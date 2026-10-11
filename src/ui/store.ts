@@ -1,16 +1,28 @@
 // The Zustand store that bridges core and UI: it owns the open slot, runs the loop, autosaves,
 // and holds the slot's tab lock so two tabs never autosave over each other.
 import { create } from 'zustand';
+import {
+  attemptBreakthrough,
+  attemptLastChance,
+  cultivate,
+  endLife,
+  type LadderId,
+} from '../core/cultivation.ts';
 import { advance, catchUp, TICK_MS, type OfflineResult } from '../core/loop.ts';
 import { makeSave, SaveError } from '../core/save/format.ts';
 import { exportFileName } from '../core/save/file.ts';
 import { SaveSlots, type SlotId, type SlotSummary } from '../core/save/slots.ts';
-import { newLife, type GameState } from '../core/state.ts';
+import { newLife, nextLife, type GameState } from '../core/state.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 
 export const AUTOSAVE_MS = 30_000;
 /** A gap longer than this between ticks (a sleeping laptop, a frozen tab) counts as offline time. */
 const OFFLINE_GAP_MS = 60_000;
+
+/** Offline time applied on return, with the state it started from, for the coming-back card. */
+export interface AwaySummary extends OfflineResult {
+  before: GameState;
+}
 
 export type Phase =
   | 'loading' // opening storage
@@ -26,7 +38,7 @@ export interface GameStore {
   /** Real time of the last write to storage. */
   savedAt: number | null;
   /** Time applied while away, for the coming-back line; null once dismissed. */
-  away: OfflineResult | null;
+  away: AwaySummary | null;
   /** A message for the player: a backup was loaded, an import failed, and so on. */
   notice: string | null;
   slots: SlotSummary[];
@@ -39,8 +51,18 @@ export interface GameStore {
   openSlot(slot: SlotId): Promise<void>;
   takeOver(): Promise<void>;
   startLife(slot: SlotId, mode: 'ironman' | 'gentle'): Promise<void>;
-  /** Saves now. P1.2 calls it at each breakthrough with `rewindPoint` set. */
+  /** Saves now; each breakthrough saves with `rewindPoint` set. */
   saveNow(opts?: { rewindPoint?: boolean }): Promise<void>;
+  /** Changes the seclusion plan: shares, the auto setting, burning stones. */
+  setPlan(patch: Partial<GameState['plan']>): void;
+  /** Attempts a ladder's next breakthrough, minor or major. */
+  breakThrough(ladder: LadderId): void;
+  /** At the lifespan edge: the last breakthrough, or the end of the life if it fails. */
+  lastChance(): void;
+  /** At the lifespan edge: accept the end. */
+  letGo(): void;
+  /** After a death: a new life in the same slot, with the chronicle kept. */
+  beginNextLife(): Promise<void>;
   exportSlot(slot: SlotId): Promise<void>;
   importSlot(slot: SlotId, file: File): Promise<void>;
   clearSlot(slot: SlotId): Promise<void>;
@@ -97,6 +119,14 @@ export const useGame = create<GameStore>()((set, get) => {
     tickTimer = autosaveTimer = null;
   }
 
+  /** Sets the new state; a breakthrough on the way saves at once, as a rewind point. */
+  function update(next: GameState) {
+    const before = get().game;
+    set({ game: next });
+    if (before && next.glass.flares > before.glass.flares)
+      void get().saveNow({ rewindPoint: true });
+  }
+
   function tick() {
     const { game, speed } = get();
     if (!game) return;
@@ -104,10 +134,11 @@ export const useGame = create<GameStore>()((set, get) => {
     const gap = now - lastTick;
     lastTick = now;
     if (gap > OFFLINE_GAP_MS) {
-      const away = catchUp(game, now - gap, now);
-      set({ game: away.state, away });
+      const away = catchUp(game, now - gap, now, { step: cultivate });
+      set({ away: { ...away, before: game } });
+      update(away.state);
     } else {
-      set({ game: advance(game, gap * speed).state });
+      update(advance(game, gap * speed, { step: cultivate }).state);
     }
   }
 
@@ -160,13 +191,13 @@ export const useGame = create<GameStore>()((set, get) => {
       return;
     }
     const now = Date.now();
-    const away = catchUp(loaded.save.state, loaded.save.savedAt, now);
+    const away = catchUp(loaded.save.state, loaded.save.savedAt, now, { step: cultivate });
     set({
       phase: 'playing',
       slot,
       game: away.state,
       savedAt: loaded.save.savedAt,
-      away: away.countedMs > OFFLINE_GAP_MS ? away : null,
+      away: away.countedMs > OFFLINE_GAP_MS ? { ...away, before: loaded.save.state } : null,
       notice: loaded.warning ?? null,
     });
     saveSettings({ activeSlot: slot });
@@ -271,6 +302,48 @@ export const useGame = create<GameStore>()((set, get) => {
       const savedAt = Date.now();
       await db().write(slot, makeSave(game, savedAt), opts);
       set({ savedAt });
+    },
+
+    setPlan(patch) {
+      const { game } = get();
+      if (!game) return;
+      set({ game: { ...game, plan: { ...game.plan, ...patch } } });
+    },
+
+    breakThrough(ladder) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      const r = attemptBreakthrough(game, ladder);
+      if (!r.attempted) return;
+      update(r.state);
+      if (!r.success) void get().saveNow();
+    },
+
+    lastChance() {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      const r = attemptLastChance(game);
+      update(r.state);
+      if (!r.success) void get().saveNow();
+    },
+
+    letGo() {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      set({ game: endLife(game) });
+      void get().saveNow();
+    },
+
+    async beginNextLife() {
+      const { game } = get();
+      if (!game?.ended || !holdsLock) return;
+      // Character creation arrives in P1.4; until then each life is a nameless placeholder.
+      set({
+        game: nextLife(game, { name: 'Nameless', seed: `${game.lineage.id}-${Date.now()}` }),
+        away: null,
+      });
+      await get().saveNow({ rewindPoint: true });
+      await refreshSlots();
     },
 
     async exportSlot(slot) {

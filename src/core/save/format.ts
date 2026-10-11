@@ -1,9 +1,16 @@
 // The save envelope, its version number and the migrations that bring old saves up to date.
 import { z } from 'zod';
-import { DAYS_PER_YEAR, GameStateSchema, START_AGE, type GameState } from '../state.ts';
+import { DEFAULT_SHARES } from '../../content/cultivation.ts';
+import {
+  DAYS_PER_YEAR,
+  GameStateSchema,
+  START_AGE,
+  startingUnlocks,
+  type GameState,
+} from '../state.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export const SaveSchema = z.object({
   version: z.literal(SAVE_VERSION),
@@ -60,6 +67,38 @@ const migrations: Record<number, (old: Raw) => Raw> = {
         unlocks: ['abode'],
         rewindCharges: mode === 'gentle' ? 1 : 0,
         rng: typeof old.rng === 'number' ? old.rng | 0 : 0,
+      },
+    };
+  },
+  // v1, P1.1: no cultivation yet. v2 adds the root, method, attributes, ladder grades and
+  // setbacks, items, the seclusion plan, the glass and the end of a life. Old lives get the
+  // placeholder true root on the garrison's standard method that P1.4 replaces.
+  1: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const c = (s.character ?? {}) as Raw;
+    const ladder = (l: unknown) => ({
+      grades: [],
+      unsettledUntil: 0,
+      injuredUntil: 0,
+      ...(l as Raw),
+    });
+    const rng = typeof s.rng === 'number' ? s.rng | 0 : 0;
+    const unlocks = Array.isArray(s.unlocks) ? (s.unlocks as string[]) : [];
+    return {
+      ...old,
+      version: 2,
+      state: {
+        ...s,
+        character: { ...c, root: 'true', method: 'garrison-standard' },
+        attributes: { agility: 10, fortune: 10, aptitude: 10 },
+        qi: ladder(s.qi),
+        body: ladder(s.body),
+        soul: ladder(s.soul),
+        items: {},
+        plan: { shares: { ...DEFAULT_SHARES }, auto: 'safe', burnStones: true },
+        glass: { seed: rng, fractures: 0, flares: 0 },
+        ended: null,
+        unlocks: [...new Set([...unlocks, ...startingUnlocks('garrison-standard')])],
       },
     };
   },

@@ -24,7 +24,7 @@ function played(): GameState {
   return {
     ...s,
     calendar: { day: s.calendar.day + 400.25 },
-    qi: { realm: 'qi-condensation', stage: 3, bar: 52.5 },
+    qi: { ...s.qi, stage: 3, bar: 52.5 },
     insight: { current: 3, earned: 10 },
     stones: 42,
     chronicle: [...s.chronicle, { day: 4720, kind: 'note', text: 'A quiet year.' }],
@@ -39,7 +39,9 @@ describe('save format', () => {
     const s = save.state;
     expect(s.character).toMatchObject({ name: 'Lin Mo', mode: 'gentle', pronouns: 'he/him' });
     expect(s.calendar.day).toBe(15.5 * 360);
-    expect(s.qi).toEqual({ realm: 'qi-condensation', stage: 2, bar: 140 });
+    expect(s.qi).toMatchObject({ realm: 'qi-condensation', stage: 2, bar: 140, grades: [] });
+    expect(s.character).toMatchObject({ root: 'true', method: 'garrison-standard' });
+    expect(s.plan.auto).toBe('safe');
     expect(s.body.stage).toBe(1);
     expect(s.insight).toEqual({ current: 7, earned: 7 });
     expect(s.stones).toBe(12);

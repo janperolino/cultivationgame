@@ -1,5 +1,8 @@
 import { realm, stageName } from '../content/realms.ts';
+import type { LadderId } from '../core/cultivation.ts';
 import { DAYS_PER_YEAR, type Ladder } from '../core/state.ts';
+
+export const LADDER_LABELS: Record<LadderId, string> = { qi: 'Qi', body: 'Body', soul: 'Soul' };
 
 /** "16 years, 3 months". */
 export function formatAge(years: number): string {
@@ -32,4 +35,25 @@ export function formatLadder(l: Ladder): string {
 export function formatWhen(ms: number | undefined | null): string {
   if (!ms) return 'never';
   return new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+/** Numbers in short forms past ten thousand: 1,248, 12.4k, 3.1M. Small fractions keep a digit. */
+export function formatNumber(n: number): string {
+  const a = Math.abs(n);
+  if (a >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
+  if (a >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+  if (a >= 1e4) return `${(n / 1e3).toFixed(1)}k`;
+  if (a > 0 && a < 10) return n.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  return Math.floor(n).toLocaleString();
+}
+
+export function formatPercent(x: number): string {
+  return `${Math.round(x * 100)}%`;
+}
+
+/** "16 y 3 m", for tight spaces. */
+export function formatAgeShort(years: number): string {
+  const whole = Math.floor(years);
+  const months = Math.floor((years - whole) * 12);
+  return months ? `${whole} y ${months} m` : `${whole} y`;
 }

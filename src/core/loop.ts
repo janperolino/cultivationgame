@@ -28,7 +28,7 @@ export interface StepContext {
 
 /**
  * What happens over a stretch of in-game days, at most one day at a time. The calendar has
- * already moved when it is called. P1.2 plugs cultivation in here; until then time only passes.
+ * already moved when it is called. core/cultivation.ts's `cultivate` is the game's step.
  */
 export type DayStep = (s: GameState, days: number, ctx: StepContext) => GameState;
 
@@ -57,6 +57,8 @@ export function advance(
   let days = 0;
 
   while (remaining > 0) {
+    // A life that has ended stands still until a new one begins.
+    if (state.ended) break;
     const edge = lifespanEdgeDay(state);
     const room = edge - state.calendar.day;
     if (room <= 0) break;

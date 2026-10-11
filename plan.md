@@ -25,7 +25,7 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 - [x] P0.2 The atlas inside the game
 - [x] P0.3 GLM spike
 - [x] P1.1 Game state, loop and saves
-- [ ] P1.2 Cultivation rules
+- [x] P1.2 Cultivation rules
 - [ ] P1.3 Trees, techniques and mastery
 - [ ] P1.4 Character creation and the first hour
 - [ ] P1.5 Polish, balance and share
@@ -210,11 +210,32 @@ Write questions here when a phase hits something the design doesn't cover, with 
 - **Narrator tail retry** (assumed 2026-10-11, P0.3). When the narrator's JSON tail fails, P3.2 should ask for the tail alone as structured output at temperature 0.2 (40/40 valid in the spike) rather than rerun the scene. The design's "one retry with the error message" becomes this for the narrator.
 - **Calendar and save details** (assumed 2026-10-11, P1.1). The year is 360 days (twelve months of thirty). Lifespans past Nascent Soul are placeholders (2,000, 3,000, 5,000, 8,000, 12,000) until their realms are designed. The chronicle lives inside the game state rather than its own table, small enough until M3's adventure log. Gentle mode's rewind point starts at the beginning of the life, so the rewind works before the first breakthrough. The `?speed=` multiplier applies to live play only; offline time is real time. A gap of over a minute between ticks (a sleeping laptop) counts as offline time, cap included. Settings can erase a slot, after a confirm.
 - **Look and where the AI runs** (Jan's call, 2026-10-11, planning). Black cracked glass replaces slate, with a gold accent and qi-cyan crack light (`docs/mockups/glass-study.html`), and players can change both colors. Idle play never needs the AI: the Scribe rewrites templated lines when a key is set, and the heart demon is a go-in scene with a templated fallback. Combat effects come from the engine's outcome tags, never from a model. Art is made at design time and shipped as data.
+- **Cultivation details the design leaves open** (assumed 2026-10-11, P1.2). Layers 1–3 ignore method fit as well as root speed, so a mutated root also reaches layer 3 in 45 minutes. Root speed counts once qi stands at layer 4. A breakthrough uses up the bar, overfill included. Offline, a bar at a major gate keeps filling to 150% rather than stopping at full; it just never breaks. The auto setting runs minor breakthroughs online too, and "Only when I say" holds them offline. Unsettled qi means no gains on that ladder for 5 days; injuries halve a ladder's gains (180 days after a failed minor from Foundation up, 3 years after a failed major). Body and soul majors need no gate item until D2 settles theirs, and use the qi thresholds. The last chance still needs the insight threshold. Grades score 0–4: a point each for qi at 150%, insight earned at twice the threshold, and each other ladder at the new realm (flawed under 0.75, ordinary, superior from 1.75, perfect from 2.75, heavenly from 3.5 on a rare method). A death keeps the lineage, the world calendar and the chronicle; the next life is "Nameless" until P1.4.
+- **Where insight comes from** (assumed 2026-10-11, P1.2). Every seclusion day leaves a trickle (0.05 a day), study days give 1, and both scale with the qi realm (×1, ×3, ×9 and up). A qi-only plan never studies, so it reaches layer 9 sooner but waits on Foundation's 500 insight (27.8 h against 22.6 h for a true root).
+- **Glass fractures** (assumed 2026-10-11, P1.2). Every qi breakthrough opens a fracture and every breakthrough on any ladder flares the glass; only the newest 12 fractures are drawn, so a long life doesn't white out the screen. A new life gets new glass.
 - **Talk styles** (assumed 2026-10-11, P0.3). The interpreter's talk styles are the design's four: bluff, intimidate, bargain, surrender. A taunt maps to intimidate.
 
 ## Log
 
 Newest first. 3–5 lines per phase.
+
+- 2026-10-11, P1.2: the shell wears black cracked glass: tokens in `theme.css` (`--accent`, `--crack` and the rest, every color a variable for P1.5), glass panels, and `GlassBackground` drawing `ui/glass.ts`'s seeded cracks on a fixed canvas, redrawn on resize, flaring and adding a fracture at breakthroughs. Checked at 1024 px and 375 px with no sideways scroll.
+  - Content: `realms.ts` now carries gates, the realm curve (`realmScale`: 1, 9, 270, 27,000), insight thresholds and rates, bar sizes and odds; `roots.ts` the six roots; `methods.ts` the six common origin methods with fit as data; `cultivation.ts` every tuning constant, the default plan, auto settings, grades and when each slot opens (body and study at layer 2, soul halfway through it, practice in P1.3).
+  - `core/cultivation.ts`: `cultivate` is the `DayStep`; `dayRates`, `minorOdds`, `majorCheck` (requirements, margin score, grade, odds), `attemptBreakthrough`, `lastChance`/`attemptLastChance`, `endLife`; `state.nextLife` starts the next life in the slot. Save v2 adds root, method, attributes, items, plan, glass, ended and ladder grades and setbacks, with a v1 migration. The store saves a rewind point at each breakthrough. Cultivate screen: share sliders with per-day rates, the auto setting, stone burning, and per-ladder breakthrough panels with odds, requirements and the grade as it stands.
+  - For P1.3: open the practice slot with the first technique (`seclusion-practice` flag; the share is already in the plan). For P1.4: set `character.root`, `method`, `attributes` at creation and hand the Foundation Pill over at layer 9 (`addItem(s, 'foundation-pill', 1)`); `startLife` and `beginNextLife` still make "Nameless". `.claude/launch.json` gained `dev-alt` on port 5174 for when another session holds 5173.
+  - `npm run sim -- pacing` (median of 25 seeds; real hours from the start of a life):
+
+```
+Default plan, safe breakthroughs, no stones
+root            L2      L3      L4      L5      L6      L7      L8      L9  Found.  age@L9 insight@L9
+mixed           9m     42m    1.6h    4.1h    7.7h   12.3h   18.4h   26.4h   36.4h    38.5       1474
+true            9m     42m    1.6h    3.1h    5.3h    8.1h   11.7h   16.7h   22.6h    28.7        930
+single          9m     42m    1.6h    2.6h    4.0h    5.9h    8.4h   11.6h   15.3h    23.6        642
+mutated         9m     42m    1.6h    2.9h    4.7h    7.0h   10.1h   14.1h   19.3h    26.1        781
+heavenly        9m     42m    1.6h    2.2h    3.1h    4.2h    5.7h    7.6h   10.1h    19.6        420
+chaos           9m     42m    1.6h    2.1h    2.9h    3.8h    5.0h    6.6h    9.0h    18.6        364
+Qi only: true root at L9 in 10.5h, heavenly 4.9h; Foundation waits on insight until 27.8h for every root.
+```
 
 - 2026-10-11, P1.1 fix: React's strict mode ran the store's start twice, and the second run found the first run's lock and showed the take-over notice over a running game. \`init\` now runs once, slot changes run one at a time through \`serial\`, a busy lock is retried three times over about a second (a reloading tab can hold it briefly), and a dev hot update of \`store.ts\` reloads the page. Checked: three reloads with no notice, and a second tab still gets it.
 

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AbodeScreen } from './AbodeScreen.tsx';
+import { CultivateScreen } from './CultivateScreen.tsx';
+import { GlassBackground } from './GlassBackground.tsx';
 import { SettingsScreen } from './SettingsScreen.tsx';
 import { formatAge } from './format.ts';
 import { screens, type ScreenId } from './screens.ts';
@@ -67,114 +69,127 @@ export function App() {
   const recent = game ? game.chronicle.slice(-8).reverse() : [];
 
   return (
-    <div className="shell">
-      <header className="topbar">
-        <button
-          type="button"
-          className="icon-button"
-          aria-label="Open menu"
-          aria-expanded={menuOpen}
-          aria-controls="side-menu"
-          onClick={() => setMenuOpen(true)}
-        >
-          ☰
-        </button>
-        <span className="topbar-title">{current.name}</span>
-        <button
-          type="button"
-          className="icon-button"
-          aria-label="Show context panel"
-          aria-expanded={contextOpen}
-          aria-controls="context-panel"
-          onClick={() => setContextOpen((o) => !o)}
-        >
-          ⋯
-        </button>
-      </header>
+    <>
+      <GlassBackground />
+      <div className="shell">
+        <header className="topbar">
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Open menu"
+            aria-expanded={menuOpen}
+            aria-controls="side-menu"
+            onClick={() => setMenuOpen(true)}
+          >
+            ☰
+          </button>
+          <span className="topbar-title">{current.name}</span>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Show context panel"
+            aria-expanded={contextOpen}
+            aria-controls="context-panel"
+            onClick={() => setContextOpen((o) => !o)}
+          >
+            ⋯
+          </button>
+        </header>
 
-      <div
-        className={`scrim ${menuOpen || contextOpen ? 'is-visible' : ''}`}
-        onClick={() => {
-          setMenuOpen(false);
-          setContextOpen(false);
-        }}
-        aria-hidden="true"
-      />
-
-      <nav id="side-menu" className={`side-menu ${menuOpen ? 'is-open' : ''}`} aria-label="Screens">
-        <div className="brand">
-          <span className="brand-name">Severed Heaven</span>
-          <span className="hanzi brand-hanzi">断天</span>
-        </div>
-        <ul>
-          {available.map((s) => (
-            <li key={s.id}>
-              <button
-                type="button"
-                className={`menu-item ${s.id === current.id ? 'is-active' : ''}`}
-                aria-current={s.id === current.id ? 'page' : undefined}
-                onClick={() => {
-                  setScreen(s.id);
-                  setMenuOpen(false);
-                }}
-              >
-                <span>{s.name}</span>
-                <span className="hanzi menu-hanzi">{s.hanzi}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      <main className="main">
-        <h1 className="screen-title">
-          {current.name} <span className="hanzi">{current.hanzi}</span>
-        </h1>
-        {notice && (
-          <section className="panel notice" role="status">
-            <p>{notice}</p>
-            <button type="button" className="button" onClick={dismissNotice}>
-              Dismiss
-            </button>
-          </section>
-        )}
-        {phase === 'loading' && <p className="muted">Opening your abode…</p>}
-        {phase === 'no-slot' && (
-          <p className="muted">No life is open. Start one or pick a slot below.</p>
-        )}
-        {phase !== 'loading' && current.id === 'abode' && <AbodeScreen />}
-        {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
-      </main>
-
-      <aside
-        id="context-panel"
-        className={`context-panel ${contextOpen ? 'is-open' : ''}`}
-        aria-label="Context"
-      >
-        <button
-          type="button"
-          className="sheet-handle"
-          aria-label="Close context panel"
-          onClick={() => setContextOpen(false)}
+        <div
+          className={`scrim ${menuOpen || contextOpen ? 'is-visible' : ''}`}
+          onClick={() => {
+            setMenuOpen(false);
+            setContextOpen(false);
+          }}
+          aria-hidden="true"
         />
-        <h2 className="panel-heading">Chronicle</h2>
-        {recent.length === 0 ? (
-          <p className="muted">Nothing has happened yet.</p>
-        ) : (
-          <ol className="chronicle">
-            {recent.map((c, i) => (
-              <li key={`${c.day}-${i}`}>
-                <span className="muted chronicle-age">
-                  {game && `age ${formatAge(ageYears({ ...game, calendar: { day: c.day } }))}`}
-                </span>
-                {c.text}
+
+        <nav
+          id="side-menu"
+          className={`side-menu ${menuOpen ? 'is-open' : ''}`}
+          aria-label="Screens"
+        >
+          <div className="brand">
+            <span className="brand-name">Severed Heaven</span>
+            <span className="hanzi brand-hanzi">断天</span>
+          </div>
+          <ul>
+            {available.map((s) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  className={`menu-item ${s.id === current.id ? 'is-active' : ''}`}
+                  aria-current={s.id === current.id ? 'page' : undefined}
+                  onClick={() => {
+                    setScreen(s.id);
+                    setMenuOpen(false);
+                  }}
+                >
+                  <span>{s.name}</span>
+                  <span className="hanzi menu-hanzi">{s.hanzi}</span>
+                </button>
               </li>
             ))}
-          </ol>
-        )}
-      </aside>
+          </ul>
+        </nav>
 
-      <SlotNotice />
-    </div>
+        <main className="main">
+          <h1 className="screen-title">
+            {current.name} <span className="hanzi">{current.hanzi}</span>
+          </h1>
+          {notice && (
+            <section className="panel notice" role="status">
+              <p>{notice}</p>
+              <button type="button" className="button" onClick={dismissNotice}>
+                Dismiss
+              </button>
+            </section>
+          )}
+          {phase === 'loading' && <p className="muted">Opening your abode…</p>}
+          {phase === 'no-slot' && (
+            <p className="muted">No life is open. Start one or pick a slot below.</p>
+          )}
+          {phase !== 'loading' && current.id === 'abode' && (
+            <AbodeScreen onCultivate={() => setScreen('cultivate')} />
+          )}
+          {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
+          {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
+        </main>
+
+        <aside
+          id="context-panel"
+          className={`context-panel ${contextOpen ? 'is-open' : ''}`}
+          aria-label="Context"
+        >
+          <button
+            type="button"
+            className="sheet-handle"
+            aria-label="Close context panel"
+            onClick={() => setContextOpen(false)}
+          />
+          <h2 className="panel-heading">Chronicle</h2>
+          {recent.length === 0 ? (
+            <p className="muted">Nothing has happened yet.</p>
+          ) : (
+            <ol className="chronicle">
+              {recent.map((c, i) => (
+                <li key={`${c.day}-${i}`}>
+                  <span className="muted chronicle-age">
+                    {game &&
+                      (c.day < game.character.bornDay
+                        ? 'a past life'
+                        : `age ${formatAge(ageYears({ ...game, calendar: { day: c.day } }))}`)}
+                  </span>
+                  {c.text}
+                </li>
+              ))}
+            </ol>
+          )}
+        </aside>
+
+        <SlotNotice />
+      </div>
+    </>
   );
 }
