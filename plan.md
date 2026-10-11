@@ -21,7 +21,7 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 
 - [x] P0.1 Scaffold the project
 - [x] P0.2 The atlas inside the game
-- [ ] P0.3 GLM spike
+- [x] P0.3 GLM spike
 - [ ] P1.1 Game state, loop and saves
 - [ ] P1.2 Cultivation rules
 - [ ] P1.3 Trees, techniques and mastery
@@ -203,10 +203,19 @@ Write questions here when a phase hits something the design doesn't cover, with 
 - **Untrained body and soul** (assumed 2026-10-11). Both start at zero like qi and stay behind when neglected; nothing lifts them to the qi realm for free.
 - **Fonts** (assumed 2026-10-11, P0.1). The design asks for a serif display face, a brush face for hanzi and a plain sans, but names none. Picked Cormorant Garamond, Ma Shan Zheng and Inter from Google Fonts, with system fallbacks, as tokens in `src/ui/theme.css`.
 - **Atlas outlines the plan didn't name** (assumed 2026-10-11, P0.2). The Rim (`guixu`) is stored as an `annulus` shape from `map.r` and `map.inner`, since the page draws it as a ring. Straits (`sea` entries) still get no shape, as on the page. A `top` that fails to parse would be kept as `unknown` with its text in the note, and listed by the build; none fail today.
+- **GLM hosts** (Jan's call, 2026-10-11, P0.3). Test and use the cheap hosts Morph and DeepInfra; never StreamLake or Novita, which make GLM 5.2 feel dumb. Morph rarely refuses; the worry is softening, which the spike checked for and didn't find. Settled as: narrator on Morph with DeepInfra as fallback, interpreter on DeepInfra then Morph (design § How GLM fits in).
+- **Narrator tail retry** (assumed 2026-10-11, P0.3). When the narrator's JSON tail fails, P3.2 should ask for the tail alone as structured output at temperature 0.2 (40/40 valid in the spike) rather than rerun the scene. The design's "one retry with the error message" becomes this for the narrator.
+- **Talk styles** (assumed 2026-10-11, P0.3). The interpreter's talk styles are the design's four: bluff, intimidate, bargain, surrender. A taunt maps to intimidate.
 
 ## Log
 
 Newest first. 3–5 lines per phase.
+
+- 2026-10-11, P0.3: `src/ai/openrouter.ts` streams over fetch and server-sent events in Node and the browser. It sends `reasoning: { enabled: false }` and `usage.include` by default, returns text, usage, cost, host and time to first token, and has a `CostMeter`. `src/ai/mock.ts` provides `mockProvider` and `sseResponse`. `src/ai/schemas.ts` holds the interpreter's action schema and the narrator's tail, each as Zod and as JSON Schema. `src/ai/prompts.ts` drafts the cached prefix, about 1,900 tokens of rules, world bible, a region brief built from atlas entries and the voice. `npm run spike` (`sim/spike.ts`, steps selectable, `--tag=` for reruns) wrote `docs/spike/` and `docs/spike-report.md`.
+  - **Go.** Thinking is off only when asked (GLM 5.2 thinks by default). Caching bills at the listed rates. Interpreter JSON was 37/40 valid, then 39/40 once the prompt was tightened. Narrator tails went from 31/40 to 40/40, and the tail as its own structured call was 40/40. Medians: first token about 0.5 s, typed turn about 2 s. Total spend $0.26.
+  - Neither host softened any of the 80 dark scenes. The drift that did show runs harsher: invented losses, and gendered guesses because the sheet had no pronouns. Morph corrupted 4 tails in run 1 and none afterwards.
+  - Design § How GLM fits in and § What the AI will cost now carry the measured settings: hosts, every Zod limit mirrored in the JSON schema, the tail retry, pronouns on the sheet, and outcomes that list what the player keeps.
+  - For P3.2: reuse `streamChat`, the schemas and the prompt drafts. Per-scene id enums in the interpreter schema would stop invented ids. A typed turn is slower than a clicked one because the interpreter's whole reply comes before the narrator's first token. The OpenRouter key in `.env.local` expires 2026-10-13.
 
 - 2026-10-11, P0.2: `src/content/atlas/schema.ts` holds strict Zod schemas for source entries (unknown fields fail) and for the generated file, plus `parseTop`. `src/content/realms.ts` lists the nine realms with kebab ids (`core-formation`) for P1.2 to extend. `npm run atlas:build` validates the source, including duplicate ids, missing parents and parent loops, and writes `src/content/generated/atlas.json` (about 1.1 MB, one entry or shape per line, byte-identical on rerun).
   - Shapes are keyed by entry id: 348 `area` (6 coasts, 69 region cells clipped with `polygon-clipping`, 206 kingdoms and 67 forbidden lands), 18 `circle` (17 sea zones and the Scar) and 1 `annulus` (the Rim). Rings are open and rounded to 10 li. Line paths stay inside each entry's `map`.

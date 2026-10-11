@@ -16,7 +16,8 @@
     "format": "prettier --write .",
     "sim": "tsx sim/run.ts",
     "atlas:build": "tsx tools/atlas-build.ts",
-    "atlas:serve": "node tools/atlas-serve.cjs"
+    "atlas:serve": "node tools/atlas-serve.cjs",
+    "spike": "node --env-file=.env.local --import tsx sim/spike.ts"
   },
   "dependencies": {
     "dexie": "^4.4.6",

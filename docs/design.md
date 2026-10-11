@@ -541,7 +541,7 @@ Memory needs no vector database: the game looks up notes for the NPCs and place 
 - The style guide shows the voice with short examples and bans softeners, moralizing and default happy endings.
 - The week-1 spike runs 20 dark scenes and checks GLM plays them straight. If it hedges, tighten the prompt or try another host.
 
-**Request settings to start from**
+**Request settings** (measured in the P0.3 spike; numbers in `docs/spike-report.md`)
 
 ```json
 {
@@ -550,14 +550,18 @@ Memory needs no vector database: the game looks up notes for the NPCs and place 
   "stream": true,
   "temperature": 0.8,
   "max_tokens": 600,
-  "usage": { "include": true }
+  "usage": { "include": true },
+  "provider": { "order": ["morph", "deepinfra"] }
 }
 ```
 
-- The week-1 spike confirms thinking is really off: `completion_tokens_details.reasoning_tokens` should read 0. If it doesn't, try `"reasoning": { "effort": "none" }`.
-- Interpreter calls add `response_format` with a JSON schema and `provider.require_parameters: true`. Z.ai's own host doesn't list structured outputs, so OpenRouter sends those calls to hosts that do.
-- GLM 5.2 runs on 25 hosts at fp4 to fp8 precision. If prose quality wobbles, pin hosts you liked with `provider.order`, or require fp8 with `provider.quantizations`.
-- Spike targets: valid JSON on at least 95% of turns, and first words on screen within about 2 seconds.
+- Thinking is off only when the request says so. Without the `reasoning` field GLM 5.2 thinks (147–400 hidden tokens); with `enabled: false`, `reasoning_tokens` read 0 on all 212 calls on both hosts.
+- Hosts: the narrator runs on Morph (fp8; the richest prose, and it never softened a dark scene) with DeepInfra (fp4) as fallback. The interpreter runs on DeepInfra first, at half Morph's cost, then Morph. Never StreamLake or Novita, which make GLM 5.2 feel dumb.
+- Interpreter calls add `response_format` with a JSON schema in strict mode and `provider.require_parameters: true`; Z.ai's own host, Novita and AtlasCloud don't list structured outputs. Every limit Zod checks (string lengths, list sizes) must also be in the JSON schema, or strict decoding can't enforce it: that one gap caused every invalid reply in the spike. The interpreter's schema lives in `src/ai/schemas.ts`.
+- The narrator's tail failed 9 of 40 times in the first run: choices longer than the prompt asked, and Morph sometimes corrupting the JSON. With the tail's limits stated in the prompt, 40 of 40 passed. If a tail still fails, the retry asks for the tail alone as structured output at temperature 0.2, which passed 40 of 40. The scene is not rerun.
+- Caching works on both hosts from the second call: the cached prefix bills at a fifth of the input price on DeepInfra and about a third on Morph.
+- First words arrive in about 0.5 seconds on a clicked turn and about 2 seconds on a typed one, since a typed turn waits for the interpreter's whole reply first.
+- The player sheet carries the pronouns picked at creation, or the narrator guesses. Engine outcomes list what the player keeps as well as what they lose, since the narrator tends to invent extra losses.
 
 ## What the AI will cost
 
@@ -565,13 +569,14 @@ With thinking off, a turn costs a quarter of a cent to under a cent, so 20 sessi
 
 | Setup | Typed turn | Clicked turn | Turns per $1 | 50-turn session |
 |---|---|---|---|---|
+| **The chosen setup:** GLM 5.2, narrator on Morph, interpreter on DeepInfra, thinking off | $0.0042 | $0.0035 | ~250 | $0.20 |
 | GLM 5.2 on a budget host (DeepInfra), thinking off | $0.0032 | $0.0025 | ~350 | $0.14 |
 | GLM 5.3 FlashX (thinking stays on) | $0.0048 | $0.0031 | ~240 | $0.21 |
 | GLM 5.2 on Z.ai's own host, thinking off | $0.0078 | $0.0061 | ~140 | $0.36 |
 | GLM 5.2 on Z.ai's own host, thinking on | $0.0171 | $0.0110 | ~70 | $0.73 |
 
-- Prices per million tokens (input / output / cached input): DeepInfra $0.56 / $1.80 / $0.105; GLM 5.3 FlashX $0.37 / $1.25 / $0.09; Z.ai $1.40 / $4.40 / $0.26. GLM 5.2's price varies widely across its 25 hosts.
-- Assumptions: narrator 4,500 tokens in (2,000 cached) and 380 out; interpreter 1,800 in (1,200 cached) and 120 out; a chronicle call every 10 turns; 60% of turns typed; thinking adds about 1,000 tokens a call. The week-1 spike replaces these with measured numbers.
+- Prices per million tokens (input / output / cached input): Morph $0.40 / $6.00 / $0.137; DeepInfra $0.5625 / $1.80 / $0.105; GLM 5.3 FlashX $0.37 / $1.25 / $0.09; Z.ai $1.40 / $4.40 / $0.26. GLM 5.2's price varies widely across its 25 hosts. Morph's output price makes a narrator turn there about 2.8× DeepInfra's.
+- Assumptions: narrator 4,500 tokens in (2,000 cached) and 380 out; interpreter 1,800 in (1,200 cached) and 120 out; a chronicle call every 10 turns; 60% of turns typed; thinking adds about 1,000 tokens a call. The spike billed exactly the listed prices, cached input included. The spike's own calls were smaller (narrator 2,300 in and 330 out, at $0.0026 on Morph and $0.0009 on DeepInfra; interpreter $0.0010 on Morph and $0.0005 on DeepInfra), and its 214 calls cost $0.26.
 - Thinking also costs time: 1,000 hidden tokens add 2.6–18.5 seconds before the first word, at hosts' measured 54–383 tokens a second.
 - A month of 20 sessions of 50 turns: about $3–7 for you, $12–29 for four players.
 - No free tier to lean on: a GLM 5.2 `:free` listing exists, but no host serves it right now. If one appears, free variants allow 20 requests a minute and 50 a day, or 1,000 a day after buying 10 credits.

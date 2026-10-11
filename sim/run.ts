@@ -6,7 +6,10 @@ import { dirname, join } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const sims = readdirSync(here)
-  .filter((f) => f.endsWith('.ts') && f !== 'run.ts' && !f.endsWith('.test.ts'))
+  // spike.ts calls OpenRouter, so it has its own script: npm run spike.
+  .filter(
+    (f) => f.endsWith('.ts') && !['run.ts', 'spike.ts'].includes(f) && !f.endsWith('.test.ts'),
+  )
   .map((f) => f.slice(0, -3));
 
 const name = process.argv[2];
