@@ -216,6 +216,8 @@ Write questions here when a phase hits something the design doesn't cover, with 
 
 Newest first. 3–5 lines per phase.
 
+- 2026-10-11, P1.1 fix: React's strict mode ran the store's start twice, and the second run found the first run's lock and showed the take-over notice over a running game. \`init\` now runs once, slot changes run one at a time through \`serial\`, a busy lock is retried three times over about a second (a reloading tab can hold it briefly), and a dev hot update of \`store.ts\` reloads the page. Checked: three reloads with no notice, and a second tab still gets it.
+
 - 2026-10-11, planning: the look moves from slate to black cracked glass (gold accent, qi-cyan crack light, a reference mockup in `docs/mockups/`), built at the start of P1.2, with player color options and a slower-clock picker in P1.5. Idle play never needs the AI: steward's reports, rumors and headlines are templates the Scribe may rewrite, and the heart demon gets a templated fallback. Combat effects come from outcome tags (tags in D2, effects in P2.3). The fog of war has four states (seen, sketched, rumored, unknown); D3 settles what reveals what. Art is made at design time; D5 adds a cast list for portraits.
 
 - 2026-10-11, P1.1: `src/core/state.ts` holds the life as one Zod-checked object: character (pronouns, ironman or gentle), a calendar of world days, the qi, body and soul ladders (realm, stage, bar), insight current and ever earned, stones in low-grade units, the chronicle, unlock flags, the rewind charge and the RNG state. `realms.ts` gained stages and lifespans.

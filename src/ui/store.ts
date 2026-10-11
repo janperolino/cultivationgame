@@ -74,8 +74,21 @@ let autosaveTimer: ReturnType<typeof setInterval> | null = null;
 let lastTick = 0;
 let releaseLock: (() => void) | null = null;
 let holdsLock = false;
+let initStarted: Promise<void> | null = null;
 
 const lockName = (slot: SlotId) => `severed-heaven-slot-${slot}`;
+/** A reloading tab can still hold its lock for a moment, so a busy slot is retried before the notice. */
+const LOCK_RETRIES = [150, 350, 700];
+
+// Slot changes run one at a time, so two of them never race for the same lock.
+let queue: Promise<unknown> = Promise.resolve();
+function serial<T>(fn: () => Promise<T>): Promise<T> {
+  const run = queue.then(fn, fn);
+  queue = run.catch(() => undefined);
+  return run;
+}
+
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const useGame = create<GameStore>()((set, get) => {
   function stopLoop() {
@@ -165,6 +178,59 @@ export const useGame = create<GameStore>()((set, get) => {
     set({ slots: await db().list() });
   }
 
+  async function openSlotNow(slot: SlotId) {
+    if (get().slot === slot && get().phase === 'playing') return;
+    await closeSession();
+    set({ slot, game: null, away: null, phase: 'loading' });
+    let locked = await acquireLock(slot, false);
+    for (const ms of LOCK_RETRIES) {
+      if (locked) break;
+      await wait(ms);
+      locked = await acquireLock(slot, false);
+    }
+    if (!locked) {
+      set({ phase: 'busy' });
+      return;
+    }
+    try {
+      await play(slot);
+    } catch (e) {
+      await closeSession();
+      set({ phase: 'no-slot', slot: null, notice: message(e) });
+    }
+    await refreshSlots();
+  }
+
+  async function init() {
+    set({ speed: speedFromUrl() });
+    // Ask the browser to keep our storage; Safari clears unvisited sites after a week otherwise.
+    if (navigator.storage?.persist) {
+      navigator.storage
+        .persisted()
+        .then((p) => (p ? p : navigator.storage.persist()))
+        .then((persisted) => set({ persisted }))
+        .catch(() => set({ persisted: null }));
+    }
+    // Leaving or hiding the tab saves; offline catch-up covers anything a lost write misses.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') void get().saveNow();
+    });
+    window.addEventListener('pagehide', () => {
+      const { game, slot } = get();
+      if (game && slot && holdsLock) db().writeNow(slot, makeSave(game, Date.now()));
+    });
+    try {
+      await refreshSlots();
+    } catch (e) {
+      set({ phase: 'no-slot', notice: `Storage is unavailable: ${message(e)}` });
+      return;
+    }
+    const active = loadSettings().activeSlot;
+    const slot = get().slots.find((s) => s.slot === active && !s.empty);
+    if (slot) await serial(() => openSlotNow(slot.slot));
+    else set({ phase: 'no-slot' });
+  }
+
   return {
     phase: 'loading',
     slot: null,
@@ -176,68 +242,28 @@ export const useGame = create<GameStore>()((set, get) => {
     persisted: null,
     speed: 1,
 
-    async init() {
-      set({ speed: speedFromUrl() });
-      // Ask the browser to keep our storage; Safari clears unvisited sites after a week otherwise.
-      if (navigator.storage?.persist) {
-        navigator.storage
-          .persisted()
-          .then((p) => (p ? p : navigator.storage.persist()))
-          .then((persisted) => set({ persisted }))
-          .catch(() => set({ persisted: null }));
-      }
-      // Leaving or hiding the tab saves; offline catch-up covers anything a lost write misses.
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') void get().saveNow();
-      });
-      window.addEventListener('pagehide', () => {
-        const { game, slot } = get();
-        if (game && slot && holdsLock) db().writeNow(slot, makeSave(game, Date.now()));
-      });
-      try {
-        await refreshSlots();
-      } catch (e) {
-        set({ phase: 'no-slot', notice: `Storage is unavailable: ${message(e)}` });
-        return;
-      }
-      const active = loadSettings().activeSlot;
-      const slot = get().slots.find((s) => s.slot === active && !s.empty);
-      if (slot) await get().openSlot(slot.slot);
-      else set({ phase: 'no-slot' });
-    },
+    // React's strict mode runs the starting effect twice in development; the game starts once.
+    init: () => (initStarted ??= init()),
 
-    async openSlot(slot) {
-      if (get().slot === slot && get().phase === 'playing') return;
-      await closeSession();
-      set({ slot, game: null, away: null, phase: 'loading' });
-      if (!(await acquireLock(slot, false))) {
-        set({ phase: 'busy' });
-        return;
-      }
-      try {
+    openSlot: (slot) => serial(() => openSlotNow(slot)),
+
+    takeOver: () =>
+      serial(async () => {
+        const { slot } = get();
+        if (!slot) return;
+        set({ phase: 'loading' });
+        await acquireLock(slot, true);
         await play(slot);
-      } catch (e) {
-        await closeSession();
-        set({ phase: 'no-slot', slot: null, notice: message(e) });
-      }
-      await refreshSlots();
-    },
+      }),
 
-    async takeOver() {
-      const { slot } = get();
-      if (!slot) return;
-      set({ phase: 'loading' });
-      await acquireLock(slot, true);
-      await play(slot);
-    },
-
-    async startLife(slot, mode) {
-      // Character creation arrives in P1.4; until then a new life is a nameless placeholder.
-      const state = newLife({ name: 'Nameless', mode, seed: `slot${slot}-${Date.now()}` });
-      await db().write(slot, makeSave(state, Date.now()), { rewindPoint: true });
-      await refreshSlots();
-      await get().openSlot(slot);
-    },
+    startLife: (slot, mode) =>
+      serial(async () => {
+        // Character creation arrives in P1.4; until then a new life is a nameless placeholder.
+        const state = newLife({ name: 'Nameless', mode, seed: `slot${slot}-${Date.now()}` });
+        await db().write(slot, makeSave(state, Date.now()), { rewindPoint: true });
+        await refreshSlots();
+        await openSlotNow(slot);
+      }),
 
     async saveNow(opts) {
       const { game, slot } = get();
@@ -266,33 +292,35 @@ export const useGame = create<GameStore>()((set, get) => {
       await refreshSlots();
     },
 
-    async importSlot(slot, file) {
-      const wasOpen = get().slot === slot;
-      if (wasOpen) {
-        await closeSession();
-        set({ slot: null, game: null, phase: 'no-slot' });
-      }
-      try {
-        const save = await db().importSlot(slot, new Uint8Array(await file.arrayBuffer()));
-        set({ notice: `Imported ${save.state.character.name} into slot ${slot}.` });
-      } catch (e) {
-        set({ notice: `Import failed: ${message(e)}` });
-      }
-      await refreshSlots();
-      if (wasOpen) await get().openSlot(slot);
-    },
+    importSlot: (slot, file) =>
+      serial(async () => {
+        const wasOpen = get().slot === slot;
+        if (wasOpen) {
+          await closeSession();
+          set({ slot: null, game: null, phase: 'no-slot' });
+        }
+        try {
+          const save = await db().importSlot(slot, new Uint8Array(await file.arrayBuffer()));
+          set({ notice: `Imported ${save.state.character.name} into slot ${slot}.` });
+        } catch (e) {
+          set({ notice: `Import failed: ${message(e)}` });
+        }
+        await refreshSlots();
+        if (wasOpen) await openSlotNow(slot);
+      }),
 
-    async clearSlot(slot) {
-      if (get().slot === slot) {
-        stopLoop();
-        holdsLock = false;
-        releaseLock?.();
-        releaseLock = null;
-        set({ slot: null, game: null, phase: 'no-slot', away: null });
-      }
-      await db().clear(slot);
-      await refreshSlots();
-    },
+    clearSlot: (slot) =>
+      serial(async () => {
+        if (get().slot === slot) {
+          stopLoop();
+          holdsLock = false;
+          releaseLock?.();
+          releaseLock = null;
+          set({ slot: null, game: null, phase: 'no-slot', away: null });
+        }
+        await db().clear(slot);
+        await refreshSlots();
+      }),
 
     async rewind() {
       const { slot } = get();
@@ -314,3 +342,7 @@ export const useGame = create<GameStore>()((set, get) => {
     dismissNotice: () => set({ notice: null }),
   };
 });
+
+// A hot update would swap this store out from under the running game and its tab lock, so in
+// development a change here reloads the page instead; pagehide saves first.
+import.meta.hot?.dispose(() => window.location.reload());
