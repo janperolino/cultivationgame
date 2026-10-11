@@ -8,7 +8,7 @@ Build it as a web game where idle seclusion and an AI-narrated world are two vie
 
 ## Decisions so far
 
-Nine calls are made; the rest of this plan builds on them.
+Ten calls are made; the rest of this plan builds on them.
 
 | Decision | Choice | Why |
 |---|---|---|
@@ -21,6 +21,7 @@ Nine calls are made; the rest of this plan builds on them.
 | Tone | Cutthroat by default; warmth is earned | GLM leans agreeable, so the rules, not the prose, decide who betrays whom. |
 | Combat | Text only: a turn-based rules engine, with free-text input on top | Creative moves earn bonuses, but your cultivation still decides who wins. |
 | AI model | GLM 5.2, thinking off | Unlike GLM 5.3, its thinking can be switched off, which roughly halves the cost and cuts the wait. |
+| Multiplayer | After v1: friends as NPCs in your world, then co-op go-in sessions; no shared persistent world | Most of the fun of playing with friends, with no server that owns the world, so personal calendars and editable saves stay. The core is built for it from M1: rules take any cultivator, events are typed, randomness runs in named streams and fight turns take many actors. |
 
 ## How the two halves connect
 
@@ -681,6 +682,7 @@ Five rules keep it sane:
 | M6 Living world | 19–21 | map tiers, markets, events, beast taming |
 | M7 Big moments | 22–24 | Nascent Soul, tribulations, heart demons |
 | M8 Rebirth and friends | 25–27 | lifespan, reincarnation, friends build |
+| After v1 | | friends as NPCs, then co-op go-in sessions |
 
 Each milestone ends playable, so stopping at any point still leaves you a game. Design comes first, working down the Still to design checklist. Then scaffold the project in your cultivationGame2 folder and run the week-1 GLM spike.
 

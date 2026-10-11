@@ -137,6 +137,10 @@ This is the "Atlas export" item from the design checklist.
 - Spending insight, with node effects wired into the rules.
 - Technique data, with mastery from Glimpse to Origin raised by practice, including the first technique of each origin path that P1.4 hands out.
 - The Trees screen (a pannable graph in tier bands) and the Techniques screen.
+- While you're there, before more code builds on the current shape:
+  - Move what belongs to a cultivator (the three ladders, insight, attributes, root, method and items) into a `Cultivator` with an id, held as `player` in the game state, and make the rules in `core/cultivation.ts` take a `Cultivator` instead of the whole game state. NPCs and co-op guests later run on the same code. Save migration included.
+  - Split the one random state into named streams, each seeded from the life's seed and the stream's name: breakthroughs now, combat and world later. Adding a system then never changes another system's rolls. Save migration included.
+  - Add lint rules that ban `Math.random`, `Date.now` and argument-less `new Date()` in `src/core`; time and randomness come in as inputs.
 
 **Done when:** buying a node changes the numbers it claims (tested), sealed nodes can be learned but not used, and both screens work at desktop and phone widths.
 
@@ -150,6 +154,7 @@ This is the "Atlas export" item from the design checklist.
 - Three origins with fixed childhood text, and the testing-day choice (go along or refuse), which sets the starting method, technique and flags.
 - Fixed event cards for what the world supplies from M3: the errand card that stands in for the first trip out; a card within the first hour that gives a method to the two refusals that start without one (the Night Bridge Society's offer to the deserter, a bounty-office job for the street cultivator); and the origin's layer 9 card that hands over a Foundation Pill, with another card ten in-game years after a failed attempt.
 - Unlock flags, so screens appear as they're reached, with chronicle entries.
+- Make the chronicle a typed event log before this phase writes its entries: each event has a day, a type, the actors by id, a place and a data object, and its text comes from a template for that type. NPC memory, the storyteller and rumors read these events later. Migrate the existing text entries.
 - The Chronicle screen, and the Character screen: talents and the six attributes, with fame and standing hidden until M5.
 
 **Done when:** a new life reaches layer 3 in about 45 minutes of play on any root (checked with the sped-up clock), and all three origins × both choices play through to a method and the errand card.
@@ -170,7 +175,7 @@ Settle items and gear (slots, grades, bonding, pill toxicity, storage rings, and
 
 ## M2: Combat engine (weeks 6–7)
 
-- **P2.1 Combat rules core:** attributes, d20 checks, criticals, grazes and backfires, realm and stage gaps on the one ladder the design describes, the damage formula with damage rounded to the nearest whole number, eleven damage types and their statuses, the element cycle and combos, qi costs. Done when every rule has a test and the design's worked example reproduces exactly.
+- **P2.1 Combat rules core:** attributes, d20 checks, criticals, grazes and backfires, realm and stage gaps on the one ladder the design describes, the damage formula with damage rounded to the nearest whole number, eleven damage types and their statuses, the element cycle and combos, qi costs. A turn takes actions from any number of actors on each side, every action names its actor, and combat rolls on its own random stream, so allies, beasts and co-op parties need no rewrite. Done when every rule has a test and the design's worked example reproduces exactly.
 - **P2.2 Enemies and the fight sim:** templates and behavior profiles from D2; `sim/fights.ts` runs 10,000 fights per matchup; tune until fighting a realm up takes stacked advantages.
 - **P2.3 Combat screen, items and the bag:** button-only fights, the bag and gear from D2, the combat Daos wired in, and the combat effects layered from the outcome tags (design § Combat, "Effects fill the wait"), with a reduced-motion version.
 
@@ -194,6 +199,7 @@ Each opens with a design session that settles its topics and expands it into pha
 - **M6 Living world (weeks 19–21):** D6 world simulation; then the events calendar, prosperity, markets and standing orders; map tiers and travel; beast taming, appraisal and geomancy; rumors and headlines as templates, with the Scribe's prose when a key is set.
 - **M7 Big moments (weeks 22–24):** D7 tribulations and heart demons; then Nascent Soul and tribulations; heart demons as a go-in scene, with thinking on and a templated trial when there is no key.
 - **M8 Rebirth and friends (weeks 25–27):** D8 death, rebirth and legacy, plus art and sound; then lifespan's end, rebirth and legacy; friends' access through OpenRouter sign-in, hosting and polish. Art and sound follow the direction in design § Still to design.
+- **After v1, multiplayer:** friends as NPCs, where a friend's exported character snapshot becomes a named NPC in your world (needs M5's NPC records); then co-op go-in sessions for two to four friends through a small room server, turn-based, one narration per turn, each guest's own world advancing as if they had gone on a trip (needs M3). No shared persistent world.
 
 ---
 
@@ -219,6 +225,7 @@ Write questions here when a phase hits something the design doesn't cover, with 
 
 Newest first. 3–5 lines per phase.
 
+- 2026-10-11, planning after P1.2: P1.2's core has no stray randomness or clock reads, and IndexedDB sits only in `core/save/slots.ts`, but the rules take the whole game state, there is one random stream, and the chronicle is text. P1.3 now extracts a `Cultivator`, splits the random streams and adds the lint rules; P1.4 makes the chronicle typed events; P2.1 takes multi-actor turns. Multiplayer is decided: friends as NPCs and co-op sessions after v1, no shared world.
 - 2026-10-11, P1.2: the shell wears black cracked glass: tokens in `theme.css` (`--accent`, `--crack` and the rest, every color a variable for P1.5), glass panels, and `GlassBackground` drawing `ui/glass.ts`'s seeded cracks on a fixed canvas, redrawn on resize, flaring and adding a fracture at breakthroughs. Checked at 1024 px and 375 px with no sideways scroll.
   - Content: `realms.ts` now carries gates, the realm curve (`realmScale`: 1, 9, 270, 27,000), insight thresholds and rates, bar sizes and odds; `roots.ts` the six roots; `methods.ts` the six common origin methods with fit as data; `cultivation.ts` every tuning constant, the default plan, auto settings, grades and when each slot opens (body and study at layer 2, soul halfway through it, practice in P1.3).
   - `core/cultivation.ts`: `cultivate` is the `DayStep`; `dayRates`, `minorOdds`, `majorCheck` (requirements, margin score, grade, odds), `attemptBreakthrough`, `lastChance`/`attemptLastChance`, `endLife`; `state.nextLife` starts the next life in the slot. Save v2 adds root, method, attributes, items, plan, glass, ended and ladder grades and setbacks, with a v1 migration. The store saves a rewind point at each breakthrough. Cultivate screen: share sliders with per-day rates, the auto setting, stone burning, and per-ladder breakthrough panels with odds, requirements and the grade as it stands.

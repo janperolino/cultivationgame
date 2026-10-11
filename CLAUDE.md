@@ -13,7 +13,9 @@ A xianxia cultivation idle game with an AI-narrated "go in" mode (GLM 5.2 throug
 - `src/core` never imports React or calls the network, so the same code runs in tests and in the Node sims.
 - Edit the local files. The claude.ai design doc and atlas they came from are frozen archives since 2026-10-11.
 - Content is data: a new pill, node, beast or region is an entry, not new code.
-- Randomness is seeded (mulberry32), so a seed replays the same fight.
+- Randomness is seeded (mulberry32) and runs in named streams, one per system, so a seed replays the same fight and a new system never shifts another's rolls.
+- Never assume one player: the rules take a cultivator, and actions name who acts.
+- Browser storage (IndexedDB and localStorage) is touched only by the save layer and settings, so a desktop or mobile wrapper can swap it.
 - Saves carry a version number and migrations.
 - Never commit API keys. The OpenRouter key lives in `.env.local` or the browser.
 - Place and sect names are English first (Clear Heaven Sword Sect), with pinyin and hanzi underneath as flavor. People keep pinyin names (Elder Mo).
