@@ -23,3 +23,5 @@ A xianxia cultivation idle game with an AI-narrated "go in" mode (GLM 5.2 throug
 ## Each session
 
 Do one phase from `plan.md`. Then tick it, add a Log entry and commit. Don't start the next phase in the same session.
+
+A planning session, with no phase named, edits only the docs and the atlas, never code, and commits on its own as `design: <summary>`.

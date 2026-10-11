@@ -17,6 +17,8 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 
 **Design sessions** (D2, D3 and so on) run here like any phase: they edit `docs/design.md` and the atlas directly, then tick, log and commit. `node tools/atlas-serve.cjs` opens the atlas map for browsing and editing.
 
+**Planning sessions** happen between phases whenever Jan wants one. They discuss the design and edit `docs/design.md`, `plan.md` and the atlas, never code. Each one adds a Log line and commits on its own as `design: <summary>`, separate from any phase commit. Only one session works in this folder at a time; branches can come later, if several agents ever run in parallel.
+
 ## Status
 
 - [x] P0.1 Scaffold the project
@@ -211,6 +213,7 @@ Write questions here when a phase hits something the design doesn't cover, with 
 
 Newest first. 3–5 lines per phase.
 
+- 2026-10-11, planning: realm gaps now escalate, about 9x power into Foundation, 30x into Core Formation and 100x from Nascent Soul up (design § Combat). Planning sessions between phases are now a recognised kind of session: docs and atlas only, committed as design: <summary>.
 - 2026-10-11, P0.3: `src/ai/openrouter.ts` streams over fetch and server-sent events in Node and the browser. It sends `reasoning: { enabled: false }` and `usage.include` by default, returns text, usage, cost, host and time to first token, and has a `CostMeter`. `src/ai/mock.ts` provides `mockProvider` and `sseResponse`. `src/ai/schemas.ts` holds the interpreter's action schema and the narrator's tail, each as Zod and as JSON Schema. `src/ai/prompts.ts` drafts the cached prefix, about 1,900 tokens of rules, world bible, a region brief built from atlas entries and the voice. `npm run spike` (`sim/spike.ts`, steps selectable, `--tag=` for reruns) wrote `docs/spike/` and `docs/spike-report.md`.
   - **Go.** Thinking is off only when asked (GLM 5.2 thinks by default). Caching bills at the listed rates. Interpreter JSON was 37/40 valid, then 39/40 once the prompt was tightened. Narrator tails went from 31/40 to 40/40, and the tail as its own structured call was 40/40. Medians: first token about 0.5 s, typed turn about 2 s. Total spend $0.26.
   - Neither host softened any of the 80 dark scenes. The drift that did show runs harsher: invented losses, and gendered guesses because the sheet had no pronouns. Morph corrupted 4 tails in run 1 and none afterwards.
