@@ -20,7 +20,7 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 ## Status
 
 - [x] P0.1 Scaffold the project
-- [ ] P0.2 The atlas inside the game
+- [x] P0.2 The atlas inside the game
 - [ ] P0.3 GLM spike
 - [ ] P1.1 Game state, loop and saves
 - [ ] P1.2 Cultivation rules
@@ -202,10 +202,16 @@ Write questions here when a phase hits something the design doesn't cover, with 
 - **Stage gaps across realms** (settled 2026-10-11, design § Combat). One ladder: −2 and ×1.2 per stage, half that per Qi Condensation layer, and −2 and ×1.75 per major breakthrough, so a realm apart is −8 and about ×3. The worked example still gives 33.
 - **Untrained body and soul** (assumed 2026-10-11). Both start at zero like qi and stay behind when neglected; nothing lifts them to the qi realm for free.
 - **Fonts** (assumed 2026-10-11, P0.1). The design asks for a serif display face, a brush face for hanzi and a plain sans, but names none. Picked Cormorant Garamond, Ma Shan Zheng and Inter from Google Fonts, with system fallbacks, as tokens in `src/ui/theme.css`.
+- **Atlas outlines the plan didn't name** (assumed 2026-10-11, P0.2). The Rim (`guixu`) is stored as an `annulus` shape from `map.r` and `map.inner`, since the page draws it as a ring. Straits (`sea` entries) still get no shape, as on the page. A `top` that fails to parse would be kept as `unknown` with its text in the note, and listed by the build; none fail today.
 
 ## Log
 
 Newest first. 3–5 lines per phase.
+
+- 2026-10-11, P0.2: `src/content/atlas/schema.ts` holds strict Zod schemas for source entries (unknown fields fail) and for the generated file, plus `parseTop`. `src/content/realms.ts` lists the nine realms with kebab ids (`core-formation`) for P1.2 to extend. `npm run atlas:build` validates the source, including duplicate ids, missing parents and parent loops, and writes `src/content/generated/atlas.json` (about 1.1 MB, one entry or shape per line, byte-identical on rerun).
+  - Shapes are keyed by entry id: 348 `area` (6 coasts, 69 region cells clipped with `polygon-clipping`, 206 kingdoms and 67 forbidden lands), 18 `circle` (17 sea zones and the Scar) and 1 `annulus` (the Rim). Rings are open and rounded to 10 li. Line paths stay inside each entry's `map`.
+  - Every `top` parses. For the canon pass, 63 entries have no realm (landmark 37, race 7, era 5, forbidden 5, cosmos 4, event 3, sea 1, route 1), and 15 are `unknown` (forbidden 11, landmark 1, sea 1, realm 1, power 1).
+  - The tests read the generated file with `fs` and check it with Zod. Game code should do the same, or fetch it, rather than `import` it, since TypeScript would infer a type for 1 MB of JSON. P0.2 ran in the same session as P0.1, at Jan's request.
 
 - 2026-10-11, P0.1: scaffolded Vite 8, React 19 and TypeScript 6 (strict, plus `noUncheckedIndexedAccess`) with zustand, zod and dexie; vitest, ESLint 10, Prettier, tsx and d3 for development. One `tsconfig.json`; `build` runs `tsc --noEmit` then `vite build` with `base: './'` for Pages.
   - `eslint.config.js` blocks React and any `ui` or `ai` path in `src/core` and `src/content` (regex patterns, so relative paths are caught), and blocks `fetch`, XHR, WebSocket and EventSource in `src/core`. A planted probe file proved it. `src/content` may import `src/core`.

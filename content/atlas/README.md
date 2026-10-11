@@ -23,7 +23,7 @@ A flat disc 1,000,000 li across (radius 500,000; 1 li = 0.5 km), centered on the
 | `tags` | free-text tags; `starting kingdom` and `starting city` mark possible birthplaces |
 | `way` | orthodox, demonic, buddhist, ghost, wild, sea, neutral or void (mostly on powers) |
 | `terrain` | on continents, regions, seas and a few forbidden lands: plains, hills, mountains, forest, jungle, marsh, desert, steppe, ice, tundra, volcanic, plateau, twilight, islands, coast, canyon, karst, sea |
-| `top` | the strongest being awake and present, counting everything inside the entry, as free text "Realm (note)"; sleepers and seals go in the note; a parent is never below its strongest awake child; empty means no cultivator of note, and unknown is a deliberate mystery; P0.2 parses it into a strict realm plus a note |
+| `top` | the strongest being awake and present, counting everything inside the entry, as free text "Realm (note)"; sleepers and seals go in the note; a parent is never below its strongest awake child; empty means no cultivator of note, and unknown is a deliberate mystery; `npm run atlas:build` parses it into a strict realm plus a note |
 | `map` | `x`, `y`; `r` radius in li; continents also have `rx`, `ry`, `rot`, `seed` and `rough`; powers have `sphere`, the radius of their influence in li; lines have `path` (a list of [x, y]), `style` (river, ridge, span, array, wall, road) and `width`; `inner` on the Rim is the inner radius of its ring |
 | `years` | `{ from, to }` in years, negative meaning years ago (eras and events); `from` is null for the Unrecorded |
 | `order`, `editedBy`, `editedAt` | bookkeeping |
@@ -38,4 +38,4 @@ Shapes aren't stored. The atlas draws them on the fly from the fields, and `tool
 - Kingdoms and forbidden lands: small blobs seeded from a hash of the id. The Scar is the exception: the page draws it as a circle from `map.r`, and the tool skips it.
 - Straits (`sea` entries) carry a radius too, but neither the page nor the tool draws them yet.
 
-P0.2 saves these as fixed outlines, so the game never has to recompute them.
+`npm run atlas:build` saves these as fixed outlines in `src/content/generated/atlas.json`, rounded to 10 li, so the game never has to recompute them. It clips land region cells to the coast, and stores The Scar as a circle and the Rim as a ring.
