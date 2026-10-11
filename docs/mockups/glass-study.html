@@ -1,0 +1,458 @@
+<!doctype html>
+<!-- The reference mockup for the cracked-glass look (design.md § UI and screens). Open it in a browser; it loads fonts and d3 from CDNs. Defaults: gold accent, qi-cyan crack light, fine web 1. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Severed Heaven Glass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500&family=Ma+Shan+Zheng&display=swap">
+<style>
+/* Layout: one study page; a full game-shell mock over a cracked-glass canvas, then a fogged map. Single dark look on purpose. */
+:root {
+  --void: #040507;
+  --page: #020203;
+  --glass: rgba(10, 12, 16, 0.8);
+  --glass-strong: rgba(8, 10, 13, 0.9);
+  --edge: rgba(255, 255, 255, 0.075);
+  --sheen: rgba(255, 255, 255, 0.05);
+  --text: #e9e5da;
+  --muted: #8d949d;
+  --accent: #d6ab4c;
+  --accent-soft: rgba(214, 171, 76, 0.12);
+  --crack: #7fc7d9;
+  --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', serif;
+  --font-ui: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--page); color: var(--text); font: 14px/1.55 var(--font-ui); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 48px; display: grid; gap: 22px; }
+.hanzi { font-family: var(--font-brush); font-weight: 400; }
+.muted { color: var(--muted); }
+.eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 5vw, 44px); line-height: 1.1; margin: 4px 0 6px; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 24px; margin: 0; text-wrap: balance; }
+.intro p { margin: 0; max-width: 62ch; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: end; padding: 14px 16px; border: 1px solid var(--edge); border-radius: 10px; background: #08090c; }
+.control { display: grid; gap: 6px; }
+.control > span { font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
+.seg { display: inline-flex; border: 1px solid var(--edge); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 6px 11px; font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.seg button + button { border-left: 1px solid var(--edge); }
+.seg button[aria-pressed="true"] { background: rgba(255, 255, 255, 0.06); color: var(--text); }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+input[type="range"] { accent-color: var(--accent); width: 150px; }
+.btn { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 7px; padding: 7px 14px; font: inherit; cursor: pointer; }
+.btn:hover { filter: brightness(1.15); }
+.btn.quiet { border-color: var(--edge); background: transparent; color: var(--muted); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.stage { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--edge); background: var(--void); }
+.stage > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.shell { position: relative; display: grid; grid-template-columns: 196px minmax(0, 1fr) 236px; min-height: 540px; }
+.glass { background: var(--glass); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); box-shadow: inset 0 1px 0 var(--sheen); }
+.menu { border-right: 1px solid var(--edge); padding: 20px 12px; display: grid; align-content: start; gap: 18px; }
+.brand { display: flex; align-items: baseline; gap: 8px; padding: 0 8px; }
+.brand b { font-family: var(--font-display); font-weight: 600; font-size: 21px; }
+.brand .hanzi { color: var(--accent); font-size: 18px; }
+.menu ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.menu li { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 6px; color: var(--muted); border: 1px solid transparent; }
+.menu li .hanzi { font-size: 15px; opacity: 0.7; }
+.menu li.on { color: var(--text); border-color: var(--edge); background: rgba(255, 255, 255, 0.03); box-shadow: inset 2px 0 0 var(--accent); border-radius: 0 6px 6px 0; }
+.menu li.on .hanzi { color: var(--accent); opacity: 1; }
+.main { padding: 24px 26px; display: grid; align-content: start; gap: 14px; min-width: 0; }
+.screen-title { font-family: var(--font-display); font-weight: 600; font-size: 32px; margin: 0 0 4px; }
+.screen-title .hanzi { color: var(--accent); font-size: 23px; margin-left: 6px; }
+.card { border: 1px solid var(--edge); border-radius: 9px; padding: 16px 18px; }
+.card.away { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.card h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; margin: 0 0 6px; }
+.card p { margin: 0; }
+.realm { font-family: var(--font-display); font-size: 25px; font-weight: 600; margin: 0; }
+.realm small { font-family: var(--font-ui); font-size: 13px; color: var(--muted); font-weight: 400; margin-left: 8px; }
+.bars { display: grid; gap: 11px; margin-top: 12px; }
+.bar-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) 118px; gap: 12px; align-items: center; font-variant-numeric: tabular-nums; }
+.bar-row .lab { color: var(--muted); }
+.bar-row .val { text-align: right; font-size: 13px; }
+.bar { height: 8px; border-radius: 4px; background: rgba(0, 0, 0, 0.55); border: 1px solid var(--edge); overflow: hidden; }
+.fill { height: 100%; background: var(--crack); box-shadow: 0 0 10px var(--crack); border-radius: 4px; transition: width 600ms ease; }
+.fill.age { background: var(--accent); box-shadow: none; opacity: 0.85; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 12px; font-variant-numeric: tabular-nums; }
+.stats span b { font-weight: 500; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.context { border-left: 1px solid var(--edge); padding: 20px 18px; display: grid; align-content: start; gap: 12px; }
+.context h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; margin: 0; }
+.chron { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.chron li { font-size: 13px; }
+.chron li span { display: block; font-size: 11.5px; color: var(--muted); letter-spacing: 0.02em; }
+.chron li.new { color: var(--text); }
+.chron li.new span { color: var(--accent); }
+.caption { font-size: 12.5px; color: var(--muted); margin: 0; }
+
+.map-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12.5px; color: var(--muted); }
+.legend i { display: inline-block; width: 22px; height: 10px; vertical-align: -1px; margin-right: 6px; border-radius: 2px; }
+.lg-seen { background: #151a20; border: 1px solid rgba(233, 229, 218, 0.45); }
+.lg-sketch { border: 1px dashed rgba(233, 229, 218, 0.45); }
+.lg-rumor { width: 10px !important; height: 10px !important; transform: rotate(45deg); border: 1.5px solid var(--accent); }
+.lg-fog { background: #030405; border: 1px solid var(--edge); box-shadow: inset 0 0 0 1px rgba(127, 199, 217, 0.15); }
+.map-stage { aspect-ratio: 16 / 9; max-width: 100%; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .menu { border-right: 0; border-bottom: 1px solid var(--edge); padding: 12px; }
+  .menu ul { display: flex; flex-wrap: wrap; gap: 4px; }
+  .menu li { padding: 6px 10px; }
+  .menu li .hanzi { display: none; }
+  .menu li.on { border-radius: 6px; box-shadow: inset 0 -2px 0 var(--accent); }
+  .context { border-left: 0; border-top: 1px solid var(--edge); }
+  .main { padding: 18px 16px; }
+  .bar-row { grid-template-columns: 44px minmax(0, 1fr) 96px; }
+  .map-stage { aspect-ratio: 4 / 3; }
+}
+@media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <p class="eyebrow">Severed Heaven · look study</p>
+    <h1>Black cracked glass</h1>
+    <p class="muted">A throwaway mockup, outside the project. A few long fractures cross the dark glass, fine webs sit only where impacts hit away from the text, and qi light leaks through the cracks. Switch the accent and the crack light, then try a breakthrough.</p>
+  </header>
+
+  <section class="controls" aria-label="Look controls">
+    <div class="control">
+      <span id="acc-label">Accent</span>
+      <div class="seg" role="group" aria-labelledby="acc-label" id="accent-seg"></div>
+    </div>
+    <div class="control">
+      <span id="crack-label">Crack light</span>
+      <div class="seg" role="group" aria-labelledby="crack-label" id="crack-seg"></div>
+    </div>
+    <label class="control" for="web">
+      <span>Fine web <output id="web-out">1</output></span>
+      <input id="web" type="range" min="0" max="3" step="1" value="1">
+    </label>
+    <div class="control">
+      <span>Try it</span>
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <button class="btn" id="bt" type="button">Break through</button>
+        <button class="btn quiet" id="reseed" type="button">New glass</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="stage" id="shell-stage">
+    <canvas id="shell-canvas" aria-hidden="true"></canvas>
+    <div class="shell">
+      <nav class="menu glass" aria-label="Screens (mock)">
+        <div class="brand"><b>Severed Heaven</b><span class="hanzi">断天</span></div>
+        <ul>
+          <li class="on">Abode <span class="hanzi">洞府</span></li>
+          <li>Cultivate <span class="hanzi">修炼</span></li>
+          <li>Trees <span class="hanzi">道树</span></li>
+          <li>Techniques <span class="hanzi">功法</span></li>
+          <li>Character <span class="hanzi">命格</span></li>
+          <li>Chronicle <span class="hanzi">史录</span></li>
+          <li>Settings <span class="hanzi">设置</span></li>
+        </ul>
+      </nav>
+
+      <main class="main">
+        <h2 class="screen-title">Abode <span class="hanzi">洞府</span></h2>
+        <div class="card glass away">
+          <h3>While you were in seclusion</h3>
+          <p>8 h 12 min away: 8.2 years passed. Qi +4,180, two minor breakthroughs on safe odds.</p>
+        </div>
+        <div class="card glass">
+          <p class="realm" id="realm">Qi Condensation, layer 3 <small>Lin Mo · he/him</small></p>
+          <div class="bars">
+            <div class="bar-row"><span class="lab">Qi</span><div class="bar"><div class="fill" id="qi-fill" style="width:78%"></div></div><span class="val" id="qi-val">1,248 / 1,600</span></div>
+            <div class="bar-row"><span class="lab">Body</span><div class="bar"><div class="fill" style="width:34%"></div></div><span class="val">layer 2 · 34%</span></div>
+            <div class="bar-row"><span class="lab">Soul</span><div class="bar"><div class="fill" style="width:19%"></div></div><span class="val">layer 1 · 19%</span></div>
+            <div class="bar-row"><span class="lab">Age</span><div class="bar"><div class="fill age" style="width:16.9%"></div></div><span class="val">20 y 4 m of 120</span></div>
+          </div>
+          <div class="stats"><span class="muted">Insight <b style="color:var(--text)">14</b></span><span class="muted">Spirit stones <b style="color:var(--text)">42</b></span><span class="muted">Today <b style="color:var(--text)">60% qi · 15% body · 10% soul</b></span></div>
+          <div class="actions"><button class="btn" type="button" id="bt2">Break through · 71%</button><span class="caption">Filling past full raises the odds.</span></div>
+        </div>
+      </main>
+
+      <aside class="context glass" aria-label="Chronicle (mock)">
+        <h3>Chronicle</h3>
+        <ol class="chron" id="chron">
+          <li><span>age 15 years</span>Layer 3 holds on the second attempt.</li>
+          <li><span>age 13 years, 2 months</span>The Beast-Butcher Gate turns you away at the door.</li>
+          <li><span>age 12 years</span>The testing stone lights up: a true wood root.</li>
+        </ol>
+      </aside>
+    </div>
+  </div>
+  <p class="caption">Text sits on smooth, darker glass; the cracks live in the gaps and behind the panels. The qi bars use the crack light, so qi reads as the same light that leaks through the glass.</p>
+
+  <section style="display:grid; gap:12px">
+    <div class="map-head">
+      <div>
+        <p class="eyebrow">In-game map, not the atlas</p>
+        <h2>Fog of war over the Border Wilds</h2>
+      </div>
+      <label class="control" for="sense">
+        <span>Divine sense <output id="sense-out">40</output> li</span>
+        <input id="sense" type="range" min="10" max="90" step="5" value="40">
+      </label>
+    </div>
+    <div class="stage map-stage" id="map-stage"><canvas id="map-canvas" role="img" aria-label="Mock fogged map of the Border Wilds: the Kingdom of Stone Eyes seen, the March of Pacified Borders sketched from a bought map, two places known only by rumor, the rest under cracked fog."></canvas></div>
+    <div class="legend">
+      <span><i class="lg-seen"></i>Seen: travelled or in divine sense</span>
+      <span><i class="lg-sketch"></i>Sketched: outline from a bought or looted map</span>
+      <span><i class="lg-rumor"></i>Rumored: a mark, no outline</span>
+      <span><i class="lg-fog"></i>Unknown: cracked fog</span>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+(() => {
+  const ACCENTS = [
+    { id: 'gold', name: 'Gold', hex: '#d6ab4c' },
+    { id: 'cyan', name: 'Pale cyan', hex: '#9fdfea' },
+    { id: 'violet', name: 'Violet', hex: '#b39dff' },
+  ];
+  const CRACKS = [
+    { id: 'qi', name: 'Qi cyan', hex: '#7fc7d9' },
+    { id: 'violet', name: 'Violet', hex: '#9d7dff' },
+    { id: 'gold', name: 'Gold', hex: '#e0b860' },
+    { id: 'white', name: 'Pale white', hex: '#d3dbe6' },
+  ];
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const state = { accent: ACCENTS[0], crack: CRACKS[0], web: 1, seed: 7, extra: 0, glow: 1, sense: 40 };
+
+  function mulberry32(a) {
+    return () => {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
+  function mixWhite(hex, t) { const n = parseInt(hex.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * t)); return '#' + c.map((v) => v.toString(16).padStart(2, '0')).join(''); }
+
+  function walk(rng, x, y, angle, len, step, wobble) {
+    const pts = [[x, y]]; let a = angle, l = 0;
+    while (l < len) { a += (rng() - 0.5) * wobble; const s = step * (0.6 + rng() * 0.8); x += Math.cos(a) * s; y += Math.sin(a) * s; pts.push([x, y]); l += s; }
+    return pts;
+  }
+  function pointAt(pts, d) {
+    let acc = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; const seg = Math.hypot(x1 - x0, y1 - y0);
+      if (acc + seg >= d) { const t = (d - acc) / seg; return [x0 + (x1 - x0) * t, y0 + (y1 - y0) * t]; }
+      acc += seg;
+    }
+    return null;
+  }
+
+  // Few long fractures from two impact points and one edge; fine webs only around the impacts.
+  function buildCracks(w, h, seed, web, extra, impacts) {
+    const rng = mulberry32(seed); const diag = Math.hypot(w, h); const paths = [];
+    const add = (pts, k) => paths.push({ pts, k });
+    impacts.forEach((imp, idx) => {
+      const [cx, cy] = [imp[0] * w, imp[1] * h];
+      const longs = idx === 0 ? 2 : 1;
+      for (let i = 0; i < longs; i++) {
+        const toward = Math.atan2(h * 0.5 - cy, w * 0.5 - cx) + (rng() - 0.5) * 1.6;
+        const f = walk(rng, cx, cy, toward, diag * (0.45 + rng() * 0.45), 22, 0.32); add(f, 1);
+        for (let b = 0; b < 2; b++) { const p = f[Math.floor(f.length * (0.25 + rng() * 0.6))]; if (p) add(walk(rng, p[0], p[1], toward + (rng() < 0.5 ? -1 : 1) * (0.5 + rng() * 0.6), 40 + rng() * 140, 12, 0.5), 0.55); }
+      }
+      if (web > 0) {
+        const n = 7 + web * 3 - idx * 2; const R = Math.min(w, h) * (0.12 + web * 0.035) * (idx === 0 ? 1 : 0.7); const spokes = [];
+        for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + (rng() - 0.5) * 0.4; const s = walk(rng, cx, cy, a, R * (0.45 + rng() * 0.6), 7, 0.45); spokes.push(s); add(s, 0.42); }
+        const rings = web + (idx === 0 ? 1 : 0);
+        for (let r = 1; r <= rings; r++) {
+          const d = (R * 0.85 * r) / (rings + 0.6);
+          for (let i = 0; i < n; i++) {
+            if (rng() < 0.28) continue;
+            const p = pointAt(spokes[i], d * (0.85 + rng() * 0.3)), q = pointAt(spokes[(i + 1) % n], d * (0.85 + rng() * 0.3));
+            if (p && q) { const mx = (p[0] + q[0]) / 2 + (cx - (p[0] + q[0]) / 2) * 0.08, my = (p[1] + q[1]) / 2 + (cy - (p[1] + q[1]) / 2) * 0.08; add([p, [mx, my], q], 0.32); }
+          }
+        }
+      }
+    });
+    const edgeRng = mulberry32(seed + 101);
+    add(walk(edgeRng, -10, h * (0.55 + edgeRng() * 0.3), -0.35 + edgeRng() * 0.2, diag * 0.9, 26, 0.22), 0.85);
+    for (let e = 0; e < extra; e++) {
+      const r = mulberry32(seed * 31 + e * 977); const sx = w * (0.15 + r() * 0.7), sy = h * (0.15 + r() * 0.7);
+      add(walk(r, sx, sy, r() * Math.PI * 2, diag * (0.3 + r() * 0.3), 18, 0.35), 0.9, true);
+      paths[paths.length - 1].fresh = true;
+    }
+    return paths;
+  }
+
+  function stroke(ctx, pts, width, style, dx = 0, dy = 0) {
+    ctx.beginPath(); ctx.moveTo(pts[0][0] + dx, pts[0][1] + dy);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0] + dx, pts[i][1] + dy);
+    ctx.lineWidth = width; ctx.strokeStyle = style; ctx.stroke();
+  }
+  function drawCracks(ctx, paths, color, glow) {
+    const core = mixWhite(color, 0.55);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const { pts, k, fresh } of paths) {
+      const g = glow * (fresh ? 1.4 : 1);
+      ctx.globalCompositeOperation = 'source-over';
+      stroke(ctx, pts, 1.1 * k + 0.4, 'rgba(0,0,0,0.55)', 1.2, 1.2);
+      ctx.globalCompositeOperation = 'lighter';
+      stroke(ctx, pts, 9 * k, rgba(color, Math.min(0.5, 0.035 * g)));
+      stroke(ctx, pts, 3 * k, rgba(color, Math.min(0.8, 0.11 * g)));
+      stroke(ctx, pts, Math.max(0.6, 0.95 * k), rgba(core, Math.min(1, 0.5 * g)));
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  function fitCanvas(canvas) {
+    const r = canvas.getBoundingClientRect(); const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.max(1, Math.round(r.width * dpr)); canvas.height = Math.max(1, Math.round(r.height * dpr));
+    const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); return { ctx, w: r.width, h: r.height };
+  }
+
+  // The shell's background glass.
+  const shellCanvas = document.getElementById('shell-canvas');
+  function drawShell() {
+    const { ctx, w, h } = fitCanvas(shellCanvas);
+    ctx.fillStyle = '#040507'; ctx.fillRect(0, 0, w, h);
+    const sheen = ctx.createLinearGradient(0, 0, w, h); sheen.addColorStop(0, 'rgba(255,255,255,0.025)'); sheen.addColorStop(0.5, 'rgba(255,255,255,0)'); sheen.addColorStop(1, 'rgba(255,255,255,0.015)');
+    ctx.fillStyle = sheen; ctx.fillRect(0, 0, w, h);
+    const narrow = w < 860;
+    const impacts = narrow ? [[0.9, 0.04], [0.06, 0.97]] : [[0.97, 0.06], [0.11, 0.95]];
+    drawCracks(ctx, buildCracks(w, h, state.seed, state.web, state.extra, impacts), state.crack.hex, state.glow);
+  }
+
+  // The fogged map.
+  const mapCanvas = document.getElementById('map-canvas');
+  const SITES = [
+    [0.44, 0.58, 'stone'], [0.2, 0.3, 'herders'], [0.68, 0.33, 'march'], [0.8, 0.72, 'forest'], [0.58, 0.8, 'blood'],
+    [0.3, 0.75, null], [0.12, 0.6, null], [0.36, 0.2, null], [0.55, 0.12, null], [0.88, 0.15, null], [0.93, 0.46, null],
+    [0.07, 0.12, null], [0.17, 0.9, null], [0.4, 0.94, null], [0.72, 0.55, null], [0.52, 0.42, null],
+  ];
+  const NAMES = { stone: ['Kingdom of Stone Eyes', '石眼国'], march: ['March of Pacified Borders', '安边府'] };
+  function wobblePoly(poly, w, h) {
+    const out = [];
+    for (let i = 0; i < poly.length - 1; i++) {
+      const a = poly[i], b = poly[i + 1]; const onEdge = (p) => p[0] <= 0.5 || p[1] <= 0.5 || p[0] >= w - 0.5 || p[1] >= h - 0.5;
+      out.push(a);
+      if (onEdge(a) && onEdge(b)) continue;
+      const ka = `${Math.round(a[0])},${Math.round(a[1])}`, kb = `${Math.round(b[0])},${Math.round(b[1])}`; const flip = ka > kb;
+      const [p, q] = flip ? [b, a] : [a, b]; const r = mulberry32(hash(flip ? kb + '|' + ka : ka + '|' + kb));
+      const len = Math.hypot(q[0] - p[0], q[1] - p[1]); const nx = -(q[1] - p[1]) / len, ny = (q[0] - p[0]) / len; const mid = [];
+      for (let s = 1; s < 6; s++) { const t = s / 6; const off = (r() - 0.5) * len * 0.16 * Math.sin(Math.PI * t); mid.push([p[0] + (q[0] - p[0]) * t + nx * off, p[1] + (q[1] - p[1]) * t + ny * off]); }
+      if (flip) mid.reverse(); out.push(...mid);
+    }
+    return out;
+  }
+  function pathPoly(ctx, poly) { ctx.beginPath(); ctx.moveTo(poly[0][0], poly[0][1]); for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i][0], poly[i][1]); ctx.closePath(); }
+  function label(ctx, x, y, name, hz, size, color) {
+    ctx.textAlign = 'center'; ctx.fillStyle = color; ctx.font = `600 ${size}px 'Cormorant Garamond', Georgia, serif`; ctx.fillText(name, x, y);
+    if (hz) { ctx.font = `${Math.round(size * 0.78)}px 'Ma Shan Zheng', KaiTi, serif`; ctx.fillStyle = rgba(state.accent.hex, 0.9); ctx.fillText(hz, x, y + size * 0.95); }
+  }
+  function diamond(ctx, x, y, s, color) { ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 4); ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.strokeRect(-s / 2, -s / 2, s, s); ctx.restore(); }
+
+  function drawMap() {
+    if (!window.d3) return;
+    const { ctx, w, h } = fitCanvas(mapCanvas);
+    const pts = SITES.map(([x, y]) => [x * w, y * h]);
+    const vor = d3.Delaunay.from(pts).voronoi([0, 0, w, h]);
+    const polys = SITES.map((_, i) => wobblePoly(vor.cellPolygon(i), w, h));
+    const you = [0.43 * w, 0.62 * h];
+    const senseR = (state.sense / 100) * Math.min(w, h) * 0.9;
+    const textCol = '#e9e5da';
+
+    // Land, every border, every label: the fog decides what you see of it.
+    ctx.fillStyle = '#0d1014'; ctx.fillRect(0, 0, w, h);
+    polys.forEach((p, i) => { pathPoly(ctx, p); ctx.fillStyle = i % 2 ? '#10141a' : '#0e1217'; ctx.fill(); ctx.strokeStyle = 'rgba(233,229,218,0.28)'; ctx.lineWidth = 1; ctx.stroke(); });
+    pathPoly(ctx, polys[0]); ctx.strokeStyle = rgba(state.accent.hex, 0.75); ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0.18 * w, 0.92 * h); ctx.bezierCurveTo(0.35 * w, 0.7 * h, 0.46 * w, 0.5 * h, 0.6 * w, 0.02 * h); ctx.strokeStyle = rgba(state.crack.hex, 0.55); ctx.lineWidth = 2; ctx.stroke();
+    const c0 = d3.polygonCentroid(polys[0]); label(ctx, c0[0] + 6, c0[1] - 36, ...NAMES.stone, 17, textCol);
+    ctx.fillStyle = state.accent.hex; ctx.beginPath(); ctx.arc(0.5 * w, 0.5 * h, 4, 0, 7); ctx.fill();
+    ctx.font = "12px Inter, system-ui, sans-serif"; ctx.textAlign = 'left'; ctx.fillStyle = textCol; ctx.fillText('City of the Guarded Mouth', 0.5 * w + 8, 0.5 * h + 4);
+    ctx.fillStyle = 'rgba(233,229,218,0.85)'; ctx.fillRect(0.34 * w - 3, 0.66 * h - 3, 6, 6); ctx.fillStyle = 'rgba(233,229,218,0.75)'; ctx.fillText('Beast-Butcher Gate', 0.34 * w - 112, 0.66 * h + 4);
+
+    // Fog: dark cracked glass with holes where you've seen.
+    const fog = document.createElement('canvas'); fog.width = mapCanvas.width; fog.height = mapCanvas.height;
+    const f = fog.getContext('2d'); const dpr = mapCanvas.width / w; f.setTransform(dpr, 0, 0, dpr, 0, 0);
+    f.fillStyle = 'rgba(3,4,6,0.95)'; f.fillRect(0, 0, w, h);
+    drawCracks(f, buildCracks(w, h, state.seed + 5, Math.max(1, state.web), 0, [[0.86, 0.9], [0.08, 0.08]]), state.crack.hex, state.glow * 0.8);
+    f.globalCompositeOperation = 'destination-out';
+    f.filter = 'blur(10px)';
+    pathPoly(f, polys[0]); f.fillStyle = '#000'; f.fill();
+    f.filter = 'none';
+    const grad = f.createRadialGradient(you[0], you[1], senseR * 0.55, you[0], you[1], senseR);
+    grad.addColorStop(0, 'rgba(0,0,0,1)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+    f.fillStyle = grad; f.beginPath(); f.arc(you[0], you[1], senseR, 0, 7); f.fill();
+    f.globalCompositeOperation = 'source-over';
+    ctx.drawImage(fog, 0, 0, w, h);
+
+    // Over the fog: sketched outlines and rumor marks.
+    ctx.save(); ctx.setLineDash([5, 5]); pathPoly(ctx, polys[2]); ctx.strokeStyle = 'rgba(233,229,218,0.42)'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.setLineDash([2, 4]); ctx.beginPath(); ctx.moveTo(0.58 * w, 0.2 * h); ctx.lineTo(0.66 * w, 0.17 * h); ctx.lineTo(0.75 * w, 0.21 * h); ctx.lineTo(0.84 * w, 0.18 * h); ctx.strokeStyle = 'rgba(233,229,218,0.55)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+    const c2 = d3.polygonCentroid(polys[2]); label(ctx, c2[0], c2[1], ...NAMES.march, 16, 'rgba(233,229,218,0.6)');
+    ctx.font = "italic 12px Inter, system-ui, sans-serif"; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(233,229,218,0.5)'; ctx.fillText('The Wall of Piled Bones', 0.71 * w, 0.15 * h);
+    [[0.2 * w, 0.3 * h, 'Kingdom of Spirit Herders'], [0.8 * w, 0.7 * h, 'Soul-Lost Stone Forest'], [0.64 * w, 0.48 * h, 'Night Bridge Society']].forEach(([x, y, n]) => {
+      diamond(ctx, x, y, 9, rgba(state.accent.hex, 0.9));
+      ctx.font = "italic 12px Inter, system-ui, sans-serif"; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(233,229,218,0.62)'; ctx.fillText(n, x, y + 20);
+      ctx.font = "11px Inter, system-ui, sans-serif"; ctx.fillStyle = rgba(state.accent.hex, 0.7); ctx.fillText('rumor', x, y + 34);
+    });
+
+    // You, and the edge of divine sense.
+    ctx.beginPath(); ctx.arc(you[0], you[1], senseR * 0.98, 0, 7); ctx.setLineDash([1, 6]); ctx.strokeStyle = rgba(state.crack.hex, 0.45); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(you[0], you[1], 6, 0, 7); ctx.fillStyle = state.accent.hex; ctx.fill();
+    ctx.beginPath(); ctx.arc(you[0], you[1], 11, 0, 7); ctx.strokeStyle = rgba(state.accent.hex, 0.6); ctx.lineWidth = 1.2; ctx.stroke();
+  }
+
+  function applyTokens() {
+    const root = document.documentElement.style;
+    root.setProperty('--accent', state.accent.hex); root.setProperty('--accent-soft', rgba(state.accent.hex, 0.12)); root.setProperty('--crack', state.crack.hex);
+  }
+  function redraw() { drawShell(); drawMap(); }
+
+  function seg(el, list, key) {
+    list.forEach((o) => {
+      const b = document.createElement('button'); b.type = 'button'; b.innerHTML = `<span class="dot" style="background:${o.hex}"></span>${o.name}`;
+      b.setAttribute('aria-pressed', String(state[key] === o));
+      b.addEventListener('click', () => { state[key] = o; [...el.children].forEach((c, i) => c.setAttribute('aria-pressed', String(list[i] === o))); applyTokens(); redraw(); });
+      el.appendChild(b);
+    });
+  }
+  seg(document.getElementById('accent-seg'), ACCENTS, 'accent');
+  seg(document.getElementById('crack-seg'), CRACKS, 'crack');
+  const web = document.getElementById('web'), webOut = document.getElementById('web-out');
+  web.addEventListener('input', () => { state.web = Number(web.value); webOut.textContent = web.value; redraw(); });
+  const sense = document.getElementById('sense'), senseOut = document.getElementById('sense-out');
+  sense.addEventListener('input', () => { state.sense = Number(sense.value); senseOut.textContent = sense.value; drawMap(); });
+  document.getElementById('reseed').addEventListener('click', () => { state.seed = Math.floor(Math.random() * 1e6); state.extra = 0; redraw(); });
+
+  // A breakthrough: the cracks flare, a new fracture opens, the realm line moves up.
+  let layer = 3, busy = false;
+  function breakThrough() {
+    if (busy) return; busy = true; state.extra += 1; layer = Math.min(9, layer + 1);
+    document.getElementById('realm').firstChild.textContent = `Qi Condensation, layer ${layer} `;
+    document.getElementById('qi-fill').style.width = '4%'; document.getElementById('qi-val').textContent = `64 / ${(1600 * 1.6 ** (layer - 3)).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+    const li = document.createElement('li'); li.className = 'new'; li.innerHTML = `<span>age 20 years, 4 months</span>Layer ${layer}. A new crack runs through the sky above the abode.`;
+    const chron = document.getElementById('chron'); chron.querySelectorAll('.new').forEach((n) => n.classList.remove('new')); chron.prepend(li);
+    if (reduced) { busy = false; redraw(); return; }
+    const t0 = performance.now(), dur = 1600;
+    const frame = (t) => {
+      const p = Math.min(1, (t - t0) / dur); state.glow = 1 + 3.2 * Math.sin(Math.PI * p) * (1 - p * 0.35); drawShell();
+      if (p < 1) requestAnimationFrame(frame); else { state.glow = 1; redraw(); busy = false; }
+    };
+    requestAnimationFrame(frame);
+  }
+  document.getElementById('bt').addEventListener('click', breakThrough);
+  document.getElementById('bt2').addEventListener('click', breakThrough);
+
+  applyTokens();
+  let raf = 0; const ro = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(redraw); });
+  ro.observe(document.getElementById('shell-stage')); ro.observe(document.getElementById('map-stage'));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+})();
+</script>

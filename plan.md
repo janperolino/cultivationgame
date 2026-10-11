@@ -111,9 +111,10 @@ This is the "Atlas export" item from the design checklist.
 
 ### P1.2 Cultivation rules (about 3–4 hours)
 
-**Read:** design.md § Cultivation (the realms table, seclusion budget, breakthroughs, body and soul, insight, cultivation methods, breakthrough grades); § Character creation (the spirit roots table and pacing targets); § Economy (stones as fuel); § Combat (the six attributes line, for Aptitude).
+**Read:** design.md § Cultivation (the realms table, seclusion budget, breakthroughs, body and soul, insight, cultivation methods, breakthrough grades); § Character creation (the spirit roots table and pacing targets); § Economy (stones as fuel); § Combat (the six attributes line, for Aptitude); § UI and screens (Look). Open `docs/mockups/glass-study.html` in a browser.
 
 **Build:**
+- The cracked-glass look first, matching the mockup: the new colors as tokens in `src/ui/theme.css`, smooth glass panels, and the cracked background drawn on a canvas from a seed kept in the life's state, redrawn on resize. Every color is a variable, since P1.5 lets players change them. The flare and the new fracture at a breakthrough come with this phase's breakthroughs.
 - `src/content/realms.ts`: realms, stages, lifespans, gates and the realm curve as data.
 - `src/content/methods.ts`: the common methods the origins hand out (the garrison's standard method, the cave clans' crude method, the cadet's spear method, the Gate's saber method, and the two the refusals lead to). Fit is data: full, partial or poor, starting at ×1.0, ×0.8 and ×0.6. Common methods fit every root fully except mutated roots, which fit them poorly.
 - Qi gain from root speed × method fit × qi density × Aptitude. Qi density is 1 until abodes arrive, and layers 1–3 ignore root speed. Spirit stones burn during qi seclusion as § Economy describes.
@@ -124,7 +125,7 @@ This is the "Atlas export" item from the design checklist.
 - The Cultivate screen and the Abode bars: qi, body, soul, and age against lifespan. The spirit pool stays hidden until M4.
 - `sim/pacing.ts`: real hours to each layer and realm, per root, playing the default plan and the default breakthrough setting; it also prints a qi-only run for comparison. Tune the constants until every root reaches layer 3 in about 45 minutes, a true root reaches layer 9 in 15–20 hours and a heavenly root in about half that.
 
-**Done when:** the formulas have unit tests and the pacing sim lands inside the targets, with its output pasted into the Log.
+**Done when:** the shell wears the glass look at desktop and phone widths, the formulas have unit tests, and the pacing sim lands inside the targets, with its output pasted into the Log.
 
 ### P1.3 Trees, techniques and mastery (about 3–4 hours)
 
@@ -157,29 +158,29 @@ This is the "Atlas export" item from the design checklist.
 
 **Before the session:** create an empty GitHub repository, add it as this folder's `origin`, and set GitHub Pages to deploy from GitHub Actions.
 
-**Read:** design.md § Economy (what the balance sims measure); § UI and screens ("Coming back" and the Settings row); the Log.
+**Read:** design.md § Economy (what the balance sims measure); § How the two halves connect (running the clock slower); § UI and screens ("Coming back", players pick their colors, and the Settings row); the Log.
 
-**Build:** the coming-back card, chronicle polish, short number formats and tooltips, the Settings screen's text size and reduced motion, a balance pass with the pacing sim, a GitHub Actions workflow that deploys to Pages, and a short README for friends. Use "Severed Heaven" as the working title until the game has a name.
+**Build:** the coming-back card, chronicle polish, short number formats and tooltips, the Settings screen's text size and reduced motion, the clock-speed picker (any realm speed the life has reached, saved with the slot), the color and glass options (accent, crack light, fine web, a new-glass reroll, presets and a picker that warns on poor contrast), a balance pass with the pacing sim, a GitHub Actions workflow that deploys to Pages, and a short README for friends. Use "Severed Heaven" as the working title until the game has a name.
 
 **Done when:** the Pages link loads in a fresh browser profile, a new life reaches layer 3 there with the sped-up clock, and the pacing sim sits inside its targets. The other balance measures wait for M2 and M3.
 
 ## D2: Design session, before M2
 
-Settle items and gear (slots, grades, bonding, pill toxicity, storage rings, and the gate items for major body and soul breakthroughs) and enemies (beast and cultivator templates, behavior profiles, loot). Draft tiers 1 and 2 of the combat Daos: the five elements, Sword, Saber, Spear and Fist. Do the Border Wilds canon pass.
+Settle items and gear (slots, grades, bonding, pill toxicity, storage rings, and the gate items for major body and soul breakthroughs) and enemies (beast and cultivator templates, behavior profiles, loot). Draft tiers 1 and 2 of the combat Daos: the five elements, Sword, Saber, Spear and Fist. Fix the tags every combat outcome carries for effects and sound: form, element or damage type, realm and result. Do the Border Wilds canon pass.
 
 ## M2: Combat engine (weeks 6–7)
 
 - **P2.1 Combat rules core:** attributes, d20 checks, criticals, grazes and backfires, realm and stage gaps on the one ladder the design describes, the damage formula with damage rounded to the nearest whole number, eleven damage types and their statuses, the element cycle and combos, qi costs. Done when every rule has a test and the design's worked example reproduces exactly.
 - **P2.2 Enemies and the fight sim:** templates and behavior profiles from D2; `sim/fights.ts` runs 10,000 fights per matchup; tune until fighting a realm up takes stacked advantages.
-- **P2.3 Combat screen, items and the bag:** button-only fights, the bag and gear from D2, and the combat Daos wired in.
+- **P2.3 Combat screen, items and the bag:** button-only fights, the bag and gear from D2, the combat Daos wired in, and the combat effects layered from the outcome tags (design § Combat, "Effects fill the wait"), with a reduced-motion version.
 
 ## D3: Design session, before M3
 
-Settle exploration (travel time, encounters per region, how a scene is built, ruins, fleeing, dying in the world) and NPC basics (the record, what each NPC knows, how talk changes relationships). Draft tiers 1 and 2 of the Orthodox, Demonic and Buddhist Ways, plus the Border Wilds scenes and encounter tables.
+Settle exploration (travel time, encounters per region, how a scene is built, ruins, fleeing, dying in the world, and the fog's rules: what travel, divine sense, maps and rumors each reveal) and NPC basics (the record, what each NPC knows, how talk changes relationships). Draft tiers 1 and 2 of the Orthodox, Demonic and Buddhist Ways, plus the Border Wilds scenes and encounter tables.
 
 ## M3: Go-in slice, the playable milestone (weeks 8–10)
 
-- **P3.1 The Border Wilds as a playable region:** scenes, tagged features, encounters, and a fogged region map drawn from the generated geometry.
+- **P3.1 The Border Wilds as a playable region:** scenes, tagged features, encounters, and a fogged region map drawn from the generated geometry in the glass look, with the four fog states and the divine sense circle from the mockup.
 - **P3.2 GLM roles:** interpreter, narrator and chronicler; a context builder with the fixed text first so it caches; Zod checks with one retry and a safe fallback; the mock provider in tests; the cost meter.
 - **P3.3 Go-in screen and loot flowing home:** the screen as designed; the first trip out replaces the errand card; Ways grow from deeds.
 - **P3.4 Tone and reliability pass:** rerun the 20 dark scenes in the game, measure the JSON failure rate and compare prose by host, then fix the prompts.
@@ -189,10 +190,10 @@ Settle exploration (travel time, encounters per region, how a scene is built, ru
 Each opens with a design session that settles its topics and expands it into phases here.
 
 - **M4 Crafts (weeks 11–14):** D4 recipes and craft Dao nodes; then alchemy and spirit farming; refining, formations and talismans; experimentation, production queues and Core Formation; the spirit pool.
-- **M5 People and powers (weeks 15–18):** D5 NPC depth and sects; then NPC records and memory; sects, posts and contribution; factions, fame, karma and romance basics; the other three origins; the Scribe's steward reports.
-- **M6 Living world (weeks 19–21):** D6 world simulation; then the events calendar, prosperity, markets and standing orders; map tiers and travel; beast taming, appraisal and geomancy; the Scribe's rumors and headlines.
-- **M7 Big moments (weeks 22–24):** D7 tribulations and heart demons; then Nascent Soul and tribulations; heart demons, with thinking on.
-- **M8 Rebirth and friends (weeks 25–27):** D8 death, rebirth and legacy, plus art and sound; then lifespan's end, rebirth and legacy; friends' access through OpenRouter sign-in, hosting and polish.
+- **M5 People and powers (weeks 15–18):** D5 NPC depth and sects, with a cast list of the atlas's named people; then NPC records and memory; sects, posts and contribution; factions, fame, karma and romance basics; the other three origins; steward's reports as templates, with the Scribe's prose when a key is set.
+- **M6 Living world (weeks 19–21):** D6 world simulation; then the events calendar, prosperity, markets and standing orders; map tiers and travel; beast taming, appraisal and geomancy; rumors and headlines as templates, with the Scribe's prose when a key is set.
+- **M7 Big moments (weeks 22–24):** D7 tribulations and heart demons; then Nascent Soul and tribulations; heart demons as a go-in scene, with thinking on and a templated trial when there is no key.
+- **M8 Rebirth and friends (weeks 25–27):** D8 death, rebirth and legacy, plus art and sound; then lifespan's end, rebirth and legacy; friends' access through OpenRouter sign-in, hosting and polish. Art and sound follow the direction in design § Still to design.
 
 ---
 
@@ -208,11 +209,14 @@ Write questions here when a phase hits something the design doesn't cover, with 
 - **GLM hosts** (Jan's call, 2026-10-11, P0.3). Test and use the cheap hosts Morph and DeepInfra; never StreamLake or Novita, which make GLM 5.2 feel dumb. Morph rarely refuses; the worry is softening, which the spike checked for and didn't find. Settled as: narrator on Morph with DeepInfra as fallback, interpreter on DeepInfra then Morph (design § How GLM fits in).
 - **Narrator tail retry** (assumed 2026-10-11, P0.3). When the narrator's JSON tail fails, P3.2 should ask for the tail alone as structured output at temperature 0.2 (40/40 valid in the spike) rather than rerun the scene. The design's "one retry with the error message" becomes this for the narrator.
 - **Calendar and save details** (assumed 2026-10-11, P1.1). The year is 360 days (twelve months of thirty). Lifespans past Nascent Soul are placeholders (2,000, 3,000, 5,000, 8,000, 12,000) until their realms are designed. The chronicle lives inside the game state rather than its own table, small enough until M3's adventure log. Gentle mode's rewind point starts at the beginning of the life, so the rewind works before the first breakthrough. The `?speed=` multiplier applies to live play only; offline time is real time. A gap of over a minute between ticks (a sleeping laptop) counts as offline time, cap included. Settings can erase a slot, after a confirm.
+- **Look and where the AI runs** (Jan's call, 2026-10-11, planning). Black cracked glass replaces slate, with a gold accent and qi-cyan crack light (`docs/mockups/glass-study.html`), and players can change both colors. Idle play never needs the AI: the Scribe rewrites templated lines when a key is set, and the heart demon is a go-in scene with a templated fallback. Combat effects come from the engine's outcome tags, never from a model. Art is made at design time and shipped as data.
 - **Talk styles** (assumed 2026-10-11, P0.3). The interpreter's talk styles are the design's four: bluff, intimidate, bargain, surrender. A taunt maps to intimidate.
 
 ## Log
 
 Newest first. 3–5 lines per phase.
+
+- 2026-10-11, planning: the look moves from slate to black cracked glass (gold accent, qi-cyan crack light, a reference mockup in `docs/mockups/`), built at the start of P1.2, with player color options and a slower-clock picker in P1.5. Idle play never needs the AI: steward's reports, rumors and headlines are templates the Scribe may rewrite, and the heart demon gets a templated fallback. Combat effects come from outcome tags (tags in D2, effects in P2.3). The fog of war has four states (seen, sketched, rumored, unknown); D3 settles what reveals what. Art is made at design time; D5 adds a cast list for portraits.
 
 - 2026-10-11, P1.1: `src/core/state.ts` holds the life as one Zod-checked object: character (pronouns, ironman or gentle), a calendar of world days, the qi, body and soul ladders (realm, stage, bar), insight current and ever earned, stones in low-grade units, the chronicle, unlock flags, the rewind charge and the RNG state. `realms.ts` gained stages and lifespans.
   - `src/core/loop.ts`: `advance` turns real ms into days at lifespan ÷ 120 years per real hour, one day or less per step, through a `DayStep` hook that P1.2 fills with cultivation (it gets an `offline` flag). Time stops at the lifespan edge, online and off. `catchUp` applies offline time capped at 12 hours.

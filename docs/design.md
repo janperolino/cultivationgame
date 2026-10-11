@@ -34,6 +34,8 @@ The calendar runs on seclusion time: one real hour is one in-game year at Qi Con
 
 Actions in the world spend hours or days of in-game time. Death never comes while you're offline: you wake at the edge of your lifespan with a last chance to break through. Offline time counts for up to 12 real hours, and an abode upgrade raises the cap later.
 
+**You can run the clock slower.** Each qi realm you reach unlocks its calendar speed, and a life can run at any speed it has unlocked: a Nascent Soul cultivator can keep Qi Condensation's year an hour. Gains, costs and lifespan all count in-game time, so a slower clock is never stronger, only slower. It keeps a fast world readable, and the offline cap then covers fewer years. The choice is saved with the slot.
+
 ## World bible
 
 The game plays out in Severed Heaven, one middle thousand world, written by hand and the same in every save; only where you're born is random. Neighboring worlds, the great worlds above and the realms past Tribulation Transcendence stay sketches until the game gets there.
@@ -131,7 +133,7 @@ The world is original, enormous and nested. Each area feels like everything unti
 | World | this whole middle thousand world: continents, seas and forbidden lands | about twenty Body Integration, fewer than ten Mahayana, a few hidden Tribulation Transcenders | reach Deity Transformation, or follow a legend |
 | Beyond | the great thousand world, where immortals go | unknown | ascension, after v1 |
 
-**Fog of war.** Travel reveals the map. Bought or looted maps sketch outlines, divine sense lights up what's around you (its range is in the scale table), and sect libraries and rumors mark places you haven't seen yet.
+**Fog of war.** The in-game map shows only what you know, in four states. Seen: places you have travelled, plus a soft circle of divine sense around you (its range is in the scale table). Sketched: outlines from bought or looted maps, with nothing inside. Rumored: a mark and a name from sect libraries and rumors, with no outline. Unknown: cracked fog, the same dark glass as the rest of the game. The mockup shows all four. Exactly what reveals what, and how much, is settled with exploration.
 
 **Where you start is part of the roll.** A village orphan sees one kingdom and takes it for the world. A child born into a great sect starts just as weak, but with the continent's maps, its politics and its libraries.
 
@@ -363,7 +365,7 @@ Intimate scenes fade to black by default. A mature setting is opt-in, sits behin
 Three moments carry the genre and get special treatment:
 
 - **Tribulations**: multi-wave lightning fights against Heaven, from Nascent Soul up. Preparation decides most of it: protective formations, artifacts, pills and a tempered body. Failure means grave injury or death.
-- **Heart demons**: before a major breakthrough, GLM builds an illusion from your own chronicle, such as an enemy you killed or a promise you broke. A Soul check plus how you answer decides it. This is where AI personalization pays off most.
+- **Heart demons**: before a major breakthrough, you face an illusion built from your own chronicle, such as an enemy you killed or a promise you broke, played as a go-in scene. GLM writes it when a key is set, and a templated trial from the same entries stands in otherwise. A Soul check plus how you answer decides it. This is where AI personalization pays off most.
 - **Death and rebirth** (the prestige loop): when a life ends, you reincarnate with fresh talent rolls and part of your insight and karma. The world moves on but remembers your old cave abode, your disciples and your killers.
 
 ## Idle production and automation
@@ -395,7 +397,7 @@ Idle production is earned in the world. A line runs only while it has a source, 
 
 **The world pushes back:** prices swing with events, so a border war doubles healing-pill prices. Gardens draw thieves unless formations guard them, and disciples have loyalties of their own. When a link breaks, the line stalls until you fix it.
 
-When you come back, GLM writes a short steward's report from the engine's ledger: "The garden yielded 40 Jade Dew Grass. Disciple Lin brewed 12 Qi-Gathering Pills; 2 batches failed. Healing pills doubled in the Jing Capital after the border clash."
+When you come back, a short steward's report sums up the engine's ledger, as templated lines the Scribe rewrites as prose when a key is set: "The garden yielded 40 Jade Dew Grass. Disciple Lin brewed 12 Qi-Gathering Pills; 2 batches failed. Healing pills doubled in the Jing Capital after the border clash."
 
 An example chain: as Alchemy Hall head of Apricot Grove Valley, you draw the sect's herbs and two apprentices brew Qi-Gathering Pills. The sect keeps 70% for its quota, and your 30% sells through a consignment house in the Jing Capital while you're in seclusion.
 
@@ -499,6 +501,8 @@ GLM maps what you type to legal actions and may add a creativity bonus of 0 to +
 
 **The log line** always follows the prose and shows the math: `Hit · 21 vs 18 · 33 fire · Elder Mo 117/150 · Qi 52/90 · grass burning (2 turns)`
 
+**Effects fill the wait.** Every outcome already carries what an effect needs: the technique's form (slash, thrust, palm, projectile, aura), its element or damage type, the attacker's realm, and the result (hit, critical, graze, miss, backfire). The screen layers those into one effect, with no model involved. Form sets the shape, element the color and particles, and realm the scale: close to the target at Qi Condensation, across the screen at Foundation, a shaking screen at Core Formation and the whole view from Nascent Soul up, as Scale of destruction describes. A critical flares, a graze fizzles and a backfire turns the effect on you. The outcome arrives before the narrator's first word, so the effect plays in that gap. Reduced motion swaps it for a still flash, and sound hangs off the same tags.
+
 ## How GLM fits in
 
 GLM gets five jobs, all with thinking off except the rare heart-demon scene. None of them can change a number or an item; the engine applies everything.
@@ -508,10 +512,12 @@ GLM gets five jobs, all with thinking off except the rare heart-demon scene. Non
 | Interpreter | you type free text; clicked choices skip it | action JSON, checked against a schema | temperature 0.2, structured output |
 | Narrator | every turn | 80–200 words, streamed, then a JSON tail: 3–4 next actions, memory notes, new names | temperature 0.8, max 600 tokens |
 | Chronicler | every 10 turns, and when you leave the world | a short summary plus NPC memory updates | temperature 0.3 |
-| Scribe | at world-calendar ticks and when you return | rumors, headlines and steward's reports on what the engine already decided | one batched call per tick |
-| Heart-demon author | before a major breakthrough | a personal trial scene built from your chronicle | thinking on: rare and worth the depth |
+| Scribe | at world-calendar ticks and when you return | rumors, headlines and steward's reports on what the engine already decided, rewritten from the game's templated lines | one batched call per tick; optional |
+| Heart-demon author | before a major breakthrough, from Nascent Soul | a personal trial scene built from your chronicle, played like a go-in scene | thinking on: rare and worth the depth; a templated trial stands in without a key |
 
 > One adventure turn: typed text → interpreter (GLM, action JSON checked with Zod) → engine (rolls, damage, state changes) → narrator (GLM, prose from the outcome only) → log line with the math. Clicked choices skip the interpreter.
+
+**Idle play never needs the AI.** The interpreter, narrator and chronicler work inside go-in. Everything the idle side shows, from steward's reports to rumors and headlines, exists first as a templated line written from the engine's ledger, so the game is whole offline and without a key. With a key and the setting on, the Scribe rewrites those lines as prose. The heart-demon trial is played as a go-in scene; without a key, a templated trial built from the same chronicle entries takes its place, so reaching Nascent Soul never depends on GLM.
 
 GLM only reads the game state; every change passes through your code. A clever sentence can earn a bonus, never a free treasure.
 
@@ -585,7 +591,9 @@ With thinking off, a turn costs a quarter of a cent to under a cent, so 20 sessi
 
 The game is dark glowing slate with a gold accent, built for desktop first and usable on a phone. Your cave abode is home, and a side menu reaches everything else. Screens appear in the menu as you unlock them.
 
-**Look.** Deep slate panels, warm off-white text, gold for anything you can act on or have just gained, and a soft glow on qi, breakthroughs and rare drops. A serif display face for names and realm titles, with hanzi set in a brush font as flavor, and a plain sans for numbers and menus. Starting colors to tune in the build: background #11151b, panel #19202a, line #2a333f, text #e8e2d2, muted #97a0aa, gold #d6ab4c, qi glow #7fc7d9. The atlas keeps its own ink-and-silk look, since it is the authoring tool, not the game.
+**Look.** Black cracked glass. A few long fractures cross the background from impact points, a fine web of cracks sits only around those impacts and away from text, and qi light leaks faintly through every crack. Panels are smooth, darker glass with a thin bright edge, so text never sits on a crack. Gold marks anything you can act on or have just gained. The crack light is the qi glow, and the qi, body and soul bars use it too, so qi reads as the light behind the glass. A breakthrough makes the cracks flare and opens a new fracture. The pattern is seeded per life and redrawn to fit the screen. A serif display face for names and realm titles, with hanzi set in a brush font as flavor, and a plain sans for numbers and menus. Starting colors to tune in the build: background #040507, panel glass rgba(10, 12, 16, 0.8), edge rgba(255, 255, 255, 0.075), text #e9e5da, muted #8d949d, gold #d6ab4c, crack light #7fc7d9. `docs/mockups/glass-study.html` is the reference mockup. The atlas keeps its own ink-and-silk look, since it is the authoring tool, not the game.
+
+**Players pick their colors.** Settings changes the accent and the crack light, sets how much fine web the glass carries, and rerolls the glass, with presets and a free color picker that warns when a color is hard to read on black. Each color keeps its job whatever it looks like: the accent always means something you can act on, and the crack light always means qi. The defaults are gold, qi cyan and a light web.
 
 **Layout.** On desktop, the side menu is on the left, the screen in the middle, and a context panel on the right with tooltips, the latest chronicle lines and active queues. On a phone the menu becomes a drawer, and the context panel slides up from the bottom.
 
@@ -597,7 +605,7 @@ The game is dark glowing slate with a gold accent, built for desktop first and u
 | Techniques | every technique with its mastery level, requirements and what is still sealed | M1 |
 | Character | talents, the six attributes, fame and standing | M1 |
 | Chronicle | your life as a log: breakthroughs, fights, rumors and steward reports | M1 |
-| Settings | OpenRouter key and cost meter, saves, text size, reduced motion, the mature content switch | M1, AI parts M3 |
+| Settings | OpenRouter key and cost meter, saves, clock speed, colors and glass, text size, reduced motion, the mature content switch | M1, AI parts M3 |
 | Bag | items, pills and storage ring space | M2 |
 | Go In | the adventure screen, described below | M3 |
 | Map | the zoomable world map with fog of war; tiers open with M6 | M3 |
@@ -712,16 +720,17 @@ Settle each before the milestone that needs it. World content is drafted and che
 
 - [ ] Items and gear: slots, grades, artifact bonding and artifact spirits, pill toxicity, storage rings; item, talisman and array power on the realm curve, with a higher-realm talisman priced by its own realm
 - [ ] Enemies: beast and cultivator templates, behavior profiles, loot
-- [ ] Exploration: travel and its time cost, encounters per region, scene building, ruins and inheritances, fleeing, dying in the world; ways to flee, hide or talk past foes a realm or more above you
+- [ ] Combat outcome tags for effects and sound: form, element or damage type, realm and result on every outcome
+- [ ] Exploration: travel and its time cost, encounters per region, scene building, ruins and inheritances, fleeing, dying in the world; ways to flee, hide or talk past foes a realm or more above you; the fog's rules, meaning what travel, divine sense, maps and rumors each reveal
 - [ ] NPC basics: what an NPC record holds, what each NPC knows, how talk changes relationships
 
 **Before M5 to M8, sketched now**
 
-- [ ] NPC depth: aging and death, NPCs who climb on their own, rivals who return stronger, disciple loyalty and betrayal
+- [ ] NPC depth: aging and death, NPCs who climb on their own, rivals who return stronger, disciple loyalty and betrayal; a cast list of the atlas's named people (a person kind or a people file) with fixed looks, so portraits can follow
 - [ ] Sects: ranks, politics, founding your own, sect wars; faction strength weighted by the realm curve, so a sect is mostly its ancestor
 - [ ] World simulation: events calendar, secret realms, auctions, tournaments, wars
 - [ ] Death, rebirth and legacy: what carries over, how much time passes, what the world remembers
-- [ ] Art and sound: how much, and whether any of it is AI-generated
+- [ ] Art and sound: how much, and from where. Settled so far: location art and portraits are made at design time and shipped as data, never generated in play, with shared art by tag for filled-in places; portraits wait for the cast list; sound hangs off the same engine events as combat effects
 
 **Anytime**
 
