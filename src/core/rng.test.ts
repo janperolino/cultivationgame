@@ -1,6 +1,8 @@
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
-import { hashSeed, mulberry32, Rng } from './rng.ts';
+import { breakThrough } from './life.ts';
+import { hashSeed, mulberry32, Rng, streamSeed } from './rng.ts';
+import { newLife, withPlayer, withStream } from './state.ts';
 
 const require = createRequire(import.meta.url);
 const atlas = require('../../tools/atlas-geo.cjs') as {
@@ -81,5 +83,38 @@ describe('Rng', () => {
     expect(r.chance(0)).toBe(false);
     expect(r.chance(1)).toBe(true);
     expect(['a', 'b', 'c']).toContain(r.pick(['a', 'b', 'c']));
+  });
+});
+
+describe('named streams', () => {
+  it('seeds each stream from the life seed and its own name', () => {
+    expect(streamSeed(42, 'breakthrough')).toBe(streamSeed(42, 'breakthrough'));
+    expect(streamSeed(42, 'breakthrough')).not.toBe(streamSeed(42, 'combat'));
+    expect(streamSeed(42, 'breakthrough')).not.toBe(streamSeed(43, 'breakthrough'));
+  });
+
+  it("never lets one system's rolls shift another's", () => {
+    const s = newLife({ name: 'Han Li', seed: 'streams' });
+    const ready = withPlayer(s, {
+      ...s.player,
+      qi: { ...s.player.qi, stage: 5, bar: 1e4 },
+    });
+    // Ten combat rolls first change nothing about the breakthrough that follows.
+    const fought = withStream(ready, 'combat', (rng) =>
+      Array.from({ length: 10 }, () => rng.next()),
+    );
+    const plain = breakThrough(ready, 'qi');
+    const after = breakThrough(fought.state, 'qi');
+    expect(after.success).toBe(plain.success);
+    expect(after.state.rng.breakthrough).toBe(plain.state.rng.breakthrough);
+    expect(after.state.rng.combat).toBe(fought.state.rng.combat);
+  });
+
+  it('continues a stream across a save, since its state is stored', () => {
+    const s = newLife({ name: 'Han Li', seed: 'streams' });
+    const first = withStream(s, 'world', (rng) => [rng.next(), rng.next()]);
+    const resumed = withStream(first.state, 'world', (rng) => rng.next());
+    const straight = withStream(s, 'world', (rng) => [rng.next(), rng.next(), rng.next()]);
+    expect(resumed.value).toBe(straight.value[2]);
   });
 });

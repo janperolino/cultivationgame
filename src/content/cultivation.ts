@@ -1,6 +1,10 @@
 // The seclusion and breakthrough constants (design § Cultivation and § Economy). Starting values
 // that sim/pacing.ts tunes; rules that read them live in src/core/cultivation.ts.
 
+/** The big three: each climbs its own ladder of realms and stages. */
+export const LADDERS = ['qi', 'body', 'soul'] as const;
+export type LadderId = (typeof LADDERS)[number];
+
 /** The five things a seclusion day can go to. */
 export const SLOTS = ['qi', 'body', 'soul', 'study', 'practice'] as const;
 export type SlotId = (typeof SLOTS)[number];
@@ -98,7 +102,7 @@ export const MAJOR_ODDS_PER_MARGIN = 0.08;
 
 /**
  * Seclusion slots open as you reach them, each with one line of hint (design § Character
- * creation, the first hour). Practice opens with techniques in P1.3.
+ * creation, the first hour). Practice opens with a technique instead (PRACTICE_UNLOCK_TEXT).
  */
 export const SLOT_UNLOCKS: readonly {
   flag: string;
@@ -131,3 +135,6 @@ export const SLOT_UNLOCKS: readonly {
     text: 'In the stillness you sense your own mind: soul nourishment opens.',
   },
 ];
+
+/** The practice slot opens with the first technique you can use. */
+export const PRACTICE_UNLOCK_TEXT = 'A technique to drill: practice days now raise its mastery.';

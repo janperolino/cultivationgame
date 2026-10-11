@@ -6,7 +6,9 @@ import { decodeSaveFile, encodeSaveFile } from './file.ts';
 import { loadSave, makeSave, SAVE_VERSION, SaveError } from './format.ts';
 import { SaveSlots } from './slots.ts';
 
-const v0 = JSON.parse(readFileSync(new URL('./fixtures/v0.json', import.meta.url), 'utf8'));
+const fixture = (name: string) =>
+  JSON.parse(readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), 'utf8'));
+const v0 = fixture('v0');
 
 let open: SaveSlots[] = [];
 function slots(): SaveSlots {
@@ -24,12 +26,20 @@ function played(): GameState {
   return {
     ...s,
     calendar: { day: s.calendar.day + 400.25 },
-    qi: { ...s.qi, stage: 3, bar: 52.5 },
-    insight: { current: 3, earned: 10 },
-    stones: 42,
+    player: {
+      ...s.player,
+      qi: { ...s.player.qi, stage: 3, bar: 52.5 },
+      insight: { current: 3, earned: 10 },
+      stones: 42,
+    },
     chronicle: [...s.chronicle, { day: 4720, kind: 'note', text: 'A quiet year.' }],
   };
 }
+
+const withStones = (s: GameState, stones: number): GameState => ({
+  ...s,
+  player: { ...s.player, stones },
+});
 
 describe('save format', () => {
   it('migrates the v0 fixture', () => {
@@ -37,17 +47,38 @@ describe('save format', () => {
     expect(save.version).toBe(SAVE_VERSION);
     expect(save.savedAt).toBe(1790000000000);
     const s = save.state;
-    expect(s.character).toMatchObject({ name: 'Lin Mo', mode: 'gentle', pronouns: 'he/him' });
+    const p = s.player;
+    expect(s.mode).toBe('gentle');
+    expect(p).toMatchObject({ id: 'player', name: 'Lin Mo', pronouns: 'he/him' });
     expect(s.calendar.day).toBe(15.5 * 360);
-    expect(s.qi).toMatchObject({ realm: 'qi-condensation', stage: 2, bar: 140, grades: [] });
-    expect(s.character).toMatchObject({ root: 'true', method: 'garrison-standard' });
-    expect(s.plan.auto).toBe('safe');
-    expect(s.body.stage).toBe(1);
-    expect(s.insight).toEqual({ current: 7, earned: 7 });
-    expect(s.stones).toBe(12);
-    expect(s.rng).toBe(123456);
+    expect(p.qi).toMatchObject({ realm: 'qi-condensation', stage: 2, bar: 140, grades: [] });
+    expect(p).toMatchObject({ root: 'true', method: 'garrison-standard' });
+    expect(p.plan.auto).toBe('safe');
+    expect(p.body.stage).toBe(1);
+    expect(p.insight).toEqual({ current: 7, earned: 7 });
+    expect(p.stones).toBe(12);
+    expect(s.rng).toEqual({ breakthrough: 123456 });
     expect(s.chronicle.map((c) => c.text)).toEqual(v0.log);
     expect(s.rewindCharges).toBe(1);
+  });
+
+  it('migrates a v2 save: the cultivator moves into player, the rng into named streams', () => {
+    const v2 = fixture('v2');
+    const s = loadSave(v2).state;
+    const p = s.player;
+    expect(s.mode).toBe('ironman');
+    expect(p).toMatchObject({ name: 'Nameless', root: 'single', method: 'garrison-standard' });
+    expect(p.qi).toMatchObject({ stage: 4, bar: 120.5 });
+    expect(p.insight).toEqual({ current: 40, earned: 64 });
+    expect(p.items).toEqual({ 'foundation-pill': 1 });
+    expect(p.flags).toEqual(['seclusion-qi', 'seclusion-body', 'seclusion-study']);
+    expect(s.unlocks).toEqual(['abode', 'cultivate', 'techniques']);
+    expect(p.techniques).toEqual({ 'rampart-palm': { practice: 0 } });
+    expect(p.practicing).toBe('rampart-palm');
+    expect(p.nodes).toEqual([]);
+    expect(s.seed).toBe(v2.state.glass.seed);
+    expect(s.rng).toEqual({ breakthrough: v2.state.rng });
+    expect(s.chronicle).toEqual(v2.state.chronicle);
   });
 
   it('rejects saves from a newer game and damaged saves', () => {
@@ -69,7 +100,7 @@ describe('save format', () => {
     const plain = new TextEncoder().encode(
       JSON.stringify({ format: 'severed-heaven-slot', exportedAt: 1, save: v0 }),
     );
-    expect((await decodeSaveFile(plain)).state.character.name).toBe('Lin Mo');
+    expect((await decodeSaveFile(plain)).state.player.name).toBe('Lin Mo');
     await expect(decodeSaveFile(new TextEncoder().encode('{}'))).rejects.toThrow(SaveError);
   });
 });
@@ -96,7 +127,7 @@ describe('save slots', () => {
   it('falls back to the backup when the latest save is damaged', async () => {
     const db = slots();
     const first = makeSave(played(), 1000);
-    const second = makeSave({ ...played(), stones: 99 }, 2000);
+    const second = makeSave(withStones(played(), 99), 2000);
     await db.write(2, first);
     await db.write(2, second);
     await db.writeRaw(2, { version: SAVE_VERSION, savedAt: 3000, state: { garbage: true } });
@@ -107,7 +138,7 @@ describe('save slots', () => {
     expect(loaded?.warning).toMatch(/previous autosave/);
 
     // The next write keeps the good backup rather than rotating the damaged save into it.
-    const third = makeSave({ ...played(), stones: 7 }, 4000);
+    const third = makeSave(withStones(played(), 7), 4000);
     await db.write(2, third);
     await db.writeRaw(2, 'corrupt');
     expect((await db.load(2))?.save).toEqual(first);
@@ -118,7 +149,7 @@ describe('save slots', () => {
     const first = makeSave(played(), 1000);
     expect(db.writeNow(1, first)).toBe(false); // nothing known about the slot yet
     await db.write(1, first);
-    const second = makeSave({ ...played(), stones: 5 }, 2000);
+    const second = makeSave(withStones(played(), 5), 2000);
     expect(db.writeNow(1, second)).toBe(true);
     // IndexedDB orders this read after the queued put.
     expect((await db.load(1))?.save).toEqual(second);
@@ -147,13 +178,13 @@ describe('save slots', () => {
     const db = slots();
     const start = played();
     await db.write(1, makeSave(start, 1000), { rewindPoint: true });
-    const later = { ...start, calendar: { day: start.calendar.day + 900 }, stones: 0 };
+    const later = { ...withStones(start, 0), calendar: { day: start.calendar.day + 900 } };
     await db.write(1, makeSave(later, 2000));
 
     const back = await db.rewind(1, 5000);
     expect(back.savedAt).toBe(5000);
     expect(back.state.calendar.day).toBe(start.calendar.day);
-    expect(back.state.stones).toBe(42);
+    expect(back.state.player.stones).toBe(42);
     expect(back.state.rewindCharges).toBe(0);
     expect((await db.load(1))?.save).toEqual(back);
     await expect(db.rewind(1, 6000)).rejects.toThrow(/spent/);

@@ -15,7 +15,8 @@ describe('calendar speed', () => {
   it('runs each realm lifespan in about 120 real hours', () => {
     const s = newLife({ name: 'A' });
     expect(yearsPerRealHour(s)).toBe(1);
-    const at = (realm: typeof s.qi.realm) => yearsPerRealHour({ ...s, qi: { ...s.qi, realm } });
+    const at = (realm: typeof s.player.qi.realm) =>
+      yearsPerRealHour({ ...s, player: { ...s.player, qi: { ...s.player.qi, realm } } });
     expect(at('foundation-establishment')).toBeCloseTo(1.67, 2);
     expect(at('core-formation')).toBeCloseTo(4.17, 2);
     expect(at('nascent-soul')).toBeCloseTo(8.33, 2);
@@ -24,7 +25,7 @@ describe('calendar speed', () => {
   it('turns one real hour into one in-game year at Qi Condensation', () => {
     const r = advance(newLife({ name: 'A' }), HOUR);
     expect(r.days).toBeCloseTo(DAYS_PER_YEAR, 6);
-    expect(ageYears(r.state)).toBeCloseTo(START_AGE + 1, 6);
+    expect(ageYears(r.state.player, r.state.calendar.day)).toBeCloseTo(START_AGE + 1, 6);
     expect(r.usedMs).toBe(HOUR);
     expect(r.atEdge).toBe(false);
   });
@@ -34,7 +35,10 @@ describe('calendar speed', () => {
     // A breakthrough into Foundation after the first step speeds the clock up from then on.
     const step: DayStep = (s, days) => {
       sizes.push(days);
-      return { ...s, qi: { ...s.qi, realm: 'foundation-establishment' } };
+      return {
+        ...s,
+        player: { ...s.player, qi: { ...s.player.qi, realm: 'foundation-establishment' } },
+      };
     };
     const r = advance(newLife({ name: 'A' }), HOUR, { step });
     expect(Math.max(...sizes)).toBeLessThanOrEqual(1);
@@ -61,7 +65,7 @@ describe('offline catch-up', () => {
 
   it('stops time at the lifespan edge instead of killing you offline', () => {
     const s = newLife({ name: 'A' });
-    const edge = lifespanEdgeDay(s);
+    const edge = lifespanEdgeDay(s.player);
     const nearEnd = { ...s, calendar: { day: edge - 90 } }; // three months left
     const r = catchUp(nearEnd, 0, 12 * HOUR);
     expect(r.atEdge).toBe(true);

@@ -1,3 +1,4 @@
+import { statInfo, type Effect } from '../content/stats.ts';
 import { realm, stageName } from '../content/realms.ts';
 import type { LadderId } from '../core/cultivation.ts';
 import { DAYS_PER_YEAR, type Ladder } from '../core/state.ts';
@@ -56,4 +57,22 @@ export function formatAgeShort(years: number): string {
   const whole = Math.floor(years);
   const months = Math.floor((years - whole) * 12);
   return months ? `${whole} y ${months} m` : `${whole} y`;
+}
+
+/** A stat change as players read it: "Qi gain +4%", "Minor odds +3", "Lifespan +3 years". */
+export function formatEffect(e: Effect): string {
+  const info = statInfo(e.stat);
+  const sign = e.value < 0 ? '−' : '+';
+  const a = Math.abs(e.value);
+  const amount =
+    info.unit === 'percent'
+      ? `${sign}${Math.round(a * 100)}%`
+      : info.unit === 'odds'
+        ? `${sign}${Math.round(a * 100)} points`
+        : info.unit === 'years'
+          ? `${sign}${a} ${a === 1 ? 'year' : 'years'}`
+          : info.unit === 'stages'
+            ? `${sign}${a} ${a === 1 ? 'stage' : 'stages'}`
+            : `${sign}${a}`;
+  return `${info.name} ${amount}`;
 }

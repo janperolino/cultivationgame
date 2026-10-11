@@ -14,7 +14,7 @@ const MS_PER_HOUR = 3_600_000;
 
 /** In-game years per real hour: 1 at Qi Condensation, about 1.7 at Foundation, 4 at Core Formation. */
 export function yearsPerRealHour(s: GameState): number {
-  return realm(s.qi.realm).lifespan / REAL_HOURS_PER_LIFESPAN;
+  return realm(s.player.qi.realm).lifespan / REAL_HOURS_PER_LIFESPAN;
 }
 
 export function daysPerRealMs(s: GameState): number {
@@ -28,7 +28,7 @@ export interface StepContext {
 
 /**
  * What happens over a stretch of in-game days, at most one day at a time. The calendar has
- * already moved when it is called. core/cultivation.ts's `cultivate` is the game's step.
+ * already moved when it is called. core/life.ts's `cultivate` is the game's step.
  */
 export type DayStep = (s: GameState, days: number, ctx: StepContext) => GameState;
 
@@ -59,7 +59,7 @@ export function advance(
   while (remaining > 0) {
     // A life that has ended stands still until a new one begins.
     if (state.ended) break;
-    const edge = lifespanEdgeDay(state);
+    const edge = lifespanEdgeDay(state.player);
     const room = edge - state.calendar.day;
     if (room <= 0) break;
     // Speed is read each step, so a breakthrough mid-run changes the clock from then on.
@@ -77,7 +77,7 @@ export function advance(
     state,
     days,
     usedMs: Math.max(0, realMs) - remaining,
-    atEdge: state.calendar.day >= lifespanEdgeDay(state),
+    atEdge: state.calendar.day >= lifespanEdgeDay(state.player),
   };
 }
 

@@ -20,6 +20,10 @@ const layerImports = {
   ],
 };
 const noNetwork = 'src/core never calls the network.';
+// Time and randomness come into src/core as inputs, so a seed replays the same life and tests
+// and sims control the clock.
+const noClock = 'src/core takes the time as an input; pass `now` in.';
+const noRandom = 'src/core draws from a named seeded stream (core/rng.ts), never Math.random.';
 
 export default tseslint.config(
   { ignores: ['dist', 'node_modules', 'tools/atlas', 'src/content/generated'] },
@@ -57,6 +61,14 @@ export default tseslint.config(
         { object: 'globalThis', property: 'fetch', message: noNetwork },
         { object: 'window', property: 'fetch', message: noNetwork },
         { object: 'self', property: 'fetch', message: noNetwork },
+        { object: 'Math', property: 'random', message: noRandom },
+        { object: 'Date', property: 'now', message: noClock },
+        { object: 'performance', property: 'now', message: noClock },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        { selector: "NewExpression[callee.name='Date'][arguments.length=0]", message: noClock },
+        { selector: "CallExpression[callee.name='Date'][arguments.length=0]", message: noClock },
       ],
     },
   },

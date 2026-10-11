@@ -1,6 +1,8 @@
 // Cultivation rules (design § Cultivation, § Economy): seclusion days split among qi, body, soul,
 // study and practice; bars that fill past full; minor and major breakthroughs and their grades;
-// the last chance at the lifespan edge. The constants live in src/content/cultivation.ts.
+// the last chance at the lifespan edge. Every rule takes a Cultivator, not the game, so NPCs and
+// co-op guests run on the same code; randomness and the day come in as inputs. The constants live
+// in src/content/cultivation.ts, and core/life.ts applies the results to the game.
 import {
   APTITUDE_BASE,
   APTITUDE_STEP,
@@ -13,6 +15,7 @@ import {
   INSIGHT_MARGIN_FULL,
   INSIGHT_PER_STUDY_DAY,
   INSIGHT_TRICKLE,
+  LADDERS,
   LAST_CHANCE_ODDS,
   MAJOR_FAIL_KEEP,
   MAJOR_INJURY_DAYS,
@@ -21,6 +24,7 @@ import {
   MINOR_FAIL_LOSS,
   MINOR_INJURY_DAYS,
   ODDS_PER_TENTH,
+  PRACTICE_UNLOCK_TEXT,
   QI_PER_DAY,
   SLOT_UNLOCKS,
   SLOTS,
@@ -30,6 +34,7 @@ import {
   TUTORIAL_LAYERS,
   UNSETTLED_DAYS,
   type GradeId,
+  type LadderId,
   type SlotId,
 } from '../content/cultivation.ts';
 import { FIT_SPEED, hasMethod, method, methodFit } from '../content/methods.ts';
@@ -44,49 +49,55 @@ import {
   type RealmId,
 } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
-import type { DayStep } from './loop.ts';
-import { Rng } from './rng.ts';
-import {
-  addChronicle,
-  addItem,
-  ageYears,
-  atLifespanEdge,
-  hasUnlock,
-  itemCount,
-  noteBreakthrough,
-  unlock,
-  type GameState,
-  type Ladder,
-} from './state.ts';
+import type { Rng } from './rng.ts';
+import { addItem, hasFlag, itemCount, type Cultivator, type Ladder } from './state.ts';
+import { stats } from './stats.ts';
+import { addPractice, canPractice, knownTechniques, techniqueSealed } from './techniques.ts';
 
-export type LadderId = 'qi' | 'body' | 'soul';
-export const LADDERS: readonly LadderId[] = ['qi', 'body', 'soul'];
+export { LADDERS, type LadderId };
 
 const LADDER_NAMES: Record<LadderId, string> = { qi: 'Qi', body: 'Body', soul: 'Soul' };
 const FUEL: Record<LadderId, string> = { qi: 'qi', body: 'tempering', soul: 'nourishment' };
 
+/** A line for the chronicle; core/life.ts dates it and adds it. */
+export interface Note {
+  kind: string;
+  text: string;
+}
+
+/** What a rule needs from the world: the day, and the random stream it may draw from. */
+export interface RuleContext {
+  day: number;
+  rng: Rng;
+}
+
 // ---------------------------------------------------------------- the seclusion plan
 
 /** The slots that have opened, in plan order. */
-export function openSlots(s: GameState): SlotId[] {
-  return SLOTS.filter((slot) => hasUnlock(s, `seclusion-${slot}`));
+export function openSlots(c: Cultivator): SlotId[] {
+  return SLOTS.filter((slot) => hasFlag(c, `seclusion-${slot}`));
 }
 
 /** The fraction of each day each slot gets: the plan's weights shared among the open slots. */
-export function dayShares(s: GameState): Record<SlotId, number> {
-  const open = openSlots(s);
-  const total = open.reduce((sum, slot) => sum + s.plan.shares[slot], 0);
+export function dayShares(c: Cultivator): Record<SlotId, number> {
+  const open = openSlots(c);
+  const total = open.reduce((sum, slot) => sum + c.plan.shares[slot], 0);
   const out = { qi: 0, body: 0, soul: 0, study: 0, practice: 0 };
   if (total <= 0) return out;
-  for (const slot of open) out[slot] = s.plan.shares[slot] / total;
+  for (const slot of open) out[slot] = c.plan.shares[slot] / total;
   return out;
 }
 
 // ---------------------------------------------------------------- rates
 
+/** Aptitude, with what nodes add. */
+export function aptitude(c: Cultivator): number {
+  return c.attributes.aptitude + stats(c).aptitude;
+}
+
 /** Aptitude's multiplier on every seclusion gain: +5% a point above 10. */
-export function aptitudeMultiplier(s: GameState): number {
-  return Math.max(0, 1 + APTITUDE_STEP * (s.attributes.aptitude - APTITUDE_BASE));
+export function aptitudeMultiplier(c: Cultivator): number {
+  return Math.max(0, 1 + APTITUDE_STEP * (aptitude(c) - APTITUDE_BASE));
 }
 
 /** Qi Condensation layers 1–3 are the tutorial: root speed and method fit don't count yet. */
@@ -100,20 +111,32 @@ export interface QiSpeed {
   /** Qi density, 1 until abodes and spirit veins arrive in M4. */
   density: number;
   aptitude: number;
+  /** Tree nodes' qi gain, as a multiplier. */
+  nodes: number;
   total: number;
 }
 
-/** Root speed × method fit × qi density × Aptitude. Zero without a method. */
-export function qiSpeed(s: GameState): QiSpeed {
-  const id = s.character.method;
-  const aptitude = aptitudeMultiplier(s);
-  if (!id || !hasMethod(id)) return { root: 0, fit: 0, density: 1, aptitude, total: 0 };
-  const r = root(s.character.root);
-  const tutorial = inTutorial(s.qi);
+/** Root speed × method fit × qi density × Aptitude × nodes. Zero without a method. */
+export function qiSpeed(c: Cultivator): QiSpeed {
+  const id = c.method;
+  const apt = aptitudeMultiplier(c);
+  const nodes = 1 + stats(c).qiGain;
+  if (!id || !hasMethod(id)) {
+    return { root: 0, fit: 0, density: 1, aptitude: apt, nodes, total: 0 };
+  }
+  const r = root(c.root);
+  const tutorial = inTutorial(c.qi);
   const rootSpeed = tutorial ? 1 : r.speed;
   const fit = tutorial ? 1 : FIT_SPEED[methodFit(method(id), r.kind)];
   const density = 1;
-  return { root: rootSpeed, fit, density, aptitude, total: rootSpeed * fit * density * aptitude };
+  return {
+    root: rootSpeed,
+    fit,
+    density,
+    aptitude: apt,
+    nodes,
+    total: rootSpeed * fit * density * apt * nodes,
+  };
 }
 
 /** A setback's multiplier on a ladder's gains: none while unsettled, slowed while injured. */
@@ -130,32 +153,57 @@ export interface DayRates {
   body: number;
   soul: number;
   insight: number;
+  /** Practice days a full day gives the technique being practiced; 0 when none can be. */
+  practice: number;
   /** The most stones a full day can burn, and the qi each one adds. */
   stoneCap: number;
   qiPerStone: number;
 }
 
-/** What one full day of seclusion gives under the current plan. */
-export function dayRates(s: GameState): DayRates {
-  const shares = dayShares(s);
-  const day = s.calendar.day;
-  const apt = aptitudeMultiplier(s);
-  const qiScale = realmScale(s.qi.realm);
-  const qi = QI_PER_DAY * qiScale * qiSpeed(s).total * shares.qi * setbackMultiplier(s.qi, day);
+/** What one full day of seclusion gives under the cultivator's plan, on a given world day. */
+export function dayRates(c: Cultivator, day: number): DayRates {
+  const shares = dayShares(c);
+  const m = stats(c);
+  const apt = aptitudeMultiplier(c);
+  const qiScale = realmScale(c.qi.realm);
+  const qi = QI_PER_DAY * qiScale * qiSpeed(c).total * shares.qi * setbackMultiplier(c.qi, day);
   const body =
-    BODY_PER_DAY * realmScale(s.body.realm) * apt * shares.body * setbackMultiplier(s.body, day);
+    BODY_PER_DAY *
+    realmScale(c.body.realm) *
+    apt *
+    (1 + m.bodyGain) *
+    shares.body *
+    setbackMultiplier(c.body, day);
   const soul =
-    SOUL_PER_DAY * realmScale(s.soul.realm) * apt * shares.soul * setbackMultiplier(s.soul, day);
+    SOUL_PER_DAY *
+    realmScale(c.soul.realm) *
+    apt *
+    (1 + m.soulGain) *
+    shares.soul *
+    setbackMultiplier(c.soul, day);
   const secluded = SLOTS.reduce((sum, slot) => sum + shares[slot], 0);
   const insight =
     (INSIGHT_PER_STUDY_DAY * shares.study + INSIGHT_TRICKLE * secluded) *
-    realm(s.qi.realm).insightRate *
-    apt;
+    realm(c.qi.realm).insightRate *
+    apt *
+    (1 + m.insightGain);
+  const practice =
+    c.practicing && canPractice(c, c.practicing) ? shares.practice * apt * (1 + m.practiceGain) : 0;
   // Each stone adds a fifth of a plain Qi Condensation day's qi, and a day takes five, both
   // scaled by the realm curve, so a full burn doubles the day whatever the realm.
-  const stoneCap = qi > 0 && s.plan.burnStones ? STONES_PER_QI_DAY * qiScale * shares.qi : 0;
-  const qiPerStone = stoneCap > 0 ? (qi * STONE_QI) / qiScale / shares.qi : 0;
-  return { shares, qi, body, soul, insight, stoneCap, qiPerStone };
+  const stoneCap = qi > 0 && c.plan.burnStones ? STONES_PER_QI_DAY * qiScale * shares.qi : 0;
+  const qiPerStone = stoneCap > 0 ? ((qi * STONE_QI) / qiScale / shares.qi) * (1 + m.stoneQi) : 0;
+  return { shares, qi, body, soul, insight, practice, stoneCap, qiPerStone };
+}
+
+/** How long a setback lasts, after what nodes take off. */
+function setbackDays(c: Cultivator, days: number): number {
+  return days * Math.max(0, 1 + stats(c).setbackTime);
+}
+
+/** The share of the bar a failure costs, after what nodes save. */
+function failLoss(c: Cultivator, loss: number): number {
+  return loss * Math.max(0, 1 + stats(c).failLoss);
 }
 
 // ---------------------------------------------------------------- steps and odds
@@ -190,14 +238,15 @@ export function overfillBonus(fill: number): number {
 }
 
 /** The chance a minor breakthrough succeeds now; 0 before the bar is full or at a major step. */
-export function minorOdds(l: Ladder): number {
+export function minorOdds(c: Cultivator, which: LadderId): number {
+  const l = c[which];
   const step = nextStep(l);
   if (step.kind !== 'minor') return 0;
   const fill = barFill(l);
   if (fill < 1) return 0;
   const base = realm(l.realm).minorOdds[step.stage - 1] ?? 0.5;
   if (base >= 1) return 1;
-  return Math.min(MAX_ODDS, base + overfillBonus(fill));
+  return Math.min(MAX_ODDS, base + overfillBonus(fill) + stats(c).minorOdds);
 }
 
 export interface MajorCheck {
@@ -235,39 +284,40 @@ const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
  * The margin a major breakthrough brings (design § Cultivation): fuel past a full bar, insight
  * earned past the threshold, and the other two ladders at or above the new realm, a point each.
  */
-export function marginScore(s: GameState, which: LadderId, target: Realm): number {
-  const barPart = clamp01((barFill(s[which]) - 1) / (BAR_CAP - 1));
+export function marginScore(c: Cultivator, which: LadderId, target: Realm): number {
+  const barPart = clamp01((barFill(c[which]) - 1) / (BAR_CAP - 1));
   const threshold = target.insightThreshold;
   const insightPart =
-    threshold > 0 ? clamp01((s.insight.earned / threshold - 1) / (INSIGHT_MARGIN_FULL - 1)) : 1;
+    threshold > 0 ? clamp01((c.insight.earned / threshold - 1) / (INSIGHT_MARGIN_FULL - 1)) : 1;
   const others = LADDERS.filter((l) => l !== which).reduce(
-    (sum, l) => sum + (realmIndex(s[l].realm) >= realmIndex(target.id) ? 1 : 0),
+    (sum, l) => sum + (realmIndex(c[l].realm) >= realmIndex(target.id) ? 1 : 0),
     0,
   );
   return barPart + insightPart + others;
 }
 
 /** Where a ladder stands against its next major breakthrough; null if its next step is minor. */
-export function majorCheck(s: GameState, which: LadderId): MajorCheck | null {
-  const l = s[which];
+export function majorCheck(c: Cultivator, which: LadderId): MajorCheck | null {
+  const l = c[which];
   const step = nextStep(l);
   if (step.kind !== 'major') return null;
   const target = realm(step.realm);
   const fill = barFill(l);
   // Body and soul gate items are settled with items and gear (D2); until then they need none.
   const gateItem = which === 'qi' ? target.gateItem : null;
-  const gate = !gateItem || itemCount(s, gateItem) > 0;
-  const insight = s.insight.earned >= target.insightThreshold;
-  const cap = which === 'qi' || realmIndex(target.id) <= realmIndex(s.qi.realm) + 1;
+  const gate = !gateItem || itemCount(c, gateItem) > 0;
+  const insight = c.insight.earned >= target.insightThreshold;
+  const cap = which === 'qi' || realmIndex(target.id) <= realmIndex(c.qi.realm) + 1;
   const bar = fill >= 1;
-  const score = marginScore(s, which, target);
-  const rare = s.character.method
-    ? hasMethod(s.character.method) && method(s.character.method).rare
-    : false;
+  const score = marginScore(c, which, target);
+  const rare = c.method ? hasMethod(c.method) && method(c.method).rare : false;
   const barPart = clamp01((fill - 1) / (BAR_CAP - 1));
   const odds = Math.min(
     MAX_ODDS,
-    target.majorOdds + overfillBonus(fill) + MAJOR_ODDS_PER_MARGIN * (score - barPart),
+    target.majorOdds +
+      overfillBonus(fill) +
+      MAJOR_ODDS_PER_MARGIN * (score - barPart) +
+      stats(c).majorOdds,
   );
   return {
     ladder: which,
@@ -286,11 +336,11 @@ export function majorCheck(s: GameState, which: LadderId): MajorCheck | null {
 }
 
 /** Whether the auto setting would attempt this ladder's minor breakthrough now. */
-export function autoWouldAttempt(s: GameState, which: LadderId): boolean {
-  const l = s[which];
+export function autoWouldAttempt(c: Cultivator, which: LadderId): boolean {
+  const l = c[which];
   if (nextStep(l).kind !== 'minor' || barFill(l) < 1) return false;
-  const odds = minorOdds(l);
-  const { minOdds } = AUTO_SETTINGS[s.plan.auto];
+  const odds = minorOdds(c, which);
+  const { minOdds } = AUTO_SETTINGS[c.plan.auto];
   if (minOdds === Infinity) return false;
   return odds >= minOdds || barFill(l) >= BAR_CAP - 1e-9;
 }
@@ -298,89 +348,102 @@ export function autoWouldAttempt(s: GameState, which: LadderId): boolean {
 // ---------------------------------------------------------------- breakthroughs
 
 export interface BreakthroughResult {
-  state: GameState;
-  /** False when the attempt wasn't allowed; the state is unchanged. */
+  cultivator: Cultivator;
+  /** False when the attempt wasn't allowed; the cultivator is unchanged. */
   attempted: boolean;
   success: boolean;
   major: boolean;
   grade?: GradeId;
   odds: number;
+  notes: Note[];
 }
 
-function stepLabel(id: RealmId, stage: number): string {
+/** "Layer 4", "Middle Foundation Establishment" or "Foundation Establishment". */
+export function stepLabel(id: RealmId, stage: number): string {
   return stage === 1 && id !== 'qi-condensation'
     ? realm(id).name
     : `${stageName(id, stage)}${id === 'qi-condensation' ? '' : ` ${realm(id).name}`}`;
 }
 
-function withLadder(s: GameState, which: LadderId, l: Ladder): GameState {
-  return { ...s, [which]: l };
+function withLadder(c: Cultivator, which: LadderId, l: Ladder): Cultivator {
+  return { ...c, [which]: l };
 }
 
 /**
- * Attempts this ladder's next breakthrough, minor or major. A major one needs the full check
- * unless `lastChance` is set, which only drops the full bar and caps the grade at flawed.
+ * Attempts this ladder's next breakthrough, minor or major, drawing one roll from `ctx.rng`.
+ * A major one needs the full check unless `lastChance` is set, which only drops the full bar and
+ * caps the grade at flawed.
  */
 export function attemptBreakthrough(
-  s: GameState,
+  c: Cultivator,
   which: LadderId,
+  ctx: RuleContext,
   opts: { lastChance?: boolean } = {},
 ): BreakthroughResult {
-  const l = s[which];
+  const l = c[which];
   const step = nextStep(l);
-  const none = { state: s, attempted: false, success: false, major: false, odds: 0 };
-  if (step.kind === 'top' || s.ended) return none;
-  const rng = new Rng(s.rng);
-  const day = s.calendar.day;
+  const none = {
+    cultivator: c,
+    attempted: false,
+    success: false,
+    major: false,
+    odds: 0,
+    notes: [],
+  };
+  if (step.kind === 'top') return none;
+  const { day, rng } = ctx;
   const name = LADDER_NAMES[which];
 
   if (step.kind === 'minor') {
     if (barFill(l) < 1) return none;
-    const odds = minorOdds(l);
+    const odds = minorOdds(c, which);
     const success = rng.next() < odds;
-    let next: GameState = { ...s, rng: rng.state };
     const label = stepLabel(step.realm, step.stage);
     if (success) {
-      next = withLadder(next, which, { ...l, stage: step.stage, bar: 0 });
-      next = {
-        ...next,
-        glass: {
-          ...next.glass,
-          flares: next.glass.flares + 1,
-          fractures: next.glass.fractures + (which === 'qi' ? 1 : 0),
-        },
+      return {
+        cultivator: withLadder(c, which, { ...l, stage: step.stage, bar: 0 }),
+        attempted: true,
+        success,
+        major: false,
+        odds,
+        notes: [
+          {
+            kind: 'breakthrough',
+            text: which === 'qi' ? `Qi breaks through to ${label}.` : `${name} reaches ${label}.`,
+          },
+        ],
       };
-      next = noteBreakthrough(next, false);
-      next = addChronicle(
-        next,
-        'breakthrough',
-        which === 'qi' ? `Qi breaks through to ${label}.` : `${name} reaches ${label}.`,
-      );
-    } else {
-      const injured = realmIndex(l.realm) >= 1;
-      next = withLadder(next, which, {
-        ...l,
-        bar: l.bar * (1 - MINOR_FAIL_LOSS),
-        unsettledUntil: day + UNSETTLED_DAYS,
-        injuredUntil: injured ? Math.max(l.injuredUntil, day + MINOR_INJURY_DAYS) : l.injuredUntil,
-      });
-      next = addChronicle(
-        next,
-        'setback',
-        `The ${FUEL[which]} breaks against ${label} and scatters${injured ? ', leaving a light injury' : ''}.`,
-      );
     }
-    return { state: next, attempted: true, success, major: false, odds };
+    const injured = realmIndex(l.realm) >= 1;
+    return {
+      cultivator: withLadder(c, which, {
+        ...l,
+        bar: l.bar * (1 - failLoss(c, MINOR_FAIL_LOSS)),
+        unsettledUntil: day + setbackDays(c, UNSETTLED_DAYS),
+        injuredUntil: injured
+          ? Math.max(l.injuredUntil, day + setbackDays(c, MINOR_INJURY_DAYS))
+          : l.injuredUntil,
+      }),
+      attempted: true,
+      success,
+      major: false,
+      odds,
+      notes: [
+        {
+          kind: 'setback',
+          text: `The ${FUEL[which]} breaks against ${label} and scatters${injured ? ', leaving a light injury' : ''}.`,
+        },
+      ],
+    };
   }
 
-  const check = majorCheck(s, which)!;
+  const check = majorCheck(c, which)!;
   const last = opts.lastChance === true;
   const allowed = last ? check.insight && check.gate && check.cap && which === 'qi' : check.ready;
   if (!allowed) return none;
-  const odds = last ? lastChanceOdds(check) : check.odds;
+  const odds = last ? lastChanceOdds(c, check) : check.odds;
   const success = rng.next() < odds;
-  let next: GameState = { ...s, rng: rng.state };
-  if (check.gateItem) next = addItem(next, check.gateItem, -1);
+  let next = check.gateItem ? addItem(c, check.gateItem, -1) : c;
   const target = check.target;
   if (success) {
     const grade: GradeId = last ? 'flawed' : check.grade;
@@ -391,42 +454,45 @@ export function attemptBreakthrough(
       bar: 0,
       grades: [...l.grades, grade],
     });
-    next = {
-      ...next,
-      glass: {
-        ...next.glass,
-        flares: next.glass.flares + 1,
-        fractures: next.glass.fractures + (which === 'qi' ? 1 : 0),
-      },
-    };
-    next = noteBreakthrough(next, true);
     const gradeName = GRADES.find((g) => g.id === grade)!.name.toLowerCase();
-    next = addChronicle(
-      next,
-      'major',
+    const text =
       which === 'qi'
-        ? `${last ? 'At the edge of death, ' : ''}${s.character.name} breaks through to ${target.name}: a ${gradeName} foundation.`
-        : `${name} breaks through to ${target.name}, a ${gradeName} breakthrough.`,
-    );
-    return { state: next, attempted: true, success, major: true, grade, odds };
+        ? `${last ? 'At the edge of death, ' : ''}${c.name} breaks through to ${target.name}: a ${gradeName} foundation.`
+        : `${name} breaks through to ${target.name}, a ${gradeName} breakthrough.`;
+    return {
+      cultivator: next,
+      attempted: true,
+      success,
+      major: true,
+      grade,
+      odds,
+      notes: [{ kind: 'major', text }],
+    };
   }
   next = withLadder(next, which, {
     ...l,
-    bar: l.bar * MAJOR_FAIL_KEEP,
-    injuredUntil: Math.max(l.injuredUntil, day + MAJOR_INJURY_DAYS),
+    bar: l.bar * (1 - failLoss(c, 1 - MAJOR_FAIL_KEEP)),
+    injuredUntil: Math.max(l.injuredUntil, day + setbackDays(c, MAJOR_INJURY_DAYS)),
   });
-  next = addChronicle(
-    next,
-    'setback',
-    `The breakthrough to ${target.name} fails${check.gateItem ? ', the pill wasted,' : ''} and leaves ${name.toLowerCase()} injured for years.`,
-  );
-  return { state: next, attempted: true, success, major: true, odds };
+  return {
+    cultivator: next,
+    attempted: true,
+    success,
+    major: true,
+    odds,
+    notes: [
+      {
+        kind: 'setback',
+        text: `The breakthrough to ${target.name} fails${check.gateItem ? ', the pill wasted,' : ''} and leaves ${name.toLowerCase()} injured for years.`,
+      },
+    ],
+  };
 }
 
 // ---------------------------------------------------------------- the lifespan edge
 
-function lastChanceOdds(check: MajorCheck): number {
-  return check.target.majorOdds * Math.min(1, check.fill) * LAST_CHANCE_ODDS;
+function lastChanceOdds(c: Cultivator, check: MajorCheck): number {
+  return (check.target.majorOdds + stats(c).majorOdds) * Math.min(1, check.fill) * LAST_CHANCE_ODDS;
 }
 
 export interface LastChance {
@@ -438,8 +504,8 @@ export interface LastChance {
 }
 
 /** What the lifespan edge offers: a major breakthrough below a full bar, at worse odds. */
-export function lastChance(s: GameState): LastChance {
-  const check = majorCheck(s, 'qi');
+export function lastChance(c: Cultivator): LastChance {
+  const check = majorCheck(c, 'qi');
   if (!check)
     return { possible: false, odds: 0, reason: 'Your qi is not at the peak of its realm.' };
   if (!check.gate) {
@@ -453,27 +519,7 @@ export function lastChance(s: GameState): LastChance {
     return { possible: false, odds: 0, reason: 'Your insight falls short of the threshold.' };
   }
   // A full bar makes it an ordinary attempt, at its ordinary odds.
-  return { possible: true, odds: check.bar ? check.odds : lastChanceOdds(check) };
-}
-
-/** Tries the last chance; if it fails, or isn't possible, the life ends. */
-export function attemptLastChance(s: GameState): BreakthroughResult {
-  if (!atLifespanEdge(s) || s.ended) {
-    return { state: s, attempted: false, success: false, major: true, odds: 0 };
-  }
-  const check = majorCheck(s, 'qi');
-  const result = attemptBreakthrough(s, 'qi', { lastChance: !check?.bar });
-  if (result.success) return result;
-  return { ...result, state: endLife(result.state) };
-}
-
-/** The life ends at the lifespan edge. The slot keeps the chronicle and offers a new life. */
-export function endLife(s: GameState, cause = 'lifespan'): GameState {
-  if (s.ended) return s;
-  const age = Math.floor(ageYears(s));
-  const where = stepLabel(s.qi.realm, s.qi.stage);
-  const text = `${s.character.name} dies at ${age}, at ${where}${s.qi.realm === 'qi-condensation' ? ' of Qi Condensation' : ''}.`;
-  return { ...addChronicle(s, 'death', text), ended: { day: s.calendar.day, cause } };
+  return { possible: true, odds: check.bar ? check.odds : lastChanceOdds(c, check) };
 }
 
 // ---------------------------------------------------------------- the day step
@@ -482,57 +528,86 @@ function capBar(l: Ladder, bar: number): number {
   return Math.min(bar, barSize(l) * BAR_CAP);
 }
 
-/** Opens seclusion slots as qi reaches them, with a chronicle hint each. */
-export function checkUnlocks(s: GameState): GameState {
-  let next = s;
-  const qi = s.qi;
+function withFlag(c: Cultivator, flag: string): Cultivator {
+  return hasFlag(c, flag) ? c : { ...c, flags: [...c.flags, flag] };
+}
+
+/** Opens seclusion slots as the cultivator reaches them, with a chronicle hint each. */
+export function checkUnlocks(c: Cultivator): { cultivator: Cultivator; notes: Note[] } {
+  let next = c;
+  const notes: Note[] = [];
+  const open = (flag: string, text: string) => {
+    if (hasFlag(next, flag)) return;
+    next = withFlag(next, flag);
+    if (text) notes.push({ kind: 'unlock', text });
+  };
+  const qi = c.qi;
   for (const u of SLOT_UNLOCKS) {
-    if (u.slot === 'qi' && !s.character.method) continue;
+    if (u.slot === 'qi' && !c.method) continue;
     const reached =
       realmIndex(qi.realm) > 0 ||
       qi.stage > u.layer ||
       (qi.stage === u.layer && barFill(qi) >= u.bar);
-    if (reached) next = unlock(next, u.flag, u.text || undefined);
+    if (reached) open(u.flag, u.text);
+  }
+  if (knownTechniques(c).some((t) => !techniqueSealed(c, t))) {
+    open('seclusion-practice', PRACTICE_UNLOCK_TEXT);
   }
   const major = majorCheck(next, 'qi');
   if (major?.bar && major.insight) {
-    next = unlock(
-      next,
+    open(
       `ready-${major.target.id}`,
       major.gate
         ? `Qi presses against the gate of ${major.target.name}. The breakthrough waits on you.`
         : `Qi presses against the gate of ${major.target.name}, but you hold no ${major.target.gate.replace(/^an? /, '')}.`,
     );
   }
-  return next;
+  return { cultivator: next, notes };
+}
+
+export interface CultivateResult {
+  cultivator: Cultivator;
+  notes: Note[];
+  /** The breakthroughs the auto setting attempted, in order. */
+  breakthroughs: { ladder: LadderId; success: boolean; major: boolean }[];
 }
 
 /**
- * The cultivation day step for `advance`: fills the bars and insight for a stretch of at most a
- * day, burns stones on qi days, opens slots, and runs minor breakthroughs on the auto setting.
- * Major breakthroughs are always the player's call and never happen here, online or off.
+ * A stretch of at most a day in seclusion: fills the bars, insight and practice, burns stones on
+ * qi days, opens slots, and runs minor breakthroughs on the auto setting. Major breakthroughs are
+ * always the cultivator's call and never happen here, online or off.
  */
-export const cultivate: DayStep = (s, days) => {
-  if (s.ended || days <= 0) return s;
-  const rates = dayRates(s);
+export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): CultivateResult {
+  if (days <= 0) return { cultivator: c, notes: [], breakthroughs: [] };
+  const rates = dayRates(c, ctx.day);
   // No stones burn once the qi bar is at its cap: the qi would be lost.
-  const capped = barFill(s.qi) >= BAR_CAP - 1e-9;
-  const burned = capped ? 0 : Math.min(s.stones, rates.stoneCap * days);
+  const capped = barFill(c.qi) >= BAR_CAP - 1e-9;
+  const burned = capped ? 0 : Math.min(c.stones, rates.stoneCap * days);
   const qiGain = rates.qi * days + burned * rates.qiPerStone;
-  let next: GameState = {
-    ...s,
-    qi: { ...s.qi, bar: capBar(s.qi, s.qi.bar + qiGain) },
-    body: { ...s.body, bar: capBar(s.body, s.body.bar + rates.body * days) },
-    soul: { ...s.soul, bar: capBar(s.soul, s.soul.bar + rates.soul * days) },
-    insight: {
-      current: s.insight.current + rates.insight * days,
-      earned: s.insight.earned + rates.insight * days,
+  let next: Cultivator = addPractice(
+    {
+      ...c,
+      qi: { ...c.qi, bar: capBar(c.qi, c.qi.bar + qiGain) },
+      body: { ...c.body, bar: capBar(c.body, c.body.bar + rates.body * days) },
+      soul: { ...c.soul, bar: capBar(c.soul, c.soul.bar + rates.soul * days) },
+      insight: {
+        current: c.insight.current + rates.insight * days,
+        earned: c.insight.earned + rates.insight * days,
+      },
+      stones: c.stones - burned,
     },
-    stones: s.stones - burned,
-  };
-  next = checkUnlocks(next);
+    rates.practice * days,
+  );
+  const unlocked = checkUnlocks(next);
+  next = unlocked.cultivator;
+  const notes = [...unlocked.notes];
+  const breakthroughs: CultivateResult['breakthroughs'] = [];
   for (const which of LADDERS) {
-    if (autoWouldAttempt(next, which)) next = attemptBreakthrough(next, which).state;
+    if (!autoWouldAttempt(next, which)) continue;
+    const r = attemptBreakthrough(next, which, ctx);
+    next = r.cultivator;
+    notes.push(...r.notes);
+    breakthroughs.push({ ladder: which, success: r.success, major: r.major });
   }
-  return next;
-};
+  return { cultivator: next, notes, breakthroughs };
+}

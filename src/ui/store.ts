@@ -1,13 +1,16 @@
 // The Zustand store that bridges core and UI: it owns the open slot, runs the loop, autosaves,
 // and holds the slot's tab lock so two tabs never autosave over each other.
 import { create } from 'zustand';
+import { PLACEHOLDER_TECHNIQUE } from '../content/techniques.ts';
+import type { LadderId } from '../core/cultivation.ts';
 import {
-  attemptBreakthrough,
   attemptLastChance,
+  breakThrough,
   cultivate,
   endLife,
-  type LadderId,
-} from '../core/cultivation.ts';
+  learn,
+  practice,
+} from '../core/life.ts';
 import { advance, catchUp, TICK_MS, type OfflineResult } from '../core/loop.ts';
 import { makeSave, SaveError } from '../core/save/format.ts';
 import { exportFileName } from '../core/save/file.ts';
@@ -54,9 +57,13 @@ export interface GameStore {
   /** Saves now; each breakthrough saves with `rewindPoint` set. */
   saveNow(opts?: { rewindPoint?: boolean }): Promise<void>;
   /** Changes the seclusion plan: shares, the auto setting, burning stones. */
-  setPlan(patch: Partial<GameState['plan']>): void;
+  setPlan(patch: Partial<GameState['player']['plan']>): void;
   /** Attempts a ladder's next breakthrough, minor or major. */
   breakThrough(ladder: LadderId): void;
+  /** Learns a tree node with insight; returns why not, or null. */
+  learnNode(id: string): string | null;
+  /** Points practice days at a technique, or at nothing. */
+  practice(id: string | null): void;
   /** At the lifespan edge: the last breakthrough, or the end of the life if it fails. */
   lastChance(): void;
   /** At the lifespan edge: accept the end. */
@@ -290,7 +297,13 @@ export const useGame = create<GameStore>()((set, get) => {
     startLife: (slot, mode) =>
       serial(async () => {
         // Character creation arrives in P1.4; until then a new life is a nameless placeholder.
-        const state = newLife({ name: 'Nameless', mode, seed: `slot${slot}-${Date.now()}` });
+        // Until then, too, every life is the cave orphan who went along, with that first technique.
+        const state = newLife({
+          name: 'Nameless',
+          mode,
+          seed: `slot${slot}-${Date.now()}`,
+          techniques: [PLACEHOLDER_TECHNIQUE],
+        });
         await db().write(slot, makeSave(state, Date.now()), { rewindPoint: true });
         await refreshSlots();
         await openSlotNow(slot);
@@ -307,16 +320,32 @@ export const useGame = create<GameStore>()((set, get) => {
     setPlan(patch) {
       const { game } = get();
       if (!game) return;
-      set({ game: { ...game, plan: { ...game.plan, ...patch } } });
+      const p = game.player;
+      set({ game: { ...game, player: { ...p, plan: { ...p.plan, ...patch } } } });
     },
 
     breakThrough(ladder) {
       const { game } = get();
       if (!game || !holdsLock) return;
-      const r = attemptBreakthrough(game, ladder);
+      const r = breakThrough(game, ladder);
       if (!r.attempted) return;
       update(r.state);
       if (!r.success) void get().saveNow();
+    },
+
+    learnNode(id) {
+      const { game } = get();
+      if (!game || !holdsLock) return 'This life is not open in this tab.';
+      const r = learn(game, id);
+      if (!r.check.ok) return r.check.reason;
+      set({ game: r.state });
+      return null;
+    },
+
+    practice(id) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      set({ game: practice(game, id) });
     },
 
     lastChance() {
@@ -339,7 +368,11 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!game?.ended || !holdsLock) return;
       // Character creation arrives in P1.4; until then each life is a nameless placeholder.
       set({
-        game: nextLife(game, { name: 'Nameless', seed: `${game.lineage.id}-${Date.now()}` }),
+        game: nextLife(game, {
+          name: 'Nameless',
+          seed: `${game.lineage.id}-${Date.now()}`,
+          techniques: [PLACEHOLDER_TECHNIQUE],
+        }),
         away: null,
       });
       await get().saveNow({ rewindPoint: true });
@@ -356,7 +389,7 @@ export const useGame = create<GameStore>()((set, get) => {
         );
         const a = document.createElement('a');
         a.href = url;
-        a.download = exportFileName(save.state.character.name, slot, new Date(now));
+        a.download = exportFileName(save.state.player.name, slot, new Date(now));
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 10_000);
       } catch (e) {
@@ -374,7 +407,7 @@ export const useGame = create<GameStore>()((set, get) => {
         }
         try {
           const save = await db().importSlot(slot, new Uint8Array(await file.arrayBuffer()));
-          set({ notice: `Imported ${save.state.character.name} into slot ${slot}.` });
+          set({ notice: `Imported ${save.state.player.name} into slot ${slot}.` });
         } catch (e) {
           set({ notice: `Import failed: ${message(e)}` });
         }

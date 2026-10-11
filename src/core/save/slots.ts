@@ -40,10 +40,10 @@ export interface SlotSummary {
   /** Neither the save nor its backup passes its check. */
   broken?: boolean;
   name?: string;
-  qiRealm?: GameState['qi']['realm'];
+  qiRealm?: GameState['player']['qi']['realm'];
   qiStage?: number;
   age?: number;
-  mode?: GameState['character']['mode'];
+  mode?: GameState['mode'];
   savedAt?: number;
   lastExportAt?: number;
   canRewind?: boolean;
@@ -144,7 +144,7 @@ export class SaveSlots {
     const loaded = await this.load(slot);
     if (!loaded) throw new SaveError(`Slot ${slot} is empty.`);
     const cur = loaded.save.state;
-    if (cur.character.mode !== 'gentle') throw new SaveError('Only gentle mode can rewind.');
+    if (cur.mode !== 'gentle') throw new SaveError('Only gentle mode can rewind.');
     if (cur.rewindCharges < 1)
       throw new SaveError('The rewind is spent until the next major breakthrough.');
     const point = tryLoad(this.known.get(slot)?.rewind);
@@ -183,14 +183,14 @@ export class SaveSlots {
       return {
         slot,
         empty: false,
-        name: s.character.name,
-        qiRealm: s.qi.realm,
-        qiStage: s.qi.stage,
-        age: ageYears(s),
-        mode: s.character.mode,
+        name: s.player.name,
+        qiRealm: s.player.qi.realm,
+        qiStage: s.player.qi.stage,
+        age: ageYears(s.player, s.calendar.day),
+        mode: s.mode,
         savedAt: save.savedAt,
         lastExportAt: rec.lastExportAt,
-        canRewind: s.character.mode === 'gentle' && s.rewindCharges > 0 && rec.rewind !== undefined,
+        canRewind: s.mode === 'gentle' && s.rewindCharges > 0 && rec.rewind !== undefined,
       };
     });
   }

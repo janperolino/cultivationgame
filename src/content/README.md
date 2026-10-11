@@ -8,3 +8,6 @@ Game content as data: realms, trees and nodes, techniques, recipes, items, talen
 - `roots.ts`: spirit roots with odds, grade and qi speed.
 - `methods.ts`: cultivation methods and how well each fits each kind of root.
 - `cultivation.ts`: the seclusion and breakthrough constants that `sim/pacing.ts` tunes, the default plan, the auto settings, grades and when each seclusion slot opens.
+- `stats.ts`: every stat a node, talent or item can move, with its unit and, for stats no rule reads yet, the system that will (`arrives`).
+- `trees/`: the tree format (`schema.ts`: nine tiers, a starter and a capstone per tier, nodes on a 5 × 4 grid per tier band) and the Qi, Body and Soul trees, tiers 1 and 2. A tier is held at half its nodes, and a tier's starter needs the tier below held.
+- `techniques.ts`: mastery levels and the techniques, starting with each origin path's first one (`firstFor: origin/choice`).

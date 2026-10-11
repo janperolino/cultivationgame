@@ -1,16 +1,11 @@
 // The save envelope, its version number and the migrations that bring old saves up to date.
 import { z } from 'zod';
 import { DEFAULT_SHARES } from '../../content/cultivation.ts';
-import {
-  DAYS_PER_YEAR,
-  GameStateSchema,
-  START_AGE,
-  startingUnlocks,
-  type GameState,
-} from '../state.ts';
+import { PLACEHOLDER_TECHNIQUE } from '../../content/techniques.ts';
+import { DAYS_PER_YEAR, GameStateSchema, PLAYER_ID, START_AGE, type GameState } from '../state.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export const SaveSchema = z.object({
   version: z.literal(SAVE_VERSION),
@@ -98,7 +93,61 @@ const migrations: Record<number, (old: Raw) => Raw> = {
         plan: { shares: { ...DEFAULT_SHARES }, auto: 'safe', burnStones: true },
         glass: { seed: rng, fractures: 0, flares: 0 },
         ended: null,
-        unlocks: [...new Set([...unlocks, ...startingUnlocks('garrison-standard')])],
+        unlocks: [...new Set([...unlocks, 'abode', 'cultivate', 'seclusion-qi'])],
+      },
+    };
+  },
+  // v2, P1.2: one flat state. v3 moves what belongs to a cultivator into `player`, so the rules
+  // can take a Cultivator; its milestone flags (seclusion slots, gates reached) move with it,
+  // leaving the screen unlocks behind. The mode moves to the top. The one random state becomes
+  // named streams seeded from the life's seed (the glass seed, which was the first rng state);
+  // breakthroughs carry on from where the old stream stood. Placeholder lives on the garrison's
+  // method get its first technique, which P1.4 hands out at creation from then on.
+  2: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const c = (s.character ?? {}) as Raw;
+    const glass = (s.glass ?? {}) as Raw;
+    const unlocks = Array.isArray(s.unlocks) ? (s.unlocks as string[]) : [];
+    const isFlag = (u: string) => u.startsWith('seclusion-') || u.startsWith('ready-');
+    const method = typeof c.method === 'string' ? c.method : null;
+    const technique = method === 'garrison-standard' ? PLACEHOLDER_TECHNIQUE : null;
+    const seed = typeof glass.seed === 'number' ? glass.seed | 0 : 0;
+    return {
+      ...old,
+      version: 3,
+      state: {
+        lineage: s.lineage,
+        mode: c.mode,
+        calendar: s.calendar,
+        player: {
+          id: PLAYER_ID,
+          name: c.name,
+          pronouns: c.pronouns,
+          look: c.look,
+          bornDay: c.bornDay,
+          lifespanBonus: c.lifespanBonus,
+          root: c.root,
+          method,
+          attributes: s.attributes,
+          qi: s.qi,
+          body: s.body,
+          soul: s.soul,
+          insight: s.insight,
+          stones: s.stones,
+          items: s.items,
+          plan: s.plan,
+          flags: unlocks.filter(isFlag),
+          nodes: [],
+          techniques: technique ? { [technique]: { practice: 0 } } : {},
+          practicing: technique,
+        },
+        glass: s.glass,
+        ended: s.ended,
+        chronicle: s.chronicle,
+        unlocks: [...unlocks.filter((u) => !isFlag(u)), ...(technique ? ['techniques'] : [])],
+        rewindCharges: s.rewindCharges,
+        seed,
+        rng: { breakthrough: typeof s.rng === 'number' ? s.rng | 0 : seed },
       },
     };
   },

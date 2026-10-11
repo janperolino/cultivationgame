@@ -1,0 +1,60 @@
+{
+  "version": 2,
+  "savedAt": 1792000000000,
+  "state": {
+    "lineage": { "id": "slot1-1791990000000", "life": 1 },
+    "character": {
+      "name": "Nameless",
+      "pronouns": "they/them",
+      "look": "",
+      "mode": "ironman",
+      "bornDay": 0,
+      "lifespanBonus": 0,
+      "root": "single",
+      "method": "garrison-standard"
+    },
+    "attributes": { "agility": 10, "fortune": 10, "aptitude": 10 },
+    "calendar": { "day": 4800.5 },
+    "qi": {
+      "realm": "qi-condensation",
+      "stage": 4,
+      "bar": 120.5,
+      "grades": [],
+      "unsettledUntil": 0,
+      "injuredUntil": 0
+    },
+    "body": {
+      "realm": "qi-condensation",
+      "stage": 2,
+      "bar": 30,
+      "grades": [],
+      "unsettledUntil": 0,
+      "injuredUntil": 0
+    },
+    "soul": {
+      "realm": "qi-condensation",
+      "stage": 1,
+      "bar": 0,
+      "grades": [],
+      "unsettledUntil": 0,
+      "injuredUntil": 0
+    },
+    "insight": { "current": 40, "earned": 64 },
+    "stones": 3,
+    "items": { "foundation-pill": 1 },
+    "plan": {
+      "shares": { "qi": 60, "body": 15, "soul": 10, "study": 10, "practice": 5 },
+      "auto": "safe",
+      "burnStones": true
+    },
+    "glass": { "seed": -1180352981, "fractures": 3, "flares": 4 },
+    "ended": null,
+    "chronicle": [
+      { "day": 4320, "kind": "birth", "text": "Nameless comes of age on root-testing day." },
+      { "day": 4500, "kind": "breakthrough", "text": "Qi breaks through to Layer 2." }
+    ],
+    "unlocks": ["abode", "cultivate", "seclusion-qi", "seclusion-body", "seclusion-study"],
+    "rewindCharges": 0,
+    "rng": 918273645
+  }
+}

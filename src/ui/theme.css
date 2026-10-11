@@ -638,6 +638,189 @@ select {
   font-size: 13px;
 }
 
+/* Trees: a pannable graph in tier bands. Gold marks what you can learn, crack light what you
+   hold; sealed tiers are dimmed. */
+.tree-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.tree-top .value {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.tree-graph {
+  margin-top: 12px;
+  max-width: 100%;
+  max-height: min(70vh, 640px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-small);
+  background: var(--well);
+  cursor: grab;
+  user-select: none;
+}
+
+.tree-graph:active {
+  cursor: grabbing;
+}
+
+.tier-band {
+  position: relative;
+  border-bottom: 1px solid var(--edge);
+}
+
+.tier-band:last-child {
+  border-bottom: 0;
+}
+
+.tier-band.is-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  opacity: 0.5;
+}
+
+.tier-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  border-bottom: 1px dashed var(--edge);
+}
+
+.tier-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.tier-grid {
+  position: relative;
+}
+
+.tier-edges {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tier-edges line {
+  stroke: var(--edge-strong);
+  stroke-width: 1.5;
+}
+
+.tier-edges line.is-lit {
+  stroke: var(--crack);
+  stroke-opacity: 0.7;
+}
+
+.tier-edges line.is-tier {
+  stroke-dasharray: 3 4;
+}
+
+.tree-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 4px 6px;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-small);
+  background: var(--glass-strong);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+}
+
+.tree-node-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.tree-node-cost {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tree-node.is-starter,
+.tree-node.is-capstone {
+  border-radius: 999px;
+}
+
+.tree-node.is-available {
+  border-color: var(--accent-edge);
+}
+
+.tree-node.is-available .tree-node-cost {
+  color: var(--accent);
+}
+
+.tree-node.is-learned {
+  border-color: var(--crack);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--crack) 35%, transparent);
+}
+
+.tree-node.is-learned .tree-node-cost {
+  color: var(--crack);
+}
+
+.tree-node.is-locked .tree-node-name {
+  color: var(--muted);
+}
+
+.tree-node.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tier-band.is-sealed .tier-grid {
+  opacity: 0.45;
+}
+
+.tier-band.is-sealed .tree-node.is-selected {
+  opacity: 1;
+}
+
+.effects {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+/* Techniques */
+.technique + .technique {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--edge);
+}
+
+.technique .muted {
+  margin-top: 4px;
+}
+
+.technique.is-sealed .bars {
+  opacity: 0.45;
+}
+
+.button[aria-pressed='true'] {
+  border-color: var(--crack);
+  color: var(--crack);
+}
+
 /* Below 900px: the menu becomes a drawer and the context panel a bottom sheet. */
 @media (max-width: 899px) {
   .shell {

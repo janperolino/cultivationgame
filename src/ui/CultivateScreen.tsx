@@ -2,6 +2,7 @@ import { AUTO_IDS, AUTO_SETTINGS, GRADES, type SlotId } from '../content/cultiva
 import { method } from '../content/methods.ts';
 import { realm } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
+import { technique } from '../content/techniques.ts';
 import {
   barFill,
   dayRates,
@@ -34,20 +35,24 @@ const ITEM_NAMES: Record<string, string> = {
 
 function PlanPanel({ game }: { game: GameState }) {
   const setPlan = useGame((s) => s.setPlan);
-  const open = openSlots(game);
-  const shares = dayShares(game);
-  const rates = dayRates(game);
-  const speed = qiSpeed(game);
+  const open = openSlots(game.player);
+  const shares = dayShares(game.player);
+  const rates = dayRates(game.player, game.calendar.day);
+  const speed = qiSpeed(game.player);
   const perDay: Partial<Record<SlotId, string>> = {
     qi: `+${formatNumber(rates.qi)} qi a day`,
     body: `+${formatNumber(rates.body)} tempering a day`,
     soul: `+${formatNumber(rates.soul)} nourishment a day`,
     study: `+${formatNumber(rates.insight)} insight a day, with every day's trickle`,
+    practice:
+      rates.practice > 0 && game.player.practicing
+        ? `+${rates.practice.toFixed(2)} practice days a day on ${technique(game.player.practicing).name}`
+        : 'Nothing to practice: pick a technique on the Techniques screen.',
   };
-  const r = root(game.character.root);
-  const m = game.character.method ? method(game.character.method) : null;
+  const r = root(game.player.root);
+  const m = game.player.method ? method(game.player.method) : null;
   const qiWhy = m
-    ? `Qi speed ×${speed.total.toFixed(2)}: root ×${speed.root}, method fit ×${speed.fit}, qi density ×${speed.density}, Aptitude ×${speed.aptitude.toFixed(2)}${inTutorial(game.qi) ? '. Layers 1–3 ignore the root and the fit' : ''}.`
+    ? `Qi speed ×${speed.total.toFixed(2)}: root ×${speed.root}, method fit ×${speed.fit}, qi density ×${speed.density}, Aptitude ×${speed.aptitude.toFixed(2)}${speed.nodes !== 1 ? `, tree nodes ×${speed.nodes.toFixed(2)}` : ''}${inTutorial(game.player.qi) ? '. Layers 1–3 ignore the root and the fit' : ''}.`
     : 'No method yet: qi days give nothing.';
 
   return (
@@ -72,9 +77,11 @@ function PlanPanel({ game }: { game: GameState }) {
                 min={0}
                 max={100}
                 step={5}
-                value={game.plan.shares[slot]}
+                value={game.player.plan.shares[slot]}
                 onChange={(e) =>
-                  setPlan({ shares: { ...game.plan.shares, [slot]: Number(e.target.value) } })
+                  setPlan({
+                    shares: { ...game.player.plan.shares, [slot]: Number(e.target.value) },
+                  })
                 }
                 aria-valuetext={`${formatPercent(shares[slot])} of each day`}
               />
@@ -98,7 +105,7 @@ function PlanPanel({ game }: { game: GameState }) {
               <button
                 key={id}
                 type="button"
-                aria-pressed={game.plan.auto === id}
+                aria-pressed={game.player.plan.auto === id}
                 onClick={() => setPlan({ auto: id })}
               >
                 {AUTO_SETTINGS[id].name}
@@ -109,23 +116,23 @@ function PlanPanel({ game }: { game: GameState }) {
         <label className="check">
           <input
             type="checkbox"
-            checked={game.plan.burnStones}
+            checked={game.player.plan.burnStones}
             onChange={(e) => setPlan({ burnStones: e.target.checked })}
           />
           Burn spirit stones on qi days
           {rates.stoneCap > 0 && (
             <span className="caption">
-              (up to {formatNumber(rates.stoneCap)} a day, {formatNumber(game.stones)} held)
+              (up to {formatNumber(rates.stoneCap)} a day, {formatNumber(game.player.stones)} held)
             </span>
           )}
         </label>
       </div>
       <p className="caption spaced">
-        {game.plan.auto === 'off'
+        {game.player.plan.auto === 'off'
           ? 'Minor breakthroughs wait for you; offline, a full bar holds.'
-          : game.plan.auto === 'bold'
+          : game.player.plan.auto === 'bold'
             ? 'Minor breakthroughs go the moment a bar is full.'
-            : `Minor breakthroughs go on their own at ${formatPercent(AUTO_SETTINGS[game.plan.auto].minOdds)} odds or a bar at 150%, online and off.`}{' '}
+            : `Minor breakthroughs go on their own at ${formatPercent(AUTO_SETTINGS[game.player.plan.auto].minOdds)} odds or a bar at 150%, online and off.`}{' '}
         Major breakthroughs are always yours to call, and never happen offline.
       </p>
     </section>
@@ -138,7 +145,7 @@ function Requirement({ met, children }: { met: boolean; children: React.ReactNod
 
 function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
   const breakThrough = useGame((s) => s.breakThrough);
-  const l = game[which];
+  const l = game.player[which];
   const step = nextStep(l);
   const fill = barFill(l);
   const unsettled = game.calendar.day < l.unsettledUntil;
@@ -149,7 +156,7 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
   if (step.kind === 'top') {
     body = <p className="muted">There is nowhere higher to climb.</p>;
   } else if (step.kind === 'minor') {
-    const odds = minorOdds(l);
+    const odds = minorOdds(game.player, which);
     body = (
       <div className="actions">
         <button
@@ -171,7 +178,7 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
       </div>
     );
   } else {
-    const check = majorCheck(game, which)!;
+    const check = majorCheck(game.player, which)!;
     const target = check.target;
     const gateName = check.gateItem ? (ITEM_NAMES[check.gateItem] ?? check.gateItem) : null;
     const grade = GRADES.find((g) => g.id === check.grade)!;
@@ -180,12 +187,12 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
         <ul className="reqs" aria-label={`Requirements for ${target.name}`}>
           <Requirement met={check.bar}>A full bar ({formatPercent(fill)})</Requirement>
           <Requirement met={check.insight}>
-            Insight ever earned {formatNumber(game.insight.earned)} of{' '}
+            Insight ever earned {formatNumber(game.player.insight.earned)} of{' '}
             {formatNumber(target.insightThreshold)}
           </Requirement>
           {gateName && (
             <Requirement met={check.gate}>
-              {gateName} ({itemCount(game, check.gateItem!)} held)
+              {gateName} ({itemCount(game.player, check.gateItem!)} held)
             </Requirement>
           )}
           {which !== 'qi' && (
@@ -237,7 +244,7 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
 export function CultivateScreen() {
   const game = useGame((s) => s.game);
   if (!game) return null;
-  const open = openSlots(game);
+  const open = openSlots(game.player);
   const ladders = (['qi', 'body', 'soul'] as const).filter((l) => l === 'qi' || open.includes(l));
 
   return (

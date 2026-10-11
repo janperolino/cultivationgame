@@ -7,7 +7,7 @@ import { useGame } from './store.ts';
 
 /** One ladder's bar: the crack light fills it, and the part past full glows brighter. */
 export function LadderBar({ game, which }: { game: GameState; which: LadderId }) {
-  const l = game[which];
+  const l = game.player[which];
   const fill = barFill(l);
   const over = Math.max(0, Math.min(1, (fill - 1) / 0.5));
   const value =
@@ -35,8 +35,8 @@ export function LadderBar({ game, which }: { game: GameState; which: LadderId })
 }
 
 export function AgeBar({ game }: { game: GameState }) {
-  const age = ageYears(game);
-  const lifespan = lifespanYears(game);
+  const age = ageYears(game.player, game.calendar.day);
+  const lifespan = lifespanYears(game.player);
   return (
     <div className="bar-row">
       <span className="label">Age</span>
@@ -86,7 +86,7 @@ export function LifeEdgeCard() {
   }
 
   if (!atLifespanEdge(game)) return null;
-  const chance = lastChance(game);
+  const chance = lastChance(game.player);
   return (
     <section className="panel card-edge" aria-labelledby="edge-heading">
       <h2 id="edge-heading" className="panel-heading">

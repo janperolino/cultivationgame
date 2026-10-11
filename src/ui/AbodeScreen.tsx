@@ -11,21 +11,26 @@ function AwayCard({ away }: { away: AwaySummary }) {
   const dismissAway = useGame((s) => s.dismissAway);
   const { before, state } = away;
   const breakthroughs = state.glass.flares - before.glass.flares;
-  const insight = state.insight.earned - before.insight.earned;
-  const stones = before.stones - state.stones;
-  const ready = majorCheck(state, 'qi');
+  const insight = state.player.insight.earned - before.player.insight.earned;
+  const stones = before.player.stones - state.player.stones;
+  const ready = majorCheck(state.player, 'qi');
   const lines: string[] = [];
-  if (state.qi.stage !== before.qi.stage || state.qi.realm !== before.qi.realm) {
-    lines.push(`Qi rose to ${formatLadder(state.qi)}.`);
+  if (
+    state.player.qi.stage !== before.player.qi.stage ||
+    state.player.qi.realm !== before.player.qi.realm
+  ) {
+    lines.push(`Qi rose to ${formatLadder(state.player.qi)}.`);
   }
   for (const which of ['body', 'soul'] as const) {
-    if (state[which].stage !== before[which].stage) {
-      lines.push(`${which === 'body' ? 'Body' : 'Soul'} rose to ${formatLadder(state[which])}.`);
+    if (state.player[which].stage !== before.player[which].stage) {
+      lines.push(
+        `${which === 'body' ? 'Body' : 'Soul'} rose to ${formatLadder(state.player[which])}.`,
+      );
     }
   }
   if (breakthroughs > 0) {
     lines.push(
-      `${breakthroughs} minor ${breakthroughs === 1 ? 'breakthrough' : 'breakthroughs'} on ${state.plan.auto} odds.`,
+      `${breakthroughs} minor ${breakthroughs === 1 ? 'breakthrough' : 'breakthroughs'} on ${state.player.plan.auto} odds.`,
     );
   }
   if (insight >= 1) lines.push(`Insight +${formatNumber(insight)}.`);
@@ -69,12 +74,12 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
   const away = useGame((s) => s.away);
   if (!game) return null;
 
-  const shares = dayShares(game);
-  const open = new Set(openSlots(game));
+  const shares = dayShares(game.player);
+  const open = new Set(openSlots(game.player));
   const plan = SLOTS.filter((s) => open.has(s) && shares[s] > 0)
     .map((s) => `${formatPercent(shares[s])} ${SLOT_NAMES[s]}`)
     .join(' · ');
-  const ready = majorCheck(game, 'qi');
+  const ready = majorCheck(game.player, 'qi');
 
   return (
     <>
@@ -96,9 +101,9 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
 
       <section className="panel">
         <h2 className="realm-title">
-          {formatLadder(game.qi)}
+          {formatLadder(game.player.qi)}
           <small>
-            {game.character.name} · {game.character.pronouns}
+            {game.player.name} · {game.player.pronouns}
           </small>
         </h2>
         <div className="bars">
@@ -110,11 +115,11 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
         <dl className="stats">
           <div>
             <dt>Insight</dt>
-            <dd>{formatNumber(game.insight.current)}</dd>
+            <dd>{formatNumber(game.player.insight.current)}</dd>
           </div>
           <div>
             <dt>Spirit stones</dt>
-            <dd>{formatNumber(game.stones)}</dd>
+            <dd>{formatNumber(game.player.stones)}</dd>
           </div>
           {plan && (
             <div>
@@ -124,7 +129,8 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
           )}
         </dl>
         <p className="caption spaced">
-          Lifespan {realm(game.qi.realm).lifespan} years at {realm(game.qi.realm).name}.
+          Lifespan {realm(game.player.qi.realm).lifespan} years at{' '}
+          {realm(game.player.qi.realm).name}.
         </p>
       </section>
     </>

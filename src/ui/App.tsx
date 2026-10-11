@@ -3,6 +3,8 @@ import { AbodeScreen } from './AbodeScreen.tsx';
 import { CultivateScreen } from './CultivateScreen.tsx';
 import { GlassBackground } from './GlassBackground.tsx';
 import { SettingsScreen } from './SettingsScreen.tsx';
+import { TechniquesScreen } from './TechniquesScreen.tsx';
+import { TreesScreen } from './TreesScreen.tsx';
 import { formatAge } from './format.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
@@ -154,6 +156,8 @@ export function App() {
             <AbodeScreen onCultivate={() => setScreen('cultivate')} />
           )}
           {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
+          {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
+          {phase !== 'loading' && current.id === 'techniques' && <TechniquesScreen />}
           {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
         </main>
 
@@ -177,9 +181,9 @@ export function App() {
                 <li key={`${c.day}-${i}`}>
                   <span className="muted chronicle-age">
                     {game &&
-                      (c.day < game.character.bornDay
+                      (c.day < game.player.bornDay
                         ? 'a past life'
-                        : `age ${formatAge(ageYears({ ...game, calendar: { day: c.day } }))}`)}
+                        : `age ${formatAge(ageYears(game.player, c.day))}`)}
                   </span>
                   {c.text}
                 </li>

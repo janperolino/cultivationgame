@@ -29,6 +29,18 @@ export function hashSeed(s: string): number {
   return h >>> 0;
 }
 
+/**
+ * Named streams, one per system. Each is seeded from the life's seed and its own name, so adding
+ * a system, or rolling more in one, never shifts another's rolls.
+ */
+export const STREAMS = ['breakthrough', 'combat', 'world'] as const;
+export type StreamName = (typeof STREAMS)[number];
+
+/** The starting state of a named stream for a life's seed. */
+export function streamSeed(lifeSeed: number, name: StreamName): number {
+  return hashSeed(`${lifeSeed >>> 0}/${name}`) | 0;
+}
+
 /** A generator whose state is one integer, so saves can store it and resume the same sequence. */
 export class Rng {
   private s: number;
