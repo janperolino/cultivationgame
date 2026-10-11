@@ -1,0 +1,1183 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Severed Heaven Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,600;1,400&family=Alegreya+Sans:wght@400;500;700&family=Alegreya+Sans+SC:wght@500;700&family=Ma+Shan+Zheng&display=swap">
+<style>
+/* Layout: a full-screen atlas. Index rail on the left, the map in the middle, the entry folio on the right (a bottom sheet on phones). Palette after blue-green landscape painting: azurite sea, malachite land, ochre silk, ink lines, cinnabar seals. */
+:root{
+  --paper:#edf0ea; --panel:#f7f8f3; --ink:#1c2526; --ink-2:#56625f; --line:#c8d0c7; --hover:#e1e7df; --chip:#e4e9e2;
+  --void:#121925; --star:#c9d3e6; --sea:#5383a1; --sea-2:#41708d; --shallow:#93b9c7; --land:#dccfa6; --coast:#2c3536;
+  --river:#3b74a0; --ridge:#6e5c46; --jade:#dfeee2; --jade-edge:#6f8f80; --gold:#ad8424; --cinnabar:#b13a29; --mist:#f3f6f4;
+  --label:#1b2425; --halo:rgba(246,244,236,.88); --sea-label:#eaf2f6; --sea-halo:rgba(40,80,110,.55);
+  --peak:#86a99d; --peak-2:#5d8377; --hill:#c5d3a2; --tree:#5f9364; --tree-2:#3f7451; --grave:#8e8a9c; --stone:#cfc6ae;
+  --ink-line:rgba(32,42,42,.78); --soft-line:rgba(62,74,56,.6); --dune:#a8823f; --wave:rgba(236,244,248,.55);
+  --w-orthodox:#22857a; --w-demonic:#a52c35; --w-buddhist:#bf8213; --w-ghost:#77679d; --w-wild:#5a8a2a; --w-sea:#2967a0; --w-neutral:#61656e; --w-void:#4b3562;
+  --t-plains:#cfd79e; --t-hills:#bac98f; --t-mountains:#a7bfae; --t-forest:#93b58c; --t-jungle:#79a274; --t-marsh:#9fac88;
+  --t-desert:#e6cf96; --t-steppe:#dbd49a; --t-ice:#eaf1f3; --t-tundra:#cfd8d2; --t-volcanic:#b1907e; --t-plateau:#d3c393;
+  --t-twilight:#aaa6b8; --t-islands:#d1cb9f; --t-coast:#d9d1a8; --t-canyon:#d4a982; --t-karst:#adc1a7;
+  --f-display:"Alegreya Sans SC","Alegreya Sans",system-ui,sans-serif;
+  --f-ui:"Alegreya Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Alegreya",Georgia,"Times New Roman",serif;
+  --f-han:"Ma Shan Zheng","Kaiti SC","STKaiti","KaiTi","Songti SC",serif;
+  --rail:300px; --folio:400px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0e1316; --panel:#141a1e; --ink:#e4e8df; --ink-2:#9ca8a4; --line:#2a3439; --hover:#1d252a; --chip:#1f282c;
+  --void:#05080c; --star:#7f8ca3; --sea:#173a53; --sea-2:#0f2a3d; --shallow:#2b5a6f; --land:#4e4734; --coast:#cfc7aa;
+  --river:#62a2cf; --ridge:#b9a07d; --jade:#a9c3b0; --jade-edge:#5f7d70; --gold:#dab85c; --cinnabar:#e5664f; --mist:#c3cfd4;
+  --label:#eef1e7; --halo:rgba(9,13,15,.82); --sea-label:#a9c8d6; --sea-halo:rgba(4,16,24,.7);
+  --peak:#4f6f66; --peak-2:#36514a; --hill:#4c5838; --tree:#3d6b47; --tree-2:#2c5338; --grave:#6c697b; --stone:#7d7562;
+  --ink-line:rgba(226,230,214,.55); --soft-line:rgba(210,214,190,.38); --dune:#b5935a; --wave:rgba(150,190,210,.32);
+  --w-orthodox:#3bb3a3; --w-demonic:#de4f58; --w-buddhist:#e0a536; --w-ghost:#a596cf; --w-wild:#86b84e; --w-sea:#4f97d6; --w-neutral:#959aa4; --w-void:#9a7bc0;
+  --t-plains:#525a3a; --t-hills:#4a5737; --t-mountains:#41585a; --t-forest:#304c37; --t-jungle:#294630; --t-marsh:#404b37;
+  --t-desert:#6c5c37; --t-steppe:#5c5835; --t-ice:#6e7d83; --t-tundra:#515c59; --t-volcanic:#523c35; --t-plateau:#5f5639;
+  --t-twilight:#423f50; --t-islands:#565138; --t-coast:#57523a; --t-canyon:#604634; --t-karst:#405042;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0e1316; --panel:#141a1e; --ink:#e4e8df; --ink-2:#9ca8a4; --line:#2a3439; --hover:#1d252a; --chip:#1f282c;
+  --void:#05080c; --star:#7f8ca3; --sea:#173a53; --sea-2:#0f2a3d; --shallow:#2b5a6f; --land:#4e4734; --coast:#cfc7aa;
+  --river:#62a2cf; --ridge:#b9a07d; --jade:#a9c3b0; --jade-edge:#5f7d70; --gold:#dab85c; --cinnabar:#e5664f; --mist:#c3cfd4;
+  --label:#eef1e7; --halo:rgba(9,13,15,.82); --sea-label:#a9c8d6; --sea-halo:rgba(4,16,24,.7);
+  --peak:#4f6f66; --peak-2:#36514a; --hill:#4c5838; --tree:#3d6b47; --tree-2:#2c5338; --grave:#6c697b; --stone:#7d7562;
+  --ink-line:rgba(226,230,214,.55); --soft-line:rgba(210,214,190,.38); --dune:#b5935a; --wave:rgba(150,190,210,.32);
+  --w-orthodox:#3bb3a3; --w-demonic:#de4f58; --w-buddhist:#e0a536; --w-ghost:#a596cf; --w-wild:#86b84e; --w-sea:#4f97d6; --w-neutral:#959aa4; --w-void:#9a7bc0;
+  --t-plains:#525a3a; --t-hills:#4a5737; --t-mountains:#41585a; --t-forest:#304c37; --t-jungle:#294630; --t-marsh:#404b37;
+  --t-desert:#6c5c37; --t-steppe:#5c5835; --t-ice:#6e7d83; --t-tundra:#515c59; --t-volcanic:#523c35; --t-plateau:#5f5639;
+  --t-twilight:#423f50; --t-islands:#565138; --t-coast:#57523a; --t-canyon:#604634; --t-karst:#405042;
+  color-scheme:dark}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--w-orthodox);outline-offset:2px}
+#app{height:100%;display:grid;grid-template-rows:auto 1fr;grid-template-columns:var(--rail) 1fr;grid-template-areas:"bar bar" "rail map"}
+#app.folio-open{grid-template-columns:var(--rail) 1fr var(--folio);grid-template-areas:"bar bar bar" "rail map folio"}
+
+/* top bar */
+.bar{grid-area:bar;display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid var(--line);background:var(--panel);min-width:0;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand .han{font-family:var(--f-han);font-size:26px;line-height:1;color:var(--cinnabar)}
+.brand .pin{font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:.08em;white-space:nowrap}
+.brand .era{font-size:13px;color:var(--ink-2);white-space:nowrap}
+.bar .spacer{flex:1}
+.layers{display:flex;gap:4px;flex-wrap:wrap}
+.tog{border:1px solid var(--line);background:transparent;border-radius:999px;padding:3px 10px;font-size:13px;color:var(--ink-2)}
+.tog[aria-pressed="true"]{background:var(--chip);color:var(--ink);border-color:var(--ink-2)}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:5px 12px;font-size:14px}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.btn.primary:hover{opacity:.9}
+.btn.danger{color:var(--cinnabar);border-color:var(--cinnabar)}
+.iconbtn{border:1px solid var(--line);background:var(--panel);width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:17px;line-height:1}
+.only-narrow{display:none}
+
+/* rail */
+.rail{grid-area:rail;border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0;min-width:0}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:transparent;padding:9px 4px;font-family:var(--f-display);font-weight:700;font-size:13px;letter-spacing:.06em;color:var(--ink-2);border-bottom:2px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--cinnabar)}
+.search{padding:10px 12px;border-bottom:1px solid var(--line)}
+.search input{width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:6px 10px}
+.list{overflow:auto;flex:1;padding:6px 0 24px}
+.row{display:flex;align-items:center;gap:6px;padding:3px 12px 3px calc(12px + var(--d,0) * 14px);cursor:pointer;min-width:0}
+.row:hover{background:var(--hover)}
+.row.sel{background:var(--chip);box-shadow:inset 3px 0 0 var(--cinnabar)}
+.row .tw{width:16px;flex:none;border:0;background:transparent;color:var(--ink-2);padding:0;font-size:11px}
+.row .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.row .hz{font-family:var(--f-han);color:var(--ink-2);font-size:13px;flex:none;opacity:.8}
+.row .kd{margin-left:auto;font-size:11px;color:var(--ink-2);flex:none;text-transform:lowercase}
+.row .dot{width:8px;height:8px;border-radius:2px;flex:none}
+.group-h{font-family:var(--f-display);font-weight:700;font-size:12px;letter-spacing:.08em;color:var(--ink-2);padding:12px 12px 4px}
+.tl{position:relative;margin:4px 12px 0 22px;border-left:2px solid var(--line)}
+.tl .it{position:relative;padding:6px 0 10px 14px;cursor:pointer}
+.tl .it::before{content:"";position:absolute;left:-7px;top:11px;width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid var(--ink-2)}
+.tl .it.era::before{border-radius:2px;background:var(--ink-2)}
+.tl .it.sel::before{border-color:var(--cinnabar);background:var(--cinnabar)}
+.tl .yr{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.tl .tt{font-weight:500}
+.tl .sm{font-size:13px;color:var(--ink-2)}
+
+/* map */
+.map{grid-area:map;position:relative;min-width:0;min-height:0;overflow:hidden;background:var(--void)}
+#svg{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+#svg.picking{cursor:crosshair}
+.zoomctl{position:absolute;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;z-index:3}
+.scale{position:absolute;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));font-size:12px;color:var(--mist);z-index:3;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.scale i{display:block;height:6px;border:1.5px solid var(--mist);border-top:0;margin-top:2px}
+#tip{position:absolute;pointer-events:none;z-index:4;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;max-width:280px;box-shadow:0 4px 18px rgba(0,0,0,.18)}
+#tip .t1{font-weight:700}
+#tip .t2{color:var(--ink-2);display:flex;gap:6px;align-items:baseline}
+#tip .t2 span{font-family:var(--f-han);font-size:15px}
+#tip .t3{color:var(--ink-2);font-size:12px}
+.banner{position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:3;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;max-width:min(460px,calc(100% - 32px));font-size:14px;box-shadow:0 4px 18px rgba(0,0,0,.18)}
+.banner b{display:block;font-family:var(--f-display);letter-spacing:.05em}
+.pickhint{position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:3;background:var(--cinnabar);color:#fff;border-radius:999px;padding:6px 14px;font-size:14px}
+.vignette{position:absolute;inset:0;pointer-events:none;z-index:1;box-shadow:inset 0 0 90px rgba(0,0,0,.35)}
+
+/* svg styling */
+.coast{fill:none;stroke:var(--coast);stroke-width:1.2px;vector-effect:non-scaling-stroke;stroke-opacity:.75}
+.halo{fill:none;stroke:var(--shallow);stroke-linejoin:round;opacity:.55}
+.ripple{fill:none;stroke:var(--shallow);stroke-width:.9px;vector-effect:non-scaling-stroke;opacity:.75}
+.ripple.far{stroke-dasharray:5 4;opacity:.5}
+.landfill{fill:var(--land)}
+.cell{stroke:var(--coast);stroke-opacity:.35;stroke-width:.8px;vector-effect:non-scaling-stroke;stroke-dasharray:4 3}
+.cell:hover{filter:brightness(1.05)}
+.kingdom{fill:var(--land);fill-opacity:.3;stroke:var(--coast);stroke-opacity:.6;stroke-width:1px;vector-effect:non-scaling-stroke;stroke-dasharray:1.5 2.5}
+.kingdom.insea{fill:var(--t-islands);fill-opacity:1;stroke-dasharray:none}
+.isle{fill:var(--t-islands);stroke:var(--coast);stroke-opacity:.6;stroke-width:.6px;vector-effect:non-scaling-stroke}
+.isle.float{fill:var(--jade);stroke-dasharray:2 2}
+.zone{fill:var(--sea-2);fill-opacity:.22;stroke:var(--sea-label);stroke-opacity:.6;stroke-width:1px;vector-effect:non-scaling-stroke;stroke-dasharray:3 4}
+.forb{fill:url(#hatch);stroke:var(--cinnabar);stroke-width:1.4px;vector-effect:non-scaling-stroke;stroke-dasharray:5 3}
+.scarfill{fill:url(#scarGrad);stroke:var(--cinnabar);stroke-width:1.6px;vector-effect:non-scaling-stroke;stroke-dasharray:6 3}
+.river{fill:none;stroke:var(--river);stroke-width:1.7px;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
+.river-w{fill:none;stroke:var(--river);stroke-linecap:round;stroke-linejoin:round;opacity:.45}
+.ridge-w{fill:none;stroke:var(--ridge);stroke-linecap:round;stroke-linejoin:round;opacity:.16}
+.hitline{fill:none;stroke:transparent;stroke-linecap:round;pointer-events:stroke}
+.wall{fill:none;stroke:var(--ink);stroke-width:2px;vector-effect:non-scaling-stroke;stroke-dasharray:6 3}
+.road{fill:none;stroke:var(--dune);stroke-width:1.2px;vector-effect:non-scaling-stroke;stroke-dasharray:3 3}
+.span-shadow{fill:none;stroke:#000;opacity:.13;stroke-linecap:round;stroke-linejoin:round}
+.span-edge{fill:none;stroke:var(--jade-edge);stroke-linecap:round;stroke-linejoin:round}
+.span-body{fill:none;stroke:var(--jade);stroke-linecap:round;stroke-linejoin:round}
+.route{fill:none;stroke:var(--gold);stroke-width:1.8px;vector-effect:non-scaling-stroke;stroke-dasharray:1 6;stroke-linecap:round}
+.sphere{stroke-width:1.2px;vector-effect:non-scaling-stroke;stroke-dasharray:4 4;fill-opacity:.08;stroke-opacity:.7}
+.selring{fill:none;stroke:var(--cinnabar);stroke-width:2.5px;vector-effect:non-scaling-stroke}
+.hit{cursor:pointer}
+/* terrain drawings */
+.glyphs{pointer-events:none}
+.g-peak{fill:var(--peak)} .g-shade{fill:var(--peak-2)} .g-hill{fill:var(--hill)} .g-tree{fill:var(--tree)} .g-tree2{fill:var(--tree-2)}
+.g-crater{fill:var(--cinnabar)} .g-grave{fill:var(--grave)} .g-stone{fill:var(--stone)}
+.g-ink{fill:none;stroke:var(--ink-line);stroke-width:.9px;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.g-soft{fill:none;stroke:var(--soft-line);stroke-width:.85px;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.g-dune{fill:none;stroke:var(--dune);stroke-width:1px;vector-effect:non-scaling-stroke;stroke-linecap:round;opacity:.85}
+.g-wave{fill:none;stroke:var(--wave);stroke-width:.9px;vector-effect:non-scaling-stroke;stroke-linecap:round}
+svg[data-lod="0"] .glyphs{opacity:.6}
+svg[data-lod="0"] .g-ink, svg[data-lod="0"] .g-soft, svg[data-lod="0"] .g-dune{display:none}
+svg[data-lod="0"] .g-wave{opacity:.45}
+svg[data-lod="0"] .cell{pointer-events:none}
+svg[data-lod="0"] .kingdom{display:none}
+svg[data-lod="1"] .kingdom{pointer-events:none;fill-opacity:.12}
+svg[data-lod="0"] .zone{pointer-events:none}
+.lbl{font-family:var(--f-ui);fill:var(--label);paint-order:stroke;stroke:var(--halo);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.lbl.cont{font-family:var(--f-display);font-weight:700;letter-spacing:.18em}
+.lbl .han{font-family:var(--f-han);letter-spacing:0}
+.lbl.sea{font-family:var(--f-body);font-style:italic;fill:var(--sea-label);stroke:var(--sea-halo);letter-spacing:.12em}
+.lbl.region{font-family:var(--f-display);font-weight:500;letter-spacing:.1em}
+.lbl.kingdom{font-family:var(--f-body);font-style:italic}
+.lbl.minor{font-size:11px}
+.pin{cursor:pointer}
+.pin .shape{stroke:var(--panel);stroke-width:1.5px}
+.selmark{display:none;fill:none;stroke:var(--cinnabar);stroke-width:2.5px}
+.pin.sel .selmark{display:block}
+.lbl.cont{font-size:var(--cont-size,19px)}
+
+/* legend */
+.legend{position:absolute;left:12px;top:12px;z-index:3;background:color-mix(in srgb,var(--panel) 94%,transparent);border:1px solid var(--line);border-radius:10px;font-size:12.5px;max-width:min(300px,calc(100% - 80px));box-shadow:0 4px 18px rgba(0,0,0,.14);display:flex;flex-direction:column;max-height:calc(100% - 110px)}
+.legend > button{display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:7px 10px;font-family:var(--f-display);font-weight:700;letter-spacing:.08em;font-size:12px;color:var(--ink)}
+.legend > button span{margin-left:auto;color:var(--ink-2)}
+.legend .lg-body{overflow:auto;padding:0 10px 10px;display:flex;flex-direction:column;gap:8px}
+.legend h4{margin:4px 0 2px;font-family:var(--f-display);font-weight:700;font-size:11px;letter-spacing:.1em;color:var(--ink-2)}
+.legend .lg-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px}
+.legend .lg-item{display:flex;align-items:center;gap:6px;min-width:0}
+.legend .lg-item svg{flex:none}
+.legend .lg-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* folio */
+.folio{grid-area:folio;border-left:1px solid var(--line);background:var(--panel);overflow:auto;min-width:0;min-height:0;position:relative}
+.folio-in{padding:16px 20px 40px;display:flex;flex-direction:column;gap:14px}
+.f-top{display:flex;align-items:flex-start;gap:12px}
+.seal{flex:none;display:grid;grid-auto-flow:column;direction:rtl;place-items:center;background:var(--cinnabar);color:#fff8f0;border-radius:5px;padding:5px;gap:0 1px;font-family:var(--f-han);line-height:1;box-shadow:inset 0 0 0 2px color-mix(in srgb,#fff 35%,transparent)}
+.seal span{display:block}
+.f-names{min-width:0;flex:1}
+.f-names h2{font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:.03em;margin:0;line-height:1.15;text-wrap:balance;overflow-wrap:anywhere}
+.f-names .sub{font-family:var(--f-body);font-style:italic;color:var(--ink-2);font-size:15.5px;margin-top:2px}
+.f-close{flex:none}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{font-size:12px;border-radius:999px;padding:2px 9px;background:var(--chip);color:var(--ink-2);white-space:nowrap}
+.chip.draft{background:transparent;border:1px dashed var(--ink-2)}
+.chip.canon{background:var(--w-wild);color:#fff}
+.chip.way{color:#fff}
+.crumbs{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px}
+.crumbs a{color:inherit;text-decoration:underline;text-decoration-color:var(--line);cursor:pointer}
+.sum{font-family:var(--f-body);font-size:17px;line-height:1.5;margin:0}
+.sec h3{font-family:var(--f-display);font-weight:700;font-size:12px;letter-spacing:.1em;color:var(--ink-2);margin:0 0 6px}
+.sec .txt{font-family:var(--f-body);font-size:15.5px;line-height:1.55;max-width:65ch}
+.sec .txt p{margin:0 0 .7em}
+.sec .txt a{color:var(--w-orthodox);cursor:pointer;text-decoration:underline}
+.truth{border:1px solid var(--cinnabar);border-radius:10px;padding:10px 12px;background:color-mix(in srgb,var(--cinnabar) 6%,transparent)}
+.truth summary{cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:12px;letter-spacing:.1em;color:var(--cinnabar)}
+.truth .txt{margin-top:6px}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.facts dt{color:var(--ink-2)}
+.facts dd{margin:0;font-variant-numeric:tabular-nums;min-width:0;overflow-wrap:anywhere}
+.kids{display:flex;flex-direction:column}
+.kids a{display:flex;gap:8px;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--line);cursor:pointer;min-width:0}
+.kids a:hover{background:var(--hover)}
+.kids .k1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.kids .k2{font-family:var(--f-han);color:var(--ink-2);flex:none;opacity:.8}
+.kids .k3{margin-left:auto;color:var(--ink-2);font-size:12px;flex:none}
+.meta{font-size:12px;color:var(--ink-2)}
+.f-actions{display:flex;gap:8px;flex-wrap:wrap}
+.form{display:flex;flex-direction:column;gap:10px}
+.form label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--ink-2)}
+.form input,.form select,.form textarea{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:6px 9px;color:var(--ink);font-size:15px;min-width:0}
+.form textarea{font-family:var(--f-body);line-height:1.5;resize:vertical}
+.form .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.confirm{border:1px solid var(--cinnabar);border-radius:10px;padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:8px 14px;border-radius:999px;font-size:14px;z-index:20}
+
+@media (max-width: 900px){
+  #app,#app.folio-open{grid-template-columns:1fr;grid-template-areas:"bar" "map"}
+  .rail{position:fixed;z-index:10;top:0;bottom:0;left:0;width:min(86vw,340px);transform:translateX(-102%);transition:transform .2s;box-shadow:0 0 30px rgba(0,0,0,.3);padding-top:env(safe-area-inset-top,0px)}
+  #app.rail-open .rail{transform:none}
+  .only-narrow{display:grid}
+  .folio{position:fixed;z-index:9;left:0;right:0;bottom:0;max-height:72%;border-left:0;border-top:1px solid var(--line);border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.25);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .layers{order:5;width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .layers::-webkit-scrollbar{display:none}
+  .tog{flex:none}
+  .brand .era{display:none}
+  .brand .pin{font-size:15px}
+  .brand .han{font-size:22px}
+  .bar{gap:8px;padding:8px 12px}
+  #newBtn{font-size:13px;padding:4px 10px}
+  .legend{max-width:calc(100% - 70px)}
+}
+@media (prefers-reduced-motion: reduce){.rail{transition:none}}
+</style>
+
+<div id="app">
+  <header class="bar">
+    <button class="iconbtn only-narrow" id="railBtn" aria-label="Open the index">☰</button>
+    <div class="brand"><span class="han" id="bHan">断天</span><span class="pin" id="bName">SEVERED HEAVEN</span><span class="era" id="bEra">Sealed Era, year 3,127</span></div>
+    <div class="spacer"></div>
+    <div class="layers" role="group" aria-label="Map layers">
+      <button class="tog" data-layer="regions" aria-pressed="true">Regions</button>
+      <button class="tog" data-layer="kingdoms" aria-pressed="true">Kingdoms</button>
+      <button class="tog" data-layer="places" aria-pressed="true">Places</button>
+      <button class="tog" data-layer="terrain" aria-pressed="true">Terrain</button>
+      <button class="tog" data-layer="spheres" aria-pressed="false">Spheres of influence</button>
+      <button class="tog" data-layer="routes" aria-pressed="true">Arrays</button>
+    </div>
+    <button class="btn primary" id="newBtn">New entry</button>
+  </header>
+
+  <aside class="rail" id="rail" aria-label="Index">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="places" aria-selected="true">Places</button>
+      <button role="tab" data-tab="history" aria-selected="false">History</button>
+      <button role="tab" data-tab="powers" aria-selected="false">Powers</button>
+      <button role="tab" data-tab="lore" aria-selected="false">Lore</button>
+    </div>
+    <div class="search"><input id="q" type="search" placeholder="Search names, pinyin, text" aria-label="Search the atlas"></div>
+    <div class="list" id="list"></div>
+  </aside>
+
+  <main class="map" id="mapWrap">
+    <svg id="svg" data-lod="0" aria-label="World map">
+      <defs>
+        <radialGradient id="rimGrad" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="500000">
+          <stop offset="0.93" stop-color="var(--mist)" stop-opacity="0"/>
+          <stop offset="0.975" stop-color="var(--mist)" stop-opacity="0.55"/>
+          <stop offset="1" stop-color="var(--mist)" stop-opacity="0.95"/>
+        </radialGradient>
+        <radialGradient id="seaGrad" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="500000">
+          <stop offset="0" stop-color="var(--sea-2)"/>
+          <stop offset="0.3" stop-color="var(--sea)"/>
+          <stop offset="0.85" stop-color="var(--sea)"/>
+          <stop offset="1" stop-color="var(--sea-2)"/>
+        </radialGradient>
+        <radialGradient id="scarGrad">
+          <stop offset="0" stop-color="#000" stop-opacity=".85"/>
+          <stop offset="1" stop-color="#000" stop-opacity=".15"/>
+        </radialGradient>
+        <pattern id="hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)">
+          <rect width="7" height="7" fill="var(--cinnabar)" fill-opacity=".08"/>
+          <line x1="0" y1="0" x2="0" y2="7" stroke="var(--cinnabar)" stroke-width="1.6" stroke-opacity=".45"/>
+        </pattern>
+        <filter id="silk" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85 0.3" numOctaves="3" seed="7"/>
+          <feColorMatrix values="0 0 0 0 0.5  0 0 0 0 0.45  0 0 0 0 0.35  0 0 0 1 0"/>
+        </filter>
+      </defs>
+      <g id="zoomRoot"><g id="world"></g></g>
+      <rect id="silkRect" width="100%" height="100%" filter="url(#silk)" pointer-events="none"/>
+      <g id="overlay"></g>
+    </svg>
+    <div class="vignette" aria-hidden="true"></div>
+    <section class="legend" id="legend" aria-label="Legend" hidden></section>
+    <div class="zoomctl">
+      <button class="iconbtn" id="zin" aria-label="Zoom in">+</button>
+      <button class="iconbtn" id="zout" aria-label="Zoom out">−</button>
+      <button class="iconbtn" id="zfit" aria-label="Show the whole world">◎</button>
+    </div>
+    <div class="scale" id="scale"></div>
+    <div id="tip" hidden></div>
+    <div class="banner" id="banner"><b>Opening the atlas</b>Loading the world's entries…</div>
+    <div class="pickhint" id="pickhint" hidden>Click the map to place this entry · Esc to cancel</div>
+  </main>
+
+  <section class="folio" id="folio" hidden aria-label="Entry"></section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+// Local data layer, added when the atlas moved out of claude.ai on 2026-10-11.
+// It stands in for the claude.ai database: tools/atlas-serve.cjs reads and writes content/atlas/entries.json.
+window.claude = {
+  use: async (name) => {
+    if (name === "user") return { me: async () => ({ id: "jan", name: "Jan" }) };
+    if (name !== "db") throw new Error("not available locally");
+    const api = "/api/entries";
+    const send = async (method, id, data) => {
+      const r = await fetch(api + "/" + encodeURIComponent(id), { method, headers: { "Content-Type": "application/json" }, body: data ? JSON.stringify(data) : undefined });
+      if (!r.ok) throw new Error(await r.text());
+    };
+    return {
+      collection: () => ({ limit: () => ({ onSnapshot: (next, fail) => {
+        fetch(api).then(r => r.json()).then(list => next({
+          docChanges: () => list.map(e => { const { id, ...data } = e; return { type: "added", doc: { id, data: () => data } }; })
+        })).catch(fail);
+        return () => {};
+      } }) }),
+      doc: (p) => { const id = p.split("/").pop(); return { set: d => send("PUT", id, d), update: d => send("PATCH", id, d), delete: () => send("DELETE", id) }; },
+    };
+  },
+};
+</script>
+
+<script>
+(() => {
+"use strict";
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const NS = "http://www.w3.org/2000/svg";
+
+const KINDS = {
+  world:["World",0], continent:["Continent",1], sea:["Sea",2], region:["Region",3], kingdom:["Kingdom",4],
+  power:["Power",5], city:["City",6], landmark:["Landmark",7], forbidden:["Forbidden land",8], realm:["Secret realm",9],
+  route:["Route",10], era:["Era",11], event:["Event",12], race:["Race",13], cosmos:["Cosmology",14], figure:["Figure",15]
+};
+const WAYS = { orthodox:"Orthodox", demonic:"Demonic", buddhist:"Buddhist", ghost:"Ghost", wild:"Beasts and plants", sea:"Sea clans", neutral:"Neutral", void:"Outer demons" };
+const TERRAINS = ["plains","hills","mountains","forest","jungle","marsh","desert","steppe","ice","tundra","volcanic","plateau","twilight","islands","coast","canyon","karst","sea"];
+const REALMS = ["Mortal","Qi Condensation","Foundation Establishment","Core Formation","Nascent Soul","Deity Transformation","Void Refinement","Body Integration","Mahayana","Tribulation Transcendence"];
+const PLACED = new Set(["continent","sea","region","kingdom","power","city","landmark","forbidden","realm","route","world"]);
+const GREAT = new Set(["great-jing","qingxiao","xinglin","night-banquet","jingdu","nine-clans","xuanji","star-dial","eternal-night","iron-bone","frost-fair","qiandeng","tianping","luoxing","beast-court","jar-mothers","evergreen-deep","gongqi","no-light","thousand-puppets","pale-city","canglan","isles-league","wanfan","seal-watch","the-stump"]);
+const WORLD_R = 500000;
+
+// ---------- state
+const S = {
+  entries: new Map(), kids: new Map(), sel: null, editing: false, creating: null, picking: null,
+  layers: { regions:true, kingdoms:true, places:true, terrain:true, spheres:false, routes:true },
+  tab: "places", q: "", open: new Set(["world"]), db: null, user: null, me: null, names: {},
+  t: d3.zoomIdentity, base: { cx:0, cy:0, s:1 }, labels: [], pins: [], loaded: false, legendOpen: null
+};
+try { const raw = localStorage.getItem("atlas-ui"); if (raw) { const v = JSON.parse(raw); Object.assign(S.layers, v.layers || {}); (v.open || []).forEach(x => S.open.add(x)); if (typeof v.legend === "boolean") S.legendOpen = v.legend; } } catch (e) {}
+if (S.legendOpen === null) S.legendOpen = !matchMedia("(max-width: 900px)").matches;
+function saveUI(){ try { localStorage.setItem("atlas-ui", JSON.stringify({ layers:S.layers, open:[...S.open], legend:S.legendOpen })); } catch (e) {} }
+
+// ---------- helpers
+function rng(seed){ let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hash(s){ let h = 2166136261; for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function blob(cx, cy, rx, ry, rotDeg, seed, rough, n){
+  const R = rng(seed), terms = []; let amp = 0;
+  for (let k = 2; k <= 44; k++){ const a = Math.pow(k, -1.05) * (0.45 + 1.1 * R()); terms.push([k, a, R() * Math.PI * 2]); amp += a; }
+  const rot = (rotDeg || 0) * Math.PI / 180, c = Math.cos(rot), s = Math.sin(rot), pts = [];
+  for (let i = 0; i < n; i++){
+    const th = i / n * Math.PI * 2; let v = 0;
+    for (const [k, a, ph] of terms) v += a * Math.sin(k * th + ph);
+    const f = Math.max(1 - rough, Math.min(1 + rough * 2.2, 1 + rough * 3.4 * v / amp));
+    const x = rx * f * Math.cos(th), y = ry * f * Math.sin(th);
+    pts.push([cx + x * c - y * s, cy + x * s + y * c]);
+  }
+  return pts;
+}
+const closed = d3.line().curve(d3.curveCatmullRomClosed.alpha(0.5));
+const open = d3.line().curve(d3.curveCatmullRom.alpha(0.5));
+function el(tag, attrs = {}, parent){ const n = document.createElementNS(NS, tag); for (const k in attrs) if (attrs[k] != null) n.setAttribute(k, attrs[k]); if (parent) parent.appendChild(n); return n; }
+function h(tag, attrs = {}, ...kids){ const n = document.createElement(tag); for (const k in attrs){ if (k === "class") n.className = attrs[k]; else if (k.startsWith("on")) n.addEventListener(k.slice(2), attrs[k]); else if (attrs[k] !== undefined && attrs[k] !== null && attrs[k] !== false) n.setAttribute(k, attrs[k]); } for (const c of kids){ if (c == null || c === false) continue; n.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(String(c)) : c); } return n; }
+const fmt = n => Math.round(n).toLocaleString("en-US");
+function kindLabel(k){ return (KINDS[k] || [k])[0]; }
+function wayColor(w){ return `var(--w-${WAYS[w] ? w : "neutral"})`; }
+function terrainFill(t){ return TERRAINS.includes(t) && t !== "sea" ? `var(--t-${t})` : "var(--land)"; }
+function sortName(e){ return String(e.name || "").replace(/^the\s+/i, ""); }
+function mapName(e){ return e.kind === "continent" ? String(e.name).replace(/\s+continent$/i, "") : e.name; }
+function ago(iso){ if (!iso) return ""; const d = (Date.now() - new Date(iso).getTime()) / 1000; if (!isFinite(d)) return ""; if (d < 60) return "just now"; if (d < 3600) return Math.floor(d/60) + " min ago"; if (d < 86400) return Math.floor(d/3600) + " h ago"; return Math.floor(d/86400) + " d ago"; }
+function yearsText(y){ if (!y) return ""; const f = y.from, t = y.to; const one = v => v == null ? "time out of mind" : v === 0 ? "now" : fmt(-v) + " years ago"; if (f === t) return one(f); return one(f) + " – " + one(t); }
+function toast(msg){ const t = h("div", { class:"toast", role:"status" }, msg); document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+function get(id){ return S.entries.get(id); }
+function ancestors(id){ const out = []; let e = get(id), guard = 0; while (e && e.parent && guard++ < 20){ const p = get(e.parent); if (!p) break; out.unshift(p); e = p; } return out; }
+function inSea(e){ const p = e && get(e.parent); return !!(p && (p.kind === "sea" || (p.kind === "region" && inSea(p)))); }
+function findByName(ref){
+  const r = String(ref).trim(), low = r.toLowerCase(), bare = low.replace(/^the\s+/, "");
+  if (get(r)) return get(r);
+  for (const e of S.entries.values()) if (String(e.name || "").toLowerCase().replace(/^the\s+/, "") === bare) return e;
+  for (const e of S.entries.values()) if (e.pinyin && String(e.pinyin).toLowerCase() === low) return e;
+  return null;
+}
+
+// ---------- terrain drawings (world space, batched into a few paths)
+function pt(x, y, s){ const k = s > 200 ? 1 : 10; return (a, b) => `${Math.round((x + a * s) * k) / k},${Math.round((y + b * s) * k) / k}`; }
+function circ(cx, cy, r){ const q = v => Math.round(v * 10) / 10; return `M${q(cx - r)},${q(cy)}a${q(r)},${q(r)} 0 1,0 ${q(2 * r)},0a${q(r)},${q(r)} 0 1,0 ${q(-2 * r)},0`; }
+const DRAW = {
+  peak(x, y, s, B){ const p = pt(x, y, s);
+    B.peak.push(`M${p(-1,.45)}L${p(-.34,-.52)}L${p(-.1,-.16)}L${p(.18,-.8)}L${p(1,.45)}Z`);
+    B.shade.push(`M${p(.18,-.8)}L${p(1,.45)}L${p(.14,.45)}L${p(.04,-.1)}Z`);
+    B.ink.push(`M${p(-1,.45)}L${p(-.34,-.52)}L${p(-.1,-.16)}L${p(.18,-.8)}L${p(1,.45)}M${p(-.34,-.52)}L${p(-.52,.08)}M${p(.18,-.8)}L${p(.02,-.2)}`); },
+  hill(x, y, s, B){ const p = pt(x, y, s);
+    B.hill.push(`M${p(-1,.3)}Q${p(-.55,-.55)} ${p(-.05,.3)}Q${p(.45,-.38)} ${p(1,.3)}Z`);
+    B.ink.push(`M${p(-1,.3)}Q${p(-.55,-.55)} ${p(-.05,.3)}Q${p(.45,-.38)} ${p(1,.3)}`); },
+  mesa(x, y, s, B){ const p = pt(x, y, s);
+    B.stone.push(`M${p(-1,.35)}L${p(-.62,-.32)}L${p(.62,-.32)}L${p(1,.35)}Z`);
+    B.ink.push(`M${p(-1,.35)}L${p(-.62,-.32)}L${p(.62,-.32)}L${p(1,.35)}M${p(-.8,.02)}L${p(.8,.02)}`); },
+  volc(x, y, s, B){ const p = pt(x, y, s);
+    B.peak.push(`M${p(-.95,.45)}L${p(-.16,-.55)}L${p(.16,-.55)}L${p(.95,.45)}Z`);
+    B.shade.push(`M${p(.16,-.55)}L${p(.95,.45)}L${p(.2,.45)}Z`);
+    B.crater.push(`M${p(-.16,-.55)}L${p(.16,-.55)}L${p(.08,-.38)}L${p(-.08,-.38)}Z`);
+    B.ink.push(`M${p(-.95,.45)}L${p(-.16,-.55)}L${p(.16,-.55)}L${p(.95,.45)}`);
+    B.soft.push(`M${p(0,-.62)}Q${p(-.28,-.9)} ${p(.05,-1.05)}Q${p(.32,-1.2)} ${p(.1,-1.42)}`); },
+  tree(x, y, s, B){ const p = pt(x, y, s); B.tree.push(circ(x, y - .22 * s, .42 * s)); B.ink.push(`M${p(0,.18)}L${p(0,.58)}`); },
+  jungle(x, y, s, B){ for (const [dx, dy, k] of [[-.36,.02,.36],[.3,-.04,.4],[-.02,-.36,.38]]) B.tree2.push(circ(x + dx * s, y + dy * s, k * s)); },
+  dune(x, y, s, B){ const p = pt(x, y, s); B.dune.push(`M${p(-1,.15)}Q${p(-.25,-.45)} ${p(.55,.05)}M${p(-.35,.5)}Q${p(.3,.05)} ${p(1,.42)}`); },
+  grass(x, y, s, B){ const p = pt(x, y, s); B.soft.push(`M${p(-.35,.3)}L${p(-.52,-.15)}M${p(0,.3)}L${p(0,-.38)}M${p(.35,.3)}L${p(.52,-.15)}`); },
+  reed(x, y, s, B){ const p = pt(x, y, s); B.soft.push(`M${p(-.9,.2)}L${p(-.1,.2)}M${p(.1,.45)}L${p(.9,.45)}M${p(-.45,.2)}L${p(-.5,-.48)}M${p(-.25,.2)}L${p(-.18,-.32)}M${p(.52,.45)}L${p(.58,-.15)}`); },
+  frost(x, y, s, B){ const p = pt(x, y, s); B.soft.push(`M${p(-.5,0)}L${p(.5,0)}M${p(-.25,-.43)}L${p(.25,.43)}M${p(-.25,.43)}L${p(.25,-.43)}`); },
+  dead(x, y, s, B, R){ const p = pt(x, y, s);
+    if (R() < .6) B.ink.push(`M${p(0,.55)}L${p(0,-.35)}M${p(0,0)}L${p(-.38,-.45)}M${p(0,-.12)}L${p(.32,-.52)}M${p(-.18,-.22)}L${p(-.3,-.62)}`);
+    else { B.grave.push(`M${p(-.22,.45)}L${p(-.22,-.15)}Q${p(0,-.42)} ${p(.22,-.15)}L${p(.22,.45)}Z`); B.ink.push(`M${p(-.5,.45)}L${p(.5,.45)}`); } },
+  karst(x, y, s, B, R){ const p = pt(x, y, s), n = 2 + (R() < .5 ? 1 : 0);
+    for (let i = 0; i < n; i++){ const dx = (i - (n - 1) / 2) * .42, hh = .6 + R() * .55;
+      const d = `M${p(dx-.17,.45)}L${p(dx-.17,.45-hh)}Q${p(dx,.45-hh-.3)} ${p(dx+.17,.45-hh)}L${p(dx+.17,.45)}`;
+      B.peak.push(d + "Z"); B.ink.push(d); } },
+  canyon(x, y, s, B){ const p = pt(x, y, s);
+    B.ink.push(`M${p(-1,0)}L${p(-.55,-.3)}L${p(-.1,.15)}L${p(.35,-.25)}L${p(.8,.1)}L${p(1,-.05)}`);
+    B.soft.push(`M${p(-.9,.32)}L${p(-.45,.02)}L${p(0,.42)}L${p(.45,.06)}L${p(.9,.36)}`); },
+  wave(x, y, s, B){ const p = pt(x, y, s); B.wave.push(`M${p(-1,0)}Q${p(-.5,-.62)} ${p(0,0)}Q${p(.5,-.62)} ${p(1,0)}M${p(-.5,.38)}Q${p(0,-.14)} ${p(.5,.38)}`); }
+};
+const GLYPHS = {
+  mountains:["peak", 8200, 2600, 4200], hills:["hill", 7800, 2000, 3000], plateau:["mesa", 9500, 2300, 3400], volcanic:["volc", 9000, 2500, 3800],
+  forest:["tree", 5800, 1250, 1900], jungle:["jungle", 5400, 1450, 2150], desert:["dune", 7800, 2100, 3100], steppe:["grass", 8600, 1100, 1600],
+  plains:["grass", 10500, 1000, 1500], coast:["grass", 12000, 1000, 1400], marsh:["reed", 7200, 1400, 2000], ice:["frost", 9000, 1500, 2200],
+  tundra:["frost", 11000, 1300, 1900], twilight:["dead", 7200, 1450, 2200], karst:["karst", 6800, 1800, 2700], canyon:["canyon", 9000, 2300, 3200]
+};
+const GCLS = { peak:"g-peak", shade:"g-shade", hill:"g-hill", stone:"g-stone", tree:"g-tree", tree2:"g-tree2", crater:"g-crater", grave:"g-grave", dune:"g-dune", soft:"g-soft", ink:"g-ink", wave:"g-wave" };
+const GORDER = ["hill","stone","peak","shade","crater","grave","tree","tree2","dune","soft","ink"];
+function newBuf(){ const B = {}; for (const k in GCLS) B[k] = []; return B; }
+function flushBuf(B, parent, order){ for (const k of order) if (B[k].length) el("path", { d: B[k].join(""), class: GCLS[k] }, parent); }
+
+// ---------- map scaffolding
+const svg = d3.select("#svg"), world = d3.select("#world"), overlay = d3.select("#overlay"), zoomRoot = d3.select("#zoomRoot");
+const layerNames = ["void","disc","waves","halo","land","cells","glyphs","isles","kingdoms","features","forbidden","spheres","routes","rim","sel"];
+const L = {}; layerNames.forEach(n => L[n] = world.append("g").attr("class", "L-" + n));
+L.glyphs.attr("class", "L-glyphs glyphs"); L.waves.attr("class", "L-waves glyphs");
+const zoom = d3.zoom().scaleExtent([0.55, 600]).on("zoom", ev => { S.t = ev.transform; zoomRoot.attr("transform", S.t); onZoom(false); }).on("end", () => onZoom(true));
+svg.call(zoom).on("dblclick.zoom", null);
+function silk(){ const dark = document.documentElement.dataset.theme === "dark" || (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches); d3.select("#silkRect").attr("opacity", dark ? .05 : .11); }
+silk(); try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", silk); } catch (e) {}
+
+function fitBase(){
+  const r = $("#svg").getBoundingClientRect();
+  const w = Math.max(200, r.width), hgt = Math.max(200, r.height);
+  S.base = { cx: w / 2, cy: hgt / 2, s: Math.min(w, hgt) / (WORLD_R * 2.08) }; S.size = { w, h: hgt };
+  world.attr("transform", `translate(${S.base.cx},${S.base.cy}) scale(${S.base.s})`);
+}
+function refit(){
+  const r = $("#svg").getBoundingClientRect();
+  if (S.size && Math.abs(r.width - S.size.w) < 1 && Math.abs(r.height - S.size.h) < 1) return;
+  if (!S.size){ fitBase(); return; }
+  const [wx, wy] = toWorld(S.size.w / 2, S.size.h / 2), p0 = ppl();
+  fitBase();
+  const k = p0 / S.base.s, tx = S.size.w / 2 - k * (S.base.cx + wx * S.base.s), ty = S.size.h / 2 - k * (S.base.cy + wy * S.base.s);
+  svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(k));
+}
+function ppl(){ return S.base.s * S.t.k; }
+function toScreen(x, y){ return [S.t.applyX(S.base.cx + x * S.base.s), S.t.applyY(S.base.cy + y * S.base.s)]; }
+function toWorld(px, py){ const [a, b] = S.t.invert([px, py]); return [(a - S.base.cx) / S.base.s, (b - S.base.cy) / S.base.s]; }
+
+function drawStatic(){
+  L.void.selectAll("*").remove(); L.disc.selectAll("*").remove(); L.rim.selectAll("*").remove();
+  const R = rng(99);
+  for (let i = 0; i < 520; i++){ const a = R() * Math.PI * 2, d = WORLD_R * (1.04 + R() * 1.4); el("circle", { cx: Math.cos(a) * d, cy: Math.sin(a) * d, r: 600 + R() * 1400, fill: "var(--star)", opacity: (0.25 + R() * 0.6).toFixed(2) }, L.void.node()); }
+  el("circle", { cx:0, cy:0, r: WORLD_R, fill:"url(#seaGrad)" }, L.disc.node());
+  el("circle", { cx:0, cy:0, r: WORLD_R, fill:"url(#rimGrad)", "pointer-events":"none" }, L.rim.node());
+}
+function ellDist(m, x, y){ const r = (m.rot || 0) * Math.PI / 180, c = Math.cos(r), s = Math.sin(r), dx = x - m.x, dy = y - m.y; return Math.hypot((dx * c + dy * s) / (m.rx || m.r), (-dx * s + dy * c) / (m.ry || m.r)); }
+
+// ---------- full render from entries
+function render(){
+  S.labels = []; S.pins = [];
+  ["waves","halo","land","cells","glyphs","isles","kingdoms","features","forbidden","spheres","routes","sel"].forEach(n => L[n].selectAll("*").remove());
+  overlay.selectAll("*").remove();
+  const all = [...S.entries.values()];
+  const conts = all.filter(e => e.kind === "continent" && e.map);
+  const defs = d3.select("#svg defs");
+  defs.selectAll(".cclip").remove();
+  const GB = newBuf();
+
+  for (const c of conts){
+    const m = c.map, rx = m.rx || m.r || 80000, ry = m.ry || m.r || 80000, seed = m.seed || hash(c.id), rough = m.rough ?? 0.14;
+    const pts = blob(m.x, m.y, rx, ry, m.rot || 0, seed, rough, 260);
+    const d = closed(pts); c._path = d; c._pts = pts;
+    el("path", { d, class:"halo", "stroke-width": 5200 }, L.halo.node());
+    el("path", { d, class:"halo", "stroke-width": 2200, style:"opacity:.8" }, L.halo.node());
+    el("path", { d: closed(blob(m.x, m.y, rx * 1.04, ry * 1.04, m.rot || 0, seed, rough, 200)), class:"ripple" }, L.halo.node());
+    el("path", { d: closed(blob(m.x, m.y, rx * 1.085, ry * 1.085, m.rot || 0, seed, rough, 200)), class:"ripple far" }, L.halo.node());
+    const cp = defs.append("clipPath").attr("id", "clip-" + c.id).attr("class", "cclip"); cp.append("path").attr("d", d);
+    el("path", { d, class:"landfill hit", "data-id": c.id, style:`fill:${terrainFill(c.terrain)}` }, L.land.node());
+    const regs = (S.kids.get(c.id) || []).filter(r => r.kind === "region" && r.map && isFinite(r.map.x));
+    const g = el("g", { "clip-path": `url(#clip-${c.id})` }, L.cells.node());
+    if (regs.length){
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      const bb = [Math.min(...xs) - 5000, Math.min(...ys) - 5000, Math.max(...xs) + 5000, Math.max(...ys) + 5000];
+      const del = d3.Delaunay.from(regs, r => r.map.x, r => r.map.y), vor = del.voronoi(bb);
+      regs.forEach((r, i) => {
+        const cd = vor.renderCell(i); if (!cd) return; r._cell = cd;
+        el("path", { d: cd, class:"cell hit", "data-id": r.id, style:`fill:${terrainFill(r.terrain || c.terrain)}` + (S.layers.regions ? "" : ";display:none") }, g);
+        if (S.layers.terrain) glyphsFor(r.terrain || c.terrain, vor.cellPolygon(i), pts, hash(r.id), GB);
+      });
+    } else if (S.layers.terrain) glyphsFor(c.terrain, pts, pts, seed, GB);
+    el("path", { d, class:"coast" }, L.land.node());
+    const IR = rng(seed + 7), rot = (m.rot || 0) * Math.PI / 180;
+    for (let i = 0; i < 26; i++){
+      const th = IR() * Math.PI * 2, f = 1.12 + IR() * 0.22, lx = Math.cos(th) * rx * f, ly = Math.sin(th) * ry * f;
+      const x = m.x + lx * Math.cos(rot) - ly * Math.sin(rot), y = m.y + lx * Math.sin(rot) + ly * Math.cos(rot), s = 700 + Math.pow(IR(), 2.4) * 5200;
+      el("path", { d: closed(blob(x, y, s, s * (0.55 + IR() * 0.5), IR() * 180, (IR() * 1e9) | 0, 0.32, 24)), class:"isle", "pointer-events":"none", style:`fill:${terrainFill(c.terrain)}` }, L.isles.node());
+    }
+  }
+
+  if (S.layers.terrain){
+    const WB = newBuf(), R = rng(777), step = 15000;
+    for (let gx = -465000; gx <= 465000; gx += step) for (let gy = -465000; gy <= 465000; gy += step){
+      const x = gx + (R() - .5) * step * .9, y = gy + (R() - .5) * step * .9, rr = Math.hypot(x, y);
+      if (rr > 462000 || rr < 30000) continue;
+      if (conts.some(c => ellDist(c.map, x, y) < 1.2)) continue;
+      DRAW.wave(x, y, 1900 + R() * 900, WB);
+    }
+    flushBuf(WB, L.waves.node(), ["wave"]);
+  }
+
+  const sui = get("suihai");
+  if (sui && sui.map){
+    const R = rng(4242), rr = sui.map.r || 140000;
+    for (let i = 0; i < 170; i++){
+      const a = R() * Math.PI * 2, d = 30000 + Math.pow(R(), 0.8) * (rr - 30000); const x = Math.cos(a) * d, y = Math.sin(a) * d;
+      const s = 900 + Math.pow(R(), 2.2) * 7000; const fl = R() < 0.08;
+      el("path", { d: closed(blob(x, y, s, s * (0.6 + R() * 0.6), R() * 180, (R() * 1e9) | 0, 0.35, 28)), class: "isle" + (fl ? " float" : "") }, L.isles.node());
+    }
+  }
+  for (const z of all.filter(e => e.kind === "region" && e.map && inSea(e))){
+    const r = z.map.r || 30000;
+    el("circle", { cx: z.map.x, cy: z.map.y, r, class:"zone hit", "data-id": z.id }, L.isles.node());
+    const R = rng(hash(z.id)); const n = Math.round(14 + r / 3000);
+    for (let i = 0; i < n; i++){ const a = R() * Math.PI * 2, d = Math.sqrt(R()) * r * 0.85; const s = 500 + Math.pow(R(), 2) * r * 0.09;
+      el("path", { d: closed(blob(z.map.x + Math.cos(a) * d, z.map.y + Math.sin(a) * d, s, s * (0.6 + R() * 0.5), R() * 180, (R() * 1e9) | 0, 0.35, 22)), class:"isle", "pointer-events":"none" }, L.isles.node()); }
+    S.labels.push({ id:z.id, x:z.map.x, y:z.map.y - r * 0.82, text:z.name, cls:"lbl sea", size:12, pri:2, minP:0.0009, layer:"regions" });
+  }
+
+  for (const k of all.filter(e => e.kind === "kingdom" && e.map && isFinite(e.map.x))){
+    const r = k.map.r || 4000, sd = hash(k.id);
+    const d = closed(blob(k.map.x, k.map.y, r, r * (0.75 + (sd % 30) / 100), sd % 180, sd, 0.26, 56)); k._path = d;
+    el("path", { d, class: "kingdom hit" + (inSea(k) ? " insea" : ""), "data-id": k.id, style: S.layers.kingdoms ? "" : "display:none" }, L.kingdoms.node());
+  }
+
+  const RB = newBuf();
+  for (const f of all.filter(e => e.map && Array.isArray(e.map.path) && e.map.path.length > 1)){
+    const style = f.map.style || "river", d = open(f.map.path);
+    if (style === "span"){
+      const w = f.map.width || 6000;
+      el("path", { d, class:"span-shadow", "stroke-width": w * 3, transform:`translate(${w * 0.8},${w * 1.2})` }, L.features.node());
+      el("path", { d, class:"span-edge", "stroke-width": w * 1.25 }, L.features.node());
+      el("path", { d, class:"span-body hit", "stroke-width": w, "data-id": f.id }, L.features.node());
+    } else if (style === "array"){
+      el("path", { d, class:"route hit", "data-id": f.id, style: S.layers.routes ? "" : "display:none" }, L.routes.node());
+    } else if (style === "ridge"){
+      el("path", { d, class:"ridge-w", "stroke-width": f.map.width || 6000 }, L.features.node());
+      ridgePeaks(f, RB);
+      el("path", { d, class:"hitline hit", "stroke-width": 5000, "data-id": f.id }, L.features.node());
+    } else if (style === "wall" || style === "road"){
+      el("path", { d, class: style + " hit", "data-id": f.id }, L.features.node());
+    } else {
+      el("path", { d, class:"river-w", "stroke-width": f.map.width || 380 }, L.features.node());
+      el("path", { d, class:"river hit", "data-id": f.id }, L.features.node());
+    }
+    const mid = f.map.path[Math.floor(f.map.path.length / 2)];
+    if (style !== "array") S.labels.push({ id: f.id, x: mid[0], y: mid[1], text: f.name, cls: "lbl minor" + (style === "river" ? " sea" : ""), size: 11, pri: 3, minP: 0.0016 });
+  }
+  if (S.layers.terrain){
+    flushBuf(GB, L.glyphs.node(), GORDER);
+    const rg = el("g", { class:"glyphs" }, L.features.node()); flushBuf(RB, rg, ["peak","shade","ink"]);
+  }
+
+  for (const f of all.filter(e => e.kind === "forbidden" && e.map && isFinite(e.map.x) && e.map.r)){
+    if (f.map.inner) continue;
+    if (f.id === "the-scar"){ el("circle", { cx: f.map.x, cy: f.map.y, r: f.map.r, class:"scarfill hit", "data-id": f.id }, L.forbidden.node()); continue; }
+    const sd = hash(f.id);
+    el("path", { d: closed(blob(f.map.x, f.map.y, f.map.r, f.map.r * 0.8, sd % 180, sd, 0.3, 48)), class:"forb hit", "data-id": f.id }, L.forbidden.node());
+  }
+
+  if (S.layers.spheres){
+    for (const p of all.filter(e => e.kind === "power" && e.map && e.map.sphere && isFinite(e.map.x))){
+      const col = wayColor(p.way);
+      el("circle", { cx: p.map.x, cy: p.map.y, r: p.map.sphere, class:"sphere", style:`fill:${col};stroke:${col}` }, L.spheres.node());
+    }
+  }
+
+  for (const e of all){
+    if (!e.map) continue;
+    const m = e.map, top = isTop(e);
+    if (e.kind === "continent"){
+      S.labels.push({ id:e.id, x:m.x, y:m.y, text:mapName(e).toUpperCase(), han:e.hanzi, cls:"lbl cont", size:S.contSize || 19, pri:0, maxP:0.0019 });
+    } else if (e.kind === "sea" && isFinite(m.x)){
+      const big = e.id === "suihai" || e.id === "wuya";
+      const y = e.id === "suihai" ? m.y - (m.r || 0) * 0.55 : m.y;
+      S.labels.push({ id:e.id, x:m.x, y, text:e.name, han: big ? e.hanzi : null, cls:"lbl sea", size: big ? 16 : 13, pri: big ? 0 : 2, minP: big ? 0 : 0.0007 });
+    } else if (e.kind === "region" && isFinite(m.x) && !inSea(e)){
+      S.labels.push({ id:e.id, x:m.x, y:m.y, text:e.name, cls:"lbl region", size:12.5, pri:2, minP:0.00105, layer:"regions" });
+    } else if (e.kind === "kingdom" && isFinite(m.x)){
+      S.labels.push({ id:e.id, x:m.x, y:m.y, text:e.name, cls:"lbl kingdom minor", size:11.5, pri:4, minP:0.0052, layer:"kingdoms" });
+    } else if (["power","city","landmark","realm","forbidden"].includes(e.kind) && isFinite(m.x) && !m.inner){
+      const isArea = e.kind === "forbidden" && m.r;
+      const minP = top ? 0.00095 : 0.0058;
+      if (!isArea) S.pins.push({ id:e.id, x:m.x, y:m.y, kind:e.kind, way:e.way, top, hub:(e.tags || []).includes("array hub"), char:[...String(e.hanzi || "")][0] || "", name:e.name, tags:e.tags || [], minP: top ? 0 : 0.0021 });
+      S.labels.push({ id:e.id, x:m.x, y:m.y, text:e.name, cls:"lbl" + (top ? "" : " minor"), size: top ? 12.5 : 11, pri: top ? 1 : 5, minP, dy: isArea ? 0 : (top ? 18 : 14), layer:"places" });
+    }
+  }
+  drawOverlay();
+  drawSelection();
+  onZoom(true);
+}
+function isTop(e){ if (GREAT.has(e.id)) return true; const p = get(e.parent); return !p || ["world","continent","sea"].includes(p.kind); }
+
+function glyphsFor(terrain, cell, coast, seed, B){
+  const spec = GLYPHS[terrain]; if (!spec || !cell) return;
+  const [fn, step, s0, s1] = spec, R = rng(seed);
+  const xs = cell.map(p => p[0]), ys = cell.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const pts = []; let row = 0;
+  for (let gy = y0 + step / 2; gy < y1; gy += step * 0.86, row++) for (let gx = x0 + step / 2 + (row % 2) * step / 2; gx < x1; gx += step){
+    const x = gx + (R() - .5) * step * .8, y = gy + (R() - .5) * step * .7, s = s0 + R() * (s1 - s0);
+    if (!d3.polygonContains(cell, [x, y])) continue;
+    if (!d3.polygonContains(coast, [x - s * .75, y]) || !d3.polygonContains(coast, [x + s * .75, y]) || !d3.polygonContains(coast, [x, y + s * .6]) || !d3.polygonContains(coast, [x, y - s * .6])) continue;
+    pts.push([x, y, s]);
+  }
+  pts.sort((a, b) => a[1] - b[1]);
+  const R2 = rng(seed + 1);
+  for (const [x, y, s] of pts) DRAW[fn](x, y, s, B, R2);
+}
+function ridgePeaks(f, B){
+  const P = f.map.path, R = rng(hash(f.id)), out = [];
+  for (let i = 1; i < P.length; i++){
+    const [ax, ay] = P[i - 1], [bx, by] = P[i], len = Math.hypot(bx - ax, by - ay), nx = -(by - ay) / (len || 1), ny = (bx - ax) / (len || 1);
+    for (let t = 0; t < len; t += 3600 + R() * 1200){
+      const k = t / len, j = (R() - .5) * 3200, s = 3400 + R() * 2200;
+      out.push([ax + (bx - ax) * k + nx * j, ay + (by - ay) * k + ny * j, s]);
+    }
+  }
+  out.sort((a, b) => a[1] - b[1]);
+  for (const [x, y, s] of out) DRAW.peak(x, y, s, B);
+}
+
+// ---------- markers (screen space)
+function marker(g, p, scale = 1){
+  const top = p.top, k = scale;
+  if (p.id === "the-stump"){
+    el("ellipse", { cx:0, cy:7*k, rx:8*k, ry:2.6*k, fill:"var(--ink)", opacity:.35 }, g);
+    el("path", { d:`M${-4.5*k} ${7*k}V${-12*k}L${-2.2*k} ${-15.5*k}L0 ${-12.5*k}L${2*k} ${-17*k}L${4.5*k} ${-12.5*k}V${7*k}Z`, class:"shape", style:"fill:var(--jade);stroke:var(--ink);stroke-width:1.4" }, g);
+    el("path", { d:`M${-4.5*k} ${-4*k}H${4.5*k}M${-4.5*k} ${1*k}H${4.5*k}`, style:"stroke:var(--jade-edge);stroke-width:1" }, g);
+    el("circle", { r: 20*k, class:"selmark" }, g); return;
+  }
+  if (p.kind === "power"){
+    const S2 = (top ? 20 : 14) * k;
+    el("rect", { x:-S2/2, y:-S2/2, width:S2, height:S2, rx:3*k, class:"shape", style:`fill:${wayColor(p.way)}` }, g);
+    el("rect", { x:-S2/2 + 2*k, y:-S2/2 + 2*k, width:S2 - 4*k, height:S2 - 4*k, rx:2*k, fill:"none", style:"stroke:rgba(255,250,240,.55);stroke-width:1" }, g);
+    if (p.char){ const t = el("text", { "text-anchor":"middle", "dominant-baseline":"central", y: .5*k, "font-size": S2 * .66, style:"fill:#fffaf0;font-family:var(--f-han);pointer-events:none" }, g); t.textContent = p.char; }
+    el("rect", { x:-S2/2 - 4, y:-S2/2 - 4, width:S2 + 8, height:S2 + 8, rx:5, class:"selmark" }, g); return;
+  }
+  if (p.kind === "city"){
+    const s = (top ? 1.15 : .85) * k;
+    if (p.hub){ el("circle", { r: 13*s, fill:"none", style:"stroke:var(--gold);stroke-width:1.6" }, g);
+      let d = ""; for (let i = 0; i < 8; i++){ const a = i * Math.PI / 4; d += `M${(Math.cos(a)*13*s).toFixed(2)} ${(Math.sin(a)*13*s).toFixed(2)}L${(Math.cos(a)*16.5*s).toFixed(2)} ${(Math.sin(a)*16.5*s).toFixed(2)}`; }
+      el("path", { d, style:"stroke:var(--gold);stroke-width:1.6;stroke-linecap:round" }, g); }
+    el("path", { d:`M${-7*s} ${6*s}V${-1*s}H${-5*s}V${-4.5*s}H${-2.5*s}V${-1*s}H${2.5*s}V${-4.5*s}H${5*s}V${-1*s}H${7*s}V${6*s}Z`, class:"shape", style:"fill:var(--panel);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round" }, g);
+    el("path", { d:`M${-2*s} ${6*s}V${2.6*s}A${2*s} ${2*s} 0 0 1 ${2*s} ${2.6*s}V${6*s}Z`, style:"fill:var(--ink)" }, g);
+    el("circle", { r: (p.hub ? 19 : 11) * s, class:"selmark" }, g); return;
+  }
+  if (p.kind === "realm"){
+    let d = "", n = 0; for (let t = 0; t <= Math.PI * 3.2; t += .25){ const r = (1.2 + t * 1.2) * k, x = Math.cos(t) * r, y = Math.sin(t) * r; d += (n++ ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1); }
+    el("circle", { r: 9*k, style:"fill:var(--panel);opacity:.8" }, g);
+    el("path", { d, style:"fill:none;stroke:var(--w-ghost);stroke-width:2;stroke-linecap:round" }, g);
+    el("circle", { r: 11.5*k, fill:"none", style:"stroke:var(--w-ghost);stroke-width:1.3;stroke-dasharray:2 2.5" }, g);
+    el("circle", { r: 15*k, class:"selmark" }, g); return;
+  }
+  if (p.kind === "forbidden"){
+    el("circle", { r: 7.5*k, class:"shape", style:"fill:var(--panel);stroke:var(--cinnabar);stroke-width:2" }, g);
+    el("path", { d:`M${-3.6*k} ${-3.6*k}L${3.6*k} ${3.6*k}M${3.6*k} ${-3.6*k}L${-3.6*k} ${3.6*k}`, style:"stroke:var(--cinnabar);stroke-width:2.2;stroke-linecap:round" }, g);
+    el("circle", { r: 12*k, class:"selmark" }, g); return;
+  }
+  const name = (p.name || "") + " " + (p.tags || []).join(" ");
+  const s = (top ? 1.1 : .85) * k;
+  if (/ruin|tomb|grave|barrow|crypt|mausole/i.test(name)){
+    el("path", { d:`M${-2.8*s} ${6*s}V${-3*s}L${-1.2*s} ${-1.4*s}L0 ${-4.8*s}L${1.3*s} ${-2.2*s}L${2.8*s} ${-3.6*s}V${6*s}Z`, class:"shape", style:"fill:var(--stone);stroke:var(--ink);stroke-width:1.3;stroke-linejoin:round" }, g);
+    el("path", { d:`M${-6*s} ${6.2*s}H${6*s}M${3.6*s} ${4.2*s}L${6*s} ${4.8*s}`, style:"stroke:var(--ink);stroke-width:1.8;stroke-linecap:round" }, g);
+  } else if (/peak|mount|summit|crag|spire|cliff|pillar/i.test(name)){
+    el("path", { d:`M${-7*s} ${5.5*s}L${-1*s} ${-6*s}L${7*s} ${5.5*s}Z`, class:"shape", style:"fill:var(--peak);stroke:var(--ink);stroke-width:1.3;stroke-linejoin:round" }, g);
+    el("path", { d:`M${-3*s} ${-2*s}L${-1*s} ${-6*s}L${1.4*s} ${-1.4*s}L${-.2*s} ${-2.6*s}Z`, style:"fill:var(--panel)" }, g);
+  } else if (/lake|pool|spring|well|fall|mere|pond|basin|tarn/i.test(name)){
+    el("path", { d:`M0 ${-7*s}C${4*s} ${-1.5*s} ${5.5*s} ${1*s} ${5.5*s} ${2.6*s}A${5.5*s} ${5.5*s} 0 0 1 ${-5.5*s} ${2.6*s}C${-5.5*s} ${1*s} ${-4*s} ${-1.5*s} 0 ${-7*s}Z`, class:"shape", style:"fill:var(--river);stroke:var(--panel);stroke-width:1.4" }, g);
+  } else {
+    el("path", { d:`M${-3.2*s} ${6*s}V${-3.5*s}Q0 ${-7.5*s} ${3.2*s} ${-3.5*s}V${6*s}Z`, class:"shape", style:"fill:var(--stone);stroke:var(--ink);stroke-width:1.3" }, g);
+    el("path", { d:`M${-6*s} ${6.2*s}H${6*s}M${-1.4*s} ${-1.5*s}H${1.4*s}M${-1.4*s} ${1*s}H${1.4*s}`, style:"stroke:var(--ink);stroke-width:1.4;stroke-linecap:round" }, g);
+  }
+  el("circle", { r: 11*s, class:"selmark" }, g);
+}
+function drawOverlay(){
+  const og = overlay.node();
+  const pg = el("g", { class:"pins" }, og), lg = el("g", { class:"labels" }, og);
+  const order = S.pins.slice().sort((a, b) => (a.top - b.top) || ((a.kind === "power") - (b.kind === "power")));
+  for (const p of order){ const g = el("g", { class:"pin hit", "data-id": p.id }, pg); marker(g, p); p.node = g; }
+  for (const l of S.labels){
+    const t = el("text", { class: l.cls, "font-size": l.size, "text-anchor":"middle", "dominant-baseline":"middle" }, lg);
+    t.textContent = l.text;
+    if (l.han){ const ts = el("tspan", { class:"han", dx: 6, "font-size": l.size * 1.05 }, t); ts.textContent = l.han; }
+    l.node = t;
+  }
+}
+function onZoom(final){
+  const p = ppl();
+  const lod = p < 0.00105 ? 0 : p < 0.0036 ? 1 : 2;
+  svg.attr("data-lod", lod);
+  const W = $("#svg").clientWidth, H = $("#svg").clientHeight;
+  const cs = Math.max(11, Math.min(19, W / 58));
+  if (cs !== S.contSize){ S.contSize = cs; document.documentElement.style.setProperty("--cont-size", cs + "px"); for (const l of S.labels) if (l.cls === "lbl cont") l.size = cs; }
+  for (const pin of S.pins){
+    const vis = S.layers.places && p >= pin.minP;
+    if (!vis){ pin.node.setAttribute("display", "none"); continue; }
+    const [x, y] = toScreen(pin.x, pin.y);
+    if (x < -30 || y < -30 || x > W + 30 || y > H + 30){ pin.node.setAttribute("display", "none"); continue; }
+    pin.node.removeAttribute("display"); pin.node.setAttribute("transform", `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+  }
+  const placed = [];
+  const order = S.labels.slice().sort((a, b) => a.pri - b.pri);
+  for (const l of order){
+    let vis = (l.minP == null || p >= l.minP) && (l.maxP == null || p < l.maxP) && (!l.layer || S.layers[l.layer]);
+    let x = 0, y = 0;
+    if (vis){ [x, y] = toScreen(l.x, l.y); y += (l.dy || 0); if (x < -200 || y < -40 || x > W + 200 || y > H + 40) vis = false; }
+    if (vis && final){
+      const w = (l.text.length + (l.han ? l.han.length * 2 : 0)) * l.size * 0.58 + 6, hh = l.size + 4;
+      const box = [x - w / 2, y - hh / 2, x + w / 2, y + hh / 2];
+      if (l.pri > 0 && placed.some(b => !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]))) vis = false;
+      else placed.push(box);
+      l.vis = vis;
+    } else if (!final && vis){ vis = l.vis !== false; }
+    if (!vis){ l.node.setAttribute("display", "none"); continue; }
+    l.node.removeAttribute("display"); l.node.setAttribute("x", x.toFixed(1)); l.node.setAttribute("y", y.toFixed(1));
+  }
+  const target = 90 / p, pow = Math.pow(10, Math.floor(Math.log10(target)));
+  const nice = [1, 2, 5, 10].map(m => m * pow).reverse().find(v => v <= target) || pow;
+  $("#scale").innerHTML = ""; $("#scale").append(`${fmt(nice)} li · ${fmt(nice / 2)} km`, h("i", { style:`width:${Math.round(nice * p)}px` }));
+  if (final) drawSelection();
+}
+
+function drawSelection(){
+  L.sel.selectAll("*").remove();
+  $$(".pin.sel").forEach(n => n.classList.remove("sel"));
+  const e = S.sel && get(S.sel); if (!e || !e.map) return;
+  const pin = S.pins.find(p => p.id === e.id); if (pin && pin.node){ pin.node.classList.add("sel"); pin.node.parentNode.appendChild(pin.node); }
+  const d = e.kind === "continent" ? e._path : e.kind === "region" ? e._cell : e.kind === "kingdom" ? e._path : null;
+  if (d) el("path", { d, class:"selring", "clip-path": e.kind === "region" && e.parent && get(e.parent) && get(e.parent).kind === "continent" ? `url(#clip-${e.parent})` : null }, L.sel.node());
+  else if (e.map.r && isFinite(e.map.x) && !e.map.inner && e.kind !== "world") el("circle", { cx:e.map.x, cy:e.map.y, r:e.map.r, class:"selring" }, L.sel.node());
+  else if (e.kind === "power" && e.map.sphere && !S.layers.spheres) el("circle", { cx:e.map.x, cy:e.map.y, r:e.map.sphere, class:"selring", style:"stroke-dasharray:4 4;stroke-width:1.5px" }, L.sel.node());
+  else if (Array.isArray(e.map.path)) el("path", { d: open(e.map.path), class:"selring", style:"stroke-dasharray:6 4" }, L.sel.node());
+}
+
+function flyTo(e){
+  if (!e || !e.map) return;
+  const m = e.map; let cx, cy, span;
+  if (Array.isArray(m.path)){ const xs = m.path.map(p => p[0]), ys = m.path.map(p => p[1]); cx = (Math.min(...xs) + Math.max(...xs)) / 2; cy = (Math.min(...ys) + Math.max(...ys)) / 2; span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) * 1.3; }
+  else if (!isFinite(m.x)) return;
+  else { cx = m.x; cy = m.y; span = e.kind === "world" ? WORLD_R * 2.1 : e.kind === "continent" ? Math.max(m.rx || 0, m.ry || 0, m.r || 0) * 2.5 : e.kind === "region" ? (m.r ? m.r * 3 : 90000) : m.r ? Math.max(m.r * 4, 22000) : e.kind === "power" ? Math.max((m.sphere || 20000) * 2.4, 30000) : 30000; }
+  refit();
+  const W = $("#svg").clientWidth, H = $("#svg").clientHeight;
+  const sheet = matchMedia("(max-width: 900px)").matches && !$("#folio").hidden ? $("#folio").offsetHeight : 0;
+  const vh = Math.max(120, H - sheet);
+  const k = Math.max(0.55, Math.min(600, Math.min(W, vh) / (span * S.base.s)));
+  const tx = W / 2 - k * (S.base.cx + cx * S.base.s), ty = vh / 2 - k * (S.base.cy + cy * S.base.s);
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  svg.transition().duration(reduce ? 0 : 650).call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(k));
+}
+$("#zin").onclick = () => svg.transition().duration(250).call(zoom.scaleBy, 1.8);
+$("#zout").onclick = () => svg.transition().duration(250).call(zoom.scaleBy, 1 / 1.8);
+$("#zfit").onclick = () => svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+
+const tip = $("#tip");
+function hitId(target){ const n = target && target.closest && target.closest("[data-id]"); return n ? n.getAttribute("data-id") : null; }
+$("#svg").addEventListener("pointermove", ev => {
+  if (S.picking || ev.pointerType === "touch"){ tip.hidden = true; return; }
+  const id = hitId(ev.target), e = id && get(id);
+  if (!e){ tip.hidden = true; return; }
+  tip.innerHTML = "";
+  const sub = h("div", { class:"t2" }); if (e.pinyin) sub.append(e.pinyin); if (e.hanzi) sub.append(h("span", {}, e.hanzi));
+  tip.append(h("div", { class:"t1" }, e.name || "Untitled"), sub.childNodes.length ? sub : null, h("div", { class:"t3" }, [kindLabel(e.kind), e.way ? WAYS[e.way] : null].filter(Boolean).join(" · ")));
+  const r = $("#mapWrap").getBoundingClientRect();
+  tip.hidden = false;
+  const x = Math.min(ev.clientX - r.left + 14, r.width - tip.offsetWidth - 8), y = Math.min(ev.clientY - r.top + 14, r.height - tip.offsetHeight - 8);
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+});
+$("#svg").addEventListener("pointerleave", () => tip.hidden = true);
+$("#svg").addEventListener("click", ev => {
+  const r = $("#svg").getBoundingClientRect();
+  if (S.picking){ const [x, y] = toWorld(ev.clientX - r.left, ev.clientY - r.top); S.picking(Math.round(x), Math.round(y)); stopPicking(); return; }
+  const id = hitId(ev.target);
+  if (id) select(id, false); else if (S.sel && !S.editing){ select(null); }
+});
+document.addEventListener("keydown", ev => { if (ev.key === "Escape"){ if (S.picking) stopPicking(); else if (S.sel && !S.editing) select(null); } });
+function startPicking(cb){ S.picking = cb; $("#svg").classList.add("picking"); $("#pickhint").hidden = false; if (matchMedia("(max-width: 900px)").matches) $("#folio").style.visibility = "hidden"; }
+function stopPicking(){ S.picking = null; $("#svg").classList.remove("picking"); $("#pickhint").hidden = true; $("#folio").style.visibility = ""; }
+
+$$(".tog").forEach(b => {
+  b.setAttribute("aria-pressed", String(!!S.layers[b.dataset.layer]));
+  b.onclick = () => { const k = b.dataset.layer; S.layers[k] = !S.layers[k]; b.setAttribute("aria-pressed", String(S.layers[k])); saveUI(); render(); };
+});
+
+// ---------- legend
+function mini(draw, w = 26, hgt = 20){ const s = el("svg", { width:w, height:hgt, viewBox:`${-w/2} ${-hgt/2} ${w} ${hgt}`, "aria-hidden":"true" }); draw(s); return s; }
+function lgItem(icon, label){ return h("div", { class:"lg-item" }, icon, h("span", {}, label)); }
+function drawLegend(){
+  const lg = $("#legend"); lg.innerHTML = "";
+  const all = [...S.entries.values()];
+  if (!all.length){ lg.hidden = true; return; }
+  lg.hidden = false;
+  const head = h("button", { "aria-expanded": String(S.legendOpen) }, "LEGEND", h("span", {}, S.legendOpen ? "▾" : "▸"));
+  head.onclick = () => { S.legendOpen = !S.legendOpen; saveUI(); drawLegend(); };
+  lg.append(head);
+  if (!S.legendOpen) return;
+  const body = h("div", { class:"lg-body" });
+  const ways = new Set(all.filter(e => e.kind === "power").map(e => e.way || "neutral"));
+  const g1 = h("div", { class:"lg-grid" });
+  for (const w of Object.keys(WAYS)) if (ways.has(w)) g1.append(lgItem(mini(s => marker(el("g", {}, s), { kind:"power", way:w, top:false, char:"" }, .95), 18, 18), WAYS[w]));
+  body.append(h("h4", {}, "FACTIONS BY SEAL COLOR"), g1);
+  const g2 = h("div", { class:"lg-grid" });
+  const mk = (p, label, sc = .8, w = 26) => g2.append(lgItem(mini(s => marker(el("g", {}, s), p, sc), w, 24), label));
+  mk({ kind:"power", way:"orthodox", top:true, char:"宗" }, "Sect, clan or court", .85);
+  mk({ kind:"city", top:false }, "City or town", 1);
+  mk({ kind:"city", top:true, hub:true }, "Array hub city", .6, 26);
+  mk({ kind:"landmark", name:"stele", top:false }, "Landmark", 1);
+  mk({ kind:"landmark", name:"ruins", top:false }, "Ruins or tomb", 1);
+  mk({ kind:"landmark", name:"peak", top:false }, "Famous peak", 1);
+  mk({ kind:"landmark", name:"lake", top:false }, "Lake or spring", 1);
+  mk({ kind:"realm", top:false }, "Secret realm gate", .8);
+  mk({ kind:"forbidden", top:false }, "Forbidden place", .9);
+  body.append(h("h4", {}, "MARKERS"), g2);
+  const used = new Set(all.filter(e => e.kind === "region" || e.kind === "continent").map(e => e.terrain).filter(t => GLYPHS[t]));
+  const g3 = h("div", { class:"lg-grid" });
+  for (const t of TERRAINS) if (used.has(t)){
+    g3.append(lgItem(mini(s => {
+      el("rect", { x:-12, y:-9, width:24, height:18, rx:3, style:`fill:${terrainFill(t)};stroke:var(--line)` }, s);
+      const B = newBuf(), fn = GLYPHS[t][0]; DRAW[fn](0, 1.5, 7.5, B, rng(3));
+      for (const k of GORDER) if (B[k].length) el("path", { d: B[k].join(""), class: GCLS[k], style:"vector-effect:none" }, s);
+    }, 26, 20), t[0].toUpperCase() + t.slice(1)));
+  }
+  body.append(h("h4", {}, "TERRAIN"), g3);
+  const g4 = h("div", { class:"lg-grid" });
+  const ln = (draw, label) => g4.append(lgItem(mini(draw, 30, 18), label));
+  ln(s => el("path", { d:"M-13 4Q-5 -6 3 2T13 -3", style:"fill:none;stroke:var(--river);stroke-width:2" }, s), "River");
+  ln(s => { const B = newBuf(); [[-8,2,6],[0,0,7],[8,2,6]].forEach(([x,y,z]) => DRAW.peak(x, y, z, B)); for (const k of ["peak","shade","ink"]) el("path", { d:B[k].join(""), class:GCLS[k], style:"vector-effect:none" }, s); }, "Mountain range");
+  ln(s => el("path", { d:"M-13 0H13", class:"route", style:"vector-effect:none" }, s), "Transfer array route");
+  ln(s => el("path", { d:"M-13 3Q0 -8 13 3", style:"fill:none;stroke:var(--coast);stroke-width:1.2;stroke-dasharray:1.5 2.5" }, s), "Kingdom border");
+  ln(s => el("rect", { x:-12, y:-7, width:24, height:14, rx:3, style:"fill:url(#hatch);stroke:var(--cinnabar);stroke-dasharray:4 2" }, s), "Forbidden land");
+  ln(s => el("circle", { r:7, style:"fill:var(--w-orthodox);fill-opacity:.12;stroke:var(--w-orthodox);stroke-dasharray:3 3" }, s), "Sphere of influence");
+  ln(s => { el("path", { d:"M-13 2L13 -2", style:"stroke:var(--jade-edge);stroke-width:7;stroke-linecap:round" }, s); el("path", { d:"M-13 2L13 -2", style:"stroke:var(--jade);stroke-width:5;stroke-linecap:round" }, s); }, "The Fallen Ladder");
+  ln(s => el("circle", { r:7, style:"fill:var(--sea-2);fill-opacity:.3;stroke:var(--sea-label);stroke-dasharray:3 3" }, s), "Sea region");
+  body.append(h("h4", {}, "LINES AND AREAS"), g4);
+  lg.append(body);
+}
+
+// ---------- index (rail)
+$$(".tabs button").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; $$(".tabs button").forEach(x => x.setAttribute("aria-selected", String(x === b))); drawList(); });
+$("#q").addEventListener("input", ev => { S.q = ev.target.value.trim().toLowerCase(); drawList(); });
+$("#railBtn").onclick = () => $("#app").classList.toggle("rail-open");
+function sortKids(a, b){ return ((KINDS[a.kind] || [0,99])[1] - (KINDS[b.kind] || [0,99])[1]) || ((a.order ?? 999) - (b.order ?? 999)) || sortName(a).localeCompare(sortName(b)); }
+function matches(e){ if (!S.q) return true; return [e.name, e.pinyin, e.hanzi, e.meaning, e.summary, e.lore, (e.tags || []).join(" ")].some(v => v && String(v).toLowerCase().includes(S.q)); }
+function rowFor(e, depth, hasKids){
+  const r = h("div", { class:"row" + (S.sel === e.id ? " sel" : ""), style:`--d:${depth}`, role:"button", tabindex:"0", "data-id": e.id });
+  if (hasKids){ const tw = h("button", { class:"tw", "aria-label": S.open.has(e.id) ? "Collapse" : "Expand" }, S.open.has(e.id) ? "▾" : "▸"); tw.onclick = ev => { ev.stopPropagation(); S.open.has(e.id) ? S.open.delete(e.id) : S.open.add(e.id); saveUI(); drawList(); }; r.append(tw); }
+  else r.append(h("span", { class:"tw" }));
+  if (e.kind === "power") r.append(h("span", { class:"dot", style:`background:${wayColor(e.way)}` }));
+  r.append(h("span", { class:"nm" }, e.name || "Untitled"), h("span", { class:"hz" }, e.hanzi || ""), h("span", { class:"kd" }, kindLabel(e.kind)));
+  r.onclick = () => { select(e.id, true); $("#app").classList.remove("rail-open"); };
+  r.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); r.onclick(); } };
+  return r;
+}
+function drawList(){
+  const list = $("#list"); list.innerHTML = "";
+  const all = [...S.entries.values()];
+  if (!all.length){ list.append(h("div", { class:"group-h" }, S.loaded ? "No entries yet" : "Loading…")); return; }
+  if (S.tab === "places"){
+    if (S.q){
+      const hits = all.filter(e => PLACED.has(e.kind) && matches(e)).sort(sortKids);
+      if (!hits.length) list.append(h("div", { class:"group-h" }, "Nothing matches"));
+      hits.slice(0, 300).forEach(e => list.append(rowFor(e, 0, false)));
+      return;
+    }
+    const walk = (e, depth) => {
+      const kids = (S.kids.get(e.id) || []).filter(k => PLACED.has(k.kind)).sort(sortKids);
+      list.append(rowFor(e, depth, kids.length > 0));
+      if (kids.length && S.open.has(e.id)) kids.forEach(k => walk(k, depth + 1));
+    };
+    const w = get("world"); if (w) walk(w, 0);
+    const orphans = all.filter(e => PLACED.has(e.kind) && e.kind !== "world" && (!e.parent || !get(e.parent)));
+    if (orphans.length){ list.append(h("div", { class:"group-h" }, "NOT YET PLACED IN THE TREE")); orphans.sort(sortKids).forEach(e => list.append(rowFor(e, 0, false))); }
+  } else if (S.tab === "history"){
+    const items = all.filter(e => (e.kind === "era" || e.kind === "event") && matches(e)).sort((a, b) => ((a.years && a.years.from != null) ? a.years.from : -1e12) - ((b.years && b.years.from != null) ? b.years.from : -1e12) || (a.order ?? 0) - (b.order ?? 0));
+    const tl = h("div", { class:"tl" });
+    for (const e of items){
+      const it = h("div", { class:"it " + e.kind + (S.sel === e.id ? " sel" : ""), role:"button", tabindex:"0" }, h("div", { class:"yr" }, yearsText(e.years)), h("div", { class:"tt" }, e.name), h("div", { class:"sm" }, e.summary || ""));
+      it.onclick = () => { select(e.id, false); $("#app").classList.remove("rail-open"); };
+      it.onkeydown = ev => { if (ev.key === "Enter") it.onclick(); };
+      tl.append(it);
+    }
+    if (!items.length) list.append(h("div", { class:"group-h" }, "No history yet")); else list.append(tl);
+  } else if (S.tab === "powers"){
+    const ps = all.filter(e => e.kind === "power" && matches(e));
+    for (const w of Object.keys(WAYS)){
+      const g = ps.filter(p => (p.way || "neutral") === w).sort((a, b) => (isTop(b) - isTop(a)) || sortName(a).localeCompare(sortName(b)));
+      if (!g.length) continue;
+      list.append(h("div", { class:"group-h" }, WAYS[w].toUpperCase() + " · " + g.length));
+      g.forEach(p => list.append(rowFor(p, 0, false)));
+    }
+  } else {
+    const groups = [["cosmos", "COSMOLOGY"], ["race", "RACES"], ["figure", "FIGURES"]];
+    for (const [k, label] of groups){
+      const g = all.filter(e => e.kind === k && matches(e)).sort(sortKids);
+      if (!g.length) continue;
+      list.append(h("div", { class:"group-h" }, label));
+      g.forEach(e => list.append(rowFor(e, 0, false)));
+    }
+  }
+}
+
+// ---------- folio (entry view and editor)
+function linkify(text){
+  const frag = document.createDocumentFragment();
+  const paras = String(text || "").split(/\n\s*\n/);
+  for (const para of paras){
+    const p = h("p");
+    const parts = para.split(/\[\[([^\]]+)\]\]/g);
+    parts.forEach((part, i) => {
+      if (i % 2 === 0){ part.split("\n").forEach((line, j) => { if (j) p.append(h("br")); p.append(document.createTextNode(line)); }); return; }
+      const [ref, label] = part.split("|");
+      const target = findByName(ref);
+      if (target){ const a = h("a", { role:"link", tabindex:"0" }, (label || ref).trim()); a.onclick = () => select(target.id, true); a.onkeydown = ev => { if (ev.key === "Enter") a.onclick(); }; p.append(a); }
+      else p.append(document.createTextNode((label || ref).trim()));
+    });
+    frag.append(p);
+  }
+  return frag;
+}
+function editorName(e){
+  if (!e.editedBy) return "";
+  if (e.editedBy === "claude") return "Claude";
+  if (S.me && e.editedBy === S.me.id) return "you";
+  return (S.names[e.editedBy] && S.names[e.editedBy].name) || "someone";
+}
+async function resolveNames(ids){ if (!S.user || !ids.length) return; try { const ps = await S.user.profiles(ids); Object.assign(S.names, ps); } catch (e) {} }
+function sizeText(e){
+  const m = e.map || {};
+  if (e.kind === "continent" && m.rx) return `about ${fmt(2 * Math.max(m.rx, m.ry))} li across (${fmt(Math.max(m.rx, m.ry))} km)`;
+  if (m.r && !m.inner && e.kind !== "world") return `about ${fmt(2 * m.r)} li across (${fmt(m.r)} km)`;
+  if (e.kind === "world") return "about 1,000,000 li across (500,000 km)";
+  if (Array.isArray(m.path)){ let d = 0; for (let i = 1; i < m.path.length; i++) d += Math.hypot(m.path[i][0] - m.path[i-1][0], m.path[i][1] - m.path[i-1][1]); return `about ${fmt(d)} li long (${fmt(d / 2)} km)`; }
+  return "";
+}
+function seal(text){
+  const chars = [...String(text)].filter(c => c.trim()).slice(0, 9), n = chars.length;
+  const rows = n <= 2 ? n : n <= 4 ? 2 : 3, size = n <= 1 ? 40 : n <= 2 ? 30 : n <= 4 ? 26 : 20;
+  const s = h("div", { class:"seal", "aria-hidden":"true", style:`grid-template-rows:repeat(${rows},${size + 2}px);grid-auto-columns:${size + 2}px;font-size:${size}px` });
+  chars.forEach(c => s.append(h("span", {}, c)));
+  return s;
+}
+function select(id, fly){
+  S.sel = id; S.editing = false; S.creating = null;
+  drawFolio(); drawSelection(); drawList();
+  if (id && fly) flyTo(get(id));
+}
+function drawFolio(){
+  const f = $("#folio");
+  const e = S.creating || (S.sel && get(S.sel));
+  if (!e){ f.hidden = true; $("#app").classList.remove("folio-open"); return; }
+  f.hidden = false; $("#app").classList.add("folio-open");
+  f.innerHTML = "";
+  const box = h("div", { class:"folio-in" });
+  f.append(box);
+  if (S.editing || S.creating){ drawEditor(box, e); return; }
+  const top = h("div", { class:"f-top" });
+  if (e.hanzi) top.append(seal(e.hanzi));
+  const subBits = [e.pinyin, e.meaning && e.meaning !== e.name ? `literally “${e.meaning}”` : null].filter(Boolean);
+  top.append(h("div", { class:"f-names" }, h("h2", {}, e.name || "Untitled"), subBits.length ? h("div", { class:"sub" }, subBits.join(" · ")) : null));
+  top.append(h("button", { class:"iconbtn f-close", "aria-label":"Close", onclick: () => select(null) }, "×"));
+  box.append(top);
+  const chips = h("div", { class:"chips" }, h("span", { class:"chip" }, kindLabel(e.kind)), h("span", { class:"chip " + (e.status === "canon" ? "canon" : "draft") }, e.status === "canon" ? "Canon" : "Draft"));
+  if (e.way) chips.append(h("span", { class:"chip way", style:`background:${wayColor(e.way)}` }, WAYS[e.way] || e.way));
+  if (e.terrain) chips.append(h("span", { class:"chip" }, e.terrain));
+  (e.tags || []).forEach(t => chips.append(h("span", { class:"chip" }, t)));
+  box.append(chips);
+  const anc = ancestors(e.id);
+  if (anc.length){ const cr = h("div", { class:"crumbs" }); anc.forEach((a, i) => { if (i) cr.append(" › "); const l = h("a", { role:"link", tabindex:"0" }, a.name); l.onclick = () => select(a.id, true); cr.append(l); }); box.append(cr); }
+  if (e.summary) box.append(h("p", { class:"sum" }, e.summary));
+  if (e.lore) box.append(h("div", { class:"sec" }, h("h3", {}, "WHAT THE WORLD BELIEVES"), h("div", { class:"txt" }, linkify(e.lore))));
+  if (e.truth){ const d = h("details", { class:"truth" }, h("summary", {}, "WHAT'S ACTUALLY TRUE (AUTHORS ONLY)"), h("div", { class:"txt sec" }, linkify(e.truth))); box.append(d); }
+  const facts = h("dl", { class:"facts" });
+  const fact = (k, v) => { if (v) facts.append(h("dt", {}, k), h("dd", {}, v)); };
+  fact("Strongest present", e.top);
+  fact("Size", sizeText(e));
+  fact("When", yearsText(e.years));
+  if (e.map && isFinite(e.map.x) && e.kind !== "world") fact("Position", `${fmt(e.map.x)}, ${fmt(e.map.y)} li from the Ladder Stump`);
+  if (e.map && e.map.sphere) fact("Sphere of influence", `${fmt(e.map.sphere)} li around its seat`);
+  if (facts.childNodes.length) box.append(facts);
+  if (e.notes) box.append(h("div", { class:"sec" }, h("h3", {}, "NOTES AND OPEN QUESTIONS"), h("div", { class:"txt" }, linkify(e.notes))));
+  const kids = (S.kids.get(e.id) || []).slice().sort(sortKids);
+  if (kids.length){
+    const k = h("div", { class:"kids" });
+    kids.forEach(c => { const a = h("a", { role:"link", tabindex:"0" }, h("span", { class:"k1" }, c.name), h("span", { class:"k2" }, c.hanzi || ""), h("span", { class:"k3" }, kindLabel(c.kind))); a.onclick = () => select(c.id, true); a.onkeydown = ev => { if (ev.key === "Enter") a.onclick(); }; k.append(a); });
+    box.append(h("div", { class:"sec" }, h("h3", {}, `INSIDE ${String(e.name).toUpperCase()} · ${kids.length}`), k));
+  }
+  const who = editorName(e);
+  if (who) box.append(h("div", { class:"meta" }, `Last edited by ${who}${e.editedAt ? " · " + ago(e.editedAt) : ""}`));
+  const acts = h("div", { class:"f-actions" });
+  if (S.db){
+    acts.append(h("button", { class:"btn primary", onclick: () => { S.editing = true; drawFolio(); } }, "Edit"));
+    acts.append(h("button", { class:"btn", onclick: () => toggleCanon(e) }, e.status === "canon" ? "Mark as draft" : "Mark as canon"));
+    if (PLACED.has(e.kind) || e.kind === "world") acts.append(h("button", { class:"btn", onclick: () => newEntry(e.id) }, "Add inside"));
+  }
+  box.append(acts);
+  if (e.editedBy && e.editedBy !== "claude" && !S.names[e.editedBy]) resolveNames([e.editedBy]).then(() => { if (S.sel === e.id && !S.editing) drawFolio(); });
+}
+function field(label, input){ return h("label", {}, label, input); }
+function drawEditor(box, e){
+  const isNew = !!S.creating;
+  const v = JSON.parse(JSON.stringify(e)); v.map = v.map || {};
+  box.append(h("div", { class:"f-top" }, h("div", { class:"f-names" }, h("h2", {}, isNew ? "New entry" : "Editing " + (e.name || "")), h("div", { class:"sub" }, "Use [[Name]] to link another entry."))));
+  const form = h("form", { class:"form" });
+  const inp = (id, val, attrs = {}) => h("input", Object.assign({ id, value: val ?? "" }, attrs));
+  const ta = (id, val, rows) => { const t = h("textarea", { id, rows: rows || 4 }); t.value = val || ""; return t; };
+  const sel = (id, opts, val) => { const s = h("select", { id }); opts.forEach(([k, l]) => { const o = h("option", { value:k }, l); if (k === (val ?? "")) o.selected = true; s.append(o); }); return s; };
+  form.append(field("Name", inp("f-name", v.name, { required:"" })));
+  form.append(h("div", { class:"two" }, field("Pinyin", inp("f-pinyin", v.pinyin)), field("Hanzi", inp("f-hanzi", v.hanzi))));
+  form.append(field("Literal meaning (optional)", inp("f-meaning", v.meaning)));
+  const parents = [["", "(none)"]].concat([...S.entries.values()].filter(x => x.id !== e.id && (PLACED.has(x.kind) || x.kind === "cosmos")).sort(sortKids).map(x => [x.id, `${x.name} · ${kindLabel(x.kind)}`]));
+  form.append(h("div", { class:"two" }, field("Kind", sel("f-kind", Object.keys(KINDS).map(k => [k, kindLabel(k)]), v.kind || "landmark")), field("Status", sel("f-status", [["draft","Draft"],["canon","Canon"]], v.status || "draft"))));
+  form.append(field("Inside", sel("f-parent", parents, v.parent || "")));
+  form.append(h("div", { class:"two" }, field("Way (for powers)", sel("f-way", [["", "—"]].concat(Object.entries(WAYS)), v.way || "")), field("Terrain", sel("f-terrain", [["", "—"]].concat(TERRAINS.map(t => [t, t])), v.terrain || ""))));
+  const topIn = inp("f-top", v.top, { list:"realms" }); const dl = h("datalist", { id:"realms" }); REALMS.forEach(r => dl.append(h("option", { value:r })));
+  form.append(field("Strongest present", topIn), dl);
+  form.append(field("Summary (one or two sentences)", ta("f-summary", v.summary, 2)));
+  form.append(field("What the world believes", ta("f-lore", v.lore, 7)));
+  form.append(field("What's actually true (hidden from players)", ta("f-truth", v.truth, 3)));
+  form.append(field("Notes and open questions", ta("f-notes", v.notes, 3)));
+  form.append(field("Tags (comma separated)", inp("f-tags", (v.tags || []).join(", "))));
+  const mx = inp("f-x", v.map.x, { type:"number", step:"1000" }), my = inp("f-y", v.map.y, { type:"number", step:"1000" });
+  const mr = inp("f-r", v.map.r, { type:"number", step:"500", min:"0" }), ms = inp("f-sphere", v.map.sphere, { type:"number", step:"1000", min:"0" });
+  form.append(h("div", { class:"three" }, field("X (li)", mx), field("Y (li)", my), field("Radius (li)", mr)));
+  const pick = h("button", { type:"button", class:"btn" }, "Pick on map");
+  pick.onclick = () => startPicking((x, y) => { mx.value = x; my.value = y; toast(`Placed at ${fmt(x)}, ${fmt(y)}`); });
+  form.append(h("div", { class:"two" }, field("Sphere of influence (li)", ms), h("label", {}, " ", pick)));
+  const yf = inp("f-yfrom", v.years && v.years.from, { type:"number", step:"100" }), yt = inp("f-yto", v.years && v.years.to, { type:"number", step:"100" });
+  form.append(h("div", { class:"two" }, field("From (years, negative = ago)", yf), field("To", yt)));
+  const acts = h("div", { class:"f-actions" },
+    h("button", { type:"submit", class:"btn primary" }, isNew ? "Create" : "Save"),
+    h("button", { type:"button", class:"btn", onclick: () => { stopPicking(); if (isNew){ S.creating = null; } S.editing = false; drawFolio(); } }, "Cancel"));
+  if (!isNew) acts.append(h("button", { type:"button", class:"btn danger", onclick: () => confirmDelete(box, e) }, "Delete"));
+  form.append(acts);
+  form.addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const num = x => x.value === "" ? undefined : Number(x.value);
+    const data = {
+      name: $("#f-name").value.trim(), pinyin: $("#f-pinyin").value.trim(), hanzi: $("#f-hanzi").value.trim(), meaning: $("#f-meaning").value.trim(),
+      kind: $("#f-kind").value, status: $("#f-status").value, parent: $("#f-parent").value || null,
+      way: $("#f-way").value || "", terrain: $("#f-terrain").value || "", top: $("#f-top").value.trim(),
+      summary: $("#f-summary").value.trim(), lore: $("#f-lore").value.trim(), truth: $("#f-truth").value.trim(), notes: $("#f-notes").value.trim(),
+      tags: $("#f-tags").value.split(",").map(s => s.trim()).filter(Boolean)
+    };
+    const map = Object.assign({}, e.map || {});
+    const x = num(mx), y = num(my), r = num(mr), sp = num(ms);
+    if (x !== undefined && y !== undefined){ map.x = x; map.y = y; } else { delete map.x; delete map.y; }
+    if (r !== undefined && r > 0) map.r = r; else delete map.r;
+    if (sp !== undefined && sp > 0) map.sphere = sp; else delete map.sphere;
+    if (Object.keys(map).length) data.map = map;
+    const yfv = num(yf), ytv = num(yt);
+    if (yfv !== undefined || ytv !== undefined) data.years = { from: yfv ?? null, to: ytv ?? null };
+    if (e.order != null) data.order = e.order;
+    data.editedBy = (S.me && S.me.id) || "someone"; data.editedAt = new Date().toISOString();
+    Object.keys(data).forEach(k => { if (data[k] === "") delete data[k]; });
+    let id = e.id;
+    if (isNew){ const base = (data.name || "entry").toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "entry"; id = base; let i = 2; while (get(id)) id = base + "-" + i++; }
+    try {
+      await S.db.doc("entries/" + id).set(data);
+      S.creating = null; S.editing = false; S.sel = id; toast(isNew ? "Entry created" : "Saved");
+      upsert(id, data); rebuild(); drawFolio();
+    } catch (err){ toast("Couldn't save: " + (err && err.code === "quota_exceeded" ? "the atlas is full" : (err && err.message) || "try again")); }
+  });
+  box.append(form);
+}
+function confirmDelete(box, e){
+  if ($(".confirm", box)) return;
+  const c = h("div", { class:"confirm" }, h("span", {}, `Delete ${e.name}? Entries inside it stay but lose their place in the tree.`),
+    h("button", { class:"btn danger", onclick: async () => { try { await S.db.doc("entries/" + e.id).delete(); S.entries.delete(e.id); S.sel = null; S.editing = false; rebuild(); drawFolio(); toast("Deleted"); } catch (err){ toast("Couldn't delete: " + ((err && err.message) || "try again")); } } }, "Delete"),
+    h("button", { class:"btn", onclick: () => c.remove() }, "Keep it"));
+  box.prepend(c);
+}
+async function toggleCanon(e){
+  try { const st = e.status === "canon" ? "draft" : "canon"; await S.db.doc("entries/" + e.id).update({ status: st, editedBy: (S.me && S.me.id) || "someone", editedAt: new Date().toISOString() }); e.status = st; drawFolio(); toast(st === "canon" ? "Marked as canon" : "Marked as draft"); }
+  catch (err){ toast("Couldn't update: " + ((err && err.message) || "try again")); }
+}
+function newEntry(parentId){
+  const p = parentId && get(parentId);
+  const kindFor = { world:"continent", continent:"region", region:"kingdom", sea:"region", kingdom:"city" };
+  S.creating = { id:null, name:"", kind: (p && kindFor[p.kind]) || "landmark", parent: parentId || "world", status:"draft", map: p && p.map && isFinite(p.map.x) ? { x: p.map.x, y: p.map.y } : {} };
+  S.editing = true; drawFolio();
+}
+$("#newBtn").onclick = () => { if (!S.db){ toast("Open the atlas in Claude to add entries"); return; } newEntry(S.sel && get(S.sel) && PLACED.has(get(S.sel).kind) ? S.sel : "world"); };
+
+// ---------- data
+function upsert(id, data){ const e = Object.assign({ id }, data); S.entries.set(id, e); }
+function rebuild(){
+  S.kids = new Map();
+  for (const e of S.entries.values()){ if (!e.parent) continue; if (!S.kids.has(e.parent)) S.kids.set(e.parent, []); S.kids.get(e.parent).push(e); }
+  const w = get("world");
+  if (w){ $("#bHan").textContent = w.hanzi || ""; $("#bName").textContent = (w.name || "").toUpperCase(); }
+  const sealed = get("era-sealed"); if (sealed && sealed.years && sealed.years.from != null) $("#bEra").textContent = `Sealed Era, year ${fmt(-sealed.years.from)}`;
+  render(); drawList(); drawLegend();
+  if (S.sel && !get(S.sel)){ S.sel = null; }
+  if (!S.editing) drawFolio();
+}
+let pending = null;
+function schedule(){ if (pending) return; pending = setTimeout(() => { pending = null; rebuild(); }, 150); }
+function showBanner(title, text){ const b = $("#banner"); b.innerHTML = ""; if (!title){ b.hidden = true; return; } b.hidden = false; b.append(h("b", {}, title), text); }
+
+async function boot(){
+  fitBase(); drawStatic(); drawList();
+  new ResizeObserver(() => { refit(); onZoom(true); }).observe($("#svg"));
+  const C = window.claude;
+  if (!C || typeof C.use !== "function"){ showBanner("Start the local atlas server", "The world's entries live in the atlas's shared database, which loads from node tools/atlas-serve.cjs."); return; }
+  const [db, user] = await Promise.all([C.use("db").catch(() => null), C.use("user").catch(() => null)]);
+  S.user = user;
+  if (user){ try { S.me = await user.me(); } catch (e) {} }
+  if (!db){ showBanner("The atlas can't reach its database here", "Open it from Claude to see and edit the world."); return; }
+  S.db = db;
+  let first = true;
+  db.collection("entries").limit(1000).onSnapshot(snap => {
+    S.loaded = true;
+    for (const ch of snap.docChanges()){
+      if (ch.type === "removed") S.entries.delete(ch.doc.id);
+      else upsert(ch.doc.id, ch.doc.data());
+    }
+    if (!S.entries.size) showBanner("The atlas is empty", "Press New entry to add the first place, or ask Claude to fill it in.");
+    else showBanner(null);
+    if (first){ first = false; rebuild(); } else schedule();
+  }, err => { showBanner("The atlas lost its connection", "Reload the page to reconnect."); });
+}
+boot();
+})();
+</script>
+
+</body></html>

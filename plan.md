@@ -1,0 +1,218 @@
+# Build plan
+
+The game is built in phases, and each phase is sized for one Claude Code session. A new session starts clean, reads this file, does one phase, records what it did, and ends. Nothing has to be carried from one session to the next except what is written here, in the code and in the tests.
+
+The rules live in `docs/design.md` and the world in `content/atlas/entries.json`. Both local files are the source of truth; the claude.ai design doc and atlas they came from are frozen archives since 2026-10-11.
+
+## How each session runs
+
+1. Open Claude Code in this folder and say: **"Do phase P0.1 from plan.md."** (Use the next unticked phase.)
+2. Claude reads `CLAUDE.md` (automatic), this file's Status, Open questions and that phase, then only the `docs/design.md` sections the phase lists. It searches by heading rather than reading the whole file.
+3. If the phase has a **Before the session** line, Jan does that first. The session checks it and stops if it isn't done.
+4. It stays inside the phase. If something comes up that the design doesn't answer, it picks the simplest option that fits, writes it under Open questions and carries on. It stops to ask only when the answer would change the design. It adds whatever npm packages the phase needs.
+5. Content a session drafts (talents, tree nodes) is committed as data and listed in the Log as awaiting review. Jan reviews it after the session and leaves notes under Open questions, and the next session applies them before its own phase.
+6. The phase is finished when its "Done when" list holds and `npm test`, `npm run lint` and `npm run build` pass.
+7. Before ending, it ticks the phase in Status, adds 3–5 lines to the Log (what was built, decisions made, what the next phase should know) and commits as `P0.1: <summary>`.
+8. Close the session. The next phase starts in a fresh one.
+
+**Design sessions** (D2, D3 and so on) run here like any phase: they edit `docs/design.md` and the atlas directly, then tick, log and commit. `node tools/atlas-serve.cjs` opens the atlas map for browsing and editing.
+
+## Status
+
+- [x] P0.1 Scaffold the project
+- [ ] P0.2 The atlas inside the game
+- [ ] P0.3 GLM spike
+- [ ] P1.1 Game state, loop and saves
+- [ ] P1.2 Cultivation rules
+- [ ] P1.3 Trees, techniques and mastery
+- [ ] P1.4 Character creation and the first hour
+- [ ] P1.5 Polish, balance and share
+- [ ] D2 Design: items and gear, enemies, combat Dao nodes, the Border Wilds canon pass
+- [ ] P2.1 Combat rules core
+- [ ] P2.2 Enemies and the fight sim
+- [ ] P2.3 Combat screen, items and the bag
+- [ ] D3 Design: exploration, NPC basics, Way nodes, Border Wilds encounters
+- [ ] P3.1 The Border Wilds as a playable region
+- [ ] P3.2 GLM roles
+- [ ] P3.3 Go-in screen and loot flowing home
+- [ ] P3.4 Tone and reliability pass
+- [ ] M4–M8: expanded into phases at their design sessions (outline at the end)
+
+---
+
+## M0: Setup, the atlas and the AI spike (weeks 1–2)
+
+### P0.1 Scaffold the project (about 2 hours)
+
+**Read:** `CLAUDE.md`; design.md § Tech stack and code layout; § UI and screens (Look and Layout only).
+
+**Build:**
+- `git init` and a `.gitignore` covering `node_modules`, `dist`, `.env*` and `*.local`. Check `node --version` is 20 or newer.
+- Vite + React + TypeScript (strict). Dependencies: zustand, zod, dexie. Dev: vitest, eslint, prettier, tsx, d3. Later phases add their own.
+- Folders as the design lays out: `src/core`, `src/content`, `src/ai`, `src/ui`, `sim/`, `tools/`, `content/`.
+- A lint rule that fails if `src/core` or `src/content` imports react, react-dom, `src/ui` or `src/ai`, or if `src/core` uses `fetch`. The Node sims import both folders.
+- `src/core/rng.ts`: seeded mulberry32 (the same function the atlas uses), with tests.
+- The app shell: side menu (Abode only for now), main area, right context panel; the slate and gold color tokens from the design; below 900px wide the menu becomes a drawer and the context panel slides up from the bottom.
+- npm scripts: `dev`, `build`, `test`, `lint`, `sim`, `atlas:build`, and `atlas:serve` for `node tools/atlas-serve.cjs`.
+
+**Done when:** `npm run dev` shows the empty shell in slate and gold; test, lint and build pass; a React import placed in `src/core` or `src/content` makes lint fail.
+
+### P0.2 The atlas inside the game (about 2–3 hours)
+
+This is the "Atlas export" item from the design checklist.
+
+**Read:** `content/atlas/README.md`; `tools/atlas-geo.cjs`; design.md § World bible and § The world map.
+
+**Build:**
+- `src/content/atlas/schema.ts`: a Zod schema for an entry, covering every field in the README and what the data adds: `top` and `map` are missing on a few entries, `years.from` can be null (the Unrecorded), `terrain` also appears on seas and forbidden lands, and `map.inner` is the Rim's inner radius.
+- A strict realm field: parse each entry's free-text `top` into `{ realm, note }`, where realm is one of the nine realms from Qi Condensation to Tribulation Transcendence, `unknown` or empty (a missing `top` counts as empty). List any entry that fails to parse, and count the entries with no realm by kind for the canon pass.
+- `npm run atlas:build`: read `content/atlas/entries.json`, validate it, compute fixed outlines with `tools/atlas-geo.cjs`, and write `src/content/generated/atlas.json` with entries plus geometry rounded to 10 li. Outlines cover continent coasts, region cells clipped to the coast (use a polygon clipping package), kingdom and forbidden-land shapes, and sea-zone circles. The tool skips The Scar on purpose, so store it as a circle from its `map.r`. Drop `notes`, `order`, `editedBy` and `editedAt` from the output, and keep `truth` for the narrator.
+- Commit the generated file, so tests and builds never need d3 or a rebuild.
+- A test that loads the generated file and checks it against the source: the same entry ids as `content/atlas/entries.json`, and 6 continents. Don't hardcode the entry count, since edits change it.
+
+**Done when:** the build runs clean, every `top` parses or appears in the report, and the generated file loads in a test. After any atlas edit, rerun `npm run atlas:build` and commit the generated file.
+
+### P0.3 GLM spike (about 3 hours, about $0.50 of OpenRouter credit)
+
+**Before the session:** put `OPENROUTER_API_KEY=...` in `.env.local` and check the OpenRouter account has at least $1 of credit.
+
+**Read:** design.md § How GLM fits in; § What the AI will cost; § Risks; the "One turn, start to finish" part of § Combat. In the atlas, the Border Wilds (`qm-bianhuang`) and the entries inside it.
+
+**Build:**
+- `src/ai/openrouter.ts`: streaming chat completions (fetch and server-sent events), using the request settings in the design and `usage.include`, recording cost. It must run in Node and in the browser.
+- `src/ai/mock.ts`: canned replies for tests.
+- `src/ai/schemas.ts`: the interpreter's action schema, written from the design's example JSON and kept for P3.2.
+- `sim/spike.ts` (`npm run spike`, loading `.env.local` with Node's `--env-file`):
+  1. Thinking off: `reasoning_tokens` must read 0. If it doesn't, retry with effort "none" and record the result.
+  2. Interpreter: 40 typed actions in a short hand-written Border Wilds fight scene, sent with the JSON schema and `provider.require_parameters`, checked with Zod. Target: at least 95% valid.
+  3. Narrator: 20 dark scenes in the Border Wilds, such as a robbery at the smugglers' crossing, a betrayal, a beast raid, or a senior taking your beast core. Save the transcripts, note any hedging or softening, and count how many of the 20 JSON tails parse and pass Zod.
+  4. Caching: send the same fixed prefix of rules and world bible, about 2,000 tokens, several times in a row, and record the cached tokens and the discount. Every row of the cost table assumes caching works.
+  5. Timing and cost: time to first token (target about 2 seconds) and cost per call.
+- `docs/spike-report.md`: the numbers, the hosts used and a go/no-go line, with any fallback to take.
+
+**Done when:** the report exists with measured numbers. Any correction to the request settings goes into design.md and the Log.
+
+## M1: Idle core, no AI (weeks 3–5)
+
+### P1.1 Game state, loop and saves (about 3 hours)
+
+**Read:** design.md § Saves; § Tech stack and code layout (the five rules); § How the two halves connect (the calendar paragraphs); § Cultivation (the body and soul paragraphs, for the state's shape).
+
+**Build:**
+- `src/core/state.ts`: character, calendar, three parallel ladders (realm, stage and bar for qi, body and soul), insight, spirit stones, the chronicle and unlock flags.
+- The game loop: a few ticks a second, with in-game time per tick set by the realm's calendar speed, and a debug speed multiplier (a `?speed=` URL flag) for testing. Offline time is applied on load, capped at 12 real hours. Death never happens offline: time stops at the lifespan edge.
+- A Zustand store that bridges core and UI.
+- Saves as the design describes, in IndexedDB through Dexie: 3 slots holding a lineage each, a version number with migrations, autosave every 30 seconds and at each breakthrough, a backup copy, export and import of one compressed file that includes the chronicle, and the gentle mode's one rewind. Ask the browser for persistent storage. One tab plays a slot at a time; a second tab on the same slot shows a take-over notice (the Web Locks API does this).
+- The Settings screen's save section, with the last export date.
+
+**Done when:** tests cover a save round trip, migrating a v0 fixture, falling back to the backup from a corrupted save, and the offline catch-up math; reloading the page keeps progress; a second tab can't autosave over the first.
+
+### P1.2 Cultivation rules (about 3–4 hours)
+
+**Read:** design.md § Cultivation (the realms table, seclusion budget, breakthroughs, body and soul, insight, cultivation methods, breakthrough grades); § Character creation (the spirit roots table and pacing targets); § Economy (stones as fuel); § Combat (the six attributes line, for Aptitude).
+
+**Build:**
+- `src/content/realms.ts`: realms, stages, lifespans and gates as data.
+- `src/content/methods.ts`: the common methods the origins hand out (the garrison's standard method, the cave clans' crude method, the cadet's spear method, the Gate's saber method, and the two the refusals lead to). Fit is data: full, partial or poor, starting at ×1.0, ×0.8 and ×0.6. Common methods fit every root fully except mutated roots, which fit them poorly.
+- Qi gain from root speed × method fit × qi density × Aptitude. Qi density is 1 until abodes arrive, and layers 1–3 ignore root speed. Spirit stones burn during qi seclusion as § Economy describes.
+- Body and soul as their own ladders beside qi: the same realms and stages, bars fed by tempering and nourishment, their own breakthroughs, each capped at one major realm above qi. Insight from seclusion, rising with realm.
+- Seclusion days split among qi, body, soul, study and practice. The default plan is 60% qi, 15% body, 10% soul, 10% study and 5% practice, shared among whichever slots are open.
+- Minor and major breakthroughs as § Cultivation describes: odds that rise as the bar fills past full, the auto setting for minor breakthroughs offline, no major breakthrough offline, grades from flawed to heavenly set by the margin you bring, and the insight threshold counted on insight ever earned. Major gates need a full bar, an insight threshold and the gate item. The Foundation Pill is an item count; the card that hands it over comes in P1.4, so tests grant it directly.
+- The lifespan edge gives a last chance. If it fails, the life ends: the slot keeps its chronicle and offers a new life, with nothing carried over, until rebirth arrives in M8.
+- The Cultivate screen and the Abode bars: qi, body, soul, and age against lifespan. The spirit pool stays hidden until M4.
+- `sim/pacing.ts`: real hours to each layer and realm, per root, playing the default plan and the default breakthrough setting; it also prints a qi-only run for comparison. Tune the constants until every root reaches layer 3 in about 45 minutes, a true root reaches layer 9 in 15–20 hours and a heavenly root in about half that.
+
+**Done when:** the formulas have unit tests and the pacing sim lands inside the targets, with its output pasted into the Log.
+
+### P1.3 Trees, techniques and mastery (about 3–4 hours)
+
+**Read:** design.md § Cultivation (the trees, insight, "learn with insight, use with one gate", techniques, mastery); § UI and screens (the Trees and Techniques rows).
+
+**Build:**
+- A tree data format in `src/content/trees/`: tiers, nodes, costs, effects, requirements, sealed above your level.
+- Node lists for tiers 1 and 2 of the Qi, Body and Soul trees: about 8–12 nodes per tier, drafted as data in the session and committed for Jan's review (How each session runs, step 5).
+- Spending insight, with node effects wired into the rules.
+- Technique data, with mastery from Glimpse to Origin raised by practice, including the first technique of each origin path that P1.4 hands out.
+- The Trees screen (a pannable graph in tier bands) and the Techniques screen.
+
+**Done when:** buying a node changes the numbers it claims (tested), sealed nodes can be learned but not used, and both screens work at desktop and phone widths.
+
+### P1.4 Character creation and the first hour (about 3 hours)
+
+**Read:** design.md § Character creation and the first hour; § Cultivation (talents); § Saves (the gentle mode); § UI and screens (the Character and Chronicle rows); § Combat (the six attributes line). In the atlas: `qm-bianhuang`, `qm-shiyan-guo`, `qm-anbian-fu`, `qm-shoukou-cheng`, `qm-tushou-men`, `qm-yeqiao-hui`, `qm-duigu-qiang`.
+
+**Build:**
+- The creation flow: name, look and pronouns; ironman or gentle mode; the five-talent roll with odds tables in `src/content/talents.ts`; three rerolls.
+- Talents: about a dozen per kind spread over the seven grades from gray to red, each a stat change under its flavor, including the Agility, Fortune and Aptitude modifiers the design gives body, fate and soul talents; spirit roots include the red chaos root. Origin is rolled like the rest; in v1 it lands on one of the three Border Wilds origins, a third each. Drafted in the session and committed for Jan's review.
+- Three origins with fixed childhood text, and the testing-day choice (go along or refuse), which sets the starting method, technique and flags.
+- Fixed event cards for what the world supplies from M3: the errand card that stands in for the first trip out; a card within the first hour that gives a method to the two refusals that start without one (the Night Bridge Society's offer to the deserter, a bounty-office job for the street cultivator); and the origin's layer 9 card that hands over a Foundation Pill, with another card ten in-game years after a failed attempt.
+- Unlock flags, so screens appear as they're reached, with chronicle entries.
+- The Chronicle screen, and the Character screen: talents and the six attributes, with fame and standing hidden until M5.
+
+**Done when:** a new life reaches layer 3 in about 45 minutes of play on any root (checked with the sped-up clock), and all three origins × both choices play through to a method and the errand card.
+
+### P1.5 Polish, balance and share (about 2–3 hours)
+
+**Before the session:** create an empty GitHub repository, add it as this folder's `origin`, and set GitHub Pages to deploy from GitHub Actions.
+
+**Read:** design.md § Economy (what the balance sims measure); § UI and screens ("Coming back" and the Settings row); the Log.
+
+**Build:** the coming-back card, chronicle polish, short number formats and tooltips, the Settings screen's text size and reduced motion, a balance pass with the pacing sim, a GitHub Actions workflow that deploys to Pages, and a short README for friends. Use "Severed Heaven" as the working title until the game has a name.
+
+**Done when:** the Pages link loads in a fresh browser profile, a new life reaches layer 3 there with the sped-up clock, and the pacing sim sits inside its targets. The other balance measures wait for M2 and M3.
+
+## D2: Design session, before M2
+
+Settle items and gear (slots, grades, bonding, pill toxicity, storage rings, and the gate items for major body and soul breakthroughs) and enemies (beast and cultivator templates, behavior profiles, loot). Draft tiers 1 and 2 of the combat Daos: the five elements, Sword, Saber, Spear and Fist. Do the Border Wilds canon pass.
+
+## M2: Combat engine (weeks 6–7)
+
+- **P2.1 Combat rules core:** attributes, d20 checks, criticals, grazes and backfires, realm and stage gaps on the one ladder the design describes, the damage formula with damage rounded to the nearest whole number, eleven damage types and their statuses, the element cycle and combos, qi costs. Done when every rule has a test and the design's worked example reproduces exactly.
+- **P2.2 Enemies and the fight sim:** templates and behavior profiles from D2; `sim/fights.ts` runs 10,000 fights per matchup; tune until fighting a realm up takes stacked advantages.
+- **P2.3 Combat screen, items and the bag:** button-only fights, the bag and gear from D2, and the combat Daos wired in.
+
+## D3: Design session, before M3
+
+Settle exploration (travel time, encounters per region, how a scene is built, ruins, fleeing, dying in the world) and NPC basics (the record, what each NPC knows, how talk changes relationships). Draft tiers 1 and 2 of the Orthodox, Demonic and Buddhist Ways, plus the Border Wilds scenes and encounter tables.
+
+## M3: Go-in slice, the playable milestone (weeks 8–10)
+
+- **P3.1 The Border Wilds as a playable region:** scenes, tagged features, encounters, and a fogged region map drawn from the generated geometry.
+- **P3.2 GLM roles:** interpreter, narrator and chronicler; a context builder with the fixed text first so it caches; Zod checks with one retry and a safe fallback; the mock provider in tests; the cost meter.
+- **P3.3 Go-in screen and loot flowing home:** the screen as designed; the first trip out replaces the errand card; Ways grow from deeds.
+- **P3.4 Tone and reliability pass:** rerun the 20 dark scenes in the game, measure the JSON failure rate and compare prose by host, then fix the prompts.
+
+## Later milestones (outline)
+
+Each opens with a design session that settles its topics and expands it into phases here.
+
+- **M4 Crafts (weeks 11–14):** D4 recipes and craft Dao nodes; then alchemy and spirit farming; refining, formations and talismans; experimentation, production queues and Core Formation; the spirit pool.
+- **M5 People and powers (weeks 15–18):** D5 NPC depth and sects; then NPC records and memory; sects, posts and contribution; factions, fame, karma and romance basics; the other three origins; the Scribe's steward reports.
+- **M6 Living world (weeks 19–21):** D6 world simulation; then the events calendar, prosperity, markets and standing orders; map tiers and travel; beast taming, appraisal and geomancy; the Scribe's rumors and headlines.
+- **M7 Big moments (weeks 22–24):** D7 tribulations and heart demons; then Nascent Soul and tribulations; heart demons, with thinking on.
+- **M8 Rebirth and friends (weeks 25–27):** D8 death, rebirth and legacy, plus art and sound; then lifespan's end, rebirth and legacy; friends' access through OpenRouter sign-in, hosting and polish.
+
+---
+
+## Open questions
+
+Write questions here when a phase hits something the design doesn't cover, with the option picked.
+
+- **Breakthrough rules** (settled 2026-10-11, design § Cultivation). Odds rise as the bar fills past full; minor breakthroughs run on auto offline; majors never happen offline; the insight threshold counts insight ever earned; grade follows the margin you bring.
+- **Stage gaps across realms** (settled 2026-10-11, design § Combat). One ladder: −2 and ×1.2 per stage, half that per Qi Condensation layer, and −2 and ×1.75 per major breakthrough, so a realm apart is −8 and about ×3. The worked example still gives 33.
+- **Untrained body and soul** (assumed 2026-10-11). Both start at zero like qi and stay behind when neglected; nothing lifts them to the qi realm for free.
+- **Fonts** (assumed 2026-10-11, P0.1). The design asks for a serif display face, a brush face for hanzi and a plain sans, but names none. Picked Cormorant Garamond, Ma Shan Zheng and Inter from Google Fonts, with system fallbacks, as tokens in `src/ui/theme.css`.
+
+## Log
+
+Newest first. 3–5 lines per phase.
+
+- 2026-10-11, P0.1: scaffolded Vite 8, React 19 and TypeScript 6 (strict, plus `noUncheckedIndexedAccess`) with zustand, zod and dexie; vitest, ESLint 10, Prettier, tsx and d3 for development. One `tsconfig.json`; `build` runs `tsc --noEmit` then `vite build` with `base: './'` for Pages.
+  - `eslint.config.js` blocks React and any `ui` or `ai` path in `src/core` and `src/content` (regex patterns, so relative paths are caught), and blocks `fetch`, XHR, WebSocket and EventSource in `src/core`. A planted probe file proved it. `src/content` may import `src/core`.
+  - `src/core/rng.ts` has `mulberry32`, `hashSeed` (the atlas's FNV-1a) and an `Rng` class whose whole state is one integer, so saves can store `rng.state` and resume. The tests check it against `tools/atlas-geo.cjs` itself, which loads d3, so a cold test run takes about 10 seconds.
+  - The shell in `src/ui` has the menu (from `screens.ts`, Abode only), the main area and the context panel in the design's tokens. Below 900px a top bar opens the menu as a drawer and the context panel as a bottom sheet, and Escape or the scrim closes them.
+  - `npm run sim -- <name>` runs `sim/<name>.ts`. `atlas:build` is a placeholder that exits 1 until P0.2 replaces `tools/atlas-build.ts`. `.claude/launch.json` has `dev` and `atlas` preview entries.
+
+- 2026-10-11, going local: the local files are now the source of truth, and the claude.ai doc and atlas are frozen. `tools/atlas-serve.cjs` and `tools/atlas/index.html` run the atlas map locally against `entries.json`. Every remaining atlas audit item was fixed there: name-replacement damage, names, prices, travel, geography, dates, 20 kingdoms nudged inside their regions, strait radii and tags (docs/atlas-audit.md).
+- 2026-10-11, audit: swapped P1.3 and P1.4 so trees and techniques exist before the first hour is tested. Filled the plan's gaps: a methods file, the Character and Chronicle screens, gentle mode at creation, event cards for the refusals and the M1 Foundation Pill, a default seclusion plan for the pacing sim, spike checks for the narrator's JSON tail and caching, a Pages deploy, and Before-the-session steps. The design doc was edited online (revision 160) and re-exported: Saber ships in v1, body and soul climb parallel ladders, eleven damage types, saves move to IndexedDB, and the price yardstick and stones-as-fuel rule were fixed. The same day Jan settled the breakthrough rules and the combat ladder (Open questions), the offline cap (12 hours), the gentle rewind, failed and last-chance breakthroughs, seven talent grades from gray to red, and three D2 rules: a Dao tier is held at half its nodes, attributes start at 10 and talents move them by grade, and HP and the qi pool climb the combat ladder. The atlas got the strait, `top`, sphere and March fixes (docs/atlas-audit.md).
+- 2026-10-11, planning: design settled through M1 on claude.ai. The start corner is the Border Wilds, the atlas review is done, and design.md and the atlas were exported here.

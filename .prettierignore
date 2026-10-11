@@ -1,0 +1,8 @@
+dist
+node_modules
+content/atlas/entries.json
+src/content/generated
+tools/atlas
+tools/*.cjs
+docs
+*.md
