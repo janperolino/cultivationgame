@@ -24,7 +24,7 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 - [x] P0.1 Scaffold the project
 - [x] P0.2 The atlas inside the game
 - [x] P0.3 GLM spike
-- [ ] P1.1 Game state, loop and saves
+- [x] P1.1 Game state, loop and saves
 - [ ] P1.2 Cultivation rules
 - [ ] P1.3 Trees, techniques and mastery
 - [ ] P1.4 Character creation and the first hour
@@ -207,11 +207,18 @@ Write questions here when a phase hits something the design doesn't cover, with 
 - **Atlas outlines the plan didn't name** (assumed 2026-10-11, P0.2). The Rim (`guixu`) is stored as an `annulus` shape from `map.r` and `map.inner`, since the page draws it as a ring. Straits (`sea` entries) still get no shape, as on the page. A `top` that fails to parse would be kept as `unknown` with its text in the note, and listed by the build; none fail today.
 - **GLM hosts** (Jan's call, 2026-10-11, P0.3). Test and use the cheap hosts Morph and DeepInfra; never StreamLake or Novita, which make GLM 5.2 feel dumb. Morph rarely refuses; the worry is softening, which the spike checked for and didn't find. Settled as: narrator on Morph with DeepInfra as fallback, interpreter on DeepInfra then Morph (design § How GLM fits in).
 - **Narrator tail retry** (assumed 2026-10-11, P0.3). When the narrator's JSON tail fails, P3.2 should ask for the tail alone as structured output at temperature 0.2 (40/40 valid in the spike) rather than rerun the scene. The design's "one retry with the error message" becomes this for the narrator.
+- **Calendar and save details** (assumed 2026-10-11, P1.1). The year is 360 days (twelve months of thirty). Lifespans past Nascent Soul are placeholders (2,000, 3,000, 5,000, 8,000, 12,000) until their realms are designed. The chronicle lives inside the game state rather than its own table, small enough until M3's adventure log. Gentle mode's rewind point starts at the beginning of the life, so the rewind works before the first breakthrough. The `?speed=` multiplier applies to live play only; offline time is real time. A gap of over a minute between ticks (a sleeping laptop) counts as offline time, cap included. Settings can erase a slot, after a confirm.
 - **Talk styles** (assumed 2026-10-11, P0.3). The interpreter's talk styles are the design's four: bluff, intimidate, bargain, surrender. A taunt maps to intimidate.
 
 ## Log
 
 Newest first. 3–5 lines per phase.
+
+- 2026-10-11, P1.1: `src/core/state.ts` holds the life as one Zod-checked object: character (pronouns, ironman or gentle), a calendar of world days, the qi, body and soul ladders (realm, stage, bar), insight current and ever earned, stones in low-grade units, the chronicle, unlock flags, the rewind charge and the RNG state. `realms.ts` gained stages and lifespans.
+  - `src/core/loop.ts`: `advance` turns real ms into days at lifespan ÷ 120 years per real hour, one day or less per step, through a `DayStep` hook that P1.2 fills with cultivation (it gets an `offline` flag). Time stops at the lifespan edge, online and off. `catchUp` applies offline time capped at 12 hours.
+  - `src/core/save/`: a versioned envelope with migrations (a v0 fixture migrates), gzip export and import (plain JSON also imports), and `SaveSlots` on Dexie: three slots with current, backup, rewind point and last export date. A damaged save loads the backup with a warning and never rotates into it. `writeNow` queues a raw IndexedDB put and commits it on `pagehide`: Dexie's own put never landed before a reload.
+  - `src/ui/store.ts` is the Zustand bridge: the 4-tick-a-second loop, autosave every 30 s and on hide, Web Locks per slot with a take-over notice (checked in two tabs), `navigator.storage.persist()`, and `saveNow({ rewindPoint: true })` for P1.2 to call at each breakthrough, after `noteBreakthrough` refills the gentle charge on a major one. Settings lists the slots with play, new life, export (last export date, flagged after a week), import, rewind and erase.
+  - For P1.2: plug cultivation into `advance`'s `step`. Until P1.4, a new life is "Nameless" at age 12. Abode shows the ladders as text and age against lifespan; the bars need P1.2's step sizes.
 
 - 2026-10-11, planning: one realm curve (about 9x into Foundation, 30x into Core Formation, 100x from Nascent Soul up) now drives power, qi needs, income, prices and item power. The money grades shifted down a realm at the top, and realm pressure pins at one realm from Nascent Soul up.
 - 2026-10-11, planning: realm gaps now escalate, about 9x power into Foundation, 30x into Core Formation and 100x from Nascent Soul up (design § Combat). Planning sessions between phases are now a recognised kind of session: docs and atlas only, committed as design: <summary>.

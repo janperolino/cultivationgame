@@ -1,0 +1,171 @@
+import { readFileSync } from 'node:fs';
+import { afterEach, describe, expect, it } from 'vitest';
+import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
+import { newLife, noteBreakthrough, type GameState } from '../state.ts';
+import { decodeSaveFile, encodeSaveFile } from './file.ts';
+import { loadSave, makeSave, SAVE_VERSION, SaveError } from './format.ts';
+import { SaveSlots } from './slots.ts';
+
+const v0 = JSON.parse(readFileSync(new URL('./fixtures/v0.json', import.meta.url), 'utf8'));
+
+let open: SaveSlots[] = [];
+function slots(): SaveSlots {
+  const s = new SaveSlots('test', { indexedDB: new IDBFactory(), IDBKeyRange });
+  open.push(s);
+  return s;
+}
+afterEach(() => {
+  open.forEach((s) => s.close());
+  open = [];
+});
+
+function played(): GameState {
+  const s = newLife({ name: 'Han Li', mode: 'gentle', seed: 'test' });
+  return {
+    ...s,
+    calendar: { day: s.calendar.day + 400.25 },
+    qi: { realm: 'qi-condensation', stage: 3, bar: 52.5 },
+    insight: { current: 3, earned: 10 },
+    stones: 42,
+    chronicle: [...s.chronicle, { day: 4720, kind: 'note', text: 'A quiet year.' }],
+  };
+}
+
+describe('save format', () => {
+  it('migrates the v0 fixture', () => {
+    const save = loadSave(v0);
+    expect(save.version).toBe(SAVE_VERSION);
+    expect(save.savedAt).toBe(1790000000000);
+    const s = save.state;
+    expect(s.character).toMatchObject({ name: 'Lin Mo', mode: 'gentle', pronouns: 'he/him' });
+    expect(s.calendar.day).toBe(15.5 * 360);
+    expect(s.qi).toEqual({ realm: 'qi-condensation', stage: 2, bar: 140 });
+    expect(s.body.stage).toBe(1);
+    expect(s.insight).toEqual({ current: 7, earned: 7 });
+    expect(s.stones).toBe(12);
+    expect(s.rng).toBe(123456);
+    expect(s.chronicle.map((c) => c.text)).toEqual(v0.log);
+    expect(s.rewindCharges).toBe(1);
+  });
+
+  it('rejects saves from a newer game and damaged saves', () => {
+    expect(() => loadSave({ ...makeSave(played(), 1), version: SAVE_VERSION + 1 })).toThrow(
+      SaveError,
+    );
+    expect(() => loadSave({ version: SAVE_VERSION, savedAt: 1, state: { qi: 'lots' } })).toThrow(
+      /failed its check/,
+    );
+    expect(() => loadSave('nope')).toThrow(SaveError);
+  });
+
+  it('round-trips a compressed export file, and reads plain JSON too', async () => {
+    const save = makeSave(played(), 1234);
+    const bytes = await encodeSaveFile(save, 5678);
+    expect([bytes[0], bytes[1]]).toEqual([0x1f, 0x8b]);
+    expect(await decodeSaveFile(bytes)).toEqual(save);
+
+    const plain = new TextEncoder().encode(
+      JSON.stringify({ format: 'severed-heaven-slot', exportedAt: 1, save: v0 }),
+    );
+    expect((await decodeSaveFile(plain)).state.character.name).toBe('Lin Mo');
+    await expect(decodeSaveFile(new TextEncoder().encode('{}'))).rejects.toThrow(SaveError);
+  });
+});
+
+describe('save slots', () => {
+  it('round-trips a save through IndexedDB', async () => {
+    const db = slots();
+    expect(await db.load(1)).toBeNull();
+    const save = makeSave(played(), 1000);
+    await db.write(1, save);
+    const loaded = await db.load(1);
+    expect(loaded).toEqual({ save, from: 'current' });
+    const list = await db.list();
+    expect(list[0]).toMatchObject({
+      slot: 1,
+      empty: false,
+      name: 'Han Li',
+      qiStage: 3,
+      savedAt: 1000,
+    });
+    expect(list[1]).toEqual({ slot: 2, empty: true });
+  });
+
+  it('falls back to the backup when the latest save is damaged', async () => {
+    const db = slots();
+    const first = makeSave(played(), 1000);
+    const second = makeSave({ ...played(), stones: 99 }, 2000);
+    await db.write(2, first);
+    await db.write(2, second);
+    await db.writeRaw(2, { version: SAVE_VERSION, savedAt: 3000, state: { garbage: true } });
+
+    const loaded = await db.load(2);
+    expect(loaded?.from).toBe('backup');
+    expect(loaded?.save).toEqual(first);
+    expect(loaded?.warning).toMatch(/previous autosave/);
+
+    // The next write keeps the good backup rather than rotating the damaged save into it.
+    const third = makeSave({ ...played(), stones: 7 }, 4000);
+    await db.write(2, third);
+    await db.writeRaw(2, 'corrupt');
+    expect((await db.load(2))?.save).toEqual(first);
+  });
+
+  it('queues an unload write synchronously, rotating the backup', async () => {
+    const db = slots();
+    const first = makeSave(played(), 1000);
+    expect(db.writeNow(1, first)).toBe(false); // nothing known about the slot yet
+    await db.write(1, first);
+    const second = makeSave({ ...played(), stones: 5 }, 2000);
+    expect(db.writeNow(1, second)).toBe(true);
+    // IndexedDB orders this read after the queued put.
+    expect((await db.load(1))?.save).toEqual(second);
+    await db.writeRaw(1, 'corrupt');
+    expect((await db.load(1))?.save).toEqual(first);
+  });
+
+  it('throws when both the save and the backup are damaged', async () => {
+    const db = slots();
+    await db.writeRaw(3, 'corrupt');
+    await expect(db.load(3)).rejects.toThrow(SaveError);
+    expect((await db.list())[2]).toMatchObject({ empty: false, broken: true });
+  });
+
+  it('exports and imports a slot, recording the export date', async () => {
+    const db = slots();
+    const save = makeSave(played(), 1000);
+    await db.write(1, save);
+    const { bytes } = await db.exportSlot(1, 9999);
+    expect((await db.list())[0]?.lastExportAt).toBe(9999);
+    await db.importSlot(3, bytes);
+    expect((await db.load(3))?.save).toEqual(save);
+  });
+
+  it('gives gentle mode one rewind that refills at the next major breakthrough', async () => {
+    const db = slots();
+    const start = played();
+    await db.write(1, makeSave(start, 1000), { rewindPoint: true });
+    const later = { ...start, calendar: { day: start.calendar.day + 900 }, stones: 0 };
+    await db.write(1, makeSave(later, 2000));
+
+    const back = await db.rewind(1, 5000);
+    expect(back.savedAt).toBe(5000);
+    expect(back.state.calendar.day).toBe(start.calendar.day);
+    expect(back.state.stones).toBe(42);
+    expect(back.state.rewindCharges).toBe(0);
+    expect((await db.load(1))?.save).toEqual(back);
+    await expect(db.rewind(1, 6000)).rejects.toThrow(/spent/);
+
+    expect(noteBreakthrough(back.state, false).rewindCharges).toBe(0);
+    expect(noteBreakthrough(back.state, true).rewindCharges).toBe(1);
+  });
+
+  it('never rewinds in ironman', async () => {
+    const db = slots();
+    const s = newLife({ name: 'Iron', mode: 'ironman' });
+    expect(s.rewindCharges).toBe(0);
+    await db.write(1, makeSave(s, 1), { rewindPoint: true });
+    await expect(db.rewind(1, 2)).rejects.toThrow(/gentle/);
+    expect(noteBreakthrough(s, true).rewindCharges).toBe(0);
+  });
+});

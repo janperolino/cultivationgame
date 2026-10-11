@@ -1,0 +1,10 @@
+{
+  "seed": "old-sketch",
+  "savedAt": 1790000000000,
+  "character": { "name": "Lin Mo", "age": 15.5, "mode": "gentle", "pronouns": "he/him" },
+  "qi": { "realm": "qi-condensation", "stage": 2, "bar": 140 },
+  "insight": 7,
+  "money": 12,
+  "rng": 123456,
+  "log": ["Lin Mo comes of age on root-testing day.", "The stone lights up."]
+}
