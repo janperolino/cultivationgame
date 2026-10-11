@@ -87,7 +87,7 @@ Stones are also fuel: you can absorb them for qi or burn them to power arrays, s
 
 ## Scale of destruction
 
-Each major realm is roughly a tenfold jump in power, and the world is built around that gap. This is a first draft to edit; GLM's world bible and the engine both read from it.
+The gap between realms widens as you climb, as in the novels: about ninefold from Qi Condensation to Foundation, thirtyfold to Core Formation, and a hundredfold from Nascent Soul up. The world is built around that gap. This is a first draft to edit; GLM's world bible and the engine both read from it.
 
 | Realm | All-out destruction | Senses and travel | How common | How the world treats them |
 |---|---|---|---|---|
@@ -231,7 +231,7 @@ Some techniques ask for two trees at once, such as a blood-sword art that needs 
 - Costs come with power. A demonic method that grows by hunting people and draining their qi or blood is the fastest climb in the game. It also sinks karma, spreads notoriety and feeds heart demons.
 - Special methods come from inheritances, secret realms and sect vaults, not shops.
 
-**Fighting a realm up** comes from stacking advantages, never from one feature. Breakthrough quality is one of them: every major breakthrough is graded flawed, ordinary, superior, perfect or heavenly, worth −1 to +3 stages in a fight. Heavenly needs a rare method.
+**Fighting a realm up** comes from stacking advantages, never from one feature, and it is a low-realm feat. A stacked genius at Qi Condensation can beat a Foundation cultivator, one at Foundation rarely beats a Core Formation cultivator, and from Nascent Soul up the gap cannot be closed: the weaker side can only flee, talk or call for help. Breakthrough quality is one of them: every major breakthrough is graded flawed, ordinary, superior, perfect or heavenly, worth −1 to +3 stages in a fight. Heavenly needs a rare method.
 
 The rest of the stack: a body or soul ahead of your realm, special methods, technique mastery, Dao tiers, Way nodes, artifacts and talismans, talents, terrain and creativity. Each closes part of the gap, enough of them close it all, and the balance sim decides how many that takes.
 
@@ -458,14 +458,14 @@ Combat is turn-based code you can play with buttons; typed free text is a layer 
 Damage, once a check hits:
 
 ```latex
-\text{damage} = \text{power} \times (1 + d_{\text{Dao}}) \times m_{\text{element}} \times (1 - \text{resist}) \times m_{\text{tier}} \times 1.75^{\Delta \text{break}} \times 1.2^{\Delta \text{stage}}
+\text{damage} = \text{power} \times (1 + d_{\text{Dao}}) \times m_{\text{element}} \times (1 - \text{resist}) \times m_{\text{tier}} \times \prod_{\text{breaks}} b \times 1.2^{\Delta \text{stage}}
 ```
 
 The Dao bonus is 0.05 per tier of each Dao the action is tagged with, plus whatever its nodes add. The element multiplier is 1.25 when your element overcomes the target's, 0.8 when theirs overcomes yours, and 1 otherwise.
 
-The tier multiplier is 1.5 for a critical, 1 for a hit and 0.5 for a graze. Δbreak counts the major breakthroughs between attacker and defender and Δstage the stages, with each Qi Condensation layer worth half a stage. Both count attacker minus defender, using body or soul levels for physical or soul attacks.
+The tier multiplier is 1.5 for a critical, 1 for a hit and 0.5 for a graze. Each major breakthrough between attacker and defender multiplies by its own step b: ×1.75 into Foundation, ×3.2 into Core Formation, and ×5.8 into Nascent Soul and every realm after. Δstage counts the stages, with each Qi Condensation layer worth half a stage. The steps live in the realms data. Both count attacker minus defender, using body or soul levels for physical or soul attacks.
 
-One major realm is a 3× swing on top of the check penalty, so fighting up a realm takes tricks, allies or running. HP and the qi pool climb the same ladder, ×1.2 per stage and ×1.75 per major breakthrough on the body and qi ladders, so a realm up also means about three times the HP and the qi: about ninefold power in all. Every multiplier is a starting value for the balance sim to tune.
+One realm up, at the same stage, is about a 3× damage swing into Foundation, 5.5× into Core Formation and 10× from Nascent Soul up, on top of the check penalty. HP and the qi pool climb the same ladder with the same steps on the body and qi ladders, so a realm up is about 9× the power into Foundation, 30× into Core Formation and 100× from Nascent Soul up. Fighting up a realm takes tricks, allies or running. Every multiplier is a starting value for the balance sim to tune.
 
 **Free text and creativity**
 
