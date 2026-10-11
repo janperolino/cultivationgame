@@ -114,7 +114,7 @@ This is the "Atlas export" item from the design checklist.
 **Read:** design.md § Cultivation (the realms table, seclusion budget, breakthroughs, body and soul, insight, cultivation methods, breakthrough grades); § Character creation (the spirit roots table and pacing targets); § Economy (stones as fuel); § Combat (the six attributes line, for Aptitude).
 
 **Build:**
-- `src/content/realms.ts`: realms, stages, lifespans and gates as data.
+- `src/content/realms.ts`: realms, stages, lifespans, gates and the realm curve as data.
 - `src/content/methods.ts`: the common methods the origins hand out (the garrison's standard method, the cave clans' crude method, the cadet's spear method, the Gate's saber method, and the two the refusals lead to). Fit is data: full, partial or poor, starting at ×1.0, ×0.8 and ×0.6. Common methods fit every root fully except mutated roots, which fit them poorly.
 - Qi gain from root speed × method fit × qi density × Aptitude. Qi density is 1 until abodes arrive, and layers 1–3 ignore root speed. Spirit stones burn during qi seclusion as § Economy describes.
 - Body and soul as their own ladders beside qi: the same realms and stages, bars fed by tempering and nourishment, their own breakthroughs, each capped at one major realm above qi. Insight from seclusion, rising with realm.
@@ -213,6 +213,7 @@ Write questions here when a phase hits something the design doesn't cover, with 
 
 Newest first. 3–5 lines per phase.
 
+- 2026-10-11, planning: one realm curve (about 9x into Foundation, 30x into Core Formation, 100x from Nascent Soul up) now drives power, qi needs, income, prices and item power. The money grades shifted down a realm at the top, and realm pressure pins at one realm from Nascent Soul up.
 - 2026-10-11, planning: realm gaps now escalate, about 9x power into Foundation, 30x into Core Formation and 100x from Nascent Soul up (design § Combat). Planning sessions between phases are now a recognised kind of session: docs and atlas only, committed as design: <summary>.
 - 2026-10-11, P0.3: `src/ai/openrouter.ts` streams over fetch and server-sent events in Node and the browser. It sends `reasoning: { enabled: false }` and `usage.include` by default, returns text, usage, cost, host and time to first token, and has a `CostMeter`. `src/ai/mock.ts` provides `mockProvider` and `sseResponse`. `src/ai/schemas.ts` holds the interpreter's action schema and the narrator's tail, each as Zod and as JSON Schema. `src/ai/prompts.ts` drafts the cached prefix, about 1,900 tokens of rules, world bible, a region brief built from atlas entries and the voice. `npm run spike` (`sim/spike.ts`, steps selectable, `--tag=` for reruns) wrote `docs/spike/` and `docs/spike-report.md`.
   - **Go.** Thinking is off only when asked (GLM 5.2 thinks by default). Caching bills at the listed rates. Interpreter JSON was 37/40 valid, then 39/40 once the prompt was tightened. Narrator tails went from 31/40 to 40/40, and the tail as its own structured call was 40/40. Medians: first token about 0.5 s, typed turn about 2 s. Total spend $0.26.

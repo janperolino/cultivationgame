@@ -79,15 +79,15 @@ You play a human in v1; a bloodline can come with a talent roll.
 | Grade | Worth | Used mostly at |
 |---|---|---|
 | Low | the base unit | Qi Condensation, Foundation Establishment |
-| Mid | 1,000 low | Core Formation, Nascent Soul |
-| High | 1,000 mid, a million low | Deity Transformation, Void Refinement |
-| Top | 1,000 high, a billion low | Body Integration, Mahayana, Tribulation Transcendence |
+| Mid | 1,000 low | Core Formation |
+| High | 1,000 mid, a million low | Nascent Soul, Deity Transformation |
+| Top | 1,000 high, a billion low | Void Refinement and up |
 
 Stones are also fuel: you can absorb them for qi or burn them to power arrays, so wealth and power are the same thing. Mortals trade in silver and gold, and one low-grade stone is a small fortune to them.
 
 ## Scale of destruction
 
-The gap between realms widens as you climb, as in the novels: about ninefold from Qi Condensation to Foundation, thirtyfold to Core Formation, and a hundredfold from Nascent Soul up. The world is built around that gap. This is a first draft to edit; GLM's world bible and the engine both read from it.
+The gap between realms widens as you climb, as in the novels: about ninefold from Qi Condensation to Foundation, thirtyfold to Core Formation, and a hundredfold from Nascent Soul up. The world is built around that gap. It is one number per realm, the realm curve, kept in the realms data, and everything that grows with realm follows it: power, the qi each realm needs, income, prices, and the power of items, talismans and arrays. This is a first draft to edit; GLM's world bible and the engine both read from it.
 
 | Realm | All-out destruction | Senses and travel | How common | How the world treats them |
 |---|---|---|---|---|
@@ -104,7 +104,7 @@ The gap between realms widens as you climb, as in the novels: about ninefold fro
 
 **Rules the world follows**
 
-- Realm pressure: a foe two or more major realms above your soul can pin you with their aura. You can only talk, beg or burn an escape talisman.
+- Realm pressure: a foe two or more major realms above your soul can pin you with their aura; from Nascent Soul up, one realm is enough. You can only talk, beg or burn an escape talisman.
 - A body or soul trained ahead of your realm moves that part of you up a row: a Foundation cultivator with a Core Formation body hits like Core Formation.
 - No treaties, just consequences: wrecking a place inside a faction's sphere of influence costs standing with that faction. A name for killing mortals costs standing with righteous factions as far as your fame reaches; demonic sects don't care.
 - Sects sit on remote spirit veins, so big fights happen in the wilds, away from mortals.
@@ -414,13 +414,13 @@ Spirit stones are money and fuel at once, sect contribution is each sect's own c
 | Qi Condensation goods: a talisman, a common pill, a herb | 1–10 low |
 | Foundation goods: a blade, rare herbs | 100–1,000 low; a Foundation-grade blade is about 400 |
 | A Foundation Pill | about 1 mid at an auction, if one comes up; most are won, looted or brewed |
-| Core Formation goods | 1–10 mid |
-| Nascent Soul goods | 10–1,000 mid |
+| Core Formation goods | 1–30 mid |
+| Nascent Soul goods | 30–3,000 mid |
 | Ransoms posted in the isles | a Qi Condensation disciple 100 low, a Foundation elder 1 mid |
 
-Income climbs about tenfold per realm, like power. A Qi Condensation cultivator earns a few low-grade stones a day, a Foundation cultivator a few tens, a Core Formation cultivator a few hundred and a Nascent Soul cultivator a few mid-grade stones.
+Income follows the realm curve. A Qi Condensation cultivator earns a few low-grade stones a day, a Foundation cultivator a few tens, a Core Formation cultivator about a mid-grade stone, a Nascent Soul cultivator about a hundred mid, and a Deity Transformation cultivator a few high-grade stones.
 
-**Stones as fuel.** Stones speed seclusion; they don't replace it. At Qi Condensation each low-grade stone burned during a day of qi seclusion adds about a fifth of that day's qi, up to about five stones a day, so a well-stocked day yields about twice the qi. That takes more than a day's wages, so working never beats secluding for raw qi; the world's share comes from what seclusion can't make. Each realm needs about ten times more qi, so a low-grade stone is worth a tenth as much at Foundation. That is why every realm hungers for the next grade.
+**Stones as fuel.** Stones speed seclusion; they don't replace it. At Qi Condensation each low-grade stone burned during a day of qi seclusion adds about a fifth of that day's qi, up to about five stones a day, so a well-stocked day yields about twice the qi. That takes more than a day's wages, so working never beats secluding for raw qi; the world's share comes from what seclusion can't make. The qi each realm needs follows the realm curve, like income, so a day's wages buy about the same share of a day's qi at every realm, and a low-grade stone is worth a ninth as much at Foundation and almost nothing by Core Formation. That is why every realm hungers for the next grade.
 
 **Where stones go:**
 
@@ -635,7 +635,7 @@ The game is a static web app with no server, and its rules live in a folder that
 | Tests | Vitest | unit tests for rules and formulas |
 | Hosting | GitHub Pages or Netlify | free static hosting and a link to send friends |
 
-Plain JavaScript numbers are enough. Even if each of the ~40 realm steps tripled the qi needed, the total would be about 4 × 10¹⁹, far below the 1.8 × 10³⁰⁸ ceiling.
+Plain JavaScript numbers are enough. The realm curve multiplies the qi needed about 3 × 10¹⁴ times from Qi Condensation to Tribulation Transcendence, so totals stay near 10¹⁸, far below the 1.8 × 10³⁰⁸ ceiling. Daily gains grow on the same curve, so adding them to large totals loses no precision that matters.
 
 ```text
 src/
@@ -710,15 +710,15 @@ Settle each before the milestone that needs it. World content is drafted and che
 
 **Before M2 and M3**
 
-- [ ] Items and gear: slots, grades, artifact bonding and artifact spirits, pill toxicity, storage rings
+- [ ] Items and gear: slots, grades, artifact bonding and artifact spirits, pill toxicity, storage rings; item, talisman and array power on the realm curve, with a higher-realm talisman priced by its own realm
 - [ ] Enemies: beast and cultivator templates, behavior profiles, loot
-- [ ] Exploration: travel and its time cost, encounters per region, scene building, ruins and inheritances, fleeing, dying in the world
+- [ ] Exploration: travel and its time cost, encounters per region, scene building, ruins and inheritances, fleeing, dying in the world; ways to flee, hide or talk past foes a realm or more above you
 - [ ] NPC basics: what an NPC record holds, what each NPC knows, how talk changes relationships
 
 **Before M5 to M8, sketched now**
 
 - [ ] NPC depth: aging and death, NPCs who climb on their own, rivals who return stronger, disciple loyalty and betrayal
-- [ ] Sects: ranks, politics, founding your own, sect wars
+- [ ] Sects: ranks, politics, founding your own, sect wars; faction strength weighted by the realm curve, so a sect is mostly its ancestor
 - [ ] World simulation: events calendar, secret realms, auctions, tournaments, wars
 - [ ] Death, rebirth and legacy: what carries over, how much time passes, what the world remembers
 - [ ] Art and sound: how much, and whether any of it is AI-generated
