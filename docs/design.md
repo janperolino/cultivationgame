@@ -8,15 +8,16 @@ Build it as a web game where idle seclusion and an AI-narrated world are two vie
 
 ## Decisions so far
 
-Ten calls are made; the rest of this plan builds on them.
+Eleven calls are made; the rest of this plan builds on them.
 
 | Decision | Choice | Why |
 |---|---|---|
 | Engine | Web: TypeScript, React, Vite | An idle game is menus and numbers, and the adventure is streamed text. Browsers do both best. |
 | Players and AI bill | You and friends, on your own OpenRouter key | No accounts or backend for now; Tech stack covers how friends get access. |
 | Time | About 12 hours a week | Sets the roadmap: a playable slice by week 10. |
-| Cultivation | Qi is the ladder; body and soul ride along and can run a realm ahead | The Mortal's Journey model, with a reason to spend seclusion time on body and soul. |
+| Cultivation | Qi is the ladder; body and soul ride along and can run a realm ahead; each ladder climbs with its own method in the twelve double-hours of your day | The Mortal's Journey model. A routine reads as a cultivator's life, not a budget sheet, and finding a body or soul method is an event. |
 | Progression | The big three, each with a level and a tree, plus Dao and Way trees; insight buys nodes, and mastery is for techniques and recipes | Trees hold what you understand and how you live; mastery holds what you practice. |
+| Power and pedigree | One rarity scale for everything, as a fraction of a realm; gold and red nearly jump a realm at every realm; a fighting-up ledger the fight sim enforces | Geniuses fight up and ordinary cultivators don't, through the same rules for players and NPCs. |
 | World | Severed Heaven: a prosperous middle thousand world about a million li across, written by hand in the atlas; nested, fog of war, random start | Each area feels like everything until you outgrow it. |
 | Tone | Cutthroat by default; warmth is earned | GLM leans agreeable, so the rules, not the prose, decide who betrays whom. |
 | Combat | Text only: a turn-based rules engine, with free-text input on top | Creative moves earn bonuses, but your cultivation still decides who wins. |
@@ -158,7 +159,12 @@ Every major breakthrough also needs a full qi bar and an insight threshold; the 
 
 **Breakthroughs.** When a bar fills, the next layer or stage is a check at the odds the Cultivate screen shows. Layers 1 and 2 always succeed, and layer 3 is the first real check. The bar keeps filling past full up to 150%, and each extra 10% raises the odds, so the choice is to go now or consolidate. A failed minor breakthrough costs a fifth of the bar and a few days of unsettled qi, with no injury below Foundation. Offline, minor breakthroughs run on an auto setting, safe odds by default. Major breakthroughs never happen offline: the bar holds at full and the coming-back card says you are ready. A failed major breakthrough uses up the gate item, halves the bar and leaves an injury that slows cultivation for a few in-game years. At the lifespan edge, the last chance lets you attempt the major breakthrough below a full bar if you hold the gate item, at worse odds and a flawed grade at best; without the item, or if it fails, the life ends.
 
-**Seclusion time is the budget.** Every in-game day in seclusion goes to whatever you assign: qi cultivation, body tempering, soul nourishment, studying for insight, or practicing a technique or recipe. Aptitude and talents set how fast each day pays off, and lifespan caps the total, so spreading too thin means dying before the next breakthrough.
+**The day is twelve double-hours.** Seclusion runs on a wheel of the twelve 时辰, from 子 at midnight round to 亥, and you set each hour to one thing you do with your own time: cultivate qi, temper the body, nourish the soul, study, practice a technique, or sleep. Furnace, forge, garden, beast, sect-duty and shop hours join as those systems arrive (M4 to M6). Whatever others do for you runs outside the wheel: disciples' queues, arrays, puppets and fields growing in real time. So every step of automation hands hours back to cultivation. Aptitude and talents set how fast each hour pays off, and lifespan caps the total, so spreading too thin means dying before the next breakthrough.
+
+- Element hours: each earthly branch carries an element: 寅 and 卯 wood, 巳 and 午 fire, 申 and 酉 metal, 亥 and 子 water, and 辰, 戌, 丑 and 未 earth. Work that matches its hour's element pays about 25% more: a fire root cultivates best at 巳 and 午, alchemy is strongest at noon, and Ghost Way and other yin work belong to the night. Dawn's purple qi at 卯 adds about 10% to everyone's qi.
+- Sleep: at Qi Condensation the body is still mostly mortal, and two hours must go to sleep. Foundation frees them: "You no longer need sleep; two more hours are yours."
+- Routines: a whole wheel can be saved as a routine, and routines are also learned from teachers, manuals and sects, such as the garrison's Watch Rotation or a hermit's Nine Midnights. Following a learned routine exactly earns a discipline bonus. A sect can impose its own routine, morning lecture and duty hours included, and keeping it grows the Orthodox Way, so breaking routine to cultivate more is a small, real choice.
+- Every hour also leaves insight in its own field (see Insight below).
 
 **Body and soul cultivate alongside qi, and can run ahead.** Each climbs its own ladder of realms and stages in parallel with qi, and either can run up to one major realm, four steps of the combat ladder, ahead of your qi realm: "his body was already at Core Formation while his cultivation sat at Foundation."
 
@@ -168,6 +174,8 @@ Every major breakthrough also needs a full qi bar and an insight threshold; the 
 
 Each ladder follows the qi rules: layers 1 to 9 at Qi Condensation, then four stages per realm, a bar fed by tempering or nourishment, minor breakthroughs between stages and major ones between realms, each major one with its own insight threshold. Lifespan follows qi alone. Gate items for major body and soul breakthroughs are settled with items and gear. A body or soul you neglect stays behind, and it is judged at its own level.
 
+**Every ladder needs a method.** Qi climbs only with a cultivation method, the body only with a tempering art and the soul only with a nourishing art, each in the hours you give it. Nobody starts with a body or soul method: your origin hands you a qi method, and the other two are found, bought or earned. Until then, body and soul grow only from the world: fights and hardship, medicinal baths and beast blood for the body; epiphanies, contemplation, near-death and heart demons for the soul. Those world sources stay the fast road even with a method, which is the slow, steady one.
+
 **The big three have trees too.** A level is raw power and the gate; the tree beside it shapes that power, and its nodes cost insight like any other tree:
 
 | Tree | What it shapes | Example nodes |
@@ -176,16 +184,19 @@ Each ladder follows the qi rules: layers 1 to 9 at Qi Condensation, then four st
 | Body | how your body holds up | iron skin against physical damage; blood refining for regeneration; poison immunity; endurance against tribulation lightning |
 | Soul | how far and how precisely you sense and control | wider divine sense that reveals more map; soul armor against pressure and illusions; split attention for one more flying sword, puppet or production queue; soul search on a captive, at a karma cost; steadier crafting hands |
 
+**Every tree has the same shape.** It has 9 tiers, one per realm. Each tier opens with a starter, spreads into 4 or 5 branches of small minor nodes and named notable nodes, and closes on a capstone. A tier holds about 25 to 30 nodes, laid out freely so each tree has its own silhouette. Two or three of the branches are the capstone's: each ends in a notable that links into it, and owning those ends unlocks the capstone. The other branches are side paths, taken for their own rewards. The capstone links to the next tier's starter, so a tree climbs as one path. Capstones and a few late notables carry the multiplicative effects that help a build fight up a realm; everything else adds. A Dao's tier bonus still counts once you own half that tier's nodes.
+
 **Insight is the universal currency of understanding.** It buys nodes in every tree except the Ways, which grow only by deeds. Every major breakthrough also needs an insight threshold on top of its fuel: qi for your realm, tempering for your body, nourishment for your soul. The threshold counts insight ever earned, so spending insight on nodes never delays a breakthrough.
 
-Insight comes from:
+Insight is what attention leaves behind, so it comes from everything you do:
 
-- seclusion time and your realm, since higher realms understand more per day
-- teachers and sect lectures
+- every hour of cultivation leaves a trickle, rising with your realm, since higher realms understand more per day
+- study hours add a steady stream
+- practice: each mastery level a technique or recipe reaches releases a burst, the moment a form finally clicks
+- contemplation of a manual, an ancient Dao stele, a teacher's or sect's lecture, a waterfall or a thunder peak; each source has its own yield, some run dry, and manuals and inheritances arrive in lumps
 - enlightenment pills and Dao incense
-- places: waterfalls, thunder peaks, ancient Dao steles
-- manuals and inheritances, which arrive in lumps
-- epiphanies the narrator tags, and near-death fights
+- crafting hours, from M4
+- epiphanies the narrator tags, and near-death fights, from M3
 
 Aptitude and talents multiply all of it, and an epiphany also leaves a discount on its related Dao.
 
@@ -219,24 +230,33 @@ Insight grows them: meditation, practice, using the Dao in a fight, and moments 
 | Buddhist | sparing, healing, keeping vows | meditation yields more insight; merit eases breakthroughs and tribulations | a vajra body; extra damage to ghosts and demons; a roar that dazes souls | spared foes may turn allies; temples shelter you and reveal the map around them |
 | Ghost | yin places, the night, handling the dead | faster cultivation in graveyards and yin veins; corpses refine into puppets and materials | evasion in darkness; soul-chilling attacks; a slain foe's shade fights for you | question the dead for clues; curse a rival's market; ghost markets sell forbidden goods |
 
-Vow nodes pay big while a vow holds, such as sparing every foe who surrenders, and break hard when you fail. Every tree shares one shape: 9 tiers, one per realm, each opening with a starter node and ending in a capstone. Nodes above your matching level stay sealed until you grow into them.
+Vow nodes pay big while a vow holds, such as sparing every foe who surrenders, and break hard when you fail. Way trees share the shape every tree has, and nodes above your matching level stay sealed until you grow into them.
 
 **Techniques** are the moves you actually use, learned from manuals, teachers, inheritances and epiphanies. Each lists its requirements: a Dao tier, a realm, sometimes a body or soul level or a Way. Flying swords are a family of Sword techniques that also need a strong soul, and elemental spells are techniques of the element Daos.
 
 Builds fall out on their own: the Demonic Way plus Sword techniques is a demonic swordsman, and the Demonic and Buddhist Ways together make a demon Buddha. The Orthodox Way plus the five element Daos on a five-element root is a five-element spell cultivator. Sword Dao plus a tempered body never needs a flying sword.
 
+**Lines, chapters and kinship.** Techniques and methods belong to lines. The Clear Heaven Sword Canon is one line, and its chapters climb the realms: chapter 1 at Qi Condensation for outer disciples, chapter 2 at Foundation for inner disciples, chapter 3 at Core Formation for core disciples only. A chapter's requirements can include a sect rank, beside realm, root, talent and Dao tier. What belongs to a line is written in the data, never guessed from names.
+
+- A technique's next chapter needs the one before at Comprehension, and starts below it: one mastery level down, or two if the new chapter is of a higher rarity. The old chapter stays known and usable.
+- A method's next chapter costs part of the bar, more for a rarer chapter. Changing to a different line costs the most, part of the bar plus a spell of unsettled qi, so staying in your sect's line pays and a stolen demonic method has a real price.
+- Kinship: two different lines that share a Dao and a form, two sword thrusts say, speed each other's practice without carrying mastery over.
+
 Some techniques ask for two trees at once, such as a blood-sword art that needs the Demonic Way and Sword Dao. v1 ships the Orthodox, Demonic and Buddhist Ways, the five element Daos, Sword, Saber, Spear and Fist, the four great craft Daos, and the first tiers of the Qi, Body and Soul trees.
 
-**Cultivation methods** are the manuals you cultivate qi with. Some are common and some are special, and each has a fit, requirements and costs.
+**Methods** are the manuals each ladder climbs with: cultivation methods for qi, tempering arts for the body and nourishing arts for the soul. Each has a ladder, a tier, a rarity, a fit, a kind, requirements and costs. Qi speed is root speed × method × fit × qi density × Aptitude, where the method part is its tier and rarity together.
 
+- Tier caps it: a method carries you to the peak of its own realm and no further, so breaking into the next realm needs the next chapter or a new method. A method whose tier sits above your realm also cultivates faster, by one realm's gap (×3 at Qi Condensation, ×5.5 at Foundation, ×10 from Core Formation up). That bonus counts once, however far above you the tier sits; a higher tier mostly buys a longer road without chapter changes.
+- Rarity sets speed on the curve everything shares (Tier, rarity and pedigree), so a red Qi Condensation method cultivates almost like a white Foundation one, then stops at its peak.
+- Kind: common methods have no requirements and climb slowly; costly ones climb fast but drain stones, herbs, blood or karma every day and stall when unfed; elite ones are fast and cheap but ask for a root, a talent or a physique. Kind and rarity are separate, so a gold method can be elite or costly.
 - Fit: a method that matches your talents cultivates faster and hits harder. A five-element root on a five-element method gets the full affinity bonus; a mismatch still works, slowly.
 - Requirements run from nothing but qi density (your spirit vein and gathering arrays) to long lists: a root, a physique, a Dao, a Way, a place, a ritual.
 - Costs come with power. A demonic method that grows by hunting people and draining their qi or blood is the fastest climb in the game. It also sinks karma, spreads notoriety and feeds heart demons.
 - Special methods come from inheritances, secret realms and sect vaults, not shops.
 
-**Fighting a realm up** comes from stacking advantages, never from one feature, and it is a low-realm feat. A stacked genius at Qi Condensation can beat a Foundation cultivator, one at Foundation rarely beats a Core Formation cultivator, and from Nascent Soul up the gap cannot be closed: the weaker side can only flee, talk or call for help. Breakthrough quality is one of them: every major breakthrough is graded flawed, ordinary, superior, perfect or heavenly, worth −1 to +3 stages in a fight. Heavenly needs a rare method.
+**Fighting a realm up** comes from stacking advantages, never from one feature, and how far a cultivator gets depends on pedigree (Tier, rarity and pedigree). An ordinary cultivator never closes a realm and can only flee, talk or call for help. A great-sect disciple sometimes does, mostly at low realms. A chosen of heaven stacked with gold and red does at every realm, a little less often higher up, because the ordinary foes up there own better things. Against an equal pedigree the higher realm wins, and nobody fights two realms up without burning something precious. The fighting-up ledger under Combat sets the targets the fight sim holds. Breakthrough quality is one of the advantages: every major breakthrough is graded flawed, ordinary, superior, perfect or heavenly, worth −1 to +3 stages in a fight. Heavenly needs a gold or red method.
 
-The rest of the stack: a body or soul ahead of your realm, special methods, technique mastery, Dao tiers, Way nodes, artifacts and talismans, talents, terrain and creativity. Each closes part of the gap, enough of them close it all, and the balance sim decides how many that takes.
+The rest of the stack: a body or soul ahead of your realm, the rarity of your techniques, methods and gear, technique mastery, Dao tiers, Way nodes, talismans, talents, terrain and creativity. Each closes part of the gap, enough of them close it all, and the fight sim holds the ledger's targets.
 
 A major breakthrough's grade depends on the margin you bring: qi past a full bar, insight earned past the threshold, and body and soul at or above the new realm. Rushing in at the bare minimum saves lifespan but leans toward a flawed grade, so the time budget matters here too.
 
@@ -254,7 +274,36 @@ A major breakthrough's grade depends on the margin you bring: qi past a full bar
 | Fate | heaven's favored, calamity star, late bloomer, karmic debt | fortuitous encounters, disasters, tribulation strength, talents that wake late |
 | Origin | village orphan, merchant's child, minor clan heir, great-sect disciple | where you start, how much of the map you know, early allies and enemies |
 
-Every talent has a grade: gray (a flaw that lowers a stat), white (plain), green, blue, purple, gold and red. Body, soul and fate talents roll their grade on one table: gray 10%, white 40%, green 35%, blue 10%, purple 4%, gold 0.9% and red 0.1%. Spirit roots use the table under Character creation, where white is the floor; origin has no grade. Kinds and names are mostly flavor, and each talent in the end moves stats: a spirit root its qi speed and method fit, a body talent body training speed, HP, Agility or resistances, a soul talent soul training speed, Aptitude or soul defense, and a fate talent Fortune, Aptitude or the odds of encounters. Some talents sleep until an event wakes them, and a past life's achievements buy rerolls at rebirth.
+Every talent has a rarity, on the scale everything shares (Tier, rarity and pedigree): gray (a flaw that lowers a stat), white (plain), green, blue, purple, gold and red. Body, soul and fate talents roll their rarity on one table: gray 10%, white 40%, green 35%, blue 10%, purple 4%, gold 0.9% and red 0.1%. Spirit roots use the table under Character creation, where white is the floor; origin has no grade. Kinds and names are mostly flavor, and each talent in the end moves stats: a spirit root its qi speed and method fit, a body talent body training speed, HP, Agility or resistances, a soul talent soul training speed, Aptitude or soul defense, and a fate talent Fortune, Aptitude or the odds of encounters. Some talents sleep until an event wakes them, and a past life's achievements buy rerolls at rebirth. Aptitude can also rise after birth, slowly and at great cost, through marrow-washing pills, spirit-spring baths and heaven-and-earth treasures, so a talentless orphan has a long road to genius. These are settled with items and gear.
+
+## Tier, rarity and pedigree
+
+Everything you can own or be born with shares one rarity scale, and everything you can own also has a tier.
+
+**Tier** is the realm a thing belongs to. It sets the thing's base power on the realm curve, its price band on the yardstick under Economy, and its gate: the realm to wield an artifact, the peak a method carries you to, the level to use a technique, the soul level to craft at that tier. Talents and spirit roots have no tier.
+
+**Rarity** is how good a thing is inside its tier: gray (flawed), white, green, blue, purple, gold, red. It works as a fraction of a realm. The gap is how much more a foe one realm up hits for: about ×3 into Foundation, ×5.5 into Core Formation and ×10 from Nascent Soul up, the same swing combat uses. A thing of rarity f multiplies by gap^f:
+
+| | gray | white | green | blue | purple | gold | red |
+|---|---|---|---|---|---|---|---|
+| f | −0.2 | 0 | 0.1 | 0.2 | 0.35 | 0.75 | 0.9 |
+| into Foundation (gap ×3) | ×0.8 | ×1 | ×1.1 | ×1.25 | ×1.5 | ×2.3 | ×2.7 |
+| from Nascent Soul up (gap ×10) | ×0.6 | ×1 | ×1.25 | ×1.6 | ×2.2 | ×5.6 | ×7.9 |
+
+White to purple is steady betterment inside the ordinary world, growing a little with realm while staying far short of one. Gold and red are heaven-defying: about 80% and 90% of a realm, at every realm, the way each realm's gap is wider than the last. Gold and red techniques also add +2 and +4 to checks. Higher rarity brings more special properties: none at white, a minor one at green, one at blue, two at purple, two and a unique one at gold, and three and a unique one at red, which is named. Price climbs much faster than power: within a tier, about ×0.5, ×1, ×2, ×5, ×15, ×50 and ×200 from gray to red. All of these are starting values for the sims.
+
+What each kind of thing does with tier and rarity:
+
+- Talents and spirit roots: rarity only, rolled at birth.
+- Methods: tier is how far the method carries you, and rarity is its speed (Cultivation, methods).
+- Techniques: tier is the level to use them, and rarity multiplies their power and adds effects.
+- Weapons multiply techniques of their own kind at half their rarity exponent, and basic strikes at the full one, and add hit and properties. Armor carries the defense at its full exponent.
+- Pills, artifacts, talismans and arrays: tier comes from the recipe or the material, and crafting rolls the rarity from mastery, materials and luck.
+- Loot and shops roll on the talent table (gray 10%, white 40%, green 35%, blue 10%, purple 4%, gold 0.9%, red 0.1%), shifted by source: a sect vault or a ruin rolls better than a market stall.
+
+**Above your realm.** A weapon one tier above your realm drinks qi with every strike, takes −4 to hit and counts its power at half the tier gap; two tiers above, it won't wake at all. An ancestor's blessing on a lineage heirloom, a talent, a soul a realm ahead or a refining bond cuts the penalty. Consumables carry their own tier: a talisman an ancestor drew a realm above you strikes at that realm, and whatever an item burns or sacrifices is the item's own rule.
+
+**Pedigree.** NPCs run on the same rules as you; what sets a chosen of heaven apart from a rogue cultivator is access. Every NPC has a pedigree (rogue, small sect, great sect, sacred land or chosen of heaven), and it sets only the tables they roll their methods, techniques, gear, talents and resources on: a rogue mostly rolls white and green, while a chosen one has a real shot at gold and red. Each realm's ordinary baseline rises too, since anyone who reached Nascent Soul has lived for centuries and owns blue and purple things; that is why the same chosen-one kit closes a little less of the gap higher up. You start as an orphan near the bottom and climb into the genius bracket by finding gold and red.
 
 ## Character creation and the first hour
 
@@ -294,21 +343,23 @@ Refusing is harder but never a dead end: each refusal leads to a method within t
 | Minute | What happens | What opens |
 |---|---|---|
 | 0–3 | creation and testing day | your method and origin |
-| 3–5 | first seclusion; you sense qi and reach layer 1 | the seclusion screen with one slot: qi |
-| 5–20 | layer 2; the first insight trickles in | body tempering, then the Qi tree |
-| 20–35 | your origin's first technique; practice takes it to Comprehension | soul nourishment and technique mastery |
+| 3–5 | first seclusion; you sense qi and reach layer 1 | the day wheel, with qi and sleep hours |
+| 5–20 | layer 2; the first insight trickles in | study hours, then the Qi tree |
+| 20–35 | your origin's first technique; practice takes it to Comprehension | practice hours and technique mastery |
 | 35–45 | the layer 3 breakthrough, with a small check and choice | the breakthrough screen |
 | 45–60 | the first trip out, from M3: a cave guiding job, a night patrol or a core hunt with a senior | the go-in screen, the map's first fog, loot flowing home |
 
 There are no tutorial walls. Each system appears when you first reach it, with one line of hint and a chronicle entry. In M1, which has no AI, the first trip out is a fixed errand card with set outcomes.
 
-Layers 1 to 3 are the tutorial and ignore root speed, so every root reaches layer 3 in about 45 minutes; root speed counts from layer 4. Pacing targets for the sim: an ordinary true root reaches layer 9 in about 15–20 real hours, around age 30. Foundation then waits on a Foundation Pill from the world, and a heavenly root gets there in about half the time. Until M3 the world can't supply that pill, so in M1 your origin hands you one at layer 9, as a reward or a trade.
+Body and soul methods are found, not given. In M1 the errand card hands over a common tempering art, which opens body hours, and a later card a common nourishing art, which opens soul hours; from M3 the world supplies them.
+
+Layers 1 to 3 are the tutorial and ignore root speed, so every root reaches layer 3 in about 45 minutes; root speed counts from layer 4. Pacing targets for the sim: an ordinary true root reaches layer 9 in about 15–20 real hours, around age 30. Foundation then waits on a Foundation Pill from the world, and a heavenly root gets there in about half the time. Until M3 the world can't supply that pill, so in M1 your origin hands you one at layer 9, as a reward or a trade, with the next chapter of your method, since a Qi Condensation method stops at the peak of its realm.
 
 ## Professions, people and powers
 
 Every system has an idle half and a world half, and each half supplies the other.
 
-**Professions** are the Hundred Arts, and each is a craft Dao: a tree with 9 tiers, one per realm, grown by insight and seclusion time. You can study higher tiers early, but crafting at a tier needs your soul level to reach it.
+**Professions** are the Hundred Arts, and each is a craft Dao: a tree with 9 tiers, one per realm, grown by insight and worked in your craft hours. You can study higher tiers early, but crafting at a tier needs your soul level to reach it.
 
 Basic recipes are scattered through each tier as nodes, and every tier's first node hands you one starter recipe. Other nodes improve success, yield, quality and speed, and each tier ends in a capstone perk, like brewing two batches at once.
 
@@ -359,6 +410,22 @@ Formation puzzles show the engine-and-GLM split well. The engine hides which nod
 | World events | the calendar runs wars, auctions, tournaments and secret realm openings | show up and take part; rumors point the way | M6 |
 | Prosperity | drifts while you idle: trade raises it, war drains it | sets the defenses, market size and prices of every sect, city and market; your deeds move it | M6 |
 
+**Organizations share one skeleton.** Sects, clans, guilds, gangs and the rest are one kind of record: how you join, how you rise, the currency you rise by, what it asks, how you leave and what it gives. Each has its own rank names, halls or branches, and the chapters each rank unlocks. A type is a preset for that skeleton, and any organization can mix parts: a sect run like a gang, or a clan that owns a guild. The details are settled with sects before M5, and the atlas's powers will carry their type.
+
+| Type | How you join | How you rise | What it asks | How you leave | What it gives | In the atlas |
+|---|---|---|---|---|---|---|
+| Sect, gate or palace | a test | contribution | duties, quotas | released or expelled | methods, a library | Waking Thunder Sect, Gate of Beast Craft |
+| Clan | birth, adoption, marriage | bloodline, seniority | blood duty | never quite | inheritance, protection | Baili Clan, Nangong Clan |
+| Guild or works | buying in, apprenticeship | capital, shares, craft rank | dues, trade quotas | selling out | markets, caravans, workshops | Geomancers' Guild, Cloud-Bearing Works |
+| Gang | a blood oath | force, loyalty | territory, tribute | in a box | streets, fences | Tusk-Saw Gang, Jarless Gang |
+| Society | recruited or sponsored | trust, secrets kept | silence, favors | hunted | intelligence, smuggling, contacts | Night Bridge Society, Core-Takers' Society |
+| Assassins | recruited | kills, contracts | contracts, silence | hunted | poisons, marks | none yet |
+| Academy | an exam | grades, exams | attendance, tests | graduating | teachers, alumni | Vermilion Brush Academy, Academy of the Chalk Line |
+| Temple or abbey | vows | piety, merit | vows, service | breaking your vows | sanctuary, Buddhist arts | River Lamp Temple, Abbey of Settled Souls |
+| Dynasty or army | conscription, office | merit, rank | service, taxes, war | deserting (hunted) or retiring | stipends, garrisons, authority | Great Jing Dynasty, the Gongsun garrison |
+| Tribe | birth, a trial | deeds, age | the hunt, feuds | exile | land, beasts, old rites | Tribe of the Shark Caves |
+| Beast power | bloodline, or a beast bond | strength | tribute, territory | devoured | beast lore, mounts, bloodline gifts | Beast Court of Ten Thousand Mountains |
+
 **Romance and dao companions** are in, and the engine tracks every NPC you meet: affinity, history, promises and grudges. A dao companion is a bond with mechanics: paired cultivation methods, shared danger, and grief if they fall.
 
 Intimate scenes fade to black by default. A mature setting is opt-in, sits behind an age check, and only works with hosts whose rules allow it.
@@ -376,7 +443,7 @@ Idle production is earned in the world. A line runs only while it has a source, 
 | Link | Examples | How you get it |
 |---|---|---|
 | Source | a spirit garden, a beast farm, a mine share, sect stores, standing market orders | buy or win land, tame beasts, take a sect post, live near a market |
-| Worker | you in seclusion, disciples, hired hands, puppets, formations | recruit disciples, hire in town, refine puppets, lay arrays |
+| Worker | you, in the hours of your day, then disciples, hired hands, puppets, formations | recruit disciples, hire in town, refine puppets, lay arrays |
 | Outlet | your own breakthroughs, a shop or consignment house, sect quotas, auctions | own a shop, sign with a merchant guild, hold a sect post |
 
 **Posts bundle all three links**, with duties attached:
@@ -391,7 +458,7 @@ Idle production is earned in the world. A line runs only while it has a source, 
 
 **Automation grows in four steps:**
 
-1. You queue crafts yourself, spending seclusion time.
+1. You queue crafts yourself, spending hours of your day on them.
 2. A disciple or hired hand runs a queue, at lower quality than you.
 3. Standing orders buy inputs and sell outputs at a reachable market, within price limits you set.
 4. A full chain, garden to furnace to shop, runs while you wander, as long as every link holds.
@@ -423,11 +490,11 @@ Spirit stones are money and fuel at once, sect contribution is each sect's own c
 
 Income follows the realm curve. A Qi Condensation cultivator earns a few low-grade stones a day, a Foundation cultivator a few tens, a Core Formation cultivator about a mid-grade stone, a Nascent Soul cultivator about a hundred mid, and a Deity Transformation cultivator a few high-grade stones.
 
-**Stones as fuel.** Stones speed seclusion; they don't replace it. At Qi Condensation each low-grade stone burned during a day of qi seclusion adds about a fifth of that day's qi, up to about five stones a day, so a well-stocked day yields about twice the qi. That takes more than a day's wages, so working never beats secluding for raw qi; the world's share comes from what seclusion can't make. The qi each realm needs follows the realm curve, like income, so a day's wages buy about the same share of a day's qi at every realm, and a low-grade stone is worth a ninth as much at Foundation and almost nothing by Core Formation. That is why every realm hungers for the next grade.
+**Stones as fuel.** Stones speed seclusion; they don't replace it. At Qi Condensation each low-grade stone burned during a day of qi seclusion adds about a fifth of that day's qi, up to about five stones a day, so a well-stocked day yields about twice the qi. That takes more than a day's wages, so working never beats secluding for raw qi; the world's share comes from what seclusion can't make. The qi each realm needs follows the realm curve, like income, so a day's wages buy about the same share of a day's qi at every realm, and a low-grade stone is worth a ninth as much at Foundation and almost nothing by Core Formation. That is why every realm hungers for the next grade. A day here means a full day of qi hours; with fewer qi hours on the wheel, the cap shrinks in step.
 
 **Where stones go:**
 
-- Fuel: stones and pills for qi, body and soul.
+- Fuel: stones and pills for qi, body and soul, and the daily upkeep of costly methods.
 - Upkeep: gathering, guarding and growing arrays burn stones every day.
 - Crafting: materials, failed experiments and cracked furnaces.
 - Fees: Armillary Pavilion array tolls, market fees, passage, taxes and bribes.
@@ -468,7 +535,36 @@ The Dao bonus is 0.05 per tier of each Dao the action is tagged with, plus whate
 
 The tier multiplier is 1.5 for a critical, 1 for a hit and 0.5 for a graze. Each major breakthrough between attacker and defender multiplies by its own step b: ×1.75 into Foundation, ×3.2 into Core Formation, and ×5.8 into Nascent Soul and every realm after. Δstage counts the stages, with each Qi Condensation layer worth half a stage. The steps live in the realms data. Both count attacker minus defender, using body or soul levels for physical or soul attacks.
 
-One realm up, at the same stage, is about a 3× damage swing into Foundation, 5.5× into Core Formation and 10× from Nascent Soul up, on top of the check penalty. HP and the qi pool climb the same ladder with the same steps on the body and qi ladders, so a realm up is about 9× the power into Foundation, 30× into Core Formation and 100× from Nascent Soul up. Fighting up a realm takes tricks, allies or running. Every multiplier is a starting value for the balance sim to tune.
+One realm up, at the same stage, is about a 3× damage swing into Foundation, 5.5× into Core Formation and 10× from Nascent Soul up, on top of the check penalty. HP and the qi pool climb the same ladder with the same steps on the body and qi ladders, so a realm up is about 9× the power into Foundation, 30× into Core Formation and 100× from Nascent Soul up. Fighting up a realm takes tricks, allies, running or a genius's stack. Every multiplier is a starting value for the balance sim to tune.
+
+**The fighting-up ledger.** A foe one realm up at the same stage leads on three axes: Hit, −8 on every check; Harm, your damage divided by the gap; and Hold, their damage multiplied by it and their HP larger by it. Harm and Hold together are why a realm is about 9×, 30× or 100× the power. Every advantage closes part of one axis:
+
+| Advantage | Axis | Biggest size |
+|---|---|---|
+| Technique rarity | Harm | gap^0.9 at red, plus +4 to checks |
+| Weapon rarity | Harm | half its exponent on techniques of its kind, the full one on basic strikes |
+| Armor rarity | Hold | gap^0.9 at red |
+| Method rarity and tier | the qi pool, so more techniques before it runs dry | gap^0.9 at red |
+| Technique mastery | Hit | +2 a level, up to +10 |
+| Breakthrough grade | all three | −1 to +3 stages, each +2 to checks and ×1.2 |
+| Body or soul a realm ahead | the whole gap, in physical or soul clashes | the whole gap |
+| Dao tiers | Hit and Harm | +1 to checks and +5% per tier |
+| Element advantage | Harm | ×1.25 |
+| Creativity | Hit | +0 to +3 |
+| Tree and Way nodes | various | small additions; capstones carry a few multipliers |
+| A weapon above your realm | Harm | half a tier, at a qi cost and −4 to hit |
+
+Each axis takes one big multiplier: technique rarity for Harm and armor rarity for Hold. A weapon counts at half its exponent, so a red sword and a red technique never add up to two realms. Everything else adds.
+
+The fight sim's targets, as win rates against an ordinary foe one realm up, measured without one-shot consumables:
+
+| Attacker | Qi Condensation → Foundation | Foundation → Core Formation | Core Formation → Nascent Soul | Nascent Soul and up |
+|---|---|---|---|---|
+| Ordinary: white gear, ordinary grade | under 2% | under 1% | about 0 | about 0 |
+| Great-sect disciple: purple, Mastery, perfect grade | 40–50% | 25–35% | 10–20% | 5–10% |
+| Chosen of heaven: gold and red, Domain, body ahead, heavenly grade | about 75% | about 65% | about 55% | about 45% |
+
+Within a pedigree the higher realm wins: a chosen one against a chosen one a realm up, or a great-sect disciple against another, wins under 5%. Two realms up is under 1% for anyone not burning something precious. At the same realm and stage, a chosen one beats a rogue about 95% of the time and a great-sect disciple beats one about 75%, and a single stage up is easy to overcome. The sims tune the rarity exponents, the check bonuses, the weapon rule and each realm's NPC baseline until the table holds.
 
 **Free text and creativity**
 
@@ -596,13 +692,15 @@ The game is dark glowing slate with a gold accent, built for desktop first and u
 
 **Players pick their colors.** Settings changes the accent and the crack light, sets how much fine web the glass carries, and rerolls the glass, with presets and a free color picker that warns when a color is hard to read on black. Each color keeps its job whatever it looks like: the accent always means something you can act on, and the crack light always means qi. The defaults are gold, qi cyan and a light web.
 
+**Rarity has its own palette,** never the accent's color or the warning color, since the accent must keep meaning "act on this": gray, white, green, blue, purple, an amber-orange gold with a soft glow, and a deep crimson red, all tokens players can recolor. A thing's name wears its rarity color, and its tier is a word beside it ("Foundation").
+
 **Layout.** On desktop, the side menu is on the left, the screen in the middle, and a context panel on the right with tooltips, the latest chronicle lines and active queues. On a phone the menu becomes a drawer, and the context panel slides up from the bottom.
 
 | Screen | What it shows | Ships in |
 |---|---|---|
 | Abode (home) | realm and stage, qi, body and soul bars, age against lifespan, today's seclusion plan, the spirit pool from M4, alerts | M1 |
-| Cultivate | split seclusion days among qi, body, soul, study and practice; breakthrough checks and their odds | M1 |
-| Trees | the Qi, Body and Soul trees, then the Daos and Ways: a pannable graph in nine tier bands, sealed nodes dimmed | M1, Daos M2, Ways M3 |
+| Cultivate | the day wheel of twelve hours with its element hours and routines, the method on each ladder, and breakthrough checks and their odds | M1 |
+| Trees | the Qi, Body and Soul trees, then the Daos and Ways: a canvas you drag and zoom, with nine tier bands of branching paths, sealed nodes dimmed and a re-centre button; a node's details open in an overlay | M1, Daos M2, Ways M3 |
 | Techniques | every technique with its mastery level, requirements and what is still sealed | M1 |
 | Character | talents, the six attributes, fame and standing | M1 |
 | Chronicle | your life as a log: breakthroughs, fights, rumors and steward reports | M1 |
@@ -715,13 +813,13 @@ Settle each before the milestone that needs it. World content is drafted and che
 - [x] UI and screens: abode dashboard, tree views, crafting, inventory, world map, go-in screen, chronicle, settings, visual style
 - [x] Economy: spirit stones, sect contribution, prices, money sinks, what the balance sims measure; then bring the atlas's dozen luxury prices into line
 - [x] Saves: format, versioning, export and import, save slots
-- [ ] Node lists: tiers 1 and 2 of each v1 tree, drafted with AI help and curated. The Qi, Body and Soul trees in the M1 build, reviewed by Jan, the combat Daos before M2, the Ways before M3, the craft Daos before M4
+- [ ] Node lists: tiers 1 and 2 of each v1 tree, 25 to 30 nodes a tier in the shape under Cultivation, drafted with AI help and curated. The Qi, Body and Soul trees in the M1 build, reviewed by Jan, the combat Daos before M2, the Ways before M3, the craft Daos before M4
 - [x] plan.md for Claude Code: the build split into one-session phases, written once planning is done
 
 **Before M2 and M3**
 
-- [ ] Items and gear: slots, grades, artifact bonding and artifact spirits, pill toxicity, storage rings; item, talisman and array power on the realm curve, with a higher-realm talisman priced by its own realm
-- [ ] Enemies: beast and cultivator templates, behavior profiles, loot
+- [ ] Items and gear: slots, grades, artifact bonding and artifact spirits, pill toxicity, storage rings; item, talisman and array power on the realm curve, with a higher-realm talisman priced by its own realm; tier and rarity on every item (Tier, rarity and pedigree), weapons and armor on the fighting-up ledger's axes, weapons above your realm; aptitude-raising pills and rites; the upkeep that costly methods drink
+- [ ] Enemies: beast and cultivator templates, behavior profiles, loot; pedigree tables and each realm's ordinary baseline, tuned to the fighting-up ledger
 - [ ] Combat outcome tags for effects and sound: form, element or damage type, realm and result on every outcome
 - [ ] Exploration: travel and its time cost, encounters per region, scene building, ruins and inheritances, fleeing, dying in the world; ways to flee, hide or talk past foes a realm or more above you; the fog's rules, meaning what travel, divine sense, maps and rumors each reveal
 - [ ] NPC basics: what an NPC record holds, what each NPC knows, how talk changes relationships
@@ -729,7 +827,7 @@ Settle each before the milestone that needs it. World content is drafted and che
 **Before M5 to M8, sketched now**
 
 - [ ] NPC depth: aging and death, NPCs who climb on their own, rivals who return stronger, disciple loyalty and betrayal; a cast list of the atlas's named people (a person kind or a people file) with fixed looks, so portraits can follow
-- [ ] Sects: ranks, politics, founding your own, sect wars; faction strength weighted by the realm curve, so a sect is mostly its ancestor
+- [ ] Sects: ranks, politics, founding your own, sect wars; faction strength weighted by the realm curve, so a sect is mostly its ancestor; every organization on the shared skeleton (Professions, people and powers), with the atlas's powers tagged by type and an assassins' organization added
 - [ ] World simulation: events calendar, secret realms, auctions, tournaments, wars
 - [ ] Death, rebirth and legacy: what carries over, how much time passes, what the world remembers
 - [ ] Art and sound: how much, and from where. Settled so far: location art and portraits are made at design time and shipped as data, never generated in play, with shared art by tag for filled-in places; portraits wait for the cast list; sound hangs off the same engine events as combat effects
