@@ -1,5 +1,5 @@
 // Spirit roots (design § Character creation): odds, grade and qi speed. Starting values for the
-// pacing sim. Character creation (P1.4) rolls them; cultivation reads the speed and the kind.
+// pacing sim. Character creation (P1.7) rolls them; cultivation reads the speed and the kind.
 
 export const ROOTS = [
   {

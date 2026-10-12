@@ -1,5 +1,5 @@
 /* Black cracked glass, from design.md § UI and screens (Look) and docs/mockups/glass-study.html.
-   Every color is a variable: P1.5 lets players change the accent and the crack light. The accent
+   Every color is a variable: P1.8 lets players change the accent and the crack light. The accent
    marks anything you can act on or have just gained; the crack light is qi. */
 :root {
   --void: #040507;

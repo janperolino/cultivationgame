@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { buildCracks, drawGlass, toHex } from './glass.ts';
 import { useGame } from './store.ts';
 
-/** The fine web's default weight; Settings changes it in P1.5. */
+/** The fine web's default weight; Settings changes it in P1.8. */
 const WEB = 1;
 const FLARE_MS = 1600;
 /** The glass before any life is open. */

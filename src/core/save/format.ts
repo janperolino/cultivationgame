@@ -67,7 +67,7 @@ const migrations: Record<number, (old: Raw) => Raw> = {
   },
   // v1, P1.1: no cultivation yet. v2 adds the root, method, attributes, ladder grades and
   // setbacks, items, the seclusion plan, the glass and the end of a life. Old lives get the
-  // placeholder true root on the garrison's standard method that P1.4 replaces.
+  // placeholder true root on the garrison's standard method that P1.7 replaces.
   1: (old) => {
     const s = (old.state ?? {}) as Raw;
     const c = (s.character ?? {}) as Raw;
@@ -102,7 +102,7 @@ const migrations: Record<number, (old: Raw) => Raw> = {
   // leaving the screen unlocks behind. The mode moves to the top. The one random state becomes
   // named streams seeded from the life's seed (the glass seed, which was the first rng state);
   // breakthroughs carry on from where the old stream stood. Placeholder lives on the garrison's
-  // method get its first technique, which P1.4 hands out at creation from then on.
+  // method get its first technique, which P1.7 hands out at creation from then on.
   2: (old) => {
     const s = (old.state ?? {}) as Raw;
     const c = (s.character ?? {}) as Raw;

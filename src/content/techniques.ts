@@ -1,6 +1,6 @@
 // Techniques: the moves you actually use (design § Cultivation, § Combat). Mastery runs Glimpse to
 // Origin, raised by practice days, and each level adds +2 to checks with the technique. These are
-// the first technique of each origin path, which character creation (P1.4) hands out. A new
+// the first technique of each origin path, which character creation (P1.7) hands out. A new
 // technique is an entry here, not new code. Power and qi cost are starting values for M2's
 // combat engine and balance sim; Dao requirements arrive with the Daos in M2.
 import type { LadderId } from './cultivation.ts';
@@ -54,7 +54,7 @@ export interface Technique {
   damage: DamageType;
   power: number;
   qiCost: number;
-  /** The origin path that hands it out, as origin/choice; P1.4 reads this. */
+  /** The origin path that hands it out, as origin/choice; P1.7 reads this. */
   firstFor?: string;
   /** Where it comes from, for the tooltip. */
   source: string;
@@ -177,5 +177,5 @@ export function firstTechnique(path: string): Technique | undefined {
   return TECHNIQUES.find((t) => t.firstFor === path);
 }
 
-/** Until character creation (P1.4), every life is the cave orphan who went along. */
+/** Until character creation (P1.7), every life is the cave orphan who went along. */
 export const PLACEHOLDER_TECHNIQUE = 'rampart-palm';

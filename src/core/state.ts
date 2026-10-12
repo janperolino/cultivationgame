@@ -44,7 +44,7 @@ export const CultivatorSchema = z.object({
   root: z.enum(ROOT_IDS),
   /** The cultivation method's id (content/methods.ts); null before you have one. */
   method: z.string().nullable(),
-  /** The three attributes that come from birth (design § Combat); talents move them in P1.4. */
+  /** The three attributes that come from birth (design § Combat); talents move them in P1.7. */
   attributes: z.object({
     agility: z.number(),
     fortune: z.number(),
@@ -131,11 +131,11 @@ export interface NewLifeOptions {
   mode?: 'ironman' | 'gentle';
   /** Seeds the generators; defaults to the name. */
   seed?: string;
-  /** Until character creation (P1.4), a true root on the garrison's standard method. */
+  /** Until character creation (P1.7), a true root on the garrison's standard method. */
   root?: RootId;
   method?: string | null;
   aptitude?: number;
-  /** Techniques known from the start; P1.4 hands the first one over at creation. */
+  /** Techniques known from the start; P1.7 hands the first one over at creation. */
   techniques?: string[];
 }
 

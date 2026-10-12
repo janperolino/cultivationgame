@@ -296,7 +296,7 @@ export const useGame = create<GameStore>()((set, get) => {
 
     startLife: (slot, mode) =>
       serial(async () => {
-        // Character creation arrives in P1.4; until then a new life is a nameless placeholder.
+        // Character creation arrives in P1.7; until then a new life is a nameless placeholder.
         // Until then, too, every life is the cave orphan who went along, with that first technique.
         const state = newLife({
           name: 'Nameless',
@@ -366,7 +366,7 @@ export const useGame = create<GameStore>()((set, get) => {
     async beginNextLife() {
       const { game } = get();
       if (!game?.ended || !holdsLock) return;
-      // Character creation arrives in P1.4; until then each life is a nameless placeholder.
+      // Character creation arrives in P1.7; until then each life is a nameless placeholder.
       set({
         game: nextLife(game, {
           name: 'Nameless',

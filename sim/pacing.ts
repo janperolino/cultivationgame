@@ -1,7 +1,7 @@
 // Pacing: real hours to each Qi Condensation layer and to Foundation, per spirit root, playing the
 // default seclusion plan on the default (safe) breakthrough setting with no stones, then the same
 // plan buying the cheapest tree node whenever insight allows, then a qi-only plan for comparison.
-// Each run gets its origin's first technique at layer 2, as P1.4's first hour hands it out.
+// Each run gets its origin's first technique at layer 2, as P1.7's first hour hands it out.
 // Each row is the median of many seeds.
 // Targets (design § Character creation): every root at layer 3 in about 45 minutes; a true root at
 // layer 9 in 15–20 hours; a heavenly root in about half that.
