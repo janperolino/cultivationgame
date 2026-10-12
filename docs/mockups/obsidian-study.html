@@ -1,0 +1,363 @@
+<!doctype html>
+<!-- A study for glowing obsidian panels and the card tray (planning after P1.7). Three directions side by side: still rim light, a living edge, and panels lit by qi. Open it in a browser; it loads fonts from Google Fonts and nothing else. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Obsidian Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500&family=Ma+Shan+Zheng&display=swap">
+<style>
+:root {
+  --page: #020203;
+  --void: #040507;
+  --obsidian: #07080b;
+  --text: #e9e5da;
+  --muted: #8d949d;
+  --accent: #d6ab4c;
+  --accent-soft: rgba(214, 171, 76, 0.12);
+  --crack: #7fc7d9;
+  --edge: rgba(255, 255, 255, 0.075);
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  --font-ui: Inter, system-ui, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font: 14px/1.55 var(--font-ui); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 28px 16px 56px; display: grid; gap: 20px; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 5vw, 42px); margin: 0; }
+.intro p { margin: 6px 0 0; max-width: 70ch; color: var(--muted); }
+.hanzi { font-family: var(--font-brush); font-weight: 400; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: end; padding: 14px 16px; border: 1px solid var(--edge); border-radius: 10px; background: #08090c; }
+.control { display: grid; gap: 6px; }
+.control > span { font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
+.seg { display: inline-flex; border: 1px solid var(--edge); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 6px 11px; font: inherit; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--edge); }
+.seg button[aria-pressed="true"] { background: rgba(255, 255, 255, 0.07); color: var(--text); }
+input[type="range"] { accent-color: var(--crack); width: 150px; }
+input[type="color"] { width: 44px; height: 30px; border: 1px solid var(--edge); background: none; border-radius: 6px; }
+.btn { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 7px; padding: 7px 14px; font: inherit; cursor: pointer; }
+.btn:hover { filter: brightness(1.15); }
+.btn.quiet { border-color: var(--edge); background: transparent; color: var(--muted); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The cracked-glass stage behind everything: a few long fractures with qi light leaking through. */
+.stage { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--edge); background: var(--void); padding: 22px 16px; }
+.stage svg.cracks { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cracks path { fill: none; stroke: var(--crack); stroke-linecap: round; }
+.cracks .glow { stroke-width: 6; opacity: 0.08; filter: blur(3px); }
+.cracks .line { stroke-width: 0.8; opacity: 0.45; }
+.columns { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 980px) { .columns { grid-template-columns: minmax(0, 1fr); max-width: 440px; margin: 0 auto; } }
+.col-head { display: grid; gap: 2px; margin-bottom: 10px; }
+.col-head b { font-family: var(--font-display); font-size: 21px; font-weight: 600; }
+.col-head span { color: var(--muted); font-size: 12.5px; }
+.col { display: grid; gap: 14px; align-content: start; }
+
+/* ------------------------------------------------------------ the obsidian panel, shared */
+@property --angle { syntax: '<angle>'; inherits: true; initial-value: 0deg; }
+@property --sheen { syntax: '<percentage>'; inherits: true; initial-value: -40%; }
+/* The stage is the stacking context, so each panel's bloom can sit behind it. */
+.stage { --rim-strength: 0.75; isolation: isolate; }
+.obsidian {
+  --rim: var(--crack);
+  position: relative;
+  border-radius: 12px;
+  padding: 16px 18px;
+  /* Lacquer: a deep black with a soft lamp-light from above and a sheen that drifts. */
+  background:
+    linear-gradient(115deg, transparent calc(var(--sheen) - 18%), rgba(255, 255, 255, 0.028) var(--sheen), transparent calc(var(--sheen) + 18%)),
+    radial-gradient(120% 70% at 50% -10%, rgba(255, 255, 255, 0.05), transparent 60%),
+    var(--obsidian);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 18px 40px -18px rgba(0, 0, 0, 0.9),
+    inset 0 1px 14px -8px color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 60%), transparent),
+    0 0 42px -14px color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 50%), transparent);
+  animation: sheen 14s ease-in-out infinite;
+}
+/* The bloom: the rim's own light, blurred, behind the panel, so the edge glows outward. */
+.obsidian::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: var(--rim-paint);
+  filter: blur(10px);
+  opacity: calc(var(--rim-strength) * 0.85);
+  z-index: -1;
+  pointer-events: none;
+}
+@keyframes sheen { 0%, 100% { --sheen: -40%; } 50% { --sheen: 140%; } }
+/* The rim: a 1px gradient border drawn with a mask, so the panel's inside stays dark. */
+.obsidian::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--rim-paint);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+.obsidian > * { position: relative; z-index: 2; }
+
+/* A: still rim light, brightest on the top edge and the upper corners. */
+.dir-still .obsidian {
+  --rim-paint:
+    radial-gradient(60% 40% at 0% 0%, color-mix(in srgb, white 70%, var(--rim)), transparent 70%),
+    radial-gradient(60% 40% at 100% 0%, color-mix(in srgb, white 50%, var(--rim)), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 100%), transparent), rgba(255, 255, 255, 0.05) 45%, rgba(255, 255, 255, 0.03));
+}
+
+/* B: a living edge, a slow light travelling round the border, quicker and brighter when a card waits. */
+.dir-living .obsidian {
+  --speed: 14s;
+  --rim-paint:
+    conic-gradient(from var(--angle), transparent 0 62%, color-mix(in srgb, var(--rim) 70%, transparent) 76%, white 80%, color-mix(in srgb, var(--rim) 70%, transparent) 84%, transparent 96%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+  animation: sheen 14s ease-in-out infinite, travel var(--speed) linear infinite;
+}
+.dir-living .obsidian.is-waiting { --speed: 5s; --rim-strength: 0.9; }
+@keyframes travel { to { --angle: 360deg; } }
+
+/* C: qi-lit, the dantian and the qi bar light the panel from inside; the rim breathes with the bar. */
+.dir-qi .obsidian {
+  --qi: 0.5;
+  --rim-paint: linear-gradient(180deg, color-mix(in srgb, var(--rim) calc(25% + var(--qi) * 65%), transparent), color-mix(in srgb, var(--rim) calc(8% + var(--qi) * 22%), transparent));
+  animation: sheen 14s ease-in-out infinite, breathe 6s ease-in-out infinite;
+}
+.dir-qi .obsidian.hero {
+  background:
+    radial-gradient(42% 55% at 22% 58%, color-mix(in srgb, var(--crack) calc(var(--qi) * 16%), transparent), transparent 70%),
+    radial-gradient(120% 70% at 50% -10%, rgba(255, 255, 255, 0.05), transparent 60%),
+    var(--obsidian);
+}
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 18px 40px -18px #000, 0 0 30px -14px color-mix(in srgb, var(--rim) 30%, transparent); }
+  50% { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 18px 40px -18px #000, 0 0 50px -12px color-mix(in srgb, var(--rim) 55%, transparent); }
+}
+
+/* ------------------------------------------------------------ the Abode hero, small */
+.hero { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; align-items: center; }
+.figure { width: 92px; height: 104px; }
+.figure .body { fill: #121419; stroke: rgba(255, 255, 255, 0.07); }
+.dantian { fill: var(--crack); filter: drop-shadow(0 0 6px var(--crack)) drop-shadow(0 0 14px var(--crack)); animation: pulse 4s ease-in-out infinite; transform-origin: 46px 70px; }
+@keyframes pulse { 50% { opacity: 0.7; transform: scale(0.85); } }
+.realm { font-family: var(--font-display); font-weight: 600; font-size: 21px; line-height: 1.2; margin: 0; }
+.who { color: var(--muted); font-size: 12px; }
+.bars { display: grid; gap: 7px; margin-top: 9px; }
+.bar-row { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; align-items: center; font-size: 12px; color: var(--muted); }
+.bar { height: 6px; border-radius: 3px; background: rgba(0, 0, 0, 0.6); border: 1px solid var(--edge); overflow: hidden; }
+.fill { height: 100%; background: var(--crack); box-shadow: 0 0 10px var(--crack); transition: width 400ms linear; }
+.fill.age { background: var(--accent); box-shadow: none; opacity: 0.8; }
+
+/* ------------------------------------------------------------ the card tray */
+.tray { padding: 12px 14px 14px; min-height: 236px; overflow: hidden; }
+.tray-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.tray-head b { font-family: var(--font-display); font-size: 17px; font-weight: 600; }
+.tray-head span { font-size: 12px; color: var(--muted); }
+.tray-empty { color: var(--muted); font-size: 13px; padding: 26px 0; text-align: center; }
+.story { position: relative; border-radius: 9px; padding: 12px 14px; background: rgba(255, 255, 255, 0.025); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); overflow: hidden; }
+.story h3 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin: 0 0 4px; }
+.story p { margin: 0; font-size: 13px; }
+.story .choices { display: grid; gap: 6px; margin-top: 10px; }
+.story .choice { text-align: left; display: grid; gap: 1px; padding: 7px 11px; }
+.story .choice small { color: var(--muted); font-size: 11.5px; }
+.story .result { font-size: 13px; animation: fade-in 500ms ease both; }
+/* Arrival: the card rises into the tray, and a flare runs along its top edge. */
+.story.is-arriving { animation: rise 620ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.story.is-arriving::after {
+  content: ''; position: absolute; left: -40%; top: 0; width: 40%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), white, var(--accent), transparent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: flare 900ms 250ms ease-out both;
+}
+.story.is-leaving { animation: leave 520ms cubic-bezier(0.5, 0, 0.8, 0.3) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(26px) scale(0.98); filter: blur(2px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes flare { from { left: -40%; opacity: 1; } to { left: 110%; opacity: 0.2; } }
+@keyframes leave { to { opacity: 0; transform: translateY(-18px) scale(0.97); filter: blur(2px); } }
+@keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.tray-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+/* Reduced motion: everything still, cards just appear. */
+.still-motion .obsidian, .still-motion .dantian, .still-motion .story { animation: none !important; }
+.still-motion .story::after { display: none; }
+.still-motion .dir-living .obsidian { --angle: 300deg; }
+
+.notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 980px) { .notes { grid-template-columns: minmax(0, 1fr); } }
+.notes div { border: 1px solid var(--edge); border-radius: 10px; padding: 12px 14px; background: #07080a; font-size: 13px; }
+.notes b { font-family: var(--font-display); font-size: 17px; }
+.notes p { margin: 4px 0 0; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <h1>Obsidian <span class="hanzi" style="color: var(--accent)">黑曜</span></h1>
+    <p>Black panels that glow at the edges, and a card tray under the figure where cards slide in. Three directions for the panels; the tray behaves the same in each. Gold still only marks what you can act on; the rim light is the crack light.</p>
+  </header>
+
+  <div class="controls">
+    <label class="control"><span>Crack light</span><input type="color" id="crack" value="#7fc7d9"></label>
+    <label class="control"><span>Rim strength</span><input type="range" id="strength" min="0" max="100" value="75"></label>
+    <label class="control"><span>Qi bar (direction C)</span><input type="range" id="qi" min="0" max="150" value="60"></label>
+    <div class="control"><span>Motion</span>
+      <div class="seg" role="group" aria-label="Motion">
+        <button type="button" data-motion="on" aria-pressed="true">Full</button>
+        <button type="button" data-motion="off" aria-pressed="false">Reduced</button>
+      </div>
+    </div>
+    <button type="button" class="btn" id="send">A card arrives</button>
+    <button type="button" class="btn quiet" id="reset">Empty the trays</button>
+  </div>
+
+  <section class="stage" id="stage">
+    <svg class="cracks" viewBox="0 0 1200 640" preserveAspectRatio="none" aria-hidden="true">
+      <g id="crack-paths"></g>
+    </svg>
+    <div class="columns">
+      <div class="col dir-still" data-dir="still">
+        <div class="col-head"><b>A · Still rim</b><span>The edge catches light from above, brightest at the corners. Calm, cheapest.</span></div>
+      </div>
+      <div class="col dir-living" data-dir="living">
+        <div class="col-head"><b>B · Living edge</b><span>A slow light walks the border; it quickens and brightens while a card waits.</span></div>
+      </div>
+      <div class="col dir-qi" data-dir="qi">
+        <div class="col-head"><b>C · Qi-lit</b><span>The dantian lights the panel from inside, and the rim breathes with the qi bar.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="notes">
+    <div><b>A · Still rim</b><p>Static gradient border plus a soft outer glow. Nothing moves but the lacquer sheen, which drifts across once every fourteen seconds. Safe for hours on screen.</p></div>
+    <div><b>B · Living edge</b><p>An animated conic gradient on the border. Doubles as the "something waits" signal: the tray's light runs faster when a card is pending, so no badge is needed.</p></div>
+    <div><b>C · Qi-lit</b><p>The most tied to the game: the panel is lit by your own qi. A full bar makes the abode bright; an empty one leaves it dim. Pairs well with B's waiting signal on the tray only.</p></div>
+  </section>
+</div>
+
+<template id="col-body">
+  <div class="obsidian hero">
+    <svg class="figure" viewBox="0 0 92 104" aria-hidden="true">
+      <circle class="body" cx="46" cy="22" r="13" />
+      <path class="body" d="M46 37c-14 0-22 10-24 26l-2 14c-10 4-16 10-16 16 0 6 10 9 42 9s42-3 42-9c0-6-6-12-16-16l-2-14c-2-16-10-26-24-26z" />
+      <circle class="dantian" cx="46" cy="70" r="4" />
+    </svg>
+    <div>
+      <p class="realm">Qi Condensation, layer 3</p>
+      <div class="who">Lin Hao · they/them</div>
+      <div class="bars">
+        <div class="bar-row"><span>Qi</span><div class="bar"><div class="fill qi-fill" style="width: 60%"></div></div></div>
+        <div class="bar-row"><span>Age</span><div class="bar"><div class="fill age" style="width: 11%"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="obsidian tray">
+    <div class="tray-head"><b>Waiting</b><span class="count">nothing yet</span></div>
+    <div class="slot"><p class="tray-empty">Seclusion is quiet.</p></div>
+  </div>
+</template>
+
+<script>
+const CARDS = [
+  { title: 'Spear on the Wall', text: 'Sergeant Lei walks the cadets along the Wall of Piled Bones at dusk. "Thrust between the ribs, where the bone wall is thin."', choices: [['Drill until dark', '']], result: 'You drill until the bones on the wall start to look like targets.' },
+  { title: 'Night Patrol', text: 'Claws on bone below the southern stretch. "Cadet. Down the rope and look. Or watch my back."', choices: [['Go down the rope', 'Agility check, 12 or more'], ["Watch the sergeant's back", '']], result: 'A bone-gnawer pup, half grown. You drive it off and bring back the tooth it broke.' },
+  { title: 'The Lamp-Keeper', text: '"You breathe like someone who is always about to run. Sit. Or take this and go." She holds out a thin nourishing art.', choices: [['Sit the night with her', ''], ['Take the manual and go', '']], result: 'Somewhere in the third watch your mind goes as still as the flame.' },
+];
+let next = 0;
+
+// A few long fractures from two impact points, seeded so the page always looks the same.
+function cracks() {
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const g = document.getElementById('crack-paths');
+  const impacts = [[180, 120], [1010, 520]];
+  let out = '';
+  for (const [x0, y0] of impacts) {
+    for (let k = 0; k < 6; k++) {
+      let a = rnd() * Math.PI * 2, x = x0, y = y0, d = `M${x} ${y}`;
+      for (let s = 0; s < 14; s++) { a += (rnd() - 0.5) * 0.5; x += Math.cos(a) * 55; y += Math.sin(a) * 55; d += ` L${x.toFixed(1)} ${y.toFixed(1)}`; }
+      out += `<path class="glow" d="${d}"/><path class="line" d="${d}"/>`;
+    }
+  }
+  g.innerHTML = out;
+}
+
+function render() {
+  for (const col of document.querySelectorAll('.col')) {
+    col.append(document.getElementById('col-body').content.cloneNode(true));
+  }
+}
+
+function setQi(v) {
+  const fill = Math.min(v, 100);
+  for (const el of document.querySelectorAll('.qi-fill')) el.style.width = `${fill}%`;
+  for (const el of document.querySelectorAll('.dir-qi .obsidian')) el.style.setProperty('--qi', String(Math.min(1.3, v / 100)));
+}
+
+function sendCard() {
+  const c = CARDS[next++ % CARDS.length];
+  for (const tray of document.querySelectorAll('.tray')) {
+    const slot = tray.querySelector('.slot');
+    const story = document.createElement('article');
+    story.className = 'story is-arriving';
+    story.innerHTML = `<h3>${c.title}</h3><p>${c.text}</p><div class="choices">${c.choices.map(([l, s]) => `<button type="button" class="btn choice">${l}${s ? `<small>${s}</small>` : ''}</button>`).join('')}</div>`;
+    story.addEventListener('animationend', (e) => { if (e.animationName === 'rise') story.classList.remove('is-arriving'); });
+    story.querySelectorAll('.choice').forEach((b) => b.addEventListener('click', () => resolve(tray, story, c)));
+    slot.replaceChildren(story);
+    tray.classList.add('is-waiting');
+    tray.querySelector('.count').textContent = '1 card';
+  }
+}
+
+function resolve(tray, story, c) {
+  story.querySelector('.choices').replaceWith(Object.assign(document.createElement('p'), { className: 'result', textContent: c.result }));
+  const close = Object.assign(document.createElement('div'), { className: 'tray-actions' });
+  close.innerHTML = '<button type="button" class="btn quiet">Into the chronicle</button>';
+  close.firstChild.addEventListener('click', () => leave(tray, story));
+  story.append(close);
+  tray.classList.remove('is-waiting');
+  tray.querySelector('.count').textContent = 'settled';
+}
+
+function leave(tray, story) {
+  const done = () => {
+    tray.querySelector('.slot').innerHTML = '<p class="tray-empty">Seclusion is quiet.</p>';
+    tray.querySelector('.count').textContent = 'nothing yet';
+  };
+  if (document.body.classList.contains('still-motion')) return done();
+  story.classList.add('is-leaving');
+  story.addEventListener('animationend', done, { once: true });
+}
+
+cracks();
+render();
+setQi(60);
+document.getElementById('send').addEventListener('click', sendCard);
+document.getElementById('reset').addEventListener('click', () => {
+  for (const tray of document.querySelectorAll('.tray')) {
+    tray.classList.remove('is-waiting');
+    tray.querySelector('.slot').innerHTML = '<p class="tray-empty">Seclusion is quiet.</p>';
+    tray.querySelector('.count').textContent = 'nothing yet';
+  }
+});
+document.getElementById('qi').addEventListener('input', (e) => setQi(Number(e.target.value)));
+document.getElementById('strength').addEventListener('input', (e) => {
+  document.getElementById('stage').style.setProperty('--rim-strength', String(Number(e.target.value) / 100));
+});
+document.getElementById('crack').addEventListener('input', (e) => document.documentElement.style.setProperty('--crack', e.target.value));
+for (const b of document.querySelectorAll('[data-motion]')) {
+  b.addEventListener('click', () => {
+    for (const x of document.querySelectorAll('[data-motion]')) x.setAttribute('aria-pressed', String(x === b));
+    document.body.classList.toggle('still-motion', b.dataset.motion === 'off');
+  });
+}
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelector('[data-motion="off"]').click();
+setTimeout(sendCard, 900);
+</script>
