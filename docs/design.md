@@ -341,7 +341,7 @@ What each kind of thing does with tier and rarity:
 
 **Above your realm.** A weapon one tier above your realm drinks qi with every strike, takes −4 to hit and counts its power at half the tier gap; two tiers above, it won't wake at all. An ancestor's blessing on a lineage heirloom, a talent, a soul a realm ahead or a refining bond cuts the penalty. Consumables carry their own tier: a talisman an ancestor drew a realm above you strikes at that realm, and whatever an item burns or sacrifices is the item's own rule.
 
-**Pedigree.** NPCs run on the same rules as you; what sets a chosen of heaven apart from a rogue cultivator is access. Every NPC has a pedigree (rogue, small sect, great sect, sacred land or chosen of heaven), and it sets only the tables they roll their methods, techniques, gear, talents and resources on: a rogue mostly rolls white and green, while a chosen one has a real shot at gold and red. Each realm's ordinary baseline rises too, since anyone who reached Nascent Soul has lived for centuries and owns blue and purple things; that is why the same chosen-one kit closes a little less of the gap higher up. You start as an orphan near the bottom and climb into the genius bracket by finding gold and red.
+**Pedigree.** NPCs run on the same rules as you; what sets a chosen of heaven apart from a rogue cultivator is access. Every NPC has a pedigree (rogue, small sect, great sect, sacred land or chosen of heaven), and it sets only the tables they roll their methods, techniques, gear, talents and resources on: a rogue mostly rolls white and green, while a chosen one has a real shot at gold and red. Each realm's ordinary baseline rises too, since anyone who reached Nascent Soul has lived for centuries and owns blue and purple things; that is why the same chosen-one kit closes a little less of the gap higher up. You start as an orphan near the bottom and climb into the genius bracket by finding gold and red. The tables, and how an NPC is generated from them, are under Enemies, beasts and the people you meet.
 
 ## Items and gear
 
@@ -788,7 +788,9 @@ One realm up, at the same stage, is about a 3× damage swing into Foundation, 5.
 | Element advantage | Harm | ×1.25 |
 | Creativity | Hit | +0 to +3 |
 | Tree and Way nodes | various | small additions; capstones carry a few multipliers |
-| A weapon above your realm | Harm | half a tier, at a qi cost and −4 to hit |
+| Gear properties and enchantments | various | small additions, like nodes; a red artifact's named unique may carry one multiplier |
+| Offerings at the breakthrough | the grade | +0.5 margin at red, so a stage of grade |
+| A weapon above your realm | Harm | half a tier, at a qi cost and −4 to hit; the bond cuts the penalty, and at Origin the whole tier counts |
 
 Each axis takes one big multiplier: technique rarity for Harm and armor rarity for Hold. A weapon counts at half its exponent, so a red sword and a red technique never add up to two realms. Everything else adds.
 
@@ -800,7 +802,7 @@ The fight sim's targets, as win rates against an ordinary foe one realm up, meas
 | Great-sect disciple: purple, Mastery, perfect grade | 40–50% | 25–35% | 10–20% | 5–10% |
 | Chosen of heaven: gold and red, Domain, body ahead, heavenly grade | about 75% | about 65% | about 55% | about 45% |
 
-Within a pedigree the higher realm wins: a chosen one against a chosen one a realm up, or a great-sect disciple against another, wins under 5%. Two realms up is under 1% for anyone not burning something precious. At the same realm and stage, a chosen one beats a rogue about 95% of the time and a great-sect disciple beats one about 75%, and a single stage up is easy to overcome. The sims tune the rarity exponents, the check bonuses, the weapon rule and each realm's NPC baseline until the table holds.
+The three rows are kits, not pedigrees: the great-sect row is a core disciple in purple throughout, and a typical great-sect disciple on the pedigree table (Enemies, beasts and the people you meet) sits between the first two rows. Beasts are their own foe: ×1.5 HP and no armor, so they lead on Hold and fall on Hold's rarity, and a bloodline's abilities count as technique rarity. Within a pedigree the higher realm wins: a chosen one against a chosen one a realm up, or a great-sect disciple against another, wins under 5%. Two realms up is under 1% for anyone not burning something precious. At the same realm and stage, a chosen one beats a rogue about 95% of the time and a great-sect disciple beats one about 75%, and a single stage up is easy to overcome. The sims tune the rarity exponents, the check bonuses, the weapon rule and each realm's NPC baseline until the table holds.
 
 **Free text and creativity**
 
