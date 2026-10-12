@@ -2353,11 +2353,32 @@ select {
 }
 
 /* The web of threads. */
-.people-web svg {
+.web-canvas-wrap {
+  position: relative;
+}
+
+.web-canvas {
+  position: relative;
+  height: min(60vh, 520px);
+  min-height: 300px;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-small);
+  background: var(--well);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.web-canvas:active {
+  cursor: grabbing;
+}
+
+.web-canvas svg {
   display: block;
   width: 100%;
-  height: auto;
-  max-height: min(560px, 70vh);
+  height: 100%;
 }
 
 .web-ring {
@@ -2369,7 +2390,7 @@ select {
 .web-ring-label {
   fill: color-mix(in srgb, var(--muted) 70%, transparent);
   font-family: var(--font-ui);
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 0.06em;
 }
 
@@ -2393,7 +2414,7 @@ select {
 .web-you text {
   fill: var(--accent);
   font-family: var(--font-brush);
-  font-size: 28px;
+  font-size: 19px;
   text-anchor: middle;
   dominant-baseline: central;
 }
@@ -2421,12 +2442,12 @@ select {
 }
 
 .web-node.is-selected .web-disc {
-  stroke-width: 2.4;
+  stroke-width: 2;
 }
 
 .web-seal {
   font-family: var(--font-brush);
-  font-size: 22px;
+  font-size: 15px;
   text-anchor: middle;
   dominant-baseline: central;
   fill: color-mix(in srgb, var(--tone) 85%, white);
@@ -2435,7 +2456,7 @@ select {
 .web-name {
   fill: var(--text);
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   text-anchor: middle;
 }
@@ -2443,7 +2464,7 @@ select {
 .web-bond {
   fill: var(--muted);
   font-family: var(--font-ui);
-  font-size: 10.5px;
+  font-size: 9.5px;
   text-anchor: middle;
 }
 

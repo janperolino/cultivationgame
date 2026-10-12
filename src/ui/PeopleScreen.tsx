@@ -11,16 +11,23 @@ import { lifeWhen } from '../core/chronicle.ts';
 import { hasNews, knownPeople, newsDay, peopleCircles, personLog } from '../core/people.ts';
 import type { GameState, PersonRecord } from '../core/state.ts';
 import { capitalize } from './format.ts';
+import { clampZoom, viewAt, type Size, type View } from './panzoom.ts';
 import {
-  labelAngle,
+  BOND_Y,
+  DISC_R,
+  NAME_Y,
   nearest,
+  ringLabels,
   ringFor,
   WEB_CENTRE,
   WEB_MAX,
+  WEB_SIZE,
+  webBounds,
   webLayout,
-  webViewBox,
+  YOU_R,
 } from './peopleWeb.ts';
 import { useGame } from './store.ts';
+import { BUTTON_STEP, usePanZoom } from './usePanZoom.ts';
 import { EventLine } from './widgets.tsx';
 
 /** Their realm as you know it, in words. */
@@ -188,13 +195,13 @@ function Circles({
   );
 }
 
-const RINGS: [number, string][] = [
-  [3, 'would bleed for you'],
-  [1, 'thinks well of you'],
-  [0, 'indifferent'],
-  [-2, 'wary, or worse'],
-];
+/** The web opens framing everyone, never zoomed in past this. */
+const HOME_MAX_ZOOM = 1.4;
 
+/**
+ * The web of threads: drag to pan, wheel or pinch to zoom, tap someone to open their page. It
+ * opens framing everyone; Re-centre goes back there.
+ */
 function Web({
   game,
   selected,
@@ -205,86 +212,136 @@ function Web({
   onSelect: (id: string) => void;
 }) {
   const everyone = knownPeople(game.player);
-  const shown = nearest(everyone);
+  const shown = nearest(everyone).map((p) => ({
+    ...p,
+    name: person(p.id).name,
+    bond: BONDS[p.record.bond],
+  }));
   const nodes = webLayout(shown);
-  const box = webViewBox(nodes);
-  // The ring labels go where nobody sits, reading away from the centre.
-  const at = (labelAngle(nodes) * Math.PI) / 180;
-  const [cos, sin] = [Math.cos(at), Math.sin(at)];
-  const lowest = Math.min(0, ...nodes.map((n) => n.regard));
+  // The ring labels go where nobody sits, and the view frames them with everyone.
+  const labels = ringLabels(nodes);
+  const bounds = webBounds(
+    nodes,
+    labels.map((l) => l.box),
+  );
+  const home = (screen: Size): View => {
+    const k = clampZoom(Math.min(HOME_MAX_ZOOM, screen.w / bounds.w, screen.h / bounds.h));
+    return viewAt(
+      k,
+      { x: bounds.x + bounds.w / 2, y: bounds.y + bounds.h / 2 },
+      { x: screen.w / 2, y: screen.h / 2 },
+    );
+  };
+  const { box, view, handlers, zoomBy, recentre } = usePanZoom(WEB_SIZE, home);
+
   const { x: cx, y: cy } = WEB_CENTRE;
   const color = (regard: number) =>
     regard > 0 ? 'var(--crack)' : regard < 0 ? 'var(--warn)' : 'var(--muted)';
+
   return (
     <div className="people-web">
-      <svg
-        viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`}
-        role="group"
-        aria-label="The web of threads: closer to the centre means closer to you"
-      >
-        {RINGS.filter(([regard]) => regard >= lowest).map(([regard, label]) => (
-          <g key={regard}>
-            <circle className="web-ring" cx={cx} cy={cy} r={ringFor(regard)} />
-            <text
-              className="web-ring-label"
-              textAnchor="middle"
-              x={cx + ringFor(regard) * cos}
-              y={cy + ringFor(regard) * sin + (sin < 0 ? -3 : 10)}
-            >
-              {label}
-            </text>
-          </g>
-        ))}
-        {nodes.map((n) => (
-          <path
-            key={`t-${n.id}`}
-            className={`web-thread tone-${tone(n.regard)}`}
-            d={n.thread}
-            stroke={color(n.regard)}
-          />
-        ))}
-        <g className="web-you" aria-hidden="true">
-          <circle cx={cx} cy={cy} r={26} />
-          <text x={cx} y={cy}>
-            我
-          </text>
-        </g>
-        {nodes.map((n) => {
-          const p = person(n.id);
-          const r = game.player.people[n.id]!;
-          return (
-            <g
-              key={n.id}
-              className={`web-node${n.id === selected ? ' is-selected' : ''}`}
-              role="button"
-              tabIndex={0}
-              aria-pressed={n.id === selected}
-              aria-label={`${p.name}, ${BONDS[r.bond]}, ${regardWords(r.regard)}`}
-              onClick={() => onSelect(n.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onSelect(n.id);
-                }
-              }}
-            >
-              <circle className="web-disc" cx={n.x} cy={n.y} r={21} stroke={color(n.regard)} />
-              <text className={`web-seal tone-${tone(n.regard)}`} x={n.x} y={n.y}>
-                {p.hanzi}
-              </text>
-              <text className="web-name" x={n.x} y={n.y + 38}>
-                {p.name}
-              </text>
-              <text className="web-bond" x={n.x} y={n.y + 52}>
-                {BONDS[r.bond]}
-              </text>
-              {hasNews(game, n.id) && (
-                <circle className="web-fresh" cx={n.x + 16} cy={n.y - 16} r={3.5} />
-              )}
-            </g>
-          );
-        })}
-      </svg>
+      <div className="web-canvas-wrap">
+        <div ref={box} className="web-canvas" {...handlers}>
+          <svg
+            role="group"
+            aria-label="The web of threads: closer to the centre means closer to you"
+          >
+            {view && (
+              <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
+                {labels.map((l) => (
+                  <g key={l.regard}>
+                    <circle className="web-ring" cx={cx} cy={cy} r={ringFor(l.regard)} />
+                    <text className="web-ring-label" textAnchor="middle" x={l.x} y={l.y}>
+                      {l.text}
+                    </text>
+                  </g>
+                ))}
+                {nodes.map((n) => (
+                  <path
+                    key={`t-${n.id}`}
+                    className={`web-thread tone-${tone(n.regard)}`}
+                    d={n.thread}
+                    stroke={color(n.regard)}
+                  />
+                ))}
+                <g className="web-you" aria-hidden="true">
+                  <circle cx={cx} cy={cy} r={YOU_R} />
+                  <text x={cx} y={cy}>
+                    我
+                  </text>
+                </g>
+                {nodes.map((n) => {
+                  const p = person(n.id);
+                  const r = game.player.people[n.id]!;
+                  return (
+                    <g
+                      key={n.id}
+                      className={`web-node${n.id === selected ? ' is-selected' : ''}`}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={n.id === selected}
+                      aria-label={`${p.name}, ${BONDS[r.bond]}, ${regardWords(r.regard)}`}
+                      onClick={() => onSelect(n.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onSelect(n.id);
+                        }
+                      }}
+                    >
+                      <circle
+                        className="web-disc"
+                        cx={n.x}
+                        cy={n.y}
+                        r={DISC_R}
+                        stroke={color(n.regard)}
+                      />
+                      <text className={`web-seal tone-${tone(n.regard)}`} x={n.x} y={n.y}>
+                        {p.hanzi}
+                      </text>
+                      <text className="web-name" x={n.x} y={n.y + NAME_Y}>
+                        {p.name}
+                      </text>
+                      <text className="web-bond" x={n.x} y={n.y + BOND_Y}>
+                        {BONDS[r.bond]}
+                      </text>
+                      {hasNews(game, n.id) && (
+                        <circle
+                          className="web-fresh"
+                          cx={n.x + DISC_R * 0.75}
+                          cy={n.y - DISC_R * 0.75}
+                          r={3}
+                        />
+                      )}
+                    </g>
+                  );
+                })}
+              </g>
+            )}
+          </svg>
+        </div>
+        <div className="tree-tools" role="group" aria-label="View">
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Zoom in"
+            onClick={() => zoomBy(BUTTON_STEP)}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Zoom out"
+            onClick={() => zoomBy(1 / BUTTON_STEP)}
+          >
+            −
+          </button>
+          <button type="button" className="button tree-recentre" onClick={recentre}>
+            Re-centre
+          </button>
+        </div>
+      </div>
       <p className="web-legend caption">
         <span>
           <i className="legend-warm" />
@@ -309,12 +366,12 @@ function Web({
   );
 }
 
-type View = 'circles' | 'web';
+type Shown = 'circles' | 'web';
 
 export function PeopleScreen() {
   const game = useGame((s) => s.game);
   const seePerson = useGame((s) => s.seePerson);
-  const [view, setView] = useState<View>('circles');
+  const [view, setView] = useState<Shown>('circles');
   const [chosen, setChosen] = useState<string | null>(null);
   const page = useRef<HTMLDivElement>(null);
 

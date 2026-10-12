@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { PersonRecord } from '../core/state.ts';
-import { labelAngle, nearest, ringFor, WEB_MAX, WEB_SIZE, webLayout } from './peopleWeb.ts';
+import {
+  anyOverlap,
+  labelAngle,
+  nearest,
+  nodeBox,
+  ringFor,
+  WEB_MAX,
+  WEB_SIZE,
+  webLayout,
+} from './peopleWeb.ts';
 
 const rec = (bond: PersonRecord['bond'], regard: number, heard = 0): PersonRecord => ({
   met: 0,
@@ -35,9 +44,27 @@ describe('the web of threads', () => {
       expect(n.y).toBeGreaterThan(20);
       expect(n.y + 52).toBeLessThan(WEB_SIZE.h);
     }
-    for (const a of nodes)
-      for (const b of nodes)
-        if (a !== b) expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(50);
+    expect(anyOverlap(nodes)).toBe(false);
+  });
+
+  it('keeps a full, crowded web clear of overlaps too', () => {
+    const bonds: PersonRecord['bond'][] = ['acquaintance', 'senior', 'kin', 'rival', 'junior'];
+    const names = ['Senior Brother Zhao', 'Aunt Yan', 'Little Ning', 'Peddler Gou', 'Fang Tie'];
+    const people = Array.from({ length: WEB_MAX }, (_, i) => ({
+      id: `p${i}`,
+      name: names[i % names.length]!,
+      bond: 'an acquaintance',
+      record: rec(bonds[i % bonds.length]!, (i % 3) - 1),
+    }));
+    const nodes = webLayout(people);
+    expect(anyOverlap(nodes)).toBe(false);
+    for (const n of nodes) {
+      const box = nodeBox(n);
+      expect(box.l).toBeGreaterThan(0);
+      expect(box.r).toBeLessThan(WEB_SIZE.w);
+      expect(box.t).toBeGreaterThan(0);
+      expect(box.b).toBeLessThan(WEB_SIZE.h);
+    }
   });
 
   it('labels the rings where nobody sits', () => {
