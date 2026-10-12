@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { AUTO_IDS, GRADE_IDS } from '../content/cultivation.ts';
 import { ELEMENTS, type Element } from '../content/elements.ts';
 import { FRESH_WHEEL, HOUR_KIND_IDS, HOURS_PER_DAY } from '../content/hours.ts';
+import { RARITY_IDS } from '../content/rarity.ts';
 import { REALM_IDS, realm } from '../content/realms.ts';
 import { defaultElements, ROOT_IDS, type RootId } from '../content/roots.ts';
 import { hashSeed, Rng, streamSeed, type StreamName } from './rng.ts';
@@ -17,6 +18,21 @@ export const DAYS_PER_YEAR = 360;
 export const START_AGE = 12;
 /** The player's cultivator id; NPCs get their own. */
 export const PLAYER_ID = 'player';
+
+/**
+ * What one climbed stage recorded (design § Cultivation, growth): the method active at the
+ * breakthrough that reached it, or none, and the growth it left, set for good.
+ */
+const StageGrowth = z.object({
+  realm: z.enum(REALM_IDS),
+  stage: z.number().int().min(1),
+  /** The method active at the attempt, or null when the world alone climbed it. */
+  method: z.string().nullable(),
+  rarity: z.enum(RARITY_IDS),
+  /** What the stage added to each growth stat (content/methods.ts, GROWTH_STATS): 0.05 is +5%. */
+  growth: z.record(z.string(), z.number()),
+});
+export type StageGrowth = z.infer<typeof StageGrowth>;
 
 const Ladder = z.object({
   realm: z.enum(REALM_IDS),
@@ -30,6 +46,8 @@ const Ladder = z.object({
   unsettledUntil: z.number(),
   /** World day until which an injury slows this ladder. */
   injuredUntil: z.number(),
+  /** Every stage climbed, oldest first, with the growth its method left. */
+  growth: z.array(StageGrowth),
 });
 export type Ladder = z.infer<typeof Ladder>;
 
@@ -50,8 +68,12 @@ export const CultivatorSchema = z.object({
   root: z.enum(ROOT_IDS),
   /** The elements the root holds; the element hours read them. */
   rootElements: z.array(z.enum(ELEMENTS)),
-  /** Methods known, by id (content/methods.ts): qi methods, tempering and nourishing arts. */
-  methods: z.array(z.string()),
+  /**
+   * Methods known, by id (content/methods.ts): qi methods, tempering and nourishing arts, each
+   * with the practice days cultivated with it, which set its mastery, and the world day its
+   * upkeep is paid through.
+   */
+  methods: z.record(z.string(), z.object({ practice: z.number().min(0), fedUntil: z.number() })),
   /** The method each ladder climbs with; a ladder gains nothing from its hours without one. */
   activeMethods: z.object({ qi: activeMethod, body: activeMethod, soul: activeMethod }),
   /** The three attributes that come from birth (design § Combat); talents move them in P1.7. */
@@ -93,6 +115,8 @@ export const CultivatorSchema = z.object({
   techniques: z.record(z.string(), z.object({ practice: z.number().min(0) })),
   /** The technique practice days go to, or null. */
   practicing: z.string().nullable(),
+  /** Insight drawn from each contemplation source (content/contemplation.ts), before Aptitude. */
+  contemplation: z.record(z.string(), z.number().min(0)),
 });
 export type Cultivator = z.infer<typeof CultivatorSchema>;
 
@@ -167,6 +191,7 @@ export function freshLadder(): Ladder {
     grades: [],
     unsettledUntil: 0,
     injuredUntil: 0,
+    growth: [],
   };
 }
 
@@ -189,7 +214,7 @@ export function newCultivator(
     lifespanBonus: 0,
     root: opts.root ?? 'true',
     rootElements: opts.elements ?? defaultElements(opts.root ?? 'true'),
-    methods: method ? [method] : [],
+    methods: method ? { [method]: { practice: 0, fedUntil: 0 } } : {},
     activeMethods: { qi: method, body: null, soul: null },
     attributes: { agility: 10, fortune: 10, aptitude: opts.aptitude ?? 10 },
     qi: freshLadder(),
@@ -206,6 +231,7 @@ export function newCultivator(
     nodes: [],
     techniques: Object.fromEntries(techniques.map((t) => [t, { practice: 0 }])),
     practicing: techniques[0] ?? null,
+    contemplation: {},
   };
 }
 

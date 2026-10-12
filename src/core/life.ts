@@ -15,7 +15,7 @@ import {
   type Note,
 } from './cultivation.ts';
 import type { DayStep } from './loop.ts';
-import { knowsMethod, learnMethod } from './methods.ts';
+import { knowsMethod, learnMethod, setActiveMethod, type MethodCheck } from './methods.ts';
 import {
   addChronicle,
   ageYears,
@@ -26,7 +26,7 @@ import {
   withStream,
   type GameState,
 } from './state.ts';
-import { learnTechnique, setPracticing } from './techniques.ts';
+import { canLearnTechnique, learnTechnique, setPracticing } from './techniques.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
 import { learnRoutine } from './wheel.ts';
 
@@ -143,11 +143,12 @@ function settle(s: GameState): GameState {
 }
 
 /**
- * The player gains a technique, at Glimpse; the Techniques screen opens with the first, and
+ * The player gains a technique, at Glimpse, or below the chapter before it for a line's next
+ * chapter, which needs that one at Comprehension. The Techniques screen opens with the first, and
  * practice hours with the first one they can use.
  */
 export function gainTechnique(s: GameState, id: string, how = 'learns'): GameState {
-  if (id in s.player.techniques) return s;
+  if (!canLearnTechnique(s.player, id).ok) return s;
   const t = technique(id);
   const next = addChronicle(
     withPlayer(s, learnTechnique(s.player, id)),
@@ -169,6 +170,25 @@ export function gainMethod(s: GameState, id: string, how = 'learns'): GameState 
     `${s.player.name} ${how} the ${method(id).name}.`,
   );
   return settle(next);
+}
+
+/**
+ * The player climbs a ladder with another known method, or with none. A chapter catches up to
+ * its floor as it is taken up; the bar is never touched.
+ */
+export function switchMethod(
+  s: GameState,
+  which: LadderId,
+  id: string | null,
+): { state: GameState; check: MethodCheck } {
+  if (s.ended) return { state: s, check: { ok: false, reason: 'This life is over.' } };
+  if (s.player.activeMethods[which] === id) return { state: s, check: { ok: true } };
+  const r = setActiveMethod(s.player, which, id);
+  if (!r.check.ok) return { state: s, check: r.check };
+  const text = id
+    ? `${s.player.name} takes up the ${method(id).name}.`
+    : `${s.player.name} sets the ${method(s.player.activeMethods[which]!).name} aside.`;
+  return { state: addChronicle(withPlayer(s, r.cultivator), 'method', text), check: r.check };
 }
 
 /** The player learns a routine from a teacher, manual or sect. */

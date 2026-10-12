@@ -26,6 +26,11 @@ export const REALMS = [
     gate: 'none: the tutorial',
     /** The damage step b for crossing into this realm (design § Combat). */
     breakStep: 1,
+    /**
+     * The gap out of this realm: how much more a foe one realm up hits for (design § Tier,
+     * rarity and pedigree). Rarity and a method's tier bonus read it.
+     */
+    gap: 3,
     /** Insight ever earned that a major breakthrough into this realm needs. */
     insightThreshold: 0,
     /** Insight per day of study at this realm; higher realms understand more per day. */
@@ -46,6 +51,7 @@ export const REALMS = [
     gateItem: 'foundation-pill',
     gate: 'a Foundation Pill',
     breakStep: 1.75,
+    gap: 5.5,
     insightThreshold: 500,
     insightRate: 3,
     steps: HIGH_STEPS,
@@ -61,6 +67,7 @@ export const REALMS = [
     gateItem: 'core-forming-pill',
     gate: 'a core-forming pill',
     breakStep: 3.2,
+    gap: 10,
     insightThreshold: 4_000,
     insightRate: 9,
     steps: HIGH_STEPS,
@@ -76,6 +83,7 @@ export const REALMS = [
     gateItem: null,
     gate: 'a 3-wave lightning tribulation and your first heart demon',
     breakStep: 5.8,
+    gap: 10,
     insightThreshold: 40_000,
     insightRate: 27,
     steps: HIGH_STEPS,
@@ -91,6 +99,7 @@ export const REALMS = [
     gateItem: null,
     gate: 'a longer tribulation and a stronger heart demon',
     breakStep: 5.8,
+    gap: 10,
     insightThreshold: 400_000,
     insightRate: 81,
     steps: HIGH_STEPS,
@@ -106,6 +115,7 @@ export const REALMS = [
     gateItem: null,
     gate: 'a longer tribulation and a stronger heart demon',
     breakStep: 5.8,
+    gap: 10,
     insightThreshold: 4_000_000,
     insightRate: 243,
     steps: HIGH_STEPS,
@@ -121,6 +131,7 @@ export const REALMS = [
     gateItem: null,
     gate: 'a longer tribulation and a stronger heart demon',
     breakStep: 5.8,
+    gap: 10,
     insightThreshold: 40_000_000,
     insightRate: 729,
     steps: HIGH_STEPS,
@@ -136,6 +147,7 @@ export const REALMS = [
     gateItem: null,
     gate: 'a longer tribulation and a stronger heart demon',
     breakStep: 5.8,
+    gap: 10,
     insightThreshold: 400_000_000,
     insightRate: 2187,
     steps: HIGH_STEPS,
@@ -151,6 +163,7 @@ export const REALMS = [
     gateItem: null,
     gate: 'the last tribulation',
     breakStep: 5.8,
+    gap: 10,
     insightThreshold: 4_000_000_000,
     insightRate: 6561,
     steps: HIGH_STEPS,
@@ -208,6 +221,24 @@ export function stepSize(id: RealmId, stage: number): number {
   const r = realm(id);
   const units = r.steps[Math.min(stage, r.stages) - 1] ?? r.steps[r.steps.length - 1]!;
   return units * realmScale(id);
+}
+
+/** The gap out of a realm: ×3 at Qi Condensation, ×5.5 at Foundation, ×10 from Core Formation up. */
+export function realmGap(id: RealmId): number {
+  return realm(id).gap;
+}
+
+/** The gap out of a thing's own tier, which its rarity multiplies by: ×3 at tier 1, ×5.5 at tier 2. */
+export function tierGap(tier: number): number {
+  return REALMS[Math.min(Math.max(tier, 1), REALMS.length) - 1]!.gap;
+}
+
+/**
+ * The stages a ladder climbs inside a realm, each by a breakthrough: layers 2–9 at Qi
+ * Condensation, since a life starts at layer 1, and every stage of the realms above.
+ */
+export function climbsIn(id: RealmId): number {
+  return id === 'qi-condensation' ? realm(id).stages - 1 : realm(id).stages;
 }
 
 const STAGE_NAMES = ['early', 'middle', 'late', 'peak'] as const;

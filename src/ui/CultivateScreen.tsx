@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { AUTO_IDS, AUTO_SETTINGS, GRADES } from '../content/cultivation.ts';
-import { ELEMENT_INFO, phaseOf } from '../content/elements.ts';
-import { BRANCHES } from '../content/hours.ts';
-import { hasMethod, method } from '../content/methods.ts';
+import { ELEMENT_INFO } from '../content/elements.ts';
 import { realm } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
 import { hasRoutine, routine } from '../content/routines.ts';
@@ -22,6 +20,7 @@ import { ladderMethod } from '../core/methods.ts';
 import { itemCount, type GameState } from '../core/state.ts';
 import { canFollow } from '../core/wheel.ts';
 import { DayWheel, WheelStrip } from './DayWheel.tsx';
+import { MethodRow } from './MethodCard.tsx';
 import { formatLadder, formatNumber, formatPercent, formatRate, LADDER_LABELS } from './format.ts';
 import { useGame } from './store.ts';
 import { LadderBar, LifeEdgeCard, Why } from './widgets.tsx';
@@ -39,24 +38,34 @@ function DayPanel({ game }: { game: GameState }) {
   const r = root(c.root);
   const m = ladderMethod(c, 'qi');
   const elements = c.rootElements.map((e) => ELEMENT_INFO[e].name.toLowerCase()).join(' and ');
-  const qiWhy = m ? (
+  const qiWhy = !m ? (
+    'No cultivation method yet: qi hours give nothing.'
+  ) : speed.capped ? (
+    `The ${m.name} carries you no further than its tier: qi hours give nothing until you take up its next chapter or a new method.`
+  ) : (
     <>
       <span>
         {m.name} on a {r.name.toLowerCase()} of {elements}.
       </span>
       <span>
-        Qi speed ×{speed.total.toFixed(2)}: root ×{speed.root}, method fit ×{speed.fit}, qi density
-        ×{speed.density}, Aptitude ×{speed.aptitude.toFixed(2)}
-        {speed.nodes !== 1 && `, tree nodes ×${speed.nodes.toFixed(2)}`}.
+        Qi speed ×{speed.total.toFixed(2)}: root ×{speed.root}, method ×
+        {(speed.tier * speed.rarity * speed.mastery).toFixed(2)} (tier ×{speed.tier}, rarity ×
+        {speed.rarity.toFixed(2)}, mastery ×{speed.mastery}), fit ×{speed.fit}, qi density ×
+        {speed.density}, Aptitude ×{speed.aptitude.toFixed(2)}
+        {speed.nodes !== 1 && `, tree nodes and method ×${speed.nodes.toFixed(2)}`}.
       </span>
       <span>
         {rates.count.qi} qi hours, each a twelfth of a day, with their element, dawn and discipline
         bonuses.
       </span>
-      {inTutorial(c.qi) && <span>Layers 1–3 ignore the root, the fit and the element hours.</span>}
+      {inTutorial(c.qi) && (
+        <span>
+          Layers 1–3 ignore the root, the method's tier, rarity and mastery, its fit and the element
+          hours.
+        </span>
+      )}
+      {rates.unfed.includes('qi') && <span>Its upkeep went unpaid: it stalls today.</span>}
     </>
-  ) : (
-    'No cultivation method yet: qi hours give nothing.'
   );
   const day = [
     rates.body > 0 && `+${formatRate(rates.body)} tempering`,
@@ -236,56 +245,16 @@ function RoutinesPanel({ game }: { game: GameState }) {
   );
 }
 
-const ART_NAMES: Record<LadderId, string> = {
-  qi: 'cultivation method',
-  body: 'tempering art',
-  soul: 'nourishing art',
-};
-
 function MethodsPanel({ game }: { game: GameState }) {
-  const c = game.player;
   return (
     <section className="panel" aria-labelledby="methods-heading">
       <h2 id="methods-heading" className="panel-heading">
         Methods
       </h2>
       <ul className="methods">
-        {(['qi', 'body', 'soul'] as const).map((which) => {
-          const m = ladderMethod(c, which);
-          const known = c.methods.filter((id) => hasMethod(id) && method(id).ladder === which);
-          return (
-            <li key={which}>
-              <span className="label">{LADDER_LABELS[which]}</span>
-              {m ? (
-                <span title={`From ${m.source}.`}>
-                  {m.name} <span className="hanzi">{m.hanzi}</span>
-                  {m.element && (
-                    <span className="caption">
-                      {' '}
-                      · {ELEMENT_INFO[m.element].name.toLowerCase()}
-                      <Why label="What its element does">
-                        Its hours pay a quarter more at {ELEMENT_INFO[m.element].name.toLowerCase()}{' '}
-                        hours:{' '}
-                        {BRANCHES.filter((b) => b.element === phaseOf(m.element!))
-                          .map((b) => b.hanzi)
-                          .join(' ')}
-                        .
-                      </Why>
-                    </span>
-                  )}
-                </span>
-              ) : (
-                <span className="muted">
-                  No {ART_NAMES[which]}
-                  {known.length === 0 &&
-                    (which === 'qi'
-                      ? ': qi hours give nothing.'
-                      : `: the ${which} grows only from the world until you find one.`)}
-                </span>
-              )}
-            </li>
-          );
-        })}
+        {(['qi', 'body', 'soul'] as const).map((which) => (
+          <MethodRow key={which} game={game} which={which} />
+        ))}
       </ul>
     </section>
   );
@@ -328,8 +297,8 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
               : ''}
           {(fill < 1 || odds < 1) && (
             <Why label="How the odds work">
-              Filling past full raises the odds, a step for each 10% up to 150%. A failure costs a
-              fifth of the bar and a few days of unsettled qi.
+              Filling past full raises the odds, a step for each 10% up to 150%, and a fine method
+              adds its own. A failure costs a fifth of the bar and a few days of unsettled qi.
             </Why>
           )}
         </span>
@@ -362,7 +331,9 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
           <Why label="How the grade is worked out">
             A {grade.name.toLowerCase()} breakthrough is worth {grade.stages >= 0 ? '+' : ''}
             {grade.stages} stages in a fight. Qi past full, insight past the threshold, and the
-            other two ladders at {target.name} each raise the grade.
+            other two ladders at {target.name} each raise the grade
+            {check.methodMargin > 0 && `, and your method adds ${check.methodMargin}`}. Only a gold
+            or red method reaches heavenly.
           </Why>
         </p>
         <div className="actions">

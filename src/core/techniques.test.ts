@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { firstTechnique, MASTERY, technique, TECHNIQUES } from '../content/techniques.ts';
+import { MASTERY, TECHNIQUE_MASTERY } from '../content/mastery.ts';
+import { firstTechnique, technique, TECHNIQUES } from '../content/techniques.ts';
 import { cultivateDays, dayRates } from './cultivation.ts';
 import { gainTechnique, practice } from './life.ts';
 import { Rng } from './rng.ts';
@@ -41,7 +42,7 @@ describe('technique content', () => {
       'Origin',
     ]);
     for (let i = 1; i < MASTERY.length; i++) {
-      expect(MASTERY[i]!.practice).toBeGreaterThan(MASTERY[i - 1]!.practice);
+      expect(TECHNIQUE_MASTERY.practice[i]!).toBeGreaterThan(TECHNIQUE_MASTERY.practice[i - 1]!);
     }
   });
 });
@@ -61,7 +62,7 @@ describe('mastery', () => {
 
   it('stops at Origin', () => {
     const t = technique('rampart-palm');
-    const origin = addPractice(withPractice(c, 'rampart-palm', 599), 50);
+    const origin = addPractice(withPractice(c, 'rampart-palm', 599), 50).cultivator;
     expect(origin.techniques['rampart-palm']!.practice).toBe(masteryNeed(t, 4));
     expect(mastery(origin, 'rampart-palm')).toMatchObject({ level: 4, next: null, fraction: 1 });
     expect(canPractice(origin, 'rampart-palm')).toBe(false);

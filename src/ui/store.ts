@@ -12,6 +12,7 @@ import {
   endLife,
   learn,
   practice,
+  switchMethod,
 } from '../core/life.ts';
 import { advance, catchUp, TICK_MS, type OfflineResult } from '../core/loop.ts';
 import { makeSave, SaveError } from '../core/save/format.ts';
@@ -74,6 +75,8 @@ export interface GameStore {
   learnNode(id: string): string | null;
   /** Points practice days at a technique, or at nothing. */
   practice(id: string | null): void;
+  /** Climbs a ladder with another known method, or with none; returns why not, or null. */
+  setMethod(ladder: LadderId, id: string | null): string | null;
   /** At the lifespan edge: the last breakthrough, or the end of the life if it fails. */
   lastChance(): void;
   /** At the lifespan edge: accept the end. */
@@ -391,6 +394,15 @@ export const useGame = create<GameStore>()((set, get) => {
       const { game } = get();
       if (!game || !holdsLock) return;
       set({ game: practice(game, id) });
+    },
+
+    setMethod(ladder, id) {
+      const { game } = get();
+      if (!game || !holdsLock) return 'This life is not open in this tab.';
+      const r = switchMethod(game, ladder, id);
+      if (!r.check.ok) return r.check.reason;
+      set({ game: r.state });
+      return null;
     },
 
     lastChance() {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { stepSize } from '../content/realms.ts';
 import { BRANCHES, SLEEP_FREED_TEXT, type HourKind } from '../content/hours.ts';
-import { FIRST_ARTS } from '../content/methods.ts';
+import { FIRST_ARTS, method } from '../content/methods.ts';
 import { PLACEHOLDER_ROUTINE, routine } from '../content/routines.ts';
 import {
   cultivateDays,
@@ -14,7 +14,7 @@ import {
 } from './cultivation.ts';
 import { cultivate, gainMethod, gainTechnique } from './life.ts';
 import { advance } from './loop.ts';
-import { ladderMethod, learnMethod, setActiveMethod } from './methods.ts';
+import { ladderMethod, learnMethod, methodNeed, setActiveMethod } from './methods.ts';
 import { Rng } from './rng.ts';
 import { newLife, withPlayer, type Cultivator, type GameState, type Ladder } from './state.ts';
 import {
@@ -33,7 +33,15 @@ import {
 type LifeOpts = Partial<Parameters<typeof newLife>[0]>;
 
 const life = (opts: LifeOpts = {}) => newLife({ name: 'Han Li', seed: 'wheel', ...opts });
-const player = (opts: LifeOpts = {}) => life(opts).player;
+
+/** Puts every known method at Mastery, where its speed is ×1, so a test sees the rest of the sum. */
+const mastered = (c: Cultivator): Cultivator => ({
+  ...c,
+  methods: Object.fromEntries(
+    Object.entries(c.methods).map(([id, r]) => [id, { ...r, practice: methodNeed(method(id), 2) }]),
+  ),
+});
+const player = (opts: LifeOpts = {}) => mastered(life(opts).player);
 const DAY = life().calendar.day;
 const ctx = () => ({ day: DAY, rng: new Rng(1) });
 
@@ -113,7 +121,7 @@ describe('element hours', () => {
   });
 
   it("match a tempering art's element on body hours", () => {
-    let c = openHours(learnMethod(player(), FIRST_ARTS.body)).cultivator;
+    let c = mastered(openHours(learnMethod(player(), FIRST_ARTS.body)).cultivator);
     c = at(withHours(c, { [h('辰')]: 'body', [h('申')]: 'body' }), 'body', { stage: 4 });
     // The Stone-Bearing art is earth: 辰 matches, 申 is metal.
     expect(hourYields(c, DAY)[h('辰')]!.body).toBeCloseTo((1.6 * 1.25) / 12);
@@ -170,7 +178,11 @@ describe('the method gate', () => {
     expect(dayRates(c, DAY).count).toMatchObject({ body: 1, soul: 1 });
     expect(dayRates(c, DAY).body).toBeGreaterThan(0);
     expect(dayRates(c, DAY).soul).toBeGreaterThan(0);
-    const bare = setActiveMethod(setActiveMethod(c, 'body', null), 'soul', null);
+    const bare = setActiveMethod(
+      setActiveMethod(c, 'body', null).cultivator,
+      'soul',
+      null,
+    ).cultivator;
     expect(dayRates(bare, DAY)).toMatchObject({ body: 0, soul: 0 });
     const after = cultivateDays(bare, 30, ctx()).cultivator;
     expect([after.body.bar, after.soul.bar]).toEqual([0, 0]);
@@ -186,7 +198,7 @@ describe('the method gate', () => {
       body: 'stone-bearing',
       soul: null,
     });
-    expect(setActiveMethod(learned, 'soul', 'stone-bearing')).toBe(learned);
+    expect(setActiveMethod(learned, 'soul', 'stone-bearing').cultivator).toBe(learned);
     const wrong = {
       ...learned,
       activeMethods: { ...learned.activeMethods, soul: 'stone-bearing' },

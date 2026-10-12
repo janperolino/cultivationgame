@@ -1,5 +1,5 @@
 import { statInfo, type Effect } from '../content/stats.ts';
-import { realm, stageName } from '../content/realms.ts';
+import { realm, REALMS, stageName } from '../content/realms.ts';
 import type { LadderId } from '../core/cultivation.ts';
 import { DAYS_PER_YEAR, type Ladder } from '../core/state.ts';
 
@@ -27,6 +27,11 @@ export function formatDuration(ms: number): string {
   if (min < 60) return `${min} min`;
   const h = Math.floor(min / 60);
   return min % 60 ? `${h} h ${min % 60} min` : `${h} h`;
+}
+
+/** A tier as a word, the realm it belongs to: "Qi Condensation". */
+export function tierName(tier: number): string {
+  return REALMS[tier - 1]?.name ?? `tier ${tier}`;
 }
 
 export function formatLadder(l: Ladder): string {

@@ -1,6 +1,11 @@
-// A cultivator's stat totals: every effect from the tree nodes they can use, added up. Talents,
-// gear and pills join here later. The rules read these totals; see content/stats.ts for units.
+// A cultivator's stat totals: every effect from the tree nodes they can use (not sealed), the
+// properties of each ladder's active method, and the growth the methods that climbed each stage
+// left (core/growth.ts). Talents, gear and pills join here later. The rules read these totals; see
+// content/stats.ts for units.
+import { APTITUDE_BASE, APTITUDE_STEP, LADDERS } from '../content/cultivation.ts';
 import { STAT_IDS, type StatId } from '../content/stats.ts';
+import { ladderGrowth } from './growth.ts';
+import { ladderMethod } from './methods.ts';
 import type { Cultivator } from './state.ts';
 import { activeNodes } from './trees.ts';
 
@@ -10,19 +15,41 @@ export function emptyStats(): Stats {
   return Object.fromEntries(STAT_IDS.map((id) => [id, 0])) as Stats;
 }
 
-// The day step reads stats many times a tick; they change only when the nodes or a ladder's
-// realm do, so each nodes list keeps its last result, keyed by the realms that unseal nodes.
-const cache = new WeakMap<readonly string[], { key: string; stats: Readonly<Stats> }>();
+// The day step reads stats many times a tick; they change only when the nodes, a ladder's realm,
+// an active method or the growth records do, so each nodes list keeps its last result.
+interface Cached {
+  key: string;
+  growth: readonly unknown[];
+  stats: Readonly<Stats>;
+}
+const cache = new WeakMap<readonly string[], Cached>();
 
-/** Every stat's total from the nodes the cultivator has learned and can use (not sealed). */
+/** Every stat's total from nodes, active methods' properties and growth. */
 export function stats(c: Cultivator): Readonly<Stats> {
-  const key = `${c.qi.realm}|${c.body.realm}|${c.soul.realm}`;
+  const key = LADDERS.map((l) => `${c[l].realm}:${c.activeMethods[l] ?? ''}`).join('|');
+  const growth = LADDERS.map((l) => c[l].growth);
   const hit = cache.get(c.nodes);
-  if (hit?.key === key) return hit.stats;
+  if (hit?.key === key && hit.growth.every((g, i) => g === growth[i])) return hit.stats;
   const out = emptyStats();
   for (const node of activeNodes(c)) {
     for (const e of node.effects) out[e.stat] += e.value;
   }
-  cache.set(c.nodes, { key, stats: out });
+  for (const l of LADDERS) {
+    for (const p of ladderMethod(c, l)?.properties ?? []) {
+      for (const e of p.effects) out[e.stat] += e.value;
+    }
+    for (const [stat, v] of Object.entries(ladderGrowth(c[l]))) out[stat as StatId] += v;
+  }
+  cache.set(c.nodes, { key, growth, stats: out });
   return out;
+}
+
+/** Aptitude, with what nodes and methods add. */
+export function aptitude(c: Cultivator): number {
+  return c.attributes.aptitude + stats(c).aptitude;
+}
+
+/** Aptitude's multiplier on every seclusion gain: +5% a point above 10. */
+export function aptitudeMultiplier(c: Cultivator): number {
+  return Math.max(0, 1 + APTITUDE_STEP * (aptitude(c) - APTITUDE_BASE));
 }

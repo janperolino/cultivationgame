@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BAR_CAP, UNSETTLED_DAYS } from '../content/cultivation.ts';
+import { method } from '../content/methods.ts';
 import { realmScale, stepSize } from '../content/realms.ts';
 import {
   attemptBreakthrough,
@@ -17,6 +18,7 @@ import {
 } from './cultivation.ts';
 import { attemptLastChance, breakThrough, cultivate } from './life.ts';
 import { advance } from './loop.ts';
+import { learnMethod, methodNeed, setActiveMethod } from './methods.ts';
 import { Rng } from './rng.ts';
 import {
   addItem,
@@ -32,7 +34,24 @@ import {
 type LifeOpts = Partial<Parameters<typeof newLife>[0]>;
 
 const life = (opts: LifeOpts = {}) => newLife({ name: 'Han Li', seed: 'test', ...opts });
-const player = (opts: LifeOpts = {}) => life(opts).player;
+/** Puts every known method at Mastery, where its speed is ×1, so a test sees the rest of the sum. */
+const mastered = (c: Cultivator): Cultivator => ({
+  ...c,
+  methods: Object.fromEntries(
+    Object.entries(c.methods).map(([id, r]) => [id, { ...r, practice: methodNeed(method(id), 2) }]),
+  ),
+});
+const player = (opts: LifeOpts = {}) => mastered(life(opts).player);
+
+/** Qi at Foundation on the garrison method's Foundation chapter, since the first runs out there. */
+function atFoundation(c: Cultivator): Cultivator {
+  const chapter = setActiveMethod(
+    learnMethod(c, 'garrison-standard-foundation'),
+    'qi',
+    'garrison-standard-foundation',
+  );
+  return at(mastered(chapter.cultivator), 'qi', { realm: 'foundation-establishment' });
+}
 const DAY = life().calendar.day;
 const ctx = (seed = 0, day = DAY) => ({ day, rng: new Rng(seed) });
 
@@ -92,11 +111,11 @@ describe('stones as fuel', () => {
     expect(fuelled.stones).toBeCloseTo(100 - (5 * 10) / 12);
     expect(fuelled.qi.bar).toBeCloseTo(plain.qi.bar * 2);
     const allQi = { ...c, wheel: c.wheel.map(() => 'qi' as const) };
-    expect(dayRates(at(allQi, 'qi', { realm: 'foundation-establishment' }), DAY).stoneCap).toBe(45);
+    expect(dayRates(atFoundation(allQi), DAY).stoneCap).toBe(45);
   });
 
   it('is worth a ninth as much at Foundation, where a full burn takes nine times the stones', () => {
-    const c = at({ ...player(), stones: 1000 }, 'qi', { realm: 'foundation-establishment' });
+    const c = atFoundation({ ...player(), stones: 1000 });
     // Layer 4 is past the tutorial too, so both count the same element hours.
     const qc = dayRates(at(player(), 'qi', { stage: 4 }), DAY);
     const r = dayRates(c, DAY);

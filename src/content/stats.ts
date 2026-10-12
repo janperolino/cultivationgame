@@ -68,6 +68,12 @@ export const STATS = {
     arrives: 'combat',
   },
   hp: { name: 'HP', unit: 'percent', what: 'your HP', arrives: 'combat' },
+  physicalDamage: {
+    name: 'Physical damage',
+    unit: 'percent',
+    what: 'the damage of physical strikes and techniques',
+    arrives: 'combat',
+  },
   physicalResist: {
     name: 'Physical resistance',
     unit: 'percent',
@@ -102,6 +108,12 @@ export const STATS = {
     name: 'Soul defense',
     unit: 'percent',
     what: 'resistance to realm pressure, illusions and heart demons',
+    arrives: 'combat',
+  },
+  perception: {
+    name: 'Perception',
+    unit: 'percent',
+    what: 'seeing through feints, ambushes and concealment',
     arrives: 'combat',
   },
   // Read once the map and crafting arrive (M3, M4).

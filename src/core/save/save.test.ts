@@ -9,6 +9,8 @@ import { SaveSlots } from './slots.ts';
 const fixture = (name: string) =>
   JSON.parse(readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), 'utf8'));
 const v0 = fixture('v0');
+/** An old life's method, at Mastery after the v5 migration so it loses no speed. */
+const MASTERED = { practice: 180, fedUntil: 0 };
 
 let open: SaveSlots[] = [];
 function slots(): SaveSlots {
@@ -52,7 +54,7 @@ describe('save format', () => {
     expect(p).toMatchObject({ id: 'player', name: 'Lin Mo', pronouns: 'he/him' });
     expect(s.calendar.day).toBe(15.5 * 360);
     expect(p.qi).toMatchObject({ realm: 'qi-condensation', stage: 2, bar: 140, grades: [] });
-    expect(p).toMatchObject({ root: 'true', methods: ['garrison-standard'] });
+    expect(p).toMatchObject({ root: 'true', methods: { 'garrison-standard': MASTERED } });
     expect(p.plan.auto).toBe('safe');
     expect(p.body.stage).toBe(1);
     expect(p.insight).toEqual({ current: 7, earned: 7 });
@@ -67,7 +69,11 @@ describe('save format', () => {
     const s = loadSave(v2).state;
     const p = s.player;
     expect(s.mode).toBe('ironman');
-    expect(p).toMatchObject({ name: 'Nameless', root: 'single', methods: ['garrison-standard'] });
+    expect(p).toMatchObject({
+      name: 'Nameless',
+      root: 'single',
+      methods: { 'garrison-standard': MASTERED },
+    });
     expect(p.qi).toMatchObject({ stage: 4, bar: 120.5 });
     expect(p.insight).toEqual({ current: 40, earned: 64 });
     expect(p.items).toEqual({ 'foundation-pill': 1 });
@@ -91,15 +97,34 @@ describe('save format', () => {
     ]);
     expect(p.flags).toEqual(['hours-study', 'hours-practice']);
     expect(p.rootElements).toEqual(['wood', 'fire', 'metal', 'water']);
-    expect(p.methods).toEqual(['garrison-standard']);
+    expect(p.methods).toEqual({ 'garrison-standard': MASTERED });
     expect(p.activeMethods).toEqual({ qi: 'garrison-standard', body: null, soul: null });
     expect(p).not.toHaveProperty('method');
     expect(p.routines).toEqual(['watch-rotation']);
     expect(p.plan).toEqual({ auto: 'safe', burnStones: true });
     // Body keeps its bar, but gains nothing from its hours until an art turns up.
-    expect(p.body).toEqual(v3.state.player.body);
+    expect(p.body).toMatchObject(v3.state.player.body);
+    // Its one climbed stage came from the world alone, which leaves a white method's growth.
+    expect(p.body.growth).toMatchObject([{ stage: 2, method: null, rarity: 'white' }]);
     expect(p.nodes).toEqual(['qi-sensing-breath']);
     expect(p.techniques).toEqual(v3.state.player.techniques);
+  });
+
+  it('migrates a v4 save: methods at Mastery, and growth recorded for the stages climbed', () => {
+    const v4 = fixture('v4');
+    const p = loadSave(v4).state.player;
+    expect(p.methods).toEqual({ 'garrison-standard': MASTERED, 'stone-bearing': MASTERED });
+    expect(p.activeMethods).toEqual(v4.state.player.activeMethods);
+    // Qi climbed layers 2 and 3 on the garrison's white method, which leaves nothing on a root it
+    // fits; the body has climbed nothing yet.
+    expect(p.qi.growth.map((g) => [g.realm, g.stage, g.method, g.rarity])).toEqual([
+      ['qi-condensation', 2, 'garrison-standard', 'white'],
+      ['qi-condensation', 3, 'garrison-standard', 'white'],
+    ]);
+    expect(Object.values(p.qi.growth[0]!.growth)).toEqual([0, 0, 0]);
+    expect(p.body.growth).toEqual([]);
+    expect(p.contemplation).toEqual({});
+    expect(p.qi.bar).toBe(v4.state.player.qi.bar);
   });
 
   it('rejects saves from a newer game and damaged saves', () => {

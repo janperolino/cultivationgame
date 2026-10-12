@@ -3,19 +3,30 @@
 // same buying the cheapest tree node whenever insight allows; then following the garrison's Watch
 // Rotation whenever it can, for the discipline bonus; then a wheel kept all qi for comparison.
 // Each run stands in for P1.7's first hour: its origin's first technique at layer 2, the errand
-// card's tempering art at minute 50 and the later card's nourishing art at two hours.
+// card's tempering art at minute 50, the later card's nourishing art at two hours, and at layer 9
+// the Foundation Pill with the Foundation chapter of the qi method, taken up at once. Every method
+// starts white, tier 1 and at Glimpse, and climbs in mastery with the hours cultivated with it.
 // Each row is the median of many seeds.
 // Targets (design § Character creation): every root at layer 3 in about 45 minutes; a true root at
 // layer 9 in 15–20 hours; a heavenly root in about half that.
 // Run: npm run sim -- pacing [--seeds=25]
-import { FIRST_ARTS } from '../src/content/methods.ts';
+import { MASTERY } from '../src/content/mastery.ts';
+import { FIRST_ARTS, method, nextChapter } from '../src/content/methods.ts';
 import { ROOTS, type RootId } from '../src/content/roots.ts';
 import { PLACEHOLDER_ROUTINE, routine } from '../src/content/routines.ts';
 import { PLACEHOLDER_TECHNIQUE } from '../src/content/techniques.ts';
 import { TREES } from '../src/content/trees/index.ts';
 import { majorCheck } from '../src/core/cultivation.ts';
-import { breakThrough, cultivate, gainMethod, gainTechnique, learn } from '../src/core/life.ts';
+import {
+  breakThrough,
+  cultivate,
+  gainMethod,
+  gainTechnique,
+  learn,
+  switchMethod,
+} from '../src/core/life.ts';
 import { advance } from '../src/core/loop.ts';
+import { methodMastery } from '../src/core/methods.ts';
 import { addItem, ageYears, newLife, withPlayer, type GameState } from '../src/core/state.ts';
 import { canLearn } from '../src/core/trees.ts';
 import { followWheel } from '../src/core/wheel.ts';
@@ -34,6 +45,20 @@ function buyNodes(s: GameState): GameState {
 }
 
 const givePill = (s: GameState) => withPlayer(s, addItem(s.player, 'foundation-pill', 1));
+
+/** The layer 9 card's Foundation chapter of the qi method, taken up before the attempt. */
+function giveChapter(s: GameState): GameState {
+  const id = s.player.activeMethods.qi;
+  const chapter = id ? nextChapter(method(id)) : undefined;
+  if (!chapter) return s;
+  return switchMethod(gainMethod(s, chapter.id, 'is handed'), 'qi', chapter.id).state;
+}
+
+/** The qi method's mastery level, as its first letter. */
+function qiMastery(s: GameState): string {
+  const id = s.player.activeMethods.qi;
+  return id ? MASTERY[methodMastery(s.player, id).level]!.name.charAt(0) : '—';
+}
 
 /** Follows the Watch Rotation once every kind of hour it needs has opened. */
 function followRoutine(s: GameState): GameState {
@@ -63,6 +88,9 @@ interface Run {
   bodyAt9?: string;
   soulAt9?: string;
   nodesAt9?: number;
+  /** The qi method's mastery at layers 4 and 9. */
+  masteryAt4?: string;
+  masteryAt9?: string;
   fails: number;
 }
 
@@ -93,14 +121,16 @@ function play(rootId: RootId, seed: number, how: Play): Run {
     const p = s.player;
     if (p.qi.realm === 'qi-condensation') {
       for (let k = 2; k <= p.qi.stage; k++) at[k] ??= hours;
+      if (p.qi.stage >= 4) run.masteryAt4 ??= qiMastery(s);
       if (p.qi.stage === 9 && run.ageAt9 === undefined) {
         run.ageAt9 = ageYears(p, s.calendar.day);
         run.insightAt9 = p.insight.earned;
         run.bodyAt9 = `${p.body.realm === 'qi-condensation' ? 'L' : 'F'}${p.body.stage}`;
         run.soulAt9 = `${p.soul.realm === 'qi-condensation' ? 'L' : 'F'}${p.soul.stage}`;
         run.nodesAt9 = p.nodes.length;
-        // In M1 the origin hands over a Foundation Pill at layer 9.
-        s = givePill(s);
+        run.masteryAt9 = qiMastery(s);
+        // In M1 the origin hands over a Foundation Pill and the next chapter at layer 9.
+        s = giveChapter(givePill(s));
       }
       // The sim breaks through as soon as it may, at the bare minimum.
       if (majorCheck(s.player, 'qi')?.ready) {
@@ -131,7 +161,7 @@ function fmt(h: number | undefined): string {
 function table(title: string, how: Play) {
   console.log(`\n${title} (median of ${SEEDS} seeds; m = real minutes, h = real hours)`);
   const head = ['root', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8', 'L9', 'Found.', 'age@L9'];
-  head.push('insight@L9', 'body', 'soul', 'nodes', 'fails');
+  head.push('insight@L9', 'body', 'soul', 'nodes', 'fails', 'mast@L4', 'mast@L9');
   console.log(head.map((h, i) => (i === 0 ? h.padEnd(10) : h.padStart(i >= 11 ? 11 : 8))).join(''));
   for (const r of ROOTS) {
     const runs = Array.from({ length: SEEDS }, (_, i) => play(r.id, i, how));
@@ -152,7 +182,9 @@ function table(title: string, how: Play) {
         (mid.bodyAt9 ?? '—').padStart(11) +
         (mid.soulAt9 ?? '—').padStart(11) +
         String(mid.nodesAt9 ?? '—').padStart(11) +
-        String(fails).padStart(11),
+        String(fails).padStart(11) +
+        (mid.masteryAt4 ?? '—').padStart(11) +
+        (mid.masteryAt9 ?? '—').padStart(11),
     );
   }
 }
@@ -162,5 +194,6 @@ table('Default rule, buying the cheapest node whenever insight allows', 'nodes')
 table('Following the Watch Rotation once it can be followed', 'routine');
 table('Every waking hour on qi, safe breakthroughs, no stones', 'qi-only');
 console.log(
-  '\nFoundation needs 500 insight ever earned and the pill; the sim tries at the bare minimum.',
+  '\nFoundation needs 500 insight ever earned and the pill; the sim tries at the bare minimum.' +
+    "\nmast@L4 and mast@L9: the qi method's mastery (Glimpse, Comprehension, Mastery, Domain, Origin).",
 );

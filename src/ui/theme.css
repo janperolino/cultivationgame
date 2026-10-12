@@ -27,6 +27,15 @@
   --hour-sleep: #59606b;
   /* Dawn's purple qi at 卯. */
   --dawn: #c4a3f0;
+  /* Rarity's own palette (design § UI and screens): never the accent or the warning color, since
+     the accent means "act on this". Gold is amber-orange with a soft glow, red a deep crimson. */
+  --rarity-gray: #7b818a;
+  --rarity-white: #ece8de;
+  --rarity-green: #7fca8c;
+  --rarity-blue: #6ea6f0;
+  --rarity-purple: #b98ef2;
+  --rarity-gold: #f39a3d;
+  --rarity-red: #e03c50;
 
   --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
   --font-brush: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', serif;
@@ -985,6 +994,78 @@ select {
 
 .methods .label {
   color: var(--muted);
+}
+
+.methods li + li {
+  padding-top: 10px;
+  border-top: 1px solid var(--edge);
+}
+
+.method-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.method .bars {
+  margin-top: 6px;
+}
+
+/* A mastery level is a word with its hanzi, and the value only a speed. */
+.method .bar-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.method .caption + .caption,
+.method .warn {
+  margin-top: 4px;
+}
+
+.method-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.method-switch select {
+  max-width: 100%;
+  padding: 5px 8px;
+  background: var(--well);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-small);
+}
+
+/* A thing's name wears its rarity; tiers are words beside it. */
+.rarity-gray {
+  color: var(--rarity-gray);
+}
+
+.rarity-white {
+  color: var(--rarity-white);
+}
+
+.rarity-green {
+  color: var(--rarity-green);
+}
+
+.rarity-blue {
+  color: var(--rarity-blue);
+}
+
+.rarity-purple {
+  color: var(--rarity-purple);
+}
+
+.rarity-gold {
+  color: var(--rarity-gold);
+  text-shadow: 0 0 9px color-mix(in srgb, var(--rarity-gold) 45%, transparent);
+}
+
+.rarity-red {
+  color: var(--rarity-red);
+  text-shadow: 0 0 9px color-mix(in srgb, var(--rarity-red) 40%, transparent);
 }
 
 /* Trees: a pannable graph in tier bands. Gold marks what you can learn, crack light what you

@@ -1,11 +1,12 @@
 // Cultivation rules (design § Cultivation, § Economy): what each hour of the day wheel yields, a
-// ladder gaining only with a method on it; bars that fill past full; minor and major breakthroughs
-// and their grades; the last chance at the lifespan edge. Every rule takes a Cultivator, not the game, so NPCs and
-// co-op guests run on the same code; randomness and the day come in as inputs. The constants live
-// in src/content/cultivation.ts, and core/life.ts applies the results to the game.
+// ladder gaining only with a method on it, at the method's tier × rarity × mastery; methods
+// climbing in mastery and fed their upkeep; insight from every hour and every mastery level; bars
+// that fill past full; minor and major breakthroughs, the active method's bonuses, the growth each
+// stage records and the grades; the last chance at the lifespan edge. Every rule takes a
+// Cultivator, not the game, so NPCs and co-op guests run on the same code; randomness and the day
+// come in as inputs. The constants live in src/content/cultivation.ts, and core/life.ts applies
+// the results to the game.
 import {
-  APTITUDE_BASE,
-  APTITUDE_STEP,
   AUTO_SETTINGS,
   BAR_CAP,
   BODY_PER_DAY,
@@ -28,7 +29,6 @@ import {
   SOUL_PER_DAY,
   STONE_QI,
   STONES_PER_QI_DAY,
-  TUTORIAL_LAYERS,
   UNSETTLED_DAYS,
   type GradeId,
   type LadderId,
@@ -44,7 +44,9 @@ import {
   HOURS_PER_DAY,
   type HourKind,
 } from '../content/hours.ts';
-import { FIT_SPEED, methodFit } from '../content/methods.ts';
+import { MASTERY, METHOD_MASTERY, TECHNIQUE_MASTERY } from '../content/mastery.ts';
+import { method } from '../content/methods.ts';
+import { rarity } from '../content/rarity.ts';
 import {
   nextRealm,
   realm,
@@ -57,14 +59,26 @@ import {
 } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
 import type { Routine } from '../content/routines.ts';
-import { ladderMethod } from './methods.ts';
+import { technique } from '../content/techniques.ts';
+import { stageGrowth } from './growth.ts';
+import { gainInsight, masteryBurst } from './insight.ts';
+import {
+  addMethodPractice,
+  breakthroughBonus,
+  feedMethod,
+  inTutorial,
+  ladderMethod,
+  methodCapped,
+  methodFitSpeed,
+  methodSpeed,
+} from './methods.ts';
 import type { Rng } from './rng.ts';
 import { addItem, hasFlag, itemCount, type Cultivator, type Ladder } from './state.ts';
-import { stats } from './stats.ts';
-import { addPractice, canPractice } from './techniques.ts';
+import { aptitude, aptitudeMultiplier, stats } from './stats.ts';
+import { addPractice, canPractice, kinshipBonus } from './techniques.ts';
 import { effectiveWheel, followedRoutine, openHours } from './wheel.ts';
 
-export { LADDERS, type LadderId };
+export { aptitude, aptitudeMultiplier, inTutorial, LADDERS, type LadderId };
 
 const LADDER_NAMES: Record<LadderId, string> = { qi: 'Qi', body: 'Body', soul: 'Soul' };
 const FUEL: Record<LadderId, string> = { qi: 'qi', body: 'tempering', soul: 'nourishment' };
@@ -101,52 +115,52 @@ export function ladderOpen(c: Cultivator, which: LadderId): boolean {
 
 // ---------------------------------------------------------------- rates
 
-/** Aptitude, with what nodes add. */
-export function aptitude(c: Cultivator): number {
-  return c.attributes.aptitude + stats(c).aptitude;
-}
-
-/** Aptitude's multiplier on every seclusion gain: +5% a point above 10. */
-export function aptitudeMultiplier(c: Cultivator): number {
-  return Math.max(0, 1 + APTITUDE_STEP * (aptitude(c) - APTITUDE_BASE));
-}
-
-/** Qi Condensation layers 1–3 are the tutorial: root speed, fit and element hours don't count. */
-export function inTutorial(l: Ladder): boolean {
-  return l.realm === 'qi-condensation' && l.stage <= TUTORIAL_LAYERS;
-}
-
 export interface QiSpeed {
   root: number;
+  /** The method part: its tier bonus × rarity × mastery (core/methods.ts). */
+  tier: number;
+  rarity: number;
+  mastery: number;
   fit: number;
   /** Qi density, 1 until abodes and spirit veins arrive in M4. */
   density: number;
   aptitude: number;
-  /** Tree nodes' qi gain, as a multiplier. */
+  /** Tree nodes' and the method's qi gain, as a multiplier. */
   nodes: number;
+  /** The method's tier sits below the qi realm: it gains nothing until the next chapter. */
+  capped: boolean;
   total: number;
 }
 
-/** Root speed × method fit × qi density × Aptitude × nodes. Zero without a qi method. */
+/**
+ * Root speed × the method (tier bonus × rarity × mastery) × fit × qi density × Aptitude × nodes.
+ * Zero without a qi method, or with one past its tier. Layers 1–3 ignore the root, the method
+ * part and the fit.
+ */
 export function qiSpeed(c: Cultivator): QiSpeed {
   const m = ladderMethod(c, 'qi');
   const apt = aptitudeMultiplier(c);
   const nodes = 1 + stats(c).qiGain;
+  const part = methodSpeed(c, 'qi');
   if (!m) {
-    return { root: 0, fit: 0, density: 1, aptitude: apt, nodes, total: 0 };
+    const none = { root: 0, tier: 0, rarity: 0, mastery: 0, fit: 0 };
+    return { ...none, density: 1, aptitude: apt, nodes, capped: false, total: 0 };
   }
-  const r = root(c.root);
   const tutorial = inTutorial(c.qi);
-  const rootSpeed = tutorial ? 1 : r.speed;
-  const fit = tutorial ? 1 : FIT_SPEED[methodFit(m, r.kind)];
+  const rootSpeed = tutorial ? 1 : root(c.root).speed;
+  const fit = tutorial ? 1 : methodFitSpeed(c, m);
   const density = 1;
   return {
     root: rootSpeed,
+    tier: part.tier,
+    rarity: part.rarity,
+    mastery: part.mastery,
     fit,
     density,
     aptitude: apt,
     nodes,
-    total: rootSpeed * fit * density * apt * nodes,
+    capped: part.capped,
+    total: rootSpeed * part.total * fit * density * apt * nodes,
   };
 }
 
@@ -168,22 +182,38 @@ interface DayBase {
   practice: number;
 }
 
-function dayBase(c: Cultivator, day: number): DayBase {
+/**
+ * What a full day of each kind of work gives. `unfed` names the ladders whose method's upkeep went
+ * unpaid, which stall and gain nothing.
+ */
+function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[]): DayBase {
   const m = stats(c);
   const apt = aptitudeMultiplier(c);
   const insight = realm(c.qi.realm).insightRate * apt * (1 + m.insightGain);
-  // A ladder gains only with a method on it; until then it grows from the world alone.
+  const fed = (which: LadderId) => (unfed.includes(which) ? 0 : 1);
+  // A ladder gains only with a method on it; until then it grows from the world alone. Body and
+  // soul ignore the root, so their speed is the method part alone.
   const art = (which: 'body' | 'soul', perDay: number, gain: number) =>
-    ladderMethod(c, which)
-      ? perDay * realmScale(c[which].realm) * apt * (1 + gain) * setbackMultiplier(c[which], day)
-      : 0;
+    perDay *
+    realmScale(c[which].realm) *
+    methodSpeed(c, which).total *
+    apt *
+    (1 + gain) *
+    setbackMultiplier(c[which], day) *
+    fed(which);
+  const practicing = c.practicing && canPractice(c, c.practicing) ? c.practicing : null;
   return {
-    qi: QI_PER_DAY * realmScale(c.qi.realm) * qiSpeed(c).total * setbackMultiplier(c.qi, day),
+    qi:
+      QI_PER_DAY *
+      realmScale(c.qi.realm) *
+      qiSpeed(c).total *
+      setbackMultiplier(c.qi, day) *
+      fed('qi'),
     body: art('body', BODY_PER_DAY, m.bodyGain),
     soul: art('soul', SOUL_PER_DAY, m.soulGain),
     study: INSIGHT_PER_STUDY_DAY * insight,
     trickle: INSIGHT_TRICKLE * insight,
-    practice: c.practicing && canPractice(c, c.practicing) ? apt * (1 + m.practiceGain) : 0,
+    practice: practicing ? apt * (1 + m.practiceGain) * (1 + kinshipBonus(c, practicing)) : 0,
   };
 }
 
@@ -219,8 +249,12 @@ export interface HourYield {
 }
 
 /** What each of the day's twelve hours gives: a twelfth of a day's work, with its bonuses. */
-export function hourYields(c: Cultivator, day: number): HourYield[] {
-  const base = dayBase(c, day);
+export function hourYields(
+  c: Cultivator,
+  day: number,
+  unfed: readonly LadderId[] = [],
+): HourYield[] {
+  const base = dayBase(c, day, unfed);
   const discipline = followedRoutine(c) ? DISCIPLINE_BONUS : 0;
   return effectiveWheel(c).map((kind, hour) => {
     const y: HourYield = {
@@ -263,14 +297,24 @@ export interface DayRates {
   insight: number;
   /** Practice days a full day gives the technique being practiced; 0 when none can be. */
   practice: number;
+  /**
+   * Practice days a full day gives each ladder's method: a twelfth for every hour cultivated with
+   * it, none past its tier or on an unfed day.
+   */
+  methodPractice: Record<LadderId, number>;
+  /** The ladders whose method stalls today, its upkeep unpaid. */
+  unfed: LadderId[];
   /** The most stones a full day can burn, and the qi each one adds. */
   stoneCap: number;
   qiPerStone: number;
 }
 
-/** What one full day of seclusion gives on the cultivator's wheel, on a given world day. */
-export function dayRates(c: Cultivator, day: number): DayRates {
-  const hours = hourYields(c, day);
+/**
+ * What one full day of seclusion gives on the cultivator's wheel, on a given world day; `unfed`
+ * names the ladders whose method's upkeep went unpaid.
+ */
+export function dayRates(c: Cultivator, day: number, unfed: readonly LadderId[] = []): DayRates {
+  const hours = hourYields(c, day, unfed);
   const count = Object.fromEntries(HOUR_KIND_IDS.map((k) => [k, 0])) as Record<HourKind, number>;
   const sum = { qi: 0, body: 0, soul: 0, insight: 0, practice: 0 };
   for (const h of hours) {
@@ -288,7 +332,23 @@ export function dayRates(c: Cultivator, day: number): DayRates {
   const stoneCap = sum.qi > 0 && c.plan.burnStones ? STONES_PER_QI_DAY * qiScale * qiShare : 0;
   const qiPerStone =
     stoneCap > 0 ? ((sum.qi / qiShare) * STONE_QI * (1 + stats(c).stoneQi)) / qiScale : 0;
-  return { hours, count, routine: followedRoutine(c), ...sum, stoneCap, qiPerStone };
+  const methodPractice = Object.fromEntries(
+    LADDERS.map((which) => {
+      const m = ladderMethod(c, which);
+      const counts = m && !methodCapped(c, m) && !unfed.includes(which);
+      return [which, counts ? count[which] / HOURS_PER_DAY : 0];
+    }),
+  ) as Record<LadderId, number>;
+  return {
+    hours,
+    count,
+    routine: followedRoutine(c),
+    ...sum,
+    methodPractice,
+    unfed: [...unfed],
+    stoneCap,
+    qiPerStone,
+  };
 }
 
 /** How long a setback lasts, after what nodes take off. */
@@ -341,7 +401,8 @@ export function minorOdds(c: Cultivator, which: LadderId): number {
   if (fill < 1) return 0;
   const base = realm(l.realm).minorOdds[step.stage - 1] ?? 0.5;
   if (base >= 1) return 1;
-  return Math.min(MAX_ODDS, base + overfillBonus(fill) + stats(c).minorOdds);
+  const bonus = breakthroughBonus(c, which).odds;
+  return clamp(base + overfillBonus(fill) + stats(c).minorOdds + bonus, 0, MAX_ODDS);
 }
 
 export interface MajorCheck {
@@ -357,23 +418,29 @@ export interface MajorCheck {
   /** Body and soul can run at most one major realm ahead of qi. */
   cap: boolean;
   ready: boolean;
-  /** The margin you bring, 0 to 4, and the grade it earns. */
+  /**
+   * The margin you bring, 0 to 4, with what the active method's rarity adds (+0.25 at gold, +0.5
+   * at red), and the grade it earns.
+   */
   score: number;
+  /** What the active method's rarity adds to the margin. */
+  methodMargin: number;
   grade: GradeId;
   odds: number;
 }
 
-/** The grade a margin score earns; heavenly needs a rare method. */
-export function gradeFor(score: number, rareMethod: boolean): GradeId {
+/** The grade a margin score earns; heavenly needs a gold or red method. */
+export function gradeFor(score: number, heavenlyMethod: boolean): GradeId {
   let best: GradeId = 'flawed';
   for (const g of GRADES) {
-    if (g.id === 'heavenly' && !rareMethod) continue;
+    if (g.id === 'heavenly' && !heavenlyMethod) continue;
     if (score >= GRADE_SCORES[g.id]) best = g.id;
   }
   return best;
 }
 
-const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
+const clamp01 = (x: number) => clamp(x, 0, 1);
 
 /**
  * The margin a major breakthrough brings (design § Cultivation): fuel past a full bar, insight
@@ -404,16 +471,21 @@ export function majorCheck(c: Cultivator, which: LadderId): MajorCheck | null {
   const insight = c.insight.earned >= target.insightThreshold;
   const cap = which === 'qi' || realmIndex(target.id) <= realmIndex(c.qi.realm) + 1;
   const bar = fill >= 1;
-  const score = marginScore(c, which, target);
-  const rare = ladderMethod(c, which)?.rare ?? false;
+  const brought = marginScore(c, which, target);
+  const bonus = breakthroughBonus(c, which);
+  const m = ladderMethod(c, which);
+  const heavenly = m ? rarity(m.rarity).heavenly : false;
   const barPart = clamp01((fill - 1) / (BAR_CAP - 1));
-  const odds = Math.min(
-    MAX_ODDS,
+  const odds = clamp(
     target.majorOdds +
       overfillBonus(fill) +
-      MAJOR_ODDS_PER_MARGIN * (score - barPart) +
-      stats(c).majorOdds,
+      MAJOR_ODDS_PER_MARGIN * (brought - barPart) +
+      stats(c).majorOdds +
+      bonus.odds,
+    0,
+    MAX_ODDS,
   );
+  const score = brought + bonus.margin;
   return {
     ladder: which,
     target,
@@ -425,7 +497,8 @@ export function majorCheck(c: Cultivator, which: LadderId): MajorCheck | null {
     cap,
     ready: bar && insight && gate && cap,
     score,
-    grade: gradeFor(score, rare),
+    methodMargin: bonus.margin,
+    grade: gradeFor(score, heavenly),
     odds,
   };
 }
@@ -465,6 +538,26 @@ function withLadder(c: Cultivator, which: LadderId, l: Ladder): Cultivator {
 }
 
 /**
+ * The ladder after climbing to a new stage: an empty bar, and the stage's growth recorded from
+ * the method active at the attempt, a white method's when none is.
+ */
+function climbed(c: Cultivator, which: LadderId, l: Ladder, realmId: RealmId, stage: number) {
+  const m = ladderMethod(c, which);
+  const record = stageGrowth(m, m ? methodFitSpeed(c, m) : 1, which, realmId, stage);
+  return { ...l, realm: realmId, stage, bar: 0, growth: [...l.growth, record] };
+}
+
+/** What a failure costs the bar, after nodes; a red method keeps the bar whole. */
+function failedBar(c: Cultivator, which: LadderId, l: Ladder, loss: number): number {
+  return breakthroughBonus(c, which).keepBar ? l.bar : l.bar * (1 - failLoss(c, loss));
+}
+
+/** How long a failure's injury lasts, after nodes and the method's mercy. */
+function injuryDays(c: Cultivator, which: LadderId, days: number): number {
+  return setbackDays(c, days) * breakthroughBonus(c, which).injury;
+}
+
+/**
  * Attempts this ladder's next breakthrough, minor or major, drawing one roll from `ctx.rng`.
  * A major one needs the full check unless `lastChance` is set, which only drops the full bar and
  * caps the grade at flawed.
@@ -496,7 +589,7 @@ export function attemptBreakthrough(
     const label = stepLabel(step.realm, step.stage);
     if (success) {
       return {
-        cultivator: withLadder(c, which, { ...l, stage: step.stage, bar: 0 }),
+        cultivator: withLadder(c, which, climbed(c, which, l, step.realm, step.stage)),
         attempted: true,
         success,
         major: false,
@@ -513,10 +606,10 @@ export function attemptBreakthrough(
     return {
       cultivator: withLadder(c, which, {
         ...l,
-        bar: l.bar * (1 - failLoss(c, MINOR_FAIL_LOSS)),
+        bar: failedBar(c, which, l, MINOR_FAIL_LOSS),
         unsettledUntil: day + setbackDays(c, UNSETTLED_DAYS),
         injuredUntil: injured
-          ? Math.max(l.injuredUntil, day + setbackDays(c, MINOR_INJURY_DAYS))
+          ? Math.max(l.injuredUntil, day + injuryDays(c, which, MINOR_INJURY_DAYS))
           : l.injuredUntil,
       }),
       attempted: true,
@@ -543,10 +636,7 @@ export function attemptBreakthrough(
   if (success) {
     const grade: GradeId = last ? 'flawed' : check.grade;
     next = withLadder(next, which, {
-      ...l,
-      realm: target.id,
-      stage: 1,
-      bar: 0,
+      ...climbed(c, which, l, target.id, 1),
       grades: [...l.grades, grade],
     });
     const gradeName = GRADES.find((g) => g.id === grade)!.name.toLowerCase();
@@ -554,20 +644,21 @@ export function attemptBreakthrough(
       which === 'qi'
         ? `${last ? 'At the edge of death, ' : ''}${c.name} breaks through to ${target.name}: a ${gradeName} foundation.`
         : `${name} breaks through to ${target.name}, a ${gradeName} breakthrough.`;
-    return {
-      cultivator: next,
-      attempted: true,
-      success,
-      major: true,
-      grade,
-      odds,
-      notes: [{ kind: 'major', text }],
-    };
+    const notes: Note[] = [{ kind: 'major', text }];
+    // The old method runs out at its tier: the ladder waits on the next chapter or a new method.
+    const m = ladderMethod(next, which);
+    if (m && methodCapped(next, m)) {
+      notes.push({
+        kind: 'method',
+        text: `The ${m.name} carries ${which === 'qi' ? 'cultivation' : `the ${which}`} no further; it waits on the next chapter or a new method.`,
+      });
+    }
+    return { cultivator: next, attempted: true, success, major: true, grade, odds, notes };
   }
   next = withLadder(next, which, {
     ...l,
-    bar: l.bar * (1 - failLoss(c, 1 - MAJOR_FAIL_KEEP)),
-    injuredUntil: Math.max(l.injuredUntil, day + setbackDays(c, MAJOR_INJURY_DAYS)),
+    bar: failedBar(c, which, l, 1 - MAJOR_FAIL_KEEP),
+    injuredUntil: Math.max(l.injuredUntil, day + injuryDays(c, which, MAJOR_INJURY_DAYS)),
   });
   return {
     cultivator: next,
@@ -587,7 +678,8 @@ export function attemptBreakthrough(
 // ---------------------------------------------------------------- the lifespan edge
 
 function lastChanceOdds(c: Cultivator, check: MajorCheck): number {
-  return (check.target.majorOdds + stats(c).majorOdds) * Math.min(1, check.fill) * LAST_CHANCE_ODDS;
+  const base = check.target.majorOdds + stats(c).majorOdds + breakthroughBonus(c, 'qi').odds;
+  return Math.max(0, base) * Math.min(1, check.fill) * LAST_CHANCE_ODDS;
 }
 
 export interface LastChance {
@@ -671,34 +763,79 @@ export interface CultivateResult {
 }
 
 /**
- * A stretch of at most a day in seclusion: fills the bars, insight and practice from the wheel,
- * burns stones in qi hours, opens kinds of hour, and runs minor breakthroughs on the auto setting. Major breakthroughs are
- * always the cultivator's call and never happen here, online or off.
+ * Practice for a stretch: the technique being practiced and each ladder's method climb in
+ * mastery, and every level reached releases a burst of insight, with a chronicle line.
+ */
+function practiceDays(c: Cultivator, rates: DayRates, days: number) {
+  const notes: Note[] = [];
+  const practiced = addPractice(c, rates.practice * days);
+  let next = practiced.cultivator;
+  for (const level of practiced.levels) {
+    const t = technique(c.practicing!);
+    next = gainInsight(next, masteryBurst(next, TECHNIQUE_MASTERY, t.tier, level));
+    notes.push({
+      kind: 'mastery',
+      text: `${t.name} reaches ${MASTERY[level]!.name}; the form finally clicks.`,
+    });
+  }
+  for (const which of LADDERS) {
+    const id = c.activeMethods[which];
+    if (!id || rates.methodPractice[which] <= 0) continue;
+    const r = addMethodPractice(next, id, rates.methodPractice[which] * days);
+    next = r.cultivator;
+    for (const level of r.levels) {
+      const m = method(id);
+      next = gainInsight(next, masteryBurst(next, METHOD_MASTERY, m.tier, level));
+      notes.push({
+        kind: 'mastery',
+        text: `The ${m.name} reaches ${MASTERY[level]!.name}; the breath runs deeper, and understanding with it.`,
+      });
+    }
+  }
+  return { cultivator: next, notes };
+}
+
+/**
+ * A stretch of at most a day in seclusion: pays methods' upkeep, fills the bars, insight and
+ * mastery from the wheel, burns stones in qi hours, opens kinds of hour, and runs minor
+ * breakthroughs on the auto setting. Major breakthroughs are always the cultivator's call and
+ * never happen here, online or off.
  */
 export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): CultivateResult {
   if (days <= 0) return { cultivator: c, notes: [], breakthroughs: [] };
-  const rates = dayRates(c, ctx.day);
+  // A method that drinks an upkeep is paid first, a day at a time, on the days its ladder has
+  // hours; an unfed one stalls, gaining nothing.
+  let fed = c;
+  const unfed: LadderId[] = [];
+  const wheel = effectiveWheel(c);
+  for (const which of LADDERS) {
+    if (!wheel.includes(which)) continue;
+    const r = feedMethod(fed, which, ctx.day, days);
+    fed = r.cultivator;
+    if (!r.fed) unfed.push(which);
+  }
+  const rates = dayRates(fed, ctx.day, unfed);
   // No stones burn once the qi bar is at its cap: the qi would be lost.
-  const capped = barFill(c.qi) >= BAR_CAP - 1e-9;
-  const burned = capped ? 0 : Math.min(c.stones, rates.stoneCap * days);
+  const capped = barFill(fed.qi) >= BAR_CAP - 1e-9;
+  const burned = capped ? 0 : Math.min(fed.stones, rates.stoneCap * days);
   const qiGain = rates.qi * days + burned * rates.qiPerStone;
-  let next: Cultivator = addPractice(
-    {
-      ...c,
-      qi: { ...c.qi, bar: capBar(c.qi, c.qi.bar + qiGain) },
-      body: { ...c.body, bar: capBar(c.body, c.body.bar + rates.body * days) },
-      soul: { ...c.soul, bar: capBar(c.soul, c.soul.bar + rates.soul * days) },
-      insight: {
-        current: c.insight.current + rates.insight * days,
-        earned: c.insight.earned + rates.insight * days,
+  const practiced = practiceDays(
+    gainInsight(
+      {
+        ...fed,
+        qi: { ...fed.qi, bar: capBar(fed.qi, fed.qi.bar + qiGain) },
+        body: { ...fed.body, bar: capBar(fed.body, fed.body.bar + rates.body * days) },
+        soul: { ...fed.soul, bar: capBar(fed.soul, fed.soul.bar + rates.soul * days) },
+        stones: fed.stones - burned,
       },
-      stones: c.stones - burned,
-    },
-    rates.practice * days,
+      rates.insight * days,
+    ),
+    rates,
+    days,
   );
-  const unlocked = checkUnlocks(next);
-  next = unlocked.cultivator;
-  const notes = [...unlocked.notes];
+  const unlocked = checkUnlocks(practiced.cultivator);
+  let next = unlocked.cultivator;
+  const notes = [...practiced.notes, ...unlocked.notes];
   const breakthroughs: CultivateResult['breakthroughs'] = [];
   for (const which of LADDERS) {
     if (!autoWouldAttempt(next, which)) continue;

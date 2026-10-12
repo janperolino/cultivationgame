@@ -1,24 +1,12 @@
 // Techniques: the moves you actually use (design § Cultivation, § Combat). Mastery runs Glimpse to
-// Origin, raised by practice days, and each level adds +2 to checks with the technique. These are
-// the first technique of each origin path, which character creation (P1.7) hands out. A new
-// technique is an entry here, not new code. Power and qi cost are starting values for M2's
-// combat engine and balance sim; Dao requirements arrive with the Daos in M2.
+// Origin, raised by practice days (content/mastery.ts), and each level adds +2 to checks with the
+// technique. Techniques belong to lines, whose chapters climb the realms. These are the first
+// technique of each origin path, which character creation (P1.7) hands out, and the garrison
+// palm's second chapter. A new technique is an entry here, not new code. Power and qi cost are
+// starting values for M2's combat engine and balance sim; Dao requirements arrive with the Daos
+// in M2.
 import type { LadderId } from './cultivation.ts';
-
-/** Mastery levels, with the practice days each needs at tier 1 (counted from learning). */
-export const MASTERY = [
-  { id: 'glimpse', name: 'Glimpse', hanzi: '初窥', practice: 0 },
-  { id: 'comprehension', name: 'Comprehension', hanzi: '领悟', practice: 4 },
-  { id: 'mastery', name: 'Mastery', hanzi: '精通', practice: 30 },
-  { id: 'domain', name: 'Domain', hanzi: '化境', practice: 150 },
-  { id: 'origin', name: 'Origin', hanzi: '归元', practice: 600 },
-] as const;
-export type MasteryId = (typeof MASTERY)[number]['id'];
-
-/** Each mastery level above Glimpse adds this to checks with the technique. */
-export const MASTERY_CHECK_BONUS = 2;
-/** A technique of tier t needs this to the power t − 1 times the practice. */
-export const MASTERY_TIER_SCALE = 3;
+import type { RarityId } from './rarity.ts';
 
 /** The eleven damage types (design § Combat). */
 export const DAMAGE_TYPES = [
@@ -48,6 +36,11 @@ export interface Technique {
   ladder: LadderId;
   /** 1 at Qi Condensation, 2 at Foundation, and so on. */
   tier: number;
+  /** Rarity multiplies its power and, at gold and red, adds to checks (content/rarity.ts). */
+  rarity: RarityId;
+  /** The line it belongs to, and its chapter in that line, from 1 (design § Cultivation, lines). */
+  line: string;
+  chapter: number;
   /** Dao tags: each tier you hold in one adds to checks with it, from M2. */
   daos: readonly string[];
   form: Form;
@@ -69,6 +62,9 @@ export const TECHNIQUES: readonly Technique[] = [
     hanzi: '守垣掌',
     ladder: 'qi',
     tier: 1,
+    rarity: 'white',
+    line: 'rampart-palm',
+    chapter: 1,
     daos: ['fist'],
     form: 'palm',
     damage: 'physical',
@@ -85,6 +81,9 @@ export const TECHNIQUES: readonly Technique[] = [
     hanzi: '坑石拳',
     ladder: 'qi',
     tier: 1,
+    rarity: 'white',
+    line: 'sinkhole-stone-fist',
+    chapter: 1,
     daos: ['earth', 'fist'],
     form: 'palm',
     damage: 'earth',
@@ -101,6 +100,9 @@ export const TECHNIQUES: readonly Technique[] = [
     hanzi: '积骨刺',
     ladder: 'qi',
     tier: 1,
+    rarity: 'white',
+    line: 'piled-bones-thrust',
+    chapter: 1,
     daos: ['spear'],
     form: 'thrust',
     damage: 'physical',
@@ -117,6 +119,9 @@ export const TECHNIQUES: readonly Technique[] = [
     hanzi: '暗流掌',
     ladder: 'qi',
     tier: 1,
+    rarity: 'white',
+    line: 'undertow-palm',
+    chapter: 1,
     daos: ['water'],
     form: 'palm',
     damage: 'water',
@@ -133,6 +138,9 @@ export const TECHNIQUES: readonly Technique[] = [
     hanzi: '劈骨斩',
     ladder: 'qi',
     tier: 1,
+    rarity: 'white',
+    line: 'bone-splitting-cleave',
+    chapter: 1,
     daos: ['saber'],
     form: 'slash',
     damage: 'physical',
@@ -149,6 +157,9 @@ export const TECHNIQUES: readonly Technique[] = [
     hanzi: '巷风掌',
     ladder: 'qi',
     tier: 1,
+    rarity: 'white',
+    line: 'alley-wind-palm',
+    chapter: 1,
     daos: ['wind'],
     form: 'palm',
     damage: 'wind',
@@ -157,6 +168,25 @@ export const TECHNIQUES: readonly Technique[] = [
     firstFor: 'frontier-orphan/refuse',
     source: 'picked up running errands for the bounty office in the City of the Guarded Mouth',
     text: 'A quick palm that rides the draft down a narrow street.',
+  },
+  // The second chapter of the garrison's palm, for a wall officer. Drafted in P1.5 for review.
+  {
+    id: 'rampart-collapse-palm',
+    name: 'Rampart Collapse Palm',
+    pinyin: 'Bengyuan Zhang',
+    hanzi: '崩垣掌',
+    ladder: 'qi',
+    tier: 2,
+    rarity: 'white',
+    line: 'rampart-palm',
+    chapter: 2,
+    daos: ['fist'],
+    form: 'palm',
+    damage: 'physical',
+    power: 130,
+    qiCost: 30,
+    source: "the March's garrison school, for the officers who hold a stretch of wall",
+    text: 'The same shove, with the whole wall behind it; what it hits comes down.',
   },
 ];
 
@@ -175,6 +205,16 @@ export function hasTechnique(id: string): boolean {
 /** The first technique an origin path hands out, as origin/choice. */
 export function firstTechnique(path: string): Technique | undefined {
   return TECHNIQUES.find((t) => t.firstFor === path);
+}
+
+/** The chapter of a line, if there is one. */
+export function techniqueChapter(line: string, chapter: number): Technique | undefined {
+  return TECHNIQUES.find((t) => t.line === line && t.chapter === chapter);
+}
+
+/** The chapter before this one in its line, if any. */
+export function previousTechniqueChapter(t: Technique): Technique | undefined {
+  return t.chapter > 1 ? techniqueChapter(t.line, t.chapter - 1) : undefined;
 }
 
 /** Until character creation (P1.7), every life is the cave orphan who went along. */

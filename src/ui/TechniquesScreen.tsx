@@ -1,19 +1,26 @@
-// The Techniques screen (design § UI and screens): every technique with its mastery level,
-// requirements and what is still sealed, and which one practice days go to.
+// The Techniques screen (design § UI and screens): every technique with its rarity, line,
+// mastery level, requirements and what is still sealed, its kin, and which one practice days go
+// to.
+import { MASTERY } from '../content/mastery.ts';
+import { rarity } from '../content/rarity.ts';
 import { REALMS } from '../content/realms.ts';
-import { MASTERY, type Technique } from '../content/techniques.ts';
+import { techniqueChapter, type Technique } from '../content/techniques.ts';
 import { dayRates } from '../core/cultivation.ts';
 import { hourKindOpen } from '../core/wheel.ts';
 import type { Cultivator } from '../core/state.ts';
 import {
   canPractice,
+  kinshipBonus,
   knownTechniques,
   mastery,
-  masteryCheckBonus,
+  techniqueCheckBonus,
+  techniqueKin,
   techniqueSealed,
 } from '../core/techniques.ts';
-import { formatNumber, formatRate, LADDER_LABELS } from './format.ts';
+import { formatNumber, formatPercent, formatRate, LADDER_LABELS } from './format.ts';
+import { RarityName } from './MethodCard.tsx';
 import { useGame } from './store.ts';
+import { Why } from './widgets.tsx';
 
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -26,15 +33,25 @@ function TechniqueCard({ c, t }: { c: Cultivator; t: Technique }) {
   const practicing = c.practicing === t.id;
   const realmName = REALMS[t.tier - 1]!.name;
   const ladder = LADDER_LABELS[t.ladder].toLowerCase();
+  const r = rarity(t.rarity);
+  const lineName = techniqueChapter(t.line, 1)?.name ?? t.name;
+  const kin = techniqueKin(c, t.id);
 
   return (
     <div className={`technique ${sealed ? 'is-sealed' : ''}`}>
       <div className="ladder-head">
         <h3>
-          {t.name} <span className="hanzi">{t.hanzi}</span>
+          <RarityName m={t} /> <span className="hanzi">{t.hanzi}</span>
         </h3>
         <span className="caption">{t.pinyin}</span>
       </div>
+      <p className="caption">
+        {r.name} · chapter {t.chapter} of the {lineName} line
+        <Why label="Lines and chapters">
+          A line's next chapter needs the one before at Comprehension, and starts a mastery level
+          below it, two if it is rarer. The old chapter stays known.
+        </Why>
+      </p>
       <p className="caption">
         {capital(ladder)} technique, tier {t.tier} ({realmName}) · {t.form} · {t.damage} · power{' '}
         {t.power} · {t.qiCost} qi
@@ -68,12 +85,23 @@ function TechniqueCard({ c, t }: { c: Cultivator; t: Technique }) {
         </div>
       </div>
       <p className="caption spaced">
-        +{masteryCheckBonus(c, t.id)} to checks with it
+        +{techniqueCheckBonus(c, t.id)} to checks with it
+        {r.check > 0 && ` (+${r.check} for its rarity)`}
         {next
           ? `; ${next.name} at ${formatNumber(m.next ?? 0)} practice days`
           : '; mastery is complete'}
         . {capital(t.source)}.
       </p>
+      {kin.length > 0 && (
+        <p className="caption">
+          Kin to {kin.map((k) => k.name).join(' and ')}: practice +
+          {formatPercent(kinshipBonus(c, t.id))}
+          <Why label="How kinship works">
+            Two techniques of different lines that share a Dao and a form speed each other's
+            practice while one sits at Comprehension or above. Mastery doesn't carry over.
+          </Why>
+        </p>
+      )}
       <div className="actions">
         <button
           type="button"
