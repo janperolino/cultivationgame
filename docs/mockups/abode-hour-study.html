@@ -282,8 +282,11 @@ function drawFigure(s) {
   if (s.up && $('wash').checked) {
     ctx.save(); ctx.clip(figure, 'evenodd');
     // Spread across the whole body and blurred, so it never reads as a bar half filled.
-    const g = ctx.createLinearGradient(s.dx * 50, -10, -s.dx * 50, 10); g.addColorStop(0, sunColor(s)); g.addColorStop(0.55, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.globalAlpha = 0.10 + 0.08 * s.elev; ctx.fillStyle = g; ctx.filter = 'blur(7px)'; ctx.fillRect(-80, -80, 160, 160); ctx.restore();
+    // Along the sun's real direction, with a constant span, so near noon the light comes from above
+    // instead of the gradient collapsing to a hard line down the middle.
+    const len = Math.hypot(s.dx, s.dy) || 1; const lx = s.dx / len * 55, ly = -s.dy / len * 55;
+    const g = ctx.createLinearGradient(lx, ly, -lx, -ly); g.addColorStop(0, sunColor(s)); g.addColorStop(0.7, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = 0.10 + 0.08 * s.elev; ctx.fillStyle = g; ctx.filter = 'blur(10px)'; ctx.fillRect(-90, -90, 180, 180); ctx.restore();
   }
   ctx.restore();
 }
