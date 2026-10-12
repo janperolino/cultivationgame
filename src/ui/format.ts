@@ -48,6 +48,12 @@ export function formatNumber(n: number): string {
   return Math.floor(n).toLocaleString();
 }
 
+/** Small rates keep two significant digits (0.083, 0.0042); from ten up they read like formatNumber. */
+export function formatRate(n: number): string {
+  if (Math.abs(n) >= 10) return formatNumber(n);
+  return String(Number(n.toPrecision(2)));
+}
+
 export function formatPercent(x: number): string {
   return `${Math.round(x * 100)}%`;
 }

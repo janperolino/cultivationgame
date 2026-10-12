@@ -1,0 +1,81 @@
+// The day is twelve double-hours (design § Cultivation): the earthly branches from 子 at midnight
+// round to 亥, each with its element, the kinds of hour you can give your own time to, and the
+// bonuses an hour can carry. Starting values that sim/pacing.ts tunes; core/wheel.ts and
+// core/cultivation.ts read them.
+import type { PhaseElement } from './elements.ts';
+
+export const HOURS_PER_DAY = 12;
+
+export interface Branch {
+  id: string;
+  /** Pinyin, for the tooltip. */
+  name: string;
+  hanzi: string;
+  element: PhaseElement;
+  /** The clock hours it covers, "23–1". */
+  clock: string;
+}
+
+export const BRANCHES: readonly Branch[] = [
+  { id: 'zi', name: 'Zi', hanzi: '子', element: 'water', clock: '23–1' },
+  { id: 'chou', name: 'Chou', hanzi: '丑', element: 'earth', clock: '1–3' },
+  { id: 'yin', name: 'Yin', hanzi: '寅', element: 'wood', clock: '3–5' },
+  { id: 'mao', name: 'Mao', hanzi: '卯', element: 'wood', clock: '5–7' },
+  { id: 'chen', name: 'Chen', hanzi: '辰', element: 'earth', clock: '7–9' },
+  { id: 'si', name: 'Si', hanzi: '巳', element: 'fire', clock: '9–11' },
+  { id: 'wu', name: 'Wu', hanzi: '午', element: 'fire', clock: '11–13' },
+  { id: 'wei', name: 'Wei', hanzi: '未', element: 'earth', clock: '13–15' },
+  { id: 'shen', name: 'Shen', hanzi: '申', element: 'metal', clock: '15–17' },
+  { id: 'you', name: 'You', hanzi: '酉', element: 'metal', clock: '17–19' },
+  { id: 'xu', name: 'Xu', hanzi: '戌', element: 'earth', clock: '19–21' },
+  { id: 'hai', name: 'Hai', hanzi: '亥', element: 'water', clock: '21–23' },
+];
+
+/**
+ * What an hour can go to. Furnace, forge, garden, beast, sect-duty and shop hours join as those
+ * systems arrive (M4 to M6).
+ */
+export const HOUR_KINDS = {
+  qi: { name: 'Qi', what: 'cultivate qi with your method' },
+  body: { name: 'Body', what: 'temper the body with your tempering art' },
+  soul: { name: 'Soul', what: 'nourish the soul with your nourishing art' },
+  study: { name: 'Study', what: 'study for insight' },
+  practice: { name: 'Practice', what: 'practice a technique' },
+  sleep: { name: 'Sleep', what: 'sleep; it gives nothing' },
+} as const;
+export type HourKind = keyof typeof HOUR_KINDS;
+export const HOUR_KIND_IDS = Object.keys(HOUR_KINDS) as [HourKind, ...HourKind[]];
+
+/** Work that matches its hour's element pays this much more, from layer 4. */
+export const ELEMENT_BONUS = 0.25;
+/** Dawn's purple qi at 卯 adds this to everyone's qi, tutorial included. */
+export const DAWN_HOUR = 3;
+export const DAWN_BONUS = 0.1;
+/** Following a learned routine exactly, all twelve hours, adds this to every hour. */
+export const DISCIPLINE_BONUS = 0.1;
+
+/** 子 and 丑 are locked to sleep at Qi Condensation; Foundation frees them. */
+export const SLEEP_HOURS: readonly number[] = [0, 1];
+export const SLEEP_FREED_TEXT = 'You no longer need sleep; two more hours are yours.';
+
+/** A fresh life's wheel: all qi, with 子 and 丑 asleep. */
+export const FRESH_WHEEL: readonly HourKind[] = BRANCHES.map((_, i) =>
+  SLEEP_HOURS.includes(i) ? 'sleep' : 'qi',
+);
+
+/**
+ * Kinds of hour that open as you reach them (design § Character creation, the first hour), in the
+ * order the default rule flips an hour to each. Study opens at Qi Condensation layer 2, practice
+ * with the first technique you can use, body and soul with their art.
+ */
+export const HOUR_OPENINGS: readonly { kind: HourKind; text: string }[] = [
+  {
+    kind: 'study',
+    text: 'The first insight trickles in. Study hours turn seclusion into understanding.',
+  },
+  { kind: 'practice', text: 'A technique to drill: practice hours now raise its mastery.' },
+  { kind: 'body', text: 'A tempering art in hand: body hours open beside qi.' },
+  { kind: 'soul', text: 'A nourishing art in hand: soul hours open.' },
+];
+/** Study hours open at this Qi Condensation layer. */
+export const STUDY_LAYER = 2;

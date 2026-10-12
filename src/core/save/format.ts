@@ -1,11 +1,17 @@
 // The save envelope, its version number and the migrations that bring old saves up to date.
 import { z } from 'zod';
-import { DEFAULT_SHARES } from '../../content/cultivation.ts';
+import { FRESH_WHEEL, SLEEP_HOURS, type HourKind } from '../../content/hours.ts';
+import { defaultElements, ROOT_IDS, type RootId } from '../../content/roots.ts';
+import { PLACEHOLDER_ROUTINE } from '../../content/routines.ts';
 import { PLACEHOLDER_TECHNIQUE } from '../../content/techniques.ts';
 import { DAYS_PER_YEAR, GameStateSchema, PLAYER_ID, START_AGE, type GameState } from '../state.ts';
+import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
+
+/** The seclusion plan's default shares from P1.2 to P1.3, which the v4 wheel replaced. */
+const OLD_SHARES = { qi: 60, body: 15, soul: 10, study: 10, practice: 5 };
 
 export const SaveSchema = z.object({
   version: z.literal(SAVE_VERSION),
@@ -90,7 +96,7 @@ const migrations: Record<number, (old: Raw) => Raw> = {
         body: ladder(s.body),
         soul: ladder(s.soul),
         items: {},
-        plan: { shares: { ...DEFAULT_SHARES }, auto: 'safe', burnStones: true },
+        plan: { shares: { ...OLD_SHARES }, auto: 'safe', burnStones: true },
         glass: { seed: rng, fractures: 0, flares: 0 },
         ended: null,
         unlocks: [...new Set([...unlocks, 'abode', 'cultivate', 'seclusion-qi'])],
@@ -148,6 +154,55 @@ const migrations: Record<number, (old: Raw) => Raw> = {
         rewindCharges: s.rewindCharges,
         seed,
         rng: { breakthrough: typeof s.rng === 'number' ? s.rng | 0 : seed },
+      },
+    };
+  },
+  // v3, P1.3: seclusion days split by shares among slots that flags opened. v4 runs the day on a
+  // wheel of twelve hours, filled by the default rule: all qi with 子 and 丑 asleep, then one hour
+  // flipped for study and one for practice where those slots had opened, and sleep freed from
+  // Foundation up. Every ladder climbs with an active method: the life's method on qi, nothing on
+  // body and soul, which keep their bars but gain no more from their hours until an art turns up.
+  // The root gets its default elements. Placeholder lives on the garrison's method learn its Watch
+  // Rotation, as new ones do until P1.7.
+  3: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const flags = Array.isArray(p.flags) ? (p.flags as string[]) : [];
+    const method = typeof p.method === 'string' ? p.method : null;
+    const rootId: RootId = ROOT_IDS.includes(p.root as RootId) ? (p.root as RootId) : 'true';
+    const elements = defaultElements(rootId);
+    let wheel: HourKind[] = [...FRESH_WHEEL];
+    const nextFlags = flags.filter((f) => !f.startsWith('seclusion-'));
+    for (const kind of ['study', 'practice'] as const) {
+      if (!flags.includes(`seclusion-${kind}`)) continue;
+      wheel = flipHour(wheel, elements, kind).wheel;
+      nextFlags.push(`hours-${kind}`);
+    }
+    const qi = (p.qi ?? {}) as Raw;
+    if (qi.realm !== undefined && qi.realm !== 'qi-condensation') {
+      wheel = wheel.map((k, i) => (SLEEP_HOURS.includes(i) ? 'qi' : k));
+      nextFlags.push('sleep-freed');
+    }
+    const plan = (p.plan ?? {}) as Raw;
+    const rest = { ...p };
+    delete rest.method;
+    return {
+      ...old,
+      version: 4,
+      state: {
+        ...s,
+        player: {
+          ...rest,
+          root: rootId,
+          rootElements: elements,
+          methods: method ? [method] : [],
+          activeMethods: { qi: method, body: null, soul: null },
+          wheel,
+          routines: method === 'garrison-standard' ? [PLACEHOLDER_ROUTINE] : [],
+          savedRoutines: [],
+          plan: { auto: plan.auto, burnStones: plan.burnStones },
+          flags: nextFlags,
+        },
       },
     };
   },

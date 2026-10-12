@@ -1,6 +1,8 @@
 // The Zustand store that bridges core and UI: it owns the open slot, runs the loop, autosaves,
 // and holds the slot's tab lock so two tabs never autosave over each other.
 import { create } from 'zustand';
+import type { HourKind } from '../content/hours.ts';
+import { PLACEHOLDER_ROUTINE } from '../content/routines.ts';
 import { PLACEHOLDER_TECHNIQUE } from '../content/techniques.ts';
 import type { LadderId } from '../core/cultivation.ts';
 import {
@@ -15,7 +17,8 @@ import { advance, catchUp, TICK_MS, type OfflineResult } from '../core/loop.ts';
 import { makeSave, SaveError } from '../core/save/format.ts';
 import { exportFileName } from '../core/save/file.ts';
 import { SaveSlots, type SlotId, type SlotSummary } from '../core/save/slots.ts';
-import { newLife, nextLife, type GameState } from '../core/state.ts';
+import { newLife, nextLife, withPlayer, type GameState } from '../core/state.ts';
+import { followWheel, forgetSavedRoutine, saveRoutine, setHour } from '../core/wheel.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 
 export const AUTOSAVE_MS = 30_000;
@@ -56,8 +59,15 @@ export interface GameStore {
   startLife(slot: SlotId, mode: 'ironman' | 'gentle'): Promise<void>;
   /** Saves now; each breakthrough saves with `rewindPoint` set. */
   saveNow(opts?: { rewindPoint?: boolean }): Promise<void>;
-  /** Changes the seclusion plan: shares, the auto setting, burning stones. */
+  /** Changes the auto setting for minor breakthroughs, or burning stones in qi hours. */
   setPlan(patch: Partial<GameState['player']['plan']>): void;
+  /** Gives one hour of the day wheel to a kind of work; returns why not, or null. */
+  setHour(hour: number, kind: HourKind): string | null;
+  /** Sets the whole wheel to a routine's hours; returns why not, or null. */
+  followRoutine(hours: readonly HourKind[]): string | null;
+  /** Saves the wheel under a name; returns why not, or null. */
+  saveRoutine(name: string): string | null;
+  forgetRoutine(name: string): void;
   /** Attempts a ladder's next breakthrough, minor or major. */
   breakThrough(ladder: LadderId): void;
   /** Learns a tree node with insight; returns why not, or null. */
@@ -297,12 +307,14 @@ export const useGame = create<GameStore>()((set, get) => {
     startLife: (slot, mode) =>
       serial(async () => {
         // Character creation arrives in P1.7; until then a new life is a nameless placeholder.
-        // Until then, too, every life is the cave orphan who went along, with that first technique.
+        // Until then, too, every life is the cave orphan who went along, with that first technique
+        // and the garrison school's routine.
         const state = newLife({
           name: 'Nameless',
           mode,
           seed: `slot${slot}-${Date.now()}`,
           techniques: [PLACEHOLDER_TECHNIQUE],
+          routines: [PLACEHOLDER_ROUTINE],
         });
         await db().write(slot, makeSave(state, Date.now()), { rewindPoint: true });
         await refreshSlots();
@@ -322,6 +334,39 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!game) return;
       const p = game.player;
       set({ game: { ...game, player: { ...p, plan: { ...p.plan, ...patch } } } });
+    },
+
+    setHour(hour, kind) {
+      const { game } = get();
+      if (!game || !holdsLock) return 'This life is not open in this tab.';
+      const r = setHour(game.player, hour, kind);
+      if (!r.check.ok) return r.check.reason;
+      set({ game: withPlayer(game, r.cultivator) });
+      return null;
+    },
+
+    followRoutine(hours) {
+      const { game } = get();
+      if (!game || !holdsLock) return 'This life is not open in this tab.';
+      const r = followWheel(game.player, hours);
+      if (!r.check.ok) return r.check.reason;
+      set({ game: withPlayer(game, r.cultivator) });
+      return null;
+    },
+
+    saveRoutine(name) {
+      const { game } = get();
+      if (!game || !holdsLock) return 'This life is not open in this tab.';
+      const r = saveRoutine(game.player, name);
+      if (!r.check.ok) return r.check.reason;
+      set({ game: withPlayer(game, r.cultivator) });
+      return null;
+    },
+
+    forgetRoutine(name) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      set({ game: withPlayer(game, forgetSavedRoutine(game.player, name)) });
     },
 
     breakThrough(ladder) {
@@ -372,6 +417,7 @@ export const useGame = create<GameStore>()((set, get) => {
           name: 'Nameless',
           seed: `${game.lineage.id}-${Date.now()}`,
           techniques: [PLACEHOLDER_TECHNIQUE],
+          routines: [PLACEHOLDER_ROUTINE],
         }),
         away: null,
       });

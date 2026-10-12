@@ -1,100 +1,65 @@
-import { AUTO_IDS, AUTO_SETTINGS, GRADES, type SlotId } from '../content/cultivation.ts';
-import { method } from '../content/methods.ts';
+import { useState } from 'react';
+import { AUTO_IDS, AUTO_SETTINGS, GRADES } from '../content/cultivation.ts';
+import { ELEMENT_INFO } from '../content/elements.ts';
+import { hasMethod, method } from '../content/methods.ts';
 import { realm } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
+import { hasRoutine, routine } from '../content/routines.ts';
 import { technique } from '../content/techniques.ts';
 import {
   barFill,
   dayRates,
-  dayShares,
   inTutorial,
+  ladderOpen,
   majorCheck,
   minorOdds,
   nextStep,
-  openSlots,
   qiSpeed,
   type LadderId,
 } from '../core/cultivation.ts';
+import { ladderMethod } from '../core/methods.ts';
 import { itemCount, type GameState } from '../core/state.ts';
-import { formatLadder, formatNumber, formatPercent, LADDER_LABELS } from './format.ts';
+import { canFollow } from '../core/wheel.ts';
+import { DayWheel, WheelStrip } from './DayWheel.tsx';
+import { formatLadder, formatNumber, formatPercent, formatRate, LADDER_LABELS } from './format.ts';
 import { useGame } from './store.ts';
 import { LadderBar, LifeEdgeCard } from './widgets.tsx';
-
-const SLOT_INFO: Record<SlotId, { name: string; what: string }> = {
-  qi: { name: 'Qi', what: 'cultivate qi with your method' },
-  body: { name: 'Body', what: 'temper flesh and bone' },
-  soul: { name: 'Soul', what: 'nourish the soul' },
-  study: { name: 'Study', what: 'study for insight' },
-  practice: { name: 'Practice', what: 'practice a technique or recipe' },
-};
 
 const ITEM_NAMES: Record<string, string> = {
   'foundation-pill': 'Foundation Pill',
   'core-forming-pill': 'core-forming pill',
 };
 
-function PlanPanel({ game }: { game: GameState }) {
+function DayPanel({ game }: { game: GameState }) {
   const setPlan = useGame((s) => s.setPlan);
-  const open = openSlots(game.player);
-  const shares = dayShares(game.player);
-  const rates = dayRates(game.player, game.calendar.day);
-  const speed = qiSpeed(game.player);
-  const perDay: Partial<Record<SlotId, string>> = {
-    qi: `+${formatNumber(rates.qi)} qi a day`,
-    body: `+${formatNumber(rates.body)} tempering a day`,
-    soul: `+${formatNumber(rates.soul)} nourishment a day`,
-    study: `+${formatNumber(rates.insight)} insight a day, with every day's trickle`,
-    practice:
-      rates.practice > 0 && game.player.practicing
-        ? `+${rates.practice.toFixed(2)} practice days a day on ${technique(game.player.practicing).name}`
-        : 'Nothing to practice: pick a technique on the Techniques screen.',
-  };
-  const r = root(game.player.root);
-  const m = game.player.method ? method(game.player.method) : null;
+  const c = game.player;
+  const rates = dayRates(c, game.calendar.day);
+  const speed = qiSpeed(c);
+  const r = root(c.root);
+  const m = ladderMethod(c, 'qi');
+  const elements = c.rootElements.map((e) => ELEMENT_INFO[e].name.toLowerCase()).join(' and ');
   const qiWhy = m
-    ? `Qi speed ×${speed.total.toFixed(2)}: root ×${speed.root}, method fit ×${speed.fit}, qi density ×${speed.density}, Aptitude ×${speed.aptitude.toFixed(2)}${speed.nodes !== 1 ? `, tree nodes ×${speed.nodes.toFixed(2)}` : ''}${inTutorial(game.player.qi) ? '. Layers 1–3 ignore the root and the fit' : ''}.`
-    : 'No method yet: qi days give nothing.';
+    ? `Qi speed ×${speed.total.toFixed(2)}: root ×${speed.root}, method fit ×${speed.fit}, qi density ×${speed.density}, Aptitude ×${speed.aptitude.toFixed(2)}${speed.nodes !== 1 ? `, tree nodes ×${speed.nodes.toFixed(2)}` : ''}${inTutorial(c.qi) ? '. Layers 1–3 ignore the root, the fit and the element hours' : ''}.`
+    : 'No cultivation method yet: qi hours give nothing.';
+  const day = [
+    rates.qi > 0 && `+${formatRate(rates.qi)} qi`,
+    rates.body > 0 && `+${formatRate(rates.body)} tempering`,
+    rates.soul > 0 && `+${formatRate(rates.soul)} nourishment`,
+    `+${formatRate(rates.insight)} insight`,
+    rates.practice > 0 &&
+      c.practicing &&
+      `+${formatRate(rates.practice)} practice days on ${technique(c.practicing).name}`,
+  ].filter(Boolean);
 
   return (
-    <section className="panel" aria-labelledby="plan-heading">
-      <h2 id="plan-heading" className="panel-heading">
-        Seclusion
+    <section className="panel" aria-labelledby="day-heading">
+      <h2 id="day-heading" className="panel-heading">
+        The day
       </h2>
-      <p className="muted">
-        Each day goes where you send it. Lifespan caps the total, so spreading too thin means dying
-        before the next breakthrough.
-      </p>
-      <div className="plan">
-        {open.map((slot) => (
-          <div key={slot} className="plan-row">
-            <label htmlFor={`share-${slot}`} title={SLOT_INFO[slot].what}>
-              {SLOT_INFO[slot].name}
-            </label>
-            <div>
-              <input
-                id={`share-${slot}`}
-                type="range"
-                min={0}
-                max={100}
-                step={5}
-                value={game.player.plan.shares[slot]}
-                onChange={(e) =>
-                  setPlan({
-                    shares: { ...game.player.plan.shares, [slot]: Number(e.target.value) },
-                  })
-                }
-                aria-valuetext={`${formatPercent(shares[slot])} of each day`}
-              />
-              <span className="caption" title={slot === 'qi' ? qiWhy : undefined}>
-                {perDay[slot]}
-              </span>
-            </div>
-            <span className="value">{formatPercent(shares[slot])}</span>
-          </div>
-        ))}
-      </div>
-      <p className="caption spaced">
-        {m ? `${m.name} on a ${r.name.toLowerCase()}. ` : ''}
+      <DayWheel game={game} />
+      <p className="rates spaced">A day of seclusion: {day.join(' · ')}.</p>
+      <p className="caption">
+        {m ? `${m.name} on a ${r.name.toLowerCase()} of ${elements}. ` : ''}
         {qiWhy}
       </p>
       <div className="settings-row">
@@ -105,7 +70,7 @@ function PlanPanel({ game }: { game: GameState }) {
               <button
                 key={id}
                 type="button"
-                aria-pressed={game.player.plan.auto === id}
+                aria-pressed={c.plan.auto === id}
                 onClick={() => setPlan({ auto: id })}
               >
                 {AUTO_SETTINGS[id].name}
@@ -116,25 +81,182 @@ function PlanPanel({ game }: { game: GameState }) {
         <label className="check">
           <input
             type="checkbox"
-            checked={game.player.plan.burnStones}
+            checked={c.plan.burnStones}
             onChange={(e) => setPlan({ burnStones: e.target.checked })}
           />
-          Burn spirit stones on qi days
+          Burn spirit stones in qi hours
           {rates.stoneCap > 0 && (
             <span className="caption">
-              (up to {formatNumber(rates.stoneCap)} a day, {formatNumber(game.player.stones)} held)
+              (up to {formatNumber(rates.stoneCap)} a day, {formatNumber(c.stones)} held)
             </span>
           )}
         </label>
       </div>
       <p className="caption spaced">
-        {game.player.plan.auto === 'off'
+        {c.plan.auto === 'off'
           ? 'Minor breakthroughs wait for you; offline, a full bar holds.'
-          : game.player.plan.auto === 'bold'
+          : c.plan.auto === 'bold'
             ? 'Minor breakthroughs go the moment a bar is full.'
-            : `Minor breakthroughs go on their own at ${formatPercent(AUTO_SETTINGS[game.player.plan.auto].minOdds)} odds or a bar at 150%, online and off.`}{' '}
+            : `Minor breakthroughs go on their own at ${formatPercent(AUTO_SETTINGS[c.plan.auto].minOdds)} odds or a bar at 150%, online and off.`}{' '}
         Major breakthroughs are always yours to call, and never happen offline.
       </p>
+    </section>
+  );
+}
+
+function RoutinesPanel({ game }: { game: GameState }) {
+  const { followRoutine, saveRoutine, forgetRoutine } = useGame.getState();
+  const [name, setName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const c = game.player;
+  const following = dayRates(c, game.calendar.day).routine;
+  const learned = c.routines.filter(hasRoutine).map(routine);
+  const same = (hours: readonly string[]) => hours.every((k, i) => c.wheel[i] === k);
+
+  return (
+    <section className="panel" aria-labelledby="routines-heading">
+      <h2 id="routines-heading" className="panel-heading">
+        Routines
+      </h2>
+      <p className="muted">
+        Follow a routine learned from a teacher, manual or sect exactly, all twelve hours, and every
+        waking hour pays a tenth more. A wheel you save yourself earns no discipline.
+      </p>
+      {learned.length > 0 && (
+        <ul className="routines">
+          {learned.map((r) => {
+            const check = canFollow(c, r.hours);
+            const isFollowed = following?.id === r.id;
+            return (
+              <li key={r.id} className="routine">
+                <div className="routine-head">
+                  <strong>
+                    {r.name} <span className="hanzi">{r.hanzi}</span>
+                  </strong>
+                  <WheelStrip hours={r.hours} />
+                </div>
+                <p className="caption">From {r.source}.</p>
+                <div className="actions">
+                  {isFollowed ? (
+                    <span className="accent">Following: discipline +10% on every waking hour.</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="button"
+                      disabled={!check.ok || !!game.ended}
+                      onClick={() => setError(followRoutine(r.hours))}
+                    >
+                      Follow
+                    </button>
+                  )}
+                  {!check.ok && <span className="caption">{check.reason}</span>}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {c.savedRoutines.length > 0 && (
+        <ul className="routines">
+          {c.savedRoutines.map((r) => (
+            <li key={r.name} className="routine">
+              <div className="routine-head">
+                <strong>{r.name}</strong>
+                <WheelStrip hours={r.hours} />
+              </div>
+              <div className="actions">
+                <button
+                  type="button"
+                  className="button"
+                  disabled={same(r.hours) || !!game.ended}
+                  onClick={() => setError(followRoutine(r.hours))}
+                >
+                  {same(r.hours) ? 'In use' : 'Use'}
+                </button>
+                <button
+                  type="button"
+                  className="button button-quiet"
+                  onClick={() => forgetRoutine(r.name)}
+                >
+                  Forget
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form
+        className="routine-save"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const why = saveRoutine(name);
+          setError(why);
+          if (!why) setName('');
+        }}
+      >
+        <label className="field">
+          <span>Save this wheel as a routine</span>
+          <input
+            type="text"
+            value={name}
+            maxLength={40}
+            placeholder="A name"
+            onChange={(e) => setName(e.target.value)}
+          />
+        </label>
+        <button type="submit" className="button" disabled={!!game.ended}>
+          Save
+        </button>
+      </form>
+      {error && <p className="warn">{error}</p>}
+    </section>
+  );
+}
+
+const ART_NAMES: Record<LadderId, string> = {
+  qi: 'cultivation method',
+  body: 'tempering art',
+  soul: 'nourishing art',
+};
+
+function MethodsPanel({ game }: { game: GameState }) {
+  const c = game.player;
+  return (
+    <section className="panel" aria-labelledby="methods-heading">
+      <h2 id="methods-heading" className="panel-heading">
+        Methods
+      </h2>
+      <ul className="methods">
+        {(['qi', 'body', 'soul'] as const).map((which) => {
+          const m = ladderMethod(c, which);
+          const known = c.methods.filter((id) => hasMethod(id) && method(id).ladder === which);
+          return (
+            <li key={which}>
+              <span className="label">{LADDER_LABELS[which]}</span>
+              {m ? (
+                <span title={`From ${m.source}.`}>
+                  {m.name} <span className="hanzi">{m.hanzi}</span>
+                  {m.element && (
+                    <span className="caption">
+                      {' '}
+                      · {ELEMENT_INFO[m.element].name.toLowerCase()}: its hours match{' '}
+                      {ELEMENT_INFO[m.element].name.toLowerCase()} hours
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className="muted">
+                  No {ART_NAMES[which]}
+                  {known.length === 0 &&
+                    (which === 'qi'
+                      ? ': qi hours give nothing.'
+                      : `: the ${which} grows only from the world until you find one.`)}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
@@ -244,13 +366,14 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
 export function CultivateScreen() {
   const game = useGame((s) => s.game);
   if (!game) return null;
-  const open = openSlots(game.player);
-  const ladders = (['qi', 'body', 'soul'] as const).filter((l) => l === 'qi' || open.includes(l));
+  const ladders = (['qi', 'body', 'soul'] as const).filter((l) => ladderOpen(game.player, l));
 
   return (
     <>
       <LifeEdgeCard />
-      <PlanPanel game={game} />
+      <DayPanel game={game} />
+      <RoutinesPanel game={game} />
+      <MethodsPanel game={game} />
       <section className="panel" aria-labelledby="bt-heading">
         <h2 id="bt-heading" className="panel-heading">
           Breakthroughs

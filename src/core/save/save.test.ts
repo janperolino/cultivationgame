@@ -52,7 +52,7 @@ describe('save format', () => {
     expect(p).toMatchObject({ id: 'player', name: 'Lin Mo', pronouns: 'he/him' });
     expect(s.calendar.day).toBe(15.5 * 360);
     expect(p.qi).toMatchObject({ realm: 'qi-condensation', stage: 2, bar: 140, grades: [] });
-    expect(p).toMatchObject({ root: 'true', method: 'garrison-standard' });
+    expect(p).toMatchObject({ root: 'true', methods: ['garrison-standard'] });
     expect(p.plan.auto).toBe('safe');
     expect(p.body.stage).toBe(1);
     expect(p.insight).toEqual({ current: 7, earned: 7 });
@@ -67,11 +67,11 @@ describe('save format', () => {
     const s = loadSave(v2).state;
     const p = s.player;
     expect(s.mode).toBe('ironman');
-    expect(p).toMatchObject({ name: 'Nameless', root: 'single', method: 'garrison-standard' });
+    expect(p).toMatchObject({ name: 'Nameless', root: 'single', methods: ['garrison-standard'] });
     expect(p.qi).toMatchObject({ stage: 4, bar: 120.5 });
     expect(p.insight).toEqual({ current: 40, earned: 64 });
     expect(p.items).toEqual({ 'foundation-pill': 1 });
-    expect(p.flags).toEqual(['seclusion-qi', 'seclusion-body', 'seclusion-study']);
+    expect(p.flags).toEqual(['hours-study']);
     expect(s.unlocks).toEqual(['abode', 'cultivate', 'techniques']);
     expect(p.techniques).toEqual({ 'rampart-palm': { practice: 0 } });
     expect(p.practicing).toBe('rampart-palm');
@@ -79,6 +79,27 @@ describe('save format', () => {
     expect(s.seed).toBe(v2.state.glass.seed);
     expect(s.rng).toEqual({ breakthrough: v2.state.rng });
     expect(s.chronicle).toEqual(v2.state.chronicle);
+  });
+
+  it('migrates a v3 save: the wheel by the default rule, and a method on each ladder', () => {
+    const v3 = fixture('v3');
+    const p = loadSave(v3).state.player;
+    // A mixed root spares every hour but earth's, so study takes 戌 and practice 未.
+    expect(p.wheel).toEqual([
+      ...['sleep', 'sleep', 'qi', 'qi', 'qi', 'qi', 'qi', 'practice'],
+      ...['qi', 'qi', 'study', 'qi'],
+    ]);
+    expect(p.flags).toEqual(['hours-study', 'hours-practice']);
+    expect(p.rootElements).toEqual(['wood', 'fire', 'metal', 'water']);
+    expect(p.methods).toEqual(['garrison-standard']);
+    expect(p.activeMethods).toEqual({ qi: 'garrison-standard', body: null, soul: null });
+    expect(p).not.toHaveProperty('method');
+    expect(p.routines).toEqual(['watch-rotation']);
+    expect(p.plan).toEqual({ auto: 'safe', burnStones: true });
+    // Body keeps its bar, but gains nothing from its hours until an art turns up.
+    expect(p.body).toEqual(v3.state.player.body);
+    expect(p.nodes).toEqual(['qi-sensing-breath']);
+    expect(p.techniques).toEqual(v3.state.player.techniques);
   });
 
   it('rejects saves from a newer game and damaged saves', () => {

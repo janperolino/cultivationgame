@@ -1,11 +1,11 @@
-import { SLOTS } from '../content/cultivation.ts';
+import { HOUR_KIND_IDS, HOUR_KINDS } from '../content/hours.ts';
 import { realm } from '../content/realms.ts';
-import { dayShares, majorCheck, openSlots } from '../core/cultivation.ts';
-import { formatDays, formatDuration, formatLadder, formatNumber, formatPercent } from './format.ts';
+import { dayRates, ladderOpen, majorCheck } from '../core/cultivation.ts';
+import { effectiveWheel } from '../core/wheel.ts';
+import { WheelStrip } from './DayWheel.tsx';
+import { formatDays, formatDuration, formatLadder, formatNumber } from './format.ts';
 import { useGame, type AwaySummary } from './store.ts';
 import { AgeBar, LadderBar, LifeEdgeCard } from './widgets.tsx';
-
-const SLOT_NAMES = { qi: 'qi', body: 'body', soul: 'soul', study: 'study', practice: 'practice' };
 
 function AwayCard({ away }: { away: AwaySummary }) {
   const dismissAway = useGame((s) => s.dismissAway);
@@ -74,10 +74,9 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
   const away = useGame((s) => s.away);
   if (!game) return null;
 
-  const shares = dayShares(game.player);
-  const open = new Set(openSlots(game.player));
-  const plan = SLOTS.filter((s) => open.has(s) && shares[s] > 0)
-    .map((s) => `${formatPercent(shares[s])} ${SLOT_NAMES[s]}`)
+  const rates = dayRates(game.player, game.calendar.day);
+  const today = HOUR_KIND_IDS.filter((k) => rates.count[k] > 0)
+    .map((k) => `${rates.count[k]} ${HOUR_KINDS[k].name.toLowerCase()}`)
     .join(' · ');
   const ready = majorCheck(game.player, 'qi');
 
@@ -108,8 +107,8 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
         </h2>
         <div className="bars">
           <LadderBar game={game} which="qi" />
-          {open.has('body') && <LadderBar game={game} which="body" />}
-          {open.has('soul') && <LadderBar game={game} which="soul" />}
+          {ladderOpen(game.player, 'body') && <LadderBar game={game} which="body" />}
+          {ladderOpen(game.player, 'soul') && <LadderBar game={game} which="soul" />}
           <AgeBar game={game} />
         </div>
         <dl className="stats">
@@ -121,12 +120,13 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
             <dt>Spirit stones</dt>
             <dd>{formatNumber(game.player.stones)}</dd>
           </div>
-          {plan && (
-            <div>
-              <dt>Today</dt>
-              <dd>{plan}</dd>
-            </div>
-          )}
+          <div>
+            <dt>Today</dt>
+            <dd>
+              <WheelStrip hours={effectiveWheel(game.player)} /> {today}
+              {rates.routine && ` · ${rates.routine.name}`}
+            </dd>
+          </div>
         </dl>
         <p className="caption spaced">
           Lifespan {realm(game.player.qi.realm).lifespan} years at{' '}

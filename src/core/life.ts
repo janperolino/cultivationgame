@@ -1,10 +1,13 @@
 // The player's life around the cultivator rules: runs them on `state.player` with the right
 // random stream, dates their notes into the chronicle, flares the glass at breakthroughs, keeps
 // gentle mode's rewind, opens screens, and ends the life at the lifespan edge.
+import { hasMethod, method } from '../content/methods.ts';
+import { hasRoutine, routine } from '../content/routines.ts';
 import { treeNode } from '../content/trees/index.ts';
 import { technique } from '../content/techniques.ts';
 import {
   attemptBreakthrough,
+  checkUnlocks,
   cultivateDays,
   majorCheck,
   stepLabel,
@@ -12,6 +15,7 @@ import {
   type Note,
 } from './cultivation.ts';
 import type { DayStep } from './loop.ts';
+import { knowsMethod, learnMethod } from './methods.ts';
 import {
   addChronicle,
   ageYears,
@@ -24,6 +28,7 @@ import {
 } from './state.ts';
 import { learnTechnique, setPracticing } from './techniques.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
+import { learnRoutine } from './wheel.ts';
 
 /** The Trees screen opens once there is insight enough for a first node (design, the first hour). */
 export const TREES_SCREEN_INSIGHT = 10;
@@ -131,7 +136,16 @@ export function learn(s: GameState, nodeId: string): { state: GameState; check: 
   return { state: next, check: r.check };
 }
 
-/** The player gains a technique, at Glimpse; the Techniques screen opens with the first. */
+/** Opens what the player has just reached, kinds of hour and screens, without waiting for a tick. */
+function settle(s: GameState): GameState {
+  const r = checkUnlocks(s.player);
+  return checkScreens(addNotes(withPlayer(s, r.cultivator), r.notes));
+}
+
+/**
+ * The player gains a technique, at Glimpse; the Techniques screen opens with the first, and
+ * practice hours with the first one they can use.
+ */
 export function gainTechnique(s: GameState, id: string, how = 'learns'): GameState {
   if (id in s.player.techniques) return s;
   const t = technique(id);
@@ -140,7 +154,31 @@ export function gainTechnique(s: GameState, id: string, how = 'learns'): GameSta
     'technique',
     `${s.player.name} ${how} ${t.name}.`,
   );
-  return checkScreens(next);
+  return settle(next);
+}
+
+/**
+ * The player gains a method; a ladder with none takes it up, and a first tempering or nourishing
+ * art opens body or soul hours. P1.7's cards hand them out.
+ */
+export function gainMethod(s: GameState, id: string, how = 'learns'): GameState {
+  if (!hasMethod(id) || knowsMethod(s.player, id)) return s;
+  const next = addChronicle(
+    withPlayer(s, learnMethod(s.player, id)),
+    'method',
+    `${s.player.name} ${how} the ${method(id).name}.`,
+  );
+  return settle(next);
+}
+
+/** The player learns a routine from a teacher, manual or sect. */
+export function gainRoutine(s: GameState, id: string, how = 'learns'): GameState {
+  if (!hasRoutine(id) || s.player.routines.includes(id)) return s;
+  return addChronicle(
+    withPlayer(s, learnRoutine(s.player, id)),
+    'routine',
+    `${s.player.name} ${how} the ${routine(id).name}.`,
+  );
 }
 
 /** Points the player's practice days at a technique, or at nothing. */

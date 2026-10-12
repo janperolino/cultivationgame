@@ -82,23 +82,22 @@ describe('mastery', () => {
 });
 
 describe('practice days', () => {
-  it('raise mastery of the technique being practiced, in step with the practice share', () => {
-    const c: Cultivator = {
-      ...learnTechnique(base.player, 'rampart-palm'),
-      flags: ['seclusion-qi', 'seclusion-practice'],
-    };
-    const share = dayRates(c, DAY).shares.practice;
-    expect(share).toBeCloseTo(5 / 65);
+  it('raise mastery of the technique being practiced, a twelfth of a day per practice hour', () => {
+    // The first technique opens practice hours, and the default rule gives it one.
+    const c = gainTechnique(base, 'rampart-palm').player;
+    expect(dayRates(c, DAY).count.practice).toBe(1);
     const after = cultivateDays(c, 1, { day: DAY, rng: new Rng(1) }).cultivator;
-    expect(after.techniques['rampart-palm']!.practice).toBeCloseTo(share);
+    expect(after.techniques['rampart-palm']!.practice).toBeCloseTo(1 / 12);
     const none = cultivateDays({ ...c, practicing: null }, 1, { day: DAY, rng: new Rng(1) });
     expect(none.cultivator.techniques['rampart-palm']!.practice).toBe(0);
   });
 
-  it('go to the technique the player picks, and the first technique opens the screen', () => {
+  it('go to the technique the player picks; the first opens the screen and practice hours', () => {
     let s = gainTechnique(base, 'rampart-palm', 'is taught');
     expect(s.unlocks).toContain('techniques');
-    expect(s.chronicle.at(-1)?.text).toBe('Han Li is taught Rampart Palm.');
+    expect(s.chronicle.at(-2)?.text).toBe('Han Li is taught Rampart Palm.');
+    // Practice hours open with it at once, by the default rule.
+    expect(s.chronicle.at(-1)?.text).toMatch(/turns from qi to practice/);
     expect(s.player.practicing).toBe('rampart-palm');
     s = gainTechnique(s, 'alley-wind-palm');
     expect(s.player.practicing).toBe('rampart-palm');

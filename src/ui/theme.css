@@ -18,6 +18,15 @@
   --warn-edge: color-mix(in srgb, var(--warn) 45%, transparent);
   --well: rgb(0 0 0 / 0.55);
   --scrim: rgb(2 3 4 / 0.65);
+  /* What each hour of the day wheel goes to. Qi is the crack light, as the qi bars are. */
+  --hour-qi: var(--crack);
+  --hour-body: #c98a5f;
+  --hour-soul: #a28fdc;
+  --hour-study: #a9b97f;
+  --hour-practice: #cf7f9f;
+  --hour-sleep: #59606b;
+  /* Dawn's purple qi at 卯. */
+  --dawn: #c4a3f0;
 
   --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
   --font-brush: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', serif;
@@ -312,10 +321,6 @@ select {
   margin-top: 10px;
 }
 
-.plan-row .caption {
-  display: block;
-}
-
 .realm-title {
   font-family: var(--font-display);
   font-weight: 600;
@@ -508,37 +513,18 @@ select {
 }
 
 /* The Cultivate screen. */
-.plan {
-  display: grid;
-  gap: 12px;
-  margin-top: 6px;
-}
-
-.plan-row {
-  display: grid;
-  grid-template-columns: 90px minmax(0, 1fr) 52px;
-  gap: 12px;
-  align-items: center;
-  font-variant-numeric: tabular-nums;
-}
-
-.plan-row input[type='range'] {
-  width: 100%;
-  accent-color: var(--accent);
-}
-
-.plan-row .value {
-  text-align: right;
-}
-
-.plan-row.is-closed {
-  color: var(--muted);
-  opacity: 0.6;
-}
-
 .field {
   display: grid;
   gap: 6px;
+}
+
+.field input[type='text'] {
+  width: 220px;
+  max-width: 100%;
+  padding: 6px 10px;
+  background: var(--well);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-small);
 }
 
 .field > span {
@@ -570,6 +556,11 @@ select {
 .seg button[aria-pressed='true'] {
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+.seg button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .check {
@@ -636,6 +627,198 @@ select {
 .rates {
   font-variant-numeric: tabular-nums;
   font-size: 13px;
+}
+
+/* The day wheel: twelve hours round a ring, 子 at the top, each tinted by what it goes to. */
+.hour-qi {
+  --hour: var(--hour-qi);
+}
+
+.hour-body {
+  --hour: var(--hour-body);
+}
+
+.hour-soul {
+  --hour: var(--hour-soul);
+}
+
+.hour-study {
+  --hour: var(--hour-study);
+}
+
+.hour-practice {
+  --hour: var(--hour-practice);
+}
+
+.hour-sleep {
+  --hour: var(--hour-sleep);
+}
+
+/* The editor sits beside the wheel when the panel has room, and wraps below it when not. */
+.wheel-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.wheel-editor {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.wheel {
+  display: block;
+  flex: 0 1 340px;
+  width: 100%;
+  min-width: 0;
+  max-width: 340px;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+  user-select: none;
+}
+
+.wheel-hour {
+  cursor: pointer;
+  outline: none;
+}
+
+.wheel-seg {
+  fill: color-mix(in srgb, var(--hour) 15%, transparent);
+  stroke: color-mix(in srgb, var(--hour) 50%, transparent);
+  stroke-width: 1;
+  transition: fill 120ms ease;
+}
+
+.wheel-hour:hover .wheel-seg {
+  fill: color-mix(in srgb, var(--hour) 26%, transparent);
+}
+
+.wheel-hour.is-selected .wheel-seg,
+.wheel-hour:focus-visible .wheel-seg {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.wheel-branch {
+  fill: var(--text);
+  font-size: 21px;
+  text-anchor: middle;
+}
+
+.wheel-kind {
+  fill: color-mix(in srgb, var(--hour) 75%, var(--text));
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  text-anchor: middle;
+}
+
+.wheel-element {
+  fill: var(--muted);
+  font-size: 13px;
+  text-anchor: middle;
+  opacity: 0.6;
+}
+
+.wheel-element.is-match {
+  fill: var(--crack);
+  opacity: 1;
+}
+
+.wheel-dawn {
+  fill: var(--dawn);
+}
+
+.wheel-lock rect {
+  fill: var(--muted);
+}
+
+.wheel-lock path {
+  stroke: var(--muted);
+}
+
+.wheel-center-title {
+  fill: var(--text);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.wheel-center-caption {
+  fill: var(--muted);
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.wheel-editor h3 {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.wheel-kinds {
+  margin-top: 10px;
+}
+
+.wheel-strip {
+  display: inline-flex;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.wheel-strip > span {
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--hour) 60%, transparent);
+}
+
+.routines,
+.methods {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.routine + .routine {
+  padding-top: 12px;
+  border-top: 1px solid var(--edge);
+}
+
+.routine-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.routine-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.methods {
+  gap: 8px;
+}
+
+.methods li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.methods .label {
+  color: var(--muted);
 }
 
 /* Trees: a pannable graph in tier bands. Gold marks what you can learn, crack light what you
@@ -861,10 +1044,6 @@ select {
   .bar-row {
     grid-template-columns: 44px minmax(0, 1fr) 112px;
     gap: 10px;
-  }
-
-  .plan-row {
-    grid-template-columns: 70px minmax(0, 1fr) 44px;
   }
 
   .scrim {

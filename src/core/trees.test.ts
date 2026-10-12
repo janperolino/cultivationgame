@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { FIRST_ARTS } from '../content/methods.ts';
 import { STATS, type StatId } from '../content/stats.ts';
 import {
   TIER_COLS,
@@ -19,32 +20,30 @@ import {
 } from './cultivation.ts';
 import { checkScreens, cultivate, learn } from './life.ts';
 import { advance } from './loop.ts';
+import { learnMethod } from './methods.ts';
 import { Rng } from './rng.ts';
 import { lifespanYears, newLife, withPlayer, type Cultivator } from './state.ts';
 import { stats } from './stats.ts';
 import { canLearn, learnNode, nodeSealed, tierHeld } from './trees.ts';
+import { openHours } from './wheel.ts';
 
 const base = newLife({ name: 'Han Li', seed: 'trees', techniques: ['rampart-palm'] });
 const DAY = base.calendar.day;
 
-/** Every slot open, rich in insight, and every ladder at Foundation unless asked otherwise. */
+/**
+ * Both first arts in hand and every kind of hour on the wheel, rich in insight, and every ladder at
+ * Foundation unless asked otherwise.
+ */
 function cultivator(opts: { realm?: Cultivator['qi']['realm'] } = {}): Cultivator {
-  const c = base.player;
+  const c = learnMethod(learnMethod(base.player, FIRST_ARTS.body), FIRST_ARTS.soul);
   const realm = opts.realm ?? 'foundation-establishment';
-  return {
+  return openHours({
     ...c,
     qi: { ...c.qi, realm, stage: 2 },
     body: { ...c.body, realm, stage: 2 },
     soul: { ...c.soul, realm, stage: 2 },
     insight: { current: 1e6, earned: 1e6 },
-    flags: [
-      'seclusion-qi',
-      'seclusion-body',
-      'seclusion-soul',
-      'seclusion-study',
-      'seclusion-practice',
-    ],
-  };
+  }).cultivator;
 }
 
 /** Learns each listed node in order, failing the test if any can't be learned. */

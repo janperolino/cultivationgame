@@ -7,7 +7,6 @@ import {
   barFill,
   cultivateDays,
   dayRates,
-  dayShares,
   gradeFor,
   lastChance,
   majorCheck,
@@ -47,13 +46,9 @@ function filled(c: Cultivator, which: LadderId, fill: number): Cultivator {
   return at(c, which, { bar: stepSize(l.realm, l.stage) * fill });
 }
 
-/** Qi at the peak of Qi Condensation, with every slot but practice open. */
+/** Qi at the peak of Qi Condensation. */
 function atLayer9(opts: LifeOpts = {}): Cultivator {
-  const c = player(opts);
-  return {
-    ...at(c, 'qi', { stage: 9 }),
-    flags: [...c.flags, 'seclusion-body', 'seclusion-soul', 'seclusion-study'],
-  };
+  return at(player(opts), 'qi', { stage: 9 });
 }
 
 /** Ready for Foundation: a full bar, the insight and the pill. */
@@ -66,31 +61,6 @@ function readyForFoundation(fill = 1, opts: LifeOpts = {}): Cultivator {
 }
 
 const step = (c: Cultivator, days: number) => cultivateDays(c, days, ctx()).cultivator;
-
-describe('the seclusion plan', () => {
-  it('shares each day among the open slots', () => {
-    expect(dayShares(player())).toEqual({ qi: 1, body: 0, soul: 0, study: 0, practice: 0 });
-    const shares = dayShares(atLayer9());
-    expect(shares.qi).toBeCloseTo(60 / 95);
-    expect(shares.body).toBeCloseTo(15 / 95);
-    expect(shares.practice).toBe(0);
-  });
-
-  it('opens body and study at layer 2 and soul halfway through it', () => {
-    let c = step(at(player(), 'qi', { stage: 2 }), 0.01);
-    expect(c.flags).toEqual(expect.arrayContaining(['seclusion-body', 'seclusion-study']));
-    expect(c.flags).not.toContain('seclusion-soul');
-    c = step(filled(c, 'qi', 0.5), 0.01);
-    expect(c.flags).toContain('seclusion-soul');
-  });
-
-  it('opens practice with the first technique, and the slot opening goes in the chronicle', () => {
-    expect(step(player(), 0.01).flags).not.toContain('seclusion-practice');
-    const s = advance(life({ techniques: ['rampart-palm'] }), 1000, { step: cultivate }).state;
-    expect(s.player.flags).toContain('seclusion-practice');
-    expect(s.chronicle.some((e) => e.text.includes('practice days'))).toBe(true);
-  });
-});
 
 describe('qi speed', () => {
   it('ignores root speed and fit in layers 1 to 3', () => {
@@ -114,20 +84,25 @@ describe('qi speed', () => {
 });
 
 describe('stones as fuel', () => {
-  it('doubles a day of qi at five stones and burns no more', () => {
+  it('doubles a day of qi at five stones a full day of qi hours, fewer with fewer hours', () => {
     const c = { ...player(), stones: 100 };
     const plain = step({ ...c, stones: 0 }, 1);
     const fuelled = step(c, 1);
-    expect(fuelled.stones).toBeCloseTo(95);
+    // A fresh wheel has ten qi hours of twelve, so the day takes five-sixths of five stones.
+    expect(fuelled.stones).toBeCloseTo(100 - (5 * 10) / 12);
     expect(fuelled.qi.bar).toBeCloseTo(plain.qi.bar * 2);
+    const allQi = { ...c, wheel: c.wheel.map(() => 'qi' as const) };
+    expect(dayRates(at(allQi, 'qi', { realm: 'foundation-establishment' }), DAY).stoneCap).toBe(45);
   });
 
-  it('is worth a ninth as much at Foundation, where a full burn takes 45', () => {
+  it('is worth a ninth as much at Foundation, where a full burn takes nine times the stones', () => {
     const c = at({ ...player(), stones: 1000 }, 'qi', { realm: 'foundation-establishment' });
+    // Layer 4 is past the tutorial too, so both count the same element hours.
+    const qc = dayRates(at(player(), 'qi', { stage: 4 }), DAY);
     const r = dayRates(c, DAY);
-    expect(r.stoneCap).toBeCloseTo(45);
-    expect(r.qiPerStone).toBeCloseTo(dayRates(player(), DAY).qiPerStone);
-    expect(r.qi).toBeCloseTo(9 * dayRates(player(), DAY).qi);
+    expect(r.stoneCap).toBeCloseTo(9 * qc.stoneCap);
+    expect(r.qiPerStone).toBeCloseTo(qc.qiPerStone);
+    expect(r.qi).toBeCloseTo(9 * qc.qi);
   });
 
   it('keeps stones when burning is off or the bar is capped', () => {

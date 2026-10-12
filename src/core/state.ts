@@ -1,10 +1,13 @@
 // The whole game state of one life, as plain data that saves, migrates and checks with Zod.
-// What belongs to a cultivator (ladders, insight, attributes, root, method, items, nodes and
-// techniques) lives in a `Cultivator`, so NPCs and co-op guests later run on the same rules.
+// What belongs to a cultivator (ladders, insight, attributes, root, methods, the day wheel, items,
+// nodes and techniques) lives in a `Cultivator`, so NPCs and co-op guests later run on the same
+// rules.
 import { z } from 'zod';
-import { AUTO_IDS, DEFAULT_SHARES, GRADE_IDS } from '../content/cultivation.ts';
+import { AUTO_IDS, GRADE_IDS } from '../content/cultivation.ts';
+import { ELEMENTS, type Element } from '../content/elements.ts';
+import { FRESH_WHEEL, HOUR_KIND_IDS, HOURS_PER_DAY } from '../content/hours.ts';
 import { REALM_IDS, realm } from '../content/realms.ts';
-import { ROOT_IDS, type RootId } from '../content/roots.ts';
+import { defaultElements, ROOT_IDS, type RootId } from '../content/roots.ts';
 import { hashSeed, Rng, streamSeed, type StreamName } from './rng.ts';
 import { stats } from './stats.ts';
 
@@ -30,7 +33,10 @@ const Ladder = z.object({
 });
 export type Ladder = z.infer<typeof Ladder>;
 
-const share = z.number().min(0);
+/** Twelve hours, from 子 round to 亥, each given to one kind of work (content/hours.ts). */
+const Wheel = z.array(z.enum(HOUR_KIND_IDS)).length(HOURS_PER_DAY);
+
+const activeMethod = z.string().nullable();
 
 export const CultivatorSchema = z.object({
   id: z.string(),
@@ -42,8 +48,12 @@ export const CultivatorSchema = z.object({
   /** Years added to the qi realm's lifespan by talents, pills and the like. */
   lifespanBonus: z.number(),
   root: z.enum(ROOT_IDS),
-  /** The cultivation method's id (content/methods.ts); null before you have one. */
-  method: z.string().nullable(),
+  /** The elements the root holds; the element hours read them. */
+  rootElements: z.array(z.enum(ELEMENTS)),
+  /** Methods known, by id (content/methods.ts): qi methods, tempering and nourishing arts. */
+  methods: z.array(z.string()),
+  /** The method each ladder climbs with; a ladder gains nothing from its hours without one. */
+  activeMethods: z.object({ qi: activeMethod, body: activeMethod, soul: activeMethod }),
   /** The three attributes that come from birth (design § Combat); talents move them in P1.7. */
   attributes: z.object({
     agility: z.number(),
@@ -63,15 +73,19 @@ export const CultivatorSchema = z.object({
   stones: z.number().min(0),
   /** Item counts by id, such as the Foundation Pill; the bag arrives in M2. */
   items: z.record(z.string(), z.number().int().min(0)),
-  /** How seclusion days are split, and when minor breakthroughs happen on their own. */
+  /** What each of the day's twelve hours goes to. */
+  wheel: Wheel,
+  /** Routines learned from teachers, manuals and sects (content/routines.ts), by id. */
+  routines: z.array(z.string()),
+  /** Wheels the cultivator saved under a name; they earn no discipline bonus. */
+  savedRoutines: z.array(z.object({ name: z.string(), hours: Wheel })),
+  /** When minor breakthroughs happen on their own, and whether qi hours burn stones. */
   plan: z.object({
-    /** Percent weights, shared among whichever slots are open. */
-    shares: z.object({ qi: share, body: share, soul: share, study: share, practice: share }),
     auto: z.enum(AUTO_IDS),
     /** Burn spirit stones as fuel on qi days. */
     burnStones: z.boolean(),
   }),
-  /** Milestones the rules have passed: seclusion slots opened, gates reached. */
+  /** Milestones the rules have passed: kinds of hour opened, sleep freed, gates reached. */
   flags: z.array(z.string()),
   /** Tree nodes learned, in the order they were learned. */
   nodes: z.array(z.string()),
@@ -133,7 +147,12 @@ export interface NewLifeOptions {
   seed?: string;
   /** Until character creation (P1.7), a true root on the garrison's standard method. */
   root?: RootId;
+  /** The root's elements; until P1.7 rolls them, the root's defaults. */
+  elements?: Element[];
+  /** The qi method; null for the refusals that start without one. */
   method?: string | null;
+  /** Routines known from the start; P1.7 hands the origin's over at creation. */
+  routines?: string[];
   aptitude?: number;
   /** Techniques known from the start; P1.7 hands the first one over at creation. */
   techniques?: string[];
@@ -149,11 +168,6 @@ export function freshLadder(): Ladder {
     unsettledUntil: 0,
     injuredUntil: 0,
   };
-}
-
-/** The milestone flags a cultivator starts with: with a method, qi days are open. */
-export function startingFlags(method: string | null): string[] {
-  return method ? ['seclusion-qi'] : [];
 }
 
 /** The screens a life starts with. */
@@ -174,7 +188,9 @@ export function newCultivator(
     bornDay: opts.bornDay,
     lifespanBonus: 0,
     root: opts.root ?? 'true',
-    method,
+    rootElements: opts.elements ?? defaultElements(opts.root ?? 'true'),
+    methods: method ? [method] : [],
+    activeMethods: { qi: method, body: null, soul: null },
     attributes: { agility: 10, fortune: 10, aptitude: opts.aptitude ?? 10 },
     qi: freshLadder(),
     body: freshLadder(),
@@ -182,8 +198,11 @@ export function newCultivator(
     insight: { current: 0, earned: 0 },
     stones: 0,
     items: {},
-    plan: { shares: { ...DEFAULT_SHARES }, auto: 'safe', burnStones: true },
-    flags: startingFlags(method),
+    wheel: [...FRESH_WHEEL],
+    routines: opts.routines ?? [],
+    savedRoutines: [],
+    plan: { auto: 'safe', burnStones: true },
+    flags: [],
     nodes: [],
     techniques: Object.fromEntries(techniques.map((t) => [t, { practice: 0 }])),
     practicing: techniques[0] ?? null,

@@ -1,0 +1,148 @@
+{
+  "version": 3,
+  "savedAt": 1792500000000,
+  "state": {
+    "lineage": {
+      "id": "fixture-v3",
+      "life": 1
+    },
+    "mode": "ironman",
+    "calendar": {
+      "day": 4620
+    },
+    "player": {
+      "id": "player",
+      "name": "Mo Lan",
+      "pronouns": "they/them",
+      "look": "",
+      "bornDay": 0,
+      "lifespanBonus": 0,
+      "root": "mixed",
+      "method": "garrison-standard",
+      "attributes": {
+        "agility": 10,
+        "fortune": 10,
+        "aptitude": 10
+      },
+      "qi": {
+        "realm": "qi-condensation",
+        "stage": 3,
+        "bar": 22.20000000000001,
+        "grades": [],
+        "unsettledUntil": 0,
+        "injuredUntil": 0
+      },
+      "body": {
+        "realm": "qi-condensation",
+        "stage": 2,
+        "bar": 10.320000000000007,
+        "grades": [],
+        "unsettledUntil": 0,
+        "injuredUntil": 0
+      },
+      "soul": {
+        "realm": "qi-condensation",
+        "stage": 1,
+        "bar": 27.20000000000002,
+        "grades": [],
+        "unsettledUntil": 0,
+        "injuredUntil": 0
+      },
+      "insight": {
+        "current": 30.222222222222015,
+        "earned": 40.222222222222015
+      },
+      "stones": 4,
+      "items": {},
+      "plan": {
+        "shares": {
+          "qi": 55,
+          "body": 20,
+          "soul": 10,
+          "study": 10,
+          "practice": 5
+        },
+        "auto": "safe",
+        "burnStones": true
+      },
+      "flags": [
+        "seclusion-qi",
+        "seclusion-practice",
+        "seclusion-body",
+        "seclusion-study",
+        "seclusion-soul"
+      ],
+      "nodes": ["qi-sensing-breath"],
+      "techniques": {
+        "rampart-palm": {
+          "practice": 16.84188034188045
+        }
+      },
+      "practicing": "rampart-palm"
+    },
+    "glass": {
+      "seed": -354288106,
+      "fractures": 2,
+      "flares": 3
+    },
+    "ended": null,
+    "chronicle": [
+      {
+        "day": 4320,
+        "kind": "birth",
+        "text": "Mo Lan comes of age on root-testing day."
+      },
+      {
+        "day": 4321,
+        "kind": "unlock",
+        "text": "A technique to drill: practice days now raise its mastery."
+      },
+      {
+        "day": 4375,
+        "kind": "breakthrough",
+        "text": "Qi breaks through to layer 2."
+      },
+      {
+        "day": 4376,
+        "kind": "unlock",
+        "text": "Qi settles into flesh and bone: body tempering opens beside qi."
+      },
+      {
+        "day": 4376,
+        "kind": "unlock",
+        "text": "The first insight trickles in. Study days turn seclusion into understanding."
+      },
+      {
+        "day": 4421,
+        "kind": "unlock",
+        "text": "Enough insight gathers to grasp a first principle: the trees open."
+      },
+      {
+        "day": 4450,
+        "kind": "unlock",
+        "text": "In the stillness you sense your own mind: soul nourishment opens."
+      },
+      {
+        "day": 4577,
+        "kind": "breakthrough",
+        "text": "Body reaches layer 2."
+      },
+      {
+        "day": 4583,
+        "kind": "breakthrough",
+        "text": "Qi breaks through to layer 3."
+      },
+      {
+        "day": 4620,
+        "kind": "node",
+        "text": "Mo Lan comprehends Sensing the Breath."
+      }
+    ],
+    "unlocks": ["abode", "cultivate", "techniques", "trees"],
+    "rewindCharges": 0,
+    "seed": -354288106,
+    "rng": {
+      "breakthrough": -184653955
+    }
+  }
+}

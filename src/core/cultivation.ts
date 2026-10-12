@@ -1,6 +1,6 @@
-// Cultivation rules (design § Cultivation, § Economy): seclusion days split among qi, body, soul,
-// study and practice; bars that fill past full; minor and major breakthroughs and their grades;
-// the last chance at the lifespan edge. Every rule takes a Cultivator, not the game, so NPCs and
+// Cultivation rules (design § Cultivation, § Economy): what each hour of the day wheel yields, a
+// ladder gaining only with a method on it; bars that fill past full; minor and major breakthroughs
+// and their grades; the last chance at the lifespan edge. Every rule takes a Cultivator, not the game, so NPCs and
 // co-op guests run on the same code; randomness and the day come in as inputs. The constants live
 // in src/content/cultivation.ts, and core/life.ts applies the results to the game.
 import {
@@ -24,10 +24,7 @@ import {
   MINOR_FAIL_LOSS,
   MINOR_INJURY_DAYS,
   ODDS_PER_TENTH,
-  PRACTICE_UNLOCK_TEXT,
   QI_PER_DAY,
-  SLOT_UNLOCKS,
-  SLOTS,
   SOUL_PER_DAY,
   STONE_QI,
   STONES_PER_QI_DAY,
@@ -35,9 +32,19 @@ import {
   UNSETTLED_DAYS,
   type GradeId,
   type LadderId,
-  type SlotId,
 } from '../content/cultivation.ts';
-import { FIT_SPEED, hasMethod, method, methodFit } from '../content/methods.ts';
+import { phaseOf } from '../content/elements.ts';
+import {
+  BRANCHES,
+  DAWN_BONUS,
+  DAWN_HOUR,
+  DISCIPLINE_BONUS,
+  ELEMENT_BONUS,
+  HOUR_KIND_IDS,
+  HOURS_PER_DAY,
+  type HourKind,
+} from '../content/hours.ts';
+import { FIT_SPEED, methodFit } from '../content/methods.ts';
 import {
   nextRealm,
   realm,
@@ -49,10 +56,13 @@ import {
   type RealmId,
 } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
+import type { Routine } from '../content/routines.ts';
+import { ladderMethod } from './methods.ts';
 import type { Rng } from './rng.ts';
 import { addItem, hasFlag, itemCount, type Cultivator, type Ladder } from './state.ts';
 import { stats } from './stats.ts';
-import { addPractice, canPractice, knownTechniques, techniqueSealed } from './techniques.ts';
+import { addPractice, canPractice } from './techniques.ts';
+import { effectiveWheel, followedRoutine, openHours } from './wheel.ts';
 
 export { LADDERS, type LadderId };
 
@@ -71,21 +81,22 @@ export interface RuleContext {
   rng: Rng;
 }
 
-// ---------------------------------------------------------------- the seclusion plan
+// ---------------------------------------------------------------- the ladders
 
-/** The slots that have opened, in plan order. */
-export function openSlots(c: Cultivator): SlotId[] {
-  return SLOTS.filter((slot) => hasFlag(c, `seclusion-${slot}`));
-}
-
-/** The fraction of each day each slot gets: the plan's weights shared among the open slots. */
-export function dayShares(c: Cultivator): Record<SlotId, number> {
-  const open = openSlots(c);
-  const total = open.reduce((sum, slot) => sum + c.plan.shares[slot], 0);
-  const out = { qi: 0, body: 0, soul: 0, study: 0, practice: 0 };
-  if (total <= 0) return out;
-  for (const slot of open) out[slot] = c.plan.shares[slot] / total;
-  return out;
+/**
+ * Whether a ladder shows on the screens: qi always; body and soul once they have a method, an
+ * opened hour, or any growth from the world.
+ */
+export function ladderOpen(c: Cultivator, which: LadderId): boolean {
+  if (which === 'qi') return true;
+  const l = c[which];
+  return (
+    c.activeMethods[which] !== null ||
+    hasFlag(c, `hours-${which}`) ||
+    realmIndex(l.realm) > 0 ||
+    l.stage > 1 ||
+    l.bar > 0
+  );
 }
 
 // ---------------------------------------------------------------- rates
@@ -100,7 +111,7 @@ export function aptitudeMultiplier(c: Cultivator): number {
   return Math.max(0, 1 + APTITUDE_STEP * (aptitude(c) - APTITUDE_BASE));
 }
 
-/** Qi Condensation layers 1–3 are the tutorial: root speed and method fit don't count yet. */
+/** Qi Condensation layers 1–3 are the tutorial: root speed, fit and element hours don't count. */
 export function inTutorial(l: Ladder): boolean {
   return l.realm === 'qi-condensation' && l.stage <= TUTORIAL_LAYERS;
 }
@@ -116,18 +127,18 @@ export interface QiSpeed {
   total: number;
 }
 
-/** Root speed × method fit × qi density × Aptitude × nodes. Zero without a method. */
+/** Root speed × method fit × qi density × Aptitude × nodes. Zero without a qi method. */
 export function qiSpeed(c: Cultivator): QiSpeed {
-  const id = c.method;
+  const m = ladderMethod(c, 'qi');
   const apt = aptitudeMultiplier(c);
   const nodes = 1 + stats(c).qiGain;
-  if (!id || !hasMethod(id)) {
+  if (!m) {
     return { root: 0, fit: 0, density: 1, aptitude: apt, nodes, total: 0 };
   }
   const r = root(c.root);
   const tutorial = inTutorial(c.qi);
   const rootSpeed = tutorial ? 1 : r.speed;
-  const fit = tutorial ? 1 : FIT_SPEED[methodFit(method(id), r.kind)];
+  const fit = tutorial ? 1 : FIT_SPEED[methodFit(m, r.kind)];
   const density = 1;
   return {
     root: rootSpeed,
@@ -146,8 +157,105 @@ export function setbackMultiplier(l: Ladder, day: number): number {
   return 1;
 }
 
+/** What a full day of each kind of work gives, before the hour's own bonuses. */
+interface DayBase {
+  qi: number;
+  body: number;
+  soul: number;
+  study: number;
+  /** The insight every waking hour leaves, whatever it went to. */
+  trickle: number;
+  practice: number;
+}
+
+function dayBase(c: Cultivator, day: number): DayBase {
+  const m = stats(c);
+  const apt = aptitudeMultiplier(c);
+  const insight = realm(c.qi.realm).insightRate * apt * (1 + m.insightGain);
+  // A ladder gains only with a method on it; until then it grows from the world alone.
+  const art = (which: 'body' | 'soul', perDay: number, gain: number) =>
+    ladderMethod(c, which)
+      ? perDay * realmScale(c[which].realm) * apt * (1 + gain) * setbackMultiplier(c[which], day)
+      : 0;
+  return {
+    qi: QI_PER_DAY * realmScale(c.qi.realm) * qiSpeed(c).total * setbackMultiplier(c.qi, day),
+    body: art('body', BODY_PER_DAY, m.bodyGain),
+    soul: art('soul', SOUL_PER_DAY, m.soulGain),
+    study: INSIGHT_PER_STUDY_DAY * insight,
+    trickle: INSIGHT_TRICKLE * insight,
+    practice: c.practicing && canPractice(c, c.practicing) ? apt * (1 + m.practiceGain) : 0,
+  };
+}
+
+/**
+ * Whether an hour's work matches the hour's element: qi by the root's elements, body and soul by
+ * their art's, if it carries one. Lightning and wind count as wood, ice as water. A ladder in its
+ * tutorial layers ignores element hours.
+ */
+export function elementMatch(c: Cultivator, kind: HourKind, hour: number): boolean {
+  const el = BRANCHES[hour]!.element;
+  if (kind === 'qi') return !inTutorial(c.qi) && c.rootElements.some((e) => phaseOf(e) === el);
+  if (kind === 'body' || kind === 'soul') {
+    const art = ladderMethod(c, kind);
+    return !!art?.element && !inTutorial(c[kind]) && phaseOf(art.element) === el;
+  }
+  return false;
+}
+
+export interface HourYield {
+  hour: number;
+  kind: HourKind;
+  /** The bonuses on the hour's work, added together: its element, dawn's purple qi, discipline. */
+  element: number;
+  dawn: number;
+  discipline: number;
+  qi: number;
+  body: number;
+  soul: number;
+  /** Study's stream, and the trickle every waking hour leaves. */
+  insight: number;
+  /** Practice days for the technique being practiced. */
+  practice: number;
+}
+
+/** What each of the day's twelve hours gives: a twelfth of a day's work, with its bonuses. */
+export function hourYields(c: Cultivator, day: number): HourYield[] {
+  const base = dayBase(c, day);
+  const discipline = followedRoutine(c) ? DISCIPLINE_BONUS : 0;
+  return effectiveWheel(c).map((kind, hour) => {
+    const y: HourYield = {
+      hour,
+      kind,
+      element: 0,
+      dawn: 0,
+      discipline: 0,
+      qi: 0,
+      body: 0,
+      soul: 0,
+      insight: 0,
+      practice: 0,
+    };
+    if (kind === 'sleep') return y;
+    y.element = elementMatch(c, kind, hour) ? ELEMENT_BONUS : 0;
+    y.dawn = kind === 'qi' && hour === DAWN_HOUR ? DAWN_BONUS : 0;
+    y.discipline = discipline;
+    const share = (1 + y.element + y.dawn + y.discipline) / HOURS_PER_DAY;
+    y.insight = base.trickle / HOURS_PER_DAY;
+    if (kind === 'qi') y.qi = base.qi * share;
+    else if (kind === 'body') y.body = base.body * share;
+    else if (kind === 'soul') y.soul = base.soul * share;
+    else if (kind === 'study') y.insight += base.study * share;
+    else y.practice = base.practice * share;
+    return y;
+  });
+}
+
 export interface DayRates {
-  shares: Record<SlotId, number>;
+  hours: HourYield[];
+  /** Hours given to each kind of work. */
+  count: Record<HourKind, number>;
+  /** The learned routine the wheel follows exactly, which earns the discipline bonus. */
+  routine: Routine | null;
   /** Fuel per full day, in qi units, before stones. */
   qi: number;
   body: number;
@@ -160,40 +268,27 @@ export interface DayRates {
   qiPerStone: number;
 }
 
-/** What one full day of seclusion gives under the cultivator's plan, on a given world day. */
+/** What one full day of seclusion gives on the cultivator's wheel, on a given world day. */
 export function dayRates(c: Cultivator, day: number): DayRates {
-  const shares = dayShares(c);
-  const m = stats(c);
-  const apt = aptitudeMultiplier(c);
+  const hours = hourYields(c, day);
+  const count = Object.fromEntries(HOUR_KIND_IDS.map((k) => [k, 0])) as Record<HourKind, number>;
+  const sum = { qi: 0, body: 0, soul: 0, insight: 0, practice: 0 };
+  for (const h of hours) {
+    count[h.kind]++;
+    sum.qi += h.qi;
+    sum.body += h.body;
+    sum.soul += h.soul;
+    sum.insight += h.insight;
+    sum.practice += h.practice;
+  }
   const qiScale = realmScale(c.qi.realm);
-  const qi = QI_PER_DAY * qiScale * qiSpeed(c).total * shares.qi * setbackMultiplier(c.qi, day);
-  const body =
-    BODY_PER_DAY *
-    realmScale(c.body.realm) *
-    apt *
-    (1 + m.bodyGain) *
-    shares.body *
-    setbackMultiplier(c.body, day);
-  const soul =
-    SOUL_PER_DAY *
-    realmScale(c.soul.realm) *
-    apt *
-    (1 + m.soulGain) *
-    shares.soul *
-    setbackMultiplier(c.soul, day);
-  const secluded = SLOTS.reduce((sum, slot) => sum + shares[slot], 0);
-  const insight =
-    (INSIGHT_PER_STUDY_DAY * shares.study + INSIGHT_TRICKLE * secluded) *
-    realm(c.qi.realm).insightRate *
-    apt *
-    (1 + m.insightGain);
-  const practice =
-    c.practicing && canPractice(c, c.practicing) ? shares.practice * apt * (1 + m.practiceGain) : 0;
-  // Each stone adds a fifth of a plain Qi Condensation day's qi, and a day takes five, both
-  // scaled by the realm curve, so a full burn doubles the day whatever the realm.
-  const stoneCap = qi > 0 && c.plan.burnStones ? STONES_PER_QI_DAY * qiScale * shares.qi : 0;
-  const qiPerStone = stoneCap > 0 ? ((qi * STONE_QI) / qiScale / shares.qi) * (1 + m.stoneQi) : 0;
-  return { shares, qi, body, soul, insight, practice, stoneCap, qiPerStone };
+  const qiShare = count.qi / HOURS_PER_DAY;
+  // Each stone adds a fifth of a full day of qi hours and a full day takes five, both scaled by the
+  // realm curve, so a full burn doubles the day whatever the realm. Fewer qi hours, fewer stones.
+  const stoneCap = sum.qi > 0 && c.plan.burnStones ? STONES_PER_QI_DAY * qiScale * qiShare : 0;
+  const qiPerStone =
+    stoneCap > 0 ? ((sum.qi / qiShare) * STONE_QI * (1 + stats(c).stoneQi)) / qiScale : 0;
+  return { hours, count, routine: followedRoutine(c), ...sum, stoneCap, qiPerStone };
 }
 
 /** How long a setback lasts, after what nodes take off. */
@@ -310,7 +405,7 @@ export function majorCheck(c: Cultivator, which: LadderId): MajorCheck | null {
   const cap = which === 'qi' || realmIndex(target.id) <= realmIndex(c.qi.realm) + 1;
   const bar = fill >= 1;
   const score = marginScore(c, which, target);
-  const rare = c.method ? hasMethod(c.method) && method(c.method).rare : false;
+  const rare = ladderMethod(c, which)?.rare ?? false;
   const barPart = clamp01((fill - 1) / (BAR_CAP - 1));
   const odds = Math.min(
     MAX_ODDS,
@@ -528,39 +623,42 @@ function capBar(l: Ladder, bar: number): number {
   return Math.min(bar, barSize(l) * BAR_CAP);
 }
 
-function withFlag(c: Cultivator, flag: string): Cultivator {
-  return hasFlag(c, flag) ? c : { ...c, flags: [...c.flags, flag] };
+/**
+ * Adds fuel to a ladder's bar from the world, up to 150%: fights and hardship, baths and beast
+ * blood for the body; epiphanies and contemplation for the soul. Cards and items call these.
+ */
+function fromWorld(c: Cultivator, which: LadderId, amount: number): Cultivator {
+  if (amount <= 0) return c;
+  return { ...c, [which]: { ...c[which], bar: capBar(c[which], c[which].bar + amount) } };
 }
 
-/** Opens seclusion slots as the cultivator reaches them, with a chronicle hint each. */
+/** Tempering from the world, in the body bar's units; no art needed. */
+export function temper(c: Cultivator, amount: number): Cultivator {
+  return fromWorld(c, 'body', amount);
+}
+
+/** Nourishment from the world, in the soul bar's units; no art needed. */
+export function nourish(c: Cultivator, amount: number): Cultivator {
+  return fromWorld(c, 'soul', amount);
+}
+
+/**
+ * Opens kinds of hour as the cultivator reaches them, flipping an hour to each by the default
+ * rule, frees sleep at Foundation, and marks a gate reached, with a chronicle line each.
+ */
 export function checkUnlocks(c: Cultivator): { cultivator: Cultivator; notes: Note[] } {
-  let next = c;
-  const notes: Note[] = [];
-  const open = (flag: string, text: string) => {
-    if (hasFlag(next, flag)) return;
-    next = withFlag(next, flag);
-    if (text) notes.push({ kind: 'unlock', text });
-  };
-  const qi = c.qi;
-  for (const u of SLOT_UNLOCKS) {
-    if (u.slot === 'qi' && !c.method) continue;
-    const reached =
-      realmIndex(qi.realm) > 0 ||
-      qi.stage > u.layer ||
-      (qi.stage === u.layer && barFill(qi) >= u.bar);
-    if (reached) open(u.flag, u.text);
-  }
-  if (knownTechniques(c).some((t) => !techniqueSealed(c, t))) {
-    open('seclusion-practice', PRACTICE_UNLOCK_TEXT);
-  }
+  const opened = openHours(c);
+  let next = opened.cultivator;
+  const notes = [...opened.notes];
   const major = majorCheck(next, 'qi');
-  if (major?.bar && major.insight) {
-    open(
-      `ready-${major.target.id}`,
-      major.gate
+  if (major?.bar && major.insight && !hasFlag(next, `ready-${major.target.id}`)) {
+    next = { ...next, flags: [...next.flags, `ready-${major.target.id}`] };
+    notes.push({
+      kind: 'unlock',
+      text: major.gate
         ? `Qi presses against the gate of ${major.target.name}. The breakthrough waits on you.`
         : `Qi presses against the gate of ${major.target.name}, but you hold no ${major.target.gate.replace(/^an? /, '')}.`,
-    );
+    });
   }
   return { cultivator: next, notes };
 }
@@ -573,8 +671,8 @@ export interface CultivateResult {
 }
 
 /**
- * A stretch of at most a day in seclusion: fills the bars, insight and practice, burns stones on
- * qi days, opens slots, and runs minor breakthroughs on the auto setting. Major breakthroughs are
+ * A stretch of at most a day in seclusion: fills the bars, insight and practice from the wheel,
+ * burns stones in qi hours, opens kinds of hour, and runs minor breakthroughs on the auto setting. Major breakthroughs are
  * always the cultivator's call and never happen here, online or off.
  */
 export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): CultivateResult {

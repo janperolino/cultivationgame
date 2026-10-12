@@ -5,39 +5,33 @@
 export const LADDERS = ['qi', 'body', 'soul'] as const;
 export type LadderId = (typeof LADDERS)[number];
 
-/** The five things a seclusion day can go to. */
-export const SLOTS = ['qi', 'body', 'soul', 'study', 'practice'] as const;
-export type SlotId = (typeof SLOTS)[number];
-
-/** The default seclusion plan, in percent, shared among whichever slots are open. */
-export const DEFAULT_SHARES: Record<SlotId, number> = {
-  qi: 60,
-  body: 15,
-  soul: 10,
-  study: 10,
-  practice: 5,
-};
-
-/** Qi units a full day of qi seclusion gives at Qi Condensation, before every multiplier. */
+/**
+ * Qi units a full day of qi seclusion, twelve qi hours, gives at Qi Condensation before every
+ * multiplier. Each hour on the wheel is a twelfth of a day (content/hours.ts).
+ */
 export const QI_PER_DAY = 1;
 /** Tempering and nourishment per full day, in the same units; body and soul ignore the root. */
 export const BODY_PER_DAY = 1.6;
 export const SOUL_PER_DAY = 1.6;
 /** Insight per full day of study, times the qi realm's insight rate. */
 export const INSIGHT_PER_STUDY_DAY = 1;
-/** Insight every seclusion day leaves behind, whatever it went to. */
+/** Insight every waking hour leaves behind, whatever it went to, per full day of them. */
 export const INSIGHT_TRICKLE = 0.05;
 
 /** Each point of Aptitude above 10 adds 5% to every seclusion gain (design § Combat). */
 export const APTITUDE_BASE = 10;
 export const APTITUDE_STEP = 0.05;
 
-/** Qi Condensation layers up to this one ignore root speed and method fit: the tutorial. */
+/**
+ * Qi Condensation layers up to this one are the tutorial: they ignore root speed, method fit and
+ * the element hours. Dawn, discipline, Aptitude and nodes still count.
+ */
 export const TUTORIAL_LAYERS = 3;
 
 /**
  * Stones as fuel (design § Economy): each low-grade stone burned on a day of qi seclusion adds a
  * fifth of the qi a Qi Condensation day gives, up to five a day, both scaled by the realm curve.
+ * A day here is a full day of qi hours; with fewer qi hours on the wheel, the cap shrinks in step.
  */
 export const STONE_QI = 0.2;
 export const STONES_PER_QI_DAY = 5;
@@ -99,42 +93,3 @@ export const GRADE_SCORES: Record<GradeId, number> = {
 export const INSIGHT_MARGIN_FULL = 2;
 /** Each point of margin score adds this to a major breakthrough's odds. */
 export const MAJOR_ODDS_PER_MARGIN = 0.08;
-
-/**
- * Seclusion slots open as you reach them, each with one line of hint (design § Character
- * creation, the first hour). Practice opens with a technique instead (PRACTICE_UNLOCK_TEXT).
- */
-export const SLOT_UNLOCKS: readonly {
-  flag: string;
-  slot: SlotId;
-  /** Opens once qi reaches this Qi Condensation layer with at least this much of its bar. */
-  layer: number;
-  bar: number;
-  text: string;
-}[] = [
-  { flag: 'seclusion-qi', slot: 'qi', layer: 1, bar: 0, text: '' },
-  {
-    flag: 'seclusion-body',
-    slot: 'body',
-    layer: 2,
-    bar: 0,
-    text: 'Qi settles into flesh and bone: body tempering opens beside qi.',
-  },
-  {
-    flag: 'seclusion-study',
-    slot: 'study',
-    layer: 2,
-    bar: 0,
-    text: 'The first insight trickles in. Study days turn seclusion into understanding.',
-  },
-  {
-    flag: 'seclusion-soul',
-    slot: 'soul',
-    layer: 2,
-    bar: 0.5,
-    text: 'In the stillness you sense your own mind: soul nourishment opens.',
-  },
-];
-
-/** The practice slot opens with the first technique you can use. */
-export const PRACTICE_UNLOCK_TEXT = 'A technique to drill: practice days now raise its mastery.';

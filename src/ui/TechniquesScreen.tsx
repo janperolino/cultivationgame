@@ -2,7 +2,8 @@
 // requirements and what is still sealed, and which one practice days go to.
 import { REALMS } from '../content/realms.ts';
 import { MASTERY, type Technique } from '../content/techniques.ts';
-import { dayRates, openSlots } from '../core/cultivation.ts';
+import { dayRates } from '../core/cultivation.ts';
+import { hourKindOpen } from '../core/wheel.ts';
 import type { Cultivator } from '../core/state.ts';
 import {
   canPractice,
@@ -11,7 +12,7 @@ import {
   masteryCheckBonus,
   techniqueSealed,
 } from '../core/techniques.ts';
-import { formatNumber, formatPercent, LADDER_LABELS } from './format.ts';
+import { formatNumber, formatRate, LADDER_LABELS } from './format.ts';
 import { useGame } from './store.ts';
 
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -94,7 +95,7 @@ export function TechniquesScreen() {
   const c = game.player;
   const known = knownTechniques(c);
   const rates = dayRates(c, game.calendar.day);
-  const slotOpen = openSlots(c).includes('practice');
+  const hoursOpen = hourKindOpen(c, 'practice');
 
   return (
     <>
@@ -104,11 +105,13 @@ export function TechniquesScreen() {
           Origin, and each level adds +2 to checks with the technique.
         </p>
         <p className="caption spaced">
-          {!slotOpen
-            ? 'Practice opens once you know a technique you can use.'
+          {!hoursOpen
+            ? 'Practice hours open once you know a technique you can use.'
             : rates.practice > 0
-              ? `Practice gets ${formatPercent(rates.shares.practice)} of each seclusion day: ${rates.practice.toFixed(2)} practice days a day. Change the share on the Cultivate screen.`
-              : 'Practice days go nowhere: pick a technique below.'}
+              ? `Practice gets ${rates.count.practice} of the day's twelve hours: ${formatRate(rates.practice)} practice days a day. Set hours on the Cultivate wheel.`
+              : rates.count.practice === 0
+                ? 'No hour of the day goes to practice: give it one on the Cultivate wheel.'
+                : 'Practice hours go nowhere: pick a technique below.'}
         </p>
       </section>
       <section className="panel" aria-label="Techniques known">

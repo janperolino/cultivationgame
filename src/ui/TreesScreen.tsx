@@ -14,7 +14,7 @@ import {
   type Tree,
   type TreeNode,
 } from '../content/trees/index.ts';
-import { openSlots } from '../core/cultivation.ts';
+import { ladderOpen } from '../core/cultivation.ts';
 import type { Cultivator } from '../core/state.ts';
 import {
   canLearn,
@@ -277,8 +277,7 @@ export function TreesScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   if (!game) return null;
   const c = game.player;
-  const open = openSlots(c);
-  const trees = TREES.filter((t) => t.ladder === 'qi' || open.includes(t.ladder));
+  const trees = TREES.filter((t) => ladderOpen(c, t.ladder));
   const tree = trees.find((t) => t.id === treeId) ?? trees[0]!;
   const pick = selected && tree.nodes.some((n) => n.id === selected) ? selected : null;
 
