@@ -10,6 +10,7 @@ import {
   HEAT_PER_BREATH,
   HEAT_TIMED,
   ORB_DRIFT_S,
+  ORB_EVERY_S,
   ORB_FOCUS,
   ORB_LINGER_S,
   ORB_TIMED,
@@ -277,10 +278,10 @@ describe('breathing', () => {
 });
 
 describe('heat', () => {
-  /** Three greedy grabs off the breath, one right after another. */
+  /** Ten greedy grabs off the breath, one right after another. */
   function greedy(c: Cultivator) {
     let a = sitting(c, { t: EXHALE_T });
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 10; i++) {
       a = { ...a, orbs: [orb(10 + i, a.t)] };
       const [x, y] = orbPosition(a.orbs[0]!, a.t);
       a = catchAt(a, c, x, y).attention;
@@ -329,11 +330,11 @@ describe('the orbs stream', () => {
     return { a, orbs: [...seen.values()] };
   }
 
-  it('brings an orb every ten to twenty seconds, mostly arriving on the inhale', () => {
+  it('brings an orb every five to ten seconds, mostly arriving on the inhale', () => {
     const c = seated();
     const { orbs } = hour(life(c), c);
-    expect(orbs.length).toBeGreaterThan(3600 / 20 - 5);
-    expect(orbs.length).toBeLessThan(3600 / 10 + 5);
+    expect(orbs.length).toBeGreaterThan(3600 / ORB_EVERY_S[1] - 5);
+    expect(orbs.length).toBeLessThan(3600 / ORB_EVERY_S[0] + 5);
     const onInhale = orbs.filter((o) => inhaling(o.arrives)).length / orbs.length;
     expect(onInhale).toBeGreaterThan(0.6);
   });

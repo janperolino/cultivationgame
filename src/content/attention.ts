@@ -26,8 +26,12 @@ export const FOCUS_DRAIN = 1 / 300;
 export const BREATH_S = 6;
 export const INHALE_SHARE = 0.45;
 
-/** An orb drifts in every ten to twenty seconds, while the Abode's figure is on screen. */
-export const ORB_EVERY_S: readonly [min: number, max: number] = [10, 20];
+/**
+ * An orb drifts in every three to six seconds, while the Abode's figure is on screen: a steady
+ * flow of small orbs rather than a few big ones (Jan's call after P1.10, the design's first guess
+ * was ten to twenty). Each is worth a third as much, so a minute of catching fills about the same.
+ */
+export const ORB_EVERY_S: readonly [min: number, max: number] = [3, 6];
 /** The share of orbs whose arrival is moved onto an inhale. */
 export const ORB_INHALE_LEAN = 0.7;
 /** Seconds an orb takes to drift from the edge of the cave to the figure. */
@@ -35,10 +39,10 @@ export const ORB_DRIFT_S = 4;
 /** Seconds it then floats near the figure before it fades. */
 export const ORB_LINGER_S = 10;
 /** At most this many orbs at once, so a long look away doesn't fill the cave. */
-export const ORB_CAP = 4;
+export const ORB_CAP = 6;
 
 /** A catch fills this share of the focus meter; a catch on the inhale is worth this much more. */
-export const ORB_FOCUS = 0.12;
+export const ORB_FOCUS = 0.04;
 export const ORB_TIMED = 1.75;
 
 /** A breath without a pointer (`breathe`) draws in the nearest orb this close to the dantian. */
@@ -48,12 +52,16 @@ export const POINTER_REACH = 15;
 /** Seconds before breathe works again: about a breath and a half, so it can't be mashed. */
 export const BREATHE_COOLDOWN_S = 1.5;
 
-/** Heat a breath adds; a breath on the inhale adds this share of it. Past the limit, unsettled. */
-export const HEAT_PER_BREATH = 0.4;
+/**
+ * Heat a breath adds; a breath on the inhale adds this share of it. Past the limit, unsettled.
+ * Catching half the orbs on the inhale stays just under the cooling; grabbing every orb off the
+ * breath tips over in about three minutes.
+ */
+export const HEAT_PER_BREATH = 0.12;
 export const HEAT_TIMED = 0.5;
 export const HEAT_LIMIT = 1;
 /** Heat lost each second. */
-export const HEAT_COOLING = 0.04;
+export const HEAT_COOLING = 0.02;
 /** Seconds the bonus is lost once the meridians tip into unsettled. */
 export const HEAT_UNSETTLED_S = 40;
 

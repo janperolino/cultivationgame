@@ -184,6 +184,8 @@ export class QiCanvas {
   constructor(
     private canvas: HTMLCanvasElement,
     attention: () => Attention | null,
+    /** The seat's clock this frame, run on smoothly between the game's ticks. */
+    private clock: (a: Attention) => number,
   ) {
     this.ctx = canvas.getContext('2d')!;
     this.attention = attention;
@@ -337,7 +339,7 @@ export class QiCanvas {
     ctx.setTransform(dpr * s, 0, 0, dpr * s, -FIGURE_BOX.x * s * dpr, -FIGURE_BOX.y * s * dpr);
 
     const a = this.attention();
-    const t = a?.t ?? performance.now() / 1000;
+    const t = a ? this.clock(a) : performance.now() / 1000;
     const level = Math.min(1, f.fill);
     const over = Math.max(0, f.fill - 1) / 0.5;
     const loopColor =

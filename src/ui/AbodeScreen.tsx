@@ -119,61 +119,60 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
         </section>
       )}
 
-      <section className="panel abode-hero">
-        <div className="abode-seat">
-          <SeatedFigure game={game} />
-          <SeatMeter game={game} />
+      <section className="panel abode-seat" aria-label="The seat">
+        <SeatedFigure game={game} />
+        <SeatMeter game={game} />
+      </section>
+
+      <section className="panel abode-info">
+        <h2 className="realm-title">
+          {formatLadder(game.player.qi)}
+          <small>
+            {game.player.name} · {game.player.pronouns}
+          </small>
+        </h2>
+        <div className="bars">
+          <LadderBar game={game} which="qi" why={<QiWhy game={game} />} />
+          {ladderOpen(game.player, 'body') && <LadderBar game={game} which="body" />}
+          {ladderOpen(game.player, 'soul') && <LadderBar game={game} which="soul" />}
+          <AgeBar game={game} />
         </div>
-        <div className="abode-info">
-          <h2 className="realm-title">
-            {formatLadder(game.player.qi)}
-            <small>
-              {game.player.name} · {game.player.pronouns}
-            </small>
-          </h2>
-          <div className="bars">
-            <LadderBar game={game} which="qi" why={<QiWhy game={game} />} />
-            {ladderOpen(game.player, 'body') && <LadderBar game={game} which="body" />}
-            {ladderOpen(game.player, 'soul') && <LadderBar game={game} which="soul" />}
-            <AgeBar game={game} />
+        <dl className="stats">
+          <div>
+            <dt>Insight</dt>
+            <dd>
+              {formatNumber(game.player.insight.current)}{' '}
+              <Why label="Where insight comes from">
+                {formatNumber(game.player.insight.current)} to spend on tree nodes, and{' '}
+                {formatNumber(game.player.insight.earned)} earned in all. Breakthroughs count what
+                you have earned, so spending never delays them. Today&apos;s wheel gives about{' '}
+                {formatRate(rates.insight)} a day.
+              </Why>
+            </dd>
           </div>
-          <dl className="stats">
-            <div>
-              <dt>Insight</dt>
-              <dd>
-                {formatNumber(game.player.insight.current)}{' '}
-                <Why label="Where insight comes from">
-                  {formatNumber(game.player.insight.current)} to spend on tree nodes, and{' '}
-                  {formatNumber(game.player.insight.earned)} earned in all. Breakthroughs count what
-                  you have earned, so spending never delays them. Today&apos;s wheel gives about{' '}
-                  {formatRate(rates.insight)} a day.
-                </Why>
-              </dd>
-            </div>
-            <div>
-              <dt>Spirit stones</dt>
-              <dd>
-                {formatNumber(game.player.stones)}{' '}
-                <Why label="What spirit stones do here">
-                  {game.player.plan.burnStones
-                    ? `On qi days you burn up to ${rates.stoneCap} stones, each adding ${formatRate(rates.qiPerStone)} qi. Turn burning off on the Cultivate screen.`
-                    : 'Burning stones is off: they wait in your pouch. Turn it on from the Cultivate screen.'}
-                </Why>
-              </dd>
-            </div>
-            <div>
-              <dt>Today</dt>
-              <dd>
-                <WheelStrip hours={effectiveWheel(game.player)} /> {today}
-                {rates.routine && ` · ${rates.routine.name}`}
-              </dd>
-            </div>
-          </dl>
-          <p className="caption spaced">
-            Lifespan {realm(game.player.qi.realm).lifespan} years at{' '}
-            {realm(game.player.qi.realm).name}.
-          </p>
-        </div>
+          <div>
+            <dt>Spirit stones</dt>
+            <dd>
+              {formatNumber(game.player.stones)}{' '}
+              <Why label="What spirit stones do here">
+                {game.player.plan.burnStones
+                  ? `On qi days you burn up to ${rates.stoneCap} stones, each adding ${formatRate(rates.qiPerStone)} qi. Turn burning off on the Cultivate screen.`
+                  : 'Burning stones is off: they wait in your pouch. Turn it on from the Cultivate screen.'}
+              </Why>
+            </dd>
+          </div>
+          <div>
+            <dt>Today</dt>
+            <dd>
+              <WheelStrip hours={effectiveWheel(game.player)} /> {today}
+              {rates.routine && ` · ${rates.routine.name}`}
+            </dd>
+          </div>
+        </dl>
+        <p className="caption spaced">
+          Lifespan {realm(game.player.qi.realm).lifespan} years at{' '}
+          {realm(game.player.qi.realm).name}.
+        </p>
       </section>
       <CardFeed />
     </>

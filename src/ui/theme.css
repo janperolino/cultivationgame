@@ -578,32 +578,19 @@ select {
 }
 
 /* The Abode's seated cultivator, the dantian glowing with qi as the bar fills. */
-.abode-hero {
+/* The seat has a panel of its own, the figure large and centred with its meter under it; the
+   cultivator's realm, bars and numbers sit in the panel after it. */
+.abode-seat {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  gap: 4px 26px;
-}
-
-.abode-info {
-  flex: 1 1 300px;
-  min-width: 0;
+  gap: 10px;
 }
 
 /* The figure and the canvas over it share one box, in the figure's own units (192 by 156). */
-.abode-seat {
-  display: flex;
-  flex: 0 1 300px;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  margin: 0 auto;
-}
-
 .seat-figure {
   position: relative;
-  width: min(300px, 100%);
+  width: min(400px, 100%);
   aspect-ratio: 192 / 156;
   touch-action: none;
   cursor: crosshair;
@@ -630,7 +617,8 @@ select {
 .seat-meter {
   display: grid;
   gap: 5px;
-  width: min(300px, 100%);
+  width: min(360px, 100%);
+  text-align: center;
 }
 
 .seat-meter .caption {
@@ -640,6 +628,7 @@ select {
 .seat-speed {
   display: flex;
   align-items: baseline;
+  justify-content: center;
   gap: 8px;
 }
 

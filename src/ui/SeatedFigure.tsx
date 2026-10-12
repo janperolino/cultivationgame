@@ -32,7 +32,7 @@ import {
   type FigureFrame,
   type FigureState,
 } from './qiCanvas.ts';
-import { holdStill, onBreath, showAbode, useSeat } from './seat.ts';
+import { holdStill, onBreath, seatTime, showAbode, useSeat } from './seat.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { useGame } from './store.ts';
 
@@ -96,7 +96,11 @@ export function SeatedFigure({ game }: { game: GameState }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const e = new QiCanvas(canvas, () => useSeat.getState().attention);
+    const e = new QiCanvas(
+      canvas,
+      () => useSeat.getState().attention,
+      (a) => seatTime(a),
+    );
     engine.current = e;
     const visibility = () => (document.visibilityState === 'visible' ? e.start() : e.stop());
     visibility();

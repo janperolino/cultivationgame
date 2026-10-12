@@ -29,6 +29,10 @@ interface SeatStore {
 export const useSeat = create<SeatStore>()(() => ({ key: null, attention: null }));
 
 let lastInput = 0;
+/** When the seat's clock last moved, in page time; the figure runs it on between ticks. */
+let tickedAt = 0;
+/** The game ticks four times a second; never run the clock on further than this past a tick. */
+const MAX_LEAD_S = 0.5;
 let abodeShown = 0;
 const breathListeners = new Set<(b: Breath) => void>();
 
@@ -77,6 +81,7 @@ export function tickSeat(s: GameState, dt: number): { seat: Seat; state: GameSta
     abode: abodeShown > 0 && !s.ended,
     hour: hourOfDay(s.calendar.day),
   });
+  tickedAt = performance.now();
   useSeat.setState({ attention: a });
   return { seat: s.ended ? AWAY : seatOf(a, s.player), state: keepOrbStream(s, a) };
 }
@@ -89,10 +94,20 @@ function apply(s: GameState, r: Breath): GameState {
 }
 
 /** The pointer or a finger passes (x, y) in figure units; `inPlace` when orbs are drawn still. */
+/**
+ * The seat's clock now, in session seconds: the last tick's, run on by the page time since, so
+ * orbs move smoothly every frame rather than in the loop's quarter-second steps.
+ */
+export function seatTime(a: Attention, now = performance.now()): number {
+  return a.t + Math.min(MAX_LEAD_S, Math.max(0, (now - tickedAt) / 1000));
+}
+
 export function catchNow(s: GameState, x: number, y: number, inPlace: boolean): GameState {
   const a = attentionFor(s);
   if (!a.orbs.length) return s;
-  const r = catchAt(a, s.player, x, y, inPlace);
+  // Catch where the orbs are drawn now, then hand the clock back to the loop.
+  const r0 = catchAt({ ...a, t: seatTime(a) }, s.player, x, y, inPlace);
+  const r = { ...r0, attention: { ...r0.attention, t: a.t } };
   return r.caught.length ? apply(s, r) : s;
 }
 
