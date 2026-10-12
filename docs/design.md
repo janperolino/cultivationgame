@@ -351,7 +351,7 @@ Everything you can carry is one record, the way a method is a bundle of fields, 
 
 | Use | What the field carries | Examples |
 |---|---|---|
-| equip | a slot (weapon, armor, ring, pouch) and what it does worn | a saber, a water-silk robe, a storage ring |
+| equip | a slot (weapon, armor, ring, pouch or treasure) and what it does worn | a saber, a water-silk robe, a storage ring, a fire bead |
 | consume | an effect, a dose for toxicity, and which ladder or stat it feeds | a Qi-Gathering Pill, a spirit fruit, a vial of beast blood |
 | fight | a one-shot action in combat: form, element or damage type, power, spent on use | an attack talisman, a shield talisman, a poison needle, beast-luring incense |
 | contemplate | a contemplation source (Cultivation, insight): lump or trickle, yield and supply | a jade slip, a sword scar on a cliff stone, a hundred-year herb |
@@ -374,12 +374,14 @@ A pill has consume alone; an old ginseng has consume, ingredient and contemplate
 
 | Tier | Pouch slot | Ring slot |
 |---|---|---|
-| Qi Condensation | storage pouch (储物袋), +20 squares | none; the slot takes a treasure ring |
+| Qi Condensation | storage pouch (储物袋), +20 squares | none yet |
 | Foundation | a bigger pouch, +40 | storage ring (储物戒), +60 |
 | Core Formation | spatial sack or sleeve (乾坤袋), +120, holds living things | ring, +180 |
 | Nascent Soul and up | a small world in a bead or jade, +360 and a garden | ring, +540 |
 
-A pouch is cloth: anyone can open it, a thief can cut it off, and it goes with you when you die. A storage ring opens to divine sense, so it needs a soul at its tier or a qi realm there, whichever you reach first, and a dead elder's ring waits in your bag until you can; it bonds like any artifact and refuses a stranger. The ring slot also takes treasure rings with properties, a fire ring, a warding ring, so a storage ring costs that choice; a storage ring with properties is a rarer thing. Stones are a count in any of them.
+A pouch is cloth: anyone can open it, a thief can cut it off, and it goes with you when you die. A storage ring opens to divine sense, so it needs a soul at its tier or a qi realm there, whichever you reach first, and a dead elder's ring waits in your bag until you can; it bonds like any artifact and refuses a stranger. Both slots are storage only. Stones are a count in any of them.
+
+**Treasure slots** hold artifacts that are properties alone: a fire bead, a warding jade, a treasure ring, a soul-calming bell. They carry no squares and no weapon rule, only their rarity's properties and a bond. You start with none, and the slots come from nodes: one notable in each tier of the Qi tree and one in each tier of the Soul tree opens a slot, so a realm is worth two and the count leans on both trees. The Bag shows them beside the four gear squares as they open.
 
 **Bonding.** Artifacts from blue up bond to a cultivator by use, on the mastery scale, Glimpse to Origin (Cultivation, mastery): fight turns with it count as practice, and feeding it stones in seclusion counts as hours. Each level unlocks one of its properties, in the order the item lists them, and cuts the above-your-realm penalty a step: −4 to hit at Glimpse, −2 at Mastery, nothing at Domain, and at Origin a weapon a tier up counts its full tier gap. At gold and red an artifact spirit wakes at Domain: it carries the unique property, speaks in scenes (GLM gives it a voice, the engine its wants), and can refuse an owner it hates. A bonded artifact works at white for anyone else, and a lineage heirloom's bond passes to an heir at Glimpse.
 
@@ -390,6 +392,28 @@ A pouch is cloth: anyone can open it, a thief can cut it off, and it goes with y
 **Aptitude** moves only by opportunities, and never by the shop: a pill from purple up (+1, one such pill counts per realm), a marrow cleansing or a purification rite, a bloodline awakening, a gold manual's node, a spirit spring in a secret realm, a dao companion's paired method. Each is +1 Aptitude, worth 5% on every seclusion gain, and the rites have no cap, only rarity.
 
 **Loot and shops.** A source has a tier band, a kind table and a bias. The band is the realm it serves: a Border Wilds stall sells tier 1, a Foundation elder's ring holds tier 1 and 2. The kind table says what it holds: a stall pills, talismans and herbs; a vault manuals and gear; a beast its parts. The bias shifts the shared rarity table (Tier, rarity and pedigree): each rarity's weight is multiplied by b to the power of its step from gray, with a stall at 0.6, a sect shop at 1, a vault or ruin at 1.6 and an inheritance at 2.5, so a stall shows blue about one lot in twenty and never gold, a vault rolls gold about one lot in 25, and an inheritance rolls gold about one in nine and red one in thirty. Loot rolls on the `loot` stream, a drop at a time.
+
+
+## Generated methods, techniques, manuals and items
+
+The world is too big to write by hand, so most of what it holds is generated and only the memorable part is authored. A method, a technique, a manual and an item are all bundles of independent fields (Cultivation, methods; Items and gear), so one rule fills any of them. Settled in D2.
+
+**One generator.** Roll a tier and a rarity on the shared table with the source's bias (Items and gear, loot and shops), pick a theme, fill the fields from the theme's tables, name it once and store it in the save by its seed, like a filled-in village. White to blue is fully generated. Purple is generated too, since purple is 4% of rolls and too many to write, but from authored property pools and name words. Gold and red are written by hand, every one, so anything a player remembers by name was written by a person. A generated thing never changes once seen: the sword in a stall is the same sword when you come back, and two players with the same seed find the same sword.
+
+**Themes make it local.** A theme is a tag bundle: an element, a Dao, a race or animal, and a place or power from the atlas. It picks the name words and hanzi, the property pool and the material. The karst gives Sinkhole Stone Fist, the strait gives Undertow Palm, and the Night Bridge gives a method that gains at night. A source's themes come from where it stands, so a Border Wilds stall sells Border Wilds things and a sword sect's vault holds sword things, with nobody writing them.
+
+What each kind fills in:
+
+- Methods: the theme sets the element, the fit by root kind, the growth profile (pool-heavy, purity-heavy or balanced), the requirements and the property pool. Upkeep is rolled, rare at green and sometimes from blue. Circulation follows rarity. A generated line gets its next chapter generated at the next tier when the world hands it over.
+- Techniques: the path sets the Dao and the form, the theme the element, power is the tier's baseline times the gap to the rarity's exponent, qi cost follows power, and the name is a theme word and a form word, the way Ember Palm reads.
+- Manuals: an item with the read use. The kind sets the size by rarity, a formula one or two nodes, an art a technique and its nodes, a method a method and its nodes, a style craft nodes and recipes; the nodes are stat effects from the property pool, with requirements between them when there are more than three.
+- Gear: a kind, a material from the theme that sets armor's resist and the look, and properties from the kind's pool.
+- Pills and talismans: an effect from a short list for now, qi, body, soul, healing, detox, an offering, and the talisman effects, until D4's effect table replaces it.
+- Materials: the tier and the ingredient tags of the beast or plant that dropped them, and an age for herbs.
+
+**Property pools are the authored part.** Per theme and kind, a few dozen entries each, a stat effect with a size by rarity, as properties were settled (Cultivation, methods). Rarity sets how many a thing takes from the pool. That is the real content work, and it is finite: a pool is a list, and a new theme is a new list.
+
+**Names once.** A template name by default, hanzi from the theme's word table, and GLM may rename a thing when a key is set, the way small places work. Gold and red names are never generated.
 
 
 ## Enemies, beasts and the people you meet
@@ -1070,7 +1094,7 @@ Settle each before the milestone that needs it. World content is drafted and che
 - [ ] Exploration: travel, trips, look around and the open, gated, hostile and deadly rule are settled under The world; left for D3: the encounter tables per region in the six kinds, scene building from the card format, ruins and inheritances, fleeing, dying in the world, ways to flee, hide or talk past foes a realm or more above you, and the fog's rules, meaning what travel, divine sense, maps and rumors each reveal
 - [ ] NPC basics: the person record and its log are settled under Professions, people and powers; left for D3: what each NPC knows, how talk changes relationships, the intents and motives scenes draw on
 - [ ] Story decks: the seclusion deck in M1, then a deck per milestone; what each card trades and how often it comes
-- [ ] Procedural methods and items (D2): a method is already a bundle of independent fields, so white-to-blue methods and items can be generated from tables and named once, as manuals are; gold and red written by hand. Loot and shops hand them out on the shared table
+- [x] Procedural methods and items (D2, § Generated methods, techniques, manuals and items): a method is already a bundle of independent fields, so white-to-blue methods and items can be generated from tables and named once, as manuals are; gold and red written by hand. Loot and shops hand them out on the shared table
 - [ ] NPC pace (D2): NPCs progress at the away rate, so an attended player outpaces a same-pedigree NPC by about double; the pedigree tables are tuned against the away row, and that gap is the player's edge for playing
 - [ ] The Breath branch beyond tier 1 (D2 and later): Attuned Breath, Heaven and Earth Resonance, Circulating Thought, Unknotting, and what each realm's vocabulary adds
 - [ ] Hands-on crafts (D4): alchemy's fire control and formations as placing, laying nodes on the abode's grid so the lines close, on the qi-handling grammar; the effect table behind generated recipes; styles and their chapters; technique forms in practice hours as a maybe, the first thing to cut if it feels like filler
