@@ -1,0 +1,445 @@
+<!doctype html>
+<!-- The reference mockup for the Bag (design.md § UI and screens, the inventory). Open it in a browser; it loads fonts from Google Fonts and nothing else. Squares, not volume: the grid is the capacity, bulky things take more than one square, gear hangs on the figure, and stones are a count. Click an item to read it, drag it onto a gear square to equip it, or use the buttons. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Severed Heaven Bag</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500&family=Ma+Shan+Zheng&display=swap">
+<style>
+:root {
+  --void: #040507;
+  --page: #020203;
+  --glass: rgba(10, 12, 16, 0.8);
+  --edge: rgba(255, 255, 255, 0.075);
+  --edge-strong: rgba(255, 255, 255, 0.14);
+  --sheen: rgba(255, 255, 255, 0.05);
+  --well: rgba(0, 0, 0, 0.55);
+  --text: #e9e5da;
+  --muted: #8d949d;
+  --accent: #d6ab4c;
+  --accent-soft: rgba(214, 171, 76, 0.12);
+  --crack: #7fc7d9;
+  /* Rarity's own palette: never the accent, never the warning color. */
+  --r-gray: #8d949d;
+  --r-white: #e9e5da;
+  --r-green: #86c282;
+  --r-blue: #6fa9e3;
+  --r-purple: #b48ae6;
+  --r-gold: #eb9a3c;
+  --r-red: #c8343f;
+  --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', serif;
+  --font-ui: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --square: 74px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--page); color: var(--text); font: 14px/1.55 var(--font-ui); -webkit-font-smoothing: antialiased; margin: 0; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 22px; }
+.hanzi { font-family: var(--font-brush); font-weight: 400; }
+.muted { color: var(--muted); }
+.eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 5vw, 44px); line-height: 1.1; margin: 4px 0 6px; text-wrap: balance; }
+.intro p { margin: 0; max-width: 66ch; }
+.caption { font-size: 12.5px; color: var(--muted); margin: 0; }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.stage { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--edge); background: var(--void); }
+.stage > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.shell { position: relative; display: grid; grid-template-columns: 184px minmax(0, 1fr) 272px; min-height: 620px; }
+.glass { background: var(--glass); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); box-shadow: inset 0 1px 0 var(--sheen); }
+.menu { border-right: 1px solid var(--edge); padding: 20px 12px; display: grid; align-content: start; gap: 18px; }
+.brand { display: flex; align-items: baseline; gap: 8px; padding: 0 8px; }
+.brand b { font-family: var(--font-display); font-weight: 600; font-size: 21px; }
+.brand .hanzi { color: var(--accent); font-size: 18px; }
+.menu ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.menu li { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; border-radius: 6px; color: var(--muted); border: 1px solid transparent; }
+.menu li .hanzi { font-size: 15px; opacity: 0.7; }
+.menu li.on { color: var(--text); border-color: var(--edge); background: rgba(255, 255, 255, 0.03); box-shadow: inset 2px 0 0 var(--accent); border-radius: 0 6px 6px 0; }
+.menu li.on .hanzi { color: var(--accent); opacity: 1; }
+
+.main { padding: 22px 24px 26px; display: grid; align-content: start; gap: 16px; min-width: 0; }
+.screen-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 18px; }
+.screen-title { font-family: var(--font-display); font-weight: 600; font-size: 32px; margin: 0; }
+.screen-title .hanzi { color: var(--accent); font-size: 23px; margin-left: 6px; }
+.purse { display: flex; flex-wrap: wrap; gap: 6px 18px; font-variant-numeric: tabular-nums; }
+.purse b { font-weight: 500; }
+.panel { border: 1px solid var(--edge); border-radius: 9px; padding: 14px 16px; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; margin-bottom: 10px; }
+.panel h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; margin: 0; }
+.panel h3 .hanzi { color: var(--accent); font-size: 16px; margin-left: 6px; }
+.room { font-size: 12.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+
+/* The "?" from P1.4: the words first, the sums on request. */
+.why { position: relative; display: inline-block; }
+.why > button { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--edge-strong); background: transparent; color: var(--muted); font: 600 12px var(--font-ui); cursor: pointer; padding: 0; line-height: 1; }
+.why > button[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
+.why > div { display: none; position: absolute; z-index: 5; right: 0; top: 26px; width: min(300px, 80vw); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--edge-strong); background: rgba(8, 10, 13, 0.96); font-size: 12.5px; color: var(--text); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); }
+.why > button[aria-expanded="true"] + div { display: block; }
+
+/* The figure and its gear squares. */
+.body-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.figure-panel { display: grid; grid-template-columns: auto auto auto; justify-content: center; align-items: center; gap: 14px 22px; }
+.gear-col { display: grid; gap: 14px; }
+.seated { display: block; width: 168px; height: auto; overflow: visible; }
+.seated-head, .seated-body { fill: #141820; stroke: rgba(127, 199, 217, 0.3); stroke-width: 0.7; }
+.dantian-core { fill: #c5e8f0; filter: drop-shadow(0 0 3px var(--crack)); }
+.dantian-halo { fill: url(#dantian-glow); transform-box: fill-box; transform-origin: center; animation: breathe 4.8s ease-in-out infinite; }
+.seated-aura { fill: url(#dantian-aura); opacity: 0.18; }
+@keyframes breathe { 0%, 100% { transform: scale(0.94); opacity: 0.85; } 50% { transform: scale(1.06); opacity: 1; } }
+
+.square { width: var(--square); height: var(--square); border-radius: 8px; border: 1px solid var(--edge); background: var(--well); position: relative; display: grid; place-items: center; transition: border-color 150ms ease, box-shadow 150ms ease; }
+.square.slot::before { content: attr(data-label); position: absolute; inset: auto 0 5px; text-align: center; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); pointer-events: none; }
+.square.slot .hz { position: absolute; top: 4px; right: 7px; font-size: 13px; color: var(--muted); opacity: 0.6; pointer-events: none; }
+.square.slot.has-item::before, .square.slot.has-item .hz { display: none; }
+.square.over { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 0 14px var(--accent-soft); }
+.square.refuse { border-color: #e08a6a; }
+
+/* The grids. */
+.grid { display: grid; grid-template-columns: repeat(5, var(--square)); grid-auto-rows: var(--square); grid-auto-flow: dense; gap: 8px; }
+.grid.home { grid-template-columns: repeat(8, var(--square)); }
+.grid .square { width: auto; height: auto; }
+.item { cursor: grab; display: grid; grid-template-rows: auto 1fr auto; padding: 6px 6px 5px; text-align: center; user-select: none; border-color: color-mix(in srgb, var(--r, var(--edge)) 42%, transparent); }
+.item:hover, .item.selected { border-color: color-mix(in srgb, var(--r, var(--text)) 75%, transparent); background: rgba(0, 0, 0, 0.7); }
+.item.selected { box-shadow: 0 0 0 1px var(--accent); }
+.item.dragging { opacity: 0.4; }
+.item.wide { grid-column: span 2; }
+.item.tall { grid-row: span 2; }
+.item .glyph { font-family: var(--font-brush); font-size: 24px; line-height: 1; color: var(--r, var(--text)); padding-top: 2px; }
+.item.tall .glyph { font-size: 44px; align-self: center; }
+.item .name { font-size: 10.5px; line-height: 1.2; color: var(--r, var(--text)); align-self: end; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.item .count { position: absolute; right: 5px; top: 4px; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text); background: rgba(0, 0, 0, 0.6); border-radius: 4px; padding: 0 4px; }
+.item .count.full { color: var(--accent); }
+.item.r-gold { box-shadow: 0 0 12px color-mix(in srgb, var(--r-gold) 28%, transparent); }
+.item.r-red { box-shadow: 0 0 12px color-mix(in srgb, var(--r-red) 32%, transparent); }
+.item.r-gold .glyph, .item.r-gold .name { text-shadow: 0 0 8px color-mix(in srgb, var(--r-gold) 55%, transparent); }
+.item.r-red .glyph, .item.r-red .name { text-shadow: 0 0 8px color-mix(in srgb, var(--r-red) 55%, transparent); }
+.item.unknown { border-style: dashed; --r: var(--muted); }
+.item.above { --above: 1; }
+.item .tag { position: absolute; left: 5px; top: 4px; font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: #e08a6a; }
+.r-gray { --r: var(--r-gray); } .r-white { --r: var(--r-white); } .r-green { --r: var(--r-green); } .r-blue { --r: var(--r-blue); } .r-purple { --r: var(--r-purple); } .r-gold { --r: var(--r-gold); } .r-red { --r: var(--r-red); }
+
+/* The context panel: what you picked up. */
+.context { border-left: 1px solid var(--edge); padding: 20px 18px; display: grid; align-content: start; gap: 14px; }
+.context h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; margin: 0; }
+.detail .title { font-family: var(--font-display); font-weight: 600; font-size: 22px; line-height: 1.15; color: var(--r, var(--text)); margin: 0; }
+.detail .title .hanzi { font-size: 17px; color: var(--muted); margin-left: 6px; }
+.detail .kind { font-size: 12.5px; color: var(--muted); margin: 4px 0 10px; }
+.detail .kind b { font-weight: 500; color: var(--r, var(--text)); }
+.detail p { margin: 0 0 10px; }
+.detail .sum { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--edge); padding-top: 8px; margin-top: 4px; display: none; }
+.detail.open .sum { display: block; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.btn { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 7px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.btn:hover { filter: brightness(1.15); }
+.btn.quiet { border-color: var(--edge-strong); background: transparent; color: var(--muted); }
+.btn[disabled] { opacity: 0.4; cursor: default; filter: none; }
+.legend { display: grid; gap: 5px; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--edge); padding-top: 12px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: -1px; margin-right: 8px; background: var(--r); }
+.legend .r-gold i, .legend .r-red i { box-shadow: 0 0 6px var(--r); }
+
+@media (max-width: 900px) {
+  :root { --square: 60px; }
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .menu { border-right: 0; border-bottom: 1px solid var(--edge); padding: 12px; }
+  .menu ul { display: flex; flex-wrap: wrap; gap: 4px; }
+  .menu li { padding: 5px 9px; }
+  .menu li .hanzi { display: none; }
+  .menu li.on { border-radius: 6px; box-shadow: inset 0 -2px 0 var(--accent); }
+  .context { border-left: 0; border-top: 1px solid var(--edge); }
+  .main { padding: 16px 14px; }
+  .figure-panel { gap: 10px 14px; }
+  .seated { width: 120px; }
+  .grid { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: var(--square); }
+  .grid.home { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .item .glyph { font-size: 20px; } .item .name { font-size: 9.5px; }
+}
+@media (prefers-reduced-motion: reduce) { .dantian-halo { animation: none; } }
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <p class="eyebrow">Severed Heaven · bag study</p>
+    <h1>The bag, in squares</h1>
+    <p class="muted">A throwaway mockup, outside the project. The grid is the capacity: pills and herbs stack to 99 a square, ore to 20, gear takes one and a furnace takes four. Gear hangs on the cultivator, stones are a count, and what you leave at home sits in a second grid. Click a thing to read it; drag it onto a gear square to wear it.</p>
+  </header>
+
+  <div class="stage" id="stage">
+    <canvas id="shell-canvas" aria-hidden="true"></canvas>
+    <div class="shell">
+      <nav class="menu glass" aria-label="Screens (mock)">
+        <div class="brand"><b>Severed Heaven</b><span class="hanzi">断天</span></div>
+        <ul>
+          <li>Abode <span class="hanzi">洞府</span></li>
+          <li>Cultivate <span class="hanzi">修炼</span></li>
+          <li>Trees <span class="hanzi">道树</span></li>
+          <li>Techniques <span class="hanzi">功法</span></li>
+          <li class="on">Bag <span class="hanzi">行囊</span></li>
+          <li>Character <span class="hanzi">命格</span></li>
+          <li>People <span class="hanzi">人缘</span></li>
+          <li>Chronicle <span class="hanzi">史录</span></li>
+          <li>Settings <span class="hanzi">设置</span></li>
+        </ul>
+      </nav>
+
+      <main class="main">
+        <div class="screen-head">
+          <h2 class="screen-title">Bag <span class="hanzi">行囊</span></h2>
+          <div class="purse"><span class="muted">Spirit stones <b style="color:var(--text)">42 low</b></span><span class="muted">Silver <b style="color:var(--text)">1,300 taels</b></span></div>
+        </div>
+
+        <section class="panel glass" aria-label="Worn gear">
+          <div class="panel-head"><h3>Lin Mo <span class="hanzi">林墨</span></h3><span class="room">Qi Condensation, fifth layer</span></div>
+          <div class="figure-panel">
+            <div class="gear-col">
+              <div class="square slot" data-slot="weapon" data-label="Weapon"><span class="hz hanzi">兵</span></div>
+              <div class="square slot" data-slot="ring" data-label="Ring"><span class="hz hanzi">戒</span></div>
+            </div>
+            <svg class="seated" viewBox="-64 -64 128 116" role="img" aria-label="Lin Mo sits in seclusion.">
+              <defs>
+                <radialGradient id="dantian-glow"><stop offset="0%" stop-color="#c5e8f0"/><stop offset="35%" stop-color="#7fc7d9" stop-opacity="0.55"/><stop offset="100%" stop-color="#7fc7d9" stop-opacity="0"/></radialGradient>
+                <radialGradient id="dantian-aura"><stop offset="0%" stop-color="#7fc7d9" stop-opacity="0.55"/><stop offset="100%" stop-color="#7fc7d9" stop-opacity="0"/></radialGradient>
+              </defs>
+              <circle class="seated-aura" cx="0" cy="9" r="46"/>
+              <circle class="seated-head" cx="0" cy="-41" r="10.5"/>
+              <path class="seated-body" fill-rule="evenodd" d="M0 -31 L-5 -31 C-7 -27 -13 -26 -19 -24 C-26 -21 -28 -14 -28 -6 C-28 2 -30 9 -33 15 C-37 20 -44 22 -49 26 C-54 30 -53 37 -46 39 C-32 43 -14 42 0 42 C14 42 32 43 46 39 C53 37 54 30 49 26 C44 22 37 20 33 15 C30 9 28 2 28 -6 C28 -14 26 -21 19 -24 C13 -26 7 -27 5 -31 Z M-20 -13 C-18 -5 -17 2 -14 8 C-18 6 -21 -3 -20 -13 Z M20 -13 C18 -5 17 2 14 8 C18 6 21 -3 20 -13 Z"/>
+              <circle class="dantian-halo" cx="0" cy="9" r="15"/>
+              <circle class="dantian-core" cx="0" cy="9" r="3.4"/>
+            </svg>
+            <div class="gear-col">
+              <div class="square slot" data-slot="armor" data-label="Armor"><span class="hz hanzi">甲</span></div>
+              <div class="square slot" data-slot="pouch" data-label="Pouch"><span class="hz hanzi">囊</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel glass" aria-label="Storage pouch">
+          <div class="panel-head">
+            <h3>Storage pouch <span class="hanzi">储物袋</span></h3>
+            <span class="room"><span id="bag-room"></span><span class="why"><button type="button" aria-expanded="false" aria-label="How the room is counted">?</button><div id="bag-why"></div></span></span>
+          </div>
+          <div class="grid" id="bag" data-cap="20"></div>
+        </section>
+
+        <section class="panel glass" aria-label="Left at the cave">
+          <div class="panel-head">
+            <h3>Left at the cave <span class="hanzi">洞府</span></h3>
+            <span class="room"><span id="home-room"></span><span class="why"><button type="button" aria-expanded="false" aria-label="How the cave's room is counted">?</button><div id="home-why"></div></span></span>
+          </div>
+          <div class="grid home" id="home" data-cap="48"></div>
+          <p class="caption" style="margin-top:10px">When you move abode, this stays until you fetch it, hire a cart or pay a caravan.</p>
+        </section>
+      </main>
+
+      <aside class="context glass" aria-label="What you picked up">
+        <h3>In hand</h3>
+        <div class="detail" id="detail"><p class="muted">Pick up something to read it.</p></div>
+        <div class="legend" aria-label="Rarity">
+          <span class="r-gray"><i></i>Gray: flawed</span>
+          <span class="r-white"><i></i>White: plain</span>
+          <span class="r-green"><i></i>Green</span>
+          <span class="r-blue"><i></i>Blue</span>
+          <span class="r-purple"><i></i>Purple</span>
+          <span class="r-gold"><i></i>Gold: glows</span>
+          <span class="r-red"><i></i>Red: named</span>
+          <span class="muted" style="margin-top:4px">A thing's name wears its rarity; its tier is a word beside it.</span>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <p class="caption">Squares, not volume: a number on every item and a sum to read is the spreadsheet the game is escaping. Bulk is a thing taking more than one square. The "?" keeps the counts for anyone who wants them.</p>
+</div>
+
+<script>
+(() => {
+  // ---- Items. Rarity colors the name; tier is a word; kind picks the glyph and the stack cap.
+  const CAP = { pill: 99, talisman: 99, herb: 99, material: 99, ore: 20, weapon: 1, armor: 1, ring: 1, pouch: 1, bulk: 1, token: 1, mortal: 99 };
+  const GLYPH = { pill: '丹', talisman: '符', herb: '草', material: '核', ore: '矿', weapon: '刀', armor: '衣', ring: '戒', pouch: '囊', bulk: '鼎', token: '牌', mortal: '米' };
+  const ITEMS = [
+    { id: 'spear', name: 'Patrol Spear', hz: '巡枪', r: 'white', tier: 'Qi Condensation', kind: 'weapon', glyph: '枪', at: 'weapon', text: 'The garrison issues one to every cadet and takes it back from the dead.', sum: 'Power 40 on a basic strike; no properties at white. A green spear would add +1 to hit.' },
+    { id: 'coat', name: 'Garrison Coat', hz: '军镇袍', r: 'gray', tier: 'Qi Condensation', kind: 'armor', at: 'armor', text: 'Padded, heavy and issued. It turns a blade once and tires you all day.', sum: 'Gray is flawed: physical resistance 8%, Agility −1 while worn.' },
+    { id: 'pouch', name: 'Storage Pouch', hz: '储物袋', r: 'green', tier: 'Qi Condensation', kind: 'pouch', at: 'pouch', text: 'Twenty squares of folded space, bought with a season of wages.', sum: 'Capacity 20 squares. A storage ring at Foundation holds 60; the great rings hold hundreds.' },
+    { id: 'qi-pill', name: 'Qi-Gathering Pill', hz: '聚气丹', r: 'white', tier: 'Qi Condensation', kind: 'pill', n: 12, text: 'Swallowed in seclusion, it is a full day of qi in one breath.', sum: 'One pill adds a day of qi at your rate, 0.9 qi today. Bought at 3 low each from the Gate hall; brewed from 4 Jade Dew Grass.' },
+    { id: 'foundation-pill', name: 'Foundation Pill', hz: '筑基丹', r: 'blue', tier: 'Foundation', kind: 'pill', n: 1, text: 'The gate into Foundation. One attempt, success or not.', sum: 'Used up by the attempt. The Gate\'s reward at layer 9, or about 1 mid at an auction if one comes up.' },
+    { id: 'jade-dew', name: 'Jade Dew Grass', hz: '玉露草', r: 'green', tier: 'Qi Condensation', kind: 'herb', n: 23, text: 'The main herb of a Qi-Gathering Pill. An old plant is worth far more than a young one.', sum: 'Three-year grass. Sells at 2 low a stalk in the Guarded Mouth; a batch of pills takes 4.' },
+    { id: 'boar-core', name: 'Iron-Hide Boar Core', hz: '铁皮猪核', r: 'white', tier: 'Qi Condensation', kind: 'material', n: 3, text: 'What the Beast-Butcher Gate pays contribution for, and what seniors take from juniors.', sum: 'Worth 5 contribution each at the Gate, or 4 low in the market.' },
+    { id: 'escape', name: 'Escape Talisman', hz: '遁符', r: 'green', tier: 'Qi Condensation', kind: 'talisman', n: 2, text: 'Tear it and you are a hundred paces off before the blow lands.', sum: 'One use. Flee check +6, and it ignores the realm gap. Green: it also leaves no trail for a day.' },
+    { id: 'fire', name: 'Fire Talisman', hz: '火符', r: 'white', tier: 'Qi Condensation', kind: 'talisman', n: 5, text: 'A burst of flame drawn by a Gate talisman-maker, good for one fight.', sum: 'One use. 45 fire damage on a hit, Fire Dao tags; burns for 2 turns.' },
+    { id: 'iron', name: 'Black Iron Ore', hz: '黑铁矿', r: 'white', tier: 'Qi Condensation', kind: 'ore', n: 20, text: 'From the Stone Eyes mines. Heavy; it fills a square at twenty.', sum: 'Ore stacks to 20 a square. A Qi Condensation blade takes 6.' },
+    { id: 'saber', name: 'Bone-Splitting Saber', hz: '劈骨刀', r: 'green', tier: 'Qi Condensation', kind: 'weapon', text: 'A Gate-forged saber with a butcher\'s weight behind the edge.', sum: 'Power 48 on a basic strike, +1 to hit. Green: it multiplies saber techniques by 1.05.' },
+    { id: 'robe', name: 'Water-Silk Robe', hz: '水绸衣', r: 'blue', tier: 'Foundation', kind: 'armor', above: true, text: 'Taken from a Foundation cultivator who no longer needed it. A tier above you.', sum: 'Above your realm: it drinks qi to wear and counts its defense at half the tier gap until you reach Foundation. Resists fire by a quarter.' },
+    { id: 'furnace', name: 'Clay Furnace', hz: '泥炉', r: 'white', tier: 'Qi Condensation', kind: 'bulk', wide: true, tall: true, glyph: '鼎', text: 'Bulky: four squares. It brews one batch at a time and cracks on a failed experiment.', sum: 'Takes a 2 × 2 block. Alchemy at tier 1 only. Bought for 30 low; cracked ones sell for 5.' },
+    { id: 'ring', name: 'An unappraised ring', hz: '？', r: null, tier: '?', kind: 'ring', unknown: true, glyph: '？', text: 'Taken from a dead cultivator on the salt road. Its folded space will not open for you.', sum: 'Appraise it in town, or wear it and find out. Appraisal arrives in M6; until then an appraiser charges 2 low.' },
+    { id: 'tally', name: 'Elder\'s Saber Tally', hz: '长老刀符', r: 'gold', tier: 'Foundation', kind: 'token', text: 'A token that opens the Gate\'s inner hall. Elder Mo did not mean to lose it.', sum: 'Gold: it glows. Shown at the inner gate it passes you once; shown to Elder Mo it starts a fight.' },
+    // Left at the cave.
+    { id: 'grass-home', name: 'Jade Dew Grass', hz: '玉露草', r: 'green', tier: 'Qi Condensation', kind: 'herb', n: 40, at: 'home', text: 'The garden\'s harvest, drying on the cave wall.', sum: 'Forty stalks; the pouch holds another stack if you take them.' },
+    { id: 'rice', name: 'Spirit Rice', hz: '灵米', r: 'white', tier: 'Qi Condensation', kind: 'mortal', n: 60, at: 'home', text: 'A season of meals. A cultivator still eats until Foundation.', sum: 'Sixty days of food.' },
+    { id: 'wood', name: 'Firewood', hz: '柴', r: 'white', tier: 'mortal', kind: 'mortal', n: 99, glyph: '柴', at: 'home', text: 'Mortal goods take squares too.', sum: 'A full stack.' },
+    { id: 'old-robe', name: 'Old Robe', hz: '旧袍', r: 'gray', tier: 'mortal', kind: 'armor', at: 'home', text: 'What you came to the garrison in.', sum: 'No defense worth the name.' },
+    { id: 'hide', name: 'Boar Hide', hz: '猪皮', r: 'white', tier: 'Qi Condensation', kind: 'material', n: 6, glyph: '皮', at: 'home', text: 'Tanned by a mortal in the Guarded Mouth for a tael apiece.', sum: 'Sells at 1 low each; a Gate tanner pays more.' },
+    { id: 'scrolls', name: 'Bamboo Scrolls', hz: '竹简', r: 'white', tier: 'Qi Condensation', kind: 'token', n: 3, glyph: '简', at: 'home', text: 'Your own notes on the Garrison Standard Method, chapter one.', sum: 'A contemplation source: 5 insight a read, three reads left.' },
+    { id: 'cave-map', name: 'Map of the Sinkholes', hz: '坑洞图', r: 'blue', tier: 'Qi Condensation', kind: 'token', glyph: '图', at: 'home', text: 'A map of caves no one else has, from the clans that hid you.', sum: 'Sketches the sinkhole caves on your map, and the clans would kill to keep it secret.' },
+    { id: 'salt', name: 'Salt', hz: '盐', r: 'white', tier: 'mortal', kind: 'mortal', n: 30, glyph: '盐', at: 'home', text: 'Trade goods for the salt road.', sum: 'Half a tael a measure in the Guarded Mouth, twice that in the sinkholes.' },
+  ];
+  const byId = new Map(ITEMS.map((i) => [i.id, i]));
+  const SLOT_HZ = { weapon: '兵', armor: '甲', ring: '戒', pouch: '囊' };
+  const SLOT_NAME = { weapon: 'weapon', armor: 'armor', ring: 'ring', pouch: 'pouch' };
+  let selected = null;
+
+  const bag = document.getElementById('bag'), home = document.getElementById('home');
+  const slots = [...document.querySelectorAll('.square.slot')];
+  const slotOf = (kind) => slots.find((s) => s.dataset.slot === kind);
+
+  function squares(it) { return (it.wide ? 2 : 1) * (it.tall ? 2 : 1); }
+  function used(where) { return ITEMS.filter((i) => (i.at ?? 'bag') === where).reduce((n, i) => n + squares(i), 0); }
+  function words(n) { return ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'][n] ?? String(n); }
+
+  function card(it) {
+    const el = document.createElement('div');
+    el.className = `square item ${it.r ? 'r-' + it.r : ''} ${it.unknown ? 'unknown' : ''} ${it.wide ? 'wide' : ''} ${it.tall ? 'tall' : ''}`;
+    el.draggable = true; el.tabIndex = 0; el.dataset.id = it.id;
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', `${it.name}${it.n ? ', ' + it.n : ''}, ${it.r ?? 'unknown rarity'}, ${it.tier}`);
+    const cap = CAP[it.kind];
+    el.innerHTML = `<span class="glyph">${it.glyph ?? GLYPH[it.kind]}</span><span class="name">${it.name}</span>` +
+      (it.n && cap > 1 ? `<span class="count ${it.n >= cap ? 'full' : ''}">${it.n}</span>` : '') +
+      (it.above ? `<span class="tag">above</span>` : '');
+    if (it.id === selected) el.classList.add('selected');
+    el.addEventListener('click', () => select(it.id));
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(it.id); } });
+    el.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', it.id); e.dataTransfer.effectAllowed = 'move'; el.classList.add('dragging'); select(it.id); });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+    return el;
+  }
+
+  function render() {
+    for (const grid of [bag, home]) {
+      const where = grid.id; grid.innerHTML = '';
+      const here = ITEMS.filter((i) => (i.at ?? 'bag') === where);
+      here.forEach((i) => grid.appendChild(card(i)));
+      const free = Number(grid.dataset.cap) - here.reduce((n, i) => n + squares(i), 0);
+      for (let k = 0; k < free; k++) { const e = document.createElement('div'); e.className = 'square empty'; grid.appendChild(e); }
+    }
+    for (const s of slots) {
+      const it = ITEMS.find((i) => i.at === s.dataset.slot);
+      s.querySelectorAll('.item').forEach((n) => n.remove());
+      s.classList.toggle('has-item', Boolean(it));
+      if (it) { const c = card(it); c.classList.remove('square'); c.classList.add('square'); s.appendChild(c); }
+    }
+    const bagFree = 20 - used('bag'), homeFree = 48 - used('home');
+    document.getElementById('bag-room').textContent = bagFree === 0 ? 'full' : `room for ${words(bagFree)} more`;
+    document.getElementById('bag-why').textContent = `${used('bag')} of 20 squares. Pills, talismans and herbs stack to 99 a square, ore to 20, gear one a square; the furnace takes four.`;
+    document.getElementById('home-room').textContent = `room for ${homeFree} more`;
+    document.getElementById('home-why').textContent = `${used('home')} of 48 squares in the cave's store. It never travels with you.`;
+    renderDetail();
+  }
+
+  function select(id) { selected = id; render(); }
+
+  function renderDetail() {
+    const box = document.getElementById('detail');
+    const it = byId.get(selected);
+    if (!it) { box.className = 'detail'; box.innerHTML = '<p class="muted">Pick up something to read it.</p>'; return; }
+    const at = it.at ?? 'bag';
+    const worn = at in SLOT_NAME;
+    const gear = it.kind in SLOT_NAME;
+    box.className = `detail ${it.r ? 'r-' + it.r : ''} ${box.classList.contains('open') ? 'open' : ''}`;
+    const rarity = it.unknown ? 'unknown' : it.r;
+    const tierWord = it.tier === 'mortal' ? 'mortal goods' : it.tier === '?' ? 'tier unknown' : it.tier;
+    box.innerHTML = `
+      <p class="title">${it.name}<span class="hanzi">${it.hz}</span></p>
+      <p class="kind"><b>${rarity}</b> · ${tierWord}${it.n ? ` · ${it.n}` : ''}${worn ? ' · worn' : at === 'home' ? ' · at the cave' : ''}</p>
+      <p>${it.text}</p>
+      <div class="why" style="display:block"><button type="button" aria-expanded="${box.classList.contains('open')}" aria-label="The numbers">?</button></div>
+      <p class="sum">${it.sum}</p>
+      <div class="btns">
+        ${gear && !worn && at === 'bag' ? `<button class="btn" data-act="equip">Wear it</button>` : ''}
+        ${worn ? `<button class="btn" data-act="unequip">Take it off</button>` : ''}
+        ${at === 'bag' ? `<button class="btn quiet" data-act="home">Leave at the cave</button>` : ''}
+        ${at === 'home' ? `<button class="btn" data-act="bag" ${20 - used('bag') < squares(it) ? 'disabled' : ''}>Take along</button>` : ''}
+        ${it.kind === 'pill' && at === 'bag' ? `<button class="btn quiet" data-act="use">Swallow one</button>` : ''}
+      </div>`;
+    box.querySelector('.why button').addEventListener('click', (e) => { const open = box.classList.toggle('open'); e.currentTarget.setAttribute('aria-expanded', String(open)); });
+    box.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => act(it, b.dataset.act)));
+  }
+
+  function act(it, what) {
+    if (what === 'equip') equip(it);
+    else if (what === 'unequip') move(it, 'bag');
+    else if (what === 'home') move(it, 'home');
+    else if (what === 'bag') move(it, 'bag');
+    else if (what === 'use' && it.n > 0) { it.n -= 1; if (it.n === 0) { ITEMS.splice(ITEMS.indexOf(it), 1); byId.delete(it.id); selected = null; } }
+    render();
+  }
+  function move(it, where) {
+    const cap = where === 'bag' ? 20 : 48;
+    if (cap - used(where) < squares(it)) return false;
+    it.at = where; return true;
+  }
+  function equip(it) {
+    if (!(it.kind in SLOT_NAME)) return false;
+    const worn = ITEMS.find((i) => i.at === it.kind);
+    if (worn) { worn.at = it.at ?? 'bag'; }
+    it.at = it.kind; return true;
+  }
+
+  // Drag and drop: onto a gear square of its kind, or back into either grid.
+  function wire(target, accept, drop) {
+    target.addEventListener('dragover', (e) => { const it = byId.get(e.dataTransfer.getData('text/plain') || selected); const ok = it && accept(it); if (ok) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; target.classList.add('over'); } else target.classList.add('refuse'); });
+    target.addEventListener('dragleave', () => target.classList.remove('over', 'refuse'));
+    target.addEventListener('drop', (e) => { e.preventDefault(); target.classList.remove('over', 'refuse'); const it = byId.get(e.dataTransfer.getData('text/plain')); if (it && accept(it)) { drop(it); render(); } });
+  }
+  for (const s of slots) wire(s, (it) => it.kind === s.dataset.slot, (it) => equip(it));
+  wire(bag, (it) => (it.at ?? 'bag') !== 'bag' && 20 - used('bag') >= squares(it), (it) => move(it, 'bag'));
+  wire(home, (it) => (it.at ?? 'bag') !== 'home', (it) => move(it, 'home'));
+
+  // The "?" buttons on the panel heads.
+  document.querySelectorAll('.panel-head .why > button').forEach((b) => {
+    b.addEventListener('click', (e) => { e.stopPropagation(); const open = b.getAttribute('aria-expanded') !== 'true'; document.querySelectorAll('.panel-head .why > button').forEach((o) => o.setAttribute('aria-expanded', 'false')); b.setAttribute('aria-expanded', String(open)); });
+  });
+  document.addEventListener('click', (e) => { if (!e.target.closest('.panel-head .why')) document.querySelectorAll('.panel-head .why > button').forEach((o) => o.setAttribute('aria-expanded', 'false')); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.why > button').forEach((o) => o.setAttribute('aria-expanded', 'false')); });
+
+  // ---- The cracked glass behind the shell, as in glass-study.html.
+  function mulberry32(a) { return () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
+  function mixWhite(hex, t) { const n = parseInt(hex.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * t)); return '#' + c.map((v) => v.toString(16).padStart(2, '0')).join(''); }
+  function walk(rng, x, y, angle, len, step, wobble) { const pts = [[x, y]]; let a = angle, l = 0; while (l < len) { a += (rng() - 0.5) * wobble; const s = step * (0.6 + rng() * 0.8); x += Math.cos(a) * s; y += Math.sin(a) * s; pts.push([x, y]); l += s; } return pts; }
+  function pointAt(pts, d) { let acc = 0; for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; const seg = Math.hypot(x1 - x0, y1 - y0); if (acc + seg >= d) { const t = (d - acc) / seg; return [x0 + (x1 - x0) * t, y0 + (y1 - y0) * t]; } acc += seg; } return null; }
+  function buildCracks(w, h, seed, web, impacts) {
+    const rng = mulberry32(seed); const diag = Math.hypot(w, h); const paths = []; const add = (pts, k) => paths.push({ pts, k });
+    impacts.forEach((imp, idx) => {
+      const [cx, cy] = [imp[0] * w, imp[1] * h]; const longs = idx === 0 ? 2 : 1;
+      for (let i = 0; i < longs; i++) { const toward = Math.atan2(h * 0.5 - cy, w * 0.5 - cx) + (rng() - 0.5) * 1.6; const f = walk(rng, cx, cy, toward, diag * (0.45 + rng() * 0.45), 22, 0.32); add(f, 1); for (let b = 0; b < 2; b++) { const p = f[Math.floor(f.length * (0.25 + rng() * 0.6))]; if (p) add(walk(rng, p[0], p[1], toward + (rng() < 0.5 ? -1 : 1) * (0.5 + rng() * 0.6), 40 + rng() * 140, 12, 0.5), 0.55); } }
+      const n = 7 + web * 3 - idx * 2; const R = Math.min(w, h) * (0.12 + web * 0.035) * (idx === 0 ? 1 : 0.7); const spokes = [];
+      for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + (rng() - 0.5) * 0.4; const s = walk(rng, cx, cy, a, R * (0.45 + rng() * 0.6), 7, 0.45); spokes.push(s); add(s, 0.42); }
+      const rings = web + (idx === 0 ? 1 : 0);
+      for (let r = 1; r <= rings; r++) { const d = (R * 0.85 * r) / (rings + 0.6); for (let i = 0; i < n; i++) { if (rng() < 0.28) continue; const p = pointAt(spokes[i], d * (0.85 + rng() * 0.3)), q = pointAt(spokes[(i + 1) % n], d * (0.85 + rng() * 0.3)); if (p && q) { const mx = (p[0] + q[0]) / 2 + (cx - (p[0] + q[0]) / 2) * 0.08, my = (p[1] + q[1]) / 2 + (cy - (p[1] + q[1]) / 2) * 0.08; add([p, [mx, my], q], 0.32); } } }
+    });
+    const edgeRng = mulberry32(seed + 101); add(walk(edgeRng, -10, h * (0.55 + edgeRng() * 0.3), -0.35 + edgeRng() * 0.2, diag * 0.9, 26, 0.22), 0.85);
+    return paths;
+  }
+  function stroke(ctx, pts, width, style, dx = 0, dy = 0) { ctx.beginPath(); ctx.moveTo(pts[0][0] + dx, pts[0][1] + dy); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0] + dx, pts[i][1] + dy); ctx.lineWidth = width; ctx.strokeStyle = style; ctx.stroke(); }
+  function drawCracks(ctx, paths, color) {
+    const core = mixWhite(color, 0.55); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const { pts, k } of paths) { ctx.globalCompositeOperation = 'source-over'; stroke(ctx, pts, 1.1 * k + 0.4, 'rgba(0,0,0,0.55)', 1.2, 1.2); ctx.globalCompositeOperation = 'lighter'; stroke(ctx, pts, 9 * k, rgba(color, 0.035)); stroke(ctx, pts, 3 * k, rgba(color, 0.11)); stroke(ctx, pts, Math.max(0.6, 0.95 * k), rgba(core, 0.5)); }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  const canvas = document.getElementById('shell-canvas');
+  function drawShell() {
+    const r = canvas.getBoundingClientRect(); const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.max(1, Math.round(r.width * dpr)); canvas.height = Math.max(1, Math.round(r.height * dpr));
+    const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); const w = r.width, h = r.height;
+    ctx.fillStyle = '#040507'; ctx.fillRect(0, 0, w, h);
+    const sheen = ctx.createLinearGradient(0, 0, w, h); sheen.addColorStop(0, 'rgba(255,255,255,0.025)'); sheen.addColorStop(0.5, 'rgba(255,255,255,0)'); sheen.addColorStop(1, 'rgba(255,255,255,0.015)'); ctx.fillStyle = sheen; ctx.fillRect(0, 0, w, h);
+    const narrow = w < 900; const impacts = narrow ? [[0.9, 0.04], [0.06, 0.97]] : [[0.97, 0.06], [0.11, 0.95]];
+    drawCracks(ctx, buildCracks(w, h, 11, 1, impacts), '#7fc7d9');
+  }
+  let raf = 0; new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(drawShell); }).observe(document.getElementById('stage'));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawShell);
+
+  render();
+  select('saber');
+})();
+</script>
