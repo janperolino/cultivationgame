@@ -45,6 +45,12 @@ export const STONES_PER_QI_DAY = 5;
 export const BAR_CAP = 1.5;
 export const ODDS_PER_TENTH = 0.07;
 export const MAX_ODDS = 0.98;
+/**
+ * An attended attempt's scene (content/scene.ts): each gate caught on time adds a step to the
+ * odds, like overfill, and all of them together never more than the cap; a miss costs nothing.
+ */
+export const SCENE_ODDS_STEP = 0.02;
+export const SCENE_ODDS_CAP = 0.1;
 
 /** A failed minor breakthrough: a fifth of the bar, and a few days of unsettled qi. */
 export const MINOR_FAIL_LOSS = 0.2;

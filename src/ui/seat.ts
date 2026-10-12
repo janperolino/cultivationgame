@@ -17,6 +17,7 @@ import {
   type Seat,
 } from '../core/attention.ts';
 import { firstBreath } from '../core/life.ts';
+import { lifeKey, scenePlaying } from './scene.ts';
 import type { GameState } from '../core/state.ts';
 import { hourOfDay } from '../core/wheel.ts';
 
@@ -35,8 +36,6 @@ let tickedAt = 0;
 const MAX_LEAD_S = 0.5;
 let abodeShown = 0;
 const breathListeners = new Set<(b: Breath) => void>();
-
-const lifeKey = (s: GameState) => `${s.lineage.id}/${s.lineage.life}/${s.seed}`;
 
 /** Every touch, key or wheel counts as being there. */
 function noteInput() {
@@ -76,14 +75,21 @@ function attentionFor(s: GameState): Attention {
  * orbs stream brought up to date. A life that has ended sits away.
  */
 export function tickSeat(s: GameState, dt: number): { seat: Seat; state: GameState } {
+  const playing = scenePlaying();
+  const attended = !s.ended && attendingNow();
+  const atFigure = abodeShown > 0 && !s.ended;
+  // No new orbs come while a breakthrough scene holds the figure.
   const a = tickAttention(attentionFor(s), s.player, dt, {
-    attended: !s.ended && attendingNow(),
-    abode: abodeShown > 0 && !s.ended,
+    attended,
+    abode: atFigure && !playing,
     hour: hourOfDay(s.calendar.day),
   });
   tickedAt = performance.now();
   useSeat.setState({ attention: a });
-  return { seat: s.ended ? AWAY : seatOf(a, s.player), state: keepOrbStream(s, a) };
+  if (s.ended) return { seat: AWAY, state: keepOrbStream(s, a) };
+  const seat = seatOf(a, s.player);
+  const scene = playing ? 'playing' : attended && atFigure ? 'ready' : undefined;
+  return { seat: scene ? { ...seat, scene } : seat, state: keepOrbStream(s, a) };
 }
 
 /** A catch's result: the seat, the figure's animation, and the first catch's chronicle line. */

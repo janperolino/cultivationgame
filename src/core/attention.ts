@@ -50,6 +50,12 @@ export interface Seat {
   factor: number;
   /** Attended hours leave a second insight trickle. */
   attended: boolean;
+  /**
+   * At the figure, qi breakthroughs play as a scene (core/scene.ts): 'ready' while you sit with
+   * it, so the auto setting leaves the qi's certain steps to the scene; 'playing' while one runs,
+   * so it leaves the qi alone. Never set away.
+   */
+  scene?: 'ready' | 'playing';
 }
 
 /** Away: exactly today's rates. Offline time and the sims' away rows run on this. */

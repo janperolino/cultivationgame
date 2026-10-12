@@ -105,11 +105,14 @@ export interface LifeBreakthrough {
   odds: number;
 }
 
-/** The player attempts a ladder's next breakthrough, minor or major. */
+/**
+ * The player attempts a ladder's next breakthrough, minor or major; `scene` is what an attended
+ * attempt's scene added to the odds (core/scene.ts).
+ */
 export function breakThrough(
   s: GameState,
   which: LadderId,
-  opts: { lastChance?: boolean } = {},
+  opts: { lastChance?: boolean; scene?: number } = {},
 ): LifeBreakthrough {
   const none = { state: s, attempted: false, success: false, major: false, odds: 0 };
   if (s.ended) return none;

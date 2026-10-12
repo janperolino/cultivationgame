@@ -2,11 +2,23 @@
 // silhouette seated cross-legged, whatever the hour (Jan's call after P1.10; the hour will show
 // another way). The dantian glows below the navel in the crack light, since it is qi. Over the
 // silhouette a canvas (ui/qiCanvas.ts) draws the qi drifting in, circulating and settling, and the
-// orbs to draw in by hover or a finger. Beside it, the seat's meter: qi speed, focus and heat.
+// orbs to draw in by hover or a finger. Beside it, the seat's meter: qi speed, focus and heat. An
+// attended qi breakthrough plays here as a ten-second scene (ui/scene.ts): a tap or click on the
+// figure as the spark passes each gate, and the meter tells the scene instead.
 import { useEffect, useMemo, useRef } from 'react';
 import { POINTER_REACH } from '../content/attention.ts';
 import { circulation, RARITY_SPARKS } from '../content/circulation.ts';
+import {
+  AUTO_SETTINGS,
+  BAR_CAP,
+  GRADES,
+  MAX_ODDS,
+  ODDS_PER_TENTH,
+  SCENE_ODDS_CAP,
+  SCENE_ODDS_STEP,
+} from '../content/cultivation.ts';
 import { methodCirculation } from '../content/methods.ts';
+import { realm } from '../content/realms.ts';
 import {
   attentionCeiling,
   heatLimit,
@@ -17,13 +29,14 @@ import {
   seatTutorial,
   type Attention,
 } from '../core/attention.ts';
-import { barFill, barSize, dayRates } from '../core/cultivation.ts';
+import { barFill, barSize, dayRates, majorCheck } from '../core/cultivation.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import { ladderMethod } from '../core/methods.ts';
+import { sceneBonus } from '../core/scene.ts';
 import type { Cultivator, GameState } from '../core/state.ts';
 import { stats } from '../core/stats.ts';
 import { hourOfDay } from '../core/wheel.ts';
-import { formatPercent } from './format.ts';
+import { formatLadder, formatPercent } from './format.ts';
 import {
   FIGURE_BOX,
   FIGURE_HEAD,
@@ -32,6 +45,14 @@ import {
   type FigureFrame,
   type FigureState,
 } from './qiCanvas.ts';
+import {
+  consolidate,
+  consolidating,
+  qiAttempt,
+  tapGate,
+  useScene,
+  type ScenePlay,
+} from './scene.ts';
 import { holdStill, onBreath, seatTime, showAbode, useSeat } from './seat.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { useGame } from './store.ts';
@@ -80,6 +101,8 @@ export function SeatedFigure({ game }: { game: GameState }) {
   const settings = useSettings();
   const reduced = reducedMotion(settings);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const sceneStarted = useScene((s) => s.play?.started ?? 0);
   const engine = useRef<QiCanvas | null>(null);
 
   const fill = Math.min(1.5, Math.max(0, barFill(c.qi)));
@@ -100,6 +123,7 @@ export function SeatedFigure({ game }: { game: GameState }) {
       canvas,
       () => useSeat.getState().attention,
       (a) => seatTime(a),
+      () => useScene.getState().play,
     );
     engine.current = e;
     const visibility = () => (document.visibilityState === 'visible' ? e.start() : e.stop());
@@ -122,6 +146,13 @@ export function SeatedFigure({ game }: { game: GameState }) {
     engine.current?.refreshPalette();
   }, [settings]);
 
+  // A scene called from another screen, or further down this one, brings the figure into view.
+  useEffect(() => {
+    if (!sceneStarted) return;
+    const behavior = reducedMotion() ? 'auto' : 'smooth';
+    boxRef.current?.scrollIntoView({ block: 'nearest', behavior });
+  }, [sceneStarted]);
+
   /** The pointer in the figure's units. */
   const toFigure = (ev: React.PointerEvent): [number, number] => {
     const r = ev.currentTarget.getBoundingClientRect();
@@ -132,6 +163,11 @@ export function SeatedFigure({ game }: { game: GameState }) {
   };
 
   const onPointer = (ev: React.PointerEvent, down = false) => {
+    // While a scene plays, a tap or click is a try at the gate, and nothing else.
+    if (useScene.getState().play) {
+      if (down) tapGate();
+      return;
+    }
     const mouse = ev.pointerType === 'mouse';
     if (!mouse && !down && ev.buttons === 0) return;
     const [x, y] = toFigure(ev);
@@ -148,6 +184,7 @@ export function SeatedFigure({ game }: { game: GameState }) {
   const box = `${FIGURE_BOX.x} ${FIGURE_BOX.y} ${FIGURE_BOX.w} ${FIGURE_BOX.h}`;
   return (
     <div
+      ref={boxRef}
       className="seat-figure"
       onPointerMove={(ev) => onPointer(ev)}
       onPointerDown={(ev) => onPointer(ev, true)}
@@ -190,8 +227,125 @@ function seatHint(c: Cultivator, a: Attention): string {
   return 'Draw orbs in by hovering over them or with a finger. On the inhale they are worth more.';
 }
 
-/** Qi speed, focus and heat beside the figure. */
+/** What the scene says as it ends: the step taken, or what the gate holding cost. */
+function outcomeLine(game: GameState, play: ScenePlay): string {
+  const o = play.outcome!;
+  if (o.success) {
+    return o.major
+      ? `Through the gate: ${realm(game.player.qi.realm).name}.`
+      : `Through: ${formatLadder(game.player.qi)}.`;
+  }
+  return o.major
+    ? 'The gate holds. The pill is spent, half the qi scatters, and the meridians will take years to mend.'
+    : 'The gate holds. A fifth of the qi scatters, and it will not settle for a few days.';
+}
+
+/** The meter during a scene: the gates as six marks, the odds, and what to do. */
+function SceneMeter({ game, play }: { game: GameState; play: ScenePlay }) {
+  const bonus = sceneBonus(play.scene);
+  // The bar fills on while the scene plays, so the odds are read live, as the roll will be.
+  const odds = play.outcome ? play.outcome.odds : (qiAttempt(game)?.odds ?? play.odds) + bonus;
+  return (
+    <div className="seat-meter scene-meter" aria-live="polite">
+      <div className="seat-speed">
+        <span className="caption">
+          {play.major ? 'Breaking through the gate' : 'Breaking through'}
+        </span>
+        <strong>{play.certain ? 'certain' : formatPercent(Math.min(MAX_ODDS, odds))}</strong>
+      </div>
+      <ol className="scene-gates" aria-label="Gates">
+        {play.scene.gates.map((g, k) => (
+          <li
+            key={k}
+            className={g === 'hit' ? 'is-hit' : g === 'early' ? 'is-early' : undefined}
+            aria-label={`Gate ${k + 1}: ${g === 'hit' ? 'caught' : g === 'early' ? 'too early' : 'to come'}`}
+          />
+        ))}
+      </ol>
+      <p className="caption">
+        {play.outcome
+          ? outcomeLine(game, play)
+          : play.certain
+            ? 'This step always holds. Tap the figure as the spark crosses each gate; from the third layer, every gate caught raises the odds.'
+            : `Tap the figure as the spark crosses each gate: each one caught adds ${formatPercent(SCENE_ODDS_STEP)}, up to ${formatPercent(SCENE_ODDS_CAP)}. A miss costs nothing.`}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * The "now or consolidate" moment under the figure: the qi is ready, and the call is yours. Now
+ * plays the scene; consolidating lets the bar fill on, raising the odds, and the moment comes back
+ * at the next tenth.
+ */
+export function BreakthroughMoment({
+  game,
+  onDetails,
+}: {
+  game: GameState;
+  onDetails: () => void;
+}) {
+  const playing = useScene((s) => !!s.play);
+  const quiet = useScene((s) => s.quietUntil);
+  const beginScene = useGame((s) => s.beginScene);
+  const attempt = qiAttempt(game);
+  if (!attempt || playing || consolidating(game, quiet)) return null;
+  const c = game.player;
+  const fill = barFill(c.qi);
+  const atCap = fill >= BAR_CAP - 1e-9;
+  const check = attempt.major ? majorCheck(c, 'qi') : null;
+  const auto = AUTO_SETTINGS[c.plan.auto];
+
+  let text: string;
+  if (check) {
+    const grade = GRADES.find((g) => g.id === check.grade)!.name.toLowerCase();
+    text =
+      `Qi presses against the gate of ${check.target.name}. Now, ${grade === 'ordinary' ? 'an' : 'a'} ${grade} ` +
+      `breakthrough at ${formatPercent(attempt.odds)}` +
+      (atCap
+        ? '; the sea can hold no more.'
+        : ', or consolidate for better odds and a better grade.');
+  } else if (attempt.odds >= 1) {
+    text = 'The qi sea is full, and this step always holds.';
+  } else {
+    text =
+      `The qi sea is full at ${formatPercent(fill)}. Now at ${formatPercent(attempt.odds)}` +
+      (atCap
+        ? '; it can hold no more.'
+        : `, or consolidate: each 10% more adds ${formatPercent(ODDS_PER_TENTH)}, up to 150%.`) +
+      (auto.minOdds === Infinity
+        ? ''
+        : ` On ${auto.name}, it goes on its own at ${formatPercent(auto.minOdds)} odds or a full 150%.`);
+  }
+  return (
+    <div className="moment">
+      <p>{text}</p>
+      <div className="actions">
+        <button type="button" className="button" onClick={() => beginScene()}>
+          Break through now · {formatPercent(attempt.odds)}
+        </button>
+        {!atCap && attempt.odds < 1 && (
+          <button type="button" className="button button-quiet" onClick={() => consolidate(game)}>
+            Consolidate
+          </button>
+        )}
+        {check && (
+          <button type="button" className="button button-quiet" onClick={onDetails}>
+            Details
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Qi speed, focus and heat beside the figure; during a scene, the scene. */
 export function SeatMeter({ game }: { game: GameState }) {
+  const play = useScene((s) => s.play);
+  return play ? <SceneMeter game={game} play={play} /> : <FocusMeter game={game} />;
+}
+
+function FocusMeter({ game }: { game: GameState }) {
   const c = game.player;
   const a = useSeat((s) => s.attention);
   const view = useMemo(() => {

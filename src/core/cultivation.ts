@@ -28,6 +28,7 @@ import {
   MINOR_INJURY_DAYS,
   ODDS_PER_TENTH,
   QI_PER_DAY,
+  SCENE_ODDS_CAP,
   SOUL_PER_DAY,
   STONE_QI,
   STONES_PER_QI_DAY,
@@ -526,6 +527,15 @@ export function majorCheck(c: Cultivator, which: LadderId): MajorCheck | null {
   };
 }
 
+/**
+ * The odds with an attended scene's bonus (core/scene.ts): never past the scene's cap or the
+ * odds' own ceiling, and a step that always holds stays certain.
+ */
+export function sceneOdds(odds: number, bonus: number): number {
+  if (odds >= 1) return 1;
+  return Math.min(MAX_ODDS, odds + clamp(bonus, 0, SCENE_ODDS_CAP));
+}
+
 /** Whether the auto setting would attempt this ladder's minor breakthrough now. */
 export function autoWouldAttempt(c: Cultivator, which: LadderId): boolean {
   const l = c[which];
@@ -576,13 +586,14 @@ function injuryDays(c: Cultivator, which: LadderId, days: number): number {
 /**
  * Attempts this ladder's next breakthrough, minor or major, drawing one roll from `ctx.rng`.
  * A major one needs the full check unless `lastChance` is set, which only drops the full bar and
- * caps the grade at flawed.
+ * caps the grade at flawed. `scene` is what an attended attempt's scene added to the odds
+ * (`sceneOdds` caps it); the roll is the same one either way. The last chance plays no scene.
  */
 export function attemptBreakthrough(
   c: Cultivator,
   which: LadderId,
   ctx: RuleContext,
-  opts: { lastChance?: boolean } = {},
+  opts: { lastChance?: boolean; scene?: number } = {},
 ): BreakthroughResult {
   const l = c[which];
   const step = nextStep(l);
@@ -599,7 +610,7 @@ export function attemptBreakthrough(
 
   if (step.kind === 'minor') {
     if (barFill(l) < 1) return none;
-    const odds = minorOdds(c, which);
+    const odds = sceneOdds(minorOdds(c, which), opts.scene ?? 0);
     const success = rng.next() < odds;
     if (success) {
       return {
@@ -643,7 +654,7 @@ export function attemptBreakthrough(
   const last = opts.lastChance === true;
   const allowed = last ? check.insight && check.gate && check.cap && which === 'qi' : check.ready;
   if (!allowed) return none;
-  const odds = last ? lastChanceOdds(c, check) : check.odds;
+  const odds = last ? lastChanceOdds(c, check) : sceneOdds(check.odds, opts.scene ?? 0);
   const success = rng.next() < odds;
   let next = check.gateItem ? addItem(c, check.gateItem, -1) : c;
   const target = check.target;
@@ -834,8 +845,13 @@ export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): Cu
   let next = unlocked.cultivator;
   const notes = [...practiced.notes, ...unlocked.notes];
   const breakthroughs: CultivateResult['breakthroughs'] = [];
+  // At the figure, a qi breakthrough is the player's scene: the auto setting leaves the qi alone
+  // while one plays, and leaves it the steps that always hold, which teach the scene.
+  const hold = ctx.seat?.scene;
   for (const which of LADDERS) {
     if (!autoWouldAttempt(next, which)) continue;
+    if (which === 'qi' && (hold === 'playing' || (hold === 'ready' && minorOdds(next, 'qi') >= 1)))
+      continue;
     const r = attemptBreakthrough(next, which, ctx);
     next = r.cultivator;
     notes.push(...r.notes);

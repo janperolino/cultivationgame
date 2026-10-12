@@ -271,7 +271,12 @@ function Requirement({ met, children }: { met: boolean; children: React.ReactNod
 }
 
 function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
-  const breakThrough = useGame((s) => s.breakThrough);
+  const breakThroughNow = useGame((s) => s.breakThrough);
+  const beginScene = useGame((s) => s.beginScene);
+  // A qi breakthrough plays as a scene on the Abode's figure; body and soul roll at once.
+  const breakThrough = (which: LadderId) => {
+    if (which !== 'qi' || !beginScene()) breakThroughNow(which);
+  };
   const l = game.player[which];
   const step = nextStep(l);
   const fill = barFill(l);

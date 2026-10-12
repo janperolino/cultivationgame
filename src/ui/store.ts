@@ -4,7 +4,9 @@ import { create } from 'zustand';
 import type { HourKind } from '../content/hours.ts';
 import { playDay, resolveCard } from '../core/cards.ts';
 import { createLife, createNextLife, type Creation } from '../core/creation.ts';
+import type { Seat } from '../core/attention.ts';
 import type { LadderId } from '../core/cultivation.ts';
+import { sceneBonus } from '../core/scene.ts';
 import {
   attemptLastChance,
   breakThrough,
@@ -21,6 +23,7 @@ import { exportFileName } from '../core/save/file.ts';
 import { SaveSlots, type SlotId, type SlotSummary } from '../core/save/slots.ts';
 import { rerollGlass, withPlayer, type GameState } from '../core/state.ts';
 import { followWheel, forgetSavedRoutine, saveRoutine, setHour } from '../core/wheel.ts';
+import { endScene, qiAttempt, sceneDue, sceneRolled, startScene, useScene } from './scene.ts';
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 
@@ -94,8 +97,10 @@ export interface GameStore {
   /** Saves the wheel under a name; returns why not, or null. */
   saveRoutine(name: string): string | null;
   forgetRoutine(name: string): void;
-  /** Attempts a ladder's next breakthrough, minor or major. */
+  /** Attempts a ladder's next breakthrough, minor or major, at once. */
   breakThrough(ladder: LadderId): void;
+  /** Plays the qi's next breakthrough as a scene on the Abode's figure; false when it can't. */
+  beginScene(): boolean;
   /** Learns a tree node with insight; returns why not, or null. */
   learnNode(id: string): string | null;
   /** Points practice days at a technique, or at nothing. */
@@ -200,6 +205,28 @@ export const useGame = create<GameStore>()((set, get) => {
       update(away.state);
     } else {
       update(advance(state, gap * speed, { step: playDay, seat }).state);
+    }
+    playScene(seat);
+  }
+
+  /**
+   * Rolls a breakthrough scene that has run its ten seconds, with what it caught. At the figure, a
+   * step that always holds plays a scene of its own, since the auto setting leaves it one.
+   */
+  function playScene(seat: Seat) {
+    const { game } = get();
+    const due = sceneDue(game);
+    if (due && game) {
+      const r = breakThrough(game, 'qi', { scene: sceneBonus(due.scene) });
+      if (!r.attempted) return endScene();
+      update(r.state);
+      if (!r.success) void get().saveNow();
+      sceneRolled({ success: r.success, major: r.major, odds: r.odds });
+      return;
+    }
+    if (game && seat.scene === 'ready' && !useScene.getState().play) {
+      const attempt = qiAttempt(game);
+      if (attempt && !attempt.major && attempt.odds >= 1) startScene(game);
     }
   }
 
@@ -453,6 +480,12 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!r.success) void get().saveNow();
     },
 
+    beginScene() {
+      const { game } = get();
+      if (!game || !holdsLock) return false;
+      return startScene(game);
+    },
+
     learnNode(id) {
       const { game } = get();
       if (!game || !holdsLock) return 'This life is not open in this tab.';
@@ -580,6 +613,7 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!slot || !holdsLock) return;
       // Paused, so an autosave can't land on top of the rewound save.
       stopLoop();
+      endScene();
       try {
         await get().saveNow();
         const save = await db().rewind(slot, Date.now());

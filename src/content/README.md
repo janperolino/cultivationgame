@@ -24,4 +24,5 @@ Game content as data: realms, trees and nodes, techniques, recipes, items, talen
 - `nodes.ts`: every node by id, wherever it lives (`home`: a tree or a manual).
 - `attention.ts`: attended seclusion's numbers: the attention floor and ceiling, focus drain, the breath cycle, orb timing, value and reach, heat, and the orb kinds.
 - `circulation.ts`: the patterns a qi method's sparks run on the Abode's figure, a default for each rarity, and the points where qi enters.
+- `scene.ts`: the breakthrough scene's timing: its length, how the spark races, the gates and the tap windows. Its odds step and cap sit in `cultivation.ts` beside `ODDS_PER_TENTH`.
 - `techniques.ts`: the techniques with their rarity, line and chapter, starting with each origin path's first one (`firstFor: origin/choice`).

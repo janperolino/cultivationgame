@@ -665,6 +665,54 @@ select {
   transition: none;
 }
 
+/* The breakthrough scene: six gates as marks under the figure, gold when caught. */
+.scene-gates {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 2px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scene-gates li {
+  width: 10px;
+  height: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  border-radius: 50%;
+}
+
+.scene-gates li.is-hit {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.scene-gates li.is-early {
+  border-color: var(--edge);
+  background: color-mix(in srgb, var(--muted) 30%, transparent);
+}
+
+.scene-meter strong {
+  color: var(--accent);
+}
+
+/* The "now or consolidate" moment under the figure, when the qi is ready. */
+.moment {
+  width: min(460px, 100%);
+  padding-top: 10px;
+  border-top: 1px solid var(--edge);
+  text-align: center;
+}
+
+.moment p {
+  margin: 0;
+}
+
+.moment .actions {
+  justify-content: center;
+  margin-top: 10px;
+}
+
 .seated-head,
 .seated-body {
   fill: color-mix(in srgb, var(--text) 9%, var(--void));
@@ -697,8 +745,7 @@ select {
 
 /* Panels you can act on wear the accent on their rim; a warning wears the warning color. */
 .card-away,
-.notice,
-.card-ready {
+.notice {
   --rim: var(--accent);
   margin-bottom: 14px;
 }

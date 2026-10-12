@@ -1,14 +1,14 @@
 import { HOUR_KIND_IDS, HOUR_KINDS } from '../content/hours.ts';
 import { realm } from '../content/realms.ts';
 import { comingBackStory, type StorySection } from '../core/comingBack.ts';
-import { barSize, dayRates, ladderOpen, majorCheck } from '../core/cultivation.ts';
+import { barSize, dayRates, ladderOpen } from '../core/cultivation.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import type { GameState } from '../core/state.ts';
 import { CardFeed } from './CardFeed.tsx';
 import { effectiveWheel } from '../core/wheel.ts';
 import { WheelStrip } from './DayWheel.tsx';
 import { formatDays, formatDuration, formatLadder, formatNumber, formatRate } from './format.ts';
-import { SeatedFigure, SeatMeter } from './SeatedFigure.tsx';
+import { BreakthroughMoment, SeatedFigure, SeatMeter } from './SeatedFigure.tsx';
 import { useGame, type AwaySummary } from './store.ts';
 import { AgeBar, LadderBar, LifeEdgeCard, Why } from './widgets.tsx';
 
@@ -99,29 +99,16 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
   const today = HOUR_KIND_IDS.filter((k) => rates.count[k] > 0)
     .map((k) => `${rates.count[k]} ${HOUR_KINDS[k].name.toLowerCase()}`)
     .join(' · ');
-  const ready = majorCheck(game.player, 'qi');
 
   return (
     <>
       {away && <AwayCard away={away} />}
       <LifeEdgeCard />
 
-      {!game.ended && ready?.ready && (
-        <section className="panel card-ready">
-          <p>
-            Qi presses against the gate of {ready.target.name}. The breakthrough is yours to call.
-          </p>
-          <div className="actions">
-            <button type="button" className="button" onClick={onCultivate}>
-              Go to Cultivate
-            </button>
-          </div>
-        </section>
-      )}
-
       <section className="panel abode-seat" aria-label="The seat">
         <SeatedFigure game={game} />
         <SeatMeter game={game} />
+        <BreakthroughMoment game={game} onDetails={onCultivate} />
       </section>
 
       <section className="panel abode-info">

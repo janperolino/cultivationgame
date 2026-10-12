@@ -11,6 +11,7 @@ import { SettingsScreen } from './SettingsScreen.tsx';
 import { TechniquesScreen } from './TechniquesScreen.tsx';
 import { TreesScreen } from './TreesScreen.tsx';
 import { capitalize } from './format.ts';
+import { useScene } from './scene.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
 import { bySeason } from '../core/chronicle.ts';
@@ -55,6 +56,13 @@ export function App() {
   if (!!creating !== wasCreating) {
     setWasCreating(!!creating);
     if (!creating) setScreen('abode');
+  }
+  // A breakthrough scene plays on the Abode's figure, wherever it was called from.
+  const sceneStarted = useScene((s) => s.play?.started ?? 0);
+  const [lastScene, setLastScene] = useState(0);
+  if (sceneStarted !== lastScene) {
+    setLastScene(sceneStarted);
+    if (sceneStarted) setScreen('abode');
   }
   const dismissNotice = useGame((s) => s.dismissNotice);
 
