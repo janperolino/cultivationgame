@@ -16,37 +16,61 @@ export interface Circulation {
   loops: readonly (readonly Point[])[];
 }
 
+// Every loop stays inside the seated silhouette (ui/qiCanvas.ts, FIGURE_PATH): the torso runs
+// x −11 to 11 between the gaps at the waist, the neck is ±5 wide at y −31, the arms sit between the
+// gaps and the outline, and the crossed legs fill the lap below y 15. The canvas also clips to it.
+
+/** The small orbit: up the back and over the crown, down the front to the dantian. */
 const ORBIT: readonly Point[] = [
   [0, 9],
-  [-5, 27],
-  [-14, 12],
-  [-13, -12],
-  [-7, -33],
-  [0, -50],
-  [7, -33],
-  [13, -12],
-  [14, 12],
-  [5, 27],
+  [-5, 21],
+  [-10, 12],
+  [-10, -8],
+  [-8, -19],
+  [-3, -27],
+  [-3, -38],
+  [0, -47],
+  [3, -38],
+  [3, -27],
+  [8, -19],
+  [10, -8],
+  [10, 12],
+  [5, 21],
 ];
 
 const mirror = (loop: readonly Point[]): Point[] => loop.map(([x, y]) => [-x, y]);
 
+/** Up the chest to the shoulder, down the arm and back across the lap. */
 const LEFT_ARM: readonly Point[] = [
   [0, 9],
-  [-8, -6],
-  [-17, -21],
-  [-25, -14],
-  [-27, 2],
-  [-21, 15],
-  [-11, 14],
+  [-6, -4],
+  [-12, -17],
+  [-19, -20],
+  [-24, -10],
+  [-25, 2],
+  [-25, 12],
+  [-14, 14],
 ];
+/** Out along the crossed leg and back under it. */
 const LEFT_LEG: readonly Point[] = [
-  [0, 9],
-  [-14, 20],
-  [-32, 24],
-  [-47, 31],
-  [-36, 39],
-  [-14, 37],
+  [0, 12],
+  [-14, 19],
+  [-30, 25],
+  [-43, 31],
+  [-40, 37],
+  [-22, 38],
+  [-8, 31],
+];
+/** The great orbit's second ring, round through the crossed legs; the arms carry their channels. */
+const LIMB_RING: readonly Point[] = [
+  [0, 14],
+  [-22, 17],
+  [-44, 31],
+  [-30, 38],
+  [0, 39],
+  [30, 38],
+  [44, 31],
+  [22, 17],
 ];
 
 export const CIRCULATIONS = {
@@ -56,15 +80,18 @@ export const CIRCULATIONS = {
     loops: [
       [
         [0, 9],
-        [-9, 23],
-        [-16, 5],
-        [-10, -18],
-        [-9, -35],
-        [3, -47],
-        [6, -29],
-        [16, -9],
-        [9, 15],
-        [7, 25],
+        [-7, 20],
+        [-10, 7],
+        [-10, -10],
+        [-7, -21],
+        [-3, -29],
+        [-2, -43],
+        [3, -45],
+        [3, -30],
+        [9, -17],
+        [10, -3],
+        [8, 14],
+        [4, 21],
       ],
     ],
   },
@@ -82,26 +109,7 @@ export const CIRCULATIONS = {
   'great-orbit': {
     id: 'great-orbit',
     name: 'the great orbit, with a second ring through the limbs',
-    loops: [
-      ORBIT,
-      [
-        [0, 9],
-        [-20, -2],
-        [-24, -22],
-        [-8, -50],
-        [8, -50],
-        [24, -22],
-        [20, -2],
-      ],
-      [
-        [0, 9],
-        [-26, 6],
-        [-45, 30],
-        [0, 41],
-        [45, 30],
-        [26, 6],
-      ],
-    ],
+    loops: [ORBIT, LEFT_ARM, mirror(LEFT_ARM), LIMB_RING],
   },
   // Red methods each have their own. The Primordial Origin Scripture turns two lobes round the
   // dantian like the first split of heaven and earth, inside the great orbit.
@@ -112,24 +120,17 @@ export const CIRCULATIONS = {
       ORBIT,
       [
         [0, 9],
-        [-14, -2],
-        [-20, 14],
-        [-8, 24],
+        [-8, 1],
+        [-10, 13],
+        [-4, 18],
       ],
       [
         [0, 9],
-        [14, 20],
-        [20, 4],
-        [8, -6],
+        [8, 17],
+        [10, 5],
+        [4, 0],
       ],
-      [
-        [0, 9],
-        [-26, 6],
-        [-45, 30],
-        [0, 41],
-        [45, 30],
-        [26, 6],
-      ],
+      LIMB_RING,
     ],
   },
   // The Night Bridge breathing method arches from palm to palm over the crown, a bridge at night.
@@ -140,13 +141,19 @@ export const CIRCULATIONS = {
       [
         [0, 9],
         [-14, 14],
-        [-30, 10],
-        [-30, -14],
-        [-20, -42],
-        [0, -60],
-        [20, -42],
-        [30, -14],
-        [30, 10],
+        [-24, 11],
+        [-25, -6],
+        [-20, -19],
+        [-8, -23],
+        [-3, -28],
+        [-3, -37],
+        [0, -47],
+        [3, -37],
+        [3, -28],
+        [8, -23],
+        [20, -19],
+        [25, -6],
+        [24, 11],
         [14, 14],
       ],
     ],

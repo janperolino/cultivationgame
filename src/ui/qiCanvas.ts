@@ -20,6 +20,19 @@ import {
 /** The figure's box in its own units: x from −96, y from −92, 192 by 156. */
 export const FIGURE_BOX = { x: -96, y: -92, w: 192, h: 156 } as const;
 
+/**
+ * The seated silhouette, head apart: shoulders, arms resting into the lap, and crossed legs. The
+ * two small inner shapes are the gaps between arm and waist, cut out by the even-odd fill.
+ */
+export const FIGURE_PATH =
+  'M0 -31 L-5 -31 C-7 -27 -13 -26 -19 -24 C-26 -21 -28 -14 -28 -6 C-28 2 -30 9 -33 15 ' +
+  'C-37 20 -44 22 -49 26 C-54 30 -53 37 -46 39 C-32 43 -14 42 0 42 ' +
+  'C14 42 32 43 46 39 C53 37 54 30 49 26 C44 22 37 20 33 15 C30 9 28 2 28 -6 ' +
+  'C28 -14 26 -21 19 -24 C13 -26 7 -27 5 -31 Z ' +
+  'M-20 -13 C-18 -5 -17 2 -14 8 C-18 6 -21 -3 -20 -13 Z ' +
+  'M20 -13 C18 -5 17 2 14 8 C18 6 21 -3 20 -13 Z';
+export const FIGURE_HEAD = { x: 0, y: -41, r: 10.5 } as const;
+
 type Point = readonly [number, number];
 
 export type FigureState = 'settled' | 'dormant' | 'unsettled' | 'full';
@@ -226,6 +239,23 @@ export class QiCanvas {
     if (b.overheated) this.burst(DANTIAN[0], DANTIAN[1], this.palette.warn, 24);
   }
 
+  private bodyPath: Path2D | null = null;
+
+  /**
+   * The silhouette and head as one clip path, by the non-zero rule: the head winds the same way as
+   * the body, so where they overlap at the neck stays inside, and the waist gaps wind the other way,
+   * so they stay out.
+   */
+  private body(): Path2D {
+    if (!this.bodyPath) {
+      const p = new Path2D(FIGURE_PATH);
+      p.moveTo(FIGURE_HEAD.x + FIGURE_HEAD.r, FIGURE_HEAD.y);
+      p.arc(FIGURE_HEAD.x, FIGURE_HEAD.y, FIGURE_HEAD.r, 0, Math.PI * 2, true);
+      this.bodyPath = p;
+    }
+    return this.bodyPath;
+  }
+
   private tint(t: QiTint): string {
     return this.palette.tints[t];
   }
@@ -314,8 +344,10 @@ export class QiCanvas {
       f.state === 'unsettled' || f.heat >= 1 ? this.palette.warn : this.palette.crack;
     const loops = loopsOf(f.circulation);
 
-    // The circulation itself, faint, reddening with heat.
+    // The circulation itself, faint, reddening with heat, and kept inside the silhouette.
     if (f.state !== 'dormant') {
+      ctx.save();
+      ctx.clip(this.body());
       const flicker = f.state === 'unsettled' && !f.reduced ? 0.5 + 0.5 * Math.random() : 1;
       ctx.globalAlpha = (0.1 + 0.14 * level + (f.reduced ? 0.12 : 0)) * f.sparks.glow * flicker;
       ctx.lineWidth = 1.1;
@@ -336,6 +368,7 @@ export class QiCanvas {
           ctx.stroke();
         }
       }
+      ctx.restore();
       ctx.globalAlpha = 1;
     }
 

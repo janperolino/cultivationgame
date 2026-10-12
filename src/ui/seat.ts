@@ -6,7 +6,6 @@ import { create } from 'zustand';
 import { ATTENDED_INPUT_MS } from '../content/attention.ts';
 import {
   AWAY,
-  breathe,
   catchAt,
   keepOrbStream,
   seatOf,
@@ -82,16 +81,11 @@ export function tickSeat(s: GameState, dt: number): { seat: Seat; state: GameSta
   return { seat: s.ended ? AWAY : seatOf(a, s.player), state: keepOrbStream(s, a) };
 }
 
+/** A catch's result: the seat, the figure's animation, and the first catch's chronicle line. */
 function apply(s: GameState, r: Breath): GameState {
   useSeat.setState({ attention: r.attention });
   for (const listen of breathListeners) listen(r);
   return r.caught.length && !r.wasted ? firstBreath(s) : s;
-}
-
-/** The player presses breathe; returns the game, with the first catch's chronicle line. */
-export function breatheNow(s: GameState): GameState {
-  noteInput();
-  return apply(s, breathe(attentionFor(s), s.player));
 }
 
 /** The pointer or a finger passes (x, y) in figure units; `inPlace` when orbs are drawn still. */
@@ -102,7 +96,7 @@ export function catchNow(s: GameState, x: number, y: number, inPlace: boolean): 
   return r.caught.length ? apply(s, r) : s;
 }
 
-/** Resting on the dantian, or holding breathe. */
+/** Resting the pointer on the dantian. */
 export function holdStill(s: GameState, still: boolean): void {
   const a = useSeat.getState().attention;
   if (a && a.who === s.player.id) useSeat.setState({ attention: setStill(a, still) });

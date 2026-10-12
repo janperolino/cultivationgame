@@ -41,7 +41,7 @@ export const ORB_CAP = 4;
 export const ORB_FOCUS = 0.12;
 export const ORB_TIMED = 1.75;
 
-/** The breathe key draws in the nearest orb this close to the dantian, in figure units. */
+/** A breath without a pointer (`breathe`) draws in the nearest orb this close to the dantian. */
 export const BREATHE_REACH = 58;
 /** A pointer or finger draws in an orb this close to it, in figure units. */
 export const POINTER_REACH = 15;

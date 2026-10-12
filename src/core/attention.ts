@@ -2,7 +2,7 @@
 // idle as it always was, the floor, and earns exactly today's rates. Attending adds a factor to qi
 // speed, ×1.25 for being there up to ×2 at full focus, and leaves a second insight trickle. Orbs
 // drift in on their own `orbs` stream while the Abode's figure is on screen; drawing one in (by
-// pointer, finger or the breathe key) fills focus, more on the inhale; focus drains slowly back
+// pointer or a finger) fills focus, more on the inhale; focus drains slowly back
 // toward the floor, and every breath warms the meridians until greed tips them into unsettled.
 //
 // An `Attention` is the session's, never saved: focus starts at zero on every load. Time here is
@@ -82,9 +82,9 @@ export interface Attention {
   heat: number;
   /** Session second until which heat has the meridians unsettled: no bonus at all. */
   unsettledUntil: number;
-  /** Session second the breathe key works again. */
+  /** Session second `breathe` works again. */
   cooldownUntil: number;
-  /** Resting the pointer on the dantian, or holding breathe. Stops the drain with Still Pool. */
+  /** Resting the pointer on the dantian. Stops the drain with Still Pool. */
   still: boolean;
   orbs: Orb[];
   nextOrbAt: number;
@@ -359,13 +359,13 @@ function perBreath(c: Cultivator): number {
   return 1 + Math.max(0, Math.floor(stats(c).twinBreath));
 }
 
-/** Whether the breathe key works now. */
+/** Whether `breathe` works now. */
 export function canBreathe(a: Attention): boolean {
   return a.t >= a.cooldownUntil;
 }
 
 /**
- * `who` presses breathe (space or B): draws in the nearest orb within reach of the dantian, two
+ * `who` breathes with no pointer: draws in the nearest orb within reach of the dantian, two
  * with Twin Streams. Every press starts the cooldown, caught or not, so it can't be mashed.
  */
 export function breathe(a: Attention, who: Cultivator): Breath {
@@ -379,7 +379,7 @@ export function breathe(a: Attention, who: Cultivator): Breath {
 
 /**
  * `who` draws in the orb under the pointer or finger at (x, y), in figure units; with Twin Streams
- * the same breath takes the nearest others within the breathe key's reach. `inPlace` when the
+ * the same breath takes the nearest others within `breathe`'s reach. `inPlace` when the
  * orbs are drawn still where they float (reduced motion).
  */
 export function catchAt(
@@ -400,7 +400,7 @@ export function catchAt(
   return drawIn(a, who, [hit, ...more]);
 }
 
-/** Rest on the dantian, or hold breathe: with Still Pool, focus stops draining. */
+/** Rest the pointer on the dantian: with Still Pool, focus stops draining. */
 export function setStill(a: Attention, still: boolean): Attention {
   return a.still === still ? a : { ...a, still };
 }

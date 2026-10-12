@@ -21,7 +21,7 @@ import { exportFileName } from '../core/save/file.ts';
 import { SaveSlots, type SlotId, type SlotSummary } from '../core/save/slots.ts';
 import { rerollGlass, withPlayer, type GameState } from '../core/state.ts';
 import { followWheel, forgetSavedRoutine, saveRoutine, setHour } from '../core/wheel.ts';
-import { breatheNow, catchNow, startSeatInput, tickSeat } from './seat.ts';
+import { catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 
 export const AUTOSAVE_MS = 30_000;
@@ -106,8 +106,6 @@ export interface GameStore {
   lastChance(): void;
   /** At the lifespan edge: accept the end. */
   letGo(): void;
-  /** Presses breathe: draws in the nearest orb within reach of the dantian. */
-  breathe(): void;
   /** The pointer or a finger passes (x, y) in the figure's units, drawing in an orb there. */
   catchOrb(x: number, y: number, inPlace: boolean): void;
   /** Runs the life's calendar at a reached realm's speed, or its own with null; saved with the slot. */
@@ -492,13 +490,6 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!game || !holdsLock) return;
       set({ game: endLife(game) });
       void get().saveNow();
-    },
-
-    breathe() {
-      const { game } = get();
-      if (!game || !holdsLock || game.ended) return;
-      const next = breatheNow(game);
-      if (next !== game) set({ game: next });
     },
 
     catchOrb(x, y, inPlace) {

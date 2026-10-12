@@ -47,7 +47,7 @@ export const STATS = {
   stillPool: {
     name: 'Still Pool',
     unit: 'points',
-    what: 'resting on the dantian, or holding breathe, stops focus draining',
+    what: 'resting the pointer on the dantian stops focus draining',
   },
   setbackTime: {
     name: 'Setbacks',

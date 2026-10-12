@@ -244,7 +244,7 @@ describe('breathing', () => {
 
   it('reaches only so far, further with Grasping Breath', () => {
     const c = seated();
-    // Just in from the right edge of the cave: out of the breathe key's reach.
+    // Just in from the right edge of the cave: out of `breathe`'s reach.
     const far: Orb = { ...orb(1, INHALE_T, 0), born: INHALE_T - 0.4, arrives: INHALE_T + 3.6 };
     const a = sitting(c, { t: INHALE_T, orbs: [far] });
     const d = Math.hypot(orbPosition(far, INHALE_T)[0], orbPosition(far, INHALE_T)[1] - 9);

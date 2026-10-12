@@ -672,20 +672,6 @@ select {
   background: var(--warn);
 }
 
-.seat-meter .button {
-  justify-self: start;
-  padding: 4px 12px;
-}
-
-.seat-meter kbd {
-  margin-left: 4px;
-  padding: 0 4px;
-  border: 1px solid var(--accent-edge);
-  border-radius: 3px;
-  font-family: var(--font-ui);
-  font-size: 0.85em;
-}
-
 :root[data-motion='reduced'] .seat-bar-fill {
   transition: none;
 }
@@ -695,60 +681,6 @@ select {
   fill: color-mix(in srgb, var(--text) 9%, var(--void));
   stroke: color-mix(in srgb, var(--crack) 30%, transparent);
   stroke-width: 0.7;
-}
-
-/* Poses by the hour: the head bows over a scroll and droops in sleep, sleep dims the dantian,
-   a body hour lights the skin's edge and a soul hour puts a faint ring round the head. */
-.figure-head {
-  transition: transform 500ms ease;
-}
-
-.pose-study .figure-head {
-  transform: translate(0, 3px);
-}
-
-.pose-asleep .figure-head {
-  transform: translate(5px, 6px);
-}
-
-.pose-asleep .dantian-halo,
-.pose-asleep .seated-aura {
-  opacity: 0.35;
-}
-
-.pose-tempering .seated-body {
-  stroke: color-mix(in srgb, var(--crack) 75%, transparent);
-  stroke-width: 1.2;
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--crack) 60%, transparent));
-}
-
-.soul-halo {
-  fill: none;
-  stroke: color-mix(in srgb, var(--crack) 55%, transparent);
-  stroke-width: 0.8;
-  filter: drop-shadow(0 0 4px var(--crack));
-}
-
-.figure-scroll {
-  fill: color-mix(in srgb, var(--accent) 30%, var(--void));
-  stroke: color-mix(in srgb, var(--accent) 60%, transparent);
-  stroke-width: 0.6;
-}
-
-.figure-sleep {
-  fill: var(--muted);
-  font-family: var(--font-display);
-  font-size: calc(11px * var(--text-scale));
-  font-style: italic;
-}
-
-:root[data-motion='reduced'] .figure-head {
-  transition: none;
-}
-
-.dantian-stop-core {
-  stop-color: color-mix(in srgb, var(--crack) 35%, white);
-  stop-opacity: 1;
 }
 
 .dantian-stop-mid {
@@ -766,52 +698,12 @@ select {
   opacity: 0.16;
 }
 
-.dantian-halo {
-  fill: url(#dantian-glow);
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: dantian-breathe 4.8s ease-in-out infinite;
-}
-
-.dantian-core {
-  fill: color-mix(in srgb, var(--crack) 45%, white);
-  filter: drop-shadow(0 0 3px var(--crack));
-}
-
-.seated.is-full .dantian-halo {
-  animation-duration: 2.4s;
-}
-
 .seated.is-full .seated-aura {
   opacity: 0.3;
 }
 
-.seated.is-unsettled .dantian-halo,
-.seated.is-unsettled .dantian-core {
-  opacity: 0.4;
-}
-
-.seated.is-dormant .dantian-halo,
 .seated.is-dormant .seated-aura {
   display: none;
-}
-
-.seated.is-dormant .dantian-core {
-  opacity: 0.25;
-  filter: none;
-}
-
-@keyframes dantian-breathe {
-  0%,
-  100% {
-    transform: scale(0.88);
-    opacity: 0.75;
-  }
-
-  50% {
-    transform: scale(1.12);
-    opacity: 1;
-  }
 }
 
 /* Panels you can act on wear the accent on their rim; a warning wears the warning color. */
@@ -1808,10 +1700,6 @@ select {
 
 :root[data-motion='reduced'] * {
   transition: none !important;
-}
-
-:root[data-motion='reduced'] .dantian-halo {
-  animation: none;
 }
 
 /* Creation, the Character screen, the card feed and the Chronicle (P1.7). */
