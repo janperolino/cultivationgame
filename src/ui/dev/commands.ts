@@ -3,17 +3,32 @@
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
 import { CARDS, hasCard } from '../../content/cards/index.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
+import { hasManual, MANUALS } from '../../content/manuals.ts';
 import { hasMethod, METHODS } from '../../content/methods.ts';
 import { hasRoutine, ROUTINES } from '../../content/routines.ts';
 import { hasTechnique, TECHNIQUES } from '../../content/techniques.ts';
 import { playDay, resolveByDefault } from '../../core/cards.ts';
 import { barSize, majorCheck } from '../../core/cultivation.ts';
 import { gainInsight } from '../../core/insight.ts';
-import { breakThrough, gainMethod, gainRoutine, gainTechnique } from '../../core/life.ts';
+import {
+  attentionFactor,
+  heatLimit,
+  heatUnsettled,
+  inhaling,
+  orbPosition,
+} from '../../core/attention.ts';
+import {
+  breakThrough,
+  gainManual,
+  gainMethod,
+  gainRoutine,
+  gainTechnique,
+} from '../../core/life.ts';
 import { advance, daysPerRealMs } from '../../core/loop.ts';
 import { addItem, ageYears, daysLived, withPlayer, type GameState } from '../../core/state.ts';
 import { formatDays, formatLadder, formatNumber } from '../format.ts';
 import { screens } from '../screens.ts';
+import { useSeat } from '../seat.ts';
 import type { GameStore } from '../store.ts';
 
 export type Output = string | string[];
@@ -253,6 +268,45 @@ export const COMMANDS: Record<string, Command> = {
         return METHODS.map((m) => `${m.id.padEnd(30)} ${m.ladder} · ${m.rarity} · tier ${m.tier}`);
       if (!hasMethod(id)) return `No method "${id}".`;
       return apply(store, (s) => gainMethod(s, id, 'is handed'), `Handed the ${id}.`);
+    },
+  },
+  manual: {
+    usage: 'manual [id]',
+    help: 'Hands over a loose manual; without an id, lists them.',
+    run([id], store) {
+      if (!id) return MANUALS.map((m) => `${m.id.padEnd(30)} ${m.kind} · ${m.rarity}`);
+      if (!hasManual(id)) return `No manual "${id}".`;
+      return apply(store, (s) => gainManual(s, id, 'is handed'), `Handed the ${id}.`);
+    },
+  },
+  seat: {
+    usage: 'seat',
+    help: 'Prints the seat: attending, the factor, focus, heat and the orbs in the cave.',
+    run(_, store) {
+      const s = needGame(store);
+      const a = useSeat.getState().attention;
+      if (!a) return 'The seat has not started.';
+      const lines = [
+        `${a.attended ? 'attending' : 'away'} · ×${attentionFactor(a, s.player).toFixed(2)} · focus ${Math.round(a.focus * 100)}% · heat ${a.heat.toFixed(2)} of ${heatLimit(s.player).toFixed(2)}${heatUnsettled(a) ? ' · unsettled' : ''}`,
+        `${a.caught} drawn in, ${a.timed} on the inhale · ${inhaling(a.t) ? 'inhaling' : 'exhaling'} · next orb in ${Math.max(0, a.nextOrbAt - a.t).toFixed(1)} s`,
+      ];
+      for (const o of a.orbs) {
+        const [x, y] = orbPosition(o, a.t);
+        lines.push(
+          `  orb ${o.id} ${o.tint} at (${x.toFixed(0)}, ${y.toFixed(0)}), fades in ${(o.fades - a.t).toFixed(1)} s`,
+        );
+      }
+      return lines;
+    },
+  },
+  orb: {
+    usage: 'orb',
+    help: 'Brings the next orb now, if the figure is on screen.',
+    run() {
+      const a = useSeat.getState().attention;
+      if (!a) return 'The seat has not started.';
+      useSeat.setState({ attention: { ...a, nextOrbAt: a.t } });
+      return 'An orb drifts in.';
     },
   },
   technique: {

@@ -2,9 +2,9 @@
 // its own silhouette. Tier 1 is broad-shouldered: the side paths reach out level from the starter
 // like arms, and the three gating branches stand as columns down to the capstone. Tier 2 is a
 // stance: the side paths run down the outer edges like legs.
-import type { Tree } from './schema.ts';
+import { defineTree } from './schema.ts';
 
-export const BODY_TREE: Tree = {
+export const BODY_TREE = defineTree({
   id: 'body',
   name: 'Body',
   hanzi: '体',
@@ -782,4 +782,4 @@ export const BODY_TREE: Tree = {
       text: 'A body that a cultivator a realm above must work to wound.',
     },
   ],
-};
+});

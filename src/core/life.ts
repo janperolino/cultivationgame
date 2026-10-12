@@ -2,6 +2,7 @@
 // random stream, dates their notes into the chronicle as typed events, flares the glass at
 // breakthroughs, keeps gentle mode's rewind, opens screens, wakes sleeping talents, marks a failed
 // Foundation attempt for the cards, and ends the life at the lifespan edge.
+import { hasManual } from '../content/manuals.ts';
 import { hasMethod } from '../content/methods.ts';
 import { realmIndex } from '../content/realms.ts';
 import { hasRoutine } from '../content/routines.ts';
@@ -15,6 +16,7 @@ import {
 } from './cultivation.ts';
 import type { DayStep } from './loop.ts';
 import { gainInsight } from './insight.ts';
+import { gainManual as holdManual, holdsManual } from './manuals.ts';
 import { knowsMethod, learnMethod, setActiveMethod, type MethodCheck } from './methods.ts';
 import {
   addEvent,
@@ -84,10 +86,10 @@ export function checkScreens(s: GameState): GameState {
  * The game's day step for `advance`: the player cultivates for a stretch of at most a day, and
  * minor breakthroughs run on the auto setting. Major breakthroughs never happen here.
  */
-export const cultivate: DayStep = (s, days) => {
+export const cultivate: DayStep = (s, days, ctx) => {
   if (s.ended || days <= 0) return s;
   const { value: r, state } = withStream(s, 'breakthrough', (rng) =>
-    cultivateDays(s.player, days, { day: s.calendar.day, rng }),
+    cultivateDays(s.player, days, { day: s.calendar.day, rng, seat: ctx?.seat }),
   );
   let next = addNotes(withPlayer(state, r.cultivator), r.notes);
   for (const b of r.breakthroughs) if (b.success) next = flare(next, b.ladder, b.major);
@@ -198,6 +200,23 @@ export function switchMethod(
     state: addEvent(withPlayer(s, r.cultivator), 'method-switch', data),
     check: r.check,
   };
+}
+
+/** The player comes by a loose manual: a formula, a style, a scripture (content/manuals.ts). */
+export function gainManual(s: GameState, id: string, how = 'comes by'): GameState {
+  if (!hasManual(id) || holdsManual(s.player, id)) return s;
+  const next = withPlayer(s, holdManual(s.player, id));
+  if (next.player === s.player) return s;
+  return addEvent(next, 'manual', { manual: id, how });
+}
+
+/** The flag the first orb drawn in sets, with its chronicle line. */
+export const FIRST_BREATH = 'drew-orb';
+
+/** The first orb a life draws in opens attended seclusion with a line in the chronicle. */
+export function firstBreath(s: GameState): GameState {
+  if (s.ended || s.player.flags.includes(FIRST_BREATH)) return s;
+  return addEvent(withPlayer(s, addFlag(s.player, FIRST_BREATH)), 'first-breath');
 }
 
 /** The player learns a routine from a teacher, manual or sect. */

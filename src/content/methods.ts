@@ -4,6 +4,7 @@
 // the growth it leaves on every stage climbed with it, its breakthrough bonuses and its properties
 // (content/rarity.ts); its tier is how far it carries you. A new method is an entry here, not new
 // code.
+import { RARITY_CIRCULATION, type CirculationId } from './circulation.ts';
 import type { LadderId } from './cultivation.ts';
 import type { Element } from './elements.ts';
 import type { RarityId } from './rarity.ts';
@@ -78,6 +79,11 @@ export interface Method {
   upkeep: Upkeep | null;
   growth: GrowthProfile;
   properties: readonly MethodProperty[];
+  /**
+   * The pattern a qi method's sparks run on the figure (content/circulation.ts); its rarity's
+   * default when absent.
+   */
+  circulation?: CirculationId;
 }
 
 /** Common methods fit every root fully, except mutated roots, which they fit poorly. */
@@ -211,6 +217,7 @@ export const METHODS: readonly Method[] = [
     line: 'night-bridge',
     chapter: 1,
     growth: { qiPool: 0.3, techniquePower: 0.2, qiRecovery: 0.5 },
+    circulation: 'night-bridge',
     ...plain,
     ...common,
   },
@@ -225,6 +232,7 @@ export const METHODS: readonly Method[] = [
     line: 'night-bridge',
     chapter: 2,
     growth: { qiPool: 0.3, techniquePower: 0.2, qiRecovery: 0.5 },
+    circulation: 'night-bridge',
     ...plain,
     ...common,
   },
@@ -440,6 +448,11 @@ export function method(id: string): Method {
   const m = byId.get(id);
   if (!m) throw new RangeError(`Unknown method ${id}`);
   return m;
+}
+
+/** The pattern a method's sparks run on the figure: its own, or its rarity's. */
+export function methodCirculation(m: Method): CirculationId {
+  return m.circulation ?? RARITY_CIRCULATION[m.rarity];
 }
 
 export function hasMethod(id: string): boolean {

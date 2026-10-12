@@ -5,6 +5,7 @@
 import { card } from './cards/index.ts';
 import { GRADES, type GradeId, type LadderId } from './cultivation.ts';
 import { BRANCHES, HOUR_KINDS, HOUR_OPENINGS, SLEEP_FREED_TEXT, type HourKind } from './hours.ts';
+import { manual } from './manuals.ts';
 import { MASTERY } from './mastery.ts';
 import { method } from './methods.ts';
 import { originPath, type OriginChoice, type OriginId } from './origins.ts';
@@ -12,7 +13,7 @@ import { realm, stageName, type RealmId } from './realms.ts';
 import { routine } from './routines.ts';
 import { talent } from './talents.ts';
 import { technique } from './techniques.ts';
-import { treeNode } from './trees/index.ts';
+import { anyNode } from './nodes.ts';
 
 export type EventValue = string | number | boolean | null;
 export type EventData = Readonly<Record<string, EventValue>>;
@@ -116,7 +117,10 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
     d.technique
       ? `${technique(s(d.technique)).name} reaches ${MASTERY[n(d.level)]!.name}; the form finally clicks.`
       : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
-  node: (d, w) => `${w.name} comprehends ${treeNode(s(d.node)).name}.`,
+  node: (d, w) => `${w.name} comprehends ${anyNode(s(d.node)).name}.`,
+  'first-breath': (_d, w) =>
+    `${w.name} draws a bright orb of qi in from the air of the cave, and the breath after it runs deeper.`,
+  manual: (d, w) => `${w.name} ${s(d.how)} the ${manual(s(d.manual)).name}.`,
   technique: (d, w) => `${w.name} ${s(d.how)} ${technique(s(d.technique)).name}.`,
   method: (d, w) => `${w.name} ${s(d.how)} the ${method(s(d.method)).name}.`,
   'method-switch': (d, w) =>

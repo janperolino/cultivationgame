@@ -1,0 +1,394 @@
+{
+  "version": 9,
+  "savedAt": 1760000000000,
+  "state": {
+    "lineage": {
+      "id": "fixture-v7",
+      "life": 1
+    },
+    "mode": "gentle",
+    "calendar": {
+      "day": 4680
+    },
+    "player": {
+      "id": "player",
+      "name": "Lin Feng",
+      "pronouns": "she/her",
+      "look": "a scar through one eyebrow",
+      "bornDay": 0,
+      "lifespanBonus": 0,
+      "root": "true",
+      "rootElements": [
+        "wood",
+        "fire"
+      ],
+      "talents": [
+        "farmhands-frame",
+        "plain-mind",
+        "ordinary-fate"
+      ],
+      "origin": {
+        "id": "frontier-orphan",
+        "choice": "along"
+      },
+      "place": "qm-tushou-men",
+      "methods": {
+        "butcher-saber": {
+          "practice": 254.08333333333334,
+          "fedUntil": 0
+        },
+        "stone-bearing": {
+          "practice": 7.375,
+          "fedUntil": 0
+        }
+      },
+      "activeMethods": {
+        "qi": "butcher-saber",
+        "body": "stone-bearing",
+        "soul": null
+      },
+      "attributes": {
+        "agility": 10,
+        "fortune": 10,
+        "aptitude": 10
+      },
+      "qi": {
+        "realm": "qi-condensation",
+        "stage": 3,
+        "bar": 71.90625000000014,
+        "grades": [],
+        "unsettledUntil": 0,
+        "injuredUntil": 4611.5,
+        "growth": [
+          {
+            "realm": "qi-condensation",
+            "stage": 2,
+            "method": "butcher-saber",
+            "rarity": "white",
+            "growth": {
+              "qiPool": 0,
+              "techniquePower": 0,
+              "qiRecovery": 0
+            }
+          },
+          {
+            "realm": "qi-condensation",
+            "stage": 3,
+            "method": "butcher-saber",
+            "rarity": "white",
+            "growth": {
+              "qiPool": 0,
+              "techniquePower": 0,
+              "qiRecovery": 0
+            }
+          }
+        ]
+      },
+      "body": {
+        "realm": "qi-condensation",
+        "stage": 1,
+        "bar": 11.799999999999992,
+        "grades": [],
+        "unsettledUntil": 0,
+        "injuredUntil": 0,
+        "growth": []
+      },
+      "soul": {
+        "realm": "qi-condensation",
+        "stage": 1,
+        "bar": 0,
+        "grades": [],
+        "unsettledUntil": 0,
+        "injuredUntil": 0,
+        "growth": []
+      },
+      "insight": {
+        "current": 95.04166666666666,
+        "earned": 95.04166666666666
+      },
+      "stones": 0,
+      "items": {},
+      "wheel": [
+        "sleep",
+        "sleep",
+        "qi",
+        "qi",
+        "qi",
+        "qi",
+        "qi",
+        "qi",
+        "qi",
+        "body",
+        "practice",
+        "study"
+      ],
+      "routines": [
+        "butchers-day"
+      ],
+      "savedRoutines": [],
+      "plan": {
+        "auto": "safe",
+        "burnStones": true
+      },
+      "flags": [
+        "outer-disciple",
+        "hours-study",
+        "hours-practice",
+        "hours-body"
+      ],
+      "nodes": [],
+      "techniques": {
+        "bone-splitting-cleave": {
+          "practice": 13.5
+        }
+      },
+      "practicing": "bone-splitting-cleave",
+      "contemplation": {},
+      "people": {
+        "senior-zhao": {
+          "met": 4320,
+          "place": "qm-tushou-men",
+          "bond": "senior",
+          "regard": 0,
+          "realm": {
+            "realm": "qi-condensation",
+            "stage": 6
+          },
+          "where": "qm-tushou-men",
+          "heard": 4320,
+          "seen": 4591.5
+        },
+        "clerk-fan": {
+          "met": 4320,
+          "place": "qm-tushou-men",
+          "bond": "acquaintance",
+          "regard": 1,
+          "realm": null,
+          "where": "qm-shoukou-cheng",
+          "heard": 4320,
+          "seen": 4320
+        }
+      }
+    },
+    "glass": {
+      "seed": -287177630,
+      "fractures": 2,
+      "flares": 2
+    },
+    "clock": null,
+    "ended": null,
+    "chronicle": [
+      {
+        "day": 4320,
+        "type": "birth",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {}
+      },
+      {
+        "day": 4320,
+        "type": "testing",
+        "actors": [
+          "player",
+          "senior-zhao",
+          "clerk-fan"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "origin": "frontier-orphan",
+          "choice": "along"
+        }
+      },
+      {
+        "day": 4356,
+        "type": "mastery",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "method": "butcher-saber",
+          "level": 1
+        }
+      },
+      {
+        "day": 4356,
+        "type": "screen",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "screen": "trees"
+        }
+      },
+      {
+        "day": 4378.5,
+        "type": "breakthrough",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "ladder": "qi",
+          "realm": "qi-condensation",
+          "stage": 2
+        }
+      },
+      {
+        "day": 4379.5,
+        "type": "hours",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "kind": "study",
+          "hour": 11
+        }
+      },
+      {
+        "day": 4518,
+        "type": "card",
+        "actors": [
+          "player",
+          "senior-zhao"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "card": "first-technique-frontier-along",
+          "choice": 0,
+          "pass": null,
+          "byDefault": true
+        }
+      },
+      {
+        "day": 4518,
+        "type": "technique",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "technique": "bone-splitting-cleave",
+          "how": "is taught"
+        }
+      },
+      {
+        "day": 4518,
+        "type": "hours",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "kind": "practice",
+          "hour": 10
+        }
+      },
+      {
+        "day": 4554,
+        "type": "breakthrough",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "ladder": "qi",
+          "realm": "qi-condensation",
+          "stage": 3
+        }
+      },
+      {
+        "day": 4558,
+        "type": "mastery",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "method": "butcher-saber",
+          "level": 2
+        }
+      },
+      {
+        "day": 4566,
+        "type": "mastery",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "technique": "bone-splitting-cleave",
+          "level": 1
+        }
+      },
+      {
+        "day": 4591.5,
+        "type": "card",
+        "actors": [
+          "player",
+          "senior-zhao"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "card": "errand-frontier-along",
+          "choice": 0,
+          "pass": false,
+          "byDefault": true
+        }
+      },
+      {
+        "day": 4591.5,
+        "type": "method",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "method": "stone-bearing",
+          "how": "is handed"
+        }
+      },
+      {
+        "day": 4591.5,
+        "type": "hours",
+        "actors": [
+          "player"
+        ],
+        "place": "qm-tushou-men",
+        "data": {
+          "kind": "body",
+          "hour": 9
+        }
+      }
+    ],
+    "cards": {
+      "pending": [],
+      "drawn": {
+        "first-technique-frontier-along": 4518,
+        "errand-frontier-along": 4591
+      },
+      "marks": {},
+      "checked": 4680,
+      "nextUid": 3
+    },
+    "unlocks": [
+      "abode",
+      "cultivate",
+      "character",
+      "chronicle",
+      "trees",
+      "techniques",
+      "people"
+    ],
+    "rewindCharges": 1,
+    "seed": -287177630,
+    "rng": {
+      "breakthrough": -1400998913,
+      "world": 1300530561
+    }
+  }
+}

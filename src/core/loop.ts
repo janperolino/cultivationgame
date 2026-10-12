@@ -1,6 +1,7 @@
 // Time: real milliseconds become in-game days at the qi realm's calendar speed.
 // The loop ticks a few times a second while you play; on load it applies offline time, capped.
 import { realm, REALMS, realmIndex, type RealmId } from '../content/realms.ts';
+import type { Seat } from './attention.ts';
 import { DAYS_PER_YEAR, lifespanEdgeDay, type GameState } from './state.ts';
 
 export const TICKS_PER_SECOND = 4;
@@ -50,6 +51,8 @@ export function daysPerRealMs(s: GameState): number {
 export interface StepContext {
   /** True while applying offline time: no major breakthroughs, minor ones on auto. */
   offline: boolean;
+  /** The seat while you play: attended or away (core/attention.ts). Away when absent or offline. */
+  seat?: Seat;
 }
 
 /**
@@ -74,10 +77,12 @@ export interface AdvanceResult {
 export function advance(
   s: GameState,
   realMs: number,
-  opts: { step?: DayStep; offline?: boolean } = {},
+  opts: { step?: DayStep; offline?: boolean; seat?: Seat } = {},
 ): AdvanceResult {
   const step = opts.step ?? passTime;
-  const ctx: StepContext = { offline: opts.offline ?? false };
+  // Offline time is away by definition: going in or closing the tab never counts as attending.
+  const offline = opts.offline ?? false;
+  const ctx: StepContext = offline ? { offline } : { offline, seat: opts.seat };
   let state = s;
   let remaining = Math.max(0, realMs);
   let days = 0;

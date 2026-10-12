@@ -28,11 +28,18 @@ export interface Branch {
   tier: number;
   /** One of the capstone's branches: its end links into the capstone. */
   gate: boolean;
+  /**
+   * The Qi tree's Breath branch (design § Cultivation): a side path that pays only while you
+   * attend, beside the tier's own 25 to 30 nodes rather than one of them.
+   */
+  breath?: boolean;
 }
 
 export interface TreeNode {
-  /** Unique across every tree. */
+  /** Unique across every tree and manual. */
   id: string;
+  /** Where the node lives: a tree, or a manual (content/manuals.ts, content/nodes.ts). */
+  home: 'tree';
   name: string;
   hanzi: string;
   /** 1 at Qi Condensation, 2 at Foundation, and so on. */
@@ -67,4 +74,11 @@ export interface Tree {
   what: string;
   branches: readonly Branch[];
   nodes: readonly TreeNode[];
+}
+
+/** A tree as its file writes it: every node lives in the tree, so `home` is filled in here. */
+export type TreeDef = Omit<Tree, 'nodes'> & { nodes: readonly Omit<TreeNode, 'home'>[] };
+
+export function defineTree(t: TreeDef): Tree {
+  return { ...t, nodes: t.nodes.map((n) => ({ ...n, home: 'tree' })) };
 }

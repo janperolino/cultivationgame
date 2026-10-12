@@ -145,8 +145,13 @@ export const CultivatorSchema = z.object({
   }),
   /** Milestones and story: kinds of hour opened, sleep freed, gates reached, talents woken, a bounty. */
   flags: z.array(z.string()),
-  /** Tree nodes learned, in the order they were learned. */
+  /** Nodes learned, from trees and manuals alike, in the order they were learned. */
   nodes: z.array(z.string()),
+  /**
+   * Loose manuals held (content/manuals.ts), by id, in the order gained. A known method's own
+   * manual is held with the method and isn't listed here.
+   */
+  manuals: z.array(z.string()),
   /** Techniques known, with the practice days put into each. */
   techniques: z.record(z.string(), z.object({ practice: z.number().min(0) })),
   /** The technique practice days go to, or null. */
@@ -321,6 +326,7 @@ export function newCultivator(
     plan: { auto: 'safe', burnStones: true },
     flags: opts.flags ?? [],
     nodes: [],
+    manuals: [],
     techniques: Object.fromEntries(techniques.map((t) => [t, { practice: 0 }])),
     practicing: techniques[0] ?? null,
     contemplation: {},

@@ -17,6 +17,11 @@ export const SOUL_PER_DAY = 1.6;
 export const INSIGHT_PER_STUDY_DAY = 1;
 /** Insight every waking hour leaves behind, whatever it went to, per full day of them. */
 export const INSIGHT_TRICKLE = 0.05;
+/**
+ * Attended hours leave a second trickle away hours never do (design § Cultivation, insight), a
+ * rate like the first, so a weekend away costs a node or two, never a tier.
+ */
+export const INSIGHT_ATTENDED = 0.05;
 
 /** Each point of Aptitude above 10 adds 5% to every seclusion gain (design § Combat). */
 export const APTITUDE_BASE = 10;

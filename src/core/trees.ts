@@ -1,33 +1,41 @@
-// Trees (design § Cultivation): learn with insight, use with one gate. Learning costs only
-// insight. A node needs every node it grows from: the one before it on its branch, the gating
-// branches' ends for a capstone, and the tier below's capstone for a starter. A node above its
-// tree's matching level stays sealed, doing nothing, until that ladder reaches the node's tier.
+// Trees and manuals (design § Cultivation): learn with insight, use with one gate. Learning costs
+// only insight. A node needs every node it grows from: on a tree, the one before it on its branch,
+// the gating branches' ends for a capstone, and the tier below's capstone for a starter; in a
+// manual, only that manual's own nodes, and you must hold the manual. A tree node above its tree's
+// matching level stays sealed, doing nothing, until that ladder reaches the node's tier; a loose
+// manual's node waits on the manual's ladder the same way, and a method's node on the method's
+// mastery.
+import { manual } from '../content/manuals.ts';
+import { anyNode, hasAnyNode, type AnyNode } from '../content/nodes.ts';
 import { realmIndex } from '../content/realms.ts';
-import {
-  hasNode,
-  TIER_HOLD,
-  tierNodes,
-  treeNode,
-  treeOf,
-  type Tree,
-  type TreeNode,
-} from '../content/trees/index.ts';
+import { TIER_HOLD, tierNodes, treeOf, type Tree } from '../content/trees/index.ts';
+import { holdsManual } from './manuals.ts';
+import { knowsMethod, methodMastery } from './methods.ts';
 import type { Cultivator } from './state.ts';
 
-/** True while the node's tree ladder sits below the node's tier. */
-export function nodeSealed(c: Cultivator, node: TreeNode): boolean {
-  return realmIndex(c[treeOf(node.id).ladder].realm) + 1 < node.tier;
+/**
+ * True while the node can't work yet: a tree node while its tree's ladder sits below its tier; a
+ * loose manual's node the same on the manual's ladder; a method's node until the method reaches
+ * its mastery level.
+ */
+export function nodeSealed(c: Cultivator, node: AnyNode): boolean {
+  if (node.home === 'tree') return realmIndex(c[treeOf(node.id).ladder].realm) + 1 < node.tier;
+  const m = manual(node.manual);
+  if (m.method && node.mastery !== undefined) {
+    return !knowsMethod(c, m.method) || methodMastery(c, m.method).level < node.mastery;
+  }
+  return realmIndex(c[m.ladder].realm) + 1 < node.tier;
 }
 
 export function hasLearned(c: Cultivator, id: string): boolean {
   return c.nodes.includes(id);
 }
 
-/** The learned nodes that work now. */
-export function activeNodes(c: Cultivator): TreeNode[] {
+/** The learned nodes that work now, from trees and manuals alike. */
+export function activeNodes(c: Cultivator): AnyNode[] {
   return c.nodes
-    .filter(hasNode)
-    .map(treeNode)
+    .filter(hasAnyNode)
+    .map(anyNode)
     .filter((n) => !nodeSealed(c, n));
 }
 
@@ -49,14 +57,17 @@ export type LearnCheck = { ok: true } | { ok: false; reason: string };
 
 /** Whether the cultivator can learn the node now, and why not. Sealed nodes can be learned. */
 export function canLearn(c: Cultivator, id: string): LearnCheck {
-  if (!hasNode(id)) return { ok: false, reason: 'No such node.' };
-  const node = treeNode(id);
+  if (!hasAnyNode(id)) return { ok: false, reason: 'No such node.' };
+  const node = anyNode(id);
   if (hasLearned(c, id)) return { ok: false, reason: 'Already learned.' };
+  if (node.home === 'manual' && !holdsManual(c, node.manual)) {
+    return { ok: false, reason: `You don't hold ${manual(node.manual).name}.` };
+  }
   const missing = node.requires.filter((r) => !hasLearned(c, r));
   if (missing.length) {
     return {
       ok: false,
-      reason: `Learn ${listNames(missing.map((r) => treeNode(r).name))} first.`,
+      reason: `Learn ${listNames(missing.map((r) => anyNode(r).name))} first.`,
     };
   }
   if (c.insight.current < node.cost) {
@@ -79,7 +90,7 @@ export function learnNode(
 ): { cultivator: Cultivator; check: LearnCheck } {
   const check = canLearn(c, id);
   if (!check.ok) return { cultivator: c, check };
-  const node = treeNode(id);
+  const node = anyNode(id);
   return {
     cultivator: {
       ...c,

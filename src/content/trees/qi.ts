@@ -1,11 +1,12 @@
 // The Qi tree: how you gather and spend qi (design § Cultivation). Redrawn in P1.6.
 // Every tier has its own silhouette. Tier 1 is a funnel: the stone-eating and veiled side paths
-// flare out wide near the top, and the three gating branches pour down into the capstone. Tier 2
+// flare out wide near the top, and the three gating branches pour down into the capstone; the
+// Breath branch winds down between Stone Eating and the meridians. Tier 2
 // is a pillar of three tight columns, with a root falling left and a wing rising right from its
 // middle.
-import type { Tree } from './schema.ts';
+import { defineTree } from './schema.ts';
 
-export const QI_TREE: Tree = {
+export const QI_TREE = defineTree({
   id: 'qi',
   name: 'Qi',
   hanzi: '气',
@@ -17,6 +18,7 @@ export const QI_TREE: Tree = {
     { id: 'qi1-strand', name: 'Pure Strand', tier: 1, gate: true },
     { id: 'qi1-stones', name: 'Stone Eating', tier: 1, gate: false },
     { id: 'qi1-veil', name: 'Veiled Aura', tier: 1, gate: false },
+    { id: 'qi1-breath', name: 'Breath', tier: 1, gate: false, breath: true },
     { id: 'qi2-liquid', name: 'Liquid Qi', tier: 2, gate: true },
     { id: 'qi2-furnace', name: 'Stone Furnace', tier: 2, gate: true },
     { id: 'qi2-strand', name: 'Condensed Strand', tier: 2, gate: true },
@@ -377,6 +379,87 @@ export const QI_TREE: Tree = {
       requires: ['qi-dimmed-light'],
       effects: [{ stat: 'concealment', value: 1 }],
       text: 'You draw your aura in, and others read you a layer lower.',
+    },
+
+    // Breath, a side path that pays only while you attend (design § Cultivation, the Breath
+    // branch): cheap and early, so an idler skips it with nothing lost.
+    {
+      id: 'qi-grasping-breath',
+      name: 'Grasping Breath',
+      hanzi: '摄息',
+      tier: 1,
+      kind: 'minor',
+      branch: 'qi1-breath',
+      at: [-3.6, 2.3],
+      cost: 10,
+      requires: ['qi-sensing-breath'],
+      effects: [{ stat: 'breathReach', value: 0.4 }],
+      text: 'Your breath reaches past your fingertips, and qi a pace off comes when called.',
+    },
+    {
+      id: 'qi-lingering-breath',
+      name: 'Lingering Breath',
+      hanzi: '绵息',
+      tier: 1,
+      kind: 'minor',
+      branch: 'qi1-breath',
+      at: [-4.45, 3.85],
+      cost: 15,
+      requires: ['qi-grasping-breath'],
+      effects: [{ stat: 'focusDrain', value: -0.4 }],
+      text: 'One long breath out, and the stillness it leaves stays a while.',
+    },
+    {
+      id: 'qi-still-pool',
+      name: 'Still Pool',
+      hanzi: '静潭',
+      tier: 1,
+      kind: 'minor',
+      branch: 'qi1-breath',
+      at: [-4.5, 5.45],
+      cost: 25,
+      requires: ['qi-lingering-breath'],
+      effects: [{ stat: 'stillPool', value: 1 }],
+      text: 'Rest your mind on the dantian and it holds, a pool no wind crosses.',
+    },
+    {
+      id: 'qi-cooling-channels',
+      name: 'Cooling Channels',
+      hanzi: '凉脉',
+      tier: 1,
+      kind: 'minor',
+      branch: 'qi1-breath',
+      at: [-4.4, 7.05],
+      cost: 35,
+      requires: ['qi-still-pool'],
+      effects: [{ stat: 'heatLimit', value: 0.5 }],
+      text: 'Cool water runs behind the hot, and greed takes longer to burn.',
+    },
+    {
+      id: 'qi-twin-streams',
+      name: 'Twin Streams',
+      hanzi: '双流',
+      tier: 1,
+      kind: 'minor',
+      branch: 'qi1-breath',
+      at: [-5.65, 8.25],
+      cost: 50,
+      requires: ['qi-cooling-channels'],
+      effects: [{ stat: 'twinBreath', value: 1 }],
+      text: 'One breath, two streams: you draw in the near and the far together.',
+    },
+    {
+      id: 'qi-whale-swallows',
+      name: 'Whale Swallows the Sea',
+      hanzi: '鲸吞海',
+      tier: 1,
+      kind: 'notable',
+      branch: 'qi1-breath',
+      at: [-3.75, 8.75],
+      cost: 90,
+      requires: ['qi-twin-streams'],
+      effects: [{ stat: 'focusCeiling', value: 0.25 }],
+      text: 'You open like a whale’s mouth, and the cave’s qi pours in faster than you can hold it.',
     },
 
     {
@@ -771,4 +854,4 @@ export const QI_TREE: Tree = {
       text: 'A foundation that does not shift when the core begins to form on it.',
     },
   ],
-};
+});

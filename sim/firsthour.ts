@@ -1,12 +1,15 @@
 // The first hour (design § Character creation): every origin path on every root, from testing day,
 // playing each card by its default choice as it comes. Real minutes to a qi method (the refusals
-// wait on a card for theirs), the first technique, layer 2, layer 3, the errand that hands over
-// the tempering art, and the nourishing art; median and slowest of many seeds. Talents are plain,
-// so Aptitude stays at 10. Targets: layer 3 at about 45 minutes going along, nearer 55 on a
-// refusal, and always inside the hour.
+// wait on a card for theirs), the first orb drifting in to the Abode's figure, the first
+// technique, layer 2, layer 3, the errand that hands over the tempering art, and the nourishing
+// art; median and slowest of many seeds. Talents are plain, so Aptitude stays at 10. The rules run
+// away, as the floor; creation's own minutes (0–3) come before testing day. Targets: the first orb
+// by minute 3–5 counting creation, layer 3 at about 45 minutes going along, nearer 55 on a refusal,
+// and always inside the hour.
 // Run: npm run sim -- firsthour [--seeds=25]
 import { ORIGIN_CHOICES, ORIGIN_IDS, pathKey } from '../src/content/origins.ts';
 import { defaultElements, ROOTS, type RootId } from '../src/content/roots.ts';
+import { startAttention, tickAttention } from '../src/core/attention.ts';
 import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
 import { advance } from '../src/core/loop.ts';
@@ -17,8 +20,8 @@ const SEEDS = arg ? Number(arg.slice(8)) : 25;
 const CHUNK_MS = 15_000;
 const END_MS = 150 * 60_000;
 
-type Mark = 'method' | 'technique' | 'L2' | 'L3' | 'errand' | 'soul';
-const MARKS: Mark[] = ['method', 'technique', 'L2', 'L3', 'errand', 'soul'];
+type Mark = 'method' | 'orb' | 'technique' | 'L2' | 'L3' | 'errand' | 'soul';
+const MARKS: Mark[] = ['method', 'orb', 'technique', 'L2', 'L3', 'errand', 'soul'];
 
 function run(
   rootId: RootId,
@@ -44,7 +47,13 @@ function run(
   });
   const at: Partial<Record<Mark, number>> = {};
   let ms = 0;
+  let seat = startAttention(s);
   while (ms < END_MS) {
+    // The seat, a second at a time, until the first orb reaches the figure.
+    for (let i = 0; at.orb === undefined && i < CHUNK_MS / 1000; i++) {
+      seat = tickAttention(seat, s.player, 1, { attended: true, abode: true, hour: 0 });
+      if (seat.orbs.some((o) => o.arrives <= seat.t)) at.orb = (ms + i * 1000) / 60_000;
+    }
     const r = advance(s, CHUNK_MS, { step: playDay });
     s = r.state;
     while (s.cards.pending.length) s = resolveByDefault(s, s.cards.pending[0]!.uid);
@@ -62,7 +71,8 @@ function run(
 }
 
 const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
-const fmt = (m: number | undefined) => (m === undefined ? '—' : `${Math.round(m)}m`);
+const fmt = (m: number | undefined) =>
+  m === undefined ? '—' : m < 2 ? `${m.toFixed(1)}m` : `${Math.round(m)}m`;
 
 console.log(`First hour (median / slowest of ${SEEDS} seeds, real minutes from testing day)`);
 console.log('path'.padEnd(26) + 'root'.padEnd(10) + MARKS.map((m) => m.padStart(12)).join(''));

@@ -29,6 +29,13 @@
   --hour-sleep: #59606b;
   /* Dawn's purple qi at 卯. */
   --dawn: #c4a3f0;
+  /* Qi as the figure draws it in, tinted by the hour (ui/qiCanvas.ts); dawn's purple is --dawn. */
+  --qi-water: var(--crack);
+  --qi-wood: #86d19a;
+  --qi-fire: #ee9670;
+  --qi-earth: #dcb359;
+  --qi-metal: #e4e7ee;
+  --qi-yin: #7d84d6;
   /* Rarity's own palette (design § UI and screens): never the accent or the warning color, since
      the accent means "act on this". Gold is amber-orange with a soft glow, red a deep crimson. */
   --rarity-gray: #7b818a;
@@ -583,13 +590,104 @@ select {
   min-width: 0;
 }
 
-.seated {
-  display: block;
-  flex: 0 0 auto;
-  width: 200px;
-  height: auto;
+/* The figure and the canvas over it share one box, in the figure's own units (192 by 156). */
+.abode-seat {
+  display: flex;
+  flex: 0 1 300px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
   margin: 0 auto;
+}
+
+.seat-figure {
+  position: relative;
+  width: min(300px, 100%);
+  aspect-ratio: 192 / 156;
+  touch-action: none;
+  cursor: crosshair;
+  user-select: none;
+}
+
+.seated {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
   overflow: visible;
+}
+
+.seat-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.seat-meter {
+  display: grid;
+  gap: 5px;
+  width: min(300px, 100%);
+}
+
+.seat-meter .caption {
+  margin: 0;
+}
+
+.seat-speed {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.seat-speed strong {
+  color: var(--crack);
+  font-family: var(--font-display);
+  font-size: calc(24px * var(--text-scale));
+  font-weight: 500;
+}
+
+.seat-bar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.seat-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--crack);
+  transition: width 250ms linear;
+}
+
+.seat-bar.is-heat {
+  height: 3px;
+}
+
+.seat-bar.is-heat .seat-bar-fill {
+  background: var(--warn);
+}
+
+.seat-meter .button {
+  justify-self: start;
+  padding: 4px 12px;
+}
+
+.seat-meter kbd {
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid var(--accent-edge);
+  border-radius: 3px;
+  font-family: var(--font-ui);
+  font-size: 0.85em;
+}
+
+:root[data-motion='reduced'] .seat-bar-fill {
+  transition: none;
 }
 
 .seated-head,
@@ -1540,6 +1638,49 @@ select {
 .effects {
   margin: 10px 0 0;
   padding-left: 18px;
+}
+
+/* Manuals on the Character screen: a list by kind, and a manual's nodes opened beneath it. */
+.manual-list {
+  margin: 4px 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.manual-open {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.manual-open:hover .caption {
+  color: var(--accent);
+}
+
+.node-overlay.is-inline {
+  position: static;
+  width: auto;
+  max-height: none;
+  margin: 4px 0 10px;
+}
+
+.manual-nodes {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.manual-node + .manual-node {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--edge);
+}
+
+.manual-node .actions {
+  margin-top: 8px;
 }
 
 /* Techniques */

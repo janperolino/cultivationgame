@@ -2,9 +2,9 @@
 // in P1.6. Every tier has its own silhouette. Tier 1 is a lantern: the gating branches bulge out
 // and close again on the capstone, and the side paths curl down around them like a frame. Tier 2
 // is an eye: two arcs round a pupil, with lashes curling off the arcs' outer corners.
-import type { Tree } from './schema.ts';
+import { defineTree } from './schema.ts';
 
-export const SOUL_TREE: Tree = {
+export const SOUL_TREE = defineTree({
   id: 'soul',
   name: 'Soul',
   hanzi: '魂',
@@ -775,4 +775,4 @@ export const SOUL_TREE: Tree = {
       text: 'Deep in the sea, a spark that will one day open its eyes. Your will finds the gap in theirs.',
     },
   ],
-};
+});

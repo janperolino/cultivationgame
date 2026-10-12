@@ -21,6 +21,7 @@ import { exportFileName } from '../core/save/file.ts';
 import { SaveSlots, type SlotId, type SlotSummary } from '../core/save/slots.ts';
 import { rerollGlass, withPlayer, type GameState } from '../core/state.ts';
 import { followWheel, forgetSavedRoutine, saveRoutine, setHour } from '../core/wheel.ts';
+import { breatheNow, catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 
 export const AUTOSAVE_MS = 30_000;
@@ -105,6 +106,10 @@ export interface GameStore {
   lastChance(): void;
   /** At the lifespan edge: accept the end. */
   letGo(): void;
+  /** Presses breathe: draws in the nearest orb within reach of the dantian. */
+  breathe(): void;
+  /** The pointer or a finger passes (x, y) in the figure's units, drawing in an orb there. */
+  catchOrb(x: number, y: number, inPlace: boolean): void;
   /** Runs the life's calendar at a reached realm's speed, or its own with null; saved with the slot. */
   setClock(realm: RealmId | null): void;
   /** The player read someone's page: their news is no longer fresh. */
@@ -189,12 +194,14 @@ export const useGame = create<GameStore>()((set, get) => {
     const now = Date.now();
     const gap = now - lastTick;
     lastTick = now;
+    // The seat runs on real seconds; a long gap is time away, which the seat spends fading.
+    const { seat, state } = tickSeat(game, gap / 1000);
     if (gap > OFFLINE_GAP_MS) {
-      const away = catchUp(game, now - gap, now, { step: playDay });
+      const away = catchUp(state, now - gap, now, { step: playDay });
       set({ away: { ...away, before: game } });
       update(away.state);
     } else {
-      update(advance(game, gap * speed, { step: playDay }).state);
+      update(advance(state, gap * speed, { step: playDay, seat }).state);
     }
   }
 
@@ -290,6 +297,7 @@ export const useGame = create<GameStore>()((set, get) => {
 
   async function init() {
     set({ speed: speedFromUrl() });
+    startSeatInput();
     // Ask the browser to keep our storage; Safari clears unvisited sites after a week otherwise.
     if (navigator.storage?.persist) {
       navigator.storage
@@ -484,6 +492,20 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!game || !holdsLock) return;
       set({ game: endLife(game) });
       void get().saveNow();
+    },
+
+    breathe() {
+      const { game } = get();
+      if (!game || !holdsLock || game.ended) return;
+      const next = breatheNow(game);
+      if (next !== game) set({ game: next });
+    },
+
+    catchOrb(x, y, inPlace) {
+      const { game } = get();
+      if (!game || !holdsLock || game.ended) return;
+      const next = catchNow(game, x, y, inPlace);
+      if (next !== game) set({ game: next });
     },
 
     setClock(realm) {

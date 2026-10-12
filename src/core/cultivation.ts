@@ -13,6 +13,7 @@ import {
   GRADES,
   GRADE_SCORES,
   INJURY_SPEED,
+  INSIGHT_ATTENDED,
   INSIGHT_MARGIN_FULL,
   INSIGHT_PER_STUDY_DAY,
   INSIGHT_TRICKLE,
@@ -61,6 +62,7 @@ import {
 import { root } from '../content/roots.ts';
 import type { Routine } from '../content/routines.ts';
 import { technique } from '../content/techniques.ts';
+import { AWAY, type Seat } from './attention.ts';
 import { stageGrowth } from './growth.ts';
 import { gainInsight, masteryBurst } from './insight.ts';
 import {
@@ -90,10 +92,15 @@ export interface Note {
   data: EventData;
 }
 
-/** What a rule needs from the world: the day, and the random stream it may draw from. */
+/**
+ * What a rule needs from the world: the day, the random stream it may draw from, and the seat,
+ * attended or away (core/attention.ts). Away when absent, which is offline time and every sim's
+ * away row.
+ */
 export interface RuleContext {
   day: number;
   rng: Rng;
+  seat?: Seat;
 }
 
 // ---------------------------------------------------------------- the ladders
@@ -128,24 +135,27 @@ export interface QiSpeed {
   aptitude: number;
   /** Tree nodes' and the method's qi gain, as a multiplier. */
   nodes: number;
+  /** Attention: ×1 away, ×1.25 for being there, up to ×2 at full focus (core/attention.ts). */
+  attention: number;
   /** The method's tier sits below the qi realm: it gains nothing until the next chapter. */
   capped: boolean;
   total: number;
 }
 
 /**
- * Root speed × the method (tier bonus × rarity × mastery) × fit × qi density × Aptitude × nodes.
- * Zero without a qi method, or with one past its tier. Layers 1–3 ignore the root, the method
- * part and the fit.
+ * Root speed × the method (tier bonus × rarity × mastery) × fit × qi density × Aptitude × nodes ×
+ * attention. Zero without a qi method, or with one past its tier. Layers 1–3 ignore the root, the
+ * method part and the fit.
  */
-export function qiSpeed(c: Cultivator): QiSpeed {
+export function qiSpeed(c: Cultivator, seat: Seat = AWAY): QiSpeed {
   const m = ladderMethod(c, 'qi');
   const apt = aptitudeMultiplier(c);
   const nodes = 1 + stats(c).qiGain;
   const part = methodSpeed(c, 'qi');
   if (!m) {
     const none = { root: 0, tier: 0, rarity: 0, mastery: 0, fit: 0 };
-    return { ...none, density: 1, aptitude: apt, nodes, capped: false, total: 0 };
+    const attention = seat.factor;
+    return { ...none, density: 1, aptitude: apt, nodes, attention, capped: false, total: 0 };
   }
   const tutorial = inTutorial(c.qi);
   const rootSpeed = tutorial ? 1 : root(c.root).speed;
@@ -160,8 +170,9 @@ export function qiSpeed(c: Cultivator): QiSpeed {
     density,
     aptitude: apt,
     nodes,
+    attention: seat.factor,
     capped: part.capped,
-    total: rootSpeed * part.total * fit * density * apt * nodes,
+    total: rootSpeed * part.total * fit * density * apt * nodes * seat.factor,
   };
 }
 
@@ -178,7 +189,7 @@ interface DayBase {
   body: number;
   soul: number;
   study: number;
-  /** The insight every waking hour leaves, whatever it went to. */
+  /** The insight every waking hour leaves, whatever it went to, and a second while attended. */
   trickle: number;
   practice: number;
 }
@@ -187,7 +198,7 @@ interface DayBase {
  * What a full day of each kind of work gives. `unfed` names the ladders whose method's upkeep went
  * unpaid, which stall and gain nothing.
  */
-function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[]): DayBase {
+function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[], seat: Seat): DayBase {
   const m = stats(c);
   const apt = aptitudeMultiplier(c);
   const insight = realm(c.qi.realm).insightRate * apt * (1 + m.insightGain);
@@ -207,13 +218,13 @@ function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[]): DayBas
     qi:
       QI_PER_DAY *
       realmScale(c.qi.realm) *
-      qiSpeed(c).total *
+      qiSpeed(c, seat).total *
       setbackMultiplier(c.qi, day) *
       fed('qi'),
     body: art('body', BODY_PER_DAY, m.bodyGain),
     soul: art('soul', SOUL_PER_DAY, m.soulGain),
     study: INSIGHT_PER_STUDY_DAY * insight,
-    trickle: INSIGHT_TRICKLE * insight,
+    trickle: (INSIGHT_TRICKLE + (seat.attended ? INSIGHT_ATTENDED : 0)) * insight,
     practice: practicing ? apt * (1 + m.practiceGain) * (1 + kinshipBonus(c, practicing)) : 0,
   };
 }
@@ -254,8 +265,9 @@ export function hourYields(
   c: Cultivator,
   day: number,
   unfed: readonly LadderId[] = [],
+  seat: Seat = AWAY,
 ): HourYield[] {
-  const base = dayBase(c, day, unfed);
+  const base = dayBase(c, day, unfed, seat);
   const discipline = followedRoutine(c) ? DISCIPLINE_BONUS : 0;
   return effectiveWheel(c).map((kind, hour) => {
     const y: HourYield = {
@@ -312,10 +324,16 @@ export interface DayRates {
 
 /**
  * What one full day of seclusion gives on the cultivator's wheel, on a given world day; `unfed`
- * names the ladders whose method's upkeep went unpaid.
+ * names the ladders whose method's upkeep went unpaid, and `seat` whether you attend (away when
+ * absent): attention multiplies the qi hours and leaves a second insight trickle.
  */
-export function dayRates(c: Cultivator, day: number, unfed: readonly LadderId[] = []): DayRates {
-  const hours = hourYields(c, day, unfed);
+export function dayRates(
+  c: Cultivator,
+  day: number,
+  unfed: readonly LadderId[] = [],
+  seat: Seat = AWAY,
+): DayRates {
+  const hours = hourYields(c, day, unfed, seat);
   const count = Object.fromEntries(HOUR_KIND_IDS.map((k) => [k, 0])) as Record<HourKind, number>;
   const sum = { qi: 0, body: 0, soul: 0, insight: 0, practice: 0 };
   for (const h of hours) {
@@ -331,8 +349,11 @@ export function dayRates(c: Cultivator, day: number, unfed: readonly LadderId[] 
   // Each stone adds a fifth of a full day of qi hours and a full day takes five, both scaled by the
   // realm curve, so a full burn doubles the day whatever the realm. Fewer qi hours, fewer stones.
   const stoneCap = sum.qi > 0 && c.plan.burnStones ? STONES_PER_QI_DAY * qiScale * qiShare : 0;
+  // Attention lifts what you draw from the air, not what a stone holds.
   const qiPerStone =
-    stoneCap > 0 ? ((sum.qi / qiShare) * STONE_QI * (1 + stats(c).stoneQi)) / qiScale : 0;
+    stoneCap > 0
+      ? ((sum.qi / seat.factor / qiShare) * STONE_QI * (1 + stats(c).stoneQi)) / qiScale
+      : 0;
   const methodPractice = Object.fromEntries(
     LADDERS.map((which) => {
       const m = ladderMethod(c, which);
@@ -790,7 +811,7 @@ export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): Cu
     fed = r.cultivator;
     if (!r.fed) unfed.push(which);
   }
-  const rates = dayRates(fed, ctx.day, unfed);
+  const rates = dayRates(fed, ctx.day, unfed, ctx.seat ?? AWAY);
   // No stones burn once the qi bar is at its cap: the qi would be lost.
   const capped = barFill(fed.qi) >= BAR_CAP - 1e-9;
   const burned = capped ? 0 : Math.min(fed.stones, rates.stoneCap * days);

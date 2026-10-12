@@ -92,11 +92,18 @@ describe('tree content', () => {
   for (const t of TREES) {
     for (const tier of [1, 2]) {
       describe(`the ${t.name} tree's tier ${tier}`, () => {
-        const nodes = tierNodes(t, tier);
+        // The Breath branch sits beside the tier's own count (design § Cultivation, Breath).
+        const breath = new Set(
+          tierBranches(t, tier)
+            .filter((b) => b.breath)
+            .map((b) => b.id),
+        );
+        const nodes = tierNodes(t, tier).filter((n) => !n.branch || !breath.has(n.branch));
+        const all = tierNodes(t, tier);
         const ids = nodes.map((n) => n.id);
         const starter = tierNode(t, tier, 'starter')!;
         const capstone = tierNode(t, tier, 'capstone')!;
-        const branches = tierBranches(t, tier);
+        const branches = tierBranches(t, tier).filter((b) => !b.breath);
         const gates = branches.filter((b) => b.gate);
 
         it('holds 25 to 30 nodes: one starter, one capstone and 4 or 5 branches, 2 or 3 gating', () => {
@@ -111,9 +118,9 @@ describe('tree content', () => {
         });
 
         it('puts every minor and notable on one of its branches', () => {
-          for (const n of nodes) {
+          for (const n of all) {
             if (n.kind === 'starter' || n.kind === 'capstone') expect(n.branch).toBeUndefined();
-            else expect(branches.map((b) => b.id)).toContain(n.branch);
+            else expect(tierBranches(t, tier).map((b) => b.id)).toContain(n.branch);
           }
           for (const b of branches) expect(branchNodes(t, b.id).length).toBeGreaterThan(2);
         });
@@ -157,11 +164,11 @@ describe('tree content', () => {
         it('places nodes apart inside the band, each with a cost and an effect', () => {
           expect(starter.at).toEqual([0, 0]);
           expect(capstone.at).toEqual([0, TIER_DEPTH]);
-          for (const n of nodes) {
+          for (const n of all) {
             expect(Math.abs(n.at[0]), n.id).toBeLessThanOrEqual(TIER_HALF_WIDTH);
             expect(n.at[1], n.id).toBeGreaterThanOrEqual(0);
             expect(n.at[1], n.id).toBeLessThanOrEqual(TIER_DEPTH);
-            for (const o of nodes) {
+            for (const o of all) {
               if (o === n) continue;
               const d = Math.hypot(o.at[0] - n.at[0], o.at[1] - n.at[1]);
               expect(d, `${n.id} and ${o.id}`).toBeGreaterThanOrEqual(1.2);
@@ -199,6 +206,22 @@ describe('tree content', () => {
       });
     }
   }
+
+  it('gives the Qi tree a Breath branch on tier 1: six cheap nodes that pay only while you attend', () => {
+    const qi = tree('qi');
+    const breath = tierBranches(qi, 1).filter((b) => b.breath);
+    expect(breath).toHaveLength(1);
+    const own = branchNodes(qi, breath[0]!.id);
+    expect(own).toHaveLength(6);
+    expect(own[0]!.requires).toEqual([tierNode(qi, 1, 'starter')!.id]);
+    const attending = ['breathReach', 'focusDrain', 'focusCeiling', 'twinBreath', 'heatLimit'];
+    for (const n of own) {
+      expect(n.cost, n.id).toBeLessThanOrEqual(100);
+      for (const e of n.effects) expect([...attending, 'stillPool'], n.id).toContain(e.stat);
+    }
+    // Only the Qi tree carries one, and no other tree's branch is a Breath branch.
+    for (const t of TREES) if (t.id !== 'qi') expect(t.branches.some((b) => b.breath)).toBe(false);
+  });
 
   it('lists each node after the nodes it grows from, so a tree can be bought in order', () => {
     for (const t of TREES) {

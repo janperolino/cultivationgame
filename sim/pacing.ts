@@ -9,13 +9,29 @@
 // failed Foundation attempt gets another pill at once rather than the card's ten years. Every
 // method starts white, tier 1 and at Glimpse, and climbs in mastery with the hours cultivated with it.
 // Each row is the median of many seeds.
+// The attended rows (design § How the two halves connect) sit with the seat for none, a third
+// (twenty minutes of every real hour) or all of the time: a steady player at the Abode who takes
+// four orbs in five, each on the first inhale it is in reach, and never grabs into the heat.
 // Targets (design § Character creation): every root at layer 3 in about 45 minutes; a true root at
-// layer 9 in 15–20 hours; a heavenly root in about half that.
+// layer 9 in 15–20 hours away and about half that attended throughout; a heavenly root in about
+// half the true root's time.
 // Run: npm run sim -- pacing [--seeds=25]
+import { HEAT_PER_BREATH, HEAT_TIMED } from '../src/content/attention.ts';
 import { MASTERY } from '../src/content/mastery.ts';
 import { method, nextChapter } from '../src/content/methods.ts';
 import { defaultElements, ROOTS, type RootId } from '../src/content/roots.ts';
 import { routine } from '../src/content/routines.ts';
+import {
+  breathe,
+  canBreathe,
+  heatLimit,
+  inhaling,
+  seatOf,
+  startAttention,
+  tickAttention,
+  type Attention,
+  type Seat,
+} from '../src/core/attention.ts';
 import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
 import { TREES, treeNode, type TreeNode } from '../src/content/trees/index.ts';
@@ -23,11 +39,56 @@ import { majorCheck } from '../src/core/cultivation.ts';
 import { breakThrough, learn, switchMethod } from '../src/core/life.ts';
 import { advance } from '../src/core/loop.ts';
 import { methodMastery } from '../src/core/methods.ts';
-import { addItem, ageYears, withPlayer, type GameState } from '../src/core/state.ts';
+import { Rng } from '../src/core/rng.ts';
+import {
+  addItem,
+  ageYears,
+  withPlayer,
+  type Cultivator,
+  type GameState,
+} from '../src/core/state.ts';
 import { canLearn, hasLearned, nodeSealed } from '../src/core/trees.ts';
 import { followWheel } from '../src/core/wheel.ts';
 
 type Play = 'default' | 'nodes' | 'routine' | 'qi-only';
+/** How much of the time the player sits with the seat. */
+type Schedule = 'none' | 'third' | 'all';
+
+/** The share of orbs the steady player takes. */
+const TAKES = 0.8;
+
+/** Whether the schedule sits with the seat at this real minute. */
+function attending(schedule: Schedule, minute: number): boolean {
+  if (schedule === 'all') return true;
+  if (schedule === 'third') return minute % 60 < 20;
+  return false;
+}
+
+/**
+ * A minute at the seat, a second at a time: the steady player breathes when an orb they mean to
+ * take is in reach on the inhale, if the breath won't tip the heat. Returns the minute's average
+ * seat, which the day step reads.
+ */
+function sitMinute(
+  a: Attention,
+  c: Cultivator,
+  attended: boolean,
+  rng: Rng,
+  skip: Set<number>,
+): { a: Attention; seat: Seat } {
+  let factor = 0;
+  for (let i = 0; i < 60; i++) {
+    a = tickAttention(a, c, 1, { attended, abode: attended, hour: 0 });
+    for (const o of a.orbs) if (o.born > a.t - 1 && rng.next() > TAKES) skip.add(o.id);
+    const safe = a.heat + HEAT_PER_BREATH * HEAT_TIMED < heatLimit(c);
+    if (attended && canBreathe(a) && inhaling(a.t) && safe && a.orbs.some((o) => !skip.has(o.id))) {
+      const r = breathe(a, c);
+      if (r.caught.length) a = r.attention;
+    }
+    factor += seatOf(a, c).factor;
+  }
+  return { a, seat: { factor: factor / 60, attended } };
+}
 
 /** Nodes a player chasing qi speed wants: qi gain or Aptitude, which the sim's run feels. */
 const SPEED_NODES = TREES.flatMap((t) => t.nodes).filter((n) =>
@@ -116,7 +177,7 @@ interface Run {
   fails: number;
 }
 
-function play(rootId: RootId, seed: number, how: Play): Run {
+function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run {
   let s = createLife({
     name: 'Sim',
     pronouns: 'they/them',
@@ -137,8 +198,17 @@ function play(rootId: RootId, seed: number, how: Play): Run {
   const run: Run = { at, fails: 0 };
   let ms = 0;
   let chronicleSeen = s.chronicle.length;
+  let seat = startAttention(s);
+  const sitter = new Rng(seed * 7919 + 1);
+  const skip = new Set<number>();
   while (ms < MAX_HOURS * 3_600_000) {
-    const r = advance(s, CHUNK_MS, { step: playDay });
+    let opts: { step: typeof playDay; seat?: Seat } = { step: playDay };
+    if (schedule !== 'none') {
+      const sat = sitMinute(seat, s.player, attending(schedule, ms / 60_000), sitter, skip);
+      seat = sat.a;
+      opts = { step: playDay, seat: sat.seat };
+    }
+    const r = advance(s, CHUNK_MS, opts);
     s = settleCards(r.state);
     ms += r.usedMs;
     const hours = ms / 3_600_000;
@@ -195,14 +265,14 @@ interface Medians {
   age?: number;
 }
 
-function table(title: string, how: Play): Record<string, Medians> {
+function table(title: string, how: Play, schedule: Schedule = 'none'): Record<string, Medians> {
   const out: Record<string, Medians> = {};
   console.log(`\n${title} (median of ${SEEDS} seeds; m = real minutes, h = real hours)`);
   const head = ['root', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8', 'L9', 'Found.', 'age@L9'];
   head.push('insight@L9', 'body', 'soul', 'nodes', 'fails', 'mast@L4', 'mast@L9');
   console.log(head.map((h, i) => (i === 0 ? h.padEnd(10) : h.padStart(i >= 11 ? 11 : 8))).join(''));
   for (const r of ROOTS) {
-    const runs = Array.from({ length: SEEDS }, (_, i) => play(r.id, i, how));
+    const runs = Array.from({ length: SEEDS }, (_, i) => play(r.id, i, how, schedule));
     const cols = [2, 3, 4, 5, 6, 7, 8, 9, 10].map((k) =>
       fmt(median(runs.map((x) => x.at[k]).filter((x): x is number => x !== undefined))),
     );
@@ -235,6 +305,13 @@ const away = table('Default rule, safe breakthroughs, no stones', 'default');
 const nodes = table('Default rule, buying tree nodes toward the nearest that speeds qi', 'nodes');
 const routineRow = table('Following the Watch Rotation once it can be followed', 'routine');
 table('Every waking hour on qi, safe breakthroughs, no stones', 'qi-only');
+const third = table(
+  'Attended a third of the time (20 minutes an hour), default rule',
+  'default',
+  'third',
+);
+const attended = table('Attended throughout, default rule', 'default', 'all');
+const engaged = table('Attended throughout, buying tree nodes', 'nodes', 'all');
 
 // The pacing targets (design § Character creation and the first hour), checked on the away row,
 // which is the floor: the default rule with nobody at the wheel.
@@ -270,7 +347,29 @@ checks.push([
   (nodes.true?.l9 ?? Infinity) <= (trueL9 ?? 0) &&
     (routineRow.true?.l9 ?? Infinity) <= (trueL9 ?? 0),
 ]);
-console.log('\nTargets (the attended rows arrive with P1.10)');
+// The attended rows (design § Character creation, the pacing targets' attended row).
+const halfOf = (attended.true?.l9 ?? NaN) / (trueL9 ?? NaN);
+checks.push([
+  'Attended throughout reaches layer 9 in about half the away hours (0.4–0.6)',
+  `${fmt(attended.true?.l9)}, ${Number.isFinite(halfOf) ? halfOf.toFixed(2) : '—'} of away`,
+  within(halfOf, 0.4, 0.6),
+]);
+checks.push([
+  'Attended throughout is around 21 at layer 9 (18–25)',
+  attended.true?.age?.toFixed(1) ?? '—',
+  within(attended.true?.age, 18, 25),
+]);
+checks.push([
+  'A third attended sits between away and attended throughout',
+  fmt(third.true?.l9),
+  (third.true?.l9 ?? 0) < (trueL9 ?? 0) && (third.true?.l9 ?? 0) > (attended.true?.l9 ?? Infinity),
+]);
+checks.push([
+  'Attended and buying nodes lands no lower than 0.4 of the away floor',
+  fmt(engaged.true?.l9),
+  (engaged.true?.l9 ?? 0) >= 0.4 * (trueL9 ?? Infinity),
+]);
+console.log('\nTargets');
 for (const [what, got, ok] of checks) console.log(`  ${ok ? 'ok ' : 'OFF'}  ${what}: ${got}`);
 console.log(
   '\nFoundation needs 500 insight ever earned and the pill; the sim tries at the bare minimum.' +

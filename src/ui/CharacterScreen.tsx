@@ -1,6 +1,6 @@
 // The Character screen (design § UI and screens): the talents rolled at birth, the six attributes,
-// and each ladder's growth realm by realm with the methods that built it. Fame and standing join
-// in M5.
+// each ladder's growth realm by realm with the methods that built it, and the manuals held, by
+// kind. Fame and standing join in M5.
 import { LADDERS, type LadderId } from '../content/cultivation.ts';
 import { ELEMENT_INFO } from '../content/elements.ts';
 import { GROWTH_STATS, method } from '../content/methods.ts';
@@ -13,6 +13,7 @@ import { realmGrowth } from '../core/growth.ts';
 import { agility, aptitude, fortune, stats, talentAwake, talentsOf } from '../core/stats.ts';
 import type { Cultivator } from '../core/state.ts';
 import { TalentRow } from './CreationScreen.tsx';
+import { ManualsPanel } from './ManualsPanel.tsx';
 import {
   capitalize,
   formatEffect,
@@ -175,6 +176,7 @@ export function CharacterScreen() {
           LADDERS.map((l) => <Growth key={l} c={c} which={l} />)
         )}
       </section>
+      <ManualsPanel c={c} />
     </>
   );
 }

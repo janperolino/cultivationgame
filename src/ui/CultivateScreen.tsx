@@ -5,6 +5,7 @@ import { realm } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
 import { hasRoutine, routine } from '../content/routines.ts';
 import { technique } from '../content/techniques.ts';
+import { attentionCeiling } from '../core/attention.ts';
 import {
   barFill,
   dayRates,
@@ -53,6 +54,11 @@ function DayPanel({ game }: { game: GameState }) {
         {speed.rarity.toFixed(2)}, mastery ×{speed.mastery}), fit ×{speed.fit}, qi density ×
         {speed.density}, Aptitude ×{speed.aptitude.toFixed(2)}
         {speed.nodes !== 1 && `, tree nodes and method ×${speed.nodes.toFixed(2)}`}.
+      </span>
+      <span>
+        That is the away rate. While you attend, attention multiplies it again: ×1.25 for being
+        there, up to ×{(1 + attentionCeiling(c)).toFixed(2)} at full focus (the meter by the
+        Abode&apos;s figure).
       </span>
       <span>
         {rates.count.qi} qi hours, each a twelfth of a day, with their element, dawn and discipline

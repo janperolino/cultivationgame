@@ -8,7 +8,7 @@ import { CardFeed } from './CardFeed.tsx';
 import { effectiveWheel } from '../core/wheel.ts';
 import { WheelStrip } from './DayWheel.tsx';
 import { formatDays, formatDuration, formatLadder, formatNumber, formatRate } from './format.ts';
-import { SeatedFigure } from './SeatedFigure.tsx';
+import { SeatedFigure, SeatMeter } from './SeatedFigure.tsx';
 import { useGame, type AwaySummary } from './store.ts';
 import { AgeBar, LadderBar, LifeEdgeCard, Why } from './widgets.tsx';
 
@@ -120,7 +120,10 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
       )}
 
       <section className="panel abode-hero">
-        <SeatedFigure game={game} />
+        <div className="abode-seat">
+          <SeatedFigure game={game} />
+          <SeatMeter game={game} />
+        </div>
         <div className="abode-info">
           <h2 className="realm-title">
             {formatLadder(game.player.qi)}

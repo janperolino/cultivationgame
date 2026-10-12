@@ -26,7 +26,7 @@ import { peopleIn } from '../people.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 /**
  * Before character creation (P1.7), every life was the cave orphan who went along: the garrison's
@@ -483,6 +483,14 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       version: 9,
       state: { ...s, clock: null, player: { ...p, people } },
     };
+  },
+
+  // v9, P1.9: no manuals. v10 holds loose manuals; an old life holds none, and its methods' own
+  // manuals come with the methods it knows.
+  9: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    return { ...old, version: 10, state: { ...s, player: { ...p, manuals: [] } } };
   },
 };
 

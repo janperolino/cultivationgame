@@ -28,7 +28,8 @@ import { firstTechnique } from '../content/techniques.ts';
 import { seasonOf, whoFor } from './chronicle.ts';
 import { barFill, barSize, fromWorld } from './cultivation.ts';
 import { contemplate, gainInsight, insightMultiplier } from './insight.ts';
-import { cultivate, gainMethod, gainRoutine, gainTechnique } from './life.ts';
+import { cultivate, gainManual, gainMethod, gainRoutine, gainTechnique } from './life.ts';
+import { holdsManual } from './manuals.ts';
 import { daysPerRealMs, type DayStep } from './loop.ts';
 import { applyPersonEffect, knowsSlot, peopleIn, resolveWho } from './people.ts';
 import type { Rng } from './rng.ts';
@@ -75,6 +76,7 @@ export function triggerHolds(s: GameState, t: Trigger, day = s.calendar.day): bo
   if (t.noItem && itemCount(c, t.noItem) > 0) return false;
   if (t.noMethod && c.activeMethods[t.noMethod] !== null) return false;
   if (t.hasMethod && c.activeMethods[t.hasMethod] === null) return false;
+  if (t.noManual && holdsManual(c, t.noManual)) return false;
   if (t.mark) {
     const at = s.cards.marks[t.mark.id];
     if (at === undefined || day - at < t.mark.days) return false;
@@ -192,6 +194,8 @@ function applyEffect(s: GameState, e: CardEffect): GameState {
     }
     case 'routine':
       return gainRoutine(s, e.id, 'is taught');
+    case 'manual':
+      return gainManual(s, e.id, 'comes by');
     case 'contemplate':
       return withPlayer(s, contemplate(c, e.source, e.days ?? 1).cultivator);
     case 'mark':

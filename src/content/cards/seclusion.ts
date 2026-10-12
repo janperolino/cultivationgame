@@ -388,6 +388,70 @@ export const SECLUSION_CARDS: readonly Card[] = [
     ],
   },
 
+  // Formulas, the world's smallest manuals (design § Cultivation, Manuals). Drafted in P1.10.
+  {
+    id: 'breath-count-for-sale',
+    deck: DECK,
+    kind: 'door',
+    title: 'A Breath-Count for Sale',
+    text: "{peddler} has a scrap of paper folded into his sleeve: the March garrison's breath-count, copied out by a cadet who needed stones more than he needed his place. Any garrison sergeant would know it by heart. Twelve spirit stones.",
+    trigger: { daysLived: [150], noManual: 'garrison-breath-count' },
+    once: true,
+    choices: [
+      {
+        label: 'Not today',
+        pass: {
+          effects: [{ do: 'person', who: 'peddler' }],
+          text: 'He tucks it back into his sleeve. "It will keep. Cadets keep selling them."',
+          chronicle: "{name} turns down a garrison breath-count from {peddler}'s sleeve.",
+        },
+      },
+      {
+        label: 'Pay twelve',
+        cost: { stones: 12 },
+        pass: {
+          effects: [
+            { do: 'manual', id: 'garrison-breath-count' },
+            { do: 'person', who: 'peddler', regard: 1 },
+          ],
+          text: 'In on four, hold for one, out on four. It is crude, and it works: the count settles your breathing within a day.',
+          chronicle: '{name} buys the Garrison Breath-Count from {peddler} for twelve stones.',
+        },
+      },
+    ],
+  },
+  {
+    id: 'fevered-courier',
+    deck: DECK,
+    kind: 'door',
+    title: 'A Courier with River Fever',
+    text: "A courier of the bounty office in the City of the Guarded Mouth stumbles to the mouth of your cave, shaking with river fever, a waxed tube clamped under his arm. The garrison healer is half a day's walk down the valley.",
+    trigger: { daysLived: [300], qi: { minStage: 3 }, noManual: 'tide-counting' },
+    once: true,
+    choices: [
+      {
+        label: 'Point him down the valley',
+        pass: {
+          effects: [],
+          text: 'You give him water and point the way. He goes, slowly, tube and all.',
+          chronicle: '{name} sends a fevered courier down the valley to the garrison healer.',
+        },
+      },
+      {
+        label: 'Nurse him through it',
+        pass: {
+          effects: [
+            { do: 'fuel', ladder: 'qi', share: -0.1 },
+            { do: 'manual', id: 'tide-counting' },
+          ],
+          text: 'Three nights of cold cloths and your own qi pressed into his chest. On the fourth morning he can stand, and he leaves you the copy he was carrying: the Tide-Counting Formula the dockside couriers breathe by.',
+          chronicle:
+            '{name} nurses a courier of the Guarded Mouth through river fever, and is left the Tide-Counting Formula.',
+        },
+      },
+    ],
+  },
+
   // ------------------------------------------------------------ inside you
   {
     id: 'qi-deviation-scare',

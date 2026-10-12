@@ -7,7 +7,8 @@ import { root } from '../content/roots.ts';
 import { STAT_IDS, statInfo, type Effect, type StatId } from '../content/stats.ts';
 import { hasTalent, talent, talentEffects, type Talent } from '../content/talents.ts';
 import { ladderGrowth } from './growth.ts';
-import { ladderMethod } from './methods.ts';
+import { methodManual } from '../content/manuals.ts';
+import { ladderMethod, methodMastery } from './methods.ts';
 import type { Cultivator } from './state.ts';
 import { activeNodes } from './trees.ts';
 
@@ -39,7 +40,8 @@ export function talentsOf(c: Cultivator): Talent[] {
 }
 
 // The day step reads stats many times a tick; they change only when the nodes, a ladder's realm,
-// an active method, the talents or the growth records do, so each nodes list keeps its last result.
+// an active method, the talents, the growth records or the mastery that unseals a method's own
+// nodes do, so each nodes list keeps its last result.
 interface Cached {
   key: string;
   growth: readonly unknown[];
@@ -50,7 +52,11 @@ const cache = new WeakMap<readonly string[], Cached>();
 function cacheKey(c: Cultivator): string {
   const ladders = LADDERS.map((l) => `${c[l].realm}:${c.activeMethods[l] ?? ''}`).join('|');
   const woke = c.talents.filter((t) => c.flags.includes(wokeFlag(t))).join(',');
-  return `${ladders}|${c.root}|${c.talents.join(',')}|${woke}`;
+  const unsealing = Object.keys(c.methods)
+    .filter((id) => methodManual(id))
+    .map((id) => `${id}:${methodMastery(c, id).level}`)
+    .join(',');
+  return `${ladders}|${c.root}|${c.talents.join(',')}|${woke}|${unsealing}`;
 }
 
 /** Every stat's total from nodes, active methods' properties, growth, the root and talents. */

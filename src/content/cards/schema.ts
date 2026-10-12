@@ -36,6 +36,8 @@ export interface Trigger {
   noMethod?: LadderId;
   /** A method active on this ladder. */
   hasMethod?: LadderId;
+  /** Doesn't hold this manual yet (content/manuals.ts). */
+  noManual?: string;
   /** A mark (core/cards.ts) set at least this many days ago. */
   mark?: { id: string; days: number };
   /** The season of the world day. */
@@ -62,6 +64,8 @@ export type CardEffect =
   /** The origin path's first technique (content/techniques.ts, `firstFor`). */
   | { do: 'first-technique' }
   | { do: 'routine'; id: string }
+  /** A loose manual (content/manuals.ts): a formula, a style, a scripture. */
+  | { do: 'manual'; id: string }
   /** Insight from a contemplation source (content/contemplation.ts): a lump, or days of a trickle. */
   | { do: 'contemplate'; source: string; days?: number }
   /** Marks the day, for a later card's trigger; `clear-mark` forgets it. */

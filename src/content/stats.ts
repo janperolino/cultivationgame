@@ -34,6 +34,21 @@ export const STATS = {
   minorOdds: { name: 'Minor odds', unit: 'odds', what: 'the odds of minor breakthroughs' },
   majorOdds: { name: 'Major odds', unit: 'odds', what: 'the odds of major breakthroughs' },
   failLoss: { name: 'Failure loss', unit: 'percent', what: 'the bar a failed breakthrough costs' },
+  // The Breath branch: read by attended seclusion (core/attention.ts) while you attend.
+  breathReach: { name: 'Catch reach', unit: 'percent', what: 'how far you draw orbs in from' },
+  focusDrain: { name: 'Focus drain', unit: 'percent', what: 'how fast focus drains to the floor' },
+  focusCeiling: {
+    name: 'Focus ceiling',
+    unit: 'percent',
+    what: 'the most attention adds to qi speed at full focus',
+  },
+  twinBreath: { name: 'Twin streams', unit: 'points', what: 'more orbs drawn in with each breath' },
+  heatLimit: { name: 'Cool channels', unit: 'percent', what: 'how much heat before unsettling' },
+  stillPool: {
+    name: 'Still Pool',
+    unit: 'points',
+    what: 'resting on the dantian, or holding breathe, stops focus draining',
+  },
   setbackTime: {
     name: 'Setbacks',
     unit: 'percent',
