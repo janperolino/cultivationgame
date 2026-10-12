@@ -139,8 +139,8 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
         .filter(([key]) => key.startsWith('var.'))
         .map(([key, v]) => [key, String(v)]),
     );
-    const line = fillSlots(outcome.chronicle ?? '', { ...w, slots: { ...w.slots, ...vars } });
-    return line + (d.byDefault ? ' (It was settled without you.)' : '');
+    // A card that settled itself says so beside the line (core/chronicle.ts, settledItself).
+    return fillSlots(outcome.chronicle ?? '', { ...w, slots: { ...w.slots, ...vars } });
   },
   'talent-wakes': (d, w) => fillSlots(talent(s(d.talent)).sleeps?.text ?? '', w),
   rewind: () => 'Time folds back.',

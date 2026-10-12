@@ -1,8 +1,31 @@
+// Settings (design § UI and screens, the Settings row): saves, the life's clock speed, colors and
+// glass, text size and motion. The clock belongs to the life and saves with the slot; the rest
+// are the player's and live in ui/settings.ts.
 import { useRef } from 'react';
-import type { SlotId, SlotSummary } from '../core/save/slots.ts';
-import { formatAge, formatWhen } from './format.ts';
+import { RARITIES, type RarityId } from '../content/rarity.ts';
 import { realm, stageName } from '../content/realms.ts';
+import { clockChoices, clockRealm, OFFLINE_CAP_MS, realmYearsPerHour } from '../core/loop.ts';
+import type { SlotId, SlotSummary } from '../core/save/slots.ts';
+import {
+  colorWarning,
+  DEFAULT_ACCENT,
+  DEFAULT_CRACK,
+  DEFAULT_RARITY,
+  PRESETS,
+  type ColorJob,
+} from './colors.ts';
+import { formatAge, formatWhen } from './format.ts';
+import {
+  DEFAULT_SETTINGS,
+  rarityColor,
+  saveSettings,
+  TEXT_SCALES,
+  useSettings,
+  WEB_LEVELS,
+  type MotionSetting,
+} from './settings.ts';
 import { useGame } from './store.ts';
+import { Why } from './widgets.tsx';
 
 const WEEK_MS = 7 * 24 * 3_600_000;
 
@@ -119,7 +142,343 @@ function SlotRow({ info }: { info: SlotSummary }) {
   );
 }
 
+/** "a year an hour", "1.7 years an hour". */
+function yearsAnHour(years: number): string {
+  if (Math.abs(years - 1) < 0.05) return 'a year an hour';
+  const n = years < 10 ? String(Math.round(years * 10) / 10) : String(Math.round(years));
+  return `${n} years an hour`;
+}
+
+/** The calendar speeds this life has reached (design § How the two halves connect). */
+function ClockPanel() {
+  const game = useGame((s) => s.game);
+  const setClock = useGame((s) => s.setClock);
+  if (!game || game.ended) return null;
+  const choices = clockChoices(game);
+  const current = clockRealm(game);
+  const own = game.player.qi.realm;
+  const capYears = (OFFLINE_CAP_MS / 3_600_000) * realmYearsPerHour(current);
+  return (
+    <section className="panel" aria-labelledby="clock-heading">
+      <h2 id="clock-heading" className="panel-heading">
+        The clock
+      </h2>
+      <p className="muted">
+        Each qi realm you reach unlocks its calendar speed. Gains, costs and lifespan all count
+        in-game time, so a slower clock is never stronger, only slower. The choice is saved with
+        this life.
+      </p>
+      <div className="seg spaced" role="group" aria-label="Clock speed">
+        {choices.map((id) => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={current === id}
+            onClick={() => setClock(id === own ? null : id)}
+          >
+            {realm(id).name} · {yearsAnHour(realmYearsPerHour(id))}
+          </button>
+        ))}
+      </div>
+      <p className="caption spaced">
+        {choices.length === 1
+          ? 'Foundation unlocks the next speed.'
+          : current === own
+            ? 'Following your realm: the clock speeds up as you break through.'
+            : `Held at the pace of ${realm(current).name}, even past it.`}{' '}
+        Offline time covers up to {Math.round(capYears * 10) / 10} years at this speed.
+      </p>
+    </section>
+  );
+}
+
+function ColorField({
+  label,
+  job,
+  value,
+  fallback,
+  onChange,
+}: {
+  label: string;
+  job: ColorJob;
+  value: string;
+  fallback: string;
+  onChange: (hex: string) => void;
+}) {
+  const settings = useSettings();
+  const palette = Object.fromEntries(
+    RARITIES.map((r) => [r.id, rarityColor(settings, r.id)]),
+  ) as Record<RarityId, string>;
+  const warning = colorWarning(job, value, palette, settings.accent);
+  return (
+    <div className="color-field">
+      <label className="color-pick">
+        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} />
+        <span>{label}</span>
+      </label>
+      {value.toLowerCase() !== fallback.toLowerCase() && (
+        <button type="button" className="button button-quiet" onClick={() => onChange(fallback)}>
+          Reset
+        </button>
+      )}
+      {warning && <p className="caption warn color-warning">{warning}</p>}
+    </div>
+  );
+}
+
+function Strength({
+  label,
+  value,
+  steps,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  steps: [number, string][];
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="field">
+      <span>{label}</span>
+      <div className="seg" role="group" aria-label={label}>
+        {steps.map(([v, name]) => (
+          <button
+            key={name}
+            type="button"
+            aria-pressed={Math.abs(value - v) < 0.01}
+            onClick={() => onChange(v)}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LookPanel() {
+  const s = useSettings();
+  const hasLife = useGame((g) => !!g.game);
+  const reroll = useGame((g) => g.rerollGlass);
+  const preset = PRESETS.find(
+    (p) =>
+      p.accent.toLowerCase() === s.accent.toLowerCase() &&
+      p.crack.toLowerCase() === s.crack.toLowerCase(),
+  );
+  const setRarity = (id: RarityId, hex: string) => {
+    const rest = Object.fromEntries(Object.entries(s.rarity).filter(([k]) => k !== id));
+    saveSettings({
+      rarity: hex.toLowerCase() === DEFAULT_RARITY[id] ? rest : { ...rest, [id]: hex },
+    });
+  };
+  return (
+    <section className="panel" aria-labelledby="look-heading">
+      <h2 id="look-heading" className="panel-heading">
+        Colors and glass
+      </h2>
+      <p className="muted">
+        Each color keeps its job whatever it looks like: the accent marks what you can act on, and
+        the crack light is qi.
+      </p>
+      <div className="field spaced">
+        <span>Presets</span>
+        <div className="presets" role="group" aria-label="Color presets">
+          {PRESETS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className="button preset"
+              aria-pressed={preset?.id === p.id}
+              onClick={() => saveSettings({ accent: p.accent, crack: p.crack })}
+            >
+              <span className="swatch" style={{ background: p.accent }} />
+              <span className="swatch" style={{ background: p.crack }} />
+              {p.name}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="color-grid spaced">
+        <ColorField
+          label="Accent"
+          job="accent"
+          value={s.accent}
+          fallback={DEFAULT_ACCENT}
+          onChange={(accent) => saveSettings({ accent })}
+        />
+        <ColorField
+          label="Crack light"
+          job="crack"
+          value={s.crack}
+          fallback={DEFAULT_CRACK}
+          onChange={(crack) => saveSettings({ crack })}
+        />
+      </div>
+
+      <h3 className="sub-heading spaced">
+        Rarity{' '}
+        <Why label="Why rarity has its own colors">
+          A thing&apos;s name wears its rarity color. Rarity never borrows the accent or the warning
+          color, so a gold name never looks like a button.
+        </Why>
+      </h3>
+      <div className="color-grid">
+        {RARITIES.map((r) => (
+          <ColorField
+            key={r.id}
+            label={r.name}
+            job={r.id}
+            value={rarityColor(s, r.id)}
+            fallback={DEFAULT_RARITY[r.id]}
+            onChange={(hex) => setRarity(r.id, hex)}
+          />
+        ))}
+      </div>
+      <p className="rarity-sample spaced">
+        {RARITIES.map((r) => (
+          <span key={r.id} className={`rarity-${r.id}`}>
+            {r.name}
+          </span>
+        ))}
+      </p>
+
+      <h3 className="sub-heading spaced">The glass</h3>
+      <div className="look-grid">
+        <div className="field">
+          <span>Fine web</span>
+          <div className="seg" role="group" aria-label="Fine web">
+            {WEB_LEVELS.map((name, i) => (
+              <button
+                key={name}
+                type="button"
+                aria-pressed={s.web === i}
+                onClick={() => saveSettings({ web: i })}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Strength
+          label="Season and weather"
+          value={s.weather}
+          steps={[
+            [0, 'Off'],
+            [0.5, 'Faint'],
+            [1, 'Full'],
+          ]}
+          onChange={(weather) => saveSettings({ weather })}
+        />
+        <Strength
+          label="Panel rims"
+          value={s.rim}
+          steps={[
+            [0.5, 'Faint'],
+            [1, 'As made'],
+            [1.4, 'Bright'],
+          ]}
+          onChange={(rim) => saveSettings({ rim })}
+        />
+        <div className="field">
+          <span>Pattern</span>
+          <div>
+            <button type="button" className="button" disabled={!hasLife} onClick={reroll}>
+              New glass
+            </button>
+          </div>
+        </div>
+      </div>
+      <p className="caption spaced">
+        {hasLife
+          ? 'New glass cracks the pane afresh for this life, and the fractures your breakthroughs opened come along.'
+          : 'New glass needs a life open.'}
+      </p>
+      <div className="actions spaced">
+        <button
+          type="button"
+          className="button button-quiet"
+          onClick={() =>
+            saveSettings({
+              accent: DEFAULT_SETTINGS.accent,
+              crack: DEFAULT_SETTINGS.crack,
+              rarity: {},
+              web: DEFAULT_SETTINGS.web,
+              weather: DEFAULT_SETTINGS.weather,
+              rim: DEFAULT_SETTINGS.rim,
+            })
+          }
+        >
+          Back to the defaults
+        </button>
+      </div>
+    </section>
+  );
+}
+
+const MOTION: { id: MotionSetting; name: string }[] = [
+  { id: 'system', name: 'Follow the system' },
+  { id: 'reduced', name: 'Reduce' },
+  { id: 'full', name: 'Full' },
+];
+
+function ReadingPanel() {
+  const s = useSettings();
+  return (
+    <section className="panel" aria-labelledby="reading-heading">
+      <h2 id="reading-heading" className="panel-heading">
+        Text and motion
+      </h2>
+      <div className="look-grid">
+        <div className="field">
+          <span>Text size</span>
+          <div className="seg" role="group" aria-label="Text size">
+            {TEXT_SCALES.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                aria-pressed={s.textScale === t.value}
+                onClick={() => saveSettings({ textScale: t.value })}
+              >
+                {t.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="field">
+          <span>Motion</span>
+          <div className="seg" role="group" aria-label="Motion">
+            {MOTION.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                aria-pressed={s.motion === m.id}
+                onClick={() => saveSettings({ motion: m.id })}
+              >
+                {m.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <p className="caption spaced">
+        Reduced motion stills the panel rims, the card tray, the weather and the breakthrough flare.
+      </p>
+    </section>
+  );
+}
+
 export function SettingsScreen() {
+  return (
+    <>
+      <SavesPanel />
+      <ClockPanel />
+      <LookPanel />
+      <ReadingPanel />
+    </>
+  );
+}
+
+function SavesPanel() {
   const slots = useGame((s) => s.slots);
   const persisted = useGame((s) => s.persisted);
   const speed = useGame((s) => s.speed);

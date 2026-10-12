@@ -26,7 +26,7 @@ import { peopleIn } from '../people.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 /**
  * Before character creation (P1.7), every life was the cave orphan who went along: the garrison's
@@ -461,6 +461,27 @@ const migrations: Record<number, (old: Raw) => Raw> = {
         unlocks: unlocks.includes('people') ? unlocks : [...unlocks, 'people'],
         player: { ...p, people },
       },
+    };
+  },
+
+  // v8, P1.8: no clock choice, and no record of which news you've read. v9 follows the life's
+  // own realm, and counts everything known so far as read, so no old life opens covered in dots.
+  8: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const people = Object.fromEntries(
+      Object.entries((p.people ?? {}) as Record<string, Raw>).map(([id, r]) => {
+        const actorDays = (Array.isArray(s.chronicle) ? (s.chronicle as Raw[]) : [])
+          .filter((e) => Array.isArray(e.actors) && (e.actors as string[]).includes(id))
+          .map((e) => (typeof e.day === 'number' ? e.day : 0));
+        const heard = typeof r.heard === 'number' ? r.heard : 0;
+        return [id, { ...r, seen: Math.max(heard, ...actorDays) }];
+      }),
+    );
+    return {
+      ...old,
+      version: 9,
+      state: { ...s, clock: null, player: { ...p, people } },
     };
   },
 };

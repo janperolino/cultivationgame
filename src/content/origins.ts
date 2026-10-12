@@ -190,6 +190,17 @@ export const PLACE_NAMES: Readonly<Record<string, string>> = {
   'qm-duigu-qiang': 'the Wall of Piled Bones',
 };
 
+/** The places' hanzi, as flavor under the English name (from content/atlas/entries.json). */
+export const PLACE_HANZI: Readonly<Record<string, string>> = {
+  'qm-bianhuang': '边荒',
+  'qm-shiyan-guo': '石眼国',
+  'qm-anbian-fu': '安边府',
+  'qm-shoukou-cheng': '守口城',
+  'qm-tushou-men': '屠兽门',
+  'qm-yeqiao-hui': '夜桥会',
+  'qm-duigu-qiang': '堆骨墙',
+};
+
 /** A place's name for the text, "the Kingdom of Stone Eyes"; its id when unknown. */
 export function placeName(id: string): string {
   return PLACE_NAMES[id] ?? id;

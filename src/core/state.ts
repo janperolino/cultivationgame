@@ -81,6 +81,8 @@ const PersonRecord = z.object({
   where: z.string().nullable(),
   /** World day you last heard of them. */
   heard: z.number(),
+  /** The `heard` day you last read on their page; newer news shows a gold dot. */
+  seen: z.number(),
 });
 export type PersonRecord = z.infer<typeof PersonRecord>;
 
@@ -221,6 +223,11 @@ export const GameStateSchema = z.object({
     /** Every breakthrough so far, on any ladder; the UI flares when it rises. */
     flares: z.number().int().min(0),
   }),
+  /**
+   * The calendar speed the life runs at: a qi realm it has reached, or null to follow its own
+   * realm (design § How the two halves connect, running the clock slower).
+   */
+  clock: z.enum(REALM_IDS).nullable(),
   /** Set when the life is over; the slot keeps the chronicle and offers a new life. */
   ended: z.object({ day: z.number(), cause: z.string() }).nullable(),
   chronicle: z.array(ChronicleEvent),
@@ -342,6 +349,7 @@ export function startingPeople(
         realm: a.realm,
         where: person(a.id).home ?? place,
         heard: day,
+        seen: day,
       },
     ]),
   );
@@ -392,6 +400,7 @@ export function newLife(opts: NewLifeOptions): GameState {
     calendar: { day: startDay },
     player,
     glass: { seed, fractures: 0, flares: 0 },
+    clock: null,
     ended: null,
     chronicle: openingEvents(player, startDay, false),
     cards: freshCards(startDay),
@@ -529,4 +538,12 @@ export function noteBreakthrough(s: GameState, major: boolean): GameState {
     return { ...s, rewindCharges: 1 };
   }
   return s;
+}
+
+/**
+ * A new pattern for the glass behind the life (Settings): the next seed in a fixed chain, so it
+ * never touches a random stream. The season's weather follows the glass, so it changes too.
+ */
+export function rerollGlass(s: GameState): GameState {
+  return { ...s, glass: { ...s.glass, seed: hashSeed(`glass:${s.glass.seed}`) | 0 } };
 }

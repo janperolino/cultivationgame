@@ -3,13 +3,28 @@
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { stageName } from '../content/realms.ts';
 import { barFill, barSize, lastChance, type LadderId } from '../core/cultivation.ts';
-import { eventText } from '../core/chronicle.ts';
-import { ageYears, atLifespanEdge, lifespanYears, type GameState } from '../core/state.ts';
+import { eventText, settledItself } from '../core/chronicle.ts';
+import {
+  ageYears,
+  atLifespanEdge,
+  lifespanYears,
+  type ChronicleEvent,
+  type GameState,
+} from '../core/state.ts';
 import { formatAgeShort, formatNumber, formatPercent, LADDER_LABELS } from './format.ts';
 import { useGame } from './store.ts';
 
 /** One ladder's bar: the crack light fills it, and the part past full glows brighter. */
-export function LadderBar({ game, which }: { game: GameState; which: LadderId }) {
+export function LadderBar({
+  game,
+  which,
+  why,
+}: {
+  game: GameState;
+  which: LadderId;
+  /** How the bar fills, behind a "?". */
+  why?: ReactNode;
+}) {
   const l = game.player[which];
   const fill = barFill(l);
   const over = Math.max(0, Math.min(1, (fill - 1) / 0.5));
@@ -32,7 +47,15 @@ export function LadderBar({ game, which }: { game: GameState; which: LadderId })
         <div className="bar-fill" style={{ width: `${Math.min(1, fill) * 100}%` }} />
         {over > 0 && <div className="bar-fill bar-over" style={{ width: `${over * 100}%` }} />}
       </div>
-      <span className="value">{value}</span>
+      <span className="value">
+        {value}
+        {why && (
+          <>
+            {' '}
+            <Why label={`How the ${LADDER_LABELS[which].toLowerCase()} bar fills`}>{why}</Why>
+          </>
+        )}
+      </span>
     </div>
   );
 }
@@ -190,5 +213,15 @@ export function Why({
         {children}
       </span>
     </span>
+  );
+}
+
+/** One chronicle line, with a quiet mark when a card settled itself without you. */
+export function EventLine({ game, e }: { game: GameState; e: ChronicleEvent }) {
+  return (
+    <>
+      {eventText(game, e)}
+      {settledItself(e) && <span className="settled-mark"> · settled without you</span>}
+    </>
   );
 }

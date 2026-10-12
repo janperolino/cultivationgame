@@ -1,6 +1,6 @@
 // Time: real milliseconds become in-game days at the qi realm's calendar speed.
 // The loop ticks a few times a second while you play; on load it applies offline time, capped.
-import { realm } from '../content/realms.ts';
+import { realm, REALMS, realmIndex, type RealmId } from '../content/realms.ts';
 import { DAYS_PER_YEAR, lifespanEdgeDay, type GameState } from './state.ts';
 
 export const TICKS_PER_SECOND = 4;
@@ -12,9 +12,35 @@ export const REAL_HOURS_PER_LIFESPAN = 120;
 
 const MS_PER_HOUR = 3_600_000;
 
-/** In-game years per real hour: 1 at Qi Condensation, about 1.7 at Foundation, 4 at Core Formation. */
+/**
+ * The realm whose calendar the life runs on: its own qi realm, or a slower one it has reached
+ * and chosen (design § How the two halves connect, running the clock slower).
+ */
+export function clockRealm(s: GameState): RealmId {
+  const own = s.player.qi.realm;
+  return s.clock && realmIndex(s.clock) < realmIndex(own) ? s.clock : own;
+}
+
+/** The calendar speeds a life can choose: every qi realm reached, slowest first. */
+export function clockChoices(s: GameState): RealmId[] {
+  return REALMS.slice(0, realmIndex(s.player.qi.realm) + 1).map((r) => r.id);
+}
+
+/** Runs the life at a reached realm's speed; its own realm (or null) follows the realm. */
+export function setClock(s: GameState, id: RealmId | null): GameState {
+  if (id !== null && !clockChoices(s).includes(id)) return s;
+  const clock = id === null || id === s.player.qi.realm ? null : id;
+  return clock === s.clock ? s : { ...s, clock };
+}
+
+/** In-game years per real hour of a realm's calendar: 1 at Qi Condensation, about 1.7 at Foundation. */
+export function realmYearsPerHour(id: RealmId): number {
+  return realm(id).lifespan / REAL_HOURS_PER_LIFESPAN;
+}
+
+/** In-game years per real hour on the life's clock: 1 at Qi Condensation, 4 at Core Formation. */
 export function yearsPerRealHour(s: GameState): number {
-  return realm(s.player.qi.realm).lifespan / REAL_HOURS_PER_LIFESPAN;
+  return realmYearsPerHour(clockRealm(s));
 }
 
 export function daysPerRealMs(s: GameState): number {

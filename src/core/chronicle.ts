@@ -34,6 +34,11 @@ export function eventText(s: GameState, e: ChronicleEvent): string {
   return renderEvent(e.type, e.data, whoFor(actor(s, e.actors[0])));
 }
 
+/** A card that settled on its own while you were away or busy: the screens mark it quietly. */
+export function settledItself(e: ChronicleEvent): boolean {
+  return e.type === 'card' && e.data.byDefault === true;
+}
+
 /** A rule's note as text, before it is dated: for tests and previews. */
 export function noteText(n: Note, c: Cultivator): string {
   return renderEvent(n.type, n.data, whoFor(c));
@@ -59,4 +64,19 @@ export function seasonOf(day: number): Season {
 export function lifeWhen(c: Cultivator, day: number): string {
   const year = Math.floor((day - c.bornDay) / DAYS_PER_YEAR) + 1;
   return `the ${seasonOf(day)} of the ${ordinal(year)} year`;
+}
+
+/** Events grouped by "the spring of the fourteenth year", in the order given. */
+export function bySeason(
+  c: Cultivator,
+  events: readonly ChronicleEvent[],
+): { when: string; items: ChronicleEvent[] }[] {
+  const groups: { when: string; items: ChronicleEvent[] }[] = [];
+  for (const e of events) {
+    const when = e.day < c.bornDay ? 'a past life' : lifeWhen(c, e.day);
+    const last = groups.at(-1);
+    if (last?.when === when) last.items.push(e);
+    else groups.push({ when, items: [e] });
+  }
+  return groups;
 }

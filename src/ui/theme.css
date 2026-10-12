@@ -49,6 +49,11 @@
   --radius: 9px;
   --radius-small: 6px;
 
+  /* The player's settings (ui/settings.ts) set these: text size, panel rims and the weather. */
+  --text-scale: 1;
+  --rim-gain: 1;
+  --weather-strength: 1;
+
   color-scheme: dark;
 }
 
@@ -69,7 +74,7 @@ body {
   background: var(--void);
   color: var(--text);
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: calc(14px * var(--text-scale));
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
@@ -154,13 +159,13 @@ select {
 
 .brand-name {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: calc(20px * var(--text-scale));
   font-weight: 600;
 }
 
 .brand-hanzi {
   color: var(--accent);
-  font-size: 18px;
+  font-size: calc(18px * var(--text-scale));
 }
 
 .side-menu ul {
@@ -198,7 +203,7 @@ select {
 }
 
 .menu-hanzi {
-  font-size: 15px;
+  font-size: calc(15px * var(--text-scale));
   opacity: 0.7;
 }
 
@@ -217,12 +222,12 @@ select {
 .screen-title {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 32px;
+  font-size: calc(32px * var(--text-scale));
   margin: 0 0 16px;
 }
 
 .screen-title .hanzi {
-  font-size: 23px;
+  font-size: calc(23px * var(--text-scale));
   color: var(--accent);
   margin-left: 6px;
 }
@@ -247,7 +252,7 @@ select {
 
 .panel {
   --rim: var(--crack);
-  --rim-strength: 0.6;
+  --rim-strength: min(1, calc(0.6 * var(--rim-gain)));
   --rim-speed: 16s;
   --rim-still:
     radial-gradient(60% 40% at 0% 0%, color-mix(in srgb, white 60%, var(--rim)), transparent 70%),
@@ -329,7 +334,7 @@ select {
 
 .panel.is-waiting {
   --rim-speed: 5s;
-  --rim-strength: 0.95;
+  --rim-strength: min(1, calc(0.95 * var(--rim-gain)));
 }
 
 /* Neighbouring panels walk out of step. */
@@ -362,11 +367,9 @@ select {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .panel {
-    --rim-paint: var(--rim-still);
-    animation: none;
-  }
+:root[data-motion='reduced'] .panel {
+  --rim-paint: var(--rim-still);
+  animation: none;
 }
 
 .panel p {
@@ -387,7 +390,7 @@ select {
 .panel-heading {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 19px;
+  font-size: calc(19px * var(--text-scale));
   margin: 0 0 8px;
 }
 
@@ -398,7 +401,7 @@ select {
   border-radius: var(--radius-small);
   background: transparent;
   color: var(--accent);
-  font-size: 18px;
+  font-size: calc(18px * var(--text-scale));
   cursor: pointer;
 }
 
@@ -460,7 +463,7 @@ select {
 }
 
 .caption {
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--text-scale));
   color: var(--muted);
 }
 
@@ -471,13 +474,13 @@ select {
 .realm-title {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 25px;
+  font-size: calc(25px * var(--text-scale));
   margin: 0;
 }
 
 .realm-title small {
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale));
   font-weight: 400;
   color: var(--muted);
   margin-left: 8px;
@@ -526,7 +529,7 @@ select {
 
 .bar-row .value {
   text-align: right;
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale));
 }
 
 .bar-label {
@@ -637,14 +640,12 @@ select {
 .figure-sleep {
   fill: var(--muted);
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale));
   font-style: italic;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .figure-head {
-    transition: none;
-  }
+:root[data-motion='reduced'] .figure-head {
+  transition: none;
 }
 
 .dantian-stop-core {
@@ -763,7 +764,7 @@ select {
 
 .panel .slot-meta {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale));
 }
 
 .slot-actions {
@@ -794,16 +795,23 @@ select {
   padding: 0;
   display: grid;
   gap: 12px;
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale));
 }
 
-.chronicle-age {
-  display: block;
-  font-size: 11.5px;
+.chronicle-season + .chronicle-season {
+  margin-top: 14px;
+}
+
+.chronicle-when {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: calc(11.5px * var(--text-scale));
+  font-weight: 500;
   letter-spacing: 0.02em;
 }
 
-.chronicle li:first-child .chronicle-age {
+.chronicle-when.is-newest {
   color: var(--accent);
 }
 
@@ -823,7 +831,7 @@ select {
 }
 
 .field > span {
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale));
   color: var(--muted);
   letter-spacing: 0.04em;
 }
@@ -894,7 +902,7 @@ select {
   border-radius: 50%;
   background: transparent;
   color: var(--muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale));
   font-weight: 600;
   line-height: 14px;
   cursor: help;
@@ -920,7 +928,7 @@ select {
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
   color: var(--text);
   font-family: var(--font-ui);
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale));
   font-weight: 400;
   line-height: 1.5;
   letter-spacing: normal;
@@ -952,7 +960,7 @@ select {
   padding: 0;
   display: grid;
   gap: 4px;
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale));
 }
 
 .reqs li::before {
@@ -984,13 +992,13 @@ select {
 .ladder-head h3 {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 18px;
+  font-size: calc(18px * var(--text-scale));
   margin: 0;
 }
 
 .rates {
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale));
 }
 
 /* The day wheel: twelve hours round a ring, 子 at the top, each tinted by what it goes to. */
@@ -1068,20 +1076,20 @@ select {
 
 .wheel-branch {
   fill: var(--text);
-  font-size: 21px;
+  font-size: calc(21px * var(--text-scale));
   text-anchor: middle;
 }
 
 .wheel-kind {
   fill: color-mix(in srgb, var(--hour) 75%, var(--text));
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale));
   letter-spacing: 0.03em;
   text-anchor: middle;
 }
 
 .wheel-element {
   fill: var(--muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale));
   text-anchor: middle;
   opacity: 0.6;
 }
@@ -1106,21 +1114,21 @@ select {
 .wheel-center-title {
   fill: var(--text);
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: calc(17px * var(--text-scale));
   font-weight: 600;
   text-anchor: middle;
 }
 
 .wheel-center-caption {
   fill: var(--muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale));
   text-anchor: middle;
 }
 
 .wheel-editor h3 {
   margin: 0 0 4px;
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: calc(18px * var(--text-scale));
   font-weight: 600;
 }
 
@@ -1193,7 +1201,7 @@ select {
 .method-name {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 17px;
+  font-size: calc(17px * var(--text-scale));
 }
 
 .method .bars {
@@ -1330,7 +1338,7 @@ select {
 .tier-label {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 17px;
+  font-size: calc(17px * var(--text-scale));
 }
 
 .tree-edges {
@@ -1372,7 +1380,7 @@ select {
   border: 0;
   background: none;
   color: var(--muted);
-  font-size: 11.5px;
+  font-size: calc(11.5px * var(--text-scale));
   line-height: 1.15;
   text-align: center;
   cursor: pointer;
@@ -1402,19 +1410,19 @@ select {
 .tree-node-name {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale));
   color: var(--muted);
 }
 
 .tree-node.is-notable .tree-node-name,
 .tree-node.is-starter .tree-node-name,
 .tree-node.is-capstone .tree-node-name {
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--text-scale));
   color: var(--text);
 }
 
 .tree-node-cost {
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale));
   font-variant-numeric: tabular-nums;
   color: var(--accent);
 }
@@ -1574,7 +1582,7 @@ select {
 
   .topbar-title {
     font-family: var(--font-display);
-    font-size: 20px;
+    font-size: calc(20px * var(--text-scale));
     font-weight: 600;
   }
 
@@ -1583,7 +1591,7 @@ select {
   }
 
   .screen-title {
-    font-size: 28px;
+    font-size: calc(28px * var(--text-scale));
   }
 
   .realm-title small {
@@ -1657,21 +1665,19 @@ select {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-  }
+:root[data-motion='reduced'] * {
+  transition: none !important;
+}
 
-  .dantian-halo {
-    animation: none;
-  }
+:root[data-motion='reduced'] .dantian-halo {
+  animation: none;
 }
 
 /* Creation, the Character screen, the card feed and the Chronicle (P1.7). */
 .sub-heading {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 16px;
+  font-size: calc(16px * var(--text-scale));
   margin: 14px 0 6px;
 }
 
@@ -1719,7 +1725,7 @@ select {
 
 .talent-kind {
   grid-row: span 3;
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale));
   color: var(--muted);
   letter-spacing: 0.04em;
   padding-top: 2px;
@@ -1728,11 +1734,11 @@ select {
 .talent-name {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 17px;
+  font-size: calc(17px * var(--text-scale));
 }
 
 .talent-text {
-  font-size: 14px;
+  font-size: calc(14px * var(--text-scale));
 }
 
 .choices {
@@ -1791,7 +1797,7 @@ select {
 .story h3 {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 18px;
+  font-size: calc(18px * var(--text-scale));
   margin: 0 0 4px;
 }
 
@@ -1865,15 +1871,13 @@ select {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .story,
-  .story .result {
-    animation: none !important;
-  }
+:root[data-motion='reduced'] .story,
+:root[data-motion='reduced'] .story .result {
+  animation: none !important;
+}
 
-  .story::after {
-    display: none;
-  }
+:root[data-motion='reduced'] .story::after {
+  display: none;
 }
 
 /* The stack: the top card in front, the waiting ones fanned behind it, each a strip lower and a
@@ -1906,7 +1910,7 @@ select {
   color: var(--muted);
   font: inherit;
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: calc(14px * var(--text-scale));
   text-align: left;
   cursor: pointer;
   animation: sheet-rise 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -1936,10 +1940,8 @@ select {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .stack-sheet {
-    animation: none;
-  }
+:root[data-motion='reduced'] .stack-sheet {
+  animation: none;
 }
 
 .attributes {
@@ -1978,7 +1980,7 @@ select {
 }
 
 .biography li {
-  font-size: 14px;
+  font-size: calc(14px * var(--text-scale));
 }
 
 @media (max-width: 600px) {
@@ -2040,12 +2042,12 @@ select {
 /* The coming-back story: an opening line, then what happened by kind. */
 .away-opening {
   font-family: var(--font-display);
-  font-size: 19px;
+  font-size: calc(19px * var(--text-scale));
 }
 
 .away-section h3 {
   margin: 12px 0 2px;
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale));
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2055,51 +2057,262 @@ select {
   margin: 0;
 }
 
-/* People: a list of rows, each opening the person's page with their log. */
+/* People (docs/mockups/people-study.html, B and C): the people beside the chosen person's page. */
+.people-split {
+  display: grid;
+  grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.people-split.view-web {
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+}
+
+.people-split > .panel + .panel,
+.people-page-col > .panel {
+  margin-top: 0;
+}
+
+.people-side-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin-bottom: 10px;
+}
+
+.people-side-head .panel-heading {
+  margin: 0;
+}
+
+.people-circle + .people-circle {
+  margin-top: 14px;
+}
+
+.circle-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 4px;
+  font: inherit;
+}
+
+.circle-head .sub-heading {
+  margin: 0;
+}
+
+.circle-hanzi {
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+  font-size: calc(14px * var(--text-scale));
+}
+
 .people-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 8px;
+  gap: 2px;
 }
 
-.person-row {
-  display: grid;
-  gap: 2px;
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--edge);
-  border-radius: var(--radius-small);
-  background: rgb(255 255 255 / 0.02);
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
   color: var(--text);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
 
-.person-row strong {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 600;
+.who:hover {
+  background: rgb(255 255 255 / 0.03);
 }
 
-.person-row:hover,
-.person-row:focus-visible {
-  border-color: var(--accent);
+.who.is-selected {
+  border-color: var(--edge-strong);
+  background: color-mix(in srgb, var(--crack) 6%, transparent);
+}
+
+.who-text {
+  display: grid;
+  min-width: 0;
+}
+
+.who-name {
+  font-family: var(--font-display);
+  font-size: calc(16px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.who-line {
+  font-size: calc(12px * var(--text-scale));
+}
+
+.who .fresh-dot {
+  margin-left: auto;
+}
+
+/* A seal: the surname in brush inside a carved square, tinted by feeling, until portraits. */
+.seal {
+  --tone: var(--muted);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 7px;
+  font-family: var(--font-brush);
+  font-size: calc(26px * var(--text-scale));
+  line-height: 1;
+  color: color-mix(in srgb, var(--tone) 85%, white);
+  background:
+    radial-gradient(
+      circle at 30% 25%,
+      color-mix(in srgb, var(--tone) 22%, transparent),
+      transparent 70%
+    ),
+    rgb(255 255 255 / 0.02);
+  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+  box-shadow: inset 0 0 12px -4px color-mix(in srgb, var(--tone) 50%, transparent);
+}
+
+.seal-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+  font-size: calc(18px * var(--text-scale));
+}
+
+.seal-big {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  font-size: calc(42px * var(--text-scale));
+}
+
+.tone-cold {
+  --tone: var(--muted);
+}
+
+.tone-warm {
+  --tone: var(--crack);
+}
+
+.tone-hot {
+  --tone: var(--warn);
+}
+
+.regard-warm {
+  color: color-mix(in srgb, var(--crack) 80%, white);
+}
+
+.regard-hot {
+  color: var(--warn);
+}
+
+.regard-cold {
+  color: var(--muted);
+}
+
+.fresh-dot {
+  display: inline-block;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* Feeling: the words lead; seven notches sit behind them as a glance, never a number. */
+.regard {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.notches {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.notches i {
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: rgb(255 255 255 / 0.08);
+}
+
+.notches i.centre {
+  background: rgb(255 255 255 / 0.22);
+}
+
+.notches i.up {
+  background: var(--crack);
+  box-shadow: 0 0 6px var(--crack);
+}
+
+.notches i.down {
+  background: var(--warn);
+  box-shadow: 0 0 6px var(--warn);
+}
+
+/* The person's page. */
+.person-top {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.person-name {
+  font-family: var(--font-display);
+  font-size: calc(28px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.1;
+  margin: 0 0 4px;
+}
+
+.bond-pill {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--edge-strong);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: calc(11.5px * var(--text-scale));
+  letter-spacing: 0.04em;
+}
+
+.person-summary {
+  font-family: var(--font-display);
+  font-size: calc(17px * var(--text-scale));
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--text) 85%, var(--muted));
+  margin: 0 0 14px;
 }
 
 .person-facts {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 8px 22px;
-  margin: 12px 0 0;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px 22px;
+  margin: 0;
 }
 
 .person-facts dt {
   color: var(--muted);
-  font-size: 12px;
-  letter-spacing: 0.06em;
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -2107,17 +2320,171 @@ select {
   margin: 0;
 }
 
-.person-log {
+/* Their log as a thread, the newest first and lit. */
+.person-thread {
   list-style: none;
   margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
+  padding: 0 0 0 16px;
+  border-left: 1px solid color-mix(in srgb, var(--crack) 25%, transparent);
 }
 
-.person-log li {
+.person-thread li {
+  position: relative;
   display: grid;
   gap: 1px;
+  padding: 0 0 12px;
+}
+
+.person-thread li::before {
+  content: '';
+  position: absolute;
+  left: -20.5px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--void);
+  border: 1px solid var(--crack);
+}
+
+.person-thread li.is-newest::before {
+  background: var(--crack);
+  box-shadow: 0 0 8px var(--crack);
+}
+
+/* The web of threads. */
+.people-web svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(560px, 70vh);
+}
+
+.web-ring {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.05);
+  stroke-dasharray: 2 6;
+}
+
+.web-ring-label {
+  fill: color-mix(in srgb, var(--muted) 70%, transparent);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.web-thread {
+  fill: none;
+  stroke-width: 1.3;
+  opacity: 0.55;
+}
+
+.web-thread.tone-warm {
+  opacity: 0.85;
+  filter: drop-shadow(0 0 3px var(--crack));
+}
+
+.web-you circle {
+  fill: var(--obsidian);
+  stroke: var(--accent);
+  stroke-width: 1.4;
+}
+
+.web-you text {
+  fill: var(--accent);
+  font-family: var(--font-brush);
+  font-size: 28px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.web-node {
+  cursor: pointer;
+}
+
+.web-node:focus-visible {
+  outline: none;
+}
+
+.web-node:focus-visible .web-disc {
+  stroke: var(--accent);
+  stroke-width: 2.4;
+}
+
+.web-disc {
+  fill: var(--obsidian);
+  stroke-width: 1.2;
+}
+
+.web-node:hover .web-disc {
+  stroke-width: 2;
+}
+
+.web-node.is-selected .web-disc {
+  stroke-width: 2.4;
+}
+
+.web-seal {
+  font-family: var(--font-brush);
+  font-size: 22px;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: color-mix(in srgb, var(--tone) 85%, white);
+}
+
+.web-name {
+  fill: var(--text);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.web-bond {
+  fill: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  text-anchor: middle;
+}
+
+.web-fresh {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+
+.web-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 8px 0 0;
+}
+
+.web-legend i {
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.legend-warm {
+  background: var(--crack);
+  box-shadow: 0 0 6px var(--crack);
+}
+
+.legend-cold {
+  background: var(--muted);
+}
+
+.legend-hot {
+  background: var(--warn);
+}
+
+@media (max-width: 1100px) {
+  .people-split,
+  .people-split.view-web {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* The season tint and weather on the glass (design § UI and screens, Look). Light enough that
@@ -2127,6 +2494,7 @@ select {
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  opacity: var(--weather-strength);
   transition: background-color 4s ease;
 }
 
@@ -2254,15 +2622,136 @@ select {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .glass-sky,
-  .glass-sky::before,
-  .glass-sky::after {
-    animation: none !important;
-    transition: none;
-  }
+:root[data-motion='reduced'] .glass-sky,
+:root[data-motion='reduced'] .glass-sky::before,
+:root[data-motion='reduced'] .glass-sky::after {
+  animation: none !important;
+  transition: none;
+}
 
-  .weather-storm::after {
-    opacity: 0;
-  }
+:root[data-motion='reduced'] .weather-storm::after {
+  opacity: 0;
+}
+
+/* Settings: presets, color pickers and the glass (P1.9). */
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.button.preset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.15);
+}
+
+.swatch + .swatch {
+  margin-left: -4px;
+}
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px 18px;
+}
+
+.color-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.color-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.color-pick input[type='color'] {
+  width: 34px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-small);
+  background: var(--well);
+  cursor: pointer;
+}
+
+.color-pick input[type='color']::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.color-pick input[type='color']::-webkit-color-swatch {
+  border: 0;
+  border-radius: 3px;
+}
+
+.color-field .button {
+  padding: 2px 8px;
+}
+
+.color-warning {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.rarity-sample {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-family: var(--font-display);
+  font-size: calc(17px * var(--text-scale));
+  font-weight: 600;
+}
+
+.look-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 26px;
+  align-items: flex-start;
+}
+
+/* The coming-back card's fold: everything that settled on its own, behind one line. */
+.away-more {
+  margin-top: 10px;
+}
+
+.away-more summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: calc(13px * var(--text-scale));
+}
+
+.away-more[open] summary {
+  margin-bottom: 4px;
+}
+
+/* A card that settled itself: said quietly beside its line, not in it. */
+.settled-mark {
+  color: var(--muted);
+  font-size: 0.86em;
+  white-space: nowrap;
+}
+
+.chronicle-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin-bottom: 6px;
+}
+
+.chronicle-head .panel-heading {
+  margin: 0;
 }

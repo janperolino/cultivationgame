@@ -9,7 +9,7 @@ import { stepLabel } from '../content/chronicle.ts';
 import { realm } from '../content/realms.ts';
 import { countWord, spanWords, timesWord } from '../content/words.ts';
 import { renderEvent, whoFor } from './chronicle.ts';
-import { majorCheck, type LadderId } from './cultivation.ts';
+import { barFill, majorCheck, type LadderId } from './cultivation.ts';
 import type { GameState, Ladder } from './state.ts';
 
 export interface StorySection {
@@ -24,6 +24,10 @@ export interface ComingBackStory {
   growth: string[];
   /** The cards settled without you, by kind. */
   sections: StorySection[];
+  /** One card a kind, the one that came most, for the short telling of a long absence. */
+  highlights: string[];
+  /** How many cards settled without you in all. */
+  settled: number;
   /** "Three cards wait for you in the tray.", or null. */
   waiting: string | null;
   /** The breakthrough waiting on you, or null. */
@@ -42,6 +46,16 @@ const ORDER: (CardKind | 'story')[] = ['story', 'door', 'within', 'sky', 'named-
 
 /** Distinct cards told per kind before the rest are summed up. */
 const PER_SECTION = 3;
+/** Kinds in the order a short telling reaches for them, and how many it tells. */
+const HIGHLIGHT_ORDER: (CardKind | 'story')[] = [
+  'story',
+  'people',
+  'named-day',
+  'door',
+  'within',
+  'sky',
+];
+const HIGHLIGHTS = 4;
 
 const LADDER_WORDS: Record<LadderId, { name: string; verb: string }> = {
   qi: { name: 'qi', verb: 'climbs' },
@@ -51,6 +65,13 @@ const LADDER_WORDS: Record<LadderId, { name: string; verb: string }> = {
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** "… results." told three times reads "… results (three times)." */
+function withTimes(line: string, times: number): string {
+  if (times <= 1) return line;
+  const m = /^(.*?)([.!?]*)$/s.exec(line)!;
+  return `${m[1]} (${timesWord(times)})${m[2] || '.'}`;
+}
+
 function growthLine(which: LadderId, from: Ladder, to: Ladder): string | null {
   if (from.realm === to.realm && from.stage === to.stage) return null;
   const w = LADDER_WORDS[which];
@@ -58,6 +79,23 @@ function growthLine(which: LadderId, from: Ladder, to: Ladder): string | null {
     return `Your ${w.name} breaks through to ${realm(to.realm).name}, and stands at ${stepLabel(to.realm, to.stage)}.`;
   }
   return `Your ${w.name} ${w.verb} from ${stepLabel(from.realm, from.stage)} to ${stepLabel(to.realm, to.stage)}.`;
+}
+
+/** How full the qi sea is, in words. */
+function fillWords(fill: number): string {
+  if (fill >= 1) return 'brimming';
+  if (fill >= 0.75) return 'nearly full';
+  if (fill >= 0.5) return 'more than half full';
+  if (fill >= 0.25) return 'filling';
+  return 'barely stirred';
+}
+
+/** When qi gathered without climbing a step: what it gathers toward and how full it is. */
+function qiLine(from: Ladder, to: Ladder): string | null {
+  if (from.realm !== to.realm || from.stage !== to.stage || to.bar <= from.bar) return null;
+  const top = to.stage >= realm(to.realm).stages;
+  const toward = top ? 'the gate of the next realm' : stepLabel(to.realm, to.stage + 1);
+  return `Your qi gathers toward ${toward}; the sea in your dantian is ${fillWords(barFill(to))}.`;
 }
 
 /** The story of the time between two states of the same life. */
@@ -69,7 +107,9 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
   const since = after.chronicle.slice(before.chronicle.length);
   const growth: string[] = [];
   for (const which of ['qi', 'body', 'soul'] as const) {
-    const line = growthLine(which, before.player[which], after.player[which]);
+    const line =
+      growthLine(which, before.player[which], after.player[which]) ??
+      (which === 'qi' ? qiLine(before.player.qi, after.player.qi) : null);
     if (line) growth.push(line);
     const broke = since.filter((e) => e.type === 'setback' && e.data.ladder === which).length;
     if (broke > 0) {
@@ -101,13 +141,21 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
   for (const kind of ORDER) {
     const told = [...groups.values()].filter((g) => g.kind === kind);
     if (!told.length) continue;
-    const lines = told
-      .slice(0, PER_SECTION)
-      .map((g) => (g.times > 1 ? `${g.line} (${timesWord(g.times)})` : g.line));
+    const lines = told.slice(0, PER_SECTION).map((g) => withTimes(g.line, g.times));
     const rest = told.slice(PER_SECTION).reduce((n, g) => n + g.times, 0);
     if (rest > 0) lines.push(`And ${rest === 1 ? 'one thing more' : `${rest} things more`}.`);
     sections.push({ heading: HEADINGS[kind], lines });
   }
+
+  const highlights: string[] = [];
+  for (const kind of HIGHLIGHT_ORDER) {
+    if (highlights.length >= HIGHLIGHTS) break;
+    const top = [...groups.values()]
+      .filter((g) => g.kind === kind)
+      .sort((a, b) => b.times - a.times)[0];
+    if (top) highlights.push(withTimes(top.line, top.times));
+  }
+  const settled = [...groups.values()].reduce((n, g) => n + g.times, 0);
 
   const n = after.cards.pending.length;
   const waiting =
@@ -124,5 +172,5 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
       : `Your qi is full; ${major.target.name} still waits on its requirements.`
     : null;
 
-  return { opening, growth, sections, waiting, ready };
+  return { opening, growth, sections, highlights, settled, waiting, ready };
 }

@@ -10,11 +10,11 @@ import { GlassBackground } from './GlassBackground.tsx';
 import { SettingsScreen } from './SettingsScreen.tsx';
 import { TechniquesScreen } from './TechniquesScreen.tsx';
 import { TreesScreen } from './TreesScreen.tsx';
-import { formatAge } from './format.ts';
+import { capitalize } from './format.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
-import { eventText } from '../core/chronicle.ts';
-import { ageYears } from '../core/state.ts';
+import { bySeason } from '../core/chronicle.ts';
+import { EventLine } from './widgets.tsx';
 
 function SlotNotice() {
   const phase = useGame((s) => s.phase);
@@ -194,19 +194,21 @@ export function App() {
           {recent.length === 0 ? (
             <p className="muted">Nothing has happened yet.</p>
           ) : (
-            <ol className="chronicle">
-              {recent.map((c, i) => (
-                <li key={`${c.day}-${i}`}>
-                  <span className="muted chronicle-age">
-                    {game &&
-                      (c.day < game.player.bornDay
-                        ? 'a past life'
-                        : `age ${formatAge(ageYears(game.player, c.day))}`)}
-                  </span>
-                  {game && eventText(game, c)}
-                </li>
-              ))}
-            </ol>
+            game &&
+            bySeason(game.player, recent).map((g, gi) => (
+              <div key={`${g.when}-${gi}`} className="chronicle-season">
+                <h3 className={`chronicle-when${gi === 0 ? ' is-newest' : ''}`}>
+                  {capitalize(g.when)}
+                </h3>
+                <ol className="chronicle">
+                  {g.items.map((e, i) => (
+                    <li key={`${e.day}-${i}`}>
+                      <EventLine game={game} e={e} />
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ))
           )}
         </aside>
 

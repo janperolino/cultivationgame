@@ -2,10 +2,9 @@ import { useEffect, useRef } from 'react';
 import { seasonOf } from '../core/chronicle.ts';
 import { SPELL_DAYS, weatherOn } from '../core/weather.ts';
 import { buildCracks, drawGlass, toHex } from './glass.ts';
+import { reducedMotion, useSettings } from './settings.ts';
 import { useGame } from './store.ts';
 
-/** The fine web's default weight; Settings changes it in P1.9. */
-const WEB = 1;
 const FLARE_MS = 1600;
 /** The glass before any life is open. */
 const IDLE_SEED = 7;
@@ -16,6 +15,9 @@ export function GlassBackground() {
   const seed = useGame((s) => s.game?.glass.seed ?? IDLE_SEED);
   const fractures = useGame((s) => s.game?.glass.fractures ?? 0);
   const flares = useGame((s) => s.game?.glass.flares ?? 0);
+  // The web and the crack light are the player's; a change repaints the glass.
+  const web = useSettings((s) => s.web);
+  const crack = useSettings((s) => s.crack);
   const lastFlares = useRef<{ seed: number; flares: number } | null>(null);
 
   useEffect(() => {
@@ -38,9 +40,9 @@ export function GlassBackground() {
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const css = getComputedStyle(document.documentElement);
-      const color = toHex(ctx, css.getPropertyValue('--crack').trim());
+      const color = toHex(ctx, crack || css.getPropertyValue('--crack').trim());
       const background = css.getPropertyValue('--void').trim() || '#040507';
-      drawGlass(ctx, w, h, background, buildCracks(w, h, { seed, web: WEB, fractures }), {
+      drawGlass(ctx, w, h, background, buildCracks(w, h, { seed, web, fractures }), {
         glow,
         color,
       });
@@ -50,7 +52,7 @@ export function GlassBackground() {
     const prev = lastFlares.current;
     lastFlares.current = { seed, flares };
     const flare = prev !== null && prev.seed === seed && flares > prev.flares;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced = reducedMotion();
     if (flare && !reduced) {
       const t0 = performance.now();
       const frame = (t: number) => {
@@ -75,7 +77,7 @@ export function GlassBackground() {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
     };
-  }, [seed, fractures, flares]);
+  }, [seed, fractures, flares, web, crack]);
 
   return (
     <>

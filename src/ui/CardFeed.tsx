@@ -7,9 +7,8 @@
 import { useState } from 'react';
 import { statInfo } from '../content/stats.ts';
 import { viewCard, type CardView } from '../core/cards.ts';
+import { reducedMotion } from './settings.ts';
 import { useGame } from './store.ts';
-
-const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** How many cards show behind the top one; the rest are counted. */
 const FANNED = 3;

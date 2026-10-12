@@ -13,11 +13,13 @@ import {
   practice,
   switchMethod,
 } from '../core/life.ts';
-import { advance, catchUp, TICK_MS, type OfflineResult } from '../core/loop.ts';
+import { advance, catchUp, setClock, TICK_MS, type OfflineResult } from '../core/loop.ts';
+import { seePerson } from '../core/people.ts';
+import type { RealmId } from '../content/realms.ts';
 import { makeSave, SaveError } from '../core/save/format.ts';
 import { exportFileName } from '../core/save/file.ts';
 import { SaveSlots, type SlotId, type SlotSummary } from '../core/save/slots.ts';
-import { withPlayer, type GameState } from '../core/state.ts';
+import { rerollGlass, withPlayer, type GameState } from '../core/state.ts';
 import { followWheel, forgetSavedRoutine, saveRoutine, setHour } from '../core/wheel.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 
@@ -103,6 +105,12 @@ export interface GameStore {
   lastChance(): void;
   /** At the lifespan edge: accept the end. */
   letGo(): void;
+  /** Runs the life's calendar at a reached realm's speed, or its own with null; saved with the slot. */
+  setClock(realm: RealmId | null): void;
+  /** The player read someone's page: their news is no longer fresh. */
+  seePerson(id: string): void;
+  /** A new pattern for the life's glass. */
+  rerollGlass(): void;
   /** After a death: opens creation for a new life in the same slot, with the chronicle kept. */
   beginNextLife(): void;
   exportSlot(slot: SlotId): Promise<void>;
@@ -475,6 +483,27 @@ export const useGame = create<GameStore>()((set, get) => {
       const { game } = get();
       if (!game || !holdsLock) return;
       set({ game: endLife(game) });
+      void get().saveNow();
+    },
+
+    setClock(realm) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      set({ game: setClock(game, realm) });
+      void get().saveNow();
+    },
+
+    seePerson(id) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      const next = seePerson(game, id);
+      if (next !== game) set({ game: next });
+    },
+
+    rerollGlass() {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      set({ game: rerollGlass(game) });
       void get().saveNow();
     },
 

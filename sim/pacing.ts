@@ -187,7 +187,16 @@ function fmt(h: number | undefined): string {
   return h < 1 ? `${Math.round(h * 60)}m` : `${h.toFixed(1)}h`;
 }
 
-function table(title: string, how: Play) {
+/** What a table measured per root: real hours to layers 3 and 9 and Foundation, and age at 9. */
+interface Medians {
+  l3?: number;
+  l9?: number;
+  found?: number;
+  age?: number;
+}
+
+function table(title: string, how: Play): Record<string, Medians> {
+  const out: Record<string, Medians> = {};
   console.log(`\n${title} (median of ${SEEDS} seeds; m = real minutes, h = real hours)`);
   const head = ['root', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8', 'L9', 'Found.', 'age@L9'];
   head.push('insight@L9', 'body', 'soul', 'nodes', 'fails', 'mast@L4', 'mast@L9');
@@ -201,6 +210,9 @@ function table(title: string, how: Play) {
     const insight = median(
       runs.map((x) => x.insightAt9).filter((x): x is number => x !== undefined),
     );
+    const at = (k: number) =>
+      median(runs.map((x) => x.at[k]).filter((x): x is number => x !== undefined));
+    out[r.id] = { l3: at(3), l9: at(9), found: at(10), age };
     const mid = runs[Math.floor(SEEDS / 2)]!;
     const fails = median(runs.map((x) => x.fails)) ?? 0;
     console.log(
@@ -216,12 +228,50 @@ function table(title: string, how: Play) {
         (mid.masteryAt9 ?? '—').padStart(11),
     );
   }
+  return out;
 }
 
-table('Default rule, safe breakthroughs, no stones', 'default');
-table('Default rule, buying tree nodes toward the nearest that speeds qi', 'nodes');
-table('Following the Watch Rotation once it can be followed', 'routine');
+const away = table('Default rule, safe breakthroughs, no stones', 'default');
+const nodes = table('Default rule, buying tree nodes toward the nearest that speeds qi', 'nodes');
+const routineRow = table('Following the Watch Rotation once it can be followed', 'routine');
 table('Every waking hour on qi, safe breakthroughs, no stones', 'qi-only');
+
+// The pacing targets (design § Character creation and the first hour), checked on the away row,
+// which is the floor: the default rule with nobody at the wheel.
+const within = (x: number | undefined, lo: number, hi: number) =>
+  x !== undefined && x >= lo && x <= hi;
+const checks: [string, string, boolean][] = [];
+const trueL9 = away.true?.l9;
+checks.push([
+  'True root reaches layer 9 in 15–20 real hours, away',
+  fmt(trueL9),
+  within(trueL9, 15, 20),
+]);
+checks.push([
+  'True root is about 30 at layer 9 (25–35)',
+  away.true?.age?.toFixed(1) ?? '—',
+  within(away.true?.age, 25, 35),
+]);
+const ratio = (away.heavenly?.found ?? NaN) / (away.true?.found ?? NaN);
+checks.push([
+  'A heavenly root reaches Foundation in about half the time (0.4–0.6)',
+  Number.isFinite(ratio) ? ratio.toFixed(2) : '—',
+  within(ratio, 0.4, 0.6),
+]);
+const l3s = Object.values(away).map((m) => m.l3);
+checks.push([
+  'Every root reaches layer 3 in about 45 minutes (30–60)',
+  `${fmt(Math.min(...l3s.map((x) => x ?? Infinity)))}–${fmt(Math.max(...l3s.map((x) => x ?? 0)))}`,
+  l3s.every((x) => within(x, 0.5, 1)),
+]);
+checks.push([
+  'Playing the wheel never runs slower than the floor (true root, layer 9)',
+  `nodes ${fmt(nodes.true?.l9)}, routine ${fmt(routineRow.true?.l9)}`,
+  (nodes.true?.l9 ?? Infinity) <= (trueL9 ?? 0) &&
+    (routineRow.true?.l9 ?? Infinity) <= (trueL9 ?? 0),
+]);
+console.log('\nTargets (the attended rows arrive with P1.10)');
+for (const [what, got, ok] of checks) console.log(`  ${ok ? 'ok ' : 'OFF'}  ${what}: ${got}`);
 console.log(
   '\nFoundation needs 500 insight ever earned and the pill; the sim tries at the bare minimum.' +
     "\nmast@L4 and mast@L9: the qi method's mastery (Glimpse, Comprehension, Mastery, Domain, Origin).",

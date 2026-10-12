@@ -20,7 +20,7 @@ import {
   triggerHolds,
   viewCard,
 } from './cards.ts';
-import { eventText, whoFor } from './chronicle.ts';
+import { eventText, settledItself, whoFor } from './chronicle.ts';
 import { comingBackStory } from './comingBack.ts';
 import { createLife } from './creation.ts';
 import { catchUp } from './loop.ts';
@@ -279,7 +279,8 @@ describe('multi-step cards', () => {
     expect(done.player.stones).toBe(12);
     const e = done.chronicle.at(-1)!;
     expect(e.data).toMatchObject({ card: 'thief', step: 'karst', path: '1.0', byDefault: true });
-    expect(eventText(done, e)).toMatch(/gives up the trail.*settled without you/);
+    expect(eventText(done, e)).toMatch(/gives up the trail/);
+    expect(settledItself(e)).toBe(true);
     // An urgent multi-step card defaults after its days, whatever step it stands at.
     const due = drawCards({ ...s, calendar: { day: s.calendar.day + 5 } }, { decks: [] });
     expect(due.cards.pending).toEqual([]);
@@ -347,6 +348,18 @@ describe('the coming-back story', () => {
     expect(story.opening).toBe('Twelve years pass in seclusion.');
     expect(story.sections.length).toBeGreaterThanOrEqual(3);
     expect(story.sections.flatMap((x) => x.lines).join(' ')).toMatch(/\((twice|\w+ times)\)/);
+    // The short telling: one card a kind, at most four, out of everything that settled.
+    expect(story.settled).toBeGreaterThan(5);
+    expect(story.highlights.length).toBeGreaterThan(0);
+    expect(story.highlights.length).toBeLessThanOrEqual(4);
+  });
+
+  it('tells qi gathered when no step was climbed', () => {
+    const s = atLived(life(), 30);
+    const away = catchUp(s, 0, 60_000, { step: playDay });
+    const story = comingBackStory(s, away.state);
+    expect(away.state.player.qi.stage).toBe(s.player.qi.stage);
+    expect(story.growth.join(' ')).toMatch(/Your qi gathers toward the \w+ layer; the sea/);
   });
 });
 

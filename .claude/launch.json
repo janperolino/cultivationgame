@@ -24,6 +24,20 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--port", "5175", "--strictPort"],
       "port": 5175
+    },
+    {
+      "name": "pages-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "preview",
+        "--base",
+        "/cultivationgame/",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173
     }
   ]
 }

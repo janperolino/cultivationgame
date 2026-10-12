@@ -74,11 +74,15 @@ export interface Person {
   id: string;
   /** Pinyin names, as people keep them: Aunt Yan, Senior Brother Zhao. */
   name: string;
+  /** Their surname in hanzi: the seal on the People screen until portraits arrive. */
+  hanzi: string;
   pronouns: string;
   /** Who they are, one line, in the second person. */
   summary: string;
   /** A mortal has no realm to know. */
   mortal?: boolean;
+  /** Met on the road wherever you meet them: the People screen's circles keep them there. */
+  wanderer?: boolean;
   /** Where they are when you meet them: an atlas entry id, or null for wherever you are. */
   home: string | null;
 }
@@ -86,6 +90,7 @@ export interface Person {
 export const PEOPLE: readonly Person[] = [
   {
     id: 'aunt-yan',
+    hanzi: '严',
     name: 'Aunt Yan',
     pronouns: 'she/her',
     summary: 'The cave-clan aunt who fed you bat-guano rice and taught you which caves breathe.',
@@ -94,6 +99,7 @@ export const PEOPLE: readonly Person[] = [
   },
   {
     id: 'tester-qiu',
+    hanzi: '邱',
     name: 'Tester Qiu',
     pronouns: 'he/him',
     summary: 'The imperial tester who came down to the sinkholes with a grey stone and a ledger.',
@@ -101,6 +107,7 @@ export const PEOPLE: readonly Person[] = [
   },
   {
     id: 'sergeant-hou',
+    hanzi: '侯',
     name: 'Sergeant Hou',
     pronouns: 'he/him',
     summary: "The garrison school's drill sergeant, missing two fingers and none of his patience.",
@@ -108,6 +115,7 @@ export const PEOPLE: readonly Person[] = [
   },
   {
     id: 'sergeant-lei',
+    hanzi: '雷',
     name: 'Sergeant Lei',
     pronouns: 'she/her',
     summary: 'The sergeant who keeps the list of lit children and walks the Wall of Piled Bones.',
@@ -115,6 +123,7 @@ export const PEOPLE: readonly Person[] = [
   },
   {
     id: 'old-sha',
+    hanzi: '沙',
     name: 'Old Sha',
     pronouns: 'he/him',
     summary:
@@ -123,6 +132,7 @@ export const PEOPLE: readonly Person[] = [
   },
   {
     id: 'senior-zhao',
+    hanzi: '赵',
     name: 'Senior Brother Zhao',
     pronouns: 'he/him',
     summary: 'An outer disciple of the Beast-Butcher Gate who counts contribution in cores.',
@@ -130,6 +140,7 @@ export const PEOPLE: readonly Person[] = [
   },
   {
     id: 'clerk-fan',
+    hanzi: '范',
     name: 'Clerk Fan',
     pronouns: 'she/her',
     summary: 'The bounty office clerk who always needs runners and never asks why.',
@@ -138,13 +149,16 @@ export const PEOPLE: readonly Person[] = [
   },
   {
     id: 'peddler-gou',
+    hanzi: '苟',
     name: 'Peddler Gou',
     pronouns: 'he/him',
     summary: 'A travelling peddler with a cart of pills, half of them real.',
+    wanderer: true,
     home: 'qm-bianhuang',
   },
   {
     id: 'little-ning',
+    hanzi: '宁',
     name: 'Little Ning',
     pronouns: 'she/her',
     summary: 'A junior who came begging help with a knotted meridian.',
@@ -152,6 +166,7 @@ export const PEOPLE: readonly Person[] = [
   },
   {
     id: 'fang-tie',
+    hanzi: '方',
     name: 'Fang Tie',
     pronouns: 'he/him',
     summary: 'A cultivator of your year who measures himself against you.',
