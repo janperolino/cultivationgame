@@ -372,6 +372,11 @@ Write questions here when a phase hits something the design doesn't cover, with 
   - Cards: a `manual` effect and a `noManual` trigger. A Breath-Count for Sale ({peddler}, twelve stones, the Garrison Breath-Count) and A Courier with River Fever (nurse him for a tenth of the bar and he leaves the blue Tide-Counting Formula). Adding them shifts the deck's draws a little: the away row's heavenly Foundation ratio moved from 0.50 to 0.52, everything else is unchanged.
   - **Awaiting Jan's review:** the six Breath nodes (`src/content/trees/qi.ts`), the five loose manuals and the eleven method nodes (`src/content/manuals.ts`), and the two formula cards (`src/content/cards/seclusion.ts`).
 
+- **What surrounds the seated figure** (for the next planning session; raised 2026-10-12 after P1.10). The seat now has its own panel, and the space round the figure is empty since the poses went. An interactable abode scene was ruled out as too concrete: every kind of abode would need its own. Three ideas that need no per-abode art, discussed but not settled:
+  - The day wheel as a faint ring round the figure, each hour tinted by its kind of work, a light going round with the current hour. This is the "other way" to show the hour that dropping the poses left open, and it explains why the motes change color.
+  - The cultivator's own things set out on a mat in front of them, each a data entry with a glyph: stones burning (tap to toggle burning), an open manual while contemplating, incense and a pill from M2 and M4, an array circle under the figure from M4. They come with you to any abode, and cards and orbs could touch them later.
+  - The abode as numbers, not pictures: the vein's grade sets the mote field's density and brightness, its element biases the tint, and M4's spirit pool glows under the figure. The realm's own vocabulary (design § Circulation on the figure) already changes the backdrop by realm.
+
 ## Log
 
 Newest first. 3–5 lines per phase.
