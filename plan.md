@@ -214,13 +214,15 @@ This is the "Atlas export" item from the design checklist.
 **Read:** design.md § Story cards and events (seclusion is quiet, not silent; pacing); § Professions, people and powers (People, from the first hour); § UI and screens (Less spreadsheet, Coming back, the Abode and People rows). Open questions: Jan's notes on P1.7's talents and cards, if any.
 
 **Build:**
-- The seclusion deck: about a dozen cards across the five kinds (at the door, inside you, sky and season, named days, people), drafted for Jan's review, with the pacing rule (about one a season at Qi Condensation, scaled by the clock speed) and a sim that counts cards per real hour.
+- The seclusion deck: about 25 cards across the five kinds (at the door, inside you, sky and season, named days, people), a few of them multi-step, drafted for Jan's review, with the pacing rule (one every five to eight real minutes, two or three a season at Qi Condensation, scaled by the clock speed) and a sim that counts cards per real hour and how often one repeats.
+- Multi-step cards (design § Story cards and events, a card can be a whole small interaction): steps in the card format, choices that lead to a step, state carried between steps, defaults step by step, one chronicle line for the path, with tests.
+- The tray as a stack: the top card open, the rest fanned behind it, new cards rising onto the stack and settled ones sliding off, still under reduced motion.
 - Named people: `src/content/people.ts` with the first hour's named people (the sergeant, your senior, the clan aunt and the rest), person records on the game state (bond, feeling in words, last known realm and whereabouts), updates from cards that name them, and a per-person log filtered from the typed chronicle.
 - The People screen, thin: the list, each person's page with their log, and the feed of newest updates on top.
 - The coming-back card as a story: what happened, the cards that resolved on their own, the rest waiting in the feed.
 - The figure's pose by the current hour; a season tint and weather on the glass from the calendar; realms and layers as words everywhere.
 
-**Done when:** tests cover draws by trigger and weight on the world stream, once and cooldown, urgent defaults, offline batching and the person log; a life left for an hour comes back to a story card; the People screen works at desktop and phone widths; the deck is committed for review.
+**Done when:** tests cover draws by trigger and weight on the world stream, once and cooldown, urgent defaults, offline batching, multi-step cards and their defaults, and the person log; the pace sim lands at one card every five to eight real minutes; a life left for an hour comes back to a story card; the People screen works at desktop and phone widths; the deck is committed for review.
 
 ### P1.9 Polish, balance and share (about 2–3 hours)
 
@@ -313,6 +315,8 @@ Write questions here when a phase hits something the design doesn't cover, with 
 ## Log
 
 Newest first. 3–5 lines per phase.
+
+- 2026-10-12, planning after P1.7 (Jan's notes): more cards while idling, one every five to eight real minutes (was ten to fifteen), so P1.8's seclusion deck grows to about 25 cards; cards stack in the tray and slide off when settled; cards can be multi-step interactions, with steps, defaults step by step and one chronicle line for the path (design § Story cards and events; P1.8's build list). Talents stay as rolled: one of each kind on the shared table, where about half the rolls come up green or better; Jan is happy with that.
 
 - 2026-10-12, obsidian panels and the card tray (Jan's call, outside the phases): direction B of the obsidian study, with A under reduced motion; C dropped, since the qi bar is progress toward the next step, not the qi you hold. Every `.panel` in `theme.css` is obsidian with a masked gradient rim, a light walking round it (`--edge-angle`, 16 s, 5 s on `is-waiting`), a still blurred bloom behind it and a lacquer sheen; neighbours walk out of step. Accent rims on actionable panels, the warning color on the lifespan edge. The card feed is now a tray panel (`CardFeed.tsx`): cards rise in with a flare, results slide out "into the chronicle". design.md § UI and § Story cards record it. For P1.9: the Settings reduced-motion switch should give panels the still rim too (today only the OS setting does), and rim strength could join the glass options.
 
