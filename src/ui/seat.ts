@@ -99,7 +99,6 @@ function apply(s: GameState, r: Breath): GameState {
   return r.caught.length && !r.wasted ? firstBreath(s) : s;
 }
 
-/** The pointer or a finger passes (x, y) in figure units; `inPlace` when orbs are drawn still. */
 /**
  * The seat's clock now, in session seconds: the last tick's, run on by the page time since, so
  * orbs move smoothly every frame rather than in the loop's quarter-second steps.
@@ -108,6 +107,25 @@ export function seatTime(a: Attention, now = performance.now()): number {
   return a.t + Math.min(MAX_LEAD_S, Math.max(0, (now - tickedAt) / 1000));
 }
 
+/** The world day the figure last saw, when, and how fast it was moving, in days a second. */
+let dayAt = { day: 0, at: 0, perSecond: 0 };
+
+/** The figure notes each new world day, so the sun can run on smoothly between ticks. */
+export function noteDay(day: number, now = performance.now()): void {
+  if (day === dayAt.day) return;
+  const dd = day - dayAt.day;
+  const dt = (now - dayAt.at) / 1000;
+  // A jump (a new life, a rewind, offline time) or a long stall moves the sun without running it on.
+  const perSecond = dd > 0 && dd < 1 && dt > 0 && dt < 2 ? dd / dt : 0;
+  dayAt = { day, at: now, perSecond };
+}
+
+/** The world day now, for the sun: the last day seen, run on for at most half a second. */
+export function sunDay(now = performance.now()): number {
+  return dayAt.day + dayAt.perSecond * Math.min(MAX_LEAD_S, Math.max(0, (now - dayAt.at) / 1000));
+}
+
+/** The pointer or a finger passes (x, y) in figure units; `inPlace` when orbs are drawn still. */
 export function catchNow(s: GameState, x: number, y: number, inPlace: boolean): GameState {
   const a = attentionFor(s);
   if (!a.orbs.length) return s;

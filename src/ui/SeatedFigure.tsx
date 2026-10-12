@@ -4,7 +4,9 @@
 // silhouette a canvas (ui/qiCanvas.ts) draws the qi drifting in, circulating and settling, and the
 // orbs to draw in by hover or a finger. Beside it, the seat's meter: qi speed, focus and heat. An
 // attended qi breakthrough plays here as a ten-second scene (ui/scene.ts): a tap or click on the
-// figure as the spark passes each gate, and the meter tells the scene instead.
+// figure as the spark passes each gate, and the meter tells the scene instead. Behind it all, over
+// the whole seat panel, the sun of the hour (ui/sunCanvas.ts): the figure is a sundial, and the
+// caption under it names the hour in words.
 import { useEffect, useMemo, useRef } from 'react';
 import { POINTER_REACH } from '../content/attention.ts';
 import { circulation, RARITY_SPARKS } from '../content/circulation.ts';
@@ -17,6 +19,7 @@ import {
   SCENE_ODDS_CAP,
   SCENE_ODDS_STEP,
 } from '../content/cultivation.ts';
+import { BRANCHES, HOUR_KINDS } from '../content/hours.ts';
 import { methodCirculation } from '../content/methods.ts';
 import { realm } from '../content/realms.ts';
 import {
@@ -35,7 +38,7 @@ import { ladderMethod } from '../core/methods.ts';
 import { sceneBonus } from '../core/scene.ts';
 import type { Cultivator, GameState } from '../core/state.ts';
 import { stats } from '../core/stats.ts';
-import { hourOfDay } from '../core/wheel.ts';
+import { effectiveWheel, hourOfDay } from '../core/wheel.ts';
 import { formatLadder, formatPercent } from './format.ts';
 import {
   FIGURE_BOX,
@@ -53,8 +56,9 @@ import {
   useScene,
   type ScenePlay,
 } from './scene.ts';
-import { holdStill, onBreath, seatTime, showAbode, useSeat } from './seat.ts';
+import { holdStill, noteDay, onBreath, seatTime, showAbode, useSeat } from './seat.ts';
 import { reducedMotion, useSettings } from './settings.ts';
+import { SunCanvas } from './sunCanvas.ts';
 import { useGame } from './store.ts';
 
 /** One mote stands for this share of the bar, so motes come at the real qi rate. */
@@ -104,6 +108,8 @@ export function SeatedFigure({ game }: { game: GameState }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const sceneStarted = useScene((s) => s.play?.started ?? 0);
   const engine = useRef<QiCanvas | null>(null);
+  const sunRef = useRef<HTMLCanvasElement>(null);
+  const sunEngine = useRef<SunCanvas | null>(null);
 
   const fill = Math.min(1.5, Math.max(0, barFill(c.qi)));
   const level = Math.min(1, fill);
@@ -115,23 +121,37 @@ export function SeatedFigure({ game }: { game: GameState }) {
     return () => showAbode(false);
   }, []);
 
-  // The canvas runs while the tab is visible, and stops drawing when it is hidden.
+  // The canvases run while the tab is visible, and stop drawing when it is hidden.
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const sunCanvas = sunRef.current;
+    if (!canvas || !sunCanvas) return;
+    const sun = new SunCanvas(sunCanvas, () => boxRef.current);
+    sunEngine.current = sun;
     const e = new QiCanvas(
       canvas,
       () => useSeat.getState().attention,
       (a) => seatTime(a),
       () => useScene.getState().play,
+      () => sun.light(),
     );
     engine.current = e;
-    const visibility = () => (document.visibilityState === 'visible' ? e.start() : e.stop());
+    const visibility = () => {
+      if (document.visibilityState === 'visible') {
+        e.start();
+        sun.start();
+      } else {
+        e.stop();
+        sun.stop();
+      }
+    };
     visibility();
     document.addEventListener('visibilitychange', visibility);
     const off = onBreath((b) => e.breath(b));
     return () => {
       e.stop();
+      sun.stop();
+      sunEngine.current = null;
       off();
       document.removeEventListener('visibilitychange', visibility);
       engine.current = null;
@@ -139,11 +159,14 @@ export function SeatedFigure({ game }: { game: GameState }) {
   }, []);
 
   useEffect(() => {
+    noteDay(game.calendar.day);
+    if (sunEngine.current) sunEngine.current.fill = barFill(game.player.qi);
     engine.current?.setFrame(frameOf(game, useSeat.getState().attention, speed, reduced));
   }, [game, speed, reduced]);
 
   useEffect(() => {
     engine.current?.refreshPalette();
+    sunEngine.current?.refreshPalette();
   }, [settings]);
 
   // A scene called from another screen, or further down this one, brings the figure into view.
@@ -182,34 +205,44 @@ export function SeatedFigure({ game }: { game: GameState }) {
   };
 
   const box = `${FIGURE_BOX.x} ${FIGURE_BOX.y} ${FIGURE_BOX.w} ${FIGURE_BOX.h}`;
+  const hour = hourOfDay(game.calendar.day);
+  const branch = BRANCHES[hour]!;
+  const kind = HOUR_KINDS[effectiveWheel(c)[hour]!].name.toLowerCase();
   return (
-    <div
-      ref={boxRef}
-      className="seat-figure"
-      onPointerMove={(ev) => onPointer(ev)}
-      onPointerDown={(ev) => onPointer(ev, true)}
-      onPointerLeave={onLeave}
-      onPointerUp={(ev) => ev.pointerType !== 'mouse' && onLeave()}
-      onPointerCancel={onLeave}
-    >
-      <svg
-        className={`seated is-${state}`}
-        viewBox={box}
-        role="img"
-        aria-label={`${c.name} sits in seclusion; the dantian holds qi at ${formatPercent(fill)} of the bar.`}
+    <>
+      <canvas ref={sunRef} className="seat-sun" aria-hidden="true" />
+      <div
+        ref={boxRef}
+        className="seat-figure"
+        onPointerMove={(ev) => onPointer(ev)}
+        onPointerDown={(ev) => onPointer(ev, true)}
+        onPointerLeave={onLeave}
+        onPointerUp={(ev) => ev.pointerType !== 'mouse' && onLeave()}
+        onPointerCancel={onLeave}
       >
-        <defs>
-          <radialGradient id="dantian-aura">
-            <stop offset="0%" className="dantian-stop-mid" />
-            <stop offset="100%" className="dantian-stop-edge" />
-          </radialGradient>
-        </defs>
-        <circle className="seated-aura" cx={0} cy={9} r={38 + 14 * level} />
-        <circle className="seated-head" cx={FIGURE_HEAD.x} cy={FIGURE_HEAD.y} r={FIGURE_HEAD.r} />
-        <path className="seated-body" d={FIGURE_PATH} fillRule="evenodd" />
-      </svg>
-      <canvas ref={canvasRef} className="seat-canvas" aria-hidden="true" />
-    </div>
+        <svg
+          className={`seated is-${state}`}
+          viewBox={box}
+          role="img"
+          aria-label={`${c.name} sits in seclusion; the dantian holds qi at ${formatPercent(fill)} of the bar.`}
+        >
+          <defs>
+            <radialGradient id="dantian-aura">
+              <stop offset="0%" className="dantian-stop-mid" />
+              <stop offset="100%" className="dantian-stop-edge" />
+            </radialGradient>
+          </defs>
+          <circle className="seated-aura" cx={0} cy={9} r={38 + 14 * level} />
+          <circle className="seated-head" cx={FIGURE_HEAD.x} cy={FIGURE_HEAD.y} r={FIGURE_HEAD.r} />
+          <path className="seated-body" d={FIGURE_PATH} fillRule="evenodd" />
+        </svg>
+        <canvas ref={canvasRef} className="seat-canvas" aria-hidden="true" />
+      </div>
+      <p className="caption seat-hour">
+        <span className="hanzi">{branch.hanzi}</span>{' '}
+        {branch.time[0]!.toUpperCase() + branch.time.slice(1)}, the hour of {branch.name} · {kind}
+      </p>
+    </>
   );
 }
 

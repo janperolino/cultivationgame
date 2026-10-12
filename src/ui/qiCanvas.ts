@@ -7,7 +7,9 @@
 // Under reduced motion the orbs pulse in place and the loop glows steadily. The loop stops while
 // the tab is hidden, and particles are capped. During a breakthrough scene (ui/scene.ts) the
 // circulation races, the gates glow on the first loop and a bright spark runs them; under reduced
-// motion the spark stays away and each gate lights in turn. Drawing only: every rule lives in core.
+// motion the spark stays away and each gate lights in turn. The sun (ui/sunCanvas.ts) puts a soft
+// blurred rim on the figure's lit side, so the body agrees with its shadow. Drawing only: every
+// rule lives in core.
 import { DANTIAN, INHALE_SHARE, ORB_EDGE, type QiTint } from '../content/attention.ts';
 import { ENTRY_POINTS, type Circulation } from '../content/circulation.ts';
 import { SCENE_GATES_PER_LAP, SCENE_GATES } from '../content/scene.ts';
@@ -20,6 +22,7 @@ import {
   type Breath,
 } from '../core/attention.ts';
 import { GATE_TIMES, gateLap, sceneLaps } from '../core/scene.ts';
+import type { Sun } from '../core/sun.ts';
 import { sceneTime, type ScenePlay } from './scene.ts';
 
 /** The figure's box in its own units: x from −96, y from −92, 192 by 156. */
@@ -39,6 +42,12 @@ export const FIGURE_PATH =
 export const FIGURE_HEAD = { x: 0, y: -41, r: 10.5 } as const;
 
 type Point = readonly [number, number];
+
+/** The sun on the figure now, and the color of its light. */
+export interface SunLight {
+  sun: Sun;
+  color: string;
+}
 
 export type FigureState = 'settled' | 'dormant' | 'unsettled' | 'full';
 
@@ -195,6 +204,8 @@ export class QiCanvas {
     private clock: (a: Attention) => number,
     /** The breakthrough scene, while one plays or shows its outcome. */
     private scene: () => ScenePlay | null = () => null,
+    /** The sun, for the rim on the figure's lit side. */
+    private sun: () => SunLight | null = () => null,
   ) {
     this.ctx = canvas.getContext('2d')!;
     this.attention = attention;
@@ -357,6 +368,9 @@ export class QiCanvas {
     const play = this.scene();
     const st = play && !play.outcome ? sceneTime(play) : null;
 
+    const light = this.sun();
+    if (light && light.sun.light > 0) this.drawRim(light, s * dpr);
+
     // The circulation itself, faint, reddening with heat, and kept inside the silhouette.
     if (f.state !== 'dormant') {
       ctx.save();
@@ -473,6 +487,29 @@ export class QiCanvas {
       ctx.globalAlpha = 1;
     }
     this.pulse = Math.max(0, this.pulse - dt * 0.6);
+  }
+
+  /**
+   * The lit side of the figure: a faint light across the whole body from the sun's direction,
+   * with a constant span and blurred, so near noon it comes from above rather than collapsing to a
+   * hard line down the middle, and it never reads as a bar half filled.
+   */
+  private drawRim({ sun, color }: SunLight, px: number): void {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.clip(this.body());
+    const len = Math.hypot(sun.dx, sun.dy) || 1;
+    const lx = (sun.dx / len) * 55;
+    const ly = (-sun.dy / len) * 55;
+    const g = ctx.createLinearGradient(lx, ly, -lx, -ly);
+    g.addColorStop(0, color);
+    g.addColorStop(0.7, 'rgba(0,0,0,0)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = (0.1 + 0.08 * sun.elevation) * sun.light;
+    ctx.fillStyle = g;
+    ctx.filter = `blur(${(10 * px) / 2.1}px)`;
+    ctx.fillRect(FIGURE_BOX.x, FIGURE_BOX.y, FIGURE_BOX.w, FIGURE_BOX.h);
+    ctx.restore();
   }
 
   /**

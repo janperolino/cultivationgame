@@ -14,21 +14,37 @@ export interface Branch {
   element: PhaseElement;
   /** The clock hours it covers, "23–1". */
   clock: string;
+  /** The time of day in words, for the seat's caption. */
+  time: string;
 }
 
 export const BRANCHES: readonly Branch[] = [
-  { id: 'zi', name: 'Zi', hanzi: '子', element: 'water', clock: '23–1' },
-  { id: 'chou', name: 'Chou', hanzi: '丑', element: 'earth', clock: '1–3' },
-  { id: 'yin', name: 'Yin', hanzi: '寅', element: 'wood', clock: '3–5' },
-  { id: 'mao', name: 'Mao', hanzi: '卯', element: 'wood', clock: '5–7' },
-  { id: 'chen', name: 'Chen', hanzi: '辰', element: 'earth', clock: '7–9' },
-  { id: 'si', name: 'Si', hanzi: '巳', element: 'fire', clock: '9–11' },
-  { id: 'wu', name: 'Wu', hanzi: '午', element: 'fire', clock: '11–13' },
-  { id: 'wei', name: 'Wei', hanzi: '未', element: 'earth', clock: '13–15' },
-  { id: 'shen', name: 'Shen', hanzi: '申', element: 'metal', clock: '15–17' },
-  { id: 'you', name: 'You', hanzi: '酉', element: 'metal', clock: '17–19' },
-  { id: 'xu', name: 'Xu', hanzi: '戌', element: 'earth', clock: '19–21' },
-  { id: 'hai', name: 'Hai', hanzi: '亥', element: 'water', clock: '21–23' },
+  { id: 'zi', name: 'Zi', hanzi: '子', element: 'water', clock: '23–1', time: 'midnight' },
+  {
+    id: 'chou',
+    name: 'Chou',
+    hanzi: '丑',
+    element: 'earth',
+    clock: '1–3',
+    time: 'the small hours',
+  },
+  { id: 'yin', name: 'Yin', hanzi: '寅', element: 'wood', clock: '3–5', time: 'before dawn' },
+  { id: 'mao', name: 'Mao', hanzi: '卯', element: 'wood', clock: '5–7', time: 'dawn' },
+  { id: 'chen', name: 'Chen', hanzi: '辰', element: 'earth', clock: '7–9', time: 'morning' },
+  { id: 'si', name: 'Si', hanzi: '巳', element: 'fire', clock: '9–11', time: 'late morning' },
+  { id: 'wu', name: 'Wu', hanzi: '午', element: 'fire', clock: '11–13', time: 'noon' },
+  { id: 'wei', name: 'Wei', hanzi: '未', element: 'earth', clock: '13–15', time: 'afternoon' },
+  {
+    id: 'shen',
+    name: 'Shen',
+    hanzi: '申',
+    element: 'metal',
+    clock: '15–17',
+    time: 'late afternoon',
+  },
+  { id: 'you', name: 'You', hanzi: '酉', element: 'metal', clock: '17–19', time: 'dusk' },
+  { id: 'xu', name: 'Xu', hanzi: '戌', element: 'earth', clock: '19–21', time: 'evening' },
+  { id: 'hai', name: 'Hai', hanzi: '亥', element: 'water', clock: '21–23', time: 'night' },
 ];
 
 /**
