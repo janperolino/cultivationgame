@@ -276,7 +276,7 @@ function Web({
                   return (
                     <g
                       key={n.id}
-                      className={`web-node${n.id === selected ? ' is-selected' : ''}`}
+                      className={`web-node tone-${tone(n.regard)}${n.id === selected ? ' is-selected' : ''}`}
                       role="button"
                       tabIndex={0}
                       aria-pressed={n.id === selected}
@@ -289,6 +289,9 @@ function Web({
                         }
                       }}
                     >
+                      {n.id === selected && (
+                        <circle className="web-halo" cx={n.x} cy={n.y} r={DISC_R + 5} />
+                      )}
                       <circle
                         className="web-disc"
                         cx={n.x}

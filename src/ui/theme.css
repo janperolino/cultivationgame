@@ -2419,10 +2419,19 @@ select {
   dominant-baseline: central;
 }
 
+/* A person on the web. The browser's focus box never shows; keyboard focus lights the disc in
+   the accent instead, and the chosen person glows in the color of their feeling. */
 .web-node {
+  --glow: var(--tone);
   cursor: pointer;
+  outline: none;
 }
 
+.web-node.tone-cold {
+  --glow: var(--text);
+}
+
+.web-node:focus,
 .web-node:focus-visible {
   outline: none;
 }
@@ -2442,7 +2451,32 @@ select {
 }
 
 .web-node.is-selected .web-disc {
+  stroke: var(--glow);
   stroke-width: 2;
+  fill: color-mix(in srgb, var(--glow) 18%, var(--obsidian));
+  filter: drop-shadow(0 0 6px var(--glow));
+}
+
+.web-halo {
+  fill: none;
+  stroke: var(--glow);
+  stroke-width: 1.2;
+  opacity: 0.55;
+  filter: drop-shadow(0 0 5px var(--glow));
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: web-halo 3.2s ease-in-out infinite;
+}
+
+@keyframes web-halo {
+  50% {
+    opacity: 0.25;
+    transform: scale(1.12);
+  }
+}
+
+:root[data-motion='reduced'] .web-halo {
+  animation: none;
 }
 
 .web-seal {
