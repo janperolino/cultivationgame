@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BAR_CAP, UNSETTLED_DAYS } from '../content/cultivation.ts';
+import { BAR_CAP, ladderGateItem, UNSETTLED_DAYS } from '../content/cultivation.ts';
 import { method } from '../content/methods.ts';
 import { realmScale, stepSize } from '../content/realms.ts';
 import {
@@ -252,7 +252,7 @@ describe('major breakthroughs', () => {
     expect(win.state.rewindCharges).toBe(1);
   });
 
-  it('let body run at most one realm ahead of qi', () => {
+  it('let body run at most one realm ahead of qi, with a gate item the world does not supply yet', () => {
     const c = { ...player(), insight: { current: 0, earned: 1e6 } };
     const bodyFE = filled(
       at(c, 'body', { realm: 'foundation-establishment', stage: 4 }),
@@ -261,7 +261,10 @@ describe('major breakthroughs', () => {
     );
     expect(majorCheck(bodyFE, 'body')).toMatchObject({ cap: false, ready: false });
     const bodyQC = filled(at(c, 'body', { stage: 9 }), 'body', 1);
-    expect(majorCheck(bodyQC, 'body')).toMatchObject({ cap: true, gate: true, ready: true });
+    // In M1 no body gate item exists, so the body stops at layer 9.
+    expect(majorCheck(bodyQC, 'body')).toMatchObject({ cap: true, gate: false, ready: false });
+    const gated = addItem(bodyQC, ladderGateItem('body', 'foundation-establishment'), 1);
+    expect(majorCheck(gated, 'body')).toMatchObject({ gate: true, ready: true });
   });
 });
 

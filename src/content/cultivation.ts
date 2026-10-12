@@ -46,6 +46,15 @@ export const MINOR_FAIL_LOSS = 0.2;
 export const UNSETTLED_DAYS = 5;
 /** From Foundation up, a failed minor breakthrough also leaves a light injury. */
 export const MINOR_INJURY_DAYS = 180;
+/**
+ * The gate item a major body or soul breakthrough uses up. Which items they are is settled with
+ * items and gear (D2); until then the world supplies none, so in M1 body and soul stop at layer 9
+ * (design § Character creation).
+ */
+export function ladderGateItem(which: 'body' | 'soul', realm: string): string {
+  return `${which}-gate-${realm}`;
+}
+
 /** A failed major breakthrough halves the bar and injures for a few in-game years. */
 export const MAJOR_FAIL_KEEP = 0.5;
 export const MAJOR_INJURY_DAYS = 3 * 360;

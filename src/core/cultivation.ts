@@ -17,6 +17,7 @@ import {
   INSIGHT_PER_STUDY_DAY,
   INSIGHT_TRICKLE,
   LADDERS,
+  ladderGateItem,
   LAST_CHANCE_ODDS,
   MAJOR_FAIL_KEEP,
   MAJOR_INJURY_DAYS,
@@ -465,8 +466,8 @@ export function majorCheck(c: Cultivator, which: LadderId): MajorCheck | null {
   if (step.kind !== 'major') return null;
   const target = realm(step.realm);
   const fill = barFill(l);
-  // Body and soul gate items are settled with items and gear (D2); until then they need none.
-  const gateItem = which === 'qi' ? target.gateItem : null;
+  // Body and soul gate items are settled with items and gear (D2); until then none exists.
+  const gateItem = which === 'qi' ? target.gateItem : ladderGateItem(which, target.id);
   const gate = !gateItem || itemCount(c, gateItem) > 0;
   const insight = c.insight.earned >= target.insightThreshold;
   const cap = which === 'qi' || realmIndex(target.id) <= realmIndex(c.qi.realm) + 1;
@@ -669,7 +670,7 @@ export function attemptBreakthrough(
     notes: [
       {
         kind: 'setback',
-        text: `The breakthrough to ${target.name} fails${check.gateItem ? ', the pill wasted,' : ''} and leaves ${name.toLowerCase()} injured for years.`,
+        text: `The breakthrough to ${target.name} fails${check.gateItem ? `, the ${which === 'qi' ? 'pill' : 'gate item'} wasted,` : ''} and leaves ${name.toLowerCase()} injured for years.`,
       },
     ],
   };

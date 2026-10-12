@@ -307,7 +307,11 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
   } else {
     const check = majorCheck(game.player, which)!;
     const target = check.target;
-    const gateName = check.gateItem ? (ITEM_NAMES[check.gateItem] ?? check.gateItem) : null;
+    const gateName = !check.gateItem
+      ? null
+      : which === 'qi'
+        ? (ITEM_NAMES[check.gateItem] ?? check.gateItem)
+        : `A ${which} gate item`;
     const grade = GRADES.find((g) => g.id === check.grade)!;
     body = (
       <>
@@ -320,6 +324,12 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
           {gateName && (
             <Requirement met={check.gate}>
               {gateName} ({itemCount(game.player, check.gateItem!)} held)
+              {which !== 'qi' && (
+                <Why label={`About the ${which} gate item`}>
+                  Every major {which} breakthrough needs something from the world. None is found
+                  yet, so the {which} stops at layer 9 for now.
+                </Why>
+              )}
             </Requirement>
           )}
           {which !== 'qi' && (
@@ -327,9 +337,11 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
           )}
         </ul>
         <p className="caption spaced">
-          As things stand: a {grade.name.toLowerCase()} breakthrough
+          As things stand: {grade.id === 'ordinary' ? 'an' : 'a'} {grade.name.toLowerCase()}{' '}
+          breakthrough
           <Why label="How the grade is worked out">
-            A {grade.name.toLowerCase()} breakthrough is worth {grade.stages >= 0 ? '+' : ''}
+            {grade.id === 'ordinary' ? 'An' : 'A'} {grade.name.toLowerCase()} breakthrough is worth{' '}
+            {grade.stages >= 0 ? '+' : ''}
             {grade.stages} stages in a fight. Qi past full, insight past the threshold, and the
             other two ladders at {target.name} each raise the grade
             {check.methodMargin > 0 && `, and your method adds ${check.methodMargin}`}. Only a gold
