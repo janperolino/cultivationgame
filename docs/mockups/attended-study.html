@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attended seclusion study</title>
+<style>
+  :root { --void: #040507; --text: #e9e5da; --muted: #9a968c; --accent: #d6ab4c; --crack: #7fc7d9; --warn: #e08a6a; }
+  body { margin: 0; background: var(--void); color: var(--text); font: 14px/1.6 system-ui, sans-serif; padding: 24px 16px; }
+  h1 { font-weight: 500; font-size: 20px; margin: 0 0 4px; }
+  p { color: var(--muted); max-width: 640px; margin: 0 0 14px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+  select, input { font: inherit; }
+  .stage { border: 0.5px solid rgba(127,199,217,.25); border-radius: 12px; padding: 14px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; max-width: 640px; }
+  canvas { width: 360px; max-width: 100%; height: 320px; touch-action: none; cursor: crosshair; display: block; margin: 0 auto; }
+  .side { flex: 1 1 200px; min-width: 0; font-size: 13px; }
+  .big { font-size: 26px; font-weight: 500; color: var(--crack); }
+  .meter { height: 6px; border-radius: 3px; background: rgba(233,229,218,.08); margin: 6px 0 2px; overflow: hidden; }
+  .meter div { height: 100%; width: 0; background: var(--crack); border-radius: 3px; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .node { margin-top: 10px; color: var(--accent); font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>Attended seclusion</h1>
+<p>The Abode's figure drawing qi in. Hover a bright orb to draw it in, or drag a finger through it. The dropdowns switch the state, the hour and the circulation pattern; the slider adds the Breath nodes. Planning study of 2026-10-12; design.md § Cultivation, Attended seclusion, is the rule.</p>
+<div class="controls">
+<label>State <select id="st"><option value="settled">Settled</option><option value="full">Bar full</option><option value="unsettled">Unsettled</option><option value="dormant">No method</option></select></label>
+<label>Hour <select id="hr"><option value="water">子 water</option><option value="wood">寅 wood</option><option value="dawn">卯 dawn purple</option><option value="fire">午 fire</option><option value="metal">申 metal</option><option value="earth">辰 earth</option></select></label>
+<label>Circulation <select id="pt"><option value="orbit">Small orbit</option><option value="mer">Meridians</option></select></label>
+<label>Breath nodes <input type="range" id="nd" min="0" max="3" step="1" value="0" style="width:90px"> <span id="ndo">0</span></label>
+</div>
+<div class="stage">
+<canvas id="cv"></canvas>
+<div class="side">
+<div class="muted">Qi speed</div>
+<div id="spd" class="big">×1.00</div>
+<div class="meter"><div id="fb"></div></div>
+<div id="fc" class="muted">Focus 0% of a +25% ceiling</div>
+<div id="msg" class="muted" style="margin-top:12px;color:#c9c4b8">Hover a bright orb to draw it in. On a phone, drag a finger through it.</div>
+<div id="nodeTxt" class="node"></div>
+<div class="muted" style="margin-top:10px">Orbs drawn in: <span id="cnt" style="color:#e9e5da">0</span></div>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const W=360,H=320,S=2.3,CX=180,CY=168,dpr=window.devicePixelRatio||1;
+cv.width=W*dpr;cv.height=H*dpr;
+const BODY=new Path2D('M0 -31 L-5 -31 C-7 -27 -13 -26 -19 -24 C-26 -21 -28 -14 -28 -6 C-28 2 -30 9 -33 15 C-37 20 -44 22 -49 26 C-54 30 -53 37 -46 39 C-32 43 -14 42 0 42 C14 42 32 43 46 39 C53 37 54 30 49 26 C44 22 37 20 33 15 C30 9 28 2 28 -6 C28 -14 26 -21 19 -24 C13 -26 7 -27 5 -31 Z M-20 -13 C-18 -5 -17 2 -14 8 C-18 6 -21 -3 -20 -13 Z M20 -13 C18 -5 17 2 14 8 C18 6 21 -3 20 -13 Z');
+const COL={water:'#7fc7d9',wood:'#86d19a',dawn:'#ab9cf0',fire:'#ee9670',metal:'#e4e7ee',earth:'#dcb359'};
+const WARN='#e08a6a';
+const NODES=[{r:16,dec:7,cap:.25,t:''},{r:26,dec:7,cap:.25,t:'Grasping Breath: catch orbs from further away.'},{r:26,dec:12,cap:.25,t:'Grasping Breath, plus Lingering Breath: focus fades slower.'},{r:28,dec:12,cap:.5,t:'Grasping and Lingering Breath, plus Whale Swallows the Sea: the ceiling rises to +50%.'}];
+function cr(pts,n){const o=[],L=pts.length;for(let i=0;i<L;i++){const p0=pts[(i-1+L)%L],p1=pts[i],p2=pts[(i+1)%L],p3=pts[(i+2)%L];for(let k=0;k<n;k++){const t=k/n,t2=t*t,t3=t2*t;o.push([.5*((2*p1[0])+(-p0[0]+p2[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)])}}return o}
+const PATHS={orbit:[cr([[0,9],[-5,27],[-14,12],[-13,-12],[-7,-33],[0,-50],[7,-33],[13,-12],[14,12],[5,27]],22)],
+mer:[cr([[0,9],[-3,-12],[-1,-32],[0,-50],[1,-32],[3,-12]],22),cr([[0,9],[-9,-8],[-17,-22],[-24,-14],[-26,2],[-21,15],[-11,14]],22),cr([[0,9],[9,-8],[17,-22],[24,-14],[26,2],[21,15],[11,14]],22)]};
+const ENTRY=[[0,-52],[-16,16],[16,16]];
+const FILL={settled:.6,full:1.25,unsettled:.5,dormant:.08};
+let st='settled',hr='water',pt='orbit',nd=0,focus=0,cnt=0,pulse=0;
+let motes=[],orbs=[],sparks=[],pops=[],ptr=null,lastOrb=0,acc=0,last=performance.now();
+const $=id=>document.getElementById(id);
+$('st').onchange=e=>{st=e.target.value;sparks=[]};$('hr').onchange=e=>hr=e.target.value;$('pt').onchange=e=>{pt=e.target.value;sparks=[]};
+$('nd').oninput=e=>{nd=+e.target.value;$('ndo').textContent=nd;$('nodeTxt').textContent=NODES[nd].t};
+function toFig(e){const r=cv.getBoundingClientRect();return[((e.clientX-r.left)*W/r.width-CX)/S,((e.clientY-r.top)*H/r.height-CY)/S]}
+cv.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'||e.buttons)ptr=toFig(e)});
+cv.addEventListener('pointerdown',e=>ptr=toFig(e));
+cv.addEventListener('pointerleave',()=>ptr=null);cv.addEventListener('pointerup',e=>{if(e.pointerType!=='mouse')ptr=null});
+function edge(){const a=Math.random()*Math.PI*2;return[Math.cos(a)*85,Math.sin(a)*78-6]}
+function nearestEntry(x,y){let b=ENTRY[0],d=1e9;for(const p of ENTRY){const q=(p[0]-x)**2+(p[1]-y)**2;if(q<d){d=q;b=p}}return b}
+function toSpark(x,y,c,big){const ps=PATHS[pt];let bi=0,bj=0,bd=1e9;ps.forEach((p,i)=>p.forEach((q,j)=>{const d=(q[0]-x)**2+(q[1]-y)**2;if(d<bd){bd=d;bi=i;bj=j}}));sparks.push({p:bi,i:bj,go:0,len:ps[bi].length,c,big,leak:st==='unsettled'&&Math.random()<.35})}
+function glow(x,y,r,c,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,c);g.addColorStop(1,'rgba(0,0,0,0)');ctx.globalAlpha=a;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.globalAlpha=1}
+function step(now){const dt=Math.min(.05,(now-last)/1000);last=now;const N=NODES[nd],c=COL[hr],fill=FILL[st],lv=Math.min(1,fill),over=Math.max(0,fill-1)/.5;
+const rate=st==='dormant'?4:st==='full'?9:6;acc+=dt*rate*(1+focus*N.cap*2);while(acc>1){acc--;const[x,y]=edge();motes.push({x,y,t:0,c})}
+if(now-lastOrb>2600&&orbs.length<4){lastOrb=now;const[x,y]=edge();orbs.push({x:x*.85,y:y*.85,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6,age:0,caught:false,c})}
+ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.setTransform(dpr*S,0,0,dpr*S,dpr*CX,dpr*CY);
+ctx.globalCompositeOperation='lighter';glow(0,9,38+14*lv,'#7fc7d9',.14+.12*over);ctx.globalCompositeOperation='source-over';
+ctx.beginPath();ctx.arc(0,-41,10.5,0,7);ctx.fillStyle='#14161a';ctx.fill();ctx.strokeStyle='rgba(127,199,217,.3)';ctx.lineWidth=.7;ctx.stroke();
+ctx.fillStyle='#14161a';ctx.fill(BODY,'evenodd');ctx.stroke(BODY);
+if(st!=='dormant'){const fl=st==='unsettled'?(.5+.5*Math.random()):1;for(const p of PATHS[pt]){ctx.beginPath();p.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.strokeStyle=st==='unsettled'?WARN:'#7fc7d9';ctx.globalAlpha=(.08+.14*lv+.1*focus)*fl;ctx.lineWidth=1.1;ctx.stroke();ctx.globalAlpha=1}}
+ctx.globalCompositeOperation='lighter';
+motes=motes.filter(m=>{m.t+=dt;const tg=nearestEntry(m.x,m.y),dx=tg[0]-m.x,dy=tg[1]-m.y,d=Math.hypot(dx,dy);
+if(st==='dormant'){const r=Math.hypot(m.x,m.y+5);if(r<48){m.vx=(m.vx||0)+m.x/r*30*dt;m.vy=(m.vy||0)+(m.y+5)/r*30*dt}else{m.vx=(m.vx||0)-m.x/r*6*dt;m.vy=(m.vy||0)-(m.y+5)/r*6*dt}m.x+=m.vx*dt*4;m.y+=m.vy*dt*4;glow(m.x,m.y,2.2,m.c,.5*Math.max(0,1-m.t/6));return m.t<6}
+const sp=(14+40*Math.min(1,m.t/3))*(st==='full'?1.4:1);const sw=Math.sin(m.t*3+m.x)*.6;m.x+=(dx/d*sp+(-dy/d)*sw*8)*dt;m.y+=(dy/d*sp+(dx/d)*sw*8)*dt;glow(m.x,m.y,2.2,m.c,Math.min(.6,m.t));
+if(d<3){toSpark(m.x,m.y,m.c,false);return false}return true});
+orbs=orbs.filter(o=>{o.age+=dt;if(!o.caught){o.x+=o.vx*dt;o.y+=o.vy*dt+Math.sin(o.age*1.3)*.08;if(ptr&&Math.hypot(ptr[0]-o.x,ptr[1]-o.y)<N.r/S*2.3){o.caught=true;if(st==='dormant'){for(let k=0;k<10;k++)pops.push({x:o.x,y:o.y,vx:(Math.random()-.5)*60,vy:(Math.random()-.5)*60,t:0,c:o.c});$('msg').textContent='No method: the qi scatters before it can settle.';return false}}
+const a=Math.min(1,o.age)*Math.max(0,Math.min(1,(10-o.age)/2));const pr=1+.25*Math.sin(o.age*4);glow(o.x,o.y,11*pr,o.c,.35*a);glow(o.x,o.y,4,'#ffffff',.7*a);glow(o.x,o.y,5,o.c,.9*a);return o.age<10}
+const tg=nearestEntry(o.x,o.y),dx=tg[0]-o.x,dy=tg[1]-o.y,d=Math.hypot(dx,dy);o.x+=dx/d*150*dt;o.y+=dy/d*150*dt;glow(o.x,o.y,9,o.c,.5);glow(o.x,o.y,3.5,'#ffffff',.8);
+if(d<4){toSpark(o.x,o.y,o.c,true);focus=Math.min(1,focus+.16);cnt++;$('cnt').textContent=cnt;for(let k=0;k<6;k++)pops.push({x:o.x,y:o.y,vx:(Math.random()-.5)*40,vy:(Math.random()-.5)*40,t:0,c:o.c});return false}return true});
+const ps=PATHS[pt];sparks=sparks.filter(s=>{const v=(st==='full'?90:50)*(1+focus*.6)*dt*(s.big?1.3:1);s.i=(s.i+v)%s.len;s.go+=v;const q=ps[s.p][Math.floor(s.i)];let x=q[0],y=q[1];if(st==='unsettled'){x+=(Math.random()-.5)*2.4;y+=(Math.random()-.5)*2.4}
+if(s.leak&&s.go>s.len*.4){for(let k=0;k<4;k++)pops.push({x,y,vx:(Math.random()-.5)*50,vy:(Math.random()-.5)*50,t:0,c:WARN});return false}
+glow(x,y,s.big?7:4,s.c,s.big?.9:.6);glow(x,y,1.6,'#ffffff',.6);if(s.go>=s.len){pulse=Math.min(1,pulse+(s.big?.5:.12));return false}return true});
+pops=pops.filter(p=>{p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;glow(p.x,p.y,2,p.c,.7*(1-p.t/.8));return p.t<.8});
+const br=1+.12*Math.sin(now/1000*Math.PI*2/(st==='full'?2.4:4.8));const core=2.4+1.8*lv+.8*over+1.5*pulse,halo=(9+10*lv+6*over+5*pulse)*br;
+const da=st==='dormant'?.25:st==='unsettled'?.45:1;if(st!=='dormant')glow(0,9,halo,st==='unsettled'?WARN:'#7fc7d9',.75*da);glow(0,9,core*1.6,'#d8f2f8',.9*da);
+if(st==='full'&&Math.random()<dt*6)pops.push({x:0,y:9,vx:(Math.random()-.5)*50,vy:-20-Math.random()*40,t:0,c:'#7fc7d9'});
+ctx.globalCompositeOperation='source-over';
+if(ptr){ctx.beginPath();ctx.arc(ptr[0],ptr[1],N.r/S*2.3,0,7);ctx.strokeStyle='rgba(214,171,76,.35)';ctx.lineWidth=.5;ctx.stroke()}
+pulse=Math.max(0,pulse-dt*.6);focus=Math.max(0,focus-dt/N.dec);
+const mult=st==='dormant'?0:1+focus*N.cap;$('spd').textContent=st==='dormant'?'none':'×'+mult.toFixed(2);$('fb').style.width=Math.round(focus*100)+'%';
+$('fc').textContent='Focus '+Math.round(focus*100)+'% of a +'+Math.round(N.cap*100)+'% ceiling';requestAnimationFrame(step)}
+requestAnimationFrame(step);
+</script>
+</body>
+</html>
