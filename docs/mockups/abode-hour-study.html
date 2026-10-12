@@ -281,8 +281,9 @@ function drawFigure(s) {
   // The lit side of the figure: a faint rim on the side the sun is, so the body agrees with the shadow.
   if (s.up && $('wash').checked) {
     ctx.save(); ctx.clip(figure, 'evenodd');
-    const g = ctx.createLinearGradient(s.dx * 40, 0, -s.dx * 20, 0); g.addColorStop(0, sunColor(s)); g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.globalAlpha = 0.10 + 0.08 * s.elev; ctx.fillStyle = g; ctx.fillRect(-60, -60, 120, 120); ctx.restore();
+    // Spread across the whole body and blurred, so it never reads as a bar half filled.
+    const g = ctx.createLinearGradient(s.dx * 50, -10, -s.dx * 50, 10); g.addColorStop(0, sunColor(s)); g.addColorStop(0.55, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = 0.10 + 0.08 * s.elev; ctx.fillStyle = g; ctx.filter = 'blur(7px)'; ctx.fillRect(-80, -80, 160, 160); ctx.restore();
   }
   ctx.restore();
 }
