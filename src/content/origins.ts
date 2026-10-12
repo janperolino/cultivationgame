@@ -42,7 +42,7 @@ export interface Origin {
   childhood: string;
   /** Testing day, up to the choice. */
   testing: string;
-  /** The named people the cards speak of, by slot. */
+  /** The people the cards speak of, by slot: a person's id (content/people.ts), or a phrase for someone unnamed. */
   people: Readonly<Record<string, string>>;
   along: OriginPath;
   refuse: OriginPath;
@@ -59,7 +59,7 @@ export const ORIGINS: readonly Origin[] = [
       "You were found at the bottom of a sinkhole in the Kingdom of Stone Eyes, wrapped in a smuggler's oilcloth, and the cave clans raised you the way they raise everything that falls in: Aunt Yan fed you bat-guano rice and taught you which caves breathe and which ones swallow. You learned to walk on terraces, to keep a lamp alive in a draught, and never to ask which neighbors have scales under their sleeves.",
     testing:
       'This year the imperial tester comes down to the sinkholes himself, with a garrison escort and a grey stone that lights for rooted children. The clans have hidden their rooted ones in the lower caves for a generation. Aunt Yan pulls you toward the dark. But the stone has already seen you across the terrace, and it is glowing.',
-    people: { aunt: 'Aunt Yan', sergeant: 'Sergeant Hou', tester: 'Tester Qiu' },
+    people: { aunt: 'aunt-yan', sergeant: 'sergeant-hou', tester: 'tester-qiu' },
     along: {
       name: 'a garrison school cadet',
       label: 'Walk to the stone',
@@ -95,7 +95,7 @@ export const ORIGINS: readonly Origin[] = [
       'Your mother held a watchtower on the March of Pacified Borders until the year the raids tripled, and your father went to the wall at sixteen like every son of the march and came back in a box with a beast core on the lid. You grew up reading tracks before letters, plowing with a spear across the furrow, and telling a raid horn from a hunt horn in your sleep.',
     testing:
       "The Gongsun garrison's frontier tester comes at twelve now, under the march's charter, and every rooted child goes to the cadet school instead of the capital. Sergeant Lei waits by the stone with a list. You put your hand on it, and it lights.",
-    people: { sergeant: 'Sergeant Lei', fixer: 'Old Sha', tester: 'the frontier tester' },
+    people: { sergeant: 'sergeant-lei', fixer: 'old-sha', tester: 'the frontier tester' },
     along: {
       name: 'a garrison cadet',
       label: 'Take the cadet oath',
@@ -131,7 +131,7 @@ export const ORIGINS: readonly Origin[] = [
       'A beast raid took your family at the reef road below the City of the Guarded Mouth when you were six, and you grew up in its alleys: carrying for the market stalls, sleeping under the bounty office stairs, and watching cultivators come back from across the strait with cores the size of fists. You know the city by its smells and its walls by their skulls.',
     testing:
       "The Beast-Butcher Gate's recruiter tests orphans who lost family to beasts, and he lines you up with the others outside the bounty office. The stone lights under your hand. He smiles like a man pricing a hide.",
-    people: { senior: 'Senior Brother Zhao', clerk: 'Clerk Fan', recruiter: 'the recruiter' },
+    people: { senior: 'senior-zhao', clerk: 'clerk-fan', recruiter: 'the recruiter' },
     along: {
       name: 'an outer disciple',
       label: 'Swear to the Gate',

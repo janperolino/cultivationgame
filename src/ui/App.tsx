@@ -5,6 +5,7 @@ import { ChronicleScreen } from './ChronicleScreen.tsx';
 import { CreationScreen } from './CreationScreen.tsx';
 import { DevConsole } from './dev/DevConsole.tsx';
 import { CultivateScreen } from './CultivateScreen.tsx';
+import { PeopleScreen } from './PeopleScreen.tsx';
 import { GlassBackground } from './GlassBackground.tsx';
 import { SettingsScreen } from './SettingsScreen.tsx';
 import { TechniquesScreen } from './TechniquesScreen.tsx';
@@ -173,6 +174,7 @@ export function App() {
           {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
           {phase !== 'loading' && current.id === 'techniques' && <TechniquesScreen />}
           {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
+          {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}
           {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}
           {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
         </main>

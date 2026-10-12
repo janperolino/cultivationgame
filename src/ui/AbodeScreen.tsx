@@ -1,85 +1,38 @@
 import { HOUR_KIND_IDS, HOUR_KINDS } from '../content/hours.ts';
 import { realm } from '../content/realms.ts';
-import { defaultedSince } from '../core/cards.ts';
-import { eventText } from '../core/chronicle.ts';
+import { comingBackStory } from '../core/comingBack.ts';
 import { dayRates, ladderOpen, majorCheck } from '../core/cultivation.ts';
 import { CardFeed } from './CardFeed.tsx';
 import { effectiveWheel } from '../core/wheel.ts';
 import { WheelStrip } from './DayWheel.tsx';
-import { formatDays, formatDuration, formatLadder, formatNumber } from './format.ts';
+import { formatDuration, formatLadder, formatNumber } from './format.ts';
 import { SeatedFigure } from './SeatedFigure.tsx';
 import { useGame, type AwaySummary } from './store.ts';
 import { AgeBar, LadderBar, LifeEdgeCard } from './widgets.tsx';
 
 function AwayCard({ away }: { away: AwaySummary }) {
   const dismissAway = useGame((s) => s.dismissAway);
-  const { before, state } = away;
-  const breakthroughs = state.glass.flares - before.glass.flares;
-  const insight = state.player.insight.earned - before.player.insight.earned;
-  const stones = before.player.stones - state.player.stones;
-  const ready = majorCheck(state.player, 'qi');
-  const lines: string[] = [];
-  if (
-    state.player.qi.stage !== before.player.qi.stage ||
-    state.player.qi.realm !== before.player.qi.realm
-  ) {
-    lines.push(`Qi rose to ${formatLadder(state.player.qi)}.`);
-  }
-  for (const which of ['body', 'soul'] as const) {
-    if (state.player[which].stage !== before.player[which].stage) {
-      lines.push(
-        `${which === 'body' ? 'Body' : 'Soul'} rose to ${formatLadder(state.player[which])}.`,
-      );
-    }
-  }
-  if (breakthroughs > 0) {
-    lines.push(
-      `${breakthroughs} minor ${breakthroughs === 1 ? 'breakthrough' : 'breakthroughs'} on ${state.player.plan.auto} odds.`,
-    );
-  }
-  if (insight >= 1) lines.push(`Insight +${formatNumber(insight)}.`);
-  if (stones >= 1) lines.push(`${formatNumber(stones)} spirit stones burned as fuel.`);
-  const defaulted = defaultedSince(state, before.calendar.day);
-  const waiting = state.cards.pending.length;
-  if (ready?.bar) {
-    lines.push(
-      ready.ready
-        ? `You are ready to break through to ${ready.target.name}.`
-        : `Your qi is full; ${ready.target.name} still waits on its requirements.`,
-    );
-  }
-
+  const story = comingBackStory(away.before, away.state);
   return (
-    <section className="panel card-away">
+    <section className="panel card-away story-away">
       <h2 className="panel-heading">While you were in seclusion</h2>
-      <p>
-        {formatDuration(away.countedMs)} away
-        {away.awayMs > away.countedMs &&
-          ` (of ${formatDuration(away.awayMs)}; offline time counts up to 12 hours)`}
-        : {formatDays(away.days)} passed.
+      <p className="away-opening">
+        {story.opening}{' '}
+        <span className="caption">
+          {formatDuration(away.countedMs)} away
+          {away.awayMs > away.countedMs &&
+            ` of ${formatDuration(away.awayMs)}; offline time counts up to 12 hours`}
+          .
+        </span>
       </p>
-      {lines.length > 0 && (
-        <ul>
-          {lines.map((l) => (
-            <li key={l}>{l}</li>
-          ))}
-        </ul>
-      )}
-      {defaulted.length > 0 && (
-        <>
-          <p className="spaced">Settled without you:</p>
-          <ul>
-            {defaulted.map((e, i) => (
-              <li key={i}>{eventText(state, e)}</li>
-            ))}
-          </ul>
-        </>
-      )}
-      {waiting > 0 && (
-        <p className="spaced">
-          {waiting === 1 ? 'A card waits' : `${waiting} cards wait`} for you below.
-        </p>
-      )}
+      {story.growth.length > 0 && <p>{story.growth.join(' ')}</p>}
+      {story.sections.map((x) => (
+        <div key={x.heading} className="away-section">
+          <h3>{x.heading}</h3>
+          <p>{x.lines.join(' ')}</p>
+        </div>
+      ))}
+      {story.waiting && <p className="spaced">{story.waiting}</p>}
       {away.atEdge && <p className="warn">You woke at the edge of your lifespan.</p>}
       <div className="actions">
         <button type="button" className="button" onClick={dismissAway}>

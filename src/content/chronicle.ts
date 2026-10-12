@@ -42,9 +42,12 @@ export function pronounWords(pronouns: string): { they: string; them: string; th
   return PRONOUN_SETS[a] ?? { they: a, them: b || a, their: 'their' };
 }
 
-/** Fills {slot} markers from the actor: {name}, {they}, {them}, {their}, then the story slots. */
+/**
+ * Fills {slot} markers from the actor: {name}, {they}, {them}, {their}, then the story slots,
+ * which include a card's variables as {var.id}.
+ */
 export function fillSlots(text: string, who: Who): string {
-  return text.replace(/\{(\w+)\}/g, (whole, key: string) => {
+  return text.replace(/\{([\w.]+)\}/g, (whole, key: string) => {
     if (key === 'name') return who.name;
     if (key === 'they' || key === 'them' || key === 'their') return who[key];
     return who.slots[key] ?? whole;
@@ -54,11 +57,10 @@ export function fillSlots(text: string, who: Who): string {
 const LADDER_NAMES: Record<LadderId, string> = { qi: 'qi', body: 'body', soul: 'soul' };
 const FUEL: Record<LadderId, string> = { qi: 'qi', body: 'tempering', soul: 'nourishment' };
 
-/** "layer 4", "middle Foundation Establishment" or "Foundation Establishment". */
+/** "the fourth layer", "middle Foundation Establishment" or "Foundation Establishment". */
 export function stepLabel(id: RealmId, stage: number): string {
-  return stage === 1 && id !== 'qi-condensation'
-    ? realm(id).name
-    : `${stageName(id, stage)}${id === 'qi-condensation' ? '' : ` ${realm(id).name}`}`;
+  if (id === 'qi-condensation') return `the ${stageName(id, stage)}`;
+  return stage === 1 ? realm(id).name : `${stageName(id, stage)} ${realm(id).name}`;
 }
 
 /** The line each screen writes when it opens. */
@@ -126,10 +128,19 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
     const r = s(d.realm) as RealmId;
     return `${w.name} dies at ${n(d.age)}, at ${stepLabel(r, n(d.stage))}${r === 'qi-condensation' ? ' of Qi Condensation' : ''}.`;
   },
+  // One line for the path a card took: the last step's outcome, with the card's variables.
   card: (d, w) => {
-    const choice = card(s(d.card)).choices[n(d.choice)]!;
+    const k = card(s(d.card));
+    const step = d.step ? k.steps?.[s(d.step)] : undefined;
+    const choice = (step ?? k).choices[n(d.choice)]!;
     const outcome = d.pass === false && choice.fail ? choice.fail : choice.pass;
-    return fillSlots(outcome.chronicle, w) + (d.byDefault ? ' (It was settled without you.)' : '');
+    const vars = Object.fromEntries(
+      Object.entries(d)
+        .filter(([key]) => key.startsWith('var.'))
+        .map(([key, v]) => [key, String(v)]),
+    );
+    const line = fillSlots(outcome.chronicle ?? '', { ...w, slots: { ...w.slots, ...vars } });
+    return line + (d.byDefault ? ' (It was settled without you.)' : '');
   },
   'talent-wakes': (d, w) => fillSlots(talent(s(d.talent)).sleeps?.text ?? '', w),
   rewind: () => 'Time folds back.',

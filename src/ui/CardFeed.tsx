@@ -1,29 +1,65 @@
 // The card tray under the figure (design § Story cards and events; docs/mockups/obsidian-study.html):
-// a panel holding the waiting cards, one open at a time. A card rises in when it arrives, and its
-// rim walks faster while it waits; what a choice led to stays until you send it into the chronicle,
-// when it slides out. Resolved cards fall into the Chronicle.
+// waiting cards as a stack, the top one open and the rest fanned behind it with their titles
+// showing, so any of them can be lifted to the top. A new card rises onto the stack, and its rim
+// walks faster while it waits; what a choice led to stays until you send it on, when it slides
+// off the stack into the chronicle, or, on a card with further steps, turns to the next step.
+// Under reduced motion nothing moves.
 import { useState } from 'react';
 import { statInfo } from '../content/stats.ts';
-import { viewCard } from '../core/cards.ts';
+import { viewCard, type CardView } from '../core/cards.ts';
 import { useGame } from './store.ts';
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** How many cards show behind the top one; the rest are counted. */
+const FANNED = 3;
+
+function Choices({ open, onChose }: { open: CardView; onChose: (error: string | null) => void }) {
+  const { chooseCard } = useGame.getState();
+  return (
+    <div className="choices">
+      {open.choices.map((c) => (
+        <button
+          key={c.index}
+          type="button"
+          className="button choice"
+          disabled={!c.check.ok}
+          onClick={() => onChose(chooseCard(open.uid, c.index, open.title))}
+        >
+          <strong>{c.label}</strong>
+          {c.choice.cost?.stones ? (
+            <span className="caption">{c.choice.cost.stones} spirit stones</span>
+          ) : null}
+          {c.choice.check && (
+            <span className="caption">
+              {statInfo(c.choice.check.attribute).name} check, {c.choice.check.dc} or more on a d20
+            </span>
+          )}
+          {!c.check.ok && <span className="caption warn">{c.check.reason}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function CardFeed() {
   const game = useGame((s) => s.game);
   const outcome = useGame((s) => s.cardOutcome);
-  const { chooseCard, dismissCardOutcome } = useGame.getState();
-  const [openUid, setOpenUid] = useState<number | null>(null);
+  const { dismissCardOutcome } = useGame.getState();
+  const [topUid, setTopUid] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
   if (!game || game.ended) return null;
   const pending = game.cards.pending.map((p) => viewCard(game, p));
-  // One open at a time: the one picked, or the oldest.
-  const open = pending.find((v) => v.uid === openUid) ?? pending[0];
+  // The top card: the one lifted, the one a step goes on with, or the oldest.
+  const top = pending.find((v) => v.uid === (outcome?.goesOn ? outcome.uid : topUid)) ?? pending[0];
+  const behind = pending.filter((v) => v.uid !== top?.uid);
+  const fanned = behind.slice(0, FANNED);
   const waiting = pending.length > 0;
 
-  const sendAway = () => {
-    if (reducedMotion()) {
+  const sendOn = () => {
+    // A card with a next step turns in place; a finished one slides off the stack.
+    if (outcome?.goesOn || reducedMotion()) {
       dismissCardOutcome();
       return;
     }
@@ -39,81 +75,78 @@ export function CardFeed() {
         </span>
       </div>
 
-      {outcome ? (
-        <article
-          className={`story is-result ${leaving ? 'is-leaving' : ''}`}
-          aria-live="polite"
-          onAnimationEnd={(e) => {
-            if (e.animationName !== 'card-leave') return;
-            setLeaving(false);
-            dismissCardOutcome();
-          }}
-        >
-          <h3>{outcome.title}</h3>
-          <p className="result">{outcome.text}</p>
-          {outcome.roll && (
-            <p className="caption spaced">
-              {outcome.pass ? 'Passed' : 'Failed'}: rolled {outcome.roll.d20}, {outcome.roll.total}{' '}
-              against {outcome.roll.dc}.
-            </p>
-          )}
-          <div className="actions">
-            <button type="button" className="button button-quiet" onClick={sendAway}>
-              Into the chronicle
-            </button>
-          </div>
-        </article>
-      ) : open ? (
-        // Keyed by card, so each new one mounts fresh and rises in.
-        <article key={open.uid} className="story is-arriving" aria-labelledby={`card-${open.uid}`}>
-          <h3 id={`card-${open.uid}`}>{open.title}</h3>
-          <p>{open.text}</p>
-          <div className="choices">
-            {open.choices.map((c, i) => (
-              <button
-                key={i}
-                type="button"
-                className="button choice"
-                disabled={!c.check.ok}
-                onClick={() => {
-                  setError(chooseCard(open.uid, i, open.title));
-                  setOpenUid(null);
+      {!outcome && !top ? (
+        <p className="tray-quiet">Seclusion is quiet.</p>
+      ) : (
+        <div className="stack">
+          {outcome ? (
+            <article
+              className={`story is-result ${leaving ? 'is-leaving' : ''}`}
+              aria-live="polite"
+              onAnimationEnd={(e) => {
+                if (e.animationName !== 'card-leave') return;
+                setLeaving(false);
+                dismissCardOutcome();
+              }}
+            >
+              <h3>{outcome.title}</h3>
+              <p className="result">{outcome.text}</p>
+              {outcome.roll && (
+                <p className="caption spaced">
+                  {outcome.pass ? 'Passed' : 'Failed'}: rolled {outcome.roll.d20},{' '}
+                  {outcome.roll.total} against {outcome.roll.dc}.
+                </p>
+              )}
+              <div className="actions">
+                <button
+                  type="button"
+                  className={`button ${outcome.goesOn ? '' : 'button-quiet'}`}
+                  onClick={sendOn}
+                >
+                  {outcome.goesOn ? 'Go on' : 'Into the chronicle'}
+                </button>
+              </div>
+            </article>
+          ) : top ? (
+            // Keyed by card and step, so each new card or step mounts fresh and rises in.
+            <article
+              key={`${top.uid}-${top.stepNumber}`}
+              className={`story is-arriving ${top.stepNumber > 1 ? 'is-step' : ''}`}
+              aria-labelledby={`card-${top.uid}`}
+            >
+              <h3 id={`card-${top.uid}`}>{top.title}</h3>
+              <p>{top.text}</p>
+              <Choices
+                open={top}
+                onChose={(e) => {
+                  setError(e);
+                  setTopUid(null);
                 }}
+              />
+              {error && <p className="warn spaced">{error}</p>}
+            </article>
+          ) : null}
+
+          {!outcome &&
+            fanned.map((v, i) => (
+              <button
+                key={v.uid}
+                type="button"
+                className="stack-sheet"
+                style={{ ['--depth' as string]: i + 1 }}
+                onClick={() => {
+                  setError(null);
+                  setTopUid(v.uid);
+                }}
+                aria-label={`Lift ${v.title} to the top`}
               >
-                <strong>{c.label}</strong>
-                {c.choice.cost?.stones ? (
-                  <span className="caption">{c.choice.cost.stones} spirit stones</span>
-                ) : null}
-                {c.choice.check && (
-                  <span className="caption">
-                    {statInfo(c.choice.check.attribute).name} check, {c.choice.check.dc} or more on
-                    a d20
-                  </span>
-                )}
-                {!c.check.ok && <span className="caption warn">{c.check.reason}</span>}
+                <span>{v.title}</span>
               </button>
             ))}
-          </div>
-          {error && <p className="warn spaced">{error}</p>}
-        </article>
-      ) : (
-        <p className="tray-quiet">Seclusion is quiet.</p>
-      )}
-
-      {!outcome && pending.length > 1 && (
-        <div className="feed-tabs" role="group" aria-label="Waiting cards">
-          {pending.map((v) => (
-            <button
-              key={v.uid}
-              type="button"
-              className="button button-quiet"
-              aria-pressed={v.uid === open?.uid}
-              onClick={() => setOpenUid(v.uid)}
-            >
-              {v.title}
-            </button>
-          ))}
         </div>
+      )}
+      {!outcome && behind.length > FANNED && (
+        <p className="caption spaced">and {behind.length - FANNED} more beneath.</p>
       )}
     </section>
   );

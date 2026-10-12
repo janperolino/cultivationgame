@@ -2,6 +2,7 @@
 // curve, insight thresholds, step sizes and breakthrough odds. Every number is a starting value
 // the pacing sim tunes. Lifespans past Nascent Soul and every number past Foundation are
 // placeholders until those realms are designed.
+import { ordinal } from './words.ts';
 
 /**
  * The realm curve: how much more power, qi, income and price a realm carries than the one below
@@ -243,8 +244,8 @@ export function climbsIn(id: RealmId): number {
 
 const STAGE_NAMES = ['early', 'middle', 'late', 'peak'] as const;
 
-/** "layer 3" at Qi Condensation, "middle" stage above it. Stages count from 1. */
+/** "third layer" at Qi Condensation, "middle" stage above it: words, never numerals. Stages count from 1. */
 export function stageName(id: RealmId, stage: number): string {
-  if (id === 'qi-condensation') return `layer ${stage}`;
+  if (id === 'qi-condensation') return `${ordinal(stage)} layer`;
   return STAGE_NAMES[stage - 1] ?? `stage ${stage}`;
 }

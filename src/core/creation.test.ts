@@ -250,7 +250,7 @@ describe('the first hour’s cards as data', () => {
   });
 
   it('fill every slot for the origins they come to', () => {
-    for (const k of CARDS) {
+    for (const k of CARDS.filter((c) => c.deck === 'first-hour')) {
       const origins = k.trigger.origin ?? ORIGINS.map((o) => o.id);
       for (const id of origins) {
         const s = createLife(creation({ roll: { ...creation().roll, origin: id } }));
@@ -261,7 +261,7 @@ describe('the first hour’s cards as data', () => {
           ...k.choices.flatMap((c) => [
             c.label,
             c.pass.text,
-            c.pass.chronicle,
+            c.pass.chronicle ?? '',
             c.fail?.text ?? '',
             c.fail?.chronicle ?? '',
           ]),

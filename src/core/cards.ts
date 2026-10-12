@@ -1,33 +1,42 @@
 // The card engine (design § Story cards and events): once a world day, each deck's cards whose
 // trigger holds roll their daily chance on the `world` stream, and one of those that pass is drawn
-// by weight into the pending feed. Cards wait for the player; an urgent one resolves by its default
-// choice once it has waited its days. Offline, at most three wait and the rest resolve by default
-// at once, for the coming-back card. Choosing pays the cost, rolls the check, applies the effects
-// and writes the chronicle line. `playDay` is the game's day step: cultivation, then the cards.
+// by weight into the pending feed. A paced deck, the seclusion deck, rolls its pace once a day
+// instead, so it comes about once every few real minutes whatever the realm's clock, and the first
+// hour's story cards come first on a day both pass. Cards wait for the player; an urgent one
+// resolves by its default choice once it has waited its days. Offline, at most three wait and the
+// rest resolve by default at once, for the coming-back story. Choosing pays the cost, rolls the
+// check and applies the effects; a choice can lead to a further step, which carries the card's
+// variables on, and the card writes one chronicle line for its path when it ends, naming everyone
+// it spoke of. `playDay` is the game's day step: cultivation, then the cards.
 import {
   CARDS,
   card,
+  DECK_PACE,
   OFFLINE_QUEUE,
   type Card,
   type CardChoice,
   type CardEffect,
   type CardOutcome,
+  type CardStep,
   type Trigger,
+  type VarCheck,
 } from '../content/cards/index.ts';
-import { fillSlots } from '../content/chronicle.ts';
+import { fillSlots, type Who } from '../content/chronicle.ts';
 import { pathKey } from '../content/origins.ts';
 import { realmIndex } from '../content/realms.ts';
 import { firstTechnique } from '../content/techniques.ts';
-import { whoFor } from './chronicle.ts';
-import { barSize, fromWorld } from './cultivation.ts';
+import { seasonOf, whoFor } from './chronicle.ts';
+import { barFill, barSize, fromWorld } from './cultivation.ts';
 import { contemplate, gainInsight, insightMultiplier } from './insight.ts';
 import { cultivate, gainMethod, gainRoutine, gainTechnique } from './life.ts';
-import type { DayStep } from './loop.ts';
+import { daysPerRealMs, type DayStep } from './loop.ts';
+import { applyPersonEffect, knowsSlot, peopleIn, resolveWho } from './people.ts';
 import type { Rng } from './rng.ts';
 import {
   addEvent,
   addFlag,
   addItem,
+  DAYS_PER_YEAR,
   daysLived,
   hasFlag,
   itemCount,
@@ -57,6 +66,7 @@ export function triggerHolds(s: GameState, t: Trigger, day = s.calendar.day): bo
     const same = !!t.qi.realm || !above;
     if (t.qi.minStage !== undefined && same && c.qi.stage < t.qi.minStage) return false;
     if (t.qi.maxStage !== undefined && (!same || c.qi.stage > t.qi.maxStage)) return false;
+    if (t.qi.minFill !== undefined && barFill(c.qi) < t.qi.minFill) return false;
   }
   if (t.origin && (!c.origin || !t.origin.includes(c.origin.id))) return false;
   if (t.choice && c.origin?.choice !== t.choice) return false;
@@ -64,10 +74,18 @@ export function triggerHolds(s: GameState, t: Trigger, day = s.calendar.day): bo
   if (t.notFlags?.some((f) => hasFlag(c, f))) return false;
   if (t.noItem && itemCount(c, t.noItem) > 0) return false;
   if (t.noMethod && c.activeMethods[t.noMethod] !== null) return false;
+  if (t.hasMethod && c.activeMethods[t.hasMethod] === null) return false;
   if (t.mark) {
     const at = s.cards.marks[t.mark.id];
     if (at === undefined || day - at < t.mark.days) return false;
   }
+  if (t.season && !t.season.includes(seasonOf(day))) return false;
+  if (t.yearDay) {
+    const d = Math.floor(((day % DAYS_PER_YEAR) + DAYS_PER_YEAR) % DAYS_PER_YEAR);
+    if (d < t.yearDay[0] || d >= t.yearDay[1]) return false;
+  }
+  if (t.people && !t.people.every((slot) => knowsSlot(c, slot))) return false;
+  if (t.minStones !== undefined && c.stones < t.minStones) return false;
   return true;
 }
 
@@ -86,6 +104,25 @@ export function cardEligible(s: GameState, c: Card, day = s.calendar.day): boole
 
 export type ChoiceCheck = { ok: true } | { ok: false; reason: string };
 
+/** The step a waiting card stands at: its opening, or a later step. */
+export function stepOf(k: Card, step: string | undefined): CardStep {
+  if (step === undefined) return k;
+  const st = k.steps?.[step];
+  if (!st) throw new RangeError(`Card ${k.id} has no step ${step}`);
+  return st;
+}
+
+function varHolds(vars: Readonly<Record<string, number>>, w: VarCheck | undefined): boolean {
+  if (!w) return true;
+  const v = vars[w.id] ?? 0;
+  return (w.min === undefined || v >= w.min) && (w.max === undefined || v <= w.max);
+}
+
+/** Whether a choice is offered at all: a `when` on the card's variables. */
+export function choiceOffered(choice: CardChoice, vars: Readonly<Record<string, number>> = {}) {
+  return varHolds(vars, choice.when);
+}
+
 /** Whether the player can pay a choice's cost. */
 export function canChoose(c: Cultivator, choice: CardChoice): ChoiceCheck {
   const cost = choice.cost;
@@ -103,15 +140,25 @@ export function attributeValue(c: Cultivator, attr: 'agility' | 'fortune' | 'apt
   return attr === 'agility' ? agility(c) : attr === 'fortune' ? fortune(c) : aptitude(c);
 }
 
-/** The choice a card takes without you: its default, or the first one you can pay for. */
-export function defaultChoice(c: Cultivator, k: Card): number {
-  const preferred = k.defaultChoice ?? 0;
-  if (canChoose(c, k.choices[preferred]!).ok) return preferred;
-  const free = k.choices.findIndex((ch) => canChoose(c, ch).ok);
+/**
+ * The choice a card's step takes without you: its default, or the first one offered that you can
+ * pay for. The opening step when no step is named.
+ */
+export function defaultChoice(
+  c: Cultivator,
+  k: Card,
+  step?: string,
+  vars: Readonly<Record<string, number>> = {},
+): number {
+  const st = stepOf(k, step);
+  const usable = (ch: CardChoice) => choiceOffered(ch, vars) && canChoose(c, ch).ok;
+  const preferred = st.defaultChoice ?? 0;
+  if (usable(st.choices[preferred]!)) return preferred;
+  const free = st.choices.findIndex(usable);
   return free < 0 ? preferred : free;
 }
 
-/** One effect of a card on the game. */
+/** One effect of a card on the game; `var` effects are the caller's. */
 function applyEffect(s: GameState, e: CardEffect): GameState {
   const c = s.player;
   switch (e.do) {
@@ -119,8 +166,12 @@ function applyEffect(s: GameState, e: CardEffect): GameState {
       return withPlayer(s, { ...c, stones: Math.max(0, c.stones + e.n) });
     case 'item':
       return withPlayer(s, addItem(c, e.id, e.n));
-    case 'fuel':
-      return withPlayer(s, fromWorld(c, e.ladder, e.share * barSize(c[e.ladder])));
+    case 'fuel': {
+      const amount = e.share * barSize(c[e.ladder]);
+      if (amount >= 0) return withPlayer(s, fromWorld(c, e.ladder, amount));
+      const l = c[e.ladder];
+      return withPlayer(s, { ...c, [e.ladder]: { ...l, bar: Math.max(0, l.bar + amount) } });
+    }
     case 'insight':
       return withPlayer(s, gainInsight(c, e.n * insightMultiplier(c)));
     case 'injury': {
@@ -150,12 +201,16 @@ function applyEffect(s: GameState, e: CardEffect): GameState {
       delete marks[e.id];
       return { ...s, cards: { ...s.cards, marks } };
     }
+    case 'person':
+      return applyPersonEffect(s, e);
+    case 'var':
+      return s;
   }
 }
 
 export interface CardResult {
   state: GameState;
-  /** False when the card isn't waiting or the choice can't be paid for; the state is unchanged. */
+  /** False when the card isn't waiting or the choice can't be taken; the state is unchanged. */
   ok: boolean;
   reason?: string;
   /** What the card says happened, slots filled. */
@@ -164,6 +219,8 @@ export interface CardResult {
   pass: boolean | null;
   /** The d20 and the total against the difficulty, when there was a check. */
   roll?: { d20: number; total: number; dc: number };
+  /** False when the card goes on to a further step and still waits. */
+  done: boolean;
 }
 
 /** A d20 check: d20 + (attribute − 10) against the difficulty. */
@@ -174,9 +231,18 @@ function rollCheck(c: Cultivator, choice: CardChoice, rng: Rng) {
   return { d20, total, dc: check.dc, pass: total >= check.dc };
 }
 
+/** The slots a card's text fills with: the player's, and the card's variables as {var.id}. */
+function cardWho(c: Cultivator, vars: Readonly<Record<string, number>> = {}): Who {
+  const who = whoFor(c);
+  const v = Object.fromEntries(Object.entries(vars).map(([k, n]) => [`var.${k}`, String(n)]));
+  return { ...who, slots: { ...who.slots, ...v } };
+}
+
 /**
- * Resolves a waiting card with a choice: pays its cost, rolls its check on the `world` stream,
- * writes its chronicle line and applies the outcome's effects.
+ * Resolves the step a waiting card stands at with a choice: pays its cost, rolls its check on the
+ * `world` stream and applies the outcome's effects. An outcome that leads on moves the card to its
+ * next step, still waiting; one that ends it writes the chronicle line for the path, with every
+ * person the card named as an actor.
  */
 export function resolveCard(
   s: GameState,
@@ -185,18 +251,17 @@ export function resolveCard(
   opts: { byDefault?: boolean } = {},
 ): CardResult {
   const pending = s.cards.pending.find((p) => p.uid === uid);
-  const none = { state: s, ok: false, text: '', pass: null };
+  const none = { state: s, ok: false, text: '', pass: null, done: false };
   if (!pending) return { ...none, reason: 'That card is gone.' };
   const k = card(pending.card);
-  const choice = k.choices[index];
-  if (!choice) return { ...none, reason: 'No such choice.' };
+  const step = stepOf(k, pending.step);
+  const vars = { ...(pending.vars ?? {}) };
+  const choice = step.choices[index];
+  if (!choice || !choiceOffered(choice, vars)) return { ...none, reason: 'No such choice.' };
   const can = canChoose(s.player, choice);
   if (!can.ok) return { ...none, reason: can.reason };
 
-  let next: GameState = {
-    ...s,
-    cards: { ...s.cards, pending: s.cards.pending.filter((p) => p.uid !== uid) },
-  };
+  let next: GameState = s;
   const cost = choice.cost;
   if (cost?.stones)
     next = withPlayer(next, { ...next.player, stones: next.player.stones - cost.stones });
@@ -211,35 +276,122 @@ export function resolveCard(
     roll = { d20: r.value.d20, total: r.value.total, dc: r.value.dc };
   }
   const outcome: CardOutcome = pass === false && choice.fail ? choice.fail : choice.pass;
-  next = addEvent(next, 'card', {
+  for (const e of outcome.effects) if (e.do === 'var') vars[e.id] = (vars[e.id] ?? 0) + e.n;
+  const text = fillSlots(outcome.text, cardWho(s.player, vars));
+  const path = [...(pending.path ?? []), index];
+  const rest = next.cards.pending.filter((p) => p.uid !== uid);
+
+  if (outcome.next) {
+    // The card goes on: it keeps its place in the feed at the next step.
+    const moved: PendingCard = { ...pending, step: outcome.next, vars, path };
+    next = {
+      ...next,
+      cards: {
+        ...next.cards,
+        pending: next.cards.pending.map((p) => (p.uid === uid ? moved : p)),
+      },
+    };
+    for (const e of outcome.effects) next = applyEffect(next, e);
+    return { state: next, ok: true, text, pass, done: false, ...(roll ? { roll } : {}) };
+  }
+
+  next = { ...next, cards: { ...next.cards, pending: rest } };
+  const named = peopleIn(s.player, cardTexts(k, path));
+  for (const e of outcome.effects) {
+    if (e.do !== 'person') continue;
+    const id = resolveWho(s.player, e.who);
+    if (id && !named.includes(id)) named.push(id);
+  }
+  const data: Record<string, string | number | boolean | null> = {
     card: k.id,
     choice: index,
     pass,
     byDefault: opts.byDefault ?? false,
-  });
+  };
+  if (pending.step !== undefined) {
+    data.step = pending.step;
+    data.path = path.join('.');
+  }
+  for (const [key, v] of Object.entries(vars)) data[`var.${key}`] = v;
+  next = addEvent(next, 'card', data, [next.player.id, ...named]);
   for (const e of outcome.effects) next = applyEffect(next, e);
-  const text = fillSlots(outcome.text, whoFor(s.player));
-  return { state: next, ok: true, text, pass, ...(roll ? { roll } : {}) };
+  return { state: next, ok: true, text, pass, done: true, ...(roll ? { roll } : {}) };
 }
 
-/** Resolves a waiting card by its default choice, as if the player had stayed away. */
+/** Every text a card showed along a path of choices, for the people it named. */
+function cardTexts(k: Card, path: readonly number[]): string[] {
+  const out = [k.title, k.text];
+  let step: CardStep = k;
+  for (const i of path) {
+    const ch = step.choices[i];
+    if (!ch) break;
+    out.push(ch.label, ch.pass.text, ch.pass.chronicle ?? '');
+    if (ch.fail) out.push(ch.fail.text, ch.fail.chronicle ?? '');
+    const nextId = ch.pass.next ?? ch.fail?.next;
+    if (!nextId || !k.steps?.[nextId]) break;
+    step = k.steps[nextId];
+    out.push(step.text);
+  }
+  return out;
+}
+
+/** Resolves a waiting card by its defaults, step by step, as if the player had stayed away. */
 export function resolveByDefault(s: GameState, uid: number): GameState {
-  const pending = s.cards.pending.find((p) => p.uid === uid);
-  if (!pending) return s;
-  const index = defaultChoice(s.player, card(pending.card));
-  return resolveCard(s, uid, index, { byDefault: true }).state;
+  let next = s;
+  // A card has few steps; the bound only guards against a loop in the content.
+  for (let guard = 0; guard < 20; guard++) {
+    const pending = next.cards.pending.find((p) => p.uid === uid);
+    if (!pending) return next;
+    const k = card(pending.card);
+    const index = defaultChoice(next.player, k, pending.step, pending.vars);
+    const r = resolveCard(next, uid, index, { byDefault: true });
+    if (!r.ok) return next;
+    next = r.state;
+    if (r.done) return next;
+  }
+  return next;
 }
 
 // ---------------------------------------------------------------- drawing
 
-/** The cards whose trigger holds today, each passing its daily chance or past its sure day. */
-function rollCandidates(s: GameState, day: number, rng: Rng): Card[] {
+/** A paced deck's chance on one world day, from its real minutes per card and the realm's clock. */
+export function paceChance(s: GameState, minutes: number): number {
+  const msPerDay = 1 / daysPerRealMs(s);
+  return 1 - Math.exp(-msPerDay / (minutes * 60_000));
+}
+
+/**
+ * The cards whose trigger holds today and that pass: a card's own daily chance or its sure day,
+ * or for a paced deck the deck's pace, rolled once for the day. Paced cards are kept apart, so
+ * the story's cards come first.
+ */
+function rollCandidates(
+  s: GameState,
+  day: number,
+  rng: Rng,
+  decks?: readonly string[],
+): { story: Card[]; paced: Card[] } {
   const lived = daysLived(s.player, day);
-  return CARDS.filter((k) => cardEligible(s, k, day)).filter((k) => {
-    if (k.sureAt !== undefined && lived >= k.sureAt) return true;
-    const chance = k.chance ?? 1;
-    return chance >= 1 || rng.next() < chance;
-  });
+  const paceRolls = new Map<string, boolean>();
+  const story: Card[] = [];
+  const paced: Card[] = [];
+  for (const k of CARDS) {
+    if (decks && !decks.includes(k.deck)) continue;
+    if (!cardEligible(s, k, day)) continue;
+    const pace = DECK_PACE[k.deck];
+    if (pace && !k.fixed) {
+      let passed = paceRolls.get(k.deck);
+      if (passed === undefined) {
+        passed = rng.next() < paceChance(s, pace.minutes);
+        paceRolls.set(k.deck, passed);
+      }
+      if (passed) paced.push(k);
+      continue;
+    }
+    if (k.sureAt !== undefined && lived >= k.sureAt) story.push(k);
+    else if ((k.chance ?? 1) >= 1 || rng.next() < (k.chance ?? 1)) story.push(k);
+  }
+  return { story, paced };
 }
 
 /** Picks one card by weight. */
@@ -255,15 +407,16 @@ export function pickByWeight(cards: readonly Card[], rng: Rng): Card | undefined
 }
 
 /** One world day of the decks: urgent cards default, then at most one card is drawn. */
-function drawDay(s: GameState, day: number, offline: boolean): GameState {
+function drawDay(s: GameState, day: number, opts: DrawOptions): GameState {
   let next = s;
   for (const p of s.cards.pending) {
     const urgent = card(p.card).urgent;
     if (urgent && day - p.day >= urgent.days) next = resolveByDefault(next, p.uid);
   }
-  const { value: drawn, state } = withStream(next, 'world', (rng) =>
-    pickByWeight(rollCandidates(next, day, rng), rng),
-  );
+  const { value: drawn, state } = withStream(next, 'world', (rng) => {
+    const { story, paced } = rollCandidates(next, day, rng, opts.decks);
+    return pickByWeight(story.length ? story : paced, rng);
+  });
   next = state;
   if (!drawn) return next;
   const entry: PendingCard = { uid: next.cards.nextUid, card: drawn.id, day: next.calendar.day };
@@ -276,19 +429,26 @@ function drawDay(s: GameState, day: number, offline: boolean): GameState {
       nextUid: entry.uid + 1,
     },
   };
-  // Offline, at most three wait for you; the rest resolve by default for the coming-back card.
-  if (offline && next.cards.pending.length > OFFLINE_QUEUE)
+  // Offline, at most three wait for you; the rest resolve by default for the coming-back story.
+  if (opts.offline && next.cards.pending.length > OFFLINE_QUEUE)
     next = resolveByDefault(next, entry.uid);
   return next;
 }
 
+export interface DrawOptions {
+  /** Offline: at most three wait, the rest resolve by default. */
+  offline?: boolean;
+  /** Only these decks draw; every deck when absent. A trip will leave seclusion's out. */
+  decks?: readonly string[];
+}
+
 /** Runs the decks for every whole world day since they were last checked. */
-export function drawCards(s: GameState, opts: { offline?: boolean } = {}): GameState {
+export function drawCards(s: GameState, opts: DrawOptions = {}): GameState {
   if (s.ended) return s;
   const today = Math.floor(s.calendar.day);
   let next = s;
   for (let day = s.cards.checked + 1; day <= today; day++) {
-    next = drawDay(next, day, opts.offline ?? false);
+    next = drawDay(next, day, opts);
     next = { ...next, cards: { ...next.cards, checked: day } };
   }
   return next;
@@ -304,30 +464,41 @@ export interface CardView {
   uid: number;
   card: Card;
   title: string;
+  /** The text of the step it stands at. */
   text: string;
   day: number;
-  choices: { label: string; check: ChoiceCheck; choice: CardChoice }[];
+  /** Which step of how many it has taken so far: 1 at its opening. */
+  stepNumber: number;
+  /** The choices offered at this step, each with its index in the step and whether it can be paid. */
+  choices: { index: number; label: string; check: ChoiceCheck; choice: CardChoice }[];
 }
 
-/** A waiting card as the player reads it: slots filled, each choice with whether it can be paid. */
+/** A waiting card as the player reads it: slots filled, each offered choice with whether it can be paid. */
 export function viewCard(s: GameState, p: PendingCard): CardView {
   const k = card(p.card);
-  const who = whoFor(s.player);
+  const step = stepOf(k, p.step);
+  const vars = p.vars ?? {};
+  const who = cardWho(s.player, vars);
   return {
     uid: p.uid,
     card: k,
     title: fillSlots(k.title, who),
-    text: fillSlots(k.text, who),
+    text: fillSlots(step.text, who),
     day: p.day,
-    choices: k.choices.map((choice) => ({
-      label: fillSlots(choice.label, who),
-      check: canChoose(s.player, choice),
-      choice,
-    })),
+    stepNumber: (p.path?.length ?? 0) + 1,
+    choices: step.choices
+      .map((choice, index) => ({ choice, index }))
+      .filter(({ choice }) => choiceOffered(choice, vars))
+      .map(({ choice, index }) => ({
+        index,
+        label: fillSlots(choice.label, who),
+        check: canChoose(s.player, choice),
+        choice,
+      })),
   };
 }
 
-/** The cards resolved without the player since a day, for the coming-back card. */
+/** The cards resolved without the player since a day, for the coming-back story. */
 export function defaultedSince(s: GameState, day: number) {
   return s.chronicle.filter((e) => e.type === 'card' && e.data.byDefault && e.day > day);
 }

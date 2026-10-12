@@ -2,17 +2,18 @@
 // with its subject's name, pronouns and story slots, and the biography's sense of time ("the
 // spring of the fourteenth year"). The person log (P1.8) filters events by actor.
 import { EVENT_TEMPLATES, pronounWords, type EventData, type Who } from '../content/chronicle.ts';
-import { origin, placeName } from '../content/origins.ts';
+import { placeName } from '../content/origins.ts';
+import { personSlots } from './people.ts';
+import { ordinal } from '../content/words.ts';
 import type { Note } from './cultivation.ts';
 import { DAYS_PER_YEAR, type ChronicleEvent, type Cultivator, type GameState } from './state.ts';
 
 /** What the templates need to know of a cultivator. */
 export function whoFor(c: Cultivator): Who {
-  const people = c.origin ? origin(c.origin.id).people : {};
   return {
     name: c.name,
     ...pronounWords(c.pronouns),
-    slots: { ...people, place: c.place ? placeName(c.place) : 'the Border Wilds' },
+    slots: { ...personSlots(c), place: c.place ? placeName(c.place) : 'the Border Wilds' },
   };
 }
 
@@ -43,6 +44,8 @@ export function eventsOf(s: GameState, id: string): ChronicleEvent[] {
   return s.chronicle.filter((e) => e.actors.includes(id));
 }
 
+export { ordinal };
+
 const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
 export type Season = (typeof SEASONS)[number];
 
@@ -50,59 +53,6 @@ export type Season = (typeof SEASONS)[number];
 export function seasonOf(day: number): Season {
   const month = Math.floor((((day % DAYS_PER_YEAR) + DAYS_PER_YEAR) % DAYS_PER_YEAR) / 30);
   return SEASONS[Math.floor(month / 3)]!;
-}
-
-const ONES = [
-  '',
-  'first',
-  'second',
-  'third',
-  'fourth',
-  'fifth',
-  'sixth',
-  'seventh',
-  'eighth',
-  'ninth',
-];
-const TEENS = [
-  'tenth',
-  'eleventh',
-  'twelfth',
-  'thirteenth',
-  'fourteenth',
-  'fifteenth',
-  'sixteenth',
-  'seventeenth',
-  'eighteenth',
-  'nineteenth',
-];
-const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
-const TENS_TH = [
-  '',
-  '',
-  'twentieth',
-  'thirtieth',
-  'fortieth',
-  'fiftieth',
-  'sixtieth',
-  'seventieth',
-  'eightieth',
-  'ninetieth',
-];
-
-/** 14 → "fourteenth", 32 → "thirty-second"; past 99, "137th". */
-export function ordinal(n: number): string {
-  if (n < 1 || n > 99 || !Number.isInteger(n)) {
-    const k = Math.round(n);
-    const suffix =
-      k % 100 >= 11 && k % 100 <= 13 ? 'th' : (['th', 'st', 'nd', 'rd'][k % 10] ?? 'th');
-    return `${k}${suffix}`;
-  }
-  if (n < 10) return ONES[n]!;
-  if (n < 20) return TEENS[n - 10]!;
-  const t = Math.floor(n / 10);
-  const o = n % 10;
-  return o === 0 ? TENS_TH[t]! : `${TENS[t]}-${ONES[o]}`;
 }
 
 /** "the spring of the fourteenth year": when an event happened in its subject's life. */

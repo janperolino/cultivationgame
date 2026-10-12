@@ -32,7 +32,11 @@ export interface AwaySummary extends OfflineResult {
 
 /** What a resolved card said happened, shown until dismissed. */
 export interface CardOutcomeView {
+  /** The card it came from; a card that goes on stays waiting under this uid. */
+  uid: number;
   title: string;
+  /** The card goes on to a further step once this is read. */
+  goesOn: boolean;
   text: string;
   pass: boolean | null;
   roll?: { d20: number; total: number; dc: number };
@@ -363,7 +367,14 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!r.ok) return r.reason ?? 'That cannot be chosen.';
       update(r.state);
       set({
-        cardOutcome: { title, text: r.text, pass: r.pass, ...(r.roll ? { roll: r.roll } : {}) },
+        cardOutcome: {
+          uid,
+          title,
+          text: r.text,
+          pass: r.pass,
+          goesOn: !r.done,
+          ...(r.roll ? { roll: r.roll } : {}),
+        },
       });
       void get().saveNow();
       return null;

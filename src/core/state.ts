@@ -13,6 +13,7 @@ import {
   type OriginChoice,
   type OriginId,
 } from '../content/origins.ts';
+import { BOND_IDS, pathPeople, person, REGARD_MAX, REGARD_MIN } from '../content/people.ts';
 import { RARITY_IDS } from '../content/rarity.ts';
 import { REALM_IDS, realm } from '../content/realms.ts';
 import { defaultElements, ROOT_IDS, type RootId } from '../content/roots.ts';
@@ -62,6 +63,26 @@ export type Ladder = z.infer<typeof Ladder>;
 const Wheel = z.array(z.enum(HOUR_KIND_IDS)).length(HOURS_PER_DAY);
 
 const activeMethod = z.string().nullable();
+
+/**
+ * What a cultivator knows of someone they've met (design § Professions, people and powers): what
+ * they are to you, how they feel (−3 to +3, shown only in words), their realm as last seen or
+ * heard and where they were, which is only what you've seen or heard. Their log is the chronicle
+ * filtered by their id.
+ */
+const PersonRecord = z.object({
+  /** World day you met, and where. */
+  met: z.number(),
+  place: z.string().nullable(),
+  bond: z.enum(BOND_IDS),
+  regard: z.number().int().min(REGARD_MIN).max(REGARD_MAX),
+  realm: z.object({ realm: z.enum(REALM_IDS), stage: z.number().int().min(1) }).nullable(),
+  /** Where they were when you last heard: an atlas entry id, or null when unknown. */
+  where: z.string().nullable(),
+  /** World day you last heard of them. */
+  heard: z.number(),
+});
+export type PersonRecord = z.infer<typeof PersonRecord>;
 
 export const CultivatorSchema = z.object({
   id: z.string(),
@@ -130,6 +151,8 @@ export const CultivatorSchema = z.object({
   practicing: z.string().nullable(),
   /** Insight drawn from each contemplation source (content/contemplation.ts), before Aptitude. */
   contemplation: z.record(z.string(), z.number().min(0)),
+  /** Everyone this cultivator has met, by person id (content/people.ts). */
+  people: z.record(z.string(), PersonRecord),
 });
 export type Cultivator = z.infer<typeof CultivatorSchema>;
 
@@ -156,6 +179,12 @@ const PendingCard = z.object({
   card: z.string(),
   /** World day it was drawn. */
   day: z.number(),
+  /** A multi-step card's current step, absent at its opening. */
+  step: z.string().optional(),
+  /** The card's own variables, set by earlier steps. */
+  vars: z.record(z.string(), z.number()).optional(),
+  /** The choices taken so far, one per step. */
+  path: z.array(z.number().int()).optional(),
 });
 export type PendingCard = z.infer<typeof PendingCard>;
 
@@ -249,7 +278,7 @@ export function freshLadder(): Ladder {
 }
 
 /** The screens a life starts with. */
-export const STARTING_UNLOCKS = ['abode', 'cultivate', 'character', 'chronicle'];
+export const STARTING_UNLOCKS = ['abode', 'cultivate', 'character', 'people', 'chronicle'];
 
 /** A cultivator at age 12, every ladder at Qi Condensation layer 1 with an empty bar. */
 export function newCultivator(
@@ -288,7 +317,34 @@ export function newCultivator(
     techniques: Object.fromEntries(techniques.map((t) => [t, { practice: 0 }])),
     practicing: techniques[0] ?? null,
     contemplation: {},
+    people: startingPeople(
+      opts.origin ?? null,
+      opts.bornDay + START_AGE * DAYS_PER_YEAR,
+      opts.place ?? null,
+    ),
   };
+}
+
+/** The people an origin path knows on testing day, met that day where the life begins. */
+export function startingPeople(
+  origin: Cultivator['origin'],
+  day: number,
+  place: string | null,
+): Record<string, PersonRecord> {
+  return Object.fromEntries(
+    pathPeople(origin).knows.map((a) => [
+      a.id,
+      {
+        met: day,
+        place,
+        bond: a.bond,
+        regard: a.regard,
+        realm: a.realm,
+        where: person(a.id).home ?? place,
+        heard: day,
+      },
+    ]),
+  );
 }
 
 /** An empty card feed, checked up to the given day. */
@@ -316,7 +372,7 @@ function openingEvents(c: Cultivator, day: number, next: boolean): ChronicleEven
         day,
         'testing',
         { origin: c.origin.id, choice: c.origin.choice },
-        [c.id],
+        [c.id, ...Object.keys(c.people)],
         c.place,
       ),
     );
@@ -356,7 +412,11 @@ export function nextLife(prev: GameState, opts: NewLifeOptions): GameState {
   const fresh = newLife({ ...opts, mode: opts.mode ?? prev.mode });
   const day = prev.calendar.day;
   const bornDay = day - START_AGE * DAYS_PER_YEAR;
-  const player = { ...fresh.player, bornDay };
+  const player = {
+    ...fresh.player,
+    bornDay,
+    people: startingPeople(fresh.player.origin, day, fresh.player.place),
+  };
   return {
     ...fresh,
     lineage: { id: prev.lineage.id, life: prev.lineage.life + 1 },

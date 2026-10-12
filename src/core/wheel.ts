@@ -11,6 +11,7 @@ import {
   HOUR_KIND_IDS,
   HOUR_KINDS,
   HOUR_OPENINGS,
+  HOURS_PER_DAY,
   SLEEP_HOURS,
   STUDY_LAYER,
   type HourKind,
@@ -34,6 +35,11 @@ export function hourLocked(c: Cultivator, hour: number): boolean {
 }
 
 /** What each hour goes to: the wheel, with locked hours asleep whatever it says. */
+/** The hour of the day wheel a world day stands in: 0 at 子 (midnight), 11 at 亥. */
+export function hourOfDay(day: number): number {
+  return Math.floor((((day % 1) + 1) % 1) * HOURS_PER_DAY) % HOURS_PER_DAY;
+}
+
 export function effectiveWheel(c: Cultivator): HourKind[] {
   return c.wheel.map((kind, i) => (hourLocked(c, i) ? 'sleep' : kind));
 }

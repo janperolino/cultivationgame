@@ -1,14 +1,20 @@
 // The card format (design § Story cards and events): everything that happens to you is a card, one
 // data format for every deck. A card has a trigger on your state, a weight, once-only or a
 // cooldown, a short text with slots, one to three choices with costs, checks and effects, and a
-// chronicle line per outcome. core/cards.ts draws them on the `world` stream, keeps the feed and
-// applies the effects. A new card is an entry in a deck, not new code.
+// chronicle line per outcome. A card can be a small interaction: a choice can lead to a further
+// step, each with its own text, choices and default, reading what earlier steps set in the card's
+// variables, and the chronicle gets one line for the path. core/cards.ts draws them on the `world`
+// stream, keeps the feed and applies the effects. A new card is an entry in a deck, not new code.
 import type { LadderId } from '../cultivation.ts';
 import type { OriginChoice, OriginId } from '../origins.ts';
+import type { BondId } from '../people.ts';
 import type { RealmId } from '../realms.ts';
 
 /** The attributes a card's d20 check can read (design § Combat, the six attributes). */
 export type CheckAttribute = 'agility' | 'fortune' | 'aptitude';
+
+/** The four seasons, three months each, the year opening in spring. */
+export type SeasonId = 'spring' | 'summer' | 'autumn' | 'winter';
 
 /**
  * When a card can come. Every field given must hold; an empty trigger always holds. Days lived
@@ -17,8 +23,8 @@ export type CheckAttribute = 'agility' | 'fortune' | 'aptitude';
 export interface Trigger {
   /** Days lived since testing day: at least the first, and less than the second if given. */
   daysLived?: readonly [min: number, max?: number];
-  /** The qi ladder's realm, and its stage within it. */
-  qi?: { realm?: RealmId; minStage?: number; maxStage?: number };
+  /** The qi ladder's realm, its stage within it, and how full its bar is (1 is full, up to 1.5). */
+  qi?: { realm?: RealmId; minStage?: number; maxStage?: number; minFill?: number };
   origin?: readonly OriginId[];
   choice?: OriginChoice;
   /** Story flags the cultivator must hold, and must not. */
@@ -28,14 +34,25 @@ export interface Trigger {
   noItem?: string;
   /** No method on this ladder. */
   noMethod?: LadderId;
+  /** A method active on this ladder. */
+  hasMethod?: LadderId;
   /** A mark (core/cards.ts) set at least this many days ago. */
   mark?: { id: string; days: number };
+  /** The season of the world day. */
+  season?: readonly SeasonId[];
+  /** The day of the year, 0–359: at least the first and less than the second. A named day. */
+  yearDay?: readonly [min: number, max: number];
+  /** People slots ({senior}, {aunt}, {mentor}) the origin path must know someone in. */
+  people?: readonly string[];
+  /** At least this many spirit stones. */
+  minStones?: number;
 }
 
 /** What a choice does, applied in order. Fuel is a share of the ladder's current bar. */
 export type CardEffect =
   | { do: 'stones'; n: number }
   | { do: 'item'; id: string; n: number }
+  /** A share of the bar; a negative share spills fuel, never below empty. */
   | { do: 'fuel'; ladder: LadderId; share: number }
   | { do: 'insight'; n: number }
   | { do: 'injury'; ladder: LadderId; days: number }
@@ -49,18 +66,48 @@ export type CardEffect =
   | { do: 'contemplate'; source: string; days?: number }
   /** Marks the day, for a later card's trigger; `clear-mark` forgets it. */
   | { do: 'mark'; id: string }
-  | { do: 'clear-mark'; id: string };
+  | { do: 'clear-mark'; id: string }
+  /** Adds to one of the card's own variables, for its later steps and its chronicle line. */
+  | { do: 'var'; id: string; n: number }
+  /**
+   * What you learn of a person, by slot ({senior}, {mentor}) or id (content/people.ts): how they
+   * feel moves by `regard`, what they are to you, their realm as you last heard it or a step up
+   * from it, and where they are. Meeting someone new starts their record.
+   */
+  | {
+      do: 'person';
+      who: string;
+      regard?: number;
+      bond?: BondId;
+      realm?: { realm: RealmId; stage: number };
+      advance?: number;
+      where?: string;
+    };
 
 export interface CardOutcome {
   effects: readonly CardEffect[];
-  /** What the card says once chosen, in the second person. */
+  /** What the card says once chosen, in the second person. Variables fill in as {var.id}. */
   text: string;
-  /** The chronicle line, a biography in the third person. */
-  chronicle: string;
+  /**
+   * The chronicle line, a biography in the third person, written when the card ends; variables
+   * fill in as {var.id}. An outcome that leads on to a step writes none.
+   */
+  chronicle?: string;
+  /** The step the card goes on to, in `steps`; the card ends here when absent. */
+  next?: string;
+}
+
+/** Offers a choice only while one of the card's variables is in range (0 when unset). */
+export interface VarCheck {
+  id: string;
+  min?: number;
+  max?: number;
 }
 
 export interface CardChoice {
   label: string;
+  /** Offered only while a card variable is in range. */
+  when?: VarCheck;
   /** What it costs up front; it can't be chosen without it. */
   cost?: { stones?: number; item?: { id: string; n: number } };
   /** A d20 plus (attribute − 10) against the difficulty; `fail` applies when it misses. */
@@ -70,21 +117,40 @@ export interface CardChoice {
   fail?: CardOutcome;
 }
 
+/** A later step of a multi-step card: its own text, choices and default. */
+export interface CardStep {
+  text: string;
+  choices: readonly CardChoice[];
+  /** The choice taken without you; the first one offered that you can pay for when absent. */
+  defaultChoice?: number;
+}
+
+/** The seclusion deck's five kinds of event (design § Story cards and events). */
+export type CardKind = 'door' | 'within' | 'sky' | 'named-day' | 'people';
+
 export interface Card {
   id: string;
   /** The deck it belongs to: the first hour's in M1, seclusion's in P1.8, and so on. */
   deck: string;
+  /** Which of the seclusion deck's five kinds it is. */
+  kind?: CardKind;
   title: string;
   /**
    * The card's text, in the second person. Slots in braces fill in at draw: {name}, {they},
-   * {them}, {their}, {place} and the origin's people ({aunt}, {sergeant}, {senior} and the rest).
+   * {them}, {their}, {place} and the origin's people ({aunt}, {sergeant}, {senior}, {mentor}
+   * and the rest).
    */
   text: string;
   trigger: Trigger;
   /** How often it comes against the others drawn on the same day; 1 when absent. */
   weight?: number;
-  /** The chance each day, once its trigger holds; 1 when absent. */
+  /**
+   * The chance each day, once its trigger holds; 1 when absent. A paced deck's cards
+   * (content/cards/index.ts, DECK_PACE) come only on days the deck's pace allows, unless fixed.
+   */
   chance?: number;
+  /** In a paced deck, a card that keeps its own daily chance instead: a named day. */
+  fixed?: boolean;
   /** Days lived by which it comes for certain, once its trigger holds. */
   sureAt?: number;
   /** Comes once a life. */
@@ -96,4 +162,6 @@ export interface Card {
   /** The choice taken when it resolves without you; the first when absent. */
   defaultChoice?: number;
   choices: readonly CardChoice[];
+  /** Later steps, by id, that outcomes lead on to. */
+  steps?: Readonly<Record<string, CardStep>>;
 }

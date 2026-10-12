@@ -82,7 +82,14 @@ describe('save format', () => {
     expect(p.insight).toEqual({ current: 40, earned: 64 });
     expect(p.items).toEqual({ 'foundation-pill': 1 });
     expect(p.flags).toEqual(['hours-study']);
-    expect(s.unlocks).toEqual(['abode', 'cultivate', 'techniques', 'character', 'chronicle']);
+    expect(s.unlocks).toEqual([
+      'abode',
+      'cultivate',
+      'techniques',
+      'character',
+      'people',
+      'chronicle',
+    ]);
     expect(p.techniques).toEqual({ 'rampart-palm': { practice: 0 } });
     expect(p.practicing).toBe('rampart-palm');
     expect(p.nodes).toEqual([]);

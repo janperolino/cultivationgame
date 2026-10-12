@@ -25,6 +25,9 @@ import { advance, catchUp } from './loop.ts';
 import { Rng } from './rng.ts';
 import { addItem, daysLived, withPlayer, type GameState } from './state.ts';
 
+/** The first hour's deck alone, so the seclusion deck's pace doesn't crowd these tests. */
+const FIRST = { decks: ['first-hour'] } as const;
+
 const life = (
   origin: OriginId = 'cave-orphan',
   choice: OriginChoice = 'along',
@@ -131,14 +134,14 @@ describe('drawing', () => {
 
   it('draws on the world stream, the same way for the same seed, and leaves breakthroughs alone', () => {
     const s = atLived(life(), 200);
-    const a = drawCards(s);
-    const b = drawCards(s);
+    const a = drawCards(s, FIRST);
+    const b = drawCards(s, FIRST);
     expect(a.cards).toEqual(b.cards);
     expect(a.cards.pending.map((p) => p.card)).toEqual(['first-technique-cave-along']);
     expect(a.rng.world).toBeDefined();
     expect(a.rng.breakthrough).toBe(s.rng.breakthrough);
     // One card a day at most, and a waiting card is not drawn again.
-    expect(drawCards(a).cards.pending).toHaveLength(1);
+    expect(drawCards(a, FIRST).cards.pending).toHaveLength(1);
   });
 
   it('come for certain by their sure day, and at their daily chance before it', () => {
@@ -147,7 +150,7 @@ describe('drawing', () => {
     for (let i = 0; i < 40; i++) {
       let s = life('cave-orphan', 'along', `chance-${i}`);
       while (!s.cards.pending.length) {
-        s = drawCards({ ...s, calendar: { day: s.calendar.day + 1 } });
+        s = drawCards({ ...s, calendar: { day: s.calendar.day + 1 } }, FIRST);
       }
       days.push(daysLived(s.player, s.calendar.day));
     }
@@ -216,9 +219,9 @@ describe('offline', () => {
     for (const [i, id] of ['lamp-keeper', 'errand-cave-along', 'bounty-office-job'].entries()) {
       s = pend(s, id, i + 1);
     }
-    const online = drawCards(s);
+    const online = drawCards(s, FIRST);
     expect(online.cards.pending).toHaveLength(4);
-    const offline = drawCards(s, { offline: true });
+    const offline = drawCards(s, { ...FIRST, offline: true });
     expect(offline.cards.pending).toHaveLength(3);
     const settled = offline.chronicle.filter((e) => e.type === 'card' && e.data.byDefault);
     expect(settled.map((e) => e.data.card)).toEqual(['first-technique-cave-along']);
@@ -288,7 +291,7 @@ describe('the first hour', () => {
       qi: { ...s.player.qi, stage: 9, bar: 0 },
       insight: { current: 0, earned: 0 },
     });
-    s = drawCards({ ...s, calendar: { day: s.calendar.day + 1 } });
+    s = drawCards({ ...s, calendar: { day: s.calendar.day + 1 } }, FIRST);
     expect(s.cards.pending.map((p) => p.card)).toEqual(['foundation-frontier-along']);
     s = resolveCard(s, s.cards.pending[0]!.uid, 0).state;
     expect(s.player.items['foundation-pill']).toBe(1);
@@ -307,9 +310,9 @@ describe('the first hour', () => {
     if (!failed) throw new Error('no failing roll found');
     expect(failed.player.items['foundation-pill']).toBe(0);
     expect(failed.cards.marks[FOUNDATION_FAILED]).toBe(failed.calendar.day);
-    const soon = drawCards({ ...failed, calendar: { day: failed.calendar.day + 3599 } });
+    const soon = drawCards({ ...failed, calendar: { day: failed.calendar.day + 3599 } }, FIRST);
     expect(soon.cards.pending.map((p) => p.card)).not.toContain('foundation-again');
-    const later = drawCards({ ...failed, calendar: { day: failed.calendar.day + 3600 } });
+    const later = drawCards({ ...failed, calendar: { day: failed.calendar.day + 3600 } }, FIRST);
     const card10 = later.cards.pending.find((p) => p.card === 'foundation-again');
     expect(card10).toBeDefined();
     const again = resolveCard(later, card10!.uid, 0).state;

@@ -6,3 +6,4 @@ tools/atlas
 tools/*.cjs
 docs
 *.md
+src/core/save/fixtures

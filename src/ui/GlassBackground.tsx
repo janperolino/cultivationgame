@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { seasonOf } from '../core/chronicle.ts';
+import { SPELL_DAYS, weatherOn } from '../core/weather.ts';
 import { buildCracks, drawGlass, toHex } from './glass.ts';
 import { useGame } from './store.ts';
 
@@ -75,5 +77,31 @@ export function GlassBackground() {
     };
   }, [seed, fractures, flares]);
 
-  return <canvas ref={canvas} className="glass-canvas" aria-hidden="true" />;
+  return (
+    <>
+      <canvas ref={canvas} className="glass-canvas" aria-hidden="true" />
+      <GlassSky />
+    </>
+  );
+}
+
+/**
+ * The season's tint and the day's weather over the glass, from the calendar: a faint wash of
+ * colour per season, and rain, storm, mist, wind or snow running down the glass. Still under
+ * reduced motion. Nothing shows before a life is open.
+ */
+function GlassSky() {
+  const seed = useGame((s) => s.game?.glass.seed ?? null);
+  // Read the calendar only to the spell, so the overlay re-renders a few times a season.
+  const spell = useGame((s) => (s.game ? Math.floor(s.game.calendar.day / SPELL_DAYS) : null));
+  if (seed === null || spell === null) return null;
+  const day = spell * SPELL_DAYS;
+  const weather = weatherOn(seed, day);
+  return (
+    <div
+      className={`glass-sky season-${seasonOf(day)} weather-${weather}`}
+      aria-hidden="true"
+      data-weather={weather}
+    />
+  );
 }

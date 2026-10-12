@@ -15,14 +15,18 @@ import {
   PLAYER_ID,
   START_AGE,
   freshCards,
+  startingPeople,
   STARTING_UNLOCKS,
+  type Cultivator,
   type GameState,
   type Ladder,
 } from '../state.ts';
+import { card, hasCard } from '../../content/cards/index.ts';
+import { peopleIn } from '../people.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 /**
  * Before character creation (P1.7), every life was the cave orphan who went along: the garrison's
@@ -417,6 +421,45 @@ const migrations: Record<number, (old: Raw) => Raw> = {
           origin: garrison ? { id: 'cave-orphan', choice: 'along' } : null,
           place: garrison ? 'qm-anbian-fu' : null,
         },
+      },
+    };
+  },
+  // v7, P1.7: no person records. v8 gives a life the people its origin path knew on testing day,
+  // and names them as actors on its testing day and on the cards that spoke of them, so their
+  // logs start full.
+  7: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const originRaw = (p.origin ?? null) as Cultivator['origin'];
+    const testingDay = (typeof p.bornDay === 'number' ? p.bornDay : 0) + START_AGE * DAYS_PER_YEAR;
+    const place = typeof p.place === 'string' ? p.place : null;
+    const people = startingPeople(originRaw, testingDay, place);
+    const withPeople = { ...p, people } as unknown as Cultivator;
+    const chronicle = (Array.isArray(s.chronicle) ? (s.chronicle as Raw[]) : []).map((e) => {
+      const actors = Array.isArray(e.actors) ? (e.actors as string[]) : [];
+      const data = (e.data ?? {}) as Raw;
+      let named: string[] = [];
+      if (e.type === 'testing') named = Object.keys(people);
+      if (e.type === 'card' && typeof data.card === 'string' && hasCard(data.card)) {
+        const k = card(data.card);
+        const texts = [
+          k.title,
+          k.text,
+          ...k.choices.flatMap((c) => [c.pass.text, c.fail?.text ?? '']),
+        ];
+        named = peopleIn(withPeople, texts);
+      }
+      return { ...e, actors: [...actors, ...named.filter((id) => !actors.includes(id))] };
+    });
+    const unlocks = Array.isArray(s.unlocks) ? (s.unlocks as string[]) : [];
+    return {
+      ...old,
+      version: 8,
+      state: {
+        ...s,
+        chronicle,
+        unlocks: unlocks.includes('people') ? unlocks : [...unlocks, 'people'],
+        player: { ...p, people },
       },
     };
   },
