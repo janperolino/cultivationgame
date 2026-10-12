@@ -8,7 +8,7 @@ Build it as a web game where idle seclusion and an AI-narrated world are two vie
 
 ## Decisions so far
 
-Eleven calls are made; the rest of this plan builds on them.
+Twelve calls are made; the rest of this plan builds on them.
 
 | Decision | Choice | Why |
 |---|---|---|
@@ -23,6 +23,7 @@ Eleven calls are made; the rest of this plan builds on them.
 | Combat | Text only: a turn-based rules engine, with free-text input on top | Creative moves earn bonuses, but your cultivation still decides who wins. |
 | AI model | GLM 5.2, thinking off | Unlike GLM 5.3, its thinking can be switched off, which roughly halves the cost and cuts the wait. |
 | Multiplayer | After v1: friends as NPCs in your world, then co-op go-in sessions; no shared persistent world | Most of the fun of playing with friends, with no server that owns the world, so personal calendars and editable saves stay. The core is built for it from M1: rules take any cultivator, events are typed, randomness runs in named streams and fight turns take many actors. |
+| Story | One card format for everything that happens to you, idle or in the world, built in M1 without the AI; decks grow with the milestones | A seclusion event, a summons, an encounter and the coming-back summary share one engine and one screen pattern, so the game reads as a life rather than a ledger, and the AI only rewrites text. |
 
 ## How the two halves connect
 
@@ -163,7 +164,7 @@ Every major breakthrough also needs a full qi bar and an insight threshold; the 
 
 - Element hours: each earthly branch carries an element: 寅 and 卯 wood, 巳 and 午 fire, 申 and 酉 metal, 亥 and 子 water, and 辰, 戌, 丑 and 未 earth. Work that matches its hour's element pays about 25% more: a fire root cultivates best at 巳 and 午, alchemy is strongest at noon, and Ghost Way and other yin work belong to the night. A root matches every hour of each element it holds, so a mixed root matches most of the day and an earth root twice the hours of a fire one; that is just how it is, and the other elements find their bonuses elsewhere. Lightning and wind count as wood and ice as water, as combat does. A tempering or nourishing art may carry an element too, and then its hours match the same way; talent, resources and environment are the fast road for body and soul in any case. Dawn's purple qi at 卯 adds about 10% to everyone's qi.
 - Sleep: at Qi Condensation the body is still mostly mortal, and 子 and 丑 are locked to sleep. Foundation frees them: "You no longer need sleep; two more hours are yours."
-- Routines: a whole wheel can be saved as a routine, and routines are also learned from teachers, manuals and sects, such as the garrison's Watch Rotation or a hermit's Nine Midnights. Following a learned routine exactly, all twelve hours, earns a discipline bonus of about 10% on every hour, less than an element hour, so a routine never beats placing your hours well. A sect can impose its own routine, morning lecture and duty hours included, and keeping it grows the Orthodox Way, so breaking routine to cultivate more is a small, real choice.
+- Routines: a whole wheel can be saved as a routine, and routines are also learned from teachers, manuals and sects, such as the garrison's Watch Rotation or a hermit's Nine Midnights. Following a learned routine exactly, all twelve hours, earns a discipline bonus of about 10% on every hour; its cost is rigidity, since a routine with no body or soul hours leaves both behind. A sect can impose its own routine, morning lecture and duty hours included, and keeping it grows the Orthodox Way, so breaking routine to cultivate more is a small, real choice.
 - A fresh life's wheel is all qi. When a new kind of hour becomes possible, study at layer 2, practice with the first usable technique, body or soul with its art, one hour flips to it with a chronicle line: the qi hour worth least to you, one that matches neither your root's elements nor dawn, latest in the day first. Rearrange freely. The same rule fills a migrated save and the pacing sim's day.
 - Every hour also leaves insight (see Insight below).
 
@@ -249,7 +250,7 @@ Some techniques ask for two trees at once, such as a blood-sword art that needs 
 
 - Tier caps it: a method gains nothing on a ladder above its tier. Breaking through needs nothing from the method; the pill, the full bar and the insight carry you over, and then the old method runs out, so you switch to its next chapter or a new method and gain nothing until you do. The breakthrough is the natural moment to change methods; if you already hold the next chapter, switch before the attempt, since the method active at an attempt is the one that builds the new stage (Growth below). A method whose tier sits above your realm cultivates faster, by one realm's gap (×3 at Qi Condensation, ×5.5 at Foundation, ×10 from Core Formation up). That bonus counts once, however far above you the tier sits; a higher tier mostly buys a longer road without chapter changes.
 - Rarity sets speed on the curve everything shares (Tier, rarity and pedigree), so a red Qi Condensation method cultivates almost like a white Foundation one, then stops at its peak.
-- Growth: every stage you climb records the growth of the method that climbed it, and it stays. A qi method leaves pool, purity (technique power) and recovery; a tempering art HP, physical damage and regeneration; a nourishing art soul defense, divine sense and perception. The total a method leaves over a full realm is its rarity on the shared curve less one, at tier 1 about −20% at gray, +10% at green, +25% at blue, +50% at purple, +130% at gold and +170% at red, and its profile splits the total: a deep-sea method is mostly pool, a pure-flame method mostly purity. Fit scales growth as it scales speed, which is how a fitting method hits harder. A stage climbed with no method active, on the world's tempering alone, takes a white method's growth. Switching never rewrites the past: your foundation is what you built it with, and a poor method's stages stay poor until a re-refining pill (M4). Growth is set, never rolled, since gentle mode's rewind lands at a breakthrough.
+- Growth: every stage you climb records the growth of the method that climbed it, and it stays. A qi method leaves pool, purity (technique power) and recovery; a tempering art HP, physical damage and regeneration; a nourishing art soul defense, divine sense and perception. The total a method leaves over a full realm is its rarity on the shared curve less one, at tier 1 about −20% at gray, +10% at green, +25% at blue, +50% at purple, +130% at gold and +170% at red, and its profile splits the total: a deep-sea method is mostly pool, a pure-flame method mostly purity. Fit scales growth as it scales speed, which is how a fitting method hits harder. A stage climbed with no method active, on the world's tempering alone, takes a white method's growth. Switching never rewrites the past: your foundation is what you built it with, and a poor method's stages stay poor until a re-refining pill (M4). Across realms growth counts as a weighted average with the realm curve as the weights, so the current realm dominates, an earlier foundation still shows a little, and the total never exceeds the ledger's gap^0.9; a plain sum would run away. The Character screen shows it per realm, "Qi Condensation foundation red, Foundation white so far", never as one shrinking number. Growth is set, never rolled, since gentle mode's rewind lands at a breakthrough.
 - Breakthrough bonuses: the method active at an attempt adds to the odds of any breakthrough, to a major one's grade margin and to mercy on failure, by rarity: gray −2 points of odds; green +2; blue +4; purple +7 and the injury halved; gold +12, +0.25 margin and the injury halved; red +16, +0.5 margin, the injury halved and no bar lost. Heavenly still needs gold or red; with red's margin it is in reach with one of body or soul ahead rather than both.
 - Properties: rarity's special properties (Tier, rarity and pedigree) are a method's gear-like extras while it is active, none at white and a named unique at red: the Night Bridge method gaining more at night hours, a demonic one devouring beast cores for qi.
 - Mastery: a method runs Glimpse to Origin like a technique, raised by every hour you cultivate with it, and its level scales its speed alone (Mastery below), so nobody waits at a full bar for a level before a breakthrough. Switching methods is paid in mastery, never in bar (Lines, chapters and kinship).
@@ -369,6 +370,60 @@ Body and soul methods are found, not given. In M1 the errand card hands over a c
 
 Layers 1 to 3 are the tutorial and ignore root speed, method fit, the method's tier, rarity and mastery, and the element hours, so every root reaches layer 3 in about 45 minutes; dawn, discipline, Aptitude and nodes still count. The rest counts from layer 4. Pacing targets for the sim: an ordinary true root reaches layer 9 in about 15–20 real hours, around age 30. Foundation then waits on a Foundation Pill from the world, and a heavenly root gets there in about half the time. Until M3 the world can't supply that pill, so in M1 your origin hands you one at layer 9, as a reward or a trade, with the next chapter of your method, since a Qi Condensation method stops at the peak of its realm.
 
+## Story cards and events
+
+Everything that happens to you is a card, in seclusion and in the world alike: a seclusion event, a beat of the first hour, a sect summons, a headline, a go-in encounter, the coming-back summary. One format and one engine, built in M1 without the AI; every milestone after adds decks, not systems, and the Scribe rewrites a card's text when a key is set.
+
+**A card is data:** a trigger on your state (realm, layer, bar, age, season, hour, flags, items, standing, where you are), a weight, once-only or a cooldown, a short text with slots for names and places, one to three choices, each with a cost or a check (hours, stones, an item, a d20 check on an attribute) and effects the engine applies (stones, items, bar, insight, injury, a flag, standing, a method, technique or routine, a go-in scene), and a chronicle line. Cards draw on the `world` stream.
+
+**Where they live.** The Abode carries the feed: pending cards in the main column under the figure, one open at a time, and resolved ones fall into the Chronicle. Cards wait for you; no timer punishes absence. A few urgent ones resolve by default if ignored for some days, a thief takes the stones, and offline at most three queue while the rest resolve by default and show in the coming-back card, which becomes a story rather than a ledger.
+
+**Pacing:** about one card per in-game season at Qi Condensation, one every ten to fifteen real minutes, with the chance per season scaled down at higher realms so the real-time pace holds whatever the clock does. Rarer and meatier beats a clicker stream. A starting value for the sims.
+
+**Decks grow with the game:** M1 ships the first hour's cards and the seclusion deck; M2 fight cards; M3 encounter cards; M4 craft cards; M5 people cards; M6 world cards.
+
+**Seclusion is quiet, not silent.** Five kinds of event:
+
+- At the door: a peddler with a pill you can't afford yet, a junior begging help, a sect summons, a tax collector, a beast sniffing round the cave, a thief. Choices trade hours, stones, risk and standing, and from M3 a choice can open a go-in scene.
+- Inside you: a qi deviation scare on a bar past 150%, an epiphany that lumps insight and discounts a Dao, a dream that wakes a sleeping talent.
+- Sky and season: a thunderstorm over the peak, sit it out for Lightning insight at a body risk; a spirit tide that doubles qi density for a day; a yin night that favors ghost work.
+- Named days: new year, the sect's lecture day, the beast tide, each a recurring card with its own choice.
+- People from the start: the sergeant, your senior, the clan aunt as named people in the card text, each with a record (Professions, people and powers), so the first hour already has faces.
+
+## The world: travel, trips and encounters
+
+The map is the go-in's board, and travel reuses the wheel.
+
+**Travel is a kind of hour.** On foot or on your own sword, travel hours move you and the rest of your day is yours, so "walk by day, cultivate by night" is a travel routine saved like any other. Riding something, a horse, a cart, a boat, a beast, a flying boat, someone else's sword, moves you without your hours, and your wheel turns at a jostled penalty, about half for qi, body and soul, study untouched on a boat. Pressed travel sets all waking hours to travel and rolls more encounters.
+
+**Going somewhere.** Pick a known place, a point in the fog or "follow the road", and the engine routes along the atlas's roads where they exist and cross-country where they don't, with days from your pace. Each travel day rolls encounters by the terrain under you, the hour, the danger band between the region's top realm and yours, your fame and the calendar.
+
+| How | Li per double-hour of travel | A kingdom of 10,000 li |
+|---|---|---|
+| Mortal on foot | 20 | half a year |
+| Qi Condensation on foot | 40 | a season at five hours a day |
+| Horse or cart, hours free | 30 | two months |
+| Foundation sword flight, costs qi | 200 | ten days |
+| Core Formation sustained flight | 300 | a week |
+| Nascent Soul, blinks and flight | 600 | days |
+
+A region of 60,000 li is half a year on foot at Qi Condensation and a month at Core Formation. Starting values for the sims.
+
+**Look around** costs an hour wherever you are. Without divine sense it is your eyes and a Soul check: tracks, a herb, a cave mouth, a watcher. With divine sense, from Foundation, it sweeps the circle the map draws, at the range the scale table gives, and finds more. Travel alone marks places seen; looking around makes them detailed.
+
+**Wherever you like, if you're strong enough.** Every place has a top realm and sits in some power's sphere, both in the atlas, and travel reads them:
+
+- Open: anyone walks in. Roads, towns, the wilds.
+- Gated: a sect mountain behind its array and gate guards, a city's inner ward, a clan's valley. You need a token, a rank, an invitation or a toll, or you force it, which works only if your realm beats the array's rating, since defenses scale with prosperity, and costs standing either way.
+- Hostile: inside the sphere of a power at the bottom of its standing with you, or whose enemy you serve. You can cross, but encounters there are hunts for you, and the map says so.
+- Deadly: a land whose own hazard sits above your realm, the forbidden lands and the beast ranges. The fog shows the warning, and going in anyway is how most cultivators die.
+
+Checkpoints inside a sphere charge tolls from the Economy's fee list, and your fame decides whether the guard knows your face.
+
+**A trip** is what gives going in its shape: a goal card, a bounty, a herb run, a patrol, a core hunt, a delivery; travel with its encounter rolls; the goal's scene plus one to three side encounters; and the return, with loot home, a coming-back story and a chronicle entry. While you're out your wheel is the trip's, so going in costs cultivation, and the spirit pool fills instead from M4. Free text and the narrator live inside scenes; between them the engine writes the travel line itself.
+
+**Encounters** are tables per region keyed by terrain tags, the hour, the danger band, fame and the calendar, in six kinds: beast, cultivator, mortal, place, omen and plot, the last seeded by your origin, talents and grudges. Each is a scene template: tagged features, NPCs carrying intents from the motive list, stakes, and exits, fight, talk, flee, sneak, trade. It is a card like any other, with the scene panel and the narrator attached. The tables themselves, ruins and inheritances, dying in the world and the fog's exact rules are settled at D3.
+
 ## Professions, people and powers
 
 Every system has an idle half and a world half, and each half supplies the other.
@@ -440,6 +495,8 @@ Formation puzzles show the engine-and-GLM split well. The engine hides which nod
 | Tribe | birth, a trial | deeds, age | the hunt, feuds | exile | land, beasts, old rites | Tribe of the Shark Caves |
 | Beast power | bloodline, or a beast bond | strength | tribute, territory | devoured | beast lore, mounts, bloodline gifts | Beast Court of Ten Thousand Mountains |
 
+**People, from the first hour.** Every person you've met has a record: name, where you met, what they are to you, friend, rival, senior, master, sworn sibling, dao companion, enemy, how they feel about you in words rather than a number, and their last known realm and whereabouts, which is only what you've seen or heard, so the same fog applies to people as to places. Each has a log: everything in your chronicle they were part of, since the typed chronicle stores actors by id, plus updates about them. In M1 updates come only from cards that name them, a letter from your senior, the sergeant posted to the wall. In M5 their lives tick on their own and bonded people send a yearly letter card; in M6 rumors and headlines feed the same log; after v1 a friend's exported snapshot writes its real progress there. The People screen lists them with a feed of the newest updates on top, and portraits once the cast list arrives.
+
 **Romance and dao companions** are in, and the engine tracks every NPC you meet: affinity, history, promises and grudges. A dao companion is a bond with mechanics: paired cultivation methods, shared danger, and grief if they fall.
 
 Intimate scenes fade to black by default. A mature setting is opt-in, sits behind an age check, and only works with hosts whose rules allow it.
@@ -468,7 +525,18 @@ Idle production is earned in the world. A line runs only while it has a source, 
 - Shop owner in a market town: no sect needed, but you buy your own inputs and pay your own guards.
 - Your own sect, later: every hall is yours, and so is every problem.
 
-**Where you live matters:** your cave abode's location sets the spirit vein grade, which markets you can reach and who might raid you. Moving it is a world action, and a line that needs a market stalls when none is in reach.
+**Where you live matters.** An abode is a site with four properties: its spirit vein grade, which sets qi density; its defenses, which decide who can raid you; its market reach; and its neighbors. Reach is how far your goods and your news travel: which markets your standing orders can use, what price you get, since distance adds courier fees and risk, how fast a line's outputs sell, what the steward can source and how soon rumors reach you. It cuts both ways, since a market at the door means thieves and taxes and a remote cave means beasts and no help.
+
+| Abode | Spirit vein | Defenses | Market reach | Neighbors |
+|---|---|---|---|---|
+| A wild cave | what you find, poor to fair | the rock | none; a caravan passes once a season | beasts, hermits, bandits |
+| A sect cave, outer or inner | by rank | the sect's arrays | the sect shop; a town a day off | fellow disciples, your senior, rivals |
+| A rented room in a cultivation market | thin | the market's guards | everything, at fees | merchants and every rumor |
+| A city estate, rented or bought | fair | the city's arrays and your own guards | most, a day off | patrons, nobles, the sect's branch |
+| A flying boat, from Core Formation | its own small array | its formations | wherever you park | your crew |
+| A spatial cave abode, after v1 | the best | its own world | none, until you step out | nobody |
+
+Rent is a seasonal fee; a sect cave is free with duties; a wild cave is free with risk. Moving a static abode is a trip: your bag and ring go with you and the rest stays in the abode's own store until you fetch it, hire a cart or pay a caravan, with robbery on the road as the risk. A mobile abode carries its store. A line that needs a market stalls when none is in reach. Sites arrive with M4 and moving with them; the flying boat comes with M6.
 
 **Automation grows in four steps:**
 
@@ -712,24 +780,28 @@ The game is dark glowing slate with a gold accent, built for desktop first and u
 
 | Screen | What it shows | Ships in |
 |---|---|---|
-| Abode (home) | your silhouette seated cross-legged, the dantian glowing brighter as the qi bar fills; realm and stage, qi, body and soul bars, age against lifespan, today's wheel and routine, the spirit pool from M4, alerts | M1 |
+| Abode (home) | your silhouette seated cross-legged, the dantian glowing brighter as the qi bar fills; realm and stage, qi, body and soul bars, age against lifespan, today's wheel and routine, the card feed, the spirit pool from M4, alerts | M1 |
 | Cultivate | the day wheel of twelve hours with its element hours and routines, the method on each ladder, and breakthrough checks and their odds | M1 |
 | Trees | the Qi, Body and Soul trees, then the Daos and Ways: a canvas you drag and zoom, with nine tier bands of branching paths, sealed nodes dimmed and a re-centre button; a node's details open in an overlay | M1, Daos M2, Ways M3 |
 | Techniques | every technique with its mastery level, requirements and what is still sealed | M1 |
 | Character | talents, the six attributes, fame and standing | M1 |
 | Chronicle | your life as a log: breakthroughs, fights, rumors and steward reports | M1 |
 | Settings | OpenRouter key and cost meter, saves, clock speed, colors and glass, text size, reduced motion, the mature content switch | M1, AI parts M3 |
-| Bag | items, pills and storage ring space | M2 |
+| Bag | a grid of squares with names in rarity colors and tiers as words, gear on the figure's squares, the abode's store as a second grid, stones as a count; `docs/mockups/inventory-study.html` is the reference | M2 |
 | Go In | the adventure screen, described below | M3 |
 | Map | the zoomable world map with fog of war; tiers open with M6 | M3 |
 | Crafts | furnace, forge, array and drawing queues, recipes and experimentation | M4 |
-| People | NPCs and relationships, your sect, factions | M5 |
+| People | everyone you've met with their bond, what you know of them and a log each, a feed of updates on top; your sect and factions from M5 | M1, full in M5 |
 
 **The go-in screen.** The narration streams down the middle, each turn followed by its log line with the math. Three or four suggested actions sit under it as buttons, with a free-text box below them. A scene panel beside it shows where you are, the tagged features, who is present and your HP, qi and statuses. Leaving returns you to the abode with a summary of what you brought home.
 
-**Coming back.** After time away, a card shows what happened while you were in seclusion: qi gained, breakthroughs, queue output, events. From M5 it includes the steward's report.
+**Coming back.** After time away, a story card tells what happened while you were in seclusion: qi gained, breakthroughs, queue output, and the cards that resolved on their own, with the rest waiting in the feed. From M5 it includes the steward's report.
 
 Numbers use short forms past ten thousand (12.4k, 3.1M), and every number that matters has a small "?" beside it that shows how it was worked out, on hover or a tap, so the sums stay out of the way.
+
+**Less spreadsheet.** Words first, numbers behind the "?", including the bars: "qi thick as river mist" with the number on hover. The Abode is home: the figure, whose pose follows the current hour, asleep at 子, drilling in a practice hour, still in seclusion, with the cards arriving under it. Every number that changes has a moment: a breakthrough flares and asks "now or consolidate", a card says what happened, and the typed chronicle reads as a biography, "in the spring of his fourteenth year". Realms and layers are words everywhere, "Qi Condensation, fifth layer". The glass carries a season tint and weather from the calendar. Named days and named people from the first hour, with portraits once the cast list arrives. The cave itself does not change with your things; that would need a design per kind of abode, and waits.
+
+**The Bag.** Squares, not volume: the grid is the capacity, and bulk is a thing taking more than one square. Pills, talismans, herbs and materials stack to 99 a square, ores and bulk materials to 20, gear takes one, and a cauldron, a corpse or a beast takes several. Your pack on foot is small; a mortal cart or mount adds squares while you travel with it, and losing the cart loses what is in it; a storage pouch at Qi Condensation, a storage ring at Foundation, bigger rings and spatial items above. Stones are a count, never an item, and a ring holds any amount, as mortals' silver does. The abode's store is a large separate grid, so "carry what you can, leave the rest" is two grids. Gear squares sit beside the figure, weapon, armor, ring, pouch, and dragging onto them equips; the same figure stands on the Character screen. An item shows a glyph from design-time art, its name in its rarity color, its tier as a word and a stack count, with the "?" for the rest, and unknown things show as "?" until appraised in M6. `docs/mockups/inventory-study.html` is the reference.
 
 ## Saves
 
@@ -786,7 +858,7 @@ Five rules keep it sane:
 | Milestone | Weeks | Contents |
 |---|---|---|
 | M0 Lore, setup, AI spike | 1–2 | world bible; GLM spike: JSON, thinking off |
-| M1 Idle core | 3–5 | Qi to Foundation, body, soul, insight; no AI |
+| M1 Idle core | 3–5 | Qi to Foundation, body, soul, insight; story cards and the first decks; no AI |
 | M2 Combat engine | 6–7 | rolls, damage types, v1 Daos; fight sim |
 | M3 Go-in slice | 8–10 | one fogged region; free text; loot flows home (the playable slice) |
 | M4 Crafts | 11–14 | four great arts, spirit farming; Core Formation |
@@ -835,8 +907,9 @@ Settle each before the milestone that needs it. World content is drafted and che
 - [ ] Items and gear: slots, grades, artifact bonding and artifact spirits, pill toxicity, storage rings; item, talisman and array power on the realm curve, with a higher-realm talisman priced by its own realm; tier and rarity on every item (Tier, rarity and pedigree), weapons and armor on the fighting-up ledger's axes, weapons above your realm; aptitude-raising pills and rites; the upkeep some methods drink
 - [ ] Enemies: beast and cultivator templates, behavior profiles, loot; pedigree tables and each realm's ordinary baseline, tuned to the fighting-up ledger
 - [ ] Combat outcome tags for effects and sound: form, element or damage type, realm and result on every outcome
-- [ ] Exploration: travel and its time cost, encounters per region, scene building, ruins and inheritances, fleeing, dying in the world; ways to flee, hide or talk past foes a realm or more above you; the fog's rules, meaning what travel, divine sense, maps and rumors each reveal
-- [ ] NPC basics: what an NPC record holds, what each NPC knows, how talk changes relationships
+- [ ] Exploration: travel, trips, look around and the open, gated, hostile and deadly rule are settled under The world; left for D3: the encounter tables per region in the six kinds, scene building from the card format, ruins and inheritances, fleeing, dying in the world, ways to flee, hide or talk past foes a realm or more above you, and the fog's rules, meaning what travel, divine sense, maps and rumors each reveal
+- [ ] NPC basics: the person record and its log are settled under Professions, people and powers; left for D3: what each NPC knows, how talk changes relationships, the intents and motives scenes draw on
+- [ ] Story decks: the seclusion deck in M1, then a deck per milestone; what each card trades and how often it comes
 
 **Before M5 to M8, sketched now**
 
