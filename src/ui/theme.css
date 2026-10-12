@@ -17,6 +17,8 @@
   --warn: #e08a6a;
   --warn-edge: color-mix(in srgb, var(--warn) 45%, transparent);
   --well: rgb(0 0 0 / 0.55);
+  /* Panels are obsidian: a deep black that catches the crack light on its edges. */
+  --obsidian: rgb(7 8 11 / 0.96);
   --scrim: rgb(2 3 4 / 0.65);
   /* What each hour of the day wheel goes to. Qi is the crack light, as the qi bars are. */
   --hour-qi: var(--crack);
@@ -104,9 +106,9 @@ select {
   pointer-events: none;
 }
 
-/* Smooth, darker glass with a thin bright edge, so text never sits on a crack. */
+/* Smooth, darker glass with a thin bright edge, so text never sits on a crack. Panels are
+   obsidian instead (below). */
 .glass,
-.panel,
 .side-menu,
 .context-panel,
 .topbar {
@@ -225,10 +227,146 @@ select {
   margin-left: 6px;
 }
 
+/* Obsidian panels with a living edge (design § UI and screens, Look; docs/mockups/obsidian-study.html,
+   direction B): a deep black with a slow lacquer sheen, a 1px rim that catches the crack light,
+   a light that walks round the rim, and a still bloom behind the edge. The walking light quickens
+   on a panel that waits for you (`is-waiting`). Under reduced motion the rim stands still,
+   brightest at the top corners (direction A). The panel makes no stacking context, so the bloom
+   can sit behind it. */
+@property --edge-angle {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+
+@property --sheen-at {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: -40%;
+}
+
 .panel {
-  border: 1px solid var(--edge);
+  --rim: var(--crack);
+  --rim-strength: 0.6;
+  --rim-speed: 16s;
+  --rim-still:
+    radial-gradient(60% 40% at 0% 0%, color-mix(in srgb, white 60%, var(--rim)), transparent 70%),
+    radial-gradient(60% 40% at 100% 0%, color-mix(in srgb, white 45%, var(--rim)), transparent 70%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 100%), transparent),
+      rgb(255 255 255 / 0.05) 45%,
+      rgb(255 255 255 / 0.03)
+    );
+  --rim-living:
+    conic-gradient(
+      from var(--edge-angle),
+      transparent 0 62%,
+      color-mix(in srgb, var(--rim) 70%, transparent) 76%,
+      white 80%,
+      color-mix(in srgb, var(--rim) 70%, transparent) 84%,
+      transparent 96%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 45%), rgb(255 255 255 / 0.1)),
+      rgb(255 255 255 / 0.04)
+    );
+  --rim-paint: var(--rim-living);
+  position: relative;
   border-radius: var(--radius);
   padding: 16px 18px;
+  background:
+    linear-gradient(
+      115deg,
+      transparent calc(var(--sheen-at) - 18%),
+      rgb(255 255 255 / 0.028) var(--sheen-at),
+      transparent calc(var(--sheen-at) + 18%)
+    ),
+    radial-gradient(120% 70% at 50% -10%, rgb(255 255 255 / 0.05), transparent 60%), var(--obsidian);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.035),
+    0 18px 40px -18px rgb(0 0 0 / 0.9),
+    inset 0 1px 14px -8px
+      color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 60%), transparent),
+    0 0 42px -14px color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 50%), transparent);
+  animation:
+    panel-sheen 14s ease-in-out infinite,
+    panel-edge var(--rim-speed) linear infinite;
+}
+
+/* The rim: a gradient border drawn through a mask, so the panel's inside stays dark. */
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--rim-paint);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* The bloom: the still rim's light, blurred, behind the panel. It never moves, so it stays cheap. */
+.panel::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--rim-still);
+  filter: blur(10px);
+  opacity: calc(var(--rim-strength) * 0.8);
+  pointer-events: none;
+}
+
+.panel.is-waiting {
+  --rim-speed: 5s;
+  --rim-strength: 0.95;
+}
+
+/* Neighbouring panels walk out of step. */
+.panel:nth-of-type(2n) {
+  animation-delay:
+    -5s,
+    -7s;
+}
+
+.panel:nth-of-type(3n) {
+  animation-delay:
+    -9s,
+    -12s;
+}
+
+@keyframes panel-sheen {
+  0%,
+  100% {
+    --sheen-at: -40%;
+  }
+
+  50% {
+    --sheen-at: 140%;
+  }
+}
+
+@keyframes panel-edge {
+  to {
+    --edge-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    --rim-paint: var(--rim-still);
+    animation: none;
+  }
 }
 
 .panel p {
@@ -526,10 +664,11 @@ select {
   }
 }
 
+/* Panels you can act on wear the accent on their rim; a warning wears the warning color. */
 .card-away,
 .notice,
 .card-ready {
-  border-color: var(--accent-edge);
+  --rim: var(--accent);
   margin-bottom: 14px;
 }
 
@@ -539,7 +678,7 @@ select {
 }
 
 .card-edge {
-  border-color: var(--warn-edge);
+  --rim: var(--warn);
 }
 
 .slots {
@@ -594,9 +733,8 @@ select {
 }
 
 .modal {
+  --rim: var(--accent);
   max-width: 440px;
-  border-color: var(--accent-edge);
-  background: var(--glass-strong);
 }
 
 .chronicle {
@@ -1563,16 +1701,128 @@ select {
   color: var(--muted);
 }
 
-.story-card {
-  border-color: var(--accent-edge);
+/* The card tray under the figure: cards rise into it with a flare along their top edge, and
+   slide out into the chronicle once settled. Its rim walks faster while a card waits. */
+.tray {
+  margin-top: 14px;
 }
 
-.story-card.is-result {
+.tray-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.tray-head .panel-heading {
+  margin: 0;
+}
+
+.tray-quiet {
+  color: var(--muted);
+  padding: 14px 0 6px;
+  text-align: center;
+}
+
+.story {
+  position: relative;
+  overflow: hidden;
+  padding: 12px 14px;
+  border: 1px solid var(--accent-edge);
+  border-radius: var(--radius-small);
+  background: rgb(255 255 255 / 0.025);
+}
+
+.story.is-result {
   border-color: var(--edge);
 }
 
-.feed {
-  margin-top: 14px;
+.story h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.story.is-arriving {
+  animation: card-rise 620ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.story.is-arriving::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), white, var(--accent), transparent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: card-flare 900ms 250ms ease-out both;
+}
+
+.story.is-leaving {
+  animation: card-leave 480ms cubic-bezier(0.5, 0, 0.8, 0.3) both;
+}
+
+.story .result {
+  animation: card-fade 450ms ease both;
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px) scale(0.98);
+    filter: blur(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes card-flare {
+  from {
+    left: -40%;
+    opacity: 1;
+  }
+
+  to {
+    left: 110%;
+    opacity: 0.2;
+  }
+}
+
+@keyframes card-leave {
+  to {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.97);
+    filter: blur(2px);
+  }
+}
+
+@keyframes card-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story,
+  .story .result {
+    animation: none !important;
+  }
+
+  .story::after {
+    display: none;
+  }
 }
 
 .feed-tabs {
