@@ -4,6 +4,7 @@ import { dayRates, ladderOpen, majorCheck } from '../core/cultivation.ts';
 import { effectiveWheel } from '../core/wheel.ts';
 import { WheelStrip } from './DayWheel.tsx';
 import { formatDays, formatDuration, formatLadder, formatNumber } from './format.ts';
+import { SeatedFigure } from './SeatedFigure.tsx';
 import { useGame, type AwaySummary } from './store.ts';
 import { AgeBar, LadderBar, LifeEdgeCard } from './widgets.tsx';
 
@@ -98,40 +99,43 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
         </section>
       )}
 
-      <section className="panel">
-        <h2 className="realm-title">
-          {formatLadder(game.player.qi)}
-          <small>
-            {game.player.name} · {game.player.pronouns}
-          </small>
-        </h2>
-        <div className="bars">
-          <LadderBar game={game} which="qi" />
-          {ladderOpen(game.player, 'body') && <LadderBar game={game} which="body" />}
-          {ladderOpen(game.player, 'soul') && <LadderBar game={game} which="soul" />}
-          <AgeBar game={game} />
+      <section className="panel abode-hero">
+        <SeatedFigure game={game} />
+        <div className="abode-info">
+          <h2 className="realm-title">
+            {formatLadder(game.player.qi)}
+            <small>
+              {game.player.name} · {game.player.pronouns}
+            </small>
+          </h2>
+          <div className="bars">
+            <LadderBar game={game} which="qi" />
+            {ladderOpen(game.player, 'body') && <LadderBar game={game} which="body" />}
+            {ladderOpen(game.player, 'soul') && <LadderBar game={game} which="soul" />}
+            <AgeBar game={game} />
+          </div>
+          <dl className="stats">
+            <div>
+              <dt>Insight</dt>
+              <dd>{formatNumber(game.player.insight.current)}</dd>
+            </div>
+            <div>
+              <dt>Spirit stones</dt>
+              <dd>{formatNumber(game.player.stones)}</dd>
+            </div>
+            <div>
+              <dt>Today</dt>
+              <dd>
+                <WheelStrip hours={effectiveWheel(game.player)} /> {today}
+                {rates.routine && ` · ${rates.routine.name}`}
+              </dd>
+            </div>
+          </dl>
+          <p className="caption spaced">
+            Lifespan {realm(game.player.qi.realm).lifespan} years at{' '}
+            {realm(game.player.qi.realm).name}.
+          </p>
         </div>
-        <dl className="stats">
-          <div>
-            <dt>Insight</dt>
-            <dd>{formatNumber(game.player.insight.current)}</dd>
-          </div>
-          <div>
-            <dt>Spirit stones</dt>
-            <dd>{formatNumber(game.player.stones)}</dd>
-          </div>
-          <div>
-            <dt>Today</dt>
-            <dd>
-              <WheelStrip hours={effectiveWheel(game.player)} /> {today}
-              {rates.routine && ` · ${rates.routine.name}`}
-            </dd>
-          </div>
-        </dl>
-        <p className="caption spaced">
-          Lifespan {realm(game.player.qi.realm).lifespan} years at{' '}
-          {realm(game.player.qi.realm).name}.
-        </p>
       </section>
     </>
   );

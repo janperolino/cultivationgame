@@ -9,6 +9,7 @@ import type { GameState } from '../core/state.ts';
 import { hourKindOpen, hourLocked } from '../core/wheel.ts';
 import { formatPercent, formatRate } from './format.ts';
 import { useGame } from './store.ts';
+import { Why } from './widgets.tsx';
 
 const R_OUTER = 132;
 const R_INNER = 66;
@@ -42,13 +43,18 @@ const YIELD_UNITS: Record<HourKind, (y: HourYield) => string> = {
   sleep: () => 'nothing',
 };
 
-/** "+0.104 qi (element +25%, dawn +10%)", what one hour gives each day. */
-function hourYieldText(y: HourYield): string {
-  const bonuses = [
+/** The bonuses on an hour's work: "element +25%", "dawn +10%", "discipline +10%". */
+function hourBonuses(y: HourYield): string[] {
+  return [
     y.element > 0 && `element +${formatPercent(y.element)}`,
     y.dawn > 0 && `dawn +${formatPercent(y.dawn)}`,
     y.discipline > 0 && `discipline +${formatPercent(y.discipline)}`,
-  ].filter(Boolean);
+  ].filter((b): b is string => !!b);
+}
+
+/** "+0.104 qi (element +25%, dawn +10%)", what one hour gives each day. */
+function hourYieldText(y: HourYield): string {
+  const bonuses = hourBonuses(y);
   return `${YIELD_UNITS[y.kind](y)}${bonuses.length ? ` (${bonuses.join(', ')})` : ''}`;
 }
 
@@ -165,8 +171,14 @@ export function DayWheel({ game }: { game: GameState }) {
               {ELEMENT_INFO[BRANCHES[pick.hour]!.element].name.toLowerCase()} hour
             </h3>
             <p className="caption">
-              {HOUR_KINDS[pick.kind].name}: {hourYieldText(pick)} each day.
-              {emptyReason(game, pick) ? ` ${emptyReason(game, pick)}` : ''}
+              {HOUR_KINDS[pick.kind].name}: {YIELD_UNITS[pick.kind](pick)} a day
+              {hourBonuses(pick).length > 0 && (
+                <Why label="This hour's bonuses">
+                  A twelfth of a day's {HOUR_KINDS[pick.kind].name.toLowerCase()}, with{' '}
+                  {hourBonuses(pick).join(', ')}.
+                </Why>
+              )}
+              {emptyReason(game, pick) ? `. ${emptyReason(game, pick)}` : ''}
             </p>
             <div className="seg wheel-kinds" role="group" aria-label="What this hour goes to">
               {HOUR_KIND_IDS.filter((k) => hourKindOpen(c, k)).map((k) => (
@@ -192,9 +204,12 @@ export function DayWheel({ game }: { game: GameState }) {
           </>
         ) : (
           <p className="muted">
-            Tap an hour to give it to qi, study, practice or sleep, and to body and soul once you
-            hold their arts. An hour whose element matches your root pays a quarter more from layer
-            4; dawn's purple qi at 卯 adds a tenth to qi.
+            Tap an hour to change what it goes to.
+            <Why label="How the hours pay">
+              Qi, study, practice and sleep are yours from the start; body and soul hours open with
+              their arts. An hour whose element matches your root pays a quarter more from layer 4,
+              and dawn's purple qi at 卯 adds a tenth to qi.
+            </Why>
           </p>
         )}
       </div>

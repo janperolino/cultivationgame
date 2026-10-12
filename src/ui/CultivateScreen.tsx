@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AUTO_IDS, AUTO_SETTINGS, GRADES } from '../content/cultivation.ts';
-import { ELEMENT_INFO } from '../content/elements.ts';
+import { ELEMENT_INFO, phaseOf } from '../content/elements.ts';
+import { BRANCHES } from '../content/hours.ts';
 import { hasMethod, method } from '../content/methods.ts';
 import { realm } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
@@ -23,7 +24,7 @@ import { canFollow } from '../core/wheel.ts';
 import { DayWheel, WheelStrip } from './DayWheel.tsx';
 import { formatLadder, formatNumber, formatPercent, formatRate, LADDER_LABELS } from './format.ts';
 import { useGame } from './store.ts';
-import { LadderBar, LifeEdgeCard } from './widgets.tsx';
+import { LadderBar, LifeEdgeCard, Why } from './widgets.tsx';
 
 const ITEM_NAMES: Record<string, string> = {
   'foundation-pill': 'Foundation Pill',
@@ -38,11 +39,26 @@ function DayPanel({ game }: { game: GameState }) {
   const r = root(c.root);
   const m = ladderMethod(c, 'qi');
   const elements = c.rootElements.map((e) => ELEMENT_INFO[e].name.toLowerCase()).join(' and ');
-  const qiWhy = m
-    ? `Qi speed ×${speed.total.toFixed(2)}: root ×${speed.root}, method fit ×${speed.fit}, qi density ×${speed.density}, Aptitude ×${speed.aptitude.toFixed(2)}${speed.nodes !== 1 ? `, tree nodes ×${speed.nodes.toFixed(2)}` : ''}${inTutorial(c.qi) ? '. Layers 1–3 ignore the root, the fit and the element hours' : ''}.`
-    : 'No cultivation method yet: qi hours give nothing.';
+  const qiWhy = m ? (
+    <>
+      <span>
+        {m.name} on a {r.name.toLowerCase()} of {elements}.
+      </span>
+      <span>
+        Qi speed ×{speed.total.toFixed(2)}: root ×{speed.root}, method fit ×{speed.fit}, qi density
+        ×{speed.density}, Aptitude ×{speed.aptitude.toFixed(2)}
+        {speed.nodes !== 1 && `, tree nodes ×${speed.nodes.toFixed(2)}`}.
+      </span>
+      <span>
+        {rates.count.qi} qi hours, each a twelfth of a day, with their element, dawn and discipline
+        bonuses.
+      </span>
+      {inTutorial(c.qi) && <span>Layers 1–3 ignore the root, the fit and the element hours.</span>}
+    </>
+  ) : (
+    'No cultivation method yet: qi hours give nothing.'
+  );
   const day = [
-    rates.qi > 0 && `+${formatRate(rates.qi)} qi`,
     rates.body > 0 && `+${formatRate(rates.body)} tempering`,
     rates.soul > 0 && `+${formatRate(rates.soul)} nourishment`,
     `+${formatRate(rates.insight)} insight`,
@@ -57,14 +73,24 @@ function DayPanel({ game }: { game: GameState }) {
         The day
       </h2>
       <DayWheel game={game} />
-      <p className="rates spaced">A day of seclusion: {day.join(' · ')}.</p>
-      <p className="caption">
-        {m ? `${m.name} on a ${r.name.toLowerCase()} of ${elements}. ` : ''}
-        {qiWhy}
+      <p className="rates spaced">
+        A day of seclusion: +{formatRate(rates.qi)} qi
+        <Why label="How qi is worked out">{qiWhy}</Why>
+        {day.length > 0 && ` · ${day.join(' · ')}`}
       </p>
       <div className="settings-row">
         <div className="field">
-          <span id="auto-label">Minor breakthroughs</span>
+          <span>
+            <span id="auto-label">Minor breakthroughs</span>
+            <Why label="How minor breakthroughs run">
+              {c.plan.auto === 'off'
+                ? 'Minor breakthroughs wait for you; offline, a full bar holds.'
+                : c.plan.auto === 'bold'
+                  ? 'Minor breakthroughs go the moment a bar is full.'
+                  : `Minor breakthroughs go on their own at ${formatPercent(AUTO_SETTINGS[c.plan.auto].minOdds)} odds or a bar at 150%, online and off.`}{' '}
+              Major breakthroughs are always yours to call, and never happen offline.
+            </Why>
+          </span>
           <div className="seg" role="group" aria-labelledby="auto-label">
             {AUTO_IDS.map((id) => (
               <button
@@ -85,21 +111,15 @@ function DayPanel({ game }: { game: GameState }) {
             onChange={(e) => setPlan({ burnStones: e.target.checked })}
           />
           Burn spirit stones in qi hours
-          {rates.stoneCap > 0 && (
-            <span className="caption">
-              (up to {formatNumber(rates.stoneCap)} a day, {formatNumber(c.stones)} held)
-            </span>
-          )}
+          <Why label="How stones burn">
+            Each stone burned in a qi hour adds a fifth of a full day of qi hours, so a full burn
+            doubles the day.
+            {rates.stoneCap > 0
+              ? ` Today that is up to ${formatNumber(rates.stoneCap)} stones; you hold ${formatNumber(c.stones)}.`
+              : ''}
+          </Why>
         </label>
       </div>
-      <p className="caption spaced">
-        {c.plan.auto === 'off'
-          ? 'Minor breakthroughs wait for you; offline, a full bar holds.'
-          : c.plan.auto === 'bold'
-            ? 'Minor breakthroughs go the moment a bar is full.'
-            : `Minor breakthroughs go on their own at ${formatPercent(AUTO_SETTINGS[c.plan.auto].minOdds)} odds or a bar at 150%, online and off.`}{' '}
-        Major breakthroughs are always yours to call, and never happen offline.
-      </p>
     </section>
   );
 }
@@ -119,8 +139,11 @@ function RoutinesPanel({ game }: { game: GameState }) {
         Routines
       </h2>
       <p className="muted">
-        Follow a routine learned from a teacher, manual or sect exactly, all twelve hours, and every
-        waking hour pays a tenth more. A wheel you save yourself earns no discipline.
+        Keep a learned routine to the hour for a discipline bonus.
+        <Why label="How discipline works">
+          Follow a routine learned from a teacher, manual or sect exactly, all twelve hours, and
+          every waking hour pays a tenth more. A wheel you save yourself earns no discipline.
+        </Why>
       </p>
       {learned.length > 0 && (
         <ul className="routines">
@@ -138,7 +161,7 @@ function RoutinesPanel({ game }: { game: GameState }) {
                 <p className="caption">From {r.source}.</p>
                 <div className="actions">
                   {isFollowed ? (
-                    <span className="accent">Following: discipline +10% on every waking hour.</span>
+                    <span className="accent">Following</span>
                   ) : (
                     <button
                       type="button"
@@ -239,8 +262,15 @@ function MethodsPanel({ game }: { game: GameState }) {
                   {m.element && (
                     <span className="caption">
                       {' '}
-                      · {ELEMENT_INFO[m.element].name.toLowerCase()}: its hours match{' '}
-                      {ELEMENT_INFO[m.element].name.toLowerCase()} hours
+                      · {ELEMENT_INFO[m.element].name.toLowerCase()}
+                      <Why label="What its element does">
+                        Its hours pay a quarter more at {ELEMENT_INFO[m.element].name.toLowerCase()}{' '}
+                        hours:{' '}
+                        {BRANCHES.filter((b) => b.element === phaseOf(m.element!))
+                          .map((b) => b.hanzi)
+                          .join(' ')}
+                        .
+                      </Why>
                     </span>
                   )}
                 </span>
@@ -292,10 +322,16 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
         </button>
         <span className="caption">
           {fill < 1
-            ? `${formatPercent(fill)} of the way.`
+            ? `${formatPercent(fill)} of the way`
             : odds >= 1
-              ? 'This step always holds.'
-              : 'Filling past full raises the odds; a failure costs a fifth of the bar.'}
+              ? 'This step always holds'
+              : ''}
+          {(fill < 1 || odds < 1) && (
+            <Why label="How the odds work">
+              Filling past full raises the odds, a step for each 10% up to 150%. A failure costs a
+              fifth of the bar and a few days of unsettled qi.
+            </Why>
+          )}
         </span>
       </div>
     );
@@ -322,9 +358,12 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
           )}
         </ul>
         <p className="caption spaced">
-          As things stand: a {grade.name.toLowerCase()} breakthrough ({grade.stages >= 0 ? '+' : ''}
-          {grade.stages} in a fight). Qi past full, insight past the threshold, and the other two
-          ladders at {target.name} each raise the grade.
+          As things stand: a {grade.name.toLowerCase()} breakthrough
+          <Why label="How the grade is worked out">
+            A {grade.name.toLowerCase()} breakthrough is worth {grade.stages >= 0 ? '+' : ''}
+            {grade.stages} stages in a fight. Qi past full, insight past the threshold, and the
+            other two ladders at {target.name} each raise the grade.
+          </Why>
         </p>
         <div className="actions">
           <button
@@ -335,10 +374,10 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
           >
             Break through to {target.name} · {formatPercent(check.odds)}
           </button>
-          <span className="caption">
+          <Why label="What a failure costs">
             A failure {gateName ? `uses the ${gateName}, ` : ''}halves the bar and injures for
             years.
-          </span>
+          </Why>
         </div>
       </>
     );

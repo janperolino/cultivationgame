@@ -1,4 +1,6 @@
-// Pieces the Abode and Cultivate screens share: the ladder bars and the lifespan-edge card.
+// Pieces the screens share: the ladder bars, the lifespan-edge card, and the "?" that shows how a
+// number was worked out.
+import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { stageName } from '../content/realms.ts';
 import { barFill, barSize, lastChance, type LadderId } from '../core/cultivation.ts';
 import { ageYears, atLifespanEdge, lifespanYears, type GameState } from '../core/state.ts';
@@ -114,5 +116,77 @@ export function LifeEdgeCard() {
         </button>
       </div>
     </section>
+  );
+}
+
+/**
+ * A small "?" that shows how a number was worked out, so the sums stay out of the way: on hover,
+ * on keyboard focus, or on a tap, which a tap anywhere else or Escape closes. It opens toward
+ * whichever side of the screen has room.
+ */
+export function Why({
+  label = 'How this is worked out',
+  children,
+}: {
+  label?: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [side, setSide] = useState<'left' | 'right'>('left');
+  /** How wide the tip may grow on its side before it would leave the screen. */
+  const [room, setRoom] = useState(290);
+  const id = useId();
+  const button = useRef<HTMLButtonElement>(null);
+  const wrap = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: Event) => {
+      if (
+        e instanceof KeyboardEvent ? e.key === 'Escape' : !wrap.current?.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', close);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', close);
+    };
+  }, [open]);
+  const place = () => {
+    const r = button.current?.getBoundingClientRect();
+    if (!r) return;
+    const right = r.left > window.innerWidth / 2;
+    setSide(right ? 'right' : 'left');
+    setRoom(Math.floor(right ? r.right - 2 : window.innerWidth - r.left - 2));
+  };
+  return (
+    <span ref={wrap} className={`why${open ? ' is-open' : ''}`} onMouseEnter={place}>
+      <button
+        ref={button}
+        type="button"
+        className="why-button"
+        aria-label={label}
+        aria-describedby={id}
+        aria-expanded={open}
+        onFocus={place}
+        onBlur={() => setOpen(false)}
+        onClick={() => {
+          place();
+          setOpen((o) => !o);
+        }}
+      >
+        ?
+      </button>
+      <span
+        role="tooltip"
+        id={id}
+        className={`why-tip why-${side}`}
+        style={{ '--tip-room': `${room}px` } as CSSProperties}
+      >
+        {children}
+      </span>
+    </span>
   );
 }

@@ -420,6 +420,103 @@ select {
   opacity: 0.85;
 }
 
+/* The Abode's seated cultivator, the dantian glowing with qi as the bar fills. */
+.abode-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 26px;
+}
+
+.abode-info {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.seated {
+  display: block;
+  flex: 0 0 auto;
+  width: 200px;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.seated-head,
+.seated-body {
+  fill: color-mix(in srgb, var(--text) 9%, var(--void));
+  stroke: color-mix(in srgb, var(--crack) 30%, transparent);
+  stroke-width: 0.7;
+}
+
+.dantian-stop-core {
+  stop-color: color-mix(in srgb, var(--crack) 35%, white);
+  stop-opacity: 1;
+}
+
+.dantian-stop-mid {
+  stop-color: var(--crack);
+  stop-opacity: 0.55;
+}
+
+.dantian-stop-edge {
+  stop-color: var(--crack);
+  stop-opacity: 0;
+}
+
+.seated-aura {
+  fill: url(#dantian-aura);
+  opacity: 0.16;
+}
+
+.dantian-halo {
+  fill: url(#dantian-glow);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dantian-breathe 4.8s ease-in-out infinite;
+}
+
+.dantian-core {
+  fill: color-mix(in srgb, var(--crack) 45%, white);
+  filter: drop-shadow(0 0 3px var(--crack));
+}
+
+.seated.is-full .dantian-halo {
+  animation-duration: 2.4s;
+}
+
+.seated.is-full .seated-aura {
+  opacity: 0.3;
+}
+
+.seated.is-unsettled .dantian-halo,
+.seated.is-unsettled .dantian-core {
+  opacity: 0.4;
+}
+
+.seated.is-dormant .dantian-halo,
+.seated.is-dormant .seated-aura {
+  display: none;
+}
+
+.seated.is-dormant .dantian-core {
+  opacity: 0.25;
+  filter: none;
+}
+
+@keyframes dantian-breathe {
+  0%,
+  100% {
+    transform: scale(0.88);
+    opacity: 0.75;
+  }
+
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
 .card-away,
 .notice,
 .card-ready {
@@ -580,6 +677,75 @@ select {
   gap: 14px 24px;
   align-items: end;
   margin-top: 14px;
+}
+
+/* The "?" beside a number: its sums open on hover, focus or a tap. */
+.why {
+  position: relative;
+  display: inline-block;
+  margin-left: 4px;
+  vertical-align: 1px;
+  line-height: 1;
+}
+
+.why-button {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid var(--edge-strong);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 14px;
+  cursor: help;
+}
+
+.why-button:hover,
+.why.is-open .why-button {
+  border-color: var(--accent-edge);
+  color: var(--accent);
+}
+
+.why-tip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 30;
+  width: max-content;
+  max-width: min(290px, var(--tip-room, 78vw));
+  padding: 8px 10px;
+  background: var(--glass-strong);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-small);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-align: left;
+  white-space: normal;
+}
+
+.why-tip > span {
+  display: block;
+}
+
+.why-left {
+  left: -6px;
+}
+
+.why-right {
+  right: -6px;
+}
+
+.why:hover .why-tip,
+.why-button:focus-visible + .why-tip,
+.why.is-open .why-tip {
+  display: block;
 }
 
 .reqs {
@@ -1110,5 +1276,9 @@ select {
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
+  }
+
+  .dantian-halo {
+    animation: none;
   }
 }
