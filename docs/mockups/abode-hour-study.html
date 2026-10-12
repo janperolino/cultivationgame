@@ -1,0 +1,325 @@
+<!doctype html>
+<!-- A study for showing the hour on the Abode without an object in the space (planning,
+     2026-10-12, after the ring and the mat were scrapped). Two layers: the seated figure as a
+     sundial, its shadow on the floor turning and lengthening with the sun, and the hour as where
+     the light falls on the glass. The motes still arrive from everywhere. The space stays empty. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abode Hour Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500&family=Ma+Shan+Zheng&display=swap">
+<style>
+:root {
+  --page: #020203; --void: #040507; --obsidian: #07080b;
+  --text: #e9e5da; --muted: #8d949d; --accent: #d6ab4c; --crack: #7fc7d9; --edge: rgba(255,255,255,0.075);
+  --dawn: #c4a3f0; --qi-wood: #86d19a; --qi-fire: #ee9670; --qi-earth: #dcb359; --qi-metal: #e4e7ee; --qi-yin: #7d84d6;
+  --font-display: 'Cormorant Garamond', Georgia, serif; --font-brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  --font-ui: Inter, system-ui, 'Segoe UI', sans-serif; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font: 14px/1.55 var(--font-ui); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 56px; display: grid; gap: 16px; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 5vw, 40px); margin: 0; }
+.intro p { margin: 6px 0 0; max-width: 72ch; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: end; padding: 12px 16px; border: 1px solid var(--edge); border-radius: 10px; background: rgba(10,12,16,0.8); }
+.control { display: grid; gap: 6px; }
+.control > span { font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
+.seg { display: inline-flex; border: 1px solid var(--edge); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 6px 11px; font: inherit; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--edge); }
+.seg button[aria-pressed="true"] { background: rgba(255,255,255,0.07); color: var(--text); }
+input[type="range"] { accent-color: var(--crack); width: 150px; }
+label.check { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.row { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; }
+@media (max-width: 820px) { .row { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--edge); background: var(--void); }
+.stage svg.cracks { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cracks path { fill: none; stroke: var(--crack); stroke-linecap: round; }
+.cracks .glow { stroke-width: 6; opacity: 0.08; filter: blur(3px); }
+.cracks .line { stroke-width: 0.8; opacity: 0.45; }
+.seat {
+  position: relative; margin: 22px auto; width: min(100% - 32px, 560px); aspect-ratio: 1 / 0.86; border-radius: 12px; overflow: hidden;
+  background: radial-gradient(120% 70% at 50% -10%, rgba(255,255,255,0.05), transparent 60%), var(--obsidian);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 18px 40px -18px rgba(0,0,0,0.9), inset 0 1px 14px -8px rgba(127,199,217,0.45), 0 0 42px -14px rgba(127,199,217,0.4);
+}
+.seat canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.seat .cap { position: absolute; left: 14px; right: 14px; bottom: 10px; display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); pointer-events: none; }
+.seat .cap b { color: var(--text); font-weight: 500; font-family: var(--font-display); font-size: 15px; }
+.side { display: grid; gap: 12px; align-content: start; }
+.card { padding: 12px 14px; border: 1px solid var(--edge); border-radius: 10px; background: rgba(10,12,16,0.8); display: grid; gap: 8px; }
+.card h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+.card p { margin: 0; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="intro">
+    <h1>The hour without an object</h1>
+    <p>The ring and the mat are gone and the space stays empty. Two ways the hour can show on what is already there: the figure casts a shadow that turns with the sun, and the light on the glass comes from where the sun is. Drag the hour or let the clock run. Hover to catch an orb.</p>
+  </div>
+
+  <div class="controls">
+    <div class="control"><span>Layers</span>
+      <div style="display:flex; gap:14px; flex-wrap:wrap">
+        <label class="check"><input type="checkbox" id="shadow" checked> the sundial shadow</label>
+        <label class="check"><input type="checkbox" id="wash" checked> the light wash</label>
+        <label class="check"><input type="checkbox" id="pool" checked> the dantian lights the floor at night</label>
+      </div>
+    </div>
+    <div class="control"><span>Hour</span><input type="range" id="hour" min="0" max="12" step="0.02" value="3.5"></div>
+    <div class="control"><span>Clock</span><input type="range" id="clock" min="0" max="3" step="0.05" value="0.6"></div>
+    <div class="control"><span>Sun rises on the</span>
+      <div class="seg" id="side"><button data-v="1" aria-pressed="true">right</button><button data-v="-1">left</button></div>
+    </div>
+    <div class="control"><span>Shadow strength</span><input type="range" id="strength" min="0" max="1" step="0.05" value="0.8"></div>
+    <div class="control"><span>Wash strength</span><input type="range" id="washStrength" min="0" max="1" step="0.05" value="0.7"></div>
+    <label class="check"><input type="checkbox" id="reduced"> reduced motion</label>
+  </div>
+
+  <div class="row">
+    <div class="stage">
+      <svg class="cracks" viewBox="0 0 800 600" preserveAspectRatio="none" aria-hidden="true">
+        <path class="glow" d="M-10 120 C120 150 230 90 380 140 S640 120 810 60"/><path class="line" d="M-10 120 C120 150 230 90 380 140 S640 120 810 60"/>
+        <path class="glow" d="M560 610 C520 480 640 420 600 300 S700 140 650 -10"/><path class="line" d="M560 610 C520 480 640 420 600 300 S700 140 650 -10"/>
+        <path class="glow" d="M-10 470 C110 450 160 520 300 500"/><path class="line" d="M-10 470 C110 450 160 520 300 500"/>
+      </svg>
+      <div class="seat">
+        <canvas id="c"></canvas>
+        <div class="cap"><span><b id="hourName">卯 Dawn</b><span id="hourKind">, qi</span></span><span id="state">qi gathering</span></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="card"><h3>The sundial</h3>
+        <p>The figure is the gnomon. At dawn the shadow is long and falls away from the sun; at noon it is a pool under the legs; at dusk it is long the other way. At night there is no sun, so the only light on the floor is the dantian's own, brighter as the bar fills. Nothing is added to the space, and nothing moves on its own except the sun.</p></div>
+      <div class="card"><h3>The light wash</h3>
+        <p>A faint light on the glass from where the sun stands: warm from the horizon at dawn, pale from above at noon, orange at dusk, and the yin blue low along the floor at night. Weak on purpose: the hour should be felt before it is read. The motes arrive from everywhere as before, since this is light, not qi.</p></div>
+      <div class="card"><h3>Both</h3>
+        <p>They are the same sun, so they agree: when the wash comes from the right, the shadow falls left. Together they say the hour; the caption still says it in words.</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const $ = (id) => document.getElementById(id);
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+const FIGURE_PATH = 'M0 -31 L-5 -31 C-7 -27 -13 -26 -19 -24 C-26 -21 -28 -14 -28 -6 C-28 2 -30 9 -33 15 C-37 20 -44 22 -49 26 C-54 30 -53 37 -46 39 C-32 43 -14 42 0 42 C14 42 32 43 46 39 C53 37 54 30 49 26 C44 22 37 20 33 15 C30 9 28 2 28 -6 C28 -14 26 -21 19 -24 C13 -26 7 -27 5 -31 Z M-20 -13 C-18 -5 -17 2 -14 8 C-18 6 -21 -3 -20 -13 Z M20 -13 C18 -5 17 2 14 8 C18 6 21 -3 20 -13 Z';
+const HEAD = { x: 0, y: -41, r: 10.5 };
+const DANTIAN = { x: 0, y: 14 };
+const BASE_Y = 42;
+const figure = new Path2D(FIGURE_PATH);
+
+const HOURS = [
+  ['子', 'Midnight', 'sleep'], ['丑', 'Ox', 'sleep'], ['寅', 'Tiger', 'qi'], ['卯', 'Dawn', 'qi'],
+  ['辰', 'Dragon', 'qi'], ['巳', 'Snake', 'study'], ['午', 'Noon', 'body'], ['未', 'Goat', 'qi'],
+  ['申', 'Monkey', 'practice'], ['酉', 'Dusk', 'qi'], ['戌', 'Dog', 'soul'], ['亥', 'Pig', 'sleep'],
+];
+const QI_TINT = (i) => i === 3 ? css('--dawn') : (i <= 1 || i === 11) ? css('--qi-yin') : [null, null, css('--qi-wood'), null, css('--qi-earth'), css('--qi-fire'), css('--qi-fire'), css('--qi-earth'), css('--qi-metal'), css('--qi-metal'), css('--qi-earth'), null][i] || css('--crack');
+
+let W = 0, H = 0, dpr = 1, t = 0, last = 0, cx = 0, cy = 0, S = 1;
+let hour = 3.5, side = 1, reduced = false;
+const motes = [], sparks = [], orbs = [];
+let fill = 0.55, pointer = null, nextOrb = 2;
+
+function layout() {
+  const r = canvas.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1);
+  W = r.width; H = r.height; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cx = W / 2; cy = H * 0.5; S = Math.min(W, H) / 230;
+}
+addEventListener('resize', layout);
+const toScreen = (x, y) => [cx + x * S, cy + y * S];
+function glow(x, y, r, color, a) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, color); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalAlpha = a; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+}
+
+// --- the sun -----------------------------------------------------------------------------------
+// The wheel's day runs from 卯 (dawn, hour 3) over 午 (noon, 6) to 酉 (dusk, 9). The sun's arc
+// angle runs 0 at dawn to π at dusk; elevation is its sine. Outside that, night.
+function sun() {
+  const phi = (hour - 3) / 6 * Math.PI;
+  const up = hour >= 3 && hour <= 9;
+  const elev = up ? Math.sin(phi) : 0;
+  // Where the sun stands relative to the figure: along the horizon, right or left, and up.
+  const dx = Math.cos(phi) * side, dy = elev;
+  // Twilight: the half hour either side of dawn and dusk, where the light is warm.
+  const twilight = up ? Math.max(0, 1 - Math.min(hour - 3, 9 - hour) / 0.8) : 0;
+  return { up, elev, dx, dy, phi, twilight };
+}
+function sunColor(s) {
+  // Warm at the horizon, pale at noon, yin blue at night.
+  if (!s.up) return css('--qi-yin');
+  const warm = '#e8a874', pale = '#e9e5da';
+  const k = Math.min(1, s.elev * 1.4);
+  return mix(warm, pale, k);
+}
+function mix(a, b, k) {
+  const p = (c) => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+  const A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',')})`;
+}
+
+// --- the light wash ----------------------------------------------------------------------------
+function drawWash(s) {
+  const strength = Number($('washStrength').value);
+  if (strength === 0) return;
+  const color = sunColor(s);
+  if (s.up) {
+    // The light comes from where the sun stands, beyond the panel's edge.
+    const sx = cx + s.dx * W * 0.75, sy = cy - s.dy * H * 0.95 + H * 0.2;
+    const R = Math.max(W, H) * 1.1;
+    const a = strength * (0.12 + 0.12 * s.elev) * (1 - 0.3 * s.twilight);
+    glow(sx, sy, R, color, a);
+    // At twilight a second, warmer band along the horizon.
+    if (s.twilight > 0) { const g = ctx.createLinearGradient(0, H * 0.5, 0, H); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, '#e07a4a'); ctx.globalAlpha = strength * 0.16 * s.twilight; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+  } else {
+    // Night: the yin blue low along the floor, and nothing from above.
+    const g = ctx.createLinearGradient(0, H * 0.55, 0, H); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, color);
+    ctx.globalAlpha = strength * 0.2; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+  }
+}
+
+// --- the sundial shadow --------------------------------------------------------------------------
+// On black glass a shadow has nothing to darken, so the sun first lights the floor round the figure
+// and the shadow is cut out of that light. The floor light is drawn offscreen, the figure's shadow
+// erased from it, and the result laid on the seat.
+const floor = document.createElement('canvas');
+const fctx = floor.getContext('2d');
+function drawShadow(s) {
+  const strength = Number($('strength').value);
+  if (!s.up || strength === 0) return;
+  if (floor.width !== canvas.width || floor.height !== canvas.height) { floor.width = canvas.width; floor.height = canvas.height; }
+  fctx.setTransform(dpr, 0, 0, dpr, 0, 0); fctx.clearRect(0, 0, W, H);
+  const [bx, by] = toScreen(0, BASE_Y);
+  // The lit floor: an ellipse of sunlight, pulled toward the sun's side, stronger the higher the sun.
+  fctx.save(); fctx.translate(bx + s.dx * W * 0.08, by + 6); fctx.scale(1, 0.36);
+  const R = W * 0.62; const g = fctx.createRadialGradient(0, 0, 0, 0, 0, R);
+  g.addColorStop(0, sunColor(s)); g.addColorStop(1, 'rgba(0,0,0,0)');
+  fctx.globalAlpha = strength * (0.10 + 0.16 * Math.min(1, s.elev * 1.6)); fctx.fillStyle = g;
+  fctx.beginPath(); fctx.arc(0, 0, R, 0, Math.PI * 2); fctx.fill(); fctx.restore();
+  // The shadow: the figure projected along the floor away from the sun, erased from the light.
+  const L = Math.min(2.4, 0.35 / Math.max(0.12, Math.tan(s.elev * Math.PI / 2)));
+  const dirX = -s.dx, dirY = -0.22 * Math.cos(s.phi) ** 2 - 0.12;
+  fctx.save(); fctx.globalCompositeOperation = 'destination-out';
+  fctx.translate(bx, by); fctx.transform(S, 0, -L * dirX * S, -L * dirY * 0.5 * S, 0, 0); fctx.translate(0, -BASE_Y);
+  fctx.fillStyle = 'rgba(0,0,0,0.9)'; fctx.filter = `blur(${1 + L * 1.2}px)`;
+  fctx.fill(figure, 'evenodd'); fctx.beginPath(); fctx.arc(HEAD.x, HEAD.y, HEAD.r, 0, Math.PI * 2); fctx.fill();
+  fctx.restore();
+  // The contact shadow under the legs, at any hour the sun is up.
+  fctx.save(); fctx.globalCompositeOperation = 'destination-out'; fctx.translate(bx, by + 2); fctx.scale(1, 0.28);
+  const c = fctx.createRadialGradient(0, 0, 0, 0, 0, 50 * S / 2.2); c.addColorStop(0, 'rgba(0,0,0,0.9)'); c.addColorStop(1, 'rgba(0,0,0,0)');
+  fctx.fillStyle = c; fctx.beginPath(); fctx.arc(0, 0, 50 * S / 2.2, 0, Math.PI * 2); fctx.fill(); fctx.restore();
+  ctx.drawImage(floor, 0, 0, W, H);
+}
+function drawPool(s) {
+  // At night, the dantian's own light on the floor; by day the sun drowns it.
+  const night = 1 - Math.min(1, s.elev * 3);
+  if (night <= 0) return;
+  const [bx, by] = toScreen(0, BASE_Y + 2);
+  ctx.save(); ctx.translate(bx, by); ctx.scale(1, 0.3);
+  glow(0, 0, (40 + 40 * fill) * S / 2.2, '#7fc7d9', night * (0.08 + 0.18 * fill));
+  ctx.restore();
+}
+
+// --- motes, circulation, orbs (as the seat has them) ---------------------------------------------
+function currentTint() { return QI_TINT(Math.floor(hour) % 12); }
+function spawnMote() {
+  const a = Math.random() * Math.PI * 2, R = Math.max(W, H) * 0.6;
+  motes.push({ x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R, tint: currentTint(), life: 0, speed: 0.5 + Math.random() * 0.5, wob: Math.random() * 6 });
+}
+function stepMotes(dt) {
+  const [hx, hy] = toScreen(HEAD.x, HEAD.y - 6); const [px, py] = toScreen(0, 2);
+  for (let i = motes.length - 1; i >= 0; i--) {
+    const m = motes[i]; m.life += dt * m.speed * (reduced ? 0.4 : 1);
+    const tx = m.life < 0.5 ? hx : px, ty = m.life < 0.5 ? hy : py;
+    m.x += (tx - m.x) * dt * 1.4 + Math.sin(t * 3 + m.wob) * 0.3; m.y += (ty - m.y) * dt * 1.4;
+    if (Math.hypot(tx - m.x, ty - m.y) < 6) { motes.splice(i, 1); sparks.push({ u: Math.random(), tint: m.tint, life: 2.5 }); continue; }
+    glow(m.x, m.y, 5, m.tint, 0.7); ctx.fillStyle = m.tint; ctx.beginPath(); ctx.arc(m.x, m.y, 1.2, 0, Math.PI * 2); ctx.fill();
+  }
+}
+function loopPoint(u) { const a = u * Math.PI * 2; return toScreen(Math.sin(a) * 9, -22 + Math.cos(a) * -30 + 12); }
+function drawCirculation(dt) {
+  ctx.strokeStyle = 'rgba(127,199,217,0.18)'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let i = 0; i <= 48; i++) { const [x, y] = loopPoint(i / 48); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.stroke();
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i]; s.u = (s.u + dt * (reduced ? 0.1 : 0.35)) % 1; s.life -= dt;
+    if (s.life <= 0) { sparks.splice(i, 1); fill = Math.min(1.1, fill + 0.004); continue; }
+    const [x, y] = loopPoint(s.u); glow(x, y, 4, s.tint, 0.9);
+  }
+  const [dx, dy] = toScreen(DANTIAN.x, DANTIAN.y);
+  glow(dx, dy, (10 + 18 * fill) * S / 2.2, '#7fc7d9', 0.35 + 0.4 * fill); glow(dx, dy, 3 * S / 2.2, '#e2f4f8', 0.9);
+}
+function stepOrbs(dt) {
+  nextOrb -= dt;
+  if (nextOrb <= 0) {
+    nextOrb = 3 + Math.random() * 3; const a = Math.random() * Math.PI * 2, R = Math.min(W, H) * 0.42;
+    orbs.push({ x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R, tint: currentTint(), life: 6, seed: Math.random() * 7 });
+  }
+  const [dx, dy] = toScreen(DANTIAN.x, DANTIAN.y);
+  for (let i = orbs.length - 1; i >= 0; i--) {
+    const o = orbs[i]; o.life -= dt; if (o.life <= 0) { orbs.splice(i, 1); continue; }
+    if (!reduced) { o.x += (dx - o.x) * dt * 0.12 + Math.sin(t * 1.3 + o.seed) * 0.25; o.y += (dy - o.y) * dt * 0.12; }
+    if (pointer && Math.hypot(pointer[0] - o.x, pointer[1] - o.y) < 16) { orbs.splice(i, 1); for (let k = 0; k < 6; k++) sparks.push({ u: Math.random(), tint: o.tint, life: 2 }); fill = Math.min(1.1, fill + 0.03); continue; }
+    const pulse = reduced ? 1 : 1 + 0.15 * Math.sin(t * 4 + o.seed);
+    glow(o.x, o.y, 11 * pulse, o.tint, Math.min(1, o.life)); glow(o.x, o.y, 3.5, '#ffffff', 0.85 * Math.min(1, o.life));
+  }
+}
+function drawFigure(s) {
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(S, S);
+  const breath = reduced ? 0 : Math.sin(t * 0.9) * 0.6;
+  ctx.fillStyle = '#14181e'; ctx.strokeStyle = 'rgba(233,229,218,0.16)'; ctx.lineWidth = 0.8 / S;
+  ctx.translate(0, -breath); ctx.fill(figure, 'evenodd'); ctx.stroke(figure);
+  ctx.beginPath(); ctx.arc(HEAD.x, HEAD.y - breath * 0.5, HEAD.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  // The lit side of the figure: a faint rim on the side the sun is, so the body agrees with the shadow.
+  if (s.up && $('wash').checked) {
+    ctx.save(); ctx.clip(figure, 'evenodd');
+    const g = ctx.createLinearGradient(s.dx * 40, 0, -s.dx * 20, 0); g.addColorStop(0, sunColor(s)); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = 0.10 + 0.08 * s.elev; ctx.fillStyle = g; ctx.fillRect(-60, -60, 120, 120); ctx.restore();
+  }
+  ctx.restore();
+}
+
+// --- loop ----------------------------------------------------------------------------------------
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now; t += dt;
+  const clock = Number($('clock').value);
+  if (clock > 0) { hour = (hour + dt * clock * 0.25) % 12; $('hour').value = hour.toFixed(2); }
+  const s = sun();
+  ctx.clearRect(0, 0, W, H);
+  if ($('wash').checked) drawWash(s);
+  if ($('pool').checked) drawPool(s);
+  if ($('shadow').checked) drawShadow(s);
+  const kind = HOURS[Math.floor(hour) % 12][2];
+  const rate = kind === 'qi' ? 5 : kind === 'sleep' ? 0.3 : 0.8;
+  if (Math.random() < rate * dt && motes.length < 140) spawnMote();
+  drawFigure(s);
+  drawCirculation(dt);
+  stepMotes(dt);
+  stepOrbs(dt);
+  const i = Math.floor(hour) % 12;
+  $('hourName').textContent = `${HOURS[i][0]} ${HOURS[i][1]}`; $('hourKind').textContent = `, ${kind}`;
+  $('state').textContent = fill > 1 ? 'the dantian overflows' : fill > 0.7 ? 'qi thick as river mist' : 'qi gathering';
+  fill = Math.max(0.2, fill - dt * 0.004);
+  requestAnimationFrame(frame);
+}
+
+$('hour').addEventListener('input', () => { hour = Number($('hour').value); $('clock').value = 0; });
+document.getElementById('side').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; for (const x of e.currentTarget.querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b)); side = Number(b.dataset.v); });
+$('reduced').addEventListener('change', () => { reduced = $('reduced').checked; });
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) { $('reduced').checked = true; reduced = true; }
+canvas.addEventListener('pointermove', (e) => { const r = canvas.getBoundingClientRect(); pointer = [e.clientX - r.left, e.clientY - r.top]; });
+canvas.addEventListener('pointerleave', () => { pointer = null; });
+
+layout(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
