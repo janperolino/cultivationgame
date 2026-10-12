@@ -712,7 +712,7 @@ The game is dark glowing slate with a gold accent, built for desktop first and u
 
 | Screen | What it shows | Ships in |
 |---|---|---|
-| Abode (home) | realm and stage, qi, body and soul bars, age against lifespan, today's wheel and routine, the spirit pool from M4, alerts | M1 |
+| Abode (home) | your silhouette seated cross-legged, the dantian glowing brighter as the qi bar fills; realm and stage, qi, body and soul bars, age against lifespan, today's wheel and routine, the spirit pool from M4, alerts | M1 |
 | Cultivate | the day wheel of twelve hours with its element hours and routines, the method on each ladder, and breakthrough checks and their odds | M1 |
 | Trees | the Qi, Body and Soul trees, then the Daos and Ways: a canvas you drag and zoom, with nine tier bands of branching paths, sealed nodes dimmed and a re-centre button; a node's details open in an overlay | M1, Daos M2, Ways M3 |
 | Techniques | every technique with its mastery level, requirements and what is still sealed | M1 |
@@ -729,7 +729,7 @@ The game is dark glowing slate with a gold accent, built for desktop first and u
 
 **Coming back.** After time away, a card shows what happened while you were in seclusion: qi gained, breakthroughs, queue output, events. From M5 it includes the steward's report.
 
-Numbers use short forms past ten thousand (12.4k, 3.1M), and every number that matters has a tooltip with how it was worked out.
+Numbers use short forms past ten thousand (12.4k, 3.1M), and every number that matters has a small "?" beside it that shows how it was worked out, on hover or a tap, so the sums stay out of the way.
 
 ## Saves
 
