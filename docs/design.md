@@ -704,6 +704,8 @@ GLM maps what you type to legal actions and may add a creativity bonus of 0 to +
 
 **Effects fill the wait.** Every outcome already carries what an effect needs: the technique's form (slash, thrust, palm, projectile, aura), its element or damage type, the attacker's realm, and the result (hit, critical, graze, miss, backfire). The screen layers those into one effect, with no model involved. Form sets the shape, element the color and particles, and realm the scale: close to the target at Qi Condensation, across the screen at Foundation, a shaking screen at Core Formation and the whole view from Nascent Soul up, as Scale of destruction describes. A critical flares, a graze fizzles and a backfire turns the effect on you. The outcome arrives before the narrator's first word, so the effect plays in that gap. Reduced motion swaps it for a still flash, and sound hangs off the same tags.
 
+A later upgrade, low priority, is the fight seen from far away: the camera pulls back by realm until the two cultivators are points of light with the land between them, and the same four tags drive what passes between the orbs and what the ground remembers. `docs/mockups/orb-fight-study.html` is the study (2026-10-12). It needs the effects honed well before it earns its place, so the screen effects above ship first.
+
 ## How GLM fits in
 
 GLM gets five jobs, all with thinking off except the rare heart-demon scene. None of them can change a number or an item; the engine applies everything.
