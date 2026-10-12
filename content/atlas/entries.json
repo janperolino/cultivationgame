@@ -12568,7 +12568,7 @@
  },
  {
   "id": "qm-anbian-fu",
-  "editedAt": "2026-10-11T12:00:00Z",
+  "editedAt": "2026-10-12T18:00:00Z",
   "editedBy": "claude",
   "hanzi": "安边府",
   "kind": "kingdom",
@@ -12581,7 +12581,7 @@
   "name": "March of Pacified Borders",
   "parent": "qm-bianhuang",
   "pinyin": "Anbian Fu",
-  "status": "draft",
+  "status": "canon",
   "summary": "The empire's frontier march, ruled by the Gongsun family of generals. Farmers plow with spears at hand, and every village has a watchtower and a beast-pit.",
   "tags": [
    "starting kingdom",
@@ -12725,11 +12725,11 @@
  },
  {
   "id": "qm-bianhuang",
-  "editedAt": "2026-10-11T12:00:00Z",
+  "editedAt": "2026-10-12T18:00:00Z",
   "editedBy": "claude",
   "hanzi": "边荒",
   "kind": "region",
-  "lore": "Across the [[Jade Strait]] lies beast country, and at low tide the island chain is a road in both directions, though it runs on for a season's travel. Spirit beasts work north along the chain to raid herds and villages; human sects go over to hunt cores, eggs and herbs; half-bloods and smugglers pass goods island by island, by night, toward [[Shared Roost City]]. The empire holds the coast with fortress towns and conscript garrisons, and pays for every beast core brought in. The karst is honeycombed with caves where raiders, smugglers and beasts all hide. Raids have tripled in five years, and the beasts coming over are older.",
+  "lore": "Across the [[Jade Strait]] lies beast country, and at low tide the island chain is a road in both directions, though walking it island to island is a season's travel at the least. Spirit beasts work north along the chain to raid herds and villages; human sects go over to hunt cores, eggs and herbs; half-bloods and smugglers pass goods island by island, by night, toward [[Shared Roost City]]. The empire holds the coast with fortress towns and conscript garrisons, and pays for every beast core brought in. The karst is honeycombed with caves where raiders, smugglers and beasts all hide. Raids have tripled in five years, and the beasts coming over are older.",
   "map": {
    "x": 176000,
    "y": 214000
@@ -12737,7 +12737,7 @@
   "name": "The Border Wilds",
   "parent": "qiming",
   "pinyin": "Bianhuang",
-  "status": "draft",
+  "status": "canon",
   "summary": "Karst hills on the Morning Star Continent's southwest coast where the island chain to Vast Wilds begins. Beasts raid, smugglers cross at low tide and every family owes a child to the wall.",
   "tags": [
    "frontier",
@@ -13139,7 +13139,7 @@
  },
  {
   "id": "qm-duigu-qiang",
-  "editedAt": "2026-10-11T13:00:00Z",
+  "editedAt": "2026-10-12T18:00:00Z",
   "editedBy": "claude",
   "hanzi": "堆骨墙",
   "kind": "landmark",
@@ -13151,7 +13151,7 @@
   "name": "The Wall of Piled Bones",
   "parent": "qm-bianhuang",
   "pinyin": "Duigu Qiang",
-  "status": "draft",
+  "status": "canon",
   "summary": "A wall of earth and beast bones along the coastal hills, built over a thousand years of raids. On Ghost Month nights the bones howl.",
   "tags": [
    "frontier",
@@ -13639,11 +13639,11 @@
  },
  {
   "id": "qm-hexue-jing",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-12T18:00:00Z",
   "editedBy": "claude",
   "hanzi": "合血境",
   "kind": "realm",
-  "lore": "Inside is a green world where beasts and humans once lived as one people, with ruined villages, bloodline altars and herbs that awaken dormant bloodlines. Half-bloods go in to learn what they are; tamers go in to strengthen their bonds; pure humans who try the gate are thrown back with broken bones. The Night Bridge Society guards the cave and charges entry. The next opening is next spring.",
+  "lore": "Inside is a green world where beasts and humans once lived as one people, with ruined villages, bloodline altars and herbs that awaken dormant bloodlines. Half-bloods go in to learn what they are; tamers go in to strengthen their bonds; pure humans who try the gate are thrown back with broken bones. The Night Bridge Society guards the cave and charges entry. It last opened five years ago.",
   "map": {
    "x": 195000,
    "y": 222000
@@ -13651,7 +13651,7 @@
   "name": "Realm of Mingled Blood",
   "parent": "qm-bianhuang",
   "pinyin": "Hexue Jing",
-  "status": "draft",
+  "status": "canon",
   "summary": "A shard world whose gate opens in a karst cave every seven years. It admits only those below Foundation who carry beast blood, or a tamer bonded to a beast.",
   "tags": [
    "secret realm",
@@ -14514,7 +14514,7 @@
  },
  {
   "id": "qm-mihun-shilin",
-  "editedAt": "2026-10-11T13:00:00Z",
+  "editedAt": "2026-10-12T18:00:00Z",
   "editedBy": "claude",
   "hanzi": "迷魂石林",
   "kind": "forbidden",
@@ -14527,7 +14527,7 @@
   "name": "Soul-Lost Stone Forest",
   "parent": "qm-bianhuang",
   "pinyin": "Mihun Shilin",
-  "status": "draft",
+  "status": "canon",
   "summary": "A maze of stone pillars where a great python from the Vast Wilds Continent has made its den. Its illusions turn the forest into a trap no map survives.",
   "tags": [
    "beasts",
@@ -14619,11 +14619,11 @@
  },
  {
   "id": "qm-muling-guo",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-12T18:00:00Z",
   "editedBy": "claude",
   "hanzi": "牧灵国",
   "kind": "kingdom",
-  "lore": "The Kingdom of Spirit Herders's ranches raise thunder-horned deer, scale-horses and war hounds from eggs and cubs bought from smugglers. The empire buys every mount at a good price, and the herder families are rich, armed and hunted. Beast Court agents in human form cross the strait to kill tamers and free their beasts. Children are bonded to a hatchling at seven and grow up with it.",
+  "lore": "The Kingdom of Spirit Herders's ranches raise thunder-horned deer, scale-horses and war hounds from eggs and cubs bought from smugglers. The empire buys every mount at a good price, and the herder families are rich, armed and hunted. Beast Court agents, half-bloods in its pay and now and then an old beast, cross the strait to kill tamers and free their beasts. Children are bonded to a hatchling at seven and grow up with it.",
   "map": {
    "r": 4500,
    "x": 168000,
@@ -14632,7 +14632,7 @@
   "name": "Kingdom of Spirit Herders",
   "parent": "qm-bianhuang",
   "pinyin": "Muling Guo",
-  "status": "draft",
+  "status": "canon",
   "summary": "A kingdom of beast tamers who raise war mounts for the empire from eggs smuggled out of the Vast Wilds Continent. The Beast Court has put a price on every one of them.",
   "tags": [
    "starting kingdom",
@@ -14641,7 +14641,7 @@
    "frontier"
   ],
   "top": "Foundation Establishment",
-  "truth": "The kingdom's best stallion bloodline comes from a beast that wandered over the strait on its own and asked to stay. It speaks, and has asked them to keep that quiet.",
+  "truth": "The kingdom's best stallion bloodline comes from a beast that wandered over the strait on its own and asked to stay. It speaks, though it has never shown a realm that should allow it, and has asked them to keep that quiet.",
   "way": ""
  },
  {
@@ -14881,7 +14881,7 @@
  },
  {
   "id": "qm-shiyan-guo",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-12T18:00:00Z",
   "editedBy": "claude",
   "hanzi": "石眼国",
   "kind": "kingdom",
@@ -14894,7 +14894,7 @@
   "name": "Kingdom of Stone Eyes",
   "parent": "qm-bianhuang",
   "pinyin": "Shiyan Guo",
-  "status": "draft",
+  "status": "canon",
   "summary": "Sinkhole villages in the karst, ruled by a council of cave clans. Half-blood families hide here, and nobody asks what is in the lower caves.",
   "tags": [
    "starting kingdom",
@@ -14908,7 +14908,7 @@
  },
  {
   "id": "qm-shoukou-cheng",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-12T18:00:00Z",
   "editedBy": "claude",
   "hanzi": "守口城",
   "kind": "city",
@@ -14920,7 +14920,7 @@
   "name": "City of the Guarded Mouth",
   "parent": "qm-bianhuang",
   "pinyin": "Shoukou Cheng",
-  "status": "draft",
+  "status": "canon",
   "summary": "The fortress city at the head of the island chain, the empire's frontier headquarters. Its walls are faced with the skulls of beasts that tried them.",
   "tags": [
    "frontier",
@@ -15226,7 +15226,7 @@
  },
  {
   "id": "qm-tushou-men",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-12T18:00:00Z",
   "editedBy": "claude",
   "hanzi": "屠兽门",
   "kind": "power",
@@ -15239,7 +15239,7 @@
   "name": "Beast-Butcher Gate",
   "parent": "qm-bianhuang",
   "pinyin": "Tushou Men",
-  "status": "draft",
+  "status": "canon",
   "summary": "A frontier sect of saber cultivators who raid across the strait for beast cores. Brutal, rich and the beasts' favorite target.",
   "tags": [
    "saber",
@@ -15705,11 +15705,11 @@
  },
  {
   "id": "qm-yeqiao-hui",
-  "editedAt": "2026-10-11T13:00:00Z",
+  "editedAt": "2026-10-12T18:00:00Z",
   "editedBy": "claude",
   "hanzi": "夜桥会",
   "kind": "power",
-  "lore": "The Society knows the tides, the reefs and which islands have something living on them this month. Most of its runners are Qi Condensation or Foundation half-bloods who know one stretch by heart, so a cargo takes about half a year to pass end to end; only the Core Formation leaders fly the whole chain, in about a month. It runs half-bloods out of human villages, beast eggs to the Kingdom of Spirit Herders's ranches, Gu to the marsh and Vast Wilds herbs to anyone. Its leaders are half-bloods with beast senses and long grudges. It pays tribute to nobody and has informers in every fort. Passage costs five low-grade stones, or a favor.",
+  "lore": "The Society knows the tides, the reefs and which islands have something living on them this month. Most of its runners are Qi Condensation or Foundation half-bloods who know one stretch by heart, and each crew waits on its own tide, so a cargo takes about half a year to pass end to end; only the Core Formation leaders fly the whole chain, in about a month. It runs half-bloods out of human villages, beast eggs to the Kingdom of Spirit Herders's ranches, Gu to the marsh and Vast Wilds herbs to anyone. Its leaders are half-bloods with beast senses and long grudges. It pays tribute to nobody and has informers in every fort. Passage costs five low-grade stones, or a favor.",
   "map": {
    "sphere": 26000,
    "x": 183000,
@@ -15718,7 +15718,7 @@
   "name": "Night Bridge Society",
   "parent": "qm-bianhuang",
   "pinyin": "Yeqiao Hui",
-  "status": "draft",
+  "status": "canon",
   "summary": "Half-blood smugglers who run the island chain in relays, one crew to a stretch, passing people, Gu eggs, beast cubs and herbs from island to island at low tide between the Morning Star Continent and Shared Roost City.",
   "tags": [
    "smuggling",

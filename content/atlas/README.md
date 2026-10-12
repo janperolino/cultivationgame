@@ -1,6 +1,6 @@
 # Severed Heaven atlas
 
-`entries.json` holds the world: 795 entries, all still draft. It has been the source of truth since 2026-10-11, when it came over from the claude.ai atlas, which is now a frozen archive. Edit it directly, or run `node tools/atlas-serve.cjs` and open http://localhost:4321 to browse and edit it on the map; the page saves straight to this file.
+`entries.json` holds the world: 795 entries. The Border Wilds and its nine children are canon since D2 (2026-10-12); the rest are draft. It has been the source of truth since 2026-10-11, when it came over from the claude.ai atlas, which is now a frozen archive. Edit it directly, or run `node tools/atlas-serve.cjs` and open http://localhost:4321 to browse and edit it on the map; the page saves straight to this file.
 
 ## Scale
 
