@@ -16,6 +16,7 @@ import {
 } from './cultivation.ts';
 import type { DayStep } from './loop.ts';
 import { gainInsight } from './insight.ts';
+import { consumeItem } from './items.ts';
 import { gainManual as holdManual, holdsManual } from './manuals.ts';
 import { knowsMethod, learnMethod, setActiveMethod, type MethodCheck } from './methods.ts';
 import {
@@ -107,12 +108,13 @@ export interface LifeBreakthrough {
 
 /**
  * The player attempts a ladder's next breakthrough, minor or major; `scene` is what an attended
- * attempt's scene added to the odds (core/scene.ts).
+ * attempt's scene added to the odds (core/scene.ts), and `offerings` the items laid on a major
+ * one beside the gate pill (core/offerings.ts).
  */
 export function breakThrough(
   s: GameState,
   which: LadderId,
-  opts: { lastChance?: boolean; scene?: number } = {},
+  opts: { lastChance?: boolean; scene?: number; offerings?: readonly string[] } = {},
 ): LifeBreakthrough {
   const none = { state: s, attempted: false, success: false, major: false, odds: 0 };
   if (s.ended) return none;
@@ -231,4 +233,12 @@ export function gainRoutine(s: GameState, id: string, how = 'learns'): GameState
 /** Points the player's practice days at a technique, or at nothing. */
 export function practice(s: GameState, id: string | null): GameState {
   return withPlayer(s, setPracticing(s.player, id));
+}
+
+/** The player eats or drinks one of an item (core/items.ts); unchanged if they can't. */
+export function takeItem(s: GameState, id: string): GameState {
+  if (s.ended) return s;
+  const r = consumeItem(s.player, id, s.calendar.day);
+  if (!r.used) return s;
+  return addNotes(withPlayer(s, r.cultivator), r.notes);
 }

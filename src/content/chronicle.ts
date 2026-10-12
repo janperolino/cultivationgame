@@ -56,6 +56,14 @@ export function fillSlots(text: string, who: Who): string {
 }
 
 const LADDER_NAMES: Record<LadderId, string> = { qi: 'qi', body: 'body', soul: 'soul' };
+/** What a failed major attempt wasted: the gate pill, the offerings laid beside it. */
+function spent(d: EventData): string {
+  const others = typeof d.offerings === 'number' ? d.offerings : 0;
+  if (d.gateItem && others > 0) return ', the pill and the offerings wasted,';
+  if (d.gateItem) return ', the pill wasted,';
+  if (others > 0) return ', the offerings wasted,';
+  return '';
+}
 const FUEL: Record<LadderId, string> = { qi: 'qi', body: 'tempering', soul: 'nourishment' };
 
 /** "the fourth layer", "middle Foundation Establishment" or "Foundation Establishment". */
@@ -96,7 +104,9 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
       : `${w.name}'s ${s(d.ladder)} breaks through to ${target}, a ${grade} breakthrough.`;
   },
   'major-setback': (d, w) =>
-    `${w.name}'s breakthrough to ${realm(s(d.realm) as RealmId).name} fails${d.gateItem ? `, the ${d.ladder === 'qi' ? 'pill' : 'gate item'} wasted,` : ''} and leaves ${w.their} ${s(d.ladder)} injured for years.`,
+    `${w.name}'s breakthrough to ${realm(s(d.realm) as RealmId).name} fails${spent(d)} and leaves ${w.their} ${s(d.ladder)} injured for years.`,
+  toxic: (d, w) =>
+    `Pill residue thickens in ${w.name}'s blood until ${w.their} ${LADDER_NAMES[s(d.ladder) as LadderId]} unsettles.`,
   'method-capped': (d) =>
     `The ${method(s(d.method)).name} carries ${d.ladder === 'qi' ? 'cultivation' : `the ${s(d.ladder)}`} no further; it waits on the next chapter or a new method.`,
   hours: (d) => {

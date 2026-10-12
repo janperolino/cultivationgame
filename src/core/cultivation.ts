@@ -17,8 +17,8 @@ import {
   INSIGHT_MARGIN_FULL,
   INSIGHT_PER_STUDY_DAY,
   INSIGHT_TRICKLE,
+  CLASH_ROLL,
   LADDERS,
-  ladderGateItem,
   LAST_CHANCE_ODDS,
   MAJOR_FAIL_KEEP,
   MAJOR_INJURY_DAYS,
@@ -27,6 +27,7 @@ import {
   MINOR_FAIL_LOSS,
   MINOR_INJURY_DAYS,
   ODDS_PER_TENTH,
+  OFFER_INJURY,
   QI_PER_DAY,
   SCENE_ODDS_CAP,
   SOUL_PER_DAY,
@@ -76,10 +77,12 @@ import {
   methodFitSpeed,
   methodSpeed,
 } from './methods.ts';
+import { offerings, type Offerings } from './offerings.ts';
 import type { Rng } from './rng.ts';
 import { addItem, hasFlag, itemCount, type Cultivator, type Ladder } from './state.ts';
 import { aptitude, aptitudeMultiplier, stats } from './stats.ts';
 import { addPractice, canPractice, kinshipBonus } from './techniques.ts';
+import { addToxicity, decayToxicity } from './toxicity.ts';
 import { effectiveWheel, followedRoutine, openHours } from './wheel.ts';
 
 export { aptitude, aptitudeMultiplier, inTutorial, LADDERS, stepLabel, type LadderId };
@@ -435,9 +438,11 @@ export interface MajorCheck {
   /** Each requirement, true when met. */
   bar: boolean;
   insight: boolean;
-  /** The gate item, or null when this breakthrough needs none (yet). */
+  /** The gate pill a qi major lays, or null: body and soul majors need none. */
   gateItem: string | null;
   gate: boolean;
+  /** What the items laid on the attempt do, the gate pill among them. */
+  offerings: Offerings;
   /** Body and soul can run at most one major realm ahead of qi. */
   cap: boolean;
   ready: boolean;
@@ -481,35 +486,44 @@ export function marginScore(c: Cultivator, which: LadderId, target: Realm): numb
   return barPart + insightPart + others;
 }
 
-/** Where a ladder stands against its next major breakthrough; null if its next step is minor. */
-export function majorCheck(c: Cultivator, which: LadderId): MajorCheck | null {
+/**
+ * Where a ladder stands against its next major breakthrough with these offerings laid (the gate
+ * pill is laid on its own); null if its next step is minor.
+ */
+export function majorCheck(
+  c: Cultivator,
+  which: LadderId,
+  chosen: readonly string[] = [],
+): MajorCheck | null {
   const l = c[which];
   const step = nextStep(l);
   if (step.kind !== 'major') return null;
   const target = realm(step.realm);
   const fill = barFill(l);
-  // Body and soul gate items are settled with items and gear (D2); until then none exists.
-  const gateItem = which === 'qi' ? target.gateItem : ladderGateItem(which, target.id);
+  // Qi majors need their gate pill; body and soul climb on tempering and nourishment alone.
+  const gateItem = which === 'qi' ? target.gateItem : null;
   const gate = !gateItem || itemCount(c, gateItem) > 0;
+  const laid = offerings(c, which, chosen, gate ? gateItem : null);
   const insight = c.insight.earned >= target.insightThreshold;
   const cap = which === 'qi' || realmIndex(target.id) <= realmIndex(c.qi.realm) + 1;
   const bar = fill >= 1;
   const brought = marginScore(c, which, target);
   const bonus = breakthroughBonus(c, which);
   const m = ladderMethod(c, which);
-  const heavenly = m ? rarity(m.rarity).heavenly : false;
+  const heavenly = (m ? rarity(m.rarity).heavenly : false) || laid.heavenly;
   const barPart = clamp01((fill - 1) / (BAR_CAP - 1));
   const odds = clamp(
     target.majorOdds +
       overfillBonus(fill) +
       MAJOR_ODDS_PER_MARGIN * (brought - barPart) +
       stats(c).majorOdds +
-      bonus.odds,
+      bonus.odds +
+      laid.odds,
     0,
     MAX_ODDS,
   );
   // Talents like the Unbreakable Dao Heart or Heaven's Jealousy raise the grade, not the odds.
-  const score = brought + bonus.margin + stats(c).gradeMargin;
+  const score = brought + bonus.margin + stats(c).gradeMargin + laid.margin;
   return {
     ladder: which,
     target,
@@ -518,8 +532,9 @@ export function majorCheck(c: Cultivator, which: LadderId): MajorCheck | null {
     insight,
     gateItem,
     gate,
+    offerings: laid,
     cap,
-    ready: bar && insight && gate && cap,
+    ready: bar && insight && gate && cap && laid.valid,
     score,
     methodMargin: bonus.margin,
     grade: gradeFor(score, heavenly),
@@ -587,13 +602,14 @@ function injuryDays(c: Cultivator, which: LadderId, days: number): number {
  * Attempts this ladder's next breakthrough, minor or major, drawing one roll from `ctx.rng`.
  * A major one needs the full check unless `lastChance` is set, which only drops the full bar and
  * caps the grade at flawed. `scene` is what an attended attempt's scene added to the odds
- * (`sceneOdds` caps it); the roll is the same one either way. The last chance plays no scene.
+ * (`sceneOdds` caps it); the roll is the same one either way. The last chance plays no scene and
+ * lays the gate pill alone. A major attempt spends its `offerings` and the gate pill either way.
  */
 export function attemptBreakthrough(
   c: Cultivator,
   which: LadderId,
   ctx: RuleContext,
-  opts: { lastChance?: boolean; scene?: number } = {},
+  opts: { lastChance?: boolean; scene?: number; offerings?: readonly string[] } = {},
 ): BreakthroughResult {
   const l = c[which];
   const step = nextStep(l);
@@ -650,13 +666,18 @@ export function attemptBreakthrough(
     };
   }
 
-  const check = majorCheck(c, which)!;
   const last = opts.lastChance === true;
+  const check = majorCheck(c, which, last ? [] : (opts.offerings ?? []))!;
   const allowed = last ? check.insight && check.gate && check.cap && which === 'qi' : check.ready;
   if (!allowed) return none;
   const odds = last ? lastChanceOdds(c, check) : sceneOdds(check.odds, opts.scene ?? 0);
-  const success = rng.next() < odds;
-  let next = check.gateItem ? addItem(c, check.gateItem, -1) : c;
+  const roll = rng.next();
+  // Two surging offerings clash: a natural 1 fails whatever the odds.
+  const clashed = check.offerings.clash && roll >= CLASH_ROLL;
+  const success = roll < odds && !clashed;
+  const laid = check.offerings;
+  let next = laid.laid.reduce((acc, id) => addItem(acc, id, -1), c);
+  if (laid.detox > 0) next = addToxicity(next, -laid.detox);
   const target = check.target;
   if (success) {
     const grade: GradeId = last ? 'flawed' : check.grade;
@@ -674,10 +695,11 @@ export function attemptBreakthrough(
     }
     return { cultivator: next, attempted: true, success, major: true, grade, odds, notes };
   }
+  const injury = injuryDays(c, which, MAJOR_INJURY_DAYS) * (laid.purifying ? OFFER_INJURY : 1);
   next = withLadder(next, which, {
     ...l,
-    bar: failedBar(c, which, l, 1 - MAJOR_FAIL_KEEP),
-    injuredUntil: Math.max(l.injuredUntil, day + injuryDays(c, which, MAJOR_INJURY_DAYS)),
+    bar: laid.guarding ? l.bar : failedBar(c, which, l, 1 - MAJOR_FAIL_KEEP),
+    injuredUntil: Math.max(l.injuredUntil, day + injury),
   });
   return {
     cultivator: next,
@@ -688,7 +710,12 @@ export function attemptBreakthrough(
     notes: [
       {
         type: 'major-setback',
-        data: { ladder: which, realm: target.id, gateItem: !!check.gateItem },
+        data: {
+          ladder: which,
+          realm: target.id,
+          gateItem: !!check.gateItem,
+          offerings: laid.laid.length - (check.gateItem ? 1 : 0),
+        },
       },
     ],
   };
@@ -804,16 +831,16 @@ function practiceDays(c: Cultivator, rates: DayRates, days: number) {
 }
 
 /**
- * A stretch of at most a day in seclusion: pays methods' upkeep, fills the bars, insight and
- * mastery from the wheel, burns stones in qi hours, opens kinds of hour, and runs minor
- * breakthroughs on the auto setting. Major breakthroughs are always the cultivator's call and
+ * A stretch of at most a day in seclusion: sheds pill toxicity, pays methods' upkeep, fills the
+ * bars, insight and mastery from the wheel, burns stones in qi hours, opens kinds of hour, and
+ * runs minor breakthroughs on the auto setting. Major breakthroughs are always the cultivator's call and
  * never happen here, online or off.
  */
 export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): CultivateResult {
   if (days <= 0) return { cultivator: c, notes: [], breakthroughs: [] };
   // A method that drinks an upkeep is paid first, a day at a time, on the days its ladder has
   // hours; an unfed one stalls, gaining nothing.
-  let fed = c;
+  let fed = decayToxicity(c, days);
   const unfed: LadderId[] = [];
   const wheel = effectiveWheel(c);
   for (const which of LADDERS) {

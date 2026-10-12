@@ -28,6 +28,8 @@ export interface ScenePlay {
   /** Page time it started, in ms. */
   started: number;
   scene: Scene;
+  /** What a major attempt lays beside the gate pill (core/offerings.ts). */
+  offerings: string[];
   outcome: SceneOutcome | null;
 }
 
@@ -55,21 +57,27 @@ export function scenePlaying(): boolean {
   return !!p && !p.outcome;
 }
 
-/** What the qi's next breakthrough would roll at now, or null when it can't be tried. */
-export function qiAttempt(s: GameState): { odds: number; major: boolean } | null {
+/**
+ * What the qi's next breakthrough would roll at now, with these offerings on a major one, or null
+ * when it can't be tried.
+ */
+export function qiAttempt(
+  s: GameState,
+  offerings: readonly string[] = [],
+): { odds: number; major: boolean } | null {
   if (s.ended) return null;
   const step = nextStep(s.player.qi);
   if (step.kind === 'minor') {
     return barFill(s.player.qi) >= 1 ? { odds: minorOdds(s.player, 'qi'), major: false } : null;
   }
-  const check = majorCheck(s.player, 'qi');
+  const check = majorCheck(s.player, 'qi', offerings);
   return check?.ready ? { odds: check.odds, major: true } : null;
 }
 
 /** Starts a scene on the qi's next breakthrough; false when it can't be tried now. */
-export function startScene(s: GameState): boolean {
+export function startScene(s: GameState, offerings: readonly string[] = []): boolean {
   if (scenePlaying()) return false;
-  const attempt = qiAttempt(s);
+  const attempt = qiAttempt(s, offerings);
   if (!attempt) return false;
   useScene.setState({
     play: {
@@ -80,6 +88,7 @@ export function startScene(s: GameState): boolean {
       certain: attempt.odds >= 1,
       started: performance.now(),
       scene: newScene(),
+      offerings: attempt.major ? [...offerings] : [],
       outcome: null,
     },
   });

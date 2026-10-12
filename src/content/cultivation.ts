@@ -58,13 +58,42 @@ export const UNSETTLED_DAYS = 5;
 /** From Foundation up, a failed minor breakthrough also leaves a light injury. */
 export const MINOR_INJURY_DAYS = 180;
 /**
- * The gate item a major body or soul breakthrough uses up. Which items they are is settled with
- * items and gear (D2); until then the world supplies none, so in M1 body and soul stop at layer 9
- * (design § Character creation).
+ * Offerings (design § Cultivation, Offerings): a major attempt on any ladder takes up to this many
+ * items with the offer use, spent whether it succeeds or fails. A qi major's gate pill counts as
+ * one; body and soul majors need no gate.
  */
-export function ladderGateItem(which: 'body' | 'soul', realm: string): string {
-  return `${which}-gate-${realm}`;
-}
+export const MAX_OFFERINGS = 3;
+/**
+ * Each offer tag's size by rarity, gray to red, on the shared curve: a steadying item's odds and
+ * a surging one's margin (it costs the steadying odds of its rarity), a purifying one's cut to
+ * toxicity. The design names white, purple and gold; the rest are filled in (P2.1). Red's margin
+ * stays at the fighting-up ledger's +0.5.
+ */
+export const OFFER_ODDS = [0.02, 0.03, 0.04, 0.05, 0.07, 0.12, 0.15] as const;
+export const OFFER_MARGIN = [0.05, 0.1, 0.13, 0.18, 0.25, 0.5, 0.5] as const;
+export const OFFER_DETOX = [20, 30, 40, 50, 70, 100, 100] as const;
+/** A ladder tag doubles the item's sizes on its own ladder. */
+export const OFFER_LADDER_MULTIPLIER = 2;
+/** A purifying offering halves a failure's injury. */
+export const OFFER_INJURY = 0.5;
+/** An offering of your root's element adds a step of odds, like a tenth of overfill. */
+export const OFFER_ELEMENT_ODDS = ODDS_PER_TENTH;
+/**
+ * Two surging offerings clash: the worst twentieth of rolls, a natural 1 on a d20, then fails
+ * and injures as a failed major would, whatever the odds.
+ */
+export const CLASH_ROLL = 0.95;
+
+/**
+ * Pill toxicity (design § Items and gear): one meter, 0 to 100. A pill adds its dose, ×3 for each
+ * tier above you and ÷3 for each below, times its rarity's purity, gray to red. It decays this
+ * much a day at Qi Condensation, and once more for each realm above (assumed in P2.1); every
+ * pill's effect scales by 1 − toxicity/100, and reaching the cap unsettles the ladder the pill fed.
+ */
+export const TOXICITY_MAX = 100;
+export const TOXICITY_TIER_STEP = 3;
+export const TOXICITY_PURITY = [1.5, 1, 0.9, 0.8, 0.65, 0.4, 0.25] as const;
+export const TOXICITY_DECAY = 1;
 
 /** A failed major breakthrough halves the bar and injures for a few in-game years. */
 export const MAJOR_FAIL_KEEP = 0.5;

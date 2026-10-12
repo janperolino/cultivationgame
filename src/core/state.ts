@@ -131,6 +131,8 @@ export const CultivatorSchema = z.object({
   stones: z.number().min(0),
   /** Item counts by id, such as the Foundation Pill; the bag arrives in M2. */
   items: z.record(z.string(), z.number().int().min(0)),
+  /** Pill toxicity, 0 to 100 (design § Items and gear): every pill's effect scales by 1 − this/100. */
+  toxicity: z.number().min(0).max(100),
   /** What each of the day's twelve hours goes to. */
   wheel: Wheel,
   /** Routines learned from teachers, manuals and sects (content/routines.ts), by id. */
@@ -320,6 +322,7 @@ export function newCultivator(
     insight: { current: 0, earned: 0 },
     stones: opts.stones ?? 0,
     items: {},
+    toxicity: 0,
     wheel: [...FRESH_WHEEL],
     routines: opts.routines ?? [],
     savedRoutines: [],

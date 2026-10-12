@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { AUTO_IDS, AUTO_SETTINGS, GRADES } from '../content/cultivation.ts';
+import { AUTO_IDS, AUTO_SETTINGS, GRADES, MAX_OFFERINGS } from '../content/cultivation.ts';
 import { ELEMENT_INFO } from '../content/elements.ts';
+import { item } from '../content/items.ts';
 import { realm } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
 import { hasRoutine, routine } from '../content/routines.ts';
@@ -18,6 +19,7 @@ import {
   type LadderId,
 } from '../core/cultivation.ts';
 import { ladderMethod } from '../core/methods.ts';
+import { offerable } from '../core/offerings.ts';
 import { itemCount, type GameState } from '../core/state.ts';
 import { canFollow } from '../core/wheel.ts';
 import { DayWheel, WheelStrip } from './DayWheel.tsx';
@@ -25,11 +27,6 @@ import { MethodRow } from './MethodCard.tsx';
 import { formatLadder, formatNumber, formatPercent, formatRate, LADDER_LABELS } from './format.ts';
 import { useGame } from './store.ts';
 import { LadderBar, LifeEdgeCard, Why } from './widgets.tsx';
-
-const ITEM_NAMES: Record<string, string> = {
-  'foundation-pill': 'Foundation Pill',
-  'core-forming-pill': 'core-forming pill',
-};
 
 function DayPanel({ game }: { game: GameState }) {
   const setPlan = useGame((s) => s.setPlan);
@@ -273,9 +270,12 @@ function Requirement({ met, children }: { met: boolean; children: React.ReactNod
 function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
   const breakThroughNow = useGame((s) => s.breakThrough);
   const beginScene = useGame((s) => s.beginScene);
+  // Items laid on a major attempt beside the gate pill; the session's, never saved.
+  const [chosen, setChosen] = useState<string[]>([]);
   // A qi breakthrough plays as a scene on the Abode's figure; body and soul roll at once.
-  const breakThrough = (which: LadderId) => {
-    if (which !== 'qi' || !beginScene()) breakThroughNow(which);
+  const breakThrough = (which: LadderId, offerings: string[] = []) => {
+    if (which !== 'qi' || !beginScene(offerings)) breakThroughNow(which, offerings);
+    setChosen([]);
   };
   const l = game.player[which];
   const step = nextStep(l);
@@ -316,13 +316,16 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
       </div>
     );
   } else {
-    const check = majorCheck(game.player, which)!;
+    // Only what is still held stays chosen.
+    const held = offerable(game.player);
+    const laid = chosen.filter(
+      (id, i) => itemCount(game.player, id) > chosen.slice(0, i).filter((x) => x === id).length,
+    );
+    const check = majorCheck(game.player, which, laid)!;
     const target = check.target;
-    const gateName = !check.gateItem
-      ? null
-      : which === 'qi'
-        ? (ITEM_NAMES[check.gateItem] ?? check.gateItem)
-        : `A ${which} gate item`;
+    const gateName = check.gateItem ? item(check.gateItem).name : null;
+    const room = MAX_OFFERINGS - check.offerings.laid.length;
+    const offers = held.filter((id) => id !== check.gateItem);
     const grade = GRADES.find((g) => g.id === check.grade)!;
     body = (
       <>
@@ -334,13 +337,7 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
           </Requirement>
           {gateName && (
             <Requirement met={check.gate}>
-              {gateName} ({itemCount(game.player, check.gateItem!)} held)
-              {which !== 'qi' && (
-                <Why label={`About the ${which} gate item`}>
-                  Every major {which} breakthrough needs something from the world. None is found
-                  yet, so the {which} stops at layer 9 for now.
-                </Why>
-              )}
+              A {gateName} ({itemCount(game.player, check.gateItem!)} held)
             </Requirement>
           )}
           {which !== 'qi' && (
@@ -359,18 +356,47 @@ function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
             or red method reaches heavenly.
           </Why>
         </p>
+        {offers.length > 0 && (
+          <div className="offerings" aria-label="Offerings">
+            <span className="caption">
+              Offerings, up to {MAX_OFFERINGS}
+              {gateName ? ` with the ${gateName}` : ''}:
+              <Why label="How offerings work">
+                Whatever you lay is spent, win or lose. Steadying things raise the odds, surging
+                ones raise the grade and cost odds, purifying ones soften a failure and clear pill
+                toxicity, guarding ones keep the bar. Something of your root&apos;s element adds a
+                little more, and a thing meant for this ladder counts double.
+              </Why>
+            </span>
+            {offers.map((id) => {
+              const on = laid.filter((x) => x === id).length;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className="button button-quiet"
+                  aria-pressed={on > 0}
+                  disabled={on === 0 && room <= 0}
+                  onClick={() => setChosen(on > 0 ? laid.filter((x) => x !== id) : [...laid, id])}
+                >
+                  {item(id).name} ({itemCount(game.player, id)})
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="actions">
           <button
             type="button"
             className="button"
             disabled={!check.ready || !!game.ended}
-            onClick={() => breakThrough(which)}
+            onClick={() => breakThrough(which, laid)}
           >
             Break through to {target.name} · {formatPercent(check.odds)}
           </button>
           <Why label="What a failure costs">
-            A failure {gateName ? `uses the ${gateName}, ` : ''}halves the bar and injures for
-            years.
+            A failure {gateName ? `uses the ${gateName} and ` : ''}the offerings, halves the bar and
+            injures for years.
           </Why>
         </div>
       </>

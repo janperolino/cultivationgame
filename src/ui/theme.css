@@ -1030,6 +1030,18 @@ select {
   color: var(--crack);
 }
 
+.offerings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.offerings .caption {
+  flex-basis: 100%;
+}
+
 .ladder + .ladder {
   margin-top: 16px;
   padding-top: 16px;

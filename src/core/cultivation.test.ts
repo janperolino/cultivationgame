@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BAR_CAP, ladderGateItem, UNSETTLED_DAYS } from '../content/cultivation.ts';
+import { BAR_CAP, UNSETTLED_DAYS } from '../content/cultivation.ts';
 import { method } from '../content/methods.ts';
 import { realmScale, stepSize } from '../content/realms.ts';
 import {
@@ -252,7 +252,7 @@ describe('major breakthroughs', () => {
     expect(win.state.rewindCharges).toBe(1);
   });
 
-  it('let body run at most one realm ahead of qi, with a gate item the world does not supply yet', () => {
+  it('let body run at most one realm ahead of qi, with no gate item', () => {
     const c = { ...player(), insight: { current: 0, earned: 1e6 } };
     const bodyFE = filled(
       at(c, 'body', { realm: 'foundation-establishment', stage: 4 }),
@@ -261,10 +261,137 @@ describe('major breakthroughs', () => {
     );
     expect(majorCheck(bodyFE, 'body')).toMatchObject({ cap: false, ready: false });
     const bodyQC = filled(at(c, 'body', { stage: 9 }), 'body', 1);
-    // In M1 no body gate item exists, so the body stops at layer 9.
-    expect(majorCheck(bodyQC, 'body')).toMatchObject({ cap: true, gate: false, ready: false });
-    const gated = addItem(bodyQC, ladderGateItem('body', 'foundation-establishment'), 1);
-    expect(majorCheck(gated, 'body')).toMatchObject({ gate: true, ready: true });
+    expect(majorCheck(bodyQC, 'body')).toMatchObject({
+      gateItem: null,
+      gate: true,
+      cap: true,
+      ready: true,
+    });
+  });
+});
+
+describe('offerings', () => {
+  const herbs = (c: Cultivator, ...ids: string[]) =>
+    ids.reduce((acc, id) => addItem(acc, id, 1), c);
+
+  it('lay the gate pill on every qi attempt, as one of at most three', () => {
+    const c = herbs(
+      readyForFoundation(),
+      'calm-heart-grass',
+      'calm-heart-grass',
+      'storm-peach-stone',
+    );
+    expect(majorCheck(c, 'qi')!.offerings.laid).toEqual(['foundation-pill']);
+    const two = majorCheck(c, 'qi', ['calm-heart-grass', 'calm-heart-grass'])!;
+    expect(two.offerings.laid).toEqual(['foundation-pill', 'calm-heart-grass', 'calm-heart-grass']);
+    expect(two.ready).toBe(true);
+    const four = majorCheck(c, 'qi', ['calm-heart-grass', 'calm-heart-grass', 'storm-peach-stone']);
+    expect(four).toMatchObject({ ready: false, offerings: { valid: false } });
+    // Only what you hold, and only things with the offer use.
+    expect(majorCheck(c, 'qi', ['root-binding-jade'])!.ready).toBe(false);
+    expect(majorCheck(herbs(c, 'qi-gathering-pill'), 'qi', ['qi-gathering-pill'])!.ready).toBe(
+      false,
+    );
+  });
+
+  it('steady the odds by rarity, and double on their own ladder', () => {
+    const c = {
+      ...herbs(readyForFoundation(), 'calm-heart-grass'),
+      rootElements: ['metal' as const],
+    };
+    const base = majorCheck(c, 'qi')!.odds;
+    // White steadying: +3 points; a wood root adds a step for the grass's element.
+    const wood = { ...c, rootElements: ['wood' as const] };
+    expect(majorCheck(c, 'qi', ['calm-heart-grass'])!.odds).toBeCloseTo(base + 0.03);
+    expect(majorCheck(wood, 'qi', ['calm-heart-grass'])!.odds).toBeCloseTo(
+      majorCheck(wood, 'qi')!.odds + 0.03 + 0.07,
+    );
+    // Tempered Marrow is blue (+5), doubled on the body.
+    const body = herbs(
+      filled(
+        at({ ...player(), insight: { current: 0, earned: 500 } }, 'body', { stage: 9 }),
+        'body',
+        1,
+      ),
+      'tempered-marrow',
+    );
+    expect(majorCheck(body, 'body', ['tempered-marrow'])!.odds).toBeCloseTo(
+      majorCheck(body, 'body')!.odds + 0.1,
+    );
+    expect(
+      majorCheck(herbs(c, 'tempered-marrow'), 'qi', ['tempered-marrow'])!.offerings.odds,
+    ).toBeCloseTo(0.05);
+  });
+
+  it('surge the grade for odds, and two surging items clash', () => {
+    const c = herbs(readyForFoundation(), 'storm-peach-stone', 'storm-peach-stone');
+    const one = majorCheck(c, 'qi', ['storm-peach-stone'])!;
+    expect(one.score - majorCheck(c, 'qi')!.score).toBeCloseTo(0.13);
+    expect(one.odds).toBeCloseTo(majorCheck(c, 'qi')!.odds - 0.04);
+    const both = majorCheck(c, 'qi', ['storm-peach-stone', 'storm-peach-stone'])!;
+    expect(both.offerings.clash).toBe(true);
+    // A natural 1 fails whatever the odds: find a seed whose roll is in the worst twentieth.
+    const seed = Array.from({ length: 500 }, (_, i) => i).find((i) => new Rng(i).next() >= 0.95)!;
+    const lucky = { ...c, insight: { current: 0, earned: 1e6 } };
+    const r = attemptBreakthrough(lucky, 'qi', ctx(seed), {
+      offerings: ['storm-peach-stone', 'storm-peach-stone'],
+    });
+    expect(r).toMatchObject({ attempted: true, success: false });
+    expect(r.cultivator.qi.injuredUntil).toBeGreaterThan(DAY + 360);
+  });
+
+  it('are spent either way; guarding keeps the bar and purifying halves the injury', () => {
+    const c = herbs(
+      { ...readyForFoundation(), toxicity: 50 },
+      'root-binding-jade',
+      'clear-spring-lotus',
+    );
+    const offered = ['root-binding-jade', 'clear-spring-lotus'];
+    const results = Array.from({ length: 40 }, (_, i) =>
+      attemptBreakthrough(c, 'qi', ctx(i), { offerings: offered }),
+    );
+    for (const r of results) {
+      expect(r.cultivator.items).toMatchObject({
+        'foundation-pill': 0,
+        'root-binding-jade': 0,
+        'clear-spring-lotus': 0,
+      });
+      // A blue purifying offering clears 50 points.
+      expect(r.cultivator.toxicity).toBe(0);
+    }
+    const loss = results.find((r) => !r.success)!;
+    expect(loss.cultivator.qi.bar).toBe(c.qi.bar);
+    const plain = Array.from({ length: 40 }, (_, i) =>
+      attemptBreakthrough(readyForFoundation(), 'qi', ctx(i)),
+    ).find((r) => !r.success)!;
+    expect(loss.cultivator.qi.injuredUntil - DAY).toBeCloseTo(
+      (plain.cultivator.qi.injuredUntil - DAY) / 2,
+    );
+    expect(loss.notes[0]).toMatchObject({
+      type: 'major-setback',
+      data: { gateItem: true, offerings: 2 },
+    });
+  });
+
+  it('carry the grade to heavenly from gold', () => {
+    const full = at(
+      at(
+        { ...filled(readyForFoundation(), 'qi', 1.5), insight: { current: 0, earned: 1000 } },
+        'body',
+        {
+          realm: 'foundation-establishment',
+        },
+      ),
+      'soul',
+      { realm: 'foundation-establishment' },
+    );
+    // The garrison method is white, so the grade stops at perfect...
+    expect(majorCheck(full, 'qi')!.grade).toBe('perfect');
+    // ...until a gold offering lies beside the pill (+12 points of odds too).
+    const gold = { ...herbs(full, 'thousand-year-ginseng'), rootElements: ['metal' as const] };
+    const check = majorCheck(gold, 'qi', ['thousand-year-ginseng'])!;
+    expect(check).toMatchObject({ grade: 'heavenly', offerings: { heavenly: true } });
+    expect(check.offerings.odds).toBeCloseTo(0.12);
   });
 });
 

@@ -277,7 +277,9 @@ function outcomeLine(game: GameState, play: ScenePlay): string {
 function SceneMeter({ game, play }: { game: GameState; play: ScenePlay }) {
   const bonus = sceneBonus(play.scene);
   // The bar fills on while the scene plays, so the odds are read live, as the roll will be.
-  const odds = play.outcome ? play.outcome.odds : (qiAttempt(game)?.odds ?? play.odds) + bonus;
+  const odds = play.outcome
+    ? play.outcome.odds
+    : (qiAttempt(game, play.offerings)?.odds ?? play.odds) + bonus;
   return (
     <div className="seat-meter scene-meter" aria-live="polite">
       <div className="seat-speed">

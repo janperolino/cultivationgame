@@ -26,3 +26,5 @@ Game content as data: realms, trees and nodes, techniques, recipes, items, talen
 - `circulation.ts`: the patterns a qi method's sparks run on the Abode's figure, a default for each rarity, and the points where qi enters.
 - `scene.ts`: the breakthrough scene's timing: its length, how the spark races, the gates and the tap windows. Its odds step and cap sit in `cultivation.ts` beside `ODDS_PER_TENTH`.
 - `techniques.ts`: the techniques with their rarity, line and chapter, starting with each origin path's first one (`firstFor: origin/choice`).
+- `combat.ts`: combat's numbers: checks, criticals and grazes, the one ladder's steps, damage tiers, the eleven damage types and their statuses, the element cycle and combos, HP and qi, the five outcome tags, and the weapon kinds. `src/core/combat/` holds the rules.
+- `items.ts`: the item record with its uses (offer, consume, fight so far; P2.3 adds the rest), the offer tags, and the offerings, pills and talismans drafted in P2.1.

@@ -97,10 +97,13 @@ export interface GameStore {
   /** Saves the wheel under a name; returns why not, or null. */
   saveRoutine(name: string): string | null;
   forgetRoutine(name: string): void;
-  /** Attempts a ladder's next breakthrough, minor or major, at once. */
-  breakThrough(ladder: LadderId): void;
-  /** Plays the qi's next breakthrough as a scene on the Abode's figure; false when it can't. */
-  beginScene(): boolean;
+  /** Attempts a ladder's next breakthrough, minor or major, at once, laying offerings on a major. */
+  breakThrough(ladder: LadderId, offerings?: readonly string[]): void;
+  /**
+   * Plays the qi's next breakthrough as a scene on the Abode's figure, laying offerings on a
+   * major; false when it can't.
+   */
+  beginScene(offerings?: readonly string[]): boolean;
   /** Learns a tree node with insight; returns why not, or null. */
   learnNode(id: string): string | null;
   /** Points practice days at a technique, or at nothing. */
@@ -217,7 +220,10 @@ export const useGame = create<GameStore>()((set, get) => {
     const { game } = get();
     const due = sceneDue(game);
     if (due && game) {
-      const r = breakThrough(game, 'qi', { scene: sceneBonus(due.scene) });
+      const r = breakThrough(game, 'qi', {
+        scene: sceneBonus(due.scene),
+        offerings: due.offerings,
+      });
       if (!r.attempted) return endScene();
       update(r.state);
       if (!r.success) void get().saveNow();
@@ -471,19 +477,19 @@ export const useGame = create<GameStore>()((set, get) => {
       set({ game: withPlayer(game, forgetSavedRoutine(game.player, name)) });
     },
 
-    breakThrough(ladder) {
+    breakThrough(ladder, offerings = []) {
       const { game } = get();
       if (!game || !holdsLock) return;
-      const r = breakThrough(game, ladder);
+      const r = breakThrough(game, ladder, { offerings });
       if (!r.attempted) return;
       update(r.state);
       if (!r.success) void get().saveNow();
     },
 
-    beginScene() {
+    beginScene(offerings = []) {
       const { game } = get();
       if (!game || !holdsLock) return false;
-      return startScene(game);
+      return startScene(game, offerings);
     },
 
     learnNode(id) {
