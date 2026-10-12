@@ -107,6 +107,12 @@ export interface GameStore {
   rewind(): Promise<void>;
   dismissAway(): void;
   dismissNotice(): void;
+  /** Dev console: sets the clock multiplier, kept in the URL so a reload keeps it. */
+  setSpeed(speed: number): void;
+  /** Dev console: replaces the game with what `change` makes of it, and saves. */
+  devApply(change: (s: GameState) => GameState): string | null;
+  /** Dev console: applies real time as if the tab had been closed, with the coming-back card. */
+  devAway(ms: number): string | null;
 }
 
 function speedFromUrl(): number {
@@ -534,6 +540,37 @@ export const useGame = create<GameStore>()((set, get) => {
 
     dismissAway: () => set({ away: null }),
     dismissNotice: () => set({ notice: null }),
+
+    setSpeed(speed) {
+      set({ speed });
+      try {
+        const url = new URL(window.location.href);
+        if (speed === 1) url.searchParams.delete('speed');
+        else url.searchParams.set('speed', String(speed));
+        window.history.replaceState(null, '', url);
+      } catch {
+        // The URL is a convenience; the speed still holds for this session.
+      }
+    },
+
+    devApply(change) {
+      const { game } = get();
+      if (!game || !holdsLock) return 'No life is open in this tab.';
+      update(change(game));
+      void get().saveNow();
+      return null;
+    },
+
+    devAway(ms) {
+      const { game } = get();
+      if (!game || !holdsLock) return 'No life is open in this tab.';
+      const now = Date.now();
+      const away = catchUp(game, now - ms, now, { step: playDay });
+      set({ away: { ...away, before: game } });
+      update(away.state);
+      void get().saveNow();
+      return null;
+    },
   };
 });
 

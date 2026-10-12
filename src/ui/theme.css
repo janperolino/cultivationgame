@@ -1630,3 +1630,49 @@ select {
     grid-row: auto;
   }
 }
+
+/* The dev console (dev builds only): ` opens it. */
+.dev-console {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 80;
+  width: min(760px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  display: grid;
+  border: 1px solid var(--accent-edge);
+  border-radius: var(--radius);
+  background: rgb(4 5 7 / 0.94);
+  box-shadow: 0 18px 50px -12px #000;
+  font:
+    12.5px/1.5 ui-monospace,
+    'Cascadia Mono',
+    Consolas,
+    monospace;
+}
+
+.dev-log {
+  max-height: 40vh;
+  overflow-y: auto;
+  padding: 10px 12px 4px;
+  white-space: pre-wrap;
+}
+
+.dev-in {
+  color: var(--accent);
+  margin-top: 6px;
+}
+
+.dev-out {
+  color: var(--muted);
+}
+
+.dev-input {
+  margin: 6px 8px 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-small);
+  background: var(--well);
+  color: var(--text);
+  font: inherit;
+}

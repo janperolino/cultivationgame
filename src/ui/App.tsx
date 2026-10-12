@@ -3,6 +3,7 @@ import { AbodeScreen } from './AbodeScreen.tsx';
 import { CharacterScreen } from './CharacterScreen.tsx';
 import { ChronicleScreen } from './ChronicleScreen.tsx';
 import { CreationScreen } from './CreationScreen.tsx';
+import { DevConsole } from './dev/DevConsole.tsx';
 import { CultivateScreen } from './CultivateScreen.tsx';
 import { GlassBackground } from './GlassBackground.tsx';
 import { SettingsScreen } from './SettingsScreen.tsx';
@@ -208,6 +209,7 @@ export function App() {
         </aside>
 
         <SlotNotice />
+        {import.meta.env.DEV && <DevConsole />}
       </div>
     </>
   );
