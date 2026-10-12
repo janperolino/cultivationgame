@@ -171,6 +171,14 @@ describe('tree content', () => {
           }
         });
 
+        it('has its own silhouette, not the tier below’s', () => {
+          const below = new Set(tierNodes(t, tier - 1).map((n) => n.at.join(',')));
+          const same = nodes.filter(
+            (n) => n !== starter && n !== capstone && below.has(n.at.join(',')),
+          );
+          expect(same.length, same.map((n) => n.id).join(', ')).toBeLessThan(nodes.length / 4);
+        });
+
         it('keeps multipliers to the capstone and a late notable or two', () => {
           const times = nodes.filter((n) =>
             n.effects.some((e) => statInfo(e.stat).unit === 'times'),
