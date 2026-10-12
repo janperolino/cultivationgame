@@ -392,6 +392,85 @@ A pouch is cloth: anyone can open it, a thief can cut it off, and it goes with y
 **Loot and shops.** A source has a tier band, a kind table and a bias. The band is the realm it serves: a Border Wilds stall sells tier 1, a Foundation elder's ring holds tier 1 and 2. The kind table says what it holds: a stall pills, talismans and herbs; a vault manuals and gear; a beast its parts. The bias shifts the shared rarity table (Tier, rarity and pedigree): each rarity's weight is multiplied by b to the power of its step from gray, with a stall at 0.6, a sect shop at 1, a vault or ruin at 1.6 and an inheritance at 2.5, so a stall shows blue about one lot in twenty and never gold, a vault rolls gold about one lot in 25, and an inheritance rolls gold about one in nine and red one in thirty. Loot rolls on the `loot` stream, a drop at a time.
 
 
+## Enemies, beasts and the people you meet
+
+NPCs run on the player's rules, and pedigree is only access (Tier, rarity and pedigree). This is how they are made, how beasts fight, what the dead leave behind and who stays in your life. Settled in D2; every number is a starting value for the fight sim.
+
+**A cultivator is generated, not authored.** The template is a pedigree, a realm and stage, a path (a Dao and its weapon kind), a profile, a name in the region's naming style and a seed. Everything else is rolled from the pedigree's table on the `people` stream: method rarity, which sets the growth that built their pool and HP; technique rarity and mastery; a weapon and an armor; zero to two consumables; a storage item; and a breakthrough grade. Named people from the atlas are the same record with the rolls pinned, so an elder and a bandit differ in access, never in rules.
+
+**Pedigree is a bias on the shared roll**, the same rule as loot and shops (Items and gear): each rarity's weight is multiplied by b to the power of its step from gray.
+
+| Pedigree | b | Typical method | Technique mastery |
+|---|---|---|---|
+| Rogue | 0.5 | white | Comprehension |
+| Small sect | 1 | green | Mastery |
+| Great sect | 1.6 | blue | Mastery |
+| Sacred land | 2.5 | purple | Domain |
+| Chosen of heaven | 4, and one slot guaranteed gold or better | gold | Domain |
+
+Each realm's ordinary baseline rises on top, since anyone who reached Nascent Soul has lived for centuries: the bias is multiplied by ×1 at Qi Condensation and Foundation, ×1.3 at Core Formation and ×1.6 from Nascent Soul up. Mastery rises one level for every realm past the first, up to Origin, because practice days pile up. The biases are midpoints of ranges the sim tunes; the fighting-up ledger's rows are what they must reproduce.
+
+**NPC pace.** An NPC's realm comes from its age and pedigree: it climbs at the away rate on its pedigree's typical method, read off the pacing sim's away row, so a rogue at sixty sits at Qi Condensation's peak while a great-sect disciple reaches Foundation around thirty. The expected realm at each age per pedigree is a sim output, filled in by P2.2 and read by M3's encounters and M5's rivals. An attended player outpaces a same-pedigree NPC by up to double (How the two halves connect), and that gap is the edge for playing.
+
+**Profiles are five numbers.** The engine owns every choice; GLM gives it a voice.
+
+| Profile | Opens with | Picks | Defends or takes a pill at | Flees at | Talks |
+|---|---|---|---|---|---|
+| Aggressive | its hardest technique | the hardest hit | never | 10% HP | taunts, never begs |
+| Cautious | defend, then a probe | the best element | 50% | 30% | bargains |
+| Cunning | a status or a trick | statuses first, then element | 40% | 25% | bluffs, bargains, lies |
+| Cowardly | a shield or a talisman | the cheapest | 60% | 50% | begs, surrenders |
+| Fanatical | its hardest technique | the hardest hit | never | never | preaches |
+
+Beasts take profiles too: predators are aggressive, herd beasts cowardly, old beasts cunning.
+
+**Beasts.** A beast has a species, a realm on the same ladder (a Foundation beast is a Foundation foe, with the same gap), a bloodline rarity in place of pedigree, one element, a profile, a pack size and a parts table. Beasts are body-first: ×1.5 HP, no armor, physical damage plus their element, no pills. Every species has its natural attacks, bite, claw, charge, tail, crush, and its bloodline rarity rolls abilities on top from the element's table: none at white, one at green, two at blue, three and an aura at purple, a unique at gold and a named one at red. The abilities are techniques on the same engine, so they take the Dao bonus, the element cycle and the effects by their tags.
+
+| Element | Abilities |
+|---|---|
+| Fire | ember breath, burning hide, heat sense |
+| Water | tide pull, mist veil, chill |
+| Earth | stone skin, quake stomp, burrow |
+| Wood | root grasp, regrowth, venom thorn |
+| Metal | iron scales, blade feathers |
+| Lightning | lightning dash, paralyzing bite |
+| Wind | gale wing, uncatchable |
+| Ice | freezing breath, frost armor |
+| Soul | illusion, fear roar, soul gaze |
+| Poison | venom fang, miasma |
+
+At Nascent Soul a beast takes human form and becomes a cultivator record on a beast path: its abilities are its techniques and its bloodline is its tempering art (World bible, spirit beasts).
+
+**Bloodlines and beast paths.** A bloodline is a thing you have: born with it, as half-bloods and the beast-bloodline body talent are, or gained by a blood rite, a beast bond, or devouring a core on the Demonic Way. Holding one unlocks that element's beast abilities as body techniques, with the bloodline as the requirement and the element's Dao as the tag, so a beast path needs no tree of its own. A half-blood raider in the Border Wilds and a transformed python are one rule from two sides.
+
+**What the dead leave.** A dead cultivator drops everything they carried: their kit, their bag and their storage item, which comes as a sealed ring until you can open it (Items and gear, storage). The only losses are the consumables they spent in the fight and the piece of gear the killing critical hit, which drops damaged, one rarity step down and repairable at a forge. A fleeing enemy keeps it all. A sect disciple's token drops too, a key item that is a hook and a danger, since the sect will ask who holds it. A beast drops by its parts table: a core from Foundation up and half the time at Qi Condensation, its tier the beast's realm and its rarity its bloodline, and hide, marrow, blood, fang or feather by species. Tempered Marrow, the body offering, is refined from a Foundation beast's marrow.
+
+**Who stays.** The world is three layers, and nobody is simulated who hasn't touched you:
+
+- Transient: a generated enemy or passer-by exists for its scene and is thrown away.
+- Kept: a scene that ends with a thread keeps them. You talked and traded names, haggled at their stall, spared, robbed, healed or bargained with them, survived a fight with them or they with you, or a card named them. A kept person is stored as a seed plus pins: the seed regenerates their kit and rolls on demand, and the pins are what changed, regard, realm, whereabouts, what you took. That is the People screen (Professions, people and powers), dozens to a few hundred a life, mortals included. Named atlas people are kept from the start with everything pinned. From M5 they tick on a coarse clock, a season or a year: climb at the away rate on their pedigree, age, roll for death, move, and roll an event that may write to their log.
+- The world: powers have strength on the realm curve and prosperity drifts (M6), and encounters generate from tables. A place's people are generated from the place's seed, so the same keeper stands at the same stall next time, and a rumor about "a Foundation elder of the Beast-Butcher Gate" carries a seed, so when you meet them they match the rumor.
+
+**The Border Wilds roster**, drafted for P2.2's sim and P3.1's region, in the Qi Condensation and Foundation bands. The parts and names follow the atlas entries the canon pass reads.
+
+| Template | Band | Kind | Element | Profile | Notes |
+|---|---|---|---|---|---|
+| Cave bat swarm | Qi Condensation | beast, pack of 6 to 12 | wind | aggressive | screech dazes; wings and guano |
+| Stone-skin boar | Qi Condensation | beast | earth | aggressive | stone skin at green; hide and marrow |
+| Tide crab | Qi Condensation | beast, pack of 3 to 5 | water | cautious | shell, meat |
+| Karst python | Foundation | beast | soul | cunning | illusion; the Soul-Lost Stone Forest's great one is Nascent Soul |
+| Reef ape | Foundation | beast, pack of 2 to 4 | metal | aggressive | Ape's Palm Reef; fists, blade feathers at blue |
+| Strait shark | Foundation | beast | water | aggressive | the Shark Caves' kin; fang, fin |
+| Vast Wilds raider beast | Foundation | beast, rolled species | rolled | aggressive | what the raids bring over; old and better-blooded than the local stock |
+| March conscript | Qi Condensation | cultivator, rogue | none | cautious | spear; a garrison method; a token of the March |
+| Garrison deserter | Qi Condensation | cultivator, rogue | none | cowardly | spear; stolen stones; a price on their head |
+| Half-blood raider | Qi Condensation to Foundation | cultivator, rogue, with a bloodline | the bloodline's | aggressive | fist and beast abilities; hunted by the wall |
+| Night Bridge smuggler | Qi Condensation to Foundation | cultivator, rogue | none | cunning | fist; an escape talisman; the Night Bridge method at night |
+| Raider Isles pirate | Qi Condensation to Foundation | cultivator, rogue | none | cunning | saber; White Fang Stockade's token |
+| Beast-Butcher Gate disciple | Qi Condensation to Foundation | cultivator, small sect | none | aggressive | saber; cores on them; the Gate's token |
+| Sea-Taming Sect disciple | Foundation | cultivator, small sect | water | cautious | spear; a water-silk robe |
+
+
 ## Character creation and the first hour
 
 Play opens at age 12 on root-testing day in the Border Wilds. Creation takes about 3 minutes, and by the end of the first real hour you sit at Qi Condensation layer 3 with a first technique, a first tree node and, from M3, a first trip into the frontier.
@@ -569,7 +648,7 @@ Formation puzzles show the engine-and-GLM split well. The engine hides which nod
 | Tribe | birth, a trial | deeds, age | the hunt, feuds | exile | land, beasts, old rites | Tribe of the Shark Caves |
 | Beast power | bloodline, or a beast bond | strength | tribute, territory | devoured | beast lore, mounts, bloodline gifts | Beast Court of Ten Thousand Mountains |
 
-**People, from the first hour.** Every person you've met has a record: name, where you met, what they are to you, friend, rival, senior, master, sworn sibling, dao companion, enemy, how they feel about you in words rather than a number, and their last known realm and whereabouts, which is only what you've seen or heard, so the same fog applies to people as to places. Each has a log: everything in your chronicle they were part of, since the typed chronicle stores actors by id, plus updates about them. In M1 updates come only from cards that name them, a letter from your senior, the sergeant posted to the wall. In M5 their lives tick on their own and bonded people send a yearly letter card; in M6 rumors and headlines feed the same log; after v1 a friend's exported snapshot writes its real progress there. The People screen shows them as circles and a web of threads (§ UI and screens, The People screen), with portraits once the cast list arrives.
+**People, from the first hour.** Every person you've met has a record: name, where you met, what they are to you, friend, rival, senior, master, sworn sibling, dao companion, enemy, how they feel about you in words rather than a number, and their last known realm and whereabouts, which is only what you've seen or heard, so the same fog applies to people as to places. Who gets a record is the kept rule under Enemies, beasts and the people you meet. Each has a log: everything in your chronicle they were part of, since the typed chronicle stores actors by id, plus updates about them. In M1 updates come only from cards that name them, a letter from your senior, the sergeant posted to the wall. In M5 their lives tick on their own and bonded people send a yearly letter card; in M6 rumors and headlines feed the same log; after v1 a friend's exported snapshot writes its real progress there. The People screen shows them as circles and a web of threads (§ UI and screens, The People screen), with portraits once the cast list arrives.
 
 **Romance and dao companions** are in, and the engine tracks every NPC you meet: affinity, history, promises and grudges. A dao companion is a bond with mechanics: paired cultivation methods, shared danger, and grief if they fall.
 
@@ -984,7 +1063,7 @@ Settle each before the milestone that needs it. World content is drafted and che
 **Before M2 and M3**
 
 - [x] Items and gear (D2, § Items and gear, with offerings under § Cultivation): slots, grades, artifact bonding and artifact spirits, pill toxicity, storage rings; item, talisman and array power on the realm curve, with a higher-realm talisman priced by its own realm; tier and rarity on every item (Tier, rarity and pedigree), weapons and armor on the fighting-up ledger's axes, weapons above your realm; aptitude-raising pills and rites; the upkeep some methods drink
-- [ ] Enemies: beast and cultivator templates, behavior profiles, loot; pedigree tables and each realm's ordinary baseline, tuned to the fighting-up ledger
+- [x] Enemies (D2, § Enemies, beasts and the people you meet): beast and cultivator templates, behavior profiles, loot; pedigree tables and each realm's ordinary baseline, tuned to the fighting-up ledger
 - [ ] Combat outcome tags for effects and sound: form, element or damage type, realm and result on every outcome
 - [ ] Exploration: travel, trips, look around and the open, gated, hostile and deadly rule are settled under The world; left for D3: the encounter tables per region in the six kinds, scene building from the card format, ruins and inheritances, fleeing, dying in the world, ways to flee, hide or talk past foes a realm or more above you, and the fog's rules, meaning what travel, divine sense, maps and rumors each reveal
 - [ ] NPC basics: the person record and its log are settled under Professions, people and powers; left for D3: what each NPC knows, how talk changes relationships, the intents and motives scenes draw on
