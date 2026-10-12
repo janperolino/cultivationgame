@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AbodeScreen } from './AbodeScreen.tsx';
+import { CharacterScreen } from './CharacterScreen.tsx';
+import { ChronicleScreen } from './ChronicleScreen.tsx';
+import { CreationScreen } from './CreationScreen.tsx';
 import { CultivateScreen } from './CultivateScreen.tsx';
 import { GlassBackground } from './GlassBackground.tsx';
 import { SettingsScreen } from './SettingsScreen.tsx';
@@ -8,6 +11,7 @@ import { TreesScreen } from './TreesScreen.tsx';
 import { formatAge } from './format.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
+import { eventText } from '../core/chronicle.ts';
 import { ageYears } from '../core/state.ts';
 
 function SlotNotice() {
@@ -43,6 +47,13 @@ export function App() {
   const phase = useGame((s) => s.phase);
   const game = useGame((s) => s.game);
   const notice = useGame((s) => s.notice);
+  const creating = useGame((s) => s.creating);
+  // A life begins at home: once creation closes, the Abode shows.
+  const [wasCreating, setWasCreating] = useState(false);
+  if (!!creating !== wasCreating) {
+    setWasCreating(!!creating);
+    if (!creating) setScreen('abode');
+  }
   const dismissNotice = useGame((s) => s.dismissNotice);
 
   useEffect(() => {
@@ -52,8 +63,9 @@ export function App() {
   const unlocks = game?.unlocks ?? [];
   const available = screens.filter((s) => !s.unlock || unlocks.includes(s.unlock));
   // With no life open, Settings is where you pick or start one.
-  const current =
-    phase === 'no-slot'
+  const current = creating
+    ? { id: 'creation', name: 'A New Life', hanzi: '新生' }
+    : phase === 'no-slot'
       ? screens.find((s) => s.id === 'settings')!
       : (available.find((s) => s.id === screen) ?? available[0]!);
 
@@ -149,7 +161,8 @@ export function App() {
             </section>
           )}
           {phase === 'loading' && <p className="muted">Opening your abode…</p>}
-          {phase === 'no-slot' && (
+          {creating && <CreationScreen />}
+          {phase === 'no-slot' && !creating && (
             <p className="muted">No life is open. Start one or pick a slot below.</p>
           )}
           {phase !== 'loading' && current.id === 'abode' && (
@@ -158,6 +171,8 @@ export function App() {
           {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
           {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
           {phase !== 'loading' && current.id === 'techniques' && <TechniquesScreen />}
+          {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
+          {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}
           {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
         </main>
 
@@ -185,7 +200,7 @@ export function App() {
                         ? 'a past life'
                         : `age ${formatAge(ageYears(game.player, c.day))}`)}
                   </span>
-                  {c.text}
+                  {game && eventText(game, c)}
                 </li>
               ))}
             </ol>

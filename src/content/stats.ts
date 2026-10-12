@@ -19,7 +19,8 @@ export interface StatInfo {
   /** What it changes, for the tooltip. */
   what: string;
   /** The system that will read it, when none does yet. */
-  arrives?: 'combat' | 'crafting' | 'the map';
+  arrives?:
+    'combat' | 'crafting' | 'the map' | 'the Daos' | 'the Ways' | 'encounters' | 'tribulations';
 }
 
 export const STATS = {
@@ -43,6 +44,11 @@ export const STATS = {
     name: 'Aptitude',
     unit: 'points',
     what: 'Aptitude, which speeds every seclusion day',
+  },
+  gradeMargin: {
+    name: 'Grade margin',
+    unit: 'points',
+    what: 'the margin a major breakthrough brings, which sets its grade',
   },
   // Read once combat arrives (M2).
   qiPool: {
@@ -106,6 +112,30 @@ export const STATS = {
     what: 'Agility: turn order, evasion, fleeing',
     arrives: 'combat',
   },
+  fortune: {
+    name: 'Fortune',
+    unit: 'points',
+    what: 'Fortune: critical hits and extra drops',
+    arrives: 'combat',
+  },
+  fireDamage: {
+    name: 'Fire damage',
+    unit: 'percent',
+    what: 'the damage of fire techniques',
+    arrives: 'combat',
+  },
+  fireResist: {
+    name: 'Fire resistance',
+    unit: 'percent',
+    what: 'fire damage turned aside',
+    arrives: 'combat',
+  },
+  yinResist: {
+    name: 'Yin resistance',
+    unit: 'percent',
+    what: 'yin chill and ghost damage turned aside',
+    arrives: 'combat',
+  },
   // The fighting-up ledger's three axes (design § Combat), carried by capstones and a few late
   // notables. Harm and Hold multiply; Hit adds to every check.
   hit: { name: 'Hit', unit: 'points', what: 'every check in a fight', arrives: 'combat' },
@@ -158,6 +188,56 @@ export const STATS = {
     unit: 'percent',
     what: 'precision at the furnace, forge, array and talisman desk',
     arrives: 'crafting',
+  },
+  arraySight: {
+    name: 'Array sight',
+    unit: 'points',
+    what: 'seeing the eye of an array at your soul tier',
+    arrives: 'crafting',
+  },
+  // Read once the Daos and Ways arrive (M2, M3). Talents that touch a Dao store them now.
+  swordInsight: {
+    name: 'Sword Dao insight',
+    unit: 'percent',
+    what: 'insight toward the Sword Dao',
+    arrives: 'the Daos',
+  },
+  swordChecks: {
+    name: 'Sword checks',
+    unit: 'points',
+    what: 'checks made with a sword',
+    arrives: 'the Daos',
+  },
+  swordPractice: {
+    name: 'Sword practice',
+    unit: 'percent',
+    what: 'mastery from practicing sword techniques',
+    arrives: 'the Daos',
+  },
+  formationInsight: {
+    name: 'Formation Dao insight',
+    unit: 'percent',
+    what: 'insight toward the Formation Dao',
+    arrives: 'the Daos',
+  },
+  ghostWay: {
+    name: 'Ghost Way',
+    unit: 'percent',
+    what: 'how fast the Ghost Way grows',
+    arrives: 'the Ways',
+  },
+  // Read once encounters and tribulations arrive (M3, Core Formation).
+  encounterLuck: {
+    name: 'Fortuitous encounters',
+    unit: 'percent',
+    what: 'how often the world turns lucky for you rather than against you',
+    arrives: 'encounters',
+  },
+  tribulation: {
+    name: 'Tribulation strength',
+    unit: 'percent',
+    what: 'how hard heavenly tribulations strike you',
+    arrives: 'tribulations',
   },
 } as const satisfies Record<string, StatInfo>;
 

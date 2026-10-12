@@ -295,7 +295,7 @@ describe('the lifespan edge', () => {
     expect(lastChance(s.player).possible).toBe(false);
     const r = attemptLastChance(s);
     expect(r.state.ended).not.toBeNull();
-    expect(r.state.chronicle.at(-1)?.kind).toBe('death');
+    expect(r.state.chronicle.at(-1)?.type).toBe('death');
     expect(advance(r.state, 3_600_000, { step: cultivate }).days).toBe(0);
   });
 

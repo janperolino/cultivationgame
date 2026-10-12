@@ -1,0 +1,217 @@
+{
+ "version": 6,
+ "savedAt": 1760000000000,
+ "state": {
+  "lineage": {
+   "id": "fixture-v6",
+   "life": 1
+  },
+  "mode": "gentle",
+  "calendar": {
+   "day": 4740
+  },
+  "player": {
+   "id": "player",
+   "name": "Han Li",
+   "pronouns": "they/them",
+   "look": "",
+   "bornDay": 0,
+   "lifespanBonus": 0,
+   "root": "true",
+   "rootElements": [
+    "wood",
+    "fire"
+   ],
+   "methods": {
+    "garrison-standard": {
+     "practice": 275.6666666666662,
+     "fedUntil": 0
+    },
+    "stone-bearing": {
+     "practice": 10.000000000000002,
+     "fedUntil": 0
+    }
+   },
+   "activeMethods": {
+    "qi": "garrison-standard",
+    "body": "stone-bearing",
+    "soul": null
+   },
+   "attributes": {
+    "agility": 10,
+    "fortune": 10,
+    "aptitude": 10
+   },
+   "qi": {
+    "realm": "qi-condensation",
+    "stage": 3,
+    "bar": 98.67500000000021,
+    "grades": [],
+    "unsettledUntil": 0,
+    "injuredUntil": 0,
+    "growth": [
+     {
+      "realm": "qi-condensation",
+      "stage": 2,
+      "method": "garrison-standard",
+      "rarity": "white",
+      "growth": {
+       "qiPool": 0,
+       "techniquePower": 0,
+       "qiRecovery": 0
+      }
+     },
+     {
+      "realm": "qi-condensation",
+      "stage": 3,
+      "method": "garrison-standard",
+      "rarity": "white",
+      "growth": {
+       "qiPool": 0,
+       "techniquePower": 0,
+       "qiRecovery": 0
+      }
+     }
+    ]
+   },
+   "body": {
+    "realm": "qi-condensation",
+    "stage": 1,
+    "bar": 15.999999999999982,
+    "grades": [],
+    "unsettledUntil": 0,
+    "injuredUntil": 0,
+    "growth": []
+   },
+   "soul": {
+    "realm": "qi-condensation",
+    "stage": 1,
+    "bar": 0,
+    "grades": [],
+    "unsettledUntil": 0,
+    "injuredUntil": 0,
+    "growth": []
+   },
+   "insight": {
+    "current": 121.91666666666669,
+    "earned": 121.91666666666669
+   },
+   "stones": 0,
+   "items": {},
+   "wheel": [
+    "sleep",
+    "sleep",
+    "qi",
+    "qi",
+    "qi",
+    "qi",
+    "qi",
+    "qi",
+    "qi",
+    "body",
+    "study",
+    "practice"
+   ],
+   "routines": [
+    "watch-rotation"
+   ],
+   "savedRoutines": [],
+   "plan": {
+    "auto": "safe",
+    "burnStones": true
+   },
+   "flags": [
+    "hours-practice",
+    "hours-study",
+    "hours-body"
+   ],
+   "nodes": [],
+   "techniques": {
+    "rampart-palm": {
+     "practice": 34.916666666666565
+    }
+   },
+   "practicing": "rampart-palm",
+   "contemplation": {}
+  },
+  "glass": {
+   "seed": -270400011,
+   "fractures": 2,
+   "flares": 2
+  },
+  "ended": null,
+  "chronicle": [
+   {
+    "day": 4320,
+    "kind": "birth",
+    "text": "Han Li comes of age on root-testing day."
+   },
+   {
+    "day": 4321,
+    "kind": "unlock",
+    "text": "A technique to drill: practice hours now raise its mastery. The hour of 亥 (Hai) turns from qi to practice."
+   },
+   {
+    "day": 4360,
+    "kind": "mastery",
+    "text": "The Garrison Standard Method reaches Comprehension; the breath runs deeper, and understanding with it."
+   },
+   {
+    "day": 4360,
+    "kind": "unlock",
+    "text": "Enough insight gathers to grasp a first principle: the trees open."
+   },
+   {
+    "day": 4369,
+    "kind": "mastery",
+    "text": "Rampart Palm reaches Comprehension; the form finally clicks."
+   },
+   {
+    "day": 4386,
+    "kind": "breakthrough",
+    "text": "Qi breaks through to layer 2."
+   },
+   {
+    "day": 4387,
+    "kind": "unlock",
+    "text": "The first insight trickles in. Study hours turn seclusion into understanding. The hour of 戌 (Xu) turns from qi to study."
+   },
+   {
+    "day": 4579,
+    "kind": "breakthrough",
+    "text": "Qi breaks through to layer 3."
+   },
+   {
+    "day": 4582,
+    "kind": "mastery",
+    "text": "The Garrison Standard Method reaches Mastery; the breath runs deeper, and understanding with it."
+   },
+   {
+    "day": 4620,
+    "kind": "method",
+    "text": "Han Li is handed the Stone-Bearing Tempering Art."
+   },
+   {
+    "day": 4620,
+    "kind": "unlock",
+    "text": "A tempering art in hand: body hours open beside qi. The hour of 酉 (You) turns from qi to body."
+   },
+   {
+    "day": 4682,
+    "kind": "mastery",
+    "text": "Rampart Palm reaches Mastery; the form finally clicks."
+   }
+  ],
+  "unlocks": [
+   "abode",
+   "cultivate",
+   "techniques",
+   "trees"
+  ],
+  "rewindCharges": 1,
+  "seed": -270400011,
+  "rng": {
+   "breakthrough": 1326835393
+  }
+ }
+}

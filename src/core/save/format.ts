@@ -6,8 +6,6 @@ import { METHOD_MASTERY } from '../../content/mastery.ts';
 import { FIT_SPEED, hasMethod, method, methodFit } from '../../content/methods.ts';
 import { REALM_IDS, type RealmId } from '../../content/realms.ts';
 import { defaultElements, root, ROOT_IDS, type RootId } from '../../content/roots.ts';
-import { PLACEHOLDER_ROUTINE } from '../../content/routines.ts';
-import { PLACEHOLDER_TECHNIQUE } from '../../content/techniques.ts';
 import { TREES } from '../../content/trees/index.ts';
 import { climbedStages, stageGrowth } from '../growth.ts';
 import { practiceNeed } from '../mastery.ts';
@@ -16,13 +14,29 @@ import {
   GameStateSchema,
   PLAYER_ID,
   START_AGE,
+  freshCards,
+  STARTING_UNLOCKS,
   type GameState,
   type Ladder,
 } from '../state.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
+
+/**
+ * Before character creation (P1.7), every life was the cave orphan who went along: the garrison's
+ * method, its first technique and its routine. The old migrations hand these to old lives.
+ */
+const PLACEHOLDER_TECHNIQUE = 'rampart-palm';
+const PLACEHOLDER_ROUTINE = 'watch-rotation';
+
+/** The first hour's cards an old life already has the gifts of, so they don't come again. */
+const CARDS_HELD: Record<string, (p: Raw) => boolean> = {
+  'first-technique-cave-along': (p) => PLACEHOLDER_TECHNIQUE in ((p.techniques ?? {}) as Raw),
+  'errand-cave-along': (p) => 'stone-bearing' in ((p.methods ?? {}) as Raw),
+  'lamp-keeper': (p) => 'still-lantern' in ((p.methods ?? {}) as Raw),
+};
 
 /** The mastery level old lives' methods are put at in v5, so they lose no speed: Mastery. */
 const MIGRATED_MASTERY = 2;
@@ -192,7 +206,7 @@ const migrations: Record<number, (old: Raw) => Raw> = {
   // leaving the screen unlocks behind. The mode moves to the top. The one random state becomes
   // named streams seeded from the life's seed (the glass seed, which was the first rng state);
   // breakthroughs carry on from where the old stream stood. Placeholder lives on the garrison's
-  // method get its first technique, which P1.7 hands out at creation from then on.
+  // method get its first technique, which a card hands out from P1.7 on.
   2: (old) => {
     const s = (old.state ?? {}) as Raw;
     const c = (s.character ?? {}) as Raw;
@@ -361,6 +375,47 @@ const migrations: Record<number, (old: Raw) => Raw> = {
           ...p,
           nodes: owned.filter((id) => kept.has(id)),
           insight: { ...insight, current: current + refund },
+        },
+      },
+    };
+  },
+  // v6, P1.6: a chronicle of text lines, no talents, origin or card feed. v7 types the chronicle:
+  // old lines keep their text as `legacy` events. A life on the garrison's method was the
+  // placeholder cave orphan who went along, and becomes one, with the cards for what it already
+  // holds marked drawn; any other gets no origin, so no origin card comes. Talents start empty.
+  6: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const day =
+      typeof (s.calendar as Raw | undefined)?.day === 'number'
+        ? ((s.calendar as Raw).day as number)
+        : 0;
+    const garrison = 'garrison-standard' in ((p.methods ?? {}) as Raw);
+    const chronicle = (Array.isArray(s.chronicle) ? (s.chronicle as Raw[]) : []).map((e) => ({
+      day: typeof e.day === 'number' ? e.day : day,
+      type: 'legacy',
+      actors: [typeof p.id === 'string' ? p.id : PLAYER_ID],
+      place: null,
+      data: { kind: String(e.kind ?? ''), text: String(e.text ?? '') },
+    }));
+    const cards = freshCards(day);
+    if (garrison) {
+      for (const [id, held] of Object.entries(CARDS_HELD)) if (held(p)) cards.drawn[id] = day;
+    }
+    const unlocks = Array.isArray(s.unlocks) ? (s.unlocks as string[]) : [];
+    return {
+      ...old,
+      version: 7,
+      state: {
+        ...s,
+        chronicle,
+        cards,
+        unlocks: [...unlocks, ...STARTING_UNLOCKS.filter((u) => !unlocks.includes(u))],
+        player: {
+          ...p,
+          talents: [],
+          origin: garrison ? { id: 'cave-orphan', choice: 'along' } : null,
+          place: garrison ? 'qm-anbian-fu' : null,
         },
       },
     };

@@ -2,32 +2,28 @@
 // day wheel by its default rule on the default (safe) breakthrough setting with no stones; then the
 // same buying tree nodes toward the nearest one that speeds qi; then following the garrison's Watch
 // Rotation whenever it can, for the discipline bonus; then a wheel kept all qi for comparison.
-// Each run stands in for P1.7's first hour: its origin's first technique at layer 2, the errand
-// card's tempering art at minute 50, the later card's nourishing art at two hours, and at layer 9
-// the Foundation Pill with the Foundation chapter of the qi method, taken up at once. Every method
-// starts white, tier 1 and at Glimpse, and climbs in mastery with the hours cultivated with it.
+// Each run is a created life, the cave orphan who went along with plain talents, playing the first
+// hour's cards as they come by their default choices: the first technique at minute 20–35, the
+// errand's tempering art near the hour, the lamp-keeper's nourishing art near two hours, and at
+// layer 9 the Foundation Pill with the Foundation chapter of the qi method, taken up at once. A
+// failed Foundation attempt gets another pill at once rather than the card's ten years. Every
+// method starts white, tier 1 and at Glimpse, and climbs in mastery with the hours cultivated with it.
 // Each row is the median of many seeds.
 // Targets (design § Character creation): every root at layer 3 in about 45 minutes; a true root at
 // layer 9 in 15–20 hours; a heavenly root in about half that.
 // Run: npm run sim -- pacing [--seeds=25]
 import { MASTERY } from '../src/content/mastery.ts';
-import { FIRST_ARTS, method, nextChapter } from '../src/content/methods.ts';
-import { ROOTS, type RootId } from '../src/content/roots.ts';
-import { PLACEHOLDER_ROUTINE, routine } from '../src/content/routines.ts';
-import { PLACEHOLDER_TECHNIQUE } from '../src/content/techniques.ts';
+import { method, nextChapter } from '../src/content/methods.ts';
+import { defaultElements, ROOTS, type RootId } from '../src/content/roots.ts';
+import { routine } from '../src/content/routines.ts';
+import { playDay, resolveByDefault } from '../src/core/cards.ts';
+import { createLife } from '../src/core/creation.ts';
 import { TREES, treeNode, type TreeNode } from '../src/content/trees/index.ts';
 import { majorCheck } from '../src/core/cultivation.ts';
-import {
-  breakThrough,
-  cultivate,
-  gainMethod,
-  gainTechnique,
-  learn,
-  switchMethod,
-} from '../src/core/life.ts';
+import { breakThrough, learn, switchMethod } from '../src/core/life.ts';
 import { advance } from '../src/core/loop.ts';
 import { methodMastery } from '../src/core/methods.ts';
-import { addItem, ageYears, newLife, withPlayer, type GameState } from '../src/core/state.ts';
+import { addItem, ageYears, withPlayer, type GameState } from '../src/core/state.ts';
 import { canLearn, hasLearned, nodeSealed } from '../src/core/trees.ts';
 import { followWheel } from '../src/core/wheel.ts';
 
@@ -69,12 +65,18 @@ function buyNodes(s: GameState): GameState {
 
 const givePill = (s: GameState) => withPlayer(s, addItem(s.player, 'foundation-pill', 1));
 
-/** The layer 9 card's Foundation chapter of the qi method, taken up before the attempt. */
-function giveChapter(s: GameState): GameState {
+/** Takes up the Foundation chapter of the qi method once the layer 9 card has handed it over. */
+function takeChapter(s: GameState): GameState {
   const id = s.player.activeMethods.qi;
   const chapter = id ? nextChapter(method(id)) : undefined;
-  if (!chapter) return s;
-  return switchMethod(gainMethod(s, chapter.id, 'is handed'), 'qi', chapter.id).state;
+  if (!chapter || !(chapter.id in s.player.methods)) return s;
+  return switchMethod(s, 'qi', chapter.id).state;
+}
+
+/** Plays every waiting card by its default choice. */
+function settleCards(s: GameState): GameState {
+  while (s.cards.pending.length) s = resolveByDefault(s, s.cards.pending[0]!.uid);
+  return s;
 }
 
 /** The qi method's mastery level, as its first letter. */
@@ -85,7 +87,7 @@ function qiMastery(s: GameState): string {
 
 /** Follows the Watch Rotation once every kind of hour it needs has opened. */
 function followRoutine(s: GameState): GameState {
-  const r = followWheel(s.player, routine(PLACEHOLDER_ROUTINE).hours);
+  const r = followWheel(s.player, routine('watch-rotation').hours);
   return r.check.ok ? withPlayer(s, r.cultivator) : s;
 }
 
@@ -99,9 +101,6 @@ const arg = process.argv.find((a) => a.startsWith('--seeds='));
 const SEEDS = arg ? Number(arg.slice(8)) : 25;
 const CHUNK_MS = 60_000;
 const MAX_HOURS = 60;
-/** When the stand-ins for P1.7's cards hand over the first arts, in real hours. */
-const TEMPERING_AT = 50 / 60;
-const NOURISHING_AT = 2;
 
 interface Run {
   /** Real hours at which qi reached each layer, index 2..9, and Foundation as index 10. */
@@ -118,26 +117,33 @@ interface Run {
 }
 
 function play(rootId: RootId, seed: number, how: Play): Run {
-  let s = newLife({
+  let s = createLife({
     name: 'Sim',
-    root: rootId,
+    pronouns: 'they/them',
+    look: '',
+    mode: 'ironman',
     seed: `pacing-${rootId}-${seed}`,
-    routines: [PLACEHOLDER_ROUTINE],
+    choice: 'along',
+    roll: {
+      root: rootId,
+      elements: defaultElements(rootId),
+      body: 'farmhands-frame',
+      soul: 'plain-mind',
+      fate: 'ordinary-fate',
+      origin: 'cave-orphan',
+    },
   });
   const at: (number | undefined)[] = [];
   const run: Run = { at, fails: 0 };
   let ms = 0;
   let chronicleSeen = s.chronicle.length;
   while (ms < MAX_HOURS * 3_600_000) {
-    const r = advance(s, CHUNK_MS, { step: cultivate });
-    s = r.state;
+    const r = advance(s, CHUNK_MS, { step: playDay });
+    s = settleCards(r.state);
     ms += r.usedMs;
     const hours = ms / 3_600_000;
-    for (const c of s.chronicle.slice(chronicleSeen)) if (c.kind === 'setback') run.fails++;
+    for (const c of s.chronicle.slice(chronicleSeen)) if (c.type.endsWith('setback')) run.fails++;
     chronicleSeen = s.chronicle.length;
-    if (s.player.qi.stage >= 2) s = gainTechnique(s, PLACEHOLDER_TECHNIQUE);
-    if (hours >= TEMPERING_AT) s = gainMethod(s, FIRST_ARTS.body);
-    if (hours >= NOURISHING_AT) s = gainMethod(s, FIRST_ARTS.soul);
     if (how === 'nodes') s = buyNodes(s);
     if (how === 'routine') s = followRoutine(s);
     if (how === 'qi-only') s = allQi(s);
@@ -152,9 +158,9 @@ function play(rootId: RootId, seed: number, how: Play): Run {
         run.soulAt9 = `${p.soul.realm === 'qi-condensation' ? 'L' : 'F'}${p.soul.stage}`;
         run.nodesAt9 = p.nodes.length;
         run.masteryAt9 = qiMastery(s);
-        // In M1 the origin hands over a Foundation Pill and the next chapter at layer 9.
-        s = giveChapter(givePill(s));
       }
+      // In M1 the origin's layer 9 card hands over a Foundation Pill and the next chapter.
+      if (p.qi.stage === 9) s = takeChapter(s);
       // The sim breaks through as soon as it may, at the bare minimum.
       if (majorCheck(s.player, 'qi')?.ready) {
         s = breakThrough(s, 'qi').state;

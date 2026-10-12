@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { stageName } from '../content/realms.ts';
 import { barFill, barSize, lastChance, type LadderId } from '../core/cultivation.ts';
+import { eventText } from '../core/chronicle.ts';
 import { ageYears, atLifespanEdge, lifespanYears, type GameState } from '../core/state.ts';
 import { formatAgeShort, formatNumber, formatPercent, LADDER_LABELS } from './format.ts';
 import { useGame } from './store.ts';
@@ -69,17 +70,18 @@ export function LifeEdgeCard() {
   if (!game) return null;
 
   if (game.ended) {
+    const last = game.chronicle.findLast((e) => e.type === 'death');
     return (
       <section className="panel card-edge" aria-labelledby="ended-heading">
         <h2 id="ended-heading" className="panel-heading">
           This life is over
         </h2>
-        <p>{game.chronicle.at(-1)?.text}</p>
+        <p>{last && eventText(game, last)}</p>
         <p className="muted">
           The chronicle stays with this slot. Nothing else carries over until rebirth is found.
         </p>
         <div className="actions">
-          <button type="button" className="button" onClick={() => void beginNextLife()}>
+          <button type="button" className="button" onClick={beginNextLife}>
             Begin a new life
           </button>
         </div>

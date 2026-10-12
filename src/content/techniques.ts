@@ -1,7 +1,7 @@
 // Techniques: the moves you actually use (design § Cultivation, § Combat). Mastery runs Glimpse to
 // Origin, raised by practice days (content/mastery.ts), and each level adds +2 to checks with the
 // technique. Techniques belong to lines, whose chapters climb the realms. These are the first
-// technique of each origin path, which character creation (P1.7) hands out, and the garrison
+// technique of each origin path, which its card hands out at minute 20–35, and the garrison
 // palm's second chapter. A new technique is an entry here, not new code. Power and qi cost are
 // starting values for M2's combat engine and balance sim; Dao requirements arrive with the Daos
 // in M2.
@@ -47,7 +47,7 @@ export interface Technique {
   damage: DamageType;
   power: number;
   qiCost: number;
-  /** The origin path that hands it out, as origin/choice; P1.7 reads this. */
+  /** The origin path that hands it out, as origin/choice; its first-technique card reads this. */
   firstFor?: string;
   /** Where it comes from, for the tooltip. */
   source: string;
@@ -216,6 +216,3 @@ export function techniqueChapter(line: string, chapter: number): Technique | und
 export function previousTechniqueChapter(t: Technique): Technique | undefined {
   return t.chapter > 1 ? techniqueChapter(t.line, t.chapter - 1) : undefined;
 }
-
-/** Until character creation (P1.7), every life is the cave orphan who went along. */
-export const PLACEHOLDER_TECHNIQUE = 'rampart-palm';

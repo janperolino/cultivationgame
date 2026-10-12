@@ -1,11 +1,18 @@
 // The whole game state of one life, as plain data that saves, migrates and checks with Zod.
-// What belongs to a cultivator (ladders, insight, attributes, root, methods, the day wheel, items,
-// nodes and techniques) lives in a `Cultivator`, so NPCs and co-op guests later run on the same
-// rules.
+// What belongs to a cultivator (ladders, insight, attributes, root, talents, origin, methods, the
+// day wheel, items, nodes and techniques) lives in a `Cultivator`, so NPCs and co-op guests later
+// run on the same rules. The chronicle is a typed event log (content/chronicle.ts writes the text).
 import { z } from 'zod';
+import type { EventData } from '../content/chronicle.ts';
 import { AUTO_IDS, GRADE_IDS } from '../content/cultivation.ts';
 import { ELEMENTS, type Element } from '../content/elements.ts';
 import { FRESH_WHEEL, HOUR_KIND_IDS, HOURS_PER_DAY } from '../content/hours.ts';
+import {
+  ORIGIN_CHOICES,
+  ORIGIN_IDS,
+  type OriginChoice,
+  type OriginId,
+} from '../content/origins.ts';
 import { RARITY_IDS } from '../content/rarity.ts';
 import { REALM_IDS, realm } from '../content/realms.ts';
 import { defaultElements, ROOT_IDS, type RootId } from '../content/roots.ts';
@@ -63,11 +70,17 @@ export const CultivatorSchema = z.object({
   look: z.string(),
   /** World day of birth. */
   bornDay: z.number(),
-  /** Years added to the qi realm's lifespan by talents, pills and the like. */
+  /** Years added to the qi realm's lifespan by pills and the like; talents and nodes add theirs as stats. */
   lifespanBonus: z.number(),
   root: z.enum(ROOT_IDS),
   /** The elements the root holds; the element hours read them. */
   rootElements: z.array(z.enum(ELEMENTS)),
+  /** The body, soul and fate talents rolled at birth, by id (content/talents.ts). */
+  talents: z.array(z.string()),
+  /** Where the cultivator comes from and what they chose on testing day; null for a placeholder. */
+  origin: z.object({ id: z.enum(ORIGIN_IDS), choice: z.enum(ORIGIN_CHOICES) }).nullable(),
+  /** Where the cultivator lives: an atlas entry id, or null when unknown. */
+  place: z.string().nullable(),
   /**
    * Methods known, by id (content/methods.ts): qi methods, tempering and nourishing arts, each
    * with the practice days cultivated with it, which set its mastery, and the world day its
@@ -76,7 +89,7 @@ export const CultivatorSchema = z.object({
   methods: z.record(z.string(), z.object({ practice: z.number().min(0), fedUntil: z.number() })),
   /** The method each ladder climbs with; a ladder gains nothing from its hours without one. */
   activeMethods: z.object({ qi: activeMethod, body: activeMethod, soul: activeMethod }),
-  /** The three attributes that come from birth (design § Combat); talents move them in P1.7. */
+  /** The three attributes that come from birth (design § Combat), at their base; talents add as stats. */
   attributes: z.object({
     agility: z.number(),
     fortune: z.number(),
@@ -107,7 +120,7 @@ export const CultivatorSchema = z.object({
     /** Burn spirit stones as fuel on qi days. */
     burnStones: z.boolean(),
   }),
-  /** Milestones the rules have passed: kinds of hour opened, sleep freed, gates reached. */
+  /** Milestones and story: kinds of hour opened, sleep freed, gates reached, talents woken, a bounty. */
   flags: z.array(z.string()),
   /** Tree nodes learned, in the order they were learned. */
   nodes: z.array(z.string()),
@@ -120,13 +133,44 @@ export const CultivatorSchema = z.object({
 });
 export type Cultivator = z.infer<typeof CultivatorSchema>;
 
-const ChronicleEntry = z.object({
-  /** World day the entry happened on. */
+const EventValue = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+
+/**
+ * One event in the chronicle: when, what type, who (cultivator ids, the subject first), where (an
+ * atlas id) and the details. The text comes from its type's template (content/chronicle.ts).
+ */
+const ChronicleEvent = z.object({
+  /** World day it happened on. */
   day: z.number(),
-  kind: z.string(),
-  text: z.string(),
+  type: z.string(),
+  actors: z.array(z.string()),
+  place: z.string().nullable(),
+  data: z.record(z.string(), EventValue),
 });
-export type ChronicleEntry = z.infer<typeof ChronicleEntry>;
+export type ChronicleEvent = z.infer<typeof ChronicleEvent>;
+
+/** A card waiting in the feed (core/cards.ts). */
+const PendingCard = z.object({
+  /** Unique within the life, so the same card drawn twice is two entries. */
+  uid: z.number().int(),
+  card: z.string(),
+  /** World day it was drawn. */
+  day: z.number(),
+});
+export type PendingCard = z.infer<typeof PendingCard>;
+
+const Cards = z.object({
+  /** Cards waiting for a choice, oldest first. */
+  pending: z.array(PendingCard),
+  /** The world day each card was last drawn, for once-only cards and cooldowns. */
+  drawn: z.record(z.string(), z.number()),
+  /** Days the story marked, for later cards' triggers: a failed Foundation attempt. */
+  marks: z.record(z.string(), z.number()),
+  /** The last whole world day the decks were checked on. */
+  checked: z.number(),
+  nextUid: z.number().int(),
+});
+export type CardsState = z.infer<typeof Cards>;
 
 export const GameStateSchema = z.object({
   lineage: z.object({
@@ -150,7 +194,9 @@ export const GameStateSchema = z.object({
   }),
   /** Set when the life is over; the slot keeps the chronicle and offers a new life. */
   ended: z.object({ day: z.number(), cause: z.string() }).nullable(),
-  chronicle: z.array(ChronicleEntry),
+  chronicle: z.array(ChronicleEvent),
+  /** The card feed and the decks' memory. */
+  cards: Cards,
   /** Unlock flags for the screens, so they appear as they're reached. */
   unlocks: z.array(z.string()),
   /** Gentle mode's rewind charge: 1 when a rewind is available. Always 0 in ironman. */
@@ -169,16 +215,23 @@ export interface NewLifeOptions {
   mode?: 'ironman' | 'gentle';
   /** Seeds the generators; defaults to the name. */
   seed?: string;
-  /** Until character creation (P1.7), a true root on the garrison's standard method. */
+  /** A true root unless creation rolled another. */
   root?: RootId;
-  /** The root's elements; until P1.7 rolls them, the root's defaults. */
+  /** The root's elements; the root's defaults unless creation rolled them. */
   elements?: Element[];
+  /** Body, soul and fate talents, by id. */
+  talents?: string[];
+  origin?: { id: OriginId; choice: OriginChoice } | null;
+  place?: string | null;
   /** The qi method; null for the refusals that start without one. */
   method?: string | null;
-  /** Routines known from the start; P1.7 hands the origin's over at creation. */
+  /** Routines known from the start: the origin path's. */
   routines?: string[];
+  stones?: number;
+  /** Story flags from the start: the origin path's. */
+  flags?: string[];
   aptitude?: number;
-  /** Techniques known from the start; P1.7 hands the first one over at creation. */
+  /** Techniques known from the start; tests and sims only, since the first one comes as a card. */
   techniques?: string[];
 }
 
@@ -196,7 +249,7 @@ export function freshLadder(): Ladder {
 }
 
 /** The screens a life starts with. */
-export const STARTING_UNLOCKS = ['abode', 'cultivate'];
+export const STARTING_UNLOCKS = ['abode', 'cultivate', 'character', 'chronicle'];
 
 /** A cultivator at age 12, every ladder at Qi Condensation layer 1 with an empty bar. */
 export function newCultivator(
@@ -214,6 +267,9 @@ export function newCultivator(
     lifespanBonus: 0,
     root: opts.root ?? 'true',
     rootElements: opts.elements ?? defaultElements(opts.root ?? 'true'),
+    talents: opts.talents ?? [],
+    origin: opts.origin ?? null,
+    place: opts.place ?? null,
     methods: method ? { [method]: { practice: 0, fedUntil: 0 } } : {},
     activeMethods: { qi: method, body: null, soul: null },
     attributes: { agility: 10, fortune: 10, aptitude: opts.aptitude ?? 10 },
@@ -221,18 +277,51 @@ export function newCultivator(
     body: freshLadder(),
     soul: freshLadder(),
     insight: { current: 0, earned: 0 },
-    stones: 0,
+    stones: opts.stones ?? 0,
     items: {},
     wheel: [...FRESH_WHEEL],
     routines: opts.routines ?? [],
     savedRoutines: [],
     plan: { auto: 'safe', burnStones: true },
-    flags: [],
+    flags: opts.flags ?? [],
     nodes: [],
     techniques: Object.fromEntries(techniques.map((t) => [t, { practice: 0 }])),
     practicing: techniques[0] ?? null,
     contemplation: {},
   };
+}
+
+/** An empty card feed, checked up to the given day. */
+export function freshCards(day: number): CardsState {
+  return { pending: [], drawn: {}, marks: {}, checked: Math.floor(day), nextUid: 1 };
+}
+
+/** A new event for the chronicle; the subject is the first actor. */
+export function chronicleEvent(
+  day: number,
+  type: string,
+  data: EventData,
+  actors: string[],
+  place: string | null,
+): ChronicleEvent {
+  return { day, type, actors, place, data: { ...data } };
+}
+
+/** The events a life opens with: coming of age, and testing day when there is an origin. */
+function openingEvents(c: Cultivator, day: number, next: boolean): ChronicleEvent[] {
+  const out = [chronicleEvent(day, 'birth', next ? { next: true } : {}, [c.id], c.place)];
+  if (c.origin) {
+    out.push(
+      chronicleEvent(
+        day,
+        'testing',
+        { origin: c.origin.id, choice: c.origin.choice },
+        [c.id],
+        c.place,
+      ),
+    );
+  }
+  return out;
 }
 
 /** A fresh life at age 12, every ladder at Qi Condensation layer 1 with an empty bar. */
@@ -248,9 +337,8 @@ export function newLife(opts: NewLifeOptions): GameState {
     player,
     glass: { seed, fractures: 0, flares: 0 },
     ended: null,
-    chronicle: [
-      { day: startDay, kind: 'birth', text: `${opts.name} comes of age on root-testing day.` },
-    ],
+    chronicle: openingEvents(player, startDay, false),
+    cards: freshCards(startDay),
     unlocks: Object.keys(player.techniques).length
       ? [...STARTING_UNLOCKS, 'techniques']
       : [...STARTING_UNLOCKS],
@@ -268,15 +356,14 @@ export function nextLife(prev: GameState, opts: NewLifeOptions): GameState {
   const fresh = newLife({ ...opts, mode: opts.mode ?? prev.mode });
   const day = prev.calendar.day;
   const bornDay = day - START_AGE * DAYS_PER_YEAR;
+  const player = { ...fresh.player, bornDay };
   return {
     ...fresh,
     lineage: { id: prev.lineage.id, life: prev.lineage.life + 1 },
-    player: { ...fresh.player, bornDay },
+    player,
     calendar: { day },
-    chronicle: [
-      ...prev.chronicle,
-      { day, kind: 'birth', text: `A new life: ${opts.name} comes of age on root-testing day.` },
-    ],
+    chronicle: [...prev.chronicle, ...openingEvents(player, day, true)],
+    cards: freshCards(day),
   };
 }
 
@@ -287,7 +374,12 @@ export function ageYears(c: Cultivator, day: number): number {
   return (day - c.bornDay) / DAYS_PER_YEAR;
 }
 
-/** Lifespan in years: the qi realm's, plus bonuses and tree nodes. */
+/** Days lived since root-testing day at 12, when play begins. */
+export function daysLived(c: Cultivator, day: number): number {
+  return day - c.bornDay - START_AGE * DAYS_PER_YEAR;
+}
+
+/** Lifespan in years: the qi realm's, plus bonuses, talents and tree nodes. */
 export function lifespanYears(c: Cultivator): number {
   return realm(c.qi.realm).lifespan + c.lifespanBonus + stats(c).lifespan;
 }
@@ -301,7 +393,7 @@ export function atLifespanEdge(s: GameState): boolean {
   return s.calendar.day >= lifespanEdgeDay(s.player);
 }
 
-// ---------------------------------------------------------------- items
+// ---------------------------------------------------------------- items and flags
 
 export function itemCount(c: Cultivator, id: string): number {
   return c.items[id] ?? 0;
@@ -316,6 +408,11 @@ export function hasFlag(c: Cultivator, flag: string): boolean {
   return c.flags.includes(flag);
 }
 
+/** A copy with the flag set. */
+export function addFlag(c: Cultivator, flag: string): Cultivator {
+  return hasFlag(c, flag) ? c : { ...c, flags: [...c.flags, flag] };
+}
+
 // ---------------------------------------------------------------- the game around the player
 
 export function withPlayer(s: GameState, player: Cultivator): GameState {
@@ -326,15 +423,27 @@ export function hasUnlock(s: GameState, flag: string): boolean {
   return s.unlocks.includes(flag);
 }
 
-/** A copy with the screen flag set and, the first time, a chronicle line. */
-export function unlock(s: GameState, flag: string, text?: string): GameState {
+/** A copy with the screen flag set and, the first time, a chronicle event if `announce`. */
+export function unlock(s: GameState, flag: string, announce = false): GameState {
   if (hasUnlock(s, flag)) return s;
   const next = { ...s, unlocks: [...s.unlocks, flag] };
-  return text ? addChronicle(next, 'unlock', text) : next;
+  return announce ? addEvent(next, 'screen', { screen: flag }) : next;
 }
 
-export function addChronicle(s: GameState, kind: string, text: string): GameState {
-  return { ...s, chronicle: [...s.chronicle, { day: s.calendar.day, kind, text }] };
+/** Adds an event to the chronicle, dated today, with the player as its subject unless named. */
+export function addEvent(
+  s: GameState,
+  type: string,
+  data: EventData = {},
+  actors: string[] = [s.player.id],
+): GameState {
+  const e = chronicleEvent(s.calendar.day, type, data, actors, s.player.place);
+  return { ...s, chronicle: [...s.chronicle, e] };
+}
+
+/** Marks today under a name, for a later card's trigger. */
+export function setMark(s: GameState, id: string): GameState {
+  return { ...s, cards: { ...s.cards, marks: { ...s.cards.marks, [id]: s.calendar.day } } };
 }
 
 /**

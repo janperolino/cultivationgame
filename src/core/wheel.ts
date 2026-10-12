@@ -11,7 +11,6 @@ import {
   HOUR_KIND_IDS,
   HOUR_KINDS,
   HOUR_OPENINGS,
-  SLEEP_FREED_TEXT,
   SLEEP_HOURS,
   STUDY_LAYER,
   type HourKind,
@@ -214,18 +213,12 @@ export function openHours(c: Cultivator): { cultivator: Cultivator; notes: Note[
     if (hasFlag(next, openFlag(o.kind)) || !kindPossible(next, o.kind)) continue;
     const { wheel, hour } = flipHour(next.wheel, next.rootElements, o.kind);
     next = { ...next, wheel, flags: [...next.flags, openFlag(o.kind)] };
-    const b = hour === null ? null : BRANCHES[hour]!;
-    notes.push({
-      kind: 'unlock',
-      text: b
-        ? `${o.text} The hour of ${b.hanzi} (${b.name}) turns from qi to ${kindName(o.kind)}.`
-        : `${o.text} Give it an hour on the wheel.`,
-    });
+    notes.push({ type: 'hours', data: { kind: o.kind, hour } });
   }
   if (!sleepLocked(next) && !hasFlag(next, 'sleep-freed')) {
     const wheel = next.wheel.map((k, i) => (SLEEP_HOURS.includes(i) && k === 'sleep' ? 'qi' : k));
     next = { ...next, wheel, flags: [...next.flags, 'sleep-freed'] };
-    notes.push({ kind: 'unlock', text: SLEEP_FREED_TEXT });
+    notes.push({ type: 'sleep-freed', data: {} });
   }
   return { cultivator: next, notes };
 }

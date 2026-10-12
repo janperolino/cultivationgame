@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { newLife, noteBreakthrough, type GameState } from '../state.ts';
+import { eventText } from '../chronicle.ts';
+import { chronicleEvent, newLife, noteBreakthrough, type GameState } from '../state.ts';
 import { decodeSaveFile, encodeSaveFile } from './file.ts';
 import { loadSave, makeSave, SAVE_VERSION, SaveError } from './format.ts';
 import { SaveSlots } from './slots.ts';
@@ -34,7 +35,10 @@ function played(): GameState {
       insight: { current: 3, earned: 10 },
       stones: 42,
     },
-    chronicle: [...s.chronicle, { day: 4720, kind: 'note', text: 'A quiet year.' }],
+    chronicle: [
+      ...s.chronicle,
+      chronicleEvent(4720, 'legacy', { text: 'A quiet year.' }, ['player'], null),
+    ],
   };
 }
 
@@ -60,7 +64,7 @@ describe('save format', () => {
     expect(p.insight).toEqual({ current: 7, earned: 7 });
     expect(p.stones).toBe(12);
     expect(s.rng).toEqual({ breakthrough: 123456 });
-    expect(s.chronicle.map((c) => c.text)).toEqual(v0.log);
+    expect(s.chronicle.map((c) => c.data.text)).toEqual(v0.log);
     expect(s.rewindCharges).toBe(1);
   });
 
@@ -78,13 +82,15 @@ describe('save format', () => {
     expect(p.insight).toEqual({ current: 40, earned: 64 });
     expect(p.items).toEqual({ 'foundation-pill': 1 });
     expect(p.flags).toEqual(['hours-study']);
-    expect(s.unlocks).toEqual(['abode', 'cultivate', 'techniques']);
+    expect(s.unlocks).toEqual(['abode', 'cultivate', 'techniques', 'character', 'chronicle']);
     expect(p.techniques).toEqual({ 'rampart-palm': { practice: 0 } });
     expect(p.practicing).toBe('rampart-palm');
     expect(p.nodes).toEqual([]);
     expect(s.seed).toBe(v2.state.glass.seed);
     expect(s.rng).toEqual({ breakthrough: v2.state.rng });
-    expect(s.chronicle).toEqual(v2.state.chronicle);
+    expect(s.chronicle.map((e) => [e.day, e.type, e.data.text])).toEqual(
+      v2.state.chronicle.map((e: { day: number; text: string }) => [e.day, 'legacy', e.text]),
+    );
   });
 
   it('migrates a v3 save: the wheel by the default rule, and a method on each ladder', () => {
@@ -125,6 +131,29 @@ describe('save format', () => {
     expect(p.body.growth).toEqual([]);
     expect(p.contemplation).toEqual({});
     expect(p.qi.bar).toBe(v4.state.player.qi.bar);
+  });
+
+  it('migrates a v6 save: the chronicle typed, the placeholder life a cave orphan who went along', () => {
+    const v6 = fixture('v6');
+    const s = loadSave(v6).state;
+    const old = v6.state.chronicle as { day: number; kind: string; text: string }[];
+    expect(s.chronicle.map((e) => [e.day, e.type, e.data.text])).toEqual(
+      old.map((e) => [e.day, 'legacy', e.text]),
+    );
+    expect(s.chronicle.map((e) => eventText(s, e))).toEqual(old.map((e) => e.text));
+    expect(s.player).toMatchObject({
+      talents: [],
+      origin: { id: 'cave-orphan', choice: 'along' },
+      place: 'qm-anbian-fu',
+    });
+    // What it already holds won't come again as a card; what it doesn't, will.
+    expect(Object.keys(s.cards.drawn).sort()).toEqual([
+      'errand-cave-along',
+      'first-technique-cave-along',
+    ]);
+    expect(s.cards.pending).toEqual([]);
+    expect(s.cards.checked).toBe(Math.floor(s.calendar.day));
+    expect(s.unlocks).toEqual(expect.arrayContaining(['character', 'chronicle']));
   });
 
   it('migrates a v5 save: P1.3 nodes stay where their new paths hold, the rest refund', () => {

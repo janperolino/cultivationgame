@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { eventText } from './chronicle.ts';
 import { FIRST_ARTS } from '../content/methods.ts';
 import { STATS, statInfo, type StatId } from '../content/stats.ts';
 import {
@@ -379,7 +380,7 @@ describe('trees in the game', () => {
     expect(checkScreens(s).unlocks).not.toContain('trees');
     const rich = withPlayer(base, { ...base.player, insight: { current: 10, earned: 10 } });
     expect(checkScreens(rich).unlocks).toContain('trees');
-    expect(checkScreens(rich).chronicle.at(-1)?.kind).toBe('unlock');
+    expect(checkScreens(rich).chronicle.at(-1)?.type).toBe('screen');
   });
 
   it('learns a node into the chronicle, and its effect shows in the next day', () => {
@@ -387,7 +388,7 @@ describe('trees in the game', () => {
     const r = learn(s, 'qi-sensing-breath');
     expect(r.check.ok).toBe(true);
     expect(r.state.player.nodes).toEqual(['qi-sensing-breath']);
-    expect(r.state.chronicle.at(-1)?.text).toContain('Sensing the Breath');
+    expect(eventText(r.state, r.state.chronicle.at(-1)!)).toContain('Sensing the Breath');
     const day = (x: typeof s) => advance(x, 10_000, { step: cultivate }).state.player.qi.bar;
     expect(day(r.state) / day(s)).toBeCloseTo(1.02);
   });

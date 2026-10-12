@@ -34,6 +34,7 @@ import {
   type GradeId,
   type LadderId,
 } from '../content/cultivation.ts';
+import { stepLabel, type EventData } from '../content/chronicle.ts';
 import { phaseOf } from '../content/elements.ts';
 import {
   BRANCHES,
@@ -45,7 +46,7 @@ import {
   HOURS_PER_DAY,
   type HourKind,
 } from '../content/hours.ts';
-import { MASTERY, METHOD_MASTERY, TECHNIQUE_MASTERY } from '../content/mastery.ts';
+import { METHOD_MASTERY, TECHNIQUE_MASTERY } from '../content/mastery.ts';
 import { method } from '../content/methods.ts';
 import { rarity } from '../content/rarity.ts';
 import {
@@ -53,7 +54,6 @@ import {
   realm,
   realmIndex,
   realmScale,
-  stageName,
   stepSize,
   type Realm,
   type RealmId,
@@ -79,15 +79,15 @@ import { aptitude, aptitudeMultiplier, stats } from './stats.ts';
 import { addPractice, canPractice, kinshipBonus } from './techniques.ts';
 import { effectiveWheel, followedRoutine, openHours } from './wheel.ts';
 
-export { aptitude, aptitudeMultiplier, inTutorial, LADDERS, type LadderId };
+export { aptitude, aptitudeMultiplier, inTutorial, LADDERS, stepLabel, type LadderId };
 
-const LADDER_NAMES: Record<LadderId, string> = { qi: 'Qi', body: 'Body', soul: 'Soul' };
-const FUEL: Record<LadderId, string> = { qi: 'qi', body: 'tempering', soul: 'nourishment' };
-
-/** A line for the chronicle; core/life.ts dates it and adds it. */
+/**
+ * An event for the chronicle, typed (content/chronicle.ts writes its text); core/life.ts dates it
+ * and names the cultivator as its subject.
+ */
 export interface Note {
-  kind: string;
-  text: string;
+  type: string;
+  data: EventData;
 }
 
 /** What a rule needs from the world: the day, and the random stream it may draw from. */
@@ -486,7 +486,8 @@ export function majorCheck(c: Cultivator, which: LadderId): MajorCheck | null {
     0,
     MAX_ODDS,
   );
-  const score = brought + bonus.margin;
+  // Talents like the Unbreakable Dao Heart or Heaven's Jealousy raise the grade, not the odds.
+  const score = brought + bonus.margin + stats(c).gradeMargin;
   return {
     ladder: which,
     target,
@@ -525,13 +526,6 @@ export interface BreakthroughResult {
   grade?: GradeId;
   odds: number;
   notes: Note[];
-}
-
-/** "Layer 4", "Middle Foundation Establishment" or "Foundation Establishment". */
-export function stepLabel(id: RealmId, stage: number): string {
-  return stage === 1 && id !== 'qi-condensation'
-    ? realm(id).name
-    : `${stageName(id, stage)}${id === 'qi-condensation' ? '' : ` ${realm(id).name}`}`;
 }
 
 function withLadder(c: Cultivator, which: LadderId, l: Ladder): Cultivator {
@@ -581,13 +575,11 @@ export function attemptBreakthrough(
   };
   if (step.kind === 'top') return none;
   const { day, rng } = ctx;
-  const name = LADDER_NAMES[which];
 
   if (step.kind === 'minor') {
     if (barFill(l) < 1) return none;
     const odds = minorOdds(c, which);
     const success = rng.next() < odds;
-    const label = stepLabel(step.realm, step.stage);
     if (success) {
       return {
         cultivator: withLadder(c, which, climbed(c, which, l, step.realm, step.stage)),
@@ -597,8 +589,8 @@ export function attemptBreakthrough(
         odds,
         notes: [
           {
-            kind: 'breakthrough',
-            text: which === 'qi' ? `Qi breaks through to ${label}.` : `${name} reaches ${label}.`,
+            type: 'breakthrough',
+            data: { ladder: which, realm: step.realm, stage: step.stage },
           },
         ],
       };
@@ -619,8 +611,8 @@ export function attemptBreakthrough(
       odds,
       notes: [
         {
-          kind: 'setback',
-          text: `The ${FUEL[which]} breaks against ${label} and scatters${injured ? ', leaving a light injury' : ''}.`,
+          type: 'setback',
+          data: { ladder: which, realm: step.realm, stage: step.stage, injured },
         },
       ],
     };
@@ -640,19 +632,13 @@ export function attemptBreakthrough(
       ...climbed(c, which, l, target.id, 1),
       grades: [...l.grades, grade],
     });
-    const gradeName = GRADES.find((g) => g.id === grade)!.name.toLowerCase();
-    const text =
-      which === 'qi'
-        ? `${last ? 'At the edge of death, ' : ''}${c.name} breaks through to ${target.name}: a ${gradeName} foundation.`
-        : `${name} breaks through to ${target.name}, a ${gradeName} breakthrough.`;
-    const notes: Note[] = [{ kind: 'major', text }];
+    const notes: Note[] = [
+      { type: 'major', data: { ladder: which, realm: target.id, grade, lastChance: last } },
+    ];
     // The old method runs out at its tier: the ladder waits on the next chapter or a new method.
     const m = ladderMethod(next, which);
     if (m && methodCapped(next, m)) {
-      notes.push({
-        kind: 'method',
-        text: `The ${m.name} carries ${which === 'qi' ? 'cultivation' : `the ${which}`} no further; it waits on the next chapter or a new method.`,
-      });
+      notes.push({ type: 'method-capped', data: { ladder: which, method: m.id } });
     }
     return { cultivator: next, attempted: true, success, major: true, grade, odds, notes };
   }
@@ -669,8 +655,8 @@ export function attemptBreakthrough(
     odds,
     notes: [
       {
-        kind: 'setback',
-        text: `The breakthrough to ${target.name} fails${check.gateItem ? `, the ${which === 'qi' ? 'pill' : 'gate item'} wasted,` : ''} and leaves ${name.toLowerCase()} injured for years.`,
+        type: 'major-setback',
+        data: { ladder: which, realm: target.id, gateItem: !!check.gateItem },
       },
     ],
   };
@@ -720,7 +706,7 @@ function capBar(l: Ladder, bar: number): number {
  * Adds fuel to a ladder's bar from the world, up to 150%: fights and hardship, baths and beast
  * blood for the body; epiphanies and contemplation for the soul. Cards and items call these.
  */
-function fromWorld(c: Cultivator, which: LadderId, amount: number): Cultivator {
+export function fromWorld(c: Cultivator, which: LadderId, amount: number): Cultivator {
   if (amount <= 0) return c;
   return { ...c, [which]: { ...c[which], bar: capBar(c[which], c[which].bar + amount) } };
 }
@@ -746,12 +732,7 @@ export function checkUnlocks(c: Cultivator): { cultivator: Cultivator; notes: No
   const major = majorCheck(next, 'qi');
   if (major?.bar && major.insight && !hasFlag(next, `ready-${major.target.id}`)) {
     next = { ...next, flags: [...next.flags, `ready-${major.target.id}`] };
-    notes.push({
-      kind: 'unlock',
-      text: major.gate
-        ? `Qi presses against the gate of ${major.target.name}. The breakthrough waits on you.`
-        : `Qi presses against the gate of ${major.target.name}, but you hold no ${major.target.gate.replace(/^an? /, '')}.`,
-    });
+    notes.push({ type: 'gate', data: { realm: major.target.id, gate: major.gate } });
   }
   return { cultivator: next, notes };
 }
@@ -774,10 +755,7 @@ function practiceDays(c: Cultivator, rates: DayRates, days: number) {
   for (const level of practiced.levels) {
     const t = technique(c.practicing!);
     next = gainInsight(next, masteryBurst(next, TECHNIQUE_MASTERY, t.tier, level));
-    notes.push({
-      kind: 'mastery',
-      text: `${t.name} reaches ${MASTERY[level]!.name}; the form finally clicks.`,
-    });
+    notes.push({ type: 'mastery', data: { technique: t.id, level } });
   }
   for (const which of LADDERS) {
     const id = c.activeMethods[which];
@@ -787,10 +765,7 @@ function practiceDays(c: Cultivator, rates: DayRates, days: number) {
     for (const level of r.levels) {
       const m = method(id);
       next = gainInsight(next, masteryBurst(next, METHOD_MASTERY, m.tier, level));
-      notes.push({
-        kind: 'mastery',
-        text: `The ${m.name} reaches ${MASTERY[level]!.name}; the breath runs deeper, and understanding with it.`,
-      });
+      notes.push({ type: 'mastery', data: { method: m.id, level } });
     }
   }
   return { cultivator: next, notes };

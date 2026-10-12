@@ -1,31 +1,34 @@
 // The player's life around the cultivator rules: runs them on `state.player` with the right
-// random stream, dates their notes into the chronicle, flares the glass at breakthroughs, keeps
-// gentle mode's rewind, opens screens, and ends the life at the lifespan edge.
-import { hasMethod, method } from '../content/methods.ts';
-import { hasRoutine, routine } from '../content/routines.ts';
-import { treeNode } from '../content/trees/index.ts';
-import { technique } from '../content/techniques.ts';
+// random stream, dates their notes into the chronicle as typed events, flares the glass at
+// breakthroughs, keeps gentle mode's rewind, opens screens, wakes sleeping talents, marks a failed
+// Foundation attempt for the cards, and ends the life at the lifespan edge.
+import { hasMethod } from '../content/methods.ts';
+import { realmIndex } from '../content/realms.ts';
+import { hasRoutine } from '../content/routines.ts';
 import {
   attemptBreakthrough,
   checkUnlocks,
   cultivateDays,
   majorCheck,
-  stepLabel,
   type LadderId,
   type Note,
 } from './cultivation.ts';
 import type { DayStep } from './loop.ts';
+import { gainInsight } from './insight.ts';
 import { knowsMethod, learnMethod, setActiveMethod, type MethodCheck } from './methods.ts';
 import {
-  addChronicle,
+  addEvent,
+  addFlag,
   ageYears,
   atLifespanEdge,
   noteBreakthrough,
+  setMark,
   unlock,
   withPlayer,
   withStream,
   type GameState,
 } from './state.ts';
+import { talentAwake, talentsOf, wokeFlag } from './stats.ts';
 import { canLearnTechnique, learnTechnique, setPracticing } from './techniques.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
 import { learnRoutine } from './wheel.ts';
@@ -33,8 +36,28 @@ import { learnRoutine } from './wheel.ts';
 /** The Trees screen opens once there is insight enough for a first node (design, the first hour). */
 export const TREES_SCREEN_INSIGHT = 10;
 
+/** The mark a failed qi Foundation attempt leaves, for the card ten years on. */
+export const FOUNDATION_FAILED = 'foundation-failed';
+
 function addNotes(s: GameState, notes: readonly Note[]): GameState {
-  return notes.reduce((acc, n) => addChronicle(acc, n.kind, n.text), s);
+  return notes.reduce((acc, n) => addEvent(acc, n.type, n.data), s);
+}
+
+/**
+ * Wakes the talents that sleep until a realm the qi ladder has reached: each gives its lump of
+ * insight and a chronicle line, and its effects count from now on.
+ */
+export function wakeTalents(s: GameState): GameState {
+  let next = s;
+  for (const t of talentsOf(s.player)) {
+    if (!t.sleeps || talentAwake(next.player, t)) continue;
+    if (realmIndex(next.player.qi.realm) < realmIndex(t.sleeps.realm)) continue;
+    const woken = addFlag(next.player, wokeFlag(t.id));
+    next = addEvent(withPlayer(next, gainInsight(woken, t.sleeps.insight)), 'talent-wakes', {
+      talent: t.id,
+    });
+  }
+  return next;
 }
 
 /** A breakthrough flares the glass, and a qi one opens a new fracture. */
@@ -51,11 +74,7 @@ function flare(s: GameState, ladder: LadderId, major: boolean): GameState {
 export function checkScreens(s: GameState): GameState {
   let next = s;
   if (s.player.insight.earned >= TREES_SCREEN_INSIGHT) {
-    next = unlock(
-      next,
-      'trees',
-      'Enough insight gathers to grasp a first principle: the trees open.',
-    );
+    next = unlock(next, 'trees', true);
   }
   if (Object.keys(s.player.techniques).length > 0) next = unlock(next, 'techniques');
   return next;
@@ -97,7 +116,8 @@ export function breakThrough(
   );
   if (!r.attempted) return none;
   let next = addNotes(withPlayer(state, r.cultivator), r.notes);
-  if (r.success) next = flare(next, which, r.major);
+  if (r.success) next = wakeTalents(flare(next, which, r.major));
+  else if (r.major && which === 'qi') next = setMark(next, FOUNDATION_FAILED);
   return { state: next, attempted: true, success: r.success, major: r.major, odds: r.odds };
 }
 
@@ -117,9 +137,8 @@ export function endLife(s: GameState, cause = 'lifespan'): GameState {
   if (s.ended) return s;
   const p = s.player;
   const age = Math.floor(ageYears(p, s.calendar.day));
-  const where = stepLabel(p.qi.realm, p.qi.stage);
-  const text = `${p.name} dies at ${age}, at ${where}${p.qi.realm === 'qi-condensation' ? ' of Qi Condensation' : ''}.`;
-  return { ...addChronicle(s, 'death', text), ended: { day: s.calendar.day, cause } };
+  const data = { age, realm: p.qi.realm, stage: p.qi.stage, cause };
+  return { ...addEvent(s, 'death', data), ended: { day: s.calendar.day, cause } };
 }
 
 /** The player learns a tree node with insight. */
@@ -127,12 +146,7 @@ export function learn(s: GameState, nodeId: string): { state: GameState; check: 
   if (s.ended) return { state: s, check: { ok: false, reason: 'This life is over.' } };
   const r = learnNode(s.player, nodeId);
   if (!r.check.ok) return { state: s, check: r.check };
-  const node = treeNode(nodeId);
-  const next = addChronicle(
-    withPlayer(s, r.cultivator),
-    'node',
-    `${s.player.name} comprehends ${node.name}.`,
-  );
+  const next = addEvent(withPlayer(s, r.cultivator), 'node', { node: nodeId });
   return { state: next, check: r.check };
 }
 
@@ -149,12 +163,10 @@ function settle(s: GameState): GameState {
  */
 export function gainTechnique(s: GameState, id: string, how = 'learns'): GameState {
   if (!canLearnTechnique(s.player, id).ok) return s;
-  const t = technique(id);
-  const next = addChronicle(
-    withPlayer(s, learnTechnique(s.player, id)),
-    'technique',
-    `${s.player.name} ${how} ${t.name}.`,
-  );
+  const next = addEvent(withPlayer(s, learnTechnique(s.player, id)), 'technique', {
+    technique: id,
+    how,
+  });
   return settle(next);
 }
 
@@ -164,11 +176,7 @@ export function gainTechnique(s: GameState, id: string, how = 'learns'): GameSta
  */
 export function gainMethod(s: GameState, id: string, how = 'learns'): GameState {
   if (!hasMethod(id) || knowsMethod(s.player, id)) return s;
-  const next = addChronicle(
-    withPlayer(s, learnMethod(s.player, id)),
-    'method',
-    `${s.player.name} ${how} the ${method(id).name}.`,
-  );
+  const next = addEvent(withPlayer(s, learnMethod(s.player, id)), 'method', { method: id, how });
   return settle(next);
 }
 
@@ -185,20 +193,17 @@ export function switchMethod(
   if (s.player.activeMethods[which] === id) return { state: s, check: { ok: true } };
   const r = setActiveMethod(s.player, which, id);
   if (!r.check.ok) return { state: s, check: r.check };
-  const text = id
-    ? `${s.player.name} takes up the ${method(id).name}.`
-    : `${s.player.name} sets the ${method(s.player.activeMethods[which]!).name} aside.`;
-  return { state: addChronicle(withPlayer(s, r.cultivator), 'method', text), check: r.check };
+  const data = { ladder: which, method: id, from: s.player.activeMethods[which] };
+  return {
+    state: addEvent(withPlayer(s, r.cultivator), 'method-switch', data),
+    check: r.check,
+  };
 }
 
 /** The player learns a routine from a teacher, manual or sect. */
 export function gainRoutine(s: GameState, id: string, how = 'learns'): GameState {
   if (!hasRoutine(id) || s.player.routines.includes(id)) return s;
-  return addChronicle(
-    withPlayer(s, learnRoutine(s.player, id)),
-    'routine',
-    `${s.player.name} ${how} the ${routine(id).name}.`,
-  );
+  return addEvent(withPlayer(s, learnRoutine(s.player, id)), 'routine', { routine: id, how });
 }
 
 /** Points the player's practice days at a technique, or at nothing. */

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { eventText } from './chronicle.ts';
 import { stepSize } from '../content/realms.ts';
 import { BRANCHES, SLEEP_FREED_TEXT, type HourKind } from '../content/hours.ts';
 import { FIRST_ARTS, method } from '../content/methods.ts';
-import { PLACEHOLDER_ROUTINE, routine } from '../content/routines.ts';
+import { routine } from '../content/routines.ts';
 import {
   cultivateDays,
   dayRates,
@@ -159,7 +160,7 @@ describe('sleep', () => {
     const foundation = withPlayer(s, at(s.player, 'qi', { realm: 'foundation-establishment' }));
     const after = advance(foundation, 1000, { step: cultivate }).state;
     expect(after.player.wheel.slice(0, 2)).toEqual(['qi', 'qi']);
-    expect(after.chronicle.some((e) => e.text === SLEEP_FREED_TEXT)).toBe(true);
+    expect(after.chronicle.some((e) => eventText(after, e) === SLEEP_FREED_TEXT)).toBe(true);
     expect(canSetHour(after.player, 0, 'body')).toMatchObject({ ok: false });
     expect(canSetHour(after.player, 0, 'sleep')).toEqual({ ok: true });
   });
@@ -218,8 +219,8 @@ describe('the method gate', () => {
 
 describe('routines', () => {
   it('earn the discipline bonus on every waking hour when followed exactly', () => {
-    const s = opened({ routines: [PLACEHOLDER_ROUTINE] });
-    const watch = routine(PLACEHOLDER_ROUTINE);
+    const s = opened({ routines: ['watch-rotation'] });
+    const watch = routine('watch-rotation');
     const plain = s.player;
     expect(followedRoutine(plain)).toBeNull();
     const r = followWheel(plain, watch.hours);
@@ -280,12 +281,16 @@ describe('the default rule', () => {
     s = advance(layer2, 1000, { step: cultivate }).state;
     // A true root holds wood and fire, so 亥, 戌, 酉 and 申 match nothing and go first.
     expect(s.player.wheel[h('亥')]).toBe('study');
-    expect(s.chronicle.at(-1)?.text).toContain('The hour of 亥 (Hai) turns from qi to study.');
+    expect(eventText(s, s.chronicle.at(-1)!)).toContain(
+      'The hour of 亥 (Hai) turns from qi to study.',
+    );
     s = gainTechnique(s, 'rampart-palm');
     expect(s.player.wheel[h('戌')]).toBe('practice');
     s = gainMethod(s, FIRST_ARTS.body, 'is handed');
     expect(s.player.wheel[h('酉')]).toBe('body');
-    expect(s.chronicle.at(-2)?.text).toBe('Han Li is handed the Stone-Bearing Tempering Art.');
+    expect(eventText(s, s.chronicle.at(-2)!)).toBe(
+      'Han Li is handed the Stone-Bearing Tempering Art.',
+    );
     s = gainMethod(s, FIRST_ARTS.soul);
     expect(s.player.wheel[h('申')]).toBe('soul');
     expect(effectiveWheel(s.player).filter((k) => k === 'qi')).toHaveLength(6);

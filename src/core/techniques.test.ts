@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { eventText } from './chronicle.ts';
 import { MASTERY, TECHNIQUE_MASTERY } from '../content/mastery.ts';
 import { firstTechnique, technique, TECHNIQUES } from '../content/techniques.ts';
 import { cultivateDays, dayRates } from './cultivation.ts';
@@ -96,9 +97,9 @@ describe('practice days', () => {
   it('go to the technique the player picks; the first opens the screen and practice hours', () => {
     let s = gainTechnique(base, 'rampart-palm', 'is taught');
     expect(s.unlocks).toContain('techniques');
-    expect(s.chronicle.at(-2)?.text).toBe('Han Li is taught Rampart Palm.');
+    expect(eventText(s, s.chronicle.at(-2)!)).toBe('Han Li is taught Rampart Palm.');
     // Practice hours open with it at once, by the default rule.
-    expect(s.chronicle.at(-1)?.text).toMatch(/turns from qi to practice/);
+    expect(eventText(s, s.chronicle.at(-1)!)).toMatch(/turns from qi to practice/);
     expect(s.player.practicing).toBe('rampart-palm');
     s = gainTechnique(s, 'alley-wind-palm');
     expect(s.player.practicing).toBe('rampart-palm');

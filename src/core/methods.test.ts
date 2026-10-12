@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { eventText, noteText } from './chronicle.ts';
 import { GROWTH_STATS, METHODS, method, nextChapter, previousChapter } from '../content/methods.ts';
 import { METHOD_MASTERY, TECHNIQUE_MASTERY } from '../content/mastery.ts';
 import { RARITIES, rarity, rarityMultiplier, rollRarity } from '../content/rarity.ts';
@@ -205,7 +206,9 @@ describe('the tier cap', () => {
   it('says so at the breakthrough that runs the method out', () => {
     const r = attemptBreakthrough(ready(on(player(), 'garrison-standard')), 'qi', roll(0));
     expect(r.success).toBe(true);
-    expect(r.notes.at(-1)?.text).toMatch(/Garrison Standard Method carries cultivation no further/);
+    expect(noteText(r.notes.at(-1)!, player())).toMatch(
+      /Garrison Standard Method carries cultivation no further/,
+    );
     // Switching before the attempt avoids the wait, and the chapter builds the new stage.
     const id = 'garrison-standard-foundation';
     const early = setActiveMethod(learnMethod(ready(player()), id), 'qi', id).cultivator;
@@ -250,7 +253,9 @@ describe('chapters and lines', () => {
     const learned = withPlayer(s, learnMethod(s.player, 'pine-wind'));
     const r = switchMethod(learned, 'qi', 'pine-wind');
     expect(r.check.ok).toBe(true);
-    expect(r.state.chronicle.at(-1)?.text).toBe('Han Li takes up the Pine Wind Breathing Method.');
+    expect(eventText(r.state, r.state.chronicle.at(-1)!)).toBe(
+      'Han Li takes up the Pine Wind Breathing Method.',
+    );
     expect(switchMethod(learned, 'qi', 'not-known').check.ok).toBe(false);
   });
 });
@@ -368,7 +373,7 @@ describe('insight bursts', () => {
     const r = cultivateDays(near, 1, roll(0.5));
     const gained = r.cultivator.insight.earned - near.insight.earned;
     expect(gained).toBeCloseTo(dayRates(near, DAY).insight + 5);
-    expect(r.notes.map((n) => n.text)).toContain(
+    expect(r.notes.map((n) => noteText(n, near))).toContain(
       'Rampart Palm reaches Comprehension; the form finally clicks.',
     );
   });
@@ -380,7 +385,7 @@ describe('insight bursts', () => {
     expect(methodMastery(r.cultivator, 'garrison-standard').level).toBe(1);
     const gained = r.cultivator.insight.earned - near.insight.earned;
     expect(gained).toBeCloseTo(dayRates(near, DAY).insight + 10);
-    expect(r.notes.some((n) => n.kind === 'mastery')).toBe(true);
+    expect(r.notes.some((n) => n.type === 'mastery')).toBe(true);
   });
 
   it('grow three times a tier, and with Aptitude', () => {

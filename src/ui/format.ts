@@ -93,3 +93,13 @@ export function formatEffect(e: Effect): string {
             : `${sign}${a}`;
   return `${info.name} ${amount}`;
 }
+
+/** "orphaned by a raid" → "Orphaned by a raid". */
+export function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** ["wood", "fire", "water"] → "wood, fire and water". */
+export function listWords(xs: readonly string[]): string {
+  return xs.length <= 1 ? (xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`;
+}

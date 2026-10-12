@@ -1,7 +1,7 @@
 // Three save slots in IndexedDB through Dexie. Each holds a lineage: the current autosave, the
 // previous one as a backup, gentle mode's rewind point and the last export date.
 import { Dexie, type DexieOptions, type EntityTable } from 'dexie';
-import { ageYears, type GameState } from '../state.ts';
+import { ageYears, chronicleEvent, type GameState } from '../state.ts';
 import { encodeSaveFile, decodeSaveFile } from './file.ts';
 import { loadSave, makeSave, SaveError, type Save } from './format.ts';
 
@@ -155,7 +155,7 @@ export class SaveSlots {
       rewindCharges: 0,
       chronicle: [
         ...back.chronicle,
-        { day: back.calendar.day, kind: 'rewind', text: 'Time folds back.' },
+        chronicleEvent(back.calendar.day, 'rewind', {}, [back.player.id], back.player.place),
       ],
     };
     // savedAt is now, so the time between the rewind point and now isn't paid out as offline time.

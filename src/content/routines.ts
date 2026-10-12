@@ -71,9 +71,6 @@ export const ROUTINES: readonly Routine[] = [
   },
 ];
 
-/** Until character creation (P1.7), every life is the cave orphan who went to the garrison school. */
-export const PLACEHOLDER_ROUTINE = 'watch-rotation';
-
 const byId = new Map(ROUTINES.map((r) => [r.id, r]));
 
 export function routine(id: string): Routine {

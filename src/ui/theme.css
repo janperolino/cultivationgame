@@ -1477,3 +1477,156 @@ select {
     animation: none;
   }
 }
+
+/* Creation, the Character screen, the card feed and the Chronicle (P1.7). */
+.sub-heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  margin: 14px 0 6px;
+}
+
+.creation-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: end;
+}
+
+.field input.wide {
+  width: 100%;
+  max-width: 460px;
+}
+
+.field input[type='text'] + .caption,
+.field .seg + input {
+  margin-top: 6px;
+}
+
+.field .seg + input {
+  width: 160px;
+  padding: 6px 10px;
+  background: var(--well);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-small);
+}
+
+.talents {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.talent {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 2px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-small);
+}
+
+.talent-kind {
+  grid-row: span 3;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  padding-top: 2px;
+}
+
+.talent-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.talent-text {
+  font-size: 14px;
+}
+
+.choices {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.button.choice {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 14px;
+}
+
+.button.choice .caption {
+  color: var(--muted);
+}
+
+.story-card {
+  border-color: var(--accent-edge);
+}
+
+.story-card.is-result {
+  border-color: var(--edge);
+}
+
+.feed {
+  margin-top: 14px;
+}
+
+.feed-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.attributes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px 22px;
+  margin: 0;
+}
+
+.attributes > div {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.attributes dt {
+  color: var(--muted);
+  min-width: 64px;
+}
+
+.attributes dd {
+  margin: 0;
+}
+
+.growth ul,
+.biography ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.biography-season + .biography-season {
+  margin-top: 6px;
+}
+
+.biography li {
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .talent {
+    grid-template-columns: 1fr;
+  }
+
+  .talent-kind {
+    grid-row: auto;
+  }
+}

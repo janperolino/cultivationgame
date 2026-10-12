@@ -1,6 +1,9 @@
 import { HOUR_KIND_IDS, HOUR_KINDS } from '../content/hours.ts';
 import { realm } from '../content/realms.ts';
+import { defaultedSince } from '../core/cards.ts';
+import { eventText } from '../core/chronicle.ts';
 import { dayRates, ladderOpen, majorCheck } from '../core/cultivation.ts';
+import { CardFeed } from './CardFeed.tsx';
 import { effectiveWheel } from '../core/wheel.ts';
 import { WheelStrip } from './DayWheel.tsx';
 import { formatDays, formatDuration, formatLadder, formatNumber } from './format.ts';
@@ -36,6 +39,8 @@ function AwayCard({ away }: { away: AwaySummary }) {
   }
   if (insight >= 1) lines.push(`Insight +${formatNumber(insight)}.`);
   if (stones >= 1) lines.push(`${formatNumber(stones)} spirit stones burned as fuel.`);
+  const defaulted = defaultedSince(state, before.calendar.day);
+  const waiting = state.cards.pending.length;
   if (ready?.bar) {
     lines.push(
       ready.ready
@@ -59,6 +64,21 @@ function AwayCard({ away }: { away: AwaySummary }) {
             <li key={l}>{l}</li>
           ))}
         </ul>
+      )}
+      {defaulted.length > 0 && (
+        <>
+          <p className="spaced">Settled without you:</p>
+          <ul>
+            {defaulted.map((e, i) => (
+              <li key={i}>{eventText(state, e)}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {waiting > 0 && (
+        <p className="spaced">
+          {waiting === 1 ? 'A card waits' : `${waiting} cards wait`} for you below.
+        </p>
       )}
       {away.atEdge && <p className="warn">You woke at the edge of your lifespan.</p>}
       <div className="actions">
@@ -137,6 +157,7 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
           </p>
         </div>
       </section>
+      <CardFeed />
     </>
   );
 }

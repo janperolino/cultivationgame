@@ -8,7 +8,7 @@ const WEEK_MS = 7 * 24 * 3_600_000;
 
 function SlotRow({ info }: { info: SlotSummary }) {
   const active = useGame((s) => s.slot === info.slot && s.phase === 'playing');
-  const { openSlot, startLife, exportSlot, importSlot, clearSlot, rewind } = useGame.getState();
+  const { openSlot, beginCreation, exportSlot, importSlot, clearSlot, rewind } = useGame.getState();
   const fileInput = useRef<HTMLInputElement>(null);
   const slot = info.slot as SlotId;
 
@@ -56,18 +56,9 @@ function SlotRow({ info }: { info: SlotSummary }) {
       )}
       <div className="slot-actions">
         {info.empty ? (
-          <>
-            <button
-              type="button"
-              className="button"
-              onClick={() => void startLife(slot, 'ironman')}
-            >
-              New life (ironman)
-            </button>
-            <button type="button" className="button" onClick={() => void startLife(slot, 'gentle')}>
-              New life (gentle)
-            </button>
-          </>
+          <button type="button" className="button" onClick={() => beginCreation(slot)}>
+            New life
+          </button>
         ) : (
           <>
             {!active && !info.broken && (

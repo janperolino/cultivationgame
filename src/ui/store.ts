@@ -2,13 +2,12 @@
 // and holds the slot's tab lock so two tabs never autosave over each other.
 import { create } from 'zustand';
 import type { HourKind } from '../content/hours.ts';
-import { PLACEHOLDER_ROUTINE } from '../content/routines.ts';
-import { PLACEHOLDER_TECHNIQUE } from '../content/techniques.ts';
+import { playDay, resolveCard } from '../core/cards.ts';
+import { createLife, createNextLife, type Creation } from '../core/creation.ts';
 import type { LadderId } from '../core/cultivation.ts';
 import {
   attemptLastChance,
   breakThrough,
-  cultivate,
   endLife,
   learn,
   practice,
@@ -18,7 +17,7 @@ import { advance, catchUp, TICK_MS, type OfflineResult } from '../core/loop.ts';
 import { makeSave, SaveError } from '../core/save/format.ts';
 import { exportFileName } from '../core/save/file.ts';
 import { SaveSlots, type SlotId, type SlotSummary } from '../core/save/slots.ts';
-import { newLife, nextLife, withPlayer, type GameState } from '../core/state.ts';
+import { withPlayer, type GameState } from '../core/state.ts';
 import { followWheel, forgetSavedRoutine, saveRoutine, setHour } from '../core/wheel.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 
@@ -29,6 +28,14 @@ const OFFLINE_GAP_MS = 60_000;
 /** Offline time applied on return, with the state it started from, for the coming-back card. */
 export interface AwaySummary extends OfflineResult {
   before: GameState;
+}
+
+/** What a resolved card said happened, shown until dismissed. */
+export interface CardOutcomeView {
+  title: string;
+  text: string;
+  pass: boolean | null;
+  roll?: { d20: number; total: number; dc: number };
 }
 
 export type Phase =
@@ -53,11 +60,22 @@ export interface GameStore {
   persisted: boolean | null;
   /** The `?speed=` debug multiplier. */
   speed: number;
+  /** Character creation in progress: for an empty slot, or the next life after a death. */
+  creating: { slot: SlotId; next: boolean } | null;
+  /** The last card resolved, until dismissed. */
+  cardOutcome: CardOutcomeView | null;
 
   init(): Promise<void>;
   openSlot(slot: SlotId): Promise<void>;
   takeOver(): Promise<void>;
-  startLife(slot: SlotId, mode: 'ironman' | 'gentle'): Promise<void>;
+  /** Opens character creation for an empty slot. */
+  beginCreation(slot: SlotId): void;
+  cancelCreation(): void;
+  /** Starts the life creation decided: a first life, or the next one after a death. */
+  finishCreation(creation: Creation): Promise<void>;
+  /** Resolves a waiting card with a choice; returns why not, or null. */
+  chooseCard(uid: number, index: number, title: string): string | null;
+  dismissCardOutcome(): void;
   /** Saves now; each breakthrough saves with `rewindPoint` set. */
   saveNow(opts?: { rewindPoint?: boolean }): Promise<void>;
   /** Changes the auto setting for minor breakthroughs, or burning stones in qi hours. */
@@ -81,8 +99,8 @@ export interface GameStore {
   lastChance(): void;
   /** At the lifespan edge: accept the end. */
   letGo(): void;
-  /** After a death: a new life in the same slot, with the chronicle kept. */
-  beginNextLife(): Promise<void>;
+  /** After a death: opens creation for a new life in the same slot, with the chronicle kept. */
+  beginNextLife(): void;
   exportSlot(slot: SlotId): Promise<void>;
   importSlot(slot: SlotId, file: File): Promise<void>;
   clearSlot(slot: SlotId): Promise<void>;
@@ -154,11 +172,11 @@ export const useGame = create<GameStore>()((set, get) => {
     const gap = now - lastTick;
     lastTick = now;
     if (gap > OFFLINE_GAP_MS) {
-      const away = catchUp(game, now - gap, now, { step: cultivate });
+      const away = catchUp(game, now - gap, now, { step: playDay });
       set({ away: { ...away, before: game } });
       update(away.state);
     } else {
-      update(advance(game, gap * speed, { step: cultivate }).state);
+      update(advance(game, gap * speed, { step: playDay }).state);
     }
   }
 
@@ -211,7 +229,7 @@ export const useGame = create<GameStore>()((set, get) => {
       return;
     }
     const now = Date.now();
-    const away = catchUp(loaded.save.state, loaded.save.savedAt, now, { step: cultivate });
+    const away = catchUp(loaded.save.state, loaded.save.savedAt, now, { step: playDay });
     set({
       phase: 'playing',
       slot,
@@ -292,6 +310,8 @@ export const useGame = create<GameStore>()((set, get) => {
     slots: [],
     persisted: null,
     speed: 1,
+    creating: null,
+    cardOutcome: null,
 
     // React's strict mode runs the starting effect twice in development; the game starts once.
     init: () => (initStarted ??= init()),
@@ -307,22 +327,43 @@ export const useGame = create<GameStore>()((set, get) => {
         await play(slot);
       }),
 
-    startLife: (slot, mode) =>
+    beginCreation: (slot) => set({ creating: { slot, next: false } }),
+
+    cancelCreation: () => set({ creating: null }),
+
+    finishCreation: (creation) =>
       serial(async () => {
-        // Character creation arrives in P1.7; until then a new life is a nameless placeholder.
-        // Until then, too, every life is the cave orphan who went along, with that first technique
-        // and the garrison school's routine.
-        const state = newLife({
-          name: 'Nameless',
-          mode,
-          seed: `slot${slot}-${Date.now()}`,
-          techniques: [PLACEHOLDER_TECHNIQUE],
-          routines: [PLACEHOLDER_ROUTINE],
-        });
-        await db().write(slot, makeSave(state, Date.now()), { rewindPoint: true });
+        const target = get().creating;
+        if (!target) return;
+        if (target.next) {
+          const { game } = get();
+          if (!game?.ended || !holdsLock || get().slot !== target.slot) return;
+          set({ game: createNextLife(game, creation), away: null, creating: null });
+          await get().saveNow({ rewindPoint: true });
+          await refreshSlots();
+          return;
+        }
+        const state = createLife(creation);
+        await db().write(target.slot, makeSave(state, Date.now()), { rewindPoint: true });
+        set({ creating: null });
         await refreshSlots();
-        await openSlotNow(slot);
+        await openSlotNow(target.slot);
       }),
+
+    chooseCard(uid, index, title) {
+      const { game } = get();
+      if (!game || !holdsLock) return 'This life is not open in this tab.';
+      const r = resolveCard(game, uid, index);
+      if (!r.ok) return r.reason ?? 'That cannot be chosen.';
+      update(r.state);
+      set({
+        cardOutcome: { title, text: r.text, pass: r.pass, ...(r.roll ? { roll: r.roll } : {}) },
+      });
+      void get().saveNow();
+      return null;
+    },
+
+    dismissCardOutcome: () => set({ cardOutcome: null }),
 
     async saveNow(opts) {
       const { game, slot } = get();
@@ -420,21 +461,10 @@ export const useGame = create<GameStore>()((set, get) => {
       void get().saveNow();
     },
 
-    async beginNextLife() {
-      const { game } = get();
-      if (!game?.ended || !holdsLock) return;
-      // Character creation arrives in P1.7; until then each life is a nameless placeholder.
-      set({
-        game: nextLife(game, {
-          name: 'Nameless',
-          seed: `${game.lineage.id}-${Date.now()}`,
-          techniques: [PLACEHOLDER_TECHNIQUE],
-          routines: [PLACEHOLDER_ROUTINE],
-        }),
-        away: null,
-      });
-      await get().saveNow({ rewindPoint: true });
-      await refreshSlots();
+    beginNextLife() {
+      const { game, slot } = get();
+      if (!game?.ended || !holdsLock || !slot) return;
+      set({ creating: { slot, next: true } });
     },
 
     async exportSlot(slot) {
