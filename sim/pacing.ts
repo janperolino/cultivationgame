@@ -1,6 +1,6 @@
 // Pacing: real hours to each Qi Condensation layer and to Foundation, per spirit root, playing the
 // day wheel by its default rule on the default (safe) breakthrough setting with no stones; then the
-// same buying the cheapest tree node whenever insight allows; then following the garrison's Watch
+// same buying tree nodes toward the nearest one that speeds qi; then following the garrison's Watch
 // Rotation whenever it can, for the discipline bonus; then a wheel kept all qi for comparison.
 // Each run stands in for P1.7's first hour: its origin's first technique at layer 2, the errand
 // card's tempering art at minute 50, the later card's nourishing art at two hours, and at layer 9
@@ -15,7 +15,7 @@ import { FIRST_ARTS, method, nextChapter } from '../src/content/methods.ts';
 import { ROOTS, type RootId } from '../src/content/roots.ts';
 import { PLACEHOLDER_ROUTINE, routine } from '../src/content/routines.ts';
 import { PLACEHOLDER_TECHNIQUE } from '../src/content/techniques.ts';
-import { TREES } from '../src/content/trees/index.ts';
+import { TREES, treeNode, type TreeNode } from '../src/content/trees/index.ts';
 import { majorCheck } from '../src/core/cultivation.ts';
 import {
   breakThrough,
@@ -28,19 +28,42 @@ import {
 import { advance } from '../src/core/loop.ts';
 import { methodMastery } from '../src/core/methods.ts';
 import { addItem, ageYears, newLife, withPlayer, type GameState } from '../src/core/state.ts';
-import { canLearn } from '../src/core/trees.ts';
+import { canLearn, hasLearned, nodeSealed } from '../src/core/trees.ts';
 import { followWheel } from '../src/core/wheel.ts';
 
 type Play = 'default' | 'nodes' | 'routine' | 'qi-only';
 
-const ALL_NODES = TREES.flatMap((t) => t.nodes).sort((a, b) => a.cost - b.cost);
+/** Nodes a player chasing qi speed wants: qi gain or Aptitude, which the sim's run feels. */
+const SPEED_NODES = TREES.flatMap((t) => t.nodes).filter((n) =>
+  n.effects.some((e) => e.stat === 'qiGain' || e.stat === 'aptitude'),
+);
 
-/** Learns the cheapest nodes the player can, until none is affordable. */
+/** The unlearned nodes on the way to a node, itself last, in learning order. */
+function pathTo(s: GameState, n: TreeNode): TreeNode[] {
+  const out: TreeNode[] = [];
+  const walk = (id: string) => {
+    if (hasLearned(s.player, id) || out.some((x) => x.id === id)) return;
+    const node = treeNode(id);
+    for (const r of node.requires) walk(r);
+    out.push(node);
+  };
+  walk(n.id);
+  return out;
+}
+
+/**
+ * Buys toward the cheapest-to-reach node that speeds qi now (not sealed), one affordable step at a
+ * time, saving up when the next step costs more than the insight in hand.
+ */
 function buyNodes(s: GameState): GameState {
   for (;;) {
-    const next = ALL_NODES.find((n) => canLearn(s.player, n.id).ok);
-    if (!next) return s;
-    s = learn(s, next.id).state;
+    const paths = SPEED_NODES.filter((n) => !hasLearned(s.player, n.id) && !nodeSealed(s.player, n))
+      .map((n) => pathTo(s, n))
+      .map((p) => ({ p, cost: p.reduce((sum, n) => sum + n.cost, 0) }))
+      .sort((a, b) => a.cost - b.cost);
+    const step = paths[0]?.p[0];
+    if (!step || !canLearn(s.player, step.id).ok) return s;
+    s = learn(s, step.id).state;
   }
 }
 
@@ -190,7 +213,7 @@ function table(title: string, how: Play) {
 }
 
 table('Default rule, safe breakthroughs, no stones', 'default');
-table('Default rule, buying the cheapest node whenever insight allows', 'nodes');
+table('Default rule, buying tree nodes toward the nearest that speeds qi', 'nodes');
 table('Following the Watch Rotation once it can be followed', 'routine');
 table('Every waking hour on qi, safe breakthroughs, no stones', 'qi-only');
 console.log(

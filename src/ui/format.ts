@@ -71,10 +71,16 @@ export function formatAgeShort(years: number): string {
 }
 
 /** A stat change as players read it: "Qi gain +4%", "Minor odds +3", "Lifespan +3 years". */
+/** A multiplier with as few decimals as it needs: 1.1, 1.05, 1.155. */
+function formatTimes(x: number): string {
+  return String(Math.round(x * 1000) / 1000);
+}
+
 export function formatEffect(e: Effect): string {
   const info = statInfo(e.stat);
   const sign = e.value < 0 ? '−' : '+';
   const a = Math.abs(e.value);
+  if (info.unit === 'times') return `${info.name} ×${formatTimes(1 + e.value)}`;
   const amount =
     info.unit === 'percent'
       ? `${sign}${Math.round(a * 100)}%`

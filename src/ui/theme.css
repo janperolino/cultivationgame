@@ -1068,8 +1068,9 @@ select {
   text-shadow: 0 0 9px color-mix(in srgb, var(--rarity-red) 40%, transparent);
 }
 
-/* Trees: a pannable graph in tier bands. Gold marks what you can learn, crack light what you
-   hold; sealed tiers are dimmed. */
+/* Trees: a canvas you drag and zoom, with tier bands in world space. Gold marks what you can
+   learn, crack light what you hold; sealed tiers are dimmed. Minor nodes are small rounds,
+   notables diamonds, starters and capstones larger rings. */
 .tree-top {
   display: flex;
   flex-wrap: wrap;
@@ -1083,78 +1084,92 @@ select {
   color: var(--accent);
 }
 
-.tree-graph {
+.tree-canvas-wrap {
+  position: relative;
   margin-top: 12px;
-  max-width: 100%;
-  max-height: min(70vh, 640px);
-  overflow: auto;
-  overscroll-behavior: contain;
+}
+
+.tree-canvas {
+  position: relative;
+  height: min(72vh, 720px);
+  min-height: 360px;
+  overflow: hidden;
   border: 1px solid var(--edge);
   border-radius: var(--radius-small);
   background: var(--well);
   cursor: grab;
   user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  overscroll-behavior: contain;
 }
 
-.tree-graph:active {
+.tree-canvas:active {
   cursor: grabbing;
 }
 
-.tier-band {
-  position: relative;
-  border-bottom: 1px solid var(--edge);
+.tree-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
 }
 
-.tier-band:last-child {
-  border-bottom: 0;
+.tree-band {
+  position: absolute;
+  left: 0;
+  border-top: 1px solid var(--edge);
 }
 
-.tier-band.is-empty {
+.tree-band:first-child {
+  border-top: 0;
+}
+
+.tree-band-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 12px;
+  height: 52px;
+  padding: 0 18px;
+}
+
+.tree-band.is-empty {
   opacity: 0.5;
-}
-
-.tier-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 12px;
-  border-bottom: 1px dashed var(--edge);
 }
 
 .tier-label {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 15px;
+  font-size: 17px;
 }
 
-.tier-grid {
-  position: relative;
-}
-
-.tier-edges {
+.tree-edges {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  overflow: visible;
   pointer-events: none;
 }
 
-.tier-edges line {
+.tree-edges path {
+  fill: none;
   stroke: var(--edge-strong);
-  stroke-width: 1.5;
+  stroke-width: 1.6;
 }
 
-.tier-edges line.is-lit {
+.tree-edges path.is-open {
+  stroke: var(--accent-edge);
+}
+
+.tree-edges path.is-lit {
   stroke: var(--crack);
-  stroke-opacity: 0.7;
+  stroke-opacity: 0.75;
+  stroke-width: 2.2;
 }
 
-.tier-edges line.is-tier {
-  stroke-dasharray: 3 4;
+.tree-edges path.is-tier {
+  stroke-dasharray: 4 5;
 }
 
 .tree-node {
@@ -1162,68 +1177,167 @@ select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1px;
-  padding: 4px 6px;
-  border: 1px solid var(--edge-strong);
-  border-radius: var(--radius-small);
-  background: var(--glass-strong);
+  gap: 3px;
+  width: 110px;
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.2;
+  font-size: 11.5px;
+  line-height: 1.15;
   text-align: center;
   cursor: pointer;
+}
+
+.tree-node-shape {
+  display: block;
+  flex: none;
+  border: 1.5px solid var(--edge-strong);
+  border-radius: 50%;
+  background: var(--glass-strong);
+}
+
+.tree-node.is-notable .tree-node-shape {
+  border-radius: 4px;
+  transform: rotate(45deg) scale(0.82);
+}
+
+.tree-node.is-starter .tree-node-shape,
+.tree-node.is-capstone .tree-node-shape {
+  border-width: 2px;
+  box-shadow:
+    0 0 0 4px var(--void),
+    0 0 0 5px var(--edge-strong);
 }
 
 .tree-node-name {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 13.5px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tree-node.is-notable .tree-node-name,
+.tree-node.is-starter .tree-node-name,
+.tree-node.is-capstone .tree-node-name {
+  font-size: 14.5px;
   color: var(--text);
 }
 
 .tree-node-cost {
   font-size: 11px;
   font-variant-numeric: tabular-nums;
-}
-
-.tree-node.is-starter,
-.tree-node.is-capstone {
-  border-radius: 999px;
-}
-
-.tree-node.is-available {
-  border-color: var(--accent-edge);
-}
-
-.tree-node.is-available .tree-node-cost {
   color: var(--accent);
 }
 
-.tree-node.is-learned {
-  border-color: var(--crack);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--crack) 35%, transparent);
+.tree-node.is-available .tree-node-shape {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--glass-strong));
 }
 
-.tree-node.is-learned .tree-node-cost {
+.tree-node.is-available .tree-node-name {
+  color: var(--text);
+}
+
+.tree-node.is-learned .tree-node-shape {
+  border-color: var(--crack);
+  background: color-mix(in srgb, var(--crack) 35%, var(--glass-strong));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--crack) 45%, transparent);
+}
+
+.tree-node.is-learned.is-starter .tree-node-shape,
+.tree-node.is-learned.is-capstone .tree-node-shape {
+  box-shadow:
+    0 0 0 4px var(--void),
+    0 0 0 5px var(--crack),
+    0 0 16px color-mix(in srgb, var(--crack) 45%, transparent);
+}
+
+.tree-node.is-learned .tree-node-name {
   color: var(--crack);
 }
 
-.tree-node.is-locked .tree-node-name {
-  color: var(--muted);
-}
-
-.tree-node.is-selected {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.tier-band.is-sealed .tier-grid {
+.tree-node.is-sealed {
   opacity: 0.45;
 }
 
-.tier-band.is-sealed .tree-node.is-selected {
-  opacity: 1;
+.tree-band.is-sealed .tree-band-head {
+  opacity: 0.6;
+}
+
+.tree-node.is-selected .tree-node-shape {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.tree-node:focus-visible {
+  outline: none;
+}
+
+.tree-node:focus-visible .tree-node-name {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+}
+
+.tree-tools {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+}
+
+.tree-tools .icon-button {
+  width: 36px;
+  height: 36px;
+  background: var(--glass-strong);
+}
+
+.tree-recentre {
+  background: var(--glass-strong);
+}
+
+.node-overlay {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  width: min(380px, calc(100% - 20px));
+  max-height: calc(100% - 66px);
+  overflow-y: auto;
+  padding: 14px 16px;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius);
+  background: var(--glass-strong);
+  backdrop-filter: blur(8px);
+}
+
+.node-overlay-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.node-overlay-head .icon-button {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin: -4px -6px 0 0;
+}
+
+.node-overlay p + p,
+.node-overlay p + .actions {
+  margin-top: 10px;
+}
+
+@media (max-width: 600px) {
+  .tree-canvas {
+    height: min(68vh, 620px);
+  }
+
+  .node-overlay {
+    max-height: 58%;
+  }
 }
 
 .effects {

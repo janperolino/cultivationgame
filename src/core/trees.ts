@@ -1,6 +1,7 @@
 // Trees (design § Cultivation): learn with insight, use with one gate. Learning costs only
-// insight. A node above its tree's matching level stays sealed, doing nothing, until that
-// ladder reaches the node's tier.
+// insight. A node needs every node it grows from: the one before it on its branch, the gating
+// branches' ends for a capstone, and the tier below's capstone for a starter. A node above its
+// tree's matching level stays sealed, doing nothing, until that ladder reaches the node's tier.
 import { realmIndex } from '../content/realms.ts';
 import {
   hasNode,
@@ -30,16 +31,16 @@ export function activeNodes(c: Cultivator): TreeNode[] {
     .filter((n) => !nodeSealed(c, n));
 }
 
-/** Nodes to own before a tier counts as held: half of them, rounded up. */
-export function tierHoldCount(t: Tree, tier: number): number {
-  return Math.ceil(tierNodes(t, tier).length * TIER_HOLD);
-}
-
 export function tierOwned(c: Cultivator, t: Tree, tier: number): number {
   return tierNodes(t, tier).filter((n) => hasLearned(c, n.id)).length;
 }
 
-/** You hold a tier once you own half its nodes. Tier 0 is always held. */
+/** Nodes to own before a Dao's tier counts for its bonus: half of them, rounded up. */
+export function tierHoldCount(t: Tree, tier: number): number {
+  return Math.ceil(tierNodes(t, tier).length * TIER_HOLD);
+}
+
+/** A Dao's tier bonus counts once you own half its nodes (M2). Tier 0 is always held. */
 export function tierHeld(c: Cultivator, t: Tree, tier: number): boolean {
   return tier < 1 || tierOwned(c, t, tier) >= tierHoldCount(t, tier);
 }
@@ -50,26 +51,25 @@ export type LearnCheck = { ok: true } | { ok: false; reason: string };
 export function canLearn(c: Cultivator, id: string): LearnCheck {
   if (!hasNode(id)) return { ok: false, reason: 'No such node.' };
   const node = treeNode(id);
-  const t = treeOf(id);
   if (hasLearned(c, id)) return { ok: false, reason: 'Already learned.' };
-  if (node.kind === 'starter' && !tierHeld(c, t, node.tier - 1)) {
-    const need = tierHoldCount(t, node.tier - 1);
-    return {
-      ok: false,
-      reason: `Hold tier ${node.tier - 1} first: learn ${need} of its nodes.`,
-    };
-  }
   const missing = node.requires.filter((r) => !hasLearned(c, r));
   if (missing.length) {
     return {
       ok: false,
-      reason: `Learn ${missing.map((r) => treeNode(r).name).join(' and ')} first.`,
+      reason: `Learn ${listNames(missing.map((r) => treeNode(r).name))} first.`,
     };
   }
   if (c.insight.current < node.cost) {
     return { ok: false, reason: `Needs ${node.cost} insight.` };
   }
   return { ok: true };
+}
+
+/** "A", "A and B", "A, B and C". */
+function listNames(names: readonly string[]): string {
+  return names.length < 3
+    ? names.join(' and ')
+    : `${names.slice(0, -1).join(', ')} and ${names.at(-1)!}`;
 }
 
 /** Learns the node, spending its insight; the cultivator is unchanged when it can't. */

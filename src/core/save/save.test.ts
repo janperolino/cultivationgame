@@ -127,6 +127,25 @@ describe('save format', () => {
     expect(p.qi.bar).toBe(v4.state.player.qi.bar);
   });
 
+  it('migrates a v5 save: P1.3 nodes stay where their new paths hold, the rest refund', () => {
+    const v5 = fixture('v5');
+    const p = loadSave(v5).state.player;
+    // Pure Strand now grows from Fine Qi, Steady Return from Widening Sea, and Ninefold
+    // Circulation from three branch ends; the others' new paths are all owned.
+    expect(p.nodes).toEqual([
+      'qi-sensing-breath',
+      'qi-smooth-meridians',
+      'qi-stone-swallowing',
+      'qi-patient-gate',
+      'qi-deep-dantian',
+      'soul-inner-lamp',
+      'soul-clear-mind',
+      'soul-night-reading',
+    ]);
+    // Their P1.3 costs come back, 60 + 45 + 120; insight ever earned is untouched.
+    expect(p.insight).toEqual({ current: 200 + 225, earned: 900 });
+  });
+
   it('rejects saves from a newer game and damaged saves', () => {
     expect(() => loadSave({ ...makeSave(played(), 1), version: SAVE_VERSION + 1 })).toThrow(
       SaveError,

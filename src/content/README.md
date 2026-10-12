@@ -15,5 +15,5 @@ Game content as data: realms, trees and nodes, techniques, recipes, items, talen
 - `contemplation.ts`: contemplation sources, lumps and trickles of insight with a supply.
 - `cultivation.ts`: the seclusion and breakthrough constants that `sim/pacing.ts` tunes, the auto settings and grades.
 - `stats.ts`: every stat a node, talent or item can move, with its unit and, for stats no rule reads yet, the system that will (`arrives`).
-- `trees/`: the tree format (`schema.ts`: nine tiers, a starter and a capstone per tier, nodes on a 5 × 4 grid per tier band) and the Qi, Body and Soul trees, tiers 1 and 2. A tier is held at half its nodes, and a tier's starter needs the tier below held.
+- `trees/`: the tree format (`schema.ts`: nine tiers, each a starter, 4 or 5 branches of minor and notable nodes at free positions, and a capstone that 2 or 3 gating branches unlock and that opens the next tier's starter) and the Qi, Body and Soul trees, tiers 1 and 2, 27 nodes a tier. Half a tier held is kept for the Daos' bonus.
 - `techniques.ts`: the techniques with their rarity, line and chapter, starting with each origin path's first one (`firstFor: origin/choice`).

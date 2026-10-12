@@ -8,6 +8,7 @@ import { REALM_IDS, type RealmId } from '../../content/realms.ts';
 import { defaultElements, root, ROOT_IDS, type RootId } from '../../content/roots.ts';
 import { PLACEHOLDER_ROUTINE } from '../../content/routines.ts';
 import { PLACEHOLDER_TECHNIQUE } from '../../content/techniques.ts';
+import { TREES } from '../../content/trees/index.ts';
 import { climbedStages, stageGrowth } from '../growth.ts';
 import { practiceNeed } from '../mastery.ts';
 import {
@@ -21,10 +22,77 @@ import {
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 /** The mastery level old lives' methods are put at in v5, so they lose no speed: Mastery. */
 const MIGRATED_MASTERY = 2;
+
+/**
+ * What each P1.3 tree node cost, for the v6 refund. Every P1.3 id lives on in the redrawn trees,
+ * though most now sit deeper on a branch.
+ */
+const P13_NODE_COSTS: Record<string, number> = {
+  'qi-sensing-breath': 10,
+  'qi-smooth-meridians': 25,
+  'qi-stone-swallowing': 30,
+  'qi-deep-dantian': 40,
+  'qi-veiled-aura': 40,
+  'qi-pure-strand': 60,
+  'qi-patient-gate': 50,
+  'qi-steady-return': 45,
+  'qi-thrifty-circulation': 35,
+  'qi-ninefold-circulation': 120,
+  'qi-foundation-circulation': 150,
+  'qi-liquid-qi': 300,
+  'qi-stone-furnace': 350,
+  'qi-hidden-realm': 400,
+  'qi-sword-riding-breath': 300,
+  'qi-condensed-strand': 500,
+  'qi-gate-patience': 600,
+  'qi-tidal-return': 450,
+  'qi-frugal-seals': 450,
+  'qi-bedrock-foundation': 1000,
+  'body-tempered-skin': 10,
+  'body-iron-skin': 30,
+  'body-ox-stamina': 45,
+  'body-blood-circulation': 40,
+  'body-bitter-herb-gut': 30,
+  'body-bone-forging': 35,
+  'body-marrow-cleansing': 60,
+  'body-hardy-frame': 40,
+  'body-sinew-spring': 50,
+  'body-bronze-body': 120,
+  'body-foundation-flesh': 150,
+  'body-stone-hide': 350,
+  'body-furnace-body': 450,
+  'body-blood-refining': 450,
+  'body-hundred-poisons': 400,
+  'body-iron-bones': 350,
+  'body-renewed-marrow': 600,
+  'body-grounding-marrow': 500,
+  'body-dragon-sinews': 500,
+  'body-silver-body': 1000,
+  'soul-inner-lamp': 10,
+  'soul-clear-mind': 35,
+  'soul-quick-study': 50,
+  'soul-spreading-sense': 40,
+  'soul-still-water': 40,
+  'soul-night-reading': 45,
+  'soul-keen-comprehension': 80,
+  'soul-steady-hands': 35,
+  'soul-dream-recollection': 55,
+  'soul-sea-of-consciousness': 120,
+  'soul-foundation-soul': 150,
+  'soul-enlightened-reading': 350,
+  'soul-lucid-practice': 450,
+  'soul-sense-sweep': 350,
+  'soul-soul-armor': 400,
+  'soul-bright-sea': 450,
+  'soul-heart-demon-ward': 500,
+  'soul-furnace-hands': 400,
+  'soul-split-attention': 600,
+  'soul-nascent-spark': 1000,
+};
 
 /** The seclusion plan's default shares from P1.2 to P1.3, which the v4 wheel replaced. */
 const OLD_SHARES = { qi: 60, body: 15, soul: 10, study: 10, practice: 5 };
@@ -263,6 +331,38 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       ...old,
       version: 5,
       state: { ...s, player: { ...p, ...ladders, methods, contemplation: {} } },
+    };
+  },
+  // v5, P1.5: the P1.3 trees, ten nodes a tier on a grid. v6 redraws them at 25 to 30 a tier in
+  // branches, opened through the capstone. A learned node stays where it survives and everything
+  // it now grows from stays too; the rest go, refunding the insight they cost.
+  5: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const owned = Array.isArray(p.nodes)
+      ? (p.nodes as unknown[]).filter((id): id is string => typeof id === 'string')
+      : [];
+    const kept = new Set<string>();
+    // Trees list each node after the nodes it grows from, so one pass settles every chain.
+    for (const n of TREES.flatMap((t) => t.nodes)) {
+      if (owned.includes(n.id) && n.requires.every((r) => kept.has(r))) kept.add(n.id);
+    }
+    const refund = owned
+      .filter((id) => !kept.has(id))
+      .reduce((sum, id) => sum + (P13_NODE_COSTS[id] ?? 0), 0);
+    const insight = (p.insight ?? {}) as Raw;
+    const current = typeof insight.current === 'number' ? insight.current : 0;
+    return {
+      ...old,
+      version: 6,
+      state: {
+        ...s,
+        player: {
+          ...p,
+          nodes: owned.filter((id) => kept.has(id)),
+          insight: { ...insight, current: current + refund },
+        },
+      },
     };
   },
 };

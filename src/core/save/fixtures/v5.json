@@ -1,0 +1,198 @@
+{
+  "version": 5,
+  "savedAt": 1793000000000,
+  "state": {
+    "lineage": {
+      "id": "fixture-v5",
+      "life": 1
+    },
+    "mode": "ironman",
+    "calendar": {
+      "day": 4860
+    },
+    "player": {
+      "id": "player",
+      "name": "Wen Qi",
+      "pronouns": "they/them",
+      "look": "",
+      "bornDay": 0,
+      "lifespanBonus": 0,
+      "root": "single",
+      "rootElements": [
+        "fire"
+      ],
+      "methods": {
+        "garrison-standard": {
+          "practice": 180,
+          "fedUntil": 0
+        },
+        "stone-bearing": {
+          "practice": 180,
+          "fedUntil": 0
+        }
+      },
+      "activeMethods": {
+        "qi": "garrison-standard",
+        "body": "stone-bearing",
+        "soul": null
+      },
+      "attributes": {
+        "agility": 10,
+        "fortune": 10,
+        "aptitude": 10
+      },
+      "qi": {
+        "realm": "qi-condensation",
+        "stage": 3,
+        "bar": 169.67500000000044,
+        "grades": [],
+        "unsettledUntil": 0,
+        "injuredUntil": 0,
+        "growth": [
+          {
+            "realm": "qi-condensation",
+            "stage": 2,
+            "method": "garrison-standard",
+            "rarity": "white",
+            "growth": {
+              "qiPool": 0,
+              "techniquePower": 0,
+              "qiRecovery": 0
+            }
+          },
+          {
+            "realm": "qi-condensation",
+            "stage": 3,
+            "method": "garrison-standard",
+            "rarity": "white",
+            "growth": {
+              "qiPool": 0,
+              "techniquePower": 0,
+              "qiRecovery": 0
+            }
+          }
+        ]
+      },
+      "body": {
+        "realm": "qi-condensation",
+        "stage": 1,
+        "bar": 31.999999999999925,
+        "grades": [],
+        "unsettledUntil": 0,
+        "injuredUntil": 0,
+        "growth": []
+      },
+      "soul": {
+        "realm": "qi-condensation",
+        "stage": 1,
+        "bar": 0,
+        "grades": [],
+        "unsettledUntil": 0,
+        "injuredUntil": 0,
+        "growth": []
+      },
+      "insight": {
+        "current": 200,
+        "earned": 900
+      },
+      "stones": 0,
+      "items": {},
+      "wheel": [
+        "sleep",
+        "sleep",
+        "qi",
+        "qi",
+        "qi",
+        "qi",
+        "qi",
+        "qi",
+        "qi",
+        "body",
+        "study",
+        "practice"
+      ],
+      "routines": [
+        "watch-rotation"
+      ],
+      "savedRoutines": [],
+      "plan": {
+        "auto": "safe",
+        "burnStones": true
+      },
+      "flags": [
+        "hours-practice",
+        "hours-study",
+        "hours-body"
+      ],
+      "nodes": [
+        "qi-sensing-breath",
+        "qi-smooth-meridians",
+        "qi-pure-strand",
+        "qi-stone-swallowing",
+        "qi-patient-gate",
+        "qi-deep-dantian",
+        "qi-steady-return",
+        "qi-ninefold-circulation",
+        "soul-inner-lamp",
+        "soul-clear-mind",
+        "soul-night-reading"
+      ],
+      "techniques": {
+        "rampart-palm": {
+          "practice": 45.000000000000185
+        }
+      },
+      "practicing": "rampart-palm",
+      "contemplation": {}
+    },
+    "glass": {
+      "seed": -303955249,
+      "fractures": 2,
+      "flares": 2
+    },
+    "ended": null,
+    "chronicle": [
+      {
+        "day": 4320,
+        "kind": "birth",
+        "text": "Wen Qi comes of age on root-testing day."
+      },
+      {
+        "day": 4320,
+        "kind": "technique",
+        "text": "Wen Qi is taught Rampart Palm."
+      },
+      {
+        "day": 4320,
+        "kind": "unlock",
+        "text": "A technique to drill: practice hours now raise its mastery. The hour of 亥 (Hai) turns from qi to practice."
+      },
+      {
+        "day": 4386,
+        "kind": "breakthrough",
+        "text": "Qi breaks through to layer 2."
+      },
+      {
+        "day": 4387,
+        "kind": "unlock",
+        "text": "The first insight trickles in. Study hours turn seclusion into understanding. The hour of 戌 (Xu) turns from qi to study."
+      },
+      {
+        "day": 4445,
+        "kind": "unlock",
+        "text": "Enough insight gathers to grasp a first principle: the trees open."
+      }
+    ],
+    "unlocks": [
+      "abode",
+      "cultivate",
+      "techniques",
+      "trees"
+    ],
+    "rewindCharges": 0,
+    "seed": -303955249,
+    "rng": {
+      "breakthrough": 965487342
+    }
+  }
+}

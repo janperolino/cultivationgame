@@ -3,7 +3,7 @@
 // left (core/growth.ts). Talents, gear and pills join here later. The rules read these totals; see
 // content/stats.ts for units.
 import { APTITUDE_BASE, APTITUDE_STEP, LADDERS } from '../content/cultivation.ts';
-import { STAT_IDS, type StatId } from '../content/stats.ts';
+import { STAT_IDS, statInfo, type Effect, type StatId } from '../content/stats.ts';
 import { ladderGrowth } from './growth.ts';
 import { ladderMethod } from './methods.ts';
 import type { Cultivator } from './state.ts';
@@ -13,6 +13,14 @@ export type Stats = Record<StatId, number>;
 
 export function emptyStats(): Stats {
   return Object.fromEntries(STAT_IDS.map((id) => [id, 0])) as Stats;
+}
+
+/** Folds one effect into the totals: most add, and a `times` stat multiplies (0.1 is ×1.1). */
+export function addEffect(out: Stats, e: Effect): void {
+  out[e.stat] =
+    statInfo(e.stat).unit === 'times'
+      ? (1 + out[e.stat]) * (1 + e.value) - 1
+      : out[e.stat] + e.value;
 }
 
 // The day step reads stats many times a tick; they change only when the nodes, a ladder's realm,
@@ -32,11 +40,11 @@ export function stats(c: Cultivator): Readonly<Stats> {
   if (hit?.key === key && hit.growth.every((g, i) => g === growth[i])) return hit.stats;
   const out = emptyStats();
   for (const node of activeNodes(c)) {
-    for (const e of node.effects) out[e.stat] += e.value;
+    for (const e of node.effects) addEffect(out, e);
   }
   for (const l of LADDERS) {
     for (const p of ladderMethod(c, l)?.properties ?? []) {
-      for (const e of p.effects) out[e.stat] += e.value;
+      for (const e of p.effects) addEffect(out, e);
     }
     for (const [stat, v] of Object.entries(ladderGrowth(c[l]))) out[stat as StatId] += v;
   }

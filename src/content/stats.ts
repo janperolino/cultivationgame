@@ -9,7 +9,9 @@ export type StatUnit =
   | 'odds'
   | 'years'
   | 'points'
-  | 'stages';
+  | 'stages'
+  /** Multiplies with every other source instead of adding: 0.1 means ×1.1. */
+  | 'times';
 
 export interface StatInfo {
   name: string;
@@ -102,6 +104,21 @@ export const STATS = {
     name: 'Agility',
     unit: 'points',
     what: 'Agility: turn order, evasion, fleeing',
+    arrives: 'combat',
+  },
+  // The fighting-up ledger's three axes (design § Combat), carried by capstones and a few late
+  // notables. Harm and Hold multiply; Hit adds to every check.
+  hit: { name: 'Hit', unit: 'points', what: 'every check in a fight', arrives: 'combat' },
+  harm: {
+    name: 'Harm',
+    unit: 'times',
+    what: 'all the damage you deal, the axis a foe a realm up leads on',
+    arrives: 'combat',
+  },
+  hold: {
+    name: 'Hold',
+    unit: 'times',
+    what: 'your HP, and the damage it takes to bring you down',
     arrives: 'combat',
   },
   soulDefense: {
