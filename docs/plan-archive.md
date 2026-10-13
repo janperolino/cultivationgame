@@ -258,6 +258,27 @@ Settle the rule, the numbers and how P2.4's panel shows it.
 
 ---
 
+## D2.2: Design session, after P2.3 (the brief)
+
+Jan's notes from reviewing P2.3 (2026-10-13), with the starting proposals from that discussion. Three blocks in order, each a concrete proposal Jan takes or edits, a commit each. It ends by writing the rules into `docs/design.md`, sizing the build (a P2.5, or folded into P2.4 or M3's phases) and moving what it settles out of Open questions. P2.3's fix already built the category row, the Bag's drag glow and the renaming of the six duplicate node names.
+
+- **Block 1, where manuals live.** The Trees screen picks a category first: Cultivation (Qi, Body, Soul), Daos, Ways (M3), Crafts (M4) and Manuals, the last shown as coming until this block settles it. Design § Cultivation, Manuals already sorts manuals by kind: a Formula is one or two nodes, an *Art* is a technique and its nodes, a Method is a ladder method and its nodes (built in P1.10, unsealed by the method's mastery), a Style puts craft nodes onto its craft Dao, and Scriptures and Inheritances are big bundles. Starting proposal: **every manual names a host**, and the Trees screen draws it grafted beside that tree, the way the discoveries edge hangs found recipes off a craft Dao's rim.
+  - A Method grafts beside its ladder's tree under Cultivation, an Art beside its technique's Dao, and a Style beside its craft. A Formula, Scripture or Inheritance with no natural home goes under Manuals, one small tree each.
+  - Grafted means drawn beside, never joined by requirements: "manuals and trees never unlock each other" stands, so losing a manual never strands a tree node.
+  - Settle: whether an Art's nodes wake at its technique's mastery levels as a Method's do (proposed: yes, so practising Rampart Palm to Mastery opens its third node); how a graft is laid out on the canvas, since manual nodes carry no positions today; where P3.3's generated arts land (a generated qi shield is a technique on the Techniques screen, and its passive nodes are its Art's); and whether the Character screen keeps its Manuals panel.
+- **Block 2, the Intent ladder.** Jan: Sword Intent as an intimidation side path undersells the genre's most iconic progression ("only Qi Condensation and already has sword intent, what a genius"). Starting proposal: a ladder per combat Dao, beside its tiers, not a node:
+
+  | Stage | Sword's | What it does (starting values) | Usual realm | Early, for a genius |
+  |---|---|---|---|---|
+  | Qi | 剑气 | the Dao's tier 1, as now | Qi Condensation | |
+  | Intent | 剑意 | ×1.15 Accuracy and Attack on the Dao's actions; foes without that intent lose 10% Accuracy against you | Foundation | Qi Condensation |
+  | Domain | 剑域 | Intent, and foes lose 15% Evasion and your Dao's actions read their Defense a stage lower | Nascent Soul | Core Formation |
+  | Law | 法则 | your Dao's actions feel a realm gap only as a half-step | Deity Transformation and up | |
+
+  - Earned by the Dao's capstones and a moment, not insight alone: an epiphany card, a near-death fight, a stele, an inheritance. The Sword Heart talent or a lucky card opens Intent a realm early.
+  - Settle: the numbers; all nine Daos at once or the weapon Daos first; the name clash with mastery's Domain (Glimpse to Origin), renaming one; what replaces the Sword Intent and Sword Pressure side paths (and whether Roar and Tiger Roar stay); how intent shows on the sheet and the Combat screen; whether NPCs carry intent by pedigree; and the fight sim's ledger, since a chosen one with intent moves the rows. Rerun `npm run sim -- fights` against any number change.
+- **Block 3, the placement pass.** Jan: some obviously cool things aren't in their right tree, in the big three as much as the Daos. Go through Qi, Body, Soul and the nine Daos with Jan and move what is misplaced. Known so far: the Qi tree's Sword-Riding Breath branch (flight) duplicates the Sword Dao's Sword-Riding side path, and flight on a sword belongs to the Sword Dao, so the Qi tree keeps generic flight or loses the branch; Split Attention (one more flying sword) sits in the Soul tree. Moves keep each tree's counts and silhouettes inside the tree tests, and the names stay unique (a test holds that since P2.3's fix).
+
 ## Open questions as they stood on 2026-10-13
 
 
