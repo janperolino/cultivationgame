@@ -116,7 +116,6 @@ Write questions here when a phase hits something the design doesn't cover, with 
 
 ### Open
 
-- **The first push** (P1.9, still not done 2026-10-13). `origin` is `janperolino/cultivationgame` and `.github/workflows/deploy.yml` deploys on every push, but `main` has no upstream yet: the session's permission check blocked `git push`. Jan runs `git push -u origin main` once. If the first run fails on Pages permissions, check that Settings, Pages, Source is "GitHub Actions".
 - **Two curves** (Jan's call, 2026-10-12, D2.0.1). Combat's realm sizes (×3.1 to ×46 a realm on each stat) are steeper than the realm curve that sizes qi needs, income and prices (1, 9, 270, 27,000), and they stay separate: fights feel the novels' gap, the economy stays tradeable (design § Scale of destruction). Revisit at D5 if a Nascent Soul elder's income reads too small beside his sheet.
 - **A method's growth profile** (assumed 2026-10-12, P1.5). The profile's shares add up to 1 and split the method's total, so a balanced red method leaves about +56% on each of its three stats. A later design session may want the whole curve on one axis instead, now that combat reads the growth.
 - **The attended insight purse** (P1.10, for Jan). The design wants the attended row to reach layer 9 "with a bigger insight purse". At the second trickle's rate (the same as the first) it ends with less insight in all, since it lives fewer in-game years, but more per real hour. Read as per hour; a bigger total would need the second trickle at about five times the first.
