@@ -22,6 +22,7 @@ import {
 import type { EquipSlot } from '../content/items.ts';
 import { advance, catchUp, setClock, TICK_MS, type OfflineResult } from '../core/loop.ts';
 import { seePerson } from '../core/people.ts';
+import { gains, openScreen, see, type SeenKind } from '../core/seen.ts';
 import type { RealmId } from '../content/realms.ts';
 import { makeSave, SaveError } from '../core/save/format.ts';
 import { exportFileName } from '../core/save/file.ts';
@@ -31,6 +32,7 @@ import { followWheel, forgetSavedRoutine, saveRoutine, setHour } from '../core/w
 import { attemptOf, endScene, sceneDue, sceneRolled, startScene, useScene } from './scene.ts';
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
+import { clearToasts, raiseToasts } from './toasts.ts';
 
 export const AUTOSAVE_MS = 30_000;
 /** A gap longer than this between ticks (a sleeping laptop, a frozen tab) counts as offline time. */
@@ -138,6 +140,10 @@ export interface GameStore {
   setClock(realm: RealmId | null): void;
   /** The player read someone's page: their news is no longer fresh. */
   seePerson(id: string): void;
+  /** The player selected new things on their screen: their glow goes (core/seen.ts). */
+  see(kind: SeenKind, ids: readonly string[]): void;
+  /** The player opened a screen: its menu dot clears. */
+  openScreen(screen: string): void;
   /** A new pattern for the life's glass. */
   rerollGlass(): void;
   /** After a death: opens creation for a new life in the same slot, with the chronicle kept. */
@@ -197,6 +203,20 @@ function serial<T>(fn: () => Promise<T>): Promise<T> {
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * True while time away is applied, or a rewind or reload swaps the life: what that brings raises
+ * no toasts, since the coming-back card tells it.
+ */
+let quiet = false;
+function quietly(fn: () => void) {
+  quiet = true;
+  try {
+    fn();
+  } finally {
+    quiet = false;
+  }
+}
+
 export const useGame = create<GameStore>()((set, get) => {
   function stopLoop() {
     if (tickTimer) clearInterval(tickTimer);
@@ -222,8 +242,10 @@ export const useGame = create<GameStore>()((set, get) => {
     const { seat, state } = tickSeat(game, gap / 1000);
     if (gap > OFFLINE_GAP_MS) {
       const away = catchUp(state, now - gap, now, { step: playDay });
-      set({ away: { ...away, before: game } });
-      update(away.state);
+      quietly(() => {
+        set({ away: { ...away, before: game } });
+        update(away.state);
+      });
     } else {
       update(advance(state, gap * speed, { step: playDay, seat }).state);
     }
@@ -610,6 +632,20 @@ export const useGame = create<GameStore>()((set, get) => {
       if (next !== game) set({ game: next });
     },
 
+    see(kind, ids) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      const next = see(game, kind, ids);
+      if (next !== game) set({ game: next });
+    },
+
+    openScreen(screen) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      const next = openScreen(game, screen);
+      if (next !== game) set({ game: next });
+    },
+
     rerollGlass() {
       const { game } = get();
       if (!game || !holdsLock) return;
@@ -681,7 +717,7 @@ export const useGame = create<GameStore>()((set, get) => {
       try {
         await get().saveNow();
         const save = await db().rewind(slot, Date.now());
-        set({ game: save.state, savedAt: save.savedAt, away: null });
+        quietly(() => set({ game: save.state, savedAt: save.savedAt, away: null }));
       } catch (e) {
         set({ notice: message(e) });
       }
@@ -717,12 +753,25 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!game || !holdsLock) return 'No life is open in this tab.';
       const now = Date.now();
       const away = catchUp(game, now - ms, now, { step: playDay });
-      set({ away: { ...away, before: game } });
-      update(away.state);
+      quietly(() => {
+        set({ away: { ...away, before: game } });
+        update(away.state);
+      });
       void get().saveNow();
       return null;
     },
   };
+});
+
+// Every gift names itself in a toast as it comes (ui/toasts.ts): a change to the open life is
+// checked for what it gained, unless it came from time away, a rewind or another life.
+useGame.subscribe((now, was) => {
+  if (now.slot !== was.slot || !now.game || now.game.lineage.life !== was.game?.lineage.life) {
+    if (now.game !== was.game) clearToasts();
+    return;
+  }
+  if (quiet || now.game === was.game || !was.game) return;
+  raiseToasts(gains(was.game, now.game), now.game);
 });
 
 // A hot update would swap this store out from under the running game and its tab lock, so in

@@ -1,11 +1,12 @@
 // The bookcase's words and sizes (design § Cultivation, Where manuals live), apart from the
 // screen so they are tested: how wide and tall a spine stands, what its hover card says of the
 // manual and each node, and what a search finds.
-import { MANUAL_KINDS, type Manual, type ManualNode } from '../content/manuals.ts';
+import { MANUAL_KINDS, type Manual, type ManualKind, type ManualNode } from '../content/manuals.ts';
 import { MASTERY } from '../content/mastery.ts';
 import { rarity, rarityRank } from '../content/rarity.ts';
 import { statInfo } from '../content/stats.ts';
 import { tree } from '../content/trees/index.ts';
+import { manualFinished } from '../core/manuals.ts';
 import type { Cultivator } from '../core/state.ts';
 import { hasLearned, nodeReady, nodeSealed } from '../core/trees.ts';
 
@@ -100,4 +101,28 @@ export function matchesManual(m: Manual, query: string): boolean {
     for (const e of [...n.effects, ...(n.own ?? [])]) words.push(e.stat, statInfo(e.stat).name);
   }
   return words.some((w) => w.toLowerCase().includes(q));
+}
+
+/** The list of manuals without a host gets its search, kind chips and Hide finished past this many. */
+export const HOSTLESS_FILTER_FROM = 8;
+
+export interface HostlessFilter {
+  query: string;
+  /** Kinds whose chip is off. */
+  hidden: ReadonlySet<ManualKind>;
+  hideFinished: boolean;
+}
+
+/** The manuals without a host that the list's filter keeps, in the order given. */
+export function filterHostless(
+  c: Cultivator,
+  list: readonly Manual[],
+  f: HostlessFilter,
+): Manual[] {
+  return list.filter(
+    (m) =>
+      matchesManual(m, f.query) &&
+      !f.hidden.has(m.kind) &&
+      !(f.hideFinished && manualFinished(c, m)),
+  );
 }

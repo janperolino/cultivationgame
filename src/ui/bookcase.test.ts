@@ -1,4 +1,5 @@
-// P2.5c: a spine's size, the hover card's words and the bookcase's search.
+// P2.5c: a spine's size, the hover card's words and the bookcase's search; P2.5d: the hostless
+// list's filter.
 import { describe, expect, it } from 'vitest';
 import { manual } from '../content/manuals.ts';
 import { registerManuals } from '../content/nodes.ts';
@@ -7,6 +8,7 @@ import { madeUpManuals } from '../core/madeUpManuals.ts';
 import { newLife } from '../core/state.ts';
 import {
   cardMeta,
+  filterHostless,
   matchesManual,
   nodeMark,
   nodeWords,
@@ -95,5 +97,25 @@ describe('the search', () => {
     expect(matchesManual(m, 'many readers')).toBe(true);
     expect(matchesManual(m, 'insight')).toBe(true);
     expect(matchesManual(m, 'tempering')).toBe(false);
+  });
+});
+
+describe('the hostless list filter', () => {
+  const list = made.manuals.filter((m) => m.host === null);
+  const none = { query: '', hidden: new Set<never>(), hideFinished: false };
+
+  it('keeps every manual with nothing set, in the order given', () => {
+    expect(filterHostless(life.player, list, none)).toEqual(list);
+  });
+
+  it('finds by name, hides a kind and hides the finished', () => {
+    const m = list[0]!;
+    expect(filterHostless(life.player, list, { ...none, query: m.name })).toContain(m);
+    const noKind = filterHostless(life.player, list, { ...none, hidden: new Set([m.kind]) });
+    expect(noKind.some((x) => x.kind === m.kind)).toBe(false);
+    const done = { ...life.player, nodes: m.nodes.map((n) => n.id) };
+    const open = filterHostless(done, list, { ...none, hideFinished: true });
+    expect(open).not.toContain(m);
+    expect(open).toHaveLength(list.length - 1);
   });
 });

@@ -5,7 +5,7 @@
 // the next, what it gives, its kin, a line on its Art (bought on its tree, design § Cultivation,
 // Where manuals live), and the button that sends practice days to it. Rarer techniques look it:
 // an edge in the rarity's color from blue, a glow from purple.
-import { useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { techniqueArt, type Manual } from '../content/manuals.ts';
 import { MASTERY, TECHNIQUE_MASTERY } from '../content/mastery.ts';
 import { rarity, rarityRank, type RarityId } from '../content/rarity.ts';
@@ -14,6 +14,7 @@ import { techniqueChapter, type Technique } from '../content/techniques.ts';
 import { tree } from '../content/trees/index.ts';
 import { dayRates, type DayRates } from '../core/cultivation.ts';
 import { masteryBurst } from '../core/insight.ts';
+import { newIds } from '../core/seen.ts';
 import type { Cultivator } from '../core/state.ts';
 import {
   canPractice,
@@ -30,7 +31,7 @@ import { hasLearned, nodeSealed } from '../core/trees.ts';
 import { hourKindOpen } from '../core/wheel.ts';
 import { formatNumber, formatPercent, formatRate, LADDER_LABELS } from './format.ts';
 import { RarityName } from './MethodCard.tsx';
-import { go, goToManual } from './nav.ts';
+import { go, goToManual, useNav } from './nav.ts';
 import { useGame } from './store.ts';
 import {
   knownChapters,
@@ -235,10 +236,13 @@ function PracticeSlot({
 function TechniqueList({
   c,
   selected,
+  fresh,
   onSelect,
 }: {
   c: Cultivator;
   selected: string;
+  /** Techniques still new: their rows glow until selected. */
+  fresh: ReadonlySet<string>;
   onSelect: (id: string) => void;
 }) {
   const practice = useGame((s) => s.practice);
@@ -335,7 +339,7 @@ function TechniqueList({
             <li key={t.id} className={quick ? 'has-quick' : undefined}>
               <button
                 type="button"
-                className={`technique-row${look.className}${isSelected ? ' is-selected' : ''}${sealed ? ' is-sealed' : ''}${under ? ' is-under' : ''}`}
+                className={`technique-row${look.className}${isSelected ? ' is-selected' : ''}${sealed ? ' is-sealed' : ''}${under ? ' is-under' : ''}${fresh.has(t.id) ? ' is-new' : ''}`}
                 style={look.style}
                 aria-pressed={isSelected}
                 onClick={() => onSelect(t.id)}
@@ -550,6 +554,11 @@ function TechniquePage({
   onSelect: (id: string) => void;
 }) {
   const practice = useGame((s) => s.practice);
+  // The technique on the page is the one selected, so it is seen.
+  const see = useGame((s) => s.see);
+  useEffect(() => {
+    see('technique', [t.id]);
+  }, [see, t.id]);
   const m = mastery(c, t.id);
   const sealed = techniqueSealed(c, t);
   const practicing = c.practicing === t.id;
@@ -647,6 +656,17 @@ export function TechniquesScreen() {
   const game = useGame((s) => s.game);
   const [chosen, setChosen] = useState<string | null>(null);
   const page = useRef<HTMLDivElement>(null);
+  // A toast's link lands on the technique it names, selected.
+  const target = useNav((s) => (s.screen === 'techniques' ? s.select : null));
+  const navSeq = useNav((s) => s.seq);
+  const [arrived, setArrived] = useState(-1);
+  if (target && navSeq !== arrived) {
+    setArrived(navSeq);
+    setChosen(target);
+  }
+  useEffect(() => {
+    if (target) useNav.setState({ select: null });
+  }, [target]);
   if (!game) return null;
   const c = game.player;
   const known = knownTechniques(c);
@@ -677,7 +697,12 @@ export function TechniquesScreen() {
     <>
       <PracticePanel c={c} rates={rates} rate={rate} onSelect={select} onKeep={setChosen} />
       <div className="technique-split">
-        <TechniqueList c={c} selected={selected} onSelect={select} />
+        <TechniqueList
+          c={c}
+          selected={selected}
+          fresh={new Set(newIds(game, 'technique'))}
+          onSelect={select}
+        />
         <div ref={page} className="technique-page-col">
           <TechniquePage
             c={c}

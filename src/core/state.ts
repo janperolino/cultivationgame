@@ -255,6 +255,12 @@ export const GameStateSchema = z.object({
   cards: Cards,
   /** Unlock flags for the screens, so they appear as they're reached. */
   unlocks: z.array(z.string()),
+  /**
+   * What the player has looked at (core/seen.ts), by kind (technique, method, manual, item, tree,
+   * screen) and id: noticed once its screen was opened, seen once selected. Anything held and not
+   * seen is new.
+   */
+  seen: z.record(z.string(), z.record(z.string(), z.enum(['noticed', 'seen']))),
   /** Gentle mode's rewind charge: 1 when a rewind is available. Always 0 in ironman. */
   rewindCharges: z.number().int().min(0).max(1),
   /** The life's seed; every random stream starts from it and its own name. */
@@ -436,6 +442,7 @@ export function newLife(opts: NewLifeOptions): GameState {
     unlocks: Object.keys(player.techniques).length
       ? [...STARTING_UNLOCKS, 'techniques']
       : [...STARTING_UNLOCKS],
+    seen: {},
     rewindCharges: mode === 'gentle' ? 1 : 0,
     seed,
     rng: {},

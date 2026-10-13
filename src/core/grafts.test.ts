@@ -227,7 +227,7 @@ describe('the placement pass', () => {
         },
       }),
     );
-    expect(SAVE_VERSION).toBe(13);
+    expect(SAVE_VERSION).toBeGreaterThanOrEqual(13);
     const nodes = loadSave(raw).state.player.nodes;
     expect(nodes).toEqual(['qi-sensing-breath', ...old.map((id) => RENAMED_NODES[id])]);
     for (const id of nodes) expect(anyNode(id).id).toBe(id);

@@ -11,12 +11,12 @@ import { MASTERY } from '../content/mastery.ts';
 import { anyNode, type AnyNode } from '../content/nodes.ts';
 import { REALMS } from '../content/realms.ts';
 import { statInfo } from '../content/stats.ts';
+import { technique } from '../content/techniques.ts';
 import {
   branchOf,
   TIER_COUNT,
   tierNode,
   tierNodes,
-  BIG_THREE,
   TREE_CATEGORIES,
   treeNode,
   treeOf,
@@ -24,12 +24,12 @@ import {
   type TreeCategory,
   type TreeNode,
 } from '../content/trees/index.ts';
-import { ladderOpen } from '../core/cultivation.ts';
-import { graftsOn, heldManuals } from '../core/manuals.ts';
+import { graftsOn, heldManuals, hostlessManuals } from '../core/manuals.ts';
 import { methodMastery } from '../core/methods.ts';
 import type { Cultivator } from '../core/state.ts';
 import { mastery } from '../core/techniques.ts';
-import { canLearn, hasLearned, nodeSealed, tierOwned } from '../core/trees.ts';
+import { newIds, shownTrees, treeOpen } from '../core/seen.ts';
+import { canLearn, hasLearned, nodeSealed, tierOwned, treeTotals } from '../core/trees.ts';
 import { Bookcase, HostlessView } from './Bookcase.tsx';
 import { formatEffect, formatNumber, LADDER_LABELS } from './format.ts';
 import { LearnAction, ManualName, ManualNodeRow, NodeEffects } from './ManualNodes.tsx';
@@ -55,6 +55,7 @@ import {
   type Graft,
   type Layout,
 } from './treeLayout.ts';
+import { Why } from './widgets.tsx';
 
 /** Moves under this many pixels are a tap, not a drag. */
 const TAP = 6;
@@ -113,7 +114,7 @@ function graftView(g: Graft, screen: Size): View {
   return viewAt(homeZoom(screen), { x: g.x + g.width / 2, y: g.y }, { x: screen.w / 2, y: 60 });
 }
 
-function Bands({ c, tree, l }: { c: Cultivator; tree: Tree; l: Layout }) {
+function Bands({ c, tree, l, own }: { c: Cultivator; tree: Tree; l: Layout; own: boolean }) {
   const ladderName = LADDER_LABELS[tree.ladder].toLowerCase();
   return Array.from({ length: TIER_COUNT }, (_, i) => {
     const tier = i + 1;
@@ -125,11 +126,13 @@ function Bands({ c, tree, l }: { c: Cultivator; tree: Tree; l: Layout }) {
     const tall = l.bandHeight[tier]! > UNCHARTED * UNIT;
     const status = !charted
       ? `Not yet charted${tall ? '; manuals grafted here' : ''}.`
-      : sealed
-        ? `Sealed until your ${ladderName} reaches ${r.name}`
-        : capstone && hasLearned(c, capstone.id)
-          ? `${tierOwned(c, tree, tier)} of ${nodes.length} · capstone learned`
-          : `${tierOwned(c, tree, tier)} of ${nodes.length} learned`;
+      : !own
+        ? `Its own nodes open with your ${ladderName}`
+        : sealed
+          ? `Sealed until your ${ladderName} reaches ${r.name}`
+          : capstone && hasLearned(c, capstone.id)
+            ? `${tierOwned(c, tree, tier)} of ${nodes.length} · capstone learned`
+            : `${tierOwned(c, tree, tier)} of ${nodes.length} learned`;
     return (
       <div
         key={tier}
@@ -169,10 +172,10 @@ function bracketPath(b: Graft['bracket']): string {
   return `M${b.x + 10} ${b.top}H${b.x}V${b.bottom}H${b.x + 10}`;
 }
 
-function Edges({ c, tree, l }: { c: Cultivator; tree: Tree; l: Layout }) {
+function Edges({ c, tree, l, own }: { c: Cultivator; tree: Tree; l: Layout; own: boolean }) {
   return (
     <svg className="tree-edges" width={l.width} height={l.height} aria-hidden="true">
-      {tree.nodes.flatMap((n) =>
+      {(own ? tree.nodes : []).flatMap((n) =>
         n.requires.map((req) => {
           const from = treeNode(req);
           const lit = hasLearned(c, req) && hasLearned(c, n.id);
@@ -214,18 +217,21 @@ function Plate({
   m,
   style,
   selected,
+  fresh,
   onSelect,
 }: {
   c: Cultivator;
   m: Manual;
   style: React.CSSProperties;
   selected: boolean;
+  /** A manual still new: the plate glows until selected. */
+  fresh: boolean;
   onSelect: (id: string) => void;
 }) {
   return (
     <button
       type="button"
-      className={`graft-plate ${selected ? 'is-selected' : ''}`}
+      className={`graft-plate ${selected ? 'is-selected' : ''}${fresh ? ' is-new' : ''}`}
       style={style}
       aria-pressed={selected}
       onClick={() => onSelect(PLATE + m.id)}
@@ -436,16 +442,36 @@ function TreeCanvas({
   tree,
   grafts,
   focus,
+  own,
+  fresh,
 }: {
   c: Cultivator;
   tree: Tree;
   grafts: readonly Manual[];
   focus: Focus | null;
+  /** Whether the tree's own nodes are drawn: false before its ladder opens, grafts alone. */
+  own: boolean;
+  /** Manuals still new: their plates glow. */
+  fresh: ReadonlySet<string>;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [screen, setScreen] = useState<Size>({ w: 0, h: 0 });
   const [view, setView] = useState<View | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  // The tree on the canvas is the tab selected, so it is seen; so is a manual whose plate or
+  // node is selected.
+  const see = useGame((s) => s.see);
+  useEffect(() => {
+    see('tree', [tree.id]);
+  }, [see, tree.id]);
+  useEffect(() => {
+    if (!selected) return;
+    if (selected.startsWith(PLATE)) see('manual', [selected.slice(PLATE.length)]);
+    else {
+      const n = anyNode(selected);
+      if (n.home === 'manual') see('manual', [n.manual]);
+    }
+  }, [see, selected]);
   const gesture = useRef<Gesture>({
     pointers: new Map(),
     start: new Map(),
@@ -461,13 +487,16 @@ function TreeCanvas({
   // A new tree opens on its home view with nothing selected, and so does the first measurement;
   // a request to focus a graft opens on its name plate, selected.
   const ready = screen.w > 0;
+  // A tree whose own nodes are shut opens on its first graft instead.
+  const start = (s: Size) =>
+    !own && l.grafts[0] ? graftView(l.grafts[0], s) : homeView(c, tree, l, s);
   const [shown, setShown] = useState({ tree: '', ready: false, focus: -1 });
   const focusSeq = focus?.seq ?? -1;
   if (shown.tree !== tree.id || shown.ready !== ready || shown.focus !== focusSeq) {
     setShown({ tree: tree.id, ready, focus: focusSeq });
     const g = focus ? l.grafts.find((x) => x.manual.id === focus.id) : undefined;
     setSelected(g ? PLATE + g.manual.id : null);
-    setView(ready ? (g ? graftView(g, screen) : homeView(c, tree, l, screen)) : null);
+    setView(ready ? (g ? graftView(g, screen) : start(screen)) : null);
   }
 
   const apply = useCallback(
@@ -475,7 +504,7 @@ function TreeCanvas({
     [screen, world],
   );
   const recentre = () => {
-    if (ready) setView(homeView(c, tree, l, screen));
+    if (ready) setView(start(screen));
   };
 
   // The observer reports the size once on its own when it starts, then on every resize.
@@ -611,10 +640,10 @@ function TreeCanvas({
             }}
           >
             <div className="tree-world-bg">
-              <Bands c={c} tree={tree} l={l} />
-              <Edges c={c} tree={tree} l={l} />
+              <Bands c={c} tree={tree} l={l} own={own} />
+              <Edges c={c} tree={tree} l={l} own={own} />
             </div>
-            {tree.nodes.map((n) => (
+            {(own ? tree.nodes : []).map((n) => (
               <NodeButton
                 key={n.id}
                 c={c}
@@ -632,6 +661,7 @@ function TreeCanvas({
                   m={g.manual}
                   style={{ left: g.x, top: g.y, width: g.width }}
                   selected={selected === PLATE + g.manual.id}
+                  fresh={fresh.has(g.manual.id)}
                   onSelect={setSelected}
                 />
                 {g.nodes.map(({ node }) => (
@@ -677,21 +707,22 @@ function TreeCanvas({
 }
 
 /**
- * The Manuals category: the manuals with no tree to stand beside on top, one tree at a time
- * beside a list of them, and the bookcase of every manual held below. A click on a spine opens
- * its graft, or focuses its own tree up here and scrolls to it.
+ * The Manuals category: the manuals with no host tree on top, one tree at a time beside a list of
+ * them, and the bookcase of every manual held below. A click on a spine opens its graft, or
+ * focuses its own tree up here and scrolls to it.
  */
 function ManualsView({
   c,
   focus,
-  treeOpen,
+  fresh,
   onOpen,
 }: {
   c: Cultivator;
   focus: Focus | null;
-  treeOpen: (id: string) => boolean;
+  fresh: ReadonlySet<string>;
   onOpen: (m: Manual) => void;
 }) {
+  const see = useGame((s) => s.see);
   const top = useRef<HTMLDivElement>(null);
   const [focused, setFocused] = useState<string | null>(focus?.id ?? null);
   const [seen, setSeen] = useState(focus?.seq ?? -1);
@@ -700,16 +731,33 @@ function ManualsView({
     setFocused(focus.id);
   }
   useEffect(() => {
-    if (focus) top.current?.scrollIntoView({ block: 'start' });
-  }, [focus]);
-  const standalone = heldManuals(c).filter((m) => !m.host || !treeOpen(m.host));
-  const current = standalone.find((m) => m.id === focused) ?? standalone[0];
+    if (!focus) return;
+    top.current?.scrollIntoView({ block: 'start' });
+    see('manual', [focus.id]);
+  }, [focus, see]);
   return (
     <>
       <div ref={top} className="manuals-top">
-        <HostlessView c={c} list={standalone} focused={current} onFocus={(m) => setFocused(m.id)} />
+        <HostlessView
+          c={c}
+          list={hostlessManuals(c)}
+          focused={focused}
+          fresh={fresh}
+          onFocus={(m) => {
+            setFocused(m.id);
+            see('manual', [m.id]);
+          }}
+        />
       </div>
-      <Bookcase c={c} hostOpen={(m) => !!m.host && treeOpen(m.host)} onOpen={onOpen} />
+      <Bookcase
+        c={c}
+        fresh={fresh}
+        hostOpen={(m) => !!m.host}
+        onOpen={(m) => {
+          see('manual', [m.id]);
+          onOpen(m);
+        }}
+      />
     </>
   );
 }
@@ -717,6 +765,49 @@ function ManualsView({
 /** "Qi · 3 manuals" on the tree list. */
 function graftCount(n: number): string {
   return n === 0 ? '' : ` · ${n} ${n === 1 ? 'manual' : 'manuals'}`;
+}
+
+/** "the Fist Dao", "the Soul tree". */
+function treeWords(t: Tree): string {
+  return `${t.name} ${t.dao ? 'Dao' : 'tree'}`;
+}
+
+/** What one tree gives, totted up by stat: the "?" by its name. */
+function Totals({ c, tree }: { c: Cultivator; tree: Tree }) {
+  const t = treeTotals(c, tree);
+  const ladderName = LADDER_LABELS[tree.ladder].toLowerCase();
+  return (
+    <Why label={`What the ${treeWords(tree)} gives`}>
+      <>
+        <span className="tree-totals-head">Working now</span>
+        <span>
+          {t.working.length > 0 ? t.working.map(formatEffect).join(', ') : 'Nothing learned yet.'}
+        </span>
+        {t.sealed.map((x) => (
+          <span key={x.tier}>
+            {x.effects.map(formatEffect).join(', ')} waits for your {ladderName} to reach{' '}
+            {REALMS[x.tier - 1]!.name}.
+          </span>
+        ))}
+        {t.grafts.length > 0 && <span className="tree-totals-head">Grafted beside it</span>}
+        {t.grafts.map((g) => {
+          const on = g.manual.technique ? technique(g.manual.technique).name : '';
+          const fx = [
+            ...g.working.map(formatEffect),
+            ...g.own.map((e) => `${formatEffect(e)} on ${on}`),
+          ];
+          return (
+            <span key={g.manual.id}>
+              <span className={`rarity-${g.manual.rarity}`}>{g.manual.name}</span> · {g.learned} of{' '}
+              {g.manual.nodes.length}
+              {fx.length > 0 && ` · ${fx.join(', ')}`}
+              {g.waiting.length > 0 && ` · ${g.waiting.map(formatEffect).join(', ')} still asleep`}
+            </span>
+          );
+        })}
+      </>
+    </Why>
+  );
 }
 
 const MANUALS_PICK = 'manuals';
@@ -743,28 +834,33 @@ export function TreesScreen() {
 
   if (!game) return null;
   const c = game.player;
-  // Pick a category, then a tree in it. The big three open with their ladders; the combat Daos
-  // once a first technique opens combat; Manuals with a first manual; the rest show as coming.
-  const open = (t: Tree) =>
-    t.dao ? game.unlocks.includes('combat') : BIG_THREE.includes(t) && ladderOpen(c, t.ladder);
-  const categories = TREE_CATEGORIES.map((k) => ({ ...k, trees: k.trees.filter(open) }));
-  const all = categories.flatMap((k) => k.trees);
+  // Pick a category, then a tree in it. Only what you have touched shows (core/seen.ts): the big
+  // three with their ladders or a manual grafted on them, a combat Dao once something of it is
+  // held; a category once it holds a tree, and Manuals with a first manual.
+  const shown = shownTrees(c);
   const anyManual = heldManuals(c).length > 0;
-  // A link to a manual whose host tree isn't open yet lands on its own tree under Manuals.
-  const shutHost = focus !== null && !all.some((t) => t.id === pick);
-  const onManuals = (pick === MANUALS_PICK || shutHost) && anyManual;
+  const categories = TREE_CATEGORIES.map((k) => ({
+    ...k,
+    trees: k.trees.filter((t) => shown.includes(t)),
+  })).filter((k) => k.trees.length > 0 || (k.id === MANUALS_PICK && anyManual));
+  const all = categories.flatMap((k) => k.trees);
+  const onManuals = pick === MANUALS_PICK && anyManual;
   const tree = all.find((t) => t.id === pick) ?? all[0]!;
   const current = onManuals
     ? categories.find((k) => k.id === MANUALS_PICK)!
     : categories.find((k) => k.trees.includes(tree))!;
-  const usable = (k: TreeCategory) => k.trees.length > 0 || (k.id === MANUALS_PICK && anyManual);
-  const shut = (k: TreeCategory) =>
-    usable(k) ? null : (k.opens ?? (k.id === 'daos' ? 'with a first technique' : ''));
+  const freshTrees = new Set(newIds(game, 'tree'));
+  const freshManuals = new Set(newIds(game, 'manual'));
+  const categoryNew = (k: TreeCategory) =>
+    k.trees.some((t) => freshTrees.has(t.id)) ||
+    (k.id === MANUALS_PICK && hostlessManuals(c).some((m) => freshManuals.has(m.id)));
   const openManual = (m: Manual) => {
     localSeq.current -= 1;
-    setPick(m.host && all.some((t) => t.id === m.host) ? m.host : MANUALS_PICK);
+    setPick(m.host ?? MANUALS_PICK);
     setFocus({ id: m.id, seq: localSeq.current });
   };
+  const own = treeOpen(c, tree);
+  const grafts = graftsOn(c, tree.id);
 
   return (
     <section className="panel">
@@ -774,9 +870,8 @@ export function TreesScreen() {
             <button
               key={k.id}
               type="button"
+              className={categoryNew(k) && k.id !== current.id ? 'is-new' : undefined}
               aria-pressed={k.id === current.id}
-              disabled={!usable(k)}
-              title={shut(k) ?? undefined}
               onClick={() => {
                 setFocus(null);
                 setPick(k.id === MANUALS_PICK ? MANUALS_PICK : k.trees[0]!.id);
@@ -800,6 +895,7 @@ export function TreesScreen() {
               <button
                 key={t.id}
                 type="button"
+                className={freshTrees.has(t.id) ? 'is-new' : undefined}
                 aria-pressed={t.id === tree.id}
                 onClick={() => {
                   setFocus(null);
@@ -813,35 +909,35 @@ export function TreesScreen() {
           </div>
         </div>
       )}
-      {categories.some((k) => shut(k)) && (
-        <p className="caption">
-          {categories
-            .filter((k) => shut(k))
-            .map((k) => `${k.name} ${shut(k)}`)
-            .join(' · ')}
-        </p>
-      )}
       {onManuals ? (
-        <ManualsView
-          c={c}
-          focus={focus}
-          treeOpen={(id) => all.some((t) => t.id === id)}
-          onOpen={openManual}
-        />
+        <ManualsView c={c} focus={focus} fresh={freshManuals} onOpen={openManual} />
       ) : (
         <>
+          <h3 className="tree-title">
+            The {treeWords(tree)} <span className="hanzi">{tree.hanzi}</span>{' '}
+            <Totals c={c} tree={tree} />
+          </h3>
+          {!own && (
+            <p className="tree-shut">
+              The {treeWords(tree)}’s own nodes open with your{' '}
+              {LADDER_LABELS[tree.ladder].toLowerCase()} ladder; until then it holds the manuals
+              grafted beside it.
+            </p>
+          )}
           <p className="caption spaced">
             {tree.dao &&
               `Holding a tier, half its nodes owned, multiplies Accuracy and Attack on its actions by ×1.05. `}
             {tree.what} Drag to move, wheel or pinch to zoom, and tap a node for its details.
-            {graftsOn(c, tree.id).length > 0 &&
+            {grafts.length > 0 &&
               ' The manuals you hold stand to the right, grafted beside the tree but joined to none of its nodes.'}
           </p>
           <TreeCanvas
             c={c}
             tree={tree}
-            grafts={graftsOn(c, tree.id)}
+            grafts={grafts}
             focus={focus && pick === tree.id ? focus : null}
+            own={own}
+            fresh={freshManuals}
           />
         </>
       )}

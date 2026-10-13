@@ -104,7 +104,6 @@ describe('tree content', () => {
     const grouped = TREE_CATEGORIES.flatMap((k) => k.trees);
     expect(grouped.map((t) => t.id).sort()).toEqual(TREES.map((t) => t.id).sort());
     expect(TREE_CATEGORIES[0]!.trees).toEqual(BIG_THREE);
-    for (const k of TREE_CATEGORIES) if (k.trees.length === 0) expect(k.opens).toBeTruthy();
   });
 
   for (const t of BIG_THREE) {

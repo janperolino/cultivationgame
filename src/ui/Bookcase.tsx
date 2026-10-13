@@ -12,10 +12,15 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from 'react';
-import { MANUAL_KINDS, type Manual, type ManualNode } from '../content/manuals.ts';
+import {
+  MANUAL_KIND_IDS,
+  MANUAL_KINDS,
+  type Manual,
+  type ManualKind,
+  type ManualNode,
+} from '../content/manuals.ts';
 import { rarity, rarityRank, type RarityId } from '../content/rarity.ts';
 import { technique } from '../content/techniques.ts';
-import { tree } from '../content/trees/index.ts';
 import {
   heldManuals,
   shelf,
@@ -29,6 +34,8 @@ import { canLearn, hasLearned } from '../core/trees.ts';
 import {
   CARD_NODES,
   cardMeta,
+  filterHostless,
+  HOSTLESS_FILTER_FROM,
   learnedCount,
   matchesManual,
   nodeMark,
@@ -75,6 +82,7 @@ function Spine({
   m,
   tabbable,
   tipped,
+  fresh,
   onShow,
   onHide,
   onPress,
@@ -84,6 +92,8 @@ function Spine({
   m: Manual;
   tabbable: boolean;
   tipped: boolean;
+  /** New, not yet selected: it glows until it is. */
+  fresh: boolean;
   onShow: (m: Manual) => void;
   onHide: (m: Manual) => void;
   onPress: (m: Manual, e: MouseEvent) => void;
@@ -93,7 +103,7 @@ function Spine({
   return (
     <button
       type="button"
-      className={`spine is-${m.kind}${rare ? ' is-rare' : ''}${tipped ? ' is-tipped' : ''}`}
+      className={`spine is-${m.kind}${rare ? ' is-rare' : ''}${tipped ? ' is-tipped' : ''}${fresh ? ' is-new' : ''}`}
       style={{ ...rarityVar(m.rarity), width: spineWidth(m), height: spineHeight(m) }}
       data-manual={m.id}
       tabIndex={tabbable ? 0 : -1}
@@ -275,13 +285,17 @@ function Strip({
 /** The bookcase: the count line and the toolbar, the strip, and a shelf per plank. */
 export function Bookcase({
   c,
+  fresh,
   hostOpen,
   onOpen,
 }: {
   c: Cultivator;
+  /** Manuals still new: their spines glow until selected. */
+  fresh: ReadonlySet<string>;
   hostOpen: (m: Manual) => boolean;
   onOpen: (m: Manual) => void;
 }) {
+  const see = useGame((s) => s.see);
   const [query, setQuery] = useState('');
   const [order, setOrder] = useState<ShelfOrder>('rarity');
   const [hidden, setHidden] = useState<ReadonlySet<RarityId>>(new Set());
@@ -338,6 +352,7 @@ export function Bookcase({
     const tap = pointer.current === 'touch' && e.detail !== 0;
     if (tap && !(tip?.pinned && tip.id === m.id)) {
       setTip({ id: m.id, pinned: true });
+      see('manual', [m.id]);
       return;
     }
     setTip(null);
@@ -441,6 +456,7 @@ export function Bookcase({
                       m={m}
                       tabbable={m.id === tab}
                       tipped={tip?.id === m.id}
+                      fresh={fresh.has(m.id)}
                       onShow={show}
                       onHide={hide}
                       onPress={press}
@@ -483,12 +499,16 @@ export function Bookcase({
   );
 }
 
+/** The Dao an Art waits on, capitalised, when its technique's first Dao has no tree drawn yet. */
+function waitingDao(m: Manual): string | undefined {
+  const dao = m.technique ? technique(m.technique).daos[0] : undefined;
+  return dao && `${dao[0]!.toUpperCase()}${dao.slice(1)}`;
+}
+
 /** Why a manual stands at the top of the tab rather than beside a tree. */
 function whyHere(m: Manual): string {
-  if (m.host) return `It grafts beside the ${tree(m.host).name} tree once that tree opens.`;
-  const dao = m.technique ? technique(m.technique).daos[0] : undefined;
-  if (dao)
-    return `It waits here until the ${dao[0]!.toUpperCase()}${dao.slice(1)} Dao is drawn, then grafts beside it.`;
+  const dao = waitingDao(m);
+  if (dao) return `It waits here until the ${dao} Dao is drawn, then grafts beside it.`;
   return 'Its nodes touch more than one tree, so no one tree holds it.';
 }
 
@@ -573,44 +593,106 @@ function OwnNodeRow({ c, m, n }: { c: Cultivator; m: Manual; n: ManualNode }) {
 }
 
 /**
- * The top of the tab, one tree at a time: a list of every manual with no tree to stand beside,
- * and the focused one's own tree beside it, then its nodes and its flavor line.
+ * The top of the tab, one tree at a time: a list of every manual with no host tree, filtered past
+ * eight by a search, a chip per kind and Hide finished, and the focused one's own tree beside it,
+ * then its nodes and its flavor line. When the filter hides the focused manual, the first match
+ * stands in for it.
  */
 export function HostlessView({
   c,
   list,
   focused,
+  fresh,
   onFocus,
 }: {
   c: Cultivator;
   list: readonly Manual[];
-  focused: Manual | undefined;
+  focused: string | null;
+  /** Manuals still new: their rows glow until picked. */
+  fresh: ReadonlySet<string>;
   onFocus: (m: Manual) => void;
 }) {
-  if (list.length === 0 || !focused) {
+  const [query, setQuery] = useState('');
+  const [hidden, setHidden] = useState<ReadonlySet<ManualKind>>(new Set());
+  const [hideFinished, setHideFinished] = useState(false);
+  const filtering = list.length > HOSTLESS_FILTER_FROM;
+  const shown = filtering ? filterHostless(c, list, { query, hidden, hideFinished }) : [...list];
+  const m = shown.find((x) => x.id === focused) ?? shown[0];
+  // The manual whose tree stands here is the one selected, so it is seen.
+  const see = useGame((s) => s.see);
+  const shownId = m?.id;
+  useEffect(() => {
+    if (shownId) see('manual', [shownId]);
+  }, [see, shownId]);
+  if (list.length === 0) {
     return (
       <p className="muted spaced">
         Scriptures and Inheritances land here, and any manual with no one tree to graft beside.
       </p>
     );
   }
-  const m = focused;
+  const kinds = MANUAL_KIND_IDS.filter((k) => list.some((x) => x.kind === k));
+  const dao = m && waitingDao(m);
   return (
     <div className="hostless">
       <nav className="hostless-list" aria-label="Manuals without a host tree">
         <h3 className="sub-heading">
-          Without a host tree <span className="caption">{list.length}</span>
+          Without a host tree{' '}
+          <span className="caption">
+            {filtering && shown.length !== list.length
+              ? `${shown.length} of ${list.length}`
+              : list.length}
+          </span>
         </h3>
         <p className="caption">
           Manuals with no one tree to graft beside. Pick one to see its tree.
         </p>
+        {filtering && (
+          <div className="hostless-filter">
+            <input
+              type="search"
+              className="bookcase-search"
+              aria-label="Find a manual without a host"
+              placeholder="Name, node or stat"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="bookcase-chips" role="group" aria-label="Show kinds">
+              {kinds.map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  aria-pressed={!hidden.has(k)}
+                  onClick={() => {
+                    const next = new Set(hidden);
+                    if (!next.delete(k)) next.add(k);
+                    setHidden(next);
+                  }}
+                >
+                  <span className="hanzi" aria-hidden="true">
+                    {MANUAL_KINDS[k].glyph}
+                  </span>{' '}
+                  {MANUAL_KINDS[k].plural}
+                </button>
+              ))}
+              <button
+                type="button"
+                aria-pressed={hideFinished}
+                onClick={() => setHideFinished(!hideFinished)}
+              >
+                Hide finished
+              </button>
+            </div>
+          </div>
+        )}
+        {shown.length === 0 && <p className="muted">Nothing matches.</p>}
         <ul>
-          {list.map((x) => (
+          {shown.map((x) => (
             <li key={x.id}>
               <button
                 type="button"
-                className="hostless-pick"
-                aria-current={x.id === m.id ? 'true' : undefined}
+                className={`hostless-pick${fresh.has(x.id) ? ' is-new' : ''}`}
+                aria-current={x.id === m?.id ? 'true' : undefined}
                 style={rarityVar(x.rarity)}
                 onClick={() => onFocus(x)}
               >
@@ -626,32 +708,34 @@ export function HostlessView({
           ))}
         </ul>
       </nav>
-      <article className="hostless-tree" style={rarityVar(m.rarity)} aria-label={m.name}>
-        <div className="hostless-head">
-          <span className="manual-seal is-large hanzi" aria-hidden="true">
-            {MANUAL_KINDS[m.kind].glyph}
-          </span>
-          <div>
-            <h3 className="hostless-name">
-              <span className={`rarity-${m.rarity}`}>{m.name}</span>{' '}
-              <span className="hanzi muted">{m.hanzi}</span>
-            </h3>
-            <span className="caption">
-              {rarity(m.rarity).name} {MANUAL_KINDS[m.kind].name.toLowerCase()} ·{' '}
-              {m.host ? `beside ${tree(m.host).name} once it opens` : 'no host tree'} ·{' '}
-              {learnedCount(c, m)} of {m.nodes.length} learned
+      {m && (
+        <article className="hostless-tree" style={rarityVar(m.rarity)} aria-label={m.name}>
+          <div className="hostless-head">
+            <span className="manual-seal is-large hanzi" aria-hidden="true">
+              {MANUAL_KINDS[m.kind].glyph}
             </span>
+            <div>
+              <h3 className="hostless-name">
+                <span className={`rarity-${m.rarity}`}>{m.name}</span>{' '}
+                <span className="hanzi muted">{m.hanzi}</span>
+              </h3>
+              <span className="caption">
+                {rarity(m.rarity).name} {MANUAL_KINDS[m.kind].name.toLowerCase()} ·{' '}
+                {dao ? `grafts beside ${dao} once it’s drawn` : 'no host tree'} ·{' '}
+                {learnedCount(c, m)} of {m.nodes.length} learned
+              </span>
+            </div>
           </div>
-        </div>
-        <OwnTree c={c} m={m} />
-        <p className="caption">{whyHere(m)}</p>
-        <ul className="own-rows">
-          {m.nodes.map((n) => (
-            <OwnNodeRow key={n.id} c={c} m={m} n={n} />
-          ))}
-        </ul>
-        {m.nodes[0]?.text && <p className="bookcase-card-flavor">{m.nodes[0].text}</p>}
-      </article>
+          <OwnTree c={c} m={m} />
+          <p className="caption">{whyHere(m)}</p>
+          <ul className="own-rows">
+            {m.nodes.map((n) => (
+              <OwnNodeRow key={n.id} c={c} m={m} n={n} />
+            ))}
+          </ul>
+          {m.nodes[0]?.text && <p className="bookcase-card-flavor">{m.nodes[0].text}</p>}
+        </article>
+      )}
     </div>
   );
 }

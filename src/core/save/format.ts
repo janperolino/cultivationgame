@@ -23,10 +23,11 @@ import {
 } from '../state.ts';
 import { card, hasCard } from '../../content/cards/index.ts';
 import { peopleIn } from '../people.ts';
+import { seeAll } from '../seen.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), old to
@@ -536,6 +537,15 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       ? (p.nodes as unknown[]).map((id) => (typeof id === 'string' ? renamedNode(id) : id))
       : p.nodes;
     return { ...old, version: 13, state: { ...s, player: { ...p, nodes } } };
+  },
+
+  // v13, P2.5: no record of what the player has looked at. v14 keeps one (core/seen.ts) and counts
+  // everything an old life holds as seen, so nothing lights up on load. The v13 state is today's
+  // shape but for `seen`, so the held lists are read from it as it stands.
+  13: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const state = seeAll({ ...s, seen: {} } as unknown as GameState);
+    return { ...old, version: 14, state: { ...s, seen: state.seen } };
   },
 };
 

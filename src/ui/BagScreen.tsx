@@ -5,7 +5,7 @@
 // glows, the right square with an unmet requirement glows in the warning color with a lock, and
 // the rest dim; dropping or tapping wears it, and a locked square says why. Dragging a worn thing
 // onto the grid takes it off, and every drag has a button beside it for touch.
-import { useState, type DragEvent } from 'react';
+import { useEffect, useState, type DragEvent } from 'react';
 import { PACK_SQUARES } from '../content/gear.ts';
 import { MASTERY } from '../content/mastery.ts';
 import { TOXICITY_MAX } from '../content/cultivation.ts';
@@ -25,11 +25,13 @@ import {
   treasureSlots,
   wornIds,
 } from '../core/gear.ts';
+import { isNew } from '../core/seen.ts';
 import type { Cultivator } from '../core/state.ts';
 import { stats } from '../core/stats.ts';
 import { pillDose, toxicityDecay } from '../core/toxicity.ts';
 import { formatEffect, formatNumber } from './format.ts';
 import { itemTag, toxicityWords, useLines } from './itemWords.ts';
+import { useNav } from './nav.ts';
 import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
 
@@ -48,6 +50,7 @@ function ItemSquare({
   n,
   wide,
   selected,
+  fresh,
   onPick,
   worn,
   onHold,
@@ -56,6 +59,8 @@ function ItemSquare({
   n?: number;
   wide?: boolean;
   selected: boolean;
+  /** New, never picked up: it glows until it is. */
+  fresh?: boolean;
   onPick: () => void;
   worn?: EquipSlot;
   /** Tells the Bag what is being dragged, so the squares it fits can glow. */
@@ -69,7 +74,7 @@ function ItemSquare({
   return (
     <button
       type="button"
-      className={`bag-item rarity-${it.rarity}${wide ? ' is-wide' : ''}${selected ? ' is-selected' : ''}`}
+      className={`bag-item rarity-${it.rarity}${wide ? ' is-wide' : ''}${selected ? ' is-selected' : ''}${fresh ? ' is-new' : ''}`}
       draggable
       onDragStart={onDragStart}
       onDragEnd={() => onHold?.(null)}
@@ -448,6 +453,24 @@ export function BagScreen() {
   const takeOff = useGame((s) => s.takeOff);
   const [picked, setPicked] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
+  const see = useGame((s) => s.see);
+  // Picking a thing up sees it, so its glow goes; a toast's link arrives with it picked up.
+  const pick = (id: string | null) => {
+    setPicked(id);
+    if (id) see('item', [id]);
+  };
+  const target = useNav((s) => (s.screen === 'bag' ? s.select : null));
+  const navSeq = useNav((s) => s.seq);
+  const [arrived, setArrived] = useState(-1);
+  if (target && navSeq !== arrived) {
+    setArrived(navSeq);
+    setPicked(target);
+  }
+  useEffect(() => {
+    if (!target) return;
+    see('item', [target]);
+    useNav.setState({ select: null });
+  }, [target, see]);
   if (!game) return null;
   const c = game.player;
   // What is in hand: a thing being dragged, else one picked up from the pack (not a worn one).
@@ -469,7 +492,7 @@ export function BagScreen() {
   };
   return (
     <div className="bag-screen">
-      <Worn c={c} hand={hand} picked={picked} onPick={setPicked} />
+      <Worn c={c} hand={hand} picked={picked} onPick={pick} />
       <section className="panel">
         <div className="panel-top">
           <h2 className="panel-heading">
@@ -493,7 +516,8 @@ export function BagScreen() {
               n={s.n}
               wide={s.squares > 1}
               selected={picked === s.id}
-              onPick={() => setPicked(s.id)}
+              fresh={isNew(game, 'item', s.id)}
+              onPick={() => pick(s.id)}
               onHold={setDragging}
             />
           ))}
@@ -504,7 +528,7 @@ export function BagScreen() {
         <Toxicity c={c} />
       </section>
       {shown ? (
-        <Detail c={c} id={picked} onClear={() => setPicked(null)} />
+        <Detail c={c} id={picked} onClear={() => pick(null)} />
       ) : (
         <section className="panel">
           <p className="muted">

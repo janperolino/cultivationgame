@@ -11,6 +11,7 @@ import { PeopleScreen } from './PeopleScreen.tsx';
 import { GlassBackground } from './GlassBackground.tsx';
 import { SettingsScreen } from './SettingsScreen.tsx';
 import { TechniquesScreen } from './TechniquesScreen.tsx';
+import { Toasts } from './Toasts.tsx';
 import { TreesScreen } from './TreesScreen.tsx';
 import { capitalize } from './format.ts';
 import { readyLadders, useScene } from './scene.ts';
@@ -18,6 +19,7 @@ import { useNav } from './nav.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
 import { bySeason } from '../core/chronicle.ts';
+import { screenDot } from '../core/seen.ts';
 import { EventLine } from './widgets.tsx';
 
 function SlotNotice() {
@@ -94,6 +96,15 @@ export function App() {
 
   const unlocks = game?.unlocks ?? [];
   const available = screens.filter((s) => !s.unlock || unlocks.includes(s.unlock));
+  // A dot on a menu item while its screen holds something new you haven't opened it on.
+  const dots = useGame((s) =>
+    s.game
+      ? available
+          .filter((x) => screenDot(s.game!, x.id))
+          .map((x) => x.id)
+          .join(',')
+      : '',
+  ).split(',');
   // With no life open, Settings is where you pick or start one.
   const current = creating
     ? { id: 'creation', name: 'A New Life', hanzi: '新生' }
@@ -112,6 +123,13 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Opening a screen clears its dot, and so does something new arriving while it is open.
+  const here = phase === 'playing' && !creating ? current.id : null;
+  const hereDot = here !== null && dots.includes(here);
+  useEffect(() => {
+    if (here) useGame.getState().openScreen(here);
+  }, [here, hereDot]);
+
   const recent = game ? game.chronicle.slice(-8).reverse() : [];
 
   return (
@@ -128,6 +146,9 @@ export function App() {
             onClick={() => setMenuOpen(true)}
           >
             ☰
+            {dots.some((d) => d && d !== current.id) && (
+              <span className="menu-mark is-new is-on-button" aria-hidden="true" />
+            )}
           </button>
           <span className="topbar-title">{current.name}</span>
           <button
@@ -176,6 +197,9 @@ export function App() {
                     {s.name}
                     {s.id === 'abode' && ready && (
                       <span className="menu-mark" role="img" aria-label="a breakthrough is ready" />
+                    )}
+                    {dots.includes(s.id) && s.id !== current.id && (
+                      <span className="menu-mark is-new" role="img" aria-label="something new" />
                     )}
                   </span>
                   <span className="hanzi menu-hanzi">{s.hanzi}</span>
@@ -247,6 +271,7 @@ export function App() {
           )}
         </aside>
 
+        <Toasts />
         <SlotNotice />
         {import.meta.env.DEV && <DevConsole />}
       </div>

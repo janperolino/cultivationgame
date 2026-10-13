@@ -9,6 +9,7 @@ import type { Element } from '../content/elements.ts';
 import { rollElements, rollRoot, type RootId } from '../content/roots.ts';
 import { talentsOf, TALENT_KINDS, type Talent, type TalentKind } from '../content/talents.ts';
 import { hashSeed, Rng } from './rng.ts';
+import { seeAll } from './seen.ts';
 import { newLife, nextLife, type GameState, type NewLifeOptions } from './state.ts';
 
 /** Free rerolls at creation; later lives earn more (design § Death and rebirth, M8). */
@@ -87,12 +88,12 @@ export function lifeOptions(c: Creation): NewLifeOptions {
   };
 }
 
-/** A first life from creation's choices. */
+/** A first life from creation's choices, holding nothing new. */
 export function createLife(c: Creation): GameState {
-  return newLife(lifeOptions(c));
+  return seeAll(newLife(lifeOptions(c)));
 }
 
 /** The next life in a slot after a death, from creation's choices; the chronicle carries on. */
 export function createNextLife(prev: GameState, c: Creation): GameState {
-  return nextLife(prev, lifeOptions(c));
+  return seeAll(nextLife(prev, lifeOptions(c)));
 }

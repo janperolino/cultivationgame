@@ -5,11 +5,12 @@
 // matching level stays sealed, doing nothing, until that ladder reaches the node's tier; a loose
 // manual's node waits on the manual's ladder the same way, a method's node on the method's
 // mastery, and an Art's on its technique's.
-import { manual, techniqueArt } from '../content/manuals.ts';
+import { manual, techniqueArt, type Manual } from '../content/manuals.ts';
 import { anyNode, hasAnyNode, type AnyNode } from '../content/nodes.ts';
 import { realmIndex } from '../content/realms.ts';
+import { statInfo, type Effect } from '../content/stats.ts';
 import { TIER_HOLD, tierNodes, treeOf, type Tree } from '../content/trees/index.ts';
-import { holdsManual } from './manuals.ts';
+import { graftsOn, holdsManual } from './manuals.ts';
 import { knowsMethod, methodMastery } from './methods.ts';
 import type { Cultivator } from './state.ts';
 import { knowsTechnique, mastery as techniqueMastery } from './techniques.ts';
@@ -130,5 +131,73 @@ export function learnNode(
       insight: { ...c.insight, current: c.insight.current - node.cost },
     },
     check,
+  };
+}
+
+// ---------------------------------------------------------------- what a tree gives
+
+/** Effects summed by stat, the way the stats sum them: most add, a `times` stat multiplies. */
+export function sumEffects(effects: readonly Effect[]): Effect[] {
+  const out = new Map<Effect['stat'], number>();
+  for (const e of effects) {
+    const was = out.get(e.stat) ?? 0;
+    out.set(
+      e.stat,
+      statInfo(e.stat).unit === 'times' ? (1 + was) * (1 + e.value) - 1 : was + e.value,
+    );
+  }
+  return [...out].map(([stat, value]) => ({ stat, value }));
+}
+
+/** What one manual grafted on a tree gives: its learned nodes, working and waiting. */
+export interface GraftTotal {
+  manual: Manual;
+  learned: number;
+  /** On the cultivator, from the learned nodes that work now. */
+  working: Effect[];
+  /** On an Art's technique alone, from the learned nodes that work now. */
+  own: Effect[];
+  /** On the cultivator, from learned nodes still waiting on a mastery level or a realm. */
+  waiting: Effect[];
+}
+
+export interface TreeTotals {
+  /** What the tree's own learned nodes give now. */
+  working: Effect[];
+  /** What its learned nodes sealed above your realm will give, by the tier they wait for. */
+  sealed: { tier: number; effects: Effect[] }[];
+  /** A line per manual grafted beside it. */
+  grafts: GraftTotal[];
+}
+
+/**
+ * Everything a tree gives, totted up by stat (the "?" by its name): its learned nodes that work
+ * now, those sealed and the realm they wait for, and each graft's.
+ */
+export function treeTotals(c: Cultivator, t: Tree): TreeTotals {
+  const learned = t.nodes.filter((n) => hasLearned(c, n.id));
+  const awake = learned.filter((n) => !nodeSealed(c, n));
+  const tiers = [...new Set(learned.filter((n) => nodeSealed(c, n)).map((n) => n.tier))].sort(
+    (a, b) => a - b,
+  );
+  return {
+    working: sumEffects(awake.flatMap((n) => n.effects)),
+    sealed: tiers.map((tier) => ({
+      tier,
+      effects: sumEffects(
+        learned.filter((n) => n.tier === tier && nodeSealed(c, n)).flatMap((n) => n.effects),
+      ),
+    })),
+    grafts: graftsOn(c, t.id).map((m) => {
+      const mine = m.nodes.filter((n) => hasLearned(c, n.id));
+      const on = mine.filter((n) => !nodeSealed(c, n));
+      return {
+        manual: m,
+        learned: mine.length,
+        working: sumEffects(on.flatMap((n) => n.effects)),
+        own: sumEffects(on.flatMap((n) => n.own ?? [])),
+        waiting: sumEffects(mine.filter((n) => nodeSealed(c, n)).flatMap((n) => n.effects)),
+      };
+    }),
   };
 }

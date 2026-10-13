@@ -16,25 +16,24 @@ export const TREES: readonly Tree[] = [...BIG_THREE, ...DAOS];
 
 /**
  * The kinds of tree the Trees screen groups by: pick a category, then a tree in it. A category
- * with no trees yet shows as coming, with `opens` saying when: "in M3".
+ * shows once it holds a tree you've touched (core/seen.ts), so Ways and Crafts stay out of sight
+ * until their milestones fill them.
  */
 export interface TreeCategory {
   id: string;
   name: string;
   hanzi: string;
   trees: readonly Tree[];
-  /** When an empty category fills, for the screen. */
-  opens?: string;
 }
 
 export const TREE_CATEGORIES: readonly TreeCategory[] = [
   { id: 'cultivation', name: 'Cultivation', hanzi: '修', trees: BIG_THREE },
   { id: 'daos', name: 'Daos', hanzi: '道', trees: DAOS },
-  { id: 'ways', name: 'Ways', hanzi: '途', trees: [], opens: 'in M3' },
-  { id: 'crafts', name: 'Crafts', hanzi: '艺', trees: [], opens: 'in M4' },
+  { id: 'ways', name: 'Ways', hanzi: '途', trees: [] },
+  { id: 'crafts', name: 'Crafts', hanzi: '艺', trees: [] },
   // The Manuals category holds no tree of its own: the manuals with no host and a shelf of every
-  // manual held (design § Cultivation, Where manuals live). It opens with a first manual.
-  { id: 'manuals', name: 'Manuals', hanzi: '典', trees: [], opens: 'with a first manual' },
+  // manual held (design § Cultivation, Where manuals live). It shows with a first manual.
+  { id: 'manuals', name: 'Manuals', hanzi: '典', trees: [] },
 ];
 
 const trees = new Map(TREES.map((t) => [t.id, t]));

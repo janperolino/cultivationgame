@@ -1,6 +1,7 @@
 // Links between screens: a screen asks for another, and the app shows it. The Trees screen also
 // takes a target, a tree or the Manuals category and a manual to centre on, so the Character
-// screen's manuals line and the Techniques screen's Arts open on the right graft.
+// screen's manuals line and the Techniques screen's Arts open on the right graft; the Techniques
+// and Bag screens take a thing to select, so a toast lands on what it names.
 import { create } from 'zustand';
 import type { ScreenId } from './screens.ts';
 
@@ -15,13 +16,25 @@ interface NavStore {
   seq: number;
   screen: ScreenId | null;
   trees: TreesTarget | null;
+  /** A technique or an item to select on arrival. */
+  select: string | null;
 }
 
-export const useNav = create<NavStore>()(() => ({ seq: 0, screen: null, trees: null }));
+export const useNav = create<NavStore>()(() => ({
+  seq: 0,
+  screen: null,
+  trees: null,
+  select: null,
+}));
 
-/** Shows a screen; the Trees screen opens on `trees` when given. */
-export function go(screen: ScreenId, trees?: TreesTarget): void {
-  useNav.setState((s) => ({ seq: s.seq + 1, screen, trees: trees ?? null }));
+/** Shows a screen; the Trees screen opens on `trees` when given, and `select` picks a thing. */
+export function go(screen: ScreenId, trees?: TreesTarget, select?: string): void {
+  useNav.setState((s) => ({
+    seq: s.seq + 1,
+    screen,
+    trees: trees ?? null,
+    select: select ?? null,
+  }));
 }
 
 /** Opens the Trees screen on a manual: beside its host tree, or under Manuals when it has none. */
