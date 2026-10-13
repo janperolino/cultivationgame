@@ -130,6 +130,7 @@ export const ABILITY_COUNT = {
   purple: 3,
   gold: 3,
   red: 3,
+  pristine: 3,
 } as const;
 
 /** A natural attack: free of qi, on the body ladder, physical. */

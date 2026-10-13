@@ -91,6 +91,7 @@ export const GRADE_BY_RARITY: Record<
   purple: 'perfect',
   gold: 'heavenly',
   red: 'heavenly',
+  pristine: 'heavenly',
 };
 
 // ---------------------------------------------------------------- profiles

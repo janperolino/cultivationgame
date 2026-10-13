@@ -50,6 +50,8 @@
   --rarity-purple: #b98ef2;
   --rarity-gold: #f39a3d;
   --rarity-red: #e03c50;
+  /* Pristine is clear glass: near-white, a rainbow refraction drifting across the name, a glow. */
+  --rarity-pristine: #eef6ff;
 
   --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
   --font-brush: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', serif;
@@ -1330,6 +1332,42 @@ select {
 .rarity-red {
   color: var(--rarity-red);
   text-shadow: 0 0 9px color-mix(in srgb, var(--rarity-red) 40%, transparent);
+}
+
+/* Pristine: the glass without a crack. The name is near-white with a faint rainbow sheen sliding
+   across it, and a soft glow under it; reduced motion holds the sheen still. */
+.rarity-pristine {
+  color: var(--rarity-pristine);
+  background: linear-gradient(
+    100deg,
+    var(--rarity-pristine) 0%,
+    color-mix(in srgb, #ff9aa2 55%, var(--rarity-pristine)) 20%,
+    color-mix(in srgb, #ffe29a 55%, var(--rarity-pristine)) 35%,
+    color-mix(in srgb, #9af0c0 55%, var(--rarity-pristine)) 50%,
+    color-mix(in srgb, #9ad0ff 55%, var(--rarity-pristine)) 65%,
+    color-mix(in srgb, #d8a8ff 55%, var(--rarity-pristine)) 80%,
+    var(--rarity-pristine) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--rarity-pristine) 55%, transparent));
+  animation: pristine-sheen 6s linear infinite;
+}
+
+@keyframes pristine-sheen {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 300% 0;
+  }
+}
+
+:root[data-motion='reduced'] .rarity-pristine {
+  animation: none;
+  background-position: 50% 0;
 }
 
 /* Trees: a canvas you drag and zoom, with tier bands in world space. Gold marks what you can

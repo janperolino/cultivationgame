@@ -1,7 +1,7 @@
 // Rarity (design § Tier, rarity and pedigree): one scale for everything you can own or be born
 // with, as a band: the stage the thing is sized at in its own tier's realm. White is the realm's
-// first stage, blue its middle, purple its peak, gold the next realm's first stage and red the
-// next realm's middle. In numbers, with s the step out of the thing's tier (`tierStep` in
+// first stage, blue its middle, purple its peak, gold the next realm's first stage, red the
+// next realm's middle and pristine its peak, never rolled, only placed. In numbers, with s the step out of the thing's tier (`tierStep` in
 // content/realms.ts, ×3.1 at tier 1): mult × s^exponent. Every number is a starting value for the sims.
 
 export interface Rarity {
@@ -148,6 +148,21 @@ export const RARITIES = [
     breakthrough: { odds: 0.16, margin: 0.5, injury: 0.5, keepBar: true },
     heavenly: true,
   },
+  {
+    id: 'pristine',
+    name: 'Pristine',
+    note: 'without a flaw: sized at the next realm’s peak, never rolled, only placed',
+    band: 'the next realm, peak',
+    mult: 1,
+    exponent: 1.8,
+    accuracy: 1.6,
+    properties: 4,
+    unique: true,
+    price: 1000,
+    roll: 0,
+    breakthrough: { odds: 0.2, margin: 0.75, injury: 0.5, keepBar: true },
+    heavenly: true,
+  },
 ] as const satisfies readonly Rarity[];
 
 export type RarityId = (typeof RARITIES)[number]['id'];
@@ -170,7 +185,7 @@ export function rarityMultiplier(id: RarityId, step: number): number {
   return r.mult * step ** r.exponent;
 }
 
-/** What a technique of this rarity multiplies Accuracy by: ×1.2 at gold, ×1.4 at red. */
+/** What a technique of this rarity multiplies Accuracy by: ×1.2 at gold, ×1.4 at red, ×1.6 at pristine. */
 export function rarityAccuracy(id: RarityId): number {
   return rarity(id).accuracy;
 }

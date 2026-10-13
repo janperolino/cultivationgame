@@ -91,8 +91,8 @@ describe('rarity', () => {
     expect([1, 2, 3, 4, 9].map(tierStep)).toEqual([3.1, 4.6, 6.7, 10, 46]);
     // The design's rows: tier 1 (step ×3.1) and tier 3 (step ×6.7).
     const rows = {
-      3.1: [0.8, 1, 1.2, 1.5, 2.5, 3.1, 4.35],
-      6.7: [0.8, 1, 1.2, 1.5, 4.6, 6.7, 11.85],
+      3.1: [0.8, 1, 1.2, 1.5, 2.5, 3.1, 4.35, 7.65],
+      6.7: [0.8, 1, 1.2, 1.5, 4.6, 6.7, 11.85, 30.65],
     };
     for (const [step, row] of Object.entries(rows)) {
       RARITIES.forEach((r, i) => {
@@ -117,9 +117,11 @@ describe('rarity', () => {
   });
 
   it('brings more properties, Accuracy and price as it climbs', () => {
-    expect(RARITIES.map((r) => r.properties + (r.unique ? 1 : 0))).toEqual([0, 0, 1, 1, 2, 3, 4]);
-    expect(RARITIES.map((r) => r.accuracy)).toEqual([1, 1, 1, 1, 1, 1.2, 1.4]);
-    expect(RARITIES.map((r) => r.price)).toEqual([0.5, 1, 2, 5, 15, 50, 200]);
+    expect(RARITIES.map((r) => r.properties + (r.unique ? 1 : 0))).toEqual([
+      0, 0, 1, 1, 2, 3, 4, 5,
+    ]);
+    expect(RARITIES.map((r) => r.accuracy)).toEqual([1, 1, 1, 1, 1, 1.2, 1.4, 1.6]);
+    expect(RARITIES.map((r) => r.price)).toEqual([0.5, 1, 2, 5, 15, 50, 200, 1000]);
   });
 });
 

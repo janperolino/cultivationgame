@@ -171,6 +171,7 @@ export const RARITY_CIRCULATION: Record<RarityId, CirculationId> = {
   purple: 'meridians',
   gold: 'great-orbit',
   red: 'primordial',
+  pristine: 'primordial',
 };
 
 /** How many sparks run at once and how brightly, by rarity: more detail inside the same realm. */
@@ -182,6 +183,7 @@ export const RARITY_SPARKS: Record<RarityId, { count: number; glow: number }> = 
   purple: { count: 8, glow: 1.05 },
   gold: { count: 11, glow: 1.15 },
   red: { count: 14, glow: 1.25 },
+  pristine: { count: 18, glow: 1.4 },
 };
 
 /** Where qi enters the figure: the crown and the two palms. */

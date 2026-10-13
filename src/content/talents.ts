@@ -36,6 +36,7 @@ export const GRADE_MODIFIER: Record<RarityId, number> = {
   purple: 3,
   gold: 4,
   red: 5,
+  pristine: 6,
 };
 
 /** The attribute each kind of talent moves by its rarity. */

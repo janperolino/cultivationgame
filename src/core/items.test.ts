@@ -26,10 +26,10 @@ describe('pill toxicity', () => {
     expect(doseAt(item('calm-heart-grass'), 1)).toBe(0);
   });
 
-  it('runs purer with rarity, gray to red', () => {
+  it('runs purer with rarity, gray to pristine', () => {
     const pill = item('qi-gathering-pill');
     expect(RARITY_IDS.map((r) => doseAt({ ...pill, rarity: r }, 1))).toEqual([
-      15, 10, 9, 8, 6.5, 4, 2.5,
+      15, 10, 9, 8, 6.5, 4, 2.5, 1.5,
     ]);
   });
 

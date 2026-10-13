@@ -17,6 +17,7 @@ export const DEFAULT_RARITY: Readonly<Record<RarityId, string>> = {
   purple: '#b98ef2',
   gold: '#f39a3d',
   red: '#e03c50',
+  pristine: '#eef6ff',
 };
 
 export interface ColorPreset {

@@ -92,7 +92,7 @@ export const CLASH_ROLL = 0.95;
  */
 export const TOXICITY_MAX = 100;
 export const TOXICITY_TIER_STEP = 3;
-export const TOXICITY_PURITY = [1.5, 1, 0.9, 0.8, 0.65, 0.4, 0.25] as const;
+export const TOXICITY_PURITY = [1.5, 1, 0.9, 0.8, 0.65, 0.4, 0.25, 0.15] as const;
 export const TOXICITY_DECAY = 1;
 
 /** A failed major breakthrough halves the bar and injures for a few in-game years. */
