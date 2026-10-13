@@ -1,16 +1,19 @@
 // The Techniques screen (design § UI and screens; P2.5b, mockup A of the Techniques screen
-// canvas): a list of every known technique beside one technique's page. The page holds its
-// rarity, line and chapter, the line's known chapters as a strip, its mastery as five steps with
-// the time to the next, what it gives, its kin, its Art's passives (design § Cultivation, Where
-// manuals live), and the button that sends practice days to it.
-import { useRef, useState, type KeyboardEvent } from 'react';
-import { techniqueArt } from '../content/manuals.ts';
-import { MASTERY } from '../content/mastery.ts';
-import { rarity } from '../content/rarity.ts';
+// canvas): what you practice and what it gives. A Practicing panel on top, then a list of every
+// known technique beside one technique's page: its rarity, line and chapter, the line's known
+// chapters as a strip, its mastery as five steps with the insight each releases and the time to
+// the next, what it gives, its kin, a line on its Art (bought on its tree, design § Cultivation,
+// Where manuals live), and the button that sends practice days to it. Rarer techniques look it:
+// an edge in the rarity's color from blue, a glow from purple.
+import { useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import { techniqueArt, type Manual } from '../content/manuals.ts';
+import { MASTERY, TECHNIQUE_MASTERY } from '../content/mastery.ts';
+import { rarity, rarityRank, type RarityId } from '../content/rarity.ts';
 import { REALMS } from '../content/realms.ts';
 import { techniqueChapter, type Technique } from '../content/techniques.ts';
 import { tree } from '../content/trees/index.ts';
-import { dayRates } from '../core/cultivation.ts';
+import { dayRates, type DayRates } from '../core/cultivation.ts';
+import { masteryBurst } from '../core/insight.ts';
 import type { Cultivator } from '../core/state.ts';
 import {
   canPractice,
@@ -23,19 +26,38 @@ import {
   techniqueKin,
   techniqueSealed,
 } from '../core/techniques.ts';
+import { hasLearned, nodeSealed } from '../core/trees.ts';
 import { hourKindOpen } from '../core/wheel.ts';
 import { formatNumber, formatPercent, formatRate, LADDER_LABELS } from './format.ts';
-import { ManualNodeRow } from './ManualNodes.tsx';
 import { RarityName } from './MethodCard.tsx';
 import { go, goToManual } from './nav.ts';
 import { useGame } from './store.ts';
-import { knownChapters, practiceTime, techniqueRows } from './techniqueList.ts';
+import {
+  knownChapters,
+  practiceTime,
+  TECHNIQUE_ORDERS,
+  techniqueFilters,
+  techniqueRows,
+  TOOLBAR_FROM,
+  type TechniqueOrder,
+} from './techniqueList.ts';
 import { Why } from './widgets.tsx';
 
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Each mastery level adds this to checks with the technique (design § Cultivation, Mastery). */
 const CHECKS_A_LEVEL = 2;
+
+/** From blue a technique's row wears an edge in its rarity's color, and from purple a glow. */
+const EDGE_FROM = rarityRank('blue');
+const GLOW_FROM = rarityRank('purple');
+
+/** The classes and color that make a rarer technique look it. */
+function rarityLook(id: RarityId): { className: string; style: CSSProperties } {
+  const rank = rarityRank(id);
+  const className = rank >= GLOW_FROM ? ' is-rare is-glowing' : rank >= EDGE_FROM ? ' is-rare' : '';
+  return { className, style: { '--rarity-color': `var(--rarity-${id})` } as CSSProperties };
+}
 
 /**
  * Practice days a day the wheel gives a technique, before its kinship: the day's practice hours
@@ -50,10 +72,32 @@ function practiceRate(c: Cultivator, day: number): number {
   return dayRates({ ...c, practicing: id }, day).practice / (1 + kinshipBonus(c, id));
 }
 
+/** The insight a technique's mastery level releases when reached, Aptitude and gains counted. */
+function levelBurst(c: Cultivator, t: Technique, level: number): number {
+  return masteryBurst(c, TECHNIQUE_MASTERY, t.tier, level);
+}
+
 /** "271 / 600", or "Origin" once mastery is complete. */
 function progressWords(c: Cultivator, t: Technique): string {
   const m = mastery(c, t.id);
   return m.next === null ? 'Origin' : `${formatNumber(m.practice)} / ${formatNumber(m.next)}`;
+}
+
+/** "Mastery in 278 days, +20 insight when it lands", with what stands in the way otherwise. */
+function nextLevelWords(c: Cultivator, t: Technique, rate: number): string {
+  const m = mastery(c, t.id);
+  const next = MASTERY[m.level + 1];
+  const days = daysToNextLevel(c, t.id, rate);
+  if (techniqueSealed(c, t)) {
+    const ladder = LADDER_LABELS[t.ladder].toLowerCase();
+    return `Practice opens when your ${ladder} reaches ${REALMS[t.tier - 1]!.name}.`;
+  }
+  if (days === null || !next) return 'Mastery is complete.';
+  const burst = `+${formatNumber(levelBurst(c, t, m.level + 1))} insight`;
+  if (days === Infinity) return `${next.name} waits on practice hours (${burst} when it lands).`;
+  const kin = kinshipBonus(c, t.id) > 0 ? ', kin counted' : '';
+  const ifPracticed = c.practicing === t.id ? '' : ` if you practice it${kin}`;
+  return `${next.name} in ${practiceTime(days)}${ifPracticed}, ${burst} when it lands.`;
 }
 
 function Lock() {
@@ -72,6 +116,122 @@ function Lock() {
   );
 }
 
+/**
+ * What practice days go to: a row per practice slot (one for now), each with its technique's level,
+ * a bar to the next, the time to it and the insight it releases.
+ */
+function PracticePanel({
+  c,
+  rates,
+  rate,
+  onSelect,
+  onKeep,
+}: {
+  c: Cultivator;
+  rates: DayRates;
+  rate: number;
+  onSelect: (id: string) => void;
+  /** Keeps the page on a technique without scrolling to it, as Stop does. */
+  onKeep: (id: string) => void;
+}) {
+  const practice = useGame((s) => s.practice);
+  const hoursOpen = hourKindOpen(c, 'practice');
+  const t = knownTechniques(c).find((k) => k.id === c.practicing);
+  const hours = rates.count.practice;
+
+  const wheel = (
+    <button type="button" className="link-button" onClick={() => go('cultivate')}>
+      Set hours on the Cultivate wheel
+    </button>
+  );
+
+  if (!hoursOpen) {
+    return (
+      <section className="panel practice-panel" aria-label="Practicing">
+        <p className="caption">Practice hours open once you know a technique you can use.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="panel practice-panel" aria-label="Practicing">
+      <div className="practice-panel-head">
+        <span className="technique-label">Practicing</span>
+        <span className="caption">
+          {hours === 0
+            ? 'No hour of the day goes to practice.'
+            : `${hours} of 12 hours${rates.practice > 0 ? ` · ${formatRate(rates.practice)} practice days a day` : ''}`}
+        </span>
+        {wheel}
+      </div>
+      <ul className="practice-slots">
+        <li
+          className={`practice-slot${t ? rarityLook(t.rarity).className : ' is-empty'}`}
+          style={t ? rarityLook(t.rarity).style : undefined}
+        >
+          {t ? (
+            <PracticeSlot
+              c={c}
+              t={t}
+              rate={rate}
+              onSelect={onSelect}
+              onStop={() => {
+                practice(null);
+                onKeep(t.id);
+              }}
+            />
+          ) : (
+            <p className="caption">Nothing practiced: pick a technique below.</p>
+          )}
+        </li>
+      </ul>
+    </section>
+  );
+}
+
+function PracticeSlot({
+  c,
+  t,
+  rate,
+  onSelect,
+  onStop,
+}: {
+  c: Cultivator;
+  t: Technique;
+  rate: number;
+  onSelect: (id: string) => void;
+  onStop: () => void;
+}) {
+  const m = mastery(c, t.id);
+  const next = MASTERY[m.level + 1];
+  return (
+    <>
+      <div className="practice-slot-head">
+        <button type="button" className="practice-slot-name" onClick={() => onSelect(t.id)}>
+          <RarityName m={t} /> <span className="hanzi">{t.hanzi}</span>
+        </button>
+        <span className="caption">{MASTERY[m.level]!.name}</span>
+        <span className="technique-row-gap" />
+        <span className="technique-num caption">{progressWords(c, t)}</span>
+        <button type="button" className="button button-quiet" onClick={onStop}>
+          Stop
+        </button>
+      </div>
+      <div
+        className="bar"
+        role="progressbar"
+        aria-label={`${t.name} toward ${next?.name ?? 'its peak'}`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(m.fraction * 100)}
+      >
+        <div className="bar-fill" style={{ width: `${m.fraction * 100}%` }} />
+      </div>
+      <p className="practice-slot-eta">{nextLevelWords(c, t, rate)}</p>
+    </>
+  );
+}
+
 function TechniqueList({
   c,
   selected,
@@ -81,7 +241,18 @@ function TechniqueList({
   selected: string;
   onSelect: (id: string) => void;
 }) {
-  const rows = techniqueRows(c);
+  const practice = useGame((s) => s.practice);
+  const [order, setOrder] = useState<TechniqueOrder>('rarity');
+  const [query, setQuery] = useState('');
+  const [tier, setTier] = useState<number | null>(null);
+  const [dao, setDao] = useState<string | null>(null);
+  const known = knownTechniques(c);
+  const toolbar = known.length > TOOLBAR_FROM;
+  const rows = techniqueRows(c, toolbar ? { order, query, tier, dao } : {});
+  const filters = techniqueFilters(known);
+  // With nothing practiced, each row that can take practice offers it.
+  const offer = !c.practicing || !known.some((t) => t.id === c.practicing);
+
   // Up and down move along the list and select as they go.
   const onKeyDown = (e: KeyboardEvent<HTMLUListElement>) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
@@ -98,18 +269,74 @@ function TechniqueList({
     <nav className="panel technique-list-panel" aria-label="Techniques known">
       <div className="technique-list-head">
         <span>Known</span>
-        <span>{rows.length}</span>
+        <span>
+          {rows.length === known.length ? known.length : `${rows.length} of ${known.length}`}
+        </span>
       </div>
+      {toolbar && (
+        <div className="technique-toolbar">
+          <div className="technique-toolbar-row">
+            <input
+              type="search"
+              className="technique-search"
+              aria-label="Search techniques"
+              placeholder="Search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <select
+              aria-label="Order"
+              value={order}
+              onChange={(e) => setOrder(e.target.value as TechniqueOrder)}
+            >
+              {TECHNIQUE_ORDERS.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {(filters.tiers.length > 0 || filters.daos.length > 0) && (
+            <div className="technique-chips-filter" role="group" aria-label="Filter">
+              {filters.tiers.map((n) => (
+                <button
+                  key={`tier-${n}`}
+                  type="button"
+                  aria-pressed={tier === n}
+                  onClick={() => setTier(tier === n ? null : n)}
+                >
+                  Tier {n}
+                </button>
+              ))}
+              {filters.daos.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={dao === d}
+                  onClick={() => setDao(dao === d ? null : d)}
+                >
+                  {capital(d)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {rows.length === 0 && <p className="caption technique-none">Nothing matches.</p>}
       <ul className="technique-list" onKeyDown={onKeyDown}>
         {rows.map(({ t, under }) => {
           const m = mastery(c, t.id);
           const sealed = techniqueSealed(c, t);
           const isSelected = t.id === selected;
+          const look = rarityLook(t.rarity);
+          const accuracy = rarity(t.rarity).accuracy;
+          const quick = offer && canPractice(c, t.id);
           return (
-            <li key={t.id}>
+            <li key={t.id} className={quick ? 'has-quick' : undefined}>
               <button
                 type="button"
-                className={`technique-row${isSelected ? ' is-selected' : ''}${sealed ? ' is-sealed' : ''}${under ? ' is-under' : ''}`}
+                className={`technique-row${look.className}${isSelected ? ' is-selected' : ''}${sealed ? ' is-sealed' : ''}${under ? ' is-under' : ''}`}
+                style={look.style}
                 aria-pressed={isSelected}
                 onClick={() => onSelect(t.id)}
               >
@@ -135,10 +362,25 @@ function TechniqueList({
                     ))}
                   </span>
                   <span>{sealed ? 'Sealed' : MASTERY[m.level]!.name}</span>
+                  {accuracy > 1 && (
+                    <span className="rarity-chip" title={`Accuracy ×${accuracy} for its rarity`}>
+                      ×{accuracy}
+                    </span>
+                  )}
                   <span className="technique-row-gap" />
                   <span className="technique-num">{progressWords(c, t)}</span>
                 </span>
               </button>
+              {quick && (
+                <button
+                  type="button"
+                  className="button button-quiet technique-quick"
+                  aria-label={`Practice ${t.name}`}
+                  onClick={() => practice(t.id)}
+                >
+                  Practice
+                </button>
+              )}
             </li>
           );
         })}
@@ -204,30 +446,20 @@ function LineStrip({
   );
 }
 
-/** Glimpse to Origin as five steps, each filling within itself, and the time to the next. */
+/** Glimpse to Origin as five steps, each filling within itself, with its insight, and the time to the next. */
 function MasteryBlock({ c, t, rate }: { c: Cultivator; t: Technique; rate: number }) {
   const m = mastery(c, t.id);
   const sealed = techniqueSealed(c, t);
-  const next = MASTERY[m.level + 1];
-  const kin = kinshipBonus(c, t.id);
-  const days = daysToNextLevel(c, t.id, rate);
-  const ladder = LADDER_LABELS[t.ladder].toLowerCase();
-
-  let eta: string;
-  if (sealed) eta = `Practice opens when your ${ladder} reaches ${REALMS[t.tier - 1]!.name}.`;
-  else if (days === null || !next) eta = 'Mastery is complete.';
-  else if (days === Infinity)
-    eta = `${next.name} waits on practice hours: give practice an hour on the Cultivate wheel.`;
-  else if (c.practicing === t.id)
-    eta = `${next.name} in ${practiceTime(days)} at ${formatRate(rate * (1 + kin))} practice days a day.`;
-  else
-    eta = `${next.name} in ${practiceTime(days)} if you practice it${kin > 0 ? ', kin counted' : ''}.`;
+  const rateWords =
+    c.practicing === t.id && !sealed && m.next !== null && rate > 0
+      ? ` At ${formatRate(rate * (1 + kinshipBonus(c, t.id)))} practice days a day.`
+      : '';
 
   return (
     <section className={`mastery-block${sealed ? ' is-sealed' : ''}`} aria-label="Mastery">
       <div className="mastery-block-head">
         <span className="technique-label">
-          Mastery · each level adds +{CHECKS_A_LEVEL} to checks
+          Mastery · each level adds +{CHECKS_A_LEVEL} to checks and releases insight
         </span>
         <span className="technique-num">{formatNumber(m.practice)} practice days</span>
       </div>
@@ -237,6 +469,7 @@ function MasteryBlock({ c, t, rate }: { c: Cultivator; t: Technique; rate: numbe
           const to = masteryNeed(t, i);
           const fill = i <= m.level ? 1 : i === m.level + 1 ? (m.practice - from) / (to - from) : 0;
           const state = i === m.level ? ' is-current' : i < m.level ? ' is-reached' : '';
+          const burst = levelBurst(c, t, i);
           return (
             <li key={level.id} className={`mastery-step${state}`}>
               <div
@@ -254,12 +487,54 @@ function MasteryBlock({ c, t, rate }: { c: Cultivator; t: Technique; rate: numbe
               </span>
               <span className="hanzi mastery-step-hanzi">{level.hanzi}</span>
               <span className="caption">{to === 0 ? 'at once' : `${formatNumber(to)} days`}</span>
+              <span className="caption mastery-step-burst">
+                {burst > 0 ? `+${formatNumber(burst)} insight` : ' '}
+              </span>
             </li>
           );
         })}
       </ol>
-      <p className="mastery-eta">{eta}</p>
+      <p className="mastery-eta">
+        {nextLevelWords(c, t, rate)}
+        {rateWords}
+      </p>
     </section>
+  );
+}
+
+/** One line on the technique's Art; its passives are bought on its tree, where the link goes. */
+function ArtLine({ c, art }: { c: Cultivator; art: Manual }) {
+  const learned = art.nodes.filter((n) => hasLearned(c, n.id)).length;
+  const open = art.nodes.filter((n) => !hasLearned(c, n.id));
+  const awake = open.filter((n) => !nodeSealed(c, n)).length;
+  const wake = Math.min(...open.map((n) => n.mastery ?? 0));
+  const only = art.nodes.length === 1 ? art.nodes[0]! : null;
+  const status =
+    open.length === 0
+      ? 'all learned'
+      : awake > 0
+        ? `${awake === 1 ? 'one' : awake} awake to learn`
+        : `${only ? 'wakes' : 'the next wakes'} at ${MASTERY[wake]!.name}`;
+  return (
+    <p className="technique-art caption">
+      Its Art ·{' '}
+      {only ? (
+        <>
+          <span className="technique-art-name">{only.name}</span>{' '}
+          <span className="hanzi">{only.hanzi}</span>
+        </>
+      ) : (
+        `${art.nodes.length} passives`
+      )}{' '}
+      · {learned} of {art.nodes.length} learned · {status}
+      <Why label="Arts">
+        An Art is a technique's own small tree of passives, bought with insight on the tree it
+        grafts beside and waking as the technique masters, the first at Comprehension.
+      </Why>{' '}
+      <button type="button" className="link-button" onClick={() => goToManual(art.id, art.host)}>
+        {art.host ? `Open it beside the ${tree(art.host).name} tree` : 'Open it under Manuals'}
+      </button>
+    </p>
   );
 }
 
@@ -285,6 +560,7 @@ function TechniquePage({
   const kin = techniqueKin(c, t.id);
   const kinBonus = kinshipBonus(c, t.id);
   const art = techniqueArt(t.id);
+  const look = rarityLook(t.rarity);
   const chips = [
     `${capital(ladder)} technique, tier ${t.tier} (${realmName})`,
     capital(t.form),
@@ -295,7 +571,10 @@ function TechniquePage({
   ];
 
   return (
-    <article className={`panel technique-page${sealed ? ' is-sealed' : ''}`}>
+    <article
+      className={`panel technique-page${look.className}${sealed ? ' is-sealed' : ''}`}
+      style={look.style}
+    >
       <div className="technique-page-head">
         <h2>
           <RarityName m={t} /> <span className="hanzi">{t.hanzi}</span>
@@ -347,26 +626,7 @@ function TechniquePage({
           </Why>
         </p>
       )}
-      {art && (
-        <section className="technique-art" aria-label="Its Art">
-          <p className="caption">
-            Its Art: {art.nodes.length === 1 ? 'one passive' : `${art.nodes.length} passives`},
-            bought with insight and waking as it masters, the first at Comprehension.{' '}
-            <button
-              type="button"
-              className="link-button"
-              onClick={() => goToManual(art.id, art.host)}
-            >
-              {art.host ? `Grafted beside the ${tree(art.host).name} tree` : 'Under Manuals'}
-            </button>
-          </p>
-          <ul className="manual-nodes">
-            {art.nodes.map((n) => (
-              <ManualNodeRow key={n.id} c={c} n={n} />
-            ))}
-          </ul>
-        </section>
-      )}
+      {art && <ArtLine c={c} art={art} />}
       <div className="technique-page-foot">
         <span className="caption">{capital(t.source)}.</span>
         <button
@@ -391,9 +651,13 @@ export function TechniquesScreen() {
   const c = game.player;
   const known = knownTechniques(c);
   const rates = dayRates(c, game.calendar.day);
-  const hoursOpen = hourKindOpen(c, 'practice');
+  const rate = practiceRate(c, game.calendar.day);
   const has = (id: string | null): id is string => !!id && known.some((t) => t.id === id);
-  const selected = has(chosen) ? chosen : has(c.practicing) ? c.practicing : known[0]?.id;
+  const selected = has(chosen)
+    ? chosen
+    : has(c.practicing)
+      ? c.practicing
+      : techniqueRows(c)[0]?.t.id;
 
   const select = (id: string) => {
     setChosen(id);
@@ -401,43 +665,28 @@ export function TechniquesScreen() {
     if (window.innerWidth < 900) page.current?.scrollIntoView({ block: 'start' });
   };
 
-  const wheel = (
-    <button type="button" className="link-button" onClick={() => go('cultivate')}>
-      Set hours on the Cultivate wheel
-    </button>
-  );
-  const status = !hoursOpen
-    ? 'Practice hours open once you know a technique you can use.'
-    : rates.practice > 0
-      ? `Practice gets ${rates.count.practice} of 12 hours · ${formatRate(rates.practice)} practice days a day`
-      : rates.count.practice === 0
-        ? 'No hour of the day goes to practice.'
-        : 'Practice hours go nowhere: pick a technique to practice.';
+  if (!selected) {
+    return (
+      <section className="panel">
+        <p className="muted">You know no techniques yet.</p>
+      </section>
+    );
+  }
 
   return (
     <>
-      <p className="technique-status caption">
-        {hoursOpen && rates.practice > 0 && <span className="practice-dot" aria-hidden="true" />}
-        <span>{status}</span>
-        {hoursOpen && wheel}
-      </p>
-      {!selected ? (
-        <section className="panel">
-          <p className="muted">You know no techniques yet.</p>
-        </section>
-      ) : (
-        <div className="technique-split">
-          <TechniqueList c={c} selected={selected} onSelect={select} />
-          <div ref={page} className="technique-page-col">
-            <TechniquePage
-              c={c}
-              t={known.find((t) => t.id === selected)!}
-              rate={practiceRate(c, game.calendar.day)}
-              onSelect={select}
-            />
-          </div>
+      <PracticePanel c={c} rates={rates} rate={rate} onSelect={select} onKeep={setChosen} />
+      <div className="technique-split">
+        <TechniqueList c={c} selected={selected} onSelect={select} />
+        <div ref={page} className="technique-page-col">
+          <TechniquePage
+            c={c}
+            t={known.find((t) => t.id === selected)!}
+            rate={rate}
+            onSelect={select}
+          />
         </div>
-      )}
+      </div>
     </>
   );
 }
