@@ -3,15 +3,26 @@
 // showing, so any of them can be lifted to the top. A new card rises onto the stack, and its rim
 // walks faster while it waits; what a choice led to stays until you send it on, when it slides
 // off the stack into the chronicle, or, on a card with further steps, turns to the next step.
-// Under reduced motion nothing moves.
-import { useState } from 'react';
+// Under reduced motion nothing moves. The tray sits at the foot of the Abode, so a choice must not
+// shrink it: the stack keeps its height while the outcome shows, and the next card is brought into
+// view once you send the outcome on.
+import { useLayoutEffect, useRef, useState } from 'react';
 import { statInfo } from '../content/stats.ts';
 import { viewCard, type CardView } from '../core/cards.ts';
+import type { GameState } from '../core/state.ts';
 import { reducedMotion } from './settings.ts';
-import { useGame } from './store.ts';
+import { useGame, type CardOutcomeView } from './store.ts';
 
 /** How many cards show behind the top one; the rest are counted. */
 const FANNED = 3;
+
+/** What the tray shows, as a key: an outcome, a card at its step, or nothing. */
+function showing(game: GameState, outcome: CardOutcomeView | null, topUid: number | null) {
+  if (outcome) return `outcome-${outcome.uid}`;
+  const pending = game.cards.pending;
+  const top = pending.find((p) => p.uid === topUid) ?? pending[0];
+  return top ? `card-${top.uid}-${top.path?.length ?? 0}` : 'quiet';
+}
 
 function Choices({ open, onChose }: { open: CardView; onChose: (error: string | null) => void }) {
   const { chooseCard } = useGame.getState();
@@ -48,6 +59,20 @@ export function CardFeed() {
   const [topUid, setTopUid] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const stack = useRef<HTMLDivElement>(null);
+  // The stack's height when a choice was made, kept as its least height while the outcome shows.
+  const [hold, setHold] = useState<number | null>(null);
+  // Set when the outcome is sent on, so the card that follows is scrolled into view.
+  const follow = useRef(false);
+  const shown = !game || game.ended ? 'none' : showing(game, outcome, topUid);
+  useLayoutEffect(() => {
+    if (!follow.current || shown.startsWith('outcome')) return;
+    follow.current = false;
+    stack.current?.scrollIntoView({
+      block: 'nearest',
+      behavior: reducedMotion() ? 'auto' : 'smooth',
+    });
+  }, [shown]);
   if (!game || game.ended) return null;
   const pending = game.cards.pending.map((p) => viewCard(game, p));
   // The top card: the one lifted, the one a step goes on with, or the oldest.
@@ -57,6 +82,7 @@ export function CardFeed() {
   const waiting = pending.length > 0;
 
   const sendOn = () => {
+    follow.current = true;
     // A card with a next step turns in place; a finished one slides off the stack.
     if (outcome?.goesOn || reducedMotion()) {
       dismissCardOutcome();
@@ -77,7 +103,11 @@ export function CardFeed() {
       {!outcome && !top ? (
         <p className="tray-quiet">Seclusion is quiet.</p>
       ) : (
-        <div className="stack">
+        <div
+          className="stack"
+          ref={stack}
+          style={outcome && hold ? { minHeight: hold } : undefined}
+        >
           {outcome ? (
             <article
               className={`story is-result ${leaving ? 'is-leaving' : ''}`}
@@ -118,6 +148,7 @@ export function CardFeed() {
               <Choices
                 open={top}
                 onChose={(e) => {
+                  setHold(stack.current?.offsetHeight ?? null);
                   setError(e);
                   setTopUid(null);
                 }}
