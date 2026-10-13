@@ -429,6 +429,7 @@ export function techniqueCost(actor: Combatant, t: Technique): number {
     t.qiCost *
       tierScale(t.tier) *
       actor.techniqueCost *
+      (actor.techniques[t.id]?.cost ?? 1) *
       Math.max(0, 1 + daoMod(actor, daos, 'Cost')),
   );
 }
@@ -462,6 +463,7 @@ function techniqueAttack(actor: Combatant, id: string, creativity: number): Atta
       (1 + daoMod(actor, daos, 'Power')) *
       typePower(actor, t.damage) *
       actor.techniquePower *
+      (known.power ?? 1) *
       physical *
       (onWeapon ? actor.weapon.technique : 1),
     qi: t.qiCost > 0,

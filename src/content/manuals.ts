@@ -8,19 +8,27 @@
 // A loose manual's nodes unseal as its ladder reaches their tier; a method's nodes unseal by the
 // method's mastery instead, and its manual is held while the method is known.
 // White to blue manuals are generated from an effect table from D4 on; these are written by hand.
-// Drafted in P1.10 for Jan's review.
+// Drafted in P1.10 for Jan's review; the Arts in P2.5.
+//
+// Where manuals live (design § Cultivation, D2.2): every manual names a host tree and the Trees
+// screen draws it grafted beside that tree, joined to none of its nodes. A Method's host is its
+// ladder's tree, an Art's its technique's first Dao, a Formula's the tree its effects touch; a
+// manual with none stands under the Manuals category on its own.
 import type { LadderId } from './cultivation.ts';
+import { COMBAT_DAO_IDS, DAO_STAT_KINDS } from './daos.ts';
 import { method } from './methods.ts';
 import type { RarityId } from './rarity.ts';
-import type { Effect } from './stats.ts';
+import type { Effect, StatId } from './stats.ts';
+import { technique } from './techniques.ts';
+import { BIG_THREE, TREES } from './trees/index.ts';
 
 export const MANUAL_KINDS = {
-  formula: { name: 'Formula', plural: 'Formulas', hanzi: '口诀' },
-  style: { name: 'Style', plural: 'Styles', hanzi: '流' },
-  art: { name: 'Art', plural: 'Arts', hanzi: '术' },
-  method: { name: 'Method', plural: 'Methods', hanzi: '功法' },
-  scripture: { name: 'Scripture', plural: 'Scriptures', hanzi: '经' },
-  inheritance: { name: 'Inheritance', plural: 'Inheritances', hanzi: '传承' },
+  formula: { name: 'Formula', plural: 'Formulas', hanzi: '口诀', glyph: '诀' },
+  method: { name: 'Method', plural: 'Methods', hanzi: '功法', glyph: '法' },
+  art: { name: 'Art', plural: 'Arts', hanzi: '术', glyph: '术' },
+  style: { name: 'Style', plural: 'Styles', hanzi: '流', glyph: '流' },
+  scripture: { name: 'Scripture', plural: 'Scriptures', hanzi: '经', glyph: '经' },
+  inheritance: { name: 'Inheritance', plural: 'Inheritances', hanzi: '传承', glyph: '承' },
 } as const;
 export type ManualKind = keyof typeof MANUAL_KINDS;
 export const MANUAL_KIND_IDS = Object.keys(MANUAL_KINDS) as ManualKind[];
@@ -41,8 +49,18 @@ export interface ManualNode {
   /** Nodes of the same manual that must be learned first. */
   requires: readonly string[];
   effects: readonly Effect[];
-  /** A method's node unseals once the method reaches this mastery level (1 is Comprehension). */
+  /**
+   * A method's or an Art's node unseals once the method or the technique reaches this mastery
+   * level (1 is Comprehension).
+   */
   mastery?: number;
+  /**
+   * An Art's passives on its technique alone (design § Cultivation, Where manuals live): its
+   * power, qi cost and Accuracy (`ART_OWN_STATS`). `effects` are the cultivator's.
+   */
+  own?: readonly Effect[];
+  /** Where it sits in its cluster, columns across and rows down; laid out from `requires` if unset. */
+  at?: readonly [col: number, row: number];
   text: string;
 }
 
@@ -61,18 +79,89 @@ export interface Manual {
   ladder: LadderId;
   /** A method's own manual: the method it belongs to. Held whenever the method is known. */
   method?: string;
+  /** An Art: the technique it is built on. Held whenever the technique is known. */
+  technique?: string;
+  /** The tree it grafts beside, by tree id, or null for one that stands under Manuals alone. */
+  host: string | null;
+  /** The tier band it grafts into: a Method's or an Art's own tier, else its first node's. */
+  tier: number;
   nodes: readonly ManualNode[];
 }
 
-type ManualDef = Omit<Manual, 'nodes' | 'ladder'> & {
+type ManualDef = Omit<Manual, 'nodes' | 'ladder' | 'host' | 'tier'> & {
   ladder?: LadderId;
+  /** Authored manuals name it; a generated one leaves it out and takes its first effect's. */
+  host?: string | null;
+  tier?: number;
   nodes: readonly ManualNodeDef[];
 };
+
+/** The stats an Art's passive may put on its technique alone. */
+export const ART_OWN_STATS: readonly StatId[] = ['techniquePower', 'techniqueCost', 'hit'];
+
+/** How many passives an Art holds by rarity: 1, 1, 2, 3, 4, 5, 6 from white to pristine. */
+export const ART_NODES: Record<RarityId, number> = {
+  gray: 1,
+  white: 1,
+  green: 1,
+  blue: 2,
+  purple: 3,
+  gold: 4,
+  red: 5,
+  pristine: 6,
+};
+
+/**
+ * The mastery level the ith of an Art's `count` passives wakes at: Comprehension, Mastery,
+ * Perfection and Origin in turn, and past four the extras share a level from the bottom up, so
+ * five wake at 1, 1, 2, 3, 4 and six at 1, 1, 2, 2, 3, 4.
+ */
+export function artWake(i: number, count: number): number {
+  const extras = Math.max(0, count - 4);
+  const levels = [1, 2, 3, 4].flatMap((l) => (l <= extras ? [l, l] : [l]));
+  return levels[Math.min(i, levels.length - 1)]!;
+}
+
+const daoStats = new Map<string, string>(
+  COMBAT_DAO_IDS.flatMap((d) => DAO_STAT_KINDS.map((k) => [`${d}${k}`, d] as const)),
+);
+const bigThree = new Set(BIG_THREE.map((t) => t.id));
+
+/**
+ * The tree a stat belongs to, for a generated manual's host: a Dao's own stat (firePower) to that
+ * Dao; any other to the tree whose nodes use it most, the big three first on a tie; null when no
+ * tree uses it.
+ */
+export function statHost(stat: StatId): string | null {
+  const own = daoStats.get(stat);
+  if (own) return own;
+  let best: string | null = null;
+  let most = 0;
+  for (const t of TREES) {
+    const uses = t.nodes.filter((n) => n.effects.some((e) => e.stat === stat)).length;
+    const tieWin = uses === most && uses > 0 && bigThree.has(t.id) && !bigThree.has(best ?? '');
+    if (uses > most || tieWin) {
+      best = t.id;
+      most = uses;
+    }
+  }
+  return best;
+}
+
+/** A generated manual's host: its first effect's stat's tree. */
+export function hostFromEffects(
+  nodes: readonly Pick<ManualNodeDef, 'effects' | 'own'>[],
+): string | null {
+  const first = nodes[0]?.effects[0] ?? nodes[0]?.own?.[0];
+  return first ? statHost(first.stat) : null;
+}
 
 function defineManual(m: ManualDef): Manual {
   return {
     ...m,
     ladder: m.ladder ?? 'qi',
+    host: m.host !== undefined ? m.host : hostFromEffects(m.nodes),
+    tier: m.tier ?? Math.min(...m.nodes.map((n) => n.tier)),
     nodes: m.nodes.map((n) => ({ ...n, home: 'manual', manual: m.id })),
   };
 }
@@ -80,7 +169,7 @@ function defineManual(m: ManualDef): Manual {
 /** A method's own manual: its name, rarity and source are the method's. */
 function forMethod(id: string, nodes: readonly ManualNodeDef[]): Manual {
   const m = method(id);
-  const { name, pinyin, hanzi, rarity, source, ladder } = m;
+  const { name, pinyin, hanzi, rarity, source, ladder, tier } = m;
   return defineManual({
     id,
     method: id,
@@ -90,8 +179,37 @@ function forMethod(id: string, nodes: readonly ManualNodeDef[]): Manual {
     rarity,
     source,
     ladder,
+    host: ladder,
+    tier,
     kind: 'method',
     nodes,
+  });
+}
+
+/** An Art's passive as its list writes it: the tier and the wake level come from the technique. */
+type ArtNodeDef = Omit<ManualNodeDef, 'tier' | 'mastery'>;
+
+/**
+ * A technique's Art: the technique on its name plate, never a node, and its passives, which wake
+ * as the technique masters (`artWake`). It grafts beside the technique's first Dao when that Dao
+ * has a tree, and stands under Manuals alone while it has none (Wind, Lightning, Ice).
+ */
+function forTechnique(id: string, nodes: readonly ArtNodeDef[]): Manual {
+  const t = technique(id);
+  const first = t.daos[0];
+  return defineManual({
+    id: `art-${id}`,
+    technique: id,
+    name: t.name,
+    pinyin: t.pinyin,
+    hanzi: t.hanzi,
+    rarity: t.rarity,
+    source: t.source,
+    ladder: t.ladder,
+    host: first && TREES.some((tr) => tr.id === first) ? first : null,
+    tier: t.tier,
+    kind: 'art',
+    nodes: nodes.map((n, i) => ({ ...n, tier: t.tier, mastery: artWake(i, nodes.length) })),
   });
 }
 
@@ -102,6 +220,7 @@ export const MANUALS: readonly Manual[] = [
   // ------------------------------------------------------------ loose formulas
   defineManual({
     id: 'garrison-breath-count',
+    host: 'qi',
     name: 'Garrison Breath-Count',
     pinyin: 'Junzhong Shuxi Jue',
     hanzi: '军中数息诀',
@@ -125,6 +244,7 @@ export const MANUALS: readonly Manual[] = [
   }),
   defineManual({
     id: 'stone-eyes-lamp',
+    host: 'soul',
     name: 'Stone Eyes Lamp Formula',
     pinyin: 'Shiyan Deng Jue',
     hanzi: '石眼灯诀',
@@ -147,6 +267,7 @@ export const MANUALS: readonly Manual[] = [
   }),
   defineManual({
     id: 'butcher-sinew',
+    host: 'body',
     name: 'Beast-Butcher Sinew Formula',
     pinyin: 'Tushou Jin Jue',
     hanzi: '屠兽筋诀',
@@ -169,6 +290,7 @@ export const MANUALS: readonly Manual[] = [
   }),
   defineManual({
     id: 'bone-wall-watch',
+    host: 'qi',
     name: 'Bone Wall Watch Formula',
     pinyin: 'Duigu Shou Jue',
     hanzi: '堆骨守诀',
@@ -202,6 +324,7 @@ export const MANUALS: readonly Manual[] = [
   }),
   defineManual({
     id: 'tide-counting',
+    host: 'qi',
     name: 'Tide-Counting Formula',
     pinyin: 'Shoukou Shuchao Jue',
     hanzi: '守口数潮诀',
@@ -373,10 +496,104 @@ export const MANUALS: readonly Manual[] = [
       text: 'Half a page, read until the missing half writes itself in your head.',
     },
   ]),
+
+  // ------------------------------------------------------------ the techniques' Arts
+  // Every technique has its Art (design § Cultivation, Where manuals live), given by any road that
+  // teaches it. A white Art holds one passive, waking at the technique's Comprehension; `own`
+  // effects land on the technique alone. Drafted in P2.5 for Jan's review.
+  forTechnique('rampart-palm', [
+    {
+      id: 'art-shoulder-behind-palm',
+      name: 'Shoulder Behind the Palm',
+      hanzi: '掌后之肩',
+      kind: 'minor',
+      cost: 30,
+      requires: [],
+      effects: [],
+      own: [{ stat: 'techniquePower', value: 0.08 }],
+      text: 'The shove starts in the heel and leaves through the palm; the climber never sees the shoulder.',
+    },
+  ]),
+  forTechnique('sinkhole-stone-fist', [
+    {
+      id: 'art-rock-underfoot',
+      name: 'Rock Underfoot',
+      hanzi: '足下石',
+      kind: 'minor',
+      cost: 30,
+      requires: [],
+      effects: [{ stat: 'hp', value: 0.03 }],
+      text: 'Borrow the rock’s weight often enough and the body starts keeping some of it.',
+    },
+  ]),
+  forTechnique('piled-bones-thrust', [
+    {
+      id: 'art-short-recovery',
+      name: 'The Short Recovery',
+      hanzi: '短收',
+      kind: 'minor',
+      cost: 30,
+      requires: [],
+      effects: [],
+      own: [{ stat: 'techniqueCost', value: -0.12 }],
+      text: 'Draw the spear back on the breath that drove it, and the next thrust starts half-made.',
+    },
+  ]),
+  forTechnique('undertow-palm', [
+    {
+      id: 'art-river-give',
+      name: 'The River’s Give',
+      hanzi: '河让',
+      kind: 'minor',
+      cost: 30,
+      requires: [],
+      effects: [{ stat: 'evasion', value: 0.03 }],
+      text: 'A current yields and is still there; a blow slides off you like a hand off wet stone.',
+    },
+  ]),
+  forTechnique('bone-splitting-cleave', [
+    {
+      id: 'art-finding-joint',
+      name: 'Finding the Joint',
+      hanzi: '寻节',
+      kind: 'minor',
+      cost: 30,
+      requires: [],
+      effects: [],
+      own: [{ stat: 'hit', value: 1 }],
+      text: 'The eye goes to the joint before the cleaver does, on a carcass or a man.',
+    },
+  ]),
+  forTechnique('alley-wind-palm', [
+    {
+      id: 'art-running-draft',
+      name: 'Running the Draft',
+      hanzi: '乘巷风',
+      kind: 'minor',
+      cost: 30,
+      requires: [],
+      effects: [{ stat: 'agility', value: 1 }],
+      text: 'A hundred errands at a run down narrow streets; the legs remember where the draft goes.',
+    },
+  ]),
+  forTechnique('rampart-collapse-palm', [
+    {
+      id: 'art-whole-wall',
+      name: 'The Whole Wall Behind It',
+      hanzi: '全垣之重',
+      kind: 'minor',
+      cost: 150,
+      requires: [],
+      effects: [],
+      own: [{ stat: 'techniquePower', value: 0.1 }],
+      text: 'An officer who has held a stretch of wall for years leans all of it into one palm.',
+    },
+  ]),
 ];
 
 const byId = new Map(MANUALS.map((m) => [m.id, m]));
 const byMethod = new Map(MANUALS.filter((m) => m.method).map((m) => [m.method!, m]));
+const byTechnique = new Map(MANUALS.filter((m) => m.technique).map((m) => [m.technique!, m]));
 
 export function hasManual(id: string): boolean {
   return byId.has(id);
@@ -391,4 +608,9 @@ export function manual(id: string): Manual {
 /** A method's own manual, if it carries nodes. */
 export function methodManual(methodId: string): Manual | undefined {
   return byMethod.get(methodId);
+}
+
+/** A technique's Art, if it has one written. */
+export function techniqueArt(techniqueId: string): Manual | undefined {
+  return byTechnique.get(techniqueId);
 }

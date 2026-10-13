@@ -8,9 +8,10 @@ import { STAT_IDS, statInfo, type Effect, type StatId } from '../content/stats.t
 import { hasTalent, talent, talentEffects, type Talent } from '../content/talents.ts';
 import { gearEffects } from './gear.ts';
 import { ladderGrowth } from './growth.ts';
-import { methodManual } from '../content/manuals.ts';
+import { methodManual, techniqueArt } from '../content/manuals.ts';
 import { ladderMethod, methodMastery } from './methods.ts';
 import type { Cultivator } from './state.ts';
+import { mastery } from './techniques.ts';
 import { activeNodes } from './trees.ts';
 
 export type Stats = Record<StatId, number>;
@@ -42,7 +43,7 @@ export function talentsOf(c: Cultivator): Talent[] {
 
 // The day step reads stats many times a tick; they change only when the nodes, a ladder's realm,
 // an active method, the talents, the growth records or the mastery that unseals a method's own
-// nodes do, so each nodes list keeps its last result.
+// nodes or an Art's do, so each nodes list keeps its last result.
 interface Cached {
   key: string;
   growth: readonly unknown[];
@@ -57,11 +58,15 @@ function cacheKey(c: Cultivator): string {
     .filter((id) => methodManual(id))
     .map((id) => `${id}:${methodMastery(c, id).level}`)
     .join(',');
+  const arts = Object.keys(c.techniques)
+    .filter((id) => techniqueArt(id))
+    .map((id) => `${id}:${mastery(c, id).level}`)
+    .join(',');
   const gear = JSON.stringify(c.gear);
   const bonded = Object.entries(c.bonds)
     .map(([id, days]) => `${id}:${Math.floor(days)}`)
     .join(',');
-  return `${ladders}|${c.root}|${c.talents.join(',')}|${woke}|${unsealing}|${gear}|${bonded}`;
+  return `${ladders}|${c.root}|${c.talents.join(',')}|${woke}|${unsealing}|${arts}|${gear}|${bonded}`;
 }
 
 /** Every stat's total from nodes, active methods' properties, growth, the root and talents. */

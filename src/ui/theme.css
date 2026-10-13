@@ -2153,7 +2153,95 @@ select {
   padding-left: 18px;
 }
 
-/* Manuals on the Character screen: a list by kind, and a manual's nodes opened beneath it. */
+/* Manuals grafted beside their host trees (design § Cultivation, Where manuals live): a name plate
+   on top of each cluster, a dotted bracket down its left side to the band, joined to no tree node. */
+.graft-plate {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 10px;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-small);
+  background: var(--glass-strong);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: calc(13.5px * var(--text-scale));
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+}
+
+.graft-plate .caption {
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.graft-plate.is-selected {
+  border-color: var(--accent);
+}
+
+.graft-plate:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.manual-glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5em;
+  height: 1.5em;
+  border: 1px solid var(--edge-strong);
+  border-radius: 50%;
+  font-size: 0.85em;
+  color: var(--muted);
+}
+
+.tree-edges path.graft-bracket {
+  stroke: var(--edge-strong);
+  stroke-width: 1.4;
+  stroke-dasharray: 2 5;
+  stroke-linecap: round;
+}
+
+/* The Manuals category: the hostless manuals as small trees side by side, then the shelf. */
+.graft-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 10px 0;
+}
+
+.graft-box {
+  position: relative;
+  flex: none;
+}
+
+.graft-box .tree-edges {
+  pointer-events: none;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--accent-edge);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.technique-art {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--edge);
+}
+
+/* Manuals: a shelf by kind, each a link to its graft. */
 .manual-list {
   margin: 4px 0 10px;
   padding: 0;

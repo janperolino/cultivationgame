@@ -161,9 +161,9 @@ export const FIST_DAO = defineDao({
           name: 'Steel Fist',
           nodes: [
             {
-              id: 'fist-bone-hardening',
-              name: 'Bone Hardening',
-              hanzi: '炼骨',
+              id: 'fist-hard-knuckle-bones',
+              name: 'Hard Knuckle Bones',
+              hanzi: '硬骨拳',
               effects: [{ stat: 'fistPower', value: 0.05 }],
               text: 'You strike a sack of sand until the bones of the hand ring.',
             },

@@ -32,13 +32,9 @@ export const TREE_CATEGORIES: readonly TreeCategory[] = [
   { id: 'daos', name: 'Daos', hanzi: '道', trees: DAOS },
   { id: 'ways', name: 'Ways', hanzi: '途', trees: [], opens: 'in M3' },
   { id: 'crafts', name: 'Crafts', hanzi: '艺', trees: [], opens: 'in M4' },
-  {
-    id: 'manuals',
-    name: 'Manuals',
-    hanzi: '典',
-    trees: [],
-    opens: 'once their homes are settled (on the Character screen until then)',
-  },
+  // The Manuals category holds no tree of its own: the manuals with no host and a shelf of every
+  // manual held (design § Cultivation, Where manuals live). It opens with a first manual.
+  { id: 'manuals', name: 'Manuals', hanzi: '典', trees: [], opens: 'with a first manual' },
 ];
 
 const trees = new Map(TREES.map((t) => [t.id, t]));

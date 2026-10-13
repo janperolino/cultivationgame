@@ -18,7 +18,8 @@ import { realmGrowth } from '../core/growth.ts';
 import { agility, aptitude, fortune, stats, talentAwake, talentsOf } from '../core/stats.ts';
 import type { Cultivator } from '../core/state.ts';
 import { TalentRow } from './CreationScreen.tsx';
-import { ManualsPanel } from './ManualsPanel.tsx';
+import { manualCount } from '../core/manuals.ts';
+import { go } from './nav.ts';
 import {
   capitalize,
   formatEffect,
@@ -305,7 +306,18 @@ export function CharacterScreen() {
           LADDERS.map((l) => <Growth key={l} c={c} which={l} />)
         )}
       </section>
-      <ManualsPanel c={c} />
+      <section className="panel">
+        <p>
+          Manuals:{' '}
+          <button
+            type="button"
+            className="link-button"
+            onClick={() => go('trees', { pick: 'manuals' })}
+          >
+            {manualCount(c)}
+          </button>
+        </p>
+      </section>
     </>
   );
 }

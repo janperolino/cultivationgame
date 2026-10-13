@@ -27,7 +27,7 @@ import { statInfo, STAT_IDS, type StatId } from '../../content/stats.ts';
 import { DAOS, tierNodes } from '../../content/trees/index.ts';
 import { gearBand, weaponAccuracy } from '../gear.ts';
 import { ownTier } from '../toxicity.ts';
-import { tierHeld } from '../trees.ts';
+import { artOwn, tierHeld } from '../trees.ts';
 import { rarityAccuracy, rarityMultiplier, type RarityId } from '../../content/rarity.ts';
 import { tierStep } from '../../content/realms.ts';
 import { hasTechnique, technique, type Technique } from '../../content/techniques.ts';
@@ -118,8 +118,14 @@ export interface Combatant {
   physicalPower: number;
   techniqueCost: number;
   qiRecovery: number;
-  /** Techniques they can use, each with what mastery multiplies Accuracy with it by. */
-  techniques: Record<string, { technique: Technique; accuracy: number }>;
+  /**
+   * Techniques they can use, each with what mastery multiplies Accuracy with it by, and what its
+   * Art's passives multiply its power and qi cost by (1 when unset).
+   */
+  techniques: Record<
+    string,
+    { technique: Technique; accuracy: number; power?: number; cost?: number }
+  >;
   /** Dao tiers held, by Dao id: sword, fire. */
   daos: Record<string, number>;
   /** Items carried into the fight, by id. */
@@ -258,7 +264,14 @@ export function fromCultivator(c: Cultivator, side: string): Combatant {
   for (const id of Object.keys(c.techniques)) {
     if (!hasTechnique(id)) continue;
     const t = technique(id);
-    if (!techniqueSealed(c, t)) techniques[id] = { technique: t, accuracy: masteryAccuracy(c, id) };
+    if (techniqueSealed(c, t)) continue;
+    const own = artOwn(c, id);
+    techniques[id] = {
+      technique: t,
+      accuracy: masteryAccuracy(c, id) * (1 + HIT_PER_POINT * own.hit),
+      power: 1 + own.power,
+      cost: Math.max(0, 1 + own.cost),
+    };
   }
   const items: Combatant['items'] = {};
   for (const [id, n] of Object.entries(c.items)) {

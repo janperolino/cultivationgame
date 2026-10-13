@@ -360,7 +360,7 @@ const BASE_STATS = {
   attention: {
     name: 'Split attention',
     unit: 'points',
-    what: 'one more flying sword, puppet or production queue',
+    what: 'one more production queue, puppet or flying sword',
     arrives: 'crafting',
   },
   craftPrecision: {

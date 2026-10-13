@@ -653,9 +653,9 @@ export const SOUL_TREE = defineTree({
       text: 'A thousand paces round you, every leaf accounted for.',
     },
     {
-      id: 'soul-furnace-hands',
-      name: 'Furnace Hands',
-      hanzi: '炉手',
+      id: 'soul-unshaking-fingers',
+      name: 'Unshaking Fingers',
+      hanzi: '不颤之指',
       tier: 2,
       kind: 'minor',
       branch: 'soul2-sense',
@@ -674,7 +674,7 @@ export const SOUL_TREE = defineTree({
       branch: 'soul2-sense',
       at: [-6.3, 2.2],
       cost: 300,
-      requires: ['soul-furnace-hands'],
+      requires: ['soul-unshaking-fingers'],
       effects: [{ stat: 'perception', value: 0.05 }],
       text: 'Your sense narrows to a point and pricks what it finds.',
     },
@@ -756,7 +756,7 @@ export const SOUL_TREE = defineTree({
       cost: 650,
       requires: ['soul-second-voice'],
       effects: [{ stat: 'attention', value: 1 }],
-      text: 'One more sword in the air, one more furnace lit, and none of them neglected.',
+      text: 'One more production queue running, one more puppet walking, one more sword in the air, and none of them neglected.',
     },
 
     {

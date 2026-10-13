@@ -148,9 +148,9 @@ export const BODY_TREE = defineTree({
       text: 'The courtyard’s lock-stone, overhead, a hundred times.',
     },
     {
-      id: 'body-iron-fists',
-      name: 'Iron Fists',
-      hanzi: '铁拳',
+      id: 'body-ox-hands',
+      name: 'Ox Hands',
+      hanzi: '牛掌',
       tier: 1,
       kind: 'minor',
       branch: 'body1-strength',
@@ -169,7 +169,7 @@ export const BODY_TREE = defineTree({
       branch: 'body1-strength',
       at: [0, 7],
       cost: 130,
-      requires: ['body-stone-lifting', 'body-iron-fists'],
+      requires: ['body-stone-lifting', 'body-ox-hands'],
       effects: [
         { stat: 'physicalDamage', value: 0.05 },
         { stat: 'bodyGain', value: 0.02 },

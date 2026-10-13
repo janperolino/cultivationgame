@@ -3,26 +3,30 @@
 // the gating branches' ends for a capstone, and the tier below's capstone for a starter; in a
 // manual, only that manual's own nodes, and you must hold the manual. A tree node above its tree's
 // matching level stays sealed, doing nothing, until that ladder reaches the node's tier; a loose
-// manual's node waits on the manual's ladder the same way, and a method's node on the method's
-// mastery.
-import { manual } from '../content/manuals.ts';
+// manual's node waits on the manual's ladder the same way, a method's node on the method's
+// mastery, and an Art's on its technique's.
+import { manual, techniqueArt } from '../content/manuals.ts';
 import { anyNode, hasAnyNode, type AnyNode } from '../content/nodes.ts';
 import { realmIndex } from '../content/realms.ts';
 import { TIER_HOLD, tierNodes, treeOf, type Tree } from '../content/trees/index.ts';
 import { holdsManual } from './manuals.ts';
 import { knowsMethod, methodMastery } from './methods.ts';
 import type { Cultivator } from './state.ts';
+import { knowsTechnique, mastery as techniqueMastery } from './techniques.ts';
 
 /**
  * True while the node can't work yet: a tree node while its tree's ladder sits below its tier; a
  * loose manual's node the same on the manual's ladder; a method's node until the method reaches
- * its mastery level.
+ * its mastery level, and an Art's until its technique does.
  */
 export function nodeSealed(c: Cultivator, node: AnyNode): boolean {
   if (node.home === 'tree') return realmIndex(c[treeOf(node.id).ladder].realm) + 1 < node.tier;
   const m = manual(node.manual);
   if (m.method && node.mastery !== undefined) {
     return !knowsMethod(c, m.method) || methodMastery(c, m.method).level < node.mastery;
+  }
+  if (m.technique && node.mastery !== undefined) {
+    return !knowsTechnique(c, m.technique) || techniqueMastery(c, m.technique).level < node.mastery;
   }
   return realmIndex(c[m.ladder].realm) + 1 < node.tier;
 }
@@ -37,6 +41,26 @@ export function activeNodes(c: Cultivator): AnyNode[] {
     .filter(hasAnyNode)
     .map(anyNode)
     .filter((n) => !nodeSealed(c, n));
+}
+
+/**
+ * What an Art's awake passives put on its technique alone, summed: power and qi cost as shares
+ * (0.08 is +8%) and Hit in points.
+ */
+export function artOwn(
+  c: Cultivator,
+  techniqueId: string,
+): { power: number; cost: number; hit: number } {
+  const out = { power: 0, cost: 0, hit: 0 };
+  for (const n of techniqueArt(techniqueId)?.nodes ?? []) {
+    if (!hasLearned(c, n.id) || nodeSealed(c, n)) continue;
+    for (const e of n.own ?? []) {
+      if (e.stat === 'techniquePower') out.power += e.value;
+      else if (e.stat === 'techniqueCost') out.cost += e.value;
+      else if (e.stat === 'hit') out.hit += e.value;
+    }
+  }
+  return out;
 }
 
 export function tierOwned(c: Cultivator, t: Tree, tier: number): number {

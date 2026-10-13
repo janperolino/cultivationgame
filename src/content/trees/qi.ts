@@ -23,7 +23,7 @@ export const QI_TREE = defineTree({
     { id: 'qi2-furnace', name: 'Stone Furnace', tier: 2, gate: true },
     { id: 'qi2-strand', name: 'Condensed Strand', tier: 2, gate: true },
     { id: 'qi2-hidden', name: 'Hidden Realm', tier: 2, gate: false },
-    { id: 'qi2-flight', name: 'Sword-Riding Breath', tier: 2, gate: false },
+    { id: 'qi2-flight', name: 'Cloud-Treading Breath', tier: 2, gate: false },
     { id: 'qi2-breath', name: 'Breath', tier: 2, gate: false, breath: true },
   ],
   nodes: [
@@ -775,11 +775,12 @@ export const QI_TREE = defineTree({
       text: 'A Foundation cultivator who looks like a Qi Condensation disciple.',
     },
 
-    // Sword-Riding Breath, a side path: flight.
+    // Cloud-Treading Breath 踏云, a side path: flight on your own qi or any vessel. Flight on a
+    // sword is the Sword Dao's (design § Cultivation, The placement pass).
     {
-      id: 'qi-sword-riding-breath',
-      name: 'Sword-Riding Breath',
-      hanzi: '御剑息',
+      id: 'qi-treading-air',
+      name: 'Treading Air',
+      hanzi: '踏空',
       tier: 2,
       kind: 'minor',
       branch: 'qi2-flight',
@@ -787,7 +788,7 @@ export const QI_TREE = defineTree({
       cost: 150,
       requires: ['qi-frugal-seals'],
       effects: [{ stat: 'flight', value: 0.08 }],
-      text: 'Qi fed to a flying artifact in a thin, steady stream lasts the whole day.',
+      text: 'Qi under the soles in a thin, steady stream, or fed to a gourd or a cloud, lasts the whole day.',
     },
     {
       id: 'qi-steady-stream',
@@ -798,9 +799,9 @@ export const QI_TREE = defineTree({
       branch: 'qi2-flight',
       at: [4.3, 3.2],
       cost: 200,
-      requires: ['qi-sword-riding-breath'],
+      requires: ['qi-treading-air'],
       effects: [{ stat: 'flight', value: 0.08 }],
-      text: 'The sword stops bucking once the stream stops wavering.',
+      text: 'Whatever carries you stops bucking once the stream stops wavering.',
     },
     {
       id: 'qi-wind-reading',

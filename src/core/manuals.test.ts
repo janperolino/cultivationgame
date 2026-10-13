@@ -175,6 +175,6 @@ describe('save v10', () => {
     expect(raw.version).toBe(9);
     const s = loadSave(raw).state;
     expect(s.player.manuals).toEqual([]);
-    expect(heldManuals(s.player).every((m) => m.method)).toBe(true);
+    expect(heldManuals(s.player).every((m) => m.method || m.technique)).toBe(true);
   });
 });

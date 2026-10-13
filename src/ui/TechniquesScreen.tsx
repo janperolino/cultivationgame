@@ -1,6 +1,7 @@
 // The Techniques screen (design § UI and screens): every technique with its rarity, line,
-// mastery level, requirements and what is still sealed, its kin, and which one practice days go
-// to.
+// mastery level, requirements and what is still sealed, its kin, its Art's passives (design §
+// Cultivation, Where manuals live), and which one practice days go to.
+import { techniqueArt } from '../content/manuals.ts';
 import { MASTERY } from '../content/mastery.ts';
 import { rarity } from '../content/rarity.ts';
 import { REALMS } from '../content/realms.ts';
@@ -17,8 +18,11 @@ import {
   techniqueKin,
   techniqueSealed,
 } from '../core/techniques.ts';
+import { tree } from '../content/trees/index.ts';
 import { formatNumber, formatPercent, formatRate, LADDER_LABELS } from './format.ts';
+import { ManualNodeRow } from './ManualNodes.tsx';
 import { RarityName } from './MethodCard.tsx';
+import { goToManual } from './nav.ts';
 import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
 
@@ -36,6 +40,7 @@ function TechniqueCard({ c, t }: { c: Cultivator; t: Technique }) {
   const r = rarity(t.rarity);
   const lineName = techniqueChapter(t.line, 1)?.name ?? t.name;
   const kin = techniqueKin(c, t.id);
+  const art = techniqueArt(t.id);
 
   return (
     <div className={`technique ${sealed ? 'is-sealed' : ''}`}>
@@ -101,6 +106,26 @@ function TechniqueCard({ c, t }: { c: Cultivator; t: Technique }) {
             practice while one sits at Comprehension or above. Mastery doesn't carry over.
           </Why>
         </p>
+      )}
+      {art && (
+        <div className="technique-art">
+          <p className="caption">
+            Its Art: {art.nodes.length === 1 ? 'one passive' : `${art.nodes.length} passives`},
+            bought with insight and waking as it masters, the first at Comprehension.{' '}
+            <button
+              type="button"
+              className="link-button"
+              onClick={() => goToManual(art.id, art.host)}
+            >
+              {art.host ? `Grafted beside the ${tree(art.host).name} tree` : 'Under Manuals'}
+            </button>
+          </p>
+          <ul className="manual-nodes">
+            {art.nodes.map((n) => (
+              <ManualNodeRow key={n.id} c={c} n={n} />
+            ))}
+          </ul>
+        </div>
       )}
       <div className="actions">
         <button

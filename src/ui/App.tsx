@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AbodeScreen } from './AbodeScreen.tsx';
 import { BagScreen } from './BagScreen.tsx';
 import { CharacterScreen } from './CharacterScreen.tsx';
@@ -14,6 +14,7 @@ import { TechniquesScreen } from './TechniquesScreen.tsx';
 import { TreesScreen } from './TreesScreen.tsx';
 import { capitalize } from './format.ts';
 import { readyLadders, useScene } from './scene.ts';
+import { useNav } from './nav.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
 import { bySeason } from '../core/chronicle.ts';
@@ -67,6 +68,21 @@ export function App() {
   if (sceneStarted !== lastScene.started || panelOpen !== lastScene.panel) {
     setLastScene({ started: sceneStarted, panel: panelOpen });
     if (sceneStarted || panelOpen) setScreen('abode');
+  }
+  // A link on one screen to another (the Character screen's manuals line, say) shows it, from
+  // its top.
+  const main = useRef<HTMLElement>(null);
+  const nav = useNav((s) => s.seq);
+  useEffect(() => {
+    if (nav === 0) return;
+    window.scrollTo(0, 0);
+    main.current?.scrollTo(0, 0);
+  }, [nav]);
+  const [lastNav, setLastNav] = useState(0);
+  if (nav !== lastNav) {
+    setLastNav(nav);
+    const to = useNav.getState().screen;
+    if (to) setScreen(to);
   }
   // A mark on the Abode in the menu while a breakthrough is ready.
   const ready = useGame((s) => (s.game ? readyLadders(s.game).length > 0 : false));
@@ -169,7 +185,7 @@ export function App() {
           </ul>
         </nav>
 
-        <main className="main">
+        <main className="main" ref={main}>
           <h1 className="screen-title">
             {current.name} <span className="hanzi">{current.hanzi}</span>
           </h1>

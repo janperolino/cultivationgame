@@ -26,7 +26,21 @@ import { peopleIn } from '../people.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
+
+/**
+ * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), old to
+ * new. The v12 migration carries a learned node across; the v5 one reads old ids through it, since
+ * it checks owned nodes against today's trees.
+ */
+export const RENAMED_NODES: Readonly<Record<string, string>> = {
+  'qi-sword-riding-breath': 'qi-treading-air',
+  'body-iron-fists': 'body-ox-hands',
+  'soul-furnace-hands': 'soul-unshaking-fingers',
+  'fist-bone-hardening': 'fist-hard-knuckle-bones',
+};
+
+const renamedNode = (id: string) => RENAMED_NODES[id] ?? id;
 
 /**
  * Before character creation (P1.7), every life was the cave orphan who went along: the garrison's
@@ -360,14 +374,18 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const owned = Array.isArray(p.nodes)
       ? (p.nodes as unknown[]).filter((id): id is string => typeof id === 'string')
       : [];
+    const cost = (id: string) =>
+      P13_NODE_COSTS[id] ??
+      P13_NODE_COSTS[Object.keys(RENAMED_NODES).find((old) => RENAMED_NODES[old] === id) ?? ''] ??
+      0;
+    // Today's trees use the renamed ids, so old ones are read through the renames here.
+    for (const [i, id] of owned.entries()) owned[i] = renamedNode(id);
     const kept = new Set<string>();
     // Trees list each node after the nodes it grows from, so one pass settles every chain.
     for (const n of TREES.flatMap((t) => t.nodes)) {
       if (owned.includes(n.id) && n.requires.every((r) => kept.has(r))) kept.add(n.id);
     }
-    const refund = owned
-      .filter((id) => !kept.has(id))
-      .reduce((sum, id) => sum + (P13_NODE_COSTS[id] ?? 0), 0);
+    const refund = owned.filter((id) => !kept.has(id)).reduce((sum, id) => sum + cost(id), 0);
     const insight = (p.insight ?? {}) as Raw;
     const current = typeof insight.current === 'number' ? insight.current : 0;
     return {
@@ -507,6 +525,17 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const p = (s.player ?? {}) as Raw;
     const gear = { weapon: null, armor: null, ring: null, pouch: null, treasures: [] };
     return { ...old, version: 12, state: { ...s, player: { ...p, gear, bonds: {} } } };
+  },
+
+  // v12, P2.4: the placement pass's old node names. v13 learns the renamed ids (`RENAMED_NODES`);
+  // a node learned under its old name is the same node, so nothing is refunded.
+  12: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const nodes = Array.isArray(p.nodes)
+      ? (p.nodes as unknown[]).map((id) => (typeof id === 'string' ? renamedNode(id) : id))
+      : p.nodes;
+    return { ...old, version: 13, state: { ...s, player: { ...p, nodes } } };
   },
 };
 
