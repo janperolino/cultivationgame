@@ -5,7 +5,7 @@
 import { card } from './cards/index.ts';
 import { GRADES, type GradeId, type LadderId } from './cultivation.ts';
 import { BRANCHES, HOUR_KINDS, HOUR_OPENINGS, SLEEP_FREED_TEXT, type HourKind } from './hours.ts';
-import { manual } from './manuals.ts';
+import { hasManual, manual } from './manuals.ts';
 import { MASTERY } from './mastery.ts';
 import { method } from './methods.ts';
 import { originPath, type OriginChoice, type OriginId } from './origins.ts';
@@ -13,7 +13,7 @@ import { realm, stageName, type RealmId } from './realms.ts';
 import { routine } from './routines.ts';
 import { talent } from './talents.ts';
 import { technique } from './techniques.ts';
-import { anyNode } from './nodes.ts';
+import { anyNode, hasAnyNode } from './nodes.ts';
 
 export type EventValue = string | number | boolean | null;
 export type EventData = Readonly<Record<string, EventValue>>;
@@ -138,10 +138,14 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
       : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
   spar: (d, w) =>
     `${w.name} spars with ${s(d.foe)} ${SPAR_ENDS[s(d.result)] ?? 'and walks away'}${n(d.turns) > 0 ? ` in ${n(d.turns)} exchange${n(d.turns) === 1 ? '' : 's'}` : ''}.`,
-  node: (d, w) => `${w.name} comprehends ${anyNode(s(d.node)).name}.`,
+  // A node or manual a save names but the game no longer holds (a made-up one, a removed one) is
+  // worded, never thrown on, so one old line never blanks the chronicle.
+  node: (d, w) =>
+    `${w.name} comprehends ${hasAnyNode(s(d.node)) ? anyNode(s(d.node)).name : 'a node no longer written'}.`,
   'first-breath': (_d, w) =>
     `${w.name} draws a bright orb of qi in from the air of the cave, and the breath after it runs deeper.`,
-  manual: (d, w) => `${w.name} ${s(d.how)} the ${manual(s(d.manual)).name}.`,
+  manual: (d, w) =>
+    `${w.name} ${s(d.how)} ${hasManual(s(d.manual)) ? `the ${manual(s(d.manual)).name}` : 'a manual no longer written'}.`,
   technique: (d, w) => `${w.name} ${s(d.how)} ${technique(s(d.technique)).name}.`,
   method: (d, w) => `${w.name} ${s(d.how)} the ${method(s(d.method)).name}.`,
   'method-switch': (d, w) =>

@@ -36,6 +36,11 @@ import type { GameStore } from '../store.ts';
 
 export type Output = string | string[];
 
+// `shelf`'s made-up manuals are known from the start in dev builds, before any save loads, so a
+// life the command filled reloads with its bookcase whole. Production builds never hold them.
+const MADE_UP = madeUpManuals(150);
+if (import.meta.env.DEV) registerManuals(MADE_UP.manuals);
+
 interface Command {
   usage: string;
   help: string;
@@ -299,13 +304,10 @@ export const COMMANDS: Record<string, Command> = {
     },
   },
   shelf: {
-    usage: 'shelf [count]',
-    help: 'Fills the bookcase with made-up manuals (150 by default), most finished. A reload forgets them until you run it again.',
-    run([n], store) {
-      const count = n ? Number(n) : 150;
-      if (!Number.isInteger(count) || count < 1) return `"${n}" is not a count.`;
-      const made = madeUpManuals(count);
-      registerManuals(made.manuals);
+    usage: 'shelf',
+    help: 'Fills the bookcase with 150 made-up manuals, most finished. Dev builds only.',
+    run(_args, store) {
+      const made = MADE_UP;
       const add = (have: string[], more: string[]) => [...new Set([...have, ...more])];
       return apply(
         store,
@@ -318,7 +320,7 @@ export const COMMANDS: Record<string, Command> = {
             ),
             nodes: add(s.player.nodes, made.learned),
           }),
-        `Shelved ${count} made-up manuals.`,
+        `Shelved ${made.manuals.length} made-up manuals.`,
       );
     },
   },

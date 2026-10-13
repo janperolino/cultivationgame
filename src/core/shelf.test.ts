@@ -16,7 +16,8 @@ import {
   shelfTally,
   type Shelf,
 } from './manuals.ts';
-import { newLife, withPlayer, type Cultivator } from './state.ts';
+import { eventText } from './chronicle.ts';
+import { chronicleEvent, newLife, withPlayer, type Cultivator } from './state.ts';
 
 const life = newLife({ name: 'Han Li', seed: 'bookcase' });
 // A life with nothing on its bookcase: no method, technique or manual.
@@ -121,5 +122,23 @@ describe('the bookcase', () => {
     const done = withPlayer(base, { ...c, nodes: [...c.nodes, ...m.nodes.map((n) => n.id)] });
     expect(manualFinished(done.player, m)).toBe(true);
     expect(shelfTally(shelf(done.player))).toMatchObject({ open: 0, finished: 1 });
+  });
+});
+
+describe('a save naming what the game no longer holds', () => {
+  it('words a chronicle line on an unknown node or manual instead of throwing', () => {
+    const who = [base.player.id];
+    const node = chronicleEvent(0, 'node', { node: 'made-up-9999-0' }, who, null);
+    const book = chronicleEvent(
+      0,
+      'manual',
+      { manual: 'made-up-9999', how: 'is handed' },
+      who,
+      null,
+    );
+    expect(eventText(base, node)).toBe('Han Li comprehends a node no longer written.');
+    expect(eventText(base, book)).toBe('Han Li is handed a manual no longer written.');
+    const known = chronicleEvent(0, 'node', { node: made.manuals[0]!.nodes[0]!.id }, who, null);
+    expect(eventText(base, known)).toBe(`Han Li comprehends ${made.manuals[0]!.nodes[0]!.name}.`);
   });
 });
