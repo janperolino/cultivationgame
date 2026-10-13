@@ -3,7 +3,7 @@ import { eventText, noteText } from './chronicle.ts';
 import { GROWTH_STATS, METHODS, method, nextChapter, previousChapter } from '../content/methods.ts';
 import { METHOD_MASTERY, TECHNIQUE_MASTERY } from '../content/mastery.ts';
 import { RARITIES, rarity, rarityMultiplier, rollRarity } from '../content/rarity.ts';
-import { stepSize, tierGap } from '../content/realms.ts';
+import { realmSize, realmSpread, stepSize, tierStep } from '../content/realms.ts';
 import { MAJOR_INJURY_DAYS } from '../content/cultivation.ts';
 import {
   attemptBreakthrough,
@@ -87,18 +87,21 @@ const ORIGIN_METHODS = [
 ];
 
 describe('rarity', () => {
-  it('multiplies by gap^f, the gap out of the thing’s own tier', () => {
-    expect([1, 2, 3, 9].map(tierGap)).toEqual([3, 5.5, 10, 10]);
-    // The design's rows: into Foundation, and from Nascent Soul up.
+  it('is a band in stage words, measured in the step out of the thing’s own tier', () => {
+    expect([1, 2, 3, 4, 9].map(tierStep)).toEqual([3.1, 4.6, 6.7, 10, 46]);
+    // The design's rows: tier 1 (step ×3.1) and tier 3 (step ×6.7).
     const rows = {
-      3: [0.8, 1, 1.1, 1.25, 1.5, 2.3, 2.7],
-      10: [0.6, 1, 1.25, 1.6, 2.2, 5.6, 7.9],
+      3.1: [0.8, 1, 1.2, 1.5, 2.5, 3.1, 4.35],
+      6.7: [0.8, 1, 1.2, 1.5, 4.6, 6.7, 11.85],
     };
-    for (const [gap, row] of Object.entries(rows)) {
+    for (const [step, row] of Object.entries(rows)) {
       RARITIES.forEach((r, i) => {
-        expect(rarityMultiplier(r.id, Number(gap)), `${r.id} at ×${gap}`).toBeCloseTo(row[i]!, 1);
+        expect(rarityMultiplier(r.id, Number(step)), `${r.id} at ×${step}`).toBeCloseTo(row[i]!, 1);
       });
     }
+    // Purple is the realm's peak, gold the next realm's first stage.
+    expect(rarityMultiplier('purple', 3.1)).toBeCloseTo(realmSpread('qi-condensation'));
+    expect(10 * rarityMultiplier('gold', 3.1)).toBeCloseTo(realmSize('foundation-establishment'));
   });
 
   it('rolls on the talent and loot table', () => {
@@ -113,9 +116,9 @@ describe('rarity', () => {
     ]);
   });
 
-  it('brings more properties, check bonuses and price as it climbs', () => {
+  it('brings more properties, Accuracy and price as it climbs', () => {
     expect(RARITIES.map((r) => r.properties + (r.unique ? 1 : 0))).toEqual([0, 0, 1, 1, 2, 3, 4]);
-    expect(RARITIES.map((r) => r.check)).toEqual([0, 0, 0, 0, 0, 2, 4]);
+    expect(RARITIES.map((r) => r.accuracy)).toEqual([1, 1, 1, 1, 1, 1.2, 1.4]);
     expect(RARITIES.map((r) => r.price)).toEqual([0.5, 1, 2, 5, 15, 50, 200]);
   });
 });
@@ -161,13 +164,13 @@ describe('method speed', () => {
   it('is tier bonus × rarity × mastery, times the fit, from layer 4', () => {
     const speeds = [0, 1, 2, 3, 4].map((lv) => qiSpeed(on(l4, 'garrison-standard', lv)).total);
     expect(speeds).toEqual([0.6, 0.8, 1, 1.1, 1.2].map((x) => expect.closeTo(x, 5)));
-    // A gold method on the mutated root it fits: root ×2 × 3^0.75.
+    // A gold method on the mutated root it fits: root ×2 × the next realm's size, 3.1.
     const gold = on(at(player({ root: 'mutated' }), 'qi', { stage: 4 }), 'thunder-swallowing');
-    expect(methodSpeed(gold, 'qi').rarity).toBeCloseTo(3 ** 0.75);
-    expect(qiSpeed(gold).total).toBeCloseTo(2 * 3 ** 0.75);
-    // A gray method that fits a mutated root poorly: ×2 × 3^−0.2 × 0.6.
+    expect(methodSpeed(gold, 'qi').rarity).toBeCloseTo(3.1);
+    expect(qiSpeed(gold).total).toBeCloseTo(2 * 3.1);
+    // A gray method that fits a mutated root poorly: ×2 × 0.8 × 0.6.
     const gray = on(at(player({ root: 'mutated' }), 'qi', { stage: 4 }), 'market-stall');
-    expect(qiSpeed(gray).total).toBeCloseTo(2 * 3 ** -0.2 * 0.6);
+    expect(qiSpeed(gray).total).toBeCloseTo(2 * 0.8 * 0.6);
   });
 
   it('ignores the method part in layers 1 to 3', () => {
@@ -175,13 +178,18 @@ describe('method speed', () => {
     expect(methodSpeed(on(at(player(), 'qi', { stage: 3 }), 'pine-wind', 0), 'qi').total).toBe(1);
   });
 
-  it('counts the tier bonus once, by the gap out of the ladder’s realm', () => {
+  it('counts the tier bonus once, by the step out of the ladder’s realm', () => {
     const chapter = on(l4, 'garrison-standard-foundation');
-    expect(methodSpeed(chapter, 'qi')).toMatchObject({ tier: 3, rarity: 1, mastery: 1, total: 3 });
+    expect(methodSpeed(chapter, 'qi')).toMatchObject({
+      tier: 3.1,
+      rarity: 1,
+      mastery: 1,
+      total: 3.1,
+    });
     const far = { ...method('garrison-standard-foundation'), tier: 5 };
-    expect(tierBonus(l4, far)).toBe(3);
+    expect(tierBonus(l4, far)).toBe(3.1);
     const foundation = at(l4, 'qi', { realm: 'foundation-establishment', stage: 1 });
-    expect(tierBonus(foundation, { ...far, tier: 3 })).toBe(5.5);
+    expect(tierBonus(foundation, { ...far, tier: 3 })).toBe(4.6);
   });
 });
 
@@ -425,7 +433,7 @@ describe('contemplation', () => {
 });
 
 describe('growth', () => {
-  const redShare = (3 ** 0.9 - 1) / 8;
+  const redShare = (3.1 ** 1.3 - 1) / 8;
 
   it('records the growth of the method that climbed each stage, split by its profile', () => {
     const c = on(player(), 'primordial-origin');
@@ -470,10 +478,10 @@ describe('growth', () => {
     };
     const realms = realmGrowth(l);
     expect(realms[0]).toMatchObject({ climbed: 8, of: 8, methods: ['primordial-origin'] });
-    expect(realms[0]!.growth.qiPool).toBeCloseTo((3 ** 0.9 - 1) * 0.4);
+    expect(realms[0]!.growth.qiPool).toBeCloseTo((3.1 ** 1.3 - 1) * 0.4);
     expect(realms[1]).toMatchObject({ climbed: 1, of: 4, methods: [null] });
     // Qi Condensation weighs 1 and Foundation 9: a red foundation still shows a little.
-    expect(ladderGrowth(l).qiPool).toBeCloseTo(((3 ** 0.9 - 1) * 0.4) / 10);
+    expect(ladderGrowth(l).qiPool).toBeCloseTo(((3.1 ** 1.3 - 1) * 0.4) / 10);
   });
 
   it('folds into the stats beside the active method’s properties', () => {

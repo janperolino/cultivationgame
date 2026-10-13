@@ -11,7 +11,7 @@ import {
 } from '../content/cultivation.ts';
 import { hasItem, item } from '../content/items.ts';
 import { rarityMultiplier } from '../content/rarity.ts';
-import { REALMS, realmScale, tierGap } from '../content/realms.ts';
+import { REALMS, realmScale, tierStep } from '../content/realms.ts';
 import { fromWorld, type Note } from './cultivation.ts';
 import { addItem, itemCount, type Cultivator } from './state.ts';
 import { addToxicity, pillDose, toxicityScale } from './toxicity.ts';
@@ -50,7 +50,7 @@ export function consumeItem(c: Cultivator, id: string, day: number): ConsumeResu
         e.days *
         PER_DAY[e.ladder] *
         realmScale(tierRealm) *
-        rarityMultiplier(it.rarity, tierGap(it.tier)) *
+        rarityMultiplier(it.rarity, tierStep(it.tier)) *
         scale;
       next = fromWorld(next, e.ladder, fuel);
       fed = e.ladder;

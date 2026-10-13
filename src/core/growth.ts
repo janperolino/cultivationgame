@@ -12,7 +12,7 @@ import {
   REALMS,
   realmIndex,
   realmScale,
-  tierGap,
+  tierStep,
   type RealmId,
 } from '../content/realms.ts';
 import type { StatId } from '../content/stats.ts';
@@ -20,9 +20,9 @@ import type { Ladder, StageGrowth } from './state.ts';
 
 export type Growth = Partial<Record<StatId, number>>;
 
-/** What a method leaves over a full realm, as a fraction: gap^f × fit − 1. */
+/** What a method leaves over a full realm, as a fraction: the rarity band × fit − 1. */
 export function realmGrowthTotal(m: Method | null, fit: number): number {
-  return m ? rarityMultiplier(m.rarity, tierGap(m.tier)) * fit - 1 : 0;
+  return m ? rarityMultiplier(m.rarity, tierStep(m.tier)) * fit - 1 : 0;
 }
 
 /** The record one stage leaves, climbed with this method (or none) at this fit. */

@@ -25,13 +25,8 @@ export const REALMS = [
     /** The item a major breakthrough into this realm uses up, or null. */
     gateItem: null,
     gate: 'none: the tutorial',
-    /** The damage step b for crossing into this realm (design § Combat). */
-    breakStep: 1,
-    /**
-     * The gap out of this realm: how much more a foe one realm up hits for (design § Tier,
-     * rarity and pedigree). Rarity and a method's tier bonus read it.
-     */
-    gap: 3,
+    /** The size step into this realm (design § Combat, Realms are sizes): 1 at the foot. */
+    step: 1,
     /** Insight ever earned that a major breakthrough into this realm needs. */
     insightThreshold: 0,
     /** Insight per day of study at this realm; higher realms understand more per day. */
@@ -51,8 +46,7 @@ export const REALMS = [
     lifespan: 200,
     gateItem: 'foundation-pill',
     gate: 'a Foundation Pill',
-    breakStep: 1.75,
-    gap: 5.5,
+    step: 3.1,
     insightThreshold: 500,
     insightRate: 3,
     steps: HIGH_STEPS,
@@ -67,8 +61,7 @@ export const REALMS = [
     lifespan: 500,
     gateItem: 'core-forming-pill',
     gate: 'a core-forming pill',
-    breakStep: 3.2,
-    gap: 10,
+    step: 4.6,
     insightThreshold: 4_000,
     insightRate: 9,
     steps: HIGH_STEPS,
@@ -83,8 +76,7 @@ export const REALMS = [
     lifespan: 1000,
     gateItem: null,
     gate: 'a 3-wave lightning tribulation and your first heart demon',
-    breakStep: 5.8,
-    gap: 10,
+    step: 6.7,
     insightThreshold: 40_000,
     insightRate: 27,
     steps: HIGH_STEPS,
@@ -99,8 +91,7 @@ export const REALMS = [
     lifespan: 2000,
     gateItem: null,
     gate: 'a longer tribulation and a stronger heart demon',
-    breakStep: 5.8,
-    gap: 10,
+    step: 10,
     insightThreshold: 400_000,
     insightRate: 81,
     steps: HIGH_STEPS,
@@ -115,8 +106,7 @@ export const REALMS = [
     lifespan: 3000,
     gateItem: null,
     gate: 'a longer tribulation and a stronger heart demon',
-    breakStep: 5.8,
-    gap: 10,
+    step: 14,
     insightThreshold: 4_000_000,
     insightRate: 243,
     steps: HIGH_STEPS,
@@ -131,8 +121,7 @@ export const REALMS = [
     lifespan: 5000,
     gateItem: null,
     gate: 'a longer tribulation and a stronger heart demon',
-    breakStep: 5.8,
-    gap: 10,
+    step: 22,
     insightThreshold: 40_000_000,
     insightRate: 729,
     steps: HIGH_STEPS,
@@ -147,8 +136,7 @@ export const REALMS = [
     lifespan: 8000,
     gateItem: null,
     gate: 'a longer tribulation and a stronger heart demon',
-    breakStep: 5.8,
-    gap: 10,
+    step: 31,
     insightThreshold: 400_000_000,
     insightRate: 2187,
     steps: HIGH_STEPS,
@@ -163,8 +151,7 @@ export const REALMS = [
     lifespan: 12000,
     gateItem: null,
     gate: 'the last tribulation',
-    breakStep: 5.8,
-    gap: 10,
+    step: 46,
     insightThreshold: 4_000_000_000,
     insightRate: 6561,
     steps: HIGH_STEPS,
@@ -224,14 +211,37 @@ export function stepSize(id: RealmId, stage: number): number {
   return units * realmScale(id);
 }
 
-/** The gap out of a realm: ×3 at Qi Condensation, ×5.5 at Foundation, ×10 from Core Formation up. */
-export function realmGap(id: RealmId): number {
-  return realm(id).gap;
+/** The sheet's size at Qi Condensation layer 1: every line of a fresh cultivator starts here. */
+export const SIZE_BASE = 10;
+/** A realm's stages climb to this share of the step out of it, so a peak sits just under the next realm. */
+export const SPREAD_SHARE = 0.8;
+
+/** The size of this realm's first stage: 10 at Qi Condensation, 31 at Foundation, 143 at Core Formation. */
+export function realmSize(id: RealmId): number {
+  let size = SIZE_BASE;
+  for (let i = 1; i <= realmIndex(id); i++) size *= REALMS[i]!.step;
+  return size;
 }
 
-/** The gap out of a thing's own tier, which its rarity multiplies by: ×3 at tier 1, ×5.5 at tier 2. */
-export function tierGap(tier: number): number {
-  return REALMS[Math.min(Math.max(tier, 1), REALMS.length) - 1]!.gap;
+/** The step out of a realm: ×3.1 at Qi Condensation, ×4.6 at Foundation; the top realm repeats its own. */
+export function stepOut(id: RealmId): number {
+  const i = realmIndex(id);
+  return (REALMS[i + 1] ?? REALMS[i]!).step;
+}
+
+/** The step out of a thing's own tier, which its rarity band is measured in: ×3.1 at tier 1, ×4.6 at tier 2. */
+export function tierStep(tier: number): number {
+  return stepOut(tierRealm(tier).id);
+}
+
+/** The realm a tier belongs to: tier 1 is Qi Condensation. */
+export function tierRealm(tier: number): Realm {
+  return REALMS[Math.min(Math.max(tier, 1), REALMS.length) - 1]!;
+}
+
+/** How far a realm's stages climb, first stage to peak: the step out of it to SPREAD_SHARE. */
+export function realmSpread(id: RealmId): number {
+  return stepOut(id) ** SPREAD_SHARE;
 }
 
 /**

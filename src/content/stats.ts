@@ -151,13 +151,13 @@ export const STATS = {
     what: 'yin chill and ghost damage turned aside',
     arrives: 'combat',
   },
-  // The fighting-up ledger's three axes (design § Combat), carried by capstones and a few late
-  // notables. Harm and Hold multiply; Hit adds to every check.
-  hit: { name: 'Hit', unit: 'points', what: 'every check in a fight', arrives: 'combat' },
+  // The sheet's lines (design § Combat), carried by capstones and a few late notables: Hit
+  // multiplies Accuracy, Harm multiplies Attack, Hold multiplies HP.
+  hit: { name: 'Hit', unit: 'points', what: 'Accuracy, 5% a point', arrives: 'combat' },
   harm: {
     name: 'Harm',
     unit: 'times',
-    what: 'all the damage you deal, the axis a foe a realm up leads on',
+    what: 'Attack: all the damage you deal',
     arrives: 'combat',
   },
   hold: {

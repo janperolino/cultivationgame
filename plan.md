@@ -39,7 +39,7 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 - [x] D2 Design: items and gear, enemies and pedigree, combat Dao nodes, the Border Wilds canon pass
 - [x] P2.1 Combat rules core
 - [x] D2.0.1 Design: the sheet, realm sizes and rarity bands
-- [ ] P2.1b The sheet: combat rebuilt on six stats
+- [x] P2.1b The sheet: combat rebuilt on six stats
 - [ ] P2.2 Enemies and the fight sim
 - [ ] D2.1 Design: breakthrough grades
 - [ ] P2.3 Combat screen, items and the bag
@@ -453,6 +453,9 @@ Write questions here when a phase hits something the design doesn't cover, with 
 ## Log
 
 Newest first. 3–5 lines per phase.
+
+- 2026-10-12, P2.1b: the combat core rebuilt on the sheet, in the same session as D2.0.1 at Jan's call. `content/realms.ts` carries each realm's size step (`step`, `realmSize`, `stepOut`, `tierStep`, `realmSpread`) and `rarity.ts` the bands (`mult` × step^`exponent`, with `accuracy` for gold and red); `rarityMultiplier` keeps its name, so methods, growth and items took the bands with no code change (a purple method now runs ×2.5, gold ×3.1, red ×4.35 at tier 1; the white-method pacing targets are untouched, and the first-hour sim is unchanged). `core/combat/sheet.ts` replaces the ladder: `rungSize` (grade as stages along the climb), `tierScale`, `hitChance`, `bandOf` for stage words. `check.ts` is the three rolls (backfire by toxicity, hit by ratio, crit by Fortune), `damage.ts` the formula with a 0.85–1.15 spread, `combatant.ts` builds HP and Qi from the sizes and `sheet(c)` gives the six lines with bands for the Character screen; statuses are Accuracy and Evasion multipliers; `fight.ts` keeps the turn and compares the two sheets, with talk and flight on the square root of the gap; outcomes carry `chance` instead of roll, total and tn, and the log line reads `Hit 57% · 25 fire · Elder Mo 151/176 · Qi 52/94 · grass burning (2 turns)`, which the test reproduces. Mastery is ×1.15 a level (`masteryAccuracy`, `techniqueAccuracy`), shown on the Techniques screen. `combat.test.ts` has 32 tests (sizes and bands, checks, damage, turns, qi, statuses, creativity, talk, flight, items, gear), seeds found by searching the stream.
+  - For P2.2: NPC templates set rungs, armor and weapon bands and a profile; `sheet(c)` is what the sim should print beside each win rate. The hit, harm and hold stats now multiply Accuracy, Attack and HP.
 
 - 2026-10-12, D2.0.1 (emergency planning after P2.1, Jan's calls): combat loses the d20 and the gap tables for one sheet of six plain numbers, Accuracy, Evasion, Attack, Defense, HP and Qi, compared by ratio (hit = Accuracy ÷ (Accuracy + Evasion), damage = base × Attack ÷ Defense), the PoE shape where realm is just a bigger number. Realms are sizes: 10 at Qi Condensation layer 1, stepping ×3.1, ×4.6, ×6.7, ×10, ×14, ×22, ×31, ×46 a realm, so one realm up is ×30 the power into Foundation and ×100,000 at the top; a realm's peak climbs to four-fifths of the step, so the half-step fight (layer 9 against early Foundation, 44%) exists at every realm. Rarity is a band in stage words: purple is your realm's peak, gold the next realm's first stage, red its middle; each source sizes one line and lines multiply within themselves, so a red art, a red sword and Daos make a glass cannon two realms up. The ledger is rewritten in the six lines (Hit, Harm and Hold are gone), the worked turn redone (`Hit 57% · 25 fire`), graze dropped, backfire tied to toxicity, and § Tier, rarity and pedigree, § Items and gear and the Dao skeletons reworded. P2.1b rebuilds the core on the sheet before P2.2's sim; P2.2 and P2.3 then show every technique's hit chance and damage against the selected foe and the sheet with bands on the Character screen.
 

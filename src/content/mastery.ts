@@ -41,8 +41,8 @@ export const METHOD_MASTERY: MasteryTable & { speed: readonly number[] } = {
 /** Practice days and bursts at tier t are this to the power t − 1 times tier 1's. */
 export const MASTERY_TIER_SCALE = 3;
 
-/** Each technique mastery level adds this to checks with it, Glimpse included. */
-export const MASTERY_CHECK_BONUS = 2;
+/** Each technique mastery level past Glimpse multiplies Accuracy with it by this: ×1.75 at Origin. */
+export const MASTERY_ACCURACY = 1.15;
 
 /**
  * Kinship (design § Cultivation, lines, chapters and kinship): two techniques of different lines

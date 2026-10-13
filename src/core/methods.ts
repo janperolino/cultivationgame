@@ -16,7 +16,7 @@ import {
   type Upkeep,
 } from '../content/methods.ts';
 import { rarity, rarityMultiplier, type Rarity } from '../content/rarity.ts';
-import { realmGap, realmIndex, tierGap } from '../content/realms.ts';
+import { realmIndex, stepOut, tierStep } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
 import {
   chapterStartLevel,
@@ -106,17 +106,17 @@ export function methodCapped(c: Cultivator, m: Method): boolean {
 }
 
 /**
- * A method whose tier sits above its ladder's realm cultivates faster by one realm's gap, out of
- * the ladder's realm: ×3 at Qi Condensation. It counts once, however far above the tier sits.
+ * A method whose tier sits above its ladder's realm cultivates faster by one realm's step, out of
+ * the ladder's realm: ×3.1 at Qi Condensation. It counts once, however far above the tier sits.
  */
 export function tierBonus(c: Cultivator, m: Method): number {
   const l = c[m.ladder];
-  return m.tier > realmIndex(l.realm) + 1 ? realmGap(l.realm) : 1;
+  return m.tier > realmIndex(l.realm) + 1 ? stepOut(l.realm) : 1;
 }
 
 export interface MethodSpeed {
   tier: number;
-  /** gap^f, the gap out of the method's own tier. */
+  /** The rarity band, measured in the step out of the method's own tier. */
   rarity: number;
   mastery: number;
   /** The method's tier sits below the ladder's realm, so it gains nothing. */
@@ -134,7 +134,7 @@ export function methodSpeed(c: Cultivator, which: LadderId): MethodSpeed {
     return { tier: 1, rarity: 1, mastery: 1, capped, total: capped ? 0 : 1 };
   }
   const tier = tierBonus(c, m);
-  const rar = rarityMultiplier(m.rarity, tierGap(m.tier));
+  const rar = rarityMultiplier(m.rarity, tierStep(m.tier));
   const mastery = METHOD_MASTERY.speed[methodMastery(c, m.id).level]!;
   return { tier, rarity: rar, mastery, capped, total: capped ? 0 : tier * rar * mastery };
 }

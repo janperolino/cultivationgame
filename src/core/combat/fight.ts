@@ -3,23 +3,23 @@
 // no rewrite. Each action is one main (technique, strike, defend, item, command, talk, flee) and
 // one minor (move, take cover, swap artifact, interact). Actors go in Agility order, ties in the
 // fight's own order, the minor before the main. Every roll comes from the rng passed in, the
-// life's `combat` stream, so a seed replays the same fight. Every outcome carries the five tags
-// (form, damage type, realm, result, status) that effects, sound and the log line read.
+// life's `combat` stream, so a seed replays the same fight. An attack is two sheets compared:
+// the actor's Accuracy against the target's Evasion for the hit, the actor's Attack over the
+// target's Defense for the damage. Every outcome carries the five tags (form, damage type, realm,
+// result, status) that effects, sound and the log line read.
 import {
-  ATTACK_TN_BASE,
   BACKFIRE_DAMAGE,
-  COVER_TN,
-  DAO_CHECK,
-  DAO_DAMAGE,
+  COVER_EVASION,
+  CREATIVITY_STEP,
+  DAO_STEP,
+  DEFEND_EVASION,
   DEFEND_QI,
-  DEFEND_TN,
-  FLEE_TN_BASE,
   MAX_CREATIVITY,
   QI_REGEN,
+  RESOLVE_BASE,
   SOFT_GAP,
   STRIKE_FORM,
   STRIKE_POWER,
-  TALK_TN_BASE,
   statusInfo,
   statusOf,
   type DamageType,
@@ -29,15 +29,29 @@ import {
 } from '../../content/combat.ts';
 import { TOXICITY_MAX, type LadderId } from '../../content/cultivation.ts';
 import type { Item } from '../../content/items.ts';
-import { rarity, rarityMultiplier } from '../../content/rarity.ts';
-import { realmIndex, tierGap, type RealmId } from '../../content/realms.ts';
+import { rarityAccuracy, rarityMultiplier } from '../../content/rarity.ts';
+import { realmIndex, tierStep, type RealmId } from '../../content/realms.ts';
 import type { Form, Technique } from '../../content/techniques.ts';
 import type { Rng } from '../rng.ts';
 import { doseAt } from '../toxicity.ts';
-import { judge, rollD20, type CheckResult } from './check.ts';
-import { statusFlag, statusSum, type Combatant } from './combatant.ts';
-import { comboMultiplier, damage, damagePhase, elementMultiplier, nextCombo } from './damage.ts';
-import { ladderGap, tierRung, tierScale, type Rung } from './ladder.ts';
+import { judge } from './check.ts';
+import {
+  agilityFactor,
+  defense,
+  evasion,
+  statusFactor,
+  statusFlag,
+  type Combatant,
+} from './combatant.ts';
+import {
+  comboMultiplier,
+  damage,
+  damagePhase,
+  elementMultiplier,
+  nextCombo,
+  rollSpread,
+} from './damage.ts';
+import { hitChance, rungSize, tierRung, tierScale, type Rung } from './sheet.ts';
 
 export const TALK_STYLES = ['bluff', 'intimidate', 'bargain', 'surrender'] as const;
 export type TalkStyle = (typeof TALK_STYLES)[number];
@@ -104,9 +118,8 @@ export interface Outcome {
   realm: RealmId;
   result: OutcomeResult;
   status: StatusId | null;
-  roll?: number;
-  total?: number;
-  tn?: number;
+  /** The chance the action had: of landing, of escaping, of swaying. */
+  chance?: number;
   damage?: number;
   /** Qi spent (or, negative, restored). */
   qi?: number;
@@ -206,7 +219,7 @@ export function resolveTurn(fight: Fight, actions: readonly Action[], rng: Rng):
       skipped.push({ actor: a.actor, reason: 'not commanded' });
       continue;
     }
-    actor.guard = 0;
+    actor.guard = 1;
     const lit = a.minor ? minor(f, actor, a.minor) : [];
     if (!a.main) continue;
     if (statusFlag(actor, 'skipMain')) {
@@ -263,7 +276,7 @@ function hurt(c: Combatant, amount: number): void {
 
 /** The minor action; returns the features it set burning. */
 function minor(f: Fight, actor: Combatant, m: MinorAction): NonNullable<Outcome['features']> {
-  if (m.type === 'take_cover') actor.guard += COVER_TN;
+  if (m.type === 'take_cover') actor.guard *= COVER_EVASION;
   if (m.type !== 'interact' || !m.onto) return [];
   const from = f.features.find((x) => x.id === m.feature);
   const onto = f.features.find((x) => x.id === m.onto);
@@ -279,25 +292,26 @@ function minor(f: Fight, actor: Combatant, m: MinorAction): NonNullable<Outcome[
 
 /**
  * Creativity counts only for real things (the scene's features, the actor's techniques and
- * items), and the same trick earns nothing the second time in a fight.
+ * items), and the same trick earns nothing the second time in a fight. Returns what it multiplies
+ * Accuracy by.
  */
 function creative(f: Fight, actor: Combatant, a: Action): number {
   const bonus = Math.min(MAX_CREATIVITY, Math.max(0, Math.round(a.creativity ?? 0)));
-  if (bonus === 0) return 0;
+  if (bonus === 0) return 1;
   const real = (a.uses ?? []).filter(
     (u) => f.features.some((x) => x.id === u) || u in actor.techniques || u in actor.items,
   );
-  if (real.length === 0) return 0;
+  if (real.length === 0) return 1;
   const trick = [...new Set(real)].sort().join('+');
-  if (actor.tricks.includes(trick)) return 0;
+  if (actor.tricks.includes(trick)) return 1;
   actor.tricks = [...actor.tricks, trick];
-  return bonus;
+  return CREATIVITY_STEP ** bonus;
 }
 
-/** The check bonus and damage bonus from the Daos an action is tagged with. */
-function daoBonus(actor: Combatant, daos: readonly string[]): { check: number; damage: number } {
+/** What the Daos an action is tagged with multiply Accuracy and Attack by: ×1.05 a tier. */
+function daoFactor(actor: Combatant, daos: readonly string[]): number {
   const tiers = daos.reduce((sum, d) => sum + (actor.daos[d] ?? 0), 0);
-  return { check: DAO_CHECK * tiers, damage: DAO_DAMAGE * tiers };
+  return DAO_STEP ** tiers;
 }
 
 /** Which ladder an attack compares: soul for soul damage, else its own. */
@@ -308,12 +322,14 @@ function clashLadder(ladder: LadderId, type: DamageType): LadderId {
 interface Attack {
   form: Form;
   type: DamageType;
-  power: number;
+  /** The base damage, sized by the technique's tier. */
+  base: number;
   ladder: LadderId;
   /** The rung the attack strikes from: the actor's, or a talisman's own tier if higher. */
   rung: Rung;
-  check: number;
-  dao: number;
+  /** What multiplies the rung's size into Accuracy and into Attack. */
+  accuracy: number;
+  attack: number;
   qi: boolean;
 }
 
@@ -343,29 +359,28 @@ function main(
       const target = foe(f, actor, m.target);
       if (!target) return 'no target';
       actor.qi -= cost;
-      const daos = daoBonus(actor, t.daos);
+      const dao = daoFactor(actor, t.daos);
       const onWeapon = t.daos.includes(actor.weapon.kind);
       const physical = t.damage === 'physical' ? actor.physicalPower : 1;
       const ladder = clashLadder(t.ladder, t.damage);
       const o = attack(f, actor, target, rng, {
         form: t.form,
         type: t.damage,
-        power:
-          t.power *
-          rarityMultiplier(t.rarity, tierGap(t.tier)) *
-          tierScale(t.tier) *
+        base: t.power * tierScale(t.tier),
+        ladder,
+        rung: actor.rungs[ladder],
+        accuracy:
+          known.accuracy *
+          dao *
+          rarityAccuracy(t.rarity) *
+          (onWeapon ? actor.weapon.accuracy : 1) *
+          creativity,
+        attack:
+          rarityMultiplier(t.rarity, tierStep(t.tier)) *
+          dao *
           actor.techniquePower *
           physical *
           (onWeapon ? actor.weapon.technique : 1),
-        ladder,
-        rung: actor.rungs[ladder],
-        check:
-          known.check +
-          daos.check +
-          rarity(t.rarity).check +
-          (onWeapon ? actor.weapon.hit : 0) +
-          creativity,
-        dao: daos.damage,
         qi: true,
       });
       return {
@@ -380,16 +395,16 @@ function main(
     case 'strike': {
       const target = foe(f, actor, m.target);
       if (!target) return 'no target';
-      const daos = daoBonus(actor, [actor.weapon.kind]);
+      const dao = daoFactor(actor, [actor.weapon.kind]);
       return {
         ...attack(f, actor, target, rng, {
           form: STRIKE_FORM[actor.weapon.kind],
           type: 'physical',
-          power: STRIKE_POWER * actor.weapon.strike * actor.physicalPower,
+          base: STRIKE_POWER * tierScale(realmIndex(actor.rungs.body.realm) + 1),
           ladder: 'body',
           rung: actor.rungs.body,
-          check: daos.check + actor.weapon.hit + creativity,
-          dao: daos.damage,
+          accuracy: dao * actor.weapon.accuracy * creativity,
+          attack: actor.weapon.strike * dao * actor.physicalPower,
           qi: false,
         }),
         action: 'strike',
@@ -397,7 +412,7 @@ function main(
     }
 
     case 'defend': {
-      actor.guard += DEFEND_TN;
+      actor.guard *= DEFEND_EVASION;
       const before = actor.qi;
       actor.qi = Math.min(
         actor.maxQi,
@@ -430,12 +445,11 @@ function main(
         const o = attack(f, actor, target, rng, {
           form: fightUse.form,
           type: fightUse.damage,
-          power:
-            fightUse.power * rarityMultiplier(it.rarity, tierGap(it.tier)) * tierScale(it.tier),
+          base: fightUse.power * tierScale(it.tier),
           ladder: clashLadder('qi', fightUse.damage),
           rung,
-          check: rarity(it.rarity).check + creativity,
-          dao: 0,
+          accuracy: rarityAccuracy(it.rarity) * creativity,
+          attack: rarityMultiplier(it.rarity, tierStep(it.tier)),
           qi: false,
         });
         return { ...o, action: 'item', id: it.id };
@@ -485,12 +499,12 @@ function main(
     case 'talk': {
       const target = foe(f, actor, m.target);
       if (!target) return 'no one to talk to';
-      const gap = ladderGap(actor.rungs.soul, target.rungs.soul);
-      const roll = rollD20(rng);
-      const total =
-        roll + creativity + Math.trunc(SOFT_GAP * gap.check) + statusSum(actor, 'check');
-      const tn = TALK_TN_BASE + target.resolve;
-      const swayed = roll !== 1 && total >= tn;
+      // Soul against soul, feeling the square root of the gap, against the listener's resolve.
+      const mine =
+        rungSize(actor.rungs.soul) ** SOFT_GAP * creativity * statusFactor(actor, 'accuracy');
+      const theirs = rungSize(target.rungs.soul) ** SOFT_GAP * (target.resolve / RESOLVE_BASE);
+      const chance = hitChance(mine, theirs);
+      const swayed = rng.chance(chance);
       // Surrender, accepted, takes you out of the fight; what the other styles win is the
       // speaker's profile and the story's (P2.2, P3.2).
       if (swayed && m.style === 'surrender') actor.state = 'yielded';
@@ -501,9 +515,7 @@ function main(
         type: null,
         realm: realm('soul'),
         result: swayed ? 'swayed' : 'failed',
-        roll,
-        total,
-        tn,
+        chance,
       };
     }
 
@@ -515,22 +527,19 @@ function main(
         actor.state = 'fled';
         return { ...out, result: 'escaped' };
       }
-      // Fleeing feels half the gap to the strongest foe, and must outrun the fastest.
-      const strongest = foes.reduce((a, b) =>
-        ladderGap(b.rungs.qi, a.rungs.qi).check > 0 ? b : a,
+      // Agility against Agility, feeling the square root of the gap to whichever foe is hardest to outrun.
+      const mine =
+        rungSize(actor.rungs.qi) ** SOFT_GAP *
+        agilityFactor(actor) *
+        creativity *
+        statusFactor(actor, 'accuracy');
+      const theirs = Math.max(
+        ...foes.map((c) => rungSize(c.rungs.qi) ** SOFT_GAP * agilityFactor(c)),
       );
-      const gap = ladderGap(actor.rungs.qi, strongest.rungs.qi);
-      const roll = rollD20(rng);
-      const total =
-        roll +
-        (actor.agility - 10) +
-        creativity +
-        Math.trunc(SOFT_GAP * gap.check) +
-        statusSum(actor, 'check');
-      const tn = FLEE_TN_BASE + Math.max(...foes.map((c) => c.agility));
-      const escaped = roll !== 1 && total >= tn;
+      const chance = hitChance(mine, theirs);
+      const escaped = rng.chance(chance);
       if (escaped) actor.state = 'fled';
-      return { ...out, result: escaped ? 'escaped' : 'failed', roll, total, tn };
+      return { ...out, result: escaped ? 'escaped' : 'failed', chance };
     }
   }
 }
@@ -546,7 +555,7 @@ function spend(actor: Combatant, id: string): void {
   actor.items = { ...actor.items, [id]: { ...held, n: held.n - 1 } };
 }
 
-/** An attack's check and damage, with its status on a critical and the backfire on a natural 1. */
+/** An attack: Accuracy against Evasion, then Attack over Defense, with its status on a critical and the backfire. */
 function attack(
   f: Fight,
   actor: Combatant,
@@ -554,11 +563,13 @@ function attack(
   rng: Rng,
   a: Attack,
 ): Omit<Outcome, 'action'> {
-  const gap = ladderGap(a.rung, target.rungs[a.ladder]);
-  const roll = rollD20(rng);
-  const total = roll + a.check + actor.hit + gap.check + statusSum(actor, 'check');
-  const tn = ATTACK_TN_BASE + target.agility + target.guard + statusSum(target, 'tn');
-  const result: CheckResult = judge(roll, total, tn, { fortune: actor.fortune, qi: a.qi });
+  const accuracy = rungSize(a.rung) * a.accuracy * actor.accuracy * statusFactor(actor, 'accuracy');
+  const { result, chance } = judge(rng, accuracy, evasion(target, a.ladder), {
+    fortune: actor.fortune,
+    qi: a.qi,
+    toxicity: actor.toxicity,
+  });
+  const attackValue = rungSize(a.rung) * a.attack;
   const phase = damagePhase(a.type);
   const out = {
     turn: f.turn,
@@ -570,9 +581,7 @@ function attack(
     realm: a.rung.realm,
     result,
     status: null as StatusId | null,
-    roll,
-    total,
-    tn,
+    chance,
   };
 
   if (result === 'miss') {
@@ -580,15 +589,14 @@ function attack(
     return out;
   }
   if (result === 'backfire') {
-    // Qi deviation: the action turns on its actor at half strength, with no gap and no element.
+    // Qi deviation: the action turns on its actor at half strength, with no element.
     const dealt = damage({
-      power: a.power,
-      dao: a.dao,
+      base: a.base * BACKFIRE_DAMAGE,
+      attack: attackValue,
+      defense: defense(actor, a.ladder),
       element: 1,
       resist: actor.resist[a.type] ?? 0,
       result: 'hit',
-      gap: BACKFIRE_DAMAGE,
-      armor: actor.armor,
     });
     hurt(actor, dealt);
     actor.combo = null;
@@ -598,14 +606,14 @@ function attack(
   const combo = nextCombo(actor.combo, phase);
   actor.combo = combo;
   const dealt = damage({
-    power: a.power,
-    dao: a.dao,
+    base: a.base,
+    attack: attackValue,
+    defense: defense(target, a.ladder),
     element: elementMultiplier(phase, target.element),
     resist: target.resist[a.type] ?? 0,
     result,
-    gap: gap.damage,
     combo: comboMultiplier(combo),
-    armor: target.armor,
+    spread: rollSpread(rng),
   });
   hurt(target, dealt);
   let status: StatusId | null = null;

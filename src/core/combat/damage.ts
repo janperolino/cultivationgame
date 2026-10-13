@@ -1,49 +1,53 @@
-// Damage once a check hits (design § Combat):
-//   power × (1 + d_Dao) × m_element × (1 − resist) × m_tier × Π breaks b × 1.2^Δstage
-// rounded to the nearest whole number. The gap term comes from core/combat/ladder.ts; armor
-// divides by its gap^f and a combo multiplies, both 1 when absent. The five-element cycle: an
-// element that overcomes the target's deals ×1.25, one the target's overcomes ×0.8, and chaining
-// elements in generating order (wood, then fire) builds a combo.
+// Damage once a hit lands (design § Combat):
+//   base × Attack ÷ Defense × m_element × (1 − resist) × m_crit × spread
+// rounded to the nearest whole number. Attack and Defense come off the two sheets, and a combo
+// multiplies, 1 when absent. The five-element cycle: an element that overcomes the target's deals
+// ×1.25, one the target's overcomes ×0.8, and chaining elements in generating order (wood, then
+// fire) builds a combo.
 import {
   COMBO_MAX,
   COMBO_STEP,
+  CRIT_DAMAGE,
+  DAMAGE_SPREAD,
   ELEMENT_ADVANTAGE,
   ELEMENT_DISADVANTAGE,
   GENERATES,
   MAX_RESIST,
   OVERCOMES,
-  RESULT_DAMAGE,
   type DamageType,
 } from '../../content/combat.ts';
 import { phaseOf, type Element, type PhaseElement } from '../../content/elements.ts';
+import type { Rng } from '../rng.ts';
 
 export interface DamageInput {
-  power: number;
-  /** The Dao bonus: 0.05 per tier of each Dao the action carries, plus nodes. */
-  dao: number;
+  /** The technique's base, sized by its tier. */
+  base: number;
+  attack: number;
+  defense: number;
   element: number;
   resist: number;
-  result: keyof typeof RESULT_DAMAGE;
-  /** Π breaks b × 1.2^Δstage, attacker over defender. */
-  gap: number;
+  result: 'critical' | 'hit';
   /** The combo multiplier, 1 with no chain. */
   combo?: number;
-  /** Armor's divisor, its tier's gap^f; 1 for white armor or none. */
-  armor?: number;
+  /** The spread roll, 1 for the formula's own value. */
+  spread?: number;
 }
 
 export function damage(i: DamageInput): number {
   const resist = Math.min(MAX_RESIST, i.resist);
   return Math.round(
-    (i.power *
-      (1 + i.dao) *
+    ((i.base * i.attack) / i.defense) *
       i.element *
       (1 - resist) *
-      RESULT_DAMAGE[i.result] *
-      i.gap *
-      (i.combo ?? 1)) /
-      (i.armor ?? 1),
+      (i.result === 'critical' ? CRIT_DAMAGE : 1) *
+      (i.combo ?? 1) *
+      (i.spread ?? 1),
   );
+}
+
+/** A spread roll: anywhere from 0.85 to 1.15. */
+export function rollSpread(rng: Rng): number {
+  return 1 - DAMAGE_SPREAD + 2 * DAMAGE_SPREAD * rng.next();
 }
 
 const ELEMENTAL = new Set<string>([

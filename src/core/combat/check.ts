@@ -1,39 +1,49 @@
-// Checks (design § Combat): d20 plus bonuses against a target number. Beat it by 10, or roll a
-// critical face, for a critical; miss by 1–3 for a half-damage graze; a natural 1 is qi deviation,
-// which backfires when the action used qi and is a plain miss when it didn't. Crits start on a
-// natural 20, and every 4 points of Fortune above 10 adds a face.
+// Checks (design § Combat): no dice. A hit lands with chance Accuracy ÷ (Accuracy + Evasion), a
+// landed hit crits with 5% plus 1% per point of Fortune above 10, and a qi technique first risks
+// qi deviation, a backfire, at a quarter of the toxicity meter's share. Every roll comes from the
+// stream passed in.
 import {
-  CRIT_MARGIN,
-  DIE,
+  BACKFIRE_PER_TOXICITY,
+  CRIT_BASE,
+  CRIT_PER_FORTUNE,
   FORTUNE_BASE,
-  FORTUNE_PER_FACE,
-  GRAZE_MARGIN,
 } from '../../content/combat.ts';
+import { TOXICITY_MAX } from '../../content/cultivation.ts';
 import type { Rng } from '../rng.ts';
+import { hitChance } from './sheet.ts';
 
-export type CheckResult = 'critical' | 'hit' | 'graze' | 'miss' | 'backfire';
+export type CheckResult = 'critical' | 'hit' | 'miss' | 'backfire';
 
-/** How many faces of the d20 crit: 1 at Fortune 10, 2 at 14, 3 at 18. */
-export function critFaces(fortune: number): number {
-  return 1 + Math.floor(Math.max(0, fortune - FORTUNE_BASE) / FORTUNE_PER_FACE);
+/** The chance a landed hit is a critical: 5% at Fortune 10, 9% at 14. */
+export function critChance(fortune: number): number {
+  return CRIT_BASE + CRIT_PER_FORTUNE * Math.max(0, fortune - FORTUNE_BASE);
 }
 
-/** One d20 from the stream. */
-export function rollD20(rng: Rng): number {
-  return rng.int(1, DIE);
+/** The chance a qi technique deviates: 0 on a clean meter, 25% on a full one. */
+export function backfireChance(toxicity: number): number {
+  return BACKFIRE_PER_TOXICITY * Math.min(1, Math.max(0, toxicity / TOXICITY_MAX));
 }
 
-/** Judges a rolled check: the natural roll, the total with bonuses, the target number. */
+export interface Judged {
+  result: CheckResult;
+  /** The chance the hit had of landing. */
+  chance: number;
+}
+
+/**
+ * Rolls one check: the backfire first when the action used qi and the meter isn't clean, then
+ * the hit, then the crit on a landed hit.
+ */
 export function judge(
-  roll: number,
-  total: number,
-  tn: number,
-  opts: { fortune?: number; qi?: boolean } = {},
-): CheckResult {
-  if (roll === 1) return opts.qi ? 'backfire' : 'miss';
-  if (roll > DIE - critFaces(opts.fortune ?? FORTUNE_BASE)) return 'critical';
-  if (total - tn >= CRIT_MARGIN) return 'critical';
-  if (total >= tn) return 'hit';
-  if (tn - total <= GRAZE_MARGIN) return 'graze';
-  return 'miss';
+  rng: Rng,
+  accuracy: number,
+  evasion: number,
+  opts: { fortune?: number; qi?: boolean; toxicity?: number } = {},
+): Judged {
+  const chance = hitChance(accuracy, evasion);
+  const backfire = opts.qi ? backfireChance(opts.toxicity ?? 0) : 0;
+  if (backfire > 0 && rng.chance(backfire)) return { result: 'backfire', chance };
+  if (!rng.chance(chance)) return { result: 'miss', chance };
+  if (rng.chance(critChance(opts.fortune ?? FORTUNE_BASE))) return { result: 'critical', chance };
+  return { result: 'hit', chance };
 }

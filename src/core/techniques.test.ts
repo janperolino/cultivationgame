@@ -11,7 +11,7 @@ import {
   canPractice,
   learnTechnique,
   mastery,
-  masteryCheckBonus,
+  masteryAccuracy,
   masteryNeed,
   techniqueSealed,
 } from './techniques.ts';
@@ -51,13 +51,13 @@ describe('technique content', () => {
 describe('mastery', () => {
   const c = learnTechnique(base.player, 'rampart-palm');
 
-  it('starts at Glimpse, +2 to checks, and climbs with practice days', () => {
+  it('starts at Glimpse, ×1 to Accuracy, and climbs with practice days', () => {
     expect(mastery(c, 'rampart-palm')).toMatchObject({ level: 0, practice: 0, next: 4 });
-    expect(masteryCheckBonus(c, 'rampart-palm')).toBe(2);
+    expect(masteryAccuracy(c, 'rampart-palm')).toBe(1);
     const comprehension = withPractice(c, 'rampart-palm', 4);
     expect(mastery(comprehension, 'rampart-palm').level).toBe(1);
-    // The design's example: a technique at Comprehension adds +4.
-    expect(masteryCheckBonus(comprehension, 'rampart-palm')).toBe(4);
+    // The design's worked turn: a technique at Comprehension multiplies Accuracy by 1.15.
+    expect(masteryAccuracy(comprehension, 'rampart-palm')).toBeCloseTo(1.15);
     expect(mastery(withPractice(c, 'rampart-palm', 17), 'rampart-palm').fraction).toBeCloseTo(0.5);
   });
 

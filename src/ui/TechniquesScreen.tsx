@@ -13,7 +13,7 @@ import {
   kinshipBonus,
   knownTechniques,
   mastery,
-  techniqueCheckBonus,
+  techniqueAccuracy,
   techniqueKin,
   techniqueSealed,
 } from '../core/techniques.ts';
@@ -85,8 +85,8 @@ function TechniqueCard({ c, t }: { c: Cultivator; t: Technique }) {
         </div>
       </div>
       <p className="caption spaced">
-        +{techniqueCheckBonus(c, t.id)} to checks with it
-        {r.check > 0 && ` (+${r.check} for its rarity)`}
+        Accuracy ×{techniqueAccuracy(c, t.id).toFixed(2)} with it
+        {r.accuracy > 1 && ` (×${r.accuracy} for its rarity)`}
         {next
           ? `; ${next.name} at ${formatNumber(m.next ?? 0)} practice days`
           : '; mastery is complete'}

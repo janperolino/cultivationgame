@@ -1,17 +1,22 @@
 // Rarity (design § Tier, rarity and pedigree): one scale for everything you can own or be born
-// with, as a fraction of a realm. A thing of rarity f multiplies by gap^f, where the gap is the one
-// out of the thing's own tier (`tierGap` in content/realms.ts): ×3 for a tier 1 thing, ×5.5 at
-// tier 2, ×10 from tier 3 up. Every number is a starting value for the sims.
+// with, as a band: the stage the thing is sized at in its own tier's realm. White is the realm's
+// first stage, blue its middle, purple its peak, gold the next realm's first stage and red the
+// next realm's middle. In numbers, with s the step out of the thing's tier (`tierStep` in
+// content/realms.ts, ×3.1 at tier 1): mult × s^exponent. Every number is a starting value for the sims.
 
 export interface Rarity {
   id: string;
   name: string;
   /** What the rarity says of a thing, for tooltips. */
   note: string;
-  /** The exponent: the thing multiplies by gap^f. */
-  f: number;
-  /** What a technique of this rarity adds to checks with it. */
-  check: number;
+  /** The band in stage words, for tooltips. */
+  band: string;
+  /** The fixed part of the band's multiplier. */
+  mult: number;
+  /** The banded part: the step out of the thing's tier to this power. */
+  exponent: number;
+  /** What a technique of this rarity multiplies Accuracy by; a weapon takes the square root. */
+  accuracy: number;
   /** Special properties a thing carries, besides its unique one; green's is a minor one. */
   properties: number;
   /** Gold and red things also carry a unique property, and red's is named. */
@@ -42,8 +47,10 @@ export const RARITIES = [
     id: 'gray',
     name: 'Gray',
     note: 'flawed',
-    f: -0.2,
-    check: 0,
+    band: 'below early',
+    mult: 0.8,
+    exponent: 0,
+    accuracy: 1,
     properties: 0,
     unique: false,
     price: 0.5,
@@ -55,8 +62,10 @@ export const RARITIES = [
     id: 'white',
     name: 'White',
     note: 'plain',
-    f: 0,
-    check: 0,
+    band: 'early',
+    mult: 1,
+    exponent: 0,
+    accuracy: 1,
     properties: 0,
     unique: false,
     price: 1,
@@ -68,8 +77,10 @@ export const RARITIES = [
     id: 'green',
     name: 'Green',
     note: 'a little better than plain',
-    f: 0.1,
-    check: 0,
+    band: 'early-middle',
+    mult: 1.2,
+    exponent: 0,
+    accuracy: 1,
     properties: 1,
     unique: false,
     price: 2,
@@ -81,8 +92,10 @@ export const RARITIES = [
     id: 'blue',
     name: 'Blue',
     note: 'fine',
-    f: 0.2,
-    check: 0,
+    band: 'middle',
+    mult: 1.5,
+    exponent: 0,
+    accuracy: 1,
     properties: 1,
     unique: false,
     price: 5,
@@ -94,8 +107,10 @@ export const RARITIES = [
     id: 'purple',
     name: 'Purple',
     note: 'rare',
-    f: 0.35,
-    check: 0,
+    band: 'peak',
+    mult: 1,
+    exponent: 0.8,
+    accuracy: 1,
     properties: 2,
     unique: false,
     price: 15,
@@ -106,9 +121,11 @@ export const RARITIES = [
   {
     id: 'gold',
     name: 'Gold',
-    note: 'heaven-defying: about four-fifths of a realm',
-    f: 0.75,
-    check: 2,
+    note: 'heaven-defying: sized at the next realm',
+    band: 'the next realm, early',
+    mult: 1,
+    exponent: 1,
+    accuracy: 1.2,
     properties: 2,
     unique: true,
     price: 50,
@@ -119,9 +136,11 @@ export const RARITIES = [
   {
     id: 'red',
     name: 'Red',
-    note: 'heaven-defying: nine-tenths of a realm',
-    f: 0.9,
-    check: 4,
+    note: 'heaven-defying: sized past the next realm’s first stage',
+    band: 'the next realm, middle',
+    mult: 1,
+    exponent: 1.3,
+    accuracy: 1.4,
     properties: 3,
     unique: true,
     price: 200,
@@ -145,9 +164,15 @@ export function rarity(id: RarityId): Rarity {
   return r;
 }
 
-/** gap^f: what a thing of this rarity multiplies by, given the gap out of its own tier. */
-export function rarityMultiplier(id: RarityId, gap: number): number {
-  return gap ** rarity(id).f;
+/** The band's multiplier, given the step out of the thing's own tier (`tierStep`): purple ×2.5 at tier 1. */
+export function rarityMultiplier(id: RarityId, step: number): number {
+  const r = rarity(id);
+  return r.mult * step ** r.exponent;
+}
+
+/** What a technique of this rarity multiplies Accuracy by: ×1.2 at gold, ×1.4 at red. */
+export function rarityAccuracy(id: RarityId): number {
+  return rarity(id).accuracy;
 }
 
 /** Where a rarity sits on the scale: 0 for gray up to 6 for red. */

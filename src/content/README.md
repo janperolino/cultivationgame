@@ -5,7 +5,7 @@ Game content as data: realms, trees and nodes, techniques, recipes, items, talen
 - `atlas/schema.ts`: Zod schemas for the atlas source and the generated file, and `parseTop`.
 - `generated/atlas.json`: written by `npm run atlas:build`, never by hand. Rerun it after any atlas edit and commit the result.
 - `realms.ts`: the nine realms with stages, lifespans, gates, insight thresholds, bar sizes, odds, the realm curve (`realmScale`) and the gap out of each realm (`realmGap`, `tierGap`).
-- `rarity.ts`: the seven rarities from gray to red, with their exponents (`rarityMultiplier`), check bonuses, property counts, prices, the roll table and what a method of each adds at a breakthrough.
+- `rarity.ts`: the seven rarities from gray to red, as bands in stage words (`rarityMultiplier`), Accuracy multipliers, property counts, prices, the roll table and what a method of each adds at a breakthrough.
 - `roots.ts`: spirit roots with odds, grade, qi speed and how many elements each kind holds (`rollRoot`, `rollElements`), including the named Innate Sword Root and Yin-Yang Twin Root with fixed elements and effects.
 - `talents.ts`: body, soul and fate talents across the seven rarities, each moving its kind's attribute by rarity (`talentEffects`) beside its own stat changes; some sleep until a realm.
 - `origins.ts`: the three Border Wilds origins with childhood and testing-day text, the named people the cards use, and each testing-day path's method, routines, stones, flags and place; the atlas names of those places (`PLACE_NAMES`).
@@ -26,5 +26,5 @@ Game content as data: realms, trees and nodes, techniques, recipes, items, talen
 - `circulation.ts`: the patterns a qi method's sparks run on the Abode's figure, a default for each rarity, and the points where qi enters.
 - `scene.ts`: the breakthrough scene's timing: its length, how the spark races, the gates and the tap windows. Its odds step and cap sit in `cultivation.ts` beside `ODDS_PER_TENTH`.
 - `techniques.ts`: the techniques with their rarity, line and chapter, starting with each origin path's first one (`firstFor: origin/choice`).
-- `combat.ts`: combat's numbers: checks, criticals and grazes, the one ladder's steps, damage tiers, the eleven damage types and their statuses, the element cycle and combos, HP and qi, the five outcome tags, and the weapon kinds. `src/core/combat/` holds the rules.
+- `combat.ts`: combat's numbers: the sheet's sizes, hit and crit chances, the damage spread, the eleven damage types and their statuses, the element cycle and combos, HP and qi, the five outcome tags, and the weapon kinds. `src/core/combat/` holds the rules.
 - `items.ts`: the item record with its uses (offer, consume, fight so far; P2.3 adds the rest), the offer tags, and the offerings, pills and talismans drafted in P2.1.

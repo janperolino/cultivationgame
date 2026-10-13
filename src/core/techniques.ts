@@ -8,10 +8,10 @@ import {
   KINSHIP_BONUS,
   KINSHIP_LEVEL,
   MASTERY,
-  MASTERY_CHECK_BONUS,
+  MASTERY_ACCURACY,
   TECHNIQUE_MASTERY,
 } from '../content/mastery.ts';
-import { rarity } from '../content/rarity.ts';
+import { rarityAccuracy } from '../content/rarity.ts';
 import { realmIndex } from '../content/realms.ts';
 import {
   hasTechnique,
@@ -54,13 +54,13 @@ export function mastery(c: Cultivator, id: string): Mastery {
 }
 
 /** What mastery adds to checks with it: +2 a level, so +2 at Glimpse and +4 at Comprehension. */
-export function masteryCheckBonus(c: Cultivator, id: string): number {
-  return (mastery(c, id).level + 1) * MASTERY_CHECK_BONUS;
+export function masteryAccuracy(c: Cultivator, id: string): number {
+  return MASTERY_ACCURACY ** mastery(c, id).level;
 }
 
-/** Everything the technique adds to checks: its mastery, and +2 or +4 at gold or red. */
-export function techniqueCheckBonus(c: Cultivator, id: string): number {
-  return masteryCheckBonus(c, id) + rarity(technique(id).rarity).check;
+/** Everything the technique multiplies Accuracy by: its mastery, and ×1.2 or ×1.4 at gold or red. */
+export function techniqueAccuracy(c: Cultivator, id: string): number {
+  return masteryAccuracy(c, id) * rarityAccuracy(technique(id).rarity);
 }
 
 /** Known, unsealed and short of Origin: practice days would count. */
