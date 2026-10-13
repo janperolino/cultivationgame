@@ -12,6 +12,7 @@ import { BreakthroughPanel, BreakthroughRow, StepNeeds } from './BreakthroughPan
 import { useScene } from './scene.ts';
 import { SeatedFigure, SeatMeter } from './SeatedFigure.tsx';
 import { useGame, type AwaySummary } from './store.ts';
+import { readingLine } from './bookcase.ts';
 import { AgeBar, LadderBar, LifeEdgeCard, Why } from './widgets.tsx';
 
 /** Up to this many settled cards are told in full; past it, one a kind and the rest folded away. */
@@ -113,9 +114,13 @@ export function AbodeScreen() {
   if (!game) return null;
 
   const rates = dayRates(game.player, game.calendar.day);
-  const today = HOUR_KIND_IDS.filter((k) => rates.count[k] > 0)
-    .map((k) => `${rates.count[k]} ${HOUR_KINDS[k].name.toLowerCase()}`)
-    .join(' · ');
+  const reading = rates.study > 0 ? readingLine(game.player) : null;
+  const today = [
+    ...HOUR_KIND_IDS.filter((k) => rates.count[k] > 0).map(
+      (k) => `${rates.count[k]} ${HOUR_KINDS[k].name.toLowerCase()}`,
+    ),
+    ...(reading ? [reading] : []),
+  ].join(' · ');
 
   return (
     <>

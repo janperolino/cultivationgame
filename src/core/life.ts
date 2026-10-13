@@ -2,6 +2,7 @@
 // random stream, dates their notes into the chronicle as typed events, flares the glass at
 // breakthroughs, keeps gentle mode's rewind, opens screens, wakes sleeping talents, marks a failed
 // Foundation attempt for the cards, and ends the life at the lifespan edge.
+import { hasCopy } from '../content/copies.ts';
 import { hasManual } from '../content/manuals.ts';
 import { hasMethod } from '../content/methods.ts';
 import { realmIndex } from '../content/realms.ts';
@@ -22,6 +23,13 @@ import { consumeItem } from './items.ts';
 import { gainManual as holdManual, holdsManual } from './manuals.ts';
 import { knowsMethod, learnMethod, setActiveMethod, type MethodCheck } from './methods.ts';
 import {
+  gainCopy as ownCopy,
+  ownedCopies,
+  startReading,
+  stopReading,
+  type ReadCheck,
+} from './reading.ts';
+import {
   addEvent,
   addFlag,
   ageYears,
@@ -38,7 +46,10 @@ import { canLearnTechnique, learnTechnique, setPracticing } from './techniques.t
 import { learnNode, type LearnCheck } from './trees.ts';
 import { learnRoutine } from './wheel.ts';
 
-/** The Trees screen opens once there is insight enough for a first node (design, the first hour). */
+/**
+ * The Trees screen opens once there is insight enough for a first node (design, the first hour),
+ * or with a first copy, which stands on its bookcase.
+ */
 export const TREES_SCREEN_INSIGHT = 10;
 
 /** The mark a failed qi Foundation attempt leaves, for the card ten years on. */
@@ -78,7 +89,7 @@ function flare(s: GameState, ladder: LadderId, major: boolean): GameState {
 /** Opens the screens the player has reached. */
 export function checkScreens(s: GameState): GameState {
   let next = s;
-  if (s.player.insight.earned >= TREES_SCREEN_INSIGHT) {
+  if (s.player.insight.earned >= TREES_SCREEN_INSIGHT || ownedCopies(s.player).length > 0) {
     next = unlock(next, 'trees', true);
   }
   if (Object.keys(s.player.techniques).length > 0) {
@@ -221,6 +232,28 @@ export function gainManual(s: GameState, id: string, how = 'comes by'): GameStat
   const next = withPlayer(s, holdManual(s.player, id));
   if (next.player === s.player) return s;
   return addEvent(next, 'manual', { manual: id, how });
+}
+
+/**
+ * The player comes by a copy (content/copies.ts): a manual, method or technique handed over as a
+ * thing. It stands unread on the bookcase until read on the study hours, and stays after.
+ */
+export function gainCopy(s: GameState, id: string, how = 'comes by'): GameState {
+  if (!hasCopy(id)) return s;
+  const next = addEvent(withPlayer(s, ownCopy(s.player, id)), 'copy', { copy: id, how });
+  return checkScreens(next);
+}
+
+/** The player sets the study hours on a copy; the reason when it can't be read. */
+export function readCopy(s: GameState, id: string): { state: GameState; check: ReadCheck } {
+  if (s.ended) return { state: s, check: { ok: false, reason: 'This life is over.' } };
+  const r = startReading(s.player, id);
+  return { state: r.check.ok ? withPlayer(s, r.cultivator) : s, check: r.check };
+}
+
+/** The study hours go back to study alone; the copy keeps its progress. */
+export function stopRead(s: GameState): GameState {
+  return withPlayer(s, stopReading(s.player));
 }
 
 /** The flag the first orb drawn in sets, with its chronicle line. */

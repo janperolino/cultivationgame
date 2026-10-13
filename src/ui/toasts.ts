@@ -4,6 +4,7 @@
 // At most three show at once: a burst of more folds into the third ("+4 more"), and a later
 // moment's wait their turn.
 import { create } from 'zustand';
+import { copyManual, hasCopy } from '../content/copies.ts';
 import { itemGlyph, item, hasItem } from '../content/items.ts';
 import { hasManual, manual, MANUAL_KINDS } from '../content/manuals.ts';
 import { hasMethod, method } from '../content/methods.ts';
@@ -85,6 +86,18 @@ function toastFor(g: Gain, s: GameState): ToastView | null {
         name: m.name,
         rarity: m.rarity,
         to: link({ screen: 'trees', trees: { pick: m.host ?? 'manuals', focus: m.id } }),
+      };
+    }
+    case 'copy': {
+      // A copy stands on the bookcase, read or not; the link lands on its spine.
+      if (!hasCopy(g.id)) return null;
+      const m = copyManual(g.id);
+      return {
+        glyph: '书',
+        label: g.fresh ? 'New copy' : 'Copy',
+        name: g.count > 1 ? `${m.name} ×${g.count}` : m.name,
+        rarity: m.rarity,
+        to: link({ screen: 'trees', trees: { pick: 'manuals', focus: m.id } }),
       };
     }
     case 'item': {

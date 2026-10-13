@@ -64,9 +64,19 @@ export function manualCount(c: Cultivator): string {
   return `${held.length} (${kinds.join(', ')})`;
 }
 
-/** Whether every one of the manual's nodes is learned: it lies flat on the bookcase. */
+/**
+ * Whether what the manual teaches is yours: its method or technique known, a loose one held. An
+ * unread copy on the bookcase isn't (core/reading.ts).
+ */
+export function knowsManual(c: Cultivator, m: Manual): boolean {
+  if (m.method) return knowsMethod(c, m.method);
+  if (m.technique) return knowsTechnique(c, m.technique);
+  return c.manuals.includes(m.id);
+}
+
+/** Whether it is yours and every one of its nodes learned: it lies flat on the bookcase. */
 export function manualFinished(c: Cultivator, m: Manual): boolean {
-  return m.nodes.every((n) => c.nodes.includes(n.id));
+  return knowsManual(c, m) && m.nodes.every((n) => c.nodes.includes(n.id));
 }
 
 /** Whether one of the manual's nodes can be bought now and works once bought. */

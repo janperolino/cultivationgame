@@ -152,7 +152,7 @@ describe('holding and learning', () => {
 });
 
 describe('the formula cards', () => {
-  it('hand a formula over for its price, and default to keeping the stones', () => {
+  it('hand a copy of a formula over for its price, and default to keeping the stones', () => {
     const k = CARDS.find((x) => x.id === 'breath-count-for-sale')!;
     expect(k.defaultChoice ?? 0).toBe(0);
     let s = withPlayer(base, { ...base.player, stones: 20 });
@@ -162,7 +162,9 @@ describe('the formula cards', () => {
     };
     const r = resolveCard(s, 1, 1);
     expect(r.ok).toBe(true);
-    expect(r.state.player.manuals).toContain('garrison-breath-count');
+    // A bought formula is a copy to read, not a manual held (design § Reading).
+    expect(r.state.player.manuals).not.toContain('garrison-breath-count');
+    expect(r.state.player.copies['manual:garrison-breath-count']).toBe(1);
     expect(r.state.player.stones).toBe(8);
   });
 });

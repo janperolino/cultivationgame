@@ -2,7 +2,7 @@
 // spreadsheet: words first, the numbers behind the "?").
 import { contemplationSource } from '../content/contemplation.ts';
 import type { ConsumeEffect, Item } from '../content/items.ts';
-import { manual } from '../content/manuals.ts';
+import { copyId, copyTitle } from '../content/copies.ts';
 import { rarity } from '../content/rarity.ts';
 import { formatPercent, LADDER_LABELS, listWords, tierName } from './format.ts';
 
@@ -55,7 +55,8 @@ export function useLines(it: Item): string[] {
     const age = u.ingredient.age ? `, ${u.ingredient.age} years old` : '';
     out.push(`An ingredient: ${listWords([...u.ingredient.tags])}${age} (crafts arrive in M4).`);
   }
-  if (u.read) out.push(`Read: ${manual(u.read.manual).name}.`);
+  if (u.read)
+    out.push(`Read on the study hours, it teaches ${copyTitle(copyId(u.read.kind, u.read.id))}.`);
   if (u.carry) out.push(`Carries ${u.carry.squares} squares while it travels with you.`);
   if (u.key) out.push(`Opens ${u.key.opens}.`);
   if (u.inscribe) {

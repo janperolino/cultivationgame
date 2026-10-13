@@ -125,9 +125,13 @@ export interface IngredientUse {
   age?: number;
 }
 
-/** A manual's nodes (content/manuals.ts). */
+/**
+ * What reading teaches (content/copies.ts): a loose manual, a method or a technique. Copies carry
+ * it; they stand on the bookcase, never in the Bag.
+ */
 export interface ReadUse {
-  manual: string;
+  kind: 'manual' | 'method' | 'technique';
+  id: string;
 }
 
 /** Squares it adds while it is with you: a cart, a mount. */

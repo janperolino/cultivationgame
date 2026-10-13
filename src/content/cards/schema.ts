@@ -64,8 +64,13 @@ export type CardEffect =
   /** The origin path's first technique (content/techniques.ts, `firstFor`). */
   | { do: 'first-technique' }
   | { do: 'routine'; id: string }
-  /** A loose manual (content/manuals.ts): a formula, a style, a scripture. */
+  /** A loose manual (content/manuals.ts): a formula, a style, a scripture. Taught, held at once. */
   | { do: 'manual'; id: string }
+  /**
+   * A copy (content/copies.ts, "manual:tide-counting"): a manual, method or technique handed over
+   * as a thing, bought, given, found or stolen, read on the study hours (design § Reading).
+   */
+  | { do: 'copy'; id: string }
   /** Insight from a contemplation source (content/contemplation.ts): a lump, or days of a trickle. */
   | { do: 'contemplate'; source: string; days?: number }
   /** Marks the day, for a later card's trigger; `clear-mark` forgets it. */

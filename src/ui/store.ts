@@ -14,6 +14,8 @@ import {
   feedStones,
   learn,
   practice,
+  readCopy,
+  stopRead,
   switchMethod,
   takeItem,
   takeOff,
@@ -115,6 +117,10 @@ export interface GameStore {
   learnNode(id: string): string | null;
   /** Points practice days at a technique, or at nothing. */
   practice(id: string | null): void;
+  /** Sets the study hours on a copy (core/reading.ts); the reason when it can't be read. */
+  readCopy(id: string): string | null;
+  /** Turns the study hours back to study alone; the copy keeps its progress. */
+  stopReading(): void;
   /** Wears an item from the Bag; returns why not, or null. */
   wear(id: string): string | null;
   /** Takes off what a gear square or treasure slot holds. */
@@ -585,6 +591,21 @@ export const useGame = create<GameStore>()((set, get) => {
       const { game } = get();
       if (!game || !holdsLock) return;
       set({ game: practice(game, id) });
+    },
+
+    readCopy(id) {
+      const { game } = get();
+      if (!game || !holdsLock) return 'This life is not open in this tab.';
+      const r = readCopy(game, id);
+      if (!r.check.ok) return r.check.reason;
+      set({ game: r.state });
+      return null;
+    },
+
+    stopReading() {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      set({ game: stopRead(game) });
     },
 
     setMethod(ladder, id) {

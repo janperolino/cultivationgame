@@ -113,7 +113,8 @@ describe('the hostless list filter', () => {
     expect(filterHostless(life.player, list, { ...none, query: m.name })).toContain(m);
     const noKind = filterHostless(life.player, list, { ...none, hidden: new Set([m.kind]) });
     expect(noKind.some((x) => x.kind === m.kind)).toBe(false);
-    const done = { ...life.player, nodes: m.nodes.map((n) => n.id) };
+    // Finished means held with every node learned.
+    const done = { ...life.player, manuals: [m.id], nodes: m.nodes.map((n) => n.id) };
     const open = filterHostless(done, list, { ...none, hideFinished: true });
     expect(open).not.toContain(m);
     expect(open).toHaveLength(list.length - 1);

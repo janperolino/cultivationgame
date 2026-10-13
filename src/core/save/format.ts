@@ -27,7 +27,7 @@ import { seeAll } from '../seen.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), old to
@@ -541,11 +541,24 @@ const migrations: Record<number, (old: Raw) => Raw> = {
 
   // v13, P2.5: no record of what the player has looked at. v14 keeps one (core/seen.ts) and counts
   // everything an old life holds as seen, so nothing lights up on load. The v13 state is today's
-  // shape but for `seen`, so the held lists are read from it as it stands.
+  // shape but for `seen` (and v15's copies, of which it owns none), so the held lists are read
+  // from it as it stands.
   13: (old) => {
     const s = (old.state ?? {}) as Raw;
-    const state = seeAll({ ...s, seen: {} } as unknown as GameState);
+    const player = { ...((s.player ?? {}) as Raw), copies: {} };
+    const state = seeAll({ ...s, player, seen: {} } as unknown as GameState);
     return { ...old, version: 14, state: { ...s, seen: state.seen } };
+  },
+
+  // v14, P2.5d: what is known is all there is. v15 counts copies apart from knowing (core/reading.ts)
+  // and keeps what the study hours read; an old life owns no copies and reads nothing, and since a
+  // spine stands for anything known its bookcase looks as it did. `seen` gains its `copy` kind.
+  14: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const seen = { ...((s.seen ?? {}) as Raw), copy: {} };
+    const player = { ...p, copies: {}, reading: { copy: null, days: {} } };
+    return { ...old, version: 15, state: { ...s, player, seen } };
   },
 };
 

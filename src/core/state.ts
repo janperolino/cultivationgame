@@ -167,6 +167,19 @@ export const CultivatorSchema = z.object({
    * manual is held with the method and isn't listed here.
    */
   manuals: z.array(z.string()),
+  /**
+   * Copies owned (content/copies.ts), counted by what they teach ("manual:tide-counting"). Knowing
+   * a thing and owning copies of it are separate: a teacher's lesson leaves none.
+   */
+  copies: z.record(z.string(), z.number().int().min(0)),
+  /**
+   * The copy the study hours read, or null, and the study days put into each copy begun; progress
+   * stays with a copy when reading turns to another.
+   */
+  reading: z.object({
+    copy: z.string().nullable(),
+    days: z.record(z.string(), z.number().min(0)),
+  }),
   /** Techniques known, with the practice days put into each. */
   techniques: z.record(z.string(), z.object({ practice: z.number().min(0) })),
   /** The technique practice days go to, or null. */
@@ -356,6 +369,8 @@ export function newCultivator(
     flags: opts.flags ?? [],
     nodes: [],
     manuals: [],
+    copies: {},
+    reading: { copy: null, days: {} },
     techniques: Object.fromEntries(techniques.map((t) => [t, { practice: 0 }])),
     practicing: techniques[0] ?? null,
     contemplation: {},

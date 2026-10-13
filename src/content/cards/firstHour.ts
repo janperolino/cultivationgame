@@ -541,9 +541,11 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
       {
         label: 'Take the manual and go',
         pass: {
-          effects: [NOURISHING],
-          text: 'You take the manual with a bow. She is already looking at the flame again.',
-          chronicle: '{name} is given a nourishing art by a lamp-keeper at a frontier shrine.',
+          // A thing handed over, not a lesson: a copy to read on the study hours (design § Reading).
+          effects: [{ do: 'copy', id: 'method:still-lantern' }],
+          text: 'You take the manual with a bow. She is already looking at the flame again. It will want reading, on the study hours.',
+          chronicle:
+            '{name} is given a copy of a nourishing art by a lamp-keeper at a frontier shrine.',
         },
       },
     ],

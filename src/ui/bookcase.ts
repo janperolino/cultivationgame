@@ -1,14 +1,27 @@
 // The bookcase's words and sizes (design § Cultivation, Where manuals live), apart from the
 // screen so they are tested: how wide and tall a spine stands, what its hover card says of the
 // manual and each node, and what a search finds.
+import {
+  copyManual,
+  copyOf,
+  copyOfManual,
+  copyTitle,
+  readDays,
+  readLump,
+} from '../content/copies.ts';
 import { MANUAL_KINDS, type Manual, type ManualKind, type ManualNode } from '../content/manuals.ts';
 import { MASTERY } from '../content/mastery.ts';
 import { rarity, rarityRank } from '../content/rarity.ts';
 import { statInfo } from '../content/stats.ts';
+import { previousTechniqueChapter, technique } from '../content/techniques.ts';
 import { tree } from '../content/trees/index.ts';
+import { insightMultiplier } from '../core/insight.ts';
+import { effectiveWheel } from '../core/wheel.ts';
 import { manualFinished } from '../core/manuals.ts';
+import { copyUnread, readCheck, readingCopy, readProgress } from '../core/reading.ts';
 import type { Cultivator } from '../core/state.ts';
 import { hasLearned, nodeReady, nodeSealed } from '../core/trees.ts';
+import { formatNumber, LADDER_LABELS } from './format.ts';
 
 /** A spine's width in px, by kind and rarity: a formula 23, an art 25, from purple 27, up to 34. */
 export function spineWidth(m: Manual): number {
@@ -125,4 +138,62 @@ export function filterHostless(
       !f.hidden.has(m.kind) &&
       !(f.hideFinished && manualFinished(c, m)),
   );
+}
+
+// ---------------------------------------------------------------- copies and reading
+
+/** "2.1 of 3 days", a copy's reading so far. */
+export function readSoFar(c: Cultivator, id: string): string {
+  return `${formatNumber(readProgress(c, id))} of ${formatNumber(readDays(id))} days`;
+}
+
+/** What the Cultivate wheel and the Abode's Today line say of the reading, or null with none. */
+export function readingLine(c: Cultivator): string | null {
+  const id = readingCopy(c);
+  return id ? `reading ${copyTitle(id)} · ${readSoFar(c, id)}` : null;
+}
+
+/** "White formula · an unread copy · beside Qi, tier 1", an unread copy's card line. */
+export function unreadMeta(m: Manual): string {
+  const where = m.host ? `beside ${tree(m.host).name}, tier ${m.tier}` : 'above the trees';
+  const kind = MANUAL_KINDS[m.kind].name.toLowerCase();
+  return `${rarity(m.rarity).name} ${kind} · an unread copy · ${where}`;
+}
+
+/** What a spine's label adds for a screen reader: an unread copy and its reading, or its copies. */
+export function spineReadLabel(c: Cultivator, m: Manual, copies: number): string {
+  const id = copyOfManual(m);
+  const unread = copyUnread(c, id) ? `, an unread copy, ${readSoFar(c, id)} read` : '';
+  return `${unread}${copies >= 2 ? `, ${copies} copies` : ''}`;
+}
+
+export interface ReadWords {
+  /** What reading it would give. */
+  teaches: string;
+  /** Its reading time, how far it has come, and the lump when done. */
+  time: string;
+  /** Why it can't be read yet, when it can't. */
+  refused?: string;
+}
+
+/** What an unread copy's card says of reading it. */
+export function readWords(c: Cultivator, id: string): ReadWords {
+  const of = copyOf(id)!;
+  const m = copyManual(id);
+  const teaches =
+    of.kind === 'method'
+      ? `Reading it teaches the ${m.name}, a ${LADDER_LABELS[m.ladder].toLowerCase()} method of tier ${m.tier}.`
+      : of.kind === 'technique'
+        ? `Reading it teaches ${m.name}${previousTechniqueChapter(technique(of.id)) ? ', starting where its chapter before stands' : ' at Glimpse'}.`
+        : m.nodes.length > 0
+          ? 'Reading it makes it yours, its nodes below to learn with insight.'
+          : 'Reading it makes it yours.';
+  const lump = formatNumber(readLump(id) * insightMultiplier(c));
+  const done = readProgress(c, id);
+  const now = readingCopy(c) === id;
+  const days = done > 0 ? `${readSoFar(c, id)} read` : `${formatNumber(readDays(id))} study days`;
+  const hours = effectiveWheel(c).includes('study') ? '' : ' Your wheel has no study hour yet.';
+  const time = `${now ? 'Reading on your study hours: ' : ''}${days} · +${lump} insight when done.${hours}`;
+  const check = readCheck(c, id);
+  return check.ok ? { teaches, time } : { teaches, time, refused: check.reason };
 }

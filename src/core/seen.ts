@@ -10,10 +10,19 @@ import { BIG_THREE, DAOS, type Tree } from '../content/trees/index.ts';
 import { ladderOpen } from './cultivation.ts';
 import { wornIds } from './gear.ts';
 import { graftsOn, heldManuals } from './manuals.ts';
+import { copyCount, ownedCopies } from './reading.ts';
 import type { Cultivator, GameState } from './state.ts';
 import { knownTechniques } from './techniques.ts';
 
-export const SEEN_KINDS = ['technique', 'method', 'manual', 'item', 'tree', 'screen'] as const;
+export const SEEN_KINDS = [
+  'technique',
+  'method',
+  'manual',
+  'copy',
+  'item',
+  'tree',
+  'screen',
+] as const;
 export type SeenKind = (typeof SEEN_KINDS)[number];
 
 /** Noticed: its screen was opened since it came, so the menu's dot is gone. Seen: selected. */
@@ -70,6 +79,8 @@ export function heldIds(s: GameState, kind: SeenKind): string[] {
       return Object.keys(c.methods);
     case 'manual':
       return heldManuals(c).map((m) => m.id);
+    case 'copy':
+      return ownedCopies(c);
     case 'item':
       return [...new Set([...Object.keys(c.items), ...wornIds(c)])].filter(
         (id) => itemTotal(c, id) > 0,
@@ -120,7 +131,7 @@ export function seeAll(s: GameState): GameState {
 export const SCREEN_KINDS: Readonly<Record<string, readonly SeenKind[]>> = {
   techniques: ['technique'],
   bag: ['item'],
-  trees: ['tree', 'manual'],
+  trees: ['tree', 'manual', 'copy'],
   cultivate: ['method'],
 };
 
@@ -147,13 +158,13 @@ export function openScreen(s: GameState, screen: string): GameState {
 
 // ---------------------------------------------------------------- what a moment brought
 
-/** Something gained between two states: a toast's worth. Items count up; the rest are new ids. */
+/** Something gained between two states: a toast's worth. Items and copies count up; the rest are new ids. */
 export interface Gain {
   kind: SeenKind;
   id: string;
-  /** How many more: items only, 1 for the rest. */
+  /** How many more: items and copies, 1 for the rest. */
   count: number;
-  /** Never seen before, as opposed to more of an item already known. */
+  /** Never seen before, as opposed to more of an item or a copy already known. */
   fresh: boolean;
 }
 
@@ -161,9 +172,10 @@ export interface Gain {
 export function gains(before: GameState, after: GameState): Gain[] {
   const out: Gain[] = [];
   for (const kind of SEEN_KINDS) {
-    if (kind === 'item') {
-      for (const id of heldIds(after, 'item')) {
-        const more = itemTotal(after.player, id) - itemTotal(before.player, id);
+    if (kind === 'item' || kind === 'copy') {
+      const total = kind === 'item' ? itemTotal : copyCount;
+      for (const id of heldIds(after, kind)) {
+        const more = total(after.player, id) - total(before.player, id);
         if (more > 0) out.push({ kind, id, count: more, fresh: isNew(after, kind, id) });
       }
       continue;

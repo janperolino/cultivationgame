@@ -411,10 +411,10 @@ export const SECLUSION_CARDS: readonly Card[] = [
         cost: { stones: 12 },
         pass: {
           effects: [
-            { do: 'manual', id: 'garrison-breath-count' },
+            { do: 'copy', id: 'manual:garrison-breath-count' },
             { do: 'person', who: 'peddler', regard: 1 },
           ],
-          text: 'In on four, hold for one, out on four. It is crude, and it works: the count settles your breathing within a day.',
+          text: 'In on four, hold for one, out on four. It is crude, and the cadet copied it badly; a few weeks over it on your study hours and the count will be yours.',
           chronicle: '{name} buys the Garrison Breath-Count from {peddler} for twelve stones.',
         },
       },
@@ -442,7 +442,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
         pass: {
           effects: [
             { do: 'fuel', ladder: 'qi', share: -0.1 },
-            { do: 'manual', id: 'tide-counting' },
+            { do: 'copy', id: 'manual:tide-counting' },
           ],
           text: 'Three nights of cold cloths and your own qi pressed into his chest. On the fourth morning he can stand, and he leaves you the copy he was carrying: the Tide-Counting Formula the dockside couriers breathe by.',
           chronicle:

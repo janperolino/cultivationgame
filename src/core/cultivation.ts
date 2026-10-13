@@ -69,6 +69,7 @@ import { AWAY, type Seat } from './attention.ts';
 import { gradesOdds, gradesSpeed } from './grades.ts';
 import { stageGrowth } from './growth.ts';
 import { gainInsight, masteryBurst } from './insight.ts';
+import { addReading } from './reading.ts';
 import {
   addMethodPractice,
   breakthroughBonus,
@@ -295,6 +296,8 @@ export interface HourYield {
   insight: number;
   /** Practice days for the technique being practiced. */
   practice: number;
+  /** Study days for the copy being read (core/reading.ts): a study hour's share of a day. */
+  study: number;
 }
 
 /** What each of the day's twelve hours gives: a twelfth of a day's work, with its bonuses. */
@@ -318,6 +321,7 @@ export function hourYields(
       soul: 0,
       insight: 0,
       practice: 0,
+      study: 0,
     };
     if (kind === 'sleep') return y;
     y.element = elementMatch(c, kind, hour) ? ELEMENT_BONUS : 0;
@@ -328,8 +332,10 @@ export function hourYields(
     if (kind === 'qi') y.qi = base.qi * share;
     else if (kind === 'body') y.body = base.body * share;
     else if (kind === 'soul') y.soul = base.soul * share;
-    else if (kind === 'study') y.insight += base.study * share;
-    else y.practice = base.practice * share;
+    else if (kind === 'study') {
+      y.insight += base.study * share;
+      y.study = share;
+    } else y.practice = base.practice * share;
     return y;
   });
 }
@@ -347,6 +353,8 @@ export interface DayRates {
   insight: number;
   /** Practice days a full day gives the technique being practiced; 0 when none can be. */
   practice: number;
+  /** Study days a full day gives the copy being read, whether or not one is. */
+  study: number;
   /**
    * Practice days a full day gives each ladder's method: a twelfth for every hour cultivated with
    * it, none past its tier or on an unfed day.
@@ -372,7 +380,7 @@ export function dayRates(
 ): DayRates {
   const hours = hourYields(c, day, unfed, seat);
   const count = Object.fromEntries(HOUR_KIND_IDS.map((k) => [k, 0])) as Record<HourKind, number>;
-  const sum = { qi: 0, body: 0, soul: 0, insight: 0, practice: 0 };
+  const sum = { qi: 0, body: 0, soul: 0, insight: 0, practice: 0, study: 0 };
   for (const h of hours) {
     count[h.kind]++;
     sum.qi += h.qi;
@@ -380,6 +388,7 @@ export function dayRates(
     sum.soul += h.soul;
     sum.insight += h.insight;
     sum.practice += h.practice;
+    sum.study += h.study;
   }
   const qiScale = realmScale(c.qi.realm);
   const qiShare = count.qi / HOURS_PER_DAY;
@@ -971,9 +980,11 @@ export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): Cu
     rates,
     days,
   );
-  const unlocked = checkUnlocks(practiced.cultivator);
+  // The study hours read the copy set on them, finishing it once its study days are in.
+  const read = addReading(practiced.cultivator, rates.study * days);
+  const unlocked = checkUnlocks(read.cultivator);
   let next = unlocked.cultivator;
-  const notes = [...practiced.notes, ...unlocked.notes];
+  const notes = [...practiced.notes, ...read.notes, ...unlocked.notes];
   const breakthroughs: CultivateResult['breakthroughs'] = [];
   // At the figure, a breakthrough is the player's scene: the auto setting leaves the steps that
   // always hold to it, since they teach the scene, and the ladder a scene plays on alone.

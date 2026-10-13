@@ -3,6 +3,7 @@
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
 import { CARDS, hasCard } from '../../content/cards/index.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
+import { COPY_KINDS, copyId, hasCopy } from '../../content/copies.ts';
 import { ITEMS } from '../../content/items.ts';
 import { hasManual, MANUALS } from '../../content/manuals.ts';
 import { registerManuals } from '../../content/nodes.ts';
@@ -21,6 +22,7 @@ import {
 } from '../../core/attention.ts';
 import {
   breakThrough,
+  gainCopy,
   gainManual,
   gainMethod,
   gainRoutine,
@@ -301,6 +303,23 @@ export const COMMANDS: Record<string, Command> = {
       if (!id) return MANUALS.map((m) => `${m.id.padEnd(30)} ${m.kind} · ${m.rarity}`);
       if (!hasManual(id)) return `No manual "${id}".`;
       return apply(store, (s) => gainManual(s, id, 'is handed'), `Handed the ${id}.`);
+    },
+  },
+  copy: {
+    usage: 'copy [id]',
+    help: 'Hands over a copy to read: manual:tide-counting, method:pine-wind, technique:rampart-palm. Without an id, lists the kinds.',
+    run([id], store) {
+      if (!id) {
+        return [
+          'manual:<id>     a loose manual (see manual)',
+          'method:<id>     a method (see method)',
+          'technique:<id>  a technique (see technique)',
+        ];
+      }
+      // A bare manual, method or technique id takes the first kind that has it.
+      const full = hasCopy(id) ? id : COPY_KINDS.map((k) => copyId(k, id)).find(hasCopy);
+      if (!full) return `No copy "${id}".`;
+      return apply(store, (s) => gainCopy(s, full, 'is handed'), `Handed a copy: ${full}.`);
     },
   },
   shelf: {

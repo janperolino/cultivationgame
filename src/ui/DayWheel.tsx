@@ -9,6 +9,7 @@ import type { GameState } from '../core/state.ts';
 import { hourKindOpen, hourLocked } from '../core/wheel.ts';
 import { formatPercent, formatRate } from './format.ts';
 import { useGame } from './store.ts';
+import { readingLine } from './bookcase.ts';
 import { Why } from './widgets.tsx';
 
 const R_OUTER = 132;
@@ -58,8 +59,8 @@ function hourYieldText(y: HourYield): string {
   return `${YIELD_UNITS[y.kind](y)}${bonuses.length ? ` (${bonuses.join(', ')})` : ''}`;
 }
 
-/** Why an hour of qi, body or soul gives nothing, when it does. */
-function emptyReason(game: GameState, y: HourYield): string | null {
+/** Why an hour gives nothing, when it does; a study hour also names the copy it reads. */
+function hourNote(game: GameState, y: HourYield): string | null {
   const c = game.player;
   if (y.kind === 'qi' && y.qi === 0) {
     return c.activeMethods.qi
@@ -69,6 +70,10 @@ function emptyReason(game: GameState, y: HourYield): string | null {
   if (y.kind === 'body' && y.body === 0) return 'No tempering art: body hours give nothing.';
   if (y.kind === 'soul' && y.soul === 0) return 'No nourishing art: soul hours give nothing.';
   if (y.kind === 'practice' && y.practice === 0) return 'No technique being practiced.';
+  if (y.kind === 'study') {
+    const reading = readingLine(game.player);
+    return reading ? `Also ${reading}.` : null;
+  }
   return null;
 }
 
@@ -178,7 +183,7 @@ export function DayWheel({ game }: { game: GameState }) {
                   {hourBonuses(pick).join(', ')}.
                 </Why>
               )}
-              {emptyReason(game, pick) ? `. ${emptyReason(game, pick)}` : ''}
+              {hourNote(game, pick) ? `. ${hourNote(game, pick)}` : ''}
             </p>
             <div className="seg wheel-kinds" role="group" aria-label="What this hour goes to">
               {HOUR_KIND_IDS.filter((k) => hourKindOpen(c, k)).map((k) => (

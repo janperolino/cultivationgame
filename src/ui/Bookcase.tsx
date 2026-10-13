@@ -2,7 +2,9 @@
 // beside on top, one tree at a time beside a list of them, and below, the bookcase of every
 // manual held. A plank per kind, each manual a standing spine with its hanzi in brush, its
 // rarity's band and its kind's binding, the finished ones lying flat in a stack at the shelf's
-// end; the hover card is how a manual is read, and a click opens it where it grafts.
+// end; the hover card is how a manual is read, and a click opens it where it grafts. Copies stand
+// here too (design § Cultivation, Reading): an unread one wears a paper band, grafts nowhere, and
+// a click pins its card open with Read.
 import {
   useEffect,
   useLayoutEffect,
@@ -20,15 +22,16 @@ import {
   type ManualNode,
 } from '../content/manuals.ts';
 import { rarity, rarityRank, type RarityId } from '../content/rarity.ts';
+import { copyOfManual, readDays } from '../content/copies.ts';
 import { technique } from '../content/techniques.ts';
+import { shelf, shelfTally, SHELF_ORDERS, type PlankId, type ShelfOrder } from '../core/manuals.ts';
 import {
-  heldManuals,
-  shelf,
-  shelfTally,
-  SHELF_ORDERS,
-  type PlankId,
-  type ShelfOrder,
-} from '../core/manuals.ts';
+  bookcaseManuals,
+  copyCount,
+  manualUnread,
+  readingCopy,
+  readProgress,
+} from '../core/reading.ts';
 import type { Cultivator } from '../core/state.ts';
 import { canLearn, hasLearned } from '../core/trees.ts';
 import {
@@ -38,6 +41,9 @@ import {
   HOSTLESS_FILTER_FROM,
   learnedCount,
   matchesManual,
+  readWords,
+  spineReadLabel,
+  unreadMeta,
   nodeMark,
   nodeWords,
   openWords,
@@ -66,7 +72,10 @@ function effectLine(m: Manual, n: ManualNode): string {
 }
 
 /** A spine's pips: one a node up to four, learned filled and a buyable one glowing; else "1/9". */
-function Pips({ c, m }: { c: Cultivator; m: Manual }) {
+function Pips({ c, m, unread }: { c: Cultivator; m: Manual; unread: boolean }) {
+  if (unread) {
+    return m.nodes.slice(0, PIPS_MAX).map((n) => <span key={n.id} className="spine-pip" />);
+  }
   if (m.nodes.length > PIPS_MAX) {
     return (
       <span className="spine-count">
@@ -77,12 +86,32 @@ function Pips({ c, m }: { c: Cultivator; m: Manual }) {
   return m.nodes.map((n) => <span key={n.id} className={`spine-pip is-${nodeMark(c, n)}`} />);
 }
 
+/** The paper band round an unread copy, its reading filling it: "2.1/5", or 未读 before a day. */
+function PaperBand({ c, m }: { c: Cultivator; m: Manual }) {
+  const id = copyOfManual(m);
+  const need = readDays(id);
+  const done = readProgress(c, id);
+  return (
+    <span className="spine-paper" aria-hidden="true">
+      <span
+        className="spine-paper-fill"
+        style={{ width: `${Math.min(100, (done / need) * 100)}%` }}
+      />
+      <span className="spine-paper-text">
+        {done > 0 ? `${formatNumber(done)}/${formatNumber(need)}` : '未读'}
+      </span>
+    </span>
+  );
+}
+
 function Spine({
   c,
   m,
   tabbable,
   tipped,
   fresh,
+  unread,
+  copies,
   onShow,
   onHide,
   onPress,
@@ -94,6 +123,10 @@ function Spine({
   tipped: boolean;
   /** New, not yet selected: it glows until it is. */
   fresh: boolean;
+  /** An unread copy: a paper band across it, its pips dim. */
+  unread: boolean;
+  /** Copies owned; the spine counts them from two. */
+  copies: number;
   onShow: (m: Manual) => void;
   onHide: (m: Manual) => void;
   onPress: (m: Manual, e: MouseEvent) => void;
@@ -103,11 +136,11 @@ function Spine({
   return (
     <button
       type="button"
-      className={`spine is-${m.kind}${rare ? ' is-rare' : ''}${tipped ? ' is-tipped' : ''}${fresh ? ' is-new' : ''}`}
+      className={`spine is-${m.kind}${rare ? ' is-rare' : ''}${tipped ? ' is-tipped' : ''}${fresh ? ' is-new' : ''}${unread ? ' is-unread' : ''}`}
       style={{ ...rarityVar(m.rarity), width: spineWidth(m), height: spineHeight(m) }}
       data-manual={m.id}
       tabIndex={tabbable ? 0 : -1}
-      aria-label={spineLabel(c, m)}
+      aria-label={`${spineLabel(c, m)}${spineReadLabel(c, m, copies)}`}
       aria-describedby={tipped ? 'bookcase-card' : undefined}
       onMouseEnter={() => onShow(m)}
       onMouseLeave={() => onHide(m)}
@@ -128,10 +161,49 @@ function Spine({
       <span className="spine-title" aria-hidden="true">
         {m.hanzi}
       </span>
+      {unread && <PaperBand c={c} m={m} />}
+      {copies >= 2 && (
+        <span className="spine-copies" aria-hidden="true">
+          ×{copies}
+        </span>
+      )}
       <span className="spine-pips" aria-hidden="true">
-        <Pips c={c} m={m} />
+        <Pips c={c} m={m} unread={unread} />
       </span>
     </button>
+  );
+}
+
+/**
+ * An unread copy's reading: what reading it would give and how far it has come, with Read (or
+ * Stop, while the study hours read it) once the card is pinned, or why it can't be read yet.
+ */
+function ReadBlock({ c, m, pinned }: { c: Cultivator; m: Manual; pinned: boolean }) {
+  const readCopy = useGame((s) => s.readCopy);
+  const stopReading = useGame((s) => s.stopReading);
+  const ended = useGame((s) => !!s.game?.ended);
+  const id = copyOfManual(m);
+  const w = readWords(c, id);
+  const now = readingCopy(c) === id;
+  return (
+    <div className="bookcase-read">
+      <span>{w.teaches}</span>
+      <span className="caption">{w.time}</span>
+      {w.refused && <span className="caption is-refused">{w.refused}</span>}
+      {pinned && !w.refused && (
+        <div className="actions">
+          {now ? (
+            <button type="button" className="button button-quiet" onClick={stopReading}>
+              Stop reading
+            </button>
+          ) : (
+            <button type="button" className="button" disabled={ended} onClick={() => readCopy(id)}>
+              Read
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -153,6 +225,8 @@ function Card({
   onClose: () => void;
   box: React.RefObject<HTMLDivElement | null>;
 }) {
+  const unread = manualUnread(c, m);
+  const copies = copyCount(c, copyOfManual(m));
   const shown = m.nodes.slice(0, CARD_NODES);
   const more = m.nodes.length - shown.length;
   const flavor = m.nodes[0]?.text;
@@ -169,17 +243,21 @@ function Card({
         <span className={`bookcase-card-name rarity-${m.rarity}`}>{m.name}</span>
         <span className="hanzi muted">{m.hanzi}</span>
       </div>
-      <span className="caption">{cardMeta(c, m)}</span>
+      <span className="caption">
+        {unread ? unreadMeta(m) : cardMeta(c, m)}
+        {copies >= 2 && ` · ${copies} copies`}
+      </span>
+      {unread && <ReadBlock c={c} m={m} pinned={pinned} />}
       <ul className="bookcase-card-nodes">
         {shown.map((n) => {
-          const mark = nodeMark(c, n);
+          const mark = unread ? 'waiting' : nodeMark(c, n);
           return (
             <li key={n.id} className={`is-${mark}`}>
               <span className="card-mark" aria-hidden="true" />
               <span>
                 <span className="card-node-name">{n.name}</span>
                 <span className="card-node-fx">
-                  {effectLine(m, n)} · {nodeWords(c, m, n)}
+                  {effectLine(m, n)} · {unread ? 'once read' : nodeWords(c, m, n)}
                 </span>
               </span>
             </li>
@@ -190,15 +268,19 @@ function Card({
       {flavor && <p className="bookcase-card-flavor">{flavor}</p>}
       {pinned ? (
         <div className="actions">
-          <button type="button" className="button" onClick={() => onOpen(m)}>
-            Open
-          </button>
+          {!unread && (
+            <button type="button" className="button" onClick={() => onOpen(m)}>
+              Open
+            </button>
+          )}
           <button type="button" className="button button-quiet" onClick={onClose}>
             Close
           </button>
         </div>
       ) : (
-        <span className="bookcase-card-hint">{openWords(m, hostOpen)}</span>
+        <span className="bookcase-card-hint">
+          {unread ? 'Click to read it' : openWords(m, hostOpen)}
+        </span>
       )}
     </div>
   );
@@ -237,7 +319,7 @@ function Strip({
   hidden: ReadonlySet<RarityId>;
   onToggle: (r: RarityId) => void;
 }) {
-  const shelves = shelf(c, 'rarity');
+  const shelves = shelf(c, 'rarity', bookcaseManuals(c));
   const tally = shelfTally(shelves);
   return (
     <div className="bookcase-strip">
@@ -287,12 +369,15 @@ export function Bookcase({
   c,
   fresh,
   hostOpen,
+  focus,
   onOpen,
 }: {
   c: Cultivator;
   /** Manuals still new: their spines glow until selected. */
   fresh: ReadonlySet<string>;
   hostOpen: (m: Manual) => boolean;
+  /** A spine a link asked for: its card pins open and it scrolls into view. */
+  focus: { id: string; seq: number } | null;
   onOpen: (m: Manual) => void;
 }) {
   const see = useGame((s) => s.see);
@@ -307,8 +392,9 @@ export function Bookcase({
   const card = useRef<HTMLDivElement>(null);
   const pointer = useRef('mouse');
 
-  const all = shelfTally(shelf(c));
-  const held = heldManuals(c).filter((m) => !hidden.has(m.rarity) && matchesManual(m, query));
+  const books = bookcaseManuals(c);
+  const all = shelfTally(shelf(c, 'rarity', books));
+  const held = books.filter((m) => !hidden.has(m.rarity) && matchesManual(m, query));
   const shelves = shelf(c, order, held);
   const stacked = (id: PlankId) => stackAll && !standing.has(id);
   const allStacked = stackAll && standing.size === 0;
@@ -345,14 +431,35 @@ export function Bookcase({
     return () => document.removeEventListener('pointerdown', away);
   }, [tip?.pinned]);
 
+  // A link to a spine (a new copy's toast) pins its card open, standing its shelf up if it lies
+  // flat, and scrolls it into view once drawn.
+  const [focusSeen, setFocusSeen] = useState(-1);
+  const [arrived, setArrived] = useState<{ id: string; copy: string } | null>(null);
+  const linked = focus && focus.seq !== focusSeen ? held.find((m) => m.id === focus.id) : undefined;
+  if (focus && linked) {
+    setFocusSeen(focus.seq);
+    setTip({ id: focus.id, pinned: true });
+    setArrived({ id: focus.id, copy: copyOfManual(linked) });
+    const flat = shelves.find((x) => x.finished.some((m) => m.id === focus.id));
+    if (flat) setStanding(new Set(standing).add(flat.plank.id));
+  }
+  useEffect(() => {
+    if (!arrived) return;
+    const at = `[data-manual="${CSS.escape(arrived.id)}"]`;
+    wrap.current?.querySelector<HTMLElement>(at)?.scrollIntoView({ block: 'center' });
+    see('copy', [arrived.copy]);
+  }, [arrived, see]);
+
   const show = (m: Manual) => setTip((t) => (t?.pinned ? t : { id: m.id, pinned: false }));
   const hide = (m: Manual) => setTip((t) => (t && !t.pinned && t.id === m.id ? null : t));
   // A tap on a touch screen shows the card with Open; a second tap, a click or Enter opens.
+  // An unread copy grafts nowhere, so any click pins its card open with Read.
   const press = (m: Manual, e: MouseEvent) => {
     const tap = pointer.current === 'touch' && e.detail !== 0;
-    if (tap && !(tip?.pinned && tip.id === m.id)) {
+    if (manualUnread(c, m) || (tap && !(tip?.pinned && tip.id === m.id))) {
       setTip({ id: m.id, pinned: true });
       see('manual', [m.id]);
+      see('copy', [copyOfManual(m)]);
       return;
     }
     setTip(null);
@@ -457,6 +564,8 @@ export function Bookcase({
                       tabbable={m.id === tab}
                       tipped={tip?.id === m.id}
                       fresh={fresh.has(m.id)}
+                      unread={manualUnread(c, m)}
+                      copies={copyCount(c, copyOfManual(m))}
                       onShow={show}
                       onHide={hide}
                       onPress={press}
@@ -479,7 +588,8 @@ export function Bookcase({
         })}
       </div>
       <p className="caption">
-        Hover or focus a spine to read it; click to open it where it grafts.
+        Hover or focus a spine to see what it holds; click to open it where it grafts, or to read a
+        copy in its paper band.
       </p>
       {tipped && (
         <Card

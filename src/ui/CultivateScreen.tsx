@@ -15,6 +15,7 @@ import { DayWheel, WheelStrip } from './DayWheel.tsx';
 import { MethodRow } from './MethodCard.tsx';
 import { formatNumber, formatPercent, formatRate } from './format.ts';
 import { useGame } from './store.ts';
+import { readingLine } from './bookcase.ts';
 import { LifeEdgeCard, Why } from './widgets.tsx';
 
 function DayPanel({ game }: { game: GameState }) {
@@ -69,6 +70,7 @@ function DayPanel({ game }: { game: GameState }) {
     rates.practice > 0 &&
       c.practicing &&
       `+${formatRate(rates.practice)} practice days on ${technique(c.practicing).name}`,
+    rates.study > 0 && readingLine(c),
   ].filter(Boolean);
 
   return (

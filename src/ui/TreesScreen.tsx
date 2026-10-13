@@ -24,7 +24,9 @@ import {
   type TreeCategory,
   type TreeNode,
 } from '../content/trees/index.ts';
-import { graftsOn, heldManuals, hostlessManuals } from '../core/manuals.ts';
+import { copyManual, copyOfManual } from '../content/copies.ts';
+import { graftsOn, hostlessManuals } from '../core/manuals.ts';
+import { bookcaseManuals } from '../core/reading.ts';
 import { methodMastery } from '../core/methods.ts';
 import type { Cultivator } from '../core/state.ts';
 import { mastery } from '../core/techniques.ts';
@@ -730,17 +732,20 @@ function ManualsView({
     setSeen(focus.seq);
     setFocused(focus.id);
   }
+  // A focus on a manual without a host lands up here; any other lands on its spine below.
+  const hostless = hostlessManuals(c);
+  const atTop = focus !== null && hostless.some((m) => m.id === focus.id);
   useEffect(() => {
     if (!focus) return;
-    top.current?.scrollIntoView({ block: 'start' });
+    if (atTop) top.current?.scrollIntoView({ block: 'start' });
     see('manual', [focus.id]);
-  }, [focus, see]);
+  }, [focus, atTop, see]);
   return (
     <>
       <div ref={top} className="manuals-top">
         <HostlessView
           c={c}
-          list={hostlessManuals(c)}
+          list={hostless}
           focused={focused}
           fresh={fresh}
           onFocus={(m) => {
@@ -753,8 +758,10 @@ function ManualsView({
         c={c}
         fresh={fresh}
         hostOpen={(m) => !!m.host}
+        focus={focus && !atTop ? focus : null}
         onOpen={(m) => {
           see('manual', [m.id]);
+          see('copy', [copyOfManual(m)]);
           onOpen(m);
         }}
       />
@@ -838,7 +845,7 @@ export function TreesScreen() {
   // three with their ladders or a manual grafted on them, a combat Dao once something of it is
   // held; a category once it holds a tree, and Manuals with a first manual.
   const shown = shownTrees(c);
-  const anyManual = heldManuals(c).length > 0;
+  const anyManual = bookcaseManuals(c).length > 0;
   const categories = TREE_CATEGORIES.map((k) => ({
     ...k,
     trees: k.trees.filter((t) => shown.includes(t)),
@@ -851,9 +858,15 @@ export function TreesScreen() {
     : categories.find((k) => k.trees.includes(tree))!;
   const freshTrees = new Set(newIds(game, 'tree'));
   const freshManuals = new Set(newIds(game, 'manual'));
+  // A new copy glows on its spine like a new manual.
+  const freshBooks = new Set([
+    ...freshManuals,
+    ...newIds(game, 'copy').map((id) => copyManual(id).id),
+  ]);
   const categoryNew = (k: TreeCategory) =>
     k.trees.some((t) => freshTrees.has(t.id)) ||
-    (k.id === MANUALS_PICK && hostlessManuals(c).some((m) => freshManuals.has(m.id)));
+    (k.id === MANUALS_PICK &&
+      (hostlessManuals(c).some((m) => freshManuals.has(m.id)) || newIds(game, 'copy').length > 0));
   const openManual = (m: Manual) => {
     localSeq.current -= 1;
     setPick(m.host ?? MANUALS_PICK);
@@ -910,7 +923,7 @@ export function TreesScreen() {
         </div>
       )}
       {onManuals ? (
-        <ManualsView c={c} focus={focus} fresh={freshManuals} onOpen={openManual} />
+        <ManualsView c={c} focus={focus} fresh={freshBooks} onOpen={openManual} />
       ) : (
         <>
           <h3 className="tree-title">

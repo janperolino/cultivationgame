@@ -1,6 +1,6 @@
 // P2.5d: what a moment's gains toast, and how a burst folds.
 import { describe, expect, it } from 'vitest';
-import { gainManual, gainTechnique, checkScreens } from '../core/life.ts';
+import { gainCopy, gainManual, gainTechnique, checkScreens } from '../core/life.ts';
 import { gains, seeAll } from '../core/seen.ts';
 import { newLife, unlock } from '../core/state.ts';
 import { toastsFor } from './toasts.ts';
@@ -34,5 +34,21 @@ describe('toasts', () => {
       screen: 'trees',
       trees: { pick: 'soul', focus: 'stone-eyes-lamp' },
     });
+  });
+
+  it('name a copy, count a second, and link both to its spine on the bookcase', () => {
+    const before = fresh();
+    const after = gainCopy(before, 'manual:tide-counting');
+    const t = toastsFor(gains(before, after), after);
+    // A copy grafts nowhere until read, so no tree appears with it.
+    expect(t.map((x) => `${x.label} · ${x.name}`)).toEqual(['New copy · Tide-Counting Formula']);
+    expect(t[0]!.to).toEqual({
+      screen: 'trees',
+      trees: { pick: 'manuals', focus: 'tide-counting' },
+    });
+    const seen = seeAll(after);
+    const twice = gainCopy(seen, 'manual:tide-counting');
+    const again = toastsFor(gains(seen, twice), twice);
+    expect(again.map((x) => `${x.label} · ${x.name}`)).toEqual(['Copy · Tide-Counting Formula']);
   });
 });

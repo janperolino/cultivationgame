@@ -5,6 +5,7 @@
 import { card } from './cards/index.ts';
 import { GRADES, type GradeId, type LadderId } from './cultivation.ts';
 import { BRANCHES, HOUR_KINDS, HOUR_OPENINGS, SLEEP_FREED_TEXT, type HourKind } from './hours.ts';
+import { copyTitle } from './copies.ts';
 import { hasManual, manual } from './manuals.ts';
 import { MASTERY } from './mastery.ts';
 import { method } from './methods.ts';
@@ -146,6 +147,9 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
     `${w.name} draws a bright orb of qi in from the air of the cave, and the breath after it runs deeper.`,
   manual: (d, w) =>
     `${w.name} ${s(d.how)} ${hasManual(s(d.manual)) ? `the ${manual(s(d.manual)).name}` : 'a manual no longer written'}.`,
+  // A copy is a thing owned, not yet known: reading it writes the manual's, method's or
+  // technique's own line, "finishes reading".
+  copy: (d, w) => `${w.name} ${s(d.how)} a copy of ${copyTitle(s(d.copy))}.`,
   technique: (d, w) => `${w.name} ${s(d.how)} ${technique(s(d.technique)).name}.`,
   method: (d, w) => `${w.name} ${s(d.how)} the ${method(s(d.method)).name}.`,
   'method-switch': (d, w) =>
