@@ -680,8 +680,8 @@ export const QI_TREE = defineTree({
     },
     {
       id: 'qi-tempered-edge',
-      name: 'Tempered Edge',
-      hanzi: '淬锋',
+      name: 'Quenched Qi',
+      hanzi: '淬气',
       tier: 2,
       kind: 'minor',
       branch: 'qi2-strand',

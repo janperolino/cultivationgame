@@ -12,10 +12,11 @@ import {
   tierNode,
   tierNodes,
   BIG_THREE,
-  DAOS,
+  TREE_CATEGORIES,
   treeNode,
   treeOf,
   type Tree,
+  type TreeCategory,
   type TreeNode,
 } from '../content/trees/index.ts';
 import { ladderOpen } from '../core/cultivation.ts';
@@ -503,30 +504,34 @@ export function TreesScreen() {
   const [treeId, setTreeId] = useState('qi');
   if (!game) return null;
   const c = game.player;
-  // The big three open with their ladders; the combat Daos once a first technique opens combat.
-  const big = BIG_THREE.filter((t) => ladderOpen(c, t.ladder));
-  const daos = game.unlocks.includes('combat') ? DAOS : [];
-  const trees = [...big, ...daos];
-  const tree = trees.find((t) => t.id === treeId) ?? trees[0]!;
-  const row = (list: readonly Tree[], label: string) => (
-    <div className="seg" role="group" aria-label={label}>
-      {list.map((t) => (
-        <button
-          key={t.id}
-          type="button"
-          aria-pressed={t.id === tree.id}
-          onClick={() => setTreeId(t.id)}
-        >
-          {t.name} <span className="hanzi">{t.hanzi}</span>
-        </button>
-      ))}
-    </div>
-  );
+  // Pick a category, then a tree in it. The big three open with their ladders; the combat Daos
+  // once a first technique opens combat; the rest show as coming.
+  const open = (t: Tree) =>
+    t.dao ? game.unlocks.includes('combat') : BIG_THREE.includes(t) && ladderOpen(c, t.ladder);
+  const categories = TREE_CATEGORIES.map((k) => ({ ...k, trees: k.trees.filter(open) }));
+  const all = categories.flatMap((k) => k.trees);
+  const tree = all.find((t) => t.id === treeId) ?? all[0]!;
+  const current = categories.find((k) => k.trees.includes(tree))!;
+  const shut = (k: TreeCategory) =>
+    k.trees.length === 0 ? (k.opens ?? (k.id === 'daos' ? 'with a first technique' : '')) : null;
 
   return (
     <section className="panel">
       <div className="tree-top">
-        {row(big, 'Tree')}
+        <div className="seg" role="group" aria-label="Kind of tree">
+          {categories.map((k) => (
+            <button
+              key={k.id}
+              type="button"
+              aria-pressed={k.id === current.id}
+              disabled={k.trees.length === 0}
+              title={shut(k) ?? undefined}
+              onClick={() => setTreeId(k.trees[0]!.id)}
+            >
+              {k.name} <span className="hanzi">{k.hanzi}</span>
+            </button>
+          ))}
+        </div>
         <span
           className="value"
           title="Insight ever earned counts toward breakthroughs; spending never delays them."
@@ -534,11 +539,27 @@ export function TreesScreen() {
           {formatNumber(c.insight.current)} insight to spend
         </span>
       </div>
-      {daos.length > 0 && (
-        <div className="tree-daos">
-          <span className="caption">Daos</span>
-          {row(daos, 'Combat Dao')}
+      <div className="tree-pick">
+        <div className="seg" role="group" aria-label={current.name}>
+          {current.trees.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              aria-pressed={t.id === tree.id}
+              onClick={() => setTreeId(t.id)}
+            >
+              {t.name} <span className="hanzi">{t.hanzi}</span>
+            </button>
+          ))}
         </div>
+      </div>
+      {categories.some((k) => shut(k)) && (
+        <p className="caption">
+          {categories
+            .filter((k) => shut(k))
+            .map((k) => `${k.name} ${shut(k)}`)
+            .join(' · ')}
+        </p>
       )}
       <p className="caption spaced">
         {tree.dao &&

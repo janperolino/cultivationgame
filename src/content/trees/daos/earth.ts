@@ -26,8 +26,8 @@ export const EARTH_DAO = defineDao({
           nodes: [
             {
               id: 'earth-heavy-hands',
-              name: 'Heavy Hands',
-              hanzi: '重手',
+              name: 'Sunken Weight',
+              hanzi: '沉劲',
               effects: [{ stat: 'earthPower', value: 0.04 }],
               text: 'Your fists sit low, and what you throw has all of you behind it.',
             },

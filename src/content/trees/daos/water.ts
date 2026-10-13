@@ -115,8 +115,8 @@ export const WATER_DAO = defineDao({
           nodes: [
             {
               id: 'water-held-breath',
-              name: 'Held Breath',
-              hanzi: '闭息',
+              name: 'Settling Silt',
+              hanzi: '沉沙',
               effects: [{ stat: 'qiRecovery', value: 0.05 }],
               text: 'You stop, and the qi you spent comes back up like silt settling.',
             },

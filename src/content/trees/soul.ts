@@ -13,7 +13,7 @@ export const SOUL_TREE = defineTree({
   branches: [
     { id: 'soul1-mind', name: 'Clear Mind', tier: 1, gate: true },
     { id: 'soul1-lamp', name: 'Inner Lamp', tier: 1, gate: true },
-    { id: 'soul1-water', name: 'Still Water', tier: 1, gate: true },
+    { id: 'soul1-water', name: 'Deep Pond', tier: 1, gate: true },
     { id: 'soul1-sense', name: 'Spreading Sense', tier: 1, gate: false },
     { id: 'soul1-ward', name: 'Heart Demon Ward', tier: 1, gate: false },
     { id: 'soul2-reading', name: 'Enlightened Reading', tier: 2, gate: true },
@@ -175,11 +175,11 @@ export const SOUL_TREE = defineTree({
       text: 'A lamp that does not flicker, even in a heart demon’s wind.',
     },
 
-    // Still Water: soul defense and perception.
+    // Deep Pond: soul defense and perception.
     {
       id: 'soul-still-water',
-      name: 'Still Water',
-      hanzi: '止水',
+      name: 'Deep Pond',
+      hanzi: '深潭',
       tier: 1,
       kind: 'minor',
       branch: 'soul1-water',

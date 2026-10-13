@@ -1,11 +1,14 @@
 // The Bag (design § UI and screens, § Items and gear; docs/mockups/inventory-study.html): the
 // figure with its four gear squares and the treasure slots the trees open, the pack as a grid of
 // squares, stones as a count, the toxicity meter, and the thing in hand with its uses, its
-// properties and its bond. Dragging onto a gear square wears a thing, dragging a worn thing onto
-// the grid takes it off, and every drag has a button beside it for touch.
+// properties and its bond. While a thing is in hand, dragged or picked up, the square it fits
+// glows, the right square with an unmet requirement glows in the warning color with a lock, and
+// the rest dim; dropping or tapping wears it, and a locked square says why. Dragging a worn thing
+// onto the grid takes it off, and every drag has a button beside it for touch.
 import { useState, type DragEvent } from 'react';
 import { PACK_SQUARES } from '../content/gear.ts';
 import { MASTERY } from '../content/mastery.ts';
+import { REALMS } from '../content/realms.ts';
 import { TOXICITY_MAX } from '../content/cultivation.ts';
 import { hasItem, item, itemGlyph, type EquipSlot, type Item } from '../content/items.ts';
 import {
@@ -15,6 +18,7 @@ import {
   bagUsed,
   bondMastery,
   bonds,
+  canEquip,
   gearBand,
   spiritAwake,
   stonesPerBondDay,
@@ -24,7 +28,7 @@ import {
 } from '../core/gear.ts';
 import type { Cultivator } from '../core/state.ts';
 import { stats } from '../core/stats.ts';
-import { pillDose, toxicityDecay } from '../core/toxicity.ts';
+import { ownTier, pillDose, toxicityDecay } from '../core/toxicity.ts';
 import { formatEffect, formatNumber } from './format.ts';
 import { itemTag, toxicityWords, useLines } from './itemWords.ts';
 import { useGame } from './store.ts';
@@ -39,7 +43,7 @@ const SQUARES: { slot: Exclude<EquipSlot, 'treasure'>; label: string; hanzi: str
 
 const DRAG = 'text/x-item';
 
-/** One item square: its glyph, name in its rarity color, and a count past one. */
+/** One item square: its glyph, name in its rarity color, a count past one, and a realm tag. */
 function ItemSquare({
   it,
   n,
@@ -47,6 +51,8 @@ function ItemSquare({
   selected,
   onPick,
   worn,
+  tag,
+  onHold,
 }: {
   it: Item;
   n?: number;
@@ -54,10 +60,15 @@ function ItemSquare({
   selected: boolean;
   onPick: () => void;
   worn?: EquipSlot;
+  /** The realm word shown on a thing above yours: "Foundation". */
+  tag?: string;
+  /** Tells the Bag what is being dragged, so the squares it fits can glow. */
+  onHold?: (id: string | null) => void;
 }) {
   const onDragStart = (e: DragEvent) => {
     e.dataTransfer.setData(DRAG, JSON.stringify({ id: it.id, worn: worn ?? null }));
     e.dataTransfer.effectAllowed = 'move';
+    if (!worn) onHold?.(it.id);
   };
   return (
     <button
@@ -65,58 +76,124 @@ function ItemSquare({
       className={`bag-item rarity-${it.rarity}${wide ? ' is-wide' : ''}${selected ? ' is-selected' : ''}`}
       draggable
       onDragStart={onDragStart}
+      onDragEnd={() => onHold?.(null)}
       onClick={onPick}
       aria-pressed={selected}
-      aria-label={`${it.name}${n && n > 1 ? `, ${n}` : ''}`}
+      aria-label={`${it.name}${n && n > 1 ? `, ${n}` : ''}${tag ? `, ${tag}` : ''}`}
     >
       <span className="bag-glyph hanzi">{itemGlyph(it)}</span>
       <span className="bag-name">{it.name}</span>
       {n !== undefined && n > 1 && <span className="bag-count">{n}</span>}
+      {tag && <span className="bag-tag">{tag}</span>}
     </button>
   );
 }
 
-function GearSquare({
+/** How a slot answers the thing in hand: it fits, it is the right slot but locked, or not this one. */
+type SlotState = { kind: 'fits' } | { kind: 'locked'; reason: string } | { kind: 'other' } | null;
+
+function slotState(c: Cultivator, slot: EquipSlot, hand: string | null, opened: number): SlotState {
+  if (!hand || !hasItem(hand)) return null;
+  if (item(hand).uses.equip?.slot !== slot) return { kind: 'other' };
+  const check = canEquip(c, hand, opened);
+  return check.ok ? { kind: 'fits' } : { kind: 'locked', reason: check.reason };
+}
+
+/**
+ * A gear square or a treasure slot. While something is in hand (dragged, or picked up from the
+ * pack) the square it fits glows, the right square with an unmet requirement glows in the warning
+ * color with a lock, and the rest dim. Dropping or tapping wears it; a locked one says why.
+ */
+function GearSlot({
   c,
   slot,
   label,
   hanzi,
+  worn,
+  hand,
+  opened,
   picked,
   onPick,
+  lockedNote,
 }: {
   c: Cultivator;
-  slot: Exclude<EquipSlot, 'treasure'>;
+  slot: EquipSlot;
   label: string;
   hanzi: string;
+  worn: string | null;
+  hand: string | null;
+  opened: number;
   picked: string | null;
   onPick: (id: string) => void;
+  /** A slot that stays locked whatever is in hand: no treasure slot open yet. */
+  lockedNote?: string;
 }) {
   const wear = useGame((s) => s.wear);
-  const [refused, setRefused] = useState(false);
-  const id = c.gear[slot];
+  const [note, setNote] = useState<string | null>(null);
+  const fitsHere = !!hand && hasItem(hand) && item(hand).uses.equip?.slot === slot;
+  const state: SlotState = lockedNote
+    ? fitsHere
+      ? { kind: 'locked', reason: lockedNote }
+      : null
+    : slotState(c, slot, hand, opened);
+  const tell = (reason: string) => {
+    setNote(reason);
+    setTimeout(() => setNote(null), 2600);
+  };
+  const tryWear = (id: string) => {
+    if (lockedNote) return tell(lockedNote);
+    if (item(id).uses.equip?.slot !== slot) return tell(`${item(id).name} doesn't go here.`);
+    const why = wear(id);
+    if (why) tell(why);
+  };
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
     const data = e.dataTransfer.getData(DRAG);
     if (!data) return;
-    const { id: dropped, worn } = JSON.parse(data) as { id: string; worn: EquipSlot | null };
-    if (worn) return;
-    if (item(dropped).uses.equip?.slot !== slot || wear(dropped)) {
-      setRefused(true);
-      setTimeout(() => setRefused(false), 500);
-    }
+    const { id, worn: from } = JSON.parse(data) as { id: string; worn: EquipSlot | null };
+    if (!from) tryWear(id);
   };
+  const glow =
+    state?.kind === 'fits'
+      ? ' is-fits'
+      : state?.kind === 'locked'
+        ? ' is-locked'
+        : state?.kind === 'other'
+          ? ' is-dim'
+          : '';
   return (
     <div
-      className={`bag-slot${refused ? ' is-refused' : ''}`}
+      className={`bag-slot${glow}`}
       data-label={label}
+      title={state?.kind === 'locked' ? state.reason : undefined}
       onDragOver={(e) => e.preventDefault()}
       onDrop={onDrop}
+      onClick={(e) => {
+        // Tapping a glowing square wears what was picked up from the pack.
+        if (e.target !== e.currentTarget || !hand || hand !== picked) return;
+        if (state?.kind === 'fits' || state?.kind === 'locked') tryWear(hand);
+      }}
     >
-      {id && hasItem(id) ? (
-        <ItemSquare it={item(id)} selected={picked === id} onPick={() => onPick(id)} worn={slot} />
+      {worn && hasItem(worn) ? (
+        <ItemSquare
+          it={item(worn)}
+          selected={picked === worn}
+          onPick={() => onPick(worn)}
+          worn={slot}
+        />
       ) : (
         <span className="bag-slot-hanzi hanzi" aria-hidden="true">
           {hanzi}
+        </span>
+      )}
+      {state?.kind === 'locked' && (
+        <span className="bag-lock" aria-hidden="true">
+          锁
+        </span>
+      )}
+      {note && (
+        <span className="bag-note" role="status">
+          {note}
         </span>
       )}
     </div>
@@ -138,16 +215,35 @@ function Figure() {
   );
 }
 
+const NO_TREASURE_SLOT =
+  'No treasure slot is open yet: notables in the Qi and Soul trees open them.';
+
 function Worn({
   c,
+  hand,
   picked,
   onPick,
 }: {
   c: Cultivator;
+  hand: string | null;
   picked: string | null;
   onPick: (id: string) => void;
 }) {
-  const open = treasureSlots(stats(c).treasureSlots);
+  const opened = stats(c).treasureSlots;
+  const open = treasureSlots(opened);
+  const square = (s: (typeof SQUARES)[number]) => (
+    <GearSlot
+      key={s.slot}
+      c={c}
+      {...s}
+      worn={c.gear[s.slot]}
+      hand={hand}
+      opened={opened}
+      picked={picked}
+      onPick={onPick}
+    />
+  );
+  const holdingTreasure = !!hand && hasItem(hand) && item(hand).uses.equip?.slot === 'treasure';
   return (
     <section className="panel">
       <div className="panel-top">
@@ -164,39 +260,41 @@ function Worn({
         </span>
       </div>
       <div className="bag-body">
-        <div className="bag-gear-col">
-          {SQUARES.slice(0, 2).map((s) => (
-            <GearSquare key={s.slot} c={c} {...s} picked={picked} onPick={onPick} />
-          ))}
-        </div>
+        <div className="bag-gear-col">{SQUARES.slice(0, 2).map(square)}</div>
         <Figure />
-        <div className="bag-gear-col">
-          {SQUARES.slice(2).map((s) => (
-            <GearSquare key={s.slot} c={c} {...s} picked={picked} onPick={onPick} />
-          ))}
-        </div>
+        <div className="bag-gear-col">{SQUARES.slice(2).map(square)}</div>
       </div>
-      {open > 0 && (
+      {(open > 0 || holdingTreasure) && (
         <div className="bag-treasures">
-          {Array.from({ length: open }, (_, i) => {
-            const id = c.gear.treasures[i];
-            return (
-              <div key={i} className="bag-slot" data-label="Treasure">
-                {id && hasItem(id) ? (
-                  <ItemSquare
-                    it={item(id)}
-                    selected={picked === id}
-                    onPick={() => onPick(id)}
-                    worn="treasure"
-                  />
-                ) : (
-                  <span className="bag-slot-hanzi hanzi" aria-hidden="true">
-                    宝
-                  </span>
-                )}
-              </div>
-            );
-          })}
+          {open === 0 ? (
+            <GearSlot
+              c={c}
+              slot="treasure"
+              label="Treasure"
+              hanzi="宝"
+              worn={null}
+              hand={hand}
+              opened={opened}
+              picked={picked}
+              onPick={onPick}
+              lockedNote={NO_TREASURE_SLOT}
+            />
+          ) : (
+            Array.from({ length: open }, (_, i) => (
+              <GearSlot
+                key={i}
+                c={c}
+                slot="treasure"
+                label="Treasure"
+                hanzi="宝"
+                worn={c.gear.treasures[i] ?? null}
+                hand={hand}
+                opened={opened}
+                picked={picked}
+                onPick={onPick}
+              />
+            ))
+          )}
         </div>
       )}
     </section>
@@ -354,8 +452,16 @@ export function BagScreen() {
   const game = useGame((s) => s.game);
   const takeOff = useGame((s) => s.takeOff);
   const [picked, setPicked] = useState<string | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
   if (!game) return null;
   const c = game.player;
+  // What is in hand: a thing being dragged, else one picked up from the pack (not a worn one).
+  const inPack = picked && hasItem(picked) && (c.items[picked] ?? 0) > 0 ? picked : null;
+  const hand = dragging ?? inPack;
+  const own = ownTier(c);
+  /** A realm word on anything from a realm above yours. */
+  const tagOf = (it: Item) =>
+    it.tier > own ? (REALMS[it.tier - 1]?.name.split(' ')[0] ?? `tier ${it.tier}`) : undefined;
   const stacks = bagStacks(c);
   const used = bagUsed(c);
   const cap = bagCapacity(c);
@@ -368,10 +474,11 @@ export function BagScreen() {
     if (!data) return;
     const { id, worn } = JSON.parse(data) as { id: string; worn: EquipSlot | null };
     if (worn) takeOff(worn, id);
+    setDragging(null);
   };
   return (
     <div className="bag-screen">
-      <Worn c={c} picked={picked} onPick={setPicked} />
+      <Worn c={c} hand={hand} picked={picked} onPick={setPicked} />
       <section className="panel">
         <div className="panel-top">
           <h2 className="panel-heading">
@@ -396,6 +503,8 @@ export function BagScreen() {
               wide={s.squares > 1}
               selected={picked === s.id}
               onPick={() => setPicked(s.id)}
+              tag={tagOf(item(s.id))}
+              onHold={setDragging}
             />
           ))}
           {Array.from({ length: free }, (_, i) => (
@@ -408,7 +517,10 @@ export function BagScreen() {
         <Detail c={c} id={picked} onClear={() => setPicked(null)} />
       ) : (
         <section className="panel">
-          <p className="muted">Pick up something to read it. Drag gear onto a square to wear it.</p>
+          <p className="muted">
+            Pick up something to read it. Drag gear onto the square that glows, or pick it up and
+            tap the square.
+          </p>
         </section>
       )}
     </div>

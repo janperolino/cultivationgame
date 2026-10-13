@@ -12,6 +12,7 @@ import {
   tierBranches,
   tierNode,
   tierNodes,
+  TREE_CATEGORIES,
   TREES,
   tree,
   treeNode,
@@ -89,6 +90,21 @@ describe('tree content', () => {
     expect(new Set(all.map((n) => n.id)).size).toBe(all.length);
     const branches = TREES.flatMap((t) => t.branches);
     expect(new Set(branches.map((b) => b.id)).size).toBe(branches.length);
+  });
+
+  it('names every node once across every tree, so a name points at one node', () => {
+    const seen = new Map<string, string>();
+    for (const n of all) {
+      expect(seen.get(n.name), `${n.name}: ${seen.get(n.name)} and ${n.id}`).toBeUndefined();
+      seen.set(n.name, n.id);
+    }
+  });
+
+  it('groups every tree under one category, the big three first', () => {
+    const grouped = TREE_CATEGORIES.flatMap((k) => k.trees);
+    expect(grouped.map((t) => t.id).sort()).toEqual(TREES.map((t) => t.id).sort());
+    expect(TREE_CATEGORIES[0]!.trees).toEqual(BIG_THREE);
+    for (const k of TREE_CATEGORIES) if (k.trees.length === 0) expect(k.opens).toBeTruthy();
   });
 
   for (const t of BIG_THREE) {

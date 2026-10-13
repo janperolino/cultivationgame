@@ -83,8 +83,8 @@ export const METAL_DAO = defineDao({
           nodes: [
             {
               id: 'metal-iron-shirt',
-              name: 'Iron Shirt',
-              hanzi: '铁衫',
+              name: 'Qi Mail',
+              hanzi: '气铠',
               effects: [{ stat: 'physicalResist', value: 0.03 }],
               text: 'Qi laid over the skin like a shirt of mail, a link at a time.',
             },

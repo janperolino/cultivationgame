@@ -14,6 +14,33 @@ export const BIG_THREE: readonly Tree[] = [QI_TREE, BODY_TREE, SOUL_TREE];
 export const DAOS: readonly Tree[] = DAO_TREES;
 export const TREES: readonly Tree[] = [...BIG_THREE, ...DAOS];
 
+/**
+ * The kinds of tree the Trees screen groups by: pick a category, then a tree in it. A category
+ * with no trees yet shows as coming, with `opens` saying when: "in M3".
+ */
+export interface TreeCategory {
+  id: string;
+  name: string;
+  hanzi: string;
+  trees: readonly Tree[];
+  /** When an empty category fills, for the screen. */
+  opens?: string;
+}
+
+export const TREE_CATEGORIES: readonly TreeCategory[] = [
+  { id: 'cultivation', name: 'Cultivation', hanzi: '修', trees: BIG_THREE },
+  { id: 'daos', name: 'Daos', hanzi: '道', trees: DAOS },
+  { id: 'ways', name: 'Ways', hanzi: '途', trees: [], opens: 'in M3' },
+  { id: 'crafts', name: 'Crafts', hanzi: '艺', trees: [], opens: 'in M4' },
+  {
+    id: 'manuals',
+    name: 'Manuals',
+    hanzi: '典',
+    trees: [],
+    opens: 'once their homes are settled (on the Character screen until then)',
+  },
+];
+
 const trees = new Map(TREES.map((t) => [t.id, t]));
 const nodes = new Map<string, { node: TreeNode; tree: Tree }>();
 for (const tree of TREES) for (const node of tree.nodes) nodes.set(node.id, { node, tree });

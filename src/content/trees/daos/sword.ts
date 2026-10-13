@@ -56,8 +56,8 @@ export const SWORD_DAO = defineDao({
           nodes: [
             {
               id: 'sword-whetstone',
-              name: 'Whetstone',
-              hanzi: '磨石',
+              name: 'Honing',
+              hanzi: '砺锋',
               effects: [{ stat: 'swordCrit', value: 0.01 }],
               text: 'You hone the edge each night until paper parts on it.',
             },
