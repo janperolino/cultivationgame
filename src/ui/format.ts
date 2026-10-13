@@ -1,6 +1,12 @@
 import { statInfo, type Effect } from '../content/stats.ts';
 import { realm, REALMS, stageName } from '../content/realms.ts';
-import { GRADE_NEXT_ODDS, GRADE_SPEED, GRADES, type GradeId } from '../content/cultivation.ts';
+import {
+  GRADE_ECHO,
+  GRADE_NEXT_ODDS,
+  GRADE_SPEED,
+  GRADES,
+  type GradeId,
+} from '../content/cultivation.ts';
 import type { LadderId } from '../core/cultivation.ts';
 import { DAYS_PER_YEAR, type Ladder } from '../core/state.ts';
 
@@ -119,5 +125,20 @@ export function gradeGives(id: GradeId, realmName: string): string {
     `${sign(speed)}${Math.round(Math.abs(speed) * 100)}% speed in ${realmName}`,
     `${sign(stages)}${Math.abs(stages)} ${Math.abs(stages) === 1 ? 'stage' : 'stages'} in a fight`,
     `${sign(odds)}${Math.round(Math.abs(odds) * 100)} odds on the next major`,
+  ].join(', ');
+}
+
+/**
+ * What an earlier grade still gives once a later major has passed it: a third of its speed and
+ * odds, for life (core/grades.ts). "+12% speed, +3 odds on every major".
+ */
+export function gradeEchoes(id: GradeId): string {
+  const speed = (GRADE_SPEED[id] - 1) * GRADE_ECHO;
+  const odds = GRADE_NEXT_ODDS[id] * GRADE_ECHO;
+  if (speed === 0 && odds === 0) return 'nothing echoes on';
+  const sign = (x: number) => (x >= 0 ? '+' : '−');
+  return [
+    `${sign(speed)}${Math.round(Math.abs(speed) * 100)}% speed`,
+    `${sign(odds)}${Math.round(Math.abs(odds) * 100)} odds on every major`,
   ].join(', ');
 }

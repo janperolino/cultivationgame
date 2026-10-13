@@ -155,6 +155,7 @@ function GradeMeter({ check, last }: { check: MajorCheck; last: boolean }) {
         <strong className={`grade-word is-${grade}`}>{g.name}</strong>
         <span className="caption">
           {last ? 'flawed at best, on the last chance' : gradeGives(grade, check.target.name)}
+          {!last && grade !== 'ordinary' && '; a third of the speed and odds echoes on for life'}
         </span>
       </div>
       <div
@@ -296,7 +297,7 @@ function Panel({ game, panel }: { game: GameState; panel: PanelOpen }) {
             <Why label="How the odds are worked out">
               {last
                 ? 'At the edge of your lifespan, below a full bar, the odds shrink with the bar and then by more. The gate pill is laid alone, and a failure ends the life.'
-                : `The realm's own odds, a step for each 10% past full, the margin you bring, your method${check.gradeOdds ? `, ${points(check.gradeOdds)} from the grade of your last breakthrough on this ladder` : ''} and the offerings. At the figure the scene adds up to 10% more for the gates you catch.`}
+                : `The realm's own odds, a step for each 10% past full, the margin you bring, your method${check.gradeOdds ? `, ${points(check.gradeOdds)} from the grades of your breakthroughs on this ladder` : ''} and the offerings. At the figure the scene adds up to 10% more for the gates you catch.`}
             </Why>
           </span>
         </div>

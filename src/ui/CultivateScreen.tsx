@@ -40,7 +40,9 @@ function DayPanel({ game }: { game: GameState }) {
         {speed.rarity.toFixed(2)}, mastery ×{speed.mastery}), fit ×{speed.fit}, qi density ×
         {speed.density}, Aptitude ×{speed.aptitude.toFixed(2)}
         {speed.nodes !== 1 && `, tree nodes and method ×${speed.nodes.toFixed(2)}`}
-        {speed.grade !== 1 && `, the grade of your breakthrough into this realm ×${speed.grade}`}.
+        {speed.grade !== 1 &&
+          `, the grades of your breakthroughs, the latest in full and earlier ones echoing, ×${speed.grade.toFixed(2)}`}
+        .
       </span>
       <span>
         That is the away rate. While you attend, attention multiplies it again: ×1.25 for being

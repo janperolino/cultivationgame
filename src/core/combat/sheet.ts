@@ -5,7 +5,7 @@
 // realm's first stage. A breakthrough grade moves you −1 to +3 stages along the same climb. HP,
 // the qi pool, Attack, Defense, Accuracy and Evasion all read a rung's size; a thing's tier reads
 // the size of its realm. The fight compares two sheets by ratio and nothing else.
-import { GRADES, type GradeId } from '../../content/cultivation.ts';
+import { gradesStages } from '../grades.ts';
 import {
   REALMS,
   realm,
@@ -27,14 +27,9 @@ export interface Rung {
   grade: number;
 }
 
-/** The stages a breakthrough grade is worth. */
-export function gradeStages(grade: GradeId | undefined): number {
-  return GRADES.find((g) => g.id === grade)?.stages ?? 0;
-}
-
 /** A cultivator's rung on a ladder, its latest major breakthrough's grade included. */
 export function rungOf(l: Ladder): Rung {
-  return { realm: l.realm, stage: l.stage, grade: gradeStages(l.grades.at(-1)) };
+  return { realm: l.realm, stage: l.stage, grade: gradesStages(l.grades) };
 }
 
 /** The rung at the start of a tier's realm: tier 1 is Qi Condensation layer 1. */

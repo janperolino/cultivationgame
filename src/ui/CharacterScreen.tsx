@@ -25,6 +25,7 @@ import {
   formatLadder,
   formatNumber,
   formatPercent,
+  gradeEchoes,
   gradeGives,
   LADDER_LABELS,
   listWords,
@@ -215,13 +216,22 @@ function Sheet({ c }: { c: Cultivator }) {
 }
 
 /** The grade of the breakthrough that opened a realm, with what it gives. */
-function GradeLine({ grade, realmName }: { grade: GradeId | undefined; realmName: string }) {
+function GradeLine({
+  grade,
+  realmName,
+  echo,
+}: {
+  grade: GradeId | undefined;
+  realmName: string;
+  /** A later major has passed it: only its echo still counts. */
+  echo: boolean;
+}) {
   if (!grade) return null;
   const g = GRADES.find((x) => x.id === grade)!;
   return (
     <div className="caption">
       <span className={`grade-word is-${grade}`}>{g.name}</span> breakthrough:{' '}
-      {gradeGives(grade, realmName)}
+      {echo ? `now an echo, ${gradeEchoes(grade)}` : gradeGives(grade, realmName)}
     </div>
   );
 }
@@ -241,7 +251,11 @@ function Growth({ c, which }: { c: Cultivator; which: LadderId }) {
               {r.climbed} of {r.of} stages
             </span>
             <div className="caption">{growthLine(r.growth, which)}</div>
-            <GradeLine grade={l.grades[realmIndex(r.realm) - 1]} realmName={realm(r.realm).name} />
+            <GradeLine
+              grade={l.grades[realmIndex(r.realm) - 1]}
+              realmName={realm(r.realm).name}
+              echo={realmIndex(r.realm) < realmIndex(l.realm)}
+            />
             <div className="caption">
               Built by{' '}
               {r.methods.map((id) => (id ? method(id).name : 'the world alone')).join(', ')}
@@ -282,7 +296,8 @@ export function CharacterScreen() {
         <h2 className="panel-heading">Growth</h2>
         <p className="caption">
           Each stage keeps the growth of the method that climbed it; the current realm counts most.
-          Each realm past the first carries the grade of the breakthrough that opened it.
+          Each realm past the first carries the grade of the breakthrough that opened it, and once
+          you climb past it, a third of its speed and odds echoes on for life.
         </p>
         {LADDERS.every((l) => realmGrowth(c[l]).every((r) => r.climbed === 0)) ? (
           <p className="muted spaced">No stage climbed yet.</p>

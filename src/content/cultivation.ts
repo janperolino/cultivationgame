@@ -150,8 +150,8 @@ export const MAJOR_ODDS_PER_MARGIN = 0.08;
  */
 export const PEAK_MARGIN = 0.5;
 /**
- * A ladder's grade multiplies its cultivation speed for the whole new realm (D2.1): the speed
- * only applies past Foundation, so the pacing sim's M1 targets stand.
+ * A ladder's grade multiplies its cultivation speed for the whole new realm (D2.1), and echoes at
+ * GRADE_ECHO after it: the speed only applies past Foundation, so the pacing sim's M1 targets stand.
  */
 export const GRADE_SPEED: Record<GradeId, number> = {
   flawed: 0.85,
@@ -168,3 +168,11 @@ export const GRADE_NEXT_ODDS: Record<GradeId, number> = {
   perfect: 0.06,
   heavenly: 0.1,
 };
+/**
+ * Echoes (Jan's call after P2.4): a ladder's latest grade counts in full, and each earlier one
+ * keeps this share of its speed and next-major odds for life, so a heavenly Foundation still gives
+ * +12% speed and +3 odds at every realm above, and a flawed one stays a scar. Heavenly at every
+ * realm comes to about ×1.6 speed by Nascent Soul. Fight stages take the latest grade alone: with
+ * echoes there, three rows of the fighting-up ledger fell off (core/grades.ts).
+ */
+export const GRADE_ECHO = 1 / 3;

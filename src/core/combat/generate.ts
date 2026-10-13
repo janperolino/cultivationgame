@@ -27,7 +27,7 @@ import {
   type DamageType,
   type WeaponKind,
 } from '../../content/combat.ts';
-import { GRADES, type GradeId, type LadderId } from '../../content/cultivation.ts';
+import type { GradeId, LadderId } from '../../content/cultivation.ts';
 import {
   ART_FORM,
   CONSUMABLES,
@@ -63,6 +63,7 @@ import {
   type CultivatorTemplate,
 } from '../../content/roster.ts';
 import type { Technique } from '../../content/techniques.ts';
+import { gradesStages } from '../grades.ts';
 import type { Rng } from '../rng.ts';
 import { armor, combatant, weapon, type Combatant } from './combatant.ts';
 import { damagePhase } from './damage.ts';
@@ -209,11 +210,13 @@ export interface Npc {
   combatant: Combatant;
 }
 
-const gradeStagesOf = (g: GradeId) => GRADES.find((x) => x.id === g)!.stages;
-
 /** A major breakthrough's grade sits on the rung from Foundation up; Qi Condensation has none. */
 function rungAt(realmId: RealmId, stage: number, grade: GradeId): Rung {
-  return { realm: realmId, stage, grade: realmId === 'qi-condensation' ? 0 : gradeStagesOf(grade) };
+  return {
+    realm: realmId,
+    stage,
+    grade: realmId === 'qi-condensation' ? 0 : gradesStages([grade]),
+  };
 }
 
 /** The rung one realm up at the same climb: Qi Condensation layer 1 sits under Foundation early. */

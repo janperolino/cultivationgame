@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BAR_CAP,
+  GRADE_ECHO,
   GRADE_NEXT_ODDS,
   GRADE_SCORES,
   GRADE_SPEED,
@@ -24,6 +25,8 @@ import {
   qiSpeed,
   type LadderId,
 } from './cultivation.ts';
+import { rungOf } from './combat/sheet.ts';
+import { gradesOdds, gradesSpeed, gradesStages } from './grades.ts';
 import { attemptLastChance, breakThrough, cultivate } from './life.ts';
 import { advance } from './loop.ts';
 import { learnMethod, methodNeed, setActiveMethod } from './methods.ts';
@@ -538,6 +541,26 @@ describe('breakthrough grades (D2.1)', () => {
     expect(graded.odds).toBeCloseTo(plain.odds + 0.06);
     const flawed = majorCheck(at(c, 'qi', { grades: ['flawed'] }), 'qi')!;
     expect(flawed.odds).toBeCloseTo(plain.odds - 0.03);
+  });
+
+  it('echo on at a third once a later major has passed them, on speed and odds only', () => {
+    const fe = atFoundation(player());
+    const base = qiSpeed(fe).total;
+    // A heavenly Foundation under an ordinary Core: a third of its +35% stays.
+    const echo = at(fe, 'qi', { grades: ['heavenly', 'ordinary'] });
+    expect(qiSpeed(echo).grade).toBeCloseTo(1 + 0.35 * GRADE_ECHO);
+    expect(qiSpeed(echo).total).toBeCloseTo(base * (1 + 0.35 * GRADE_ECHO));
+    // The latest counts in full on top of every echo; a flawed one stays a scar.
+    expect(gradesSpeed(['heavenly', 'heavenly', 'heavenly'])).toBeCloseTo(1.35 + (2 * 0.35) / 3);
+    expect(gradesSpeed(['flawed', 'ordinary'])).toBeCloseTo(1 - 0.05);
+    expect(gradesOdds(['perfect', 'flawed'])).toBeCloseTo(0.06 / 3 - 0.03);
+    const c = readyForFoundation();
+    const echoed = majorCheck(at(c, 'qi', { grades: ['heavenly', 'ordinary'] }), 'qi')!;
+    expect(echoed.gradeOdds).toBeCloseTo(0.1 / 3);
+    // A fight reads the latest grade alone: the ledger is a cliff a third of a stage tips.
+    expect(rungOf(at(fe, 'qi', { grades: ['heavenly', 'ordinary'] }).qi).grade).toBe(0);
+    expect(rungOf(at(fe, 'qi', { grades: ['ordinary', 'heavenly'] }).qi).grade).toBe(3);
+    expect(gradesStages([])).toBe(0);
   });
 });
 

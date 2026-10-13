@@ -11,8 +11,6 @@ import {
   BAR_CAP,
   BODY_PER_DAY,
   GRADES,
-  GRADE_NEXT_ODDS,
-  GRADE_SPEED,
   GRADE_SCORES,
   INJURY_SPEED,
   INSIGHT_ATTENDED,
@@ -68,6 +66,7 @@ import { root } from '../content/roots.ts';
 import type { Routine } from '../content/routines.ts';
 import { technique } from '../content/techniques.ts';
 import { AWAY, type Seat } from './attention.ts';
+import { gradesOdds, gradesSpeed } from './grades.ts';
 import { stageGrowth } from './growth.ts';
 import { gainInsight, masteryBurst } from './insight.ts';
 import {
@@ -135,16 +134,17 @@ export function currentGrade(l: Ladder): GradeId | undefined {
   return l.grades.at(-1);
 }
 
-/** The grade's multiplier on the ladder's speed, for the whole realm it opened (D2.1). */
+/**
+ * The grades' multiplier on the ladder's speed: the latest in full for the realm it opened, each
+ * earlier one echoing at a third (core/grades.ts).
+ */
 export function gradeSpeed(l: Ladder): number {
-  const g = currentGrade(l);
-  return g ? GRADE_SPEED[g] : 1;
+  return gradesSpeed(l.grades);
 }
 
-/** What the grade adds to the ladder's next major breakthrough's odds (D2.1). */
+/** What the grades add to the ladder's next major breakthrough's odds, echoes and all. */
 export function gradeNextOdds(l: Ladder): number {
-  const g = currentGrade(l);
-  return g ? GRADE_NEXT_ODDS[g] : 0;
+  return gradesOdds(l.grades);
 }
 
 // ---------------------------------------------------------------- rates
@@ -163,7 +163,7 @@ export interface QiSpeed {
   nodes: number;
   /** Attention: ×1 away, ×1.25 for being there, up to ×2 at full focus (core/attention.ts). */
   attention: number;
-  /** The grade of the breakthrough into this realm (D2.1): ×0.85 flawed to ×1.35 heavenly. */
+  /** The grades on the qi ladder (D2.1): the latest ×0.85 flawed to ×1.35 heavenly, with echoes. */
   grade: number;
   /** The method's tier sits below the qi realm: it gains nothing until the next chapter. */
   capped: boolean;
@@ -491,7 +491,7 @@ export interface MajorCheck {
   /** Whether the grade may reach heavenly: a gold or better method or offering. */
   heavenly: boolean;
   grade: GradeId;
-  /** What the grade of this ladder's last major adds to these odds (D2.1). */
+  /** What this ladder's grades add to these odds: the last major's in full, earlier ones echoing. */
   gradeOdds: number;
   odds: number;
 }
