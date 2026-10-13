@@ -16,6 +16,8 @@ import {
 } from './cultivation.ts';
 import type { DayStep } from './loop.ts';
 import { gainInsight } from './insight.ts';
+import type { EquipSlot } from '../content/items.ts';
+import { equip, feedArtifact, unequip, wornIds, type GearCheck } from './gear.ts';
 import { consumeItem } from './items.ts';
 import { gainManual as holdManual, holdsManual } from './manuals.ts';
 import { knowsMethod, learnMethod, setActiveMethod, type MethodCheck } from './methods.ts';
@@ -31,7 +33,7 @@ import {
   withStream,
   type GameState,
 } from './state.ts';
-import { talentAwake, talentsOf, wokeFlag } from './stats.ts';
+import { stats, talentAwake, talentsOf, wokeFlag } from './stats.ts';
 import { canLearnTechnique, learnTechnique, setPracticing } from './techniques.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
 import { learnRoutine } from './wheel.ts';
@@ -79,7 +81,13 @@ export function checkScreens(s: GameState): GameState {
   if (s.player.insight.earned >= TREES_SCREEN_INSIGHT) {
     next = unlock(next, 'trees', true);
   }
-  if (Object.keys(s.player.techniques).length > 0) next = unlock(next, 'techniques');
+  if (Object.keys(s.player.techniques).length > 0) {
+    next = unlock(next, 'techniques');
+    next = unlock(next, 'combat');
+  }
+  const p = s.player;
+  const holds = Object.values(p.items).some((n) => n > 0) || wornIds(p).length > 0;
+  if (holds) next = unlock(next, 'bag');
   return next;
 }
 
@@ -233,6 +241,25 @@ export function gainRoutine(s: GameState, id: string, how = 'learns'): GameState
 /** Points the player's practice days at a technique, or at nothing. */
 export function practice(s: GameState, id: string | null): GameState {
   return withPlayer(s, setPracticing(s.player, id));
+}
+
+/** The player wears an item from the Bag (core/gear.ts); the reason when they can't. */
+export function wearItem(s: GameState, id: string): { state: GameState; check: GearCheck } {
+  if (s.ended) return { state: s, check: { ok: false, reason: 'This life is over.' } };
+  const r = equip(s.player, id, stats(s.player).treasureSlots);
+  return { state: r.check.ok ? withPlayer(s, r.cultivator) : s, check: r.check };
+}
+
+/** The player takes off what a gear square or a treasure slot holds. */
+export function takeOff(s: GameState, slot: EquipSlot, id?: string): GameState {
+  if (s.ended) return s;
+  return withPlayer(s, unequip(s.player, slot, id));
+}
+
+/** The player feeds an artifact spirit stones in seclusion, bonding by the day's worth. */
+export function feedStones(s: GameState, id: string, stones: number): GameState {
+  if (s.ended) return s;
+  return withPlayer(s, feedArtifact(s.player, id, stones));
 }
 
 /** The player eats or drinks one of an item (core/items.ts); unchanged if they can't. */

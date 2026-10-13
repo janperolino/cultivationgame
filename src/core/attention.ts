@@ -34,10 +34,12 @@ import {
   ORB_RING,
   ORB_TIMED,
   POINTER_REACH,
+  RESONANCE_DAWN_EVERY,
   YIN_HOURS,
   type OrbKindId,
   type QiTint,
 } from '../content/attention.ts';
+import { phaseOf, type PhaseElement } from '../content/elements.ts';
 import { BRANCHES, DAWN_HOUR } from '../content/hours.ts';
 import { inTutorial, ladderMethod } from './methods.ts';
 import { Rng, streamSeed } from './rng.ts';
@@ -50,6 +52,8 @@ export interface Seat {
   factor: number;
   /** Attended hours leave a second insight trickle. */
   attended: boolean;
+  /** Focus while attending, 0 to 1: Circulating Thought grows the second trickle with it. */
+  focus?: number;
   /**
    * At the figure, qi breakthroughs play as a scene (core/scene.ts): 'ready' while you sit with
    * it, so the auto setting leaves the qi's certain steps to the scene; 'playing' while one runs,
@@ -165,21 +169,41 @@ export function attentionFactor(a: Attention, c: Cultivator): number {
 
 /** What the day step reads from the seat. */
 export function seatOf(a: Attention, c: Cultivator): Seat {
-  return { factor: attentionFactor(a, c), attended: a.attended };
+  const focus = heatUnsettled(a) ? 0 : a.presence * a.focus;
+  return { factor: attentionFactor(a, c), attended: a.attended, focus };
+}
+
+/** Seconds a breath takes for this cultivator: Long Breath slows the cycle. */
+export function breathCycle(c: Cultivator): number {
+  return BREATH_S * (1 + Math.max(0, stats(c).longBreath));
 }
 
 /** Where the breath cycle stands: 0 to 1, the inhale first. */
-export function breathPhase(t: number): number {
-  return (((t / BREATH_S) % 1) + 1) % 1;
+export function breathPhase(t: number, cycle = BREATH_S): number {
+  return (((t / cycle) % 1) + 1) % 1;
 }
 
-export function inhaling(t: number): boolean {
-  return breathPhase(t) < INHALE_SHARE;
+export function inhaling(t: number, cycle = BREATH_S): boolean {
+  return breathPhase(t, cycle) < INHALE_SHARE;
 }
 
 /** The next moment an inhale begins at or after `t`. */
-function nextInhale(t: number): number {
-  return Math.ceil(t / BREATH_S - 1e-9) * BREATH_S;
+function nextInhale(t: number, cycle: number): number {
+  return Math.ceil(t / cycle - 1e-9) * cycle;
+}
+
+/**
+ * What an orb is worth to this cultivator (design § Cultivation, the Breath branch, tier 2): its
+ * kind's worth, half again for your root's own element with Attuned Breath, double for dawn's and
+ * the night's with Heaven and Earth Resonance, and more each breath with Long Breath.
+ */
+export function orbWorth(c: Cultivator, o: Pick<Orb, 'kind' | 'tint'>): number {
+  const m = stats(c);
+  let worth: number = ORB_KINDS[o.kind].value;
+  const own = c.rootElements.map(phaseOf);
+  if (o.kind === 'element' && own.includes(o.tint as PhaseElement)) worth *= 1 + m.attunedBreath;
+  if ((o.kind === 'dawn' || o.kind === 'yin') && m.resonance > 0) worth *= 2;
+  return worth * (1 + Math.max(0, m.longBreath));
 }
 
 /** Orbs come only while a qi method draws qi in; without one the qi slides off. */
@@ -252,7 +276,8 @@ export function tickAttention(a: Attention, c: Cultivator, dt: number, at: TickI
       // Most orbs are timed to arrive on an inhale, so a breath with the figure catches them best.
       let arrives = t + ORB_DRIFT_S;
       if (rng.chance(ORB_INHALE_LEAN)) {
-        arrives = nextInhale(arrives) + rng.next() * INHALE_SHARE * BREATH_S * 0.6;
+        const cycle = breathCycle(c);
+        arrives = nextInhale(arrives, cycle) + rng.next() * INHALE_SHARE * cycle * 0.6;
       }
       const { kind, tint } = hourTint(at.hour);
       orbs = [
@@ -269,7 +294,9 @@ export function tickAttention(a: Attention, c: Cultivator, dt: number, at: TickI
         },
       ];
     }
-    nextOrbAt = t + between(rng, ORB_EVERY_S);
+    // Heaven and Earth Resonance: dawn sends its purple orbs more often.
+    const sooner = hourTint(at.hour).kind === 'dawn' && m.resonance > 0 ? RESONANCE_DAWN_EVERY : 1;
+    nextOrbAt = t + between(rng, ORB_EVERY_S) * sooner;
     rngState = rng.state;
   }
   return {
@@ -324,7 +351,7 @@ function orbsNear(a: Attention, p: readonly [number, number], reach: number, inP
  * unsettled and lose the bonus for a while. The tutorial layers take orbs for nothing, with no heat.
  */
 function drawIn(a: Attention, c: Cultivator, picked: { orb: Orb; at: [number, number] }[]): Breath {
-  const timed = inhaling(a.t);
+  const timed = inhaling(a.t, breathCycle(c));
   const left = a.orbs.filter((o) => !picked.some((p) => p.orb.id === o.id));
   const base = {
     ...a,
@@ -338,7 +365,7 @@ function drawIn(a: Attention, c: Cultivator, picked: { orb: Orb; at: [number, nu
   if (seatTutorial(c) || heatUnsettled(a)) {
     return { attention: base, caught: picked, timed, overheated: false, wasted: true };
   }
-  const worth = picked.reduce((sum, p) => sum + ORB_KINDS[p.orb.kind].value, 0);
+  const worth = picked.reduce((sum, p) => sum + orbWorth(c, p.orb), 0);
   const focus = Math.min(1, a.focus + ORB_FOCUS * worth * (timed ? ORB_TIMED : 1));
   const heat = a.heat + HEAT_PER_BREATH * (timed ? HEAT_TIMED : 1);
   const limit = heatLimit(c);
@@ -375,7 +402,13 @@ export function canBreathe(a: Attention): boolean {
  * with Twin Streams. Every press starts the cooldown, caught or not, so it can't be mashed.
  */
 export function breathe(a: Attention, who: Cultivator): Breath {
-  const none = { attention: a, caught: [], timed: inhaling(a.t), overheated: false, wasted: false };
+  const none = {
+    attention: a,
+    caught: [],
+    timed: inhaling(a.t, breathCycle(who)),
+    overheated: false,
+    wasted: false,
+  };
   if (who.id !== a.who || !canBreathe(a)) return none;
   const reach = BREATHE_REACH * (1 + stats(who).breathReach);
   const picked = orbsNear(a, DANTIAN, reach).slice(0, perBreath(who));
@@ -395,7 +428,13 @@ export function catchAt(
   y: number,
   inPlace = false,
 ): Breath {
-  const none = { attention: a, caught: [], timed: inhaling(a.t), overheated: false, wasted: false };
+  const none = {
+    attention: a,
+    caught: [],
+    timed: inhaling(a.t, breathCycle(who)),
+    overheated: false,
+    wasted: false,
+  };
   if (who.id !== a.who) return none;
   const reach = 1 + stats(who).breathReach;
   const hit = orbsNear(a, [x, y], POINTER_REACH * reach, inPlace)[0];

@@ -68,6 +68,24 @@ export const MATERIAL_RESIST = 0.25;
 /** No resistance turns aside more than this. */
 export const MAX_RESIST = 0.9;
 
+// ---------------------------------------------------------------- the Dao rules
+
+/**
+ * What the combat Daos' rule twists do (design § The combat Daos; their stats in content/stats.ts
+ * turn them on, core/combat/fight.ts reads them). Assumed in P2.3, starting values for the sim.
+ */
+/** Binding Vines: a foe you root keeps this share of its Evasion besides. */
+export const BIND_EVASION = 0.8;
+/** Unbreaking: a bleeding foe's armor a rarity step lower, read as its Defense times this. */
+export const UNBREAKING_DEFENSE = 0.8;
+/** Mist Step and Unmoved: the hit they catch does this share. */
+export const HALVED_HIT = 0.5;
+/** Evergreen: the HP a blow that would fell you leaves, as a share of your HP. */
+export const EVERGREEN_HP = 0.25;
+/** Turn order: First Blood puts you ahead of everyone, a slowing status behind everyone. */
+export const FIRST_BLOOD_ORDER = 1000;
+export const SLOWED_ORDER = -1000;
+
 // ---------------------------------------------------------------- qi
 
 /** Qi barely regenerates mid-fight: this share of the pool at the start of each turn. */

@@ -1,0 +1,398 @@
+// The Combat screen (design § Combat, § UI and screens): button-only fights. Every technique
+// shows its hit chance and damage against the selected foe before you press it, and every
+// outcome plays as an effect layered from its five tags, with a still flash under reduced motion.
+// Until M3's encounters, fights are spars against the Border Wilds roster at your realm.
+import { useEffect, useRef } from 'react';
+import { realm, stageName } from '../content/realms.ts';
+import {
+  TALK_STYLES,
+  combatantIn,
+  preview,
+  type Fight,
+  type MainAction,
+} from '../core/combat/fight.ts';
+import { mod, type Combatant } from '../core/combat/combatant.ts';
+import { sparFoes, YOU } from '../core/spar.ts';
+import { FxLayer, type FxShot } from './combatFx.ts';
+import { act, beginSpar, leaveSpar, selectTarget, takePending, useFight } from './fight.ts';
+import { capitalize, formatNumber } from './format.ts';
+import { reducedMotion, useSettings } from './settings.ts';
+import { useGame } from './store.ts';
+import { Why } from './widgets.tsx';
+
+const RESULT_WORDS = {
+  won: 'You bring them down.',
+  lost: 'You are brought down. It was a spar: you get up.',
+  fled: 'You break away.',
+  yielded: 'You yield.',
+  draw: 'Neither of you can go on.',
+} as const;
+
+function Meter({
+  label,
+  value,
+  max,
+  kind,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  kind: string;
+}) {
+  return (
+    <div className={`fight-meter fight-${kind}`}>
+      <span className="caption">
+        {label} {formatNumber(value)}/{formatNumber(max)}
+      </span>
+      <div
+        className="bar"
+        role="meter"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={value}
+      >
+        <div className="bar-fill" style={{ width: `${Math.max(0, (value / max) * 100)}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function FighterCard({
+  c,
+  selected,
+  onSelect,
+}: {
+  c: Combatant;
+  selected?: boolean;
+  onSelect?: () => void;
+}) {
+  const r = c.rungs.qi;
+  const down = c.state !== 'fighting';
+  const body = (
+    <>
+      <span className="fight-name">{c.name}</span>
+      <span className="caption">
+        {realm(r.realm).name}, {stageName(r.realm, r.stage)}
+        {down ? ` · ${c.state}` : ''}
+      </span>
+      <Meter label="HP" value={c.hp} max={c.maxHp} kind="hp" />
+      <Meter label="Qi" value={c.qi} max={c.maxQi} kind="qi" />
+      {c.statuses.length > 0 && (
+        <span className="caption fight-statuses">
+          {c.statuses.map((s) => `${s.id} (${s.turns})`).join(' · ')}
+        </span>
+      )}
+    </>
+  );
+  return onSelect ? (
+    <button
+      type="button"
+      data-fighter={c.id}
+      className={`fight-card${selected ? ' is-selected' : ''}${down ? ' is-down' : ''}`}
+      aria-pressed={selected}
+      disabled={down}
+      onClick={onSelect}
+    >
+      {body}
+    </button>
+  ) : (
+    <div data-fighter={c.id} className={`fight-card is-you${down ? ' is-down' : ''}`}>
+      {body}
+    </div>
+  );
+}
+
+/** A main-action button with its price against the selected foe: "Hit 57% · 25 fire · 12 qi". */
+function ActionButton({
+  f,
+  me,
+  m,
+  name,
+  extra,
+  disabled,
+}: {
+  f: Fight;
+  me: string;
+  m: MainAction;
+  name: string;
+  extra?: string;
+  disabled?: boolean;
+}) {
+  const p = preview(f, me, m);
+  const cant = disabled || ((m.type === 'technique' || m.type === 'strike') && !p);
+  const price = p
+    ? `Hit ${Math.round(p.chance * 100)}% · ${formatNumber(p.damage)}${extra ? ` ${extra}` : ''}${p.qi ? ` · ${p.qi} qi` : ''}`
+    : (extra ?? '');
+  return (
+    <button
+      type="button"
+      className="button fight-action"
+      disabled={cant}
+      onClick={() => act({ main: m })}
+    >
+      <span>{name}</span>
+      {price && <span className="caption">{price}</span>}
+    </button>
+  );
+}
+
+function Arena({ f, me }: { f: Fight; me: Combatant }) {
+  const target = useFight((s) => s.target);
+  const pending = useFight((s) => s.pending);
+  const settings = useSettings();
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const arena = useRef<HTMLDivElement>(null);
+  const layer = useRef<FxLayer | null>(null);
+
+  useEffect(() => {
+    if (!canvas.current || !arena.current) return;
+    layer.current = new FxLayer(canvas.current, arena.current);
+    return () => layer.current?.dispose();
+  }, []);
+
+  useEffect(() => {
+    if (!pending || !layer.current || !arena.current) return;
+    const box = arena.current.getBoundingClientRect();
+    const where = (id: string) => {
+      const el = arena.current!.querySelector(`[data-fighter="${CSS.escape(id)}"]`);
+      const r = el?.getBoundingClientRect();
+      return r
+        ? { x: r.left + r.width / 2 - box.left, y: r.top + r.height / 2 - box.top }
+        : { x: box.width / 2, y: box.height / 2 };
+    };
+    const shots: FxShot[] = pending.outcomes.map((o) => ({
+      form: o.form,
+      type: o.type,
+      realm: o.realm,
+      result: o.result,
+      status: o.status,
+      from: where(o.actor),
+      to: where(o.target ?? o.actor),
+      damage: o.damage,
+    }));
+    layer.current.play(shots, reducedMotion(settings));
+    takePending();
+  }, [pending, settings]);
+
+  const foes = f.combatants.filter((c) => c.side !== YOU);
+  return (
+    <div className="fight-arena" ref={arena}>
+      <div className="fight-side">
+        <FighterCard c={me} />
+      </div>
+      <div className="fight-side">
+        {foes.map((c) => (
+          <FighterCard
+            key={c.id}
+            c={c}
+            selected={c.id === target}
+            onSelect={() => selectTarget(c.id)}
+          />
+        ))}
+      </div>
+      <canvas className="fight-fx" ref={canvas} aria-hidden="true" />
+    </div>
+  );
+}
+
+function Actions({ f, me }: { f: Fight; me: Combatant }) {
+  const target = useFight((s) => s.target) ?? '';
+  const result = useFight((s) => s.result);
+  if (result) return null;
+  const techniques = Object.values(me.techniques);
+  const items = Object.values(me.items).filter(
+    (h) =>
+      h.n > 0 &&
+      (h.item.uses.fight || h.item.uses.consume?.effects.some((e) => e.effect === 'restore')),
+  );
+  const flurry = mod(me, 'flurry') > 0 && me.weapon.kind === 'fist';
+  return (
+    <section className="panel">
+      <h2 className="panel-heading">
+        Your move
+        <Why label="How the odds are worked out">
+          Hit chance is your Accuracy over your Accuracy plus their Evasion; damage is the art's
+          base times your Attack over their Defense, before the spread and any critical. Pick a foe
+          to price every action against them.
+        </Why>
+      </h2>
+      <div className="fight-actions">
+        {techniques.map(({ technique: t }) => (
+          <ActionButton
+            key={t.id}
+            f={f}
+            me={me.id}
+            m={{ type: 'technique', id: t.id, target }}
+            name={t.name}
+            extra={t.damage}
+          />
+        ))}
+        <ActionButton
+          f={f}
+          me={me.id}
+          m={{ type: 'strike', target }}
+          name={`Strike (${me.weapon.kind})`}
+          extra="physical"
+        />
+        {flurry && (
+          <button
+            type="button"
+            className="button fight-action"
+            onClick={() =>
+              act({ minor: { type: 'flurry', target }, main: { type: 'strike', target } })
+            }
+          >
+            <span>Flurry, then strike</span>
+            <span className="caption">a fist strike as your minor action</span>
+          </button>
+        )}
+        <button
+          type="button"
+          className="button button-quiet fight-action"
+          onClick={() => act({ main: { type: 'defend' } })}
+        >
+          <span>Defend</span>
+          <span className="caption">Evasion ×1.5, qi back</span>
+        </button>
+        <button
+          type="button"
+          className="button button-quiet fight-action"
+          onClick={() => act({ minor: { type: 'take_cover' }, main: { type: 'defend' } })}
+        >
+          <span>Take cover and defend</span>
+          <span className="caption">Evasion ×1.5 and ×1.25</span>
+        </button>
+      </div>
+      {items.length > 0 && (
+        <>
+          <h3 className="sub-heading">Items</h3>
+          <div className="fight-actions">
+            {items.map((h) => (
+              <ActionButton
+                key={h.item.id}
+                f={f}
+                me={me.id}
+                m={{ type: 'item', id: h.item.id, target }}
+                name={`${h.item.name} (${h.n})`}
+                extra={h.item.uses.fight ? h.item.uses.fight.damage : 'restores'}
+              />
+            ))}
+          </div>
+        </>
+      )}
+      <h3 className="sub-heading">Words and feet</h3>
+      <div className="fight-actions">
+        {TALK_STYLES.map((style) => (
+          <button
+            key={style}
+            type="button"
+            className="button button-quiet fight-action"
+            onClick={() => act({ main: { type: 'talk', style, target } })}
+          >
+            <span>{capitalize(style)}</span>
+          </button>
+        ))}
+        <button
+          type="button"
+          className="button button-quiet fight-action"
+          onClick={() => act({ main: { type: 'flee' } })}
+        >
+          <span>Flee</span>
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function Log() {
+  const log = useFight((s) => s.log);
+  const list = useRef<HTMLOListElement>(null);
+  // The newest exchange stays in view inside the log, without moving the page.
+  useEffect(() => {
+    if (list.current) list.current.scrollTop = list.current.scrollHeight;
+  }, [log.length]);
+  if (log.length === 0) return <p className="muted">The first exchange waits on you.</p>;
+  return (
+    <ol className="fight-log" ref={list}>
+      {log.map((l, i) => (
+        <li key={i} className={l.mine ? 'is-mine' : ''}>
+          <span className="caption">
+            {l.turn}. {l.head}
+          </span>{' '}
+          {l.line}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function Spars() {
+  const game = useGame((s) => s.game);
+  if (!game) return null;
+  const foes = sparFoes(game);
+  if (!game) return null;
+  return (
+    <section className="panel">
+      <h2 className="panel-heading">Spar</h2>
+      <p className="caption spaced">
+        Until the Border Wilds open, you test your techniques against fighters and beasts of the
+        hills at your own realm and stage. Nothing dies in a spar and nothing drops; the pills you
+        swallow are spent, and the gear you wear bonds a little each exchange.
+      </p>
+      <ul className="spar-list">
+        {foes.map((t) => (
+          <li key={t.id}>
+            <div>
+              <strong>{t.name}</strong>
+              <div className="caption">
+                {t.kind === 'beast' ? 'beast' : t.pedigree.replace('-', ' ')} · {t.profile} ·{' '}
+                {t.notes}
+              </div>
+            </div>
+            <button type="button" className="button" onClick={() => beginSpar(t.id)}>
+              Spar
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+export function CombatScreen() {
+  const game = useGame((s) => s.game);
+  const f = useFight((s) => s.fight);
+  const foe = useFight((s) => s.foe);
+  const result = useFight((s) => s.result);
+  if (!game) return null;
+  if (!f) return <Spars />;
+  const me = combatantIn(f, game.player.id);
+  if (!me) return <Spars />;
+  return (
+    <>
+      <section className="panel">
+        <div className="panel-top">
+          <h2 className="panel-heading">Sparring with {foe}</h2>
+          <span className="caption">Exchange {f.turn}</span>
+        </div>
+        <Arena f={f} me={me} />
+        {result && (
+          <div className="fight-end">
+            <p>
+              <strong>{RESULT_WORDS[result]}</strong>
+            </p>
+            <button type="button" className="button" onClick={leaveSpar}>
+              Leave the ground
+            </button>
+          </div>
+        )}
+      </section>
+      <Actions f={f} me={me} />
+      <section className="panel">
+        <h2 className="panel-heading">The exchanges</h2>
+        <Log />
+      </section>
+    </>
+  );
+}

@@ -11,7 +11,8 @@ import {
   TIER_HALF_WIDTH,
   tierNode,
   tierNodes,
-  TREES,
+  BIG_THREE,
+  DAOS,
   treeNode,
   treeOf,
   type Tree,
@@ -502,24 +503,30 @@ export function TreesScreen() {
   const [treeId, setTreeId] = useState('qi');
   if (!game) return null;
   const c = game.player;
-  const trees = TREES.filter((t) => ladderOpen(c, t.ladder));
+  // The big three open with their ladders; the combat Daos once a first technique opens combat.
+  const big = BIG_THREE.filter((t) => ladderOpen(c, t.ladder));
+  const daos = game.unlocks.includes('combat') ? DAOS : [];
+  const trees = [...big, ...daos];
   const tree = trees.find((t) => t.id === treeId) ?? trees[0]!;
+  const row = (list: readonly Tree[], label: string) => (
+    <div className="seg" role="group" aria-label={label}>
+      {list.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          aria-pressed={t.id === tree.id}
+          onClick={() => setTreeId(t.id)}
+        >
+          {t.name} <span className="hanzi">{t.hanzi}</span>
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <section className="panel">
       <div className="tree-top">
-        <div className="seg" role="group" aria-label="Tree">
-          {trees.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              aria-pressed={t.id === tree.id}
-              onClick={() => setTreeId(t.id)}
-            >
-              {t.name} <span className="hanzi">{t.hanzi}</span>
-            </button>
-          ))}
-        </div>
+        {row(big, 'Tree')}
         <span
           className="value"
           title="Insight ever earned counts toward breakthroughs; spending never delays them."
@@ -527,7 +534,15 @@ export function TreesScreen() {
           {formatNumber(c.insight.current)} insight to spend
         </span>
       </div>
+      {daos.length > 0 && (
+        <div className="tree-daos">
+          <span className="caption">Daos</span>
+          {row(daos, 'Combat Dao')}
+        </div>
+      )}
       <p className="caption spaced">
+        {tree.dao &&
+          `Holding a tier, half its nodes owned, multiplies Accuracy and Attack on its actions by ×1.05. `}
         {tree.what} Drag to move, wheel or pinch to zoom, and tap a node for its details.
       </p>
       <TreeCanvas c={c} tree={tree} />

@@ -129,8 +129,21 @@ export const CultivatorSchema = z.object({
   }),
   /** Spirit stones, counted in low-grade stones (each grade is worth 1,000 of the one below). */
   stones: z.number().min(0),
-  /** Item counts by id, such as the Foundation Pill; the bag arrives in M2. */
+  /** Item counts by id, carried in the Bag; what is worn sits in `gear` instead. */
   items: z.record(z.string(), z.number().int().min(0)),
+  /**
+   * What is worn (design § Items and gear): the four gear squares and the treasure slots the Qi
+   * and Soul trees open, each an item id taken out of `items`.
+   */
+  gear: z.object({
+    weapon: z.string().nullable(),
+    armor: z.string().nullable(),
+    ring: z.string().nullable(),
+    pouch: z.string().nullable(),
+    treasures: z.array(z.string()),
+  }),
+  /** Bond practice with each artifact from blue up, by item id, on the mastery scale. */
+  bonds: z.record(z.string(), z.number().min(0)),
   /** Pill toxicity, 0 to 100 (design § Items and gear): every pill's effect scales by 1 − this/100. */
   toxicity: z.number().min(0).max(100),
   /** What each of the day's twelve hours goes to. */
@@ -291,6 +304,11 @@ export function freshLadder(): Ladder {
   };
 }
 
+/** Nothing worn. */
+export function emptyGear(): Cultivator['gear'] {
+  return { weapon: null, armor: null, ring: null, pouch: null, treasures: [] };
+}
+
 /** The screens a life starts with. */
 export const STARTING_UNLOCKS = ['abode', 'cultivate', 'character', 'people', 'chronicle'];
 
@@ -322,6 +340,8 @@ export function newCultivator(
     insight: { current: 0, earned: 0 },
     stones: opts.stones ?? 0,
     items: {},
+    gear: emptyGear(),
+    bonds: {},
     toxicity: 0,
     wheel: [...FRESH_WHEEL],
     routines: opts.routines ?? [],

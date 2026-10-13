@@ -170,6 +170,7 @@ export const SOUL_TREE = defineTree({
       effects: [
         { stat: 'soulGain', value: 0.04 },
         { stat: 'insightGain', value: 0.03 },
+        { stat: 'treasureSlots', value: 1 },
       ],
       text: 'A lamp that does not flicker, even in a heart demon’s wind.',
     },
@@ -549,6 +550,7 @@ export const SOUL_TREE = defineTree({
       effects: [
         { stat: 'soulGain', value: 0.05 },
         { stat: 'majorOdds', value: 0.02 },
+        { stat: 'treasureSlots', value: 1 },
       ],
       text: 'A lamp you could carry through a thousand years of dark.',
     },

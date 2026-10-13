@@ -1,6 +1,7 @@
 // The Character screen (design § UI and screens): the talents rolled at birth, the six attributes,
-// each ladder's growth realm by realm with the methods that built it, and the manuals held, by
-// kind. Fame and standing join in M5.
+// the fighting sheet with each line's band in stage words (design § Combat, the sheet), each
+// ladder's growth realm by realm with the methods that built it, and the manuals held, by kind.
+// Fame and standing join in M5.
 import { LADDERS, type LadderId } from '../content/cultivation.ts';
 import { ELEMENT_INFO } from '../content/elements.ts';
 import { GROWTH_STATS, method } from '../content/methods.ts';
@@ -9,6 +10,9 @@ import { realm } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
 import { statInfo, type StatId } from '../content/stats.ts';
 import { talentEffects } from '../content/talents.ts';
+import { COMBAT_DAOS, isCombatDao } from '../content/daos.ts';
+import { hasItem, item } from '../content/items.ts';
+import { fromCultivator, sheet, type SheetLine } from '../core/combat/combatant.ts';
 import { realmGrowth } from '../core/growth.ts';
 import { agility, aptitude, fortune, stats, talentAwake, talentsOf } from '../core/stats.ts';
 import type { Cultivator } from '../core/state.ts';
@@ -18,6 +22,7 @@ import {
   capitalize,
   formatEffect,
   formatLadder,
+  formatNumber,
   formatPercent,
   LADDER_LABELS,
   listWords,
@@ -84,7 +89,7 @@ function Attributes({ c }: { c: Cultivator }) {
     {
       name: 'Agility',
       value: String(agility(c)),
-      why: birth(c.attributes.agility, agility(c), 'Turn order, evasion and fleeing, from M2.'),
+      why: birth(c.attributes.agility, agility(c), 'Turn order, evasion and fleeing.'),
     },
     {
       name: 'Fortune',
@@ -92,7 +97,7 @@ function Attributes({ c }: { c: Cultivator }) {
       why: birth(
         c.attributes.fortune,
         fortune(c),
-        'Crits and drops from M2; luck checks on cards now.',
+        'Crits in a fight, drops later, and luck checks on cards.',
       ),
     },
     {
@@ -116,6 +121,94 @@ function Attributes({ c }: { c: Cultivator }) {
         </div>
       ))}
     </dl>
+  );
+}
+
+const big = (x: number) => (x >= 100 ? formatNumber(x) : x.toFixed(1));
+
+function SheetRow({
+  name,
+  lines,
+  why,
+}: {
+  name: string;
+  lines: { label?: string; line: SheetLine }[];
+  why: string;
+}) {
+  return (
+    <div>
+      <dt>
+        {name} <Why label={`How ${name} is worked out`}>{why}</Why>
+      </dt>
+      <dd>
+        {lines.map(({ label, line }, i) => (
+          <span key={i} className="sheet-line">
+            {label && <span className="muted">{label} </span>}
+            {big(line.value)} <span className="caption">· {line.band}</span>
+          </span>
+        ))}
+      </dd>
+    </div>
+  );
+}
+
+/** Lines that differ by ladder show each; lines that agree show once. */
+function perLadder(x: Record<LadderId, SheetLine>): { label?: string; line: SheetLine }[] {
+  const same = LADDERS.every((l) => Math.abs(x[l].value - x.qi.value) < 1e-6);
+  return same ? [{ line: x.qi }] : LADDERS.map((l) => ({ label: LADDER_LABELS[l], line: x[l] }));
+}
+
+function Sheet({ c }: { c: Cultivator }) {
+  const me = fromCultivator(c, 'you');
+  const sh = sheet(me);
+  const weapon = c.gear.weapon && hasItem(c.gear.weapon) ? item(c.gear.weapon).name : 'bare hands';
+  const armor = c.gear.armor && hasItem(c.gear.armor) ? item(c.gear.armor).name : 'no armor';
+  const daos = Object.entries(me.daos)
+    .filter(([d]) => isCombatDao(d))
+    .map(([d, n]) => `${COMBAT_DAOS[d as keyof typeof COMBAT_DAOS].name} ${n}`);
+  return (
+    <>
+      <p className="caption spaced">
+        Six plain numbers; a fight compares two sheets. Each line's band says the stage it is sized
+        at, so a line that reads the next realm has crossed it.
+      </p>
+      <dl className="sheet">
+        <SheetRow
+          name="Accuracy"
+          lines={perLadder(sh.accuracy)}
+          why="The ladder an action uses sets its size: qi for techniques, body for strikes, soul for soul arts. Mastery, Dao tiers and the Hit stat multiply it per action."
+        />
+        <SheetRow
+          name="Evasion"
+          lines={[{ line: sh.evasion }]}
+          why="Your body's size, with Agility above 10 adding 5% a point. Defending adds half, cover a quarter."
+        />
+        <SheetRow
+          name="Attack"
+          lines={perLadder(sh.attack)}
+          why={`Each ladder's size, times technique power for qi and soul, and for the body your physical power and ${weapon} at its band. An art's rarity and its Daos multiply in when you use it.`}
+        />
+        <SheetRow
+          name="Defense"
+          lines={[{ line: sh.defense }]}
+          why={`Your body's size at your armor's band: ${armor}. The soul defends against soul damage.`}
+        />
+        <SheetRow
+          name="HP"
+          lines={[{ line: sh.hp }]}
+          why="Ten times your body's size, grown by the methods that tempered it and the Body tree."
+        />
+        <SheetRow
+          name="Qi"
+          lines={[{ line: sh.qi }]}
+          why="Six times your qi realm's size, deepened by the Qi tree and your methods."
+        />
+      </dl>
+      <p className="caption spaced">
+        {daos.length ? `Dao tiers held: ${daos.join(', ')}.` : 'No Dao tier held yet.'} Wielding{' '}
+        {weapon}, wearing {armor}.
+      </p>
+    </>
   );
 }
 
@@ -164,6 +257,10 @@ export function CharacterScreen() {
       <section className="panel">
         <h2 className="panel-heading">Attributes</h2>
         <Attributes c={c} />
+      </section>
+      <section className="panel">
+        <h2 className="panel-heading">Sheet</h2>
+        <Sheet c={c} />
       </section>
       <section className="panel">
         <h2 className="panel-heading">Growth</h2>

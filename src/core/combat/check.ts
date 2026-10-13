@@ -31,19 +31,21 @@ export interface Judged {
 }
 
 /**
- * Rolls one check: the backfire first when the action used qi and the meter isn't clean, then
+ * Rolls one check, with any critical odds the actor's Daos add: the backfire first when the action used qi and the meter isn't clean, then
  * the hit, then the crit on a landed hit.
  */
 export function judge(
   rng: Rng,
   accuracy: number,
   evasion: number,
-  opts: { fortune?: number; qi?: boolean; toxicity?: number } = {},
+  opts: { fortune?: number; qi?: boolean; toxicity?: number; crit?: number; sure?: boolean } = {},
 ): Judged {
-  const chance = hitChance(accuracy, evasion);
+  // A sure strike (Dragon Thrust) cannot miss; it still rolls, so the stream stays in step.
+  const chance = opts.sure ? 1 : hitChance(accuracy, evasion);
   const backfire = opts.qi ? backfireChance(opts.toxicity ?? 0) : 0;
   if (backfire > 0 && rng.chance(backfire)) return { result: 'backfire', chance };
   if (!rng.chance(chance)) return { result: 'miss', chance };
-  if (rng.chance(critChance(opts.fortune ?? FORTUNE_BASE))) return { result: 'critical', chance };
+  const crit = critChance(opts.fortune ?? FORTUNE_BASE) + (opts.crit ?? 0);
+  if (rng.chance(crit)) return { result: 'critical', chance };
   return { result: 'hit', chance };
 }

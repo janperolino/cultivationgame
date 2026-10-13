@@ -26,7 +26,7 @@ import { peopleIn } from '../people.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 /**
  * Before character creation (P1.7), every life was the cave orphan who went along: the garrison's
@@ -498,6 +498,15 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const s = (old.state ?? {}) as Raw;
     const p = (s.player ?? {}) as Raw;
     return { ...old, version: 11, state: { ...s, player: { ...p, toxicity: 0 } } };
+  },
+
+  // v11, P2.2: nothing worn. v12 holds the gear squares, treasure slots and artifact bonds; an old
+  // life wears nothing and has bonded with nothing.
+  11: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const gear = { weapon: null, armor: null, ring: null, pouch: null, treasures: [] };
+    return { ...old, version: 12, state: { ...s, player: { ...p, gear, bonds: {} } } };
   },
 };
 

@@ -3,7 +3,9 @@ import { eventText } from './chronicle.ts';
 import { FIRST_ARTS } from '../content/methods.ts';
 import { STATS, statInfo, type StatId } from '../content/stats.ts';
 import {
+  BIG_THREE,
   branchEnd,
+  DAOS,
   branchNodes,
   TIER_DEPTH,
   TIER_HALF_WIDTH,
@@ -89,7 +91,7 @@ describe('tree content', () => {
     expect(new Set(branches.map((b) => b.id)).size).toBe(branches.length);
   });
 
-  for (const t of TREES) {
+  for (const t of BIG_THREE) {
     for (const tier of [1, 2]) {
       describe(`the ${t.name} tree's tier ${tier}`, () => {
         // The Breath branch sits beside the tier's own count (design § Cultivation, Breath).
@@ -221,6 +223,73 @@ describe('tree content', () => {
     }
     // Only the Qi tree carries one, and no other tree's branch is a Breath branch.
     for (const t of TREES) if (t.id !== 'qi') expect(t.branches.some((b) => b.breath)).toBe(false);
+  });
+
+  describe('the combat Daos', () => {
+    it('are the nine of v1, each a tree on the qi ladder', () => {
+      expect(DAOS.map((t) => t.id)).toEqual([
+        'fire',
+        'water',
+        'wood',
+        'metal',
+        'earth',
+        'sword',
+        'saber',
+        'spear',
+        'fist',
+      ]);
+      for (const t of DAOS) expect(t.dao).toBe(t.id);
+      for (const t of BIG_THREE) expect(t.dao).toBeUndefined();
+    });
+
+    for (const t of DAOS) {
+      for (const tier of [1, 2]) {
+        it(`${t.name} tier ${tier}: three gating branches, ${tier} side path${tier > 1 ? 's' : ''}, 12 to 18 nodes`, () => {
+          const nodes = tierNodes(t, tier);
+          const branches = tierBranches(t, tier);
+          const gates = branches.filter((b) => b.gate);
+          const sides = branches.filter((b) => !b.gate);
+          const capstone = tierNode(t, tier, 'capstone')!;
+          expect(nodes.length).toBeGreaterThanOrEqual(tier === 1 ? 12 : 15);
+          expect(nodes.length).toBeLessThanOrEqual(18);
+          expect(gates).toHaveLength(3);
+          expect(sides).toHaveLength(tier);
+          for (const b of gates) {
+            const own = branchNodes(t, b.id);
+            expect(own, b.id).toHaveLength(tier + 2);
+            expect(own.at(-1)!.kind).toBe('notable');
+            expect(own.slice(0, -1).every((n) => n.kind === 'minor')).toBe(true);
+          }
+          for (const b of sides) {
+            const own = branchNodes(t, b.id);
+            expect(own.length).toBeGreaterThanOrEqual(2);
+            expect(own.length).toBeLessThanOrEqual(3);
+            expect(nodes.some((n) => n.requires.includes(own.at(-1)!.id))).toBe(false);
+          }
+          expect([...capstone.requires].sort()).toEqual(
+            gates.map((b) => branchEnd(t, b.id)!.id).sort(),
+          );
+          const below = tierNode(t, tier - 1, 'capstone');
+          expect(tierNode(t, tier, 'starter')!.requires).toEqual(below ? [below.id] : []);
+        });
+
+        it(`${t.name} tier ${tier}: nodes apart inside the band, each with a real effect`, () => {
+          const all = tierNodes(t, tier);
+          for (const n of all) {
+            expect(Math.abs(n.at[0]), n.id).toBeLessThanOrEqual(TIER_HALF_WIDTH);
+            expect(n.at[1]).toBeGreaterThanOrEqual(0);
+            expect(n.at[1]).toBeLessThanOrEqual(TIER_DEPTH);
+            for (const o of all) {
+              if (o === n) continue;
+              const d = Math.hypot(o.at[0] - n.at[0], o.at[1] - n.at[1]);
+              expect(d, `${n.id} and ${o.id}`).toBeGreaterThanOrEqual(1.2);
+            }
+            expect(n.effects.length, n.id).toBeGreaterThan(0);
+            for (const e of n.effects) expect(STATS, n.id).toHaveProperty(e.stat);
+          }
+        });
+      }
+    }
   });
 
   it('lists each node after the nodes it grows from, so a tree can be bought in order', () => {

@@ -24,6 +24,7 @@ import { methodCirculation } from '../content/methods.ts';
 import { realm } from '../content/realms.ts';
 import {
   attentionCeiling,
+  breathCycle,
   heatLimit,
   heatUnsettled,
   hourTint,
@@ -94,6 +95,7 @@ function frameOf(
     tint: hourTint(hourOfDay(game.calendar.day)).tint,
     heat: a ? Math.min(1, a.heat / heatLimit(c)) : 0,
     reach: POINTER_REACH * (1 + stats(c).breathReach),
+    breath: breathCycle(c),
     reduced,
   };
 }

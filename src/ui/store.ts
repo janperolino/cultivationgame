@@ -11,10 +11,15 @@ import {
   attemptLastChance,
   breakThrough,
   endLife,
+  feedStones,
   learn,
   practice,
   switchMethod,
+  takeItem,
+  takeOff,
+  wearItem,
 } from '../core/life.ts';
+import type { EquipSlot } from '../content/items.ts';
 import { advance, catchUp, setClock, TICK_MS, type OfflineResult } from '../core/loop.ts';
 import { seePerson } from '../core/people.ts';
 import type { RealmId } from '../content/realms.ts';
@@ -108,6 +113,19 @@ export interface GameStore {
   learnNode(id: string): string | null;
   /** Points practice days at a technique, or at nothing. */
   practice(id: string | null): void;
+  /** Wears an item from the Bag; returns why not, or null. */
+  wear(id: string): string | null;
+  /** Takes off what a gear square or treasure slot holds. */
+  takeOff(slot: EquipSlot, id?: string): void;
+  /** Eats or drinks one of an item, out of a fight. */
+  eat(id: string): void;
+  /** Feeds an artifact spirit stones to deepen the bond. */
+  feedStones(id: string, stones: number): void;
+  /**
+   * Applies a rules change to the open life at once (the Combat screen's turns run here); false
+   * when no life is open in this tab.
+   */
+  applyLife(change: (s: GameState) => GameState): boolean;
   /** Climbs a ladder with another known method, or with none; returns why not, or null. */
   setMethod(ladder: LadderId, id: string | null): string | null;
   /** At the lifespan edge: the last breakthrough, or the end of the life if it fails. */
@@ -499,6 +517,40 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!r.check.ok) return r.check.reason;
       set({ game: r.state });
       return null;
+    },
+
+    wear(id) {
+      const { game } = get();
+      if (!game || !holdsLock) return 'This life is not open in this tab.';
+      const r = wearItem(game, id);
+      if (!r.check.ok) return r.check.reason;
+      set({ game: r.state });
+      return null;
+    },
+
+    takeOff(slot, id) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      set({ game: takeOff(game, slot, id) });
+    },
+
+    eat(id) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      set({ game: takeItem(game, id) });
+    },
+
+    feedStones(id, stones) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      set({ game: feedStones(game, id, stones) });
+    },
+
+    applyLife(change) {
+      const { game } = get();
+      if (!game || !holdsLock || game.ended) return false;
+      set({ game: change(game) });
+      return true;
     },
 
     practice(id) {

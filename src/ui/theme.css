@@ -2954,3 +2954,435 @@ select {
 .chronicle-head .panel-heading {
   margin: 0;
 }
+
+/* ---------------------------------------------------------------- P2.3: the Bag, the sheet, fights */
+
+.panel-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 14px;
+}
+
+.sheet {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 18px;
+  margin: 10px 0;
+}
+
+.sheet > div {
+  display: contents;
+}
+
+.sheet dt {
+  color: var(--muted);
+}
+
+.sheet dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.sheet-line {
+  display: block;
+}
+
+.tree-daos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 8px;
+}
+
+/* The Bag (docs/mockups/inventory-study.html): squares, gear on the figure, stones as a count. */
+.bag-screen {
+  --square: 74px;
+  display: grid;
+  gap: 16px;
+}
+
+.bag-body {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: center;
+  align-items: center;
+  gap: 14px 22px;
+  margin-top: 10px;
+}
+
+.bag-gear-col {
+  display: grid;
+  gap: 14px;
+}
+
+.bag-figure {
+  width: 150px;
+  height: auto;
+  overflow: visible;
+}
+
+.bag-figure .seated-head,
+.bag-figure .seated-body {
+  fill: #141820;
+  stroke: color-mix(in srgb, var(--crack) 30%, transparent);
+  stroke-width: 0.7;
+}
+
+.bag-dantian {
+  fill: var(--crack);
+  filter: drop-shadow(0 0 3px var(--crack));
+}
+
+.bag-slot {
+  width: var(--square);
+  height: var(--square);
+  border-radius: 8px;
+  border: 1px solid var(--edge);
+  background: var(--well);
+  position: relative;
+  display: grid;
+  place-items: center;
+  transition: border-color 150ms ease;
+}
+
+.bag-slot::before {
+  content: attr(data-label);
+  position: absolute;
+  inset: auto 0 5px;
+  text-align: center;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.bag-slot:has(.bag-item)::before {
+  display: none;
+}
+
+.bag-slot > .bag-item {
+  width: 100%;
+  height: 100%;
+}
+
+.bag-slot-hanzi {
+  font-size: 20px;
+  color: var(--muted);
+  opacity: 0.5;
+  margin-bottom: 10px;
+}
+
+.bag-slot.is-refused {
+  border-color: var(--warn);
+}
+
+.bag-treasures {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.bag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--square), 1fr));
+  grid-auto-rows: var(--square);
+  grid-auto-flow: dense;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.bag-free {
+  border-radius: 8px;
+  border: 1px dashed var(--edge);
+}
+
+.bag-item {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 6px 6px 5px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  background: var(--well);
+  text-align: center;
+  cursor: grab;
+  font: inherit;
+}
+
+.bag-item:hover,
+.bag-item.is-selected {
+  border-color: color-mix(in srgb, currentColor 75%, transparent);
+  background: rgb(0 0 0 / 0.7);
+}
+
+.bag-item.is-selected {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.bag-item.is-wide {
+  grid-column: span 2;
+}
+
+.bag-item.rarity-gold,
+.bag-item.rarity-red {
+  box-shadow: 0 0 12px color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.bag-glyph {
+  font-size: 24px;
+  line-height: 1;
+  padding-top: 2px;
+}
+
+.bag-name {
+  font-size: 10.5px;
+  line-height: 1.2;
+  align-self: end;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.bag-count {
+  position: absolute;
+  right: 5px;
+  top: 4px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: rgb(0 0 0 / 0.6);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.bag-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 24px;
+  margin: 0;
+}
+
+.bag-title .hanzi {
+  font-size: 18px;
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+.bag-uses,
+.bag-props {
+  margin: 8px 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.bag-props .is-sealed {
+  color: var(--muted);
+}
+
+.bar.is-warn .bar-fill {
+  background: var(--warn);
+}
+
+/* Fights: the arena with its effects layer, the action buttons and the log. */
+.fight-arena {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 40px;
+  align-items: center;
+  padding: 18px 4px;
+  min-height: 190px;
+}
+
+.fight-fx {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.fight-arena.is-shaking {
+  animation: fight-shake 120ms linear infinite;
+}
+
+.fight-arena.is-flooded {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+@keyframes fight-shake {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(2px, -1px);
+  }
+  50% {
+    transform: translate(-2px, 1px);
+  }
+  75% {
+    transform: translate(1px, 2px);
+  }
+}
+
+.fight-side {
+  display: grid;
+  gap: 10px;
+}
+
+.fight-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--edge);
+  background: var(--well);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+}
+
+button.fight-card {
+  cursor: pointer;
+}
+
+.fight-card.is-selected {
+  border-color: var(--accent-edge);
+  box-shadow: 0 0 0 1px var(--accent-edge);
+}
+
+.fight-card.is-down {
+  opacity: 0.45;
+}
+
+.fight-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.fight-meter .bar {
+  height: 6px;
+}
+
+.fight-hp .bar-fill {
+  background: var(--warn);
+}
+
+.fight-statuses {
+  color: var(--warn);
+}
+
+.fight-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
+.fight-action {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  min-width: 150px;
+}
+
+.fight-action .caption {
+  color: inherit;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+.fight-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--edge);
+  padding-top: 10px;
+}
+
+.fight-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.fight-log .is-mine {
+  color: var(--text);
+}
+
+.fight-log li:not(.is-mine) {
+  color: var(--muted);
+}
+
+.spar-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.spar-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--edge);
+}
+
+:root[data-motion='reduced'] .fight-arena.is-shaking {
+  animation: none;
+}
+
+@media (max-width: 600px) {
+  .bag-screen {
+    --square: 58px;
+  }
+
+  .bag-figure {
+    width: 104px;
+  }
+
+  .bag-item {
+    padding: 4px 3px 3px;
+  }
+
+  .bag-glyph {
+    font-size: 17px;
+  }
+
+  .bag-name {
+    font-size: 9px;
+  }
+
+  .bag-body {
+    gap: 10px 12px;
+  }
+
+  .fight-arena {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .fight-action {
+    min-width: 0;
+    flex: 1 1 140px;
+  }
+}

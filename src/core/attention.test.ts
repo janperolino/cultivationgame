@@ -2,6 +2,7 @@
 // stream, and that away earns exactly what idle always did.
 import { describe, expect, it } from 'vitest';
 import {
+  BREATH_S,
   ATTENTION_FLOOR,
   AWAY_FADE_S,
   BREATHE_COOLDOWN_S,
@@ -21,11 +22,13 @@ import { realm } from '../content/realms.ts';
 import {
   attentionFactor,
   AWAY,
+  breathCycle,
   breathe,
   catchAt,
   inhaling,
   keepOrbStream,
   orbPosition,
+  orbWorth,
   seatOf,
   startAttention,
   tickAttention,
@@ -200,7 +203,7 @@ describe('focus and its drain', () => {
     expect(attentionFactor(half, c)).toBeLessThan(1.6);
     const gone = tickAttention(half, c, AWAY_FADE_S, away);
     expect(attentionFactor(gone, c)).toBe(1);
-    expect(seatOf(gone, c)).toEqual({ factor: 1, attended: false });
+    expect(seatOf(gone, c)).toEqual({ factor: 1, attended: false, focus: 0 });
     expect(attentionFactor(tickAttention(gone, c, 0.25, ATTENDING), c)).toBeGreaterThanOrEqual(
       1.25,
     );
@@ -357,5 +360,59 @@ describe('the orbs stream', () => {
     expect(hour(life(c), c, { ...ATTENDING, abode: false }).orbs).toEqual([]);
     const bare = { ...c, activeMethods: { ...c.activeMethods, qi: null } };
     expect(hour(life(bare), bare).orbs).toEqual([]);
+  });
+});
+
+describe('the Breath branch, tier 2', () => {
+  /** A Foundation cultivator holding the given tier 2 Breath nodes, their path bought. */
+  function breathing(...ids: string[]): Cultivator {
+    const c = seated();
+    const fe = {
+      ...c,
+      qi: { ...c.qi, realm: 'foundation-establishment' as const, stage: 1 },
+      rootElements: ['fire' as const],
+      nodes: ['qi-foundation-circulation'],
+    };
+    const chain = [
+      'qi-even-breath',
+      'qi-deep-catch',
+      'qi-attuned-breath',
+      'qi-resonance',
+      'qi-circulating-thought',
+      'qi-unknotting',
+      'qi-long-breath',
+    ];
+    const upTo = Math.max(...ids.map((id) => chain.indexOf(id)));
+    return { ...fe, nodes: [...fe.nodes, ...chain.slice(0, upTo + 1)] };
+  }
+
+  it("Attuned Breath: an orb of your root's element is worth half again", () => {
+    const plain = breathing('qi-deep-catch');
+    const tuned = breathing('qi-attuned-breath');
+    expect(orbWorth(plain, { kind: 'element', tint: 'fire' })).toBe(1);
+    expect(orbWorth(tuned, { kind: 'element', tint: 'fire' })).toBe(1.5);
+    expect(orbWorth(tuned, { kind: 'element', tint: 'water' })).toBe(1);
+  });
+
+  it("Heaven and Earth Resonance: dawn's and the night's orbs are worth double", () => {
+    const c = breathing('qi-resonance');
+    expect(orbWorth(c, { kind: 'dawn', tint: 'dawn' })).toBe(2);
+    expect(orbWorth(c, { kind: 'yin', tint: 'yin' })).toBe(2);
+    expect(orbWorth(breathing('qi-attuned-breath'), { kind: 'dawn', tint: 'dawn' })).toBe(1);
+  });
+
+  it('Long Breath slows the cycle and makes each orb worth more', () => {
+    const c = breathing('qi-long-breath');
+    expect(breathCycle(c)).toBeCloseTo(BREATH_S * 1.25);
+    expect(breathCycle(breathing('qi-unknotting'))).toBe(BREATH_S);
+    expect(orbWorth(c, { kind: 'element', tint: 'water' })).toBeCloseTo(1.25);
+  });
+
+  it('Circulating Thought grows the attended insight trickle with focus, half again at full', () => {
+    const c = breathing('qi-circulating-thought');
+    const away = dayRates(c, DAY).insight;
+    const dull = dayRates(c, DAY, [], { factor: 1.25, attended: true, focus: 0 }).insight - away;
+    const full = dayRates(c, DAY, [], { factor: 2, attended: true, focus: 1 }).insight - away;
+    expect(full / dull).toBeCloseTo(1.5);
   });
 });

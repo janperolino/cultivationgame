@@ -78,6 +78,15 @@ export const SCREEN_TEXT: Record<string, string> = {
   techniques: 'A first technique to drill: the techniques open.',
 };
 
+/** How a spar ended, from the subject's side (core/spar.ts). */
+const SPAR_ENDS: Record<string, string> = {
+  won: 'and brings them down',
+  lost: 'and is brought down',
+  fled: 'and breaks away',
+  yielded: 'and yields',
+  draw: 'until neither can go on',
+};
+
 const s = (v: EventValue | undefined) => String(v ?? '');
 const n = (v: EventValue | undefined) => Number(v ?? 0);
 
@@ -127,6 +136,8 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
     d.technique
       ? `${technique(s(d.technique)).name} reaches ${MASTERY[n(d.level)]!.name}; the form finally clicks.`
       : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
+  spar: (d, w) =>
+    `${w.name} spars with ${s(d.foe)} ${SPAR_ENDS[s(d.result)] ?? 'and walks away'}${n(d.turns) > 0 ? ` in ${n(d.turns)} exchange${n(d.turns) === 1 ? '' : 's'}` : ''}.`,
   node: (d, w) => `${w.name} comprehends ${anyNode(s(d.node)).name}.`,
   'first-breath': (_d, w) =>
     `${w.name} draws a bright orb of qi in from the air of the cave, and the breath after it runs deeper.`,

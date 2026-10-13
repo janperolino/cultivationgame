@@ -1,11 +1,12 @@
 // A cultivator's stat totals: every effect from the tree nodes they can use (not sealed), the
 // properties of each ladder's active method, the growth the methods that climbed each stage left
-// (core/growth.ts), a named root's effects and the talents (a sleeping one counts once it wakes).
-// Gear and pills join here later. The rules read these totals; see content/stats.ts for units.
+// (core/growth.ts), a named root's effects, the talents (a sleeping one counts once it wakes) and
+// the working properties of worn gear (core/gear.ts). The rules read these totals; see content/stats.ts for units.
 import { APTITUDE_BASE, APTITUDE_STEP, LADDERS } from '../content/cultivation.ts';
 import { root } from '../content/roots.ts';
 import { STAT_IDS, statInfo, type Effect, type StatId } from '../content/stats.ts';
 import { hasTalent, talent, talentEffects, type Talent } from '../content/talents.ts';
+import { gearEffects } from './gear.ts';
 import { ladderGrowth } from './growth.ts';
 import { methodManual } from '../content/manuals.ts';
 import { ladderMethod, methodMastery } from './methods.ts';
@@ -56,7 +57,11 @@ function cacheKey(c: Cultivator): string {
     .filter((id) => methodManual(id))
     .map((id) => `${id}:${methodMastery(c, id).level}`)
     .join(',');
-  return `${ladders}|${c.root}|${c.talents.join(',')}|${woke}|${unsealing}`;
+  const gear = JSON.stringify(c.gear);
+  const bonded = Object.entries(c.bonds)
+    .map(([id, days]) => `${id}:${Math.floor(days)}`)
+    .join(',');
+  return `${ladders}|${c.root}|${c.talents.join(',')}|${woke}|${unsealing}|${gear}|${bonded}`;
 }
 
 /** Every stat's total from nodes, active methods' properties, growth, the root and talents. */
@@ -80,6 +85,7 @@ export function stats(c: Cultivator): Readonly<Stats> {
     if (!talentAwake(c, t)) continue;
     for (const e of talentEffects(t)) addEffect(out, e);
   }
+  for (const e of gearEffects(c, out.treasureSlots)) addEffect(out, e);
   cache.set(c.nodes, { key, growth, stats: out });
   return out;
 }

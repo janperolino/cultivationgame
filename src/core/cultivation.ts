@@ -228,7 +228,13 @@ function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[], seat: S
     body: art('body', BODY_PER_DAY, m.bodyGain),
     soul: art('soul', SOUL_PER_DAY, m.soulGain),
     study: INSIGHT_PER_STUDY_DAY * insight,
-    trickle: (INSIGHT_TRICKLE + (seat.attended ? INSIGHT_ATTENDED : 0)) * insight,
+    // Circulating Thought grows the attended trickle with focus, half again at full.
+    trickle:
+      (INSIGHT_TRICKLE +
+        (seat.attended
+          ? INSIGHT_ATTENDED * (1 + m.circulatingThought * Math.min(1, seat.focus ?? 0))
+          : 0)) *
+      insight,
     practice: practicing ? apt * (1 + m.practiceGain) * (1 + kinshipBonus(c, practicing)) : 0,
   };
 }

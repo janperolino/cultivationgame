@@ -4,6 +4,8 @@ export type ScreenId =
   | 'cultivate'
   | 'trees'
   | 'techniques'
+  | 'bag'
+  | 'combat'
   | 'character'
   | 'people'
   | 'chronicle'
@@ -22,6 +24,8 @@ export const screens: readonly ScreenInfo[] = [
   { id: 'cultivate', name: 'Cultivate', hanzi: '修炼', unlock: 'cultivate' },
   { id: 'trees', name: 'Trees', hanzi: '道树', unlock: 'trees' },
   { id: 'techniques', name: 'Techniques', hanzi: '招式', unlock: 'techniques' },
+  { id: 'bag', name: 'Bag', hanzi: '行囊', unlock: 'bag' },
+  { id: 'combat', name: 'Combat', hanzi: '斗法', unlock: 'combat' },
   { id: 'character', name: 'Character', hanzi: '根骨', unlock: 'character' },
   { id: 'people', name: 'People', hanzi: '人物', unlock: 'people' },
   { id: 'chronicle', name: 'Chronicle', hanzi: '生平', unlock: 'chronicle' },

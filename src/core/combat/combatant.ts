@@ -8,6 +8,7 @@
 import {
   AGILITY_BASE,
   AGILITY_PER_POINT,
+  BIND_EVASION,
   HIT_PER_POINT,
   HP_PER_SIZE,
   MATERIAL_RESIST,
@@ -22,6 +23,11 @@ import type { LadderId } from '../../content/cultivation.ts';
 import type { ProfileId } from '../../content/enemies.ts';
 import { phaseOf, type PhaseElement } from '../../content/elements.ts';
 import { hasItem, item, type Item } from '../../content/items.ts';
+import { statInfo, STAT_IDS, type StatId } from '../../content/stats.ts';
+import { DAOS, tierNodes } from '../../content/trees/index.ts';
+import { gearBand, weaponAccuracy } from '../gear.ts';
+import { ownTier } from '../toxicity.ts';
+import { tierHeld } from '../trees.ts';
 import { rarityAccuracy, rarityMultiplier, type RarityId } from '../../content/rarity.ts';
 import { tierStep } from '../../content/realms.ts';
 import { hasTechnique, technique, type Technique } from '../../content/techniques.ts';
@@ -38,12 +44,20 @@ export interface Weapon {
   technique: number;
   /** What it multiplies Accuracy by: half a technique's at gold and red. */
   accuracy: number;
+  /** The share of the qi pool each strike drinks: a weapon above your realm. */
+  drink: number;
 }
 
 /** A weapon of a kind, tier and rarity: its band on strikes, the square root on techniques of its Dao. */
 export function weapon(kind: WeaponKind, tier: number, r: RarityId): Weapon {
   const m = rarityMultiplier(r, tierStep(tier));
-  return { kind, strike: m, technique: Math.sqrt(m), accuracy: Math.sqrt(rarityAccuracy(r)) };
+  return {
+    kind,
+    strike: m,
+    technique: Math.sqrt(m),
+    accuracy: Math.sqrt(rarityAccuracy(r)),
+    drink: 0,
+  };
 }
 
 /** Bare hands: a white tier 1 fist weapon, so unarmed strikes run through the same rule. */
@@ -68,6 +82,11 @@ export interface ActiveStatus {
   dot: number;
   /** The turn it was applied; it starts counting down after that turn. */
   since: number;
+  /** Set by the Dao rules of whoever applied it (core/combat/fight.ts): acts last, loses its minor, loses Evasion, burns as one sea. */
+  slow?: boolean;
+  undertow?: boolean;
+  bind?: boolean;
+  sea?: boolean;
 }
 
 export type CombatantState = 'fighting' | 'down' | 'fled' | 'yielded';
@@ -110,6 +129,13 @@ export interface Combatant {
   profile?: ProfileId;
   /** A beast that acts only on a turn its owner commands it. */
   needsCommand?: boolean;
+  /**
+   * The stats that shape a fight beyond the sheet (content/stats.ts): each Dao's power, hit, crit,
+   * cost and pierce, and the rule twists the Dao nodes carry. Nonzero ones only; NPCs carry none yet.
+   */
+  mods: Partial<Record<StatId, number>>;
+  /** What this fight remembers of them: once-a-fight rules spent, a saber's run of hits. */
+  marks: Record<string, number>;
   statuses: ActiveStatus[];
   /** Multiplies their Evasion until their next action: defending, cover. */
   guard: number;
@@ -150,6 +176,8 @@ export function combatant(init: CombatantInit): Combatant {
     daos: {},
     items: {},
     toxicity: 0,
+    mods: {},
+    marks: {},
     statuses: [],
     guard: 1,
     combo: null,
@@ -169,8 +197,51 @@ const RESIST_STATS: Partial<
 };
 
 /**
- * A cultivator as a combatant on a side, at full HP and qi. The element is the root's when it
- * holds one alone. Gear and Daos arrive with the bag and the Dao data (P2.3).
+ * The weapon a cultivator wields: the worn one at its band for them (core/gear.ts), or bare hands
+ * when none is worn or it won't wake.
+ */
+export function wornWeapon(c: Cultivator): Weapon {
+  const id = c.gear.weapon;
+  const it = id && hasItem(id) ? item(id) : null;
+  const kind = it?.uses.equip?.weapon;
+  const band = it ? gearBand(c, it) : null;
+  if (!it || !kind || !band) return BARE_HANDS;
+  return {
+    kind,
+    strike: band.band,
+    technique: Math.sqrt(band.band),
+    accuracy: weaponAccuracy(it, band.accuracy),
+    drink: band.qi,
+  };
+}
+
+/** The armor a cultivator wears: Defense at its band for them, and its material's resist. */
+export function wornArmor(c: Cultivator): { defense: number; material: DamageType | null } {
+  const id = c.gear.armor;
+  const it = id && hasItem(id) ? item(id) : null;
+  const band = it ? gearBand(c, it) : null;
+  if (!it || !band) return { defense: 1, material: null };
+  return { defense: band.band, material: it.uses.equip?.material ?? null };
+}
+
+/**
+ * The combat Dao tiers a cultivator holds, by Dao id: tiers in a row from the first, each held
+ * once half its nodes are owned, and none above their realm (design § Cultivation, Daos).
+ */
+export function daoTiers(c: Cultivator): Record<string, number> {
+  const out: Record<string, number> = {};
+  const top = ownTier(c);
+  for (const t of DAOS) {
+    let n = 0;
+    while (n < top && tierNodes(t, n + 1).length > 0 && tierHeld(c, t, n + 1)) n++;
+    if (n > 0) out[t.id] = n;
+  }
+  return out;
+}
+
+/**
+ * A cultivator as a combatant on a side, at full HP and qi, with their gear, Dao tiers and the
+ * stats the trees, gear and talents give. The element is the root's when it holds one alone.
  */
 export function fromCultivator(c: Cultivator, side: string): Combatant {
   const s = stats(c);
@@ -179,6 +250,10 @@ export function fromCultivator(c: Cultivator, side: string): Combatant {
   for (const [type, stat] of Object.entries(RESIST_STATS)) {
     if (s[stat] !== 0) resist[type as DamageType] = s[stat];
   }
+  const worn = wornArmor(c);
+  if (worn.material) resist[worn.material] = (resist[worn.material] ?? 0) + MATERIAL_RESIST;
+  const mods: Combatant['mods'] = {};
+  for (const id of STAT_IDS) if (s[id] !== 0 && !statInfo(id).arrives) mods[id] = s[id];
   const techniques: Combatant['techniques'] = {};
   for (const id of Object.keys(c.techniques)) {
     if (!hasTechnique(id)) continue;
@@ -208,6 +283,10 @@ export function fromCultivator(c: Cultivator, side: string): Combatant {
     techniques,
     items,
     toxicity: c.toxicity,
+    armor: worn.defense,
+    weapon: wornWeapon(c),
+    daos: daoTiers(c),
+    mods,
   });
 }
 
@@ -228,9 +307,22 @@ export function statusFlag(c: Combatant, flag: 'skipMain' | 'noFlee'): boolean {
   return c.statuses.some((a) => statusInfo(a.id)[flag] === true);
 }
 
+/** A combat stat they carry (content/stats.ts), 0 when they carry none. */
+export function mod(c: Combatant, stat: StatId): number {
+  return c.mods[stat] ?? 0;
+}
+
 /** Their Evasion against an attack compared on this ladder, guard and statuses included. */
 export function evasion(c: Combatant, ladder: LadderId): number {
-  return rungSize(c.rungs[ladder]) * agilityFactor(c) * c.guard * statusFactor(c, 'evasion');
+  const bound = c.statuses.some((s) => s.bind) ? BIND_EVASION : 1;
+  return (
+    rungSize(c.rungs[ladder]) *
+    agilityFactor(c) *
+    (1 + mod(c, 'evasion')) *
+    c.guard *
+    statusFactor(c, 'evasion') *
+    bound
+  );
 }
 
 /** Their Defense against an attack compared on this ladder: the rung's size at their armor's band. */
@@ -265,7 +357,7 @@ export function sheet(c: Combatant): Sheet {
   });
   return {
     accuracy: per((l) => rungSize(c.rungs[l]) * c.accuracy),
-    evasion: line(rungSize(c.rungs.body) * agilityFactor(c)),
+    evasion: line(rungSize(c.rungs.body) * agilityFactor(c) * (1 + mod(c, 'evasion'))),
     attack: per(
       (l) =>
         rungSize(c.rungs[l]) *

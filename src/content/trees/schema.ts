@@ -5,6 +5,7 @@
 // tier's starter, so a tree climbs as one path. Nodes cost insight; a node above its tree's
 // matching level can be learned but stays sealed, doing nothing, until you grow into it.
 import type { LadderId } from '../cultivation.ts';
+import type { CombatDaoId } from '../daos.ts';
 import type { Effect } from '../stats.ts';
 
 /** One tier per realm. */
@@ -72,6 +73,11 @@ export interface Tree {
   ladder: LadderId;
   /** What it shapes, for the screen. */
   what: string;
+  /**
+   * A combat Dao's id (content/daos.ts): its tiers held size the actions it counts, and its tiers
+   * hold once you own half their nodes. The big three have none.
+   */
+  dao?: CombatDaoId;
   branches: readonly Branch[];
   nodes: readonly TreeNode[];
 }

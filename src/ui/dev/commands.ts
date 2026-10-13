@@ -3,6 +3,7 @@
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
 import { CARDS, hasCard } from '../../content/cards/index.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
+import { ITEMS } from '../../content/items.ts';
 import { hasManual, MANUALS } from '../../content/manuals.ts';
 import { hasMethod, METHODS } from '../../content/methods.ts';
 import { hasRoutine, ROUTINES } from '../../content/routines.ts';
@@ -155,6 +156,22 @@ export const COMMANDS: Record<string, Command> = {
       if (!id) return 'Give an item id, like foundation-pill.';
       const v = n === undefined ? 1 : Number(n);
       return apply(store, (s) => withPlayer(s, addItem(s.player, id, v)), `${id} +${v}.`);
+    },
+  },
+  kit: {
+    usage: 'kit',
+    help: 'Adds one of every gear item, five Mending and Qi-Restoring Pills and three talismans.',
+    run(_args, store) {
+      return apply(
+        store,
+        (s) => {
+          let c = s.player;
+          for (const it of ITEMS) if (it.uses.equip) c = addItem(c, it.id, 1);
+          c = addItem(addItem(c, 'mending-pill', 5), 'qi-restoring-pill', 5);
+          return withPlayer(s, addItem(c, 'ember-talisman', 3));
+        },
+        'Every gear item, pills and talismans added.',
+      );
     },
   },
   pill: {

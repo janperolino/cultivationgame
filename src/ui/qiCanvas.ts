@@ -66,6 +66,8 @@ export interface FigureFrame {
   heat: number;
   /** Catch reach for the pointer ring, in figure units. */
   reach: number;
+  /** Seconds a breath takes: Long Breath slows it. */
+  breath: number;
   reduced: boolean;
 }
 
@@ -422,7 +424,7 @@ export class QiCanvas {
     }
 
     // The dantian breathes with the figure: it swells on the inhale. Steady under reduced motion.
-    const phase = breathPhase(t);
+    const phase = breathPhase(t, f.breath);
     const breath = f.reduced
       ? 0.5
       : phase < INHALE_SHARE

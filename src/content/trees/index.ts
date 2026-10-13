@@ -1,13 +1,18 @@
 // Every tree, and lookups by id. A new node is an entry in its tree's file, not new code.
-// The Daos (M2) and Ways (M3) join this list in the same shape.
+// The combat Daos (P2.3) share the shape; the Ways (M3) join the same way.
 import { BODY_TREE } from './body.ts';
+import { DAO_TREES } from './daos/index.ts';
 import { QI_TREE } from './qi.ts';
 import type { Branch, Tree, TreeNode } from './schema.ts';
 import { SOUL_TREE } from './soul.ts';
 
 export * from './schema.ts';
 
-export const TREES: readonly Tree[] = [QI_TREE, BODY_TREE, SOUL_TREE];
+/** The big three: Qi, Body and Soul, 25 to 30 nodes a tier. */
+export const BIG_THREE: readonly Tree[] = [QI_TREE, BODY_TREE, SOUL_TREE];
+/** The combat Daos, 12 to 18 nodes a tier. */
+export const DAOS: readonly Tree[] = DAO_TREES;
+export const TREES: readonly Tree[] = [...BIG_THREE, ...DAOS];
 
 const trees = new Map(TREES.map((t) => [t.id, t]));
 const nodes = new Map<string, { node: TreeNode; tree: Tree }>();

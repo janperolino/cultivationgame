@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { AbodeScreen } from './AbodeScreen.tsx';
+import { BagScreen } from './BagScreen.tsx';
 import { CharacterScreen } from './CharacterScreen.tsx';
 import { ChronicleScreen } from './ChronicleScreen.tsx';
+import { CombatScreen } from './CombatScreen.tsx';
 import { CreationScreen } from './CreationScreen.tsx';
 import { DevConsole } from './dev/DevConsole.tsx';
 import { CultivateScreen } from './CultivateScreen.tsx';
@@ -181,6 +183,8 @@ export function App() {
           {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
           {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
           {phase !== 'loading' && current.id === 'techniques' && <TechniquesScreen />}
+          {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
+          {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}
           {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
           {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}
           {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}

@@ -38,6 +38,8 @@ export const ORB_INHALE_LEAN = 0.7;
 export const ORB_DRIFT_S = 4;
 /** Seconds it then floats near the figure before it fades. */
 export const ORB_LINGER_S = 10;
+/** With Heaven and Earth Resonance, dawn's orbs come this much sooner (the wait is multiplied by it). */
+export const RESONANCE_DAWN_EVERY = 0.6;
 /** At most this many orbs at once, so a long look away doesn't fill the cave. */
 export const ORB_CAP = 6;
 
