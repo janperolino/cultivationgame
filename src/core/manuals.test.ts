@@ -52,7 +52,7 @@ describe('manual content', () => {
 
   it('keeps multipliers to purple and up, so small manuals only add', () => {
     for (const m of MANUALS) {
-      if (['purple', 'gold', 'red'].includes(m.rarity)) continue;
+      if (['purple', 'gold', 'red', 'pristine'].includes(m.rarity)) continue;
       for (const n of m.nodes) {
         for (const e of n.effects) expect(statInfo(e.stat).unit, n.id).not.toBe('times');
       }

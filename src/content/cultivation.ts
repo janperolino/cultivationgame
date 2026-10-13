@@ -69,9 +69,9 @@ export const MAX_OFFERINGS = 3;
  * toxicity. The design names white, purple and gold; the rest are filled in (P2.1). Red's margin
  * stays at the fighting-up ledger's +0.5.
  */
-export const OFFER_ODDS = [0.02, 0.03, 0.04, 0.05, 0.07, 0.12, 0.15] as const;
-export const OFFER_MARGIN = [0.05, 0.1, 0.13, 0.18, 0.25, 0.5, 0.5] as const;
-export const OFFER_DETOX = [20, 30, 40, 50, 70, 100, 100] as const;
+export const OFFER_ODDS = [0.02, 0.03, 0.04, 0.05, 0.07, 0.12, 0.15, 0.2] as const;
+export const OFFER_MARGIN = [0.05, 0.1, 0.13, 0.18, 0.25, 0.5, 0.5, 0.75] as const;
+export const OFFER_DETOX = [20, 30, 40, 50, 70, 100, 100, 100] as const;
 /** A ladder tag doubles the item's sizes on its own ladder. */
 export const OFFER_LADDER_MULTIPLIER = 2;
 /** A purifying offering halves a failure's injury. */

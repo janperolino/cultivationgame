@@ -85,6 +85,7 @@ export function rollBiased(rng: Rng, bias: number): RarityId {
     acc += p;
     if (u < acc) return id;
   }
+  // Pristine rolls at 0, so the table ends at red.
   return 'red';
 }
 

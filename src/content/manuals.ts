@@ -2,7 +2,7 @@
 // by realm; manuals are found, bought, inherited, written or stolen. One mechanical kind with a
 // `nodes` list; the fiction supplies the size and the name: a Formula is one or two nodes, a Style
 // bundles craft nodes, an Art is a technique and its nodes, a Method a ladder and its nodes, a
-// Scripture a big gold or red bundle, an Inheritance a whole tree. Manual nodes cost insight like
+// Scripture a big bundle of gold or better, an Inheritance a whole tree. Manual nodes cost insight like
 // any node and stack without limit: small effects add, and multipliers come only from purple up.
 // Manuals and trees never unlock each other: a manual's nodes grow only from its own nodes.
 // A loose manual's nodes unseal as its ladder reaches their tier; a method's nodes unseal by the
