@@ -5,6 +5,7 @@ A xianxia cultivation idle game with an AI-narrated "go in" mode (GLM 5.2 throug
 ## Where things are
 
 - `plan.md`: the build split into one-session phases, with Status, Open questions and a Log.
+- `docs/plan-archive.md`: the finished milestones' phase specs, settled questions and log, moved out of `plan.md`. History, not rules.
 - `docs/design.md`: the rules, and their source of truth. Read only the sections your phase lists.
 - `content/atlas/entries.json`: the world, Severed Heaven, one entry per place, power, era and race, and its source of truth. `content/atlas/README.md` explains the fields, `tools/atlas-geo.cjs` computes the outlines, and `node tools/atlas-serve.cjs` serves the map viewer and editor at http://localhost:4321.
 
