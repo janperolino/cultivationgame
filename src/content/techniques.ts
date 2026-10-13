@@ -24,8 +24,22 @@ export const DAMAGE_TYPES = [
 ] as const;
 export type DamageType = (typeof DAMAGE_TYPES)[number];
 
-/** A technique's shape, which the combat effects draw (design § Combat, effects fill the wait). */
-export type Form = 'slash' | 'thrust' | 'palm' | 'projectile' | 'aura';
+/**
+ * A technique's shape, which the combat effects draw (design § Combat, effects fill the wait): the
+ * five a cultivator's arts take, then the five a beast's natural attacks and abilities take, which
+ * a bloodline's body techniques share.
+ */
+export type Form =
+  | 'slash'
+  | 'thrust'
+  | 'palm'
+  | 'projectile'
+  | 'aura'
+  | 'bite'
+  | 'claw'
+  | 'charge'
+  | 'tail'
+  | 'breath';
 
 export interface Technique {
   id: string;

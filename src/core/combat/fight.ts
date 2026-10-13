@@ -319,6 +319,11 @@ function clashLadder(ladder: LadderId, type: DamageType): LadderId {
   return type === 'soul' ? 'soul' : ladder;
 }
 
+/** Which ladder sizes the target's Defense: the body, or the soul against soul damage. */
+function guardLadder(type: DamageType): LadderId {
+  return type === 'soul' ? 'soul' : 'body';
+}
+
 interface Attack {
   form: Form;
   type: DamageType;
@@ -331,6 +336,128 @@ interface Attack {
   accuracy: number;
   attack: number;
   qi: boolean;
+}
+
+/** What a technique costs this actor in qi. */
+export function techniqueCost(actor: Combatant, t: Technique): number {
+  return Math.round(t.qiCost * tierScale(t.tier) * actor.techniqueCost);
+}
+
+/** A technique as an attack: its tier sizes the base, its rarity, Daos and the weapon the rest. */
+function techniqueAttack(actor: Combatant, id: string, creativity: number): Attack | string {
+  const known = actor.techniques[id];
+  if (!known) return `doesn't know ${id}`;
+  const t: Technique = known.technique;
+  const dao = daoFactor(actor, t.daos);
+  const onWeapon = t.daos.includes(actor.weapon.kind);
+  const physical = t.damage === 'physical' ? actor.physicalPower : 1;
+  const ladder = clashLadder(t.ladder, t.damage);
+  return {
+    form: t.form,
+    type: t.damage,
+    base: t.power * tierScale(t.tier),
+    ladder,
+    rung: actor.rungs[ladder],
+    accuracy:
+      known.accuracy *
+      dao *
+      rarityAccuracy(t.rarity) *
+      (onWeapon ? actor.weapon.accuracy : 1) *
+      creativity,
+    attack:
+      rarityMultiplier(t.rarity, tierStep(t.tier)) *
+      dao *
+      actor.techniquePower *
+      physical *
+      (onWeapon ? actor.weapon.technique : 1),
+    qi: t.qiCost > 0,
+  };
+}
+
+/** A basic strike: physical, on the body ladder, with the weapon at its full band. */
+function strikeAttack(actor: Combatant, creativity: number): Attack {
+  const dao = daoFactor(actor, [actor.weapon.kind]);
+  return {
+    form: STRIKE_FORM[actor.weapon.kind],
+    type: 'physical',
+    base: STRIKE_POWER * tierScale(realmIndex(actor.rungs.body.realm) + 1),
+    ladder: 'body',
+    rung: actor.rungs.body,
+    accuracy: dao * actor.weapon.accuracy * creativity,
+    attack: actor.weapon.strike * dao * actor.physicalPower,
+    qi: false,
+  };
+}
+
+/** A fight item's strike: a talisman strikes at its own tier, even above yours. */
+function itemAttack(actor: Combatant, it: Item, creativity: number): Attack | null {
+  const use = it.uses.fight;
+  if (!use) return null;
+  const own = actor.rungs.qi;
+  const rung = realmIndex(own.realm) + 1 >= it.tier ? own : tierRung(it.tier);
+  return {
+    form: use.form,
+    type: use.damage,
+    base: use.power * tierScale(it.tier),
+    ladder: clashLadder('qi', use.damage),
+    rung,
+    accuracy: rarityAccuracy(it.rarity) * creativity,
+    attack: rarityMultiplier(it.rarity, tierStep(it.tier)),
+    qi: false,
+  };
+}
+
+/** What an attack would do before it rolls: its chance of landing and its damage on a plain hit. */
+export interface Preview {
+  chance: number;
+  damage: number;
+  /** The qi it costs. */
+  qi: number;
+}
+
+/**
+ * Prices an attacking main action against its target without rolling: the hit chance and a
+ * plain hit's damage at the spread's middle, element, resist and combo included. Null for an
+ * action that doesn't attack, can't be paid, or has no standing target. The Combat screen shows
+ * this beside every technique, and the profiles pick by it.
+ */
+export function preview(f: Fight, actorId: string, m: MainAction): Preview | null {
+  const actor = combatantIn(f, actorId);
+  if (!actor || actor.state !== 'fighting') return null;
+  let a: Attack | string | null;
+  let qi = 0;
+  if (m.type === 'technique') {
+    const known = actor.techniques[m.id];
+    if (!known) return null;
+    qi = techniqueCost(actor, known.technique);
+    if (actor.qi < qi) return null;
+    a = techniqueAttack(actor, m.id, 1);
+  } else if (m.type === 'strike') {
+    a = strikeAttack(actor, 1);
+  } else if (m.type === 'item') {
+    const held = actor.items[m.id];
+    a = held && held.n > 0 ? itemAttack(actor, held.item, 1) : null;
+  } else return null;
+  if (!a || typeof a === 'string') return null;
+  const target = foe(f, actor, 'target' in m ? (m.target ?? '') : '');
+  if (!target) return null;
+  const chance = hitChance(attackAccuracy(actor, a), evasion(target, a.ladder));
+  const phase = damagePhase(a.type);
+  const dealt = damage({
+    base: a.base,
+    attack: rungSize(a.rung) * a.attack,
+    defense: defense(target, guardLadder(a.type)),
+    element: elementMultiplier(phase, target.element),
+    resist: target.resist[a.type] ?? 0,
+    result: 'hit',
+    combo: comboMultiplier(nextCombo(actor.combo, phase)),
+  });
+  return { chance, damage: dealt, qi };
+}
+
+/** An attack's Accuracy: the rung's size times what feeds it, the Hit stat and the actor's statuses. */
+function attackAccuracy(actor: Combatant, a: Attack): number {
+  return rungSize(a.rung) * a.accuracy * actor.accuracy * statusFactor(actor, 'accuracy');
 }
 
 function main(
@@ -353,40 +480,18 @@ function main(
     case 'technique': {
       const known = actor.techniques[m.id];
       if (!known) return `doesn't know ${m.id}`;
-      const t: Technique = known.technique;
-      const cost = Math.round(t.qiCost * tierScale(t.tier) * actor.techniqueCost);
+      const cost = techniqueCost(actor, known.technique);
       if (actor.qi < cost) return 'not enough qi';
       const target = foe(f, actor, m.target);
       if (!target) return 'no target';
+      const spec = techniqueAttack(actor, m.id, creativity);
+      if (typeof spec === 'string') return spec;
       actor.qi -= cost;
-      const dao = daoFactor(actor, t.daos);
-      const onWeapon = t.daos.includes(actor.weapon.kind);
-      const physical = t.damage === 'physical' ? actor.physicalPower : 1;
-      const ladder = clashLadder(t.ladder, t.damage);
-      const o = attack(f, actor, target, rng, {
-        form: t.form,
-        type: t.damage,
-        base: t.power * tierScale(t.tier),
-        ladder,
-        rung: actor.rungs[ladder],
-        accuracy:
-          known.accuracy *
-          dao *
-          rarityAccuracy(t.rarity) *
-          (onWeapon ? actor.weapon.accuracy : 1) *
-          creativity,
-        attack:
-          rarityMultiplier(t.rarity, tierStep(t.tier)) *
-          dao *
-          actor.techniquePower *
-          physical *
-          (onWeapon ? actor.weapon.technique : 1),
-        qi: true,
-      });
+      const o = attack(f, actor, target, rng, spec);
       return {
         ...o,
         action: 'technique',
-        id: t.id,
+        id: known.technique.id,
         qi: cost,
         pool: { qi: actor.qi, max: actor.maxQi },
       };
@@ -395,18 +500,8 @@ function main(
     case 'strike': {
       const target = foe(f, actor, m.target);
       if (!target) return 'no target';
-      const dao = daoFactor(actor, [actor.weapon.kind]);
       return {
-        ...attack(f, actor, target, rng, {
-          form: STRIKE_FORM[actor.weapon.kind],
-          type: 'physical',
-          base: STRIKE_POWER * tierScale(realmIndex(actor.rungs.body.realm) + 1),
-          ladder: 'body',
-          rung: actor.rungs.body,
-          accuracy: dao * actor.weapon.accuracy * creativity,
-          attack: actor.weapon.strike * dao * actor.physicalPower,
-          qi: false,
-        }),
+        ...attack(f, actor, target, rng, strikeAttack(actor, creativity)),
         action: 'strike',
       };
     }
@@ -434,25 +529,12 @@ function main(
       const held = actor.items[m.id];
       if (!held || held.n <= 0) return `holds no ${m.id}`;
       const it: Item = held.item;
-      const fightUse = it.uses.fight;
-      if (fightUse) {
+      const strike = itemAttack(actor, it, creativity);
+      if (strike) {
         const target = foe(f, actor, m.target ?? '');
         if (!target) return 'no target';
         spend(actor, m.id);
-        // A talisman strikes at its own tier, even above yours.
-        const own = actor.rungs.qi;
-        const rung = realmIndex(own.realm) + 1 >= it.tier ? own : tierRung(it.tier);
-        const o = attack(f, actor, target, rng, {
-          form: fightUse.form,
-          type: fightUse.damage,
-          base: fightUse.power * tierScale(it.tier),
-          ladder: clashLadder('qi', fightUse.damage),
-          rung,
-          accuracy: rarityAccuracy(it.rarity) * creativity,
-          attack: rarityMultiplier(it.rarity, tierStep(it.tier)),
-          qi: false,
-        });
-        return { ...o, action: 'item', id: it.id };
+        return { ...attack(f, actor, target, rng, strike), action: 'item', id: it.id };
       }
       const consume = it.uses.consume;
       if (!consume) return `${m.id} can't be used in a fight`;
@@ -563,8 +645,7 @@ function attack(
   rng: Rng,
   a: Attack,
 ): Omit<Outcome, 'action'> {
-  const accuracy = rungSize(a.rung) * a.accuracy * actor.accuracy * statusFactor(actor, 'accuracy');
-  const { result, chance } = judge(rng, accuracy, evasion(target, a.ladder), {
+  const { result, chance } = judge(rng, attackAccuracy(actor, a), evasion(target, a.ladder), {
     fortune: actor.fortune,
     qi: a.qi,
     toxicity: actor.toxicity,
@@ -593,7 +674,7 @@ function attack(
     const dealt = damage({
       base: a.base * BACKFIRE_DAMAGE,
       attack: attackValue,
-      defense: defense(actor, a.ladder),
+      defense: defense(actor, guardLadder(a.type)),
       element: 1,
       resist: actor.resist[a.type] ?? 0,
       result: 'hit',
@@ -608,7 +689,7 @@ function attack(
   const dealt = damage({
     base: a.base,
     attack: attackValue,
-    defense: defense(target, a.ladder),
+    defense: defense(target, guardLadder(a.type)),
     element: elementMultiplier(phase, target.element),
     resist: target.resist[a.type] ?? 0,
     result,

@@ -156,7 +156,7 @@ export function statusOf(type: DamageType): StatusId | null {
 export const TECHNIQUE_FORMS = ['slash', 'thrust', 'palm', 'projectile', 'aura'] as const;
 export const BEAST_FORMS = ['bite', 'claw', 'charge', 'tail', 'breath'] as const;
 export const ACTION_FORMS = ['defend', 'flee', 'talk', 'item', 'command'] as const;
-export type OutcomeForm = Form | (typeof BEAST_FORMS)[number] | (typeof ACTION_FORMS)[number];
+export type OutcomeForm = Form | (typeof ACTION_FORMS)[number];
 
 export const ATTACK_RESULTS = ['hit', 'critical', 'miss', 'backfire'] as const;
 export const ACTION_RESULTS = ['held', 'escaped', 'failed', 'swayed'] as const;

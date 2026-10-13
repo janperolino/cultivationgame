@@ -19,6 +19,7 @@ import {
   type WeaponKind,
 } from '../../content/combat.ts';
 import type { LadderId } from '../../content/cultivation.ts';
+import type { ProfileId } from '../../content/enemies.ts';
 import { phaseOf, type PhaseElement } from '../../content/elements.ts';
 import { hasItem, item, type Item } from '../../content/items.ts';
 import { rarityAccuracy, rarityMultiplier, type RarityId } from '../../content/rarity.ts';
@@ -105,6 +106,8 @@ export interface Combatant {
   /** Items carried into the fight, by id. */
   items: Record<string, { item: Item; n: number }>;
   toxicity: number;
+  /** How it picks its actions when the engine fights it (content/enemies.ts); the player has none. */
+  profile?: ProfileId;
   /** A beast that acts only on a turn its owner commands it. */
   needsCommand?: boolean;
   statuses: ActiveStatus[];
