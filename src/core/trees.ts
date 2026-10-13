@@ -100,6 +100,14 @@ export function canLearn(c: Cultivator, id: string): LearnCheck {
   return { ok: true };
 }
 
+/**
+ * A node you can buy now and that works once bought: learnable, and not waiting on a mastery
+ * level or a realm. The bookcase and the hostless trees make these glow.
+ */
+export function nodeReady(c: Cultivator, n: AnyNode): boolean {
+  return canLearn(c, n.id).ok && !nodeSealed(c, n);
+}
+
 /** "A", "A and B", "A, B and C". */
 function listNames(names: readonly string[]): string {
   return names.length < 3

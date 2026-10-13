@@ -2,10 +2,11 @@
 // canvas you drag and zoom, in nine tier bands of branching paths, sealed tiers dimmed, with a
 // re-centre button. The manuals you hold graft beside their host trees, each a cluster in its tier
 // band with a name plate and a dotted bracket, joined to none of the tree's nodes (design §
-// Cultivation, Where manuals live); the Manuals category holds those with no host and a shelf of
-// every manual held. A node's details open in an overlay on the canvas.
+// Cultivation, Where manuals live); the Manuals category holds those with no tree to stand beside
+// and the bookcase of every manual held (Bookcase.tsx). A node's details open in an overlay on the
+// canvas.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { MANUAL_KIND_IDS, MANUAL_KINDS, manual, type Manual } from '../content/manuals.ts';
+import { MANUAL_KINDS, manual, type Manual } from '../content/manuals.ts';
 import { MASTERY } from '../content/mastery.ts';
 import { anyNode, type AnyNode } from '../content/nodes.ts';
 import { REALMS } from '../content/realms.ts';
@@ -17,7 +18,6 @@ import {
   tierNodes,
   BIG_THREE,
   TREE_CATEGORIES,
-  tree as treeById,
   treeNode,
   treeOf,
   type Tree,
@@ -25,11 +25,12 @@ import {
   type TreeNode,
 } from '../content/trees/index.ts';
 import { ladderOpen } from '../core/cultivation.ts';
-import { graftsOn, heldManuals, hostlessManuals } from '../core/manuals.ts';
+import { graftsOn, heldManuals } from '../core/manuals.ts';
 import { methodMastery } from '../core/methods.ts';
 import type { Cultivator } from '../core/state.ts';
 import { mastery } from '../core/techniques.ts';
 import { canLearn, hasLearned, nodeSealed, tierOwned } from '../core/trees.ts';
+import { Bookcase, HostlessView } from './Bookcase.tsx';
 import { formatEffect, formatNumber, LADDER_LABELS } from './format.ts';
 import { LearnAction, ManualName, ManualNodeRow, NodeEffects } from './ManualNodes.tsx';
 import { hostWords, sealWords, wakeWords } from './manualWords.ts';
@@ -46,13 +47,11 @@ import {
 } from './panzoom.ts';
 import { useGame } from './store.ts';
 import {
-  cluster,
   layout,
   NODE_HALF_W,
   TREE_W,
   UNCHARTED,
   UNIT,
-  type Cluster,
   type Graft,
   type Layout,
 } from './treeLayout.ts';
@@ -275,27 +274,13 @@ function NodeButton({
 }
 
 /** Details for a manual's node: what it does, which manual it belongs to, when it wakes. */
-function ManualNodeDetail({
-  c,
-  id,
-  inline,
-  onClose,
-}: {
-  c: Cultivator;
-  id: string;
-  inline?: boolean;
-  onClose: () => void;
-}) {
+function ManualNodeDetail({ c, id, onClose }: { c: Cultivator; id: string; onClose: () => void }) {
   const n = anyNode(id);
   if (n.home !== 'manual') return null;
   const m = manual(n.manual);
   const sealed = nodeSealed(c, n);
   return (
-    <section
-      className={`node-overlay ${inline ? 'is-inline' : ''}`}
-      aria-live="polite"
-      aria-label={n.name}
-    >
+    <section className="node-overlay" aria-live="polite" aria-label={n.name}>
       <div className="node-overlay-head">
         <h2 className="panel-heading">
           {n.name} <span className="hanzi">{n.hanzi}</span>
@@ -320,24 +305,10 @@ function ManualNodeDetail({
 }
 
 /** Details for a manual as a whole, from its name plate: where it comes from and its nodes. */
-function ManualDetail({
-  c,
-  id,
-  inline,
-  onClose,
-}: {
-  c: Cultivator;
-  id: string;
-  inline?: boolean;
-  onClose: () => void;
-}) {
+function ManualDetail({ c, id, onClose }: { c: Cultivator; id: string; onClose: () => void }) {
   const m = manual(id);
   return (
-    <section
-      className={`node-overlay ${inline ? 'is-inline' : ''}`}
-      aria-live="polite"
-      aria-label={m.name}
-    >
+    <section className="node-overlay" aria-live="polite" aria-label={m.name}>
       <div className="node-overlay-head">
         <h2 className="panel-heading">
           <ManualName m={m} />
@@ -363,22 +334,12 @@ function ManualDetail({
 }
 
 /** Whatever is selected: a manual's plate, a manual's node or a tree's node. */
-function Detail({
-  c,
-  id,
-  inline,
-  onClose,
-}: {
-  c: Cultivator;
-  id: string;
-  inline?: boolean;
-  onClose: () => void;
-}) {
+function Detail({ c, id, onClose }: { c: Cultivator; id: string; onClose: () => void }) {
   if (id.startsWith(PLATE)) {
-    return <ManualDetail c={c} id={id.slice(PLATE.length)} inline={inline} onClose={onClose} />;
+    return <ManualDetail c={c} id={id.slice(PLATE.length)} onClose={onClose} />;
   }
   if (anyNode(id).home === 'manual') {
-    return <ManualNodeDetail c={c} id={id} inline={inline} onClose={onClose} />;
+    return <ManualNodeDetail c={c} id={id} onClose={onClose} />;
   }
   return <NodeDetail c={c} id={id} onClose={onClose} />;
 }
@@ -715,122 +676,40 @@ function TreeCanvas({
   );
 }
 
-/** A manual drawn on its own, off the canvas: its plate, its nodes and their edges. */
-function ClusterBox({
-  c,
-  k,
-  selected,
-  onSelect,
-}: {
-  c: Cultivator;
-  k: Cluster;
-  selected: string | null;
-  onSelect: (id: string) => void;
-}) {
-  const at = new Map(k.nodes.map((n) => [n.node.id, n.at]));
-  return (
-    <div className="graft-box" style={{ width: k.width, height: k.height }}>
-      <svg className="tree-edges" width={k.width} height={k.height} aria-hidden="true">
-        {graftEdges(c, k.manual, (id) => at.get(id)!)}
-      </svg>
-      <Plate
-        c={c}
-        m={k.manual}
-        style={{ left: 0, top: 0, width: k.width }}
-        selected={selected === PLATE + k.manual.id}
-        onSelect={onSelect}
-      />
-      {k.nodes.map(({ node, at: p }) => (
-        <NodeButton
-          key={node.id}
-          c={c}
-          n={node}
-          at={p}
-          selected={selected === node.id}
-          onSelect={onSelect}
-          onFocusNode={() => {}}
-        />
-      ))}
-    </div>
-  );
-}
-
 /**
- * The Manuals category: the manuals with no host tree as small trees of their own on top, and a
- * shelf of every manual held by kind below, each a link to its graft.
+ * The Manuals category: the manuals with no tree to stand beside on top, one tree at a time
+ * beside a list of them, and the bookcase of every manual held below. A click on a spine opens
+ * its graft, or focuses its own tree up here and scrolls to it.
  */
 function ManualsView({
   c,
   focus,
+  treeOpen,
   onOpen,
 }: {
   c: Cultivator;
   focus: Focus | null;
+  treeOpen: (id: string) => boolean;
   onOpen: (m: Manual) => void;
 }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [focused, setFocused] = useState(-1);
-  if (focus && focus.seq !== focused) {
-    setFocused(focus.seq);
-    setSelected(PLATE + focus.id);
+  const top = useRef<HTMLDivElement>(null);
+  const [focused, setFocused] = useState<string | null>(focus?.id ?? null);
+  const [seen, setSeen] = useState(focus?.seq ?? -1);
+  if (focus && focus.seq !== seen) {
+    setSeen(focus.seq);
+    setFocused(focus.id);
   }
-  const hostless = hostlessManuals(c);
-  const held = heldManuals(c);
+  useEffect(() => {
+    if (focus) top.current?.scrollIntoView({ block: 'start' });
+  }, [focus]);
+  const standalone = heldManuals(c).filter((m) => !m.host || !treeOpen(m.host));
+  const current = standalone.find((m) => m.id === focused) ?? standalone[0];
   return (
     <>
-      <h3 className="sub-heading">Without a host tree</h3>
-      {hostless.length === 0 ? (
-        <p className="muted spaced">
-          Scriptures and Inheritances land here, and any manual with no one tree to graft beside.
-        </p>
-      ) : (
-        <>
-          <p className="caption">
-            Manuals with no one tree to graft beside stand here as small trees of their own.
-          </p>
-          <div className="graft-row">
-            {hostless.map((m) => (
-              <ClusterBox
-                key={m.id}
-                c={c}
-                k={cluster(m)}
-                selected={selected}
-                onSelect={setSelected}
-              />
-            ))}
-          </div>
-        </>
-      )}
-      {selected && <Detail c={c} id={selected} inline onClose={() => setSelected(null)} />}
-      <h3 className="sub-heading spaced">The shelf</h3>
-      {held.length === 0 ? (
-        <p className="muted spaced">You hold no manual yet.</p>
-      ) : (
-        MANUAL_KIND_IDS.filter((k) => held.some((m) => m.kind === k)).map((k) => (
-          <div key={k} className="manual-kind">
-            <h4 className="caption">
-              {MANUAL_KINDS[k].plural} <span className="hanzi">{MANUAL_KINDS[k].hanzi}</span>
-            </h4>
-            <ul className="manual-list">
-              {held
-                .filter((m) => m.kind === k)
-                .map((m) => (
-                  <li key={m.id}>
-                    <button type="button" className="manual-open" onClick={() => onOpen(m)}>
-                      <ManualName m={m} />
-                      <span className="caption">
-                        {' '}
-                        · {m.nodes.filter((n) => hasLearned(c, n.id)).length} of {m.nodes.length}{' '}
-                        learned ·{' '}
-                        {m.host ? `beside ${treeById(m.host).name}, tier ${m.tier}` : 'above'}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-            </ul>
-          </div>
-        ))
-      )}
+      <div ref={top} className="manuals-top">
+        <HostlessView c={c} list={standalone} focused={current} onFocus={(m) => setFocused(m.id)} />
+      </div>
+      <Bookcase c={c} hostOpen={(m) => !!m.host && treeOpen(m.host)} onOpen={onOpen} />
     </>
   );
 }
@@ -871,7 +750,9 @@ export function TreesScreen() {
   const categories = TREE_CATEGORIES.map((k) => ({ ...k, trees: k.trees.filter(open) }));
   const all = categories.flatMap((k) => k.trees);
   const anyManual = heldManuals(c).length > 0;
-  const onManuals = pick === MANUALS_PICK && anyManual;
+  // A link to a manual whose host tree isn't open yet lands on its own tree under Manuals.
+  const shutHost = focus !== null && !all.some((t) => t.id === pick);
+  const onManuals = (pick === MANUALS_PICK || shutHost) && anyManual;
   const tree = all.find((t) => t.id === pick) ?? all[0]!;
   const current = onManuals
     ? categories.find((k) => k.id === MANUALS_PICK)!
@@ -941,7 +822,12 @@ export function TreesScreen() {
         </p>
       )}
       {onManuals ? (
-        <ManualsView c={c} focus={focus} onOpen={openManual} />
+        <ManualsView
+          c={c}
+          focus={focus}
+          treeOpen={(id) => all.some((t) => t.id === id)}
+          onOpen={openManual}
+        />
       ) : (
         <>
           <p className="caption spaced">

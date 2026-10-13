@@ -1,7 +1,7 @@
 // Every node a cultivator can own, wherever it lives: a tree's (content/trees) or a manual's
 // (content/manuals.ts). Each carries its `home`, so a learned node's id finds its rules: a tree
 // node unseals with its tree's ladder, a manual node with its manual's ladder or method mastery.
-import { MANUALS, type ManualNode } from './manuals.ts';
+import { addManuals, MANUALS, type Manual, type ManualNode } from './manuals.ts';
 import { TREES, type TreeNode } from './trees/index.ts';
 
 export type AnyNode = TreeNode | ManualNode;
@@ -19,4 +19,10 @@ export function anyNode(id: string): AnyNode {
   const n = nodes.get(id);
   if (!n) throw new RangeError(`Unknown node ${id}`);
   return n;
+}
+
+/** Adds made-up manuals and their nodes, for the dev console's full bookcase and for tests. */
+export function registerManuals(ms: readonly Manual[]): void {
+  addManuals(ms);
+  for (const m of ms) for (const n of m.nodes) nodes.set(n.id, n);
 }

@@ -5,6 +5,7 @@ import { CARDS, hasCard } from '../../content/cards/index.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
 import { ITEMS } from '../../content/items.ts';
 import { hasManual, MANUALS } from '../../content/manuals.ts';
+import { registerManuals } from '../../content/nodes.ts';
 import { hasMethod, METHODS } from '../../content/methods.ts';
 import { hasRoutine, ROUTINES } from '../../content/routines.ts';
 import { hasTechnique, TECHNIQUES } from '../../content/techniques.ts';
@@ -26,6 +27,7 @@ import {
   gainTechnique,
 } from '../../core/life.ts';
 import { advance, daysPerRealMs } from '../../core/loop.ts';
+import { madeUpManuals } from '../../core/madeUpManuals.ts';
 import { addItem, ageYears, daysLived, withPlayer, type GameState } from '../../core/state.ts';
 import { formatDays, formatLadder, formatNumber } from '../format.ts';
 import { screens } from '../screens.ts';
@@ -294,6 +296,30 @@ export const COMMANDS: Record<string, Command> = {
       if (!id) return MANUALS.map((m) => `${m.id.padEnd(30)} ${m.kind} · ${m.rarity}`);
       if (!hasManual(id)) return `No manual "${id}".`;
       return apply(store, (s) => gainManual(s, id, 'is handed'), `Handed the ${id}.`);
+    },
+  },
+  shelf: {
+    usage: 'shelf [count]',
+    help: 'Fills the bookcase with made-up manuals (150 by default), most finished. A reload forgets them until you run it again.',
+    run([n], store) {
+      const count = n ? Number(n) : 150;
+      if (!Number.isInteger(count) || count < 1) return `"${n}" is not a count.`;
+      const made = madeUpManuals(count);
+      registerManuals(made.manuals);
+      const add = (have: string[], more: string[]) => [...new Set([...have, ...more])];
+      return apply(
+        store,
+        (s) =>
+          withPlayer(s, {
+            ...s.player,
+            manuals: add(
+              s.player.manuals,
+              made.manuals.map((m) => m.id),
+            ),
+            nodes: add(s.player.nodes, made.learned),
+          }),
+        `Shelved ${count} made-up manuals.`,
+      );
     },
   },
   seat: {

@@ -2206,23 +2206,6 @@ select {
   stroke-linecap: round;
 }
 
-/* The Manuals category: the hostless manuals as small trees side by side, then the shelf. */
-.graft-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin: 10px 0;
-}
-
-.graft-box {
-  position: relative;
-  flex: none;
-}
-
-.graft-box .tree-edges {
-  pointer-events: none;
-}
-
 .link-button {
   padding: 0;
   border: 0;
@@ -2239,33 +2222,6 @@ select {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--edge);
-}
-
-/* Manuals: a shelf by kind, each a link to its graft. */
-.manual-list {
-  margin: 4px 0 10px;
-  padding: 0;
-  list-style: none;
-}
-
-.manual-open {
-  padding: 4px 0;
-  border: 0;
-  background: none;
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-}
-
-.manual-open:hover .caption {
-  color: var(--accent);
-}
-
-.node-overlay.is-inline {
-  position: static;
-  width: auto;
-  max-height: none;
-  margin: 4px 0 10px;
 }
 
 .manual-nodes {
@@ -4642,5 +4598,711 @@ button.fight-card {
   .fight-action {
     min-width: 0;
     flex: 1 1 140px;
+  }
+}
+
+/* The Manuals tab (P2.5c): the manuals with no tree to stand beside, one tree at a time beside a
+   list of them, then the bookcase. A plank per kind; each manual a standing spine with its
+   rarity's band on top, its hanzi in brush down it with no box round it, and its kind's
+   binding; finished ones lie flat at the shelf's end. The hover card says what a manual is. */
+.manuals-top {
+  scroll-margin-top: 12px;
+}
+
+.hostless {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: stretch;
+  margin: 10px 0 22px;
+}
+
+.hostless-list {
+  flex: 1 1 250px;
+  min-width: 0;
+  padding: 12px;
+  background: var(--well);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+}
+
+.hostless-list .sub-heading {
+  margin: 0 0 2px;
+}
+
+.hostless-list ul {
+  display: grid;
+  gap: 4px;
+  max-height: 560px;
+  margin: 8px 0 0;
+  padding: 0 4px 0 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.hostless-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  background: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.hostless-pick:hover {
+  border-color: var(--edge-strong);
+}
+
+.hostless-pick[aria-current='true'] {
+  border-color: var(--accent-edge);
+  background: var(--accent-soft);
+}
+
+.hostless-pick-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hostless-pick-name {
+  font-family: var(--font-display);
+  font-size: calc(16px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.manual-seal {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid color-mix(in srgb, var(--rarity-color) 60%, transparent);
+  border-radius: 50%;
+  color: var(--rarity-color);
+  font-size: calc(15px * var(--text-scale));
+}
+
+.manual-seal.is-large {
+  width: 40px;
+  height: 40px;
+  font-size: calc(21px * var(--text-scale));
+}
+
+.hostless-tree {
+  flex: 999 1 480px;
+  align-self: flex-start;
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--glass-strong);
+  border: 1px solid var(--accent-edge);
+  border-radius: var(--radius);
+}
+
+.hostless-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hostless-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: calc(24px * var(--text-scale));
+  font-weight: 600;
+}
+
+.own-tree-scroll {
+  display: flex;
+  justify-content: safe center;
+  padding: 14px 0 6px;
+  border-block: 1px solid var(--edge);
+  overflow-x: auto;
+}
+
+.own-tree {
+  position: relative;
+  flex: none;
+}
+
+.own-tree svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.own-tree line {
+  stroke: color-mix(in srgb, var(--accent) 22%, transparent);
+  stroke-width: 1.4;
+}
+
+.own-tree line.is-open {
+  stroke: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.own-tree line.is-lit {
+  stroke: var(--accent);
+}
+
+.own-node {
+  fill: var(--void);
+  stroke: color-mix(in srgb, var(--accent) 35%, transparent);
+  stroke-width: 1;
+}
+
+.own-node.is-learned {
+  fill: var(--accent);
+  stroke: color-mix(in srgb, var(--accent) 40%, black);
+  stroke-width: 2;
+}
+
+.own-node.is-ready {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 70%, transparent));
+}
+
+.own-label {
+  position: absolute;
+  width: 130px;
+  color: var(--muted);
+  font-size: calc(11.5px * var(--text-scale));
+  line-height: 1.25;
+  text-align: center;
+}
+
+.own-label.is-learned {
+  color: var(--text);
+}
+
+.own-label.is-ready {
+  color: var(--accent);
+}
+
+.own-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.own-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.own-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.own-row-body .effects {
+  margin: 2px 0;
+}
+
+/* A node's mark, on the card and in the hostless list: filled learned, glowing ready. */
+.card-mark {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 50%;
+}
+
+.is-learned > .card-mark {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.is-ready > .card-mark {
+  border-color: var(--accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 80%, transparent);
+}
+
+.bookcase {
+  position: relative;
+  display: grid;
+  gap: 14px;
+}
+
+.bookcase-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.bookcase-count {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+}
+
+.bookcase-count .sub-heading {
+  margin: 0;
+}
+
+.bookcase-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.bookcase-search {
+  width: 190px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-small);
+  background: var(--well);
+}
+
+.bookcase-order {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.bookcase-order select {
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-small);
+  background: var(--well);
+}
+
+.bookcase-stack-all {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-small);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.bookcase-stack-all[aria-pressed='true'] {
+  border-color: var(--accent-edge);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.bookcase-strip {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--well);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+}
+
+.bookcase-strip-bars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 22px;
+}
+
+.strip-group {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.strip-bars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1px;
+  min-height: 24px;
+}
+
+.strip-bar {
+  width: 4px;
+  height: 24px;
+  border-radius: 1px;
+  background: var(--rarity-color);
+}
+
+.strip-bar.is-finished {
+  height: 12px;
+  opacity: 0.45;
+}
+
+.strip-bar.is-hidden {
+  opacity: 0.12;
+}
+
+.bookcase-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bookcase-chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--edge-strong);
+  border-radius: 999px;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.bookcase-chips button[aria-pressed='false'] {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.chip-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--rarity-color);
+}
+
+.bookcase-chips button[aria-pressed='false'] .chip-dot {
+  border: 1px solid var(--rarity-color);
+  background: none;
+}
+
+.shelves {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 20px 28px;
+  padding-top: 6px;
+}
+
+.shelf {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.shelf-head {
+  margin: 0;
+  color: var(--text);
+  font-size: calc(13px * var(--text-scale));
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.shelf-head .muted {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* Each row of spines stands on a plank: rows are 159 px apart, the plank their last 9. */
+.shelf-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  align-content: flex-start;
+  padding: 0 14px;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 150px,
+    #1d1a14 150px,
+    #1d1a14 159px
+  );
+  box-shadow: 0 8px 14px -8px rgb(0 0 0 / 0.8);
+}
+
+/* Every spine sits in a 150 px slot over 9 px of plank, so the rows line up with the planks. */
+.shelf-slot {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  height: 150px;
+  margin: 0 3px 9px 0;
+}
+
+.spine {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 2px;
+  background: #12151a;
+  color: var(--rarity-color);
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.spine:hover,
+.spine.is-tipped {
+  border-color: var(--accent-edge);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 22%, transparent);
+  transform: translateY(-8px);
+}
+
+:root[data-motion='reduced'] .spine {
+  transition: none;
+}
+
+.spine.is-formula {
+  border-radius: 2px 2px 1px 1px;
+  background: repeating-linear-gradient(90deg, #15181d 0, #15181d 5px, #0c0e12 5px, #0c0e12 6px);
+}
+
+.spine.is-method {
+  border-left: 2px dotted rgb(233 229 218 / 0.3);
+  border-radius: 1px 3px 3px 1px;
+}
+
+.spine.is-art {
+  border-radius: 9px;
+  background: #13161b;
+}
+
+.spine.is-style {
+  background: repeating-linear-gradient(
+    to bottom,
+    #14171c 0,
+    #14171c 11px,
+    #0c0e12 11px,
+    #0c0e12 12px
+  );
+}
+
+.spine.is-scripture {
+  border-color: color-mix(in srgb, var(--rarity-green) 30%, transparent);
+  border-radius: 3px 3px 1px 1px;
+  background: repeating-linear-gradient(90deg, #11201b 0, #11201b 6px, #0a1411 6px, #0a1411 7px);
+}
+
+.spine.is-inheritance {
+  border-color: color-mix(in srgb, var(--rarity-red) 35%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--rarity-red) 18%, transparent);
+  outline-offset: -4px;
+  background: #1b1214;
+}
+
+.spine-band {
+  flex: none;
+  align-self: stretch;
+  height: 5px;
+  border-radius: 2px 2px 0 0;
+  background: var(--rarity-color);
+}
+
+.spine.is-art .spine-band {
+  margin: 0 3px;
+}
+
+.spine-rod {
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  height: 5px;
+  border-radius: 3px;
+  background: #3b3226;
+}
+
+.spine-rod.is-top {
+  top: -4px;
+}
+
+.spine-rod.is-bottom {
+  bottom: -4px;
+}
+
+.spine-title {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 9px 0 4px;
+  writing-mode: vertical-rl;
+  font-family: var(--font-brush);
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 1px;
+  opacity: 0.88;
+}
+
+.spine.is-rare .spine-title {
+  opacity: 1;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--rarity-color) 50%, transparent);
+}
+
+.spine-pips {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 0 8px;
+}
+
+.spine-pip {
+  width: 5px;
+  height: 5px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 50%;
+}
+
+.spine-pip.is-learned {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.spine-pip.is-ready {
+  border-color: var(--accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 80%, transparent);
+}
+
+.spine-count {
+  color: var(--accent);
+  font-size: 9px;
+}
+
+.shelf-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-left: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.shelf-stack:hover {
+  color: var(--accent);
+}
+
+.shelf-stack-count {
+  padding-bottom: 6px;
+  font-size: calc(12px * var(--text-scale));
+  white-space: nowrap;
+}
+
+.shelf-slab {
+  display: block;
+  height: 9px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-left: 4px solid var(--rarity-color);
+  border-radius: 2px;
+  background: #14171d;
+}
+
+.bookcase-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  display: grid;
+  gap: 5px;
+  width: min(320px, 100%);
+  padding: 14px 16px;
+  background: var(--glass-strong);
+  border: 1px solid color-mix(in srgb, var(--rarity-color) 45%, transparent);
+  border-top: 3px solid var(--rarity-color);
+  border-radius: 7px;
+  box-shadow: 0 14px 30px rgb(0 0 0 / 0.7);
+  pointer-events: none;
+}
+
+.bookcase-card.is-pinned {
+  pointer-events: auto;
+}
+
+.bookcase-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.bookcase-card-name {
+  font-family: var(--font-display);
+  font-size: calc(21px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.bookcase-card-nodes {
+  display: grid;
+  gap: 7px;
+  margin: 4px 0 0;
+  padding: 6px 0 0;
+  border-top: 1px solid var(--edge);
+  list-style: none;
+}
+
+.bookcase-card-nodes li {
+  display: flex;
+  gap: 9px;
+}
+
+.card-node-name {
+  display: block;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.card-node-fx {
+  display: block;
+  color: var(--crack);
+  font-size: calc(12.5px * var(--text-scale));
+}
+
+.bookcase-card-nodes .is-ready .card-node-fx {
+  color: var(--accent);
+}
+
+.bookcase-card-nodes .is-sealed,
+.bookcase-card-nodes .is-waiting,
+.bookcase-card-nodes .is-sealed .card-node-fx,
+.bookcase-card-nodes .is-waiting .card-node-fx {
+  color: var(--muted);
+}
+
+.bookcase-card-flavor {
+  margin: 2px 0 0;
+  color: #b9b4a8;
+  font-family: var(--font-display);
+  font-size: calc(15px * var(--text-scale));
+  font-style: italic;
+  line-height: 1.35;
+}
+
+.bookcase-card-hint {
+  padding-top: 2px;
+  color: var(--accent);
+  font-size: calc(12px * var(--text-scale));
+}
+
+@media (max-width: 600px) {
+  .hostless-list ul {
+    max-height: 280px;
   }
 }

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { MANUALS, type Manual, type ManualNode } from '../content/manuals.ts';
 import { TREES } from '../content/trees/index.ts';
-import { layout, NODE_HALF_W, TREE_W, cluster } from './treeLayout.ts';
+import { cluster, layout, NODE_HALF_W, OWN_COL, OWN_R, ownTree, TREE_W } from './treeLayout.ts';
 
 /** A made-up manual: `shape` lists each node's parents by index, so [[], [0], [0]] forks. */
 function fake(id: string, tier: number, shape: number[][]): Manual {
@@ -84,5 +84,26 @@ describe('the graft layout', () => {
       const bare = layout(t);
       for (const n of t.nodes) expect(l.pos(n)).toEqual(bare.pos(n));
     }
+  });
+});
+
+describe("a hostless manual's own tree", () => {
+  it('lays its nodes inside its box, a chain down and a fork centred across', () => {
+    for (const m of [chain6, fork, lone, chain4]) {
+      const t = ownTree(m);
+      for (const { at } of t.nodes) {
+        expect(at.x - OWN_COL / 2).toBeGreaterThanOrEqual(0);
+        expect(at.x + OWN_COL / 2).toBeLessThanOrEqual(t.width);
+        expect(at.y - OWN_R).toBeGreaterThanOrEqual(0);
+        expect(at.y + OWN_R).toBeLessThanOrEqual(t.height);
+      }
+    }
+    const at = new Map(ownTree(fork).nodes.map((n) => [n.node.id, n.at]));
+    expect(at.get('fork-0')!.x).toBe(at.get('fork-2')!.x);
+    expect(at.get('fork-4')!.x).toBe(at.get('fork-2')!.x);
+    expect(at.get('fork-1')!.y).toBe(at.get('fork-3')!.y);
+    expect(at.get('fork-4')!.y).toBeGreaterThan(at.get('fork-1')!.y);
+    const ys = ownTree(chain6).nodes.map((n) => n.at.y);
+    expect([...ys].sort((a, b) => a - b)).toEqual(ys);
   });
 });

@@ -176,3 +176,32 @@ export function layout(t: Tree, grafts: readonly Manual[] = []): Layout {
     graftPos,
   };
 }
+
+/** The large tree of a manual with no host, at the top of the Manuals tab: px a column, a row. */
+export const OWN_COL = 150;
+export const OWN_ROW = 92;
+/** A node's radius there, and the room under the last row for its name. */
+export const OWN_R = 13;
+const OWN_LABEL = 36;
+
+/**
+ * A hostless manual's own tree, laid out from `requires` as a graft is, the chain running down
+ * and siblings across, each row centred: its size and each node's centre, in px.
+ */
+export function ownTree(m: Manual): Omit<Cluster, 'manual'> {
+  const at = cells(m);
+  const spots = [...at.values()];
+  const cols = Math.max(1, ...spots.map(([c]) => c + 1));
+  const rows = Math.max(1, ...spots.map(([, r]) => r + 1));
+  const rowCols = new Map<number, number>();
+  for (const [c, r] of spots) rowCols.set(r, Math.max(rowCols.get(r) ?? 0, c + 1));
+  return {
+    width: cols * OWN_COL,
+    height: OWN_R * 2 + 4 + (rows - 1) * OWN_ROW + OWN_LABEL,
+    nodes: m.nodes.map((node) => {
+      const [c, r] = at.get(node.id)!;
+      const offset = (cols - rowCols.get(r)!) / 2;
+      return { node, at: { x: (offset + c + 0.5) * OWN_COL, y: OWN_R + 4 + r * OWN_ROW } };
+    }),
+  };
+}

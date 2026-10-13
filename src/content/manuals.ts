@@ -595,6 +595,18 @@ const byId = new Map(MANUALS.map((m) => [m.id, m]));
 const byMethod = new Map(MANUALS.filter((m) => m.method).map((m) => [m.method!, m]));
 const byTechnique = new Map(MANUALS.filter((m) => m.technique).map((m) => [m.technique!, m]));
 
+/**
+ * Adds made-up manuals to the lookups, for the dev console's full bookcase and for tests; the
+ * game's own manuals are the list above. A save holding one that isn't added skips it on load.
+ */
+export function addManuals(ms: readonly Manual[]): void {
+  for (const m of ms) {
+    byId.set(m.id, m);
+    if (m.method) byMethod.set(m.method, m);
+    if (m.technique) byTechnique.set(m.technique, m);
+  }
+}
+
 export function hasManual(id: string): boolean {
   return byId.has(id);
 }
