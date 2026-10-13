@@ -202,7 +202,7 @@ Each ladder follows the qi rules: layers 1 to 9 at Qi Condensation, then four st
 |---|---|---|
 | Qi | how you spend your qi | cheaper techniques; faster qi recovery mid-fight; a deeper pool; purer qi for harder-hitting techniques; hiding your realm; longer flights on your own qi or any vessel (flight on a sword is the Sword Dao's) |
 | Body | how your body holds up | iron skin against physical damage; blood refining for regeneration; poison immunity; endurance against tribulation lightning |
-| Soul | how far and how precisely you sense and control | wider divine sense that reveals more map; soul armor against pressure and illusions; split attention for one more production queue, puppet or flying sword (how many swords fly is the soul's; how hard each hits is the Sword Dao's); soul search on a captive, at a karma cost; steadier crafting hands |
+| Soul | how far and how precisely you sense and control | wider divine sense that reveals more map; soul armor against pressure and illusions; split attention for one more production queue, puppet, flying sword or practiced technique (how many swords fly is the soul's; how hard each hits is the Sword Dao's); soul search on a captive, at a karma cost; steadier crafting hands |
 
 **The placement pass** (D2.2). Each thing sits in the tree it belongs to. The Qi tree's tier 2 flight path is Cloud-Treading Breath 踏云, flight on your own qi or any vessel, opening on Treading Air, while flight on a sword stays the Sword Dao's Sword-Riding path. Split Attention stays in the Soul tree. Names stay apart even where the uniqueness test can't see it: the Body tree's Iron Fists is Ox Hands 牛掌 (the Fist Dao owns "fist"), the Soul tree's Furnace Hands is Unshaking Fingers 不颤之指 (Fire keeps Furnace Hand) and the Fist Dao's Bone Hardening is Hard Knuckle Bones 硬骨拳 (bone tempering is the Body tree's word).
 
@@ -324,6 +324,8 @@ A grade gives three things, all shown: stages in a fight on every line of the sh
 | Origin | 2,400 | ×1.2 |
 
 An hour with a method or a technique is a twelfth of a practice day. At six qi hours a day Mastery lands about an hour into a life, inside the tutorial; a new line taken at Foundation runs below full speed for about two in-game years and forgoes Perfection or Origin's bonus for longer. Starting values for the pacing sim.
+
+**Practice slots** (Jan's call, 2026-10-13, after P2.5b). Practice days go to the techniques in your practice slots, split evenly: one technique practices at the full rate, two at half each, three at a third. You start with one slot, and each point of split attention opens another, up to three in v1: the Soul tree's Split Attention and the Twin Soul talent each give one, the same point that runs one more production queue, puppet or flying sword. Slots never add practice, only spread it, and the day's total grows with the Practice stat alone (the Soul tree's practice nodes, a formula). A sealed technique or one at Origin can't sit in a slot, and reaching Origin frees its slot for the others; kinship lifts each technique's own share. Spreading pays in two ways that one slot already allowed by switching: early levels release more insight per practice day (at tier 1, Comprehension 1.25, Mastery 0.77, Perfection 0.5, Origin 0.33), and a kin can climb to Comprehension beside your main technique.
 
 "Flowing Cloud Blade at Comprehension" means a Foundation-tier sword technique at its second mastery level.
 
