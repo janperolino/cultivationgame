@@ -12,6 +12,7 @@ import {
   type GameState,
 } from '../core/state.ts';
 import { formatAgeShort, formatNumber, formatPercent, LADDER_LABELS } from './format.ts';
+import { openPanel } from './scene.ts';
 import { useGame } from './store.ts';
 
 /** One ladder's bar: the crack light fills it, and the part past full glows brighter. */
@@ -89,7 +90,7 @@ export function AgeBar({ game }: { game: GameState }) {
 /** At the lifespan edge: the last chance, or the end. After a death: a new life. */
 export function LifeEdgeCard() {
   const game = useGame((s) => s.game);
-  const { lastChance: tryLast, letGo, beginNextLife } = useGame.getState();
+  const { letGo, beginNextLife } = useGame.getState();
   if (!game) return null;
 
   if (game.ended) {
@@ -132,8 +133,8 @@ export function LifeEdgeCard() {
       )}
       <div className="actions">
         {chance.possible && (
-          <button type="button" className="button" onClick={tryLast}>
-            Last breakthrough · {formatPercent(chance.odds)}
+          <button type="button" className="button" onClick={() => openPanel('qi', true)}>
+            The last breakthrough · {formatPercent(chance.odds)}
           </button>
         )}
         <button type="button" className="button button-danger" onClick={letGo}>

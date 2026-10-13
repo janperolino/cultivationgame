@@ -17,7 +17,7 @@ import {
   type Seat,
 } from '../core/attention.ts';
 import { firstBreath } from '../core/life.ts';
-import { lifeKey, scenePlaying } from './scene.ts';
+import { lifeKey, scenePlaying, useScene } from './scene.ts';
 import type { GameState } from '../core/state.ts';
 import { hourOfDay } from '../core/wheel.ts';
 
@@ -89,7 +89,11 @@ export function tickSeat(s: GameState, dt: number): { seat: Seat; state: GameSta
   if (s.ended) return { seat: AWAY, state: keepOrbStream(s, a) };
   const seat = seatOf(a, s.player);
   const scene = playing ? 'playing' : attended && atFigure ? 'ready' : undefined;
-  return { seat: scene ? { ...seat, scene } : seat, state: keepOrbStream(s, a) };
+  const sceneLadder = playing ? useScene.getState().play?.ladder : undefined;
+  return {
+    seat: scene ? { ...seat, scene, ...(sceneLadder ? { sceneLadder } : {}) } : seat,
+    state: keepOrbStream(s, a),
+  };
 }
 
 /** A catch's result: the seat, the figure's animation, and the first catch's chronicle line. */

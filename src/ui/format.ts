@@ -1,5 +1,6 @@
 import { statInfo, type Effect } from '../content/stats.ts';
 import { realm, REALMS, stageName } from '../content/realms.ts';
+import { GRADE_NEXT_ODDS, GRADE_SPEED, GRADES, type GradeId } from '../content/cultivation.ts';
 import type { LadderId } from '../core/cultivation.ts';
 import { DAYS_PER_YEAR, type Ladder } from '../core/state.ts';
 
@@ -102,4 +103,21 @@ export function capitalize(s: string): string {
 /** ["wood", "fire", "water"] → "wood, fire and water". */
 export function listWords(xs: readonly string[]): string {
   return xs.length <= 1 ? (xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`;
+}
+
+/**
+ * What a breakthrough grade gives, in a line (D2.1): "+20% speed in Foundation Establishment, +2
+ * stages in a fight, +6 odds on the next major".
+ */
+export function gradeGives(id: GradeId, realmName: string): string {
+  const stages = GRADES.find((g) => g.id === id)!.stages;
+  const speed = GRADE_SPEED[id] - 1;
+  const odds = GRADE_NEXT_ODDS[id];
+  if (speed === 0 && stages === 0 && odds === 0) return 'nothing gained, nothing lost';
+  const sign = (x: number) => (x >= 0 ? '+' : '−');
+  return [
+    `${sign(speed)}${Math.round(Math.abs(speed) * 100)}% speed in ${realmName}`,
+    `${sign(stages)}${Math.abs(stages)} ${Math.abs(stages) === 1 ? 'stage' : 'stages'} in a fight`,
+    `${sign(odds)}${Math.round(Math.abs(odds) * 100)} odds on the next major`,
+  ].join(', ');
 }

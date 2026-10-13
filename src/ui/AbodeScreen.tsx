@@ -8,7 +8,9 @@ import { CardFeed } from './CardFeed.tsx';
 import { effectiveWheel } from '../core/wheel.ts';
 import { WheelStrip } from './DayWheel.tsx';
 import { formatDays, formatDuration, formatLadder, formatNumber, formatRate } from './format.ts';
-import { BreakthroughMoment, SeatedFigure, SeatMeter } from './SeatedFigure.tsx';
+import { BreakthroughPanel, BreakthroughRow, StepNeeds } from './BreakthroughPanel.tsx';
+import { useScene } from './scene.ts';
+import { SeatedFigure, SeatMeter } from './SeatedFigure.tsx';
 import { useGame, type AwaySummary } from './store.ts';
 import { AgeBar, LadderBar, LifeEdgeCard, Why } from './widgets.tsx';
 
@@ -85,14 +87,29 @@ function QiWhy({ game }: { game: GameState }) {
         ? 'The bar is full; past full raises the odds of the breakthrough.'
         : Number.isFinite(days)
           ? `Full in about ${formatDays(days)}, ${formatDuration(days / daysPerRealMs(game))} at this clock.`
-          : 'Nothing fills it today.'}
+          : 'Nothing fills it today.'}{' '}
+      <StepNeeds game={game} which="qi" />
     </>
   );
 }
 
-export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
+/**
+ * The seat panel's class while a breakthrough lands: it shakes and flares on a success, harder for
+ * a major, and dims on a failure; under reduced motion the flash stands still (theme.css).
+ */
+function useBreakClass(): string {
+  return useScene((s) => {
+    const o = s.play?.outcome;
+    if (!o) return '';
+    if (!o.success) return ' is-held';
+    return ` is-breaking is-${s.play!.ladder}${o.major ? ' is-major' : ''}`;
+  });
+}
+
+export function AbodeScreen() {
   const game = useGame((s) => s.game);
   const away = useGame((s) => s.away);
+  const breaking = useBreakClass();
   if (!game) return null;
 
   const rates = dayRates(game.player, game.calendar.day);
@@ -105,11 +122,13 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
       {away && <AwayCard away={away} />}
       <LifeEdgeCard />
 
-      <section className="panel abode-seat" aria-label="The seat">
+      <section className={`panel abode-seat${breaking}`} aria-label="The seat">
+        <div className="seat-flash" aria-hidden="true" />
         <SeatedFigure game={game} />
         <SeatMeter game={game} />
-        <BreakthroughMoment game={game} onDetails={onCultivate} />
+        <BreakthroughRow game={game} />
       </section>
+      <BreakthroughPanel game={game} />
 
       <section className="panel abode-info">
         <h2 className="realm-title">
@@ -120,8 +139,12 @@ export function AbodeScreen({ onCultivate }: { onCultivate: () => void }) {
         </h2>
         <div className="bars">
           <LadderBar game={game} which="qi" why={<QiWhy game={game} />} />
-          {ladderOpen(game.player, 'body') && <LadderBar game={game} which="body" />}
-          {ladderOpen(game.player, 'soul') && <LadderBar game={game} which="soul" />}
+          {ladderOpen(game.player, 'body') && (
+            <LadderBar game={game} which="body" why={<StepNeeds game={game} which="body" />} />
+          )}
+          {ladderOpen(game.player, 'soul') && (
+            <LadderBar game={game} which="soul" why={<StepNeeds game={game} which="soul" />} />
+          )}
           <AgeBar game={game} />
         </div>
         <dl className="stats">

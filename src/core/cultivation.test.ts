@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { BAR_CAP, UNSETTLED_DAYS } from '../content/cultivation.ts';
+import {
+  BAR_CAP,
+  GRADE_NEXT_ODDS,
+  GRADE_SCORES,
+  GRADE_SPEED,
+  PEAK_MARGIN,
+  UNSETTLED_DAYS,
+} from '../content/cultivation.ts';
 import { method } from '../content/methods.ts';
 import { realmScale, stepSize } from '../content/realms.ts';
 import {
@@ -11,6 +18,7 @@ import {
   gradeFor,
   lastChance,
   majorCheck,
+  majorRequirements,
   minorOdds,
   overfillBonus,
   qiSpeed,
@@ -19,6 +27,7 @@ import {
 import { attemptLastChance, breakThrough, cultivate } from './life.ts';
 import { advance } from './loop.ts';
 import { learnMethod, methodNeed, setActiveMethod } from './methods.ts';
+import { offerEffect } from './offerings.ts';
 import { Rng } from './rng.ts';
 import {
   addItem,
@@ -444,5 +453,120 @@ describe('the realm curve', () => {
     expect(realmScale('foundation-establishment')).toBe(9);
     expect(realmScale('core-formation')).toBe(270);
     expect(realmScale('nascent-soul')).toBe(27_000);
+  });
+});
+
+describe('breakthrough grades (D2.1)', () => {
+  const sum = (c: Cultivator, which: LadderId = 'qi') =>
+    majorCheck(c, which)!.parts.reduce((t, p) => t + p.value, 0);
+
+  it('score body and soul half a point at the peak, a full point at the new realm', () => {
+    const base = readyForFoundation(1.5);
+    const insight = { current: 0, earned: 1000 };
+    const peak = at(at({ ...base, insight }, 'body', { stage: 9 }), 'soul', { stage: 9 });
+    const check = majorCheck(peak, 'qi')!;
+    expect(check.parts.filter((p) => p.source === 'body' || p.source === 'soul')).toEqual([
+      { source: 'body', value: PEAK_MARGIN },
+      { source: 'soul', value: PEAK_MARGIN },
+    ]);
+    // Everything else full and both at layer 9: a perfect Foundation, and no further.
+    expect(check.score).toBeCloseTo(3);
+    expect(check.grade).toBe('perfect');
+    // One of them actually at the new realm is a full point; a stage short of the peak is none.
+    const ahead = at(peak, 'body', { realm: 'foundation-establishment', stage: 1 });
+    expect(majorCheck(ahead, 'qi')!.score).toBeCloseTo(3.5);
+    expect(majorCheck(at(peak, 'soul', { stage: 8 }), 'qi')!.score).toBeCloseTo(2.5);
+    // Heavenly needs a gold method or offering, whatever the score.
+    expect(majorCheck(ahead, 'qi')!.grade).toBe('perfect');
+    expect(GRADE_SCORES.heavenly).toBeLessThanOrEqual(3.5);
+  });
+
+  it('list every source of the score for the meter, offerings by item', () => {
+    const c = addItem(at(readyForFoundation(1.2), 'body', { stage: 9 }), 'storm-peach-stone', 1);
+    const check = majorCheck(c, 'qi', ['storm-peach-stone'])!;
+    expect(check.parts.map((p) => p.item ?? p.source)).toEqual([
+      'qi',
+      'insight',
+      'body',
+      'soul',
+      'method',
+      'talents',
+      'foundation-pill',
+      'storm-peach-stone',
+    ]);
+    expect(sum(c)).toBeCloseTo(majorCheck(c, 'qi')!.score);
+    expect(check.parts.reduce((t, p) => t + p.value, 0)).toBeCloseTo(check.score);
+    const peach = check.parts.find((p) => p.item === 'storm-peach-stone')!;
+    expect(peach.value).toBeCloseTo(offerEffect(c, 'qi', 'storm-peach-stone').margin);
+    expect(peach.value).toBeGreaterThan(0);
+  });
+
+  it('multiply the ladder’s speed for the whole new realm', () => {
+    const fe = atFoundation(player());
+    const base = qiSpeed(fe).total;
+    expect(base).toBeGreaterThan(0);
+    for (const g of ['flawed', 'superior', 'perfect', 'heavenly'] as const) {
+      const graded = at(fe, 'qi', { grades: [g] });
+      expect(qiSpeed(graded).grade).toBe(GRADE_SPEED[g]);
+      expect(qiSpeed(graded).total).toBeCloseTo(base * GRADE_SPEED[g]);
+    }
+    // Body and soul as well, on their own ladders only.
+    const learned = setActiveMethod(
+      learnMethod(player(), 'stone-bearing'),
+      'body',
+      'stone-bearing',
+    );
+    // A body hour on the wheel, where qi was.
+    const qiHour = learned.cultivator.wheel.indexOf('qi');
+    const body = {
+      ...learned.cultivator,
+      wheel: learned.cultivator.wheel.map((k, i) => (i === qiHour ? ('body' as const) : k)),
+    };
+    const plain = dayRates(body, DAY).body;
+    expect(plain).toBeGreaterThan(0);
+    const heavenly = at(body, 'body', { grades: ['heavenly'] });
+    expect(dayRates(heavenly, DAY).body).toBeCloseTo(plain * 1.35);
+    expect(dayRates(heavenly, DAY).qi).toBeCloseTo(dayRates(body, DAY).qi);
+  });
+
+  it('add to the next major’s odds on that ladder', () => {
+    const c = readyForFoundation();
+    const plain = majorCheck(c, 'qi')!;
+    expect(plain.gradeOdds).toBe(0);
+    const graded = majorCheck(at(c, 'qi', { grades: ['perfect'] }), 'qi')!;
+    expect(graded.gradeOdds).toBe(GRADE_NEXT_ODDS.perfect);
+    expect(graded.odds).toBeCloseTo(plain.odds + 0.06);
+    const flawed = majorCheck(at(c, 'qi', { grades: ['flawed'] }), 'qi')!;
+    expect(flawed.odds).toBeCloseTo(plain.odds - 0.03);
+  });
+});
+
+describe('the requirements checklist', () => {
+  it('lists the bar, insight and the gate pill on a qi major', () => {
+    const ids = (c: Cultivator, which: LadderId = 'qi') =>
+      majorRequirements(majorCheck(c, which)!).map((r) => `${r.id}:${r.met}`);
+    expect(ids(filled(atLayer9(), 'qi', 0.5))).toEqual([
+      'bar:false',
+      'insight:false',
+      'gate:false',
+    ]);
+    expect(ids(readyForFoundation())).toEqual(['bar:true', 'insight:true', 'gate:true']);
+  });
+
+  it('lists the realm cap, not a gate, on body and soul', () => {
+    const c = { ...player(), insight: { current: 0, earned: 1e6 } };
+    const ids = (x: Cultivator, which: LadderId) =>
+      majorRequirements(majorCheck(x, which)!).map((r) => `${r.id}:${r.met}`);
+    const soul = filled(at(c, 'soul', { stage: 9 }), 'soul', 1);
+    expect(ids(soul, 'soul')).toEqual(['bar:true', 'insight:true', 'cap:true']);
+    const ahead = filled(at(c, 'body', { realm: 'foundation-establishment', stage: 4 }), 'body', 1);
+    expect(ids(ahead, 'body')).toEqual(['bar:true', 'insight:true', 'cap:false']);
+    // Every line met is exactly when the attempt is ready, offerings aside.
+    for (const x of [soul, ahead]) {
+      for (const which of ['body', 'soul'] as const) {
+        const check = majorCheck(x, which);
+        if (check) expect(majorRequirements(check).every((r) => r.met)).toBe(check.ready);
+      }
+    }
   });
 });

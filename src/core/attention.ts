@@ -39,6 +39,7 @@ import {
   type OrbKindId,
   type QiTint,
 } from '../content/attention.ts';
+import type { LadderId } from '../content/cultivation.ts';
 import { phaseOf, type PhaseElement } from '../content/elements.ts';
 import { BRANCHES, DAWN_HOUR } from '../content/hours.ts';
 import { inTutorial, ladderMethod } from './methods.ts';
@@ -55,11 +56,13 @@ export interface Seat {
   /** Focus while attending, 0 to 1: Circulating Thought grows the second trickle with it. */
   focus?: number;
   /**
-   * At the figure, qi breakthroughs play as a scene (core/scene.ts): 'ready' while you sit with
-   * it, so the auto setting leaves the qi's certain steps to the scene; 'playing' while one runs,
-   * so it leaves the qi alone. Never set away.
+   * At the figure, breakthroughs play as a scene (core/scene.ts): 'ready' while you sit with it,
+   * so the auto setting leaves every ladder's certain steps to the scene; 'playing' while one
+   * runs, so it leaves that ladder alone as well. Never set away.
    */
   scene?: 'ready' | 'playing';
+  /** The ladder a playing scene is on; qi when unsaid. */
+  sceneLadder?: LadderId;
 }
 
 /** Away: exactly today's rates. Offline time and the sims' away rows run on this. */

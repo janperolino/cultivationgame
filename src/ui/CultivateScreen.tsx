@@ -1,32 +1,21 @@
+// The Cultivate screen: the day wheel and its routines, the method on each ladder, and the auto
+// setting for minor breakthroughs. Breakthroughs themselves are called at the Abode (P2.4).
 import { useState } from 'react';
-import { AUTO_IDS, AUTO_SETTINGS, GRADES, MAX_OFFERINGS } from '../content/cultivation.ts';
+import { AUTO_IDS, AUTO_SETTINGS } from '../content/cultivation.ts';
 import { ELEMENT_INFO } from '../content/elements.ts';
-import { item } from '../content/items.ts';
-import { realm } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
 import { hasRoutine, routine } from '../content/routines.ts';
 import { technique } from '../content/techniques.ts';
 import { attentionCeiling } from '../core/attention.ts';
-import {
-  barFill,
-  dayRates,
-  inTutorial,
-  ladderOpen,
-  majorCheck,
-  minorOdds,
-  nextStep,
-  qiSpeed,
-  type LadderId,
-} from '../core/cultivation.ts';
+import { dayRates, inTutorial, qiSpeed } from '../core/cultivation.ts';
 import { ladderMethod } from '../core/methods.ts';
-import { offerable } from '../core/offerings.ts';
-import { itemCount, type GameState } from '../core/state.ts';
+import type { GameState } from '../core/state.ts';
 import { canFollow } from '../core/wheel.ts';
 import { DayWheel, WheelStrip } from './DayWheel.tsx';
 import { MethodRow } from './MethodCard.tsx';
-import { formatLadder, formatNumber, formatPercent, formatRate, LADDER_LABELS } from './format.ts';
+import { formatNumber, formatPercent, formatRate } from './format.ts';
 import { useGame } from './store.ts';
-import { LadderBar, LifeEdgeCard, Why } from './widgets.tsx';
+import { LifeEdgeCard, Why } from './widgets.tsx';
 
 function DayPanel({ game }: { game: GameState }) {
   const setPlan = useGame((s) => s.setPlan);
@@ -50,7 +39,8 @@ function DayPanel({ game }: { game: GameState }) {
         {(speed.tier * speed.rarity * speed.mastery).toFixed(2)} (tier ×{speed.tier}, rarity ×
         {speed.rarity.toFixed(2)}, mastery ×{speed.mastery}), fit ×{speed.fit}, qi density ×
         {speed.density}, Aptitude ×{speed.aptitude.toFixed(2)}
-        {speed.nodes !== 1 && `, tree nodes and method ×${speed.nodes.toFixed(2)}`}.
+        {speed.nodes !== 1 && `, tree nodes and method ×${speed.nodes.toFixed(2)}`}
+        {speed.grade !== 1 && `, the grade of your breakthrough into this realm ×${speed.grade}`}.
       </span>
       <span>
         That is the away rate. While you attend, attention multiplies it again: ×1.25 for being
@@ -100,7 +90,7 @@ function DayPanel({ game }: { game: GameState }) {
                 : c.plan.auto === 'bold'
                   ? 'Minor breakthroughs go the moment a bar is full.'
                   : `Minor breakthroughs go on their own at ${formatPercent(AUTO_SETTINGS[c.plan.auto].minOdds)} odds or a bar at 150%, online and off.`}{' '}
-              Major breakthroughs are always yours to call, and never happen offline.
+              Major breakthroughs are always yours to call, at the Abode, and never happen offline.
             </Why>
           </span>
           <div className="seg" role="group" aria-labelledby="auto-label">
@@ -263,184 +253,15 @@ function MethodsPanel({ game }: { game: GameState }) {
   );
 }
 
-function Requirement({ met, children }: { met: boolean; children: React.ReactNode }) {
-  return <li className={met ? 'is-met' : undefined}>{children}</li>;
-}
-
-function LadderPanel({ game, which }: { game: GameState; which: LadderId }) {
-  const breakThroughNow = useGame((s) => s.breakThrough);
-  const beginScene = useGame((s) => s.beginScene);
-  // Items laid on a major attempt beside the gate pill; the session's, never saved.
-  const [chosen, setChosen] = useState<string[]>([]);
-  // A qi breakthrough plays as a scene on the Abode's figure; body and soul roll at once.
-  const breakThrough = (which: LadderId, offerings: string[] = []) => {
-    if (which !== 'qi' || !beginScene(offerings)) breakThroughNow(which, offerings);
-    setChosen([]);
-  };
-  const l = game.player[which];
-  const step = nextStep(l);
-  const fill = barFill(l);
-  const unsettled = game.calendar.day < l.unsettledUntil;
-  const injured = game.calendar.day < l.injuredUntil;
-  const grades = l.grades.map((g) => GRADES.find((x) => x.id === g)!.name.toLowerCase());
-
-  let body: React.ReactNode;
-  if (step.kind === 'top') {
-    body = <p className="muted">There is nowhere higher to climb.</p>;
-  } else if (step.kind === 'minor') {
-    const odds = minorOdds(game.player, which);
-    body = (
-      <div className="actions">
-        <button
-          type="button"
-          className="button"
-          disabled={fill < 1 || !!game.ended}
-          onClick={() => breakThrough(which)}
-        >
-          Break through to {formatLadder({ ...l, stage: step.stage })} ·{' '}
-          {fill < 1 ? 'not yet' : formatPercent(odds)}
-        </button>
-        <span className="caption">
-          {fill < 1
-            ? `${formatPercent(fill)} of the way`
-            : odds >= 1
-              ? 'This step always holds'
-              : ''}
-          {(fill < 1 || odds < 1) && (
-            <Why label="How the odds work">
-              Filling past full raises the odds, a step for each 10% up to 150%, and a fine method
-              adds its own. A failure costs a fifth of the bar and a few days of unsettled qi.
-            </Why>
-          )}
-        </span>
-      </div>
-    );
-  } else {
-    // Only what is still held stays chosen.
-    const held = offerable(game.player);
-    const laid = chosen.filter(
-      (id, i) => itemCount(game.player, id) > chosen.slice(0, i).filter((x) => x === id).length,
-    );
-    const check = majorCheck(game.player, which, laid)!;
-    const target = check.target;
-    const gateName = check.gateItem ? item(check.gateItem).name : null;
-    const room = MAX_OFFERINGS - check.offerings.laid.length;
-    const offers = held.filter((id) => id !== check.gateItem);
-    const grade = GRADES.find((g) => g.id === check.grade)!;
-    body = (
-      <>
-        <ul className="reqs" aria-label={`Requirements for ${target.name}`}>
-          <Requirement met={check.bar}>A full bar ({formatPercent(fill)})</Requirement>
-          <Requirement met={check.insight}>
-            Insight ever earned {formatNumber(game.player.insight.earned)} of{' '}
-            {formatNumber(target.insightThreshold)}
-          </Requirement>
-          {gateName && (
-            <Requirement met={check.gate}>
-              A {gateName} ({itemCount(game.player, check.gateItem!)} held)
-            </Requirement>
-          )}
-          {which !== 'qi' && (
-            <Requirement met={check.cap}>At most one realm ahead of your qi</Requirement>
-          )}
-        </ul>
-        <p className="caption spaced">
-          As things stand: {grade.id === 'ordinary' ? 'an' : 'a'} {grade.name.toLowerCase()}{' '}
-          breakthrough
-          <Why label="How the grade is worked out">
-            {grade.id === 'ordinary' ? 'An' : 'A'} {grade.name.toLowerCase()} breakthrough is worth{' '}
-            {grade.stages >= 0 ? '+' : ''}
-            {grade.stages} stages in a fight. Qi past full, insight past the threshold, and the
-            other two ladders at {target.name} each raise the grade
-            {check.methodMargin > 0 && `, and your method adds ${check.methodMargin}`}. Only a gold
-            or red method reaches heavenly.
-          </Why>
-        </p>
-        {offers.length > 0 && (
-          <div className="offerings" aria-label="Offerings">
-            <span className="caption">
-              Offerings, up to {MAX_OFFERINGS}
-              {gateName ? ` with the ${gateName}` : ''}:
-              <Why label="How offerings work">
-                Whatever you lay is spent, win or lose. Steadying things raise the odds, surging
-                ones raise the grade and cost odds, purifying ones soften a failure and clear pill
-                toxicity, guarding ones keep the bar. Something of your root&apos;s element adds a
-                little more, and a thing meant for this ladder counts double.
-              </Why>
-            </span>
-            {offers.map((id) => {
-              const on = laid.filter((x) => x === id).length;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className="button button-quiet"
-                  aria-pressed={on > 0}
-                  disabled={on === 0 && room <= 0}
-                  onClick={() => setChosen(on > 0 ? laid.filter((x) => x !== id) : [...laid, id])}
-                >
-                  {item(id).name} ({itemCount(game.player, id)})
-                </button>
-              );
-            })}
-          </div>
-        )}
-        <div className="actions">
-          <button
-            type="button"
-            className="button"
-            disabled={!check.ready || !!game.ended}
-            onClick={() => breakThrough(which, laid)}
-          >
-            Break through to {target.name} · {formatPercent(check.odds)}
-          </button>
-          <Why label="What a failure costs">
-            A failure {gateName ? `uses the ${gateName} and ` : ''}the offerings, halves the bar and
-            injures for years.
-          </Why>
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <div className="ladder">
-      <div className="ladder-head">
-        <h3>
-          {LADDER_LABELS[which]}: {formatLadder(l)}
-        </h3>
-        <span className="caption">
-          {grades.length > 0 && `${grades.join(', ')} · `}
-          {unsettled ? 'unsettled' : injured ? 'injured, slowed' : `${realm(l.realm).hanzi}`}
-        </span>
-      </div>
-      <div className="bars">
-        <LadderBar game={game} which={which} />
-      </div>
-      {body}
-    </div>
-  );
-}
-
 export function CultivateScreen() {
   const game = useGame((s) => s.game);
   if (!game) return null;
-  const ladders = (['qi', 'body', 'soul'] as const).filter((l) => ladderOpen(game.player, l));
-
   return (
     <>
       <LifeEdgeCard />
       <DayPanel game={game} />
       <RoutinesPanel game={game} />
       <MethodsPanel game={game} />
-      <section className="panel" aria-labelledby="bt-heading">
-        <h2 id="bt-heading" className="panel-heading">
-          Breakthroughs
-        </h2>
-        {ladders.map((which) => (
-          <LadderPanel key={which} game={game} which={which} />
-        ))}
-      </section>
     </>
   );
 }

@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_ODDS, SCENE_ODDS_CAP, SCENE_ODDS_STEP } from '../content/cultivation.ts';
 import { stepSize } from '../content/realms.ts';
-import { SCENE_EARLY_S, SCENE_GATES, SCENE_SECONDS, SCENE_WINDOW_S } from '../content/scene.ts';
+import {
+  SCENE_EARLY_S,
+  SCENE_GATES,
+  SCENE_GATES_PER_LAP,
+  SCENE_RACE_S,
+  SCENE_SECONDS,
+  SCENE_WINDOW_S,
+  SCENE_WINDUP_S,
+} from '../content/scene.ts';
 import {
   attemptBreakthrough,
   cultivateDays,
@@ -15,6 +23,7 @@ import { Rng } from './rng.ts';
 import {
   GATE_TIMES,
   gateLap,
+  gatesLit,
   newScene,
   nextGate,
   sceneBonus,
@@ -22,6 +31,7 @@ import {
   sceneLaps,
   sceneOver,
   tapScene,
+  windingUp,
   type Scene,
 } from './scene.ts';
 import { addItem, newLife, withPlayer, type Cultivator, type Ladder } from './state.ts';
@@ -41,7 +51,7 @@ const tapAll = (times: number[], s: Scene = newScene()) =>
   times.reduce((x, t) => tapScene(x, t).scene, s);
 
 describe('the scene', () => {
-  it('races: the gates come closer together, all inside the ten seconds', () => {
+  it('races: the gates come closer together, all inside the race', () => {
     expect(GATE_TIMES).toHaveLength(SCENE_GATES);
     for (let k = 0; k < SCENE_GATES; k++) {
       expect(sceneLaps(GATE_TIMES[k]!)).toBeCloseTo(gateLap(k));
@@ -107,6 +117,44 @@ describe('the scene', () => {
   });
 });
 
+describe('the wind-up', () => {
+  it('runs three to four seconds before the race, so the first gate comes in the sixth second', () => {
+    expect(SCENE_WINDUP_S).toBeGreaterThanOrEqual(3);
+    expect(SCENE_WINDUP_S).toBeLessThanOrEqual(4);
+    expect(SCENE_SECONDS).toBe(SCENE_WINDUP_S + SCENE_RACE_S);
+    expect(GATE_TIMES[0]).toBeGreaterThanOrEqual(5);
+    expect(GATE_TIMES[0]).toBeLessThan(6);
+    expect(windingUp(SCENE_WINDUP_S - 0.01)).toBe(true);
+    expect(windingUp(SCENE_WINDUP_S)).toBe(false);
+    // The spark waits at the start of the loop until the race begins.
+    expect(sceneLaps(0)).toBe(0);
+    expect(sceneLaps(SCENE_WINDUP_S)).toBe(0);
+    expect(sceneLaps(SCENE_WINDUP_S + 1)).toBeGreaterThan(0);
+  });
+
+  it('lights the gates round the loop one by one, all lit before the race', () => {
+    const lit = Array.from({ length: SCENE_WINDUP_S * 10 + 1 }, (_, i) => gatesLit(i / 10));
+    expect(lit[0]).toBe(0);
+    // Never more than one at a time, and never going dark again.
+    for (let i = 1; i < lit.length; i++) {
+      expect(lit[i]! - lit[i - 1]!).toBeGreaterThanOrEqual(0);
+      expect(lit[i]! - lit[i - 1]!).toBeLessThanOrEqual(1);
+    }
+    expect(gatesLit(SCENE_WINDUP_S - 0.5)).toBe(SCENE_GATES_PER_LAP);
+    expect(gatesLit(SCENE_SECONDS)).toBe(SCENE_GATES_PER_LAP);
+    // Each lights at its own moment, spread through the wind-up.
+    const firsts = [1, 2, 3].map((n) => lit.indexOf(n) / 10);
+    expect(new Set(firsts).size).toBe(SCENE_GATES_PER_LAP);
+    expect(firsts.every((t) => t > 0 && t < SCENE_WINDUP_S)).toBe(true);
+  });
+
+  it('takes no tap through the wind-up, early or caught', () => {
+    const quiet = Array.from({ length: 30 }, (_, i) => (i / 30) * (GATE_TIMES[0]! - SCENE_EARLY_S));
+    const s = tapAll(quiet);
+    expect(s).toEqual(newScene());
+  });
+});
+
 describe('the roll after a scene', () => {
   const l3 = () => filled(at(life().player, 'qi', { stage: 2 }), 1);
 
@@ -165,8 +213,11 @@ describe('the roll after a scene', () => {
 });
 
 describe('the auto setting at the figure', () => {
-  const step = (c: Cultivator, scene?: 'ready' | 'playing') =>
-    cultivateDays(c, 0.01, { ...ctx(), seat: { factor: 1, attended: !!scene, scene } });
+  const step = (c: Cultivator, scene?: 'ready' | 'playing', sceneLadder?: LadderId) =>
+    cultivateDays(c, 0.01, {
+      ...ctx(),
+      seat: { factor: 1, attended: !!scene, scene, ...(sceneLadder ? { sceneLadder } : {}) },
+    });
 
   it('leaves the certain steps to the scene while you sit with the figure', () => {
     const c = filled(life().player, 1);
@@ -180,5 +231,20 @@ describe('the auto setting at the figure', () => {
     expect(step(c).breakthroughs).toHaveLength(1);
     expect(step(c, 'ready').breakthroughs).toHaveLength(1);
     expect(step(c, 'playing').breakthroughs).toHaveLength(0);
+  });
+
+  it('leaves body and soul to their own scenes the same way', () => {
+    const c = at(life().player, 'body', { bar: stepSize('qi-condensation', 1) });
+    expect(step(c).cultivator.body.stage).toBe(2);
+    expect(step(c, 'ready').cultivator.body.stage).toBe(1);
+    // A body scene playing leaves the body alone, and the qi's uncertain steps still go.
+    const both = filled(
+      at(at(c, 'body', { stage: 2, bar: stepSize('qi-condensation', 2) * 1.5 }), 'qi', {
+        stage: 2,
+      }),
+      1.4,
+    );
+    const r = step(both, 'playing', 'body');
+    expect(r.breakthroughs.map((b) => b.ladder)).toEqual(['qi']);
   });
 });

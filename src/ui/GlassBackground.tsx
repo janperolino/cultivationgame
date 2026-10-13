@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { seasonOf } from '../core/chronicle.ts';
 import { SPELL_DAYS, weatherOn } from '../core/weather.ts';
 import { buildCracks, drawGlass, toHex } from './glass.ts';
+import { useScene } from './scene.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { useGame } from './store.ts';
 
@@ -83,8 +84,18 @@ export function GlassBackground() {
     <>
       <canvas ref={canvas} className="glass-canvas" aria-hidden="true" />
       <GlassSky />
+      <GlassDusk />
     </>
   );
+}
+
+/**
+ * The glass darkens while a breakthrough scene winds up and races, so the figure is the only
+ * light, and clears as it lands (P2.4). The fade is a CSS transition, cut under reduced motion.
+ */
+function GlassDusk() {
+  const dark = useScene((s) => !!s.play && !s.play.outcome);
+  return <div className={`glass-dusk${dark ? ' is-dark' : ''}`} aria-hidden="true" />;
 }
 
 /**

@@ -1,13 +1,15 @@
 // The breakthrough scene while you play (design § Cultivation, Breakthroughs; core/scene.ts): an
-// attended qi attempt plays for ten seconds on the Abode's figure, then rolls. Like the seat's
-// attention, the scene is the session's and never saved; the store's loop ends it on time, even
-// with the tab hidden, and rolls with what was caught. Drawing only reads it.
+// attended attempt on any ladder plays on the Abode's figure, a wind-up and then the race, and
+// rolls. Like the seat's attention, the scene is the session's and never saved; the store's loop
+// ends it on time, even with the tab hidden, and rolls with what was caught. Drawing only reads
+// it. The breakthrough panel (ui/BreakthroughPanel.tsx) that leads to a major one is the
+// session's too, and lives here so any screen can open it.
 import { create } from 'zustand';
 import { SCENE_OUTCOME_S } from '../content/scene.ts';
-import { BAR_CAP } from '../content/cultivation.ts';
-import { barFill, majorCheck, minorOdds, nextStep } from '../core/cultivation.ts';
+import { BAR_CAP, LADDERS, type LadderId } from '../content/cultivation.ts';
+import { barFill, lastChance, majorCheck, minorOdds, nextStep } from '../core/cultivation.ts';
 import { newScene, sceneOver, tapScene, type Scene } from '../core/scene.ts';
-import type { GameState } from '../core/state.ts';
+import { atLifespanEdge, type GameState } from '../core/state.ts';
 
 export interface SceneOutcome {
   success: boolean;
@@ -18,8 +20,9 @@ export interface SceneOutcome {
 }
 
 export interface ScenePlay {
-  /** The life it belongs to, and the step it was started on. */
+  /** The life it belongs to, the ladder, and the step it was started on. */
   key: string;
+  ladder: LadderId;
   from: { realm: string; stage: number };
   major: boolean;
   /** The odds before the scene, and whether the step always holds (layers 1 and 2). */
@@ -33,18 +36,27 @@ export interface ScenePlay {
   outcome: SceneOutcome | null;
 }
 
-interface SceneStore {
-  play: ScenePlay | null;
-  /** "Consolidate": the moment stays quiet on this step until the bar passes this fill. */
-  quietUntil: { key: string; fill: number } | null;
+/** The panel for a major breakthrough, open on a ladder; at the lifespan edge, the last chance. */
+export interface PanelOpen {
+  ladder: LadderId;
+  lastChance: boolean;
 }
 
-export const useScene = create<SceneStore>()(() => ({ play: null, quietUntil: null }));
+interface SceneStore {
+  play: ScenePlay | null;
+  panel: PanelOpen | null;
+  /** "Wait, let it fill": a ladder's button stays quiet until its bar passes this fill. */
+  quietUntil: Partial<Record<LadderId, { key: string; fill: number }>>;
+}
+
+export const useScene = create<SceneStore>()(() => ({ play: null, panel: null, quietUntil: {} }));
 
 export const lifeKey = (s: GameState) => `${s.lineage.id}/${s.lineage.life}/${s.seed}`;
-/** The life and the qi's step, so consolidating is forgotten once the step is tried. */
-const stepKey = (s: GameState) =>
-  `${lifeKey(s)}/${s.player.qi.realm}/${s.player.qi.stage}/${s.player.qi.unsettledUntil}`;
+/** The life and the ladder's step, so waiting is forgotten once the step is tried. */
+const stepKey = (s: GameState, which: LadderId) => {
+  const l = s.player[which];
+  return `${lifeKey(s)}/${which}/${l.realm}/${l.stage}/${l.unsettledUntil}/${l.injuredUntil}`;
+};
 
 /** Scene seconds now. */
 export function sceneTime(p: ScenePlay, now = performance.now()): number {
@@ -58,31 +70,65 @@ export function scenePlaying(): boolean {
 }
 
 /**
- * What the qi's next breakthrough would roll at now, with these offerings on a major one, or null
- * when it can't be tried.
+ * What a ladder's next breakthrough would roll at now, with these offerings on a major one, or
+ * null when it can't be tried.
  */
-export function qiAttempt(
+export function attemptOf(
   s: GameState,
+  which: LadderId,
   offerings: readonly string[] = [],
 ): { odds: number; major: boolean } | null {
   if (s.ended) return null;
-  const step = nextStep(s.player.qi);
+  const l = s.player[which];
+  const step = nextStep(l);
+  if (step.kind === 'top') return null;
   if (step.kind === 'minor') {
-    return barFill(s.player.qi) >= 1 ? { odds: minorOdds(s.player, 'qi'), major: false } : null;
+    return barFill(l) >= 1 ? { odds: minorOdds(s.player, which), major: false } : null;
   }
-  const check = majorCheck(s.player, 'qi', offerings);
+  const check = majorCheck(s.player, which, offerings);
   return check?.ready ? { odds: check.odds, major: true } : null;
 }
 
-/** Starts a scene on the qi's next breakthrough; false when it can't be tried now. */
-export function startScene(s: GameState, offerings: readonly string[] = []): boolean {
+/** What a ladder's button under the figure shows: nothing, ready, or a full bar not yet ready. */
+export type StepState = 'hidden' | 'ready' | 'not-ready';
+
+/**
+ * A ladder's button shows once its bar is full, dimmer when a major's other requirements aren't
+ * met. At the lifespan edge the qi's button always shows, since the last chance needs no full bar.
+ */
+export function stepState(s: GameState, which: LadderId): StepState {
+  if (s.ended) return 'hidden';
+  const l = s.player[which];
+  const step = nextStep(l);
+  if (step.kind === 'top') return 'hidden';
+  if (which === 'qi' && step.kind === 'major' && atLifespanEdge(s)) {
+    return lastChance(s.player).possible ? 'ready' : 'not-ready';
+  }
+  if (barFill(l) < 1) return 'hidden';
+  if (step.kind === 'minor') return 'ready';
+  return majorCheck(s.player, which)?.ready ? 'ready' : 'not-ready';
+}
+
+/** The ladders with a breakthrough you can take now, for the Abode's mark in the menu. */
+export function readyLadders(s: GameState): LadderId[] {
+  return LADDERS.filter((which) => stepState(s, which) === 'ready');
+}
+
+/** Starts a scene on a ladder's next breakthrough; false when it can't be tried now. */
+export function startScene(
+  s: GameState,
+  which: LadderId,
+  offerings: readonly string[] = [],
+): boolean {
   if (scenePlaying()) return false;
-  const attempt = qiAttempt(s, offerings);
+  const attempt = attemptOf(s, which, offerings);
   if (!attempt) return false;
+  const l = s.player[which];
   useScene.setState({
     play: {
       key: lifeKey(s),
-      from: { realm: s.player.qi.realm, stage: s.player.qi.stage },
+      ladder: which,
+      from: { realm: l.realm, stage: l.stage },
       major: attempt.major,
       odds: attempt.odds,
       certain: attempt.odds >= 1,
@@ -91,6 +137,7 @@ export function startScene(s: GameState, offerings: readonly string[] = []): boo
       offerings: attempt.major ? [...offerings] : [],
       outcome: null,
     },
+    panel: null,
   });
   return true;
 }
@@ -116,8 +163,8 @@ export function sceneDue(s: GameState | null, now = performance.now()): ScenePla
     return null;
   }
   if (!sceneOver(sceneTime(p, now))) return null;
-  const q = s?.player.qi;
-  if (!s || lifeKey(s) !== p.key || q!.realm !== p.from.realm || q!.stage !== p.from.stage) {
+  const l = s?.player[p.ladder];
+  if (!s || !l || lifeKey(s) !== p.key || l.realm !== p.from.realm || l.stage !== p.from.stage) {
     useScene.setState({ play: null });
     return null;
   }
@@ -133,13 +180,29 @@ export function endScene(): void {
   useScene.setState({ play: null });
 }
 
-/** "Consolidate": let the bar fill on, and say nothing until it reaches the next tenth. */
-export function consolidate(s: GameState): void {
-  const next = Math.floor(barFill(s.player.qi) * 10 + 1e-9) / 10 + 0.1;
-  useScene.setState({ quietUntil: { key: stepKey(s), fill: Math.min(BAR_CAP, next) } });
+/** Opens the breakthrough panel on a ladder, or the last chance at the lifespan edge. */
+export function openPanel(which: LadderId, lastChance = false): void {
+  useScene.setState({ panel: { ladder: which, lastChance } });
 }
 
-/** Whether "Consolidate" still keeps the moment quiet. */
-export function consolidating(s: GameState, quiet: SceneStore['quietUntil']): boolean {
-  return !!quiet && quiet.key === stepKey(s) && barFill(s.player.qi) < quiet.fill - 1e-9;
+export function closePanel(): void {
+  useScene.setState({ panel: null });
+}
+
+/** "Wait, let it fill": the ladder's button stays quiet until the bar reaches the next tenth. */
+export function letFill(s: GameState, which: LadderId): void {
+  const next = Math.floor(barFill(s.player[which]) * 10 + 1e-9) / 10 + 0.1;
+  useScene.setState((st) => ({
+    panel: null,
+    quietUntil: {
+      ...st.quietUntil,
+      [which]: { key: stepKey(s, which), fill: Math.min(BAR_CAP, next) },
+    },
+  }));
+}
+
+/** Whether waiting still keeps a ladder's button quiet. */
+export function filling(s: GameState, which: LadderId, quiet: SceneStore['quietUntil']): boolean {
+  const q = quiet[which];
+  return !!q && q.key === stepKey(s, which) && barFill(s.player[which]) < q.fill - 1e-9;
 }

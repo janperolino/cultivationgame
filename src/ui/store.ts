@@ -5,7 +5,7 @@ import type { HourKind } from '../content/hours.ts';
 import { playDay, resolveCard } from '../core/cards.ts';
 import { createLife, createNextLife, type Creation } from '../core/creation.ts';
 import type { Seat } from '../core/attention.ts';
-import type { LadderId } from '../core/cultivation.ts';
+import { LADDERS, type LadderId } from '../core/cultivation.ts';
 import { sceneBonus } from '../core/scene.ts';
 import {
   attemptLastChance,
@@ -28,7 +28,7 @@ import { exportFileName } from '../core/save/file.ts';
 import { SaveSlots, type SlotId, type SlotSummary } from '../core/save/slots.ts';
 import { rerollGlass, withPlayer, type GameState } from '../core/state.ts';
 import { followWheel, forgetSavedRoutine, saveRoutine, setHour } from '../core/wheel.ts';
-import { endScene, qiAttempt, sceneDue, sceneRolled, startScene, useScene } from './scene.ts';
+import { attemptOf, endScene, sceneDue, sceneRolled, startScene, useScene } from './scene.ts';
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 
@@ -105,10 +105,10 @@ export interface GameStore {
   /** Attempts a ladder's next breakthrough, minor or major, at once, laying offerings on a major. */
   breakThrough(ladder: LadderId, offerings?: readonly string[]): void;
   /**
-   * Plays the qi's next breakthrough as a scene on the Abode's figure, laying offerings on a
+   * Plays a ladder's next breakthrough as a scene on the Abode's figure, laying offerings on a
    * major; false when it can't.
    */
-  beginScene(offerings?: readonly string[]): boolean;
+  beginScene(ladder: LadderId, offerings?: readonly string[]): boolean;
   /** Learns a tree node with insight; returns why not, or null. */
   learnNode(id: string): string | null;
   /** Points practice days at a technique, or at nothing. */
@@ -231,14 +231,15 @@ export const useGame = create<GameStore>()((set, get) => {
   }
 
   /**
-   * Rolls a breakthrough scene that has run its ten seconds, with what it caught. At the figure, a
-   * step that always holds plays a scene of its own, since the auto setting leaves it one.
+   * Rolls a breakthrough scene that has run its wind-up and race, with what it caught. At the
+   * figure, a step that always holds plays a scene of its own on any ladder, since the auto
+   * setting leaves it one.
    */
   function playScene(seat: Seat) {
     const { game } = get();
     const due = sceneDue(game);
     if (due && game) {
-      const r = breakThrough(game, 'qi', {
+      const r = breakThrough(game, due.ladder, {
         scene: sceneBonus(due.scene),
         offerings: due.offerings,
       });
@@ -248,9 +249,14 @@ export const useGame = create<GameStore>()((set, get) => {
       sceneRolled({ success: r.success, major: r.major, odds: r.odds });
       return;
     }
-    if (game && seat.scene === 'ready' && !useScene.getState().play) {
-      const attempt = qiAttempt(game);
-      if (attempt && !attempt.major && attempt.odds >= 1) startScene(game);
+    // Never over the breakthrough panel while you lay offerings.
+    const { play, panel } = useScene.getState();
+    if (game && seat.scene === 'ready' && !play && !panel) {
+      const certain = LADDERS.find((which) => {
+        const attempt = attemptOf(game, which);
+        return attempt && !attempt.major && attempt.odds >= 1;
+      });
+      if (certain) startScene(game, certain);
     }
   }
 
@@ -504,10 +510,10 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!r.success) void get().saveNow();
     },
 
-    beginScene(offerings = []) {
+    beginScene(ladder, offerings = []) {
       const { game } = get();
       if (!game || !holdsLock) return false;
-      return startScene(game, offerings);
+      return startScene(game, ladder, offerings);
     },
 
     learnNode(id) {

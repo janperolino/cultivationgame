@@ -6,12 +6,16 @@
 // where the seat (core/attention.ts) says they are, and a caught one flies in as a bright spark.
 // Under reduced motion the orbs pulse in place and the loop glows steadily. The loop stops while
 // the tab is hidden, and particles are capped. During a breakthrough scene (ui/scene.ts) the
-// circulation races, the gates glow on the first loop and a bright spark runs them; under reduced
-// motion the spark stays away and each gate lights in turn. The sun (ui/sunCanvas.ts) puts a soft
+// circulation slows through the wind-up while the gates light round the first loop one by one,
+// then races, and a bright spark runs the gates; under reduced motion the spark stays away and
+// each gate lights in turn. A body or soul scene recolors the loop in its ladder's color. The
+// break lands hard: a flash through the whole figure, a ring of light and a spray of sparks, with
+// the ring left out under reduced motion. The sun (ui/sunCanvas.ts) puts a soft
 // blurred rim on the figure's lit side, so the body agrees with its shadow. Drawing only: every
 // rule lives in core.
 import { DANTIAN, INHALE_SHARE, ORB_EDGE, type QiTint } from '../content/attention.ts';
 import { ENTRY_POINTS, type Circulation } from '../content/circulation.ts';
+import type { LadderId } from '../content/cultivation.ts';
 import { SCENE_GATES_PER_LAP, SCENE_GATES } from '../content/scene.ts';
 import {
   breathPhase,
@@ -21,7 +25,7 @@ import {
   type Attention,
   type Breath,
 } from '../core/attention.ts';
-import { GATE_TIMES, gateLap, sceneLaps } from '../core/scene.ts';
+import { GATE_TIMES, gateLap, gatesLit, sceneLaps, windingUp } from '../core/scene.ts';
 import type { Sun } from '../core/sun.ts';
 import { sceneTime, type ScenePlay } from './scene.ts';
 
@@ -100,10 +104,21 @@ interface Pop {
   t: number;
   color: string;
 }
+/** A ring of light opening from the dantian as a breakthrough lands. */
+interface Wave {
+  t: number;
+  color: string;
+  reach: number;
+}
 
 const MAX_MOTES = 70;
 const MAX_SPARKS = 40;
 const MAX_POPS = 60;
+/** The break may spray more than the everyday cap, for a moment. */
+const MAX_BREAK_POPS = 200;
+/** The flash through the figure and the ring of light, in seconds. */
+const FLASH_S = 0.9;
+const WAVE_S = 1.1;
 const SAMPLES = 22;
 
 /** Smooth closed curve through the points (Catmull–Rom), as many samples a segment. */
@@ -157,6 +172,8 @@ interface Palette {
   warn: string;
   core: string;
   tints: Record<QiTint, string>;
+  /** Each ladder's color in a scene: qi is the crack light, body and soul their hours' colors. */
+  ladders: Record<LadderId, string>;
 }
 
 function readPalette(): Palette {
@@ -176,6 +193,11 @@ function readPalette(): Palette {
       dawn: v('--dawn', '#ab9cf0'),
       yin: v('--qi-yin', '#7d84d6'),
     },
+    ladders: {
+      qi: crack,
+      body: v('--hour-body', '#c98a5f'),
+      soul: v('--hour-soul', '#a28fdc'),
+    },
   };
 }
 
@@ -189,13 +211,17 @@ export class QiCanvas {
   private sparks: Spark[] = [];
   private flyers: Flyer[] = [];
   private pops: Pop[] = [];
+  private waves: Wave[] = [];
+  /** The flash through the figure as a breakthrough lands, 1 down to 0, and its color. */
+  private flash = 0;
+  private flashColor = '#ffffff';
   private moteDebt = 0;
   private pulse = 0;
   private raf = 0;
   private last = 0;
   private running = false;
-  /** What of the scene has been drawn: its start, the gates judged, and its outcome. */
-  private seen = { started: 0, gates: '', outcome: 0 };
+  /** What of the scene has been drawn: its start, the gates lit and judged, and its outcome. */
+  private seen = { started: 0, lit: 0, gates: '', outcome: 0 };
   /** The pointer, in figure units, while it is over the canvas. */
   pointer: Point | null = null;
 
@@ -306,17 +332,49 @@ export class QiCanvas {
     this.ctx.drawImage(this.sprite(color), x - r, y - r, r * 2, r * 2);
   }
 
-  private burst(x: number, y: number, color: string, n: number): void {
-    for (let k = 0; k < n && this.pops.length < MAX_POPS; k++) {
+  private burst(x: number, y: number, color: string, n: number, speed = 50, cap = MAX_POPS): void {
+    for (let k = 0; k < n && this.pops.length < cap; k++) {
       this.pops.push({
         x,
         y,
-        vx: (Math.random() - 0.5) * 50,
-        vy: (Math.random() - 0.5) * 50,
+        vx: (Math.random() - 0.5) * speed,
+        vy: (Math.random() - 0.5) * speed,
         t: 0,
         color,
       });
     }
+  }
+
+  /** The flash through the figure and the rings of light, while a breakthrough lands. */
+  private drawBreak(dt: number): void {
+    const ctx = this.ctx;
+    if (this.flash > 0) {
+      ctx.save();
+      ctx.clip(this.body());
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.55 * this.flash;
+      ctx.fillStyle = this.flashColor;
+      ctx.fillRect(FIGURE_BOX.x, FIGURE_BOX.y, FIGURE_BOX.w, FIGURE_BOX.h);
+      ctx.restore();
+      ctx.globalCompositeOperation = 'lighter';
+      this.glow(DANTIAN[0], DANTIAN[1], 30 + 50 * this.flash, this.flashColor, 0.6 * this.flash);
+      this.flash = Math.max(0, this.flash - dt / FLASH_S);
+    }
+    this.waves = this.waves.filter((w) => {
+      w.t += dt;
+      if (w.t < 0) return true;
+      const p = Math.min(1, w.t / WAVE_S);
+      const ease = 1 - (1 - p) ** 3;
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.8 * (1 - p);
+      ctx.strokeStyle = w.color;
+      ctx.lineWidth = 3.5 * (1 - p) + 0.4;
+      ctx.beginPath();
+      ctx.arc(DANTIAN[0], DANTIAN[1], 6 + w.reach * ease, 0, Math.PI * 2);
+      ctx.stroke();
+      return p < 1;
+    });
+    ctx.globalAlpha = 1;
   }
 
   private toSpark(x: number, y: number, tint: QiTint, big: boolean): void {
@@ -364,11 +422,16 @@ export class QiCanvas {
     const t = a ? this.clock(a) : performance.now() / 1000;
     const level = Math.min(1, f.fill);
     const over = Math.max(0, f.fill - 1) / 0.5;
-    const loopColor =
-      f.state === 'unsettled' || f.heat >= 1 ? this.palette.warn : this.palette.crack;
     const loops = loopsOf(f.circulation);
     const play = this.scene();
     const st = play && !play.outcome ? sceneTime(play) : null;
+    const winding = st !== null && windingUp(st);
+    const loopColor =
+      f.state === 'unsettled' || f.heat >= 1
+        ? this.palette.warn
+        : play
+          ? this.palette.ladders[play.ladder]
+          : this.palette.crack;
 
     const light = this.sun();
     if (light && light.sun.light > 0) this.drawRim(light, s * dpr);
@@ -378,7 +441,8 @@ export class QiCanvas {
       ctx.save();
       ctx.clip(this.body());
       const flicker = f.state === 'unsettled' && !f.reduced ? 0.5 + 0.5 * Math.random() : 1;
-      const race = st !== null ? 0.25 : 0;
+      // The wind-up slows the loop and dims it; the race brightens it.
+      const race = st === null ? 0 : winding ? -0.04 : 0.25;
       ctx.globalAlpha =
         (0.1 + 0.14 * level + race + (f.reduced ? 0.12 : 0)) * f.sparks.glow * flicker;
       ctx.lineWidth = 1.1;
@@ -405,10 +469,11 @@ export class QiCanvas {
 
     ctx.globalCompositeOperation = 'lighter';
     if (!f.reduced) this.moveMotes(dt, f);
-    if (!f.reduced) this.moveSparks(dt, loops, f, st !== null);
+    if (!f.reduced) this.moveSparks(dt, loops, f, st === null ? 1 : winding ? 0.35 : 2.4);
     this.moveFlyers(dt, f);
 
     if (play) this.drawScene(dt, play, st, loops[0]!, f);
+    this.drawBreak(dt);
 
     // Orbs: drifting in and floating, or pulsing in place under reduced motion. A scene hides them.
     if (a && !play) {
@@ -531,9 +596,17 @@ export class QiCanvas {
       const frac = ((laps % 1) + 1) % 1;
       return loop[Math.floor(frac * loop.length) % loop.length]!;
     };
+    const color = this.palette.ladders[play.ladder];
     if (this.seen.started !== play.started) {
-      this.seen = { started: play.started, gates: '', outcome: 0 };
+      this.seen = { started: play.started, lit: 0, gates: '', outcome: 0 };
     }
+    // Through the wind-up the gates light one by one, each with a small flare as it wakes.
+    const lit = st === null ? SCENE_GATES_PER_LAP : gatesLit(st);
+    for (let m = this.seen.lit; m < lit; m++) {
+      const [x, y] = at(gateLap(m));
+      this.burst(x, y, accent, f.reduced ? 3 : 8);
+    }
+    this.seen.lit = Math.max(this.seen.lit, lit);
 
     // Each gate judged since the last frame: a gold burst for a catch, a small grey puff for an
     // early tap, which costs nothing.
@@ -553,7 +626,7 @@ export class QiCanvas {
 
     if (st !== null) {
       // The gates: one marker for each place on the loop, lit by the next gate to pass there.
-      for (let m = 0; m < SCENE_GATES_PER_LAP; m++) {
+      for (let m = 0; m < lit; m++) {
         const [x, y] = at(gateLap(m));
         let near = 0;
         for (let k = m; k < SCENE_GATES; k += SCENE_GATES_PER_LAP) {
@@ -574,23 +647,40 @@ export class QiCanvas {
       // The racing spark, with a short trail, until it comes home to the dantian.
       const laps = sceneLaps(st);
       const home = Math.ceil(gateLap(SCENE_GATES - 1));
-      if (!f.reduced && laps < home) {
+      if (!f.reduced && !windingUp(st) && laps < home) {
         for (let i = 5; i >= 0; i--) {
           const [x, y] = at(sceneLaps(Math.max(0, st - i * 0.035)));
-          this.glow(x, y, i ? 4 - i * 0.5 : 8, i ? accent : '#ffffff', i ? 0.5 - i * 0.07 : 0.95);
+          this.glow(x, y, i ? 4 - i * 0.5 : 8, i ? color : '#ffffff', i ? 0.5 - i * 0.07 : 0.95);
         }
       } else if (laps >= home) {
         this.pulse = Math.min(1, this.pulse + dt * 1.5);
       }
     }
 
+    // The break: a flash through the whole figure, rings of light and a wide spray of sparks,
+    // a second ring for a major one. A failure scatters in the warning color. Reduced motion
+    // keeps the flash, which only fades, and a few sparks.
     if (play.outcome && this.seen.outcome !== play.outcome.at) {
       this.seen.outcome = play.outcome.at;
-      const n = f.reduced ? 12 : 40;
-      this.burst(DANTIAN[0], DANTIAN[1], play.outcome.success ? accent : this.palette.warn, n);
-      if (play.outcome.success) {
-        this.burst(DANTIAN[0], DANTIAN[1], this.palette.crack, n);
+      const { success, major } = play.outcome;
+      const n = f.reduced ? 12 : major ? 90 : 60;
+      const speed = f.reduced ? 40 : major ? 150 : 110;
+      const [x, y] = DANTIAN;
+      if (success) {
+        this.burst(x, y, color, n, speed, MAX_BREAK_POPS);
+        this.burst(x, y, accent, n / 2, speed * 0.7, MAX_BREAK_POPS);
+        this.burst(x, y, '#ffffff', n / 3, speed * 0.4, MAX_BREAK_POPS);
+        this.flash = 1;
+        this.flashColor = color;
         this.pulse = 1;
+        if (!f.reduced) {
+          this.waves.push({ t: 0, color, reach: major ? 150 : 95 });
+          if (major) this.waves.push({ t: -0.22, color: accent, reach: 120 });
+        }
+      } else {
+        this.burst(x, y, this.palette.warn, n, speed * 0.8, MAX_BREAK_POPS);
+        this.flash = 0.45;
+        this.flashColor = this.palette.warn;
       }
     }
   }
@@ -641,8 +731,8 @@ export class QiCanvas {
     });
   }
 
-  private moveSparks(dt: number, loops: Point[][], f: FigureFrame, racing: boolean): void {
-    const speed = (f.state === 'full' ? 90 : 50) * (racing ? 2.4 : 1) * dt;
+  private moveSparks(dt: number, loops: Point[][], f: FigureFrame, pace: number): void {
+    const speed = (f.state === 'full' ? 90 : 50) * pace * dt;
     this.sparks = this.sparks.filter((s) => {
       const l = loops[s.loop] ?? loops[0]!;
       const v = speed * (s.big ? 1.3 : 1);

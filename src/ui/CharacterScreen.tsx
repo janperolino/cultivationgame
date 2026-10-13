@@ -1,12 +1,13 @@
 // The Character screen (design § UI and screens): the talents rolled at birth, the six attributes,
 // the fighting sheet with each line's band in stage words (design § Combat, the sheet), each
-// ladder's growth realm by realm with the methods that built it, and the manuals held, by kind.
+// ladder's growth realm by realm with the methods that built it and the grade of the breakthrough
+// that opened it (D2.1), and the manuals held, by kind.
 // Fame and standing join in M5.
-import { LADDERS, type LadderId } from '../content/cultivation.ts';
+import { GRADES, LADDERS, type GradeId, type LadderId } from '../content/cultivation.ts';
 import { ELEMENT_INFO } from '../content/elements.ts';
 import { GROWTH_STATS, method } from '../content/methods.ts';
 import { origin } from '../content/origins.ts';
-import { realm } from '../content/realms.ts';
+import { realm, realmIndex } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
 import { statInfo, type StatId } from '../content/stats.ts';
 import { talentEffects } from '../content/talents.ts';
@@ -24,6 +25,7 @@ import {
   formatLadder,
   formatNumber,
   formatPercent,
+  gradeGives,
   LADDER_LABELS,
   listWords,
 } from './format.ts';
@@ -212,8 +214,21 @@ function Sheet({ c }: { c: Cultivator }) {
   );
 }
 
+/** The grade of the breakthrough that opened a realm, with what it gives. */
+function GradeLine({ grade, realmName }: { grade: GradeId | undefined; realmName: string }) {
+  if (!grade) return null;
+  const g = GRADES.find((x) => x.id === grade)!;
+  return (
+    <div className="caption">
+      <span className={`grade-word is-${grade}`}>{g.name}</span> breakthrough:{' '}
+      {gradeGives(grade, realmName)}
+    </div>
+  );
+}
+
 function Growth({ c, which }: { c: Cultivator; which: LadderId }) {
-  const realms = realmGrowth(c[which]).filter((r) => r.climbed > 0);
+  const l = c[which];
+  const realms = realmGrowth(l).filter((r) => r.climbed > 0);
   if (!realms.length) return null;
   return (
     <div className="growth">
@@ -226,6 +241,7 @@ function Growth({ c, which }: { c: Cultivator; which: LadderId }) {
               {r.climbed} of {r.of} stages
             </span>
             <div className="caption">{growthLine(r.growth, which)}</div>
+            <GradeLine grade={l.grades[realmIndex(r.realm) - 1]} realmName={realm(r.realm).name} />
             <div className="caption">
               Built by{' '}
               {r.methods.map((id) => (id ? method(id).name : 'the world alone')).join(', ')}
@@ -266,6 +282,7 @@ export function CharacterScreen() {
         <h2 className="panel-heading">Growth</h2>
         <p className="caption">
           Each stage keeps the growth of the method that climbed it; the current realm counts most.
+          Each realm past the first carries the grade of the breakthrough that opened it.
         </p>
         {LADDERS.every((l) => realmGrowth(c[l]).every((r) => r.climbed === 0)) ? (
           <p className="muted spaced">No stage climbed yet.</p>

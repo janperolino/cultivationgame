@@ -11,6 +11,8 @@ import {
   BAR_CAP,
   BODY_PER_DAY,
   GRADES,
+  GRADE_NEXT_ODDS,
+  GRADE_SPEED,
   GRADE_SCORES,
   INJURY_SPEED,
   INSIGHT_ATTENDED,
@@ -28,6 +30,7 @@ import {
   MINOR_INJURY_DAYS,
   ODDS_PER_TENTH,
   OFFER_INJURY,
+  PEAK_MARGIN,
   QI_PER_DAY,
   SCENE_ODDS_CAP,
   SOUL_PER_DAY,
@@ -125,6 +128,25 @@ export function ladderOpen(c: Cultivator, which: LadderId): boolean {
   );
 }
 
+// ---------------------------------------------------------------- grades
+
+/** The grade of the major breakthrough that opened this ladder's realm; none below Foundation. */
+export function currentGrade(l: Ladder): GradeId | undefined {
+  return l.grades.at(-1);
+}
+
+/** The grade's multiplier on the ladder's speed, for the whole realm it opened (D2.1). */
+export function gradeSpeed(l: Ladder): number {
+  const g = currentGrade(l);
+  return g ? GRADE_SPEED[g] : 1;
+}
+
+/** What the grade adds to the ladder's next major breakthrough's odds (D2.1). */
+export function gradeNextOdds(l: Ladder): number {
+  const g = currentGrade(l);
+  return g ? GRADE_NEXT_ODDS[g] : 0;
+}
+
 // ---------------------------------------------------------------- rates
 
 export interface QiSpeed {
@@ -141,6 +163,8 @@ export interface QiSpeed {
   nodes: number;
   /** Attention: ×1 away, ×1.25 for being there, up to ×2 at full focus (core/attention.ts). */
   attention: number;
+  /** The grade of the breakthrough into this realm (D2.1): ×0.85 flawed to ×1.35 heavenly. */
+  grade: number;
   /** The method's tier sits below the qi realm: it gains nothing until the next chapter. */
   capped: boolean;
   total: number;
@@ -148,18 +172,19 @@ export interface QiSpeed {
 
 /**
  * Root speed × the method (tier bonus × rarity × mastery) × fit × qi density × Aptitude × nodes ×
- * attention. Zero without a qi method, or with one past its tier. Layers 1–3 ignore the root, the
- * method part and the fit.
+ * the realm's grade × attention. Zero without a qi method, or with one past its tier. Layers 1–3
+ * ignore the root, the method part and the fit.
  */
 export function qiSpeed(c: Cultivator, seat: Seat = AWAY): QiSpeed {
   const m = ladderMethod(c, 'qi');
   const apt = aptitudeMultiplier(c);
   const nodes = 1 + stats(c).qiGain;
   const part = methodSpeed(c, 'qi');
+  const grade = gradeSpeed(c.qi);
   if (!m) {
     const none = { root: 0, tier: 0, rarity: 0, mastery: 0, fit: 0 };
     const attention = seat.factor;
-    return { ...none, density: 1, aptitude: apt, nodes, attention, capped: false, total: 0 };
+    return { ...none, density: 1, aptitude: apt, nodes, attention, grade, capped: false, total: 0 };
   }
   const tutorial = inTutorial(c.qi);
   const rootSpeed = tutorial ? 1 : root(c.root).speed;
@@ -175,8 +200,9 @@ export function qiSpeed(c: Cultivator, seat: Seat = AWAY): QiSpeed {
     aptitude: apt,
     nodes,
     attention: seat.factor,
+    grade,
     capped: part.capped,
-    total: rootSpeed * part.total * fit * density * apt * nodes * seat.factor,
+    total: rootSpeed * part.total * fit * density * apt * nodes * grade * seat.factor,
   };
 }
 
@@ -213,6 +239,7 @@ function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[], seat: S
     perDay *
     realmScale(c[which].realm) *
     methodSpeed(c, which).total *
+    gradeSpeed(c[which]) *
     apt *
     (1 + gain) *
     setbackMultiplier(c[which], day) *
@@ -459,8 +486,33 @@ export interface MajorCheck {
   score: number;
   /** What the active method's rarity adds to the margin. */
   methodMargin: number;
+  /** Every source of the score, for the grade meter; the parts sum to `score`. */
+  parts: MarginPart[];
+  /** Whether the grade may reach heavenly: a gold or better method or offering. */
+  heavenly: boolean;
   grade: GradeId;
+  /** What the grade of this ladder's last major adds to these odds (D2.1). */
+  gradeOdds: number;
   odds: number;
+}
+
+/** One line of a major breakthrough's checklist. */
+export interface Requirement {
+  id: 'bar' | 'insight' | 'gate' | 'cap';
+  met: boolean;
+}
+
+/**
+ * The checklist a major breakthrough shows (P2.4): a full bar, the insight ever earned, the gate
+ * pill on a qi major, and for body and soul at most one realm ahead of qi.
+ */
+export function majorRequirements(check: MajorCheck): Requirement[] {
+  return [
+    { id: 'bar', met: check.bar },
+    { id: 'insight', met: check.insight },
+    ...(check.gateItem ? [{ id: 'gate' as const, met: check.gate }] : []),
+    ...(check.ladder !== 'qi' ? [{ id: 'cap' as const, met: check.cap }] : []),
+  ];
 }
 
 /** The grade a margin score earns; heavenly needs a gold or red method. */
@@ -476,20 +528,47 @@ export function gradeFor(score: number, heavenlyMethod: boolean): GradeId {
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 const clamp01 = (x: number) => clamp(x, 0, 1);
 
+/** One source of a major breakthrough's margin, as the grade meter labels it. */
+export interface MarginPart {
+  source: LadderId | 'insight' | 'method' | 'talents' | 'offering';
+  /** The item, for an offering. */
+  item?: string;
+  value: number;
+}
+
 /**
- * The margin a major breakthrough brings (design § Cultivation): fuel past a full bar, insight
- * earned past the threshold, and the other two ladders at or above the new realm, a point each.
+ * What another ladder brings to this one's major breakthrough (D2.1): half a point at the peak of
+ * the realm being left, a full point once at the new realm or above.
  */
-export function marginScore(c: Cultivator, which: LadderId, target: Realm): number {
+export function ladderMargin(other: Ladder, from: RealmId, target: Realm): number {
+  if (realmIndex(other.realm) >= realmIndex(target.id)) return 1;
+  if (other.realm === from && other.stage >= realm(from).stages) return PEAK_MARGIN;
+  return 0;
+}
+
+/**
+ * The margin a major breakthrough brings from where you stand (design § Cultivation, grades):
+ * fuel past a full bar up to a point at 150%, insight earned past the threshold up to a point at
+ * double it, and each other ladder by `ladderMargin`, in the order the meter draws them.
+ */
+export function standingMargin(c: Cultivator, which: LadderId, target: Realm): MarginPart[] {
   const barPart = clamp01((barFill(c[which]) - 1) / (BAR_CAP - 1));
   const threshold = target.insightThreshold;
   const insightPart =
     threshold > 0 ? clamp01((c.insight.earned / threshold - 1) / (INSIGHT_MARGIN_FULL - 1)) : 1;
-  const others = LADDERS.filter((l) => l !== which).reduce(
-    (sum, l) => sum + (realmIndex(c[l].realm) >= realmIndex(target.id) ? 1 : 0),
-    0,
-  );
-  return barPart + insightPart + others;
+  return [
+    { source: which, value: barPart },
+    { source: 'insight', value: insightPart },
+    ...LADDERS.filter((l) => l !== which).map((l) => ({
+      source: l,
+      value: ladderMargin(c[l], c[which].realm, target),
+    })),
+  ];
+}
+
+/** The margin you bring, 0 to 4, before the method, talents and offerings. */
+export function marginScore(c: Cultivator, which: LadderId, target: Realm): number {
+  return standingMargin(c, which, target).reduce((sum, p) => sum + p.value, 0);
 }
 
 /**
@@ -513,23 +592,37 @@ export function majorCheck(
   const insight = c.insight.earned >= target.insightThreshold;
   const cap = which === 'qi' || realmIndex(target.id) <= realmIndex(c.qi.realm) + 1;
   const bar = fill >= 1;
-  const brought = marginScore(c, which, target);
+  const standing = standingMargin(c, which, target);
+  const brought = standing.reduce((sum, p) => sum + p.value, 0);
   const bonus = breakthroughBonus(c, which);
   const m = ladderMethod(c, which);
   const heavenly = (m ? rarity(m.rarity).heavenly : false) || laid.heavenly;
-  const barPart = clamp01((fill - 1) / (BAR_CAP - 1));
+  const barPart = standing[0]!.value;
+  const gradeOdds = gradeNextOdds(l);
   const odds = clamp(
     target.majorOdds +
       overfillBonus(fill) +
       MAJOR_ODDS_PER_MARGIN * (brought - barPart) +
       stats(c).majorOdds +
       bonus.odds +
+      gradeOdds +
       laid.odds,
     0,
     MAX_ODDS,
   );
   // Talents like the Unbreakable Dao Heart or Heaven's Jealousy raise the grade, not the odds.
-  const score = brought + bonus.margin + stats(c).gradeMargin + laid.margin;
+  const talents = stats(c).gradeMargin;
+  const parts: MarginPart[] = [
+    ...standing,
+    { source: 'method', value: bonus.margin },
+    { source: 'talents', value: talents },
+    ...laid.laid.map((id, i) => ({
+      source: 'offering' as const,
+      item: id,
+      value: laid.margins[i] ?? 0,
+    })),
+  ];
+  const score = brought + bonus.margin + talents + laid.margin;
   return {
     ladder: which,
     target,
@@ -543,7 +636,10 @@ export function majorCheck(
     ready: bar && insight && gate && cap && laid.valid,
     score,
     methodMargin: bonus.margin,
+    parts,
+    heavenly,
     grade: gradeFor(score, heavenly),
+    gradeOdds,
     odds,
   };
 }
@@ -730,7 +826,8 @@ export function attemptBreakthrough(
 // ---------------------------------------------------------------- the lifespan edge
 
 function lastChanceOdds(c: Cultivator, check: MajorCheck): number {
-  const base = check.target.majorOdds + stats(c).majorOdds + breakthroughBonus(c, 'qi').odds;
+  const base =
+    check.target.majorOdds + stats(c).majorOdds + breakthroughBonus(c, 'qi').odds + check.gradeOdds;
   return Math.max(0, base) * Math.min(1, check.fill) * LAST_CHANCE_ODDS;
 }
 
@@ -878,13 +975,13 @@ export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): Cu
   let next = unlocked.cultivator;
   const notes = [...practiced.notes, ...unlocked.notes];
   const breakthroughs: CultivateResult['breakthroughs'] = [];
-  // At the figure, a qi breakthrough is the player's scene: the auto setting leaves the qi alone
-  // while one plays, and leaves it the steps that always hold, which teach the scene.
+  // At the figure, a breakthrough is the player's scene: the auto setting leaves the steps that
+  // always hold to it, since they teach the scene, and the ladder a scene plays on alone.
   const hold = ctx.seat?.scene;
+  const playing = hold === 'playing' ? (ctx.seat?.sceneLadder ?? 'qi') : null;
   for (const which of LADDERS) {
     if (!autoWouldAttempt(next, which)) continue;
-    if (which === 'qi' && (hold === 'playing' || (hold === 'ready' && minorOdds(next, 'qi') >= 1)))
-      continue;
+    if (which === playing || (hold && minorOdds(next, which) >= 1)) continue;
     const r = attemptBreakthrough(next, which, ctx);
     next = r.cultivator;
     notes.push(...r.notes);

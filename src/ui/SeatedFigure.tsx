@@ -3,22 +3,14 @@
 // another way). The dantian glows below the navel in the crack light, since it is qi. Over the
 // silhouette a canvas (ui/qiCanvas.ts) draws the qi drifting in, circulating and settling, and the
 // orbs to draw in by hover or a finger. Beside it, the seat's meter: qi speed, focus and heat. An
-// attended qi breakthrough plays here as a ten-second scene (ui/scene.ts): a tap or click on the
-// figure as the spark passes each gate, and the meter tells the scene instead. Behind it all, over
-// the whole seat panel, the sun of the hour (ui/sunCanvas.ts): the figure is a sundial, and the
-// caption under it names the hour in words.
+// attended breakthrough on any ladder plays here as a scene (ui/scene.ts), a wind-up and then the
+// race: a tap or click on the figure as the spark passes each gate, and the meter tells the scene
+// instead. Behind it all, over the whole seat panel, the sun of the hour (ui/sunCanvas.ts): the
+// figure is a sundial, and the caption under it names the hour in words.
 import { useEffect, useMemo, useRef } from 'react';
 import { POINTER_REACH } from '../content/attention.ts';
 import { circulation, RARITY_SPARKS } from '../content/circulation.ts';
-import {
-  AUTO_SETTINGS,
-  BAR_CAP,
-  GRADES,
-  MAX_ODDS,
-  ODDS_PER_TENTH,
-  SCENE_ODDS_CAP,
-  SCENE_ODDS_STEP,
-} from '../content/cultivation.ts';
+import { MAX_ODDS, SCENE_ODDS_CAP, SCENE_ODDS_STEP } from '../content/cultivation.ts';
 import { BRANCHES, HOUR_KINDS } from '../content/hours.ts';
 import { methodCirculation } from '../content/methods.ts';
 import { realm } from '../content/realms.ts';
@@ -33,14 +25,14 @@ import {
   seatTutorial,
   type Attention,
 } from '../core/attention.ts';
-import { barFill, barSize, dayRates, majorCheck } from '../core/cultivation.ts';
+import { barFill, barSize, dayRates } from '../core/cultivation.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import { ladderMethod } from '../core/methods.ts';
-import { sceneBonus } from '../core/scene.ts';
+import { sceneBonus, windingUp } from '../core/scene.ts';
 import type { Cultivator, GameState } from '../core/state.ts';
 import { stats } from '../core/stats.ts';
 import { effectiveWheel, hourOfDay } from '../core/wheel.ts';
-import { formatLadder, formatPercent } from './format.ts';
+import { formatLadder, formatPercent, LADDER_LABELS } from './format.ts';
 import {
   FIGURE_BOX,
   FIGURE_HEAD,
@@ -49,14 +41,7 @@ import {
   type FigureFrame,
   type FigureState,
 } from './qiCanvas.ts';
-import {
-  consolidate,
-  consolidating,
-  qiAttempt,
-  tapGate,
-  useScene,
-  type ScenePlay,
-} from './scene.ts';
+import { attemptOf, sceneTime, tapGate, useScene, type ScenePlay } from './scene.ts';
 import { holdStill, noteDay, onBreath, seatTime, showAbode, useSeat } from './seat.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { SunCanvas } from './sunCanvas.ts';
@@ -265,14 +250,18 @@ function seatHint(c: Cultivator, a: Attention): string {
 /** What the scene says as it ends: the step taken, or what the gate holding cost. */
 function outcomeLine(game: GameState, play: ScenePlay): string {
   const o = play.outcome!;
+  const l = game.player[play.ladder];
+  const label = LADDER_LABELS[play.ladder];
   if (o.success) {
     return o.major
-      ? `Through the gate: ${realm(game.player.qi.realm).name}.`
-      : `Through: ${formatLadder(game.player.qi)}.`;
+      ? `Through the gate: ${label}, ${realm(l.realm).name}.`
+      : `Through: ${label}, ${formatLadder(l)}.`;
   }
-  return o.major
-    ? 'The gate holds. The pill is spent, half the qi scatters, and the meridians will take years to mend.'
-    : 'The gate holds. A fifth of the qi scatters, and it will not settle for a few days.';
+  const fuel = play.ladder === 'qi' ? 'qi' : play.ladder === 'body' ? 'tempering' : 'nourishment';
+  if (!o.major) {
+    return `The gate holds. A fifth of the ${fuel} scatters, and it will not settle for a few days.`;
+  }
+  return `The gate holds. ${play.ladder === 'qi' ? 'The pill and the offerings are' : 'The offerings are'} spent, half the ${fuel} scatters, and it will take years to mend.`;
 }
 
 /** The meter during a scene: the gates as six marks, the odds, and what to do. */
@@ -281,12 +270,15 @@ function SceneMeter({ game, play }: { game: GameState; play: ScenePlay }) {
   // The bar fills on while the scene plays, so the odds are read live, as the roll will be.
   const odds = play.outcome
     ? play.outcome.odds
-    : (qiAttempt(game, play.offerings)?.odds ?? play.odds) + bonus;
+    : (attemptOf(game, play.ladder, play.offerings)?.odds ?? play.odds) + bonus;
+  // The meter renders with the game's ticks, often enough to tell the wind-up from the race.
+  const winding = !play.outcome && windingUp(sceneTime(play));
+  const label = LADDER_LABELS[play.ladder].toLowerCase();
   return (
-    <div className="seat-meter scene-meter" aria-live="polite">
+    <div className={`seat-meter scene-meter is-${play.ladder}`} aria-live="polite">
       <div className="seat-speed">
         <span className="caption">
-          {play.major ? 'Breaking through the gate' : 'Breaking through'}
+          {play.major ? 'Breaking through the gate' : 'Breaking through'} · {label}
         </span>
         <strong>{play.certain ? 'certain' : formatPercent(Math.min(MAX_ODDS, odds))}</strong>
       </div>
@@ -302,76 +294,12 @@ function SceneMeter({ game, play }: { game: GameState; play: ScenePlay }) {
       <p className="caption">
         {play.outcome
           ? outcomeLine(game, play)
-          : play.certain
-            ? 'This step always holds. Tap the figure as the spark crosses each gate; from the third layer, every gate caught raises the odds.'
-            : `Tap the figure as the spark crosses each gate: each one caught adds ${formatPercent(SCENE_ODDS_STEP)}, up to ${formatPercent(SCENE_ODDS_CAP)}. A miss costs nothing.`}
+          : winding
+            ? 'The circulation slows and the gates light round the loop. Be ready: the race comes next.'
+            : play.certain
+              ? 'This step always holds. Tap the figure as the spark crosses each gate; from the third layer, every gate caught raises the odds.'
+              : `Tap the figure as the spark crosses each gate: each one caught adds ${formatPercent(SCENE_ODDS_STEP)}, up to ${formatPercent(SCENE_ODDS_CAP)}. A miss costs nothing.`}
       </p>
-    </div>
-  );
-}
-
-/**
- * The "now or consolidate" moment under the figure: the qi is ready, and the call is yours. Now
- * plays the scene; consolidating lets the bar fill on, raising the odds, and the moment comes back
- * at the next tenth.
- */
-export function BreakthroughMoment({
-  game,
-  onDetails,
-}: {
-  game: GameState;
-  onDetails: () => void;
-}) {
-  const playing = useScene((s) => !!s.play);
-  const quiet = useScene((s) => s.quietUntil);
-  const beginScene = useGame((s) => s.beginScene);
-  const attempt = qiAttempt(game);
-  if (!attempt || playing || consolidating(game, quiet)) return null;
-  const c = game.player;
-  const fill = barFill(c.qi);
-  const atCap = fill >= BAR_CAP - 1e-9;
-  const check = attempt.major ? majorCheck(c, 'qi') : null;
-  const auto = AUTO_SETTINGS[c.plan.auto];
-
-  let text: string;
-  if (check) {
-    const grade = GRADES.find((g) => g.id === check.grade)!.name.toLowerCase();
-    text =
-      `Qi presses against the gate of ${check.target.name}. Now, ${grade === 'ordinary' ? 'an' : 'a'} ${grade} ` +
-      `breakthrough at ${formatPercent(attempt.odds)}` +
-      (atCap
-        ? '; the sea can hold no more.'
-        : ', or consolidate for better odds and a better grade.');
-  } else if (attempt.odds >= 1) {
-    text = 'The qi sea is full, and this step always holds.';
-  } else {
-    text =
-      `The qi sea is full at ${formatPercent(fill)}. Now at ${formatPercent(attempt.odds)}` +
-      (atCap
-        ? '; it can hold no more.'
-        : `, or consolidate: each 10% more adds ${formatPercent(ODDS_PER_TENTH)}, up to 150%.`) +
-      (auto.minOdds === Infinity
-        ? ''
-        : ` On ${auto.name}, it goes on its own at ${formatPercent(auto.minOdds)} odds or a full 150%.`);
-  }
-  return (
-    <div className="moment">
-      <p>{text}</p>
-      <div className="actions">
-        <button type="button" className="button" onClick={() => beginScene()}>
-          Break through now · {formatPercent(attempt.odds)}
-        </button>
-        {!atCap && attempt.odds < 1 && (
-          <button type="button" className="button button-quiet" onClick={() => consolidate(game)}>
-            Consolidate
-          </button>
-        )}
-        {check && (
-          <button type="button" className="button button-quiet" onClick={onDetails}>
-            Details
-          </button>
-        )}
-      </div>
     </div>
   );
 }

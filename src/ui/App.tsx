@@ -13,7 +13,7 @@ import { SettingsScreen } from './SettingsScreen.tsx';
 import { TechniquesScreen } from './TechniquesScreen.tsx';
 import { TreesScreen } from './TreesScreen.tsx';
 import { capitalize } from './format.ts';
-import { useScene } from './scene.ts';
+import { readyLadders, useScene } from './scene.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
 import { bySeason } from '../core/chronicle.ts';
@@ -59,13 +59,17 @@ export function App() {
     setWasCreating(!!creating);
     if (!creating) setScreen('abode');
   }
-  // A breakthrough scene plays on the Abode's figure, wherever it was called from.
+  // A breakthrough scene plays on the Abode's figure, and its panel opens there, wherever either
+  // was called from.
   const sceneStarted = useScene((s) => s.play?.started ?? 0);
-  const [lastScene, setLastScene] = useState(0);
-  if (sceneStarted !== lastScene) {
-    setLastScene(sceneStarted);
-    if (sceneStarted) setScreen('abode');
+  const panelOpen = useScene((s) => (s.panel ? `${s.panel.ladder}/${s.panel.lastChance}` : ''));
+  const [lastScene, setLastScene] = useState({ started: 0, panel: '' });
+  if (sceneStarted !== lastScene.started || panelOpen !== lastScene.panel) {
+    setLastScene({ started: sceneStarted, panel: panelOpen });
+    if (sceneStarted || panelOpen) setScreen('abode');
   }
+  // A mark on the Abode in the menu while a breakthrough is ready.
+  const ready = useGame((s) => (s.game ? readyLadders(s.game).length > 0 : false));
   const dismissNotice = useGame((s) => s.dismissNotice);
 
   useEffect(() => {
@@ -152,7 +156,12 @@ export function App() {
                     setMenuOpen(false);
                   }}
                 >
-                  <span>{s.name}</span>
+                  <span>
+                    {s.name}
+                    {s.id === 'abode' && ready && (
+                      <span className="menu-mark" role="img" aria-label="a breakthrough is ready" />
+                    )}
+                  </span>
                   <span className="hanzi menu-hanzi">{s.hanzi}</span>
                 </button>
               </li>
@@ -177,9 +186,7 @@ export function App() {
           {phase === 'no-slot' && !creating && (
             <p className="muted">No life is open. Start one or pick a slot below.</p>
           )}
-          {phase !== 'loading' && current.id === 'abode' && (
-            <AbodeScreen onCultivate={() => setScreen('cultivate')} />
-          )}
+          {phase !== 'loading' && current.id === 'abode' && <AbodeScreen />}
           {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
           {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
           {phase !== 'loading' && current.id === 'techniques' && <TechniquesScreen />}

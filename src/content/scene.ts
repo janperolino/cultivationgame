@@ -1,10 +1,15 @@
-// The breakthrough scene (design § Cultivation, Breakthroughs): an attended attempt plays for ten
-// seconds on the figure. A spark races the circulation, faster every lap, and passes the gates on
-// the loop; a tap timed on a gate catches it. The odds steps and their cap sit beside
+// The breakthrough scene (design § Cultivation, Breakthroughs): an attended attempt plays on the
+// figure, a wind-up of four seconds where the circulation slows, the gates light round the loop
+// one by one and the glass darkens, then ten seconds of the race. A spark races the circulation,
+// faster every lap, and passes the gates on the loop; a tap timed on a gate catches it. The odds steps and their cap sit beside
 // ODDS_PER_TENTH in content/cultivation.ts. Starting values, to tune by feel.
 
-/** The whole scene, from the first lap to the roll. */
-export const SCENE_SECONDS = 10;
+/** The wind-up before the race (P2.4), so the first gate comes around the fifth or sixth second. */
+export const SCENE_WINDUP_S = 4;
+/** The race, from the spark's first lap to the roll. */
+export const SCENE_RACE_S = 10;
+/** The whole scene, wind-up and race. */
+export const SCENE_SECONDS = SCENE_WINDUP_S + SCENE_RACE_S;
 /** The racing spark's way round the loop, in laps: SCENE_SPEED t + SCENE_RACE t². */
 export const SCENE_SPEED = 0.1;
 export const SCENE_RACE = 0.012;

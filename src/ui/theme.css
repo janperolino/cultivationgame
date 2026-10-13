@@ -727,21 +727,519 @@ select {
   color: var(--accent);
 }
 
-/* The "now or consolidate" moment under the figure, when the qi is ready. */
-.moment {
+/* Breakthroughs at the Abode (P2.4): a row of buttons under the figure, one for each ladder whose
+   bar is full, each with its ladder's color on the left; dimmer while not ready. */
+.bt-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
   width: min(460px, 100%);
   padding-top: 10px;
   border-top: 1px solid var(--edge);
-  text-align: center;
 }
 
-.moment p {
+.bt-step {
+  --ladder: var(--crack);
+  box-shadow: inset 3px 0 0 var(--ladder);
+}
+
+.bt-step.is-body,
+.bt-panel.is-body {
+  --ladder: var(--hour-body);
+}
+
+.bt-step.is-soul,
+.bt-panel.is-soul {
+  --ladder: var(--hour-soul);
+}
+
+.bt-step.is-dim {
+  opacity: 0.6;
+  border-color: var(--edge-strong);
+  color: var(--muted);
+}
+
+.bt-step.is-open {
+  border-color: var(--accent);
+  opacity: 1;
+}
+
+/* The panel for a major breakthrough, between the figure and the stats. */
+.bt-panel {
+  --ladder: var(--crack);
+  --rim: var(--ladder);
+  display: grid;
+  gap: 14px;
+}
+
+.bt-panel > * {
   margin: 0;
 }
 
-.moment .actions {
+.bt-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 16px;
+}
+
+.bt-head .panel-heading {
+  margin: 0;
+}
+
+.bt-odds {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.bt-odds strong {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: calc(30px * var(--text-scale));
+  font-weight: 500;
+  line-height: 1;
+}
+
+.bt-ready {
+  color: var(--crack);
+}
+
+.bt-ready span {
+  margin-right: 6px;
+}
+
+/* The grade meter: a bar from 0 to 4, each source a labeled segment landing in turn, the five
+   grades marked above it. */
+.grade-meter {
+  display: grid;
+  gap: 6px;
+}
+
+.grade-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.grade-line .caption {
+  margin: 0;
+}
+
+.grade-word {
+  font-family: var(--font-display);
+  font-size: calc(20px * var(--text-scale));
+  font-weight: 600;
+}
+
+.caption .grade-word {
+  font-size: 1.15em;
+}
+
+.grade-word.is-flawed {
+  color: var(--warn);
+}
+
+.grade-word.is-ordinary {
+  color: var(--text);
+}
+
+.grade-word.is-superior {
+  color: var(--crack);
+}
+
+.grade-word.is-perfect {
+  color: color-mix(in srgb, var(--crack) 45%, white);
+}
+
+.grade-word.is-heavenly {
+  color: var(--dawn);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--dawn) 60%, transparent);
+}
+
+.grade-bar {
+  position: relative;
+  height: 22px;
+  margin-top: 18px;
+  border-radius: 4px;
+  background: var(--well);
+  box-shadow: inset 0 0 0 1px var(--edge);
+}
+
+.grade-segments {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.grade-seg {
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid rgb(0 0 0 / 0.55);
+  background: var(--seg, var(--crack));
+  transition: width 450ms ease;
+  animation: grade-land 500ms ease-out backwards;
+  animation-delay: calc(var(--i) * 140ms);
+  transform-origin: left center;
+}
+
+@keyframes grade-land {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+}
+
+.grade-seg.is-qi {
+  --seg: var(--crack);
+}
+
+.grade-seg.is-insight {
+  --seg: var(--hour-study);
+}
+
+.grade-seg.is-body {
+  --seg: var(--hour-body);
+}
+
+.grade-seg.is-soul {
+  --seg: var(--hour-soul);
+}
+
+.grade-seg.is-method {
+  --seg: var(--rarity-gold);
+}
+
+.grade-seg.is-talents {
+  --seg: var(--dawn);
+}
+
+/* An offering wears its rarity's color; pristine's sheen stays on names, so it is plain here. */
+.grade-seg.is-offering {
+  background: currentColor;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  filter: none;
+  animation: grade-land 500ms ease-out backwards;
+  animation-delay: calc(var(--i) * 140ms);
+}
+
+.grade-seg.is-offering.rarity-pristine {
+  background: var(--rarity-pristine);
+}
+
+.grade-seg-label {
+  display: block;
+  padding: 0 5px;
+  overflow: hidden;
+  color: #0b0d10;
+  -webkit-text-fill-color: #0b0d10;
+  font-size: calc(10.5px * var(--text-scale));
+  font-weight: 600;
+  line-height: 22px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.grade-tick {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+  background: color-mix(in srgb, var(--text) 35%, transparent);
+  pointer-events: none;
+}
+
+.grade-tick.is-reached {
+  background: var(--text);
+}
+
+.grade-tick-label {
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: 0;
+  transform: translateX(-50%);
+  color: var(--muted);
+  font-size: calc(10.5px * var(--text-scale));
+  white-space: nowrap;
+}
+
+.grade-tick.is-reached .grade-tick-label {
+  color: var(--text);
+}
+
+.grade-legend {
+  margin: 0;
+}
+
+:root[data-motion='reduced'] .grade-seg {
+  transition: none;
+  animation: none;
+}
+
+/* Three offering slots: the gate pill locked into the first on a qi major. */
+.bt-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bt-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  margin-top: 10px;
+  gap: 2px;
+  min-height: 54px;
+  padding: 6px;
+  border: 1px dashed var(--edge-strong);
+  border-radius: var(--radius-small);
+  background: var(--well);
+  color: var(--text);
+  font: inherit;
+  font-size: calc(13px * var(--text-scale));
+  text-align: center;
+  cursor: default;
+}
+
+.bt-slot .caption {
+  margin: 0;
+}
+
+.bt-slot.is-filled {
+  border-style: solid;
+  cursor: pointer;
+}
+
+.bt-slot.is-filled:hover:not(:disabled) {
+  border-color: var(--accent-edge);
+}
+
+.bt-slot.is-locked.is-filled {
+  border-color: var(--accent-edge);
+  cursor: default;
+}
+
+.bt-slot.is-needed {
+  border-color: var(--warn-edge);
+}
+
+.bt-slot:disabled {
+  opacity: 1;
+}
+
+/* The strip of things you hold with the offer use, scrolling sideways. */
+.bt-strip-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.bt-strip-wrap .caption {
+  margin: 0;
+}
+
+.bt-strip {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 6px;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x proximity;
+}
+
+.bt-strip li {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+.bt-offer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  width: 168px;
+  height: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-small);
+  background: var(--glass);
+  color: var(--text);
+  font: inherit;
+  font-size: calc(13px * var(--text-scale));
+  text-align: left;
+  cursor: pointer;
+}
+
+.bt-offer:hover:not(:disabled) {
+  border-color: var(--accent-edge);
+}
+
+.bt-offer:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.bt-offer .caption {
+  margin: 0;
+}
+
+.bt-offer-effect {
+  grid-column: 1 / -1;
+  color: var(--crack);
+  font-size: calc(12px * var(--text-scale));
+}
+
+/* The mark on the Abode in the menu while a breakthrough is ready. */
+.menu-mark {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  vertical-align: middle;
+  animation: menu-mark 2.4s ease-in-out infinite;
+}
+
+@keyframes menu-mark {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+:root[data-motion='reduced'] .menu-mark {
+  animation: none;
+}
+
+/* The glass darkens through the wind-up, so the figure is the only light, and clears as the
+   breakthrough lands. */
+.glass-dusk {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 35%, rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.82) 70%);
+  opacity: 0;
+  transition: opacity 700ms ease-out;
+}
+
+.glass-dusk.is-dark {
+  opacity: 1;
+  transition: opacity 3.5s ease-in;
+}
+
+:root[data-motion='reduced'] .glass-dusk {
+  transition: none;
+}
+
+/* The break: a flash over the whole seat and the figure shaking, harder for a major one; under
+   reduced motion the flash stays and fades, and nothing moves. A failure flashes the warning. */
+.abode-seat > .seat-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at 50% 40%,
+    color-mix(in srgb, var(--flash, var(--crack)) 55%, transparent),
+    transparent 65%
+  );
+}
+
+.abode-seat.is-body {
+  --flash: var(--hour-body);
+}
+
+.abode-seat.is-soul {
+  --flash: var(--hour-soul);
+}
+
+.abode-seat.is-held {
+  --flash: var(--warn);
+}
+
+.abode-seat.is-breaking > .seat-flash {
+  animation: seat-flash 1.4s ease-out;
+}
+
+.abode-seat.is-breaking.is-major > .seat-flash {
+  animation: seat-flash 2.2s ease-out;
+}
+
+.abode-seat.is-held > .seat-flash {
+  animation: seat-flash 0.9s ease-out;
+}
+
+@keyframes seat-flash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.abode-seat.is-breaking .seat-figure {
+  animation: seat-shake 0.5s ease-out;
+}
+
+.abode-seat.is-breaking.is-major .seat-figure {
+  animation: seat-shake-major 0.8s ease-out;
+}
+
+@keyframes seat-shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translate(-3px, 1px);
+  }
+  40% {
+    transform: translate(3px, -1px);
+  }
+  60% {
+    transform: translate(-2px, 0);
+  }
+  80% {
+    transform: translate(1px, 0);
+  }
+}
+
+@keyframes seat-shake-major {
+  0%,
+  100% {
+    transform: none;
+  }
+  10% {
+    transform: translate(-6px, 2px) scale(1.02);
+  }
+  25% {
+    transform: translate(6px, -2px) scale(1.02);
+  }
+  40% {
+    transform: translate(-4px, 1px);
+  }
+  60% {
+    transform: translate(3px, -1px);
+  }
+  80% {
+    transform: translate(-1px, 0);
+  }
+}
+
+:root[data-motion='reduced'] .abode-seat .seat-figure {
+  animation: none;
 }
 
 .seated-head,
@@ -3117,7 +3615,6 @@ select {
   text-align: center;
   pointer-events: none;
 }
-
 
 :root[data-motion='reduced'] .bag-slot {
   transition: none;

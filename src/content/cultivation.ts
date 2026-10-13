@@ -128,8 +128,9 @@ export const GRADES = [
 export type GradeId = (typeof GRADES)[number]['id'];
 export const GRADE_IDS = GRADES.map((g) => g.id) as unknown as readonly [GradeId, ...GradeId[]];
 /**
- * The margin score runs 0 to 4: a quarter each for qi past full, insight past the threshold, and
- * each of the other two ladders at or above the new realm. These are the scores each grade needs.
+ * The margin score runs 0 to 4: a point each for qi past full, insight past the threshold, and
+ * each of the other two ladders (half at the current realm's peak, whole at the new realm), with
+ * the method's and the offerings' margin on top. These are the scores each grade needs.
  */
 export const GRADE_SCORES: Record<GradeId, number> = {
   flawed: 0,
@@ -142,3 +143,28 @@ export const GRADE_SCORES: Record<GradeId, number> = {
 export const INSIGHT_MARGIN_FULL = 2;
 /** Each point of margin score adds this to a major breakthrough's odds. */
 export const MAJOR_ODDS_PER_MARGIN = 0.08;
+/**
+ * Body and soul each score this at the current realm's peak, and a full point once at the new
+ * realm (D2.1), so a cultivator with both at layer 9 and everything else full lays a perfect
+ * Foundation, and heavenly needs one of them actually there.
+ */
+export const PEAK_MARGIN = 0.5;
+/**
+ * A ladder's grade multiplies its cultivation speed for the whole new realm (D2.1): the speed
+ * only applies past Foundation, so the pacing sim's M1 targets stand.
+ */
+export const GRADE_SPEED: Record<GradeId, number> = {
+  flawed: 0.85,
+  ordinary: 1,
+  superior: 1.1,
+  perfect: 1.2,
+  heavenly: 1.35,
+};
+/** And adds to the next major breakthrough's odds on that ladder: a sound foundation (D2.1). */
+export const GRADE_NEXT_ODDS: Record<GradeId, number> = {
+  flawed: -0.03,
+  ordinary: 0,
+  superior: 0.03,
+  perfect: 0.06,
+  heavenly: 0.1,
+};
