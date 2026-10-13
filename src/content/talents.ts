@@ -195,6 +195,21 @@ export const TALENTS: readonly Talent[] = [
       { stat: 'majorOdds', value: 0.05 },
     ],
   },
+  {
+    id: 'glazed-glass-body',
+    kind: 'body',
+    name: 'Glazed Glass Body',
+    hanzi: '琉璃之体',
+    rarity: 'pristine',
+    text: 'Flesh like the uncracked glass of the heavens: clear, hard, and nothing foul stays in it.',
+    effects: [
+      { stat: 'bodyGain', value: 0.25 },
+      { stat: 'hp', value: 0.3 },
+      { stat: 'physicalResist', value: 0.15 },
+      { stat: 'poisonResist', value: 0.5 },
+      { stat: 'regeneration', value: 0.2 },
+    ],
+  },
 
   // ------------------------------------------------------------ soul
   {
@@ -332,6 +347,21 @@ export const TALENTS: readonly Talent[] = [
       { stat: 'soulDefense', value: 0.25 },
     ],
   },
+  {
+    id: 'dao-seeing-eyes',
+    kind: 'soul',
+    name: 'Dao-Seeing Eyes',
+    hanzi: '观道之眼',
+    rarity: 'pristine',
+    text: 'You see the pattern under things the way others see color. Nothing hides from you, and little escapes your understanding.',
+    effects: [
+      { stat: 'insightGain', value: 0.35 },
+      { stat: 'soulGain', value: 0.2 },
+      { stat: 'perception', value: 0.3 },
+      { stat: 'soulDefense', value: 0.2 },
+      { stat: 'aptitude', value: 1 },
+    ],
+  },
 
   // ------------------------------------------------------------ fate
   {
@@ -454,6 +484,34 @@ export const TALENTS: readonly Talent[] = [
       realm: 'foundation-establishment',
       insight: 500,
       text: 'At Foundation, a past life wakes in {name}, and remembers a great deal.',
+    },
+  },
+  {
+    id: 'child-of-the-severed-heaven',
+    kind: 'fate',
+    name: 'Child of the Severed Heaven',
+    hanzi: '断天之子',
+    rarity: 'pristine',
+    text: 'The cut heavens have a stake in you. Luck bends your way, tribulations go easier, and the world keeps putting things in your path.',
+    effects: [
+      { stat: 'fortune', value: 3 },
+      { stat: 'encounterLuck', value: 0.5 },
+      { stat: 'majorOdds', value: 0.05 },
+      { stat: 'tribulation', value: -0.2 },
+    ],
+  },
+  {
+    id: 'unsevered-thread',
+    kind: 'fate',
+    name: 'Unsevered Thread',
+    hanzi: '不断之缘',
+    rarity: 'pristine',
+    text: 'One thread from before the cut still runs through you. It sleeps until Core Formation, then pulls.',
+    effects: [{ stat: 'insightGain', value: 0.15 }],
+    sleeps: {
+      realm: 'core-formation',
+      insight: 2000,
+      text: 'At Core Formation the thread in {name} draws taut, and something on the far side of the cut answers.',
     },
   },
 ];

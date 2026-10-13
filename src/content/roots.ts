@@ -22,7 +22,7 @@ interface RootDef {
   hanzi: string;
   note: string;
   /** Its rarity on the shared scale (content/rarity.ts); white is the floor for roots. */
-  grade: 'white' | 'green' | 'blue' | 'purple' | 'gold' | 'red';
+  grade: 'white' | 'green' | 'blue' | 'purple' | 'gold' | 'red' | 'pristine';
   odds: number;
   speed: number;
   /** Which methods fit it (content/methods.ts, fitBy). */
@@ -129,6 +129,26 @@ export const ROOTS = [
       from: 'phases',
       defaults: ['wood', 'fire', 'earth', 'metal', 'water'],
     },
+  },
+  {
+    id: 'primordial',
+    name: 'Primordial Root',
+    hanzi: '鸿蒙灵根',
+    note: 'the qi of before the heavens were cut; every element, and the world leans in to teach you',
+    grade: 'pristine',
+    odds: 0.0001,
+    speed: 3.5,
+    kind: 'chaos',
+    elements: {
+      count: [5, 5],
+      from: 'phases',
+      defaults: ['wood', 'fire', 'earth', 'metal', 'water'],
+      fixed: true,
+    },
+    effects: [
+      { stat: 'aptitude', value: 1 },
+      { stat: 'insightGain', value: 0.1 },
+    ],
   },
 ] as const satisfies readonly RootDef[];
 

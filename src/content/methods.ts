@@ -440,6 +440,61 @@ export const METHODS: readonly Method[] = [
       },
     ],
   },
+  {
+    id: 'glazed-heaven-sutra',
+    name: 'Glazed Heaven Sutra',
+    pinyin: 'Liuli Tian Jing',
+    hanzi: '琉璃天经',
+    source:
+      'said to be cut from the glass of the heavens before they were severed; a sutra with no sect, no master and no second copy',
+    ladder: 'qi',
+    tier: 1,
+    rarity: 'pristine',
+    line: 'glazed-heaven-sutra',
+    chapter: 1,
+    fit: 'full',
+    fitBy: {},
+    requirements: {},
+    upkeep: null,
+    growth: { qiPool: 0.4, techniquePower: 0.4, qiRecovery: 0.2 },
+    properties: [
+      {
+        name: 'Clear Sea',
+        text: 'The dantian is glass: it holds more, and loses nothing.',
+        effects: [
+          { stat: 'qiGain', value: 0.08 },
+          { stat: 'qiRecovery', value: 0.1 },
+        ],
+      },
+      {
+        name: 'Unclouded',
+        text: 'Nothing muddies what you see.',
+        effects: [{ stat: 'insightGain', value: 0.08 }],
+      },
+      {
+        name: 'Flawless Step',
+        text: 'Every breakthrough finds its footing.',
+        effects: [
+          { stat: 'majorOdds', value: 0.04 },
+          { stat: 'gradeMargin', value: 0.25 },
+        ],
+      },
+      {
+        name: 'Uncracked',
+        text: 'Setbacks slide off the glass.',
+        effects: [{ stat: 'setbackTime', value: -0.3 }],
+      },
+      {
+        name: 'The Heaven Before the Cut',
+        text: 'For a breath each day you cultivate under the sky as it was, whole.',
+        effects: [
+          { stat: 'aptitude', value: 3 },
+          { stat: 'lifespan', value: 0.1 },
+        ],
+        unique: true,
+      },
+    ],
+  },
 ];
 
 const byId = new Map(METHODS.map((m) => [m.id, m]));

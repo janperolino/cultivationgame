@@ -42,10 +42,8 @@ describe('talents', () => {
     for (const kind of TALENT_KINDS) {
       const all = TALENTS.filter((t) => t.kind === kind);
       expect(all.length, kind).toBeGreaterThanOrEqual(10);
-      // No talent is pristine (design § Character creation, talents).
-      for (const r of RARITY_IDS.filter((r) => r !== 'pristine'))
+      for (const r of RARITY_IDS)
         expect(talentsOf(kind, r).length, `${kind} ${r}`).toBeGreaterThan(0);
-      expect(talentsOf(kind, 'pristine')).toEqual([]);
     }
     expect(new Set(TALENTS.map((t) => t.id)).size).toBe(TALENTS.length);
     for (const t of TALENTS) for (const e of t.effects) expect(STATS).toHaveProperty(e.stat);

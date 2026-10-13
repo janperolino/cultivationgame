@@ -106,13 +106,14 @@ describe('rarity', () => {
 
   it('rolls on the talent and loot table', () => {
     expect(RARITIES.reduce((sum, r) => sum + r.roll, 0)).toBeCloseTo(1);
-    expect([0, 0.0999, 0.1, 0.849, 0.9989, 0.9995].map(rollRarity)).toEqual([
+    expect([0, 0.0999, 0.1, 0.849, 0.998, 0.9995, 0.99995].map(rollRarity)).toEqual([
       'gray',
       'gray',
       'white',
       'green',
       'gold',
       'red',
+      'pristine',
     ]);
   });
 
