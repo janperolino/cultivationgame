@@ -306,7 +306,7 @@ Two things, in order (Jan's call after P2.2, 2026-10-12): the fight curve, then 
 - Tried in P2.2 and not enough: square-root ratios for hit and damage (chosen 88–100%, great-sect 0%), a base sized by the target's realm (great-sect 10 / 89 / 78 / 2%, non-monotone), steps shrunk to step^0.35 (great-sect 3 / 9 / 2 / 0%).
 - The targets themselves pull two ways. Under any smooth power-to-win curve, "ordinary under 2% a realm up" needs a realm worth about 4 logits, and then a great-sect disciple a realm-step's worth of kit ahead of a rogue wins about 96%, not 75%. One of the two gives.
 
-Settle the targets from the measurements, then rewrite § Combat's table and worked turn to match.
+*Done, 2026-10-13 (block 1):* § Combat's table carries kill time (about the step to the fifth: ×300 into Foundation, ×2,000 into Core Formation, ×13,000 into Nascent Soul) in place of the old power column, the ledger has four rows measured by the sim (ordinary about 0; great-sect purple under 10%; a new sacred-land genius row in gold, 40–60% into Core Formation and 25–45% into Nascent Soul; chosen over 95%), the Qi Condensation column is explained (no grade yet, tier 1 bases, so only a body ahead crosses; the half-step fight is Qi Condensation's way up), same-realm purple beats white over 95%, and two realms up is about 0 for everyone and 5% in pristine throughout. `content/enemies.ts` gained the genius kit and `sim/fights.ts` the new pass/fail list: all 28 targets hold at 4,000 fights a cell.
 
 **Breakthrough grades** (raised by Jan after P2.1: what a grade gets you and how to earn one aren't clear). Discussion notes from planning, not decisions:
 

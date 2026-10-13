@@ -1,6 +1,6 @@
 // The fight sim (design § Combat, the fighting-up ledger; § Enemies, beasts and the people you
 // meet): many fights per matchup, every fighter on its profile, the first mover drawn at random
-// each fight. The ledger's three kits fight an ordinary foe one realm up at the same stage,
+// each fight. The ledger's four kits fight an ordinary foe one realm up at the same stage,
 // without one-shot consumables, and the targets under the ledger are the pass/fail list. Then the
 // Border Wilds roster against a white and a purple kit at each realm it is met at. Each matchup
 // prints both sheets beside its win rate.
@@ -96,22 +96,28 @@ function ledgerCell(k: Kit, from: RealmId, gap = 1, stage = 1): Tally {
 const COLUMNS = REALMS.slice(0, 4).map((r) => r.id);
 const TARGETS: Record<string, [number, number][]> = {
   ordinary: [
-    [0, 0.02],
+    [0, 0.01],
     [0, 0.01],
     [0, 0.005],
     [0, 0.005],
   ],
   'great-sect': [
-    [0.4, 0.5],
-    [0.25, 0.35],
-    [0.1, 0.2],
-    [0.05, 0.1],
+    [0, 0.02],
+    [0, 0.1],
+    [0, 0.05],
+    [0, 0.02],
+  ],
+  genius: [
+    [0, 0.02],
+    [0.4, 0.6],
+    [0.25, 0.45],
+    [0, 0.05],
   ],
   chosen: [
-    [0.7, 0.8],
-    [0.6, 0.7],
-    [0.5, 0.6],
-    [0.4, 0.5],
+    [0.95, 1],
+    [0.95, 1],
+    [0.95, 1],
+    [0.9, 1],
   ],
 };
 
@@ -196,8 +202,8 @@ for (const r of ['foundation-establishment', 'core-formation'] as const) {
   console.log(
     `  ${name}: chosen v rogue ${pct(chosenRogue)}, great-sect v rogue ${pct(greatRogue)}, chosen v chosen a realm up ${pct(chosenUp)}, great-sect v great-sect a realm up ${pct(greatUp)}, chosen two realms up ${pct(twoUp)}, great-sect a stage up ${pct(stageUp)}`,
   );
-  check(`${name}: a chosen one beats a rogue about 95%`, chosenRogue, 0.9, 0.99);
-  check(`${name}: a great-sect disciple beats a rogue about 75%`, greatRogue, 0.65, 0.85);
+  check(`${name}: a chosen one beats a rogue over 95%`, chosenRogue, 0.95, 1);
+  check(`${name}: a great-sect disciple beats a rogue over 95%`, greatRogue, 0.95, 1);
   check(`${name}: chosen against chosen a realm up under 5%`, chosenUp, 0, 0.05);
   check(`${name}: great-sect against great-sect a realm up under 5%`, greatUp, 0, 0.05);
   check(`${name}: a chosen one two realms up under 5%`, twoUp, 0, 0.05);

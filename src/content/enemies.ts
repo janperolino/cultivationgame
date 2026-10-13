@@ -1,6 +1,6 @@
 // The people you fight (design § Enemies, beasts and the people you meet; § Tier, rarity and
 // pedigree): pedigree as a bias on the shared rarity roll, the realm baselines, the five
-// profiles, the fighting-up ledger's three kits, and the shapes a generated cultivator's arts and
+// profiles, the fighting-up ledger's four kits, and the shapes a generated cultivator's arts and
 // consumables take. Beasts are in content/beasts.ts and the Border Wilds roster in
 // content/roster.ts; core/combat/generate.ts rolls them all on the `people` stream. Every number
 // is a starting value the fight sim (sim/fights.ts) tunes.
@@ -177,7 +177,7 @@ export const PICK_SLACK = 0.8;
 // ---------------------------------------------------------------- kits
 
 /**
- * The fighting-up ledger's three rows (design § Combat), as kits rather than pedigrees: the
+ * The fighting-up ledger's four rows (design § Combat), as kits rather than pedigrees: the
  * rarity of each source, the art's mastery, the breakthrough grade, and whether the body stands a
  * realm ahead. The sim measures each against an ordinary foe one realm up.
  */
@@ -213,6 +213,17 @@ export const KITS: readonly Kit[] = [
     technique: 'purple',
     weapon: 'purple',
     armor: 'purple',
+    mastery: 2,
+    grade: 'perfect',
+    bodyAhead: false,
+  },
+  {
+    id: 'genius',
+    name: 'Sacred-land genius',
+    method: 'gold',
+    technique: 'gold',
+    weapon: 'gold',
+    armor: 'gold',
     mastery: 2,
     grade: 'perfect',
     bodyAhead: false,
