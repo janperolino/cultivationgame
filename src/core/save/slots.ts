@@ -1,11 +1,11 @@
-// Three save slots in IndexedDB through Dexie. Each holds a lineage: the current autosave, the
+// Eight save slots in IndexedDB through Dexie. Each holds a lineage: the current autosave, the
 // previous one as a backup, gentle mode's rewind point and the last export date.
 import { Dexie, type DexieOptions, type EntityTable } from 'dexie';
 import { ageYears, chronicleEvent, type GameState } from '../state.ts';
 import { encodeSaveFile, decodeSaveFile } from './file.ts';
 import { loadSave, makeSave, SaveError, type Save } from './format.ts';
 
-export const SLOTS = [1, 2, 3] as const;
+export const SLOTS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 export type SlotId = (typeof SLOTS)[number];
 
 /** Saves are stored raw and checked with Zod on the way out, so a bad write can't hide. */

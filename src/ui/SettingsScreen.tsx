@@ -1,7 +1,7 @@
 // Settings (design § UI and screens, the Settings row): saves, the life's clock speed, colors and
 // glass, text size and motion. The clock belongs to the life and saves with the slot; the rest
 // are the player's and live in ui/settings.ts.
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { RARITIES, type RarityId } from '../content/rarity.ts';
 import { realm, stageName } from '../content/realms.ts';
 import { clockChoices, clockRealm, OFFLINE_CAP_MS, realmYearsPerHour } from '../core/loop.ts';
@@ -29,24 +29,42 @@ import { Why } from './widgets.tsx';
 
 const WEEK_MS = 7 * 24 * 3_600_000;
 
+/**
+ * What a slot is asking before it acts. The browser's own confirm box is skipped silently in some
+ * frames (the desktop app's browser pane answers no at once), so the question sits in the row.
+ */
+type Asking = { kind: 'erase' } | { kind: 'rewind' } | { kind: 'import'; file: File };
+
 function SlotRow({ info }: { info: SlotSummary }) {
   const active = useGame((s) => s.slot === info.slot && s.phase === 'playing');
   const { openSlot, beginCreation, exportSlot, importSlot, clearSlot, rewind } = useGame.getState();
   const fileInput = useRef<HTMLInputElement>(null);
+  const [asking, setAsking] = useState<Asking | null>(null);
   const slot = info.slot as SlotId;
 
   const onImport = (file: File | undefined) => {
     if (!file) return;
-    if (
-      !info.empty &&
-      !window.confirm(
-        `Replace slot ${slot} with ${file.name}? The life in it is lost unless exported.`,
-      )
-    ) {
-      return;
-    }
-    void importSlot(slot, file);
+    if (info.empty) void importSlot(slot, file);
+    else setAsking({ kind: 'import', file });
   };
+
+  const confirm = () => {
+    if (!asking) return;
+    if (asking.kind === 'erase') void clearSlot(slot);
+    if (asking.kind === 'rewind') void rewind();
+    if (asking.kind === 'import') void importSlot(slot, asking.file);
+    setAsking(null);
+  };
+  const question = !asking
+    ? null
+    : asking.kind === 'erase'
+      ? { text: `Erase slot ${slot}? This can't be undone unless you exported it.`, yes: 'Erase' }
+      : asking.kind === 'rewind'
+        ? { text: 'Use your one rewind? You return to your latest breakthrough.', yes: 'Rewind' }
+        : {
+            text: `Replace slot ${slot} with ${asking.file.name}? The life in it is lost unless exported.`,
+            yes: 'Replace',
+          };
 
   // Measured against the last save rather than the clock, so rendering stays pure.
   const exportStale =
@@ -77,67 +95,71 @@ function SlotRow({ info }: { info: SlotSummary }) {
           <span className={exportStale ? 'warn' : undefined}>{formatWhen(info.lastExportAt)}</span>
         </p>
       )}
-      <div className="slot-actions">
-        {info.empty ? (
-          <button type="button" className="button" onClick={() => beginCreation(slot)}>
-            New life
+      {question ? (
+        <div className="slot-confirm" role="alertdialog" aria-label={question.text}>
+          <p className="warn">{question.text}</p>
+          <div className="slot-actions">
+            <button type="button" className="button button-danger" onClick={confirm}>
+              {question.yes}
+            </button>
+            <button type="button" className="button" onClick={() => setAsking(null)}>
+              Keep it
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="slot-actions">
+          {info.empty ? (
+            <button type="button" className="button" onClick={() => beginCreation(slot)}>
+              New life
+            </button>
+          ) : (
+            <>
+              {!active && !info.broken && (
+                <button type="button" className="button" onClick={() => void openSlot(slot)}>
+                  Play
+                </button>
+              )}
+              {!info.broken && (
+                <button type="button" className="button" onClick={() => void exportSlot(slot)}>
+                  Export
+                </button>
+              )}
+              {active && info.canRewind && (
+                <button
+                  type="button"
+                  className="button"
+                  onClick={() => setAsking({ kind: 'rewind' })}
+                >
+                  Rewind
+                </button>
+              )}
+            </>
+          )}
+          <button type="button" className="button" onClick={() => fileInput.current?.click()}>
+            Import
           </button>
-        ) : (
-          <>
-            {!active && !info.broken && (
-              <button type="button" className="button" onClick={() => void openSlot(slot)}>
-                Play
-              </button>
-            )}
-            {!info.broken && (
-              <button type="button" className="button" onClick={() => void exportSlot(slot)}>
-                Export
-              </button>
-            )}
-            {active && info.canRewind && (
-              <button
-                type="button"
-                className="button"
-                onClick={() => {
-                  if (
-                    window.confirm('Use your one rewind? You return to your latest breakthrough.')
-                  )
-                    void rewind();
-                }}
-              >
-                Rewind
-              </button>
-            )}
-          </>
-        )}
-        <button type="button" className="button" onClick={() => fileInput.current?.click()}>
-          Import
-        </button>
-        <input
-          ref={fileInput}
-          type="file"
-          accept=".gz,.json,application/gzip,application/json"
-          hidden
-          onChange={(e) => {
-            onImport(e.target.files?.[0]);
-            e.target.value = '';
-          }}
-        />
-        {!info.empty && (
-          <button
-            type="button"
-            className="button button-danger"
-            onClick={() => {
-              if (
-                window.confirm(`Erase slot ${slot}? This can't be undone unless you exported it.`)
-              )
-                void clearSlot(slot);
+          <input
+            ref={fileInput}
+            type="file"
+            accept=".gz,.json,application/gzip,application/json"
+            hidden
+            onChange={(e) => {
+              onImport(e.target.files?.[0]);
+              e.target.value = '';
             }}
-          >
-            Erase
-          </button>
-        )}
-      </div>
+          />
+          {!info.empty && (
+            <button
+              type="button"
+              className="button button-danger"
+              onClick={() => setAsking({ kind: 'erase' })}
+            >
+              Erase
+            </button>
+          )}
+        </div>
+      )}
     </li>
   );
 }
@@ -482,6 +504,10 @@ function SavesPanel() {
   const slots = useGame((s) => s.slots);
   const persisted = useGame((s) => s.persisted);
   const speed = useGame((s) => s.speed);
+  // Every slot that holds a life, and one empty one for a new life or an import.
+  const firstEmpty = slots.find((x) => x.empty);
+  const shown = slots.filter((x) => !x.empty || x === firstEmpty);
+  const used = slots.filter((x) => !x.empty).length;
 
   return (
     <section className="panel">
@@ -491,10 +517,14 @@ function SavesPanel() {
         autosave as a backup. Export is the only way to move a life to another device.
       </p>
       <ul className="slots">
-        {slots.map((info) => (
+        {shown.map((info) => (
           <SlotRow key={info.slot} info={info} />
         ))}
       </ul>
+      <p className="caption">
+        {used} of {slots.length} slots hold a life
+        {used < slots.length ? '; the first empty one waits at the end.' : '.'}
+      </p>
       <p className="muted">
         {persisted === true && 'The browser has agreed to keep this game’s storage.'}
         {persisted === false &&

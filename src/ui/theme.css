@@ -1329,6 +1329,14 @@ select {
   margin-top: 10px;
 }
 
+.slot-confirm {
+  margin-top: 10px;
+}
+
+.slot-confirm p {
+  margin: 0;
+}
+
 .modal-scrim {
   position: fixed;
   inset: 0;
