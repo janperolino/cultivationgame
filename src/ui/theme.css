@@ -3118,15 +3118,6 @@ select {
   pointer-events: none;
 }
 
-.bag-tag {
-  position: absolute;
-  left: 4px;
-  top: 3px;
-  font-size: 9px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--warn);
-}
 
 :root[data-motion='reduced'] .bag-slot {
   transition: none;

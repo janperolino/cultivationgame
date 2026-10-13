@@ -8,7 +8,6 @@
 import { useState, type DragEvent } from 'react';
 import { PACK_SQUARES } from '../content/gear.ts';
 import { MASTERY } from '../content/mastery.ts';
-import { REALMS } from '../content/realms.ts';
 import { TOXICITY_MAX } from '../content/cultivation.ts';
 import { hasItem, item, itemGlyph, type EquipSlot, type Item } from '../content/items.ts';
 import {
@@ -28,7 +27,7 @@ import {
 } from '../core/gear.ts';
 import type { Cultivator } from '../core/state.ts';
 import { stats } from '../core/stats.ts';
-import { ownTier, pillDose, toxicityDecay } from '../core/toxicity.ts';
+import { pillDose, toxicityDecay } from '../core/toxicity.ts';
 import { formatEffect, formatNumber } from './format.ts';
 import { itemTag, toxicityWords, useLines } from './itemWords.ts';
 import { useGame } from './store.ts';
@@ -43,7 +42,7 @@ const SQUARES: { slot: Exclude<EquipSlot, 'treasure'>; label: string; hanzi: str
 
 const DRAG = 'text/x-item';
 
-/** One item square: its glyph, name in its rarity color, a count past one, and a realm tag. */
+/** One item square: its glyph, name in its rarity color, and a count past one. */
 function ItemSquare({
   it,
   n,
@@ -51,7 +50,6 @@ function ItemSquare({
   selected,
   onPick,
   worn,
-  tag,
   onHold,
 }: {
   it: Item;
@@ -60,8 +58,6 @@ function ItemSquare({
   selected: boolean;
   onPick: () => void;
   worn?: EquipSlot;
-  /** The realm word shown on a thing above yours: "Foundation". */
-  tag?: string;
   /** Tells the Bag what is being dragged, so the squares it fits can glow. */
   onHold?: (id: string | null) => void;
 }) {
@@ -79,12 +75,11 @@ function ItemSquare({
       onDragEnd={() => onHold?.(null)}
       onClick={onPick}
       aria-pressed={selected}
-      aria-label={`${it.name}${n && n > 1 ? `, ${n}` : ''}${tag ? `, ${tag}` : ''}`}
+      aria-label={`${it.name}${n && n > 1 ? `, ${n}` : ''}`}
     >
       <span className="bag-glyph hanzi">{itemGlyph(it)}</span>
       <span className="bag-name">{it.name}</span>
       {n !== undefined && n > 1 && <span className="bag-count">{n}</span>}
-      {tag && <span className="bag-tag">{tag}</span>}
     </button>
   );
 }
@@ -458,10 +453,6 @@ export function BagScreen() {
   // What is in hand: a thing being dragged, else one picked up from the pack (not a worn one).
   const inPack = picked && hasItem(picked) && (c.items[picked] ?? 0) > 0 ? picked : null;
   const hand = dragging ?? inPack;
-  const own = ownTier(c);
-  /** A realm word on anything from a realm above yours. */
-  const tagOf = (it: Item) =>
-    it.tier > own ? (REALMS[it.tier - 1]?.name.split(' ')[0] ?? `tier ${it.tier}`) : undefined;
   const stacks = bagStacks(c);
   const used = bagUsed(c);
   const cap = bagCapacity(c);
@@ -503,7 +494,6 @@ export function BagScreen() {
               wide={s.squares > 1}
               selected={picked === s.id}
               onPick={() => setPicked(s.id)}
-              tag={tagOf(item(s.id))}
               onHold={setDragging}
             />
           ))}
