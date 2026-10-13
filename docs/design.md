@@ -267,12 +267,12 @@ Builds fall out on their own: the Demonic Way plus Sword techniques is a demonic
 
 **Manuals are nodes the world gives you.** Trees are yours and grow by realm; manuals are found, bought, inherited, written or stolen. A manual is anything learnable that carries nodes, one mechanical kind with a `nodes` list, from a single node to a small external tree with its own branches, requirements between its nodes, a capstone, and chapters per realm tier like a method's, the next chapter coming from a sect by contribution, rank or a master's favor, or from the world. The fiction supplies the size and the name, never a new mechanic: a *Formula* (口诀) is one or two nodes; a *Style* bundles craft nodes onto a craft Dao, *Clear Fire Sect's Alchemy Style*, and holds the sect's own recipes as nodes, so its pills are brewed by nobody else without stealing the manual; an *Art* is a technique and its nodes, which wake as the technique masters; a *Method* a ladder and its nodes, unsealed by mastery rather than realm; a *Scripture* (经) a big gold or red bundle; an *Inheritance* a ruin's or dead master's whole tree. Manual nodes cost insight like any node, by rarity, with requirements where they make sense. Hold two styles and both count: a cultivator who has read a hundred manuals should feel it, so there is no slot limit, small effects add without limit on the same stat, and multipliers and rule changes come only from purple up and go through the fighting-up ledger with gear and nodes, so the ledger stays the one place that caps a build. A white formula is +5% qi gain; a gold scripture changes how overfill works. White to blue manuals are generated from an effect table and named once, by template or GLM, like the small places; purple and above are written by hand. Manuals and trees never unlock each other: trees link to trees, and a manual is self-contained. From M5, *write a manual* turns any knowledge you hold, nodes or recipes, into a manual item to teach, sell or lose.
 
-**Where manuals live** (settled in D2.2). Every manual names a host tree, and the Trees screen draws it grafted beside that tree, the way the discoveries edge hangs found recipes off a craft Dao's rim.
+**Where manuals live** (settled in D2.2). Every manual names a host tree, and the Trees screen draws it grafted beside that tree: on the host's canvas, joined to none of its nodes, so a Cloud Saber Art stands in the Saber Dao's canvas beside the Saber tree, the way the discoveries edge hangs found recipes off a craft Dao's rim.
 
 - Hosts: a Method grafts beside its ladder's tree, an Art beside its technique's first Dao (Sinkhole Stone Fist's Art beside Earth), a Style beside its craft Dao, and a Formula beside the tree its effects touch: the Garrison Breath-Count, Tide-Counting and Bone Wall Watch formulas beside Qi, the Beast-Butcher Sinew Formula beside Body, the Stone Eyes Lamp Formula (insight) beside Soul. Authored manuals name their host in the data; a generated one takes it from its first effect's stat, a qi, body or soul stat to that ladder's tree and a Dao's stat to that Dao. A Scripture, an Inheritance or a Formula of mixed effects has no host and stands under the Manuals category as a small tree of its own.
 - Grafted means drawn beside, never joined: no requirement crosses between a manual and a tree, so losing a manual never strands a tree node.
 - The layout: each manual is a cluster in a column to the right of its host, in the tier band its nodes unseal in (a Method's or an Art's own tier), with a name plate (name, kind glyph, rarity color) and a dotted bracket to the band, never an edge into a tree node. Its nodes lay out by their requirements, the chain running down and siblings spreading across; several manuals in one band sit side by side, outward. A hand-written manual from purple up may place its nodes itself. The host's entry in the tree list counts them: "Qi · 3 manuals".
-- An Art is one technique and a small external tree of nodes built on it. The technique is never a node: you learn it however you learn it, it sits on the Art's name plate, and the nodes are passives you buy on it with insight. They wake as the technique masters, the way a Method's do: the first at Comprehension, then Mastery, Domain and Origin, and past four nodes the extras share a level. By rarity an Art holds 1, 1, 2, 3, 4, 5 and 6 nodes from white to pristine, so practising white Rampart Palm to Comprehension opens its one node. Its nodes act on its own technique only (+10% power, −15% qi cost, a critical staggers), so below purple an Art never reaches the ledger. A technique's next chapter (Lines, chapters and kinship) is its own Art.
+- An Art is one technique and a small external tree of nodes built on it. The technique is never a node: you learn it however you learn it, it sits on the Art's name plate, and the nodes are passives you buy on it with insight. They wake as the technique masters, the way a Method's do: the first at Comprehension, then Mastery, Perfection and Origin, and past four nodes the extras share a level. By rarity an Art holds 1, 1, 2, 3, 4, 5 and 6 nodes from white to pristine, so practising white Rampart Palm to Comprehension opens its one node. Its nodes can be any stat: the technique's own (+10% power, −15% qi cost, a critical staggers) or yours (+3% HP, +2% qi recovery, +4% Agility), so practising a technique grows the cultivator too. They follow the manual rule above, small adds to anything and multipliers and rule changes only from purple up, so below purple an Art never reaches the ledger. A technique's next chapter (Lines, chapters and kinship) is its own Art.
 - Every technique has its Art. Learning the technique by any road, a manual, a teacher or an epiphany, gives you its Art, the way a known method keeps its manual.
 - The Manuals category on the Trees screen shows the hostless manuals' small trees on top and, below, a shelf of every manual held by kind, each a link to its graft. The Character screen keeps one line, "Manuals: 7 (5 formulas, 1 method, 1 art)", linking there.
 
@@ -299,17 +299,17 @@ A major breakthrough's grade depends on the margin you bring, scored 0 to 4 (set
 
 A grade gives three things, all shown: stages in a fight on every line of the sheet (flawed −1, ordinary 0, superior +1, perfect +2, heavenly +3; Combat); cultivation speed on that ladder for the whole new realm (−15%, 0, +10%, +20%, +35%); and the odds of the next major breakthrough on that ladder (−3, 0, +3, +6, +10 points), since a sound foundation makes the next step easier. The breakthrough panel at the Abode (UI and screens) shows a grade meter, a bar from 0 to 4 with the five thresholds marked, filling as each source lands with every segment labeled, and the grade it earns as it stands; the Character screen lists each ladder's grade per realm with what it gives ("Foundation: perfect, +20% speed, +2 stages"). Minor steps have no grade.
 
-**Mastery belongs to techniques, methods and recipes.** Each runs Glimpse, Comprehension, Mastery, Domain, Origin, raised by use. A technique's or recipe's level adds +2 to checks with it. A method's level scales its speed, and its levels come about six times slower than a technique's, since every hour cultivating with it counts:
+**Mastery belongs to techniques, methods and recipes.** Each runs Glimpse, Comprehension, Mastery, Perfection 圆满, Origin, raised by use (the fourth level was Domain until D2.2 gave that name to the Intent ladder's stage, The combat Daos). A technique's or recipe's level adds +2 to checks with it. A method's level scales its speed, and its levels come about six times slower than a technique's, since every hour cultivating with it counts:
 
 | Level | Practice days at tier 1 (×3 per tier) | Method speed |
 |---|---|---|
 | Glimpse | 0 | ×0.6 |
 | Comprehension | 30 | ×0.8 |
 | Mastery | 180 | ×1.0 |
-| Domain | 720 | ×1.1 |
+| Perfection | 720 | ×1.1 |
 | Origin | 2,400 | ×1.2 |
 
-An hour with a method or a technique is a twelfth of a practice day. At six qi hours a day Mastery lands about an hour into a life, inside the tutorial; a new line taken at Foundation runs below full speed for about two in-game years and forgoes Domain or Origin's bonus for longer. Starting values for the pacing sim.
+An hour with a method or a technique is a twelfth of a practice day. At six qi hours a day Mastery lands about an hour into a life, inside the tutorial; a new line taken at Foundation runs below full speed for about two in-game years and forgoes Perfection or Origin's bonus for longer. Starting values for the pacing sim.
 
 "Flowing Cloud Blade at Comprehension" means a Foundation-tier sword technique at its second mastery level.
 
@@ -341,13 +341,30 @@ The five element Daos and the four weapon Daos of v1, with their shape settled a
 
 **Earth**, weight, stagger and standing firm. Tier 1: Weight (earth damage), Stagger (staggered foes lose turn order), Mountain Stance (hold, HP); side path Vein Sense (geomancy, veins found); capstone Unmoved, the first hit against you each turn does half. Tier 2: Landslide (earth damage), Crush (staggered foes take earth ×1.15), Bedrock (hold); side paths Spirit Vein Sense (abode sites) and Burrow (cover anywhere, escape underground); capstone Mountain Falls, a critical staggers every foe.
 
-**Sword**, precision and the single strike. Tier 1: Sword Heart (hit), Keen Edge (crit faces), Sword Qi (technique power at range); side path Sword Intent (intimidate, and talk checks against the timid); capstone One Sword, the first sword strike of a fight at ×1.5. Tier 2: Clear Heart (hit, and daze cannot touch you), Sword Light (critical damage), Flying Sword (sword qi at full power at range); side paths Sword-Riding (flight on your sword) and Sword Intent's second step (a sword's pressure as an aura); capstone Sword Rain, once a fight a sword technique strikes every foe.
+**Sword**, precision and the single strike. Tier 1: Sword Heart (hit), Keen Edge (crit faces), Sword Qi (technique power at range); side path Sword Bearing 剑势 (intimidate, and talk checks against the timid; renamed in D2.2, since Sword Intent is the Intent ladder's); capstone One Sword, the first sword strike of a fight at ×1.5. Tier 2: Clear Heart (hit, and daze cannot touch you), Sword Light (critical damage), Flying Sword (sword qi at full power at range); side paths Sword-Riding (flight on your sword) and Sword Pressure, Sword Bearing's second step (a sword's pressure as an aura); capstone Sword Rain, once a fight a sword technique strikes every foe.
 
 **Saber**, force, momentum and the cleave. Tier 1: Heavy Cleave (harm), Momentum (each hit in a row adds damage), Butcher's Nerve (crit faces against wounded foes); side path Roar (intimidate); capstone Cleaving Tide, momentum carries over a miss. Tier 2: Mountain-Splitting (harm), Tide of Blades (momentum climbs faster), Executioner (criticals on wounded foes ×1.25); side paths Bone-Cutter (bleed) and Tiger Roar (fear, a foe may lose its turn); capstone Unstoppable Cleave, a critical carries half its damage to a second foe.
 
 **Spear**, reach, the first strike and the line. Tier 1: Reach (turn order), Piercing (ignores part of resist), Wall Drill (defend gives more); side path Sweep (a second foe takes half); capstone First Blood, you strike first in the first turn. Tier 2: Long Reach (turn order, the first strike each fight at ×1.25), Armor-Piercing (ignores more resist), Shield Wall (defend covers an ally); side paths Whirl (sweep hits all adjacent) and Banner (allies gain hit); capstone Dragon Thrust, your first thrust each turn cannot miss.
 
 **Fist**, the body, speed and closeness. Tier 1: Iron Fist (physical damage), Flurry (a minor-action strike), Rooted Stance (stagger resist, hold); side path Breath of Blows (qi back on each hit); capstone Hundred Fists, a critical grants a second main action, once a fight. Tier 2: Steel Fist (physical damage), Storm of Blows (the flurry strike at full power), Immovable (stagger and unbalance cannot touch you); side paths Palm Wind (a palm at range) and Second Wind (regeneration in a fight); capstone Fist and Body as One, unarmed strikes count your body a stage higher.
+
+**The Intent ladder** (settled in D2.2). Every combat Dao has a ladder beside its tiers, and it is the genre's signature progression, not a node: Qi, Intent, Domain and Law, Sword's 剑气, 剑意, 剑域 and 剑之法则, Saber's 刀意 and 刀域, Fire's 火意 and 火域, and so on for all nine. The stages are earned, never bought with insight.
+
+| Stage | What it does | Earned by | Early, for a genius |
+|---|---|---|---|
+| Qi | the Dao's tier 1, as now | holding tier 1 | |
+| Intent | the Dao's actions at ×1.15 Accuracy and ×1.15 Attack; foes below your stage in that Dao at ×0.9 Accuracy against you; about a stage in all | the Dao's tier 2 capstone (Foundation) and a moment | the tier 1 capstone (Qi Condensation) |
+| Domain | Intent, and foes below your stage at ×0.85 Evasion, with their Defense counted ×0.8 against the Dao's actions | the tier 4 capstone (Nascent Soul) and a moment | the tier 3 capstone (Core Formation) |
+| Law | a realm gap counts only as half a step on the Dao's actions; written, not built in v1 | past v1 | |
+
+- A moment is an epiphany card, a fight won from under 10% of your HP, a Dao stele or an inheritance, each with that Dao in it. The capstone makes you ready; the moment breaks through.
+- A genius takes each stage a realm early: a gold-or-better talent tied to the Dao (Sword Heart, the Innate Sword Root for Sword) or a rare card opens it on the capstone a tier lower, so a Qi Condensation cultivator with sword intent is a prodigy people talk about.
+- A foe at your stage or above in any Dao cancels your Intent's and Domain's effects on them: intent meets intent.
+- The sheet shows a line for each Dao you hold intent in, "Sword · Intent 剑意"; on the Combat screen a combatant with intent wears a mark, and the hit-chance preview counts the effects.
+- NPCs carry intent on their weapon's Dao by pedigree and realm (Enemies, beasts and the people you meet, the pedigree table).
+- Intent and Domain are a row of the fighting-up ledger (Combat). The four target rows stand, measured with the intent each pedigree's kit carries by that table; if a row breaks, the stage numbers move, not the targets.
+- Saber's Roar and Tiger Roar stay: a roar is not intent. The Sword tree's intimidation side path is Sword Bearing, which leaves the name to the ladder.
 
 Lightning, Wind and Ice stay as Daos the trees list (Cultivation, Daos) with no draft yet; the fight sim says whether v1 needs them beyond their damage types.
 
@@ -421,7 +438,7 @@ A pouch is cloth: anyone can open it, a thief can cut it off, and it goes with y
 
 **Treasure slots** hold artifacts that are properties alone: a fire bead, a warding jade, a treasure ring, a soul-calming bell. They carry no squares and no weapon rule, only their rarity's properties and a bond. You start with none, and the slots come from nodes: one notable in each tier of the Qi tree and one in each tier of the Soul tree opens a slot, so a realm is worth two and the count leans on both trees. The Bag shows them beside the four gear squares as they open.
 
-**Bonding.** Artifacts from blue up bond to a cultivator by use, on the mastery scale, Glimpse to Origin (Cultivation, mastery): fight turns with it count as practice, and feeding it stones in seclusion counts as hours. Each level unlocks one of its properties, in the order the item lists them, and cuts the above-your-realm penalty a step: −4 to hit at Glimpse, −2 at Mastery, nothing at Domain, and at Origin a weapon a tier up counts its full tier gap. At gold and red an artifact spirit wakes at Domain, and a pristine artifact is born with one awake: it carries the unique property, speaks in scenes (GLM gives it a voice, the engine its wants), and can refuse an owner it hates. A bonded artifact works at white for anyone else, and a lineage heirloom's bond passes to an heir at Glimpse.
+**Bonding.** Artifacts from blue up bond to a cultivator by use, on the mastery scale, Glimpse to Origin (Cultivation, mastery): fight turns with it count as practice, and feeding it stones in seclusion counts as hours. Each level unlocks one of its properties, in the order the item lists them, and cuts the above-your-realm penalty a step: −4 to hit at Glimpse, −2 at Mastery, nothing at Perfection, and at Origin a weapon a tier up counts its full tier gap. At gold and red an artifact spirit wakes at Perfection, and a pristine artifact is born with one awake: it carries the unique property, speaks in scenes (GLM gives it a voice, the engine its wants), and can refuse an owner it hates. A bonded artifact works at white for anyone else, and a lineage heirloom's bond passes to an heir at Glimpse.
 
 **Pills and toxicity.** Every cultivator has one toxicity meter, 0 to 100. A pill adds its dose: 10 at your own tier for a white pill, triple for a pill a tier above you, a third for one below. Higher rarity is purer, so the dose scales ×1.5 at gray, ×1 at white, ×0.9 at green, ×0.8 at blue, ×0.65 at purple, ×0.4 at gold, ×0.25 at red and ×0.15 at pristine; a red pill is almost clean. Toxicity decays about 1 a day at Qi Condensation and faster by realm, every pill's effect scales by 1 minus toxicity over 100, and reaching 100 unsettles the ladder the last pill fed. Detox pills and the Body tree's Hundred Poisons branch cut it. Toxicity is why pills are a boost and never the road.
 
@@ -462,13 +479,13 @@ NPCs run on the player's rules, and pedigree is only access (Tier, rarity and pe
 
 **Pedigree is a bias on the shared roll**, the same rule as loot and shops (Items and gear): each rarity's weight is multiplied by b to the power of its step from gray.
 
-| Pedigree | b | Typical method | Technique mastery |
-|---|---|---|---|
-| Rogue | 0.5 | white | Comprehension |
-| Small sect | 1 | green | Mastery |
-| Great sect | 1.6 | blue | Mastery |
-| Sacred land | 2.5 | purple | Domain |
-| Chosen of heaven | 4, and one slot guaranteed gold or better | gold | Domain |
+| Pedigree | b | Typical method | Technique mastery | Intent on the weapon's Dao | Domain |
+|---|---|---|---|---|---|
+| Rogue | 0.5 | white | Comprehension | from Core Formation | never |
+| Small sect | 1 | green | Mastery | from Foundation | from Nascent Soul |
+| Great sect | 1.6 | blue | Mastery | from Foundation | from Nascent Soul |
+| Sacred land | 2.5 | purple | Perfection | from Foundation | from Core Formation |
+| Chosen of heaven | 4, and one slot guaranteed gold or better | gold | Perfection | from Qi Condensation | from Core Formation |
 
 Each realm's ordinary baseline rises on top, since anyone who reached Nascent Soul has lived for centuries: the bias is multiplied by ×1 at Qi Condensation and Foundation, ×1.3 at Core Formation and ×1.6 from Nascent Soul up. Mastery rises one level for every realm past the first, up to Origin, because practice days pile up. The biases are midpoints of ranges the sim tunes; the fighting-up ledger's rows are what they must reproduce.
 
@@ -861,6 +878,7 @@ The element multiplier is 1.25 when your element overcomes the target's, 0.8 whe
 | Breakthrough grade | every line | −1 to +3 stages |
 | Body or soul a realm ahead | HP and Defense, or soul Attack and Defense | the next realm's size on those lines |
 | Dao tiers | Accuracy and Attack | ×1.05 a tier |
+| Intent and Domain (The combat Daos, the Intent ladder) | Accuracy and Attack on the Dao's actions; the foe's Accuracy, then Evasion and Defense | Intent ×1.15 and the foe ×0.9, about a stage; Domain adds the foe's Evasion ×0.85 and Defense ×0.8 |
 | Element advantage | damage | ×1.25 |
 | Creativity | Accuracy | ×1.1 a point, 0 to +3 |
 | Tree and Way nodes | various | a few percent each; capstones a stage |
@@ -868,7 +886,7 @@ The element multiplier is 1.25 when your element overcomes the target's, 0.8 whe
 | Offerings at the breakthrough | the grade | +0.5 margin at red and +0.75 at pristine, so a stage of grade |
 | A weapon above your realm | Attack | half its tier's step, at a qi cost and ×0.8 Accuracy; the bond cuts the penalty, and at Origin the whole step counts |
 
-Win rate follows the two sheets line by line, and under the brutal curve it is a cliff: a kit a fifth of a realm short loses nearly always, and a kit over the line wins nearly always. Four rows mark the cliff, kits rather than pedigrees: an ordinary kit has every line a step behind; a great-sect kit in purple with a perfect grade sizes its lines at its own realm's peak, a step short; a sacred-land genius in gold with a perfect grade stands at the next realm's first stage on Attack and Defense and fights it about even in the middle realms; a chosen of heaven in red and gold, Domain, a heavenly grade and a body a realm ahead stands at the next realm on every line and wins.
+Win rate follows the two sheets line by line, and under the brutal curve it is a cliff: a kit a fifth of a realm short loses nearly always, and a kit over the line wins nearly always. Four rows mark the cliff, kits rather than pedigrees: an ordinary kit has every line a step behind; a great-sect kit in purple with a perfect grade sizes its lines at its own realm's peak, a step short; a sacred-land genius in gold with a perfect grade stands at the next realm's first stage on Attack and Defense and fights it about even in the middle realms; a chosen of heaven in red and gold, Perfection, a heavenly grade and a body a realm ahead stands at the next realm on every line and wins.
 
 The fight sim's targets (settled in D2.1 from the measurements, 10,000 fights a cell), as win rates against an ordinary foe one realm up at the same first stage, measured without one-shot consumables; the ordinary foe's own kit rises by realm (green at Core Formation, blue at Nascent Soul, purple arts at Deity Transformation), which is why every row falls off at Nascent Soul:
 
@@ -877,7 +895,7 @@ The fight sim's targets (settled in D2.1 from the measurements, 10,000 fights a 
 | Ordinary: white gear, ordinary grade | about 0 | about 0 | about 0 | about 0 |
 | Great-sect disciple: purple, Mastery, perfect grade | about 0 | under 10% | under 5% | about 0 |
 | Sacred-land genius: gold, Mastery, perfect grade | about 0 | 40–60% | 25–45% | under 5% |
-| Chosen of heaven: red art, gold gear and method, Domain, body ahead, heavenly grade | over 95% | over 95% | over 95% | over 90% |
+| Chosen of heaven: red art, gold gear and method, Perfection, body ahead, heavenly grade | over 95% | over 95% | over 95% | over 90% |
 
 The Qi Condensation column is its own case: no major breakthrough has happened, so no grade exists, and tier 1 arts strike at tier 1 bases against Foundation HP, so nothing but a body a realm ahead crosses out of it; that is the half-step fight's job, and a layer 9 against an early Foundation foe (44% to hit) is where a Qi Condensation cultivator fights up. The rows are kits, not pedigrees: a typical great-sect disciple on the pedigree table (Enemies, beasts and the people you meet) sits between the first two rows. Beasts are their own foe: ×1.5 HP and no armor, so they lead on HP and fall on Defense, and a bloodline's abilities count as technique rarity. Within a pedigree the higher realm wins: a chosen one against a chosen one a realm up, or a great-sect disciple against another, wins under 5%. Two realms up is about 0 for everyone, and 5% in pristine from head to foot. At the same realm and stage, a chosen one or a great-sect disciple beats a rogue over 95% of the time, the sect disciple crushing the rogue as the novels have it, and a single stage up is easy to overcome. The sim holds these; what it tunes when content arrives is each realm's NPC baseline and the roster.
 
