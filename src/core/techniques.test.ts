@@ -9,6 +9,7 @@ import { newLife, type Cultivator } from './state.ts';
 import {
   addPractice,
   canPractice,
+  daysToNextLevel,
   learnTechnique,
   mastery,
   masteryAccuracy,
@@ -106,5 +107,35 @@ describe('practice days', () => {
     s = practice(s, 'alley-wind-palm');
     expect(s.player.practicing).toBe('alley-wind-palm');
     expect(practice(s, 'not-known').player.practicing).toBe('alley-wind-palm');
+  });
+});
+
+describe('days to the next level', () => {
+  const c = learnTechnique(learnTechnique(base.player, 'rampart-palm'), 'sinkhole-stone-fist');
+
+  it('divides the practice days left by the rate', () => {
+    // Comprehension is 4 practice days at tier 1: 3 left at half a day a day.
+    const at = withPractice(c, 'rampart-palm', 1);
+    expect(daysToNextLevel(at, 'rampart-palm', 0.5)).toBeCloseTo(6);
+    expect(daysToNextLevel(at, 'rampart-palm', 0)).toBe(Infinity);
+  });
+
+  it("counts the technique's kinship", () => {
+    // Sinkhole Stone Fist shares the Fist Dao and the palm form; at Comprehension it is kin.
+    const kin = withPractice(c, 'sinkhole-stone-fist', 4);
+    expect(daysToNextLevel(kin, 'rampart-palm', 1)).toBeCloseTo(4 / 1.25);
+    expect(daysToNextLevel(c, 'rampart-palm', 1)).toBeCloseTo(4);
+  });
+
+  it('is null at Origin and while sealed', () => {
+    expect(daysToNextLevel(withPractice(c, 'rampart-palm', 600), 'rampart-palm', 1)).toBeNull();
+    const collapse = withPractice(withPractice(c, 'rampart-palm', 30), 'rampart-collapse-palm', 0);
+    expect(daysToNextLevel(collapse, 'rampart-collapse-palm', 1)).toBeNull();
+    const foundation = {
+      ...collapse,
+      qi: { ...collapse.qi, realm: 'foundation-establishment' as const },
+    };
+    // Tier 2 needs three times tier 1's 4 days.
+    expect(daysToNextLevel(foundation, 'rampart-collapse-palm', 1)).toBeCloseTo(12);
   });
 });

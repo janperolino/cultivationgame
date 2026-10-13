@@ -2284,19 +2284,477 @@ select {
   margin-top: 8px;
 }
 
-/* Techniques */
-.technique + .technique {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--edge);
+/* Techniques (P2.5b, mockup A): the list beside one technique's page, stacking list-first. */
+.technique-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: -6px 0 14px;
 }
 
-.technique .muted {
-  margin-top: 4px;
+.practice-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hour-practice);
 }
 
-.technique.is-sealed .bars {
+.technique-split {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.technique-split > .panel + .panel,
+.technique-page-col > .panel {
+  margin-top: 0;
+}
+
+.technique-page-col {
+  scroll-margin-top: 12px;
+}
+
+.technique-list-panel {
+  padding: 10px;
+}
+
+.technique-list-head,
+.technique-label {
+  font-size: calc(11px * var(--text-scale));
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.technique-list-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 10px 8px;
+}
+
+.technique-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.technique-row {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.technique-row:hover {
+  background: rgb(255 255 255 / 0.03);
+}
+
+.technique-row.is-selected {
+  border-color: var(--accent-edge);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.technique-row.is-under {
+  margin-left: 20px;
+  width: calc(100% - 20px);
+}
+
+.technique-row.is-sealed > * {
+  opacity: 0.62;
+}
+
+.technique-row-top,
+.technique-row-bottom {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.technique-row-bottom {
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+}
+
+.technique-row-name {
+  font-family: var(--font-display);
+  font-size: calc(18px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.technique-row-hanzi {
+  color: var(--muted);
+  font-size: calc(14px * var(--text-scale));
+  white-space: nowrap;
+}
+
+.technique-row-gap {
+  flex: 1;
+}
+
+.technique-hook {
+  flex: none;
+  align-self: center;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+}
+
+.practicing-mark {
+  color: var(--hour-practice);
+  font-size: calc(11px * var(--text-scale));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.technique-lock {
+  flex: none;
+  align-self: center;
+  fill: none;
+  stroke: var(--warn);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mastery-pips {
+  display: flex;
+  gap: 3px;
+}
+
+.mastery-pips .pip {
+  display: block;
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.12);
+}
+
+.mastery-pips .pip.is-lit {
+  background: var(--crack);
+}
+
+.technique-num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.technique-page {
+  display: grid;
+  gap: 16px;
+}
+
+.technique-page > * {
+  margin: 0;
+}
+
+.technique-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.technique-page-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: calc(30px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.technique-page-head .hanzi {
+  color: var(--muted);
+  font-size: calc(23px * var(--text-scale));
+}
+
+.technique-page-head + .caption {
+  margin-top: -10px;
+}
+
+.line-strip {
+  display: grid;
+  gap: 8px;
+}
+
+.line-strip-tiles {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.line-strip-step {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.line-arrow {
+  flex: none;
+  fill: none;
+  stroke: var(--crack);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.line-tile {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  max-width: 260px;
+  padding: 9px 14px;
+  border: 1px solid var(--edge-strong);
+  border-radius: 7px;
+  background: var(--well);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.line-tile:hover {
+  border-color: var(--accent-edge);
+}
+
+.line-tile.is-here {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.line-tile-name {
+  font-family: var(--font-display);
+  font-size: calc(17px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.line-tile-name .hanzi {
+  color: var(--muted);
+  font-size: calc(14px * var(--text-scale));
+}
+
+.line-tile-status {
+  font-size: calc(12px * var(--text-scale));
+  color: var(--muted);
+}
+
+.line-tile-status.warn {
+  color: var(--warn);
+}
+
+.technique-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.technique-chips li {
+  padding: 2px 10px;
+  border: 1px solid var(--edge-strong);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+}
+
+.technique-text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: calc(18px * var(--text-scale));
+  line-height: 1.4;
+}
+
+.technique-sealed {
+  padding: 10px 14px;
+  border: 1px solid var(--warn-edge);
+  border-radius: var(--radius-small);
+  background: color-mix(in srgb, var(--warn) 7%, transparent);
+  color: var(--warn);
+}
+
+.mastery-block {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--edge);
+  border-radius: 7px;
+  background: var(--well);
+}
+
+.mastery-block-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 16px;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.mastery-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mastery-step {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mastery-step .bar {
+  height: 6px;
+}
+
+.mastery-block.is-sealed .mastery-step .bar {
   opacity: 0.45;
+}
+
+.mastery-step-name {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: calc(13px * var(--text-scale));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mastery-step.is-reached .mastery-step-name {
+  color: var(--text);
+}
+
+.mastery-step.is-current .mastery-step-name {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.mastery-step-hanzi {
+  margin-top: -4px;
+  color: var(--muted);
+  font-size: calc(14px * var(--text-scale));
+}
+
+.mastery-eta {
+  margin: 0;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.technique-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.technique-figures > div {
+  flex: 1 1 130px;
+  padding: 9px 14px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-small);
+}
+
+.technique-figures dt {
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.technique-figures dd {
+  margin: 0;
+  font-size: calc(19px * var(--text-scale));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.technique-figures dd.caption {
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 400;
+}
+
+.technique-kin {
+  color: var(--crack);
+  font-size: calc(13px * var(--text-scale));
+}
+
+.technique-page .technique-art {
+  margin-top: 0;
+}
+
+.technique-page-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+.technique-page-foot .button {
+  min-height: 44px;
+  padding: 0 20px;
+}
+
+@media (max-width: 1100px) {
+  .technique-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .mastery-steps {
+    gap: 4px;
+  }
+
+  .mastery-step-name,
+  .mastery-step .caption {
+    font-size: calc(11px * var(--text-scale));
+  }
+
+  .mastery-step .caption {
+    white-space: nowrap;
+  }
+
+  .line-strip-tiles {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .line-strip-step,
+  .line-tile {
+    width: 100%;
+    max-width: none;
+  }
+
+  .line-strip-step {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .line-arrow {
+    align-self: center;
+    transform: rotate(90deg);
+  }
 }
 
 .button[aria-pressed='true'] {

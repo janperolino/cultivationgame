@@ -91,6 +91,19 @@ export function kinshipBonus(c: Cultivator, id: string): number {
   return techniqueKin(c, id).length > 0 ? KINSHIP_BONUS : 0;
 }
 
+/**
+ * Practice days it takes to reach the next mastery level, at `rate` practice days a day before
+ * kinship, the technique's own kinship counted; null at Origin or while sealed, Infinity with no
+ * rate at all.
+ */
+export function daysToNextLevel(c: Cultivator, id: string, rate: number): number | null {
+  const t = technique(id);
+  const m = mastery(c, id);
+  if (techniqueSealed(c, t) || m.next === null) return null;
+  const perDay = rate * (1 + kinshipBonus(c, id));
+  return perDay > 0 ? (m.next - m.practice) / perDay : Infinity;
+}
+
 export type TechniqueCheck = { ok: true } | { ok: false; reason: string };
 
 /** Whether a technique can be learned: a line's next chapter needs the one before at Comprehension. */
