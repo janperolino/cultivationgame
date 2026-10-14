@@ -5,7 +5,9 @@
 // Each run is a created life, the cave orphan who went along with plain talents, playing the first
 // hour's cards as they come by their default choices: the first technique at minute 20–35, the
 // errand's tempering art near the hour, the lamp-keeper's nourishing art near two hours, and at
-// layer 9 the Foundation Pill with a copy of the Foundation chapter, taken up once read (P2.5f). A
+// layer 9 the Foundation Pill with a copy of the Foundation chapter, taken up once read (P2.5f).
+// Each first time is played at once, as a player would (core/life.ts, playFirsts): the method's
+// copy read on one study hour and taken up, each technique and art given its slot and hour. A
 // failed Foundation attempt gets another pill at once rather than the card's ten years. Every
 // method starts white, tier 1 and at Glimpse, and climbs in mastery with the hours cultivated with it.
 // Each row is the median of many seeds.
@@ -36,7 +38,7 @@ import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
 import { TREES, treeNode, type TreeNode } from '../src/content/trees/index.ts';
 import { majorCheck } from '../src/core/cultivation.ts';
-import { breakThrough, learn, switchMethod } from '../src/core/life.ts';
+import { breakThrough, learn, playFirsts, switchMethod } from '../src/core/life.ts';
 import { advance } from '../src/core/loop.ts';
 import { methodMastery } from '../src/core/methods.ts';
 import { Rng } from '../src/core/rng.ts';
@@ -152,8 +154,9 @@ function followRoutine(s: GameState): GameState {
   return r.check.ok ? withPlayer(s, r.cultivator) : s;
 }
 
-/** Keeps every waking hour on qi, whatever the default rule flipped. */
+/** Keeps every waking hour on qi once a method is taken up, whatever the default rule flipped. */
 function allQi(s: GameState): GameState {
+  if (!s.player.activeMethods.qi) return s;
   const wheel = s.player.wheel.map((k) => (k === 'sleep' ? 'sleep' : 'qi'));
   return withPlayer(s, { ...s.player, wheel });
 }
@@ -194,6 +197,7 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
       origin: 'cave-orphan',
     },
   });
+  s = playFirsts(s);
   const at: (number | undefined)[] = [];
   const run: Run = { at, fails: 0 };
   let ms = 0;
@@ -209,7 +213,7 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
       opts = { step: playDay, seat: sat.seat };
     }
     const r = advance(s, CHUNK_MS, opts);
-    s = settleCards(r.state);
+    s = playFirsts(settleCards(r.state));
     ms += r.usedMs;
     const hours = ms / 3_600_000;
     for (const c of s.chronicle.slice(chronicleSeen)) if (c.type.endsWith('setback')) run.fails++;

@@ -12,11 +12,13 @@ import { graftsOn, hostlessManuals } from '../core/manuals.ts';
 import { bookcaseManuals } from '../core/reading.ts';
 import type { Cultivator } from '../core/state.ts';
 import { newIds, shownTrees, treeOpen } from '../core/seen.ts';
-import { treeTotals } from '../core/trees.ts';
+import { canLearn, treeTotals } from '../core/trees.ts';
 import { Bookcase, HostlessView } from './Bookcase.tsx';
 import { formatEffect, formatNumber, LADDER_LABELS } from './format.ts';
 import { useNav } from './nav.ts';
 import { useGame } from './store.ts';
+import { rings } from './beacons.ts';
+import { useBeacons } from './useBeacons.ts';
 import { TreeFan } from './TreeFan.tsx';
 import { Why } from './widgets.tsx';
 
@@ -165,6 +167,9 @@ export function TreesScreen() {
     if (target) useNav.setState({ trees: null });
   }, [target]);
   const localSeq = useRef(0);
+  // A first node waiting (ui/beacons.ts): the trees holding a node buyable now glow their tabs, and
+  // those nodes wear the ring.
+  const nodeBeacon = rings(useBeacons(), 'node');
 
   if (!game) return null;
   const c = game.player;
@@ -190,6 +195,7 @@ export function TreesScreen() {
     ...freshManuals,
     ...newIds(game, 'copy').map((id) => copyManual(id).id),
   ]);
+  const buyable = (t: Tree) => nodeBeacon && t.nodes.some((n) => canLearn(c, n.id).ok);
   const categoryNew = (k: TreeCategory) =>
     k.trees.some((t) => freshTrees.has(t.id)) ||
     (k.id === MANUALS_PICK &&
@@ -211,7 +217,13 @@ export function TreesScreen() {
             <button
               key={k.id}
               type="button"
-              className={categoryNew(k) && k.id !== current.id ? 'is-new' : undefined}
+              className={
+                k.id !== current.id && k.trees.some(buyable)
+                  ? 'is-beacon'
+                  : categoryNew(k) && k.id !== current.id
+                    ? 'is-new'
+                    : undefined
+              }
               aria-pressed={k.id === current.id}
               onClick={() => {
                 setFocus(null);
@@ -236,7 +248,13 @@ export function TreesScreen() {
               <button
                 key={t.id}
                 type="button"
-                className={freshTrees.has(t.id) ? 'is-new' : undefined}
+                className={
+                  t.id !== tree.id && buyable(t)
+                    ? 'is-beacon'
+                    : freshTrees.has(t.id)
+                      ? 'is-new'
+                      : undefined
+                }
                 aria-pressed={t.id === tree.id}
                 onClick={() => {
                   setFocus(null);
@@ -276,15 +294,17 @@ export function TreesScreen() {
         {grafts.length > 0 &&
           ' The manuals you hold are jewels in each band’s crown, joined to none of its nodes; tap one to open it.'}
       </p>
-      <TreeFan
-        key={`${tree.id}:${treeFocus?.seq ?? 'home'}`}
-        c={c}
-        tree={tree}
-        grafts={grafts}
-        focus={treeFocus?.id ?? null}
-        own={own}
-        fresh={freshManuals}
-      />
+      <div className={`fan-holder${nodeBeacon ? ' has-node-beacon' : ''}`}>
+        <TreeFan
+          key={`${tree.id}:${treeFocus?.seq ?? 'home'}`}
+          c={c}
+          tree={tree}
+          grafts={grafts}
+          focus={treeFocus?.id ?? null}
+          own={own}
+          fresh={freshManuals}
+        />
+      </div>
     </section>
   );
 }

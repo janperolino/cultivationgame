@@ -40,6 +40,7 @@ import {
 } from '../content/cultivation.ts';
 import { stepLabel, type EventData } from '../content/chronicle.ts';
 import { phaseOf } from '../content/elements.ts';
+import { ALL_FIRSTS, type FirstId } from '../content/firsts.ts';
 import {
   BRANCHES,
   DAWN_BONUS,
@@ -108,6 +109,8 @@ export interface RuleContext {
   day: number;
   rng: Rng;
   seat?: Seat;
+  /** The first times the lineage has done (core/firsts.ts); every one when not given. */
+  firsts?: readonly FirstId[];
 }
 
 // ---------------------------------------------------------------- the ladders
@@ -908,8 +911,11 @@ export function nourish(c: Cultivator, amount: number): Cultivator {
  * Opens kinds of hour as the cultivator reaches them, flipping an hour to each by the default
  * rule, frees sleep at Foundation, and marks a gate reached, with a chronicle line each.
  */
-export function checkUnlocks(c: Cultivator): { cultivator: Cultivator; notes: Note[] } {
-  const opened = openHours(c);
+export function checkUnlocks(
+  c: Cultivator,
+  firsts: readonly FirstId[] = ALL_FIRSTS,
+): { cultivator: Cultivator; notes: Note[] } {
+  const opened = openHours(c, firsts);
   let next = opened.cultivator;
   const notes = [...opened.notes];
   const major = majorCheck(next, 'qi');
@@ -996,8 +1002,9 @@ export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): Cu
     days,
   );
   // The study hours read the copy set on them, finishing it once its study days are in.
-  const read = addReading(practiced.cultivator, rates.study * days);
-  const unlocked = checkUnlocks(read.cultivator);
+  const firsts = ctx.firsts ?? ALL_FIRSTS;
+  const read = addReading(practiced.cultivator, rates.study * days, firsts);
+  const unlocked = checkUnlocks(read.cultivator, firsts);
   let next = unlocked.cultivator;
   const notes = [...practiced.notes, ...read.notes, ...unlocked.notes];
   const breakthroughs: CultivateResult['breakthroughs'] = [];

@@ -10,6 +10,7 @@ import { realm } from '../content/realms.ts';
 import { countWord, spanWords, timesWord } from '../content/words.ts';
 import { renderEvent, whoFor } from './chronicle.ts';
 import { barFill, majorCheck, type LadderId } from './cultivation.ts';
+import { firstsWaitingLines } from './firsts.ts';
 import type { GameState, Ladder } from './state.ts';
 
 export interface StorySection {
@@ -32,6 +33,8 @@ export interface ComingBackStory {
   waiting: string | null;
   /** The breakthrough waiting on you, or null. */
   ready: string | null;
+  /** Each first time still waiting on you (core/firsts.ts): "Your tempering art waits for an hour." */
+  firsts: string[];
 }
 
 const HEADINGS: Record<CardKind | 'story', string> = {
@@ -178,5 +181,6 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
       : `Your qi is full; ${major.target.name} still waits on its requirements.`
     : null;
 
-  return { opening, growth, sections, highlights, settled, waiting, ready };
+  const firsts = firstsWaitingLines(after);
+  return { opening, growth, sections, highlights, settled, waiting, ready, firsts };
 }

@@ -5,6 +5,7 @@
 // next chapter or a new method. Mastery climbs with every hour cultivated with it, and switching is
 // paid in mastery, never in bar. Some methods drink an upkeep and stall on an unfed day.
 import { TUTORIAL_LAYERS, type LadderId } from '../content/cultivation.ts';
+import { ALL_FIRSTS, type FirstId } from '../content/firsts.ts';
 import { METHOD_MASTERY } from '../content/mastery.ts';
 import {
   FIT_SPEED,
@@ -164,15 +165,21 @@ export function meetsRequirements(c: Cultivator, m: Method): MethodCheck {
 
 /**
  * Learns a method, starting from its chapter floor; a ladder with nothing active takes it up at
- * once if it can.
+ * once if it can, unless the lineage has never taken up one of its kind (a qi method, or a
+ * tempering or nourishing art): the first time, it waits to be taken up (core/firsts.ts).
  */
-export function learnMethod(c: Cultivator, id: string): Cultivator {
+export function learnMethod(
+  c: Cultivator,
+  id: string,
+  firsts: readonly FirstId[] = ALL_FIRSTS,
+): Cultivator {
   if (knowsMethod(c, id) || !hasMethod(id)) return c;
   const m = method(id);
   const next = {
     ...c,
     methods: { ...c.methods, [id]: { practice: chapterFloor(c, m), fedUntil: 0 } },
   };
+  if (!firsts.includes(m.ladder === 'qi' ? 'method' : 'art')) return next;
   if (c.activeMethods[m.ladder] || !meetsRequirements(c, m).ok) return next;
   return { ...next, activeMethods: { ...c.activeMethods, [m.ladder]: id } };
 }

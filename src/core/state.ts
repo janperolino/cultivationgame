@@ -6,6 +6,7 @@ import { z } from 'zod';
 import type { EventData } from '../content/chronicle.ts';
 import { AUTO_IDS, GRADE_IDS } from '../content/cultivation.ts';
 import { ELEMENTS, type Element } from '../content/elements.ts';
+import { ALL_FIRSTS, FIRST_IDS, type FirstId } from '../content/firsts.ts';
 import { FRESH_WHEEL, HOUR_KIND_IDS, HOURS_PER_DAY } from '../content/hours.ts';
 import {
   ORIGIN_CHOICES,
@@ -175,14 +176,12 @@ export const CultivatorSchema = z.object({
   copies: z.record(z.string(), z.number().int().min(0)),
   /**
    * The reading queue (core/reading.ts): copy ids in order, the first readable one read on the
-   * study hours; the study days put into each copy begun, which stay with it if it leaves the
-   * head; and the wheel as it was before a first copy turned every waking hour to study, which
-   * comes back once that copy is read.
+   * study hours, and the study days put into each copy begun, which stay with it if it leaves
+   * the head.
    */
   reading: z.object({
     queue: z.array(z.string()),
     days: z.record(z.string(), z.number().min(0)),
-    wheel: Wheel.nullable(),
   }),
   /** Techniques known, with the practice days put into each. */
   techniques: z.record(z.string(), z.object({ practice: z.number().min(0) })),
@@ -250,6 +249,10 @@ export const GameStateSchema = z.object({
     id: z.string(),
     /** 1 for the first life; rebirth (M8) counts up. */
     life: z.number().int().min(1),
+    /** The first times done (core/firsts.ts), so a reborn cultivator isn't walked through them. */
+    firsts: z.array(z.enum(FIRST_IDS)),
+    /** The hints acted on or dismissed (content/firsts.ts), each shown once a lineage. */
+    hints: z.array(z.string()),
   }),
   mode: z.enum(['ironman', 'gentle']),
   calendar: z.object({
@@ -317,6 +320,13 @@ export interface NewLifeOptions {
   aptitude?: number;
   /** Techniques known from the start; tests and sims only, since the first one comes as a card. */
   techniques?: string[];
+  /**
+   * The first times the lineage has done (core/firsts.ts); every one unless given, so tests and
+   * NPCs run on the defaults. Creation starts a lineage with none.
+   */
+  firsts?: readonly FirstId[];
+  /** Burn stones in qi hours from the start: a reborn life whose lineage has done it before. */
+  burnStones?: boolean;
 }
 
 /** An empty ladder at Qi Condensation layer 1. */
@@ -347,6 +357,9 @@ export function newCultivator(
 ): Cultivator {
   const method = opts.method === undefined ? 'garrison-standard' : opts.method;
   const techniques = opts.techniques ?? [];
+  const elements = opts.elements ?? defaultElements(opts.root ?? 'true');
+  // A fresh wheel is all qi until the lineage has set a study hour itself; after, one is set for it.
+  const studied = (opts.firsts ?? ALL_FIRSTS).includes('study-hour');
   return {
     id,
     name: opts.name,
@@ -355,7 +368,7 @@ export function newCultivator(
     bornDay: opts.bornDay,
     lifespanBonus: 0,
     root: opts.root ?? 'true',
-    rootElements: opts.elements ?? defaultElements(opts.root ?? 'true'),
+    rootElements: elements,
     talents: opts.talents ?? [],
     origin: opts.origin ?? null,
     place: opts.place ?? null,
@@ -372,16 +385,15 @@ export function newCultivator(
     bonds: {},
     toxicity: 0,
     // Study is open from the start: one qi hour turns to it by the default rule.
-    wheel: flipHour(FRESH_WHEEL, opts.elements ?? defaultElements(opts.root ?? 'true'), 'study')
-      .wheel,
+    wheel: studied ? flipHour(FRESH_WHEEL, elements, 'study').wheel : [...FRESH_WHEEL],
     routines: opts.routines ?? [],
     savedRoutines: [],
-    plan: { auto: 'safe', burnStones: false },
+    plan: { auto: 'safe', burnStones: opts.burnStones ?? false },
     flags: opts.flags ?? [],
     nodes: [],
     manuals: [],
     copies: {},
-    reading: { queue: [], days: {}, wheel: null },
+    reading: { queue: [], days: {} },
     techniques: Object.fromEntries(techniques.map((t) => [t, { practice: 0 }])),
     practicing: techniques.slice(0, 1),
     contemplation: {},
@@ -457,7 +469,12 @@ export function newLife(opts: NewLifeOptions): GameState {
   const startDay = START_AGE * DAYS_PER_YEAR;
   const player = newCultivator(PLAYER_ID, { ...opts, bornDay: 0 });
   return {
-    lineage: { id: opts.seed ?? opts.name, life: 1 },
+    lineage: {
+      id: opts.seed ?? opts.name,
+      life: 1,
+      firsts: [...(opts.firsts ?? ALL_FIRSTS)],
+      hints: [],
+    },
     mode,
     calendar: { day: startDay },
     player,
@@ -478,10 +495,17 @@ export function newLife(opts: NewLifeOptions): GameState {
 
 /**
  * The next life in the same slot after a death: the world's calendar runs on and the chronicle
- * stays, but nothing else carries over until rebirth arrives in M8.
+ * stays, and so does the lineage's record of first times and hints; nothing else carries over
+ * until rebirth arrives in M8.
  */
 export function nextLife(prev: GameState, opts: NewLifeOptions): GameState {
-  const fresh = newLife({ ...opts, mode: opts.mode ?? prev.mode });
+  const firsts = prev.lineage.firsts;
+  const fresh = newLife({
+    ...opts,
+    mode: opts.mode ?? prev.mode,
+    firsts,
+    burnStones: firsts.includes('stones'),
+  });
   const day = prev.calendar.day;
   const bornDay = day - START_AGE * DAYS_PER_YEAR;
   const player = {
@@ -491,7 +515,7 @@ export function nextLife(prev: GameState, opts: NewLifeOptions): GameState {
   };
   return {
     ...fresh,
-    lineage: { id: prev.lineage.id, life: prev.lineage.life + 1 },
+    lineage: { ...prev.lineage, life: prev.lineage.life + 1 },
     player,
     calendar: { day },
     chronicle: [...prev.chronicle, ...openingEvents(player, day, true)],

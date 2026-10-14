@@ -1,5 +1,6 @@
-// P2.5f: study opened by a first copy, the reading queue and how well a copy suits you (design
-// § Cultivation, the day is twelve double-hours and Reading), and save v16's reading.
+// P2.5f: study on the hours you set, the reading queue and how well a copy suits you (design
+// § Cultivation, the day is twelve double-hours and Reading), and save v16's reading. P2.8 dropped
+// the whole-wheel reading: a copy reads on the study hours the wheel holds, however few.
 import { describe, expect, it } from 'vitest';
 import { readDays, SUITS_CAP } from '../content/copies.ts';
 import { masteryNeed } from './techniques.ts';
@@ -46,49 +47,34 @@ function days(c: Cultivator, n: number, from = base.calendar.day): Cultivator {
 
 const count = (c: Cultivator, kind: string) => effectiveWheel(c).filter((k) => k === kind).length;
 
-describe('study opened by a first copy', () => {
-  it('takes every waking hour until the torn manual is read, then gives the wheel back', () => {
+describe('study on the hours you set', () => {
+  it('reads the torn manual on the one study hour, the rest of the wheel left alone', () => {
     expect(street.player.qi.stage).toBeLessThan(2);
     const wheelBefore = [...street.player.wheel];
     const s = gainCopy(street, SCRAP);
     const c = s.player;
-    // Ten waking hours at Qi Condensation, 子 and 丑 asleep.
-    expect(count(c, 'study')).toBe(10);
-    expect(count(c, 'qi')).toBe(0);
-    expect(c.reading.wheel).toEqual(wheelBefore);
-    expect(s.chronicle.map((e) => eventText(s, e))).toContainEqual(
-      expect.stringMatching(/every waking hour turns to study/),
-    );
-    // A white copy, three study days, on ten study hours: about 3.6 days.
-    const perDay = dayRates(c, base.calendar.day).study;
-    expect(perDay).toBeCloseTo(10 / 12);
-    expect(readDays(SCRAP) / perDay).toBeCloseTo(3.6);
-    const half = days(c, 3);
-    expect('bounty-scrap' in half.methods).toBe(false);
-    const read = days(half, 1, base.calendar.day + 3);
-    expect(read.activeMethods.qi).toBe('bounty-scrap');
-    // The wheel comes back with one study hour kept, and qi on the rest.
-    expect(read.reading.wheel).toBeNull();
-    expect(count(read, 'study')).toBe(1);
-    expect(count(read, 'qi')).toBe(9);
-  });
-
-  it('leaves the wheel alone once a qi method is known: study keeps its one hour', () => {
-    const c = gainCopy(base, TIDE).player;
+    // No shortcut fills the wheel: it is as it was, one study hour and qi on the rest.
+    expect(c.wheel).toEqual(wheelBefore);
     expect(count(c, 'study')).toBe(1);
-    expect(c.reading.wheel).toBeNull();
+    expect(s.chronicle.map((e) => eventText(s, e))).not.toContainEqual(
+      expect.stringMatching(/every waking hour/),
+    );
+    // A white copy, three study days, on one study hour: 36 days.
+    const perDay = dayRates(c, base.calendar.day).study;
+    expect(perDay).toBeCloseTo(1 / 12);
+    expect(readDays(SCRAP) / perDay).toBeCloseTo(36);
+    const most = days(c, 35);
+    expect('bounty-scrap' in most.methods).toBe(false);
+    const read = days(most, 2, base.calendar.day + 35);
+    expect(read.activeMethods.qi).toBe('bounty-scrap');
+    expect(read.wheel).toEqual(wheelBefore);
   });
 
-  it('flips a kind opened meanwhile on the wheel put aside', () => {
+  it('flips a kind opened while a copy is read on the wheel itself', () => {
     let s = gainCopy(street, SCRAP);
     s = gainTechnique(s, 'rampart-palm');
-    expect(count(s.player, 'study')).toBe(10);
-    expect(s.player.reading.wheel!.filter((k) => k === 'practice')).toHaveLength(1);
-    // Taking the copy out of the queue gives the wheel back at once, practice hour and all.
-    const back = unqueueRead(s, SCRAP).player;
-    expect(back.reading.wheel).toBeNull();
-    expect(count(back, 'practice')).toBe(1);
-    expect(count(back, 'study')).toBe(1);
+    expect(count(s.player, 'study')).toBe(1);
+    expect(count(s.player, 'practice')).toBe(1);
   });
 
   it('opens body hours only once an errand’s tempering art is read', () => {
@@ -152,8 +138,8 @@ describe('the reading queue', () => {
     c = queueCopy(c, TIDE).cultivator;
     c = { ...c, reading: { ...c.reading, days: { [TIDE]: 2 } } };
     expect(readingCopy(c)).toBe(BREATH);
-    // Every waking hour is study until the first copy is read: ten hours, 10/12 of a study day a day.
-    const read = days(c, 4);
+    // One study hour: a twelfth of a study day a day, so the three-day formula takes 36.
+    const read = days(c, 36);
     expect(read.manuals).toContain('garrison-breath-count');
     expect(readingQueue(read)).toEqual([TIDE]);
     expect(readingCopy(read)).toBe(TIDE);
@@ -220,11 +206,7 @@ describe('save v16', () => {
     const loaded = loadSave(raw);
     expect(loaded.version).toBe(SAVE_VERSION);
     expect(loaded.state.player.practicing).toEqual(['rampart-palm']);
-    expect(loaded.state.player.reading).toEqual({
-      queue: [TIDE],
-      days: { [TIDE]: 1.5 },
-      wheel: null,
-    });
+    expect(loaded.state.player.reading).toEqual({ queue: [TIDE], days: { [TIDE]: 1.5 } });
     raw.state.player.practicing = null;
     raw.state.player.reading = { copy: null, days: {} };
     const none = loadSave(raw).state.player;
@@ -235,12 +217,5 @@ describe('save v16', () => {
     raw.state.player.practicing = palm.id;
     raw.state.player.techniques = { [palm.id]: { practice: masteryNeed(palm, 4) } };
     expect(loadSave(raw).state.player.practicing).toEqual([]);
-  });
-
-  it('round-trips a wheel put aside by a first copy', () => {
-    const s = gainCopy(street, SCRAP);
-    const loaded = loadSave(makeSave(s, 1)).state.player;
-    expect(loaded.reading.wheel).toEqual(street.player.wheel);
-    expect(count(loaded, 'study')).toBe(10);
   });
 });

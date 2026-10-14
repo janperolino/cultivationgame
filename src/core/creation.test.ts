@@ -213,13 +213,13 @@ describe('origins', () => {
         const s = createLife(creation({ choice, roll: { ...creation().roll, origin: o.id } }));
         const p = s.player;
         const path = o[choice];
-        // The method comes as a copy, read before it is any use, on every waking hour.
+        // The method comes as a copy, unread and unqueued on a wheel all qi: the player's first
+        // times (core/firsts.ts).
         expect(p.activeMethods.qi).toBeNull();
-        if (path.method) {
-          expect(p.copies[`method:${path.method}`]).toBe(1);
-          expect(p.reading.queue).toEqual([`method:${path.method}`]);
-          expect(p.wheel.filter((k) => k === 'study')).toHaveLength(10);
-        }
+        expect(p.wheel.filter((k) => k === 'study')).toHaveLength(0);
+        expect(p.reading.queue).toEqual([]);
+        expect(s.lineage.firsts).toEqual([]);
+        if (path.method) expect(p.copies[`method:${path.method}`]).toBe(1);
         expect(p.routines).toEqual(path.routines);
         expect(p.stones).toBe(path.stones);
         expect(p.flags).toEqual(path.flags);

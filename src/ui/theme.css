@@ -6171,3 +6171,126 @@ button.fight-card {
     flex-wrap: wrap;
   }
 }
+
+/* ---------------------------------------------------------------- first times (P2.8) */
+
+/* The beacon (ui/beacons.ts): a first-time action waits. Its menu button and its tab glow lightly
+   and hold still; two motes drift along their edges, small and alone in moving, so nothing large
+   repaints. Under reduced motion the glow stays and the motes go. It outranks the new glow. */
+.is-beacon {
+  position: relative;
+  border-color: var(--accent-edge);
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--accent) 36%, transparent),
+    inset 0 0 8px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.is-beacon::before,
+.is-beacon::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  offset-path: inset(0 round 6px);
+  offset-rotate: 0deg;
+  animation: beacon-mote 6s linear infinite;
+  pointer-events: none;
+}
+
+.is-beacon::after {
+  opacity: 0.6;
+  animation-delay: -3s;
+  animation-duration: 7.5s;
+}
+
+@keyframes beacon-mote {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+:root[data-motion='reduced'] .is-beacon::before,
+:root[data-motion='reduced'] .is-beacon::after {
+  display: none;
+}
+
+/* The exact control wears a soft ring, and a fainter one widens from it now and then. */
+.beacon-ring {
+  position: relative;
+  border-radius: var(--radius-small);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent),
+    0 0 14px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.beacon-ring::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1px solid var(--accent);
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  animation: beacon-ring 2.6s ease-out infinite;
+}
+
+@keyframes beacon-ring {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.97);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+:root[data-motion='reduced'] .beacon-ring::after {
+  display: none;
+}
+
+label.beacon-ring {
+  padding: 2px 6px;
+  margin: -2px -6px;
+}
+
+/* The wheel: the free qi hours ring in the accent while an hour is wanted. */
+.wheel.is-beacon .wheel-hour.is-beckoning .wheel-seg {
+  stroke: var(--accent);
+  stroke-width: 1.5px;
+  stroke-opacity: 0.85;
+}
+
+/* A node buyable now, while the first node waits: a ring in world space, scaling with the zoom. */
+.fan-holder {
+  display: contents;
+}
+
+.has-node-beacon .fan-node.is-buyable {
+  outline: 2px solid color-mix(in srgb, var(--accent) 75%, transparent);
+  outline-offset: 4px;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+/* A hint stays until done or dismissed: the accent on its edge, its link a quiet "Show me". */
+.toast.is-hint {
+  border-left-color: var(--accent);
+}
+
+.toast.is-hint .toast-name {
+  color: var(--text);
+}
+
+.toast-go {
+  font-size: inherit;
+  white-space: nowrap;
+}

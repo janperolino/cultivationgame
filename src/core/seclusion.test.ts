@@ -24,32 +24,45 @@ import {
 import { eventText, settledItself, whoFor } from './chronicle.ts';
 import { comingBackStory } from './comingBack.ts';
 import { createLife } from './creation.ts';
+import { ALL_FIRSTS } from './firsts.ts';
+import { playFirsts } from './life.ts';
 import { catchUp } from './loop.ts';
 import { knownPeople, peopleFeed, personLog, resolveWho } from './people.ts';
 import { loadSave } from './save/format.ts';
 import { DAYS_PER_YEAR, daysLived, withPlayer, type GameState } from './state.ts';
+
+/**
+ * A life whose lineage has done every first time: the copy queued and a study hour set as a player
+ * would, then the method taken up by itself once read.
+ */
+const seasoned = (s: GameState): GameState => {
+  const played = playFirsts(s);
+  return { ...played, lineage: { ...played.lineage, firsts: [...ALL_FIRSTS] } };
+};
 
 const life = (
   origin: OriginId = 'cave-orphan',
   choice: OriginChoice = 'along',
   seed = 'seclusion',
 ): GameState =>
-  createLife({
-    name: 'Han Li',
-    pronouns: 'he/him',
-    look: '',
-    mode: 'ironman',
-    seed,
-    choice,
-    roll: {
-      root: 'true',
-      elements: ['wood', 'fire'],
-      body: 'farmhands-frame',
-      soul: 'plain-mind',
-      fate: 'ordinary-fate',
-      origin,
-    },
-  });
+  seasoned(
+    createLife({
+      name: 'Han Li',
+      pronouns: 'he/him',
+      look: '',
+      mode: 'ironman',
+      seed,
+      choice,
+      roll: {
+        root: 'true',
+        elements: ['wood', 'fire'],
+        body: 'farmhands-frame',
+        soul: 'plain-mind',
+        fate: 'ordinary-fate',
+        origin,
+      },
+    }),
+  );
 
 const atLived = (s: GameState, lived: number): GameState => ({
   ...s,
@@ -365,7 +378,9 @@ describe('the coming-back story', () => {
   });
 
   it('tells qi gathered when no step was climbed', () => {
-    const s = atLived(life(), 30);
+    // Eight real minutes read the method on its one study hour; the minute after is the one told.
+    const s = catchUp(atLived(life(), 30), 0, 8 * 60_000, { step: playDay }).state;
+    expect(s.player.activeMethods.qi).not.toBeNull();
     const away = catchUp(s, 0, 60_000, { step: playDay });
     const story = comingBackStory(s, away.state);
     expect(away.state.player.qi.stage).toBe(s.player.qi.stage);

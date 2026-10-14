@@ -63,6 +63,7 @@ function AwayCard({ away }: { away: AwaySummary }) {
         <Sections sections={story.sections} />
       )}
       {story.waiting && <p className="spaced">{story.waiting}</p>}
+      {story.firsts.length > 0 && <p className="spaced accent">{story.firsts.join(' ')}</p>}
       {away.atEdge && <p className="warn">You woke at the edge of your lifespan.</p>}
       <div className="actions">
         <button type="button" className="button" onClick={dismissAway}>

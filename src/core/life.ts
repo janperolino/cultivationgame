@@ -3,6 +3,7 @@
 // breakthroughs, keeps gentle mode's rewind, opens screens, wakes sleeping talents, marks a failed
 // Foundation attempt for the cards, and ends the life at the lifespan edge.
 import { hasCopy } from '../content/copies.ts';
+import type { HourKind } from '../content/hours.ts';
 import { hasManual } from '../content/manuals.ts';
 import { hasMethod } from '../content/methods.ts';
 import { realmIndex } from '../content/realms.ts';
@@ -51,8 +52,9 @@ import {
   stopPractice,
   type TechniqueCheck,
 } from './techniques.ts';
+import { FIRST_IDS, firstsWaiting, noteFirsts, type FirstStep } from './firsts.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
-import { learnRoutine } from './wheel.ts';
+import { followWheel, hourToFlip, learnRoutine, setHour, type WheelCheck } from './wheel.ts';
 
 /**
  * The Trees screen opens with anything that lives there (design § UI and screens, Only what you
@@ -125,11 +127,16 @@ export function checkScreens(s: GameState): GameState {
 export const cultivate: DayStep = (s, days, ctx) => {
   if (s.ended || days <= 0) return s;
   const { value: r, state } = withStream(s, 'breakthrough', (rng) =>
-    cultivateDays(s.player, days, { day: s.calendar.day, rng, seat: ctx?.seat }),
+    cultivateDays(s.player, days, {
+      day: s.calendar.day,
+      rng,
+      seat: ctx?.seat,
+      firsts: s.lineage.firsts,
+    }),
   );
   let next = addNotes(withPlayer(state, r.cultivator), r.notes);
   for (const b of r.breakthroughs) if (b.success) next = flare(next, b.ladder, b.major);
-  return checkScreens(next);
+  return noteFirsts(checkScreens(next));
 };
 
 export interface LifeBreakthrough {
@@ -189,13 +196,41 @@ export function learn(s: GameState, nodeId: string): { state: GameState; check: 
   const r = learnNode(s.player, nodeId);
   if (!r.check.ok) return { state: s, check: r.check };
   const next = addEvent(withPlayer(s, r.cultivator), 'node', { node: nodeId });
-  return { state: next, check: r.check };
+  return { state: noteFirsts(next), check: r.check };
 }
 
-/** Opens what the player has just reached, kinds of hour and screens, without waiting for a tick. */
+/**
+ * Opens what the player has just reached, kinds of hour and screens, without waiting for a tick,
+ * and records any first time it shows done.
+ */
 function settle(s: GameState): GameState {
-  const r = checkUnlocks(s.player);
-  return checkScreens(addNotes(withPlayer(s, r.cultivator), r.notes));
+  const r = checkUnlocks(s.player, s.lineage.firsts);
+  return noteFirsts(checkScreens(addNotes(withPlayer(s, r.cultivator), r.notes)));
+}
+
+/** The player gives one hour of the day wheel to a kind of work; the reason when they can't. */
+export function giveHour(
+  s: GameState,
+  hour: number,
+  kind: HourKind,
+): { state: GameState; check: WheelCheck } {
+  const r = setHour(s.player, hour, kind);
+  return { state: r.check.ok ? noteFirsts(withPlayer(s, r.cultivator)) : s, check: r.check };
+}
+
+/** The player sets the whole wheel to a routine's hours; the reason when they can't. */
+export function followRoutine(
+  s: GameState,
+  hours: readonly HourKind[],
+): { state: GameState; check: WheelCheck } {
+  const r = followWheel(s.player, hours);
+  return { state: r.check.ok ? noteFirsts(withPlayer(s, r.cultivator)) : s, check: r.check };
+}
+
+/** The player changes the auto setting for minor breakthroughs, or burning stones in qi hours. */
+export function setPlan(s: GameState, patch: Partial<GameState['player']['plan']>): GameState {
+  const p = s.player;
+  return noteFirsts(withPlayer(s, { ...p, plan: { ...p.plan, ...patch } }));
 }
 
 /**
@@ -205,7 +240,8 @@ function settle(s: GameState): GameState {
  */
 export function gainTechnique(s: GameState, id: string, how = 'learns'): GameState {
   if (!canLearnTechnique(s.player, id).ok) return s;
-  const next = addEvent(withPlayer(s, learnTechnique(s.player, id)), 'technique', {
+  const learned = learnTechnique(s.player, id, s.lineage.firsts);
+  const next = addEvent(withPlayer(s, learned), 'technique', {
     technique: id,
     how,
   });
@@ -218,7 +254,8 @@ export function gainTechnique(s: GameState, id: string, how = 'learns'): GameSta
  */
 export function gainMethod(s: GameState, id: string, how = 'learns'): GameState {
   if (!hasMethod(id) || knowsMethod(s.player, id)) return s;
-  const next = addEvent(withPlayer(s, learnMethod(s.player, id)), 'method', { method: id, how });
+  const learned = learnMethod(s.player, id, s.lineage.firsts);
+  const next = addEvent(withPlayer(s, learned), 'method', { method: id, how });
   return settle(next);
 }
 
@@ -237,7 +274,7 @@ export function switchMethod(
   if (!r.check.ok) return { state: s, check: r.check };
   const data = { ladder: which, method: id, from: s.player.activeMethods[which] };
   return {
-    state: addEvent(withPlayer(s, r.cultivator), 'method-switch', data),
+    state: settle(addEvent(withPlayer(s, r.cultivator), 'method-switch', data)),
     check: r.check,
   };
 }
@@ -257,8 +294,8 @@ export function gainManual(s: GameState, id: string, how = 'comes by'): GameStat
 export function gainCopy(s: GameState, id: string, how = 'comes by'): GameState {
   if (!hasCopy(id)) return s;
   const owned = addEvent(withPlayer(s, ownCopy(s.player, id)), 'copy', { copy: id, how });
-  // A new copy joins an empty queue by itself, and a first one opens study hours.
-  const queued = queueIfIdle(owned.player, id);
+  // A new copy joins an empty queue by itself, once the lineage has queued one itself.
+  const queued = queueIfIdle(owned.player, id, s.lineage.firsts);
   return settle(addNotes(withPlayer(owned, queued.cultivator), queued.notes));
 }
 
@@ -298,7 +335,7 @@ export function gainRoutine(s: GameState, id: string, how = 'learns'): GameState
 export function practice(s: GameState, id: string): { state: GameState; check: TechniqueCheck } {
   if (s.ended) return { state: s, check: { ok: false, reason: 'This life is over.' } };
   const r = startPractice(s.player, id);
-  return { state: r.check.ok ? withPlayer(s, r.cultivator) : s, check: r.check };
+  return { state: r.check.ok ? noteFirsts(withPlayer(s, r.cultivator)) : s, check: r.check };
 }
 
 /** The player takes a technique out of its practice slot. */
@@ -331,4 +368,54 @@ export function takeItem(s: GameState, id: string): GameState {
   const r = consumeItem(s.player, id, s.calendar.day);
   if (!r.used) return s;
   return addNotes(withPlayer(s, r.cultivator), r.notes);
+}
+
+// ---------------------------------------------------------------- the first times, played
+
+/** Gives a kind of work the hour the default rule would: the qi hour worth least. */
+function giveHourTo(s: GameState, kind: HourKind): GameState {
+  const hour = hourToFlip(s.player.wheel, s.player.rootElements);
+  return hour === null ? s : giveHour(s, hour, kind).state;
+}
+
+function playStep(s: GameState, step: FirstStep): GameState {
+  switch (step.hint) {
+    case 'copy':
+      return readCopy(s, step.id!).state;
+    case 'study-hour':
+      return giveHourTo(s, 'study');
+    case 'method':
+      return switchMethod(s, 'qi', step.id!).state;
+    case 'technique':
+      return practice(s, step.id!).state;
+    case 'technique-hour':
+      return giveHourTo(s, 'practice');
+    case 'art':
+      return switchMethod(s, step.ladder!, step.id!).state;
+    case 'art-hour':
+      return giveHourTo(s, step.ladder!);
+    case 'stones':
+      return setPlan(s, { burnStones: true });
+    case 'node':
+      return s;
+  }
+}
+
+/**
+ * Does every first time waiting at once, as a player would (the sims): queues the copy, turns the
+ * hour the default rule would to study, takes up the method or art, slots the technique, gives each
+ * its hour, and burns stones. A node is the sim's own choice, so it is left alone.
+ */
+export function playFirsts(s: GameState): GameState {
+  let next = s;
+  // Each step clears its first or moves it on (a slot, then its hour); a step that can't be done
+  // ends the round, and the cap stops a step that would be done again and again.
+  for (let i = 0; i < 2 * FIRST_IDS.length; i++) {
+    const step = firstsWaiting(next).find((x) => x.first !== 'node');
+    if (!step) break;
+    const played = playStep(next, step);
+    if (played === next) break;
+    next = played;
+  }
+  return next;
 }

@@ -24,6 +24,8 @@ import { formatNumber, formatRate } from './format.ts';
 import { RarityName } from './MethodCard.tsx';
 import { go, goToTab } from './nav.ts';
 import { useGame } from './store.ts';
+import { rings } from './beacons.ts';
+import { useBeacons } from './useBeacons.ts';
 import { practiceTime } from './techniqueList.ts';
 import { Why } from './widgets.tsx';
 
@@ -141,12 +143,6 @@ function ReadingNow({ game }: { game: GameState }) {
           Stop
         </button>
       </div>
-      {c.reading.wheel && (
-        <p className="caption">
-          A copy wants reading before it is any use, so every waking hour studies until it is read;
-          then the wheel goes back to what it was, with one study hour kept.
-        </p>
-      )}
     </section>
   );
 }
@@ -232,6 +228,7 @@ function Shelf({ game }: { game: GameState }) {
   const c = game.player;
   const unqueued = unqueuedCopies(c);
   const empty = readingQueue(c).length === 0;
+  const bs = useBeacons();
   return (
     <section className="panel" aria-labelledby="shelf-heading">
       <h2 id="shelf-heading" className="panel-heading">
@@ -254,7 +251,7 @@ function Shelf({ game }: { game: GameState }) {
                 </div>
                 <button
                   type="button"
-                  className="button"
+                  className={`button${rings(bs, 'read-now', { id }) ? ' beacon-ring' : ''}`}
                   disabled={!!game.ended}
                   onClick={() => setError(readCopy(id))}
                 >

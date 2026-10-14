@@ -12,10 +12,13 @@ import {
   breakThrough,
   endLife,
   feedStones,
+  followRoutine as followRoutineHours,
+  giveHour,
   learn,
   moveRead,
   practice,
   readCopy,
+  setPlan as setLifePlan,
   stopPracticing,
   switchMethod,
   takeItem,
@@ -32,18 +35,22 @@ import { makeSave, SaveError } from '../core/save/format.ts';
 import { exportFileName } from '../core/save/file.ts';
 import { SaveSlots, type SlotId, type SlotSummary } from '../core/save/slots.ts';
 import { rerollGlass, withPlayer, type GameState } from '../core/state.ts';
-import { followWheel, forgetSavedRoutine, saveRoutine, setHour } from '../core/wheel.ts';
+import { forgetSavedRoutine, saveRoutine } from '../core/wheel.ts';
+import type { HintId } from '../content/firsts.ts';
+import { hintStillWaiting, nextHint } from './hints.ts';
 import { attemptOf, endScene, sceneDue, sceneRolled, startScene, useScene } from './scene.ts';
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
-import { loadSettings, saveSettings } from './settings.ts';
+import { loadSettings, saveSettings, useSettings } from './settings.ts';
 import { technique } from '../content/techniques.ts';
 import { intentRisen, stageName as intentName } from '../core/intent.ts';
 import {
   clearToasts,
+  dismissToast,
   leftSlots,
   raiseStartToasts,
   raiseToast,
   raiseToasts,
+  shownHint,
   stonesRanOut,
 } from './toasts.ts';
 
@@ -165,6 +172,10 @@ export interface GameStore {
   see(kind: SeenKind, ids: readonly string[]): void;
   /** The player opened a screen: its menu dot clears. */
   openScreen(screen: string): void;
+  /** A hint was acted on or dismissed: the lineage won't be shown it again. */
+  hintDone(id: HintId): void;
+  /** Settings' Show hints again: the lineage forgets the hints it was shown. */
+  replayHints(): void;
   /** A new pattern for the life's glass. */
   rerollGlass(): void;
   /** After a death: opens creation for a new life in the same slot, with the chronicle kept. */
@@ -511,25 +522,24 @@ export const useGame = create<GameStore>()((set, get) => {
     setPlan(patch) {
       const { game } = get();
       if (!game) return;
-      const p = game.player;
-      set({ game: { ...game, player: { ...p, plan: { ...p.plan, ...patch } } } });
+      set({ game: setLifePlan(game, patch) });
     },
 
     setHour(hour, kind) {
       const { game } = get();
       if (!game || !holdsLock) return 'This life is not open in this tab.';
-      const r = setHour(game.player, hour, kind);
+      const r = giveHour(game, hour, kind);
       if (!r.check.ok) return r.check.reason;
-      set({ game: withPlayer(game, r.cultivator) });
+      set({ game: r.state });
       return null;
     },
 
     followRoutine(hours) {
       const { game } = get();
       if (!game || !holdsLock) return 'This life is not open in this tab.';
-      const r = followWheel(game.player, hours);
+      const r = followRoutineHours(game, hours);
       if (!r.check.ok) return r.check.reason;
-      set({ game: withPlayer(game, r.cultivator) });
+      set({ game: r.state });
       return null;
     },
 
@@ -701,6 +711,18 @@ export const useGame = create<GameStore>()((set, get) => {
       if (next !== game) set({ game: next });
     },
 
+    hintDone(id) {
+      const { game } = get();
+      if (!game || !holdsLock || game.lineage.hints.includes(id)) return;
+      set({ game: { ...game, lineage: { ...game.lineage, hints: [...game.lineage.hints, id] } } });
+    },
+
+    replayHints() {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      set({ game: { ...game, lineage: { ...game.lineage, hints: [] } } });
+    },
+
     rerollGlass() {
       const { game } = get();
       if (!game || !holdsLock) return;
@@ -823,8 +845,10 @@ export const useGame = create<GameStore>()((set, get) => {
 useGame.subscribe((now, was) => {
   if (now.slot !== was.slot || !now.game || now.game.lineage.life !== was.game?.lineage.life) {
     if (now.game !== was.game) clearToasts();
+    driveHints();
     return;
   }
+  if (now.game !== was.game) driveHints();
   if (quiet || now.game === was.game || !was.game) return;
   raiseToasts(gains(was.game, now.game), now.game);
   if (stonesRanOut(was.game, now.game)) raiseToast('stones', 'none left to burn');
@@ -841,6 +865,33 @@ useGame.subscribe((now, was) => {
     const st = intentName(dao, stage);
     raiseToast('intent', `${st.name} ${st.hanzi} wakes`, { screen: 'character' });
   }
+});
+
+/**
+ * Hints, one at a time (ui/hints.ts): a hint showing stays until its moment passes, the action
+ * done, and the lineage then counts it shown; with none showing, the next the lineage hasn't been
+ * shown rises. Turning hints off takes the one showing away, unmarked. Marking runs after the
+ * change that called it, so the store isn't set from inside its own listener.
+ */
+function driveHints(): void {
+  const { game, phase } = useGame.getState();
+  const showing = shownHint();
+  const on = useSettings.getState().hints && phase === 'playing' && !!game && !game.ended;
+  if (showing?.hint) {
+    if (!on || !game) return dismissToast(showing.key);
+    if (hintStillWaiting(game, showing.hint)) return;
+    dismissToast(showing.key);
+    const id = showing.hint;
+    queueMicrotask(() => useGame.getState().hintDone(id));
+    return;
+  }
+  if (!on || !game) return;
+  const next = nextHint(game);
+  if (next) raiseToast('hint', next.text, next.to, next.id);
+}
+
+useSettings.subscribe((now, was) => {
+  if (now.hints !== was.hints) driveHints();
 });
 
 // A hot update would swap this store out from under the running game and its tab lock, so in

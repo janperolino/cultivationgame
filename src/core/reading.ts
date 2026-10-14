@@ -18,6 +18,7 @@ import {
   SUITS_ELEMENT,
 } from '../content/copies.ts';
 import { ELEMENTS, ELEMENT_INFO, type Element } from '../content/elements.ts';
+import { ALL_FIRSTS, type FirstId } from '../content/firsts.ts';
 import type { Manual } from '../content/manuals.ts';
 import { KINSHIP_BONUS } from '../content/mastery.ts';
 import { manual } from '../content/manuals.ts';
@@ -170,9 +171,15 @@ export function moveInQueue(c: Cultivator, id: string, by: -1 | 1): Cultivator {
 
 /**
  * A copy just gained joins an empty queue by itself, so nothing waits unread for want of a click;
- * the note is the chronicle's "begins reading". A queue already holding something is left alone.
+ * the note is the chronicle's "begins reading". A queue already holding something is left alone,
+ * and so is every copy until the lineage has queued one itself (core/firsts.ts).
  */
-export function queueIfIdle(c: Cultivator, id: string): { cultivator: Cultivator; notes: Note[] } {
+export function queueIfIdle(
+  c: Cultivator,
+  id: string,
+  firsts: readonly FirstId[] = ALL_FIRSTS,
+): { cultivator: Cultivator; notes: Note[] } {
+  if (!firsts.includes('copy')) return { cultivator: c, notes: [] };
   if (readingQueue(c).length > 0 || !copyUnread(c, id)) return { cultivator: c, notes: [] };
   const r = queueCopy(c, id);
   if (!r.check.ok) return { cultivator: c, notes: [] };
@@ -248,19 +255,21 @@ export function suitsYou(c: Cultivator, id: string): SuitsYou {
 /**
  * Finishes a copy: what it teaches becomes yours (a manual held, a method known, a technique at
  * Glimpse or where the chapter rule starts it), its lump of insight lands, it leaves the queue, and
- * the next readable copy begins.
+ * the next readable copy begins. What it teaches arrives as learning would, a first time switched
+ * off (core/firsts.ts).
  */
 export function finishReading(
   c: Cultivator,
   id: string,
+  firsts: readonly FirstId[] = ALL_FIRSTS,
 ): { cultivator: Cultivator; notes: Note[] } {
   const of = copyOf(id);
   if (!of || !readCheck(c, id).ok) return { cultivator: c, notes: [] };
   const learned =
     of.kind === 'method'
-      ? learnMethod(c, of.id)
+      ? learnMethod(c, of.id, firsts)
       : of.kind === 'technique'
-        ? learnTechnique(c, of.id)
+        ? learnTechnique(c, of.id, firsts)
         : gainManual(c, of.id);
   const days = { ...c.reading.days };
   delete days[id];
@@ -286,6 +295,7 @@ export function readRate(c: Cultivator, id: string, studyPerDay: number): number
 export function addReading(
   c: Cultivator,
   studyDays: number,
+  firsts: readonly FirstId[] = ALL_FIRSTS,
 ): { cultivator: Cultivator; notes: Note[] } {
   const id = readingCopy(c);
   if (!id || studyDays <= 0) return { cultivator: c, notes: [] };
@@ -296,5 +306,5 @@ export function addReading(
       notes: [],
     };
   }
-  return finishReading(c, id);
+  return finishReading(c, id, firsts);
 }

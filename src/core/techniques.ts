@@ -12,6 +12,7 @@ import {
   PRACTICE_SLOTS_MAX,
   TECHNIQUE_MASTERY,
 } from '../content/mastery.ts';
+import { ALL_FIRSTS, type FirstId } from '../content/firsts.ts';
 import { rarityAccuracy } from '../content/rarity.ts';
 import { realmIndex } from '../content/realms.ts';
 import {
@@ -122,9 +123,14 @@ export function canLearnTechnique(c: Cultivator, id: string): TechniqueCheck {
 
 /**
  * Learns a technique, at Glimpse or, for a line's next chapter, one level below the chapter
- * before (two when rarer); with nothing being practiced, the first slot takes it.
+ * before (two when rarer); with nothing being practiced, the first slot takes it, unless the
+ * lineage has never put a technique in a slot itself (core/firsts.ts).
  */
-export function learnTechnique(c: Cultivator, id: string): Cultivator {
+export function learnTechnique(
+  c: Cultivator,
+  id: string,
+  firsts: readonly FirstId[] = ALL_FIRSTS,
+): Cultivator {
   if (!canLearnTechnique(c, id).ok) return c;
   const t = technique(id);
   const prev = previousTechniqueChapter(t);
@@ -132,7 +138,7 @@ export function learnTechnique(c: Cultivator, id: string): Cultivator {
     ? masteryNeed(t, chapterStartLevel(mastery(c, prev.id).level, prev.rarity, t.rarity))
     : 0;
   const learned = { ...c, techniques: { ...c.techniques, [id]: { practice: start } } };
-  return c.practicing.length === 0 && canPractice(learned, id)
+  return firsts.includes('technique') && c.practicing.length === 0 && canPractice(learned, id)
     ? { ...learned, practicing: [id] }
     : learned;
 }

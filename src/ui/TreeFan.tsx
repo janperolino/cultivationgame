@@ -24,7 +24,7 @@ import { REALMS } from '../content/realms.ts';
 import { tierNodes, type Tree } from '../content/trees/index.ts';
 import { manualReady } from '../core/manuals.ts';
 import type { Cultivator } from '../core/state.ts';
-import { hasLearned, nodeSealed, tierOwned } from '../core/trees.ts';
+import { canLearn, hasLearned, nodeSealed, tierOwned } from '../core/trees.ts';
 import { learnedCount, nodeMark } from './bookcase.ts';
 import { formatNumber, LADDER_LABELS } from './format.ts';
 import { hereTier, jewelTip, nodeState, nodeTip, type TipWords } from './fanWords.ts';
@@ -172,11 +172,13 @@ function NodeShape({
   const state = nodeState(c, n);
   const sealed = nodeSealed(c, n);
   const selected = tips.pinned === n.id;
+  // Buyable now: a first node's beacon rings these (ui/beacons.ts, theme.css).
+  const buyable = state === 'available' && canLearn(c, n.id).ok;
   const hover: Hover = { kind: 'node', id: n.id, at: tipAt ?? at, size };
   return (
     <button
       type="button"
-      className={`fan-node is-${n.kind} is-${state}${sealed ? ' is-sealed' : ''}${medallion ? ' is-medallion' : ''}${selected ? ' is-selected' : ''}`}
+      className={`fan-node is-${n.kind} is-${state}${buyable ? ' is-buyable' : ''}${sealed ? ' is-sealed' : ''}${medallion ? ' is-medallion' : ''}${selected ? ' is-selected' : ''}`}
       style={{ left: at.x - size / 2, top: at.y - size / 2, width: size, height: size }}
       aria-pressed={selected}
       aria-label={`${n.name}, ${n.kind}, ${state}${sealed ? ', sealed' : ''}${state === 'available' ? `, ${n.cost} insight` : ''}`}

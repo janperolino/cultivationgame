@@ -20,6 +20,7 @@ import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
 import { bySeason } from '../core/chronicle.ts';
 import { screenDot, screenIsNew } from '../core/seen.ts';
+import { useBeacons } from './useBeacons.ts';
 import { EventLine } from './widgets.tsx';
 
 function SlotNotice() {
@@ -114,6 +115,10 @@ export function App() {
           .join(',')
       : '',
   ).split(',');
+  // A first time waiting glows its screen's menu button with drifting motes (ui/beacons.ts),
+  // over the "new screen" glow.
+  const beaconsNow = useBeacons();
+  const beaconed = new Set(beaconsNow.map((b) => b.screen));
   // With no life open, Settings is where you pick or start one.
   const current = creating
     ? { id: 'creation', name: 'A New Life', hanzi: '新生' }
@@ -154,8 +159,8 @@ export function App() {
         <header className="topbar">
           <button
             type="button"
-            className="icon-button"
-            aria-label="Open menu"
+            aria-label={beaconed.size > 0 ? 'Open menu: something waits for you' : 'Open menu'}
+            className={`icon-button${beaconed.size > 0 ? ' is-beacon' : ''}`}
             aria-expanded={menuOpen}
             aria-controls="side-menu"
             onClick={() => setMenuOpen(true)}
@@ -201,7 +206,7 @@ export function App() {
               <li key={s.id}>
                 <button
                   type="button"
-                  className={`menu-item${s.id === current.id ? ' is-active' : ''}${fresh.includes(s.id) && s.id !== current.id ? ' is-new' : ''}`}
+                  className={`menu-item${s.id === current.id ? ' is-active' : ''}${beaconed.has(s.id) ? ' is-beacon' : fresh.includes(s.id) && s.id !== current.id ? ' is-new' : ''}`}
                   aria-current={s.id === current.id ? 'page' : undefined}
                   onClick={() => {
                     setScreen(s.id);

@@ -27,6 +27,8 @@ import type { Cultivator, GameState } from '../core/state.ts';
 import { formatEffect, formatNumber, formatPercent, LADDER_LABELS, tierName } from './format.ts';
 import { goToTab } from './nav.ts';
 import { useGame } from './store.ts';
+import { rings } from './beacons.ts';
+import { useBeacons } from './useBeacons.ts';
 import { Why } from './widgets.tsx';
 
 const ART_NAMES: Record<LadderId, string> = {
@@ -242,6 +244,7 @@ export function MethodRow({ game, which }: { game: GameState; which: LadderId })
   const known = knownMethods(c, which);
   const others = known.filter((k) => k.id !== m?.id);
   const copy = m ? null : waitingCopy(c, which);
+  const ring = rings(useBeacons(), 'climb-with', { ladder: which });
 
   return (
     <li className="method">
@@ -267,7 +270,7 @@ export function MethodRow({ game, which }: { game: GameState; which: LadderId })
         )}
         {m && others.length === 0 && <span className="caption method-only">Only one known</span>}
         {others.length > 0 && (
-          <label className="method-switch">
+          <label className={`method-switch${ring ? ' beacon-ring' : ''}`}>
             <span className="caption">Climb with</span>
             <select
               value={m?.id ?? ''}

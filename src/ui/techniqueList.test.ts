@@ -12,7 +12,7 @@ import { technique, type Technique } from '../content/techniques.ts';
 
 const base = newLife({ name: 'Han Li', seed: 'technique-list' }).player;
 
-const learn = (c: Cultivator, ...ids: string[]) => ids.reduce(learnTechnique, c);
+const learn = (c: Cultivator, ...ids: string[]) => ids.reduce((x, id) => learnTechnique(x, id), c);
 const withPractice = (c: Cultivator, id: string, days: number): Cultivator => ({
   ...c,
   techniques: { ...c.techniques, [id]: { practice: days } },

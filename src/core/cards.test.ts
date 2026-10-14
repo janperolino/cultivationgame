@@ -20,7 +20,7 @@ import {
 } from './cards.ts';
 import { eventText } from './chronicle.ts';
 import { createLife, type Creation } from './creation.ts';
-import { breakThrough, FOUNDATION_FAILED } from './life.ts';
+import { breakThrough, FOUNDATION_FAILED, playFirsts } from './life.ts';
 import { advance, catchUp } from './loop.ts';
 import { Rng } from './rng.ts';
 import { addItem, daysLived, withPlayer, type GameState } from './state.ts';
@@ -247,15 +247,19 @@ describe('offline', () => {
 });
 
 describe('the first hour', () => {
-  /** Plays a path for some real minutes, taking each card's default as it comes. */
+  /**
+   * Plays a path for some real minutes, taking each card's default as it comes and each first time
+   * at once, as a player would.
+   */
   function play(origin: OriginId, choice: OriginChoice, minutes: number) {
-    let s = life(origin, choice, `first-hour-${origin}-${choice}`);
+    let s = playFirsts(life(origin, choice, `first-hour-${origin}-${choice}`));
     const at: Record<string, number> = {};
     for (let ms = 0; ms < minutes * 60_000;) {
       const r = advance(s, 15_000, { step: playDay });
       ms += r.usedMs;
       s = r.state;
       while (s.cards.pending.length) s = resolveByDefault(s, s.cards.pending[0]!.uid);
+      s = playFirsts(s);
       const p = s.player;
       if (p.activeMethods.qi) at.method ??= ms / 60_000;
       if (Object.keys(p.techniques).length) at.technique ??= ms / 60_000;
@@ -270,7 +274,8 @@ describe('the first hour', () => {
       it(`${pathKey(origin, choice)}: a method, the technique, layer 3 inside the hour, the errand`, () => {
         const { s, at } = play(origin, choice, 70);
         expect(at.layer3).toBeLessThan(60);
-        if (choice === 'along') expect(at.layer3).toBeLessThan(50);
+        // Since P2.8 the method is read on the one study hour the player sets: about six minutes.
+        if (choice === 'along') expect(at.layer3).toBeLessThan(55);
         else if (origin !== 'cave-orphan') expect(at.layer3).toBeGreaterThan(at.method!);
         expect(at.technique).toBeGreaterThanOrEqual(20);
         expect(at.technique).toBeLessThanOrEqual(36);

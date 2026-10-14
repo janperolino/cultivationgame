@@ -12,6 +12,7 @@ Game content as data: realms, trees and nodes, techniques, recipes, items, talen
 - `cards/`: the card format (`schema.ts`: trigger, weight, daily chance and sure day, once or cooldown, urgent, choices with costs, checks, effects and chronicle lines) and the decks, the first hour's in `firstHour.ts`.
 - `chronicle.ts`: the chronicle's event types, each with the template that writes its line as a biography, and the slot filling the cards share.
 - `elements.ts`: the five phases and the three mutated elements; lightning and wind count as wood, ice as water.
+- `firsts.ts`: the first times a lineage does itself (P2.8), the hints toward each, one at a time in order, and the coming-back card's line for a first still waiting.
 - `hours.ts`: the twelve double-hours with their elements, the kinds of hour, the element, dawn and discipline bonuses, sleep at 子 and 丑, and when each kind of hour opens.
 - `routines.ts`: routines learned from teachers, manuals and sects, each a whole wheel.
 - `methods.ts`: methods for each ladder (cultivation methods, tempering and nourishing arts), each a bundle of tier, rarity, line and chapter, fit, requirements, upkeep, growth profile, properties and source, and what each ladder's growth builds (`GROWTH_STATS`).

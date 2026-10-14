@@ -1,6 +1,8 @@
 // The save envelope, its version number and the migrations that bring old saves up to date.
 import { z } from 'zod';
 import { LADDERS } from '../../content/cultivation.ts';
+import type { Element } from '../../content/elements.ts';
+import type { FirstId } from '../../content/firsts.ts';
 import { FRESH_WHEEL, SLEEP_HOURS, type HourKind } from '../../content/hours.ts';
 import { METHOD_MASTERY, TECHNIQUE_MASTERY } from '../../content/mastery.ts';
 import { hasTechnique, technique as techniqueOf } from '../../content/techniques.ts';
@@ -28,7 +30,7 @@ import { seeAll } from '../seen.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -599,6 +601,68 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       ? (p.nodes as unknown[]).map((id) => (typeof id === 'string' ? renamedNode(id) : id))
       : p.nodes;
     return { ...old, version: 17, state: { ...s, player: { ...p, nodes, intent: {} } } };
+  },
+
+  // v17, P2.6: no record of first times, and before a qi method was known a copy took every waking
+  // hour, the wheel as it was put aside (`reading.wheel`). v18 keeps the lineage's first times
+  // (core/firsts.ts), counting every one an old life has passed as done (a study hour on its wheel,
+  // a method taken up, a technique in a slot, a node learned, burning on), and the hints acted on,
+  // with those it has outgrown (the orbs drawn, a breakthrough made, a card played) counted. The
+  // whole-wheel reading goes: a wheel put aside comes back now with a study hour, as it would
+  // have once the copy was read.
+  17: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const reading = (p.reading ?? {}) as Raw;
+    const aside = Array.isArray(reading.wheel) ? (reading.wheel as HourKind[]) : null;
+    const elements = (Array.isArray(p.rootElements) ? p.rootElements : []) as Element[];
+    const wheel = aside
+      ? aside.includes('study')
+        ? [...aside]
+        : flipHour(aside, elements, 'study').wheel
+      : ((Array.isArray(p.wheel) ? p.wheel : []) as HourKind[]);
+    const hours = (k: HourKind) => wheel.includes(k);
+    const active = (p.activeMethods ?? {}) as Record<string, unknown>;
+    const queue = Array.isArray(reading.queue) ? (reading.queue as string[]) : [];
+    const days = (reading.days ?? {}) as Raw;
+    const methods = (p.methods ?? {}) as Raw;
+    const techniques = (p.techniques ?? {}) as Record<string, { practice?: number }>;
+    const manuals = (Array.isArray(p.manuals) ? p.manuals : []) as string[];
+    const copyRead = Object.entries((p.copies ?? {}) as Record<string, number>).some(([id, n]) => {
+      const [kind, of] = [id.slice(0, id.indexOf(':')), id.slice(id.indexOf(':') + 1)];
+      if (!(n > 0)) return false;
+      if (kind === 'method') return of in methods;
+      if (kind === 'technique') return of in techniques;
+      return manuals.includes(of);
+    });
+    const practicing = Array.isArray(p.practicing) ? p.practicing : [];
+    const passed: Record<FirstId, boolean> = {
+      copy: queue.length > 0 || Object.keys(days).length > 0 || copyRead,
+      'study-hour': hours('study'),
+      method: !!active.qi,
+      technique:
+        practicing.length > 0 ||
+        hours('practice') ||
+        Object.values(techniques).some((t) => (t.practice ?? 0) > 0),
+      art: !!active.body || !!active.soul || hours('body') || hours('soul'),
+      stones: ((p.plan ?? {}) as Raw).burnStones === true,
+      node: Array.isArray(p.nodes) && p.nodes.length > 0,
+    };
+    const firsts = (Object.keys(passed) as FirstId[]).filter((id) => passed[id]);
+    const flags = (Array.isArray(p.flags) ? p.flags : []) as string[];
+    const climbed = (['qi', 'body', 'soul'] as const).some((k) => {
+      const l = (p[k] ?? {}) as Raw;
+      return l.realm !== 'qi-condensation' || (typeof l.stage === 'number' && l.stage > 1);
+    });
+    const chronicle = (Array.isArray(s.chronicle) ? s.chronicle : []) as Raw[];
+    const hints = [
+      ...(flags.includes('drew-orb') ? ['orbs'] : []),
+      ...(climbed ? ['breakthrough'] : []),
+      ...(chronicle.some((e) => e.type === 'card') ? ['cards'] : []),
+    ];
+    const player = { ...p, wheel, reading: { queue, days } };
+    const lineage = { ...((s.lineage ?? {}) as Raw), firsts, hints };
+    return { ...old, version: 18, state: { ...s, lineage, player } };
   },
 };
 

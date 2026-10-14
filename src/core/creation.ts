@@ -89,12 +89,15 @@ export function lifeOptions(c: Creation): NewLifeOptions {
     routines: [...path.routines],
     stones: path.stones,
     flags: [...path.flags],
+    // A new lineage has done nothing for the first time yet (core/firsts.ts); the next life in a
+    // slot keeps its lineage's record instead (nextLife).
+    firsts: [],
   };
 }
 
 /**
- * The origin path's method as a copy, joining the empty reading queue; with no qi method known,
- * it takes every waking hour until read.
+ * The origin path's method as a copy: unread on the shelf the first time in a lineage, joining the
+ * empty reading queue after.
  */
 function handMethod(s: GameState, c: Creation): GameState {
   const id = originPath(c.roll.origin, c.choice).method;

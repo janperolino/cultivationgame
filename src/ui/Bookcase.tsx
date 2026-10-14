@@ -55,6 +55,8 @@ import {
 } from './bookcase.ts';
 import { formatEffect, formatNumber } from './format.ts';
 import { useGame } from './store.ts';
+import { rings } from './beacons.ts';
+import { useBeacons } from './useBeacons.ts';
 import { OwnFan } from './TreeFan.tsx';
 
 const RARE = rarityRank('purple');
@@ -213,6 +215,7 @@ function ReadBlock({ c, m, pinned }: { c: Cultivator; m: Manual; pinned: boolean
   const now = readingCopy(c) === id;
   const at = c.reading.queue.indexOf(id);
   const empty = readingQueue(c).length === 0;
+  const ring = rings(useBeacons(), 'read-now', { id });
   return (
     <div className="bookcase-read">
       <span>{w.teaches}</span>
@@ -228,7 +231,12 @@ function ReadBlock({ c, m, pinned }: { c: Cultivator; m: Manual; pinned: boolean
               </button>
             </>
           ) : (
-            <button type="button" className="button" disabled={ended} onClick={() => readCopy(id)}>
+            <button
+              type="button"
+              className={`button${ring ? ' beacon-ring' : ''}`}
+              disabled={ended}
+              onClick={() => readCopy(id)}
+            >
               {empty ? 'Read now' : 'Queue'}
             </button>
           )}

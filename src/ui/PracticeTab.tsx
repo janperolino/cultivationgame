@@ -37,6 +37,8 @@ import { formatNumber, formatPercent, formatRate, LADDER_LABELS } from './format
 import { RarityName } from './MethodCard.tsx';
 import { goToManual, goToTab, useNav } from './nav.ts';
 import { useGame } from './store.ts';
+import { rings } from './beacons.ts';
+import { useBeacons } from './useBeacons.ts';
 import {
   knownChapters,
   practiceTime,
@@ -641,6 +643,7 @@ function TechniquePage({
   const sealed = techniqueSealed(c, t);
   const practicing = practiced(c).includes(t.id);
   const full = practiced(c).length >= practiceSlots(c);
+  const ring = rings(useBeacons(), 'practice-this', { id: t.id });
   const realmName = REALMS[t.tier - 1]!.name;
   const ladder = LADDER_LABELS[t.ladder].toLowerCase();
   const r = rarity(t.rarity);
@@ -722,7 +725,7 @@ function TechniquePage({
         <span className="caption">{capital(t.source)}.</span>
         <button
           type="button"
-          className="button"
+          className={`button${ring ? ' beacon-ring' : ''}`}
           aria-pressed={practicing}
           disabled={!practicing && (!canPractice(c, t.id) || full)}
           onClick={() => {

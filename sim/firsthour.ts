@@ -2,7 +2,10 @@
 // playing each card by its default choice as it comes. Real minutes to a qi method (the refusals
 // wait on a card for theirs), the first orb drifting in to the Abode's figure, the first
 // technique, layer 2, layer 3, the errand that hands over the tempering art, and the nourishing
-// art; median and slowest of many seeds. Talents are plain, so Aptitude stays at 10. The rules run
+// art; median and slowest of many seeds. Each first time is played at once, as a player would
+// (core/life.ts, playFirsts): the method's copy read on one study hour, then taken up, the
+// technique slotted with its hour, the art taken up with its hour, the stones burned. Talents are
+// plain, so Aptitude stays at 10. The rules run
 // away, as the floor; creation's own minutes (0–3) come before testing day. Targets: the first orb
 // by minute 3–5 counting creation, layer 3 at about 45 minutes going along, nearer 55 on a refusal,
 // and always inside the hour.
@@ -12,6 +15,7 @@ import { defaultElements, ROOTS, type RootId } from '../src/content/roots.ts';
 import { startAttention, tickAttention } from '../src/core/attention.ts';
 import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
+import { playFirsts } from '../src/core/life.ts';
 import { advance } from '../src/core/loop.ts';
 import type { GameState } from '../src/core/state.ts';
 
@@ -29,22 +33,24 @@ function run(
   choice: 'along' | 'refuse',
   seed: number,
 ) {
-  let s: GameState = createLife({
-    name: 'Sim',
-    pronouns: 'they/them',
-    look: '',
-    mode: 'ironman',
-    seed: `firsthour-${rootId}-${origin}-${choice}-${seed}`,
-    choice,
-    roll: {
-      root: rootId,
-      elements: defaultElements(rootId),
-      body: 'farmhands-frame',
-      soul: 'plain-mind',
-      fate: 'ordinary-fate',
-      origin,
-    },
-  });
+  let s: GameState = playFirsts(
+    createLife({
+      name: 'Sim',
+      pronouns: 'they/them',
+      look: '',
+      mode: 'ironman',
+      seed: `firsthour-${rootId}-${origin}-${choice}-${seed}`,
+      choice,
+      roll: {
+        root: rootId,
+        elements: defaultElements(rootId),
+        body: 'farmhands-frame',
+        soul: 'plain-mind',
+        fate: 'ordinary-fate',
+        origin,
+      },
+    }),
+  );
   const at: Partial<Record<Mark, number>> = {};
   let ms = 0;
   let seat = startAttention(s);
@@ -57,6 +63,7 @@ function run(
     const r = advance(s, CHUNK_MS, { step: playDay });
     s = r.state;
     while (s.cards.pending.length) s = resolveByDefault(s, s.cards.pending[0]!.uid);
+    s = playFirsts(s);
     ms += r.usedMs;
     const min = ms / 60_000;
     const p = s.player;

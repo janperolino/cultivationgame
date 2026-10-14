@@ -264,9 +264,8 @@ describe('chapters and lines', () => {
     const learned = withPlayer(s, learnMethod(s.player, 'pine-wind'));
     const r = switchMethod(learned, 'qi', 'pine-wind');
     expect(r.check.ok).toBe(true);
-    expect(eventText(r.state, r.state.chronicle.at(-1)!)).toBe(
-      'Han Li takes up the Pine Wind Breathing Method.',
-    );
+    const line = r.state.chronicle.findLast((e) => e.type === 'method-switch')!;
+    expect(eventText(r.state, line)).toBe('Han Li takes up the Pine Wind Breathing Method.');
     expect(switchMethod(learned, 'qi', 'not-known').check.ok).toBe(false);
   });
 });

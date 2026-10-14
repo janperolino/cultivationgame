@@ -3,9 +3,11 @@
 // a moment gained (core/seen.ts, `gains`), never from time away, which the coming-back card tells.
 // At most three show at once: a burst of more folds into the third ("+4 more"), and a later
 // moment's wait their turn. A moment that isn't something held (a technique reaching Origin and
-// leaving its slot) raises its own toast by hand (`raiseToast`).
+// leaving its slot) raises its own toast by hand (`raiseToast`), and so does a hint (ui/hints.ts),
+// which stays until its action is done or it is dismissed.
 import { create } from 'zustand';
 import { copyManual, hasCopy } from '../content/copies.ts';
+import type { HintId } from '../content/firsts.ts';
 import { itemGlyph, item, hasItem } from '../content/items.ts';
 import { hasManual, manual, MANUAL_KINDS } from '../content/manuals.ts';
 import { hasMethod, method } from '../content/methods.ts';
@@ -41,9 +43,11 @@ export interface Toast {
   /** Gains folded into this one, past the three shown. */
   more: number;
   to: ToastLink | null;
+  /** A hint: it stays until its action is done or it is dismissed. */
+  hint?: HintId;
 }
 
-type ToastView = Omit<Toast, 'key' | 'more'>;
+type ToastView = Omit<Toast, 'key' | 'more' | 'hint'>;
 
 /** A Dao's tree reads "the Fist Dao"; the big three "the Soul tree". */
 function treeName(id: string): string {
@@ -187,13 +191,42 @@ export const HAND_TOASTS = {
   stones: { glyph: '灵', label: 'Spirit stones' },
   /** A stage of the Intent ladder opened: a thing earned, not held (core/intent.ts). */
   intent: { glyph: '意', label: 'Intent' },
+  /** A hint toward a first time's control (ui/hints.ts). */
+  hint: { glyph: '指', label: 'Hint' },
 } as const;
 export type HandToast = keyof typeof HAND_TOASTS;
 
-/** Shows a toast for a moment that isn't a gain: its kind's glyph and label, the text, a link. */
-export function raiseToast(kind: HandToast, text: string, link: ToastLink | null = null): void {
-  const t: Toast = { key: nextKey++, ...HAND_TOASTS[kind], name: text, more: 0, to: link };
-  useToasts.setState((st) => settle({ toasts: st.toasts, waiting: [...st.waiting, t] }));
+/**
+ * Shows a toast for a moment that isn't a gain: its kind's glyph and label, the text, a link; a
+ * hint names its id and stays. A hint goes ahead of the toasts waiting, so it is never kept back.
+ */
+export function raiseToast(
+  kind: HandToast,
+  text: string,
+  link: ToastLink | null = null,
+  hint?: HintId,
+): void {
+  const t: Toast = {
+    key: nextKey++,
+    ...HAND_TOASTS[kind],
+    name: text,
+    more: 0,
+    to: link,
+    ...(hint ? { hint } : {}),
+  };
+  useToasts.setState((st) =>
+    settle(
+      hint
+        ? { toasts: st.toasts, waiting: [t, ...st.waiting] }
+        : { toasts: st.toasts, waiting: [...st.waiting, t] },
+    ),
+  );
+}
+
+/** The hint showing or waiting its turn, if any. */
+export function shownHint(): Toast | null {
+  const st = useToasts.getState();
+  return [...st.toasts, ...st.waiting].find((t) => t.hint) ?? null;
 }
 
 /**

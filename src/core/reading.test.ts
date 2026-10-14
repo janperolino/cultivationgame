@@ -347,7 +347,7 @@ describe('save v15', () => {
     expect(loaded.version).toBe(SAVE_VERSION);
     const p = loaded.state.player;
     expect(p.copies).toEqual({});
-    expect(p.reading).toEqual({ queue: [], days: {}, wheel: null });
+    expect(p.reading).toEqual({ queue: [], days: {} });
     expect(loaded.state.seen.copy).toEqual({});
     expect(bookcaseManuals(p).map((m) => m.id)).toEqual(heldManuals(p).map((m) => m.id));
     expect(p.techniques['rampart-palm']).toBeDefined();
@@ -358,6 +358,6 @@ describe('save v15', () => {
     c = addReading(startReading(c, TIDE).cultivator, 2.5).cultivator;
     const loaded = loadSave(makeSave(withPlayer(base, c), 1)).state.player;
     expect(loaded.copies[copyId('manual', 'tide-counting')]).toBe(1);
-    expect(loaded.reading).toEqual({ queue: [TIDE], days: { [TIDE]: 2.5 }, wheel: null });
+    expect(loaded.reading).toEqual({ queue: [TIDE], days: { [TIDE]: 2.5 } });
   });
 });

@@ -27,10 +27,13 @@ import { PracticeTab } from './PracticeTab.tsx';
 import { useGame } from './store.ts';
 import { StudyTab } from './StudyTab.tsx';
 import { readingLine } from './bookcase.ts';
+import { useBeacons } from './useBeacons.ts';
+import { rings } from './beacons.ts';
 import { LifeEdgeCard, Why } from './widgets.tsx';
 
 function DayPanel({ game }: { game: GameState }) {
   const setPlan = useGame((s) => s.setPlan);
+  const burnRing = rings(useBeacons(), 'burn-stones');
   const c = game.player;
   const rates = dayRates(c, game.calendar.day);
   const speed = qiSpeed(c);
@@ -122,7 +125,7 @@ function DayPanel({ game }: { game: GameState }) {
             ))}
           </div>
         </div>
-        <label className="check">
+        <label className={`check${burnRing ? ' beacon-ring' : ''}`}>
           <input
             type="checkbox"
             checked={c.plan.burnStones}
@@ -341,6 +344,7 @@ export function CultivateScreen() {
     setArrived(navSeq);
     setChosen(navTab);
   }
+  const beaconsNow = useBeacons();
   const tabs = game ? cultivateTabs(game) : [];
   const tab = tabs.includes(chosen) ? chosen : 'cultivation';
   // Opening Practice looks at what was the Techniques screen, so its own newness clears.
@@ -352,6 +356,8 @@ export function CultivateScreen() {
   const practiceNew =
     newIds(game, 'technique').length > 0 ||
     (game.unlocks.includes('techniques') && isNew(game, 'screen', 'techniques'));
+  // A first time waiting on a tab glows it with motes, over the new glow (ui/beacons.ts).
+  const beaconTabs = new Set(beaconsNow.map((b) => b.tab));
 
   return (
     <>
@@ -366,7 +372,13 @@ export function CultivateScreen() {
               role="tab"
               aria-selected={tab === t.id}
               aria-pressed={tab === t.id}
-              className={t.id === 'practice' && practiceNew && tab !== t.id ? 'is-new' : undefined}
+              className={
+                beaconTabs.has(t.id) && tab !== t.id
+                  ? 'is-beacon'
+                  : t.id === 'practice' && practiceNew && tab !== t.id
+                    ? 'is-new'
+                    : undefined
+              }
               onClick={() => setChosen(t.id)}
             >
               {t.name} <span className="hanzi">{t.hanzi}</span>

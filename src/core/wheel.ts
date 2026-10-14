@@ -16,10 +16,9 @@ import {
   SLEEP_HOURS,
   type HourKind,
 } from '../content/hours.ts';
-import { hasMethod, method } from '../content/methods.ts';
+import { ALL_FIRSTS, type FirstId } from '../content/firsts.ts';
 import { hasRoutine, routine, type Routine } from '../content/routines.ts';
 import type { Note } from './cultivation.ts';
-import { readingCopy } from './reading.ts';
 import { hasFlag, type Cultivator } from './state.ts';
 import { knownTechniques, techniqueSealed } from './techniques.ts';
 
@@ -207,68 +206,35 @@ function kindPossible(c: Cultivator, kind: HourKind): boolean {
   }
 }
 
-/**
- * The wheel the default rule flips on: the one put aside while a first copy holds every waking
- * hour, so a kind opened meanwhile gets its hour back with the rest, else the wheel itself.
- */
-function flipTarget(c: Cultivator): readonly HourKind[] {
-  return c.reading.wheel ?? c.wheel;
-}
-
-/** Whether the cultivator knows any qi method, read or taught. */
-function knowsQiMethod(c: Cultivator): boolean {
-  return Object.keys(c.methods).some((id) => hasMethod(id) && method(id).ladder === 'qi');
-}
-
-/**
- * Before you know a qi method, qi hours give nothing, so a copy to read takes every waking hour
- * (design § Cultivation, the day is twelve double-hours) and the wheel as it was is put aside.
- */
-function studyTakesAll(c: Cultivator): Cultivator {
-  const wheel = c.wheel.map((k, i) => (hourLocked(c, i) ? k : 'study'));
-  return { ...c, wheel, reading: { ...c.reading, wheel: [...c.wheel] } };
-}
-
-/**
- * Once a qi method is known, or nothing is left to read, the wheel put aside comes back with a study
- * hour kept: its own, or one turned by the default rule.
- */
-function studyGivesBack(c: Cultivator): { cultivator: Cultivator; notes: Note[] } {
-  if (!c.reading.wheel || (readingCopy(c) !== null && !knowsQiMethod(c))) {
-    return { cultivator: c, notes: [] };
-  }
-  const kept = c.reading.wheel.indexOf('study');
-  const { wheel, hour } =
-    kept >= 0
-      ? { wheel: [...c.reading.wheel], hour: kept }
-      : flipHour(c.reading.wheel, c.rootElements, 'study');
-  return {
-    cultivator: { ...c, wheel, reading: { ...c.reading, wheel: null } },
-    notes: [{ type: 'study-back', data: { hour } }],
-  };
-}
+/** The first time each kind opening by the rule stands for: a technique's, or an art's. */
+const FIRST_OF: Partial<Record<HourKind, FirstId>> = {
+  practice: 'technique',
+  body: 'art',
+  soul: 'art',
+};
 
 /**
  * The default rule (design § Cultivation): when a new kind of hour becomes possible, one qi hour
- * flips to it with a chronicle line. Before you know a qi method, a copy to read takes every waking
- * hour until one is known, then gives the wheel back. At Foundation, sleep is freed and its hours
- * turn to qi.
+ * flips to it with a chronicle line; the first time in a lineage (core/firsts.ts) it only opens,
+ * and the player gives it its hour. At Foundation, sleep is freed and its hours turn to qi.
  */
-export function openHours(c: Cultivator): { cultivator: Cultivator; notes: Note[] } {
-  const back = studyGivesBack(c);
-  let next = back.cultivator;
-  const notes: Note[] = [...back.notes];
-  if (!next.reading.wheel && !knowsQiMethod(next) && readingCopy(next) !== null) {
-    next = studyTakesAll(next);
-    notes.push({ type: 'study-all', data: { copy: readingCopy(next) } });
-  }
+export function openHours(
+  c: Cultivator,
+  firsts: readonly FirstId[] = ALL_FIRSTS,
+): { cultivator: Cultivator; notes: Note[] } {
+  let next = c;
+  const notes: Note[] = [];
   for (const o of HOUR_OPENINGS) {
     if (hourKindOpen(next, o.kind) || !kindPossible(next, o.kind)) continue;
     const flags = [...next.flags, openFlag(o.kind)];
-    const { wheel, hour } = flipHour(flipTarget(next), next.rootElements, o.kind);
-    next = next.reading.wheel
-      ? { ...next, flags, reading: { ...next.reading, wheel } }
-      : { ...next, wheel, flags };
+    const first = FIRST_OF[o.kind];
+    if (first && !firsts.includes(first)) {
+      next = { ...next, flags };
+      notes.push({ type: 'hours', data: { kind: o.kind, hour: null } });
+      continue;
+    }
+    const { wheel, hour } = flipHour(next.wheel, next.rootElements, o.kind);
+    next = { ...next, wheel, flags };
     notes.push({ type: 'hours', data: { kind: o.kind, hour } });
   }
   if (!sleepLocked(next) && !hasFlag(next, 'sleep-freed')) {

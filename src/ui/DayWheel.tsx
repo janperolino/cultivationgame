@@ -10,6 +10,7 @@ import { hourKindOpen, hourLocked } from '../core/wheel.ts';
 import { formatPercent, formatRate } from './format.ts';
 import { useGame } from './store.ts';
 import { readingLine } from './bookcase.ts';
+import { useBeacons } from './useBeacons.ts';
 import { Why } from './widgets.tsx';
 
 const R_OUTER = 132;
@@ -93,6 +94,13 @@ export function DayWheel({ game }: { game: GameState }) {
   const c = game.player;
   const rates = dayRates(c, game.calendar.day);
   const pick = selected === null ? null : rates.hours[selected]!;
+  // A first time waiting on an hour (ui/beacons.ts): the free qi hours wear the ring, and so does
+  // the kind it wants once an hour is picked.
+  const wants = new Set(
+    useBeacons()
+      .filter((b) => b.control === 'wheel' && b.kind)
+      .map((b) => b.kind!),
+  );
 
   const choose = (i: number) => {
     setSelected(i === selected ? null : i);
@@ -102,7 +110,7 @@ export function DayWheel({ game }: { game: GameState }) {
   return (
     <div className="wheel-wrap">
       <svg
-        className="wheel"
+        className={`wheel${wants.size > 0 ? ' is-beacon' : ''}`}
         viewBox="-160 -160 320 320"
         role="group"
         aria-label="The day wheel: twelve double-hours, 子 at midnight at the top"
@@ -118,7 +126,7 @@ export function DayWheel({ game }: { game: GameState }) {
           return (
             <g
               key={b.id}
-              className={`wheel-hour hour-${y.kind}${selected === i ? ' is-selected' : ''}`}
+              className={`wheel-hour hour-${y.kind}${selected === i ? ' is-selected' : ''}${wants.size > 0 && y.kind === 'qi' && !locked ? ' is-beckoning' : ''}`}
               role="button"
               tabIndex={0}
               aria-label={label}
@@ -190,6 +198,7 @@ export function DayWheel({ game }: { game: GameState }) {
                 <button
                   key={k}
                   type="button"
+                  className={wants.has(k) && pick.kind !== k ? 'beacon-ring' : undefined}
                   aria-pressed={pick.kind === k}
                   disabled={!!game.ended || (hourLocked(c, pick.hour) && k !== 'sleep')}
                   title={HOUR_KINDS[k].what}
@@ -209,7 +218,10 @@ export function DayWheel({ game }: { game: GameState }) {
           </>
         ) : (
           <p className="muted">
-            Tap an hour to change what it goes to.
+            Tap an hour to change what it goes to
+            {wants.size > 0 &&
+              `, then give it to ${[...wants].map((k) => HOUR_KINDS[k].name).join(' or ')}`}
+            .
             <Why label="How the hours pay">
               Qi, study, practice and sleep are yours from the start; body and soul hours open with
               their arts. An hour whose element matches your root pays a quarter more from layer 4,

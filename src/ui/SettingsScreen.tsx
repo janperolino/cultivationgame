@@ -489,6 +489,50 @@ function ReadingPanel() {
   );
 }
 
+/**
+ * Hints toward first times (ui/hints.ts): on or off for the player, and shown again for the open
+ * life's lineage, each once more.
+ */
+function HintsPanel() {
+  const s = useSettings();
+  const replay = useGame((g) => g.replayHints);
+  const hasLife = useGame((g) => !!g.game && !g.game.ended);
+  const [replayed, setReplayed] = useState(false);
+  return (
+    <section className="panel" aria-labelledby="hints-heading">
+      <h2 id="hints-heading" className="panel-heading">
+        Hints
+      </h2>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={s.hints}
+          onChange={(e) => saveSettings({ hints: e.target.checked })}
+        />
+        Show hints
+      </label>
+      <p className="caption spaced">
+        The first time something reaches you, a hint points at it, once a lineage, and stays until
+        you do it or dismiss it.
+      </p>
+      <div className="actions">
+        <button
+          type="button"
+          className="button"
+          disabled={!hasLife}
+          onClick={() => {
+            replay();
+            setReplayed(true);
+          }}
+        >
+          Show hints again
+        </button>
+        {replayed && <span className="caption">Hints will come again as their moments do.</span>}
+      </div>
+    </section>
+  );
+}
+
 export function SettingsScreen() {
   return (
     <>
@@ -496,6 +540,7 @@ export function SettingsScreen() {
       <ClockPanel />
       <LookPanel />
       <ReadingPanel />
+      <HintsPanel />
     </>
   );
 }
