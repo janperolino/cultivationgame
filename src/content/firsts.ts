@@ -73,10 +73,12 @@ export const HINTS: Readonly<Record<HintId, string>> = {
     'You have learned your first cultivation method, the {method}. Take it up under Climb with to start cultivating.',
   'qi-hours':
     'Your qi climbs in the qi hours of your wheel. Give your day more qi hours to cultivate for longer.',
-  technique: '{technique} waits to be drilled. Practice this puts it in a slot.',
+  technique:
+    'You have learned your first combat technique, {technique}: what you fight with. Put it in a practice slot with Practice this, and its mastery rises a little each day.',
   'technique-hour': '{technique} has its slot but no hour. Turn an hour to Practice on the wheel.',
   art: 'You have learned your first {artKind}, the {art}. Take it up under Climb with to start {growing}.',
-  'art-hour': 'Your {art} waits for an hour. Turn an hour of the wheel to {hour}.',
+  'art-hour':
+    'Your {ladder} climbs in the {hour} hours of your wheel. Turn an hour to {hour} to start {growing}.',
   stones: 'Spirit stones sit in your pouch. Burn them in qi hours and the day gathers more.',
   node: 'Insight enough for a node. Buy one on the Trees, where your understanding takes shape.',
   insight:
