@@ -75,7 +75,7 @@ export function stepLabel(id: RealmId, stage: number): string {
 
 /** The line each screen writes when it opens. */
 export const SCREEN_TEXT: Record<string, string> = {
-  trees: 'Enough insight gathers to grasp a first principle: the trees open.',
+  trees: 'The trees open: what you hold grafts on them, and insight buys their nodes.',
   techniques: 'A first technique to drill: the techniques open.',
 };
 

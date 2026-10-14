@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { eventText } from './chronicle.ts';
 import { stepSize } from '../content/realms.ts';
-import { BRANCHES, SLEEP_FREED_TEXT, type HourKind } from '../content/hours.ts';
+import { BRANCHES, FRESH_WHEEL, SLEEP_FREED_TEXT, type HourKind } from '../content/hours.ts';
 import { FIRST_ARTS, method } from '../content/methods.ts';
 import { routine } from '../content/routines.ts';
 import {
@@ -24,6 +24,7 @@ import {
   effectiveWheel,
   followedRoutine,
   followWheel,
+  hourKindOpen,
   hourToFlip,
   learnRoutine,
   openHours,
@@ -72,17 +73,24 @@ function opened(opts: LifeOpts = {}): GameState {
 describe("the wheel's yields", () => {
   it('gives each hour a twelfth of a day, and sleep nothing', () => {
     const c = player();
-    expect(effectiveWheel(c)).toEqual(['sleep', 'sleep', ...Array<HourKind>(10).fill('qi')]);
+    // Study is open from the start: a fresh true root (wood and fire) gives it 亥, worth least.
+    expect(effectiveWheel(c)).toEqual([
+      'sleep',
+      'sleep',
+      ...Array<HourKind>(9).fill('qi'),
+      'study',
+    ]);
     const hours = hourYields(c, DAY);
     expect(hours[h('子')]).toMatchObject({ kind: 'sleep', qi: 0, insight: 0 });
     expect(hours[h('辰')]!.qi).toBeCloseTo(1 / 12);
-    // Ten waking hours, each leaving a twelfth of the day's trickle of 0.05 insight.
-    const r = dayRates(c, DAY);
+    // Ten waking hours, all on qi, each leaving a twelfth of the day's trickle of 0.05 insight.
+    const r = dayRates({ ...c, wheel: [...FRESH_WHEEL] }, DAY);
     expect(r.count).toMatchObject({ qi: 10, sleep: 2, study: 0 });
     expect(r.insight).toBeCloseTo((0.05 * 10) / 12);
     // Ten qi hours, dawn's included.
     expect(r.qi).toBeCloseTo(10.1 / 12);
-    expect(cultivateDays(c, 1, ctx()).cultivator.qi.bar).toBeCloseTo(10.1 / 12);
+    const allQi = { ...c, wheel: [...FRESH_WHEEL] };
+    expect(cultivateDays(allQi, 1, ctx()).cultivator.qi.bar).toBeCloseTo(10.1 / 12);
   });
 
   it('pays study in insight and practice in practice days', () => {
@@ -115,7 +123,7 @@ describe('element hours', () => {
     // Common methods fit mutated roots poorly: root ×2.0 × fit ×0.6.
     const lightning = at(player({ root: 'mutated' }), 'qi', { stage: 4 });
     expect(qiAt(lightning, h('寅'))).toBeCloseTo((1.2 * 1.25) / 12);
-    expect(qiAt(lightning, h('亥'))).toBeCloseTo(1.2 / 12);
+    expect(qiAt(lightning, h('申'))).toBeCloseTo(1.2 / 12);
     const ice = at(player({ root: 'mutated', elements: ['ice'] }), 'qi', { stage: 4 });
     expect(qiAt(ice, h('亥'))).toBeCloseTo((1.2 * 1.25) / 12);
     expect(qiAt(ice, h('寅'))).toBeCloseTo(1.2 / 12);
@@ -251,7 +259,7 @@ describe('routines', () => {
     const fresh = player({ routines: ['watch-rotation', 'nine-midnights'] });
     expect(canFollow(fresh, routine('watch-rotation').hours)).toEqual({
       ok: false,
-      reason: 'It needs practice and study hours.',
+      reason: 'It needs practice hours.',
     });
     const c = opened().player;
     expect(canFollow(c, routine('watch-rotation').hours)).toEqual({ ok: true });
@@ -275,15 +283,12 @@ describe('the tutorial', () => {
 });
 
 describe('the default rule', () => {
-  it('starts all qi, and flips the qi hour worth least to each new kind, latest first', () => {
+  it('starts with one study hour, and flips the qi hour worth least to each new kind, latest first', () => {
     let s = life();
-    const layer2 = withPlayer(s, at(s.player, 'qi', { stage: 2 }));
-    s = advance(layer2, 1000, { step: cultivate }).state;
-    // A true root holds wood and fire, so 亥, 戌, 酉 and 申 match nothing and go first.
+    // A true root holds wood and fire, so 亥, 戌, 酉 and 申 match nothing and go first; study,
+    // open from the start, has 亥 already.
     expect(s.player.wheel[h('亥')]).toBe('study');
-    expect(eventText(s, s.chronicle.at(-1)!)).toContain(
-      'The hour of 亥 (Hai) turns from qi to study.',
-    );
+    expect(hourKindOpen(s.player, 'study')).toBe(true);
     s = gainTechnique(s, 'rampart-palm');
     expect(s.player.wheel[h('戌')]).toBe('practice');
     s = gainMethod(s, FIRST_ARTS.body, 'is handed');
@@ -299,7 +304,7 @@ describe('the default rule', () => {
   it('spares hours that match the root, and dawn longest', () => {
     // A mixed root of wood, fire, metal and water matches every hour but earth's.
     const elements = ['wood', 'fire', 'metal', 'water'] as const;
-    let wheel = player().wheel;
+    let wheel = [...FRESH_WHEEL];
     const order: string[] = [];
     for (let i = 0; i < 9; i++) {
       const hour = hourToFlip(wheel, elements)!;
@@ -319,10 +324,11 @@ describe('the default rule', () => {
   });
 
   it('refuses hours of a kind that has not opened', () => {
-    expect(canSetHour(player(), h('辰'), 'study')).toEqual({
+    expect(canSetHour(player(), h('辰'), 'practice')).toEqual({
       ok: false,
-      reason: 'You have no study hours yet.',
+      reason: 'You have no practice hours yet.',
     });
-    expect(canSetHour(opened().player, h('辰'), 'study')).toEqual({ ok: true });
+    expect(canSetHour(player(), h('辰'), 'study')).toEqual({ ok: true });
+    expect(canSetHour(opened().player, h('辰'), 'practice')).toEqual({ ok: true });
   });
 });

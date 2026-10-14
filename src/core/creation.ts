@@ -8,6 +8,8 @@ import { rollRarity } from '../content/rarity.ts';
 import type { Element } from '../content/elements.ts';
 import { rollElements, rollRoot, type RootId } from '../content/roots.ts';
 import { talentsOf, TALENT_KINDS, type Talent, type TalentKind } from '../content/talents.ts';
+import { copyId } from '../content/copies.ts';
+import { gainCopy } from './life.ts';
 import { hashSeed, Rng } from './rng.ts';
 import { seeAll } from './seen.ts';
 import { newLife, nextLife, type GameState, type NewLifeOptions } from './state.ts';
@@ -81,19 +83,30 @@ export function lifeOptions(c: Creation): NewLifeOptions {
     talents: [c.roll.body, c.roll.soul, c.roll.fate],
     origin: { id: c.roll.origin, choice: c.choice },
     place: path.place,
-    method: path.method,
+    // The origin hands its method over as a book (design § Cultivation, Reading): a copy, read
+    // before it is any use, so the life starts with none known (handMethod, below).
+    method: null,
     routines: [...path.routines],
     stones: path.stones,
     flags: [...path.flags],
   };
 }
 
+/**
+ * The origin path's method as a copy, joining the empty reading queue; with no qi method known,
+ * it takes every waking hour until read.
+ */
+function handMethod(s: GameState, c: Creation): GameState {
+  const id = originPath(c.roll.origin, c.choice).method;
+  return id ? gainCopy(s, copyId('method', id), 'is handed') : s;
+}
+
 /** A first life from creation's choices, holding nothing new. */
 export function createLife(c: Creation): GameState {
-  return seeAll(newLife(lifeOptions(c)));
+  return seeAll(handMethod(newLife(lifeOptions(c)), c));
 }
 
 /** The next life in a slot after a death, from creation's choices; the chronicle carries on. */
 export function createNextLife(prev: GameState, c: Creation): GameState {
-  return seeAll(nextLife(prev, lifeOptions(c)));
+  return seeAll(handMethod(nextLife(prev, lifeOptions(c)), c));
 }

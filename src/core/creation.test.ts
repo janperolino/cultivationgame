@@ -213,7 +213,13 @@ describe('origins', () => {
         const s = createLife(creation({ choice, roll: { ...creation().roll, origin: o.id } }));
         const p = s.player;
         const path = o[choice];
-        expect(p.activeMethods.qi).toBe(path.method);
+        // The method comes as a copy, read before it is any use, on every waking hour.
+        expect(p.activeMethods.qi).toBeNull();
+        if (path.method) {
+          expect(p.copies[`method:${path.method}`]).toBe(1);
+          expect(p.reading.queue).toEqual([`method:${path.method}`]);
+          expect(p.wheel.filter((k) => k === 'study')).toHaveLength(10);
+        }
         expect(p.routines).toEqual(path.routines);
         expect(p.stones).toBe(path.stones);
         expect(p.flags).toEqual(path.flags);
@@ -221,7 +227,7 @@ describe('origins', () => {
         expect(p.origin).toEqual({ id: o.id, choice });
         // The first technique comes as a card, not at creation.
         expect(p.techniques).toEqual({});
-        expect(s.chronicle.map((e) => e.type)).toEqual(['birth', 'testing']);
+        expect(s.chronicle.map((e) => e.type).slice(0, 2)).toEqual(['birth', 'testing']);
       }
     }
   });

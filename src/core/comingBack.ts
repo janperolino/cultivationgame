@@ -121,7 +121,13 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
   const insight = after.player.insight.earned - before.player.insight.earned;
   if (insight >= 1) growth.push(`Understanding gathers: ${Math.floor(insight)} insight.`);
   const stones = after.player.stones - before.player.stones;
-  if (stones <= -1) growth.push(`${Math.floor(-stones)} spirit stones are gone, burned or spent.`);
+  // Burning ran the pouch dry while you were away: the toast that says so at the seat doesn't come.
+  const ranOut =
+    before.player.stones > 0 && after.player.stones <= 1e-9 && after.player.plan.burnStones;
+  if (ranOut)
+    growth.push('Your spirit stones ran out: the qi hours burn none until you have more.');
+  else if (stones <= -1)
+    growth.push(`${Math.floor(-stones)} spirit stones are gone, burned or spent.`);
   else if (stones >= 1) growth.push(`Your pouch is ${Math.floor(stones)} spirit stones heavier.`);
 
   // Each card settled without you, once, with the line its last coming wrote.

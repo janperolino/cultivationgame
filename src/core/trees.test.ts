@@ -403,7 +403,8 @@ describe('node effects in the rules', () => {
   });
 
   it('Stone Swallowing draws 5% more qi from each stone', () => {
-    const c = tutorialFree(learnAll(qc(), ['qi-sensing-breath']));
+    const burning = (x: Cultivator) => ({ ...x, plan: { ...x.plan, burnStones: true } });
+    const c = burning(tutorialFree(learnAll(qc(), ['qi-sensing-breath'])));
     const after = learnAll(c, ['qi-stone-swallowing']);
     expect(dayRates(after, DAY).qiPerStone / dayRates(c, DAY).qiPerStone).toBeCloseTo(1.05);
   });
@@ -482,10 +483,17 @@ describe('sealed nodes', () => {
 });
 
 describe('trees in the game', () => {
-  it('opens the Trees screen once there is insight for a first node', () => {
-    const s = withPlayer(base, { ...base.player, insight: { current: 9, earned: 9 } });
+  it('opens the Trees screen with insight for a first node, or a method', () => {
+    const none = {
+      ...base.player,
+      methods: {},
+      activeMethods: { qi: null, body: null, soul: null },
+    };
+    const s = withPlayer(base, { ...none, insight: { current: 9, earned: 9 } });
     expect(checkScreens(s).unlocks).not.toContain('trees');
-    const rich = withPlayer(base, { ...base.player, insight: { current: 10, earned: 10 } });
+    // A method grafts its manual on its ladder's tree, so it opens the screen.
+    expect(checkScreens(base).unlocks).toContain('trees');
+    const rich = withPlayer(base, { ...none, insight: { current: 10, earned: 10 } });
     expect(checkScreens(rich).unlocks).toContain('trees');
     expect(checkScreens(rich).chronicle.at(-1)?.type).toBe('screen');
   });

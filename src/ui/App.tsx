@@ -18,7 +18,7 @@ import { useNav } from './nav.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
 import { bySeason } from '../core/chronicle.ts';
-import { screenDot } from '../core/seen.ts';
+import { screenDot, screenIsNew } from '../core/seen.ts';
 import { EventLine } from './widgets.tsx';
 
 function SlotNotice() {
@@ -104,6 +104,15 @@ export function App() {
           .join(',')
       : '',
   ).split(',');
+  // A screen just opened glows in the menu, beside its dot, until it is first looked at.
+  const fresh = useGame((s) =>
+    s.game
+      ? available
+          .filter((x) => screenIsNew(s.game!, x.id))
+          .map((x) => x.id)
+          .join(',')
+      : '',
+  ).split(',');
   // With no life open, Settings is where you pick or start one.
   const current = creating
     ? { id: 'creation', name: 'A New Life', hanzi: '新生' }
@@ -185,7 +194,7 @@ export function App() {
               <li key={s.id}>
                 <button
                   type="button"
-                  className={`menu-item ${s.id === current.id ? 'is-active' : ''}`}
+                  className={`menu-item${s.id === current.id ? ' is-active' : ''}${fresh.includes(s.id) && s.id !== current.id ? ' is-new' : ''}`}
                   aria-current={s.id === current.id ? 'page' : undefined}
                   onClick={() => {
                     setScreen(s.id);

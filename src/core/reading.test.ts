@@ -14,6 +14,7 @@ import {
   readDays,
   readLump,
 } from '../content/copies.ts';
+import type { HourKind } from '../content/hours.ts';
 import { technique } from '../content/techniques.ts';
 import { eventText } from './chronicle.ts';
 import { resolveCard } from './cards.ts';
@@ -46,7 +47,7 @@ const base = newLife({ name: 'Han Li', seed: 'reading' });
 
 /** Two study hours on the wheel (寅 and 辰), the rest as a fresh life has them. */
 function studious(c: Cultivator): Cultivator {
-  const wheel = [...c.wheel];
+  const wheel = c.wheel.map((k): HourKind => (k === 'study' ? 'qi' : k));
   wheel[2] = 'study';
   wheel[4] = 'study';
   return { ...c, wheel, flags: [...c.flags, 'hours-study'] };

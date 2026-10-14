@@ -151,8 +151,13 @@ function screenNew(s: GameState, screen: string): boolean {
 const SEEN_ON_OPEN: readonly SeenKind[] = ['method'];
 
 /** Whether the screen's menu item wears a dot: it is new itself, or holds a thing not yet noticed. */
+/** Whether a screen, or a tab it holds that was once a screen, is open and not yet looked at. */
+export function screenIsNew(s: GameState, screen: string): boolean {
+  return screenNew(s, screen) || (SCREEN_TABS[screen] ?? []).some((t) => screenNew(s, t));
+}
+
 export function screenDot(s: GameState, screen: string): boolean {
-  if (screenNew(s, screen) || (SCREEN_TABS[screen] ?? []).some((t) => screenNew(s, t))) return true;
+  if (screenIsNew(s, screen)) return true;
   return (SCREEN_KINDS[screen] ?? []).some((k) =>
     heldIds(s, k).some((id) => look(s, k, id) === undefined),
   );

@@ -196,7 +196,7 @@ export function raiseToast(kind: HandToast, text: string, link: ToastLink | null
 
 /**
  * What a new life starts with, toasted once after testing day: a created life holds everything
- * seen, so no gain names its method, technique, items or stones on its own.
+ * seen, so no gain names its method (a copy, until read), technique, items or stones on its own.
  */
 export function startingGains(s: GameState): Gain[] {
   const p = s.player;
@@ -205,6 +205,9 @@ export function startingGains(s: GameState): Gain[] {
   return [
     ...held('method', Object.keys(p.methods)),
     ...held('technique', Object.keys(p.techniques)),
+    ...Object.entries(p.copies)
+      .filter(([, n]) => n > 0)
+      .map(([id, n]) => ({ kind: 'copy' as const, id, count: n, fresh: true })),
     ...Object.entries(p.items)
       .filter(([, n]) => n > 0)
       .map(([id, n]) => ({ kind: 'item' as const, id, count: n, fresh: true })),
@@ -216,6 +219,11 @@ export function raiseStartToasts(s: GameState): void {
   raiseToasts(startingGains(s), s);
   const stones = Math.floor(s.player.stones);
   if (stones > 0) raiseToast('stones', `${stones} low-grade ${stones === 1 ? 'stone' : 'stones'}`);
+}
+
+/** Whether burning emptied the pouch between two states: the last stone went into a qi hour. */
+export function stonesRanOut(before: GameState, after: GameState): boolean {
+  return after.player.plan.burnStones && before.player.stones > 0 && after.player.stones <= 1e-9;
 }
 
 /** The techniques that reached Origin and left their slot between two states. */

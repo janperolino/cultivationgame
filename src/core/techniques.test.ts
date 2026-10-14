@@ -102,9 +102,10 @@ describe('practice days', () => {
   it('go to the technique the player picks; the first opens the screen and practice hours', () => {
     let s = gainTechnique(base, 'rampart-palm', 'is taught');
     expect(s.unlocks).toContain('techniques');
-    expect(eventText(s, s.chronicle.at(-2)!)).toBe('Han Li is taught Rampart Palm.');
+    const lines = s.chronicle.map((e) => eventText(s, e));
+    expect(lines).toContain('Han Li is taught Rampart Palm.');
     // Practice hours open with it at once, by the default rule.
-    expect(eventText(s, s.chronicle.at(-1)!)).toMatch(/turns from qi to practice/);
+    expect(lines.some((l) => /turns from qi to practice/.test(l))).toBe(true);
     expect(s.player.practicing).toEqual(['rampart-palm']);
     s = gainTechnique(s, 'alley-wind-palm');
     expect(s.player.practicing).toEqual(['rampart-palm']);

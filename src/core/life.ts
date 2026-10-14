@@ -55,8 +55,9 @@ import { learnNode, type LearnCheck } from './trees.ts';
 import { learnRoutine } from './wheel.ts';
 
 /**
- * The Trees screen opens once there is insight enough for a first node (design, the first hour),
- * or with a first copy, which stands on its bookcase.
+ * The Trees screen opens with anything that lives there (design § UI and screens, Only what you
+ * have touched shows): insight enough for a first node, a method (its manual grafts on its tree)
+ * or a copy (it stands on the bookcase).
  */
 export const TREES_SCREEN_INSIGHT = 10;
 
@@ -97,7 +98,14 @@ function flare(s: GameState, ladder: LadderId, major: boolean): GameState {
 /** Opens the screens the player has reached. */
 export function checkScreens(s: GameState): GameState {
   let next = s;
-  if (s.player.insight.earned >= TREES_SCREEN_INSIGHT || ownedCopies(s.player).length > 0) {
+  // Things open where they live: a method grafts its manual on its ladder's tree, a copy stands
+  // on the bookcase, and insight enough for a node has something to buy there.
+  const p0 = s.player;
+  if (
+    p0.insight.earned >= TREES_SCREEN_INSIGHT ||
+    ownedCopies(p0).length > 0 ||
+    Object.keys(p0.methods).length > 0
+  ) {
     next = unlock(next, 'trees', true);
   }
   if (Object.keys(s.player.techniques).length > 0) {

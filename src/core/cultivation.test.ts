@@ -116,11 +116,13 @@ describe('qi speed', () => {
 
 describe('stones as fuel', () => {
   it('doubles a day of qi at five stones a full day of qi hours, fewer with fewer hours', () => {
-    const c = { ...player(), stones: 100 };
+    // Burning is off by default; this cultivator turned it on.
+    const p = player();
+    const c = { ...p, stones: 100, plan: { ...p.plan, burnStones: true } };
     const plain = step({ ...c, stones: 0 }, 1);
     const fuelled = step(c, 1);
-    // A fresh wheel has ten qi hours of twelve, so the day takes five-sixths of five stones.
-    expect(fuelled.stones).toBeCloseTo(100 - (5 * 10) / 12);
+    // A fresh wheel has nine qi hours of twelve (one is study), so the day takes 9/12 of five stones.
+    expect(fuelled.stones).toBeCloseTo(100 - (5 * 9) / 12);
     expect(fuelled.qi.bar).toBeCloseTo(plain.qi.bar * 2);
     const allQi = { ...c, wheel: c.wheel.map(() => 'qi' as const) };
     expect(dayRates(atFoundation(allQi), DAY).stoneCap).toBe(45);

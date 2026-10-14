@@ -19,6 +19,7 @@ import { REALM_IDS, realm } from '../content/realms.ts';
 import { defaultElements, ROOT_IDS, type RootId } from '../content/roots.ts';
 import { hashSeed, Rng, streamSeed, type StreamName } from './rng.ts';
 import { stats } from './stats.ts';
+import { flipHour } from './wheel.ts';
 
 /** The in-game calendar: twelve months of thirty days. */
 export const DAYS_PER_YEAR = 360;
@@ -365,10 +366,12 @@ export function newCultivator(
     gear: emptyGear(),
     bonds: {},
     toxicity: 0,
-    wheel: [...FRESH_WHEEL],
+    // Study is open from the start: one qi hour turns to it by the default rule.
+    wheel: flipHour(FRESH_WHEEL, opts.elements ?? defaultElements(opts.root ?? 'true'), 'study')
+      .wheel,
     routines: opts.routines ?? [],
     savedRoutines: [],
-    plan: { auto: 'safe', burnStones: true },
+    plan: { auto: 'safe', burnStones: false },
     flags: opts.flags ?? [],
     nodes: [],
     manuals: [],

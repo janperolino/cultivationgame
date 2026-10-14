@@ -37,7 +37,14 @@ import { attemptOf, endScene, sceneDue, sceneRolled, startScene, useScene } from
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 import { technique } from '../content/techniques.ts';
-import { clearToasts, leftSlots, raiseStartToasts, raiseToast, raiseToasts } from './toasts.ts';
+import {
+  clearToasts,
+  leftSlots,
+  raiseStartToasts,
+  raiseToast,
+  raiseToasts,
+  stonesRanOut,
+} from './toasts.ts';
 
 export const AUTOSAVE_MS = 30_000;
 /** A gap longer than this between ticks (a sleeping laptop, a frozen tab) counts as offline time. */
@@ -819,6 +826,7 @@ useGame.subscribe((now, was) => {
   }
   if (quiet || now.game === was.game || !was.game) return;
   raiseToasts(gains(was.game, now.game), now.game);
+  if (stonesRanOut(was.game, now.game)) raiseToast('stones', 'none left to burn');
   // A technique reaching Origin leaves its slot, which stays empty until the player fills it.
   for (const id of leftSlots(was.game, now.game)) {
     raiseToast('slot', `${technique(id).name} reached Origin and left its slot`, {

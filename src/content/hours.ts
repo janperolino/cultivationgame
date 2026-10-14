@@ -74,15 +74,22 @@ export const DISCIPLINE_BONUS = 0.1;
 export const SLEEP_HOURS: readonly number[] = [0, 1];
 export const SLEEP_FREED_TEXT = 'You no longer need sleep; two more hours are yours.';
 
-/** A fresh life's wheel: all qi, with 子 and 丑 asleep. */
+/**
+ * The wheel a fresh life is built from: all qi, with 子 and 丑 asleep. A new cultivator gives one
+ * of its hours to study by the default rule (core/state.ts), since study is open from the start.
+ */
 export const FRESH_WHEEL: readonly HourKind[] = BRANCHES.map((_, i) =>
   SLEEP_HOURS.includes(i) ? 'sleep' : 'qi',
 );
 
+/** Kinds of hour open from the start: qi, study and sleep. */
+export const ALWAYS_OPEN_HOURS: readonly HourKind[] = ['qi', 'study', 'sleep'];
+
 /**
- * Kinds of hour that open as you reach them (design § Character creation, the first hour), in the
- * order the default rule flips an hour to each. Study opens at Qi Condensation layer 2, practice
- * with the first technique you can use, body and soul with their art.
+ * Kinds of hour that open as you reach them (design § Cultivation, the day is twelve double-hours),
+ * in the order the default rule flips an hour to each: practice with the first technique you can
+ * use, body and soul with their art. Study is open from the start; its line stays for the chronicle
+ * of older lives, which opened it at layer 2.
  */
 export const HOUR_OPENINGS: readonly { kind: HourKind; text: string }[] = [
   {
@@ -93,5 +100,3 @@ export const HOUR_OPENINGS: readonly { kind: HourKind; text: string }[] = [
   { kind: 'body', text: 'A tempering art in hand: body hours open beside qi.' },
   { kind: 'soul', text: 'A nourishing art in hand: soul hours open.' },
 ];
-/** Study hours open at this Qi Condensation layer. */
-export const STUDY_LAYER = 2;

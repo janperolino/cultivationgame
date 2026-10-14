@@ -73,9 +73,8 @@ describe('study opened by a first copy', () => {
     expect(count(read, 'qi')).toBe(9);
   });
 
-  it('flips one hour at layer 2 as before, a copy or not', () => {
-    const layer2 = withPlayer(street, { ...street.player, qi: { ...street.player.qi, stage: 2 } });
-    const c = gainCopy(layer2, TIDE).player;
+  it('leaves the wheel alone once a qi method is known: study keeps its one hour', () => {
+    const c = gainCopy(base, TIDE).player;
     expect(count(c, 'study')).toBe(1);
     expect(c.reading.wheel).toBeNull();
   });
@@ -149,7 +148,7 @@ describe('the reading queue', () => {
   });
 
   it('moves on to the next readable copy when one is done, and keeps each copy’s progress', () => {
-    let c = gainCopy(gainCopy(base, BREATH), TIDE).player;
+    let c = gainCopy(gainCopy(street, BREATH), TIDE).player;
     c = queueCopy(c, TIDE).cultivator;
     c = { ...c, reading: { ...c.reading, days: { [TIDE]: 2 } } };
     expect(readingCopy(c)).toBe(BREATH);

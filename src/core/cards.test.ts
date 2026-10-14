@@ -77,7 +77,13 @@ describe('triggers', () => {
     expect(triggerHolds(s, { flags: ['bounty'] })).toBe(true);
     expect(triggerHolds(s, { notFlags: ['bounty'] })).toBe(false);
     expect(triggerHolds(s, { noMethod: 'qi' })).toBe(true);
-    expect(triggerHolds(life(), { noMethod: 'qi' })).toBe(false);
+    // A going-along life holds its method as a copy until read; read, it has one.
+    const read = life();
+    const withMethod = withPlayer(read, {
+      ...read.player,
+      activeMethods: { ...read.player.activeMethods, qi: 'garrison-standard' },
+    });
+    expect(triggerHolds(withMethod, { noMethod: 'qi' })).toBe(false);
     expect(triggerHolds(s, { qi: { minStage: 3 } })).toBe(false);
     const l9 = withPlayer(s, { ...s.player, qi: { ...s.player.qi, stage: 9 } });
     expect(triggerHolds(l9, { qi: { realm: 'qi-condensation', minStage: 9 } })).toBe(true);

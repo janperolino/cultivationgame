@@ -5400,6 +5400,19 @@ button.fight-card {
   }
 }
 
+/* A screen just opened: its menu item glows, beside its dot, until first looked at. */
+.menu-item.is-new {
+  border-color: var(--accent-edge);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent);
+  animation: new-menu-glow 2.8s ease-in-out infinite;
+}
+
+@keyframes new-menu-glow {
+  50% {
+    box-shadow: 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+}
+
 :root[data-motion='reduced'] .is-new {
   animation: none;
 }

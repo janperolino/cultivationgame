@@ -4,6 +4,7 @@
 // yields lives with the other rates in core/cultivation.ts.
 import { phaseOf, type Element } from '../content/elements.ts';
 import {
+  ALWAYS_OPEN_HOURS,
   BRANCHES,
   DAWN_BONUS,
   DAWN_HOUR,
@@ -13,13 +14,12 @@ import {
   HOUR_OPENINGS,
   HOURS_PER_DAY,
   SLEEP_HOURS,
-  STUDY_LAYER,
   type HourKind,
 } from '../content/hours.ts';
-import { realmIndex } from '../content/realms.ts';
+import { hasMethod, method } from '../content/methods.ts';
 import { hasRoutine, routine, type Routine } from '../content/routines.ts';
 import type { Note } from './cultivation.ts';
-import { ownedCopies, readingCopy } from './reading.ts';
+import { readingCopy } from './reading.ts';
 import { hasFlag, type Cultivator } from './state.ts';
 import { knownTechniques, techniqueSealed } from './techniques.ts';
 
@@ -47,9 +47,9 @@ export function effectiveWheel(c: Cultivator): HourKind[] {
 
 const openFlag = (kind: HourKind) => `hours-${kind}`;
 
-/** Whether hours can be given to this kind yet: qi and sleep always, the rest once opened. */
+/** Whether hours can be given to this kind yet: qi, study and sleep always, the rest once opened. */
 export function hourKindOpen(c: Cultivator, kind: HourKind): boolean {
-  return kind === 'qi' || kind === 'sleep' || hasFlag(c, openFlag(kind));
+  return ALWAYS_OPEN_HOURS.includes(kind) || hasFlag(c, openFlag(kind));
 }
 
 export function openHourKinds(c: Cultivator): HourKind[] {
@@ -194,17 +194,9 @@ export function flipHour(
   return { wheel: next, hour };
 }
 
-/** Whether the qi ladder has reached the layer that opens study hours by itself. */
-function studyLayerReached(c: Cultivator): boolean {
-  return realmIndex(c.qi.realm) > 0 || c.qi.stage >= STUDY_LAYER;
-}
-
 /** Whether the cultivator can now do a kind of work, opened or not. */
 function kindPossible(c: Cultivator, kind: HourKind): boolean {
   switch (kind) {
-    case 'study':
-      // Study opens at layer 2, or with the first copy owned if that comes first.
-      return studyLayerReached(c) || ownedCopies(c).length > 0;
     case 'practice':
       return knownTechniques(c).some((t) => !techniqueSealed(c, t));
     case 'body':
@@ -223,10 +215,14 @@ function flipTarget(c: Cultivator): readonly HourKind[] {
   return c.reading.wheel ?? c.wheel;
 }
 
+/** Whether the cultivator knows any qi method, read or taught. */
+function knowsQiMethod(c: Cultivator): boolean {
+  return Object.keys(c.methods).some((id) => hasMethod(id) && method(id).ladder === 'qi');
+}
+
 /**
- * Study opened by a first copy before layer 2 (design § Cultivation, the day is twelve
- * double-hours): every waking hour turns to study until that copy is read, and the wheel as it
- * was is put aside.
+ * Before you know a qi method, qi hours give nothing, so a copy to read takes every waking hour
+ * (design § Cultivation, the day is twelve double-hours) and the wheel as it was is put aside.
  */
 function studyTakesAll(c: Cultivator): Cultivator {
   const wheel = c.wheel.map((k, i) => (hourLocked(c, i) ? k : 'study'));
@@ -234,12 +230,18 @@ function studyTakesAll(c: Cultivator): Cultivator {
 }
 
 /**
- * Once nothing is left to read, the wheel a first copy put aside comes back with one study hour
- * kept, by the default rule.
+ * Once a qi method is known, or nothing is left to read, the wheel put aside comes back with a study
+ * hour kept: its own, or one turned by the default rule.
  */
 function studyGivesBack(c: Cultivator): { cultivator: Cultivator; notes: Note[] } {
-  if (!c.reading.wheel || readingCopy(c) !== null) return { cultivator: c, notes: [] };
-  const { wheel, hour } = flipHour(c.reading.wheel, c.rootElements, 'study');
+  if (!c.reading.wheel || (readingCopy(c) !== null && !knowsQiMethod(c))) {
+    return { cultivator: c, notes: [] };
+  }
+  const kept = c.reading.wheel.indexOf('study');
+  const { wheel, hour } =
+    kept >= 0
+      ? { wheel: [...c.reading.wheel], hour: kept }
+      : flipHour(c.reading.wheel, c.rootElements, 'study');
   return {
     cultivator: { ...c, wheel, reading: { ...c.reading, wheel: null } },
     notes: [{ type: 'study-back', data: { hour } }],
@@ -248,22 +250,21 @@ function studyGivesBack(c: Cultivator): { cultivator: Cultivator; notes: Note[] 
 
 /**
  * The default rule (design § Cultivation): when a new kind of hour becomes possible, one qi hour
- * flips to it with a chronicle line; study opened by a first copy before layer 2 takes every waking
- * hour until it is read instead, then gives the wheel back. At Foundation, sleep is freed and its
- * hours turn to qi.
+ * flips to it with a chronicle line. Before you know a qi method, a copy to read takes every waking
+ * hour until one is known, then gives the wheel back. At Foundation, sleep is freed and its hours
+ * turn to qi.
  */
 export function openHours(c: Cultivator): { cultivator: Cultivator; notes: Note[] } {
   const back = studyGivesBack(c);
   let next = back.cultivator;
   const notes: Note[] = [...back.notes];
+  if (!next.reading.wheel && !knowsQiMethod(next) && readingCopy(next) !== null) {
+    next = studyTakesAll(next);
+    notes.push({ type: 'study-all', data: { copy: readingCopy(next) } });
+  }
   for (const o of HOUR_OPENINGS) {
-    if (hasFlag(next, openFlag(o.kind)) || !kindPossible(next, o.kind)) continue;
+    if (hourKindOpen(next, o.kind) || !kindPossible(next, o.kind)) continue;
     const flags = [...next.flags, openFlag(o.kind)];
-    if (o.kind === 'study' && !studyLayerReached(next) && readingCopy(next) !== null) {
-      next = { ...studyTakesAll(next), flags };
-      notes.push({ type: 'study-all', data: { copy: readingCopy(next) } });
-      continue;
-    }
     const { wheel, hour } = flipHour(flipTarget(next), next.rootElements, o.kind);
     next = next.reading.wheel
       ? { ...next, flags, reading: { ...next.reading, wheel } }
