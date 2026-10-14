@@ -251,8 +251,6 @@ export const GameStateSchema = z.object({
     life: z.number().int().min(1),
     /** The first times done (core/firsts.ts), so a reborn cultivator isn't walked through them. */
     firsts: z.array(z.enum(FIRST_IDS)),
-    /** The hints acted on or dismissed (content/firsts.ts), each shown once a lineage. */
-    hints: z.array(z.string()),
   }),
   mode: z.enum(['ironman', 'gentle']),
   calendar: z.object({
@@ -278,6 +276,11 @@ export const GameStateSchema = z.object({
   chronicle: z.array(ChronicleEvent),
   /** The card feed and the decks' memory. */
   cards: Cards,
+  /**
+   * Hints toward first times (ui/hints.ts), the life's own: whether they show, and the ones acted
+   * on or dismissed, each shown once a life.
+   */
+  hints: z.object({ on: z.boolean(), shown: z.array(z.string()) }),
   /** Unlock flags for the screens, so they appear as they're reached. */
   unlocks: z.array(z.string()),
   /**
@@ -473,8 +476,8 @@ export function newLife(opts: NewLifeOptions): GameState {
       id: opts.seed ?? opts.name,
       life: 1,
       firsts: [...(opts.firsts ?? ALL_FIRSTS)],
-      hints: [],
     },
+    hints: { on: true, shown: [] },
     mode,
     calendar: { day: startDay },
     player,
@@ -495,8 +498,8 @@ export function newLife(opts: NewLifeOptions): GameState {
 
 /**
  * The next life in the same slot after a death: the world's calendar runs on and the chronicle
- * stays, and so does the lineage's record of first times and hints; nothing else carries over
- * until rebirth arrives in M8.
+ * stays, and so does the lineage's record of first times; nothing else carries over until rebirth
+ * arrives in M8, hints included.
  */
 export function nextLife(prev: GameState, opts: NewLifeOptions): GameState {
   const firsts = prev.lineage.firsts;

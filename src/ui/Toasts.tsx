@@ -15,7 +15,7 @@ function ToastCard({ t }: { t: Toast }) {
   }, [held, t.key, t.hint]);
   const dismiss = () => {
     dismissToast(t.key);
-    if (t.hint) useGame.getState().hintDone(t.hint);
+    if (t.hint) useGame.getState().markHint(t.hint);
   };
   const style = t.rarity
     ? ({ '--rarity-color': `var(--rarity-${t.rarity})` } as CSSProperties)

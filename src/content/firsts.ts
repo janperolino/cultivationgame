@@ -1,7 +1,7 @@
 // You do it the first time (design § UI and screens): the first time in a lineage a feature
 // reaches you it arrives switched off, a hint points at the control, and it waits until you do it;
 // after that the defaults help. The lineage keeps which firsts are done (core/firsts.ts). The texts
-// here are drafts for Jan's review: each hint, shown once a lineage, and the coming-back card's
+// here are drafts for Jan's review: each hint, shown once a life, and the coming-back card's
 // line for a first still waiting. {copy}, {method}, {technique}, {art} (its name), {artKind}
 // ("tempering art"), {ladder} ("body") and {hour} ("Body") fill in.
 
@@ -23,19 +23,26 @@ export const ALL_FIRSTS: readonly FirstId[] = FIRST_IDS;
 /** Stones worth burning: the stones first waits from this many held. */
 export const FIRST_STONES = 5;
 
-/** Insight enough for a node: the node first waits from here (the Trees screen opens at it too). */
-export const FIRST_NODE_INSIGHT = 10;
+/**
+ * Insight enough for a node: the node first waits from here, well past the 10 that opens the
+ * Trees, so a new life has time to look round first (Jan's call after P2.8).
+ */
+export const FIRST_NODE_INSIGHT = 50;
+
+/** Days lived (about five real minutes at the start) before a hint says hints can be turned off. */
+export const HINTS_OFF_DAYS = 30;
 
 /**
- * Hints, one at a time, in this order, each once a lineage. A first with two steps (a slot or a
+ * Hints, one at a time, in this order, each once a life. A first with two steps (a slot or a
  * method, then an hour) has a hint for each. Breakthroughs, drawing orbs and the card tray are
- * already yours to do and get a hint only.
+ * already yours to do and get a hint only; drawing orbs waits for a method taken up, so the
+ * method's hint comes first. The last says hints can be turned off.
  */
 export const HINT_IDS = [
   'copy',
   'study-hour',
-  'orbs',
   'method',
+  'orbs',
   'technique',
   'technique-hour',
   'art',
@@ -44,6 +51,7 @@ export const HINT_IDS = [
   'node',
   'breakthrough',
   'cards',
+  'hints-off',
 ] as const;
 export type HintId = (typeof HINT_IDS)[number];
 
@@ -52,7 +60,8 @@ export const HINTS: Readonly<Record<HintId, string>> = {
   'study-hour':
     'Your wheel is all qi, and qi hours give nothing until you know a method. Turn an hour to Study to read it; more hours read it sooner.',
   orbs: 'Qi drifts toward your figure at the Abode. Pass the pointer through an orb to draw it in.',
-  method: 'You know the {method}, but nothing climbs with it yet. Choose it under Climb with.',
+  method:
+    'You have learned your first cultivation method, the {method}. Take it up under Climb with to start cultivating, then give your day more qi hours to cultivate for longer.',
   technique: '{technique} waits to be drilled. Practice this puts it in a slot.',
   'technique-hour': '{technique} has its slot but no hour. Turn an hour to Practice on the wheel.',
   art: 'The {art} is yours, but your {ladder} does not climb with it yet. Choose it under Climb with.',
@@ -61,11 +70,12 @@ export const HINTS: Readonly<Record<HintId, string>> = {
   node: 'Insight enough for a node. Buy one on the Trees, where your understanding takes shape.',
   breakthrough: 'A bar is full. Break through with the button under your figure at the Abode.',
   cards: 'A card waits in the tray at the Abode. Each is a choice, and it waits for you.',
+  'hints-off': 'Hints like this one can be turned off in Settings, and shown again from there.',
 };
 
 /** The coming-back card's line for each first still waiting, by its step. */
 export const FIRST_WAITING: Readonly<
-  Record<Exclude<HintId, 'orbs' | 'breakthrough' | 'cards'>, string>
+  Record<Exclude<HintId, 'orbs' | 'breakthrough' | 'cards' | 'hints-off'>, string>
 > = {
   copy: 'Your {copy} waits on the shelf, unread.',
   'study-hour': 'No hour of your wheel goes to study yet.',

@@ -2460,98 +2460,12 @@ select {
   color: var(--muted);
 }
 
-.fan-ladder {
-  width: 232px;
-  padding: 6px 0;
-  border: 1px solid color-mix(in srgb, var(--gilt) 22%, transparent);
-  border-radius: var(--radius-small);
-  background: rgb(12 11 9 / 0.92);
-}
-
-.fan-ladder-head {
-  display: block;
-  padding: 4px 10px 6px;
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--gilt) 55%, var(--muted));
-}
-
-.fan-ladder ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.fan-ladder button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 30px;
-  padding: 0 10px;
-  border: 0;
-  background: none;
-  color: #e3cf9f;
-  font: inherit;
-  font-size: 12px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.fan-ladder button:hover,
-.fan-ladder button.is-here {
-  background: color-mix(in srgb, var(--gilt) 12%, transparent);
-}
-
-.fan-ladder button.is-ahead {
-  color: var(--muted);
-}
-
-.fan-ladder .hanzi {
-  font-family: var(--font-brush);
-  font-size: 13px;
-}
-
-.fan-ladder-num {
-  width: 12px;
-  font-size: 10px;
-  color: var(--muted);
-}
-
-.fan-ladder-name {
-  flex: 1;
-}
-
-.fan-ladder-mark {
-  font-size: 9.5px;
-  color: var(--gilt);
-}
-
+/* Go to a realm: a dropdown, "you are here" and "next" marked. */
 .fan-ladder-select {
-  display: none;
-}
-
-/* A narrow canvas (a phone, or a narrow window beside the chronicle) takes the ladder as a select. */
-@container (max-width: 720px) {
-  .fan-ladder {
-    width: auto;
-    padding: 0;
-    border: 0;
-    background: none;
-  }
-
-  .fan-ladder-head,
-  .fan-ladder ol {
-    display: none;
-  }
-
-  .fan-ladder-select {
-    display: block;
-    max-width: 180px;
-    min-height: 36px;
-    background: var(--glass-strong);
-  }
+  display: block;
+  max-width: 220px;
+  min-height: 36px;
+  background: var(--glass-strong);
 }
 
 /* A hostless manual's own tree, a small fan in the same look, its node's details under it. */

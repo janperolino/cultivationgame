@@ -70,17 +70,13 @@ const rarityVar = (m: Manual) =>
   ({ '--rarity-color': `var(--rarity-${m.rarity})` }) as CSSProperties;
 
 /**
- * The view on a band. Qi Condensation keeps the hub low and centred, fitted to the screen within
- * 0.5 and 1; a band further out centres its peak at a zoom that reads, smaller the further out.
+ * The view on a band, at 100% so the names read without zooming in (Jan's call after P2.8): Qi
+ * Condensation keeps the hub low and centred, where its starter stands; a band further out
+ * centres its peak.
  */
 function bandView(f: Fan, tier: number, s: Size): View {
-  if (tier === 1) {
-    const b = f.bands[0]!;
-    const fit = Math.min((s.w - 24) / (b.outer * 2 + 200), (s.h - 80) / (b.outer + 60));
-    return viewAt(Math.min(1, Math.max(0.5, fit)), f.hub, { x: s.w / 2, y: s.h - 56 });
-  }
-  const k = Math.min(0.8, Math.max(0.2, 640 / f.bands[tier - 1]!.ring));
-  return viewAt(k, bandFocus(f, tier), { x: s.w / 2, y: s.h / 2 });
+  if (tier === 1) return viewAt(1, f.hub, { x: s.w / 2, y: s.h - 56 });
+  return viewAt(1, bandFocus(f, tier), { x: s.w / 2, y: s.h / 2 });
 }
 
 /** A view on a jewel, bloomed: near the middle, above where a node's details open. */
@@ -402,29 +398,11 @@ function BloomDisc({
   );
 }
 
-/** The realms to jump to, "you are here" and "next" marked; a select at phone width. */
+/** The realms to jump to, as a dropdown, "you are here" and "next" marked. */
 function RealmLadder({ here, onGo }: { here: number; onGo: (tier: number) => void }) {
   const mark = (tier: number) => (tier === here ? 'you are here' : tier === here + 1 ? 'next' : '');
   return (
     <nav className="fan-ladder" aria-label="Go to a realm">
-      <span className="fan-ladder-head">Go to a realm</span>
-      <ol>
-        {REALMS.map((r, i) => (
-          <li key={r.id}>
-            <button
-              type="button"
-              className={i + 1 === here ? 'is-here' : i + 1 > here ? 'is-ahead' : undefined}
-              aria-current={i + 1 === here ? 'true' : undefined}
-              onClick={() => onGo(i + 1)}
-            >
-              <span className="fan-ladder-num">{i + 1}</span>
-              <span className="hanzi">{r.hanzi}</span>
-              <span className="fan-ladder-name">{r.name}</span>
-              <span className="fan-ladder-mark">{mark(i + 1)}</span>
-            </button>
-          </li>
-        ))}
-      </ol>
       <select
         className="fan-ladder-select"
         aria-label="Go to a realm"
@@ -436,7 +414,7 @@ function RealmLadder({ here, onGo }: { here: number; onGo: (tier: number) => voi
         <option value="">Go to a realm…</option>
         {REALMS.map((r, i) => (
           <option key={r.id} value={i + 1}>
-            {i + 1} · {r.name}
+            {i + 1} · {r.name} {r.hanzi}
             {mark(i + 1) ? ` (${mark(i + 1)})` : ''}
           </option>
         ))}

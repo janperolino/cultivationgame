@@ -1,5 +1,5 @@
 // Settings live in localStorage; saves never do (design § Saves). These are the player's, not the
-// life's: text size, motion, colors, the glass and whether hints show. The clock speed belongs to the life and saves
+// life's: text size, motion, colors and the glass. The clock speed belongs to the life and saves
 // with the slot instead. Only this file and the save layer touch browser storage.
 import { create } from 'zustand';
 import { RARITY_IDS, type RarityId } from '../content/rarity.ts';
@@ -25,8 +25,6 @@ export interface Settings {
   weather: number;
   /** How bright the panels' rims are, as a multiple of the default. */
   rim: number;
-  /** Whether hints toward first times show (ui/hints.ts). */
-  hints: boolean;
 }
 
 export const TEXT_SCALES = [
@@ -48,7 +46,6 @@ export const DEFAULT_SETTINGS: Settings = {
   web: 1,
   weather: 1,
   rim: 1,
-  hints: true,
 };
 
 const clamp = (x: unknown, lo: number, hi: number, d: number) =>
@@ -73,7 +70,6 @@ export function cleanSettings(raw: Partial<Record<keyof Settings, unknown>>): Se
     web: Math.round(clamp(raw.web, 0, 3, d.web)),
     weather: clamp(raw.weather, 0, 1, d.weather),
     rim: clamp(raw.rim, 0.3, 1.6, d.rim),
-    hints: typeof raw.hints === 'boolean' ? raw.hints : d.hints,
   };
 }
 

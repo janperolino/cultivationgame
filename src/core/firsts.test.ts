@@ -137,7 +137,10 @@ describe('a new lineage', () => {
     let s = playFirsts(createLife(creation()));
     expect(s.player.plan.burnStones).toBe(true);
     expect(s.lineage.firsts).toContain('stones');
+    // Insight enough to open the Trees isn't yet a nudge to buy: the node waits from 50.
     s = withPlayer(s, { ...s.player, insight: { current: 40, earned: 40 } });
+    expect(waiting(s)).not.toContain('node');
+    s = withPlayer(s, { ...s.player, insight: { current: 50, earned: 50 } });
     expect(waiting(s)).toContain('node');
     s = learn(s, 'qi-sensing-breath').state;
     expect(s.lineage.firsts).toContain('node');
@@ -161,11 +164,16 @@ describe('a new lineage', () => {
 describe('a reborn life', () => {
   it('gets no first times: its method queued, a study hour set, stones burning', () => {
     const done = { ...playFirsts(createLife(creation())), ended: { day: 0, cause: 'test' } };
-    const all = { ...done, lineage: { ...done.lineage, firsts: [...ALL_FIRSTS], hints: ['orbs'] } };
+    const all = {
+      ...done,
+      lineage: { ...done.lineage, firsts: [...ALL_FIRSTS] },
+      hints: { on: false, shown: ['orbs'] },
+    };
     const next = createNextLife(all, creation({ seed: 'firsts-2' }));
     expect(next.lineage.life).toBe(2);
     expect(next.lineage.firsts).toEqual(ALL_FIRSTS);
-    expect(next.lineage.hints).toEqual(['orbs']);
+    // Hints are each life's own: on again, none shown.
+    expect(next.hints).toEqual({ on: true, shown: [] });
     expect(next.player.reading.queue).toEqual([METHOD]);
     expect(hours(next, 'study')).toBe(1);
     expect(next.player.plan.burnStones).toBe(true);
@@ -188,15 +196,29 @@ describe('save v18', () => {
   function v17(s: GameState, aside: HourKind[] | null = null) {
     const raw = JSON.parse(JSON.stringify(makeSave(s, 1))) as {
       version: number;
-      state: { lineage: Record<string, unknown>; player: Record<string, unknown> };
+      state: { lineage: Record<string, unknown>; player: Record<string, unknown>; hints?: unknown };
     };
     raw.version = 17;
     delete raw.state.lineage.firsts;
-    delete raw.state.lineage.hints;
+    delete raw.state.hints;
     const reading = raw.state.player.reading as Record<string, unknown>;
     raw.state.player.reading = { ...reading, wheel: aside };
     return raw;
   }
+
+  it('v19 keeps the hints with the life: on, with the ones the lineage was shown', () => {
+    const s = newLife({ name: 'Han Li', seed: 'v19' });
+    const raw = JSON.parse(JSON.stringify(makeSave(s, 1))) as {
+      version: number;
+      state: Record<string, unknown> & { lineage: Record<string, unknown> };
+    };
+    raw.version = 18;
+    delete raw.state.hints;
+    raw.state.lineage.hints = ['copy', 'cards'];
+    const loaded = loadSave(raw).state;
+    expect(loaded.hints).toEqual({ on: true, shown: ['copy', 'cards'] });
+    expect('hints' in loaded.lineage).toBe(false);
+  });
 
   it('counts every first an old life has passed as done, and nothing else changes', () => {
     let s = newLife({ name: 'Han Li', seed: 'v18', techniques: ['rampart-palm'] });
@@ -206,7 +228,8 @@ describe('save v18', () => {
     expect(loaded.player.wheel).toEqual(s.player.wheel);
     expect(loaded.player.reading).toEqual({ queue: [], days: {} });
     expect(loaded.lineage.firsts).toEqual(['study-hour', 'method', 'technique', 'stones']);
-    expect(loaded.lineage.hints).toEqual(['orbs']);
+    expect(loaded.hints).toEqual({ on: true, shown: ['orbs'] });
+    expect('hints' in loaded.lineage).toBe(false);
     expect(loadSave(makeSave(loaded, 2)).version).toBe(SAVE_VERSION);
   });
 

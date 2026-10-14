@@ -30,7 +30,7 @@ import { seeAll } from '../seen.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -663,6 +663,15 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const player = { ...p, wheel, reading: { queue, days } };
     const lineage = { ...((s.lineage ?? {}) as Raw), firsts, hints };
     return { ...old, version: 18, state: { ...s, lineage, player } };
+  },
+
+  // v18, P2.8: hints shown once a lineage, turned on or off in the browser's settings. v19 keeps
+  // them with the life (Jan's call after P2.8): on, with the ones the lineage was shown.
+  18: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const { hints, ...lineage } = (s.lineage ?? {}) as Raw;
+    const shown = Array.isArray(hints) ? hints : [];
+    return { ...old, version: 19, state: { ...s, lineage, hints: { on: true, shown } } };
   },
 };
 

@@ -6,7 +6,8 @@ import { gainMethod, giveHour, readCopy, switchMethod } from '../core/life.ts';
 import type { GameState } from '../core/state.ts';
 import { hourToFlip } from '../core/wheel.ts';
 import { beacons, rings } from './beacons.ts';
-import { hintsWaiting, nextHint } from './hints.ts';
+import { HINTS_OFF_DAYS } from '../content/firsts.ts';
+import { hintDone, hintsWaiting, nextHint } from './hints.ts';
 
 const creation: Creation = {
   name: 'Han Li',
@@ -24,6 +25,8 @@ const creation: Creation = {
     origin: 'cave-orphan',
   },
 };
+
+const s0 = () => createLife(creation);
 
 const study = (s: GameState) =>
   giveHour(s, hourToFlip(s.player.wheel, s.player.rootElements)!, 'study').state;
@@ -57,7 +60,7 @@ describe('beacons', () => {
 });
 
 describe('hints', () => {
-  it('come one at a time in order, once a lineage, with a link to the control', () => {
+  it('come one at a time in order, once a life, with a link to the control', () => {
     const s = createLife(creation);
     const first = nextHint(s)!;
     expect(first.id).toBe('copy');
@@ -65,14 +68,54 @@ describe('hints', () => {
       'Your Garrison Standard Method waits on the shelf. Read now puts it on your study hours.',
     );
     expect(first.to).toEqual({ screen: 'cultivate', tab: 'study' });
-    expect(hintsWaiting(s).map((h) => h.id)).toEqual(['copy', 'study-hour', 'orbs', 'stones']);
-    // Shown once: a lineage that dismissed it is shown the next.
-    const shown = { ...s, lineage: { ...s.lineage, hints: ['copy'] } };
+    expect(hintsWaiting(s).map((h) => h.id)).toEqual(['copy', 'study-hour', 'stones']);
+    // Shown once: a life that dismissed it is shown the next.
+    const shown = { ...s, hints: { on: true, shown: ['copy'] } };
     expect(nextHint(shown)!.id).toBe('study-hour');
     // Done, its moment passes.
     expect(
       hintsWaiting(readCopy(s, 'method:garrison-standard').state).map((h) => h.id),
     ).not.toContain('copy');
+  });
+
+  it('ask to take up a first method before the orbs, which wait on one taken up', () => {
+    const read = {
+      ...s0(),
+      player: { ...s0().player, methods: { 'garrison-standard': { practice: 0, fedUntil: 0 } } },
+    };
+    const ids = hintsWaiting(read).map((h) => h.id);
+    expect(ids).toContain('method');
+    expect(ids).not.toContain('orbs');
+    expect(hintsWaiting(read).find((h) => h.id === 'method')!.text).toMatch(
+      /^You have learned your first cultivation method, the Garrison Standard Method. Take it up/,
+    );
+    const taken = switchMethod(read, 'qi', 'garrison-standard').state;
+    const after = hintsWaiting(taken).map((h) => h.id);
+    expect(after).toContain('orbs');
+    expect(after).not.toContain('method');
+  });
+
+  it('go only when the player does what they say, not when the moment passes by itself', () => {
+    const s = s0();
+    const pending = {
+      ...s,
+      cards: { ...s.cards, pending: [{ uid: 1, card: 'lamp-keeper', day: 0 }] },
+    };
+    expect(hintDone(pending, 'cards')).toBe(false);
+    // The tray emptied by itself: the hint still stands until chosen or dismissed.
+    expect(hintDone({ ...pending, cards: s.cards }, 'cards')).toBe(false);
+    expect(hintDone(s, 'copy')).toBe(false);
+    expect(hintDone(readCopy(s, 'method:garrison-standard').state, 'copy')).toBe(true);
+    expect(hintDone({ ...s, hints: { on: true, shown: ['cards'] } }, 'cards')).toBe(true);
+  });
+
+  it('say hints can be turned off once a life has lived about five minutes', () => {
+    const s = s0();
+    expect(hintsWaiting(s).map((h) => h.id)).not.toContain('hints-off');
+    const later = { ...s, calendar: { day: s.calendar.day + HINTS_OFF_DAYS } };
+    expect(hintsWaiting(later).find((h) => h.id === 'hints-off')!.to).toEqual({
+      screen: 'settings',
+    });
   });
 
   it('point at the card tray and a breakthrough, which are already yours to do', () => {

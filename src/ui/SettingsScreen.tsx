@@ -490,12 +490,13 @@ function ReadingPanel() {
 }
 
 /**
- * Hints toward first times (ui/hints.ts): on or off for the player, and shown again for the open
- * life's lineage, each once more.
+ * Hints toward first times (ui/hints.ts), the open life's own: on or off, and shown again, each
+ * once more. With no life open there is nothing to set.
  */
 function HintsPanel() {
-  const s = useSettings();
   const replay = useGame((g) => g.replayHints);
+  const setHints = useGame((g) => g.setHints);
+  const on = useGame((g) => g.game?.hints.on ?? true);
   const hasLife = useGame((g) => !!g.game && !g.game.ended);
   const [replayed, setReplayed] = useState(false);
   return (
@@ -506,14 +507,15 @@ function HintsPanel() {
       <label className="check">
         <input
           type="checkbox"
-          checked={s.hints}
-          onChange={(e) => saveSettings({ hints: e.target.checked })}
+          checked={on}
+          disabled={!hasLife}
+          onChange={(e) => setHints(e.target.checked)}
         />
         Show hints
       </label>
       <p className="caption spaced">
-        The first time something reaches you, a hint points at it, once a lineage, and stays until
-        you do it or dismiss it.
+        The first time something reaches you, a hint points at it, once a life, and stays until you
+        do it or dismiss it. Each life keeps its own setting.
       </p>
       <div className="actions">
         <button

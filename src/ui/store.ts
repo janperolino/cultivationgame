@@ -37,10 +37,10 @@ import { SaveSlots, type SlotId, type SlotSummary } from '../core/save/slots.ts'
 import { rerollGlass, withPlayer, type GameState } from '../core/state.ts';
 import { forgetSavedRoutine, saveRoutine } from '../core/wheel.ts';
 import type { HintId } from '../content/firsts.ts';
-import { hintStillWaiting, nextHint } from './hints.ts';
+import { hintDone, nextHint } from './hints.ts';
 import { attemptOf, endScene, sceneDue, sceneRolled, startScene, useScene } from './scene.ts';
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
-import { loadSettings, saveSettings, useSettings } from './settings.ts';
+import { loadSettings, saveSettings } from './settings.ts';
 import { technique } from '../content/techniques.ts';
 import { intentRisen, stageName as intentName } from '../core/intent.ts';
 import {
@@ -172,9 +172,11 @@ export interface GameStore {
   see(kind: SeenKind, ids: readonly string[]): void;
   /** The player opened a screen: its menu dot clears. */
   openScreen(screen: string): void;
-  /** A hint was acted on or dismissed: the lineage won't be shown it again. */
-  hintDone(id: HintId): void;
-  /** Settings' Show hints again: the lineage forgets the hints it was shown. */
+  /** A hint was acted on or dismissed: this life won't be shown it again. */
+  markHint(id: HintId): void;
+  /** Settings' Show hints: on or off for this life. */
+  setHints(on: boolean): void;
+  /** Settings' Show hints again: the life forgets the hints it was shown. */
   replayHints(): void;
   /** A new pattern for the life's glass. */
   rerollGlass(): void;
@@ -495,6 +497,7 @@ export const useGame = create<GameStore>()((set, get) => {
       const r = resolveCard(game, uid, index);
       if (!r.ok) return r.reason ?? 'That cannot be chosen.';
       update(r.state);
+      get().markHint('cards');
       set({
         cardOutcome: {
           uid,
@@ -564,13 +567,16 @@ export const useGame = create<GameStore>()((set, get) => {
       const r = breakThrough(game, ladder, { offerings });
       if (!r.attempted) return;
       update(r.state);
+      get().markHint('breakthrough');
       if (!r.success) void get().saveNow();
     },
 
     beginScene(ladder, offerings = []) {
       const { game } = get();
       if (!game || !holdsLock) return false;
-      return startScene(game, ladder, offerings);
+      const started = startScene(game, ladder, offerings);
+      if (started) get().markHint('breakthrough');
+      return started;
     },
 
     learnNode(id) {
@@ -711,16 +717,26 @@ export const useGame = create<GameStore>()((set, get) => {
       if (next !== game) set({ game: next });
     },
 
-    hintDone(id) {
+    markHint(id) {
       const { game } = get();
-      if (!game || !holdsLock || game.lineage.hints.includes(id)) return;
-      set({ game: { ...game, lineage: { ...game.lineage, hints: [...game.lineage.hints, id] } } });
+      if (!game || !holdsLock || game.hints.shown.includes(id)) return;
+      set({ game: { ...game, hints: { ...game.hints, shown: [...game.hints.shown, id] } } });
+    },
+
+    setHints(on) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      // Turning them off counts as an answer to the hint that says they can be.
+      const shown = game.hints.shown.includes('hints-off')
+        ? game.hints.shown
+        : [...game.hints.shown, 'hints-off'];
+      set({ game: { ...game, hints: { on, shown } } });
     },
 
     replayHints() {
       const { game } = get();
       if (!game || !holdsLock) return;
-      set({ game: { ...game, lineage: { ...game.lineage, hints: [] } } });
+      set({ game: { ...game, hints: { on: true, shown: [] } } });
     },
 
     rerollGlass() {
@@ -868,31 +884,27 @@ useGame.subscribe((now, was) => {
 });
 
 /**
- * Hints, one at a time (ui/hints.ts): a hint showing stays until its moment passes, the action
- * done, and the lineage then counts it shown; with none showing, the next the lineage hasn't been
- * shown rises. Turning hints off takes the one showing away, unmarked. Marking runs after the
+ * Hints, one at a time (ui/hints.ts): a hint showing stays until the player does what it says or
+ * dismisses it, and the life then counts it shown; with none showing, the next the life hasn't
+ * been shown rises. Turning hints off takes the one showing away, unmarked. Marking runs after the
  * change that called it, so the store isn't set from inside its own listener.
  */
 function driveHints(): void {
   const { game, phase } = useGame.getState();
   const showing = shownHint();
-  const on = useSettings.getState().hints && phase === 'playing' && !!game && !game.ended;
+  const on = phase === 'playing' && !!game && !game.ended && game.hints.on;
   if (showing?.hint) {
     if (!on || !game) return dismissToast(showing.key);
-    if (hintStillWaiting(game, showing.hint)) return;
+    if (!hintDone(game, showing.hint)) return;
     dismissToast(showing.key);
     const id = showing.hint;
-    queueMicrotask(() => useGame.getState().hintDone(id));
+    queueMicrotask(() => useGame.getState().markHint(id));
     return;
   }
   if (!on || !game) return;
   const next = nextHint(game);
   if (next) raiseToast('hint', next.text, next.to, next.id);
 }
-
-useSettings.subscribe((now, was) => {
-  if (now.hints !== was.hints) driveHints();
-});
 
 // A hot update would swap this store out from under the running game and its tab lock, so in
 // development a change here reloads the page instead; pagehide saves first.
