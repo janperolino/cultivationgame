@@ -106,6 +106,43 @@ describe('the opening fan', () => {
     }
   });
 
+  it('draws each branch as a straight spoke, a fork side by side, the spokes apart', () => {
+    for (const t of TREES) {
+      const f = fan(t);
+      for (const b of t.branches) {
+        const ps = [...f.nodes.values()].filter((p) => p.node.branch === b.id);
+        // Nodes with no sibling at their depth share the branch's spoke.
+        const lone = ps.filter(
+          (p) =>
+            !ps.some(
+              (q) =>
+                q !== p &&
+                q.node.requires[0] === p.node.requires[0] &&
+                Math.abs(q.node.at[1] - p.node.at[1]) < 0.8,
+            ) && p.node.requires.length === 1,
+        );
+        const angles = new Set(lone.map((p) => Math.round(p.angle * 10)));
+        expect(angles.size, `${t.id} ${b.id}`).toBeLessThanOrEqual(
+          new Set(ps.map((p) => Math.round(p.angle * 10))).size,
+        );
+      }
+      // The nodes on one spoke stand apart.
+      const ps = [...f.nodes.values()].filter((p) => p.r > 0);
+      for (const p of ps) {
+        for (const q of ps) {
+          if (p === q || Math.abs(p.angle - q.angle) >= 0.5) continue;
+          expect(Math.abs(p.r - q.r), `${p.node.id} ${q.node.id}`).toBeGreaterThanOrEqual(30);
+        }
+      }
+    }
+    // Qi Condensation's chain of Open Meridians runs straight.
+    const qi = fan(TREES[0]!);
+    const meridians = [...qi.nodes.values()].filter(
+      (p) => p.node.branch === TREES[0]!.nodes.find((n) => n.id === 'qi-smooth-meridians')!.branch,
+    );
+    expect(new Set(meridians.map((p) => p.angle.toFixed(3))).size).toBe(1);
+  });
+
   it('keeps labels clear of each other along a spoke', () => {
     for (const t of TREES) {
       const ps = [...fan(t).nodes.values()];

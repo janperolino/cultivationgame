@@ -39,7 +39,7 @@ export const LEVEL = 90;
 export const halfOpening = (tier: number) => Math.min(LEVEL, 75 + (tier - 1) * 6.25);
 /** Px for each step of a node's `at` down: the far bands are wide enough to pack tighter. */
 export const depthStep = (tier: number) => (tier === 1 ? 54 : tier === 2 ? 46 : 34);
-/** The tier's widest node sits at this share of its half-opening. */
+/** The outermost branches' spokes reach this share of the band's half-opening. */
 const WIDEST = 0.9;
 /** Where a band's nodes start before any crown below steps it out: 460 px a tier from tier 3. */
 const firstRing = (tier: number) => (tier === 1 ? 150 : tier === 2 ? 840 : 1460 + (tier - 3) * 460);
@@ -257,18 +257,113 @@ export function bandArc(r: number, span: number, hub: Point): string {
 }
 
 /**
- * Edges follow the rings: a branch runs round its parent's ring and then straight out, branches
- * that meet (or a step inward) run straight out and then round the ring they meet on, and nodes
- * on one spoke join straight.
+ * Edges run along the spokes. Nodes on one spoke join straight, and so does anything from the hub;
+ * where a node's branches part, or several meet in one node, the edge goes straight out to a ring
+ * between them, round it, and straight out again, every edge from one parent (or into one child)
+ * turning on the same ring, so the parting reads as one arc.
  */
-function edgePath(a: FanNode, b: FanNode, merge: boolean, hub: Point): string {
+function edgePath(a: FanNode, b: FanNode, turn: number, hub: Point): string {
   const start = `M${a.x} ${a.y}`;
   if (a.r === 0 || Math.abs(a.angle - b.angle) < 0.5) return `${start} L${b.x} ${b.y}`;
-  if (merge || b.r < a.r) {
-    const m = polar(a.angle, b.r);
-    return `${start} L${m.x + hub.x} ${m.y + hub.y}${arcTo(b.r, a.angle, b.angle, hub)}`;
+  const out = polar(a.angle, turn);
+  return `${start} L${out.x + hub.x} ${out.y + hub.y}${arcTo(turn, a.angle, b.angle, hub)} L${b.x} ${b.y}`;
+}
+
+/** Px of arc kept between neighbouring spokes, and between a fork's nodes, at the band's middle. */
+const SPOKE_GAP = 120;
+const FORK_GAP = 80;
+/**
+ * Px kept between nodes on one spoke, so their labels clear each other: enough for a label's
+ * height across an upright spoke, or its width along a level one, whichever is less.
+ */
+const spokeStep = (angle: number) =>
+  Math.max(
+    56,
+    Math.min(42 / Math.abs(Math.cos(rad(angle))), (LABEL_W + 4) / Math.abs(Math.sin(rad(angle)))),
+  );
+
+/**
+ * Each branch of a tier is a straight spoke (Jan's call after P2.7: the authored across, made
+ * for the old upright bands, wobbled as an angle and stair-stepped its edges). A branch stands
+ * where it was drawn, its spoke on the angle of its nodes' mean across (the tier's widest at
+ * WIDEST of the opening), and its nodes run straight out along it, side by side only where it
+ * forks (one node's children within 0.8 of one depth; a
+ * rejoining node between its parents). Spokes closer than SPOKE_GAP at the band's middle are
+ * pushed apart, the tier's middle held, and squeezed back inside the opening if they must; the
+ * rest of the band stays empty for what comes later. The starter and the capstone stand on the
+ * middle spoke. Every node's angle, by id.
+ */
+function spokeAngles(t: Tree): Map<string, number> {
+  const out = new Map<string, number>();
+  // Each node's place across its spoke, in fork steps: a chain stays on the spoke; siblings (one
+  // parent's children within 0.8 of one depth) stand side by side round their parent's place; a
+  // node where branches rejoin stands between them.
+  const offsets = (ns: readonly TreeNode[]) => {
+    const inside = new Set(ns.map((n) => n.id));
+    const off = new Map<string, number>();
+    const parentsOf = (n: TreeNode) => n.requires.filter((r) => inside.has(r));
+    const childrenOf = (id: string) => ns.filter((c) => parentsOf(c)[0] === id);
+    for (const n of [...ns].sort((x, y) => x.at[1] - y.at[1])) {
+      const ps = parentsOf(n).filter((r) => off.has(r));
+      if (ps.length > 1) {
+        off.set(n.id, ps.reduce((sum, r) => sum + off.get(r)!, 0) / ps.length);
+        continue;
+      }
+      const base = ps.length ? off.get(ps[0]!)! : 0;
+      const kin = (ps.length ? childrenOf(ps[0]!) : ns.filter((c) => parentsOf(c).length === 0))
+        .filter((c) => Math.abs(c.at[1] - n.at[1]) < 0.8)
+        .sort((x, y) => x.at[0] - y.at[0]);
+      const i = kin.indexOf(n);
+      off.set(n.id, kin.length > 1 ? base + i - (kin.length - 1) / 2 : base);
+    }
+    return off;
+  };
+  for (let tier = 1; tier <= TIER_COUNT; tier++) {
+    const inTier = t.nodes.filter((x) => x.tier === tier);
+    if (inTier.length === 0) continue;
+    const groups = new Map<string, TreeNode[]>();
+    for (const n of inTier) {
+      if (n.branch) groups.set(n.branch, [...(groups.get(n.branch) ?? []), n]);
+      else out.set(n.id, 0);
+    }
+    const reach = halfOpening(tier) * WIDEST;
+    const widest = Math.max(1, ...inTier.map((n) => Math.abs(n.at[0])));
+    const middle = firstRing(tier) + (TIER_DEPTH / 2) * depthStep(tier);
+    const fork = deg(FORK_GAP / middle);
+    const branches = [...groups.values()]
+      .map((ns) => {
+        const off = offsets(ns);
+        const x = ns.reduce((sum, n) => sum + n.at[0], 0) / ns.length;
+        const w = Math.max(...off.values()) - Math.min(...off.values()) + 1;
+        return { ns, off, w, angle: (x / widest) * reach };
+      })
+      .sort((p, q) => p.angle - q.angle);
+    // Push neighbours apart where they crowd, then hold the tier's middle where it was.
+    const before = branches.reduce((sum, b) => sum + b.angle, 0) / branches.length;
+    const apart = (p: (typeof branches)[number], q: (typeof branches)[number]) =>
+      deg(SPOKE_GAP / middle) + ((p.w - 1) / 2 + (q.w - 1) / 2) * fork;
+    for (let i = 1; i < branches.length; i++) {
+      const min = branches[i - 1]!.angle + apart(branches[i - 1]!, branches[i]!);
+      if (branches[i]!.angle < min) branches[i]!.angle = min;
+    }
+    const after = branches.reduce((sum, b) => sum + b.angle, 0) / branches.length;
+    for (const b of branches) b.angle += before - after;
+    // Squeeze back inside the opening if the push carried a spoke past it.
+    const edge = Math.max(
+      ...branches.map((b) => Math.abs(b.angle) + ((b.w - 1) / 2) * fork),
+      reach,
+    );
+    const squeeze = reach / edge;
+    for (const b of branches) {
+      for (const n of b.ns) {
+        // A fork's nodes keep FORK_GAP apart on their own ring, wider near the hub.
+        const ring = firstRing(tier) + n.at[1] * depthStep(tier);
+        const spread = Math.max(fork, deg(FORK_GAP / Math.max(ring, 1)));
+        out.set(n.id, (b.angle + b.off.get(n.id)! * spread) * squeeze);
+      }
+    }
   }
-  return `${start}${arcTo(a.r, a.angle, b.angle, hub)} L${b.x} ${b.y}`;
+  return out;
 }
 
 /**
@@ -338,9 +433,7 @@ const NAME_LOWEST = 84;
 export function fan(t: Tree, grafts: readonly Manual[] = []): Fan {
   const { rows, jewels: rel } = crown(grafts.map(crownItem));
   const rings = ringsFor(rows);
-  // Every authored tier's widest node sets how far its angles open.
-  const widest = new Map<number, number>();
-  for (const n of t.nodes) widest.set(n.tier, Math.max(widest.get(n.tier) ?? 1, Math.abs(n.at[0])));
+  const spokes = spokeAngles(t);
 
   // First everything hub-relative, then shifted so the world starts at PAD.
   const bands: Band[] = [];
@@ -366,11 +459,45 @@ export function fan(t: Tree, grafts: readonly Manual[] = []): Fan {
       capstone: polar(0, ring + TIER_DEPTH * depthStep(tier)),
     });
   }
+  // A node's ring is its authored depth, except that nodes on one spoke keep `spokeStep` apart
+  // (a side path drawn running sideways folds onto its spoke), pushed outward within the band.
+  const radius = new Map<string, number>();
+  for (const n of t.nodes) {
+    radius.set(
+      n.id,
+      n.tier === 1 && n.kind === 'starter' ? 0 : rings[n.tier]! + n.at[1] * depthStep(n.tier),
+    );
+  }
+  for (let tier = 1; tier <= TIER_COUNT; tier++) {
+    const deepest = rings[tier]! + TIER_DEPTH * depthStep(tier);
+    // Nodes on one spoke, from the hub out.
+    const spokesHere = new Map<number, TreeNode[]>();
+    for (const n of t.nodes.filter((x) => x.tier === tier && radius.get(x.id)! > 0)) {
+      const key = [...spokesHere.keys()].find((k) => Math.abs(k - spokes.get(n.id)!) < 0.5);
+      const at = key ?? spokes.get(n.id)!;
+      spokesHere.set(at, [...(spokesHere.get(at) ?? []), n]);
+    }
+    for (const [angle, ns] of spokesHere) {
+      ns.sort((x, y) => radius.get(x.id)! - radius.get(y.id)!);
+      const step = spokeStep(angle);
+      for (let i = 1; i < ns.length; i++) {
+        const floor = radius.get(ns[i - 1]!.id)! + step;
+        if (radius.get(ns[i]!.id)! < floor) radius.set(ns[i]!.id, floor);
+      }
+      // Past the band's deepest ring, the spoke slides inward, and if it can't fit even from the
+      // band's first ring it spreads evenly over the band.
+      const last = radius.get(ns[ns.length - 1]!.id)!;
+      if (last <= deepest) continue;
+      const first = radius.get(ns[0]!.id)!;
+      const start = Math.max(rings[tier]!, first - (last - deepest));
+      const gap = ns.length > 1 ? Math.min(step, (deepest - start) / (ns.length - 1)) : 0;
+      ns.forEach((n, i) => radius.set(n.id, start + i * gap));
+    }
+  }
   const placed = new Map<string, Omit<FanNode, 'label'>>();
   for (const n of t.nodes) {
-    const angle = (n.at[0] * WIDEST * halfOpening(n.tier)) / widest.get(n.tier)!;
-    const r =
-      n.tier === 1 && n.kind === 'starter' ? 0 : rings[n.tier]! + n.at[1] * depthStep(n.tier);
+    const angle = spokes.get(n.id)!;
+    const r = radius.get(n.id)!;
     placed.set(n.id, {
       node: n,
       ...polar(angle, r),
@@ -413,16 +540,27 @@ export function fan(t: Tree, grafts: readonly Manual[] = []): Fan {
   }
   const jewels = new Map<string, Jewel>();
   for (const [id, j] of rel) jewels.set(id, { ...j, ...at(j) });
-  const edges: FanEdge[] = [];
+  // The ring an edge turns on: shared by a parent's parting branches, or by the branches meeting
+  // in one node, else halfway.
+  const kids = new Map<string, FanNode[]>();
   for (const n of t.nodes) {
     for (const req of n.requires) {
-      const a = nodes.get(req);
-      if (!a) continue;
-      edges.push({
-        from: req,
-        to: n.id,
-        d: edgePath(a, nodes.get(n.id)!, n.requires.length > 1, hub),
-      });
+      if (nodes.has(req)) kids.set(req, [...(kids.get(req) ?? []), nodes.get(n.id)!]);
+    }
+  }
+  const edges: FanEdge[] = [];
+  for (const n of t.nodes) {
+    const b = nodes.get(n.id)!;
+    const parents = n.requires.flatMap((r) => nodes.get(r) ?? []);
+    for (const a of parents) {
+      const siblings = kids.get(a.node.id)!;
+      const turn =
+        siblings.length > 1
+          ? a.r + (Math.min(...siblings.map((k) => k.r)) - a.r) / 2
+          : parents.length > 1
+            ? b.r - (b.r - Math.max(...parents.map((p) => p.r))) / 2
+            : (a.r + b.r) / 2;
+      edges.push({ from: a.node.id, to: n.id, d: edgePath(a, b, turn, hub) });
     }
   }
   return {
