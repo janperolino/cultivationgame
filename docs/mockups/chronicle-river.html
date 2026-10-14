@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- The Chronicle reference (P2.9): Jan picked the Chapters setting on 2026-10-14. Also published as https://claude.ai/artifact/ErjnC2AV72yTWg6SiWymjZ -->
+<title>Chronicle River Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap" />
+<style>
+/* Layout: the game's shell (menu, screen, context) around one Chronicle panel; inside it, a margin of
+   written years, a glowing line carrying the milestones as stations, and the rest as prose beside it.
+   The game is dark only, so this page commits to its one look. */
+:root {
+  --void: #040507;
+  --panel: #07080b;
+  --edge: rgb(255 255 255 / 0.075);
+  --edge-strong: rgb(255 255 255 / 0.14);
+  --text: #e9e5da;
+  --prose: #d6d1c4;
+  --muted: #8d949d;
+  --faint: #5c636c;
+  --ghost: rgb(233 229 218 / 0.16);
+  --accent: #d6ab4c;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --crack: #7fc7d9;
+  /* the line is a gilt hairline, the trees' gold, kept apart from the accent that means "act on this";
+     a new realm turns it paler */
+  --line: #d9b46a;
+  --line-hi: #f4dc9a;
+  --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', serif;
+  --font-ui: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --k-qi: #7fc7d9;  --k-body: #c98a5f;  --k-soul: #a28fdc;  --k-gate: #c4a3f0;
+  --k-mastery: #cf7f9f;  --k-learn: #a9b97f;  --k-fight: #ee9670;  --k-hurt: #e08a6a;
+  --k-people: #86d19a;  --k-card: #b9b3a6;  --k-settled: #6b727b;  --k-origin: #e4e7ee;
+  --k-death: #9aa0a8;  --k-system: #8d949d;
+  --s-spring: #86d19a; --s-summer: #e8a874; --s-autumn: #dcb359; --s-winter: #7fc7d9;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--void); color: var(--text); font: 14px/1.55 var(--font-ui); -webkit-font-smoothing: antialiased; margin: 0; padding-inline: 16px; padding-block: 0 48px; }
+button { font: inherit; color: inherit; }
+select { font: inherit; color: var(--text); background: #0b0d11; border: 1px solid var(--edge-strong); border-radius: 7px; padding: 4px 8px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- study bar ---------- */
+.study-bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-inline: -16px; padding: 10px 16px; background: rgb(4 5 7 / 0.97); border-bottom: 1px solid var(--edge); }
+.study-bar h1 { font: 600 19px var(--font-display); margin: 0 6px 0 0; white-space: nowrap; }
+.study-bar h1 small { font: 15px var(--font-brush); color: var(--accent); margin-left: 6px; }
+.knob { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--edge-strong); border-radius: 7px; overflow: hidden; }
+.seg button { background: none; border: 0; padding: 4px 10px; cursor: pointer; color: var(--muted); font-size: 12.5px; }
+.seg button[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); }
+.study-note { max-width: 1320px; margin: 12px auto 0; color: var(--muted); font-size: 13px; max-width: 1320px; }
+.study-note b { color: var(--text); font-weight: 500; }
+
+/* ---------- shell ---------- */
+.shell { display: grid; grid-template-columns: 172px minmax(0, 1fr) 232px; max-width: 1320px; margin: 12px auto 0; border: 1px solid var(--edge); border-radius: 12px; overflow: clip; background: radial-gradient(900px 500px at 70% 110%, rgb(127 199 217 / 0.05), transparent 60%), var(--void); }
+.menu { padding: 18px 10px; border-right: 1px solid var(--edge); }
+.menu .brand { font: 600 16px var(--font-display); padding: 0 8px 14px; white-space: nowrap; }
+.menu .brand span { font: 14px var(--font-brush); color: var(--accent); margin-left: 4px; }
+.menu a { display: flex; justify-content: space-between; padding: 8px 10px; border-radius: 7px; color: var(--muted); text-decoration: none; font-size: 13.5px; margin-bottom: 2px; }
+.menu a span { font-family: var(--font-brush); opacity: .7; }
+.menu a.on { color: var(--text); background: rgb(255 255 255 / .04); box-shadow: inset 2px 0 0 var(--accent); }
+.main { padding: 22px 24px; min-width: 0; }
+.main > h2 { font: 600 30px var(--font-display); margin: 0 0 14px; }
+.main > h2 span { font: 22px var(--font-brush); color: var(--accent); margin-left: 8px; }
+.context { border-left: 1px solid var(--edge); padding: 22px 16px; font-size: 12.5px; min-width: 0; }
+.context h3 { font: 600 18px var(--font-display); margin: 0 0 10px; }
+.context .when { color: var(--muted); font-size: 11.5px; margin-top: 10px; }
+.context .when:first-of-type { color: var(--accent); }
+.panel { background: rgb(7 8 11 / .96); border: 1px solid var(--edge-strong); border-radius: 9px; box-shadow: 0 0 0 1px rgb(127 199 217 / .06), 0 0 24px rgb(127 199 217 / .05); padding: 18px 20px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+.panel-head h3 { font: 600 21px var(--font-display); margin: 0; text-wrap: balance; }
+.head-right { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.caption { color: var(--muted); font-size: 12.5px; }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; font: 12px var(--font-ui); opacity: .8; }
+.linkish:hover { text-decoration: underline; opacity: 1; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 18px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; background: none; border: 1px solid var(--edge-strong); border-radius: 999px; padding: 2px 9px 2px 3px; cursor: pointer; font-size: 12px; color: var(--muted); }
+.chip .g { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 999px; font: 12px/1 var(--font-brush); color: var(--kc); border: 1px solid color-mix(in srgb, var(--kc) 40%, transparent); background: color-mix(in srgb, var(--kc) 9%, transparent); }
+.chip[aria-pressed="false"] { opacity: .38; }
+.chip[aria-pressed="true"] { color: var(--text); }
+
+/* ---------- the river ---------- */
+.river { --margin: 92px; --lane: 44px; }
+.row { display: grid; grid-template-columns: var(--margin) var(--lane) minmax(0, 1fr); scroll-margin: 120px; }
+.row > .m { text-align: right; padding-right: 12px; min-width: 0; }
+.row > .t { padding-left: 14px; min-width: 0; }
+.row > .c { position: relative; display: flex; justify-content: center; }
+/* the line: one gilt hairline with a small halo and a still haze (gradients only: no blur, no loop) */
+.row > .c::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: var(--w, 1.3px); transform: translateX(-50%);
+  background-color: var(--tint, var(--line));
+  box-shadow: 0 0 3px var(--tint, var(--line)), 0 0 10px color-mix(in srgb, var(--tint, var(--line)) 30%, transparent);
+}
+.row > .c::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 36px; transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tint, var(--line)) 8%, transparent) 40%, color-mix(in srgb, var(--tint, var(--line)) 8%, transparent) 60%, transparent);
+  pointer-events: none;
+}
+/* level as glow: the halo and haze brighten with the layer, and fall back at a new realm */
+.lv-glow .row > .c::before { box-shadow: 0 0 calc(1px + var(--f, 0) * 5px) var(--tint, var(--line)), 0 0 calc(3px + var(--f, 0) * 16px) color-mix(in srgb, var(--tint, var(--line)) 45%, transparent); }
+.lv-glow .row > .c::after { width: 56px; opacity: calc(.08 + var(--f, 0) * .92); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tint, var(--line)) 20%, transparent) 44%, color-mix(in srgb, var(--tint, var(--line)) 20%, transparent) 56%, transparent); }
+/* level as strands: one hairline per realm reached */
+.lv-strands .row > .c::before { width: calc(var(--strands, 1) * 1.3px + (var(--strands, 1) - 1) * 3.5px); background: repeating-linear-gradient(90deg, var(--tint, var(--line)) 0 1.3px, transparent 1.3px 4.8px); box-shadow: none; }
+/* level as a gauge under the age */
+.gauge { display: flex; justify-content: flex-end; align-items: center; gap: 2px; margin-top: 7px; }
+.gauge .gz { font: 11px/1 var(--font-brush); color: var(--faint); margin-right: 4px; }
+.gauge i { width: 4px; height: 10px; border-radius: 1px; background: var(--edge-strong); }
+.gauge i.on { background: var(--line); box-shadow: 0 0 4px color-mix(in srgb, var(--line) 60%, transparent); }
+.gauge.fe i { width: 7px; }
+.gauge.fe i.on { background: var(--line-hi); }
+/* level as chapters: a realm header where the life enters it */
+.chapter { margin-top: 34px; }
+.chapter > .m { align-self: center; }
+.chapter .ch-hz { font: 26px/1 var(--font-brush); color: var(--tint, var(--line)); }
+.chapter .knot { position: relative; z-index: 1; align-self: center; width: 9px; height: 9px; transform: rotate(45deg); background: var(--panel); border: 1.3px solid var(--tint, var(--line)); }
+.chapter > .t { align-self: center; border-top: 1px solid color-mix(in srgb, var(--tint, var(--line)) 35%, transparent); padding-top: 8px; }
+.chapter > .t b { display: block; font: 600 13px var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--tint, var(--line)); }
+.chapter > .t small { color: var(--faint); font-size: 12px; }
+.chapter + .row.yr, .chapter + .secl, .chapter + .row.fold { margin-top: 6px; }
+
+/* the year: the age in the margin, the world's year beside the line, both as plain numbers */
+.yr { margin-top: 26px; }
+.yr > .m { font: 600 26px/1 var(--font-display); color: var(--ghost); padding-top: 1px; white-space: nowrap; font-variant-numeric: tabular-nums lining-nums; }
+.river-key > .t { color: var(--faint); font-size: 11.5px; }
+.river-key > .m { color: var(--faint); font-size: 11.5px; }
+.river-key > .c::before, .river-key > .c::after { display: none; }
+.yr > .c > .notch { position: relative; z-index: 1; margin-top: 14px; width: 14px; height: 1px; background: var(--edge-strong); }
+.yr > .t { font: italic 600 21px/1.25 var(--font-display); color: var(--text); text-wrap: balance; }
+.yr > .t small { display: block; font: normal 12px/1.6 var(--font-ui); color: var(--faint); margin-top: 2px; }
+.river > .row.yr:first-child { margin-top: 4px; }
+
+/* stations: the milestones, ringed on the line */
+.station { margin: 6px 0; }
+.stop {
+  position: relative; z-index: 1; align-self: center; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  font: 17px/1 var(--font-brush); color: var(--kc); background: #090b0f; border: 1.5px solid var(--kc);
+  box-shadow: 0 0 0 4px var(--panel), 0 0 12px color-mix(in srgb, var(--kc) 35%, transparent);
+}
+.station > .t { align-self: center; font: 600 17.5px/1.32 var(--font-display); color: var(--text); max-width: 60ch; }
+.station > .m { align-self: center; }
+.realm.station { margin: 14px 0; }
+.realm .stop { width: 50px; height: 50px; border-radius: 12px; font-size: 18px; letter-spacing: -1px; --kc: var(--line-hi); box-shadow: 0 0 0 5px var(--panel), 0 0 26px color-mix(in srgb, var(--line-hi) 50%, transparent); }
+.realm > .t b { display: block; font: 600 20px var(--font-display); color: var(--line-hi); }
+.realm > .t span { font-weight: 500; color: var(--prose); }
+
+/* prose: everything else, a paragraph a season */
+.para > .m { font: 13px/2 var(--font-brush); color: var(--sc); opacity: .6; }
+.para > .c > .bead { position: relative; z-index: 1; margin-top: 11px; width: 4px; height: 4px; border-radius: 50%; background: var(--sc); opacity: .7; box-shadow: 0 0 0 3px var(--panel); }
+.para > .t { font: 16.5px/1.6 var(--font-display); color: var(--prose); padding-bottom: 8px; max-width: 64ch; }
+.para .mk { font: 12.5px var(--font-brush); color: var(--kc); margin-right: 4px; vertical-align: 1px; }
+.para .settled { color: var(--faint); font-style: italic; }
+
+/* seclusion: a stretch of its own, every year a row */
+.secl { position: relative; margin: 14px 0; padding: 4px 0 8px; }
+.secl::before { content: ''; position: absolute; left: calc(var(--margin) - 6px); right: 0; top: 0; bottom: 0; border-radius: 12px; background: linear-gradient(90deg, rgb(255 255 255 / .035), rgb(255 255 255 / .008) 70%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .05); pointer-events: none; }
+.secl::after { content: '闭关'; position: absolute; right: 14px; top: 10px; font: 32px/1 var(--font-brush); color: rgb(255 255 255 / .06); pointer-events: none; }
+.secl-head > .t { padding-block: 10px 4px; color: var(--muted); font-size: 12.5px; }
+.secl-head > .t b { display: block; font: italic 600 18px var(--font-display); color: var(--text); }
+.secl .row > .c::before { opacity: .7; }
+.tick { min-height: 14px; }
+.tick > .m { font: 10.5px/14px var(--font-ui); color: var(--faint); font-variant-numeric: tabular-nums; }
+.tick > .c::before { opacity: .5; }
+.fold > .t { padding: 12px 0 12px 14px; color: var(--muted); font: italic 15px var(--font-display); }
+.fold > .c::before { background: none; box-shadow: none; border-left: 2px dotted color-mix(in srgb, var(--tint, var(--line)) 50%, transparent); width: 0; }
+.flash { animation: flash 1.6s ease-out; border-radius: 6px; }
+@keyframes flash { 0%, 30% { background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); } 100% { background: transparent; box-shadow: none; } }
+
+/* ---------- the almanac ---------- */
+.alm-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; align-items: start; }
+.alm-scroll { overflow-x: auto; min-width: 0; }
+.almanac { width: 100%; min-width: 380px; border-collapse: separate; border-spacing: 4px 3px; table-layout: fixed; }
+.almanac th { font: 500 11px var(--font-ui); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.almanac th .b { font: 16px var(--font-brush); display: block; text-transform: none; letter-spacing: 0; color: var(--sc); }
+.almanac .yrc { width: 60px; text-align: right; padding-right: 6px; font: 600 15px/1.1 var(--font-display); font-variant-numeric: tabular-nums lining-nums; }
+.almanac .yrc small { display: block; font: 10px var(--font-ui); color: var(--faint); }
+.almanac .end { width: 140px; color: var(--muted); font-size: 11.5px; line-height: 1.3; padding-left: 6px; }
+.almanac tr { scroll-margin: 120px; }
+.cell { height: 44px; vertical-align: top; padding: 4px; border-radius: 6px; cursor: pointer; background: color-mix(in srgb, var(--sc) 4%, rgb(255 255 255 / .015)); border: 1px solid var(--edge); }
+.cell:hover { border-color: var(--edge-strong); }
+.cell.sel { border-color: var(--accent); background: var(--accent-soft); }
+.cell.rise { box-shadow: inset 0 0 0 1px rgb(127 199 217 / .45), 0 0 12px rgb(127 199 217 / .16); }
+.cell.realmc { box-shadow: inset 0 0 0 2px var(--line-hi), 0 0 16px color-mix(in srgb, var(--line-hi) 35%, transparent); }
+.cell .pips { display: flex; flex-wrap: wrap; gap: 3px; }
+.pip { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; font: 12px/1 var(--font-brush); color: var(--kc); border: 1px solid color-mix(in srgb, var(--kc) 40%, transparent); background: color-mix(in srgb, var(--kc) 9%, transparent); }
+.pip.dim { opacity: .5; }
+tr.quiet .cell { height: 14px; padding: 0; background: rgb(255 255 255 / .012); }
+tr.quiet .yrc { font: 11px var(--font-ui); color: var(--faint); }
+tr.quiet .end { font-size: 0; }
+tr.in-secl td.cell { background: rgb(255 255 255 / .03); border-color: rgb(255 255 255 / .05); }
+tr.band td.span { padding: 6px 10px; border-radius: 6px; background: rgb(255 255 255 / .03); color: var(--muted); font-size: 12.5px; }
+tr.band b { font: italic 600 15px var(--font-display); color: var(--text); margin-right: 8px; }
+tr.afold td.span { cursor: pointer; border: 1px dashed var(--edge-strong); border-radius: 6px; padding: 6px 10px; color: var(--muted); font: italic 14px var(--font-display); }
+.readout { position: sticky; top: 76px; }
+.readout h4 { font: 600 19px var(--font-display); margin: 0 0 2px; }
+.readout .ln { display: flex; gap: 8px; margin: 8px 0; align-items: flex-start; }
+.readout .after { color: var(--muted); font-size: 12px; border-top: 1px solid var(--edge); padding-top: 8px; margin-top: 12px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+@media (max-width: 1180px) { .shell { grid-template-columns: 160px minmax(0, 1fr); } .context { display: none; } }
+@media (max-width: 760px) {
+  .shell { grid-template-columns: minmax(0, 1fr); border-radius: 12px; }
+  .menu { display: none; }
+  .main { padding: 14px 12px; }
+  .panel { padding: 12px; }
+  .river { --margin: 44px; --lane: 34px; }
+  .row > .m { padding-right: 6px; }
+  .row > .t { padding-left: 8px; }
+  .yr > .m { font-size: 18px; }
+  .yr > .t { font-size: 18px; }
+  .station > .t { font-size: 15.5px; }
+  .para > .t { font-size: 15px; }
+  .stop { width: 26px; height: 26px; font-size: 15px; }
+  .realm .stop { width: 34px; height: 34px; font-size: 12px; }
+  .alm-wrap { grid-template-columns: minmax(0, 1fr); }
+  .almanac .end { display: none; }
+  .almanac .yrc { width: 40px; font-size: 12px; }
+  .readout { position: static; }
+}
+</style>
+
+<div class="study-bar">
+  <h1>Chronicle River <small>生平</small></h1>
+  <div class="knob"><span>Cultivation level as</span>
+    <div class="seg" id="knob-level"><button data-v="glow">Glow</button><button data-v="strands">Strands</button><button data-v="gauge">Gauge</button><button data-v="chapters">Chapters</button><button data-v="deepen">Deepening gold</button></div>
+  </div>
+</div>
+<p class="study-note" id="note"></p>
+
+<div class="shell">
+  <nav class="menu" aria-label="Screens">
+    <div class="brand">Severed Heaven<span>断天</span></div>
+    <a href="#abode">Abode <span>洞府</span></a><a href="#cultivate">Cultivate <span>修炼</span></a><a href="#trees">Trees <span>道树</span></a>
+    <a href="#character">Character <span>根骨</span></a><a href="#people">People <span>人物</span></a><a href="#chronicle" class="on">Chronicle <span>生平</span></a><a href="#settings">Settings <span>设置</span></a>
+  </nav>
+  <main class="main">
+    <h2>Chronicle<span>生平</span></h2>
+    <section class="panel" id="panel"></section>
+  </main>
+  <aside class="context" id="context"></aside>
+</div>
+
+<script>
+// ===================== two made-up lives on one world calendar =====================
+// [year of life, season 0-3, kind, text, level]  qi level: 1-9 the layers of Qi Condensation, 10-13 Foundation's stages
+const MO_NING = [
+  [1, 0, 'origin', 'Mo Ning is born in the barracks under the Wall of Piled Bones, a conscript’s child.'],
+  [12, 0, 'origin', 'The Gate tests Mo Ning’s root: water and metal, a middling pair.'],
+  [12, 0, 'learn', 'Mo Ning is taught the Garrison Standard Method at the cadet school.'],
+  [12, 1, 'learn', 'He drills the Rampart Palm with the cadets of the garrison school.'],
+  [12, 1, 'qi', 'Mo Ning’s qi breaks through to the first layer.', 1],
+  [12, 2, 'system', 'A first technique to drill: the techniques open.'],
+  [12, 2, 'people', 'He is posted under Sergeant Gao of the east tower.'],
+  [12, 3, 'hurt', 'He is clawed below the Wall of Piled Bones on a first night patrol.'],
+  [13, 0, 'qi', 'Mo Ning’s qi breaks through to the second layer.', 2],
+  [13, 1, 'card', 'He pays a ferryman to send two bounty hunters the wrong way.'],
+  [13, 1, 'settled', 'A peddler’s offer of cheap pills lapses while he sits in seclusion.'],
+  [13, 2, 'system', 'Enough insight gathers to grasp a first principle: the trees open.'],
+  [13, 2, 'learn', 'He comprehends Steady Breath.'],
+  [13, 3, 'qi', 'Mo Ning’s qi breaks through to the third layer.', 3],
+  [14, 0, 'fight', 'He spars with Cadet Lu Wen and brings them down in seven exchanges.'],
+  [14, 0, 'card', 'He pays the March’s levy on cultivators.'],
+  [14, 0, 'card', 'He sits out a stone-hide boar at the cave mouth with his breath held small.'],
+  [14, 1, 'body', 'Mo Ning’s body hardens to the first layer.', 1],
+  [14, 1, 'settled', 'Sergeant Gao’s errand goes to another cadet while he is away.'],
+  [14, 3, 'qi', 'Mo Ning’s qi breaks through to the fourth layer.', 4],
+  [15, 1, 'hurt', 'He is thrown by a qi deviation and left lightly injured.'],
+  [15, 2, 'qi', 'Mo Ning’s qi breaks through to the fifth layer.', 5],
+  [15, 2, 'mastery', 'The Garrison Standard Method reaches Domain; the breath runs deeper, and understanding with it.'],
+  [15, 3, 'learn', 'He buys a copy of the Tide-Counting Formula from a stall at the Gate.'],
+  [16, 0, 'learn', 'He draws a bright orb of qi in from the air of the cave, and the breath after it runs deeper.'],
+  [16, 0, 'soul', 'Mo Ning’s soul steadies to the first layer.', 1],
+  [16, 1, 'hurt', 'Pill poison settles in his meridians; for five days the qi will not come.'],
+  [16, 1, 'settled', 'A beggar’s tip about a herb patch goes unchased.'],
+  [16, 2, 'qi', 'Mo Ning’s qi breaks through to the sixth layer.', 6],
+  [17, 0, 'people', 'Elder Shen of the Clear Heaven Sword Sect watches him on the wall and says nothing.'],
+  [17, 1, 'fight', 'He spars with a Night Bridge runner and is brought down in three exchanges.'],
+  [17, 2, 'qi', 'Mo Ning’s qi breaks through to the seventh layer.', 7],
+  [18, 0, 'settled', 'The levy is paid from his stones while he sits in seclusion.'],
+  [18, 0, 'settled', 'A wandering scribe’s offer to copy a manual lapses.'],
+  [18, 1, 'mastery', 'The Rampart Palm reaches Mastery; the form finally clicks.'],
+  [18, 3, 'qi', 'Mo Ning’s qi breaks through to the eighth layer.', 8],
+  [19, 2, 'settled', 'A thief takes 40 spirit stones from the cave while he sits in seclusion.'],
+  [20, 1, 'body', 'Mo Ning’s body hardens to the second layer.', 2],
+  [20, 3, 'qi', 'Mo Ning’s qi breaks through to the ninth layer.', 9],
+  [21, 3, 'mastery', 'The Garrison Standard Method reaches Origin.'],
+  [22, 3, 'gate', 'Qi presses against the gate of Foundation Establishment, but Mo Ning holds no Foundation Pill.'],
+  [23, 0, 'card', 'He trades two years’ stones and the Rampart Palm’s scroll for a Foundation Pill at the Gate.'],
+  [23, 1, 'people', 'Sergeant Gao lends him the rest of the price, and tells him not to die.'],
+  [23, 2, 'qi', 'Mo Ning swallows the Foundation Pill and breaks through to Foundation Establishment.', 10],
+  [24, 0, 'card', 'He seals the cave mouth with a stone and goes into seclusion.'],
+  [27, 2, 'settled', 'A thief takes 60 spirit stones from the outer cave.'],
+  [29, 1, 'settled', 'The levy is paid from the cave’s stones.'],
+  [31, 3, 'qi', 'Mo Ning’s qi settles into the middle stage of Foundation.', 11],
+  [33, 0, 'settled', 'A letter from Sergeant Gao waits at the Gate, unread.'],
+  [36, 2, 'body', 'Mo Ning’s body hardens to the third layer.', 3],
+  [39, 1, 'qi', 'Mo Ning’s qi settles into the late stage of Foundation.', 12],
+  [42, 0, 'card', 'He rolls the stone back and walks down to the Gate for the first time in eighteen years.'],
+  [42, 0, 'people', 'Sergeant Gao is dead; his widow has kept his sword for Mo Ning.'],
+  [42, 1, 'learn', 'Elder Shen teaches him the outer form of the Clear Heaven Sword.'],
+  [43, 2, 'fight', 'He spars with Elder Shen’s disciple Qiu Ran and yields after twelve exchanges.'],
+  [44, 3, 'hurt', 'He is cut on the reef path by a bounty hunter who took him for someone else.'],
+  [45, 1, 'mastery', 'The Clear Heaven Sword’s outer form reaches Proficiency.'],
+  [46, 0, 'soul', 'Mo Ning’s soul steadies to the second layer.', 2],
+];
+const LAN_SHU = [
+  [1, 0, 'origin', 'Lan Shu is born on the reef stairs of the lower town.'],
+  [9, 2, 'origin', 'The Gate tests Lan Shu’s root: a lone wood root, poor.'],
+  [10, 0, 'learn', 'Lan Shu learns the Alley Wind Palm between errands for the bounty office.'],
+  [14, 1, 'qi', 'Lan Shu’s qi breaks through to the first layer.', 1],
+  [17, 3, 'qi', 'Lan Shu’s qi breaks through to the second layer.', 2],
+  [19, 0, 'people', 'Lan Shu falls in with the Night Bridge Society, a favor owed.'],
+  [22, 1, 'hurt', 'Lan Shu is knifed in a reef-cave quarrel and limps for a season.'],
+  [24, 0, 'card', 'Lan Shu rents a meditation cell for a month and stays seven years.'],
+  [26, 2, 'qi', 'Lan Shu’s qi breaks through to the third layer.', 3],
+  [31, 0, 'card', 'The cell’s owner raises the rent, and Lan Shu walks out into the lower town.'],
+  [34, 1, 'settled', 'The levy is paid from Lan Shu’s purse.'],
+  [41, 2, 'settled', 'A Night Bridge runner calls in part of the favor; Lan Shu is not home.'],
+  [48, 0, 'card', 'Lan Shu sells the Alley Wind Palm’s scroll to feed a sister’s children.'],
+  [55, 1, 'settled', 'A peddler’s longevity tea goes unbought.'],
+  [63, 3, 'death', 'Lan Shu dies at the third layer of Qi Condensation, still owing the Night Bridge Society.'],
+];
+// born: the Sealed Era year of the first year of life. The atlas puts "now" at 3,127, the year Mo Ning turns twelve.
+// A seclusion lists the years wholly inside it; the years it begins and ends in stay outside, with their lines.
+const LIVES = {
+  now: { name: 'Mo Ning', rows: MO_NING, now: 46, born: 3116, secl: [{ from: 25, to: 41, entered: 24, left: 42, why: 'to settle Foundation' }] },
+  before: { name: 'Lan Shu', rows: LAN_SHU, now: 63, born: 3052, secl: [{ from: 25, to: 30, entered: 24, left: 31, why: 'in a rented cell' }] },
+};
+
+const KIND = {
+  qi: ['气', 'Qi'], body: ['体', 'Body'], soul: ['魂', 'Soul'], gate: ['关', 'Gates'], mastery: ['精', 'Mastery'],
+  learn: ['学', 'Learned'], fight: ['战', 'Fights'], hurt: ['伤', 'Hurts'], people: ['人', 'People'], card: ['事', 'Choices'],
+  settled: ['了', 'Settled itself'], origin: ['生', 'Birth'], death: ['终', 'Death'], system: ['开', 'Openings'],
+};
+const STATION = new Set(['qi', 'body', 'soul', 'gate', 'mastery', 'origin', 'death']);
+const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
+const SEASON_HZ = ['春', '夏', '秋', '冬'];
+const ONES = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+const ORD1 = { one: 'first', two: 'second', three: 'third', five: 'fifth', eight: 'eighth', nine: 'ninth', twelve: 'twelfth' };
+const words = (n) => n < 20 ? ONES[n] : TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : '');
+const ordinal = (n) => { const p = words(n).split('-'); const last = p.pop(); return [...p, ORD1[last] ?? (last.endsWith('y') ? last.slice(0, -1) + 'ieth' : last + 'th')].join('-'); };
+const HZ = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+const hanziNum = (n) => n < 10 ? HZ[n] : n < 20 ? '十' + HZ[n % 10] : HZ[Math.floor(n / 10)] + '十' + HZ[n % 10];
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const num = (n) => n.toLocaleString('en-US');
+const sc = (s) => `--sc:var(--s-${SEASONS[s]})`;
+const STAGE = ['early', 'middle', 'late', 'peak'];
+const realmOf = (l) => (l >= 10 ? 1 : 0);
+const TINT = ['var(--line)', 'var(--line-hi)'];
+const levelWords = (l) => !l ? 'mortal' : l <= 9 ? `Qi Condensation, ${ordinal(l)} layer` : `Foundation, ${STAGE[l - 10]} stage`;
+// The line stays one hairline; the cultivation level shows in one of five ways (the study's switch).
+const REALM_OF = (l) => (!l ? 'mortal' : l <= 9 ? 'qc' : 'fe');
+const REALM_NAME = { mortal: ['凡人', 'Before the path'], qc: ['炼气', 'Qi Condensation'], fe: ['筑基', 'Foundation Establishment'] };
+const within = (l) => (l <= 9 ? { n: l, of: 9 } : { n: l - 9, of: 4 });
+function seg(lv) {
+  const { n, of } = within(lv);
+  const f = of ? n / of : 0;
+  let tint = lv >= 10 ? 'var(--line-hi)' : 'var(--line)';
+  if (S.level === 'deepen') tint = lv >= 10 ? `color-mix(in srgb, #f2c14e ${Math.round(f * 100)}%, #f5eedb)` : `color-mix(in srgb, #c47f22 ${Math.round(f * 100)}%, #efe3c0)`;
+  return `--w:1.3px;--tint:${tint};--f:${f.toFixed(3)};--strands:${lv >= 10 ? 2 : 1}`;
+}
+function gauge(lv) {
+  if (!lv) return '';
+  const { n, of } = within(lv);
+  const key = REALM_OF(lv);
+  return `<span class="gauge ${key}" title="${levelWords(lv)}"><span class="gz">${REALM_NAME[key][0]}</span>${Array.from({ length: of }, (_, k) => `<i class="${k < n ? 'on' : ''}"></i>`).join('')}</span>`;
+}
+function chapterRow(D, key, lv) {
+  const ys = [];
+  for (let y = 1; y <= D.L.now; y++) if (REALM_OF(D.at((y - 1) * 4 + 3).qi) === key) ys.push(y);
+  const a = ys[0], b = ys.at(-1);
+  const [hz, name] = REALM_NAME[key];
+  return `<div class="row chapter" style="${seg(lv)}"><div class="m"><span class="ch-hz">${hz}</span></div><div class="c"><span class="knot"></span></div>
+    <div class="t"><b>${name}</b><small>ages ${a}–${b} · Sealed Era ${num(era(D.L, a))}–${num(era(D.L, b))}${b === D.L.now && D.L.now === LIVES.now.now && S.life === 'now' ? ' · now' : ''}</small></div></div>`;
+}
+
+// ===================== state =====================
+const S = { level: 'chapters', life: 'now', view: 'river', off: new Set(), unfolded: new Set(), sel: null };
+try { const v = localStorage.getItem('chronicle-river-level'); if (v) S.level = v; } catch {}
+const LEVEL_NOTES = {
+  glow: 'The line’s halo brightens layer by layer, then falls back to almost nothing at a new realm’s first step, where the gold turns paler.',
+  strands: 'One hairline per realm reached: Qi Condensation one, Foundation two, Core Formation would be three. The layers themselves are the stations.',
+  gauge: 'Under each age, a row of ticks with the realm’s hanzi: nine for Qi Condensation’s layers, four for each later realm’s stages, lit as far as that year reached.',
+  chapters: 'Each realm is a chapter: a header where the life enters it, with its hanzi, its ages and its years. The line itself stays one plain hairline.',
+  deepen: 'The gold deepens from pale straw to amber through the nine layers, then starts pale again at Foundation and deepens through its four stages.',
+};
+
+// ===================== the calendar's words =====================
+// Numbers stay numbers: the age in the margin, the world's year (the Sealed Era, one clock across lives) beside it.
+const era = (L, y) => L.born + y - 1;
+const C = {
+  title(L, y) { return `Sealed Era ${num(era(L, y))}`; },
+  sub(L, y, lv) { return y === 1 ? 'born' : levelWords(lv); },
+  margin(L, y) { return num(y); },
+  tick(L, y) { return num(y); },
+  when(L, y, s) { return `${cap(SEASONS[s])} ${num(era(L, y))}`; },
+  span(L, a, b) { return `${num(era(L, a))}–${num(era(L, b))}, ages ${a}–${b}`; },
+  label(id) { const L = LIVES[id]; return id === 'now' ? `This life · ${L.name}, from ${num(L.born)}` : `The life before · ${L.name}, ${num(L.born)}–${num(era(L, L.now))}`; },
+};
+
+function lifeData() {
+  const L = LIVES[S.life];
+  const ev = L.rows.map(([y, s, kind, text, lvl], i) => ({ i, y, s, kind, text, lvl, t: (y - 1) * 4 + s, realm: kind === 'qi' && lvl === 10 }));
+  const at = (t) => { const o = { qi: 0, body: 0, soul: 0 }; for (const e of ev) if (e.t <= t && e.lvl !== undefined && o[e.kind] !== undefined) o[e.kind] = e.lvl; return o; };
+  const items = [];
+  let quiet = [];
+  const flush = () => { if (quiet.length >= 6) items.push({ fold: quiet.slice() }); else quiet.forEach((y) => items.push({ y })); quiet = []; };
+  for (let y = L.now; y >= 1; y--) {
+    const sx = L.secl.find((x) => y >= x.from && y <= x.to);
+    if (sx) { flush(); if (y === sx.to) items.push({ secl: sx }); continue; }
+    if (!ev.some((e) => e.y === y)) quiet.push(y); else { flush(); items.push({ y }); }
+  }
+  flush();
+  return { L, ev, at, items };
+}
+const shows = (e) => !S.off.has(e.kind);
+
+// ===================== the river =====================
+function yearRows(D, y) {
+  const L = D.L;
+  const lv = D.at((y - 1) * 4 + 3).qi;
+  let out = `<div class="row yr" id="ry-${y}" style="${seg(lv)}">
+    <div class="m" title="Age ${y}">${C.margin(L, y)}${S.level === 'gauge' ? gauge(lv) : ''}</div><div class="c"><span class="notch"></span></div>
+    <div class="t">${C.title(L, y)}<small>${C.sub(L, y, lv)} · <button class="linkish" data-to-almanac="${y}">almanac</button></small></div></div>`;
+  for (let s = 3; s >= 0; s--) {
+    const es = D.ev.filter((e) => e.y === y && e.s === s && shows(e));
+    if (!es.length) continue;
+    const at = D.at((y - 1) * 4 + s).qi;
+    const segAt = seg(at);
+    let first = true;
+    const idAttr = () => { const a = first ? `id="r-${y}-${s}"` : ''; first = false; return a; };
+    // stations first, newest at the top as the river reads
+    for (const e of es.filter((x) => STATION.has(x.kind)).reverse()) {
+      if (e.realm) {
+        out += `<div class="row station realm" ${idAttr()} style="${seg(10)}"><div class="m"></div><div class="c"><span class="stop">筑基</span></div>
+          <div class="t"><b>Foundation Establishment</b><span>${esc(e.text)}</span></div></div>`;
+        continue;
+      }
+      out += `<div class="row station" ${idAttr()} style="${segAt};--kc:var(--k-${e.kind})" title="${C.when(L, y, s)}"><div class="m"></div>
+        <div class="c"><span class="stop" title="${KIND[e.kind][1]}">${KIND[e.kind][0]}</span></div><div class="t">${esc(e.text)}</div></div>`;
+    }
+    const prose = es.filter((x) => !STATION.has(x.kind));
+    if (prose.length) {
+      const text = prose.map((e) => `<span class="${e.kind === 'settled' ? 'settled' : ''}"><span class="mk" style="--kc:var(--k-${e.kind})" title="${KIND[e.kind][1]}">${KIND[e.kind][0]}</span>${esc(e.text)}</span>`).join(' ');
+      out += `<div class="row para" ${idAttr()} style="${segAt};${sc(s)}"><div class="m" title="${SEASONS[s]}">${SEASON_HZ[s]}</div><div class="c"><span class="bead"></span></div><div class="t">${text}</div></div>`;
+    }
+  }
+  return out;
+}
+function tickRow(D, y) {
+  const lv = D.at((y - 1) * 4 + 3).qi;
+  return `<div class="row tick" id="ry-${y}" style="${seg(lv)}"><div class="m">${C.tick(D.L, y)}</div><div class="c"></div><div class="t"></div></div>`;
+}
+function seclWords(D, sx) {
+  const es = D.ev.filter((e) => e.y >= sx.from && e.y <= sx.to);
+  const qi = es.filter((e) => e.kind === 'qi').length, bo = es.filter((e) => e.kind === 'body').length;
+  const parts = [];
+  if (qi) parts.push(qi === 1 ? 'a stage of qi' : `${qi} stages of qi`);
+  if (bo) parts.push(bo === 1 ? 'a body layer' : `${bo} body layers`);
+  return `${sx.left - sx.entered} years ${sx.why}${parts.length ? `: ${parts.join(', ')}` : ''}`;
+}
+function riverHTML(D) {
+  let out = '';
+  let lastKey = null;
+  for (const it of D.items) {
+    if (S.level === 'chapters') {
+      const y = it.secl ? it.secl.to : it.fold ? it.fold[0] : it.y;
+      const lv = D.at((y - 1) * 4 + 3).qi;
+      const key = REALM_OF(lv);
+      if (key !== lastKey) { out += chapterRow(D, key, lv); lastKey = key; }
+    }
+    if (it.secl) {
+      const sx = it.secl;
+      const lv = D.at((sx.to - 1) * 4 + 3).qi;
+      let inner = '';
+      for (let y = sx.to; y >= sx.from; y--) inner += D.ev.some((e) => e.y === y && shows(e)) ? yearRows(D, y) : tickRow(D, y);
+      out += `<div class="secl" id="secl-${sx.from}"><div class="row secl-head" style="${seg(lv)}"><div class="m"></div><div class="c"></div>
+        <div class="t"><b>In seclusion</b>${C.span(D.L, sx.entered, sx.left)} · ${seclWords(D, sx)}</div></div>${inner}</div>`;
+      continue;
+    }
+    if (it.fold) {
+      const key = `${S.life}:${it.fold.at(-1)}`;
+      if (S.unfolded.has(key)) { it.fold.forEach((y) => { out += tickRow(D, y); }); continue; }
+      out += `<div class="row fold"><div class="m"></div><div class="c"></div><div class="t">${it.fold.length} years with nothing written, ${C.span(D.L, it.fold.at(-1), it.fold[0])} · <button class="linkish" data-unfold="${it.fold.at(-1)}">show them</button></div></div>`;
+      continue;
+    }
+    out += yearRows(D, it.y);
+  }
+  return `<div class="river lv-${S.level}"><div class="row river-key"><div class="m">age</div><div class="c"></div><div class="t">the world’s year</div></div>${out}</div>`;
+}
+
+// ===================== the almanac =====================
+function almanacHTML(D) {
+  const L = D.L;
+  let rows = '';
+  const yearRow = (y, inSecl) => {
+    const all = D.ev.filter((e) => e.y === y && shows(e));
+    const l = D.at((y - 1) * 4 + 3);
+    const cells = [0, 1, 2, 3].map((s) => {
+      const es = all.filter((e) => e.s === s);
+      const cls = [es.some((e) => e.realm) ? 'realmc' : es.some((e) => e.kind === 'qi') ? 'rise' : '', S.sel === `${y}-${s}` ? 'sel' : ''].join(' ');
+      return `<td class="cell ${cls}" data-cell="${y}-${s}" style="${sc(s)}" title="${C.when(L, y, s)}"><div class="pips">${es.map((e) => `<span class="pip ${e.kind === 'settled' ? 'dim' : ''}" style="--kc:var(--k-${e.kind})">${KIND[e.kind][0]}</span>`).join('')}</div></td>`;
+    }).join('');
+    return `<tr id="ay-${y}" class="${all.length ? '' : 'quiet'} ${inSecl ? 'in-secl' : ''}"><td class="yrc" title="Age ${y}, Sealed Era ${num(era(L, y))}">${C.tick(L, y)}${all.length ? `<small>${num(era(L, y))}</small>` : ''}</td>${cells}<td class="end">${y === 1 ? 'born' : levelWords(l.qi)}</td></tr>`;
+  };
+  for (const it of D.items) {
+    if (it.secl) {
+      const sx = it.secl;
+      rows += `<tr class="band"><td></td><td class="span" colspan="4"><b>In seclusion</b>${seclWords(D, sx)}</td><td></td></tr>`;
+      for (let y = sx.to; y >= sx.from; y--) rows += yearRow(y, true);
+      continue;
+    }
+    if (it.fold) {
+      if (S.unfolded.has(`${S.life}:${it.fold.at(-1)}`)) { it.fold.forEach((y) => { rows += yearRow(y, false); }); continue; }
+      rows += `<tr class="afold"><td class="yrc" style="font-size:11px">${it.fold.at(-1)}–${it.fold[0]}</td><td class="span" colspan="4" data-unfold="${it.fold.at(-1)}">${it.fold.length} years with nothing written</td><td></td></tr>`;
+      continue;
+    }
+    rows += yearRow(it.y, false);
+  }
+  let readout = '<h4>Pick a season</h4>';
+  if (S.sel) {
+    const [y, s] = S.sel.split('-').map(Number);
+    const es = D.ev.filter((e) => e.y === y && e.s === s && shows(e));
+    readout = `<h4>${C.when(L, y, s)}</h4><div class="caption">${L.name} at ${y}</div>
+      ${es.length ? es.map((e) => `<div class="ln"><span class="pip ${e.kind === 'settled' ? 'dim' : ''}" style="--kc:var(--k-${e.kind})">${KIND[e.kind][0]}</span><span>${esc(e.text)}</span></div>`).join('') : '<p class="caption">A quiet season.</p>'}
+      <div class="after"><span>After it: ${levelWords(D.at((y - 1) * 4 + s).qi)}</span><button class="linkish" data-to-river="${y}-${s}">Read it in the river →</button></div>`;
+  }
+  return `<div class="alm-wrap"><div class="alm-scroll"><table class="almanac"><tr><th class="yrc"></th>${SEASONS.map((s, i) => `<th style="${sc(i)}"><span class="b">${SEASON_HZ[i]}</span>${s}</th>`).join('')}<th class="end">By year’s end</th></tr>${rows}</table></div><div class="readout panel">${readout}</div></div>`;
+}
+
+// ===================== render =====================
+const panel = document.getElementById('panel');
+function render(after) {
+  document.querySelectorAll('#knob-level button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === S.level));
+  document.getElementById('note').innerHTML = `<b>${document.querySelector(`#knob-level [data-v="${S.level}"]`).textContent}.</b> ${LEVEL_NOTES[S.level]}<br><b>Stations and prose on a fine gold line.</b> The milestones (layers, mastery, gates, birth, death) ride the line as ringed brush marks; everything else that season is one paragraph of prose beside it, each sentence led by its kind’s mark. The age stands in the margin and the world’s year beside the line, both as plain numbers. The Sealed Era is one clock across lives: Mo Ning turns 12 in 3,127, the atlas’s “now”, and Lan Shu died two years before he was born.`;
+  const D = lifeData();
+  const ks = Object.keys(KIND).filter((k) => !['origin', 'death', 'system'].includes(k));
+  panel.innerHTML = `<div class="panel-head"><h3>The life of ${D.L.name}</h3><div class="head-right">
+      <div class="seg" role="group" aria-label="View"><button data-view="river" aria-pressed="${S.view === 'river'}">River</button><button data-view="almanac" aria-pressed="${S.view === 'almanac'}">Almanac</button></div>
+      <select id="life-pick" aria-label="Which life">${Object.keys(LIVES).map((id) => `<option value="${id}" ${S.life === id ? 'selected' : ''}>${C.label(id)}</option>`).join('')}</select></div></div>
+    <div class="chips">${ks.map((k) => `<button class="chip" data-chip="${k}" aria-pressed="${!S.off.has(k)}"><span class="g" style="--kc:var(--k-${k})">${KIND[k][0]}</span>${KIND[k][1]}</button>`).join('')}</div>
+    ${S.view === 'river' ? riverHTML(D) : almanacHTML(D)}`;
+  document.getElementById('context').innerHTML = '<h3>Chronicle</h3>' + D.ev.slice().reverse().filter((e) => e.kind !== 'settled').slice(0, 6).map((e) => `<div class="when">${C.when(D.L, e.y, e.s)}</div><div>${esc(e.text)}</div>`).join('');
+  wire(D);
+  after?.();
+}
+function flashTo(id) { const el = document.getElementById(id); if (!el) return; el.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+function wire(D) {
+  const q = (sel, fn) => panel.querySelectorAll(sel).forEach((el) => { el.onclick = () => fn(el); });
+  q('[data-view]', (b) => { S.view = b.dataset.view; render(); });
+  q('[data-chip]', (b) => { const k = b.dataset.chip; S.off.has(k) ? S.off.delete(k) : S.off.add(k); render(); });
+  q('[data-unfold]', (b) => { S.unfolded.add(`${S.life}:${b.dataset.unfold}`); render(); });
+  q('[data-cell]', (td) => { S.sel = td.dataset.cell; render(); });
+  q('[data-to-river]', (b) => {
+    const [y, s] = b.dataset.toRiver.split('-').map(Number);
+    const f = D.items.find((it) => it.fold && it.fold.includes(y)); if (f) S.unfolded.add(`${S.life}:${f.fold.at(-1)}`);
+    S.view = 'river';
+    render(() => flashTo(document.getElementById(`r-${y}-${s}`) ? `r-${y}-${s}` : `ry-${y}`));
+  });
+  q('[data-to-almanac]', (b) => {
+    const y = +b.dataset.toAlmanac;
+    const s = [3, 2, 1, 0].find((x) => D.ev.some((e) => e.y === y && e.s === x)) ?? 3;
+    S.view = 'almanac'; S.sel = `${y}-${s}`; render(() => flashTo(`ay-${y}`));
+  });
+  const pick = panel.querySelector('#life-pick');
+  if (pick) pick.onchange = () => { S.life = pick.value; S.sel = `${LIVES[S.life].now}-3`; render(); };
+}
+document.querySelectorAll('#knob-level button').forEach((b) => { b.onclick = () => { S.level = b.dataset.v; try { localStorage.setItem('chronicle-river-level', S.level); } catch {} render(); }; });
+document.querySelectorAll('.menu a').forEach((a) => { a.onclick = (e) => e.preventDefault(); });
+S.sel = `${LIVES[S.life].now}-0`;
+render();
+</script>
+</html>
