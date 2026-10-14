@@ -38,11 +38,11 @@ export function polar(angle: number, r: number): Point {
 export const LEVEL = 90;
 export const halfOpening = (tier: number) => Math.min(LEVEL, 75 + (tier - 1) * 6.25);
 /** Px for each step of a node's `at` down: the far bands are wide enough to pack tighter. */
-export const depthStep = (tier: number) => (tier === 1 ? 40 : tier === 2 ? 34 : 24);
+export const depthStep = (tier: number) => (tier === 1 ? 54 : tier === 2 ? 46 : 34);
 /** The tier's widest node sits at this share of its half-opening. */
 const WIDEST = 0.9;
-/** Where a band's nodes start before any crown below steps it out: 340 px a tier from tier 3. */
-const firstRing = (tier: number) => (tier === 1 ? 110 : tier === 2 ? 640 : 1120 + (tier - 3) * 340);
+/** Where a band's nodes start before any crown below steps it out: 460 px a tier from tier 3. */
+const firstRing = (tier: number) => (tier === 1 ? 150 : tier === 2 ? 840 : 1460 + (tier - 3) * 460);
 /** The crown's rim lies this far past the capstone's ring, and the band's edge this far past it. */
 const RIM_GAP = 52;
 const EDGE_GAP = 30;
@@ -561,9 +561,9 @@ export function bloom(m: Manual): Bloom {
 }
 
 /** A hostless manual's own fan: px between rings, between its bands, and between siblings' labels. */
-export const OWN_STEP = 64;
+export const OWN_STEP = 72;
 const OWN_BAND_GAP = 20;
-const OWN_ARC = 92;
+const OWN_ARC = 100;
 /** The widest the leaves may spread, in degrees either side of straight up. */
 const OWN_SPREAD = 75;
 export const OWN_LABEL_W = 88;

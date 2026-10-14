@@ -15,6 +15,7 @@ import { TreesScreen } from './TreesScreen.tsx';
 import { capitalize } from './format.ts';
 import { readyLadders, useScene } from './scene.ts';
 import { useNav } from './nav.ts';
+import { markMoving } from './moving.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
 import { bySeason } from '../core/chronicle.ts';
@@ -119,6 +120,12 @@ export function App() {
     : phase === 'no-slot'
       ? screens.find((s) => s.id === 'settings')!
       : (available.find((s) => s.id === screen) ?? available[0]!);
+
+  // Scrolling anywhere (the page, the main column, a list) pauses the looping animations.
+  useEffect(() => {
+    document.addEventListener('scroll', markMoving, { capture: true, passive: true });
+    return () => document.removeEventListener('scroll', markMoving, { capture: true });
+  }, []);
 
   // Escape closes the phone drawer and bottom sheet.
   useEffect(() => {

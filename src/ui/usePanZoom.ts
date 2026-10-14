@@ -12,6 +12,7 @@ import {
   type View,
   type ZoomRange,
 } from './panzoom.ts';
+import { markMoving } from './moving.ts';
 
 /** Pixels a pointer may move and still count as a tap. */
 const TAP = 6;
@@ -73,6 +74,7 @@ export function usePanZoom(
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      markMoving();
       const r = el.getBoundingClientRect();
       const at = { x: e.clientX - r.left, y: e.clientY - r.top };
       const lines = e.deltaMode === 1 ? 16 : 1;
@@ -115,6 +117,7 @@ export function usePanZoom(
       const g = gesture.current;
       if (!g.pointers.has(e.pointerId) || !view) return;
       g.pointers.set(e.pointerId, local(e));
+      markMoving();
       const ids = [...g.pointers.keys()];
       if (ids.length >= 2) {
         const [a, b] = ids as [number, number];

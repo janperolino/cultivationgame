@@ -388,6 +388,14 @@ select {
   }
 }
 
+/* While the page scrolls or a canvas pans (ui/moving.ts), every looping animation holds still:
+   a panel's sheen and rim repaint the whole panel each frame, which a scroll would wait on. */
+:root.is-moving *,
+:root.is-moving *::before,
+:root.is-moving *::after {
+  animation-play-state: paused !important;
+}
+
 :root[data-motion='reduced'] .panel {
   --rim-paint: var(--rim-still);
   animation: none;
@@ -1927,6 +1935,11 @@ select {
   -webkit-user-select: none;
   touch-action: none;
   overscroll-behavior: contain;
+}
+
+/* Its own layer: the panel around it shimmers, and that repaint must not redraw the tree. */
+.fan-canvas {
+  will-change: transform;
 }
 
 .tree-canvas:active {
