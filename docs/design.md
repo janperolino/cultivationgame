@@ -739,44 +739,45 @@ Checkpoints inside a sphere charge tolls from the Economy's fee list, and your f
 
 How going in decides what happens (D3, 2026-10-14). Everything you try, from a lie to a formation round a city, runs through one pipeline, and NPCs run through the same one, since the rules take a cultivator and actions name who acts.
 
-**The pipeline.** You type, and the interpreter turns your words into a plan of verbs with targets, the scene's features and the things you use (The world, Do whatever you want). The engine checks the plan can be tried at all, by scale and by what you hold, then shows each step's odds and stakes with **Do it** and **Change it**. Do it rolls and saves at once, the effects land, lasting states take hold, and the narrator tells it. GLM touches only the first step and the telling. A plan of several steps runs in order and hands back to you at the first fail or surprise. When your words could mean two things, the interpreter offers two or three readings as buttons instead of guessing. The scene's exits and the narrator's suggestions are clicks that skip the interpreter.
+**The pipeline.** You type, and the interpreter turns your words into a plan of verbs with targets, the scene's features and the things you use (The world, Do whatever you want). The engine checks the plan can be tried at all, by scale and by what you hold, then shows each step's verdict and stakes with **Do it** and **Change it**. Do it settles the step and saves at once, the effects land, lasting states take hold, and the narrator tells it. GLM touches only the first step and the telling. A plan of several steps runs in order and hands back to you at the first fail or surprise. When your words could mean two things, the interpreter offers two or three readings as buttons instead of guessing. The scene's exits and the narrator's suggestions are clicks that skip the interpreter.
 
 **Going in is GLM's** (Jan's call). It uses GLM 5.2 fully and has no templated version. Without a key, trips still run, resolved by the engine as they are while you're away and told by the chronicle's templated lines, but there are no scenes to go into. Tests drive the resolver with plans directly and the narrator through the mock provider.
 
-**Chance has a narrow job:** close contests, what you couldn't have known (a guard's mood, whether a herb is ripe, who walks past), and keeping the same move on the same foe from always playing out the same. Wherever the world is a hierarchy, the outcome is certain.
+**No dice in a check** (Jan's call). A check compares your number with theirs:
 
-**Power checks** are sized by realm, on the sheet's sizes (Combat, Realms are sizes):
+- **Clear**, yours at least ×1.25 theirs: you pass.
+- **Close**, yours at least theirs but under ×1.25: you pass at a cost.
+- **Short**, yours below theirs: you fail.
+
+The cost comes from the verb's own list (time doubled, a witness, a wound, heat, a thing spent or broken, trust lost, noise), and every verdict shows before you act with its stakes: "Sneak past the gate · close · the dog barks · if short: caught at the gate". The uncertainty is what you don't know, never a roll: a veiled realm, a hidden blade, a motive you haven't learned, so scouting, asking and Perception pay. The world still rolls its own dice on the `scene` stream (encounters, loot, weather, who walks past), and a fight keeps its roll for each blow, since a fight is many blows and the fight sim is tuned on them. Your checks never roll.
+
+**Your number** is the line the check reads, sized as the sheet sizes it (Combat, The sheet), times what helps: a technique the action uses, ×1.05 a mastery level (×1.25 at Origin; this is what mastery gives checks, in place of "+2 to checks"); a node, talent or Way that names the check; the scene's things you use, ×1.1 each and three at most, as combat's creativity; a helper ×1.2, two at most. Together these at most double you. A realm is a step of ×3.1 or more, so skill and cunning win close contests and never cross a realm, and a Foundation deacon never catches a Nascent Soul. Their side counts the same, and a place's features count for whoever they favor (darkness for the one sneaking).
 
 | Check | Your number | Theirs |
 |---|---|---|
 | Notice someone sneaking | perception: your soul × (1 + Perception) | their stealth |
 | Sneak, hide | stealth: your body × Agility | their perception |
-| Threaten, press with your aura | your soul | their soul |
+| Intimidate | the danger you show | the safety they feel |
 | Force: break, lift, hold, endure | your body | the foe's body, or the feature's own realm |
 | Chase, flee, outrun | speed: your qi × Agility | their speed |
 | Find, without divine sense | your soul | the site's danger realm |
 
-Agility counts as it does in a fight, 5% a point above 10. A check with no opponent faces a size: the feature's own realm when it names one ("a sheer karst wall, Foundation"), else the site's danger realm.
+Agility counts as it does in a fight, 5% a point above 10. A check with no opponent faces the feature's own realm when it names one ("a sheer karst wall, Foundation"), else the site's danger realm.
 
-- **Certain past a realm.** When one side's number is a full realm's step above the other's (×3.1 at Qi Condensation, ×4.6 at Foundation, as the steps run), the stronger side wins with no roll.
-- **Rolled when close**, on a steep curve: chance = yours⁴ ÷ (yours⁴ + theirs⁴). Equal sides 50%, a fifth ahead 67%, half again 84%, double 94%. A Qi Condensation layer is about ×1.12 (61%) and a Foundation stage about ×1.5 (84%), so a stage weighs more the higher you climb.
-- **What counts on your side**, multiplied onto the base and capped at ×2 together: a technique the action uses, ×1.05 a mastery level (×1.25 at Origin; this is what mastery gives checks, in place of "+2 to checks"); a node, talent or Way that names the check; the scene's things you use, ×1.1 each and three at most, as combat's creativity; a helper ×1.2, two at most. Their side counts the same sources, and a place's features count for whoever they favor (darkness for the one sneaking).
+**Intimidation** is how dangerous you look against how safe they feel. The danger you show is the realm they read on you (true, veiled, or beyond them, which counts as a realm above them) times what backs it: a weapon drawn ×1.2 (×1.5 from gold), a technique shown ×1.25, your infamy ×1.5 to anyone who knows your name, each follower at your back ×1.1 (three at most). The safety they feel is their realm times theirs: a sect behind them ×1.5 (×2 a great sect), each of their crew ×1.1 (three at most), and ×2 when they are desperate, since a cornered man doesn't scare. Both sides cap at ×2, as above. A veiled Nascent Soul frightens only as much as the realm they show, and dropping the veil to frighten someone ends the cover. Two realms up is past a threat: realm pressure pins them outright (Scale of destruction). What intimidation wins is obedience from fear, a fear bond (block 3), with karma for using it on the weak.
 
-**Reading a realm** is never rolled. With your perception at or above their soul you read their true realm. Below it you read them as beyond you ("you can't see through his cultivation"), or, if they veil it, as the realm they choose to show, as many stages down as their concealment allows (Veiled Aura, Hidden Realm, a masking jade). A Foundation deacon never sees through a Nascent Soul; a Nascent Soul elder always sees through a Foundation disciple's veil. Perception from nodes, talents and detection arts is how a weaker soul closes part of a gap.
+**Reading a realm** is a comparison too. With your perception at or above their soul you read their true realm. Below it you read them as beyond you ("you can't see through his cultivation"), or, if they veil it, as the realm they choose to show, as many stages down as their concealment allows (Veiled Aura, Hidden Realm, a masking jade). A Foundation deacon never sees through a Nascent Soul; a Nascent Soul elder always sees through a Foundation disciple's veil. Perception from nodes, talents and detection arts is how a weaker soul closes part of a gap.
 
-**The odds you see are the odds your character can judge.** Against someone whose realm you can't read, the step shows "?" and the engine rolls the true odds unseen. A certain step says so: "Sneak past the drunk porter · sure".
+**The verdict you see is what your character can judge.** Against someone whose realm you can't read, the verdict shows "?" and the engine compares the true numbers unseen. A step that can't fail says so: "Sneak past the drunk porter · clear".
 
-**People checks** are not sized by realm: a Qi Condensation con man with a forged token can fool a Foundation noble, and a mortal merchant can out-haggle you. Persuade, ask, lie, bargain, recruit and calm weigh your leverage against their resistance, both starting at 1, on a gentle curve, since people are fickle: chance = leverage ÷ (leverage + resistance).
+**People checks** are not sized by realm: a Qi Condensation con man with a forged token can fool a Foundation noble, and a mortal merchant can out-haggle you. Persuade, ask, lie, bargain, recruit and calm weigh your leverage against their resistance, both starting at 1, with the same three verdicts.
 
-- **Leverage:** trust (hostile ×0.25, wary ×0.5, neutral ×1, friendly ×1.5, trusting ×2; block 3 settles trust); an offer that meets one of their motives ×2; proof or a prop ×1.5 (a token, a sect's robe); standing with their power, ×0.5 at its worst to ×1.5 at its best; a talent, node or Way that names the check. Capped at ×8, so talk never passes 89%.
+- **Leverage:** trust (hostile ×0.25, wary ×0.5, neutral ×1, friendly ×1.5, trusting ×2; block 3 settles trust); an offer that meets one of their motives ×2; proof or a prop ×1.5 (a token, a sect's robe); standing with their power, ×0.5 at its worst to ×1.5 at its best; a talent, node or Way that names the check.
 - **Resistance:** a motive against it ×2, suspicion of you ×2, their own talents.
-- **Two things make talk certain.** A soul two realms above yours reads your lies, so a lie to it fails and it knows. And leaning on your aura turns talk into a power check: a realm above, it is certain, but what you get is obedience from fear, a fear bond (block 3), with karma for using it on the weak.
+- What you see is your read of them, built from what you know. A motive you haven't learned can turn it: "he had a reason you didn't know".
+- A soul two realms above yours reads your lies, so a lie to it fails and it knows.
 
-**Three grades.** A rolled check passes, passes at a cost, or fails; the quarter of the passing range nearest the line passes at a cost. The cost comes from the verb's own list (time doubled, a witness, a wound, heat, a thing spent or broken, trust lost, noise) and shows before you roll: "Sneak past the gate · 74% · at a cost: the dog barks · fail: caught at the gate". A certain check has no grades.
-
-**No retries.** A failed check can't be tried again on the same target in the same way until something changes: a new day, a new approach (another verb, a new prop, a helper), or a move in trust, heat or the scene.
-
-**Rolls** run on their own stream, `scene`. They roll on Do it and save at once, so a reload resumes after the roll and never rolls again. Change it re-reads your words and never rolls.
+**No retries.** With no dice, the same attempt gives the same answer until something changes: another approach (another verb, a new prop, a helper), a move in trust or heat, or someone else on the gate.
 
 **Symmetry.** NPCs make every one of these checks against you: the rival's lie, the bandit's sneak, the elder reading your veil.
 
