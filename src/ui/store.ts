@@ -534,6 +534,7 @@ export const useGame = create<GameStore>()((set, get) => {
       const r = giveHour(game, hour, kind);
       if (!r.check.ok) return r.check.reason;
       set({ game: r.state });
+      if (kind === 'qi') get().markHint('qi-hours');
       return null;
     },
 

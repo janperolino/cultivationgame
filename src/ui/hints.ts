@@ -41,8 +41,13 @@ export function hintsWaiting(s: GameState): HintView[] {
       out.push({ id, text: firstText(HINTS[id], step), to: open(linkTo(beaconFor(step))) });
       continue;
     }
-    // The motes only settle once a method is taken up, so its hint comes first.
-    const drawing = s.player.activeMethods.qi !== null && !s.player.flags.includes(FIRST_BREATH);
+    // Once a method is taken up: more qi hours, then the motes, which only settle with one.
+    const climbing = s.player.activeMethods.qi !== null;
+    if (id === 'qi-hours' && climbing) {
+      const to = open({ screen: 'cultivate', tab: 'cultivation' });
+      out.push({ id, text: HINTS['qi-hours'], to });
+    }
+    const drawing = climbing && !s.player.flags.includes(FIRST_BREATH);
     if (id === 'orbs' && drawing && abode) out.push({ id, text: HINTS.orbs, to: abode });
     if (id === 'breakthrough' && readyLadders(s).length > 0) {
       out.push({ id, text: HINTS.breakthrough, to: abode });
@@ -65,8 +70,8 @@ export function nextHint(s: GameState): HintView | null {
 /**
  * Whether the player has done what a hint asked, so it goes. Only the player's own doing counts:
  * a hint whose moment passes by itself (an auto breakthrough, a card settled while away) stays
- * until dismissed. A breakthrough, a card chosen and the hints' own switch mark theirs shown from
- * the store's actions.
+ * until dismissed. An hour turned to qi, a breakthrough, a card chosen and the hints' own switch
+ * mark theirs shown from the store's actions.
  */
 export function hintDone(s: GameState, id: HintId): boolean {
   if (s.hints.shown.includes(id)) return true;
@@ -91,6 +96,7 @@ export function hintDone(s: GameState, id: HintId): boolean {
       return firsts.includes('art');
     case 'orbs':
       return p.flags.includes(FIRST_BREATH);
+    case 'qi-hours':
     case 'breakthrough':
     case 'cards':
     case 'hints-off':

@@ -62,7 +62,7 @@ describe('a new lineage', () => {
     expect(s.player.copies[METHOD]).toBe(1);
     expect(s.player.reading.queue).toEqual([]);
     expect(s.player.plan.burnStones).toBe(false);
-    expect(waiting(s)).toEqual(['copy', 'study-hour', 'stones']);
+    expect(waiting(s)).toEqual(['copy', 'study-hour']);
     // Left alone, nothing is read and the qi hours give nothing.
     s = run(s, 3);
     expect(s.player.reading.days[METHOD] ?? 0).toBe(0);
@@ -70,7 +70,7 @@ describe('a new lineage', () => {
     // Read now queues it, but with no study hour it still waits.
     s = readCopy(s, METHOD).state;
     expect(s.lineage.firsts).toContain('copy');
-    expect(waiting(s)).toEqual(['study-hour', 'stones']);
+    expect(waiting(s)).toEqual(['study-hour']);
     s = run(s, 1);
     expect(s.player.reading.days[METHOD] ?? 0).toBe(0);
     // An hour turned to study reads it; read, the method is known but nothing climbs with it.
@@ -133,8 +133,14 @@ describe('a new lineage', () => {
     expect(hours(s, 'soul')).toBe(1);
   });
 
-  it('waits on stones worth burning and a node within reach', () => {
+  it('waits on stones worth burning from layer 2, and a node within reach', () => {
     let s = playFirsts(createLife(creation()));
+    // Stones in the pouch wait for the second layer, after the method and the orbs.
+    expect(s.player.stones).toBeGreaterThanOrEqual(5);
+    expect(s.player.plan.burnStones).toBe(false);
+    s = withPlayer(s, { ...s.player, qi: { ...s.player.qi, stage: 2 } });
+    expect(waiting(s)).toContain('stones');
+    s = playFirsts(s);
     expect(s.player.plan.burnStones).toBe(true);
     expect(s.lineage.firsts).toContain('stones');
     // Insight enough to open the Trees isn't yet a nudge to buy: the node waits from 50.

@@ -10,6 +10,7 @@ import {
   FIRST_IDS,
   FIRST_NODE_INSIGHT,
   FIRST_STONES,
+  FIRST_STONES_LAYER,
   FIRST_WAITING,
   type FirstId,
   type HintId,
@@ -58,7 +59,7 @@ export function noteFirsts(s: GameState): GameState {
 /** A first waiting on the player: which, the step it is at (its hint), and what it is about. */
 export interface FirstStep {
   first: FirstId;
-  hint: Exclude<HintId, 'orbs' | 'breakthrough' | 'cards' | 'hints-off'>;
+  hint: Exclude<HintId, 'qi-hours' | 'orbs' | 'breakthrough' | 'cards' | 'hints-off'>;
   /** The copy, method or technique it is about. */
   id?: string;
   /** An art's ladder. */
@@ -97,7 +98,10 @@ export function firstsWaiting(s: GameState): FirstStep[] {
     const step = artStep(c);
     if (step) out.push(step);
   }
-  if (todo('stones') && c.stones >= FIRST_STONES) out.push({ first: 'stones', hint: 'stones' });
+  const layer2 = c.qi.realm !== 'qi-condensation' || c.qi.stage >= FIRST_STONES_LAYER;
+  if (todo('stones') && layer2 && c.stones >= FIRST_STONES) {
+    out.push({ first: 'stones', hint: 'stones' });
+  }
   if (todo('node') && c.insight.current >= FIRST_NODE_INSIGHT) {
     out.push({ first: 'node', hint: 'node' });
   }

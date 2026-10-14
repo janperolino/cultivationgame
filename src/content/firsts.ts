@@ -20,8 +20,12 @@ export type FirstId = (typeof FIRST_IDS)[number];
 /** Every first done: NPCs, old tests, and sims that don't play them. */
 export const ALL_FIRSTS: readonly FirstId[] = FIRST_IDS;
 
-/** Stones worth burning: the stones first waits from this many held. */
+/**
+ * Stones worth burning: the stones first waits from this many held, and from Qi Condensation's
+ * second layer, so it comes after the method and the orbs (Jan's call after P2.8).
+ */
 export const FIRST_STONES = 5;
+export const FIRST_STONES_LAYER = 2;
 
 /**
  * Insight enough for a node: the node first waits from here, well past the 10 that opens the
@@ -42,6 +46,7 @@ export const HINT_IDS = [
   'copy',
   'study-hour',
   'method',
+  'qi-hours',
   'orbs',
   'technique',
   'technique-hour',
@@ -61,7 +66,9 @@ export const HINTS: Readonly<Record<HintId, string>> = {
     'Your wheel is all qi, and qi hours give nothing until you know a method. Turn an hour to Study to read it; more hours read it sooner.',
   orbs: 'Qi drifts toward your figure at the Abode. Pass the pointer through an orb to draw it in.',
   method:
-    'You have learned your first cultivation method, the {method}. Take it up under Climb with to start cultivating, then give your day more qi hours to cultivate for longer.',
+    'You have learned your first cultivation method, the {method}. Take it up under Climb with to start cultivating.',
+  'qi-hours':
+    'Your qi climbs in the qi hours of your wheel. Give your day more qi hours to cultivate for longer.',
   technique: '{technique} waits to be drilled. Practice this puts it in a slot.',
   'technique-hour': '{technique} has its slot but no hour. Turn an hour to Practice on the wheel.',
   art: 'The {art} is yours, but your {ladder} does not climb with it yet. Choose it under Climb with.',
@@ -75,7 +82,7 @@ export const HINTS: Readonly<Record<HintId, string>> = {
 
 /** The coming-back card's line for each first still waiting, by its step. */
 export const FIRST_WAITING: Readonly<
-  Record<Exclude<HintId, 'orbs' | 'breakthrough' | 'cards' | 'hints-off'>, string>
+  Record<Exclude<HintId, 'qi-hours' | 'orbs' | 'breakthrough' | 'cards' | 'hints-off'>, string>
 > = {
   copy: 'Your {copy} waits on the shelf, unread.',
   'study-hour': 'No hour of your wheel goes to study yet.',
