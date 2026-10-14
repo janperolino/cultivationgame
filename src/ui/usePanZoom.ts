@@ -29,8 +29,14 @@ interface Gesture {
 /**
  * A pannable, zoomable view of `world` inside the returned `box`. It opens on `home(screen)` once
  * the box has a size, and `recentre` goes back there; `show` moves to any view made for the screen.
+ * `range` bounds the zoom, and `floor` keeps the world's bottom edge from rising off the screen's.
  */
-export function usePanZoom(world: Size, home: (screen: Size) => View, range?: ZoomRange) {
+export function usePanZoom(
+  world: Size,
+  home: (screen: Size) => View,
+  { range, floor = false }: { range?: ZoomRange; floor?: boolean } = {},
+) {
+  const fit = (v: View, s: Size) => clampView(v, world, s, undefined, floor);
   const box = useRef<HTMLDivElement>(null);
   const [screen, setScreen] = useState<Size>({ w: 0, h: 0 });
   const [view, setView] = useState<View | null>(null);
@@ -45,10 +51,10 @@ export function usePanZoom(world: Size, home: (screen: Size) => View, range?: Zo
   const [homed, setHomed] = useState(false);
   if (screen.w > 0 && !homed) {
     setHomed(true);
-    setView(home(screen));
+    setView(fit(home(screen), screen));
   }
 
-  const apply = (v: View) => setView(screen.w ? clampView(v, world, screen) : v);
+  const apply = (v: View) => setView(screen.w ? fit(v, screen) : v);
 
   useLayoutEffect(() => {
     const el = box.current;
@@ -72,13 +78,19 @@ export function usePanZoom(world: Size, home: (screen: Size) => View, range?: Zo
       const lines = e.deltaMode === 1 ? 16 : 1;
       setView((v) =>
         v
-          ? clampView(zoomAt(v, Math.exp(-e.deltaY * lines * WHEEL_STEP), at, range), world, screen)
+          ? clampView(
+              zoomAt(v, Math.exp(-e.deltaY * lines * WHEEL_STEP), at, range),
+              world,
+              screen,
+              undefined,
+              floor,
+            )
           : v,
       );
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [world, screen, range]);
+  }, [world, screen, range, floor]);
 
   const local = (e: React.PointerEvent): Point => {
     const r = box.current!.getBoundingClientRect();
@@ -158,7 +170,7 @@ export function usePanZoom(world: Size, home: (screen: Size) => View, range?: Zo
       if (view) apply(zoomAt(view, f, { x: screen.w / 2, y: screen.h / 2 }, range));
     },
     recentre: () => {
-      if (screen.w) setView(home(screen));
+      if (screen.w) setView(fit(home(screen), screen));
     },
     show: (make: (screen: Size, now: View | null) => View) => {
       if (screen.w) apply(make(screen, view));

@@ -62,9 +62,20 @@ const hits = (a: Rect, b: Rect) =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 describe('the opening fan', () => {
-  it('opens each band wider, from 150° at Qi Condensation to 250° at the top', () => {
+  it('opens each band wider, from 150° at Qi Condensation to a half circle, never below the root', () => {
     expect(halfOpening(1) * 2).toBe(150);
-    expect(halfOpening(TIER_COUNT) * 2).toBe(250);
+    expect(halfOpening(TIER_COUNT) * 2).toBe(180);
+    for (let t = 1; t <= TIER_COUNT; t++) expect(crownSpan(t)).toBeLessThanOrEqual(90);
+    for (const t of TREES) {
+      const f = fan(
+        t,
+        MANUALS.filter((m) => m.host === t.id),
+      );
+      for (const p of f.nodes.values()) expect(p.y, p.node.id).toBeLessThanOrEqual(f.hub.y);
+      for (const j of f.jewels.values()) expect(j.y).toBeLessThanOrEqual(f.hub.y + 1e-6);
+      // The world ends just under the root: its label and a margin.
+      expect(f.height - f.hub.y).toBeLessThan(160);
+    }
   });
 
   it('puts every node inside its band and its opening, and everything inside the world', () => {

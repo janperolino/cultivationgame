@@ -1971,6 +1971,11 @@ select {
   pointer-events: none;
 }
 
+/* The world is a half circle: nothing is drawn below the root. */
+.fan-lines.is-world {
+  overflow: hidden;
+}
+
 .fan-lines path,
 .fan-lines circle {
   fill: none;
@@ -2101,9 +2106,7 @@ select {
   line-height: 13px;
   color: #948c7c;
   text-align: center;
-  text-shadow:
-    0 0 3px var(--void),
-    0 0 3px var(--void);
+  text-shadow: 0 0 3px var(--void);
 }
 
 .fan-label.is-left {
@@ -2147,6 +2150,10 @@ select {
   color: color-mix(in srgb, var(--gilt) 70%, var(--muted));
 }
 
+.fan-band-name.is-inward {
+  text-align: left;
+}
+
 .fan-band-name.is-here {
   color: var(--gilt);
 }
@@ -2176,7 +2183,6 @@ select {
   border-radius: 50%;
   background: none;
   cursor: pointer;
-  filter: drop-shadow(0 0 6px var(--rarity-color));
 }
 
 .jewel-gem {
@@ -2187,6 +2193,7 @@ select {
   background: var(--rarity-color);
   border: 2px solid var(--void);
   outline: 1px solid var(--rarity-color);
+  box-shadow: 0 0 8px var(--rarity-color);
 }
 
 .jewel.is-open .jewel-gem {
@@ -2194,32 +2201,48 @@ select {
   height: 16px;
 }
 
-.jewel.is-open {
-  filter: drop-shadow(0 0 10px var(--rarity-color));
+.jewel.is-open .jewel-gem {
+  box-shadow: 0 0 14px var(--rarity-color);
 }
 
 .jewel.is-sealed {
   opacity: 0.4;
 }
 
-.jewel.is-ready {
+/* The pulse and the new glow are rings that fade in and out: only their opacity moves, on their
+   own layers, so the huge world never repaints for them. */
+.jewel.is-ready::after,
+.jewel.is-new::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
   animation: jewel-pulse 2.6s ease-in-out infinite;
 }
 
-@keyframes jewel-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
+.jewel.is-ready::after {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gilt) 30%, transparent);
+}
 
+.jewel.is-new::before {
+  inset: -7px;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 75%, transparent);
+  animation-duration: 2.8s;
+}
+
+@keyframes jewel-pulse {
   50% {
-    box-shadow: 0 0 0 6px color-mix(in srgb, var(--gilt) 20%, transparent);
+    opacity: 1;
   }
 }
 
-:root[data-motion='reduced'] .jewel.is-ready {
+:root[data-motion='reduced'] .jewel.is-ready::after,
+:root[data-motion='reduced'] .jewel.is-new::before {
   animation: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gilt) 35%, transparent);
+  opacity: 0.7;
 }
 
 .jewel:focus-visible {
@@ -5640,8 +5663,8 @@ button.fight-card {
 /* ---------------------------------------------------------------- what's new (P2.5d) */
 
 /* A new thing glows faintly in the accent until it is selected: a Bag square, a technique's row,
-   a tree's tab, a manual's jewel, a spine. A drop shadow, so it sits over each thing's own look. */
-.is-new:is(.technique-row, .bag-item, .jewel, .spine, .hostless-pick),
+   a tree's tab, a spine (a jewel wears its own ring, under Trees). A drop shadow, so it sits over each thing's own look. */
+.is-new:is(.technique-row, .bag-item, .spine, .hostless-pick),
 .seg button.is-new {
   filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 70%, transparent));
   animation: new-glow 2.8s ease-in-out infinite;

@@ -49,4 +49,16 @@ describe('the Trees canvas view', () => {
     expect(v.x + 400 * 0.5).toBe(200);
     expect(v.y + 100 * 0.5).toBe(20);
   });
+
+  it("keeps the world's bottom from rising off the screen's with a floor", () => {
+    const world = { w: 2000, h: 1000 };
+    const screen = { w: 400, h: 600 };
+    // Dragged far up: without a floor, only a margin of the world stays; with one, its bottom
+    // edge stays at the screen's.
+    const up = { x: 0, y: -5000, k: 1 };
+    expect(clampView(up, world, screen).y).toBe(80 - 1000);
+    expect(clampView(up, world, screen, 80, true).y).toBe(600 - 1000);
+    // A world shorter than the screen sits on its bottom.
+    expect(clampView({ x: 0, y: 0, k: 0.2 }, world, screen, 80, true).y).toBe(600 - 200);
+  });
 });

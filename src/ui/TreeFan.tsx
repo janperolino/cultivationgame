@@ -7,7 +7,16 @@
 // band you cultivate in, and a ladder of the realms jumps to any band. A hostless manual's own
 // tree draws as a small fan in the same look (OwnFan). A node's card hangs beside it on hover,
 // and a click pins it open with Learn (NodeTip.tsx).
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { MANUAL_KINDS, type Manual } from '../content/manuals.ts';
 import type { AnyNode } from '../content/nodes.ts';
 import { rarity } from '../content/rarity.ts';
@@ -31,6 +40,7 @@ import {
   BLOOM_RING,
   fan,
   JEWEL,
+  LEVEL,
   LABEL_W,
   nameBox,
   NODE_SIZE,
@@ -434,6 +444,130 @@ function RealmLadder({ here, onGo }: { here: number; onGo: (tier: number) => voi
 }
 
 /**
+ * Everything drawn in the world: the bands, the edges, the nodes and their labels, the jewels and
+ * a bloom. Memoized, so a drag or a zoom, which only moves the world's transform, never redraws it.
+ */
+const FanWorld = memo(function FanWorld({
+  c,
+  tree,
+  f,
+  here,
+  own,
+  grafts,
+  open,
+  fresh,
+  tips,
+  onOpen,
+  onCloseBloom,
+  onFocusNode,
+}: {
+  c: Cultivator;
+  tree: Tree;
+  f: Fan;
+  here: number;
+  own: boolean;
+  grafts: readonly Manual[];
+  open: string | null;
+  fresh: ReadonlySet<string>;
+  tips: TipControl;
+  onOpen: (id: string, j: Jewel) => void;
+  onCloseBloom: () => void;
+  onFocusNode: (p: Point) => void;
+}) {
+  const manualsIn = (tier: number) => grafts.filter((m) => m.tier === tier).length;
+  const opened = open ? grafts.find((m) => m.id === open) : undefined;
+  return (
+    <>
+      <div className="fan-bg">
+        <svg className="fan-lines is-world" width={f.width} height={f.height} aria-hidden="true">
+          {f.bands.map((b) => (
+            <g key={b.tier} className={b.tier > here ? 'is-sealed' : undefined}>
+              <path
+                className="fan-band-edge"
+                d={bandArc(b.outer, Math.min(LEVEL, b.span + 4), f.hub)}
+              />
+              {Array.from({ length: b.rows }, (_, k) => (
+                <path
+                  key={k}
+                  className="fan-crown-row"
+                  d={bandArc(b.rim + k * ROW, Math.min(LEVEL, b.span + 2), f.hub)}
+                />
+              ))}
+              {!b.charted && (
+                <circle className="fan-capstone-place" cx={b.capstone.x} cy={b.capstone.y} r={20} />
+              )}
+            </g>
+          ))}
+          {own && <EdgePaths c={c} edges={f.edges} />}
+        </svg>
+        {f.bands.map((b) => {
+          const box = nameBox(b);
+          return (
+            <span
+              key={b.tier}
+              className={`fan-band-name${b.nameInward ? ' is-inward' : ''}${b.tier > here ? ' is-sealed' : ''}${b.tier === here ? ' is-here' : ''}`}
+              style={{ left: box.x, top: box.y, width: box.w, fontSize: b.nameSize }}
+            >
+              {bandName(b, manualsIn(b.tier))}
+              <span className="fan-band-status">{bandStatus(c, tree, b, own, here)}</span>
+            </span>
+          );
+        })}
+        {own &&
+          [...f.nodes.values()].map((p) => (
+            <NodeLabel
+              key={p.node.id}
+              c={c}
+              n={p.node}
+              cls={`is-${p.beside}`}
+              style={labelStyle(p)}
+            />
+          ))}
+      </div>
+      {own &&
+        [...f.nodes.values()].map((p) => (
+          <NodeShape
+            key={p.node.id}
+            c={c}
+            n={p.node}
+            at={p}
+            size={NODE_SIZE[p.node.kind]}
+            medallion={p.node.kind === 'starter' || p.node.kind === 'capstone'}
+            tips={tips}
+            onFocusNode={onFocusNode}
+          />
+        ))}
+      {grafts.map((m) => {
+        const j = f.jewels.get(m.id)!;
+        return (
+          <JewelButton
+            key={m.id}
+            c={c}
+            m={m}
+            j={j}
+            sealed={m.tier > here}
+            open={open === m.id}
+            fresh={fresh.has(m.id)}
+            onOpen={(id) => onOpen(id, j)}
+            tips={tips}
+          />
+        );
+      })}
+      {opened && (
+        <BloomDisc
+          c={c}
+          m={opened}
+          j={f.jewels.get(opened.id)!}
+          sealed={opened.tier > here}
+          tips={tips}
+          onClose={onCloseBloom}
+        />
+      )}
+    </>
+  );
+});
+
+/**
  * The canvas for one tree. Remount it (a `key`) to open on another tree or another jewel: it opens
  * on `focus`'s jewel, bloomed, when given; on the first graft when the tree's own nodes are shut;
  * else on the band you cultivate in.
@@ -441,7 +575,7 @@ function RealmLadder({ here, onGo }: { here: number; onGo: (tier: number) => voi
 export function TreeFan({
   c,
   tree,
-  grafts,
+  grafts: given,
   focus,
   own,
   fresh,
@@ -457,19 +591,62 @@ export function TreeFan({
   fresh: ReadonlySet<string>;
 }) {
   // The grafts change only when a manual is gained or lost, so the layout keys on their ids.
-  const graftKey = grafts.map((m) => m.id).join(',');
+  const graftKey = given.map((m) => m.id).join(',');
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const f = useMemo(() => fan(tree, grafts), [tree, graftKey]);
+  const grafts = useMemo(() => given, [graftKey]);
+  const f = useMemo(() => fan(tree, grafts), [tree, grafts]);
   const world = useMemo(() => ({ w: f.width, h: f.height }), [f]);
-  const byId = useMemo(() => new Map(grafts.map((m) => [m.id, m])), [grafts]);
   const here = hereTier(c, tree);
   const focused = focus ? f.jewels.get(focus) : undefined;
   const first = !own && grafts[0] ? f.jewels.get(grafts[0].id) : undefined;
   const home = (s: Size) =>
     focused ? jewelView(focused, s) : first ? jewelView(first, s) : bandView(f, here, s);
-  const { box, view, screen, handlers, zoomBy, show } = usePanZoom(world, home, RANGE);
+  const { box, view, screen, handlers, zoomBy, show } = usePanZoom(world, home, {
+    range: RANGE,
+    floor: true,
+  });
   const [open, setOpen] = useState<string | null>(focused ? focus : null);
   const tip = useNodeTip<Hover>();
+
+  // The handlers the world holds keep one identity, reading the latest view and bloom from refs.
+  const showRef = useRef(show);
+  const openRef = useRef(open);
+  useLayoutEffect(() => {
+    showRef.current = show;
+    openRef.current = open;
+  });
+  const pinnedId = tip.pinned?.id ?? null;
+  const { enter, leave, pin, clear } = tip;
+  const tips = useMemo<TipControl>(
+    () => ({ enter, leave, pin, pinned: pinnedId }),
+    [enter, leave, pin, pinnedId],
+  );
+  const onOpen = useCallback(
+    (id: string, j: Jewel) => {
+      clear();
+      const opening = openRef.current !== id;
+      setOpen(opening ? id : null);
+      // Opened from far out, the view comes in to read the bloom.
+      if (opening) showRef.current((s, v) => (v && v.k >= 0.9 ? v : jewelView(j, s)));
+    },
+    [clear],
+  );
+  const onCloseBloom = useCallback(() => {
+    setOpen(null);
+    clear();
+  }, [clear]);
+  const keepInView = useCallback(
+    (p: Point) =>
+      showRef.current((s, v) => {
+        if (!v) return viewAt(1, p, { x: s.w / 2, y: s.h / 3 });
+        const sx = p.x * v.k + v.x;
+        const sy = p.y * v.k + v.y;
+        return sx < 40 || sx > s.w - 40 || sy < 40 || sy > s.h - 40
+          ? viewAt(v.k, p, { x: s.w / 2, y: s.h / 3 })
+          : v;
+      }),
+    [],
+  );
 
   // The tree on the canvas is the tab selected, so it is seen; so is a manual opened.
   const see = useGame((s) => s.see);
@@ -480,27 +657,11 @@ export function TreeFan({
     if (open) see('manual', [open]);
   }, [see, open]);
 
-  const tips: TipControl = {
-    enter: tip.enter,
-    leave: tip.leave,
-    pin: tip.pin,
-    pinned: tip.pinned?.id ?? null,
-  };
   const goBand = (tier: number) => {
     setOpen(null);
-    tip.clear();
+    clear();
     show((s) => bandView(f, tier, s));
   };
-  const keepInView = (p: Point) =>
-    show((s, v) => {
-      if (!v) return home(s);
-      const sx = p.x * v.k + v.x;
-      const sy = p.y * v.k + v.y;
-      return sx < 40 || sx > s.w - 40 || sy < 40 || sy > s.h - 40
-        ? viewAt(v.k, p, { x: s.w / 2, y: s.h / 3 })
-        : v;
-    });
-  const manualsIn = (tier: number) => grafts.filter((m) => m.tier === tier).length;
 
   // The card, in screen pixels beside what it tells of, so it reads at any zoom.
   let card: { words: TipWords; node?: AnyNode; at: Point; half: number } | null = null;
@@ -508,7 +669,7 @@ export function TreeFan({
   if (shown && view) {
     const toScreen = (p: Point) => ({ x: p.x * view.k + view.x, y: p.y * view.k + view.y });
     if (shown.kind === 'jewel') {
-      const m = byId.get(shown.id);
+      const m = grafts.find((x) => x.id === shown.id);
       const j = f.jewels.get(shown.id);
       if (m && j) {
         card = {
@@ -537,7 +698,7 @@ export function TreeFan({
       className="tree-canvas-wrap"
       onKeyDown={(e) => {
         if (e.key !== 'Escape') return;
-        if (tip.pinned) tip.clear();
+        if (tip.pinned) clear();
         else if (open) setOpen(null);
         else return;
         e.stopPropagation();
@@ -555,7 +716,7 @@ export function TreeFan({
         onClick={(e) => {
           // A tap on empty canvas closes the card and the bloom.
           if (e.target === e.currentTarget || (e.target as Element).closest('.fan-bg')) {
-            tip.clear();
+            clear();
             setOpen(null);
           }
         }}
@@ -569,101 +730,20 @@ export function TreeFan({
               transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})`,
             }}
           >
-            <div className="fan-bg">
-              <svg className="fan-lines" width={f.width} height={f.height} aria-hidden="true">
-                {f.bands.map((b) => (
-                  <g key={b.tier} className={b.tier > here ? 'is-sealed' : undefined}>
-                    <path className="fan-band-edge" d={bandArc(b.outer, b.span + 4, f.hub)} />
-                    {Array.from({ length: b.rows }, (_, k) => (
-                      <path
-                        key={k}
-                        className="fan-crown-row"
-                        d={bandArc(b.rim + k * ROW, b.span + 2, f.hub)}
-                      />
-                    ))}
-                    {!b.charted && (
-                      <circle
-                        className="fan-capstone-place"
-                        cx={b.capstone.x}
-                        cy={b.capstone.y}
-                        r={20}
-                      />
-                    )}
-                  </g>
-                ))}
-                {own && <EdgePaths c={c} edges={f.edges} />}
-              </svg>
-              {f.bands.map((b) => {
-                const box = nameBox(b);
-                return (
-                  <span
-                    key={b.tier}
-                    className={`fan-band-name${b.tier > here ? ' is-sealed' : ''}${b.tier === here ? ' is-here' : ''}`}
-                    style={{ left: box.x, top: box.y, width: box.w, fontSize: b.nameSize }}
-                  >
-                    {bandName(b, manualsIn(b.tier))}
-                    <span className="fan-band-status">{bandStatus(c, tree, b, own, here)}</span>
-                  </span>
-                );
-              })}
-              {own &&
-                [...f.nodes.values()].map((p) => (
-                  <NodeLabel
-                    key={p.node.id}
-                    c={c}
-                    n={p.node}
-                    cls={`is-${p.beside}`}
-                    style={labelStyle(p)}
-                  />
-                ))}
-            </div>
-            {own &&
-              [...f.nodes.values()].map((p) => (
-                <NodeShape
-                  key={p.node.id}
-                  c={c}
-                  n={p.node}
-                  at={p}
-                  size={NODE_SIZE[p.node.kind]}
-                  medallion={p.node.kind === 'starter' || p.node.kind === 'capstone'}
-                  tips={tips}
-                  onFocusNode={keepInView}
-                />
-              ))}
-            {grafts.map((m) => {
-              const j = f.jewels.get(m.id)!;
-              return (
-                <JewelButton
-                  key={m.id}
-                  c={c}
-                  m={m}
-                  j={j}
-                  sealed={m.tier > here}
-                  open={open === m.id}
-                  fresh={fresh.has(m.id)}
-                  onOpen={(id) => {
-                    tip.clear();
-                    setOpen(open === id ? null : id);
-                    // Opened from far out, the view comes in to read the bloom.
-                    if (open !== id) show((s, v) => (v && v.k >= 0.9 ? v : jewelView(j, s)));
-                  }}
-                  tips={tips}
-                />
-              );
-            })}
-            {open && byId.has(open) && (
-              <BloomDisc
-                c={c}
-                m={byId.get(open)!}
-                j={f.jewels.get(open)!}
-                sealed={byId.get(open)!.tier > here}
-                tips={tips}
-                onClose={() => {
-                  setOpen(null);
-                  tip.clear();
-                }}
-              />
-            )}
+            <FanWorld
+              c={c}
+              tree={tree}
+              f={f}
+              here={here}
+              own={own}
+              grafts={grafts}
+              open={open}
+              fresh={fresh}
+              tips={tips}
+              onOpen={onOpen}
+              onCloseBloom={onCloseBloom}
+              onFocusNode={keepInView}
+            />
           </div>
         )}
       </div>
@@ -674,7 +754,7 @@ export function TreeFan({
           node={card.node}
           style={placeTip(card.at, card.half, screen)}
           pinned={!!tip.pinned && tip.pinned.id === shown?.id}
-          onClose={tip.clear}
+          onClose={clear}
           handlers={tip.cardHandlers}
         />
       )}

@@ -68,13 +68,21 @@ export function pinch(
   return { k, x: m.x - w.x * k, y: m.y - w.y * k };
 }
 
-/** Keeps at least `margin` pixels of the world on screen, so it can never be lost off an edge. */
-export function clampView(v: View, world: Size, screen: Size, margin = 80): View {
+/**
+ * Keeps at least `margin` pixels of the world on screen, so it can never be lost off an edge.
+ * With `floor`, the world's bottom edge never rises above the screen's: nothing lies below it.
+ */
+export function clampView(v: View, world: Size, screen: Size, margin = 80, floor = false): View {
   const clamp = (t: number, size: number, room: number) => {
     const m = Math.min(margin, size * v.k, room);
     return Math.min(room - m, Math.max(m - size * v.k, t));
   };
-  return { ...v, x: clamp(v.x, world.w, screen.w), y: clamp(v.y, world.h, screen.h) };
+  const y = clamp(v.y, world.h, screen.h);
+  return {
+    ...v,
+    x: clamp(v.x, world.w, screen.w),
+    y: floor ? Math.max(y, screen.h - world.h * v.k) : y,
+  };
 }
 
 /** A view at zoom k with a world point at a screen point. */

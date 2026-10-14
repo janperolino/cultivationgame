@@ -31,8 +31,12 @@ export function polar(angle: number, r: number): Point {
   return { x: r * Math.sin(rad(angle)), y: -r * Math.cos(rad(angle)) };
 }
 
-/** Half a band's opening in degrees: 75 at Qi Condensation, 6.25 more a tier, so 250° at the top. */
-export const halfOpening = (tier: number) => 75 + (tier - 1) * 6.25;
+/**
+ * Half a band's opening in degrees: 75 at Qi Condensation, 6.25 more a tier, until the bands are
+ * a half circle from Nascent Soul on (Jan's call after P2.7): nothing ever sits below the root.
+ */
+export const LEVEL = 90;
+export const halfOpening = (tier: number) => Math.min(LEVEL, 75 + (tier - 1) * 6.25);
 /** Px for each step of a node's `at` down: the far bands are wide enough to pack tighter. */
 export const depthStep = (tier: number) => (tier === 1 ? 40 : tier === 2 ? 34 : 24);
 /** The tier's widest node sits at this share of its half-opening. */
@@ -53,7 +57,7 @@ export const PITCH = 42;
 export const ROW = 46;
 export const PEAK_GAP = 3;
 export const CROWN_PAST = 16;
-export const crownSpan = (tier: number) => halfOpening(tier) + CROWN_PAST;
+export const crownSpan = (tier: number) => Math.min(LEVEL, halfOpening(tier) + CROWN_PAST);
 
 /** A node's drawn size in px, by kind: the starter and capstone are medallions. */
 export const NODE_SIZE: Record<TreeNode['kind'], number> = {
@@ -196,6 +200,8 @@ export interface Band {
   /** The band's name at its left end, right-aligned to this point, and its size. */
   name: Point;
   nameSize: number;
+  /** A band opening past level reads its name inward from its point, not out past the band. */
+  nameInward: boolean;
   /** Where the capstone stands, or would stand. */
   capstone: Point;
 }
@@ -325,6 +331,8 @@ function placeLabels(ps: Omit<FanNode, 'label'>[]): void {
 }
 
 const PAD = 60;
+/** The lowest a band's name sits, in degrees from straight up: just above level. */
+const NAME_LOWEST = 84;
 
 /** The tree as an opening fan, all nine bands drawn, with its grafts' jewels in their crowns. */
 export function fan(t: Tree, grafts: readonly Manual[] = []): Fan {
@@ -351,8 +359,10 @@ export function fan(t: Tree, grafts: readonly Manual[] = []): Fan {
       half,
       span: crownSpan(tier),
       charted: t.nodes.some((n) => n.tier === tier),
-      name: polar(-half - 9, ring + (tier > 2 ? 110 : depthStep(tier) * 5)),
+      // At the band's left end, but never below the hub's level, where the world stops.
+      name: polar(-Math.min(half + 9, NAME_LOWEST), ring + (tier > 2 ? 110 : depthStep(tier) * 5)),
       nameSize: bandNameSize(ring),
+      nameInward: half + 9 > NAME_LOWEST,
       capstone: polar(0, ring + TIER_DEPTH * depthStep(tier)),
     });
   }
@@ -372,13 +382,14 @@ export function fan(t: Tree, grafts: readonly Manual[] = []): Fan {
   }
   placeLabels([...placed.values()]);
 
-  // The world's bounds: every band's outer arc, every label and name, every jewel.
+  // The world's bounds: every band's outer arc down to the hub's level, every label and name,
+  // every jewel. The far bands open past level, but below the hub they hold nothing yet, so the
+  // world stops there and their arcs are cut at its edge: a world half the size paints far less.
   const boxes: Rect[] = [];
   for (const b of bands) {
     const r = b.outer;
-    const sideways = b.span + 4 >= 90 ? r : r * Math.sin(rad(b.span + 4));
-    const low = Math.max(0, -r * Math.cos(rad(b.span + 4)));
-    boxes.push({ x: -sideways, y: -r, w: sideways * 2, h: r + low });
+    const sideways = b.span + 4 >= LEVEL ? r : r * Math.sin(rad(b.span + 4));
+    boxes.push({ x: -sideways, y: -r, w: sideways * 2, h: r });
     boxes.push(nameBox(b));
   }
   for (const p of placed.values()) boxes.push(labelBox(p.node, p, p.size, p.beside));
@@ -428,10 +439,11 @@ export function fan(t: Tree, grafts: readonly Manual[] = []): Fan {
 /** About how wide a band's name runs, in px: "Tier 3 · Core Formation 结丹 · 12 manuals". */
 export const nameWidth = (size: number) => size * 26;
 
-/** A band's name box, right-aligned to its point, a line of its size and a caption under it. */
-export function nameBox(b: Pick<Band, 'name' | 'nameSize'>): Rect {
+/** A band's name box, right-aligned to its point (left-aligned when it reads inward), a line of its size and a caption under it. */
+export function nameBox(b: Pick<Band, 'name' | 'nameSize' | 'nameInward'>): Rect {
   const w = nameWidth(b.nameSize);
-  return { x: b.name.x - w, y: b.name.y - b.nameSize, w, h: b.nameSize * 3 };
+  const x = b.nameInward ? b.name.x : b.name.x - w;
+  return { x, y: b.name.y - b.nameSize, w, h: b.nameSize * 3 };
 }
 
 /** Where a band's realm is looked at: its peak, between its first ring and its outer edge. */
