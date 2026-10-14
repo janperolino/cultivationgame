@@ -126,6 +126,7 @@ function artStep(c: Cultivator): FirstStep | null {
 }
 
 const ART_KIND = { body: 'tempering art', soul: 'nourishing art' } as const;
+const ART_GROWING = { body: 'tempering your body', soul: 'nourishing your soul' } as const;
 
 /** A first's text, hint or coming-back line, with its slots filled from the step. */
 export function firstText(template: string, step: FirstStep): string {
@@ -138,6 +139,7 @@ export function firstText(template: string, step: FirstStep): string {
   if (step.first === 'technique' && hasTechnique(id)) words.technique = technique(id).name;
   if (step.ladder) {
     words.artKind = ART_KIND[step.ladder];
+    words.growing = ART_GROWING[step.ladder];
     words.ladder = step.ladder;
     words.hour = HOUR_KINDS[step.ladder].name;
   }

@@ -3,7 +3,7 @@
 // after that the defaults help. The lineage keeps which firsts are done (core/firsts.ts). The texts
 // here are drafts for Jan's review: each hint, shown once a life, and the coming-back card's
 // line for a first still waiting. {copy}, {method}, {technique}, {art} (its name), {artKind}
-// ("tempering art"), {ladder} ("body") and {hour} ("Body") fill in.
+// ("tempering art"), {growing} ("tempering your body"), {ladder} ("body") and {hour} ("Body") fill in.
 
 /** The first times, in the order their hints come. */
 export const FIRST_IDS = [
@@ -75,7 +75,7 @@ export const HINTS: Readonly<Record<HintId, string>> = {
     'Your qi climbs in the qi hours of your wheel. Give your day more qi hours to cultivate for longer.',
   technique: '{technique} waits to be drilled. Practice this puts it in a slot.',
   'technique-hour': '{technique} has its slot but no hour. Turn an hour to Practice on the wheel.',
-  art: 'The {art} is yours, but your {ladder} does not climb with it yet. Choose it under Climb with.',
+  art: 'You have learned your first {artKind}, the {art}. Take it up under Climb with to start {growing}.',
   'art-hour': 'Your {art} waits for an hour. Turn an hour of the wheel to {hour}.',
   stones: 'Spirit stones sit in your pouch. Burn them in qi hours and the day gathers more.',
   node: 'Insight enough for a node. Buy one on the Trees, where your understanding takes shape.',
