@@ -33,9 +33,9 @@ const treeIds = new Set(TREES.map((t) => t.id));
 
 /** The cultivator knowing a technique, practiced to a mastery level. */
 function practiced(c: Cultivator, id: string, level: number): Cultivator {
-  const known = learnTechnique({ ...c, practicing: null }, id);
+  const known = learnTechnique({ ...c, practicing: [] }, id);
   const days = masteryNeed(technique(id), level);
-  return addPractice({ ...known, practicing: id }, days).cultivator;
+  return addPractice({ ...known, practicing: [id] }, { [id]: days }).cultivator;
 }
 
 describe('hosts', () => {
@@ -163,9 +163,10 @@ describe('Arts', () => {
     expect(activeNodes(c).map((n) => n.id)).not.toContain(id);
     const hp = stats(c).hp;
     // Practice to one day short of Comprehension: still asleep.
-    c = addPractice(c, masteryNeed(technique('sinkhole-stone-fist'), 1) - 1).cultivator;
+    const fist = (d: number) => ({ 'sinkhole-stone-fist': d });
+    c = addPractice(c, fist(masteryNeed(technique('sinkhole-stone-fist'), 1) - 1)).cultivator;
     expect(nodeSealed(c, anyNode(id))).toBe(true);
-    c = addPractice(c, 1).cultivator;
+    c = addPractice(c, fist(1)).cultivator;
     expect(mastery(c, 'sinkhole-stone-fist').level).toBe(1);
     expect(nodeSealed(c, anyNode(id))).toBe(false);
     expect(stats(c).hp).toBeCloseTo(hp + 0.03);
@@ -185,7 +186,7 @@ describe('Arts', () => {
     // Rampart Palm's own power sleeps until the palm reaches Comprehension.
     c = learnNode(c, 'art-shoulder-behind-palm').cultivator;
     expect(fromCultivator(c, 'a').techniques['rampart-palm']!.power).toBe(1);
-    c = addPractice({ ...c, practicing: 'rampart-palm' }, 4).cultivator;
+    c = addPractice({ ...c, practicing: ['rampart-palm'] }, { 'rampart-palm': 4 }).cultivator;
     expect(fromCultivator(c, 'a').techniques['rampart-palm']!.power).toBeCloseTo(1.08);
     // A Hit passive multiplies that technique's Accuracy alone.
     let s = rich(practiced(base.player, 'bone-splitting-cleave', 1));

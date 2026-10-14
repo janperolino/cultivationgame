@@ -1,9 +1,14 @@
-// P2.5d: what a moment's gains toast, and how a burst folds.
+// P2.5d: what a moment's gains toast, and how a burst folds. P2.5f: a technique's toast lands on
+// Cultivate › Practice, and one reaching Origin raises its own.
 import { describe, expect, it } from 'vitest';
 import { gainCopy, gainManual, gainTechnique, checkScreens } from '../core/life.ts';
 import { gains, seeAll } from '../core/seen.ts';
 import { newLife, unlock } from '../core/state.ts';
-import { toastsFor } from './toasts.ts';
+import { masteryNeed } from '../core/techniques.ts';
+import { technique } from '../content/techniques.ts';
+import { cultivateDays } from '../core/cultivation.ts';
+import { withPlayer } from '../core/state.ts';
+import { leftSlots, toastsFor } from './toasts.ts';
 
 const fresh = () => unlock(seeAll(newLife({ name: 'Han Li', seed: 'toasts' })), 'trees');
 
@@ -17,9 +22,41 @@ describe('toasts', () => {
       'New tree · Earth Dao',
       'New tree · Fist Dao',
     ]);
-    // Techniques and Combat open too, folded into the third.
+    // Cultivate › Practice and Combat open too, folded into the third.
     expect(t.map((x) => x.more)).toEqual([0, 0, 2]);
-    expect(t[0]!.to).toEqual({ screen: 'techniques', select: 'sinkhole-stone-fist' });
+    expect(t[0]!.to).toEqual({
+      screen: 'cultivate',
+      tab: 'practice',
+      select: 'sinkhole-stone-fist',
+    });
+    const all = toastsFor(gains(before, after), after).length;
+    expect(all).toBe(3);
+  });
+
+  it('name the Practice tab where the Techniques screen opened', () => {
+    const before = fresh();
+    const after = checkScreens(gainTechnique(before, 'sinkhole-stone-fist'));
+    const screen = gains(before, after).find((g) => g.kind === 'screen' && g.id === 'techniques');
+    expect(screen).toBeDefined();
+    const [t] = toastsFor([screen!], after);
+    expect(`${t!.label} · ${t!.name}`).toBe('New tab · Cultivate › Practice');
+    expect(t!.to).toEqual({ screen: 'cultivate', tab: 'practice' });
+  });
+
+  it('notice a technique that reached Origin and left its slot, not one stopped by hand', () => {
+    const t = technique('rampart-palm');
+    const s = gainTechnique(fresh(), t.id);
+    const near = withPlayer(s, {
+      ...s.player,
+      techniques: { [t.id]: { practice: masteryNeed(t, 4) - 0.01 } },
+    });
+    const day = near.calendar.day;
+    const done = cultivateDays(near.player, 1, { day, rng: { next: () => 0.5 } as never });
+    const after = withPlayer(near, done.cultivator);
+    expect(after.player.practicing).toEqual([]);
+    expect(leftSlots(near, after)).toEqual([t.id]);
+    const stopped = withPlayer(s, { ...s.player, practicing: [] });
+    expect(leftSlots(s, stopped)).toEqual([]);
   });
 
   it('link a formula to its graft, and its tree to the Trees screen', () => {

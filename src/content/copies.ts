@@ -168,3 +168,14 @@ export function readLump(id: string): number {
   const it = copyItem(id);
   return READ_LUMP[it.rarity] * READ_TIER_SCALE ** (it.tier - 1);
 }
+
+/**
+ * Suits you (design § Cultivation, Reading): how well a copy fits you multiplies its reading speed,
+ * built from the rules that already say a thing fits. A copy of an element your root holds reads
+ * ×1.25, each tier you hold in a technique's first Dao ×1.1, a technique with a kin at
+ * Comprehension by kinship's quarter and a method by its fit; the product is capped at ×1.5, so no
+ * fit makes a scripture an afternoon's read. Starting values for the sims.
+ */
+export const SUITS_ELEMENT = 1.25;
+export const SUITS_DAO_TIER = 1.1;
+export const SUITS_CAP = 1.5;

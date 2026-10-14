@@ -10,7 +10,6 @@ import { CultivateScreen } from './CultivateScreen.tsx';
 import { PeopleScreen } from './PeopleScreen.tsx';
 import { GlassBackground } from './GlassBackground.tsx';
 import { SettingsScreen } from './SettingsScreen.tsx';
-import { TechniquesScreen } from './TechniquesScreen.tsx';
 import { Toasts } from './Toasts.tsx';
 import { TreesScreen } from './TreesScreen.tsx';
 import { capitalize } from './format.ts';
@@ -229,7 +228,6 @@ export function App() {
           {phase !== 'loading' && current.id === 'abode' && <AbodeScreen />}
           {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
           {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
-          {phase !== 'loading' && current.id === 'techniques' && <TechniquesScreen />}
           {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
           {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}
           {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}

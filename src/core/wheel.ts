@@ -19,6 +19,7 @@ import {
 import { realmIndex } from '../content/realms.ts';
 import { hasRoutine, routine, type Routine } from '../content/routines.ts';
 import type { Note } from './cultivation.ts';
+import { ownedCopies, readingCopy } from './reading.ts';
 import { hasFlag, type Cultivator } from './state.ts';
 import { knownTechniques, techniqueSealed } from './techniques.ts';
 
@@ -193,11 +194,17 @@ export function flipHour(
   return { wheel: next, hour };
 }
 
+/** Whether the qi ladder has reached the layer that opens study hours by itself. */
+function studyLayerReached(c: Cultivator): boolean {
+  return realmIndex(c.qi.realm) > 0 || c.qi.stage >= STUDY_LAYER;
+}
+
 /** Whether the cultivator can now do a kind of work, opened or not. */
 function kindPossible(c: Cultivator, kind: HourKind): boolean {
   switch (kind) {
     case 'study':
-      return realmIndex(c.qi.realm) > 0 || c.qi.stage >= STUDY_LAYER;
+      // Study opens at layer 2, or with the first copy owned if that comes first.
+      return studyLayerReached(c) || ownedCopies(c).length > 0;
     case 'practice':
       return knownTechniques(c).some((t) => !techniqueSealed(c, t));
     case 'body':
@@ -209,16 +216,58 @@ function kindPossible(c: Cultivator, kind: HourKind): boolean {
 }
 
 /**
+ * The wheel the default rule flips on: the one put aside while a first copy holds every waking
+ * hour, so a kind opened meanwhile gets its hour back with the rest, else the wheel itself.
+ */
+function flipTarget(c: Cultivator): readonly HourKind[] {
+  return c.reading.wheel ?? c.wheel;
+}
+
+/**
+ * Study opened by a first copy before layer 2 (design § Cultivation, the day is twelve
+ * double-hours): every waking hour turns to study until that copy is read, and the wheel as it
+ * was is put aside.
+ */
+function studyTakesAll(c: Cultivator): Cultivator {
+  const wheel = c.wheel.map((k, i) => (hourLocked(c, i) ? k : 'study'));
+  return { ...c, wheel, reading: { ...c.reading, wheel: [...c.wheel] } };
+}
+
+/**
+ * Once nothing is left to read, the wheel a first copy put aside comes back with one study hour
+ * kept, by the default rule.
+ */
+function studyGivesBack(c: Cultivator): { cultivator: Cultivator; notes: Note[] } {
+  if (!c.reading.wheel || readingCopy(c) !== null) return { cultivator: c, notes: [] };
+  const { wheel, hour } = flipHour(c.reading.wheel, c.rootElements, 'study');
+  return {
+    cultivator: { ...c, wheel, reading: { ...c.reading, wheel: null } },
+    notes: [{ type: 'study-back', data: { hour } }],
+  };
+}
+
+/**
  * The default rule (design § Cultivation): when a new kind of hour becomes possible, one qi hour
- * flips to it with a chronicle line. At Foundation, sleep is freed and its hours turn to qi.
+ * flips to it with a chronicle line; study opened by a first copy before layer 2 takes every waking
+ * hour until it is read instead, then gives the wheel back. At Foundation, sleep is freed and its
+ * hours turn to qi.
  */
 export function openHours(c: Cultivator): { cultivator: Cultivator; notes: Note[] } {
-  let next = c;
-  const notes: Note[] = [];
+  const back = studyGivesBack(c);
+  let next = back.cultivator;
+  const notes: Note[] = [...back.notes];
   for (const o of HOUR_OPENINGS) {
     if (hasFlag(next, openFlag(o.kind)) || !kindPossible(next, o.kind)) continue;
-    const { wheel, hour } = flipHour(next.wheel, next.rootElements, o.kind);
-    next = { ...next, wheel, flags: [...next.flags, openFlag(o.kind)] };
+    const flags = [...next.flags, openFlag(o.kind)];
+    if (o.kind === 'study' && !studyLayerReached(next) && readingCopy(next) !== null) {
+      next = { ...studyTakesAll(next), flags };
+      notes.push({ type: 'study-all', data: { copy: readingCopy(next) } });
+      continue;
+    }
+    const { wheel, hour } = flipHour(flipTarget(next), next.rootElements, o.kind);
+    next = next.reading.wheel
+      ? { ...next, flags, reading: { ...next.reading, wheel } }
+      : { ...next, wheel, flags };
     notes.push({ type: 'hours', data: { kind: o.kind, hour } });
   }
   if (!sleepLocked(next) && !hasFlag(next, 'sleep-freed')) {

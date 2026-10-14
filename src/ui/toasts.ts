@@ -2,7 +2,8 @@
 // over names itself in the corner with a link to where it lives. The store raises them from what
 // a moment gained (core/seen.ts, `gains`), never from time away, which the coming-back card tells.
 // At most three show at once: a burst of more folds into the third ("+4 more"), and a later
-// moment's wait their turn.
+// moment's wait their turn. A moment that isn't something held (a technique reaching Origin and
+// leaving its slot) raises its own toast by hand (`raiseToast`).
 import { create } from 'zustand';
 import { copyManual, hasCopy } from '../content/copies.ts';
 import { itemGlyph, item, hasItem } from '../content/items.ts';
@@ -13,7 +14,8 @@ import { hasTechnique, technique } from '../content/techniques.ts';
 import { tree } from '../content/trees/index.ts';
 import type { Gain } from '../core/seen.ts';
 import type { GameState } from '../core/state.ts';
-import type { TreesTarget } from './nav.ts';
+import { mastery, MAX_MASTERY } from '../core/techniques.ts';
+import type { CultivateTab, TreesTarget } from './nav.ts';
 import { screens, type ScreenId } from './screens.ts';
 
 /** At most this many toasts at once. */
@@ -21,10 +23,11 @@ export const TOASTS_MAX = 3;
 /** How long a toast stays, unless hovered or focused. */
 export const TOAST_MS = 6000;
 
-/** Where a toast's link goes: a screen, the Trees screen's target, a thing to select there. */
+/** Where a toast's link goes: a screen, the Trees screen's target, Cultivate's tab, a thing to select there. */
 export interface ToastLink {
   screen: ScreenId;
   trees?: TreesTarget;
+  tab?: CultivateTab;
   select?: string;
 }
 
@@ -61,7 +64,7 @@ function toastFor(g: Gain, s: GameState): ToastView | null {
         label: 'New technique',
         name: t.name,
         rarity: t.rarity,
-        to: link({ screen: 'techniques', select: g.id }),
+        to: link({ screen: 'cultivate', tab: 'practice', select: g.id }),
       };
     }
     case 'method': {
@@ -122,6 +125,15 @@ function toastFor(g: Gain, s: GameState): ToastView | null {
       };
     }
     case 'screen': {
+      // The Techniques screen is Cultivate's Practice tab now; its unlock keeps the old id.
+      if (g.id === 'techniques') {
+        return {
+          glyph: '练',
+          label: 'New tab',
+          name: 'Cultivate › Practice',
+          to: link({ screen: 'cultivate', tab: 'practice' }),
+        };
+      }
       const screen = screens.find((x) => x.id === g.id);
       if (!screen) return null;
       return {
@@ -165,6 +177,31 @@ export function raiseToasts(gained: readonly Gain[], s: GameState): void {
   const fresh = toastsFor(gained, s).map((t) => ({ ...t, key: nextKey++ }));
   if (fresh.length === 0) return;
   useToasts.setState((st) => settle({ toasts: st.toasts, waiting: [...st.waiting, ...fresh] }));
+}
+
+/** Kinds of toast raised by hand, for a moment that isn't something held. */
+export const HAND_TOASTS = {
+  /** A technique reached Origin and left its practice slot. */
+  slot: { glyph: '练', label: 'Practice' },
+} as const;
+export type HandToast = keyof typeof HAND_TOASTS;
+
+/** Shows a toast for a moment that isn't a gain: its kind's glyph and label, the text, a link. */
+export function raiseToast(kind: HandToast, text: string, link: ToastLink | null = null): void {
+  const t: Toast = { key: nextKey++, ...HAND_TOASTS[kind], name: text, more: 0, to: link };
+  useToasts.setState((st) => settle({ toasts: st.toasts, waiting: [...st.waiting, t] }));
+}
+
+/** The techniques that reached Origin and left their slot between two states. */
+export function leftSlots(before: GameState, after: GameState): string[] {
+  const now = new Set(after.player.practicing);
+  return before.player.practicing.filter(
+    (id) =>
+      !now.has(id) &&
+      hasTechnique(id) &&
+      id in after.player.techniques &&
+      mastery(after.player, id).level >= MAX_MASTERY,
+  );
 }
 
 export function dismissToast(key: number): void {

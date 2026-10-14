@@ -84,7 +84,7 @@ import { offerings, type Offerings } from './offerings.ts';
 import type { Rng } from './rng.ts';
 import { addItem, hasFlag, itemCount, type Cultivator, type Ladder } from './state.ts';
 import { aptitude, aptitudeMultiplier, stats } from './stats.ts';
-import { addPractice, canPractice, kinshipBonus } from './techniques.ts';
+import { addPractice, practiceShares, practicingNow } from './techniques.ts';
 import { addToxicity, decayToxicity } from './toxicity.ts';
 import { effectiveWheel, followedRoutine, openHours } from './wheel.ts';
 
@@ -220,8 +220,11 @@ interface DayBase {
   body: number;
   soul: number;
   study: number;
+  /** Study days a full day of study gives the copy being read: Aptitude, as comprehension. */
+  studyDays: number;
   /** The insight every waking hour leaves, whatever it went to, and a second while attended. */
   trickle: number;
+  /** Practice days a full day gives, before the slots split it and kinship lifts each share. */
   practice: number;
 }
 
@@ -245,7 +248,6 @@ function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[], seat: S
     (1 + gain) *
     setbackMultiplier(c[which], day) *
     fed(which);
-  const practicing = c.practicing && canPractice(c, c.practicing) ? c.practicing : null;
   return {
     qi:
       QI_PER_DAY *
@@ -256,6 +258,7 @@ function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[], seat: S
     body: art('body', BODY_PER_DAY, m.bodyGain),
     soul: art('soul', SOUL_PER_DAY, m.soulGain),
     study: INSIGHT_PER_STUDY_DAY * insight,
+    studyDays: apt,
     // Circulating Thought grows the attended trickle with focus, half again at full.
     trickle:
       (INSIGHT_TRICKLE +
@@ -263,7 +266,7 @@ function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[], seat: S
           ? INSIGHT_ATTENDED * (1 + m.circulatingThought * Math.min(1, seat.focus ?? 0))
           : 0)) *
       insight,
-    practice: practicing ? apt * (1 + m.practiceGain) * (1 + kinshipBonus(c, practicing)) : 0,
+    practice: practicingNow(c).length > 0 ? apt * (1 + m.practiceGain) : 0,
   };
 }
 
@@ -294,9 +297,12 @@ export interface HourYield {
   soul: number;
   /** Study's stream, and the trickle every waking hour leaves. */
   insight: number;
-  /** Practice days for the technique being practiced. */
+  /** Practice days, before the slots split them and kinship lifts each share. */
   practice: number;
-  /** Study days for the copy being read (core/reading.ts): a study hour's share of a day. */
+  /**
+   * Study days for the copy being read (core/reading.ts): a study hour's share of a day × Aptitude,
+   * before how well the copy suits you.
+   */
   study: number;
 }
 
@@ -334,7 +340,7 @@ export function hourYields(
     else if (kind === 'soul') y.soul = base.soul * share;
     else if (kind === 'study') {
       y.insight += base.study * share;
-      y.study = share;
+      y.study = base.studyDays * share;
     } else y.practice = base.practice * share;
     return y;
   });
@@ -351,9 +357,14 @@ export interface DayRates {
   body: number;
   soul: number;
   insight: number;
-  /** Practice days a full day gives the technique being practiced; 0 when none can be. */
+  /** Practice days a full day gives, before the slots split it; 0 when no slot can practice. */
   practice: number;
-  /** Study days a full day gives the copy being read, whether or not one is. */
+  /** Practice days a full day gives each technique practiced: its share, lifted by its kinship. */
+  practiceEach: Record<string, number>;
+  /**
+   * Study days a full day gives the copy being read, whether or not one is, before how well it
+   * suits you (core/reading.ts, suitsYou).
+   */
   study: number;
   /**
    * Practice days a full day gives each ladder's method: a twelfth for every hour cultivated with
@@ -412,6 +423,7 @@ export function dayRates(
     count,
     routine: followedRoutine(c),
     ...sum,
+    practiceEach: practiceShares(c, sum.practice),
     methodPractice,
     unfed: [...unfed],
     stoneCap,
@@ -916,15 +928,18 @@ export interface CultivateResult {
 }
 
 /**
- * Practice for a stretch: the technique being practiced and each ladder's method climb in
+ * Practice for a stretch: each technique practiced and each ladder's method climb in
  * mastery, and every level reached releases a burst of insight, with a chronicle line.
  */
 function practiceDays(c: Cultivator, rates: DayRates, days: number) {
   const notes: Note[] = [];
-  const practiced = addPractice(c, rates.practice * days);
+  const each = Object.fromEntries(
+    Object.entries(rates.practiceEach).map(([id, perDay]) => [id, perDay * days]),
+  );
+  const practiced = addPractice(c, each);
   let next = practiced.cultivator;
-  for (const level of practiced.levels) {
-    const t = technique(c.practicing!);
+  for (const { technique: id, level } of practiced.levels) {
+    const t = technique(id);
     next = gainInsight(next, masteryBurst(next, TECHNIQUE_MASTERY, t.tier, level));
     notes.push({ type: 'mastery', data: { technique: t.id, level } });
   }

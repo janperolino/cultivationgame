@@ -1,8 +1,10 @@
-// Reading (design § Cultivation, Reading): a copy is read on the study hours, one at a time, over
-// study days by its rarity and tier, while those hours still give their insight. Finishing makes
-// what it teaches yours as any road does, gives a lump of insight and writes a chronicle line; the
-// copy stays, so knowing a thing and owning copies of it are counted apart. An unread copy grafts
-// nowhere: it stands on the bookcase alone until read.
+// Reading (design § Cultivation, Reading): a copy is read on the study hours, one at a time, from a
+// queue, over study days by its rarity and tier, while those hours still give their insight. The
+// first readable copy in the queue is read; one that can't be read yet stays, skipped, saying what
+// it waits on; a new copy joins an empty queue by itself. Reading runs at the study days × Aptitude
+// × how well the copy suits you. Finishing makes what it teaches yours as any road does, gives a
+// lump of insight and writes a chronicle line; the copy stays, so knowing a thing and owning copies
+// of it are counted apart. An unread copy grafts nowhere: it stands on the bookcase alone until read.
 import {
   copyManual,
   copyOf,
@@ -11,14 +13,24 @@ import {
   hasCopy,
   readDays,
   readLump,
+  SUITS_CAP,
+  SUITS_DAO_TIER,
+  SUITS_ELEMENT,
 } from '../content/copies.ts';
+import { ELEMENTS, ELEMENT_INFO, type Element } from '../content/elements.ts';
 import type { Manual } from '../content/manuals.ts';
+import { KINSHIP_BONUS } from '../content/mastery.ts';
+import { manual } from '../content/manuals.ts';
+import { method } from '../content/methods.ts';
+import { technique } from '../content/techniques.ts';
+import { tree } from '../content/trees/index.ts';
+import { daoTiers } from './combat/combatant.ts';
 import type { Note } from './cultivation.ts';
 import { gainInsight, insightMultiplier } from './insight.ts';
 import { gainManual, heldManuals, holdsManual } from './manuals.ts';
-import { knowsMethod, learnMethod } from './methods.ts';
+import { knowsMethod, learnMethod, methodFitSpeed } from './methods.ts';
 import type { Cultivator } from './state.ts';
-import { canLearnTechnique, knowsTechnique, learnTechnique } from './techniques.ts';
+import { canLearnTechnique, knowsTechnique, learnTechnique, techniqueKin } from './techniques.ts';
 
 /** How many copies of it the cultivator owns. */
 export function copyCount(c: Cultivator, id: string): number {
@@ -89,36 +101,154 @@ export function readCheck(c: Cultivator, id: string): ReadCheck {
   return { ok: true };
 }
 
-/** Sets the study hours on a copy; the one read before keeps its progress. */
-export function startReading(
-  c: Cultivator,
-  id: string,
-): { cultivator: Cultivator; check: ReadCheck } {
-  const check = readCheck(c, id);
-  if (!check.ok) return { cultivator: c, check };
-  return { cultivator: { ...c, reading: { ...c.reading, copy: id } }, check };
-}
-
-/** Turns the study hours back to study alone; the copy keeps its progress. */
-export function stopReading(c: Cultivator): Cultivator {
-  return c.reading.copy === null ? c : { ...c, reading: { ...c.reading, copy: null } };
-}
-
 /** Study days put into the copy so far. */
 export function readProgress(c: Cultivator, id: string): number {
   return c.reading.days[id] ?? 0;
 }
 
-/** The copy the study hours read now: the one set, while it can still be read. */
+// ---------------------------------------------------------------- the queue
+
+/** The reading queue, in order, without copies no longer written or owned. */
+export function readingQueue(c: Cultivator): string[] {
+  return c.reading.queue.filter((id) => hasCopy(id) && copyCount(c, id) > 0);
+}
+
+/** The copy the study hours read now: the first in the queue that can be read. */
 export function readingCopy(c: Cultivator): string | null {
-  const id = c.reading.copy;
-  return id && readCheck(c, id).ok ? id : null;
+  return readingQueue(c).find((id) => readCheck(c, id).ok) ?? null;
+}
+
+/** What a queued copy waits on, or null when it can be read. */
+export function waitsOn(c: Cultivator, id: string): string | null {
+  const check = readCheck(c, id);
+  return check.ok ? null : check.reason;
+}
+
+/** Copies owned and unread that aren't in the queue: the shelf's, each with Queue. */
+export function unqueuedCopies(c: Cultivator): string[] {
+  const queued = new Set(c.reading.queue);
+  return ownedCopies(c).filter((id) => !queued.has(id) && copyUnread(c, id));
 }
 
 /**
+ * Whether a copy can join the queue: owned, unread and not queued yet. A next chapter can wait in
+ * the queue for the chapter before it; the queue says so.
+ */
+export function queueCheck(c: Cultivator, id: string): ReadCheck {
+  if (!hasCopy(id)) return { ok: false, reason: 'There is no such copy.' };
+  if (copyCount(c, id) <= 0) return { ok: false, reason: 'You own no copy of it.' };
+  if (knowsCopy(c, id)) return { ok: false, reason: `You know ${copyTitle(id)} already.` };
+  if (c.reading.queue.includes(id)) return { ok: false, reason: 'It is in the queue already.' };
+  return { ok: true };
+}
+
+/** Adds a copy to the end of the queue. */
+export function queueCopy(c: Cultivator, id: string): { cultivator: Cultivator; check: ReadCheck } {
+  const check = queueCheck(c, id);
+  if (!check.ok) return { cultivator: c, check };
+  return {
+    cultivator: { ...c, reading: { ...c.reading, queue: [...c.reading.queue, id] } },
+    check,
+  };
+}
+
+/** Takes a copy out of the queue; it keeps its progress. */
+export function unqueueCopy(c: Cultivator, id: string): Cultivator {
+  if (!c.reading.queue.includes(id)) return c;
+  return { ...c, reading: { ...c.reading, queue: c.reading.queue.filter((x) => x !== id) } };
+}
+
+/** Moves a queued copy one place up (−1) or down (+1). */
+export function moveInQueue(c: Cultivator, id: string, by: -1 | 1): Cultivator {
+  const queue = [...c.reading.queue];
+  const at = queue.indexOf(id);
+  const to = at + by;
+  if (at < 0 || to < 0 || to >= queue.length) return c;
+  [queue[at], queue[to]] = [queue[to]!, queue[at]!];
+  return { ...c, reading: { ...c.reading, queue } };
+}
+
+/**
+ * A copy just gained joins an empty queue by itself, so nothing waits unread for want of a click;
+ * the note is the chronicle's "begins reading". A queue already holding something is left alone.
+ */
+export function queueIfIdle(c: Cultivator, id: string): { cultivator: Cultivator; notes: Note[] } {
+  if (readingQueue(c).length > 0 || !copyUnread(c, id)) return { cultivator: c, notes: [] };
+  const r = queueCopy(c, id);
+  if (!r.check.ok) return { cultivator: c, notes: [] };
+  const notes: Note[] = readCheck(r.cultivator, id).ok
+    ? [{ type: 'reading', data: { copy: id } }]
+    : [];
+  return { cultivator: r.cultivator, notes };
+}
+
+// ---------------------------------------------------------------- suits you
+
+export interface SuitsYou {
+  /** The multiplier on reading speed, capped. */
+  total: number;
+  /** Each reason with its factor, for the "?". */
+  reasons: { label: string; factor: number }[];
+  /** True when the reasons multiply past the cap. */
+  capped: boolean;
+}
+
+/** The element a copy carries: a method's, a technique's damage type, a formula grafted on an element Dao. */
+function copyElement(id: string): Element | null {
+  const of = copyOf(id);
+  if (!of) return null;
+  const isElement = (x: string | null | undefined): x is Element =>
+    !!x && (ELEMENTS as readonly string[]).includes(x);
+  if (of.kind === 'method') return method(of.id).element ?? null;
+  if (of.kind === 'technique') {
+    const d = technique(of.id).damage;
+    return isElement(d) ? d : null;
+  }
+  const host = manual(of.id).host;
+  return isElement(host) ? host : null;
+}
+
+/**
+ * How well a copy suits you (design § Cultivation, Reading): one multiplier on its reading speed
+ * with its reasons, from a method's fit to your root, a technique's kin at Comprehension, an
+ * element your root holds, and each tier you hold in a technique's first Dao; capped at ×1.5.
+ */
+export function suitsYou(c: Cultivator, id: string): SuitsYou {
+  const of = copyOf(id);
+  const reasons: SuitsYou['reasons'] = [];
+  if (of?.kind === 'method') {
+    const fit = methodFitSpeed(c, method(of.id));
+    if (fit !== 1) reasons.push({ label: 'its fit to your root', factor: fit });
+  }
+  if (of?.kind === 'technique') {
+    const kin = techniqueKin(c, of.id);
+    if (kin.length > 0) {
+      reasons.push({ label: `kin to ${kin[0]!.name}`, factor: 1 + KINSHIP_BONUS });
+    }
+    const dao = technique(of.id).daos[0];
+    const tiers = dao ? (daoTiers(c)[dao] ?? 0) : 0;
+    if (dao && tiers > 0) {
+      const name = tree(dao).name;
+      reasons.push({
+        label: `${tiers === 1 ? 'a tier' : `${tiers} tiers`} of the ${name} Dao`,
+        factor: SUITS_DAO_TIER ** tiers,
+      });
+    }
+  }
+  const el = copyElement(id);
+  if (el && c.rootElements.includes(el)) {
+    reasons.push({ label: `${ELEMENT_INFO[el].name}, in your root`, factor: SUITS_ELEMENT });
+  }
+  const product = reasons.reduce((acc, r) => acc * r.factor, 1);
+  return { total: Math.min(SUITS_CAP, product), reasons, capped: product > SUITS_CAP };
+}
+
+// ---------------------------------------------------------------- reading
+
+/**
  * Finishes a copy: what it teaches becomes yours (a manual held, a method known, a technique at
- * Glimpse or where the chapter rule starts it), its lump of insight lands, and the study hours
- * turn back to study alone.
+ * Glimpse or where the chapter rule starts it), its lump of insight lands, it leaves the queue, and
+ * the next readable copy begins.
  */
 export function finishReading(
   c: Cultivator,
@@ -136,22 +266,30 @@ export function finishReading(
   delete days[id];
   const read = {
     ...learned,
-    reading: { copy: c.reading.copy === id ? null : c.reading.copy, days },
+    reading: { ...c.reading, queue: c.reading.queue.filter((x) => x !== id), days },
   };
-  return {
-    cultivator: gainInsight(read, readLump(id) * insightMultiplier(c)),
-    notes: [{ type: of.kind, data: { [of.kind]: of.id, how: 'finishes reading' } }],
-  };
+  const next = readingCopy(read);
+  const notes: Note[] = [{ type: of.kind, data: { [of.kind]: of.id, how: 'finishes reading' } }];
+  if (next) notes.push({ type: 'reading', data: { copy: next } });
+  return { cultivator: gainInsight(read, readLump(id) * insightMultiplier(c)), notes };
 }
 
-/** Study days into the copy being read, finishing it when they reach its reading time. */
+/** Study days a day of study puts into a copy: the day's (Aptitude counted) × how well it suits you. */
+export function readRate(c: Cultivator, id: string, studyPerDay: number): number {
+  return studyPerDay * suitsYou(c, id).total;
+}
+
+/**
+ * Study days into the copy being read, × how well it suits you, finishing it when they reach its
+ * reading time; study days past the end of a read are lost.
+ */
 export function addReading(
   c: Cultivator,
   studyDays: number,
 ): { cultivator: Cultivator; notes: Note[] } {
   const id = readingCopy(c);
   if (!id || studyDays <= 0) return { cultivator: c, notes: [] };
-  const done = readProgress(c, id) + studyDays;
+  const done = readProgress(c, id) + readRate(c, id, studyDays);
   if (done < readDays(id) - 1e-9) {
     return {
       cultivator: { ...c, reading: { ...c.reading, days: { ...c.reading.days, [id]: done } } },

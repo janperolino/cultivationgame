@@ -284,8 +284,10 @@ describe('the first hour’s cards as data', () => {
         expect(k, pathKey(o.id, choice)).toBeDefined();
         const effects = k!.choices[0]!.pass.effects;
         expect(effects).toContainEqual({ do: 'item', id: 'foundation-pill', n: 1 });
-        const m = effects.find((e) => e.do === 'method');
-        expect(m && m.do === 'method' && method(m.id).chapter).toBe(2);
+        // A copy of the chapter, read before it can be taken up.
+        const m = effects.find((e) => e.do === 'copy');
+        const id = m && m.do === 'copy' ? m.id.replace(/^method:/, '') : '';
+        expect(method(id).chapter).toBe(2);
       }
     }
   });

@@ -2,13 +2,14 @@
 import { z } from 'zod';
 import { LADDERS } from '../../content/cultivation.ts';
 import { FRESH_WHEEL, SLEEP_HOURS, type HourKind } from '../../content/hours.ts';
-import { METHOD_MASTERY } from '../../content/mastery.ts';
+import { METHOD_MASTERY, TECHNIQUE_MASTERY } from '../../content/mastery.ts';
+import { hasTechnique, technique as techniqueOf } from '../../content/techniques.ts';
 import { FIT_SPEED, hasMethod, method, methodFit } from '../../content/methods.ts';
 import { REALM_IDS, type RealmId } from '../../content/realms.ts';
 import { defaultElements, root, ROOT_IDS, type RootId } from '../../content/roots.ts';
 import { TREES } from '../../content/trees/index.ts';
 import { climbedStages, stageGrowth } from '../growth.ts';
-import { practiceNeed } from '../mastery.ts';
+import { MAX_MASTERY, practiceNeed } from '../mastery.ts';
 import {
   DAYS_PER_YEAR,
   GameStateSchema,
@@ -27,7 +28,7 @@ import { seeAll } from '../seen.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), old to
@@ -559,6 +560,30 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const seen = { ...((s.seen ?? {}) as Raw), copy: {} };
     const player = { ...p, copies: {}, reading: { copy: null, days: {} } };
     return { ...old, version: 15, state: { ...s, player, seen } };
+  },
+
+  // v15, P2.5e: one technique practiced and one copy read. v16 practices a list, as many as the
+  // practice slots (core/techniques.ts), and reads from a queue (core/reading.ts): an old life keeps
+  // its technique in the first slot (unless it is already at Origin, which no slot holds) and its
+  // copy at the head of the queue, and no first copy has put its wheel aside.
+  15: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const reading = (p.reading ?? {}) as Raw;
+    const copy = typeof reading.copy === 'string' ? reading.copy : null;
+    const known = (p.techniques ?? {}) as Record<string, { practice?: number }>;
+    const id = typeof p.practicing === 'string' ? p.practicing : null;
+    const atOrigin =
+      id !== null &&
+      hasTechnique(id) &&
+      (known[id]?.practice ?? 0) >=
+        practiceNeed(TECHNIQUE_MASTERY, techniqueOf(id).tier, MAX_MASTERY);
+    const player = {
+      ...p,
+      practicing: id && !atOrigin ? [id] : [],
+      reading: { queue: copy ? [copy] : [], days: reading.days ?? {}, wheel: null },
+    };
+    return { ...old, version: 16, state: { ...s, player } };
   },
 };
 

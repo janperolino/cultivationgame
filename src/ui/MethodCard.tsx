@@ -6,7 +6,8 @@ import { useState } from 'react';
 import { ELEMENT_INFO, phaseOf } from '../content/elements.ts';
 import { BRANCHES } from '../content/hours.ts';
 import { MASTERY, METHOD_MASTERY } from '../content/mastery.ts';
-import { nextChapter, type Method, type Upkeep } from '../content/methods.ts';
+import { copyOf, copyTitle } from '../content/copies.ts';
+import { method as methodOf, nextChapter, type Method, type Upkeep } from '../content/methods.ts';
 import { rarity, type Rarity } from '../content/rarity.ts';
 import type { LadderId } from '../core/cultivation.ts';
 import { ladderGrowth, realmGrowthTotal } from '../core/growth.ts';
@@ -21,8 +22,10 @@ import {
   methodMastery,
   methodSpeed,
 } from '../core/methods.ts';
-import type { GameState } from '../core/state.ts';
+import { copyUnread, ownedCopies, readingCopy } from '../core/reading.ts';
+import type { Cultivator, GameState } from '../core/state.ts';
 import { formatEffect, formatNumber, formatPercent, LADDER_LABELS, tierName } from './format.ts';
+import { goToTab } from './nav.ts';
 import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
 
@@ -211,6 +214,25 @@ function ActiveMethod({ game, which, m }: { game: GameState; which: LadderId; m:
   );
 }
 
+/** An unread copy of a method for this ladder, the one being read first. */
+function waitingCopy(c: Cultivator, which: LadderId): string | null {
+  const copies = ownedCopies(c).filter((id) => {
+    const of = copyOf(id);
+    return of?.kind === 'method' && methodOf(of.id).ladder === which && copyUnread(c, id);
+  });
+  return copies.find((id) => id === readingCopy(c)) ?? copies[0] ?? null;
+}
+
+/** Where a ladder's unread art stands: being read, queued, or on the shelf. */
+function waitingWords(c: Cultivator, id: string): string {
+  const title = copyTitle(id);
+  const name = title.charAt(0).toUpperCase() + title.slice(1);
+  if (readingCopy(c) === id) return `${name} is being read now.`;
+  const at = c.reading.queue.indexOf(id);
+  if (at >= 0) return `${name} waits in your reading queue, place ${at + 1}.`;
+  return `${name} stands unread on your shelf.`;
+}
+
 /** One ladder's row: its active method, or why it has none, and the switch. */
 export function MethodRow({ game, which }: { game: GameState; which: LadderId }) {
   const setMethod = useGame((s) => s.setMethod);
@@ -219,6 +241,7 @@ export function MethodRow({ game, which }: { game: GameState; which: LadderId })
   const m = ladderMethod(c, which);
   const known = knownMethods(c, which);
   const others = known.filter((k) => k.id !== m?.id);
+  const copy = m ? null : waitingCopy(c, which);
 
   return (
     <li className="method">
@@ -226,6 +249,13 @@ export function MethodRow({ game, which }: { game: GameState; which: LadderId })
       <div>
         {m ? (
           <ActiveMethod game={game} which={which} m={m} />
+        ) : copy ? (
+          <span className="muted">
+            No {ART_NAMES[which]} yet. {waitingWords(c, copy)}{' '}
+            <button type="button" className="link-button" onClick={() => goToTab('study')}>
+              See the queue
+            </button>
+          </span>
         ) : (
           <span className="muted">
             No {ART_NAMES[which]}
@@ -235,6 +265,7 @@ export function MethodRow({ game, which }: { game: GameState; which: LadderId })
                 : `: the ${which} grows only from the world until you find one.`)}
           </span>
         )}
+        {m && others.length === 0 && <span className="caption method-only">Only one known</span>}
         {others.length > 0 && (
           <label className="method-switch">
             <span className="caption">Climb with</span>

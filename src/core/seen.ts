@@ -127,20 +127,32 @@ export function seeAll(s: GameState): GameState {
 
 // ---------------------------------------------------------------- the menu's dots
 
-/** The kinds of new thing each screen holds, for its dot. */
+/** The kinds of new thing each screen holds, for its dot; techniques live on Cultivate › Practice. */
 export const SCREEN_KINDS: Readonly<Record<string, readonly SeenKind[]>> = {
-  techniques: ['technique'],
   bag: ['item'],
   trees: ['tree', 'manual', 'copy'],
-  cultivate: ['method'],
+  cultivate: ['method', 'technique'],
 };
+
+/**
+ * Tabs a screen holds that once were screens of their own, by the unlock and screen id they keep:
+ * Cultivate › Practice is the old Techniques screen (P2.5f).
+ */
+export const SCREEN_TABS: Readonly<Record<string, readonly string[]>> = {
+  cultivate: ['techniques'],
+};
+
+/** Whether a screen or a tab kept under its old screen id is open and not yet looked at. */
+function screenNew(s: GameState, screen: string): boolean {
+  return s.unlocks.includes(screen) && isNew(s, 'screen', screen);
+}
 
 /** Kinds nothing on their screen glows for: opening the screen sees them. */
 const SEEN_ON_OPEN: readonly SeenKind[] = ['method'];
 
 /** Whether the screen's menu item wears a dot: it is new itself, or holds a thing not yet noticed. */
 export function screenDot(s: GameState, screen: string): boolean {
-  if (s.unlocks.includes(screen) && isNew(s, 'screen', screen)) return true;
+  if (screenNew(s, screen) || (SCREEN_TABS[screen] ?? []).some((t) => screenNew(s, t))) return true;
   return (SCREEN_KINDS[screen] ?? []).some((k) =>
     heldIds(s, k).some((id) => look(s, k, id) === undefined),
   );

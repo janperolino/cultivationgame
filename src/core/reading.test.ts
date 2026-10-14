@@ -30,7 +30,6 @@ import {
   readCheck,
   readingCopy,
   readProgress,
-  startReading,
 } from './reading.ts';
 import { loadSave, makeSave, SAVE_VERSION } from './save/format.ts';
 import { gains, heldIds, isNew, seeAll } from './seen.ts';
@@ -50,7 +49,14 @@ function studious(c: Cultivator): Cultivator {
   const wheel = [...c.wheel];
   wheel[2] = 'study';
   wheel[4] = 'study';
-  return { ...c, wheel };
+  return { ...c, wheel, flags: [...c.flags, 'hours-study'] };
+}
+
+/** Puts a copy at the head of the queue, as reading it next would; unchanged when it can't be read. */
+function startReading(c: Cultivator, id: string): { cultivator: Cultivator } {
+  if (!readCheck(c, id).ok) return { cultivator: c };
+  const queue = [id, ...c.reading.queue.filter((x) => x !== id)];
+  return { cultivator: { ...c, reading: { ...c.reading, queue } } };
 }
 
 /** Cultivates a day at a time, the way the loop runs, with the notes it wrote. */
@@ -120,7 +126,7 @@ describe('reading time and the lump', () => {
     // The copy stays, its band off; the study hours turn back to study alone.
     expect(copyCount(after, BREATH)).toBe(1);
     expect(copyUnread(after, BREATH)).toBe(false);
-    expect(after.reading.copy).toBeNull();
+    expect(after.reading.queue).toEqual([]);
     expect(after.reading.days[BREATH]).toBeUndefined();
     expect(done.notes).toContainEqual({
       type: 'manual',
@@ -248,12 +254,36 @@ describe('the cards that hand over copies', () => {
     expect(copyCount(went, LANTERN)).toBe(1);
   });
 
-  it('keeps every origin’s method, first technique and Foundation chapter taught', () => {
-    const taught = CARDS.filter((k) => k.deck === 'first-hour' && k.id !== 'lamp-keeper');
-    for (const k of taught) {
-      const effects = k.choices.flatMap((ch) => [...ch.pass.effects, ...(ch.fail?.effects ?? [])]);
+  it('teaches the deserter’s method and the first techniques, and hands the rest over as copies', () => {
+    const effectsOf = (k: (typeof CARDS)[number]) =>
+      k.choices.flatMap((ch) => [...ch.pass.effects, ...(ch.fail?.effects ?? [])]);
+    const firstHour = CARDS.filter((k) => k.deck === 'first-hour');
+    const taught = firstHour.filter(
+      (k) => k.id === 'night-bridge-offer' || k.id.startsWith('first-technique-'),
+    );
+    expect(taught.length).toBe(7);
+    for (const k of taught)
+      expect(
+        effectsOf(k).some((e) => e.do === 'copy'),
+        k.id,
+      ).toBe(false);
+    // Jan's call (P2.5f): the errands' tempering art, the bounty office's torn manual and the six
+    // Foundation chapters are things handed over, so copies, never a method taught.
+    const handed = firstHour.filter(
+      (k) =>
+        k.id.startsWith('errand-') ||
+        k.id === 'bounty-office-job' ||
+        (k.id.startsWith('foundation-') && k.id !== 'foundation-again'),
+    );
+    expect(handed.length).toBe(13);
+    for (const k of handed) {
+      const effects = effectsOf(k);
       expect(
         effects.some((e) => e.do === 'copy'),
+        k.id,
+      ).toBe(true);
+      expect(
+        effects.some((e) => e.do === 'method'),
         k.id,
       ).toBe(false);
     }
@@ -289,14 +319,14 @@ describe('the life around a copy', () => {
     expect(isNew(seeAll(again), 'copy', TIDE)).toBe(false);
   });
 
-  it('reads through the life, refusing what the checks refuse', () => {
-    const s = gainCopy(base, COLLAPSE);
-    const r = readCopy(s, COLLAPSE);
+  it('queues through the life, refusing what is known', () => {
+    const taught = gainTechnique(base, 'rampart-palm');
+    const s = gainCopy(taught, RAMPART);
+    const r = readCopy(s, RAMPART);
     expect(r.check.ok).toBe(false);
     expect(r.state).toBe(s);
-    const ok = readCopy(gainCopy(base, TIDE), TIDE);
-    expect(ok.check.ok).toBe(true);
-    expect(ok.state.player.reading.copy).toBe(TIDE);
+    // A new copy joins the empty queue by itself.
+    expect(gainCopy(base, TIDE).player.reading.queue).toEqual([TIDE]);
   });
 });
 
@@ -316,7 +346,7 @@ describe('save v15', () => {
     expect(loaded.version).toBe(SAVE_VERSION);
     const p = loaded.state.player;
     expect(p.copies).toEqual({});
-    expect(p.reading).toEqual({ copy: null, days: {} });
+    expect(p.reading).toEqual({ queue: [], days: {}, wheel: null });
     expect(loaded.state.seen.copy).toEqual({});
     expect(bookcaseManuals(p).map((m) => m.id)).toEqual(heldManuals(p).map((m) => m.id));
     expect(p.techniques['rampart-palm']).toBeDefined();
@@ -327,6 +357,6 @@ describe('save v15', () => {
     c = addReading(startReading(c, TIDE).cultivator, 2.5).cultivator;
     const loaded = loadSave(makeSave(withPlayer(base, c), 1)).state.player;
     expect(loaded.copies[copyId('manual', 'tide-counting')]).toBe(1);
-    expect(loaded.reading).toEqual({ copy: TIDE, days: { [TIDE]: 2.5 } });
+    expect(loaded.reading).toEqual({ queue: [TIDE], days: { [TIDE]: 2.5 }, wheel: null });
   });
 });

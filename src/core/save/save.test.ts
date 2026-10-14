@@ -91,7 +91,7 @@ describe('save format', () => {
       'chronicle',
     ]);
     expect(p.techniques).toEqual({ 'rampart-palm': { practice: 0 } });
-    expect(p.practicing).toBe('rampart-palm');
+    expect(p.practicing).toEqual(['rampart-palm']);
     expect(p.nodes).toEqual([]);
     expect(s.seed).toBe(v2.state.glass.seed);
     expect(s.rng).toEqual({ breakthrough: v2.state.rng });

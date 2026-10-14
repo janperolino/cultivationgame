@@ -126,6 +126,15 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
     return `${o.text} The hour of ${b.hanzi} (${b.name}) turns from qi to ${HOUR_KINDS[s(d.kind) as HourKind].name.toLowerCase()}.`;
   },
   'sleep-freed': () => SLEEP_FREED_TEXT,
+  // A first copy before layer 2 takes the whole wheel until it is read (core/wheel.ts).
+  'study-all': (d) =>
+    `A copy wants reading before it is any use: every waking hour turns to study until ${copyTitle(s(d.copy))} is read.`,
+  'study-back': (d) => {
+    if (d.hour === null || d.hour === undefined)
+      return 'The reading done, the wheel goes back to what it was.';
+    const b = BRANCHES[n(d.hour)]!;
+    return `The reading done, the wheel goes back to what it was, with the hour of ${b.hanzi} (${b.name}) kept for study.`;
+  },
   gate: (d) => {
     const r = realm(s(d.realm) as RealmId);
     return d.gate
@@ -150,6 +159,7 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   // A copy is a thing owned, not yet known: reading it writes the manual's, method's or
   // technique's own line, "finishes reading".
   copy: (d, w) => `${w.name} ${s(d.how)} a copy of ${copyTitle(s(d.copy))}.`,
+  reading: (d, w) => `${w.name} begins reading ${copyTitle(s(d.copy))}.`,
   technique: (d, w) => `${w.name} ${s(d.how)} ${technique(s(d.technique)).name}.`,
   method: (d, w) => `${w.name} ${s(d.how)} the ${method(s(d.method)).name}.`,
   'method-switch': (d, w) =>

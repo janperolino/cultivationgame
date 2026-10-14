@@ -755,7 +755,7 @@ export const SOUL_TREE = defineTree({
       at: [5.8, 9.1],
       cost: 650,
       requires: ['soul-second-voice'],
-      effects: [{ stat: 'attention', value: 1 }],
+      effects: [{ stat: 'splitAttention', value: 1 }],
       text: 'One more production queue running, one more puppet walking, one more sword in the air, and none of them neglected.',
     },
 

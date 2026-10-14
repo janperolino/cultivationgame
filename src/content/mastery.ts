@@ -54,3 +54,9 @@ export const KINSHIP_LEVEL = 1;
 
 /** A technique's next chapter needs the one before at this level (Comprehension). */
 export const CHAPTER_NEEDS_LEVEL = 1;
+
+/**
+ * Practice slots (design § Cultivation, Practice slots): one, and one more for each point of split
+ * attention, up to this many in v1. A day's practice days split evenly among them.
+ */
+export const PRACTICE_SLOTS_MAX = 3;

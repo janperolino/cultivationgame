@@ -173,17 +173,20 @@ export const CultivatorSchema = z.object({
    */
   copies: z.record(z.string(), z.number().int().min(0)),
   /**
-   * The copy the study hours read, or null, and the study days put into each copy begun; progress
-   * stays with a copy when reading turns to another.
+   * The reading queue (core/reading.ts): copy ids in order, the first readable one read on the
+   * study hours; the study days put into each copy begun, which stay with it if it leaves the
+   * head; and the wheel as it was before a first copy turned every waking hour to study, which
+   * comes back once that copy is read.
    */
   reading: z.object({
-    copy: z.string().nullable(),
+    queue: z.array(z.string()),
     days: z.record(z.string(), z.number().min(0)),
+    wheel: Wheel.nullable(),
   }),
   /** Techniques known, with the practice days put into each. */
   techniques: z.record(z.string(), z.object({ practice: z.number().min(0) })),
-  /** The technique practice days go to, or null. */
-  practicing: z.string().nullable(),
+  /** The techniques in the practice slots, in slot order (core/techniques.ts, practiceSlots). */
+  practicing: z.array(z.string()),
   /** Insight drawn from each contemplation source (content/contemplation.ts), before Aptitude. */
   contemplation: z.record(z.string(), z.number().min(0)),
   /** Everyone this cultivator has met, by person id (content/people.ts). */
@@ -370,9 +373,9 @@ export function newCultivator(
     nodes: [],
     manuals: [],
     copies: {},
-    reading: { copy: null, days: {} },
+    reading: { queue: [], days: {}, wheel: null },
     techniques: Object.fromEntries(techniques.map((t) => [t, { practice: 0 }])),
-    practicing: techniques[0] ?? null,
+    practicing: techniques.slice(0, 1),
     contemplation: {},
     people: startingPeople(
       opts.origin ?? null,

@@ -29,7 +29,9 @@ import {
   bookcaseManuals,
   copyCount,
   manualUnread,
+  queueCheck,
   readingCopy,
+  readingQueue,
   readProgress,
 } from '../core/reading.ts';
 import type { Cultivator } from '../core/state.ts';
@@ -84,6 +86,31 @@ function Pips({ c, m, unread }: { c: Cultivator; m: Manual; unread: boolean }) {
     );
   }
   return m.nodes.map((n) => <span key={n.id} className={`spine-pip is-${nodeMark(c, n)}`} />);
+}
+
+/**
+ * A spine standing alone, out of the bookcase, for Cultivate › Study: the same binding, band and
+ * paper, not a button, since the row it sits in carries the controls.
+ */
+export function StillSpine({ c, m }: { c: Cultivator; m: Manual }) {
+  const unread = manualUnread(c, m);
+  return (
+    <span
+      className={`spine is-still is-${m.kind}${rarityRank(m.rarity) >= RARE ? ' is-rare' : ''}${unread ? ' is-unread' : ''}`}
+      style={{ ...rarityVar(m.rarity), width: spineWidth(m), height: spineHeight(m) }}
+      aria-hidden="true"
+    >
+      {m.kind === 'art' && (
+        <>
+          <span className="spine-rod is-top" />
+          <span className="spine-rod is-bottom" />
+        </>
+      )}
+      <span className="spine-band" />
+      <span className="spine-title">{m.hanzi}</span>
+      {unread && <PaperBand c={c} m={m} />}
+    </span>
+  );
 }
 
 /** The paper band round an unread copy, its reading filling it: "2.1/5", or 未读 before a day. */
@@ -175,30 +202,36 @@ function Spine({
 }
 
 /**
- * An unread copy's reading: what reading it would give and how far it has come, with Read (or
- * Stop, while the study hours read it) once the card is pinned, or why it can't be read yet.
+ * An unread copy's reading: what reading it would give and how far it has come, with Queue (Read
+ * now while the queue is empty) once the card is pinned, its place in the queue and a way out of
+ * it once queued, or why it can't be read yet.
  */
 function ReadBlock({ c, m, pinned }: { c: Cultivator; m: Manual; pinned: boolean }) {
   const readCopy = useGame((s) => s.readCopy);
-  const stopReading = useGame((s) => s.stopReading);
+  const unqueue = useGame((s) => s.unqueue);
   const ended = useGame((s) => !!s.game?.ended);
   const id = copyOfManual(m);
   const w = readWords(c, id);
   const now = readingCopy(c) === id;
+  const at = c.reading.queue.indexOf(id);
+  const empty = readingQueue(c).length === 0;
   return (
     <div className="bookcase-read">
       <span>{w.teaches}</span>
       <span className="caption">{w.time}</span>
       {w.refused && <span className="caption is-refused">{w.refused}</span>}
-      {pinned && !w.refused && (
+      {pinned && (at >= 0 || queueCheck(c, id).ok) && (
         <div className="actions">
-          {now ? (
-            <button type="button" className="button button-quiet" onClick={stopReading}>
-              Stop reading
-            </button>
+          {at >= 0 ? (
+            <>
+              {!now && <span className="caption">In the reading queue, place {at + 1}</span>}
+              <button type="button" className="button button-quiet" onClick={() => unqueue(id)}>
+                {now ? 'Stop reading' : 'Take it out'}
+              </button>
+            </>
           ) : (
             <button type="button" className="button" disabled={ended} onClick={() => readCopy(id)}>
-              Read
+              {empty ? 'Read now' : 'Queue'}
             </button>
           )}
         </div>

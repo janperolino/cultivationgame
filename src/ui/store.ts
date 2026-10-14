@@ -13,12 +13,14 @@ import {
   endLife,
   feedStones,
   learn,
+  moveRead,
   practice,
   readCopy,
-  stopRead,
+  stopPracticing,
   switchMethod,
   takeItem,
   takeOff,
+  unqueueRead,
   wearItem,
 } from '../core/life.ts';
 import type { EquipSlot } from '../content/items.ts';
@@ -34,7 +36,8 @@ import { followWheel, forgetSavedRoutine, saveRoutine, setHour } from '../core/w
 import { attemptOf, endScene, sceneDue, sceneRolled, startScene, useScene } from './scene.ts';
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
-import { clearToasts, raiseToasts } from './toasts.ts';
+import { technique } from '../content/techniques.ts';
+import { clearToasts, leftSlots, raiseToast, raiseToasts } from './toasts.ts';
 
 export const AUTOSAVE_MS = 30_000;
 /** A gap longer than this between ticks (a sleeping laptop, a frozen tab) counts as offline time. */
@@ -115,12 +118,16 @@ export interface GameStore {
   beginScene(ladder: LadderId, offerings?: readonly string[]): boolean;
   /** Learns a tree node with insight; returns why not, or null. */
   learnNode(id: string): string | null;
-  /** Points practice days at a technique, or at nothing. */
-  practice(id: string | null): void;
-  /** Sets the study hours on a copy (core/reading.ts); the reason when it can't be read. */
+  /** Puts a technique in the first free practice slot; the reason when it can't go. */
+  practice(id: string): string | null;
+  /** Takes a technique out of its practice slot. */
+  stopPractice(id: string): void;
+  /** Adds a copy to the end of the reading queue (core/reading.ts); the reason when it can't. */
   readCopy(id: string): string | null;
-  /** Turns the study hours back to study alone; the copy keeps its progress. */
-  stopReading(): void;
+  /** Takes a copy out of the reading queue; it keeps its progress. */
+  unqueue(id: string): void;
+  /** Moves a queued copy one place up (−1) or down (+1). */
+  moveQueued(id: string, by: -1 | 1): void;
   /** Wears an item from the Bag; returns why not, or null. */
   wear(id: string): string | null;
   /** Takes off what a gear square or treasure slot holds. */
@@ -589,8 +596,17 @@ export const useGame = create<GameStore>()((set, get) => {
 
     practice(id) {
       const { game } = get();
+      if (!game || !holdsLock) return 'This life is not open in this tab.';
+      const r = practice(game, id);
+      if (!r.check.ok) return r.check.reason;
+      set({ game: r.state });
+      return null;
+    },
+
+    stopPractice(id) {
+      const { game } = get();
       if (!game || !holdsLock) return;
-      set({ game: practice(game, id) });
+      set({ game: stopPracticing(game, id) });
     },
 
     readCopy(id) {
@@ -602,10 +618,16 @@ export const useGame = create<GameStore>()((set, get) => {
       return null;
     },
 
-    stopReading() {
+    unqueue(id) {
       const { game } = get();
       if (!game || !holdsLock) return;
-      set({ game: stopRead(game) });
+      set({ game: unqueueRead(game, id) });
+    },
+
+    moveQueued(id, by) {
+      const { game } = get();
+      if (!game || !holdsLock) return;
+      set({ game: moveRead(game, id, by) });
     },
 
     setMethod(ladder, id) {
@@ -793,6 +815,14 @@ useGame.subscribe((now, was) => {
   }
   if (quiet || now.game === was.game || !was.game) return;
   raiseToasts(gains(was.game, now.game), now.game);
+  // A technique reaching Origin leaves its slot, which stays empty until the player fills it.
+  for (const id of leftSlots(was.game, now.game)) {
+    raiseToast('slot', `${technique(id).name} reached Origin and left its slot`, {
+      screen: 'cultivate',
+      tab: 'practice',
+      select: id,
+    });
+  }
 });
 
 // A hot update would swap this store out from under the running game and its tab lock, so in

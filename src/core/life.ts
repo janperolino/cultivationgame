@@ -24,9 +24,11 @@ import { gainManual as holdManual, holdsManual } from './manuals.ts';
 import { knowsMethod, learnMethod, setActiveMethod, type MethodCheck } from './methods.ts';
 import {
   gainCopy as ownCopy,
+  moveInQueue,
   ownedCopies,
-  startReading,
-  stopReading,
+  queueCopy,
+  queueIfIdle,
+  unqueueCopy,
   type ReadCheck,
 } from './reading.ts';
 import {
@@ -42,7 +44,13 @@ import {
   type GameState,
 } from './state.ts';
 import { stats, talentAwake, talentsOf, wokeFlag } from './stats.ts';
-import { canLearnTechnique, learnTechnique, setPracticing } from './techniques.ts';
+import {
+  canLearnTechnique,
+  learnTechnique,
+  startPractice,
+  stopPractice,
+  type TechniqueCheck,
+} from './techniques.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
 import { learnRoutine } from './wheel.ts';
 
@@ -240,20 +248,27 @@ export function gainManual(s: GameState, id: string, how = 'comes by'): GameStat
  */
 export function gainCopy(s: GameState, id: string, how = 'comes by'): GameState {
   if (!hasCopy(id)) return s;
-  const next = addEvent(withPlayer(s, ownCopy(s.player, id)), 'copy', { copy: id, how });
-  return checkScreens(next);
+  const owned = addEvent(withPlayer(s, ownCopy(s.player, id)), 'copy', { copy: id, how });
+  // A new copy joins an empty queue by itself, and a first one opens study hours.
+  const queued = queueIfIdle(owned.player, id);
+  return settle(addNotes(withPlayer(owned, queued.cultivator), queued.notes));
 }
 
-/** The player sets the study hours on a copy; the reason when it can't be read. */
+/** The player adds a copy to the end of the reading queue; the reason when it can't join. */
 export function readCopy(s: GameState, id: string): { state: GameState; check: ReadCheck } {
   if (s.ended) return { state: s, check: { ok: false, reason: 'This life is over.' } };
-  const r = startReading(s.player, id);
-  return { state: r.check.ok ? withPlayer(s, r.cultivator) : s, check: r.check };
+  const r = queueCopy(s.player, id);
+  return { state: r.check.ok ? settle(withPlayer(s, r.cultivator)) : s, check: r.check };
 }
 
-/** The study hours go back to study alone; the copy keeps its progress. */
-export function stopRead(s: GameState): GameState {
-  return withPlayer(s, stopReading(s.player));
+/** The player takes a copy out of the reading queue; it keeps its progress. */
+export function unqueueRead(s: GameState, id: string): GameState {
+  return settle(withPlayer(s, unqueueCopy(s.player, id)));
+}
+
+/** The player moves a queued copy one place up or down. */
+export function moveRead(s: GameState, id: string, by: -1 | 1): GameState {
+  return withPlayer(s, moveInQueue(s.player, id, by));
 }
 
 /** The flag the first orb drawn in sets, with its chronicle line. */
@@ -271,9 +286,16 @@ export function gainRoutine(s: GameState, id: string, how = 'learns'): GameState
   return addEvent(withPlayer(s, learnRoutine(s.player, id)), 'routine', { routine: id, how });
 }
 
-/** Points the player's practice days at a technique, or at nothing. */
-export function practice(s: GameState, id: string | null): GameState {
-  return withPlayer(s, setPracticing(s.player, id));
+/** The player puts a technique in the first free practice slot; the reason when it can't go. */
+export function practice(s: GameState, id: string): { state: GameState; check: TechniqueCheck } {
+  if (s.ended) return { state: s, check: { ok: false, reason: 'This life is over.' } };
+  const r = startPractice(s.player, id);
+  return { state: r.check.ok ? withPlayer(s, r.cultivator) : s, check: r.check };
+}
+
+/** The player takes a technique out of its practice slot. */
+export function stopPracticing(s: GameState, id: string): GameState {
+  return withPlayer(s, stopPractice(s.player, id));
 }
 
 /** The player wears an item from the Bag (core/gear.ts); the reason when they can't. */

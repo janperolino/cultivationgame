@@ -5,7 +5,7 @@
 // Each run is a created life, the cave orphan who went along with plain talents, playing the first
 // hour's cards as they come by their default choices: the first technique at minute 20–35, the
 // errand's tempering art near the hour, the lamp-keeper's nourishing art near two hours, and at
-// layer 9 the Foundation Pill with the Foundation chapter of the qi method, taken up at once. A
+// layer 9 the Foundation Pill with a copy of the Foundation chapter, taken up once read (P2.5f). A
 // failed Foundation attempt gets another pill at once rather than the card's ten years. Every
 // method starts white, tier 1 and at Glimpse, and climbs in mastery with the hours cultivated with it.
 // Each row is the median of many seeds.
@@ -126,7 +126,7 @@ function buyNodes(s: GameState): GameState {
 
 const givePill = (s: GameState) => withPlayer(s, addItem(s.player, 'foundation-pill', 1));
 
-/** Takes up the Foundation chapter of the qi method once the layer 9 card has handed it over. */
+/** Takes up the Foundation chapter of the qi method once its copy from the layer 9 card is read. */
 function takeChapter(s: GameState): GameState {
   const id = s.player.activeMethods.qi;
   const chapter = id ? nextChapter(method(id)) : undefined;
@@ -229,7 +229,7 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
         run.nodesAt9 = p.nodes.length;
         run.masteryAt9 = qiMastery(s);
       }
-      // In M1 the origin's layer 9 card hands over a Foundation Pill and the next chapter.
+      // In M1 the origin's layer 9 card hands over a Foundation Pill and a copy of the next chapter.
       if (p.qi.stage === 9) s = takeChapter(s);
       // The sim breaks through as soon as it may, at the bare minimum.
       if (majorCheck(s.player, 'qi')?.ready) {

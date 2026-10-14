@@ -329,8 +329,9 @@ describe('kinship', () => {
     expect(techniqueKin(kin, 'rampart-palm').map((t) => t.id)).toEqual(['sinkhole-stone-fist']);
     expect(kinshipBonus(kin, 'rampart-palm')).toBe(0.25);
     const open = (c: Cultivator) => openHours(c).cultivator;
-    expect(dayRates(open(kin), DAY).practice).toBeCloseTo(
-      dayRates(open(both), DAY).practice * 1.25,
+    // Kinship lifts the technique's own share of the day's practice, not the day's total.
+    expect(dayRates(open(kin), DAY).practiceEach['rampart-palm']).toBeCloseTo(
+      dayRates(open(both), DAY).practiceEach['rampart-palm']! * 1.25,
     );
     // Mastery doesn't carry over.
     expect(mastery(kin, 'rampart-palm').practice).toBe(0);

@@ -1,9 +1,10 @@
-// The screens the side menu can reach. Later phases add entries here, gated by unlock flags.
+// The screens the side menu can reach. Later phases add entries here, gated by unlock flags. The
+// Techniques screen lives in Cultivate › Practice since P2.5f, though its unlock and the seen
+// record's screen id stay `techniques` (the Practice tab shows with it).
 export type ScreenId =
   | 'abode'
   | 'cultivate'
   | 'trees'
-  | 'techniques'
   | 'bag'
   | 'combat'
   | 'character'
@@ -23,7 +24,6 @@ export const screens: readonly ScreenInfo[] = [
   { id: 'abode', name: 'Abode', hanzi: '洞府', unlock: 'abode' },
   { id: 'cultivate', name: 'Cultivate', hanzi: '修炼', unlock: 'cultivate' },
   { id: 'trees', name: 'Trees', hanzi: '道树', unlock: 'trees' },
-  { id: 'techniques', name: 'Techniques', hanzi: '招式', unlock: 'techniques' },
   { id: 'bag', name: 'Bag', hanzi: '行囊', unlock: 'bag' },
   { id: 'combat', name: 'Combat', hanzi: '斗法', unlock: 'combat' },
   { id: 'character', name: 'Character', hanzi: '根骨', unlock: 'character' },

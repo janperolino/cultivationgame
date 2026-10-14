@@ -193,7 +193,9 @@ describe('choosing', () => {
       const s = pend(life('cave-orphan', 'along', `check-${i}`), 'errand-cave-along', 1);
       const r = resolveCard(s, 1, 0);
       outcomes.add(r.pass);
-      expect(r.state.player.methods).toHaveProperty('stone-bearing');
+      // The tempering art comes as a copy, read before it opens body hours.
+      expect(r.state.player.copies['method:stone-bearing']).toBe(1);
+      expect(r.state.player.methods).not.toHaveProperty('stone-bearing');
       if (r.pass === false) expect(r.state.player.qi.injuredUntil).toBeGreaterThan(s.calendar.day);
       else expect(r.state.player.stones).toBe(s.player.stones + 8);
       expect(r.roll!.total).toBe(r.roll!.d20);
@@ -295,7 +297,9 @@ describe('the first hour', () => {
     expect(s.cards.pending.map((p) => p.card)).toEqual(['foundation-frontier-along']);
     s = resolveCard(s, s.cards.pending[0]!.uid, 0).state;
     expect(s.player.items['foundation-pill']).toBe(1);
-    expect(s.player.methods).toHaveProperty('butcher-saber-foundation');
+    // The chapter is a copy, read before it can be taken up.
+    expect(s.player.copies['method:butcher-saber-foundation']).toBe(1);
+    expect(s.player.methods).not.toHaveProperty('butcher-saber-foundation');
     // A failed attempt spends the pill and marks the day; find a roll that fails.
     s = withPlayer(s, {
       ...s.player,

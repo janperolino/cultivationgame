@@ -2,13 +2,14 @@
 // Domain, Origin, raised by practice days. A technique above its matching level is sealed: you
 // know it, but can neither use nor practice it until you grow into it. A line's next chapter
 // needs the one before at Comprehension and starts below it, and kin techniques of other lines
-// speed each other's practice.
+// speed each other's practice. A day's practice days split evenly among the practice slots.
 import {
   CHAPTER_NEEDS_LEVEL,
   KINSHIP_BONUS,
   KINSHIP_LEVEL,
   MASTERY,
   MASTERY_ACCURACY,
+  PRACTICE_SLOTS_MAX,
   TECHNIQUE_MASTERY,
 } from '../content/mastery.ts';
 import { rarityAccuracy } from '../content/rarity.ts';
@@ -27,6 +28,7 @@ import {
   type Mastery,
 } from './mastery.ts';
 import type { Cultivator } from './state.ts';
+import { stats } from './stats.ts';
 
 export { MAX_MASTERY, type Mastery };
 
@@ -120,7 +122,7 @@ export function canLearnTechnique(c: Cultivator, id: string): TechniqueCheck {
 
 /**
  * Learns a technique, at Glimpse or, for a line's next chapter, one level below the chapter
- * before (two when rarer); with nothing being practiced, practice turns to it.
+ * before (two when rarer); with nothing being practiced, the first slot takes it.
  */
 export function learnTechnique(c: Cultivator, id: string): Cultivator {
   if (!canLearnTechnique(c, id).ok) return c;
@@ -129,34 +131,107 @@ export function learnTechnique(c: Cultivator, id: string): Cultivator {
   const start = prev
     ? masteryNeed(t, chapterStartLevel(mastery(c, prev.id).level, prev.rarity, t.rarity))
     : 0;
-  return {
-    ...c,
-    techniques: { ...c.techniques, [id]: { practice: start } },
-    practicing: c.practicing ?? id,
-  };
+  const learned = { ...c, techniques: { ...c.techniques, [id]: { practice: start } } };
+  return c.practicing.length === 0 && canPractice(learned, id)
+    ? { ...learned, practicing: [id] }
+    : learned;
 }
 
-/** Points practice days at a known technique, or at nothing. */
-export function setPracticing(c: Cultivator, id: string | null): Cultivator {
-  if (id !== null && !knowsTechnique(c, id)) return c;
-  return { ...c, practicing: id };
+// ---------------------------------------------------------------- practice slots
+
+/**
+ * How many techniques can be practiced at once (design § Cultivation, Practice slots): one, and
+ * one more for each point of split attention, at most `PRACTICE_SLOTS_MAX`.
+ */
+export function practiceSlots(c: Cultivator): number {
+  const extra = Math.max(0, Math.floor(stats(c).splitAttention));
+  return Math.min(PRACTICE_SLOTS_MAX, 1 + extra);
+}
+
+/** The techniques in the slots, in slot order, at most as many as there are slots. */
+export function practiced(c: Cultivator): string[] {
+  return c.practicing.slice(0, practiceSlots(c));
+}
+
+/** The practiced techniques practice days count on now: known, unsealed and short of Origin. */
+export function practicingNow(c: Cultivator): string[] {
+  return practiced(c).filter((id) => canPractice(c, id));
 }
 
 /**
- * Adds practice days to the technique being practiced, up to what Origin needs, and says which
- * levels it reached on the way; each releases a burst of insight.
+ * Practice days a full day gives each technique practiced, from the day's `total` before kinship:
+ * split evenly among the slots that can practice, each share lifted by its own kinship.
  */
-export function addPractice(
+export function practiceShares(c: Cultivator, total: number): Record<string, number> {
+  const now = practicingNow(c);
+  if (now.length === 0 || total <= 0) return {};
+  return Object.fromEntries(
+    now.map((id) => [id, (total / now.length) * (1 + kinshipBonus(c, id))]),
+  );
+}
+
+/** Whether a technique can take a slot: one free, and the technique known, unsealed, short of Origin. */
+export function canStartPractice(c: Cultivator, id: string): TechniqueCheck {
+  if (!knowsTechnique(c, id) || !hasTechnique(id)) {
+    return { ok: false, reason: 'You do not know it.' };
+  }
+  if (practiced(c).includes(id)) return { ok: false, reason: 'You practice it already.' };
+  if (techniqueSealed(c, technique(id))) {
+    return { ok: false, reason: 'It is sealed until your realm grows into it.' };
+  }
+  if (mastery(c, id).level >= MAX_MASTERY) {
+    return { ok: false, reason: 'It is at Origin: there is nothing left to drill.' };
+  }
+  if (practiced(c).length >= practiceSlots(c)) return { ok: false, reason: 'All slots in use.' };
+  return { ok: true };
+}
+
+/** Puts a technique in the first free practice slot. */
+export function startPractice(
   c: Cultivator,
-  days: number,
-): { cultivator: Cultivator; levels: number[] } {
-  const id = c.practicing;
-  if (!id || days <= 0 || !canPractice(c, id)) return { cultivator: c, levels: [] };
-  const before = mastery(c, id).level;
-  const cap = masteryNeed(technique(id), MAX_MASTERY);
-  const practice = Math.min(cap, (c.techniques[id]?.practice ?? 0) + days);
-  const next = { ...c, techniques: { ...c.techniques, [id]: { practice } } };
-  const after = mastery(next, id).level;
-  const levels = Array.from({ length: after - before }, (_, i) => before + 1 + i);
-  return { cultivator: next, levels };
+  id: string,
+): { cultivator: Cultivator; check: TechniqueCheck } {
+  const check = canStartPractice(c, id);
+  if (!check.ok) return { cultivator: c, check };
+  return { cultivator: { ...c, practicing: [...practiced(c), id] }, check };
+}
+
+/** Takes a technique out of its slot; the slots after it move up. */
+export function stopPractice(c: Cultivator, id: string): Cultivator {
+  if (!c.practicing.includes(id)) return c;
+  return { ...c, practicing: c.practicing.filter((x) => x !== id) };
+}
+
+export interface PracticeResult {
+  cultivator: Cultivator;
+  /** Each level reached on the way, in slot order; each releases a burst of insight. */
+  levels: { technique: string; level: number }[];
+  /** The techniques that reached Origin and left their slot, which stays empty. */
+  left: string[];
+}
+
+/**
+ * Adds practice days to each technique practiced, by `days` per technique (practiceShares × the
+ * stretch), up to what Origin needs, and says which levels each reached. One reaching Origin
+ * leaves its slot: practice is never queued or picked for you.
+ */
+export function addPractice(c: Cultivator, days: Readonly<Record<string, number>>): PracticeResult {
+  let next = c;
+  const levels: PracticeResult['levels'] = [];
+  const left: string[] = [];
+  for (const id of practicingNow(c)) {
+    const d = days[id] ?? 0;
+    if (d <= 0) continue;
+    const before = mastery(next, id).level;
+    const cap = masteryNeed(technique(id), MAX_MASTERY);
+    const practice = Math.min(cap, (next.techniques[id]?.practice ?? 0) + d);
+    next = { ...next, techniques: { ...next.techniques, [id]: { practice } } };
+    const after = mastery(next, id).level;
+    for (let l = before + 1; l <= after; l++) levels.push({ technique: id, level: l });
+    if (after >= MAX_MASTERY) left.push(id);
+  }
+  if (left.length > 0) {
+    next = { ...next, practicing: next.practicing.filter((id) => !left.includes(id)) };
+  }
+  return { cultivator: next, levels, left };
 }

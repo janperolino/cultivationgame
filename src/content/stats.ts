@@ -357,11 +357,12 @@ const BASE_STATS = {
     what: 'how far your senses reach, and how much map they reveal',
     arrives: 'the map',
   },
-  attention: {
+  // Not attended seclusion's attention (core/attention.ts): a point of this is one more practice
+  // slot now, and one more production queue, puppet or flying sword as those arrive.
+  splitAttention: {
     name: 'Split attention',
     unit: 'points',
-    what: 'one more production queue, puppet or flying sword',
-    arrives: 'crafting',
+    what: 'one more practice slot, production queue, puppet or flying sword',
   },
   craftPrecision: {
     name: 'Steady hands',

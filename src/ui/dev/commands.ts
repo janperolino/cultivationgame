@@ -27,6 +27,8 @@ import {
   gainMethod,
   gainRoutine,
   gainTechnique,
+  practice,
+  readCopy,
 } from '../../core/life.ts';
 import { advance, daysPerRealMs } from '../../core/loop.ts';
 import { madeUpManuals } from '../../core/madeUpManuals.ts';
@@ -322,6 +324,30 @@ export const COMMANDS: Record<string, Command> = {
       return apply(store, (s) => gainCopy(s, full, 'is handed'), `Handed a copy: ${full}.`);
     },
   },
+  practice: {
+    usage: 'practice <id>',
+    help: 'Puts a known technique in the first free practice slot.',
+    run([id], store) {
+      const s = needGame(store);
+      if (!id) return 'Give a technique id.';
+      const r = practice(s, id);
+      if (!r.check.ok) return r.check.reason;
+      return apply(store, (g) => practice(g, id).state, `Practicing ${id}.`);
+    },
+  },
+  queue: {
+    usage: 'queue <copy>',
+    help: 'Adds an owned copy to the end of the reading queue: manual:tide-counting, or a bare id.',
+    run([id], store) {
+      const s = needGame(store);
+      if (!id) return 'Give a copy id.';
+      const full = hasCopy(id) ? id : COPY_KINDS.map((k) => copyId(k, id)).find(hasCopy);
+      if (!full) return `No copy "${id}".`;
+      const r = readCopy(s, full);
+      if (!r.check.ok) return r.check.reason;
+      return apply(store, (g) => readCopy(g, full).state, `Queued ${full}.`);
+    },
+  },
   shelf: {
     usage: 'shelf',
     help: 'Fills the bookcase with 150 made-up manuals, most finished. Dev builds only.',
@@ -396,7 +422,11 @@ export const COMMANDS: Record<string, Command> = {
     help: 'Shows a screen in the menu before it is reached.',
     run([id], store) {
       const ids =
-        id === 'all' ? screens.flatMap((x) => (x.unlock ? [x.unlock] : [])) : id ? [id] : [];
+        id === 'all'
+          ? [...screens.flatMap((x) => (x.unlock ? [x.unlock] : [])), 'techniques']
+          : id
+            ? [id]
+            : [];
       if (!ids.length) return 'Give a screen id or all.';
       return apply(
         store,

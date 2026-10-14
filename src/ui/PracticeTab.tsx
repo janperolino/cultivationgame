@@ -1,13 +1,14 @@
-// The Techniques screen (design § UI and screens; P2.5b, mockup A of the Techniques screen
-// canvas): what you practice and what it gives. A Practicing panel on top, then a list of every
+// Cultivate › Practice (design § UI and screens; P2.5b, mockup A of the Techniques screen canvas,
+// moved whole into Cultivate in P2.5f): what you practice and what it gives. A Practicing panel on
+// top with a row per practice slot, each with its share of the day, then a list of every
 // known technique beside one technique's page: its rarity, line and chapter, the line's known
 // chapters as a strip, its mastery as five steps with the insight each releases and the time to
 // the next, what it gives, its kin, a line on its Art (bought on its tree, design § Cultivation,
-// Where manuals live), and the button that sends practice days to it. Rarer techniques look it:
+// Where manuals live), and the button that puts it in a free slot. Rarer techniques look it:
 // an edge in the rarity's color from blue, a glow from purple.
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { techniqueArt, type Manual } from '../content/manuals.ts';
-import { MASTERY, TECHNIQUE_MASTERY } from '../content/mastery.ts';
+import { MASTERY, PRACTICE_SLOTS_MAX, TECHNIQUE_MASTERY } from '../content/mastery.ts';
 import { rarity, rarityRank, type RarityId } from '../content/rarity.ts';
 import { REALMS } from '../content/realms.ts';
 import { techniqueChapter, type Technique } from '../content/techniques.ts';
@@ -23,6 +24,9 @@ import {
   knownTechniques,
   mastery,
   masteryNeed,
+  practiced,
+  practiceSlots,
+  practicingNow,
   techniqueAccuracy,
   techniqueKin,
   techniqueSealed,
@@ -31,7 +35,7 @@ import { hasLearned, nodeSealed } from '../core/trees.ts';
 import { hourKindOpen } from '../core/wheel.ts';
 import { formatNumber, formatPercent, formatRate, LADDER_LABELS } from './format.ts';
 import { RarityName } from './MethodCard.tsx';
-import { go, goToManual, useNav } from './nav.ts';
+import { goToManual, goToTab, useNav } from './nav.ts';
 import { useGame } from './store.ts';
 import {
   knownChapters,
@@ -61,17 +65,25 @@ function rarityLook(id: RarityId): { className: string; style: CSSProperties } {
 }
 
 /**
- * Practice days a day the wheel gives a technique, before its kinship: the day's practice hours
+ * Practice days a day the wheel gives before the slots split them: the day's practice hours
  * counted on whichever technique can take them. 0 when none can.
  */
-function practiceRate(c: Cultivator, day: number): number {
-  const id =
-    c.practicing && canPractice(c, c.practicing)
-      ? c.practicing
-      : knownTechniques(c).find((t) => canPractice(c, t.id))?.id;
+function dayPractice(c: Cultivator, day: number): number {
+  const id = practicingNow(c)[0] ?? knownTechniques(c).find((t) => canPractice(c, t.id))?.id;
   if (!id) return 0;
-  return dayRates({ ...c, practicing: id }, day).practice / (1 + kinshipBonus(c, id));
+  return dayRates({ ...c, practicing: [id] }, day).practice;
 }
+
+/** How many ways the day is split for a technique: its slots', or theirs with it taking a slot. */
+function splitFor(c: Cultivator, id: string): number {
+  const now = practicingNow(c);
+  if (now.includes(id)) return now.length;
+  return Math.max(1, Math.min(practiceSlots(c), now.length + 1));
+}
+
+/** A slot's share of the day, as the Practicing panel and the list show it. */
+const SHARE_GLYPHS: Record<number, string> = { 1: '1', 2: '½', 3: '⅓' };
+const SHARE_WORDS: Record<number, string> = { 2: 'half share', 3: 'a third share' };
 
 /** The insight a technique's mastery level releases when reached, Aptitude and gains counted. */
 function levelBurst(c: Cultivator, t: Technique, level: number): number {
@@ -97,7 +109,9 @@ function nextLevelWords(c: Cultivator, t: Technique, rate: number): string {
   const burst = `+${formatNumber(levelBurst(c, t, m.level + 1))} insight`;
   if (days === Infinity) return `${next.name} waits on practice hours (${burst} when it lands).`;
   const kin = kinshipBonus(c, t.id) > 0 ? ', kin counted' : '';
-  const ifPracticed = c.practicing === t.id ? '' : ` if you practice it${kin}`;
+  const share = SHARE_WORDS[splitFor(c, t.id)];
+  const at = share ? ` at ${share}` : '';
+  const ifPracticed = practiced(c).includes(t.id) ? at : ` if you practice it${at}${kin}`;
   return `${next.name} in ${practiceTime(days)}${ifPracticed}, ${burst} when it lands.`;
 }
 
@@ -117,32 +131,45 @@ function Lock() {
   );
 }
 
+/** What opens the next practice slot: the Soul tree's Split Attention first, then any point. */
+function nextSlotWords(c: Cultivator): string {
+  return hasLearned(c, SPLIT_NODE)
+    ? 'Opens with another point of split attention'
+    : 'Opens with Split Attention · Soul, tier 2';
+}
+
+/** The Soul tree's node that opens a practice slot. */
+const SPLIT_NODE = 'soul-split-attention';
+
 /**
- * What practice days go to: a row per practice slot (one for now), each with its technique's level,
- * a bar to the next, the time to it and the insight it releases.
+ * What practice days go to: a row per practice slot, each with its technique's share of the day,
+ * its level, a bar to the next, the time to it and the insight it releases; an empty slot asks for
+ * a technique, and once the first is in use the next slot not yet open says what opens it.
  */
 function PracticePanel({
   c,
   rates,
-  rate,
+  total,
   onSelect,
   onKeep,
 }: {
   c: Cultivator;
   rates: DayRates;
-  rate: number;
+  /** Practice days a day before the slots split them. */
+  total: number;
   onSelect: (id: string) => void;
   /** Keeps the page on a technique without scrolling to it, as Stop does. */
   onKeep: (id: string) => void;
 }) {
-  const practice = useGame((s) => s.practice);
+  const stopPractice = useGame((s) => s.stopPractice);
   const hoursOpen = hourKindOpen(c, 'practice');
-  const t = knownTechniques(c).find((k) => k.id === c.practicing);
+  const slots = practiceSlots(c);
+  const inSlots = practiced(c);
   const hours = rates.count.practice;
 
   const wheel = (
-    <button type="button" className="link-button" onClick={() => go('cultivate')}>
-      Set hours on the Cultivate wheel
+    <button type="button" className="link-button" onClick={() => goToTab('cultivation')}>
+      Change hours on the wheel
     </button>
   );
 
@@ -161,30 +188,64 @@ function PracticePanel({
         <span className="caption">
           {hours === 0
             ? 'No hour of the day goes to practice.'
-            : `${hours} of 12 hours${rates.practice > 0 ? ` · ${formatRate(rates.practice)} practice days a day` : ''}`}
+            : `${hours} of 12 hours${total > 0 ? ` · ${formatRate(total)} practice days a day${slots > 1 ? ', shared between the slots' : ''}` : ''}`}
         </span>
         {wheel}
       </div>
       <ul className="practice-slots">
-        <li
-          className={`practice-slot${t ? rarityLook(t.rarity).className : ' is-empty'}`}
-          style={t ? rarityLook(t.rarity).style : undefined}
-        >
-          {t ? (
-            <PracticeSlot
-              c={c}
-              t={t}
-              rate={rate}
-              onSelect={onSelect}
-              onStop={() => {
-                practice(null);
-                onKeep(t.id);
-              }}
-            />
-          ) : (
-            <p className="caption">Nothing practiced: pick a technique below.</p>
-          )}
-        </li>
+        {Array.from({ length: slots }, (_, i) => {
+          const t = knownTechniques(c).find((k) => k.id === inSlots[i]);
+          // The day splits among the slots that can practice; one that can't takes no share.
+          const now = practicingNow(c);
+          const split = now.length;
+          const sharing = !!t && now.includes(t.id);
+          return (
+            <li
+              key={t?.id ?? `empty-${i}`}
+              className={`practice-slot${t ? rarityLook(t.rarity).className : ' is-empty'}`}
+              style={t ? rarityLook(t.rarity).style : undefined}
+            >
+              {t ? (
+                <PracticeSlot
+                  c={c}
+                  t={t}
+                  share={sharing ? (SHARE_GLYPHS[split] ?? `1/${split}`) : '·'}
+                  rate={sharing ? total / split : 0}
+                  onSelect={onSelect}
+                  onStop={() => {
+                    stopPractice(t.id);
+                    onKeep(t.id);
+                  }}
+                />
+              ) : (
+                <p className="caption practice-slot-empty">
+                  <span className="practice-share" aria-hidden="true">
+                    ·
+                  </span>
+                  {i === 0
+                    ? 'Nothing practiced: pick a technique below.'
+                    : 'Pick a technique below.'}
+                </p>
+              )}
+            </li>
+          );
+        })}
+        {slots < PRACTICE_SLOTS_MAX && inSlots.length > 0 && (
+          <li className="practice-slot is-locked">
+            <p className="caption practice-slot-empty">
+              <span className="practice-share hanzi" aria-hidden="true">
+                封
+              </span>
+              {nextSlotWords(c)}
+              <Why label="Practice slots">
+                A day&apos;s practice days split evenly among the slots: one technique practices at
+                the full rate, two at half each, three at a third. Each point of split attention
+                opens another slot, up to three. Slots never add practice, only spread it; kinship
+                lifts each technique&apos;s own share.
+              </Why>
+            </p>
+          </li>
+        )}
       </ul>
     </section>
   );
@@ -193,12 +254,15 @@ function PracticePanel({
 function PracticeSlot({
   c,
   t,
+  share,
   rate,
   onSelect,
   onStop,
 }: {
   c: Cultivator;
   t: Technique;
+  /** "½", the slot's share of the day. */
+  share: string;
   rate: number;
   onSelect: (id: string) => void;
   onStop: () => void;
@@ -208,10 +272,16 @@ function PracticeSlot({
   return (
     <>
       <div className="practice-slot-head">
+        <span className="practice-share" title="Its share of the day's practice">
+          {share}
+        </span>
         <button type="button" className="practice-slot-name" onClick={() => onSelect(t.id)}>
           <RarityName m={t} /> <span className="hanzi">{t.hanzi}</span>
         </button>
-        <span className="caption">{MASTERY[m.level]!.name}</span>
+        <span className="caption">
+          {MASTERY[m.level]!.name}
+          {kinshipBonus(c, t.id) > 0 && ` · kin +${formatPercent(kinshipBonus(c, t.id))}`}
+        </span>
         <span className="technique-row-gap" />
         <span className="technique-num caption">{progressWords(c, t)}</span>
         <button type="button" className="button button-quiet" onClick={onStop}>
@@ -254,8 +324,10 @@ function TechniqueList({
   const toolbar = known.length > TOOLBAR_FROM;
   const rows = techniqueRows(c, toolbar ? { order, query, tier, dao } : {});
   const filters = techniqueFilters(known);
-  // With nothing practiced, each row that can take practice offers it.
-  const offer = !c.practicing || !known.some((t) => t.id === c.practicing);
+  // While a slot is free, each row that can take practice offers it.
+  const inSlots = practiced(c);
+  const offer = inSlots.length < practiceSlots(c);
+  const split = practicingNow(c).length;
 
   // Up and down move along the list and select as they go.
   const onKeyDown = (e: KeyboardEvent<HTMLUListElement>) => {
@@ -334,7 +406,7 @@ function TechniqueList({
           const isSelected = t.id === selected;
           const look = rarityLook(t.rarity);
           const accuracy = rarity(t.rarity).accuracy;
-          const quick = offer && canPractice(c, t.id);
+          const quick = offer && canPractice(c, t.id) && !inSlots.includes(t.id);
           return (
             <li key={t.id} className={quick ? 'has-quick' : undefined}>
               <button
@@ -353,7 +425,11 @@ function TechniqueList({
                   <RarityName m={t} className="technique-row-name" />
                   <span className="hanzi technique-row-hanzi">{t.hanzi}</span>
                   <span className="technique-row-gap" />
-                  {c.practicing === t.id && <span className="practicing-mark">Practicing</span>}
+                  {inSlots.includes(t.id) && (
+                    <span className="practicing-mark">
+                      Practicing{split > 1 ? ` ${SHARE_GLYPHS[split] ?? `1/${split}`}` : ''}
+                    </span>
+                  )}
                   {sealed && <Lock />}
                 </span>
                 <span className="technique-row-bottom">
@@ -455,7 +531,7 @@ function MasteryBlock({ c, t, rate }: { c: Cultivator; t: Technique; rate: numbe
   const m = mastery(c, t.id);
   const sealed = techniqueSealed(c, t);
   const rateWords =
-    c.practicing === t.id && !sealed && m.next !== null && rate > 0
+    practiced(c).includes(t.id) && !sealed && m.next !== null && rate > 0
       ? ` At ${formatRate(rate * (1 + kinshipBonus(c, t.id)))} practice days a day.`
       : '';
 
@@ -554,6 +630,8 @@ function TechniquePage({
   onSelect: (id: string) => void;
 }) {
   const practice = useGame((s) => s.practice);
+  const stopPractice = useGame((s) => s.stopPractice);
+  const [error, setError] = useState<string | null>(null);
   // The technique on the page is the one selected, so it is seen.
   const see = useGame((s) => s.see);
   useEffect(() => {
@@ -561,7 +639,8 @@ function TechniquePage({
   }, [see, t.id]);
   const m = mastery(c, t.id);
   const sealed = techniqueSealed(c, t);
-  const practicing = c.practicing === t.id;
+  const practicing = practiced(c).includes(t.id);
+  const full = practiced(c).length >= practiceSlots(c);
   const realmName = REALMS[t.tier - 1]!.name;
   const ladder = LADDER_LABELS[t.ladder].toLowerCase();
   const r = rarity(t.rarity);
@@ -623,7 +702,10 @@ function TechniquePage({
         </div>
         <div>
           <dt>Practice speed</dt>
-          <dd>{kinBonus > 0 ? `+${formatPercent(kinBonus)} kin` : 'base'}</dd>
+          <dd>
+            {splitFor(c, t.id) > 1 ? `${SHARE_GLYPHS[splitFor(c, t.id)]} share` : 'base'}
+            {kinBonus > 0 && `, +${formatPercent(kinBonus)} kin`}
+          </dd>
         </div>
       </dl>
       {kin.length > 0 && (
@@ -642,22 +724,36 @@ function TechniquePage({
           type="button"
           className="button"
           aria-pressed={practicing}
-          disabled={!canPractice(c, t.id) && !practicing}
-          onClick={() => practice(practicing ? null : t.id)}
+          disabled={!practicing && (!canPractice(c, t.id) || full)}
+          onClick={() => {
+            if (practicing) stopPractice(t.id);
+            else setError(practice(t.id));
+          }}
         >
-          {practicing ? 'Practicing · stop' : sealed ? 'Sealed' : 'Practice this'}
+          {practicing
+            ? 'Practicing · stop'
+            : sealed
+              ? 'Sealed'
+              : !canPractice(c, t.id)
+                ? 'Mastery is complete'
+                : full
+                  ? 'All slots in use'
+                  : 'Practice this'}
         </button>
       </div>
+      {error && <p className="warn">{error}</p>}
     </article>
   );
 }
 
-export function TechniquesScreen() {
+export function PracticeTab() {
   const game = useGame((s) => s.game);
   const [chosen, setChosen] = useState<string | null>(null);
   const page = useRef<HTMLDivElement>(null);
   // A toast's link lands on the technique it names, selected.
-  const target = useNav((s) => (s.screen === 'techniques' ? s.select : null));
+  const target = useNav((s) =>
+    s.screen === 'cultivate' && s.tab === 'practice' ? s.select : null,
+  );
   const navSeq = useNav((s) => s.seq);
   const [arrived, setArrived] = useState(-1);
   if (target && navSeq !== arrived) {
@@ -671,13 +767,11 @@ export function TechniquesScreen() {
   const c = game.player;
   const known = knownTechniques(c);
   const rates = dayRates(c, game.calendar.day);
-  const rate = practiceRate(c, game.calendar.day);
-  const has = (id: string | null): id is string => !!id && known.some((t) => t.id === id);
-  const selected = has(chosen)
-    ? chosen
-    : has(c.practicing)
-      ? c.practicing
-      : techniqueRows(c)[0]?.t.id;
+  const total = dayPractice(c, game.calendar.day);
+  const has = (id: string | null | undefined): id is string =>
+    !!id && known.some((t) => t.id === id);
+  const first = practiced(c)[0];
+  const selected = has(chosen) ? chosen : has(first) ? first : techniqueRows(c)[0]?.t.id;
 
   const select = (id: string) => {
     setChosen(id);
@@ -695,7 +789,7 @@ export function TechniquesScreen() {
 
   return (
     <>
-      <PracticePanel c={c} rates={rates} rate={rate} onSelect={select} onKeep={setChosen} />
+      <PracticePanel c={c} rates={rates} total={total} onSelect={select} onKeep={setChosen} />
       <div className="technique-split">
         <TechniqueList
           c={c}
@@ -707,7 +801,7 @@ export function TechniquesScreen() {
           <TechniquePage
             c={c}
             t={known.find((t) => t.id === selected)!}
-            rate={rate}
+            rate={total / splitFor(c, selected)}
             onSelect={select}
           />
         </div>

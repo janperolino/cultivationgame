@@ -295,7 +295,7 @@ export const TALENTS: readonly Talent[] = [
     rarity: 'purple',
     text: 'Two minds share the one skull, and both pay attention.',
     effects: [
-      { stat: 'attention', value: 1 },
+      { stat: 'splitAttention', value: 1 },
       { stat: 'soulGain', value: 0.1 },
     ],
   },

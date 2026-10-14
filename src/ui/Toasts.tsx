@@ -36,7 +36,7 @@ function ToastCard({ t }: { t: Toast }) {
             type="button"
             className={`link-button toast-name${t.rarity ? ` rarity-${t.rarity}` : ''}`}
             onClick={() => {
-              go(to.screen, to.trees, to.select);
+              go(to.screen, to.trees, to.select, to.tab);
               dismissToast(t.key);
             }}
           >

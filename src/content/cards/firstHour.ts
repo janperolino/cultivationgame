@@ -1,16 +1,20 @@
 // The first hour's cards (design § Character creation, the first hour; § Story cards and events).
 // They stand in for what the world supplies from M3: the refusals' method after a month or two of
-// odd jobs, each origin path's first technique at minute 20–35, the errand that stands in for the
-// first trip out and hands over a common tempering art, a later card with a common nourishing art,
-// and at layer 9 a Foundation Pill with the Foundation chapter of the origin's method, with another
-// pill ten years after a failed attempt. Days lived run one real hour to a year at Qi
+// odd jobs (the deserter taught, the street cultivator paid in a copy), each origin path's first
+// technique at minute 20–35, the errand that stands in for the first trip out and hands over a copy
+// of a common tempering art, a later card with a common nourishing art, and at layer 9 a Foundation
+// Pill with a copy of the Foundation chapter of the origin's method, with another pill ten years
+// after a failed attempt. A copy is read on the study hours before it is any use (design § Reading). Days lived run one real hour to a year at Qi
 // Condensation, so day 30 is about minute 5. Drafted in P1.7 for Jan's review.
 import type { Card, CardEffect } from './schema.ts';
 
 const DECK = 'first-hour';
 
-/** The tempering art every errand hands over, and the nourishing art the later card does. */
-const TEMPERING: CardEffect = { do: 'method', id: 'stone-bearing' };
+/**
+ * The tempering art every errand hands over, as a copy to read (design § Reading: handed over as a
+ * thing), so body hours open once it is read; and the nourishing art the later card teaches.
+ */
+const TEMPERING: CardEffect = { do: 'copy', id: 'method:stone-bearing' };
 const NOURISHING: CardEffect = { do: 'method', id: 'still-lantern' };
 
 export const FIRST_HOUR_CARDS: readonly Card[] = [
@@ -80,7 +84,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
         check: { attribute: 'agility', dc: 11 },
         pass: {
           effects: [
-            { do: 'method', id: 'bounty-scrap' },
+            { do: 'copy', id: 'method:bounty-scrap' },
             { do: 'flag', id: 'bounty-runner' },
             { do: 'stones', n: 3 },
           ],
@@ -90,7 +94,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
         },
         fail: {
           effects: [
-            { do: 'method', id: 'bounty-scrap' },
+            { do: 'copy', id: 'method:bounty-scrap' },
             { do: 'flag', id: 'bounty-runner' },
           ],
           text: 'A gutter gives way and you arrive late, bruised and limping. {clerk} hands over the manual anyway, and nothing else.',
@@ -102,10 +106,10 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
         label: 'Take the long way, safely',
         pass: {
           effects: [
-            { do: 'method', id: 'bounty-scrap' },
+            { do: 'copy', id: 'method:bounty-scrap' },
             { do: 'flag', id: 'bounty-runner' },
           ],
-          text: 'You take the main streets and arrive as the tide turns. The manual is yours: torn, stained, and still breathing.',
+          text: 'You take the main streets and arrive as the tide turns. The manual is yours to read: torn, stained, and still breathing.',
           chronicle:
             '{name} carries a case of cores to the harbor hall and is paid in a torn manual.',
         },
@@ -417,7 +421,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
         check: { attribute: 'agility', dc: 12 },
         pass: {
           effects: [TEMPERING, { do: 'stones', n: 10 }, { do: 'fuel', ladder: 'body', share: 0.2 }],
-          text: 'You run it waist-deep in the dark and the skiff never turns its lamp. {fixer} pays ten stones and a tempering art the Society teaches its runners.',
+          text: "You run it waist-deep in the dark and the skiff never turns its lamp. {fixer} pays ten stones and a copy of the tempering art the Society's runners read.",
           chronicle:
             '{name} runs a crate of beast cubs past a garrison skiff for the Night Bridge Society.',
         },
@@ -569,7 +573,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
         pass: {
           effects: [
             { do: 'item', id: 'foundation-pill', n: 1 },
-            { do: 'method', id: 'garrison-standard-foundation' },
+            { do: 'copy', id: 'method:garrison-standard-foundation' },
           ],
           text: 'The pill sits in its jade box like a held breath. The chapter is three pages long and took a hundred years to write.',
           chronicle:
@@ -595,7 +599,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
         pass: {
           effects: [
             { do: 'item', id: 'foundation-pill', n: 1 },
-            { do: 'method', id: 'crude-cave-foundation' },
+            { do: 'copy', id: 'method:crude-cave-foundation' },
           ],
           text: 'It takes you a week to copy the wall by lamplight. {aunt} puts the pill in your hand herself.',
           chronicle:
@@ -621,7 +625,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
         pass: {
           effects: [
             { do: 'item', id: 'foundation-pill', n: 1 },
-            { do: 'method', id: 'cadet-spear-foundation' },
+            { do: 'copy', id: 'method:cadet-spear-foundation' },
           ],
           text: 'You salute. {sergeant} salutes back, for the first time.',
           chronicle:
@@ -647,7 +651,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
         pass: {
           effects: [
             { do: 'item', id: 'foundation-pill', n: 1 },
-            { do: 'method', id: 'night-bridge-foundation' },
+            { do: 'copy', id: 'method:night-bridge-foundation' },
             { do: 'flag', id: 'night-bridge-favor' },
           ],
           text: 'The box is still wet with seawater.',
@@ -674,7 +678,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
         pass: {
           effects: [
             { do: 'item', id: 'foundation-pill', n: 1 },
-            { do: 'method', id: 'butcher-saber-foundation' },
+            { do: 'copy', id: 'method:butcher-saber-foundation' },
           ],
           text: '{senior} grins. "Don\'t die. I\'d have to train another one."',
           chronicle:
@@ -700,7 +704,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
         pass: {
           effects: [
             { do: 'item', id: 'foundation-pill', n: 1 },
-            { do: 'method', id: 'bounty-scrap-foundation' },
+            { do: 'copy', id: 'method:bounty-scrap-foundation' },
           ],
           text: '{clerk} waves the thanks away. "You ran a hundred errands. Call it a bonus."',
           chronicle:

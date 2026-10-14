@@ -12,6 +12,7 @@ import { BreakthroughPanel, BreakthroughRow, StepNeeds } from './BreakthroughPan
 import { useScene } from './scene.ts';
 import { SeatedFigure, SeatMeter } from './SeatedFigure.tsx';
 import { useGame, type AwaySummary } from './store.ts';
+import { technique } from '../content/techniques.ts';
 import { readingLine } from './bookcase.ts';
 import { AgeBar, LadderBar, LifeEdgeCard, Why } from './widgets.tsx';
 
@@ -115,10 +116,12 @@ export function AbodeScreen() {
 
   const rates = dayRates(game.player, game.calendar.day);
   const reading = rates.study > 0 ? readingLine(game.player) : null;
+  const drilled = Object.keys(rates.practiceEach).map((id) => technique(id).name);
   const today = [
     ...HOUR_KIND_IDS.filter((k) => rates.count[k] > 0).map(
       (k) => `${rates.count[k]} ${HOUR_KINDS[k].name.toLowerCase()}`,
     ),
+    ...(drilled.length > 0 ? [`practicing ${drilled.join(' and ')}`] : []),
     ...(reading ? [reading] : []),
   ].join(' · ');
 

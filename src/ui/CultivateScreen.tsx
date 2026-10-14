@@ -1,20 +1,31 @@
-// The Cultivate screen: the day wheel and its routines, the method on each ladder, and the auto
-// setting for minor breakthroughs. Breakthroughs themselves are called at the Abode (P2.4).
-import { useState } from 'react';
+// The Cultivate screen (design § UI and screens, the Cultivate row; P2.5f, from the "Cultivate as
+// three tabs" canvas): what your hours do. A strip of the day's twelve hours with their counts
+// across the top, then three tabs, one per kind of work, which an hour on the strip opens:
+// Cultivation (the day wheel and its routines, the method on each ladder, the auto setting for minor
+// breakthroughs and stone burning), Practice (what was the Techniques screen) and Study (the reading
+// queue). A tab shows once it holds something. Breakthroughs are called at the Abode (P2.4).
+import { useEffect, useState } from 'react';
 import { AUTO_IDS, AUTO_SETTINGS } from '../content/cultivation.ts';
 import { ELEMENT_INFO } from '../content/elements.ts';
+import { BRANCHES, HOUR_KIND_IDS, HOUR_KINDS } from '../content/hours.ts';
 import { root } from '../content/roots.ts';
 import { hasRoutine, routine } from '../content/routines.ts';
 import { technique } from '../content/techniques.ts';
+import { isNew, newIds } from '../core/seen.ts';
+import { practicingNow } from '../core/techniques.ts';
 import { attentionCeiling } from '../core/attention.ts';
 import { dayRates, inTutorial, qiSpeed } from '../core/cultivation.ts';
 import { ladderMethod } from '../core/methods.ts';
 import type { GameState } from '../core/state.ts';
-import { canFollow } from '../core/wheel.ts';
+import { canFollow, effectiveWheel } from '../core/wheel.ts';
 import { DayWheel, WheelStrip } from './DayWheel.tsx';
 import { MethodRow } from './MethodCard.tsx';
 import { formatNumber, formatPercent, formatRate } from './format.ts';
+import { CULTIVATE_TABS, cultivateTabs, TAB_OF } from './cultivateTabs.ts';
+import { useNav, type CultivateTab } from './nav.ts';
+import { PracticeTab } from './PracticeTab.tsx';
 import { useGame } from './store.ts';
+import { StudyTab } from './StudyTab.tsx';
 import { readingLine } from './bookcase.ts';
 import { LifeEdgeCard, Why } from './widgets.tsx';
 
@@ -68,8 +79,9 @@ function DayPanel({ game }: { game: GameState }) {
     rates.soul > 0 && `+${formatRate(rates.soul)} nourishment`,
     `+${formatRate(rates.insight)} insight`,
     rates.practice > 0 &&
-      c.practicing &&
-      `+${formatRate(rates.practice)} practice days on ${technique(c.practicing).name}`,
+      `+${formatRate(rates.practice)} practice days on ${practicingNow(c)
+        .map((id) => technique(id).name)
+        .join(' and ')}`,
     rates.study > 0 && readingLine(c),
   ].filter(Boolean);
 
@@ -257,15 +269,117 @@ function MethodsPanel({ game }: { game: GameState }) {
   );
 }
 
+/** The day's twelve hours colored by kind, the open tab's outlined; tapping one opens its tab. */
+function HourStrip({
+  game,
+  tab,
+  tabs,
+  onTab,
+}: {
+  game: GameState;
+  tab: CultivateTab;
+  tabs: readonly CultivateTab[];
+  onTab: (tab: CultivateTab) => void;
+}) {
+  const wheel = effectiveWheel(game.player);
+  const counts = HOUR_KIND_IDS.map((k) => [k, wheel.filter((x) => x === k).length] as const);
+  return (
+    <section className="hour-strip" aria-label="Today's hours">
+      <div className="hour-strip-cells">
+        {wheel.map((kind, i) => {
+          const b = BRANCHES[i]!;
+          const to = tabs.includes(TAB_OF[kind]) ? TAB_OF[kind] : 'cultivation';
+          return (
+            <button
+              key={b.id}
+              type="button"
+              className={`hour-cell hour-${kind}${TAB_OF[kind] === tab ? ' is-open' : ''}`}
+              aria-label={`${b.hanzi} ${b.name}, ${b.clock}: ${HOUR_KINDS[kind].name.toLowerCase()}`}
+              title={`${b.hanzi} ${b.name} (${b.clock}): ${HOUR_KINDS[kind].name}`}
+              onClick={() => onTab(to)}
+            >
+              <span className="hanzi">{b.hanzi}</span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="hour-strip-counts caption">
+        {counts
+          .filter(([, n]) => n > 0)
+          .map(([k, n]) => (
+            <span key={k} className={`hour-count hour-${k}`}>
+              <span className="hour-swatch" aria-hidden="true" />
+              {HOUR_KINDS[k].name} {n}
+            </span>
+          ))}
+        <span className="hour-strip-hint">Tap an hour to open its tab</span>
+      </p>
+    </section>
+  );
+}
+
+function CultivationTab({ game }: { game: GameState }) {
+  return (
+    <>
+      <div className="cultivate-split">
+        <DayPanel game={game} />
+        <MethodsPanel game={game} />
+      </div>
+      <RoutinesPanel game={game} />
+    </>
+  );
+}
+
 export function CultivateScreen() {
   const game = useGame((s) => s.game);
+  const [chosen, setChosen] = useState<CultivateTab>('cultivation');
+  // A link lands on its tab: a toast's technique on Practice, a method row's copy on Study.
+  const navTab = useNav((s) => (s.screen === 'cultivate' ? s.tab : null));
+  const navSeq = useNav((s) => s.seq);
+  const [arrived, setArrived] = useState(-1);
+  if (navTab && navSeq !== arrived) {
+    setArrived(navSeq);
+    setChosen(navTab);
+  }
+  const tabs = game ? cultivateTabs(game) : [];
+  const tab = tabs.includes(chosen) ? chosen : 'cultivation';
+  // Opening Practice looks at what was the Techniques screen, so its own newness clears.
+  const openScreen = useGame((s) => s.openScreen);
+  useEffect(() => {
+    if (tab === 'practice') openScreen('techniques');
+  }, [tab, openScreen]);
   if (!game) return null;
+  const practiceNew =
+    newIds(game, 'technique').length > 0 ||
+    (game.unlocks.includes('techniques') && isNew(game, 'screen', 'techniques'));
+
   return (
     <>
       <LifeEdgeCard />
-      <DayPanel game={game} />
-      <RoutinesPanel game={game} />
-      <MethodsPanel game={game} />
+      <HourStrip game={game} tab={tab} tabs={tabs} onTab={setChosen} />
+      {tabs.length > 1 && (
+        <div className="seg cultivate-tabs" role="tablist" aria-label="Kind of work">
+          {CULTIVATE_TABS.filter((t) => tabs.includes(t.id)).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.id}
+              aria-pressed={tab === t.id}
+              className={t.id === 'practice' && practiceNew && tab !== t.id ? 'is-new' : undefined}
+              onClick={() => setChosen(t.id)}
+            >
+              {t.name} <span className="hanzi">{t.hanzi}</span>
+              {t.id === 'practice' && practiceNew && tab !== t.id && (
+                <span className="menu-mark is-new" role="img" aria-label="something new" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+      {tab === 'cultivation' && <CultivationTab game={game} />}
+      {tab === 'practice' && <PracticeTab />}
+      {tab === 'study' && <StudyTab game={game} />}
     </>
   );
 }

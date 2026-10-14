@@ -18,7 +18,7 @@ import { tree } from '../content/trees/index.ts';
 import { insightMultiplier } from '../core/insight.ts';
 import { effectiveWheel } from '../core/wheel.ts';
 import { manualFinished } from '../core/manuals.ts';
-import { copyUnread, readCheck, readingCopy, readProgress } from '../core/reading.ts';
+import { copyUnread, readCheck, readingCopy, readProgress, readRate } from '../core/reading.ts';
 import type { Cultivator } from '../core/state.ts';
 import { hasLearned, nodeReady, nodeSealed } from '../core/trees.ts';
 import { formatNumber, LADDER_LABELS } from './format.ts';
@@ -151,6 +151,16 @@ export function readSoFar(c: Cultivator, id: string): string {
 export function readingLine(c: Cultivator): string | null {
   const id = readingCopy(c);
   return id ? `reading ${copyTitle(id)} · ${readSoFar(c, id)}` : null;
+}
+
+/**
+ * Days left to read a copy at today's study hours, how well it suits you counted; Infinity with no
+ * study hour.
+ */
+export function readDaysLeft(c: Cultivator, id: string, studyPerDay: number): number {
+  const rate = readRate(c, id, studyPerDay);
+  const left = Math.max(0, readDays(id) - readProgress(c, id));
+  return rate > 0 ? left / rate : Infinity;
 }
 
 /** "White formula · an unread copy · beside Qi, tier 1", an unread copy's card line. */

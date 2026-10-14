@@ -5535,3 +5535,319 @@ button.fight-card {
 .tree-totals-head:first-child {
   margin-top: 0;
 }
+
+/* Cultivate (P2.5f): a strip of the day's hours across the top, three tabs under it. */
+.hour-strip {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.hour-strip-cells {
+  display: flex;
+  gap: 4px;
+}
+
+.hour-cell {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: var(--hour);
+  color: #0a0c10;
+  font-size: calc(16px * var(--text-scale));
+  cursor: pointer;
+}
+
+.hour-cell.hour-sleep {
+  opacity: 0.55;
+}
+
+.hour-cell.is-open {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.hour-cell:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.hour-strip-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.hour-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hour-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--hour);
+}
+
+.hour-strip-hint {
+  margin-left: auto;
+}
+
+.cultivate-tabs {
+  margin-bottom: 14px;
+}
+
+.cultivate-tabs button {
+  padding: 8px 16px;
+}
+
+.cultivate-tabs .menu-mark {
+  margin-left: 6px;
+}
+
+.cultivate-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.cultivate-split > .panel {
+  margin: 0;
+}
+
+.method-only {
+  display: block;
+}
+
+/* Practice: each slot's share of the day, and a slot not yet open. */
+.practice-share {
+  flex: none;
+  width: 26px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: calc(21px * var(--text-scale));
+  line-height: 1;
+  color: var(--hour-practice);
+}
+
+.practice-slot-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.practice-slot-empty .practice-share {
+  color: var(--muted);
+}
+
+.practice-slot.is-locked {
+  border-style: dashed;
+  opacity: 0.75;
+}
+
+.practice-slot.is-locked > p {
+  margin: 0;
+}
+
+/* Study: the copy being read, the queue after it, the shelf. */
+.study-split {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.study-main,
+.study-side {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.study-main > .panel,
+.study-side > .panel {
+  margin: 0;
+}
+
+.study-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+}
+
+.study-head .panel-heading {
+  margin: 0;
+}
+
+.study-head .link-button {
+  margin-left: auto;
+}
+
+.study-now {
+  display: grid;
+  gap: 12px;
+}
+
+.study-now > p {
+  margin: 0;
+}
+
+.study-book {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.study-book-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.study-book-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: calc(24px * var(--text-scale));
+  font-weight: 600;
+}
+
+.study-bar {
+  height: 8px;
+  margin: 6px 0 2px;
+}
+
+.study-bar .bar-fill {
+  background: var(--hour-study);
+}
+
+.study-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.study-suits.is-good {
+  color: var(--hour-study);
+}
+
+.study-queue {
+  display: grid;
+  margin: 8px 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.study-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--edge);
+}
+
+.study-row:first-child {
+  border-top: 0;
+}
+
+.study-row.is-waiting .spine {
+  opacity: 0.6;
+}
+
+.study-row-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.study-row-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.study-place {
+  width: 16px;
+  font-family: var(--font-display);
+  font-size: calc(19px * var(--text-scale));
+  color: var(--muted);
+}
+
+.study-gives {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  margin: 8px 0 0;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.study-gives dt {
+  color: var(--muted);
+}
+
+.study-gives dd {
+  margin: 0;
+  text-align: right;
+}
+
+/* A spine out of the bookcase, in a row that carries the controls. */
+.spine.is-still {
+  cursor: default;
+}
+
+.spine.is-still:hover {
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow: none;
+  transform: none;
+}
+
+@media (max-width: 899px) {
+  .cultivate-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Study's shelf wants room for a spine, a name and a button: below a wide window it goes under. */
+@media (max-width: 1400px) {
+  .study-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .hour-strip-cells {
+    gap: 2px;
+  }
+
+  .hour-cell {
+    height: 30px;
+    font-size: calc(13px * var(--text-scale));
+  }
+
+  .hour-strip-hint {
+    display: none;
+  }
+
+  .cultivate-tabs {
+    display: flex;
+  }
+
+  .cultivate-tabs button {
+    flex: 1;
+    padding: 8px 6px;
+  }
+
+  .study-book {
+    flex-wrap: wrap;
+  }
+}
