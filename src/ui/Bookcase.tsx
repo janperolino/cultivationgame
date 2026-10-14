@@ -35,7 +35,6 @@ import {
   readProgress,
 } from '../core/reading.ts';
 import type { Cultivator } from '../core/state.ts';
-import { canLearn, hasLearned } from '../core/trees.ts';
 import {
   CARD_NODES,
   cardMeta,
@@ -55,9 +54,8 @@ import {
   spineWidth,
 } from './bookcase.ts';
 import { formatEffect, formatNumber } from './format.ts';
-import { NodeEffects } from './ManualNodes.tsx';
 import { useGame } from './store.ts';
-import { OWN_R, ownTree } from './treeLayout.ts';
+import { OwnFan } from './TreeFan.tsx';
 
 const RARE = rarityRank('purple');
 
@@ -660,85 +658,10 @@ function listCaption(c: Cultivator, m: Manual): string {
   return `${MANUAL_KINDS[m.kind].name} · ${learnedCount(c, m)} of ${m.nodes.length} learned`;
 }
 
-/** The focused manual's own tree, large: its nodes from `requires`, names under them, edges lit. */
-function OwnTree({ c, m }: { c: Cultivator; m: Manual }) {
-  const t = ownTree(m);
-  const at = new Map(t.nodes.map((n) => [n.node.id, n.at]));
-  return (
-    <div className="own-tree-scroll">
-      <div className="own-tree" style={{ width: t.width, height: t.height }} aria-hidden="true">
-        <svg width={t.width} height={t.height}>
-          {m.nodes.flatMap((n) =>
-            n.requires.map((r) => {
-              const a = at.get(r)!;
-              const b = at.get(n.id)!;
-              const lit = hasLearned(c, r) && hasLearned(c, n.id);
-              const open = hasLearned(c, r) && !lit;
-              return (
-                <line
-                  key={`${r}-${n.id}`}
-                  x1={a.x}
-                  y1={a.y}
-                  x2={b.x}
-                  y2={b.y}
-                  className={lit ? 'is-lit' : open ? 'is-open' : ''}
-                />
-              );
-            }),
-          )}
-          {t.nodes.map(({ node, at: p }) => (
-            <circle
-              key={node.id}
-              cx={p.x}
-              cy={p.y}
-              r={OWN_R}
-              className={`own-node is-${nodeMark(c, node)}`}
-            />
-          ))}
-        </svg>
-        {t.nodes.map(({ node, at: p }) => (
-          <span
-            key={node.id}
-            className={`own-label is-${nodeMark(c, node)}`}
-            style={{ left: p.x - 65, top: p.y + OWN_R + 5 }}
-          >
-            {node.name}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** One of the focused manual's nodes: its effects, its state, and Learn when it can be bought. */
-function OwnNodeRow({ c, m, n }: { c: Cultivator; m: Manual; n: ManualNode }) {
-  const learnNode = useGame((s) => s.learnNode);
-  const ended = useGame((s) => !!s.game?.ended);
-  const mark = nodeMark(c, n);
-  return (
-    <li className={`own-row is-${mark}`}>
-      <span className="card-mark" aria-hidden="true" />
-      <div className="own-row-body">
-        <div>
-          <strong>{n.name}</strong> <span className="hanzi muted">{n.hanzi}</span>
-          {n.kind === 'notable' && <span className="caption"> · notable</span>}
-        </div>
-        <NodeEffects n={n} />
-        <span className="caption">{nodeWords(c, m, n)}</span>
-      </div>
-      {canLearn(c, n.id).ok && (
-        <button type="button" className="button" disabled={ended} onClick={() => learnNode(n.id)}>
-          Learn · {formatNumber(n.cost)}
-        </button>
-      )}
-    </li>
-  );
-}
-
 /**
  * The top of the tab, one tree at a time: a list of every manual with no host tree, filtered past
- * eight by a search, a chip per kind and Hide finished, and the focused one's own tree beside it,
- * then its nodes and its flavor line. When the filter hides the focused manual, the first match
+ * eight by a search, a chip per kind and Hide finished, and the focused one's own tree beside it
+ * as a small fan, its nodes read and learned in place, then its flavor line. When the filter hides the focused manual, the first match
  * stands in for it.
  */
 export function HostlessView({
@@ -869,13 +792,8 @@ export function HostlessView({
               </span>
             </div>
           </div>
-          <OwnTree c={c} m={m} />
+          <OwnFan key={m.id} c={c} m={m} />
           <p className="caption">{whyHere(m)}</p>
-          <ul className="own-rows">
-            {m.nodes.map((n) => (
-              <OwnNodeRow key={n.id} c={c} m={m} n={n} />
-            ))}
-          </ul>
           {m.nodes[0]?.text && <p className="bookcase-card-flavor">{m.nodes[0].text}</p>}
         </article>
       )}

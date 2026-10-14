@@ -20,8 +20,16 @@ export interface Size {
 export const MIN_ZOOM = 0.3;
 export const MAX_ZOOM = 2;
 
-export function clampZoom(k: number): number {
-  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, k));
+/** How far a view may zoom out and in. */
+export interface ZoomRange {
+  min: number;
+  max: number;
+}
+
+const DEFAULT_RANGE: ZoomRange = { min: MIN_ZOOM, max: MAX_ZOOM };
+
+export function clampZoom(k: number, range: ZoomRange = DEFAULT_RANGE): number {
+  return Math.min(range.max, Math.max(range.min, k));
 }
 
 /** The world point under a screen point. */
@@ -34,8 +42,8 @@ export function pan(v: View, dx: number, dy: number): View {
 }
 
 /** Zooms by a factor about a screen point, which stays over the same world point. */
-export function zoomAt(v: View, factor: number, at: Point): View {
-  const k = clampZoom(v.k * factor);
+export function zoomAt(v: View, factor: number, at: Point, range?: ZoomRange): View {
+  const k = clampZoom(v.k * factor, range);
   const w = toWorld(v, at);
   return { k, x: at.x - w.x * k, y: at.y - w.y * k };
 }
@@ -44,10 +52,17 @@ export function zoomAt(v: View, factor: number, at: Point): View {
  * Two fingers: the view at the gesture's start, the two touches then and now. The world point
  * under the first midpoint follows the midpoint, and the zoom follows the spread.
  */
-export function pinch(start: View, a0: Point, b0: Point, a1: Point, b1: Point): View {
+export function pinch(
+  start: View,
+  a0: Point,
+  b0: Point,
+  a1: Point,
+  b1: Point,
+  range?: ZoomRange,
+): View {
   const d0 = Math.hypot(b0.x - a0.x, b0.y - a0.y);
   const d1 = Math.hypot(b1.x - a1.x, b1.y - a1.y);
-  const k = clampZoom(d0 > 0 ? (start.k * d1) / d0 : start.k);
+  const k = clampZoom(d0 > 0 ? (start.k * d1) / d0 : start.k, range);
   const w = toWorld(start, { x: (a0.x + b0.x) / 2, y: (a0.y + b0.y) / 2 });
   const m = { x: (a1.x + b1.x) / 2, y: (a1.y + b1.y) / 2 };
   return { k, x: m.x - w.x * k, y: m.y - w.y * k };

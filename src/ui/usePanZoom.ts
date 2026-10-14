@@ -1,8 +1,17 @@
 // Drag to pan, wheel or pinch to zoom, for a box that shows a world through a View (ui/panzoom.ts).
-// The web of threads uses it; the Trees canvas has its own copy of the same gestures.
+// The web of threads and the Trees canvas use it.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type React from 'react';
-import { clampView, pan, pinch, zoomAt, type Point, type Size, type View } from './panzoom.ts';
+import {
+  clampView,
+  pan,
+  pinch,
+  zoomAt,
+  type Point,
+  type Size,
+  type View,
+  type ZoomRange,
+} from './panzoom.ts';
 
 /** Pixels a pointer may move and still count as a tap. */
 const TAP = 6;
@@ -19,9 +28,9 @@ interface Gesture {
 
 /**
  * A pannable, zoomable view of `world` inside the returned `box`. It opens on `home(screen)` once
- * the box has a size, and `recentre` goes back there.
+ * the box has a size, and `recentre` goes back there; `show` moves to any view made for the screen.
  */
-export function usePanZoom(world: Size, home: (screen: Size) => View) {
+export function usePanZoom(world: Size, home: (screen: Size) => View, range?: ZoomRange) {
   const box = useRef<HTMLDivElement>(null);
   const [screen, setScreen] = useState<Size>({ w: 0, h: 0 });
   const [view, setView] = useState<View | null>(null);
@@ -62,12 +71,14 @@ export function usePanZoom(world: Size, home: (screen: Size) => View) {
       const at = { x: e.clientX - r.left, y: e.clientY - r.top };
       const lines = e.deltaMode === 1 ? 16 : 1;
       setView((v) =>
-        v ? clampView(zoomAt(v, Math.exp(-e.deltaY * lines * WHEEL_STEP), at), world, screen) : v,
+        v
+          ? clampView(zoomAt(v, Math.exp(-e.deltaY * lines * WHEEL_STEP), at, range), world, screen)
+          : v,
       );
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [world, screen]);
+  }, [world, screen, range]);
 
   const local = (e: React.PointerEvent): Point => {
     const r = box.current!.getBoundingClientRect();
@@ -97,7 +108,14 @@ export function usePanZoom(world: Size, home: (screen: Size) => View) {
         const [a, b] = ids as [number, number];
         g.moved = true;
         apply(
-          pinch(g.view, g.start.get(a)!, g.start.get(b)!, g.pointers.get(a)!, g.pointers.get(b)!),
+          pinch(
+            g.view,
+            g.start.get(a)!,
+            g.start.get(b)!,
+            g.pointers.get(a)!,
+            g.pointers.get(b)!,
+            range,
+          ),
         );
         return;
       }
@@ -134,12 +152,16 @@ export function usePanZoom(world: Size, home: (screen: Size) => View) {
   return {
     box,
     view,
+    screen,
     handlers,
     zoomBy: (f: number) => {
-      if (view) apply(zoomAt(view, f, { x: screen.w / 2, y: screen.h / 2 }));
+      if (view) apply(zoomAt(view, f, { x: screen.w / 2, y: screen.h / 2 }, range));
     },
     recentre: () => {
       if (screen.w) setView(home(screen));
+    },
+    show: (make: (screen: Size, now: View | null) => View) => {
+      if (screen.w) apply(make(screen, view));
     },
   };
 }

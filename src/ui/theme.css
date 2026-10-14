@@ -13,6 +13,13 @@
   --accent: #d6ab4c;
   --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
   --accent-edge: color-mix(in srgb, var(--accent) 45%, transparent);
+  /* The trees' learned nodes and paths (P2.7), apart from the accent so the accent keeps meaning
+     "act on this"; locked nodes are iron. */
+  --gilt: #d9b46a;
+  --gilt-soft: color-mix(in srgb, var(--gilt) 45%, transparent);
+  --gilt-core: #fff1c9;
+  --iron: #3a3832;
+  --iron-deep: #12110e;
   --crack: #7fc7d9;
   --warn: #e08a6a;
   --warn-edge: color-mix(in srgb, var(--warn) 45%, transparent);
@@ -1883,9 +1890,11 @@ select {
   background-position: 50% 0;
 }
 
-/* Trees: a canvas you drag and zoom, with tier bands in world space. Gold marks what you can
-   learn, crack light what you hold; sealed tiers are dimmed. Minor nodes are small rounds,
-   notables diamonds, starters and capstones larger rings. */
+/* Trees (design § UI and screens, The trees are opening fans): each tree an opening fan you drag
+   and zoom, in the gilded look. Gilt is its own token, so the accent keeps meaning "act on this":
+   learned nodes and paths are gilt with a glow and a fine bright core, a node you can buy now
+   rings in the accent with its cost, a locked one is dark iron; the three differ in lightness as
+   well as hue. Manuals are the only jewels. Strokes keep their width at any zoom. */
 .tree-top {
   display: flex;
   flex-wrap: wrap;
@@ -1902,6 +1911,7 @@ select {
 .tree-canvas-wrap {
   position: relative;
   margin-top: 12px;
+  container-type: inline-size;
 }
 
 .tree-canvas {
@@ -1930,170 +1940,6 @@ select {
   transform-origin: 0 0;
 }
 
-.tree-band {
-  position: absolute;
-  left: 0;
-  border-top: 1px solid var(--edge);
-}
-
-.tree-band:first-child {
-  border-top: 0;
-}
-
-.tree-band-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  height: 52px;
-  padding: 0 18px;
-}
-
-.tree-band.is-empty {
-  opacity: 0.5;
-}
-
-.tier-label {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: calc(17px * var(--text-scale));
-}
-
-.tree-edges {
-  position: absolute;
-  top: 0;
-  left: 0;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.tree-edges path {
-  fill: none;
-  stroke: var(--edge-strong);
-  stroke-width: 1.6;
-}
-
-.tree-edges path.is-open {
-  stroke: var(--accent-edge);
-}
-
-.tree-edges path.is-lit {
-  stroke: var(--crack);
-  stroke-opacity: 0.75;
-  stroke-width: 2.2;
-}
-
-.tree-edges path.is-tier {
-  stroke-dasharray: 4 5;
-}
-
-.tree-node {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  width: 110px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--muted);
-  font-size: calc(11.5px * var(--text-scale));
-  line-height: 1.15;
-  text-align: center;
-  cursor: pointer;
-}
-
-.tree-node-shape {
-  display: block;
-  flex: none;
-  border: 1.5px solid var(--edge-strong);
-  border-radius: 50%;
-  background: var(--glass-strong);
-}
-
-.tree-node.is-notable .tree-node-shape {
-  border-radius: 4px;
-  transform: rotate(45deg) scale(0.82);
-}
-
-.tree-node.is-starter .tree-node-shape,
-.tree-node.is-capstone .tree-node-shape {
-  border-width: 2px;
-  box-shadow:
-    0 0 0 4px var(--void),
-    0 0 0 5px var(--edge-strong);
-}
-
-.tree-node-name {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: calc(13px * var(--text-scale));
-  color: var(--muted);
-}
-
-.tree-node.is-notable .tree-node-name,
-.tree-node.is-starter .tree-node-name,
-.tree-node.is-capstone .tree-node-name {
-  font-size: calc(14.5px * var(--text-scale));
-  color: var(--text);
-}
-
-.tree-node-cost {
-  font-size: calc(11px * var(--text-scale));
-  font-variant-numeric: tabular-nums;
-  color: var(--accent);
-}
-
-.tree-node.is-available .tree-node-shape {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 14%, var(--glass-strong));
-}
-
-.tree-node.is-available .tree-node-name {
-  color: var(--text);
-}
-
-.tree-node.is-learned .tree-node-shape {
-  border-color: var(--crack);
-  background: color-mix(in srgb, var(--crack) 35%, var(--glass-strong));
-  box-shadow: 0 0 12px color-mix(in srgb, var(--crack) 45%, transparent);
-}
-
-.tree-node.is-learned.is-starter .tree-node-shape,
-.tree-node.is-learned.is-capstone .tree-node-shape {
-  box-shadow:
-    0 0 0 4px var(--void),
-    0 0 0 5px var(--crack),
-    0 0 16px color-mix(in srgb, var(--crack) 45%, transparent);
-}
-
-.tree-node.is-learned .tree-node-name {
-  color: var(--crack);
-}
-
-.tree-node.is-sealed {
-  opacity: 0.45;
-}
-
-.tree-band.is-sealed .tree-band-head {
-  opacity: 0.6;
-}
-
-.tree-node.is-selected .tree-node-shape {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
-}
-
-.tree-node:focus-visible {
-  outline: none;
-}
-
-.tree-node:focus-visible .tree-node-name {
-  text-decoration: underline;
-  text-decoration-color: var(--accent);
-}
-
 .tree-tools {
   position: absolute;
   top: 10px;
@@ -2110,6 +1956,572 @@ select {
 
 .tree-recentre {
   background: var(--glass-strong);
+}
+
+.fan-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.fan-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.fan-lines path,
+.fan-lines circle {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.fan-band-edge {
+  stroke: color-mix(in srgb, var(--gilt) 32%, transparent);
+  stroke-width: 1.2;
+}
+
+.fan-crown-row {
+  stroke: color-mix(in srgb, var(--gilt) 18%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+}
+
+.fan-lines .is-sealed {
+  opacity: 0.55;
+}
+
+.fan-capstone-place {
+  stroke: color-mix(in srgb, var(--gilt) 22%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.fan-edge {
+  stroke-width: 1.4;
+}
+
+.fan-edge.is-iron {
+  stroke: var(--iron);
+}
+
+.fan-edge.is-open {
+  stroke: color-mix(in srgb, var(--gilt) 40%, var(--iron));
+}
+
+.fan-edge.is-lit {
+  stroke: var(--gilt);
+  stroke-width: 2.4;
+}
+
+.fan-edge-core {
+  stroke: var(--gilt-core);
+  stroke-width: 0.6;
+  opacity: 0.55;
+}
+
+/* A node: a ring in its state's color (currentColor), a notable's double rim, a medallion with a
+   hanzi for the starter and the capstone. The hit area reaches past the small rings. */
+.fan-node {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 0;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: var(--iron-deep);
+  color: var(--iron);
+  cursor: pointer;
+}
+
+.fan-node::before {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+}
+
+.fan-node.is-notable {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+}
+
+.fan-node.is-medallion {
+  outline: 1px solid currentColor;
+  outline-offset: 3px;
+}
+
+.fan-node-glyph {
+  font-family: var(--font-brush);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.fan-node.is-available {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--iron-deep));
+}
+
+.fan-node.is-learned {
+  color: var(--gilt);
+  background: color-mix(in srgb, var(--gilt) 18%, var(--iron-deep));
+  box-shadow:
+    0 0 10px var(--gilt-soft),
+    inset 0 0 6px color-mix(in srgb, var(--gilt) 35%, transparent);
+}
+
+/* A learned minor ring fills with gilt, so learned and buyable differ in lightness, not only hue. */
+.fan-node.is-learned.is-minor {
+  background: color-mix(in srgb, var(--gilt) 75%, var(--iron-deep));
+}
+
+.fan-node.is-sealed {
+  opacity: 0.5;
+}
+
+.fan-node.is-selected {
+  box-shadow:
+    0 0 0 4px var(--void),
+    0 0 0 6px var(--accent);
+}
+
+.fan-node:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.fan-label {
+  position: absolute;
+  pointer-events: none;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: calc(12px * var(--text-scale));
+  line-height: 13px;
+  color: #6f685a;
+  text-align: center;
+  text-shadow:
+    0 0 3px var(--void),
+    0 0 3px var(--void);
+}
+
+.fan-label.is-left {
+  text-align: right;
+}
+
+.fan-label.is-right {
+  text-align: left;
+}
+
+.fan-label.is-learned {
+  color: #e9d7a8;
+}
+
+.fan-label.is-available {
+  color: var(--text);
+}
+
+.fan-label.is-sealed {
+  opacity: 0.6;
+}
+
+.fan-label-cost {
+  display: block;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: calc(10.5px * var(--text-scale));
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+/* A band's name at its left end, growing with its ring so the far realms read zoomed out. */
+.fan-band-name {
+  position: absolute;
+  pointer-events: none;
+  font-family: var(--font-ui);
+  line-height: 1.25;
+  letter-spacing: 0.14em;
+  text-align: right;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--gilt) 70%, var(--muted));
+}
+
+.fan-band-name.is-here {
+  color: var(--gilt);
+}
+
+.fan-band-name.is-sealed {
+  opacity: 0.55;
+}
+
+.fan-band-status {
+  display: block;
+  font-size: 0.72em;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--muted);
+}
+
+/* A manual's jewel: a diamond in its rarity's color with a soft glow, its pips under it, a slow
+   pulse while one of its nodes is ready, dim in a sealed band. */
+.jewel {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  filter: drop-shadow(0 0 6px var(--rarity-color));
+}
+
+.jewel-gem {
+  width: 13px;
+  height: 13px;
+  box-sizing: border-box;
+  transform: rotate(45deg);
+  background: var(--rarity-color);
+  border: 2px solid var(--void);
+  outline: 1px solid var(--rarity-color);
+}
+
+.jewel.is-open .jewel-gem {
+  width: 16px;
+  height: 16px;
+}
+
+.jewel.is-open {
+  filter: drop-shadow(0 0 10px var(--rarity-color));
+}
+
+.jewel.is-sealed {
+  opacity: 0.4;
+}
+
+.jewel.is-ready {
+  animation: jewel-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes jewel-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--gilt) 20%, transparent);
+  }
+}
+
+:root[data-motion='reduced'] .jewel.is-ready {
+  animation: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gilt) 35%, transparent);
+}
+
+.jewel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.jewel-pips {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  width: 48px;
+  pointer-events: none;
+}
+
+.jewel-pip {
+  width: 5px;
+  height: 5px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--iron);
+}
+
+.jewel-pip.is-learned {
+  background: var(--gilt);
+  box-shadow: 0 0 4px var(--gilt);
+}
+
+.jewel-pip.is-ready {
+  background: none;
+  border: 1px solid var(--gilt);
+}
+
+.jewel-count {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--gilt);
+}
+
+/* A jewel opened in place: a disc over its neighbours, its nodes on a ring above the heart. */
+.bloom {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--gilt) 40%, transparent);
+  border-radius: 50%;
+  background: #0e0c09;
+  outline: 1px solid color-mix(in srgb, var(--gilt) 16%, transparent);
+  outline-offset: 4px;
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.7);
+}
+
+.bloom-lines {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.bloom-lines path,
+.bloom-ring {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.bloom-ring {
+  stroke: var(--iron);
+  stroke-width: 1.2;
+}
+
+.bloom.is-sealed .fan-node,
+.bloom.is-sealed .fan-label {
+  opacity: 0.5;
+}
+
+.bloom .fan-label {
+  font-size: calc(11px * var(--text-scale));
+  line-height: 12px;
+}
+
+.bloom-name {
+  position: absolute;
+  left: 18px;
+  width: 140px;
+  pointer-events: none;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* The hover card, in screen pixels over the canvas. */
+.fan-tip {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 248px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--gilt) 45%, transparent);
+  border-radius: var(--radius-small);
+  background: var(--obsidian);
+  box-shadow: 0 12px 26px rgb(0 0 0 / 0.6);
+  pointer-events: none;
+}
+
+.fan-tip-title {
+  font-family: var(--font-display);
+  font-size: calc(17px * var(--text-scale));
+  font-weight: 700;
+  line-height: 1.1;
+  color: #f0dca8;
+}
+
+.fan-tip-sub {
+  font-size: calc(11px * var(--text-scale));
+  color: var(--muted);
+}
+
+.fan-tip-effects {
+  font-size: calc(12px * var(--text-scale));
+  color: #e3cf9f;
+}
+
+.fan-tip-status {
+  font-size: calc(11px * var(--text-scale));
+  color: var(--muted);
+}
+
+.fan-tip-status.is-ready {
+  color: var(--accent);
+}
+
+.fan-tip-status.is-learned {
+  color: var(--gilt);
+}
+
+.fan-tip-text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: calc(13.5px * var(--text-scale));
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+/* The view's buttons and the realm ladder float top right, outside the dragged box. */
+.fan-tools {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.fan-tools .tree-tools {
+  position: static;
+  align-items: center;
+}
+
+.fan-zoom {
+  margin-right: 4px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.fan-ladder {
+  width: 232px;
+  padding: 6px 0;
+  border: 1px solid color-mix(in srgb, var(--gilt) 22%, transparent);
+  border-radius: var(--radius-small);
+  background: rgb(12 11 9 / 0.92);
+}
+
+.fan-ladder-head {
+  display: block;
+  padding: 4px 10px 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--gilt) 55%, var(--muted));
+}
+
+.fan-ladder ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fan-ladder button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  color: #e3cf9f;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fan-ladder button:hover,
+.fan-ladder button.is-here {
+  background: color-mix(in srgb, var(--gilt) 12%, transparent);
+}
+
+.fan-ladder button.is-ahead {
+  color: var(--muted);
+}
+
+.fan-ladder .hanzi {
+  font-family: var(--font-brush);
+  font-size: 13px;
+}
+
+.fan-ladder-num {
+  width: 12px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.fan-ladder-name {
+  flex: 1;
+}
+
+.fan-ladder-mark {
+  font-size: 9.5px;
+  color: var(--gilt);
+}
+
+.fan-ladder-select {
+  display: none;
+}
+
+/* A narrow canvas (a phone, or a narrow window beside the chronicle) takes the ladder as a select. */
+@container (max-width: 720px) {
+  .fan-ladder {
+    width: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .fan-ladder-head,
+  .fan-ladder ol {
+    display: none;
+  }
+
+  .fan-ladder-select {
+    display: block;
+    max-width: 180px;
+    min-height: 36px;
+    background: var(--glass-strong);
+  }
+}
+
+/* A hostless manual's own tree, a small fan in the same look, its node's details under it. */
+.own-fan-scroll {
+  display: flex;
+  justify-content: safe center;
+  padding: 12px 0 6px;
+  border-block: 1px solid var(--edge);
+  overflow-x: auto;
+}
+
+.own-fan {
+  position: relative;
+  flex: none;
+}
+
+.own-fan-band {
+  position: absolute;
+  width: 150px;
+  pointer-events: none;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-align: right;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--gilt) 70%, var(--muted));
+}
+
+.own-fan-band .hanzi {
+  letter-spacing: 0;
+}
+
+.own-fan-detail .node-overlay {
+  position: static;
+  width: auto;
+  max-height: none;
+  backdrop-filter: none;
 }
 
 .node-overlay {
@@ -2160,59 +2572,6 @@ select {
   padding-left: 18px;
 }
 
-/* Manuals grafted beside their host trees (design § Cultivation, Where manuals live): a name plate
-   on top of each cluster, a dotted bracket down its left side to the band, joined to no tree node. */
-.graft-plate {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 6px 10px;
-  border: 1px solid var(--edge-strong);
-  border-radius: var(--radius-small);
-  background: var(--glass-strong);
-  color: var(--text);
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: calc(13.5px * var(--text-scale));
-  line-height: 1.2;
-  text-align: left;
-  cursor: pointer;
-}
-
-.graft-plate .caption {
-  font-family: var(--font-body);
-  font-weight: 400;
-}
-
-.graft-plate.is-selected {
-  border-color: var(--accent);
-}
-
-.graft-plate:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.manual-glyph {
-  display: inline-grid;
-  place-items: center;
-  width: 1.5em;
-  height: 1.5em;
-  border: 1px solid var(--edge-strong);
-  border-radius: 50%;
-  font-size: 0.85em;
-  color: var(--muted);
-}
-
-.tree-edges path.graft-bracket {
-  stroke: var(--edge-strong);
-  stroke-width: 1.4;
-  stroke-dasharray: 2 5;
-  stroke-linecap: round;
-}
-
 .link-button {
   padding: 0;
   border: 0;
@@ -2229,22 +2588,6 @@ select {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--edge);
-}
-
-.manual-nodes {
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.manual-node + .manual-node {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--edge);
-}
-
-.manual-node .actions {
-  margin-top: 8px;
 }
 
 /* Techniques (P2.5b, mockup A): the Practicing panel, then the list beside one technique's page,
@@ -4742,97 +5085,6 @@ button.fight-card {
   font-weight: 600;
 }
 
-.own-tree-scroll {
-  display: flex;
-  justify-content: safe center;
-  padding: 14px 0 6px;
-  border-block: 1px solid var(--edge);
-  overflow-x: auto;
-}
-
-.own-tree {
-  position: relative;
-  flex: none;
-}
-
-.own-tree svg {
-  position: absolute;
-  inset: 0;
-  overflow: visible;
-}
-
-.own-tree line {
-  stroke: color-mix(in srgb, var(--accent) 22%, transparent);
-  stroke-width: 1.4;
-}
-
-.own-tree line.is-open {
-  stroke: color-mix(in srgb, var(--accent) 45%, transparent);
-}
-
-.own-tree line.is-lit {
-  stroke: var(--accent);
-}
-
-.own-node {
-  fill: var(--void);
-  stroke: color-mix(in srgb, var(--accent) 35%, transparent);
-  stroke-width: 1;
-}
-
-.own-node.is-learned {
-  fill: var(--accent);
-  stroke: color-mix(in srgb, var(--accent) 40%, black);
-  stroke-width: 2;
-}
-
-.own-node.is-ready {
-  stroke: var(--accent);
-  stroke-width: 1.5;
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 70%, transparent));
-}
-
-.own-label {
-  position: absolute;
-  width: 130px;
-  color: var(--muted);
-  font-size: calc(11.5px * var(--text-scale));
-  line-height: 1.25;
-  text-align: center;
-}
-
-.own-label.is-learned {
-  color: var(--text);
-}
-
-.own-label.is-ready {
-  color: var(--accent);
-}
-
-.own-rows {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 10px 24px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.own-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.own-row-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.own-row-body .effects {
-  margin: 2px 0;
-}
-
 /* A node's mark, on the card and in the hostless list: filled learned, glowing ready. */
 .card-mark {
   flex: none;
@@ -5395,8 +5647,8 @@ button.fight-card {
 /* ---------------------------------------------------------------- what's new (P2.5d) */
 
 /* A new thing glows faintly in the accent until it is selected: a Bag square, a technique's row,
-   a tree's tab, a graft's plate, a spine. A drop shadow, so it sits over each thing's own look. */
-.is-new:is(.technique-row, .bag-item, .graft-plate, .spine, .hostless-pick),
+   a tree's tab, a manual's jewel, a spine. A drop shadow, so it sits over each thing's own look. */
+.is-new:is(.technique-row, .bag-item, .jewel, .spine, .hostless-pick),
 .seg button.is-new {
   filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 70%, transparent));
   animation: new-glow 2.8s ease-in-out infinite;
