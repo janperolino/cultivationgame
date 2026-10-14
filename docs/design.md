@@ -146,6 +146,17 @@ The world is original, enormous and nested. Each area feels like everything unti
 
 **Generation.** The big places are written by hand, as the world bible describes, and small ones fill in procedurally around them, as each kingdom's sites (The fog). The save keeps everything, so the world never changes behind your back.
 
+**The atlas as data** (D3, 2026-10-14). Prose is the narrator's and fields are the engine's: `summary`, `lore` and `truth` stay GLM's, and anything a rule branches on is a field, never read from prose. Lore and truth are the only two layers of knowing (The fog, told and true). The fields:
+
+- `terrain` on every land place, kingdoms included; one left out takes its region's. Sight, sites and the encounter tables read it.
+- `hidden`: left out for a place anyone can see, `true` for one a Soul check or divine sense finds, or a realm for one only a soul at that realm finds.
+- `access` on gated places and secret realms: what opens it (a token, a rank, an invitation, a toll in stones) and its array's realm rating, and for a secret realm an entry cap, a requirement and a cycle. The Realm of Mingled Blood: below Foundation, beast blood or a bonded beast, every 7 years for 30 days.
+- `enemies` on powers, as entry ids, read by the hostile rule and the encounter tables.
+- The `famous` tag, which a start reads to rumor the region's famous places.
+- `features` on any place: the tagged features its scenes build from.
+
+A generated site is the same record, kind `site` with a sub-kind (town, village, cave, den, ruin, shrine, herb valley), kept in the save; a hand-written one may join the atlas.
+
 **Size without lag.** Regions near you simulate in detail; distant ones tick in yearly summaries until you arrive. The map view zooms between tiers, and when a new tier opens, your old world shrinks to a dot on it.
 
 ## Cultivation: the big three, Daos, Ways and techniques
@@ -552,7 +563,7 @@ At Nascent Soul a beast takes human form and becomes a cultivator record on a be
 - Kept: a scene that ends with a thread keeps them. You talked and traded names, haggled at their stall, spared, robbed, healed or bargained with them, survived a fight with them or they with you, or a card named them. A kept person is stored as a seed plus pins: the seed regenerates their kit and rolls on demand, and the pins are what changed, regard, realm, whereabouts, what you took. That is the People screen (Professions, people and powers), dozens to a few hundred a life, mortals included. Named atlas people are kept from the start with everything pinned. From M5 they tick on a coarse clock, a season or a year: climb at the away rate on their pedigree, age, roll for death, move, and roll an event that may write to their log.
 - The world: powers have strength on the realm curve and prosperity drifts (M6), and encounters generate from tables. A place's people are generated from the place's seed, so the same keeper stands at the same stall next time, and a rumor about "a Foundation elder of the Beast-Butcher Gate" carries a seed, so when you meet them they match the rumor.
 
-**The Border Wilds roster**, drafted for P2.2's sim and P3.1's region, in the Qi Condensation and Foundation bands. The parts and names follow the atlas entries the canon pass reads.
+**The Border Wilds roster**, drafted for P2.2's sim and P3.2's region, in the Qi Condensation and Foundation bands. The parts and names follow the atlas entries the canon pass reads.
 
 | Template | Band | Kind | Element | Profile | Notes |
 |---|---|---|---|---|---|
@@ -645,6 +656,43 @@ Everything that happens to you is a card, in seclusion and in the world alike: a
 - People from the start: the sergeant, your senior, the clan aunt as named people in the card text, each with a record (Professions, people and powers), so the first hour already has faces.
 
 ## The world: travel, trips and encounters
+
+**Do whatever you want** (Jan's call, D3, 2026-10-14). Going in rests on one principle: the player can try anything, and the world answers by its own rules.
+
+- **Free to try, not free to win.** Scale holds (Scale of destruction): a Qi Condensation punch cracks a wall, never the Wall of Piled Bones. Memory holds too: rob a Gate runner and the Gate remembers.
+- **Free text on top, twelve verbs underneath,** as combat already is (Combat: rules underneath, free text on top). The interpreter turns what you write into verbs with targets and the scene's features ("wait on the cliff until the caravan passes, then cut the lead mule loose" is rest, then evade, then take); the engine resolves them and the narrator tells it. With no key, the same verbs are buttons on the scene, so going in plays without the AI.
+- **Priced, not gated.** Nothing says "you can't" except scale. An attempt costs time off your wheel, risk, standing, karma and fame, and every attempt changes something: time passes, or someone saw.
+- **As deep as the world's memory.** Freedom reaches as far as the state the world keeps: people who remember (Who stays), places with fields and features (The world map, The atlas as data), standing with each power. An attempt whose system comes later is narrated, and says which milestone makes it real.
+
+| Verb | What it covers |
+|---|---|
+| Go | travel, enter, leave, follow, turn back, go home |
+| Look | look around, search, track, watch, scout |
+| Talk | ask, persuade, lie, threaten, bargain, beg, recruit, challenge |
+| Fight | attack, ambush, duel, hunt, defend |
+| Evade | flee, hide, sneak, disguise, hide your realm |
+| Take | loot, gather, mine, steal, rob, claim |
+| Give | buy, sell, pay, gift, bribe, ransom, deliver, donate |
+| Use | an item, a technique, a scene's feature; heal, open, break |
+| Cultivate | sit at a source, comprehend a stele, break through, seclude |
+| Work | bounties, jobs, patrols, escorts, missions |
+| Rest | wait, camp, recover, let time pass |
+| Make | brew, refine, inscribe, plant (M4) |
+
+**What you can do**, the menu the interpreter knows. A milestone in brackets means the action waits for it; the rest is M3's.
+
+- **Move:** walk · march pressed · ride a horse, cart or mount · fly your own sword (Foundation) · ride someone else's sword or boat · pay smugglers for the low-tide chain · hire a guide · roads or cross-country · travel by night · walk blind into the fog · detour · turn back · camp anywhere · go home anytime · walk by day and cultivate by night · teleport arrays (M6) · the flying boat (M6)
+- **Find:** look around · search a body, a room or a ruin · track a beast · tail a person · watch a place from cover · scout ahead · read the bounty board · buy a rumor at a teahouse · ask locals · buy, steal or loot maps · follow a treasure map · see through a hidden realm · appraise (M6) · divine (M6)
+- **Talk:** ask · persuade · lie · bluff · flatter · threaten · press with your realm's aura · beg · haggle · bribe · trade names · insult · provoke · challenge · apologize · promise · swear brotherhood · recruit a companion · hire a guard · sell information · report someone · start a rumor · court (M5) · take a disciple (M5)
+- **Fight:** attack · ambush · sneak attack · duel · spar · fight with the scene (burn the grass, drop the rocks) · talismans · command a beast · hunt beasts for cores and parts · clear a den · hunt bounties on people · defend a village · spare · take captive · finish the wounded
+- **Get away:** flee · hide · sneak past · disguise yourself · hide your realm · act weaker than you are · burn an escape talisman · surrender · pay them off · leave a decoy · outfly them · go to ground in a town
+- **Take:** loot the dead · gather herbs · mine ore · butcher a beast · open a sealed ring once your soul can · rob a caravan · pickpocket · burgle · steal from a sect's store · rob graves · poach on sect land · claim a cave as your abode (M4)
+- **Give and trade:** buy · sell · barter · pay or refuse tolls · give gifts · return lost things · pay debts · pay ransoms · fund a village · donate to a temple for merit · auctions (M6) · standing orders (M6)
+- **Help or harm:** heal · save · escort · deliver a letter · avenge · protect mortals · free captives · kidnap · frame · assassinate · interrogate · search a captive's soul (karma) · poison · betray
+- **Places:** enter towns, cities and markets · get into a gated place by token, rank, invitation, toll, force or stealth · cross hostile land while hunted · enter a deadly land past its warning · enter a secret realm while it is open · take an inheritance trial · open a tomb · break an array (M4) · wreck a place (standing, and scars from Core Formation up) · found a sect (M5)
+- **Cultivate out there:** sit at a waterfall or a thunder peak · comprehend a stele or a sword scar (an Intent moment) · drink from a spirit vein · seclude in a cave you found · break through in the wild, where someone may come · meet a tribulation where you choose (M7)
+- **Work:** take a bounty · herb runs · patrol the Wall · deliver · guard a caravan · core hunts · a day's guarding, guiding or hunting for a stone · sect missions and posts (M5) · sell what you craft (M4)
+- **Be someone:** keep a vow (Buddhist) · walk the demonic road (devour cores, drain cultivators) · keep or break promises · build a name or stay unknown · make friends and grudges that remember · take a side in a feud
 
 The map is the go-in's board, and travel reuses the wheel.
 
