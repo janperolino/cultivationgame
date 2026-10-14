@@ -153,3 +153,27 @@ describe('hints after a first', () => {
     expect(hintDone(drew, 'attending')).toBe(false);
   });
 });
+
+describe('the auto setting', () => {
+  it('is hinted after the first step on any ladder, its control lit until the hint is dismissed', () => {
+    const s = s0();
+    expect(rings(beacons(s), 'auto')).toBe(false);
+    expect(hintsWaiting(s).map((h) => h.id)).not.toContain('auto');
+    const climbed = { ...s, player: { ...s.player, qi: { ...s.player.qi, stage: 2 } } };
+    expect(hintsWaiting(climbed).find((h) => h.id === 'auto')!.to).toEqual({
+      screen: 'cultivate',
+      tab: 'cultivation',
+    });
+    expect(beacons(climbed)).toContainEqual({
+      screen: 'cultivate',
+      tab: 'cultivation',
+      control: 'auto',
+    });
+    // Dismiss only: the glow goes with the hint, and never shows with hints off.
+    expect(hintDone(climbed, 'auto')).toBe(false);
+    const dismissed = { ...climbed, hints: { on: true, shown: ['auto'] } };
+    expect(rings(beacons(dismissed), 'auto')).toBe(false);
+    const off = { ...climbed, hints: { on: false, shown: [] } };
+    expect(rings(beacons(off), 'auto')).toBe(false);
+  });
+});

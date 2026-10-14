@@ -57,6 +57,7 @@ export const HINT_IDS = [
   'node',
   'insight',
   'breakthrough',
+  'auto',
   'cards',
   'hints-off',
 ] as const;
@@ -84,6 +85,7 @@ export const HINTS: Readonly<Record<HintId, string>> = {
   insight:
     'Insight buys more nodes. Every hour leaves a little, more while you attend; study hours give a steady stream, and each mastery level and each read finished gives a burst.',
   breakthrough: 'A bar is full. Break through with the button under your figure at the Abode.',
+  auto: 'Minor breakthroughs run on their own, at safe odds, even while you are away. Choose how bold under Minor breakthroughs on Cultivate. Major breakthroughs are always yours to call.',
   cards: 'A card waits in the tray at the Abode. Each is a choice, and it waits for you.',
   'hints-off': 'Hints like this one can be turned off in Settings, and shown again from there.',
 };
@@ -93,7 +95,14 @@ export const FIRST_WAITING: Readonly<
   Record<
     Exclude<
       HintId,
-      'qi-hours' | 'orbs' | 'attending' | 'insight' | 'breakthrough' | 'cards' | 'hints-off'
+      | 'qi-hours'
+      | 'orbs'
+      | 'attending'
+      | 'insight'
+      | 'breakthrough'
+      | 'auto'
+      | 'cards'
+      | 'hints-off'
     >,
     string
   >

@@ -12,7 +12,7 @@ import type { ScreenId } from './screens.ts';
 
 /** The control a beacon rings. */
 export type BeaconControl =
-  'wheel' | 'read-now' | 'climb-with' | 'practice-this' | 'node' | 'burn-stones';
+  'wheel' | 'read-now' | 'climb-with' | 'practice-this' | 'node' | 'burn-stones' | 'auto';
 
 export interface Beacon {
   screen: ScreenId;
@@ -57,8 +57,25 @@ export function beaconFor(step: FirstStep): Beacon {
   }
 }
 
+/**
+ * The auto setting's hint (ui/hints.ts) is the one hint that also lights its control: after the
+ * life's first step on any ladder, until dismissed, while hints are on. Nothing switches off for
+ * it, since minor breakthroughs already run at safe odds.
+ */
+export function autoHintWaiting(s: GameState): boolean {
+  const p = s.player;
+  const climbed = (['qi', 'body', 'soul'] as const).some(
+    (k) => p[k].realm !== 'qi-condensation' || p[k].stage > 1,
+  );
+  return climbed && !s.ended;
+}
+
 export function beacons(s: GameState): Beacon[] {
-  return firstsWaiting(s).map(beaconFor);
+  const out = firstsWaiting(s).map(beaconFor);
+  if (s.hints.on && !s.hints.shown.includes('auto') && autoHintWaiting(s)) {
+    out.push({ screen: 'cultivate', tab: 'cultivation', control: 'auto' });
+  }
+  return out;
 }
 
 /** Whether a control wears the ring: any beacon on it, or the one for this id or ladder. */

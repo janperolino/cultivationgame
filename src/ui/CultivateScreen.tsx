@@ -33,7 +33,9 @@ import { LifeEdgeCard, Why } from './widgets.tsx';
 
 function DayPanel({ game }: { game: GameState }) {
   const setPlan = useGame((s) => s.setPlan);
-  const burnRing = rings(useBeacons(), 'burn-stones');
+  const bs = useBeacons();
+  const burnRing = rings(bs, 'burn-stones');
+  const autoRing = rings(bs, 'auto');
   const c = game.player;
   const rates = dayRates(c, game.calendar.day);
   const speed = qiSpeed(c);
@@ -112,7 +114,11 @@ function DayPanel({ game }: { game: GameState }) {
               Major breakthroughs are always yours to call, at the Abode, and never happen offline.
             </Why>
           </span>
-          <div className="seg" role="group" aria-labelledby="auto-label">
+          <div
+            className={`seg${autoRing ? ' beacon-ring' : ''}`}
+            role="group"
+            aria-labelledby="auto-label"
+          >
             {AUTO_IDS.map((id) => (
               <button
                 key={id}

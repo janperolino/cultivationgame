@@ -61,7 +61,7 @@ export interface FirstStep {
   first: FirstId;
   hint: Exclude<
     HintId,
-    'qi-hours' | 'orbs' | 'attending' | 'insight' | 'breakthrough' | 'cards' | 'hints-off'
+    'qi-hours' | 'orbs' | 'attending' | 'insight' | 'breakthrough' | 'auto' | 'cards' | 'hints-off'
   >;
   /** The copy, method or technique it is about. */
   id?: string;

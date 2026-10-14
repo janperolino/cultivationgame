@@ -8,7 +8,7 @@ import { firstsWaiting, firstText } from '../core/firsts.ts';
 import { FIRST_BREATH } from '../core/life.ts';
 import { daysLived, type GameState } from '../core/state.ts';
 import { practiced } from '../core/techniques.ts';
-import { beaconFor, type Beacon } from './beacons.ts';
+import { autoHintWaiting, beaconFor, type Beacon } from './beacons.ts';
 import { readyLadders } from './scene.ts';
 import type { ToastLink } from './toasts.ts';
 
@@ -60,6 +60,9 @@ export function hintsWaiting(s: GameState): HintView[] {
     if (id === 'breakthrough' && readyLadders(s).length > 0) {
       out.push({ id, text: HINTS.breakthrough, to: abode });
     }
+    if (id === 'auto' && autoHintWaiting(s)) {
+      out.push({ id, text: HINTS.auto, to: open({ screen: 'cultivate', tab: 'cultivation' }) });
+    }
     if (id === 'cards' && s.cards.pending.length > 0) {
       out.push({ id, text: HINTS.cards, to: abode });
     }
@@ -108,6 +111,7 @@ export function hintDone(s: GameState, id: HintId): boolean {
     case 'attending':
     case 'insight':
     case 'breakthrough':
+    case 'auto':
     case 'cards':
     case 'hints-off':
       return false;
