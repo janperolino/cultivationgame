@@ -660,7 +660,7 @@ Everything that happens to you is a card, in seclusion and in the world alike: a
 **Do whatever you want** (Jan's call, D3, 2026-10-14). Going in rests on one principle: the player can try anything, and the world answers by its own rules.
 
 - **Free to try, not free to win.** Scale holds (Scale of destruction): a Qi Condensation punch cracks a wall, never the Wall of Piled Bones. Memory holds too: rob a Gate runner and the Gate remembers.
-- **Free text on top, twelve verbs underneath,** as combat already is (Combat: rules underneath, free text on top). The interpreter turns what you write into verbs with targets and the scene's features ("wait on the cliff until the caravan passes, then cut the lead mule loose" is rest, then evade, then take); the engine resolves them and the narrator tells it. With no key, the same verbs are buttons on the scene, so going in plays without the AI.
+- **Free text on top, twelve verbs underneath,** as combat already is (Combat: rules underneath, free text on top). The interpreter turns what you write into verbs with targets and the scene's features ("wait on the cliff until the caravan passes, then cut the lead mule loose" is rest, then evade, then take); the engine resolves them (The resolver) and the narrator tells it. Going in uses GLM 5.2 fully; without a key, trips still run on the engine, but there are no scenes.
 - **Priced, not gated.** Nothing says "you can't" except scale. An attempt costs time off your wheel, risk, standing, karma and fame, and every attempt changes something: time passes, or someone saw.
 - **As deep as the world's memory.** Freedom reaches as far as the state the world keeps: people who remember (Who stays), places with fields and features (The world map, The atlas as data), standing with each power. An attempt whose system comes later is narrated, and says which milestone makes it real.
 
@@ -734,6 +734,66 @@ Checkpoints inside a sphere charge tolls from the Economy's fee list, and your f
 **A trip** is what gives going in its shape: a goal card, a bounty, a herb run, a patrol, a core hunt, a delivery; travel with its encounter rolls; the goal's scene plus one to three side encounters; and the return, with loot home, a coming-back story and a chronicle entry. While you're out your wheel is the trip's, so going in costs cultivation, and the spirit pool fills instead from M4. Free text and the narrator live inside scenes; between them the engine writes the travel line itself.
 
 **Encounters** are tables per region keyed by terrain tags, the hour, the danger band, fame and the calendar, in six kinds: beast, cultivator, mortal, place, omen and plot, the last seeded by your origin, talents and grudges. Each is a scene template: tagged features, NPCs carrying intents from the motive list, stakes, and exits, fight, talk, flee, sneak, trade. It is a card like any other, with the scene panel and the narrator attached. The tables themselves, ruins and inheritances, dying in the world and the fog's exact rules are settled at D3.
+
+## The resolver
+
+How going in decides what happens (D3, 2026-10-14). Everything you try, from a lie to a formation round a city, runs through one pipeline, and NPCs run through the same one, since the rules take a cultivator and actions name who acts.
+
+**The pipeline.** You type, and the interpreter turns your words into a plan of verbs with targets, the scene's features and the things you use (The world, Do whatever you want). The engine checks the plan can be tried at all, by scale and by what you hold, then shows each step's odds and stakes with **Do it** and **Change it**. Do it rolls and saves at once, the effects land, lasting states take hold, and the narrator tells it. GLM touches only the first step and the telling. A plan of several steps runs in order and hands back to you at the first fail or surprise. When your words could mean two things, the interpreter offers two or three readings as buttons instead of guessing. The scene's exits and the narrator's suggestions are clicks that skip the interpreter.
+
+**Going in is GLM's** (Jan's call). It uses GLM 5.2 fully and has no templated version. Without a key, trips still run, resolved by the engine as they are while you're away and told by the chronicle's templated lines, but there are no scenes to go into. Tests drive the resolver with plans directly and the narrator through the mock provider.
+
+**Chance has a narrow job:** close contests, what you couldn't have known (a guard's mood, whether a herb is ripe, who walks past), and keeping the same move on the same foe from always playing out the same. Wherever the world is a hierarchy, the outcome is certain.
+
+**Power checks** are sized by realm, on the sheet's sizes (Combat, Realms are sizes):
+
+| Check | Your number | Theirs |
+|---|---|---|
+| Notice someone sneaking | perception: your soul × (1 + Perception) | their stealth |
+| Sneak, hide | stealth: your body × Agility | their perception |
+| Threaten, press with your aura | your soul | their soul |
+| Force: break, lift, hold, endure | your body | the foe's body, or the feature's own realm |
+| Chase, flee, outrun | speed: your qi × Agility | their speed |
+| Find, without divine sense | your soul | the site's danger realm |
+
+Agility counts as it does in a fight, 5% a point above 10. A check with no opponent faces a size: the feature's own realm when it names one ("a sheer karst wall, Foundation"), else the site's danger realm.
+
+- **Certain past a realm.** When one side's number is a full realm's step above the other's (×3.1 at Qi Condensation, ×4.6 at Foundation, as the steps run), the stronger side wins with no roll.
+- **Rolled when close**, on a steep curve: chance = yours⁴ ÷ (yours⁴ + theirs⁴). Equal sides 50%, a fifth ahead 67%, half again 84%, double 94%. A Qi Condensation layer is about ×1.12 (61%) and a Foundation stage about ×1.5 (84%), so a stage weighs more the higher you climb.
+- **What counts on your side**, multiplied onto the base and capped at ×2 together: a technique the action uses, ×1.05 a mastery level (×1.25 at Origin; this is what mastery gives checks, in place of "+2 to checks"); a node, talent or Way that names the check; the scene's things you use, ×1.1 each and three at most, as combat's creativity; a helper ×1.2, two at most. Their side counts the same sources, and a place's features count for whoever they favor (darkness for the one sneaking).
+
+**Reading a realm** is never rolled. With your perception at or above their soul you read their true realm. Below it you read them as beyond you ("you can't see through his cultivation"), or, if they veil it, as the realm they choose to show, as many stages down as their concealment allows (Veiled Aura, Hidden Realm, a masking jade). A Foundation deacon never sees through a Nascent Soul; a Nascent Soul elder always sees through a Foundation disciple's veil. Perception from nodes, talents and detection arts is how a weaker soul closes part of a gap.
+
+**The odds you see are the odds your character can judge.** Against someone whose realm you can't read, the step shows "?" and the engine rolls the true odds unseen. A certain step says so: "Sneak past the drunk porter · sure".
+
+**People checks** are not sized by realm: a Qi Condensation con man with a forged token can fool a Foundation noble, and a mortal merchant can out-haggle you. Persuade, ask, lie, bargain, recruit and calm weigh your leverage against their resistance, both starting at 1, on a gentle curve, since people are fickle: chance = leverage ÷ (leverage + resistance).
+
+- **Leverage:** trust (hostile ×0.25, wary ×0.5, neutral ×1, friendly ×1.5, trusting ×2; block 3 settles trust); an offer that meets one of their motives ×2; proof or a prop ×1.5 (a token, a sect's robe); standing with their power, ×0.5 at its worst to ×1.5 at its best; a talent, node or Way that names the check. Capped at ×8, so talk never passes 89%.
+- **Resistance:** a motive against it ×2, suspicion of you ×2, their own talents.
+- **Two things make talk certain.** A soul two realms above yours reads your lies, so a lie to it fails and it knows. And leaning on your aura turns talk into a power check: a realm above, it is certain, but what you get is obedience from fear, a fear bond (block 3), with karma for using it on the weak.
+
+**Three grades.** A rolled check passes, passes at a cost, or fails; the quarter of the passing range nearest the line passes at a cost. The cost comes from the verb's own list (time doubled, a witness, a wound, heat, a thing spent or broken, trust lost, noise) and shows before you roll: "Sneak past the gate · 74% · at a cost: the dog barks · fail: caught at the gate". A certain check has no grades.
+
+**No retries.** A failed check can't be tried again on the same target in the same way until something changes: a new day, a new approach (another verb, a new prop, a helper), or a move in trust, heat or the scene.
+
+**Rolls** run on their own stream, `scene`. They roll on Do it and save at once, so a reload resumes after the roll and never rolls again. Change it re-reads your words and never rolls.
+
+**Symmetry.** NPCs make every one of these checks against you: the rival's lie, the bandit's sneak, the elder reading your veil.
+
+**The playbook:** the cases every D3 block is checked against. A case that can't play through marks a gap.
+
+- Hide your realm, pose as an untested orphan and join the Beast-Butcher Gate, then keep the cover through spars, inspections and a breakthrough.
+- Earn a half-blood's trust, go into the Realm of Mingled Blood on their blood, and betray them for the loot or leave them inside when the gate shuts.
+- Drain a city for a demonic method: a hidden formation planted node by node, heat rising, and the city's Nascent Soul answering when it fires (M4).
+- Frame a rival with a Beast Court token, then report him.
+- Sell one treasure map to three crews and ambush whoever reaches the cave first.
+- Kidnap the Spirit Herders' speaking stallion and ransom it to the Beast Court.
+- Fake your death with a corpse in your robes to shake a hunter.
+- Loot the Wall's dead after a beast tide, posing as a corpse collector.
+- Steal your own sect's Foundation Pill the night before the tournament.
+- Gather a ragtag crew by pay, loyalty and fear, and coerce a village into hiding you.
+- A fight's noise draws strangers, your backup arrives mid-fight, and a trap you laid fires.
+- Run a stall and chat with customers; walk away from your abode with nothing.
 
 ## Professions, people and powers
 
