@@ -8,7 +8,7 @@
 // instead. Behind it all, over the whole seat panel, the sun of the hour (ui/sunCanvas.ts): the
 // figure is a sundial, and the caption under it names the hour in words.
 import { useEffect, useMemo, useRef } from 'react';
-import { POINTER_REACH } from '../content/attention.ts';
+import { HEAT_UNSETTLED_S, POINTER_REACH } from '../content/attention.ts';
 import { circulation, RARITY_SPARKS } from '../content/circulation.ts';
 import { MAX_ODDS, SCENE_ODDS_CAP, SCENE_ODDS_STEP } from '../content/cultivation.ts';
 import { BRANCHES, HOUR_KINDS } from '../content/hours.ts';
@@ -22,7 +22,6 @@ import {
   hourTint,
   onDantian,
   seatOf,
-  seatTutorial,
   type Attention,
 } from '../core/attention.ts';
 import { barFill, barSize, dayRates } from '../core/cultivation.ts';
@@ -46,6 +45,7 @@ import { holdStill, noteDay, onBreath, seatTime, showAbode, useSeat } from './se
 import { reducedMotion, useSettings } from './settings.ts';
 import { SunCanvas } from './sunCanvas.ts';
 import { useGame } from './store.ts';
+import { Why } from './widgets.tsx';
 
 /** One mote stands for this share of the bar, so motes come at the real qi rate. */
 const MOTES_PER_BAR = 400;
@@ -233,18 +233,18 @@ export function SeatedFigure({ game }: { game: GameState }) {
   );
 }
 
-/** The words for the seat now, under the meter. */
-function seatHint(c: Cultivator, a: Attention): string {
-  if (!ladderMethod(c, 'qi')) return 'Without a method the qi drifts close and slides off.';
-  if (!a.attended) return 'Away: the seat runs as it always has. Touch the game to sit with it.';
+/** The words for the seat now, under the meter; `why` adds the "?" on the inhale and the heat. */
+function seatHint(c: Cultivator, a: Attention): { text: string; why: boolean } {
+  const say = (text: string) => ({ text, why: false });
+  if (!ladderMethod(c, 'qi')) return say('Without a method the qi drifts close and slides off.');
+  if (!a.attended) {
+    return say('Away: the seat runs as it always has. Touch the game to sit with it.');
+  }
   if (heatUnsettled(a)) {
     const s = Math.ceil(a.unsettledUntil - a.t);
-    return `Your meridians burn and the bonus is gone for ${s} s. Breathe steadily, not greedily.`;
+    return say(`Your meridians burn and the bonus is gone for ${s} s. Breathe steadily.`);
   }
-  const how =
-    'Draw orbs in by hovering over them or with a finger. On the inhale they are worth more.';
-  if (seatTutorial(c)) return `${how} Your meridians stay cool until the fourth layer.`;
-  return how;
+  return { text: 'Draw orbs in by hovering over them.', why: true };
 }
 
 /** What the scene says as it ends: the step taken, or what the gate holding cost. */
@@ -345,7 +345,17 @@ function FocusMeter({ game }: { game: GameState }) {
       <div className="seat-bar is-heat" aria-label={`Heat ${Math.round(view.heat * 100)}%`}>
         <div className="seat-bar-fill" style={{ width: `${view.heat * 100}%` }} />
       </div>
-      <p className="caption">{view.hint}</p>
+      <p className="caption">
+        {view.hint.text}
+        {view.hint.why && (
+          <Why label="How drawing orbs works">
+            An orb drawn on the inhale, as the figure breathes in, fills more focus, and focus lifts
+            your qi toward the top of the meter. Each breath warms the meridians, less on the
+            inhale: past the end of the heat bar they burn, and the bonus is gone for{' '}
+            {HEAT_UNSETTLED_S} s. Breathe steadily, not greedily. Focus fades once you leave.
+          </Why>
+        )}
+      </p>
     </div>
   );
 }

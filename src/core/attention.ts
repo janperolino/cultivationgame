@@ -42,7 +42,7 @@ import {
 import type { LadderId } from '../content/cultivation.ts';
 import { phaseOf, type PhaseElement } from '../content/elements.ts';
 import { BRANCHES, DAWN_HOUR } from '../content/hours.ts';
-import { inTutorial, ladderMethod } from './methods.ts';
+import { ladderMethod } from './methods.ts';
 import { Rng, streamSeed } from './rng.ts';
 import type { Cultivator, GameState } from './state.ts';
 import { stats } from './stats.ts';
@@ -149,14 +149,6 @@ export function attentionCeiling(c: Cultivator): number {
 /** Heat the meridians hold before they unsettle. */
 export function heatLimit(c: Cultivator): number {
   return HEAT_LIMIT * (1 + stats(c).heatLimit);
-}
-
-/**
- * The tutorial layers keep it safe: orbs fill focus from the first layer, but no heat builds until
- * the fourth, so the first hour can't unsettle (Jan's call after P2.8; it was the floor only).
- */
-export function seatTutorial(c: Cultivator): boolean {
-  return inTutorial(c.qi);
 }
 
 export function heatUnsettled(a: Attention): boolean {
@@ -354,7 +346,7 @@ function orbsNear(a: Attention, p: readonly [number, number], reach: number, inP
 /**
  * One breath draws the given orbs in, as one: focus fills by each orb's worth (more on the inhale),
  * and the breath warms the meridians, less on the inhale. Past the heat limit you tip into
- * unsettled and lose the bonus for a while. The tutorial layers build no heat.
+ * unsettled and lose the bonus for a while, from the first layer on (Jan's call after P2.8).
  */
 function drawIn(a: Attention, c: Cultivator, picked: { orb: Orb; at: [number, number] }[]): Breath {
   const timed = inhaling(a.t, breathCycle(c));
@@ -373,7 +365,7 @@ function drawIn(a: Attention, c: Cultivator, picked: { orb: Orb; at: [number, nu
   }
   const worth = picked.reduce((sum, p) => sum + orbWorth(c, p.orb), 0);
   const focus = Math.min(1, a.focus + ORB_FOCUS * worth * (timed ? ORB_TIMED : 1));
-  const heat = seatTutorial(c) ? a.heat : a.heat + HEAT_PER_BREATH * (timed ? HEAT_TIMED : 1);
+  const heat = a.heat + HEAT_PER_BREATH * (timed ? HEAT_TIMED : 1);
   const limit = heatLimit(c);
   if (heat >= limit) {
     return {

@@ -25,6 +25,7 @@ import {
   breathCycle,
   breathe,
   catchAt,
+  heatUnsettled,
   inhaling,
   keepOrbStream,
   orbPosition,
@@ -303,7 +304,7 @@ describe('heat', () => {
     expect(cooled.heat).toBeCloseTo(0.8 - 10 * HEAT_COOLING);
   });
 
-  it('holds more with Cooling Channels, and never rises in the tutorial layers, where focus still fills', () => {
+  it('holds more with Cooling Channels, and burns from the first layer on', () => {
     const cool = learn(
       seated(),
       'qi-sensing-breath',
@@ -313,11 +314,12 @@ describe('heat', () => {
       'qi-cooling-channels',
     );
     expect(attentionFactor(greedy(cool), cool)).toBeGreaterThan(1.25);
-    const tutorial = seated(2);
-    const t = greedy(tutorial);
-    expect(t.heat).toBe(0);
-    expect(t.focus).toBeGreaterThan(0);
-    expect(attentionFactor(t, tutorial)).toBeGreaterThan(1.25);
+    // No grace in the first layers since Jan's call after P2.8: greed burns there too.
+    const early = seated(2);
+    const t = greedy(early);
+    expect(t.heat).toBeGreaterThan(0);
+    expect(heatUnsettled(t)).toBe(true);
+    expect(attentionFactor(t, early)).toBe(1);
   });
 });
 
