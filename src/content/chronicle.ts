@@ -3,6 +3,7 @@
 // its type, written as a biography. NPC memory, the storyteller, rumors and the person log read
 // the events, not the text. A new kind of event is a template here.
 import { card } from './cards/index.ts';
+import type { CardOutcome } from './cards/schema.ts';
 import { GRADES, type GradeId, type LadderId } from './cultivation.ts';
 import { BRANCHES, HOUR_KINDS, HOUR_OPENINGS, SLEEP_FREED_TEXT, type HourKind } from './hours.ts';
 import { copyTitle } from './copies.ts';
@@ -93,6 +94,14 @@ const SPAR_ENDS: Record<string, string> = {
 const s = (v: EventValue | undefined) => String(v ?? '');
 const n = (v: EventValue | undefined) => Number(v ?? 0);
 
+/** The outcome a card event's line came from: the last step's choice, passed or failed. */
+function cardOutcome(d: EventData): CardOutcome {
+  const k = card(s(d.card));
+  const step = d.step ? k.steps?.[s(d.step)] : undefined;
+  const choice = (step ?? k).choices[n(d.choice)]!;
+  return d.pass === false && choice.fail ? choice.fail : choice.pass;
+}
+
 type Template = (d: EventData, who: Who) => string;
 
 export const EVENT_TEMPLATES: Record<string, Template> = {
@@ -175,10 +184,7 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   },
   // One line for the path a card took: the last step's outcome, with the card's variables.
   card: (d, w) => {
-    const k = card(s(d.card));
-    const step = d.step ? k.steps?.[s(d.step)] : undefined;
-    const choice = (step ?? k).choices[n(d.choice)]!;
-    const outcome = d.pass === false && choice.fail ? choice.fail : choice.pass;
+    const outcome = cardOutcome(d);
     const vars = Object.fromEntries(
       Object.entries(d)
         .filter(([key]) => key.startsWith('var.'))
@@ -201,6 +207,110 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
 };
 
 export const EVENT_TYPES = Object.keys(EVENT_TEMPLATES);
+
+// ---------------------------------------------------------------- kinds
+
+/**
+ * What a line is, shown as a brush character in its color (design § UI and screens, The
+ * Chronicle screen); a chip on the screen filters by it.
+ */
+export const CHRONICLE_KINDS = [
+  'qi',
+  'body',
+  'soul',
+  'gate',
+  'mastery',
+  'learned',
+  'fight',
+  'hurt',
+  'people',
+  'choice',
+  'settled',
+  'birth',
+  'death',
+  'opening',
+] as const;
+export type ChronicleKind = (typeof CHRONICLE_KINDS)[number];
+
+export const KIND_WORDS: Record<ChronicleKind, { hanzi: string; name: string }> = {
+  qi: { hanzi: '气', name: 'Qi' },
+  body: { hanzi: '体', name: 'Body' },
+  soul: { hanzi: '魂', name: 'Soul' },
+  gate: { hanzi: '关', name: 'Gates' },
+  mastery: { hanzi: '精', name: 'Mastery' },
+  learned: { hanzi: '学', name: 'Learned' },
+  fight: { hanzi: '战', name: 'Fights' },
+  hurt: { hanzi: '伤', name: 'Hurts' },
+  people: { hanzi: '人', name: 'People' },
+  choice: { hanzi: '事', name: 'Choices' },
+  settled: { hanzi: '了', name: 'Settled itself' },
+  birth: { hanzi: '生', name: 'Birth' },
+  death: { hanzi: '终', name: 'Death' },
+  opening: { hanzi: '开', name: 'Openings' },
+};
+
+/** The milestones, which ride the river's line as stations; every other kind is prose. */
+export const STATION_KINDS: ReadonlySet<ChronicleKind> = new Set<ChronicleKind>([
+  'qi',
+  'body',
+  'soul',
+  'gate',
+  'mastery',
+  'birth',
+  'death',
+]);
+
+type KindOf = ChronicleKind | ((d: EventData) => ChronicleKind);
+
+/** A step takes its ladder's kind. */
+const ladderKind = (d: EventData): ChronicleKind =>
+  d.ladder === 'body' || d.ladder === 'soul' ? d.ladder : 'qi';
+
+/**
+ * Each event type's kind, beside its template (a test fails on a type without one): a fixed kind
+ * or one read from the event. A card is a choice, settled when it resolved by default, or the
+ * kind its outcome names.
+ */
+export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
+  legacy: 'opening',
+  birth: 'birth',
+  testing: 'birth',
+  'talent-wakes': 'birth',
+  breakthrough: ladderKind,
+  major: ladderKind,
+  setback: 'hurt',
+  'major-setback': 'hurt',
+  toxic: 'hurt',
+  gate: 'gate',
+  mastery: 'mastery',
+  intent: 'mastery',
+  death: 'death',
+  spar: 'fight',
+  node: 'learned',
+  manual: 'learned',
+  copy: 'learned',
+  reading: 'learned',
+  technique: 'learned',
+  method: 'learned',
+  'method-switch': 'learned',
+  routine: 'learned',
+  'first-breath': 'learned',
+  hours: 'opening',
+  'sleep-freed': 'opening',
+  'study-all': 'opening',
+  'study-back': 'opening',
+  screen: 'opening',
+  'method-capped': 'opening',
+  rewind: 'opening',
+  card: (d) => (d.byDefault === true ? 'settled' : (cardOutcome(d).kind ?? 'choice')),
+};
+
+/** An event's kind; a type with none written (an old save's) reads as an opening. */
+export function eventKind(type: string, data: EventData): ChronicleKind {
+  const k = EVENT_KINDS[type];
+  if (!k) return 'opening';
+  return typeof k === 'function' ? k(data) : k;
+}
 
 /** The events a coming-back summary, the Chronicle and the sims treat as setbacks. */
 export const SETBACK_TYPES: readonly string[] = ['setback', 'major-setback'];

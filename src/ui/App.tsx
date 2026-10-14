@@ -12,7 +12,6 @@ import { GlassBackground } from './GlassBackground.tsx';
 import { SettingsScreen } from './SettingsScreen.tsx';
 import { Toasts } from './Toasts.tsx';
 import { TreesScreen } from './TreesScreen.tsx';
-import { capitalize } from './format.ts';
 import { readyLadders, useScene } from './scene.ts';
 import { useNav } from './nav.ts';
 import { markMoving } from './moving.ts';
@@ -273,11 +272,9 @@ export function App() {
             <p className="muted">Nothing has happened yet.</p>
           ) : (
             game &&
-            bySeason(game.player, recent).map((g, gi) => (
+            bySeason(recent).map((g, gi) => (
               <div key={`${g.when}-${gi}`} className="chronicle-season">
-                <h3 className={`chronicle-when${gi === 0 ? ' is-newest' : ''}`}>
-                  {capitalize(g.when)}
-                </h3>
+                <h3 className={`chronicle-when${gi === 0 ? ' is-newest' : ''}`}>{g.when}</h3>
                 <ol className="chronicle">
                   {g.items.map((e, i) => (
                     <li key={`${e.day}-${i}`}>

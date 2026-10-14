@@ -33,6 +33,7 @@ import {
   readCopy,
 } from '../../core/life.ts';
 import { advance, daysPerRealMs } from '../../core/loop.ts';
+import { madeUpLife } from '../../core/madeUpLife.ts';
 import { madeUpManuals } from '../../core/madeUpManuals.ts';
 import { addItem, ageYears, daysLived, withPlayer, type GameState } from '../../core/state.ts';
 import { formatDays, formatLadder, formatNumber } from '../format.ts';
@@ -348,6 +349,13 @@ export const COMMANDS: Record<string, Command> = {
       const r = readCopy(s, full);
       if (!r.check.ok) return r.check.reason;
       return apply(store, (g) => readCopy(g, full).state, `Queued ${full}.`);
+    },
+  },
+  chronicle: {
+    usage: 'chronicle',
+    help: 'Writes a made-up long chronicle over the open life: Lan Shu before it, then this life to 46 through Foundation and 18 years of seclusion. Moves the calendar on; the cultivator stays.',
+    run(_args, store) {
+      return apply(store, madeUpLife, 'Wrote a made-up chronicle: two lives, 3,115 to 3,213.');
     },
   },
   shelf: {

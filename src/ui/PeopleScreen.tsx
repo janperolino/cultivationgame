@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { placeName } from '../content/origins.ts';
 import { BONDS, person, REGARD_MAX, REGARD_MIN, regardWords } from '../content/people.ts';
 import { realm, stageName } from '../content/realms.ts';
-import { lifeWhen } from '../core/chronicle.ts';
+import { worldWhen } from '../core/chronicle.ts';
 import { hasNews, knownPeople, newsDay, peopleCircles, personLog } from '../core/people.ts';
 import type { GameState, PersonRecord } from '../core/state.ts';
 import { capitalize } from './format.ts';
@@ -89,7 +89,6 @@ function Regard({ name, regard }: { name: string; regard: number }) {
 function PersonPage({ game, id }: { game: GameState; id: string }) {
   const p = person(id);
   const r = game.player.people[id]!;
-  const c = game.player;
   const log = personLog(game, id).slice().reverse();
   return (
     <section className="panel person-page" aria-labelledby="person-name">
@@ -121,7 +120,7 @@ function PersonPage({ game, id }: { game: GameState; id: string }) {
         <div>
           <dt>Met</dt>
           <dd>
-            In {lifeWhen(c, r.met)}
+            In {worldWhen(r.met)}
             {r.place ? `, at ${placeName(r.place)}` : ''}
           </dd>
         </div>
@@ -131,7 +130,7 @@ function PersonPage({ game, id }: { game: GameState; id: string }) {
         <ul className="person-thread">
           {log.map((e, i) => (
             <li key={`${e.day}-${i}`} className={i === 0 ? 'is-newest' : undefined}>
-              <span className="caption">{capitalize(lifeWhen(c, e.day))}</span>
+              <span className="caption">{worldWhen(e.day)}</span>
               <EventLine game={game} e={e} />
             </li>
           ))}

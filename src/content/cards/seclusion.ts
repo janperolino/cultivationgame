@@ -144,6 +144,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           text: "Three days of easing qi along a child's arm teaches you more about your own than a month alone. The knot gives, and she bows until her forehead touches stone.",
           chronicle:
             "{name} spends three days easing the knot in {junior}'s meridian, and learns from it.",
+          kind: 'learned',
         },
         fail: {
           effects: [
@@ -224,6 +225,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           text: 'There are more than two of them, it turns out. They take the toll and a little extra out of your ribs.',
           chronicle:
             '{name} tries to face down a street gang and pays the toll with bruises on top.',
+          kind: 'hurt',
         },
       },
     ],
@@ -257,11 +259,13 @@ export const SECLUSION_CARDS: readonly Card[] = [
           text: 'It breaks a tusk on your doorpost and runs. A herbalist in the valley pays six stones for the tusk.',
           chronicle:
             '{name} drives a stone-hide boar from the cave and sells the tusk it left behind.',
+          kind: 'fight',
         },
         fail: {
           effects: [{ do: 'injury', ladder: 'body', days: 20 }],
           text: 'It drives you off instead, and roots through your things before it goes.',
           chronicle: '{name} is tossed by a stone-hide boar at {their} own door.',
+          kind: 'hurt',
         },
       },
     ],
@@ -282,6 +286,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           effects: [{ do: 'stones', n: -8 }],
           text: 'You count what is left and move the pouch somewhere smarter.',
           chronicle: "A thief lightens {name}'s pouch by eight stones.",
+          kind: 'hurt',
         },
       },
       {
@@ -416,6 +421,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           ],
           text: 'In on four, hold for one, out on four. It is crude, and the cadet copied it badly; a few weeks over it on your study hours and the count will be yours.',
           chronicle: '{name} buys the Garrison Breath-Count from {peddler} for twelve stones.',
+          kind: 'learned',
         },
       },
     ],
@@ -447,6 +453,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           text: 'Three nights of cold cloths and your own qi pressed into his chest. On the fourth morning he can stand, and he leaves you the copy he was carrying: the Tide-Counting Formula the dockside couriers breathe by.',
           chronicle:
             '{name} nurses a courier of the Guarded Mouth through river fever, and is left the Tide-Counting Formula.',
+          kind: 'learned',
         },
       },
     ],
@@ -478,6 +485,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           effects: [{ do: 'insight', n: 12 }],
           text: 'You ride the heat round the small circuit nine times until it runs smooth, and something about the gate makes sense that did not before.',
           chronicle: '{name} rides a qi deviation round the small circuit and comes out wiser.',
+          kind: 'learned',
         },
         fail: {
           effects: [
@@ -486,6 +494,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           ],
           text: 'It bucks you. You come to on the cave floor with a taste of iron.',
           chronicle: '{name} is thrown by a qi deviation and left lightly injured.',
+          kind: 'hurt',
         },
       },
     ],
@@ -505,6 +514,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           effects: [{ do: 'insight', n: 10 }],
           text: 'You scratch it into the wall before it can leave.',
           chronicle: '{name} glimpses a principle in a drop of water and writes it down.',
+          kind: 'learned',
         },
       },
       {
@@ -549,6 +559,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           effects: [{ do: 'insight', n: 10 }],
           text: 'You let it close. The door is still there, and now you know where it stands.',
           chronicle: '{name} glimpses the whole of a Dao and lets it close again.',
+          kind: 'learned',
         },
       },
     ],
@@ -619,6 +630,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           effects: [{ do: 'injury', ladder: 'qi', days: 15 }],
           text: 'The knot holds, and the channel behind it bruises.',
           chronicle: '{name} bruises a channel forcing a knot that would not give.',
+          kind: 'hurt',
         },
       },
     ],
@@ -647,12 +659,14 @@ export const SECLUSION_CARDS: readonly Card[] = [
           effects: [{ do: 'insight', n: 15 }],
           text: 'You listen, and learn the shape of the thing that will one day try to eat you.',
           chronicle: '{name} listens to the whisper in {their} sitting, and learns its shape.',
+          kind: 'learned',
         },
         fail: {
           effects: [{ do: 'injury', ladder: 'soul', days: 30 }],
           text: 'It talks for a long time. You come back cold to the marrow.',
           chronicle:
             '{name} listens too long to a whisper in seclusion and comes back with a chill in the soul.',
+          kind: 'hurt',
         },
       },
     ],
@@ -727,6 +741,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
               text: 'You let it go, and keep what it left you.',
               chronicle:
                 '{name} sits through a summer storm watch by watch, and keeps a little of its understanding.',
+              kind: 'learned',
             },
           },
           {
@@ -741,12 +756,14 @@ export const SECLUSION_CARDS: readonly Card[] = [
               text: 'You stand on the ridge as the last strike comes down a hundred paces off, and for a moment you understand how lightning chooses.',
               chronicle:
                 '{name} follows a storm up onto the ridge and comes down knowing how lightning chooses.',
+              kind: 'learned',
             },
             fail: {
               effects: [{ do: 'injury', ladder: 'body', days: 30 }],
               text: 'The last strike chooses the rock beside you. You wake up at the bottom of the scree.',
               chronicle:
                 '{name} chases a storm onto the ridge and is thrown down by its last strike.',
+              kind: 'hurt',
             },
           },
         ],
@@ -785,6 +802,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           ],
           text: 'You swallow it too fast, and spend the next days coughing it back up.',
           chronicle: '{name} gulps at a spirit tide and chokes on it.',
+          kind: 'hurt',
         },
       },
     ],
@@ -822,6 +840,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           effects: [{ do: 'injury', ladder: 'soul', days: 20 }],
           text: 'Something sits down beside you in the dark. You do not remember the rest.',
           chronicle: '{name} sits out a yin night in the dark and comes back with a shaken soul.',
+          kind: 'hurt',
         },
       },
     ],
@@ -889,6 +908,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           effects: [{ do: 'injury', ladder: 'body', days: 10 }],
           text: 'A ledge gives way. You keep your neck and lose the basket.',
           chronicle: "{name} falls from a ledge gathering dragon's-whisker grass.",
+          kind: 'hurt',
         },
       },
     ],
@@ -1079,6 +1099,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           text: 'Someone follows you home. It takes a week to make them leave.',
           chronicle:
             '{name} walks among the lanterns on the night of the hungry dead, and is followed home.',
+          kind: 'hurt',
         },
       },
     ],
@@ -1113,6 +1134,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           text: 'Nine days on the walls. You come down with a share of the cores and a body that has learned what it is for.',
           chronicle:
             '{name} holds the walls through the beast tide and comes down with a share of the cores.',
+          kind: 'fight',
         },
         fail: {
           effects: [
@@ -1121,6 +1143,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           ],
           text: 'A horned thing comes over the parapet on the fourth day. You live, which is more than some.',
           chronicle: '{name} is gored on the walls in the beast tide, and lives.',
+          kind: 'hurt',
         },
       },
     ],
@@ -1169,6 +1192,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           ],
           text: 'She sells your herbs in the valley for better prices than you ever got.',
           chronicle: '{name} takes {junior} on to run errands, and she brings back a few stones.',
+          kind: 'people',
         },
       },
     ],
@@ -1196,6 +1220,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           ],
           text: 'He talks for an hour about the fourth layer. You learn more about him than about it.',
           chronicle: '{name} meets {rival}, a cultivator of {their} year, and lets him boast.',
+          kind: 'people',
         },
       },
       {
@@ -1215,6 +1240,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           ],
           text: 'You put him on his back in the dust. He gets up smiling, which is how you know he will not forget it.',
           chronicle: '{name} puts {rival} on his back in a sparring match.',
+          kind: 'fight',
         },
         fail: {
           effects: [
@@ -1229,6 +1255,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           ],
           text: 'He puts you on your back and laughs all the way down the hill.',
           chronicle: '{name} spars with {rival} and is put on {their} back.',
+          kind: 'fight',
         },
       },
     ],
@@ -1411,6 +1438,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           effects: [{ do: 'injury', ladder: 'body', days: 20 }],
           text: 'She is not fooled, and you leave the river villages faster than you meant to.',
           chronicle: '{sergeant} sees through a false trail, and {name} barely gets away.',
+          kind: 'hurt',
         },
       },
     ],

@@ -1,7 +1,8 @@
 // Reading the typed chronicle: an event's text from its type's template (content/chronicle.ts),
-// with its subject's name, pronouns and story slots, and the biography's sense of time ("the
-// spring of the fourteenth year"). The person log (P1.8) filters events by actor.
+// with its subject's name, pronouns and story slots, and the world's calendar ("Winter 3,137", the
+// Sealed Era). The person log (P1.8) filters events by actor.
 import { EVENT_TEMPLATES, pronounWords, type EventData, type Who } from '../content/chronicle.ts';
+import { ERA_START_YEAR } from '../content/calendar.ts';
 import { placeName } from '../content/origins.ts';
 import { personSlots } from './people.ts';
 import { ordinal } from '../content/words.ts';
@@ -56,24 +57,44 @@ export type Season = (typeof SEASONS)[number];
 
 /** The season of a world day: three months each, the year opening in spring. */
 export function seasonOf(day: number): Season {
+  return SEASONS[seasonIndex(day)]!;
+}
+
+/** The season of a world day as 0–3, spring first. */
+export function seasonIndex(day: number): number {
   const month = Math.floor((((day % DAYS_PER_YEAR) + DAYS_PER_YEAR) % DAYS_PER_YEAR) / 30);
-  return SEASONS[Math.floor(month / 3)]!;
+  return Math.floor(month / 3);
 }
 
-/** "the spring of the fourteenth year": when an event happened in its subject's life. */
-export function lifeWhen(c: Cultivator, day: number): string {
-  const year = Math.floor((day - c.bornDay) / DAYS_PER_YEAR) + 1;
-  return `the ${seasonOf(day)} of the ${ordinal(year)} year`;
+/** The world's year on a world day: the Sealed Era, day 0 the first day of 3,115. */
+export function worldYear(day: number): number {
+  return ERA_START_YEAR + Math.floor(day / DAYS_PER_YEAR);
 }
 
-/** Events grouped by "the spring of the fourteenth year", in the order given. */
+/** The world day a Sealed Era year begins on. */
+export function yearStartDay(year: number): number {
+  return (year - ERA_START_YEAR) * DAYS_PER_YEAR;
+}
+
+/** A year as digits: "3,137". Years are never spelled out. */
+export function yearDigits(year: number): string {
+  return String(year).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/** "Winter 3,137": when an event happened, on the world's calendar. */
+export function worldWhen(day: number): string {
+  return `${capitalize(seasonOf(day))} ${yearDigits(worldYear(day))}`;
+}
+
+const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/** Events grouped by "Winter 3,137", in the order given. */
 export function bySeason(
-  c: Cultivator,
   events: readonly ChronicleEvent[],
 ): { when: string; items: ChronicleEvent[] }[] {
   const groups: { when: string; items: ChronicleEvent[] }[] = [];
   for (const e of events) {
-    const when = e.day < c.bornDay ? 'a past life' : lifeWhen(c, e.day);
+    const when = worldWhen(e.day);
     const last = groups.at(-1);
     if (last?.when === when) last.items.push(e);
     else groups.push({ when, items: [e] });

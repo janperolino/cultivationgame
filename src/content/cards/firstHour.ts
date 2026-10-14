@@ -40,6 +40,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           ],
           text: 'You shake his wet hand. The Society teaches you its breathing in a cave that floods twice a day, and it will want something back one day.',
           chronicle: '{name} falls in with the Night Bridge Society, a favor owed.',
+          kind: 'people',
         },
       },
       {
@@ -151,6 +152,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           text: 'One of them sees you go. You lose him in the flooded passages, and a fair amount of skin.',
           chronicle:
             '{name} escapes two bounty hunters through the flooded reef caves, torn up by the rock.',
+          kind: 'hurt',
         },
       },
     ],
@@ -173,6 +175,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           effects: [{ do: 'first-technique' }],
           text: 'By the hundredth repetition your palm stops hurting. By the thousandth it starts to mean something.',
           chronicle: '{name} drills the Rampart Palm with the cadets of the garrison school.',
+          kind: 'learned',
         },
       },
       {
@@ -186,6 +189,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           text: 'You read the manual cover to cover in a night. Half of it is about latrines, the other half is worth the stones.',
           chronicle:
             "{name} drills the Rampart Palm and reads the garrison school's manual cover to cover.",
+          kind: 'learned',
         },
       },
     ],
@@ -206,6 +210,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           effects: [{ do: 'first-technique' }],
           text: 'Your knuckles bleed for a week. On the eighth day a slab splits clean.',
           chronicle: '{name} learns the Sinkhole Stone Fist from {aunt} on the lowest terrace.',
+          kind: 'learned',
         },
       },
     ],
@@ -226,6 +231,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           effects: [{ do: 'first-technique' }],
           text: 'You drill until the bones on the wall start to look like targets.',
           chronicle: '{name} learns the Piled Bones Thrust on the Wall of Piled Bones.',
+          kind: 'learned',
         },
       },
     ],
@@ -246,6 +252,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           effects: [{ do: 'first-technique' }],
           text: 'You fall in the sea forty times. The forty-first, the sea falls instead.',
           chronicle: '{name} learns the Undertow Palm from the Night Bridge runners.',
+          kind: 'learned',
         },
       },
     ],
@@ -266,6 +273,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           effects: [{ do: 'first-technique' }],
           text: 'By the time the carcass is in pieces, you can hear the bone before the blade reaches it.',
           chronicle: "{name} learns the Bone-Splitting Cleave on a carcass in the Gate's yard.",
+          kind: 'learned',
         },
       },
     ],
@@ -291,6 +299,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           effects: [{ do: 'first-technique' }],
           text: 'Every corner you take at a run, you push the wind ahead of you a little harder.',
           chronicle: '{name} learns the Alley Wind Palm between errands for the bounty office.',
+          kind: 'learned',
         },
       },
     ],
@@ -321,6 +330,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           text: 'A gust snuffs every torch, and you lead them out by feel with a gash down your arm. {sergeant} gives you a tempering art and orders you to bed.',
           chronicle:
             '{name} leads a garrison survey party out of the dark, hurt, under the Kingdom of Stone Eyes.',
+          kind: 'hurt',
         },
       },
       {
@@ -358,6 +368,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           text: 'A lamp gives you away and you run the crew out through the flooding cave. They get away; you get the tempering art and a cracked rib.',
           chronicle:
             "{name} runs a smuggler crew out of a garrison patrol's reach, and pays for it with a cracked rib.",
+          kind: 'hurt',
         },
       },
       {
@@ -389,11 +400,13 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           text: 'A bone-gnawer pup, half grown, digging at the wall. You drive it off with the spear and bring back the tooth it broke. {sergeant} pays the bounty out of pocket and hands you the garrison tempering art.',
           chronicle:
             '{name} goes down the Wall of Piled Bones on a rope at night and drives off a bone-gnawer.',
+          kind: 'fight',
         },
         fail: {
           effects: [TEMPERING, { do: 'injury', ladder: 'qi', days: 20 }],
           text: 'The rope burns your hands and the beast opens your leg before {sergeant} hauls you up. "Brave and stupid. Here," and hands you a tempering art.',
           chronicle: '{name} is clawed below the Wall of Piled Bones on a first night patrol.',
+          kind: 'hurt',
         },
       },
       {
@@ -430,6 +443,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           text: "The lamp finds you and a crossbow bolt finds your shoulder. You get the crate there anyway. {fixer} patches you up and gives you the runners' tempering art.",
           chronicle:
             '{name} takes a garrison bolt on a night run for the Night Bridge Society, and delivers anyway.',
+          kind: 'hurt',
         },
       },
       {
@@ -465,11 +479,13 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           effects: [TEMPERING, { do: 'stones', n: 8 }, { do: 'fuel', ladder: 'body', share: 0.2 }],
           text: 'You drive it into {senior}\'s saber like you have done it all your life. Your share of the core is eight stones, and {senior} tosses you the Gate\'s tempering art: "Get heavier."',
           chronicle: "{name} drives a stone-hide boar onto {senior}'s saber on the first island.",
+          kind: 'fight',
         },
         fail: {
           effects: [TEMPERING, { do: 'injury', ladder: 'qi', days: 20 }],
           text: "The boar turns on you and you go into a tide pool with a tusk in your thigh. {senior} kills it, laughs, and gives you the Gate's tempering art.",
           chronicle: '{name} is gored by a stone-hide boar on a first core hunt with {senior}.',
+          kind: 'hurt',
         },
       },
       {
@@ -509,6 +525,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           effects: [TEMPERING, { do: 'injury', ladder: 'qi', days: 20 }],
           text: 'Not quite fast enough: the fang grazes your calf and you spend a week sweating poison. The hunter gives you the tempering art and a little respect.',
           chronicle: '{name} is bitten baiting a reef viper on the first island, and lives.',
+          kind: 'hurt',
         },
       },
       {
@@ -540,6 +557,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           text: 'She talks about stillness until dawn, and somewhere in the third watch your mind goes as still as the flame.',
           chronicle:
             '{name} sits a night with a lamp-keeper at a frontier shrine and learns to be still.',
+          kind: 'learned',
         },
       },
       {
@@ -550,6 +568,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
           text: 'You take the manual with a bow. She is already looking at the flame again. It will want reading, on the study hours.',
           chronicle:
             '{name} is given a copy of a nourishing art by a lamp-keeper at a frontier shrine.',
+          kind: 'learned',
         },
       },
     ],

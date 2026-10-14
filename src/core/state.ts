@@ -450,7 +450,9 @@ export function chronicleEvent(
 
 /** The events a life opens with: coming of age, and testing day when there is an origin. */
 function openingEvents(c: Cultivator, day: number, next: boolean): ChronicleEvent[] {
-  const out = [chronicleEvent(day, 'birth', next ? { next: true } : {}, [c.id], c.place)];
+  // The name and pronouns stay on the line, so an earlier life reads under its own name.
+  const who = { name: c.name, pronouns: c.pronouns };
+  const out = [chronicleEvent(day, 'birth', next ? { next: true, ...who } : who, [c.id], c.place)];
   if (c.origin) {
     out.push(
       chronicleEvent(

@@ -103,6 +103,9 @@ export type CardEffect =
       where?: string;
     };
 
+/** The kinds a card's chronicle line can name beside the plain choice (事). */
+export type CardLineKind = 'fight' | 'hurt' | 'people' | 'learned';
+
 export interface CardOutcome {
   effects: readonly CardEffect[];
   /** What the card says once chosen, in the second person. Variables fill in as {var.id}. */
@@ -112,6 +115,12 @@ export interface CardOutcome {
    * fill in as {var.id}. An outcome that leads on to a step writes none.
    */
   chronicle?: string;
+  /**
+   * The chronicle line's kind when it is more than a choice (content/chronicle.ts): a fight, a
+   * hurt, a person met or something learned. A card that settled itself reads as settled whatever
+   * this says.
+   */
+  kind?: CardLineKind;
   /** The step the card goes on to, in `steps`; the card ends here when absent. */
   next?: string;
 }
