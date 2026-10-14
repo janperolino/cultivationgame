@@ -5,8 +5,9 @@
 // jewels in each band's crown (design § Cultivation, Where manuals live); a click blooms one into
 // a ring of its nodes. Drag and pinch to move, wheel and pinch to zoom; the screen opens on the
 // band you cultivate in, and a ladder of the realms jumps to any band. A hostless manual's own
-// tree draws as a small fan in the same look (OwnFan).
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+// tree draws as a small fan in the same look (OwnFan). A node's card hangs beside it on hover,
+// and a click pins it open with Learn (NodeTip.tsx).
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { MANUAL_KINDS, type Manual } from '../content/manuals.ts';
 import type { AnyNode } from '../content/nodes.ts';
 import { rarity } from '../content/rarity.ts';
@@ -18,7 +19,7 @@ import { hasLearned, nodeSealed, tierOwned } from '../core/trees.ts';
 import { learnedCount, nodeMark } from './bookcase.ts';
 import { formatNumber, LADDER_LABELS } from './format.ts';
 import { hereTier, jewelTip, nodeState, nodeTip, type TipWords } from './fanWords.ts';
-import { NodeDetail } from './NodeDetail.tsx';
+import { NodeTip } from './NodeTip.tsx';
 import { viewAt, type Point, type Size, type View } from './panzoom.ts';
 import { useGame } from './store.ts';
 import {
@@ -34,8 +35,10 @@ import {
   nameBox,
   NODE_SIZE,
   OWN_LABEL_W,
+  OWN_NAME_W,
   OWN_R,
   ownFan,
+  placeTip,
   ROW,
   type Band,
   type Fan,
@@ -43,6 +46,7 @@ import {
   type FanNode,
   type Jewel,
 } from './treeLayout.ts';
+import { useNodeTip } from './useNodeTip.ts';
 import { BUTTON_STEP, usePanZoom } from './usePanZoom.ts';
 
 /** The canvas zooms from the whole of Tribulation Transcendence to a close look at one node. */
@@ -122,7 +126,17 @@ function EdgePaths({
   });
 }
 
+/** What a card tells of: a node, hanging at a point, or a jewel. */
 type Hover = { kind: 'node'; id: string; at: Point; size: number } | { kind: 'jewel'; id: string };
+
+/** The card's controls (useNodeTip), as the shapes on a fan use them. */
+interface TipControl {
+  enter: (h: Hover) => void;
+  leave: () => void;
+  pin: (h: Hover) => void;
+  /** The node whose card is pinned open, selected. */
+  pinned: string | null;
+}
 
 /** A node as a gilded shape: a ring, a notable's double rim, a medallion with a hanzi. */
 function NodeShape({
@@ -131,9 +145,8 @@ function NodeShape({
   at,
   size,
   medallion,
-  selected,
-  onSelect,
-  onHover,
+  tips,
+  tipAt,
   onFocusNode,
 }: {
   c: Cultivator;
@@ -141,14 +154,15 @@ function NodeShape({
   at: Point;
   size: number;
   medallion: boolean;
-  selected: boolean;
-  onSelect: (id: string) => void;
-  onHover: (h: Hover | null) => void;
+  tips: TipControl;
+  /** Where its card hangs, when that isn't `at` (a bloom's node, in the world). */
+  tipAt?: Point;
   onFocusNode?: (p: Point) => void;
 }) {
   const state = nodeState(c, n);
   const sealed = nodeSealed(c, n);
-  const hover: Hover = { kind: 'node', id: n.id, at, size };
+  const selected = tips.pinned === n.id;
+  const hover: Hover = { kind: 'node', id: n.id, at: tipAt ?? at, size };
   return (
     <button
       type="button"
@@ -156,14 +170,14 @@ function NodeShape({
       style={{ left: at.x - size / 2, top: at.y - size / 2, width: size, height: size }}
       aria-pressed={selected}
       aria-label={`${n.name}, ${n.kind}, ${state}${sealed ? ', sealed' : ''}${state === 'available' ? `, ${n.cost} insight` : ''}`}
-      onClick={() => onSelect(n.id)}
-      onPointerEnter={(e) => e.pointerType === 'mouse' && onHover(hover)}
-      onPointerLeave={() => onHover(null)}
+      onClick={() => tips.pin(hover)}
+      onPointerEnter={(e) => e.pointerType === 'mouse' && tips.enter(hover)}
+      onPointerLeave={tips.leave}
       onFocus={() => {
-        onHover(hover);
+        tips.enter(hover);
         onFocusNode?.(at);
       }}
-      onBlur={() => onHover(null)}
+      onBlur={tips.leave}
     >
       {medallion && (
         <span className="fan-node-glyph hanzi" aria-hidden="true">
@@ -250,7 +264,7 @@ function JewelButton({
   open,
   fresh,
   onOpen,
-  onHover,
+  tips,
 }: {
   c: Cultivator;
   m: Manual;
@@ -259,7 +273,7 @@ function JewelButton({
   open: boolean;
   fresh: boolean;
   onOpen: (id: string) => void;
-  onHover: (h: Hover | null) => void;
+  tips: TipControl;
 }) {
   const ready = !sealed && manualReady(c, m);
   const hover: Hover = { kind: 'jewel', id: m.id };
@@ -273,10 +287,10 @@ function JewelButton({
         aria-expanded={open}
         aria-label={`${m.name}, ${rarity(m.rarity).name.toLowerCase()} ${kind}, ${learnedCount(c, m)} of ${m.nodes.length} learned${ready ? ', one ready' : ''}`}
         onClick={() => onOpen(m.id)}
-        onPointerEnter={(e) => e.pointerType === 'mouse' && onHover(hover)}
-        onPointerLeave={() => onHover(null)}
-        onFocus={() => onHover(hover)}
-        onBlur={() => onHover(null)}
+        onPointerEnter={(e) => e.pointerType === 'mouse' && tips.enter(hover)}
+        onPointerLeave={tips.leave}
+        onFocus={() => tips.enter(hover)}
+        onBlur={tips.leave}
       >
         <span className="jewel-gem" aria-hidden="true" />
       </button>
@@ -300,19 +314,15 @@ function BloomDisc({
   m,
   j,
   sealed,
-  selected,
-  onSelect,
+  tips,
   onClose,
-  onHover,
 }: {
   c: Cultivator;
   m: Manual;
   j: Jewel;
   sealed: boolean;
-  selected: string | null;
-  onSelect: (id: string) => void;
+  tips: TipControl;
   onClose: () => void;
-  onHover: (h: Hover | null) => void;
 }) {
   const b = useMemo(() => bloom(m), [m]);
   const mid = BLOOM_DISC / 2;
@@ -347,11 +357,8 @@ function BloomDisc({
               at={at}
               size={size}
               medallion={false}
-              selected={selected === p.node.id}
-              onSelect={onSelect}
-              onHover={(h) =>
-                onHover(h && ({ ...h, at: { x: j.x - mid + at.x, y: j.y - mid + at.y } } as Hover))
-              }
+              tips={tips}
+              tipAt={{ x: j.x - mid + at.x, y: j.y - mid + at.y }}
             />
             <NodeLabel
               c={c}
@@ -379,33 +386,6 @@ function BloomDisc({
       <span className={`bloom-name rarity-${m.rarity}`} style={{ top: mid + 24 }}>
         {m.name}
       </span>
-    </div>
-  );
-}
-
-/** A hover card in screen pixels, beside the thing it tells of, so it reads at any zoom. */
-function TipCard({
-  words,
-  at,
-  half,
-  screen,
-}: {
-  words: TipWords;
-  at: Point;
-  half: number;
-  screen: Size;
-}) {
-  const left = at.x > screen.w - 290 ? at.x - half - 262 : at.x + half + 14;
-  const top = Math.max(8, Math.min(at.y - 16, screen.h - 200));
-  return (
-    <div className="fan-tip" role="tooltip" style={{ left: Math.max(8, left), top }}>
-      <span className={`fan-tip-title${words.rarity ? ` rarity-${words.rarity}` : ''}`}>
-        {words.title} <span className="hanzi muted">{words.hanzi}</span>
-      </span>
-      <span className="fan-tip-sub">{words.sub}</span>
-      {words.effects && <span className="fan-tip-effects">{words.effects}</span>}
-      <span className={`fan-tip-status is-${words.tone}`}>{words.status}</span>
-      {words.text && <span className="fan-tip-text">{words.text}</span>}
     </div>
   );
 }
@@ -489,11 +469,9 @@ export function TreeFan({
     focused ? jewelView(focused, s) : first ? jewelView(first, s) : bandView(f, here, s);
   const { box, view, screen, handlers, zoomBy, show } = usePanZoom(world, home, RANGE);
   const [open, setOpen] = useState<string | null>(focused ? focus : null);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [hover, setHover] = useState<Hover | null>(null);
+  const tip = useNodeTip<Hover>();
 
-  // The tree on the canvas is the tab selected, so it is seen; so is a manual opened, or one
-  // whose node is selected.
+  // The tree on the canvas is the tab selected, so it is seen; so is a manual opened.
   const see = useGame((s) => s.see);
   useEffect(() => {
     see('tree', [tree.id]);
@@ -502,8 +480,15 @@ export function TreeFan({
     if (open) see('manual', [open]);
   }, [see, open]);
 
+  const tips: TipControl = {
+    enter: tip.enter,
+    leave: tip.leave,
+    pin: tip.pin,
+    pinned: tip.pinned?.id ?? null,
+  };
   const goBand = (tier: number) => {
     setOpen(null);
+    tip.clear();
     show((s) => bandView(f, tier, s));
   };
   const keepInView = (p: Point) =>
@@ -517,22 +502,33 @@ export function TreeFan({
     });
   const manualsIn = (tier: number) => grafts.filter((m) => m.tier === tier).length;
 
-  // The hover card, in screen pixels.
-  let tip: { words: TipWords; at: Point; half: number } | null = null;
-  if (hover && view) {
+  // The card, in screen pixels beside what it tells of, so it reads at any zoom.
+  let card: { words: TipWords; node?: AnyNode; at: Point; half: number } | null = null;
+  const shown = tip.shown;
+  if (shown && view) {
     const toScreen = (p: Point) => ({ x: p.x * view.k + view.x, y: p.y * view.k + view.y });
-    if (hover.kind === 'jewel') {
-      const m = byId.get(hover.id);
-      const j = f.jewels.get(hover.id);
+    if (shown.kind === 'jewel') {
+      const m = byId.get(shown.id);
+      const j = f.jewels.get(shown.id);
       if (m && j) {
-        tip = { words: jewelTip(c, m, m.tier > here), at: toScreen(j), half: (JEWEL / 2) * view.k };
+        card = {
+          words: jewelTip(c, m, m.tier > here),
+          at: toScreen(j),
+          half: (JEWEL / 2) * view.k,
+        };
       }
     } else {
       const n =
-        f.nodes.get(hover.id)?.node ??
-        grafts.flatMap((m) => m.nodes).find((x) => x.id === hover.id);
-      if (n)
-        tip = { words: nodeTip(c, n), at: toScreen(hover.at), half: (hover.size / 2) * view.k };
+        f.nodes.get(shown.id)?.node ??
+        grafts.flatMap((m) => m.nodes).find((x) => x.id === shown.id);
+      if (n) {
+        card = {
+          words: nodeTip(c, n),
+          node: n,
+          at: toScreen(shown.at),
+          half: (shown.size / 2) * view.k,
+        };
+      }
     }
   }
 
@@ -540,10 +536,11 @@ export function TreeFan({
     <div
       className="tree-canvas-wrap"
       onKeyDown={(e) => {
-        if (e.key === 'Escape' && open) {
-          setOpen(null);
-          e.stopPropagation();
-        }
+        if (e.key !== 'Escape') return;
+        if (tip.pinned) tip.clear();
+        else if (open) setOpen(null);
+        else return;
+        e.stopPropagation();
       }}
     >
       <div
@@ -556,9 +553,9 @@ export function TreeFan({
         }}
         {...handlers}
         onClick={(e) => {
-          // A tap on empty canvas closes the details and the bloom.
+          // A tap on empty canvas closes the card and the bloom.
           if (e.target === e.currentTarget || (e.target as Element).closest('.fan-bg')) {
-            setSelected(null);
+            tip.clear();
             setOpen(null);
           }
         }}
@@ -629,9 +626,7 @@ export function TreeFan({
                   at={p}
                   size={NODE_SIZE[p.node.kind]}
                   medallion={p.node.kind === 'starter' || p.node.kind === 'capstone'}
-                  selected={selected === p.node.id}
-                  onSelect={setSelected}
-                  onHover={setHover}
+                  tips={tips}
                   onFocusNode={keepInView}
                 />
               ))}
@@ -647,12 +642,12 @@ export function TreeFan({
                   open={open === m.id}
                   fresh={fresh.has(m.id)}
                   onOpen={(id) => {
-                    setHover(null);
+                    tip.clear();
                     setOpen(open === id ? null : id);
                     // Opened from far out, the view comes in to read the bloom.
                     if (open !== id) show((s, v) => (v && v.k >= 0.9 ? v : jewelView(j, s)));
                   }}
-                  onHover={setHover}
+                  tips={tips}
                 />
               );
             })}
@@ -662,22 +657,27 @@ export function TreeFan({
                 m={byId.get(open)!}
                 j={f.jewels.get(open)!}
                 sealed={byId.get(open)!.tier > here}
-                selected={selected}
-                onSelect={(id) => {
-                  setSelected(id);
-                  see('manual', [open]);
-                }}
+                tips={tips}
                 onClose={() => {
                   setOpen(null);
-                  setHover(null);
+                  tip.clear();
                 }}
-                onHover={setHover}
               />
             )}
           </div>
         )}
       </div>
-      {tip && <TipCard words={tip.words} at={tip.at} half={tip.half} screen={screen} />}
+      {card && (
+        <NodeTip
+          c={c}
+          words={card.words}
+          node={card.node}
+          style={placeTip(card.at, card.half, screen)}
+          pinned={!!tip.pinned && tip.pinned.id === shown?.id}
+          onClose={tip.clear}
+          handlers={tip.cardHandlers}
+        />
+      )}
       <div className="fan-tools">
         <div className="tree-tools" role="group" aria-label="View">
           {view && <span className="fan-zoom">{Math.round(view.k * 100)}%</span>}
@@ -703,25 +703,65 @@ export function TreeFan({
         </div>
         <RealmLadder here={here} onGo={goBand} />
       </div>
-      {selected && <NodeDetail c={c} id={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }
 
 /**
  * A hostless manual's own tree as a small fan (design § UI and screens, A manual's own tree): its
- * first node at the bottom, its tier bands in ascending order, each named for its realm. Hover or
- * focus shows a node's details under it; a click pins them there, with Learn.
+ * first node at the bottom, its tier bands in ascending order, each named for its realm. Its nodes
+ * act as a tree's do: a card beside one on hover or focus, pinned open by a click, with Learn. Too
+ * wide for its box, it scrolls sideways, opening centred.
  */
 export function OwnFan({ c, m }: { c: Cultivator; m: Manual }) {
   const f = useMemo(() => ownFan(m), [m]);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [hover, setHover] = useState<string | null>(null);
-  const shown = hover ?? selected;
+  const tip = useNodeTip<Hover>();
+  const wrap = useRef<HTMLDivElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const fanBox = useRef<HTMLDivElement>(null);
+  // Where the fan sits in the wrap, so a card can hang beside a node; it moves as the fan scrolls.
+  const [offset, setOffset] = useState({ x: 0, y: 0, w: 0 });
+  const measure = () => {
+    const a = wrap.current?.getBoundingClientRect();
+    const b = fanBox.current?.getBoundingClientRect();
+    if (a && b) setOffset({ x: b.left - a.left, y: b.top - a.top, w: a.width });
+  };
+  useLayoutEffect(() => {
+    const s = scroller.current;
+    if (s) s.scrollLeft = (s.scrollWidth - s.clientWidth) / 2;
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (wrap.current) ro.observe(wrap.current);
+    return () => ro.disconnect();
+  }, [f]);
+  const tips: TipControl = {
+    enter: tip.enter,
+    leave: tip.leave,
+    pin: tip.pin,
+    pinned: tip.pinned?.id ?? null,
+  };
+  const shown = tip.shown?.kind === 'node' ? tip.shown : null;
+  const node = shown ? m.nodes.find((n) => n.id === shown.id) : undefined;
   return (
-    <div className="own-fan-wrap">
-      <div className="own-fan-scroll">
-        <div className="own-fan" style={{ width: f.width, height: f.height }}>
+    <div
+      ref={wrap}
+      className="own-fan-wrap"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && tip.pinned) {
+          tip.clear();
+          e.stopPropagation();
+        }
+      }}
+    >
+      <div ref={scroller} className="own-fan-scroll" onScroll={measure}>
+        <div
+          ref={fanBox}
+          className="own-fan"
+          style={{ width: f.width, height: f.height }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) tip.clear();
+          }}
+        >
           <svg className="fan-lines" width={f.width} height={f.height} aria-hidden="true">
             {f.bands.map((b) => (
               <path key={b.tier} className="fan-band-edge" d={bandArc(b.outer, b.half, f.hub)} />
@@ -732,10 +772,10 @@ export function OwnFan({ c, m }: { c: Cultivator; m: Manual }) {
             <span
               key={b.tier}
               className="own-fan-band"
-              style={{ left: b.name.x - 150, top: b.name.y - 8 }}
+              style={{ left: b.name.x - OWN_NAME_W, top: b.name.y, width: OWN_NAME_W }}
             >
-              Tier {b.tier} · {REALMS[b.tier - 1]!.name}{' '}
-              <span className="hanzi">{REALMS[b.tier - 1]!.hanzi}</span>
+              Tier {b.tier} · <span className="hanzi">{REALMS[b.tier - 1]!.hanzi}</span>
+              <span className="own-fan-band-realm">{REALMS[b.tier - 1]!.name}</span>
             </span>
           ))}
           {f.nodes.map((p) => (
@@ -746,9 +786,7 @@ export function OwnFan({ c, m }: { c: Cultivator; m: Manual }) {
                 at={p}
                 size={p.node.kind === 'notable' ? NODE_SIZE.notable : OWN_R * 2}
                 medallion={false}
-                selected={selected === p.node.id}
-                onSelect={(id) => setSelected(selected === id ? null : id)}
-                onHover={(h) => setHover(h?.id ?? null)}
+                tips={tips}
               />
               <NodeLabel
                 c={c}
@@ -760,14 +798,19 @@ export function OwnFan({ c, m }: { c: Cultivator; m: Manual }) {
           ))}
         </div>
       </div>
-      {shown ? (
-        <div className="own-fan-detail">
-          <NodeDetail c={c} id={shown} onClose={() => setSelected(null)} />
-        </div>
-      ) : (
-        <p className="caption">
-          Hover or tap a node for what it gives; tap to keep it open and learn it.
-        </p>
+      {shown && node && (
+        <NodeTip
+          c={c}
+          words={nodeTip(c, node)}
+          node={node}
+          style={placeTip({ x: shown.at.x + offset.x, y: shown.at.y + offset.y }, shown.size / 2, {
+            w: offset.w,
+            h: Infinity,
+          })}
+          pinned={tip.pinned?.id === shown.id}
+          onClose={tip.clear}
+          handlers={tip.cardHandlers}
+        />
       )}
     </div>
   );

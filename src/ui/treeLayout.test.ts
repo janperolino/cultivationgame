@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { MANUALS, type Manual, type ManualNode } from '../content/manuals.ts';
 import type { RarityId } from '../content/rarity.ts';
+import { madeUpManuals } from '../core/madeUpManuals.ts';
 import { TIER_COUNT, TREES } from '../content/trees/index.ts';
 import {
   bloom,
@@ -13,7 +14,10 @@ import {
   halfOpening,
   JEWEL,
   nameBox,
+  OWN_LABEL_W,
   ownFan,
+  placeTip,
+  TIP_W,
   PEAK_GAP,
   type CrownItem,
   type Rect,
@@ -234,6 +238,18 @@ describe('a bloom', () => {
   });
 });
 
+describe("a node's card", () => {
+  it('sits right of the node, else left, else under it, inside the area', () => {
+    const area = { w: 800, h: 600 };
+    expect(placeTip({ x: 100, y: 200 }, 10, area).left).toBeGreaterThan(100);
+    expect(placeTip({ x: 700, y: 200 }, 10, area).left).toBeLessThan(700 - TIP_W);
+    const phone = placeTip({ x: 150, y: 100 }, 10, { w: 307, h: 550 });
+    expect(phone.top).toBeGreaterThan(100);
+    expect(phone.left).toBeGreaterThanOrEqual(8);
+    expect(phone.left + phone.width).toBeLessThanOrEqual(307 - 8);
+  });
+});
+
 describe("a hostless manual's own fan", () => {
   it('opens upward from its first node, tier 1 innermost, every node inside its box', () => {
     const m = fake('two-tier', 1, [[], [0], [0], [1], [2, 3], [4]], [1, 1, 1, 2, 2, 2]);
@@ -260,8 +276,26 @@ describe("a hostless manual's own fan", () => {
     expect(ownFan(fake('lone', 1, [[]])).bands).toHaveLength(1);
   });
 
-  it('fits a desktop box without panning', () => {
-    const f = ownFan(fake('wide', 1, [[], [0], [0], [0], [1, 2, 3]]));
-    expect(f.width).toBeLessThan(720);
+  it('grows each node past its parents, keeps labels on a ring apart, and fits a desktop box', () => {
+    const big = madeUpManuals().manuals.filter((m) => m.host === null && m.nodes.length > 4);
+    expect(big.length).toBeGreaterThan(5);
+    for (const m of [...big, fake('wide', 1, [[], [0], [0], [0], [1, 2, 3]])]) {
+      const f = ownFan(m);
+      const at = new Map(f.nodes.map((p) => [p.node.id, p]));
+      const r = (id: string) => Math.hypot(at.get(id)!.x - f.hub.x, at.get(id)!.y - f.hub.y);
+      for (const n of m.nodes) {
+        for (const q of n.requires) expect(r(n.id), `${m.id} ${n.id}`).toBeGreaterThan(r(q));
+      }
+      for (const a of f.nodes) {
+        for (const b of f.nodes) {
+          if (a === b || Math.abs(r(a.node.id) - r(b.node.id)) > 1) continue;
+          expect(
+            Math.hypot(a.x - b.x, a.y - b.y),
+            `${a.node.id} ${b.node.id}`,
+          ).toBeGreaterThanOrEqual(OWN_LABEL_W);
+        }
+      }
+      expect(f.width, m.id).toBeLessThan(800);
+    }
   });
 });

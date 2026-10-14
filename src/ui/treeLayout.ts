@@ -549,19 +549,23 @@ export function bloom(m: Manual): Bloom {
 }
 
 /** A hostless manual's own fan: px between rings, between its bands, and between siblings' labels. */
-export const OWN_STEP = 84;
-const OWN_BAND_GAP = 26;
-const OWN_ARC = 116;
-export const OWN_LABEL_W = 104;
+export const OWN_STEP = 64;
+const OWN_BAND_GAP = 20;
+const OWN_ARC = 92;
+/** The widest the leaves may spread, in degrees either side of straight up. */
+const OWN_SPREAD = 75;
+export const OWN_LABEL_W = 88;
 /** A node's radius there. */
 export const OWN_R = 11;
+/** A band's name: two short lines, right-aligned to the band's left end. */
+export const OWN_NAME_W = 112;
 
 export interface OwnBand {
   tier: number;
   /** Its outer edge, from the hub, and how far it opens either side. */
   outer: number;
   half: number;
-  /** Its name's point at the band's left end, in px from the box's top-left. */
+  /** Its name's top right, just under the band's left end, in px from the box's top-left. */
   name: Point;
 }
 
@@ -576,60 +580,115 @@ export interface OwnFan {
 
 /**
  * A manual with no host, as a small fan of its own (design § UI and screens, A manual's own tree):
- * opening upward from its first node at the bottom, one band a tier in ascending order, tier 1
- * innermost. Within a band a node sits a ring further out than the nodes it needs there, and
- * siblings on a ring spread round it, ordered by where their parents stand. Labels sit under their
- * nodes. In px from the box's top-left.
+ * a radial tree opening upward from its first node at the hub, one band a tier in ascending order,
+ * tier 1 innermost. A node sits a ring past every node it needs, and never inside its own tier's
+ * band. Each branch keeps its own wedge: the outermost nodes share the opening evenly in the
+ * order the branches grow, and a node stands at the middle of the nodes that grow from it, so no
+ * two branches cross. An edge leaves its parent straight out, runs round just past the parent's
+ * ring and goes straight out to the child, so a fork opens as arcs from one node. Labels sit under
+ * their nodes. In px from the box's top-left.
  */
 export function ownFan(m: Manual): OwnFan {
   const own = new Map(m.nodes.map((n) => [n.id, n]));
-  // A node's ring within its band: one past the deepest of its parents in the same band.
-  const depth = new Map<string, number>();
-  const depthOf = (n: ManualNode): number => {
-    const known = depth.get(n.id);
-    if (known !== undefined) return known;
-    const same = n.requires.map((r) => own.get(r)).filter((p) => p && p.tier === n.tier);
-    const d = same.length ? Math.max(...same.map((p) => depthOf(p!))) + 1 : 0;
-    depth.set(n.id, d);
-    return d;
-  };
+  const parentsOf = (n: ManualNode) => n.requires.flatMap((r) => own.get(r) ?? []);
+  // The tree the wedges follow: each node under its first parent.
+  const kids = new Map<string, ManualNode[]>();
+  const roots: ManualNode[] = [];
+  for (const n of m.nodes) {
+    const p = parentsOf(n)[0];
+    if (p) kids.set(p.id, [...(kids.get(p.id) ?? []), n]);
+    else roots.push(n);
+  }
+
+  // Rings, tier by tier: past every parent, and past the band below.
   const tiers = [...new Set(m.nodes.map((n) => n.tier))].sort((a, b) => a - b);
-  const firstRow = m.nodes.filter((n) => n.tier === tiers[0] && depthOf(n) === 0);
-  // One first node stands at the hub; several start a ring out.
-  let r = firstRow.length === 1 ? 0 : OWN_STEP;
-  const angle = new Map<string, number>();
-  const radius = new Map<string, number>();
-  const bands: Omit<OwnBand, 'name'>[] = [];
+  const ring = new Map<string, number>();
+  let floor = roots.length === 1 ? 0 : 1;
   for (const tier of tiers) {
     const inBand = m.nodes.filter((n) => n.tier === tier);
-    const deepest = Math.max(...inBand.map(depthOf));
-    let widest = 30;
-    for (let d = 0; d <= deepest; d++, r += OWN_STEP) {
-      const ring = inBand.filter((n) => depthOf(n) === d);
-      const mean = (n: ManualNode) => {
-        const as = n.requires.map((q) => angle.get(q)).filter((a) => a !== undefined);
-        return as.length ? as.reduce((s, a) => s + a!, 0) / as.length : 0;
-      };
-      const sorted = ring
-        .map((n, i) => ({ n, i, a: mean(n) }))
-        .sort((x, y) => x.a - y.a || x.i - y.i);
-      const step = r > 0 ? Math.min(70, deg(OWN_ARC / r)) : 0;
-      sorted.forEach(({ n }, i) => {
-        const a = (i - (sorted.length - 1) / 2) * step;
-        angle.set(n.id, a);
-        radius.set(n.id, r);
-        widest = Math.max(widest, Math.abs(a) + 14);
-      });
-    }
-    // The band's edge half a ring past its last nodes.
-    bands.push({ tier, outer: r - OWN_STEP / 2 + OWN_BAND_GAP / 2, half: widest });
-    r += OWN_BAND_GAP;
+    const ringOf = (n: ManualNode, seen: Set<string>): number => {
+      const known = ring.get(n.id);
+      if (known !== undefined) return known;
+      if (seen.has(n.id)) return floor;
+      seen.add(n.id);
+      const r = Math.max(
+        n.tier === tier ? floor : 0,
+        ...parentsOf(n).map((p) => ringOf(p, seen) + 1),
+      );
+      ring.set(n.id, r);
+      return r;
+    };
+    for (const n of inBand) ringOf(n, new Set());
+    floor = Math.max(...inBand.map((n) => ring.get(n.id)!)) + 1;
   }
-  const rel = m.nodes.map((node) => ({
-    node,
-    ...polar(angle.get(node.id)!, radius.get(node.id)!),
-  }));
-  const names = bands.map((b) => polar(-b.half - 6, b.outer - 18));
+  const band = (tier: number) => tiers.indexOf(tier);
+  const radiusOf = (n: ManualNode) =>
+    ring.get(n.id)! === 0 ? 0 : ring.get(n.id)! * OWN_STEP + band(n.tier) * OWN_BAND_GAP;
+
+  // Wedges: the outermost nodes in branch order, evenly; each other node at its branches' middle.
+  const leaves: ManualNode[] = [];
+  const walk = (n: ManualNode) => {
+    const ks = kids.get(n.id) ?? [];
+    if (ks.length === 0) leaves.push(n);
+    ks.forEach(walk);
+  };
+  roots.forEach(walk);
+  const nearest = Math.min(...leaves.map(radiusOf).filter((r) => r > 0), Infinity);
+  const step =
+    leaves.length > 1
+      ? Math.min(
+          deg(OWN_ARC / (Number.isFinite(nearest) ? nearest : OWN_STEP)),
+          (OWN_SPREAD * 2) / (leaves.length - 1),
+        )
+      : 0;
+  const angle = new Map<string, number>();
+  leaves.forEach((n, i) => angle.set(n.id, (i - (leaves.length - 1) / 2) * step));
+  const place = (n: ManualNode): number => {
+    const known = angle.get(n.id);
+    if (known !== undefined) return known;
+    const as = (kids.get(n.id) ?? []).map(place);
+    const a = as.reduce((s, x) => s + x, 0) / as.length;
+    angle.set(n.id, a);
+    return a;
+  };
+  m.nodes.forEach(place);
+  // Nodes sharing a ring keep at least a label's width apart, the ring's middle held.
+  const byRadius = new Map<number, ManualNode[]>();
+  for (const n of m.nodes) {
+    const r = radiusOf(n);
+    if (r > 0) byRadius.set(r, [...(byRadius.get(r) ?? []), n]);
+  }
+  for (const [r, ns] of byRadius) {
+    // A chord, not an arc: labels sit apart in a straight line.
+    const gap = 2 * deg(Math.asin(Math.min(1, OWN_ARC / (2 * r))));
+    const sorted = [...ns].sort((a, b) => angle.get(a.id)! - angle.get(b.id)!);
+    const before = sorted.reduce((s, n) => s + angle.get(n.id)!, 0) / sorted.length;
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = angle.get(sorted[i - 1]!.id)!;
+      if (angle.get(sorted[i]!.id)! < prev + gap) angle.set(sorted[i]!.id, prev + gap);
+    }
+    const after = sorted.reduce((s, n) => s + angle.get(n.id)!, 0) / sorted.length;
+    for (const n of sorted) angle.set(n.id, angle.get(n.id)! - after + before);
+  }
+
+  const rel = m.nodes.map((node) => ({ node, ...polar(angle.get(node.id)!, radiusOf(node)) }));
+  // Each band's edge half a ring past its last nodes, opening as wide as its nodes and the ones
+  // inside it, with room for their labels.
+  const bands = tiers.map((tier) => {
+    const upTo = m.nodes.filter((n) => band(n.tier) <= band(tier));
+    const last = Math.max(...m.nodes.filter((n) => n.tier === tier).map(radiusOf));
+    const outer = last + OWN_STEP / 2 + OWN_BAND_GAP / 2;
+    const half = Math.max(
+      30,
+      ...upTo.map((n) => Math.abs(angle.get(n.id)!) + deg(OWN_LABEL_W / 2 / Math.max(outer, 1))),
+    );
+    return { tier, outer, half: Math.min(half, 100) };
+  });
+  // The name just inside the band's left end.
+  const names = bands.map((b) => {
+    const end = polar(-b.half, b.outer);
+    return { x: end.x - 4, y: end.y + 4 };
+  });
   const boxes: Rect[] = [
     ...rel.map((p) => ({
       x: p.x - OWN_LABEL_W / 2,
@@ -639,9 +698,10 @@ export function ownFan(m: Manual): OwnFan {
     })),
     ...bands.map((b) => {
       const side = b.half >= 90 ? b.outer : b.outer * Math.sin(rad(b.half));
-      return { x: -side, y: -b.outer, w: side * 2, h: 1 };
+      const low = Math.max(0, -b.outer * Math.cos(rad(b.half)));
+      return { x: -side, y: -b.outer, w: side * 2, h: b.outer + low };
     }),
-    ...names.map((p) => ({ x: p.x - 150, y: p.y - 8, w: 150, h: 16 })),
+    ...names.map((p) => ({ x: p.x - OWN_NAME_W, y: p.y, w: OWN_NAME_W, h: 28 })),
   ];
   const minX = Math.min(...boxes.map((b) => b.x));
   const minY = Math.min(...boxes.map((b) => b.y));
@@ -652,19 +712,20 @@ export function ownFan(m: Manual): OwnFan {
   const at = new Map(nodes.map((p) => [p.node.id, p]));
   const edges: FanEdge[] = [];
   for (const n of m.nodes) {
-    for (const q of n.requires) {
-      const a = at.get(q);
-      if (!a) continue;
+    for (const q of parentsOf(n)) {
+      const a = at.get(q.id)!;
       const b = at.get(n.id)!;
-      const ra = radius.get(q)!;
-      const ga = angle.get(q)!;
+      const ra = radiusOf(q);
+      const ga = angle.get(q.id)!;
       const gb = angle.get(n.id)!;
-      // Round the parent's ring, then out, as the trees' edges run.
-      const d =
-        ra === 0 || Math.abs(ga - gb) < 0.5
-          ? `M${a.x} ${a.y} L${b.x} ${b.y}`
-          : `M${a.x} ${a.y}${arcTo(ra, ga, gb, hub)} L${b.x} ${b.y}`;
-      edges.push({ from: q, to: n.id, d });
+      let d: string;
+      if (ra === 0 || Math.abs(ga - gb) < 0.5) d = `M${a.x} ${a.y} L${b.x} ${b.y}`;
+      else {
+        const bend = ra + OWN_STEP / 2;
+        const out = polar(ga, bend);
+        d = `M${a.x} ${a.y} L${out.x + hub.x} ${out.y + hub.y}${arcTo(bend, ga, gb, hub)} L${b.x} ${b.y}`;
+      }
+      edges.push({ from: q.id, to: n.id, d });
     }
   }
   return {
@@ -677,5 +738,34 @@ export function ownFan(m: Manual): OwnFan {
     })),
     nodes,
     edges,
+  };
+}
+
+/** A node's card: its width, and about how tall it runs with Learn under it. */
+export const TIP_W = 248;
+export const TIP_TALL = 230;
+
+/**
+ * Where a node's card sits in an area, in its px: right of the node, else left of it, else under
+ * it (over it near the bottom), always inside the area's sides and top.
+ */
+export function placeTip(
+  at: Point,
+  half: number,
+  area: { w: number; h: number },
+): { left: number; top: number; width: number } {
+  const width = Math.min(TIP_W, area.w - 16);
+  let left: number;
+  let top = at.y - 16;
+  if (at.x + half + 14 + width <= area.w - 8) left = at.x + half + 14;
+  else if (at.x - half - 14 - width >= 8) left = at.x - half - 14 - width;
+  else {
+    left = at.x - width / 2;
+    top = at.y + half + 10 + TIP_TALL > area.h ? at.y - half - 10 - TIP_TALL : at.y + half + 10;
+  }
+  return {
+    width,
+    left: Math.min(Math.max(8, left), area.w - width - 8),
+    top: Math.max(8, Math.min(top, area.h - TIP_TALL)),
   };
 }
