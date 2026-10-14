@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chronicle Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --void: #040507;
+  --edge: rgb(255 255 255 / 0.075);
+  --edge-strong: rgb(255 255 255 / 0.14);
+  --text: #e9e5da;
+  --muted: #8d949d;
+  --faint: #5c636c;
+  --accent: #d6ab4c;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --crack: #7fc7d9;
+  --warn: #e08a6a;
+  --obsidian: rgb(7 8 11 / 0.96);
+  --well: rgb(0 0 0 / 0.45);
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  --font-ui: Inter, system-ui, 'Segoe UI', sans-serif;
+  --radius: 9px;
+
+  /* what each kind of line is: the game's hour and qi colors */
+  --k-qi: #7fc7d9;
+  --k-body: #c98a5f;
+  --k-soul: #a28fdc;
+  --k-learn: #a9b97f;
+  --k-mastery: #cf7f9f;
+  --k-fight: #ee9670;
+  --k-hurt: #e08a6a;
+  --k-people: #86d19a;
+  --k-card: #b9b3a6;
+  --k-auto: #5c636c;
+  --k-gate: #c4a3f0;
+  --k-origin: #e4e7ee;
+  --k-system: #8d949d;
+
+  --s-spring: #86d19a;
+  --s-summer: #e8a874;
+  --s-autumn: #dcb359;
+  --s-winter: #7fc7d9;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--void);
+  color: var(--text);
+  font: 14px/1.55 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+button { font: inherit; color: inherit; }
+.brush { font-family: var(--font-brush); }
+
+/* ---------- the study chrome ---------- */
+.study-bar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  padding: 12px 20px;
+  background: rgb(4 5 7 / 0.92);
+  border-bottom: 1px solid var(--edge);
+  backdrop-filter: blur(6px);
+}
+.study-bar h1 { font: 600 20px var(--font-display); margin: 0 12px 0 0; }
+.study-bar h1 small { font: 16px var(--font-brush); color: var(--accent); margin-left: 6px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab {
+  background: none; border: 1px solid var(--edge); border-radius: 999px;
+  padding: 5px 14px; cursor: pointer; color: var(--muted);
+}
+.tab[aria-selected="true"] { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+.study-note {
+  max-width: 1360px; margin: 14px auto 0; padding: 0 20px;
+  color: var(--muted); font-size: 13px;
+}
+.study-note b { color: var(--text); font-weight: 500; }
+.study-note ul { margin: 6px 0 0; padding-left: 18px; }
+
+/* ---------- the game shell, simplified ---------- */
+.shell {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) 240px;
+  max-width: 1360px; margin: 14px auto 40px;
+  min-height: 760px;
+  border: 1px solid var(--edge); border-radius: 12px; overflow: hidden;
+  position: relative;
+  background:
+    radial-gradient(900px 500px at 70% 110%, rgb(127 199 217 / 0.05), transparent 60%),
+    var(--void);
+}
+.menu { padding: 18px 10px; border-right: 1px solid var(--edge); background: rgb(4 5 7 / .7); }
+.menu .brand { font: 600 16px var(--font-display); white-space: nowrap; padding: 0 8px 14px; }
+.menu .brand span { font: 15px var(--font-brush); color: var(--accent); margin-left: 4px; }
+.menu a {
+  display: flex; justify-content: space-between; padding: 8px 10px; border-radius: 7px;
+  color: var(--muted); text-decoration: none; font-size: 13.5px; margin-bottom: 2px;
+}
+.menu a span { font-family: var(--font-brush); opacity: .7; }
+.menu a.on { color: var(--text); background: rgb(255 255 255 / .04); box-shadow: inset 2px 0 0 var(--accent); }
+.main { padding: 22px 24px; min-width: 0; }
+.main > h2 { font: 600 30px var(--font-display); margin: 0 0 14px; }
+.main > h2 span { font: 22px var(--font-brush); color: var(--accent); margin-left: 8px; }
+.context { border-left: 1px solid var(--edge); padding: 22px 16px; background: rgb(4 5 7 / .55); font-size: 12.5px; }
+.context h3 { font: 600 18px var(--font-display); margin: 0 0 10px; }
+.context .when { color: var(--muted); font-size: 11.5px; margin-top: 10px; }
+.context .when:first-of-type { color: var(--accent); }
+.panel {
+  background: var(--obsidian);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 1px rgb(127 199 217 / .06), 0 0 24px rgb(127 199 217 / .05);
+  padding: 18px 20px;
+}
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+.panel-head h3 { font: 600 21px var(--font-display); margin: 0; }
+.caption { color: var(--muted); font-size: 12.5px; }
+.seg { display: inline-flex; border: 1px solid var(--edge-strong); border-radius: 7px; overflow: hidden; }
+.seg button { background: none; border: 0; padding: 5px 11px; cursor: pointer; color: var(--muted); font-size: 12.5px; }
+.seg button[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); }
+
+.glyph {
+  display: inline-grid; place-items: center; flex: none;
+  width: 22px; height: 22px; border-radius: 5px;
+  font: 14px/1 var(--font-brush);
+  color: var(--kc); border: 1px solid color-mix(in srgb, var(--kc) 40%, transparent);
+  background: color-mix(in srgb, var(--kc) 9%, transparent);
+}
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 1px solid var(--edge-strong); border-radius: 999px;
+  padding: 3px 10px 3px 4px; cursor: pointer; font-size: 12px; color: var(--muted);
+}
+.chip .glyph { width: 18px; height: 18px; font-size: 12px; border-radius: 999px; }
+.chip[aria-pressed="false"] { opacity: .4; }
+.chip[aria-pressed="true"] { color: var(--text); }
+
+.view { display: none; }
+.view.on { display: block; }
+
+/* ====================== A · The river ====================== */
+.river { position: relative; }
+.river-legend { display: grid; grid-template-columns: 1fr 64px 1fr; color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+.river-legend :first-child { text-align: right; }
+.river-row { display: grid; grid-template-columns: 1fr 64px 1fr; min-height: 28px; }
+.river-row .l { text-align: right; padding: 4px 14px 4px 0; }
+.river-row .r { padding: 4px 0 4px 14px; }
+.river-row .c { position: relative; display: flex; justify-content: center; }
+.river-row .c::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 50%;
+  width: var(--w, 2px); transform: translateX(-50%);
+  background: linear-gradient(var(--crack), color-mix(in srgb, var(--crack) 70%, transparent));
+  box-shadow: 0 0 calc(var(--w, 2px) * 3) rgb(127 199 217 / .45);
+  border-radius: 2px;
+}
+.river-year .c::after {
+  content: attr(data-age); position: relative; z-index: 1; align-self: center;
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+  font: 600 15px var(--font-display); color: var(--text);
+  background: #090b0f; border: 1px solid var(--edge-strong);
+  box-shadow: 0 0 0 4px var(--void);
+}
+.river-year .l, .river-year .r { align-self: center; font: 600 17px var(--font-display); }
+.river-year .r { color: var(--muted); font: 12px var(--font-ui); }
+.season-dot {
+  position: relative; z-index: 1; margin-top: 9px; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--sc); box-shadow: 0 0 0 3px var(--void);
+}
+.river-line { display: flex; gap: 8px; align-items: flex-start; margin: 2px 0; }
+.river-row .l .river-line { flex-direction: row-reverse; }
+.river-line.big { font: 600 16.5px/1.35 var(--font-display); }
+.river-line.big .glyph { width: 28px; height: 28px; font-size: 18px; }
+.river-line.auto { color: var(--faint); font-size: 12.5px; }
+.river-season-name { font-size: 10.5px; color: var(--sc); text-transform: uppercase; letter-spacing: .08em; opacity: .8; }
+.river-gap .c::before {
+  background: repeating-linear-gradient(var(--crack) 0 4px, transparent 4px 9px);
+  box-shadow: none; opacity: .5;
+}
+.river-gap .r, .river-gap .l { color: var(--muted); font-style: italic; font-family: var(--font-display); font-size: 15px; padding-top: 18px; padding-bottom: 18px; }
+
+/* ====================== B · Chapters ====================== */
+.chapter {
+  border: 1px solid var(--edge); border-radius: var(--radius);
+  margin-bottom: 10px; background: rgb(255 255 255 / .012);
+}
+.chapter > summary {
+  list-style: none; cursor: pointer;
+  display: grid; grid-template-columns: 52px 1fr auto; gap: 14px; align-items: center;
+  padding: 12px 16px;
+}
+.chapter > summary::-webkit-details-marker { display: none; }
+.chapter[open] { border-color: var(--edge-strong); background: rgb(127 199 217 / .025); }
+.ch-num { font: 34px/1 var(--font-brush); color: var(--crack); text-align: center; text-shadow: 0 0 14px rgb(127 199 217 / .4); }
+.ch-title { font: 600 20px/1.2 var(--font-display); }
+.ch-title em { font-style: italic; font-weight: 500; color: var(--muted); }
+.ch-span { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.ch-bar { height: 3px; border-radius: 2px; background: var(--edge); margin-top: 7px; max-width: 360px; }
+.ch-bar i { display: block; height: 100%; border-radius: 2px; background: var(--crack); opacity: .7; }
+.ch-marks { display: flex; gap: 3px; flex-wrap: wrap; justify-content: flex-end; max-width: 200px; }
+.ch-marks .glyph { width: 18px; height: 18px; font-size: 12px; }
+.ch-body { padding: 4px 16px 16px 82px; }
+.ch-body .line { display: flex; gap: 10px; align-items: flex-start; padding: 4px 0; }
+.ch-body .line .when { color: var(--muted); font-size: 11.5px; width: 92px; flex: none; padding-top: 3px; }
+.ch-body .line.big { font: 600 16px/1.35 var(--font-display); }
+.ch-fold { color: var(--faint); font-size: 12.5px; margin-top: 6px; padding-left: 102px; }
+.ch-current-tag { font: 11px var(--font-ui); color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 1px 8px; margin-left: 8px; vertical-align: 3px; }
+
+/* ====================== C · The almanac ====================== */
+.almanac-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+.almanac { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+.almanac th { font: 500 11px var(--font-ui); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; padding-bottom: 2px; }
+.almanac th .brush { font-size: 16px; display: block; text-transform: none; letter-spacing: 0; color: var(--sc); }
+.almanac th.yr, .almanac td.yr { width: 92px; text-align: right; padding-right: 6px; }
+.almanac th.end, .almanac td.end { width: 150px; }
+.almanac td.yr { font: 600 16px var(--font-display); }
+.almanac td.yr small { display: block; font: 11px var(--font-ui); color: var(--muted); }
+.almanac td.end { color: var(--muted); font-size: 11.5px; line-height: 1.3; padding-left: 6px; }
+.cell {
+  height: 58px; vertical-align: top; padding: 5px; border-radius: 6px; cursor: pointer;
+  background: color-mix(in srgb, var(--sc) 4%, rgb(255 255 255 / .015));
+  border: 1px solid var(--edge);
+}
+.cell:hover { border-color: var(--edge-strong); }
+.cell.sel { border-color: var(--accent); background: var(--accent-soft); }
+.cell.rise { box-shadow: inset 0 0 0 1px rgb(127 199 217 / .45), 0 0 12px rgb(127 199 217 / .18); }
+.cell .pips { display: flex; flex-wrap: wrap; gap: 3px; }
+.cell .glyph { width: 19px; height: 19px; font-size: 12.5px; }
+.cell .glyph.dim { opacity: .45; }
+.almanac tr.quiet td.span {
+  text-align: center; color: var(--muted); font: italic 15px var(--font-display);
+  border: 1px dashed var(--edge-strong); border-radius: 6px; padding: 8px;
+}
+.almanac-detail { position: sticky; top: 80px; }
+.almanac-detail h4 { font: 600 19px var(--font-display); margin: 0 0 4px; }
+.almanac-detail .line { display: flex; gap: 8px; margin: 8px 0; align-items: flex-start; }
+.almanac-detail .after { color: var(--muted); font-size: 12px; border-top: 1px solid var(--edge); padding-top: 8px; margin-top: 12px; }
+
+/* ====================== D · The handscroll ====================== */
+.scroll-frame { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); }
+.scroll-axis { position: relative; }
+.scroll-axis span { position: absolute; right: 8px; font: 13px var(--font-brush); color: var(--muted); transform: translateY(-50%); }
+.scroll-box {
+  overflow-x: auto; overflow-y: hidden; border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgb(4 5 7) 0, transparent 30px, transparent calc(100% - 30px), rgb(4 5 7) 100%),
+    linear-gradient(#0a0c10, #07080b);
+  border: 1px solid var(--edge);
+  scrollbar-color: var(--edge-strong) transparent;
+}
+.scroll-box svg { display: block; }
+.scroll-box .mk { cursor: pointer; }
+.scroll-box .mk:hover circle, .scroll-box .mk.sel circle { stroke: var(--accent); stroke-width: 1.5; }
+.scroll-caption { margin-top: 12px; min-height: 92px; display: grid; grid-template-columns: 1fr; gap: 4px; }
+.scroll-caption h4 { font: 600 19px var(--font-display); margin: 0; }
+.scroll-caption .line { display: flex; gap: 8px; align-items: flex-start; }
+.scroll-key { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+.scroll-key i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+
+/* ====================== E · The annotated biography ====================== */
+.bio-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 18px; align-items: start; }
+.brief {
+  display: grid; grid-template-columns: auto 1fr; gap: 6px 18px; align-items: center;
+  padding: 14px 16px; border-radius: 8px; background: var(--well); border: 1px solid var(--edge); margin-bottom: 14px;
+}
+.brief .seal {
+  grid-row: span 2; width: 58px; height: 58px; border-radius: 8px; display: grid; place-items: center;
+  font: 30px var(--font-brush); color: var(--crack); border: 1px solid rgb(127 199 217 / .4);
+  box-shadow: inset 0 0 18px rgb(127 199 217 / .15);
+}
+.brief .who { font: 600 20px/1.2 var(--font-display); }
+.brief .who small { display: block; font: 13px var(--font-ui); color: var(--muted); margin-top: 3px; }
+.brief .stats { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--edge); padding-top: 8px; margin-top: 4px; }
+.brief .stats b { color: var(--text); font-weight: 500; }
+.firsts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.firsts div { border: 1px solid var(--edge); border-radius: 7px; padding: 6px 10px; font-size: 12px; color: var(--muted); }
+.firsts div b { display: block; color: var(--text); font: 600 14px var(--font-display); }
+.bio-tools { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.bio-year { padding: 12px 0 4px; border-top: 1px solid var(--edge); scroll-margin-top: 80px; }
+.bio-year h4 { font: 600 22px var(--font-display); margin: 0 0 6px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.bio-year h4 small { font: 12px var(--font-ui); color: var(--muted); }
+.bio-season { display: grid; grid-template-columns: 30px 1fr; gap: 10px; margin: 4px 0 8px; }
+.bio-season .sz { font: 17px var(--font-brush); color: var(--sc); text-align: center; padding-top: 1px; border-right: 1px solid color-mix(in srgb, var(--sc) 30%, transparent); }
+.bio-line { display: flex; gap: 9px; align-items: flex-start; padding: 2px 0; }
+.bio-line.big { font: 600 17px/1.35 var(--font-display); }
+.bio-line.big .glyph { width: 26px; height: 26px; font-size: 17px; }
+.bio-fold { color: var(--faint); font-size: 12.5px; cursor: pointer; background: none; border: 0; padding: 2px 0 2px 31px; text-align: left; }
+.bio-fold:hover { color: var(--muted); }
+.bio-line.auto { color: var(--faint); font-size: 12.5px; }
+.rail { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 2px; }
+.rail a { display: grid; grid-template-columns: 28px 1fr; gap: 6px; align-items: center; text-decoration: none; color: var(--muted); font-size: 11.5px; padding: 2px 4px; border-radius: 5px; }
+.rail a:hover { background: rgb(255 255 255 / .04); color: var(--text); }
+.rail .bar { height: 6px; border-radius: 3px; background: var(--crack); opacity: .55; }
+.rail .bar.has-rise { opacity: 1; box-shadow: 0 0 6px rgb(127 199 217 / .5); }
+.rail .gap { color: var(--faint); font-style: italic; padding: 4px; }
+
+@media (max-width: 1100px) {
+  .shell { grid-template-columns: 160px minmax(0, 1fr); }
+  .context { display: none; }
+}
+@media (max-width: 760px) {
+  .shell { grid-template-columns: minmax(0, 1fr); margin: 10px 0 30px; border-radius: 0; border-left: 0; border-right: 0; }
+  .menu { display: none; }
+  .main { padding: 16px; }
+  .panel { padding: 14px; }
+  .river-row, .river-legend { grid-template-columns: 1fr 40px 1fr; }
+  .river-row .l { padding-right: 8px; } .river-row .r { padding-left: 8px; }
+  .river-line { font-size: 12.5px; }
+  .river-line.big { font-size: 14.5px; }
+  .ch-body { padding-left: 16px; }
+  .ch-body .line .when { width: 70px; }
+  .ch-fold { padding-left: 16px; }
+  .ch-marks { display: none; }
+  .chapter > summary { grid-template-columns: 40px 1fr; }
+  .almanac-wrap { grid-template-columns: minmax(0, 1fr); }
+  .almanac th.end, .almanac td.end { display: none; }
+  .almanac th.yr, .almanac td.yr { width: 56px; }
+  .almanac td.yr small { display: none; }
+  .almanac { border-spacing: 2px; }
+  .cell { height: 50px; padding: 3px; }
+  .cell .glyph { width: 15px; height: 15px; font-size: 10px; }
+  .almanac-detail { position: static; }
+  .bio-wrap { grid-template-columns: minmax(0, 1fr); }
+  .rail { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="study-bar">
+  <h1>Chronicle study <small>生平</small></h1>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-view="river" aria-selected="true">A · The river</button>
+    <button class="tab" role="tab" data-view="chapters" aria-selected="false">B · Chapters</button>
+    <button class="tab" role="tab" data-view="almanac" aria-selected="false">C · The almanac</button>
+    <button class="tab" role="tab" data-view="scroll" aria-selected="false">D · The handscroll</button>
+    <button class="tab" role="tab" data-view="bio" aria-selected="false">E · Annotated biography</button>
+  </div>
+</div>
+
+<div class="study-note" id="note"></div>
+
+<div class="shell">
+  <nav class="menu" aria-label="Screens">
+    <div class="brand">Severed Heaven<span>断天</span></div>
+    <a href="#">Abode <span>洞府</span></a>
+    <a href="#">Cultivate <span>修炼</span></a>
+    <a href="#">Trees <span>道树</span></a>
+    <a href="#">Character <span>根骨</span></a>
+    <a href="#">People <span>人物</span></a>
+    <a href="#" class="on">Chronicle <span>生平</span></a>
+    <a href="#">Settings <span>设置</span></a>
+  </nav>
+
+  <main class="main">
+    <h2>Chronicle<span>生平</span></h2>
+    <section class="panel">
+      <div class="view on" id="v-river"></div>
+      <div class="view" id="v-chapters"></div>
+      <div class="view" id="v-almanac"></div>
+      <div class="view" id="v-scroll"></div>
+      <div class="view" id="v-bio"></div>
+    </section>
+  </main>
+
+  <aside class="context" id="context"></aside>
+</div>
+
+<script>
+// ---------- a made-up life: Mo Ning, a conscript's child at the Wall of Piled Bones ----------
+// [year, season 0-3, kind, text, extra]   extra: qi/body/soul layer reached, or a chapter tag
+const LIFE = [
+  [1, 0, 'origin', 'Mo Ning is born in the barracks under the Wall of Piled Bones, a conscript’s child.'],
+  [12, 0, 'origin', 'The Gate tests Mo Ning’s root: water and metal, a middling pair.'],
+  [12, 0, 'learn', 'Mo Ning is taught the Garrison Standard Method at the cadet school.'],
+  [12, 1, 'learn', 'Mo Ning drills the Rampart Palm with the cadets of the garrison school.'],
+  [12, 1, 'qi', 'Mo Ning’s qi breaks through to the first layer.', 1],
+  [12, 2, 'system', 'A first technique to drill: the techniques open.'],
+  [12, 2, 'people', 'Mo Ning is posted under Sergeant Gao of the east tower.'],
+  [12, 3, 'hurt', 'Mo Ning is clawed below the Wall of Piled Bones on a first night patrol.', 'the first patrol'],
+  [13, 0, 'qi', 'Mo Ning’s qi breaks through to the second layer.', 2],
+  [13, 1, 'card', 'Mo Ning pays a ferryman to send two bounty hunters the wrong way.'],
+  [13, 1, 'auto', 'A peddler’s offer of cheap pills lapses while Mo Ning sits in seclusion.'],
+  [13, 2, 'system', 'Enough insight gathers to grasp a first principle: the trees open.'],
+  [13, 2, 'learn', 'Mo Ning comprehends Steady Breath.'],
+  [13, 3, 'qi', 'Mo Ning’s qi breaks through to the third layer.', 3],
+  [14, 0, 'fight', 'Mo Ning spars with Cadet Lu Wen and brings them down in 7 exchanges.', 'Lu Wen'],
+  [14, 0, 'card', 'Mo Ning pays the March’s levy on cultivators.'],
+  [14, 0, 'card', 'Mo Ning sits out a stone-hide boar at the cave mouth with his breath held small.'],
+  [14, 1, 'body', 'Mo Ning’s body hardens to the first layer.', 1],
+  [14, 1, 'auto', 'Sergeant Gao’s errand goes to another cadet while Mo Ning is away.'],
+  [14, 3, 'qi', 'Mo Ning’s qi breaks through to the fourth layer.', 4],
+  [15, 1, 'hurt', 'Mo Ning is thrown by a qi deviation and left lightly injured.', 'the deviation'],
+  [15, 2, 'qi', 'Mo Ning’s qi breaks through to the fifth layer.', 5],
+  [15, 2, 'mastery', 'The Garrison Standard Method reaches Domain; the breath runs deeper, and understanding with it.'],
+  [15, 3, 'learn', 'Mo Ning buys a copy of the Tide-Counting Formula from a stall at the Gate.', 'the Tide-Counting Formula'],
+  [16, 0, 'learn', 'Mo Ning draws a bright orb of qi in from the air of the cave, and the breath after it runs deeper.'],
+  [16, 0, 'soul', 'Mo Ning’s soul steadies to the first layer.', 1],
+  [16, 1, 'hurt', 'Pill poison settles in Mo Ning’s meridians; for five days the qi will not come.'],
+  [16, 1, 'auto', 'A beggar’s tip about a herb patch goes unchased.'],
+  [16, 2, 'qi', 'Mo Ning’s qi breaks through to the sixth layer.', 6],
+  [17, 0, 'people', 'Elder Shen of the Clear Heaven Sword Sect watches Mo Ning on the wall and says nothing.', 'Elder Shen'],
+  [17, 1, 'fight', 'Mo Ning spars with a Night Bridge runner and is brought down in 3 exchanges.'],
+  [17, 2, 'qi', 'Mo Ning’s qi breaks through to the seventh layer.', 7],
+  [18, 0, 'auto', 'The levy is paid from Mo Ning’s stones while he sits in seclusion.'],
+  [18, 0, 'auto', 'A wandering scribe’s offer to copy a manual lapses.'],
+  [18, 1, 'mastery', 'The Rampart Palm reaches Mastery; the form finally clicks.', 'the Rampart Palm'],
+  [18, 1, 'auto', 'A stone-hide boar wanders off from the cave mouth on its own.'],
+  [18, 3, 'qi', 'Mo Ning’s qi breaks through to the eighth layer.', 8],
+  [19, 2, 'auto', 'A thief takes 40 spirit stones from the cave while Mo Ning sits in seclusion.', 'the thief'],
+  [20, 1, 'body', 'Mo Ning’s body hardens to the second layer.', 2],
+  [20, 3, 'qi', 'Mo Ning’s qi breaks through to the ninth layer.', 9],
+  [21, 3, 'mastery', 'The Garrison Standard Method reaches Origin; the breath runs deeper, and understanding with it.'],
+  [22, 3, 'gate', 'Qi presses against the gate of Foundation Establishment, but you hold no Foundation Pill.', 'the gate'],
+];
+const EVENTS = LIFE.map(([y, s, kind, text, extra], i) => ({ i, y, s, kind, text, extra, t: (y - 1) * 4 + s }));
+const NOW_YEAR = 22;
+
+const KIND = {
+  qi:      { g: '气', name: 'Qi', big: true },
+  body:    { g: '体', name: 'Body', big: true },
+  soul:    { g: '魂', name: 'Soul', big: true },
+  gate:    { g: '关', name: 'Gates', big: true },
+  mastery: { g: '精', name: 'Mastery', big: true },
+  learn:   { g: '学', name: 'Learned' },
+  fight:   { g: '战', name: 'Fights' },
+  hurt:    { g: '伤', name: 'Hurts' },
+  people:  { g: '人', name: 'People' },
+  card:    { g: '事', name: 'Choices' },
+  auto:    { g: '事', name: 'Settled itself' },
+  origin:  { g: '生', name: 'Origin', big: true },
+  system:  { g: '开', name: 'Openings' },
+};
+const BECOMING = new Set(['qi', 'body', 'soul', 'gate', 'mastery', 'origin']);
+const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
+const SEASON_HZ = ['春', '夏', '秋', '冬'];
+const NUM_HZ = ['〇', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+const ORD = ['zeroth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth', 'twenty-first', 'twenty-second'];
+const LAYER_WORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth'];
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const glyph = (k, extra = '') => `<span class="glyph ${extra}" style="--kc:var(--k-${k})" title="${KIND[k].name}">${KIND[k].g}</span>`;
+const sc = (s) => `--sc:var(--s-${SEASONS[s]})`;
+const yearName = (y) => `the ${ORD[y]} year`;
+const when = (e) => `the ${SEASONS[e.s]} of the ${ORD[e.y]} year`;
+const shortWhen = (e) => `${cap(SEASONS[e.s])}, ${e.y}`;
+const isBig = (e) => !!KIND[e.kind].big;
+
+/** Qi, body and soul layers held at a moment (t in seasons). */
+function layersAt(t) {
+  const out = { qi: 0, body: 0, soul: 0 };
+  for (const e of EVENTS) if (e.t <= t && out[e.kind] !== undefined && typeof e.extra === 'number') out[e.kind] = e.extra;
+  return out;
+}
+const realmWords = (l) => l.qi ? `Qi Condensation, ${LAYER_WORD[l.qi]} layer` : 'Mortal';
+const years = () => [...new Set(EVENTS.map((e) => e.y))];
+
+// ---------- the context panel: as today ----------
+(function context() {
+  const recent = EVENTS.slice().reverse().filter((e) => e.kind !== 'auto').slice(0, 6);
+  document.getElementById('context').innerHTML = '<h3>Chronicle</h3>' +
+    recent.map((e) => `<div class="when">${cap(when(e))}</div><div>${esc(e.text)}</div>`).join('');
+})();
+
+// ====================== A · The river ======================
+function renderRiver() {
+  const el = document.getElementById('v-river');
+  let rows = '';
+  const ys = years().sort((a, b) => b - a);
+  ys.forEach((y, yi) => {
+    const lEnd = layersAt((y - 1) * 4 + 3);
+    const w = 2 + lEnd.qi * 0.7;
+    rows += `<div class="river-row river-year" style="--w:${w}px"><div class="l">${cap(yearName(y))}</div><div class="c" data-age="${y}"></div><div class="r">${realmWords(lEnd)}</div></div>`;
+    for (let s = 3; s >= 0; s--) {
+      const evs = EVENTS.filter((e) => e.y === y && e.s === s);
+      if (!evs.length) continue;
+      const w2 = 2 + layersAt((y - 1) * 4 + s).qi * 0.7;
+      const left = evs.filter((e) => BECOMING.has(e.kind));
+      const right = evs.filter((e) => !BECOMING.has(e.kind));
+      const line = (e) => `<div class="river-line ${isBig(e) ? 'big' : ''} ${e.kind === 'auto' ? 'auto' : ''}">${glyph(e.kind, e.kind === 'auto' ? 'dim' : '')}<span>${esc(e.text)}</span></div>`;
+      rows += `<div class="river-row" style="--w:${w2}px;${sc(s)}">
+        <div class="l">${right.length ? '' : `<div class="river-season-name">${SEASONS[s]}</div>`}${left.map(line).join('')}</div>
+        <div class="c"><span class="season-dot" title="${SEASONS[s]}"></span></div>
+        <div class="r">${right.length ? `<div class="river-season-name">${SEASONS[s]}</div>` : ''}${right.map(line).join('')}</div>
+      </div>`;
+    }
+    const next = ys[yi + 1];
+    if (next !== undefined && y - next > 1) {
+      const n = y - next - 1;
+      rows += `<div class="river-row river-gap" style="--w:2px"><div class="l">${n} quiet years</div><div class="c"></div><div class="r">a childhood at the Wall</div></div>`;
+    }
+  });
+  el.innerHTML = `
+    <div class="panel-head"><h3>The life of Mo Ning</h3><span class="caption">The river widens as the qi deepens</span></div>
+    <div class="river-legend"><div>What he became</div><div></div><div>What happened to him</div></div>
+    <div class="river">${rows}</div>`;
+}
+
+// ====================== B · Chapters ======================
+function renderChapters() {
+  const el = document.getElementById('v-chapters');
+  // a chapter begins at each qi layer; the first runs from birth
+  const starts = EVENTS.filter((e) => e.kind === 'qi');
+  const chapters = [{ n: 0, title: 'Before the path', from: EVENTS[0] }].concat(
+    starts.map((e) => ({ n: e.extra, title: `The ${LAYER_WORD[e.extra]} layer`, from: e })));
+  const lastT = (NOW_YEAR - 1) * 4 + 3;
+  chapters.forEach((c, i) => {
+    c.to = chapters[i + 1]?.from;
+    const endT = c.to ? c.to.t : lastT + 1;
+    c.events = EVENTS.filter((e) => e.t >= c.from.t && e.t < endT && e !== c.from && !(c.to && e === c.to));
+    if (c.n === 0) c.events = EVENTS.filter((e) => e.t < (c.to?.t ?? 0) || (e.t === c.to?.t && e.i < c.to.i)).slice(1);
+    else c.events = EVENTS.filter((e) => (e.t > c.from.t || (e.t === c.from.t && e.i > c.from.i)) && (!c.to || e.t < c.to.t || (e.t === c.to.t && e.i < c.to.i)));
+    c.seasons = Math.max(1, endT - c.from.t);
+    // the chapter's epithet: its most telling moment
+    const tagged = c.events.filter((e) => typeof e.extra === 'string');
+    const pick = ['hurt', 'gate', 'people', 'mastery', 'learn', 'fight', 'auto'].map((k) => tagged.find((e) => e.kind === k)).find(Boolean);
+    c.epithet = pick ? pick.extra : '';
+  });
+  const maxS = Math.max(...chapters.map((c) => c.seasons));
+  const span = (c) => {
+    const NUM = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+    const y = Math.floor(c.seasons / 4), r = c.seasons % 4;
+    const ys = y === 0 ? '' : y === 1 ? 'a year' : `${NUM[y]} years`;
+    const rs = r === 0 ? '' : r === 1 ? 'a season' : `${NUM[r]} seasons`;
+    const len = c.n === 0 ? 'eleven years and more' : [ys, rs].filter(Boolean).join(' and ');
+    return `${cap(when(c.from))} → ${c.to ? when(c.to) : 'now'} · ${len}`;
+  };
+  const html = chapters.slice().reverse().map((c, i) => {
+    const marks = c.events.filter((e) => e.kind !== 'auto').map((e) => glyph(e.kind)).join('');
+    const shown = c.events.filter((e) => e.kind !== 'auto');
+    const auto = c.events.filter((e) => e.kind === 'auto');
+    return `<details class="chapter" ${i < 2 ? 'open' : ''}>
+      <summary>
+        <div class="ch-num">${NUM_HZ[c.n]}</div>
+        <div>
+          <div class="ch-title">${c.title}${c.epithet ? `<em>, and ${esc(c.epithet)}</em>` : ''}${i === 0 ? '<span class="ch-current-tag">now</span>' : ''}</div>
+          <div class="ch-span">${span(c)}</div>
+          <div class="ch-bar"><i style="width:${c.n === 0 ? 100 : (c.seasons / maxS) * 100}%"></i></div>
+        </div>
+        <div class="ch-marks">${marks}</div>
+      </summary>
+      <div class="ch-body">
+        <div class="line big"><span class="when">${shortWhen(c.from)}</span>${glyph(c.from.kind)}<span>${esc(c.from.text)}</span></div>
+        ${shown.map((e) => `<div class="line ${isBig(e) ? 'big' : ''}"><span class="when">${shortWhen(e)}</span>${glyph(e.kind)}<span>${esc(e.text)}</span></div>`).join('')}
+        ${shown.length === 0 ? '<div class="line caption"><span class="when"></span>Nothing else; the breath, the wall, the breath.</div>' : ''}
+      </div>
+      ${auto.length ? `<div class="ch-fold">and ${auto.length === 1 ? 'one small thing' : `${auto.length} small things`} that settled themselves ▸</div>` : '<div style="height:6px"></div>'}
+    </details>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="panel-head"><h3>The life of Mo Ning, in chapters</h3><span class="caption">A chapter turns at each layer of qi</span></div>
+    ${html}`;
+}
+
+// ====================== C · The almanac ======================
+function renderAlmanac() {
+  const el = document.getElementById('v-almanac');
+  const kinds = Object.keys(KIND);
+  const on = new Set(kinds);
+  let sel = null;
+  const draw = () => {
+    const ys = years().filter((y) => y > 1).sort((a, b) => b - a);
+    const head = `<tr><th class="yr"></th>${SEASONS.map((s, i) => `<th style="${sc(i)}"><span class="brush">${SEASON_HZ[i]}</span>${s}</th>`).join('')}<th class="end">By year’s end</th></tr>`;
+    let body = '';
+    for (let y = NOW_YEAR; y >= 12; y--) {
+      const cells = SEASONS.map((_, s) => {
+        const evs = EVENTS.filter((e) => e.y === y && e.s === s && on.has(e.kind));
+        const rise = evs.some((e) => e.kind === 'qi');
+        const id = `${y}-${s}`;
+        return `<td class="cell ${rise ? 'rise' : ''} ${sel === id ? 'sel' : ''}" data-cell="${id}" style="${sc(s)}" title="${cap(SEASONS[s])} of the ${ORD[y]} year">
+          <div class="pips">${evs.map((e) => glyph(e.kind, e.kind === 'auto' ? 'dim' : '')).join('')}</div></td>`;
+      }).join('');
+      const l = layersAt((y - 1) * 4 + 3);
+      body += `<tr><td class="yr">${y}<small>${ORD[y]} year</small></td>${cells}<td class="end">${realmWords(l)}${l.body ? `<br>body ${LAYER_WORD[l.body]}` : ''}${l.soul ? ` · soul ${LAYER_WORD[l.soul]}` : ''}</td></tr>`;
+    }
+    body += `<tr class="quiet"><td class="yr">1–11</td><td class="span" colspan="4">Born under the Wall; eleven quiet years</td><td class="end"></td></tr>`;
+    let detail;
+    if (sel) {
+      const [y, s] = sel.split('-').map(Number);
+      const evs = EVENTS.filter((e) => e.y === y && e.s === s);
+      const l = layersAt((y - 1) * 4 + s);
+      detail = `<h4>${cap(SEASONS[s])} of the ${ORD[y]} year</h4>
+        <div class="caption">Mo Ning at ${y}</div>
+        ${evs.length ? evs.map((e) => `<div class="line">${glyph(e.kind, e.kind === 'auto' ? 'dim' : '')}<span>${esc(e.text)}</span></div>`).join('') : '<p class="caption">A quiet season: the breath, the wall, the breath.</p>'}
+        <div class="after">After it: ${realmWords(l)}</div>`;
+    } else {
+      detail = `<h4>Pick a season</h4><p class="caption">Each square is a season; each mark a line in the chronicle. A square edged in crack light holds a breakthrough.</p>`;
+    }
+    el.innerHTML = `
+      <div class="panel-head"><h3>The almanac of Mo Ning</h3>
+        <div class="chips">${kinds.filter((k) => !['origin', 'system'].includes(k)).map((k) => `<button class="chip" data-k="${k}" aria-pressed="${on.has(k)}">${glyph(k)}${KIND[k].name}</button>`).join('')}</div>
+      </div>
+      <div class="almanac-wrap">
+        <table class="almanac">${head}${body}</table>
+        <div class="almanac-detail panel">${detail}</div>
+      </div>`;
+    el.querySelectorAll('[data-cell]').forEach((td) => td.onclick = () => { sel = td.dataset.cell; draw(); });
+    el.querySelectorAll('[data-k]').forEach((b) => b.onclick = () => { const k = b.dataset.k; on.has(k) ? on.delete(k) : on.add(k); draw(); });
+  };
+  sel = `${NOW_YEAR}-3`;
+  draw();
+}
+
+// ====================== D · The handscroll ======================
+function renderScroll() {
+  const el = document.getElementById('v-scroll');
+  const SW = 44;           // a season's width
+  const PRE = 150;         // the folded childhood
+  const T0 = (12 - 1) * 4; // spring of the twelfth year
+  const T1 = (NOW_YEAR - 1) * 4 + 4;
+  const W = PRE + (T1 - T0) * SW + 40;
+  const RIDGE_BASE = 250, STEP = 22;
+  const LANES = [['learn', 'mastery'], ['fight', 'hurt'], ['people'], ['card', 'auto', 'system']];
+  const LANE_Y0 = 290, LANE_H = 30;
+  const H = LANE_Y0 + LANES.length * LANE_H + 40;
+  const x = (t) => PRE + (t - T0) * SW + SW / 2;
+
+  // the ridge: each ladder's layer over time, eased between seasons
+  const ridge = (key, base, step) => {
+    let d = `M 0 ${base}`;
+    d += ` L ${PRE - 20} ${base}`;
+    let prev = 0;
+    for (let t = T0; t < T1; t++) {
+      const l = layersAt(t)[key];
+      const yy = base - l * step;
+      const xx = x(t);
+      if (l !== prev) d += ` C ${xx - SW * 0.55} ${base - prev * step}, ${xx - SW * 0.25} ${yy}, ${xx} ${yy}`;
+      else d += ` L ${xx} ${yy}`;
+      prev = l;
+    }
+    d += ` L ${W} ${base - prev * step}`;
+    return d;
+  };
+  const qiPath = ridge('qi', RIDGE_BASE, STEP);
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Mo Ning's life as a handscroll">
+    <defs>
+      <linearGradient id="wash" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#7fc7d9" stop-opacity=".32"/>
+        <stop offset="1" stop-color="#7fc7d9" stop-opacity="0"/>
+      </linearGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>`;
+  // year columns and season ticks
+  for (let t = T0; t < T1; t++) {
+    const s = t % 4, y = Math.floor(t / 4) + 1;
+    const x0 = PRE + (t - T0) * SW;
+    if (s === 0) {
+      svg += `<line x1="${x0}" y1="20" x2="${x0}" y2="${H - 26}" stroke="rgb(255 255 255 / .07)"/>`;
+      svg += `<text x="${x0 + 6}" y="${H - 10}" fill="#e9e5da" font-family="Cormorant Garamond" font-weight="600" font-size="15">${cap(ORD[y])} year</text>`;
+    }
+    svg += `<text x="${x0 + SW / 2}" y="${H - 30}" text-anchor="middle" fill="var(--s-${SEASONS[s]})" opacity=".6" font-family="Ma Shan Zheng" font-size="12">${SEASON_HZ[s]}</text>`;
+  }
+  // the folded childhood
+  svg += `<text x="16" y="${RIDGE_BASE - 18}" fill="#8d949d" font-family="Cormorant Garamond" font-style="italic" font-size="15">Born under the Wall;</text>
+          <text x="16" y="${RIDGE_BASE}" fill="#8d949d" font-family="Cormorant Garamond" font-style="italic" font-size="15">eleven quiet years</text>
+          <line x1="${PRE - 14}" y1="30" x2="${PRE - 14}" y2="${H - 26}" stroke="rgb(255 255 255 / .14)" stroke-dasharray="3 5"/>`;
+  // ridges: body and soul faint, qi bright
+  svg += `<path d="${ridge('body', RIDGE_BASE, STEP)}" fill="none" stroke="var(--k-body)" stroke-opacity=".55" stroke-width="1.5"/>`;
+  svg += `<path d="${ridge('soul', RIDGE_BASE, STEP)}" fill="none" stroke="var(--k-soul)" stroke-opacity=".55" stroke-width="1.5"/>`;
+  svg += `<path d="${qiPath} L ${W} ${RIDGE_BASE} Z" fill="url(#wash)"/>`;
+  svg += `<path d="${qiPath}" fill="none" stroke="#7fc7d9" stroke-width="2.4" filter="url(#glow)"/>`;
+  // the gate at Foundation, above the ninth layer
+  const gateY = RIDGE_BASE - 10 * STEP;
+  svg += `<line x1="${PRE}" y1="${gateY}" x2="${W}" y2="${gateY}" stroke="var(--k-gate)" stroke-dasharray="6 6" stroke-opacity=".5"/>
+          <text x="${W - 10}" y="${gateY - 8}" text-anchor="end" fill="var(--k-gate)" font-size="12" font-family="Inter">Foundation Establishment</text>`;
+  // breakthrough seals on the ridge
+  EVENTS.filter((e) => ['qi', 'body', 'soul', 'gate'].includes(e.kind)).forEach((e) => {
+    const yy = e.kind === 'gate' ? gateY : RIDGE_BASE - (typeof e.extra === 'number' ? e.extra : 0) * STEP;
+    const hz = e.kind === 'gate' ? '关' : NUM_HZ[e.extra];
+    const r = e.kind === 'qi' || e.kind === 'gate' ? 12 : 9;
+    svg += `<g class="mk" data-e="${e.i}" tabindex="0"><circle cx="${x(e.t)}" cy="${yy}" r="${r}" fill="#090b0f" stroke="var(--k-${e.kind})"/>
+      <text x="${x(e.t)}" y="${yy + 4.5}" text-anchor="middle" fill="var(--k-${e.kind})" font-family="Ma Shan Zheng" font-size="${r + 2}">${hz}</text></g>`;
+  });
+  // lanes for everything else
+  LANES.forEach((ks, li) => {
+    const ly = LANE_Y0 + li * LANE_H;
+    svg += `<line x1="${PRE}" y1="${ly}" x2="${W}" y2="${ly}" stroke="rgb(255 255 255 / .05)"/>`;
+    const seen = {};
+    EVENTS.filter((e) => ks.includes(e.kind)).forEach((e) => {
+      const n = (seen[e.t] = (seen[e.t] ?? 0) + 1) - 1;
+      const cx = x(e.t) + n * 20 - 10 * 0;
+      svg += `<g class="mk" data-e="${e.i}" tabindex="0" opacity="${e.kind === 'auto' ? .5 : 1}"><circle cx="${cx}" cy="${ly}" r="9" fill="#090b0f" stroke="var(--k-${e.kind})" stroke-opacity=".7"/>
+        <text x="${cx}" y="${ly + 4}" text-anchor="middle" fill="var(--k-${e.kind})" font-family="Ma Shan Zheng" font-size="11">${KIND[e.kind].g}</text></g>`;
+    });
+  });
+  svg += '</svg>';
+
+  const axis = Array.from({ length: 10 }, (_, l) => `<span style="top:${RIDGE_BASE - l * STEP}px">${l ? NUM_HZ[l] : ''}</span>`).join('') +
+    LANES.map((ks, li) => `<span style="top:${LANE_Y0 + li * LANE_H}px;font-size:12px">${KIND[ks[0]].g}</span>`).join('');
+  el.innerHTML = `
+    <div class="panel-head"><h3>The life of Mo Ning, as a handscroll</h3><span class="caption">Drag or scroll sideways; the newest season is on the right</span></div>
+    <div class="scroll-frame"><div class="scroll-axis">${axis}</div><div class="scroll-box">${svg}</div></div>
+    <div class="scroll-key">
+      <span><i style="background:var(--k-qi)"></i>Qi, by layer</span>
+      <span><i style="background:var(--k-body)"></i>Body</span>
+      <span><i style="background:var(--k-soul)"></i>Soul</span>
+      <span>Lanes: learned and mastered · fights and hurts · people · the rest</span>
+    </div>
+    <div class="scroll-caption" id="scroll-caption"></div>`;
+  const box = el.querySelector('.scroll-box');
+  const capEl = el.querySelector('#scroll-caption');
+  const show = (i) => {
+    const e = EVENTS[i];
+    el.querySelectorAll('.mk').forEach((m) => m.classList.toggle('sel', +m.dataset.e === i));
+    const same = EVENTS.filter((o) => o.t === e.t);
+    capEl.innerHTML = `<h4>${cap(when(e))}</h4>` + same.map((o) => `<div class="line" style="${o === e ? '' : 'opacity:.6'}">${glyph(o.kind)}<span>${esc(o.text)}</span></div>`).join('');
+  };
+  el.querySelectorAll('.mk').forEach((m) => { m.onclick = () => show(+m.dataset.e); m.onkeydown = (ev) => { if (ev.key === 'Enter') show(+m.dataset.e); }; });
+  // drag to pan
+  let drag = null;
+  box.onpointerdown = (ev) => { if (ev.target.closest('.mk')) return; drag = { x: ev.clientX, s: box.scrollLeft }; box.setPointerCapture(ev.pointerId); };
+  box.onpointermove = (ev) => { if (drag) box.scrollLeft = drag.s - (ev.clientX - drag.x); };
+  box.onpointerup = () => { drag = null; };
+  show(EVENTS.length - 1);
+  requestAnimationFrame(() => { box.scrollLeft = box.scrollWidth; });
+  el._onShow = () => { box.scrollLeft = box.scrollWidth; };
+}
+
+// ====================== E · The annotated biography ======================
+function renderBio() {
+  const el = document.getElementById('v-bio');
+  const FILTERS = [
+    ['all', 'Everything', null],
+    ['becoming', 'Breakthroughs', ['qi', 'body', 'soul', 'gate', 'mastery', 'origin']],
+    ['learned', 'Learned', ['learn', 'mastery', 'system']],
+    ['fights', 'Fights and hurts', ['fight', 'hurt']],
+    ['people', 'People', ['people']],
+    ['choices', 'Choices', ['card']],
+  ];
+  let filter = 'all';
+  const open = new Set();
+  const first = (k) => EVENTS.find((e) => e.kind === k);
+  const now = layersAt((NOW_YEAR - 1) * 4 + 3);
+  const draw = () => {
+    const kinds = FILTERS.find((f) => f[0] === filter)[2];
+    const pass = (e) => !kinds || kinds.includes(e.kind);
+    let yearsHtml = '';
+    const rail = [];
+    for (let y = NOW_YEAR; y >= 1; y--) {
+      const evs = EVENTS.filter((e) => e.y === y);
+      if (!evs.length) {
+        if (y === 11) { yearsHtml += `<div class="bio-year"><h4 style="color:var(--muted);font-style:italic;font-weight:500">The second to the eleventh year <small>a childhood at the Wall; nothing written</small></h4></div>`; rail.push('<div class="gap">2–11</div>'); }
+        continue;
+      }
+      const l = layersAt((y - 1) * 4 + 3);
+      rail.push(`<a href="#bio-y${y}"><span>${y}</span><span class="bar ${evs.some((e) => e.kind === 'qi') ? 'has-rise' : ''}" style="width:${Math.min(100, evs.filter((e) => e.kind !== 'auto').length * 18 + 6)}%"></span></a>`);
+      let seasons = '';
+      for (let s = 3; s >= 0; s--) {
+        const se = evs.filter((e) => e.s === s && pass(e));
+        const shown = se.filter((e) => e.kind !== 'auto');
+        const auto = filter === 'all' ? se.filter((e) => e.kind === 'auto') : [];
+        if (!shown.length && !auto.length) continue;
+        const key = `${y}-${s}`;
+        seasons += `<div class="bio-season" style="${sc(s)}"><div class="sz" title="${SEASONS[s]}">${SEASON_HZ[s]}</div><div>
+          ${shown.map((e) => `<div class="bio-line ${isBig(e) ? 'big' : ''}">${glyph(e.kind)}<span>${esc(e.text)}</span></div>`).join('')}
+          ${auto.length ? (open.has(key)
+            ? auto.map((e) => `<div class="bio-line auto">${glyph('auto', 'dim')}<span>${esc(e.text)}</span></div>`).join('')
+            : `<button class="bio-fold" data-open="${key}">+ ${auto.length === 1 ? 'one small thing' : `${auto.length} small things`} settled without you</button>`) : ''}
+        </div></div>`;
+      }
+      if (!seasons) continue;
+      yearsHtml += `<div class="bio-year" id="bio-y${y}"><h4>${cap(yearName(y))} <small>${y === 1 ? 'born' : `age ${y} · ${realmWords(l)}`}</small></h4>${seasons}</div>`;
+    }
+    el.innerHTML = `
+      <div class="brief">
+        <div class="seal">${NUM_HZ[now.qi]}</div>
+        <div class="who">The life of Mo Ning<small>Twenty-two years · ${realmWords(now)}, at the gate of Foundation · a garrison cadet of the Wall</small></div>
+        <div class="stats">
+          <span><b>9</b> layers in <b>9</b> years</span><span>body <b>second</b>, soul <b>first</b></span>
+          <span><b>3</b> hurts</span><span><b>2</b> spars, <b>1</b> won</span><span><b>2</b> people met</span><span><b>6</b> things settled without you</span>
+        </div>
+      </div>
+      <div class="firsts">
+        <div><b>First layer</b>${cap(when(first('qi')))}</div>
+        <div><b>First fight</b>${cap(when(first('fight')))}</div>
+        <div><b>First wound</b>${cap(when(first('hurt')))}</div>
+        <div><b>First mastery</b>${cap(when(first('mastery')))}</div>
+        <div><b>Longest climb</b>the eighth to ninth layer, two years</div>
+      </div>
+      <div class="bio-tools">
+        <div class="seg" role="group" aria-label="Which lines to show">${FILTERS.map(([id, name]) => `<button data-f="${id}" aria-pressed="${filter === id}">${name}</button>`).join('')}</div>
+      </div>
+      <div class="bio-wrap"><div>${yearsHtml}</div><nav class="rail" aria-label="Years">${rail.join('')}</nav></div>`;
+    el.querySelectorAll('[data-f]').forEach((b) => b.onclick = () => { filter = b.dataset.f; draw(); });
+    el.querySelectorAll('[data-open]').forEach((b) => b.onclick = () => { open.add(b.dataset.open); draw(); });
+  };
+  draw();
+}
+
+// ---------- the study's tabs and notes ----------
+const NOTES = {
+  river: `<b>A · The river.</b> A vertical spine of crack light that widens with each qi layer. Left bank: what Mo Ning <i>became</i> (layers, mastery, gates), set large in the display face. Right bank: what <i>happened</i> to him (people, fights, choices, things learned). Seasons are dots on the spine; empty years fold into one dashed stretch. Newest at the top, as now.`,
+  chapters: `<b>B · Chapters.</b> The life cut into chapters at each qi layer, titled "The fifth layer, and the deviation" from the chapter's most telling moment (a hurt beats a person beats a mastery&hellip;). Each shows how long it took and its marks at a glance; the latest two stand open. Things that settled themselves fold under each chapter.`,
+  almanac: `<b>C · The almanac.</b> A year per row and a season per column, each square holding a brush mark per line. Breakthrough seasons are edged in crack light, so the pace of the climb shows as a pattern. The chips hide kinds; picking a square reads it out on the right, with where Mo Ning stood after it. The whole life fits on one screen.`,
+  scroll: `<b>D · The handscroll.</b> A horizontal scroll read left to right, like a painted 手卷: the qi climbs as a ridge of light (body and soul as faint lines under it), with a seal on each layer and the Foundation gate dashed above. Lanes below carry everything else. Click a seal or a mark to read its season underneath. It opens on the newest season.`,
+  bio: `<b>E · Annotated biography.</b> The closest to today: still prose, newest first, but with a "life in brief" header, its firsts, filters by kind, the season as a brush mark in the margin, milestones set large, things that settled themselves folded to "+ 2 small things", and a rail of years on the right whose bars show how full each year was.`,
+};
+const RENDER = { river: renderRiver, chapters: renderChapters, almanac: renderAlmanac, scroll: renderScroll, bio: renderBio };
+Object.values(RENDER).forEach((f) => f());
+const note = document.getElementById('note');
+function select(id) {
+  document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', t.dataset.view === id));
+  document.querySelectorAll('.view').forEach((v) => v.classList.toggle('on', v.id === `v-${id}`));
+  note.innerHTML = NOTES[id];
+  document.getElementById(`v-${id}`)._onShow?.();
+  try { localStorage.setItem('chronicle-study-tab', id); } catch {}
+}
+document.querySelectorAll('.tab').forEach((t) => t.onclick = () => select(t.dataset.view));
+let start = 'river';
+try { start = localStorage.getItem('chronicle-study-tab') || 'river'; } catch {}
+select(RENDER[start] ? start : 'river');
+</script>
+</body>
+</html>
