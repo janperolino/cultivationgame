@@ -185,6 +185,8 @@ export const HAND_TOASTS = {
   slot: { glyph: '练', label: 'Practice' },
   /** Spirit stones handed over: a counter, not a thing held, so no gain toasts them. */
   stones: { glyph: '灵', label: 'Spirit stones' },
+  /** A stage of the Intent ladder opened: a thing earned, not held (core/intent.ts). */
+  intent: { glyph: '意', label: 'Intent' },
 } as const;
 export type HandToast = keyof typeof HAND_TOASTS;
 

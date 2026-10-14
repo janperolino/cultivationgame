@@ -37,9 +37,20 @@ import { actionDaos, isCombatDao, type DaoStatKind } from '../../content/daos.ts
 import type { Item } from '../../content/items.ts';
 import { rarityAccuracy, rarityMultiplier } from '../../content/rarity.ts';
 import { realmIndex, tierStep, type RealmId } from '../../content/realms.ts';
+import {
+  BRINK_HP,
+  DOMAIN,
+  DOMAIN_FOE_DEFENSE,
+  DOMAIN_FOE_EVASION,
+  INTENT,
+  INTENT_ACCURACY,
+  INTENT_ATTACK,
+  INTENT_FOE_ACCURACY,
+} from '../../content/intent.ts';
 import { daoStat } from '../../content/stats.ts';
 import type { Form, Technique } from '../../content/techniques.ts';
 import type { Rng } from '../rng.ts';
+import { topStage } from '../intent.ts';
 import { doseAt } from '../toxicity.ts';
 import { judge } from './check.ts';
 import {
@@ -371,6 +382,16 @@ function creative(f: Fight, actor: Combatant, a: Action): number {
   return CREATIVITY_STEP ** bonus;
 }
 
+/** The mark an action with a Dao leaves when taken from the brink: "brink:sword". */
+export const brinkMark = (dao: string) => `brink:${dao}`;
+
+/** The Daos a combatant acted with from under a tenth of their HP this fight. */
+export function brinkDaos(c: Combatant): string[] {
+  return Object.keys(c.marks)
+    .filter((k) => k.startsWith('brink:'))
+    .map((k) => k.slice('brink:'.length));
+}
+
 /** Sets one of the fight's marks on a combatant, leaving the old marks untouched. */
 function mark(c: Combatant, key: string, value = 1): void {
   c.marks = { ...c.marks, [key]: value };
@@ -549,6 +570,30 @@ interface Numbers {
 const hasStatus = (c: Combatant, id: StatusId) => c.statuses.some((s) => s.id === id);
 
 /**
+ * What the Intent ladder does to one attack (design § The combat Daos, The Intent ladder). The
+ * actor's stage in the Daos the action counts, against the target's highest in any Dao: Intent
+ * lifts the action's Accuracy and Attack, Domain also lowers the target's Evasion and Defense.
+ * The target's own intent, above the actor's highest, weighs on the actor's aim. A foe at your
+ * stage or above cancels yours on them: intent meets intent.
+ */
+export function intentEdge(
+  actor: Pick<Combatant, 'intent'>,
+  target: Pick<Combatant, 'intent'>,
+  daos: readonly string[],
+): { accuracy: number; attack: number; evasion: number; defense: number } {
+  const mine = daos.reduce((m, d) => Math.max(m, actor.intent[d] ?? 0), 0);
+  const theirs = topStage(target.intent);
+  const over = mine > theirs ? mine : 0;
+  const pressed = theirs > topStage(actor.intent) ? INTENT_FOE_ACCURACY : 1;
+  return {
+    accuracy: (over >= INTENT ? INTENT_ACCURACY : 1) * pressed,
+    attack: over >= INTENT ? INTENT_ATTACK : 1,
+    evasion: over >= DOMAIN ? DOMAIN_FOE_EVASION : 1,
+    defense: over >= DOMAIN ? DOMAIN_FOE_DEFENSE : 1,
+  };
+}
+
+/**
  * The two sheets compared, with the Dao rules that move them: a first attack and the first sword
  * action of a fight, a saber's run of hits, water on the chilled, metal on the bleeding and earth
  * on the staggered, Unbreaking's lower armor, pierce, crits against the wounded, Dragon Thrust.
@@ -564,11 +609,13 @@ function numbers(f: Fight, actor: Combatant, target: Combatant, a: Attack): Numb
   let guard = defense(target, guardLadder(a.type));
   if (hasStatus(target, 'bleeding') && mod(actor, 'unbreaking') > 0) guard *= UNBREAKING_DEFENSE;
   const wounded = target.hp < target.maxHp / 2;
+  const edge = intentEdge(actor, target, a.daos);
+  attack *= edge.attack;
   return {
-    accuracy: attackAccuracy(f, actor, a),
-    evasion: evasion(target, a.ladder),
+    accuracy: attackAccuracy(f, actor, a) * edge.accuracy,
+    evasion: evasion(target, a.ladder) * edge.evasion,
     attack,
-    defense: guard,
+    defense: guard * edge.defense,
     element: elementMultiplier(damagePhase(a.type), target.element),
     resist: (target.resist[a.type] ?? 0) * Math.max(0, 1 - daoMod(actor, a.daos, 'Pierce')),
     crit: daoMod(actor, a.daos, 'Crit') + (wounded ? mod(actor, 'woundedCrit') : 0),
@@ -991,6 +1038,10 @@ function attack(
   });
   mark(actor, 'struck');
   if (a.daos.includes('sword')) mark(actor, 'oneSword');
+  // Acting with a Dao from under a tenth of your HP: a win after it is that Dao's moment.
+  if (actor.hp < BRINK_HP * actor.maxHp) {
+    for (const d of a.daos) if (isCombatDao(d)) mark(actor, brinkMark(d));
+  }
   const phase = damagePhase(a.type);
   const out = {
     turn: f.turn,

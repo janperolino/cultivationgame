@@ -37,6 +37,7 @@ import { attemptOf, endScene, sceneDue, sceneRolled, startScene, useScene } from
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 import { technique } from '../content/techniques.ts';
+import { intentRisen, stageName as intentName } from '../core/intent.ts';
 import {
   clearToasts,
   leftSlots,
@@ -834,6 +835,11 @@ useGame.subscribe((now, was) => {
       tab: 'practice',
       select: id,
     });
+  }
+  // A stage of the Intent ladder opening is earned, not held, so it toasts by hand.
+  for (const { dao, stage } of intentRisen(was.game.player, now.game.player)) {
+    const st = intentName(dao, stage);
+    raiseToast('intent', `${st.name} ${st.hanzi} wakes`, { screen: 'character' });
   }
 });
 

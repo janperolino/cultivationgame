@@ -11,10 +11,12 @@ import { realm, realmIndex } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
 import { statInfo, type StatId } from '../content/stats.ts';
 import { talentEffects } from '../content/talents.ts';
-import { COMBAT_DAOS, isCombatDao } from '../content/daos.ts';
+import { COMBAT_DAOS, isCombatDao, type CombatDaoId } from '../content/daos.ts';
+import { INTENT_STAGES } from '../content/intent.ts';
 import { hasItem, item } from '../content/items.ts';
 import { fromCultivator, sheet, type SheetLine } from '../core/combat/combatant.ts';
 import { realmGrowth } from '../core/growth.ts';
+import { readyDaos, readyFor, stageName } from '../core/intent.ts';
 import { agility, aptitude, fortune, stats, talentAwake, talentsOf } from '../core/stats.ts';
 import type { Cultivator } from '../core/state.ts';
 import { TalentRow } from './CreationScreen.tsx';
@@ -207,12 +209,54 @@ function Sheet({ c }: { c: Cultivator }) {
           lines={[{ line: sh.qi }]}
           why="Six times your qi realm's size, deepened by the Qi tree and your methods."
         />
+        <IntentRow c={c} />
       </dl>
       <p className="caption spaced">
         {daos.length ? `Dao tiers held: ${daos.join(', ')}.` : 'No Dao tier held yet.'} Wielding{' '}
         {weapon}, wearing {armor}.
       </p>
     </>
+  );
+}
+
+/**
+ * The Intent ladder on the sheet: a line for each Dao you hold intent in, "Sword · Intent 剑意",
+ * and one for each a moment would break through in. Absent until either.
+ */
+function IntentRow({ c }: { c: Cultivator }) {
+  const held = Object.entries(c.intent).filter(([d]) => isCombatDao(d)) as [CombatDaoId, number][];
+  const ready = readyDaos(c);
+  if (held.length === 0 && ready.length === 0) return null;
+  return (
+    <div>
+      <dt>
+        Intent{' '}
+        <Why label="How intent works">
+          Beside its tiers each combat Dao climbs Qi, Intent, Domain and Law. Its tier 2 capstone
+          makes you ready for Intent, its tier 4 capstone for Domain (a tier sooner for a genius in
+          it), and a moment breaks through: an epiphany, or a fight won from under a tenth of your
+          HP with that Dao's actions. Intent lifts the Dao's actions ×1.15 in Accuracy and Attack
+          and a foe below your stage aims at you ×0.9; Domain also takes their Evasion ×0.85 and
+          their Defense ×0.8 against it. A foe at your stage or above in any Dao cancels it on them.
+        </Why>
+      </dt>
+      <dd>
+        {held.map(([d, n]) => {
+          const st = stageName(d, n);
+          return (
+            <span key={d} className="sheet-line">
+              {COMBAT_DAOS[d].name} · {INTENT_STAGES[n]!.name}{' '}
+              <span className="hanzi">{st.hanzi}</span>
+            </span>
+          );
+        })}
+        {ready.map((d) => (
+          <span key={`ready-${d}`} className="sheet-line muted">
+            {COMBAT_DAOS[d].name} · ready for {INTENT_STAGES[readyFor(c, d)!]!.name}, a moment away
+          </span>
+        ))}
+      </dd>
+    </div>
   );
 }
 

@@ -3,11 +3,12 @@
 // from the Border Wilds roster at their own realm and stage on the `people` stream, fought turn by
 // turn on the life's `combat` stream. Nothing dies in a spar and nothing drops; what the fight
 // spends comes home: the pills and talismans used, the toxicity the pills left, and the bond
-// every worn artifact gained.
+// every worn artifact gained. A spar won from the brink is a moment on the Intent ladder.
 import { BORDER_WILDS, template, type Template } from '../content/roster.ts';
 import { realm } from '../content/realms.ts';
 import { fromCultivator, type Combatant } from './combat/combatant.ts';
 import {
+  brinkDaos,
   combatantIn,
   fightOver,
   resolveTurn,
@@ -20,6 +21,7 @@ import {
 import { generateCultivator, generatePack } from './combat/generate.ts';
 import { chooseAction, profile } from './combat/profile.ts';
 import { bondFromFight } from './gear.ts';
+import { intentMoment } from './intent.ts';
 import { addEvent, withPlayer, withStream, type GameState } from './state.ts';
 
 /** The player's side and the foe's in a spar. */
@@ -109,5 +111,8 @@ export function endSpar(s: GameState, fight: Fight, foe: string): GameState {
   for (const [id, held] of Object.entries(me.items)) if (id in items) items[id] = held.n;
   const back = bondFromFight({ ...p, items, toxicity: me.toxicity }, fight.turn);
   const result = sparResult(fight, p.id) ?? 'draw';
-  return addEvent(withPlayer(s, back), 'spar', { foe, result, turns: fight.turn });
+  let next = addEvent(withPlayer(s, back), 'spar', { foe, result, turns: fight.turn });
+  // A fight won after acting with a Dao from the brink is that Dao's moment (core/intent.ts).
+  if (result === 'won') for (const d of brinkDaos(me)) next = intentMoment(next, d, 'brink');
+  return next;
 }

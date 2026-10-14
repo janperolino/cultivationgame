@@ -6,6 +6,8 @@ import { card } from './cards/index.ts';
 import { GRADES, type GradeId, type LadderId } from './cultivation.ts';
 import { BRANCHES, HOUR_KINDS, HOUR_OPENINGS, SLEEP_FREED_TEXT, type HourKind } from './hours.ts';
 import { copyTitle } from './copies.ts';
+import { COMBAT_DAOS, type CombatDaoId } from './daos.ts';
+import { INTENT_HANZI, INTENT_STAGES } from './intent.ts';
 import { hasManual, manual } from './manuals.ts';
 import { MASTERY } from './mastery.ts';
 import { method } from './methods.ts';
@@ -184,6 +186,15 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
     );
     // A card that settled itself says so beside the line (core/chronicle.ts, settledItself).
     return fillSlots(outcome.chronicle ?? '', { ...w, slots: { ...w.slots, ...vars } });
+  },
+  // A stage of the Intent ladder opening (core/intent.ts): an epiphany or a fight won from the brink.
+  intent: (d, w) => {
+    const dao = s(d.dao) as CombatDaoId;
+    const stage = n(d.stage);
+    const name = `${COMBAT_DAOS[dao].name} ${INTENT_STAGES[stage]!.name} ${INTENT_HANZI[dao][stage]!}`;
+    return d.how === 'brink'
+      ? `Down to the last of ${w.their} blood, ${w.name} finds ${name} and wins with it.`
+      : `${w.name} sees the whole of the Dao in one stroke: ${name} wakes.`;
   },
   'talent-wakes': (d, w) => fillSlots(talent(s(d.talent)).sleeps?.text ?? '', w),
   rewind: () => 'Time folds back.',

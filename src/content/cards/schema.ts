@@ -48,6 +48,11 @@ export interface Trigger {
   people?: readonly string[];
   /** At least this many spirit stones. */
   minStones?: number;
+  /**
+   * Ready for the Intent ladder's next stage in some combat Dao (core/intent.ts): its capstone
+   * learned, a moment away. The card's text names that Dao as {dao} and the stage as {intent}.
+   */
+  intentReady?: boolean;
 }
 
 /** What a choice does, applied in order. Fuel is a share of the ladder's current bar. */
@@ -73,6 +78,11 @@ export type CardEffect =
   | { do: 'copy'; id: string }
   /** Insight from a contemplation source (content/contemplation.ts): a lump, or days of a trickle. */
   | { do: 'contemplate'; source: string; days?: number }
+  /**
+   * A moment on the Intent ladder (core/intent.ts) in the Dao the card names ({dao}): the next
+   * stage opens. An epiphany card's breakthrough.
+   */
+  | { do: 'moment' }
   /** Marks the day, for a later card's trigger; `clear-mark` forgets it. */
   | { do: 'mark'; id: string }
   | { do: 'clear-mark'; id: string }

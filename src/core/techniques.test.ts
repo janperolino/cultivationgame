@@ -43,7 +43,7 @@ describe('technique content', () => {
       'Glimpse',
       'Comprehension',
       'Mastery',
-      'Domain',
+      'Perfection',
       'Origin',
     ]);
     for (let i = 1; i < MASTERY.length; i++) {

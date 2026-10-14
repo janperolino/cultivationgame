@@ -4,6 +4,7 @@
 // fixed elements and carries effects beyond its speed, like any talent. Cultivation reads the
 // speed, the kind (which methods fit), and the elements for the element hours.
 import { FIVE_PHASES, MUTATED_ELEMENTS, type Element } from './elements.ts';
+import type { CombatDaoId } from './daos.ts';
 import type { Effect } from './stats.ts';
 
 /** How many elements a root holds, and whether they come from the five phases or the mutated three. */
@@ -30,6 +31,8 @@ interface RootDef {
   elements: RootElements;
   /** What a named root changes beyond its speed. */
   effects?: readonly Effect[];
+  /** The combat Dao a named root is tied to: from gold up, its Intent opens a tier early. */
+  intent?: CombatDaoId;
 }
 
 export const ROOTS = [
@@ -110,6 +113,7 @@ export const ROOTS = [
     speed: 2.5,
     kind: 'single',
     elements: { count: [1, 1], from: 'phases', defaults: ['metal'], fixed: true },
+    intent: 'sword',
     effects: [
       { stat: 'swordInsight', value: 0.3 },
       { stat: 'swordChecks', value: 2 },

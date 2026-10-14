@@ -11,6 +11,7 @@ import {
 import { hasPerson, PATH_PEOPLE, person, regardWords } from '../content/people.ts';
 import { stageName } from '../content/realms.ts';
 import {
+  cardWho,
   defaultChoice,
   drawCards,
   paceChance,
@@ -131,18 +132,27 @@ describe('the seclusion deck as data', () => {
   it('fills every slot, and names only real people, on every path it can come to', () => {
     for (const k of SECLUSION) {
       for (const [o, c] of PATHS) {
-        const s = life(o, c);
+        const born = life(o, c);
+        // A card that waits on the Intent ladder comes only to someone ready: Sword Rain learned.
+        const s = k.trigger.intentReady
+          ? withPlayer(born, { ...born.player, nodes: [...born.player.nodes, 'sword-sword-rain'] })
+          : born;
         if (!pathFits(k, s)) continue;
-        const who = whoFor(s.player);
+        // What the card shows fills from the card's slots; its chronicle line from the life's.
+        const shown = cardWho(s.player);
         const texts = [
           k.title,
           k.text,
           ...Object.values(k.steps ?? {}).map((st) => st.text),
           ...[k, ...Object.values(k.steps ?? {})].flatMap((st) => st.choices.map((ch) => ch.label)),
-          ...outcomes(k).flatMap(({ o: x }) => [x.text, x.chronicle ?? '']),
+          ...outcomes(k).map(({ o: x }) => x.text),
         ];
         for (const t of texts) {
-          expect(fillSlots(t, who), `${k.id} for ${o}/${c}`).not.toMatch(/\{[\w.]+\}/);
+          expect(fillSlots(t, shown), `${k.id} for ${o}/${c}`).not.toMatch(/\{[\w.]+\}/);
+        }
+        for (const { o: x } of outcomes(k)) {
+          const line = fillSlots(x.chronicle ?? '', whoFor(s.player));
+          expect(line, `${k.id} for ${o}/${c}`).not.toMatch(/\{[\w.]+\}/);
         }
         for (const { o: x } of outcomes(k)) {
           for (const e of x.effects) {

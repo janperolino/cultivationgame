@@ -6,6 +6,7 @@
 // is a starting value the fight sim (sim/fights.ts) tunes.
 import type { LadderId } from './cultivation.ts';
 import type { RarityId } from './rarity.ts';
+import type { RealmId } from './realms.ts';
 import type { DamageType, Form } from './techniques.ts';
 import type { WeaponKind } from './combat.ts';
 
@@ -24,14 +25,29 @@ export interface Pedigree {
   bias: number;
   /** The method rarity the bias makes typical, for tooltips and the pace table. */
   typical: RarityId;
-  /** Technique mastery at Qi Condensation: 1 Comprehension up to 3 Domain; a level more each realm. */
+  /** Technique mastery at Qi Condensation: 1 Comprehension up to 3 Perfection; a level more each realm. */
   mastery: number;
+  /**
+   * The realm from which they carry Intent on their weapon's Dao, and Domain (design § The combat
+   * Daos, the Intent ladder); null for never.
+   */
+  intentFrom: RealmId | null;
+  domainFrom: RealmId | null;
   /** A chosen one has one slot (method, art, weapon or armor) guaranteed gold or better. */
   guaranteedGold: boolean;
 }
 
 export const PEDIGREES: readonly Pedigree[] = [
-  { id: 'rogue', name: 'Rogue', bias: 0.5, typical: 'white', mastery: 1, guaranteedGold: false },
+  {
+    id: 'rogue',
+    name: 'Rogue',
+    bias: 0.5,
+    typical: 'white',
+    mastery: 1,
+    guaranteedGold: false,
+    intentFrom: 'core-formation',
+    domainFrom: null,
+  },
   {
     id: 'small-sect',
     name: 'Small sect',
@@ -39,6 +55,8 @@ export const PEDIGREES: readonly Pedigree[] = [
     typical: 'green',
     mastery: 2,
     guaranteedGold: false,
+    intentFrom: 'foundation-establishment',
+    domainFrom: 'nascent-soul',
   },
   {
     id: 'great-sect',
@@ -47,6 +65,8 @@ export const PEDIGREES: readonly Pedigree[] = [
     typical: 'blue',
     mastery: 2,
     guaranteedGold: false,
+    intentFrom: 'foundation-establishment',
+    domainFrom: 'nascent-soul',
   },
   {
     id: 'sacred-land',
@@ -55,6 +75,8 @@ export const PEDIGREES: readonly Pedigree[] = [
     typical: 'purple',
     mastery: 3,
     guaranteedGold: false,
+    intentFrom: 'foundation-establishment',
+    domainFrom: 'core-formation',
   },
   {
     id: 'chosen',
@@ -63,6 +85,8 @@ export const PEDIGREES: readonly Pedigree[] = [
     typical: 'gold',
     mastery: 3,
     guaranteedGold: true,
+    intentFrom: 'qi-condensation',
+    domainFrom: 'core-formation',
   },
 ];
 
@@ -184,6 +208,8 @@ export const PICK_SLACK = 0.8;
 export interface Kit {
   id: string;
   name: string;
+  /** The pedigree whose table gives the kit its intent on the sword's Dao. */
+  pedigree: PedigreeId;
   method: RarityId;
   technique: RarityId;
   weapon: RarityId;
@@ -197,6 +223,7 @@ export interface Kit {
 export const KITS: readonly Kit[] = [
   {
     id: 'ordinary',
+    pedigree: 'rogue',
     name: 'Ordinary',
     method: 'white',
     technique: 'white',
@@ -208,6 +235,7 @@ export const KITS: readonly Kit[] = [
   },
   {
     id: 'great-sect',
+    pedigree: 'great-sect',
     name: 'Great-sect disciple',
     method: 'purple',
     technique: 'purple',
@@ -219,6 +247,7 @@ export const KITS: readonly Kit[] = [
   },
   {
     id: 'genius',
+    pedigree: 'sacred-land',
     name: 'Sacred-land genius',
     method: 'gold',
     technique: 'gold',
@@ -230,6 +259,7 @@ export const KITS: readonly Kit[] = [
   },
   {
     id: 'chosen',
+    pedigree: 'chosen',
     name: 'Chosen of heaven',
     method: 'gold',
     technique: 'red',

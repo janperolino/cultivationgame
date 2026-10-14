@@ -4,6 +4,7 @@
 // moves by that rarity (design § Combat: body talents move Agility, soul talents Aptitude, fate
 // talents Fortune; gray −2 up to red +5), beside the stat changes under its flavor. Some sleep
 // until the cultivator reaches a realm. Drafted in P1.7 for Jan's review.
+import type { CombatDaoId } from './daos.ts';
 import type { RarityId } from './rarity.ts';
 import type { RealmId } from './realms.ts';
 import type { Effect, StatId } from './stats.ts';
@@ -25,6 +26,11 @@ export interface Talent {
   sleeps?: { realm: RealmId; insight: number; text: string };
   /** How often it comes up against the others of its kind and rarity; 1 when absent. */
   weight?: number;
+  /**
+   * The combat Dao it is tied to: from gold up, its Intent and Domain open on the capstone a tier
+   * lower (content/intent.ts).
+   */
+  intent?: CombatDaoId;
 }
 
 /** How far a talent's rarity moves its kind's attribute from the base of 10 (design § Combat). */
@@ -174,6 +180,7 @@ export const TALENTS: readonly Talent[] = [
     hanzi: '纯阳之体',
     rarity: 'gold',
     text: 'Fire hits harder in your hands, yin chill cannot touch you, and lightning bites less.',
+    intent: 'fire',
     effects: [
       { stat: 'fireDamage', value: 0.15 },
       { stat: 'yinResist', value: 1 },
@@ -330,6 +337,7 @@ export const TALENTS: readonly Talent[] = [
     hanzi: '剑心',
     rarity: 'gold',
     text: 'Sword techniques master faster in your hands, and sword intent cannot shake you.',
+    intent: 'sword',
     effects: [
       { stat: 'swordPractice', value: 0.3 },
       { stat: 'soulDefense', value: 0.1 },

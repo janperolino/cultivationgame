@@ -1,9 +1,10 @@
 // The fight sim (design § Combat, the fighting-up ledger; § Enemies, beasts and the people you
 // meet): many fights per matchup, every fighter on its profile, the first mover drawn at random
 // each fight. The ledger's four kits fight an ordinary foe one realm up at the same stage,
-// without one-shot consumables, and the targets under the ledger are the pass/fail list. Then the
-// Border Wilds roster against a white and a purple kit at each realm it is met at. Each matchup
-// prints both sheets beside its win rate.
+// without one-shot consumables, each carrying the sword intent its pedigree's table gives at its
+// realm (the ordinary kit and foe a rogue's), and the targets under the ledger are the pass/fail
+// list. Then the Border Wilds roster against a white and a purple kit at each realm it is met at.
+// Each matchup prints both sheets beside its win rate.
 // Run: npm run sim -- fights [--fights=10000] [--roster=2000] [--sheets]
 import { FOE_BASELINE, KITS, type Kit, type PedigreeId } from '../src/content/enemies.ts';
 import { REALMS, realm, realmIndex, type RealmId } from '../src/content/realms.ts';

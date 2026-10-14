@@ -1,5 +1,5 @@
 // Techniques and mastery (design § Cultivation): mastery runs Glimpse, Comprehension, Mastery,
-// Domain, Origin, raised by practice days. A technique above its matching level is sealed: you
+// Perfection, Origin, raised by practice days. A technique above its matching level is sealed: you
 // know it, but can neither use nor practice it until you grow into it. A line's next chapter
 // needs the one before at Comprehension and starts below it, and kin techniques of other lines
 // speed each other's practice. A day's practice days split evenly among the practice slots.

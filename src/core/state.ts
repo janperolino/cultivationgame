@@ -192,6 +192,11 @@ export const CultivatorSchema = z.object({
   contemplation: z.record(z.string(), z.number().min(0)),
   /** Everyone this cultivator has met, by person id (content/people.ts). */
   people: z.record(z.string(), PersonRecord),
+  /**
+   * The Intent ladder's stage earned in each combat Dao, by Dao id (content/intent.ts): 1 Intent,
+   * 2 Domain. A Dao absent stands at Qi, or below it.
+   */
+  intent: z.record(z.string(), z.number().int().min(1)),
 });
 export type Cultivator = z.infer<typeof CultivatorSchema>;
 
@@ -385,6 +390,7 @@ export function newCultivator(
       opts.bornDay + START_AGE * DAYS_PER_YEAR,
       opts.place ?? null,
     ),
+    intent: {},
   };
 }
 

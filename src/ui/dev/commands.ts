@@ -2,6 +2,7 @@
 // the game uses where they can (time runs through the day step, breakthroughs roll their odds,
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
 import { CARDS, hasCard } from '../../content/cards/index.ts';
+import { COMBAT_DAO_IDS, isCombatDao } from '../../content/daos.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
 import { COPY_KINDS, copyId, hasCopy } from '../../content/copies.ts';
 import { ITEMS } from '../../content/items.ts';
@@ -13,6 +14,7 @@ import { hasTechnique, TECHNIQUES } from '../../content/techniques.ts';
 import { playDay, resolveByDefault } from '../../core/cards.ts';
 import { barSize, majorCheck } from '../../core/cultivation.ts';
 import { gainInsight } from '../../core/insight.ts';
+import { capstoneOf, intentMoment, intentStage, readyingTier } from '../../core/intent.ts';
 import {
   attentionFactor,
   heatLimit,
@@ -406,6 +408,25 @@ export const COMMANDS: Record<string, Command> = {
       if (!id) return TECHNIQUES.map((t) => `${t.id.padEnd(30)} ${t.name}`);
       if (!hasTechnique(id)) return `No technique "${id}".`;
       return apply(store, (s) => gainTechnique(s, id, 'is taught'), `Taught ${id}.`);
+    },
+  },
+  intent: {
+    usage: 'intent <dao> [ready]',
+    help: 'Learns the capstone that readies a Dao’s next Intent stage and breaks through with a moment; with ready, stops a moment away (the epiphany card can come).',
+    run([dao, only], store) {
+      if (!dao || !isCombatDao(dao)) return `Give a combat Dao: ${COMBAT_DAO_IDS.join(', ')}.`;
+      return apply(
+        store,
+        (s) => {
+          const p = s.player;
+          const next = intentStage(p, dao) + 1;
+          const cap = capstoneOf(dao, readyingTier(p, dao, next));
+          if (!cap) return s;
+          const ready = withPlayer(s, { ...p, nodes: [...new Set([...p.nodes, cap])] });
+          return only === 'ready' ? ready : intentMoment(ready, dao, 'epiphany');
+        },
+        only === 'ready' ? `Ready in ${dao}.` : `A moment in ${dao}.`,
+      );
     },
   },
   routine: {

@@ -27,8 +27,8 @@ export const SPIRIT_WAKES = 3;
 
 /**
  * A weapon or armor a tier above your realm: its Accuracy multiplier and how much of the tier's
- * step it counts, by bond level (Glimpse to Origin). At Domain the penalty is gone; at Origin the
- * whole step counts (design § Items and gear, bonding). Two tiers above, it won't wake.
+ * step it counts, by bond level (Glimpse to Origin). At Perfection the penalty is gone; at Origin
+ * the whole step counts (design § Items and gear, bonding). Two tiers above, it won't wake.
  */
 export const ABOVE_ACCURACY = [0.8, 0.8, 0.9, 1, 1] as const;
 export const ABOVE_STEP_SHARE = [0.5, 0.5, 0.5, 0.5, 1] as const;

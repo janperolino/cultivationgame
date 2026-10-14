@@ -23,12 +23,14 @@ import {
 } from '../content/cards/index.ts';
 import { fillSlots, type Who } from '../content/chronicle.ts';
 import { copyId } from '../content/copies.ts';
+import { COMBAT_DAOS } from '../content/daos.ts';
 import { pathKey } from '../content/origins.ts';
 import { realmIndex } from '../content/realms.ts';
 import { firstTechnique } from '../content/techniques.ts';
 import { seasonOf, whoFor } from './chronicle.ts';
 import { barFill, barSize, fromWorld } from './cultivation.ts';
 import { contemplate, gainInsight, insightMultiplier } from './insight.ts';
+import { intentMoment, readyDaos, readyFor, stageName } from './intent.ts';
 import { cultivate, gainCopy, gainManual, gainMethod, gainRoutine, gainTechnique } from './life.ts';
 import { holdsManual } from './manuals.ts';
 import { copyCount } from './reading.ts';
@@ -95,6 +97,7 @@ export function triggerHolds(s: GameState, t: Trigger, day = s.calendar.day): bo
   }
   if (t.people && !t.people.every((slot) => knowsSlot(c, slot))) return false;
   if (t.minStones !== undefined && c.stones < t.minStones) return false;
+  if (t.intentReady && readyDaos(c).length === 0) return false;
   return true;
 }
 
@@ -207,6 +210,10 @@ function applyEffect(s: GameState, e: CardEffect): GameState {
       return gainCopy(s, e.id, 'comes by');
     case 'contemplate':
       return withPlayer(s, contemplate(c, e.source, e.days ?? 1).cultivator);
+    case 'moment': {
+      const dao = readyDaos(c)[0];
+      return dao ? intentMoment(s, dao, 'epiphany') : s;
+    }
     case 'mark':
       return setMark(s, e.id);
     case 'clear-mark': {
@@ -244,11 +251,21 @@ function rollCheck(c: Cultivator, choice: CardChoice, rng: Rng) {
   return { d20, total, dc: check.dc, pass: total >= check.dc };
 }
 
-/** The slots a card's text fills with: the player's, and the card's variables as {var.id}. */
-function cardWho(c: Cultivator, vars: Readonly<Record<string, number>> = {}): Who {
+/**
+ * The slots a card's text fills with: the player's, the card's variables as {var.id}, and the
+ * Dao the player is readiest in as {dao} with its next stage as {intent} ("Sword Intent 剑意").
+ */
+export function cardWho(c: Cultivator, vars: Readonly<Record<string, number>> = {}): Who {
   const who = whoFor(c);
   const v = Object.fromEntries(Object.entries(vars).map(([k, n]) => [`var.${k}`, String(n)]));
-  return { ...who, slots: { ...who.slots, ...v } };
+  const dao = readyDaos(c)[0];
+  const ready: Record<string, string> = {};
+  if (dao) {
+    const name = stageName(dao, readyFor(c, dao)!);
+    ready.dao = COMBAT_DAOS[dao].name;
+    ready.intent = `${name.name} ${name.hanzi}`;
+  }
+  return { ...who, slots: { ...who.slots, ...ready, ...v } };
 }
 
 /**

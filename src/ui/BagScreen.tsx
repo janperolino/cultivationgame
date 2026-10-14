@@ -399,7 +399,7 @@ function Detail({ c, id, onClear }: { c: Cultivator; id: string; onClear: () => 
             Artifacts from blue up bond to you by use, Glimpse to Origin: each fight turn worn
             counts a quarter of a day, and stones fed in seclusion count too ({feedCost} a day at
             its tier). Each level wakes one property in order, and eases a weapon above your realm.
-            At gold and red its spirit wakes at Domain.
+            At gold and red its spirit wakes at Perfection.
           </Why>
         </p>
       )}

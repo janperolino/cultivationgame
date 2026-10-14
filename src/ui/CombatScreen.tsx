@@ -11,7 +11,9 @@ import {
   type Fight,
   type MainAction,
 } from '../core/combat/fight.ts';
+import { isCombatDao, type CombatDaoId } from '../content/daos.ts';
 import { mod, type Combatant } from '../core/combat/combatant.ts';
+import { stageName as intentName } from '../core/intent.ts';
 import { sparFoes, YOU } from '../core/spar.ts';
 import { FxLayer, type FxShot } from './combatFx.ts';
 import { act, beginSpar, leaveSpar, selectTarget, takePending, useFight } from './fight.ts';
@@ -58,6 +60,32 @@ function Meter({
   );
 }
 
+/**
+ * A mark for each Dao a combatant holds intent in, its stage in the Dao's own words ("剑意"):
+ * the hit chances on the buttons already count it (design § The combat Daos, the Intent ladder).
+ */
+function IntentMarks({ c }: { c: Combatant }) {
+  const held = Object.entries(c.intent).filter(([d, n]) => isCombatDao(d) && n > 0);
+  if (held.length === 0) return null;
+  return (
+    <>
+      {held.map(([d, n]) => {
+        const st = intentName(d as CombatDaoId, n);
+        return (
+          <span
+            key={d}
+            className="fight-intent hanzi"
+            title={`${st.name} ${st.hanzi}`}
+            aria-label={st.name}
+          >
+            {st.hanzi}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 function FighterCard({
   c,
   selected,
@@ -71,7 +99,10 @@ function FighterCard({
   const down = c.state !== 'fighting';
   const body = (
     <>
-      <span className="fight-name">{c.name}</span>
+      <span className="fight-name">
+        {c.name}
+        <IntentMarks c={c} />
+      </span>
       <span className="caption">
         {realm(r.realm).name}, {stageName(r.realm, r.stage)}
         {down ? ` · ${c.state}` : ''}

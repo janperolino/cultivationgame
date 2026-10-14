@@ -374,7 +374,7 @@ The five element Daos and the four weapon Daos of v1, with their shape settled a
 |---|---|---|---|
 | Qi | the Dao's tier 1, as now | holding tier 1 | |
 | Intent | the Dao's actions at ×1.15 Accuracy and ×1.15 Attack; foes below your stage in that Dao at ×0.9 Accuracy against you; about a stage in all | the Dao's tier 2 capstone (Foundation) and a moment | the tier 1 capstone (Qi Condensation) |
-| Domain | Intent, and foes below your stage at ×0.85 Evasion, with their Defense counted ×0.8 against the Dao's actions | the tier 4 capstone (Nascent Soul) and a moment | the tier 3 capstone (Core Formation) |
+| Domain | Intent, and foes below your stage at ×0.9 Evasion, with their Defense counted ×0.95 against the Dao's actions | the tier 4 capstone (Nascent Soul) and a moment | the tier 3 capstone (Core Formation) |
 | Law | a realm gap counts only as half a step on the Dao's actions; written, not built in v1 | past v1 | |
 
 - A moment is an epiphany card, a fight won from under 10% of your HP, a Dao stele or an inheritance, each with that Dao in it. The capstone makes you ready; the moment breaks through.
@@ -382,7 +382,7 @@ The five element Daos and the four weapon Daos of v1, with their shape settled a
 - A foe at your stage or above in any Dao cancels your Intent's and Domain's effects on them: intent meets intent.
 - The sheet shows a line for each Dao you hold intent in, "Sword · Intent 剑意"; on the Combat screen a combatant with intent wears a mark, and the hit-chance preview counts the effects.
 - NPCs carry intent on their weapon's Dao by pedigree and realm (Enemies, beasts and the people you meet, the pedigree table).
-- Intent and Domain are a row of the fighting-up ledger (Combat). The four target rows stand, measured with the intent each pedigree's kit carries by that table; if a row breaks, the stage numbers move, not the targets.
+- Intent and Domain are a row of the fighting-up ledger (Combat). The four target rows stand, measured with the intent each pedigree's kit carries by that table; if a row breaks, the stage numbers move, not the targets. P2.6 moved Domain's from ×0.85 Evasion and ×0.8 Defense, which put a sacred-land genius at Core Formation, holding Domain over a foe's Intent, at 65% against the ledger's 25–45%; at ×0.9 and ×0.95 it stands at 41%.
 - Saber's Roar and Tiger Roar stay: a roar is not intent. The Sword tree's intimidation side path is Sword Bearing, which leaves the name to the ladder.
 
 Lightning, Wind and Ice stay as Daos the trees list (Cultivation, Daos) with no draft yet; the fight sim says whether v1 needs them beyond their damage types.
@@ -897,7 +897,7 @@ The element multiplier is 1.25 when your element overcomes the target's, 0.8 whe
 | Breakthrough grade | every line | −1 to +3 stages |
 | Body or soul a realm ahead | HP and Defense, or soul Attack and Defense | the next realm's size on those lines |
 | Dao tiers | Accuracy and Attack | ×1.05 a tier |
-| Intent and Domain (The combat Daos, the Intent ladder) | Accuracy and Attack on the Dao's actions; the foe's Accuracy, then Evasion and Defense | Intent ×1.15 and the foe ×0.9, about a stage; Domain adds the foe's Evasion ×0.85 and Defense ×0.8 |
+| Intent and Domain (The combat Daos, the Intent ladder) | Accuracy and Attack on the Dao's actions; the foe's Accuracy, then Evasion and Defense | Intent ×1.15 and the foe ×0.9, about a stage; Domain adds the foe's Evasion ×0.9 and Defense ×0.95 |
 | Element advantage | damage | ×1.25 |
 | Creativity | Accuracy | ×1.1 a point, 0 to +3 |
 | Tree and Way nodes | various | a few percent each; capstones a stage |

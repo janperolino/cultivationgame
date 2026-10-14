@@ -60,7 +60,7 @@ export function activeProperties(c: Cultivator, it: Item): readonly ItemProperty
   return all.slice(0, bondMastery(c, it.id).level + 1);
 }
 
-/** Whether its artifact spirit is awake: from Domain at gold and red, always at pristine. */
+/** Whether its artifact spirit is awake: from Perfection at gold and red, always at pristine. */
 export function spiritAwake(c: Cultivator, it: Item): boolean {
   if (it.rarity === 'pristine') return true;
   if (it.rarity !== 'gold' && it.rarity !== 'red') return false;

@@ -128,6 +128,8 @@ export interface Combatant {
   >;
   /** Dao tiers held, by Dao id: sword, fire. */
   daos: Record<string, number>;
+  /** The Intent ladder's stage in each Dao, by Dao id (core/intent.ts): 1 Intent, 2 Domain. */
+  intent: Record<string, number>;
   /** Items carried into the fight, by id. */
   items: Record<string, { item: Item; n: number }>;
   toxicity: number;
@@ -180,6 +182,7 @@ export function combatant(init: CombatantInit): Combatant {
     qiRecovery: 1,
     techniques: {},
     daos: {},
+    intent: {},
     items: {},
     toxicity: 0,
     mods: {},
@@ -299,6 +302,7 @@ export function fromCultivator(c: Cultivator, side: string): Combatant {
     armor: worn.defense,
     weapon: wornWeapon(c),
     daos: daoTiers(c),
+    intent: { ...c.intent },
     mods,
   });
 }

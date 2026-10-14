@@ -2,7 +2,8 @@
 // (pedigree, realm and stage, path, profile) and a seed, and everything else is rolled from the
 // pedigree's table on the `people` stream: the method's rarity on each ladder, which sets the
 // growth behind their pool and HP; the arts' rarity and mastery; a weapon and an armor; zero to
-// two consumables; a storage item; a breakthrough grade. A beast is a species, a realm and a
+// two consumables; a storage item; a breakthrough grade; and intent on the weapon's Dao by the
+// pedigree's table, which nothing rolls. A beast is a species, a realm and a
 // bloodline rarity that rolls abilities from its element's table. Both come out as the same
 // combatant the player is, so an elder and a bandit differ in access, never in rules. `kitFighter`
 // builds the fighting-up ledger's kits the same way with every roll pinned.
@@ -64,6 +65,7 @@ import {
 } from '../../content/roster.ts';
 import type { Technique } from '../../content/techniques.ts';
 import { gradesStages } from '../grades.ts';
+import { npcIntent } from '../intent.ts';
 import type { Rng } from '../rng.ts';
 import { armor, combatant, weapon, type Combatant } from './combatant.ts';
 import { damagePhase } from './damage.ts';
@@ -244,6 +246,8 @@ interface Build {
   resists?: DamageType;
   consumables?: Item[];
   profile?: ProfileId;
+  /** Their Intent ladder stage on the weapon's Dao (core/intent.ts, npcIntent). */
+  intent?: number;
 }
 
 /** Puts the rolls together into a combatant on the player's rules. */
@@ -299,6 +303,7 @@ function build(b: Build): Combatant {
     qiRecovery: 1 + gQi * share('qi', 'qiRecovery'),
     techniques,
     daos,
+    intent: b.intent ? { [b.weaponKind]: b.intent } : {},
     items,
     profile: b.profile,
     resolve: PROFILES.find((x) => x.id === b.profile)?.resolve ?? RESOLVE_BASE,
@@ -450,6 +455,7 @@ export function generateCultivator(
       resists: t.resists,
       consumables,
       profile: t.profile,
+      intent: npcIntent(t.pedigree, realmId),
     }),
   };
 }
@@ -597,5 +603,6 @@ export function kitFighter(
       ),
     ],
     profile: o.profile ?? 'fanatical',
+    intent: npcIntent(kit.pedigree, realmId),
   });
 }

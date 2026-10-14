@@ -4502,6 +4502,20 @@ button.fight-card {
   color: var(--warn);
 }
 
+/* A combatant's intent, in its Dao's own words: a small seal beside the name. */
+.fight-intent {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 5px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--accent);
+  border: 1px solid var(--accent-edge);
+  border-radius: 3px;
+  background: var(--accent-soft);
+  vertical-align: 2px;
+}
+
 .fight-actions {
   display: flex;
   flex-wrap: wrap;

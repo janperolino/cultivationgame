@@ -113,8 +113,8 @@ export const SWORD_DAO = defineDao({
       ],
       sides: [
         {
-          id: 'sword1-intent',
-          name: 'Sword Intent',
+          id: 'sword1-bearing',
+          name: 'Sword Bearing',
           nodes: [
             {
               id: 'sword-drawn-stillness',
@@ -131,9 +131,9 @@ export const SWORD_DAO = defineDao({
               text: 'The timid look at the blade, then at you, then away.',
             },
             {
-              id: 'sword-sword-intent',
-              name: 'Sword Intent',
-              hanzi: '剑意',
+              id: 'sword-sword-bearing',
+              name: 'Sword Bearing',
+              hanzi: '剑势',
               effects: [{ stat: 'intimidate', value: 0.15 }],
               text: 'A sword not yet drawn already ends arguments: your talk wins against the timid.',
             },

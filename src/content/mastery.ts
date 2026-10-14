@@ -1,14 +1,15 @@
 // Mastery (design § Cultivation, mastery): techniques, methods and recipes each run Glimpse,
-// Comprehension, Mastery, Domain, Origin, raised by use. A technique's level adds to checks with
-// it; a method's level scales its speed, and its levels come about six times slower, since every
-// hour cultivating with it counts. Each level reached releases a burst of insight. Practice days
-// and bursts are at tier 1 and three times that per tier above. Starting values for the sims.
+// Comprehension, Mastery, Perfection, Origin, raised by use. A technique's level adds to checks
+// with it; a method's level scales its speed, and its levels come about six times slower, since
+// every hour cultivating with it counts. Each level reached releases a burst of insight. Practice
+// days and bursts are at tier 1 and three times that per tier above. Starting values for the sims.
+// The fourth level was Domain until D2.2 gave that name to the Intent ladder (content/intent.ts).
 
 export const MASTERY = [
   { id: 'glimpse', name: 'Glimpse', hanzi: '初窥' },
   { id: 'comprehension', name: 'Comprehension', hanzi: '领悟' },
   { id: 'mastery', name: 'Mastery', hanzi: '精通' },
-  { id: 'domain', name: 'Domain', hanzi: '化境' },
+  { id: 'perfection', name: 'Perfection', hanzi: '圆满' },
   { id: 'origin', name: 'Origin', hanzi: '归元' },
 ] as const;
 export type MasteryId = (typeof MASTERY)[number]['id'];

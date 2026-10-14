@@ -28,18 +28,20 @@ import { seeAll } from '../seen.ts';
 import { flipHour } from '../wheel.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 
 /**
- * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), old to
- * new. The v12 migration carries a learned node across; the v5 one reads old ids through it, since
- * it checks owned nodes against today's trees.
+ * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
+ * Sword tree's Sword Intent, now Sword Bearing (P2.6), old to new. The v12 and v16 migrations
+ * carry a learned node across; the v5 one reads old ids through it, since it checks owned nodes
+ * against today's trees.
  */
 export const RENAMED_NODES: Readonly<Record<string, string>> = {
   'qi-sword-riding-breath': 'qi-treading-air',
   'body-iron-fists': 'body-ox-hands',
   'soul-furnace-hands': 'soul-unshaking-fingers',
   'fist-bone-hardening': 'fist-hard-knuckle-bones',
+  'sword-sword-intent': 'sword-sword-bearing',
 };
 
 const renamedNode = (id: string) => RENAMED_NODES[id] ?? id;
@@ -584,6 +586,19 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       reading: { queue: copy ? [copy] : [], days: reading.days ?? {}, wheel: null },
     };
     return { ...old, version: 16, state: { ...s, player } };
+  },
+
+  // v16, P2.5f: no Intent ladder, and the Sword tree's side path named Sword Intent. v17 keeps the
+  // stage earned in each combat Dao (core/intent.ts), of which an old life has none, and learns
+  // the side path's last node as Sword Bearing (`RENAMED_NODES`), refunding nothing. Mastery's
+  // fourth level is Perfection now, but levels are stored as numbers, so nothing else moves.
+  16: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const nodes = Array.isArray(p.nodes)
+      ? (p.nodes as unknown[]).map((id) => (typeof id === 'string' ? renamedNode(id) : id))
+      : p.nodes;
+    return { ...old, version: 17, state: { ...s, player: { ...p, nodes, intent: {} } } };
   },
 };
 

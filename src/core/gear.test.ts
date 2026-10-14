@@ -161,7 +161,7 @@ describe('bonding', () => {
     expect(stats(c).swordCrit).toBeCloseTo(0.03);
   });
 
-  it('feeds on stones in seclusion, and a gold spirit wakes at Domain', () => {
+  it('feeds on stones in seclusion, and a gold spirit wakes at Perfection', () => {
     let c = { ...holding(life().player, 'soul-calming-bell'), stones: 1000 };
     expect(spiritAwake(c, item('soul-calming-bell'))).toBe(false);
     c = feedArtifact(c, 'soul-calming-bell', 750); // 150 bond days at 5 stones a day

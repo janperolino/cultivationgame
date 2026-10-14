@@ -523,6 +523,36 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
     ],
   },
+  // A moment on the Intent ladder (core/intent.ts): it comes only while a Dao's capstone has made
+  // you ready, and names that Dao. Held for later, it comes again.
+  {
+    id: 'dao-epiphany',
+    deck: DECK,
+    kind: 'within',
+    title: 'One Stroke',
+    text: 'Your hands are running the {dao} forms they have run ten thousand times when the forms stop being forms. For one breath every stroke of the {dao} Dao is the same stroke, and {intent} is a step away.',
+    trigger: { intentReady: true },
+    weight: 3,
+    cooldown: 60,
+    choices: [
+      {
+        label: 'Take the step',
+        pass: {
+          effects: [{ do: 'moment' }],
+          text: 'You step through, and the Dao steps with you. Nothing you hold will be held the same way again.',
+          chronicle: '{name} stops in the middle of a form and does not move again until dusk.',
+        },
+      },
+      {
+        label: 'Let it close for now',
+        pass: {
+          effects: [{ do: 'insight', n: 10 }],
+          text: 'You let it close. The door is still there, and now you know where it stands.',
+          chronicle: '{name} glimpses the whole of a Dao and lets it close again.',
+        },
+      },
+    ],
+  },
   {
     id: 'white-city-dream',
     deck: DECK,
