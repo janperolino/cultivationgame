@@ -241,10 +241,10 @@ function seatHint(c: Cultivator, a: Attention): string {
     const s = Math.ceil(a.unsettledUntil - a.t);
     return `Your meridians burn and the bonus is gone for ${s} s. Breathe steadily, not greedily.`;
   }
-  if (seatTutorial(c)) {
-    return 'Your meridians are too new to hold more than being here gives. From the fourth layer, every orb you draw in counts.';
-  }
-  return 'Draw orbs in by hovering over them or with a finger. On the inhale they are worth more.';
+  const how =
+    'Draw orbs in by hovering over them or with a finger. On the inhale they are worth more.';
+  if (seatTutorial(c)) return `${how} Your meridians stay cool until the fourth layer.`;
+  return how;
 }
 
 /** What the scene says as it ends: the step taken, or what the gate holding cost. */

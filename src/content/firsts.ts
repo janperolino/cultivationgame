@@ -48,12 +48,14 @@ export const HINT_IDS = [
   'method',
   'qi-hours',
   'orbs',
+  'attending',
   'technique',
   'technique-hour',
   'art',
   'art-hour',
   'stones',
   'node',
+  'insight',
   'breakthrough',
   'cards',
   'hints-off',
@@ -65,6 +67,8 @@ export const HINTS: Readonly<Record<HintId, string>> = {
   'study-hour':
     'Your wheel is all qi, and qi hours give nothing until you know a method. Turn an hour to Study to read it; more hours read it sooner.',
   orbs: 'Qi drifts toward your figure at the Abode. Pass the pointer through an orb to draw it in.',
+  attending:
+    'That orb filled your focus. While you sit at the Abode your qi runs ×1.25, and focus lifts it toward ×2; an orb drawn on the inhale fills it faster. Focus fades once you leave.',
   method:
     'You have learned your first cultivation method, the {method}. Take it up under Climb with to start cultivating.',
   'qi-hours':
@@ -75,6 +79,8 @@ export const HINTS: Readonly<Record<HintId, string>> = {
   'art-hour': 'Your {art} waits for an hour. Turn an hour of the wheel to {hour}.',
   stones: 'Spirit stones sit in your pouch. Burn them in qi hours and the day gathers more.',
   node: 'Insight enough for a node. Buy one on the Trees, where your understanding takes shape.',
+  insight:
+    'Insight buys more nodes. Every hour leaves a little, more while you attend; study hours give a steady stream, and each mastery level and each read finished gives a burst.',
   breakthrough: 'A bar is full. Break through with the button under your figure at the Abode.',
   cards: 'A card waits in the tray at the Abode. Each is a choice, and it waits for you.',
   'hints-off': 'Hints like this one can be turned off in Settings, and shown again from there.',
@@ -82,7 +88,13 @@ export const HINTS: Readonly<Record<HintId, string>> = {
 
 /** The coming-back card's line for each first still waiting, by its step. */
 export const FIRST_WAITING: Readonly<
-  Record<Exclude<HintId, 'qi-hours' | 'orbs' | 'breakthrough' | 'cards' | 'hints-off'>, string>
+  Record<
+    Exclude<
+      HintId,
+      'qi-hours' | 'orbs' | 'attending' | 'insight' | 'breakthrough' | 'cards' | 'hints-off'
+    >,
+    string
+  >
 > = {
   copy: 'Your {copy} waits on the shelf, unread.',
   'study-hour': 'No hour of your wheel goes to study yet.',

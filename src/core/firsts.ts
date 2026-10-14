@@ -59,7 +59,10 @@ export function noteFirsts(s: GameState): GameState {
 /** A first waiting on the player: which, the step it is at (its hint), and what it is about. */
 export interface FirstStep {
   first: FirstId;
-  hint: Exclude<HintId, 'qi-hours' | 'orbs' | 'breakthrough' | 'cards' | 'hints-off'>;
+  hint: Exclude<
+    HintId,
+    'qi-hours' | 'orbs' | 'attending' | 'insight' | 'breakthrough' | 'cards' | 'hints-off'
+  >;
   /** The copy, method or technique it is about. */
   id?: string;
   /** An art's ladder. */

@@ -151,7 +151,10 @@ export function heatLimit(c: Cultivator): number {
   return HEAT_LIMIT * (1 + stats(c).heatLimit);
 }
 
-/** The tutorial layers keep it simple: the floor only, no heat, so the first hour can't unsettle. */
+/**
+ * The tutorial layers keep it safe: orbs fill focus from the first layer, but no heat builds until
+ * the fourth, so the first hour can't unsettle (Jan's call after P2.8; it was the floor only).
+ */
 export function seatTutorial(c: Cultivator): boolean {
   return inTutorial(c.qi);
 }
@@ -166,7 +169,7 @@ export function heatUnsettled(a: Attention): boolean {
  */
 export function attentionFactor(a: Attention, c: Cultivator): number {
   if (heatUnsettled(a)) return 1;
-  const span = seatTutorial(c) ? 0 : Math.max(0, attentionCeiling(c) - ATTENTION_FLOOR);
+  const span = Math.max(0, attentionCeiling(c) - ATTENTION_FLOOR);
   return 1 + a.presence * (ATTENTION_FLOOR + span * a.focus);
 }
 
@@ -326,7 +329,7 @@ export interface Breath {
   timed: boolean;
   /** The breath tipped the meridians into unsettled. */
   overheated: boolean;
-  /** Drawn in, but in the tutorial layers or unsettled, so it adds nothing. */
+  /** Drawn in, but unsettled, so it adds nothing. */
   wasted: boolean;
 }
 
@@ -351,7 +354,7 @@ function orbsNear(a: Attention, p: readonly [number, number], reach: number, inP
 /**
  * One breath draws the given orbs in, as one: focus fills by each orb's worth (more on the inhale),
  * and the breath warms the meridians, less on the inhale. Past the heat limit you tip into
- * unsettled and lose the bonus for a while. The tutorial layers take orbs for nothing, with no heat.
+ * unsettled and lose the bonus for a while. The tutorial layers build no heat.
  */
 function drawIn(a: Attention, c: Cultivator, picked: { orb: Orb; at: [number, number] }[]): Breath {
   const timed = inhaling(a.t, breathCycle(c));
@@ -365,12 +368,12 @@ function drawIn(a: Attention, c: Cultivator, picked: { orb: Orb; at: [number, nu
   if (picked.length === 0) {
     return { attention: a, caught: [], timed, overheated: false, wasted: false };
   }
-  if (seatTutorial(c) || heatUnsettled(a)) {
+  if (heatUnsettled(a)) {
     return { attention: base, caught: picked, timed, overheated: false, wasted: true };
   }
   const worth = picked.reduce((sum, p) => sum + orbWorth(c, p.orb), 0);
   const focus = Math.min(1, a.focus + ORB_FOCUS * worth * (timed ? ORB_TIMED : 1));
-  const heat = a.heat + HEAT_PER_BREATH * (timed ? HEAT_TIMED : 1);
+  const heat = seatTutorial(c) ? a.heat : a.heat + HEAT_PER_BREATH * (timed ? HEAT_TIMED : 1);
   const limit = heatLimit(c);
   if (heat >= limit) {
     return {

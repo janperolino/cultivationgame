@@ -138,3 +138,18 @@ describe('hints', () => {
     expect(hintsWaiting(full).map((h) => h.id)).toContain('breakthrough');
   });
 });
+
+describe('hints after a first', () => {
+  it('say what attending does after the first orb, and where insight comes from after the first node', () => {
+    const s = s0();
+    const ids = (x: GameState) => hintsWaiting(x).map((h) => h.id);
+    expect(ids(s)).not.toContain('attending');
+    expect(ids(s)).not.toContain('insight');
+    const drew = { ...s, player: { ...s.player, flags: [...s.player.flags, 'drew-orb'] } };
+    expect(ids(drew)).toContain('attending');
+    const node = { ...s, player: { ...s.player, nodes: ['qi-sensing-breath'] } };
+    expect(hintsWaiting(node).find((h) => h.id === 'insight')!.text).toMatch(/study hours/);
+    // Only dismissing them answers them.
+    expect(hintDone(drew, 'attending')).toBe(false);
+  });
+});

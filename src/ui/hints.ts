@@ -49,6 +49,14 @@ export function hintsWaiting(s: GameState): HintView[] {
     }
     const drawing = climbing && !s.player.flags.includes(FIRST_BREATH);
     if (id === 'orbs' && drawing && abode) out.push({ id, text: HINTS.orbs, to: abode });
+    // After the first orb: what attending does. After the first node: where more insight comes from.
+    if (id === 'attending' && s.player.flags.includes(FIRST_BREATH) && abode) {
+      out.push({ id, text: HINTS.attending, to: abode });
+    }
+    if (id === 'insight' && s.player.nodes.length > 0) {
+      const to = open({ screen: 'cultivate', tab: 'cultivation' });
+      out.push({ id, text: HINTS.insight, to });
+    }
     if (id === 'breakthrough' && readyLadders(s).length > 0) {
       out.push({ id, text: HINTS.breakthrough, to: abode });
     }
@@ -97,6 +105,8 @@ export function hintDone(s: GameState, id: HintId): boolean {
     case 'orbs':
       return p.flags.includes(FIRST_BREATH);
     case 'qi-hours':
+    case 'attending':
+    case 'insight':
     case 'breakthrough':
     case 'cards':
     case 'hints-off':

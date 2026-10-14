@@ -98,7 +98,7 @@ describe('the attention factor', () => {
     );
   });
 
-  it('rises to ×2.25 with Whale Swallows the Sea, and holds the floor alone in the tutorial', () => {
+  it('rises to ×2.25 with Whale Swallows the Sea, and to ×2 in the tutorial layers too', () => {
     const whale = learn(
       seated(),
       'qi-sensing-breath',
@@ -111,7 +111,7 @@ describe('the attention factor', () => {
     );
     expect(attentionFactor(sitting(whale, { focus: 1 }), whale)).toBeCloseTo(2.25);
     const tutorial = seated(3);
-    expect(attentionFactor(sitting(tutorial, { focus: 1 }), tutorial)).toBe(1.25);
+    expect(attentionFactor(sitting(tutorial, { focus: 1 }), tutorial)).toBeCloseTo(2);
   });
 
   it('multiplies the qi hours exactly, leaves stones alone and adds a second insight trickle', () => {
@@ -303,7 +303,7 @@ describe('heat', () => {
     expect(cooled.heat).toBeCloseTo(0.8 - 10 * HEAT_COOLING);
   });
 
-  it('holds more with Cooling Channels, and never rises in the tutorial layers', () => {
+  it('holds more with Cooling Channels, and never rises in the tutorial layers, where focus still fills', () => {
     const cool = learn(
       seated(),
       'qi-sensing-breath',
@@ -316,8 +316,8 @@ describe('heat', () => {
     const tutorial = seated(2);
     const t = greedy(tutorial);
     expect(t.heat).toBe(0);
-    expect(t.focus).toBe(0);
-    expect(attentionFactor(t, tutorial)).toBe(1.25);
+    expect(t.focus).toBeGreaterThan(0);
+    expect(attentionFactor(t, tutorial)).toBeGreaterThan(1.25);
   });
 });
 
