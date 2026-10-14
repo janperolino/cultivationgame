@@ -183,6 +183,8 @@ export function raiseToasts(gained: readonly Gain[], s: GameState): void {
 export const HAND_TOASTS = {
   /** A technique reached Origin and left its practice slot. */
   slot: { glyph: '练', label: 'Practice' },
+  /** Spirit stones handed over: a counter, not a thing held, so no gain toasts them. */
+  stones: { glyph: '灵', label: 'Spirit stones' },
 } as const;
 export type HandToast = keyof typeof HAND_TOASTS;
 
@@ -190,6 +192,30 @@ export type HandToast = keyof typeof HAND_TOASTS;
 export function raiseToast(kind: HandToast, text: string, link: ToastLink | null = null): void {
   const t: Toast = { key: nextKey++, ...HAND_TOASTS[kind], name: text, more: 0, to: link };
   useToasts.setState((st) => settle({ toasts: st.toasts, waiting: [...st.waiting, t] }));
+}
+
+/**
+ * What a new life starts with, toasted once after testing day: a created life holds everything
+ * seen, so no gain names its method, technique, items or stones on its own.
+ */
+export function startingGains(s: GameState): Gain[] {
+  const p = s.player;
+  const held = (kind: Gain['kind'], ids: string[]) =>
+    ids.map((id) => ({ kind, id, count: 1, fresh: true }));
+  return [
+    ...held('method', Object.keys(p.methods)),
+    ...held('technique', Object.keys(p.techniques)),
+    ...Object.entries(p.items)
+      .filter(([, n]) => n > 0)
+      .map(([id, n]) => ({ kind: 'item' as const, id, count: n, fresh: true })),
+  ];
+}
+
+/** Toasts what a new life starts with, its stones last. */
+export function raiseStartToasts(s: GameState): void {
+  raiseToasts(startingGains(s), s);
+  const stones = Math.floor(s.player.stones);
+  if (stones > 0) raiseToast('stones', `${stones} low-grade ${stones === 1 ? 'stone' : 'stones'}`);
 }
 
 /** The techniques that reached Origin and left their slot between two states. */

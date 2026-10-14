@@ -8,7 +8,7 @@ import { masteryNeed } from '../core/techniques.ts';
 import { technique } from '../content/techniques.ts';
 import { cultivateDays } from '../core/cultivation.ts';
 import { withPlayer } from '../core/state.ts';
-import { leftSlots, toastsFor } from './toasts.ts';
+import { leftSlots, startingGains, toastsFor } from './toasts.ts';
 
 const fresh = () => unlock(seeAll(newLife({ name: 'Han Li', seed: 'toasts' })), 'trees');
 
@@ -87,5 +87,15 @@ describe('toasts', () => {
     const twice = gainCopy(seen, 'manual:tide-counting');
     const again = toastsFor(gains(seen, twice), twice);
     expect(again.map((x) => `${x.label} · ${x.name}`)).toEqual(['Copy · Tide-Counting Formula']);
+  });
+
+  it('name what a new life starts with, though it holds everything seen', () => {
+    const s = fresh();
+    expect(gains(s, s)).toEqual([]);
+    const start = startingGains(s);
+    const methods = Object.keys(s.player.methods);
+    expect(methods.length).toBeGreaterThan(0);
+    expect(start.filter((g) => g.kind === 'method').map((g) => g.id)).toEqual(methods);
+    expect(toastsFor(start, s)[0]!.label).toBe('New method');
   });
 });

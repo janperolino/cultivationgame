@@ -1517,6 +1517,13 @@ select {
   display: block;
 }
 
+/* A tip can't rise out of its panel, so the panel holding an open one rises over the panels after it. */
+.panel:has(.why:hover),
+.panel:has(.why-button:focus-visible),
+.panel:has(.why.is-open) {
+  z-index: 35;
+}
+
 .reqs {
   list-style: none;
   margin: 10px 0 0;

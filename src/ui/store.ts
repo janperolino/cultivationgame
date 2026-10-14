@@ -37,7 +37,7 @@ import { attemptOf, endScene, sceneDue, sceneRolled, startScene, useScene } from
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 import { technique } from '../content/techniques.ts';
-import { clearToasts, leftSlots, raiseToast, raiseToasts } from './toasts.ts';
+import { clearToasts, leftSlots, raiseStartToasts, raiseToast, raiseToasts } from './toasts.ts';
 
 export const AUTOSAVE_MS = 30_000;
 /** A gap longer than this between ticks (a sleeping laptop, a frozen tab) counts as offline time. */
@@ -455,6 +455,7 @@ export const useGame = create<GameStore>()((set, get) => {
           const { game } = get();
           if (!game?.ended || !holdsLock || get().slot !== target.slot) return;
           set({ game: createNextLife(game, creation), away: null, creating: null });
+          raiseStartToasts(get().game!);
           await get().saveNow({ rewindPoint: true });
           await refreshSlots();
           return;
@@ -464,6 +465,9 @@ export const useGame = create<GameStore>()((set, get) => {
         set({ creating: null });
         await refreshSlots();
         await openSlotNow(target.slot);
+        // A new life holds everything seen; what testing day gave names itself once.
+        const opened = get().game;
+        if (opened) raiseStartToasts(opened);
       }),
 
     chooseCard(uid, index, title) {
