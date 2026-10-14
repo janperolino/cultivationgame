@@ -140,11 +140,11 @@ The world is original, enormous and nested. Each area feels like everything unti
 | World | this whole middle thousand world: continents, seas and forbidden lands | about twenty Body Integration, fewer than ten Mahayana, a few hidden Tribulation Transcenders | reach Deity Transformation, or follow a legend |
 | Beyond | the great thousand world, where immortals go | unknown | ascension, after v1 |
 
-**Fog of war.** The in-game map shows only what you know, in four states. Seen: places you have travelled, plus a soft circle of divine sense around you (its range is in the scale table). Sketched: outlines from bought or looted maps, with nothing inside. Rumored: a mark and a name from sect libraries and rumors, with no outline. Unknown: cracked fog, the same dark glass as the rest of the game. The mockup shows all four. Exactly what reveals what, and how much, is settled with exploration.
+**Fog of war.** The in-game map shows only what you know, in four states. Seen: places you have travelled, plus a soft circle of divine sense around you (its range is in the scale table). Sketched: outlines from bought or looted maps, with nothing inside. Rumored: a mark and a name from sect libraries and rumors, with no outline. Unknown: cracked fog, the same dark glass as the rest of the game. The glass study (`docs/mockups/glass-study.html`) shows all four. The fog is kept per place, and what reveals what is under The world: travel, trips and encounters, The fog.
 
-**Where you start is part of the roll.** A village orphan sees one kingdom and takes it for the world. A child born into a great sect starts just as weak, but with the continent's maps, its politics and its libraries.
+**Where you start is part of the roll.** A village orphan sees one kingdom and takes it for the world. A child born into a great sect starts just as weak, but with the continent's maps, its politics and its libraries. What each start knows is under The fog.
 
-**Generation.** The big places are written by hand, as the world bible describes, and small ones fill in procedurally around them. The save keeps everything, so the world never changes behind your back.
+**Generation.** The big places are written by hand, as the world bible describes, and small ones fill in procedurally around them, as each kingdom's sites (The fog). The save keeps everything, so the world never changes behind your back.
 
 **Size without lag.** Regions near you simulate in detail; distant ones tick in yearly summaries until you arrive. The map view zooms between tiers, and when a new tier opens, your old world shrinks to a dot on it.
 
@@ -436,6 +436,7 @@ Everything you can carry is one record, the way a method is a bundle of fields, 
 | offer | what it does at a breakthrough attempt (Cultivation, breakthroughs) | the Foundation Pill, a steadying herb |
 | carry | squares it adds while it is with you | a storage pouch, a cart, a mount |
 | key | opens a place, a card or a lock | a sect token, a smuggler's map, a letter |
+| chart | the places it Sketches on the map when used, kept after (The world, The fog) | a kingdom map, a sect's region map, a treasure map |
 | inscribe | a formation slot for M4's enchantments | an empty slot on a blade or a robe |
 
 A pill has consume alone; an old ginseng has consume, ingredient and contemplate; a beast core has ingredient, a dangerous consume and a price; a cart has carry alone. Anything you can consume and anything with ingredient tags can go into a recipe, so a fruit and the pill brewed from it are two items that share tags, not two systems. Unknown things show every use as "?" until appraised (M6).
@@ -662,7 +663,16 @@ The map is the go-in's board, and travel reuses the wheel.
 
 A region of 60,000 li is half a year on foot at Qi Condensation and a month at Core Formation. Starting values for the sims.
 
-**Look around** costs an hour wherever you are. Without divine sense it is your eyes and a Soul check: tracks, a herb, a cave mouth, a watcher. With divine sense, from Foundation, it sweeps the circle the map draws, at the range the scale table gives, and finds more. Travel alone marks places seen; looking around makes them detailed.
+**Look around** costs an hour wherever you are. Without divine sense your eyes search 2 li, and each hidden site there takes a Soul check: tracks, a herb, a cave mouth, a watcher. With divine sense, from Foundation, it sweeps the scale table's range with no roll: 2 li at Foundation, 20 at Core Formation, 200 at Nascent Soul, a soul ahead of your realm using the next row. A site hidden by an array or a realm above your soul stays a rumor whatever you roll. Travel alone marks places seen; looking around finds what is hidden and lists each site's features.
+
+**The fog** (D3, 2026-10-14). What you know of the map is kept per place, never as a fog picture: each place, an atlas entry or a site inside one, holds one of the four states (The world map, Fog of war), and a state only rises, Unknown to Rumored to Sketched to Seen. An area, a kingdom or a forbidden land, shows its outline once Sketched and its inside once Seen; a point, a town, a cave or a sect's gate, shows its mark.
+
+- **Sites.** The atlas stops at kingdoms, cities, landmarks and powers, so each kingdom holds 12 to 20 sites, seeded from the world and the kingdom's id the first time anything needs them and kept in the save: about a third towns and villages, the rest wild sites from its terrain (a cave, a herb valley, a beast den, a ruin, a shrine), each with tagged features for scenes, and roads joining its towns to each other and to the next kingdom's. Sites belong to the world, so every life in the slot finds the same ones.
+- **Travel** turns Seen every visible place within sight of the route: 20 li on open ground, 5 li in forest, jungle, karst or marsh. Hidden sites never show from the road. From Foundation the divine sense circle sweeps as you travel, so hidden sites within its range of the route turn up without stopping.
+- **Maps** are items with the chart use: used, they Sketch their places at once, and they stay in the Bag. A kingdom map gives its outline, towns, roads and named landmarks, sold in its towns for about a month's wage at Qi Condensation (30 low-grade stones); a region map gives its kingdoms and named places, a city's for about a year's wage (360 low-grade) or a sect's for contribution; a treasure map gives one hidden site, exactly. Only a treasure map shows a hidden site.
+- **Rumors** mark one place by name somewhere inside a dashed ring about 100 li across, found by going there and looking around. They come from cards that name a place, from asking a person, who knows the places round their home and their trade, and from an hour in a town's teahouse, one rumor a visit.
+- **Told and true.** A Rumored or Sketched place shows its atlas `lore`, what the world believes; being there shows what is there; a place's `truth` comes out only in scenes.
+- **Every start knows** its home kingdom Sketched, a day's walk round its home Seen and the region's famous places Rumored; a start with a sect or clan behind it adds that power's region map. What you know is the life's: a new life starts from its own origin's knowledge.
 
 **Wherever you like, if you're strong enough.** Every place has a top realm and sits in some power's sphere, both in the atlas, and travel reads them:
 
@@ -1217,7 +1227,7 @@ Settle each before the milestone that needs it. World content is drafted and che
 - [x] Items and gear (D2, § Items and gear, with offerings under § Cultivation): slots, grades, artifact bonding and artifact spirits, pill toxicity, storage rings; item, talisman and array power on the realm curve, with a higher-realm talisman priced by its own realm; tier and rarity on every item (Tier, rarity and pedigree), weapons and armor on the fighting-up ledger's axes, weapons above your realm; aptitude-raising pills and rites; the upkeep some methods drink
 - [x] Enemies (D2, § Enemies, beasts and the people you meet): beast and cultivator templates, behavior profiles, loot; pedigree tables and each realm's ordinary baseline, tuned to the fighting-up ledger
 - [x] Combat outcome tags for effects and sound (D2, § Combat, Effects fill the wait): form, element or damage type, realm and result on every outcome
-- [ ] Exploration: travel, trips, look around and the open, gated, hostile and deadly rule are settled under The world; left for D3: the encounter tables per region in the six kinds, scene building from the card format, ruins and inheritances, fleeing, dying in the world, ways to flee, hide or talk past foes a realm or more above you, and the fog's rules, meaning what travel, divine sense, maps and rumors each reveal
+- [ ] Exploration: travel, trips, look around, the fog and the open, gated, hostile and deadly rule are settled under The world; left for D3: the encounter tables per region in the six kinds, scene building from the card format, ruins and inheritances, fleeing, dying in the world, and ways to flee, hide or talk past foes a realm or more above you
 - [ ] NPC basics: the person record and its log are settled under Professions, people and powers; left for D3: what each NPC knows, how talk changes relationships, the intents and motives scenes draw on
 - [ ] Story decks: the seclusion deck in M1, then a deck per milestone; what each card trades and how often it comes
 - [x] Procedural methods and items (D2, § Generated methods, techniques, manuals and items): a method is already a bundle of independent fields, so white-to-blue methods and items can be generated from tables and named once, as manuals are; gold and red written by hand. Loot and shops hand them out on the shared table
