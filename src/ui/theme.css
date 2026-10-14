@@ -340,15 +340,20 @@ select {
   pointer-events: none;
 }
 
-/* The bloom: the still rim's light, blurred, behind the panel. It never moves, so it stays cheap. */
+/* The bloom: the still rim's light behind the panel, brightest at the top corners and along the
+   top, fading down. Drawn as shadows, not a blurred copy of the rim: a live blur filter the size of
+   a tall panel had to be recomputed as the page scrolled, and made long screens judder. */
 .panel::after {
   content: '';
   position: absolute;
-  inset: -1px;
+  inset: 0;
   z-index: -1;
   border-radius: inherit;
-  background: var(--rim-still);
-  filter: blur(10px);
+  box-shadow:
+    -5px -5px 14px -6px color-mix(in srgb, white 60%, var(--rim)),
+    5px -5px 14px -6px color-mix(in srgb, white 45%, var(--rim)),
+    0 -4px 12px -4px color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 100%), transparent),
+    0 0 10px -2px rgb(255 255 255 / 0.05);
   opacity: calc(var(--rim-strength) * 0.8);
   pointer-events: none;
 }

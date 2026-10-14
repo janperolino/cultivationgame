@@ -2,7 +2,7 @@
 // each an opening fan you drag and zoom (TreeFan.tsx), its manuals jewels in its bands' crowns
 // (design § Cultivation, Where manuals live). The Manuals category holds those with no tree to
 // stand beside, each a small fan of its own, and the bookcase of every manual held (Bookcase.tsx).
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { type Manual } from '../content/manuals.ts';
 import { REALMS } from '../content/realms.ts';
 import { technique } from '../content/techniques.ts';
@@ -27,16 +27,20 @@ interface Focus {
 }
 
 /**
- * The Manuals category: the manuals with no host tree on top, one tree at a time beside a list of
- * them, and the bookcase of every manual held below. A click on a spine opens its jewel on its
- * host's fan, bloomed, or focuses its own tree up here and scrolls to it.
+ * The Manuals category: the manuals with no host tree on top, in the panel with the screen's
+ * tabs, one tree at a time beside a list of them; the bookcase of every manual held in a panel of
+ * its own below. A click on a spine opens its jewel on its host's fan, bloomed, or focuses its
+ * own tree up here and scrolls to it.
  */
 function ManualsView({
+  head,
   c,
   focus,
   fresh,
   onOpen,
 }: {
+  /** The screen's tabs, atop the first panel. */
+  head: ReactNode;
   c: Cultivator;
   focus: Focus | null;
   fresh: ReadonlySet<string>;
@@ -60,29 +64,34 @@ function ManualsView({
   }, [focus, atTop, see]);
   return (
     <>
-      <div ref={top} className="manuals-top">
-        <HostlessView
+      <section className="panel">
+        {head}
+        <div ref={top} className="manuals-top">
+          <HostlessView
+            c={c}
+            list={hostless}
+            focused={focused}
+            fresh={fresh}
+            onFocus={(m) => {
+              setFocused(m.id);
+              see('manual', [m.id]);
+            }}
+          />
+        </div>
+      </section>
+      <section className="panel" aria-label="Bookcase">
+        <Bookcase
           c={c}
-          list={hostless}
-          focused={focused}
           fresh={fresh}
-          onFocus={(m) => {
-            setFocused(m.id);
+          hostOpen={(m) => !!m.host}
+          focus={focus && !atTop ? focus : null}
+          onOpen={(m) => {
             see('manual', [m.id]);
+            see('copy', [copyOfManual(m)]);
+            onOpen(m);
           }}
         />
-      </div>
-      <Bookcase
-        c={c}
-        fresh={fresh}
-        hostOpen={(m) => !!m.host}
-        focus={focus && !atTop ? focus : null}
-        onOpen={(m) => {
-          see('manual', [m.id]);
-          see('copy', [copyOfManual(m)]);
-          onOpen(m);
-        }}
-      />
+      </section>
     </>
   );
 }
@@ -194,8 +203,8 @@ export function TreesScreen() {
   const grafts = graftsOn(c, tree.id);
   const treeFocus = focus && pick === tree.id ? focus : null;
 
-  return (
-    <section className="panel">
+  const head = (
+    <>
       <div className="tree-top">
         <div className="seg" role="group" aria-label="Kind of tree">
           {categories.map((k) => (
@@ -241,39 +250,41 @@ export function TreesScreen() {
           </div>
         </div>
       )}
-      {onManuals ? (
-        <ManualsView c={c} focus={focus} fresh={freshBooks} onOpen={openManual} />
-      ) : (
-        <>
-          <h3 className="tree-title">
-            The {treeWords(tree)} <span className="hanzi">{tree.hanzi}</span>{' '}
-            <Totals c={c} tree={tree} />
-          </h3>
-          {!own && (
-            <p className="tree-shut">
-              The {treeWords(tree)}’s own nodes open with your{' '}
-              {LADDER_LABELS[tree.ladder].toLowerCase()} ladder; until then it holds the manuals
-              grafted beside it.
-            </p>
-          )}
-          <p className="caption spaced">
-            {tree.dao &&
-              `Holding a tier, half its nodes owned, multiplies Accuracy and Attack on its actions by ×1.05. `}
-            {tree.what} Drag to move, wheel or pinch to zoom, and tap a node for its details.
-            {grafts.length > 0 &&
-              ' The manuals you hold are jewels in each band’s crown, joined to none of its nodes; tap one to open it.'}
-          </p>
-          <TreeFan
-            key={`${tree.id}:${treeFocus?.seq ?? 'home'}`}
-            c={c}
-            tree={tree}
-            grafts={grafts}
-            focus={treeFocus?.id ?? null}
-            own={own}
-            fresh={freshManuals}
-          />
-        </>
+    </>
+  );
+  if (onManuals) {
+    return <ManualsView head={head} c={c} focus={focus} fresh={freshBooks} onOpen={openManual} />;
+  }
+  return (
+    <section className="panel">
+      {head}
+      <h3 className="tree-title">
+        The {treeWords(tree)} <span className="hanzi">{tree.hanzi}</span>{' '}
+        <Totals c={c} tree={tree} />
+      </h3>
+      {!own && (
+        <p className="tree-shut">
+          The {treeWords(tree)}’s own nodes open with your{' '}
+          {LADDER_LABELS[tree.ladder].toLowerCase()} ladder; until then it holds the manuals grafted
+          beside it.
+        </p>
       )}
+      <p className="caption spaced">
+        {tree.dao &&
+          `Holding a tier, half its nodes owned, multiplies Accuracy and Attack on its actions by ×1.05. `}
+        {tree.what} Drag to move, wheel or pinch to zoom, and tap a node for its details.
+        {grafts.length > 0 &&
+          ' The manuals you hold are jewels in each band’s crown, joined to none of its nodes; tap one to open it.'}
+      </p>
+      <TreeFan
+        key={`${tree.id}:${treeFocus?.seq ?? 'home'}`}
+        c={c}
+        tree={tree}
+        grafts={grafts}
+        focus={treeFocus?.id ?? null}
+        own={own}
+        fresh={freshManuals}
+      />
     </section>
   );
 }
