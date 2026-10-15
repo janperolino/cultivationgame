@@ -276,6 +276,8 @@ Insight grows them: meditation, practice, using the Dao in a fight, and moments 
 
 Vow nodes pay big while a vow holds, such as sparing every foe who surrenders, and break hard when you fail. Way trees share the shape every tree has, and nodes above your matching level stay sealed until you grow into them.
 
+**How deeds grow a Way** (D3, 2026-10-14). Each Way has a list of deeds that earn its points, and its points buy its nodes, its tiers unsealing with your realm: Orthodox for duties done for your power, mortals protected and sect rules kept; Demonic for kills, devoured cores and blood, and intimidation that works; Buddhist for foes spared, healing and vows kept. Heaven counts the deeds as it counts karma, seen or not, while standing moves only by what people know. A deed is worth what its target is to you, in full at your realm and a tenth a realm below, so butchering mortals barely feeds a Foundation cultivator's Demonic Way while draining a city does. Ways mix (a demon Buddha), and some deeds cut across them: killing a foe who surrendered feeds the Demonic Way and breaks a Buddhist vow. v1 ships Orthodox, Demonic and Buddhist, at the combat Daos' shape, 10 to 15 nodes a tier; their tiers 1 and 2 are drafted in the talk of the phase that builds them.
+
 **Techniques** are the moves you actually use, learned from manuals, teachers, inheritances and epiphanies: a manual is a copy you read over study days, and the rest teach at once (Reading, below). Each lists its requirements: a Dao tier, a realm, sometimes a body or soul level or a Way. Flying swords are a family of Sword techniques that also need a strong soul, and elemental spells are techniques of the element Daos.
 
 Builds fall out on their own: the Demonic Way plus Sword techniques is a demonic swordsman, and the Demonic and Buddhist Ways together make a demon Buddha. The Orthodox Way plus the five element Daos on a five-element root is a five-element spell cultivator. Sword Dao plus a tempered body never needs a flying sword.
@@ -1442,7 +1444,7 @@ Settle each before the milestone that needs it. World content is drafted and che
 - [x] UI and screens: abode dashboard, tree views, crafting, inventory, world map, go-in screen, chronicle, settings, visual style
 - [x] Economy: spirit stones, sect contribution, prices, money sinks, what the balance sims measure; then bring the atlas's dozen luxury prices into line
 - [x] Saves: format, versioning, export and import, save slots
-- [ ] Node lists: tiers 1 and 2 of each v1 tree, 25 to 30 nodes a tier for the big three and 10 to 15 for the combat Daos (skeletons drafted in D2 under The combat Daos, the nodes written in P2.3), drafted with AI help and curated. The Qi, Body and Soul trees in the M1 build, reviewed by Jan, the combat Daos before M2, the Ways before M3, the craft Daos before M4
+- [ ] Node lists: tiers 1 and 2 of each v1 tree, 25 to 30 nodes a tier for the big three and 10 to 15 for the combat Daos (skeletons drafted in D2 under The combat Daos, the nodes written in P2.3), drafted with AI help and curated. The Qi, Body and Soul trees in the M1 build, reviewed by Jan, the combat Daos before M2, the Ways in the M3 phase that builds them (D3), the craft Daos before M4
 - [x] plan.md for Claude Code: the build split into one-session phases, written once planning is done
 
 **Before M2 and M3**
