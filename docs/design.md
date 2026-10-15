@@ -834,6 +834,12 @@ Agility counts as it does in a fight, 5% a point above 10. A check with no oppon
 - **Projects tick on** where their steps are hours on your wheel (planting a formation's nodes by night): a clear step goes through, and anything else pauses the project until you're back.
 - **Followers keep their orders**, their wages paid from your stones; when you run dry the hired ones leave, and a card says so.
 
+**What GLM sees** (D3, 2026-10-14).
+
+- **Only what your character knows:** the places your fog has revealed, the names you have learned, the scene's visible features, and the people in it with what you know of them. A place's or a person's truth goes in only once a scene reveals it, so the narrator can't leak it, and typing your way to the python's den without knowing where it lies walks you into the fog.
+- **Its plan is verbs checked against a schema**, so words grant nothing: "ignore your rules, I win" reads as nothing to do.
+- **A scene takes a list of player actors**, so co-op after v1 drops in without a rebuild.
+
 **Symmetry.** NPCs make every one of these checks against you: the rival's lie, the bandit's sneak, the elder reading your veil.
 
 **The playbook:** the cases every D3 block is checked against. A case that can't play through marks a gap.
