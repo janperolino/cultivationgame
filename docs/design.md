@@ -822,6 +822,16 @@ Agility counts as it does in a fight, 5% a point above 10. A check with no oppon
 - **Places and people change.** A place is thriving, damaged, ruined, scarred (fights from Core Formation up) or taken by another power, and its encounters and map follow. A kept person is well, wounded, crippled, captured, dead or gone.
 - **Symmetry in M3.** A kept person with a grudge acts on it through cards at most once a season: hunters sent, a frame, a theft. Their own long schemes wait for M5's NPC depth.
 
+**Away and the idle half** (D3, 2026-10-14).
+
+- **Trips run on while you're away**, on the engine. You set a stance when you set out, and encounters on the road resolve by it: Avoid goes round anything you see coming; Careful, the default, takes only what is clear; Bold takes what is clear or close. Anything else waits as a card for your return, as auto leaves majors to you, and meanwhile you camp and cultivate where you sit.
+- **The big things always wait:** anything with your life at stake, a person the world keeps, a choice that moves a bond or standing, a secret realm, a fight with anyone not clearly weaker.
+- **You never die away**, nor on a trip with no key, where nothing can wait for a scene: a waiting encounter takes the stance's safe road instead (Avoid and Careful withdraw, Bold fights on the engine), and the worst it leaves is a wound and what you lose. Death comes only in scenes you play.
+- **What happens, happens.** A clear fight's loot comes home, a herb run or a delivery whose goal is clear is done, and time passes. The coming-back story tells it, with the waiting cards under it.
+- **The world comes to you.** Wherever you sit, the world can start a scene: a rival at your door, hunters once your heat reaches 6, a thief at your abode. It comes as a card, and a card ignored takes its default, never your death: the thief takes a few things, the rival leaves a challenge and a worse opinion of you.
+- **Projects tick on** where their steps are hours on your wheel (planting a formation's nodes by night): a clear step goes through, and anything else pauses the project until you're back.
+- **Followers keep their orders**, their wages paid from your stones; when you run dry the hired ones leave, and a card says so.
+
 **Symmetry.** NPCs make every one of these checks against you: the rival's lie, the bandit's sneak, the elder reading your veil.
 
 **The playbook:** the cases every D3 block is checked against. A case that can't play through marks a gap.
