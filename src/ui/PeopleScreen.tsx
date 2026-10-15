@@ -1,14 +1,28 @@
 // The People screen (design § UI and screens, The People screen; docs/mockups/people-study.html,
-// B and C): everyone you've met on the left, as circles grouped by where you met them or as a web
-// of threads, and the chosen person's page on the right, so opening someone never hides the list.
-// A seal stands in for a portrait, feeling is words with seven notches behind them, and fresh
-// news is a gold dot. Their log is your chronicle filtered by them. Full in M5.
+// B and C, and P3.4's mockup): everyone you've met on the left, as circles grouped by where you
+// met them or as a web of threads, the powers that know you under them, and the chosen person's
+// page on the right, so opening someone never hides the list. A seal stands in for a portrait,
+// trust is a word with five notches behind it, read from the memories you know they hold, and
+// fresh news is a gold dot. The page shows their nature as far as you've seen it, what they
+// remember of you and their ties as you know them; their log is your chronicle filtered by them.
+// Full in M5.
 import { useEffect, useRef, useState } from 'react';
 import { placeName } from '../content/origins.ts';
-import { BONDS, person, REGARD_MAX, REGARD_MIN, regardWords } from '../content/people.ts';
+import { person, TIES, type TieId } from '../content/people.ts';
+import type { TrustWord } from '../content/resolver.ts';
 import { realm, stageName } from '../content/realms.ts';
 import { worldWhen } from '../core/chronicle.ts';
-import { hasNews, knownPeople, newsDay, peopleCircles, personLog } from '../core/people.ts';
+import {
+  hasNews,
+  knownPeople,
+  newsDay,
+  peopleCircles,
+  personLog,
+  personView,
+  powersView,
+  type PersonView,
+} from '../core/people.ts';
+import { knowsTie } from '../core/resolver/opinion.ts';
 import type { GameState, PersonRecord } from '../core/state.ts';
 import { capitalize } from './format.ts';
 import { clampZoom, viewAt, type Size, type View } from './panzoom.ts';
@@ -19,6 +33,7 @@ import {
   nearest,
   ringLabels,
   ringFor,
+  tieLinks,
   WEB_CENTRE,
   WEB_MAX,
   WEB_SIZE,
@@ -41,14 +56,19 @@ function whereWords(r: PersonRecord): string {
   return r.where ? `last heard of at ${placeName(r.where)}` : 'whereabouts unknown';
 }
 
-/** Warm, cold or hostile: the seal's tint and the thread's color. */
-function tone(regard: number): 'warm' | 'cold' | 'hot' {
-  return regard > 0 ? 'warm' : regard < 0 ? 'hot' : 'cold';
+/** Warm, cold or hostile: the seal's tint and the thread's color, from trust as a level. */
+function tone(level: number): 'warm' | 'cold' | 'hot' {
+  return level > 0 ? 'warm' : level < 0 ? 'hot' : 'cold';
 }
 
-function Seal({ id, regard, size }: { id: string; regard: number; size?: 'sm' | 'big' }) {
+/** What they are to you, in words. */
+function tieWords(tie: TieId | null): string {
+  return tie ? TIES[tie] : 'an acquaintance';
+}
+
+function Seal({ id, level, size }: { id: string; level: number; size?: 'sm' | 'big' }) {
   return (
-    <span className={`seal tone-${tone(regard)}${size ? ` seal-${size}` : ''}`} aria-hidden="true">
+    <span className={`seal tone-${tone(level)}${size ? ` seal-${size}` : ''}`} aria-hidden="true">
       {person(id).hanzi}
     </span>
   );
@@ -58,18 +78,18 @@ function FreshDot({ label }: { label: string }) {
   return <span className="fresh-dot" role="img" aria-label={label} />;
 }
 
-/** Feeling as words, with seven quiet notches behind them as a glance, never a number. */
-function Regard({ name, regard }: { name: string; regard: number }) {
+/** Trust as its word, with five quiet notches behind it as a glance, read as you know them. */
+function Trust({ word, level }: { word: TrustWord; level: number }) {
   const notches = [];
-  for (let i = REGARD_MIN; i <= REGARD_MAX; i++) {
+  for (let i = -2; i <= 2; i++) {
     const lit =
       i === 0
-        ? regard === 0
+        ? level === 0
           ? 'centre'
           : ''
-        : regard > 0 && i > 0 && i <= regard
+        : level > 0 && i > 0 && i <= level
           ? 'up'
-          : regard < 0 && i < 0 && i >= regard
+          : level < 0 && i < 0 && i >= level
             ? 'down'
             : '';
     notches.push(<i key={i} className={lit} />);
@@ -79,9 +99,61 @@ function Regard({ name, regard }: { name: string; regard: number }) {
       <span className="notches" aria-hidden="true">
         {notches}
       </span>
-      <span className={`regard-${tone(regard)}`}>
-        {name} {regardWords(regard)}
-      </span>
+      <span className={`regard-${tone(level)}`}>{word}</span>
+      <span className="caption">as you read it</span>
+    </span>
+  );
+}
+
+/** What they remember of you, each with its fade as a thin bar. */
+function Memories({ name, view }: { name: string; view: PersonView }) {
+  return (
+    <>
+      <h3 className="sub-heading spaced">What {name} remembers of you</h3>
+      {view.memories.length ? (
+        <ul className="memories">
+          {view.memories.map((m, i) => (
+            <li key={i} className="memory">
+              <span className="memory-text">
+                {m.text}
+                {m.motive && <span className="memory-why"> · {m.motive} ×2</span>}
+                {m.never ? (
+                  <span className="caption"> · never fades</span>
+                ) : m.fading ? (
+                  <span className="caption"> · fading</span>
+                ) : null}
+              </span>
+              <span className={`memory-value regard-${tone(Math.sign(m.value))}`}>
+                {m.value > 0 ? `+${m.value}` : `−${-m.value}`}
+              </span>
+              <span className="memory-bar" aria-hidden="true">
+                <i
+                  className={m.value > 0 ? 'up' : 'down'}
+                  style={{ width: `${Math.round(m.share * 100)}%` }}
+                />
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="caption">Nothing you know of.</p>
+      )}
+      {view.unknown > 0 && <p className="caption">{name} may remember things you don't know of.</p>}
+    </>
+  );
+}
+
+/** Small chips: their leans, wants and likes as far as you know them. */
+function Chips({ words, more }: { words: string[]; more?: string }) {
+  return (
+    <span className="chips">
+      {words.map((w) => (
+        <span key={w} className="chip">
+          {w}
+        </span>
+      ))}
+      {more && <span className="chip chip-unknown">{more}</span>}
+      {!words.length && !more && <span className="caption">nothing seen yet</span>}
     </span>
   );
 }
@@ -89,26 +161,82 @@ function Regard({ name, regard }: { name: string; regard: number }) {
 function PersonPage({ game, id }: { game: GameState; id: string }) {
   const p = person(id);
   const r = game.player.people[id]!;
+  const view = personView(game, id);
+  const n = view.nature;
   const log = personLog(game, id).slice().reverse();
   return (
     <section className="panel person-page" aria-labelledby="person-name">
       <div className="person-top">
-        <Seal id={id} regard={r.regard} size="big" />
+        <Seal id={id} level={view.level} size="big" />
         <div>
           <h2 id="person-name" className="person-name">
             {p.name}
           </h2>
-          <span className="bond-pill">{capitalize(BONDS[r.bond])}</span>
+          <span className="bond-pill">{capitalize(tieWords(view.tie))}</span>
         </div>
       </div>
       <p className="person-summary">{p.summary}</p>
-      <dl className="person-facts">
+      <dl className="person-facts person-nature">
         <div>
-          <dt>Feeling</dt>
+          <dt>Nature</dt>
           <dd>
-            <Regard name={p.name} regard={r.regard} />
+            <Chips
+              words={n.words}
+              more={
+                n.hidden
+                  ? n.hidden === 1
+                    ? "one more you haven't seen"
+                    : `${n.hidden} more you haven't seen`
+                  : undefined
+              }
+            />
           </dd>
         </div>
+        <div>
+          <dt>Wants</dt>
+          <dd>
+            <Chips
+              words={n.motives}
+              more={
+                n.unknownMotives
+                  ? n.unknownMotives === 1
+                    ? "a reason you don't know"
+                    : "reasons you don't know"
+                  : undefined
+              }
+            />
+          </dd>
+        </div>
+        {n.likes.length > 0 && (
+          <div>
+            <dt>Likes</dt>
+            <dd>
+              <Chips words={n.likes} />
+            </dd>
+          </div>
+        )}
+        <div>
+          <dt>Trust</dt>
+          <dd>
+            <Trust word={view.trust} level={view.level} />
+          </dd>
+        </div>
+      </dl>
+      <Memories name={p.name} view={view} />
+      {(view.ties.length > 0 || view.hiddenTies > 0) && (
+        <>
+          <h3 className="sub-heading spaced">Their ties, as you know them</h3>
+          <ul className="their-ties">
+            {view.ties.map((t) => (
+              <li key={t.id}>
+                <span className="caption">{t.label}</span> {t.name}
+              </li>
+            ))}
+            {view.hiddenTies > 0 && <li className="caption">… a tie you haven't learned</li>}
+          </ul>
+        </>
+      )}
+      <dl className="person-facts spaced">
         <div>
           <dt>Realm</dt>
           <dd>{capitalize(realmWords(id, r))}</dd>
@@ -161,32 +289,35 @@ function Circles({
 }) {
   return (
     <>
-      {peopleCircles(game.player).map((circle) => (
+      {peopleCircles(game).map((circle) => (
         <div key={circle.key} className="people-circle">
           <h3 className="circle-head">
             <span className="sub-heading">{circle.label}</span>
             <span className="hanzi circle-hanzi">{circle.hanzi}</span>
           </h3>
           <ul className="people-list">
-            {circle.people.map(({ id, record }) => (
-              <li key={id}>
-                <button
-                  type="button"
-                  className={`who${id === selected ? ' is-selected' : ''}`}
-                  aria-pressed={id === selected}
-                  onClick={() => onSelect(id)}
-                >
-                  <Seal id={id} regard={record.regard} size="sm" />
-                  <span className="who-text">
-                    <span className="who-name">{person(id).name}</span>
-                    <span className={`who-line regard-${tone(record.regard)}`}>
-                      {capitalize(BONDS[record.bond])} · {regardWords(record.regard)}
+            {circle.people.map(({ id }) => {
+              const v = personView(game, id);
+              return (
+                <li key={id}>
+                  <button
+                    type="button"
+                    className={`who${id === selected ? ' is-selected' : ''}`}
+                    aria-pressed={id === selected}
+                    onClick={() => onSelect(id)}
+                  >
+                    <Seal id={id} level={v.level} size="sm" />
+                    <span className="who-text">
+                      <span className="who-name">{person(id).name}</span>
+                      <span className={`who-line regard-${tone(v.level)}`}>
+                        {capitalize(tieWords(v.tie))} · {v.trust}
+                      </span>
                     </span>
-                  </span>
-                  {hasNews(game, id) && <FreshDot label="News" />}
-                </button>
-              </li>
-            ))}
+                    {hasNews(game, id) && <FreshDot label="News" />}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ))}
@@ -211,12 +342,21 @@ function Web({
   onSelect: (id: string) => void;
 }) {
   const everyone = knownPeople(game.player);
-  const shown = nearest(everyone).map((p) => ({
-    ...p,
-    name: person(p.id).name,
-    bond: BONDS[p.record.bond],
-  }));
+  const views = new Map(everyone.map((p) => [p.id, personView(game, p.id)]));
+  const shown = nearest(
+    everyone.map((p) => {
+      const v = views.get(p.id)!;
+      return { id: p.id, tie: v.tie, level: v.level, heard: p.record.heard };
+    }),
+  ).map((p) => ({ ...p, name: person(p.id).name, bond: tieWords(p.tie) }));
   const nodes = webLayout(shown);
+  // The faint threads between people you know are tied to each other.
+  const links = tieLinks(
+    nodes,
+    game.world.ties.filter(
+      (t) => t.a !== game.player.id && t.b !== game.player.id && knowsTie(t, game.player.id),
+    ),
+  );
   // The ring labels go where nobody sits, and the view frames them with everyone.
   const labels = ringLabels(nodes);
   const bounds = webBounds(
@@ -234,8 +374,8 @@ function Web({
   const { box, view, handlers, zoomBy, recentre } = usePanZoom(WEB_SIZE, home);
 
   const { x: cx, y: cy } = WEB_CENTRE;
-  const color = (regard: number) =>
-    regard > 0 ? 'var(--crack)' : regard < 0 ? 'var(--warn)' : 'var(--muted)';
+  const color = (level: number) =>
+    level > 0 ? 'var(--crack)' : level < 0 ? 'var(--warn)' : 'var(--muted)';
 
   return (
     <div className="people-web">
@@ -248,8 +388,8 @@ function Web({
             {view && (
               <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
                 {labels.map((l) => (
-                  <g key={l.regard}>
-                    <circle className="web-ring" cx={cx} cy={cy} r={ringFor(l.regard)} />
+                  <g key={l.level}>
+                    <circle className="web-ring" cx={cx} cy={cy} r={ringFor(l.level)} />
                     <text className="web-ring-label" textAnchor="middle" x={l.x} y={l.y}>
                       {l.text}
                     </text>
@@ -258,10 +398,13 @@ function Web({
                 {nodes.map((n) => (
                   <path
                     key={`t-${n.id}`}
-                    className={`web-thread tone-${tone(n.regard)}`}
+                    className={`web-thread tone-${tone(n.level)}`}
                     d={n.thread}
-                    stroke={color(n.regard)}
+                    stroke={color(n.level)}
                   />
+                ))}
+                {links.map((l) => (
+                  <line key={l.key} className="web-tie" x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} />
                 ))}
                 <g className="web-you" aria-hidden="true">
                   <circle cx={cx} cy={cy} r={YOU_R} />
@@ -271,15 +414,15 @@ function Web({
                 </g>
                 {nodes.map((n) => {
                   const p = person(n.id);
-                  const r = game.player.people[n.id]!;
+                  const v = views.get(n.id)!;
                   return (
                     <g
                       key={n.id}
-                      className={`web-node tone-${tone(n.regard)}${n.id === selected ? ' is-selected' : ''}`}
+                      className={`web-node tone-${tone(n.level)}${n.id === selected ? ' is-selected' : ''}`}
                       role="button"
                       tabIndex={0}
                       aria-pressed={n.id === selected}
-                      aria-label={`${p.name}, ${BONDS[r.bond]}, ${regardWords(r.regard)}`}
+                      aria-label={`${p.name}, ${tieWords(v.tie)}, ${v.trust}`}
                       onClick={() => onSelect(n.id)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -296,16 +439,16 @@ function Web({
                         cx={n.x}
                         cy={n.y}
                         r={DISC_R}
-                        stroke={color(n.regard)}
+                        stroke={color(n.level)}
                       />
-                      <text className={`web-seal tone-${tone(n.regard)}`} x={n.x} y={n.y}>
+                      <text className={`web-seal tone-${tone(n.level)}`} x={n.x} y={n.y}>
                         {p.hanzi}
                       </text>
                       <text className="web-name" x={n.x} y={n.y + NAME_Y}>
                         {p.name}
                       </text>
                       <text className="web-bond" x={n.x} y={n.y + BOND_Y}>
-                        {BONDS[r.bond]}
+                        {tieWords(v.tie)}
                       </text>
                       {hasNews(game, n.id) && (
                         <circle
@@ -347,15 +490,15 @@ function Web({
       <p className="web-legend caption">
         <span>
           <i className="legend-warm" />
-          warm
+          friendly or trusting
         </span>
         <span>
           <i className="legend-cold" />
-          indifferent
+          neutral
         </span>
         <span>
           <i className="legend-hot" />
-          hostile
+          wary or hostile
         </span>
         <span>closer to the centre means closer to you</span>
         {everyone.length > WEB_MAX && (
@@ -364,6 +507,28 @@ function Web({
           </span>
         )}
       </p>
+    </div>
+  );
+}
+
+/** The powers that know you, and your standing with each; heat's cap shows beside it. */
+function Powers({ game }: { game: GameState }) {
+  const powers = powersView(game);
+  if (!powers.length) return null;
+  return (
+    <div className="people-powers">
+      <h3 className="sub-heading">Powers that know you</h3>
+      <dl>
+        {powers.map((x) => (
+          <div key={x.power}>
+            <dt>{capitalize(x.name)}</dt>
+            <dd className={x.word === 'unknown' ? 'caption' : undefined}>
+              {x.word}
+              {x.capped && <span className="regard-hot"> · held down by heat</span>}
+            </dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
@@ -429,6 +594,7 @@ export function PeopleScreen() {
         ) : (
           <Web game={game} selected={selected} onSelect={select} />
         )}
+        <Powers game={game} />
       </section>
       <div ref={page} className="people-page-col">
         <PersonPage game={game} id={selected} />

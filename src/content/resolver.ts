@@ -6,6 +6,7 @@
 // which of the twelve verbs, which capability it reads against what, what a close pass costs and
 // what a short one means). A new act or capability is a row here; core/resolver/ never changes for
 // one. core/resolver/ holds the rules.
+import type { TieId } from './people.ts';
 import type { RealmId } from './realms.ts';
 import type { StatId } from './stats.ts';
 
@@ -218,6 +219,16 @@ export interface ActInfo {
   loud?: boolean;
   /** The milestone that makes it real; until then it can't be tried. */
   waits?: string;
+  /** A trust they must hold: below it they refuse whatever you bring (P3.4). */
+  needs?: TrustWord;
+  /** The tie a pass makes: what the target becomes to the actor. */
+  makes?: TieId;
+  /** The ties to the target it can only be tried from. */
+  from?: readonly TieId[];
+  /** A realm above the target it needs, as a master over a disciple. */
+  above?: boolean;
+  /** The lean or quirk that resists it: Hand a bargain, a quirk a confession. */
+  resist?: 'bargain' | 'confess';
 }
 
 const PEOPLE = { people: true, costs: ['trust', 'witness'], short: 'refused' } as const;
@@ -280,11 +291,47 @@ export const ACTS = {
     ...PEOPLE,
     short: 'seen-through',
   },
-  bargain: { verb: 'talk', name: 'bargain', target: 'person', ...PEOPLE },
+  bargain: { verb: 'talk', name: 'bargain', target: 'person', ...PEOPLE, resist: 'bargain' },
   recruit: { verb: 'talk', name: 'recruit', target: 'person', ...PEOPLE },
   calm: { verb: 'talk', name: 'calm', target: 'person', ...PEOPLE },
   beg: { verb: 'talk', name: 'beg', target: 'person', ...PEOPLE },
   report: { verb: 'talk', name: 'report', target: 'person', ...PEOPLE },
+  // Ties made by a deed at trust (design § NPC basics, Ties).
+  swear: {
+    verb: 'talk',
+    name: 'swear brotherhood',
+    target: 'person',
+    ...PEOPLE,
+    needs: 'trusting',
+    makes: 'sworn-sibling',
+  },
+  confess: {
+    verb: 'talk',
+    name: 'confess',
+    target: 'person',
+    ...PEOPLE,
+    needs: 'trusting',
+    makes: 'lover',
+    resist: 'confess',
+  },
+  oath: {
+    verb: 'talk',
+    name: "swear a dao companion's oath",
+    target: 'person',
+    ...PEOPLE,
+    needs: 'trusting',
+    makes: 'dao-companion',
+    from: ['lover', 'betrothed'],
+  },
+  'take-disciple': {
+    verb: 'talk',
+    name: 'take as a disciple',
+    target: 'person',
+    ...PEOPLE,
+    needs: 'friendly',
+    makes: 'disciple',
+    above: true,
+  },
   threaten: {
     verb: 'talk',
     name: 'threaten',
@@ -471,7 +518,7 @@ export function act(id: ActId): ActInfo {
 export const MANNERS = ['quiet', 'quick', 'careful', 'open', 'veiled'] as const;
 export type Manner = (typeof MANNERS)[number];
 
-// ── People checks (stubbed until P3.4: trust neutral, no motives) ────────────────────────────
+// ── People checks (P3.4: trust from opinion, offers from motives, standing from the power) ──
 
 /** Trust, the word opinion reads, as leverage (design § The resolver, People checks). */
 export const TRUST = {

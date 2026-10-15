@@ -1,41 +1,33 @@
 import { describe, expect, it } from 'vitest';
-import type { PersonRecord } from '../core/state.ts';
+import type { TieId } from '../content/people.ts';
 import {
   anyOverlap,
   labelAngle,
   nearest,
   nodeBox,
   ringFor,
+  tieLinks,
   WEB_MAX,
   WEB_SIZE,
   webLayout,
 } from './peopleWeb.ts';
 
-const rec = (bond: PersonRecord['bond'], regard: number, heard = 0): PersonRecord => ({
-  met: 0,
-  place: null,
-  bond,
-  regard,
-  realm: null,
-  where: null,
-  heard,
-  seen: 0,
-});
+const rec = (tie: TieId | null, level: number, heard = 0) => ({ tie, level, heard });
 
 describe('the web of threads', () => {
-  it('puts the warm close and the hostile far', () => {
-    expect(ringFor(3)).toBeLessThan(ringFor(0));
-    expect(ringFor(0)).toBeLessThan(ringFor(-3));
+  it('puts the trusting close and the hostile far', () => {
+    expect(ringFor(2)).toBeLessThan(ringFor(0));
+    expect(ringFor(0)).toBeLessThan(ringFor(-2));
   });
 
   it('keeps everyone on the web and apart from each other', () => {
     const people = [
-      { id: 'a', record: rec('acquaintance', 0) },
-      { id: 'b', record: rec('acquaintance', 1) },
-      { id: 'c', record: rec('acquaintance', -1) },
-      { id: 'd', record: rec('kin', 3) },
-      { id: 'e', record: rec('rival', -3) },
-      { id: 'f', record: rec('senior', 0) },
+      { id: 'a', ...rec(null, 0) },
+      { id: 'b', ...rec(null, 1) },
+      { id: 'c', ...rec(null, -1) },
+      { id: 'd', ...rec('kin', 2) },
+      { id: 'e', ...rec('rival', -2) },
+      { id: 'f', ...rec('senior', 0) },
     ];
     const nodes = webLayout(people);
     for (const n of nodes) {
@@ -48,13 +40,13 @@ describe('the web of threads', () => {
   });
 
   it('keeps a full, crowded web clear of overlaps too', () => {
-    const bonds: PersonRecord['bond'][] = ['acquaintance', 'senior', 'kin', 'rival', 'junior'];
+    const ties: (TieId | null)[] = [null, 'senior', 'kin', 'rival', 'junior'];
     const names = ['Senior Brother Zhao', 'Aunt Yan', 'Little Ning', 'Peddler Gou', 'Fang Tie'];
     const people = Array.from({ length: WEB_MAX }, (_, i) => ({
       id: `p${i}`,
       name: names[i % names.length]!,
       bond: 'an acquaintance',
-      record: rec(bonds[i % bonds.length]!, (i % 3) - 1),
+      ...rec(ties[i % ties.length]!, (i % 3) - 1),
     }));
     const nodes = webLayout(people);
     expect(anyOverlap(nodes)).toBe(false);
@@ -69,8 +61,8 @@ describe('the web of threads', () => {
 
   it('labels the rings where nobody sits', () => {
     const nodes = webLayout([
-      { id: 'a', record: rec('senior', 0) },
-      { id: 'b', record: rec('kin', 2) },
+      { id: 'a', ...rec('senior', 0) },
+      { id: 'b', ...rec('kin', 2) },
     ]);
     const at = labelAngle(nodes);
     for (const n of nodes) {
@@ -82,10 +74,23 @@ describe('the web of threads', () => {
   it('shows the nearest dozen, warmest first', () => {
     const many = Array.from({ length: 20 }, (_, i) => ({
       id: `p${i}`,
-      record: rec('acquaintance', (i % 7) - 3, i),
+      ...rec(null, (i % 5) - 2, i),
     }));
     const shown = nearest(many);
     expect(shown).toHaveLength(WEB_MAX);
-    expect(shown[0]!.record.regard).toBe(3);
+    expect(shown[0]!.level).toBe(2);
+  });
+
+  it('draws a thread between two people it shows who are tied', () => {
+    const nodes = webLayout([
+      { id: 'a', ...rec(null, 0) },
+      { id: 'b', ...rec('kin', 1) },
+    ]);
+    expect(
+      tieLinks(nodes, [
+        { a: 'a', b: 'b' },
+        { a: 'a', b: 'gone' },
+      ]),
+    ).toHaveLength(1);
   });
 });

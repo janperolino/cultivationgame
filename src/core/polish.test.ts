@@ -105,7 +105,7 @@ describe('the People screen circles', () => {
     s = applyPersonEffect(s, { do: 'person', who: 'peddler-gou' });
     s = { ...s, player: { ...s.player, place: 'qm-tushou-men' } };
     s = applyPersonEffect(s, { do: 'person', who: 'fang-tie' });
-    const circles = peopleCircles(s.player);
+    const circles = peopleCircles(s);
     expect(circles.map((c) => c.key)).toEqual(['kin', 'qm-tushou-men', 'qm-anbian-fu', 'road']);
     expect(circles[0]!.people.map((p) => p.id)).toEqual(['aunt-yan']);
     expect(circles[1]!.label).toBe('At the Beast-Butcher Gate');

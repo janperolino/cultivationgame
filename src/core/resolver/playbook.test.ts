@@ -1,14 +1,36 @@
 // The playbook (design § The resolver, The playbook): every case as plans fed straight to the core,
-// as far as the resolver alone takes them in P3.3. Each case says where it stops: the steps that
-// need opinion and motives finish in P3.4, the Realm of Mingled Blood in P3.11, the city's
-// formation in M4, and a fight played as a mode of the scene in P3.9.
+// as far as the resolver takes them. Each case says where it stops: the steps that need opinion
+// and motives run on them since P3.4, followers' bonds, karma and what people tell wait for P3.4b,
+// the Realm of Mingled Blood for P3.11, the city's formation for M4, and a fight played as a mode
+// of the scene for P3.9.
 import { describe, expect, it } from 'vitest';
 import { createLife, type Creation } from '../creation.ts';
 import type { GameState } from '../state.ts';
 import { plainActor, YOU, type Actor } from './actor.ts';
 import { PlanSchema, step } from './plan.ts';
 import { doStep, leaveScene, round, runPlan, startScene, type SceneInit } from './scene.ts';
-import { addProject, heatOf, knows, statesOf, sweep, type Project } from './world.ts';
+import type { Nature } from '../../content/personality.ts';
+import { revealNature } from './nature.ts';
+import { opinion, remember, tieOf } from './opinion.ts';
+import {
+  addProject,
+  heatOf,
+  knows,
+  learn,
+  standingOf,
+  statesOf,
+  sweep,
+  tell,
+  type Project,
+} from './world.ts';
+
+/** A nature for a test's NPC: motives and leans, no quirks, a plain voice. */
+const nature = (motives: Nature['motives'], axes: Nature['axes'] = {}): Nature => ({
+  motives,
+  axes,
+  quirks: [],
+  voice: { register: 'plain', habit: '', topic: '' },
+});
 
 const life = (): GameState =>
   createLife({
@@ -45,6 +67,10 @@ const at = (place: string, actors: Actor[], init: Partial<SceneInit> = {}) =>
 const plan = (s: GameState, ...steps: ReturnType<typeof step>[]) =>
   PlanSchema.parse({ actor: s.player.id, steps });
 
+/** Someone you saved learns it: in this test, told by the scene that saw it. */
+const learnSaved = (w: GameState['world'], holder: string, you: string, day: number) =>
+  remember(w, { holder, about: you, row: 'saved-life', known: [you] }, day);
+
 describe('the playbook', () => {
   it('hides your realm and joins the Beast-Butcher Gate as an untested orphan', () => {
     const s = life();
@@ -63,7 +89,7 @@ describe('the playbook', () => {
     );
     expect(r.stopped).toBeNull();
     expect(r.scene.actors[0]!.shown).toEqual(QC(6));
-    // The lie is believed: a people check, close at neutral trust (P3.4 brings the deacon's opinion).
+    // The lie is believed: a people check, close at the deacon's neutral trust (nobody he knows of).
     expect(r.results.find((x) => x.step.act === 'lie')!.check!.verdict).toBe('close');
     expect(knows(r.state.world, r.results.at(-1)!.deeds[0]!, 'deacon').deed).toBe(false);
     // An inspection by a senior who can't read your soul believes the shown realm.
@@ -80,8 +106,13 @@ describe('the playbook', () => {
     );
     expect(r.stopped).toMatch(/cover is blown/);
     expect(heatOf(r.state.world, GATE, s.calendar.day)).toBe(1);
-    // The deacon it fooled will remember the lie, once P3.4 gives memories a home.
-    expect(r.results[0]!.deferred).toEqual([]);
+    // The deacon it fooled learns the lie: it lands as a memory, and he trusts you less.
+    const lied = opinion(r.state.world, 'deacon', s.player.id, s.calendar.day);
+    // The lie passed close, at the cost of pressing him; then he found it out.
+    expect(lied.lines.map((l) => l.memory.row)).toEqual(['bad-turn', 'lied']);
+    expect(lied.word).toBe('wary');
+    // The Gate learns of the cover blown: a lie to the sect, held under the heat it raised.
+    expect(standingOf(r.state.world, GATE, s.player.id, s.calendar.day).word).toBe('cold');
     // Stops here: spars as fights in the scene (P3.9) and a breakthrough under cover.
   });
 
@@ -108,7 +139,35 @@ describe('the playbook', () => {
       sc = r.scene;
     }
     expect(st.world.projects[0]!.progress).toBe(4);
-    // Stops here: the trust itself is opinion (P3.4), the realm and the betrayal inside it P3.11.
+    // The trust itself is opinion: fighting beside them, a liked gift, a life saved.
+    const halfBlood = {
+      ...npc('half-blood', { realm: QC(4) }),
+      nature: nature(['greed'], { trust: -1 }),
+    };
+    sc = at('qm-shoukou-cheng', [you(s, { stones: 60 }), halfBlood], { kind: 'city' });
+    const ask = step('persuade', { target: 'half-blood', offer: 'greed' });
+    // Guarded at first: a stranger to be watched, and greed you don't know of.
+    let before = runPlan(st, sc, plan(s, ask)).results[0]!.check!;
+    expect(before.judged).toBe('close');
+    const deeds = runPlan(
+      st,
+      sc,
+      plan(s, step('gift', { target: 'half-blood', thing: 'stones', n: 30 })),
+    );
+    st = deeds.state;
+    sc = deeds.scene;
+    st = {
+      ...st,
+      world: learnSaved(st.world, 'half-blood', s.player.id, st.calendar.day),
+    };
+    const feels = opinion(st.world, 'half-blood', s.player.id, st.calendar.day);
+    expect(feels.word).toBe('trusting');
+    // Greed met (a stones gift counts double to the greedy): asked now, they take you in.
+    before = runPlan(st, sc, plan(s, ask)).results[0]!.check!;
+    expect(before.verdict).toBe('clear');
+    // A life saved makes you their benefactor.
+    expect(tieOf(st.world, 'half-blood', s.player.id)).toBe('benefactor');
+    // Stops here: the realm and the betrayal inside it are P3.11's.
   });
 
   it('plants a hidden formation in a city node by node, the firing waiting for M4', () => {
@@ -159,13 +218,38 @@ describe('the playbook', () => {
       plan(
         s,
         step('slip', { target: 'rival', thing: 'court-token' }),
-        step('report', { target: 'deacon' }),
+        step('report', { target: 'deacon', about: 'rival' }),
       ),
     );
     expect(r.scene.actors.find((a) => a.id === 'rival')!.items['court-token']).toBe(1);
     expect(r.state.world.deeds.at(-1)!.kind).toBe('frame');
     expect(r.results.at(-1)!.check!.verdict).toBe('close');
-    // Stops here: whether the Gate believes it is the deacon's opinion of you and the rival (P3.4).
+    // The deacon believes it: the rival wronged the Gate, and you did him a service.
+    const day = s.calendar.day;
+    expect(opinion(r.state.world, 'deacon', 'rival', day).lines.map((l) => l.memory.row)).toEqual([
+      'wronged-us',
+    ]);
+    // Believed close, at the cost of pressing him: the service and the pressing nearly cancel.
+    expect(
+      opinion(r.state.world, 'deacon', s.player.id, day).lines.map((l) => l.memory.row),
+    ).toEqual(['bad-turn', 'service']);
+    // The rival, vengeful, finds the frame out: never forgiven, and doubled by revenge, an enemy.
+    const frame = r.state.world.deeds.at(-1)!;
+    let world = { ...r.state.world, kept: { ...r.state.world.kept } };
+    world.kept.rival = {
+      name: 'rival',
+      nature: nature(['revenge']),
+      power: GATE,
+      home: null,
+    };
+    world = learn(world, frame.id, { id: 'rival', power: GATE }, true, day);
+    expect(opinion(world, 'rival', s.player.id, day).word).toBe('hostile');
+    expect(tieOf(world, 'rival', s.player.id)).toBe('enemy');
+    // He tells the deacon: the accusation was a lie, and the deacon holds it against you instead.
+    world = tell(world, 'rival', { id: 'deacon', power: GATE }, day);
+    const told = opinion(world, 'deacon', s.player.id, day);
+    expect(told.lines.map((l) => l.memory.row).sort()).toEqual(['bad-turn', 'lied', 'service']);
+    expect(opinion(world, 'deacon', 'rival', day).lines).toEqual([]);
   });
 
   it('sells one map to three crews and ambushes whoever reaches the cave first', () => {
@@ -220,7 +304,16 @@ describe('the playbook', () => {
     ]);
     r = runPlan(r.state, meet, plan(s, step('wait')));
     expect(r.state.player.stones).toBe(s.player.stones + 150);
-    // Stops here: what the herders and the Court think of it is P3.4's standing.
+    // Nobody saw the seizing, so the herders hold nothing against you, until one of theirs learns.
+    const herders = 'qm-muling-guo';
+    const day = s.calendar.day;
+    expect(standingOf(r.state.world, herders, s.player.id, day).word).toBe('unknown');
+    const seized = r.state.world.deeds.find((d) => d.kind === 'kidnapping')!;
+    const world = learn(r.state.world, seized.id, { id: 'herder', power: herders }, true, day);
+    const st = standingOf(world, herders, s.player.id, day);
+    expect(st.lines.map((l) => l.memory.row)).toEqual(['captive-ours']);
+    expect(st.word).toBe('hostile');
+    // Stops here: the Court's own view waits for its people to learn it.
   });
 
   it('fakes your death with a corpse in your robes to shake a hunter', () => {
@@ -242,7 +335,7 @@ describe('the playbook', () => {
     // Your stealth with two things used and the dark against his perception, no roll.
     expect(check.verdict).not.toBe('short');
     expect(r.scene.actors[0]!.items.corpse).toBe(0);
-    // Stops here: the hunter believing you dead is what he knows (P3.4).
+    // Stops here: the hunter believing you dead is what he knows and tells (P3.4b).
   });
 
   it("loots the Wall's dead after a beast tide, posing as a corpse collector", () => {
@@ -306,16 +399,25 @@ describe('the playbook', () => {
 
   it('gathers a crew by pay, loyalty and fear, and coerces a village into hiding you', () => {
     const s = life();
-    const sword = npc('sword', { realm: QC(5) });
+    const sword = { ...npc('sword', { realm: QC(5) }), nature: nature(['greed']) };
     const thug = npc('thug', { realm: QC(3), side: 'thug' });
-    let r = runPlan(
-      s,
+    const crewScene = () =>
       at('qm-shoukou-cheng', [you(s, { realm: FE(1), stones: 50, weapon: 'plain' }), sword, thug], {
         kind: 'city',
-      }),
+      });
+    // Not knowing the sword is greedy, you judge the offer close; it goes clear, a surprise.
+    const recruit = step('recruit', { target: 'sword', offer: 'greed' });
+    const blind = runPlan(s, crewScene(), plan(s, recruit));
+    expect(blind.results[0]!.check!.judged).toBe('close');
+    expect(blind.results[0]!.surprise).toMatch(/clear, not close/);
+    // Knowing it, the plan runs through.
+    const knowing = { ...s, world: revealNature(s.world, 'sword', ['motive:greed']) };
+    let r = runPlan(
+      knowing,
+      crewScene(),
       plan(
         s,
-        step('recruit', { target: 'sword', offer: true }),
+        step('recruit', { target: 'sword', offer: 'greed' }),
         step('pay', { target: 'sword', n: 10 }),
         step('threaten', { target: 'thug', show: ['weapon'] }),
       ),
@@ -323,8 +425,13 @@ describe('the playbook', () => {
     expect(r.results[0]!.check!.verdict).toBe('clear');
     const threat = r.results.find((x) => x.step.act === 'threaten')!;
     expect(threat.check!.verdict).toBe('clear');
-    // Fear is a bond and karma heaven's ledger: both wait for P3.4.
-    expect(threat.deferred.map((e) => e.do)).toEqual(['bond', 'karma', 'memory']);
+    // The thug remembers the threat; fear as a bond and karma as heaven's ledger wait for P3.4b.
+    expect(threat.deferred.map((e) => e.do)).toEqual(['bond', 'karma']);
+    expect(opinion(r.state.world, 'thug', s.player.id, s.calendar.day).word).toBe('wary');
+    // The sword was paid fairly.
+    expect(
+      opinion(r.state.world, 'sword', s.player.id, s.calendar.day).lines.map((l) => l.memory.row),
+    ).toEqual(['paid-fairly']);
     // With two followers at your back, the headman bends.
     const headman = npc('headman', { realm: QC(4), side: 'village' });
     const crew = ['sword', 'thug'].map((id) => ({

@@ -139,7 +139,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
             { do: 'fuel', ladder: 'qi', share: -0.05 },
             { do: 'insight', n: 8 },
             { do: 'flag', id: 'helped-ning' },
-            { do: 'person', who: 'junior', bond: 'junior', regard: 2 },
+            { do: 'person', who: 'junior', tie: 'junior', regard: 2 },
           ],
           text: "Three days of easing qi along a child's arm teaches you more about your own than a month alone. The knot gives, and she bows until her forehead touches stone.",
           chronicle:
@@ -150,7 +150,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           effects: [
             { do: 'fuel', ladder: 'qi', share: -0.05 },
             { do: 'flag', id: 'helped-ning' },
-            { do: 'person', who: 'junior', bond: 'junior', regard: 1 },
+            { do: 'person', who: 'junior', tie: 'junior', regard: 1 },
           ],
           text: 'You cannot shift it, but you dull the burn. She thanks you anyway, which is worse.',
           chronicle: "{name} tries to ease {junior}'s knotted meridian and only dulls the pain.",
@@ -1214,7 +1214,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
             {
               do: 'person',
               who: 'rival',
-              bond: 'rival',
+              tie: 'rival',
               realm: { realm: 'qi-condensation', stage: 4 },
             },
           ],
@@ -1233,7 +1233,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
             {
               do: 'person',
               who: 'rival',
-              bond: 'rival',
+              tie: 'rival',
               regard: -1,
               realm: { realm: 'qi-condensation', stage: 4 },
             },
@@ -1249,7 +1249,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
             {
               do: 'person',
               who: 'rival',
-              bond: 'rival',
+              tie: 'rival',
               realm: { realm: 'qi-condensation', stage: 4 },
             },
           ],
@@ -1464,7 +1464,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           effects: [
             { do: 'flag', id: 'favor-paid' },
             { do: 'fuel', ladder: 'qi', share: -0.05 },
-            { do: 'person', who: 'fixer', regard: 1, bond: 'patron' },
+            { do: 'person', who: 'fixer', regard: 1, tie: 'patron' },
           ],
           text: 'One crossing, one crate, no questions. The crate is warm, and something inside it is breathing.',
           chronicle:
@@ -1479,7 +1479,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
             { do: 'flag', id: 'favor-paid' },
             { do: 'flag', id: 'saw-the-crate' },
             { do: 'insight', n: 6 },
-            { do: 'person', who: 'fixer', bond: 'patron' },
+            { do: 'person', who: 'fixer', tie: 'patron' },
           ],
           text: 'Halfway across you lift the lid a finger-width. A golden eye looks back. You close it and say nothing, ever.',
           chronicle:

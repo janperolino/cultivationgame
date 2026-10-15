@@ -11,6 +11,7 @@ import {
   USE_MAX,
   VERBS,
 } from '../../content/resolver.ts';
+import { OFFERS } from '../../content/personality.ts';
 import { REALM_IDS } from '../../content/realms.ts';
 
 export const StepSchema = z
@@ -31,8 +32,10 @@ export const StepSchema = z
     /** The thing taken, given or used ("stones" for spirit stones), and how many. */
     thing: z.string().optional(),
     n: z.number().int().min(1).optional(),
-    /** A talk's offer meets one of their motives (P3.4 reads it from what you know of them). */
-    offer: z.boolean().optional(),
+    /** A talk's offer, aimed at one of their motives or a quirk's way in; it counts only if they have it. */
+    offer: z.enum(OFFERS).optional(),
+    /** Who a talk is about: the one a report accuses. */
+    about: z.string().optional(),
     /** An item held and shown as proof: a token, a robe. */
     prop: z.string().optional(),
     /** What backs a threat: a weapon drawn, a technique shown. */

@@ -395,7 +395,7 @@ describe('scenes and ticks', () => {
 });
 
 describe('effects', () => {
-  it('apply to you, the world and the scene, and hand back what waits for P3.4', () => {
+  it('apply to you, the world and the scene, and hand back what waits for P3.4b', () => {
     const s = life();
     const sc = scene([you(s), them('ally')]);
     const effects = [
@@ -405,18 +405,26 @@ describe('effects', () => {
       { do: 'heat', holder: 'test-place', n: 2 },
       { do: 'wound', who: s.player.id, share: 0.2, days: 3 },
       { do: 'place', id: 'test-place', state: 'damaged' },
-      { do: 'memory', who: 'ally', about: s.player.id, reason: 'Saved my life', value: 40 },
+      { do: 'memory', who: 'ally', about: s.player.id, row: 'saved-life' },
       { do: 'karma', who: s.player.id, n: 5 },
     ].map((e) => EffectSchema.parse(e));
     const r = applyEffects(s, sc, effects);
     expect(r.state.player.stones).toBe(s.player.stones + 5);
     expect(r.scene!.actors[1]!.items['mending-pill']).toBe(1);
-    expect(r.state.world.known).toEqual(['name:elder-mo']);
+    expect(r.state.world.known).toContain('name:elder-mo');
     expect(heatOf(r.state.world, 'test-place', s.calendar.day)).toBe(2);
     expect(woundShare(r.state.world, s.player.id, s.calendar.day)).toBe(0.2);
     expect(woundShare(r.state.world, s.player.id, s.calendar.day + 3)).toBe(0);
     expect(r.state.world.places['test-place']).toBe('damaged');
-    expect(r.deferred.map((e) => e.do)).toEqual(['memory', 'karma']);
+    // The memory lands, seen by the players in the scene; karma waits for P3.4b.
+    expect(r.state.world.memories.at(-1)).toMatchObject({
+      holder: 'ally',
+      about: s.player.id,
+      row: 'saved-life',
+      value: 40,
+      known: [s.player.id],
+    });
+    expect(r.deferred.map((e) => e.do)).toEqual(['karma']);
   });
 
   it('take nothing off the fixed list', () => {
@@ -571,13 +579,14 @@ describe('plans', () => {
 describe('the save', () => {
   it('carries the world from v20, and a v19 save loads with an empty one', () => {
     const s = life();
-    expect(SAVE_VERSION).toBe(20);
+    expect(SAVE_VERSION).toBe(21);
     const raw = JSON.parse(JSON.stringify(makeSave(s, 1))) as {
       version: number;
       state: Record<string, unknown>;
     };
     delete raw.state.world;
     raw.version = 19;
-    expect(loadSave(raw).state.world).toEqual(emptyWorld());
+    // Empty but for what v21 brings forward: the outer leans of the people you'd met.
+    expect({ ...loadSave(raw).state.world, known: [] }).toEqual(emptyWorld());
   });
 });

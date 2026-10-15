@@ -14,13 +14,14 @@ import {
   type OriginChoice,
   type OriginId,
 } from '../content/origins.ts';
-import { BOND_IDS, pathPeople, person, REGARD_MAX, REGARD_MIN } from '../content/people.ts';
+import { pathPeople, person } from '../content/people.ts';
 import { RARITY_IDS } from '../content/rarity.ts';
 import { REALM_IDS, realm, realmIndex, type RealmId } from '../content/realms.ts';
 import { defaultElements, ROOT_IDS, type RootId } from '../content/roots.ts';
 import { hashSeed, Rng, streamSeed, type StreamName } from './rng.ts';
 import { stats } from './stats.ts';
 import { flipHour } from './wheel.ts';
+import { startingWorld } from './resolver/opinion.ts';
 import { emptyWorld, WorldSchema } from './resolver/world.ts';
 
 /** The in-game calendar: twelve months of thirty days. */
@@ -77,8 +78,6 @@ const PersonRecord = z.object({
   /** World day you met, and where. */
   met: z.number(),
   place: z.string().nullable(),
-  bond: z.enum(BOND_IDS),
-  regard: z.number().int().min(REGARD_MIN).max(REGARD_MAX),
   realm: z.object({ realm: z.enum(REALM_IDS), stage: z.number().int().min(1) }).nullable(),
   /** Where they were when you last heard: an atlas entry id, or null when unknown. */
   where: z.string().nullable(),
@@ -427,8 +426,6 @@ export function startingPeople(
       {
         met: day,
         place,
-        bond: a.bond,
-        regard: a.regard,
         realm: a.realm,
         where: person(a.id).home ?? place,
         heard: day,
@@ -501,7 +498,7 @@ export function newLife(opts: NewLifeOptions): GameState {
     rewindCharges: mode === 'gentle' ? 1 : 0,
     seed,
     rng: {},
-    world: emptyWorld(),
+    world: startingWorld(emptyWorld(), player.origin, player.id, startDay),
   };
 }
 
@@ -530,6 +527,7 @@ export function nextLife(prev: GameState, opts: NewLifeOptions): GameState {
     lineage: { ...prev.lineage, life: prev.lineage.life + 1 },
     player,
     calendar: { day },
+    world: startingWorld(emptyWorld(), player.origin, player.id, day),
     chronicle: [...prev.chronicle, ...openingEvents(player, day, true)],
     cards: freshCards(day),
   };

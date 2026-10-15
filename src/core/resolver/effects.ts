@@ -1,12 +1,15 @@
 // The one fixed list of effects (design § The resolver, What lasts): everything a step, a scene
 // or the narrator can change. GLM picks from this list and can't add to it, and a new system adds
-// an effect only when it brings a new kind of state. Memories, standing, bonds, karma, renown and
-// infamy are on the list now and land in P3.4, which gives them their home: until then applying
-// one hands it back as deferred.
+// an effect only when it brings a new kind of state. Memories, standing and ties land (P3.4);
+// bonds, karma, renown and infamy are on the list and land in P3.4b, which gives them their home:
+// until then applying one hands it back as deferred.
 import { z } from 'zod';
-import { BOND_IDS } from '../../content/people.ts';
+import { MEMORY_IDS, STANDING_IDS } from '../../content/memories.ts';
+import { KIN_RELATIONS, TIE_IDS } from '../../content/people.ts';
+import { GIFT_KINDS } from '../../content/personality.ts';
 import { PERSON_STATES, PLACE_STATES, TICKS_PER_DAY } from '../../content/resolver.ts';
 import { addItem, withPlayer, type GameState } from '../state.ts';
+import { addStanding, addTie, remember } from './opinion.ts';
 import type { Scene } from './scene.ts';
 import {
   addHeat,
@@ -33,23 +36,40 @@ export const EffectSchema = z.discriminatedUnion('do', [
     n: z.number().int(),
     how: z.enum(['gained', 'lost', 'broken', 'spent']),
   }),
-  /** A memory in a person's opinion of someone (P3.4). */
+  /** A memory in a person's opinion of someone: a row of the memory table, never a new reason. */
   z.object({
     do: z.literal('memory'),
     who: Who,
     about: Who,
-    reason: z.string(),
-    value: z.number(),
+    row: z.enum(MEMORY_IDS),
+    /** For a row whose value is its own: a gift's worth. */
+    value: z.number().optional(),
+    note: z.string().optional(),
+    like: z.enum(GIFT_KINDS).optional(),
   }),
-  /** A reason in a power's standing with someone (P3.4). */
+  /** A reason in a power's standing with someone. */
   z.object({
     do: z.literal('standing'),
     power: z.string(),
     about: Who,
-    reason: z.string(),
-    value: z.number(),
+    row: z.enum(STANDING_IDS),
+    value: z.number().optional(),
   }),
-  z.object({ do: z.literal('bond'), who: Who, with: Who, bond: z.enum([...BOND_IDS, 'fear']) }),
+  /** A tie made: what `a` is to `b`. */
+  z.object({
+    do: z.literal('tie'),
+    a: Who,
+    b: Who,
+    kind: z.enum(TIE_IDS),
+    relation: z.enum(KIN_RELATIONS).optional(),
+  }),
+  /** Why a follower follows (P3.4b). */
+  z.object({
+    do: z.literal('bond'),
+    who: Who,
+    with: Who,
+    bond: z.enum(['pay', 'loyalty', 'fear', 'goal']),
+  }),
   z.object({ do: z.literal('heat'), holder: z.string(), n: z.number().int() }),
   /** Heaven's ledger (P3.4). */
   z.object({ do: z.literal('karma'), who: Who, n: z.number().int() }),
@@ -69,8 +89,8 @@ export const EffectSchema = z.discriminatedUnion('do', [
 ]);
 export type Effect = z.infer<typeof EffectSchema>;
 
-/** The effects P3.4 gives a home; until then they come back unapplied. */
-const DEFERRED = new Set<Effect['do']>(['memory', 'standing', 'bond', 'karma', 'renown', 'infamy']);
+/** The effects P3.4b gives a home; until then they come back unapplied. */
+const DEFERRED = new Set<Effect['do']>(['bond', 'karma', 'renown', 'infamy']);
 
 export function isDeferred(e: Effect): boolean {
   return DEFERRED.has(e.do);
@@ -79,7 +99,7 @@ export function isDeferred(e: Effect): boolean {
 export interface Applied {
   state: GameState;
   scene: Scene | null;
-  /** Effects waiting for P3.4. */
+  /** Effects waiting for P3.4b. */
   deferred: Effect[];
 }
 
@@ -150,6 +170,41 @@ export function applyEffects(
           ...a,
           items: { ...a.items, [e.id]: Math.max(0, (a.items[e.id] ?? 0) + e.n) },
         }));
+        break;
+      case 'memory':
+        state = {
+          ...state,
+          world: remember(
+            state.world,
+            {
+              holder: e.who,
+              about: e.about,
+              row: e.row,
+              value: e.value,
+              note: e.note,
+              like: e.like,
+              // Whoever is in the scene sees it land.
+              known: sc ? sc.players : [],
+            },
+            day,
+          ),
+        };
+        break;
+      case 'standing':
+        state = {
+          ...state,
+          world: addStanding(
+            state.world,
+            { power: e.power, about: e.about, row: e.row, value: e.value },
+            day,
+          ),
+        };
+        break;
+      case 'tie':
+        state = {
+          ...state,
+          world: addTie(state.world, { a: e.a, b: e.b, kind: e.kind, relation: e.relation }),
+        };
         break;
       case 'heat':
         state = { ...state, world: addHeat(state.world, e.holder, e.n, day) };

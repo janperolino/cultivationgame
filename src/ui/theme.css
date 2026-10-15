@@ -3925,6 +3925,109 @@ select {
   margin: 0;
 }
 
+/* Their nature, wants and likes as small chips; what you haven't seen in dim ones. */
+.chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  padding: 0 8px;
+  border: 1px solid var(--edge-strong);
+  border-radius: 999px;
+  font-size: calc(12px * var(--text-scale));
+}
+
+.chip-unknown {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+/* What they remember of you: the reason, its value, and its fade as a thin bar under it. */
+.memories {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.memory {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--edge);
+}
+
+.memory-why {
+  color: var(--gilt);
+}
+
+.memory-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.memory-bar {
+  grid-column: 1 / -1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.06);
+}
+
+.memory-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+}
+
+.memory-bar i.up {
+  background: var(--crack);
+}
+
+.memory-bar i.down {
+  background: var(--warn);
+}
+
+.their-ties {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.people-powers {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--edge);
+}
+
+.people-powers dl {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 0;
+}
+
+.people-powers dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.people-powers dd {
+  margin: 0;
+}
+
+.web-tie {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  opacity: 0.5;
+}
+
 /* Their log as a thread, the newest first and lit. */
 .person-thread {
   list-style: none;

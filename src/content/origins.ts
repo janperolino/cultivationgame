@@ -188,6 +188,7 @@ export const PLACE_NAMES: Readonly<Record<string, string>> = {
   'qm-tushou-men': 'the Beast-Butcher Gate',
   'qm-yeqiao-hui': 'the Night Bridge Society',
   'qm-duigu-qiang': 'the Wall of Piled Bones',
+  'great-jing': 'the Great Jing Dynasty',
 };
 
 /** The places' hanzi, as flavor under the English name (from content/atlas/entries.json). */

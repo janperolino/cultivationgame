@@ -7,6 +7,7 @@ import { LADDERS, type LadderId } from '../../content/cultivation.ts';
 import { item, hasItem } from '../../content/items.ts';
 import { rarityRank } from '../../content/rarity.ts';
 import { REALMS, realmIndex, type RealmId } from '../../content/realms.ts';
+import type { Nature } from '../../content/personality.ts';
 import type { StatId } from '../../content/stats.ts';
 import { generateCultivator, type Npc } from '../combat/generate.ts';
 import { fromCultivator, topRung, type Combatant } from '../combat/combatant.ts';
@@ -53,7 +54,9 @@ export interface Actor {
   desperate?: boolean;
   /** The people they know by sight, who a disguise doesn't fool if they see through it. */
   knows?: string[];
-  /** Steps they take on their own, one a round: an NPC's stub until P3.4's motives, or a follower's orders. */
+  /** Who they are, when the scene gives it; else the world's (a named or kept person's). */
+  nature?: Nature;
+  /** Steps they take on their own, one a round, over their motives: a follower's orders, a set plan. */
   plan?: Step[];
   /** Whose orders they keep. */
   follows?: string;

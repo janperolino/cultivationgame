@@ -7,7 +7,7 @@
 // stream, keeps the feed and applies the effects. A new card is an entry in a deck, not new code.
 import type { LadderId } from '../cultivation.ts';
 import type { OriginChoice, OriginId } from '../origins.ts';
-import type { BondId } from '../people.ts';
+import type { TieId } from '../people.ts';
 import type { RealmId } from '../realms.ts';
 
 /** The attributes a card's check can read (design § Combat, the six attributes). */
@@ -89,15 +89,16 @@ export type CardEffect =
   /** Adds to one of the card's own variables, for its later steps and its chronicle line. */
   | { do: 'var'; id: string; n: number }
   /**
-   * What you learn of a person, by slot ({senior}, {mentor}) or id (content/people.ts): how they
-   * feel moves by `regard`, what they are to you, their realm as you last heard it or a step up
-   * from it, and where they are. Meeting someone new starts their record.
+   * What you learn of a person, by slot ({senior}, {mentor}) or id (content/people.ts): `regard`
+   * lands as a memory of ±10 a step that fades over a season (a plain mapping until P3.12 names
+   * memory rows), `tie` is what they become to you, then their realm as you last heard it or a
+   * step up from it, and where they are. Meeting someone new starts their record.
    */
   | {
       do: 'person';
       who: string;
       regard?: number;
-      bond?: BondId;
+      tie?: TieId;
       realm?: { realm: RealmId; stage: number };
       advance?: number;
       where?: string;

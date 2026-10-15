@@ -1,18 +1,18 @@
 // The web of threads on the People screen (design § UI and screens, The People screen;
 // docs/mockups/people-study.html, C): you at the centre, everyone joined to you by a crack of qi
-// light. Distance is how they feel, the bond sets the side of the web, and past a dozen people
-// only your nearest show. Each person is a small disc with their name under it, and no disc or
+// light. Distance is how they feel, the trust word their memories of you read as you know them,
+// the tie sets the side of the web, and past a dozen people only your nearest show. Each person is a small disc with their name under it, and no disc or
 // name ever sits on another's. Pure layout, so it has tests; the screen pans and zooms over it.
-import type { BondId } from '../content/people.ts';
-import { REGARD_MAX } from '../content/people.ts';
+import type { TieId } from '../content/people.ts';
 import { hashSeed, mulberry32 } from '../core/rng.ts';
-import type { PersonRecord } from '../core/state.ts';
 
 export const WEB_SIZE = { w: 620, h: 560 } as const;
 export const WEB_CENTRE = { x: 310, y: 268 } as const;
-/** The ring for "would bleed for you", and the step out for each notch of feeling below it. */
+/** Trust as a level, hostile −2 to trusting +2. */
+export const LEVEL_MAX = 2;
+/** The ring for "trusting", and the step out for each trust word below it. */
 export const RING_START = 72;
-export const RING_STEP = 28;
+export const RING_STEP = 36;
 /** Past this many people the web shows the nearest; the circles keep everyone. */
 export const WEB_MAX = 12;
 
@@ -33,27 +33,49 @@ const DRIFT = 1.5;
 const DRIFT_MAX = RING_STEP * 0.45;
 const PASSES = 120;
 
-/** Where each bond sits round the web, in degrees from the right, clockwise. */
-const SIDE: Record<BondId, number> = {
+/** Where each tie sits round the web, in degrees from the right, clockwise; no tie at 95. */
+const SIDE: Record<TieId | 'none', number> = {
   master: -90,
   patron: -90,
   superior: -90,
+  guardian: -90,
+  backer: -90,
+  benefactor: -75,
+  creditor: -75,
   senior: -60,
+  leader: -60,
   junior: -25,
+  disciple: -25,
+  subordinate: -25,
+  protege: -25,
+  ward: -25,
+  follower: -10,
+  backed: -10,
+  beneficiary: 0,
+  debtor: 0,
   friend: 15,
   'sworn-sibling': 40,
+  lover: 60,
+  betrothed: 60,
   'dao-companion': 60,
-  acquaintance: 95,
+  'former-lover': 75,
+  none: 95,
   kin: 145,
   rival: 200,
   enemy: 225,
+  'sworn-enemy': 235,
 };
 /** How far apart two people on the same side start, as an arc in px, before any nudging. */
 const SPREAD_PX = 80;
 
 export interface WebPerson {
   id: string;
-  record: PersonRecord;
+  /** What they are to you, or null for no tie. */
+  tie: TieId | null;
+  /** Their trust as you read it: −2 hostile to +2 trusting. */
+  level: number;
+  /** World day you last heard of them. */
+  heard: number;
   /** The two lines under the disc, for measuring how wide they run. */
   name?: string;
   bond?: string;
@@ -63,7 +85,7 @@ export interface WebNode {
   id: string;
   x: number;
   y: number;
-  regard: number;
+  level: number;
   /** Degrees round the web from the right, clockwise. */
   angle: number;
   /** How wide the name and bond lines run, centred under the disc. */
@@ -79,9 +101,9 @@ export interface Box {
   b: number;
 }
 
-/** Distance from the centre for a feeling: the warm close, the hostile at the rim. */
-export function ringFor(regard: number): number {
-  return RING_START + (REGARD_MAX - regard) * RING_STEP;
+/** Distance from the centre for a trust: the trusting close, the hostile at the rim. */
+export function ringFor(level: number): number {
+  return RING_START + (LEVEL_MAX - level) * RING_STEP;
 }
 
 /** What a person takes up on the web: their disc and the lines under it. */
@@ -117,10 +139,11 @@ function jag(x1: number, y1: number, x2: number, y2: number, id: string): string
 }
 
 /** The nearest people, warmest first and then the most recently heard of. */
-export function nearest<T extends { record: PersonRecord }>(people: T[], max = WEB_MAX): T[] {
-  return [...people]
-    .sort((a, b) => b.record.regard - a.record.regard || b.record.heard - a.record.heard)
-    .slice(0, max);
+export function nearest<T extends { level: number; heard: number }>(
+  people: T[],
+  max = WEB_MAX,
+): T[] {
+  return [...people].sort((a, b) => b.level - a.level || b.heard - a.heard).slice(0, max);
 }
 
 const place = (deg: number, r: number) => {
@@ -138,21 +161,21 @@ const turn = (a: number, b: number) => ((((b - a) % 360) + 540) % 360) - 180;
 export function webLayout(people: WebPerson[]): WebNode[] {
   const bySide = new Map<number, WebPerson[]>();
   for (const p of people) {
-    const side = SIDE[p.record.bond];
+    const side = SIDE[p.tie ?? 'none'];
     bySide.set(side, [...(bySide.get(side) ?? []), p]);
   }
   const nodes: (WebNode & { r: number; ring: number })[] = [];
   for (const [side, group] of bySide) {
-    const meanR = group.reduce((n, p) => n + ringFor(p.record.regard), 0) / group.length;
+    const meanR = group.reduce((n, p) => n + ringFor(p.level), 0) / group.length;
     const step = (SPREAD_PX / meanR) * (180 / Math.PI);
     group.forEach((p, i) => {
       const angle = side + (i - (group.length - 1) / 2) * step;
-      const r = ringFor(p.record.regard);
+      const r = ringFor(p.level);
       const labelW =
         Math.max((p.name?.length ?? 14) * NAME_CHAR, (p.bond?.length ?? 14) * BOND_CHAR) + 6;
       nodes.push({
         id: p.id,
-        regard: p.record.regard,
+        level: p.level,
         angle,
         labelW,
         r,
@@ -191,7 +214,7 @@ export function webLayout(people: WebPerson[]): WebNode[] {
     id: n.id,
     x: n.x,
     y: n.y,
-    regard: n.regard,
+    level: n.level,
     angle: n.angle,
     labelW: n.labelW,
     thread: jag(WEB_CENTRE.x, WEB_CENTRE.y, n.x, n.y, n.id),
@@ -234,10 +257,10 @@ export function webBounds(
 }
 
 export const RING_LABELS: readonly [number, string][] = [
-  [3, 'would bleed for you'],
-  [1, 'thinks well of you'],
-  [0, 'indifferent'],
-  [-2, 'wary, or worse'],
+  [2, 'trusting'],
+  [1, 'friendly'],
+  [0, 'neutral'],
+  [-1, 'wary, or worse'],
 ];
 const RING_LABEL_CHAR = 5;
 
@@ -248,13 +271,13 @@ const RING_LABEL_CHAR = 5;
 export function ringLabels(nodes: readonly WebNode[]) {
   const at = (labelAngle(nodes) * Math.PI) / 180;
   const [cos, sin] = [Math.cos(at), Math.sin(at)];
-  const lowest = Math.min(0, ...nodes.map((n) => n.regard));
-  return RING_LABELS.filter(([regard]) => regard >= lowest).map(([regard, text]) => {
-    const r = ringFor(regard);
+  const lowest = Math.min(0, ...nodes.map((n) => n.level));
+  return RING_LABELS.filter(([level]) => level >= lowest).map(([level, text]) => {
+    const r = ringFor(level);
     const x = WEB_CENTRE.x + r * cos;
     const y = WEB_CENTRE.y + r * sin + (sin < 0 ? -3 : 9);
     const half = (text.length * RING_LABEL_CHAR) / 2;
-    return { regard, text, x, y, box: { l: x - half, t: y - 9, r: x + half, b: y + 2 } };
+    return { level, text, x, y, box: { l: x - half, t: y - 9, r: x + half, b: y + 2 } };
   });
 }
 
@@ -268,4 +291,19 @@ export function labelAngle(nodes: readonly WebNode[]): number {
     if (next - a > best.gap) best = { gap: next - a, at: a + (next - a) / 2 };
   });
   return best.at;
+}
+
+/** The faint threads between two people on the web you know are tied, as straight lines. */
+export function tieLinks(
+  nodes: readonly WebNode[],
+  pairs: readonly { a: string; b: string }[],
+): { key: string; x1: number; y1: number; x2: number; y2: number }[] {
+  const at = new Map(nodes.map((n) => [n.id, n]));
+  const out: { key: string; x1: number; y1: number; x2: number; y2: number }[] = [];
+  for (const { a, b } of pairs) {
+    const na = at.get(a);
+    const nb = at.get(b);
+    if (na && nb) out.push({ key: `${a}~${b}`, x1: na.x, y1: na.y, x2: nb.x, y2: nb.y });
+  }
+  return out;
 }

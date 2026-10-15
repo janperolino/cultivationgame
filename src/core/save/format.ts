@@ -29,9 +29,11 @@ import { peopleIn } from '../people.ts';
 import { seeAll } from '../seen.ts';
 import { flipHour } from '../wheel.ts';
 import { emptyWorld } from '../resolver/world.ts';
+import { meetingShows, natureKey } from '../resolver/nature.ts';
+import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 20;
+export const SAVE_VERSION = 21;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -680,6 +682,61 @@ const migrations: Record<number, (old: Raw) => Raw> = {
   19: (old) => {
     const s = (old.state ?? {}) as Raw;
     return { ...old, version: 20, state: { ...s, world: emptyWorld() } };
+  },
+
+  // v20, P3.4: a record held how someone felt as a regard of −3 to +3 and what they were to you as
+  // a bond. v21 keeps feeling as memories and ties in the world: each regard becomes a memory "from
+  // before" that never fades (−50, −25, −12, 0, +12, +25, +50), each bond but an acquaintance a
+  // tie, and you know the outer leans of everyone you'd met.
+  20: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const you = typeof p.id === 'string' ? p.id : 'player';
+    const w = (s.world ?? {}) as Raw;
+    let next = typeof w.next === 'number' ? w.next : 1;
+    const memories = (Array.isArray(w.memories) ? w.memories : []) as Raw[];
+    const ties = (Array.isArray(w.ties) ? w.ties : []) as Raw[];
+    const known = (Array.isArray(w.known) ? w.known : []) as string[];
+    const people: Raw = {};
+    for (const [id, rec] of Object.entries((p.people ?? {}) as Record<string, Raw>)) {
+      const { bond, regard, ...rest } = rec;
+      people[id] = rest;
+      if (
+        typeof bond === 'string' &&
+        bond !== 'acquaintance' &&
+        (TIE_IDS as readonly string[]).includes(bond)
+      ) {
+        ties.push({ a: id, b: you, kind: bond, known: [] });
+      }
+      const value = typeof regard === 'number' ? (REGARD_VALUES[Math.round(regard)] ?? 0) : 0;
+      if (value !== 0) {
+        memories.push({
+          id: next++,
+          holder: id,
+          about: you,
+          row: 'from-before',
+          value,
+          day: typeof rec.met === 'number' ? rec.met : 0,
+          known: [you],
+        });
+      }
+      if (hasPerson(id)) {
+        for (const k of meetingShows(person(id).nature)) {
+          const key = natureKey(id, k);
+          if (!known.includes(key)) known.push(key);
+        }
+      }
+    }
+    const world = {
+      ...w,
+      memories,
+      standing: Array.isArray(w.standing) ? w.standing : [],
+      ties,
+      kept: w.kept ?? {},
+      known,
+      next,
+    };
+    return { ...old, version: 21, state: { ...s, player: { ...p, people }, world } };
   },
 };
 

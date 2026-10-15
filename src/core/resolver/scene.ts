@@ -1,14 +1,16 @@
 // Scenes and time (design § The resolver, Scenes and time; P3.3). A scene is a place, the people
 // there, its features and a clock in ticks, a quarter of a wheel hour each. Each round everyone
 // present acts through the same resolver in Agility order: the players take their plan's next
-// step, followers keep their orders and NPCs take their own steps (a stub until P3.4's motives).
+// step, followers keep their orders and NPCs act on their motives (intent.ts) unless given a plan.
 // A step is previewed with the verdict your character can judge and its stakes, then done: its
 // check, its cost on a close pass, what a short one means, the deeds it makes and who saw them,
 // the noise it makes. A noise rings out to its range, and while it rings someone arrives on the
 // place's traffic schedule, who comes drawn from its people on the `scene` stream; the law comes
 // when it answers. A fight is handed to the combat engine whole for now (P3.9 plays it as a mode
 // of the scene). The world's clock stops in a scene; leaving adds its ticks to the clock, off the
-// wheel. A scene takes a list of player actors, so co-op can drop in after v1.
+// wheel. A scene takes a list of player actors, so co-op can drop in after v1. People checks read
+// real opinion, motives and standing (talk.ts); the players learn the outer leans of everyone in
+// the scene as it begins, and what moves anyone when they act on it.
 import {
   ACTS,
   CAPABILITIES,
@@ -40,20 +42,21 @@ import {
   composure,
   isBeyond,
   judgedOf,
-  leverage,
   presence,
   readRealm,
   readsLies,
-  resistance,
   verdict,
   type Read,
   type Verdict,
 } from './check.ts';
 import { applyEffects, type Effect } from './effects.ts';
+import { intentOf } from './intent.ts';
+import { meetingShows, revealNature } from './nature.ts';
+import { contest, remember, tieOf } from './opinion.ts';
+import { actorNature, giftOf, talkCheck } from './talk.ts';
 import type { Plan, Step } from './plan.ts';
 import {
   healWounds,
-  knownDeeds,
   learn,
   projectById,
   recordDeed,
@@ -233,15 +236,15 @@ export function checkFor(s: GameState, scene: Scene, a: Actor, st: Step): StepCh
         read: true,
       };
     }
-    const suspicion = knownDeeds(s.world, target.id, a.id).some((d) =>
-      (['lie', 'theft', 'frame', 'betrayal'] as DeedKind[]).includes(d.kind),
-    );
-    const prop = st.prop !== undefined && (a.items[st.prop] ?? 0) > 0;
-    const helpers = (st.helpers ?? []).length;
-    const yours = leverage({ motive: st.offer, prop, helpers });
-    const theirs = resistance({ suspicion });
-    const v = verdict(yours, theirs);
-    return { yours, theirs, verdict: v, judged: v, beyond: false, faced: [target.id] };
+    const t = talkCheck(s, a, target, st);
+    return {
+      yours: t.yours,
+      theirs: t.theirs,
+      verdict: t.verdict,
+      judged: t.judged,
+      beyond: false,
+      faced: [target.id],
+    };
   }
 
   const check = info.check;
@@ -343,6 +346,18 @@ function refusal(
   if (st.act === 'veil' && (a.stats.concealment ?? 0) <= 0)
     return 'you have no way to hide your realm';
   if (check?.beyond) return 'beyond you: a whole realm short';
+  const target = st.target ? actorIn(scene, st.target) : undefined;
+  if (info.from && target) {
+    const t = tieOf(s.world, a.id, target.id);
+    if (!t || !info.from.includes(t)) return `only from ${info.from.join(' or ')}`;
+  }
+  if (
+    info.above &&
+    target &&
+    realmIndex(realmOfActor(a).realm) <= realmIndex(realmOfActor(target).realm)
+  ) {
+    return 'you need a realm above them';
+  }
   return null;
 }
 
@@ -410,7 +425,7 @@ export interface StepResult {
   read?: Read;
   /** Deeds it made, by id. */
   deeds: number[];
-  /** Effects waiting for P3.4. */
+  /** Effects waiting for P3.4b. */
   deferred: Effect[];
   /** Something you didn't see coming: a misjudged verdict, a cover blown. */
   surprise: string | null;
@@ -510,14 +525,24 @@ function blowCover(w: Working, a: Actor, why: string, seenBy: Actor[]): void {
     if (x && !learners.includes(x)) learners.push(x);
   }
   deed(w, a, 'exposure', learners);
+  // Those it fooled learn the lie: the lies told them land as memories, or the cover itself does.
+  const day = w.s.calendar.day;
   for (const id of fooled) {
-    w.deferred.push({
-      do: 'memory',
-      who: id,
-      about: a.id,
-      reason: 'Lied to me, and I found out',
-      value: -25,
-    });
+    const x = actorIn(w.scene, id);
+    const here = !!x && learners.includes(x);
+    const lies = w.s.world.deeds.filter(
+      (d) => d.kind === 'lie' && d.actor === a.id && d.victim === id,
+    );
+    let world = w.s.world;
+    for (const d of lies) world = learn(world, d.id, x ? learner(x) : { id }, true, day, here);
+    if (lies.length === 0) {
+      world = remember(
+        world,
+        { holder: id, about: a.id, row: 'lied', known: here ? [a.id] : [] },
+        day,
+      );
+    }
+    w.s = { ...w.s, world };
   }
   apply(w, [{ do: 'state-break', id: cover.id, why }]);
   setActor(w, a.id, (x) => ({ ...x, shown: undefined }));
@@ -667,13 +692,16 @@ export function doStep(
       }
       case 'trust':
         if (target) {
-          w.deferred.push({
-            do: 'memory',
-            who: target.id,
-            about: a.id,
-            reason: 'Pressed me hard',
-            value: -5,
-          });
+          apply(w, [
+            {
+              do: 'memory',
+              who: target.id,
+              about: a.id,
+              row: 'bad-turn',
+              value: -5,
+              note: 'Pressed me hard',
+            },
+          ]);
         }
         break;
       case 'noise':
@@ -762,13 +790,19 @@ export function doStep(
               ];
         apply(w, effects);
         if (st.act === 'gift') {
-          w.deferred.push({
-            do: 'memory',
-            who: target.id,
-            about: a.id,
-            reason: 'A gift',
-            value: Math.min(15, n),
-          });
+          const g = giftOf(thing, n);
+          apply(w, [
+            {
+              do: 'memory',
+              who: target.id,
+              about: a.id,
+              row: 'gift',
+              value: g.worth,
+              like: g.kind,
+            },
+          ]);
+        } else if (st.act === 'pay' || st.act === 'buy') {
+          apply(w, [{ do: 'memory', who: target.id, about: a.id, row: 'paid-fairly' }]);
         }
       }
       break;
@@ -812,19 +846,35 @@ export function doStep(
         if (realmIndex(realmOfActor(target).realm) < realmIndex(realmOfActor(a).realm)) {
           w.deferred.push({ do: 'karma', who: a.id, n: -1 });
         }
-        w.deferred.push({
-          do: 'memory',
-          who: target.id,
-          about: a.id,
-          reason: 'Threatened me',
-          value: -20,
-        });
       }
       seenBy = [...new Set([...seenBy, ...(target ? [target] : [])])];
+      if (target) w.s = { ...w.s, world: revealNature(w.s.world, target.id, ['nerve']) };
       break;
     case 'lie':
       // A lie believed is known to nobody; one seen through is known to whoever saw through it.
-      if (check?.read) seenBy = target ? [target] : [];
+      if (check?.read || (check && v === 'short' && target)) seenBy = target ? [target] : [];
+      break;
+    case 'bargain':
+      if (target) w.s = { ...w.s, world: revealNature(w.s.world, target.id, ['hand']) };
+      break;
+    case 'report':
+      // Believed, the report lands on the listener: the accused wronged them, you did them a service.
+      if (passed && target && st.about) {
+        apply(w, [
+          { do: 'memory', who: target.id, about: st.about, row: 'wronged-us' },
+          { do: 'memory', who: target.id, about: a.id, row: 'service' },
+        ]);
+      }
+      break;
+    case 'swear':
+    case 'confess':
+    case 'oath':
+    case 'take-disciple':
+      if (passed && target && info.makes) {
+        apply(w, [{ do: 'tie', a: target.id, b: a.id, kind: info.makes }]);
+      } else if (!passed && target && st.act === 'confess') {
+        apply(w, [{ do: 'memory', who: a.id, about: target.id, row: 'spurned' }]);
+      }
       break;
     case 'read-realm':
       if (target) {
@@ -951,6 +1001,11 @@ export function doStep(
     fight = runSceneFight(w, a, target);
     seenBy = watchers(w.scene, a).filter((x) => x.state === 'present' || x.state === 'down');
     ticks = 1;
+    // A spar or a duel is a contest: the loser remembers it, and the proud make a rival of it.
+    if ((st.act === 'spar' || st.act === 'duel') && fight.winner) {
+      const [winner, loser] = fight.winner === a.side ? [a, target] : [target, a];
+      w.s = { ...w.s, world: contest(w.s.world, winner.id, loser.id, w.s.calendar.day) };
+    }
   }
 
   // The deed the act makes: done in plain sight it is seen; done unseen, nobody knows but you.
@@ -1029,7 +1084,8 @@ export function round(
   scene: Scene,
   steps: Readonly<Record<string, Step>>,
 ): RoundResult {
-  let state = s;
+  // Everyone the players see shows them their outer leans and quirks.
+  let state = meet(s, scene);
   // An open scene, or a noise still ringing, calls the next arrival before anyone acts, so a Wait
   // can skip to it.
   let sc = call(scene, scene.tick);
@@ -1040,7 +1096,19 @@ export function round(
     if (!active(now)) continue;
     const mine = steps[a.id];
     const own = !mine && now.plan?.length ? now.plan[0] : undefined;
-    const st = mine ?? own;
+    // Nobody telling them and no plan of their own: they act on their motives.
+    const intent =
+      !mine && !own && !sc.players.includes(a.id) && now.follows === undefined
+        ? intentOf(state, sc, now)
+        : null;
+    if (intent) state = { ...state, world: revealNature(state.world, a.id, [whyKey(intent.why)]) };
+    if (intent?.law) {
+      const law = LAW[sc.kind];
+      if (law && sc.lawDue === null) sc = { ...sc, lawDue: sc.tick + law.ticks };
+      sc = { ...sc, log: [...sc.log, `${now.name} ${intent.means}.`] };
+      continue;
+    }
+    const st = mine ?? own ?? intent?.step;
     if (!st) continue;
     if (own)
       sc = {
@@ -1067,6 +1135,33 @@ export function round(
     law: law.came,
     surprise: came.surprise ?? law.surprise,
   };
+}
+
+/** What acting on a motive or a lean shows of someone. */
+function whyKey(why: string): string {
+  return [
+    'greed',
+    'ambition',
+    'fear',
+    'loyalty',
+    'family',
+    'revenge',
+    'duty',
+    'pride',
+    'curiosity',
+  ].includes(why)
+    ? `motive:${why}`
+    : why;
+}
+
+/** The players see everyone present: their outer leans and quirks show. */
+function meet(s: GameState, scene: Scene): GameState {
+  let world = s.world;
+  for (const x of scene.actors) {
+    if (scene.players.includes(x.id) || x.state === 'hidden') continue;
+    world = revealNature(world, x.id, meetingShows(actorNature(world, x)));
+  }
+  return world === s.world ? s : { ...s, world };
 }
 
 /** Calls the next arrival if nobody is on the way and the scene is open or a noise rings. */

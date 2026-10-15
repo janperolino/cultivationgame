@@ -1,9 +1,10 @@
 // What lasts (design § The resolver, What lasts): heat on places and powers, the deeds done and
 // who knows of them, lasting states, projects as clocks, what you have learned, and the states of
-// places and kept people. The save carries it as `world` (v20). A deed spreads only through those
+// places and kept people. The save carries it as `world` (v20; memories, standing, ties and the kept in v21). A deed spreads only through those
 // who know it: witnesses, the telling, soul lamps, evidence and divine sense; heat lands on a place
 // when someone there sees it done, and on a power when one of its people learns who did it.
-// Opinion, standing, karma, renown and infamy wait for P3.4, which reads these deeds.
+// Knowing who did a deed lands it as a memory and as standing (opinion.ts); karma, renown and
+// infamy wait for P3.4b.
 import { z } from 'zod';
 import {
   CAPABILITY_IDS,
@@ -18,6 +19,15 @@ import {
   type LastingKind,
 } from '../../content/resolver.ts';
 import { REALM_IDS } from '../../content/realms.ts';
+import {
+  KeptSchema,
+  landDeed,
+  MemorySchema,
+  readStanding,
+  StandingSchema,
+  TieSchema,
+  type Standing,
+} from './opinion.ts';
 
 const RealmStage = z.object({ realm: z.enum(REALM_IDS), stage: z.number().int().min(1) });
 export type RealmStage = z.infer<typeof RealmStage>;
@@ -114,7 +124,15 @@ export const WorldSchema = z.object({
   known: z.array(z.string()),
   places: z.record(z.string(), z.enum(PLACE_STATES)),
   people: z.record(z.string(), z.enum(PERSON_STATES)),
-  /** The next deed's and lasting state's id. */
+  /** What people remember of each other (opinion.ts). */
+  memories: z.array(MemorySchema),
+  /** What powers remember of people. */
+  standing: z.array(StandingSchema),
+  /** What people are to each other. */
+  ties: z.array(TieSchema),
+  /** People the world keeps who aren't named in content: their natures, by id. */
+  kept: z.record(z.string(), KeptSchema),
+  /** The next deed's, lasting state's and memory's id. */
   next: z.number().int().min(1),
 });
 export type World = z.infer<typeof WorldSchema>;
@@ -128,6 +146,10 @@ export function emptyWorld(): World {
     known: [],
     places: {},
     people: {},
+    memories: [],
+    standing: [],
+    ties: [],
+    kept: {},
     next: 1,
   };
 }
@@ -139,6 +161,11 @@ export function heatOf(w: World, holder: string, day: number): number {
   const h = w.heat[holder];
   if (!h) return 0;
   return Math.max(0, h.n - Math.floor(Math.max(0, day - h.day) / HEAT_COOL_DAYS));
+}
+
+/** A power's standing with someone today, held under the cap its heat sets. */
+export function standingOf(w: World, power: string, about: string, day: number): Standing {
+  return readStanding(w, power, about, day, heatOf(w, power, day));
 }
 
 /** Raises (or lowers) heat on a place or power, 0 to 9, from what it stands at today. */
@@ -192,7 +219,7 @@ export function recordDeed(w: World, d: NewDeed, day: number): { world: World; i
   };
   let world: World = { ...w, deeds: [...w.deeds, deed], next: w.next + 1 };
   if (d.witnesses.length > 0) world = landHeat(world, deed.id, d.place, day);
-  for (const who of d.witnesses) world = learn(world, deed.id, who, true, day);
+  for (const who of d.witnesses) world = learn(world, deed.id, who, true, day, true);
   return { world, id: deed.id };
 }
 
@@ -215,15 +242,25 @@ function replaceDeed(w: World, d: Deed): World {
 
 /**
  * Someone comes to know of a deed: that it happened, or who did it as well. Knowing who lands its
- * heat on their power.
+ * heat on their power, and lands it on them as a memory and on their power as standing; `seen`
+ * is that they saw it done, so the doer knows they know.
  */
-export function learn(w: World, id: number, by: Learner, who: boolean, day: number): World {
+export function learn(
+  w: World,
+  id: number,
+  by: Learner,
+  who: boolean,
+  day: number,
+  seen = false,
+): World {
   const d = deedById(w, id);
   if (!d || by.id === d.actor) return w;
   const had = d.knownBy[by.id];
   const knows = { who: who || (had?.who ?? false), power: by.power ?? had?.power ?? null };
   let world = replaceDeed(w, { ...d, knownBy: { ...d.knownBy, [by.id]: knows } });
   if (knows.who && knows.power) world = landHeat(world, id, knows.power, day);
+  if (knows.who)
+    world = landDeed(world, deedById(world, id)!, { ...by, power: knows.power }, day, seen);
   return world;
 }
 

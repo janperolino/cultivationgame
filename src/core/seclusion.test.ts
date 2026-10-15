@@ -8,7 +8,8 @@ import {
   type OriginChoice,
   type OriginId,
 } from '../content/origins.ts';
-import { hasPerson, PATH_PEOPLE, person, regardWords } from '../content/people.ts';
+import { hasPerson, PATH_PEOPLE, person } from '../content/people.ts';
+import { opinion, tieOf } from './resolver/opinion.ts';
 import { stageName } from '../content/realms.ts';
 import {
   cardWho,
@@ -316,7 +317,11 @@ describe('people', () => {
   it('start with the people of their path, named on testing day', () => {
     const s = life('cave-orphan', 'along');
     expect(Object.keys(s.player.people).sort()).toEqual(['aunt-yan', 'sergeant-hou', 'tester-qiu']);
-    expect(s.player.people['aunt-yan']).toMatchObject({ bond: 'kin', regard: 2, realm: null });
+    expect(s.player.people['aunt-yan']).toMatchObject({ realm: null });
+    // What she is to you is a tie, how she feels a memory she brings to testing day.
+    expect(tieOf(s.world, 'player', 'aunt-yan')).toBe('kin');
+    expect(opinion(s.world, 'aunt-yan', 'player', s.calendar.day).total).toBe(25);
+    expect(opinion(s.world, 'aunt-yan', 'player', s.calendar.day).word).toBe('friendly');
     const testing = s.chronicle.find((e) => e.type === 'testing')!;
     expect(testing.actors).toEqual(expect.arrayContaining(['player', 'aunt-yan']));
     expect(personLog(s, 'aunt-yan')).toEqual([testing]);
@@ -339,12 +344,14 @@ describe('people', () => {
     // A card through the {mentor} slot reaches the path's mentor; feelings move in words.
     s = pend(s, 'sect-summons', 2);
     s = resolveCard(s, 2, 0).state;
-    expect(s.player.people['senior-zhao']!.regard).toBe(before.regard + 1);
-    expect(regardWords(s.player.people['senior-zhao']!.regard)).toBe('thinks well of you');
+    const zhao = opinion(s.world, 'senior-zhao', 'player', s.calendar.day);
+    expect(zhao.lines.map((l) => l.memory.row)).toContain('good-turn');
+    expect(zhao.word).toBe('friendly');
     // Meeting someone new starts a record; a mortal has no realm.
     s = pend(s, 'junior-begging', 3);
     s = resolveCard(s, 3, 0).state;
-    expect(s.player.people['little-ning']).toMatchObject({ bond: 'acquaintance', regard: 0 });
+    expect(s.player.people['little-ning']).toBeDefined();
+    expect(tieOf(s.world, 'player', 'little-ning')).toBeNull();
     expect(person('aunt-yan').mortal).toBe(true);
   });
 });
