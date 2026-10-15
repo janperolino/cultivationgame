@@ -60,9 +60,11 @@ import {
   realm as realmOf,
   realmIndex,
   realmScale,
+  REALM_IDS,
   tierStep,
   type RealmId,
 } from '../../content/realms.ts';
+import { BACKER_ONE_IN, LUCKY_ROGUE_ONE_IN } from '../../content/resolver.ts';
 import {
   BORDER_WILDS_NAMES,
   type BeastTemplate,
@@ -71,7 +73,7 @@ import {
 import { GUARDS, type Technique } from '../../content/techniques.ts';
 import { gradesStages } from '../grades.ts';
 import { npcIntent } from '../intent.ts';
-import type { Rng } from '../rng.ts';
+import { Rng } from '../rng.ts';
 import { armor, combatant, guardArt, NO_GUARDS, weapon, type Combatant } from './combatant.ts';
 import { damagePhase } from './damage.ts';
 import { rungSize, withFloor, type Rung } from './sheet.ts';
@@ -214,7 +216,41 @@ export interface Npc {
   storage: string | null;
   /** Key items and parts that drop with them. */
   carries: string[];
+  /** A lucky rogue's find: the slot rolled at the chosen's bias, at least gold (P3.5 names it). */
+  find?: { slot: LuckySlot };
+  /** A great-sect young master's backer: the "my father is…" tie (P3.4b). */
+  backer?: { id: string; name: string; realm: RealmId; stage: number };
   combatant: Combatant;
+}
+
+export type LuckySlot = 'method' | 'technique' | 'weapon' | 'armor';
+
+/** Luck has its own stream, keyed off the NPC's seed, so it never shifts their other rolls. */
+const LUCK_SALT = 0x5bd1e995;
+
+/**
+ * Luck, rolled apart from everything else: one rogue in 50 has found something, one slot at the
+ * chosen's bias and at least gold; one great-sect young master in 5 has a backer two realms up.
+ */
+function rollLuck(
+  seed: number,
+  pedigree: PedigreeId,
+  realmId: RealmId,
+  id: string,
+): { find?: { slot: LuckySlot; rarity: RarityId }; backer?: Npc['backer'] } {
+  const luck = new Rng((seed ^ LUCK_SALT) >>> 0);
+  if (pedigree === 'rogue' && luck.int(1, LUCKY_ROGUE_ONE_IN) === 1) {
+    const slot = pickOne(luck, ['method', 'technique', 'weapon', 'armor'] as const);
+    const r = rollBiased(luck, pedigreeBias('chosen', realmId));
+    return { find: { slot, rarity: rarityRank(r) >= rarityRank('gold') ? r : 'gold' } };
+  }
+  if (pedigree === 'great-sect' && luck.int(1, BACKER_ONE_IN) === 1) {
+    const i = Math.min(REALM_IDS.length - 1, realmIndex(realmId) + 2);
+    return {
+      backer: { id: `${id}-backer`, name: `Elder ${name(luck)}`, realm: REALM_IDS[i]!, stage: 1 },
+    };
+  }
+  return {};
 }
 
 /** An untrained ladder: Qi Condensation's first layer, which the floor lifts. */
@@ -418,6 +454,13 @@ export function generateCultivator(
     if (slot === 'method') rolls.method.qi = atLeastGold(rolls.method.qi);
     else rolls[slot] = atLeastGold(rolls[slot]);
   }
+  const id = opts.id ?? `${t.id}-${seed >>> 0}`;
+  const luck = rollLuck(seed, t.pedigree, realmId, id);
+  if (luck.find) {
+    const { slot, rarity } = luck.find;
+    if (slot === 'method') rolls.method.qi = rarity;
+    else rolls[slot] = rarity;
+  }
   const gradeRoll = GRADE_BY_RARITY[roll()];
   const heavenlyOk = rarityRank(rolls.method.qi) >= rarityRank('gold');
   rolls.grade = gradeRoll === 'heavenly' && !heavenlyOk ? 'perfect' : gradeRoll;
@@ -468,7 +511,6 @@ export function generateCultivator(
     }
   }
   const who = name(rng);
-  const id = opts.id ?? `${t.id}-${seed >>> 0}`;
   return {
     template: t.id,
     seed,
@@ -483,6 +525,8 @@ export function generateCultivator(
     consumables,
     storage: STORAGE_BY_REALM[Math.min(realmIndex(realmId), STORAGE_BY_REALM.length - 1)]!,
     carries: [...(t.carries ?? [])],
+    ...(luck.find ? { find: { slot: luck.find.slot } } : {}),
+    ...(luck.backer ? { backer: luck.backer } : {}),
     combatant: build({
       id,
       name: who,

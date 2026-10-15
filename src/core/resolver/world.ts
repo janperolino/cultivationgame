@@ -1,10 +1,12 @@
 // What lasts (design § The resolver, What lasts): heat on places and powers, the deeds done and
 // who knows of them, lasting states, projects as clocks, what you have learned, and the states of
-// places and kept people. The save carries it as `world` (v20; memories, standing, ties and the kept in v21). A deed spreads only through those
+// places and kept people. The save carries it as `world` (v20; memories, standing, ties and the
+// kept in v21; bonds, karma, renown and infamy, what you've heard and memberships in v22). A deed
+// spreads only through those
 // who know it: witnesses, the telling, soul lamps, evidence and divine sense; heat lands on a place
 // when someone there sees it done, and on a power when one of its people learns who did it.
-// Knowing who did a deed lands it as a memory and as standing (opinion.ts); karma, renown and
-// infamy wait for P3.4b.
+// Knowing who did a deed lands it as a memory and as standing (opinion.ts) and carries its renown
+// or infamy across its region (names.ts); its karma lands as it is done, seen or not.
 import { z } from 'zod';
 import {
   CAPABILITY_IDS,
@@ -19,6 +21,8 @@ import {
   type LastingKind,
 } from '../../content/resolver.ts';
 import { REALM_IDS } from '../../content/realms.ts';
+import { BOND_IDS } from '../../content/bonds.ts';
+import { deedKarma, HOME_REGION } from '../../content/resolver.ts';
 import {
   KeptSchema,
   landDeed,
@@ -28,6 +32,7 @@ import {
   TieSchema,
   type Standing,
 } from './opinion.ts';
+import { addKarma, landFame } from './names.ts';
 
 const RealmStage = z.object({ realm: z.enum(REALM_IDS), stage: z.number().int().min(1) });
 export type RealmStage = z.infer<typeof RealmStage>;
@@ -54,8 +59,12 @@ export const DeedSchema = z.object({
   evidence: z.array(z.string()),
   /** Everyone who knows of it, by id. */
   knownBy: z.record(z.string(), Knower),
-  /** The places and powers its heat has landed on, once each. */
+  /** The places and powers its heat has landed on, once each; "fame:<region>" once its name has. */
   landed: z.array(z.string()),
+  /** The region it was done in, whose renown and infamy it moves. */
+  region: z.string().optional(),
+  /** Staged: a death that never happened, believed by whoever knows of it. */
+  staged: z.boolean().optional(),
 });
 export type Deed = z.infer<typeof DeedSchema>;
 
@@ -86,6 +95,15 @@ const StateData = z.discriminatedUnion('kind', [
     until: z.number(),
   }),
   z.object({ kind: z.literal('captive'), held: z.string(), by: z.string() }),
+  z.object({
+    kind: z.literal('trace'),
+    /** The power whose elders it marks you for. */
+    power: z.string().nullable(),
+    /** How strong it is: the sect's or the backer's realm. */
+    strength: RealmStage,
+    /** Whose death left it. */
+    victim: z.string(),
+  }),
 ]);
 export type StateData = z.infer<typeof StateData>;
 
@@ -115,6 +133,43 @@ export const ProjectSchema = z.object({
 });
 export type Project = z.infer<typeof ProjectSchema>;
 
+/** Why a follower follows (content/bonds.ts). */
+export const BondSchema = z.object({
+  follower: z.string(),
+  leader: z.string(),
+  kind: z.enum(BOND_IDS),
+  /** A paid follower's monthly wage in low-grade stones, and the day it's paid through. */
+  wage: z.number().min(0).optional(),
+  paidTo: z.number().optional(),
+  /** A shared goal: the project. */
+  goal: z.string().optional(),
+  since: z.number(),
+  /** The last day they were within the leader's reach, for a fear bond. */
+  seen: z.number(),
+  /** Left under orders at a place, which keeps them in reach while you're there. */
+  posted: z.string().optional(),
+});
+export type Bond = z.infer<typeof BondSchema>;
+
+/** Points of renown or infamy, the value at its last gain and that day's date. */
+const Points = z.object({ n: z.number().min(0), day: z.number() });
+/** Someone's name in one region. */
+export const FameSchema = z.object({ renown: Points, infamy: Points });
+export type Fame = z.infer<typeof FameSchema>;
+
+/** Something you were told: who told you and whether it's true, which you can't see. */
+export const HeardSchema = z.object({
+  fact: z.string(),
+  from: z.string(),
+  day: z.number(),
+  true: z.boolean(),
+});
+export type Heard = z.infer<typeof HeardSchema>;
+
+/** A thin membership (design § NPC basics): who belongs to which power, and since when. */
+export const MemberSchema = z.object({ who: z.string(), power: z.string(), since: z.number() });
+export type Member = z.infer<typeof MemberSchema>;
+
 export const WorldSchema = z.object({
   heat: z.record(z.string(), Heat),
   deeds: z.array(DeedSchema),
@@ -132,6 +187,16 @@ export const WorldSchema = z.object({
   ties: z.array(TieSchema),
   /** People the world keeps who aren't named in content: their natures, by id. */
   kept: z.record(z.string(), KeptSchema),
+  /** Why each follower follows. */
+  bonds: z.array(BondSchema),
+  /** Heaven's ledger, by actor: never shown, never anyone's opinion. */
+  karma: z.record(z.string(), z.number()),
+  /** Renown and infamy, by person and then by region. */
+  fame: z.record(z.string(), z.record(z.string(), FameSchema)),
+  /** What you have been told, true or not, until you see it yourself. */
+  heard: z.array(HeardSchema),
+  /** Who belongs to which power. */
+  members: z.array(MemberSchema),
   /** The next deed's, lasting state's and memory's id. */
   next: z.number().int().min(1),
 });
@@ -150,6 +215,11 @@ export function emptyWorld(): World {
     standing: [],
     ties: [],
     kept: {},
+    bonds: [],
+    karma: {},
+    fame: {},
+    heard: [],
+    members: [],
     next: 1,
   };
 }
@@ -198,6 +268,12 @@ export interface NewDeed {
   evidence?: string[];
   /** Who saw it done, and so know who did it. */
   witnesses: readonly Learner[];
+  /** The region it was done in; the Border Wilds when unnamed. */
+  region?: string;
+  /** Done to someone of a lower realm, for the karma of a cruelty. */
+  weaker?: boolean;
+  /** A death that never happened. */
+  staged?: boolean;
 }
 
 /**
@@ -216,8 +292,12 @@ export function recordDeed(w: World, d: NewDeed, day: number): { world: World; i
     evidence: [...(d.evidence ?? [])],
     knownBy: {},
     landed: [],
+    region: d.region ?? HOME_REGION,
+    ...(d.staged ? { staged: true } : {}),
   };
   let world: World = { ...w, deeds: [...w.deeds, deed], next: w.next + 1 };
+  // Heaven counts it as it is done, whoever saw.
+  if (!d.staged) world = addKarma(world, d.actor, deedKarma(d.kind, d.weaker ?? false));
   if (d.witnesses.length > 0) world = landHeat(world, deed.id, d.place, day);
   for (const who of d.witnesses) world = learn(world, deed.id, who, true, day, true);
   return { world, id: deed.id };
@@ -259,8 +339,10 @@ export function learn(
   const knows = { who: who || (had?.who ?? false), power: by.power ?? had?.power ?? null };
   let world = replaceDeed(w, { ...d, knownBy: { ...d.knownBy, [by.id]: knows } });
   if (knows.who && knows.power) world = landHeat(world, id, knows.power, day);
-  if (knows.who)
+  if (knows.who && !d.staged) {
     world = landDeed(world, deedById(world, id)!, { ...by, power: knows.power }, day, seen);
+    world = landFame(world, deedById(world, id)!, day);
+  }
   return world;
 }
 

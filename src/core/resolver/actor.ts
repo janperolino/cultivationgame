@@ -17,6 +17,7 @@ import { stats } from '../stats.ts';
 import { mastery } from '../techniques.ts';
 import type { GameState } from '../state.ts';
 import { template } from '../../content/roster.ts';
+import { TRACE_BY_PEDIGREE } from '../../content/resolver.ts';
 import { statesOf, woundShare, type RealmStage } from './world.ts';
 import type { Step } from './plan.ts';
 
@@ -50,6 +51,10 @@ export interface Actor {
   backing?: 'sect' | 'great-sect' | null;
   /** A soul lamp kept for them: their power learns when they die, and with `face` who killed them. */
   lamp?: 'lamp' | 'face';
+  /** A death talisman: killing them leaves a trace this strong (P3.4b). */
+  talisman?: RealmStage;
+  /** Who backs them, a realm or more above: the "my father is…" tie (P3.4b). */
+  backer?: { id: string; name: string; realm: RealmStage };
   /** Cornered: a desperate man doesn't scare. */
   desperate?: boolean;
   /** The people they know by sight, who a disguise doesn't fool if they see through it. */
@@ -113,6 +118,7 @@ const STAT_KEYS: StatId[] = [
   'find',
   'intimidate',
   'concealment',
+  'traceSevering',
 ];
 
 /** The player, or any cultivator the game keeps, as an actor; their world states read in. */
@@ -151,8 +157,20 @@ export function actorFromCultivator(s: GameState, id = s.player.id, side = YOU):
   };
 }
 
-/** A generated NPC as an actor, on their side; mastery is their rolled one on every technique. */
+/**
+ * A generated NPC as an actor, on their side; mastery is their rolled one on every technique. A
+ * great sect's or sacred land's own carry a death talisman as strong as their sect, and a backer
+ * makes it as strong as the backer if that is stronger.
+ */
 export function actorFromNpc(n: Npc, extra: Partial<Actor> = {}): Actor {
+  const sect = n.pedigree ? TRACE_BY_PEDIGREE[n.pedigree] : undefined;
+  const backer = n.backer
+    ? {
+        id: n.backer.id,
+        name: n.backer.name,
+        realm: { realm: n.backer.realm, stage: n.backer.stage },
+      }
+    : undefined;
   const c = n.combatant;
   const techniques: Record<string, number> = {};
   for (const t of Object.keys(c.techniques)) techniques[t] = n.rolls.mastery;
@@ -172,6 +190,8 @@ export function actorFromNpc(n: Npc, extra: Partial<Actor> = {}): Actor {
     wound: 0,
     state: 'present',
     combatant: c,
+    ...(sect ? { talisman: sect } : {}),
+    ...(backer ? { backer } : {}),
     ...extra,
   };
 }

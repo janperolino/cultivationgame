@@ -156,23 +156,116 @@ export const CLOSE_WOUND = { share: 0.1, days: 3 } as const;
 /**
  * What a deed is, for heat and who knows. Heat lands on a place when someone there sees it done
  * and on a power when one of its people learns who did it (design § The resolver, What lasts).
+ * Karma is heaven's ledger and lands as the deed is done, seen or not; a `weaker` deed costs it
+ * only when done to someone of a lower realm (P3.4b). Infamy and renown are the points it carries
+ * across its region once someone learns who did it.
  */
 export const DEEDS = {
-  theft: { name: 'a theft', heat: 1 },
-  robbery: { name: 'a robbery', heat: 1 },
+  theft: { name: 'a theft', heat: 1, karma: -1, weaker: true, infamy: 1 },
+  robbery: { name: 'a robbery', heat: 1, karma: -1, weaker: true, infamy: 1 },
   assault: { name: 'an attack', heat: 1 },
-  killing: { name: 'a killing', heat: 3 },
-  massacre: { name: 'a massacre', heat: 5 },
+  /** Finishing the fallen: a life that didn't need taking. A fair fight's dead are not a deed. */
+  killing: { name: 'a killing', heat: 3, karma: -5, infamy: 2 },
+  massacre: { name: 'a massacre', heat: 5, karma: -50, infamy: 8 },
   lie: { name: 'a lie', heat: 0 },
-  threat: { name: 'a threat', heat: 0 },
+  threat: { name: 'a threat', heat: 0, karma: -1, weaker: true },
   trespass: { name: 'a trespass', heat: 0 },
   exposure: { name: 'a cover blown', heat: 1 },
-  frame: { name: 'a frame', heat: 0 },
-  betrayal: { name: 'a betrayal', heat: 0 },
-  kidnapping: { name: 'a kidnapping', heat: 3 },
-} as const;
+  frame: { name: 'a frame', heat: 0, karma: -1, weaker: true, infamy: 3 },
+  betrayal: { name: 'a betrayal', heat: 0, karma: -20, infamy: 3 },
+  kidnapping: { name: 'a kidnapping', heat: 3, karma: -1, weaker: true, infamy: 3 },
+  /** A life saved: someone who was down healed. */
+  rescue: { name: 'a life saved', heat: 0, karma: 5, renown: 2 },
+  /** A duel or a spar won in front of people. */
+  victory: { name: 'a win', heat: 0, renown: 1 },
+  /** A mission done for a power (its trips come with P3.7, its posts with M5). */
+  mission: { name: 'a mission', heat: 0, renown: 1 },
+  /** A death, real or staged: a decoy believed is a death the hunter knows of and tells. */
+  death: { name: 'a death', heat: 0 },
+} as const satisfies Record<string, DeedInfo>;
 export type DeedKind = keyof typeof DEEDS;
 export const DEED_KINDS = Object.keys(DEEDS) as DeedKind[];
+
+export interface DeedInfo {
+  name: string;
+  heat: number;
+  karma?: number;
+  weaker?: boolean;
+  infamy?: number;
+  renown?: number;
+}
+
+export function deedInfo(kind: DeedKind): DeedInfo {
+  return DEEDS[kind];
+}
+
+/** Karma a deed moves, done to someone weaker or not (design § The resolver, What lasts). */
+export function deedKarma(kind: DeedKind, weaker: boolean): number {
+  const d = deedInfo(kind);
+  if (!d.karma) return 0;
+  return d.weaker && !weaker ? 0 : d.karma;
+}
+/** Healing someone who is up: a small mercy, to someone weaker. */
+export const MERCY_KARMA = 1;
+/** Paying a ransom for someone else, or freeing a captive. */
+export const FREED_KARMA = 5;
+
+// ── Renown and infamy (P3.4b) ────────────────────────────────────────────────────────────────
+
+/** The points each level needs, 1 to 9, per region (P3.4b's talk). */
+export const FAME_LEVELS = [1, 2, 4, 7, 11, 16, 22, 29, 37] as const;
+/** A point fades each season after the last gain. */
+export const FAME_COOL_DAYS = 90;
+/** How far a level carries your name: 3 across a town, 6 across the region. */
+export const FAME_WORDS = [
+  { at: 0, word: 'unknown' },
+  { at: 1, word: 'a few have heard' },
+  { at: 3, word: 'known across a town' },
+  { at: 6, word: 'known across the region' },
+  { at: 9, word: 'a name beyond the region' },
+] as const;
+/** Strangers know your name from this level up in their region. */
+export const NAME_KNOWN_AT = 3;
+/** Killing someone this infamous there is renown, not infamy. */
+export const VILLAIN_AT = 3;
+export const VILLAIN_RENOWN = 3;
+/** Renown in a people check, to anyone who knows your name: anyone honors renown. */
+export const RENOWN_LEVERAGE = 1.25;
+/** The region a scene stands in when it names none. */
+export const HOME_REGION = 'qm-bianhuang';
+
+// ── Traces (P3.4b) ───────────────────────────────────────────────────────────────────────────
+
+/**
+ * A death talisman's trace: a great sect's core disciple carries one, and killing them marks the
+ * killer's face for their elders. Its strength is the sect's or the backer's, whichever is
+ * greater; these are the sect's by pedigree when nothing names it.
+ */
+export const TRACE_BY_PEDIGREE: Partial<Record<string, { realm: RealmId; stage: number }>> = {
+  'great-sect': { realm: 'core-formation', stage: 1 },
+  'sacred-land': { realm: 'nascent-soul', stage: 1 },
+};
+/** A soul erasing a trace needs at least this realm, and the Soul tree's Severing to do it. */
+export const ERASE_FROM: RealmId = 'foundation-establishment';
+
+// ── Backers (P3.4b) ──────────────────────────────────────────────────────────────────────────
+
+/** A backer a realm above their charge makes them feel safe as a sect does; two or more, a great sect. */
+export const BACKER_COMPOSURE = { one: 1.5, two: 2 } as const;
+/**
+ * A backer's projection, played in P3.9: it arrives when its charge falls under this share of HP,
+ * fights at a third of the backer's lines for three turns, and opens by asking for face.
+ */
+export const PROJECTION = {
+  below: 0.25,
+  share: 1 / 3,
+  turns: 3,
+  line: 'Fellow daoist, give me some face.',
+} as const;
+/** One generated great-sect young master in this many has a backer. */
+export const BACKER_ONE_IN = 5;
+/** One rogue in this many has found something (design § NPC basics, The lucky rogue). */
+export const LUCKY_ROGUE_ONE_IN = 50;
 
 // ── Acts ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -483,6 +576,15 @@ export const ACTS = {
   item: { verb: 'use', name: 'use an item', target: 'item' },
   technique: { verb: 'use', name: 'use a technique', loud: true },
   heal: { verb: 'use', name: 'heal', target: 'person' },
+  /** A trace erased from a soul: your soul against the trace's strength (P3.4b). */
+  erase: {
+    verb: 'use',
+    name: 'erase a trace',
+    target: 'person',
+    ticks: 4,
+    costs: ['wound', 'time'],
+    short: 'holds',
+  },
   open: { verb: 'use', name: 'open', target: 'feature' },
   // Cultivate
   sit: { verb: 'cultivate', name: 'sit and cultivate', ticks: 4 },
@@ -658,6 +760,11 @@ export const LASTING = {
     name: 'Captive',
     tested: 'held by you or holding you',
     breaks: 'a ransom or an escape',
+  },
+  trace: {
+    name: 'Trace',
+    tested: "any of the power's people who sees your face",
+    breaks: 'erased by a soul stronger than the trace, or a formation (M4)',
   },
 } as const;
 export type LastingKind = keyof typeof LASTING;

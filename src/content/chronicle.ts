@@ -105,6 +105,15 @@ function cardOutcome(d: EventData): CardOutcome {
 
 type Template = (d: EventData, who: Who) => string;
 
+/** How a follower's bond ended, as the chronicle says it. */
+const FOLLOWER_ENDS: Record<string, string> = {
+  unpaid: 'goes unpaid and leaves',
+  loyalty: 'has had enough and leaves',
+  fear: 'slips away from',
+  goal: 'has what they came for and parts from',
+  turned: 'turns on',
+};
+
 export const EVENT_TEMPLATES: Record<string, Template> = {
   /** A line written before the chronicle was typed, kept as it was. */
   legacy: (d) => s(d.text),
@@ -163,6 +172,8 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
     d.technique
       ? `${technique(s(d.technique)).name} reaches ${MASTERY[n(d.level)]!.name}; the form finally clicks.`
       : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
+  // A follower who left or turned (P3.4b): the card P3.12 writes says it at more length.
+  follower: (d, w) => `${s(d.name)} ${FOLLOWER_ENDS[s(d.why)] ?? 'leaves'} ${w.name}.`,
   spar: (d, w) =>
     `${w.name} spars with ${s(d.foe)} ${SPAR_ENDS[s(d.result)] ?? 'and walks away'}${n(d.turns) > 0 ? ` in ${n(d.turns)} exchange${n(d.turns) === 1 ? '' : 's'}` : ''}.`,
   // A node or manual a save names but the game no longer holds (a made-up one, a removed one) is
@@ -292,6 +303,7 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   intent: 'mastery',
   death: 'death',
   spar: 'fight',
+  follower: 'people',
   node: 'learned',
   manual: 'learned',
   copy: 'learned',

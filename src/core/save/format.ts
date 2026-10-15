@@ -33,7 +33,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -737,6 +737,25 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       next,
     };
     return { ...old, version: 21, state: { ...s, player: { ...p, people }, world } };
+  },
+
+  // v21, P3.4: followers were a tie with no reason behind it, and karma, renown and infamy waited.
+  // v22 keeps bonds, karma, renown and infamy, what you've heard and memberships in the world: no
+  // karma, no name anywhere, nothing heard, no membership, and anyone who followed you does so out
+  // of loyalty.
+  21: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const you = typeof p.id === 'string' ? p.id : 'player';
+    const w = (s.world ?? {}) as Raw;
+    const day =
+      typeof (s.calendar as Raw | undefined)?.day === 'number' ? (s.calendar as Raw).day : 0;
+    const ties = (Array.isArray(w.ties) ? w.ties : []) as Raw[];
+    const bonds = ties
+      .filter((t) => t.kind === 'follower' && t.b === you && typeof t.a === 'string')
+      .map((t) => ({ follower: t.a, leader: you, kind: 'loyalty', since: day, seen: day }));
+    const world = { ...w, bonds, karma: {}, fame: {}, heard: [], members: [] };
+    return { ...old, version: 22, state: { ...s, world } };
   },
 };
 

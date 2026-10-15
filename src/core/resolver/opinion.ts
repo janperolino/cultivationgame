@@ -530,20 +530,26 @@ export function contest(w: World, winner: string, loser: string, day: number): W
   return world;
 }
 
-/** Who would act on what they are to you, and how: a card at most once a season (P3.12). */
+/**
+ * Who would act on what they are to you, and how: a card at most once a season (P3.12). Nobody
+ * hunts someone they believe dead.
+ */
 export function grudges(
   w: World,
   about: string,
   day: number,
 ): { who: string; how: 'hunt' | 'avenge' | 'challenge' }[] {
   const out: { who: string; how: 'hunt' | 'avenge' | 'challenge' }[] = [];
+  const dead = (h: string) =>
+    w.deeds.some((d) => d.kind === 'death' && d.victim === about && !!d.knownBy[h]);
   for (const t of tiesOf(w, about)) {
+    if (dead(t.other)) continue;
     if (t.kind === 'enemy') out.push({ who: t.other, how: 'hunt' });
     else if (t.kind === 'sworn-enemy') out.push({ who: t.other, how: 'avenge' });
     else if (t.kind === 'rival') out.push({ who: t.other, how: 'challenge' });
   }
   for (const m of w.memories) {
-    if (m.about !== about || out.some((o) => o.who === m.holder)) continue;
+    if (m.about !== about || out.some((o) => o.who === m.holder) || dead(m.holder)) continue;
     if (MEMORIES[m.row].fade === null && opinion(w, m.holder, about, day).word === 'hostile') {
       out.push({ who: m.holder, how: 'hunt' });
     }

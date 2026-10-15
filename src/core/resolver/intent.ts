@@ -5,13 +5,15 @@
 // loots the fallen, ambition takes the scene's prize, pride answers an insult or a threat,
 // curiosity watches. The leans bend it: the cruel finish the fallen, the craven flee sooner, the
 // reckless fight what is beyond them, the hot-tempered answer an insult with blows. What they act
-// on is what you learn of them. A plan given them overrides it all.
+// on is what you learn of them. A plan given them overrides it all. Before any motive, a power's
+// people who see a face its death talisman marked come at it, or call the law if it is past them.
 import { BEYOND_RATIO, LAW } from '../../content/resolver.ts';
 import { realmIndex } from '../../content/realms.ts';
 import type { AxisId, MotiveId } from '../../content/personality.ts';
 import type { GameState } from '../state.ts';
 import { realmOfActor, realmSizeOf, type Actor } from './actor.ts';
 import { readRealm } from './check.ts';
+import { traceFor } from './backers.ts';
 import { lean, opinion, tieOf } from './opinion.ts';
 import { LOVE_TIES } from '../../content/people.ts';
 import { step, type Step } from './plan.ts';
@@ -23,8 +25,8 @@ export interface Intent {
   step?: Step;
   /** They call the law on a deed they saw. */
   law?: boolean;
-  /** What moved them: a motive, or a lean: what those watching learn of them. */
-  why: MotiveId | AxisId;
+  /** What moved them: a motive, or a lean: what those watching learn of them; or a trace seen. */
+  why: MotiveId | AxisId | 'trace';
   /** The scene's line for it: "means to flee". */
   means: string;
 }
@@ -75,6 +77,21 @@ export function intentOf(s: GameState, scene: Scene, a: Actor): Intent | null {
   if (nerve <= -1) {
     const above = present.find((x) => readAbove(a, x) >= (nerve <= -2 ? 0 : 1));
     if (above) return { step: step('flee'), why: 'nerve', means: 'means to run' };
+  }
+  // A face their power's death talisman marked: they come at it, or call the law if it's past them.
+  if (a.power) {
+    const marked = present.find((x) => !x.disguised && traceFor(w, x.id, a.power!, day));
+    if (marked) {
+      if (!pastMe(a, marked))
+        return {
+          step: step('attack', { target: marked.id }),
+          why: 'trace',
+          means: `knows ${marked.name}'s face from the trace, and attacks`,
+        };
+      if (LAW[scene.kind] && scene.lawDue === null) {
+        return { law: true, why: 'trace', means: `knows ${marked.name}'s face, and calls the law` };
+      }
+    }
   }
   // The hot-tempered answer an insult or a threat with blows.
   const insulted = (x: Actor) =>

@@ -11,6 +11,7 @@ import {
   USE_MAX,
   VERBS,
 } from '../../content/resolver.ts';
+import { BOND_IDS } from '../../content/bonds.ts';
 import { OFFERS } from '../../content/personality.ts';
 import { REALM_IDS } from '../../content/realms.ts';
 
@@ -34,8 +35,12 @@ export const StepSchema = z
     n: z.number().int().min(1).optional(),
     /** A talk's offer, aimed at one of their motives or a quirk's way in; it counts only if they have it. */
     offer: z.enum(OFFERS).optional(),
-    /** Who a talk is about: the one a report accuses. */
+    /** Who a talk is about: the one a report accuses, the captive a ransom frees. */
     about: z.string().optional(),
+    /** A recruit's bond: pay (the default), loyalty, fear or a shared goal. */
+    bond: z.enum(BOND_IDS).optional(),
+    /** A shared goal's project, by id. */
+    goal: z.string().optional(),
     /** An item held and shown as proof: a token, a robe. */
     prop: z.string().optional(),
     /** What backs a threat: a weapon drawn, a technique shown. */

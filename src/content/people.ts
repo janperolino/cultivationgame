@@ -176,6 +176,9 @@ export const LOVE_TIES: readonly TieId[] = [
   'disciple',
   'guardian',
   'ward',
+  // A backer stands behind their charge as kin would (P3.4b).
+  'backer',
+  'backed',
 ];
 /** The ties that carry it at half; members of the same power do too. */
 export const HALF_TIES: readonly TieId[] = ['friend'];

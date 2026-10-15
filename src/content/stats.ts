@@ -353,6 +353,12 @@ const BASE_STATS = {
     unit: 'stages',
     what: 'how many stages below your realm you can show',
   },
+  // Read by the resolver's erase (P3.4b): a trace on a soul weaker than yours can be cut away.
+  traceSevering: {
+    name: 'Severing the trace',
+    unit: 'points',
+    what: 'erasing a trace left on a soul, if your soul is stronger than the trace',
+  },
   flight: { name: 'Flight', unit: 'percent', what: 'how far you fly in a day', arrives: 'the map' },
   divineSense: {
     name: 'Divine sense',

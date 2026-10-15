@@ -1,14 +1,17 @@
 // The one fixed list of effects (design § The resolver, What lasts): everything a step, a scene
 // or the narrator can change. GLM picks from this list and can't add to it, and a new system adds
 // an effect only when it brings a new kind of state. Memories, standing and ties land (P3.4);
-// bonds, karma, renown and infamy are on the list and land in P3.4b, which gives them their home:
-// until then applying one hands it back as deferred.
+// bonds, karma, renown, infamy and membership (P3.4b), which brought a new kind of state.
 import { z } from 'zod';
 import { MEMORY_IDS, STANDING_IDS } from '../../content/memories.ts';
 import { KIN_RELATIONS, TIE_IDS } from '../../content/people.ts';
 import { GIFT_KINDS } from '../../content/personality.ts';
 import { PERSON_STATES, PLACE_STATES, TICKS_PER_DAY } from '../../content/resolver.ts';
+import { BOND_IDS } from '../../content/bonds.ts';
 import { addItem, withPlayer, type GameState } from '../state.ts';
+import { endBond, makeBond } from './followers.ts';
+import { see } from './knows.ts';
+import { addFame, addKarma, join, leave } from './names.ts';
 import { addStanding, addTie, remember } from './opinion.ts';
 import type { Scene } from './scene.ts';
 import {
@@ -63,15 +66,21 @@ export const EffectSchema = z.discriminatedUnion('do', [
     kind: z.enum(TIE_IDS),
     relation: z.enum(KIN_RELATIONS).optional(),
   }),
-  /** Why a follower follows (P3.4b). */
+  /** Why a follower follows: `who` follows `with` for this bond, or stops. */
   z.object({
     do: z.literal('bond'),
     who: Who,
     with: Who,
-    bond: z.enum(['pay', 'loyalty', 'fear', 'goal']),
+    bond: z.enum(BOND_IDS),
+    /** A paid follower's monthly wage. */
+    wage: z.number().min(0).optional(),
+    /** A shared goal's project. */
+    goal: z.string().optional(),
+    /** The bond ends. */
+    ends: z.boolean().optional(),
   }),
   z.object({ do: z.literal('heat'), holder: z.string(), n: z.number().int() }),
-  /** Heaven's ledger (P3.4). */
+  /** Heaven's ledger: moves whether or not anyone saw. */
   z.object({ do: z.literal('karma'), who: Who, n: z.number().int() }),
   z.object({ do: z.literal('renown'), who: Who, region: z.string(), n: z.number().int() }),
   z.object({ do: z.literal('infamy'), who: Who, region: z.string(), n: z.number().int() }),
@@ -86,21 +95,21 @@ export const EffectSchema = z.discriminatedUnion('do', [
   z.object({ do: z.literal('project'), id: z.string(), steps: z.number().int() }),
   z.object({ do: z.literal('place'), id: z.string(), state: z.enum(PLACE_STATES) }),
   z.object({ do: z.literal('person'), id: z.string(), state: z.enum(PERSON_STATES) }),
+  /** Joining or leaving a power: a thin membership (P3.4b). */
+  z.object({
+    do: z.literal('member'),
+    who: Who,
+    power: z.string(),
+    joins: z.boolean(),
+    /** The region whose map it gives. */
+    region: z.string().optional(),
+  }),
 ]);
 export type Effect = z.infer<typeof EffectSchema>;
-
-/** The effects P3.4b gives a home; until then they come back unapplied. */
-const DEFERRED = new Set<Effect['do']>(['bond', 'karma', 'renown', 'infamy']);
-
-export function isDeferred(e: Effect): boolean {
-  return DEFERRED.has(e.do);
-}
 
 export interface Applied {
   state: GameState;
   scene: Scene | null;
-  /** Effects waiting for P3.4b. */
-  deferred: Effect[];
 }
 
 /** Changes one actor in the scene. */
@@ -121,14 +130,9 @@ export function applyEffects(
 ): Applied {
   let state = s;
   let sc = scene;
-  const deferred: Effect[] = [];
   const day = s.calendar.day;
   const you = s.player.id;
   for (const e of effects) {
-    if (isDeferred(e)) {
-      deferred.push(e);
-      continue;
-    }
     switch (e.do) {
       case 'time':
         if (sc) sc = { ...sc, tick: sc.tick + e.ticks };
@@ -210,12 +214,42 @@ export function applyEffects(
         state = { ...state, world: addHeat(state.world, e.holder, e.n, day) };
         break;
       case 'knowledge': {
+        // Seen for yourself: what you heard of it settles, and a lie about it is found out.
         const id = `${e.kind}:${e.id}`;
-        if (!state.world.known.includes(id)) {
-          state = { ...state, world: { ...state.world, known: [...state.world.known, id] } };
-        }
+        const place = sc?.place ?? state.player.place ?? 'unknown';
+        state = { ...state, world: see(state.world, id, you, place, day) };
         break;
       }
+      case 'bond':
+        state = {
+          ...state,
+          world: e.ends
+            ? endBond(state.world, e.who)
+            : makeBond(
+                state.world,
+                { follower: e.who, leader: e.with, kind: e.bond, wage: e.wage, goal: e.goal },
+                day,
+              ),
+        };
+        sc = withActor(sc, e.who, (a) =>
+          e.ends ? { ...a, follows: undefined } : { ...a, follows: e.with },
+        );
+        break;
+      case 'karma':
+        state = { ...state, world: addKarma(state.world, e.who, e.n) };
+        break;
+      case 'renown':
+      case 'infamy':
+        state = { ...state, world: addFame(state.world, e.who, e.region, e.do, e.n, day) };
+        break;
+      case 'member':
+        state = {
+          ...state,
+          world: e.joins
+            ? join(state.world, e.who, e.power, day, { you: e.who === you, region: e.region })
+            : leave(state.world, e.who, e.power, { you: e.who === you }),
+        };
+        break;
       case 'state-start': {
         const started = startState(state.world, e.state.holder, e.state.data, e.state.since);
         state = { ...state, world: started.world };
@@ -253,5 +287,5 @@ export function applyEffects(
         break;
     }
   }
-  return { state, scene: sc, deferred };
+  return { state, scene: sc };
 }

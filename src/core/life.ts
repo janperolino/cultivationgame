@@ -58,6 +58,7 @@ import {
 import { FIRST_IDS, firstsWaiting, noteFirsts, type FirstStep } from './firsts.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
 import { followWheel, hourToFlip, learnRoutine, setHour, type WheelCheck } from './wheel.ts';
+import { followersDay } from './resolver/followers.ts';
 
 /**
  * The Trees screen opens with anything that lives there (design § UI and screens, Only what you
@@ -139,6 +140,8 @@ export const cultivate: DayStep = (s, days, ctx) => {
   );
   let next = addNotes(withPlayer(state, r.cultivator), r.notes);
   for (const b of r.breakthroughs) if (b.success) next = flare(next, b.ladder, b.major);
+  // Your followers' wages and bonds run on through the days (P3.4b).
+  next = followersDay(next);
   return noteFirsts(checkScreens(next));
 };
 

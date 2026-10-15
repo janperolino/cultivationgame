@@ -1,6 +1,10 @@
 // The dev console's commands: testing shortcuts that change the open life through the same rules
 // the game uses where they can (time runs through the day step, breakthroughs roll their odds,
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
+import { BOND_IDS, type BondId } from '../../content/bonds.ts';
+import { HOME_REGION } from '../../content/resolver.ts';
+import { makeBond } from '../../core/resolver/followers.ts';
+import { addFame } from '../../core/resolver/names.ts';
 import { CARDS, hasCard } from '../../content/cards/index.ts';
 import { COMBAT_DAO_IDS, isCombatDao } from '../../content/daos.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
@@ -160,6 +164,49 @@ export const COMMANDS: Record<string, Command> = {
         store,
         (s) => withPlayer(s, { ...s.player, stones: Math.max(0, s.player.stones + v) }),
         `Stones ${v >= 0 ? '+' : ''}${v}.`,
+      );
+    },
+  },
+  follow: {
+    usage: 'follow <person> [pay|loyalty|fear|goal]',
+    help: "Makes someone you've met follow you (P3.4b); pay asks 30 stones a month.",
+    run([id, kind], store) {
+      if (!id) return 'Give a person id, like old-sha.';
+      const bond = (kind ?? 'loyalty') as BondId;
+      if (!BOND_IDS.includes(bond)) return `A bond is one of ${BOND_IDS.join(', ')}.`;
+      return apply(
+        store,
+        (s) => ({
+          ...s,
+          world: makeBond(
+            s.world,
+            {
+              follower: id,
+              leader: s.player.id,
+              kind: bond,
+              wage: bond === 'pay' ? 30 : undefined,
+            },
+            s.calendar.day,
+          ),
+        }),
+        `${id} follows you (${bond}).`,
+      );
+    },
+  },
+  fame: {
+    usage: 'fame <renown|infamy> <points>',
+    help: 'Adds points of renown or infamy in the Border Wilds (P3.4b).',
+    run([kind, n], store) {
+      if (kind !== 'renown' && kind !== 'infamy') return 'Say renown or infamy.';
+      const v = Number(n);
+      if (!Number.isFinite(v)) return 'Give a number.';
+      return apply(
+        store,
+        (s) => ({
+          ...s,
+          world: addFame(s.world, s.player.id, HOME_REGION, kind, v, s.calendar.day),
+        }),
+        `${kind === 'renown' ? 'Renown' : 'Infamy'} +${v}.`,
       );
     },
   },

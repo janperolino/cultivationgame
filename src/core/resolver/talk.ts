@@ -3,7 +3,8 @@
 // truly have, proof shown and your standing with their power; resistance is suspicion, the leans
 // that name the talk (Hand in a bargain, Trust against a lie, a quirk against a confession) and a
 // trust the act needs. The true numbers decide; what you see is judged from what you know of them:
-// the memories you know they hold, the motives and leans you have learned.
+// the memories you know they hold, the motives and leans you have learned. Your renown counts to
+// anyone who knows your name; a recruit's bond sets what it needs: loyalty asks friendly (P3.4b).
 import { ITEMS } from '../../content/items.ts';
 import {
   ALWAYS_SUSPICIOUS,
@@ -17,14 +18,22 @@ import {
 } from '../../content/personality.ts';
 import { rarityRank } from '../../content/rarity.ts';
 import { realmIndex } from '../../content/realms.ts';
-import { ACTS, type ActInfo, type DeedKind, type TrustWord } from '../../content/resolver.ts';
+import {
+  ACTS,
+  HOME_REGION,
+  type ActInfo,
+  type DeedKind,
+  type TrustWord,
+} from '../../content/resolver.ts';
 import type { GameState } from '../state.ts';
 import { realmOfActor, type Actor } from './actor.ts';
 import { leverage, readRealm, resistance, verdict, type Verdict } from './check.ts';
 import { knowsNature, seenNature } from './nature.ts';
 import { axisFactor, lean, natureOf, opinion, trustLevel } from './opinion.ts';
 import type { Step } from './plan.ts';
-import { knownDeeds, standingOf, type World } from './world.ts';
+import { LOYALTY_NEEDS } from '../../content/bonds.ts';
+import { fameOf, knowsName } from './names.ts';
+import { knownDeeds, standingOf, statesOf, type World } from './world.ts';
 
 /** Someone's nature in a scene: their own if the scene gave them one, else the world's. */
 export function actorNature(w: World, a: Actor): Nature {
@@ -69,7 +78,13 @@ export interface TalkCheck {
 }
 
 /** Leverage against resistance, once with the truth and once with what the speaker knows. */
-export function talkCheck(s: GameState, a: Actor, target: Actor, st: Step): TalkCheck {
+export function talkCheck(
+  s: GameState,
+  a: Actor,
+  target: Actor,
+  st: Step,
+  region: string = HOME_REGION,
+): TalkCheck {
   const w = s.world;
   const day = s.calendar.day;
   const info: ActInfo = ACTS[st.act];
@@ -90,8 +105,20 @@ export function talkCheck(s: GameState, a: Actor, target: Actor, st: Step): Talk
       (u) => (a.items[u] ?? 0) > 0 && ITEMS.find((i) => i.id === u)?.kind === 'talisman',
     );
   const helpers = (st.helpers ?? []).length;
+  const renown =
+    !a.disguised &&
+    statesOf(w, a.id, 'false-name', day).length === 0 &&
+    fameOf(w, a.id, region, 'renown', day) >= 1 &&
+    knowsName(w, target.id, a.id, region, day);
   const yoursFor = (word: TrustWord, met: boolean, nn: Nature) =>
-    leverage({ trust: word, motive: met, prop: held || superstitious(nn), standing, helpers });
+    leverage({
+      trust: word,
+      motive: met,
+      prop: held || superstitious(nn),
+      standing,
+      helpers,
+      renown,
+    });
   const met = st.offer !== undefined && meetsOffer(n, st.offer);
   const seenMet = st.offer !== undefined && met && offerKnown(w, target.id, n, st.offer);
 
@@ -111,8 +138,9 @@ export function talkCheck(s: GameState, a: Actor, target: Actor, st: Step): Talk
   const yoursSeen = yoursFor(seenTrust, seenMet, seen);
   const theirsSeen = theirsFor(seen);
   // An act that needs a trust they don't hold is refused whatever you bring.
-  const short = (word: TrustWord) =>
-    info.needs !== undefined && trustLevel(word) < trustLevel(info.needs);
+  const needs =
+    info.needs ?? (st.act === 'recruit' && st.bond === 'loyalty' ? LOYALTY_NEEDS : undefined);
+  const short = (word: TrustWord) => needs !== undefined && trustLevel(word) < trustLevel(needs);
   return {
     yours,
     theirs,

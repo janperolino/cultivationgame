@@ -10,11 +10,16 @@
 // of the scene). The world's clock stops in a scene; leaving adds its ticks to the clock, off the
 // wheel. A scene takes a list of player actors, so co-op can drop in after v1. People checks read
 // real opinion, motives and standing (talk.ts); the players learn the outer leans of everyone in
-// the scene as it begins, and what moves anyone when they act on it.
+// the scene as it begins, and what moves anyone when they act on it. Followers keep their bonds
+// (followers.ts), checked each round; the asked tell what they know (knows.ts); renown, infamy and
+// karma move with the deeds (names.ts); traces and backers ride the actors (backers.ts).
 import {
   ACTS,
   CAPABILITIES,
   CLOSE_WOUND,
+  FREED_KARMA,
+  HOME_REGION,
+  MERCY_KARMA,
   COSTS,
   LAW,
   NOISE_LI,
@@ -50,7 +55,11 @@ import {
   type Verdict,
 } from './check.ts';
 import { applyEffects, type Effect } from './effects.ts';
+import { eraseNumbers, knowsErasing, leaveTrace, strongestTrace, talismanOf } from './backers.ts';
+import { bondOf, checkBonds, wageFor, type BondBreak } from './followers.ts';
 import { intentOf } from './intent.ts';
+import { believesDead, currentPlaces, foundAlive, hear, telling } from './knows.ts';
+import { fameOf, knowsName } from './names.ts';
 import { meetingShows, revealNature } from './nature.ts';
 import { contest, remember, tieOf } from './opinion.ts';
 import { actorNature, giftOf, talkCheck } from './talk.ts';
@@ -89,6 +98,8 @@ export interface Scene {
   /** An atlas or site id, and the power it answers to. */
   place: string;
   power: string | null;
+  /** The region it stands in, whose renown and infamy its deeds move. */
+  region: string;
   kind: PlaceKind;
   traffic: Traffic;
   /** The site's danger realm, what a check with no opponent faces. */
@@ -115,6 +126,7 @@ export interface Scene {
 export interface SceneInit {
   place: string;
   power?: string | null;
+  region?: string;
   kind?: PlaceKind;
   traffic?: Traffic;
   danger?: RealmStage;
@@ -129,6 +141,7 @@ export function startScene(init: SceneInit): Scene {
   return {
     place: init.place,
     power: init.power ?? null,
+    region: init.region ?? HOME_REGION,
     kind: init.kind ?? 'wilds',
     traffic: init.traffic ?? 'wilds',
     danger: init.danger ?? { realm: 'qi-condensation', stage: 1 },
@@ -223,7 +236,18 @@ export function checkFor(s: GameState, scene: Scene, a: Actor, st: Step): StepCh
   const info: ActInfo = ACTS[st.act];
   const target = st.target ? actorIn(scene, st.target) : undefined;
 
-  if (info.people) {
+  // Erasing a trace: your soul against its strength.
+  if (st.act === 'erase') {
+    const trace = target ? strongestTrace(s.world, target.id, s.calendar.day) : undefined;
+    if (!trace) return null;
+    const { yours, theirs } = eraseNumbers(a, trace);
+    const v = verdict(yours, theirs);
+    return { yours, theirs, verdict: v, judged: v, beyond: isBeyond(yours, theirs), faced: [] };
+  }
+
+  // Recruiting by fear is a threat, not a talk.
+  const byFear = st.act === 'recruit' && st.bond === 'fear';
+  if (info.people && !byFear) {
     if (!target) return null;
     if (info.lie && readsLies(target, a)) {
       return {
@@ -236,7 +260,7 @@ export function checkFor(s: GameState, scene: Scene, a: Actor, st: Step): StepCh
         read: true,
       };
     }
-    const t = talkCheck(s, a, target, st);
+    const t = talkCheck(s, a, target, st, scene.region);
     return {
       yours: t.yours,
       theirs: t.theirs,
@@ -247,7 +271,7 @@ export function checkFor(s: GameState, scene: Scene, a: Actor, st: Step): StepCh
     };
   }
 
-  const check = info.check;
+  const check = byFear ? ({ yours: 'presence', faces: 'composure' } as const) : info.check;
   if (!check) return null;
 
   if (check.yours === 'presence') {
@@ -260,6 +284,7 @@ export function checkFor(s: GameState, scene: Scene, a: Actor, st: Step): StepCh
       weapon: show.includes('weapon'),
       technique: show.includes('technique'),
       followers,
+      infamy: infamous(s, scene, a, target),
     });
     const crew = scene.actors.filter(
       (x) => x.side === target.side && x.id !== target.id && x.state === 'present',
@@ -345,6 +370,20 @@ function refusal(
   if (info.target === 'project' && !projectById(s.world, st.target ?? '')) return 'no such project';
   if (st.act === 'veil' && (a.stats.concealment ?? 0) <= 0)
     return 'you have no way to hide your realm';
+  if (st.act === 'erase') {
+    if (!knowsErasing(a, scene.players.includes(a.id)))
+      return "you don't know how to erase a trace";
+    if (!check) return 'no trace to erase';
+  }
+  const aimed = st.target ? actorIn(scene, st.target) : undefined;
+  if (st.act === 'recruit' && aimed) {
+    if (aimed.follows === a.id) return 'they already follow you';
+    const bond = st.bond ?? 'pay';
+    if (bond === 'pay' && a.stones < wageFor(aimed)) {
+      return `you can't pay their wage, ${wageFor(aimed)} stones a month`;
+    }
+    if (bond === 'goal' && !projectById(s.world, st.goal ?? '')) return 'no goal to share';
+  }
   if (check?.beyond) return 'beyond you: a whole realm short';
   const target = st.target ? actorIn(scene, st.target) : undefined;
   if (info.from && target) {
@@ -425,8 +464,6 @@ export interface StepResult {
   read?: Read;
   /** Deeds it made, by id. */
   deeds: number[];
-  /** Effects waiting for P3.4b. */
-  deferred: Effect[];
   /** Something you didn't see coming: a misjudged verdict, a cover blown. */
   surprise: string | null;
   /** How a fight it started ended: the side standing, or null for a draw. */
@@ -437,7 +474,6 @@ interface Working {
   s: GameState;
   scene: Scene;
   deeds: number[];
-  deferred: Effect[];
   surprise: string | null;
 }
 
@@ -445,7 +481,19 @@ function apply(w: Working, effects: Effect[]): void {
   const r = applyEffects(w.s, w.scene, effects);
   w.s = r.state;
   w.scene = r.scene!;
-  w.deferred.push(...r.deferred);
+}
+
+/**
+ * Whether your infamy backs a threat: you have some in the scene's region, they know your name,
+ * and no disguise or false name hides it.
+ */
+function infamous(s: GameState, scene: Scene, a: Actor, them: Actor): boolean {
+  const day = s.calendar.day;
+  if (a.disguised || statesOf(s.world, a.id, 'false-name', day).length > 0) return false;
+  return (
+    fameOf(s.world, a.id, scene.region, 'infamy', day) >= 1 &&
+    knowsName(s.world, them.id, a.id, scene.region, day)
+  );
 }
 
 function setActor(w: Working, id: string, f: (a: Actor) => Actor): void {
@@ -467,6 +515,9 @@ function makeNoise(w: Working, loudest: Actor, ticks = NOISE_TICKS): void {
   };
 }
 
+/** Deeds the law doesn't come for. */
+const LAWFUL: readonly DeedKind[] = ['rescue', 'victory', 'mission', 'death'];
+
 /** Records a deed with its witnesses and calls the law if anyone saw it. */
 function deed(
   w: Working,
@@ -486,13 +537,16 @@ function deed(
       power: victim?.power ?? w.scene.power,
       evidence,
       witnesses: seenBy.filter((x) => x.id !== a.id).map(learner),
+      region: w.scene.region,
+      weaker:
+        !!victim && realmIndex(realmOfActor(victim).realm) < realmIndex(realmOfActor(a).realm),
     },
     w.s.calendar.day,
   );
   w.s = { ...w.s, world: r.world };
   w.deeds.push(r.id);
   const law = LAW[w.scene.kind];
-  if (law && seenBy.length > 0 && w.scene.lawDue === null) {
+  if (law && !LAWFUL.includes(kind) && seenBy.length > 0 && w.scene.lawDue === null) {
     w.scene = { ...w.scene, lawDue: w.scene.tick + law.ticks };
   }
   return r.id;
@@ -555,9 +609,9 @@ function blowCover(w: Working, a: Actor, why: string, seenBy: Actor[]): void {
  * cover breaks; below it they believe the shown realm, and are fooled.
  */
 export function inspect(s: GameState, scene: Scene, observerId: string, targetId: string) {
-  const w: Working = { s, scene, deeds: [], deferred: [], surprise: null };
+  const w: Working = { s, scene, deeds: [], surprise: null };
   inspectInto(w, observerId, targetId);
-  return { state: w.s, scene: w.scene, surprise: w.surprise, deferred: w.deferred };
+  return { state: w.s, scene: w.scene, surprise: w.surprise };
 }
 
 function inspectInto(w: Working, observerId: string, targetId: string): void {
@@ -617,6 +671,74 @@ function testCoverByAct(
   if (seen.length > 0) blowCover(w, a, `${a.name} acted above the realm shown`, seen);
 }
 
+/**
+ * Asked, they tell what their trust in you opens: the deeds they know of you learn who did, and the
+ * rest you hear, true or a lie, until you see it for yourself (knows.ts).
+ */
+function asked(w: Working, a: Actor, target: Actor) {
+  const day = w.s.calendar.day;
+  const n = actorNature(w.s.world, target);
+  const t = telling(w.s.world, currentPlaces(), target.id, a.id, day, n);
+  let world = w.s.world;
+  const deeds = t.lie ? [] : t.facts.filter((f) => f.startsWith('deed:'));
+  for (const f of deeds) world = learn(world, Number(f.slice(5)), learner(a), true, day);
+  const rest = t.facts.filter((f) => !f.startsWith('deed:'));
+  world = hear(world, rest, target.id, day, !t.lie);
+  note(
+    w,
+    t.refused
+      ? `${target.name} won't say.`
+      : `${target.name} tells what they know (${t.facts.length}).`,
+  );
+  return world;
+}
+
+/**
+ * Healing: someone down stands again, a life saved that they remember and heaven counts, seen by
+ * whoever stands there; someone hurt remembers being healed, a small mercy if they are weaker.
+ */
+function heal(w: Working, a: Actor, target: Actor): void {
+  if (target.state === 'down') {
+    setActor(w, target.id, (x) => ({
+      ...x,
+      state: 'present',
+      combatant: x.combatant
+        ? { ...x.combatant, hp: Math.max(1, Math.round(x.combatant.maxHp * 0.25)) }
+        : x.combatant,
+    }));
+    const saw = [...watchers(w.scene, a), actorIn(w.scene, target.id)!].filter(
+      (x) => x.state === 'present',
+    );
+    deed(w, a, 'rescue', saw, target);
+    return;
+  }
+  const c = target.combatant;
+  if (target.wound <= 0 && !(c && c.hp < c.maxHp)) return;
+  apply(w, [{ do: 'memory', who: target.id, about: a.id, row: 'healed' }]);
+  if (realmIndex(realmOfActor(target).realm) < realmIndex(realmOfActor(a).realm)) {
+    apply(w, [{ do: 'karma', who: a.id, n: MERCY_KARMA }]);
+  }
+}
+
+/**
+ * Why a follower won't carry out an order, or null: nobody takes one beyond them, and the paid
+ * won't fight anyone they read above them; the loyal, the afraid and the goal-bound take the rest.
+ */
+export function orderRefusal(s: GameState, scene: Scene, f: Actor, st: Step): string | null {
+  const b = bondOf(s.world, f.id);
+  if (!b) return null;
+  const pv = previewStep(s, scene, f.id, st);
+  if (pv.check?.beyond) return 'beyond them';
+  const target = st.target ? actorIn(scene, st.target) : undefined;
+  if (b.kind === 'pay' && (ACTS[st.act] as ActInfo).fight && target) {
+    const r = readRealm(f, target);
+    if (r.kind === 'beyond' || realmIndex(r.realm.realm) > realmIndex(realmOfActor(f).realm)) {
+      return "they aren't paid to die";
+    }
+  }
+  return null;
+}
+
 /** Does one step for one actor: its check, cost, outcome, deeds and noise. The clock is the round's. */
 export function doStep(
   s: GameState,
@@ -630,7 +752,7 @@ export function doStep(
 } {
   const preview = previewStep(s, scene, actorId, st);
   const info: ActInfo = ACTS[st.act];
-  const w: Working = { s, scene, deeds: [], deferred: [], surprise: null };
+  const w: Working = { s, scene, deeds: [], surprise: null };
   const result = (extra: Partial<StepResult> = {}): StepResult => ({
     actor: actorId,
     step: st,
@@ -640,7 +762,6 @@ export function doStep(
     short: null,
     ticks: info.ticks ?? 1,
     deeds: w.deeds,
-    deferred: w.deferred,
     surprise: w.surprise,
     ...extra,
   });
@@ -803,6 +924,14 @@ export function doStep(
           ]);
         } else if (st.act === 'pay' || st.act === 'buy') {
           apply(w, [{ do: 'memory', who: target.id, about: a.id, row: 'paid-fairly' }]);
+        } else if (st.act === 'ransom' && st.about && st.about !== a.id) {
+          // Paying for someone else's freedom: heaven counts it, and they go free.
+          apply(w, [{ do: 'karma', who: a.id, n: FREED_KARMA }]);
+          for (const c of w.s.world.states) {
+            if (c.data.kind === 'captive' && c.data.held === st.about) {
+              apply(w, [{ do: 'state-break', id: c.id, why: 'ransomed' }]);
+            }
+          }
         }
       }
       break;
@@ -841,14 +970,42 @@ export function doStep(
       setActor(w, a.id, (x) => ({ ...x, disguised: true }));
       break;
     case 'threaten':
-      if (passed && target) {
-        w.deferred.push({ do: 'bond', who: target.id, with: a.id, bond: 'fear' });
-        if (realmIndex(realmOfActor(target).realm) < realmIndex(realmOfActor(a).realm)) {
-          w.deferred.push({ do: 'karma', who: a.id, n: -1 });
-        }
-      }
+      // A threat that lands wins its one demand; a follower by fear is a recruit (P3.4b).
       seenBy = [...new Set([...seenBy, ...(target ? [target] : [])])];
       if (target) w.s = { ...w.s, world: revealNature(w.s.world, target.id, ['nerve']) };
+      // "My father is…": the threatened name their backer.
+      if (target?.backer && youAre(a)) {
+        apply(w, [{ do: 'knowledge', kind: 'truth', id: `backer:${target.id}` }]);
+        note(w, `${target.name} names ${target.backer.name} as their backer.`);
+      }
+      break;
+    case 'recruit':
+      if (passed && target) {
+        const bond = st.bond ?? 'pay';
+        const wage = bond === 'pay' ? wageFor(target) : undefined;
+        if (wage) {
+          apply(w, [
+            { do: 'stones', who: a.id, n: -wage },
+            { do: 'stones', who: target.id, n: wage },
+          ]);
+        }
+        apply(w, [{ do: 'bond', who: target.id, with: a.id, bond, wage, goal: st.goal }]);
+        setActor(w, target.id, (x) => ({ ...x, side: a.side, follows: a.id }));
+        // Obedience from fear is a threat that landed, and they remember it.
+        if (bond === 'fear') deed(w, a, 'threat', [target], target);
+      }
+      break;
+    case 'ask':
+      if (passed && target && youAre(a)) w.s = { ...w.s, world: asked(w, a, target) };
+      break;
+    case 'heal':
+      if (target) heal(w, a, target);
+      break;
+    case 'erase':
+      if (passed && target) {
+        const trace = strongestTrace(w.s.world, target.id, w.s.calendar.day);
+        if (trace) apply(w, [{ do: 'state-break', id: trace.id, why: `${a.name} erased it` }]);
+      }
       break;
     case 'lie':
       // A lie believed is known to nobody; one seen through is known to whoever saw through it.
@@ -943,6 +1100,24 @@ export function doStep(
     case 'decoy': {
       const used = (st.uses ?? []).find((u) => (a.items[u] ?? 0) > 0);
       if (used) apply(w, [{ do: 'item', who: a.id, id: used, n: -1, how: 'spent' }]);
+      // Believed, the decoy is a death those it fooled know of, and tell.
+      if (passed && faced.length > 0) {
+        const r = recordDeed(
+          w.s.world,
+          {
+            kind: 'death',
+            actor: a.id,
+            victim: a.id,
+            place: w.scene.place,
+            witnesses: faced.map(learner),
+            region: w.scene.region,
+            staged: true,
+          },
+          w.s.calendar.day,
+        );
+        w.s = { ...w.s, world: r.world };
+        w.deeds.push(r.id);
+      }
       break;
     }
     case 'seize':
@@ -983,11 +1158,16 @@ export function doStep(
           target,
           ['body'],
         );
-        if (target.lamp && target.power) {
-          w.s = {
-            ...w.s,
-            world: soulLamp(w.s.world, id, target.power, target.lamp === 'face', w.s.calendar.day),
-          };
+        // A death talisman marks the killer's face for its power, as a lamp with a face does.
+        const traced = !!talismanOf(target);
+        if (traced) {
+          w.s = { ...w.s, world: leaveTrace(w.s.world, a.id, target, w.s.calendar.day) };
+          w.surprise ??= `${target.name}'s death talisman marks ${a.name}'s face`;
+          note(w, `${target.name}'s death talisman flares: a trace sinks into ${a.name}'s soul.`);
+        }
+        if ((target.lamp || traced) && target.power) {
+          const face = traced || target.lamp === 'face';
+          w.s = { ...w.s, world: soulLamp(w.s.world, id, target.power, face, w.s.calendar.day) };
         }
       }
       break;
@@ -1005,6 +1185,9 @@ export function doStep(
     if ((st.act === 'spar' || st.act === 'duel') && fight.winner) {
       const [winner, loser] = fight.winner === a.side ? [a, target] : [target, a];
       w.s = { ...w.s, world: contest(w.s.world, winner.id, loser.id, w.s.calendar.day) };
+      // Won in front of people, it carries their name.
+      const crowd = w.scene.actors.filter((x) => x.id !== winner.id && x.state !== 'dead');
+      deed(w, winner, 'victory', crowd, loser);
     }
   }
 
@@ -1065,6 +1248,8 @@ export interface RoundResult {
   arrivals: string[];
   /** The law came. */
   law: boolean;
+  /** Followers whose bond broke this round. */
+  broke: BondBreak[];
   /** What an arrival or the law found out: a cover seen through, a face recognized. */
   surprise: string | null;
 }
@@ -1101,7 +1286,8 @@ export function round(
       !mine && !own && !sc.players.includes(a.id) && now.follows === undefined
         ? intentOf(state, sc, now)
         : null;
-    if (intent) state = { ...state, world: revealNature(state.world, a.id, [whyKey(intent.why)]) };
+    if (intent && intent.why !== 'trace')
+      state = { ...state, world: revealNature(state.world, a.id, [whyKey(intent.why)]) };
     if (intent?.law) {
       const law = LAW[sc.kind];
       if (law && sc.lawDue === null) sc = { ...sc, lawDue: sc.tick + law.ticks };
@@ -1115,12 +1301,22 @@ export function round(
         ...sc,
         actors: sc.actors.map((x) => (x.id === a.id ? { ...x, plan: x.plan!.slice(1) } : x)),
       };
+    // A follower's order they won't carry out.
+    const refused = own && now.follows !== undefined ? orderRefusal(state, sc, now, own) : null;
+    if (refused) {
+      sc = { ...sc, log: [...sc.log, `${now.name} refuses: ${refused}.`] };
+      continue;
+    }
     const r = doStep(state, sc, a.id, st);
     state = r.state;
     sc = r.scene;
     results.push(r.result);
     if (sc.players.includes(a.id)) ticks = Math.max(ticks, r.result.ticks);
   }
+  // Every follower's bond, once a round: loyalty, fear and a shared goal.
+  const bonds = checkBonds(state, sc);
+  state = bonds.state;
+  sc = bonds.scene;
   const before = sc.tick;
   sc = { ...sc, tick: sc.tick + Math.max(1, ticks) };
   const came = arrivals(state, sc, before);
@@ -1133,6 +1329,7 @@ export function round(
     results,
     arrivals: came.ids,
     law: law.came,
+    broke: bonds.broke,
     surprise: came.surprise ?? law.surprise,
   };
 }
@@ -1154,12 +1351,21 @@ function whyKey(why: string): string {
     : why;
 }
 
-/** The players see everyone present: their outer leans and quirks show. */
+/**
+ * The players see everyone present: their outer leans and quirks show. Anyone who believed a
+ * player dead, seeing them alive, knows the death was a lie.
+ */
 function meet(s: GameState, scene: Scene): GameState {
   let world = s.world;
   for (const x of scene.actors) {
     if (scene.players.includes(x.id) || x.state === 'hidden') continue;
     world = revealNature(world, x.id, meetingShows(actorNature(world, x)));
+    for (const p of scene.players) {
+      const me = actorIn(scene, p);
+      if (me && !me.disguised && me.state === 'present' && believesDead(world, x.id, p)) {
+        world = foundAlive(world, x.id, p, scene.place, s.calendar.day);
+      }
+    }
   }
   return world === s.world ? s : { ...s, world };
 }
@@ -1198,7 +1404,7 @@ function arrivals(s: GameState, scene: Scene, before: number) {
       log: [...scene.log, `${who.name} arrives.`],
     },
     deeds: [],
-    deferred: [],
+
     surprise: null,
   };
   for (const p of scene.players) inspectInto(w, who.id, p);
@@ -1239,7 +1445,7 @@ function lawArrives(
       log: [...scene.log, `${law.who} arrive.`],
     },
     deeds: [],
-    deferred: [],
+
     surprise: null,
   };
   for (const p of scene.players) inspectInto(w, officer.id, p);
@@ -1279,6 +1485,9 @@ export function runPlan(s: GameState, scene: Scene, plan: Plan): PlanRun {
       r.surprise ??
       (r.arrivals.length ? `${r.arrivals.length} arrive` : null) ??
       (r.law ? 'the law arrives' : null) ??
+      (r.broke.length
+        ? `${actorIn(sc, r.broke[0]!.follower)?.name ?? 'a follower'} ${r.broke[0]!.how === 'turn' ? 'turns on you' : 'leaves you'}`
+        : null) ??
       (r.results.some((x) => x.actor !== plan.actor && x.step.target === plan.actor)
         ? 'someone acts on you'
         : null);

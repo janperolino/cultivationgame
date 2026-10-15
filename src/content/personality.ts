@@ -342,6 +342,30 @@ export const TRADES = {
 export type TradeId = keyof typeof TRADES;
 export const TRADE_IDS = Object.keys(TRADES) as TradeId[];
 
+/** The site kinds a trade knows along its way, the private tier of what they know (P3.4b). */
+export const TRADE_SITES: Record<TradeId, readonly string[]> = {
+  ferryman: ['village', 'town'],
+  soldier: ['den', 'village'],
+  swordsman: ['cave'],
+  disciple: ['cave'],
+  elder: ['ruin', 'cave'],
+  alchemist: ['herb-valley'],
+  scholar: ['ruin', 'shrine'],
+  merchant: ['town'],
+  peddler: ['village', 'town'],
+  hunter: ['den', 'cave'],
+  farmer: ['village'],
+  smith: ['town'],
+  clerk: ['town'],
+  official: ['town', 'village'],
+  monk: ['shrine'],
+  healer: ['herb-valley'],
+  smuggler: ['cave', 'town'],
+  bandit: ['cave', 'village'],
+  herder: ['den', 'village'],
+  tester: ['village', 'town'],
+};
+
 /** A trade's lean wins its axis's direction this many times out of a hundred. */
 export const TRADE_LEAN_ODDS = 75;
 /** A trade's axes are this many times as likely to be one of the person's leans. */

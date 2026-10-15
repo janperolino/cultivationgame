@@ -5,7 +5,8 @@
 // trust is a word with five notches behind it, read from the memories you know they hold, and
 // fresh news is a gold dot. The page shows their nature as far as you've seen it, what they
 // remember of you and their ties as you know them; their log is your chronicle filtered by them.
-// Full in M5.
+// A follower's page says why they follow and how that breaks, and your name's reach by region
+// sits under the powers (P3.4b). Full in M5.
 import { useEffect, useRef, useState } from 'react';
 import { placeName } from '../content/origins.ts';
 import { person, TIES, type TieId } from '../content/people.ts';
@@ -13,12 +14,14 @@ import type { TrustWord } from '../content/resolver.ts';
 import { realm, stageName } from '../content/realms.ts';
 import { worldWhen } from '../core/chronicle.ts';
 import {
+  bondView,
   hasNews,
   knownPeople,
   newsDay,
   peopleCircles,
   personLog,
   personView,
+  namesView,
   powersView,
   type PersonView,
 } from '../core/people.ts';
@@ -162,6 +165,7 @@ function PersonPage({ game, id }: { game: GameState; id: string }) {
   const p = person(id);
   const r = game.player.people[id]!;
   const view = personView(game, id);
+  const bond = bondView(game, id);
   const n = view.nature;
   const log = personLog(game, id).slice().reverse();
   return (
@@ -221,6 +225,14 @@ function PersonPage({ game, id }: { game: GameState; id: string }) {
             <Trust word={view.trust} level={view.level} />
           </dd>
         </div>
+        {bond && (
+          <div>
+            <dt>Follows you</dt>
+            <dd>
+              {capitalize(bond.words)} <span className="caption">· {bond.breaks}</span>
+            </dd>
+          </div>
+        )}
       </dl>
       <Memories name={p.name} view={view} />
       {(view.ties.length > 0 || view.hiddenTies > 0) && (
@@ -533,6 +545,27 @@ function Powers({ game }: { game: GameState }) {
   );
 }
 
+/** How far your name carries, by region: renown and infamy apart, each 0 to 9. */
+function YourName({ game }: { game: GameState }) {
+  const names = namesView(game);
+  if (!names.length) return null;
+  return (
+    <div className="people-powers">
+      <h3 className="sub-heading">Your name</h3>
+      <dl>
+        {names.map((x) => (
+          <div key={x.region}>
+            <dt>{capitalize(x.name)}</dt>
+            <dd>
+              renown {x.renown} · infamy {x.infamy} <span className="caption">· {x.words}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 type Shown = 'circles' | 'web';
 
 export function PeopleScreen() {
@@ -595,6 +628,7 @@ export function PeopleScreen() {
           <Web game={game} selected={selected} onSelect={select} />
         )}
         <Powers game={game} />
+        <YourName game={game} />
       </section>
       <div ref={page} className="people-page-col">
         <PersonPage game={game} id={selected} />

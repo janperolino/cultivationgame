@@ -1,11 +1,14 @@
 // The playbook (design § The resolver, The playbook): every case as plans fed straight to the core,
 // as far as the resolver takes them. Each case says where it stops: the steps that need opinion
-// and motives run on them since P3.4, followers' bonds, karma and what people tell wait for P3.4b,
-// the Realm of Mingled Blood for P3.11, the city's formation for M4, and a fight played as a mode
+// and motives run on them since P3.4, followers' bonds, karma and what people tell since P3.4b,
+// the Realm of Mingled Blood waits for P3.11, the city's formation for M4, and a fight played as a mode
 // of the scene for P3.9.
 import { describe, expect, it } from 'vitest';
 import { createLife, type Creation } from '../creation.ts';
-import type { GameState } from '../state.ts';
+import { withPlayer, type GameState } from '../state.ts';
+import { bondOf, followersDay } from './followers.ts';
+import { believesDead } from './knows.ts';
+import { karmaOf } from './names.ts';
 import { plainActor, YOU, type Actor } from './actor.ts';
 import { PlanSchema, step } from './plan.ts';
 import { doStep, leaveScene, round, runPlan, startScene, type SceneInit } from './scene.ts';
@@ -335,7 +338,10 @@ describe('the playbook', () => {
     // Your stealth with two things used and the dark against his perception, no roll.
     expect(check.verdict).not.toBe('short');
     expect(r.scene.actors[0]!.items.corpse).toBe(0);
-    // Stops here: the hunter believing you dead is what he knows and tells (P3.4b).
+    // He believes you dead, and tells whoever he meets.
+    expect(believesDead(r.state.world, 'hunter', s.player.id)).toBe(true);
+    const told = tell(r.state.world, 'hunter', { id: 'his-employer' }, s.calendar.day);
+    expect(believesDead(told, 'his-employer', s.player.id)).toBe(true);
   });
 
   it("loots the Wall's dead after a beast tide, posing as a corpse collector", () => {
@@ -411,40 +417,80 @@ describe('the playbook', () => {
     expect(blind.results[0]!.check!.judged).toBe('close');
     expect(blind.results[0]!.surprise).toMatch(/clear, not close/);
     // Knowing it, the plan runs through.
-    const knowing = { ...s, world: revealNature(s.world, 'sword', ['motive:greed']) };
-    let r = runPlan(
+    // An old friend from the caves follows out of loyalty.
+    const friend = { ...npc('friend', { realm: QC(4) }), nature: nature([], { fidelity: 1 }) };
+    let world = revealNature(s.world, 'sword', ['motive:greed']);
+    world = remember(
+      world,
+      { holder: 'friend', about: s.player.id, row: 'from-before', value: 25, known: [s.player.id] },
+      0,
+    );
+    const knowing = { ...s, world };
+    // Out on the road, where no garrison answers a threat.
+    const scene = () =>
+      at('a-road', [you(s, { realm: FE(1), stones: 50, weapon: 'plain' }), sword, friend, thug]);
+    const r = runPlan(
       knowing,
-      crewScene(),
+      scene(),
       plan(
         s,
-        step('recruit', { target: 'sword', offer: 'greed' }),
-        step('pay', { target: 'sword', n: 10 }),
-        step('threaten', { target: 'thug', show: ['weapon'] }),
+        step('recruit', { target: 'sword', offer: 'greed', bond: 'pay' }),
+        step('recruit', { target: 'friend', bond: 'loyalty' }),
+        step('recruit', { target: 'thug', bond: 'fear', show: ['weapon'] }),
       ),
     );
-    expect(r.results[0]!.check!.verdict).toBe('clear');
-    const threat = r.results.find((x) => x.step.act === 'threaten')!;
-    expect(threat.check!.verdict).toBe('clear');
-    // The thug remembers the threat; fear as a bond and karma as heaven's ledger wait for P3.4b.
-    expect(threat.deferred.map((e) => e.do)).toEqual(['bond', 'karma']);
+    expect(r.stopped).toBeNull();
+    expect(r.results.filter((x) => x.actor === s.player.id).map((x) => x.check!.verdict)).toEqual([
+      'clear',
+      'clear',
+      'clear',
+    ]);
+    // The sword took a month's wage at Qi Condensation up front.
+    expect(bondOf(r.state.world, 'sword')).toMatchObject({ kind: 'pay', wage: 30 });
+    expect(r.scene.actors[0]!.stones).toBe(20);
+    expect(bondOf(r.state.world, 'friend')!.kind).toBe('loyalty');
+    expect(bondOf(r.state.world, 'thug')!.kind).toBe('fear');
+    expect(tieOf(r.state.world, s.player.id, 'thug')).toBe('follower');
+    // The thug obeys while hating you, and heaven counts the cruelty to someone weaker.
     expect(opinion(r.state.world, 'thug', s.player.id, s.calendar.day).word).toBe('wary');
-    // The sword was paid fairly.
-    expect(
-      opinion(r.state.world, 'sword', s.player.id, s.calendar.day).lines.map((l) => l.memory.row),
-    ).toEqual(['paid-fairly']);
-    // With two followers at your back, the headman bends.
+    expect(karmaOf(r.state.world, s.player.id)).toBe(-1);
+    // With three followers at your back, the headman bends and hides you.
     const headman = npc('headman', { realm: QC(4), side: 'village' });
-    const crew = ['sword', 'thug'].map((id) => ({
-      ...npc(id, { realm: QC(4) }),
-      side: YOU,
-      follows: s.player.id,
-    }));
-    r = runPlan(
+    const crew = r.scene.actors.filter((x) => x.follows === s.player.id);
+    expect(crew).toHaveLength(3);
+    const village = runPlan(
       r.state,
       at('a-village', [you(s, { realm: FE(1) }), ...crew, headman], { kind: 'village' }),
       plan(s, step('threaten', { target: 'headman' })),
     );
-    expect(r.results.find((x) => x.actor === s.player.id)!.check!.verdict).toBe('clear');
+    expect(village.results.find((x) => x.actor === s.player.id)!.check!.verdict).toBe('clear');
+
+    // Each bond breaks as written. Down in a fight, you look weak: the afraid thug's bond breaks
+    // in the scene, and, not being reckless or vengeful, he runs.
+    const down = { ...you(s, { realm: FE(1) }), state: 'down' as const };
+    const thugNow = { ...crew.find((x) => x.id === 'thug')!, nature: nature([]) };
+    const fall = round(village.state, at('a-road', [down, thugNow]), {});
+    expect(fall.broke).toEqual([{ follower: 'thug', why: 'fear', how: 'leave' }]);
+    expect(fall.scene.actors.find((x) => x.id === 'thug')!.state).toBe('gone');
+    // A month on, with 20 stones against a wage of 30, the pay stops and the sword leaves; the
+    // thug, a week and more out of your reach, slips away as well.
+    const month = { ...village.state, calendar: { day: s.calendar.day + 31 } };
+    const later = followersDay(withPlayer(month, { ...month.player, stones: 20 }));
+    expect(bondOf(later.world, 'sword')).toBeUndefined();
+    expect(bondOf(later.world, 'thug')).toBeUndefined();
+    expect(later.chronicle.slice(-2).map((e) => e.data)).toEqual([
+      { name: 'sword', why: 'unpaid' },
+      { name: 'thug', why: 'fear' },
+    ]);
+    // The friend stays through the month; humiliated in public, their opinion falls under the
+    // floor their Fidelity sets, and they leave.
+    expect(bondOf(later.world, 'friend')!.kind).toBe('loyalty');
+    const hurt = remember(
+      later.world,
+      { holder: 'friend', about: s.player.id, row: 'humiliated' },
+      later.calendar.day,
+    );
+    expect(bondOf(followersDay({ ...later, world: hurt }).world, 'friend')).toBeUndefined();
   });
 
   it("draws strangers with a fight's noise, and your backup arrives", () => {

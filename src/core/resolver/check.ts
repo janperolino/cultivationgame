@@ -24,6 +24,7 @@ import {
   PIN_REALMS,
   PRESENCE,
   PROP,
+  RENOWN_LEVERAGE,
   STANDING_RANGE,
   SUSPICION,
   TRUST,
@@ -34,6 +35,7 @@ import {
 } from '../../content/resolver.ts';
 import { MAX_MASTERY } from '../../content/mastery.ts';
 import { lineSize, realmOfActor, realmSizeOf, sizeAt, type Actor } from './actor.ts';
+import { backerComposure } from './backers.ts';
 import type { RealmStage } from './world.ts';
 
 export type Verdict = 'clear' | 'close' | 'short';
@@ -199,14 +201,19 @@ export function presence(
   return { value: size * Math.min(HELP_CAP, f), pinned };
 }
 
-/** The safety someone feels: their realm times their sect, their crew and despair, held to ×2. */
+/**
+ * The safety someone feels: their realm times their sect or their backer, whichever stands taller,
+ * their crew and despair, held to ×2.
+ */
 export function composure(them: Actor, crew = 0): number {
-  const sect =
+  const sect = Math.max(
     them.backing === 'great-sect'
       ? COMPOSURE.greatSect
       : them.backing === 'sect'
         ? COMPOSURE.sect
-        : 1;
+        : 1,
+    backerComposure(them),
+  );
   const f =
     sect *
     COMPOSURE.crew ** Math.min(COMPOSURE.crews, crew) *
@@ -225,6 +232,8 @@ export interface LeverageOpts {
   prop?: boolean;
   /** Standing with their power, 0.5 at its worst to 1.5 at its best; 1 when unknown. */
   standing?: number;
+  /** Your renown, to someone who knows your name: anyone honors renown (P3.4b). */
+  renown?: boolean;
   /** The stat, talent or Way naming the check, and helpers: held to ×2 together. */
   stat?: number;
   helpers?: number;
@@ -237,6 +246,7 @@ export function leverage(o: LeverageOpts = {}): number {
     (o.motive ? MOTIVE_MET : 1) *
     (o.prop ? PROP : 1) *
     standing *
+    (o.renown ? RENOWN_LEVERAGE : 1) *
     helpFactor({ stat: o.stat, helpers: o.helpers })
   );
 }

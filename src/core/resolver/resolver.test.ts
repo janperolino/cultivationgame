@@ -395,7 +395,7 @@ describe('scenes and ticks', () => {
 });
 
 describe('effects', () => {
-  it('apply to you, the world and the scene, and hand back what waits for P3.4b', () => {
+  it('apply to you, the world and the scene, karma included', () => {
     const s = life();
     const sc = scene([you(s), them('ally')]);
     const effects = [
@@ -416,7 +416,7 @@ describe('effects', () => {
     expect(woundShare(r.state.world, s.player.id, s.calendar.day)).toBe(0.2);
     expect(woundShare(r.state.world, s.player.id, s.calendar.day + 3)).toBe(0);
     expect(r.state.world.places['test-place']).toBe('damaged');
-    // The memory lands, seen by the players in the scene; karma waits for P3.4b.
+    // The memory lands, seen by the players in the scene; karma lands on heaven's ledger.
     expect(r.state.world.memories.at(-1)).toMatchObject({
       holder: 'ally',
       about: s.player.id,
@@ -424,7 +424,7 @@ describe('effects', () => {
       value: 40,
       known: [s.player.id],
     });
-    expect(r.deferred.map((e) => e.do)).toEqual(['karma']);
+    expect(r.state.world.karma[s.player.id]).toBe(5);
   });
 
   it('take nothing off the fixed list', () => {
@@ -579,7 +579,7 @@ describe('plans', () => {
 describe('the save', () => {
   it('carries the world from v20, and a v19 save loads with an empty one', () => {
     const s = life();
-    expect(SAVE_VERSION).toBe(21);
+    expect(SAVE_VERSION).toBe(22);
     const raw = JSON.parse(JSON.stringify(makeSave(s, 1))) as {
       version: number;
       state: Record<string, unknown>;

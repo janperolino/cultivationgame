@@ -27,6 +27,9 @@ import {
   type GameState,
   type PersonRecord,
 } from './state.ts';
+import { BONDS } from '../content/bonds.ts';
+import { bondOf } from './resolver/followers.ts';
+import { fameWord, namesOf } from './resolver/names.ts';
 import { knownNature, meetingShows, revealNature, seenNature } from './resolver/nature.ts';
 import {
   addTie,
@@ -342,4 +345,24 @@ export function powersView(s: GameState) {
     const st = standingOf(s.world, power, s.player.id, day);
     return { power, name: placeName(power), word: st.word, capped: st.cap !== null };
   });
+}
+
+/** Why someone follows you, in words, or null if they don't (P3.4b). */
+export function bondView(s: GameState, id: string): { words: string; breaks: string } | null {
+  const b = bondOf(s.world, id);
+  if (!b || b.leader !== s.player.id) return null;
+  const words =
+    b.kind === 'pay' ? `${BONDS.pay.name}, ${b.wage ?? 0} stones a month` : BONDS[b.kind].name;
+  return { words, breaks: BONDS[b.kind].breaks };
+}
+
+/** Where your name is known: renown and infamy by region, each with how far it carries (P3.4b). */
+export function namesView(s: GameState) {
+  return namesOf(s.world, s.player.id, s.calendar.day).map((n) => ({
+    region: n.region,
+    name: placeName(n.region),
+    renown: n.renown,
+    infamy: n.infamy,
+    words: fameWord(Math.max(n.renown, n.infamy)),
+  }));
 }

@@ -165,6 +165,7 @@ export const DEED_MEMORY: Partial<Record<DeedKind, MemoryId>> = {
   frame: 'framed',
   betrayal: 'betrayed',
   kidnapping: 'captive',
+  rescue: 'saved-life',
 };
 
 /** What someone tied to its victim remembers: in full through a love tie, at half through a friend. */

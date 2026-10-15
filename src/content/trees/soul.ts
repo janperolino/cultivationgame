@@ -625,7 +625,7 @@ export const SOUL_TREE = defineTree({
       text: 'Storms cross the surface; the depths never move.',
     },
 
-    // Sense Sweep, a side path: divine sense and steady hands.
+    // Sense Sweep, a side path: divine sense, steady hands and a trace burned off a soul.
     {
       id: 'soul-sense-sweep',
       name: 'Sense Sweep',
@@ -679,6 +679,19 @@ export const SOUL_TREE = defineTree({
       text: 'Your sense narrows to a point and pricks what it finds.',
     },
     {
+      id: 'soul-trace-severing',
+      name: 'Severing the Trace',
+      hanzi: '斩痕',
+      tier: 2,
+      kind: 'minor',
+      branch: 'soul2-sense',
+      at: [-5.0, 1.9],
+      cost: 400,
+      requires: ['soul-sense-needle'],
+      effects: [{ stat: 'traceSevering', value: 1 }],
+      text: "A stranger's mark sits on a soul like soot on a lamp. Yours is the brighter flame, and the soot burns off.",
+    },
+    {
       id: 'soul-valley-eye',
       name: 'Eye Over the Valley',
       hanzi: '俯谷之眼',
@@ -687,7 +700,7 @@ export const SOUL_TREE = defineTree({
       branch: 'soul2-sense',
       at: [-5.8, 0.9],
       cost: 600,
-      requires: ['soul-sense-needle'],
+      requires: ['soul-trace-severing'],
       effects: [{ stat: 'divineSense', value: 0.2 }],
       text: 'You map a valley from its rim without setting foot in it.',
     },
