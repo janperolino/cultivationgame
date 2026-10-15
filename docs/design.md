@@ -151,11 +151,13 @@ The world is original, enormous and nested. Each area feels like everything unti
 - `terrain` on every land place, kingdoms included; one left out takes its region's. Sight, sites and the encounter tables read it.
 - `hidden`: left out for a place anyone can see, `true` for one a Soul check or divine sense finds, or a realm for one only a soul at that realm finds.
 - `access` on gated places and secret realms: what opens it (a token, a rank, an invitation, a toll in stones) and its array's realm rating, and for a secret realm an entry cap, a requirement and a cycle. The Realm of Mingled Blood: below Foundation, beast blood or a bonded beast, every 7 years for 30 days.
-- `enemies` on powers, as entry ids, read by the hostile rule and the encounter tables.
+- `ties` on any entry: each names another entry, a kind (enemy, ally, trade, kin, patron, debt, feud, secret), whether it is open or hidden, and a one-line why, written on both ends. The hostile rule reads enemy ties, and rumors and plot encounters travel along them.
 - The `famous` tag, which a start reads to rumor the region's famous places.
 - `features` on any place: the tagged features its scenes build from.
 
 A generated site is the same record, kind `site` with a sub-kind (town, village, cave, den, ruin, shrine, herb valley), kept in the save; a hand-written one may join the atlas.
+
+**Connected, not forced** (Jan's call, D3). Places, powers, people and plots tie together through wants that both sides act on, a public layer and a hidden one, grown from the map outward and mostly ordinary, and in play the generator and GLM draw on the ties already there rather than inventing new conflicts. The guide and the writing workflow are in `content/atlas/README.md`, How things connect, which every session and agent writing the atlas reads first.
 
 **Size without lag.** Regions near you simulate in detail; distant ones tick in yearly summaries until you arrive. The map view zooms between tiers, and when a new tier opens, your old world shrinks to a dot on it.
 

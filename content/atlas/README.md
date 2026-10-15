@@ -39,3 +39,24 @@ Shapes aren't stored. The atlas draws them on the fly from the fields, and `tool
 - Straits (`sea` entries) carry a radius too, but neither the page nor the tool draws them yet.
 
 `npm run atlas:build` saves these as fixed outlines in `src/content/generated/atlas.json`, rounded to 10 li, so the game never has to recompute them. It clips land region cells to the coast, and stores The Scar as a circle and the Rim as a ring.
+
+## How things connect
+
+Places, powers, people and plots tie together the way the Beast Court and the Border Wilds do: the Gate raids across the strait for beast cores, the Night Bridge Society moves cubs and eggs at low tide, and the beasts raid back, while the truth underneath is that old beasts are waking and driving the young north, and the Gate's master once killed a Court prince. Settled in D3 (2026-10-14); every session and every agent writing the atlas reads this first.
+
+**The guide**
+
+- **Ties run on wants.** Every tie says who wants what from whom: cores, cubs, a debt, revenge, a secret.
+- **Both sides act.** Write what each side does about it. A tie only one side acts on is decoration.
+- **A public layer and a hidden one.** `lore` says one thing and `truth` another, with at most one secret an entry.
+- **Grow from the map.** Look along the strait, the road, the river, the shared vein or the border before reaching for famous names.
+- **Walk outward, don't reach up.** Tie to the parent, the siblings and the neighbors first; a tie to a far, famous power needs a reason the near ones can't give.
+- **Mostly ordinary.** Most ties are trade, marriage, debt or a feud over water, so the rare dramatic one lands.
+- **Every region's big tie touches at least one of its starts.**
+- **The test:** each side can say the tie in one sentence from its own view.
+
+**The workflow.** Before writing an entry, list its neighbors: its parent, its siblings, the powers whose sphere covers it and the routes through it. Tie it to one or two of them, and write the tie on both ends. Until P3.1 adds the `ties` field, a tie lives in `lore` or `truth` with a `[[Name]]` link on both entries.
+
+**Ties as data** (from P3.1). `ties` on any entry: each names another entry, a kind (enemy, ally, trade, kin, patron, debt, feud or secret), whether it is open or hidden, and a one-line why, and both entries carry it. `npm run atlas:build` warns on a tie written on one end only and on an entry with no tie at all.
+
+**In play, nothing new is invented.** Generated people and plots draw on the ties already there (a rogue's grudge against a named power, a merchant's debt to a sect), and neither the generator nor GLM makes up a new conflict. Rumors and plot encounters travel along ties, so a quarrel between the Gate and the Herders sends their people across your road.
