@@ -738,7 +738,19 @@ Checkpoints inside a sphere charge tolls from the Economy's fee list, and your f
 
 **A trip** is what gives going in its shape: a goal card, a bounty, a herb run, a patrol, a core hunt, a delivery; travel with its encounter rolls; the goal's scene plus one to three side encounters; and the return, with loot home, a coming-back story and a chronicle entry. While you're out your wheel is the trip's, so going in costs cultivation, and the spirit pool fills instead from M4. Free text and the narrator live inside scenes; between them the engine writes the travel line itself.
 
-**Encounters** are tables per region keyed by terrain tags, the hour, the danger band, fame and the calendar, in six kinds: beast, cultivator, mortal, place, omen and plot, the last seeded by your origin, talents and grudges. Each is a scene template: tagged features, NPCs carrying intents from the motive list, stakes, and exits, fight, talk, flee, sneak, trade. It is a card like any other, with the scene panel and the narrator attached. The tables themselves, ruins and inheritances, dying in the world and the fog's exact rules are settled at D3.
+**Encounters** are tables per region keyed by terrain tags, the hour, the danger band, fame and the calendar, in six kinds: beast, cultivator, mortal, place, omen and plot, the last seeded by your origin, talents and grudges. Each is a scene template: tagged features, NPCs carrying intents from the motive list, stakes, and exits, fight, talk, flee, sneak, trade. It is a card like any other, with the scene panel and the narrator attached.
+
+**Encounters on the map** (D3, 2026-10-14).
+
+- **Every encounter is a card on the map,** where it happens. You go in, or let it resolve by your stance (The resolver, Away and the idle half).
+- **You sense them coming** (Jan's call). As you travel, a card shows at the edge of your sight or your divine sense, so the realm you have is how early you see trouble, and you can go round it, go in or wait. Something hiding (an ambush, a lurking beast) shows only if your perception reaches its stealth, and otherwise springs on you.
+- **Any card that holds a person or a place can be gone into,** seclusion cards included (Jan's note from D2: cards as hooks you can go in on). A card's choices are the quick road and going in the long one.
+- **Scaled to you.** Each table entry carries a realm band, and the danger band, the region's top against your realm, picks which bands roll, so a threat is a threat at your realm.
+- **Plot encounters come from what is yours:** your origin, talents and grudges, and the people the world keeps.
+- **About one every few travel days,** busier on roads, deadlier off them and at night, and more with noise and heat; the numbers are the phase talk's.
+- **The Combat screen goes** once go-in fights exist (Jan's call): every fight happens in a scene, and sparring stays as something you do with people you know, a fellow disciple or a rival's challenge.
+
+The tables themselves, ruins and inheritances, and dying in the world are settled in D3's later blocks.
 
 ## The resolver
 
