@@ -338,7 +338,7 @@ svg[data-lod="0"] .zone{pointer-events:none}
 // It stands in for the claude.ai database: tools/atlas-serve.cjs reads and writes content/atlas/entries.json.
 window.claude = {
   use: async (name) => {
-    if (name === "user") return { me: async () => ({ id: "jan", name: "Jan" }) };
+    if (name === "user") return { me: async () => ({ id: "jan", name: "Jan" }), profiles: async ids => Object.fromEntries(ids.map(id => [id, { name: id === "jan" ? "Jan" : id }])) };
     if (name !== "db") throw new Error("not available locally");
     const api = "/api/entries";
     const send = async (method, id, data) => {
@@ -1002,7 +1002,8 @@ function editorName(e){
   if (S.me && e.editedBy === S.me.id) return "you";
   return (S.names[e.editedBy] && S.names[e.editedBy].name) || "someone";
 }
-async function resolveNames(ids){ if (!S.user || !ids.length) return; try { const ps = await S.user.profiles(ids); Object.assign(S.names, ps); } catch (e) {} }
+// Every id asked for gets a name, even when the lookup fails, so drawFolio never asks again in a loop.
+async function resolveNames(ids){ if (!S.user || !ids.length) return; try { const ps = await S.user.profiles(ids); Object.assign(S.names, ps); } catch (e) {} for (const id of ids) if (!S.names[id]) S.names[id] = { name: "someone" }; }
 function sizeText(e){
   const m = e.map || {};
   if (e.kind === "continent" && m.rx) return `about ${fmt(2 * Math.max(m.rx, m.ry))} li across (${fmt(Math.max(m.rx, m.ry))} km)`;
