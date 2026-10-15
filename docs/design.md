@@ -759,7 +759,17 @@ Checkpoints inside a sphere charge tolls from the Economy's fee list, and your f
 - **GLM adds color, never things.** A feature or a person it invents is real only once the engine registers it, so a scene stays what its template and the world say it is.
 - How many templates the Border Wilds starts with is sized with the decks.
 
-The tables themselves, ruins and inheritances, and dying in the world are settled in D3's later blocks.
+**Escape and death** (D3, 2026-10-14).
+
+- **Fleeing** is a speed comparison on the resolver (The resolver, The check): your qi × Agility against theirs, in a fight or out of one. Clear, you're away; close, away at a cost (a wound, something dropped, a trail they can follow); short, caught. Your own sword's flight counts, and an escape talisman wins a flight outright against anyone up to its tier.
+- **Hiding** is stealth against perception, helped by the scene's features: a crowd, a cave, the dark.
+- **Talking past** is a people check: surrender, beg, bribe, bluff. An accepted surrender makes you their captive, and their motives decide the rest: they rob you, ransom you, sell you, kill you or let you go.
+- **Realm pressure** still pins you two realms up, leaving talk, begging and an escape talisman (Scale of destruction).
+- **Falling isn't dying.** At 0 HP you are down, not dead, with one last act: a life-saving talisman, a plea, or from Nascent Soul the soul fleeing its body. Otherwise whoever stands over you decides by their motives: a robber takes everything and leaves you for dead, and you wake wounded; a grudge finishes you. Death comes from someone's will, not from a number reaching zero.
+- **When you die**, the life ends and you drop everything you carried; the people the world keeps remember it; the next life is born that day and starts at 12 (NPC basics); gentle mode's rewind still applies. A defeat you survive leaves a wound and what you lost.
+- **Leave things for the next life** (Jan's call). It is the same world, so what you leave in it stays: a stash sealed in a cave you found, things entrusted to someone you trust with a token for whoever comes after, your abode's store (M4), the manuals you write (M5). The next life starts with your stashes rumored to it, as dreams of a life before, and the people you entrusted as people it can seek; they don't know it is you unless it brings the token, and they hand over only if they live and still think well of you. The world can get there first: a stash is a hidden site anyone may stumble on, and a trusted friend's motives can turn. What the lineage carries without being left is M8's legacy.
+
+The tables themselves, and ruins and inheritances, are settled in D3's later blocks.
 
 ## The resolver
 
@@ -1444,7 +1454,7 @@ Settle each before the milestone that needs it. World content is drafted and che
 - [ ] Write a manual (M5): turning knowledge you hold into a manual item to teach, sell or lose, and sects handing out a style's next chapter by contribution, rank or favor
 - [ ] Sects: ranks, politics, founding your own, sect wars; faction strength weighted by the realm curve, so a sect is mostly its ancestor; every organization on the shared skeleton (Professions, people and powers), with the atlas's powers tagged by type and an assassins' organization added
 - [ ] World simulation: events calendar, secret realms, auctions, tournaments, wars
-- [ ] Death, rebirth and legacy: what carries over, how much time passes, what the world remembers
+- [ ] Death, rebirth and legacy: what carries over, what the world remembers (D3 settled the twelve years between lives and leaving things for the next life, under The world, Escape and death)
 - [ ] Art and sound: how much, and from where. Settled so far: location art and portraits are made at design time and shipped as data, never generated in play, with shared art by tag for filled-in places; portraits wait for the cast list; sound hangs off the same engine events as combat effects
 
 **Anytime**

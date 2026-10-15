@@ -82,7 +82,7 @@ Travel, trips, look around and the open, gated, hostile and deadly rule are sett
 
 - Mastery's "+2 to checks" shows on Cultivate › Practice, but no check reads it yet (P2.5b). *Settled in block 2a:* a technique an action uses gives its check ×1.05 a mastery level, so the line rewords.
 - Spars stand in for fights: the Combat screen offers the Border Wilds roster at your realm and stage, rolled on `people` and fought on `combat`, where nobody dies and nothing drops (P2.3). Settle what they become once encounters exist. *Settled in block 4:* the Combat screen goes once go-in fights exist, and sparring is a scene with people you know.
-- Fleeing and talking compare Agility and soul size at the square root of the gap, an accepted surrender takes you out of the fight, and what the other talk styles win was left to P3.3, GLM roles (P2.1); the smuggler's escape talisman does nothing until an escape use exists (P2.2). The fleeing block starts from these.
+- Fleeing and talking compare Agility and soul size at the square root of the gap, an accepted surrender takes you out of the fight, and what the other talk styles win was left to P3.3, GLM roles (P2.1); the smuggler's escape talisman does nothing until an escape use exists (P2.2). The fleeing block starts from these. *Settled in block 8:* fleeing is the resolver's speed comparison (qi × Agility), in a fight or out of one, and an escape talisman wins a flight outright up to its tier.
 - The Intent ladder's stele and inheritance moments arrive with M3, and a rare card that opens a stage early waits for D3's decks (P2.6).
 - Knots, lightning orbs and the Unknotting node wait for the storm card (P1.10), so they ride the seclusion deck's rewrite.
 
