@@ -19,7 +19,75 @@ export const ENTRY_KINDS = [
   'event',
   'race',
   'cosmos',
+  'site',
 ] as const;
+
+export type EntryKind = (typeof ENTRY_KINDS)[number];
+
+/** Kinds that are places on the map: they may carry terrain, hidden, access, features and famous. */
+export const PLACE_KINDS: readonly EntryKind[] = [
+  'continent',
+  'sea',
+  'region',
+  'kingdom',
+  'power',
+  'city',
+  'landmark',
+  'forbidden',
+  'realm',
+  'site',
+];
+
+/** Places on land, which always have a terrain, their own or their nearest ancestor's. */
+export const LAND_KINDS: readonly EntryKind[] = PLACE_KINDS.filter((k) => k !== 'sea');
+
+/** A site's sub-kind: the small places each kingdom seeds, or a hand-written one (design § The world map). */
+export const SITE_KINDS = [
+  'town',
+  'village',
+  'cave',
+  'den',
+  'ruin',
+  'shrine',
+  'herb-valley',
+] as const;
+
+export const TIE_KINDS = [
+  'enemy',
+  'ally',
+  'trade',
+  'kin',
+  'patron',
+  'debt',
+  'feud',
+  'secret',
+] as const;
+
+/**
+ * Tags on a scene feature (design § The world, Scene templates). A starting list from the design's
+ * examples, plus `narrow` for a chokepoint; P3.6 and P3.7 grow it as their tables need.
+ */
+export const FEATURE_TAGS = [
+  'fire',
+  'burnable',
+  'height',
+  'fall',
+  'water',
+  'crossing',
+  'cover',
+  'witnesses',
+  'fragile',
+  'dark',
+  'narrow',
+] as const;
+
+/** What opens a gated place; forcing it is always open to a realm above the array's rating. */
+export const ACCESS_BY = ['token', 'rank', 'invitation', 'toll'] as const;
+
+/** What a secret realm can ask of whoever enters, any one sufficing. Grows with the realms. */
+export const ACCESS_NEEDS = ['beast-blood', 'bonded-beast'] as const;
+
+export const STONE_GRADES = ['low', 'mid', 'high', 'top'] as const;
 
 export const WAYS = [
   'orthodox',
@@ -90,6 +158,72 @@ export const yearsSchema = z
   })
   .strict();
 
+const realmId = z.enum(REALM_IDS);
+
+export const tieSchema = z
+  .object({
+    /** The other entry's id; it carries the same tie back. */
+    to: z.string().min(1),
+    kind: z.enum(TIE_KINDS),
+    /** False for a tie nobody outside knows of. */
+    open: z.boolean(),
+    /** This side's one-line view of the tie: who wants what from whom. */
+    why: z.string(),
+  })
+  .strict();
+
+export type Tie = z.infer<typeof tieSchema>;
+
+export const featureSchema = z
+  .object({
+    name: z.string().min(1),
+    tags: z.array(z.enum(FEATURE_TAGS)).min(1),
+  })
+  .strict();
+
+export type Feature = z.infer<typeof featureSchema>;
+
+export const accessSchema = z
+  .object({
+    /** What opens it. Left out for a secret realm that only asks `below` or `needs`. */
+    by: z.array(z.enum(ACCESS_BY)).optional(),
+    /** Whose token, rank or invitation, or who takes the toll; the entry itself when left out. */
+    of: z.string().optional(),
+    /** The rank that opens it, free text until M5's ranks. */
+    rank: z.string().optional(),
+    toll: z
+      .object({ stones: z.number().int().positive(), grade: z.enum(STONE_GRADES) })
+      .strict()
+      .optional(),
+    /** The array's realm rating: forcing the way in needs a realm above it. */
+    array: realmId.optional(),
+    /** Secret realms: only cultivators below this realm may enter. */
+    below: realmId.optional(),
+    /** Secret realms: any one of these lets you in. */
+    needs: z.array(z.enum(ACCESS_NEEDS)).min(1).optional(),
+    /** Secret realms: open `days` days every `every` years, counted from an opening in world year `anchor`. */
+    cycle: z
+      .object({
+        every: z.number().int().positive(),
+        days: z.number().int().positive(),
+        anchor: z.number().int(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict()
+  .refine((a) => (a.by?.includes('toll') ?? false) === (a.toll !== undefined), {
+    message: 'a toll comes with "toll" in by, and the other way round',
+  })
+  .refine((a) => (a.by?.includes('rank') ?? false) === (a.rank !== undefined), {
+    message: 'a rank comes with "rank" in by, and the other way round',
+  })
+  .refine((a) => a.by?.length || a.below || a.needs || a.cycle, {
+    message: 'access needs something that opens it',
+  });
+
+export type Access = z.infer<typeof accessSchema>;
+
 const baseFields = {
   id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),
   name: z.string().min(1),
@@ -105,9 +239,42 @@ const baseFields = {
   tags: z.array(z.string()),
   way: z.enum(WAYS).or(z.literal('')).optional(),
   terrain: z.enum(TERRAINS).or(z.literal('')).optional(),
+  /** A site's sub-kind, on kind `site` only. */
+  site: z.enum(SITE_KINDS).optional(),
+  /** `true` when a Soul check or divine sense finds it, or the realm a soul must reach to find it. */
+  hidden: z.union([z.literal(true), realmId]).optional(),
+  access: accessSchema.optional(),
+  ties: z.array(tieSchema).optional(),
+  features: z.array(featureSchema).optional(),
   map: mapSchema.optional(),
   years: yearsSchema.optional(),
 };
+
+/** Rules one entry can check on its own; the ones across entries are in checks.ts. */
+function entryRules(
+  e: {
+    kind: EntryKind;
+    site?: unknown;
+    hidden?: unknown;
+    access?: Access;
+    features?: unknown;
+    tags: string[];
+  },
+  ctx: z.RefinementCtx,
+) {
+  const issue = (path: string, message: string) =>
+    ctx.addIssue({ code: 'custom', path: [path], message });
+  const place = PLACE_KINDS.includes(e.kind);
+  if (e.kind === 'site' && e.site === undefined) issue('site', 'a site needs its sub-kind');
+  if (e.kind !== 'site' && e.site !== undefined) issue('site', 'only a site has a sub-kind');
+  if (!place) {
+    for (const k of ['hidden', 'access', 'features'] as const)
+      if (e[k] !== undefined) issue(k, `${e.kind} is not a place`);
+    if (e.tags.includes('famous')) issue('tags', `${e.kind} is not a place, so it can't be famous`);
+  }
+  if (e.access && e.kind !== 'realm' && (e.access.below || e.access.needs || e.access.cycle))
+    issue('access', 'an entry cap, needs and a cycle are for secret realms');
+}
 
 /** One entry as it sits in content/atlas/entries.json. */
 export const sourceEntrySchema = z
@@ -119,7 +286,8 @@ export const sourceEntrySchema = z
     editedBy: z.string(),
     editedAt: z.string(),
   })
-  .strict();
+  .strict()
+  .superRefine(entryRules);
 
 export type SourceEntry = z.infer<typeof sourceEntrySchema>;
 
@@ -156,10 +324,24 @@ export function parseTop(text: string | undefined): TopParse {
 
 // --- The generated file. ---
 
-/** One entry in the generated atlas: bookkeeping dropped, `top` parsed. `truth` stays for the narrator. */
-export const atlasEntrySchema = z.object({ ...baseFields, top: topSchema }).strict();
+/**
+ * One entry in the generated atlas: bookkeeping dropped, `top` parsed, and `terrain` resolved on
+ * every land place (its own, or its nearest ancestor's). `truth` stays for the narrator.
+ */
+export const atlasEntrySchema = z
+  .object({ ...baseFields, top: topSchema })
+  .strict()
+  .superRefine(entryRules);
 
 export type AtlasEntry = z.infer<typeof atlasEntrySchema>;
+
+/**
+ * The record a generated site shares with the atlas (design § The world map): kind `site` with its
+ * sub-kind, kept in the save. A hand-written site in the atlas parses the same way.
+ */
+export const siteSchema = atlasEntrySchema.refine((e) => e.kind === 'site', 'a site has kind site');
+
+export type Site = AtlasEntry & { kind: 'site'; site: (typeof SITE_KINDS)[number] };
 
 /** A ring of [x, y] points in li, not closed (the last point doesn't repeat the first). */
 const ring = z.array(point).min(3);
@@ -185,7 +367,7 @@ export const shapeSchema = z.discriminatedUnion('type', [
 
 export type Shape = z.infer<typeof shapeSchema>;
 
-export const GENERATED_ATLAS_VERSION = 1;
+export const GENERATED_ATLAS_VERSION = 2;
 
 export const generatedAtlasSchema = z
   .object({

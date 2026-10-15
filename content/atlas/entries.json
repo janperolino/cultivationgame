@@ -1,7 +1,7 @@
 [
  {
   "id": "beast-court",
-  "editedAt": "2026-10-11T12:00:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "万山兽庭",
   "kind": "power",
@@ -20,6 +20,20 @@
   "summary": "The spirit beast realm of the Vast Wilds Continent, ruled from a forest of stone pillars by four beast kings.",
   "tags": [
    "spirit beasts"
+  ],
+  "ties": [
+   {
+    "to": "qm-tushou-men",
+    "kind": "enemy",
+    "open": true,
+    "why": "The Butchers cross the strait to cut cores from our young; we send hunters after every raiding party."
+   },
+   {
+    "to": "qm-muling-guo",
+    "kind": "enemy",
+    "open": true,
+    "why": "The herders chain our children for mounts; we kill the tamers and free the beasts."
+   }
   ],
   "top": "Void Refinement (the dowager queen, newly woken; two beast kings at Deity Transformation)",
   "truth": "The Ape King and the Roc are a breath away from civil war over who leads the Court when the tide peaks. The prince the Beast-Butcher Gate killed was the son of the Court's dowager queen, a Void Refinement beast who went into seclusion before the Ape and the Roc were crowned. She has woken, and she remembers.",
@@ -1201,7 +1215,7 @@
  },
  {
   "id": "cg-jinpan-ku",
-  "editedAt": "2026-10-11T13:00:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "金蟠窟",
   "kind": "kingdom",
@@ -1222,6 +1236,14 @@
    "metal dao"
   ],
   "terrain": "",
+  "ties": [
+   {
+    "to": "qm-mihun-shilin",
+    "kind": "kin",
+    "open": true,
+    "why": "The Python's grandson crossed the strait and made the Soul-Lost Stone Forest his hunting ground."
+   }
+  ],
   "top": "Nascent Soul (the Golden Python)",
   "truth": "",
   "way": ""
@@ -2189,7 +2211,7 @@
  },
  {
   "id": "cg-tuobian",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "拓边",
   "kind": "region",
@@ -2210,6 +2232,14 @@
    "beast war"
   ],
   "terrain": "hills",
+  "ties": [
+   {
+    "to": "qm-bianhuang",
+    "kind": "trade",
+    "open": true,
+    "why": "The chain comes ashore at Bridgehead Town, bringing broke walkers from the Border Wilds and sending cores back."
+   }
+  ],
   "top": "Core Formation",
   "truth": "The withdrawal is a feint aimed at the Storm Roc as much as at the humans. The tigers of the [[Brindled Ridges]] are lying up in the hills, and the Ape King has promised them every human head they take before the rains.",
   "way": ""
@@ -8777,7 +8807,7 @@
  },
  {
   "id": "gongqi",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "共栖城",
   "kind": "city",
@@ -8797,12 +8827,26 @@
    "array hub",
    "half-bloods"
   ],
+  "ties": [
+   {
+    "to": "qm-yeqiao-hui",
+    "kind": "trade",
+    "open": true,
+    "why": "The Night Bridge runners bring us Morning Star goods and half-bloods, island by island."
+   },
+   {
+    "to": "qm-anbian-fu",
+    "kind": "secret",
+    "open": false,
+    "why": "A Gongsun widow pays in cores and captives for blades, and the council asks nothing."
+   }
+  ],
   "top": "Nascent Soul",
   "truth": ""
  },
  {
   "id": "great-jing",
-  "editedAt": "2026-10-11T13:00:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "大靖皇朝",
   "kind": "power",
@@ -8823,6 +8867,14 @@
    "spear",
    "empire",
    "conscription"
+  ],
+  "ties": [
+   {
+    "to": "qm-anbian-fu",
+    "kind": "patron",
+    "open": true,
+    "why": "The Gongsuns hold the southwest march in the dynasty's name, under a frontier charter."
+   }
   ],
   "top": "Body Integration (the Ancestor Emperor, dying)",
   "truth": "The Ancestor Emperor is dying. The palace array feeds him the capital's veins, and he has decided the dynasty can starve first. He reached Body Integration nine hundred years ago, and a body that strong eats spirit veins the way a mortal eats rice.",
@@ -12568,8 +12620,29 @@
  },
  {
   "id": "qm-anbian-fu",
-  "editedAt": "2026-10-12T18:00:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
+  "features": [
+   {
+    "name": "a village watchtower",
+    "tags": [
+     "height",
+     "burnable"
+    ]
+   },
+   {
+    "name": "a beast-pit",
+    "tags": [
+     "fall"
+    ]
+   },
+   {
+    "name": "fields plowed with spears at hand",
+    "tags": [
+     "witnesses"
+    ]
+   }
+  ],
   "hanzi": "安边府",
   "kind": "kingdom",
   "lore": "The Gongsuns have held the march for nine generations and buried most of their sons on the wall. Every family owes one child to the garrison at sixteen. Rooted children are another matter: since the raids tripled, the Gongsuns hold a frontier charter, so the Registry's frontier tester comes at twelve, the age the march can put a child on the wall, and the garrison keeps every rooted child for its cadet school instead of sending them to the capital. Children here learn to read beast tracks before letters and to tell a raid horn from a hunt horn. A beast core turned in at a fort earns a bounty in rice or stones.",
@@ -12588,6 +12661,33 @@
    "frontier",
    "military",
    "beast raids"
+  ],
+  "terrain": "hills",
+  "ties": [
+   {
+    "to": "gongqi",
+    "kind": "secret",
+    "open": false,
+    "why": "Lady Gongsun sends cores and captives to Shared Roost for the weapons the capital stopped sending."
+   },
+   {
+    "to": "qm-duigu-qiang",
+    "kind": "patron",
+    "open": true,
+    "why": "Our garrisons hold the wall's southern stretch, and every cadet learns it by patrolling it."
+   },
+   {
+    "to": "qm-shiyan-guo",
+    "kind": "feud",
+    "open": true,
+    "why": "Stone Eyes is ours on every imperial map, yet its clans pay no tax and send no sons to the wall."
+   },
+   {
+    "to": "great-jing",
+    "kind": "patron",
+    "open": true,
+    "why": "We hold the march for the dynasty, though the capital has stopped sending the weapons to do it."
+   }
   ],
   "top": "Foundation Establishment",
   "truth": "Lady Gongsun Wei, the general's widow, has been trading cores and captives to Shared Roost City to buy the weapons the capital stopped sending.",
@@ -12725,7 +12825,7 @@
  },
  {
   "id": "qm-bianhuang",
-  "editedAt": "2026-10-12T18:00:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "边荒",
   "kind": "region",
@@ -12746,6 +12846,14 @@
    "half-bloods"
   ],
   "terrain": "karst",
+  "ties": [
+   {
+    "to": "cg-tuobian",
+    "kind": "trade",
+    "open": true,
+    "why": "Walkers, poachers and smugglers leave our coast down the chain, and cores come back up it."
+   }
+  ],
   "top": "Nascent Soul",
   "truth": "The Beast Court is not sending the raids. Old beasts are waking in the Vast Wilds Continent's mountains and driving the young ones north across the strait.",
   "way": ""
@@ -13139,8 +13247,32 @@
  },
  {
   "id": "qm-duigu-qiang",
-  "editedAt": "2026-10-12T18:00:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
+  "features": [
+   {
+    "name": "the patrol walk along the top",
+    "tags": [
+     "height",
+     "narrow"
+    ]
+   },
+   {
+    "name": "the old sections faced with cart-sized skulls",
+    "tags": [
+     "height",
+     "fall",
+     "fragile"
+    ]
+   },
+   {
+    "name": "bone heaps waiting to be built in",
+    "tags": [
+     "cover",
+     "fragile"
+    ]
+   }
+  ],
   "hanzi": "堆骨墙",
   "kind": "landmark",
   "lore": "Each garrison adds the bones of the beasts it kills, and the oldest sections are faced with skulls the size of carts. Beast spirits haunt it in the seventh month, and ghost-hunters and bone-collectors come then. Old bones from the wall are a refining material for beast-taming whistles and Slaughter Dao artifacts, and stealing them is a hanging offense. The [[March of Pacified Borders]] garrisons the southern stretch, and its cadets learn the wall by patrolling it.",
@@ -13156,7 +13288,17 @@
   "tags": [
    "frontier",
    "ghost",
-   "refining materials"
+   "refining materials",
+   "famous"
+  ],
+  "terrain": "hills",
+  "ties": [
+   {
+    "to": "qm-anbian-fu",
+    "kind": "patron",
+    "open": true,
+    "why": "The Gongsun garrisons man the southern stretch and add their kills to the bones."
+   }
   ],
   "top": "Core Formation",
   "truth": "",
@@ -13639,9 +13781,58 @@
  },
  {
   "id": "qm-hexue-jing",
-  "editedAt": "2026-10-12T18:00:00Z",
+  "access": {
+   "by": [
+    "toll"
+   ],
+   "of": "qm-yeqiao-hui",
+   "toll": {
+    "stones": 10,
+    "grade": "low"
+   },
+   "below": "foundation-establishment",
+   "needs": [
+    "beast-blood",
+    "bonded-beast"
+   ],
+   "cycle": {
+    "every": 7,
+    "days": 30,
+    "anchor": 3110
+   }
+  },
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
+  "features": [
+   {
+    "name": "the gate cave in the karst",
+    "tags": [
+     "dark",
+     "narrow"
+    ]
+   },
+   {
+    "name": "a ruined village of the one people",
+    "tags": [
+     "cover",
+     "fragile"
+    ]
+   },
+   {
+    "name": "a bloodline altar",
+    "tags": [
+     "witnesses"
+    ]
+   },
+   {
+    "name": "herb meadows under a green sky",
+    "tags": [
+     "cover"
+    ]
+   }
+  ],
   "hanzi": "合血境",
+  "hidden": true,
   "kind": "realm",
   "lore": "Inside is a green world where beasts and humans once lived as one people, with ruined villages, bloodline altars and herbs that awaken dormant bloodlines. Half-bloods go in to learn what they are; tamers go in to strengthen their bonds; pure humans who try the gate are thrown back with broken bones. The Night Bridge Society guards the cave and charges entry. It last opened five years ago.",
   "map": {
@@ -13658,6 +13849,15 @@
    "half-bloods",
    "beast taming",
    "bloodlines"
+  ],
+  "terrain": "forest",
+  "ties": [
+   {
+    "to": "qm-yeqiao-hui",
+    "kind": "patron",
+    "open": true,
+    "why": "The Night Bridge Society guards the gate cave and takes a toll from all who enter."
+   }
   ],
   "top": "Qi Condensation (gate cap)",
   "truth": "",
@@ -14514,8 +14714,31 @@
  },
  {
   "id": "qm-mihun-shilin",
-  "editedAt": "2026-10-12T18:00:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
+  "features": [
+   {
+    "name": "stone pillars that shift in the illusion",
+    "tags": [
+     "cover",
+     "height"
+    ]
+   },
+   {
+    "name": "narrow lanes between the pillars",
+    "tags": [
+     "narrow",
+     "dark"
+    ]
+   },
+   {
+    "name": "the python's den",
+    "tags": [
+     "dark",
+     "fall"
+    ]
+   }
+  ],
   "hanzi": "迷魂石林",
   "kind": "forbidden",
   "lore": "The Golden Python's grandson, a Nascent Soul serpent, crossed the strait six years ago and took the stone forest as its hunting ground. Its illusions make travelers walk in circles until they starve. Its shed skins are worth a fortune, and its den is said to hold the treasures of everyone it has eaten. Three imperial expeditions have gone in.",
@@ -14533,7 +14756,16 @@
    "beasts",
    "illusion",
    "danger",
-   "treasure"
+   "treasure",
+   "famous"
+  ],
+  "ties": [
+   {
+    "to": "cg-jinpan-ku",
+    "kind": "kin",
+    "open": true,
+    "why": "The serpent of the stone forest is the Golden Python's grandson, and his den answers to the lair."
+   }
   ],
   "top": "Nascent Soul",
   "truth": "",
@@ -14619,8 +14851,30 @@
  },
  {
   "id": "qm-muling-guo",
-  "editedAt": "2026-10-12T18:00:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
+  "features": [
+   {
+    "name": "ranch corrals of thunder-horned deer and scale-horses",
+    "tags": [
+     "witnesses",
+     "fragile"
+    ]
+   },
+   {
+    "name": "open grass to the horizon",
+    "tags": [
+     "crossing"
+    ]
+   },
+   {
+    "name": "the hatchling barns",
+    "tags": [
+     "burnable",
+     "cover"
+    ]
+   }
+  ],
   "hanzi": "牧灵国",
   "kind": "kingdom",
   "lore": "The Kingdom of Spirit Herders's ranches raise thunder-horned deer, scale-horses and war hounds from eggs and cubs bought from smugglers. The empire buys every mount at a good price, and the herder families are rich, armed and hunted. Beast Court agents, half-bloods in its pay and now and then an old beast, cross the strait to kill tamers and free their beasts. Children are bonded to a hatchling at seven and grow up with it.",
@@ -14639,6 +14893,33 @@
    "beast taming",
    "mounts",
    "frontier"
+  ],
+  "terrain": "plains",
+  "ties": [
+   {
+    "to": "qm-tushou-men",
+    "kind": "feud",
+    "open": true,
+    "why": "The Gate spits on us as collaborators and seizes any bonded beast that strays near its hall."
+   },
+   {
+    "to": "qm-yeqiao-hui",
+    "kind": "trade",
+    "open": true,
+    "why": "Our hatchlings come over the strait in Night Bridge crates, and we pay whatever they ask."
+   },
+   {
+    "to": "beast-court",
+    "kind": "enemy",
+    "open": true,
+    "why": "The Court has priced every tamer's head and sends agents over the strait to collect."
+   },
+   {
+    "to": "qm-shoukou-cheng",
+    "kind": "trade",
+    "open": true,
+    "why": "The frontier command buys every war mount we raise, at a good price."
+   }
   ],
   "top": "Foundation Establishment",
   "truth": "The kingdom's best stallion bloodline comes from a beast that wandered over the strait on its own and asked to stay. It speaks, though it has never shown a realm that should allow it, and has asked them to keep that quiet.",
@@ -14881,8 +15162,32 @@
  },
  {
   "id": "qm-shiyan-guo",
-  "editedAt": "2026-10-12T18:00:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
+  "features": [
+   {
+    "name": "a sinkhole rim with terraces down the walls",
+    "tags": [
+     "height",
+     "fall"
+    ]
+   },
+   {
+    "name": "caves no map shows",
+    "tags": [
+     "dark",
+     "cover",
+     "narrow"
+    ]
+   },
+   {
+    "name": "bat roosts heaped with guano",
+    "tags": [
+     "dark",
+     "burnable"
+    ]
+   }
+  ],
   "hanzi": "石眼国",
   "kind": "kingdom",
   "lore": "Stone Eyes is named for the round sinkholes that dot its hills, each with a village around the rim and terraces down the walls. Its people farm in the sinkholes, keep bats for guano and guide smugglers through caves no map shows. The empire counts it as part of the march; the cave clans pay no tax and give no soldiers. Children grow up knowing which neighbors have scales under their sleeves and never saying so.",
@@ -14902,14 +15207,59 @@
    "caves",
    "half-bloods"
   ],
+  "terrain": "karst",
+  "ties": [
+   {
+    "to": "qm-yeqiao-hui",
+    "kind": "trade",
+    "open": true,
+    "why": "We guide the Society's runners through the lower caves for a share, and never ask what is in the crates."
+   },
+   {
+    "to": "qm-anbian-fu",
+    "kind": "feud",
+    "open": true,
+    "why": "The march calls us its own and wants our taxes and our sons; it gets neither."
+   }
+  ],
   "top": "Qi Condensation",
   "truth": "",
   "way": ""
  },
  {
   "id": "qm-shoukou-cheng",
-  "editedAt": "2026-10-12T18:00:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
+  "features": [
+   {
+    "name": "the skull-faced walls",
+    "tags": [
+     "height",
+     "fall"
+    ]
+   },
+   {
+    "name": "the bounty office, paying for cores by grade",
+    "tags": [
+     "witnesses"
+    ]
+   },
+   {
+    "name": "the beast-part market",
+    "tags": [
+     "cover",
+     "witnesses"
+    ]
+   },
+   {
+    "name": "the reef road below the walls at low tide",
+    "tags": [
+     "water",
+     "crossing",
+     "narrow"
+    ]
+   }
+  ],
   "hanzi": "守口城",
   "kind": "city",
   "lore": "The City of the Guarded Mouth holds the narrow coast where the chain begins, with a garrison of ten thousand and a bounty office that pays for cores by grade. Its markets sell beast parts, smuggled Vast Wilds herbs and frontier saber steel. Every sect with a frontier interest keeps a hall here. At low tide, the reef road appears below the walls.",
@@ -14926,7 +15276,23 @@
    "frontier",
    "fortress",
    "beast cores",
-   "starting city"
+   "starting city",
+   "famous"
+  ],
+  "terrain": "coast",
+  "ties": [
+   {
+    "to": "qm-tushou-men",
+    "kind": "ally",
+    "open": true,
+    "why": "The Gate leads our raids across the chain and fills our bounty office with cores."
+   },
+   {
+    "to": "qm-muling-guo",
+    "kind": "trade",
+    "open": true,
+    "why": "Our cavalry rides Spirit Herder mounts, and we buy every one they raise."
+   }
   ],
   "top": "Nascent Soul",
   "truth": "",
@@ -15226,8 +15592,36 @@
  },
  {
   "id": "qm-tushou-men",
-  "editedAt": "2026-10-12T18:00:00Z",
+  "access": {
+   "by": [
+    "token",
+    "invitation"
+   ],
+   "array": "core-formation"
+  },
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
+  "features": [
+   {
+    "name": "the drill yard, where rank is counted in cores",
+    "tags": [
+     "witnesses"
+    ]
+   },
+   {
+    "name": "the core vault",
+    "tags": [
+     "dark",
+     "narrow"
+    ]
+   },
+   {
+    "name": "racks of frontier sabers",
+    "tags": [
+     "fragile"
+    ]
+   }
+  ],
   "hanzi": "屠兽门",
   "kind": "power",
   "lore": "The Beast-Butcher Gate teaches Saber and Slaughter Daos and recruits frontier orphans who have already lost someone to beasts. Disciples earn rank by cores taken. The sect sells cores to the Apricot Grove Valley, hides to the Zhu clan's rivals and meat to anyone, and leads the empire's punitive raids across the island chain. It despises beast tamers as collaborators and half-bloods as vermin.",
@@ -15245,7 +15639,34 @@
    "saber",
    "slaughter",
    "beast cores",
-   "frontier"
+   "frontier",
+   "famous"
+  ],
+  "ties": [
+   {
+    "to": "beast-court",
+    "kind": "enemy",
+    "open": true,
+    "why": "We raid across the strait for their cores, and their young come back over it for our disciples."
+   },
+   {
+    "to": "qm-muling-guo",
+    "kind": "feud",
+    "open": true,
+    "why": "The herders raise beasts for coin and call it taming; we take their mounts at our gates and their riders for collaborators."
+   },
+   {
+    "to": "xinglin",
+    "kind": "trade",
+    "open": true,
+    "why": "Apricot Grove buys every beast core we bring home, at a price we never argue."
+   },
+   {
+    "to": "qm-shoukou-cheng",
+    "kind": "ally",
+    "open": true,
+    "why": "We keep a hall in the city and lead its punitive raids down the chain; the bounty office pays us first."
+   }
   ],
   "top": "Nascent Soul",
   "truth": "The sect's Nascent Soul master killed a young Beast Court prince fifty years ago. The prince's mother has finally woken from seclusion.",
@@ -15705,8 +16126,32 @@
  },
  {
   "id": "qm-yeqiao-hui",
-  "editedAt": "2026-10-12T18:00:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
+  "features": [
+   {
+    "name": "a tide pool island on the chain",
+    "tags": [
+     "water",
+     "crossing"
+    ]
+   },
+   {
+    "name": "the low-tide reef between islands",
+    "tags": [
+     "water",
+     "narrow",
+     "fall"
+    ]
+   },
+   {
+    "name": "a smugglers' sea cave",
+    "tags": [
+     "dark",
+     "cover"
+    ]
+   }
+  ],
   "hanzi": "夜桥会",
   "kind": "power",
   "lore": "The Society knows the tides, the reefs and which islands have something living on them this month. Most of its runners are Qi Condensation or Foundation half-bloods who know one stretch by heart, and each crew waits on its own tide, so a cargo takes about half a year to pass end to end; only the Core Formation leaders fly the whole chain, in about a month. It runs half-bloods out of human villages, beast eggs to the Kingdom of Spirit Herders's ranches, Gu to the marsh and Vast Wilds herbs to anyone. Its leaders are half-bloods with beast senses and long grudges. It pays tribute to nobody and has informers in every fort. Passage costs five low-grade stones, or a favor.",
@@ -15725,6 +16170,32 @@
    "half-bloods",
    "gu",
    "beasts"
+  ],
+  "ties": [
+   {
+    "to": "qm-muling-guo",
+    "kind": "trade",
+    "open": true,
+    "why": "The ranches pay well for every egg and cub we carry over at low tide."
+   },
+   {
+    "to": "gongqi",
+    "kind": "trade",
+    "open": true,
+    "why": "Everything we run along the chain ends at Shared Roost, the only market that takes it all."
+   },
+   {
+    "to": "qm-shiyan-guo",
+    "kind": "trade",
+    "open": true,
+    "why": "The cave clans guide our cargo through caves no map shows, for a share and no questions."
+   },
+   {
+    "to": "qm-hexue-jing",
+    "kind": "patron",
+    "open": true,
+    "why": "We hold the cave where the gate opens and charge every blood that goes in."
+   }
   ],
   "top": "Core Formation",
   "truth": "",
@@ -18888,7 +19359,7 @@
  },
  {
   "id": "xinglin",
-  "editedAt": "2026-10-11T08:35:00Z",
+  "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "杏林谷",
   "kind": "power",
@@ -18909,6 +19380,14 @@
    "alchemy",
    "medicine",
    "spirit farming"
+  ],
+  "ties": [
+   {
+    "to": "qm-tushou-men",
+    "kind": "trade",
+    "open": true,
+    "why": "The Butchers are our steadiest source of beast cores, and we pay them enough to keep it that way."
+   }
   ],
   "top": "Void Refinement (the Valley Master)",
   "truth": "Apricot Grove Valley keeps its grip on the herb trade by quietly seeding blight in rival gardens. The Valley Master calls it hygiene. The Valley Master is a Void Refinement alchemist who has outlived three dynasties by keeping all of them in his debt.",

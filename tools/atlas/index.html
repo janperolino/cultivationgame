@@ -224,6 +224,18 @@ svg[data-lod="0"] .zone{pointer-events:none}
 .form textarea{font-family:var(--f-body);line-height:1.5;resize:vertical}
 .form .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .form .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.form details{border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.form details summary{cursor:pointer;font-size:13px;color:var(--ink-2);font-weight:700}
+.form details[open] summary{margin-bottom:8px}
+.form .checks{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--ink-2)}
+.form .checks label{flex-direction:row;align-items:center;gap:5px}
+.form .row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:start;padding:6px 0;border-bottom:1px solid var(--line)}
+.form .row > div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.form .hint{font-size:12px;color:var(--ink-2)}
+.ties{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.ties div{display:flex;flex-direction:column;gap:1px}
+.ties a{color:var(--w-orthodox);cursor:pointer;text-decoration:underline}
+.ties .why{font-family:var(--f-body);color:var(--ink-2)}
 .confirm{border:1px solid var(--cinnabar);border-radius:10px;padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:8px 14px;border-radius:999px;font-size:14px;z-index:20}
 
@@ -356,12 +368,22 @@ const NS = "http://www.w3.org/2000/svg";
 const KINDS = {
   world:["World",0], continent:["Continent",1], sea:["Sea",2], region:["Region",3], kingdom:["Kingdom",4],
   power:["Power",5], city:["City",6], landmark:["Landmark",7], forbidden:["Forbidden land",8], realm:["Secret realm",9],
-  route:["Route",10], era:["Era",11], event:["Event",12], race:["Race",13], cosmos:["Cosmology",14], figure:["Figure",15]
+  route:["Route",10], era:["Era",11], event:["Event",12], race:["Race",13], cosmos:["Cosmology",14], figure:["Figure",15], site:["Site",16]
 };
+// The P3.1 fields; the lists match src/content/atlas/schema.ts, which atlas:build checks against.
+const PLACES = new Set(["continent","sea","region","kingdom","power","city","landmark","forbidden","realm","site"]);
+const SITE_KINDS = ["town","village","cave","den","ruin","shrine","herb-valley"];
+const TIE_KINDS = ["enemy","ally","trade","kin","patron","debt","feud","secret"];
+const FEATURE_TAGS = ["fire","burnable","height","fall","water","crossing","cover","witnesses","fragile","dark","narrow"];
+const ACCESS_BY = ["token","rank","invitation","toll"];
+const ACCESS_NEEDS = ["beast-blood","bonded-beast"];
+const STONE_GRADES = ["low","mid","high","top"];
 const WAYS = { orthodox:"Orthodox", demonic:"Demonic", buddhist:"Buddhist", ghost:"Ghost", wild:"Beasts and plants", sea:"Sea clans", neutral:"Neutral", void:"Outer demons" };
 const TERRAINS = ["plains","hills","mountains","forest","jungle","marsh","desert","steppe","ice","tundra","volcanic","plateau","twilight","islands","coast","canyon","karst","sea"];
 const REALMS = ["Mortal","Qi Condensation","Foundation Establishment","Core Formation","Nascent Soul","Deity Transformation","Void Refinement","Body Integration","Mahayana","Tribulation Transcendence"];
-const PLACED = new Set(["continent","sea","region","kingdom","power","city","landmark","forbidden","realm","route","world"]);
+const PLACED = new Set(["continent","sea","region","kingdom","power","city","landmark","forbidden","realm","route","world","site"]);
+const realmId = name => name.toLowerCase().replace(/ /g, "-");
+const realmName = id => REALMS.find(r => realmId(r) === id) || id;
 const GREAT = new Set(["great-jing","qingxiao","xinglin","night-banquet","jingdu","nine-clans","xuanji","star-dial","eternal-night","iron-bone","frost-fair","qiandeng","tianping","luoxing","beast-court","jar-mothers","evergreen-deep","gongqi","no-light","thousand-puppets","pale-city","canglan","isles-league","wanfan","seal-watch","the-stump"]);
 const WORLD_R = 500000;
 
@@ -989,6 +1011,17 @@ function sizeText(e){
   if (Array.isArray(m.path)){ let d = 0; for (let i = 1; i < m.path.length; i++) d += Math.hypot(m.path[i][0] - m.path[i-1][0], m.path[i][1] - m.path[i-1][1]); return `about ${fmt(d)} li long (${fmt(d / 2)} km)`; }
   return "";
 }
+function accessText(a){
+  const o = a.of && get(a.of), whose = o ? o.name : a.of;
+  const bits = (a.by || []).map(b => b === "toll" && a.toll ? `a toll of ${a.toll.stones} ${a.toll.grade}-grade stones` : b === "rank" ? `the rank of ${a.rank}` : `a ${b}`);
+  const parts = [];
+  if (bits.length) parts.push(bits.join(" or ") + (whose ? ` (${whose})` : ""));
+  if (a.array) parts.push(`array rated ${realmName(a.array)}`);
+  if (a.below) parts.push(`below ${realmName(a.below)}`);
+  if (a.needs) parts.push(a.needs.join(" or ").replace(/-/g, " "));
+  if (a.cycle) parts.push(`open ${a.cycle.days} days every ${a.cycle.every} years, from ${a.cycle.anchor}`);
+  return parts.join("; ");
+}
 function seal(text){
   const chars = [...String(text)].filter(c => c.trim()).slice(0, 9), n = chars.length;
   const rows = n <= 2 ? n : n <= 4 ? 2 : 3, size = n <= 1 ? 40 : n <= 2 ? 30 : n <= 4 ? 26 : 20;
@@ -1033,7 +1066,24 @@ function drawFolio(){
   fact("When", yearsText(e.years));
   if (e.map && isFinite(e.map.x) && e.kind !== "world") fact("Position", `${fmt(e.map.x)}, ${fmt(e.map.y)} li from the Ladder Stump`);
   if (e.map && e.map.sphere) fact("Sphere of influence", `${fmt(e.map.sphere)} li around its seat`);
+  if (e.site) fact("Site", e.site.replace("-", " "));
+  if (e.hidden) fact("Hidden", e.hidden === true ? "found by a Soul check or divine sense" : `only a soul at ${realmName(e.hidden)} finds it`);
+  if (e.access) fact("Access", accessText(e.access));
   if (facts.childNodes.length) box.append(facts);
+  if (e.features && e.features.length){
+    const fl = h("div", { class:"ties" });
+    e.features.forEach(ft => fl.append(h("div", {}, h("span", {}, ft.name), h("span", { class:"why" }, (ft.tags || []).join(", ")))));
+    box.append(h("div", { class:"sec" }, h("h3", {}, "FEATURES"), fl));
+  }
+  if (e.ties && e.ties.length){
+    const tl = h("div", { class:"ties" });
+    e.ties.forEach(t => {
+      const o = get(t.to), a = h("a", { role:"link", tabindex:"0" }, o ? o.name : t.to);
+      if (o){ a.onclick = () => select(o.id, true); a.onkeydown = ev => { if (ev.key === "Enter") a.onclick(); }; }
+      tl.append(h("div", {}, h("span", {}, `${t.kind[0].toUpperCase() + t.kind.slice(1)}${t.open ? "" : " (hidden)"} · `, a), t.why ? h("span", { class:"why" }, t.why) : h("span", { class:"why" }, "(no why yet)")));
+    });
+    box.append(h("div", { class:"sec" }, h("h3", {}, `TIES · ${e.ties.length}`), tl));
+  }
   if (e.notes) box.append(h("div", { class:"sec" }, h("h3", {}, "NOTES AND OPEN QUESTIONS"), h("div", { class:"txt" }, linkify(e.notes))));
   const kids = (S.kids.get(e.id) || []).slice().sort(sortKids);
   if (kids.length){
@@ -1074,7 +1124,53 @@ function drawEditor(box, e){
   form.append(field("What the world believes", ta("f-lore", v.lore, 7)));
   form.append(field("What's actually true (hidden from players)", ta("f-truth", v.truth, 3)));
   form.append(field("Notes and open questions", ta("f-notes", v.notes, 3)));
-  form.append(field("Tags (comma separated)", inp("f-tags", (v.tags || []).join(", "))));
+  form.append(field("Tags (comma separated; famous for a start to rumor)", inp("f-tags", (v.tags || []).join(", "))));
+  // --- what the engine reads (P3.1): site, hidden, access, features, ties
+  const names = h("datalist", { id:"entry-names" });
+  [...S.entries.values()].sort(sortKids).forEach(x => names.append(h("option", { value:x.id }, `${x.name} · ${kindLabel(x.kind)}`)));
+  form.append(names);
+  const realmOpts = [["", "—"]].concat(REALMS.slice(1).map(r => [realmId(r), r]));
+  form.append(h("div", { class:"two" },
+    field("Site sub-kind (sites only)", sel("f-site", [["", "—"]].concat(SITE_KINDS.map(k => [k, k.replace("-", " ")])), v.site || "")),
+    field("Hidden", sel("f-hidden", [["", "No, anyone can see it"], ["true", "Soul check or divine sense"]].concat(REALMS.slice(1).map(r => [realmId(r), `Only a soul at ${r}`])), v.hidden === true ? "true" : v.hidden || ""))));
+  const ac = v.access || {};
+  const checks = (name, all, on) => h("div", { class:"checks" }, ...all.map(k => h("label", {}, h("input", { type:"checkbox", name, value:k, checked: on.includes(k) ? "" : null }), k.replace("-", " "))));
+  const accBox = h("details", {}, h("summary", {}, "Access (gated places and secret realms)"),
+    h("div", { class:"form" },
+      h("div", { class:"hint" }, "Opened by (forcing it is always possible above the array's rating)"),
+      checks("f-by", ACCESS_BY, ac.by || []),
+      h("div", { class:"two" }, field("Whose token, rank or toll (blank: this entry)", inp("f-of", ac.of, { list:"entry-names" })), field("Rank", inp("f-rank", ac.rank))),
+      h("div", { class:"three" }, field("Toll (stones)", inp("f-toll", ac.toll && ac.toll.stones, { type:"number", min:"1", step:"1" })), field("Grade", sel("f-grade", STONE_GRADES.map(g => [g, g]), ac.toll ? ac.toll.grade : "low")), field("Array rating", sel("f-array", realmOpts, ac.array || ""))),
+      h("div", { class:"hint" }, "Secret realms only"),
+      field("Only cultivators below", sel("f-below", realmOpts, ac.below || "")),
+      h("div", { class:"hint" }, "Needs, any one"),
+      checks("f-needs", ACCESS_NEEDS, ac.needs || []),
+      h("div", { class:"three" }, field("Every (years)", inp("f-every", ac.cycle && ac.cycle.every, { type:"number", min:"1" })), field("Open (days)", inp("f-days", ac.cycle && ac.cycle.days, { type:"number", min:"1" })), field("Opened in (world year)", inp("f-anchor", ac.cycle && ac.cycle.anchor, { type:"number" })))));
+  if (v.access) accBox.open = true;
+  form.append(accBox);
+  const remove = (row, what) => h("button", { type:"button", class:"btn", "aria-label":`Remove ${what}`, onclick: () => row.remove() }, "×");
+  const featList = h("div");
+  const addFeat = (ft = { name:"", tags:[] }) => {
+    const row = h("div", { class:"row feat" });
+    row.append(h("div", {}, inp(null, ft.name, { placeholder:"name, such as the reef road at low tide", class:"ft-name" }), inp(null, ft.tags.join(", "), { placeholder:"tags, comma separated", class:"ft-tags" })), remove(row, "feature"));
+    featList.append(row);
+  };
+  (v.features || []).forEach(addFeat);
+  form.append(h("details", { open: (v.features || []).length ? "" : null }, h("summary", {}, `Features · ${(v.features || []).length}`),
+    h("div", { class:"hint" }, "Tags: " + FEATURE_TAGS.join(", ")), featList,
+    h("button", { type:"button", class:"btn", onclick: () => addFeat() }, "Add feature")));
+  const tieList = h("div");
+  const addTie = (t = { to:"", kind:"trade", open:true, why:"" }) => {
+    const row = h("div", { class:"row tie" });
+    row.append(h("div", {},
+      h("div", { class:"three" }, inp(null, t.to, { list:"entry-names", placeholder:"entry id", class:"t-to" }), sel(null, TIE_KINDS.map(k => [k, k]), t.kind), sel(null, [["open", "open"], ["hidden", "hidden"]], t.open ? "open" : "hidden")),
+      inp(null, t.why, { placeholder:"why, in one line from this side", class:"t-why" })), remove(row, "tie"));
+    tieList.append(row);
+  };
+  (v.ties || []).forEach(addTie);
+  form.append(h("details", { open: (v.ties || []).length ? "" : null }, h("summary", {}, `Ties · ${(v.ties || []).length}`),
+    h("div", { class:"hint" }, "A tie is written on both ends: adding one here writes the other end with the same kind and an empty why to fill there, and removing one removes both."), tieList,
+    h("button", { type:"button", class:"btn", onclick: () => addTie() }, "Add tie")));
   const mx = inp("f-x", v.map.x, { type:"number", step:"1000" }), my = inp("f-y", v.map.y, { type:"number", step:"1000" });
   const mr = inp("f-r", v.map.r, { type:"number", step:"500", min:"0" }), ms = inp("f-sphere", v.map.sphere, { type:"number", step:"1000", min:"0" });
   form.append(h("div", { class:"three" }, field("X (li)", mx), field("Y (li)", my), field("Radius (li)", mr)));
@@ -1091,33 +1187,96 @@ function drawEditor(box, e){
   form.addEventListener("submit", async ev => {
     ev.preventDefault();
     const num = x => x.value === "" ? undefined : Number(x.value);
-    const data = {
-      name: $("#f-name").value.trim(), pinyin: $("#f-pinyin").value.trim(), hanzi: $("#f-hanzi").value.trim(), meaning: $("#f-meaning").value.trim(),
+    const bad = msg => { toast(msg); return true; };
+    // Start from the entry as it is, so fields this form doesn't show are kept.
+    const data = Object.assign({}, e);
+    delete data.id;
+    const by = $$('input[name="f-by"]:checked', form).map(x => x.value), needs = $$('input[name="f-needs"]:checked', form).map(x => x.value);
+    const access = {}, toll = num($("#f-toll")), every = num($("#f-every")), days = num($("#f-days")), anchor = num($("#f-anchor"));
+    if (by.length) access.by = by;
+    if ($("#f-of").value.trim()) access.of = $("#f-of").value.trim();
+    if (by.includes("rank")) access.rank = $("#f-rank").value.trim();
+    if (by.includes("toll")) access.toll = { stones: toll, grade: $("#f-grade").value };
+    if ($("#f-array").value) access.array = $("#f-array").value;
+    if ($("#f-below").value) access.below = $("#f-below").value;
+    if (needs.length) access.needs = needs;
+    if (every || days || anchor !== undefined) access.cycle = { every, days, anchor };
+    if (access.of && !get(access.of) && bad(`Access: no entry with the id ${access.of}`)) return;
+    if (by.includes("rank") && !access.rank && bad("Access: name the rank")) return;
+    if (by.includes("toll") && !(toll > 0) && bad("Access: give the toll in stones")) return;
+    if (access.cycle && !(every > 0 && days > 0 && anchor !== undefined) && bad("Access: a cycle needs every, days and a year it opened")) return;
+    const features = [];
+    for (const row of $$(".feat", form)){
+      const name = $(".ft-name", row).value.trim(), tags = $(".ft-tags", row).value.split(",").map(s => s.trim()).filter(Boolean);
+      if (!name && !tags.length) continue;
+      const unknown = tags.filter(t => !FEATURE_TAGS.includes(t));
+      if (!name && bad("A feature needs a name")) return;
+      if (!tags.length && bad(`${name}: give it at least one tag`)) return;
+      if (unknown.length && bad(`${name}: unknown tag ${unknown.join(", ")}`)) return;
+      features.push({ name, tags });
+    }
+    const ties = [];
+    for (const row of $$(".tie", form)){
+      const [kind, open] = $$("select", row).map(s => s.value), to = $(".t-to", row).value.trim(), why = $(".t-why", row).value.trim();
+      if (!to) continue;
+      if (!get(to) && bad(`Tie: no entry with the id ${to}`)) return;
+      if (ties.some(t => t.to === to) && bad(`Two ties to ${to}; keep one a pair`)) return;
+      ties.push({ to, kind, open: open === "open", why });
+    }
+    const tiesBefore = isNew ? [] : (e.ties || []);
+    Object.assign(data, {
+      site: $("#f-site").value || undefined,
+      hidden: $("#f-hidden").value === "true" ? true : $("#f-hidden").value || undefined,
+      access: Object.keys(access).length ? access : undefined,
+      features: features.length ? features : undefined,
+      ties: ties.length ? ties : undefined,
+    });
+    Object.assign(data, {
+      name:$("#f-name").value.trim(), pinyin: $("#f-pinyin").value.trim(), hanzi: $("#f-hanzi").value.trim(), meaning: $("#f-meaning").value.trim(),
       kind: $("#f-kind").value, status: $("#f-status").value, parent: $("#f-parent").value || null,
       way: $("#f-way").value || "", terrain: $("#f-terrain").value || "", top: $("#f-top").value.trim(),
       summary: $("#f-summary").value.trim(), lore: $("#f-lore").value.trim(), truth: $("#f-truth").value.trim(), notes: $("#f-notes").value.trim(),
       tags: $("#f-tags").value.split(",").map(s => s.trim()).filter(Boolean)
-    };
+    });
     const map = Object.assign({}, e.map || {});
     const x = num(mx), y = num(my), r = num(mr), sp = num(ms);
     if (x !== undefined && y !== undefined){ map.x = x; map.y = y; } else { delete map.x; delete map.y; }
     if (r !== undefined && r > 0) map.r = r; else delete map.r;
     if (sp !== undefined && sp > 0) map.sphere = sp; else delete map.sphere;
-    if (Object.keys(map).length) data.map = map;
+    if (Object.keys(map).length) data.map = map; else delete data.map;
     const yfv = num(yf), ytv = num(yt);
-    if (yfv !== undefined || ytv !== undefined) data.years = { from: yfv ?? null, to: ytv ?? null };
+    if (yfv !== undefined || ytv !== undefined) data.years = { from: yfv ?? null, to: ytv ?? null }; else delete data.years;
     if (e.order != null) data.order = e.order;
     data.editedBy = (S.me && S.me.id) || "someone"; data.editedAt = new Date().toISOString();
-    Object.keys(data).forEach(k => { if (data[k] === "") delete data[k]; });
+    // Drop empty fields, but keep the text fields the schema requires even when empty.
+    const required = new Set(["pinyin", "hanzi", "summary", "lore", "truth"]);
+    Object.keys(data).forEach(k => { if ((data[k] === "" && !required.has(k)) || data[k] === undefined) delete data[k]; });
     let id = e.id;
     if (isNew){ const base = (data.name || "entry").toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "entry"; id = base; let i = 2; while (get(id)) id = base + "-" + i++; }
     try {
       await S.db.doc("entries/" + id).set(data);
+      upsert(id, data);
+      await syncTies(id, tiesBefore, data.ties || []);
       S.creating = null; S.editing = false; S.sel = id; toast(isNew ? "Entry created" : "Saved");
       upsert(id, data); rebuild(); drawFolio();
     } catch (err){ toast("Couldn't save: " + (err && err.code === "quota_exceeded" ? "the atlas is full" : (err && err.message) || "try again")); }
   });
   box.append(form);
+}
+// A tie lives on both ends: write, update or remove the other end to match this one.
+async function syncTies(id, before, after){
+  const stamp = { editedBy: (S.me && S.me.id) || "someone", editedAt: new Date().toISOString() };
+  for (const oid of new Set([...before, ...after].map(t => t.to))){
+    const o = get(oid); if (!o || oid === id) continue;
+    const t = after.find(x => x.to === oid), list = (o.ties || []).slice(), i = list.findIndex(x => x.to === id);
+    if (!t && i >= 0) list.splice(i, 1);
+    else if (t && i < 0) list.push({ to:id, kind:t.kind, open:t.open, why:"" });
+    else if (t && i >= 0 && (list[i].kind !== t.kind || list[i].open !== t.open)) list[i] = Object.assign({}, list[i], { kind:t.kind, open:t.open });
+    else continue;
+    const patch = Object.assign({ ties: list }, stamp);
+    await S.db.doc("entries/" + oid).update(patch);
+    upsert(oid, Object.assign({}, o, patch));
+  }
 }
 function confirmDelete(box, e){
   if ($(".confirm", box)) return;

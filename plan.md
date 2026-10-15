@@ -59,7 +59,7 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 - [x] P2.8 You do it the first time: hints and beacons
 - [x] P2.9 The Chronicle as a river
 - [x] D3 Design: exploration, the resolver, three paths, NPC basics, the Ways, the Border Wilds
-- [ ] P3.1 The atlas as data
+- [x] P3.1 The atlas as data
 - [ ] P3.2 Three paths
 - [ ] P3.3 The resolver
 - [ ] P3.4 People
@@ -149,12 +149,18 @@ Content drafted by sessions and committed as data. Leave notes here; the next se
 - Planning after P2.2: the first pristine content, the Primordial Root 鸿蒙灵根 (`src/content/roots.ts`), four talents (the Glazed Glass Body, Dao-Seeing Eyes, a Child of the Severed Heaven, the Unsevered Thread; `src/content/talents.ts`) and the Glazed Heaven Sutra 琉璃天经 (`src/content/methods.ts`).
 - P2.8: the hint texts and the coming-back lines for a first still waiting (`src/content/firsts.ts`), and the hint glyph 指; best reviewed in P3.9's talk, which adds the travel and going-in firsts.
 - P2.9: the kind colors in `theme.css` (`.chron`); the card lines' kinds moved to P3.12.
+- P3.1: the Border Wilds as data in `content/atlas/entries.json`: the 16 ties (32 ends, each why written from its own side), the nine children's features, the City and the Wall as `coast` and `hills`, the Realm of Mingled Blood as `forest`, and the Society's 10 low-grade entry toll; best reviewed in P3.6's talk, which first reads them on the map.
 
 ---
 
 ## Log
 
 Newest first. 3–5 lines per phase. M0 to M2 are one line a phase here; their full entries, with the sim tables and the hand-offs, are in `docs/plan-archive.md`.
+
+- 2026-10-15, P3.1: the atlas as data. The schema (`src/content/atlas/schema.ts`) gains `hidden` (`true` or a realm id), `access` (`by` token, rank, invitation or toll, `of`, `rank`, `toll` in stones by grade, `array`, and for a secret realm only `below`, `needs` and a `cycle` of every, days and an anchor year), `ties` (`to`, kind, open, why), `features` (name and tags from `FEATURE_TAGS`, eleven to start, `narrow` added to the design's ten), the `famous` tag on places only, and kind `site` with its `site` sub-kind (`siteSchema` is the record P3.6 generates). The rules across entries are in `checks.ts`: `resolveTerrain` (a place without terrain takes its nearest ancestor's, written into the generated atlas, now version 2) and `checkAtlas` (the build stops on a tie or `access.of` to nothing, a tie to itself or two to one entry; it warns on one end, ends that disagree, an empty why and an untied canon entry, and counts untied drafts by kind, 779 now).
+  - The Border Wilds filled as Jan agreed in the talk: terrain, the Realm of Mingled Blood hidden behind its access (toll to the Night Bridge Society, below Foundation, beast blood or a bonded beast, every 7 years for 30 days from 3110), the Gate behind token or invitation and a Core Formation array, the four famous places, 2 to 4 features on each child, and 16 ties, with the other ends on the Beast Court, Apricot Grove Valley, Shared Roost City, the Great Jing Dynasty, the Golden Coil Lair and the Pushed Frontier. One tie a pair; an open tie's hidden layer stays in `truth`, and only the March's trade with Shared Roost is a hidden tie.
+  - The editor (`tools/atlas/index.html`) edits the site sub-kind, hidden, access, features and ties, shows them in the read view, and writes, updates or removes a tie's other end itself; its Save now keeps the fields the form doesn't show and the empty text fields the schema needs (it used to drop both). The add path was checked in the browser pane; the remove path wasn't, since the pane stopped answering.
+  - For P3.6 and P3.7: the feature tags and `ACCESS_NEEDS` are closed lists in `schema.ts` (and repeated at the top of the editor's script) that those phases grow; checkpoint tolls stay P3.6's. 659 tests.
 
 - 2026-10-15, planning: M3 reordered by what each phase reads, and renumbered. The generator, loot and shops come before the travel map, since the rogue's find, wages, tolls and map prices want stones by grade; the Ways come before the ruins, since an inheritance tests the master's Way. Old to new: P3.7 to P3.5, P3.5 to P3.6, P3.5b to P3.7, P3.6 to P3.8, P3.8 to P3.9, P3.9 to P3.11, P3.11 to P3.12, P3.12 to P3.13 (P3.1 to P3.4 and P3.10 unchanged; the Log keeps the numbers each entry was written with). A checkpoint after P3.7 marks the game without the AI and runs the atlas fill. Each phase gained a *Later milestones* note on what it leaves room for in M4 to M8, the review items name the talk they fit, and Open questions gained the beast-ranch origin against M6's taming and the old phase numbers in code comments. Nothing in code changed.
 

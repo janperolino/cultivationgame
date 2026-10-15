@@ -1,11 +1,12 @@
-// npm run atlas:build: validates content/atlas/entries.json, parses each `top` into a strict realm,
-// computes fixed outlines with tools/atlas-geo.cjs and writes src/content/generated/atlas.json.
+// npm run atlas:build: validates content/atlas/entries.json and its ties, parses each `top` into a
+// strict realm, resolves each place's terrain, computes fixed outlines with tools/atlas-geo.cjs and writes src/content/generated/atlas.json.
 // Rerun it after any atlas edit and commit the generated file, so tests and builds never need d3.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import polygonClipping, { type MultiPolygon, type Polygon } from 'polygon-clipping';
+import { checkAtlas, resolveTerrain } from '../src/content/atlas/checks.ts';
 import {
   GENERATED_ATLAS_VERSION,
   generatedAtlasSchema,
@@ -77,7 +78,10 @@ for (const e of source) {
 }
 if (source.filter((e) => e.kind === 'world').length !== 1)
   problems.push('  (atlas): needs exactly one world entry');
+const report = checkAtlas(source);
+problems.push(...report.errors.map((p) => `  ${p}`));
 if (problems.length) fail([`entries.json failed validation (${problems.length}):`, ...problems]);
+const terrain = resolveTerrain(source);
 
 // --- Parse `top`. ---
 
@@ -93,6 +97,10 @@ const entries: AtlasEntry[] = source.map((e) => {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(e)) if (!DROPPED.has(k)) out[k] = v;
   out.top = top;
+  // A place with no terrain of its own takes its nearest ancestor's.
+  delete out.terrain;
+  const t = terrain.get(e.id);
+  if (t) out.terrain = t;
   return out as AtlasEntry;
 });
 
@@ -200,3 +208,14 @@ console.log(
 console.log(`No realm (empty top), ${noRealm.length}: ${count(noRealm) || 'none'}`);
 console.log(`Unknown realm, ${unknown.length}: ${count(unknown) || 'none'}`);
 if (missing.length) console.log(`Outlines that came out empty: ${missing.join(', ')}`);
+const ends = entries.reduce((n, e) => n + (e.ties?.length ?? 0), 0);
+console.log(`Ties: ${entries.filter((e) => e.ties?.length).length} entries tied, ${ends} ends`);
+const drafts = Object.entries(report.untiedDrafts)
+  .sort((a, b) => b[1] - a[1])
+  .map(([k, n]) => `${k} ${n}`)
+  .join(', ');
+if (drafts) console.log(`Untied drafts, waiting for the atlas fill: ${drafts}`);
+if (report.warnings.length)
+  console.log(
+    `Warnings (${report.warnings.length}):\n${report.warnings.map((w) => `  ${w}`).join('\n')}`,
+  );
