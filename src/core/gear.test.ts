@@ -115,17 +115,20 @@ describe('wearing gear', () => {
     });
   });
 
-  it('feeds the sheet: the weapon sizes strikes, the armor Defense and its material’s resist', () => {
+  it('feeds the sheet: the weapon sizes strikes, the armor its own bar with its material’s resist', () => {
     const bare = fromCultivator(life().player, 'a');
     let c = holding(life().player, 'cold-moon-sword', 'water-silk-robe');
     c = wear(wear(c, 'cold-moon-sword'), 'water-silk-robe');
     const me = fromCultivator(c, 'a');
     expect(me.weapon.kind).toBe('sword');
     expect(me.weapon.strike).toBeCloseTo(rarityMultiplier('purple', tierStep(1)));
-    expect(me.armor).toBeCloseTo(1.2);
-    expect(me.resist.fire).toBeCloseTo(0.25);
+    // A green robe of your tier: Defense 12 (Qi Condensation's 10 at its band), 36 durability,
+    // and its water-silk turns a quarter of fire, on the robe alone.
+    expect(me.armor!.defense).toBeCloseTo(12);
+    expect(me.armor).toMatchObject({ hp: 36, max: 36, resist: { fire: 0.25 } });
+    expect(me.resist.fire).toBeUndefined();
     expect(bare.weapon.kind).toBe('fist');
-    expect(bare.armor).toBe(1);
+    expect(bare.armor).toBeNull();
   });
 });
 

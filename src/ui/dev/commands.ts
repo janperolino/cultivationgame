@@ -189,10 +189,17 @@ export const COMMANDS: Record<string, Command> = {
     },
   },
   pill: {
-    usage: 'pill [n]',
-    help: 'Adds Foundation Pills.',
-    run([n], store) {
-      return COMMANDS.item!.run(['foundation-pill', n ?? '1'], store);
+    usage: 'pill [qi|body|soul] [n]',
+    help: "Adds a path's Foundation gate pills: the Foundation Pill unless told.",
+    run([which, n], store) {
+      const gates = {
+        qi: 'foundation-pill',
+        body: 'marrow-washing-pill',
+        soul: 'soul-condensing-pill',
+      };
+      if (which && !(which in gates)) return COMMANDS.item!.run(['foundation-pill', which], store);
+      const id = gates[(which ?? 'qi') as keyof typeof gates];
+      return COMMANDS.item!.run([id, n ?? '1'], store);
     },
   },
   fill: {

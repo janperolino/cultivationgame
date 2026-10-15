@@ -12,11 +12,11 @@ import {
 import type { Item } from '../content/items.ts';
 import { rarityRank } from '../content/rarity.ts';
 import { realmIndex } from '../content/realms.ts';
-import type { Cultivator } from './state.ts';
+import { realmOf, type Cultivator } from './state.ts';
 
-/** The cultivator's own tier: 1 at Qi Condensation, from the qi realm. */
+/** The cultivator's own tier: 1 at Qi Condensation, from your realm (your highest ladder). */
 export function ownTier(c: Cultivator): number {
-  return realmIndex(c.qi.realm) + 1;
+  return realmIndex(realmOf(c)) + 1;
 }
 
 /** The toxicity a consumable adds to someone of this tier; 0 for clean food and herbs. */

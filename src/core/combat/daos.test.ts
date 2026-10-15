@@ -38,10 +38,13 @@ const knows = (...ts: Technique[]) =>
 const SURE = { accuracy: 1e6 };
 const CRITS = { fortune: 1000 };
 
+/** Me against foes with no qi shield up, so the Dao rules meet the body they measure. */
 function fight(me: Partial<CombatantInit>, ...foes: Partial<CombatantInit>[]): Fight {
   return startFight([
     combatant({ id: 'me', name: 'Me', side: 'a', techniques: knows(EMBER, THRUST, CUT), ...me }),
-    ...foes.map((f, i) => combatant({ id: `foe${i + 1}`, name: `Foe ${i + 1}`, side: 'b', ...f })),
+    ...foes.map((f, i) =>
+      combatant({ id: `foe${i + 1}`, name: `Foe ${i + 1}`, side: 'b', maxShield: 0, ...f }),
+    ),
   ]);
 }
 

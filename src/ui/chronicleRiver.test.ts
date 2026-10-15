@@ -189,7 +189,7 @@ describe('the almanac', () => {
     const row = moRows.find((r) => r.age === 23)!;
     const before = qiBefore(moRows, row.year);
     expect(before).toEqual({ realm: 'qi-condensation', stage: 9 });
-    expect(qiAfterSeason(row, 0, before)).toEqual(before);
-    expect(qiAfterSeason(row, 3, before).realm).toBe('foundation-establishment');
+    expect(qiAfterSeason(row, 0)).toEqual(before);
+    expect(qiAfterSeason(row, 3).realm).toBe('foundation-establishment');
   });
 });

@@ -1,7 +1,7 @@
 // Eight save slots in IndexedDB through Dexie. Each holds a lineage: the current autosave, the
 // previous one as a backup, gentle mode's rewind point and the last export date.
 import { Dexie, type DexieOptions, type EntityTable } from 'dexie';
-import { ageYears, chronicleEvent, type GameState } from '../state.ts';
+import { ageYears, chronicleEvent, realmOf, stageOf, type GameState } from '../state.ts';
 import { encodeSaveFile, decodeSaveFile } from './file.ts';
 import { loadSave, makeSave, SaveError, type Save } from './format.ts';
 
@@ -184,8 +184,8 @@ export class SaveSlots {
         slot,
         empty: false,
         name: s.player.name,
-        qiRealm: s.player.qi.realm,
-        qiStage: s.player.qi.stage,
+        qiRealm: realmOf(s.player),
+        qiStage: stageOf(s.player),
         age: ageYears(s.player, s.calendar.day),
         mode: s.mode,
         savedAt: save.savedAt,

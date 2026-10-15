@@ -14,10 +14,12 @@ import {
   DAO_STEP,
   DEFEND_EVASION,
   DEFEND_QI,
+  DEFEND_SHIELD,
   EVERGREEN_HP,
   FIRST_BLOOD_ORDER,
   HALVED_HIT,
   MAX_CREATIVITY,
+  MAX_RESIST,
   QI_REGEN,
   RESOLVE_BASE,
   SLOWED_ORDER,
@@ -58,6 +60,8 @@ import {
   defense,
   evasion,
   mod,
+  shieldDefense,
+  soulWound,
   statusFactor,
   statusFlag,
   type Combatant,
@@ -66,6 +70,7 @@ import {
   comboMultiplier,
   damage,
   damagePhase,
+  force,
   elementMultiplier,
   nextCombo,
   rollSpread,
@@ -146,10 +151,25 @@ export interface Outcome {
   qi?: number;
   /** Who took the damage, HP after and their max: the target, or the actor on a backfire. */
   hp?: { id: string; hp: number; max: number };
+  /**
+   * The target's qi shield and armor after the hit, with what each took (P3.2); `damage` is
+   * everything the hit dealt, bars and body together. On a defend, the actor's shield refilled.
+   */
+  bars?: Bars;
   /** The actor's qi after, and their pool. */
   pool?: { qi: number; max: number };
   /** Features this action's minor set burning. */
   features?: { id: string; name: string; burning: number }[];
+}
+
+/** Someone's qi shield and armor bars, and what a hit took from each. */
+export interface Bars {
+  id: string;
+  shield: number;
+  maxShield: number;
+  armor: number | null;
+  maxArmor: number | null;
+  took: { shield: number; armor: number };
 }
 
 /** Damage a status dealt at the start of a turn. */
@@ -556,9 +576,15 @@ interface Numbers {
   accuracy: number;
   evasion: number;
   attack: number;
+  /** The body's Defense, or the soul's against soul damage, with what weakens it. */
   defense: number;
+  /** What weakens every bar's Defense: Domain, Unbreaking on the bleeding. */
+  weaken: number;
   element: number;
+  /** The body's resist to the attack's type, after pierce. */
   resist: number;
+  /** What remains of any resist after the attack's pierce. */
+  pierce: number;
   /** Odds added to the critical chance. */
   crit: number;
   /** What a critical multiplies Attack by, beside the crit's own ×1.5. */
@@ -606,22 +632,100 @@ function numbers(f: Fight, actor: Combatant, target: Combatant, a: Attack): Numb
   if (a.type === 'water' && hasStatus(target, 'chilled')) attack *= 1 + mod(actor, 'riptide');
   if (a.type === 'metal' && hasStatus(target, 'bleeding')) attack *= 1 + mod(actor, 'temperedEdge');
   if (a.type === 'earth' && hasStatus(target, 'staggered')) attack *= 1 + mod(actor, 'crush');
-  let guard = defense(target, guardLadder(a.type));
-  if (hasStatus(target, 'bleeding') && mod(actor, 'unbreaking') > 0) guard *= UNBREAKING_DEFENSE;
-  const wounded = target.hp < target.maxHp / 2;
   const edge = intentEdge(actor, target, a.daos);
+  let weaken = edge.defense;
+  if (hasStatus(target, 'bleeding') && mod(actor, 'unbreaking') > 0) weaken *= UNBREAKING_DEFENSE;
+  const wounded = target.hp < target.maxHp / 2;
   attack *= edge.attack;
+  const pierce = Math.max(0, 1 - daoMod(actor, a.daos, 'Pierce'));
   return {
     accuracy: attackAccuracy(f, actor, a) * edge.accuracy,
     evasion: evasion(target, a.ladder) * edge.evasion,
     attack,
-    defense: guard * edge.defense,
+    defense: defense(target, guardLadder(a.type)) * weaken,
+    weaken,
     element: elementMultiplier(damagePhase(a.type), target.element),
-    resist: (target.resist[a.type] ?? 0) * Math.max(0, 1 - daoMod(actor, a.daos, 'Pierce')),
+    resist: (target.resist[a.type] ?? 0) * pierce,
+    pierce,
     crit: daoMod(actor, a.daos, 'Crit') + (wounded ? mod(actor, 'woundedCrit') : 0),
     critAttack: (1 + mod(actor, 'critDamage')) * (wounded ? 1 + mod(actor, 'executioner') : 1),
     sure:
       a.form === 'thrust' && mod(actor, 'dragonThrust') > 0 && actor.marks.dragonTurn !== f.turn,
+  };
+}
+
+/** What a landed hit takes from each of a target's bars. */
+interface Landing {
+  shield: number;
+  armor: number;
+  hp: number;
+}
+
+/**
+ * Where a landed hit's force goes (design § Combat, The sheet; P3.2): the qi shield first, against
+ * its own Defense; what it can't hold passes to the armor, against the armor's Defense and its
+ * material's resist; what is left reaches the body. Each bar that runs out passes on the share of
+ * the force it didn't hold. Soul damage passes both bars and strikes the soul, taking HP as if it
+ * were sized by the soul (`soulWound`). Reads, never writes.
+ */
+function landing(target: Combatant, hit: number, type: DamageType, n: Numbers): Landing {
+  let left = hit;
+  const take = (pool: number, def: number, resist: number): number => {
+    const full = (left * (1 - Math.min(MAX_RESIST, resist))) / def;
+    if (full <= pool) {
+      left = 0;
+      return Math.round(full);
+    }
+    left *= 1 - pool / full;
+    return pool;
+  };
+  const out: Landing = { shield: 0, armor: 0, hp: 0 };
+  if (type !== 'soul') {
+    if (target.shield > 0) out.shield = take(target.shield, shieldDefense(target) * n.weaken, 0);
+    const worn = target.armor;
+    if (left > 0 && worn && worn.hp > 0) {
+      out.armor = take(worn.hp, worn.defense * n.weaken, (worn.resist[type] ?? 0) * n.pierce);
+    }
+  }
+  if (left > 0) {
+    const wound = type === 'soul' ? soulWound(target) : 1;
+    out.hp = Math.round((left * (1 - Math.min(MAX_RESIST, n.resist)) * wound) / n.defense);
+  }
+  return out;
+}
+
+/** Takes a landing off the target's bars and HP; returns everything it dealt. */
+function land(target: Combatant, l: Landing): number {
+  target.shield = Math.max(0, target.shield - l.shield);
+  if (target.armor && l.armor > 0) {
+    target.armor = { ...target.armor, hp: Math.max(0, target.armor.hp - l.armor) };
+  }
+  hurt(target, l.hp);
+  return l.shield + l.armor + l.hp;
+}
+
+/**
+ * Damage already figured, as a sweep's or a cleave's share: it meets the shield, then the armor,
+ * then the body, a point for a point.
+ */
+function soak(target: Combatant, amount: number): Landing {
+  let left = amount;
+  const shield = Math.min(target.shield, left);
+  left -= shield;
+  const armor = Math.min(target.armor?.hp ?? 0, left);
+  left -= armor;
+  return { shield, armor, hp: left };
+}
+
+/** A combatant's bars after a hit, with what the hit took. */
+function barsOf(c: Combatant, took: { shield: number; armor: number }): Bars {
+  return {
+    id: c.id,
+    shield: c.shield,
+    maxShield: c.maxShield,
+    armor: c.armor?.hp ?? null,
+    maxArmor: c.armor?.max ?? null,
+    took,
   };
 }
 
@@ -662,15 +766,15 @@ export function preview(f: Fight, actorId: string, m: MainAction): Preview | nul
   const target = foe(f, actor, 'target' in m ? (m.target ?? '') : '');
   if (!target) return null;
   const n = numbers(f, actor, target, a);
-  const dealt = damage({
+  const hit = force({
     base: a.base,
     attack: n.attack,
-    defense: n.defense,
     element: n.element,
-    resist: n.resist,
     result: 'hit',
     combo: comboMultiplier(nextCombo(actor.combo, damagePhase(a.type))),
   });
+  const l = landing(target, hit, a.type, n);
+  const dealt = l.shield + l.armor + l.hp;
   return { chance: n.sure ? 1 : hitChance(n.accuracy, n.evasion), damage: dealt, qi };
 }
 
@@ -751,6 +855,17 @@ function main(
         actor.maxQi,
         actor.qi + Math.round(DEFEND_QI * actor.maxQi * actor.qiRecovery),
       );
+      // Then qi is poured into the shield, a qi a point (P3.2).
+      const pour = Math.max(
+        0,
+        Math.min(
+          actor.maxShield - actor.shield,
+          Math.round(DEFEND_SHIELD * actor.maxShield),
+          actor.qi,
+        ),
+      );
+      actor.shield += pour;
+      actor.qi -= pour;
       return [
         {
           ...base,
@@ -761,6 +876,7 @@ function main(
           result: 'held',
           qi: before - actor.qi,
           pool: { qi: actor.qi, max: actor.maxQi },
+          ...(pour > 0 ? { bars: barsOf(actor, { shield: -pour, armor: 0 }) } : {}),
         },
       ];
     }
@@ -792,7 +908,9 @@ function main(
         if (e.what === 'hp')
           actor.hp = Math.min(actor.maxHp, actor.hp + Math.round(e.share * actor.maxHp * scale));
       }
-      const dose = doseAt(it, realmIndex(actor.rungs.qi.realm) + 1);
+      // A pill doses by your realm, your highest ladder (P3.2).
+      const own = Math.max(...Object.values(actor.rungs).map((r) => realmIndex(r.realm)));
+      const dose = doseAt(it, own + 1);
       actor.toxicity = Math.min(TOXICITY_MAX, actor.toxicity + dose);
       return [
         {
@@ -840,7 +958,7 @@ function main(
       const chance = hitChance(mine, theirs);
       const swayed = rng.chance(chance);
       // Surrender, accepted, takes you out of the fight; what the other styles win is the
-      // speaker's profile and the story's (P2.2, P3.2).
+      // speaker's profile and the story's (P2.2, P3.9).
       if (swayed && m.style === 'surrender') actor.state = 'yielded';
       return [
         {
@@ -996,8 +1114,8 @@ function splash(
   a: Attack,
   dealt: number,
 ): Omit<Outcome, 'action'> {
-  const d = Math.max(1, Math.round(guarded(f, target, dealt)));
-  hurt(target, d);
+  const l = soak(target, Math.max(1, Math.round(guarded(f, target, dealt))));
+  const d = land(target, l);
   return {
     turn: f.turn,
     actor: actor.id,
@@ -1010,6 +1128,7 @@ function splash(
     status: null,
     damage: d,
     hp: { id: target.id, hp: target.hp, max: target.maxHp },
+    bars: barsOf(target, { shield: l.shield, armor: l.armor }),
   };
 }
 
@@ -1080,21 +1199,20 @@ function attack(
   const chilled = hasStatus(target, 'chilled');
   const combo = nextCombo(actor.combo, phase);
   actor.combo = combo;
-  const dealt = guarded(
+  const hit = guarded(
     f,
     target,
-    damage({
+    force({
       base: a.base,
       attack: n.attack * (crit ? n.critAttack : 1),
-      defense: n.defense,
       element: n.element,
-      resist: n.resist,
       result,
       combo: comboMultiplier(combo),
       spread: rollSpread(rng),
     }),
   );
-  hurt(target, dealt);
+  const landed = landing(target, hit, a.type, n);
+  const dealt = land(target, landed);
   if (a.daos.includes('saber')) mark(actor, 'momentum', (actor.marks.momentum ?? 0) + 1);
   const back = mod(actor, 'qiOnHit');
   if (back > 0) actor.qi = Math.min(actor.maxQi, actor.qi + Math.round(back * actor.maxQi));
@@ -1124,7 +1242,13 @@ function attack(
   }
 
   const outcomes: Omit<Outcome, 'action'>[] = [
-    { ...out, status, damage: dealt, hp: { id: target.id, hp: target.hp, max: target.maxHp } },
+    {
+      ...out,
+      status,
+      damage: dealt,
+      hp: { id: target.id, hp: target.hp, max: target.maxHp },
+      bars: barsOf(target, { shield: landed.shield, armor: landed.armor }),
+    },
   ];
   // A spear's sweep: a second foe takes a share, every other foe with Whirl.
   const sweep = a.daos.includes('spear') ? mod(actor, 'sweep') : 0;

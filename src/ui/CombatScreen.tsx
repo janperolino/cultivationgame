@@ -12,7 +12,7 @@ import {
   type MainAction,
 } from '../core/combat/fight.ts';
 import { isCombatDao, type CombatDaoId } from '../content/daos.ts';
-import { mod, type Combatant } from '../core/combat/combatant.ts';
+import { mod, topRung, type Combatant } from '../core/combat/combatant.ts';
 import { stageName as intentName } from '../core/intent.ts';
 import { sparFoes, YOU } from '../core/spar.ts';
 import { FxLayer, type FxShot } from './combatFx.ts';
@@ -95,7 +95,7 @@ function FighterCard({
   selected?: boolean;
   onSelect?: () => void;
 }) {
-  const r = c.rungs.qi;
+  const r = topRung(c);
   const down = c.state !== 'fighting';
   const body = (
     <>
@@ -107,6 +107,8 @@ function FighterCard({
         {realm(r.realm).name}, {stageName(r.realm, r.stage)}
         {down ? ` · ${c.state}` : ''}
       </span>
+      {c.maxShield > 0 && <Meter label="Shield" value={c.shield} max={c.maxShield} kind="shield" />}
+      {c.armor && <Meter label="Armor" value={c.armor.hp} max={c.armor.max} kind="armor" />}
       <Meter label="HP" value={c.hp} max={c.maxHp} kind="hp" />
       <Meter label="Qi" value={c.qi} max={c.maxQi} kind="qi" />
       {c.statuses.length > 0 && (

@@ -295,6 +295,39 @@ export const METHODS: readonly Method[] = [
     ...plain,
     ...common,
   },
+  // Their Foundation chapters (P3.2, drafted for Jan's review), so a body refiner or a soul
+  // cultivator climbs Foundation on their own path.
+  {
+    id: 'stone-bearing-foundation',
+    name: 'Stone-Bearing Tempering Art, Foundation Chapter',
+    pinyin: 'Fushi Duanti Jue, Zhuji Pian',
+    hanzi: '负石锻体诀·筑基篇',
+    source:
+      'the wall crews who carry the great blocks of the Wall of Piled Bones, two porters to a stone, or one who has washed the marrow',
+    ladder: 'body',
+    tier: 2,
+    line: 'stone-bearing',
+    chapter: 2,
+    element: 'earth',
+    growth: { hp: 0.5, physicalDamage: 0.3, regeneration: 0.2 },
+    ...plain,
+    ...common,
+  },
+  {
+    id: 'still-lantern-foundation',
+    name: 'Still Lantern Nourishing Art, Foundation Chapter',
+    pinyin: 'Jingdeng Yangshen Jue, Zhuji Pian',
+    hanzi: '静灯养神诀·筑基篇',
+    source:
+      "the shrine's elder keepers, who sit with the lamp unlit and keep the flame in mind alone",
+    ladder: 'soul',
+    tier: 2,
+    line: 'still-lantern',
+    chapter: 2,
+    growth: { soulDefense: 0.4, divineSense: 0.2, perception: 0.4 },
+    ...plain,
+    ...common,
+  },
   // Methods off the first hour's path, one a rarity from gray to red, for the world to hand out
   // from M3 (sect vaults, inheritances, ruins). Drafted in P1.5 for Jan's review.
   {

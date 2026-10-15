@@ -94,15 +94,16 @@ export type StepState = 'hidden' | 'ready' | 'not-ready';
 
 /**
  * A ladder's button shows once its bar is full, dimmer when a major's other requirements aren't
- * met. At the lifespan edge the qi's button always shows, since the last chance needs no full bar.
+ * met. At the lifespan edge the last chance's ladder always shows its button, since it needs no full bar.
  */
 export function stepState(s: GameState, which: LadderId): StepState {
   if (s.ended) return 'hidden';
   const l = s.player[which];
   const step = nextStep(l);
   if (step.kind === 'top') return 'hidden';
-  if (which === 'qi' && step.kind === 'major' && atLifespanEdge(s)) {
-    return lastChance(s.player).possible ? 'ready' : 'not-ready';
+  if (step.kind === 'major' && atLifespanEdge(s)) {
+    const chance = lastChance(s.player);
+    if (chance.ladder === which) return chance.possible ? 'ready' : 'not-ready';
   }
   if (barFill(l) < 1) return 'hidden';
   if (step.kind === 'minor') return 'ready';

@@ -12,6 +12,7 @@ import {
   attemptBreakthrough,
   checkUnlocks,
   cultivateDays,
+  lastChance,
   majorCheck,
   type LadderId,
   type Note,
@@ -38,7 +39,9 @@ import {
   ageYears,
   atLifespanEdge,
   noteBreakthrough,
+  realmOf,
   setMark,
+  stageOf,
   unlock,
   withPlayer,
   withStream,
@@ -78,7 +81,7 @@ export function wakeTalents(s: GameState): GameState {
   let next = s;
   for (const t of talentsOf(s.player)) {
     if (!t.sleeps || talentAwake(next.player, t)) continue;
-    if (realmIndex(next.player.qi.realm) < realmIndex(t.sleeps.realm)) continue;
+    if (realmIndex(realmOf(next.player)) < realmIndex(t.sleeps.realm)) continue;
     const woken = addFlag(next.player, wokeFlag(t.id));
     next = addEvent(withPlayer(next, gainInsight(woken, t.sleeps.insight)), 'talent-wakes', {
       talent: t.id,
@@ -175,8 +178,9 @@ export function attemptLastChance(s: GameState): LifeBreakthrough {
   if (!atLifespanEdge(s) || s.ended) {
     return { state: s, attempted: false, success: false, major: true, odds: 0 };
   }
-  const check = majorCheck(s.player, 'qi');
-  const result = breakThrough(s, 'qi', { lastChance: !check?.bar });
+  const which = lastChance(s.player).ladder;
+  const check = majorCheck(s.player, which);
+  const result = breakThrough(s, which, { lastChance: !check?.bar });
   if (result.success) return result;
   return { ...result, state: endLife(result.state) };
 }
@@ -186,7 +190,7 @@ export function endLife(s: GameState, cause = 'lifespan'): GameState {
   if (s.ended) return s;
   const p = s.player;
   const age = Math.floor(ageYears(p, s.calendar.day));
-  const data = { age, realm: p.qi.realm, stage: p.qi.stage, cause };
+  const data = { age, realm: realmOf(p), stage: stageOf(p), cause };
   return { ...addEvent(s, 'death', data), ended: { day: s.calendar.day, cause } };
 }
 

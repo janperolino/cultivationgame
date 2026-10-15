@@ -175,8 +175,8 @@ function Sheet({ c }: { c: Cultivator }) {
   return (
     <>
       <p className="caption spaced">
-        Six plain numbers; a fight compares two sheets. Each line's band says the stage it is sized
-        at, so a line that reads the next realm has crossed it.
+        Six plain numbers and the bars a hit meets first; a fight compares two sheets. Each line's
+        band says the stage it is sized at, so a line that reads the next realm has crossed it.
       </p>
       <dl className="sheet">
         <SheetRow
@@ -187,7 +187,7 @@ function Sheet({ c }: { c: Cultivator }) {
         <SheetRow
           name="Evasion"
           lines={[{ line: sh.evasion }]}
-          why="Your body's size, with Agility above 10 adding 5% a point. Defending adds half, cover a quarter."
+          why={`Your size on the ladder the blow comes on, or your soul where it stands higher: a strong soul sees it coming. The soul counts ${formatPercent(sh.guards.movement)} of itself here, half without a movement art. Agility above 10 adds 5% a point; defending adds half, cover a quarter.`}
         />
         <SheetRow
           name="Attack"
@@ -197,8 +197,20 @@ function Sheet({ c }: { c: Cultivator }) {
         <SheetRow
           name="Defense"
           lines={[{ line: sh.defense }]}
-          why={`Your body's size at your armor's band: ${armor}. The soul defends against soul damage.`}
+          why={`Your body's size through its guard: ${formatPercent(sh.guards.hardening)}, half without a hardening art like the Iron Cloth Shirt, the rest from the art's band. The soul defends against soul damage.`}
         />
+        <SheetRow
+          name="Qi shield"
+          lines={[{ line: sh.shield }, { label: 'Defense', line: sh.shield.defense }]}
+          why={`A hit meets your qi shield first: four times your qi realm's size, full when a fight starts, with your qi through its guard as its Defense (${formatPercent(sh.guards.shield)}, half without a shield art). Defending pours qi back into it. Soul damage passes it.`}
+        />
+        {sh.armor && (
+          <SheetRow
+            name="Armor"
+            lines={[{ line: sh.armor }, { label: 'Defense', line: sh.armor.defense }]}
+            why={`${armor} is a bar of its own between the shield and your body: its durability, and its band as its Defense. Its material's resist turns only what strikes it. Soul damage passes it.`}
+          />
+        )}
         <SheetRow
           name="HP"
           lines={[{ line: sh.hp }]}
@@ -211,6 +223,12 @@ function Sheet({ c }: { c: Cultivator }) {
         />
         <IntentRow c={c} />
       </dl>
+      {sh.floored.length > 0 && (
+        <p className="caption spaced">
+          Your {listWords(sh.floored)} {sh.floored.length > 1 ? 'count' : 'counts'} at the floor:
+          half your highest ladder, since a cultivator&apos;s body is never a mortal&apos;s.
+        </p>
+      )}
       <p className="caption spaced">
         {daos.length ? `Dao tiers held: ${daos.join(', ')}.` : 'No Dao tier held yet.'} Wielding{' '}
         {weapon}, wearing {armor}.

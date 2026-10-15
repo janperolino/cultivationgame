@@ -1,4 +1,4 @@
-// First drafts of the fixed prompt text, written for the P0.3 spike and kept for P3.2's context
+// First drafts of the fixed prompt text, written for the P0.3 spike and kept for P3.8's context
 // builder. The fixed part goes first in every call and never changes, so hosts can cache it.
 
 export const WORLD_BIBLE = `# World: Severed Heaven

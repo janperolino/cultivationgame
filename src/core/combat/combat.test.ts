@@ -78,13 +78,14 @@ const EMBER_PALM = tech({
   qiCost: 12,
 });
 
-const fighter = (init: CombatantInit) => combatant(init);
+/** A fighter with no qi shield, so hits reach the body as these tests measure; the bars have their own. */
+const fighter = (init: CombatantInit) => combatant({ maxShield: 0, ...init });
 const turn = (f: Fight, actions: Action[], seed = 0) => resolveTurn(f, actions, new Rng(seed));
 const hit = (target: string, technique?: string): Action['main'] =>
   technique ? { type: 'technique', id: technique, target } : { type: 'strike', target };
 
 describe('the worked turn (design § Combat, one turn)', () => {
-  it('reproduces exactly: 57%, 25 fire, Mo 151/176, qi 52/94, the grass burning', () => {
+  it('reproduces exactly: 57%, 40 fire on his shield, Mo 176/176, qi 52/94, the grass burning', () => {
     const you = fighter({
       id: 'you',
       name: 'Han Li',
@@ -96,17 +97,15 @@ describe('the worked turn (design § Combat, one turn)', () => {
       daos: { fire: 1 },
     });
     expect(you.maxQi).toBe(94);
-    const robe = armor(1, 'green', 'fire');
-    const mo = fighter({
+    const mo = combatant({
       id: 'elder_mo',
       name: 'Elder Mo',
       side: 'mo',
-      // One layer above you.
+      // One layer above you, his qi shield up and his water-silk robe on behind it.
       rungs: all(QC(6)),
-      resist: robe.resist,
-      armor: robe.defense,
+      armor: armor(1, 'green', 'fire'),
     });
-    expect(mo.maxHp).toBe(176);
+    expect(mo).toMatchObject({ maxHp: 176, maxShield: 176 });
     const features: Feature[] = [
       { id: 'brazier', name: 'brazier', tags: ['fire'] },
       { id: 'spirit_grass', name: 'grass', tags: ['flammable'] },
@@ -128,16 +127,19 @@ describe('the worked turn (design § Combat, one turn)', () => {
     // Accuracy 15.7 × 1.15 (Comprehension) × 1.05 (Fire Dao 1) × 1.21 (creativity 2) = 23.0 against Evasion 17.6.
     const accuracy = stageSize('qi-condensation', 5) * 1.15 * 1.05 * 1.1 ** 2;
     expect(hitChance(accuracy, stageSize('qi-condensation', 6))).toBeCloseTo(0.566, 3);
-    expect(o).toMatchObject({ result: 'hit', damage: 25, qi: 12 });
+    expect(o).toMatchObject({ result: 'hit', damage: 40, qi: 12 });
     expect(o.chance).toBeCloseTo(0.566, 3);
-    // 40 × Attack 16.5 ÷ Defense 21.1 × 0.75 (the robe against fire) × 1.057 = 24.8, rounded.
+    // His shield holds it all: 40 × Attack 16.5 ÷ its Defense 17.6 × 1.057 = 39.6, rounded; the
+    // robe and its quarter against fire are never reached.
     const attack = stageSize('qi-condensation', 5) * 1.05;
-    const def = stageSize('qi-condensation', 6) * 1.2;
-    expect(((40 * attack) / def) * 0.75 * 1.057).toBeCloseTo(24.8, 1);
-    expect(combatantIn(r.fight, 'elder_mo')).toMatchObject({ hp: 151, maxHp: 176 });
+    const def = stageSize('qi-condensation', 6);
+    expect(((40 * attack) / def) * 1.057).toBeCloseTo(39.6, 1);
+    const after = combatantIn(r.fight, 'elder_mo')!;
+    expect(after).toMatchObject({ hp: 176, shield: 136 });
+    expect(after.armor!.hp).toBe(after.armor!.max);
     expect(r.fight.features.find((x) => x.id === 'spirit_grass')!.burning).toBe(2);
     expect(logLine(r.fight, o)).toBe(
-      'Hit 57% · 25 fire · Elder Mo 151/176 · Qi 52/94 · grass burning (2 turns)',
+      'Hit 57% · 40 fire · shield 136/176 · Elder Mo 176/176 · Qi 52/94 · grass burning (2 turns)',
     );
     // The five tags.
     expect(o).toMatchObject({
@@ -191,7 +193,8 @@ describe('sizes (design § Combat, Realms are sizes)', () => {
     );
     expect(low).toMatchObject({ maxHp: 100, maxQi: 60, hp: 100, qi: 60 });
     expect(high.maxHp).toBe(310);
-    expect(high.maxQi).toBe(60);
+    // The floor: qi untrained counts at half the body's Foundation size, 15.5, so a pool of 93.
+    expect(high.maxQi).toBe(93);
   });
 
   it('name the band a size sits in, in stage words', () => {
@@ -665,12 +668,18 @@ describe('items in a fight', () => {
     expect(red.accuracy).toBeCloseTo(Math.sqrt(1.4));
     expect(weapon('fist', 1, 'gold').accuracy).toBeCloseTo(Math.sqrt(1.2));
     expect(weapon('fist', 1, 'blue').accuracy).toBe(1);
-    expect(armor(2, 'red').defense).toBeCloseTo(4.6 ** 1.3);
-    // A red robe is a Defense from the next realm's middle: it divides damage by its band.
-    const robed = fighter({ id: 'a', name: 'A', side: 'a', armor: armor(1, 'gold').defense });
+    // Armor is a bar of its own: its size is its tier's realm at its band, its durability three
+    // points a point of size.
+    expect(armor(2, 'red').defense).toBeCloseTo(31 * 4.6 ** 1.3);
+    const gold = armor(1, 'gold');
+    expect(gold).toMatchObject({ hp: 93, max: 93 });
+    expect(gold.defense).toBeCloseTo(31);
+    // A gold robe is a Defense from the next realm: a plain strike's 20 is 6 on it, and the body
+    // under it takes nothing while it holds.
+    const robed = fighter({ id: 'a', name: 'A', side: 'a', armor: gold });
     const f = startFight([fighter({ id: 'b', name: 'B', side: 'b' }), robed]);
-    expect(turn(f, [{ actor: 'b', main: hit('a') }], SEED_HIT).outcomes[0]!.damage).toBe(
-      Math.round(20 / 3.1),
-    );
+    const r = turn(f, [{ actor: 'b', main: hit('a') }], SEED_HIT);
+    expect(r.outcomes[0]).toMatchObject({ damage: Math.round(20 / 3.1), hp: { hp: 100 } });
+    expect(combatantIn(r.fight, 'a')!.armor!.hp).toBe(93 - 6);
   });
 });

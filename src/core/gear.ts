@@ -28,7 +28,7 @@ import { realmIndex, tierStep } from '../content/realms.ts';
 import type { Effect } from '../content/stats.ts';
 import { masteryAt, type Mastery } from './mastery.ts';
 import { tierScale } from './combat/sheet.ts';
-import type { Cultivator } from './state.ts';
+import { realmOf, type Cultivator } from './state.ts';
 import { ownTier } from './toxicity.ts';
 
 export type GearCheck = { ok: true } | { ok: false; reason: string };
@@ -154,7 +154,7 @@ export function canEquip(c: Cultivator, id: string, opened: number): GearCheck {
   if (!use) return { ok: false, reason: `${it.name} isn't worn.` };
   if ((c.items[id] ?? 0) <= 0) return { ok: false, reason: `You hold no ${it.name}.` };
   if (use.slot === 'ring') {
-    const reach = Math.max(realmIndex(c.soul.realm), realmIndex(c.qi.realm)) + 1;
+    const reach = realmIndex(realmOf(c)) + 1;
     if (reach < it.tier)
       return { ok: false, reason: `${it.name} opens only to a soul at its tier.` };
   }

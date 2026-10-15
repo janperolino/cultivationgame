@@ -25,6 +25,11 @@ export interface Rung {
   stage: number;
   /** −1 for a flawed breakthrough up to +3 for a heavenly one; 0 before the first. */
   grade: number;
+  /**
+   * The floor (design § Cultivation, Three paths): the least size this rung counts at, half your
+   * highest ladder's. A ladder trained past it counts as itself.
+   */
+  min?: number;
 }
 
 /** A cultivator's rung on a ladder, its latest major breakthrough's grade included. */
@@ -43,9 +48,27 @@ function climb(id: RealmId, stage: number): number {
   return stages > 1 ? (stage - 1) / (stages - 1) : 0;
 }
 
-/** The size of a rung: its realm's size, climbed by its stage and grade. */
+/** The size of a rung: its realm's size, climbed by its stage and grade, never below its floor. */
 export function rungSize(r: Rung): number {
-  return realmSize(r.realm) * realmSpread(r.realm) ** climb(r.realm, r.stage + r.grade);
+  const own = realmSize(r.realm) * realmSpread(r.realm) ** climb(r.realm, r.stage + r.grade);
+  return Math.max(own, r.min ?? 0);
+}
+
+/** Whether a rung counts at its floor rather than at itself. */
+export function floored(r: Rung): boolean {
+  return r.min !== undefined && rungSize({ ...r, min: undefined }) < r.min;
+}
+
+/** Rungs with the floor set: each counts at least `share` of the highest one's size. */
+export function withFloor<K extends string>(
+  rungs: Record<K, Rung>,
+  share: number,
+): Record<K, Rung> {
+  const sizes = Object.values<Rung>(rungs).map((r) => rungSize({ ...r, min: undefined }));
+  const min = share * Math.max(...sizes);
+  const out = {} as Record<K, Rung>;
+  for (const k of Object.keys(rungs) as K[]) out[k] = { ...rungs[k], min };
+  return out;
 }
 
 /** The size of a realm's stage, grade aside: Foundation early is 31, its peak 105. */

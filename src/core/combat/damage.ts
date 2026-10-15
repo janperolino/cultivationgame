@@ -35,13 +35,21 @@ export interface DamageInput {
 
 export function damage(i: DamageInput): number {
   const resist = Math.min(MAX_RESIST, i.resist);
-  return Math.round(
-    ((i.base * i.attack) / i.defense) *
-      i.element *
-      (1 - resist) *
-      (i.result === 'critical' ? CRIT_DAMAGE : 1) *
-      (i.combo ?? 1) *
-      (i.spread ?? 1),
+  return Math.round((force(i) / i.defense) * (1 - resist));
+}
+
+/**
+ * A hit's force before any Defense or resist meets it: base × Attack × element × crit × combo ×
+ * spread. Each bar it meets divides it by its own Defense (core/combat/fight.ts, P3.2).
+ */
+export function force(i: Omit<DamageInput, 'defense' | 'resist'>): number {
+  return (
+    i.base *
+    i.attack *
+    i.element *
+    (i.result === 'critical' ? CRIT_DAMAGE : 1) *
+    (i.combo ?? 1) *
+    (i.spread ?? 1)
   );
 }
 

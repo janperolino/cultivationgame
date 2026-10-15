@@ -16,7 +16,7 @@ import {
 } from '../content/origins.ts';
 import { BOND_IDS, pathPeople, person, REGARD_MAX, REGARD_MIN } from '../content/people.ts';
 import { RARITY_IDS } from '../content/rarity.ts';
-import { REALM_IDS, realm } from '../content/realms.ts';
+import { REALM_IDS, realm, realmIndex, type RealmId } from '../content/realms.ts';
 import { defaultElements, ROOT_IDS, type RootId } from '../content/roots.ts';
 import { hashSeed, Rng, streamSeed, type StreamName } from './rng.ts';
 import { stats } from './stats.ts';
@@ -540,9 +540,42 @@ export function daysLived(c: Cultivator, day: number): number {
   return day - c.bornDay - START_AGE * DAYS_PER_YEAR;
 }
 
-/** Lifespan in years: the qi realm's, plus bonuses, talents and tree nodes. */
+const PATHS = ['qi', 'body', 'soul'] as const;
+type Path = (typeof PATHS)[number];
+
+/**
+ * Your highest ladder (design § Cultivation, Three paths): the highest realm, then the highest
+ * stage, qi before body before soul on a tie. Your realm is its realm.
+ */
+export function topLadder(c: Record<Path, { realm: RealmId; stage: number }>): Path {
+  let best: Path = 'qi';
+  for (const which of PATHS) {
+    const l = c[which];
+    const top = c[best];
+    const ri = realmIndex(l.realm);
+    const ti = realmIndex(top.realm);
+    if (ri > ti || (ri === ti && l.stage > top.stage)) best = which;
+  }
+  return best;
+}
+
+/**
+ * Your realm: your highest ladder's. Lifespan, tribulations, what the scale table says you can
+ * do, the Daos' tiers and the realm others read on you all come from it; each sheet line still
+ * reads its own ladder.
+ */
+export function realmOf(c: Record<Path, { realm: RealmId; stage: number }>): RealmId {
+  return c[topLadder(c)].realm;
+}
+
+/** Your stage in your realm: your highest ladder's. */
+export function stageOf(c: Record<Path, { realm: RealmId; stage: number }>): number {
+  return c[topLadder(c)].stage;
+}
+
+/** Lifespan in years: your realm's, plus bonuses, talents and tree nodes. */
 export function lifespanYears(c: Cultivator): number {
-  return realm(c.qi.realm).lifespan + c.lifespanBonus + stats(c).lifespan;
+  return realm(realmOf(c)).lifespan + c.lifespanBonus + stats(c).lifespan;
 }
 
 /** The world day the cultivator reaches their lifespan edge. */

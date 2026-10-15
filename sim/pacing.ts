@@ -16,9 +16,13 @@
 // four orbs in five, each on the first inhale it is in reach, and never grabs into the heat.
 // Targets (design § Character creation): every root at layer 3 in about 45 minutes; a true root at
 // layer 9 in 15–20 hours away and about half that attended throughout; a heavenly root in about
-// half the true root's time.
-// Run: npm run sim -- pacing [--seeds=25]
+// half the true root's time. Then the three paths (design § Economy, What the balance sims
+// measure): a pure body life and a pure soul life, given their art at birth and every waking hour
+// on it, its Foundation chapter and its gate pill at layer 9, reach layer 9 and Foundation within
+// 15% of the pure qi life (every waking hour on qi), on the true root.
+// Run: npm run sim -- pacing [--seeds=25] [--paths]   (--paths: only the three paths' rows)
 import { HEAT_PER_BREATH, HEAT_TIMED } from '../src/content/attention.ts';
+import type { LadderId } from '../src/content/cultivation.ts';
 import { MASTERY } from '../src/content/mastery.ts';
 import { method, nextChapter } from '../src/content/methods.ts';
 import { defaultElements, ROOTS, type RootId } from '../src/content/roots.ts';
@@ -38,7 +42,7 @@ import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
 import { TREES, treeNode, type TreeNode } from '../src/content/trees/index.ts';
 import { majorCheck } from '../src/core/cultivation.ts';
-import { breakThrough, learn, playFirsts, switchMethod } from '../src/core/life.ts';
+import { breakThrough, gainMethod, learn, playFirsts, switchMethod } from '../src/core/life.ts';
 import { advance } from '../src/core/loop.ts';
 import { methodMastery } from '../src/core/methods.ts';
 import { Rng } from '../src/core/rng.ts';
@@ -52,7 +56,22 @@ import {
 import { canLearn, hasLearned, nodeSealed } from '../src/core/trees.ts';
 import { followWheel } from '../src/core/wheel.ts';
 
-type Play = 'default' | 'nodes' | 'routine' | 'qi-only';
+type Play = 'default' | 'nodes' | 'routine' | 'qi-only' | 'body-only' | 'soul-only';
+
+/** The ladder a play climbs: the pure body and soul lives their own, every other play qi. */
+const ladderOf = (how: Play): LadderId =>
+  how === 'body-only' ? 'body' : how === 'soul-only' ? 'soul' : 'qi';
+/** The art a pure body or soul life is given at birth. */
+const PATH_ART: Partial<Record<LadderId, string>> = {
+  body: 'stone-bearing',
+  soul: 'still-lantern',
+};
+/** Each path's Foundation gate (content/realms.ts). */
+const GATE: Record<LadderId, string> = {
+  qi: 'foundation-pill',
+  body: 'marrow-washing-pill',
+  soul: 'soul-condensing-pill',
+};
 /** How much of the time the player sits with the seat. */
 type Schedule = 'none' | 'third' | 'all';
 
@@ -126,14 +145,27 @@ function buyNodes(s: GameState): GameState {
   }
 }
 
-const givePill = (s: GameState) => withPlayer(s, addItem(s.player, 'foundation-pill', 1));
+const givePill = (s: GameState, which: LadderId = 'qi') =>
+  withPlayer(s, addItem(s.player, GATE[which], 1));
 
-/** Takes up the Foundation chapter of the qi method once its copy from the layer 9 card is read. */
-function takeChapter(s: GameState): GameState {
-  const id = s.player.activeMethods.qi;
+/**
+ * Takes up the Foundation chapter of the ladder's method: the qi's once its copy from the layer 9
+ * card is read, or, when `given`, handed over at once, as a pure path's is and the pure qi life's
+ * too, so the three compare alike (a pure life keeps no study hour to read it on).
+ */
+function takeChapter(s: GameState, which: LadderId = 'qi', given = which !== 'qi'): GameState {
+  const id = s.player.activeMethods[which];
   const chapter = id ? nextChapter(method(id)) : undefined;
-  if (!chapter || !(chapter.id in s.player.methods)) return s;
-  return switchMethod(s, 'qi', chapter.id).state;
+  if (!chapter) return s;
+  if (given) s = gainMethod(s, chapter.id, 'is given');
+  if (!(chapter.id in s.player.methods)) return s;
+  return switchMethod(s, which, chapter.id).state;
+}
+
+/** Keeps every waking hour on one ladder. */
+function allOn(s: GameState, which: LadderId): GameState {
+  const wheel = s.player.wheel.map((k) => (k === 'sleep' ? 'sleep' : which));
+  return withPlayer(s, { ...s.player, wheel });
 }
 
 /** Plays every waiting card by its default choice. */
@@ -198,6 +230,12 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
     },
   });
   s = playFirsts(s);
+  const L = ladderOf(how);
+  const art = PATH_ART[L];
+  if (art) {
+    s = gainMethod(s, art, 'is given');
+    s = allOn(switchMethod(s, L, art).state, L);
+  }
   const at: (number | undefined)[] = [];
   const run: Run = { at, fails: 0 };
   let ms = 0;
@@ -221,11 +259,13 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
     if (how === 'nodes') s = buyNodes(s);
     if (how === 'routine') s = followRoutine(s);
     if (how === 'qi-only') s = allQi(s);
+    if (art) s = allOn(s, L);
     const p = s.player;
-    if (p.qi.realm === 'qi-condensation') {
-      for (let k = 2; k <= p.qi.stage; k++) at[k] ??= hours;
-      if (p.qi.stage >= 4) run.masteryAt4 ??= qiMastery(s);
-      if (p.qi.stage === 9 && run.ageAt9 === undefined) {
+    const l = p[L];
+    if (l.realm === 'qi-condensation') {
+      for (let k = 2; k <= l.stage; k++) at[k] ??= hours;
+      if (l.stage >= 4) run.masteryAt4 ??= qiMastery(s);
+      if (l.stage === 9 && run.ageAt9 === undefined) {
         run.ageAt9 = ageYears(p, s.calendar.day);
         run.insightAt9 = p.insight.earned;
         run.bodyAt9 = `${p.body.realm === 'qi-condensation' ? 'L' : 'F'}${p.body.stage}`;
@@ -233,13 +273,17 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
         run.nodesAt9 = p.nodes.length;
         run.masteryAt9 = qiMastery(s);
       }
-      // In M1 the origin's layer 9 card hands over a Foundation Pill and a copy of the next chapter.
-      if (p.qi.stage === 9) s = takeChapter(s);
+      // In M1 the origin's layer 9 card hands over a Foundation Pill and a copy of the next chapter;
+      // a pure path is handed its chapter and its own gate.
+      if (l.stage === 9) {
+        s = takeChapter(s, L, art !== undefined || how === 'qi-only');
+        if (art && !s.player.items[GATE[L]]) s = givePill(s, L);
+      }
       // The sim breaks through as soon as it may, at the bare minimum.
-      if (majorCheck(s.player, 'qi')?.ready) {
-        s = breakThrough(s, 'qi').state;
-        if (s.player.qi.realm !== 'qi-condensation') at[10] = hours;
-        else s = givePill(s); // a failed attempt costs a pill; the sim gives another
+      if (majorCheck(s.player, L)?.ready) {
+        s = breakThrough(s, L).state;
+        if (s.player[L].realm !== 'qi-condensation') at[10] = hours;
+        else s = givePill(s, L); // a failed attempt costs a pill; the sim gives another
       }
     } else {
       at[10] ??= hours;
@@ -269,13 +313,18 @@ interface Medians {
   age?: number;
 }
 
-function table(title: string, how: Play, schedule: Schedule = 'none'): Record<string, Medians> {
+function table(
+  title: string,
+  how: Play,
+  schedule: Schedule = 'none',
+  roots: readonly (typeof ROOTS)[number][] = ROOTS,
+): Record<string, Medians> {
   const out: Record<string, Medians> = {};
   console.log(`\n${title} (median of ${SEEDS} seeds; m = real minutes, h = real hours)`);
   const head = ['root', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8', 'L9', 'Found.', 'age@L9'];
   head.push('insight@L9', 'body', 'soul', 'nodes', 'fails', 'mast@L4', 'mast@L9');
   console.log(head.map((h, i) => (i === 0 ? h.padEnd(10) : h.padStart(i >= 11 ? 11 : 8))).join(''));
-  for (const r of ROOTS) {
+  for (const r of roots) {
     const runs = Array.from({ length: SEEDS }, (_, i) => play(r.id, i, how, schedule));
     const cols = [2, 3, 4, 5, 6, 7, 8, 9, 10].map((k) =>
       fmt(median(runs.map((x) => x.at[k]).filter((x): x is number => x !== undefined))),
@@ -305,10 +354,59 @@ function table(title: string, how: Play, schedule: Schedule = 'none'): Record<st
   return out;
 }
 
+const within = (x: number | undefined, lo: number, hi: number) =>
+  x !== undefined && x >= lo && x <= hi;
+const checks: [string, string, boolean][] = [];
+const printChecks = () => {
+  console.log('\nTargets');
+  for (const [what, got, ok] of checks) console.log(`  ${ok ? 'ok ' : 'OFF'}  ${what}: ${got}`);
+};
+
+// The three paths first (design § Economy, What the balance sims measure).
+const ONLY_PATHS = process.argv.includes('--paths');
+const trueRoot = ROOTS.filter((r) => r.id === 'true');
+const qiOnly = table(
+  'Every waking hour on qi, safe breakthroughs, no stones',
+  'qi-only',
+  'none',
+  ONLY_PATHS ? trueRoot : ROOTS,
+);
+const bodyOnly = table(
+  'A pure body life, every waking hour tempering',
+  'body-only',
+  'none',
+  trueRoot,
+);
+const soulOnly = table(
+  'A pure soul life, every waking hour nourishing',
+  'soul-only',
+  'none',
+  trueRoot,
+);
+for (const [name, row] of [
+  ['body', bodyOnly],
+  ['soul', soulOnly],
+] as const) {
+  for (const [at, key] of [
+    ['layer 9', 'l9'],
+    ['Foundation', 'found'],
+  ] as const) {
+    const r = (row.true?.[key] ?? NaN) / (qiOnly.true?.[key] ?? NaN);
+    checks.push([
+      `A pure ${name} life reaches ${at} within 15% of a pure qi life (0.85–1.15)`,
+      `${fmt(row.true?.[key])} against ${fmt(qiOnly.true?.[key])}, ${Number.isFinite(r) ? r.toFixed(2) : '—'}`,
+      within(r, 0.85, 1.15),
+    ]);
+  }
+}
+if (ONLY_PATHS) {
+  printChecks();
+  process.exit(0);
+}
+
 const away = table('Default rule, safe breakthroughs, no stones', 'default');
 const nodes = table('Default rule, buying tree nodes toward the nearest that speeds qi', 'nodes');
 const routineRow = table('Following the Watch Rotation once it can be followed', 'routine');
-table('Every waking hour on qi, safe breakthroughs, no stones', 'qi-only');
 const third = table(
   'Attended a third of the time (20 minutes an hour), default rule',
   'default',
@@ -319,9 +417,6 @@ const engaged = table('Attended throughout, buying tree nodes', 'nodes', 'all');
 
 // The pacing targets (design § Character creation and the first hour), checked on the away row,
 // which is the floor: the default rule with nobody at the wheel.
-const within = (x: number | undefined, lo: number, hi: number) =>
-  x !== undefined && x >= lo && x <= hi;
-const checks: [string, string, boolean][] = [];
 const trueL9 = away.true?.l9;
 checks.push([
   'True root reaches layer 9 in 15–20 real hours, away',
@@ -373,8 +468,7 @@ checks.push([
   fmt(engaged.true?.l9),
   (engaged.true?.l9 ?? 0) >= 0.4 * (trueL9 ?? Infinity),
 ]);
-console.log('\nTargets');
-for (const [what, got, ok] of checks) console.log(`  ${ok ? 'ok ' : 'OFF'}  ${what}: ${got}`);
+printChecks();
 console.log(
   '\nFoundation needs 500 insight ever earned and the pill; the sim tries at the bare minimum.' +
     "\nmast@L4 and mast@L9: the qi method's mastery (Glimpse, Comprehension, Mastery, Domain, Origin).",

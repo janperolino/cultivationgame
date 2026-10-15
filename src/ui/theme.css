@@ -4767,6 +4767,17 @@ button.fight-card {
   background: var(--warn);
 }
 
+/* The bars a hit meets before the body (P3.2): the qi shield, then the armor. */
+.fight-shield .bar-fill {
+  background: color-mix(in srgb, var(--crack) 45%, transparent);
+  box-shadow: inset 0 0 0 1px var(--crack);
+}
+
+.fight-armor .bar-fill {
+  background: color-mix(in srgb, var(--qi-metal) 55%, var(--iron));
+  box-shadow: none;
+}
+
 .fight-statuses {
   color: var(--warn);
 }

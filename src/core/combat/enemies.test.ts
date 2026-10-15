@@ -150,10 +150,14 @@ describe('generated cultivators', () => {
         3,
         new Rng(seed),
       );
-      const body = Object.values(n.combatant.techniques).filter((k) => k.technique.ladder !== 'qi');
+      const known = Object.values(n.combatant.techniques).map((k) => k.technique);
+      const body = known.filter((t) => n.abilities.includes(t.id) && t.ladder !== 'qi');
       if (n.abilities.length && body.length) {
         found = true;
-        expect(body[0]!.technique.qiCost).toBeGreaterThan(0);
+        expect(body[0]!.qiCost).toBeGreaterThan(0);
+        // A half-blood walks the body's path (P3.2): their path art is a body art, free of qi.
+        const path = known.find((t) => t.id === 'half-blood-raider-path')!;
+        expect(path).toMatchObject({ ladder: 'body', qiCost: 0 });
       }
     }
     expect(found).toBe(true);
@@ -187,11 +191,11 @@ describe('beasts', () => {
     expect(bloodlineAbilities('fire', 'purple')).toHaveLength(3);
   });
 
-  it('are body-first: half again the HP, and Defense with no armor', () => {
+  it('are body-first: half again the HP, a hide for Defense, no armor and no qi shield', () => {
     const shark = generateBeast(beast('strait-shark'), 'foundation-establishment', 1, new Rng(3));
     const c = shark.combatant;
     const aura = rarityRank(shark.rolls.bloodline!) >= rarityRank('purple');
-    expect(c.armor).toBe(BEAST_DEFENSE);
+    expect(c).toMatchObject({ hide: BEAST_DEFENSE, armor: null, maxShield: 0, shield: 0 });
     expect(c.maxHp).toBeGreaterThanOrEqual(
       Math.round(HP_PER_SIZE * stageSize('foundation-establishment', 1) * BEAST_HP) - 1,
     );
@@ -292,13 +296,17 @@ describe('the preview', () => {
     expect(preview(broke, 'a', { type: 'technique', id: 'palm', target: 'b' })).toBeNull();
   });
 
-  it('reads Defense off the body ladder, whatever ladder the attack climbs', () => {
+  it('reads the qi shield off the qi ladder and Defense off the body, whatever the attack climbs', () => {
     const high = { realm: 'foundation-establishment' as const, stage: 1, grade: 0 };
     const low = { realm: 'qi-condensation' as const, stage: 1, grade: 0 };
-    const qiOnly = fighter('b', 'b', { rungs: { qi: high, body: low, soul: low } });
-    const f = startFight([fighter('a', 'a'), qiOnly]);
-    // Defense 10 from the body, not 31 from the qi ladder: the palm lands at full 40.
-    expect(preview(f, 'a', { type: 'technique', id: 'palm', target: 'b' })!.damage).toBe(40);
+    const rungs = { qi: high, body: low, soul: low };
+    const palm = { type: 'technique' as const, id: 'palm', target: 'b' };
+    // The shield up: the palm meets Defense 31 from the qi ladder, 40 × 10 ÷ 31.
+    const shielded = startFight([fighter('a', 'a'), fighter('b', 'b', { rungs })]);
+    expect(preview(shielded, 'a', palm)!.damage).toBe(Math.round(400 / rungSize(high)));
+    // The shield down: Defense 10 from the body, and the palm lands at full 40.
+    const bare = startFight([fighter('a', 'a'), fighter('b', 'b', { rungs, maxShield: 0 })]);
+    expect(preview(bare, 'a', palm)!.damage).toBe(40);
     expect(rungSize(high)).toBeCloseTo(31, 0);
   });
 });

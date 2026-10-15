@@ -219,8 +219,6 @@ function requirementText(game: GameState, check: MajorCheck, r: Requirement): st
       return `Insight ever earned: ${formatNumber(c.insight.earned)} of ${formatNumber(check.target.insightThreshold)}`;
     case 'gate':
       return `A ${item(check.gateItem!).name} (${itemCount(c, check.gateItem!)} held)`;
-    case 'cap':
-      return `At most one realm ahead of your qi (${realm(c.qi.realm).name})`;
   }
 }
 

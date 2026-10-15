@@ -24,6 +24,7 @@ import {
   WEB_LEVELS,
   type MotionSetting,
 } from './settings.ts';
+import { realmOf } from '../core/state.ts';
 import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
 
@@ -178,7 +179,7 @@ function ClockPanel() {
   if (!game || game.ended) return null;
   const choices = clockChoices(game);
   const current = clockRealm(game);
-  const own = game.player.qi.realm;
+  const own = realmOf(game.player);
   const capYears = (OFFLINE_CAP_MS / 3_600_000) * realmYearsPerHour(current);
   return (
     <section className="panel" aria-labelledby="clock-heading">

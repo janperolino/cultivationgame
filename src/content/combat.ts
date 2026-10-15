@@ -16,6 +16,32 @@ export { DAMAGE_TYPES, type DamageType };
  */
 export const HP_PER_SIZE = 10;
 export const QI_PER_SIZE = 6;
+
+// ---------------------------------------------------------------- three paths (P3.2)
+
+/**
+ * The floor (design § Cultivation, Three paths): no ladder's lines count below this share of your
+ * highest ladder's size, however neglected.
+ */
+export const LADDER_FLOOR = 0.5;
+/**
+ * Each path guards its own way (design § Combat, The sheet): a guard reads its ladder at this
+ * share, and its guard art gives the rest at the art's band. With a white art at your realm's
+ * tier it reads in full; with none, at half.
+ */
+export const GUARD_SHARE = 0.5;
+/**
+ * The qi shield, a bar of its own over the body: this many points per point of the qi rung's
+ * size, full at the start of a fight. A starting value the fight sim tunes.
+ */
+export const SHIELD_PER_SIZE = 10;
+/** Defending pours qi into the shield: up to this share of the shield, a qi a point. */
+export const DEFEND_SHIELD = 0.25;
+/**
+ * Armor, a bar of its own between the shield and the body: its durability is this many points per
+ * point of its size, and its size (its tier's realm at its rarity's band) is its Defense.
+ */
+export const ARMOR_PER_SIZE = 3;
 /** Each point of Agility above 10 adds this to Evasion and to fleeing. */
 export const AGILITY_BASE = 10;
 export const AGILITY_PER_POINT = 0.05;
@@ -26,7 +52,7 @@ export const FORTUNE_BASE = 10;
 export const CRIT_BASE = 0.05;
 export const CRIT_PER_FORTUNE = 0.01;
 export const CRIT_DAMAGE = 1.5;
-/** Each point of Fortune above 10 adds this chance of an extra drop (loot reads it, P3.3). */
+/** Each point of Fortune above 10 adds this chance of an extra drop (loot reads it, P3.5). */
 export const FORTUNE_DROP = 0.02;
 /** Damage lands anywhere from 1 − this to 1 + this of the formula. */
 export const DAMAGE_SPREAD = 0.15;

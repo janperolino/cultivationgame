@@ -11,8 +11,8 @@ export type LadderId = (typeof LADDERS)[number];
  */
 export const QI_PER_DAY = 1;
 /** Tempering and nourishment per full day, in the same units; body and soul ignore the root. */
-export const BODY_PER_DAY = 1.6;
-export const SOUL_PER_DAY = 1.6;
+export const BODY_PER_DAY = 1.1;
+export const SOUL_PER_DAY = 1.1;
 /** Insight per full day of study, times the qi realm's insight rate. */
 export const INSIGHT_PER_STUDY_DAY = 1;
 /** Insight every waking hour leaves behind, whatever it went to, per full day of them. */

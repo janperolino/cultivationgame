@@ -41,6 +41,21 @@ export type Form =
   | 'tail'
   | 'breath';
 
+/**
+ * A guard art's guard (design § Combat, The sheet; P3.2): each path guards its own way, reading its
+ * ladder at half and its guard art for the other half. The shield is the qi's (its Defense), the
+ * hardening the body's (its Defense) and the movement the soul's (its share of Evasion).
+ */
+export const GUARDS = ['shield', 'hardening', 'movement'] as const;
+export type GuardId = (typeof GUARDS)[number];
+
+/** The ladder each guard reads. */
+export const GUARD_LADDER: Record<GuardId, LadderId> = {
+  shield: 'qi',
+  hardening: 'body',
+  movement: 'soul',
+};
+
 export interface Technique {
   id: string;
   name: string;
@@ -61,6 +76,11 @@ export interface Technique {
   damage: DamageType;
   power: number;
   qiCost: number;
+  /**
+   * A guard art: known, it gives its guard's half at its band and is never cast, so its form,
+   * damage, power and cost are unused (power 0, cost 0).
+   */
+  guard?: GuardId;
   /** The origin path that hands it out, as origin/choice; its first-technique card reads this. */
   firstFor?: string;
   /** Where it comes from, for the tooltip. */
@@ -201,6 +221,105 @@ export const TECHNIQUES: readonly Technique[] = [
     qiCost: 30,
     source: "the March's garrison school, for the officers who hold a stretch of wall",
     text: 'The same shove, with the whole wall behind it; what it hits comes down.',
+  },
+  // The three paths' first arts (P3.2, drafted for Jan's review): a strike for the body and the
+  // soul, which had none, and a guard art for each path (design § Combat, The sheet).
+  {
+    id: 'porters-charge',
+    name: "Porter's Charge",
+    pinyin: 'Tiaofu Zhuang',
+    hanzi: '挑夫撞',
+    ladder: 'body',
+    tier: 1,
+    rarity: 'white',
+    line: 'porters-charge',
+    chapter: 1,
+    daos: [],
+    form: 'charge',
+    damage: 'physical',
+    power: 42,
+    qiCost: 0,
+    source: 'the porters and wall crews of the Border Wilds, beside their tempering art',
+    text: 'Drop the shoulder you carry stone on and run it through whatever stands in the road. It costs no qi; it costs the body.',
+  },
+  {
+    id: 'lamp-snuffing-glance',
+    name: 'Lamp-Snuffing Glance',
+    pinyin: 'Miedeng Yipie',
+    hanzi: '灭灯一瞥',
+    ladder: 'soul',
+    tier: 1,
+    rarity: 'white',
+    line: 'lamp-snuffing-glance',
+    chapter: 1,
+    daos: [],
+    form: 'aura',
+    damage: 'soul',
+    // A soul strike passes the qi shield and the armor, so it carries a third of an art's power
+    // (SOUL_ART_POWER in content/enemies.ts, as the fight sim's path rows hold it).
+    power: 13,
+    qiCost: 6,
+    source:
+      "the frontier shrines' lamp-keepers, for the night something comes to put the flame out",
+    text: 'A look that reaches past the eyes and pinches out the small flame behind them.',
+  },
+  {
+    id: 'bulwark-of-breath',
+    name: 'Bulwark of Breath',
+    pinyin: 'Xiyuan Jue',
+    hanzi: '息垣诀',
+    ladder: 'qi',
+    tier: 1,
+    rarity: 'white',
+    line: 'bulwark-of-breath',
+    chapter: 1,
+    daos: [],
+    form: 'aura',
+    damage: 'physical',
+    power: 0,
+    qiCost: 0,
+    guard: 'shield',
+    source: "the March's garrison school, taught to whoever stands the wall at night",
+    text: 'Qi held a finger off the skin, packed the way the wall is packed, so a blow spends itself on breath before it finds flesh.',
+  },
+  {
+    id: 'iron-cloth-shirt',
+    name: 'Iron Cloth Shirt',
+    pinyin: 'Tiebu Shan',
+    hanzi: '铁布衫',
+    ladder: 'body',
+    tier: 1,
+    rarity: 'white',
+    line: 'iron-cloth-shirt',
+    chapter: 1,
+    daos: [],
+    form: 'aura',
+    damage: 'physical',
+    power: 0,
+    qiCost: 0,
+    guard: 'hardening',
+    source: 'every street boxer of the Border Wilds claims to teach it; the garrison actually does',
+    text: 'Years of being struck with sticks, then stones, until the skin takes a blow the way cloth soaked in iron would.',
+  },
+  {
+    id: 'lamp-shadow-step',
+    name: 'Lamp-Shadow Step',
+    pinyin: 'Dengying Bu',
+    hanzi: '灯影步',
+    ladder: 'soul',
+    tier: 1,
+    rarity: 'white',
+    line: 'lamp-shadow-step',
+    chapter: 1,
+    daos: [],
+    form: 'aura',
+    damage: 'physical',
+    power: 0,
+    qiCost: 0,
+    guard: 'movement',
+    source:
+      "the frontier shrines' lamp-keepers, who learn to move as a shadow does when the flame bends",
+    text: 'The soul sees the blow begin; the step is only the body agreeing with it, a shadow sliding off the wall.',
   },
 ];
 

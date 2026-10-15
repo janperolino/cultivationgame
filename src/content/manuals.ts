@@ -589,6 +589,69 @@ export const MANUALS: readonly Manual[] = [
       text: 'An officer who has held a stretch of wall for years leans all of it into one palm.',
     },
   ]),
+  // The three paths' first arts (P3.2, drafted for Jan's review).
+  forTechnique('porters-charge', [
+    {
+      id: 'art-load-on-the-shoulder',
+      name: 'The Load on the Shoulder',
+      hanzi: '肩上担',
+      kind: 'minor',
+      cost: 30,
+      requires: [],
+      effects: [],
+      own: [{ stat: 'techniquePower', value: 0.08 }],
+      text: 'A porter runs best with a load on; the charge learns to carry the weight it hits with.',
+    },
+  ]),
+  forTechnique('lamp-snuffing-glance', [
+    {
+      id: 'art-thumb-and-finger',
+      name: 'Thumb and Finger',
+      hanzi: '指捻',
+      kind: 'minor',
+      cost: 30,
+      requires: [],
+      effects: [],
+      own: [{ stat: 'techniqueCost', value: -0.12 }],
+      text: 'A lamp-keeper snuffs a hundred wicks a night and never burns a finger doing it.',
+    },
+  ]),
+  forTechnique('bulwark-of-breath', [
+    {
+      id: 'art-packed-like-the-wall',
+      name: 'Packed Like the Wall',
+      hanzi: '如垣夯',
+      kind: 'minor',
+      cost: 30,
+      requires: [],
+      effects: [{ stat: 'qiPool', value: 0.03 }],
+      text: 'Rammed earth, a layer at a time: the breath held round you gets denser with every night on the wall.',
+    },
+  ]),
+  forTechnique('iron-cloth-shirt', [
+    {
+      id: 'art-sticks-then-stones',
+      name: 'Sticks, Then Stones',
+      hanzi: '先棍后石',
+      kind: 'minor',
+      cost: 30,
+      requires: [],
+      effects: [{ stat: 'hp', value: 0.03 }],
+      text: 'The beating goes on after the skin has learned it, and the flesh under it learns too.',
+    },
+  ]),
+  forTechnique('lamp-shadow-step', [
+    {
+      id: 'art-flame-bends-first',
+      name: 'The Flame Bends First',
+      hanzi: '焰先偏',
+      kind: 'minor',
+      cost: 30,
+      requires: [],
+      effects: [{ stat: 'evasion', value: 0.03 }],
+      text: 'A draft moves the flame before it moves the curtain; watch the flame and you are already gone.',
+    },
+  ]),
 ];
 
 const byId = new Map(MANUALS.map((m) => [m.id, m]));

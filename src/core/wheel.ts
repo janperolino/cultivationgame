@@ -19,7 +19,7 @@ import {
 import { ALL_FIRSTS, type FirstId } from '../content/firsts.ts';
 import { hasRoutine, routine, type Routine } from '../content/routines.ts';
 import type { Note } from './cultivation.ts';
-import { hasFlag, type Cultivator } from './state.ts';
+import { hasFlag, realmOf, type Cultivator } from './state.ts';
 import { knownTechniques, techniqueSealed } from './techniques.ts';
 
 /** How many wheels a cultivator can keep under a name. */
@@ -27,7 +27,7 @@ export const SAVED_ROUTINES_MAX = 8;
 
 /** At Qi Condensation the body is still mostly mortal: 子 and 丑 are locked to sleep. */
 export function sleepLocked(c: Cultivator): boolean {
-  return c.qi.realm === 'qi-condensation';
+  return realmOf(c) === 'qi-condensation';
 }
 
 export function hourLocked(c: Cultivator, hour: number): boolean {

@@ -2,17 +2,24 @@
 // the turn rules read (core/combat/fight.ts). It carries its techniques and items as records, not
 // ids, so generated ones fight like authored ones. Its sheet (design § Combat) is six plain
 // numbers built from its rungs and what feeds each line: HP and the qi pool climb the body and
-// qi ladders by the realm sizes, armor sizes Defense, a weapon sizes Attack, and the stats the
-// trees, methods and growth add (content/stats.ts) multiply in. `fromCultivator` builds one from
-// a cultivator, `sheet` reads the six lines for the Character screen.
+// qi ladders by the realm sizes, a weapon sizes Attack, and the stats the trees, methods and
+// growth add (content/stats.ts) multiply in. Every rung counts at least half the highest (the
+// floor), and each path guards its own way, its ladder at half and its guard art the other half:
+// the qi shield's Defense, the body's Defense, the soul's share of Evasion (P3.2). A hit meets
+// three bars in turn: the qi shield, the armor, then the body's HP. `fromCultivator` builds one
+// from a cultivator, `sheet` reads the lines for the Character screen.
 import {
   AGILITY_BASE,
   AGILITY_PER_POINT,
+  ARMOR_PER_SIZE,
   BIND_EVASION,
+  GUARD_SHARE,
   HIT_PER_POINT,
   HP_PER_SIZE,
+  LADDER_FLOOR,
   MATERIAL_RESIST,
   QI_PER_SIZE,
+  SHIELD_PER_SIZE,
   RESOLVE_BASE,
   statusInfo,
   type DamageType,
@@ -29,13 +36,19 @@ import { gearBand, weaponAccuracy } from '../gear.ts';
 import { ownTier } from '../toxicity.ts';
 import { artOwn, tierHeld } from '../trees.ts';
 import { rarityAccuracy, rarityMultiplier, type RarityId } from '../../content/rarity.ts';
-import { tierStep } from '../../content/realms.ts';
-import { hasTechnique, technique, type Technique } from '../../content/techniques.ts';
-import type { Cultivator } from '../state.ts';
+import { realmSize, tierRealm, tierStep } from '../../content/realms.ts';
+import {
+  GUARDS,
+  hasTechnique,
+  technique,
+  type GuardId,
+  type Technique,
+} from '../../content/techniques.ts';
+import { topLadder, type Cultivator } from '../state.ts';
 import { agility, fortune, stats } from '../stats.ts';
 import { masteryAccuracy, techniqueSealed } from '../techniques.ts';
 import type { Combo } from './damage.ts';
-import { bandOf, rungOf, rungSize, type Rung } from './sheet.ts';
+import { bandOf, floored, rungOf, rungSize, tierScale, withFloor, type Rung } from './sheet.ts';
 
 /** What a held weapon does: sizes basic strikes at its full band, its Dao's techniques at half. */
 export interface Weapon {
@@ -63,16 +76,27 @@ export function weapon(kind: WeaponKind, tier: number, r: RarityId): Weapon {
 /** Bare hands: a white tier 1 fist weapon, so unarmed strikes run through the same rule. */
 export const BARE_HANDS: Weapon = weapon('fist', 1, 'white');
 
-/** Armor: Defense at its band, and the one damage type its material resists. */
-export function armor(
-  tier: number,
-  r: RarityId,
-  material?: DamageType,
-): { defense: number; resist: Partial<Record<DamageType, number>> } {
-  return {
-    defense: rarityMultiplier(r, tierStep(tier)),
-    resist: material ? { [material]: MATERIAL_RESIST } : {},
-  };
+/**
+ * Armor worn into a fight: a bar of its own, its durability, between the qi shield and the body
+ * (P3.2). Its Defense is its size, its tier's realm at its rarity's band, and its material's
+ * resist turns only what strikes it.
+ */
+export interface ArmorBar {
+  defense: number;
+  hp: number;
+  max: number;
+  resist: Partial<Record<DamageType, number>>;
+}
+
+/** An armor bar of a size: durability ARMOR_PER_SIZE a point, and its material's resist. */
+export function armorBar(size: number, material?: DamageType | null): ArmorBar {
+  const max = Math.round(ARMOR_PER_SIZE * size);
+  return { defense: size, hp: max, max, resist: material ? { [material]: MATERIAL_RESIST } : {} };
+}
+
+/** Armor of a tier and rarity, worn at its own tier: its realm's size at its band. */
+export function armor(tier: number, r: RarityId, material?: DamageType): ArmorBar {
+  return armorBar(realmSize(tierRealm(tier).id) * rarityMultiplier(r, tierStep(tier)), material);
 }
 
 export interface ActiveStatus {
@@ -105,11 +129,21 @@ export interface Combatant {
   maxHp: number;
   qi: number;
   maxQi: number;
+  /** The qi shield: a bar over the body, sized by the qi rung, full when a fight starts. */
+  shield: number;
+  maxShield: number;
+  /** Armor worn, as its own bar, or null. */
+  armor: ArmorBar | null;
+  /**
+   * What each guard art gives on top of its ladder's half: its band against your realm, 0 with
+   * none known (design § Combat, The sheet). A white art of your realm's tier is 1.
+   */
+  guards: Record<GuardId, number>;
   /** The phase their own qi counts as, for the element cycle, or null. */
   element: PhaseElement | null;
   resist: Partial<Record<DamageType, number>>;
-  /** Armor's band on Defense. */
-  armor: number;
+  /** Multiplies body Defense: a beast's hide (lower than a cultivator's), bloodline passives. */
+  hide: number;
   weapon: Weapon;
   /** Multiplies Accuracy: the Hit stat. */
   accuracy: number;
@@ -157,11 +191,20 @@ export type CombatantInit = Partial<Combatant> & Pick<Combatant, 'id' | 'name' |
 
 const FOOT: Rung = { realm: 'qi-condensation', stage: 1, grade: 0 };
 
-/** A combatant from parts, everything unnamed at an ordinary Qi Condensation layer 1. */
+/** No guard arts known: each guard reads its ladder at half. */
+export const NO_GUARDS: Record<GuardId, number> = { shield: 0, hardening: 0, movement: 0 };
+/** A white guard art of your tier on every path: each guard reads its ladder in full. */
+export const WHITE_GUARDS: Record<GuardId, number> = { shield: 1, hardening: 1, movement: 1 };
+
+/**
+ * A combatant from parts, everything unnamed at an ordinary Qi Condensation layer 1 with a white
+ * guard art on every path, so each guard reads its ladder in full.
+ */
 export function combatant(init: CombatantInit): Combatant {
   const rungs = init.rungs ?? { qi: FOOT, body: FOOT, soul: FOOT };
   const maxHp = init.maxHp ?? Math.round(HP_PER_SIZE * rungSize(rungs.body));
   const maxQi = init.maxQi ?? Math.round(QI_PER_SIZE * rungSize(rungs.qi));
+  const maxShield = init.maxShield ?? Math.round(SHIELD_PER_SIZE * rungSize(rungs.qi));
   return {
     rungs,
     agility: AGILITY_BASE,
@@ -171,9 +214,13 @@ export function combatant(init: CombatantInit): Combatant {
     maxHp,
     qi: maxQi,
     maxQi,
+    shield: maxShield,
+    maxShield,
+    armor: null,
+    guards: WHITE_GUARDS,
     element: null,
     resist: {},
-    armor: 1,
+    hide: 1,
     weapon: BARE_HANDS,
     accuracy: 1,
     techniquePower: 1,
@@ -224,13 +271,39 @@ export function wornWeapon(c: Cultivator): Weapon {
   };
 }
 
-/** The armor a cultivator wears: Defense at its band for them, and its material's resist. */
-export function wornArmor(c: Cultivator): { defense: number; material: DamageType | null } {
+/**
+ * The armor a cultivator wears, as its bar: its size is its band for them at their realm's size,
+ * so a white armor of their tier stands at their realm's first stage. Null when none is worn or
+ * it won't wake.
+ */
+export function wornArmor(c: Cultivator): ArmorBar | null {
   const id = c.gear.armor;
   const it = id && hasItem(id) ? item(id) : null;
   const band = it ? gearBand(c, it) : null;
-  if (!it || !band) return { defense: 1, material: null };
-  return { defense: band.band, material: it.uses.equip?.material ?? null };
+  if (!it || !band) return null;
+  const size = band.band * realmSize(tierRealm(ownTier(c)).id);
+  return armorBar(size, it.uses.equip?.material ?? null);
+}
+
+/**
+ * What a guard art gives on top of its ladder's half: its rarity's band, scaled by its tier
+ * against your realm's, so a white art of your tier gives 1 and one a realm below a step less.
+ */
+export function guardArt(t: Pick<Technique, 'rarity' | 'tier'>, own: number): number {
+  return (rarityMultiplier(t.rarity, tierStep(t.tier)) * tierScale(t.tier)) / tierScale(own);
+}
+
+/** The guard arts a cultivator knows and can use, the best of each guard. */
+export function guardsOf(c: Cultivator): Record<GuardId, number> {
+  const out = { ...NO_GUARDS };
+  const own = ownTier(c);
+  for (const id of Object.keys(c.techniques)) {
+    if (!hasTechnique(id)) continue;
+    const t = technique(id);
+    if (!t.guard || techniqueSealed(c, t)) continue;
+    out[t.guard] = Math.max(out[t.guard], guardArt(t, own));
+  }
+  return out;
 }
 
 /**
@@ -254,20 +327,22 @@ export function daoTiers(c: Cultivator): Record<string, number> {
  */
 export function fromCultivator(c: Cultivator, side: string): Combatant {
   const s = stats(c);
-  const rungs = { qi: rungOf(c.qi), body: rungOf(c.body), soul: rungOf(c.soul) };
+  const rungs = withFloor(
+    { qi: rungOf(c.qi), body: rungOf(c.body), soul: rungOf(c.soul) },
+    LADDER_FLOOR,
+  );
   const resist: Partial<Record<DamageType, number>> = {};
   for (const [type, stat] of Object.entries(RESIST_STATS)) {
     if (s[stat] !== 0) resist[type as DamageType] = s[stat];
   }
-  const worn = wornArmor(c);
-  if (worn.material) resist[worn.material] = (resist[worn.material] ?? 0) + MATERIAL_RESIST;
   const mods: Combatant['mods'] = {};
   for (const id of STAT_IDS) if (s[id] !== 0 && !statInfo(id).arrives) mods[id] = s[id];
   const techniques: Combatant['techniques'] = {};
   for (const id of Object.keys(c.techniques)) {
     if (!hasTechnique(id)) continue;
     const t = technique(id);
-    if (techniqueSealed(c, t)) continue;
+    // A guard art is never cast: it stands in `guards`.
+    if (t.guard || techniqueSealed(c, t)) continue;
     const own = artOwn(c, id);
     techniques[id] = {
       technique: t,
@@ -299,12 +374,18 @@ export function fromCultivator(c: Cultivator, side: string): Combatant {
     techniques,
     items,
     toxicity: c.toxicity,
-    armor: worn.defense,
+    armor: wornArmor(c),
+    guards: guardsOf(c),
     weapon: wornWeapon(c),
     daos: daoTiers(c),
     intent: { ...c.intent },
     mods,
   });
+}
+
+/** Their highest rung, which is their realm (design § Cultivation, Three paths). */
+export function topRung(c: Pick<Combatant, 'rungs'>): Rung {
+  return c.rungs[topLadder(c.rungs)];
 }
 
 /** What Agility does to Evasion and fleeing: 5% a point above 10. */
@@ -329,11 +410,34 @@ export function mod(c: Combatant, stat: StatId): number {
   return c.mods[stat] ?? 0;
 }
 
+/** How much of its guard a path reads: half from the ladder, the rest from its guard art. */
+export function guardFactor(c: Combatant, g: GuardId): number {
+  return GUARD_SHARE + (1 - GUARD_SHARE) * c.guards[g];
+}
+
+/**
+ * The size Evasion reads against an attack on this ladder: your rung on it, or your soul when it
+ * stands higher, read through the movement guard (design § Combat, The sheet): a strong soul sees
+ * the blow coming, and a movement art lets the body act on it.
+ */
+export function evasionSize(c: Combatant, ladder: LadderId): number {
+  return Math.max(rungSize(c.rungs[ladder]), rungSize(c.rungs.soul) * guardFactor(c, 'movement'));
+}
+
+/**
+ * What a soul strike's damage is multiplied by before it takes HP: your body's size over your
+ * soul's, so your HP holds against it as if it were sized by your soul. A body refiner's soul is
+ * wrecked at its floor; a strong soul shrugs a soul strike off.
+ */
+export function soulWound(c: Combatant): number {
+  return rungSize(c.rungs.body) / rungSize(c.rungs.soul);
+}
+
 /** Their Evasion against an attack compared on this ladder, guard and statuses included. */
 export function evasion(c: Combatant, ladder: LadderId): number {
   const bound = c.statuses.some((s) => s.bind) ? BIND_EVASION : 1;
   return (
-    rungSize(c.rungs[ladder]) *
+    evasionSize(c, ladder) *
     agilityFactor(c) *
     (1 + mod(c, 'evasion')) *
     c.guard *
@@ -342,9 +446,18 @@ export function evasion(c: Combatant, ladder: LadderId): number {
   );
 }
 
-/** Their Defense against an attack compared on this ladder: the rung's size at their armor's band. */
+/**
+ * Their body's Defense against an attack compared on this ladder: the body through its hardening
+ * guard and their hide, or the soul against soul damage.
+ */
 export function defense(c: Combatant, ladder: LadderId): number {
-  return rungSize(c.rungs[ladder]) * c.armor;
+  if (ladder === 'soul') return rungSize(c.rungs.soul);
+  return rungSize(c.rungs[ladder]) * guardFactor(c, 'hardening') * c.hide;
+}
+
+/** The qi shield's Defense: the qi rung through its shield guard. */
+export function shieldDefense(c: Combatant): number {
+  return rungSize(c.rungs.qi) * guardFactor(c, 'shield');
 }
 
 /** One line of the sheet, with the band it is sized at in stage words. */
@@ -353,7 +466,11 @@ export interface SheetLine {
   band: string;
 }
 
-/** The six lines of a combatant's sheet, at rest: Attack and Accuracy per ladder where they differ. */
+/**
+ * The six lines of a combatant's sheet, at rest, with Attack and Accuracy per ladder where they
+ * differ; then the qi shield and the armor as bars, each with its Defense; what each guard
+ * reads; and the ladders counting at the floor.
+ */
 export interface Sheet {
   accuracy: Record<LadderId, SheetLine>;
   evasion: SheetLine;
@@ -361,6 +478,11 @@ export interface Sheet {
   defense: SheetLine;
   hp: SheetLine;
   qi: SheetLine;
+  shield: SheetLine & { defense: SheetLine };
+  armor: (SheetLine & { defense: SheetLine }) | null;
+  /** What each guard reads: 0.5 with no art, 1 with a white art of your tier, more past it. */
+  guards: Record<GuardId, number>;
+  floored: LadderId[];
 }
 
 const line = (value: number): SheetLine => ({ value, band: bandOf(value).name });
@@ -374,7 +496,7 @@ export function sheet(c: Combatant): Sheet {
   });
   return {
     accuracy: per((l) => rungSize(c.rungs[l]) * c.accuracy),
-    evasion: line(rungSize(c.rungs.body) * agilityFactor(c) * (1 + mod(c, 'evasion'))),
+    evasion: line(evasionSize(c, 'body') * agilityFactor(c) * (1 + mod(c, 'evasion'))),
     attack: per(
       (l) =>
         rungSize(c.rungs[l]) *
@@ -383,5 +505,22 @@ export function sheet(c: Combatant): Sheet {
     defense: line(defense(c, 'body')),
     hp: { value: c.maxHp, band: bandOf(c.maxHp / HP_PER_SIZE).name },
     qi: { value: c.maxQi, band: bandOf(c.maxQi / QI_PER_SIZE).name },
+    shield: {
+      value: c.maxShield,
+      band: bandOf(c.maxShield / SHIELD_PER_SIZE).name,
+      defense: line(shieldDefense(c)),
+    },
+    armor: c.armor
+      ? {
+          value: c.armor.max,
+          band: bandOf(c.armor.max / ARMOR_PER_SIZE).name,
+          defense: line(c.armor.defense),
+        }
+      : null,
+    guards: Object.fromEntries(GUARDS.map((g) => [g, guardFactor(c, g)])) as Record<
+      GuardId,
+      number
+    >,
+    floored: (['qi', 'body', 'soul'] as const).filter((l) => floored(c.rungs[l])),
   };
 }

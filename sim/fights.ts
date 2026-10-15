@@ -3,10 +3,18 @@
 // each fight. The ledger's four kits fight an ordinary foe one realm up at the same stage,
 // without one-shot consumables, each carrying the sword intent its pedigree's table gives at its
 // realm (the ordinary kit and foe a rogue's), and the targets under the ledger are the pass/fail
-// list. Then the Border Wilds roster against a white and a purple kit at each realm it is met at.
-// Each matchup prints both sheets beside its win rate.
+// list. Then the three paths (P3.2): white kits walking one path each, qi, body or soul, the
+// others at the floor, against each other at the same top rung, and a balanced kit (all three at
+// the top, the ledger's ordinary kit) against each. Then the Border Wilds roster against a white
+// and a purple kit at each realm it is met at. Each matchup prints both sheets beside its win rate.
 // Run: npm run sim -- fights [--fights=10000] [--roster=2000] [--sheets]
-import { FOE_BASELINE, KITS, type Kit, type PedigreeId } from '../src/content/enemies.ts';
+import {
+  FOE_BASELINE,
+  KITS,
+  type Kit,
+  type NpcPath,
+  type PedigreeId,
+} from '../src/content/enemies.ts';
 import { REALMS, realm, realmIndex, type RealmId } from '../src/content/realms.ts';
 import { BORDER_WILDS, type CultivatorTemplate } from '../src/content/roster.ts';
 import { sheet, type Combatant } from '../src/core/combat/combatant.ts';
@@ -74,7 +82,7 @@ const rate = (t: Tally) => t.win / (t.win + t.loss + t.fled + t.draw);
 function sheetLine(c: Combatant): string {
   const s = sheet(c);
   const n = (x: number) => (x >= 1e4 ? `${(x / 1e3).toFixed(0)}k` : x.toFixed(0)).padStart(6);
-  return `acc${n(s.accuracy.qi.value)} ev${n(s.evasion.value)} att${n(s.attack.qi.value)} def${n(s.defense.value)} hp${n(s.hp.value)} qi${n(s.qi.value)}`;
+  return `acc${n(s.accuracy.qi.value)} ev${n(s.evasion.value)} att${n(s.attack.qi.value)} def${n(s.defense.value)} hp${n(s.hp.value)} qi${n(s.qi.value)} sh${n(s.shield.value)} ar${n(s.armor?.value ?? 0)}`;
 }
 
 const fixed = (k: Kit, r: RealmId, stage: number, id: string) => () => [
@@ -209,6 +217,56 @@ for (const r of ['foundation-establishment', 'core-formation'] as const) {
   check(`${name}: great-sect against great-sect a realm up under 5%`, greatUp, 0, 0.05);
   check(`${name}: a chosen one two realms up under 5%`, twoUp, 0, 0.05);
   check(`${name}: a great-sect disciple overcomes an ordinary foe a stage up`, stageUp, 0.5, 1);
+}
+
+// ---------------------------------------------------------------- the three paths
+
+const pathKit = (path: NpcPath): Kit => ({
+  ...kit('ordinary'),
+  id: `path-${path}`,
+  name: path === 'balanced' ? 'balanced' : `pure ${path}`,
+  path,
+});
+const PURE = ['qi', 'body', 'soul'] as const;
+const PATH_RUNGS: [RealmId, number][] = [
+  ['qi-condensation', 9],
+  ['foundation-establishment', 1],
+  ['foundation-establishment', 4],
+];
+
+console.log('\nThe three paths: white kits at the same top rung (row against column)');
+for (const [r, stage] of PATH_RUNGS) {
+  const where = `${realm(r).name.split(' ')[0]} ${stage}`;
+  const vs = (a: NpcPath, b: NpcPath) =>
+    rate(
+      bout(
+        fixed(pathKit(a), r, stage, 'a'),
+        fixed(pathKit(b), r, stage, 'b'),
+        FIGHTS,
+        `paths/${a}/${b}/${r}/${stage}`,
+      ),
+    );
+  const pairs: [NpcPath, NpcPath][] = [
+    ['qi', 'body'],
+    ['qi', 'soul'],
+    ['body', 'soul'],
+  ];
+  const pure = pairs.map(([a, b]) => [a, b, vs(a, b)] as const);
+  const balanced = PURE.map((b) => [b, vs('balanced', b)] as const);
+  console.log(
+    `  ${where.padEnd(14)}${pure.map(([a, b, x]) => `${a} v ${b} ${pct(x)}`).join('   ')}   |   balanced v ${balanced.map(([b, x]) => `${b} ${pct(x)}`).join(', ')}`,
+  );
+  for (const [a, b, x] of pure)
+    check(`${where}: pure ${a} against pure ${b} 35–65%`, x, 0.35, 0.65);
+  for (const [b, x] of balanced)
+    check(`${where}: balanced against pure ${b} about 75%`, x, 0.65, 0.85);
+  if (SHEETS) {
+    for (const k of ['balanced', ...PURE] as const) {
+      console.log(
+        `    ${k.padEnd(10)}${sheetLine(kitFighter(pathKit(k), r, stage, { id: 'x', side: 'x' }))}`,
+      );
+    }
+  }
 }
 
 // ---------------------------------------------------------------- the Border Wilds roster

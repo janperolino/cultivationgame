@@ -22,7 +22,7 @@ import { generateCultivator, generatePack } from './combat/generate.ts';
 import { chooseAction, profile } from './combat/profile.ts';
 import { bondFromFight } from './gear.ts';
 import { intentMoment } from './intent.ts';
-import { addEvent, withPlayer, withStream, type GameState } from './state.ts';
+import { addEvent, realmOf, stageOf, withPlayer, withStream, type GameState } from './state.ts';
 
 /** The player's side and the foe's in a spar. */
 export const YOU = 'you';
@@ -32,9 +32,9 @@ export const SPAR_TURNS = 60;
 
 export type SparResult = 'won' | 'lost' | 'fled' | 'yielded' | 'draw';
 
-/** The roster's templates met at the player's qi realm, sparring partners for now. */
+/** The roster's templates met at the player's realm, sparring partners for now. */
 export function sparFoes(s: GameState): Template[] {
-  const at = s.player.qi.realm;
+  const at = realmOf(s.player);
   return BORDER_WILDS.filter((t) => t.band.includes(at));
 }
 
@@ -46,15 +46,15 @@ export interface SparStart {
 }
 
 /**
- * Rolls a foe from a roster template at the player's qi realm and stage, on the `people` stream,
+ * Rolls a foe from a roster template at the player's realm and stage, on the `people` stream,
  * and opens the fight with the player first in the fight's order. A beast template rolls its
  * whole pack. Null when the template isn't met at the player's realm.
  */
 export function startSpar(s: GameState, templateId: string): SparStart | null {
   const t = template(templateId);
-  const at = s.player.qi.realm;
+  const at = realmOf(s.player);
   if (s.ended || !t.band.includes(at)) return null;
-  const stage = Math.min(s.player.qi.stage, realm(at).stages);
+  const stage = Math.min(stageOf(s.player), realm(at).stages);
   const { value: npcs, state } = withStream(s, 'people', (rng) =>
     t.kind === 'beast'
       ? generatePack(t, at, stage, rng, FOES)

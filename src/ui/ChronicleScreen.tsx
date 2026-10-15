@@ -33,7 +33,6 @@ import {
   lineOf,
   livesOf,
   qiAfterSeason,
-  qiBefore,
   riverItems,
   shows,
   shownIn,
@@ -551,28 +550,19 @@ const Almanac = memo(function Almanac({
           })}
         </tbody>
       </table>
-      <Readout
-        life={life}
-        rows={rows}
-        row={pickedRow}
-        picked={picked}
-        off={off}
-        onRiver={onRiver}
-      />
+      <Readout life={life} row={pickedRow} picked={picked} off={off} onRiver={onRiver} />
     </div>
   );
 });
 
 function Readout({
   life,
-  rows,
   row,
   picked,
   off,
   onRiver,
 }: {
   life: Life;
-  rows: readonly YearRow[];
   row: YearRow | undefined;
   picked: Picked | null;
   off: KindsOff;
@@ -587,7 +577,7 @@ function Readout({
     );
   }
   const es = row.seasons[picked.season]!.filter((e) => shows(e, off));
-  const after = qiAfterSeason(row, picked.season, qiBefore(rows, row.year));
+  const after = qiAfterSeason(row, picked.season);
   const season = SEASONS[picked.season]!;
   return (
     <div className="cr-readout" aria-live="polite">

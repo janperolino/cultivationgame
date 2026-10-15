@@ -3,7 +3,7 @@ import { realm } from '../content/realms.ts';
 import { comingBackStory, type StorySection } from '../core/comingBack.ts';
 import { barSize, dayRates, ladderOpen } from '../core/cultivation.ts';
 import { daysPerRealMs } from '../core/loop.ts';
-import type { GameState } from '../core/state.ts';
+import { realmOf, type GameState } from '../core/state.ts';
 import { CardFeed } from './CardFeed.tsx';
 import { effectiveWheel } from '../core/wheel.ts';
 import { WheelStrip } from './DayWheel.tsx';
@@ -189,8 +189,8 @@ export function AbodeScreen() {
           </div>
         </dl>
         <p className="caption spaced">
-          Lifespan {realm(game.player.qi.realm).lifespan} years at{' '}
-          {realm(game.player.qi.realm).name}.
+          Lifespan {realm(realmOf(game.player)).lifespan} years at{' '}
+          {realm(realmOf(game.player)).name}.
         </p>
       </section>
       <CardFeed />

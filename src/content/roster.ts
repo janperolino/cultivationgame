@@ -1,10 +1,10 @@
 // The Border Wilds roster (design § Enemies, beasts and the people you meet), in the Qi
-// Condensation and Foundation bands: P2.2's matchup list and P3.1's encounter tables. A template
+// Condensation and Foundation bands: P2.2's matchup list and P3.7's encounter templates. A template
 // names a species or a pedigree and path; core/combat/generate.ts rolls the rest on the `people`
 // stream. Names and parts follow the atlas entries the canon pass reads.
 import type { BeastElement } from './beasts.ts';
 import type { WeaponKind } from './combat.ts';
-import type { PedigreeId, ProfileId } from './enemies.ts';
+import type { NpcPath, PedigreeId, ProfileId } from './enemies.ts';
 import type { RealmId } from './realms.ts';
 import type { DamageType } from './techniques.ts';
 
@@ -26,6 +26,8 @@ export interface BeastTemplate extends TemplateBase {
 export interface CultivatorTemplate extends TemplateBase {
   kind: 'cultivator';
   pedigree: PedigreeId;
+  /** Their path, when it isn't their pedigree's (P3.2). */
+  path?: NpcPath;
   weapon: WeaponKind;
   /** Their arts' element, if their method gives them one. */
   element: BeastElement | null;
@@ -136,6 +138,7 @@ export const BORDER_WILDS: readonly Template[] = [
     name: 'Half-blood raider',
     kind: 'cultivator',
     pedigree: 'rogue',
+    path: 'body',
     weapon: 'fist',
     element: null,
     bloodline: 'rolled',
@@ -172,6 +175,7 @@ export const BORDER_WILDS: readonly Template[] = [
     name: 'Beast-Butcher Gate disciple',
     kind: 'cultivator',
     pedigree: 'small-sect',
+    path: 'body',
     weapon: 'saber',
     element: null,
     band: BOTH,

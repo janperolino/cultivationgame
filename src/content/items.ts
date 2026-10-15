@@ -212,6 +212,32 @@ export const ITEMS: readonly Item[] = [
     source: 'sect treasuries and the black market',
     text: 'The gate pill for Foundation (realms.ts names each gate): every qi attempt lays one down.',
   },
+  // The body's and the soul's gates for Foundation (P3.2, for Jan's review): the major that takes
+  // your realm into Foundation on that path lays one; a ladder catching up below needs none.
+  {
+    id: 'marrow-washing-pill',
+    name: 'Marrow-Washing Pill',
+    pinyin: 'Xisui Dan',
+    hanzi: '洗髓丹',
+    tier: 1,
+    rarity: 'white',
+    kind: 'pill',
+    uses: { offer: { tags: [] } },
+    source: 'body-refiner clans, beast hunters and the black market',
+    text: "The body's gate pill for Foundation: it boils the old marrow out through the skin, black and stinking, and the bones set again as one piece.",
+  },
+  {
+    id: 'soul-condensing-pill',
+    name: 'Soul-Condensing Pill',
+    pinyin: 'Ninghun Dan',
+    hanzi: '凝魂丹',
+    tier: 1,
+    rarity: 'white',
+    kind: 'pill',
+    uses: { offer: { tags: [] } },
+    source: 'shrine keepers and the few sects that teach the soul',
+    text: "The soul's gate pill for Foundation: a bitter cold that draws the scattered mind into one bead behind the brow.",
+  },
   {
     id: 'core-forming-pill',
     name: 'Core-Forming Pill',

@@ -1,9 +1,11 @@
 // Generated foes (design § Enemies, beasts and the people you meet): a cultivator is a template
-// (pedigree, realm and stage, path, profile) and a seed, and everything else is rolled from the
+// (pedigree, realm and stage, weapon, path, profile) and a seed, and everything else is rolled from the
 // pedigree's table on the `people` stream: the method's rarity on each ladder, which sets the
 // growth behind their pool and HP; the arts' rarity and mastery; a weapon and an armor; zero to
 // two consumables; a storage item; a breakthrough grade; and intent on the weapon's Dao by the
-// pedigree's table, which nothing rolls. A beast is a species, a realm and a
+// pedigree's table, which nothing rolls. Their path (P3.2) says which ladders they cultivate,
+// the others standing at the floor, and which path art and guard arts they know. A beast is a
+// species, a realm and a
 // bloodline rarity that rolls abilities from its element's table. Both come out as the same
 // combatant the player is, so an elder and a bandit differ in access, never in rules. `kitFighter`
 // builds the fighting-up ledger's kits the same way with every roll pinned.
@@ -23,6 +25,7 @@ import {
 } from '../../content/beasts.ts';
 import {
   HP_PER_SIZE,
+  LADDER_FLOOR,
   QI_PER_SIZE,
   RESOLVE_BASE,
   type DamageType,
@@ -40,9 +43,11 @@ import {
   PROFILES,
   REALM_BASELINE,
   SECOND_ART,
+  SOUL_ART_POWER,
   STORAGE_BY_REALM,
   type ArtShape,
   type Kit,
+  type NpcPath,
   type PedigreeId,
   type ProfileId,
 } from '../../content/enemies.ts';
@@ -63,13 +68,13 @@ import {
   type BeastTemplate,
   type CultivatorTemplate,
 } from '../../content/roster.ts';
-import type { Technique } from '../../content/techniques.ts';
+import { GUARDS, type Technique } from '../../content/techniques.ts';
 import { gradesStages } from '../grades.ts';
 import { npcIntent } from '../intent.ts';
 import type { Rng } from '../rng.ts';
-import { armor, combatant, weapon, type Combatant } from './combatant.ts';
+import { armor, combatant, guardArt, NO_GUARDS, weapon, type Combatant } from './combatant.ts';
 import { damagePhase } from './damage.ts';
-import { rungSize, type Rung } from './sheet.ts';
+import { rungSize, withFloor, type Rung } from './sheet.ts';
 
 // ---------------------------------------------------------------- the shared roll, biased
 
@@ -212,6 +217,28 @@ export interface Npc {
   combatant: Combatant;
 }
 
+/** An untrained ladder: Qi Condensation's first layer, which the floor lifts. */
+const UNTRAINED: Rung = { realm: 'qi-condensation', stage: 1, grade: 0 };
+
+/** The ladder a path's arts strike from: its own, or qi for the balanced. */
+export function pathLadder(path: NpcPath): LadderId {
+  return path === 'balanced' ? 'qi' : path;
+}
+
+/**
+ * A path's art shape and damage: a body art costs no qi; a soul art strikes the soul, past the
+ * qi shield and the armor, at SOUL_ART_POWER of the shape's power.
+ */
+function pathArt(path: NpcPath, shape: ArtShape, damage: DamageType) {
+  const ladder = pathLadder(path);
+  const soul = { ...shape, power: Math.round(shape.power * SOUL_ART_POWER) };
+  return {
+    shape: ladder === 'body' ? { ...shape, qiCost: 0 } : ladder === 'soul' ? soul : shape,
+    ladder,
+    damage: ladder === 'soul' ? ('soul' as const) : damage,
+  };
+}
+
 /** A major breakthrough's grade sits on the rung from Foundation up; Qi Condensation has none. */
 function rungAt(realmId: RealmId, stage: number, grade: GradeId): Rung {
   return {
@@ -239,6 +266,8 @@ interface Build {
   weaponKind: WeaponKind;
   element: BeastElement | null;
   bodyAhead?: boolean;
+  /** Which ladders they cultivate; beasts are balanced. */
+  path: NpcPath;
   techniques: Technique[];
   /** Passives from bloodline abilities. */
   abilities?: Ability[];
@@ -253,11 +282,22 @@ interface Build {
 /** Puts the rolls together into a combatant on the player's rules. */
 function build(b: Build): Combatant {
   const tier = realmIndex(b.realm) + 1;
-  const qi = rungAt(b.realm, b.stage, b.rolls.grade);
-  const body = b.bodyAhead ? rungAhead(b.realm, b.stage) : qi;
+  const top = rungAt(b.realm, b.stage, b.rolls.grade);
+  const trained = (l: LadderId) => b.path === 'balanced' || b.path === l;
+  const own = (l: LadderId): Rung =>
+    !trained(l) ? UNTRAINED : l === 'body' && b.bodyAhead ? rungAhead(b.realm, b.stage) : top;
+  const rungs = withFloor({ qi: own('qi'), body: own('body'), soul: own('soul') }, LADDER_FLOOR);
+  const { qi, body } = rungs;
   const growth = (l: LadderId, r: Rung) => methodGrowth(b.rolls.method[l], r.realm, r.stage);
   const gQi = growth('qi', qi);
   const gBody = growth('body', body);
+  // A guard art is a technique anyone can learn, so they know one for every path at their arts'
+  // rarity, whatever ladders they cultivate; a beast's hide is its guard, and it raises no qi shield.
+  const guards = { ...NO_GUARDS };
+  for (const g of GUARDS) {
+    if (b.beast) guards[g] = g === 'hardening' ? 1 : 0;
+    else guards[g] = guardArt({ rarity: b.rolls.technique, tier }, tier);
+  }
   const share = (l: LadderId, stat: string) => NPC_GROWTH[l][stat] ?? 0;
   const passives = (b.abilities ?? []).map((a) => a.passive).filter((p) => p !== undefined);
   const product = (f: (p: (typeof passives)[number]) => number | undefined) =>
@@ -265,8 +305,7 @@ function build(b: Build): Combatant {
   const aura =
     b.rolls.bloodline && rarityRank(b.rolls.bloodline) >= rarityRank('purple') ? AURA_POWER : 1;
   const scale = b.beast?.scale ?? { hp: 1, attack: 1 };
-  const gear = armor(tier, b.rolls.armor, b.resists);
-  const resist: Partial<Record<DamageType, number>> = { ...gear.resist };
+  const resist: Partial<Record<DamageType, number>> = {};
   for (const p of passives) {
     if (p.resist) resist[p.resist.type] = (resist[p.resist.type] ?? 0) + p.resist.share;
   }
@@ -282,7 +321,7 @@ function build(b: Build): Combatant {
     id: b.id,
     name: b.name,
     side: b.side,
-    rungs: { qi, body, soul: qi },
+    rungs,
     agility: 10 + passives.reduce((s, p) => s + (p.agility ?? 0), 0),
     maxHp: Math.round(
       HP_PER_SIZE *
@@ -293,9 +332,12 @@ function build(b: Build): Combatant {
         product((p) => p.hp),
     ),
     maxQi: Math.round(QI_PER_SIZE * rungSize(qi) * (1 + gQi * share('qi', 'qiPool'))),
+    ...(b.beast ? { maxShield: 0 } : {}),
     element: b.element ? damagePhase(b.element) : null,
     resist,
-    armor: (b.beast ? BEAST_DEFENSE : gear.defense) * product((p) => p.armor),
+    armor: b.beast ? null : armor(tier, b.rolls.armor, b.resists),
+    guards,
+    hide: (b.beast ? BEAST_DEFENSE : 1) * product((p) => p.armor),
     weapon: weapon(b.weaponKind, tier, b.rolls.weapon),
     accuracy: product((p) => p.accuracy),
     techniquePower: (1 + gQi * share('qi', 'techniquePower')) * aura * scale.attack,
@@ -381,26 +423,26 @@ export function generateCultivator(
   rolls.grade = gradeRoll === 'heavenly' && !heavenlyOk ? 'perfect' : gradeRoll;
 
   const tier = realmIndex(realmId) + 1;
-  const damage: DamageType = t.element ?? 'physical';
+  const path = t.path ?? ped.path;
+  const main = pathArt(path, { ...PATH_ART, form: ART_FORM[t.weapon] }, t.element ?? 'physical');
   const techniques = [
-    art(
-      `${t.id}-path`,
-      { ...PATH_ART, form: ART_FORM[t.weapon] },
-      {
-        tier,
-        rarity: rolls.technique,
-        dao: t.weapon,
-        damage,
-      },
-    ),
+    art(`${t.id}-path`, main.shape, {
+      tier,
+      rarity: rolls.technique,
+      dao: t.weapon,
+      damage: main.damage,
+      ladder: main.ladder,
+    }),
   ];
   if (t.pedigree !== 'rogue') {
+    const second = pathArt(path, SECOND_ART, t.element ?? 'physical');
     techniques.push(
-      art(`${t.id}-second`, SECOND_ART, {
+      art(`${t.id}-second`, second.shape, {
         tier,
         rarity: rolls.technique,
         dao: t.element ?? t.weapon,
-        damage,
+        damage: second.damage,
+        ladder: second.ladder,
       }),
     );
   }
@@ -450,6 +492,7 @@ export function generateCultivator(
       rolls,
       weaponKind: t.weapon,
       element,
+      path,
       techniques,
       abilities,
       resists: t.resists,
@@ -534,6 +577,7 @@ export function generateBeast(
       // Claws and fangs are a beast's weapon: its bloodline's band on natural attacks.
       weaponKind: 'fist',
       element,
+      path: 'balanced',
       techniques,
       abilities,
       beast: { scale: sp.scale },
@@ -572,6 +616,8 @@ export function kitFighter(
   o: { id: string; side: string; profile?: ProfileId },
 ): Combatant {
   const tier = realmIndex(realmId) + 1;
+  const path = kit.path ?? 'balanced';
+  const main = pathArt(path, { ...PATH_ART, form: 'thrust' }, 'physical');
   const rolls: Rolls = {
     method: { qi: kit.method, body: kit.method, soul: kit.method },
     technique: kit.technique,
@@ -590,17 +636,15 @@ export function kitFighter(
     weaponKind: 'sword',
     element: null,
     bodyAhead: kit.bodyAhead,
+    path,
     techniques: [
-      art(
-        `${kit.id}-art`,
-        { ...PATH_ART, form: 'thrust' },
-        {
-          tier,
-          rarity: kit.technique,
-          dao: 'sword',
-          damage: 'physical',
-        },
-      ),
+      art(`${kit.id}-art`, main.shape, {
+        tier,
+        rarity: kit.technique,
+        dao: 'sword',
+        damage: main.damage,
+        ladder: main.ladder,
+      }),
     ],
     profile: o.profile ?? 'fanatical',
     intent: npcIntent(kit.pedigree, realmId),

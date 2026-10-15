@@ -4,7 +4,8 @@
 // stretches of seclusion with every year a row, and the years before the first hour folded into
 // one line. The screen (ChronicleScreen.tsx) draws them; the almanac reads the same items.
 import { eventKind, pronounWords, type ChronicleKind, type Who } from '../content/chronicle.ts';
-import { realm, stageName, type RealmId } from '../content/realms.ts';
+import type { LadderId } from '../content/cultivation.ts';
+import { realm, realmIndex, stageName, type RealmId } from '../content/realms.ts';
 import {
   renderEvent,
   seasonIndex,
@@ -13,7 +14,13 @@ import {
   yearDigits,
   yearStartDay,
 } from '../core/chronicle.ts';
-import { DAYS_PER_YEAR, START_AGE, type ChronicleEvent, type GameState } from '../core/state.ts';
+import {
+  DAYS_PER_YEAR,
+  START_AGE,
+  topLadder,
+  type ChronicleEvent,
+  type GameState,
+} from '../core/state.ts';
 
 // ---------------------------------------------------------------- lives
 
@@ -105,8 +112,11 @@ export interface YearRow {
   age: number;
   /** Spring to winter, each oldest first, every line (the chips filter at drawing). */
   seasons: ChronicleEvent[][];
+  /** Your realm and stage at the year's end: the highest ladder's (P3.2). */
   qi: QiLevel;
-  /** A qi step this year, and a new qi realm. */
+  /** Where each ladder stood when the year opened. */
+  start: Record<LadderId, QiLevel>;
+  /** A step of your highest ladder this year, and a new realm. */
   rise: boolean;
   newRealm: boolean;
   died: boolean;
@@ -114,14 +124,26 @@ export interface YearRow {
 
 const START: QiLevel = { realm: 'qi-condensation', stage: 1 };
 
-/** Where an event leaves the qi ladder, or null when it doesn't move it. */
-function qiStep(e: ChronicleEvent): QiLevel | null {
-  if (e.data.ladder !== 'qi') return null;
+/** Where an event leaves its ladder, or null when it doesn't move one. */
+function ladderStep(e: ChronicleEvent): { ladder: LadderId; level: QiLevel } | null {
+  const ladder = e.data.ladder;
+  if (ladder !== 'qi' && ladder !== 'body' && ladder !== 'soul') return null;
+  const level = levelStep(e);
+  return level ? { ladder, level } : null;
+}
+
+function levelStep(e: ChronicleEvent): QiLevel | null {
   if (e.type === 'breakthrough') {
     return { realm: e.data.realm as RealmId, stage: Number(e.data.stage) };
   }
   if (e.type === 'major') return { realm: e.data.realm as RealmId, stage: 1 };
   return null;
+}
+
+/** Whether one level stands above another. */
+function above(a: QiLevel, b: QiLevel): boolean {
+  const d = realmIndex(a.realm) - realmIndex(b.realm);
+  return d > 0 || (d === 0 && a.stage > b.stage);
 }
 
 /** The age a life reaches in a world year, counted at the year's turn. */
@@ -134,25 +156,31 @@ export function yearsOf(life: Life): YearRow[] {
   const first = worldYear(life.startDay);
   const last = Math.max(first, worldYear(life.endDay));
   const rows: YearRow[] = [];
+  const ladders: Record<LadderId, QiLevel> = { qi: START, body: START, soul: START };
   let qi = START;
   let k = 0;
   for (let year = first; year <= last; year++) {
     const seasons: ChronicleEvent[][] = [[], [], [], []];
+    const start = { ...ladders };
     let rise = false;
     let newRealm = false;
     let died = false;
     while (k < life.events.length && worldYear(life.events[k]!.day) <= year) {
       const e = life.events[k++]!;
       seasons[seasonIndex(e.day)]!.push(e);
-      const step = qiStep(e);
+      const step = ladderStep(e);
       if (step) {
-        qi = step;
-        rise = true;
-        if (e.type === 'major') newRealm = true;
+        ladders[step.ladder] = step.level;
+        const top = topLadder(ladders);
+        if (top === step.ladder && above(ladders[top], qi)) {
+          if (realmIndex(ladders[top].realm) > realmIndex(qi.realm)) newRealm = true;
+          qi = ladders[top];
+          rise = true;
+        }
       }
       if (e.type === 'death') died = true;
     }
-    rows.push({ year, age: ageIn(life.bornDay, year), seasons, qi, rise, newRealm, died });
+    rows.push({ year, age: ageIn(life.bornDay, year), seasons, qi, start, rise, newRealm, died });
   }
   return rows;
 }
@@ -352,8 +380,8 @@ function almanacYear(r: YearRow, off: KindsOff, inStretch: boolean): AlmanacRow 
     return {
       season,
       kinds: shown.map((e) => eventKind(e.type, e.data)),
-      rise: es.some((e) => qiStep(e) !== null),
-      newRealm: es.some((e) => e.type === 'major' && e.data.ladder === 'qi'),
+      rise: es.some((e) => ladderStep(e) !== null),
+      newRealm: es.some((e) => e.type === 'major'),
     };
   });
   const quiet = cells.every((c) => c.kinds.length === 0);
@@ -379,13 +407,16 @@ export function lastSeason(r: YearRow, off: KindsOff): number {
   return 3;
 }
 
-/** Where the qi stood after a season of a year. */
-export function qiAfterSeason(r: YearRow, season: number, before: QiLevel): QiLevel {
-  let qi = before;
+/** Where your realm stood after a season of a year: your highest ladder's level. */
+export function qiAfterSeason(r: YearRow, season: number): QiLevel {
+  const ladders = { ...r.start };
   for (let s = 0; s <= season; s++) {
-    for (const e of r.seasons[s]!) qi = qiStep(e) ?? qi;
+    for (const e of r.seasons[s]!) {
+      const step = ladderStep(e);
+      if (step) ladders[step.ladder] = step.level;
+    }
   }
-  return qi;
+  return ladders[topLadder(ladders)];
 }
 
 /** Where the qi stood when a year opened: the year before's end, or the start. */

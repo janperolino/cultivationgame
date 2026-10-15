@@ -266,19 +266,35 @@ describe('major breakthroughs', () => {
     expect(win.state.rewindCharges).toBe(1);
   });
 
-  it('let body run at most one realm ahead of qi, with no gate item', () => {
+  it("need the path's gate to raise your realm, and none to catch up below it", () => {
     const c = { ...player(), insight: { current: 0, earned: 1e6 } };
-    const bodyFE = filled(
-      at(c, 'body', { realm: 'foundation-establishment', stage: 4 }),
-      'body',
-      1,
-    );
-    expect(majorCheck(bodyFE, 'body')).toMatchObject({ cap: false, ready: false });
+    // Body leading at the peak of Qi Condensation: its major raises your realm.
     const bodyQC = filled(at(c, 'body', { stage: 9 }), 'body', 1);
     expect(majorCheck(bodyQC, 'body')).toMatchObject({
+      raises: true,
+      gateItem: 'marrow-washing-pill',
+      gate: false,
+      ready: false,
+    });
+    const pilled = addItem(bodyQC, 'marrow-washing-pill', 1);
+    expect(majorCheck(pilled, 'body')).toMatchObject({ gate: true, ready: true });
+    // The body a realm ahead runs on into Core with no cap: its gate is all it needs.
+    const bodyFE = addItem(
+      filled(at(c, 'body', { realm: 'foundation-establishment', stage: 4 }), 'body', 1),
+      'core-forming-pill',
+      1,
+    );
+    expect(majorCheck(bodyFE, 'body')).toMatchObject({ raises: true, ready: true });
+    // Qi catching up below a Foundation body: no Foundation Pill.
+    const catching = filled(
+      at(at(c, 'body', { realm: 'foundation-establishment', stage: 1 }), 'qi', { stage: 9 }),
+      'qi',
+      1,
+    );
+    expect(majorCheck(catching, 'qi')).toMatchObject({
+      raises: false,
       gateItem: null,
       gate: true,
-      cap: true,
       ready: true,
     });
   });
@@ -578,14 +594,18 @@ describe('the requirements checklist', () => {
     expect(ids(readyForFoundation())).toEqual(['bar:true', 'insight:true', 'gate:true']);
   });
 
-  it('lists the realm cap, not a gate, on body and soul', () => {
+  it("lists the path's gate on body and soul when they lead, and none catching up", () => {
     const c = { ...player(), insight: { current: 0, earned: 1e6 } };
     const ids = (x: Cultivator, which: LadderId) =>
       majorRequirements(majorCheck(x, which)!).map((r) => `${r.id}:${r.met}`);
     const soul = filled(at(c, 'soul', { stage: 9 }), 'soul', 1);
-    expect(ids(soul, 'soul')).toEqual(['bar:true', 'insight:true', 'cap:true']);
-    const ahead = filled(at(c, 'body', { realm: 'foundation-establishment', stage: 4 }), 'body', 1);
-    expect(ids(ahead, 'body')).toEqual(['bar:true', 'insight:true', 'cap:false']);
+    expect(ids(soul, 'soul')).toEqual(['bar:true', 'insight:true', 'gate:false']);
+    const ahead = filled(
+      at(at(c, 'qi', { realm: 'foundation-establishment', stage: 1 }), 'body', { stage: 9 }),
+      'body',
+      1,
+    );
+    expect(ids(ahead, 'body')).toEqual(['bar:true', 'insight:true']);
     // Every line met is exactly when the attempt is ready, offerings aside.
     for (const x of [soul, ahead]) {
       for (const which of ['body', 'soul'] as const) {

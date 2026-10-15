@@ -15,9 +15,21 @@ import type { WeaponKind } from './combat.ts';
 export const PEDIGREE_IDS = ['rogue', 'small-sect', 'great-sect', 'sacred-land', 'chosen'] as const;
 export type PedigreeId = (typeof PEDIGREE_IDS)[number];
 
+/**
+ * What a cultivator cultivates (design § Cultivation, Three paths): one ladder, its path art and
+ * its guard art, the others left at the floor; or all three, balanced, the strongest and slowest.
+ */
+export const NPC_PATHS = ['qi', 'body', 'soul', 'balanced'] as const;
+export type NpcPath = (typeof NPC_PATHS)[number];
+
 export interface Pedigree {
   id: PedigreeId;
   name: string;
+  /**
+   * The path they walk unless their template says otherwise (P3.2): rogues and small sects learn
+   * what they can get, qi; the great sects and above teach all three.
+   */
+  path: NpcPath;
   /**
    * The bias on the shared roll (content/rarity.ts): each rarity's weight is multiplied by b to
    * the power of its step from gray, as loot and shops are.
@@ -41,6 +53,7 @@ export const PEDIGREES: readonly Pedigree[] = [
   {
     id: 'rogue',
     name: 'Rogue',
+    path: 'qi',
     bias: 0.5,
     typical: 'white',
     mastery: 1,
@@ -51,6 +64,7 @@ export const PEDIGREES: readonly Pedigree[] = [
   {
     id: 'small-sect',
     name: 'Small sect',
+    path: 'qi',
     bias: 1,
     typical: 'green',
     mastery: 2,
@@ -61,6 +75,7 @@ export const PEDIGREES: readonly Pedigree[] = [
   {
     id: 'great-sect',
     name: 'Great sect',
+    path: 'balanced',
     bias: 1.6,
     typical: 'blue',
     mastery: 2,
@@ -71,6 +86,7 @@ export const PEDIGREES: readonly Pedigree[] = [
   {
     id: 'sacred-land',
     name: 'Sacred land',
+    path: 'balanced',
     bias: 2.5,
     typical: 'purple',
     mastery: 3,
@@ -81,6 +97,7 @@ export const PEDIGREES: readonly Pedigree[] = [
   {
     id: 'chosen',
     name: 'Chosen of heaven',
+    path: 'balanced',
     bias: 4,
     typical: 'gold',
     mastery: 3,
@@ -218,6 +235,8 @@ export interface Kit {
   mastery: number;
   grade: 'flawed' | 'ordinary' | 'superior' | 'perfect' | 'heavenly';
   bodyAhead: boolean;
+  /** The path the kit walks; the ledger's four rows are balanced, the sim's path rows pure. */
+  path?: NpcPath;
 }
 
 export const KITS: readonly Kit[] = [
@@ -274,7 +293,7 @@ export const KITS: readonly Kit[] = [
 // ---------------------------------------------------------------- generated arts and kit
 
 /**
- * The arts a generated cultivator knows until P3.3's generator writes real ones: a path art on
+ * The arts a generated cultivator knows until P3.5's generator writes real ones: a path art on
  * their weapon's Dao, and from small sect up a lighter second art, in their element when they hold
  * one. Power and cost are tier 1's; the tier scales both.
  */
@@ -293,6 +312,11 @@ export const PATH_ART: ArtShape = {
   power: 40,
   qiCost: 10,
 };
+/**
+ * A soul art strikes the soul, past the qi shield and the armor, so it hits at this share of an
+ * art's power (P3.2): what the fight sim's path rows hold.
+ */
+export const SOUL_ART_POWER = 0.33;
 export const SECOND_ART: ArtShape = {
   key: 'second',
   name: 'second art',

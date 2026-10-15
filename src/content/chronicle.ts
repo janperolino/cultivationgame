@@ -8,6 +8,7 @@ import { GRADES, type GradeId, type LadderId } from './cultivation.ts';
 import { BRANCHES, HOUR_KINDS, HOUR_OPENINGS, SLEEP_FREED_TEXT, type HourKind } from './hours.ts';
 import { copyTitle } from './copies.ts';
 import { COMBAT_DAOS, type CombatDaoId } from './daos.ts';
+import { item } from './items.ts';
 import { INTENT_HANZI, INTENT_STAGES } from './intent.ts';
 import { hasManual, manual } from './manuals.ts';
 import { MASTERY } from './mastery.ts';
@@ -148,9 +149,14 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   },
   gate: (d) => {
     const r = realm(s(d.realm) as RealmId);
+    // Older lines carry no ladder: they were the qi's.
+    const which = (d.ladder ?? 'qi') as LadderId;
+    const press =
+      which === 'qi' ? 'Qi presses' : which === 'body' ? 'The body strains' : 'The soul presses';
+    const pill = r.gates[which];
     return d.gate
-      ? `Qi presses against the gate of ${r.name}. The breakthrough waits on you.`
-      : `Qi presses against the gate of ${r.name}, but you hold no ${r.gate.replace(/^an? /, '')}.`;
+      ? `${press} against the gate of ${r.name}. The breakthrough waits on you.`
+      : `${press} against the gate of ${r.name}, but you hold no ${pill ? item(pill).name : r.gate.replace(/^an? /, '')}.`;
   },
   screen: (d) => SCREEN_TEXT[s(d.screen)] ?? `The ${s(d.screen)} open.`,
   mastery: (d) =>

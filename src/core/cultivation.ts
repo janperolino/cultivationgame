@@ -52,6 +52,7 @@ import {
   type HourKind,
 } from '../content/hours.ts';
 import { METHOD_MASTERY, TECHNIQUE_MASTERY } from '../content/mastery.ts';
+import { item } from '../content/items.ts';
 import { method } from '../content/methods.ts';
 import { rarity } from '../content/rarity.ts';
 import {
@@ -83,7 +84,7 @@ import {
 } from './methods.ts';
 import { offerings, type Offerings } from './offerings.ts';
 import type { Rng } from './rng.ts';
-import { addItem, hasFlag, itemCount, type Cultivator, type Ladder } from './state.ts';
+import { addItem, hasFlag, itemCount, realmOf, type Cultivator, type Ladder } from './state.ts';
 import { aptitude, aptitudeMultiplier, stats } from './stats.ts';
 import { addPractice, practiceShares, practicingNow } from './techniques.ts';
 import { addToxicity, decayToxicity } from './toxicity.ts';
@@ -238,7 +239,7 @@ interface DayBase {
 function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[], seat: Seat): DayBase {
   const m = stats(c);
   const apt = aptitudeMultiplier(c);
-  const insight = realm(c.qi.realm).insightRate * apt * (1 + m.insightGain);
+  const insight = realm(realmOf(c)).insightRate * apt * (1 + m.insightGain);
   const fed = (which: LadderId) => (unfed.includes(which) ? 0 : 1);
   // A ladder gains only with a method on it; until then it grows from the world alone. Body and
   // soul ignore the root, so their speed is the method part alone.
@@ -495,13 +496,13 @@ export interface MajorCheck {
   /** Each requirement, true when met. */
   bar: boolean;
   insight: boolean;
-  /** The gate pill a qi major lays, or null: body and soul majors need none. */
+  /** Whether this major takes your realm into a new realm: then it needs its path's gate. */
+  raises: boolean;
+  /** The gate pill this major lays, or null: a ladder catching up below your realm needs none. */
   gateItem: string | null;
   gate: boolean;
   /** What the items laid on the attempt do, the gate pill among them. */
   offerings: Offerings;
-  /** Body and soul can run at most one major realm ahead of qi. */
-  cap: boolean;
   ready: boolean;
   /**
    * The margin you bring, 0 to 4, with what the active method's rarity adds (+0.25 at gold, +0.5
@@ -522,20 +523,19 @@ export interface MajorCheck {
 
 /** One line of a major breakthrough's checklist. */
 export interface Requirement {
-  id: 'bar' | 'insight' | 'gate' | 'cap';
+  id: 'bar' | 'insight' | 'gate';
   met: boolean;
 }
 
 /**
- * The checklist a major breakthrough shows (P2.4): a full bar, the insight ever earned, the gate
- * pill on a qi major, and for body and soul at most one realm ahead of qi.
+ * The checklist a major breakthrough shows (P2.4): a full bar, the insight ever earned, and the
+ * path's gate pill on a major that raises your realm (P3.2).
  */
 export function majorRequirements(check: MajorCheck): Requirement[] {
   return [
     { id: 'bar', met: check.bar },
     { id: 'insight', met: check.insight },
     ...(check.gateItem ? [{ id: 'gate' as const, met: check.gate }] : []),
-    ...(check.ladder !== 'qi' ? [{ id: 'cap' as const, met: check.cap }] : []),
   ];
 }
 
@@ -609,12 +609,13 @@ export function majorCheck(
   if (step.kind !== 'major') return null;
   const target = realm(step.realm);
   const fill = barFill(l);
-  // Qi majors need their gate pill; body and soul climb on tempering and nourishment alone.
-  const gateItem = which === 'qi' ? target.gateItem : null;
+  // The major that raises your realm needs its path's gate; a ladder catching up below your realm
+  // climbs on its fuel alone, so leading costs a gate and catching up stays cheap.
+  const raises = realmIndex(target.id) > realmIndex(realmOf(c));
+  const gateItem: string | null = raises ? target.gates[which] : null;
   const gate = !gateItem || itemCount(c, gateItem) > 0;
   const laid = offerings(c, which, chosen, gate ? gateItem : null);
   const insight = c.insight.earned >= target.insightThreshold;
-  const cap = which === 'qi' || realmIndex(target.id) <= realmIndex(c.qi.realm) + 1;
   const bar = fill >= 1;
   const standing = standingMargin(c, which, target);
   const brought = standing.reduce((sum, p) => sum + p.value, 0);
@@ -653,11 +654,11 @@ export function majorCheck(
     fill,
     bar,
     insight,
+    raises,
     gateItem,
     gate,
     offerings: laid,
-    cap,
-    ready: bar && insight && gate && cap && laid.valid,
+    ready: bar && insight && gate && laid.valid,
     score,
     methodMargin: bonus.margin,
     parts,
@@ -794,7 +795,7 @@ export function attemptBreakthrough(
 
   const last = opts.lastChance === true;
   const check = majorCheck(c, which, last ? [] : (opts.offerings ?? []))!;
-  const allowed = last ? check.insight && check.gate && check.cap && which === 'qi' : check.ready;
+  const allowed = last ? check.raises && check.insight && check.gate : check.ready;
   if (!allowed) return none;
   const odds = last ? lastChanceOdds(c, check) : sceneOdds(check.odds, opts.scene ?? 0);
   const roll = rng.next();
@@ -851,35 +852,62 @@ export function attemptBreakthrough(
 
 function lastChanceOdds(c: Cultivator, check: MajorCheck): number {
   const base =
-    check.target.majorOdds + stats(c).majorOdds + breakthroughBonus(c, 'qi').odds + check.gradeOdds;
+    check.target.majorOdds +
+    stats(c).majorOdds +
+    breakthroughBonus(c, check.ladder).odds +
+    check.gradeOdds;
   return Math.max(0, base) * Math.min(1, check.fill) * LAST_CHANCE_ODDS;
 }
 
 export interface LastChance {
   /** True when a last breakthrough can be tried: peak of the realm, the gate item, the insight. */
   possible: boolean;
+  /** The ladder it is tried on: one whose major would raise your realm, the best odds first. */
+  ladder: LadderId;
   odds: number;
   /** Why not, when it isn't possible. */
   reason?: string;
 }
 
-/** What the lifespan edge offers: a major breakthrough below a full bar, at worse odds. */
+/**
+ * What the lifespan edge offers: a major breakthrough below a full bar, at worse odds, on any
+ * ladder whose major would raise your realm, laying that path's gate (P3.2).
+ */
 export function lastChance(c: Cultivator): LastChance {
-  const check = majorCheck(c, 'qi');
-  if (!check)
-    return { possible: false, odds: 0, reason: 'Your qi is not at the peak of its realm.' };
-  if (!check.gate) {
+  const checks = LADDERS.map((which) => majorCheck(c, which)).filter(
+    (m): m is MajorCheck => m !== null && m.raises,
+  );
+  const first = checks[0];
+  if (!first) {
     return {
       possible: false,
+      ladder: 'qi',
       odds: 0,
-      reason: `You hold no ${check.target.gate.replace(/^an? /, '')}.`,
+      reason: 'No ladder stands at the peak of your realm.',
     };
   }
-  if (!check.insight) {
-    return { possible: false, odds: 0, reason: 'Your insight falls short of the threshold.' };
+  let best: LastChance | null = null;
+  for (const check of checks) {
+    if (!check.gate || !check.insight) continue;
+    // A full bar makes it an ordinary attempt, at its ordinary odds.
+    const odds = check.bar ? check.odds : lastChanceOdds(c, check);
+    if (!best || odds > best.odds) best = { possible: true, ladder: check.ladder, odds };
   }
-  // A full bar makes it an ordinary attempt, at its ordinary odds.
-  return { possible: true, odds: check.bar ? check.odds : lastChanceOdds(c, check) };
+  if (best) return best;
+  if (!first.gate && first.gateItem) {
+    return {
+      possible: false,
+      ladder: first.ladder,
+      odds: 0,
+      reason: `You hold no ${item(first.gateItem).name}.`,
+    };
+  }
+  return {
+    possible: false,
+    ladder: first.ladder,
+    odds: 0,
+    reason: 'Your insight falls short of the threshold.',
+  };
 }
 
 // ---------------------------------------------------------------- the day step
@@ -918,10 +946,14 @@ export function checkUnlocks(
   const opened = openHours(c, firsts);
   let next = opened.cultivator;
   const notes = [...opened.notes];
-  const major = majorCheck(next, 'qi');
-  if (major?.bar && major.insight && !hasFlag(next, `ready-${major.target.id}`)) {
+  // The first ladder to stand ready at the gate of a new realm marks it, once.
+  for (const which of LADDERS) {
+    const major = majorCheck(next, which);
+    if (!major?.raises || !major.bar || !major.insight) continue;
+    if (hasFlag(next, `ready-${major.target.id}`)) break;
     next = { ...next, flags: [...next.flags, `ready-${major.target.id}`] };
-    notes.push({ type: 'gate', data: { realm: major.target.id, gate: major.gate } });
+    notes.push({ type: 'gate', data: { realm: major.target.id, gate: major.gate, ladder: which } });
+    break;
   }
   return { cultivator: next, notes };
 }

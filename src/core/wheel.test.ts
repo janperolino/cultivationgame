@@ -1,3 +1,4 @@
+import { BODY_PER_DAY } from '../content/cultivation.ts';
 import { describe, expect, it } from 'vitest';
 import { eventText } from './chronicle.ts';
 import { stepSize } from '../content/realms.ts';
@@ -133,8 +134,8 @@ describe('element hours', () => {
     let c = mastered(openHours(learnMethod(player(), FIRST_ARTS.body)).cultivator);
     c = at(withHours(c, { [h('辰')]: 'body', [h('申')]: 'body' }), 'body', { stage: 4 });
     // The Stone-Bearing art is earth: 辰 matches, 申 is metal.
-    expect(hourYields(c, DAY)[h('辰')]!.body).toBeCloseTo((1.6 * 1.25) / 12);
-    expect(hourYields(c, DAY)[h('申')]!.body).toBeCloseTo(1.6 / 12);
+    expect(hourYields(c, DAY)[h('辰')]!.body).toBeCloseTo((BODY_PER_DAY * 1.25) / 12);
+    expect(hourYields(c, DAY)[h('申')]!.body).toBeCloseTo(BODY_PER_DAY / 12);
   });
 });
 
@@ -149,7 +150,7 @@ describe('dawn', () => {
       [h('卯')]: 'body',
     });
     expect(hourYields(body, DAY)[h('卯')]!.dawn).toBe(0);
-    expect(hourYields(body, DAY)[h('卯')]!.body).toBeCloseTo(1.6 / 12);
+    expect(hourYields(body, DAY)[h('卯')]!.body).toBeCloseTo(BODY_PER_DAY / 12);
   });
 });
 
