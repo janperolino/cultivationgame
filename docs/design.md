@@ -944,6 +944,17 @@ Formation puzzles show the engine-and-GLM split well. The engine hides which nod
 
 **Romance and dao companions** are in, and the engine tracks every NPC you meet: affinity, history, promises and grudges. A dao companion is a bond with mechanics: paired cultivation methods, shared danger, and grief if they fall.
 
+**NPC basics** (D3, 2026-10-14).
+
+- **Motives are data:** one to three of greed, ambition, fear, loyalty to a power, family, revenge, duty or faith, pride and curiosity. They weight the memories in a person's opinion, pick what the person does each tick, and give a scene its intents ("Elder Mo means to take the herb").
+- **What an NPC knows** comes from their home, their trade and their power: the places round their home and along their trade, the people they have met, their power's affairs if they belong to it, and what they saw. Asked, they tell it as their opinion of you allows; a wary one holds back or lies.
+- **Ties** (Jan's call: relationships have to be a thing). What someone is to you, apart from how they feel about you: kin, master and disciple, senior and junior, sworn siblings, friend, rival, enemy, lover and dao companion, follower, debtor. A tie is made by a deed (swearing brotherhood at trusting, taking a disciple, a grudge that never fades), and it acts: kin and sworn siblings avenge you, a master teaches, a rival comes back stronger, an enemy hunts you. Kept people hold ties to each other too, family, sect-mates, rivals and lovers, so a deed ripples: kill a man and his brother remembers it as "killed someone I love". The People screen's web draws them. Romance and dao companions, with paired cultivation, arrive with M5.
+- **Bonds** are why a follower follows: pay, loyalty, fear or a shared goal, and your orders are verbs they carry out. The paid leave when the pay stops, the loyal when their opinion falls below friendly, and the afraid run or turn on you when you look weak or they are out of your reach.
+- **The lucky rogue.** One rogue in 50 has found something: one slot (a method, an art, a weapon or armor) rolled at the chosen's bias and at least gold, every other slot a rogue's. The generator names the find ("an inheritance in a collapsed cave") as a hook for the narrator, and a kept or named person pins it.
+- **Origin people are roles.** A senior at the Gate, an aunt on the terraces: the world fills each role with whoever holds it that year, today's named people are only the first life's defaults, and a start's text and cards read the role, never the name.
+- **Years between lives.** The next life is born on the day the last one dies and starts at 12, so the world has moved on twelve years and no childhood overlaps the life before.
+- **A thin membership** in M3: you belong to a power, its token opens its gate, membership is a standing memory (+10 while you belong), and it gives you its region map. Ranks and contribution stay M5's.
+
 Intimate scenes fade to black by default. A mature setting is opt-in, sits behind an age check, and only works with hosts whose rules allow it.
 
 Three moments carry the genre and get special treatment:
@@ -1411,7 +1422,7 @@ Settle each before the milestone that needs it. World content is drafted and che
 - [x] Enemies (D2, § Enemies, beasts and the people you meet): beast and cultivator templates, behavior profiles, loot; pedigree tables and each realm's ordinary baseline, tuned to the fighting-up ledger
 - [x] Combat outcome tags for effects and sound (D2, § Combat, Effects fill the wait): form, element or damage type, realm and result on every outcome
 - [ ] Exploration: travel, trips, look around, the fog and the open, gated, hostile and deadly rule are settled under The world; left for D3: the encounter tables per region in the six kinds, scene building from the card format, ruins and inheritances, fleeing, dying in the world, and ways to flee, hide or talk past foes a realm or more above you
-- [ ] NPC basics: the person record and its log are settled under Professions, people and powers; left for D3: what each NPC knows, how talk changes relationships, the intents and motives scenes draw on
+- [x] NPC basics (D3, § Professions, people and powers, NPC basics; opinion and standing under The resolver, What lasts): motives, what each NPC knows, ties, bonds, the lucky rogue, origin people as roles, years between lives
 - [ ] Story decks: the seclusion deck in M1, then a deck per milestone; what each card trades and how often it comes
 - [x] Procedural methods and items (D2, § Generated methods, techniques, manuals and items): a method is already a bundle of independent fields, so white-to-blue methods and items can be generated from tables and named once, as manuals are; gold and red written by hand. Loot and shops hand them out on the shared table
 - [ ] NPC pace (D2): NPCs progress at the away rate, so an attended player outpaces a same-pedigree NPC by about double; the pedigree tables are tuned against the away row, and that gap is the player's edge for playing
