@@ -94,6 +94,15 @@ You play a human in v1; a bloodline can come with a talent roll.
 
 Stones are also fuel: you can absorb them for qi or burn them to power arrays, so wealth and power are the same thing. Mortals trade in silver and gold, and one low-grade stone is a small fortune to them.
 
+**Stones, silver and shops in play** (D3, 2026-10-14; Jan's calls).
+
+- **Each grade is held as its own count** and shown as such ("3 mid · 240 low"), a price reading in the largest grade that reads cleanly ("2.4 mid"). Cultivate burns the grade your realm uses.
+- **Going up a grade always costs** (Jan's call): a higher stone is purer and does more for a higher cultivator, so 1,200 of a grade buy one of the next, and a price in a higher grade paid in a lower one costs the same premium. Breaking one down at a money changer gives 1,000 of the grade below less the changer's 10%.
+- **Silver is the mortal purse.** A low-grade stone is worth 100 taels; inns, ferries, food and mortal shops deal in silver and can't make change for a stone, so a town's money changer breaks one for 10%.
+- **Shops** follow the loot and shop rules (Items and gear): stock refreshes monthly; they buy from you at 40% of their own price, 60% once you are friendly with the keeper or favored by their power; haggling is a people check, 20% on a clear pass and 10% on a close one; a stolen thing sold to its owner's own power is recognized, which is evidence and heat; and a place's money is finite, so a village can't buy a sack of cores.
+- **Loot sells** at posted rates: cores and beast parts to the bounty office, apothecaries and refiners, and bounties pay on proof.
+- **Your stall:** you set the prices, a customer buys at or under what their wants say a thing is worth, regulars become people the world keeps, and the stall's hours on your wheel go on selling while you are idle.
+
 ## Scale of destruction
 
 The gap between realms widens as you climb, as in the novels: about ninefold from Qi Condensation to Foundation, thirtyfold to Core Formation, and a hundredfold from Nascent Soul up. The world is built around that gap. It is one number per realm, the realm curve, kept in the realms data, and everything that grows with realm follows it: power, the qi each realm needs, income, prices, and the power of items, talismans and arrays. This is a first draft to edit; GLM's world bible and the engine both read from it. Combat has its own, steeper sizes per realm (Combat, Realms are sizes), since fights should feel the full gap of the novels while the economy stays tradeable.
