@@ -11,6 +11,7 @@ import type { Nature } from '../../content/personality.ts';
 import type { StatId } from '../../content/stats.ts';
 import { generateCultivator, type Npc } from '../combat/generate.ts';
 import { fromCultivator, topRung, type Combatant } from '../combat/combatant.ts';
+import { kitOf } from '../loot.ts';
 import { rungSize, type Rung } from '../combat/sheet.ts';
 import { Rng } from '../rng.ts';
 import { stats } from '../stats.ts';
@@ -68,6 +69,8 @@ export interface Actor {
   state: ActorState;
   /** How a fight takes them; built when absent. */
   combatant?: Combatant;
+  /** A generated NPC's template and seed, from which their kit regenerates if the world keeps them. */
+  npc?: { template: string; seed: number; realm: RealmId; stage: number };
 }
 
 /** The player's side. */
@@ -172,6 +175,7 @@ export function actorFromNpc(n: Npc, extra: Partial<Actor> = {}): Actor {
       }
     : undefined;
   const c = n.combatant;
+  const kit = kitOf(n);
   const techniques: Record<string, number> = {};
   for (const t of Object.keys(c.techniques)) techniques[t] = n.rolls.mastery;
   const statsHeld: Actor['stats'] = {};
@@ -184,8 +188,10 @@ export function actorFromNpc(n: Npc, extra: Partial<Actor> = {}): Actor {
     agility: c.agility,
     stats: statsHeld,
     techniques,
-    items: Object.fromEntries(Object.entries(c.items).map(([k, v]) => [k, v.n])),
-    stones: 0,
+    // What they carry is their real kit (core/loot.ts): what falls with them, and what a thief takes.
+    items: { ...kit.items },
+    stones: kit.stones,
+    npc: { template: n.template, seed: n.seed, realm: n.realm, stage: n.stage },
     weapon: rarityRank(n.rolls.weapon) >= rarityRank('gold') ? 'gold' : 'plain',
     wound: 0,
     state: 'present',

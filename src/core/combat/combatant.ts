@@ -282,7 +282,18 @@ export function wornArmor(c: Cultivator): ArmorBar | null {
   const band = it ? gearBand(c, it) : null;
   if (!it || !band) return null;
   const size = band.band * realmSize(tierRealm(ownTier(c)).id);
-  return armorBar(size, it.uses.equip?.material ?? null);
+  const bar = armorBar(size, it.uses.equip?.material ?? null);
+  // Its wear carries from the last fight until a refiner mends it (P3.5).
+  const wear = c.wear[it.id] ?? 0;
+  return { ...bar, hp: Math.round(bar.max * (1 - wear)) };
+}
+
+/** The cultivator with the wear a fight left on their armor: the share of its bar it took. */
+export function wearFrom(c: Cultivator, fought: Pick<Combatant, 'armor'>): Cultivator {
+  const id = c.gear.armor;
+  if (!id || !fought.armor || fought.armor.max <= 0) return c;
+  const wear = Math.min(1, Math.max(0, 1 - fought.armor.hp / fought.armor.max));
+  return { ...c, wear: { ...c.wear, [id]: Math.round(wear * 1000) / 1000 } };
 }
 
 /**

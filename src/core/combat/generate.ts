@@ -51,7 +51,8 @@ import {
   type PedigreeId,
   type ProfileId,
 } from '../../content/enemies.ts';
-import type { Item } from '../../content/items.ts';
+import { baseOf, item, variantId, type Item } from '../../content/items.ts';
+import { consumableId } from '../../content/loot.ts';
 import { MASTERY_ACCURACY, MAX_MASTERY } from '../../content/mastery.ts';
 import { RARITIES, rarityMultiplier, rarityRank, type RarityId } from '../../content/rarity.ts';
 import {
@@ -398,22 +399,13 @@ function name(rng: Rng): string {
   return `${pickOne(rng, BORDER_WILDS_NAMES.surnames)} ${pickOne(rng, BORDER_WILDS_NAMES.given)}`;
 }
 
-/** A consumable of a shape, tier and rarity, as an item record. */
+/**
+ * A consumable of a shape, tier and rarity, as the written pill or talisman it is (P3.5,
+ * content/loot.ts) drawn at the NPC's tier, its rarity held inside the item's range.
+ */
 function consumable(key: string, tier: number, r: RarityId): Item {
-  const shape = CONSUMABLES.find((c) => c.key === key)!;
-  return {
-    id: `${key}-${tier}-${r}`,
-    name: shape.name,
-    pinyin: '',
-    hanzi: '',
-    tier,
-    rarity: r,
-    uses: shape.restore
-      ? { consume: { effects: [{ effect: 'restore', ...shape.restore }], dose: 10 } }
-      : { fight: shape.strike! },
-    source: 'generated',
-    text: '',
-  };
+  const id = consumableId(key, r);
+  return item(variantId(baseOf(id), item(id).rarity, { tier }));
 }
 
 export interface GenerateOptions {

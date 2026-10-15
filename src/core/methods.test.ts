@@ -133,7 +133,9 @@ describe('method content', () => {
       expect(m, id).toMatchObject({ ladder: 'qi', tier: 1, rarity: 'white', chapter: 1 });
       expect(m.upkeep).toBeNull();
       const next = nextChapter(m)!;
-      expect(next, id).toMatchObject({ ladder: 'qi', tier: 2, rarity: 'white', line: m.line });
+      // The Night Bridge's Foundation chapter is green, with the night it is named for (P3.5).
+      const rarity = id === 'night-bridge' ? 'green' : 'white';
+      expect(next, id).toMatchObject({ ladder: 'qi', tier: 2, rarity, line: m.line });
       expect(previousChapter(next)).toBe(m);
     }
   });

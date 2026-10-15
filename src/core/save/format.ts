@@ -33,7 +33,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 22;
+export const SAVE_VERSION = 23;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -756,6 +756,33 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       .map((t) => ({ follower: t.a, leader: you, kind: 'loyalty', since: day, seen: day }));
     const world = { ...w, bonds, karma: {}, fame: {}, heard: [], members: [] };
     return { ...old, version: 22, state: { ...s, world } };
+  },
+
+  // v22, P3.4b: stones were one count of low-grade, and armor came whole to every fight. v23 holds
+  // the higher grades as their own counts and silver as the mortal purse (both empty, every old
+  // stone counted low), keeps wear on armor (none yet), each shop's month, what was taken from whom
+  // and the storage rings that won't open yet (nothing yet), and renames the Mending Pill the Spring-Returning Pill its hanzi says.
+  22: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const rename = (r: unknown) => {
+      const items = { ...((r ?? {}) as Record<string, number>) };
+      if ('mending-pill' in items) {
+        items['spring-returning-pill'] =
+          (items['spring-returning-pill'] ?? 0) + items['mending-pill']!;
+        delete items['mending-pill'];
+      }
+      return items;
+    };
+    const player = {
+      ...p,
+      higherStones: { mid: 0, high: 0, top: 0 },
+      silver: 0,
+      wear: {},
+      items: rename(p.items),
+    };
+    const world = { ...((s.world ?? {}) as Raw), shops: {}, taken: {}, sealed: [] };
+    return { ...old, version: 23, state: { ...s, player, world } };
   },
 };
 

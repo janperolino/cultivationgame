@@ -7,6 +7,7 @@
 // people are to each other, made by deeds. Nothing here imports world.ts at run time, so the world
 // can import this.
 import { z } from 'zod';
+import { REALM_IDS } from '../../content/realms.ts';
 import {
   DEED_MEMORY,
   DEED_RIPPLE,
@@ -133,12 +134,26 @@ export const NatureSchema = z.object({
   voice: z.object({ register: z.enum(REGISTERS), habit: z.string(), topic: z.string() }),
 });
 
-/** Someone the world keeps who isn't a named person: their nature and where they belong. */
+/**
+ * Someone the world keeps who isn't a named person (design § Enemies, Who stays): a seed plus pins.
+ * The seed and template regenerate their kit and rolls on demand (core/kept.ts); the pins are what
+ * changed: their nature, where they belong, the realm they reached and what you took from them.
+ * Someone kept before P3.5 has no seed and keeps only the pins.
+ */
 export const KeptSchema = z.object({
   name: z.string(),
   nature: NatureSchema,
   power: z.string().nullable(),
   home: z.string().nullable(),
+  /** The roster template and the seed their kit rolls from. */
+  template: z.string().optional(),
+  seed: z.number().int().optional(),
+  /** Their realm as generated or as it changed since. */
+  realm: z.object({ realm: z.enum(REALM_IDS), stage: z.number().int().min(1) }).optional(),
+  /** What they no longer carry: item ids and counts you took. */
+  took: z.record(z.string(), z.number().int().min(0)).optional(),
+  /** Stones you took. */
+  tookStones: z.number().min(0).optional(),
 });
 export type Kept = z.infer<typeof KeptSchema>;
 

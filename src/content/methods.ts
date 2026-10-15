@@ -10,6 +10,7 @@ import type { Element } from './elements.ts';
 import type { RarityId } from './rarity.ts';
 import type { RootKind } from './roots.ts';
 import type { Effect, StatId } from './stats.ts';
+import { CATALOG_METHODS } from './catalogs/index.ts';
 
 export type Fit = 'full' | 'partial' | 'poor';
 
@@ -91,7 +92,7 @@ const common = { fit: 'full', fitBy: { mutated: 'poor' } } as const;
 /** No requirements, no upkeep and no properties: a plain white method. */
 const plain = { rarity: 'white', requirements: {}, upkeep: null, properties: [] } as const;
 
-export const METHODS: readonly Method[] = [
+const WRITTEN: readonly Method[] = [
   // The origins' qi methods (design § Character creation), each with the Foundation chapter the
   // origin's layer 9 card hands over with the pill (P1.7).
   {
@@ -235,6 +236,15 @@ export const METHODS: readonly Method[] = [
     circulation: 'night-bridge',
     ...plain,
     ...common,
+    // Green, with the night the design names it for (Jan's call in P3.5's talk).
+    rarity: 'green',
+    properties: [
+      {
+        name: 'Low Tide at Midnight',
+        text: 'The reef comes up out of the sea at night, and so does the qi.',
+        effects: [{ stat: 'nightQi', value: 0.25 }],
+      },
+    ],
   },
   {
     id: 'bounty-scrap',
@@ -529,6 +539,9 @@ export const METHODS: readonly Method[] = [
     ],
   },
 ];
+
+/** The written list and every catalog's (content/catalogs/). */
+export const METHODS: readonly Method[] = [...WRITTEN, ...CATALOG_METHODS];
 
 const byId = new Map(METHODS.map((m) => [m.id, m]));
 

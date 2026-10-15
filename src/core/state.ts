@@ -129,8 +129,20 @@ export const CultivatorSchema = z.object({
     /** Insight ever earned; breakthrough thresholds count this, so spending never delays them. */
     earned: z.number().min(0),
   }),
-  /** Spirit stones, counted in low-grade stones (each grade is worth 1,000 of the one below). */
+  /**
+   * Low-grade spirit stones, the grade Qi Condensation and Foundation burn and pay with. Each grade
+   * is held as its own count (design § World bible, Stones, silver and shops in play): the higher
+   * grades are in `higherStones`, and core/purse.ts changes and pays across them.
+   */
   stones: z.number().min(0),
+  /** Mid-, high- and top-grade stones, each its own count. */
+  higherStones: z.object({
+    mid: z.number().int().min(0),
+    high: z.number().int().min(0),
+    top: z.number().int().min(0),
+  }),
+  /** Silver taels, the mortal purse: inns, ferries, food and mortal shops deal in it. */
+  silver: z.number().min(0),
   /** Item counts by id, carried in the Bag; what is worn sits in `gear` instead. */
   items: z.record(z.string(), z.number().int().min(0)),
   /**
@@ -144,6 +156,11 @@ export const CultivatorSchema = z.object({
     pouch: z.string().nullable(),
     treasures: z.array(z.string()),
   }),
+  /**
+   * Wear on armor, by item id, as the share of its bar fights took and nobody has repaired (design
+   * § Items and gear, armor): it carries from fight to fight until a refiner mends it.
+   */
+  wear: z.record(z.string(), z.number().min(0).max(1)),
   /** Bond practice with each artifact from blue up, by item id, on the mastery scale. */
   bonds: z.record(z.string(), z.number().min(0)),
   /** Pill toxicity, 0 to 100 (design § Items and gear): every pill's effect scales by 1 − this/100. */
@@ -388,8 +405,11 @@ export function newCultivator(
     soul: freshLadder(),
     insight: { current: 0, earned: 0 },
     stones: opts.stones ?? 0,
+    higherStones: { mid: 0, high: 0, top: 0 },
+    silver: 0,
     items: {},
     gear: emptyGear(),
+    wear: {},
     bonds: {},
     toxicity: 0,
     // Study is open from the start: one qi hour turns to it by the default rule.

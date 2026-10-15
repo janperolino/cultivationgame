@@ -18,6 +18,7 @@ import { loadSave } from './save/format.ts';
 import { newLife, withPlayer, type Cultivator } from './state.ts';
 import { stats } from './stats.ts';
 import { activeNodes, canLearn, learnNode, nodeSealed } from './trees.ts';
+import { CATALOG_MANUALS, CATALOG_TECHNIQUES } from '../content/catalogs/index.ts';
 
 const base = newLife({ name: 'Han Li', seed: 'manuals' });
 const rich = (c: Cultivator): Cultivator => ({ ...c, insight: { current: 1e5, earned: 1e5 } });
@@ -60,7 +61,12 @@ describe('manual content', () => {
   });
 
   it('ships three or four white formulas and a blue one, and nodes on every starting method', () => {
-    const loose = MANUALS.filter((m) => !m.method);
+    // The written list's own (P1.10); the catalogs' formulas and Arts are P3.5's.
+    const catalog = new Set([
+      ...CATALOG_MANUALS.map((m) => m.id),
+      ...CATALOG_TECHNIQUES.map((t) => `art-${t.id}`),
+    ]);
+    const loose = MANUALS.filter((m) => !m.method && !catalog.has(m.id));
     const white = loose.filter((m) => m.kind === 'formula' && m.rarity === 'white');
     expect(white.length).toBeGreaterThanOrEqual(3);
     expect(white.length).toBeLessThanOrEqual(4);

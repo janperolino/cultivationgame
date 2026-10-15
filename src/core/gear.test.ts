@@ -54,12 +54,13 @@ describe('the item record', () => {
     }
   });
 
-  it('grants properties by rarity: none at white, one at green or blue, two at purple, a unique at gold', () => {
+  it('writes properties for the best rarity a thing comes at: none at white, one at green or blue, two at purple, a unique at gold', () => {
     const count = { white: 0, green: 1, blue: 1, purple: 2 } as Record<string, number>;
     for (const it of ITEMS) {
       if (!it.uses.equip) continue;
       const n = it.properties?.length ?? 0;
-      if (it.rarity in count) expect(n, it.id).toBe(count[it.rarity]);
+      const top = it.upTo ?? it.rarity;
+      if (top in count) expect(n, it.id).toBe(count[top]);
       if (it.rarity === 'gold') expect(it.properties!.filter((p) => p.unique)).toHaveLength(1);
     }
   });
@@ -80,9 +81,9 @@ describe('wearing gear', () => {
   });
 
   it('refuses what isn’t held or isn’t worn, and a ring before its soul or realm', () => {
-    const c = holding(life().player, 'storage-ring', 'mending-pill');
+    const c = holding(life().player, 'storage-ring', 'spring-returning-pill');
     expect(canEquip(c, 'iron-sword', 0)).toMatchObject({ ok: false });
-    expect(canEquip(c, 'mending-pill', 0)).toMatchObject({ ok: false });
+    expect(canEquip(c, 'spring-returning-pill', 0)).toMatchObject({ ok: false });
     expect(canEquip(c, 'storage-ring', 0)).toMatchObject({ ok: false });
     expect(canEquip(FE(c), 'storage-ring', 0)).toEqual({ ok: true });
   });
@@ -178,12 +179,12 @@ describe('bonding', () => {
 describe('the Bag in squares', () => {
   it('stacks pills to 99 a square, counts bulk, and grows with a pouch', () => {
     let c = life().player;
-    c = addItem(c, 'mending-pill', 150);
+    c = addItem(c, 'spring-returning-pill', 150);
     c = addItem(c, 'ash-wood-spear', 1);
     c = addItem(c, 'storage-pouch', 1);
     expect(bagStacks(c).map((s) => [s.id, s.n, s.squares])).toEqual([
-      ['mending-pill', 99, 1],
-      ['mending-pill', 51, 1],
+      ['spring-returning-pill', 99, 1],
+      ['spring-returning-pill', 51, 1],
       ['ash-wood-spear', 1, 2],
       ['storage-pouch', 1, 1],
     ]);
@@ -230,12 +231,18 @@ describe('sparring', () => {
     let s = life();
     s = withPlayer(
       s,
-      wear(holding(addItem(s.player, 'mending-pill', 2), 'cold-moon-sword'), 'cold-moon-sword'),
+      wear(
+        holding(addItem(s.player, 'spring-returning-pill', 2), 'cold-moon-sword'),
+        'cold-moon-sword',
+      ),
     );
     const start = spar(s);
     s = start.state;
     let f = start.fight;
-    const r = playTurn(s, f, { actor: 'player', main: { type: 'item', id: 'mending-pill' } });
+    const r = playTurn(s, f, {
+      actor: 'player',
+      main: { type: 'item', id: 'spring-returning-pill' },
+    });
     expect(r.state.rng.combat).not.toBe(s.rng.combat);
     s = r.state;
     f = r.turn.fight;
@@ -246,7 +253,7 @@ describe('sparring', () => {
       f = t.turn.fight;
     }
     const end = endSpar(s, f, start.foe);
-    expect(end.player.items['mending-pill']).toBe(1);
+    expect(end.player.items['spring-returning-pill']).toBe(1);
     expect(end.player.toxicity).toBe(10);
     expect(end.player.bonds['cold-moon-sword']).toBeCloseTo(f.turn * 0.25);
     expect(end.chronicle.at(-1)!.type).toBe('spar');

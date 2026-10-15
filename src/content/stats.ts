@@ -40,6 +40,7 @@ export interface StatInfo {
 const BASE_STATS = {
   // Read by the cultivation rules now.
   qiGain: { name: 'Qi gain', unit: 'percent', what: 'qi from each day of qi seclusion' },
+  nightQi: { name: 'Night qi', unit: 'percent', what: 'qi in the night hours, from 亥 to 丑' },
   bodyGain: { name: 'Tempering', unit: 'percent', what: 'tempering from each day of body work' },
   soulGain: { name: 'Nourishment', unit: 'percent', what: 'nourishment from each soul day' },
   insightGain: { name: 'Insight', unit: 'percent', what: 'insight from study and seclusion' },

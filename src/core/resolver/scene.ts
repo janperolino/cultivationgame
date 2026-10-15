@@ -37,7 +37,7 @@ import {
   type Traffic,
 } from '../../content/resolver.ts';
 import { realmIndex } from '../../content/realms.ts';
-import { combatant, topRung } from '../combat/combatant.ts';
+import { combatant, topRung, wearFrom } from '../combat/combatant.ts';
 import { startFight } from '../combat/fight.ts';
 import { runFight } from '../combat/profile.ts';
 import { withStream, type GameState } from '../state.ts';
@@ -78,6 +78,8 @@ import {
   type Learner,
   type RealmStage,
 } from './world.ts';
+import { keepThreaded, noteTaken, npcFrom } from '../kept.ts';
+import { opensRing, ringOf, type Haul } from '../loot.ts';
 
 /** A thing in the scene that can be used, searched, broken or hidden behind. */
 export interface SceneFeature {
@@ -862,6 +864,12 @@ export function doStep(
                   { do: 'item', who: a.id, id: thing, n: took, how: 'gained' },
                 ],
           );
+          // What you take is pinned on them, and theirs becomes stolen goods (core/kept.ts).
+          if (youAre(a)) {
+            const items = thing === 'stones' ? {} : { [thing]: took };
+            const stones = thing === 'stones' ? took : 0;
+            w.s = { ...w.s, world: noteTaken(w.s.world, target, items, stones, w.scene.place) };
+          }
         }
         // A robbery is done to someone's face: they know who.
         if (st.act === 'rob') seenBy = [...new Set([...seenBy, ...watchers(w.scene, a)])];
@@ -888,7 +896,30 @@ export function doStep(
             { do: 'stones', who: a.id, n: target.stones },
           );
         }
+        // A storage ring opens on the spot to a realm at its tier; otherwise it stays sealed.
+        const ring = youAre(a) ? ringHaul(target) : null;
+        let opened: Record<string, number> = {};
+        if (ring && (target.items['storage-ring'] ?? 0) > 0) {
+          if (opensRing(w.s.player, 2)) {
+            opened = ring.items;
+            for (const [id, k] of Object.entries(ring.items)) {
+              effects.push({ do: 'item', who: a.id, id, n: k, how: 'gained' });
+            }
+            if (ring.stones > 0) effects.push({ do: 'stones', who: a.id, n: ring.stones });
+          } else {
+            const sealed = { from: target.id, name: target.name, tier: 2, ...ring };
+            w.s = { ...w.s, world: { ...w.s.world, sealed: [...w.s.world.sealed, sealed] } };
+          }
+        }
         apply(w, effects);
+        if (youAre(a)) {
+          const took = Object.fromEntries(Object.entries(target.items).filter(([, k]) => k > 0));
+          for (const [id, k] of Object.entries(opened)) took[id] = (took[id] ?? 0) + k;
+          w.s = {
+            ...w.s,
+            world: noteTaken(w.s.world, target, took, target.stones, w.scene.place),
+          };
+        }
       }
       break;
     case 'buy':
@@ -1226,6 +1257,8 @@ function runSceneFight(
   const r = withStream(w.s, 'combat', (rng) => runFight(startFight(combatants), rng));
   w.s = r.state;
   for (const c of r.value.fight.combatants) {
+    // The armor you wore keeps the wear the fight left (P3.5).
+    if (c.id === w.s.player.id) w.s = { ...w.s, player: wearFrom(w.s.player, c) };
     const state =
       c.state === 'down' ? 'down' : c.state === 'fled' || c.state === 'yielded' ? 'fled' : null;
     if (state) setActor(w, c.id, (x) => ({ ...x, state }));
@@ -1502,5 +1535,12 @@ export function runPlan(s: GameState, scene: Scene, plan: Plan): PlanRun {
  */
 export function leaveScene(s: GameState, scene: Scene): GameState {
   const day = s.calendar.day + scene.tick / TICKS_PER_DAY;
-  return { ...s, calendar: { day }, world: healWounds(s.world, day) };
+  // Whoever the scene left a thread to you is kept; everyone else is thrown away (core/kept.ts).
+  const world = keepThreaded(healWounds(s.world, day), scene, s.player.id, scene.place);
+  return { ...s, calendar: { day }, world };
+}
+
+/** A generated NPC's ring, as their seed fills it (core/loot.ts), or null for anyone else. */
+function ringHaul(x: Actor): Haul | null {
+  return x.npc ? ringOf(npcFrom(x.npc.template, x.npc.seed, x.npc.realm, x.npc.stage)) : null;
 }

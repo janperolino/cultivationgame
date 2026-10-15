@@ -350,7 +350,7 @@ describe('the playbook', () => {
       realm: QC(3),
       state: 'down',
       stones: 12,
-      items: { 'mending-pill': 1 },
+      items: { 'spring-returning-pill': 1 },
     });
     const sergeant = npc('sergeant', { realm: QC(8), side: 'wall', knows: [s.player.id] });
     let r = runPlan(
@@ -360,7 +360,7 @@ describe('the playbook', () => {
     );
     expect(r.stopped).toBeNull();
     expect(r.state.player.stones).toBe(s.player.stones + 12);
-    expect(r.state.player.items['mending-pill']).toBe(1);
+    expect(r.state.player.items['spring-returning-pill']).toBe(1);
     // A sergeant who knows your face comes by: perception against your stealth, and he knows you.
     r = runPlan(
       r.state,
@@ -518,7 +518,7 @@ describe('the playbook', () => {
     const customers = ['aunt', 'porter', 'scholar'].map((id) =>
       npc(id, { realm: QC(1), stones: 5 }),
     );
-    let sc = at('qm-shoukou-cheng', [you(s, { items: { 'mending-pill': 2 } })], {
+    let sc = at('qm-shoukou-cheng', [you(s, { items: { 'spring-returning-pill': 2 } })], {
       kind: 'city',
       open: true,
       traffic: 'busy',
@@ -531,7 +531,11 @@ describe('the playbook', () => {
     const r2 = runPlan(
       r1.state,
       r1.scene,
-      plan(s, step('ask', { target: who }), step('sell', { target: who, thing: 'mending-pill' })),
+      plan(
+        s,
+        step('ask', { target: who }),
+        step('sell', { target: who, thing: 'spring-returning-pill' }),
+      ),
     );
     expect(r2.results[0]!.check!.verdict).toBe('close');
     st = r2.state;

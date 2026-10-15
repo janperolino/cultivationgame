@@ -7,9 +7,10 @@
 import type { WeaponKind } from './combat.ts';
 import type { LadderId } from './cultivation.ts';
 import type { Element } from './elements.ts';
-import type { RarityId } from './rarity.ts';
+import { RARITY_IDS, rarity, rarityRank, type RarityId } from './rarity.ts';
 import type { Effect } from './stats.ts';
 import type { DamageType, Form } from './techniques.ts';
+import { CATALOG_ITEMS } from './catalogs/index.ts';
 
 /** What the Bag draws and stacks it as (design § Items and gear, the item record). */
 export const ITEM_KINDS = [
@@ -192,13 +193,29 @@ export interface Item {
   stack?: number;
   /** The glyph its square shows, when not the kind's or the weapon's. */
   glyph?: string;
+  /**
+   * Its properties in the order its rarity takes them: a green one the first, a purple one the
+   * first two (content/rarity.ts `properties`), a gold or red one its unique as well.
+   */
   properties?: readonly ItemProperty[];
+  /**
+   * The best it comes at, when its rarity is its quality (P3.5): a Black Iron Saber turns up white
+   * or green. `rarity` is then the worst it comes at, and each rarity between is a variant
+   * (`variantId`) taking as many of the properties as its rarity grants.
+   */
+  upTo?: RarityId;
+  /** Its price in low-grade stones at its own rarity, when not its kind's (content/money.ts). */
+  price?: number;
+  /** A mortal good's price in silver taels; a mortal shop sells only these. */
+  taels?: number;
+  /** Damaged when the killing blow fell on it: one rarity lower until a refiner mends it. */
+  damaged?: boolean;
   uses: ItemUses;
   source: string;
   text: string;
 }
 
-export const ITEMS: readonly Item[] = [
+const WRITTEN: readonly Item[] = [
   // ------------------------------------------------------------ gate pills and offerings
   {
     id: 'foundation-pill',
@@ -207,6 +224,7 @@ export const ITEMS: readonly Item[] = [
     hanzi: '筑基丹',
     tier: 1,
     rarity: 'white',
+    price: 1000,
     kind: 'pill',
     uses: { offer: { tags: [] } },
     source: 'sect treasuries and the black market',
@@ -221,6 +239,7 @@ export const ITEMS: readonly Item[] = [
     hanzi: '洗髓丹',
     tier: 1,
     rarity: 'white',
+    price: 1000,
     kind: 'pill',
     uses: { offer: { tags: [] } },
     source: 'body-refiner clans, beast hunters and the black market',
@@ -233,6 +252,7 @@ export const ITEMS: readonly Item[] = [
     hanzi: '凝魂丹',
     tier: 1,
     rarity: 'white',
+    price: 1000,
     kind: 'pill',
     uses: { offer: { tags: [] } },
     source: 'shrine keepers and the few sects that teach the soul',
@@ -245,10 +265,11 @@ export const ITEMS: readonly Item[] = [
     hanzi: '结丹丹',
     tier: 2,
     rarity: 'white',
+    price: 30_000,
     kind: 'pill',
     uses: { offer: { tags: [] } },
     source: 'great sects and old alchemists',
-    text: 'The gate pill for Core Formation.',
+    text: 'The gate pill for Core Formation: a pill the size of a quail egg that the whole Foundation sea folds around and presses into one bead.',
   },
   {
     id: 'calm-heart-grass',
@@ -257,6 +278,7 @@ export const ITEMS: readonly Item[] = [
     hanzi: '安心草',
     tier: 1,
     rarity: 'white',
+    upTo: 'green',
     element: 'wood',
     kind: 'herb',
     uses: { offer: { tags: ['steadying'] }, ingredient: { tags: ['calming', 'wood'], age: 3 } },
@@ -351,6 +373,7 @@ export const ITEMS: readonly Item[] = [
     hanzi: '聚气丹',
     tier: 1,
     rarity: 'white',
+    upTo: 'blue',
     kind: 'pill',
     uses: { consume: { effects: [{ effect: 'fuel', ladder: 'qi', days: 3 }], dose: 10 } },
     source: 'every herb stall that sells pills',
@@ -363,18 +386,20 @@ export const ITEMS: readonly Item[] = [
     hanzi: '回气丹',
     tier: 1,
     rarity: 'white',
+    upTo: 'blue',
     kind: 'pill',
     uses: { consume: { effects: [{ effect: 'restore', what: 'qi', share: 0.3 }], dose: 10 } },
     source: 'every herb stall that sells pills',
     text: 'Swallowed mid-fight, it fills a third of an empty pool.',
   },
   {
-    id: 'mending-pill',
-    name: 'Mending Pill',
+    id: 'spring-returning-pill',
+    name: 'Spring-Returning Pill',
     pinyin: 'Huichun Dan',
     hanzi: '回春丹',
     tier: 1,
     rarity: 'white',
+    upTo: 'blue',
     kind: 'pill',
     uses: { consume: { effects: [{ effect: 'restore', what: 'hp', share: 0.3 }], dose: 10 } },
     source: 'every herb stall that sells pills',
@@ -387,6 +412,7 @@ export const ITEMS: readonly Item[] = [
     hanzi: '祛毒丹',
     tier: 1,
     rarity: 'green',
+    upTo: 'blue',
     kind: 'pill',
     uses: { consume: { effects: [{ effect: 'detox', amount: 30 }] } },
     source: 'herb stalls and sect infirmaries',
@@ -399,6 +425,7 @@ export const ITEMS: readonly Item[] = [
     hanzi: '火符',
     tier: 1,
     rarity: 'white',
+    upTo: 'green',
     element: 'fire',
     kind: 'talisman',
     uses: { fight: { form: 'projectile', damage: 'fire', power: 45 } },
@@ -414,7 +441,9 @@ export const ITEMS: readonly Item[] = [
     hanzi: '铁剑',
     tier: 1,
     rarity: 'white',
+    upTo: 'green',
     kind: 'gear',
+    properties: [{ name: 'Honest Temper', effects: [{ stat: 'swordPower', value: 0.03 }] }],
     uses: { equip: { slot: 'weapon', weapon: 'sword' }, inscribe: { slots: 1 } },
     source: 'any smithy in the Border Wilds',
     text: 'Plain iron, honestly forged, the edge a little soft.',
@@ -426,6 +455,7 @@ export const ITEMS: readonly Item[] = [
     hanzi: '青钢刀',
     tier: 1,
     rarity: 'green',
+    upTo: 'blue',
     kind: 'gear',
     properties: [{ name: 'Heavy Spine', effects: [{ stat: 'saberPower', value: 0.03 }] }],
     uses: { equip: { slot: 'weapon', weapon: 'saber' }, inscribe: { slots: 1 } },
@@ -439,8 +469,10 @@ export const ITEMS: readonly Item[] = [
     hanzi: '白蜡枪',
     tier: 1,
     rarity: 'white',
+    upTo: 'green',
     kind: 'gear',
     bulk: 2,
+    properties: [{ name: 'Springing Shaft', effects: [{ stat: 'spearHit', value: 0.03 }] }],
     uses: { equip: { slot: 'weapon', weapon: 'spear' }, inscribe: { slots: 1 } },
     source: 'any smithy in the Border Wilds',
     text: 'A long ash shaft that bends before it breaks, with an iron head.',
@@ -452,7 +484,9 @@ export const ITEMS: readonly Item[] = [
     hanzi: '铁拳套',
     tier: 1,
     rarity: 'white',
+    upTo: 'blue',
     kind: 'gear',
+    properties: [{ name: 'Worn Smooth', effects: [{ stat: 'fistPower', value: 0.03 }] }],
     uses: { equip: { slot: 'weapon', weapon: 'fist' }, inscribe: { slots: 1 } },
     source: 'pit fighters in the river markets',
     text: 'Four iron rings joined over the knuckles, worn smooth by somebody else first.',
@@ -495,7 +529,9 @@ export const ITEMS: readonly Item[] = [
     hanzi: '猪皮甲',
     tier: 1,
     rarity: 'white',
+    upTo: 'green',
     kind: 'gear',
+    properties: [{ name: 'Bristle Grain', effects: [{ stat: 'physicalResist', value: 0.02 }] }],
     uses: { equip: { slot: 'armor', material: 'physical' }, inscribe: { slots: 1 } },
     source: "a stone-skin boar's hide, boiled and stitched",
     text: 'Stiff, heavy and ugly, and a blade skids off it.',
@@ -507,8 +543,12 @@ export const ITEMS: readonly Item[] = [
     hanzi: '水丝袍',
     tier: 1,
     rarity: 'green',
+    upTo: 'purple',
     kind: 'gear',
-    properties: [{ name: 'Light Weave', effects: [{ stat: 'evasion', value: 0.02 }] }],
+    properties: [
+      { name: 'Light Weave', effects: [{ stat: 'evasion', value: 0.02 }] },
+      { name: 'Never Quite Dry', effects: [{ stat: 'fireResist', value: 0.04 }] },
+    ],
     uses: { equip: { slot: 'armor', material: 'fire' }, inscribe: { slots: 1 } },
     source: 'river-market tailors',
     text: 'Silk spun wet and never quite dry; fire hisses where it touches.',
@@ -596,16 +636,97 @@ export const ITEMS: readonly Item[] = [
   },
 ];
 
-const byId = new Map(ITEMS.map((i) => [i.id, i]));
+/** The written list and every catalog's (content/catalogs/). */
+export const ITEMS: readonly Item[] = [...WRITTEN, ...CATALOG_ITEMS];
+
+/** Every written thing as written, every property its best rarity takes; variants read these. */
+const written = new Map(ITEMS.map((i) => [i.id, i]));
+/** The lookup: a written thing at its own rarity, holding only the properties that rarity grants. */
+const byId = new Map(ITEMS.map((i) => [i.id, i.upTo ? atRarity(i, i.id, i.rarity) : i]));
+const rarityIds = new Set<RarityId>(RARITY_IDS);
+
+// ---------------------------------------------------------------- variants (P3.5)
+
+/**
+ * Kinds whose tier is the source's: a beast's core and parts take the beast's realm, and a pill or
+ * talisman is drawn at its maker's tier.
+ */
+const TIERED: readonly ItemKind[] = ['beast-part', 'material', 'pill', 'talisman'];
+
+/**
+ * The id of a written thing at a rarity, a tier or damaged: "shark-tooth-spear~green",
+ * "beast-core~blue~t2", "iron-sword~white~dmg". The written thing itself keeps its plain id, so a
+ * variant id is only ever longer than its base when something differs.
+ */
+export function variantId(
+  base: string,
+  r?: RarityId,
+  o: { tier?: number; damaged?: boolean } = {},
+): string {
+  const b = byId.get(base);
+  const parts = [base];
+  const rarityDiffers = r !== undefined && (!b || r !== b.rarity);
+  const tierDiffers = o.tier !== undefined && (!b || o.tier !== b.tier);
+  if (rarityDiffers || tierDiffers || o.damaged) parts.push(r ?? b?.rarity ?? 'white');
+  if (tierDiffers) parts.push(`t${o.tier}`);
+  if (o.damaged) parts.push('dmg');
+  return parts.join('~');
+}
+
+/** The written thing a variant is of. */
+export function baseOf(id: string): string {
+  return id.split('~')[0]!;
+}
+
+/** A variant built from its written thing, or null when the id names nothing it can be. */
+function variant(id: string): Item | null {
+  const [base, r, ...rest] = id.split('~');
+  const b = base ? written.get(base) : undefined;
+  if (!b || !r || !rarityIds.has(r as RarityId)) return null;
+  const rar = r as RarityId;
+  const damaged = rest.includes('dmg');
+  const tierPart = rest.find((x) => /^t\d+$/.test(x));
+  const tier = tierPart ? Number(tierPart.slice(1)) : b.tier;
+  if (tierPart && !TIERED.includes(itemKind(b))) return null;
+  if (rest.some((x) => x !== 'dmg' && x !== tierPart)) return null;
+  // A damaged piece stands a step below what it was, so the range shifts down one.
+  const lo = rarityRank(b.rarity) - (damaged ? 1 : 0);
+  const hi = rarityRank(b.upTo ?? b.rarity) - (damaged ? 1 : 0);
+  if (rarityRank(rar) < Math.max(0, lo) || rarityRank(rar) > hi) return null;
+  return {
+    ...atRarity(b, id, rar),
+    tier,
+    ...(damaged ? { name: `Damaged ${b.name}`, damaged: true } : {}),
+  };
+}
+
+/** A written thing at a rarity: as many of its properties as the rarity grants, its unique at gold up. */
+function atRarity(b: Item, id: string, rar: RarityId): Item {
+  const grants = rarity(rar);
+  const props = b.properties ?? [];
+  const plain = props.filter((p) => !p.unique).slice(0, grants.properties);
+  const unique = grants.unique ? props.filter((p) => p.unique) : [];
+  return { ...b, id, rarity: rar, ...(b.properties ? { properties: [...plain, ...unique] } : {}) };
+}
 
 export function hasItem(id: string): boolean {
-  return byId.has(id);
+  return byId.has(id) || variant(id) !== null;
 }
 
 export function item(id: string): Item {
-  const i = byId.get(id);
-  if (!i) throw new RangeError(`Unknown item ${id}`);
-  return i;
+  const known = byId.get(id);
+  if (known) return known;
+  const v = variant(id);
+  if (!v) throw new RangeError(`Unknown item ${id}`);
+  byId.set(id, v);
+  return v;
+}
+
+/** The rarities a written thing comes at, worst first. */
+export function rarityRange(it: Item): RarityId[] {
+  const lo = rarityRank(it.rarity);
+  const hi = rarityRank(it.upTo ?? it.rarity);
+  return RARITY_IDS.slice(lo, hi + 1);
 }
 
 /** The kind the Bag files it under: its own, or read off its uses. */

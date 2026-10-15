@@ -6,7 +6,7 @@
 // every worn artifact gained. A spar won from the brink is a moment on the Intent ladder.
 import { BORDER_WILDS, template, type Template } from '../content/roster.ts';
 import { realm } from '../content/realms.ts';
-import { fromCultivator, type Combatant } from './combat/combatant.ts';
+import { fromCultivator, wearFrom, type Combatant } from './combat/combatant.ts';
 import {
   brinkDaos,
   combatantIn,
@@ -109,7 +109,7 @@ export function endSpar(s: GameState, fight: Fight, foe: string): GameState {
   const me = you(fight, p.id);
   const items = { ...p.items };
   for (const [id, held] of Object.entries(me.items)) if (id in items) items[id] = held.n;
-  const back = bondFromFight({ ...p, items, toxicity: me.toxicity }, fight.turn);
+  const back = wearFrom(bondFromFight({ ...p, items, toxicity: me.toxicity }, fight.turn), me);
   const result = sparResult(fight, p.id) ?? 'draw';
   let next = addEvent(withPlayer(s, back), 'spar', { foe, result, turns: fight.turn });
   // A fight won after acting with a Dao from the brink is that Dao's moment (core/intent.ts).

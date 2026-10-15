@@ -400,7 +400,7 @@ describe('effects', () => {
     const sc = scene([you(s), them('ally')]);
     const effects = [
       { do: 'stones', who: s.player.id, n: 5 },
-      { do: 'item', who: 'ally', id: 'mending-pill', n: 1, how: 'gained' },
+      { do: 'item', who: 'ally', id: 'spring-returning-pill', n: 1, how: 'gained' },
       { do: 'knowledge', kind: 'name', id: 'elder-mo' },
       { do: 'heat', holder: 'test-place', n: 2 },
       { do: 'wound', who: s.player.id, share: 0.2, days: 3 },
@@ -410,7 +410,7 @@ describe('effects', () => {
     ].map((e) => EffectSchema.parse(e));
     const r = applyEffects(s, sc, effects);
     expect(r.state.player.stones).toBe(s.player.stones + 5);
-    expect(r.scene!.actors[1]!.items['mending-pill']).toBe(1);
+    expect(r.scene!.actors[1]!.items['spring-returning-pill']).toBe(1);
     expect(r.state.world.known).toContain('name:elder-mo');
     expect(heatOf(r.state.world, 'test-place', s.calendar.day)).toBe(2);
     expect(woundShare(r.state.world, s.player.id, s.calendar.day)).toBe(0.2);
@@ -579,7 +579,7 @@ describe('plans', () => {
 describe('the save', () => {
   it('carries the world from v20, and a v19 save loads with an empty one', () => {
     const s = life();
-    expect(SAVE_VERSION).toBe(22);
+    expect(SAVE_VERSION).toBe(23);
     const raw = JSON.parse(JSON.stringify(makeSave(s, 1))) as {
       version: number;
       state: Record<string, unknown>;

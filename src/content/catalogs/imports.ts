@@ -1,0 +1,149 @@
+// What reaches the Border Wilds from elsewhere, along the ties the atlas draws (P3.5): Red Rocks
+// steel and ore and the Medicine Ridges' herbs by the merchant guild's road, a Sword Domain blade
+// now and then, and the Vast Wilds' and the Ink Marsh's contraband over the Night Bridge to the
+// black market. A shop weighs the imports by its kind: a guild double, a black market first.
+// **Awaiting Jan's review** (P3.5): the new items below.
+import type { Catalog } from './types.ts';
+
+const AT = 'qm-bianhuang';
+
+export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
+  {
+    at: AT,
+    layer: 'import',
+    from: 'qm-chiyan',
+    via: 'the merchant guild’s caravans down from the Red Rocks’ forges',
+    items: [
+      {
+        id: 'black-iron-saber',
+        name: 'Black Iron Saber',
+        pinyin: 'Heitie Dao',
+        hanzi: '黑铁刀',
+        tier: 1,
+        rarity: 'white',
+        upTo: 'purple',
+        kind: 'gear',
+        uses: { equip: { slot: 'weapon', weapon: 'saber' }, inscribe: { slots: 1 } },
+        properties: [
+          { name: 'Forge-Black', effects: [{ stat: 'saberPower', value: 0.03 }] },
+          { name: 'Convict-Quenched', effects: [{ stat: 'critDamage', value: 0.06 }] },
+        ],
+        source: 'the Red Rocks’ forges, quenched in the convict pits’ water',
+        text: 'Plain black iron, heavy at the tip. The Red Rocks make a thousand a year and every one cuts.',
+      },
+      {
+        id: 'cinnabar-ore',
+        name: 'Cinnabar Ore',
+        pinyin: 'Zhusha Kuang',
+        hanzi: '朱砂矿',
+        tier: 1,
+        rarity: 'white',
+        upTo: 'blue',
+        kind: 'material',
+        stack: 20,
+        uses: { ingredient: { tags: ['ore', 'fire'] } },
+        source: 'the Red Rocks’ mines',
+        text: 'Red ore that stains the fingers. Refiners want it for edges, talisman-makers for ink.',
+      },
+    ],
+    lots: [
+      { thing: 'black-iron-saber', shops: ['refiner', 'guild'] },
+      { thing: 'cinnabar-ore', shops: ['refiner', 'guild'], count: [2, 10] },
+      { thing: 'fire-bead', shops: ['guild', 'refiner'], weight: 0.3 },
+      { thing: 'method:ember-furnace', shops: ['guild'], weight: 0.3 },
+    ],
+  },
+  {
+    at: AT,
+    layer: 'import',
+    from: 'qm-yaoling',
+    via: 'the Apricot Grove Valley’s herb carts, by the guild',
+    items: [
+      {
+        id: 'old-apricot-kernel',
+        name: 'Old Apricot Kernel',
+        pinyin: 'Lao Xingren',
+        hanzi: '老杏仁',
+        tier: 1,
+        rarity: 'white',
+        upTo: 'blue',
+        kind: 'herb',
+        uses: { ingredient: { tags: ['wood', 'cleansing'], age: 30 } },
+        source: 'the Apricot Grove Valley’s old orchards',
+        text: 'A kernel from a tree older than the dynasty. Half the continent’s pills start with one.',
+      },
+    ],
+    lots: [
+      { thing: 'old-apricot-kernel', shops: ['alchemy', 'guild'], count: [1, 5] },
+      { thing: 'clear-spring-lotus', shops: ['alchemy', 'guild'], weight: 0.4 },
+    ],
+  },
+  {
+    at: AT,
+    layer: 'import',
+    from: 'qm-jianyu',
+    via: 'a Clear Heaven Sword Sect blade the guild bought off someone who needed money more',
+    lots: [{ thing: 'azure-cloud-sword', shops: ['guild'], weight: 0.15 }],
+  },
+  {
+    at: AT,
+    layer: 'import',
+    from: 'cangmang',
+    via: 'smuggled over the Night Bridge from the Pushed Frontier and Shared Roost City',
+    items: [
+      {
+        id: 'roc-feather-talisman',
+        name: 'Roc-Feather Talisman',
+        pinyin: 'Pengyu Fu',
+        hanzi: '鹏羽符',
+        tier: 1,
+        rarity: 'green',
+        upTo: 'blue',
+        kind: 'talisman',
+        uses: { fight: { form: 'projectile', damage: 'wind', power: 46 } },
+        source: 'a Shared Roost City scribe who draws with a storm roc’s moulted pinion',
+        text: 'Thrown, it is a blade of wind the length of a spear. Selling them on the Morning Star coast is a crime.',
+      },
+      {
+        id: 'raider-beast-blood',
+        name: 'Vast Wilds Beast Blood',
+        pinyin: 'Cangmang Shouxue',
+        hanzi: '苍莽兽血',
+        tier: 1,
+        rarity: 'blue',
+        upTo: 'purple',
+        kind: 'beast-part',
+        uses: { ingredient: { tags: ['blood', 'bloodline'] } },
+        source:
+          'the Vast Wilds’ older, better-blooded beasts, bled by half-bloods who can get close',
+        text: 'Thick and nearly black. The Wall burns anyone it catches carrying it.',
+      },
+    ],
+    lots: [
+      { thing: 'roc-feather-talisman', shops: ['black-market'], count: [1, 2] },
+      { thing: 'raider-beast-blood', shops: ['black-market'], weight: 0.6 },
+    ],
+  },
+  {
+    at: AT,
+    layer: 'import',
+    from: 'qm-mozhao',
+    via: 'the Night Banquet Sect’s brokers, by boat around the coast and over the Night Bridge',
+    items: [
+      {
+        id: 'blood-feast-pill',
+        name: 'Blood-Feast Pill',
+        pinyin: 'Xueyan Dan',
+        hanzi: '血宴丹',
+        tier: 1,
+        rarity: 'green',
+        upTo: 'purple',
+        kind: 'pill',
+        uses: { consume: { effects: [{ effect: 'fuel', ladder: 'qi', days: 6 }], dose: 30 } },
+        source: 'the Ink Marsh, from what the Night Banquet will not say',
+        text: 'Six days of qi in one red pill, and a poison that takes most of a month to leave.',
+      },
+    ],
+    lots: [{ thing: 'blood-feast-pill', shops: ['black-market'], count: [1, 3] }],
+  },
+];

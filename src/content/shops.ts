@@ -1,0 +1,377 @@
+// Shops (design § World bible, Stones, silver and shops in play; § Items and gear, Loot and
+// shops): the kinds of shop, what each stocks and buys, its bias on the shared rarity table, its
+// purse, and the Border Wilds' shops where they stand. A shop's stock comes from the catalogs of
+// its place, its region, its continent and the imports along their ties (content/catalogs/),
+// weighted by the layer weights below. Stock and money are kept per shop, so M6's markets by reach
+// and standing orders grow from these. P3.6 stands them in its towns. Every number is a starting
+// value; M6 tunes them.
+import type { Layer } from './catalogs/types.ts';
+import type { ItemKind } from './items.ts';
+
+export const SHOP_KINDS = [
+  'stall',
+  'alchemy',
+  'refiner',
+  'sect',
+  'guild',
+  'black-market',
+  'bounty',
+  'mortal',
+] as const;
+export type ShopKind = (typeof SHOP_KINDS)[number];
+
+/** What a shop deals in: the Bag's kinds, and copies of manuals, methods and techniques. */
+export type Ware = ItemKind | 'copy';
+
+export interface ShopKindInfo {
+  name: string;
+  hanzi: string;
+  /** The bias on the shared rarity table (Items and gear): a stall 0.6, a vault 1.6. */
+  bias: number;
+  /** Lots in a month's stock. */
+  lots: number;
+  /** What it buys from you, and at what share of its own price. */
+  buys: readonly Ware[];
+  buyRate: number;
+  /** Its purse a month, in its own money: what it can pay out buying from you. */
+  purse: number;
+  money: 'stones' | 'silver';
+  /** Its prices against the posted rate: the black market's risk. */
+  markup: number;
+  /** How a lot draws from each layer of catalogs (they need not add up to anything). */
+  layers: Record<Layer, number>;
+  /** Whether it knows stolen goods for what they are. A black market never asks. */
+  recognizes: boolean;
+  /** It mends worn and damaged armor and gear for stones. */
+  repairs?: boolean;
+  /** It sells only to members of its power. */
+  members?: boolean;
+  /** What it leans toward stocking, against its other wares: a stall's few copies and blades. */
+  leans?: Partial<Record<Ware, number>>;
+  /** It posts its rates and never haggles: the bounty office. */
+  posted?: boolean;
+}
+
+const BY_PLACE: Record<Layer, number> = { place: 50, region: 25, continent: 15, import: 10 };
+
+export const SHOP_KIND_INFO: Record<ShopKind, ShopKindInfo> = {
+  stall: {
+    name: 'stall',
+    hanzi: '摊',
+    bias: 0.6,
+    lots: 6,
+    buys: ['herb', 'beast-part', 'material'],
+    buyRate: 0.4,
+    purse: 150,
+    money: 'stones',
+    markup: 1,
+    layers: BY_PLACE,
+    recognizes: true,
+    // A stall sells pills, talismans and herbs (Items and gear); a copy or a blade is the odd lot.
+    leans: { copy: 0.25, gear: 0.5, treasure: 0.5 },
+  },
+  alchemy: {
+    name: 'alchemy shop',
+    hanzi: '丹铺',
+    bias: 1,
+    lots: 8,
+    buys: ['pill', 'herb', 'beast-part', 'material'],
+    buyRate: 0.4,
+    purse: 1500,
+    money: 'stones',
+    markup: 1,
+    layers: BY_PLACE,
+    recognizes: true,
+  },
+  refiner: {
+    name: 'refiner',
+    hanzi: '器坊',
+    bias: 1,
+    lots: 6,
+    buys: ['gear', 'treasure', 'material'],
+    buyRate: 0.4,
+    purse: 1500,
+    money: 'stones',
+    markup: 1,
+    layers: BY_PLACE,
+    recognizes: true,
+    repairs: true,
+  },
+  sect: {
+    name: 'sect shop',
+    hanzi: '宗门坊',
+    bias: 1,
+    lots: 12,
+    buys: ['pill', 'talisman', 'herb', 'beast-part', 'material', 'gear', 'treasure', 'copy'],
+    buyRate: 0.4,
+    purse: 5000,
+    money: 'stones',
+    markup: 1,
+    layers: BY_PLACE,
+    recognizes: true,
+    members: true,
+  },
+  guild: {
+    name: 'merchant guild',
+    hanzi: '商会',
+    bias: 1,
+    lots: 16,
+    buys: ['pill', 'talisman', 'herb', 'beast-part', 'material', 'gear', 'treasure', 'copy'],
+    buyRate: 0.4,
+    purse: 8000,
+    money: 'stones',
+    markup: 1,
+    // A guild carries goods from region to region, so its imports count double.
+    layers: { place: 40, region: 25, continent: 15, import: 20 },
+    recognizes: true,
+  },
+  'black-market': {
+    name: 'black market',
+    hanzi: '黑市',
+    bias: 1.3,
+    lots: 10,
+    buys: ['pill', 'talisman', 'herb', 'beast-part', 'material', 'gear', 'treasure', 'copy'],
+    buyRate: 0.3,
+    purse: 4000,
+    money: 'stones',
+    markup: 1.5,
+    // Contraband comes from elsewhere: imports first.
+    layers: { place: 25, region: 15, continent: 10, import: 50 },
+    recognizes: false,
+  },
+  bounty: {
+    name: 'bounty office',
+    hanzi: '赏榜',
+    bias: 1,
+    lots: 0,
+    buys: ['beast-part', 'material'],
+    buyRate: 0.5,
+    purse: 20_000,
+    money: 'stones',
+    markup: 1,
+    layers: BY_PLACE,
+    recognizes: true,
+    posted: true,
+  },
+  mortal: {
+    name: 'mortal shop',
+    hanzi: '铺',
+    bias: 0.6,
+    lots: 4,
+    buys: [],
+    buyRate: 0.4,
+    purse: 30,
+    money: 'silver',
+    markup: 1,
+    layers: BY_PLACE,
+    recognizes: true,
+  },
+};
+
+/** A shop's price against the posted rate, drawn once from its id: two guild branches disagree. */
+export const PRICE_SPREAD = [0.9, 1.15] as const;
+
+/** Haggling (a people check, the `bargain` act): off the whole visit on a clear or a close pass. */
+export const HAGGLE_OFF = { clear: 0.2, close: 0.1 } as const;
+
+/** Selling at the better rate once the keeper is friendly or their power favors you. */
+export const FRIENDLY_BUY_RATE = 0.6;
+
+/** A refiner mends a full bar of wear for this share of the armor's price. */
+export const REPAIR_SHARE = 0.2;
+/** It mends a damaged piece back to its rarity for this share of the price between the two. */
+export const DAMAGE_REPAIR_SHARE = 0.5;
+
+/** A shop where it stands: an atlas place, the power that owns it if any, and its own name. */
+export interface Shop {
+  id: string;
+  kind: ShopKind;
+  /** The atlas place it stands in, and the region and continent above it, whose catalogs it reads too. */
+  at: string;
+  region: string;
+  continent: string;
+  /** The power that owns it: whose stolen goods it knows, whose members a sect shop serves. */
+  power: string | null;
+  name: string;
+  /** The tiers it stocks; a Border Wilds shop sells tier 1, a sect shop a little of tier 2. */
+  tiers: readonly number[];
+}
+
+/**
+ * The Border Wilds' shops. The merchant guild's hall in the City belongs to no atlas power yet:
+ * which guild runs the strait trade is for the atlas fill or M6 (Open questions).
+ */
+const BW = { region: 'qm-bianhuang', continent: 'qiming' } as const;
+
+export const SHOPS: readonly Shop[] = [
+  {
+    id: 'mouth-stall',
+    kind: 'stall',
+    at: 'qm-shoukou-cheng',
+    ...BW,
+    power: null,
+    name: 'a stall under the skull walls',
+    tiers: [1],
+  },
+  {
+    id: 'mouth-alchemy',
+    kind: 'alchemy',
+    at: 'qm-shoukou-cheng',
+    ...BW,
+    power: 'xinglin',
+    name: 'the Apricot Grove branch shop',
+    tiers: [1, 2],
+  },
+  {
+    id: 'mouth-refiner',
+    kind: 'refiner',
+    at: 'qm-shoukou-cheng',
+    ...BW,
+    power: null,
+    name: 'a refiner by the beast-part market',
+    tiers: [1],
+  },
+  {
+    id: 'mouth-guild',
+    kind: 'guild',
+    at: 'qm-shoukou-cheng',
+    ...BW,
+    power: null,
+    name: 'the merchant guild hall',
+    tiers: [1, 2],
+  },
+  {
+    id: 'mouth-bounty',
+    kind: 'bounty',
+    at: 'qm-shoukou-cheng',
+    ...BW,
+    power: null,
+    name: 'the bounty office',
+    tiers: [1, 2],
+  },
+  {
+    id: 'mouth-mortal',
+    kind: 'mortal',
+    at: 'qm-shoukou-cheng',
+    ...BW,
+    power: null,
+    name: 'a chandler on the harbor street',
+    tiers: [1],
+  },
+  {
+    id: 'bridge-black',
+    kind: 'black-market',
+    at: 'qm-yeqiao-hui',
+    ...BW,
+    power: 'qm-yeqiao-hui',
+    name: 'the sea-cave market',
+    tiers: [1, 2],
+  },
+  {
+    id: 'bridge-stall',
+    kind: 'stall',
+    at: 'qm-yeqiao-hui',
+    ...BW,
+    power: null,
+    name: 'a tide-pool stall',
+    tiers: [1],
+  },
+  {
+    id: 'gate-sect',
+    kind: 'sect',
+    at: 'qm-tushou-men',
+    ...BW,
+    power: 'qm-tushou-men',
+    name: 'the Gate’s exchange hall',
+    tiers: [1, 2],
+  },
+  {
+    id: 'march-stall',
+    kind: 'stall',
+    at: 'qm-anbian-fu',
+    ...BW,
+    power: null,
+    name: 'a sutler’s stall by the watchtower',
+    tiers: [1],
+  },
+  {
+    id: 'march-mortal',
+    kind: 'mortal',
+    at: 'qm-anbian-fu',
+    ...BW,
+    power: null,
+    name: 'the village store',
+    tiers: [1],
+  },
+  {
+    id: 'wall-stall',
+    kind: 'stall',
+    at: 'qm-duigu-qiang',
+    ...BW,
+    power: null,
+    name: 'a stall at the foot of the Wall',
+    tiers: [1],
+  },
+  {
+    id: 'eyes-stall',
+    kind: 'stall',
+    at: 'qm-shiyan-guo',
+    ...BW,
+    power: null,
+    name: 'a stall on the sinkhole rim',
+    tiers: [1],
+  },
+  {
+    id: 'eyes-alchemy',
+    kind: 'alchemy',
+    at: 'qm-shiyan-guo',
+    ...BW,
+    power: null,
+    name: 'a cave alchemy shop',
+    tiers: [1],
+  },
+  {
+    id: 'eyes-mortal',
+    kind: 'mortal',
+    at: 'qm-shiyan-guo',
+    ...BW,
+    power: null,
+    name: 'a terrace store',
+    tiers: [1],
+  },
+  {
+    id: 'herders-stall',
+    kind: 'stall',
+    at: 'qm-muling-guo',
+    ...BW,
+    power: null,
+    name: 'a stall at the corrals',
+    tiers: [1],
+  },
+  {
+    id: 'herders-guild',
+    kind: 'guild',
+    at: 'qm-muling-guo',
+    ...BW,
+    power: null,
+    name: 'the herders’ trading post',
+    tiers: [1],
+  },
+  {
+    id: 'herders-mortal',
+    kind: 'mortal',
+    at: 'qm-muling-guo',
+    ...BW,
+    power: null,
+    name: 'a herders’ store',
+    tiers: [1],
+  },
+];
+
+const byId = new Map(SHOPS.map((s) => [s.id, s]));
+
+export function shop(id: string): Shop {
+  const s = byId.get(id);
+  if (!s) throw new RangeError(`Unknown shop ${id}`);
+  return s;
+}

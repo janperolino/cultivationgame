@@ -67,6 +67,8 @@ export const ELEMENT_BONUS = 0.25;
 /** Dawn's purple qi at 卯 adds this to everyone's qi, tutorial included. */
 export const DAWN_HOUR = 3;
 export const DAWN_BONUS = 0.1;
+/** The night hours, 亥, 子 and 丑, where a method with night qi (the `nightQi` stat) gains more. */
+export const NIGHT_HOURS: readonly number[] = [11, 0, 1];
 /** Following a learned routine exactly, all twelve hours, adds this to every hour. */
 export const DISCIPLINE_BONUS = 0.1;
 

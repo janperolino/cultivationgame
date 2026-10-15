@@ -45,6 +45,7 @@ import {
   BRANCHES,
   DAWN_BONUS,
   DAWN_HOUR,
+  NIGHT_HOURS,
   DISCIPLINE_BONUS,
   ELEMENT_BONUS,
   HOUR_KIND_IDS,
@@ -295,6 +296,8 @@ export interface HourYield {
   /** The bonuses on the hour's work, added together: its element, dawn's purple qi, discipline. */
   element: number;
   dawn: number;
+  /** A method with night qi, in the night hours. */
+  night: number;
   discipline: number;
   qi: number;
   body: number;
@@ -319,12 +322,14 @@ export function hourYields(
 ): HourYield[] {
   const base = dayBase(c, day, unfed, seat);
   const discipline = followedRoutine(c) ? DISCIPLINE_BONUS : 0;
+  const night = stats(c).nightQi;
   return effectiveWheel(c).map((kind, hour) => {
     const y: HourYield = {
       hour,
       kind,
       element: 0,
       dawn: 0,
+      night: 0,
       discipline: 0,
       qi: 0,
       body: 0,
@@ -336,8 +341,9 @@ export function hourYields(
     if (kind === 'sleep') return y;
     y.element = elementMatch(c, kind, hour) ? ELEMENT_BONUS : 0;
     y.dawn = kind === 'qi' && hour === DAWN_HOUR ? DAWN_BONUS : 0;
+    y.night = kind === 'qi' && NIGHT_HOURS.includes(hour) ? night : 0;
     y.discipline = discipline;
-    const share = (1 + y.element + y.dawn + y.discipline) / HOURS_PER_DAY;
+    const share = (1 + y.element + y.dawn + y.night + y.discipline) / HOURS_PER_DAY;
     y.insight = base.trickle / HOURS_PER_DAY;
     if (kind === 'qi') y.qi = base.qi * share;
     else if (kind === 'body') y.body = base.body * share;

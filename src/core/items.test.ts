@@ -69,11 +69,12 @@ describe('pill toxicity', () => {
 });
 
 describe('items', () => {
-  it('have unique ids, English names with pinyin and hanzi, and at least one use', () => {
+  it('have unique ids, English names with pinyin and hanzi, and a use unless a mortal good', () => {
     expect(new Set(ITEMS.map((i) => i.id)).size).toBe(ITEMS.length);
     for (const i of ITEMS) {
       expect(i.name && i.pinyin && i.hanzi, i.id).toBeTruthy();
-      expect(Object.keys(i.uses).length, i.id).toBeGreaterThan(0);
+      // Mortal goods (rations, a saddle blanket) are bought for silver and do nothing yet.
+      if (i.taels === undefined) expect(Object.keys(i.uses).length, i.id).toBeGreaterThan(0);
     }
   });
 });

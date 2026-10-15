@@ -50,6 +50,7 @@ function hourBonuses(y: HourYield): string[] {
   return [
     y.element > 0 && `element +${formatPercent(y.element)}`,
     y.dawn > 0 && `dawn +${formatPercent(y.dawn)}`,
+    y.night > 0 && `night +${formatPercent(y.night)}`,
     y.discipline > 0 && `discipline +${formatPercent(y.discipline)}`,
   ].filter((b): b is string => !!b);
 }

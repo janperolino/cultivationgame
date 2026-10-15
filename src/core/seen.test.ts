@@ -47,12 +47,12 @@ describe('the seen record', () => {
   });
 
   it('dots a newly opened screen until it is opened, and sees a method when Cultivate opens', () => {
-    let s = checkScreens(withPlayer(fresh(), addItem(fresh().player, 'mending-pill', 1)));
+    let s = checkScreens(withPlayer(fresh(), addItem(fresh().player, 'spring-returning-pill', 1)));
     expect(s.unlocks).toContain('bag');
     expect(screenDot(s, 'bag')).toBe(true);
     s = openScreen(s, 'bag');
     expect(screenDot(s, 'bag')).toBe(false);
-    expect(isNew(s, 'item', 'mending-pill')).toBe(true);
+    expect(isNew(s, 'item', 'spring-returning-pill')).toBe(true);
     s = withPlayer(s, {
       ...s.player,
       methods: { ...s.player.methods, 'stone-bearing': { practice: 0, fedUntil: 0 } },
@@ -65,13 +65,13 @@ describe('the seen record', () => {
   it('lists what a moment gained: new things once, and more of an item by its count', () => {
     const before = fresh();
     let after = gainTechnique(before, 'rampart-palm');
-    after = checkScreens(withPlayer(after, addItem(after.player, 'mending-pill', 3)));
+    after = checkScreens(withPlayer(after, addItem(after.player, 'spring-returning-pill', 3)));
     const got = gains(before, after).map((g) => `${g.kind}:${g.id}:${g.count}:${g.fresh}`);
     expect(got).toEqual(
       expect.arrayContaining([
         'technique:rampart-palm:1:true',
         'manual:art-rampart-palm:1:true',
-        'item:mending-pill:3:true',
+        'item:spring-returning-pill:3:true',
         'tree:fist:1:true',
         'screen:techniques:1:true',
         'screen:combat:1:true',
@@ -79,10 +79,10 @@ describe('the seen record', () => {
       ]),
     );
     // Taking a sword off is not a gain, and more of a known pill is not fresh.
-    const known = see(after, 'item', ['mending-pill']);
-    const more = withPlayer(known, addItem(known.player, 'mending-pill', 2));
+    const known = see(after, 'item', ['spring-returning-pill']);
+    const more = withPlayer(known, addItem(known.player, 'spring-returning-pill', 2));
     expect(gains(known, more)).toEqual([
-      { kind: 'item', id: 'mending-pill', count: 2, fresh: false },
+      { kind: 'item', id: 'spring-returning-pill', count: 2, fresh: false },
     ]);
     const worn = withPlayer(more, {
       ...more.player,

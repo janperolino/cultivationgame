@@ -8,8 +8,8 @@ import { addFame } from '../../core/resolver/names.ts';
 import { CARDS, hasCard } from '../../content/cards/index.ts';
 import { COMBAT_DAO_IDS, isCombatDao } from '../../content/daos.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
-import { COPY_KINDS, copyId, hasCopy } from '../../content/copies.ts';
-import { ITEMS } from '../../content/items.ts';
+import { COPY_KINDS, copyId, copyTitle, hasCopy } from '../../content/copies.ts';
+import { item, ITEMS } from '../../content/items.ts';
 import { hasManual, MANUALS } from '../../content/manuals.ts';
 import { registerManuals } from '../../content/nodes.ts';
 import { hasMethod, METHODS } from '../../content/methods.ts';
@@ -44,6 +44,9 @@ import { formatDays, formatLadder, formatNumber } from '../format.ts';
 import { screens } from '../screens.ts';
 import { useSeat } from '../seat.ts';
 import type { GameStore } from '../store.ts';
+import { shop, SHOP_KIND_INFO, SHOPS } from '../../content/shops.ts';
+import { priceWords, purseWords } from '../../core/purse.ts';
+import { buy, haggle, repair, sell, shelf, type ShopResult } from '../../core/shops.ts';
 
 export type Output = string | string[];
 
@@ -167,6 +170,53 @@ export const COMMANDS: Record<string, Command> = {
       );
     },
   },
+  purse: {
+    usage: 'purse <low|mid|high|top|taels> <n>',
+    help: 'Adds stones of a grade, or silver taels.',
+    run([grade, n], store) {
+      const v = Number(n);
+      if (!Number.isFinite(v)) return 'Give a grade and a number.';
+      return apply(
+        store,
+        (s) => {
+          const p = s.player;
+          if (grade === 'taels') return withPlayer(s, { ...p, silver: Math.max(0, p.silver + v) });
+          if (grade === 'low') return withPlayer(s, { ...p, stones: Math.max(0, p.stones + v) });
+          if (grade !== 'mid' && grade !== 'high' && grade !== 'top') return s;
+          const h = { ...p.higherStones, [grade]: Math.max(0, p.higherStones[grade] + v) };
+          return withPlayer(s, { ...p, higherStones: h });
+        },
+        `${grade} ${v >= 0 ? '+' : ''}${v}.`,
+      );
+    },
+  },
+  shop: {
+    usage: 'shop [id] [buy <slot> | sell <thing> [n] | haggle | repair <thing>]',
+    help: 'Lists the shops; with an id, its shelf this month, and buys, sells, haggles or mends there.',
+    run([id, verb, arg, n], store) {
+      if (!id) return SHOPS.map((x) => `${x.id}: ${x.name} (${x.kind})`);
+      if (!SHOPS.some((x) => x.id === id)) return `No shop ${id}.`;
+      const s = needGame(store);
+      const act = (r: ShopResult, done: string): Output =>
+        r.ok ? apply(store, () => r.state, done) : r.reason;
+      if (verb === 'buy') return act(buy(s, id, Number(arg)), `Bought lot ${arg}.`);
+      if (verb === 'sell' && arg) return act(sell(s, id, arg, n ? Number(n) : 1), `Sold ${arg}.`);
+      if (verb === 'haggle') {
+        const r = haggle(s, id);
+        return act(r, `Haggled: ${Math.round((r.off ?? 0) * 100)}% off today.`);
+      }
+      if (verb === 'repair' && arg) return act(repair(s, id, arg), `Mended ${arg}.`);
+      const ware = (t: string) => (hasCopy(t) ? copyTitle(t) : item(t).name);
+      const silver = SHOP_KIND_INFO[shop(id).kind].money === 'silver';
+      const cost = (p: number) => (silver ? `${p} taels` : priceWords(p));
+      return [
+        `${shop(id).name}, this month · you hold ${purseWords(s.player)}`,
+        ...shelf(s, id).map(
+          (l) => `  ${l.slot}. ${ware(l.thing)} ×${l.n} (${l.thing}): ${cost(l.price)} each`,
+        ),
+      ];
+    },
+  },
   follow: {
     usage: 'follow <person> [pay|loyalty|fear|goal]',
     help: "Makes someone you've met follow you (P3.4b); pay asks 30 stones a month.",
@@ -228,7 +278,7 @@ export const COMMANDS: Record<string, Command> = {
         (s) => {
           let c = s.player;
           for (const it of ITEMS) if (it.uses.equip) c = addItem(c, it.id, 1);
-          c = addItem(addItem(c, 'mending-pill', 5), 'qi-restoring-pill', 5);
+          c = addItem(addItem(c, 'spring-returning-pill', 5), 'qi-restoring-pill', 5);
           return withPlayer(s, addItem(c, 'ember-talisman', 3));
         },
         'Every gear item, pills and talismans added.',

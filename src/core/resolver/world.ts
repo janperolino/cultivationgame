@@ -170,6 +170,27 @@ export type Heard = z.infer<typeof HeardSchema>;
 export const MemberSchema = z.object({ who: z.string(), power: z.string(), since: z.number() });
 export type Member = z.infer<typeof MemberSchema>;
 
+/** A sealed storage ring: whose it was, its tier, and what is in it. */
+export const SealedSchema = z.object({
+  from: z.string(),
+  name: z.string(),
+  tier: z.number().int().min(1),
+  items: z.record(z.string(), z.number().int().min(1)),
+  stones: z.number().min(0),
+});
+export type Sealed = z.infer<typeof SealedSchema>;
+
+/** A shop's month: which month since the calendar began, the lots sold, the purse paid out. */
+export const ShopMonthSchema = z.object({
+  month: z.number().int().min(0),
+  bought: z.array(z.number().int().min(0)),
+  /** What the shop has paid out buying from you this month, in its own money. */
+  paid: z.number().min(0),
+  /** The day of your last haggle there and the share it took off; one check a visit. */
+  haggle: z.object({ day: z.number().int(), off: z.number().min(0).max(1) }).nullable(),
+});
+export type ShopMonth = z.infer<typeof ShopMonthSchema>;
+
 export const WorldSchema = z.object({
   heat: z.record(z.string(), Heat),
   deeds: z.array(DeedSchema),
@@ -197,6 +218,18 @@ export const WorldSchema = z.object({
   heard: z.array(HeardSchema),
   /** Who belongs to which power. */
   members: z.array(MemberSchema),
+  /**
+   * Each shop's month as you have touched it (core/shops.ts): the lots bought out of its stock,
+   * what its purse has paid out, and the day you last haggled there and what it won.
+   */
+  shops: z.record(z.string(), ShopMonthSchema),
+  /** Things taken from someone, by item id, and the power that owned them: stolen goods. */
+  taken: z.record(z.string(), z.string()),
+  /**
+   * Storage rings you took that won't open to you yet (core/loot.ts): whose they were, what is in
+   * them and their tier, until your soul or your realm reaches it.
+   */
+  sealed: z.array(SealedSchema),
   /** The next deed's, lasting state's and memory's id. */
   next: z.number().int().min(1),
 });
@@ -220,6 +253,9 @@ export function emptyWorld(): World {
     fame: {},
     heard: [],
     members: [],
+    shops: {},
+    taken: {},
+    sealed: [],
     next: 1,
   };
 }

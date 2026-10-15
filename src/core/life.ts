@@ -59,6 +59,7 @@ import { FIRST_IDS, firstsWaiting, noteFirsts, type FirstStep } from './firsts.t
 import { learnNode, type LearnCheck } from './trees.ts';
 import { followWheel, hourToFlip, learnRoutine, setHour, type WheelCheck } from './wheel.ts';
 import { followersDay } from './resolver/followers.ts';
+import { openRings } from './loot.ts';
 
 /**
  * The Trees screen opens with anything that lives there (design § UI and screens, Only what you
@@ -210,7 +211,9 @@ export function learn(s: GameState, nodeId: string): { state: GameState; check: 
  * Opens what the player has just reached, kinds of hour and screens, without waiting for a tick,
  * and records any first time it shows done.
  */
-function settle(s: GameState): GameState {
+function settle(before: GameState): GameState {
+  // A ring taken sealed opens once the realm reaches it (core/loot.ts).
+  const s = openRings(before);
   const r = checkUnlocks(s.player, s.lineage.firsts);
   return noteFirsts(checkScreens(addNotes(withPlayer(s, r.cultivator), r.notes)));
 }

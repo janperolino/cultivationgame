@@ -34,6 +34,7 @@ import { itemTag, toxicityWords, useLines } from './itemWords.ts';
 import { useNav } from './nav.ts';
 import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
+import { purseWords } from '../core/purse.ts';
 
 const SQUARES: { slot: Exclude<EquipSlot, 'treasure'>; label: string; hanzi: string }[] = [
   { slot: 'weapon', label: 'Weapon', hanzi: '兵' },
@@ -499,7 +500,7 @@ export function BagScreen() {
             Pack <span className="hanzi">行囊</span>
           </h2>
           <span className="caption">
-            {formatNumber(c.stones)} spirit stones · {used} of {cap} squares
+            {purseWords(c)} · {used} of {cap} squares
             <Why label="Squares">
               Squares, not volume: pills, talismans and herbs stack to 99 a square, ores to 20, gear
               takes one, and a long spear two. The pack holds {PACK_SQUARES} on foot; a pouch and a

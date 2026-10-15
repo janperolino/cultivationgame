@@ -15,7 +15,7 @@ import {
   OFFER_ODDS,
   type LadderId,
 } from '../content/cultivation.ts';
-import { hasItem, item, ITEMS } from '../content/items.ts';
+import { baseOf, hasItem, item, ITEMS } from '../content/items.ts';
 import { rarityRank } from '../content/rarity.ts';
 import { itemCount, type Cultivator } from './state.ts';
 
@@ -56,7 +56,13 @@ export interface Offerings {
 
 /** The items a cultivator holds that can be laid at an attempt, by id. */
 export function offerable(c: Cultivator): string[] {
-  return ITEMS.filter((i) => i.uses.offer && itemCount(c, i.id) > 0).map((i) => i.id);
+  // Held ids, variants included, in the written list's order.
+  const order = new Map(ITEMS.map((i, n) => [i.id, n]));
+  return Object.keys(c.items)
+    .filter((id) => itemCount(c, id) > 0 && hasItem(id) && item(id).uses.offer)
+    .sort(
+      (a, b) => (order.get(baseOf(a)) ?? 0) - (order.get(baseOf(b)) ?? 0) || a.localeCompare(b),
+    );
 }
 
 /**

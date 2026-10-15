@@ -5,7 +5,8 @@
 // trust the act needs. The true numbers decide; what you see is judged from what you know of them:
 // the memories you know they hold, the motives and leans you have learned. Your renown counts to
 // anyone who knows your name; a recruit's bond sets what it needs: loyalty asks friendly (P3.4b).
-import { ITEMS } from '../../content/items.ts';
+import { hasItem, item, itemKind, type Item } from '../../content/items.ts';
+import { priceOf } from '../prices.ts';
 import {
   ALWAYS_SUSPICIOUS,
   BARGAIN_AXIS,
@@ -16,7 +17,6 @@ import {
   type Nature,
   type OfferId,
 } from '../../content/personality.ts';
-import { rarityRank } from '../../content/rarity.ts';
 import { realmIndex } from '../../content/realms.ts';
 import {
   ACTS,
@@ -102,7 +102,7 @@ export function talkCheck(
   const superstitious = (nn: Nature) =>
     nn.quirks.some((q) => (QUIRKS[q] as { prop?: string }).prop === 'talisman') &&
     (st.uses ?? []).some(
-      (u) => (a.items[u] ?? 0) > 0 && ITEMS.find((i) => i.id === u)?.kind === 'talisman',
+      (u) => (a.items[u] ?? 0) > 0 && hasItem(u) && itemKind(item(u)) === 'talisman',
     );
   const helpers = (st.helpers ?? []).length;
   const renown =
@@ -153,19 +153,16 @@ export function talkCheck(
 
 // ── Gifts ────────────────────────────────────────────────────────────────────────────────────
 
-/** A gift's worth a unit in stones, by its rarity, until P3.5's prices. */
-const WORTH_BY_RANK = [2, 5, 10, 20, 40, 80, 160, 320];
-
-/** What a gift is worth and what kind of thing it is. */
+/** What a gift is worth, in stones at its posted price (core/prices.ts), and what kind of thing it is. */
 export function giftOf(thing: string, n: number): { worth: number; kind: GiftKind | undefined } {
   if (thing === 'stones') return { worth: n, kind: 'stones' };
-  const it = ITEMS.find((i) => i.id === thing);
-  if (!it) return { worth: n, kind: undefined };
-  const worth = (WORTH_BY_RANK[rarityRank(it.rarity)] ?? 5) * n;
+  if (!hasItem(thing)) return { worth: n, kind: undefined };
+  const it = item(thing);
+  const worth = priceOf(thing) * n;
   return { worth, kind: giftKindOf(it) };
 }
 
-function giftKindOf(it: (typeof ITEMS)[number]): GiftKind | undefined {
+function giftKindOf(it: Item): GiftKind | undefined {
   switch (it.kind) {
     case 'gear': {
       const slot = (it.uses as { equip?: { slot?: string } }).equip?.slot;

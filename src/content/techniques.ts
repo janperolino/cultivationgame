@@ -7,6 +7,7 @@
 // in M2.
 import type { LadderId } from './cultivation.ts';
 import type { RarityId } from './rarity.ts';
+import { CATALOG_TECHNIQUES } from './catalogs/index.ts';
 
 /** The eleven damage types (design § Combat). */
 export const DAMAGE_TYPES = [
@@ -88,7 +89,7 @@ export interface Technique {
   text: string;
 }
 
-export const TECHNIQUES: readonly Technique[] = [
+const WRITTEN: readonly Technique[] = [
   {
     id: 'rampart-palm',
     name: 'Rampart Palm',
@@ -322,6 +323,9 @@ export const TECHNIQUES: readonly Technique[] = [
     text: 'The soul sees the blow begin; the step is only the body agreeing with it, a shadow sliding off the wall.',
   },
 ];
+
+/** The written list and every catalog's (content/catalogs/). */
+export const TECHNIQUES: readonly Technique[] = [...WRITTEN, ...CATALOG_TECHNIQUES];
 
 const byId = new Map(TECHNIQUES.map((t) => [t.id, t]));
 

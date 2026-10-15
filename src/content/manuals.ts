@@ -21,6 +21,7 @@ import type { RarityId } from './rarity.ts';
 import type { Effect, StatId } from './stats.ts';
 import { technique } from './techniques.ts';
 import { BIG_THREE, TREES } from './trees/index.ts';
+import { CATALOG_ARTS, CATALOG_MANUALS } from './catalogs/index.ts';
 
 export const MANUAL_KINDS = {
   formula: { name: 'Formula', plural: 'Formulas', hanzi: '口诀', glyph: '诀' },
@@ -88,7 +89,7 @@ export interface Manual {
   nodes: readonly ManualNode[];
 }
 
-type ManualDef = Omit<Manual, 'nodes' | 'ladder' | 'host' | 'tier'> & {
+export type ManualDef = Omit<Manual, 'nodes' | 'ladder' | 'host' | 'tier'> & {
   ladder?: LadderId;
   /** Authored manuals name it; a generated one leaves it out and takes its first effect's. */
   host?: string | null;
@@ -187,7 +188,7 @@ function forMethod(id: string, nodes: readonly ManualNodeDef[]): Manual {
 }
 
 /** An Art's passive as its list writes it: the tier and the wake level come from the technique. */
-type ArtNodeDef = Omit<ManualNodeDef, 'tier' | 'mastery'>;
+export type ArtNodeDef = Omit<ManualNodeDef, 'tier' | 'mastery'>;
 
 /**
  * A technique's Art: the technique on its name plate, never a node, and its passives, which wake
@@ -216,7 +217,7 @@ function forTechnique(id: string, nodes: readonly ArtNodeDef[]): Manual {
 /** A method's node, unsealed at a mastery level: 1 is Comprehension, 2 Mastery. */
 const at = (mastery: number) => ({ tier: 1, mastery });
 
-export const MANUALS: readonly Manual[] = [
+const WRITTEN: readonly Manual[] = [
   // ------------------------------------------------------------ loose formulas
   defineManual({
     id: 'garrison-breath-count',
@@ -652,6 +653,16 @@ export const MANUALS: readonly Manual[] = [
       text: 'A draft moves the flame before it moves the curtain; watch the flame and you are already gone.',
     },
   ]),
+];
+
+/**
+ * The written list and every catalog's (content/catalogs/): their loose manuals, and the Arts
+ * written beside their techniques.
+ */
+export const MANUALS: readonly Manual[] = [
+  ...WRITTEN,
+  ...CATALOG_MANUALS.map(defineManual),
+  ...CATALOG_ARTS.map((a) => forTechnique(a.technique, a.nodes)),
 ];
 
 const byId = new Map(MANUALS.map((m) => [m.id, m]));
