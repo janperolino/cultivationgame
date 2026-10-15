@@ -4,8 +4,9 @@
 // instead, so it comes about once every few real minutes whatever the realm's clock, and the first
 // hour's story cards come first on a day both pass. Cards wait for the player; an urgent one
 // resolves by its default choice once it has waited its days. Offline, at most three wait and the
-// rest resolve by default at once, for the coming-back story. Choosing pays the cost, rolls the
-// check and applies the effects; a choice can lead to a further step, which carries the card's
+// rest resolve by default at once, for the coming-back story. Choosing pays the cost, makes the
+// check (your attribute against the card's number, the resolver's comparison, no roll) and
+// applies the effects; a choice can lead to a further step, which carries the card's
 // variables on, and the card writes one chronicle line for its path when it ends, naming everyone
 // it spoke of. `playDay` is the game's day step: cultivation, then the cards.
 import {
@@ -52,6 +53,7 @@ import {
   type GameState,
   type PendingCard,
 } from './state.ts';
+import { verdict, type Verdict } from './resolver/check.ts';
 import { agility, aptitude, fortune, stats } from './stats.ts';
 
 // ---------------------------------------------------------------- triggers
@@ -235,20 +237,27 @@ export interface CardResult {
   reason?: string;
   /** What the card says happened, slots filled. */
   text: string;
-  /** The check's outcome, or null without one. */
+  /** The check's outcome, or null without one: true on a clear or close pass. */
   pass: boolean | null;
-  /** The d20 and the total against the difficulty, when there was a check. */
-  roll?: { d20: number; total: number; dc: number };
+  /** The comparison, when there was a check: your attribute, the card's number and the verdict. */
+  check?: CardCheck;
   /** False when the card goes on to a further step and still waits. */
   done: boolean;
 }
 
-/** A d20 check: d20 + (attribute − 10) against the difficulty. */
-function rollCheck(c: Cultivator, choice: CardChoice, rng: Rng) {
-  const check = choice.check!;
-  const d20 = 1 + Math.floor(rng.next() * 20);
-  const total = d20 + attributeValue(c, check.attribute) - 10;
-  return { d20, total, dc: check.dc, pass: total >= check.dc };
+/** A card's check: your attribute against its number, clear, close or short, never a roll. */
+export interface CardCheck {
+  yours: number;
+  against: number;
+  verdict: Verdict;
+}
+
+/** The check a choice makes for this cultivator, or null without one; the same until you change. */
+export function cardCheck(c: Cultivator, choice: CardChoice): CardCheck | null {
+  if (!choice.check) return null;
+  const yours = attributeValue(c, choice.check.attribute);
+  const against = choice.check.against;
+  return { yours, against, verdict: verdict(yours, against) };
 }
 
 /**
@@ -269,8 +278,8 @@ export function cardWho(c: Cultivator, vars: Readonly<Record<string, number>> = 
 }
 
 /**
- * Resolves the step a waiting card stands at with a choice: pays its cost, rolls its check on the
- * `world` stream and applies the outcome's effects. An outcome that leads on moves the card to its
+ * Resolves the step a waiting card stands at with a choice: pays its cost, makes its check and
+ * applies the outcome's effects: a close pass takes the choice's close outcome when it has one. An outcome that leads on moves the card to its
  * next step, still waiting; one that ends it writes the chronicle line for the path, with every
  * person the card named as an actor.
  */
@@ -297,15 +306,14 @@ export function resolveCard(
     next = withPlayer(next, { ...next.player, stones: next.player.stones - cost.stones });
   if (cost?.item) next = withPlayer(next, addItem(next.player, cost.item.id, -cost.item.n));
 
-  let pass: boolean | null = null;
-  let roll: CardResult['roll'];
-  if (choice.check) {
-    const r = withStream(next, 'world', (rng) => rollCheck(next.player, choice, rng));
-    next = r.state;
-    pass = r.value.pass;
-    roll = { d20: r.value.d20, total: r.value.total, dc: r.value.dc };
-  }
-  const outcome: CardOutcome = pass === false && choice.fail ? choice.fail : choice.pass;
+  const check = cardCheck(next.player, choice) ?? undefined;
+  const pass = check ? check.verdict !== 'short' : null;
+  const outcome: CardOutcome =
+    pass === false && choice.fail
+      ? choice.fail
+      : check?.verdict === 'close' && choice.close
+        ? choice.close
+        : choice.pass;
   for (const e of outcome.effects) if (e.do === 'var') vars[e.id] = (vars[e.id] ?? 0) + e.n;
   const text = fillSlots(outcome.text, cardWho(s.player, vars));
   const path = [...(pending.path ?? []), index];
@@ -322,7 +330,7 @@ export function resolveCard(
       },
     };
     for (const e of outcome.effects) next = applyEffect(next, e);
-    return { state: next, ok: true, text, pass, done: false, ...(roll ? { roll } : {}) };
+    return { state: next, ok: true, text, pass, done: false, ...(check ? { check } : {}) };
   }
 
   next = { ...next, cards: { ...next.cards, pending: rest } };
@@ -345,7 +353,7 @@ export function resolveCard(
   for (const [key, v] of Object.entries(vars)) data[`var.${key}`] = v;
   next = addEvent(next, 'card', data, [next.player.id, ...named]);
   for (const e of outcome.effects) next = applyEffect(next, e);
-  return { state: next, ok: true, text, pass, done: true, ...(roll ? { roll } : {}) };
+  return { state: next, ok: true, text, pass, done: true, ...(check ? { check } : {}) };
 }
 
 /** Every text a card showed along a path of choices, for the people it named. */
@@ -499,8 +507,17 @@ export interface CardView {
   day: number;
   /** Which step of how many it has taken so far: 1 at its opening. */
   stepNumber: number;
-  /** The choices offered at this step, each with its index in the step and whether it can be paid. */
-  choices: { index: number; label: string; check: ChoiceCheck; choice: CardChoice }[];
+  /**
+   * The choices offered at this step, each with its index in the step, whether it can be paid and
+   * the verdict its check would give, shown before you choose.
+   */
+  choices: {
+    index: number;
+    label: string;
+    check: ChoiceCheck;
+    comparison: CardCheck | null;
+    choice: CardChoice;
+  }[];
 }
 
 /** A waiting card as the player reads it: slots filled, each offered choice with whether it can be paid. */
@@ -523,6 +540,7 @@ export function viewCard(s: GameState, p: PendingCard): CardView {
         index,
         label: fillSlots(choice.label, who),
         check: canChoose(s.player, choice),
+        comparison: cardCheck(s.player, choice),
         choice,
       })),
   };

@@ -33,7 +33,7 @@ export function hashSeed(s: string): number {
  * Named streams, one per system. Each is seeded from the life's seed and its own name, so adding
  * a system, or rolling more in one, never shifts another's rolls.
  */
-export const STREAMS = ['breakthrough', 'combat', 'world', 'orbs', 'people'] as const;
+export const STREAMS = ['breakthrough', 'combat', 'world', 'orbs', 'people', 'scene'] as const;
 export type StreamName = (typeof STREAMS)[number];
 
 /** The starting state of a named stream for a life's seed. */

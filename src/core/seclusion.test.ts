@@ -255,13 +255,10 @@ describe('multi-step cards', () => {
     expect(s.cards.pending[0]).toMatchObject({ card: 'thief', step: 'karst', path: [1] });
     expect(viewCard(s, s.cards.pending[0]!).text).toMatch(/karst/);
     expect(s.chronicle).toHaveLength(n);
-    // Find a seed whose stone-reading passes, then take the stones back.
-    let cornered: GameState | null = null;
-    for (let i = 0; i < 60 && !cornered; i++) {
-      const t = resolveCard({ ...s, rng: { ...s.rng, world: i * 7919 } }, 1, 1);
-      if (!t.done) cornered = t.state;
-    }
-    if (!cornered) throw new Error('no passing roll');
+    // The stone-reading passes for an ordinary cultivator, with no roll; then take the stones back.
+    const read = resolveCard(s, 1, 1);
+    expect(read.done).toBe(false);
+    const cornered = read.state;
     expect(cornered.cards.pending[0]).toMatchObject({ step: 'cornered', path: [1, 1] });
     r = resolveCard(cornered, 1, 0);
     expect(r.done).toBe(true);
@@ -281,12 +278,17 @@ describe('multi-step cards', () => {
     s = resolveCard(s, 1, 1).state;
     let steady: GameState | null = null;
     let shaken: GameState | null = null;
-    for (let i = 0; i < 60 && (!steady || !shaken); i++) {
-      const t = resolveCard({ ...s, rng: { ...s.rng, world: i * 104729 } }, 1, 1);
+    // No roll: a strong cultivator passes the check and a weak one falls short.
+    for (const n of [20, 5]) {
+      const strong = withPlayer(s, {
+        ...s.player,
+        attributes: { agility: n, fortune: n, aptitude: n },
+      });
+      const t = resolveCard(strong, 1, 1);
       if (t.pass) steady ??= t.state;
       else shaken ??= t.state;
     }
-    if (!steady || !shaken) throw new Error('no rolls of both kinds');
+    if (!steady || !shaken) throw new Error('no verdicts of both kinds');
     expect(steady.cards.pending[0]!.vars).toEqual({ steady: 1 });
     expect(viewCard(steady, steady.cards.pending[0]!).choices.map((c) => c.index)).toEqual([0, 1]);
     expect(viewCard(shaken, shaken.cards.pending[0]!).choices.map((c) => c.index)).toEqual([0]);

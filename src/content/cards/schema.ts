@@ -10,7 +10,7 @@ import type { OriginChoice, OriginId } from '../origins.ts';
 import type { BondId } from '../people.ts';
 import type { RealmId } from '../realms.ts';
 
-/** The attributes a card's d20 check can read (design § Combat, the six attributes). */
+/** The attributes a card's check can read (design § Combat, the six attributes). */
 export type CheckAttribute = 'agility' | 'fortune' | 'aptitude';
 
 /** The four seasons, three months each, the year opening in spring. */
@@ -138,10 +138,16 @@ export interface CardChoice {
   when?: VarCheck;
   /** What it costs up front; it can't be chosen without it. */
   cost?: { stones?: number; item?: { id: string; n: number } };
-  /** A d20 plus (attribute − 10) against the difficulty; `fail` applies when it misses. */
-  check?: { attribute: CheckAttribute; dc: number };
+  /**
+   * Your attribute against a number, the resolver's comparison with no roll (design § The resolver;
+   * P3.3): clear at ×1.25 of it, close at ×1, short below. A card is you against yourself, so it
+   * reads no realm. `fail` applies when short. P3.3 converted the old d20 difficulty as `dc − 2`.
+   */
+  check?: { attribute: CheckAttribute; against: number };
   /** What happens, or what happens on a pass when there is a check. */
   pass: CardOutcome;
+  /** What a close pass does, its cost paid; `pass` when absent (P3.12 writes them). */
+  close?: CardOutcome;
   fail?: CardOutcome;
 }
 

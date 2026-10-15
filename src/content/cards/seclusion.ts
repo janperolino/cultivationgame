@@ -74,7 +74,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           },
           {
             label: 'Push harder',
-            check: { attribute: 'fortune', dc: 12 },
+            check: { attribute: 'fortune', against: 10 },
             pass: {
               effects: [],
               text: 'He clutches his chest as if you had stabbed him, and names a lower number.',
@@ -133,7 +133,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Spend a few days on her knot',
-        check: { attribute: 'aptitude', dc: 10 },
+        check: { attribute: 'aptitude', against: 8 },
         pass: {
           effects: [
             { do: 'fuel', ladder: 'qi', share: -0.05 },
@@ -177,7 +177,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Argue that seclusion is service',
-        check: { attribute: 'aptitude', dc: 13 },
+        check: { attribute: 'aptitude', against: 11 },
         pass: {
           effects: [],
           text: 'He laughs, but he writes "in service" beside your name and goes.',
@@ -210,7 +210,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Show them your qi',
-        check: { attribute: 'agility', dc: 12 },
+        check: { attribute: 'agility', against: 10 },
         pass: {
           effects: [],
           text: "A palm into the rock beside one lad's ear, and they remember somewhere else to be.",
@@ -250,7 +250,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Drive it off',
-        check: { attribute: 'agility', dc: 12 },
+        check: { attribute: 'agility', against: 10 },
         pass: {
           effects: [
             { do: 'stones', n: 6 },
@@ -313,7 +313,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           },
           {
             label: 'Read the stone',
-            check: { attribute: 'aptitude', dc: 11 },
+            check: { attribute: 'aptitude', against: 9 },
             pass: {
               effects: [],
               text: 'Scuffs on wet limestone, a thread of cloth on a thorn: you have them.',
@@ -378,7 +378,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Plead seclusion',
-        check: { attribute: 'fortune', dc: 12 },
+        check: { attribute: 'fortune', against: 10 },
         pass: {
           effects: [],
           text: 'The runner shrugs and crosses your name off.',
@@ -480,7 +480,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Ride it round the small circuit',
-        check: { attribute: 'aptitude', dc: 13 },
+        check: { attribute: 'aptitude', against: 11 },
         pass: {
           effects: [{ do: 'insight', n: 12 }],
           text: 'You ride the heat round the small circuit nine times until it runs smooth, and something about the gate makes sense that did not before.',
@@ -519,7 +519,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Chase it',
-        check: { attribute: 'aptitude', dc: 12 },
+        check: { attribute: 'aptitude', against: 10 },
         pass: {
           effects: [{ do: 'insight', n: 25 }],
           text: 'You follow it down past the drop, past the wall, into the stone itself. When you come back the lamp is out.',
@@ -583,7 +583,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Sit with it until dawn',
-        check: { attribute: 'fortune', dc: 13 },
+        check: { attribute: 'fortune', against: 11 },
         pass: {
           effects: [
             { do: 'insight', n: 15 },
@@ -620,7 +620,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Force it open',
-        check: { attribute: 'aptitude', dc: 12 },
+        check: { attribute: 'aptitude', against: 10 },
         pass: {
           effects: [{ do: 'fuel', ladder: 'qi', share: 0.12 }],
           text: 'It bursts, and the backed-up qi floods on down the channel all at once.',
@@ -654,7 +654,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Listen a while',
-        check: { attribute: 'aptitude', dc: 14 },
+        check: { attribute: 'aptitude', against: 12 },
         pass: {
           effects: [{ do: 'insight', n: 15 }],
           text: 'You listen, and learn the shape of the thing that will one day try to eat you.',
@@ -714,7 +714,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           },
           {
             label: 'Hold your seat',
-            check: { attribute: 'agility', dc: 11 },
+            check: { attribute: 'agility', against: 9 },
             pass: {
               effects: [
                 { do: 'insight', n: 8 },
@@ -747,7 +747,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           {
             label: 'Climb to the ridge after it',
             when: { id: 'steady', min: 1 },
-            check: { attribute: 'aptitude', dc: 13 },
+            check: { attribute: 'aptitude', against: 11 },
             pass: {
               effects: [
                 { do: 'insight', n: 25 },
@@ -789,7 +789,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Drink deep',
-        check: { attribute: 'aptitude', dc: 12 },
+        check: { attribute: 'aptitude', against: 10 },
         pass: {
           effects: [{ do: 'fuel', ladder: 'qi', share: 0.18 }],
           text: 'You open every channel and drink until the tide goes out.',
@@ -826,7 +826,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Put the lamp out and sit in the dark',
-        check: { attribute: 'aptitude', dc: 13 },
+        check: { attribute: 'aptitude', against: 11 },
         pass: {
           effects: [
             { do: 'fuel', ladder: 'soul', share: 0.12 },
@@ -898,7 +898,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Search the high ledges',
-        check: { attribute: 'agility', dc: 12 },
+        check: { attribute: 'agility', against: 10 },
         pass: {
           effects: [{ do: 'stones', n: 7 }],
           text: 'The best of it grows where the goats will not go. You go anyway, and come back with seven stones of it.',
@@ -932,7 +932,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Read the wind',
-        check: { attribute: 'aptitude', dc: 12 },
+        check: { attribute: 'aptitude', against: 10 },
         pass: {
           effects: [{ do: 'insight', n: 8 }],
           text: 'Smoke from the beast lands, and too early: the herds are moving. You learn more from that smell than from a month of breathing.',
@@ -1034,7 +1034,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
           },
           {
             label: 'Ask about the gate',
-            check: { attribute: 'aptitude', dc: 13 },
+            check: { attribute: 'aptitude', against: 11 },
             pass: {
               effects: [
                 { do: 'insight', n: 20 },
@@ -1088,7 +1088,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Walk among the lanterns',
-        check: { attribute: 'fortune', dc: 12 },
+        check: { attribute: 'fortune', against: 10 },
         pass: {
           effects: [{ do: 'insight', n: 10 }],
           text: 'You walk the riverbank among the lanterns and the living and the not, and no one follows you home.',
@@ -1125,7 +1125,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Go to the walls',
-        check: { attribute: 'agility', dc: 13 },
+        check: { attribute: 'agility', against: 11 },
         pass: {
           effects: [
             { do: 'stones', n: 12 },
@@ -1225,7 +1225,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Spar with him',
-        check: { attribute: 'agility', dc: 12 },
+        check: { attribute: 'agility', against: 10 },
         pass: {
           effects: [
             { do: 'flag', id: 'met-rival' },
@@ -1391,7 +1391,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Ask how he did it',
-        check: { attribute: 'fortune', dc: 12 },
+        check: { attribute: 'fortune', against: 10 },
         pass: {
           effects: [
             { do: 'person', who: 'senior', advance: 1, regard: 1 },
@@ -1427,7 +1427,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Leave a false trail',
-        check: { attribute: 'agility', dc: 12 },
+        check: { attribute: 'agility', against: 10 },
         pass: {
           effects: [{ do: 'person', who: 'sergeant', regard: -1, where: 'qm-shoukou-cheng' }],
           text: 'You leave your old boots on a ferry bound for the City of the Guarded Mouth. She follows them.',
@@ -1473,7 +1473,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Look inside the crate',
-        check: { attribute: 'agility', dc: 13 },
+        check: { attribute: 'agility', against: 11 },
         pass: {
           effects: [
             { do: 'flag', id: 'favor-paid' },
@@ -1515,7 +1515,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Take the job',
-        check: { attribute: 'agility', dc: 11 },
+        check: { attribute: 'agility', against: 9 },
         pass: {
           effects: [
             { do: 'stones', n: 8 },

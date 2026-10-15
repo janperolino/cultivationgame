@@ -2,7 +2,7 @@
 // and holds the slot's tab lock so two tabs never autosave over each other.
 import { create } from 'zustand';
 import type { HourKind } from '../content/hours.ts';
-import { playDay, resolveCard } from '../core/cards.ts';
+import { playDay, resolveCard, type CardCheck } from '../core/cards.ts';
 import { createLife, createNextLife, type Creation } from '../core/creation.ts';
 import type { Seat } from '../core/attention.ts';
 import { LADDERS, type LadderId } from '../core/cultivation.ts';
@@ -72,7 +72,8 @@ export interface CardOutcomeView {
   goesOn: boolean;
   text: string;
   pass: boolean | null;
-  roll?: { d20: number; total: number; dc: number };
+  /** Your attribute against the card's number, and the verdict. */
+  check?: CardCheck;
 }
 
 export type Phase =
@@ -505,7 +506,7 @@ export const useGame = create<GameStore>()((set, get) => {
           text: r.text,
           pass: r.pass,
           goesOn: !r.done,
-          ...(r.roll ? { roll: r.roll } : {}),
+          ...(r.check ? { check: r.check } : {}),
         },
       });
       void get().saveNow();

@@ -193,20 +193,28 @@ describe('choosing', () => {
     expect(resolveCard(poor, 1, 1)).toMatchObject({ ok: false, state: poor });
   });
 
-  it('rolls a check on the world stream, with the fail outcome on a miss', () => {
-    const outcomes = new Set<boolean | null>();
-    for (let i = 0; i < 30; i++) {
-      const s = pend(life('cave-orphan', 'along', `check-${i}`), 'errand-cave-along', 1);
+  it('makes its check as a comparison, the same answer every time, with the fail outcome when short', () => {
+    const at = (agility: number) => {
+      const s = life('cave-orphan', 'along', 'check');
+      const p = { ...s.player, attributes: { ...s.player.attributes, agility } };
+      return pend(withPlayer(s, p), 'errand-cave-along', 1);
+    };
+    // Agility 10 against 10 is close, 13 is clear, 9 is short.
+    const verdicts = [10, 13, 9].map((a) => {
+      const s = at(a);
       const r = resolveCard(s, 1, 0);
-      outcomes.add(r.pass);
       // The tempering art comes as a copy, read before it opens body hours.
       expect(r.state.player.copies['method:stone-bearing']).toBe(1);
-      expect(r.state.player.methods).not.toHaveProperty('stone-bearing');
       if (r.pass === false) expect(r.state.player.qi.injuredUntil).toBeGreaterThan(s.calendar.day);
       else expect(r.state.player.stones).toBe(s.player.stones + 8);
-      expect(r.roll!.total).toBe(r.roll!.d20);
-    }
-    expect(outcomes).toEqual(new Set([true, false]));
+      // No roll: the world stream is untouched, and a second try answers the same.
+      expect(r.state.rng.world).toBe(s.rng.world);
+      expect(resolveCard(s, 1, 0).check).toEqual(r.check);
+      return r.check!.verdict;
+    });
+    expect(verdicts).toEqual(['close', 'clear', 'short']);
+    const view = viewCard(at(9), at(9).cards.pending[0]!);
+    expect(view.choices[0]!.comparison).toEqual({ yours: 9, against: 10, verdict: 'short' });
   });
 
   it('resolves an urgent card by its default once it has waited its days', () => {

@@ -28,9 +28,10 @@ import { card, hasCard } from '../../content/cards/index.ts';
 import { peopleIn } from '../people.ts';
 import { seeAll } from '../seen.ts';
 import { flipHour } from '../wheel.ts';
+import { emptyWorld } from '../resolver/world.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -672,6 +673,13 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const { hints, ...lineage } = (s.lineage ?? {}) as Raw;
     const shown = Array.isArray(hints) ? hints : [];
     return { ...old, version: 19, state: { ...s, lineage, hints: { on: true, shown } } };
+  },
+
+  // v19, P3.3: nothing lasted from going in. v20 adds the world: no heat, no deeds, no lasting
+  // states or projects, nothing learned.
+  19: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    return { ...old, version: 20, state: { ...s, world: emptyWorld() } };
   },
 };
 

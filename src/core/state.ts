@@ -21,6 +21,7 @@ import { defaultElements, ROOT_IDS, type RootId } from '../content/roots.ts';
 import { hashSeed, Rng, streamSeed, type StreamName } from './rng.ts';
 import { stats } from './stats.ts';
 import { flipHour } from './wheel.ts';
+import { emptyWorld, WorldSchema } from './resolver/world.ts';
 
 /** The in-game calendar: twelve months of thirty days. */
 export const DAYS_PER_YEAR = 360;
@@ -293,6 +294,11 @@ export const GameStateSchema = z.object({
   rewindCharges: z.number().int().min(0).max(1),
   /** The life's seed; every random stream starts from it and its own name. */
   seed: z.number().int(),
+  /**
+   * What lasts from going in (core/resolver/world.ts): heat, deeds and who knows of them, lasting
+   * states, projects, what you have learned, and the states of places and kept people.
+   */
+  world: WorldSchema,
   /** Where each named random stream stands, so a reload continues the same sequences. */
   rng: z.record(z.string(), z.number().int()),
 });
@@ -495,6 +501,7 @@ export function newLife(opts: NewLifeOptions): GameState {
     rewindCharges: mode === 'gentle' ? 1 : 0,
     seed,
     rng: {},
+    world: emptyWorld(),
   };
 }
 

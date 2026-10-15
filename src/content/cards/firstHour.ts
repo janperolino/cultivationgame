@@ -45,7 +45,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
       },
       {
         label: 'Work the tide crossing for your passage',
-        check: { attribute: 'agility', dc: 11 },
+        check: { attribute: 'agility', against: 9 },
         pass: {
           effects: [
             { do: 'method', id: 'night-bridge' },
@@ -82,7 +82,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
     choices: [
       {
         label: 'Run it across the rooftops',
-        check: { attribute: 'agility', dc: 11 },
+        check: { attribute: 'agility', against: 9 },
         pass: {
           effects: [
             { do: 'copy', id: 'method:bounty-scrap' },
@@ -141,7 +141,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
       },
       {
         label: 'Run for the reef caves',
-        check: { attribute: 'agility', dc: 10 },
+        check: { attribute: 'agility', against: 8 },
         pass: {
           effects: [{ do: 'fuel', ladder: 'body', share: 0.1 }],
           text: 'You are three caves deep before they reach the shore, and you sleep in the dark for a week.',
@@ -318,7 +318,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
     choices: [
       {
         label: 'Take the short way through the breathing cave',
-        check: { attribute: 'agility', dc: 12 },
+        check: { attribute: 'agility', against: 10 },
         pass: {
           effects: [TEMPERING, { do: 'stones', n: 8 }, { do: 'fuel', ladder: 'body', share: 0.2 }],
           text: 'You get them through the breathing cave between gusts and find the raiders\' cache. {sergeant} pays you eight stones and hands you a garrison tempering art: "You climb like you were born on a rope. Make it count."',
@@ -356,7 +356,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
     choices: [
       {
         label: 'Take them under the patrol',
-        check: { attribute: 'fortune', dc: 12 },
+        check: { attribute: 'fortune', against: 10 },
         pass: {
           effects: [TEMPERING, { do: 'stones', n: 10 }, { do: 'fuel', ladder: 'body', share: 0.2 }],
           text: "You hear the patrol's boots through the rock above and the crew never does. The leader pays ten stones and throws in the tempering art.",
@@ -394,7 +394,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
     choices: [
       {
         label: 'Go down the rope',
-        check: { attribute: 'agility', dc: 12 },
+        check: { attribute: 'agility', against: 10 },
         pass: {
           effects: [TEMPERING, { do: 'stones', n: 8 }, { do: 'fuel', ladder: 'body', share: 0.2 }],
           text: 'A bone-gnawer pup, half grown, digging at the wall. You drive it off with the spear and bring back the tooth it broke. {sergeant} pays the bounty out of pocket and hands you the garrison tempering art.',
@@ -431,7 +431,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
     choices: [
       {
         label: 'Run it past the skiff',
-        check: { attribute: 'agility', dc: 12 },
+        check: { attribute: 'agility', against: 10 },
         pass: {
           effects: [TEMPERING, { do: 'stones', n: 10 }, { do: 'fuel', ladder: 'body', share: 0.2 }],
           text: "You run it waist-deep in the dark and the skiff never turns its lamp. {fixer} pays ten stones and a copy of the tempering art the Society's runners read.",
@@ -474,7 +474,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
     choices: [
       {
         label: 'Drive the boar',
-        check: { attribute: 'agility', dc: 12 },
+        check: { attribute: 'agility', against: 10 },
         pass: {
           effects: [TEMPERING, { do: 'stones', n: 8 }, { do: 'fuel', ladder: 'body', share: 0.2 }],
           text: 'You drive it into {senior}\'s saber like you have done it all your life. Your share of the core is eight stones, and {senior} tosses you the Gate\'s tempering art: "Get heavier."',
@@ -515,7 +515,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
     choices: [
       {
         label: 'Be the bait',
-        check: { attribute: 'agility', dc: 12 },
+        check: { attribute: 'agility', against: 10 },
         pass: {
           effects: [TEMPERING, { do: 'stones', n: 10 }, { do: 'fuel', ladder: 'body', share: 0.2 }],
           text: 'The viper strikes where you were a heartbeat ago and the net drops. Ten stones and the tempering art, and a nod that means more.',

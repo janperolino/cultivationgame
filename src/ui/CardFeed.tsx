@@ -13,6 +13,9 @@ import type { GameState } from '../core/state.ts';
 import { reducedMotion } from './settings.ts';
 import { useGame, type CardOutcomeView } from './store.ts';
 
+/** A check's verdict after the choice: your attribute against the card's number, no roll. */
+const VERDICT_WORDS = { clear: 'Clear', close: 'Close', short: 'Short' } as const;
+
 /** How many cards show behind the top one; the rest are counted. */
 const FANNED = 3;
 
@@ -40,9 +43,10 @@ function Choices({ open, onChose }: { open: CardView; onChose: (error: string | 
           {c.choice.cost?.stones ? (
             <span className="caption">{c.choice.cost.stones} spirit stones</span>
           ) : null}
-          {c.choice.check && (
+          {c.choice.check && c.comparison && (
             <span className="caption">
-              {statInfo(c.choice.check.attribute).name} check, {c.choice.check.dc} or more on a d20
+              {statInfo(c.choice.check.attribute).name} {c.comparison.yours} against{' '}
+              {c.comparison.against} · {c.comparison.verdict}
             </span>
           )}
           {!c.check.ok && <span className="caption warn">{c.check.reason}</span>}
@@ -120,10 +124,10 @@ export function CardFeed() {
             >
               <h3>{outcome.title}</h3>
               <p className="result">{outcome.text}</p>
-              {outcome.roll && (
+              {outcome.check && (
                 <p className="caption spaced">
-                  {outcome.pass ? 'Passed' : 'Failed'}: rolled {outcome.roll.d20},{' '}
-                  {outcome.roll.total} against {outcome.roll.dc}.
+                  {VERDICT_WORDS[outcome.check.verdict]}: {outcome.check.yours} against{' '}
+                  {outcome.check.against}.
                 </p>
               )}
               <div className="actions">

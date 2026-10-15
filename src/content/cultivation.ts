@@ -79,8 +79,8 @@ export const OFFER_INJURY = 0.5;
 /** An offering of your root's element adds a step of odds, like a tenth of overfill. */
 export const OFFER_ELEMENT_ODDS = ODDS_PER_TENTH;
 /**
- * Two surging offerings clash: the worst twentieth of rolls, a natural 1 on a d20, then fails
- * and injures as a failed major would, whatever the odds.
+ * Two surging offerings clash: on the worst twentieth of the breakthrough's own roll the attempt
+ * fails and injures as a failed major would, whatever the odds.
  */
 export const CLASH_ROLL = 0.95;
 

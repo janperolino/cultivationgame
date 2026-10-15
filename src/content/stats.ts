@@ -334,21 +334,24 @@ const BASE_STATS = {
   perception: {
     name: 'Perception',
     unit: 'percent',
-    what: 'seeing through feints, ambushes and concealment',
-    arrives: 'combat',
+    what: 'noticing the hidden, reading a realm, seeing through a veil or a disguise',
   },
+  // The resolver's capabilities (content/resolver.ts): a stat naming one helps its checks.
+  stealth: { name: 'Stealth', unit: 'percent', what: 'sneaking, hiding, stealing and tailing' },
+  force: { name: 'Force', unit: 'percent', what: 'breaking, lifting, holding and enduring' },
+  speed: { name: 'Speed', unit: 'percent', what: 'chasing, fleeing and outrunning' },
+  find: { name: 'Finding', unit: 'percent', what: 'searching and tracking' },
   // Gear (design § Items and gear): treasure slots open from the Qi and Soul trees.
   treasureSlots: {
     name: 'Treasure slot',
     unit: 'points',
     what: 'a slot for an artifact that is properties alone',
   },
-  // Read once the map and crafting arrive (M3, M4).
+  // Concealment is read by the resolver (P3.3); the rest once the map and crafting arrive (M3, M4).
   concealment: {
     name: 'Concealment',
     unit: 'stages',
-    what: 'stages your realm reads lower to others',
-    arrives: 'the map',
+    what: 'how many stages below your realm you can show',
   },
   flight: { name: 'Flight', unit: 'percent', what: 'how far you fly in a day', arrives: 'the map' },
   divineSense: {
