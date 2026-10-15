@@ -782,6 +782,19 @@ Agility counts as it does in a fight, 5% a point above 10. A check with no oppon
 
 **No retries.** With no dice, the same attempt gives the same answer until something changes: another approach (another verb, a new prop, a helper), a move in trust or heat, or someone else on the gate.
 
+**Scenes and time** (D3, 2026-10-14).
+
+- **A scene** is a place (a site, or a spot on the road), the people there, the place's features and a clock. It starts from a trip's goal, an encounter, a card you go in on, or your walking into a town to look round.
+- **Ticks.** A scene's clock runs in ticks of a quarter of a wheel hour, about half an hour of the day: an exchange of talk, a sneak past a gate, a search of a room. Looking around takes four ticks, and a whole fight one, since its turns are a few breaths. The world's clock stops while you are in a scene, so real time spent typing costs nothing; when you leave, the ticks join the world's clock and come off your wheel, which is how going in costs cultivation.
+- **Everyone acts each tick** through the same resolver, in Agility order as in a fight: you take your plan's next step, your followers carry out their orders, and NPCs take whatever serves their strongest motive. That is where a plan's surprises come from.
+- **A fight is a mode of the scene**, run turn by turn on the combat engine while the scene goes on round it. People already in the scene can act the next turn; followers you left nearby arrive in 3 turns, or 6 if within call; the law arrives where it answers fast; anyone farther comes after the fight and finds what's left, as a witness.
+- **Noise.** A fight is heard out to a range set by its loudest fighter's realm: 1 li at Qi Condensation, 5 at Foundation, 25 at Core Formation, 120 at Nascent Soul. Each tick it rings, it rolls the place's encounter table for arrivals, more often the busier the place. Sneaking makes none, a scream a little, and techniques and talismans make noise at their realm.
+- **The law of a place**, from its kind and its power: nobody in the wilds; a village's headman and perhaps a Qi Condensation guard in 2 ticks; a town's watch, mortals under a Qi Condensation captain, in a tick; a city's garrison cultivators in 3 turns; a sect's elders, whose divine sense covers their grounds, in 1 to 3 turns. The law judges by what it saw and by its power's standing with you, and heat rises with what it found.
+- **Open scenes** carry no stakes: your stall, a teahouse, a walk through a market. They tick like any scene, people drift in at the place's traffic (a stall's customers come from its people table), and Wait skips to the next arrival. One ends when you leave, or when you set the stall to tend itself as hours on your wheel, selling while you're idle.
+- **A scene ends** when you leave (fleeing, if mid-fight), when its stakes resolve, or when you are dead or taken. It saves after every step, so a reload drops you back into it.
+- **Groups.** A group sneaks at its worst member's stealth and talks at its best member's; a helper adds ×1.2, two at most.
+- **Narration.** A narrator call for every step of yours. In a fight a turn gets a sentence or two, so it stays quick, and the moments that matter get more: the first blow, a kill, an arrival, the end. At the spike's prices a ten-turn fight costs about a cent.
+
 **Symmetry.** NPCs make every one of these checks against you: the rival's lie, the bandit's sneak, the elder reading your veil.
 
 **The playbook:** the cases every D3 block is checked against. A case that can't play through marks a gap.
