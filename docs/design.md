@@ -699,6 +699,8 @@ Everything that happens to you is a card, in seclusion and in the world alike: a
 
 The map is the go-in's board, and travel reuses the wheel.
 
+**The travel map** (Jan's call, D3, 2026-10-14). The world map is the main go-in mode, and travel is as easy as a click: left-click where you want to go and a dotted line runs from you to there, a click again changes course at any time, and a right-click on a spot lists what you can do there (look around, camp, cultivate, enter, ask after rumors, search a rumored ring). Besides walking, riding and boats, a flying artifact boat carries you and frees your hours, at a price in stones. The details are the travel phase's talk.
+
 **Travel is a kind of hour.** On foot or on your own sword, travel hours move you and the rest of your day is yours, so "walk by day, cultivate by night" is a travel routine saved like any other. Riding something, a horse, a cart, a boat, a beast, a flying boat, someone else's sword, moves you without your hours, and your wheel turns at a jostled penalty, about half for qi, body and soul, study untouched on a boat. Pressed travel sets all waking hours to travel and rolls more encounters.
 
 **Going somewhere.** Pick a known place, a point in the fog or "follow the road", and the engine routes along the atlas's roads where they exist and cross-country where they don't, with days from your pace. Each travel day rolls encounters by the terrain under you, the hour, the danger band between the region's top realm and yours, your fame and the calendar.
