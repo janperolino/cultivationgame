@@ -775,7 +775,7 @@ Agility counts as it does in a fight, 5% a point above 10. A check with no oppon
 
 **People checks** are not sized by realm: a Qi Condensation con man with a forged token can fool a Foundation noble, and a mortal merchant can out-haggle you. Persuade, ask, lie, bargain, recruit and calm weigh your leverage against their resistance, both starting at 1, with the same three verdicts.
 
-- **Leverage:** trust (hostile ×0.25, wary ×0.5, neutral ×1, friendly ×1.5, trusting ×2; block 3 settles trust); an offer that meets one of their motives ×2; proof or a prop ×1.5 (a token, a sect's robe); standing with their power, ×0.5 at its worst to ×1.5 at its best; a talent, node or Way that names the check.
+- **Leverage:** trust, the word their opinion of you reads (hostile ×0.25, wary ×0.5, neutral ×1, friendly ×1.5, trusting ×2; What lasts); an offer that meets one of their motives ×2; proof or a prop ×1.5 (a token, a sect's robe); standing with their power, ×0.5 at its worst to ×1.5 at its best; a talent, node or Way that names the check.
 - **Resistance:** a motive against it ×2, suspicion of you ×2, their own talents.
 - What you see is your read of them, built from what you know. A motive you haven't learned can turn it: "he had a reason you didn't know".
 - A soul two realms above yours reads your lies, so a lie to it fails and it knows.
@@ -794,6 +794,33 @@ Agility counts as it does in a fight, 5% a point above 10. A check with no oppon
 - **A scene ends** when you leave (fleeing, if mid-fight), when its stakes resolve, or when you are dead or taken. It saves after every step, so a reload drops you back into it.
 - **Groups.** A group sneaks at its worst member's stealth and talks at its best member's; a helper adds ×1.2, two at most.
 - **Narration.** A narrator call for every step of yours. In a fight a turn gets a sentence or two, so it stays quick, and the moments that matter get more: the first blow, a kill, an arrival, the end. At the spike's prices a ten-turn fight costs about a cent.
+
+**What lasts** (D3, 2026-10-14).
+
+- **One fixed list of effects:** time; HP and qi; a wound; items and stones gained, lost or broken; a memory in a person's opinion or a power's standing; a bond; heat; karma; renown and infamy; knowledge (a name, a place or a truth learned); a lasting state started, tested or broken; a project's progress; a place's or a person's state. GLM picks from the list and can't add to it, and a new system adds an effect only when it brings a new kind of state.
+- **People judge only what they know** (Jan's call). Opinion, standing, renown and infamy move only by deeds someone saw or learned of (Who knows, below), and a deed learned later lands when it is learned.
+- **Opinion is remembered reasons**, as RimWorld does it. A person's opinion of you is the sum of their memories of you, each a reason with a value and a fade, listed on their page: "Saved my brother +30 · Paid fairly +3 (fading) · Lied to me, and I found out −25 (fading)". The total gives the word, and the word is the trust that talk reads (People checks): hostile at −40 or below, wary −39 to −10, neutral −9 to +9, friendly +10 to +39, trusting +40 and up. Starting values: saved my life +40 and saved someone I love +30, never fading; fought beside me +10, fading over a year; paid me fairly +3, a month, stacking to +15; a gift by its worth, a season; insulted me −10, a month; threatened me −20, a season; robbed me −30, a year; lied to me and I found out −25, a year; betrayed me −80 and killed someone I love −100, never. A person's motives weight their memories (block 3): a greedy one counts payment double, a proud one an insult. Fear is a bond, not an opinion, so the coerced obey while hating you. You see the memories you know they hold; one you don't know of is a motive you haven't learned.
+- **Standing is a power's remembered reasons**, kept the same way from the deeds it knows: killed one of ours −30 each, never fading until a blood price is paid; robbed us −15, a year; a mission done for us +10, a year; tribute or gifts by worth, a season; a member +10 while you are one. The words: hunted at −60 or below, hostile −59 to −30, cold −29 to −10, unknown −9 to +9, known +10 to +29, favored +30 to +59, honored +60 and up.
+- **Karma is heaven's ledger, never anyone's opinion.** It moves whether or not anyone saw: ±1 a small mercy or cruelty to someone weaker, ±5 a life saved or taken that didn't need taking, −20 a betrayal of trust, −50 a massacre, and nothing for killing in a fair fight or in self-defense. Heart demons, tribulations (M7) and the Buddhist Way's vows read it; no person does.
+- **Renown and infamy**, per region, 0 to 9 each: how far the deeds people admire and the deeds they fear have carried your name, 3 across a town and 6 across the region. A power takes them by its Way: the righteous hunt an infamous name, the demonic court it, and anyone honors renown.
+- **Lasting states**, each with what tests it and what breaking it costs:
+
+| State | Tested by | When it breaks |
+|---|---|---|
+| Cover (a shown realm and a false story) | a perception at or above your soul; every act above your shown realm | exposure: memories and heat with whoever was fooled |
+| Disguise (another face) | people who know you, friendly or better; perception | you are recognized |
+| False name | someone checking it: a sect's register, a person who knew you | your real name is known |
+| Hidden intent | a soul two realms above yours; acting on it too early | your target learns it, and remembers |
+| Vow | keeping it, which pays its Way's reward | −10 karma and the Way's price |
+| Debt | its due date | −5 a month with whoever holds it; at hostile, they collect |
+| Wound | time and pills, as a breakthrough's injury | a share off your lines for days |
+| Captive | held by you or holding you | a ransom or an escape |
+
+- **Projects are clocks** of 4, 6 or 8 steps for small, middling and big ambitions: a half-blood's trust 4, a crew 6, a city's formation 8 and the firing. Each step is a scene or hours on the wheel; a failed step costs a step or adds heat; a hidden project carries its own heat. The clock and the heat show on the project's card.
+- **Heat**, 0 to 9 on each place and each power: a theft someone saw +1, a killing +3, a massacre +5, and −1 a month while you stay away or keep quiet. At 3 you are watched (prices up, guards eyeing you, talk spreading), at 6 hunted locally (the watch doubled, a bounty at your known realm, gates shut to you), at 9 hunted by the power (hunters sized to beat you, your name on every bounty board in the region).
+- **Who knows.** A deed spreads only through witnesses who live (and kept people, who tell those they meet), soul lamps (a sect knows at once when a disciple dies, and a Core Formation elder's lamp shows the killer's face), evidence (a body, or a technique's mark to anyone who knows the technique) and divine sense (anyone who swept the place). A deed no one learns of moves only your karma.
+- **Places and people change.** A place is thriving, damaged, ruined, scarred (fights from Core Formation up) or taken by another power, and its encounters and map follow. A kept person is well, wounded, crippled, captured, dead or gone.
+- **Symmetry in M3.** A kept person with a grudge acts on it through cards at most once a season: hunters sent, a frame, a theft. Their own long schemes wait for M5's NPC depth.
 
 **Symmetry.** NPCs make every one of these checks against you: the rival's lie, the bandit's sneak, the elder reading your veil.
 
@@ -883,7 +910,7 @@ Formation puzzles show the engine-and-GLM split well. The engine hides which nod
 | Tribe | birth, a trial | deeds, age | the hunt, feuds | exile | land, beasts, old rites | Tribe of the Shark Caves |
 | Beast power | bloodline, or a beast bond | strength | tribute, territory | devoured | beast lore, mounts, bloodline gifts | Beast Court of Ten Thousand Mountains |
 
-**People, from the first hour.** Every person you've met has a record: name, where you met, what they are to you, friend, rival, senior, master, sworn sibling, dao companion, enemy, how they feel about you in words rather than a number, and their last known realm and whereabouts, which is only what you've seen or heard, so the same fog applies to people as to places. Who gets a record is the kept rule under Enemies, beasts and the people you meet. Each has a log: everything in your chronicle they were part of, since the typed chronicle stores actors by id, plus updates about them. In M1 updates come only from cards that name them, a letter from your senior, the sergeant posted to the wall. In M5 their lives tick on their own and bonded people send a yearly letter card; in M6 rumors and headlines feed the same log; after v1 a friend's exported snapshot writes its real progress there. The People screen shows them as circles and a web of threads (§ UI and screens, The People screen), with portraits once the cast list arrives.
+**People, from the first hour.** Every person you've met has a record: name, where you met, what they are to you, friend, rival, senior, master, sworn sibling, dao companion, enemy, how they feel about you, a word read off the reasons they remember, each listed with its weight (The resolver, What lasts), and their last known realm and whereabouts, which is only what you've seen or heard, so the same fog applies to people as to places. Who gets a record is the kept rule under Enemies, beasts and the people you meet. Each has a log: everything in your chronicle they were part of, since the typed chronicle stores actors by id, plus updates about them. In M1 updates come only from cards that name them, a letter from your senior, the sergeant posted to the wall. In M5 their lives tick on their own and bonded people send a yearly letter card; in M6 rumors and headlines feed the same log; after v1 a friend's exported snapshot writes its real progress there. The People screen shows them as circles and a web of threads (§ UI and screens, The People screen), with portraits once the cast list arrives.
 
 **Romance and dao companions** are in, and the engine tracks every NPC you meet: affinity, history, promises and grudges. A dao companion is a bond with mechanics: paired cultivation methods, shared danger, and grief if they fall.
 
