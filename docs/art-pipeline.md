@@ -8,7 +8,7 @@ What comes from the Jade Sanctuary prototype (Jan's Codex test, 2026-10-16, kept
 
 1. **Concept.** Claude writes a concept prompt for one screen (template A) with the screen's real content, and attaches a screenshot of the current build as the content reference. Jan runs it, two to four takes, and picks one or asks GPT for edits. The pick is saved in `art/concepts/<screen>-<n>.webp` and committed, since it is the reference the build is held to.
 2. **Cut list.** Claude reads the pick and writes the cut list (template B): what is art and what is code, and for each asset its id, kind, size, slice insets, budget and prompt. Jan says yes or edits.
-3. **Assets.** Jan runs each asset prompt (templates C to F) with the concept attached, so GPT matches it, and drops the PNG in `art/inbox/` named by its asset id (`abode-scene.png`).
+3. **Assets.** Jan runs each asset prompt (templates C to F) with the concept attached, so GPT matches it, and drops the PNG in `art/inbox/` named by its asset id (`cultivate-scene.png`).
 4. **Ingest.** `npm run art` moves the inbox files to `art/source/`, writes `src/ui/art/<screen>/<id>.webp` as the manifest says, checks the budgets and prints the sizes.
 5. **Build.** Claude builds the screen: frames as `border-image`, surfaces as backgrounds, scenes as images, ornaments as images, everything else code.
 6. **Compare.** Claude screenshots the build in the browser pane at 1920×1080, beside the concept, lists the differences in a line each, fixes them and compares once more. Then Jan signs off. Where the concept invented content (wrong numbers, a stat or mechanic the game lacks), the game wins.
@@ -68,7 +68,7 @@ src/ui/art/
   <screen>/       one screen's own
 ```
 
-Ids are kebab-case with the screen first, `abode-scene`, `common-slab`, `map-markers`; the file is the id. An asset renamed is renamed in the manifest and the CSS together. Art lives under `src/ui/art/` and is referenced from CSS, so Vite hashes it and the build works under a subpath.
+Ids are kebab-case with the screen first, `cultivate-scene`, `common-slab`, `map-markers`; the file is the id. An asset renamed is renamed in the manifest and the CSS together. Art lives under `src/ui/art/` and is referenced from CSS, so Vite hashes it and the build works under a subpath.
 
 A manifest entry:
 
@@ -81,7 +81,7 @@ A manifest entry:
   "slice": 64,
   "quality": 90,
   "budgetKB": 150,
-  "concept": "abode-2",
+  "concept": "cultivate-2",
   "prompt": "Template C. Obsidian slab with an antique gold double rule..."
 }
 ```
@@ -134,13 +134,13 @@ followed by a line naming everything on the screen that stays code.
 
 **When GPT drifts**, ask in the same chat: "Same image, but remove all text", "Same, but make each edge plain and even between the corners", "Same, but empty the center", "Same, but take the person out".
 
-## Worked example: the Abode
+## Worked example: Cultivate
 
-A sketch of the cut list for the Abode in the jade prototype's structure, painted in the gilded void. Its final form waits on a picked concept.
+A sketch of the cut list for Cultivate, the home screen (the Abode until P3.7's fix), in the jade prototype's structure, painted in the gilded void. Its final form waits on a picked concept.
 
 | Id | Kind | What | GPT size → ships | Slice | Budget |
 |---|---|---|---|---|---|
-| abode-scene | scene | a moon gate court open to the starry void, gold-inlaid stone floor, lanterns, no figure | 1024×1536 → 800×1200 | — | 300 KB |
+| cultivate-scene | scene | a moon gate court open to the starry void, gold-inlaid stone floor, lanterns, no figure | 1024×1536 → 800×1200 | — | 300 KB |
 | common-slab | frame | obsidian slab, gold double rule, fretwork corners | 1024×1024 → 512×512 | 64 | 150 KB |
 | common-card | frame | the bright card: ivory silk in a gilt frame | 1024×1536 → 512×768 | 64 | 150 KB |
 | common-card-ink | scene | an ink-wash mountain strip for the card's foot, fading to transparent upward | 1536×1024 → 600×400 | — | 80 KB |
@@ -156,6 +156,6 @@ Stays code: the name, pronouns, realm, bars and numbers, recent events, the seat
 3. **The walking rim light.** design.md § Look's slow light walking round each panel's rim, a looping animation, goes with the gilt frames; a panel that waits on you keeps a still accent rim.
 4. **Where the rule lives.** When the first screen lands, a design pass rewrites § Look as the gilded void with carved panels; until then this file is the pipeline, and § Look stands.
 
-## First phase (a proposal for plan.md)
+## The overhaul
 
-**Art pipeline and the Abode.** Build `tools/art.ts` and `npm run art` with sharp, the `art/` folders and their `.gitignore` lines, and the frame classes in `theme.css`. Then run the loop once on the Abode: a concept Jan picks, the cut list, Jan's assets, the build, the compare. It also builds the stage: drop the 15 width breakpoints in `theme.css`, scale the UI by the window's height over 1080, route the canvases' pointer through that factor, and add the Fullscreen button. Done: the Abode matches its concept at 1920×1080, every screen holds at 1280×720, 16:10 and 21:9, the Abode's art is under 800 KB, and `npm test`, `npm run lint` and `npm run build` pass.
+`plan.md` runs the pipeline as phases A1 to A9, before P3.8: A1 builds the stage and `npm run art`, A2 the shell and the shared kit (and rewrites design.md § Look), then the screens one or a few at a time.
