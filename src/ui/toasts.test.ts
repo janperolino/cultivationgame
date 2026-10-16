@@ -1,5 +1,5 @@
 // P2.5d: what a moment's gains toast, and how a burst folds. P2.5f: a technique's toast lands on
-// Cultivate › Practice, and one reaching Origin raises its own.
+// Routine › Practice, and one reaching Origin raises its own.
 import { describe, expect, it } from 'vitest';
 import { gainCopy, gainManual, gainTechnique, checkScreens } from '../core/life.ts';
 import { gains, seeAll } from '../core/seen.ts';
@@ -22,10 +22,10 @@ describe('toasts', () => {
       'New tree · Earth Dao',
       'New tree · Fist Dao',
     ]);
-    // Cultivate › Practice and Combat open too, folded into the third.
+    // Routine › Practice and Combat open too, folded into the third.
     expect(t.map((x) => x.more)).toEqual([0, 0, 2]);
     expect(t[0]!.to).toEqual({
-      screen: 'cultivate',
+      screen: 'routine',
       tab: 'practice',
       select: 'sinkhole-stone-fist',
     });
@@ -39,8 +39,8 @@ describe('toasts', () => {
     const screen = gains(before, after).find((g) => g.kind === 'screen' && g.id === 'techniques');
     expect(screen).toBeDefined();
     const [t] = toastsFor([screen!], after);
-    expect(`${t!.label} · ${t!.name}`).toBe('New tab · Cultivate › Practice');
-    expect(t!.to).toEqual({ screen: 'cultivate', tab: 'practice' });
+    expect(`${t!.label} · ${t!.name}`).toBe('New tab · Routine › Practice');
+    expect(t!.to).toEqual({ screen: 'routine', tab: 'practice' });
   });
 
   it('notice a technique that reached Origin and left its slot, not one stopped by hand', () => {

@@ -10,7 +10,7 @@ import { ALL_FIRSTS, firstsPassed, firstsWaiting, noteFirsts } from './firsts.ts
 import {
   gainMethod,
   gainTechnique,
-  giveHour,
+  giveHours,
   learn,
   playFirsts,
   practice,
@@ -53,7 +53,7 @@ const waiting = (s: GameState) => firstsWaiting(s).map((w) => w.hint);
 
 /** Turns the qi hour the default rule would pick to a kind of work. */
 const give = (s: GameState, kind: HourKind): GameState =>
-  giveHour(s, hourToFlip(s.player.wheel, s.player.rootElements)!, kind).state;
+  giveHours(s, [hourToFlip(s.player.wheel, s.player.rootElements)!], kind).state;
 
 describe('a new lineage', () => {
   it('starts all qi with its method unread, and nothing moves until it is read and taken up', () => {

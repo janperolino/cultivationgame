@@ -1,9 +1,11 @@
-// The screens the side menu can reach. Later phases add entries here, gated by unlock flags. The
-// Techniques screen lives in Cultivate › Practice since P2.5f, though its unlock and the seen
+// The screens the side menu can reach. Later phases add entries here, gated by unlock flags.
+// Cultivate is the seated figure and its breakthroughs (the Abode until P3.7's fix); Routine is the
+// day wheel with its Practice and Study tabs (Cultivate until then). The Techniques screen lives in
+// Routine › Practice since P2.5f, though its unlock and the seen
 // record's screen id stay `techniques` (the Practice tab shows with it).
 export type ScreenId =
-  | 'abode'
   | 'cultivate'
+  | 'routine'
   | 'map'
   | 'trees'
   | 'bag'
@@ -22,8 +24,8 @@ export interface ScreenInfo {
 }
 
 export const screens: readonly ScreenInfo[] = [
-  { id: 'abode', name: 'Abode', hanzi: '洞府', unlock: 'abode' },
   { id: 'cultivate', name: 'Cultivate', hanzi: '修炼', unlock: 'cultivate' },
+  { id: 'routine', name: 'Routine', hanzi: '日课', unlock: 'routine' },
   { id: 'map', name: 'Map', hanzi: '舆图', unlock: 'map' },
   { id: 'trees', name: 'Trees', hanzi: '道树', unlock: 'trees' },
   { id: 'bag', name: 'Bag', hanzi: '行囊', unlock: 'bag' },

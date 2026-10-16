@@ -13,7 +13,7 @@ import {
   endLife,
   feedStones,
   followRoutine as followRoutineHours,
-  giveHour,
+  giveHours,
   learn,
   moveRead,
   practice,
@@ -119,8 +119,8 @@ export interface GameStore {
   saveNow(opts?: { rewindPoint?: boolean }): Promise<void>;
   /** Changes the auto setting for minor breakthroughs, or burning stones in qi hours. */
   setPlan(patch: Partial<GameState['player']['plan']>): void;
-  /** Gives one hour of the day wheel to a kind of work; returns why not, or null. */
-  setHour(hour: number, kind: HourKind): string | null;
+  /** Gives hours of the day wheel to a kind of work; returns why not, or null. */
+  setHours(hours: readonly number[], kind: HourKind): string | null;
   /** Sets the whole wheel to a routine's hours; returns why not, or null. */
   followRoutine(hours: readonly HourKind[]): string | null;
   /** Saves the wheel under a name; returns why not, or null. */
@@ -129,7 +129,7 @@ export interface GameStore {
   /** Attempts a ladder's next breakthrough, minor or major, at once, laying offerings on a major. */
   breakThrough(ladder: LadderId, offerings?: readonly string[]): void;
   /**
-   * Plays a ladder's next breakthrough as a scene on the Abode's figure, laying offerings on a
+   * Plays a ladder's next breakthrough as a scene on Cultivate's figure, laying offerings on a
    * major; false when it can't.
    */
   beginScene(ladder: LadderId, offerings?: readonly string[]): boolean;
@@ -540,10 +540,10 @@ export const useGame = create<GameStore>()((set, get) => {
       set({ game: setLifePlan(game, patch) });
     },
 
-    setHour(hour, kind) {
+    setHours(hours, kind) {
       const { game } = get();
       if (!game || !holdsLock) return 'This life is not open in this tab.';
-      const r = giveHour(game, hour, kind);
+      const r = giveHours(game, hours, kind);
       if (!r.check.ok) return r.check.reason;
       set({ game: r.state });
       if (kind === 'qi') get().markHint('qi-hours');
@@ -899,7 +899,7 @@ useGame.subscribe((now, was) => {
   // A technique reaching Origin leaves its slot, which stays empty until the player fills it.
   for (const id of leftSlots(was.game, now.game)) {
     raiseToast('slot', `${technique(id).name} reached Origin and left its slot`, {
-      screen: 'cultivate',
+      screen: 'routine',
       tab: 'practice',
       select: id,
     });

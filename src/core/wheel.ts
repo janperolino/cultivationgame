@@ -73,16 +73,24 @@ export function canSetHour(c: Cultivator, hour: number, kind: HourKind): WheelCh
   return { ok: true };
 }
 
-export function setHour(
+/**
+ * Gives one or several hours to a kind of work. Hours locked to sleep are passed over when others
+ * can take it, so a sweep across 子 still sets the rest; it fails only when none can.
+ */
+export function setHours(
   c: Cultivator,
-  hour: number,
+  hours: readonly number[],
   kind: HourKind,
 ): { cultivator: Cultivator; check: WheelCheck } {
-  const check = canSetHour(c, hour, kind);
-  if (!check.ok) return { cultivator: c, check };
+  const checks = hours.map((h) => [h, canSetHour(c, h, kind)] as const);
+  const ok = checks.filter(([, k]) => k.ok).map(([h]) => h);
+  if (ok.length === 0) {
+    const check = checks[0]?.[1] ?? { ok: false as const, reason: 'There is no such hour.' };
+    return { cultivator: c, check };
+  }
   const wheel = [...c.wheel];
-  wheel[hour] = kind;
-  return { cultivator: { ...c, wheel }, check };
+  for (const h of ok) wheel[h] = kind;
+  return { cultivator: { ...c, wheel }, check: { ok: true } };
 }
 
 /** Whether a whole wheel can be followed now: every kind open, and sleep where it is locked. */

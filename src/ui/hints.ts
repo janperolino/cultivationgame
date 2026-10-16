@@ -33,7 +33,7 @@ export function hintsWaiting(s: GameState): HintView[] {
   if (s.ended) return [];
   const open = (to: ToastLink) => (s.unlocks.includes(to.screen) ? to : null);
   const steps = new Map(firstsWaiting(s).map((st) => [st.hint as HintId, st]));
-  const abode = open({ screen: 'abode' });
+  const seat = open({ screen: 'cultivate' });
   const out: HintView[] = [];
   for (const id of HINT_IDS) {
     const step = steps.get(id);
@@ -44,27 +44,27 @@ export function hintsWaiting(s: GameState): HintView[] {
     // Once a method is taken up: more qi hours, then the motes, which only settle with one.
     const climbing = s.player.activeMethods.qi !== null;
     if (id === 'qi-hours' && climbing) {
-      const to = open({ screen: 'cultivate', tab: 'cultivation' });
+      const to = open({ screen: 'routine', tab: 'day' });
       out.push({ id, text: HINTS['qi-hours'], to });
     }
     const drawing = climbing && !s.player.flags.includes(FIRST_BREATH);
-    if (id === 'orbs' && drawing && abode) out.push({ id, text: HINTS.orbs, to: abode });
+    if (id === 'orbs' && drawing && seat) out.push({ id, text: HINTS.orbs, to: seat });
     // After the first orb: what attending does. After the first node: where more insight comes from.
-    if (id === 'attending' && s.player.flags.includes(FIRST_BREATH) && abode) {
-      out.push({ id, text: HINTS.attending, to: abode });
+    if (id === 'attending' && s.player.flags.includes(FIRST_BREATH) && seat) {
+      out.push({ id, text: HINTS.attending, to: seat });
     }
     if (id === 'insight' && s.player.nodes.length > 0) {
-      const to = open({ screen: 'cultivate', tab: 'cultivation' });
+      const to = open({ screen: 'routine', tab: 'day' });
       out.push({ id, text: HINTS.insight, to });
     }
     if (id === 'breakthrough' && readyLadders(s).length > 0) {
-      out.push({ id, text: HINTS.breakthrough, to: abode });
+      out.push({ id, text: HINTS.breakthrough, to: seat });
     }
     if (id === 'auto' && autoHintWaiting(s)) {
-      out.push({ id, text: HINTS.auto, to: open({ screen: 'cultivate', tab: 'cultivation' }) });
+      out.push({ id, text: HINTS.auto, to: open({ screen: 'routine', tab: 'day' }) });
     }
     if (id === 'cards' && s.cards.pending.length > 0) {
-      out.push({ id, text: HINTS.cards, to: abode });
+      out.push({ id, text: HINTS.cards, to: seat });
     }
     if (id === 'hints-off' && daysLived(s.player, s.calendar.day) >= HINTS_OFF_DAYS) {
       out.push({ id, text: HINTS['hints-off'], to: { screen: 'settings' } });

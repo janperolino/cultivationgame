@@ -19,7 +19,6 @@ import {
   START_AGE,
   freshCards,
   startingPeople,
-  STARTING_UNLOCKS,
   type Cultivator,
   type GameState,
   type Ladder,
@@ -33,7 +32,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 26;
+export const SAVE_VERSION = 27;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -55,6 +54,8 @@ const renamedNode = (id: string) => RENAMED_NODES[id] ?? id;
  * Before character creation (P1.7), every life was the cave orphan who went along: the garrison's
  * method, its first technique and its routine. The old migrations hand these to old lives.
  */
+/** The starting unlocks as v7 knew them, under the screen ids of their day (v27 renames them). */
+const V7_UNLOCKS = ['abode', 'cultivate', 'map', 'character', 'people', 'chronicle'];
 const PLACEHOLDER_TECHNIQUE = 'rampart-palm';
 const PLACEHOLDER_ROUTINE = 'watch-rotation';
 
@@ -441,7 +442,7 @@ const migrations: Record<number, (old: Raw) => Raw> = {
         ...s,
         chronicle,
         cards,
-        unlocks: [...unlocks, ...STARTING_UNLOCKS.filter((u) => !unlocks.includes(u))],
+        unlocks: [...unlocks, ...V7_UNLOCKS.filter((u) => !unlocks.includes(u))],
         player: {
           ...p,
           talents: [],
@@ -825,6 +826,23 @@ const migrations: Record<number, (old: Raw) => Raw> = {
         }
       : null;
     return { ...old, version: 26, state: { ...s, map } };
+  },
+  // v26, P3.7: the seated figure's screen was the Abode and the day wheel's was Cultivate. v27 calls
+  // them Cultivate and Routine, in the unlocks and the seen record's screens; the old Cultivate
+  // moves first, so the Abode can take its id.
+  26: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const id = (u: string) => (u === 'cultivate' ? 'routine' : u === 'abode' ? 'cultivate' : u);
+    const unlocks = [...new Set(((s.unlocks ?? []) as string[]).map(id))];
+    const seen = (s.seen ?? {}) as Record<string, Record<string, unknown>>;
+    const screens = Object.fromEntries(
+      Object.entries(seen.screen ?? {}).map(([k, v]) => [id(k), v]),
+    );
+    return {
+      ...old,
+      version: 27,
+      state: { ...s, unlocks, seen: seen.screen ? { ...seen, screen: screens } : seen },
+    };
   },
 };
 

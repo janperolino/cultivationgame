@@ -1,5 +1,5 @@
 // The breakthrough scene while you play (design § Cultivation, Breakthroughs; core/scene.ts): an
-// attended attempt on any ladder plays on the Abode's figure, a wind-up and then the race, and
+// attended attempt on any ladder plays on Cultivate's figure, a wind-up and then the race, and
 // rolls. Like the seat's attention, the scene is the session's and never saved; the store's loop
 // ends it on time, even with the tab hidden, and rolls with what was caught. Drawing only reads
 // it. The breakthrough panel (ui/BreakthroughPanel.tsx) that leads to a major one is the
@@ -110,7 +110,7 @@ export function stepState(s: GameState, which: LadderId): StepState {
   return majorCheck(s.player, which)?.ready ? 'ready' : 'not-ready';
 }
 
-/** The ladders with a breakthrough you can take now, for the Abode's mark in the menu. */
+/** The ladders with a breakthrough you can take now, for Cultivate's mark in the menu. */
 export function readyLadders(s: GameState): LadderId[] {
   return LADDERS.filter((which) => stepState(s, which) === 'ready');
 }

@@ -1,4 +1,4 @@
-// One ladder's method on the Cultivate screen (design § Cultivation, methods): its name in its
+// One ladder's method on the Routine screen (design § Cultivation, methods): its name in its
 // rarity's color with its tier as a word, its mastery, what it builds, what it adds at a
 // breakthrough, its upkeep and properties, and a switch among the methods known for that ladder.
 // Words first, numbers behind the "?".

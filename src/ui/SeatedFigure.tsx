@@ -1,4 +1,4 @@
-// The Abode's cultivator (design § UI and screens; § Cultivation, Attended seclusion): a
+// Cultivate's cultivator (design § UI and screens; § Cultivation, Attended seclusion): a
 // silhouette seated cross-legged, whatever the hour (Jan's call after P1.10; the hour will show
 // another way). The dantian glows below the navel in the crack light, since it is qi. Over the
 // silhouette a canvas (ui/qiCanvas.ts) draws the qi drifting in, circulating and settling, and the
@@ -41,7 +41,7 @@ import {
   type FigureState,
 } from './qiCanvas.ts';
 import { attemptOf, sceneTime, tapGate, useScene, type ScenePlay } from './scene.ts';
-import { holdStill, noteDay, onBreath, seatTime, showAbode, useSeat } from './seat.ts';
+import { holdStill, noteDay, onBreath, seatTime, showFigure, useSeat } from './seat.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { SunCanvas } from './sunCanvas.ts';
 import { useGame } from './store.ts';
@@ -104,8 +104,8 @@ export function SeatedFigure({ game }: { game: GameState }) {
 
   // Orbs come only while the figure is on screen.
   useEffect(() => {
-    showAbode(true);
-    return () => showAbode(false);
+    showFigure(true);
+    return () => showFigure(false);
   }, []);
 
   // The canvases run while the tab is visible, and stop drawing when it is hidden.

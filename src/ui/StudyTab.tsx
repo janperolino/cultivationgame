@@ -1,4 +1,4 @@
-// Cultivate › Study (design § UI and screens, the Cultivate row; § Cultivation, Reading): the copy
+// Routine › Study (design § UI and screens, the Routine row; § Cultivation, Reading): the copy
 // being read, with its bar, time left, lump and how well it suits you; the queue after it, reordered
 // and pruned, a waiting copy saying why; the unread copies on the shelf, each with Queue; and what
 // study gives.
@@ -89,7 +89,7 @@ function ReadingNow({ game }: { game: GameState }) {
           ? 'No hour of the day goes to study.'
           : `${hours} of 12 hours · ${formatRate(rates.study)} study days a day`}
       </span>
-      <button type="button" className="link-button" onClick={() => goToTab('cultivation')}>
+      <button type="button" className="link-button" onClick={() => goToTab('day')}>
         Change hours on the wheel
       </button>
     </div>

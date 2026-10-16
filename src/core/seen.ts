@@ -127,19 +127,19 @@ export function seeAll(s: GameState): GameState {
 
 // ---------------------------------------------------------------- the menu's dots
 
-/** The kinds of new thing each screen holds, for its dot; techniques live on Cultivate › Practice. */
+/** The kinds of new thing each screen holds, for its dot; techniques live on Routine › Practice. */
 export const SCREEN_KINDS: Readonly<Record<string, readonly SeenKind[]>> = {
   bag: ['item'],
   trees: ['tree', 'manual', 'copy'],
-  cultivate: ['method', 'technique'],
+  routine: ['method', 'technique'],
 };
 
 /**
  * Tabs a screen holds that once were screens of their own, by the unlock and screen id they keep:
- * Cultivate › Practice is the old Techniques screen (P2.5f).
+ * Routine › Practice is the old Techniques screen (P2.5f).
  */
 export const SCREEN_TABS: Readonly<Record<string, readonly string[]>> = {
-  cultivate: ['techniques'],
+  routine: ['techniques'],
 };
 
 /** Whether a screen or a tab kept under its old screen id is open and not yet looked at. */

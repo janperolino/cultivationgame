@@ -84,7 +84,7 @@ function orb(id: number, t: number, angle = Math.PI / 2): Orb {
   };
 }
 
-const ATTENDING = { attended: true, abode: true, hour: 5 };
+const ATTENDING = { attended: true, figure: true, hour: 5 };
 const INHALE_T = 60; // 60 / 6 = 10 cycles exactly: the start of an inhale.
 const EXHALE_T = 64;
 
@@ -359,7 +359,7 @@ describe('the orbs stream', () => {
 
   it('brings none while the figure is off screen, or with no qi method', () => {
     const c = seated();
-    expect(hour(life(c), c, { ...ATTENDING, abode: false }).orbs).toEqual([]);
+    expect(hour(life(c), c, { ...ATTENDING, figure: false }).orbs).toEqual([]);
     const bare = { ...c, activeMethods: { ...c.activeMethods, qi: null } };
     expect(hour(life(bare), bare).orbs).toEqual([]);
   });

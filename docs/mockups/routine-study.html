@@ -1,0 +1,510 @@
+<!doctype html>
+<!-- The Routine study: the Abode renamed Cultivate, the Cultivate screen renamed Routine, the road
+     day on Routine's wheel beside the home day, and choosing several hours at once on either wheel.
+     The hours, routines and road routines are the game's own (content/routines.ts,
+     content/map/travel.ts). Open it in a browser; it loads fonts from Google. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Routine Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap">
+<style>
+:root {
+  --page: #020203;
+  --panel: rgb(7 8 11 / 0.96);
+  --edge: rgb(255 255 255 / 0.075);
+  --edge-strong: rgb(255 255 255 / 0.14);
+  --text: #e9e5da;
+  --muted: #8d949d;
+  --accent: #d6ab4c;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --crack: #7fc7d9;
+  --warn: #e08a6a;
+  --hour-qi: var(--crack);
+  --hour-body: #c98a5f;
+  --hour-soul: #a28fdc;
+  --hour-study: #a9b97f;
+  --hour-practice: #cf7f9f;
+  --hour-sleep: #59606b;
+  --hour-travel: #c2ae8c;
+  --hour-guard: #b98a6e;
+  --hour-look: #9fc4ad;
+  --hour-home: #6f7a86;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  --font-ui: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--text); font: 14px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; }
+.hanzi { font-family: var(--font-brush); font-weight: 400; }
+.muted { color: var(--muted); }
+.caption { color: var(--muted); font-size: 12.5px; margin: 4px 0 0; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 22px 16px 40px; display: grid; gap: 16px; }
+.wrap > * { min-width: 0; }
+.eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 2px 0 6px; }
+.intro p { margin: 0 0 6px; max-width: 80ch; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px 20px; padding: 12px 14px; border: 1px dashed var(--edge-strong); border-radius: 10px; background: #07080a; }
+.control { display: grid; gap: 5px; min-width: 0; max-width: 100%; }
+.control > span { font-size: 11.5px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+.seg { max-width: 100%; display: inline-flex; flex-wrap: wrap; border: 1px solid var(--edge-strong); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 5px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--edge); }
+.seg button[aria-pressed="true"] { background: rgb(255 255 255 / 0.07); color: var(--text); }
+.seg button:disabled { opacity: 0.4; cursor: default; }
+
+/* The game frame. */
+.frame { margin: 0 auto; width: 100%; border: 1px solid var(--edge); border-radius: 12px; background: #050608; display: grid; grid-template-columns: 172px minmax(0, 1fr); overflow: hidden; }
+.frame.is-phone { max-width: 375px; grid-template-columns: minmax(0, 1fr); }
+.menu { border-right: 1px solid var(--edge); padding: 14px 8px; display: grid; align-content: start; gap: 2px; }
+.menu a { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 14px; }
+.menu a .hanzi { font-size: 16px; opacity: 0.7; }
+.menu a.is-current { background: var(--accent-soft); color: var(--text); }
+.menu a.is-renamed::after { content: 'renamed'; font-size: 10px; color: var(--accent); margin-left: 6px; }
+.is-phone .menu { border-right: 0; border-bottom: 1px solid var(--edge); display: flex; overflow-x: auto; gap: 4px; padding: 8px; }
+.is-phone .menu a { flex: none; gap: 6px; }
+.is-phone .menu a.is-renamed::after { display: none; }
+.screen { padding: 16px; display: grid; gap: 14px; min-width: 0; }
+.is-phone .screen { padding: 12px; }
+.panel { border: 1px solid var(--edge); border-radius: 10px; background: var(--panel); padding: 14px 16px; min-width: 0; }
+.panel-heading { font-family: var(--font-display); font-weight: 600; font-size: 21px; margin: 0 0 6px; }
+.button { border: 1px solid var(--edge-strong); background: transparent; color: var(--text); border-radius: 6px; padding: 4px 11px; font: inherit; font-size: 13px; cursor: pointer; }
+.button:disabled { opacity: 0.45; cursor: default; }
+.button-quiet { color: var(--muted); }
+.accent { color: var(--accent); }
+
+.hour-strip-cells { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; }
+.hour-cell { border: 1px solid color-mix(in srgb, var(--h) 50%, transparent); background: color-mix(in srgb, var(--h) 16%, transparent); color: var(--text); border-radius: 5px; padding: 4px 0; font-size: 16px; }
+.hour-cell.is-open { outline: 1px solid var(--accent); }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tabs .seg button { font-size: 14px; padding: 6px 14px; }
+
+.dayhead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; }
+.dayhead .seg button { padding: 5px 14px; }
+
+.wheel-wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; margin-top: 8px; }
+.wheel { display: block; flex: 0 1 340px; width: 100%; max-width: 340px; height: auto; margin: 0 auto; overflow: visible; user-select: none; touch-action: none; }
+.wheel-editor { flex: 1 1 260px; min-width: 0; }
+.wheel-hour { cursor: pointer; }
+.wheel-seg { fill: color-mix(in srgb, var(--h) 15%, transparent); stroke: color-mix(in srgb, var(--h) 50%, transparent); stroke-width: 1; }
+.wheel-hour:hover .wheel-seg { fill: color-mix(in srgb, var(--h) 26%, transparent); }
+.wheel-hour.is-selected .wheel-seg { stroke: var(--accent); stroke-width: 2.2; fill: color-mix(in srgb, var(--h) 30%, transparent); }
+.wheel-hour.is-locked { cursor: default; }
+.wheel-branch { fill: var(--text); font-size: 21px; text-anchor: middle; font-family: var(--font-brush); pointer-events: none; }
+.wheel-kind { fill: var(--muted); font-size: 10.5px; text-anchor: middle; pointer-events: none; }
+.wheel-hour.is-selected .wheel-kind { fill: var(--text); }
+.wheel-center-title { fill: var(--text); font-family: var(--font-display); font-size: 17px; font-weight: 600; text-anchor: middle; }
+.wheel-center-caption { fill: var(--muted); font-size: 11px; text-anchor: middle; }
+.wheel-editor h3 { font-family: var(--font-display); font-size: 19px; font-weight: 600; margin: 0 0 2px; }
+.kinds { margin-top: 10px; }
+.kinds button { display: inline-flex; gap: 6px; align-items: center; }
+.kinds i { width: 9px; height: 9px; border-radius: 50%; background: var(--h); display: inline-block; }
+.kinds button.is-mixed { box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+.editor-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+.routines { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.routine { border: 1px solid var(--edge); border-radius: 8px; padding: 8px 10px; display: grid; gap: 4px; }
+.routine-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; }
+.routine .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.strip { display: inline-grid; grid-template-columns: repeat(12, 12px); gap: 2px; }
+.strip span { height: 10px; border-radius: 2px; background: var(--h); opacity: 0.85; }
+.fold { margin-top: 12px; border-top: 1px solid var(--edge); padding-top: 8px; }
+.fold-head { width: 100%; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; border: 0; background: transparent; color: var(--text); font: inherit; text-align: left; padding: 4px 0; cursor: pointer; }
+.fold-chev { margin-left: auto; color: var(--accent); font-size: 12.5px; }
+.fold-list { list-style: none; margin: 4px 0 0; padding: 0; display: grid; }
+.fold-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--edge); }
+.fold-row.is-now .fold-name { color: var(--accent); }
+.fold-act { display: flex; gap: 6px; justify-content: flex-end; }
+.fold-note { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+.fold-row input, .fold-save input { background: transparent; border: 1px solid var(--edge-strong); color: var(--text); border-radius: 5px; padding: 3px 7px; font: inherit; min-width: 0; }
+.fold-save { display: flex; gap: 8px; margin-top: 10px; }
+.fold-save input { flex: 1 1 auto; }
+.is-phone .fold-row { grid-template-columns: minmax(0, 1fr) auto; }
+.is-phone .fold-act { grid-column: 1 / -1; justify-content: flex-start; }
+.group-label { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 12px 0 0; }
+
+/* The Map bar's road wheel, as it is after P3.7, for the quick switch. */
+.mapbar { display: grid; gap: 10px; }
+.map-wheel-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.map-wheel { width: 128px; height: 128px; flex: none; }
+.map-wheel g { cursor: pointer; }
+.map-wheel-branch { fill: #0b0c0f; font-size: 11px; font-family: var(--font-brush); pointer-events: none; }
+.map-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.map-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.map-chip { border: 1px solid var(--edge-strong); background: transparent; color: var(--muted); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.map-chip[aria-pressed="true"] { color: var(--text); border-color: var(--accent); background: var(--accent-soft); }
+.map-pace { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+.map-pace b { color: var(--text); font-weight: 500; }
+.map-picker { border: 1px solid var(--edge-strong); border-radius: 8px; padding: 6px; display: grid; gap: 2px; max-width: 240px; }
+.map-picker button { text-align: left; border: 0; background: transparent; color: var(--text); padding: 4px 8px; border-radius: 5px; font: inherit; font-size: 13px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.map-picker button:hover { background: rgb(255 255 255 / 0.06); }
+.map-picker i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #111318; border: 1px solid var(--accent); padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 200ms; pointer-events: none; }
+.toast.is-on { opacity: 1; }
+
+.notes { border-top: 1px solid var(--edge); padding-top: 12px; }
+.notes h2 { font-family: var(--font-display); font-size: 22px; margin: 0 0 6px; }
+.notes ol { margin: 0; padding-left: 20px; max-width: 86ch; }
+.notes li { margin: 0 0 6px; }
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <p class="eyebrow">Study · after P3.7</p>
+    <h1>Routine and the road day</h1>
+    <p>The Abode becomes <b>Cultivate</b>: the seated figure, the orbs and the breakthroughs. Today's Cultivate becomes <b>Routine</b>: the day wheel, Practice and Study. Routine's wheel gets a Home / Road toggle, so you can set the road's twelve hours before you leave. On either wheel you can pick several hours and give them all one kind.</p>
+    <p class="muted">Try it: drag across the wheel, shift-click to take a run of hours, ctrl-click to add or drop one hour. The dashed bar holds the open choices.</p>
+  </header>
+
+  <div class="controls">
+    <label class="control"><span>Width</span>
+      <div class="seg" data-ctl="width"><button data-v="desk" aria-pressed="true">Desktop</button><button data-v="phone">375 px</button></div></label>
+    <label class="control"><span>Routine's hanzi</span>
+      <div class="seg" data-ctl="hz"><button data-v="日课" aria-pressed="true">日课 daily lessons</button><button data-v="作息">作息 work and rest</button></div></label>
+    <label class="control"><span>First tab (was Cultivation)</span>
+      <div class="seg" data-ctl="tab"><button data-v="Day|日" aria-pressed="true">Day 日</button><button data-v="Hours|时">Hours 时</button><button data-v="Wheel|轮">Wheel 轮</button></div></label>
+    <label class="control"><span>Road day opens</span>
+      <div class="seg" data-ctl="when"><button data-v="any" aria-pressed="true">Any time</button><button data-v="map">Once the Map opens</button></div></label>
+    <label class="control"><span>Map wheel, tap an hour</span>
+      <div class="seg" data-ctl="maptap"><button data-v="route" aria-pressed="true">Opens Routine there</button><button data-v="pick">Keeps its own picker</button></div></label>
+    <label class="control"><span>On touch</span>
+      <div class="seg" data-ctl="touch"><button data-v="drag" aria-pressed="true">Drag sweeps</button><button data-v="tap">Each tap adds</button></div></label>
+    <label class="control"><span>Mock state</span>
+      <div class="seg" data-ctl="realm"><button data-v="qc" aria-pressed="true">Qi Condensation (子丑 locked)</button><button data-v="fe">Foundation</button></div></label>
+  </div>
+
+  <div class="frame" id="frame">
+    <nav class="menu" id="menu"></nav>
+    <main class="screen" id="screen"></main>
+  </div>
+
+  <section class="notes">
+    <h2>What changes</h2>
+    <ol>
+      <li><b>Names, outright.</b> Screen ids become <code>cultivate</code> (the figure) and <code>routine</code> (the wheel); <code>AbodeScreen</code> → <code>CultivateScreen</code>, today's <code>CultivateScreen</code> → <code>RoutineScreen</code>, the tab type and links follow. The unlocks and the seen record carry the ids, so save v27 moves <code>abode</code>→<code>cultivate</code> and <code>cultivate</code>→<code>routine</code> in both, in that order. The cave abode in the world (finding an abode site, spirit veins) keeps its word; only the screen is renamed.</li>
+      <li><b>Cultivate takes 修炼</b>, the hanzi Routine had. Routine takes a new one, picked above.</li>
+      <li><b>Routines fold away.</b> One line under the wheel names the routine you keep; Change opens the list: the learned ones (or the ways of the road), your own, and saving this wheel. Closed again, it is one line.</li>
+      <li><b>The road day</b> is a toggle at the head of Routine's first tab. Road shows the road wheel, the four road routines you can follow, and your own, which you can follow, rename and forget. Editing a road routine you didn't make copies it into your own (My road 2), as the Map does now. In a group the road wheel is the group's: you see it but can't edit it.</li>
+      <li><b>Several hours at once</b>, on both wheels: drag across, shift-click for a run, ctrl-click to add or drop one. The editor names the hours you picked; a kind button sets them all. Locked hours are skipped, and the editor says so. Esc or a click on the centre clears the pick.</li>
+      <li><b>The Map bar</b> keeps its small wheel and the routine chips for a quick switch. Tapping an hour either opens Routine on the road wheel with that hour picked, or keeps the bar's own one-hour picker. Pick one above.</li>
+    </ol>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const BR = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const PIN = ['Zi','Chou','Yin','Mao','Chen','Si','Wu','Wei','Shen','You','Xu','Hai'];
+const CLOCK = ['23–1','1–3','3–5','5–7','7–9','9–11','11–13','13–15','15–17','17–19','19–21','21–23'];
+const KIND = {
+  qi: ['Qi', '--hour-qi'], body: ['Body', '--hour-body'], soul: ['Soul', '--hour-soul'],
+  study: ['Study', '--hour-study'], practice: ['Practice', '--hour-practice'], sleep: ['Sleep', '--hour-sleep'],
+  travel: ['Travel', '--hour-travel'], look: ['Look around', '--hour-look'], guard: ['Guard', '--hour-guard'],
+  home: ['As at home', '--hour-home'],
+};
+const HOME_KINDS = ['qi', 'body', 'study', 'practice', 'sleep'];
+const ROAD_KINDS = ['travel', 'look', 'home', 'qi', 'body', 'study', 'practice'];
+const z = 'sleep', q = 'qi', p = 'practice', b = 'body', st = 'study', s = 'soul', t = 'travel', l = 'look', h = 'home', g = 'guard';
+const LEARNED = [
+  { id: 'watch-rotation', name: 'Watch Rotation', hanzi: '轮岗', source: 'the garrison at the Guarded Mouth', hours: [z,z,q,q,p,q,q,st,q,q,q,q] },
+  { id: 'wall-drill', name: 'Wall Drill', hanzi: '城操', source: 'a drill manual off the march wall', hours: [z,z,q,q,p,b,q,q,p,q,st,q] },
+];
+const ROAD = [
+  { id: 'walk', name: 'Walk by day, cultivate by night', short: 'Walk by day', note: 'open, on the roads; you look around at dusk', hours: [z,z,h,h,t,t,t,t,t,t,l,h] },
+  { id: 'pressed', name: 'Pressed march', short: 'Pressed march', note: 'every waking hour on the road', hours: [z,z,t,t,t,t,t,t,t,t,t,t] },
+  { id: 'night', name: 'The night road', short: 'Night road', note: 'hidden: off the roads and round the checkpoints; you look around at dawn', hours: [z,z,t,l,h,h,h,h,h,t,t,t] },
+  { id: 'caravan', name: 'Caravan guard', short: 'Caravan guard', note: 'paid a low-grade stone a day; slow, safe, and on the roads', hours: [z,z,h,h,g,g,g,g,g,g,l,h] },
+];
+
+const st8 = {
+  width: 'desk', hz: '日课', tab: 'Day|日', when: 'any', maptap: 'route', touch: 'drag', realm: 'qc',
+  day: 'home',
+  home: [z,z,q,q,p,q,q,st,q,b,st,q],
+  saved: [{ name: 'Before the drill', hours: [z,z,q,q,q,q,q,st,q,q,st,q] }],
+  own: [{ id: 'own-1', name: 'My road 1', hours: [z,z,t,t,t,t,t,t,h,h,l,h] }],
+  road: 'walk',
+  sel: new Set(), anchor: null,
+  mapPick: null,
+  rename: null,
+};
+
+const locked = (i) => st8.realm === 'qc' && (i === 0 || i === 1);
+const roadAll = () => [...ROAD, ...st8.own.map((r) => ({ ...r, short: r.name, note: 'your own', own: true }))];
+const roadNow = () => roadAll().find((r) => r.id === st8.road) || ROAD[0];
+const wheelHours = () => (st8.day === 'home' ? st8.home : roadNow().hours);
+const shown = (k, i) => (st8.day === 'road' && k === 'home' ? st8.home[i] : k);
+const sameAs = (a, b) => a.every((k, i) => b[i] === k);
+const tabName = () => st8.tab.split('|');
+
+function toast(t) {
+  const el = document.getElementById('toast');
+  el.textContent = t; el.classList.add('is-on');
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('is-on'), 1800);
+}
+
+function polar(r, deg) { const a = ((deg - 90) * Math.PI) / 180; return [r * Math.cos(a), r * Math.sin(a)]; }
+function seg(i, R0, R1, gap) {
+  const f = i * 30 - 15 + gap / 2, to = i * 30 + 15 - gap / 2;
+  const [x1, y1] = polar(R1, f), [x2, y2] = polar(R1, to), [x3, y3] = polar(R0, to), [x4, y4] = polar(R0, f);
+  return `M${x1} ${y1}A${R1} ${R1} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${R0} ${R0} 0 0 0 ${x4} ${y4}Z`;
+}
+
+function renderMenu() {
+  const items = [
+    ['Cultivate', '修炼', true, false], ['Routine', st8.hz, true, true], ['Map', '舆图'], ['Trees', '道树'],
+    ['Bag', '行囊'], ['Character', '根骨'], ['People', '人物'], ['Chronicle', '生平'], ['Settings', '设置'],
+  ];
+  document.getElementById('menu').innerHTML = items.map(([n, hz, renamed, cur]) =>
+    `<a href="#" class="${cur ? 'is-current' : ''} ${renamed ? 'is-renamed' : ''}"><span>${n}</span> <span class="hanzi">${hz}</span></a>`).join('');
+}
+
+function strip(hours, home) {
+  return `<span class="strip" aria-hidden="true">${hours.map((k, i) => `<span style="--h:var(${KIND[k === 'home' ? (home ? home[i] : 'home') : k][1]})" title="${BR[i]}: ${KIND[k][0]}"></span>`).join('')}</span>`;
+}
+
+function renderWheel() {
+  const hours = wheelHours();
+  const roadOpen = st8.when === 'any';
+  const ro = st8.day === 'road' ? roadNow() : null;
+  const segs = hours.map((k, i) => {
+    const [bx, by] = polar(112, i * 30), [kx, ky] = polar(86, i * 30);
+    const show = shown(k, i);
+    const kindWord = k === 'home' ? `home: ${KIND[show][0]}` : KIND[k][0];
+    return `<g class="wheel-hour${st8.sel.has(i) ? ' is-selected' : ''}${locked(i) ? ' is-locked' : ''}" data-i="${i}" style="--h:var(${KIND[k === 'home' ? 'home' : k][1]})">
+      <title>${BR[i]} ${PIN[i]} (${CLOCK[i]}): ${kindWord}${locked(i) ? ' · locked to sleep at Qi Condensation' : ''}</title>
+      <path class="wheel-seg" d="${seg(i, 66, 132, 1.2)}"/>
+      <text class="wheel-branch" x="${bx}" y="${by}" dy="0.35em">${BR[i]}</text>
+      <text class="wheel-kind" x="${kx}" y="${ky}" dy="0.35em">${locked(i) ? '🔒' : k === 'home' ? '· home ·' : KIND[k][0]}</text>
+    </g>`;
+  }).join('');
+  const learnedNow = st8.day === 'home' ? LEARNED.find((r) => sameAs(r.hours, st8.home)) : null;
+  const centre = st8.day === 'home'
+    ? [learnedNow ? learnedNow.name : 'Your own day', learnedNow ? 'discipline +10%' : '+0.214 qi a day']
+    : [ro.short, ro.own ? 'your own road' : `${hours.filter((x) => x === 'travel' || x === 'guard').length} travel hours`];
+
+  const sel = [...st8.sel].sort((a, b) => a - b);
+  const kinds = st8.day === 'home' ? HOME_KINDS : ROAD_KINDS;
+  let editor;
+  if (sel.length === 0) {
+    editor = `<p class="muted">Tap an hour to change it. Drag across the wheel, or shift-click, to take several; ctrl-click adds or drops one.</p>
+      ${st8.day === 'road' ? `<p class="caption">Road hours set to <i>as at home</i> do what your home wheel does at that hour. Sleep stays where the body needs it.</p>` : ''}`;
+  } else {
+    const ks = new Set(sel.map((i) => hours[i]));
+    const skipped = sel.filter(locked);
+    const head = sel.length === 1
+      ? `<span class="hanzi">${BR[sel[0]]}</span> ${PIN[sel[0]]} · ${CLOCK[sel[0]]}`
+      : `${sel.length} hours · <span class="hanzi">${sel.map((i) => BR[i]).join(' ')}</span>`;
+    const now = ks.size === 1 ? KIND[[...ks][0]][0] : 'mixed';
+    editor = `<h3>${head}</h3>
+      <p class="caption">${sel.length === 1 ? `${now}${st8.day === 'home' && now === 'Qi' ? ': +0.018 qi a day (element +25%)' : ''}` : `Now ${now}. A kind below sets them all.`}</p>
+      <div class="seg kinds" role="group" aria-label="What these hours go to">
+        ${kinds.map((k) => `<button data-kind="${k}" style="--h:var(${KIND[k][1]})" aria-pressed="${ks.size === 1 && ks.has(k)}" class="${ks.size > 1 && ks.has(k) ? 'is-mixed' : ''}"><i></i>${KIND[k][0]}</button>`).join('')}
+      </div>
+      ${skipped.length ? `<p class="caption">${skipped.map((i) => BR[i]).join(' and ')} stay asleep: at Qi Condensation the body still needs them, until Foundation.</p>` : ''}
+      <div class="editor-actions"><button class="button button-quiet" data-clear>Clear the pick</button></div>`;
+  }
+
+  return `<section class="panel">
+    <div class="dayhead">
+      <h2 class="panel-heading" style="margin:0">${st8.day === 'home' ? 'The day at home' : 'The day on the road'}</h2>
+      <div class="seg" role="group" aria-label="Which day">
+        <button data-day="home" aria-pressed="${st8.day === 'home'}">Home <span class="hanzi">居</span></button>
+        <button data-day="road" aria-pressed="${st8.day === 'road'}" ${roadOpen ? '' : 'disabled title="Opens with the Map"'}>Road <span class="hanzi">途</span></button>
+      </div>
+    </div>
+    ${!roadOpen && st8.day === 'home' ? '<p class="caption">The road day opens with the Map.</p>' : ''}
+    <div class="wheel-wrap">
+      <svg class="wheel" id="wheel" viewBox="-160 -160 320 320" role="group" aria-label="The ${st8.day} wheel">
+        ${segs}
+        <circle r="60" fill="transparent" data-centre style="cursor:pointer"/>
+        <text class="wheel-center-title" y="-6">${centre[0]}</text>
+        <text class="wheel-center-caption" y="13">${centre[1]}</text>
+      </svg>
+      <div class="wheel-editor">${editor}</div>
+    </div>
+    ${st8.day === 'home'
+      ? '<p class="caption" style="margin-top:10px">A day of seclusion: +0.214 qi · +0.041 tempering · +0.62 insight · +2 practice days on Long Spear Thrust</p>'
+      : `<p class="caption" style="margin-top:10px">${roadNow().note} · on foot, 40 li a double-hour · ${hours.filter((x) => x === 'travel').length * 40} li a day</p>`}
+    ${renderFold()}
+  </section>`;
+}
+
+function renderFold() {
+  const home = st8.day === 'home';
+  const learnedNow = home ? LEARNED.find((r) => sameAs(r.hours, st8.home)) : null;
+  const savedNow = home ? st8.saved.find((r) => sameAs(r.hours, st8.home)) : null;
+  const cur = home ? (learnedNow ? [learnedNow.name, 'discipline +10%'] : savedNow ? [savedNow.name, 'saved'] : ['Your own day', 'no discipline']) : [roadNow().name, roadNow().own ? 'your own' : 'a way of the road'];
+  const row = (name, hours, note, now, act, extra = '') => `<li class="fold-row${now ? ' is-now' : ''}">
+      <span class="fold-name">${name}</span>${strip(hours, home ? null : st8.home)}
+      <span class="fold-act">${now ? '<span class="accent">Following</span>' : act}${extra}</span>
+      ${note ? `<span class="fold-note">${note}</span>` : ''}</li>`;
+  let list;
+  if (home) {
+    list = `<p class="group-label">Learned · keep one to the hour for discipline +10%</p><ul class="fold-list">
+      ${LEARNED.map((r) => row(`${r.name} <span class="hanzi">${r.hanzi}</span>`, r.hours, `From ${r.source}.`, sameAs(r.hours, st8.home), `<button class="button" data-follow-home="${r.id}">Follow</button>`)).join('')}</ul>
+      <p class="group-label">Your own</p><ul class="fold-list">
+      ${st8.saved.map((r, n) => row(r.name, r.hours, '', sameAs(r.hours, st8.home), `<button class="button" data-use-saved="${n}">Use</button>`, '<button class="button button-quiet">Forget</button>')).join('')}</ul>
+      <form class="fold-save" onsubmit="return false"><input placeholder="Save this wheel as…" maxlength="40"><button class="button">Save</button></form>`;
+  } else {
+    list = `<p class="group-label">Ways of the road</p><ul class="fold-list">
+      ${ROAD.map((r) => row(r.name, r.hours, r.note[0].toUpperCase() + r.note.slice(1) + '.', st8.road === r.id, `<button class="button" data-road="${r.id}">Follow</button>`)).join('')}</ul>
+      <p class="group-label">Your own · change an hour of a way and it becomes yours</p><ul class="fold-list">
+      ${st8.own.map((r) => row(st8.rename === r.id ? `<input value="${r.name}" maxlength="40" data-rename-input="${r.id}">` : r.name, r.hours, '', st8.road === r.id, `<button class="button" data-road="${r.id}">Follow</button>`,
+        `<button class="button button-quiet" data-rename="${r.id}">${st8.rename === r.id ? 'Done' : 'Rename'}</button><button class="button button-quiet" data-forget-road="${r.id}">Forget</button>`)).join('') || '<li class="caption">None yet.</li>'}</ul>`;
+  }
+  return `<div class="fold${st8.fold ? ' is-open' : ''}">
+    <button class="fold-head" data-fold aria-expanded="${!!st8.fold}">
+      <span class="map-label">${home ? 'Routine' : 'Road routine'}</span>
+      <b>${cur[0]}</b> <span class="muted">· ${cur[1]}</span>
+      <span class="fold-chev">${st8.fold ? 'Close ▴' : 'Change ▾'}</span>
+    </button>
+    ${st8.fold ? `<div class="fold-body">${list}</div>` : ''}
+  </div>`;
+}
+
+function renderMapBar() {
+  const hours = roadNow().hours;
+  const R1 = 60, R0 = 32, now = 5;
+  const segs = hours.map((k, i) => {
+    const [x1, y1] = polar(R1, i * 30 - 14.4), [x2, y2] = polar(R1, i * 30 + 14.4), [x3, y3] = polar(R0, i * 30 + 14.4), [x4, y4] = polar(R0, i * 30 - 14.4);
+    const [tx, ty] = polar((R0 + R1) / 2, i * 30);
+    const col = `var(${KIND[k === 'home' ? st8.home[i] : k][1]})`;
+    return `<g data-map-hour="${i}"><path d="M${x1} ${y1}A${R1} ${R1} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${R0} ${R0} 0 0 0 ${x4} ${y4}Z" fill="${col}" opacity="${i === now ? 1 : k === 'sleep' ? 0.55 : 0.78}" stroke="${i === now ? '#e9e5da' : 'none'}" stroke-width="1.3"><title>${BR[i]}: ${KIND[k][0]}</title></path>
+      <text x="${tx}" y="${ty + 4}" text-anchor="middle" class="map-wheel-branch">${BR[i]}</text></g>`;
+  }).join('');
+  const [nx, ny] = polar(R0 - 4, now * 30);
+  const picker = st8.maptap === 'pick' && st8.mapPick !== null
+    ? `<div class="map-picker"><div class="map-label" style="padding:2px 8px">${BR[st8.mapPick]} · ${CLOCK[st8.mapPick]}</div>
+      ${ROAD_KINDS.filter((k) => k !== 'home').map((k) => `<button data-map-kind="${k}"><i style="background:var(${KIND[k][1]})"></i>${KIND[k][0]}</button>`).join('')}
+      <button data-map-cancel class="muted">Cancel</button></div>` : '';
+  return `<section class="panel mapbar">
+    <p class="eyebrow" style="margin:0">Meanwhile, the Map's bar</p>
+    <div class="map-wheel-row">
+      <svg viewBox="-64 -64 128 128" class="map-wheel">${segs}<line x1="0" y1="0" x2="${nx}" y2="${ny}" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"/><circle r="3" fill="var(--accent)"/></svg>
+      <div style="min-width:0;flex:1 1 180px">
+        <div class="map-label">Road routine</div>
+        <div class="map-chips">${roadAll().map((r) => `<button class="map-chip" data-road="${r.id}" aria-pressed="${st8.road === r.id}">${r.short}</button>`).join('')}</div>
+        <p class="map-pace"><b>巳 · walking</b><br>240 li a day, 40 a double-hour · ${st8.maptap === 'route' ? 'tap an hour to set it in Routine' : 'tap an hour to change it'}</p>
+      </div>
+    </div>
+    ${picker}
+  </section>`;
+}
+
+function render() {
+  document.getElementById('frame').classList.toggle('is-phone', st8.width === 'phone');
+  renderMenu();
+  const hours = st8.home;
+  const [tn, th] = tabName();
+  document.getElementById('screen').innerHTML = `
+    <section class="hour-strip"><div class="hour-strip-cells">${hours.map((k, i) =>
+      `<button class="hour-cell${['qi','body','soul','sleep'].includes(k) ? ' is-open' : ''}" style="--h:var(${KIND[k][1]})" title="${BR[i]}: ${KIND[k][0]}"><span class="hanzi">${BR[i]}</span></button>`).join('')}</div>
+      <p class="caption">Qi 6 · Study 2 · Practice 1 · Body 1 · Sleep 2 · tap an hour to open its tab</p></section>
+    <div class="tabs"><div class="seg" role="tablist">
+      <button aria-pressed="true">${tn} <span class="hanzi">${th}</span></button><button>Practice <span class="hanzi">练</span></button><button>Study <span class="hanzi">读</span></button>
+    </div></div>
+    ${renderWheel()}
+    ${renderMapBar()}`;
+  bindWheel();
+}
+
+// ---- choosing hours: drag across, shift for a run, ctrl to add or drop one.
+let drag = null;
+function bindWheel() {
+  const svg = document.getElementById('wheel');
+  const hourAt = (e) => { const g = document.elementFromPoint(e.clientX, e.clientY)?.closest('.wheel-hour'); return g ? +g.dataset.i : null; };
+  svg.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('[data-centre]')) { st8.sel.clear(); st8.anchor = null; render(); return; }
+    const g = e.target.closest('.wheel-hour');
+    const i = g ? +g.dataset.i : hourAt(e); if (i === null) return;
+    e.preventDefault();
+    const touchTap = e.pointerType === 'touch' && st8.touch === 'tap';
+    if (e.shiftKey && st8.anchor !== null) {
+      st8.sel = new Set(run(st8.anchor, i));
+    } else if (e.ctrlKey || e.metaKey || touchTap) {
+      st8.sel.has(i) ? st8.sel.delete(i) : st8.sel.add(i); st8.anchor = i;
+    } else {
+      const only = st8.sel.size === 1 && st8.sel.has(i);
+      st8.sel = only ? new Set() : new Set([i]); st8.anchor = only ? null : i;
+      if (!(e.pointerType === 'touch' && st8.touch !== 'drag')) drag = { from: i };
+    }
+    render();
+  });
+  svg.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    // A mouse moves over the hour it is on; a finger keeps its first target, so ask the point.
+    const g = e.pointerType === 'touch' ? null : e.target.closest('.wheel-hour');
+    const i = g ? +g.dataset.i : hourAt(e); if (i === null) return;
+    const next = new Set(run(drag.from, i));
+    if (next.size !== st8.sel.size || [...next].some((x) => !st8.sel.has(x))) { st8.sel = next; st8.anchor = drag.from; render(); }
+  });
+}
+window.addEventListener('pointerup', () => { drag = null; });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && st8.sel.size) { st8.sel.clear(); render(); } });
+/** The hours from a to b the short way round the wheel, so 亥 to 寅 runs through midnight. */
+function run(a, b) {
+  const fwd = (b - a + 12) % 12, back = (a - b + 12) % 12;
+  const out = [];
+  if (fwd <= back) for (let k = 0; k <= fwd; k++) out.push((a + k) % 12);
+  else for (let k = 0; k <= back; k++) out.push((a - k + 12) % 12);
+  return out;
+}
+
+function setKind(kind) {
+  const hit = [...st8.sel].filter((i) => !locked(i));
+  if (st8.day === 'home') {
+    hit.forEach((i) => { st8.home[i] = kind; });
+  } else {
+    let r = roadNow();
+    if (!r.own) {
+      const id = `own-${st8.own.length + 1}`;
+      st8.own.push({ id, name: `My road ${st8.own.length + 1}`, hours: [...r.hours] });
+      st8.road = id; toast(`Your changes made ${st8.own.at(-1).name}, a road of your own.`);
+    }
+    const mine = st8.own.find((o) => o.id === st8.road);
+    hit.forEach((i) => { mine.hours[i] = kind; });
+  }
+  render();
+}
+
+document.addEventListener('click', (e) => {
+  const c = e.target.closest('[data-ctl] button');
+  if (c) {
+    const ctl = c.parentElement.dataset.ctl;
+    st8[ctl] = c.dataset.v;
+    c.parentElement.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === c));
+    if (ctl === 'when' && st8.when === 'map') st8.day = 'home';
+    st8.mapPick = null; render(); return;
+  }
+  const el = e.target.closest('button, g[data-map-hour]');
+  if (!el) return;
+  const d = el.dataset;
+  if (d.day) { st8.day = d.day; st8.sel.clear(); st8.anchor = null; }
+  else if (d.kind) return setKind(d.kind);
+  else if ('clear' in d) { st8.sel.clear(); st8.anchor = null; }
+  else if ('fold' in d) { st8.fold = !st8.fold; }
+  else if (d.road) { st8.road = d.road; }
+  else if (d.followHome) { st8.home = [...LEARNED.find((r) => r.id === d.followHome).hours]; }
+  else if (d.useSaved) { st8.home = [...st8.saved[+d.useSaved].hours]; }
+  else if (d.forgetRoad) { st8.own = st8.own.filter((o) => o.id !== d.forgetRoad); if (st8.road === d.forgetRoad) st8.road = 'walk'; }
+  else if (d.rename) {
+    if (st8.rename === d.rename) { const v = document.querySelector(`[data-rename-input="${d.rename}"]`).value.trim(); const o = st8.own.find((x) => x.id === d.rename); if (v) o.name = v; st8.rename = null; }
+    else st8.rename = d.rename;
+  }
+  else if (d.mapHour !== undefined) {
+    const i = +d.mapHour;
+    if (st8.maptap === 'route') { st8.day = 'road'; st8.sel = new Set([i]); st8.anchor = i; toast(`Routine opens on the road wheel, ${BR[i]} picked.`); document.getElementById('wheel')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    else st8.mapPick = i;
+  }
+  else if (d.mapKind) { st8.sel = new Set([st8.mapPick]); const was = st8.day; st8.day = 'road'; setKind(d.mapKind); st8.day = was; st8.sel.clear(); st8.mapPick = null; }
+  else if ('mapCancel' in d) st8.mapPick = null;
+  else return;
+  render();
+});
+
+render();
+</script>

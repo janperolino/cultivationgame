@@ -83,8 +83,8 @@ describe('save format', () => {
     expect(p.items).toEqual({ 'foundation-pill': 1 });
     expect(p.flags).toEqual(['hours-study']);
     expect(s.unlocks).toEqual([
-      'abode',
       'cultivate',
+      'routine',
       'techniques',
       'map',
       'character',
@@ -181,6 +181,16 @@ describe('save format', () => {
     ]);
     // Their P1.3 costs come back, 60 + 45 + 120; insight ever earned is untouched.
     expect(p.insight).toEqual({ current: 200 + 225, earned: 900 });
+  });
+
+  it('renames the Abode to Cultivate and Cultivate to Routine, in the unlocks and the seen record', () => {
+    const raw = JSON.parse(JSON.stringify(makeSave(played(), 1)));
+    raw.version = 26;
+    raw.state.unlocks = ['abode', 'cultivate', 'techniques', 'map'];
+    raw.state.seen.screen = { abode: 'seen', cultivate: 'noticed', map: 'seen' };
+    const s = loadSave(raw).state;
+    expect(s.unlocks).toEqual(['cultivate', 'routine', 'techniques', 'map']);
+    expect(s.seen.screen).toEqual({ cultivate: 'seen', routine: 'noticed', map: 'seen' });
   });
 
   it('rejects saves from a newer game and damaged saves', () => {

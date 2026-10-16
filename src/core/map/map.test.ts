@@ -41,7 +41,9 @@ import {
   liPerDay,
   mapOf,
   setCourse,
-  setRoadHour,
+  setRoadHours,
+  forgetRoadRoutine,
+  renameRoadRoutine,
   travelDays,
 } from './travel.ts';
 
@@ -318,10 +320,34 @@ describe('travel on the day loop', () => {
 
   it('lets you edit the road wheel into a routine of your own', () => {
     let s = life();
-    s = setRoadHour(s, 11, 'travel');
+    s = setRoadHours(s, [11], 'travel');
     expect(s.map!.roadRoutine).toBe('own-1');
     expect(s.map!.ownRoutines[0]!.hours[11]).toBe('travel');
-    expect(setRoadHour(s, 0, 'travel')).toBe(s); // 子 is locked to sleep at Qi Condensation
+    expect(setRoadHours(s, [0], 'travel')).toBe(s); // 子 is locked to sleep at Qi Condensation
+  });
+
+  it('sets several road hours at once, passing over the locked ones', () => {
+    let s = setRoadHours(life(), [0, 1, 2, 3], 'qi');
+    expect(s.map!.ownRoutines[0]!.hours.slice(0, 4)).toEqual(['sleep', 'sleep', 'qi', 'qi']);
+    s = setRoadHours(s, [4, 5], 'look');
+    expect(s.map!.ownRoutines).toHaveLength(1); // your own is edited in place
+    expect(s.map!.ownRoutines[0]!.hours.slice(4, 6)).toEqual(['look', 'look']);
+  });
+
+  it('forgets a road routine of your own and never reuses its id', () => {
+    let s = setRoadHours(life(), [11], 'travel');
+    s = followRoadRoutine(s, 'walk');
+    s = setRoadHours(s, [10], 'qi');
+    expect(s.map!.ownRoutines.map((o) => o.id)).toEqual(['own-1', 'own-2']);
+    s = forgetRoadRoutine(s, 'own-1');
+    s = followRoadRoutine(s, 'pressed');
+    s = setRoadHours(s, [9], 'qi');
+    expect(s.map!.ownRoutines.map((o) => o.id)).toEqual(['own-2', 'own-3']);
+    s = forgetRoadRoutine(s, 'own-3');
+    expect(s.map!.roadRoutine).toBe('walk'); // forgetting the one you follow goes back to walking
+    s = renameRoadRoutine(s, 'own-2', '  Herb road  ');
+    expect(s.map!.ownRoutines[0]!.name).toBe('Herb road');
+    expect(renameRoadRoutine(s, 'own-2', '   ')).toBe(s);
   });
 
   it('travels with a group on its course, refuses a course of your own, and pays on arriving', () => {

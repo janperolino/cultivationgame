@@ -155,25 +155,26 @@ export function roadHours(life: MapLife, c: Cultivator): RoadHour[] {
   });
 }
 
-/** Sets one hour of the road wheel; editing a saved routine makes it your own. */
-export function setRoadHour(s: GameState, hour: number, kind: RoadHour): GameState {
+/**
+ * Sets one or several hours of the road wheel; editing a saved routine makes it your own. Hours
+ * locked to sleep are passed over, and a group's road is the group's to keep.
+ */
+export function setRoadHours(s: GameState, at: readonly number[], kind: RoadHour): GameState {
   const life = s.map;
-  if (!life || hour < 0 || hour >= HOURS_PER_DAY || hourLocked(s.player, hour)) return s;
+  if (!life || life.group) return s;
+  const set = at.filter((h) => h >= 0 && h < HOURS_PER_DAY && !hourLocked(s.player, h));
+  if (set.length === 0) return s;
   const r = roadRoutine(life);
   const hours = [...r.hours];
-  hours[hour] = kind;
+  for (const h of set) hours[h] = kind;
+  if (hours.every((k, i) => k === r.hours[i])) return s;
   const mine = life.ownRoutines.find((o) => o.id === life.roadRoutine);
+  // A new one takes the next number never used, so a forgotten one's id stays its own.
+  const n = 1 + Math.max(0, ...life.ownRoutines.map((o) => Number(o.id.slice(4)) || 0));
   const ownRoutines = mine
     ? life.ownRoutines.map((o) => (o.id === mine.id ? { ...o, hours } : o))
-    : [
-        ...life.ownRoutines,
-        {
-          id: `own-${life.ownRoutines.length + 1}`,
-          name: `My road ${life.ownRoutines.length + 1}`,
-          hours,
-        },
-      ];
-  const id = mine ? mine.id : ownRoutines[ownRoutines.length - 1]!.id;
+    : [...life.ownRoutines, { id: `own-${n}`, name: `My road ${n}`, hours }];
+  const id = mine ? mine.id : `own-${n}`;
   return replan(withLife(s, { ...life, ownRoutines, roadRoutine: id }));
 }
 
@@ -182,11 +183,21 @@ export function followRoadRoutine(s: GameState, id: string): GameState {
   return replan(withLife(s, { ...s.map, roadRoutine: id }));
 }
 
+/** Forgets a road routine of your own; following it, you go back to walking by day. */
+export function forgetRoadRoutine(s: GameState, id: string): GameState {
+  if (!s.map || !s.map.ownRoutines.some((o) => o.id === id)) return s;
+  const ownRoutines = s.map.ownRoutines.filter((o) => o.id !== id);
+  const roadRoutine = s.map.roadRoutine === id ? ROAD_ROUTINES[0]!.id : s.map.roadRoutine;
+  return replan(withLife(s, { ...s.map, ownRoutines, roadRoutine }));
+}
+
+/** Names a road routine of your own; a blank name keeps the old one. */
 export function renameRoadRoutine(s: GameState, id: string, name: string): GameState {
-  if (!s.map) return s;
+  const named = name.trim().slice(0, 40);
+  if (!s.map || !named) return s;
   return withLife(s, {
     ...s.map,
-    ownRoutines: s.map.ownRoutines.map((o) => (o.id === id ? { ...o, name } : o)),
+    ownRoutines: s.map.ownRoutines.map((o) => (o.id === id ? { ...o, name: named } : o)),
   });
 }
 

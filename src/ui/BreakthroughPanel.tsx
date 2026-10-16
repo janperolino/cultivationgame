@@ -1,4 +1,4 @@
-// Breakthroughs at the Abode (P2.4; design § Cultivation, Breakthroughs and grades; § UI and
+// Breakthroughs on Cultivate (P2.4; design § Cultivation, Breakthroughs and grades; § UI and
 // screens). Under the figure, a row of up to three buttons, Qi, Body and Soul, each naming its
 // next step once that ladder's bar is full. A minor step starts the scene at once; a major one
 // opens the panel between the figure and the stats: the ladder, the target, the odds, the grade

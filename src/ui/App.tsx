@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { AbodeScreen } from './AbodeScreen.tsx';
+import { CultivateScreen } from './CultivateScreen.tsx';
 import { BagScreen } from './BagScreen.tsx';
 import { CharacterScreen } from './CharacterScreen.tsx';
 import { ChronicleScreen } from './ChronicleScreen.tsx';
 import { CombatScreen } from './CombatScreen.tsx';
 import { CreationScreen } from './CreationScreen.tsx';
 import { DevConsole } from './dev/DevConsole.tsx';
-import { CultivateScreen } from './CultivateScreen.tsx';
+import { RoutineScreen } from './RoutineScreen.tsx';
 import { MapScreen } from './MapScreen.tsx';
 import { PeopleScreen } from './PeopleScreen.tsx';
 import { GlassBackground } from './GlassBackground.tsx';
@@ -50,27 +50,27 @@ function SlotNotice() {
 }
 
 export function App() {
-  const [screen, setScreen] = useState<ScreenId>('abode');
+  const [screen, setScreen] = useState<ScreenId>('cultivate');
   const [menuOpen, setMenuOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const phase = useGame((s) => s.phase);
   const game = useGame((s) => s.game);
   const notice = useGame((s) => s.notice);
   const creating = useGame((s) => s.creating);
-  // A life begins at home: once creation closes, the Abode shows.
+  // A life begins at home: once creation closes, Cultivate shows.
   const [wasCreating, setWasCreating] = useState(false);
   if (!!creating !== wasCreating) {
     setWasCreating(!!creating);
-    if (!creating) setScreen('abode');
+    if (!creating) setScreen('cultivate');
   }
-  // A breakthrough scene plays on the Abode's figure, and its panel opens there, wherever either
+  // A breakthrough scene plays on Cultivate's figure, and its panel opens there, wherever either
   // was called from.
   const sceneStarted = useScene((s) => s.play?.started ?? 0);
   const panelOpen = useScene((s) => (s.panel ? `${s.panel.ladder}/${s.panel.lastChance}` : ''));
   const [lastScene, setLastScene] = useState({ started: 0, panel: '' });
   if (sceneStarted !== lastScene.started || panelOpen !== lastScene.panel) {
     setLastScene({ started: sceneStarted, panel: panelOpen });
-    if (sceneStarted || panelOpen) setScreen('abode');
+    if (sceneStarted || panelOpen) setScreen('cultivate');
   }
   // A link on one screen to another (the Character screen's manuals line, say) shows it, from
   // its top.
@@ -87,7 +87,7 @@ export function App() {
     const to = useNav.getState().screen;
     if (to) setScreen(to);
   }
-  // A mark on the Abode in the menu while a breakthrough is ready.
+  // A mark on Cultivate in the menu while a breakthrough is ready.
   const ready = useGame((s) => (s.game ? readyLadders(s.game).length > 0 : false));
   const dismissNotice = useGame((s) => s.dismissNotice);
 
@@ -221,7 +221,7 @@ export function App() {
                 >
                   <span>
                     {s.name}
-                    {s.id === 'abode' && ready && (
+                    {s.id === 'cultivate' && ready && (
                       <span className="menu-mark" role="img" aria-label="a breakthrough is ready" />
                     )}
                     {dots.includes(s.id) && s.id !== current.id && (
@@ -252,8 +252,8 @@ export function App() {
           {phase === 'no-slot' && !creating && (
             <p className="muted">No life is open. Start one or pick a slot below.</p>
           )}
-          {phase !== 'loading' && current.id === 'abode' && <AbodeScreen />}
           {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
+          {phase !== 'loading' && current.id === 'routine' && <RoutineScreen />}
           {phase !== 'loading' && current.id === 'map' && <MapScreen />}
           {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
           {phase !== 'loading' && current.id === 'bag' && <BagScreen />}

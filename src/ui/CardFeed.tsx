@@ -3,7 +3,7 @@
 // showing, so any of them can be lifted to the top. A new card rises onto the stack, and its rim
 // walks faster while it waits; what a choice led to stays until you send it on, when it slides
 // off the stack into the chronicle, or, on a card with further steps, turns to the next step.
-// Under reduced motion nothing moves. The tray sits at the foot of the Abode, so a choice must not
+// Under reduced motion nothing moves. The tray sits at the foot of Cultivate, so a choice must not
 // shrink it: the stack keeps its height while the outcome shows, and the next card is brought into
 // view once you send the outcome on.
 import { useLayoutEffect, useRef, useState } from 'react';

@@ -17,7 +17,7 @@ import { tree } from '../content/trees/index.ts';
 import type { Gain } from '../core/seen.ts';
 import type { GameState } from '../core/state.ts';
 import { mastery, MAX_MASTERY } from '../core/techniques.ts';
-import type { CultivateTab, TreesTarget } from './nav.ts';
+import type { RoutineTab, TreesTarget } from './nav.ts';
 import { screens, type ScreenId } from './screens.ts';
 
 /** At most this many toasts at once. */
@@ -25,11 +25,11 @@ export const TOASTS_MAX = 3;
 /** How long a toast stays, unless hovered or focused. */
 export const TOAST_MS = 6000;
 
-/** Where a toast's link goes: a screen, the Trees screen's target, Cultivate's tab, a thing to select there. */
+/** Where a toast's link goes: a screen, the Trees screen's target, Routine's tab, a thing to select there. */
 export interface ToastLink {
   screen: ScreenId;
   trees?: TreesTarget;
-  tab?: CultivateTab;
+  tab?: RoutineTab;
   select?: string;
 }
 
@@ -68,7 +68,7 @@ function toastFor(g: Gain, s: GameState): ToastView | null {
         label: 'New technique',
         name: t.name,
         rarity: t.rarity,
-        to: link({ screen: 'cultivate', tab: 'practice', select: g.id }),
+        to: link({ screen: 'routine', tab: 'practice', select: g.id }),
       };
     }
     case 'method': {
@@ -79,7 +79,7 @@ function toastFor(g: Gain, s: GameState): ToastView | null {
         label: 'New method',
         name: m.name,
         rarity: m.rarity,
-        to: link({ screen: 'cultivate' }),
+        to: link({ screen: 'routine' }),
       };
     }
     case 'manual': {
@@ -129,13 +129,13 @@ function toastFor(g: Gain, s: GameState): ToastView | null {
       };
     }
     case 'screen': {
-      // The Techniques screen is Cultivate's Practice tab now; its unlock keeps the old id.
+      // The Techniques screen is Routine's Practice tab now; its unlock keeps the old id.
       if (g.id === 'techniques') {
         return {
           glyph: '练',
           label: 'New tab',
-          name: 'Cultivate › Practice',
-          to: link({ screen: 'cultivate', tab: 'practice' }),
+          name: 'Routine › Practice',
+          to: link({ screen: 'routine', tab: 'practice' }),
         };
       }
       const screen = screens.find((x) => x.id === g.id);

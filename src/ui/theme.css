@@ -34,6 +34,11 @@
   --hour-study: #a9b97f;
   --hour-practice: #cf7f9f;
   --hour-sleep: #59606b;
+  /* The road wheel's own hours; an hour kept as at home is grey, and its tooltip says what it does. */
+  --hour-travel: #c2ae8c;
+  --hour-look: #9fc4ad;
+  --hour-guard: #b98a6e;
+  --hour-home: #7d8692;
   /* Dawn's purple qi at 卯. */
   --dawn: #c4a3f0;
   /* Qi as the figure draws it in, tinted by the hour (ui/qiCanvas.ts); dawn's purple is --dawn. */
@@ -604,10 +609,10 @@ select {
   opacity: 0.85;
 }
 
-/* The Abode's seated cultivator, the dantian glowing with qi as the bar fills. */
+/* Cultivate's seated cultivator, the dantian glowing with qi as the bar fills. */
 /* The seat has a panel of its own, the figure large and centred with its meter under it; the
    cultivator's realm, bars and numbers sit in the panel after it. */
-.abode-seat {
+.cultivate-seat {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -624,7 +629,7 @@ select {
   pointer-events: none;
 }
 
-.abode-seat > :not(.seat-sun) {
+.cultivate-seat > :not(.seat-sun) {
   position: relative;
 }
 
@@ -747,7 +752,7 @@ select {
   color: var(--accent);
 }
 
-/* Breakthroughs at the Abode (P2.4): a row of buttons under the figure, one for each ladder whose
+/* Breakthroughs on Cultivate (P2.4): a row of buttons under the figure, one for each ladder whose
    bar is full, each with its ladder's color on the left; dimmer while not ready. */
 .bt-row {
   display: flex;
@@ -1114,7 +1119,7 @@ select {
   font-size: calc(12px * var(--text-scale));
 }
 
-/* The mark on the Abode in the menu while a breakthrough is ready. */
+/* The mark on Cultivate in the menu while a breakthrough is ready. */
 .menu-mark {
   display: inline-block;
   width: 7px;
@@ -1160,7 +1165,7 @@ select {
 
 /* The break: a flash over the whole seat and the figure shaking, harder for a major one; under
    reduced motion the flash stays and fades, and nothing moves. A failure flashes the warning. */
-.abode-seat > .seat-flash {
+.cultivate-seat > .seat-flash {
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -1173,27 +1178,27 @@ select {
   );
 }
 
-.abode-seat.is-body {
+.cultivate-seat.is-body {
   --flash: var(--hour-body);
 }
 
-.abode-seat.is-soul {
+.cultivate-seat.is-soul {
   --flash: var(--hour-soul);
 }
 
-.abode-seat.is-held {
+.cultivate-seat.is-held {
   --flash: var(--warn);
 }
 
-.abode-seat.is-breaking > .seat-flash {
+.cultivate-seat.is-breaking > .seat-flash {
   animation: seat-flash 1.4s ease-out;
 }
 
-.abode-seat.is-breaking.is-major > .seat-flash {
+.cultivate-seat.is-breaking.is-major > .seat-flash {
   animation: seat-flash 2.2s ease-out;
 }
 
-.abode-seat.is-held > .seat-flash {
+.cultivate-seat.is-held > .seat-flash {
   animation: seat-flash 0.9s ease-out;
 }
 
@@ -1209,11 +1214,11 @@ select {
   }
 }
 
-.abode-seat.is-breaking .seat-figure {
+.cultivate-seat.is-breaking .seat-figure {
   animation: seat-shake 0.5s ease-out;
 }
 
-.abode-seat.is-breaking.is-major .seat-figure {
+.cultivate-seat.is-breaking.is-major .seat-figure {
   animation: seat-shake-major 0.8s ease-out;
 }
 
@@ -1258,7 +1263,7 @@ select {
   }
 }
 
-:root[data-motion='reduced'] .abode-seat .seat-figure {
+:root[data-motion='reduced'] .cultivate-seat .seat-figure {
   animation: none;
 }
 
@@ -1398,7 +1403,7 @@ select {
   color: var(--accent);
 }
 
-/* The Cultivate screen. */
+/* The Routine screen. */
 .field {
   display: grid;
   gap: 6px;
@@ -1628,6 +1633,22 @@ select {
   --hour: var(--hour-sleep);
 }
 
+.hour-travel {
+  --hour: var(--hour-travel);
+}
+
+.hour-look {
+  --hour: var(--hour-look);
+}
+
+.hour-guard {
+  --hour: var(--hour-guard);
+}
+
+.hour-home {
+  --hour: var(--hour-home);
+}
+
 /* The editor sits beside the wheel when the panel has room, and wraps below it when not. */
 .wheel-wrap {
   display: flex;
@@ -1657,6 +1678,27 @@ select {
 .wheel-hour {
   cursor: pointer;
   outline: none;
+}
+
+/* A drag across the wheel picks hours, so a finger on it doesn't scroll the page. */
+.wheel {
+  touch-action: none;
+}
+
+/* A press on the wheel's middle lets go of the pick. */
+.wheel-centre {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.wheel-center-title,
+.wheel-center-caption {
+  pointer-events: none;
+}
+
+.wheel-clear {
+  display: inline-block;
+  margin-top: 8px;
 }
 
 .wheel-seg {
@@ -1751,7 +1793,6 @@ select {
   background: color-mix(in srgb, var(--hour) 60%, transparent);
 }
 
-.routines,
 .methods {
   list-style: none;
   margin: 12px 0 0;
@@ -1760,25 +1801,149 @@ select {
   gap: 12px;
 }
 
-.routine + .routine {
-  padding-top: 12px;
+/* The day's head: its name, and the Home / Road switch beside it. */
+.day-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+}
+
+.day-head .panel-heading {
+  margin: 0;
+}
+
+/* Routines fold under the wheel: one line naming the one you keep; Change opens the list. */
+.routine-fold {
+  margin-top: 12px;
+  padding-top: 8px;
   border-top: 1px solid var(--edge);
 }
 
-.routine-head {
+.routine-fold-head {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px 12px;
+  align-items: baseline;
+  gap: 4px 8px;
+  width: 100%;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.routine-save {
+.routine-fold-label {
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.routine-fold-head b {
+  font-weight: 600;
+}
+
+.routine-fold-chev {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: calc(12.5px * var(--text-scale));
+}
+
+.routine-fold-chev::after {
+  content: ' ▾';
+}
+
+.routine-fold.is-open .routine-fold-chev::after {
+  content: ' ▴';
+}
+
+.routine-fold-group {
+  margin: 12px 0 0;
+  font-size: calc(11.5px * var(--text-scale));
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.routine-fold-list {
+  display: grid;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.routine-fold-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'name strip act'
+    'note note note';
+  align-items: center;
+  gap: 2px 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--edge);
+}
+
+.routine-fold-name {
+  grid-area: name;
+}
+
+.routine-fold-row > .wheel-strip {
+  grid-area: strip;
+}
+
+.routine-fold-row.is-now .routine-fold-name {
+  color: var(--accent);
+}
+
+.routine-fold-act {
+  grid-area: act;
   display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 10px;
-  margin-top: 16px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.routine-fold-note {
+  grid-area: note;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+}
+
+.routine-fold-row input,
+.routine-fold-save input {
+  min-width: 0;
+  padding: 3px 7px;
+  border: 1px solid var(--edge-strong);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+
+.routine-fold-save {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.routine-fold-save input {
+  flex: 1 1 auto;
+}
+
+@media (max-width: 560px) {
+  /* Narrow, the buttons sit by the name and the strip drops under it. */
+  .routine-fold-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'name act'
+      'strip strip'
+      'note note';
+  }
 }
 
 .methods {
@@ -5862,7 +6027,7 @@ button.fight-card {
   margin-top: 0;
 }
 
-/* Cultivate (P2.5f): a strip of the day's hours across the top, three tabs under it. */
+/* Routine (P2.5f): a strip of the day's hours across the top, three tabs under it. */
 .hour-strip {
   display: grid;
   gap: 6px;
@@ -5925,26 +6090,26 @@ button.fight-card {
   margin-left: auto;
 }
 
-.cultivate-tabs {
+.routine-tabs {
   margin-bottom: 14px;
 }
 
-.cultivate-tabs button {
+.routine-tabs button {
   padding: 8px 16px;
 }
 
-.cultivate-tabs .menu-mark {
+.routine-tabs .menu-mark {
   margin-left: 6px;
 }
 
-.cultivate-split {
+.routine-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
   align-items: start;
 }
 
-.cultivate-split > .panel {
+.routine-split > .panel {
   margin: 0;
 }
 
@@ -6138,7 +6303,7 @@ button.fight-card {
 }
 
 @media (max-width: 899px) {
-  .cultivate-split {
+  .routine-split {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -6164,11 +6329,11 @@ button.fight-card {
     display: none;
   }
 
-  .cultivate-tabs {
+  .routine-tabs {
     display: flex;
   }
 
-  .cultivate-tabs button {
+  .routine-tabs button {
     flex: 1;
     padding: 8px 6px;
   }
@@ -7078,9 +7243,6 @@ label.beacon-ring {
    a bar: the road wheel, its routine and the ways of going; and the course card. */
 
 :root {
-  --hour-travel: #c2ae8c;
-  --hour-look: #9fc4ad;
-  --hour-guard: #b98a6e;
   --map-depth: #d07a96;
 }
 

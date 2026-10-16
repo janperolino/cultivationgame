@@ -57,7 +57,7 @@ import {
 } from './techniques.ts';
 import { FIRST_IDS, firstsWaiting, noteFirsts, type FirstStep } from './firsts.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
-import { followWheel, hourToFlip, learnRoutine, setHour, type WheelCheck } from './wheel.ts';
+import { followWheel, hourToFlip, learnRoutine, setHours, type WheelCheck } from './wheel.ts';
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
 import { bedNights } from './map/place.ts';
@@ -230,13 +230,13 @@ function settle(before: GameState): GameState {
   return noteFirsts(checkScreens(addNotes(withPlayer(s, r.cultivator), r.notes)));
 }
 
-/** The player gives one hour of the day wheel to a kind of work; the reason when they can't. */
-export function giveHour(
+/** The player gives hours of the day wheel to a kind of work; the reason when they can't. */
+export function giveHours(
   s: GameState,
-  hour: number,
+  hours: readonly number[],
   kind: HourKind,
 ): { state: GameState; check: WheelCheck } {
-  const r = setHour(s.player, hour, kind);
+  const r = setHours(s.player, hours, kind);
   return { state: r.check.ok ? noteFirsts(withPlayer(s, r.cultivator)) : s, check: r.check };
 }
 
@@ -400,7 +400,7 @@ export function takeItem(s: GameState, id: string): GameState {
 /** Gives a kind of work the hour the default rule would: the qi hour worth least. */
 function giveHourTo(s: GameState, kind: HourKind): GameState {
   const hour = hourToFlip(s.player.wheel, s.player.rootElements);
-  return hour === null ? s : giveHour(s, hour, kind).state;
+  return hour === null ? s : giveHours(s, [hour], kind).state;
 }
 
 function playStep(s: GameState, step: FirstStep): GameState {

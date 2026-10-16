@@ -7,7 +7,7 @@ import type { HourKind } from '../content/hours.ts';
 import type { LadderId } from '../content/cultivation.ts';
 import { firstsWaiting, type FirstStep } from '../core/firsts.ts';
 import type { GameState } from '../core/state.ts';
-import type { CultivateTab } from './nav.ts';
+import type { RoutineTab } from './nav.ts';
 import type { ScreenId } from './screens.ts';
 
 /** The control a beacon rings. */
@@ -16,8 +16,8 @@ export type BeaconControl =
 
 export interface Beacon {
   screen: ScreenId;
-  /** Cultivate's tab it lives in, when it lives on Cultivate. */
-  tab?: CultivateTab;
+  /** Routine's tab it lives in, when it lives on Routine. */
+  tab?: RoutineTab;
   control: BeaconControl;
   /** The copy, method or technique the control is for. */
   id?: string;
@@ -29,8 +29,8 @@ export interface Beacon {
 
 /** Where a waiting first's beacon stands. */
 export function beaconFor(step: FirstStep): Beacon {
-  const on = (tab: CultivateTab, control: BeaconControl, more: Partial<Beacon> = {}): Beacon => ({
-    screen: 'cultivate',
+  const on = (tab: RoutineTab, control: BeaconControl, more: Partial<Beacon> = {}): Beacon => ({
+    screen: 'routine',
     tab,
     control,
     ...more,
@@ -39,19 +39,19 @@ export function beaconFor(step: FirstStep): Beacon {
     case 'copy':
       return on('study', 'read-now', { id: step.id });
     case 'study-hour':
-      return on('cultivation', 'wheel', { kind: 'study' });
+      return on('day', 'wheel', { kind: 'study' });
     case 'method':
-      return on('cultivation', 'climb-with', { id: step.id, ladder: 'qi' });
+      return on('day', 'climb-with', { id: step.id, ladder: 'qi' });
     case 'technique':
       return on('practice', 'practice-this', { id: step.id });
     case 'technique-hour':
-      return on('cultivation', 'wheel', { kind: 'practice' });
+      return on('day', 'wheel', { kind: 'practice' });
     case 'art':
-      return on('cultivation', 'climb-with', { id: step.id, ladder: step.ladder });
+      return on('day', 'climb-with', { id: step.id, ladder: step.ladder });
     case 'art-hour':
-      return on('cultivation', 'wheel', { kind: step.ladder });
+      return on('day', 'wheel', { kind: step.ladder });
     case 'stones':
-      return on('cultivation', 'burn-stones');
+      return on('day', 'burn-stones');
     case 'node':
       return { screen: 'trees', control: 'node' };
   }
@@ -73,7 +73,7 @@ export function autoHintWaiting(s: GameState): boolean {
 export function beacons(s: GameState): Beacon[] {
   const out = firstsWaiting(s).map(beaconFor);
   if (s.hints.on && !s.hints.shown.includes('auto') && autoHintWaiting(s)) {
-    out.push({ screen: 'cultivate', tab: 'cultivation', control: 'auto' });
+    out.push({ screen: 'routine', tab: 'day', control: 'auto' });
   }
   return out;
 }

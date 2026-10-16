@@ -1,4 +1,4 @@
-// The canvas over the Abode's figure (design § Cultivation, Attended seclusion and Circulation on
+// The canvas over Cultivate's figure (design § Cultivation, Attended seclusion and Circulation on
 // the figure): motes drift in from the edge of the cave at the real qi rate, tinted by the hour,
 // enter at the crown and the palms, run the active method's circulation and settle in the dantian,
 // which breathes with the figure. Without a method the qi drifts close and slides off; unsettled,

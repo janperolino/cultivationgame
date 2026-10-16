@@ -4,7 +4,7 @@
 // the right. The line under the date says where you stand and how deep. What the road brings shows
 // as round seals on the map and in the course card's Ahead list, the card itself under it (P3.7).
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { BRANCHES, HOUR_KINDS, type HourKind } from '../content/hours.ts';
+import { BRANCHES } from '../content/hours.ts';
 import { realm as realmInfo, stageName, type RealmId } from '../content/realms.ts';
 import { QI_NAMES, ROAD_ROUTINES, WAYS, type RoadHour, type WayId } from '../content/map/travel.ts';
 import { worldWhen } from '../core/chronicle.ts';
@@ -39,14 +39,14 @@ import {
   roadHours,
   roadRoutines,
   setCourse,
-  setRoadHour,
   sleepPlace,
   stopHere,
   unpin,
   yourBand,
 } from '../core/map/travel.ts';
 import type { GameState } from '../core/state.ts';
-import { hourKindOpen } from '../core/wheel.ts';
+import { goToWheel } from './nav.ts';
+import { ROAD_WORD } from './roadWords.ts';
 import { drawMap, isDeadly, pickAt, toScreen, toWorld, type View } from './map/draw.ts';
 import { EncounterCard } from './EncounterCard.tsx';
 import { sealOf } from './encounterSeals.ts';
@@ -644,15 +644,6 @@ const ROAD_COLOR: Record<string, string> = {
   sleep: 'var(--hour-sleep)',
 };
 
-const ROAD_WORD: Record<string, string> = {
-  travel: 'travel',
-  look: 'look around and make camp',
-  guard: 'guard the caravan',
-  ...Object.fromEntries(Object.entries(HOUR_KINDS).map(([k, v]) => [k, v.name.toLowerCase()])),
-};
-
-const PICK: RoadHour[] = ['travel', 'look', 'qi', 'body', 'soul', 'study', 'practice'];
-
 /** The three stances (P3.7): what the road brings settles by them, whether you watch or not. */
 const STANCE_WORDS: Record<Stance, [string, string]> = {
   avoid: [
@@ -672,7 +663,6 @@ const STANCE_WORDS: Record<Stance, [string, string]> = {
 type Act = (change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0]) => string | null;
 
 function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: Act }) {
-  const [picking, setPicking] = useState<number | null>(null);
   const road = !!life.course;
   const hours: string[] = road ? roadHours(life, game.player) : [...game.player.wheel];
   const hour = Math.floor((((game.calendar.day % 1) + 1) % 1) * 12);
@@ -680,7 +670,7 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
   const riding = !!w.rideHours;
   const cur = hours[hour]!;
   const doing = !road
-    ? ROAD_WORD[cur]
+    ? ROAD_WORD[cur as RoadHour]
     : waiting(life).length
       ? 'camped: a card waits for you'
       : riding && hour >= 4 && hour < 4 + (w.rideHours ?? 0)
@@ -689,7 +679,7 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
           ? `asleep ${sleepPlace(game)}`
           : cur === 'travel'
             ? 'walking'
-            : ROAD_WORD[cur];
+            : ROAD_WORD[cur as RoadHour];
   const pace = paceOf(game);
   const perDay = liPerDay(game);
   const routine = roadRoutines(life).find((r) => r.id === life.roadRoutine) ?? ROAD_ROUTINES[0]!;
@@ -714,13 +704,9 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
             const [x3, y3] = pol(R0, i * 30 + 14.4);
             const [x4, y4] = pol(R0, i * 30 - 14.4);
             const [tx, ty] = pol((R0 + R1) / 2, i * 30);
-            const editable = road && h !== 'sleep' && !life.group;
+            // An hour opens on Routine's wheel, where the day is set (P3.7's fix).
             return (
-              <g
-                key={i}
-                className={editable ? 'is-editable' : ''}
-                onClick={() => editable && setPicking(i)}
-              >
+              <g key={i} className="is-editable" onClick={() => goToWheel(road, i)}>
                 <path
                   d={`M${x1} ${y1}A${R1} ${R1} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${R0} ${R0} 0 0 0 ${x4} ${y4}Z`}
                   fill={ROAD_COLOR[h] ?? 'var(--hour-qi)'}
@@ -728,7 +714,7 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
                   stroke={i === hour ? '#e9e5da' : 'none'}
                   strokeWidth={1.3}
                 >
-                  <title>{`${BRANCHES[i]!.hanzi}: ${ROAD_WORD[h] ?? h}`}</title>
+                  <title>{`${BRANCHES[i]!.hanzi}: ${ROAD_WORD[h as RoadHour] ?? h}`}</title>
                 </path>
                 <text x={tx} y={ty + 4} textAnchor="middle" className="map-wheel-branch">
                   {BRANCHES[i]!.hanzi}
@@ -774,36 +760,11 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
             {road
               ? life.group
                 ? `${life.group.name} keeps these hours`
-                : 'tap an hour to change it'
-              : 'the home wheel, set in Cultivate'}
+                : 'tap an hour to set it in Routine'
+              : 'the home wheel; tap an hour to set it in Routine'}
           </p>
         </div>
       </div>
-      {picking !== null && (
-        <div className="map-picker" role="menu">
-          <div className="map-menu-head">
-            {BRANCHES[picking]!.hanzi} · {BRANCHES[picking]!.time}
-          </div>
-          {PICK.filter(
-            (k) => k === 'travel' || k === 'look' || hourKindOpen(game.player, k as HourKind),
-          ).map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => {
-                act((s) => setRoadHour(s, picking, k));
-                setPicking(null);
-              }}
-            >
-              <i style={{ background: ROAD_COLOR[k] }} />{' '}
-              {ROAD_WORD[k]![0]!.toUpperCase() + ROAD_WORD[k]!.slice(1)}
-            </button>
-          ))}
-          <button type="button" className="is-later" onClick={() => setPicking(null)}>
-            Cancel
-          </button>
-        </div>
-      )}
       <div className="map-road-block">
         <div className="map-label">Going by</div>
         <div className="map-chips">

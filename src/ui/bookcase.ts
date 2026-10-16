@@ -147,7 +147,7 @@ export function readSoFar(c: Cultivator, id: string): string {
   return `${formatNumber(readProgress(c, id))} of ${formatNumber(readDays(id))} days`;
 }
 
-/** What the Cultivate wheel and the Abode's Today line say of the reading, or null with none. */
+/** What the Routine wheel and Cultivate's Today line say of the reading, or null with none. */
 export function readingLine(c: Cultivator): string | null {
   const id = readingCopy(c);
   return id ? `reading ${copyTitle(id)} · ${readSoFar(c, id)}` : null;

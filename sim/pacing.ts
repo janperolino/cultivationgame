@@ -12,7 +12,7 @@
 // method starts white, tier 1 and at Glimpse, and climbs in mastery with the hours cultivated with it.
 // Each row is the median of many seeds.
 // The attended rows (design § How the two halves connect) sit with the seat for none, a third
-// (twenty minutes of every real hour) or all of the time: a steady player at the Abode who takes
+// (twenty minutes of every real hour) or all of the time: a steady player on Cultivate who takes
 // four orbs in five, each on the first inhale it is in reach, and never grabs into the heat.
 // Targets (design § Character creation): every root at layer 3 in about 45 minutes; a true root at
 // layer 9 in 15–20 hours away and about half that attended throughout; a heavenly root in about
@@ -99,7 +99,7 @@ function sitMinute(
 ): { a: Attention; seat: Seat } {
   let factor = 0;
   for (let i = 0; i < 60; i++) {
-    a = tickAttention(a, c, 1, { attended, abode: attended, hour: 0 });
+    a = tickAttention(a, c, 1, { attended, figure: attended, hour: 0 });
     for (const o of a.orbs) if (o.born > a.t - 1 && rng.next() > TAKES) skip.add(o.id);
     const safe = a.heat + HEAT_PER_BREATH * HEAT_TIMED < heatLimit(c);
     if (attended && canBreathe(a) && inhaling(a.t) && safe && a.orbs.some((o) => !skip.has(o.id))) {

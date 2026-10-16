@@ -34,7 +34,7 @@ let lastInput = 0;
 let tickedAt = 0;
 /** The game ticks four times a second; never run the clock on further than this past a tick. */
 const MAX_LEAD_S = 0.5;
-let abodeShown = 0;
+let figureShown = 0;
 const breathListeners = new Set<(b: Breath) => void>();
 
 /** Every touch, key or wheel counts as being there. */
@@ -56,9 +56,9 @@ export function attendingNow(now = Date.now()): boolean {
   return visible && now - lastInput < ATTENDED_INPUT_MS;
 }
 
-/** The Abode's figure mounts and unmounts; orbs come only while it is on screen. */
-export function showAbode(on: boolean): void {
-  abodeShown = Math.max(0, abodeShown + (on ? 1 : -1));
+/** Cultivate's figure mounts and unmounts; orbs come only while it is on screen. */
+export function showFigure(on: boolean): void {
+  figureShown = Math.max(0, figureShown + (on ? 1 : -1));
 }
 
 /** The attention for this life, started fresh when the life changes. */
@@ -77,11 +77,11 @@ function attentionFor(s: GameState): Attention {
 export function tickSeat(s: GameState, dt: number): { seat: Seat; state: GameState } {
   const playing = scenePlaying();
   const attended = !s.ended && attendingNow();
-  const atFigure = abodeShown > 0 && !s.ended;
+  const atFigure = figureShown > 0 && !s.ended;
   // No new orbs come while a breakthrough scene holds the figure.
   const a = tickAttention(attentionFor(s), s.player, dt, {
     attended,
-    abode: atFigure && !playing,
+    figure: atFigure && !playing,
     hour: hourOfDay(s.calendar.day),
   });
   tickedAt = performance.now();

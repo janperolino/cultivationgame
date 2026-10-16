@@ -30,7 +30,7 @@ import {
   learnRoutine,
   openHours,
   saveRoutine,
-  setHour,
+  setHours,
 } from './wheel.ts';
 
 type LifeOpts = Partial<Parameters<typeof newLife>[0]>;
@@ -158,7 +158,7 @@ describe('sleep', () => {
   it('is locked at 子 and 丑 through Qi Condensation', () => {
     const c = player();
     expect(canSetHour(c, h('子'), 'qi')).toMatchObject({ ok: false });
-    expect(setHour(c, h('丑'), 'qi').cultivator).toBe(c);
+    expect(setHours(c, [h('丑')], 'qi').cultivator).toBe(c);
     // Whatever the wheel says, those hours sleep.
     expect(effectiveWheel(withHours(c, { 0: 'qi' }))[0]).toBe('sleep');
     expect(qiAt(withHours(c, { 0: 'qi' }), 0)).toBe(0);
@@ -242,7 +242,7 @@ describe('routines', () => {
     expect(hours[h('未')]).toMatchObject({ kind: 'study', discipline: 0.1 });
     expect(hours[h('子')]!.discipline).toBe(0);
     // One hour off the routine, and the bonus is gone.
-    const broken = setHour(c, h('亥'), 'study').cultivator;
+    const broken = setHours(c, [h('亥')], 'study').cultivator;
     expect(followedRoutine(broken)).toBeNull();
     expect(qiAt(broken, h('寅'))).toBeCloseTo(1 / 12);
   });
@@ -318,7 +318,7 @@ describe('the default rule', () => {
 
   it('flips once per kind, so a rearranged wheel stays as you left it', () => {
     const s = opened();
-    const c = setHour(s.player, h('亥'), 'qi').cultivator;
+    const c = setHours(s.player, [h('亥')], 'qi').cultivator;
     const after = cultivateDays(c, 1, ctx()).cultivator;
     expect(after.wheel[h('亥')]).toBe('qi');
     expect(dayRates(after, DAY).count.study).toBe(0);

@@ -154,7 +154,7 @@ export const COMMANDS: Record<string, Command> = {
       const s = needGame(store);
       const ms = parseTime(t, s);
       if (ms === null) return 'Give a time like 30m or 4h.';
-      return store.devAway(ms) ?? 'Back from seclusion; see the Abode.';
+      return store.devAway(ms) ?? 'Back from seclusion; see Cultivate.';
     },
   },
   insight: {

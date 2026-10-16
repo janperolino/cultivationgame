@@ -27,7 +27,7 @@ export const BREATH_S = 6;
 export const INHALE_SHARE = 0.45;
 
 /**
- * An orb drifts in every three to six seconds, while the Abode's figure is on screen: a steady
+ * An orb drifts in every three to six seconds, while Cultivate's figure is on screen: a steady
  * flow of small orbs rather than a few big ones (Jan's call after P1.10, the design's first guess
  * was ten to twenty). Each is worth a third as much, so a minute of catching fills about the same.
  */

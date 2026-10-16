@@ -89,7 +89,7 @@ function Pips({ c, m, unread }: { c: Cultivator; m: Manual; unread: boolean }) {
 }
 
 /**
- * A spine standing alone, out of the bookcase, for Cultivate › Study: the same binding, band and
+ * A spine standing alone, out of the bookcase, for Routine › Study: the same binding, band and
  * paper, not a button, since the row it sits in carries the controls.
  */
 export function StillSpine({ c, m }: { c: Cultivator; m: Manual }) {

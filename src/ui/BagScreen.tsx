@@ -201,7 +201,7 @@ function GearSlot({
   );
 }
 
-/** The seated figure from the Abode, small, between the gear squares. */
+/** The seated figure from Cultivate, small, between the gear squares. */
 function Figure() {
   return (
     <svg className="bag-figure" viewBox="-56 -54 112 100" aria-hidden="true">

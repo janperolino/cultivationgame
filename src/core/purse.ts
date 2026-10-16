@@ -15,7 +15,7 @@ import {
 } from '../content/money.ts';
 import type { Cultivator } from './state.ts';
 
-/** Every grade's count, low first. Low may be fractional: Cultivate burns it by the hour. */
+/** Every grade's count, low first. Low may be fractional: qi hours burn it by the hour. */
 export type Stones = [low: number, mid: number, high: number, top: number];
 
 export function stonesOf(c: Pick<Cultivator, 'stones' | 'higherStones'>): Stones {

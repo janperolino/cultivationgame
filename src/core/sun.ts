@@ -1,4 +1,4 @@
-// The sun on the Abode's seat (design § Cultivation, The hour on the figure): where it stands at a
+// The sun on Cultivate's seat (design § Cultivation, The hour on the figure): where it stands at a
 // moment of the world day, and the shadow it casts from the seated figure. The day wheel's 子 is
 // 23–1, so midnight is the middle of 子, dawn the middle of 卯, noon the middle of 午 and dusk the
 // middle of 酉; the sun rises on the right. Pure geometry: ui/sunCanvas.ts and ui/qiCanvas.ts draw

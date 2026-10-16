@@ -1,7 +1,7 @@
 // Attended seclusion (design § Cultivation, Attended seclusion): the seat's two states. Away is
 // idle as it always was, the floor, and earns exactly today's rates. Attending adds a factor to qi
 // speed, ×1.25 for being there up to ×2 at full focus, and leaves a second insight trickle. Orbs
-// drift in on their own `orbs` stream while the Abode's figure is on screen; drawing one in (by
+// drift in on their own `orbs` stream while Cultivate's figure is on screen; drawing one in (by
 // pointer or a finger) fills focus, more on the inhale; focus drains slowly back
 // toward the floor, and every breath warms the meridians until greed tips them into unsettled.
 //
@@ -242,8 +242,8 @@ export function orbAlpha(o: Orb, t: number): number {
 export interface TickInput {
   /** The tab is visible and touched lately (ATTENDED_INPUT_MS). */
   attended: boolean;
-  /** The Abode's figure is on screen, so orbs can come. */
-  abode: boolean;
+  /** Cultivate's figure is on screen, so orbs can come. */
+  figure: boolean;
   /** The hour of the day wheel now, for the orbs' tint. */
   hour: number;
 }
@@ -265,7 +265,7 @@ export function tickAttention(a: Attention, c: Cultivator, dt: number, at: TickI
   let orbs = a.orbs.filter((o) => o.fades > t);
   let { nextOrbAt, nextId } = a;
   let rngState = a.rng;
-  if (!at.abode || !orbsCanCome(c)) {
+  if (!at.figure || !orbsCanCome(c)) {
     orbs = [];
     nextOrbAt = Math.max(nextOrbAt, t);
   } else if (t >= nextOrbAt) {

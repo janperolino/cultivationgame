@@ -1,6 +1,6 @@
 // The first hour (design § Character creation): every origin path on every root, from testing day,
 // playing each card by its default choice as it comes. Real minutes to a qi method (the refusals
-// wait on a card for theirs), the first orb drifting in to the Abode's figure, the first
+// wait on a card for theirs), the first orb drifting in to Cultivate's figure, the first
 // technique, layer 2, layer 3, the errand that hands over the tempering art, and the nourishing
 // art; median and slowest of many seeds. Each first time is played at once, as a player would
 // (core/life.ts, playFirsts): the method's copy read on one study hour, then taken up, the
@@ -57,7 +57,7 @@ function run(
   while (ms < END_MS) {
     // The seat, a second at a time, until the first orb reaches the figure.
     for (let i = 0; at.orb === undefined && i < CHUNK_MS / 1000; i++) {
-      seat = tickAttention(seat, s.player, 1, { attended: true, abode: true, hour: 0 });
+      seat = tickAttention(seat, s.player, 1, { attended: true, figure: true, hour: 0 });
       if (seat.orbs.some((o) => o.arrives <= seat.t)) at.orb = (ms + i * 1000) / 60_000;
     }
     const r = advance(s, CHUNK_MS, { step: playDay });

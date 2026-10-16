@@ -46,7 +46,7 @@ describe('the seen record', () => {
     expect(openScreen(s, 'techniques')).toBe(s);
   });
 
-  it('dots a newly opened screen until it is opened, and sees a method when Cultivate opens', () => {
+  it('dots a newly opened screen until it is opened, and sees a method when Routine opens', () => {
     let s = checkScreens(withPlayer(fresh(), addItem(fresh().player, 'spring-returning-pill', 1)));
     expect(s.unlocks).toContain('bag');
     expect(screenDot(s, 'bag')).toBe(true);
@@ -57,8 +57,8 @@ describe('the seen record', () => {
       ...s.player,
       methods: { ...s.player.methods, 'stone-bearing': { practice: 0, fedUntil: 0 } },
     });
-    expect(screenDot(s, 'cultivate')).toBe(true);
-    s = openScreen(s, 'cultivate');
+    expect(screenDot(s, 'routine')).toBe(true);
+    s = openScreen(s, 'routine');
     expect(isNew(s, 'method', 'stone-bearing')).toBe(false);
   });
 

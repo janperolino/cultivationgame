@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { comingBackStory } from '../core/comingBack.ts';
 import { createLife, type Creation } from '../core/creation.ts';
-import { gainMethod, giveHour, readCopy, switchMethod } from '../core/life.ts';
+import { gainMethod, giveHours, readCopy, switchMethod } from '../core/life.ts';
 import type { GameState } from '../core/state.ts';
 import { hourToFlip } from '../core/wheel.ts';
 import { beacons, rings } from './beacons.ts';
@@ -29,15 +29,15 @@ const creation: Creation = {
 const s0 = () => createLife(creation);
 
 const study = (s: GameState) =>
-  giveHour(s, hourToFlip(s.player.wheel, s.player.rootElements)!, 'study').state;
+  giveHours(s, [hourToFlip(s.player.wheel, s.player.rootElements)!], 'study').state;
 
 describe('beacons', () => {
-  it('stand on Cultivate for a new life: Read now on Study and the wheel; stones from layer 2', () => {
+  it('stand on Routine for a new life: Read now on Study and the wheel; stones from layer 2', () => {
     const s = createLife(creation);
     const bs = beacons(s);
     expect(bs).toEqual([
-      { screen: 'cultivate', tab: 'study', control: 'read-now', id: 'method:garrison-standard' },
-      { screen: 'cultivate', tab: 'cultivation', control: 'wheel', kind: 'study' },
+      { screen: 'routine', tab: 'study', control: 'read-now', id: 'method:garrison-standard' },
+      { screen: 'routine', tab: 'day', control: 'wheel', kind: 'study' },
     ]);
     const layer2 = { ...s, player: { ...s.player, qi: { ...s.player.qi, stage: 2 } } };
     expect(rings(beacons(layer2), 'burn-stones')).toBe(true);
@@ -68,7 +68,7 @@ describe('hints', () => {
     expect(first.text).toBe(
       'Your Garrison Standard Method waits on the shelf. Read now puts it on your study hours.',
     );
-    expect(first.to).toEqual({ screen: 'cultivate', tab: 'study' });
+    expect(first.to).toEqual({ screen: 'routine', tab: 'study' });
     expect(hintsWaiting(s).map((h) => h.id)).toEqual(['copy', 'study-hour']);
     // Shown once: a life that dismissed it is shown the next.
     const shown = { ...s, hints: { on: true, shown: ['copy'] } };
@@ -161,12 +161,12 @@ describe('the auto setting', () => {
     expect(hintsWaiting(s).map((h) => h.id)).not.toContain('auto');
     const climbed = { ...s, player: { ...s.player, qi: { ...s.player.qi, stage: 2 } } };
     expect(hintsWaiting(climbed).find((h) => h.id === 'auto')!.to).toEqual({
-      screen: 'cultivate',
-      tab: 'cultivation',
+      screen: 'routine',
+      tab: 'day',
     });
     expect(beacons(climbed)).toContainEqual({
-      screen: 'cultivate',
-      tab: 'cultivation',
+      screen: 'routine',
+      tab: 'day',
       control: 'auto',
     });
     // Dismiss only: the glow goes with the hint, and never shows with hints off.

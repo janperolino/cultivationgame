@@ -1,5 +1,5 @@
-// Cultivate › Practice (design § UI and screens; P2.5b, mockup A of the Techniques screen canvas,
-// moved whole into Cultivate in P2.5f): what you practice and what it gives. A Practicing panel on
+// Routine › Practice (design § UI and screens; P2.5b, mockup A of the Techniques screen canvas,
+// moved whole into Routine in P2.5f): what you practice and what it gives. A Practicing panel on
 // top with a row per practice slot, each with its share of the day, then a list of every
 // known technique beside one technique's page: its rarity, line and chapter, the line's known
 // chapters as a strip, its mastery as five steps with the insight each releases and the time to
@@ -170,7 +170,7 @@ function PracticePanel({
   const hours = rates.count.practice;
 
   const wheel = (
-    <button type="button" className="link-button" onClick={() => goToTab('cultivation')}>
+    <button type="button" className="link-button" onClick={() => goToTab('day')}>
       Change hours on the wheel
     </button>
   );
@@ -755,7 +755,7 @@ export function PracticeTab() {
   const page = useRef<HTMLDivElement>(null);
   // A toast's link lands on the technique it names, selected.
   const target = useNav((s) =>
-    s.screen === 'cultivate' && s.tab === 'practice' ? s.select : null,
+    s.screen === 'routine' && s.tab === 'practice' ? s.select : null,
   );
   const navSeq = useNav((s) => s.seq);
   const [arrived, setArrived] = useState(-1);
