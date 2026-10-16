@@ -10,6 +10,7 @@ import { shadowOf, SUN_SHADOW_STRENGTH, SUN_WASH_STRENGTH, sunAt, type Sun } fro
 import { parseHex } from './colors.ts';
 import { FIGURE_BOX, FIGURE_HEAD, FIGURE_PATH, type SunLight } from './qiCanvas.ts';
 import { sunDay } from './seat.ts';
+import { canvasDensity, rectIn } from './stage.ts';
 
 /** The study's seat, in figure units: the wash and the floor are sized from it. */
 const SEAT_W = 267;
@@ -106,9 +107,9 @@ export class SunCanvas {
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
     if (!box || !w || !h) return;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const panel = this.canvas.getBoundingClientRect();
-    const fig = box.getBoundingClientRect();
+    const dpr = canvasDensity();
+    const panel = rectIn(this.canvas);
+    const fig = rectIn(box);
     // Figure units to the panel's pixels: k pixels a unit, the figure's origin at (ox, oy).
     const k = fig.width / FIGURE_BOX.w;
     const ox = fig.left - panel.left - FIGURE_BOX.x * k;

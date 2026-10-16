@@ -88,7 +88,7 @@ A manifest entry:
 
 An ornament sheet adds `"cells": [cols, rows]` and `"pieces": ["map-marker-known", "map-marker-rumored", ...]`; a green-screen one adds `"key": "#00FF00"`.
 
-**`npm run art`** is `tools/art.ts` run with tsx, with sharp as a dev dependency: Node only, so it runs in PowerShell (Jan's machine has no Python). It moves each `inbox/<id>.png` to `source/`, resizes, cuts sheets into pieces, keys out a green screen, writes webp, and fails when a file is over budget or a manifest asset has no source. The prompts live in the manifest, so an asset can be redrawn whenever its original is lost.
+**`npm run art`** is `tools/art.ts` run with tsx, with sharp as a dev dependency: Node only, so it runs in PowerShell (Jan's machine has no Python). It moves each `inbox/<id>.png` to `source/`, resizes, cuts sheets into pieces, keys out a green screen, writes webp, and fails when a file is over budget, a screen's art passes 800 KB or a manifest asset has no source. The manifest is `{ "assets": [ ... ] }`, checked before anything is written; a concept's budget is 600 KB. `npm run art -- --root <dir>` runs it on another folder. The prompts live in the manifest, so an asset can be redrawn whenever its original is lost.
 
 ## Paint cost
 

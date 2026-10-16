@@ -13,6 +13,7 @@ import {
   type ZoomRange,
 } from './panzoom.ts';
 import { markMoving } from './moving.ts';
+import { pointIn } from './stage.ts';
 
 /** Pixels a pointer may move and still count as a tap. */
 const TAP = 6;
@@ -75,8 +76,7 @@ export function usePanZoom(
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       markMoving();
-      const r = el.getBoundingClientRect();
-      const at = { x: e.clientX - r.left, y: e.clientY - r.top };
+      const at = pointIn(e, el);
       const lines = e.deltaMode === 1 ? 16 : 1;
       setView((v) =>
         v
@@ -95,8 +95,7 @@ export function usePanZoom(
   }, [world, screen, range, floor]);
 
   const local = (e: React.PointerEvent): Point => {
-    const r = box.current!.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
+    return pointIn(e, box.current!);
   };
   const restart = () => {
     const g = gesture.current;

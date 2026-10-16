@@ -5,3 +5,7 @@ dist
 *.tsbuildinfo
 coverage
 
+
+# The art pipeline: what Jan drops in and the originals ingest keeps (docs/art-pipeline.md).
+art/inbox/
+art/source/

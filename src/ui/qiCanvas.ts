@@ -28,6 +28,7 @@ import {
 import { GATE_TIMES, gateLap, gatesLit, sceneLaps, windingUp } from '../core/scene.ts';
 import type { Sun } from '../core/sun.ts';
 import { sceneTime, type ScenePlay } from './scene.ts';
+import { canvasDensity } from './stage.ts';
 
 /** The figure's box in its own units: x from −96, y from −92, 192 by 156. */
 export const FIGURE_BOX = { x: -96, y: -92, w: 192, h: 156 } as const;
@@ -404,7 +405,7 @@ export class QiCanvas {
   private draw(dt: number): void {
     const f = this.frame;
     const ctx = this.ctx;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = canvasDensity(3);
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
     if (!w || !h) return;

@@ -600,8 +600,6 @@ export function PeopleScreen() {
 
   const select = (id: string) => {
     setChosen(id);
-    // On a phone the page sits under the list, so bring it into view.
-    if (window.innerWidth < 900) page.current?.scrollIntoView({ block: 'start' });
   };
 
   return (

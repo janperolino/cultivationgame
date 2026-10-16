@@ -754,9 +754,7 @@ export function PracticeTab() {
   const [chosen, setChosen] = useState<string | null>(null);
   const page = useRef<HTMLDivElement>(null);
   // A toast's link lands on the technique it names, selected.
-  const target = useNav((s) =>
-    s.screen === 'routine' && s.tab === 'practice' ? s.select : null,
-  );
+  const target = useNav((s) => (s.screen === 'routine' && s.tab === 'practice' ? s.select : null));
   const navSeq = useNav((s) => s.seq);
   const [arrived, setArrived] = useState(-1);
   if (target && navSeq !== arrived) {
@@ -778,8 +776,6 @@ export function PracticeTab() {
 
   const select = (id: string) => {
     setChosen(id);
-    // On a phone the page sits under the list, so bring it into view.
-    if (window.innerWidth < 900) page.current?.scrollIntoView({ block: 'start' });
   };
 
   if (!selected) {

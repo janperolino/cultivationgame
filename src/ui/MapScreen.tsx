@@ -51,6 +51,7 @@ import { drawMap, isDeadly, pickAt, toScreen, toWorld, type View } from './map/d
 import { EncounterCard } from './EncounterCard.tsx';
 import { sealOf } from './encounterSeals.ts';
 import { PlaceScreen } from './PlaceScreen.tsx';
+import { canvasDensity, pointIn, stageFactor, useStage } from './stage.ts';
 import { useGame } from './store.ts';
 
 const TERRAIN_WORDS: Record<string, string> = { sea: 'at sea' };
@@ -136,15 +137,15 @@ function MapView({
     return why;
   };
 
-  // Size the canvases to the stage.
+  // Size the canvases to the map's panel, in stage pixels, drawn at the screen's density.
+  const zoom = useStage((s) => s.factor);
   useLayoutEffect(() => {
     const el = stage.current;
     if (!el) return;
     const fit = () => {
-      const r = el.getBoundingClientRect();
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      const W = Math.max(1, r.width);
-      const H = Math.max(1, r.height);
+      const dpr = canvasDensity();
+      const W = Math.max(1, el.clientWidth);
+      const H = Math.max(1, el.clientHeight);
       const mk = () => {
         const c = document.createElement('canvas');
         return c.getContext('2d')!;
@@ -160,7 +161,7 @@ function MapView({
     const ro = new ResizeObserver(fit);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [zoom]);
 
   // Draw on every change of the life, the view or the hover.
   useEffect(() => {
@@ -188,8 +189,8 @@ function MapView({
   const pickAtSpot = (sx: number, sy: number) =>
     pickAt({ view, W: size.W, H: size.H }, scene, sx, sy);
   const local = (e: { clientX: number; clientY: number }) => {
-    const r = canvas.current!.getBoundingClientRect();
-    return [e.clientX - r.left, e.clientY - r.top] as const;
+    const p = pointIn(e, canvas.current!);
+    return [p.x, p.y] as const;
   };
 
   const zoomAt = (sx: number, sy: number, f: number) =>
@@ -205,8 +206,8 @@ function MapView({
     if (!c) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const r = c.getBoundingClientRect();
-      zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0015));
+      const p = pointIn(e, c);
+      zoomAt(p.x, p.y, Math.exp(-e.deltaY * 0.0015));
     };
     c.addEventListener('wheel', onWheel, { passive: false });
     return () => c.removeEventListener('wheel', onWheel);
@@ -402,8 +403,8 @@ function MapView({
   const onMove = (e: React.PointerEvent) => {
     const d = drag.current;
     if (d) {
-      const dx = e.clientX - d.x;
-      const dy = e.clientY - d.y;
+      const dx = (e.clientX - d.x) / stageFactor();
+      const dy = (e.clientY - d.y) / stageFactor();
       if (Math.hypot(dx, dy) > 4) d.moved = true;
       if (d.moved) setView((v) => ({ ...v, x: d.vx - dx / v.k, y: d.vy - dy / v.k }));
       return;

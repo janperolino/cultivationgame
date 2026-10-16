@@ -58,6 +58,7 @@ import {
 } from './treeLayout.ts';
 import { useNodeTip } from './useNodeTip.ts';
 import { BUTTON_STEP, usePanZoom } from './usePanZoom.ts';
+import { rectIn } from './stage.ts';
 
 /** The canvas zooms from the whole of Tribulation Transcendence to a close look at one node. */
 const RANGE = { min: 0.14, max: 1.8 };
@@ -782,8 +783,8 @@ export function OwnFan({ c, m }: { c: Cultivator; m: Manual }) {
   // Where the fan sits in the wrap, so a card can hang beside a node; it moves as the fan scrolls.
   const [offset, setOffset] = useState({ x: 0, y: 0, w: 0 });
   const measure = () => {
-    const a = wrap.current?.getBoundingClientRect();
-    const b = fanBox.current?.getBoundingClientRect();
+    const a = wrap.current && rectIn(wrap.current);
+    const b = fanBox.current && rectIn(fanBox.current);
     if (a && b) setOffset({ x: b.left - a.left, y: b.top - a.top, w: a.width });
   };
   useLayoutEffect(() => {

@@ -26,7 +26,7 @@ import {
 } from './settings.ts';
 import { realmOf } from '../core/state.ts';
 import { useGame } from './store.ts';
-import { Why } from './widgets.tsx';
+import { FullscreenButton, Why } from './widgets.tsx';
 
 const WEEK_MS = 7 * 24 * 3_600_000;
 
@@ -482,9 +482,14 @@ function ReadingPanel() {
             ))}
           </div>
         </div>
+        <div className="field">
+          <span>Screen</span>
+          <FullscreenButton />
+        </div>
       </div>
       <p className="caption spaced">
-        Reduced motion stills the panel rims, the card tray, the weather and the breakthrough flare.
+        The game scales to fit your window, so F11 or Fullscreen gives it the whole monitor. Reduced
+        motion stills the panel rims, the card tray, the weather and the breakthrough flare.
       </p>
     </section>
   );

@@ -21,6 +21,7 @@ import { capitalize, formatNumber } from './format.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
+import { rectIn } from './stage.ts';
 
 const RESULT_WORDS = {
   won: 'You bring them down.',
@@ -186,10 +187,10 @@ function Arena({ f, me }: { f: Fight; me: Combatant }) {
 
   useEffect(() => {
     if (!pending || !layer.current || !arena.current) return;
-    const box = arena.current.getBoundingClientRect();
+    const box = rectIn(arena.current);
     const where = (id: string) => {
       const el = arena.current!.querySelector(`[data-fighter="${CSS.escape(id)}"]`);
-      const r = el?.getBoundingClientRect();
+      const r = el && rectIn(el);
       return r
         ? { x: r.left + r.width / 2 - box.left, y: r.top + r.height / 2 - box.top }
         : { x: box.width / 2, y: box.height / 2 };

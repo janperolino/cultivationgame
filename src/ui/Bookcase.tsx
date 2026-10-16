@@ -58,6 +58,7 @@ import { useGame } from './store.ts';
 import { rings } from './beacons.ts';
 import { useBeacons } from './useBeacons.ts';
 import { OwnFan } from './TreeFan.tsx';
+import { rectIn } from './stage.ts';
 
 const RARE = rarityRank('purple');
 
@@ -447,8 +448,8 @@ export function Bookcase({
     if (!box || !outer || !tip) return;
     const spine = outer.querySelector<HTMLElement>(`[data-manual="${CSS.escape(tip.id)}"]`);
     if (!spine) return;
-    const w = outer.getBoundingClientRect();
-    const r = spine.getBoundingClientRect();
+    const w = rectIn(outer);
+    const r = rectIn(spine);
     const cw = box.offsetWidth;
     const ch = box.offsetHeight;
     let left = r.left - w.left - 10;

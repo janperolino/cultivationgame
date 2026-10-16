@@ -7,6 +7,7 @@
 // It reads nothing but the tags and where the two fighters stand on screen.
 import type { DamageType, OutcomeForm, OutcomeResult } from '../content/combat.ts';
 import { realmIndex, type RealmId } from '../content/realms.ts';
+import { canvasDensity } from './stage.ts';
 
 /** What one effect needs: the five tags and two points on the canvas. */
 export interface FxShot {
@@ -103,7 +104,7 @@ export class FxLayer {
 
   private tick = (now: number) => {
     const { canvas, ctx } = this;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = canvasDensity(3);
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
     if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {

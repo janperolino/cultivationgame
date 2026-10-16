@@ -71,7 +71,6 @@
 
   --menu-width: 210px;
   --context-width: 280px;
-  --topbar-height: 52px;
   --radius: 9px;
   --radius-small: 6px;
 
@@ -141,35 +140,86 @@ select {
    obsidian instead (below). */
 .glass,
 .side-menu,
-.context-panel,
-.topbar {
+.context-panel {
   background: var(--glass);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   box-shadow: inset 0 1px 0 var(--sheen);
 }
 
-/* Desktop: menu | main | context panel. */
+/* The stage (design.md § UI and screens, The stage; ui/stage.ts): every screen is laid out on a
+   stage 1080 tall and 1728 to 2520 wide, zoomed as one to the window, the void around it. Its
+   layout containment makes it the box that fixed overlays (toasts, modals) sit in. */
+.stage-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.stage {
+  position: relative;
+  flex: none;
+  width: var(--stage-width, 1920px);
+  height: 1080px;
+  zoom: var(--stage-zoom, 1);
+  contain: layout;
+}
+
+/* Menu | main | context panel; the main column takes whatever width the stage has past 1728. */
 .shell {
   position: relative;
-  z-index: 1;
   display: grid;
   grid-template-columns: var(--menu-width) minmax(0, 1fr) var(--context-width);
   grid-template-areas: 'menu main context';
   height: 100%;
 }
 
-.topbar,
-.scrim,
-.sheet-handle {
-  display: none;
+/* Art frames (docs/art-pipeline.md, Frames in CSS): a panel's border as a 9-slice image. The
+   corners never scale, the plain bands between them stretch and `fill` paints the plain centre.
+   --frame-slice is the corner in the shipped file's pixels (the manifest's `slice`) and
+   --frame-width the corner on the stage, half of it, since art ships at twice the size it shows.
+   A frame's class names its image; one with no image yet draws an empty border. Padding inside
+   keeps text clear of the gilt. */
+.frame {
+  --frame-image: none;
+  --frame-slice: 64;
+  --frame-width: 32px;
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--frame-width);
+  border-image-source: var(--frame-image);
+  border-image-slice: var(--frame-slice) fill;
+  border-image-width: var(--frame-width);
+  border-image-repeat: stretch;
+}
+
+/* The obsidian slab every panel sits on, and the bright card for what waits on you (A2 draws them). */
+.frame-slab {
+  --frame-slice: 64;
+  --frame-width: 32px;
+}
+
+.frame-card {
+  --frame-slice: 64;
+  --frame-width: 32px;
 }
 
 .side-menu {
   grid-area: menu;
+  display: flex;
+  flex-direction: column;
   border-right: 1px solid var(--edge);
   padding: 20px 12px;
   overflow-y: auto;
+}
+
+/* Fullscreen sits at the foot of the menu. */
+.menu-foot {
+  margin-top: auto;
 }
 
 .brand {
@@ -1508,7 +1558,7 @@ select {
   top: calc(100% + 6px);
   z-index: 30;
   width: max-content;
-  max-width: min(290px, var(--tip-room, 78vw));
+  max-width: min(290px, var(--tip-room, 290px));
   padding: 8px 10px;
   background: var(--glass-strong);
   border: 1px solid var(--edge-strong);
@@ -1935,17 +1985,6 @@ select {
   flex: 1 1 auto;
 }
 
-@media (max-width: 560px) {
-  /* Narrow, the buttons sit by the name and the strip drops under it. */
-  .routine-fold-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'name act'
-      'strip strip'
-      'note note';
-  }
-}
-
 .methods {
   gap: 8px;
 }
@@ -2094,7 +2133,7 @@ select {
 
 .tree-canvas {
   position: relative;
-  height: min(72vh, 720px);
+  height: 720px;
   min-height: 360px;
   overflow: hidden;
   border: 1px solid var(--edge);
@@ -2672,12 +2711,6 @@ select {
   letter-spacing: 0.06em;
   text-transform: none;
   color: var(--muted);
-}
-
-@media (max-width: 600px) {
-  .tree-canvas {
-    height: min(68vh, 620px);
-  }
 }
 
 .effects {
@@ -3298,156 +3331,12 @@ select {
   padding: 0 20px;
 }
 
-@media (max-width: 1100px) {
-  .technique-split {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .mastery-steps {
-    gap: 4px;
-  }
-
-  .mastery-step-name,
-  .mastery-step .caption {
-    font-size: calc(11px * var(--text-scale));
-  }
-
-  .mastery-step .caption {
-    white-space: nowrap;
-  }
-
-  .line-strip-tiles {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .line-strip-step,
-  .line-tile {
-    width: 100%;
-    max-width: none;
-  }
-
-  .line-strip-step {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .line-arrow {
-    align-self: center;
-    transform: rotate(90deg);
-  }
-}
-
 .button[aria-pressed='true'] {
   border-color: var(--crack);
   color: var(--crack);
 }
 
 /* Below 900px: the menu becomes a drawer and the context panel a bottom sheet. */
-@media (max-width: 899px) {
-  .shell {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: var(--topbar-height) minmax(0, 1fr);
-    grid-template-areas: 'topbar' 'main';
-  }
-
-  .topbar {
-    grid-area: topbar;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 0 6px;
-    border-bottom: 1px solid var(--edge);
-  }
-
-  .topbar-title {
-    font-family: var(--font-display);
-    font-size: calc(20px * var(--text-scale));
-    font-weight: 600;
-  }
-
-  .main {
-    padding: 18px 16px 32px;
-  }
-
-  .screen-title {
-    font-size: calc(28px * var(--text-scale));
-  }
-
-  .realm-title small {
-    display: block;
-    margin: 2px 0 0;
-  }
-
-  .bar-row {
-    grid-template-columns: 44px minmax(0, 1fr) 112px;
-    gap: 10px;
-  }
-
-  .scrim {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 10;
-    background: var(--scrim);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 200ms ease;
-  }
-
-  .scrim.is-visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .side-menu {
-    position: fixed;
-    inset: 0 auto 0 0;
-    z-index: 20;
-    width: min(80vw, 280px);
-    background: var(--glass-strong);
-    transform: translateX(-100%);
-    transition: transform 220ms ease;
-  }
-
-  .side-menu.is-open {
-    transform: none;
-  }
-
-  .context-panel {
-    position: fixed;
-    inset: auto 0 0 0;
-    z-index: 20;
-    max-height: 70vh;
-    background: var(--glass-strong);
-    border-left: none;
-    border-top: 1px solid var(--edge);
-    border-radius: 14px 14px 0 0;
-    padding-top: 8px;
-    transform: translateY(100%);
-    transition: transform 240ms ease;
-  }
-
-  .context-panel.is-open {
-    transform: none;
-  }
-
-  .sheet-handle {
-    display: block;
-    width: 48px;
-    height: 5px;
-    margin: 4px auto 14px;
-    padding: 0;
-    border: none;
-    border-radius: 3px;
-    background: var(--edge-strong);
-    cursor: pointer;
-  }
-}
-
 :root[data-motion='reduced'] * {
   transition: none !important;
 }
@@ -3753,23 +3642,13 @@ select {
   gap: 8px;
 }
 
-@media (max-width: 600px) {
-  .talent {
-    grid-template-columns: 1fr;
-  }
-
-  .talent-kind {
-    grid-row: auto;
-  }
-}
-
 /* The dev console (dev builds only): ` opens it. */
 .dev-console {
   position: fixed;
   left: 50%;
   bottom: 16px;
   z-index: 80;
-  width: min(760px, calc(100vw - 32px));
+  width: 760px;
   transform: translateX(-50%);
   display: grid;
   border: 1px solid var(--accent-edge);
@@ -3784,7 +3663,7 @@ select {
 }
 
 .dev-log {
-  max-height: 40vh;
+  max-height: 432px;
   overflow-y: auto;
   padding: 10px 12px 4px;
   white-space: pre-wrap;
@@ -4232,7 +4111,7 @@ select {
 
 .web-canvas {
   position: relative;
-  height: min(60vh, 520px);
+  height: 520px;
   min-height: 300px;
   overflow: hidden;
   border: 1px solid var(--edge);
@@ -4406,13 +4285,6 @@ select {
 
 .legend-hot {
   background: var(--warn);
-}
-
-@media (max-width: 1100px) {
-  .people-split,
-  .people-split.view-web {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 /* The season tint and weather on the glass (design § UI and screens, Look). Light enough that
@@ -5134,42 +5006,6 @@ button.fight-card {
   animation: none;
 }
 
-@media (max-width: 600px) {
-  .bag-screen {
-    --square: 58px;
-  }
-
-  .bag-figure {
-    width: 104px;
-  }
-
-  .bag-item {
-    padding: 4px 3px 3px;
-  }
-
-  .bag-glyph {
-    font-size: 17px;
-  }
-
-  .bag-name {
-    font-size: 9px;
-  }
-
-  .bag-body {
-    gap: 10px 12px;
-  }
-
-  .fight-arena {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .fight-action {
-    min-width: 0;
-    flex: 1 1 140px;
-  }
-}
-
 /* The Manuals tab (P2.5c): the manuals with no tree to stand beside, one tree at a time beside a
    list of them, then the bookcase. A plank per kind; each manual a standing spine with its
    rarity's band on top, its hanzi in brush down it with no box round it, and its kind's
@@ -5843,12 +5679,6 @@ button.fight-card {
   color: var(--warn);
 }
 
-@media (max-width: 600px) {
-  .hostless-list ul {
-    max-height: 280px;
-  }
-}
-
 /* ---------------------------------------------------------------- what's new (P2.5d) */
 
 /* A new thing glows faintly in the accent until it is selected: a Bag square, a technique's row,
@@ -5916,7 +5746,7 @@ button.fight-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: min(340px, calc(100vw - 32px));
+  width: 340px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -5977,23 +5807,6 @@ button.fight-card {
   border: none;
   font-size: calc(16px * var(--text-scale));
   color: var(--muted);
-}
-
-@media (max-width: 899px) {
-  .toasts {
-    top: calc(var(--topbar-height) + 8px);
-    bottom: auto;
-    left: 16px;
-    right: 16px;
-    width: auto;
-  }
-
-  @keyframes toast-in {
-    from {
-      opacity: 0;
-      transform: translateY(-16px);
-    }
-  }
 }
 
 /* The tree's name with its "?" totting up what it gives. */
@@ -6302,47 +6115,7 @@ button.fight-card {
   transform: none;
 }
 
-@media (max-width: 899px) {
-  .routine-split {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 /* Study's shelf wants room for a spine, a name and a button: below a wide window it goes under. */
-@media (max-width: 1400px) {
-  .study-split {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .hour-strip-cells {
-    gap: 2px;
-  }
-
-  .hour-cell {
-    height: 30px;
-    font-size: calc(13px * var(--text-scale));
-  }
-
-  .hour-strip-hint {
-    display: none;
-  }
-
-  .routine-tabs {
-    display: flex;
-  }
-
-  .routine-tabs button {
-    flex: 1;
-    padding: 8px 6px;
-  }
-
-  .study-book {
-    flex-wrap: wrap;
-  }
-}
-
 /* ---------------------------------------------------------------- first times (P2.8) */
 
 /* The beacon (ui/beacons.ts): a first-time action waits. Its menu button and its tab glow lightly
@@ -8002,28 +7775,6 @@ p.map-above {
   gap: 8px;
 }
 
-@media (max-width: 899px) {
-  .shell.is-map {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .shell.is-map .main {
-    overflow: auto;
-  }
-
-  .map-screen {
-    grid-template-rows: 62vh auto;
-  }
-
-  .map-bar {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .map-where {
-    max-width: calc(100% - 70px);
-  }
-}
-
 /* ---------------------------------------------------------------- a place's own screen (P3.6b) */
 
 .place-screen {
@@ -8445,30 +8196,4 @@ p.map-above {
   justify-self: end;
   padding: 8px 13px;
   font-size: calc(13px * var(--text-scale));
-}
-
-@media (max-width: 899px) {
-  .place-head {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .place-purse {
-    grid-column: 1 / -1;
-    text-align: left;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 12px;
-  }
-
-  .place-body {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .place-row.is-caravan {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .place-row.is-caravan > span {
-    grid-column: 1 / -1;
-  }
 }

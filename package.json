@@ -17,6 +17,7 @@
     "sim": "tsx sim/run.ts",
     "atlas:build": "tsx tools/atlas-build.ts",
     "atlas:serve": "node tools/atlas-serve.cjs",
+    "art": "tsx tools/art.ts",
     "spike": "node --env-file=.env.local --import tsx sim/spike.ts"
   },
   "dependencies": {
@@ -41,6 +42,7 @@
     "globals": "^17.13.0",
     "polygon-clipping": "^0.15.7",
     "prettier": "^3.9.10",
+    "sharp": "^0.35.5",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.1",

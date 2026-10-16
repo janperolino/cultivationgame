@@ -21,7 +21,7 @@ import { useGame } from './store.ts';
 import { bySeason } from '../core/chronicle.ts';
 import { screenDot, screenIsNew } from '../core/seen.ts';
 import { useBeacons } from './useBeacons.ts';
-import { EventLine } from './widgets.tsx';
+import { EventLine, FullscreenButton } from './widgets.tsx';
 
 function SlotNotice() {
   const phase = useGame((s) => s.phase);
@@ -51,8 +51,6 @@ function SlotNotice() {
 
 export function App() {
   const [screen, setScreen] = useState<ScreenId>('cultivate');
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [contextOpen, setContextOpen] = useState(false);
   const phase = useGame((s) => s.phase);
   const game = useGame((s) => s.game);
   const notice = useGame((s) => s.notice);
@@ -138,17 +136,6 @@ export function App() {
     return () => document.removeEventListener('scroll', markMoving, { capture: true });
   }, []);
 
-  // Escape closes the phone drawer and bottom sheet.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      setMenuOpen(false);
-      setContextOpen(false);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
   // Opening a screen clears its dot, and so does something new arriving while it is open.
   const here = phase === 'playing' && !creating ? current.id : null;
   const hereDot = here !== null && dots.includes(here);
@@ -161,143 +148,103 @@ export function App() {
   return (
     <>
       <GlassBackground />
-      <div className={`shell${current.id === 'map' ? ' is-map' : ''}`}>
-        <header className="topbar">
-          <button
-            type="button"
-            aria-label={beaconed.size > 0 ? 'Open menu: something waits for you' : 'Open menu'}
-            className={`icon-button${beaconed.size > 0 ? ' is-beacon' : ''}`}
-            aria-expanded={menuOpen}
-            aria-controls="side-menu"
-            onClick={() => setMenuOpen(true)}
-          >
-            ☰
-            {dots.some((d) => d && d !== current.id) && (
-              <span className="menu-mark is-new is-on-button" aria-hidden="true" />
-            )}
-          </button>
-          <span className="topbar-title">{current.name}</span>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Show context panel"
-            aria-expanded={contextOpen}
-            aria-controls="context-panel"
-            onClick={() => setContextOpen((o) => !o)}
-          >
-            ⋯
-          </button>
-        </header>
-
-        <div
-          className={`scrim ${menuOpen || contextOpen ? 'is-visible' : ''}`}
-          onClick={() => {
-            setMenuOpen(false);
-            setContextOpen(false);
-          }}
-          aria-hidden="true"
-        />
-
-        <nav
-          id="side-menu"
-          className={`side-menu ${menuOpen ? 'is-open' : ''}`}
-          aria-label="Screens"
-        >
-          <div className="brand">
-            <span className="brand-name">Severed Heaven</span>
-            <span className="hanzi brand-hanzi">断天</span>
-          </div>
-          <ul>
-            {available.map((s) => (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  className={`menu-item${s.id === current.id ? ' is-active' : ''}${beaconed.has(s.id) ? ' is-beacon' : fresh.includes(s.id) && s.id !== current.id ? ' is-new' : ''}`}
-                  aria-current={s.id === current.id ? 'page' : undefined}
-                  onClick={() => {
-                    setScreen(s.id);
-                    setMenuOpen(false);
-                  }}
-                >
-                  <span>
-                    {s.name}
-                    {s.id === 'cultivate' && ready && (
-                      <span className="menu-mark" role="img" aria-label="a breakthrough is ready" />
-                    )}
-                    {dots.includes(s.id) && s.id !== current.id && (
-                      <span className="menu-mark is-new" role="img" aria-label="something new" />
-                    )}
-                  </span>
-                  <span className="hanzi menu-hanzi">{s.hanzi}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <main className="main" ref={main}>
-          <h1 className="screen-title">
-            {current.name} <span className="hanzi">{current.hanzi}</span>
-          </h1>
-          {notice && (
-            <section className="panel notice" role="status">
-              <p>{notice}</p>
-              <button type="button" className="button" onClick={dismissNotice}>
-                Dismiss
-              </button>
-            </section>
-          )}
-          {phase === 'loading' && <p className="muted">Opening your abode…</p>}
-          {creating && <CreationScreen />}
-          {phase === 'no-slot' && !creating && (
-            <p className="muted">No life is open. Start one or pick a slot below.</p>
-          )}
-          {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
-          {phase !== 'loading' && current.id === 'routine' && <RoutineScreen />}
-          {phase !== 'loading' && current.id === 'map' && <MapScreen />}
-          {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
-          {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
-          {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}
-          {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
-          {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}
-          {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}
-          {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
-        </main>
-
-        <aside
-          id="context-panel"
-          className={`context-panel ${contextOpen ? 'is-open' : ''}`}
-          aria-label="Context"
-        >
-          <button
-            type="button"
-            className="sheet-handle"
-            aria-label="Close context panel"
-            onClick={() => setContextOpen(false)}
-          />
-          <h2 className="panel-heading">Chronicle</h2>
-          {recent.length === 0 ? (
-            <p className="muted">Nothing has happened yet.</p>
-          ) : (
-            game &&
-            bySeason(recent).map((g, gi) => (
-              <div key={`${g.when}-${gi}`} className="chronicle-season">
-                <h3 className={`chronicle-when${gi === 0 ? ' is-newest' : ''}`}>{g.when}</h3>
-                <ol className="chronicle">
-                  {g.items.map((e, i) => (
-                    <li key={`${e.day}-${i}`}>
-                      <EventLine game={game} e={e} />
-                    </li>
-                  ))}
-                </ol>
+      <div className="stage-frame">
+        <div className="stage">
+          <div className={`shell${current.id === 'map' ? ' is-map' : ''}`}>
+            <nav id="side-menu" className="side-menu" aria-label="Screens">
+              <div className="brand">
+                <span className="brand-name">Severed Heaven</span>
+                <span className="hanzi brand-hanzi">断天</span>
               </div>
-            ))
-          )}
-        </aside>
+              <ul>
+                {available.map((s) => (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      className={`menu-item${s.id === current.id ? ' is-active' : ''}${beaconed.has(s.id) ? ' is-beacon' : fresh.includes(s.id) && s.id !== current.id ? ' is-new' : ''}`}
+                      aria-current={s.id === current.id ? 'page' : undefined}
+                      onClick={() => setScreen(s.id)}
+                    >
+                      <span>
+                        {s.name}
+                        {s.id === 'cultivate' && ready && (
+                          <span
+                            className="menu-mark"
+                            role="img"
+                            aria-label="a breakthrough is ready"
+                          />
+                        )}
+                        {dots.includes(s.id) && s.id !== current.id && (
+                          <span
+                            className="menu-mark is-new"
+                            role="img"
+                            aria-label="something new"
+                          />
+                        )}
+                      </span>
+                      <span className="hanzi menu-hanzi">{s.hanzi}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <FullscreenButton className="menu-foot" />
+            </nav>
 
-        <Toasts />
-        <SlotNotice />
-        {import.meta.env.DEV && <DevConsole />}
+            <main className="main" ref={main}>
+              <h1 className="screen-title">
+                {current.name} <span className="hanzi">{current.hanzi}</span>
+              </h1>
+              {notice && (
+                <section className="panel notice" role="status">
+                  <p>{notice}</p>
+                  <button type="button" className="button" onClick={dismissNotice}>
+                    Dismiss
+                  </button>
+                </section>
+              )}
+              {phase === 'loading' && <p className="muted">Opening your abode…</p>}
+              {creating && <CreationScreen />}
+              {phase === 'no-slot' && !creating && (
+                <p className="muted">No life is open. Start one or pick a slot below.</p>
+              )}
+              {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
+              {phase !== 'loading' && current.id === 'routine' && <RoutineScreen />}
+              {phase !== 'loading' && current.id === 'map' && <MapScreen />}
+              {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
+              {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
+              {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}
+              {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
+              {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}
+              {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}
+              {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
+            </main>
+
+            <aside id="context-panel" className="context-panel" aria-label="Context">
+              <h2 className="panel-heading">Chronicle</h2>
+              {recent.length === 0 ? (
+                <p className="muted">Nothing has happened yet.</p>
+              ) : (
+                game &&
+                bySeason(recent).map((g, gi) => (
+                  <div key={`${g.when}-${gi}`} className="chronicle-season">
+                    <h3 className={`chronicle-when${gi === 0 ? ' is-newest' : ''}`}>{g.when}</h3>
+                    <ol className="chronicle">
+                      {g.items.map((e, i) => (
+                        <li key={`${e.day}-${i}`}>
+                          <EventLine game={game} e={e} />
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ))
+              )}
+            </aside>
+
+            <Toasts />
+            <SlotNotice />
+            {import.meta.env.DEV && <DevConsole />}
+          </div>
+        </div>
       </div>
     </>
   );

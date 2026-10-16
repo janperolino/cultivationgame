@@ -13,7 +13,23 @@ import {
 } from '../core/state.ts';
 import { formatAgeShort, formatNumber, formatPercent, LADDER_LABELS } from './format.ts';
 import { openPanel } from './scene.ts';
+import { rectIn, toggleFullscreen, useStage } from './stage.ts';
 import { useGame } from './store.ts';
+
+/** Fullscreen on and off (Settings and the foot of the menu); F11 works as well. */
+export function FullscreenButton({ className = '' }: { className?: string }) {
+  const [full, setFull] = useState(() => !!document.fullscreenElement);
+  useEffect(() => {
+    const sync = () => setFull(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, []);
+  return (
+    <button type="button" className={`button ${className}`} onClick={toggleFullscreen}>
+      {full ? 'Leave fullscreen' : 'Fullscreen'}
+    </button>
+  );
+}
 
 /** One ladder's bar: the crack light fills it, and the part past full glows brighter. */
 export function LadderBar({
@@ -181,11 +197,14 @@ export function Why({
     };
   }, [open]);
   const place = () => {
-    const r = button.current?.getBoundingClientRect();
-    if (!r) return;
-    const right = r.left > window.innerWidth / 2;
+    if (!button.current) return;
+    // The room to the stage's edge, in stage pixels.
+    const stage = useStage.getState();
+    const r = rectIn(button.current);
+    const left = r.left - stage.left / stage.factor;
+    const right = left > stage.width / 2;
     setSide(right ? 'right' : 'left');
-    setRoom(Math.floor(right ? r.right - 2 : window.innerWidth - r.left - 2));
+    setRoom(Math.floor(right ? left + r.width - 2 : stage.width - left - 2));
   };
   return (
     <span ref={wrap} className={`why${open ? ' is-open' : ''}`} onMouseEnter={place}>
