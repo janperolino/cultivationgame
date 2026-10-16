@@ -61,6 +61,7 @@ import { followWheel, hourToFlip, learnRoutine, setHour, type WheelCheck } from 
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
 import { bedNights } from './map/place.ts';
+import { setCopyGain } from './map/encounters.ts';
 import { cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 
 /**
@@ -319,6 +320,9 @@ export function gainCopy(s: GameState, id: string, how = 'comes by'): GameState 
   const queued = queueIfIdle(owned.player, id, s.lineage.firsts);
   return settle(addNotes(withPlayer(owned, queued.cultivator), queued.notes));
 }
+
+// A copy in the road's loot comes home as a copy, never into the Bag (P3.7).
+setCopyGain((s, id) => gainCopy(s, id, 'finds on the road'));
 
 /** The player adds a copy to the end of the reading queue; the reason when it can't join. */
 export function readCopy(s: GameState, id: string): { state: GameState; check: ReadCheck } {

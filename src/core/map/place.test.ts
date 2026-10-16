@@ -35,7 +35,9 @@ const life = (seed = 'place'): GameState => {
   const s = ensureMap(
     newLife({ name: 'Han Li', seed, origin: { id: 'cave-orphan', choice: 'along' } }),
   );
-  return withPlayer(s, { ...s.player, stones: 600, silver: 100 });
+  // A quiet road: these tests meet no encounters (core/map/encounters.test.ts meets them).
+  const q = { ...s, map: { ...s.map!, notice: { n: 0, next: 1e9 } } };
+  return withPlayer(q, { ...q.player, stones: 600, silver: 100 });
 };
 
 const place = (s: GameState, id: string): MapPlace => placeById(mapOf(s)!, id)!;

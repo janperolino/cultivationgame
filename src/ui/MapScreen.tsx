@@ -1,13 +1,16 @@
 // The Map 舆图 (design § The world, The travel map): the Border Wilds under drifting cloud, a click
 // to set a course and the clock carrying you along it, a right-click for choices, and the bar under
 // the map with the road wheel, its routine and the ways of going on the left and the course card on
-// the right. The line under the date says where you stand and how deep.
+// the right. The line under the date says where you stand and how deep. What the road brings shows
+// as round seals on the map and in the course card's Ahead list, the card itself under it (P3.7).
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { BRANCHES, HOUR_KINDS, type HourKind } from '../content/hours.ts';
+import { realm as realmInfo, stageName, type RealmId } from '../content/realms.ts';
 import { QI_NAMES, ROAD_ROUTINES, WAYS, type RoadHour, type WayId } from '../content/map/travel.ts';
 import { worldWhen } from '../core/chronicle.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import { band, bandAt, depthInfo, pullsIn, qiAt } from '../core/map/depth.ts';
+import { setStance, setVeil, veilReach, waiting } from '../core/map/encounters.ts';
 import { known, sightAt } from '../core/map/fog.ts';
 import { enterAt, gateOf, placeKindOf } from '../core/map/gate.ts';
 import type { Pt } from '../core/map/geometry.ts';
@@ -19,7 +22,8 @@ import {
   type MapPlace,
   type RegionMap,
 } from '../core/map/region.ts';
-import type { MapLife } from '../core/map/schema.ts';
+import { STANCES, type Encounter, type MapLife, type Stance } from '../core/map/schema.ts';
+import { encounterTemplate } from '../content/encounters/index.ts';
 import {
   canGoBy,
   followRoadRoutine,
@@ -44,6 +48,8 @@ import {
 import type { GameState } from '../core/state.ts';
 import { hourKindOpen } from '../core/wheel.ts';
 import { drawMap, isDeadly, pickAt, toScreen, toWorld, type View } from './map/draw.ts';
+import { EncounterCard } from './EncounterCard.tsx';
+import { sealOf } from './encounterSeals.ts';
 import { PlaceScreen } from './PlaceScreen.tsx';
 import { useGame } from './store.ts';
 
@@ -114,6 +120,7 @@ function MapView({
   const [menu, setMenu] = useState<Menu | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const [openEnc, setOpenEnc] = useState<string | null>(null);
   const drag = useRef<{ x: number; y: number; vx: number; vy: number; moved: boolean } | null>(
     null,
   );
@@ -432,6 +439,14 @@ function MapView({
   );
   const bd = band(b);
   const above = bd && pullsIn(b, band0);
+  // What the road brings and the postings you hold, as round seals over the map.
+  const marks: { id: string; at: Pt; template: string; how?: Encounter['how']; board?: boolean }[] =
+    [
+      ...life.encounters.map((e) => ({ id: e.id, at: e.at, template: e.template, how: e.how })),
+      ...life.postings
+        .filter((p) => !p.done)
+        .map((p) => ({ id: `post:${p.id}`, at: p.spot, template: p.template, board: true })),
+    ];
 
   return (
     <div className="map-screen">
@@ -449,8 +464,9 @@ function MapView({
         <div className="map-float map-where panel">
           <span className="map-date">{worldWhen(game.calendar.day)}</span>
           <span className="map-here">
-            {hereWords(game)} · {TERRAIN_WORDS[terrainAt(map, life.at)] ?? terrainAt(map, life.at)}{' '}
-            · qi density {qd}, {QI_NAMES[qd]} · you see {sightAt(map, life.at)} li
+            <b>{hereWords(game)}</b> ·{' '}
+            {TERRAIN_WORDS[terrainAt(map, life.at)] ?? terrainAt(map, life.at)} · {QI_NAMES[qd]} qi
+            ({qd}) · you see {sightAt(map, life.at)} li
           </span>
           <span className="map-depth">
             <span className="map-pips" title="How deep into the wilds">
@@ -458,11 +474,30 @@ function MapView({
             </span>{' '}
             {d.name}:{' '}
             {bd ? `beasts of ${bd.name} · ${bd.finds} finds` : 'nothing past mortal beasts'}
-            {above && (
-              <b className="map-above"> · a realm above you: what lives here finds you first</b>
-            )}
           </span>
+          {above && (
+            <span className="map-above">a realm above you: what lives here finds you first</span>
+          )}
         </div>
+        {marks.map((e) => {
+          const [x, y] = toScreen(view, size.W, size.H, e.at);
+          if (x < -40 || y < -40 || x > size.W + 40 || y > size.H + 40) return null;
+          const t = encounterTemplate(e.template);
+          const danger = !e.board && e.how !== 'seen';
+          return (
+            <button
+              key={e.id}
+              type="button"
+              className={`map-enc is-${t.kind}${danger ? ' is-danger' : ''}${e.board ? ' is-posting' : ''}${openEnc === e.id ? ' is-open' : ''}`}
+              style={{ left: x, top: y }}
+              title={e.board ? `Bounty: ${t.title}` : t.title}
+              onPointerDown={(ev) => ev.stopPropagation()}
+              onClick={() => !e.board && setOpenEnc(e.id)}
+            >
+              <span className="hanzi">{e.board ? '榜' : sealOf(t)}</span>
+            </button>
+          );
+        })}
         <div className="map-float map-zoom panel">
           <button
             type="button"
@@ -571,7 +606,16 @@ function MapView({
       </div>
       <div className="map-bar">
         <RoadPanel game={game} life={life} act={act} />
-        <CourseCard game={game} map={map} life={life} act={act} onLeave={() => setLeaving(true)} />
+        <CourseCard
+          game={game}
+          map={map}
+          life={life}
+          act={act}
+          say={say}
+          open={openEnc}
+          onOpen={setOpenEnc}
+          onLeave={() => setLeaving(true)}
+        />
       </div>
     </div>
   );
@@ -609,13 +653,27 @@ const ROAD_WORD: Record<string, string> = {
 
 const PICK: RoadHour[] = ['travel', 'look', 'qi', 'body', 'soul', 'study', 'practice'];
 
+/** The three stances (P3.7): what the road brings settles by them, whether you watch or not. */
+const STANCE_WORDS: Record<Stance, [string, string]> = {
+  avoid: [
+    'Avoid',
+    'Goes round all you sense; met by something, slips away when that is clear. No fights; finds on the course only.',
+  ],
+  careful: [
+    'Careful',
+    'Hunts the sure kills and takes clear sneaks and flights; gathers finds. Anything else waits for you.',
+  ],
+  bold: [
+    'Bold',
+    'Takes what is clear or close. A kept person, a bond or standing and a plot still wait for you.',
+  ],
+};
+
 type Act = (change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0]) => string | null;
 
 function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: Act }) {
-  const onRoadNow = !!life.course;
-  const [tab, setTab] = useState<'road' | 'home' | null>(null);
   const [picking, setPicking] = useState<number | null>(null);
-  const road = tab ? tab === 'road' : onRoadNow;
+  const road = !!life.course;
   const hours: string[] = road ? roadHours(life, game.player) : [...game.player.wheel];
   const hour = Math.floor((((game.calendar.day % 1) + 1) % 1) * 12);
   const w = WAYS.find((x) => x.id === life.way)!;
@@ -623,16 +681,19 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
   const cur = hours[hour]!;
   const doing = !road
     ? ROAD_WORD[cur]
-    : riding && hour >= 4 && hour < 4 + (w.rideHours ?? 0)
-      ? 'riding, cultivating at half'
-      : cur === 'sleep'
-        ? `asleep ${sleepPlace(game)}`
-        : cur === 'travel'
-          ? 'walking'
-          : ROAD_WORD[cur];
+    : waiting(life).length
+      ? 'camped: a card waits for you'
+      : riding && hour >= 4 && hour < 4 + (w.rideHours ?? 0)
+        ? 'riding, cultivating at half'
+        : cur === 'sleep'
+          ? `asleep ${sleepPlace(game)}`
+          : cur === 'travel'
+            ? 'walking'
+            : ROAD_WORD[cur];
   const pace = paceOf(game);
   const perDay = liPerDay(game);
   const routine = roadRoutines(life).find((r) => r.id === life.roadRoutine) ?? ROAD_ROUTINES[0]!;
+  const veil = veilReach(game);
   const R1 = 60;
   const R0 = 32;
   const pol = (r: number, deg: number): [number, number] => {
@@ -687,38 +748,35 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
           <circle r={3} fill="var(--accent)" />
         </svg>
         <div className="map-wheel-side">
+          <div className="map-label">Road routine</div>
           <div className="map-chips">
-            <button
-              type="button"
-              className="map-chip"
-              aria-pressed={road}
-              onClick={() => setTab('road')}
-            >
-              Road wheel
-            </button>
-            <button
-              type="button"
-              className="map-chip"
-              aria-pressed={!road}
-              onClick={() => setTab('home')}
-            >
-              Home wheel
-            </button>
+            {roadRoutines(life).map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                className="map-chip"
+                aria-pressed={life.roadRoutine === r.id}
+                disabled={!!life.group}
+                title={`${r.name}: ${r.note}`}
+                onClick={() => act((s) => followRoadRoutine(s, r.id))}
+              >
+                {r.short}
+              </button>
+            ))}
           </div>
-          <b>
-            {BRANCHES[hour]!.hanzi} · {doing}
-          </b>
-          <span className="muted">
+          <p className="map-pace">
+            <b>
+              {BRANCHES[hour]!.hanzi} · {doing}
+            </b>
+            <br />
+            {Math.round(perDay).toLocaleString('en-US')} li a day, {Math.round(pace)} a double-hour
+            ·{' '}
             {road
               ? life.group
-                ? `${life.group.name} keeps these hours.`
-                : 'Tap an hour to change it.'
-              : 'The home wheel is set in Cultivate.'}
-          </span>
-          <span className="map-pace">
-            <b>{Math.round(pace)} li</b> a double-hour ·{' '}
-            <b>{Math.round(perDay).toLocaleString('en-US')} li</b> a day
-          </span>
+                ? `${life.group.name} keeps these hours`
+                : 'tap an hour to change it'
+              : 'the home wheel, set in Cultivate'}
+          </p>
         </div>
       </div>
       {picking !== null && (
@@ -746,25 +804,7 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
           </button>
         </div>
       )}
-      <div>
-        <div className="map-label">Road routine</div>
-        <div className="map-chips">
-          {roadRoutines(life).map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              className="map-chip"
-              aria-pressed={life.roadRoutine === r.id}
-              disabled={!!life.group}
-              title={`${r.name}: ${r.note}`}
-              onClick={() => act((s) => followRoadRoutine(s, r.id))}
-            >
-              {r.short}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div>
+      <div className="map-road-block">
         <div className="map-label">Going by</div>
         <div className="map-chips">
           {WAYS.filter((x) => !x.groupOnly).map((x) => {
@@ -784,13 +824,47 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
             );
           })}
         </div>
+        <p className="map-pace">
+          {routine.note}
+          {w.note ? ` · ${w.note}` : ''}
+        </p>
       </div>
-      <p className="map-pace">
-        {routine.note}
-        {w.note ? ` · ${w.note}` : ''}
-      </p>
+      <div className="map-road-block">
+        <div className="map-label">When the road brings something</div>
+        <div className="map-chips">
+          {STANCES.map((k) => (
+            <button
+              key={k}
+              type="button"
+              className="map-chip"
+              aria-pressed={life.stance === k}
+              onClick={() => act((s) => setStance(s, k))}
+            >
+              {STANCE_WORDS[k][0]}
+            </button>
+          ))}
+        </div>
+        <p className="map-stance-note">{STANCE_WORDS[life.stance][1]}</p>
+        <button
+          type="button"
+          className="map-toggle"
+          aria-pressed={life.veiled}
+          disabled={!veil && !life.veiled}
+          title={veil ? undefined : 'Veiled Aura, on the Qi tree, lets you show a lower realm.'}
+          onClick={() => act((s) => setVeil(s, !life.veiled))}
+        >
+          <i />
+          {veil
+            ? `Travel veiled · show ${realmWords(veil.shown)} (${veil.stages} ${veil.stages === 1 ? 'stage' : 'stages'} of concealment)`
+            : 'Travel veiled · needs concealment (Veiled Aura)'}
+        </button>
+      </div>
     </section>
   );
+}
+
+function realmWords(r: { realm: RealmId; stage: number }): string {
+  return `${realmInfo(r.realm).name}, ${stageName(r.realm, r.stage)}`;
 }
 
 // ---------------------------------------------------------------- the course card
@@ -800,20 +874,53 @@ function CourseCard({
   map,
   life,
   act,
+  say,
+  open,
+  onOpen,
   onLeave,
 }: {
   game: GameState;
   map: RegionMap;
   life: MapLife;
   act: Act;
+  say: (t: string) => void;
+  open: string | null;
+  onOpen: (id: string | null) => void;
   onLeave: () => void;
 }) {
   const course = life.course;
   const realSeconds = (days: number) => days / daysPerRealMs(game) / 1000;
   const realWords = (days: number) => {
     const s = realSeconds(days);
-    return s < 90 ? `${Math.max(1, Math.round(s))} s` : `${Math.round(s / 60)} min`;
+    return s < 90 ? `${Math.max(1, Math.round(s))} s` : `${Math.round(s / 60)} real minutes`;
   };
+  // What the road brought: the waiting first, then the sensed nearest first.
+  const ahead = [...life.encounters].sort(
+    (a, b) =>
+      (a.state === 'waiting' ? -1 : 0) - (b.state === 'waiting' ? -1 : 0) ||
+      Math.hypot(a.at[0] - life.at[0], a.at[1] - life.at[1]) -
+        Math.hypot(b.at[0] - life.at[0], b.at[1] - life.at[1]),
+  );
+  const shown =
+    ahead.find((e) => e.id === open) ?? ahead.find((e) => e.state === 'waiting') ?? null;
+  const aheadList = ahead.length > 0 && (
+    <>
+      <div className="map-label">Ahead</div>
+      <div className="map-ahead">
+        {ahead.map((e) => (
+          <AheadRow
+            key={e.id}
+            e={e}
+            life={life}
+            game={game}
+            open={shown?.id === e.id}
+            onOpen={() => onOpen(shown?.id === e.id ? null : e.id)}
+          />
+        ))}
+      </div>
+      {shown && <EncounterCard game={game} life={life} enc={shown} act={act} say={say} />}
+    </>
+  );
   if (!course) {
     const counts = Object.values(life.know);
     return (
@@ -823,97 +930,95 @@ function CourseCard({
           Click anywhere on the map to set a course, or a place you know. Right-click for what you
           can do there.
         </p>
-        <div className="map-rows">
-          <div>
-            <span>Places known</span>
-            <span>{counts.length}</span>
-          </div>
-          <div>
-            <span>Seen</span>
-            <span>{counts.filter((v) => v === 'seen').length}</span>
-          </div>
-          <div>
-            <span>Rumored</span>
-            <span>{counts.filter((v) => v === 'rumored').length}</span>
-          </div>
-          <div>
-            <span>Pins</span>
-            <span>{life.pins.length}</span>
-          </div>
-        </div>
+        <dl className="map-rows">
+          <dt>Places known</dt>
+          <dd>
+            {counts.length} · {counts.filter((v) => v === 'seen').length} seen,{' '}
+            {counts.filter((v) => v === 'rumored').length} rumored
+          </dd>
+          <dt>Pins</dt>
+          <dd>{life.pins.length}</dd>
+          {life.postings.length > 0 && (
+            <>
+              <dt>Postings</dt>
+              <dd>
+                {life.postings.filter((p) => p.done).length} done of {life.postings.length} held
+              </dd>
+            </>
+          )}
+        </dl>
+        {aheadList}
       </section>
     );
   }
   const target = course.target ? placeById(map, course.target) : null;
-  const left = Math.max(0, course.days - (game.calendar.day - course.startDay));
-  const done = Math.min(1, (game.calendar.day - course.startDay) / Math.max(1e-6, course.days));
+  // How far along you are by where you stand on the course, so a stop on the road holds it still.
+  let liLeftExact = 0;
+  let from = life.at;
+  for (let i = course.at; i < course.pts.length; i++) {
+    const q = course.pts[i]!;
+    liLeftExact += Math.hypot(q[0] - from[0], q[1] - from[1]);
+    from = q;
+  }
+  const total = Math.max(1, course.roadLi + course.crossLi);
+  const done = Math.min(1, Math.max(0, 1 - liLeftExact / total));
+  const left = (course.days * liLeftExact) / total + life.detour / Math.max(1, liPerDay(game));
   const dest = target
-    ? `${target.name}${known(life, target.id) === 'rumored' ? ' (its ring)' : ''}`
+    ? `${target.name.replace(/^The /, 'the ')}${known(life, target.id) === 'rumored' ? ' (its ring)' : ''}`
     : `a point in ${hereAt(map, course.to)}`;
   const g = life.group;
   const above = pullsIn(course.maxBand, yourBand(game.player));
+  const halted = waiting(life).length > 0;
+  const liLeft = Math.round(liLeftExact / 100) * 100;
   return (
     <section className="map-card panel">
       <span className="map-label">{g ? 'Travelling with a group' : 'On the road'}</span>
       <h3>
-        {g ? g.name : dest}
+        {g ? g.name : `To ${dest}`}
         {!g && target && <span className="hanzi"> {target.hanzi}</span>}
       </h3>
       <div className="map-progress">
         <i style={{ width: `${(done * 100).toFixed(1)}%` }} />
       </div>
-      <div className="map-rows">
+      <dl className="map-rows">
         {g && (
           <>
-            <div>
-              <span>Bound for</span>
-              <span>{placeById(map, g.bound)?.name ?? dest}</span>
-            </div>
-            <div>
-              <span>Led by</span>
-              <span>{g.leader}</span>
-            </div>
-            {g.pay > 0 && (
-              <div>
-                <span>Owed</span>
-                <span>{Math.floor(g.owed)} low-grade</span>
-              </div>
-            )}
+            <dt>Bound for</dt>
+            <dd>
+              {placeById(map, g.bound)?.name ?? dest}, led by {g.leader}
+              {g.pay > 0 ? ` · ${Math.floor(g.owed)} low-grade owed` : ''}
+            </dd>
           </>
         )}
-        <div>
-          <span>By road</span>
-          <span>{Math.round(course.roadLi).toLocaleString('en-US')} li</span>
-        </div>
-        <div>
-          <span>Cross-country</span>
-          <span>{Math.round(course.crossLi).toLocaleString('en-US')} li</span>
-        </div>
-        <div>
-          <span>Days left</span>
-          <span>{Math.ceil(left)}</span>
-        </div>
-        <div>
-          <span>Arrives</span>
-          <span>{worldWhen(course.startDay + course.days)}</span>
-        </div>
-        <div>
-          <span>Real time</span>
-          <span>about {realWords(left)} at your clock</span>
-        </div>
-        {course.tolls.length > 0 && (
-          <div>
-            <span>Checkpoints</span>
-            <span>{course.tolls.length}</span>
-          </div>
-        )}
-      </div>
+        <dt>Left</dt>
+        <dd>
+          {liLeft.toLocaleString('en-US')} li · {Math.ceil(left)} days
+          {course.crossLi > 1
+            ? ` · ${Math.round(course.crossLi).toLocaleString('en-US')} cross-country in all`
+            : ''}
+        </dd>
+        <dt>Arrives</dt>
+        <dd>
+          {halted
+            ? 'when you go on'
+            : `${worldWhen(game.calendar.day + left)} · ${realWords(left)}`}
+        </dd>
+        <dt>Now</dt>
+        <dd className={halted ? 'is-halted' : ''}>
+          {halted
+            ? 'Stopped: a card waits for you. You camp and cultivate where you stand.'
+            : life.detour > 0
+              ? `Going round, ${Math.round(life.detour)} li cross-country before the road.`
+              : `On the move. ${course.tolls.length ? `${course.tolls.length} checkpoints on the way.` : ''}`}
+        </dd>
+      </dl>
       {above && (
         <p className="map-above">
           The course crosses ground a realm above you ({band(course.maxBand)?.name}). What lives
           there finds you first.
         </p>
       )}
+      {aheadList}
       <div className="map-buttons">
         {g ? (
           <button type="button" className="button button-quiet" onClick={onLeave}>
@@ -935,5 +1040,37 @@ function CourseCard({
         )}
       </div>
     </section>
+  );
+}
+
+function AheadRow({
+  e,
+  life,
+  game,
+  open,
+  onOpen,
+}: {
+  e: Encounter;
+  life: MapLife;
+  game: GameState;
+  open: boolean;
+  onOpen: () => void;
+}) {
+  const t = encounterTemplate(e.template);
+  const li = Math.hypot(e.at[0] - life.at[0], e.at[1] - life.at[1]);
+  const hours = Math.max(1, Math.round((li / Math.max(1, paceOf(game))) * 2));
+  const when = e.state === 'waiting' ? 'waiting' : e.how === 'seen' ? `${hours} h` : 'on you';
+  return (
+    <button
+      type="button"
+      className={`map-ahead-row${open ? ' is-open' : ''}${e.state === 'waiting' ? ' is-waiting' : ''}`}
+      onClick={onOpen}
+    >
+      <span className={`enc-seal is-mini is-${t.kind}${e.how !== 'seen' ? ' is-danger' : ''}`}>
+        {sealOf(t)}
+      </span>
+      <span>{t.title}</span>
+      <span className="map-ahead-when">{when}</span>
+    </button>
   );
 }

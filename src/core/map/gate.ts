@@ -18,7 +18,7 @@ import { fameOf, isMember } from '../resolver/names.ts';
 import { rollNature } from '../resolver/nature.ts';
 import { remember } from '../resolver/opinion.ts';
 import { talkCheck } from '../resolver/talk.ts';
-import type { World } from '../resolver/world.ts';
+import { statesOf, type World } from '../resolver/world.ts';
 import { realmOf, withPlayer, type GameState } from '../state.ts';
 import { regionData } from '../../content/map/index.ts';
 import type { MapPlace, RegionMap } from './region.ts';
@@ -71,8 +71,13 @@ export type GateRead =
   /** A gated place shut to you: what would open it. */
   | { kind: 'shut'; access: Access; words: string };
 
-/** The realm the watch reads off you: the one you show (hiding it is P3.7's stance). */
+/** The realm the watch reads off you: the one you show, your cover's when you travel veiled (P3.7). */
 export function shownRealm(s: GameState): string {
+  const cover = statesOf(s.world, s.player.id, 'cover', s.calendar.day)[0];
+  if (cover) {
+    const shown = cover.data.shown;
+    return `${realm(shown.realm).name}, ${stageName(shown.realm, shown.stage)}`;
+  }
   const r = realmOf(s.player);
   const ladder = ([s.player.qi, s.player.body, s.player.soul] as const).find((l) => l.realm === r);
   return `${realm(r).name}, ${stageName(r, ladder?.stage ?? 1)}`;

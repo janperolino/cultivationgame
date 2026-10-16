@@ -10,6 +10,47 @@ export const NIGHT_BRIDGE: Catalog = {
   layer: 'place',
   items: [
     {
+      id: 'hiding-talisman',
+      name: 'Hiding Talisman',
+      pinyin: 'Yinxing Fu',
+      hanzi: '隐形符',
+      tier: 1,
+      rarity: 'white',
+      upTo: 'green',
+      kind: 'talisman',
+      uses: { hide: { tier: 1 } },
+      source:
+        'the sea-cave scribes, who write it in squid ink that is gone from the paper by morning',
+      text: 'Burned in the palm, it lays a day of nothing over you. Anything at Qi Condensation looks straight through where you stand.',
+    },
+    {
+      id: 'shade-hiding-talisman',
+      name: 'Shade-Hiding Talisman',
+      pinyin: 'Yinying Fu',
+      hanzi: '隐影符',
+      tier: 2,
+      rarity: 'blue',
+      upTo: 'purple',
+      kind: 'talisman',
+      uses: { hide: { tier: 2 } },
+      source: 'the Society’s one Foundation scribe, who will not say where the ink comes from',
+      text: 'It hides you from Foundation eyes for a day. Cultivators who find one on a body ask quietly who sold it.',
+    },
+    {
+      id: 'void-hiding-talisman',
+      name: 'Void-Hiding Talisman',
+      pinyin: 'Xuyin Fu',
+      hanzi: '虚隐符',
+      tier: 3,
+      rarity: 'purple',
+      upTo: 'gold',
+      kind: 'talisman',
+      uses: { hide: { tier: 3 } },
+      source:
+        'no scribe on the Night Bridge; the Society buys them from the Vast Wilds and asks no questions',
+      text: 'Burned, it unthreads you from the air for a day. A Core Formation sense slides off you like water off oilcloth.',
+    },
+    {
       id: 'lampless-saber',
       name: 'Lampless Saber',
       pinyin: 'Wudeng Dao',
@@ -245,6 +286,10 @@ export const NIGHT_BRIDGE: Catalog = {
     },
   ],
   lots: [
+    // Hiding talismans (P3.7): the one way to cross a realm unseen on the road.
+    { thing: 'hiding-talisman', shops: ['black-market', 'stall'], weight: 0.8, count: [1, 3] },
+    { thing: 'shade-hiding-talisman', shops: ['black-market'], weight: 0.25 },
+    { thing: 'void-hiding-talisman', shops: ['black-market'], weight: 0.05 },
     { thing: 'lampless-saber', shops: ['black-market'] },
     { thing: 'black-oilcloth-coat', shops: ['black-market', 'stall'] },
     { thing: 'shuttered-lantern', shops: ['black-market'], weight: 0.5 },

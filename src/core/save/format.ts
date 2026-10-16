@@ -33,7 +33,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 25;
+export const SAVE_VERSION = 26;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -806,6 +806,25 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const s = (old.state ?? {}) as Raw;
     const map = s.map ? { ...(s.map as Raw), inside: null, heard: {} } : null;
     return { ...old, version: 25, state: { ...s, map } };
+  },
+  // v25, P3.6b: the road met nothing. v26 keeps the stance, the veil, the road's notice, the
+  // encounters sensed and waiting, a talisman's cover, the postings taken and the road's lines.
+  25: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const map = s.map
+      ? {
+          ...(s.map as Raw),
+          stance: 'careful',
+          veiled: false,
+          notice: { n: 0, next: 1 },
+          encounters: [],
+          detour: 0,
+          hidden: null,
+          postings: [],
+          road: [],
+        }
+      : null;
+    return { ...old, version: 26, state: { ...s, map } };
   },
 };
 

@@ -1,0 +1,541 @@
+<!doctype html>
+<!-- P3.7's look study: encounters on the map. Mock data from the Border Wilds' tracts, hearts, roster,
+     site tables and catalogs, and the twelve calls of P3.7's talk; nothing here is wired to the game.
+     Open it in a browser. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Encounter Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap">
+<style>
+:root {
+  --void: #040507;
+  --page: #020203;
+  --obsidian: rgb(7 8 11 / 0.96);
+  --edge: rgb(255 255 255 / 0.075);
+  --edge-strong: rgb(255 255 255 / 0.14);
+  --text: #e9e5da;
+  --muted: #8d949d;
+  --accent: #d6ab4c;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-edge: color-mix(in srgb, var(--accent) 45%, transparent);
+  --crack: #7fc7d9;
+  --warn: #e08a6a;
+  --good: #9fc4ad;
+  --r-white: #d8d8d8; --r-green: #7fc48a; --r-blue: #6fa8e0; --r-purple: #b48ae0; --r-gold: #e0b44c;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  --font-ui: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--text); font: 14px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; }
+.hanzi { font-family: var(--font-brush); font-weight: 400; }
+.muted { color: var(--muted); }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 22px 20px 40px; display: grid; gap: 16px; }
+.wrap > * { min-width: 0; }
+.eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 2px 0 6px; }
+.intro p { margin: 0; max-width: 84ch; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px 20px; padding: 12px 14px; border: 1px dashed var(--edge-strong); border-radius: 10px; background: #07080a; }
+.control { display: grid; gap: 5px; min-width: 0; max-width: 100%; }
+.control > span { font-size: 11.5px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+.seg { max-width: 100%; display: inline-flex; flex-wrap: wrap; border: 1px solid var(--edge-strong); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 5px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--edge); }
+.seg button[aria-pressed="true"] { background: rgb(255 255 255 / 0.07); color: var(--text); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.frame { margin: 0 auto; width: 100%; }
+.frame.narrow { width: 375px; }
+.shell { display: grid; grid-template-columns: 184px minmax(0, 1fr); border: 1px solid var(--edge); border-radius: 14px; overflow: hidden; background: var(--void); min-height: 720px; }
+.frame.narrow .shell { grid-template-columns: minmax(0, 1fr); }
+.menu { border-right: 1px solid var(--edge); padding: 18px 10px; display: grid; align-content: start; gap: 16px; background: var(--obsidian); }
+.frame.narrow .menu { display: none; }
+.brand { display: flex; align-items: baseline; gap: 8px; padding: 0 8px; }
+.brand b { font-family: var(--font-display); font-weight: 600; font-size: 17px; white-space: nowrap; }
+.brand .hanzi { color: var(--accent); font-size: 16px; }
+.menu ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.menu li { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; border-radius: 6px; color: var(--muted); font-size: 13.5px; }
+.menu li .hanzi { font-size: 14px; opacity: 0.7; }
+.menu li.on { color: var(--text); background: rgb(255 255 255 / 0.03); box-shadow: inset 2px 0 0 var(--accent); border-radius: 0 6px 6px 0; }
+.menu li.on .hanzi { color: var(--accent); opacity: 1; }
+.menu li .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); margin-left: 6px; }
+.topbar { display: none; align-items: center; justify-content: center; height: 48px; border-bottom: 1px solid var(--edge); font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+.frame.narrow .topbar { display: flex; }
+
+.main { min-width: 0; padding: 14px; display: grid; gap: 12px; align-content: start; position: relative; }
+.panel { background: var(--obsidian); border: 1px solid var(--edge); border-radius: 10px; box-shadow: 0 8px 28px rgb(0 0 0 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.04); }
+.label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+/* The map. */
+.stage { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--edge); height: 430px; background: #0a0c0e; }
+.frame.narrow .stage { height: 360px; }
+.stage svg { width: 100%; height: 100%; display: block; }
+.where { position: absolute; left: 10px; top: 10px; padding: 7px 11px; font-size: 12.5px; display: grid; gap: 1px; max-width: calc(100% - 20px); }
+.where .date { color: var(--muted); font-size: 11.5px; }
+.where .here b { font-weight: 600; }
+.where .depth { color: var(--muted); }
+.where .above { color: var(--warn); }
+.pips { letter-spacing: 1px; color: var(--accent); }
+.mk { cursor: pointer; }
+.mk text { font-family: var(--font-brush); }
+.float-card { position: absolute; right: 12px; top: 12px; width: 330px; max-width: calc(100% - 24px); }
+.frame.narrow .float-card { position: static; width: auto; max-width: none; }
+
+/* The bar under the map. */
+.bar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 12px; align-items: start; }
+.frame.narrow .bar { grid-template-columns: minmax(0, 1fr); }
+.road { padding: 12px 14px; display: grid; gap: 10px; }
+.wheel-row { display: flex; gap: 14px; align-items: center; }
+.wheel { flex: none; }
+.wheel text { font-family: var(--font-brush); fill: var(--muted); font-size: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { border: 1px solid var(--edge-strong); background: transparent; color: var(--muted); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.chip[aria-pressed="true"] { color: var(--text); border-color: var(--accent-edge); background: var(--accent-soft); }
+.chip.off { opacity: 0.4; cursor: default; }
+.pace { font-size: 12px; color: var(--muted); margin: 0; }
+.stance-note { font-size: 12px; color: #c6c1b5; margin: 0; min-height: 36px; }
+.toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.toggle i { width: 26px; height: 15px; border-radius: 999px; border: 1px solid var(--edge-strong); position: relative; }
+.toggle i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); transition: transform 0.15s; }
+.toggle[aria-pressed="true"] { color: var(--text); }
+.toggle[aria-pressed="true"] i { border-color: var(--accent-edge); background: var(--accent-soft); }
+.toggle[aria-pressed="true"] i::after { transform: translateX(11px); background: var(--accent); }
+
+.course { padding: 12px 14px; display: grid; gap: 10px; }
+.course h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 19px; }
+.course h3 .hanzi { color: var(--accent); font-size: 15px; margin-left: 4px; }
+.progress { height: 4px; border-radius: 3px; background: rgb(255 255 255 / 0.06); overflow: hidden; }
+.progress i { display: block; height: 100%; width: 38%; background: var(--accent); opacity: 0.7; }
+.rows { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 14px; font-size: 12.5px; }
+.rows dt { color: var(--muted); }
+.rows dd { margin: 0; }
+.halted { color: var(--warn); }
+.ahead { display: grid; gap: 4px; }
+.ahead-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px; align-items: center; font-size: 12.5px; padding: 5px 7px; border-radius: 7px; border: 1px solid transparent; cursor: pointer; }
+.ahead-row:hover { background: rgb(255 255 255 / 0.03); }
+.ahead-row.open { border-color: var(--accent-edge); background: var(--accent-soft); }
+.ahead-row .when { color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+.buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.button { border: 1px solid var(--edge-strong); background: rgb(255 255 255 / 0.03); color: var(--text); border-radius: 7px; padding: 5px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.button-quiet { background: transparent; color: var(--muted); }
+
+/* Seals. */
+.seal { width: 34px; height: 34px; border: 1.5px solid var(--accent-edge); border-radius: 6px; display: grid; place-items: center; color: var(--accent); font-family: var(--font-brush); font-size: 19px; background: var(--accent-soft); flex: none; }
+.seal.mini { width: 22px; height: 22px; font-size: 13px; border-radius: 5px; border-width: 1px; }
+.seal.beast { color: #d9a46a; border-color: #d9a46a88; background: #d9a46a14; }
+.seal.cult { color: var(--crack); border-color: #7fc7d988; background: #7fc7d914; }
+.seal.mortal { color: #c6c1b5; border-color: #c6c1b566; background: #c6c1b50d; }
+.seal.place { color: var(--good); border-color: #9fc4ad88; background: #9fc4ad14; }
+.seal.omen { color: var(--r-purple); border-color: #b48ae088; background: #b48ae014; }
+.seal.plot { color: var(--accent); }
+.seal.danger { color: var(--warn); border-color: #e08a6a99; background: #e08a6a18; }
+
+/* The encounter card. */
+.enc { padding: 13px 14px; display: grid; gap: 10px; border-color: var(--accent-edge); }
+.enc.danger { border-color: #e08a6a77; }
+.enc-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
+.enc-head h4 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 19px; line-height: 1.15; }
+.enc-head .sub { font-size: 12px; color: var(--muted); }
+.enc .opening { margin: 0; font-size: 13px; color: #c6c1b5; font-style: italic; }
+.reads { display: grid; gap: 3px; font-size: 12.5px; }
+.read { display: flex; justify-content: space-between; gap: 10px; }
+.read .r { color: var(--muted); white-space: nowrap; }
+.read .r.q { color: var(--warn); }
+.stakes { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.stakes b { color: var(--text); font-weight: 500; }
+.exits { display: grid; gap: 4px; }
+.exit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 9px; border: 1px solid var(--edge-strong); border-radius: 7px; background: rgb(255 255 255 / 0.02); color: inherit; font: inherit; text-align: left; cursor: pointer; width: 100%; }
+.exit:hover { border-color: var(--accent-edge); }
+.exit .n { font-size: 13px; font-weight: 500; }
+.exit .why { display: block; font-size: 11.5px; color: var(--muted); font-weight: 400; }
+.exit.stance { border-color: var(--accent-edge); }
+.exit.stance .n::after { content: ' · your stance'; color: var(--accent); font-size: 11px; font-weight: 400; }
+.exit.later { opacity: 0.42; cursor: default; }
+.v { font-size: 11.5px; padding: 1px 8px; border-radius: 999px; white-space: nowrap; border: 1px solid; }
+.v.clear { color: var(--good); border-color: #9fc4ad66; }
+.v.close { color: var(--accent); border-color: var(--accent-edge); }
+.v.short { color: var(--warn); border-color: #e08a6a77; }
+.v.q { color: var(--warn); border-color: #e08a6a77; }
+.v.none { color: var(--muted); border-color: var(--edge-strong); }
+.foot { font-size: 11.5px; color: var(--muted); margin: 0; }
+
+/* Coming back and the board. */
+.back { padding: 14px 16px; display: grid; gap: 10px; }
+.back h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 22px; }
+.lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; font-size: 13px; }
+.lines li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 9px; align-items: start; }
+.lines li .t { color: var(--muted); font-size: 11.5px; }
+.gain { color: var(--r-green); }
+.gain.blue { color: var(--r-blue); }
+.board { padding: 14px 16px; display: grid; gap: 10px; }
+.board h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 22px; }
+.board h3 .hanzi { color: var(--accent); font-size: 18px; margin-left: 6px; }
+.posts { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.post { border: 1px solid var(--edge-strong); border-radius: 9px; padding: 11px 12px; display: grid; gap: 6px; background: #0b0c0f; }
+.post.taken { border-color: var(--accent-edge); background: var(--accent-soft); }
+.post h5 { margin: 0; font-family: var(--font-display); font-size: 17px; font-weight: 600; line-height: 1.15; }
+.post p { margin: 0; font-size: 12.5px; color: #c6c1b5; }
+.post .meta { font-size: 11.5px; color: var(--muted); display: grid; gap: 1px; }
+.post .pay { color: var(--accent); }
+.notes { padding: 12px 14px; font-size: 13px; display: grid; gap: 6px; }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+[hidden] { display: none !important; }
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <p class="eyebrow">P3.7 look study · encounters on the map</p>
+    <h1>What the road brings</h1>
+    <p>A conscript of the March, Qi Condensation layer 5, walks from Pacified Fort toward the City across the Howling Downs. The five moments below are: a card sensed at the edge of sight, an ambush that springs, something a realm above that found you first, what the stance settled while you were away and what waited, and the bounty board. The verdicts follow call 7: a fight's edge is the exchanges they'd need to fell you over the ones you'd need to fell them, read from both sheets with no roll.</p>
+  </header>
+
+  <div class="controls" role="group" aria-label="Study controls">
+    <label class="control"><span>Moment</span>
+      <div class="seg" data-ctl="moment">
+        <button aria-pressed="true" data-v="sensed">Sensed ahead</button>
+        <button data-v="sprung">Sprung</button>
+        <button data-v="found">Found you first</button>
+        <button data-v="back">Back from away</button>
+        <button data-v="board">Bounty board</button>
+      </div>
+    </label>
+    <label class="control"><span>The card sits</span>
+      <div class="seg" data-ctl="place">
+        <button aria-pressed="true" data-v="bar">In the course card</button>
+        <button data-v="float">Over the map</button>
+      </div>
+    </label>
+    <label class="control"><span>Width</span>
+      <div class="seg" data-ctl="width">
+        <button aria-pressed="true" data-v="wide">Desktop</button>
+        <button data-v="narrow">375 px</button>
+      </div>
+    </label>
+  </div>
+
+  <div class="frame" id="frame">
+    <div class="shell">
+      <nav class="menu" aria-label="Menu">
+        <div class="brand"><b>Severed Heaven</b><span class="hanzi">断天</span></div>
+        <ul>
+          <li>Abode <span class="hanzi">洞府</span></li>
+          <li>Cultivate <span class="hanzi">修炼</span></li>
+          <li class="on">Map <span class="hanzi">舆图</span></li>
+          <li>Trees <span class="hanzi">道树</span></li>
+          <li>Bag <span class="hanzi">行囊</span></li>
+          <li>People <span class="hanzi">人物</span></li>
+          <li>Chronicle <span class="hanzi">史记</span></li>
+        </ul>
+      </nav>
+      <div>
+        <div class="topbar">Map <span class="hanzi" style="color:var(--accent);margin-left:6px">舆图</span></div>
+        <div class="main" id="main"></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="notes panel">
+    <span class="label">What the study settles, for the talk</span>
+    <ul>
+      <li><b>Sensed cards don't stop you.</b> One shows on the map at the edge of your sight and in the course card's Ahead list with its hours. Answer it or leave it, and your stance answers it when you reach it. Only what the stance can't settle stops the course and waits.</li>
+      <li><b>Exits are the template's.</b> Each is a resolver act with its verdict and what a short costs. The stance's pick is outlined. Go in waits for P3.9.</li>
+      <li><b>Seals by kind:</b> 兽 beast, 修 cultivator, 人 mortal, 地 place, 兆 omen, 缘 plot, drawn on the map like the sites' seals but round, so they read as passing things.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+const S = { moment: 'sensed', place: 'bar', width: 'wide', stance: 'careful', veil: false };
+
+const STANCES = {
+  avoid: ['Avoid', 'Goes round all you sense; met by something, flees or sneaks when clear. No fights; finds on the course only.'],
+  careful: ['Careful', 'Hunts the sure kills and takes clear sneaks and flights; gathers finds. Anything else waits for you.'],
+  bold: ['Bold', 'Takes what is clear or close. A kept person, a bond or standing and a plot still wait for you.'],
+};
+
+// Real content: the Howling Downs (hills), the Wolf King's ridge, the roster's deserters, the Stone-Ape King's pillars.
+const MOMENTS = {
+  sensed: {
+    where: { here: 'the Howling Downs', terrain: 'hills · thin qi (3)', sight: 'you see 600 li', pips: '●○○', depth: 'ring 1 of 3 toward the Wolf King’s ridge: beasts of layers 4 to 6 · green finds' },
+    halted: false,
+    marks: [
+      { x: 640, y: 150, seal: '兽', cls: 'beast', id: 'wolves', label: 'ridge wolves · 9 h' },
+      { x: 520, y: 300, seal: '地', cls: 'place', id: 'clover', label: 'Thunderhead Clover · 4 h' },
+    ],
+    ahead: ['wolves', 'clover'],
+    open: 'wolves',
+  },
+  sprung: {
+    where: { here: 'Blackpine Forest', terrain: 'forest · thin qi (3)', sight: 'you see 150 li', pips: '●○○', depth: 'ring 1 of 3 toward the old camphor’s grove: beasts of layers 4 to 6 · green finds' },
+    halted: true,
+    marks: [{ x: 452, y: 236, seal: '修', cls: 'cult danger', id: 'deserters', label: 'sprung' }],
+    ahead: ['deserters'],
+    open: 'deserters',
+  },
+  found: {
+    where: { here: 'Grey Karst Reaches', terrain: 'karst · thin qi (3)', sight: 'you see 150 li', pips: '●●●●', depth: 'ring 4 of 5 toward the Stone-Ape King’s pillars: beasts of Foundation, middle · blue finds', above: true },
+    halted: true,
+    marks: [{ x: 470, y: 200, seal: '兽', cls: 'beast danger', id: 'ape', label: 'it has seen you' }],
+    ahead: ['ape'],
+    open: 'ape',
+  },
+};
+
+const CARDS = {
+  wolves: {
+    seal: '兽', cls: 'beast', title: 'Ridge wolves on the skyline',
+    sub: 'beast · sensed at 600 li · you reach them in 9 hours',
+    opening: 'Five grey shapes trot the ridge above the old beacon road, noses low, working the wind toward the goat folds.',
+    reads: [['5 ridge wolves', 'layers 4 to 6, middle'], ['the pack’s lead, a scarred bitch', 'layer 6']],
+    stakes: [['Win', '5 wolf pelts, 2 wolf fangs, a tier 1 beast core (green)'], ['Short', 'a wound, 30% for 10 days']],
+    exits: [
+      { n: 'Hunt them', why: 'fight · you’d fell the pack in 4 exchanges, it needs 7 to fell you (×1.75)', v: 'clear', stance: ['careful', 'bold'] },
+      { n: 'Go round', why: '60 li cross-country more, about 3 hours · they haven’t noticed you', v: 'none', label: 'sure', stance: ['avoid'] },
+      { n: 'Sneak past downwind', why: 'Stealth against their noses · if short, they turn on you', v: 'close' },
+      { n: 'Go in', why: 'the scene, with GLM (P3.9)', v: 'none', label: 'later', later: true },
+    ],
+    foot: 'Leave it, and when you reach them your stance hunts them: a clear fight.',
+  },
+  clover: {
+    seal: '地', cls: 'place', title: 'Thunderhead Clover in a lightning scar',
+    sub: 'place · on your course · 4 hours ahead',
+    opening: 'A ring of blackened turf on the downs, and in it clover with a blue sheen standing straight up as if the storm hadn’t finished with it.',
+    reads: [['nothing guards it', 'you looked']],
+    stakes: [['Gather', '3 to 5 Thunderhead Clover (green), an hour']],
+    exits: [
+      { n: 'Gather it', why: 'an hour off your road', v: 'clear', stance: ['avoid', 'careful', 'bold'] },
+      { n: 'Leave it', why: 'walk on', v: 'none', label: 'sure' },
+    ],
+    foot: 'Every stance gathers a find on the course; Avoid passes one that needs a detour.',
+  },
+  deserters: {
+    seal: '修', cls: 'cult danger', title: 'Deserters in the pines',
+    sub: 'cultivator · sprung on you · your Perception fell short of their Stealth',
+    opening: 'Three men in cut-off garrison coats step out of the blackpines across the trail, spears low, one already between you and the way back.',
+    reads: [['a garrison deserter, the one talking', 'layer 6'], ['two more deserters', 'layers 4 and 5']],
+    stakes: [['Win', 'their kit: 3 Ash-Wood Spears, a Garrison Ration Pill, 18 low-grade stones'], ['Short', 'a wound, and half your stones (14) and one thing from the bag']],
+    exits: [
+      { n: 'Fight them', why: 'fight · you’d need 6 exchanges, they need 7 (×1.17)', v: 'close', stance: ['bold'] },
+      { n: 'Threaten them off', why: 'your presence against three of them, a weapon drawn ×1.2', v: 'close' },
+      { n: 'Pay the road toll they ask', why: '12 low-grade stones', v: 'clear', label: 'sure' },
+      { n: 'Run for it', why: 'Speed against theirs · if short, they catch you tired', v: 'short' },
+      { n: 'Go round', why: 'they already have you', v: 'none', label: 'no', later: true },
+      { n: 'Go in', why: 'the scene, with GLM (P3.9)', v: 'none', label: 'later', later: true },
+    ],
+    foot: 'Careful can’t settle it (nothing clear but paying), so it waits and the course has stopped. Bold would fight: close.',
+  },
+  ape: {
+    seal: '兽', cls: 'beast danger', title: 'Something in the pillars has seen you',
+    sub: 'beast · found you first · its Perception is a realm beyond your Stealth',
+    opening: 'The stone forest goes quiet. High on a pillar, what you took for a weathered boulder turns its head, and the eyes in it are older than the Wall.',
+    reads: [['a stone ape of the King’s troop', '?  you can’t see through it']],
+    stakes: [['Short', 'a wound, 30% for 10 days'], ['Win', 'unknown: a Foundation hide and core, blue']],
+    exits: [
+      { n: 'Hold still in the pillars', why: 'Stealth with the cover (×1.21) against its Perception', v: 'q' },
+      { n: 'Burn a Hiding Talisman', why: 'you hold one of tier 1; it hides you only up to Qi Condensation', v: 'short' },
+      { n: 'Run for it', why: 'Speed against a Foundation beast', v: 'q' },
+      { n: 'Fight it', why: 'fight · you can’t read it', v: 'q' },
+      { n: 'Go in', why: 'the scene, with GLM (P3.9)', v: 'none', label: 'later', later: true },
+    ],
+    foot: 'Nothing the stance can judge: it waits. Nobody dies on the map; the worst is the wound and what it costs you.',
+  },
+};
+
+const WHEEL = ['sleep','sleep','home','home','travel','travel','travel','travel','travel','travel','look','home'];
+const BR = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const KIND_FILL = { sleep: '#1b1d22', home: '#2b2a24', travel: '#6b5521', look: '#2f4a52' };
+
+function wheelSvg() {
+  const cx = 44, cy = 44, R = 40, r = 22;
+  let s = `<svg class="wheel" width="88" height="88" viewBox="0 0 88 88" aria-hidden="true">`;
+  WHEEL.forEach((k, i) => {
+    const a0 = (i / 12) * Math.PI * 2 - Math.PI / 2, a1 = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
+    const p = (a, rad) => `${cx + rad * Math.cos(a)},${cy + rad * Math.sin(a)}`;
+    s += `<path d="M${p(a0, r)} L${p(a0, R)} A${R},${R} 0 0 1 ${p(a1, R)} L${p(a1, r)} A${r},${r} 0 0 0 ${p(a0, r)}Z" fill="${KIND_FILL[k]}" stroke="#040507" stroke-width="1"/>`;
+    const am = (a0 + a1) / 2;
+    s += `<text x="${cx + 31 * Math.cos(am)}" y="${cy + 31 * Math.sin(am) + 3.5}" text-anchor="middle">${BR[i]}</text>`;
+  });
+  return s + `<circle cx="44" cy="44" r="19" fill="#07080b"/><text x="44" y="49" text-anchor="middle" style="font-size:15px;fill:var(--accent)">行</text></svg>`;
+}
+
+function mapSvg(m) {
+  const sight = m.where.sight.includes('600') ? 250 : 95;
+  const you = [360, 250];
+  const terrain = S.moment === 'sensed' ? 'hills' : S.moment === 'sprung' ? 'forest' : 'karst';
+  const tone = { hills: ['#1a1d17', '#23261c'], forest: ['#0f1812', '#16241a'], karst: ['#191a1d', '#24252a'] }[terrain];
+  let s = `<svg viewBox="0 0 900 430" preserveAspectRatio="xMidYMid slice" aria-label="The map around you">
+  <defs>
+    <radialGradient id="sight" cx="${you[0]}" cy="${you[1]}" r="${sight}" gradientUnits="userSpaceOnUse">
+      <stop offset="0.75" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="0.04"/>
+    </radialGradient>
+    <radialGradient id="fog" cx="${you[0]}" cy="${you[1]}" r="${sight + 140}" gradientUnits="userSpaceOnUse">
+      <stop offset="0.62" stop-color="#050608" stop-opacity="0"/><stop offset="1" stop-color="#050608" stop-opacity="0.92"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="430" fill="${tone[0]}"/>`;
+  // Relief: soft ridges or pillars.
+  for (let i = 0; i < 14; i++) {
+    const x = (i * 137) % 900, y = 40 + ((i * 89) % 360);
+    if (terrain === 'karst') s += `<ellipse cx="${x}" cy="${y}" rx="14" ry="9" fill="${tone[1]}"/><ellipse cx="${x + 40}" cy="${y + 22}" rx="10" ry="7" fill="${tone[1]}"/>`;
+    else s += `<path d="M${x - 70},${y + 20} Q${x},${y - 30} ${x + 80},${y + 18}" fill="none" stroke="${tone[1]}" stroke-width="14" stroke-linecap="round"/>`;
+  }
+  // Depth line toward the heart.
+  s += `<path d="M560,0 C600,90 700,110 720,200 C740,300 860,320 900,330" fill="none" stroke="#d6ab4c" stroke-opacity="0.35" stroke-width="1.2" stroke-dasharray="6 6"/>`;
+  s += `<text x="770" y="246" fill="#d6ab4c" fill-opacity="0.55" font-size="12" font-family="Inter">ring ${m.where.above ? 5 : 2}</text>`;
+  // The old beacon road and your course.
+  s += `<path d="M0,330 C140,300 260,270 360,250 C470,228 560,170 700,130 C780,108 850,90 900,80" fill="none" stroke="#6b5f45" stroke-width="2.4" stroke-opacity="0.8"/>`;
+  s += `<path d="M120,296 C220,276 290,262 360,250" fill="none" stroke="#d6ab4c" stroke-opacity="0.45" stroke-width="10" stroke-linecap="round"/>`;
+  s += `<path d="M360,250 C470,228 560,170 700,130 C780,108 850,90 900,80" fill="none" stroke="#e9e5da" stroke-width="1.6" stroke-dasharray="1 7" stroke-linecap="round"/>`;
+  s += `<circle cx="${you[0]}" cy="${you[1]}" r="${sight}" fill="url(#sight)" stroke="#e9e5da" stroke-opacity="0.18" stroke-dasharray="3 5"/>`;
+  s += `<rect width="900" height="430" fill="url(#fog)"/>`;
+  // You.
+  s += `<circle cx="${you[0]}" cy="${you[1]}" r="6" fill="#d6ab4c"/><circle cx="${you[0]}" cy="${you[1]}" r="11" fill="none" stroke="#d6ab4c" stroke-opacity="0.5"/>`;
+  for (const k of m.marks) {
+    const col = k.cls.includes('danger') ? '#e08a6a' : k.cls.includes('beast') ? '#d9a46a' : k.cls.includes('cult') ? '#7fc7d9' : '#9fc4ad';
+    s += `<g class="mk" data-open="${k.id}"><circle cx="${k.x}" cy="${k.y}" r="15" fill="#07080b" stroke="${col}" stroke-width="1.4"/>
+      <text x="${k.x}" y="${k.y + 6}" text-anchor="middle" fill="${col}" font-size="17">${k.seal}</text>
+      <text x="${k.x}" y="${k.y + 32}" text-anchor="middle" fill="${col}" fill-opacity="0.85" font-size="11.5" font-family="Inter">${k.label}</text></g>`;
+    if (k.cls.includes('danger')) s += `<line x1="${you[0]}" y1="${you[1]}" x2="${k.x}" y2="${k.y}" stroke="#e08a6a" stroke-opacity="0.5" stroke-dasharray="2 4"/>`;
+  }
+  return s + `</svg>`;
+}
+
+function cardHtml(id) {
+  const c = CARDS[id];
+  const danger = c.cls.includes('danger');
+  const exits = c.exits.map((e) => {
+    const isStance = e.stance && e.stance.includes(S.stance);
+    const tag = e.label ?? (e.v === 'q' ? '?' : e.v);
+    return `<button class="exit${isStance ? ' stance' : ''}${e.later ? ' later' : ''}" type="button"${e.later ? ' disabled' : ''}>
+      <span><span class="n">${e.n}</span><span class="why">${e.why}</span></span><span class="v ${e.v}">${tag}</span></button>`;
+  }).join('');
+  return `<section class="enc panel${danger ? ' danger' : ''}" aria-label="${c.title}">
+    <div class="enc-head"><span class="seal ${c.cls}">${c.seal}</span><div><h4>${c.title}</h4><div class="sub">${c.sub}</div></div></div>
+    <p class="opening">${c.opening}</p>
+    <div class="reads">${c.reads.map(([a, b]) => `<div class="read"><span>${a}</span><span class="r${b.startsWith('?') ? ' q' : ''}">${b}</span></div>`).join('')}</div>
+    <div class="stakes">${c.stakes.map(([a, b]) => `<span><b>${a}</b> ${b}</span>`).join('')}</div>
+    <div class="exits">${exits}</div>
+    <p class="foot">${c.foot}</p>
+  </section>`;
+}
+
+function roadHtml() {
+  const st = Object.entries(STANCES).map(([k, [n]]) => `<button class="chip" type="button" data-stance="${k}" aria-pressed="${S.stance === k}">${n}</button>`).join('');
+  return `<section class="road panel">
+    <div class="wheel-row">${wheelSvg()}
+      <div style="display:grid;gap:6px;min-width:0">
+        <div class="label">Road routine</div>
+        <div class="chips"><button class="chip" aria-pressed="true">Walk by day</button><button class="chip">Pressed march</button><button class="chip">Night road</button><button class="chip off">Caravan guard</button></div>
+        <p class="pace">240 li a day on foot · 6 hours on the road, a look round at 戌</p>
+      </div>
+    </div>
+    <div style="display:grid;gap:6px">
+      <div class="label">When the road brings something</div>
+      <div class="chips">${st}</div>
+      <p class="stance-note">${STANCES[S.stance][1]}</p>
+      <button class="toggle" type="button" data-veil aria-pressed="${S.veil}"><i></i>Travel veiled · show layer 3, not 5 (Veiled Aura, 2 stages)</button>
+    </div>
+  </section>`;
+}
+
+function courseHtml(m) {
+  const rows = m.ahead.map((id) => {
+    const c = CARDS[id];
+    const mk = m.marks.find((k) => k.id === id);
+    return `<div class="ahead-row${S.open === id ? ' open' : ''}" data-open="${id}"><span class="seal mini ${c.cls}">${c.seal}</span><span>${c.title}</span><span class="when">${mk.label}</span></div>`;
+  }).join('');
+  const card = S.place === 'bar' && S.open ? cardHtml(S.open) : '';
+  return `<section class="course panel">
+    <span class="label">On the road</span>
+    <h3>To the City of the Guarded Mouth <span class="hanzi">守口城</span></h3>
+    <div class="progress"><i></i></div>
+    <dl class="rows">
+      <dt>Left</dt><dd>12,800 li by road · 53 days</dd>
+      <dt>Arrives</dt><dd>3116, summer, 14th of the 6th month · 8 real minutes</dd>
+      <dt>Now</dt><dd class="${m.halted ? 'halted' : ''}">${m.halted ? 'Stopped: a card waits for you. You camp and cultivate where you stand.' : 'Walking. A look round at 戌.'}</dd>
+    </dl>
+    <div class="label">Ahead</div>
+    <div class="ahead">${rows}</div>
+    ${card}
+    <div class="buttons"><button class="button button-quiet">Stop here</button><button class="button button-quiet">Change course</button></div>
+  </section>`;
+}
+
+function whereHtml(m) {
+  const w = m.where;
+  return `<div class="where panel"><span class="date">3116, spring, 2nd of the 4th month · 申</span>
+    <span class="here"><b>${w.here}</b> · ${w.terrain} · ${w.sight}</span>
+    <span class="depth"><span class="pips">${w.pips}</span> ${w.depth}</span>
+    ${w.above ? '<span class="above">a realm above you: what lives here finds you first</span>' : ''}</div>`;
+}
+
+function backHtml() {
+  return `<div class="stage">${mapSvg({ ...MOMENTS.sprung, marks: [{ x: 452, y: 236, seal: '修', cls: 'cult danger', id: 'deserters', label: 'waiting' }] })}${whereHtml(MOMENTS.sprung)}</div>
+  <section class="back panel">
+    <span class="label">While you were away · 34 days on the road · Careful</span>
+    <h3>From Pacified Fort into Blackpine Forest</h3>
+    <ul class="lines">
+      <li><span class="seal mini place">地</span><span>Gathered 4 <b class="gain">Thunderhead Clover</b> in a lightning scar on the Howling Downs. <span class="t">day 3</span></span></li>
+      <li><span class="seal mini beast">兽</span><span>Hunted a pack of ridge wolves on the skyline: a clear fight. <b class="gain">5 wolf pelts, 2 fangs, a beast core</b>. <span class="t">day 7</span></span></li>
+      <li><span class="seal mini mortal">人</span><span>Passed a salt peddler’s mule train on the beacon road and bought nothing. <span class="t">day 12</span></span></li>
+      <li><span class="seal mini beast">兽</span><span>Went round a stone-skin boar rooting at a ford: not a clear fight. <span class="t">day 19</span></span></li>
+      <li><span class="seal mini omen">兆</span><span>A qi tide rolled off the downs at dusk; you sat in it. <b class="gain">Qi +6%</b> <span class="t">day 24</span></span></li>
+      <li><span class="seal mini cult">修</span><span>A Beast-Butcher Gate disciple on the road asked your business and let you by. <span class="t">day 29</span></span></li>
+      <li><span class="seal mini cult danger">修</span><span class="halted">Deserters sprang from the pines on day 31. Nothing was clear, so you stopped and camped. It waits for you.</span></li>
+    </ul>
+  </section>
+  ${cardHtml('deserters')}`;
+}
+
+function boardHtml() {
+  return `<section class="board panel">
+    <span class="label">The City of the Guarded Mouth · Hear and hire</span>
+    <h3>The bounty board <span class="hanzi">赏格榜</span></h3>
+    <p class="muted" style="margin:0;font-size:13px">Three postings a month, from the six trip goals. Take one and its spot is pinned on the map; you meet its goal there like any encounter and are paid here when you come back.</p>
+    <div class="posts">
+      <article class="post taken"><span class="seal mini beast">赏</span><h5>The boar that broke the Grain Ford sluice</h5>
+        <p>A stone-skin boar, old and heavy, has twice torn the ford's sluice gate. The ford's elder wants its tusks on the board.</p>
+        <div class="meta"><span>bounty · a beast at layers 4 to 6 · Grain Ford, 2,900 li</span><span class="pay">40 low-grade · taken, pinned</span></div></article>
+      <article class="post"><span class="seal mini place">药</span><h5>Blood-Salt Kelp for the tide alchemist</h5>
+        <p>Six strands of Blood-Salt Kelp, cut at low tide off the Tidewrack Shore, brought back wet.</p>
+        <div class="meta"><span>herb run · 6 of a green herb · the Tidewrack Shore</span><span class="pay">60 low-grade, or 75 by the 10th</span></div></article>
+      <article class="post"><span class="seal mini mortal">送</span><h5>A sealed letter to Corral Town</h5>
+        <p>A guild clerk's letter for the Spirit Herders' horse factor. Don't open it; the wax is a sect's.</p>
+        <div class="meta"><span>delivery · Corral Town, 9,400 li by road</span><span class="pay">25 low-grade on delivery, 25 here</span></div></article>
+    </div>
+    <p class="foot">The bounty office beside it keeps buying cores and parts at half price; the board pays for the goal, the office for the things.</p>
+  </section>`;
+}
+
+function render() {
+  const main = document.getElementById('main');
+  document.getElementById('frame').classList.toggle('narrow', S.width === 'narrow');
+  if (S.moment === 'back') { main.innerHTML = backHtml() + `<div class="bar">${roadHtml()}${courseHtml({ ...MOMENTS.sprung, ahead: [] })}</div>`; bind(); return; }
+  if (S.moment === 'board') { main.innerHTML = boardHtml(); bind(); return; }
+  const m = MOMENTS[S.moment];
+  if (!S.open || !m.ahead.includes(S.open)) S.open = m.open;
+  const float = S.place === 'float' && S.open ? `<div class="float-card">${cardHtml(S.open)}</div>` : '';
+  main.innerHTML = `<div class="stage">${mapSvg(m)}${whereHtml(m)}${S.width === 'narrow' ? '' : float}</div>
+    ${S.width === 'narrow' ? float : ''}
+    <div class="bar">${roadHtml()}${courseHtml(m)}</div>`;
+  bind();
+}
+
+function bind() {
+  document.querySelectorAll('[data-open]').forEach((el) => el.addEventListener('click', () => { S.open = el.dataset.open; render(); }));
+  document.querySelectorAll('[data-stance]').forEach((el) => el.addEventListener('click', () => { S.stance = el.dataset.stance; render(); }));
+  document.querySelectorAll('[data-veil]').forEach((el) => el.addEventListener('click', () => { S.veil = !S.veil; render(); }));
+}
+
+document.querySelectorAll('.seg').forEach((seg) => seg.addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  seg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  S[seg.dataset.ctl] = b.dataset.v; S.open = null; render();
+}));
+render();
+</script>

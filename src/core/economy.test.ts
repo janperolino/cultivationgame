@@ -410,7 +410,7 @@ describe('loot', () => {
           "antler-velvet-pill~green": 1,
           "beast-core": 1,
           "beast-fang": 3,
-          "marrow-washing-pill": 1,
+          "method:butcher-saber": 1,
           "python-skin-jerkin": 1,
         },
         "stones": 181,

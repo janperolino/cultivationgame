@@ -29,6 +29,8 @@ import { hourLocked } from '../wheel.ts';
 import { bandAt, bandOfRealm } from './depth.ts';
 import { lineDist, type Pt } from './geometry.ts';
 import { known, lookAround, seeFrom, senseLi, startKnowledge, type Seeing } from './fog.ts';
+import { roadHour, setMapOf, waiting } from './encounters.ts';
+import { reachPostings } from './board.ts';
 import { enterAt } from './gate.ts';
 import {
   areaAt,
@@ -89,9 +91,19 @@ export function ensureMap(s: GameState): GameState {
     flown: { day: -1, hours: 0 },
     inside: null,
     heard: {},
+    stance: 'careful',
+    veiled: false,
+    notice: { n: 0, next: 1 },
+    encounters: [],
+    detour: 0,
+    hidden: null,
+    postings: [],
+    road: [],
   };
   return { ...s, mapgen, map: startKnowledge(map, blank, home) };
 }
+
+setMapOf(mapOf);
 
 function withLife(s: GameState, life: MapLife): GameState {
   return { ...s, map: life };
@@ -286,8 +298,9 @@ function courseFrom(
     maxBand,
     enter,
   };
-  // Setting off leaves the place you were in.
-  return { ok: true, state: withLife(s, { ...life, course, inside: null }) };
+  // Setting off leaves the place you were in, and what was sensed ahead on the old course.
+  const encounters = life.encounters.filter((e) => e.state === 'waiting');
+  return { ok: true, state: withLife(s, { ...life, course, inside: null, encounters }) };
 }
 
 /** Sets a course to a spot or a place; a group owns its course, so you can't while with one. */
@@ -429,6 +442,10 @@ export function cultivationWheel(s: GameState): { wheel: HourKind[]; factor: num
   return { wheel, factor };
 }
 
+function waitingOn(life: MapLife): boolean {
+  return waiting(life).length > 0;
+}
+
 export interface TravelNote {
   type: 'arrived' | 'found';
   place: string;
@@ -447,6 +464,7 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
   let next = s;
   const c = s.player;
   const sb = soulBand(c);
+  const yb = yourBand(c);
   const sense = senseOf(c);
   const pace = paceOf(s);
   const w = wayOf(life);
@@ -471,7 +489,9 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
     }
     // A group you joined before it left waits for its day.
     const waiting = !!life.group?.departs && h0 < life.group.departs * HOURS_PER_DAY - 1e-9;
-    let moving = !waiting && movesAt({ ...next, map: life }, hour);
+    // A card waiting on the road stops you: you camp and cultivate where you stand.
+    const halted = waitingOn(life);
+    let moving = !waiting && !halted && movesAt({ ...next, map: life }, hour);
     if (moving && foundationFlight) {
       const flown: number = life.flown.day === dayInt ? life.flown.hours : 0;
       if (flown >= FOUNDATION_FLIGHT_HOURS) moving = false;
@@ -489,6 +509,13 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
           },
         };
       let budget = pace * (end - h0);
+      // Going round something sensed: those li are walked cross-country before the course moves on.
+      if (life.detour > 0) {
+        const f = w.flies ? 1 : (OFFROAD_FACTOR[terrainAt(map, life.at)] ?? 0.5);
+        const used = Math.min(life.detour, budget * f);
+        life = { ...life, detour: life.detour - used };
+        budget -= used / f;
+      }
       const course: Course = life.course!;
       let at: Pt = life.at;
       let i = course.at;
@@ -536,8 +563,23 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
           enterTarget = target;
         // A group pays what it owes on arriving.
         if (life.group && life.group.owed > 0) paid += Math.round(life.group.owed);
-        life = { ...life, course: null, group: null, way: life.way === 'ship' ? 'foot' : life.way };
+        life = {
+          ...life,
+          course: null,
+          group: null,
+          way: life.way === 'ship' ? 'foot' : life.way,
+          encounters: life.encounters.filter((e) => e.state === 'waiting'),
+        };
       }
+    }
+    // The road's hour: its notice fills and what it brings is met; a posting's spot reached meets its goal.
+    if (life.course && !waiting) {
+      const st = reachPostings(
+        roadHour({ ...next, map: life }, map, hour, end - h0, moving, !!w.flies, yb, sense),
+        map,
+      );
+      next = st;
+      life = st.map!;
     }
     h0 = end;
   }

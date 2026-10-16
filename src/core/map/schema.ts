@@ -1,4 +1,4 @@
-// What the save keeps of the travel map (save v24, v25 the place you are in): the world's seeded regions, which every life in
+// What the save keeps of the travel map (save v24, v25 the place you are in, v26 encounters): the world's seeded regions, which every life in
 // the slot shares, and the life's own map: where you are, what you know, the trail you walked,
 // your pins, your course, your road wheel and the group you travel with.
 import { z } from 'zod';
@@ -113,6 +113,54 @@ export const GroupSchema = z.object({
 });
 export type Group = z.infer<typeof GroupSchema>;
 
+/** How the road's encounters settle without you (P3.7): go round, take the clear, take the close. */
+export const STANCES = ['avoid', 'careful', 'bold'] as const;
+export type Stance = (typeof STANCES)[number];
+
+/**
+ * An encounter on the map (P3.7): a template met at a band, its people regenerated from its seed.
+ * Sensed ones stand ahead on your course until you reach them; a waiting one stops the course.
+ */
+export const EncounterSchema = z.object({
+  id: z.string(),
+  template: z.string(),
+  seed: z.number().int(),
+  band: z.number().int(),
+  at: pt,
+  /** The course point you meet it at, while it stands sensed ahead. */
+  meetAt: z.number().int().nullable(),
+  state: z.enum(['sensed', 'waiting']),
+  /** Seen at the edge of your sight, sprung from hiding, or it found you first. */
+  how: z.enum(['seen', 'sprung', 'found']),
+  /** Exits tried and fallen short: no retries until something changes. */
+  tried: z.array(z.number().int()),
+  day: z.number(),
+  /** Where it was met, in words. */
+  where: z.string(),
+  /** The bounty posting whose goal it is. */
+  posting: z.string().optional(),
+});
+export type Encounter = z.infer<typeof EncounterSchema>;
+
+/** A bounty posting you took (P3.7): its goal met at its spot, paid at the board it hangs on. */
+export const PostingSchema = z.object({
+  id: z.string(),
+  board: z.string(),
+  template: z.string(),
+  title: z.string(),
+  text: z.string(),
+  spot: pt,
+  /** The place the spot is at, if it is one (a delivery's town). */
+  place: z.string().nullable(),
+  band: z.number().int(),
+  pay: z.number().int(),
+  taken: z.number(),
+  done: z.boolean(),
+  /** The day its goal was last met, so one fallen short waits a month to be met again. */
+  met: z.number().optional(),
+});
+export type Posting = z.infer<typeof PostingSchema>;
+
 export const MapLifeSchema = z.object({
   region: z.string(),
   at: pt,
@@ -143,5 +191,26 @@ export const MapLifeSchema = z.object({
   inside: z.string().nullable(),
   /** The day you last heard a place's rumor, by place: a teahouse tells one a day. */
   heard: z.record(z.string(), z.number()),
+  /** The stance the road's encounters settle by (P3.7). */
+  stance: z.enum(STANCES),
+  /** Travelling veiled: the realm you show is your concealment's lowest. */
+  veiled: z.boolean(),
+  /** The road's notice: how full, and the threshold the next encounter comes at. */
+  notice: z.object({ n: z.number(), next: z.number() }),
+  encounters: z.array(EncounterSchema),
+  /** Li of going round still to walk before the course moves on. */
+  detour: z.number(),
+  /** The day a burned hiding talisman's cover ends, and its tier. */
+  hidden: z.object({ until: z.number(), tier: z.number().int() }).nullable(),
+  postings: z.array(PostingSchema),
+  /** Lines from the road since you last looked: what the stance settled. */
+  road: z.array(
+    z.object({
+      day: z.number(),
+      kind: z.string(),
+      text: z.string(),
+      template: z.string().optional(),
+    }),
+  ),
 });
 export type MapLife = z.infer<typeof MapLifeSchema>;

@@ -155,6 +155,14 @@ export interface ChartUse {
   scope: 'region' | 'kingdom';
 }
 
+/**
+ * A hiding talisman (P3.7): burned when something on the road would find you first, it holds your
+ * Stealth at its tier's size against perception up to that tier, for a day.
+ */
+export interface HideUse {
+  tier: number;
+}
+
 /** Formation slots for M4's enchantments. */
 export interface InscribeUse {
   slots: number;
@@ -172,6 +180,7 @@ export interface ItemUses {
   key?: KeyUse;
   inscribe?: InscribeUse;
   chart?: ChartUse;
+  hide?: HideUse;
 }
 
 /**

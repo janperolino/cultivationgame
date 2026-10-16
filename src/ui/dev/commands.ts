@@ -2,6 +2,15 @@
 // the game uses where they can (time runs through the day step, breakthroughs roll their odds,
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
 import { BOND_IDS, type BondId } from '../../content/bonds.ts';
+import {
+  ENCOUNTERS,
+  encounterTemplate,
+  hasEncounterTemplate,
+} from '../../content/encounters/index.ts';
+import { contact } from '../../core/map/encounters.ts';
+import { ensureMap, hereWords, mapOf } from '../../core/map/travel.ts';
+import { placeById } from '../../core/map/region.ts';
+import type { Encounter } from '../../core/map/schema.ts';
 import { HOME_REGION } from '../../content/resolver.ts';
 import { makeBond } from '../../core/resolver/followers.ts';
 import { addFame } from '../../core/resolver/names.ts';
@@ -167,6 +176,61 @@ export const COMMANDS: Record<string, Command> = {
         store,
         (s) => withPlayer(s, { ...s.player, stones: Math.max(0, s.player.stones + v) }),
         `Stones ${v >= 0 ? '+' : ''}${v}.`,
+      );
+    },
+  },
+  meet: {
+    usage: 'meet [template] [band]',
+    help: 'Lists the encounter templates; with an id, it meets you where you stand now (P3.7), settled by your stance or waiting.',
+    run([id, b], store) {
+      if (!id)
+        return ENCOUNTERS.map(
+          (t) =>
+            `${t.id}: ${t.kind}${t.goal ? ` (${t.goal})` : ''}, bands ${t.bands[0]}–${t.bands[1]}`,
+        );
+      if (!hasEncounterTemplate(id)) return `No template ${id}.`;
+      return apply(
+        store,
+        (s0) => {
+          const s = ensureMap(s0);
+          const t = encounterTemplate(id);
+          const enc: Encounter = {
+            id: `dev-${Math.floor(s.calendar.day * 1000)}`,
+            template: id,
+            seed: Math.floor(s.calendar.day * 7919) % 2147483647,
+            band: b !== undefined && Number.isFinite(Number(b)) ? Number(b) : t.bands[0],
+            at: [s.map!.at[0], s.map!.at[1]],
+            meetAt: null,
+            state: 'sensed',
+            how: 'seen',
+            tried: [],
+            day: s.calendar.day,
+            where: hereWords(s),
+          };
+          return contact(
+            { ...s, map: { ...s.map!, encounters: [...s.map!.encounters, enc] } },
+            enc.id,
+          );
+        },
+        `Met ${id}.`,
+      );
+    },
+  },
+  at: {
+    usage: 'at <place id>',
+    help: 'Stands you at a place on the map, outside it, with no course.',
+    run([id], store) {
+      const s = needGame(store);
+      const map = s && mapOf(ensureMap(s));
+      const p = map && id ? placeById(map, id) : null;
+      if (!p) return `No place ${id ?? ''} on the map.`;
+      return apply(
+        store,
+        (g) => {
+          const m = ensureMap(g);
+          return { ...m, map: { ...m.map!, at: [p.x, p.y], course: null, inside: null } };
+        },
+        `At ${p.name}.`,
       );
     },
   },

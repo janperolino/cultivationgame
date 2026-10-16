@@ -245,6 +245,55 @@ export const SPECIES: readonly Species[] = [
     bloodline: 1.6,
     parts: ['hide', 'fang', 'blood'],
   },
+  // The map's beasts (P3.7): the hills' wolves, the plains' deer, the marsh's crocodiles and the
+  // karst's apes, for the encounter templates.
+  {
+    id: 'ridge-wolf',
+    name: 'ridge wolf',
+    element: 'wind',
+    profile: 'aggressive',
+    pack: [3, 6],
+    natural: [
+      { name: 'bite', form: 'bite', power: 30 },
+      { name: 'flanking lunge', form: 'charge', power: 22 },
+    ],
+    scale: { hp: 0.45, attack: 0.5 },
+    parts: ['hide', 'fang'],
+  },
+  {
+    id: 'thunder-deer',
+    name: 'thunder-horned deer',
+    element: 'lightning',
+    profile: 'cautious',
+    pack: [2, 5],
+    natural: [{ name: 'horn charge', form: 'charge', power: 30 }],
+    first: ['lightning-dash'],
+    scale: { hp: 0.6, attack: 0.6 },
+    parts: ['hide', 'meat'],
+  },
+  {
+    id: 'marsh-crocodile',
+    name: 'marsh crocodile',
+    element: 'water',
+    profile: 'cunning',
+    pack: [1, 1],
+    natural: [
+      { name: 'death roll', form: 'bite', power: 32 },
+      { name: 'tail', form: 'tail', power: 24 },
+    ],
+    first: ['mist-veil'],
+    parts: ['hide', 'gall'],
+  },
+  {
+    id: 'stone-ape',
+    name: 'stone ape',
+    element: 'earth',
+    profile: 'aggressive',
+    pack: [2, 4],
+    natural: [{ name: 'fists', form: 'palm', power: 30 }],
+    first: ['stone-skin'],
+    parts: ['fists', 'hide'],
+  },
 ];
 
 const speciesById = new Map(SPECIES.map((s) => [s.id, s]));

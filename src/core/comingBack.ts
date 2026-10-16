@@ -5,6 +5,7 @@
 // many times it came, and ends on what still waits. It never mentions what attending would have
 // earned.
 import { card, type CardKind } from '../content/cards/index.ts';
+import { encounterTemplate } from '../content/encounters/index.ts';
 import { stepLabel } from '../content/chronicle.ts';
 import { realm } from '../content/realms.ts';
 import { countWord, spanWords, timesWord } from '../content/words.ts';
@@ -67,6 +68,10 @@ const LADDER_WORDS: Record<LadderId, { name: string; verb: string }> = {
 };
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+
+/** Lines from the road told before the rest are summed up. */
+const ROAD_LINES = 5;
 
 /** "… results." told three times reads "… results (three times)." */
 function withTimes(line: string, times: number): string {
@@ -105,7 +110,10 @@ function qiLine(from: Ladder, to: Ladder): string | null {
 export function comingBackStory(before: GameState, after: GameState): ComingBackStory {
   const days = after.calendar.day - before.calendar.day;
   const span = spanWords(days);
-  const opening = `${capitalize(span.text)} ${span.plural ? 'pass' : 'passes'} in seclusion.`;
+  // On a course the time passes on the road, and what it brought is told under its own heading (P3.7).
+  const road = (after.map?.road ?? []).filter((l) => l.day > before.calendar.day);
+  const onRoad = !!after.map?.course || road.length > 0;
+  const opening = `${capitalize(span.text)} ${span.plural ? 'pass' : 'passes'} ${onRoad ? 'on the road' : 'in seclusion'}.`;
 
   const since = after.chronicle.slice(before.chronicle.length);
   const growth: string[] = [];
@@ -156,6 +164,14 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
     sections.push({ heading: HEADINGS[kind], lines });
   }
 
+  if (road.length) {
+    const lines = road.slice(0, ROAD_LINES).map((l) => l.text);
+    const rest = road.length - lines.length;
+    if (rest > 0)
+      lines.push(`And ${rest === 1 ? 'one thing more' : `${rest} things more`} on the road.`);
+    sections.unshift({ heading: 'On the road', lines });
+  }
+
   const highlights: string[] = [];
   for (const kind of HIGHLIGHT_ORDER) {
     if (highlights.length >= HIGHLIGHTS) break;
@@ -167,12 +183,18 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
   const settled = [...groups.values()].reduce((n, g) => n + g.times, 0);
 
   const n = after.cards.pending.length;
-  const waiting =
+  const tray =
     n === 0
       ? null
       : n === 1
         ? 'A card waits for you in the tray.'
         : `${capitalize(countWord(n))} cards wait for you in the tray.`;
+  // What waits on the road has stopped the course: you camp where it met you.
+  const met = (after.map?.encounters ?? []).find((e) => e.state === 'waiting');
+  const onTheRoad = met
+    ? `On the road, ${lowerFirst(encounterTemplate(met.template).title)} waits for you on the Map; you camp where it met you.`
+    : null;
+  const waiting = [onTheRoad, tray].filter(Boolean).join(' ') || null;
 
   const major = majorCheck(after.player, 'qi');
   const ready = major?.bar

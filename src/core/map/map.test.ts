@@ -51,7 +51,13 @@ const life = (
   origin: 'cave-orphan' | 'conscript' | 'frontier-orphan' = 'cave-orphan',
   seed = 'map',
 ): GameState =>
-  ensureMap(newLife({ name: 'Han Li', seed, origin: { id: origin, choice: 'along' } }));
+  quiet(ensureMap(newLife({ name: 'Han Li', seed, origin: { id: origin, choice: 'along' } })));
+
+/** A quiet road: the travel tests meet no encounters (core/map/encounters.test.ts meets them). */
+const quiet = (s: GameState): GameState => ({
+  ...s,
+  map: { ...s.map!, notice: { n: 0, next: 1e9 } },
+});
 
 const mapFor = (s: GameState): RegionMap => mapOf(s)!;
 

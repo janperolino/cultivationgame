@@ -11,6 +11,8 @@ import { QI_NAMES, TERRAIN_NAMES } from '../content/map/travel.ts';
 import { REALM_IDS, realm, realmIdFromName, type RealmId } from '../content/realms.ts';
 import { SHOP_KIND_INFO, shop as shopById } from '../content/shops.ts';
 import { worldWhen } from '../core/chronicle.ts';
+import { encounterTemplate } from '../content/encounters/index.ts';
+import { claimPosting, dropPosting, postingsAt, takePosting } from '../core/map/board.ts';
 import { band, bandAt, depthInfo, qiAt } from '../core/map/depth.ts';
 import { known } from '../core/map/fog.ts';
 import { gateOf, placeKindOf, shownRealm, stepOut } from '../core/map/gate.ts';
@@ -147,15 +149,21 @@ function doorsOf(s: GameState, p: MapPlace, info: PlaceKindInfo): [string, Door[
             sub: `you sleep here by rule: ${info.bed} taels a night`,
           },
         ];
-  const later: Door[] = info.board
-    ? [{ id: 'board', seal: '榜', name: 'Bounty board', sub: 'posted in P3.7', later: true }]
-    : [];
+  if (info.board) {
+    const held = s.map?.postings.filter((x) => x.board === p.id && x.done).length ?? 0;
+    hear.push({
+      id: 'board',
+      seal: '榜',
+      name: 'Bounty board',
+      sub: held ? `${held} to be paid here` : 'three postings a month',
+      tag: held ? 'paid' : undefined,
+    });
+  }
   return (
     [
       ['Trade', trade],
       [info.guides > 0 ? 'Hear and hire' : 'Hear', hear],
       ['Rest', rest],
-      ['Later', later],
     ] as [string, Door[]][]
   ).filter(([, d]) => d.length > 0);
 }
@@ -365,6 +373,8 @@ function Counter({
       return <GuidesCounter game={game} map={map} place={place} act={act} say={say} />;
     case 'caravans':
       return <CaravansCounter game={game} map={map} place={place} act={act} say={say} />;
+    case 'board':
+      return <BoardCounter game={game} map={map} place={place} act={act} say={say} />;
     case 'bed': {
       const bed = PLACE_KINDS[placeKindOf(place)!].bed;
       return (
@@ -917,6 +927,106 @@ function CaravansCounter({
         jostled half. Guarding puts you on the Caravan guard routine, roads only, paid on arriving;
         a guard who walks off loses the pay.
       </p>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- the bounty board (P3.7)
+
+function BoardCounter({
+  game,
+  map,
+  place,
+  act,
+  say,
+}: {
+  game: GameState;
+  map: RegionMap;
+  place: MapPlace;
+  act: Act;
+  say: (t: string) => void;
+}) {
+  const posted = postingsAt(game, map, place);
+  const held = game.map?.postings ?? [];
+  const here = held.filter((p) => p.board === place.id);
+  const goalWords = (id: string) => encounterTemplate(id).goal?.replace('-', ' ') ?? 'goal';
+  return (
+    <>
+      <p className="place-sub">
+        Take one and its spot is pinned on the map; you meet its goal there like anything the road
+        brings, and are paid here when you come back. The bounty office beside it buys cores and
+        parts; the board pays for the goal.
+      </p>
+      {here.length > 0 && (
+        <div className="place-rows">
+          {here.map((p) => (
+            <div key={p.id} className="place-row is-plain">
+              <span>
+                <span className="place-row-name">{p.title}</span>
+                <br />
+                <span className="place-sub">
+                  {p.done ? 'done · ' : 'held · '}
+                  {p.text}
+                </span>
+              </span>
+              {p.done ? (
+                <button
+                  type="button"
+                  className="place-btn is-primary"
+                  onClick={() =>
+                    act((s) => {
+                      const r = claimPosting(s, map, p.id);
+                      if (r.ok) say(`Paid ${p.pay} low-grade.`);
+                      return r;
+                    })
+                  }
+                >
+                  Claim · {p.pay} low
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="place-btn"
+                  onClick={() => act((s) => dropPosting(s, p.id))}
+                >
+                  Drop it
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="place-rows">
+        {posted.length === 0 && <p className="muted">Nothing is posted this month.</p>}
+        {posted.map((p) => {
+          const taken = held.some((h) => h.id === p.id);
+          return (
+            <div key={p.id} className="place-row is-plain">
+              <span>
+                <span className="place-row-name">{p.title}</span>
+                <br />
+                <span className="place-sub">
+                  {goalWords(p.template)} · {band(p.band)?.name ?? 'mortal'} · {p.text}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="place-btn is-primary"
+                disabled={taken}
+                onClick={() =>
+                  act((s) => {
+                    const r = takePosting(s, map, place, p.id);
+                    if (r.ok) say('Taken: its spot is pinned on the map.');
+                    return r;
+                  })
+                }
+              >
+                {taken ? 'Taken' : `Take · pays ${p.pay}`}
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 }
