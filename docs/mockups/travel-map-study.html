@@ -1,0 +1,1735 @@
+<!doctype html>
+<!-- P3.6's look study: the travel map. The geometry is the atlas's own (tools/atlas-geo.cjs), baked in;
+     the towns, roads, tracts and wild sites are mock data for the study. Open it in a browser; it loads
+     fonts and d3 from CDNs. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Travel Map Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap">
+<style>
+:root {
+  --void: #040507;
+  --page: #020203;
+  --obsidian: rgb(7 8 11 / 0.96);
+  --edge: rgb(255 255 255 / 0.075);
+  --edge-strong: rgb(255 255 255 / 0.14);
+  --text: #e9e5da;
+  --muted: #8d949d;
+  --accent: #d6ab4c;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-edge: color-mix(in srgb, var(--accent) 45%, transparent);
+  --crack: #7fc7d9;
+  --warn: #e08a6a;
+  --hour-qi: var(--crack);
+  --hour-body: #c98a5f;
+  --hour-soul: #a28fdc;
+  --hour-study: #a9b97f;
+  --hour-practice: #cf7f9f;
+  --hour-sleep: #59606b;
+  --hour-travel: #c2ae8c;
+  --hour-guard: #b98a6e;
+  --hour-look: #9fc4ad;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  --font-ui: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--text); font: 14px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; }
+.hanzi { font-family: var(--font-brush); font-weight: 400; }
+.muted { color: var(--muted); }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 22px 20px 40px; display: grid; gap: 16px; }
+.eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 2px 0 6px; }
+.intro p { margin: 0; max-width: 78ch; }
+
+/* Study controls (not part of the game). */
+.controls { display: flex; flex-wrap: wrap; gap: 12px 20px; padding: 12px 14px; border: 1px dashed var(--edge-strong); border-radius: 10px; background: #07080a; }
+.control { display: grid; gap: 5px; min-width: 0; max-width: 100%; }
+.control > span { font-size: 11.5px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+.wrap > * { min-width: 0; }
+.seg { max-width: 100%; display: inline-flex; flex-wrap: wrap; border: 1px solid var(--edge-strong); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 5px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--edge); }
+.seg button[aria-pressed="true"] { background: rgb(255 255 255 / 0.07); color: var(--text); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The game shell. */
+.shell { display: grid; grid-template-columns: 184px minmax(0, 1fr); border: 1px solid var(--edge); border-radius: 14px; overflow: hidden; background: var(--void); min-height: 680px; }
+.shell.column { grid-template-columns: 184px minmax(0, 1fr) 300px; }
+.menu { border-right: 1px solid var(--edge); padding: 18px 10px; display: grid; align-content: start; gap: 16px; background: var(--obsidian); }
+.brand { display: flex; align-items: baseline; gap: 8px; padding: 0 8px; }
+.brand b { font-family: var(--font-display); font-weight: 600; font-size: 17px; white-space: nowrap; }
+.brand .hanzi { color: var(--accent); font-size: 16px; }
+.menu ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.menu li { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; border-radius: 6px; color: var(--muted); font-size: 13.5px; }
+.menu li .hanzi { font-size: 14px; opacity: 0.7; }
+.menu li.on { color: var(--text); background: rgb(255 255 255 / 0.03); box-shadow: inset 2px 0 0 var(--accent); border-radius: 0 6px 6px 0; }
+.menu li.on .hanzi { color: var(--accent); opacity: 1; }
+
+.stage { position: relative; min-width: 0; overflow: hidden; touch-action: none; user-select: none; }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage canvas.cursor-go { cursor: crosshair; }
+
+.panel { background: var(--obsidian); border: 1px solid var(--edge); border-radius: 10px; box-shadow: 0 8px 28px rgb(0 0 0 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.04); }
+.float { position: absolute; z-index: 2; }
+.where { top: 12px; left: 12px; padding: 9px 13px; display: grid; gap: 1px; max-width: calc(100% - 140px); }
+.where .date { font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+.where .here { font-size: 12.5px; color: var(--muted); }
+.where .depthline { color: var(--text); }
+.where .pips { color: #d07a96; letter-spacing: 1px; font-size: 11px; }
+.where .depthname { font-family: var(--font-ui); font-size: 12px; font-weight: 500; color: #e6b3c3; vertical-align: 2px; }
+.where .above { color: var(--warn); font-weight: 600; }
+.zoom { top: 12px; right: 12px; display: grid; gap: 4px; padding: 5px; }
+.zoom button { width: 30px; height: 30px; border: 1px solid var(--edge); border-radius: 6px; background: transparent; color: var(--text); font: 16px var(--font-ui); cursor: pointer; }
+.zoom button.word { width: auto; font-size: 11px; padding: 0 4px; height: 24px; color: var(--muted); }
+.zoom button:hover { border-color: var(--edge-strong); }
+
+.roadpanel { left: 12px; bottom: 12px; width: 300px; padding: 12px; display: grid; gap: 10px; }
+.routecard { right: 12px; bottom: 12px; width: 290px; padding: 13px 14px; display: grid; gap: 8px; }
+.column-side { border-left: 1px solid var(--edge); background: var(--obsidian); padding: 14px; display: none; align-content: start; gap: 14px; overflow: auto; }
+.shell.column .column-side { display: grid; }
+.shell.column .float.roadpanel, .shell.column .float.routecard { display: none; }
+.column-side .roadpanel, .column-side .routecard { position: static; width: auto; box-shadow: none; }
+.mapcol { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-width: 0; }
+.bar { display: none; border-top: 1px solid var(--edge); background: var(--obsidian); padding: 10px; gap: 10px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+.shell.with-bar .bar { display: grid; }
+.shell.with-bar .float.roadpanel, .shell.with-bar .float.routecard { display: none; }
+.shell.with-bar .stage { min-height: 500px; }
+.bar .roadpanel, .bar .routecard { position: static; width: auto; box-shadow: none; }
+.bar .roadpanel { grid-template-columns: 250px minmax(0, 1fr); align-items: start; column-gap: 16px; }
+.bar .roadpanel .wheel-row { grid-row: span 3; }
+
+.wheel-row { display: grid; grid-template-columns: 112px 1fr; gap: 10px; align-items: center; }
+.wheel-row svg { width: 112px; height: 112px; display: block; }
+.wheel-side { display: grid; gap: 4px; font-size: 12px; }
+.wheel-side b { font-weight: 600; color: var(--text); }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { border: 1px solid var(--edge-strong); background: transparent; color: var(--muted); border-radius: 999px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--accent-edge); background: var(--accent-soft); color: var(--accent); }
+.chip[disabled] { opacity: 0.45; cursor: not-allowed; }
+.label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.pace { font-size: 12px; color: var(--muted); }
+.pace b { color: var(--text); font-weight: 500; }
+
+.routecard h3 { font-family: var(--font-display); font-weight: 600; font-size: 21px; margin: 0; line-height: 1.15; }
+.routecard h3 .hanzi { color: var(--accent); font-size: 16px; margin-left: 6px; white-space: nowrap; }
+.state { display: inline-flex; gap: 6px; align-items: center; font-size: 11.5px; color: var(--muted); }
+.tag { display: inline-block; border: 1px solid var(--edge-strong); border-radius: 4px; padding: 0 6px; font-size: 11px; color: var(--muted); }
+.tag.warn { border-color: color-mix(in srgb, var(--warn) 55%, transparent); color: var(--warn); }
+.tag.gold { border-color: var(--accent-edge); color: var(--accent); }
+.routecard p { margin: 0; font-size: 13px; }
+.routecard .told { color: var(--muted); font-style: italic; }
+.rows { display: grid; gap: 3px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.rows div { display: flex; justify-content: space-between; gap: 10px; }
+.rows span:first-child { color: var(--muted); }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--accent-edge); background: var(--accent-soft); color: var(--accent); border-radius: 7px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.btn.quiet { border-color: var(--edge-strong); background: transparent; color: var(--muted); }
+.progress { height: 5px; border-radius: 3px; background: rgb(0 0 0 / 0.6); border: 1px solid var(--edge); overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--hour-travel); width: 0; }
+
+.tip { position: absolute; z-index: 4; pointer-events: none; max-width: 260px; padding: 9px 11px; font-size: 12.5px; display: none; }
+.tip b { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+.tip .hanzi { color: var(--accent); margin-left: 5px; }
+.tip p { margin: 3px 0 0; }
+.menu-pop { position: absolute; z-index: 5; min-width: 210px; padding: 5px; display: none; }
+.menu-pop .head { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 5px 9px 4px; }
+.menu-pop button { display: flex; justify-content: space-between; gap: 14px; width: 100%; text-align: left; border: 0; background: transparent; color: var(--text); padding: 6px 9px; border-radius: 5px; font: inherit; font-size: 13px; cursor: pointer; }
+.menu-pop button span { color: var(--muted); font-size: 12px; }
+.menu-pop button:hover { background: rgb(255 255 255 / 0.05); }
+.menu-pop button[disabled] { color: var(--muted); cursor: default; }
+.menu-pop { max-width: 290px; }
+.menu-pop button.later { color: var(--muted); }
+.menu-pop button.warn { color: var(--warn); }
+.menu-pop button span { text-align: right; }
+.menu-pop .sep { height: 1px; background: var(--edge); margin: 4px 6px; }
+.toast { position: absolute; z-index: 3; left: 50%; top: 14px; transform: translateX(-50%); padding: 7px 13px; font-size: 13px; display: none; max-width: 70%; text-align: center; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend canvas { width: 24px; height: 18px; }
+.compare { display: grid; gap: 12px; }
+.compare-head { display: flex; justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; }
+.compare h2 { font-family: var(--font-display); font-weight: 600; font-size: 24px; margin: 0; }
+.compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 12px; }
+.compare figure { margin: 0; border: 1px solid var(--edge); border-radius: 10px; overflow: hidden; background: var(--void); }
+.compare canvas { display: block; width: 100%; aspect-ratio: 16 / 10; }
+.compare figcaption { padding: 8px 12px; font-size: 12.5px; color: var(--muted); }
+.compare figcaption b { color: var(--text); font-weight: 600; }
+.notes { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.note { border: 1px solid var(--edge); border-radius: 10px; padding: 12px 14px; background: #07080a; font-size: 13px; }
+.note h3 { margin: 0 0 6px; font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+.note ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.note b { font-weight: 600; }
+
+@media (max-width: 860px) {
+  .wrap { padding: 16px 16px 32px; }
+  .shell, .shell.column { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .menu { border-right: 0; border-bottom: 1px solid var(--edge); padding: 10px; }
+  .brand { display: none; }
+  .menu ul { display: flex; flex-wrap: wrap; gap: 3px; }
+  .menu li { padding: 5px 9px; }
+  .menu li .hanzi { display: none; }
+  .menu li.on { border-radius: 6px; box-shadow: inset 0 -2px 0 var(--accent); }
+  .stage { height: 62vh; min-height: 380px; }
+  .float.roadpanel, .float.routecard { display: none; }
+  .column-side, .shell.column .column-side { display: grid; border-left: 0; border-top: 1px solid var(--edge); }
+  .where { max-width: calc(100% - 70px); }
+  .bar { grid-template-columns: minmax(0, 1fr); }
+  .bar .roadpanel { grid-template-columns: minmax(0, 1fr); }
+  .bar .roadpanel .wheel-row { grid-row: auto; }
+  .shell.with-bar .stage { min-height: 380px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <p class="eyebrow">Severed Heaven · P3.6 look study</p>
+    <h1>The travel map</h1>
+    <p class="muted">The Border Wilds from the atlas's own geometry, under the fog. <b>Left-click</b> anywhere to set a course: the dotted line runs and you set off as the world's clock turns. <b>Right-click</b> a spot for what you can do there. Drag to pan, scroll to zoom. The towns, roads, wild tracts and sites are mock data for the look. The toggles are the open choices.</p>
+  </header>
+
+  <section class="controls" aria-label="Study controls">
+    <div class="control"><span>Panels</span><div class="seg" data-key="layout"><button data-v="overlay">Over the map</button><button data-v="bar">Bar under the map</button><button data-v="column">Side column</button></div></div>
+    <div class="control"><span>The wilds' fog</span><div class="seg" data-key="wilds"><button data-v="tracts">Tracts (places)</button><button data-v="trail">Trail band</button><button data-v="places">Sites only</button></div></div>
+    <div class="control"><span>Sight on the map</span><div class="seg" data-key="sight"><button data-v="x30">×30 (600 / 150 li)</button><button data-v="written">As written (20 / 5 li)</button></div></div>
+    <div class="control"><span>Site marks</span><div class="seg" data-key="marks"><button data-v="seals">Hanzi seals</button><button data-v="glyphs">Glyphs</button></div></div>
+    <div class="control"><span>Life</span><div class="seg" data-key="scene"><button data-v="start">Day one, Stone Eyes</button><button data-v="season">A season in</button></div></div>
+    <div class="control"><span>Sites</span><div class="seg" data-key="sites"><button data-v="all">All revealed</button><button data-v="fog">By the fog</button></div></div>
+    <div class="control"><span>The land</span><div class="seg" data-key="land"><button data-v="relief">Relief + marks</button><button data-v="flat">Flat + marks</button><button data-v="reliefOnly">Relief only</button><button data-v="ink">Ink wash</button></div></div>
+    <div class="control"><span>Depth lines</span><div class="seg" data-key="depthLines"><button data-v="dashed">On</button><button data-v="off">Off</button></div></div>
+    <label class="control" for="qi"><span>The region's qi density: <output id="qi-out">3, thin (the Border Wilds)</output></span><input id="qi" type="range" min="1" max="9" step="1" value="3" style="accent-color:var(--accent);width:220px"></label>
+    <div class="control"><span>The fog</span><div class="seg" data-key="fogLook"><button data-v="mix">Glass + cloud</button><button data-v="glass">Cracked glass</button><button data-v="cloud">Drifting cloud</button><button data-v="off">Off (to see the land)</button></div></div>
+    <div class="control"><span>Travel with a group</span><div class="seg" data-key="groupMode"><button data-v="none">Alone</button><button data-v="caravan">A guild caravan</button><button data-v="ship">The sect’s cloud ship</button></div></div>
+    <div class="control"><span>Standing</span><div class="seg" data-key="hunted"><button data-v="no">At peace</button><button data-v="yes">The Gate hunts you</button></div></div>
+    <div class="control"><span>Clock</span><div class="seg" data-key="speed"><button data-v="1">World's (a day / 10 s)</button><button data-v="20">×20 for the study</button><button data-v="0">Paused</button></div></div>
+  </section>
+
+  <div class="shell" id="shell">
+    <nav class="menu" aria-label="Screens (mock)">
+      <div class="brand"><b>Severed Heaven</b><span class="hanzi">断天</span></div>
+      <ul>
+        <li>Abode <span class="hanzi">洞府</span></li>
+        <li>Cultivate <span class="hanzi">修炼</span></li>
+        <li class="on">Map <span class="hanzi">舆图</span></li>
+        <li>Trees <span class="hanzi">道树</span></li>
+        <li>Bag <span class="hanzi">行囊</span></li>
+        <li>Character <span class="hanzi">根骨</span></li>
+        <li>People <span class="hanzi">人物</span></li>
+        <li>Chronicle <span class="hanzi">生平</span></li>
+        <li>Settings <span class="hanzi">设置</span></li>
+      </ul>
+    </nav>
+
+    <div class="mapcol">
+    <div class="stage" id="stage">
+      <canvas id="map" aria-label="The travel map of the Border Wilds"></canvas>
+      <div class="float panel where" id="where"><span class="date" id="date"></span><span class="here" id="here"></span></div>
+      <div class="float panel zoom">
+        <button type="button" id="zin" aria-label="Zoom in">+</button>
+        <button type="button" id="zout" aria-label="Zoom out">−</button>
+        <button type="button" class="word" id="zregion">Region</button>
+        <button type="button" class="word" id="zyou">You</button>
+        <button type="button" class="word" id="zdepth" aria-pressed="false" title="How far into the wilds: the deeper, the stronger the beasts and the richer the finds">Depth</button>
+      </div>
+      <div class="float panel roadpanel" id="road-float"></div>
+      <div class="float panel routecard" id="card-float"></div>
+      <div class="panel tip" id="tip"></div>
+      <div class="panel menu-pop" id="pop"></div>
+      <div class="panel toast" id="toast"></div>
+    </div>
+    <div class="bar"><div class="panel roadpanel" id="road-bar"></div><div class="panel routecard" id="card-bar"></div></div>
+    </div>
+
+    <aside class="column-side" id="side">
+      <div class="panel roadpanel" id="road-side"></div>
+      <div class="panel routecard" id="card-side"></div>
+    </aside>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <section class="compare">
+    <div class="compare-head"><div><p class="eyebrow">The land, four ways</p><h2>Same view, four styles</h2></div><button class="btn" type="button" id="recompare">Redraw from the map's view</button></div>
+    <div class="compare-grid">
+      <figure><canvas data-style="relief"></canvas><figcaption><b>Relief + marks</b> · shaded land lit from the north-west, painted pillars, hills and woods on it</figcaption></figure>
+      <figure><canvas data-style="flat"></canvas><figcaption><b>Flat + marks</b> · the earlier one: flat tints per tract and the painted marks</figcaption></figure>
+      <figure><canvas data-style="reliefOnly"></canvas><figcaption><b>Relief only</b> · the shading alone, quiet, closest to a strategy map</figcaption></figure>
+      <figure><canvas data-style="ink"></canvas><figcaption><b>Ink wash</b> · the same light without colour, marks in pale ink, like a brush map</figcaption></figure>
+    </div>
+
+  </section>
+
+  <section class="notes">
+    <div class="note">
+      <h3>What to look at</h3>
+      <ul>
+        <li><b>The land</b>: each tract has its own tint and marks (karst spires, hill arcs, pines, grass, reeds, waves), scattered across the world so the texture holds at every zoom. Rivers run to the west coast, with a ferry 渡 wherever a road crosses one. Both are mock: the atlas has no rivers in the Border Wilds yet.</li>
+        <li><b>The trail</b> lights the band you walked; a tract you have seen shows dimly round it, with its name.</li>
+        <li><b>Sites</b>: about 160 in the region now, in twenty kinds: springs 泉, waterfalls 瀑, thunder peaks 峰, bandit camps 寨, hermits 庐, mines 矿, graves 冢, ancient trees 木, a stele 碑, hamlets and the rest. About one in five is hidden.</li>
+        <li><b>No buttons for the routine</b>: the road wheel has a look-around hour (酉 on Walk by day), you also look around when you arrive, and the night is spent at an inn, a shelter you found, or a camp, by rule. Watch the wheel's line while you walk.</li>
+        <li><b>Right-click</b> anything: a town (enter, teahouse rumors, the kingdom map, a guide, a caravan, the inn), a checkpoint (pay, go round, talk), a cave (seclude), a spring (sit and cultivate), the Gate (token, invitation, force, sneak), a deadly land (go in anyway, go to its edge), a rumor (search, pin) or bare land (go, by night, pressed, seclude, pin). Grey lines arrive in the phase they name.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h3>P3.1's data, read on the map</h3>
+      <ul>
+        <li>The <b>City of the Guarded Mouth</b> is tagged coast and has a reef road at low tide, but it sits about 16,000 li from the coast. The Night Bridge's sea caves are about 33,000 li inland. Either the points move to the west coast, or the coast moves.</li>
+        <li>Everything sits in the middle third of the region. The west and south are empty karst, and the tracts here are what would fill them.</li>
+        <li>The <b>low-tide chain</b> runs from the southwest coast to the Pushed Frontier. Beyond the region's edge is M6's long travel.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>const GEO = {"bb":[125000,160000,240000,280000],"conts":{"cangmang":[[147880,305000],[147940,307500],[148570,310030],[148950,312570],[148710,315090],[148120,317590],[147620,320090],[147280,322610],[146700,325100],[145430,327500],[143540,329770],[141680,332000],[140700,334390],[140900,337050],[141770,339920],[142280,342770],[141490,345330],[139080,347410],[135440,349050],[131320,350450],[127420,351810],[124080,353300],[121320,354950],[118980,356730],[117010,358660],[115490,360800],[114640,363300],[114490,366240],[114750,369510],[114830,372820],[114210,375830],[112860,378470],[111340,381080],[110440,384200],[110470,388150],[110900,392630],[110630,396790],[108770,399800],[105400,401550],[101560,402850],[98480,404870],[96630,408240],[95310,412420],[93230,415960],[89390,417520],[83790,416750],[77280,414410],[70880,411780],[65180,409740],[60200,408500],[55740,407870],[51640,407740],[47890,408180],[44400,409160],[40930,410240],[37240,410750],[33290,410450],[29340,409900],[25640,410080],[22210,411450],[18780,413270],[15080,413880],[11100,411960],[7100,407680],[3380,402800],[0,399460],[-3240,398740],[-6560,399960],[-10010,401440],[-13420,401870],[-16690,401230],[-19930,400520],[-23360,400750],[-27150,402060],[-31190,403780],[-35240,405070],[-39090,405490],[-42660,405070],[-45890,403870],[-48670,401820],[-50910,398970],[-52920,395980],[-55420,394060],[-59280,394290],[-64760,396690],[-71140,399890],[-76980,401910],[-81010,401420],[-83040,398580],[-84060,394810],[-85500,391700],[-88200,389980],[-91990,389270],[-96080,388740],[-99940,387920],[-103730,386960],[-107910,386230],[-112550,385710],[-116850,384840],[-119670,382910],[-120390,379660],[-119510,375580],[-118470,371600],[-118630,368450],[-120430,366250],[-123190,364520],[-125710,362650],[-127030,360230],[-126850,357230],[-125460,353830],[-123320,350310],[-121030,346890],[-119280,343800],[-118900,341260],[-120570,339360],[-124330,338010],[-129320,336850],[-134140,335510],[-137530,333730],[-139080,331510],[-139270,329030],[-139040,326510],[-139120,324070],[-139690,321700],[-140540,319370],[-141520,317030],[-142620,314680],[-143870,312310],[-144960,309910],[-145270,307460],[-144200,305000],[-141610,302600],[-138050,300330],[-134360,298170],[-131190,296100],[-128640,294070],[-126390,292080],[-125680,289970],[-125120,287850],[-124500,285740],[-123800,283640],[-123020,281550],[-122670,279380],[-124900,276590],[-127550,273580],[-130580,270330],[-133700,266900],[-136220,263460],[-137360,260320],[-136770,257670],[-134960,255420],[-133130,253180],[-132460,250470],[-133340,247020],[-135090,243050],[-136430,239080],[-136310,235680],[-134570,233020],[-131940,230830],[-129360,228600],[-127360,226020],[-125700,223170],[-123640,220520],[-120510,218580],[-116220,217520],[-111290,217070],[-106490,216650],[-102390,215760],[-99010,214300],[-95950,212560],[-92700,210990],[-89050,209850],[-85160,209020],[-81390,208140],[-77900,206940],[-74550,205570],[-71010,204460],[-67080,203940],[-62970,203820],[-59110,203370],[-55870,201870],[-53180,199210],[-50540,196120],[-47430,193750],[-43640,192800],[-39400,193090],[-35110,193790],[-30970,194260],[-26930,194620],[-22840,195530],[-18690,197250],[-14690,198960],[-11000,199020],[-7520,196170],[-3940,190830],[0,185170],[4250,181900],[8470,182470],[12330,186140],[15840,190680],[19240,194070],[22770,195840],[26350,197030],[29640,199030],[32420,202300],[34820,206110],[37220,209300],[39910,211370],[42810,212770],[45590,214300],[48070,216270],[50460,218240],[53190,219530],[56520,219860],[60270,219670],[64030,219600],[67550,219970],[70970,220540],[74640,220880],[78680,220930],[82740,221090],[86250,221900],[88840,223610],[90600,226040],[91840,228800],[92830,231650],[93740,234440],[94860,236980],[96820,238840],[100300,239700],[105300,239700],[110660,239640],[114520,240620],[115500,243220],[113890,247080],[111620,251070],[111020,254090],[113140,255800],[117070,256800],[120600,258060],[122000,260180],[121170,263070],[119640,266090],[119360,268600],[121380,270410],[125390,271710],[130250,272920],[134820,274340],[138590,276050],[141630,278010],[144270,280110],[146810,282290],[149460,284520],[152150,286810],[154540,289200],[155970,291740],[155860,294420],[154130,297160],[151480,299870],[149100,302480]],"qiming":[[364850,178150],[364060,180980],[363210,183800],[362290,186590],[361320,189370],[360290,192120],[359200,194850],[358050,197550],[356840,200230],[355580,202870],[354260,205480],[352880,208070],[351450,210610],[349970,213120],[349050,216060],[347930,218880],[346100,221160],[344410,223560],[343420,226600],[343020,230280],[342660,234160],[341900,237760],[340650,240980],[339200,244030],[337800,247250],[336530,250740],[335260,254370],[333830,257940],[332180,261330],[330340,264550],[328350,267660],[326240,270680],[324020,273610],[321690,276460],[319250,279200],[316670,281760],[313950,284070],[311140,286240],[308320,288500],[305560,291040],[302760,293660],[299750,295760],[296420,296720],[292840,296510],[289240,295930],[285870,296170],[282750,297910],[279750,300770],[276650,303670],[273370,305710],[269970,306830],[266530,307610],[263060,308390],[259580,308670],[256130,307540],[252810,304800],[249630,301650],[246450,300100],[243020,301370],[239240,304750],[235320,307940],[231650,308850],[228430,307190],[225450,304630],[222270,303240],[218640,303650],[214790,304580],[211320,304050],[208630,301100],[206640,296500],[204810,291880],[202740,288280],[200420,285480],[198180,282670],[196170,279550],[194120,276670],[191630,274720],[188710,273550],[185970,272030],[184100,269110],[183130,264940],[182170,260980],[180000,258830],[176230,258790],[171700,259520],[167920,259080],[165880,256530],[165200,252510],[164560,248590],[162840,245880],[160000,244230],[156980,242680],[154680,240410],[153270,237370],[152220,234090],[151080,230910],[150040,227700],[149650,224100],[150040,220070],[150540,216090],[150160,212740],[148590,210080],[146690,207570],[145830,204500],[146780,200650],[148960,196380],[150960,192370],[151710,188970],[151340,186030],[150890,183120],[151250,180000],[151670,176910],[151260,174050],[150910,171180],[150240,168360],[147510,165810],[145230,163070],[144060,160120],[144100,157040],[145170,153920],[147100,150850],[149670,147890],[150660,144980],[150960,142060],[151310,139150],[151730,136240],[152210,133340],[152760,130450],[153170,127530],[153420,124560],[153560,121530],[153580,118430],[153930,115390],[155070,112600],[156880,110080],[158660,107600],[159700,104820],[159810,101600],[159510,98080],[159480,94610],[160010,91370],[160820,88240],[161420,84930],[161630,81270],[161690,77370],[161970,73520],[162590,69820],[163340,66120],[163880,62110],[164180,57730],[164580,53270],[165610,49290],[167640,46290],[170720,44480],[174540,43690],[178600,43370],[182260,42730],[184980,40880],[186450,37170],[186910,31600],[187050,25110],[187810,19220],[189850,15330],[193220,13910],[197400,14340],[201690,15350],[205630,15840],[209100,15400],[212250,14220],[215270,12690],[218290,11140],[221410,9880],[224680,9250],[228120,9440],[231590,10120],[234900,10300],[237910,8820],[240680,5320],[243450,700],[246460,-3210],[249770,-4920],[253230,-4290],[256670,-2520],[260020,-1100],[263320,-690],[266620,-770],[269900,-450],[273110,530],[276270,1570],[279490,1940],[282790,1760],[286010,2180],[288840,4560],[291070,9280],[292810,15290],[294430,20800],[296380,24410],[298910,25780],[302040,25310],[305740,23460],[310050,20380],[315000,16290],[320260,12090],[325130,9370],[328800,9560],[330890,12930],[331860,18200],[332740,23260],[334520,26520],[337470,27820],[340990,28300],[344150,29450],[346290,32070],[347460,35900],[348290,40020],[349490,43530],[351500,46020],[354280,47640],[357470,48920],[360500,50450],[362840,52720],[364190,55920],[364590,59880],[364550,64100],[364740,67990],[365620,71260],[367090,74050],[368570,76840],[369420,80030],[369490,83660],[369230,87390],[369350,90820],[370200,93820],[371440,96610],[372340,99580],[372450,102860],[372140,106270],[372380,109410],[374060,112050],[377080,114340],[380280,116710],[382100,119570],[381760,122980],[379960,126630],[378510,130110],[379110,133200],[382040,136060],[385870,138980],[388400,142180],[388220,145610],[385740,149050],[382870,152360],[381520,155600],[382160,158920],[383490,162370],[383420,165740],[380690,168720],[375790,171180],[370490,173320],[366520,175520]]},"cells":{"qm-bianhuang":{"poly":[[139060,176120],[155390,173980],[213230,214810],[139060,290920],[139060,176120]],"cont":"qiming","name":"The Border Wilds","terrain":"karst"}},"kingdoms":{"qm-anbian-fu":{"poly":[[189230,221740],[188280,221820],[189250,223400],[188180,223350],[187320,223360],[186450,223220],[185990,223670],[185370,223930],[184540,223610],[183730,222820],[183100,222030],[182600,221620],[182140,221390],[181700,221130],[181260,220890],[180310,221270],[179940,220790],[179710,220240],[179480,219760],[179430,219260],[178290,219060],[176950,218660],[176600,218020],[176740,217400],[176730,216790],[177130,216300],[177670,215940],[177710,215410],[177610,214760],[177890,214300],[178150,213800],[178190,213030],[178630,212580],[179110,212120],[179820,211960],[180830,212570],[181640,213070],[182170,212500],[182880,212920],[183540,213100],[183870,214590],[184380,214670],[185070,214560],[185320,215180],[185900,215370],[186250,215780],[186380,216300],[186610,216730],[187810,216920],[187430,217520],[187820,217980],[188240,218500],[188440,219050],[188710,219650],[189600,220560],[189770,221320]],"name":"March of Pacified Borders","hanzi":"安边府","parent":"qm-bianhuang","terrain":"hills"},"qm-muling-guo":{"poly":[[167810,197300],[167370,197150],[167050,196500],[166740,196090],[166450,195770],[165720,196320],[165340,196020],[165110,195500],[164870,195020],[165100,194200],[165410,193500],[165310,193110],[165140,192740],[164970,192340],[164940,191890],[164750,191410],[165000,191000],[165090,190550],[165290,190170],[165130,189480],[165770,189520],[165910,189080],[166320,189040],[166400,188370],[166550,187630],[166970,187570],[167330,187200],[167730,186690],[168190,186510],[168620,186940],[169010,187220],[169620,186710],[169850,187510],[170130,187970],[170890,187630],[171110,188240],[171180,188930],[171100,189650],[171030,190250],[171180,190690],[171020,191220],[170780,191690],[170560,192090],[170530,192460],[170470,192830],[170430,193210],[170500,193690],[170590,194270],[170750,195060],[170710,195790],[170480,196370],[170020,196570],[169620,196870],[169110,196790],[168670,196780],[168270,197250]],"name":"Kingdom of Spirit Herders","hanzi":"牧灵国","parent":"qm-bianhuang","terrain":"plains"},"qm-shiyan-guo":{"poly":[[197600,212390],[197660,212900],[198040,213530],[197580,213970],[195980,213840],[195570,214090],[195050,214230],[194520,214290],[194340,214670],[193790,214600],[193720,215330],[193190,215290],[192750,215480],[192250,215500],[191730,215910],[191230,215580],[190720,215510],[190090,215600],[189610,215370],[189650,214570],[189590,214080],[189160,213940],[188980,213620],[188320,213510],[187610,213330],[187350,212940],[187860,212450],[187640,212080],[187830,211710],[186880,211180],[186740,210670],[187310,210340],[187980,210140],[188550,209980],[188710,209590],[189010,209280],[189260,208880],[189670,208610],[190050,208220],[190690,208380],[191250,208480],[191740,208390],[192250,208410],[192670,208870],[193130,208910],[193390,209370],[193860,209380],[194730,209020],[195230,209220],[195640,209520],[195130,210320],[194990,210770],[195510,210940],[195400,211310],[195720,211590],[197150,211900]],"name":"Kingdom of Stone Eyes","hanzi":"石眼国","parent":"qm-bianhuang","terrain":"karst"}},"forbidden":{"qm-mihun-shilin":{"poly":[[189850,238920],[189070,238780],[188280,237530],[187680,237580],[187040,237590],[186640,236570],[185870,236850],[185440,236230],[185010,235670],[184480,235210],[184470,234340],[184740,233470],[184200,233020],[183750,232420],[183740,231740],[182260,230740],[182580,229940],[183810,229700],[184590,229490],[184870,229030],[184850,228220],[184430,226570],[185050,226230],[185140,224560],[186090,224870],[186800,224420],[187610,224230],[188440,224380],[189130,225480],[189570,226700],[190090,227240],[190480,227900],[191180,228100],[191190,229090],[191210,229870],[191190,230560],[191670,231020],[191440,231660],[191420,232210],[191410,232750],[191900,233480],[192890,234690],[192730,235480],[192210,235990],[192490,237390],[192230,238430],[192100,240020],[190960,239720]],"name":"Soul-Lost Stone Forest","hanzi":"迷魂石林","parent":"qm-bianhuang"}},"points":{"qm-duigu-qiang":{"x":176000,"y":196000},"qm-hexue-jing":{"x":195000,"y":222000},"qm-shoukou-cheng":{"x":166000,"y":210000},"qm-tushou-men":{"x":174000,"y":210000},"qm-yeqiao-hui":{"x":183000,"y":200000}}};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+(() => {
+'use strict';
+// ---------- helpers ----------
+function mulberry32(a) { return () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
+function pip(p, poly) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > p[1]) !== (yj > p[1]) && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) c = !c; } return c; }
+function segDist(p, a, b) { const dx = b[0] - a[0], dy = b[1] - a[1]; const l = dx * dx + dy * dy; let t = l ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l : 0; t = Math.max(0, Math.min(1, t)); return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy); }
+function polyDist(p, poly) { if (pip(p, poly)) return 0; let d = Infinity; for (let i = 0; i < poly.length; i++) d = Math.min(d, segDist(p, poly[i], poly[(i + 1) % poly.length])); return d; }
+function centroid(poly) { return d3.polygonCentroid(poly); }
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const C = { text: '#e9e5da', muted: '#8d949d', accent: '#d6ab4c', crack: '#7fc7d9', warn: '#e08a6a', travel: '#c2ae8c' };
+const fmt = (n) => Math.round(n).toLocaleString('en-US');
+
+// ---------- the world ----------
+const REGION = GEO.cells['qm-bianhuang'].poly;
+const LAND = [GEO.conts.qiming, GEO.conts.cangmang];
+const onLand = (p) => LAND.some((l) => pip(p, l));
+const inRegion = (p) => pip(p, REGION) && pip(p, GEO.conts.qiming);
+const OPEN = new Set(['plains', 'hills', 'coast', 'steppe', 'desert', 'plateau']);
+const FACTOR = { plains: 0.8, coast: 0.8, hills: 0.6, forest: 0.5, karst: 0.45, marsh: 0.4, mountains: 0.35, jungle: 0.4 };
+const TERRAIN_WORD = { plains: 'plains', coast: 'coast', hills: 'hills', forest: 'forest', karst: 'karst', marsh: 'marsh' };
+
+const areas = [];   // { id, name, hanzi, kind, poly, terrain, mark, top, lore }
+const points = [];  // { id, name, hanzi, kind, sub, x, y, terrain, hidden, mark, top, lore, shops }
+const P = (id) => points.find((p) => p.id === id) || areas.find((a) => a.id === id);
+
+for (const id of ['qm-anbian-fu', 'qm-muling-guo', 'qm-shiyan-guo']) {
+  const k = GEO.kingdoms[id];
+  areas.push({ id, name: k.name, hanzi: k.hanzi, kind: 'kingdom', poly: k.poly, terrain: k.terrain, mark: 'open', top: 'Foundation', lore: null });
+}
+{ const f = GEO.forbidden['qm-mihun-shilin']; areas.push({ id: 'qm-mihun-shilin', name: f.name, hanzi: f.hanzi, kind: 'forbidden', poly: f.poly, terrain: 'karst', mark: 'deadly', top: 'Nascent Soul', famous: true, lore: 'Stone pillars that shift in the illusion; the Golden Python’s grandson dens at its heart.' }); }
+const LORE = {
+  'qm-shoukou-cheng': 'The frontier fortress at the mouth of the strait, its walls faced with beast skulls; the bounty office pays for cores by grade.',
+  'qm-duigu-qiang': 'A wall built of the bones of every beast tide, the March’s garrisons patrolling its top.',
+  'qm-tushou-men': 'Saber cultivators who count rank in beast cores and raid across the strait.',
+  'qm-yeqiao-hui': 'Smugglers of the low-tide chain; everything runs through them at a price.',
+  'qm-hexue-jing': 'A secret realm of the one people, opening every seven years.',
+};
+const SEAL = { city: '城', town: '镇', village: '村', cave: '洞', den: '穴', ruin: '墟', shrine: '祠', 'herb-valley': '谷', sect: '门', society: '会', landmark: '墙', realm: '境', checkpoint: '卡', heart: '王', spring: '泉', falls: '瀑', peak: '峰', camp: '寨', hut: '庐', mine: '矿', tomb: '冢', stele: '碑', tree: '木', ferry: '渡' };
+points.push(
+  { id: 'qm-shoukou-cheng', name: 'City of the Guarded Mouth', hanzi: '守口城', kind: 'city', sub: 'city', ...xy('qm-shoukou-cheng'), mark: 'open', top: 'Nascent Soul', famous: true, shops: ['a stall under the skull walls', 'the Apricot Grove branch shop', 'a refiner by the beast-part market', 'the merchant guild hall', 'the bounty office', 'a chandler on the harbor street'], toll: '1 low-grade at the gate' },
+  { id: 'qm-duigu-qiang', name: 'The Wall of Piled Bones', hanzi: '堆骨墙', kind: 'landmark', sub: 'landmark', ...xy('qm-duigu-qiang'), mark: 'open', top: 'Core Formation', famous: true },
+  { id: 'qm-tushou-men', name: 'Beast-Butcher Gate', hanzi: '屠兽门', kind: 'power', sub: 'sect', ...xy('qm-tushou-men'), sphere: 20000, mark: 'gated', access: 'a token or an invitation · array: Core Formation', top: 'Nascent Soul', famous: true },
+  { id: 'qm-yeqiao-hui', name: 'Night Bridge Society', hanzi: '夜桥会', kind: 'power', sub: 'society', ...xy('qm-yeqiao-hui'), sphere: 26000, mark: 'open', top: 'Core Formation' },
+  { id: 'qm-hexue-jing', name: 'Realm of Mingled Blood', hanzi: '合血境', kind: 'realm', sub: 'realm', ...xy('qm-hexue-jing'), hidden: true, mark: 'gated', access: 'toll 10 low-grade · below Foundation · beast blood · every 7 years for 30 days', top: 'Qi Condensation' },
+);
+function xy(id) { const p = GEO.points[id]; return { x: p.x, y: p.y }; }
+for (const p of points) if (LORE[p.id]) p.lore = LORE[p.id];
+
+// Written towns and villages (mock names for the study).
+const TOWNS = [
+  ['sinkhole', 'Sinkhole Terraces', '天坑台', 'town', 192600, 211300, 'qm-shiyan-guo', ['a stall on the sinkhole rim', 'a cave alchemy shop', 'a terrace store'], 'The Registry’s testing stone stands at the top terrace.'],
+  ['batroost', 'Bat Roost', '蝠栖村', 'village', 195600, 214300, 'qm-shiyan-guo', [], 'Guano diggers and their ropes.'],
+  ['fort', 'Pacified Fort', '安边堡', 'town', 183600, 217200, 'qm-anbian-fu', ['a sutler’s stall by the watchtower', 'the village store'], 'The Gongsun garrison’s seat, and its cadet school.'],
+  ['spearplow', 'Spear-Plow Village', '枪犁村', 'village', 179400, 220600, 'qm-anbian-fu', [], 'Fields plowed with spears at hand.'],
+  ['beacon', 'Ninth Beacon', '九烽', 'village', 188300, 214600, 'qm-anbian-fu', [], 'The last watchtower before Stone Eyes.'],
+  ['corral', 'Corral Town', '围栏镇', 'town', 168200, 191300, 'qm-muling-guo', ['a stall at the corrals', 'the herders’ trading post', 'a herders’ store'], 'Thunder-horned deer and scale-horses, sold by the head.'],
+  ['barns', 'Hatchling Barns', '雏棚村', 'village', 166300, 195600, 'qm-muling-guo', [], 'Night Bridge crates come in after dark.'],
+  ['wallfoot', 'Foot of the Wall', '墙脚村', 'village', 176800, 199200, null, ['a stall at the foot of the Wall'], 'Bone-carters and the women who feed the patrols.'],
+  ['reedwater', 'Reedwater', '苇水村', 'village', 157500, 229000, null, [], 'Salt-reed cutters on the last dry ground.'],
+];
+for (const [id, name, hanzi, sub, x, y, parent, shops, lore] of TOWNS) points.push({ id, name, hanzi, kind: 'site', sub, x, y, parent, mark: 'open', shops, lore, top: sub === 'town' ? 'Qi Condensation' : null });
+
+// Wild tracts: the region's wilds as named places, each with its own terrain (seeded cells, written names).
+const TRACT_NAMES = [
+  ['Grey Karst Reaches', '灰岩野', 'karst'], ['Saltreed Flats', '盐苇滩', 'coast'], ['the Howling Downs', '啸风岗', 'hills'],
+  ['Blackpine Forest', '黑松林', 'forest'], ['Marsh of Drowned Lanterns', '溺灯泽', 'marsh'], ['the Long Grass', '长草原', 'plains'],
+  ['Needle Peaks', '针峰野', 'karst'], ['Bonefields', '白骨野', 'hills'], ['the Tidewrack Shore', '潮骸岸', 'coast'],
+  ['Mistbamboo Hollows', '雾竹谷', 'forest'], ['the Sinkhole Country', '天坑野', 'karst'], ['Redclay Barrens', '赤土野', 'plains'],
+  ['the Ghost-Lamp Fens', '鬼灯泽', 'marsh'], ['Broken Teeth Hills', '断齿岗', 'hills'], ['the Southern Karst', '南岩野', 'karst'],
+];
+{
+  const rng = mulberry32(3127);
+  const xs = REGION.map((p) => p[0]), ys = REGION.map((p) => p[1]);
+  const bb = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+  const seeds = [];
+  let guard = 0;
+  while (seeds.length < TRACT_NAMES.length && guard++ < 5000) {
+    const p = [bb[0] + rng() * (bb[2] - bb[0]), bb[1] + rng() * (bb[3] - bb[1])];
+    if (!inRegion(p) || seeds.some((s) => Math.hypot(s[0] - p[0], s[1] - p[1]) < 14000)) continue;
+    seeds.push(p);
+  }
+  // Coast and marsh names go to the seeds nearest the sea.
+  const coastness = (p) => { let d = Infinity; for (const q of GEO.conts.qiming) d = Math.min(d, Math.hypot(q[0] - p[0], q[1] - p[1])); return d; };
+  const order = seeds.map((s, i) => [coastness(s), i]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+  const wet = TRACT_NAMES.filter((t) => t[2] === 'coast' || t[2] === 'marsh'), dry = TRACT_NAMES.filter((t) => t[2] !== 'coast' && t[2] !== 'marsh');
+  const names = []; order.forEach((si, rank) => { names[si] = rank < wet.length ? wet[rank] : dry[rank - wet.length]; });
+  const vor = d3.Delaunay.from(seeds).voronoi([bb[0] - 2000, bb[1] - 2000, bb[2] + 2000, bb[3] + 2000]);
+  seeds.forEach((s, i) => {
+    const [name, hanzi, terrain] = names[i];
+    areas.push({ id: 'tract-' + i, name, hanzi, kind: 'tract', poly: vor.cellPolygon(i), seed: s, terrain, mark: 'open', top: terrain === 'marsh' ? 'Foundation' : 'Qi Condensation', lore: null });
+  });
+}
+const kingdomAt = (p) => areas.find((a) => (a.kind === 'kingdom' || a.kind === 'forbidden') && pip(p, a.poly));
+const tractAt = (p) => (inRegion(p) && !kingdomAt(p) ? areas.find((a) => a.kind === 'tract' && pip(p, a.poly)) : null);
+function terrainAt(p) {
+  if (!onLand(p)) return 'sea';
+  const k = kingdomAt(p); if (k) return k.terrain;
+  const t = tractAt(p); if (t) return t.terrain;
+  return 'karst';
+}
+function townAt(p) { return points.find((q) => (q.kind === 'city' || q.sub === 'town' || q.sub === 'village') && Math.hypot(q.x - p[0], q.y - p[1]) < 250); }
+function placeAt(p) { return townAt(p) || kingdomAt(p) || tractAt(p) || (inRegion(p) ? { name: 'the Border Wilds', hanzi: '边荒', kind: 'region' } : null); }
+
+// Seeded wild sites from written tables: kind × terrain gives the name and the features.
+const WILD = {
+  karst: [['cave', 'a cave behind a sinkhole'], ['den', 'a stone-ape den'], ['ruin', 'a collapsed cave temple'], ['herb-valley', 'a herb ledge in a sinkhole'], ['spring', 'a spirit spring in a grotto'], ['peak', 'a thunder-struck spire'], ['hut', 'a hermit’s cliff hut'], ['tomb', 'cliff coffins on a rock face'], ['camp', 'a bandit hold among the pillars']],
+  hills: [['den', 'a wolf den on a ridge'], ['shrine', 'a roadside earth shrine'], ['ruin', 'a burnt watch post'], ['cave', 'a hillside cave'], ['mine', 'an abandoned iron mine'], ['tomb', 'barrow mounds'], ['camp', 'a deserters’ camp'], ['village', 'a goatherds’ hamlet'], ['falls', 'a waterfall in a ravine']],
+  plains: [['den', 'a thunder-deer wallow'], ['shrine', 'a herders’ cairn shrine'], ['herb-valley', 'a hollow of spirit grass'], ['village', 'a yurt camp'], ['tree', 'a lone ancient elm'], ['camp', 'raiders’ horse lines'], ['ruin', 'a field of rusted spears']],
+  forest: [['den', 'a boar den under the roots'], ['herb-valley', 'a mushroom glade'], ['ruin', 'an overgrown hermitage'], ['shrine', 'a tree shrine'], ['tree', 'a spirit-touched camphor'], ['hut', 'a woodcutters’ lodge'], ['falls', 'a mossy waterfall'], ['camp', 'a poachers’ camp']],
+  marsh: [['den', 'a crocodile wallow'], ['ruin', 'a sunken village'], ['herb-valley', 'a lotus pool'], ['spring', 'a will-o’-wisp spring'], ['village', 'a stilt village'], ['tomb', 'a drowned bone shrine']],
+  coast: [['cave', 'a sea cave'], ['ruin', 'a wrecked junk'], ['shrine', 'a sea-goddess shrine'], ['village', 'a fishing hamlet'], ['camp', 'a wreckers’ camp'], ['spring', 'a tide spring']],
+};
+// Rivers (mock: the atlas has no rivers in the Border Wilds yet). Each runs from the uplands to the west coast.
+const rivers = [
+  ['the Bonewash', '洗骨河', [197000, 205500], [150500, 212500]],
+  ['Grey Eel River', '灰鳗河', [178500, 186500], [151200, 190000]],
+  ['Lantern Water', '灯水', [186000, 247000], [153000, 234500]],
+].map(([name, hanzi, from, to], i) => {
+  const rng = mulberry32(hash('river' + i)); const pts = [from.slice()]; let p = from.slice(); let a = Math.atan2(to[1] - p[1], to[0] - p[0]); let guard = 0;
+  while (onLand(p) && guard++ < 400) {
+    const want = Math.atan2(to[1] - p[1], to[0] - p[0]); a += (want - a) * 0.18 + (rng() - 0.5) * 0.9;
+    p = [p[0] + Math.cos(a) * 700, p[1] + Math.sin(a) * 700]; pts.push(p);
+    if (Math.hypot(to[0] - p[0], to[1] - p[1]) < 900) { pts.push(to.slice()); break; }
+  }
+  return { id: 'river-' + i, name, hanzi, pts };
+});
+{
+  const rng = mulberry32(hash('sites-qm-bianhuang'));
+  const place = (area, n) => {
+    const xs = area.poly.map((p) => p[0]), ys = area.poly.map((p) => p[1]);
+    let made = 0, guard = 0;
+    while (made < n && guard++ < 400) {
+      const p = [Math.min(...xs) + rng() * (Math.max(...xs) - Math.min(...xs)), Math.min(...ys) + rng() * (Math.max(...ys) - Math.min(...ys))];
+      if (!pip(p, area.poly) || !inRegion(p)) continue;
+      if (area.kind === 'tract' && kingdomAt(p)) continue;
+      if (points.some((q) => Math.hypot(q.x - p[0], q.y - p[1]) < 1700)) continue;
+      const table = WILD[area.terrain] || WILD.karst; const [sub, name] = table[Math.floor(rng() * table.length)];
+      const hidden = rng() < 0.2;
+      points.push({ id: `site-${area.id}-${made}`, name: name[0].toUpperCase() + name.slice(1), hanzi: SEAL[sub], kind: 'site', sub, x: p[0], y: p[1], parent: area.id, hidden, mark: 'open', top: 'Qi Condensation', lore: null, seeded: true });
+      made++;
+    }
+  };
+  for (const a of areas) if (a.kind === 'kingdom') place(a, 9); else if (a.kind === 'tract') place(a, 9);
+}
+points.push({ id: 'stele', name: 'A sword-scarred stele', hanzi: '碑', kind: 'site', sub: 'stele', x: 160500, y: 221500, hidden: true, mark: 'open', top: null, lore: 'Someone cut a single stroke into it, and the stroke still cuts.', seeded: true });
+// One hidden cave within a look-around of home, to try "Look around" on day one.
+points.push({ id: 'hidden-cave', name: 'A cave no map shows', hanzi: '洞', kind: 'site', sub: 'cave', x: 192600 + 38, y: 211300 + 22, parent: 'qm-shiyan-guo', hidden: true, mark: 'open', top: null, lore: null, seeded: true });
+
+// Written roads (mock), with seeded bends; checkpoints where a road crosses into a kingdom.
+const ROADS = [
+  ['qm-shoukou-cheng', 'qm-tushou-men'], ['qm-tushou-men', 'fort'], ['fort', 'beacon'], ['beacon', 'sinkhole'], ['sinkhole', 'batroost'],
+  ['fort', 'spearplow'], ['qm-shoukou-cheng', 'barns'], ['barns', 'corral'], ['qm-tushou-men', 'wallfoot'], ['wallfoot', 'qm-duigu-qiang'], ['corral', 'wallfoot'],
+  ['qm-shoukou-cheng', 'reedwater'],
+];
+const roads = ROADS.map(([a, b], i) => {
+  const A = P(a), B = P(b); const rng = mulberry32(hash(a + '|' + b));
+  let pts = [[A.x, A.y], [B.x, B.y]];
+  for (let pass = 0; pass < 4; pass++) {
+    const next = [pts[0]];
+    for (let j = 1; j < pts.length; j++) {
+      const p = pts[j - 1], q = pts[j]; const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      const nx = -(q[1] - p[1]) / len, ny = (q[0] - p[0]) / len; const off = (rng() - 0.5) * len * 0.22;
+      next.push([(p[0] + q[0]) / 2 + nx * off, (p[1] + q[1]) / 2 + ny * off], q);
+    }
+    pts = next;
+  }
+  let li = 0; for (let j = 1; j < pts.length; j++) li += Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]);
+  return { id: 'road-' + i, a, b, pts, li };
+});
+const checkpoints = [];
+for (const r of roads) {
+  for (let j = 1; j < r.pts.length; j++) {
+    const k0 = kingdomAt(r.pts[j - 1]), k1 = kingdomAt(r.pts[j]);
+    if (k1 && k1.kind === 'kingdom' && k0 !== k1) checkpoints.push({ id: 'cp-' + r.id + j, road: r.id, x: r.pts[j][0], y: r.pts[j][1], name: `${k1.name.replace(/^(Kingdom of |March of )/, '')}'s border post`, kingdom: k1.id });
+    else if (k0 && k0.kind === 'kingdom' && k0 !== k1) checkpoints.push({ id: 'cp-' + r.id + j, road: r.id, x: r.pts[j - 1][0], y: r.pts[j - 1][1], name: `${k0.name.replace(/^(Kingdom of |March of )/, '')}'s border post`, kingdom: k0.id });
+  }
+}
+function crossAt(a, b, c, d) { const den = (b[0] - a[0]) * (d[1] - c[1]) - (b[1] - a[1]) * (d[0] - c[0]); if (!den) return null; const t = ((c[0] - a[0]) * (d[1] - c[1]) - (c[1] - a[1]) * (d[0] - c[0])) / den, u = ((c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0])) / den; return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])] : null; }
+for (const rd of roads) for (const rv of rivers) for (let j = 1; j < rd.pts.length; j++) for (let m = 1; m < rv.pts.length; m++) { const x = crossAt(rd.pts[j - 1], rd.pts[j], rv.pts[m - 1], rv.pts[m]); if (x && !points.some((q) => q.sub === 'ferry' && Math.hypot(q.x - x[0], q.y - x[1]) < 600)) points.push({ id: 'ferry-' + rd.id + '-' + rv.id + '-' + j, name: 'The ' + rv.name.replace(/^the /, '') + ' ferry', hanzi: '渡', kind: 'site', sub: 'ferry', x: x[0], y: x[1], road: rd.id, mark: 'open', toll: '5 taels', lore: 'A rope ferry and a ferryman who drinks.' }); }
+for (const c of checkpoints) points.push({ id: c.id, name: c.name, hanzi: '卡', kind: 'site', sub: 'checkpoint', x: c.x, y: c.y, mark: 'open', road: c.road, toll: '1 low-grade, or 110 taels', lore: 'Your fame decides whether the guard knows your face.' });
+
+// Qi density (a proposed atlas field, 1 to 9) sets a land's edge band: what lives at its edge, near people. Each
+// wild has hearts, and a heart carries its own rank; the rings count the bands from the edge up to it, a third of
+// a realm a ring. The atlas's named ones (the Stone Forest's python) fix their own rank.
+const QI_NAMES = ['', 'barren', 'sparse', 'thin', 'modest', 'ordinary', 'rich', 'abundant', 'blessed', 'heaven-touched'];
+const BANDS = [
+  ['layers 1 to 3', 'white and green'], ['layers 4 to 6', 'green'], ['layers 7 to 9', 'green and blue'],
+  ['Foundation, early', 'blue'], ['Foundation, middle', 'blue'], ['Foundation, late', 'blue and purple'],
+  ['Core Formation, early', 'purple'], ['Core Formation, middle', 'purple'], ['Core Formation, late', 'purple and gold'],
+  ['Nascent Soul, early', 'gold'], ['Nascent Soul, middle', 'gold'], ['Nascent Soul, late', 'gold and red'],
+  ['Deity Transformation, early', 'red'], ['Deity Transformation, middle', 'red'], ['Deity Transformation, late', 'red'],
+  ['Void Refinement, early', 'red'], ['Void Refinement, middle', 'red'], ['Void Refinement, late', 'red'],
+  ['Body Integration', 'red'], ['Mahayana', 'red'], ['Tribulation Transcendence', 'red'],
+];
+const YOUR_BAND = 0; // layer 3 of Qi Condensation, the study's life
+// A forbidden land or a rich spot carries its own grade above its region's; the Stone Forest is two up.
+const qiAt = (p) => { const k = kingdomAt(p); return Math.max(1, Math.min(9, S.qi + (k && k.id === 'qm-mihun-shilin' ? 2 : 0))); };
+const edgeBand = (p) => qiAt(p) - 3;
+let DEPTH_ANCHORS = null;
+function roadLi(p) {
+  if (!DEPTH_ANCHORS) { DEPTH_ANCHORS = []; for (const rd of roads) for (const q of densify(rd.pts, 500)) DEPTH_ANCHORS.push(q); for (const q of points) if (q.kind === 'city' || q.sub === 'town' || q.sub === 'village') DEPTH_ANCHORS.push([q.x, q.y]); }
+  let d = Infinity; for (const q of DEPTH_ANCHORS) d = Math.min(d, Math.hypot(q[0] - p[0], q[1] - p[1])); return d;
+}
+const HEART_NAMES = {
+  karst: ['the Stone-Ape King’s pillars', '猿王'], hills: ['the Wolf King’s ridge', '狼王'], plains: ['the bison kings’ grass', '牛王'],
+  forest: ['the old camphor’s grove', '樟王'], marsh: ['the drowned heart of the fens', '泽心'], coast: ['the tide drake’s reef', '蛟礁'],
+};
+const HEARTS = (() => {
+  const out = []; const rng = mulberry32(hash('hearts-qm-bianhuang'));
+  for (const a of areas) {
+    if (a.kind !== 'tract' && a.kind !== 'forbidden') continue;
+    const area = Math.abs(d3.polygonArea(a.poly)); const n = a.kind === 'forbidden' ? 1 : area > 240e6 ? 2 : 1;
+    const xs = a.poly.map((p) => p[0]), ys = a.poly.map((p) => p[1]);
+    for (let j = 0; j < n; j++) {
+      let best = null;
+      if (a.kind === 'forbidden') best = [1e9, centroid(a.poly)];
+      else for (let t = 0; t < 80; t++) {
+        const p = [Math.min(...xs) + rng() * (Math.max(...xs) - Math.min(...xs)), Math.min(...ys) + rng() * (Math.max(...ys) - Math.min(...ys))];
+        if (!pip(p, a.poly) || !inRegion(p) || kingdomAt(p)) continue;
+        if (out.some((h) => Math.hypot(h.x - p[0], h.y - p[1]) < 10000)) continue;
+        const s = roadLi(p) + rng() * 1500; if (!best || s > best[0]) best = [s, p];
+      }
+      if (!best || best[0] < 3000) continue;
+      // A heart's size: two to five rings in a thin land, more as the land's qi rises.
+      const size = 2 + (area > 240e6 ? 2 : area > 150e6 ? 1 : 0) + Math.floor(rng() * 2);
+      const t = a.kind === 'forbidden' ? 'karst' : a.terrain; const [name, hz] = a.kind === 'forbidden' ? ['the python’s den, heart of the Stone Forest', '蟒穴'] : HEART_NAMES[t] || HEART_NAMES.karst;
+      out.push({ x: best[1][0], y: best[1][1], size, fixedRank: a.kind === 'forbidden' ? 9 : null, name: name + (n > 1 ? (j ? ', east' : ', west') : ''), hanzi: hz, area: a.id });
+    }
+  }
+  return out;
+})();
+function heartSteps(h) { const p = [h.x, h.y]; return h.fixedRank != null ? Math.max(1, h.fixedRank - edgeBand(p)) : h.size + Math.max(0, Math.floor((qiAt(p) - 3) / 2)); }
+const heartRank = (h) => edgeBand([h.x, h.y]) + heartSteps(h);
+// Stronger hearts hold more ground, and a heart fills its wild rather than sitting in it as a dot.
+const heartReach = (h) => 5000 + 2200 * heartSteps(h);
+HEARTS.forEach((h, i) => points.push({ id: 'heart-' + i, name: h.name[0].toUpperCase() + h.name.slice(1), hanzi: '王', kind: 'site', sub: 'heart', x: h.x, y: h.y, mark: 'open', heart: h, get top() { return BANDS[Math.max(0, Math.min(BANDS.length - 1, heartRank(h)))][0]; }, lore: 'A heart of the wild: what rules it dens here, and the rings count up to it.' }));
+// The depth field: under 1 near people, 1 across the open wilds, rising to a heart's steps at its centre. The
+// distance to a heart is read through a warp, so a heart's ground is a ragged shape, and people carve into it:
+// every 1,200 li from the nearest road or settlement allows one more ring.
+function depthField(p) {
+  const rd = roadLi(p); if (rd < 1500) return { f: rd / 1500, heart: null };
+  return fieldAt(rd, p[0] + (fbm(p[0] / 7000, p[1] / 7000, 61) - 0.5) * 9000, p[1] + (fbm(p[0] / 7000, p[1] / 7000, 67) - 0.5) * 9000);
+}
+// The part that changes with qi density: the hearts read against a spot's distance from people and its warped place.
+function fieldAt(rd, wx, wy) {
+  if (rd < 1500) return { f: rd / 1500, heart: null };
+  let best = { f: 1, heart: null };
+  for (const { h, st, R } of heartTable()) {
+    const d = Math.hypot(h.x - wx, h.y - wy); if (d >= R) continue;
+    const f = Math.min(st * (1 - d / R) * 1.25, st, rd / 1200); if (f > best.f) best = { f, heart: h };
+  }
+  return best;
+}
+// Each heart's steps and reach, worked out once per qi density rather than at every point.
+let HEART_TABLE = null, HEART_TABLE_QI = null;
+function heartTable() {
+  if (HEART_TABLE_QI !== S.qi) { HEART_TABLE = HEARTS.map((h) => ({ h, st: heartSteps(h), R: heartReach(h) })); HEART_TABLE_QI = S.qi; }
+  return HEART_TABLE;
+}
+function depthInfo(p) {
+  const { f, heart } = depthField(p); const ring = f < 1 ? 0 : Math.max(1, Math.ceil(f - 1e-9)); const of = heart ? heartSteps(heart) : 1;
+  const name = ring === 0 ? 'the edge' : !heart ? 'the wilds' : ring >= of ? 'the heart of ' + heart.name.replace(/^the /, '') : `ring ${ring} of ${of} toward ${heart.name}`;
+  return { ring, of, heart, name };
+}
+const depthTier = (p) => depthInfo(p).ring;
+const bandAt = (p) => edgeBand(p) + depthTier(p);
+function bandWords(p) {
+  const b = bandAt(p); if (b < 0) return 'nothing past mortal beasts · common finds';
+  const [realm, finds] = BANDS[Math.min(BANDS.length - 1, b)]; const gap = b - YOUR_BAND;
+  return `beasts of ${realm} · ${finds} finds${gap >= 3 ? ' · <b class="above">a realm above you: what lives here finds you first</b>' : gap >= 1 ? ' · stronger than you' : ''}`;
+}
+// Dashed rings: one line a band, heavier toward the heart.
+let DEPTH_LINES = null, DEPTH_BASE = null;
+// What never changes with qi density, worked out once: each grid point's distance from people and its warped place.
+function depthBase() {
+  if (DEPTH_BASE) return DEPTH_BASE;
+  const RES = 400, x0 = RELIEF.x0, y0 = RELIEF.y0, w = Math.ceil((RELIEF.w * RELIEF.RES) / RES) + 1, h = Math.ceil((RELIEF.h * RELIEF.RES) / RES) + 1;
+  const RD = new Float32Array(w * h), WX = new Float32Array(w * h), WY = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, p = [x0 + x * RES, y0 + y * RES];
+    if (!inRegion(p)) { RD[i] = NaN; continue; }
+    RD[i] = roadLi(p); WX[i] = p[0] + (fbm(p[0] / 7000, p[1] / 7000, 61) - 0.5) * 9000; WY[i] = p[1] + (fbm(p[0] / 7000, p[1] / 7000, 67) - 0.5) * 9000;
+  }
+  return (DEPTH_BASE = { RES, x0, y0, w, h, RD, WX, WY });
+}
+function depthContours() {
+  if (DEPTH_LINES) return DEPTH_LINES;
+  const { RES, x0, y0, w, h, RD, WX, WY } = depthBase();
+  const D = new Float32Array(w * h); let top = 1;
+  for (let i = 0; i < w * h; i++) { const v = Number.isNaN(RD[i]) ? NaN : fieldAt(RD[i], WX[i], WY[i]).f; D[i] = v; if (v > top) top = v; }
+  const out = [];
+  for (let level = 1; level <= Math.floor(top); level++) {
+    const segs = [];
+    for (let y = 0; y < h - 1; y++) for (let x = 0; x < w - 1; x++) {
+      const a = D[y * w + x], b = D[y * w + x + 1], c = D[(y + 1) * w + x + 1], d = D[(y + 1) * w + x];
+      if ([a, b, c, d].some(Number.isNaN)) continue;
+      const P = (x1, y1, v1, x2, y2, v2) => { const t = (level - v1) / (v2 - v1); return [x0 + (x1 + (x2 - x1) * t) * RES, y0 + (y1 + (y2 - y1) * t) * RES]; };
+      const e = [];
+      if ((a < level) !== (b < level)) e.push(P(x, y, a, x + 1, y, b));
+      if ((b < level) !== (c < level)) e.push(P(x + 1, y, b, x + 1, y + 1, c));
+      if ((c < level) !== (d < level)) e.push(P(x + 1, y + 1, c, x, y + 1, d));
+      if ((d < level) !== (a < level)) e.push(P(x, y + 1, d, x, y, a));
+      if (e.length >= 2) segs.push([e[0], e[1]]); if (e.length === 4) segs.push([e[2], e[3]]);
+    }
+    out.push({ level, segs });
+  }
+  return (DEPTH_LINES = out);
+}
+function drawDepthLines(k) {
+  const L = depthContours(); ctx.save(); ctx.lineCap = 'round';
+  L.forEach(({ level, segs }) => {
+    const i = Math.min(6, level - 1);
+    ctx.beginPath(); for (const [p, q] of segs) { const [x1, y1] = toS(p), [x2, y2] = toS(q); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); }
+    ctx.strokeStyle = `rgba(208,122,150,${0.22 + i * 0.08})`; ctx.lineWidth = 0.8 + i * 0.2; ctx.setLineDash([3, 3 + Math.min(i, 3)]); ctx.stroke();
+  });
+  ctx.restore();
+}
+let DEPTH_CANVAS = null;
+function drawDepth(k, rgb = [120, 30, 70], gain = 1) {
+  if (!DEPTH_CANVAS) {
+    const RES = 600, x0 = RELIEF.x0, y0 = RELIEF.y0, w = Math.ceil((RELIEF.w * RELIEF.RES) / RES), h = Math.ceil((RELIEF.h * RELIEF.RES) / RES);
+    const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); const img = g.createImageData(w, h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const p = [x0 + (x + 0.5) * RES, y0 + (y + 0.5) * RES]; if (!inRegion(p)) continue; const i = (y * w + x) * 4; img.data[i] = rgb[0]; img.data[i + 1] = rgb[1]; img.data[i + 2] = rgb[2]; img.data[i + 3] = Math.min(255, 255 * Math.min(0.45, depthField(p).f * 0.06) * gain); }
+    g.putImageData(img, 0, 0); DEPTH_CANVAS = { c, x0, y0, RES, w, h };
+  }
+  const D = DEPTH_CANVAS; const [x, y] = toS([D.x0, D.y0]); ctx.imageSmoothingEnabled = true; ctx.drawImage(D.c, x, y, D.w * D.RES * k, D.h * D.RES * k);
+}
+// The low-tide chain: islets from the southwest coast toward the Pushed Frontier.
+const chain = (() => {
+  const target = [141630, 278010];
+  let best = null; for (const q of GEO.conts.qiming) if (pip(q, REGION)) { const d = Math.hypot(q[0] - target[0], q[1] - target[1]); if (!best || d < best[0]) best = [d, q]; }
+  const a = best[1], pts = []; const rng = mulberry32(77);
+  for (let i = 0; i <= 14; i++) { const t = i / 14; pts.push([a[0] + (target[0] - a[0]) * t + (rng() - 0.5) * 900, a[1] + (target[1] - a[1]) * t + (rng() - 0.5) * 900]); }
+  return pts;
+})();
+
+// ---------- the life ----------
+const HOME = 'sinkhole';
+const S = {
+  layout: 'bar', wilds: 'trail', sight: 'x30', marks: 'seals', scene: 'season', hunted: 'no', speed: '1', pins: [], veiled: false, group: null, groupMode: 'none', sites: 'all', fogLook: 'cloud', land: 'relief', depthLayer: false, depthLines: 'dashed', qi: 3, wheelTab: null, gather: true, stance: 'avoid', haul: [],
+  routine: 'walk', way: 'foot',
+  you: [P(HOME).x, P(HOME).y], dest: null, route: null, routeAt: 0,
+  day: 0, hour: 4, know: new Map(), trail: [], told: new Map(), ping: null,
+  view: { x: 0, y: 0, k: 1 }, hover: null, selected: null,
+};
+const STATE_RANK = { unknown: 0, rumored: 1, sketched: 2, seen: 3 };
+function raise(id, st, why) { const cur = S.know.get(id) || 'unknown'; if (STATE_RANK[st] > STATE_RANK[cur]) { S.know.set(id, st); if (why) S.told.set(id, why); return true; } return false; }
+const known = (id) => S.know.get(id) || 'unknown';
+const shown = (q) => (S.sites === 'all' && !q.poly && !q.pts ? 'seen' : known(q.id));
+
+const SIGHT = () => (S.sight === 'x30' ? { open: 600, closed: 150, look: 60 } : { open: 20, closed: 5, look: 2 });
+const RUMOR_R = () => (S.sight === 'x30' ? 1500 : 50);
+const sightAt = (p) => (OPEN.has(terrainAt(p)) ? SIGHT().open : SIGHT().closed);
+
+function seeFrom(p) {
+  const r = sightAt(p); let found = [];
+  for (const q of points) {
+    if (q.hidden) continue;
+    if (Math.hypot(q.x - p[0], q.y - p[1]) <= r && raise(q.id, 'seen')) found.push(q);
+  }
+  for (const a of areas) {
+    if (a.kind === 'tract') {
+      const probe = [p];
+      for (let i = 0; i < 16; i++) probe.push([p[0] + Math.cos((i / 16) * 6.283) * r, p[1] + Math.sin((i / 16) * 6.283) * r], [p[0] + Math.cos((i / 16) * 6.283) * r * 0.5, p[1] + Math.sin((i / 16) * 6.283) * r * 0.5]);
+      const hit = probe.find((q) => tractAt(q) === a); if (hit && raise(a.id, 'seen')) { a.seenAt = hit; found.push(a); }
+    } else if (polyDist(p, a.poly) <= r && raise(a.id, 'seen')) found.push(a);
+  }
+  for (const rd of [...roads, ...rivers]) { if (rd.pts.some((q, j) => j && segDist(p, rd.pts[j - 1], q) <= r)) raise(rd.id, 'seen'); }
+  if (inRegion(p)) raise('qm-bianhuang', 'sketched');
+  return found;
+}
+
+function resetLife() {
+  S.know = new Map(); S.told = new Map(); S.trail = []; S.dest = null; S.route = null; S.routeAt = 0; S.selected = null; S.day = 0; S.hour = 4;
+  S.you = [P(HOME).x, P(HOME).y];
+  // Every start knows its home kingdom Sketched, a day's walk round home Seen, the famous places Rumored.
+  raise('qm-shiyan-guo', 'sketched', 'your home kingdom');
+  for (const q of points) if (!q.hidden && Math.hypot(q.x - S.you[0], q.y - S.you[1]) <= 240) raise(q.id, 'seen');
+  for (const q of [...points, ...areas]) if (q.famous) raise(q.id, 'rumored', 'everyone in the Border Wilds has heard of it');
+  raise(HOME, 'seen');
+  if (S.scene === 'season') {
+    // Walked to the City by road, looked about, bought the March's kingdom map, sat in a teahouse.
+    const legs = [['sinkhole', 'beacon'], ['beacon', 'fort'], ['fort', 'qm-tushou-men'], ['qm-tushou-men', 'qm-shoukou-cheng']];
+    for (const [a, b] of legs) {
+      const rd = roads.find((r) => (r.a === a && r.b === b) || (r.a === b && r.b === a));
+      const pts = rd.a === a ? rd.pts : [...rd.pts].reverse();
+      for (const q of pts) { S.trail.push(q); }
+    }
+    densify(S.trail, 120).forEach((q) => seeFrom(q));
+    raise('qm-anbian-fu', 'sketched', 'a kingdom map, bought at Pacified Fort');
+    for (const q of points) if (q.parent === 'qm-anbian-fu' && !q.seeded) raise(q.id, 'sketched', 'the March’s kingdom map');
+    for (const rd of roads) { const A = P(rd.a), B = P(rd.b); if (A.parent === 'qm-anbian-fu' || B.parent === 'qm-anbian-fu') raise(rd.id, 'sketched'); }
+    raise('corral', 'rumored', 'a horse-trader in the City’s teahouse');
+    const ruin = points.find((q) => q.sub === 'ruin' && q.seeded && !q.hidden && known(q.id) === 'unknown' && inRegion([q.x, q.y]));
+    if (ruin) { raise(ruin.id, 'rumored', 'an old bone-carter at the Foot of the Wall'); ruin.ring = ringFor(ruin); }
+    S.you = [P('qm-shoukou-cheng').x, P('qm-shoukou-cheng').y]; S.day = 96;
+  }
+  for (const q of points) if (known(q.id) === 'rumored' && !q.ring) q.ring = ringFor(q);
+  seeFrom(S.you);
+  fitKnown();
+}
+// The map opens framing what you know, never more than a kingdom's scale.
+function fitKnown() {
+  const ps = [S.you];
+  for (const q of points) if (known(q.id) !== 'unknown') ps.push(q.ring && known(q.id) === 'rumored' ? q.ring : [q.x, q.y]);
+  for (const a of areas) if (a.kind !== 'tract' && known(a.id) !== 'unknown') ps.push(...a.poly);
+  const xs = ps.map((p) => p[0]), ys = ps.map((p) => p[1]); const pad = 3000;
+  const bw = Math.max(...xs) - Math.min(...xs) + pad * 2, bh = Math.max(...ys) - Math.min(...ys) + pad * 2;
+  S.view.x = (Math.max(...xs) + Math.min(...xs)) / 2; S.view.y = (Math.max(...ys) + Math.min(...ys)) / 2;
+  S.view.k = Math.min((W || 900) / bw, (H || 650) / bh, 0.08);
+}
+function ringFor(q) { const rng = mulberry32(hash('ring' + q.id)); const r = RUMOR_R() * 0.6 * rng(); const a = rng() * Math.PI * 2; return [q.x + Math.cos(a) * r, q.y + Math.sin(a) * r]; }
+function densify(pts, step) { const out = []; for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i]; const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step)); for (let j = 0; j < n; j++) out.push([a[0] + ((b[0] - a[0]) * j) / n, a[1] + ((b[1] - a[1]) * j) / n]); } out.push(pts[pts.length - 1]); return out; }
+
+// ---------- routes, ways and the wheel ----------
+// The day from 子: z sleep, q qi, T travel, G caravan guard.
+const ROUTINES = {
+  walk: { name: 'Walk by day, cultivate by night', short: 'Walk by day', hours: 'zzqqTTTTTTLq', note: 'open, on the roads; you look around at dusk' },
+  pressed: { name: 'Pressed march', short: 'Pressed march', hours: 'zzTTTTTTTTTT', note: 'every waking hour; more encounters (P3.7)' },
+  night: { name: 'The night road', short: 'Night road', hours: 'zzTLqqqqqTTT', note: 'hidden: off the roads, round the checkpoints; you look around at dawn' },
+  caravan: { name: 'Caravan guard', short: 'Caravan guard', hours: 'zzqqGGGGGGLq', note: 'paid a low-grade a day; slow and safe; roads only' },
+};
+const WAYS = {
+  foot: { name: 'On foot', pace: 40, free: false },
+  horse: { name: 'Horse', pace: 30, free: true, hours: 6, note: 'bought; your hours are free, jostled at half' },
+  boat: { name: 'Passage', pace: 30, free: true, hours: 12, locked: 'along a coast or a river: none in the Border Wilds yet' },
+  mount: { name: 'Mount', pace: 45, free: true, hours: 8, locked: 'a spirit mount: bought from the Herders now, tamed in M6. 45 li, eight hours a day, your hours free' },
+  fly: { name: 'Fly', pace: 200, free: false, locked: 'from Foundation: 200 li a double-hour on your sword, stopping to refill your qi. From Core Formation: 300 li and no stops. Seen from afar' },
+  shipride: { name: 'The sect’s cloud ship', pace: 250, free: true, hours: 12, fly: true, hidden: true },
+  ride: { name: 'Someone’s sword', pace: 200, free: true, hours: 6, locked: 'hired in a city with a sect, for stones' },
+};
+function dayHours() {
+  const w = WAYS[S.way]; const r = ROUTINES[S.routine];
+  if (w.free) { return r.hours.replace(/[TG]/g, 'R'); }
+  return r.hours;
+}
+function travelHoursPerDay() { const w = WAYS[S.way]; if (w.free) return w.hours; return [...ROUTINES[S.routine].hours].filter((h) => h === 'T' || h === 'G').length; }
+function paceLi() { const base = S.routine === 'caravan' && !WAYS[S.way].free ? 20 : WAYS[S.way].pace; if (S.group && S.group.kind === 'ship') return base; return base * (S.gather ? 0.85 : 1) * (S.stance === 'avoid' ? 0.9 : 1); }
+function crossFactor(a, b) { let s = 0; const n = 6; for (let i = 0; i < n; i++) { const t = (i + 0.5) / n; const tr = terrainAt([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); if (tr === 'sea') return 0; s += 1 / (FACTOR[tr] || 0.45); } return n / s; }
+function planRoute(from, to) {
+  if (!onLand(to)) return { error: 'That is open sea. The low-tide chain needs a smuggler, and past the region’s edge is M6.' };
+  const nodes = [...new Set(roads.flatMap((r) => [r.a, r.b]))];
+  const useRoads = S.routine !== 'night';
+  const N = ['start', ...(useRoads ? nodes : []), 'end'];
+  const pos = (n) => (n === 'start' ? from : n === 'end' ? to : [P(n).x, P(n).y]);
+  const edges = new Map(N.map((n) => [n, []]));
+  const cross = (a, b) => { const A = pos(a), B = pos(b); const f = crossFactor(A, B); if (!f) return; const li = Math.hypot(B[0] - A[0], B[1] - A[1]); edges.get(a).push({ to: b, cost: li / f, li, f, road: null }); edges.get(b).push({ to: a, cost: li / f, li, f, road: null }); };
+  cross('start', 'end');
+  if (useRoads) {
+    for (const n of nodes) { cross('start', n); cross(n, 'end'); }
+    for (const r of roads) { edges.get(r.a).push({ to: r.b, cost: r.li, li: r.li, f: 1, road: r }); edges.get(r.b).push({ to: r.a, cost: r.li, li: r.li, f: 1, road: r }); }
+  }
+  const dist = new Map(N.map((n) => [n, Infinity])), prev = new Map(); dist.set('start', 0); const open = new Set(N);
+  while (open.size) {
+    let u = null; for (const n of open) if (u === null || dist.get(n) < dist.get(u)) u = n;
+    open.delete(u); if (u === 'end' || dist.get(u) === Infinity) break;
+    for (const e of edges.get(u)) { const d = dist.get(u) + e.cost; if (d < dist.get(e.to)) { dist.set(e.to, d); prev.set(e.to, { from: u, e }); } }
+  }
+  if (!prev.has('end')) return { error: 'No way there on land.' };
+  const legs = []; let cur = 'end'; while (cur !== 'start') { const { from: f, e } = prev.get(cur); legs.unshift({ from: f, to: cur, ...e }); cur = f; }
+  const pts = []; let roadLi = 0, crossLi = 0, crossCost = 0, tolls = [];
+  for (const L of legs) {
+    let seg;
+    if (L.road) { seg = L.road.a === L.from ? L.road.pts : [...L.road.pts].reverse(); roadLi += L.li; for (const c of checkpoints) if (c.road === L.road.id && !tolls.includes(c)) tolls.push(c); }
+    else { seg = [pos(L.from), pos(L.to)]; crossLi += L.li; crossCost += L.cost; }
+    if (pts.length) seg = seg.slice(1); pts.push(...seg);
+  }
+  const perDay = paceLi() * travelHoursPerDay();
+  const days = (roadLi + crossCost) / perDay;
+  const dense = densify(pts, 60); let maxBand = -9; for (let i = 0; i < dense.length; i += 12) maxBand = Math.max(maxBand, bandAt(dense[i]));
+  return { pts: dense, roadLi, crossLi, crossFactor: crossLi ? crossLi / crossCost : 1, days, tolls, perDay, maxBand };
+}
+
+// ---------- canvas ----------
+const stage = document.getElementById('stage'), cv = document.getElementById('map'); let ctx, W = 0, H = 0, DPR = 1;
+const fogCv = document.createElement('canvas'); const fctx = fogCv.getContext('2d');
+const maskCv = document.createElement('canvas'); const mctx = maskCv.getContext('2d');
+const cloudCv = document.createElement('canvas'); const cctx = cloudCv.getContext('2d');
+function fit() { const r = stage.getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1); W = r.width; H = r.height; for (const c of [cv, fogCv, maskCv, cloudCv]) { c.width = Math.round(W * DPR); c.height = Math.round(H * DPR); } ctx = cv.getContext('2d'); }
+const toS = (p) => [(p[0] - S.view.x) * S.view.k + W / 2, (p[1] - S.view.y) * S.view.k + H / 2];
+const toW = (x, y) => [(x - W / 2) / S.view.k + S.view.x, (y - H / 2) / S.view.k + S.view.y];
+function fitRegion() { const xs = REGION.map((p) => p[0]), ys = REGION.map((p) => p[1]); const bw = Math.max(...xs) - Math.min(...xs), bh = Math.max(...ys) - Math.min(...ys); S.view.x = (Math.max(...xs) + Math.min(...xs)) / 2; S.view.y = (Math.max(...ys) + Math.min(...ys)) / 2; S.view.k = Math.min((W || 900) / (bw * 1.08), (H || 650) / (bh * 1.06)); }
+function pathPoly(c, poly) { c.beginPath(); poly.forEach((p, i) => { const [x, y] = toS(p); i ? c.lineTo(x, y) : c.moveTo(x, y); }); c.closePath(); }
+function pathLine(c, pts) { c.beginPath(); pts.forEach((p, i) => { const [x, y] = toS(p); i ? c.lineTo(x, y) : c.moveTo(x, y); }); }
+
+// Terrain textures: tiny marks, moved with the map.
+const PATTERNS = {};
+function makePatterns() {
+  const mk = (terrain, draw) => { const t = document.createElement('canvas'); t.width = t.height = 28; const g = t.getContext('2d'); g.strokeStyle = 'rgba(233,229,218,0.2)'; g.fillStyle = 'rgba(233,229,218,0.18)'; g.lineWidth = 1; draw(g); PATTERNS[terrain] = ctx.createPattern(t, 'repeat'); };
+  mk('karst', (g) => { for (const [x, y, h] of [[5, 9, 6], [8, 10, 4], [19, 22, 7], [22, 23, 4]]) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - h); g.stroke(); } });
+  mk('hills', (g) => { g.beginPath(); g.arc(8, 12, 5, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); g.beginPath(); g.arc(21, 25, 5, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); });
+  mk('plains', (g) => { g.beginPath(); g.moveTo(3, 8); g.lineTo(9, 8); g.moveTo(16, 21); g.lineTo(22, 21); g.stroke(); });
+  mk('coast', (g) => { g.beginPath(); g.moveTo(3, 8); g.quadraticCurveTo(6, 5, 9, 8); g.moveTo(16, 21); g.quadraticCurveTo(19, 18, 22, 21); g.stroke(); });
+  mk('forest', (g) => { for (const [x, y] of [[5, 6], [9, 8], [6, 10], [19, 19], [22, 22], [18, 23]]) { g.beginPath(); g.arc(x, y, 1.1, 0, 7); g.fill(); } });
+  mk('marsh', (g) => { g.beginPath(); g.moveTo(2, 9); g.lineTo(5, 7); g.lineTo(8, 9); g.lineTo(11, 7); g.moveTo(15, 22); g.lineTo(18, 20); g.lineTo(21, 22); g.lineTo(24, 20); g.stroke(); });
+}
+const TERRAIN_FILL = { karst: '#18212a', hills: '#241f1a', plains: '#20221a', coast: '#221f1a', forest: '#132119', marsh: '#14212a' };
+const TERRAIN_INK = { karst: '#a9bcc6', hills: '#cfa77a', plains: '#c4c08a', forest: '#83b892', marsh: '#8ab9c6', coast: '#d2bb90' };
+// Value noise for the relief, hashed so the land is the same in every life.
+function vhash(ix, iy, s) { let h = (Math.imul(ix, 374761393) + Math.imul(iy, 668265263) + Math.imul(s, 1442695041)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+function vnoise(x, y, s) { const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy; const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy); const a = vhash(ix, iy, s), b = vhash(ix + 1, iy, s), c = vhash(ix, iy + 1, s), d = vhash(ix + 1, iy + 1, s); return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v; }
+function fbm(x, y, s) { let t = 0, a = 0.5, f = 1; for (let o = 0; o < 4; o++) { t += a * vnoise(x * f, y * f, s + o); f *= 2; a *= 0.5; } return t / 0.9375; }
+function boxBlur(src, w, h, r) {
+  const tmp = new Float32Array(src.length), out = new Float32Array(src.length);
+  for (let y = 0; y < h; y++) { let acc = 0, n = 0; for (let x = -r; x < w + r; x++) { if (x + r < w) { acc += src[y * w + x + r]; n++; } if (x - r - 1 >= 0) { acc -= src[y * w + x - r - 1]; n--; } if (x >= 0 && x < w) tmp[y * w + x] = acc / n; } }
+  for (let x = 0; x < w; x++) { let acc = 0, n = 0; for (let y = -r; y < h + r; y++) { if (y + r < h) { acc += tmp[(y + r) * w + x]; n++; } if (y - r - 1 >= 0) { acc -= tmp[(y - r - 1) * w + x]; n--; } if (y >= 0 && y < h) out[y * w + x] = acc / n; } }
+  return out;
+}
+const RELIEF = (() => {
+  const xs = REGION.map((p) => p[0]), ys = REGION.map((p) => p[1]); const RES = 55;
+  const x0 = Math.min(...xs), y0 = Math.min(...ys), w = Math.ceil((Math.max(...xs) - x0) / RES), h = Math.ceil((Math.max(...ys) - y0) / RES);
+  const tc = document.createElement('canvas'); tc.width = w; tc.height = h; const g = tc.getContext('2d');
+  const poly = (pts) => { g.beginPath(); pts.forEach((p, i) => { const X = (p[0] - x0) / RES, Y = (p[1] - y0) / RES; i ? g.lineTo(X, Y) : g.moveTo(X, Y); }); g.closePath(); };
+  const IDS = ['none', 'karst', 'hills', 'plains', 'forest', 'marsh', 'coast'];
+  const col = (t) => `rgb(${Math.max(1, IDS.indexOf(t)) * 36},0,0)`;
+  g.save(); poly(GEO.conts.qiming); g.clip(); poly(REGION); g.clip(); poly(REGION); g.fillStyle = col('karst'); g.fill();
+  for (const a of areas) if (a.kind === 'tract') { poly(a.poly); g.fillStyle = col(a.terrain); g.fill(); }
+  for (const a of areas) if (a.kind !== 'tract') { poly(a.poly); g.fillStyle = col(a.terrain); g.fill(); }
+  g.restore();
+  const px = g.getImageData(0, 0, w, h).data; const N = w * h;
+  const AMP = [0, 1, 0.55, 0.12, 0.3, 0.04, 0.1];
+  const TINT = [[0, 0, 0], [44, 56, 64], [64, 54, 43], [58, 61, 45], [34, 54, 42], [36, 51, 62], [62, 57, 47]];
+  let A = new Float32Array(N), K = new Float32Array(N), R = new Float32Array(N), G = new Float32Array(N), B = new Float32Array(N), L = new Float32Array(N);
+  // Borders read through a warp, so tracts meet along ragged natural edges instead of straight cells.
+  const idAt = (x, y) => { x = Math.max(0, Math.min(w - 1, Math.round(x))); y = Math.max(0, Math.min(h - 1, Math.round(y))); const j = (y * w + x) * 4; return px[j + 3] > 0 ? Math.round(px[j] / 36) : 0; };
+  for (let i = 0; i < N; i++) {
+    const x = i % w, y = (i / w) | 0, wx = x0 + x * RES, wy = y0 + y * RES;
+    const wxo = (fbm(wx / 6000, wy / 6000, 51) - 0.5) * 60 + (vnoise(wx / 1500, wy / 1500, 52) - 0.5) * 16, wyo = (fbm(wx / 6000, wy / 6000, 53) - 0.5) * 60 + (vnoise(wx / 1500, wy / 1500, 54) - 0.5) * 16;
+    const t0 = idAt(x + wxo, y + wyo); const t = t0 || Math.round(px[i * 4] / 36); L[i] = px[i * 4 + 3] / 255; A[i] = AMP[t] || 0; K[i] = t === 1 ? 1 : 0; const c = TINT[t] || TINT[0]; R[i] = c[0]; G[i] = c[1]; B[i] = c[2]; }
+  A = boxBlur(boxBlur(A, w, h, 7), w, h, 7); K = boxBlur(K, w, h, 4); R = boxBlur(boxBlur(R, w, h, 6), w, h, 6); G = boxBlur(boxBlur(G, w, h, 6), w, h, 6); B = boxBlur(boxBlur(B, w, h, 6), w, h, 6);
+  const H = new Float32Array(N);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, wx = x0 + x * RES, wy = y0 + y * RES;
+    const base = fbm(wx / 9000, wy / 9000, 11) * 0.55 + fbm(wx / 2600, wy / 2600, 23) * 0.45;
+    const ridge = 1 - Math.abs(2 * vnoise(wx / 640, wy / 640, 37) - 1);
+    H[i] = A[i] * base + K[i] * Math.pow(ridge, 4) * 0.32 * (0.6 + 0.8 * fbm(wx / 5000, wy / 5000, 41));
+  }
+  const img = g.createImageData(w, h); const o = img.data; const GAIN = 3.2;
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x; if (L[i] <= 0) continue;
+    const dx = H[i + 1] - H[i - 1], dy = H[i + w] - H[i - w];
+    const s = Math.max(0, Math.min(1.25, 0.6 - (dx + dy) * GAIN));
+    const lit = 0.55 + 0.75 * s;
+    o[i * 4] = Math.min(255, R[i] * lit); o[i * 4 + 1] = Math.min(255, G[i] * lit); o[i * 4 + 2] = Math.min(255, B[i] * lit); o[i * 4 + 3] = 255 * L[i];
+  }
+  g.putImageData(img, 0, 0);
+  const ic = document.createElement('canvas'); ic.width = w; ic.height = h; const ig = ic.getContext('2d'); const iimg = ig.createImageData(w, h); const io = iimg.data;
+  for (let i = 0; i < N; i++) { if (o[i * 4 + 3] === 0) continue; const lum = (o[i * 4] + o[i * 4 + 1] + o[i * 4 + 2]) / 3; const v = 14 + lum * 0.62; io[i * 4] = v * 1.02; io[i * 4 + 1] = v; io[i * 4 + 2] = v * 0.96; io[i * 4 + 3] = o[i * 4 + 3]; }
+  ig.putImageData(iimg, 0, 0);
+  return { canvas: tc, ink: ic, x0, y0, RES, w, h };
+})();
+// Painted features (after the ink maps of cultivation games): a fixed set placed once by the world seed, a few big
+// shapes over a quiet wash. Each has a size in li, so zooming in brings it closer; nothing spawns.
+const FEATURE_SIZE = { karst: [1600, 2800], hills: [2400, 4200], forest: [1800, 3200], plains: [1400, 2200], marsh: [1800, 2800], coast: [1400, 2200] };
+const FEATURES = (() => {
+  const rng = mulberry32(hash('features-qm-bianhuang')); const out = [];
+  const xs = REGION.map((p) => p[0]), ys = REGION.map((p) => p[1]);
+  let guard = 0;
+  while (out.length < 260 && guard++ < 20000) {
+    const p = [Math.min(...xs) + rng() * (Math.max(...xs) - Math.min(...xs)), Math.min(...ys) + rng() * (Math.max(...ys) - Math.min(...ys))];
+    if (!inRegion(p)) continue;
+    const t = terrainAt(p); const [lo, hi] = FEATURE_SIZE[t] || FEATURE_SIZE.karst; const size = lo + rng() * (hi - lo);
+    if (out.some((f) => Math.hypot(f.x - p[0], f.y - p[1]) < (f.size + size) * 0.62)) continue;
+    if (points.some((q) => !q.seeded && Math.hypot(q.x - p[0], q.y - p[1]) < size * 0.45)) continue;
+    out.push({ x: p[0], y: p[1], t, size, seed: Math.floor(rng() * 1e9) });
+  }
+  return out.sort((a, b) => a.y - b.y);
+})();
+function drawTerrain(k) {
+  const [x0, y0] = toW(-200, -200), [x1, y1] = toW(W + 200, H + 200);
+  for (const f of FEATURES) {
+    if (f.x < x0 || f.x > x1 || f.y < y0 || f.y > y1) continue;
+    const s = f.size * k; if (s < 5) continue;
+    const [x, y] = toS([f.x, f.y]); paint(f.t, x, y, Math.min(s, 220), mulberry32(f.seed), Math.min(1, (s - 5) / 10));
+  }
+}
+function wash(ink, top, bottom, a) { const g = ctx.createLinearGradient(0, top, 0, bottom); g.addColorStop(0, rgba(ink, a)); g.addColorStop(0.55, rgba(ink, a * 0.45)); g.addColorStop(1, rgba(ink, 0)); return g; }
+function paint(t, x, y, s, r, fade) {
+  const ink = S.land === 'ink' ? '#d9d6cc' : TERRAIN_INK[t] || TERRAIN_INK.karst; ctx.save(); ctx.globalAlpha = fade; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (t === 'karst') {
+    // Guilin pillars: tall rounded towers in a cluster, the far ones paler, all fading into mist at the foot.
+    const n = 3 + Math.floor(r() * 4); const cols = [];
+    for (let i = 0; i < n; i++) cols.push({ ox: (r() - 0.5) * s * 0.9, w: s * (0.09 + r() * 0.08), h: s * (0.35 + r() * 0.55), back: r() < 0.4 });
+    cols.sort((a, b) => (a.back === b.back ? 0 : a.back ? -1 : 1));
+    for (const c of cols) {
+      const bx = x + c.ox, top = y - c.h, a = c.back ? 0.22 : 0.4;
+      ctx.beginPath(); ctx.moveTo(bx - c.w / 2, y); ctx.bezierCurveTo(bx - c.w * 0.62, y - c.h * 0.55, bx - c.w * 0.5, top, bx, top); ctx.bezierCurveTo(bx + c.w * 0.5, top, bx + c.w * 0.62, y - c.h * 0.55, bx + c.w / 2, y); ctx.closePath();
+      ctx.fillStyle = wash(ink, top, y, a); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(bx - c.w * 0.42, y - c.h * 0.35); ctx.bezierCurveTo(bx - c.w * 0.55, y - c.h * 0.7, bx - c.w * 0.35, top + 1, bx, top); ctx.strokeStyle = rgba(ink, a * 1.3); ctx.lineWidth = Math.max(0.8, s * 0.008); ctx.stroke();
+    }
+  } else if (t === 'hills') {
+    // Rolling hills: two or three soft mounds, a ridge line and a few dry-brush hatches on the shadow side.
+    const n = 2 + Math.floor(r() * 2);
+    for (let i = 0; i < n; i++) {
+      const ox = x + (i - (n - 1) / 2) * s * 0.36 + (r() - 0.5) * s * 0.1, w = s * (0.45 + r() * 0.25), h = s * (0.16 + r() * 0.12), top = y - h;
+      ctx.beginPath(); ctx.moveTo(ox - w / 2, y); ctx.quadraticCurveTo(ox - w * 0.1, top - h * 0.5, ox + w / 2, y); ctx.closePath(); ctx.fillStyle = wash(ink, top, y, 0.32); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(ox - w / 2, y); ctx.quadraticCurveTo(ox - w * 0.1, top - h * 0.5, ox + w / 2, y); ctx.strokeStyle = rgba(ink, 0.42); ctx.lineWidth = Math.max(0.8, s * 0.007); ctx.stroke();
+      for (let j = 0; j < 3; j++) { const hx = ox + w * (0.08 + j * 0.09), hy = y - h * (0.55 - j * 0.15); ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + w * 0.03, hy + h * 0.35); ctx.strokeStyle = rgba(ink, 0.25); ctx.stroke(); }
+    }
+  } else if (t === 'forest') {
+    // A wood: one canopy of overlapping crowns, darker underneath, lit along the top.
+    const n = 7 + Math.floor(r() * 7); const crowns = [];
+    for (let i = 0; i < n; i++) crowns.push([x + (r() - 0.5) * s * 0.8, y - r() * s * 0.25, s * (0.07 + r() * 0.06)]);
+    crowns.sort((a, b) => a[1] - b[1]);
+    const top = y - s * 0.4; ctx.beginPath(); for (const [cx, cy, cr] of crowns) { ctx.moveTo(cx + cr, cy); ctx.arc(cx, cy, cr, 0, 7); } ctx.fillStyle = wash(ink, top, y + s * 0.1, 0.38); ctx.fill();
+    for (const [cx, cy, cr] of crowns) { ctx.beginPath(); ctx.arc(cx, cy, cr, Math.PI * 1.05, Math.PI * 1.75); ctx.strokeStyle = rgba(ink, 0.5); ctx.lineWidth = Math.max(0.7, s * 0.006); ctx.stroke(); }
+  } else if (t === 'plains') {
+    // Open grass: a faint wash and a few long wind-bent strokes.
+    for (let i = 0; i < 5; i++) { const ox = x + (r() - 0.5) * s, oy = y + (r() - 0.5) * s * 0.3, l = s * (0.15 + r() * 0.2); ctx.beginPath(); ctx.moveTo(ox, oy); ctx.quadraticCurveTo(ox + l * 0.2, oy - l * 0.5, ox + l * 0.55, oy - l * 0.6); ctx.strokeStyle = rgba(ink, 0.3); ctx.lineWidth = Math.max(0.7, s * 0.008); ctx.stroke(); }
+  } else if (t === 'marsh') {
+    // Reed beds: still water lines and reed clumps.
+    for (let i = 0; i < 4; i++) { const oy = y + (i - 1.5) * s * 0.07, ox = x + (r() - 0.5) * s * 0.3, l = s * (0.25 + r() * 0.3); ctx.beginPath(); ctx.moveTo(ox - l / 2, oy); ctx.lineTo(ox + l / 2, oy); ctx.strokeStyle = rgba(ink, 0.3); ctx.lineWidth = Math.max(0.7, s * 0.006); ctx.stroke(); }
+    for (let i = 0; i < 3; i++) { const ox = x + (r() - 0.5) * s * 0.6, oy = y - s * 0.02; for (let j = -2; j <= 2; j++) { ctx.beginPath(); ctx.moveTo(ox, oy); ctx.quadraticCurveTo(ox + j * s * 0.01, oy - s * 0.08, ox + j * s * 0.03, oy - s * (0.12 + Math.abs(j) * -0.015)); ctx.strokeStyle = rgba(ink, 0.4); ctx.stroke(); } }
+  } else if (t === 'coast') {
+    for (let i = 0; i < 3; i++) { const oy = y + i * s * 0.08, ox = x + (r() - 0.5) * s * 0.2, l = s * 0.5; ctx.beginPath(); ctx.moveTo(ox - l / 2, oy); for (let j = 0; j < 4; j++) ctx.quadraticCurveTo(ox - l / 2 + l * (j + 0.5) / 4, oy - s * 0.04, ox - l / 2 + l * (j + 1) / 4, oy); ctx.strokeStyle = rgba(ink, 0.3); ctx.lineWidth = Math.max(0.7, s * 0.006); ctx.stroke(); }
+  }
+  ctx.restore();
+}
+function drawTerrainGrid(k) {
+  const cellLi = Math.pow(2, Math.round(Math.log2(40 / k))); const lvl = Math.round(Math.log2(cellLi));
+  const [x0, y0] = toW(-20, -20), [x1, y1] = toW(W + 20, H + 20);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (let i = Math.floor(x0 / cellLi); i <= x1 / cellLi; i++) for (let j = Math.floor(y0 / cellLi); j <= y1 / cellLi; j++) {
+    const r = mulberry32(hash(lvl + ':' + i + ':' + j)); const p = [(i + r()) * cellLi, (j + r()) * cellLi];
+    if (r() < 0.4 || !inRegion(p)) continue;
+    const t = terrainAt(p); if (t === 'sea') continue;
+    const [x, y] = toS(p); sym(t, x, y, r);
+  }
+}
+function sym(t, x, y, r) {
+  const ink = TERRAIN_INK[t] || TERRAIN_INK.karst; ctx.strokeStyle = rgba(ink, 0.34); ctx.fillStyle = rgba(ink, 0.2); ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (t === 'karst') {
+    const n = 2 + Math.floor(r() * 3);
+    for (let s = 0; s < n; s++) { const ox = x + (s - n / 2) * 3.4 + (r() - 0.5) * 2, h = 5 + r() * 8; ctx.moveTo(ox - 1.4, y); ctx.quadraticCurveTo(ox - 1.7, y - h, ox, y - h - 1.2); ctx.quadraticCurveTo(ox + 1.7, y - h, ox + 1.4, y); }
+    ctx.moveTo(x - n * 2.4, y + 0.5); ctx.lineTo(x + n * 2.4, y + 0.5); ctx.stroke();
+  } else if (t === 'hills') {
+    ctx.moveTo(x - 8, y); ctx.quadraticCurveTo(x - 3, y - 8, x + 2, y); ctx.moveTo(x - 1, y - 2); ctx.quadraticCurveTo(x + 3, y - 6, x + 8, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - 1, y - 3); ctx.lineTo(x, y - 1); ctx.moveTo(x - 2.5, y - 4.5); ctx.lineTo(x - 1.6, y - 2.4); ctx.stroke();
+  } else if (t === 'forest') {
+    for (let s = 0; s < 3; s++) { const ox = x + (s - 1) * 5 + (r() - 0.5) * 2, oy = y + (s === 1 ? -2 : 0), h = 6 + r() * 3; ctx.moveTo(ox, oy - h); ctx.lineTo(ox - 2.8, oy); ctx.lineTo(ox + 2.8, oy); ctx.closePath(); }
+    ctx.fill(); ctx.stroke();
+  } else if (t === 'plains') {
+    for (let s = 0; s < 3; s++) { const ox = x + (s - 1) * 3; ctx.moveTo(ox, y); ctx.lineTo(ox + (s - 1) * 1.6, y - 4 - (s === 1 ? 2 : 0)); }
+    ctx.stroke(); if (r() < 0.4) { ctx.beginPath(); ctx.arc(x + 7, y - 1, 0.9, 0, 7); ctx.fill(); }
+  } else if (t === 'marsh') {
+    ctx.moveTo(x - 6, y); ctx.lineTo(x + 2, y); ctx.moveTo(x - 3, y + 3); ctx.lineTo(x + 6, y + 3);
+    ctx.moveTo(x + 2, y - 1); ctx.lineTo(x + 2, y - 6); ctx.moveTo(x + 2, y - 1); ctx.lineTo(x - 0.5, y - 5); ctx.moveTo(x + 2, y - 1); ctx.lineTo(x + 4.5, y - 5); ctx.stroke();
+  } else if (t === 'coast') {
+    ctx.moveTo(x - 7, y); ctx.quadraticCurveTo(x - 4.5, y - 3, x - 2, y); ctx.quadraticCurveTo(x + 0.5, y - 3, x + 3, y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x + 6, y + 2, 0.8, 0, 7); ctx.arc(x - 4, y + 3, 0.7, 0, 7); ctx.fill();
+  }
+}
+function drawRivers(k) {
+  for (const rv of rivers) {
+    pathLine(ctx, rv.pts); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const w = Math.max(1.6, 220 * k);
+    ctx.strokeStyle = 'rgba(20,48,58,0.9)'; ctx.lineWidth = w + 2.5; ctx.stroke();
+    ctx.strokeStyle = 'rgba(86,150,170,0.55)'; ctx.lineWidth = w; ctx.stroke();
+    ctx.strokeStyle = 'rgba(160,215,230,0.25)'; ctx.lineWidth = Math.max(0.6, w * 0.3); ctx.stroke();
+  }
+}
+
+// Cracks in world space: a few long fractures and fine webs, fixed to the map.
+const CRACKS = (() => {
+  const rng = mulberry32(905); const out = [];
+  const walk = (x, y, a, len, step, wob) => { const pts = [[x, y]]; let l = 0; while (l < len) { a += (rng() - 0.5) * wob; const s = step * (0.6 + rng() * 0.8); x += Math.cos(a) * s; y += Math.sin(a) * s; pts.push([x, y]); l += s; } return pts; };
+  const impacts = [[150000, 180000], [205000, 252000], [128000, 262000], [232000, 172000], [178000, 232000]];
+  impacts.forEach(([cx, cy], idx) => {
+    for (let i = 0; i < 2; i++) { const f = walk(cx, cy, rng() * Math.PI * 2, 18000 + rng() * 26000, 1300, 0.34); out.push({ pts: f, k: 1 }); for (let b = 0; b < 2; b++) { const p = f[Math.floor(f.length * (0.2 + rng() * 0.6))]; out.push({ pts: walk(p[0], p[1], rng() * Math.PI * 2, 4000 + rng() * 9000, 700, 0.5), k: 0.55 }); } }
+    const n = 9 - idx; const R = 7000 + rng() * 4000;
+    for (let i = 0; i < n; i++) out.push({ pts: walk(cx, cy, (i / n) * Math.PI * 2, R * (0.5 + rng() * 0.6), 420, 0.45), k: 0.42 });
+  });
+  return out;
+})();
+let SMALL_CLOUD = null;
+// Small clouds: little clusters of three to five puffs, many of them, each with a lit top.
+function smallCloudPattern() {
+  if (SMALL_CLOUD) return SMALL_CLOUD;
+  const t = document.createElement('canvas'); t.width = t.height = 512; const g = t.getContext('2d'); const rng = mulberry32(57);
+  for (let c = 0; c < 45; c++) {
+    const cx = rng() * 512, cy = rng() * 512, n = 3 + Math.floor(rng() * 3), a = 0.26 + rng() * 0.14;
+    for (let i = 0; i < n; i++) {
+      const x = cx + (i - n / 2) * (7 + rng() * 4), y = cy + (rng() - 0.5) * 6 - (i === Math.floor(n / 2) ? 4 : 0), r = 6 + rng() * 7;
+      for (const [dx, dy] of [[0, 0], [512, 0], [-512, 0], [0, 512], [0, -512]]) { const gr = g.createRadialGradient(x + dx, y + dy - r * 0.3, 0, x + dx, y + dy, r); gr.addColorStop(0, `rgba(215,226,234,${a})`); gr.addColorStop(0.7, `rgba(190,205,215,${a * 0.6})`); gr.addColorStop(1, 'rgba(190,205,215,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x + dx, y + dy, r, 0, 7); g.fill(); }
+    }
+  }
+  SMALL_CLOUD = ctx.createPattern(t, 'repeat'); return SMALL_CLOUD;
+}
+let CLOUD = null;
+function cloudPattern() {
+  if (CLOUD) return CLOUD;
+  const t = document.createElement('canvas'); t.width = t.height = 640; const g = t.getContext('2d'); const rng = mulberry32(31);
+  for (let i = 0; i < 70; i++) {
+    const cl = Math.floor(i / 7), cx = (mulberry32(cl * 17 + 3)() * 640), cy = (mulberry32(cl * 29 + 5)() * 640);
+    const x = cx + (rng() - 0.5) * 150, y = cy + (rng() - 0.5) * 70, r = 22 + rng() * 48, a = 0.07 + rng() * 0.07;
+    for (const [dx, dy] of [[0, 0], [640, 0], [-640, 0], [0, 640], [0, -640]]) { const gr = g.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r); gr.addColorStop(0, `rgba(190,205,215,${a})`); gr.addColorStop(1, 'rgba(190,205,215,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x + dx, y + dy, r, 0, 7); g.fill(); }
+  }
+  g.strokeStyle = 'rgba(200,214,224,0.07)'; g.lineWidth = 1.2;
+  for (let i = 0; i < 26; i++) { const x = rng() * 640, y = rng() * 640, r = 12 + rng() * 22; g.beginPath(); g.arc(x, y, r, Math.PI * 0.9, Math.PI * 2.1); g.arc(x + r * 0.9, y - r * 0.2, r * 0.55, Math.PI * 0.9, Math.PI * 2.3); g.stroke(); }
+  CLOUD = ctx.createPattern(t, 'repeat'); return CLOUD;
+}
+function drawCracks(c, glow) {
+  const core = '#c5e6ee'; c.lineCap = 'round'; c.lineJoin = 'round';
+  for (const { pts, k } of CRACKS) {
+    pathLine(c, pts); c.globalCompositeOperation = 'source-over'; c.lineWidth = 1.1 * k + 0.4; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.stroke();
+    c.globalCompositeOperation = 'lighter';
+    c.lineWidth = 6 * k; c.strokeStyle = rgba(C.crack, 0.018 * glow); c.stroke();
+    c.lineWidth = 2 * k; c.strokeStyle = rgba(C.crack, 0.05 * glow); c.stroke();
+    c.lineWidth = Math.max(0.5, 0.7 * k); c.strokeStyle = rgba(core, 0.2 * glow); c.stroke();
+  }
+  c.globalCompositeOperation = 'source-over';
+}
+
+function draw() {
+  if (!ctx) return;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const k = S.view.k;
+  // Sea and land.
+  ctx.fillStyle = '#05070a'; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.strokeStyle = 'rgba(127,199,217,0.035)'; ctx.lineWidth = 1;
+  for (let y = (((-S.view.y * k) % 9) + 9) % 9; y < H; y += 9) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.restore();
+  for (const l of LAND) { pathPoly(ctx, l); ctx.fillStyle = '#14181d'; ctx.fill(); }
+  // Terrain inside the region (the fog decides what shows).
+  ctx.save(); pathPoly(ctx, GEO.conts.qiming); ctx.clip(); pathPoly(ctx, REGION); ctx.clip();
+  const fillArea = (a) => { pathPoly(ctx, a.poly); ctx.fillStyle = TERRAIN_FILL[a.terrain] || '#11161a'; ctx.fill(); };
+  if (S.land === 'relief' || S.land === 'reliefOnly') { const [rx, ry] = toS([RELIEF.x0, RELIEF.y0]); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(RELIEF.canvas, rx, ry, RELIEF.w * RELIEF.RES * k, RELIEF.h * RELIEF.RES * k); }
+  else if (S.land === 'ink') { const [rx, ry] = toS([RELIEF.x0, RELIEF.y0]); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(RELIEF.ink, rx, ry, RELIEF.w * RELIEF.RES * k, RELIEF.h * RELIEF.RES * k); }
+  else { pathPoly(ctx, REGION); ctx.fillStyle = TERRAIN_FILL.karst; ctx.fill(); for (const a of areas) if (a.kind === 'tract') fillArea(a); for (const a of areas) if (a.kind !== 'tract') fillArea(a); }
+  if (S.land !== 'reliefOnly') drawTerrain(k);
+  if (S.depthLayer) drawDepth(k, [120, 30, 70], 1);
+  if (S.depthLines !== 'off') drawDepthLines(k);
+  drawRivers(k);
+  ctx.restore();
+  // Coast line, with a soft wash of surf along it.
+  pathPoly(ctx, GEO.conts.qiming); ctx.lineJoin = 'round';
+  for (const [w, a] of [[Math.max(6, 900 * k), 0.035], [Math.max(3, 400 * k), 0.06]]) { ctx.strokeStyle = `rgba(127,199,217,${a})`; ctx.lineWidth = w; ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(127,199,217,0.3)'; ctx.lineWidth = 1.2; ctx.stroke();
+  pathPoly(ctx, GEO.conts.cangmang); ctx.stroke();
+
+  // ---- the fog ----
+  // What you know is drawn once as a mask: the region you stand in faintly, places by their state, your trail and
+  // your sight. The veil is cut by it, and in the mixed look a thin drift of cloud lies only where it is.
+  mctx.setTransform(DPR, 0, 0, DPR, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.clearRect(0, 0, W, H);
+  const hole = (poly, a) => { pathPoly(mctx, poly); mctx.fillStyle = `rgba(0,0,0,${a})`; mctx.fill(); mctx.lineJoin = 'round'; for (const [w, al] of [[16, 0.25 * a], [8, 0.35 * a]]) { mctx.lineWidth = w; mctx.strokeStyle = `rgba(0,0,0,${al})`; mctx.stroke(); } };
+  if (known('qm-bianhuang') !== 'unknown') { mctx.save(); pathPoly(mctx, GEO.conts.qiming); mctx.clip(); hole(REGION, S.fogLook === 'cloud' ? 0.3 : S.wilds === 'tracts' ? 0.14 : 0.12); mctx.restore(); }
+  for (const a of areas) {
+    const st = known(a.id); if (st === 'unknown' || st === 'rumored') continue;
+    if (a.kind === 'tract') { mctx.save(); pathPoly(mctx, GEO.conts.qiming); mctx.clip(); pathPoly(mctx, REGION); mctx.clip(); hole(a.poly, S.wilds === 'tracts' ? (st === 'seen' ? 0.82 : 0.4) : S.fogLook === 'cloud' ? 0.62 : 0.4); mctx.restore(); }
+    else hole(a.poly, st === 'seen' ? 1 : S.fogLook === 'cloud' ? 0.65 : 0.42);
+  }
+  if (S.wilds === 'trail' && S.trail.length > 1) {
+    mctx.lineCap = 'round'; mctx.lineJoin = 'round'; pathLine(mctx, S.trail);
+    const r = Math.max(3, SIGHT().open * k);
+    for (const [w, a] of [[r * 2.4, 0.3], [r * 2.1, 0.5], [r * 1.8, 1]]) { mctx.lineWidth = w; mctx.strokeStyle = `rgba(0,0,0,${a})`; mctx.stroke(); }
+  }
+  for (const q of points) { if (known(q.id) === 'seen' && S.sites !== 'all') { const [x, y] = toS([q.x, q.y]); mctx.beginPath(); mctx.arc(x, y, Math.max(9, 400 * k), 0, 7); mctx.fillStyle = 'rgba(0,0,0,0.7)'; mctx.fill(); } }
+  { const [x, y] = toS(S.you); const r = Math.max(5, sightAt(S.you) * k); const g = mctx.createRadialGradient(x, y, r * 0.5, x, y, r); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); mctx.fillStyle = g; mctx.beginPath(); mctx.arc(x, y, r, 0, 7); mctx.fill(); }
+  // The veil over the unknown: dark glass and its cracks, or cloud alone in the cloud look.
+  fctx.setTransform(DPR, 0, 0, DPR, 0, 0); fctx.globalCompositeOperation = 'source-over'; fctx.clearRect(0, 0, W, H);
+  // Clouds are pinned to the world: a pattern pixel is 100 li (a tile is about a region), so zooming magnifies them like the land under them.
+  const cloudFill = (c, scale) => { const pat = cloudPattern(); const li = 100 * scale; pat.setTransform(new DOMMatrix().translate(W / 2 - S.view.x * k, H / 2 - S.view.y * k).scale(li * k)); c.fillStyle = pat; c.fillRect(0, 0, W, H); };
+  if (S.fogLook === 'cloud') { fctx.fillStyle = 'rgba(4,6,9,0.66)'; fctx.fillRect(0, 0, W, H); cloudFill(fctx, 1); cloudFill(fctx, 0.62); cloudFill(fctx, 1.6); }
+  else { fctx.fillStyle = 'rgba(3,4,6,0.965)'; fctx.fillRect(0, 0, W, H); drawCracks(fctx, 1); }
+  fctx.setTransform(1, 0, 0, 1, 0, 0); fctx.globalCompositeOperation = 'destination-out'; fctx.drawImage(maskCv, 0, 0); fctx.globalCompositeOperation = 'source-over';
+  if (S.fogLook === 'cloud') {
+    // Over what you know, weather rather than fog: many small clouds and no veil, kept to the mask.
+    cctx.setTransform(DPR, 0, 0, DPR, 0, 0); cctx.globalCompositeOperation = 'source-over'; cctx.clearRect(0, 0, W, H);
+    const sp = smallCloudPattern(); sp.setTransform(new DOMMatrix().translate(W / 2 - S.view.x * k, H / 2 - S.view.y * k).scale(45 * k)); cctx.fillStyle = sp; cctx.fillRect(0, 0, W, H);
+    cctx.setTransform(1, 0, 0, 1, 0, 0); cctx.globalCompositeOperation = 'destination-in'; cctx.drawImage(maskCv, 0, 0); cctx.globalCompositeOperation = 'source-over';
+    fctx.drawImage(cloudCv, 0, 0);
+  }
+  if (S.fogLook === 'mix') {
+    // Over what you know, only a thin drift: the same clouds, kept to the mask and half as thick.
+    cctx.setTransform(DPR, 0, 0, DPR, 0, 0); cctx.globalCompositeOperation = 'source-over'; cctx.clearRect(0, 0, W, H);
+    cctx.fillStyle = 'rgba(4,6,9,0.14)'; cctx.fillRect(0, 0, W, H); cloudFill(cctx, 1.3); cloudFill(cctx, 0.8);
+    cctx.setTransform(1, 0, 0, 1, 0, 0); cctx.globalCompositeOperation = 'destination-in'; cctx.drawImage(maskCv, 0, 0); cctx.globalCompositeOperation = 'source-over';
+    fctx.drawImage(cloudCv, 0, 0);
+  }
+  if (S.fogLook !== 'off') { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(fogCv, 0, 0); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
+
+  // ---- over the fog ----
+  // Borders of what you know.
+  for (const a of areas) {
+    const st = known(a.id); if (st === 'unknown' || st === 'rumored') continue;
+    if (a.kind === 'tract') continue;
+    pathPoly(ctx, a.poly); ctx.save();
+    if (st === 'sketched') ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = a.mark === 'deadly' ? rgba(C.warn, 0.75) : st === 'seen' ? 'rgba(233,229,218,0.42)' : 'rgba(233,229,218,0.32)'; ctx.lineWidth = a.mark === 'deadly' ? 1.6 : 1.2; ctx.stroke(); ctx.restore();
+  }
+  if (known('qm-bianhuang') !== 'unknown') { ctx.save(); pathPoly(ctx, GEO.conts.qiming); ctx.clip(); pathPoly(ctx, REGION); ctx.setLineDash([2, 5]); ctx.strokeStyle = 'rgba(214,171,76,0.32)'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.restore(); }
+  // Hostile sphere.
+  if (S.hunted === 'yes') {
+    const g = P('qm-tushou-men'); const [x, y] = toS([g.x, g.y]); const r = g.sphere * k;
+    ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.clip();
+    ctx.strokeStyle = rgba(C.warn, 0.13); ctx.lineWidth = 1; for (let i = -H - W; i < W + H; i += 10) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + H, H); ctx.stroke(); }
+    ctx.restore(); ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.strokeStyle = rgba(C.warn, 0.5); ctx.setLineDash([8, 6]); ctx.lineWidth = 1.3; ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = '600 12px Inter, sans-serif'; ctx.fillStyle = rgba(C.warn, 0.85); ctx.textAlign = 'center'; ctx.fillText('Hostile · the Gate hunts you here', x, y - r + 16);
+  }
+  // Roads.
+  for (const rd of roads) {
+    const st = known(rd.id); if (st === 'unknown') continue;
+    pathLine(ctx, rd.pts); ctx.save(); ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3.2; ctx.stroke();
+    ctx.setLineDash(st === 'sketched' ? [3, 4] : []); ctx.strokeStyle = st === 'seen' ? 'rgba(194,174,140,0.72)' : 'rgba(194,174,140,0.45)'; ctx.lineWidth = 1.4; ctx.stroke(); ctx.restore();
+  }
+  // The low-tide chain (rumored by every start on the coast; shown when the region is known).
+  if (known('qm-bianhuang') !== 'unknown') {
+    ctx.fillStyle = 'rgba(127,199,217,0.45)'; chain.forEach((q, i) => { const [x, y] = toS(q); ctx.beginPath(); ctx.arc(x, y, i % 3 ? 1.4 : 2.2, 0, 7); ctx.fill(); });
+    const [x, y] = toS(chain[9]); ctx.font = 'italic 12px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(127,199,217,0.7)'; ctx.fillText('the low-tide chain → the Pushed Frontier (M6)', x + 10, y);
+  }
+  for (const rv of rivers) {
+    if (known(rv.id) !== 'seen') continue; const mid = rv.pts[Math.floor(rv.pts.length * 0.45)]; const [x, y] = toS(mid);
+    ctx.font = 'italic 500 13px Cormorant Garamond, Georgia, serif'; const w = ctx.measureText(rv.name).width;
+    queue(35, x - w / 2, y - 18, w, 14, () => { ctx.font = 'italic 500 13px Cormorant Garamond, Georgia, serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(150,205,220,0.75)'; ctx.fillText(rv.name, x, y - 7); });
+  }
+  // Pins you set.
+  S.pins.forEach((pin, i) => { const [x, y] = toS(pin); ctx.fillStyle = C.accent; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 4, y - 8); ctx.arc(x, y - 10, 4.2, Math.PI * 0.8, Math.PI * 2.2); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#040507'; ctx.beginPath(); ctx.arc(x, y - 10, 1.6, 0, 7); ctx.fill(); const t = 'Pin ' + (i + 1); ctx.font = '11.5px Inter, sans-serif'; const w = ctx.measureText(t).width; queue(75, x + 7, y - 18, w, 13, () => { ctx.font = '11.5px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = rgba(C.accent, 0.9); ctx.fillText(t, x + 7, y - 8); }); });
+  // Area labels.
+  for (const a of areas) {
+    const st = known(a.id); if (st === 'unknown') continue;
+    if (a.kind === 'tract' && st !== 'seen') continue;
+    if (st === 'rumored') continue;
+    let [cx, cy] = toS(a.kind === 'tract' && S.wilds !== 'tracts' && a.seenAt ? a.seenAt : centroid(a.poly)); const big = a.kind === 'kingdom' || a.kind === 'forbidden';
+    if (big) { const ys = a.poly.map((p) => toS(p)[1]); const top = Math.min(...ys), h = Math.max(...ys) - top; if (h < 220) cy = top - (a.mark === 'deadly' ? 34 : 22); }
+    const size = big ? Math.max(13, Math.min(22, 9000 * k)) : Math.max(11, Math.min(17, 6000 * k));
+    label(cx, cy - (big ? 6 : 0), a.name, a.hanzi, size, st === 'seen' ? 1 : 0.6, a.kind === 'tract', big ? 85 : 20);
+    if (a.mark === 'deadly') warnTag(cx, cy + size * 1.9, `险 deadly · ${a.top}`);
+  }
+  // Rumors: a dashed ring and a diamond, no outline.
+  for (const q of [...points, ...areas]) {
+    if (shown(q) !== 'rumored') continue;
+    const c = q.poly ? centroid(q.poly) : q.ring || [q.x, q.y];
+    const [x, y] = toS(c); const r = Math.max(9, RUMOR_R() * k);
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.setLineDash([3, 5]); ctx.strokeStyle = rgba(C.accent, 0.45); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+    diamond(x, y, 8, rgba(C.accent, 0.95));
+    ctx.font = 'italic 12px Inter, sans-serif'; { const w = ctx.measureText(q.name).width; const nm = q.name; queue(q.famous ? 55 : 40, x - w / 2, y + r + 3, w, 14, () => { ctx.font = 'italic 12px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(233,229,218,0.68)'; ctx.fillText(nm, x, y + r + 14); }); }
+    if (q.mark === 'deadly') warnTag(x, y + r + 30, `险 deadly · ${q.top}`);
+  }
+  // Sites.
+  const showName = k > 0.03;
+  for (const q of points) {
+    const st = shown(q); if (st !== 'seen' && st !== 'sketched') continue;
+    const [x, y] = toS([q.x, q.y]); if (x < -40 || y < -40 || x > W + 40 || y > H + 40) continue;
+    mark(q, x, y, st);
+    const major = q.kind === 'city' || q.kind === 'power' || q.kind === 'landmark' || q.sub === 'town';
+    if (major || showName || S.hover === q || S.selected === q) {
+      const font = `${major ? '500 12.5px' : '11.5px'} Inter, sans-serif`; ctx.font = font; const w = ctx.measureText(q.name).width; const col = st === 'seen' ? 'rgba(233,229,218,0.88)' : 'rgba(233,229,218,0.55)';
+      const pri = S.hover === q || S.selected === q ? 100 : major ? 80 : q.sub === 'town' ? 70 : q.sub === 'village' ? 45 : 30;
+      if (q.sub !== 'checkpoint' || showName) queue(pri, x + 11, y - 7, w, 14, () => { ctx.font = font; ctx.textAlign = 'left'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(4,5,7,0.75)'; ctx.strokeText(q.name, x + 11, y + 4); ctx.fillStyle = col; ctx.fillText(q.name, x + 11, y + 4); });
+    }
+  }
+  flushLabels();
+  // Look-around ping.
+  if (S.ping) { const [x, y] = toS(S.ping.at); const r = Math.max(14, S.ping.r * k); ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.strokeStyle = rgba(C.crack, 0.7 * S.ping.a); ctx.lineWidth = 1.4; ctx.stroke(); }
+  // Route and you.
+  if (S.route && S.route.pts) {
+    const rest = S.route.pts.slice(S.routeAt); pathLine(ctx, [S.you, ...rest]); ctx.save(); ctx.setLineDash([2, 6]); ctx.lineCap = 'round'; ctx.strokeStyle = rgba(C.accent, 0.95); ctx.lineWidth = 2.2; ctx.stroke(); ctx.restore();
+    const [x, y] = toS(S.route.pts[S.route.pts.length - 1]); ctx.beginPath(); ctx.arc(x, y, 6, 0, 7); ctx.strokeStyle = C.accent; ctx.lineWidth = 1.5; ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, 2, 0, 7); ctx.fillStyle = C.accent; ctx.fill();
+  }
+  { const [x, y] = toS(S.you); const r = sightAt(S.you) * k;
+    if (r > 6) { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.setLineDash([1, 5]); ctx.strokeStyle = rgba(C.crack, 0.5); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]); }
+    ctx.beginPath(); ctx.arc(x, y, 5.5, 0, 7); ctx.fillStyle = C.accent; ctx.fill(); ctx.beginPath(); ctx.arc(x, y, 10, 0, 7); ctx.strokeStyle = rgba(C.accent, 0.6); ctx.lineWidth = 1.2; ctx.stroke(); }
+}
+const LBL = [];
+function queue(pri, x, y, w, h, fn) { LBL.push({ pri, x, y, w, h, fn }); }
+function flushLabels() {
+  LBL.sort((a, b) => b.pri - a.pri); const taken = [];
+  for (const l of LBL) {
+    const box = [l.x - 2, l.y - 2, l.x + l.w + 2, l.y + l.h + 2];
+    if (l.pri < 90 && taken.some((t) => box[0] < t[2] && box[2] > t[0] && box[1] < t[3] && box[3] > t[1])) continue;
+    taken.push(box); l.fn();
+  }
+  LBL.length = 0;
+}
+function label(x, y, name, hz, size, alpha, small, pri) {
+  ctx.font = `${small ? 'italic 500' : '600'} ${size}px 'Cormorant Garamond', Georgia, serif`;
+  const w = ctx.measureText(name).width;
+  queue(pri ?? 50, x - w / 2, y - size, w, size * (hz ? 2.1 : 1.2), () => labelNow(x, y, name, hz, size, alpha, small));
+}
+function labelNow(x, y, name, hz, size, alpha, small) {
+  ctx.textAlign = 'center'; ctx.font = `${small ? 'italic 500' : '600'} ${size}px 'Cormorant Garamond', Georgia, serif`;
+  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(4,5,7,0.8)'; ctx.strokeText(name, x, y); ctx.fillStyle = `rgba(233,229,218,${alpha * (small ? 0.75 : 0.95)})`; ctx.fillText(name, x, y);
+  if (hz) { ctx.font = `${Math.round(size * 0.78)}px 'Ma Shan Zheng', KaiTi, serif`; ctx.fillStyle = rgba(C.accent, alpha * (small ? 0.55 : 0.85)); ctx.fillText(hz, x, y + size * 0.98); }
+}
+function warnTag(x, y, text) { ctx.font = '600 11px Inter, sans-serif'; ctx.textAlign = 'center'; const w = ctx.measureText(text).width + 12; ctx.fillStyle = 'rgba(20,8,6,0.85)'; ctx.fillRect(x - w / 2, y - 11, w, 16); ctx.strokeStyle = rgba(C.warn, 0.6); ctx.lineWidth = 1; ctx.strokeRect(x - w / 2, y - 11, w, 16); ctx.fillStyle = C.warn; ctx.fillText(text, x, y + 1); }
+function diamond(x, y, s, color) { ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 4); ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.strokeRect(-s / 2, -s / 2, s, s); ctx.restore(); }
+function mark(q, x, y, st) {
+  const a = st === 'seen' ? 1 : 0.55; const major = q.kind === 'city' || q.kind === 'power' || q.kind === 'landmark';
+  const minor = !major && q.sub !== 'town' && q.sub !== 'checkpoint' && q.sub !== 'ferry' && q.sub !== 'heart';
+  if (minor && S.view.k < 0.016) { const t = Math.max(0, (S.view.k - 0.009) / 0.007); ctx.beginPath(); ctx.arc(x, y, 1.6 + t, 0, 7); ctx.fillStyle = rgba(C.text, (0.45 + t * 0.3) * a); ctx.fill(); return; }
+  const ink = q.sub === 'checkpoint' ? C.travel : q.sub === 'heart' ? '#e6b3c3' : C.text;
+  if (S.marks === 'seals') {
+    const s = major ? 19 : q.sub === 'town' ? 16 : q.sub === 'checkpoint' ? 12 : 14;
+    ctx.fillStyle = 'rgba(8,9,12,0.92)'; ctx.strokeStyle = rgba(major ? C.accent : ink, 0.75 * a); ctx.lineWidth = 1.1;
+    roundRect(x - s / 2, y - s / 2, s, s, 3); ctx.fill(); ctx.stroke();
+    if (q.mark === 'gated') { ctx.strokeStyle = rgba(C.accent, 0.6 * a); roundRect(x - s / 2 - 3, y - s / 2 - 3, s + 6, s + 6, 5); ctx.stroke(); }
+    ctx.font = `${Math.round(s * 0.74)}px 'Ma Shan Zheng', KaiTi, serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = rgba(major ? C.accent : ink, 0.95 * a); ctx.fillText(SEAL[q.sub] || '·', x, y + 1); ctx.textBaseline = 'alphabetic';
+  } else {
+    ctx.strokeStyle = rgba(major ? C.accent : ink, 0.85 * a); ctx.fillStyle = rgba(major ? C.accent : ink, 0.85 * a); ctx.lineWidth = 1.4;
+    const g = q.sub;
+    if (g === 'city') { ctx.strokeRect(x - 6, y - 6, 12, 12); ctx.fillRect(x - 3, y - 3, 6, 6); }
+    else if (g === 'town') ctx.fillRect(x - 4.5, y - 4.5, 9, 9);
+    else if (g === 'village') ctx.fillRect(x - 3, y - 3, 6, 6);
+    else if (g === 'sect' || g === 'society' || g === 'realm') { diamond(x, y, 10, rgba(C.accent, a)); ctx.beginPath(); ctx.arc(x, y, 1.8, 0, 7); ctx.fill(); }
+    else if (g === 'landmark') { ctx.fillRect(x - 8, y - 2, 16, 4); }
+    else if (g === 'cave') { ctx.beginPath(); ctx.arc(x, y + 3, 5, Math.PI, 0); ctx.stroke(); }
+    else if (g === 'den') { ctx.beginPath(); ctx.moveTo(x - 5, y + 4); ctx.lineTo(x, y - 5); ctx.lineTo(x + 5, y + 4); ctx.closePath(); ctx.stroke(); }
+    else if (g === 'ruin') { ctx.beginPath(); ctx.moveTo(x - 5, y - 1); ctx.lineTo(x - 5, y + 5); ctx.lineTo(x + 1, y + 5); ctx.moveTo(x + 5, y + 1); ctx.lineTo(x + 5, y - 5); ctx.lineTo(x - 1, y - 5); ctx.stroke(); }
+    else if (g === 'shrine') { ctx.beginPath(); ctx.moveTo(x - 6, y - 2); ctx.lineTo(x + 6, y - 2); ctx.moveTo(x - 4, y - 2); ctx.lineTo(x - 4, y + 5); ctx.moveTo(x + 4, y - 2); ctx.lineTo(x + 4, y + 5); ctx.moveTo(x - 7, y - 5); ctx.lineTo(x + 7, y - 5); ctx.stroke(); }
+    else if (g === 'herb-valley') { ctx.beginPath(); ctx.ellipse(x, y, 3, 6, 0.6, 0, 7); ctx.stroke(); }
+    else if (g === 'checkpoint') { ctx.fillRect(x - 5, y - 1.5, 10, 3); }
+    else { ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, 1.3, 0, 7); ctx.fill(); }
+    if (q.mark === 'gated') { ctx.beginPath(); ctx.arc(x, y, 10, 0, 7); ctx.strokeStyle = rgba(C.accent, 0.55 * a); ctx.stroke(); }
+  }
+}
+function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+let raf = 0; const redraw = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; draw(); }); };
+
+// ---------- hit testing ----------
+function pick(sx, sy) {
+  let best = null, bd = 13;
+  for (const q of points) { const st = shown(q); if (st === 'unknown') continue; const c = st === 'rumored' && q.ring ? q.ring : [q.x, q.y]; const [x, y] = toS(c); const d = Math.hypot(x - sx, y - sy); if (d < bd) { bd = d; best = q; } }
+  if (best) return best;
+  for (const a of areas) if (known(a.id) === 'rumored') { const [x, y] = toS(centroid(a.poly)); if (Math.hypot(x - sx, y - sy) < 14) return a; }
+  const w = toW(sx, sy);
+  const k = kingdomAt(w); if (k && known(k.id) !== 'unknown' && known(k.id) !== 'rumored') return k;
+  const t = tractAt(w); if (t && S.wilds === 'tracts' && known(t.id) === 'seen') return t;
+  return null;
+}
+
+// ---------- panels ----------
+const HOURS = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+const HOUR_COLOR = { b: 'var(--hour-body)', o: 'var(--hour-soul)', L: 'var(--hour-look)', z: 'var(--hour-sleep)', q: 'var(--hour-qi)', T: 'var(--hour-travel)', G: 'var(--hour-guard)', R: 'var(--hour-qi)', p: 'var(--hour-practice)', s: 'var(--hour-study)' };
+const HOUR_WORD = { b: 'temper the body', o: 'nourish the soul', L: 'look around and make camp', z: 'sleep', q: 'qi', T: 'travel', G: 'guard the caravan', R: 'qi, riding (jostled ×½)', p: 'practice', s: 'study' };
+const HOME_WHEEL = 'zzqqpqqsqqqq';
+const onRoad = () => !!(S.route && S.route.pts && S.routeAt < S.route.pts.length - 1);
+const wheelHours = () => (showRoadWheel() ? dayHours() : HOME_WHEEL);
+const showRoadWheel = () => (S.wheelTab ? S.wheelTab === 'road' : onRoad());
+const PICKABLE = ['T', 'L', 'q', 'b', 'o', 's', 'p'];
+let customN = 0;
+function setHour(i, kind) {
+  const r = ROUTINES[S.routine]; const hours = [...r.hours]; hours[i] = kind;
+  if (!S.routine.startsWith('own')) { ROUTINES.own = { name: 'Your own road routine', short: 'Your own', hours: hours.join(''), note: 'edited by hand' }; S.routine = 'own'; }
+  else ROUTINES[S.routine].hours = hours.join('');
+  replan();
+}
+function wheelSvg() {
+  const hrs = wheelHours(); const R1 = 60, R0 = 32; let s = `<svg viewBox="-64 -64 128 128" aria-label="The road wheel"><defs><pattern id="jostle" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="var(--hour-qi)"/><rect width="2.2" height="5" fill="rgba(4,5,7,0.65)"/></pattern></defs>`;
+  const pol = (r, d) => { const a = ((d - 90) * Math.PI) / 180; return [r * Math.cos(a), r * Math.sin(a)]; };
+  for (let i = 0; i < 12; i++) {
+    const a0 = i * 30 - 15 + 0.8, a1 = i * 30 + 15 - 0.8; const [x1, y1] = pol(R1, a0), [x2, y2] = pol(R1, a1), [x3, y3] = pol(R0, a1), [x4, y4] = pol(R0, a0);
+    const h = hrs[i]; const fill = h === 'R' ? 'url(#jostle)' : HOUR_COLOR[h]; const now = i === S.hour;
+    s += `<path data-hour="${i}" style="cursor:${showRoadWheel() && h !== 'z' ? 'pointer' : 'default'}" d="M${x1} ${y1}A${R1} ${R1} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${R0} ${R0} 0 0 0 ${x4} ${y4}Z" fill="${fill}" opacity="${now ? 1 : h === 'z' ? 0.55 : 0.78}" stroke="${now ? '#e9e5da' : 'none'}" stroke-width="1.3"><title>${HOURS[i]}: ${HOUR_WORD[h]}</title></path>`;
+    const [tx, ty] = pol((R0 + R1) / 2, i * 30); s += `<text x="${tx}" y="${ty + 4}" text-anchor="middle" font-family="Ma Shan Zheng, KaiTi, serif" font-size="11" fill="rgba(4,5,7,0.85)">${HOURS[i]}</text>`;
+  }
+  const [hx, hy] = pol(R0 - 4, S.hour * 30); s += `<line x1="0" y1="0" x2="${hx}" y2="${hy}" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"/><circle r="3" fill="var(--accent)"/>`;
+  return s + '</svg>';
+}
+function roadPanel() {
+  const w = WAYS[S.way], r = ROUTINES[S.routine]; const tph = travelHoursPerDay(); const pace = paceLi();
+  const moving = S.route && S.route.pts && S.routeAt < S.route.pts.length - 1;
+  const hrs = wheelHours(); const cur = hrs[S.hour];
+  const doing = !moving ? HOUR_WORD[cur] : cur === 'T' ? 'walking' : cur === 'G' ? 'guarding the caravan' : cur === 'R' ? 'riding, cultivating at half' : cur === 'L' ? `looking around ${SIGHT().look} li, making camp` : cur === 'z' ? 'asleep ' + sleepPlace() : 'stopped to cultivate';
+  const road = showRoadWheel();
+  return `
+    <div class="wheel-row">${wheelSvg()}
+      <div class="wheel-side"><div class="chips" style="margin-bottom:3px"><button class="chip" data-tab="road" aria-pressed="${road}">Road wheel</button><button class="chip" data-tab="home" aria-pressed="${!road}">Home wheel</button></div><b>${HOURS[S.hour]} · ${doing}</b>
+        <span class="muted">${road ? (WAYS[S.way].free ? 'Riding: your hours are your own, at half. ' : '') + 'Tap an hour to change it.' : 'The home wheel is set in Cultivate.'}</span>
+        <span class="pace"><b>${Math.round(pace)} li</b> a double-hour · <b>${fmt(pace * tph)} li</b> a day by road</span></div>
+    </div>
+    <div><div class="label" style="margin-bottom:5px">Road routine</div><div class="chips">${Object.entries(ROUTINES).map(([id, x]) => `<button class="chip" data-routine="${id}" aria-pressed="${S.routine === id}" title="${x.name}: ${x.note}">${x.short}</button>`).join('')}${ROUTINES.own ? '<button class="chip" data-save>Save it</button>' : ''}</div></div>
+    ${S.group && S.group.kind === 'ship' ? '<div><div class="label" style="margin-bottom:5px">On the way</div><p class="pace" style="margin:0">Elder Tu decides. The ship sails through the night, gathers nothing unless something below is worth a Core elder stopping for, and only a beast that could rival him comes near.</p></div>' : ''}
+    <div style="${S.group && S.group.kind === 'ship' ? 'display:none' : ''}"><div class="label" style="margin-bottom:5px">On the way</div><div class="chips"><button class="chip" data-gather aria-pressed="${S.gather}" title="Keep an eye out for herbs and materials as you go: 15% slower; what you find goes by the land and its depth">Gather</button><button class="chip" data-stance="avoid" aria-pressed="${S.stance === 'avoid'}" title="Go round beasts and people: 10% slower, and most trouble never reaches you. The safe way to leave it running">Avoid trouble</button><button class="chip" data-stance="hunt" aria-pressed="${S.stance === 'hunt'}" title="Fight only what you would clearly beat (the resolver's clear verdict), and butcher it">Hunt sure kills</button></div></div>
+    <div><div class="label" style="margin-bottom:5px">Going by</div><div class="chips">${Object.entries(WAYS).filter(([, x]) => !x.hidden).map(([id, x]) => `<button class="chip" data-way="${id}" aria-pressed="${S.way === id}" ${x.locked ? 'disabled' : ''} title="${x.locked || x.note || ''}">${x.name}</button>`).join('')}</div></div>
+    <div class="pace">${r.note}${w.note ? ' · ' + w.note : ''}</div>`;
+}
+function openPicker(i, x, y) {
+  let el = document.getElementById('hpick'); if (!el) { el = document.createElement('div'); el.id = 'hpick'; el.className = 'panel menu-pop'; el.style.position = 'fixed'; el.style.zIndex = 20; document.body.appendChild(el); }
+  el.innerHTML = `<div class="head">${HOURS[i]} · ${BR_TIME[i]}</div>` + PICKABLE.map((k) => `<button type="button" data-pick="${k}" data-i="${i}"><span style="display:inline-flex;gap:8px;align-items:center;color:var(--text)"><i style="width:10px;height:10px;border-radius:2px;background:${HOUR_COLOR[k]}"></i>${HOUR_WORD[k][0].toUpperCase() + HOUR_WORD[k].slice(1)}</span></button>`).join('');
+  el.style.display = 'block'; el.style.left = Math.min(x + 8, innerWidth - 240) + 'px'; el.style.top = Math.max(8, Math.min(y - 40, innerHeight - el.offsetHeight - 8)) + 'px';
+}
+function closePicker() { const el = document.getElementById('hpick'); if (el) el.style.display = 'none'; }
+const BR_TIME = ['midnight', 'the small hours', 'before dawn', 'dawn', 'morning', 'late morning', 'noon', 'afternoon', 'late afternoon', 'dusk', 'evening', 'night'];
+function setGroup(mode) {
+  S.group = null; S.way = S.way === 'shipride' ? 'foot' : S.way;
+  if (mode === 'caravan') {
+    const from = P('qm-shoukou-cheng'), to = P('corral'); S.you = [from.x, from.y]; S.routine = 'caravan'; S.way = 'foot';
+    const plan = planRoute(S.you, [to.x, to.y]); plan.target = to; plan.startDay = S.day; S.route = plan; S.routeAt = 0;
+    S.group = { kind: 'caravan', name: 'The Iron-Shod caravan to Corral Town', leader: 'caravan master Lu', pay: '1 low-grade a day, paid at Corral Town', stops: 'Hatchling Barns: a day there, and you may go in while it rests',
+      leave: 'You lose the pay owed so far, and the merchant guild remembers a guard who walked off: standing −5.', canLeave: true };
+  }
+  if (mode === 'ship') {
+    const from = P('qm-tushou-men'); S.you = [from.x, from.y]; S.way = 'shipride'; const to = [212000, 196500];
+    const li = Math.hypot(to[0] - S.you[0], to[1] - S.you[1]);
+    const nb = P('qm-yeqiao-hui');
+    S.route = { pts: densify([S.you.slice(), [nb.x, nb.y], to], 60), roadLi: 0, crossLi: li, crossFactor: 1, days: li / (250 * 12), tolls: [], perDay: 3000, maxBand: -9, target: { name: 'the Contest of the Four Sects', hanzi: '四宗会武' }, startDay: S.day }; S.routeAt = 0;
+    S.group = { kind: 'ship', name: 'The Beast-Butcher Gate’s cloud ship', leader: 'Elder Tu', pay: 'none: you sail as an inner disciple, sent to fight', stops: 'the Night Bridge’s hall for a day, to take on its two contestants; then the host sect’s mountain',
+      leave: 'You are two thousand li up. Without flight of your own, stepping off means falling, and walking out on the sect’s contest is desertion: contribution and standing both.', canLeave: false };
+  }
+  renderPanels(); redraw();
+}
+function askLeave() {
+  const G = S.group; if (!G) return; let el = document.getElementById('leave');
+  if (!el) { el = document.createElement('div'); el.id = 'leave'; el.className = 'panel'; el.style.cssText = 'position:absolute;z-index:6;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,90%);padding:16px 18px;display:grid;gap:10px'; document.getElementById('stage').appendChild(el); }
+  el.innerHTML = `<span class="label">${G.kind === 'ship' ? 'Leave the ship?' : 'Leave the caravan?'}</span><p style="margin:0;font-size:13.5px">${G.leave}</p><p class="muted" style="margin:0;font-size:12.5px">Travelling with a group, the group sets the course. Your wheel stays yours.</p>
+    <div class="btns"><button class="btn" type="button" data-leave="stay">Stay with them</button><button class="btn quiet" type="button" data-leave="go" ${G.canLeave ? '' : 'disabled title="You cannot fly yet"'} style="${G.canLeave ? 'color:var(--warn);border-color:var(--warn-edge, #8a4b3a)' : 'opacity:.45'}">Leave</button></div>`;
+  el.style.display = 'grid';
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-leave]'); if (!b) return; document.getElementById('leave').style.display = 'none';
+  if (b.dataset.leave === 'go' && S.group && S.group.canLeave) { toast('You leave the caravan where it stands. The guild will hear of it.'); S.group = null; S.groupMode = 'none'; S.route = null; document.querySelectorAll('[data-key="groupMode"] button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === 'none'))); renderPanels(); redraw(); }
+});
+function stateWord(st) { return { seen: 'Seen', sketched: 'Sketched', rumored: 'Rumored', unknown: 'Unknown' }[st]; }
+function routeCard() {
+  const q = S.selected;
+  if (S.route && S.route.error) return `<span class="label">Course</span><p>${S.route.error}</p>`;
+  if (S.group && S.route && S.route.pts) {
+    const G = S.group, R = S.route; const left = Math.max(0, R.days - (S.day - R.startDay)); const done = Math.min(1, (S.day - R.startDay) / R.days);
+    return `<span class="label">Travelling with a group</span><h3>${G.name}</h3>
+      <div class="progress"><i style="width:${(done * 100).toFixed(1)}%"></i></div>
+      <div class="rows"><div><span>Bound for</span><span>${R.target.name}</span></div><div><span>Led by</span><span>${G.leader}</span></div><div><span>Pay</span><span>${G.pay}</span></div><div><span>Stops</span><span>${G.stops}</span></div><div><span>Days left</span><span>${Math.ceil(left)}</span></div></div>
+      <p class="told">The group sets the course; a click on the map asks if you want to leave it. Your hours are your own${G.kind === 'ship' ? ', at half, in a cabin' : ' outside the guard watches'}.</p>
+      <div class="btns"><button class="btn quiet" type="button" data-act="leavegroup">${G.kind === 'ship' ? 'Leave the ship…' : 'Leave the caravan…'}</button></div>`;
+  }
+  if (S.route && S.route.pts) {
+    const R = S.route; const left = Math.max(0, R.days - (S.day - R.startDay)); const done = Math.min(1, (S.day - R.startDay) / R.days);
+    const dest = R.target ? R.target.name : 'a point in the ' + (placeAt(R.pts[R.pts.length - 1])?.name || 'wilds');
+    const arrived = S.routeAt >= R.pts.length - 1;
+    return `<span class="label">${arrived ? 'Arrived' : 'On the road'}</span><h3>${dest}${R.target && R.target.hanzi ? `<span class="hanzi">${R.target.hanzi}</span>` : ''}</h3>
+      <div class="progress"><i style="width:${(done * 100).toFixed(1)}%"></i></div>
+      <div class="rows">
+        <div><span>By road</span><span>${fmt(R.roadLi)} li</span></div>
+        <div><span>Cross-country</span><span>${fmt(R.crossLi)} li${R.crossLi ? ` · ×${R.crossFactor.toFixed(2)} pace` : ''}</span></div>
+        <div><span>Days</span><span>${arrived ? 'here' : `${Math.ceil(left)} of ${Math.ceil(R.days)}`}</span></div>
+        <div><span>Arrives</span><span>${dateWords(R.startDay + R.days)}</span></div>
+        <div><span>Real time</span><span>about ${realTime(left)} at your clock</span></div>
+        ${S.haul.length ? `<div><span>Haul</span><span>${S.haul.length} · ${S.haul.slice(0, 2).join(', ')}</span></div>` : ''}
+        ${R.tolls.length ? `<div><span>Checkpoints</span><span>${R.tolls.length} · 1 low-grade each</span></div>` : ''}
+      </div>
+      ${R.maxBand - YOUR_BAND >= 3 ? `<p style="color:var(--warn);font-size:12.5px">The course crosses ground a realm above you (${BANDS[Math.min(BANDS.length - 1, R.maxBand)][0]}). What lives there finds you first, and Avoid trouble won't hold.</p>` : ''}
+      ${S.routine === 'night' ? '<p class="told">The night road keeps off the roads and round the checkpoints.</p>' : ''}
+      <div class="btns">${arrived ? (R.target && R.target.shops && R.target.shops.length ? '<button class="btn" type="button">Enter</button>' : '') : '<button class="btn quiet" type="button" data-act="stop">Stop here</button>'}<button class="btn quiet" type="button" data-act="clear">${arrived ? 'Done' : 'Turn back home'}</button></div>`;
+  }
+  if (q) return placeCard(q);
+  return `<span class="label">Where to</span><p>Click anywhere on the map to set a course, or a place you know. Right-click for what you can do on the spot.</p>
+    <div class="rows"><div><span>Places known</span><span>${[...S.know.values()].filter((v) => v !== 'unknown').length}</span></div><div><span>Seen</span><span>${[...S.know.values()].filter((v) => v === 'seen').length}</span></div><div><span>Rumored</span><span>${[...S.know.values()].filter((v) => v === 'rumored').length}</span></div></div>`;
+}
+function placeCard(q) {
+  const st = known(q.id); const c = q.poly ? centroid(q.poly) : q.ring && st === 'rumored' ? q.ring : [q.x, q.y];
+  const kindWord = q.kind === 'tract' ? `wilds · ${q.terrain}` : q.kind === 'kingdom' ? `kingdom · ${q.terrain}` : q.kind === 'forbidden' ? 'forbidden land' : q.sub ? q.sub.replace('-', ' ') : q.kind;
+  const tags = [];
+  if (q.mark === 'deadly') tags.push(`<span class="tag warn">Deadly · ${q.top}</span>`);
+  else if (q.mark === 'gated') tags.push('<span class="tag gold">Gated</span>');
+  else tags.push('<span class="tag">Open</span>');
+  if (S.hunted === 'yes' && q.x && Math.hypot(q.x - P('qm-tushou-men').x, q.y - P('qm-tushou-men').y) < 20000) tags.push('<span class="tag warn">Hostile</span>');
+  const plan = planRoute(S.you, c);
+  return `<span class="state">${stateWord(st)} · ${kindWord}</span><h3>${q.name}${q.hanzi ? `<span class="hanzi">${q.hanzi}</span>` : ''}</h3>
+    <div>${tags.join(' ')}</div>
+    ${q.lore ? `<p class="told">Told: ${q.lore}</p>` : ''}
+    ${S.told.get(q.id) ? `<p class="muted" style="font-size:12px">${st === 'rumored' ? 'Heard from' : 'Known from'} ${S.told.get(q.id)}${st === 'rumored' ? '. Somewhere in the ring: go there and look around.' : ''}</p>` : ''}
+    ${q.access ? `<p style="font-size:12.5px"><span class="muted">To enter:</span> ${q.access}</p>` : ''}
+    ${q.toll ? `<p style="font-size:12.5px"><span class="muted">Toll:</span> ${q.toll}</p>` : ''}
+    ${q.shops && q.shops.length && st === 'seen' ? `<p style="font-size:12.5px"><span class="muted">Shops:</span> ${q.shops.join(' · ')}</p>` : ''}
+    <div class="rows">${plan.error ? '' : `<div><span>From you</span><span>${fmt(plan.roadLi + plan.crossLi)} li · ${Math.ceil(plan.days)} days</span></div>`}<div><span>Top</span><span>${q.top || 'no cultivator of note'}</span></div></div>
+    <div class="btns"><button class="btn" type="button" data-act="go">Go there</button></div>`;
+}
+function dateWords(day) { const y = 3127 + Math.floor(day / 360); const seasons = ['spring', 'summer', 'autumn', 'winter']; const dIn = day % 360; return `${seasons[Math.floor(dIn / 90)]} ${y}, day ${Math.floor(dIn % 90) + 1}`; }
+function realTime(days) { const s = days * 10; return s < 90 ? `${Math.max(1, Math.round(s))} s` : `${Math.round(s / 60)} min`; }
+function renderPanels() {
+  const rp = roadPanel(), rc = routeCard();
+  for (const id of ['road-float', 'road-side', 'road-bar']) document.getElementById(id).innerHTML = rp;
+  for (const id of ['card-float', 'card-side', 'card-bar']) document.getElementById(id).innerHTML = rc;
+  const pl = placeAt(S.you); const tr = pl && pl.id === 'qm-shoukou-cheng' ? 'coast' : terrainAt(S.you);
+
+  const dt = depthInfo(S.you);
+  const ti = dt.ring; const pips = Array.from({ length: Math.max(1, dt.of) }, (_, i) => (i < ti ? '●' : '○')).join(''); const qd = qiAt(S.you);
+  document.getElementById('date').textContent = dateWords(S.day).replace(/^./, (c) => c.toUpperCase());
+  document.getElementById('here').innerHTML = `${pl ? pl.name : 'beyond the region'} · ${TERRAIN_WORD[tr] || tr} · qi density ${qd}, ${QI_NAMES[qd]} · you see ${sightAt(S.you)} li<br><span class="depthline"><span class="pips" title="How deep into the wilds">${pips}</span> ${dt.name}: ${bandWords(S.you)}</span>`;
+}
+document.addEventListener('click', (e) => {
+  const hp = e.target.closest('[data-hour]');
+  if (hp && showRoadWheel()) { const i = Number(hp.dataset.hour); if (i > 1) openPicker(i, e.clientX, e.clientY); return; }
+  const pk = e.target.closest('[data-pick]'); if (pk) { setHour(Number(pk.dataset.i), pk.dataset.pick); closePicker(); renderPanels(); redraw(); return; }
+  if (!e.target.closest('#hpick')) closePicker();
+  const b = e.target.closest('[data-routine],[data-way],[data-act],[data-tab],[data-gather],[data-stance],[data-save]'); if (!b) return;
+  if (b.dataset.routine) { S.routine = b.dataset.routine; replan(); }
+  if (b.dataset.tab) { S.wheelTab = b.dataset.tab; }
+  if (b.dataset.gather !== undefined) { S.gather = !S.gather; replan(); }
+  if (b.dataset.stance) { S.stance = S.stance === b.dataset.stance ? 'none' : b.dataset.stance; replan(); }
+  if (b.dataset.save !== undefined && ROUTINES.own) { customN++; ROUTINES['own' + customN] = { ...ROUTINES.own, name: 'Road routine ' + customN, short: 'Routine ' + customN }; delete ROUTINES.own; S.routine = 'own' + customN; }
+  if (b.dataset.way && !b.disabled) { S.way = b.dataset.way; replan(); }
+  if (b.dataset.act === 'go' && S.selected) { const q = S.selected; setCourse(q.poly ? centroid(q.poly) : q.ring && known(q.id) === 'rumored' ? q.ring : [q.x, q.y], q); }
+  if (b.dataset.act === 'stop') { S.route = null; }
+  if (b.dataset.act === 'leavegroup') { askLeave(); return; }
+  if (b.dataset.act === 'clear') { if (S.route && S.routeAt < (S.route.pts || []).length - 1) setCourse([P(HOME).x, P(HOME).y], P(HOME)); else { S.route = null; S.selected = null; } }
+  renderPanels(); redraw();
+});
+function setCourse(to, target) {
+  const plan = planRoute(S.you, to);
+  S.route = plan; S.routeAt = 0; if (plan.pts) { plan.target = target || null; plan.startDay = S.day; S.selected = target || null; }
+  renderPanels(); redraw();
+}
+function replan() { if (S.route && S.route.pts) { const end = S.route.pts[S.route.pts.length - 1]; setCourse(end, S.route.target); } }
+
+// ---------- the clock ----------
+let last = performance.now(), acc = 0;
+function tick(t) {
+  const dt = Math.min(250, t - last); last = t;
+  const speed = Number(S.speed);
+  if (speed > 0) {
+    acc += (dt / 1000) * speed * (12 / 10); // a day (12 double-hours) per 10 s at the world's clock
+    let changed = false;
+    while (acc >= 1) { acc -= 1; stepHour(); changed = true; }
+    if (changed) { renderPanels(); redraw(); }
+  }
+  if (S.ping) { S.ping.a -= dt / 1600; if (S.ping.a <= 0) S.ping = null; redraw(); }
+  requestAnimationFrame(tick);
+}
+// Where a night on the road is spent, picked by rule: an inn in a town, a shelter you have found nearby, or a camp.
+function sleepPlace() {
+  const town = townAt(S.you); if (town) return `at an inn in ${town.name} · 20 taels`;
+  const shelter = points.find((q) => (q.sub === 'cave' || q.sub === 'hut' || q.sub === 'shrine') && known(q.id) === 'seen' && Math.hypot(q.x - S.you[0], q.y - S.you[1]) < 300);
+  if (shelter) return 'in ' + shelter.name.replace(/^A /, 'a ');
+  return 'at a camp in the ' + (TERRAIN_WORD[terrainAt(S.you)] || 'wilds');
+}
+function lookAround(auto) {
+  const r = SIGHT().look; S.ping = { at: S.you.slice(), r, a: 1 };
+  const hits = points.filter((p) => p.hidden && Math.hypot(p.x - S.you[0], p.y - S.you[1]) <= r);
+  const rum = points.filter((p) => known(p.id) === 'rumored' && Math.hypot(p.x - S.you[0], p.y - S.you[1]) <= r);
+  for (const p of [...hits, ...rum]) { p.hidden = false; raise(p.id, 'seen'); }
+  if (hits.length + rum.length) toast(`Looking around at ${auto ? 'dusk' : 'once'}: found ${[...hits, ...rum].map((p) => p.name.toLowerCase()).join(', ')}`);
+  else if (!auto) toast(`Looking around ${r} li: nothing hidden here`);
+}
+const FINDS = {
+  karst: ['Stone-Ear Fungus', 'Cave Crystal', 'Bat-Roost Saltpeter', 'Pillar Moss'], hills: ['Iron Sand', 'Wolfsbane', 'Red Ridge Ginseng'], plains: ['Spirit Grass', 'a shed Thunder-Deer antler', 'Wind Clover'],
+  forest: ['Pine Spirit Resin', 'Ghost-Cap Mushroom', 'Blackpine Seed', 'Camphor Heartwood'], marsh: ['Ghost-Lamp Moss', 'Still-Water Lotus Root', 'Leech Gall'], coast: ['Sea-Salt Crystal', 'a tide pearl', 'Reef Coral'],
+};
+const RARITY = ['white', 'green', 'blue', 'purple', 'gold'];
+const BEASTS = {
+  karst: [['a stone ape', 2], ['a cliff bat swarm', 4], ['a horned python', 7], ['a pillar-climbing tiger', 10]], hills: [['a grey wolf', 1], ['a ridge boar', 4], ['a wolf king', 7], ['a bone-hide bear', 10]],
+  plains: [['a thunder-deer', 2], ['a plains jackal pack', 4], ['a storm hawk', 7], ['a horned bison bull', 10]], forest: [['a forest boar', 2], ['a shadow lynx', 5], ['a boar king', 7], ['an old camphor spirit', 10]],
+  marsh: [['a leech swarm', 1], ['a marsh crocodile', 5], ['a lamp-eye toad', 7], ['a drowned-bone serpent', 10]], coast: [['a reef crab', 1], ['a shore shark', 4], ['a sea serpent', 8], ['a tide drake', 10]],
+};
+const YOUR_LAYER = 3;
+function onTheWay() {
+  if (S.group && S.group.kind === 'ship') {
+    // Nothing that can't rival the elder comes near, and the ship stops only for what is worth his realm.
+    const r = mulberry32(hash('ship' + S.day + ':' + S.hour));
+    if (bandAt(S.you) >= 5 && r() < 0.02) return toast('Something in the forest below could rival a Core elder. Elder Tu stands at the prow; the disciples are told to stay inside.');
+    if (r() < 0.004) return toast('Elder Tu brings the ship down: a Core-grade herb in a ravine below. The disciples dig it out for him; an hour lost.');
+    return;
+  }
+  const t = terrainAt(S.you); if (t === 'sea') return; const tier = depthTier(S.you);
+  const r = mulberry32(hash('way' + S.day + ':' + S.hour + ':' + Math.round(S.you[0] / 300) + ':' + Math.round(S.you[1] / 300)));
+  const chance = Math.min(0.3, 0.05 + tier * 0.04);
+  if (S.gather && r() < chance * 1.4) {
+    const names = FINDS[t] || FINDS.karst; const name = names[Math.floor(r() * names.length)]; const rar = RARITY[Math.min(4, tier + (r() < 0.25 ? 1 : 0))];
+    S.haul.unshift(`${name} (${rar})`); toast(`Gathered on the way: ${name}, ${rar}`); return;
+  }
+  if (r() < chance) {
+    const list = BEASTS[t] || BEASTS.karst; const band = Math.max(0, bandAt(S.you) - (r() < 0.4 ? 1 : 0)); const [name] = list[Math.min(list.length - 1, Math.max(0, band))];
+    const layer = band < 3 ? band * 3 + 1 + Math.floor(r() * 3) : 10 + band; const realm = band < 3 ? 'layer ' + layer : BANDS[Math.min(BANDS.length - 1, band)][0];
+    if (band - YOUR_BAND >= 3) { S.speed = '0'; document.querySelectorAll('[data-key="speed"] button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === '0'))); return toast(`Pulled in: ${name} (${realm}) found you before you saw it. Nothing a realm above you can be walked round. The clock stops for P3.7's card.`); }
+    if (S.stance === 'avoid') return toast(`You went round ${name} (${realm}). An hour lost.`);
+    if (S.stance === 'hunt') {
+      if (layer * 1.25 <= YOUR_LAYER) { S.haul.unshift(`${name.replace(/^an? /, '')}: hide and core`); return toast(`${name[0].toUpperCase() + name.slice(1)} (${realm}): a sure kill. Killed and butchered.`); }
+      return toast(`${name[0].toUpperCase() + name.slice(1)} (${realm}) is no sure kill. You kept your distance.`);
+    }
+    toast(`${name[0].toUpperCase() + name.slice(1)} (${realm}) crosses your path. P3.7's card waits for you.`);
+  }
+}
+function stepHour() {
+  S.hour = (S.hour + 1) % 12; if (S.hour === 0) S.day += 1;
+  const R = S.route; if (!R || !R.pts || S.routeAt >= R.pts.length - 1) return;
+  if (dayHours()[S.hour] === 'L') { lookAround(true); return; }
+  const h = dayHours()[S.hour]; const wy = WAYS[S.way]; const moves = wy.free ? wy.hours >= 12 || (S.hour >= 4 && S.hour <= 9) : h === 'T' || h === 'G';
+  if (!moves) return;
+  let budget = paceLi();
+  while (budget > 0 && S.routeAt < R.pts.length - 1) {
+    const next = R.pts[S.routeAt + 1]; const onRoad = roads.some((rd) => rd.pts.some((q) => Math.hypot(q[0] - next[0], q[1] - next[1]) < 80));
+    const f = onRoad || WAYS[S.way].fly ? 1 : FACTOR[terrainAt(next)] || 0.45; const d = Math.hypot(next[0] - S.you[0], next[1] - S.you[1]); const can = budget * f;
+    if (d <= can) { S.you = next; S.routeAt++; budget -= d / f; } else { S.you = [S.you[0] + ((next[0] - S.you[0]) * can) / d, S.you[1] + ((next[1] - S.you[1]) * can) / d]; budget = 0; }
+    S.trail.push(S.you.slice());
+  }
+  onTheWay();
+  const found = seeFrom(S.you);
+  const named = found.filter((f) => f.kind !== 'tract' || S.wilds === 'tracts').filter((f) => f.sub !== 'checkpoint');
+  if (named.length) toast(`Seen from the road: ${named.slice(0, 2).map((f) => f.name).join(', ')}${named.length > 2 ? ` and ${named.length - 2} more` : ''}`);
+  if (S.routeAt >= R.pts.length - 1) { lookAround(true); toast(`Arrived: ${R.target ? R.target.name : 'the spot you chose'}. You look around on arrival.`); }
+}
+let toastT = 0; function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => (el.style.display = 'none'), 2600); }
+
+// ---------- input ----------
+let drag = null;
+cv.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; drag = { x: e.clientX, y: e.clientY, vx: S.view.x, vy: S.view.y, moved: false }; cv.setPointerCapture(e.pointerId); hidePop(); });
+cv.addEventListener('pointermove', (e) => {
+  const r = cv.getBoundingClientRect(); const sx = e.clientX - r.left, sy = e.clientY - r.top;
+  if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.hypot(dx, dy) > 4) drag.moved = true; if (drag.moved) { S.view.x = drag.vx - dx / S.view.k; S.view.y = drag.vy - dy / S.view.k; redraw(); } return; }
+  const q = pick(sx, sy); if (q !== S.hover) { S.hover = q; redraw(); }
+  const tip = document.getElementById('tip');
+  if (q) { const st = known(q.id); tip.innerHTML = `<b>${q.name}</b><span class="hanzi">${q.hanzi || ''}</span><p class="muted">${stateWord(st)}${q.mark === 'deadly' ? ' · <span style="color:var(--warn)">deadly</span>' : q.mark === 'gated' ? ' · gated' : ''}</p>${q.lore && st !== 'unknown' ? `<p>${q.lore}</p>` : ''}`; tip.style.display = 'block'; tip.style.left = Math.min(sx + 14, W - 270) + 'px'; tip.style.top = Math.min(sy + 14, H - 90) + 'px'; }
+  else tip.style.display = 'none';
+  cv.classList.toggle('cursor-go', !q);
+});
+cv.addEventListener('pointerup', (e) => {
+  if (!drag) return; const moved = drag.moved; drag = null; if (moved) return;
+  if (S.group) { askLeave(); return; }
+  const r = cv.getBoundingClientRect(); const sx = e.clientX - r.left, sy = e.clientY - r.top; const q = pick(sx, sy);
+  if (q && !q.poly) { S.selected = q; const st = shown(q); setCourse(q.ring && st === 'rumored' ? q.ring : [q.x, q.y], q); }
+  else setCourse(toW(sx, sy), null);
+});
+cv.addEventListener('pointerleave', () => { document.getElementById('tip').style.display = 'none'; });
+cv.addEventListener('wheel', (e) => { e.preventDefault(); const r = cv.getBoundingClientRect(); zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+function zoomAt(sx, sy, f) { const before = toW(sx, sy); S.view.k = Math.max(0.004, Math.min(1.5, S.view.k * f)); const after = toW(sx, sy); S.view.x += before[0] - after[0]; S.view.y += before[1] - after[1]; redraw(); }
+document.getElementById('zin').onclick = () => zoomAt(W / 2, H / 2, 1.6);
+document.getElementById('zout').onclick = () => zoomAt(W / 2, H / 2, 1 / 1.6);
+document.getElementById('zdepth').onclick = (e) => { S.depthLayer = !S.depthLayer; e.currentTarget.setAttribute('aria-pressed', String(S.depthLayer)); e.currentTarget.style.color = S.depthLayer ? 'var(--accent)' : ''; redraw(); };
+document.getElementById('zregion').onclick = () => { fitRegion(); redraw(); };
+document.getElementById('zyou').onclick = () => { S.view.x = S.you[0]; S.view.y = S.you[1]; S.view.k = Math.max(S.view.k, 0.06); redraw(); };
+cv.addEventListener('contextmenu', (e) => {
+  e.preventDefault(); const r = cv.getBoundingClientRect(); const sx = e.clientX - r.left, sy = e.clientY - r.top; const w = toW(sx, sy); const q = pick(sx, sy);
+  if (S.group) {
+    const G = S.group; MENU = [
+      { t: 'Talk to ' + G.leader, s: 'a scene · P3.9', run: () => toast('Talking on the road is a scene. That arrives in P3.9.'), later: true },
+      { t: G.kind === 'ship' ? 'Spend time with the disciples aboard' : 'Sit with the other guards', s: 'people you travel with · P3.9', run: () => toast('The people you travel with are scenes. That arrives in P3.9.'), later: true },
+      { sep: true },
+      { t: G.kind === 'ship' ? 'Leave the ship…' : 'Leave the caravan…', s: 'asks first', run: askLeave, warn: true },
+    ];
+    const pop = document.getElementById('pop');
+    pop.innerHTML = `<div class="head">${G.name}</div>` + MENU.map((it, i) => it.sep ? '<div class="sep"></div>' : `<button type="button" data-pop="${i}" class="${it.later ? 'later' : ''} ${it.warn ? 'warn' : ''}">${it.t}<span>${it.s}</span></button>`).join('');
+    pop.style.display = 'block'; pop.style.left = Math.max(4, Math.min(sx, W - 290)) + 'px'; pop.style.top = Math.max(4, Math.min(sy, H - pop.offsetHeight - 6)) + 'px';
+    return;
+  }
+  const here = Math.hypot(w[0] - S.you[0], w[1] - S.you[1]) * S.view.k < 16 || (q && Math.hypot(q.x - S.you[0], q.y - S.you[1]) < 300);
+  const { head, items } = menuFor(q, w, here); MENU = items;
+  const pop = document.getElementById('pop');
+  pop.innerHTML = `<div class="head">${head}</div>` + items.map((it, i) => it.sep ? '<div class="sep"></div>' : `<button type="button" data-pop="${i}" class="${it.later ? 'later' : ''} ${it.warn ? 'warn' : ''}">${it.t}<span>${it.s || ''}</span></button>`).join('');
+  pop.style.display = 'block'; pop.style.left = Math.max(4, Math.min(sx, W - 290)) + 'px'; pop.style.top = Math.max(4, Math.min(sy, H - pop.offsetHeight - 6)) + 'px';
+});
+let MENU = [];
+const SUB_WORD = { cave: 'cave', den: 'beast den', ruin: 'ruin', shrine: 'shrine', 'herb-valley': 'herb valley', spring: 'spirit spring', falls: 'waterfall', peak: 'thunder peak', camp: 'camp', hut: 'hut', mine: 'mine', tomb: 'graves', stele: 'stele', tree: 'ancient tree', ferry: 'ferry', checkpoint: 'checkpoint', village: 'village', town: 'town', city: 'city' };
+function menuFor(q, w, here) {
+  const I = (t, s, run, o = {}) => ({ t, s, run, ...o });
+  const later = (t, s, phase, what) => I(t, s + ' · ' + phase, () => toast(`${what} That arrives in ${phase}.`), { later: true });
+  const SEP = { sep: true };
+  const at = q ? (q.poly ? centroid(q.poly) : q.ring && known(q.id) === 'rumored' ? q.ring : [q.x, q.y]) : w;
+  const goTo = (to, tgt, routine) => () => { if (routine) S.routine = routine; setCourse(to, tgt); };
+  const items = [];
+  const placeItems = (p, isHere) => {
+    const g = p.sub; const out = [];
+    if (isHere || !isHere) { out.push(I('Enter', p.toll ? 'toll: ' + p.toll : 'its own screen: shops, teahouse, inn, people', () => toast(`You enter ${p.name}. Its screen opens: everything there is done inside.`))); return out; }
+    if (g === 'city' || g === 'town' || g === 'village') {
+      out.push(I('Enter ' + (g === 'village' ? 'the village' : p.name), p.toll || 'open', () => toast(`Through the gate. The watch reads your realm${S.veiled ? ' as you show it' : ''}. ${(p.shops || []).length} shops: ${(p.shops || ['a village store']).join(', ')}.`)));
+      out.push(I('Ask after rumors', 'an hour in the teahouse · one a visit', () => teahouse(p)));
+      if (g !== 'village') out.push(later('Read the bounty board', 'jobs and wanted heads', 'P3.7', 'The board lists the beasts and people with prices on them.'));
+      const kd = kingdomAt([p.x, p.y]);
+      if (kd && known(kd.id) !== 'seen' && g !== 'village') out.push(I('Buy the kingdom map', '30 low-grade', () => buyMap(kd)));
+      out.push(I('Hire a guide', '1 low-grade a day', () => { const n = guideRumors(p); toast(`A guide joins you: no getting lost off the roads, and ${n} places round here are rumored now.`); }));
+      const nb = roads.filter((r) => r.a === p.id || r.b === p.id).map((r) => P(r.a === p.id ? r.b : r.a));
+      if (nb.length && g !== 'village') out.push(I('Join a caravan to ' + nb[0].name, 'caravan guard · paid, slow, safe', goTo([nb[0].x, nb[0].y], nb[0], 'caravan')));
+      out.push(I('Take a room at the inn', '20 taels a night', () => toast('A room for the night. Nothing comes for you while you sleep in a town.')));
+    } else if (g === 'checkpoint') {
+      out.push(I('Pay the toll and pass', p.toll, () => toast('You pay. The guard looks at your face a moment too long.')));
+      out.push(I('Go round it', 'off the road, by the night road', () => { S.routine = 'night'; replan(); toast('You leave the road before the post and go round it by night.'); }));
+      out.push(later('Talk your way through', 'a bribe or a bluff', 'P3.9', 'Talking past a guard is a people check in a scene.'));
+    } else if (g === 'ferry') {
+      out.push(I('Take the ferry', '5 taels', () => toast('The ferryman poles you across, singing.')));
+      out.push(I('Ask the ferryman', 'ferrymen know the crossings', () => { const n = guideRumors(p); toast(`The ferryman knows the river. ${n} places along it are rumored now.`); }));
+    } else if (p.kind === 'power' && p.mark === 'gated') {
+      out.push(I('Show a token', 'you have none', () => toast('The gate guards wait. You have no token of the Gate.'), { later: true }));
+      out.push(later('Ask for an invitation', 'a people check', 'P3.9', 'Asking in is a talk at the gate.'));
+      out.push(I('Force the array', 'needs a realm above Core Formation', () => toast('The array is rated Core Formation. A Qi Condensation hand cannot break it.'), { warn: true }));
+      out.push(later('Sneak in', 'stealth against the array and the guards', 'P3.9', 'Sneaking in is a scene.'));
+    } else if (p.kind === 'realm') {
+      out.push(I('Wait for the opening', 'every 7 years, next in 3131', () => toast('The Realm of Mingled Blood opens in 3131, for thirty days, to beast blood below Foundation.')));
+    } else if (p.kind === 'landmark') {
+      out.push(later('Patrol the Wall', 'a day’s work for a stone', 'P3.7', 'Wall patrols are work on the board.'));
+      out.push(I('Sit on the Wall and cultivate', 'the bones hum with old killing intent', () => stayAt(p)));
+    } else {
+      if (g === 'cave') { out.push(I('Seclude here', 'the home wheel, in the cave', () => stayAt(p))); out.push(later('Go in', 'a scene', 'P3.9', 'Going in is a scene.')); out.push(later('Make it your abode', 'a site of your own', 'M4', 'Abodes as sites')); }
+      if (g === 'den') { out.push(later('Hunt the beast', 'for its core and parts', 'P3.7', 'Hunting is an encounter.')); out.push(later('Watch from cover', 'learn what lives here', 'P3.9', 'Watching is a scene.')); }
+      if (g === 'ruin' || g === 'tomb') { out.push(later(g === 'tomb' ? 'Rob the graves' : 'Search the ruin', g === 'tomb' ? 'karma' : 'layer by layer', 'P3.11', 'Ruins are layered scenes.')); }
+      if (g === 'herb-valley') out.push(later('Gather herbs', 'a day’s picking', 'P3.9', 'Gathering is a take in a scene.'));
+      if (g === 'shrine') { out.push(I('Donate for merit', '5 low-grade · karma +1', () => toast('You leave five stones on the altar. Heaven’s ledger notes it.'))); out.push(I('Rest at the shrine', 'a safe night', () => toast('You sleep under the eaves. Nothing troubles the shrine.'))); }
+      if (g === 'spring' || g === 'falls' || g === 'peak' || g === 'tree') out.push(I('Sit and cultivate here', 'a source: qi ×1.2 while you stay', () => stayAt(p)));
+      if (g === 'stele') out.push(later('Comprehend the stele', 'an Intent moment', 'P3.11', 'A Dao stele opens Intent for a readied capstone.'));
+      if (g === 'camp') { out.push(later('Watch from cover', 'count them first', 'P3.9', 'Watching is a scene.')); out.push(later('Report it', 'to the bounty office', 'P3.7', 'A camp reported becomes a bounty.')); }
+      if (g === 'mine') out.push(later('Mine ore', 'a day’s digging', 'P3.9', 'Mining is a take in a scene.'));
+      if (g === 'hut') out.push(later('Call on whoever lives here', 'a scene', 'P3.9', 'Calling on someone is a scene.'));
+    }
+    return out;
+  };
+  if (here) {
+    const town = townAt(S.you); const site = q && Math.hypot(q.x - S.you[0], q.y - S.you[1]) < 300 ? q : town;
+    items.push(I('Stay and cultivate here', 'the home wheel turns here', () => stayAt(site || null)));
+    if (site) items.push(...placeItems(site, true));
+    items.push(SEP);
+    items.push(I(S.veiled ? 'Let your realm show' : 'Hide your realm', 'the watch reads what you show', () => { S.veiled = !S.veiled; toast(S.veiled ? 'You draw your qi in. You show layer 3.' : 'You let your realm show.'); }));
+    items.push(I('Go home', ROUTINES[S.routine].short, goTo([P(HOME).x, P(HOME).y], P(HOME))));
+    return { head: site ? site.name : 'Where you stand', items };
+  }
+  { const ar = !q || q.poly ? kingdomAt(w) : null; if (ar && ar.mark === 'deadly' && known(ar.id) !== 'unknown') q = ar; }
+  if (q && q.mark === 'deadly') {
+    items.push(I('Go in anyway', 'its own hazard is above your realm: ' + q.top, goTo(w, q), { warn: true }));
+    items.push(I('Go to its edge', 'look in from outside', goTo(edgeOf(q), null)));
+    items.push(I('Pin it', 'mark it on the map', () => S.pins.push(w)));
+    return { head: q.name + ' · deadly', items };
+  }
+  if (q && known(q.id) === 'rumored') {
+    items.push(I('Search for it', 'walk to the ring; your evening look-around finds it', goTo(at, q)));
+    items.push(I('Pin the ring', 'mark it on the map', () => S.pins.push(at)));
+    return { head: q.name + ' · rumored', items };
+  }
+  if (q && q.mark === 'deadly') {
+    items.push(I('Go in anyway', 'its own hazard is above your realm', goTo(at, q), { warn: true }));
+    items.push(I('Go to its edge', 'look in from outside', goTo(edgeOf(q), null)));
+    items.push(I('Pin it', 'mark it on the map', () => S.pins.push(at)));
+    return { head: q.name, items };
+  }
+  if (q && !q.poly) {
+    items.push(I('Go there and enter', 'by your road routine', () => { setCourse(at, q); toast(`On your way to ${q.name}. You go in when you arrive.`); }));
+    items.push(I('Pin it', 'mark it on the map', () => S.pins.push(at)));
+    return { head: `${q.name} · ${SUB_WORD[q.sub] || q.kind}`, items };
+  }
+  items.push(I('Go here', 'by your road routine', goTo(w, null)));
+  items.push(I('Pin this spot', 'mark it on the map', () => S.pins.push(w)));
+  items.push(SEP);
+  items.push(later('Bury a stash here', 'a hidden site only you know, for this life or the next', 'P3.12', 'A stash is a hidden site of your own; anyone may stumble on it.'));
+  items.push(later('Found an abode here', 'a site of your own, on any spot', 'M4', 'Your abode on a spot you choose: its vein, defenses, reach and neighbours.'));
+  items.push(later('Raise a sect or a faction here', 'a project on the resolver', 'M5', 'Founding a sect or a faction is a project.'));
+  const pl = placeAt(w);
+  const dt = depthInfo(w); const bw = bandAt(w);
+  return { head: pl ? `${pl.name} · ${TERRAIN_WORD[terrainAt(w)] || terrainAt(w)} · ${dt.name}${bw >= 0 ? ' · ' + BANDS[Math.min(BANDS.length - 1, bw)][0] : ''}` : 'That spot', items };
+}
+function stayAt(p) { S.route = null; toast(p ? `You stop at ${p.name.replace(/^A /, 'a ')}. The home wheel turns here until you move on.` : 'You stop here. The home wheel turns until you move on.'); }
+function edgeOf(a) { const c = centroid(a.poly); let best = null; for (const v of a.poly) { const d = Math.hypot(v[0] - S.you[0], v[1] - S.you[1]); if (!best || d < best[0]) best = [d, v]; } const v = best[1]; return [v[0] + (v[0] - c[0]) * 0.08, v[1] + (v[1] - c[1]) * 0.08]; }
+function teahouse(p) {
+  const cands = points.filter((q) => q.seeded && !q.hidden && known(q.id) === 'unknown' && Math.hypot(q.x - p.x, q.y - p.y) < 9000);
+  if (!cands.length) return toast('Nothing new in the teahouse today.');
+  const q = cands[Math.floor(mulberry32(hash(p.id + S.day))() * cands.length)]; raise(q.id, 'rumored', 'a storyteller in ' + p.name + '’s teahouse'); q.ring = ringFor(q);
+  toast(`In the teahouse: talk of ${q.name.toLowerCase()}, somewhere out there.`);
+}
+function guideRumors(p) { let n = 0; for (const q of points) if (q.seeded && !q.hidden && known(q.id) === 'unknown' && Math.hypot(q.x - p.x, q.y - p.y) < 5000 && n < 3) { raise(q.id, 'rumored', 'your guide'); q.ring = ringFor(q); n++; } return n; }
+function buyMap(kd) {
+  raise(kd.id, 'sketched', 'a kingdom map');
+  for (const q of points) if (q.parent === kd.id && !q.seeded) raise(q.id, 'sketched', 'the kingdom map');
+  for (const rd of roads) if (P(rd.a).parent === kd.id || P(rd.b).parent === kd.id) raise(rd.id, 'sketched');
+  toast(`The ${kd.name} map: its outline, towns and roads are Sketched now. It stays in your Bag.`);
+}
+function hidePop() { document.getElementById('pop').style.display = 'none'; }
+document.getElementById('pop').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-pop]'); if (!b) return; const it = MENU[Number(b.dataset.pop)]; hidePop(); if (it && it.run) it.run();
+  renderPanels(); redraw();
+});
+document.getElementById('pop').addEventListener('click-old', (e) => {
+  const b = e.target.closest('[data-pop]'); if (!b) return; const pop = document.getElementById('pop'); const a = b.dataset.pop; hidePop();
+  if (a === 'look') {
+    const r = SIGHT().look; S.ping = { at: S.you.slice(), r, a: 1 }; S.hour = (S.hour + 1) % 12;
+    const hits = points.filter((p) => p.hidden && Math.hypot(p.x - S.you[0], p.y - S.you[1]) <= r);
+    const rum = points.filter((p) => known(p.id) === 'rumored' && Math.hypot(p.x - S.you[0], p.y - S.you[1]) <= r);
+    for (const p of [...hits, ...rum]) { p.hidden = false; raise(p.id, 'seen'); }
+    toast(hits.length + rum.length ? `Looking around ${r} li: found ${[...hits, ...rum].map((p) => p.name.toLowerCase()).join(', ')}` : `Looking around ${r} li: nothing hidden here`);
+  }
+  if (a === 'goto') setCourse([Number(pop.dataset.wx), Number(pop.dataset.wy)], P(pop.dataset.q) || null);
+  if (a === 'about') { S.selected = P(pop.dataset.q); S.route = null; }
+  if (a === 'home') setCourse([P(HOME).x, P(HOME).y], P(HOME));
+  if (a === 'camp') toast('You camp. A night in the open: P3.7’s night encounters roll here.');
+  if (a === 'sit') toast('You sit down here. The home wheel turns until you move on.');
+  if (a === 'enter') toast('Through the gate. The watch reads your realm, and the shops are here (the town screen).');
+  if (a === 'rumor') toast('An hour in the teahouse: one rumor a visit.');
+  renderPanels(); redraw();
+});
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePop(); });
+
+// ---------- study controls ----------
+document.querySelectorAll('.seg').forEach((seg) => {
+  const key = seg.dataset.key;
+  const sync = () => seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(S[key] === b.dataset.v)));
+  seg.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return; S[key] = b.dataset.v; sync();
+    if (key === 'layout') { setLayout(); requestAnimationFrame(() => { fit(); makePatterns(); redraw(); }); }
+    if (key === 'groupMode') setGroup(S.groupMode);
+    if (key === 'scene' || key === 'wilds' || key === 'sight') { points.forEach((p) => { if (p.id === 'hidden-cave') p.hidden = true; delete p.ring; }); resetLife(); }
+    renderPanels(); redraw();
+  });
+  sync();
+});
+// Legend swatches.
+const LEG = [['seen', 'Seen: travelled or in sight'], ['sketched', 'Sketched: from a map, outline only'], ['rumored', 'Rumored: a name in a ring'], ['unknown', 'Unknown: cracked fog'], ['road', 'Road (dashed: from a map)'], ['deadly', 'Deadly: above your realm'], ['gated', 'Gated: token, rank, invitation or toll'], ['route', 'Your course']];
+document.getElementById('legend').innerHTML = LEG.map(([k, t]) => `<span><canvas data-leg="${k}" width="48" height="36"></canvas>${t}</span>`).join('');
+document.querySelectorAll('[data-leg]').forEach((c) => {
+  const g = c.getContext('2d'); g.scale(2, 2); const k = c.dataset.leg;
+  if (k === 'seen') { g.fillStyle = '#13161a'; g.fillRect(2, 3, 20, 12); g.strokeStyle = 'rgba(233,229,218,0.5)'; g.strokeRect(2.5, 3.5, 19, 11); }
+  if (k === 'sketched') { g.fillStyle = '#08090c'; g.fillRect(2, 3, 20, 12); g.setLineDash([3, 3]); g.strokeStyle = 'rgba(233,229,218,0.45)'; g.strokeRect(2.5, 3.5, 19, 11); }
+  if (k === 'rumored') { g.translate(12, 9); g.rotate(Math.PI / 4); g.strokeStyle = C.accent; g.lineWidth = 1.4; g.strokeRect(-3.5, -3.5, 7, 7); }
+  if (k === 'unknown') { g.fillStyle = '#030405'; g.fillRect(2, 3, 20, 12); g.strokeStyle = rgba(C.crack, 0.6); g.beginPath(); g.moveTo(3, 13); g.lineTo(10, 8); g.lineTo(21, 5); g.stroke(); }
+  if (k === 'road') { g.strokeStyle = 'rgba(194,174,140,0.8)'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(2, 12); g.quadraticCurveTo(12, 2, 22, 9); g.stroke(); }
+  if (k === 'deadly') { g.strokeStyle = C.warn; g.lineWidth = 1.4; g.strokeRect(3, 4, 18, 10); g.fillStyle = C.warn; g.font = '9px Ma Shan Zheng, serif'; g.fillText('险', 8, 13); }
+  if (k === 'gated') { g.strokeStyle = C.accent; g.strokeRect(7, 4, 10, 10); g.strokeStyle = rgba(C.accent, 0.5); g.strokeRect(5, 2, 14, 14); }
+  if (k === 'route') { g.setLineDash([1.5, 3.5]); g.lineCap = 'round'; g.strokeStyle = C.accent; g.lineWidth = 2; g.beginPath(); g.moveTo(2, 9); g.lineTo(22, 9); g.stroke(); }
+});
+
+// ---------- go ----------
+function setLayout() { const sh = document.getElementById('shell'); sh.classList.toggle('column', S.layout === 'column'); sh.classList.toggle('with-bar', S.layout === 'bar'); }
+// Draws the map into another canvas with a given land style and no fog, from the map's current view.
+function snapshot(canvas, style, depthStyle) {
+  const r = canvas.getBoundingClientRect(); if (!r.width) return;
+  const keep = { ctx, W, H, DPR, land: S.land, fogLook: S.fogLook, depthLayer: S.depthLayer, hover: S.hover, view: { ...S.view }, depthLines: S.depthLines };
+  if (depthStyle) S.depthLines = depthStyle;
+  DPR = Math.min(2, window.devicePixelRatio || 1); canvas.width = Math.round(r.width * DPR); canvas.height = Math.round(r.height * DPR);
+  ctx = canvas.getContext('2d'); W = r.width; H = r.height; S.land = style; S.fogLook = 'off'; S.depthLayer = false; S.hover = null;
+  S.view.k = keep.view.k * (W / keep.W);
+  try { draw(); } finally { ctx = keep.ctx; W = keep.W; H = keep.H; DPR = keep.DPR; S.land = keep.land; S.fogLook = keep.fogLook; S.depthLayer = keep.depthLayer; S.hover = keep.hover; S.view = keep.view; S.depthLines = keep.depthLines; }
+}
+function compareAll() { document.querySelectorAll('.compare canvas').forEach((c) => (c.dataset.depth ? snapshot(c, S.land, c.dataset.depth) : snapshot(c, c.dataset.style))); redraw(); }
+document.getElementById('recompare').addEventListener('click', compareAll);
+document.getElementById('qi').addEventListener('input', (e) => { S.qi = Number(e.target.value); DEPTH_LINES = null; DEPTH_CANVAS = null; document.getElementById('qi-out').textContent = S.qi + ', ' + QI_NAMES[S.qi] + (S.qi === 3 ? ' (the Border Wilds)' : S.qi >= 7 ? ' (a continent’s heart)' : ''); if (S.route && S.route.pts) replan(); renderPanels(); redraw(); });
+function start() {
+  fit(); makePatterns();
+  const h = new URLSearchParams(location.hash.slice(1));
+  for (const key of ['layout', 'wilds', 'sight', 'marks', 'scene', 'hunted', 'speed', 'routine', 'way', 'sites', 'fogLook', 'land', 'depthLines']) if (h.has(key)) S[key] = h.get(key);
+  setLayout();
+  document.querySelectorAll('.seg').forEach((seg) => seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(S[seg.dataset.key] === b.dataset.v))));
+  fit(); makePatterns(); resetLife();
+  if (h.has('go')) { const q = P(h.get('go')); setCourse(q.poly ? centroid(q.poly) : [q.x, q.y], q); }
+  if (h.has('to')) { const [x, y] = h.get('to').split(',').map(Number); setCourse([x, y], null); }
+  if (h.has('run')) for (let i = 0; i < Number(h.get('run')); i++) stepHour();
+  if (h.get('view') === 'region') fitRegion();
+  if (h.get('view') === 'you') { S.view.x = S.you[0]; S.view.y = S.you[1]; S.view.k = Number(h.get('k') || 0.06); }
+  if (h.has('sel')) S.selected = P(h.get('sel'));
+  if (h.has('depth')) S.depthLayer = true;
+  renderPanels(); draw(); requestAnimationFrame(tick);
+  compareAll(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(compareAll);
+}
+new ResizeObserver(() => { fit(); makePatterns(); redraw(); }).observe(stage);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => redraw());
+start();
+})();
+</script>
