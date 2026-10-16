@@ -82,7 +82,6 @@ function MapView({ game, map, life }: { game: GameState; map: RegionMap; life: M
   const layers = useRef<{
     fog: CanvasRenderingContext2D;
     mask: CanvasRenderingContext2D;
-    cloud: CanvasRenderingContext2D;
   } | null>(null);
   const [size, setSize] = useState({ W: 0, H: 0, dpr: 1 });
   const [view, setView] = useState<View>(() => ({ x: life.at[0], y: life.at[1], k: 0.012 }));
@@ -119,13 +118,8 @@ function MapView({ game, map, life }: { game: GameState; map: RegionMap; life: M
         const c = document.createElement('canvas');
         return c.getContext('2d')!;
       };
-      layers.current ??= { fog: mk(), mask: mk(), cloud: mk() };
-      for (const c of [
-        canvas.current!,
-        layers.current.fog.canvas,
-        layers.current.mask.canvas,
-        layers.current.cloud.canvas,
-      ]) {
+      layers.current ??= { fog: mk(), mask: mk() };
+      for (const c of [canvas.current!, layers.current.fog.canvas, layers.current.mask.canvas]) {
         c.width = Math.round(W * dpr);
         c.height = Math.round(H * dpr);
       }
@@ -148,7 +142,6 @@ function MapView({ game, map, life }: { game: GameState; map: RegionMap; life: M
           ctx: c.getContext('2d')!,
           fog: L.fog,
           mask: L.mask,
-          cloud: L.cloud,
           W: size.W,
           H: size.H,
           dpr: size.dpr,

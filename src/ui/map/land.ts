@@ -409,58 +409,109 @@ export function paintFeature(
 }
 
 /** A tile of thick cloud for the fog over the unknown, wrapping at its edges. */
-export function cloudTile(big: boolean): HTMLCanvasElement {
-  const size = big ? 640 : 512;
+export function cloudTile(): HTMLCanvasElement {
+  const size = 640;
   const t = document.createElement('canvas');
   t.width = t.height = size;
   const g = t.getContext('2d')!;
-  const rng = mulberry32(big ? 31 : 57);
-  const puff = (x: number, y: number, r: number, a: number, lit: boolean) => {
-    for (const [dx, dy] of [
-      [0, 0],
-      [size, 0],
-      [-size, 0],
-      [0, size],
-      [0, -size],
-    ] as const) {
-      const gr = g.createRadialGradient(x + dx, y + dy - (lit ? r * 0.3 : 0), 0, x + dx, y + dy, r);
-      gr.addColorStop(0, `rgba(${lit ? '215,226,234' : '190,205,215'},${a})`);
-      if (lit) gr.addColorStop(0.7, `rgba(190,205,215,${a * 0.6})`);
-      gr.addColorStop(1, 'rgba(190,205,215,0)');
-      g.fillStyle = gr;
-      g.beginPath();
-      g.arc(x + dx, y + dy, r, 0, 7);
-      g.fill();
-    }
-  };
-  if (big) {
-    for (let i = 0; i < 70; i++) {
-      const cl = Math.floor(i / 7);
-      const cx = mulberry32(cl * 17 + 3)() * size;
-      const cy = mulberry32(cl * 29 + 5)() * size;
-      puff(
-        cx + (rng() - 0.5) * 150,
-        cy + (rng() - 0.5) * 70,
-        22 + rng() * 48,
-        0.07 + rng() * 0.07,
-        false,
-      );
-    }
-  } else {
-    for (let c = 0; c < 45; c++) {
-      const cx = rng() * size;
-      const cy = rng() * size;
-      const n = 3 + Math.floor(rng() * 3);
-      const a = 0.26 + rng() * 0.14;
-      for (let i = 0; i < n; i++)
-        puff(
-          cx + (i - n / 2) * (7 + rng() * 4),
-          cy + (rng() - 0.5) * 6 - (i === Math.floor(n / 2) ? 4 : 0),
-          6 + rng() * 7,
-          a,
-          true,
-        );
-    }
+  const rng = mulberry32(31);
+  for (let i = 0; i < 70; i++) {
+    const cl = Math.floor(i / 7);
+    const cx = mulberry32(cl * 17 + 3)() * size;
+    const cy = mulberry32(cl * 29 + 5)() * size;
+    puffAt(g, size, cx + (rng() - 0.5) * 150, cy + (rng() - 0.5) * 70, 22 + rng() * 48, [
+      [0, `rgba(190,205,215,${0.07 + rng() * 0.07})`],
+      [1, 'rgba(190,205,215,0)'],
+    ]);
   }
   return t;
+}
+
+/**
+ * A tile of the small clouds over what you know, as if seen from high above: a few soft
+ * tufts, each a heap of puffs rising to its middle with a faint shadow on the land below it,
+ * wrapping at its edges.
+ */
+export function smallCloudTile(): HTMLCanvasElement {
+  const size = 512;
+  const t = document.createElement('canvas');
+  t.width = t.height = size;
+  const g = t.getContext('2d')!;
+  const rng = mulberry32(57);
+  const clouds = Array.from({ length: 8 }, () => {
+    const cx = rng() * size;
+    const cy = rng() * size;
+    const w = 12 + rng() * 14;
+    const n = 6 + Math.floor(rng() * 5);
+    return Array.from({ length: n }, (): [number, number, number] => {
+      const u = rng() * 2 - 1;
+      const mid = 1 - Math.abs(u);
+      const r = 3 + mid * 5 + rng() * 2;
+      // Puffs heap up toward the middle and sit on a flattish base.
+      return [cx + u * w, cy - mid * 4 - rng() * 3 + r * 0.4, r];
+    });
+  });
+  for (const c of clouds)
+    for (const [x, y, r] of c)
+      puffAt(g, size, x + r * 0.9, y + r * 1.3, r * 1.3, [
+        [0, 'rgba(0,0,0,0.12)'],
+        [1, 'rgba(0,0,0,0)'],
+      ]);
+  // A thin wisp under each tuft, so it trails off rather than ending at an edge.
+  for (const c of clouds) {
+    const xs = c.map(([x]) => x);
+    const my = c.reduce((s, [, y]) => s + y, 0) / c.length + 2;
+    const x0 = Math.min(...xs);
+    const span = Math.max(...xs) - x0;
+    for (const f of [0.15, 0.5, 0.85])
+      puffAt(g, size, x0 + span * f, my, 6 + span * 0.35, [
+        [0, 'rgba(210,220,228,0.08)'],
+        [1, 'rgba(210,220,228,0)'],
+      ]);
+  }
+  for (const c of clouds)
+    for (const [x, y, r] of c)
+      puffAt(
+        g,
+        size,
+        x,
+        y,
+        r * 1.5,
+        [
+          [0, 'rgba(236,240,244,0.2)'],
+          [0.5, 'rgba(214,224,232,0.1)'],
+          [1, 'rgba(200,212,222,0)'],
+        ],
+        -r * 0.35,
+      );
+  return t;
+}
+
+/**
+ * A round puff and its copies across the tile's edges, so the tile wraps; `lift` moves its
+ * brightest point up, so the puff looks lit from above.
+ */
+function puffAt(
+  g: CanvasRenderingContext2D,
+  size: number,
+  x: number,
+  y: number,
+  r: number,
+  stops: [number, string][],
+  lift = 0,
+) {
+  for (const [dx, dy] of [
+    [0, 0],
+    [size, 0],
+    [-size, 0],
+    [0, size],
+    [0, -size],
+  ] as const) {
+    const gr = g.createRadialGradient(x + dx, y + dy + lift, 0, x + dx, y + dy, r);
+    for (const [at, col] of stops) gr.addColorStop(at, col);
+    g.fillStyle = gr;
+    g.beginPath();
+    g.arc(x + dx, y + dy, r, 0, 7);
+    g.fill();
+  }
 }

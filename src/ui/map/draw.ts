@@ -1,6 +1,6 @@
 // Draws the travel map (design § The world, The travel map) into a canvas: the sea and the land,
 // the relief and its painted marks, the dashed depth lines, the roads, the fog as drifting cloud
-// (thick over the unknown, a few small clouds over what you know), the trail you walked, the sites
+// (thick over the unknown, a few small soft clouds over what you know), the trail you walked, the sites
 // as seals, rumors in their rings, the labels placed by priority, your course, your pins and you.
 import { RUMOR_RING_LI } from '../../content/map/travel.ts';
 import { fieldFrom, heartBand, peopleLi, pullsIn, warped } from '../../core/map/depth.ts';
@@ -9,7 +9,7 @@ import { type Multi, type Pt, ringCentroid } from '../../core/map/geometry.ts';
 import { band } from '../../core/map/depth.ts';
 import type { MapArea, MapPlace, RegionMap } from '../../core/map/region.ts';
 import type { MapLife } from '../../core/map/schema.ts';
-import { cloudTile, featuresOf, paintFeature, reliefOf } from './land.ts';
+import { cloudTile, featuresOf, paintFeature, reliefOf, smallCloudTile } from './land.ts';
 
 export interface View {
   x: number;
@@ -23,7 +23,6 @@ export interface Frame {
   /** The fog's own canvases, the size of the map's. */
   fog: CanvasRenderingContext2D;
   mask: CanvasRenderingContext2D;
-  cloud: CanvasRenderingContext2D;
   W: number;
   H: number;
   dpr: number;
@@ -72,8 +71,8 @@ const PATTERNS = new WeakMap<
 function patternsFor(ctx: CanvasRenderingContext2D) {
   let p = PATTERNS.get(ctx);
   if (!p) {
-    TILES.big ??= cloudTile(true);
-    TILES.small ??= cloudTile(false);
+    TILES.big ??= cloudTile();
+    TILES.small ??= smallCloudTile();
     p = {
       big: ctx.createPattern(TILES.big, 'repeat')!,
       small: ctx.createPattern(TILES.small, 'repeat')!,
@@ -481,7 +480,7 @@ export function drawMap(f: Frame, s: Scene): void {
 }
 
 function drawFog(f: Frame, s: Scene) {
-  const { fog, mask, cloud, W, H, dpr, view } = f;
+  const { fog, mask, W, H, dpr, view } = f;
   const { map, life } = s;
   const k = view.k;
   const at = (p: Pt) => toScreen(view, W, H, p);
@@ -511,9 +510,9 @@ function drawFog(f: Frame, s: Scene) {
       mask.save();
       pathMulti(mask, f, map.outline);
       mask.clip('evenodd');
-      hole(a.outline, 0.4);
+      hole(a.outline, st === 'seen' ? 1 : 0.6);
       mask.restore();
-    } else hole(a.outline, st === 'seen' ? 1 : 0.65);
+    } else hole(a.outline, st === 'seen' ? 1 : 0.85);
   }
   if (life.trail.length > 1) {
     mask.lineCap = 'round';
@@ -535,7 +534,7 @@ function drawFog(f: Frame, s: Scene) {
       const [x, y] = at([q.x, q.y]);
       mask.beginPath();
       mask.arc(x, y, Math.max(9, 400 * k), 0, 7);
-      mask.fillStyle = 'rgba(0,0,0,0.7)';
+      mask.fillStyle = 'rgba(0,0,0,0.9)';
       mask.fill();
     }
   {
@@ -549,39 +548,46 @@ function drawFog(f: Frame, s: Scene) {
     mask.arc(x, y, r, 0, 7);
     mask.fill();
   }
-  // The thick cloud over the unknown, pinned to the world.
+  // The thick cloud over the unknown, pinned to the world. Each layer of a tile is laid at its
+  // own size and slant, so zoomed out their sum never lines up into a visible grid.
   const pats = patternsFor(fog);
-  const pinned = (pat: CanvasPattern, liPerPx: number) =>
+  const pinned = (pat: CanvasPattern, liPerPx: number, deg: number) =>
     pat.setTransform(
-      new DOMMatrix().translate(W / 2 - view.x * k, H / 2 - view.y * k).scale(liPerPx * k),
+      new DOMMatrix()
+        .translate(W / 2 - view.x * k, H / 2 - view.y * k)
+        .rotate(deg)
+        .scale(liPerPx * k),
     );
   fog.setTransform(dpr, 0, 0, dpr, 0, 0);
   fog.globalCompositeOperation = 'source-over';
   fog.clearRect(0, 0, W, H);
-  fog.fillStyle = 'rgba(4,6,9,0.66)';
+  fog.fillStyle = 'rgba(4,6,9,0.84)';
   fog.fillRect(0, 0, W, H);
-  for (const scale of [1, 0.62, 1.6]) {
-    pinned(pats.big, 100 * scale);
+  for (const [scale, deg] of [
+    [1, 0],
+    [0.62, 37],
+    [1.6, -61],
+  ] as const) {
+    pinned(pats.big, 100 * scale, deg);
     fog.fillStyle = pats.big;
     fog.fillRect(0, 0, W, H);
   }
   fog.setTransform(1, 0, 0, 1, 0, 0);
   fog.globalCompositeOperation = 'destination-out';
   fog.drawImage(mask.canvas, 0, 0);
+  // Over what you know, small soft clouds far below you, slipped under the fog so they show
+  // only where it has lifted; two slanted layers, for the same reason.
+  fog.setTransform(dpr, 0, 0, dpr, 0, 0);
+  fog.globalCompositeOperation = 'destination-over';
+  for (const [li, deg] of [
+    [45, 0],
+    [62, 53],
+  ] as const) {
+    pinned(pats.small, li, deg);
+    fog.fillStyle = pats.small;
+    fog.fillRect(0, 0, W, H);
+  }
   fog.globalCompositeOperation = 'source-over';
-  // Over what you know, weather rather than fog: small clouds, kept to the mask.
-  const cpats = patternsFor(cloud);
-  cloud.setTransform(dpr, 0, 0, dpr, 0, 0);
-  cloud.globalCompositeOperation = 'source-over';
-  cloud.clearRect(0, 0, W, H);
-  pinned(cpats.small, 45);
-  cloud.fillStyle = cpats.small;
-  cloud.fillRect(0, 0, W, H);
-  cloud.setTransform(1, 0, 0, 1, 0, 0);
-  cloud.globalCompositeOperation = 'destination-in';
-  cloud.drawImage(mask.canvas, 0, 0);
-  cloud.globalCompositeOperation = 'source-over';
-  fog.drawImage(cloud.canvas, 0, 0);
   f.ctx.setTransform(1, 0, 0, 1, 0, 0);
   f.ctx.drawImage(fog.canvas, 0, 0);
   f.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
