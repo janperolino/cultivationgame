@@ -10,6 +10,18 @@ export const SPIRIT_HERDERS: Catalog = {
   layer: 'place',
   items: [
     {
+      id: 'scale-horse',
+      name: 'Scale-Horse',
+      pinyin: 'Linma',
+      hanzi: '鳞马',
+      tier: 1,
+      rarity: 'white',
+      kind: 'mount',
+      uses: { carry: { squares: 12 } },
+      source: 'the ranch corrals, broken to the saddle in the second spring',
+      text: 'A horse with a beast’s blood in it, scaled at the shoulders and never tired before you are. Forty-five li a double-hour, eight hours a day. (P3.6: the Mount way of going.)',
+    },
+    {
       id: 'horn-head-lance',
       name: 'Horn-Head Lance',
       pinyin: 'Jiaotou Qiang',
@@ -214,6 +226,7 @@ export const SPIRIT_HERDERS: Catalog = {
     },
   ],
   lots: [
+    { thing: 'scale-horse', shops: ['guild'], weight: 0.4 },
     { thing: 'horn-head-lance', shops: ['stall', 'guild'] },
     { thing: 'deer-horn-whistle', shops: ['guild', 'stall'], weight: 0.5 },
     { thing: 'antler-velvet-pill', shops: ['stall', 'guild'], count: [1, 4] },

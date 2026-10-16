@@ -23,6 +23,7 @@ import { stats } from './stats.ts';
 import { flipHour } from './wheel.ts';
 import { startingWorld } from './resolver/opinion.ts';
 import { emptyWorld, WorldSchema } from './resolver/world.ts';
+import { MapLifeSchema, RegionGenSchema } from './map/schema.ts';
 
 /** The in-game calendar: twelve months of thirty days. */
 export const DAYS_PER_YEAR = 360;
@@ -315,6 +316,12 @@ export const GameStateSchema = z.object({
    * states, projects, what you have learned, and the states of places and kept people.
    */
   world: WorldSchema,
+  /**
+   * The travel map (core/map): the regions the world has seeded, by id, kept so every life in the
+   * slot finds the same places, and the life's own map, made on first need (null until then).
+   */
+  mapgen: z.record(z.string(), RegionGenSchema),
+  map: MapLifeSchema.nullable(),
   /** Where each named random stream stands, so a reload continues the same sequences. */
   rng: z.record(z.string(), z.number().int()),
 });
@@ -373,7 +380,7 @@ export function emptyGear(): Cultivator['gear'] {
 }
 
 /** The screens a life starts with. */
-export const STARTING_UNLOCKS = ['abode', 'cultivate', 'character', 'people', 'chronicle'];
+export const STARTING_UNLOCKS = ['abode', 'cultivate', 'map', 'character', 'people', 'chronicle'];
 
 /** A cultivator at age 12, every ladder at Qi Condensation layer 1 with an empty bar. */
 export function newCultivator(
@@ -519,6 +526,8 @@ export function newLife(opts: NewLifeOptions): GameState {
     seed,
     rng: {},
     world: startingWorld(emptyWorld(), player.origin, player.id, startDay),
+    mapgen: {},
+    map: null,
   };
 }
 
@@ -548,6 +557,9 @@ export function nextLife(prev: GameState, opts: NewLifeOptions): GameState {
     player,
     calendar: { day },
     world: startingWorld(emptyWorld(), player.origin, player.id, day),
+    // The world's places stay; what this life knows of them starts from its own origin.
+    mapgen: prev.mapgen,
+    map: null,
     chronicle: [...prev.chronicle, ...openingEvents(player, day, true)],
     cards: freshCards(day),
   };

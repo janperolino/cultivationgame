@@ -188,6 +188,9 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   // technique's own line, "finishes reading".
   copy: (d, w) => `${w.name} ${s(d.how)} a copy of ${copyTitle(s(d.copy))}.`,
   'ring-opened': (d, w) => `${w.name} opens the storage ring taken from ${s(d.name)} at last.`,
+  // The travel map (P3.6): the first time you come to a place, and a hidden one found.
+  arrived: (d, w) => `${w.name} comes to ${s(d.place)} for the first time.`,
+  found: (d, w) => `${w.name} finds ${s(d.place)}, which no road shows.`,
   reading: (d, w) => `${w.name} begins reading ${copyTitle(s(d.copy))}.`,
   technique: (d, w) => `${w.name} ${s(d.how)} ${technique(s(d.technique)).name}.`,
   method: (d, w) => `${w.name} ${s(d.how)} the ${method(s(d.method)).name}.`,
@@ -309,6 +312,8 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   manual: 'learned',
   copy: 'learned',
   'ring-opened': 'learned',
+  arrived: 'opening',
+  found: 'opening',
   reading: 'learned',
   technique: 'learned',
   method: 'learned',

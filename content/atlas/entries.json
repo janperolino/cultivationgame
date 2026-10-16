@@ -12824,10 +12824,10 @@
   "way": ""
  },
  {
-  "id": "qm-bianhuang",
   "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "边荒",
+  "id": "qm-bianhuang",
   "kind": "region",
   "lore": "Across the [[Jade Strait]] lies beast country, and at low tide the island chain is a road in both directions, though walking it island to island is a season's travel at the least. Spirit beasts work north along the chain to raid herds and villages; human sects go over to hunt cores, eggs and herbs; half-bloods and smugglers pass goods island by island, by night, toward [[Shared Roost City]]. The empire holds the coast with fortress towns and conscript garrisons, and pays for every beast core brought in. The karst is honeycombed with caves where raiders, smugglers and beasts all hide. Raids have tripled in five years, and the beasts coming over are older.",
   "map": {
@@ -12837,6 +12837,7 @@
   "name": "The Border Wilds",
   "parent": "qiming",
   "pinyin": "Bianhuang",
+  "qiDensity": 3,
   "status": "canon",
   "summary": "Karst hills on the Morning Star Continent's southwest coast where the island chain to Vast Wilds begins. Beasts raid, smugglers cross at low tide and every family owes a child to the wall.",
   "tags": [
@@ -14713,7 +14714,6 @@
   "way": ""
  },
  {
-  "id": "qm-mihun-shilin",
   "editedAt": "2026-10-15T12:00:00Z",
   "editedBy": "claude",
   "features": [
@@ -14740,6 +14740,7 @@
    }
   ],
   "hanzi": "迷魂石林",
+  "id": "qm-mihun-shilin",
   "kind": "forbidden",
   "lore": "The Golden Python's grandson, a Nascent Soul serpent, crossed the strait six years ago and took the stone forest as its hunting ground. Its illusions make travelers walk in circles until they starve. Its shed skins are worth a fortune, and its den is said to hold the treasures of everyone it has eaten. Three imperial expeditions have gone in.",
   "map": {
@@ -14750,6 +14751,7 @@
   "name": "Soul-Lost Stone Forest",
   "parent": "qm-bianhuang",
   "pinyin": "Mihun Shilin",
+  "qiDensity": 5,
   "status": "canon",
   "summary": "A maze of stone pillars where a great python from the Vast Wilds Continent has made its den. Its illusions turn the forest into a trap no map survives.",
   "tags": [

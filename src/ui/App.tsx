@@ -7,6 +7,7 @@ import { CombatScreen } from './CombatScreen.tsx';
 import { CreationScreen } from './CreationScreen.tsx';
 import { DevConsole } from './dev/DevConsole.tsx';
 import { CultivateScreen } from './CultivateScreen.tsx';
+import { MapScreen } from './MapScreen.tsx';
 import { PeopleScreen } from './PeopleScreen.tsx';
 import { GlassBackground } from './GlassBackground.tsx';
 import { SettingsScreen } from './SettingsScreen.tsx';
@@ -92,6 +93,12 @@ export function App() {
 
   useEffect(() => {
     void useGame.getState().init();
+    // What people know of places reads the whole atlas (core/resolver/knows.ts); it loads on its own,
+    // after the game, so the first screen never waits for it.
+    void Promise.all([
+      import('../content/generated/atlas.json'),
+      import('../core/resolver/knows.ts'),
+    ]).then(([atlas, knows]) => knows.setPlaces(knows.placeIndex(atlas.default.entries)));
   }, []);
 
   const unlocks = game?.unlocks ?? [];
@@ -154,7 +161,7 @@ export function App() {
   return (
     <>
       <GlassBackground />
-      <div className="shell">
+      <div className={`shell${current.id === 'map' ? ' is-map' : ''}`}>
         <header className="topbar">
           <button
             type="button"
@@ -247,6 +254,7 @@ export function App() {
           )}
           {phase !== 'loading' && current.id === 'abode' && <AbodeScreen />}
           {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
+          {phase !== 'loading' && current.id === 'map' && <MapScreen />}
           {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
           {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
           {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}

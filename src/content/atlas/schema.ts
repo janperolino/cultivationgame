@@ -50,6 +50,20 @@ export const SITE_KINDS = [
   'ruin',
   'shrine',
   'herb-valley',
+  // The travel map's kinds (P3.6's talk): wild sites seeded from the tables, a wild's hearts, and
+  // the posts and crossings on its roads.
+  'spring',
+  'falls',
+  'peak',
+  'camp',
+  'hut',
+  'mine',
+  'tomb',
+  'tree',
+  'stele',
+  'heart',
+  'checkpoint',
+  'ferry',
 ] as const;
 
 export const TIE_KINDS = [
@@ -239,6 +253,12 @@ const baseFields = {
   tags: z.array(z.string()),
   way: z.enum(WAYS).or(z.literal('')).optional(),
   terrain: z.enum(TERRAINS).or(z.literal('')).optional(),
+  /**
+   * How rich the land's spirit qi runs, 1 (barren) to 9 (heaven-touched); a place without one takes
+   * its nearest ancestor's (design § The world, Depth and qi density). It sets the band of what lives
+   * at a land's edge; the generated atlas carries it resolved on every place.
+   */
+  qiDensity: z.number().int().min(1).max(9).optional(),
   /** A site's sub-kind, on kind `site` only. */
   site: z.enum(SITE_KINDS).optional(),
   /** `true` when a Soul check or divine sense finds it, or the realm a soul must reach to find it. */
@@ -367,7 +387,7 @@ export const shapeSchema = z.discriminatedUnion('type', [
 
 export type Shape = z.infer<typeof shapeSchema>;
 
-export const GENERATED_ATLAS_VERSION = 2;
+export const GENERATED_ATLAS_VERSION = 3;
 
 export const generatedAtlasSchema = z
   .object({

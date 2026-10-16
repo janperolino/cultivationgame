@@ -372,7 +372,7 @@ const KINDS = {
 };
 // The P3.1 fields; the lists match src/content/atlas/schema.ts, which atlas:build checks against.
 const PLACES = new Set(["continent","sea","region","kingdom","power","city","landmark","forbidden","realm","site"]);
-const SITE_KINDS = ["town","village","cave","den","ruin","shrine","herb-valley"];
+const SITE_KINDS = ["town","village","cave","den","ruin","shrine","herb-valley","spring","falls","peak","camp","hut","mine","tomb","tree","stele","heart","checkpoint","ferry"];
 const TIE_KINDS = ["enemy","ally","trade","kin","patron","debt","feud","secret"];
 const FEATURE_TAGS = ["fire","burnable","height","fall","water","crossing","cover","witnesses","fragile","dark","narrow"];
 const ACCESS_BY = ["token","rank","invitation","toll"];
@@ -1119,6 +1119,7 @@ function drawEditor(box, e){
   form.append(h("div", { class:"two" }, field("Kind", sel("f-kind", Object.keys(KINDS).map(k => [k, kindLabel(k)]), v.kind || "landmark")), field("Status", sel("f-status", [["draft","Draft"],["canon","Canon"]], v.status || "draft"))));
   form.append(field("Inside", sel("f-parent", parents, v.parent || "")));
   form.append(h("div", { class:"two" }, field("Way (for powers)", sel("f-way", [["", "—"]].concat(Object.entries(WAYS)), v.way || "")), field("Terrain", sel("f-terrain", [["", "—"]].concat(TERRAINS.map(t => [t, t])), v.terrain || ""))));
+  form.append(h("div", { class:"two" }, field("Qi density (1 barren to 9 heaven-touched; empty takes the parent's)", h("input", { id:"f-qi", type:"number", min:"1", max:"9", step:"1", value: v.qiDensity ?? "" }))));
   const topIn = inp("f-top", v.top, { list:"realms" }); const dl = h("datalist", { id:"realms" }); REALMS.forEach(r => dl.append(h("option", { value:r })));
   form.append(field("Strongest present", topIn), dl);
   form.append(field("Summary (one or two sentences)", ta("f-summary", v.summary, 2)));
@@ -1239,6 +1240,7 @@ function drawEditor(box, e){
       summary: $("#f-summary").value.trim(), lore: $("#f-lore").value.trim(), truth: $("#f-truth").value.trim(), notes: $("#f-notes").value.trim(),
       tags: $("#f-tags").value.split(",").map(s => s.trim()).filter(Boolean)
     });
+    const qd = num($("#f-qi")); if (qd !== undefined && qd >= 1 && qd <= 9) data.qiDensity = Math.round(qd); else delete data.qiDensity;
     const map = Object.assign({}, e.map || {});
     const x = num(mx), y = num(my), r = num(mr), sp = num(ms);
     if (x !== undefined && y !== undefined){ map.x = x; map.y = y; } else { delete map.x; delete map.y; }

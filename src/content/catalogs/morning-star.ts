@@ -164,6 +164,19 @@ export const MORNING_STAR: Catalog = {
       source: 'village carpenters',
       text: 'Two wheels and a bed; it carries what your back can’t, until someone takes it.',
     },
+    {
+      id: 'mortal-horse',
+      name: 'Post Horse',
+      pinyin: 'Yi Ma',
+      hanzi: '驿马',
+      tier: 1,
+      rarity: 'white',
+      kind: 'mount',
+      taels: 800,
+      uses: { carry: { squares: 10 } },
+      source: 'post stations and horse fairs on the roads',
+      text: 'A sound mortal horse with a post-station brand. Thirty li a double-hour, six hours a day, and it never complains about the weather. (P3.6: the Horse way of going.)',
+    },
   ],
   lots: [
     // Apricot Grove's pills, everywhere
@@ -201,5 +214,6 @@ export const MORNING_STAR: Catalog = {
     // Mortal goods
     { thing: 'travel-rations', shops: ['mortal'], count: [1, 5] },
     { thing: 'mortal-cart', shops: ['mortal'], weight: 0.3 },
+    { thing: 'mortal-horse', shops: ['mortal'], weight: 0.25 },
   ],
 };

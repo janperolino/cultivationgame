@@ -43,6 +43,7 @@ import { catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 import { technique } from '../content/techniques.ts';
 import { intentRisen, stageName as intentName } from '../core/intent.ts';
+import { ensureMap } from '../core/map/travel.ts';
 import {
   clearToasts,
   dismissToast,
@@ -191,6 +192,15 @@ export interface GameStore {
   dismissNotice(): void;
   /** Dev console: sets the clock multiplier, kept in the URL so a reload keeps it. */
   setSpeed(speed: number): void;
+  /**
+   * The travel map: applies a change from core/map (a course, a routine, a pin); a change that can
+   * fail returns its reason, which comes back here. Returns null when it held.
+   */
+  mapAct(
+    change: (
+      s: GameState,
+    ) => GameState | { ok: true; state: GameState } | { ok: false; reason: string },
+  ): string | null;
   /** Dev console: replaces the game with what `change` makes of it, and saves. */
   devApply(change: (s: GameState) => GameState): string | null;
   /** Dev console: applies real time as if the tab had been closed, with the coming-back card. */
@@ -833,6 +843,17 @@ export const useGame = create<GameStore>()((set, get) => {
       } catch {
         // The URL is a convenience; the speed still holds for this session.
       }
+    },
+
+    mapAct(change) {
+      const { game } = get();
+      if (!game || !holdsLock) return 'This life is not open in this tab.';
+      const r = change(ensureMap(game));
+      if ('ok' in r) {
+        if (!r.ok) return r.reason;
+        set({ game: r.state });
+      } else set({ game: r });
+      return null;
     },
 
     devApply(change) {

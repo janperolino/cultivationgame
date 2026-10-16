@@ -113,6 +113,8 @@ export interface RuleContext {
   seat?: Seat;
   /** The first times the lineage has done (core/firsts.ts); every one when not given. */
   firsts?: readonly FirstId[];
+  /** Each hour's share of its work: a ride's jostled half (core/map/travel.ts); whole when not given. */
+  hourFactor?: readonly number[];
 }
 
 // ---------------------------------------------------------------- the ladders
@@ -319,6 +321,7 @@ export function hourYields(
   day: number,
   unfed: readonly LadderId[] = [],
   seat: Seat = AWAY,
+  hourFactor?: readonly number[],
 ): HourYield[] {
   const base = dayBase(c, day, unfed, seat);
   const discipline = followedRoutine(c) ? DISCIPLINE_BONUS : 0;
@@ -343,7 +346,9 @@ export function hourYields(
     y.dawn = kind === 'qi' && hour === DAWN_HOUR ? DAWN_BONUS : 0;
     y.night = kind === 'qi' && NIGHT_HOURS.includes(hour) ? night : 0;
     y.discipline = discipline;
-    const share = (1 + y.element + y.dawn + y.night + y.discipline) / HOURS_PER_DAY;
+    const share =
+      ((1 + y.element + y.dawn + y.night + y.discipline) * (hourFactor?.[hour] ?? 1)) /
+      HOURS_PER_DAY;
     y.insight = base.trickle / HOURS_PER_DAY;
     if (kind === 'qi') y.qi = base.qi * share;
     else if (kind === 'body') y.body = base.body * share;
@@ -398,8 +403,9 @@ export function dayRates(
   day: number,
   unfed: readonly LadderId[] = [],
   seat: Seat = AWAY,
+  hourFactor?: readonly number[],
 ): DayRates {
-  const hours = hourYields(c, day, unfed, seat);
+  const hours = hourYields(c, day, unfed, seat, hourFactor);
   const count = Object.fromEntries(HOUR_KIND_IDS.map((k) => [k, 0])) as Record<HourKind, number>;
   const sum = { qi: 0, body: 0, soul: 0, insight: 0, practice: 0, study: 0 };
   for (const h of hours) {
@@ -1020,7 +1026,7 @@ export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): Cu
     fed = r.cultivator;
     if (!r.fed) unfed.push(which);
   }
-  const rates = dayRates(fed, ctx.day, unfed, ctx.seat ?? AWAY);
+  const rates = dayRates(fed, ctx.day, unfed, ctx.seat ?? AWAY, ctx.hourFactor);
   // No stones burn once the qi bar is at its cap: the qi would be lost.
   const capped = barFill(fed.qi) >= BAR_CAP - 1e-9;
   const burned = capped ? 0 : Math.min(fed.stones, rates.stoneCap * days);

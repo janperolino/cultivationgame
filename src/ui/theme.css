@@ -7072,3 +7072,460 @@ label.beacon-ring {
     position: static;
   }
 }
+
+/* ---------------------------------------------------------------- the Map 舆图 (P3.6)
+   The map takes the whole main column, and the Chronicle steps aside so it has the room. Under it
+   a bar: the road wheel, its routine and the ways of going; and the course card. */
+
+:root {
+  --hour-travel: #c2ae8c;
+  --hour-look: #9fc4ad;
+  --hour-guard: #b98a6e;
+  --map-depth: #d07a96;
+}
+
+.shell.is-map {
+  grid-template-columns: var(--menu-width) minmax(0, 1fr) 0;
+}
+
+.shell.is-map .context-panel {
+  display: none;
+}
+
+.shell.is-map .main {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 16px;
+  overflow: hidden;
+}
+
+.map-screen {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(360px, 1fr) auto;
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #05070a;
+}
+
+.map-stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.map-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.map-canvas.is-go {
+  cursor: crosshair;
+}
+
+.map-float {
+  position: absolute;
+  z-index: 2;
+}
+
+.map-where {
+  top: 12px;
+  left: 12px;
+  max-width: calc(100% - 110px);
+  padding: 9px 13px;
+  display: grid;
+  gap: 1px;
+}
+
+.map-date {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: calc(18px * var(--text-scale));
+}
+
+.map-here {
+  font-size: calc(12.5px * var(--text-scale));
+  color: var(--muted);
+}
+
+.map-depth {
+  font-size: calc(12.5px * var(--text-scale));
+}
+
+.map-pips {
+  color: var(--map-depth);
+  letter-spacing: 1px;
+  font-size: calc(11px * var(--text-scale));
+}
+
+.map-above {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+p.map-above {
+  margin: 0;
+  font-size: calc(12.5px * var(--text-scale));
+  font-weight: 400;
+}
+
+.map-zoom {
+  top: 12px;
+  right: 12px;
+  display: grid;
+  gap: 4px;
+  padding: 5px;
+}
+
+.map-zoom button {
+  min-width: 30px;
+  height: 30px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.map-zoom button.is-word {
+  height: 24px;
+  padding: 0 4px;
+  font-size: calc(11px * var(--text-scale));
+  color: var(--muted);
+}
+
+.map-tip {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  max-width: 260px;
+  padding: 9px 11px;
+  font-size: calc(12.5px * var(--text-scale));
+}
+
+.map-tip b {
+  font-family: var(--font-display);
+  font-size: calc(16px * var(--text-scale));
+  font-weight: 600;
+}
+
+.map-tip .hanzi {
+  color: var(--accent);
+}
+
+.map-tip p {
+  margin: 3px 0 0;
+}
+
+.map-menu,
+.map-picker {
+  position: absolute;
+  z-index: 5;
+  min-width: 220px;
+  max-width: 290px;
+  padding: 5px;
+  display: grid;
+}
+
+.map-picker {
+  position: static;
+  margin-top: 6px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+}
+
+.map-menu-head {
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 5px 9px 4px;
+}
+
+.map-menu button,
+.map-picker button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  padding: 6px 9px;
+  border-radius: 5px;
+  font: inherit;
+  font-size: calc(13px * var(--text-scale));
+  cursor: pointer;
+}
+
+.map-picker button {
+  justify-content: flex-start;
+}
+
+.map-picker i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.map-menu button span {
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+  text-align: right;
+}
+
+.map-menu button:hover,
+.map-picker button:hover {
+  background: rgb(255 255 255 / 0.05);
+}
+
+.map-menu button.is-later,
+.map-picker button.is-later {
+  color: var(--muted);
+}
+
+.map-menu button.is-warn {
+  color: var(--warn);
+}
+
+.map-menu-sep {
+  height: 1px;
+  background: var(--edge);
+  margin: 4px 6px;
+}
+
+.map-toast {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  padding: 7px 13px;
+  font-size: calc(13px * var(--text-scale));
+  max-width: 70%;
+  text-align: center;
+}
+
+.map-leave {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(360px, 90%);
+  padding: 16px 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.map-leave p {
+  margin: 0;
+}
+
+.map-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px;
+  border-top: 1px solid var(--edge);
+  background: var(--obsidian);
+}
+
+.map-road {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  column-gap: 16px;
+  row-gap: 8px;
+  align-items: start;
+  padding: 12px;
+}
+
+.map-wheel-row {
+  grid-row: span 4;
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.map-wheel {
+  width: 112px;
+  height: 112px;
+  display: block;
+}
+
+.map-wheel .is-editable {
+  cursor: pointer;
+}
+
+.map-wheel-branch {
+  font-family: var(--font-brush);
+  font-size: 11px;
+  fill: rgb(4 5 7 / 0.85);
+  pointer-events: none;
+}
+
+.map-wheel-side {
+  display: grid;
+  gap: 4px;
+  font-size: calc(12px * var(--text-scale));
+}
+
+.map-label {
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.map-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.map-chip {
+  border: 1px solid var(--edge-strong);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font: inherit;
+  font-size: calc(12px * var(--text-scale));
+  cursor: pointer;
+}
+
+.map-chip[aria-pressed='true'] {
+  border-color: var(--accent-edge);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.map-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.map-pace {
+  font-size: calc(12px * var(--text-scale));
+  color: var(--muted);
+  margin: 0;
+}
+
+.map-pace b {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.map-card {
+  padding: 13px 14px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.map-card h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: calc(21px * var(--text-scale));
+  margin: 0;
+  line-height: 1.15;
+}
+
+.map-card h3 .hanzi {
+  color: var(--accent);
+  font-size: calc(16px * var(--text-scale));
+}
+
+.map-card p {
+  margin: 0;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.map-progress {
+  height: 5px;
+  border-radius: 3px;
+  background: rgb(0 0 0 / 0.6);
+  border: 1px solid var(--edge);
+  overflow: hidden;
+}
+
+.map-progress i {
+  display: block;
+  height: 100%;
+  background: var(--hour-travel);
+}
+
+.map-rows {
+  display: grid;
+  gap: 3px;
+  font-size: calc(12.5px * var(--text-scale));
+  font-variant-numeric: tabular-nums;
+}
+
+.map-rows div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.map-rows span:first-child {
+  color: var(--muted);
+}
+
+.map-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 899px) {
+  .shell.is-map {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .shell.is-map .main {
+    overflow: auto;
+  }
+
+  .map-screen {
+    grid-template-rows: 62vh auto;
+  }
+
+  .map-bar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .map-road {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .map-wheel-row {
+    grid-row: auto;
+  }
+
+  .map-where {
+    max-width: calc(100% - 70px);
+  }
+}
+
+@media (max-width: 1200px) {
+  .map-road {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .map-wheel-row {
+    grid-row: auto;
+  }
+}

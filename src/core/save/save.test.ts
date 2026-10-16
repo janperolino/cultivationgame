@@ -86,6 +86,7 @@ describe('save format', () => {
       'abode',
       'cultivate',
       'techniques',
+      'map',
       'character',
       'people',
       'chronicle',

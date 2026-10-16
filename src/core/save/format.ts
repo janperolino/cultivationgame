@@ -33,7 +33,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 23;
+export const SAVE_VERSION = 24;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -783,6 +783,22 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     };
     const world = { ...((s.world ?? {}) as Raw), shops: {}, taken: {}, sealed: [] };
     return { ...old, version: 23, state: { ...s, player, world } };
+  },
+  // v23, P3.5: no travel map. v24 keeps the world's seeded regions and the life's map, made on
+  // first need from where the life began, and opens the Map screen.
+  23: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const unlocks = (s.unlocks ?? []) as string[];
+    return {
+      ...old,
+      version: 24,
+      state: {
+        ...s,
+        mapgen: {},
+        map: null,
+        unlocks: unlocks.includes('map') ? unlocks : [...unlocks, 'map'],
+      },
+    };
   },
 };
 

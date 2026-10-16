@@ -60,6 +60,7 @@ import { learnNode, type LearnCheck } from './trees.ts';
 import { followWheel, hourToFlip, learnRoutine, setHour, type WheelCheck } from './wheel.ts';
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
+import { cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 
 /**
  * The Trees screen opens with anything that lives there (design § UI and screens, Only what you
@@ -129,17 +130,24 @@ export function checkScreens(s: GameState): GameState {
  * The game's day step for `advance`: the player cultivates for a stretch of at most a day, and
  * minor breakthroughs run on the auto setting. Major breakthroughs never happen here.
  */
-export const cultivate: DayStep = (s, days, ctx) => {
-  if (s.ended || days <= 0) return s;
+export const cultivate: DayStep = (s0, days, ctx) => {
+  if (s0.ended || days <= 0) return s0;
+  const s = ensureMap(s0);
+  // On the road the road wheel's hours are spent travelling, and a ride's at a jostled half.
+  const road = cultivationWheel(s);
   const { value: r, state } = withStream(s, 'breakthrough', (rng) =>
-    cultivateDays(s.player, days, {
+    cultivateDays(road ? { ...s.player, wheel: road.wheel } : s.player, days, {
       day: s.calendar.day,
       rng,
       seat: ctx?.seat,
       firsts: s.lineage.firsts,
+      hourFactor: road?.factor,
     }),
   );
-  let next = addNotes(withPlayer(state, r.cultivator), r.notes);
+  const cultivated = road ? { ...r.cultivator, wheel: s.player.wheel } : r.cultivator;
+  let next = addNotes(withPlayer(state, cultivated), r.notes);
+  // The hours on the road carry you along your course.
+  next = travelDays(next, s.calendar.day - days, s.calendar.day);
   for (const b of r.breakthroughs) if (b.success) next = flare(next, b.ladder, b.major);
   // Your followers' wages and bonds run on through the days (P3.4b).
   next = followersDay(next);

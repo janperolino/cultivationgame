@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import polygonClipping, { type MultiPolygon, type Polygon } from 'polygon-clipping';
-import { checkAtlas, resolveTerrain } from '../src/content/atlas/checks.ts';
+import { checkAtlas, resolveQiDensity, resolveTerrain } from '../src/content/atlas/checks.ts';
 import {
   GENERATED_ATLAS_VERSION,
   generatedAtlasSchema,
@@ -82,6 +82,7 @@ const report = checkAtlas(source);
 problems.push(...report.errors.map((p) => `  ${p}`));
 if (problems.length) fail([`entries.json failed validation (${problems.length}):`, ...problems]);
 const terrain = resolveTerrain(source);
+const qiDensity = resolveQiDensity(source);
 
 // --- Parse `top`. ---
 
@@ -101,6 +102,10 @@ const entries: AtlasEntry[] = source.map((e) => {
   delete out.terrain;
   const t = terrain.get(e.id);
   if (t) out.terrain = t;
+  // Qi density too, so the map reads it straight off every place.
+  delete out.qiDensity;
+  const q = qiDensity.get(e.id);
+  if (q !== undefined) out.qiDensity = q;
   return out as AtlasEntry;
 });
 
@@ -182,6 +187,95 @@ const text =
   `\n}}\n`;
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, text);
+
+// --- Region maps. ---
+// Each canon region gets a small file of what its travel map draws and reads (design § The world,
+// The travel map): its outline, the coast round it, and its places with their outlines and fields,
+// so the game never loads the whole atlas to draw one region.
+
+const REGIONS_OUT = join(ROOT, 'src', 'content', 'generated', 'regions');
+mkdirSync(REGIONS_OUT, { recursive: true });
+const MARGIN = 30000;
+const regionsWritten: string[] = [];
+for (const region of atlas.entries) {
+  if (region.kind !== 'region' || region.status !== 'canon') continue;
+  const outline = atlas.shapes[region.id];
+  if (!outline || outline.type !== 'area') continue;
+  const ring = outline.polygons.flat(1).flat(1);
+  const xs = ring.map((p) => p[0]);
+  const ys = ring.map((p) => p[1]);
+  const bbox: [number, number, number, number] = [
+    Math.min(...xs) - MARGIN,
+    Math.min(...ys) - MARGIN,
+    Math.max(...xs) + MARGIN,
+    Math.max(...ys) + MARGIN,
+  ];
+  const box: Polygon = [
+    [
+      [bbox[0], bbox[1]],
+      [bbox[2], bbox[1]],
+      [bbox[2], bbox[3]],
+      [bbox[0], bbox[3]],
+    ],
+  ];
+  // The land round the region, clipped to its box: the coast the map draws the sea against.
+  const land: Pt[][][] = [];
+  for (const e of atlas.entries) {
+    const s = atlas.shapes[e.id];
+    if (e.kind !== 'continent' || !s || s.type !== 'area') continue;
+    for (const poly of polygonClipping.intersection(s.polygons as MultiPolygon, box))
+      land.push(poly.map((r) => cleanRing(r as Pt[])).filter((r) => r.length >= 3));
+  }
+  const inside = new Set<string>([region.id]);
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const e of atlas.entries)
+      if (e.parent && inside.has(e.parent) && !inside.has(e.id)) {
+        inside.add(e.id);
+        grew = true;
+      }
+  }
+  const places = atlas.entries
+    .filter((e) => e.id !== region.id && inside.has(e.id))
+    .map((e) => {
+      const s = atlas.shapes[e.id];
+      return {
+        id: e.id,
+        name: e.name,
+        pinyin: e.pinyin,
+        hanzi: e.hanzi,
+        kind: e.kind,
+        terrain: e.terrain ?? null,
+        qiDensity: e.qiDensity ?? null,
+        hidden: e.hidden ?? null,
+        access: e.access ?? null,
+        top: e.top.realm,
+        famous: e.tags.includes('famous'),
+        summary: e.summary,
+        lore: e.lore,
+        features: e.features ?? [],
+        x: e.map?.x ?? null,
+        y: e.map?.y ?? null,
+        sphere: e.map?.sphere ?? null,
+        outline: s && s.type === 'area' ? s.polygons : null,
+      };
+    });
+  const file = {
+    version: 1,
+    id: region.id,
+    name: region.name,
+    hanzi: region.hanzi,
+    terrain: region.terrain ?? 'plains',
+    qiDensity: region.qiDensity ?? 5,
+    top: region.top.realm,
+    bbox,
+    outline: outline.polygons,
+    land,
+    places,
+  };
+  writeFileSync(join(REGIONS_OUT, `${region.id}.json`), JSON.stringify(file) + '\n');
+  regionsWritten.push(region.id);
+}
 
 // --- Report. ---
 
