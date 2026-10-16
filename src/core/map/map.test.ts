@@ -326,6 +326,12 @@ describe('travel on the day loop', () => {
     expect(setRoadHours(s, [0], 'travel')).toBe(s); // 子 is locked to sleep at Qi Condensation
   });
 
+  it('never lets you pick the Caravan guard routine alone: a caravan sets it', () => {
+    const s = life();
+    expect(followRoadRoutine(s, 'caravan')).toBe(s);
+    expect(followRoadRoutine(s, 'pressed').map!.roadRoutine).toBe('pressed');
+  });
+
   it('sets several road hours at once, passing over the locked ones', () => {
     let s = setRoadHours(life(), [0, 1, 2, 3], 'qi');
     expect(s.map!.ownRoutines[0]!.hours.slice(0, 4)).toEqual(['sleep', 'sleep', 'qi', 'qi']);

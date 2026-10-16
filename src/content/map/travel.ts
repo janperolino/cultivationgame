@@ -88,6 +88,8 @@ export interface RoadRoutine {
   hidden?: boolean;
   /** Keeps to the roads. */
   roadsOnly?: boolean;
+  /** Kept only while you travel with a group that asks it (a paid caravan guard); never picked. */
+  groupOnly?: boolean;
 }
 
 const h = 'home';
@@ -128,6 +130,7 @@ export const ROAD_ROUTINES: readonly RoadRoutine[] = [
     note: 'paid a low-grade stone a day; slow, safe, and on the roads',
     hours: [z, z, h, h, g, g, g, g, g, g, l, h],
     roadsOnly: true,
+    groupOnly: true,
   },
 ];
 

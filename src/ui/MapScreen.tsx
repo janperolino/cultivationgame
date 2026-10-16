@@ -736,19 +736,21 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
         <div className="map-wheel-side">
           <div className="map-label">Road routine</div>
           <div className="map-chips">
-            {roadRoutines(life).map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                className="map-chip"
-                aria-pressed={life.roadRoutine === r.id}
-                disabled={!!life.group}
-                title={`${r.name}: ${r.note}`}
-                onClick={() => act((s) => followRoadRoutine(s, r.id))}
-              >
-                {r.short}
-              </button>
-            ))}
+            {roadRoutines(life)
+              .filter((r) => !r.groupOnly || life.roadRoutine === r.id)
+              .map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  className="map-chip"
+                  aria-pressed={life.roadRoutine === r.id}
+                  disabled={!!life.group}
+                  title={`${r.name}: ${r.note}`}
+                  onClick={() => act((s) => followRoadRoutine(s, r.id))}
+                >
+                  {r.short}
+                </button>
+              ))}
           </div>
           <p className="map-pace">
             <b>

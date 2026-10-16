@@ -406,7 +406,7 @@ function RoadFold({ game }: { game: GameState }) {
     >
       <p className="routine-fold-group">Ways of the road</p>
       <ul className="routine-fold-list">
-        {ROAD_ROUTINES.map((r) => (
+        {ROAD_ROUTINES.filter((r) => !r.groupOnly).map((r) => (
           <FoldRow
             key={r.id}
             name={r.name}

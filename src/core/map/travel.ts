@@ -178,8 +178,10 @@ export function setRoadHours(s: GameState, at: readonly number[], kind: RoadHour
   return replan(withLife(s, { ...life, ownRoutines, roadRoutine: id }));
 }
 
+/** Follows a road routine you can pick: a way of the road or your own, never a group's. */
 export function followRoadRoutine(s: GameState, id: string): GameState {
-  if (!s.map || !roadRoutines(s.map).some((r) => r.id === id) || s.map.group) return s;
+  const r = s.map ? roadRoutines(s.map).find((x) => x.id === id) : undefined;
+  if (!s.map || !r || r.groupOnly || s.map.group) return s;
   return replan(withLife(s, { ...s.map, roadRoutine: id }));
 }
 
