@@ -158,4 +158,4 @@ Stays code: the name, pronouns, realm, bars and numbers, recent events, the seat
 
 ## The overhaul
 
-`plan.md` runs the pipeline as phases A1 to A9, before P3.8: A1 builds the stage and `npm run art`, A2 the shell and the shared kit (and rewrites design.md § Look), then the screens one or a few at a time.
+`plan.md` runs the pipeline as phases A1 to A9: A1 builds the stage and `npm run art` and A2 the shell and the shared kit (and rewrites design.md § Look), both before P3.8; then, after P3.13, the screens one or a few at a time, the go-in screen among them.
