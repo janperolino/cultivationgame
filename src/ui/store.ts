@@ -199,7 +199,8 @@ export interface GameStore {
   mapAct(
     change: (
       s: GameState,
-    ) => GameState | { ok: true; state: GameState } | { ok: false; reason: string },
+    ) =>
+      GameState | { ok: true; state: GameState } | { ok: false; reason: string; state?: GameState },
   ): string | null;
   /** Dev console: replaces the game with what `change` makes of it, and saves. */
   devApply(change: (s: GameState) => GameState): string | null;
@@ -850,7 +851,11 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!game || !holdsLock) return 'This life is not open in this tab.';
       const r = change(ensureMap(game));
       if ('ok' in r) {
-        if (!r.ok) return r.reason;
+        // A refusal may still change the world (a keeper or a sergeant remembers).
+        if (!r.ok) {
+          if (r.state) set({ game: r.state });
+          return r.reason;
+        }
         set({ game: r.state });
       } else set({ game: r });
       return null;

@@ -759,7 +759,7 @@ A region of 60,000 li is half a year on foot at Qi Condensation and a month at C
 
 **Look around** takes an hour, which the road wheel spends at its look-around hour, and once on arriving. It finds what is hidden within 60 li, each hidden site taking a Soul check against its rating, and the rumored place whose ring you stand in. With divine sense, from Foundation, the sweep needs no check. A site hidden by an array or a realm above your soul stays a rumor whatever you roll. Travel alone marks places seen; looking around finds what is hidden and lists each site's features.
 
-**Where you sleep** is picked by rule when the wheel sleeps on the road: an inn if you stand in a town (20 taels a night), a cave, hut or shrine you have found within 300 li, else a camp in the open, where P3.7's night encounters roll.
+**Where you sleep** is picked by rule when the wheel sleeps on the road: an inn if you stand in a town (20 taels a night, paid by rule while you are inside one away from home), a cave, hut or shrine you have found within 300 li, else a camp in the open, where P3.7's night encounters roll.
 
 **Depth and qi density** (P3.6's talk). How strong a place's life runs is two fields, never one number:
 
@@ -774,7 +774,7 @@ A region of 60,000 li is half a year on foot at Qi Condensation and a month at C
 - **Sites.** The atlas stops at kingdoms, cities, landmarks and powers. Below it, a region's towns and villages are written by hand as data, a few to each kingdom and a few in the wilds, with the roads that join them and their shops (P3.5's) standing in them; a road crossing into a kingdom passes a checkpoint, and a road crossing a river a ferry. The wilds between the kingdoms are tracts, named stretches with a terrain of their own, their names written and their cells seeded. Wild sites are seeded from written tables by terrain, about nine to a tract or a kingdom, one in five hidden: a cave, a den, a ruin, a shrine, a herb valley, a spring, a waterfall, a peak, a camp, a hut, a mine, graves, an ancient tree, each with tagged features for scenes. Seeded from the world and the region's id the first time anything needs them and kept in the save, they belong to the world, so every life in the slot finds the same ones. A region without written towns seeds its towns from the same tables.
 - **Travel** turns Seen every visible place within sight of the route, 600 li on open ground and 150 li in forest, jungle, karst or marsh, and the tract you cross. Hidden sites never show from the road. From Foundation the divine sense circle sweeps as you travel, so hidden sites within its range of the route turn up without stopping.
 - **Maps** are items with the chart use: used, they Sketch their places at once, and they stay in the Bag. A kingdom map gives its outline, towns, roads and named landmarks, sold in its towns for about a month's wage at Qi Condensation (30 low-grade stones); a region map gives its kingdoms and named places, a city's for about a year's wage (360 low-grade) or a sect's for contribution; a treasure map gives one hidden site, exactly. Only a treasure map shows a hidden site.
-- **Rumors** mark one place by name somewhere inside a dashed ring, 3,000 li across on the map, found by going there and looking around. They come from cards that name a place, from asking a person, who knows the places round their home and their trade, and from an hour in a town's teahouse, one rumor a visit.
+- **Rumors** mark one place by name somewhere inside a dashed ring, 3,000 li across on the map, found by going there and looking around. They come from cards that name a place, from asking a person, who knows the places round their home and their trade, and from a town's teahouse, one rumor a day for a pot of tea (Entering a place).
 - **Told and true.** A Rumored or Sketched place shows its atlas `lore`, what the world believes; being there shows what is there; a place's `truth` comes out only in scenes.
 - **Every start knows** its home kingdom Sketched, a day's walk round its home Seen and the region's famous places Rumored; a start with a sect or clan behind it adds that power's region map. What you know is the life's: a new life starts from its own origin's knowledge.
 
@@ -786,6 +786,25 @@ A region of 60,000 li is half a year on foot at Qi Condensation and a month at C
 - Deadly: a land whose own hazard sits above your realm, the forbidden lands and the beast ranges. The fog shows the warning, and going in anyway is how most cultivators die.
 
 Checkpoints inside a sphere charge tolls from the Economy's fee list, and your fame decides whether the guard knows your face.
+
+**Entering a place** (P3.6b's talk, 2026-10-16, on the look study `docs/mockups/place-screen-study.html`). Right-click a place you stand at and choose Enter, or arrive on a course marked to go in: the place's own screen stands in for the Map, which is one step back (← Map looks at the map without leaving). Entering takes no time and the clock runs on; you are inside until you set a course or step out, the home wheel turning there. The screen: the place's head and lore, the gate strip, its doors on the left grouped as Trade, Hear and hire, Rest and Later, and the open door's counter beside them.
+
+| Kind | The gate | Doors |
+|---|---|---|
+| City | the watch, a toll of 1 low-grade | its shops, a money changer, the teahouse, the region's map (360 low) and each kingdom's (30), 2 guides, 3 caravans a week, an inn (20 taels), the bounty board (P3.7) |
+| Town | the watch, no toll | its shops, a money changer, the teahouse, its kingdom's map, 1 guide, 1 caravan a week, an inn, the bounty board |
+| Village | none | its store, the elder (a rumor a day, free), a barn bed (5 taels); no changer, since a village store can't break a stone |
+| A power's hall, a landmark | none | its shops, if any |
+| A sect's gate | its access | behind it, the members' shop |
+| A wild site | none | its features and depth, stay or pin it; inside is a scene (P3.9) |
+
+- **The watch** reads the realm you show (hiding it is P3.7's). Renown 3 in the region waives the toll; infamy 3 and it knows your face and turns you away, unless the sergeant takes a 5 low-grade bribe, a persuade check offering greed, who remembers one he refused.
+- **A gated place** asks for its token, rank, invitation or toll; forcing it needs your realm above its array's, and invitations come in M5, so in M3 only members pass a sect's gate. A secret realm's way in is P3.11's.
+- **The teahouse**: a pot of tea, 5 taels, buys one rumor a day of one of the three nearest places you don't know within 6,000 li, hidden ones included, told in a teller's voice ("There's a spring south, three days out, that doesn't freeze"). A village elder tells one within 4,500 li for news of your own.
+- **Guides** are seeded by the place and the month. Each knows the sites of their trade (a beast hunter dens, caves and peaks; a herb-gatherer valleys, springs, falls and old trees; a grave-robber ruins, graves, steles, shrines and mines) within 8,000 li, about a month on foot: hiring one Sketches the site, sets the course and is paid up front, a low-grade stone a day of the trip. A hidden site only if your soul could find it once there.
+- **Caravans** are seeded by the place and the week, bound along the roads for other towns, a week's going different ways. Ride for 2 low-grade, on its wagon at its pace (20 li a double-hour, six hours a day from 辰) with your hours free at half; or guard it on the Caravan guard routine, paid a stone a day on arriving. It sets off at 辰 on its day; join early and you wait.
+- **The money changer** breaks a low-grade stone for 110 taels and sells one for 120, and mid-grade for 1,100 low and 1,200 back.
+- **Your bed**: each night inside a place away from home is paid from your silver at its bed's price, by rule; with no silver you sleep rough.
 
 **A trip** is what gives going in its shape: a goal card, a bounty, a herb run, a patrol, a core hunt, a delivery; travel with its encounter rolls; the goal's scene plus one to three side encounters; and the return, with loot home, a coming-back story and a chronicle entry. While you're out your wheel is the trip's, so going in costs cultivation, and the spirit pool fills instead from M4. Free text and the narrator live inside scenes; between them the engine writes the travel line itself.
 

@@ -121,6 +121,8 @@ export interface MapPlace {
   /** The atlas kind (city, power, landmark, realm) or the site's sub-kind. */
   sub: string;
   name: string;
+  /** Its pinyin, as flavor under the English name; empty for a seeded site. */
+  pinyin: string;
   hanzi: string;
   seal: string;
   x: number;
@@ -227,6 +229,7 @@ const atlasPlace = (p: RegionPlace, shops: readonly string[]): MapPlace | null =
     kind: 'atlas',
     sub: p.kind,
     name: p.name,
+    pinyin: p.pinyin,
     hanzi: p.hanzi,
     seal: PLACE_SEAL[p.kind] ?? '·',
     x: p.x,
@@ -287,6 +290,7 @@ function buildFrom(data: RegionData, gen: RegionGen): RegionMap {
       kind: 'town',
       sub: t.sub,
       name: t.name,
+      pinyin: t.pinyin,
       hanzi: t.hanzi,
       seal: SITE_SEAL[t.sub],
       x: t.x,
@@ -309,6 +313,7 @@ function buildFrom(data: RegionData, gen: RegionGen): RegionMap {
       kind: 'site',
       sub: s.sub,
       name: s.name,
+      pinyin: '',
       hanzi: SITE_SEAL[s.sub],
       seal: SITE_SEAL[s.sub],
       x: s.x,
@@ -334,6 +339,7 @@ function buildFrom(data: RegionData, gen: RegionGen): RegionMap {
       kind: 'heart',
       sub: 'heart',
       name: h.name,
+      pinyin: '',
       hanzi: h.hanzi,
       seal: SITE_SEAL.heart,
       x: h.x,

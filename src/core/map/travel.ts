@@ -29,6 +29,7 @@ import { hourLocked } from '../wheel.ts';
 import { bandAt, bandOfRealm } from './depth.ts';
 import { lineDist, type Pt } from './geometry.ts';
 import { known, lookAround, seeFrom, senseLi, startKnowledge, type Seeing } from './fog.ts';
+import { enterAt } from './gate.ts';
 import {
   areaAt,
   generateRegion,
@@ -86,6 +87,8 @@ export function ensureMap(s: GameState): GameState {
     group: null,
     lookedAt: -1,
     flown: { day: -1, hours: 0 },
+    inside: null,
+    heard: {},
   };
   return { ...s, mapgen, map: startKnowledge(map, blank, home) };
 }
@@ -188,7 +191,7 @@ export function canGoBy(s: GameState, id: WayId): WayCheck {
   if (id === 'boat')
     return { ok: false, reason: 'No passage is charted along a coast or a river here yet.' };
   if (id === 'ride')
-    return { ok: false, reason: 'A flight is hired in a city with a sect (P3.6b).' };
+    return { ok: false, reason: 'A flight on someone’s sword is hired for stones in M6.' };
   if (w.needs && itemCount(s.player, w.needs) <= 0)
     return { ok: false, reason: `You have no ${w.id === 'horse' ? 'horse' : 'mount'}.` };
   return { ok: true };
@@ -283,7 +286,8 @@ function courseFrom(
     maxBand,
     enter,
   };
-  return { ok: true, state: withLife(s, { ...life, course }) };
+  // Setting off leaves the place you were in.
+  return { ok: true, state: withLife(s, { ...life, course, inside: null }) };
 }
 
 /** Sets a course to a spot or a place; a group owns its course, so you can't while with one. */
@@ -333,7 +337,10 @@ export function unpin(s: GameState, i: number): GameState {
 
 // ---------------------------------------------------------------- groups
 
-/** Joins a group bound for a place; it owns the course from now on (P3.6b's caravans and ships join it). */
+/**
+ * Joins a group bound for a place; it owns the course from now on (P3.6b's caravans, M5's ships). A
+ * paid guard keeps the Caravan guard routine; a rider keeps their own, the group's way moving them.
+ */
 export function joinGroup(
   s: GameState,
   group: Omit<Group, 'owed'>,
@@ -347,7 +354,7 @@ export function joinGroup(
     ...s.map,
     group: null,
     way: wayId ?? s.map.way,
-    roadRoutine: group.kind === 'caravan' ? 'caravan' : s.map.roadRoutine,
+    roadRoutine: group.kind === 'caravan' && group.pay > 0 ? 'caravan' : s.map.roadRoutine,
   };
   const r = courseFrom(withLife(s, life), map, [target.x, target.y], target.id, false);
   if (!r.ok) return r;
@@ -446,6 +453,7 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
   const foundationFlight = w.id === 'fly' && realmIndex(realmOf(c)) === 1;
   const notes: TravelNote[] = [];
   let paid = 0;
+  let enterTarget: MapPlace | null = null;
   const take = (r: Seeing) => {
     life = r.life;
     for (const id of r.found) notes.push({ type: 'found', place: id });
@@ -461,7 +469,9 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
     if (kind === 'look' && life.lookedAt !== hourIndex) {
       take(lookAround(map, { ...life, lookedAt: hourIndex }, life.at, sb, sense));
     }
-    let moving = movesAt({ ...next, map: life }, hour);
+    // A group you joined before it left waits for its day.
+    const waiting = !!life.group?.departs && h0 < life.group.departs * HOURS_PER_DAY - 1e-9;
+    let moving = !waiting && movesAt({ ...next, map: life }, hour);
     if (moving && foundationFlight) {
       const flown: number = life.flown.day === dayInt ? life.flown.hours : 0;
       if (flown >= FOUNDATION_FLIGHT_HOURS) moving = false;
@@ -518,6 +528,12 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
           notes.push({ type: 'arrived', place: target.id });
           life = { ...life, been: [...life.been, target.id] };
         }
+        if (
+          course.enter &&
+          target &&
+          Math.hypot(target.x - life.at[0], target.y - life.at[1]) < 250
+        )
+          enterTarget = target;
         // A group pays what it owes on arriving.
         if (life.group && life.group.owed > 0) paid += Math.round(life.group.owed);
         life = { ...life, course: null, group: null, way: life.way === 'ship' ? 'foot' : life.way };
@@ -530,6 +546,11 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
   for (const n of notes) {
     const p = placeById(map, n.place);
     if (p) next = addEvent(next, n.type, { place: p.name });
+  }
+  // A course marked to go in goes in on arriving, through the gate (a refusal leaves you outside).
+  if (enterTarget) {
+    const r = enterAt(next, map, enterTarget);
+    if (r.ok) next = r.state;
   }
   return next;
 }

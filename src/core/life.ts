@@ -60,6 +60,7 @@ import { learnNode, type LearnCheck } from './trees.ts';
 import { followWheel, hourToFlip, learnRoutine, setHour, type WheelCheck } from './wheel.ts';
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
+import { bedNights } from './map/place.ts';
 import { cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 
 /**
@@ -148,6 +149,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   let next = addNotes(withPlayer(state, cultivated), r.notes);
   // The hours on the road carry you along your course.
   next = travelDays(next, s.calendar.day - days, s.calendar.day);
+  // Nights inside a town away from home are paid at its inn by rule (P3.6b).
+  next = bedNights(next, s.calendar.day - days, s.calendar.day);
   for (const b of r.breakthroughs) if (b.success) next = flare(next, b.ladder, b.major);
   // Your followers' wages and bonds run on through the days (P3.4b).
   next = followersDay(next);

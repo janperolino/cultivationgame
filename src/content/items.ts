@@ -11,6 +11,7 @@ import { RARITY_IDS, rarity, rarityRank, type RarityId } from './rarity.ts';
 import type { Effect } from './stats.ts';
 import type { DamageType, Form } from './techniques.ts';
 import { CATALOG_ITEMS } from './catalogs/index.ts';
+import { MAP_ITEMS } from './map/places.ts';
 
 /** What the Bag draws and stacks it as (design § Items and gear, the item record). */
 export const ITEM_KINDS = [
@@ -25,6 +26,7 @@ export const ITEM_KINDS = [
   'vessel',
   'mount',
   'beast',
+  'map',
 ] as const;
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
@@ -44,6 +46,7 @@ export const STACK_BY_KIND: Record<ItemKind, number> = {
   vessel: 1,
   mount: 1,
   beast: 1,
+  map: 1,
 };
 
 /** The glyph a square shows for a kind, until design-time art arrives. */
@@ -59,6 +62,7 @@ export const KIND_GLYPH: Record<ItemKind, string> = {
   vessel: '鼎',
   mount: '骑',
   beast: '兽',
+  map: '图',
 };
 
 /**
@@ -145,6 +149,12 @@ export interface KeyUse {
   opens: string;
 }
 
+/** A map (design § The world, The fog: Maps): used, it Sketches the region's or the kingdom's places. */
+export interface ChartUse {
+  of: string;
+  scope: 'region' | 'kingdom';
+}
+
 /** Formation slots for M4's enchantments. */
 export interface InscribeUse {
   slots: number;
@@ -161,6 +171,7 @@ export interface ItemUses {
   carry?: CarryUse;
   key?: KeyUse;
   inscribe?: InscribeUse;
+  chart?: ChartUse;
 }
 
 /**
@@ -636,8 +647,8 @@ const WRITTEN: readonly Item[] = [
   },
 ];
 
-/** The written list and every catalog's (content/catalogs/). */
-export const ITEMS: readonly Item[] = [...WRITTEN, ...CATALOG_ITEMS];
+/** The written list, every catalog's (content/catalogs/) and the maps for sale (content/map/places.ts). */
+export const ITEMS: readonly Item[] = [...WRITTEN, ...CATALOG_ITEMS, ...MAP_ITEMS];
 
 /** Every written thing as written, every property its best rarity takes; variants read these. */
 const written = new Map(ITEMS.map((i) => [i.id, i]));

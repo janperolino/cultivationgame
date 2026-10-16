@@ -1,4 +1,4 @@
-// What the save keeps of the travel map (save v24): the world's seeded regions, which every life in
+// What the save keeps of the travel map (save v24, v25 the place you are in): the world's seeded regions, which every life in
 // the slot shares, and the life's own map: where you are, what you know, the trail you walked,
 // your pins, your course, your road wheel and the group you travel with.
 import { z } from 'zod';
@@ -68,6 +68,7 @@ const WAY_IDS = [
   'fly',
   'ride',
   'ship',
+  'wagon',
 ] as const satisfies readonly WayId[];
 
 export const CourseSchema = z.object({
@@ -107,6 +108,8 @@ export const GroupSchema = z.object({
   leaveCost: z.string(),
   /** You lead it: its calls are yours. */
   leading: z.boolean(),
+  /** The world day it sets off, when you joined before it left (P3.6b's caravans). */
+  departs: z.number().optional(),
 });
 export type Group = z.infer<typeof GroupSchema>;
 
@@ -136,5 +139,9 @@ export const MapLifeSchema = z.object({
   lookedAt: z.number().int(),
   /** Flight hours spent today on your own sword, and the day they count for. */
   flown: z.object({ day: z.number().int(), hours: z.number() }),
+  /** The place you have gone into (P3.6b): its screen stands in for the map until you set a course. */
+  inside: z.string().nullable(),
+  /** The day you last heard a place's rumor, by place: a teahouse tells one a day. */
+  heard: z.record(z.string(), z.number()),
 });
 export type MapLife = z.infer<typeof MapLifeSchema>;

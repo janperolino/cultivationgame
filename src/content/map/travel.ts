@@ -137,7 +137,7 @@ export const GUARD_PAY_LOW = 1;
 
 // ---------------------------------------------------------------- ways of going
 
-export type WayId = 'foot' | 'horse' | 'mount' | 'boat' | 'fly' | 'ride' | 'ship';
+export type WayId = 'foot' | 'horse' | 'mount' | 'boat' | 'fly' | 'ride' | 'ship' | 'wagon';
 
 export interface Way {
   id: WayId;
@@ -202,7 +202,7 @@ export const WAYS: readonly Way[] = [
     rideHours: 6,
     jostle: 0.5,
     flies: true,
-    note: 'a flight hired in a city with a sect, for stones (P3.6b)',
+    note: 'a flight on someone’s sword, hired for stones (M6)',
   },
   {
     id: 'ship',
@@ -213,6 +213,15 @@ export const WAYS: readonly Way[] = [
     flies: true,
     groupOnly: true,
     note: 'a sect’s flying ship, sailing through the night',
+  },
+  {
+    id: 'wagon',
+    name: 'A caravan’s wagon',
+    pace: 20,
+    rideHours: 6,
+    jostle: 0.5,
+    groupOnly: true,
+    note: 'riding with a caravan: its six hours a day from 辰, yours free at half',
   },
 ];
 

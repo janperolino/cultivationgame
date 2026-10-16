@@ -9,6 +9,7 @@ import { worldWhen } from '../core/chronicle.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import { band, bandAt, depthInfo, pullsIn, qiAt } from '../core/map/depth.ts';
 import { known, sightAt } from '../core/map/fog.ts';
+import { enterAt, gateOf, placeKindOf } from '../core/map/gate.ts';
 import type { Pt } from '../core/map/geometry.ts';
 import {
   areaAt,
@@ -43,6 +44,7 @@ import {
 import type { GameState } from '../core/state.ts';
 import { hourKindOpen } from '../core/wheel.ts';
 import { drawMap, isDeadly, pickAt, toScreen, toWorld, type View } from './map/draw.ts';
+import { PlaceScreen } from './PlaceScreen.tsx';
 import { useGame } from './store.ts';
 
 const TERRAIN_WORDS: Record<string, string> = { sea: 'at sea' };
@@ -71,11 +73,33 @@ export function MapScreen() {
     if (game && !game.map) mapAct((s) => s);
   }, [game, mapAct]);
   const map = game ? mapOf(game) : null;
+  // Inside a place its screen stands in for the map; ← Map looks back at the map without leaving.
+  const inside = game?.map?.inside ?? null;
+  const [looking, setLooking] = useState<string | null>(null);
+  // Stepping out forgets the look back, so arriving there again opens its screen.
+  const [was, setWas] = useState(inside);
+  if (was !== inside) {
+    setWas(inside);
+    if (!inside) setLooking(null);
+  }
   if (!game || !map || !game.map) return <p className="muted">Unrolling the map…</p>;
-  return <MapView game={game} map={map} life={game.map} />;
+  const place = inside ? placeById(map, inside) : undefined;
+  if (place && looking !== inside)
+    return <PlaceScreen game={game} map={map} place={place} onMap={() => setLooking(inside)} />;
+  return <MapView game={game} map={map} life={game.map} onGoIn={() => setLooking(null)} />;
 }
 
-function MapView({ game, map, life }: { game: GameState; map: RegionMap; life: MapLife }) {
+function MapView({
+  game,
+  map,
+  life,
+  onGoIn,
+}: {
+  game: GameState;
+  map: RegionMap;
+  life: MapLife;
+  onGoIn: () => void;
+}) {
   const mapAct = useGame((s) => s.mapAct);
   const stage = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -248,21 +272,43 @@ function MapView({ game, map, life }: { game: GameState; map: RegionMap; life: M
         ],
       };
     const [ux, uy] = toScreen(view, size.W, size.H, life.at);
+    // A place under the cursor wins over your own mark beside it, so a place you stand near but
+    // not at still offers going there.
     const here =
-      Math.hypot(ux - sx, uy - sy) < 16 ||
-      (q && 'x' in q && Math.hypot(q.x - life.at[0], q.y - life.at[1]) < 250);
+      q && 'x' in q
+        ? Math.hypot(q.x - life.at[0], q.y - life.at[1]) < 250
+        : Math.hypot(ux - sx, uy - sy) < 16;
     if (here) {
       const atPlace =
         q && 'x' in q && Math.hypot(q.x - life.at[0], q.y - life.at[1]) < 250 ? q : null;
       const home = homeOf(game, map);
       const items: MenuItem[] = [];
-      if (atPlace && (atPlace.kind === 'town' || atPlace.kind === 'atlas'))
-        items.push({
-          t: 'Enter',
-          s: 'its own screen · P3.6b',
-          later: true,
-          run: () => say(`Going into ${atPlace.name} arrives with P3.6b.`),
-        });
+      if (atPlace && placeKindOf(atPlace)) {
+        const gate = gateOf(game, map, atPlace);
+        const goIn = (bribe = false) => {
+          if (!act((s) => enterAt(s, map, atPlace, { bribe }))) onGoIn();
+        };
+        if (life.inside === atPlace.id)
+          items.push({ t: 'Go back in', s: 'its own screen', run: onGoIn });
+        else if (gate.kind === 'refused') {
+          items.push({ t: 'Enter', s: 'the watch knows your face', warn: true, run: () => goIn() });
+          items.push({
+            t: 'Bribe the watch',
+            s: ` low-grade, if he takes it`,
+            run: () => goIn(true),
+          });
+        } else
+          items.push({
+            t: 'Enter',
+            s:
+              gate.kind === 'toll'
+                ? `the toll is ${gate.toll} low-grade`
+                : gate.kind === 'shut'
+                  ? 'the gate is shut to you'
+                  : 'its own screen',
+            run: () => goIn(),
+          });
+      }
       items.push({
         t: 'Stay and cultivate here',
         s: 'the home wheel turns here',
@@ -294,7 +340,7 @@ function MapView({ game, map, life }: { game: GameState; map: RegionMap; life: M
         y: sy,
         head: q.name,
         items: [
-          ...(q.kind === 'town' || q.kind === 'atlas'
+          ...(placeKindOf(q)
             ? [
                 {
                   t: 'Go there and enter',

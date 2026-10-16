@@ -38,6 +38,8 @@ export const BASE_PRICE: Record<ItemKind, number> = {
   vessel: 50,
   mount: 100,
   beast: 100,
+  // A map sets its own price (content/map/places.ts): a kingdom's 30, a region's 360.
+  map: 30,
 };
 
 /** Gear that carries squares is dearer than a blade. */

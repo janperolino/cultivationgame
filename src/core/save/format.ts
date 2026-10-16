@@ -33,7 +33,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 24;
+export const SAVE_VERSION = 25;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -799,6 +799,13 @@ const migrations: Record<number, (old: Raw) => Raw> = {
         unlocks: unlocks.includes('map') ? unlocks : [...unlocks, 'map'],
       },
     };
+  },
+  // v24, P3.6: a place was only stood at. v25 keeps the place you have gone into and the day you
+  // last heard each place's rumor.
+  24: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const map = s.map ? { ...(s.map as Raw), inside: null, heard: {} } : null;
+    return { ...old, version: 25, state: { ...s, map } };
   },
 };
 

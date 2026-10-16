@@ -1,0 +1,494 @@
+<!doctype html>
+<!-- P3.6b's look study: the place screen. Mock data from the Border Wilds' written towns, the atlas and
+     P3.5's shops and catalogs; nothing here is wired to the game. Open it in a browser. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Place Screen Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap">
+<style>
+:root {
+  --void: #040507;
+  --page: #020203;
+  --obsidian: rgb(7 8 11 / 0.96);
+  --edge: rgb(255 255 255 / 0.075);
+  --edge-strong: rgb(255 255 255 / 0.14);
+  --text: #e9e5da;
+  --muted: #8d949d;
+  --accent: #d6ab4c;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-edge: color-mix(in srgb, var(--accent) 45%, transparent);
+  --crack: #7fc7d9;
+  --warn: #e08a6a;
+  --good: #9fc4ad;
+  --r-white: #d8d8d8; --r-green: #7fc48a; --r-blue: #6fa8e0; --r-purple: #b48ae0; --r-gold: #e0b44c;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  --font-ui: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--text); font: 14px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; }
+.hanzi { font-family: var(--font-brush); font-weight: 400; }
+.muted { color: var(--muted); }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 22px 20px 40px; display: grid; gap: 16px; }
+.wrap > * { min-width: 0; }
+.eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 2px 0 6px; }
+.intro p { margin: 0; max-width: 80ch; }
+
+/* Study controls (not part of the game). */
+.controls { display: flex; flex-wrap: wrap; gap: 12px 20px; padding: 12px 14px; border: 1px dashed var(--edge-strong); border-radius: 10px; background: #07080a; }
+.control { display: grid; gap: 5px; min-width: 0; max-width: 100%; }
+.control > span { font-size: 11.5px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+.seg { max-width: 100%; display: inline-flex; flex-wrap: wrap; border: 1px solid var(--edge-strong); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 5px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--edge); }
+.seg button[aria-pressed="true"] { background: rgb(255 255 255 / 0.07); color: var(--text); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The game shell. */
+.frame { margin: 0 auto; width: 100%; }
+.frame.narrow { width: 375px; }
+.shell { display: grid; grid-template-columns: 184px minmax(0, 1fr); border: 1px solid var(--edge); border-radius: 14px; overflow: hidden; background: var(--void); min-height: 720px; }
+.frame.narrow .shell { grid-template-columns: minmax(0, 1fr); }
+.menu { border-right: 1px solid var(--edge); padding: 18px 10px; display: grid; align-content: start; gap: 16px; background: var(--obsidian); }
+.frame.narrow .menu { display: none; }
+.brand { display: flex; align-items: baseline; gap: 8px; padding: 0 8px; }
+.brand b { font-family: var(--font-display); font-weight: 600; font-size: 17px; white-space: nowrap; }
+.brand .hanzi { color: var(--accent); font-size: 16px; }
+.menu ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.menu li { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; border-radius: 6px; color: var(--muted); font-size: 13.5px; }
+.menu li .hanzi { font-size: 14px; opacity: 0.7; }
+.menu li.on { color: var(--text); background: rgb(255 255 255 / 0.03); box-shadow: inset 2px 0 0 var(--accent); border-radius: 0 6px 6px 0; }
+.menu li.on .hanzi { color: var(--accent); opacity: 1; }
+.topbar { display: none; align-items: center; justify-content: center; height: 48px; border-bottom: 1px solid var(--edge); font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+.frame.narrow .topbar { display: flex; }
+
+.main { min-width: 0; padding: 18px 20px 20px; display: grid; gap: 14px; align-content: start; position: relative; }
+.frame.narrow .main { padding: 12px; }
+.panel { background: var(--obsidian); border: 1px solid var(--edge); border-radius: 10px; box-shadow: 0 8px 28px rgb(0 0 0 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.04); }
+
+/* The head: back to the map, the place's name and its line. */
+.crumbs { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.back { border: 1px solid var(--edge-strong); background: transparent; color: var(--text); border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.back:hover { border-color: var(--accent-edge); }
+.head { padding: 14px 16px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+.frame.narrow .head { grid-template-columns: auto minmax(0, 1fr); }
+.seal { width: 52px; height: 52px; border: 1.5px solid var(--accent-edge); border-radius: 8px; display: grid; place-items: center; color: var(--accent); font-family: var(--font-brush); font-size: 30px; background: var(--accent-soft); }
+.seal.small { width: 34px; height: 34px; font-size: 19px; border-radius: 6px; }
+.seal.dim { color: var(--muted); border-color: var(--edge-strong); background: transparent; }
+.head h2 { font-family: var(--font-display); font-weight: 600; font-size: 28px; margin: 0; line-height: 1.1; }
+.head h2 .hanzi { color: var(--accent); font-size: 21px; margin-left: 8px; }
+.head .pinyin { font-size: 12px; color: var(--muted); font-style: italic; }
+.head .line { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.head .line b { color: var(--text); font-weight: 500; }
+.purse { text-align: right; font-size: 12.5px; color: var(--muted); display: grid; gap: 2px; }
+.purse b { color: var(--text); font-weight: 600; font-size: 14px; }
+.frame.narrow .purse { grid-column: 1 / -1; text-align: left; display: flex; gap: 12px; }
+.lore { margin: 0; font-size: 13px; color: #c6c1b5; max-width: 90ch; }
+
+/* The gate strip. */
+.gate { padding: 10px 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.gate .what { flex: 1 1 260px; }
+.gate .what b { font-weight: 600; }
+.gate.ok { border-color: color-mix(in srgb, var(--good) 30%, transparent); }
+.gate.bad { border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.gate.bad .what b { color: var(--warn); }
+
+/* Body: doors and the counter. */
+.body { display: grid; grid-template-columns: minmax(270px, 340px) minmax(0, 1fr); gap: 14px; align-items: start; }
+.body.over { grid-template-columns: minmax(0, 1fr); }
+.frame.narrow .body { grid-template-columns: minmax(0, 1fr); }
+.doors { padding: 10px; display: grid; gap: 12px; }
+.body.over .doors { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); align-items: start; }
+.group { display: grid; gap: 4px; }
+.body.over .group { padding: 4px; }
+.group > .label { padding: 0 6px 2px; }
+.label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.door { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 8px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; width: 100%; }
+.door:hover { background: rgb(255 255 255 / 0.03); border-color: var(--edge); }
+.door[aria-pressed="true"] { border-color: var(--accent-edge); background: var(--accent-soft); }
+.door .n { font-weight: 500; font-size: 13.5px; display: block; }
+.door .s { font-size: 12px; color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.door .tag { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.door.later { opacity: 0.45; cursor: default; }
+.door.later:hover { background: transparent; border-color: transparent; }
+
+.counter { padding: 16px; display: grid; gap: 12px; min-height: 420px; align-content: start; }
+.body.over .counter, .frame.narrow .counter { position: absolute; left: 20px; right: 20px; top: 150px; z-index: 5; min-height: 0; max-height: calc(100% - 170px); overflow: auto; }
+.frame.narrow .counter { left: 8px; right: 8px; top: 56px; max-height: calc(100% - 64px); }
+.counter[hidden] { display: none; }
+.counter .ch { display: flex; gap: 12px; align-items: center; }
+.counter h3 { font-family: var(--font-display); font-weight: 600; font-size: 22px; margin: 0; line-height: 1.1; }
+.counter h3 .hanzi { color: var(--accent); font-size: 17px; margin-left: 6px; }
+.counter .sub { font-size: 12.5px; color: var(--muted); }
+.close { margin-left: auto; border: 1px solid var(--edge-strong); background: transparent; color: var(--muted); border-radius: 6px; padding: 2px 9px; font: inherit; cursor: pointer; display: none; }
+.body.over .close, .frame.narrow .close { display: inline-block; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--edge); }
+.tabs button { border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; margin-bottom: -1px; }
+.tabs button[aria-pressed="true"] { color: var(--text); border-bottom-color: var(--accent); }
+.rows { display: grid; gap: 2px; }
+.row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 7px 6px; border-radius: 6px; }
+.row:hover { background: rgb(255 255 255 / 0.025); }
+.row .dot { width: 8px; height: 8px; border-radius: 50%; }
+.row .n { font-size: 13.5px; }
+.row .s { font-size: 12px; color: var(--muted); }
+.row .p { font-size: 13px; text-align: right; white-space: nowrap; }
+.row .p s { color: var(--muted); font-size: 11.5px; margin-right: 4px; }
+.btn { border: 1px solid var(--edge-strong); background: transparent; color: var(--text); border-radius: 6px; padding: 4px 10px; font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--accent-edge); }
+.btn.primary { border-color: var(--accent-edge); color: var(--accent); background: var(--accent-soft); }
+.btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+.note { font-size: 12.5px; color: var(--muted); padding: 8px 10px; border: 1px dashed var(--edge-strong); border-radius: 8px; }
+.note b { color: var(--text); font-weight: 500; }
+.keeper { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.keeper b { color: var(--text); font-weight: 500; }
+.said { font-family: var(--font-display); font-size: 17px; font-style: italic; color: #d9d3c4; margin: 0; }
+.ring { display: inline-block; width: 14px; height: 14px; border: 1.5px dashed var(--crack); border-radius: 50%; vertical-align: -2px; margin-right: 4px; }
+.ok-t { color: var(--good); }
+.warn-t { color: var(--warn); }
+.features { display: flex; flex-wrap: wrap; gap: 6px; }
+.feat { font-size: 12px; border: 1px solid var(--edge-strong); border-radius: 999px; padding: 2px 9px; color: #c6c1b5; }
+.feat i { color: var(--muted); font-style: normal; font-size: 11px; margin-left: 4px; }
+.depth { color: #e6b3c3; }
+.pips { color: #d07a96; letter-spacing: 1px; font-size: 11px; }
+.toast { position: absolute; right: 20px; bottom: 16px; z-index: 9; padding: 8px 13px; font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.toast.on { opacity: 1; }
+.access { display: grid; gap: 6px; }
+.access .row { grid-template-columns: auto minmax(0, 1fr) auto; }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <p class="eyebrow">P3.6b · look study</p>
+    <h1>Entering a place</h1>
+    <p class="muted">Right-click a place on the map and choose Enter, or arrive on a course marked to go in: the Map gives way to the place's own screen, with the map one step back. The gate comes first, then the place's doors on the left; a door opens at the counter. Try each kind of place, both counters, and how the watch reads your name.</p>
+  </div>
+
+  <div class="controls">
+    <label class="control"><span>Place</span><div class="seg" data-ctl="place">
+      <button data-v="city" aria-pressed="true">City</button><button data-v="town">Town</button><button data-v="village">Village</button><button data-v="sect">Sect's gate</button><button data-v="site">Wild site</button>
+    </div></label>
+    <label class="control"><span>The counter</span><div class="seg" data-ctl="counter">
+      <button data-v="beside" aria-pressed="true">Beside the doors</button><button data-v="over">Over the doors</button>
+    </div></label>
+    <label class="control"><span>Your name here</span><div class="seg" data-ctl="name">
+      <button data-v="unknown" aria-pressed="true">Unknown</button><button data-v="renown">Renowned (3)</button><button data-v="infamy">Infamous (3)</button>
+    </div></label>
+    <label class="control"><span>Width</span><div class="seg" data-ctl="width">
+      <button data-v="wide" aria-pressed="true">Desktop</button><button data-v="narrow">375 px</button>
+    </div></label>
+  </div>
+
+  <div class="frame" id="frame">
+    <div class="shell">
+      <nav class="menu">
+        <div class="brand"><b>Severed Heaven</b><span class="hanzi">断天</span></div>
+        <ul>
+          <li>Abode <span class="hanzi">洞府</span></li>
+          <li>Cultivate <span class="hanzi">修炼</span></li>
+          <li class="on">Map <span class="hanzi">舆图</span></li>
+          <li>Trees <span class="hanzi">道树</span></li>
+          <li>Character <span class="hanzi">根骨</span></li>
+          <li>People <span class="hanzi">人物</span></li>
+          <li>Chronicle <span class="hanzi">生平</span></li>
+          <li>Settings <span class="hanzi">设置</span></li>
+        </ul>
+      </nav>
+      <div>
+        <div class="topbar">Map</div>
+        <div class="main" id="main"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const S = { place: 'city', counter: 'beside', name: 'unknown', width: 'wide', door: null, tab: 'buy', haggled: null, heard: false };
+
+const R = { white: 'var(--r-white)', green: 'var(--r-green)', blue: 'var(--r-blue)', purple: 'var(--r-purple)', gold: 'var(--r-gold)' };
+
+// ---- mock data, from the Border Wilds' written towns, the atlas and P3.5's shops
+const SHOPS = {
+  'mouth-stall': { seal: '摊', name: 'A stall under the skull walls', kind: 'stall', tag: '6 lots', keeper: 'Old Hu, a stallholder', trust: 'neutral', purse: '150 low this month',
+    lots: [['Shark-Marrow Pill', 'pill · tier 1', 'green', '14 low'], ['Undertow Talisman', 'talisman · tier 1', 'white', '6 low'], ['Blood-Salt Kelp', 'herb · tier 1', 'white', '3 low'], ['Garrison Ration Pill', 'pill · tier 1', 'white', '4 low'], ['Reef-Road Thrust', 'copy · technique', 'green', '40 low'], ['Tide-Reading Shell', 'treasure · tier 1', 'blue', '96 low']] },
+  'mouth-alchemy': { seal: '丹', name: 'The Apricot Grove branch shop', kind: 'alchemy shop', tag: 'Apricot Grove', keeper: 'Steward Lin of Apricot Grove', trust: 'neutral', purse: '1,500 low this month',
+    lots: [['Spring-Returning Pill', 'pill · tier 1', 'green', '18 low'], ['Shark-Marrow Pill', 'pill · tier 1', 'blue', '42 low'], ['Garrison Ration Pill', 'pill · tier 1', 'white', '4 low'], ['Foundation Pill', 'pill · gate', 'white', '1.5 mid'], ['Spring-Returning Pill', 'pill · tier 2', 'white', '81 low']] },
+  'mouth-refiner': { seal: '器', name: 'A refiner by the beast-part market', kind: 'refiner', tag: 'mends gear', keeper: 'Refiner Zhao', trust: 'neutral', purse: '1,500 low this month', mends: true,
+    lots: [['Shark-Tooth Spear', 'spear · tier 1', 'green', '30 low'], ['Crab-Shell Vest', 'armor · tier 1', 'white', '12 low'], ['Watchtower Spear', 'spear · tier 1', 'blue', '90 low'], ['Cadet’s Scale Coat', 'armor · tier 1', 'green', '28 low']] },
+  'mouth-guild': { seal: '商', name: 'The merchant guild hall', kind: 'merchant guild', tag: 'imports', keeper: 'Factor Wen', trust: 'neutral', purse: '8,000 low this month',
+    lots: [['Red Rocks steel ingot', 'material · import', 'white', '9 low'], ['Medicine Ridges ginseng', 'herb · import', 'green', '24 low'], ['Azure Cloud Sword', 'sword · tier 2', 'purple', '2.2 mid'], ['Post Horse', 'mount', 'white', '60 low'], ['Hand Cart', 'gear', 'white', '400 taels']] },
+  'mouth-bounty': { seal: '赏', name: 'The bounty office', kind: 'bounty office', tag: 'posted rates', keeper: 'Clerk Ma', trust: 'neutral', purse: '20,000 low this month', posted: true, lots: [] },
+  'mouth-mortal': { seal: '铺', name: 'A chandler on the harbor street', kind: 'mortal shop', tag: 'silver', keeper: 'Chandler Sun', trust: 'neutral', purse: '30 taels this month',
+    lots: [['Travel Rations', 'food · ten days', 'white', '30 taels'], ['Millet Cake', 'food', 'white', '2 taels'], ['Oilcloth and rope', 'gear', 'white', '15 taels']] },
+  'march-stall': { seal: '摊', name: 'A sutler’s stall by the watchtower', kind: 'stall', tag: '6 lots', keeper: 'Sutler Ge', trust: 'friendly', purse: '150 low this month',
+    lots: [['Garrison Ration Pill', 'pill · tier 1', 'white', '4 low'], ['Iron-Rain Talisman', 'talisman · tier 1', 'green', '15 low'], ['Pit-Edge Nettle', 'herb · tier 1', 'white', '2 low'], ['Drill-Yard Thrust', 'copy · technique', 'white', '12 low']] },
+  'march-mortal': { seal: '铺', name: 'The village store', kind: 'mortal shop', tag: 'silver', keeper: 'Storekeeper Tian', trust: 'neutral', purse: '30 taels this month',
+    lots: [['Millet Cake', 'food', 'white', '2 taels'], ['Ash Spear Shaft', 'material', 'white', '8 taels'], ['Travel Rations', 'food · ten days', 'white', '30 taels']] },
+  'gate-sect': { seal: '宗', name: 'The Gate’s exchange hall', kind: 'sect shop', tag: 'members', keeper: 'Deacon Qu', trust: '—', purse: '5,000 low', members: true, lots: [] },
+};
+const BAG = [['Beast Core', 'beast part · tier 1', 'white', '6 low', 'bounty office pays 5'], ['Wolf hide', 'beast part', 'white', '2 low', ''], ['Shark-Tooth Spear', 'spear · tier 1 · worn 40%', 'white', '4 low', 'mend for 2 low']];
+
+const PLACES = {
+  city: {
+    seal: '城', name: 'City of the Guarded Mouth', hanzi: '守口城', pinyin: 'Shoukou Cheng',
+    line: 'city · coast · qi density 3, thin · top realm <b>Nascent Soul</b> · garrison of ten thousand',
+    lore: 'The City holds the narrow coast where the chain begins. Its markets sell beast parts, smuggled Vast Wilds herbs and frontier saber steel; every sect with a frontier interest keeps a hall here. At low tide, the reef road appears below the walls.',
+    gate: { toll: '1 low-grade stone', tollAt: 'the Sea Gate' },
+    groups: [
+      ['Trade', ['mouth-stall', 'mouth-alchemy', 'mouth-refiner', 'mouth-guild', 'mouth-bounty', 'mouth-mortal', 'changer']],
+      ['Hear and hire', ['teahouse', 'maps', 'guides', 'caravans']],
+      ['Rest', ['inn']],
+      ['Later', ['board']],
+    ],
+  },
+  town: {
+    seal: '镇', name: 'Pacified Fort', hanzi: '安边堡', pinyin: 'Anbian Bao',
+    line: 'town · hills · qi density 3, thin · the March of Pacified Borders · the Gongsun garrison',
+    lore: 'The Gongsun garrison’s seat and its cadet school, a watchtower on every corner of the wall.',
+    gate: { toll: null, tollAt: 'the fort gate' },
+    groups: [
+      ['Trade', ['march-stall', 'changer']],
+      ['Hear and hire', ['teahouse', 'maps', 'guides', 'caravans']],
+      ['Rest', ['inn']],
+      ['Later', ['board']],
+    ],
+  },
+  village: {
+    seal: '村', name: 'Spear-Plow Village', hanzi: '枪犁村', pinyin: 'Qiangli Cun',
+    line: 'village · hills · qi density 3, thin · the March of Pacified Borders',
+    lore: 'Fields plowed with spears at hand; the village store sells to the patrols.',
+    gate: null,
+    groups: [
+      ['Trade', ['march-mortal']],
+      ['Hear', ['elder']],
+      ['Rest', ['barn']],
+    ],
+  },
+  sect: {
+    seal: '门', name: 'Beast-Butcher Gate', hanzi: '屠兽门', pinyin: 'Tushou Men',
+    line: 'a sect’s gate · Saber and Slaughter · top realm <b>Nascent Soul</b> · array of <b>Core Formation</b>',
+    lore: 'The Gate teaches Saber and Slaughter Daos and recruits frontier orphans who have already lost someone to beasts. Disciples earn rank by cores taken.',
+    gated: true,
+    groups: [
+      ['Behind the gate', ['gate-sect']],
+      ['At the gate', ['notice']],
+    ],
+  },
+  site: {
+    seal: '洞', name: 'Hollow of the Gnawed Bones', hanzi: '啮骨洞', pinyin: 'Niegu Dong',
+    line: 'a cave · the Broken Teeth Hills · hills · <span class="pips">●●○○</span> <span class="depth">ring 1 of 3: beasts of layers 4 to 6 · green finds</span>',
+    lore: 'Found on a look around. A dry cave above a beast-run, old bones in the mouth.',
+    site: true,
+  },
+};
+
+const DOORS = {
+  changer: { seal: '兑', name: 'Money changer', s: 'a stone for 110 taels, 120 back' },
+  teahouse: { seal: '茶', name: 'Teahouse', s: 'an hour over tea: one rumor a day' },
+  maps: { seal: '图', name: 'Map seller', s: 'kingdom maps 30 low' },
+  guides: { seal: '导', name: 'Guides', s: 'two for hire, a stone a day' },
+  caravans: { seal: '队', name: 'Caravans', s: 'three leaving this week' },
+  inn: { seal: '宿', name: 'Inn', s: 'you sleep here by rule: 20 taels a night' },
+  board: { seal: '榜', name: 'Bounty board', s: 'posted in P3.7', later: true },
+  elder: { seal: '老', name: 'The village elder', s: 'one rumor a day, for news of your own' },
+  barn: { seal: '宿', name: 'A bed in a barn', s: 'you sleep here by rule: 5 taels' },
+  notice: { seal: '告', name: 'Notice wall', s: 'what the Gate posts for outsiders' },
+};
+if (true) {
+  DOORS.maps.cityS = 'the region 360 low, each kingdom 30';
+  DOORS.caravans.townS = 'one leaving this week';
+  DOORS.guides.townS = 'one for hire, a stone a day';
+}
+
+function doorInfo(id) {
+  if (SHOPS[id]) { const s = SHOPS[id]; return { seal: s.seal, name: s.name, s: s.kind, tag: s.tag }; }
+  const d = { ...DOORS[id] };
+  if (S.place === 'city' && d.cityS) d.s = d.cityS;
+  if (S.place === 'town' && d.townS) d.s = d.townS;
+  if (S.place === 'town' && id === 'caravans') d.tag = '';
+  return d;
+}
+
+// ---- rendering
+const main = document.getElementById('main');
+
+function gateHtml(p) {
+  if (p.site) return '';
+  if (p.gated) {
+    return `<div class="panel gate bad"><span class="seal small">门</span><div class="what"><b>The gate is shut to you.</b> Two Gate disciples at Foundation, sabers bare: “Token or invitation.” The array reads <b>Core Formation</b>; forcing it needs your realm above it, and costs standing with the Gate either way.</div></div>`;
+  }
+  if (!p.gate) return `<div class="panel gate ok"><span class="seal small dim">村</span><div class="what">No wall and no watch: a dog barks, and the fields go on working.</div></div>`;
+  const realm = 'Qi Condensation, third layer';
+  if (S.name === 'infamy') {
+    return `<div class="panel gate bad"><span class="seal small">卫</span><div class="what"><b>The watch knows your face.</b> The sergeant at ${p.gate.tollAt} reads you at ${realm} and has heard what you did at the Wall (infamy 3 here). He won’t let you in.</div><button class="btn">Bribe him · 5 low</button><button class="btn">Back to the map</button></div>`;
+  }
+  const toll = p.gate.toll;
+  const tollText = toll ? (S.name === 'renown' ? `waives the toll (<s>${toll}</s>): “Go in, hero of the Wall.”` : `takes the toll, ${toll}.`) : 'asks your name and lets you through.';
+  return `<div class="panel gate ok"><span class="seal small">卫</span><div class="what">The watch at ${p.gate.tollAt} reads you at <b>${realm}</b> and ${tollText} ${S.name === 'renown' ? '<span class="ok-t">Renown 3 in the Border Wilds.</span>' : '<span class="muted">Nobody knows your face.</span>'}</div></div>`;
+}
+
+function doorsHtml(p) {
+  if (p.site) return '';
+  return `<div class="panel doors">${p.groups.map(([label, ids]) => `
+    <div class="group"><div class="label">${label}</div>${ids.map((id) => {
+      const d = doorInfo(id);
+      const later = d.later ? ' later' : '';
+      return `<button class="door${later}" data-door="${id}" aria-pressed="${S.door === id}"><span class="seal small${later ? ' dim' : ''}">${d.seal}</span><span><span class="n">${d.name}</span><span class="s">${d.s}</span></span><span class="tag">${d.tag || ''}</span></button>`;
+    }).join('')}</div>`).join('')}</div>`;
+}
+
+function shopHtml(id) {
+  const s = SHOPS[id];
+  if (s.members) {
+    return `<div class="note"><b>Members only.</b> The exchange hall sells to disciples of the Gate, at prices in stones now and in contribution from M5. You carry no token of the Gate.</div>`;
+  }
+  const tabs = [['buy', 'Buy'], ['sell', 'Sell']];
+  if (s.mends) tabs.push(['mend', 'Mend']);
+  const tab = tabs.some(([t]) => t === S.tab) ? S.tab : (s.posted ? 'sell' : 'buy');
+  const haggle = s.posted
+    ? '<span class="muted">Posted rates, never haggled.</span>'
+    : S.haggled === id
+      ? '<span class="ok-t">Haggled: 20% off this visit, a clear pass.</span>'
+      : '<button class="btn" data-act="haggle">Haggle · once a visit</button>';
+  let list = '';
+  if (tab === 'buy') {
+    list = s.posted ? '<div class="note">The bounty office buys cores and beast parts at half their price, and pays bounties on proof. Its board is P3.7’s.</div>'
+      : `<div class="rows">${s.lots.map(([n, sub, r, price]) => `<div class="row"><span class="dot" style="background:${R[r]}"></span><span><span class="n">${n}</span> <span class="s">· ${sub}</span></span><span class="p">${S.haggled === id && price.includes('low') ? `<s>${price}</s>${discount(price)}` : price}</span><button class="btn" data-act="buy" data-n="${n}">Buy</button></div>`).join('')}</div>`;
+  } else if (tab === 'sell') {
+    list = `<div class="rows">${BAG.map(([n, sub, r, price]) => `<div class="row"><span class="dot" style="background:${R[r]}"></span><span><span class="n">${n}</span> <span class="s">· ${sub}</span></span><span class="p">${s.posted && n !== 'Beast Core' ? '<span class="muted">not bought here</span>' : (s.posted ? '5 low' : price)}</span><button class="btn" data-act="sell" data-n="${n}" ${s.posted && n !== 'Beast Core' ? 'disabled' : ''}>Sell</button></div>`).join('')}</div>
+      <div class="sub">They buy at 40% of their own price, 60% once ${s.keeper.split(',')[0]} is friendly. ${s.purse ? `They can pay out ${s.purse}.` : ''}</div>`;
+  } else {
+    list = `<div class="rows"><div class="row"><span class="dot" style="background:${R.white}"></span><span><span class="n">Shark-Tooth Spear</span> <span class="s">· worn 40%</span></span><span class="p">2 low</span><button class="btn" data-act="mend">Mend</button></div><div class="row"><span class="dot" style="background:${R.green}"></span><span><span class="n">Cadet’s Scale Coat</span> <span class="s">· damaged, green to white</span></span><span class="p">7 low</span><button class="btn" data-act="mend">Restore</button></div></div>`;
+  }
+  return `<div class="keeper"><span>Keeper: <b>${s.keeper}</b> · ${s.trust}</span>${haggle}</div>
+    <div class="tabs">${tabs.map(([t, l]) => `<button data-tab="${t}" aria-pressed="${t === tab}">${l}</button>`).join('')}</div>${list}`;
+}
+
+function discount(price) {
+  const m = price.match(/([\d.]+) (low|mid)/);
+  if (!m) return price;
+  const v = parseFloat(m[1]) * 0.8;
+  return `${Number.isInteger(v) ? v : v.toFixed(1)} ${m[2]}`;
+}
+
+function counterBody(id) {
+  if (SHOPS[id]) return shopHtml(id);
+  switch (id) {
+    case 'changer':
+      return `<div class="rows">
+        <div class="row"><span></span><span><span class="n">Break a low-grade stone</span> <span class="s">· for 110 taels</span></span><span class="p">you hold 6 low</span><button class="btn" data-act="change">Break one</button></div>
+        <div class="row"><span></span><span><span class="n">Buy a low-grade stone</span> <span class="s">· for 120 taels</span></span><span class="p">you hold 40 taels</span><button class="btn" disabled>Buy one</button></div>
+        <div class="row"><span></span><span><span class="n">Break a mid-grade stone</span> <span class="s">· for 1,100 low</span></span><span class="p">you hold 0 mid</span><button class="btn" disabled>Break one</button></div>
+      </div><div class="sub">Inns, ferries and mortal shops deal in silver and can’t make change for a stone.</div>`;
+    case 'teahouse':
+    case 'elder': {
+      const who = id === 'elder' ? 'The elder, over a bowl of millet wine' : 'A herb-gatherer two tables over';
+      return S.heard
+        ? `<p class="said">“${id === 'elder' ? 'My boy saw smoke from a hollow up the ridge, north of the beast-pit. Nobody lives up there.' : 'There’s a spring in the Saltreed Flats that doesn’t freeze, three days south. Swear on my mother.'}”</p>
+           <div class="sub">${who}. <span class="ring"></span>${id === 'elder' ? 'A hut' : 'A spring'} is Rumored now, somewhere in a 3,000 li ring on the map; go there and look around to find it. The next rumor here is tomorrow.</div>`
+        : `<div class="sub">${id === 'elder' ? 'He talks if you sit a while: an hour, and he asks for news of your own.' : 'An hour and a pot of tea, 5 taels: one rumor a day, of a place you don’t know, nearest first.'}</div><div><button class="btn primary" data-act="listen">Sit and listen · an hour</button></div>`;
+    }
+    case 'maps': {
+      const rows = S.place === 'city'
+        ? [['The Border Wilds', 'region map: its kingdoms and named places', '360 low', 'you know 4 of 12'], ['The March of Pacified Borders', 'kingdom map: outline, towns, roads', '30 low', 'Sketched already'], ['The Kingdom of Spirit Herders', 'kingdom map', '30 low', 'unknown'], ['Stone Eyes', 'kingdom map', '30 low', 'Rumored']]
+        : [['The March of Pacified Borders', 'kingdom map: outline, towns, roads', '30 low', 'Sketched already']];
+      return `<div class="rows">${rows.map(([n, s, p, k]) => `<div class="row"><span></span><span><span class="n">${n}</span> <span class="s">· ${s}</span><br><span class="s">${k}</span></span><span class="p">${p}</span><button class="btn" data-act="buy" data-n="the map of ${n}" ${k.startsWith('Sketched') ? 'disabled' : ''}>Buy</button></div>`).join('')}</div>
+        <div class="sub">A map goes in the Bag and Sketches its places the moment you use it. Only a treasure map shows a hidden site.</div>`;
+    }
+    case 'guides': {
+      const gs = [['Lao Qian', 'herb-gatherer, mortal', 'knows the herb valleys and springs within 3,000 li', '1 low a day'], ['Hei Ya', 'beast hunter, Qi Condensation 2', 'knows the dens and caves within 3,000 li', '1 low a day']];
+      return `<div class="rows">${(S.place === 'town' ? gs.slice(1) : gs).map(([n, w, k, p]) => `<div class="row"><span></span><span><span class="n">${n}</span> <span class="s">· ${w}</span><br><span class="s">${k}</span></span><span class="p">${p}</span><button class="btn" data-act="guide" data-n="${n}">Ask where</button></div>`).join('')}</div>
+        <div class="sub">A guide takes you to one place they know that you don’t, a hidden one too: it turns Sketched, the course is set, and they walk with you, paid by the day, until you arrive.</div>`;
+    }
+    case 'caravans': {
+      const cs = [['To Pacified Fort', 'the merchant guild · 6 wagons · 4 guards', 'leaves tomorrow at 辰 · about 9 days by road'], ['To the Kingdom of Spirit Herders', 'Spirit Herder drovers · 40 mounts', 'leaves in 3 days · about 21 days'], ['To Stone Eyes', 'the merchant guild · 3 wagons', 'leaves in 5 days · about 14 days']];
+      return `<div class="rows">${(S.place === 'town' ? [['To the City of the Guarded Mouth', 'the merchant guild · 5 wagons', 'leaves in 2 days · about 9 days by road']] : cs).map(([n, w, k]) => `<div class="row" style="grid-template-columns: minmax(0,1fr) auto auto"><span><span class="n">${n}</span> <span class="s">· ${w}</span><br><span class="s">${k}</span></span><button class="btn" data-act="join" data-n="${n}">Ride · 2 low</button><button class="btn primary" data-act="guard" data-n="${n}">Guard · 1 low a day</button></div>`).join('')}</div>
+        <div class="sub">The caravan owns the course and its stops; you own your wheel. Riding frees your hours at a jostled half. Guarding puts you on the Caravan guard routine, roads only, paid on arriving; walking off loses the pay and costs the guild’s regard.</div>`;
+    }
+    case 'inn':
+    case 'barn':
+      return `<div class="sub">${id === 'barn' ? 'A farmer lets the barn for 5 taels a night.' : 'The Salt Lantern Inn, 20 taels a night.'} When your wheel sleeps while you stand here, you sleep here, paid from your silver by rule; with no silver, you sleep rough.</div>
+        <div class="note"><b>Staying.</b> Leave the screen and the home wheel turns as it would at home; your course is clear until you set one.</div>`;
+    case 'notice':
+      return `<p class="said">“The Gate takes frontier orphans who have lost someone to beasts. Bring a beast core you took yourself.”</p><div class="sub">Joining a sect is M5’s. For now the wall says who they want.</div>`;
+    default: return '';
+  }
+}
+
+function counterHtml(p) {
+  if (p.site) {
+    return `<div class="panel counter">
+      <div class="label">What’s here</div>
+      <div class="features"><span class="feat">a dry ledge above the beast-run<i>height</i></span><span class="feat">old bones in the mouth<i>witnesses?</i></span><span class="feat">a narrow back passage<i>narrow, dark</i></span></div>
+      <div class="note"><b>Inside, a scene waits for P3.9.</b> Until then a site is a place to stand: your wheel sleeps here by rule as found shelter (a cave, hut or shrine within 300 li), and P3.7’s encounters read its band.</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap"><button class="btn primary">Stay and cultivate here</button><button class="btn">Pin it</button><button class="btn" data-act="map">Back to the map</button></div>
+    </div>`;
+  }
+  if (!S.door) {
+    return `<div class="panel counter"><div class="note">Pick a door. ${p.gated ? 'Behind the gate is for members.' : 'Shops keep their stock for the month, and what you bought stays bought.'}</div></div>`;
+  }
+  const d = doorInfo(S.door);
+  const sub = SHOPS[S.door] ? `${SHOPS[S.door].kind}${SHOPS[S.door].purse ? '' : ''}` : d.s;
+  return `<div class="panel counter"><div class="ch"><span class="seal">${d.seal}</span><div><h3>${d.name}</h3><div class="sub">${sub}</div></div><button class="close" data-act="close">Close</button></div>${counterBody(S.door)}</div>`;
+}
+
+function render() {
+  const p = PLACES[S.place];
+  document.getElementById('frame').classList.toggle('narrow', S.width === 'narrow');
+  const showCounter = p.site || S.counter === 'beside' && S.width !== 'narrow' || S.door;
+  const blocked = S.name === 'infamy' && p.gate && !p.gated;
+  main.innerHTML = `
+    <div class="crumbs"><button class="back" data-act="map">← Map</button><span>The Border Wilds</span></div>
+    <div class="panel head"><span class="seal">${p.seal}</span><div><h2>${p.name}<span class="hanzi">${p.hanzi}</span></h2><div class="pinyin">${p.pinyin}</div><div class="line">${p.line}</div></div>
+      <div class="purse"><span><b>6</b> low-grade</span><span><b>40</b> taels</span><span>Autumn 3,134 · 巳</span></div></div>
+    <p class="lore">${p.lore}</p>
+    ${gateHtml(p)}
+    ${blocked ? '' : p.site ? counterHtml(p) : `<div class="body ${S.counter === 'over' ? 'over' : ''}">${doorsHtml(p)}${showCounter ? counterHtml(p) : ''}</div>`}
+    <div class="panel toast" id="toast"></div>`;
+}
+
+function toast(t) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = t;
+  el.classList.add('on');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => el.classList.remove('on'), 2200);
+}
+
+document.addEventListener('click', (e) => {
+  const seg = e.target.closest('.seg button');
+  if (seg) {
+    const ctl = seg.parentElement.dataset.ctl;
+    S[ctl] = seg.dataset.v;
+    seg.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === seg));
+    if (ctl === 'place') { S.door = S.place === 'sect' ? 'gate-sect' : S.place === 'site' ? null : (S.place === 'village' ? 'march-mortal' : S.place === 'town' ? 'march-stall' : 'mouth-stall'); S.tab = 'buy'; S.heard = false; S.haggled = null; }
+    render();
+    return;
+  }
+  const door = e.target.closest('.door');
+  if (door && !door.classList.contains('later')) { S.door = door.dataset.door; S.tab = 'buy'; S.heard = false; render(); return; }
+  const tab = e.target.closest('.tabs button');
+  if (tab) { S.tab = tab.dataset.tab; render(); return; }
+  const act = e.target.closest('[data-act]');
+  if (!act || act.disabled) return;
+  const a = act.dataset.act, n = act.dataset.n;
+  if (a === 'close') { S.door = null; render(); }
+  else if (a === 'haggle') { S.haggled = S.door; render(); }
+  else if (a === 'listen') { S.heard = true; render(); }
+  else if (a === 'buy') toast(`Bought ${n}.`);
+  else if (a === 'sell') toast(`Sold ${n}.`);
+  else if (a === 'mend') toast('Mended.');
+  else if (a === 'change') toast('110 taels for a stone.');
+  else if (a === 'guide') toast(`${n} names the places they know.`);
+  else if (a === 'join' || a === 'guard') toast(`You’ll leave with the caravan ${n.toLowerCase()}; the map shows its course.`);
+  else if (a === 'map') toast('Back to the map, standing at the place.');
+});
+
+S.door = 'mouth-stall';
+render();
+</script>
