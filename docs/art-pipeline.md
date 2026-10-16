@@ -11,7 +11,7 @@ What comes from the Jade Sanctuary prototype (Jan's Codex test, 2026-10-16, kept
 3. **Assets.** Jan runs each asset prompt (templates C to F) with the concept attached, so GPT matches it, and drops the PNG in `art/inbox/` named by its asset id (`abode-scene.png`).
 4. **Ingest.** `npm run art` moves the inbox files to `art/source/`, writes `src/ui/art/<screen>/<id>.webp` as the manifest says, checks the budgets and prints the sizes.
 5. **Build.** Claude builds the screen: frames as `border-image`, surfaces as backgrounds, scenes as images, ornaments as images, everything else code.
-6. **Compare.** Claude screenshots the build in the browser pane at the concept's own size, beside the concept, lists the differences in a line each, fixes them and compares once more. Then Jan signs off. Where the concept invented content (wrong numbers, a stat or mechanic the game lacks), the game wins.
+6. **Compare.** Claude screenshots the build in the browser pane at 1920×1080, beside the concept, lists the differences in a line each, fixes them and compares once more. Then Jan signs off. Where the concept invented content (wrong numbers, a stat or mechanic the game lacks), the game wins.
 
 ## What is art and what is code
 
@@ -32,7 +32,7 @@ Art can also be content, later: an item, place or beast entry names an art id, a
 
 ## Asset kinds
 
-GPT draws at its own sizes (1024×1024, 1536×1024, 1024×1536, larger where offered); each kind asks for the nearest. Assets ship at twice the size they show at, for sharp gold on high-density screens.
+GPT draws at its own sizes (1024×1024, 1536×1024, 1024×1536, larger where offered); each kind asks for the nearest. Screens are laid out on the stage (design.md § UI and screens, The stage): 1080 tall, 1920 wide at 16:9, everything needed inside the centre 1728, scaled as one to the window. Assets ship at twice the size they show at on the stage, so the gold stays sharp up to 4K.
 
 | Kind | What it is | GPT makes | Ships as | Budget |
 |---|---|---|---|---|
@@ -40,7 +40,7 @@ GPT draws at its own sizes (1024×1024, 1536×1024, 1024×1536, larger where off
 | surface | a seamless tile: void sky, obsidian grain, gilt leaf | 1024×1024, tiling on all four sides | webp q80, 512 or 1024 square | 120 KB |
 | scene | a still illustration with clear zones for text and for what code draws | the slot's shape, full-bleed | webp q84, up to 1600 on the long side | 300 KB |
 | ornament | small pieces: seals, dividers, corner studs, waypoint diamonds | a sheet on an even grid, transparent (or flat #00FF00 to key out) | each piece cut, webp q90 with alpha | 30 KB |
-| concept | a whole screen, reference only, never shipped | 1536×1024 | `art/concepts/`, 1600 wide q80 | — |
+| concept | a whole screen, reference only, never shipped | 16:9, the widest GPT offers, cropped to 16:9 | `art/concepts/`, 1920×1080 q80 | — |
 
 A screen's art stays under 800 KB, shared assets counted once.
 
@@ -50,9 +50,6 @@ A screen's art stays under 800 KB, shared assets counted once.
 .slab {
   border: 64px solid transparent;
   border-image: url('./art/common/slab.webp') 128 fill / 64px stretch;
-}
-@media (max-width: 540px) {
-  .slab { border-image-width: 40px; }
 }
 ```
 
@@ -110,7 +107,7 @@ Every prompt carries the style block word for word, so the assets agree with eac
 
 **A. Concept, one screen**
 
-> Use case: ui-mockup. Create ONE polished desktop game screen for Severed Heaven 断天, a literary cultivation RPG, landscape 1536x1024, straight-on actual UI with real readable text. The attached screenshot is the current screen: keep its content and controls, redesign its look and layout. [STYLE BLOCK] STRUCTURE: build the screen from solid carved panels with real ornament at their corners, not thin outline boxes; one painted scene is the heart of the screen; the one thing waiting on the player is the brightest panel; [layout for this screen, e.g. "character slab left, scene center, card right, routine rail above a bottom navigation"]. CONTENT, use exactly, English first with small hanzi: [the screen's real copy and numbers from the build]. Nothing over the painted scene except [list]. No invented mechanics, no extra stats, no presentation captions.
+> Use case: ui-mockup. Create ONE polished desktop game screen for Severed Heaven 断天, a literary cultivation RPG, a 16:9 landscape PC monitor screen at 1920x1080 proportions, straight-on actual UI with real readable text. Keep everything the player needs inside the centre 90% of the width; the outer edges carry only scenery. The attached screenshot is the current screen: keep its content and controls, redesign its look and layout. [STYLE BLOCK] STRUCTURE: build the screen from solid carved panels with real ornament at their corners, not thin outline boxes; one painted scene is the heart of the screen; the one thing waiting on the player is the brightest panel; [layout for this screen, e.g. "character slab left, scene center, card right, routine rail above a bottom navigation"]. CONTENT, use exactly, English first with small hanzi: [the screen's real copy and numbers from the build]. Nothing over the painted scene except [list]. No invented mechanics, no extra stats, no presentation captions.
 
 **B. Cut list** (Claude writes it, Jan reads it)
 
@@ -161,4 +158,4 @@ Stays code: the name, pronouns, realm, bars and numbers, recent events, the seat
 
 ## First phase (a proposal for plan.md)
 
-**Art pipeline and the Abode.** Build `tools/art.ts` and `npm run art` with sharp, the `art/` folders and their `.gitignore` lines, and the frame classes in `theme.css`. Then run the loop once on the Abode: a concept Jan picks, the cut list, Jan's assets, the build, the compare. Done: the Abode matches its concept at the concept's size, works at 390 wide, its art is under 800 KB, and `npm test`, `npm run lint` and `npm run build` pass.
+**Art pipeline and the Abode.** Build `tools/art.ts` and `npm run art` with sharp, the `art/` folders and their `.gitignore` lines, and the frame classes in `theme.css`. Then run the loop once on the Abode: a concept Jan picks, the cut list, Jan's assets, the build, the compare. It also builds the stage: drop the 15 width breakpoints in `theme.css`, scale the UI by the window's height over 1080, route the canvases' pointer through that factor, and add the Fullscreen button. Done: the Abode matches its concept at 1920×1080, every screen holds at 1280×720, 16:10 and 21:9, the Abode's art is under 800 KB, and `npm test`, `npm run lint` and `npm run build` pass.

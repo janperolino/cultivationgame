@@ -16,7 +16,8 @@ A xianxia cultivation idle game with an AI-narrated "go in" mode (GLM 5.2 throug
 - Content is data: a new pill, node, beast or region is an entry, not new code.
 - Randomness is seeded (mulberry32) and runs in named streams, one per system, so a seed replays the same fight and a new system never shifts another's rolls.
 - Never assume one player: the rules take a cultivator, and actions name who acts.
-- Browser storage (IndexedDB and localStorage) is touched only by the save layer and settings, so a desktop or mobile wrapper can swap it.
+- Browser storage (IndexedDB and localStorage) is touched only by the save layer and settings, so a desktop wrapper can swap it.
+- Monitors only: every screen is laid out on the 1920×1080 stage that scales to the window (design.md § UI and screens, The stage). No phone layouts and no width breakpoints.
 - Saves carry a version number and migrations.
 - Never commit API keys. The OpenRouter key lives in `.env.local` or the browser.
 - Place and sect names are English first (Clear Heaven Sword Sect), with pinyin and hanzi underneath as flavor. People keep pinyin names (Elder Mo).
