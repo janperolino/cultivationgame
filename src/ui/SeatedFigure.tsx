@@ -11,7 +11,6 @@ import { useEffect, useMemo, useRef } from 'react';
 import { HEAT_UNSETTLED_S, POINTER_REACH } from '../content/attention.ts';
 import { circulation, RARITY_SPARKS } from '../content/circulation.ts';
 import { MAX_ODDS, SCENE_ODDS_CAP, SCENE_ODDS_STEP } from '../content/cultivation.ts';
-import { BRANCHES, HOUR_KINDS } from '../content/hours.ts';
 import { methodCirculation } from '../content/methods.ts';
 import { realm } from '../content/realms.ts';
 import {
@@ -30,7 +29,7 @@ import { ladderMethod } from '../core/methods.ts';
 import { sceneBonus, windingUp } from '../core/scene.ts';
 import type { Cultivator, GameState } from '../core/state.ts';
 import { stats } from '../core/stats.ts';
-import { effectiveWheel, hourOfDay } from '../core/wheel.ts';
+import { hourOfDay } from '../core/wheel.ts';
 import { formatLadder, formatPercent, LADDER_LABELS } from './format.ts';
 import {
   FIGURE_BOX,
@@ -93,7 +92,6 @@ export function SeatedFigure({ game }: { game: GameState }) {
   const reduced = reducedMotion(settings);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
-  const sceneStarted = useScene((s) => s.play?.started ?? 0);
   const engine = useRef<QiCanvas | null>(null);
   const sunRef = useRef<HTMLCanvasElement>(null);
   const sunEngine = useRef<SunCanvas | null>(null);
@@ -156,13 +154,6 @@ export function SeatedFigure({ game }: { game: GameState }) {
     sunEngine.current?.refreshPalette();
   }, [settings]);
 
-  // A scene called from another screen, or further down this one, brings the figure into view.
-  useEffect(() => {
-    if (!sceneStarted) return;
-    const behavior = reducedMotion() ? 'auto' : 'smooth';
-    boxRef.current?.scrollIntoView({ block: 'nearest', behavior });
-  }, [sceneStarted]);
-
   /** The pointer in the figure's units. */
   const toFigure = (ev: React.PointerEvent): [number, number] => {
     const r = ev.currentTarget.getBoundingClientRect();
@@ -192,9 +183,6 @@ export function SeatedFigure({ game }: { game: GameState }) {
   };
 
   const box = `${FIGURE_BOX.x} ${FIGURE_BOX.y} ${FIGURE_BOX.w} ${FIGURE_BOX.h}`;
-  const hour = hourOfDay(game.calendar.day);
-  const branch = BRANCHES[hour]!;
-  const kind = HOUR_KINDS[effectiveWheel(c)[hour]!].name.toLowerCase();
   return (
     <>
       <canvas ref={sunRef} className="seat-sun" aria-hidden="true" />
@@ -207,6 +195,7 @@ export function SeatedFigure({ game }: { game: GameState }) {
         onPointerUp={(ev) => ev.pointerType !== 'mouse' && onLeave()}
         onPointerCancel={onLeave}
       >
+        <FocusRing game={game} box={box} />
         <svg
           className={`seated is-${state}`}
           viewBox={box}
@@ -225,10 +214,6 @@ export function SeatedFigure({ game }: { game: GameState }) {
         </svg>
         <canvas ref={canvasRef} className="seat-canvas" aria-hidden="true" />
       </div>
-      <p className="caption seat-hour">
-        <span className="hanzi">{branch.hanzi}</span>{' '}
-        {branch.time[0]!.toUpperCase() + branch.time.slice(1)}, the hour of {branch.name} · {kind}
-      </p>
     </>
   );
 }
@@ -310,48 +295,87 @@ export function SeatMeter({ game }: { game: GameState }) {
   return play ? <SceneMeter game={game} play={play} /> : <FocusMeter game={game} />;
 }
 
+/**
+ * Focus and heat as a ring round the figure (A3, Jan's call): most of a circle about the dantian,
+ * open toward the floor so its ends stay clear of the band, outside the sun's hand. Focus is the outer arc in gold,
+ * rising clockwise from the lower left, where the factor stands, toward the ceiling at the lower
+ * right; heat is a fainter arc just inside it, in red, brighter as it nears its limit.
+ */
+const RING = { cx: 0, cy: 9, r: 180, heat: 6 } as const;
+/** How far below the level the ring's ends stand, in degrees; the rest of the circle is the ring. */
+const RING_END_DEG = 27;
+const RING_SWEEP = (180 + 2 * RING_END_DEG) / 360;
+const RING_START_DEG = 180 - RING_END_DEG;
+
+function FocusRing({ game, box }: { game: GameState; box: string }) {
+  const c = game.player;
+  const a = useSeat((s) => s.attention);
+  const play = useScene((s) => s.play);
+  if (!a || play || game.ended || !ladderMethod(c, 'qi')) return null;
+  const seat = seatOf(a, c);
+  const heat = Math.min(1, a.heat / heatLimit(c));
+  const ceiling = 1 + attentionCeiling(c);
+  const arc = (r: number, fill: number, className: string) => {
+    const C = 2 * Math.PI * r;
+    return (
+      <circle
+        className={className}
+        cx={RING.cx}
+        cy={RING.cy}
+        r={r}
+        strokeDasharray={`${C * RING_SWEEP * Math.min(1, Math.max(0, fill))} ${C}`}
+        transform={`rotate(${RING_START_DEG} ${RING.cx} ${RING.cy})`}
+      />
+    );
+  };
+  // Beside the ring's two ends, outward.
+  const t = (RING_END_DEG * Math.PI) / 180;
+  const end = (side: -1 | 1) => ({
+    x: RING.cx + side * (RING.r * Math.cos(t) + 4),
+    y: RING.cy + RING.r * Math.sin(t) + 2,
+  });
+  const from = end(-1);
+  const to = end(1);
+  return (
+    <svg
+      className="focus-ring"
+      viewBox={box}
+      role="meter"
+      aria-label={`Attention ×${seat.factor.toFixed(2)} of ×${ceiling.toFixed(2)}, heat ${Math.round(heat * 100)}%`}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(a.focus * 100)}
+    >
+      {arc(RING.r, 1, 'focus-track')}
+      {arc(RING.r, a.focus, 'focus-arc')}
+      {arc(RING.r - RING.heat, 1, 'focus-track')}
+      {arc(RING.r - RING.heat, heat, `heat-arc${heat > 0.75 ? ' is-near' : ''}`)}
+      <text className="focus-label" x={from.x} y={from.y} textAnchor="end">
+        ×{seat.factor.toFixed(2)}
+      </text>
+      <text className="focus-label is-ceiling" x={to.x} y={to.y} textAnchor="start">
+        ×{ceiling.toFixed(2)}
+      </text>
+    </svg>
+  );
+}
+
+/** Under the figure, the seat's one line of words; the ring carries the numbers. */
 function FocusMeter({ game }: { game: GameState }) {
   const c = game.player;
   const a = useSeat((s) => s.attention);
-  const view = useMemo(() => {
-    if (!a) return null;
-    const seat = seatOf(a, c);
-    return {
-      factor: seat.factor,
-      focus: a.focus,
-      heat: Math.min(1, a.heat / heatLimit(c)),
-      ceiling: 1 + attentionCeiling(c),
-      hint: seatHint(c, a),
-    };
-  }, [a, c]);
-  if (!view || game.ended) return null;
+  const hint = useMemo(() => (a ? seatHint(c, a) : null), [a, c]);
+  if (!hint || game.ended) return null;
   return (
     <div className="seat-meter">
-      <div className="seat-speed">
-        <span className="caption">Attention</span>
-        <strong>×{view.factor.toFixed(2)}</strong>
-        <span className="caption">of ×{view.ceiling.toFixed(2)}</span>
-      </div>
-      <div
-        className="seat-bar"
-        role="meter"
-        aria-label="Focus"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(view.focus * 100)}
-      >
-        <div className="seat-bar-fill" style={{ width: `${view.focus * 100}%` }} />
-      </div>
-      <div className="seat-bar is-heat" aria-label={`Heat ${Math.round(view.heat * 100)}%`}>
-        <div className="seat-bar-fill" style={{ width: `${view.heat * 100}%` }} />
-      </div>
       <p className="caption">
-        {view.hint.text}
-        {view.hint.why && (
+        {hint.text}
+        {hint.why && (
           <Why label="How drawing orbs works">
-            An orb drawn on the inhale, as the figure breathes in, fills more focus, and focus lifts
-            your qi toward the top of the meter. Each breath warms the meridians, less on the
-            inhale: past the end of the heat bar they burn, and the bonus is gone for{' '}
+            The ring round the figure is your attention: focus on the outer arc, lifting your qi
+            toward the ceiling at its end, and heat just inside it. An orb drawn on the inhale, as
+            the figure breathes in, fills more focus. Each breath warms the meridians, less on the
+            inhale: past the end of the heat arc they burn, and the bonus is gone for{' '}
             {HEAT_UNSETTLED_S} s. Breathe steadily, not greedily. Focus fades once you leave.
           </Why>
         )}

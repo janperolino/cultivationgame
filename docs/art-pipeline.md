@@ -23,7 +23,7 @@ Art is the still set. Code is everything that reads state, changes, moves, or th
 | Bars, buttons and their states | they change |
 | The accent on anything you can act on, and the qi cyan on qi | players recolor both in Settings; paint can't follow |
 | Icons | SVG, drawn after the concept's style, tinted by tokens |
-| The seated figure, its sun, shadow, qi and breakthrough scene | it shows state, and every player looks different: scenes paint the place, never the cultivator |
+| The seated figure, its sun, shadow, qi and breakthrough scene | it shows state, and every player looks different: a scene paints the place and at most a featureless black silhouette on the seat, with the code's own silhouette laid exactly over it (A3) |
 | The map's geometry, fog, roads, marks and labels | they come from the atlas; art gives the map only terrain surfaces, cloud stills and marker sprites |
 | The day wheel, the trees' fans, the Chronicle river, the cracks | drawn from data |
 | Anything that animates | art never moves |
@@ -140,7 +140,7 @@ A sketch of the cut list for Cultivate, the home screen (the Abode until P3.7's 
 
 | Id | Kind | What | GPT size → ships | Slice | Budget |
 |---|---|---|---|---|---|
-| cultivate-scene | scene | a moon gate court open to the starry void, gold-inlaid stone floor, lanterns, no figure | 1024×1536 → 800×1200 | — | 300 KB |
+| cultivate-scene | scene | the cave abode (as built in A3: a cliff hall open on misty peaks, the black silhouette on its dais) | 1536×1024 → 1536×1024 | — | 300 KB |
 | common-slab | frame | obsidian slab, gold double rule, fretwork corners | 1024×1024 → 512×512 | 64 | 150 KB |
 | common-card | frame | the bright card: ivory silk in a gilt frame | 1024×1536 → 512×768 | 64 | 150 KB |
 | common-card-ink | scene | an ink-wash mountain strip for the card's foot, fading to transparent upward | 1536×1024 → 600×400 | — | 80 KB |

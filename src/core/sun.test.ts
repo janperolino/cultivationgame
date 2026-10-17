@@ -11,11 +11,11 @@ const YOU = BRANCHES.findIndex((b) => b.hanzi === '酉');
 const ZI = BRANCHES.findIndex((b) => b.hanzi === '子');
 
 describe('the sun on the seat', () => {
-  it('rises on the right at dawn, in the middle of 卯', () => {
+  it('rises on the left at dawn, in the middle of 卯', () => {
     const s = sunAt(at(MAO));
     expect(hourOfDay(at(MAO))).toBe(MAO);
     expect(s.elevation).toBeCloseTo(0);
-    expect(s.dx).toBeCloseTo(1);
+    expect(s.dx).toBeCloseTo(-1);
     expect(s.twilight).toBeCloseTo(1);
     expect(s.light).toBeCloseTo(1);
   });
@@ -28,10 +28,10 @@ describe('the sun on the seat', () => {
     expect(s.night).toBe(0);
   });
 
-  it('sets on the left at dusk, in the middle of 酉', () => {
+  it('sets on the right at dusk, in the middle of 酉', () => {
     const s = sunAt(at(YOU));
     expect(s.elevation).toBeCloseTo(0);
-    expect(s.dx).toBeCloseTo(-1);
+    expect(s.dx).toBeCloseTo(1);
     expect(s.twilight).toBeCloseTo(1);
   });
 
@@ -44,12 +44,12 @@ describe('the sun on the seat', () => {
     expect(shadowOf(s)).toBeNull();
   });
 
-  it('casts the shadow away from the sun: long left at dawn, a pool at noon, long right at dusk', () => {
+  it('casts the shadow away from the sun: long right at dawn, a pool at noon, long left at dusk', () => {
     const dawn = shadowOf(sunAt(at(MAO)))!;
     const noon = shadowOf(sunAt(at(WU)))!;
     const dusk = shadowOf(sunAt(at(YOU)))!;
-    expect(dawn.dirX).toBeCloseTo(-1);
-    expect(dusk.dirX).toBeCloseTo(1);
+    expect(dawn.dirX).toBeCloseTo(1);
+    expect(dusk.dirX).toBeCloseTo(-1);
     expect(noon.dirX).toBeCloseTo(0);
     expect(dawn.length).toBeGreaterThan(noon.length * 5);
     expect(dusk.length).toBeCloseTo(dawn.length);

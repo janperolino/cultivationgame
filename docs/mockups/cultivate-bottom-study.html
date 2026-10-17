@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cultivate, the bottom band</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<style>
+  /* A3 study: Cultivate with what waits on you moved off the right into a band along the foot,
+     the figure centred in an open scene, and a faint clock hand behind it following the sun.
+     The scene here is a CSS stand-in for the painted cave. Two layouts: A, the band in three
+     columns; B, a lean strip whose card rises over the scene when opened. */
+  :root {
+    --bg: #040507;
+    --panel: rgb(7 8 11 / 0.84);
+    --text: #e9e5da;
+    --muted: #8d949d;
+    --accent: #d6ab4c;
+    --gilt: #d9b46a;
+    --line: rgb(217 180 106 / 0.16);
+    --line-mark: rgb(217 180 106 / 0.4);
+    --crack: #7fc7d9;
+    --sun-warm: #e8a874;
+    --display: 'Cormorant Garamond', Georgia, serif;
+    --body: Inter, system-ui, sans-serif;
+    --brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #000; color: var(--text); font-family: var(--body); overflow-x: hidden; }
+  .bar-top {
+    display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 10px 16px;
+    font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line);
+  }
+  .bar-top b { color: var(--text); font-weight: 500; }
+  .bar-top button {
+    background: none; border: 1px solid var(--line); color: var(--muted); padding: 5px 12px;
+    font: inherit; border-radius: 3px; cursor: pointer; white-space: nowrap;
+  }
+  .bar-top button.on { color: var(--accent); border-color: var(--line-mark); }
+  .wrap { width: 100%; overflow: hidden; }
+  .stage {
+    position: relative; width: 1920px; height: 1080px; transform-origin: 0 0;
+    background: var(--bg); overflow: hidden;
+  }
+
+  /* The scene stand-in: a cave mouth behind the seat, the void beyond, a polished floor. */
+  .scene { position: absolute; inset: 0 0 0 72px; overflow: hidden; }
+  .scene::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 520px 430px at 924px 330px, rgb(40 52 70 / 0.55), transparent 70%),
+      radial-gradient(ellipse 380px 300px at 924px 300px, rgb(70 90 110 / 0.25), transparent 70%),
+      linear-gradient(to bottom, #07090d 0%, #0b0d12 52%, #050608 56%, #030304 100%);
+  }
+  .scene::after {
+    /* The mouth's rim of rock, and a few stars through it. */
+    content: ''; position: absolute; left: 924px; top: 300px; width: 900px; height: 680px;
+    transform: translate(-50%, -50%); border-radius: 48% 48% 10% 10%;
+    box-shadow: 0 0 0 600px rgb(3 4 6 / 0.72), inset 0 0 80px rgb(0 0 0 / 0.8);
+    background:
+      radial-gradient(1px 1px at 20% 30%, #cfd8e6, transparent),
+      radial-gradient(1px 1px at 62% 18%, #cfd8e6, transparent),
+      radial-gradient(1.4px 1.4px at 80% 40%, #e8d9b8, transparent),
+      radial-gradient(1px 1px at 38% 52%, #cfd8e6, transparent),
+      radial-gradient(1px 1px at 72% 62%, #cfd8e6, transparent);
+  }
+  .lamp {
+    position: absolute; width: 10px; height: 16px; border-radius: 3px;
+    background: #f2c27a; box-shadow: 0 0 22px 8px rgb(242 160 80 / 0.28);
+  }
+
+  /* The sun's wash, set by the hour. */
+  .wash { position: absolute; inset: 0 0 0 72px; pointer-events: none; }
+
+  /* The rail and the top, as A2 left them. */
+  .rail {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(4 5 7 / 0.94);
+    border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center;
+    gap: 22px; padding-top: 22px;
+  }
+  .rail i { width: 22px; height: 22px; border: 1px solid var(--line-mark); border-radius: 4px; display: block; }
+  .rail i:nth-child(2) { border-color: var(--accent); box-shadow: 0 0 10px rgb(214 171 76 / 0.3); }
+  .top {
+    position: absolute; left: 104px; right: 40px; top: 22px; display: flex;
+    justify-content: space-between; align-items: center; font-family: var(--display); font-size: 22px;
+  }
+  .top .hz { font-family: var(--brush); color: var(--gilt); margin-left: 8px; font-size: 20px; }
+  .top .stats { display: flex; gap: 34px; font-size: 18px; align-items: baseline; }
+  .top .stats small { display: block; font-family: var(--body); font-size: 11px; color: var(--muted); }
+
+  /* The figure, the hand behind it and the seat's caption. */
+  .seat { position: absolute; left: 766px; top: 280px; width: 460px; height: 374px; }
+  .hand-wrap { position: absolute; left: 230px; top: 242px; width: 0; height: 0; }
+  .hand {
+    position: absolute; left: 0; top: -1px; width: 420px; height: 2px; transform-origin: 0 50%;
+    background: linear-gradient(to right, transparent 0%, rgb(217 180 106 / 0.0) 18%, rgb(217 180 106 / 0.32) 70%, rgb(217 180 106 / 0.5) 100%);
+  }
+  .hand::after {
+    content: ''; position: absolute; right: -5px; top: -4px; width: 8px; height: 8px;
+    transform: rotate(45deg); border: 1px solid rgb(217 180 106 / 0.6); background: rgb(4 5 7 / 0.9);
+  }
+  .dial {
+    position: absolute; left: -420px; top: -420px; width: 840px; height: 840px; border-radius: 50%;
+    border: 1px dashed rgb(217 180 106 / 0.12); clip-path: inset(0 0 50% 0);
+  }
+  .dial span {
+    position: absolute; font-family: var(--brush); font-size: 16px; color: rgb(217 180 106 / 0.35);
+    transform: translate(-50%, -50%);
+  }
+  .stage:not(.show-dial) .dial { display: none; }
+  .stage.night .hand { opacity: 0.35; }
+  .floorlight {
+    position: absolute; left: -80px; right: -80px; bottom: -40px; height: 120px;
+    background: radial-gradient(closest-side, rgb(232 168 116 / 0.14), transparent);
+  }
+  .seat svg { position: absolute; inset: 0; overflow: visible; }
+  .seat svg path, .seat svg circle.head { fill: #08090b; stroke: rgb(127 199 217 / 0.18); stroke-width: 0.6; }
+  .seat .dantian { fill: url(#dt); }
+  .caption-hour {
+    position: absolute; left: 766px; width: 460px; top: 660px; text-align: center; font-size: 13px;
+    color: var(--muted);
+  }
+  .caption-hour .hz { font-family: var(--brush); color: var(--text); font-size: 16px; }
+  .meter { position: absolute; left: 846px; width: 300px; top: 690px; text-align: center; font-size: 12px; color: var(--muted); }
+  .meter b { color: var(--crack); font-family: var(--display); font-size: 20px; font-weight: 500; margin: 0 6px; }
+  .meter .bar { height: 2px; background: rgb(255 255 255 / 0.08); margin: 6px 0 4px; }
+  .meter .bar i { display: block; height: 100%; width: 38%; background: var(--crack); }
+
+  /* The band along the foot: a static scrim, never a blur. */
+  .band {
+    position: absolute; left: 72px; right: 0; bottom: 0; height: 330px;
+    background: linear-gradient(to top, rgb(3 4 6 / 0.96) 0%, rgb(3 4 6 / 0.9) 62%, rgb(3 4 6 / 0) 100%);
+  }
+  .band-inner {
+    position: absolute; left: 44px; right: 40px; bottom: 30px; height: 252px; display: grid;
+    border-top: 1px solid var(--line);
+  }
+  .layout-a .band-inner { grid-template-columns: 560px 1fr 400px; }
+  .layout-b .band-inner { grid-template-columns: 1fr 560px; height: 196px; }
+  .col { padding: 22px 30px 0; min-width: 0; }
+  .col + .col { border-left: 1px solid var(--line); }
+  .col:first-child { padding-left: 0; }
+  .col:last-child { padding-right: 0; }
+
+  .who h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 30px; line-height: 1; }
+  .who h1 small { font-family: var(--body); font-size: 11px; color: var(--muted); margin-left: 8px; font-weight: 300; }
+  .who .realm { margin: 6px 0 14px; font-family: var(--display); font-size: 16px; color: var(--muted); }
+  .cells { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); }
+  .cells > div { padding: 8px 10px 9px; font-size: 11px; color: var(--muted); }
+  .cells > div + div { border-left: 1px solid var(--line); }
+  .cells span { float: right; color: var(--text); }
+  .cells .b { height: 2px; background: rgb(255 255 255 / 0.08); margin-top: 8px; }
+  .cells .b i { display: block; height: 100%; background: var(--crack); }
+  .who .realm .age { margin-left: 14px; padding-left: 14px; border-left: 1px solid var(--line); color: var(--text); font-family: var(--body); font-size: 12px; }
+  .who .realm .age small { color: var(--muted); font-size: 11px; }
+  .routine { margin-top: 16px; font-size: 11px; color: var(--muted); }
+  .routine .head { display: flex; justify-content: space-between; margin-bottom: 7px; }
+  .routine .head b { font-family: var(--display); font-size: 15px; color: var(--text); font-weight: 500; }
+  .routine a { color: var(--accent); text-decoration: none; }
+  .hours { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+  .hours i { height: 2px; background: var(--crack); opacity: 0.7; }
+  .hours i.s { background: #b9a2e0; } .hours i.b { background: var(--sun-warm); } .hours i.z { background: #3a3f48; } .hours i.p { background: #c86b5a; }
+  .routine p { margin: 7px 0 0; }
+
+  .card h2 { margin: 0 0 4px; font-family: var(--display); font-weight: 500; font-size: 24px; }
+  .card .kicker { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .card .kicker b { color: var(--accent); font-weight: 500; }
+  .card p { margin: 0 0 12px; font-size: 13px; line-height: 1.5; color: #cfcbc1; }
+  .choices { display: grid; gap: 6px; }
+  .choice {
+    display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;
+    border: 1px solid var(--line); border-radius: 3px; font-size: 13px; background: rgb(255 255 255 / 0.02);
+  }
+  .choice:first-child { border-color: rgb(214 171 76 / 0.6); color: var(--accent); box-shadow: 0 0 10px rgb(214 171 76 / 0.12); }
+  .choice::after { content: '›'; color: var(--muted); }
+  .choices.row { grid-auto-flow: column; grid-auto-columns: 1fr; }
+
+  .tray h3, .recent h3 { margin: 0 0 8px; font-family: var(--display); font-weight: 500; font-size: 16px; display: flex; justify-content: space-between; }
+  .tray h3 small, .recent h3 small { font-family: var(--body); font-size: 11px; color: var(--muted); font-weight: 300; }
+  .tray ol { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+  .tray li { padding: 5px 0; border-bottom: 1px solid rgb(217 180 106 / 0.08); color: #cfcbc1; }
+  .tray .more { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .recent { margin-top: 14px; }
+  .recent p { margin: 0 0 4px; font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+  .recent a { color: var(--accent); text-decoration: none; font-size: 11px; font-family: var(--body); }
+
+  /* B: the strip, and the card rising over the scene when opened. */
+  .strip .kicker { margin-bottom: 6px; }
+  .strip h2 { font-size: 21px; }
+  .strip p.one { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 10px; }
+  .strip .next { margin-top: 10px; font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+  .strip .next a { color: var(--accent); text-decoration: none; }
+  .risen {
+    position: absolute; right: 40px; bottom: 236px; width: 560px; padding: 22px 26px 20px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+    box-shadow: 0 0 0 1px rgb(214 171 76 / 0.12), 0 20px 40px rgb(0 0 0 / 0.5);
+  }
+  .risen .sec { font-size: 10.5px; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; margin: 10px 0 3px; }
+  .risen p { margin: 0 0 6px; }
+  .stage:not(.open) .risen { display: none; }
+  .tick { position: absolute; left: 116px; right: 640px; bottom: 236px; font-size: 11.5px; color: var(--muted); display: flex; gap: 22px; }
+  .tick a { color: var(--accent); text-decoration: none; margin-left: auto; }
+
+  .layout-a .only-b, .layout-b .only-a { display: none !important; }
+  .notes { max-width: 1100px; margin: 18px auto 40px; padding: 0 16px; font-size: 14px; line-height: 1.6; color: #cfcbc1; }
+  .notes h2 { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 0 0 6px; color: var(--text); }
+  .notes b { color: var(--text); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="bar-top">
+  <b>Layout</b>
+  <button data-layout="a" class="on">A · the band</button>
+  <button data-layout="b">B · the strip</button>
+  <span style="width:18px"></span>
+  <b>Card</b>
+  <button data-card="away" class="on">Coming back</button>
+  <button data-card="card">A card</button>
+  <span class="only-b-btn"><button data-open>Open it</button></span>
+  <span style="width:18px"></span>
+  <b>Hour</b>
+  <button data-hour="dawn">Dawn 卯</button>
+  <button data-hour="noon">Noon 午</button>
+  <button data-hour="dusk" class="on">Dusk 酉</button>
+  <button data-hour="night">Night 子</button>
+  <button data-dial>Dial arc</button>
+</div>
+
+<div class="wrap" id="wrap">
+<div class="stage layout-a" id="stage">
+  <div class="scene">
+    <span class="lamp" style="left:236px;top:520px"></span>
+    <span class="lamp" style="left:1540px;top:500px"></span>
+  </div>
+  <div class="wash" id="wash"></div>
+
+  <nav class="rail"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></nav>
+  <div class="top">
+    <div>Severed Heaven<span class="hz">断天</span></div>
+    <div class="stats">
+      <div>Summer 3,156<small id="hourword">Dusk · hour of You</small></div>
+      <div>3<small>spirit stones</small></div>
+      <div>1,408<small>insight</small></div>
+    </div>
+  </div>
+
+  <div class="seat">
+    <div class="floorlight"></div>
+    <div class="hand-wrap">
+      <div class="dial">
+        <span style="left:840px;top:420px">卯</span>
+        <span style="left:420px;top:0">午</span>
+        <span style="left:0;top:420px">酉</span>
+      </div>
+      <div class="hand" id="hand"></div>
+    </div>
+    <svg viewBox="-96 -92 192 156">
+      <defs><radialGradient id="dt"><stop offset="0" stop-color="#7fc7d9" stop-opacity="0.6"/><stop offset="1" stop-color="#7fc7d9" stop-opacity="0"/></radialGradient></defs>
+      <circle class="dantian" cx="0" cy="9" r="30" opacity="0.4"/>
+      <circle class="head" cx="0" cy="-41" r="10.5"/>
+      <path fill-rule="evenodd" d="M0 -31 L-5 -31 C-7 -27 -13 -26 -19 -24 C-26 -21 -28 -14 -28 -6 C-28 2 -30 9 -33 15 C-37 20 -44 22 -49 26 C-54 30 -53 37 -46 39 C-32 43 -14 42 0 42 C14 42 32 43 46 39 C53 37 54 30 49 26 C44 22 37 20 33 15 C30 9 28 2 28 -6 C28 -14 26 -21 19 -24 C13 -26 7 -27 5 -31 Z M-20 -13 C-18 -5 -17 2 -14 8 C-18 6 -21 -3 -20 -13 Z M20 -13 C18 -5 17 2 14 8 C18 6 21 -3 20 -13 Z"/>
+      <circle cx="0" cy="9" r="3" fill="#bfeaf3"/>
+    </svg>
+  </div>
+  <p class="caption-hour"><span class="hz" id="branch">酉</span> <span id="hourline">Dusk, the hour of You · qi</span></p>
+  <div class="meter">Attention<b>×1.25</b>of ×2.25<div class="bar"><i></i></div>Draw orbs in by hovering over them.</div>
+
+  <!-- B: the last lines of the chronicle as a ticker over the band, and the card risen. -->
+  <div class="tick only-b">
+    <span>Ye Hao's qi breaks through to the seventh layer.</span>
+    <span>Ye Hao congratulates Fang Tie on his breakthroughs.</span>
+    <a href="#">Read all →</a>
+  </div>
+  <div class="risen only-b" id="risen"></div>
+
+  <div class="band">
+    <div class="band-inner">
+      <section class="col who">
+        <h1>Ye Hao<small>they/them</small></h1>
+        <p class="realm">Qi Condensation, seventh layer<span class="age">42 y 7 m <small>of 120</small></span></p>
+        <div class="cells">
+          <div>Qi<span>248 / 595</span><div class="b"><i style="width:42%"></i></div></div>
+          <div>Body<span>first layer · 25%</span><div class="b"><i style="width:25%"></i></div></div>
+          <div>Soul<span>not yet opened</span><div class="b soul"><i style="width:0%"></i></div></div>
+        </div>
+        <div class="routine">
+          <div class="head"><b>Today's routine</b><a href="#">Arrange your day →</a></div>
+          <div class="hours"><i class="z"></i><i class="z"></i><i></i><i></i><i class="s"></i><i class="s"></i><i class="p"></i><i></i><i></i><i class="b"></i><i></i><i></i></div>
+          <p class="only-a">6 qi · 1 body · 2 study · 1 practice · 2 sleep · practicing Piled Bones Thrust</p>
+        </div>
+      </section>
+
+      <section class="col card only-a" id="cardA"></section>
+
+      <section class="col only-a">
+        <div class="tray">
+          <h3>Waiting <small>21 cards</small></h3>
+          <ol>
+            <li>The Levy</li>
+            <li>A Knot in the Arm</li>
+            <li>A Breath-Count for Sale</li>
+          </ol>
+          <div class="more">and 17 more beneath.</div>
+        </div>
+        <div class="recent">
+          <h3>Recent <a href="#">Read all →</a></h3>
+          <p>Ye Hao's qi breaks through to the seventh layer.</p>
+          <p>Ye Hao congratulates Fang Tie on his breakthroughs.</p>
+        </div>
+      </section>
+
+      <section class="col card strip only-b" id="cardB"></section>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="notes">
+  <h2>What this shows</h2>
+  <p><b>Both layouts</b> take the cards and the coming-back story off the right, so the cave is open and the figure sits in the middle of the screen, about 240 px further right than now. What waits on you lives in a band along the foot on a still gradient scrim. Behind the figure is <b>the sun's hand</b>, a faint gilt line from the dantian toward where the sun stands: right at dawn, up at noon, left at dusk and under the floor at night, dimmed. <b>Dial arc</b> adds the sun's path with 卯, 午 and 酉 marked.</p>
+  <p><b>A, the band</b>: three columns, you on the left, the top card in full in the middle (the coming-back story is the first card, Continue clears it), and the rest of the tray with the last chronicle lines on the right. Everything is visible at once, and the band stands 250 px tall.</p>
+  <p><b>B, the strip</b>: you on the left and one short card on the right, its title, one line and its choices in a row, with the next card named under it. The coming-back story is one line, and <b>Open it</b> raises it over the scene's right side as a panel until you continue. The chronicle runs as a line of two above the band. The band stands 200 px tall, and the scene gets the most room.</p>
+  <p>The breakthrough panel and the lifespan card, which sit on the right today, would rise over the scene the way B's card does, beside the figure, only while they matter.</p>
+</div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const wrap = document.getElementById('wrap');
+  function fit() {
+    const k = wrap.clientWidth / 1920;
+    stage.style.transform = `scale(${k})`;
+    wrap.style.height = `${1080 * k}px`;
+  }
+  addEventListener('resize', fit);
+  fit();
+
+  const away = {
+    kicker: 'While you were in seclusion',
+    title: 'A month passes on the road.',
+    sub: '5 min away',
+    lines: [
+      ['', 'Your qi gathers toward the eighth layer; the sea in your dantian is filling. Understanding gathers: 5 insight.'],
+      ['On the road', 'Deserters in the pines wait for you on the Map; you camp where they met you. 21 cards wait for you in the tray.'],
+    ],
+    choices: ['Continue'],
+  };
+  const card = {
+    kicker: 'Waiting',
+    title: 'Storm over the Peak',
+    text: 'A thunderstorm parks itself over the peak. Lightning walks the ridge, and the air in the cave tastes of metal and qi.',
+    choices: ['Seal the cave and sit it out', 'Sit at the cave mouth'],
+  };
+  let which = 'away';
+  let open = false;
+
+  function renderA() {
+    const el = document.getElementById('cardA');
+    if (which === 'away') {
+      el.innerHTML = `<div class="kicker"><span>${away.kicker}</span><span>${away.sub}</span></div>
+        <h2>${away.title}</h2>
+        ${away.lines.map(([h, t]) => `<p>${h ? `<b style="color:var(--text);font-weight:500">${h}.</b> ` : ''}${t}</p>`).join('')}
+        <div class="choices row" style="grid-auto-columns:160px">${away.choices.map((c) => `<div class="choice">${c}</div>`).join('')}</div>`;
+    } else {
+      el.innerHTML = `<div class="kicker"><span>${card.kicker}</span><b>1 of 21</b></div>
+        <h2>${card.title}</h2><p>${card.text}</p>
+        <div class="choices">${card.choices.map((c) => `<div class="choice">${c}</div>`).join('')}</div>`;
+    }
+  }
+  function renderB() {
+    const el = document.getElementById('cardB');
+    const risen = document.getElementById('risen');
+    if (which === 'away') {
+      el.innerHTML = `<div class="kicker"><span>${away.kicker}</span><span>${away.sub}</span></div>
+        <h2>${away.title}</h2>
+        <p class="one">${away.lines[0][1]}</p>
+        <div class="choices row"><div class="choice">Continue</div><div class="choice" data-open>Read it all</div></div>
+        <div class="next"><span>Next: Storm over the Peak</span><span>21 waiting</span></div>`;
+      risen.innerHTML = `<div class="kicker" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">${away.kicker} · ${away.sub}</div>
+        <h2 style="margin:0 0 8px;font-family:var(--display);font-weight:500;font-size:24px">${away.title}</h2>
+        ${away.lines.map(([h, t]) => `${h ? `<div class="sec">${h}</div>` : ''}<p style="font-size:13px;line-height:1.5;color:#cfcbc1">${t}</p>`).join('')}`;
+    } else {
+      el.innerHTML = `<div class="kicker"><span>${card.kicker}</span><b>1 of 21</b></div>
+        <h2>${card.title}</h2><p class="one">${card.text}</p>
+        <div class="choices row">${card.choices.map((c) => `<div class="choice">${c}</div>`).join('')}</div>
+        <div class="next"><span>Next: The Levy</span><a href="#" data-open>Read it all</a></div>`;
+      risen.innerHTML = `<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">${card.kicker}</div>
+        <h2 style="margin:0 0 8px;font-family:var(--display);font-weight:500;font-size:24px">${card.title}</h2>
+        <p style="font-size:13px;line-height:1.5;color:#cfcbc1;margin:0">${card.text}</p>`;
+    }
+  }
+
+  const hours = {
+    dawn: { angle: 0, branch: '卯', line: 'Dawn, the hour of Mao · qi', word: 'Dawn · hour of Mao',
+      wash: 'radial-gradient(ellipse 900px 600px at 100% 62%, rgb(232 168 116 / 0.16), transparent 70%)' },
+    noon: { angle: -90, branch: '午', line: 'Noon, the hour of Wu · study', word: 'Noon · hour of Wu',
+      wash: 'radial-gradient(ellipse 1100px 600px at 50% -10%, rgb(233 229 218 / 0.12), transparent 70%)' },
+    dusk: { angle: 180, branch: '酉', line: 'Dusk, the hour of You · qi', word: 'Dusk · hour of You',
+      wash: 'radial-gradient(ellipse 900px 500px at 0% 66%, rgb(224 122 74 / 0.18), transparent 70%)' },
+    night: { angle: 90, branch: '子', line: 'Midnight, the hour of Zi · sleep', word: 'Midnight · hour of Zi',
+      wash: 'linear-gradient(to top, rgb(125 132 214 / 0.12), transparent 55%), rgb(0 0 10 / 0.3)' },
+  };
+  function setHour(h) {
+    const v = hours[h];
+    document.getElementById('hand').style.transform = `rotate(${v.angle}deg)`;
+    document.getElementById('wash').style.background = v.wash;
+    document.getElementById('branch').textContent = v.branch;
+    document.getElementById('hourline').textContent = v.line;
+    document.getElementById('hourword').textContent = v.word;
+    stage.classList.toggle('night', h === 'night');
+    document.querySelectorAll('[data-hour]').forEach((b) => b.classList.toggle('on', b.dataset.hour === h));
+  }
+
+  function render() {
+    renderA();
+    renderB();
+    stage.classList.toggle('open', open);
+  }
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('button, [data-open]');
+    if (!t) return;
+    e.preventDefault();
+    if (t.dataset.layout) {
+      stage.classList.remove('layout-a', 'layout-b');
+      stage.classList.add(`layout-${t.dataset.layout}`);
+      document.querySelectorAll('[data-layout]').forEach((b) => b.classList.toggle('on', b === t));
+    } else if (t.dataset.card) {
+      which = t.dataset.card;
+      document.querySelectorAll('[data-card]').forEach((b) => b.classList.toggle('on', b === t));
+    } else if (t.dataset.hour) {
+      setHour(t.dataset.hour);
+    } else if ('dial' in t.dataset) {
+      stage.classList.toggle('show-dial');
+      t.classList.toggle('on');
+    } else if ('open' in t.dataset) {
+      open = !open;
+    }
+    render();
+  });
+  setHour('dusk');
+  render();
+</script>
+</body>
+</html>

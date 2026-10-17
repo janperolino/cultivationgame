@@ -689,7 +689,7 @@ select {
    filling it with the figure in its middle; over it the cultivator low on the left, what waits on
    you down the right, and the last lines of the chronicle at its foot. A3 paints the place. */
 .shell.is-cultivate .main-column {
-  background: #000;
+  background: transparent;
 }
 
 .shell.is-cultivate .main {
@@ -697,89 +697,187 @@ select {
   overflow: hidden;
 }
 
-.cultivate {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 440px;
-  grid-template-rows: minmax(0, 1fr) auto;
-  column-gap: 48px;
-  height: 100%;
-  padding: 0 40px 30px 44px;
-}
-
-/* The seat fills the screen, under the top too, the figure centred in the space left of the
-   cards and above the cultivator. */
-.cultivate-seat {
+/* On Cultivate the top floats over the scene, which runs up to the stage's edge under it. */
+.shell.is-cultivate .shell-top {
   position: absolute;
-  inset: -76px 0 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 40px 528px 330px 44px;
-}
-
-.cultivate-seat > :not(.seat-sun, .seat-flash) {
-  position: relative;
-}
-
-.cultivate-who,
-.cultivate-side {
-  position: relative;
-  z-index: 1;
-}
-
-.cultivate-who {
-  grid-column: 1;
-  grid-row: 2;
-  align-self: end;
+  top: 0;
+  left: 0;
+  right: 0;
   text-shadow: 0 1px 10px rgb(0 0 0 / 0.85);
 }
 
-.cultivate-title {
+.cultivate {
+  position: relative;
+  height: 100%;
+}
+
+/* The seat fills the screen, under the top too, the figure low and centred, just over the band.
+   The figure stands at a fixed height, so the line and the breakthrough's buttons under it come
+   and go without moving it (Jan's call). */
+.cultivate-seat {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 392px 40px 0 44px;
+}
+
+.cultivate-seat > :not(.seat-sun, .seat-flash, .cultivate-scene) {
+  position: relative;
+}
+
+/* The painted cave (A3, art/manifest.json's cultivate-scene): the stage's full height, centred on
+   the figure so its painted seat lands under it (docs/mockups/cultivate-scene-guide.png), its sides
+   fading into the void sky on a wide screen. Still, so it costs nothing to paint. */
+.cultivate-scene {
+  position: absolute;
+  top: 0;
+  left: calc(44px + (100% - 84px) / 2);
+  height: 100%;
+  aspect-ratio: 1536 / 1024;
+  transform: translateX(-50%);
+  background: url('./art/cultivate/scene.webp') center / 100% 100% no-repeat;
+  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+  pointer-events: none;
+}
+
+/* What matters only for a while rises over the scene's right, above the band. */
+.cultivate-rise {
+  position: absolute;
+  z-index: 2;
+  right: 40px;
+  bottom: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 14px;
+  width: 470px;
+  max-height: calc(100% - 336px);
+  overflow: hidden;
+}
+
+.cultivate-rise:empty {
+  display: none;
+}
+
+.cultivate-rise > .panel {
+  margin: 0;
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.5);
+}
+
+/* The band along the foot (A3, docs/mockups/cultivate-bottom-study.html): a still scrim and
+   three columns between hairlines: you, the open card taking the room, and the last lines. */
+.cultivate-band {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 300px;
+  padding: 0 40px 10px 44px;
+  display: grid;
+  grid-template-columns: 620px minmax(0, 1fr) 300px;
+  grid-template-rows: 212px;
+  align-content: end;
+  pointer-events: none;
+}
+
+/* The band is faint dark glass over the scene (Jan's picks): darkest at the foot and clearing to
+   nothing at its top, with no line, and no live blur, since the painting carries its own softness
+   (docs/art-pipeline.md, Paint cost). */
+.cultivate-band::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgb(6 8 10 / 0.86) 0%,
+    rgb(8 11 13 / 0.66) 45%,
+    rgb(10 13 16 / 0) 100%
+  );
+  pointer-events: none;
+}
+
+.cultivate-band > * {
+  pointer-events: auto;
+}
+
+.band-who,
+.band-now,
+.band-recent {
+  position: relative;
+  min-width: 0;
+  padding: 8px 30px 0;
+}
+
+.band-who {
+  padding-left: 0;
+}
+
+.band-now,
+.band-recent {
+  border-left: 1px solid var(--line-faint);
+}
+
+/* A "?" in the band opens upward, and its column rises over the others while it is open. */
+.cultivate-band .why-tip {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.cultivate-band > :has(.why:hover, .why.is-open, .why-button:focus-visible) {
+  z-index: 3;
+}
+
+.cultivate-name {
   margin: 0;
   font-family: var(--font-display);
-  font-size: calc(46px * var(--text-scale));
+  font-size: calc(30px * var(--text-scale));
   font-weight: 500;
   line-height: 1;
 }
 
-.cultivate-title .hanzi {
-  margin-left: 6px;
-  color: var(--accent);
-  font-size: 0.7em;
-}
-
-.cultivate-name {
-  margin: 12px 0 0;
-  font-family: var(--font-display);
-  font-size: calc(21px * var(--text-scale));
-  font-weight: 500;
-}
-
 .cultivate-name small {
-  margin-left: 6px;
+  margin-left: 8px;
   color: var(--muted);
-  font-size: 0.62em;
+  font-family: var(--font-ui);
+  font-size: calc(11px * var(--text-scale));
+  font-weight: 300;
 }
 
 .cultivate-realm {
-  margin: 2px 0 0;
+  margin: 6px 0 0;
   font-family: var(--font-display);
-  font-size: calc(15px * var(--text-scale));
+  font-size: calc(16px * var(--text-scale));
   color: color-mix(in srgb, var(--text) 82%, transparent);
 }
 
-/* The bars in a row between hairlines: a cell each, its name and value over a thin bar. */
+/* The age beside the realm, behind a hairline. */
+.cultivate-age {
+  margin-left: 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--line-faint);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: calc(12px * var(--text-scale));
+}
+
+.cultivate-age small {
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+}
+
+/* The bars in a row of cells: a name and value over a thin bar. */
 .cultivate-bars {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
   gap: 0;
-  margin-top: 16px;
-  border-top: 1px solid var(--line-faint);
-  border-bottom: 1px solid var(--line-faint);
+  margin-top: 14px;
+  border: 1px solid var(--line-faint);
 }
 
 .cultivate-bars .bar-row {
@@ -788,70 +886,64 @@ select {
     'label value'
     'bar bar';
   gap: 6px 10px;
-  padding: 10px 16px 12px;
+  padding: 8px 12px 10px;
   border-left: 1px solid var(--line-faint);
-  font-family: var(--font-display);
 }
 
 .cultivate-bars .bar-row:first-child {
-  padding-left: 0;
   border-left: 0;
 }
 
 .cultivate-bars .label {
   grid-area: label;
-  color: var(--text);
-  font-size: calc(15px * var(--text-scale));
+  color: var(--muted);
+  font-size: calc(11.5px * var(--text-scale));
 }
 
 .cultivate-bars .value {
   grid-area: value;
-  font-size: calc(14px * var(--text-scale));
+  justify-self: end;
+  font-size: calc(12px * var(--text-scale));
   white-space: nowrap;
 }
 
 .cultivate-bars .bar {
   grid-area: bar;
-  height: 3px;
+  height: 2px;
   border: 0;
   border-radius: 2px;
   background: rgb(255 255 255 / 0.08);
 }
 
 .cultivate-routine {
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
 .cultivate-routine-head {
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .cultivate-routine-head h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: calc(18px * var(--text-scale));
+  font-size: calc(16px * var(--text-scale));
   font-weight: 500;
 }
 
 .cultivate-routine-head small {
   color: var(--muted);
-  font-family: var(--font-display);
-  font-size: calc(13px * var(--text-scale));
-}
-
-.cultivate-routine-head .caption {
-  margin-left: auto;
+  font-size: calc(11px * var(--text-scale));
 }
 
 .cultivate-routine-head .link-button {
-  font-family: var(--font-display);
-  font-size: calc(15px * var(--text-scale));
+  margin-left: auto;
+  font-size: calc(12px * var(--text-scale));
 }
 
-/* Today's wheel as a strip of twelve thin hours across the width. */
+/* Today's wheel as a strip of twelve thin hours across the column. */
 .cultivate-routine .wheel-strip {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -860,57 +952,275 @@ select {
 
 .cultivate-routine .wheel-strip > span {
   width: auto;
-  height: 3px;
+  height: 2px;
   background: color-mix(in srgb, var(--hour) 85%, transparent);
 }
 
 .cultivate-today {
-  margin: 10px 0 0;
-  font-family: var(--font-display);
-  font-size: calc(14.5px * var(--text-scale));
-  color: color-mix(in srgb, var(--text) 85%, transparent);
+  margin: 8px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-/* The right: what waits on you from the top, the chronicle's last lines at the foot. */
-.cultivate-side {
-  grid-column: 2;
-  grid-row: 1 / 3;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-height: 0;
-  overflow-y: auto;
-  padding-top: 4px;
-}
-
-.cultivate-side > .panel + .panel {
-  margin-top: 0;
-}
-
-.cultivate-recent {
-  margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px solid var(--line-faint);
-}
-
-.cultivate-recent h2 {
+/* The open card: the column is the card, so no box of its own. */
+.band-kicker {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  margin: 0 0 10px;
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.band-now .stack > .story,
+.band-now .story {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  overflow: visible;
+}
+
+.band-now .story h3 {
+  margin: 0 0 6px;
   font-family: var(--font-display);
-  font-size: calc(17px * var(--text-scale));
+  font-size: calc(24px * var(--text-scale));
   font-weight: 500;
 }
 
-.cultivate-recent .link-button {
-  font-family: var(--font-display);
+.band-now .story p:not(.band-kicker) {
+  margin: 0 0 10px;
   font-size: calc(13px * var(--text-scale));
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--text) 85%, transparent);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 
-.cultivate-recent .chronicle {
-  gap: 7px;
-  font-size: calc(13px * var(--text-scale));
+.band-now .choices {
+  margin-top: 4px;
+  gap: 6px;
+}
+
+/* Three choices or more sit two to a row, so the card keeps to the band. */
+.band-now .choices:has(> :nth-child(3)) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.band-now .stack > .story .button.choice {
+  padding: 7px 30px 7px 12px;
+  font-size: calc(14px * var(--text-scale));
+}
+
+.band-now .actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.band-now .tray-quiet {
+  padding: 60px 0 0;
+}
+
+/* Today, while no card waits: up to four rows, two by two. */
+.today-rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 34px;
+  margin-top: 10px;
+}
+
+.today-row {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+}
+
+.today-row strong {
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: calc(17px * var(--text-scale));
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.today-bar {
+  height: 2px;
+  margin-top: 5px;
+  background: rgb(255 255 255 / 0.08);
+}
+
+.today-bar i {
+  display: block;
+  height: 100%;
+  background: var(--crack);
+}
+
+.today-row.is-read .today-bar i {
+  background: var(--hour-study, var(--crack));
+}
+
+.today-row.is-practice .today-bar i {
+  background: var(--hour-practice, var(--crack));
+}
+
+/* A card's choices sit side by side in the band, so it keeps to the band's height. */
+.band-now .choices,
+.band-now .choices:has(> :nth-child(3)) {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+/* A great realm's panel in the band's middle (Jan's call): no box of its own, the gate and what
+   you do in the left column, what it asks and what you lay in the right, so it keeps to the band. */
+.bt-col {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bt-col > * {
+  margin: 0;
+}
+
+.band-now .bt-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 34px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.band-now .bt-head {
+  flex-wrap: nowrap;
+}
+
+.band-now .bt-head .panel-heading {
+  overflow: hidden;
+  font-size: calc(17px * var(--text-scale));
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.band-now .bt-odds {
+  flex: none;
+}
+
+.band-now .bt-odds strong {
+  font-size: calc(20px * var(--text-scale));
+}
+
+.band-now .bt-panel .reqs {
+  gap: 2px;
+  font-size: calc(12px * var(--text-scale));
+}
+
+/* The picker of what can be laid, floating over the scene above the slots (A3). */
+.bt-slots {
+  position: relative;
+}
+
+.bt-slot.is-open {
+  border-color: var(--accent-edge);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.bt-slot.is-open .caption {
+  color: var(--accent);
+}
+
+.bt-slot.is-open:hover {
+  border-color: var(--accent);
+}
+
+.bt-picker {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  bottom: calc(100% + 10px);
+  display: grid;
+  gap: 8px;
+  width: 360px;
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--panel-solid);
+  box-shadow:
+    0 18px 40px rgb(0 0 0 / 0.6),
+    0 0 20px -8px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.bt-picker > .caption {
+  margin: 0;
+}
+
+.bt-picker .bt-strip {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  overflow: visible;
+}
+
+.bt-picker .bt-offer {
+  width: 100%;
+}
+
+.band-now .bt-panel .actions {
+  margin-top: 4px;
+}
+
+/* A row with nothing in it is quieter, its title muted. */
+.today-row.is-empty strong {
+  color: var(--muted);
+}
+
+/* A card that waits glows faintly along the band's top over its column. */
+.band-now.is-waiting {
+  border-top-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* The chronicle's last lines on the right. */
+.band-recent {
+  padding-right: 0;
+}
+
+.band-recent h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: calc(16px * var(--text-scale));
+  font-weight: 500;
+}
+
+.band-recent .link-button {
+  font-size: calc(11.5px * var(--text-scale));
+}
+
+.band-recent .chronicle {
+  gap: 6px;
+  font-size: calc(11.5px * var(--text-scale));
+  color: var(--muted);
+}
+
+.band-recent .chronicle li {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* The sun of the hour, on the glass behind everything in the seat, which sits above it. */
@@ -921,16 +1231,6 @@ select {
   height: 100%;
   border-radius: inherit;
   pointer-events: none;
-}
-
-.seat-hour {
-  margin: -4px 0 0;
-  text-align: center;
-}
-
-.seat-hour .hanzi {
-  color: var(--text);
-  font-size: 1.15em;
 }
 
 /* The figure and the canvas over it share one box, in the figure's own units (192 by 156). */
@@ -985,29 +1285,55 @@ select {
   font-weight: 500;
 }
 
-.seat-bar {
-  height: 5px;
-  overflow: hidden;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-}
-
-.seat-bar-fill {
+/* Focus and heat as a ring round the figure (A3): faint, a step brighter than the sun's hand. */
+.focus-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
   height: 100%;
-  border-radius: 3px;
-  background: var(--crack);
-  transition: width 250ms linear;
+  overflow: visible;
+  pointer-events: none;
 }
 
-.seat-bar.is-heat {
-  height: 3px;
+.focus-ring circle {
+  fill: none;
+  stroke-linecap: round;
 }
 
-.seat-bar.is-heat .seat-bar-fill {
-  background: var(--warn);
+.focus-track {
+  stroke: color-mix(in srgb, var(--gilt) 14%, transparent);
+  stroke-width: 0.5;
 }
 
-:root[data-motion='reduced'] .seat-bar-fill {
+.focus-arc {
+  stroke: color-mix(in srgb, var(--gilt) 60%, transparent);
+  stroke-width: 0.9;
+  transition: stroke-dasharray 250ms linear;
+}
+
+.heat-arc {
+  stroke: color-mix(in srgb, var(--rarity-red) 40%, transparent);
+  stroke-width: 0.6;
+  transition: stroke-dasharray 250ms linear;
+}
+
+.heat-arc.is-near {
+  stroke: color-mix(in srgb, var(--rarity-red) 80%, transparent);
+}
+
+.focus-label {
+  fill: color-mix(in srgb, var(--gilt) 85%, transparent);
+  font-family: var(--font-display);
+  font-size: 7px;
+}
+
+.focus-label.is-ceiling {
+  fill: var(--muted);
+  font-size: 5.5px;
+}
+
+:root[data-motion='reduced'] .focus-arc,
+:root[data-motion='reduced'] .heat-arc {
   transition: none;
 }
 
@@ -5998,10 +6324,11 @@ button.fight-card {
 }
 
 /* Toasts: bottom right on desktop, under the top bar on a phone. */
+/* Toasts and hints in the top right, under the season and the stones (Jan's call in A3). */
 .toasts {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
+  right: 40px;
+  top: 84px;
   z-index: 60;
   display: flex;
   flex-direction: column;
@@ -6504,7 +6831,9 @@ label.beacon-ring {
 /* Each kind of line is a brush character in its color; the seasons tint their marks. The line is
    one still gilt hairline with a small halo (gradients only: no blur, no loop), so long lives
    scroll smoothly (docs/mockups/chronicle-river.html, the Chapters setting). */
-.chron {
+/* The kinds' colors, on the Chronicle and on Cultivate's last lines. */
+.chron,
+.band-recent {
   --k-qi: var(--crack);
   --k-body: #c98a5f;
   --k-soul: #a28fdc;
@@ -6519,6 +6848,9 @@ label.beacon-ring {
   --k-birth: #e4e7ee;
   --k-death: #9aa0a8;
   --k-opening: var(--muted);
+}
+
+.chron {
   --s-spring: #86d19a;
   --s-summer: #e8a874;
   --s-autumn: #dcb359;

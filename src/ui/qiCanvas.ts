@@ -261,7 +261,8 @@ export class QiCanvas {
     this.last = performance.now();
     const step = (now: number) => {
       if (!this.running) return;
-      const dt = Math.min(0.05, (now - this.last) / 1000);
+      // A frame's timestamp can fall just before the start that asked for it, so never below 0.
+      const dt = Math.max(0, Math.min(0.05, (now - this.last) / 1000));
       this.last = now;
       this.draw(dt);
       this.raf = requestAnimationFrame(step);
@@ -739,7 +740,7 @@ export class QiCanvas {
       // A figure laid out at no size has empty loops; its sparks go rather than throw each frame.
       if (!l?.length) return false;
       const v = speed * (s.big ? 1.3 : 1);
-      s.i = (s.i + v) % l.length;
+      s.i = (((s.i + v) % l.length) + l.length) % l.length;
       s.run += v;
       const q = l[Math.floor(s.i)]!;
       let [x, y] = q;

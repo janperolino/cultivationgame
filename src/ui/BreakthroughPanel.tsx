@@ -5,7 +5,7 @@
 // meter, the requirements as a checklist, three offering slots and a strip of the things you hold
 // that can be offered, each saying what it does on this attempt. At the lifespan edge the same
 // panel holds the last chance, with the gate pill alone. Every rule lives in core.
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import {
   GRADE_SCORES,
   GRADES,
@@ -247,6 +247,26 @@ function Panel({ game, panel }: { game: GameState; panel: PanelOpen }) {
   const tryLast = useGame((s) => s.lastChance);
   // Items laid beside the gate pill; the session's, never saved.
   const [chosen, setChosen] = useState<string[]>([]);
+  // The floating picker of what can be laid, opened from an empty slot (A3).
+  const [picking, setPicking] = useState(false);
+  const slotsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!picking) return;
+    const close = (e: Event) => {
+      if (
+        e instanceof KeyboardEvent
+          ? e.key === 'Escape'
+          : !slotsRef.current?.contains(e.target as Node)
+      )
+        setPicking(false);
+    };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', close);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', close);
+    };
+  }, [picking]);
   const c = game.player;
   const which = panel.ladder;
   const last = panel.lastChance;
@@ -267,6 +287,7 @@ function Panel({ game, panel }: { game: GameState; panel: PanelOpen }) {
   const extra = check.offerings.laid.filter((id, i) => !(gate && i === 0 && id === gate));
   const room = MAX_OFFERINGS - (gate ? 1 : 0) - extra.length;
   const strip = offerable(c).filter((id) => id !== gate);
+  const canLay = !last && room > 0 && strip.length > 0;
   const label = LADDER_LABELS[which];
   const atCap = check.fill >= 1.5 - 1e-9;
 
@@ -284,147 +305,164 @@ function Panel({ game, panel }: { game: GameState; panel: PanelOpen }) {
 
   return (
     <section className={`panel bt-panel is-${which}`} aria-labelledby="bt-panel-heading">
-      <div className="bt-head">
-        <h2 id="bt-panel-heading" className="panel-heading">
-          {label} · {check.target.name} <span className="hanzi">{check.target.hanzi}</span>
-        </h2>
-        <div className="bt-odds">
-          <strong>{formatPercent(odds)}</strong>
-          <span className="caption">
-            {last ? 'the last chance' : 'odds'}{' '}
-            <Why label="How the odds are worked out">
-              {last
-                ? 'At the edge of your lifespan, below a full bar, the odds shrink with the bar and then by more. The gate pill is laid alone, and a failure ends the life.'
-                : `The realm's own odds, a step for each 10% past full, the margin you bring, your method${check.gradeOdds ? `, ${points(check.gradeOdds)} from the grades of your breakthroughs on this ladder` : ''} and the offerings. At the figure the scene adds up to 10% more for the gates you catch.`}
-            </Why>
-          </span>
+      {/* Two columns in Cultivate's band (A3): the gate and what you do on the left, what it asks
+          and what you lay on the right. */}
+      <div className="bt-col">
+        <div className="bt-head">
+          <h2 id="bt-panel-heading" className="panel-heading">
+            {label} · {check.target.name} <span className="hanzi">{check.target.hanzi}</span>
+          </h2>
+          <div className="bt-odds">
+            <strong>{formatPercent(odds)}</strong>
+            <span className="caption">
+              {last ? 'the last chance' : 'odds'}{' '}
+              <Why label="How the odds are worked out">
+                {last
+                  ? 'At the edge of your lifespan, below a full bar, the odds shrink with the bar and then by more. The gate pill is laid alone, and a failure ends the life.'
+                  : `The realm's own odds, a step for each 10% past full, the margin you bring, your method${check.gradeOdds ? `, ${points(check.gradeOdds)} from the grades of your breakthroughs on this ladder` : ''} and the offerings. At the figure the scene adds up to 10% more for the gates you catch.`}
+              </Why>
+            </span>
+          </div>
+        </div>
+
+        <GradeMeter check={check} last={last} />
+        <div className="actions">
+          <button
+            type="button"
+            className="button"
+            disabled={!ready}
+            onClick={() => {
+              if (last) {
+                closePanel();
+                tryLast();
+              } else beginScene(which, laid);
+            }}
+          >
+            {last ? `Last breakthrough · ${formatPercent(odds)}` : `Begin · ${formatPercent(odds)}`}
+          </button>
+          {!last && check.bar && !atCap && (
+            <button
+              type="button"
+              className="button button-quiet"
+              onClick={() => letFill(game, which)}
+            >
+              Wait, let it fill
+            </button>
+          )}
+          <button type="button" className="button button-quiet" onClick={closePanel}>
+            Close
+          </button>
+          <Why label="What a failure costs">
+            {last
+              ? 'If it fails, the life ends.'
+              : `A failure spends ${gate ? 'the pill and ' : ''}the offerings, halves the bar and injures for years. Waiting lets the bar fill on: each 10% past full raises the odds and the grade.`}
+          </Why>
         </div>
       </div>
 
-      <GradeMeter check={check} last={last} />
-
-      {allMet ? (
-        <p className="bt-ready">
-          <span aria-hidden="true">●</span> Ready
-        </p>
-      ) : (
-        <ul className="reqs" aria-label={`Requirements for ${check.target.name}`}>
-          {reqs.map((r) => (
-            <li key={r.id} className={r.met ? 'is-met' : undefined}>
-              {requirementText(game, check, r)}
-            </li>
-          ))}
-        </ul>
-      )}
-      {chance && !chance.possible && <p className="warn">{chance.reason}</p>}
-
-      <div className="bt-slots" role="group" aria-label="Offerings laid">
-        {slots.map((s, k) => (
-          <button
-            key={k}
-            type="button"
-            className={`bt-slot${s.id ? ' is-filled' : ''}${s.locked ? ' is-locked' : ''}${s.needed ? ' is-needed' : ''}`}
-            disabled={s.locked || !s.id}
-            aria-label={
-              s.id
-                ? `${item(s.id).name}${s.locked ? ', the gate pill' : ', lift it off'}`
-                : s.needed
-                  ? `The ${item(gate!).name}, needed`
-                  : 'An empty offering slot'
-            }
-            onClick={() => s.index !== undefined && lift(s.index)}
-          >
-            {s.id ? (
-              <>
-                <span className={`rarity-${item(s.id).rarity}`}>{item(s.id).name}</span>
-                {s.locked && <span className="caption">gate</span>}
-              </>
-            ) : s.needed ? (
-              <>
-                <span>{item(gate!).name}</span>
-                <span className="caption warn">needed</span>
-              </>
-            ) : (
-              <span className="caption">{last ? '—' : 'empty'}</span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {last ? (
-        <p className="caption">The last chance lays the gate pill alone.</p>
-      ) : strip.length > 0 ? (
-        <div className="bt-strip-wrap">
-          <span className="caption">
-            Click to lay, click a slot to lift it off. Whatever is laid is spent, win or lose.
-          </span>
-          <ul className="bt-strip" aria-label="Things you can offer">
-            {strip.map((id) => {
-              const held = itemCount(c, id) - laid.filter((x) => x === id).length;
-              const it = item(id);
-              return (
-                <li key={id}>
-                  <button
-                    type="button"
-                    className="bt-offer"
-                    disabled={held <= 0 || room <= 0}
-                    onClick={() => lay(id)}
-                  >
-                    <span className={`rarity-${it.rarity}`}>{it.name}</span>
-                    <span className="caption">×{held}</span>
-                    <span className="bt-offer-effect">
-                      {effectWords(offerEffect(c, which, id))}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
+      <div className="bt-col">
+        {allMet ? (
+          <p className="bt-ready">
+            <span aria-hidden="true">●</span> Ready
+          </p>
+        ) : (
+          <ul className="reqs" aria-label={`Requirements for ${check.target.name}`}>
+            {reqs.map((r) => (
+              <li key={r.id} className={r.met ? 'is-met' : undefined}>
+                {requirementText(game, check, r)}
+              </li>
+            ))}
           </ul>
-          {check.offerings.clash && (
-            <p className="caption warn">
-              Two surging things clash: the worst twentieth of rolls fails and injures, whatever the
-              odds.
-            </p>
+        )}
+        {chance && !chance.possible && <p className="warn">{chance.reason}</p>}
+
+        <div className="bt-slots" role="group" aria-label="Offerings laid" ref={slotsRef}>
+          {slots.map((s, k) => (
+            <button
+              key={k}
+              type="button"
+              className={`bt-slot${s.id ? ' is-filled' : ''}${s.locked ? ' is-locked' : ''}${s.needed ? ' is-needed' : ''}${!s.id && canLay ? ' is-open' : ''}`}
+              disabled={s.locked || (!s.id && !canLay)}
+              aria-expanded={!s.id && canLay ? picking : undefined}
+              aria-label={
+                s.id
+                  ? `${item(s.id).name}${s.locked ? ', the gate pill' : ', lift it off'}`
+                  : s.needed
+                    ? `The ${item(gate!).name}, needed`
+                    : 'An empty offering slot'
+              }
+              onClick={() => {
+                if (s.index !== undefined) lift(s.index);
+                else if (!s.id && canLay) setPicking((p) => !p);
+              }}
+            >
+              {s.id ? (
+                <>
+                  <span className={`rarity-${item(s.id).rarity}`}>{item(s.id).name}</span>
+                  {s.locked && <span className="caption">gate</span>}
+                </>
+              ) : s.needed ? (
+                <>
+                  <span>{item(gate!).name}</span>
+                  <span className="caption warn">needed</span>
+                </>
+              ) : (
+                <span className="caption">{last ? '—' : canLay ? 'lay +' : 'empty'}</span>
+              )}
+            </button>
+          ))}
+          {picking && (
+            <div className="bt-picker panel" role="dialog" aria-label="Lay an offering">
+              <p className="caption">Whatever is laid is spent, win or lose.</p>
+              <ul className="bt-strip" aria-label="Things you can offer">
+                {strip.map((id) => {
+                  const held = itemCount(c, id) - laid.filter((x) => x === id).length;
+                  const it = item(id);
+                  return (
+                    <li key={id}>
+                      <button
+                        type="button"
+                        className="bt-offer"
+                        disabled={held <= 0}
+                        onClick={() => {
+                          lay(id);
+                          setPicking(false);
+                        }}
+                      >
+                        <span className={`rarity-${it.rarity}`}>{it.name}</span>
+                        <span className="caption">×{held}</span>
+                        <span className="bt-offer-effect">
+                          {effectWords(offerEffect(c, which, id))}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           )}
         </div>
-      ) : (
-        <p className="caption">
-          You hold nothing else that can be offered. Herbs, stones and pearls from the world can be
-          laid here.
-        </p>
-      )}
 
-      <div className="actions">
-        <button
-          type="button"
-          className="button"
-          disabled={!ready}
-          onClick={() => {
-            if (last) {
-              closePanel();
-              tryLast();
-            } else beginScene(which, laid);
-          }}
-        >
-          {last ? `Last breakthrough · ${formatPercent(odds)}` : `Begin · ${formatPercent(odds)}`}
-        </button>
-        {!last && check.bar && !atCap && (
-          <button
-            type="button"
-            className="button button-quiet"
-            onClick={() => letFill(game, which)}
-          >
-            Wait, let it fill
-          </button>
+        {last ? (
+          <p className="caption">The last chance lays the gate pill alone.</p>
+        ) : strip.length > 0 ? (
+          <div className="bt-strip-wrap">
+            <span className="caption">
+              Click an empty slot to lay an offering, a laid one to lift it off.
+            </span>
+            {check.offerings.clash && (
+              <p className="caption warn">
+                Two surging things clash: the worst twentieth of rolls fails and injures, whatever
+                the odds.
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="caption">
+            You hold nothing else that can be offered. Herbs, stones and pearls from the world can
+            be laid here.
+          </p>
         )}
-        <button type="button" className="button button-quiet" onClick={closePanel}>
-          Close
-        </button>
-        <Why label="What a failure costs">
-          {last
-            ? 'If it fails, the life ends.'
-            : `A failure spends ${gate ? 'the pill and ' : ''}the offerings, halves the bar and injures for years. Waiting lets the bar fill on: each 10% past full raises the odds and the grade.`}
-        </Why>
       </div>
     </section>
   );

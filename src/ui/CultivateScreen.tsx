@@ -1,24 +1,35 @@
 import { HOUR_KIND_IDS, HOUR_KINDS } from '../content/hours.ts';
-import { realm } from '../content/realms.ts';
+import { useState, type CSSProperties } from 'react';
+import { eventKind, KIND_WORDS } from '../content/chronicle.ts';
 import { comingBackStory, type StorySection } from '../core/comingBack.ts';
 import { barSize, dayRates, ladderOpen } from '../core/cultivation.ts';
 import { daysPerRealMs } from '../core/loop.ts';
-import { realmOf, type GameState } from '../core/state.ts';
+import { ageYears, lifespanYears, type GameState } from '../core/state.ts';
 import { CardFeed } from './CardFeed.tsx';
 import { effectiveWheel } from '../core/wheel.ts';
 import { WheelStrip } from './DayWheel.tsx';
-import { formatDays, formatDuration, formatLadder, formatNumber, formatRate } from './format.ts';
+import {
+  formatAgeShort,
+  formatDays,
+  formatDuration,
+  formatLadder,
+  formatNumber,
+  formatRate,
+} from './format.ts';
 import { BreakthroughPanel, BreakthroughRow, StepNeeds } from './BreakthroughPanel.tsx';
 import { useScene } from './scene.ts';
 import { SeatedFigure, SeatMeter } from './SeatedFigure.tsx';
+import { TodayPanel } from './TodayPanel.tsx';
 import { useGame, type AwaySummary } from './store.ts';
 import { technique } from '../content/techniques.ts';
 import { readingLine } from './bookcase.ts';
-import { AgeBar, EventLine, LadderBar, LifeEdgeCard } from './widgets.tsx';
+import { EventLine, LadderBar, LifeEdgeCard } from './widgets.tsx';
 import { go, goToTab } from './nav.ts';
 
 /** Up to this many settled cards are told in full; past it, one a kind and the rest folded away. */
 const SHORT_TELLING = 5;
+/** The chronicle's last lines in the band's right column. */
+const RECENT_LINES = 5;
 
 function Sections({ sections }: { sections: StorySection[] }) {
   return (
@@ -33,21 +44,43 @@ function Sections({ sections }: { sections: StorySection[] }) {
   );
 }
 
-function AwayCard({ away }: { away: AwaySummary }) {
+/** The coming-back story in the band: its opening and what grew, the rest raised over the scene. */
+function AwayCard({ away, onRead }: { away: AwaySummary; onRead: () => void }) {
   const dismissAway = useGame((s) => s.dismissAway);
   const story = comingBackStory(away.before, away.state);
   return (
-    <section className="panel card-away story-away">
-      <h2 className="panel-heading">While you were in seclusion</h2>
-      <p className="away-opening">
-        {story.opening}{' '}
-        <span className="caption">
+    <article className="story story-away" aria-labelledby="away-heading">
+      <p className="band-kicker">
+        <span>While you were in seclusion</span>
+        <span>
           {formatDuration(away.countedMs)} away
-          {away.awayMs > away.countedMs &&
-            ` of ${formatDuration(away.awayMs)}; offline time counts up to 12 hours`}
-          .
+          {away.awayMs > away.countedMs && ` of ${formatDuration(away.awayMs)}`}
         </span>
       </p>
+      <h3 id="away-heading">{story.opening}</h3>
+      {story.growth.length > 0 && <p className="away-growth">{story.growth.join(' ')}</p>}
+      {story.waiting && <p className="away-waiting">{story.waiting}</p>}
+      {away.atEdge && <p className="warn">You woke at the edge of your lifespan.</p>}
+      <div className="actions">
+        <button type="button" className="button" onClick={dismissAway}>
+          Continue
+        </button>
+        {(story.sections.length > 0 || story.firsts.length > 0) && (
+          <button type="button" className="button button-quiet" onClick={onRead}>
+            Read it all
+          </button>
+        )}
+      </div>
+    </article>
+  );
+}
+
+/** The whole coming-back story, risen over the scene while you read it. */
+function AwayStory({ away, onClose }: { away: AwaySummary; onClose: () => void }) {
+  const story = comingBackStory(away.before, away.state);
+  return (
+    <section className="panel card-away" aria-label="The whole story">
+      <h2 className="panel-heading">{story.opening}</h2>
       {story.growth.length > 0 && <p>{story.growth.join(' ')}</p>}
       {story.settled > SHORT_TELLING ? (
         <>
@@ -55,20 +88,23 @@ function AwayCard({ away }: { away: AwaySummary }) {
             <h3>Among what happened</h3>
             <p>{story.highlights.join(' ')}</p>
           </div>
-          <details className="away-more">
-            <summary>Everything that settled on its own · {formatNumber(story.settled)}</summary>
-            <Sections sections={story.sections} />
-          </details>
+          <p className="caption">
+            {formatNumber(story.settled)} things settled on their own; the Chronicle keeps them all.
+          </p>
         </>
       ) : (
         <Sections sections={story.sections} />
       )}
-      {story.waiting && <p className="spaced">{story.waiting}</p>}
       {story.firsts.length > 0 && <p className="spaced accent">{story.firsts.join(' ')}</p>}
-      {away.atEdge && <p className="warn">You woke at the edge of your lifespan.</p>}
+      {away.awayMs > away.countedMs && (
+        <p className="caption">Offline time counts up to 12 hours.</p>
+      )}
       <div className="actions">
-        <button type="button" className="button" onClick={dismissAway}>
-          Continue
+        <button type="button" className="button button-quiet" onClick={onClose}>
+          Close
+        </button>
+        <button type="button" className="link-button" onClick={() => go('chronicle')}>
+          Read it in the Chronicle →
         </button>
       </div>
     </section>
@@ -114,76 +150,94 @@ export function CultivateScreen() {
   const game = useGame((s) => s.game);
   const away = useGame((s) => s.away);
   const breaking = useBreakClass();
+  // A great realm's panel, open, takes the band's middle before anything else (Jan's call).
+  const gate = useScene((s) => !!s.panel && !s.play);
+  const [reading, setReading] = useState(false);
   if (!game) return null;
 
-  const rates = dayRates(game.player, game.calendar.day);
-  const reading = rates.study > 0 ? readingLine(game.player) : null;
+  const c = game.player;
+  const rates = dayRates(c, game.calendar.day);
+  const studying = rates.study > 0 ? readingLine(c) : null;
   const drilled = Object.keys(rates.practiceEach).map((id) => technique(id).name);
   const today = [
     ...HOUR_KIND_IDS.filter((k) => rates.count[k] > 0).map(
       (k) => `${rates.count[k]} ${HOUR_KINDS[k].name.toLowerCase()}`,
     ),
     ...(drilled.length > 0 ? [`practicing ${drilled.join(' and ')}`] : []),
-    ...(reading ? [reading] : []),
+    ...(studying ? [studying] : []),
   ].join(' · ');
 
-  const recent = game.chronicle.slice(-3).reverse();
-  const r = realm(realmOf(game.player));
+  const recent = game.chronicle.slice(-RECENT_LINES).reverse();
+  const age = ageYears(c, game.calendar.day);
 
-  // The scene (A2; docs/mockups/shell-study.html): the seat fills the screen, the figure in its
-  // middle, and over it the cultivator low on the left, what waits on you on the right and the
-  // last few lines of the chronicle at its foot. A3 paints the place behind the seat.
+  // The scene (A3; docs/mockups/cultivate-bottom-study.html): the seat fills the screen with the
+  // figure low in its middle, the sun's hand behind it; along the foot a band of three columns,
+  // you, the open card and the chronicle's last lines. What matters only for a while (a
+  // breakthrough's panel, the lifespan's edge, the whole coming-back story) rises over the scene's
+  // right. Nothing on the screen scrolls (Jan's call).
   return (
     <div className="cultivate">
       <section className={`cultivate-seat${breaking}`} aria-label="The seat">
+        <div className="cultivate-scene" aria-hidden="true" />
         <div className="seat-flash" aria-hidden="true" />
         <SeatedFigure game={game} />
         <SeatMeter game={game} />
         <BreakthroughRow game={game} />
       </section>
 
-      <section className="cultivate-who" aria-label="The cultivator">
-        <h1 className="cultivate-title">
-          Cultivate <span className="hanzi">修炼</span>
-        </h1>
-        <p className="cultivate-name">
-          {game.player.name} <small>{game.player.pronouns}</small>
-        </p>
-        <p className="cultivate-realm">{formatLadder(game.player.qi)}</p>
-        <div className="bars cultivate-bars">
-          <LadderBar game={game} which="qi" why={<QiWhy game={game} />} />
-          {ladderOpen(game.player, 'body') && (
-            <LadderBar game={game} which="body" why={<StepNeeds game={game} which="body" />} />
-          )}
-          {ladderOpen(game.player, 'soul') && (
-            <LadderBar game={game} which="soul" why={<StepNeeds game={game} which="soul" />} />
-          )}
-          <AgeBar game={game} />
-        </div>
-        <div className="cultivate-routine">
-          <div className="cultivate-routine-head">
-            <h2>Today&apos;s routine</h2>
-            <small>{rates.routine ? rates.routine.name : 'Your own day'}</small>
-            <span className="caption">
-              Lifespan {r.lifespan} years at {r.name}.
-            </span>
-            <button type="button" className="link-button" onClick={() => goToTab('day')}>
-              Arrange your day →
-            </button>
-          </div>
-          <WheelStrip hours={effectiveWheel(game.player)} />
-          <p className="cultivate-today">{today}</p>
-        </div>
-      </section>
-
-      <div className="cultivate-side">
-        <BreakthroughPanel game={game} />
-        {away && <AwayCard away={away} />}
+      <div className="cultivate-rise">
         <LifeEdgeCard />
-        <CardFeed />
-        <section className="cultivate-recent" aria-label="Recent events">
+        {away && reading && <AwayStory away={away} onClose={() => setReading(false)} />}
+      </div>
+
+      <div className="cultivate-band">
+        <section className="band-who" aria-label="The cultivator">
+          <h1 className="visually-hidden">Cultivate</h1>
+          <p className="cultivate-name">
+            {c.name} <small>{c.pronouns}</small>
+          </p>
+          <p className="cultivate-realm">
+            {formatLadder(c.qi)}
+            <span className="cultivate-age" title="Age against lifespan">
+              {formatAgeShort(age)} <small>of {lifespanYears(c)}</small>
+            </span>
+          </p>
+          <div className="bars cultivate-bars">
+            <LadderBar game={game} which="qi" why={<QiWhy game={game} />} />
+            {ladderOpen(c, 'body') && (
+              <LadderBar game={game} which="body" why={<StepNeeds game={game} which="body" />} />
+            )}
+            {ladderOpen(c, 'soul') && (
+              <LadderBar game={game} which="soul" why={<StepNeeds game={game} which="soul" />} />
+            )}
+          </div>
+          <div className="cultivate-routine">
+            <div className="cultivate-routine-head">
+              <h2>Today&apos;s routine</h2>
+              <small>{rates.routine ? rates.routine.name : 'Your own day'}</small>
+              <button type="button" className="link-button" onClick={() => goToTab('day')}>
+                Arrange your day →
+              </button>
+            </div>
+            <WheelStrip hours={effectiveWheel(c)} />
+            <p className="cultivate-today">{today}</p>
+          </div>
+        </section>
+
+        <CardFeed
+          quiet={<TodayPanel game={game} />}
+          first={
+            gate && !game.ended ? (
+              <BreakthroughPanel game={game} />
+            ) : away && !game.ended ? (
+              <AwayCard away={away} onRead={() => setReading((r) => !r)} />
+            ) : undefined
+          }
+        />
+
+        <section className="band-recent" aria-label="Recent events">
           <h2>
-            Recent events{' '}
+            Recent{' '}
             <button type="button" className="link-button" onClick={() => go('chronicle')}>
               Read all →
             </button>
@@ -192,11 +246,22 @@ export function CultivateScreen() {
             <p className="caption">Nothing has happened yet.</p>
           ) : (
             <ol className="chronicle">
-              {recent.map((e, i) => (
-                <li key={`${e.day}-${i}`}>
-                  <EventLine game={game} e={e} />
-                </li>
-              ))}
+              {recent.map((e, i) => {
+                // Each line led by its kind's brush mark, as on the Chronicle.
+                const k = eventKind(e.type, e.data);
+                return (
+                  <li key={`${e.day}-${i}`}>
+                    <span
+                      className="cr-mk"
+                      style={{ '--kc': `var(--k-${k})` } as CSSProperties}
+                      title={KIND_WORDS[k].name}
+                    >
+                      {KIND_WORDS[k].hanzi}
+                    </span>
+                    <EventLine game={game} e={e} />
+                  </li>
+                );
+              })}
             </ol>
           )}
         </section>

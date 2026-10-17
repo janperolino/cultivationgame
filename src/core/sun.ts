@@ -1,14 +1,14 @@
 // The sun on Cultivate's seat (design § Cultivation, The hour on the figure): where it stands at a
 // moment of the world day, and the shadow it casts from the seated figure. The day wheel's 子 is
 // 23–1, so midnight is the middle of 子, dawn the middle of 卯, noon the middle of 午 and dusk the
-// middle of 酉; the sun rises on the right. Pure geometry: ui/sunCanvas.ts and ui/qiCanvas.ts draw
+// middle of 酉; the sun rises on the left and sets on the right (Jan's call in A3). Pure geometry: ui/sunCanvas.ts and ui/qiCanvas.ts draw
 // it, and the numbers are `docs/mockups/abode-hour-study.html`'s.
 import { HOURS_PER_DAY } from '../content/hours.ts';
 
 /** The double-hour of dawn's middle, as a fraction of the wheel: 卯 is the fourth hour, 5–7. */
 export const SUNRISE_HOUR = 3.5;
-/** Which side the sun rises on: 1 the right, −1 the left. */
-export const SUN_SIDE = 1;
+/** Which side the sun rises on: 1 the right, −1 the left (the left since A3). */
+export const SUN_SIDE = -1;
 /** The study's default strengths, the tuning (design § Cultivation). */
 export const SUN_SHADOW_STRENGTH = 0.8;
 export const SUN_WASH_STRENGTH = 0.7;

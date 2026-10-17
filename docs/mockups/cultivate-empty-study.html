@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cultivate, the empty middle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<style>
+  /* A3 study: what Cultivate's band does when no card waits. The layout is the build's after Jan's
+     rounds (the figure low, the band of you, the card and Recent); the cave is a CSS stand-in.
+     1, cards rise over the scene and the band is two columns; 2, the middle shows today;
+     3, the band parts in the middle when nothing waits. */
+  :root {
+    --bg: #040507;
+    --panel: rgb(7 8 11 / 0.9);
+    --text: #e9e5da;
+    --muted: #8d949d;
+    --accent: #d6ab4c;
+    --gilt: #d9b46a;
+    --line: rgb(217 180 106 / 0.16);
+    --line-mark: rgb(217 180 106 / 0.4);
+    --crack: #7fc7d9;
+    --display: 'Cormorant Garamond', Georgia, serif;
+    --body: Inter, system-ui, sans-serif;
+    --brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #000; color: var(--text); font-family: var(--body); overflow-x: hidden; }
+  .bar-top {
+    display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 10px 16px;
+    font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line);
+  }
+  .bar-top b { color: var(--text); font-weight: 500; }
+  .bar-top button {
+    background: none; border: 1px solid var(--line); color: var(--muted); padding: 5px 12px;
+    font: inherit; border-radius: 3px; cursor: pointer; white-space: nowrap;
+  }
+  .bar-top button.on { color: var(--accent); border-color: var(--line-mark); }
+  .wrap { width: 100%; overflow: hidden; }
+  .stage { position: relative; width: 1920px; height: 1080px; transform-origin: 0 0; background: var(--bg); overflow: hidden; }
+
+  .scene { position: absolute; inset: 0 0 0 72px; overflow: hidden; }
+  .scene::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 560px 460px at 924px 420px, rgb(40 52 70 / 0.5), transparent 70%),
+      radial-gradient(ellipse 1100px 700px at 300px 0%, rgb(232 168 116 / 0.07), transparent 70%),
+      linear-gradient(to bottom, #07090d 0%, #0b0d12 58%, #050608 62%, #030304 100%);
+  }
+  .scene::after {
+    content: ''; position: absolute; left: 924px; top: 400px; width: 960px; height: 700px;
+    transform: translate(-50%, -50%); border-radius: 48% 48% 10% 10%;
+    box-shadow: 0 0 0 700px rgb(3 4 6 / 0.7), inset 0 0 80px rgb(0 0 0 / 0.8);
+    background:
+      radial-gradient(1px 1px at 20% 30%, #cfd8e6, transparent),
+      radial-gradient(1px 1px at 62% 18%, #cfd8e6, transparent),
+      radial-gradient(1.4px 1.4px at 80% 40%, #e8d9b8, transparent),
+      radial-gradient(1px 1px at 38% 52%, #cfd8e6, transparent);
+  }
+  .lamp { position: absolute; width: 10px; height: 16px; border-radius: 3px; background: #f2c27a; box-shadow: 0 0 22px 8px rgb(242 160 80 / 0.28); }
+
+  .rail {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(4 5 7 / 0.94);
+    border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 22px; padding-top: 22px;
+  }
+  .rail i { width: 22px; height: 22px; border: 1px solid var(--line-mark); border-radius: 4px; display: block; }
+  .rail i:nth-child(2) { border-color: var(--accent); }
+  .top {
+    position: absolute; left: 116px; right: 40px; top: 22px; display: flex; justify-content: space-between;
+    align-items: center; font-family: var(--display); font-size: 22px; text-shadow: 0 1px 10px #000;
+  }
+  .top .hz { font-family: var(--brush); color: var(--gilt); margin-left: 8px; font-size: 20px; }
+  .top .stats { display: flex; gap: 34px; font-size: 18px; align-items: baseline; }
+  .top .stats small { display: block; font-family: var(--body); font-size: 11px; color: var(--muted); }
+
+  /* The figure, low, and the sun's hand behind it, the afternoon sun up to the right. */
+  .seat { position: absolute; left: 768px; top: 312px; width: 460px; height: 374px; }
+  .hand { position: absolute; left: 230px; top: 241px; width: 420px; height: 2px; transform-origin: 0 50%; transform: rotate(-58deg);
+    background: linear-gradient(to right, transparent 20%, rgb(217 180 106 / 0.34)); }
+  .hand::after { content: ''; position: absolute; right: -5px; top: -4px; width: 8px; height: 8px; transform: rotate(45deg); border: 1px solid rgb(217 180 106 / 0.5); }
+  .floorlight { position: absolute; left: -80px; right: -80px; bottom: -40px; height: 120px; background: radial-gradient(closest-side, rgb(232 168 116 / 0.12), transparent); }
+  .seat svg { position: absolute; inset: 0; overflow: visible; }
+  .seat svg path, .seat svg circle.head { fill: #08090b; stroke: rgb(127 199 217 / 0.18); stroke-width: 0.6; }
+  .caption-hour { position: absolute; left: 768px; width: 460px; top: 700px; text-align: center; font-size: 13px; color: var(--muted); margin: 0; }
+  .caption-hour .hz { font-family: var(--brush); color: var(--text); font-size: 16px; }
+  .meter { position: absolute; left: 848px; width: 300px; top: 730px; text-align: center; font-size: 12px; color: var(--muted); }
+  .meter b { color: var(--crack); font-family: var(--display); font-size: 20px; font-weight: 500; margin: 0 6px; }
+  .meter .bar { height: 2px; background: rgb(255 255 255 / 0.08); margin: 6px 0 4px; }
+  .meter .bar i { display: block; height: 100%; width: 52%; background: var(--crack); }
+
+  /* The band. */
+  .band { position: absolute; left: 72px; right: 0; bottom: 0; height: 320px;
+    background: linear-gradient(to top, rgb(3 4 6 / 0.96) 0%, rgb(3 4 6 / 0.9) 60%, rgb(3 4 6 / 0) 100%); }
+  .band-inner { position: absolute; left: 44px; right: 40px; bottom: 14px; height: 250px; display: grid; }
+  .col { padding: 20px 30px 0; min-width: 0; border-top: 1px solid var(--line); }
+  .col + .col { border-left: 1px solid var(--line); }
+  .col:first-child { padding-left: 0; }
+  .col:last-child { padding-right: 0; }
+
+  .who h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 30px; line-height: 1; }
+  .who h1 small { font-family: var(--body); font-size: 11px; color: var(--muted); margin-left: 8px; font-weight: 300; }
+  .who .realm { margin: 6px 0 14px; font-family: var(--display); font-size: 16px; color: #cfcbc1; }
+  .who .realm .age { margin-left: 14px; padding-left: 14px; border-left: 1px solid var(--line); color: var(--text); font-family: var(--body); font-size: 12px; }
+  .who .realm .age small { color: var(--muted); font-size: 11px; }
+  .cells { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); }
+  .cells > div { padding: 8px 12px 10px; font-size: 11.5px; color: var(--muted); }
+  .cells > div + div { border-left: 1px solid var(--line); }
+  .cells span { float: right; color: var(--text); font-size: 12px; }
+  .cells .b { height: 2px; background: rgb(255 255 255 / 0.08); margin-top: 8px; }
+  .cells .b i { display: block; height: 100%; background: var(--crack); }
+  .routine { margin-top: 16px; font-size: 11px; color: var(--muted); }
+  .routine .head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 8px; }
+  .routine .head b { font-family: var(--display); font-size: 16px; color: var(--text); font-weight: 500; }
+  .routine .head a { margin-left: auto; color: var(--accent); text-decoration: none; font-size: 12px; }
+  .hours { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+  .hours i { height: 2px; background: var(--crack); opacity: 0.8; }
+  .hours i.s { background: #b9a2e0; } .hours i.b { background: #c98a5f; } .hours i.z { background: #3a3f48; } .hours i.p { background: #c86b5a; } .hours i.so { background: #a28fdc; }
+  .routine p { margin: 8px 0 0; font-size: 12px; }
+
+  .kicker { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 6px; display: flex; justify-content: space-between; }
+  .kicker b { color: var(--accent); font-weight: 500; }
+  .card h2 { margin: 0 0 6px; font-family: var(--display); font-weight: 500; font-size: 24px; }
+  .card p.text { margin: 0 0 10px; font-size: 13px; line-height: 1.5; color: #cfcbc1; }
+  .choices { display: grid; gap: 6px; }
+  .choice { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border: 1px solid var(--line); border-radius: 3px; font-family: var(--display); font-size: 15px; background: rgb(255 255 255 / 0.02); }
+  .choice small { display: block; font-family: var(--body); font-size: 11px; color: var(--muted); }
+  .choice:first-child { border-color: var(--accent); color: var(--accent); background: rgb(214 171 76 / 0.07); }
+  .choice::after { content: '›'; color: var(--muted); font-size: 18px; }
+
+  .recent h3 { margin: 0 0 8px; font-family: var(--display); font-weight: 500; font-size: 16px; display: flex; justify-content: space-between; }
+  .recent h3 a { color: var(--accent); text-decoration: none; font-family: var(--body); font-size: 11.5px; }
+  .recent ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 11.5px; color: var(--muted); }
+  .recent li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recent li .k { font-family: var(--brush); color: var(--crack); margin-right: 8px; font-size: 13px; }
+  .recent li .k.p { color: #e0a86a; } .recent li .k.f { color: #c86b5a; }
+  .recent.wide li { white-space: normal; line-height: 1.45; }
+  .recent.wide ol { gap: 8px; font-size: 12.5px; }
+
+  /* 2: today in the middle. */
+  .today h2 { margin: 0 0 12px; font-family: var(--display); font-weight: 500; font-size: 22px; }
+  .today .rows { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 30px; }
+  .today .row { font-size: 12px; color: var(--muted); }
+  .today .row b { display: block; font-family: var(--display); font-weight: 500; font-size: 16px; color: var(--text); margin-bottom: 3px; }
+  .today .row .b { height: 2px; background: rgb(255 255 255 / 0.08); margin-top: 6px; }
+  .today .row .b i { display: block; height: 100%; background: var(--crack); }
+  .today .quiet { margin-top: 14px; font-size: 11.5px; color: var(--muted); font-style: italic; }
+
+  /* 1: the card risen over the scene's right. */
+  .risen {
+    position: absolute; right: 40px; bottom: 286px; width: 470px; padding: 20px 24px 18px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+    box-shadow: 0 0 0 1px rgb(214 171 76 / 0.22), 0 0 26px -8px rgb(214 171 76 / 0.5), 0 20px 40px rgb(0 0 0 / 0.5);
+  }
+
+  /* 3: the band parts, the scene showing through the middle. */
+  .split .band { background: none; }
+  .split .band-inner { grid-template-columns: 620px 1fr 300px !important; }
+  .split .island { position: relative; }
+  .split .island::before { content: ''; position: absolute; inset: -60px -40px -14px -44px; z-index: -1;
+    background: radial-gradient(ellipse at 50% 100%, rgb(3 4 6 / 0.95) 40%, rgb(3 4 6 / 0) 75%); }
+  .split .gap { border-top-color: transparent; border-left-color: transparent; }
+  .split .gap + .col { border-left-color: transparent; }
+
+  .notes { max-width: 1100px; margin: 18px auto 40px; padding: 0 16px; font-size: 14px; line-height: 1.6; color: #cfcbc1; }
+  .notes h2 { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 0 0 6px; color: var(--text); }
+  .notes b { color: var(--text); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="bar-top">
+  <b>Way</b>
+  <button data-way="1" class="on">1 · cards rise</button>
+  <button data-way="2">2 · today in the middle</button>
+  <button data-way="3">3 · the band parts</button>
+  <span style="width:18px"></span>
+  <b>Cards</b>
+  <button data-card="none" class="on">Nothing waits</button>
+  <button data-card="one">A card waits</button>
+</div>
+
+<div class="wrap" id="wrap">
+<div class="stage" id="stage">
+  <div class="scene">
+    <span class="lamp" style="left:236px;top:600px"></span>
+    <span class="lamp" style="left:1540px;top:590px"></span>
+  </div>
+  <nav class="rail"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></nav>
+  <div class="top">
+    <div>Severed Heaven<span class="hz">断天</span></div>
+    <div class="stats">
+      <div>Summer 3,158<small>Afternoon · hour of Wei</small></div>
+      <div>19<small>spirit stones</small></div>
+      <div>1,624<small>insight</small></div>
+    </div>
+  </div>
+
+  <div class="seat">
+    <div class="floorlight"></div>
+    <div class="hand"></div>
+    <svg viewBox="-96 -92 192 156">
+      <defs><radialGradient id="dt"><stop offset="0" stop-color="#7fc7d9" stop-opacity="0.6"/><stop offset="1" stop-color="#7fc7d9" stop-opacity="0"/></radialGradient></defs>
+      <circle cx="0" cy="9" r="30" fill="url(#dt)" opacity="0.4"/>
+      <circle class="head" cx="0" cy="-41" r="10.5"/>
+      <path fill-rule="evenodd" d="M0 -31 L-5 -31 C-7 -27 -13 -26 -19 -24 C-26 -21 -28 -14 -28 -6 C-28 2 -30 9 -33 15 C-37 20 -44 22 -49 26 C-54 30 -53 37 -46 39 C-32 43 -14 42 0 42 C14 42 32 43 46 39 C53 37 54 30 49 26 C44 22 37 20 33 15 C30 9 28 2 28 -6 C28 -14 26 -21 19 -24 C13 -26 7 -27 5 -31 Z M-20 -13 C-18 -5 -17 2 -14 8 C-18 6 -21 -3 -20 -13 Z M20 -13 C18 -5 17 2 14 8 C18 6 21 -3 20 -13 Z"/>
+      <circle cx="0" cy="9" r="3" fill="#bfeaf3"/>
+    </svg>
+  </div>
+  <p class="caption-hour"><span class="hz">未</span> Afternoon, the hour of Wei · soul</p>
+  <div class="meter">Attention<b>×1.55</b>of ×2.25<div class="bar"><i></i></div>Draw orbs in by hovering over them.</div>
+
+  <div id="risen"></div>
+
+  <div class="band">
+    <div class="band-inner" id="inner"></div>
+  </div>
+</div>
+</div>
+
+<div class="notes">
+  <h2>Three ways for the empty middle</h2>
+  <p><b>1, cards rise.</b> The band is two columns for good: you, and Recent across the rest with its lines in full. A card, the coming-back story, a breakthrough and the lifespan's edge all rise over the scene's right, beside the figure, with a still accent glow, and go once settled. The band never changes.</p>
+  <p><b>2, today in the middle.</b> The three columns stay. With no card, the middle tells what the day is doing: the copy you read and its bar, what you practice, qi a day and when the bar fills, and the next step on the body. A card takes its place when one comes. (The numbers here are made up.)</p>
+  <p><b>3, the band parts.</b> With no card the middle of the band is gone and the scene runs down to the floor between you and Recent; a card fills the gap when it comes, as in the build now.</p>
+  <p>Switch <b>Cards</b> to see each with a card waiting.</p>
+</div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const wrap = document.getElementById('wrap');
+  function fit() { const k = wrap.clientWidth / 1920; stage.style.transform = `scale(${k})`; wrap.style.height = `${1080 * k}px`; }
+  addEventListener('resize', fit); fit();
+
+  const who = `<section class="col who island">
+    <h1>Ye Hao<small>they/them</small></h1>
+    <p class="realm">Qi Condensation, seventh layer<span class="age">43 y 3 m <small>of 120</small></span></p>
+    <div class="cells">
+      <div>Qi<span>522 / 595</span><div class="b"><i style="width:88%"></i></div></div>
+      <div>Body<span>first layer · 39%</span><div class="b"><i style="width:39%"></i></div></div>
+      <div>Soul<span>first layer · 18%</span><div class="b"><i style="width:18%"></i></div></div>
+    </div>
+    <div class="routine">
+      <div class="head"><b>Today's routine</b><span>Your own day</span><a href="#">Arrange your day →</a></div>
+      <div class="hours"><i class="z"></i><i class="z"></i><i></i><i></i><i class="s"></i><i class="so"></i><i class="p"></i><i></i><i></i><i class="b"></i><i></i><i></i></div>
+      <p>5 qi · 1 body · 1 soul · 2 study · 1 practice · 2 sleep · practicing Piled Bones Thrust</p>
+    </div>
+  </section>`;
+  const lines = [
+    ['人', 'p', 'Ye Hao haggles Peddler Gou down to sixteen stones for the Qi Gathering Pill, and he swears it is robbery.'],
+    ['事', '', 'Ye Hao is gored on the walls in the beast tide, and holds the gap until the watch comes.'],
+    ['战', 'f', 'Ye Hao drives a stone-hide boar from the cave and sells the tusks at the Gate.'],
+    ['人', 'p', 'Ye Hao answers a summons from the Wall of Piled Bones and stands a night watch.'],
+    ['气', '', 'Ye Hao climbs the high ledges for dragon’s-whisker grass and comes down with a bundle.'],
+  ];
+  const recent = (wide) => `<section class="col recent island ${wide ? 'wide' : ''}">
+    <h3>Recent <a href="#">Read all →</a></h3>
+    <ol>${lines.slice(0, wide ? 5 : 5).map(([k, c, t]) => `<li><span class="k ${c}">${k}</span>${t}</li>`).join('')}</ol>
+  </section>`;
+  const cardBody = (kicker) => `<p class="kicker"><span>${kicker}</span><b>1 of 3</b></p>
+    <h2>A Voice Like Yours</h2>
+    <p class="text">In the deepest part of a sitting, a voice that sounds like yours remarks how much faster all this would go with a little blood.</p>
+    <div class="choices">
+      <div class="choice">Open your eyes</div>
+      <div class="choice"><span>Listen a while<small>Aptitude 10 against 12 · short</small></span></div>
+    </div>`;
+  const card = `<section class="col card">${cardBody('Waiting')}</section>`;
+  const today = `<section class="col today">
+    <p class="kicker"><span>Today</span><span>nothing waits</span></p>
+    <div class="rows">
+      <div class="row"><b>Reading Tide-Counting</b>chapter 3 of 5 · about 40 days left<div class="b"><i style="width:56%"></i></div></div>
+      <div class="row"><b>Practicing Piled Bones Thrust</b>second level · 70% to the third<div class="b"><i style="width:70%; background:#c86b5a"></i></div></div>
+      <div class="row"><b>12.4 qi a day</b>the bar fills in about 6 days, then the eighth layer waits</div>
+      <div class="row"><b>Body: the second layer</b>in about 2 years at this wheel</div>
+    </div>
+    <p class="quiet">Seclusion is quiet.</p>
+  </section>`;
+
+  let way = '1';
+  let waits = false;
+  function render() {
+    const inner = document.getElementById('inner');
+    const risen = document.getElementById('risen');
+    stage.classList.toggle('split', way === '3' && !waits);
+    risen.innerHTML = '';
+    if (way === '1') {
+      inner.style.gridTemplateColumns = '620px 1fr';
+      inner.innerHTML = who + recent(true);
+      if (waits) risen.innerHTML = `<div class="risen card">${cardBody('Waiting')}</div>`;
+    } else if (way === '2') {
+      inner.style.gridTemplateColumns = '620px minmax(0, 1fr) 300px';
+      inner.innerHTML = who + (waits ? card : today) + recent(false);
+    } else {
+      inner.style.gridTemplateColumns = '620px minmax(0, 1fr) 300px';
+      inner.innerHTML = who + (waits ? card : '<section class="col gap"></section>') + recent(false);
+    }
+  }
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('button');
+    if (!t) return;
+    if (t.dataset.way) { way = t.dataset.way; document.querySelectorAll('[data-way]').forEach((b) => b.classList.toggle('on', b === t)); }
+    if (t.dataset.card) { waits = t.dataset.card === 'one'; document.querySelectorAll('[data-card]').forEach((b) => b.classList.toggle('on', b === t)); }
+    render();
+  });
+  render();
+</script>
+</body>
+</html>

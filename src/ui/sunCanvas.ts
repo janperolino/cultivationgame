@@ -6,7 +6,16 @@
 // dantian's own light on the floor, brighter as the bar fills. The sun moves with the clock, not on
 // its own, so reduced motion changes nothing here. `docs/mockups/abode-hour-study.html` is the
 // reference, and its numbers are kept: the mock's seat is 267 by 230 figure units round the figure.
-import { shadowOf, SUN_SHADOW_STRENGTH, SUN_WASH_STRENGTH, sunAt, type Sun } from '../core/sun.ts';
+// Behind the figure, the sun's hand (A3, Jan's call): a faint gilt line from the dantian toward
+// where the sun stands, round the day like a clock's, dimmer below the floor at night.
+import {
+  shadowOf,
+  SUN_SHADOW_STRENGTH,
+  SUN_SIDE,
+  SUN_WASH_STRENGTH,
+  sunAt,
+  type Sun,
+} from '../core/sun.ts';
 import { parseHex } from './colors.ts';
 import { FIGURE_BOX, FIGURE_HEAD, FIGURE_PATH, type SunLight } from './qiCanvas.ts';
 import { sunDay } from './seat.ts';
@@ -17,6 +26,14 @@ const SEAT_W = 267;
 const SEAT_H = 230;
 /** Where the figure sits on its floor, in figure units. */
 const BASE_Y = 42;
+/** How much the night dims the painted cave, and how dark the shadow lies on its floor (A3). */
+const NIGHT_DIM = 0.32;
+const SHADOW_ON_PAINT = 0.4;
+/** The sun's hand: from the dantian, this long, in figure units, and this bright at its tip. */
+const HAND_FROM = { x: 0, y: 9 } as const;
+const HAND_LENGTH = 165;
+const HAND_ALPHA = 0.34;
+const HAND_NIGHT = 0.35;
 
 /** The colors the sun reads from the page's tokens. */
 export interface SunPalette {
@@ -25,6 +42,7 @@ export interface SunPalette {
   dusk: string;
   yin: string;
   crack: string;
+  gilt: string;
 }
 
 export function readSunPalette(): SunPalette {
@@ -36,6 +54,7 @@ export function readSunPalette(): SunPalette {
     dusk: v('--sun-dusk', '#e07a4a'),
     yin: v('--qi-yin', '#7d84d6'),
     crack: v('--crack', '#7fc7d9'),
+    gilt: v('--gilt', '#d9b46a'),
   };
 }
 
@@ -140,6 +159,7 @@ export class SunCanvas {
     const W = SEAT_W * k;
     const H = SEAT_H * k;
     this.drawWash(s, ox, oy, W, H, w, h);
+    this.drawHand(s, ox, oy, k);
     this.drawPool(s, ox, oy + (BASE_Y + 1) * k, k, fill);
     this.drawFloor(s, ox, oy + BASE_Y * k, k, W, w, h, dpr);
   }
@@ -181,9 +201,16 @@ export class SunCanvas {
     ctx.globalAlpha = 1;
   }
 
-  /** The wash on the glass, from where the sun stands; the yin blue low along the floor at night. */
+  /**
+   * The wash on the glass, from where the sun stands; the yin blue low along the floor at night,
+   * and the painted cave dimmed as the light goes (A3: the hour is a still wash over the scene).
+   */
   private drawWash(s: Sun, ox: number, oy: number, W: number, H: number, w: number, h: number) {
     const strength = SUN_WASH_STRENGTH;
+    if (s.light < 1) {
+      this.ctx.fillStyle = `rgba(2, 3, 9, ${NIGHT_DIM * (1 - s.light)})`;
+      this.ctx.fillRect(0, 0, w, h);
+    }
     if (s.light > 0) {
       const sx = ox + s.dx * W * 0.75;
       const sy = oy - s.dy * H * 0.95 + H * 0.2;
@@ -192,6 +219,46 @@ export class SunCanvas {
     }
     this.band(oy, oy + H / 2, this.palette.dusk, strength * 0.16 * s.twilight, w, h);
     this.band(oy + H * 0.05, oy + H / 2, this.palette.yin, strength * 0.2 * (1 - s.light), w, h);
+  }
+
+  /** The sun's hand, from the dantian toward the sun on its round, behind the figure. */
+  private drawHand(s: Sun, ox: number, oy: number, k: number) {
+    const ctx = this.ctx;
+    const x0 = ox + HAND_FROM.x * k;
+    const y0 = oy + HAND_FROM.y * k;
+    const dx = Math.cos(s.phi) * SUN_SIDE;
+    const dy = -Math.sin(s.phi);
+    const L = HAND_LENGTH * k;
+    const x1 = x0 + dx * L;
+    const y1 = y0 + dy * L;
+    const alpha = HAND_ALPHA * (s.altitude >= 0 ? 1 : HAND_NIGHT);
+    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+    g.addColorStop(0, CLEAR);
+    g.addColorStop(0.2, CLEAR);
+    g.addColorStop(1, this.palette.gilt);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = g;
+    ctx.lineWidth = Math.max(1, 0.5 * k);
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+    // A small diamond at the tip, hollow, turned along the hand.
+    const r = 2 * k;
+    ctx.globalAlpha = Math.min(1, alpha * 1.6);
+    ctx.strokeStyle = this.palette.gilt;
+    ctx.lineWidth = Math.max(1, 0.4 * k);
+    ctx.translate(x1, y1);
+    ctx.rotate(Math.atan2(dy, dx));
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(0, r * 0.75);
+    ctx.lineTo(-r, 0);
+    ctx.lineTo(0, -r * 0.75);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
   }
 
   /** At night the dantian's own light on the floor; by day the sun drowns it. */
@@ -272,5 +339,20 @@ export class SunCanvas {
     f.restore();
 
     this.ctx.drawImage(floor, 0, 0, w, h);
+
+    // On a painted floor the shadow also darkens the paint, so it reads with or without the patch.
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.transform(k, 0, -L * shadow.dirX * k, -L * shadow.dirY * 0.5 * k, 0, 0);
+    ctx.translate(0, -BASE_Y);
+    ctx.globalAlpha = SHADOW_ON_PAINT * strength * s.light;
+    ctx.fillStyle = '#000';
+    ctx.filter = `blur(${((1 + L * 1.2) * k * dpr) / 2.1}px)`;
+    ctx.fill(this.figure, 'evenodd');
+    ctx.beginPath();
+    ctx.arc(FIGURE_HEAD.x, FIGURE_HEAD.y, FIGURE_HEAD.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 }
