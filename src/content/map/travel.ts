@@ -101,9 +101,9 @@ const z = 'sleep';
 /** The four saved road routines (design § The world, Travel is a kind of hour). */
 export const ROAD_ROUTINES: readonly RoadRoutine[] = [
   {
-    id: 'walk',
-    name: 'Walk by day, cultivate by night',
-    short: 'Walk by day',
+    id: 'by-day',
+    name: 'Travel by day, cultivate by night',
+    short: 'By day',
     note: 'open, on the roads; you look around at dusk',
     //      子 丑 寅 卯 辰 巳 午 未 申 酉 戌 亥
     hours: [z, z, h, h, t, t, t, t, t, t, l, h],
@@ -140,7 +140,7 @@ export const GUARD_PAY_LOW = 1;
 
 // ---------------------------------------------------------------- ways of going
 
-export type WayId = 'foot' | 'horse' | 'mount' | 'boat' | 'fly' | 'ride' | 'ship' | 'wagon';
+export type WayId = 'light-step' | 'horse' | 'mount' | 'boat' | 'fly' | 'ride' | 'ship' | 'wagon';
 
 export interface Way {
   id: WayId;
@@ -163,7 +163,12 @@ export interface Way {
 }
 
 export const WAYS: readonly Way[] = [
-  { id: 'foot', name: 'On foot', pace: 40, note: 'your travel hours move you' },
+  {
+    id: 'light-step',
+    name: 'Light step',
+    pace: 40,
+    note: "a cultivator's run (轻功), past a horse's pace: your travel hours move you",
+  },
   {
     id: 'horse',
     name: 'Horse',

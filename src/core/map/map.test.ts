@@ -221,7 +221,7 @@ describe('routing', () => {
     expect(planRoute(map, s.map!.at, [230000, 214000]).ok).toBe(false);
   });
 
-  it('times a course by the road wheel: a pressed march is faster than walking by day', () => {
+  it('times a course by the road wheel: a pressed march is faster than travelling by day', () => {
     let s = life();
     const walk = goToPlace(s, 'qm-shoukou-cheng');
     expect(walk.ok).toBe(true);
@@ -342,7 +342,7 @@ describe('travel on the day loop', () => {
 
   it('forgets a road routine of your own and never reuses its id', () => {
     let s = setRoadHours(life(), [11], 'travel');
-    s = followRoadRoutine(s, 'walk');
+    s = followRoadRoutine(s, 'by-day');
     s = setRoadHours(s, [10], 'qi');
     expect(s.map!.ownRoutines.map((o) => o.id)).toEqual(['own-1', 'own-2']);
     s = forgetRoadRoutine(s, 'own-1');
@@ -350,7 +350,7 @@ describe('travel on the day loop', () => {
     s = setRoadHours(s, [9], 'qi');
     expect(s.map!.ownRoutines.map((o) => o.id)).toEqual(['own-2', 'own-3']);
     s = forgetRoadRoutine(s, 'own-3');
-    expect(s.map!.roadRoutine).toBe('walk'); // forgetting the one you follow goes back to walking
+    expect(s.map!.roadRoutine).toBe('by-day'); // forgetting the one you follow goes back to travelling by day
     s = renameRoadRoutine(s, 'own-2', '  Herb road  ');
     expect(s.map!.ownRoutines[0]!.name).toBe('Herb road');
     expect(renameRoadRoutine(s, 'own-2', '   ')).toBe(s);

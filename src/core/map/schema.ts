@@ -61,7 +61,7 @@ export const ROAD_HOUR_IDS = [...ROAD_HOUR_KINDS, ...HOUR_KIND_IDS] as const;
 const roadHour = z.enum(ROAD_HOUR_IDS);
 
 const WAY_IDS = [
-  'foot',
+  'light-step',
   'horse',
   'mount',
   'boat',

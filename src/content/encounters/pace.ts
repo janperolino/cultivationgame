@@ -6,12 +6,12 @@ import type { EncounterKind } from './schema.ts';
 
 /**
  * The road's notice: each double-hour on the move adds this much, and an encounter comes when it
- * fills. On a road one every four travel days of the walking routine (six hours a day), off the
+ * fills. On a road one every four travel days of the by-day routine (six hours a day), off the
  * roads one every five.
  */
 export const NOTICE_ROAD = 1 / 24;
 export const NOTICE_OFF = 1 / 30;
-/** Camping in the open: each hour at rest on a course (six a day walking), one every eight nights. */
+/** Camping in the open: each hour at rest on a course (six a day travelling by day), one every eight nights. */
 export const NOTICE_CAMP = 1 / 48;
 /** Travel by night (戌 to 寅) counts this much more. */
 export const NIGHT_HOURS: readonly number[] = [10, 11, 0, 1, 2];

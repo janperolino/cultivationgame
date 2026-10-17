@@ -386,7 +386,7 @@ export function joinCaravan(
       leading: false,
       departs: c.departs,
     },
-    as === 'ride' ? 'wagon' : 'foot',
+    as === 'ride' ? 'wagon' : 'light-step',
   );
 }
 

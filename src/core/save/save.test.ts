@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { eventText } from '../chronicle.ts';
 import { chronicleEvent, newLife, noteBreakthrough, type GameState } from '../state.ts';
+import { ensureMap } from '../map/travel.ts';
 import { decodeSaveFile, encodeSaveFile } from './file.ts';
 import { loadSave, makeSave, SAVE_VERSION, SaveError } from './format.ts';
 import { SaveSlots } from './slots.ts';
@@ -191,6 +192,16 @@ describe('save format', () => {
     const s = loadSave(raw).state;
     expect(s.unlocks).toEqual(['cultivate', 'routine', 'techniques', 'map']);
     expect(s.seen.screen).toEqual({ cultivate: 'seen', routine: 'noticed', map: 'seen' });
+  });
+
+  it('renames walking on foot to Light step and Travel by day', () => {
+    const raw = JSON.parse(JSON.stringify(makeSave(ensureMap(played()), 1)));
+    raw.version = 27;
+    raw.state.map.roadRoutine = 'walk';
+    raw.state.map.way = 'foot';
+    const s = loadSave(raw).state;
+    expect(s.map!.roadRoutine).toBe('by-day');
+    expect(s.map!.way).toBe('light-step');
   });
 
   it('rejects saves from a newer game and damaged saves', () => {

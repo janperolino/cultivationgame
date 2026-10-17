@@ -3,7 +3,8 @@
 // enter at the crown and the palms, run the active method's circulation and settle in the dantian,
 // which breathes with the figure. Without a method the qi drifts close and slides off; unsettled,
 // the loop jitters and sparks leak; at a full bar it runs fast and the dantian overflows. Orbs float
-// where the seat (core/attention.ts) says they are, and a caught one flies in as a bright spark.
+// where the seat (core/attention.ts) says they are, and a caught one flies to the dantian first
+// (Jan's note after A4) and joins the loop there as a bright spark.
 // Under reduced motion the orbs pulse in place and the loop glows steadily. The loop stops while
 // the tab is hidden, and particles are capped. During a breakthrough scene (ui/scene.ts) the
 // circulation slows through the wind-up while the gates light round the first loop one by one,
@@ -765,7 +766,7 @@ export class QiCanvas {
 
   private moveFlyers(dt: number, f: FigureFrame): void {
     this.flyers = this.flyers.filter((o) => {
-      const [tx, ty] = nearestEntry(o.x, o.y);
+      const [tx, ty] = DANTIAN;
       const dx = tx - o.x;
       const dy = ty - o.y;
       const d = Math.hypot(dx, dy) || 1;

@@ -83,9 +83,9 @@ export function ensureMap(s: GameState): GameState {
     been: [home.id],
     pins: [],
     course: null,
-    roadRoutine: 'walk',
+    roadRoutine: 'by-day',
     ownRoutines: [],
-    way: 'foot',
+    way: 'light-step',
     group: null,
     lookedAt: -1,
     flown: { day: -1, hours: 0 },
@@ -185,7 +185,7 @@ export function followRoadRoutine(s: GameState, id: string): GameState {
   return replan(withLife(s, { ...s.map, roadRoutine: id }));
 }
 
-/** Forgets a road routine of your own; following it, you go back to walking by day. */
+/** Forgets a road routine of your own; following it, you go back to travelling by day. */
 export function forgetRoadRoutine(s: GameState, id: string): GameState {
   if (!s.map || !s.map.ownRoutines.some((o) => o.id === id)) return s;
   const ownRoutines = s.map.ownRoutines.filter((o) => o.id !== id);
@@ -399,7 +399,7 @@ export function leaveGroup(s: GameState): CourseCheck {
       ...s.map!,
       group: null,
       course: null,
-      way: s.map!.way === 'ship' ? 'foot' : s.map!.way,
+      way: s.map!.way === 'ship' ? 'light-step' : s.map!.way,
     }),
   };
 }
@@ -580,7 +580,7 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
           ...life,
           course: null,
           group: null,
-          way: life.way === 'ship' ? 'foot' : life.way,
+          way: life.way === 'ship' ? 'light-step' : life.way,
           encounters: life.encounters.filter((e) => e.state === 'waiting'),
         };
       }

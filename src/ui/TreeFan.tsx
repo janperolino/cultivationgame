@@ -6,7 +6,7 @@
 // a ring of its nodes. Drag and pinch to move, wheel and pinch to zoom; the screen opens on the
 // band you cultivate in, and a ladder of the realms jumps to any band. A hostless manual's own
 // tree draws as a small fan in the same look (OwnFan). A node's card hangs beside it on hover,
-// and a click pins it open with Learn (NodeTip.tsx).
+// and a click pins it open with Learn (NodeTip.tsx); a double click learns it at once.
 import {
   memo,
   useCallback,
@@ -171,6 +171,8 @@ function NodeShape({
   const selected = tips.pinned === n.id;
   // Buyable now: a first node's beacon rings these (ui/beacons.ts, theme.css).
   const buyable = state === 'available' && canLearn(c, n.id).ok;
+  const learnNode = useGame((s) => s.learnNode);
+  const ended = useGame((s) => !!s.game?.ended);
   const hover: Hover = { kind: 'node', id: n.id, at: tipAt ?? at, size };
   return (
     <button
@@ -180,6 +182,8 @@ function NodeShape({
       aria-pressed={selected}
       aria-label={`${n.name}, ${n.kind}, ${state}${sealed ? ', sealed' : ''}${state === 'available' ? `, ${n.cost} insight` : ''}`}
       onClick={() => tips.pin(hover)}
+      // A double click learns a node you can buy now, the card's Learn without the trip (Jan's note).
+      onDoubleClick={() => buyable && !ended && learnNode(n.id)}
       onPointerEnter={(e) => e.pointerType === 'mouse' && tips.enter(hover)}
       onPointerLeave={tips.leave}
       onFocus={() => {

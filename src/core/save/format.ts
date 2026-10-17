@@ -32,7 +32,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 27;
+export const SAVE_VERSION = 28;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -843,6 +843,20 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       version: 27,
       state: { ...s, unlocks, seen: seen.screen ? { ...seen, screen: screens } : seen },
     };
+  },
+  // v27, A4: cultivators walked on foot. v28 calls the way Light step and the first road routine
+  // Travel by day (Jan's note after A4), since a cultivator outruns a horse.
+  27: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const m = s.map as Raw | null | undefined;
+    const map = m
+      ? {
+          ...m,
+          roadRoutine: m.roadRoutine === 'walk' ? 'by-day' : m.roadRoutine,
+          way: m.way === 'foot' ? 'light-step' : m.way,
+        }
+      : null;
+    return { ...old, version: 28, state: { ...s, map } };
   },
 };
 

@@ -679,7 +679,7 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
         : cur === 'sleep'
           ? `asleep ${sleepPlace(game)}`
           : cur === 'travel'
-            ? 'walking'
+            ? 'on the road'
             : ROAD_WORD[cur as RoadHour];
   const pace = paceOf(game);
   const perDay = liPerDay(game);

@@ -290,7 +290,8 @@ export function TreesScreen() {
       <p className="caption spaced">
         {tree.dao &&
           `Holding a tier, half its nodes owned, multiplies Accuracy and Attack on its actions by ×1.05. `}
-        {tree.what} Drag to move, wheel or pinch to zoom, and tap a node for its details.
+        {tree.what} Drag to move, wheel or pinch to zoom, tap a node for its details, and
+        double-click one you can buy to learn it.
         {grafts.length > 0 &&
           ' The manuals you hold are jewels in each band’s crown, joined to none of its nodes; tap one to open it.'}
       </p>
