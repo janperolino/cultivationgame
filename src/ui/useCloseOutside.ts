@@ -4,13 +4,18 @@ import { useEffect, useRef } from 'react';
 
 export function useCloseOutside<T extends HTMLElement>(open: boolean, close: () => void) {
   const ref = useRef<T>(null);
+  // The latest `close`, so an inline arrow from the caller doesn't resubscribe every render.
+  const closeRef = useRef(close);
+  useEffect(() => {
+    closeRef.current = close;
+  });
   useEffect(() => {
     if (!open) return;
     const off = (e: Event) => {
       if (
         e instanceof KeyboardEvent ? e.key === 'Escape' : !ref.current?.contains(e.target as Node)
       )
-        close();
+        closeRef.current();
     };
     window.addEventListener('pointerdown', off);
     window.addEventListener('keydown', off);
@@ -18,6 +23,6 @@ export function useCloseOutside<T extends HTMLElement>(open: boolean, close: () 
       window.removeEventListener('pointerdown', off);
       window.removeEventListener('keydown', off);
     };
-  }, [open, close]);
+  }, [open]);
   return ref;
 }

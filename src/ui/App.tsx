@@ -18,6 +18,7 @@ import { TreesScreen } from './TreesScreen.tsx';
 import { readyLadders, useScene } from './scene.ts';
 import { useNav } from './nav.ts';
 import { markMoving } from './moving.ts';
+import { reducedMotion, useSettings } from './settings.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
 import { screenDot, screenIsNew } from '../core/seen.ts';
@@ -95,10 +96,8 @@ export function App() {
   // once, and so is this one under reduced motion. The rail answers at once either way.
   const [shown, setShown] = useState<ScreenId>('cultivate');
   const [entering, setEntering] = useState(false);
-  const glide =
-    SCENE_PAIR.has(screen) &&
-    SCENE_PAIR.has(shown) &&
-    document.documentElement.dataset.motion !== 'reduced';
+  const reduced = useSettings((s) => reducedMotion(s));
+  const glide = SCENE_PAIR.has(screen) && SCENE_PAIR.has(shown) && !reduced;
   if (screen !== shown && !glide) setShown(screen);
   useEffect(() => {
     if (screen === shown) return;

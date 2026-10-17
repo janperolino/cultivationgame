@@ -13,9 +13,9 @@ import {
   type ZoomRange,
 } from './panzoom.ts';
 import { markMoving } from './moving.ts';
-import { pointIn } from './stage.ts';
+import { pointIn, stageFactor } from './stage.ts';
 
-/** Pixels a pointer may move and still count as a tap. */
+/** Window pixels a pointer may move and still count as a tap, whatever the stage's zoom. */
 const TAP = 6;
 const WHEEL_STEP = 0.0015;
 export const BUTTON_STEP = 1.25;
@@ -135,7 +135,7 @@ export function usePanZoom(
       }
       const p = g.pointers.get(e.pointerId)!;
       const s = g.start.get(e.pointerId)!;
-      if (!g.moved && Math.hypot(p.x - s.x, p.y - s.y) < TAP) return;
+      if (!g.moved && Math.hypot(p.x - s.x, p.y - s.y) * stageFactor() < TAP) return;
       if (!g.moved) {
         g.moved = true;
         try {

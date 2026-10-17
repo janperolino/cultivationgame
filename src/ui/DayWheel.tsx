@@ -162,6 +162,11 @@ function Ring({
     };
   }, []);
 
+  // A pick let go of from outside (a tap off the wheel, Escape) starts the next shift-run afresh.
+  useEffect(() => {
+    if (pick.length === 0) anchor.current = null;
+  }, [pick]);
+
   const press = (i: number, shift: boolean) => {
     const r = pressHour(pick, anchor.current, i, { shift });
     anchor.current = r.anchor;
@@ -266,14 +271,7 @@ function Ring({
           </g>
         );
       })}
-      <circle
-        className="wheel-centre"
-        r={R_INNER - 6}
-        onPointerDown={() => {
-          anchor.current = null;
-          onPick([]);
-        }}
-      />
+      <circle className="wheel-centre" r={R_INNER - 6} />
       <text className="wheel-center-title" x={0} y={-8}>
         {title}
       </text>

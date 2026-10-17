@@ -7,7 +7,7 @@
 // race: a tap or click on the figure as the spark passes each gate, and the meter tells the scene
 // instead. Behind it all, over the whole seat panel, the sun of the hour (ui/sunCanvas.ts): the
 // figure is a sundial, and the caption under it names the hour in words.
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { HEAT_UNSETTLED_S, POINTER_REACH } from '../content/attention.ts';
 import { circulation, RARITY_SPARKS } from '../content/circulation.ts';
 import { MAX_ODDS, SCENE_ODDS_CAP, SCENE_ODDS_STEP } from '../content/cultivation.ts';
@@ -35,6 +35,7 @@ import {
   FIGURE_BOX,
   FIGURE_HEAD,
   FIGURE_PATH,
+  QI_PAD,
   QiCanvas,
   type FigureFrame,
   type FigureState,
@@ -212,7 +213,12 @@ export function SeatedFigure({ game }: { game: GameState }) {
           <circle className="seated-head" cx={FIGURE_HEAD.x} cy={FIGURE_HEAD.y} r={FIGURE_HEAD.r} />
           <path className="seated-body" d={FIGURE_PATH} fillRule="evenodd" />
         </svg>
-        <canvas ref={canvasRef} className="seat-canvas" aria-hidden="true" />
+        <canvas
+          ref={canvasRef}
+          className="seat-canvas"
+          style={{ '--qi-pad': QI_PAD } as CSSProperties}
+          aria-hidden="true"
+        />
       </div>
     </>
   );

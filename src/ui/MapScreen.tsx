@@ -405,7 +405,8 @@ function MapView({
     if (d) {
       const dx = (e.clientX - d.x) / stageFactor();
       const dy = (e.clientY - d.y) / stageFactor();
-      if (Math.hypot(dx, dy) > 4) d.moved = true;
+      // A tap's slack is in window pixels, so it feels the same at every window size.
+      if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4) d.moved = true;
       if (d.moved) setView((v) => ({ ...v, x: d.vx - dx / v.k, y: d.vy - dy / v.k }));
       return;
     }

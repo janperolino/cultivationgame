@@ -74,15 +74,23 @@ function DayTab({ game, head }: { game: GameState; head: ReactNode }) {
     setPick([]);
     setError(null);
   };
-  // A press anywhere but on an hour or the editor lets go of the pick (A4, Jan's call: no link).
+  // A press anywhere but on an hour or the editor lets go of the pick (A4, Jan's call: no link),
+  // and so does Escape, wherever the focus is.
   const picking = pick.length > 0;
   useEffect(() => {
     if (!picking) return;
     const off = (e: PointerEvent) => {
       if (!(e.target as Element | null)?.closest('.wheel-hour, .routine-page')) setPick([]);
     };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPick([]);
+    };
     window.addEventListener('pointerdown', off);
-    return () => window.removeEventListener('pointerdown', off);
+    window.addEventListener('keydown', esc);
+    return () => {
+      window.removeEventListener('pointerdown', off);
+      window.removeEventListener('keydown', esc);
+    };
   }, [picking]);
   const bs = useBeacons();
   const burnRing = rings(bs, 'burn-stones');

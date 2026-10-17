@@ -35,10 +35,10 @@ import { canvasDensity } from './stage.ts';
 export const FIGURE_BOX = { x: -96, y: -92, w: 192, h: 156 } as const;
 
 /**
- * The qi canvas reaches this share of the figure's box past it on every side (theme.css's
- * `.seat-canvas` insets match), so orbs and motes come in from well out round the figure.
+ * The qi canvas reaches this share of the figure's box past it on every side, handed to theme.css's
+ * `.seat-canvas` as `--qi-pad` (SeatedFigure.tsx), so orbs and motes come in from well out round it.
  */
-const QI_PAD = 0.35;
+export const QI_PAD = 0.35;
 const QI_BOX = {
   x: FIGURE_BOX.x - FIGURE_BOX.w * QI_PAD,
   y: FIGURE_BOX.y - FIGURE_BOX.h * QI_PAD,
