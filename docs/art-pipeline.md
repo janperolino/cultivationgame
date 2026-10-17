@@ -132,7 +132,7 @@ followed by a line naming everything on the screen that stays code.
 
 > Create a sprite sheet AS AN ASSET: [N] separate game UI ornaments on a TRANSPARENT background (if transparency is not possible, a flat pure #00FF00 background with no shading or shadow), on an even [cols]x[rows] grid of [256] px cells, each piece centered in its cell with a 10% margin, none touching. [STYLE BLOCK] Pieces, left to right, top to bottom: 1. [a gold diamond waypoint, known], 2. [...]. The same light direction and the same gold on every piece. No text, no labels, no grid lines.
 
-**When GPT drifts**, ask in the same chat: "Same image, but remove all text", "Same, but make each edge plain and even between the corners", "Same, but empty the center", "Same, but take the person out".
+**When GPT drifts**, ask in the same chat: "Same image, but remove all text", "Same, but make each edge plain and even between the corners", "Same, but empty the center", "Same, but take the person out". Two things it does that ingest has to meet (A2): a frame comes with a transparent margin round the panel, so trim it before measuring the slice; and an ornament sheet rarely keeps its grid, a long piece running into its neighbour's cell, so re-lay the pieces by the gaps between them onto an even grid before `npm run art` cuts it.
 
 ## Worked example: Cultivate
 
@@ -151,10 +151,10 @@ Stays code: the name, pronouns, realm, bars and numbers, recent events, the seat
 
 ## Settled with Jan (2026-10-16)
 
-1. **The bright card.** The card that waits on you is ivory silk with ink wash in a gilt frame, the brightest thing on the screen, as the prototype's parchment was, since it reads at once as "this waits on you".
+1. **The card that waits on you.** First settled as ivory silk with ink wash in a gilt frame; in A2's study Jan chose it dark like the panels, edged in hairlines, its first choice in the accent (`docs/mockups/shell-study.html`).
 2. **The glass.** The cracks stay code, since they flare on a breakthrough and are seeded per life, and the void sky surface lies under them in place of today's flat black.
-3. **The walking rim light.** design.md § Look's slow light walking round each panel's rim, a looping animation, goes with the gilt frames; a panel that waits on you keeps a still accent rim.
-4. **Where the rule lives.** When the first screen lands, a design pass rewrites § Look as the gilded void with carved panels; until then this file is the pipeline, and § Look stands.
+3. **The walking rim light** goes; a panel that waits on you keeps a still accent glow. A2 also dropped the 9-slice slab frames for single CSS hairlines (Jan: thin and sleek over carved), so frames as art are for a screen that wants one.
+4. **Where the rule lives.** design.md § Look, rewritten in A2.
 
 ## The overhaul
 

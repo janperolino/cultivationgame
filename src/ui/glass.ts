@@ -185,7 +185,10 @@ export function toHex(ctx: CanvasRenderingContext2D, color: string): string {
   return /^#[0-9a-f]{6}$/i.test(v) ? v : '#7fc7d9';
 }
 
-/** Paints the glass: the void, a faint sheen, then every crack with its light. */
+/**
+ * Paints the glass: the background (transparent over the void sky since A2), a faint sheen, then
+ * every crack with its light.
+ */
 export function drawGlass(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -195,6 +198,7 @@ export function drawGlass(
   o: Pick<GlassOptions, 'glow' | 'color'>,
 ) {
   ctx.globalCompositeOperation = 'source-over';
+  ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, w, h);
   const sheen = ctx.createLinearGradient(0, 0, w, h);

@@ -42,7 +42,8 @@ export function GlassBackground() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const css = getComputedStyle(document.documentElement);
       const color = toHex(ctx, crack || css.getPropertyValue('--crack').trim());
-      const background = css.getPropertyValue('--void').trim() || '#040507';
+      // The void sky (A2) is the body's background, under the canvas; the glass adds only light.
+      const background = 'rgba(0, 0, 0, 0)';
       drawGlass(ctx, w, h, background, buildCracks(w, h, { seed, web, fractures }), {
         glow,
         color,

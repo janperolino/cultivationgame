@@ -1,4 +1,5 @@
-/* Black cracked glass, from design.md § UI and screens (Look) and docs/mockups/glass-study.html.
+/* The gilded void (design.md § UI and screens, Look; art/concepts/shell-1.webp): cracked glass over
+   a starry sky, carved obsidian slabs in gilt, and the bright ivory card for what waits on you.
    Every color is a variable: P1.9 lets players change the accent and the crack light. The accent
    marks anything you can act on or have just gained; the crack light is qi. */
 :root {
@@ -69,8 +70,16 @@
   --font-brush: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', serif;
   --font-ui: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --menu-width: 210px;
-  --context-width: 280px;
+  /* The shell (A2): the rail's width, the panels' obsidian and their gilt hairlines. */
+  --rail-width: 72px;
+  --panel: rgb(7 8 11 / 0.84);
+  --panel-solid: #08090c;
+  --line: color-mix(in srgb, var(--gilt) 40%, transparent);
+  --line-faint: color-mix(in srgb, var(--gilt) 16%, transparent);
+  --row: rgb(255 255 255 / 0.04);
+  /* The void sky under the cracks (art/manifest.json). */
+  --sky-image: url('./art/common/sky.webp');
+
   --radius: 9px;
   --radius-small: 6px;
 
@@ -95,8 +104,11 @@ body,
   margin: 0;
 }
 
+/* The void sky (A2) under the cracked glass, its tile at half its pixels so the stars stay fine. */
 body {
-  background: var(--void);
+  background:
+    var(--sky-image, none) 0 0 / 512px repeat,
+    var(--void);
   color: var(--text);
   font-family: var(--font-ui);
   font-size: calc(14px * var(--text-scale));
@@ -138,12 +150,8 @@ select {
 
 /* Smooth, darker glass with a thin bright edge, so text never sits on a crack. Panels are
    obsidian instead (below). */
-.glass,
-.side-menu,
-.context-panel {
-  background: var(--glass);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+.glass {
+  background: var(--glass-strong);
   box-shadow: inset 0 1px 0 var(--sheen);
 }
 
@@ -169,12 +177,12 @@ select {
   contain: layout;
 }
 
-/* Menu | main | context panel; the main column takes whatever width the stage has past 1728. */
+/* The rail | the screen (A2): the screen takes every pixel the stage has right of the rail. */
 .shell {
   position: relative;
   display: grid;
-  grid-template-columns: var(--menu-width) minmax(0, 1fr) var(--context-width);
-  grid-template-areas: 'menu main context';
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  grid-template-areas: 'rail main';
   height: 100%;
 }
 
@@ -183,7 +191,8 @@ select {
    --frame-slice is the corner in the shipped file's pixels (the manifest's `slice`) and
    --frame-width the corner on the stage, half of it, since art ships at twice the size it shows.
    A frame's class names its image; one with no image yet draws an empty border. Padding inside
-   keeps text clear of the gilt. */
+   keeps text clear of the gilt. A2's panels are hairlines in CSS and use no frame; a screen's own
+   A phase can give one. */
 .frame {
   --frame-image: none;
   --frame-slice: 64;
@@ -197,268 +206,289 @@ select {
   border-image-repeat: stretch;
 }
 
-/* The obsidian slab every panel sits on, and the bright card for what waits on you (A2 draws them). */
-.frame-slab {
-  --frame-slice: 64;
-  --frame-width: 32px;
-}
-
-.frame-card {
-  --frame-slice: 64;
-  --frame-width: 32px;
-}
-
-.side-menu {
-  grid-area: menu;
+/* The rail (A2; docs/mockups/shell-study.html): flush on the stage's left edge, the abode's mark
+   at its head, a glyph a screen; the one you are on lit in the accent with a bar, its name and
+   hanzi as a tip beside it on hover or focus. */
+.side-rail {
+  grid-area: rail;
+  position: relative;
+  z-index: 3;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--edge);
-  padding: 20px 12px;
-  overflow-y: auto;
+  min-height: 0;
+  background: rgb(5 6 8 / 0.96);
+  border-right: 1px solid var(--line-faint);
 }
 
-/* Fullscreen sits at the foot of the menu. */
-.menu-foot {
-  margin-top: auto;
-}
-
-.brand {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 0 8px 18px;
-}
-
-.brand {
-  white-space: nowrap;
-}
-
-.brand-name {
-  font-family: var(--font-display);
-  font-size: calc(20px * var(--text-scale));
-  font-weight: 600;
-}
-
-.brand-hanzi {
+.rail-mark {
+  display: grid;
+  place-items: center;
+  height: 76px;
+  flex: none;
   color: var(--accent);
-  font-size: calc(18px * var(--text-scale));
 }
 
-.side-menu ul {
+.rail-mark-icon {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+}
+
+.side-rail ul {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 10px 0 0;
   display: grid;
-  gap: 2px;
 }
 
-.menu-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.rail-item {
+  position: relative;
+  display: grid;
+  place-items: center;
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-small);
+  height: 54px;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
   background: none;
   color: var(--muted);
-  text-align: left;
   cursor: pointer;
 }
 
-.menu-item:hover {
+.rail-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rail-item:hover,
+.rail-item:focus-visible {
   color: var(--text);
 }
 
-.menu-item.is-active {
-  color: var(--text);
-  border-color: var(--edge);
-  background: rgb(255 255 255 / 0.03);
-  box-shadow: inset 2px 0 0 var(--accent);
-  border-radius: 0 var(--radius-small) var(--radius-small) 0;
-}
-
-.menu-hanzi {
-  font-size: calc(15px * var(--text-scale));
-  opacity: 0.7;
-}
-
-.menu-item.is-active .menu-hanzi {
+.rail-item.is-active {
   color: var(--accent);
+  border-color: var(--line);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 16%, transparent),
+    color-mix(in srgb, var(--accent) 3%, transparent)
+  );
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* The dots sit at the glyph's corner. */
+.rail-item .menu-mark {
+  position: absolute;
+  top: 13px;
+  right: 15px;
+  margin: 0;
+}
+
+.rail-tip {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  z-index: 5;
+  padding: 5px 11px;
+  border: 1px solid var(--line-faint);
+  background: var(--panel-solid);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: calc(16px * var(--text-scale));
+  white-space: nowrap;
+  transform: translateY(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms;
+}
+
+.rail-tip .hanzi {
+  margin-left: 4px;
+  color: var(--accent);
+  font-size: 0.85em;
+}
+
+.rail-item:hover .rail-tip,
+.rail-item:focus-visible .rail-tip {
   opacity: 1;
 }
 
-.main {
+/* The main column: the top floating over it, and the screen under it, which scrolls. */
+.main-column {
   grid-area: main;
-  padding: 24px 26px 40px;
-  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
-.screen-title {
+.main {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: 6px 40px 40px 44px;
+  overflow-y: auto;
+}
+
+/* The top (A2): no bar. The brand on the left and the season, the hour, the stones and the insight
+   on the right, floating over whatever the screen shows. */
+.shell-top {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 76px;
+  padding: 0 40px 0 44px;
+}
+
+.brand {
+  margin: 0;
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: calc(32px * var(--text-scale));
-  margin: 0 0 16px;
+  font-size: calc(24px * var(--text-scale));
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.brand-hanzi {
+  margin-left: 4px;
+  color: var(--accent);
+  font-size: 0.88em;
+}
+
+.top-res {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  white-space: nowrap;
+}
+
+.top-when {
+  margin: 0;
+  display: grid;
+  font-family: var(--font-display);
+}
+
+.top-when b {
+  font-size: calc(18px * var(--text-scale));
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.top-when small {
+  color: var(--muted);
+  font-size: calc(12.5px * var(--text-scale));
+}
+
+.top-sep {
+  width: 1px;
+  height: 30px;
+  background: var(--line-faint);
+}
+
+.top-stats {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.top-stats > div {
+  display: grid;
+  justify-items: center;
+}
+
+.top-stats dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: calc(20px * var(--text-scale));
+  font-weight: 500;
+}
+
+.top-glyph {
+  width: 14px;
+  height: 14px;
+  fill: var(--gilt);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A screen's name, at the head of every screen but Cultivate, which carries its own. */
+.screen-title {
+  margin: 0 0 18px;
+  font-family: var(--font-display);
+  font-size: calc(34px * var(--text-scale));
+  font-weight: 500;
+  line-height: 1.1;
 }
 
 .screen-title .hanzi {
-  font-size: calc(23px * var(--text-scale));
-  color: var(--accent);
   margin-left: 6px;
+  color: var(--accent);
+  font-size: 0.74em;
 }
 
-/* Obsidian panels with a living edge (design § UI and screens, Look; docs/mockups/obsidian-study.html,
-   direction B): a deep black with a slow lacquer sheen, a 1px rim that catches the crack light,
-   a light that walks round the rim, and a still bloom behind the edge. The walking light quickens
-   on a panel that waits for you (`is-waiting`). Under reduced motion the rim stands still,
-   brightest at the top corners (direction A). The panel makes no stacking context, so the bloom
-   can sit behind it. */
-@property --edge-angle {
-  syntax: '<angle>';
-  inherits: true;
-  initial-value: 0deg;
-}
-
-@property --sheen-at {
-  syntax: '<percentage>';
-  inherits: true;
-  initial-value: -40%;
-}
-
+/* Panels (A2): obsidian with a single gilt hairline, thin and still. Nothing loops. A panel that
+   waits on you or that you can act on carries a still glow in its --rim color, the accent by
+   default, which Settings' Panel rims brightens or dims. A panel inside a panel is lighter still. */
 .panel {
-  --rim: var(--crack);
-  --rim-strength: min(1, calc(0.6 * var(--rim-gain)));
-  --rim-speed: 16s;
-  --rim-still:
-    radial-gradient(60% 40% at 0% 0%, color-mix(in srgb, white 60%, var(--rim)), transparent 70%),
-    radial-gradient(60% 40% at 100% 0%, color-mix(in srgb, white 45%, var(--rim)), transparent 70%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 100%), transparent),
-      rgb(255 255 255 / 0.05) 45%,
-      rgb(255 255 255 / 0.03)
-    );
-  --rim-living:
-    conic-gradient(
-      from var(--edge-angle),
-      transparent 0 62%,
-      color-mix(in srgb, var(--rim) 70%, transparent) 76%,
-      white 80%,
-      color-mix(in srgb, var(--rim) 70%, transparent) 84%,
-      transparent 96%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 45%), rgb(255 255 255 / 0.1)),
-      rgb(255 255 255 / 0.04)
-    );
-  --rim-paint: var(--rim-living);
+  --rim: transparent;
+  --rim-strength: min(1, calc(0.55 * var(--rim-gain)));
   position: relative;
-  border-radius: var(--radius);
-  padding: 16px 18px;
-  background:
-    linear-gradient(
-      115deg,
-      transparent calc(var(--sheen-at) - 18%),
-      rgb(255 255 255 / 0.028) var(--sheen-at),
-      transparent calc(var(--sheen-at) + 18%)
-    ),
-    radial-gradient(120% 70% at 50% -10%, rgb(255 255 255 / 0.05), transparent 60%), var(--obsidian);
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.035),
-    0 18px 40px -18px rgb(0 0 0 / 0.9),
-    inset 0 1px 14px -8px
-      color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 60%), transparent),
-    0 0 42px -14px color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 50%), transparent);
-  animation:
-    panel-sheen 14s ease-in-out infinite,
-    panel-edge var(--rim-speed) linear infinite;
+  padding: 20px 22px;
+  border: 1px solid var(--line-faint);
+  border-radius: 4px;
+  background: var(--panel);
+  box-shadow: 0 24px 50px -28px rgb(0 0 0 / 0.95);
 }
 
-/* The rim: a gradient border drawn through a mask, so the panel's inside stays dark. */
-.panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: var(--rim-paint);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* The bloom: the still rim's light behind the panel, brightest at the top corners and along the
-   top, fading down. Drawn as shadows, not a blurred copy of the rim: a live blur filter the size of
-   a tall panel had to be recomputed as the page scrolled, and made long screens judder. */
-.panel::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
+.panel.is-waiting,
+.card-away,
+.notice,
+.modal,
+.card-edge,
+.bt-panel {
+  border-color: color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 70%), var(--line-faint));
   box-shadow:
-    -5px -5px 14px -6px color-mix(in srgb, white 60%, var(--rim)),
-    5px -5px 14px -6px color-mix(in srgb, white 45%, var(--rim)),
-    0 -4px 12px -4px color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 100%), transparent),
-    0 0 10px -2px rgb(255 255 255 / 0.05);
-  opacity: calc(var(--rim-strength) * 0.8);
-  pointer-events: none;
+    0 24px 50px -28px rgb(0 0 0 / 0.95),
+    0 0 24px -8px color-mix(in srgb, var(--rim) calc(var(--rim-strength) * 55%), transparent);
 }
 
 .panel.is-waiting {
-  --rim-speed: 5s;
-  --rim-strength: min(1, calc(0.95 * var(--rim-gain)));
+  --rim: var(--accent);
 }
 
-/* Neighbouring panels walk out of step. */
-.panel:nth-of-type(2n) {
-  animation-delay:
-    -5s,
-    -7s;
+.panel .panel {
+  padding: 14px 16px;
+  border-color: var(--line-faint);
+  border-radius: 3px;
+  background: var(--row);
+  box-shadow: none;
 }
 
-.panel:nth-of-type(3n) {
-  animation-delay:
-    -9s,
-    -12s;
-}
-
-@keyframes panel-sheen {
-  0%,
-  100% {
-    --sheen-at: -40%;
-  }
-
-  50% {
-    --sheen-at: 140%;
-  }
-}
-
-@keyframes panel-edge {
-  to {
-    --edge-angle: 360deg;
-  }
-}
-
-/* While the page scrolls or a canvas pans (ui/moving.ts), every looping animation holds still:
-   a panel's sheen and rim repaint the whole panel each frame, which a scroll would wait on. */
+/* While the page scrolls or a canvas pans (ui/moving.ts), every looping animation holds still,
+   since a scroll would wait on anything repainting each frame. */
 :root.is-moving *,
 :root.is-moving *::before,
 :root.is-moving *::after {
   animation-play-state: paused !important;
-}
-
-:root[data-motion='reduced'] .panel {
-  --rim-paint: var(--rim-still);
-  animation: none;
 }
 
 .panel p {
@@ -467,13 +497,6 @@ select {
 
 .panel + .panel {
   margin-top: 14px;
-}
-
-.context-panel {
-  grid-area: context;
-  border-left: 1px solid var(--edge);
-  padding: 20px 18px;
-  overflow-y: auto;
 }
 
 .panel-heading {
@@ -662,11 +685,232 @@ select {
 /* Cultivate's seated cultivator, the dantian glowing with qi as the bar fills. */
 /* The seat has a panel of its own, the figure large and centred with its meter under it; the
    cultivator's realm, bars and numbers sit in the panel after it. */
+/* Cultivate as a scene (A2; docs/mockups/shell-study.html): the screen is one dark place, the seat
+   filling it with the figure in its middle; over it the cultivator low on the left, what waits on
+   you down the right, and the last lines of the chronicle at its foot. A3 paints the place. */
+.shell.is-cultivate .main-column {
+  background: #000;
+}
+
+.shell.is-cultivate .main {
+  padding: 0;
+  overflow: hidden;
+}
+
+.cultivate {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  column-gap: 48px;
+  height: 100%;
+  padding: 0 40px 30px 44px;
+}
+
+/* The seat fills the screen, under the top too, the figure centred in the space left of the
+   cards and above the cultivator. */
 .cultivate-seat {
+  position: absolute;
+  inset: -76px 0 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  padding: 40px 528px 330px 44px;
+}
+
+.cultivate-seat > :not(.seat-sun, .seat-flash) {
+  position: relative;
+}
+
+.cultivate-who,
+.cultivate-side {
+  position: relative;
+  z-index: 1;
+}
+
+.cultivate-who {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: end;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.85);
+}
+
+.cultivate-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: calc(46px * var(--text-scale));
+  font-weight: 500;
+  line-height: 1;
+}
+
+.cultivate-title .hanzi {
+  margin-left: 6px;
+  color: var(--accent);
+  font-size: 0.7em;
+}
+
+.cultivate-name {
+  margin: 12px 0 0;
+  font-family: var(--font-display);
+  font-size: calc(21px * var(--text-scale));
+  font-weight: 500;
+}
+
+.cultivate-name small {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 0.62em;
+}
+
+.cultivate-realm {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: calc(15px * var(--text-scale));
+  color: color-mix(in srgb, var(--text) 82%, transparent);
+}
+
+/* The bars in a row between hairlines: a cell each, its name and value over a thin bar. */
+.cultivate-bars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0;
+  margin-top: 16px;
+  border-top: 1px solid var(--line-faint);
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.cultivate-bars .bar-row {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'label value'
+    'bar bar';
+  gap: 6px 10px;
+  padding: 10px 16px 12px;
+  border-left: 1px solid var(--line-faint);
+  font-family: var(--font-display);
+}
+
+.cultivate-bars .bar-row:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.cultivate-bars .label {
+  grid-area: label;
+  color: var(--text);
+  font-size: calc(15px * var(--text-scale));
+}
+
+.cultivate-bars .value {
+  grid-area: value;
+  font-size: calc(14px * var(--text-scale));
+  white-space: nowrap;
+}
+
+.cultivate-bars .bar {
+  grid-area: bar;
+  height: 3px;
+  border: 0;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.08);
+}
+
+.cultivate-routine {
+  margin-top: 14px;
+}
+
+.cultivate-routine-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.cultivate-routine-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: calc(18px * var(--text-scale));
+  font-weight: 500;
+}
+
+.cultivate-routine-head small {
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: calc(13px * var(--text-scale));
+}
+
+.cultivate-routine-head .caption {
+  margin-left: auto;
+}
+
+.cultivate-routine-head .link-button {
+  font-family: var(--font-display);
+  font-size: calc(15px * var(--text-scale));
+}
+
+/* Today's wheel as a strip of twelve thin hours across the width. */
+.cultivate-routine .wheel-strip {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.cultivate-routine .wheel-strip > span {
+  width: auto;
+  height: 3px;
+  background: color-mix(in srgb, var(--hour) 85%, transparent);
+}
+
+.cultivate-today {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: calc(14.5px * var(--text-scale));
+  color: color-mix(in srgb, var(--text) 85%, transparent);
+}
+
+/* The right: what waits on you from the top, the chronicle's last lines at the foot. */
+.cultivate-side {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-top: 4px;
+}
+
+.cultivate-side > .panel + .panel {
+  margin-top: 0;
+}
+
+.cultivate-recent {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-faint);
+}
+
+.cultivate-recent h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: calc(17px * var(--text-scale));
+  font-weight: 500;
+}
+
+.cultivate-recent .link-button {
+  font-family: var(--font-display);
+  font-size: calc(13px * var(--text-scale));
+}
+
+.cultivate-recent .chronicle {
+  gap: 7px;
+  font-size: calc(13px * var(--text-scale));
 }
 
 /* The sun of the hour, on the glass behind everything in the seat, which sits above it. */
@@ -677,10 +921,6 @@ select {
   height: 100%;
   border-radius: inherit;
   pointer-events: none;
-}
-
-.cultivate-seat > :not(.seat-sun) {
-  position: relative;
 }
 
 .seat-hour {
@@ -696,7 +936,7 @@ select {
 /* The figure and the canvas over it share one box, in the figure's own units (192 by 156). */
 .seat-figure {
   position: relative;
-  width: min(400px, 100%);
+  width: min(460px, 100%);
   aspect-ratio: 192 / 156;
   touch-action: none;
   cursor: crosshair;
@@ -1317,11 +1557,31 @@ select {
   animation: none;
 }
 
+/* The figure is a shadow (A2): near-black, a faint qi edge, and a warm rim on the sun's side. */
 .seated-head,
 .seated-body {
-  fill: color-mix(in srgb, var(--text) 9%, var(--void));
-  stroke: color-mix(in srgb, var(--crack) 30%, transparent);
-  stroke-width: 0.7;
+  fill: #08090b;
+  stroke: color-mix(in srgb, var(--crack) 18%, transparent);
+  stroke-width: 0.6;
+}
+
+.cultivate-seat .seated {
+  filter: drop-shadow(-1.2px 0 0 color-mix(in srgb, var(--sun-warm) 45%, transparent));
+  -webkit-box-reflect: below -6px linear-gradient(transparent 72%, rgb(0 0 0 / 0.2));
+}
+
+/* The lit spot on the floor, where the painting leaves the seat, and the contact shadow in it. */
+.cultivate-seat .seat-figure::before {
+  content: '';
+  position: absolute;
+  left: -18%;
+  right: -18%;
+  bottom: -9%;
+  height: 26%;
+  background:
+    radial-gradient(closest-side, rgb(0 0 0 / 0.85), transparent 60%) center 60% / 74% 46% no-repeat,
+    radial-gradient(closest-side, color-mix(in srgb, var(--gilt) 16%, transparent), transparent);
+  pointer-events: none;
 }
 
 .dantian-stop-mid {
@@ -5701,16 +5961,16 @@ button.fight-card {
   }
 }
 
-/* A screen just opened: its menu item glows, beside its dot, until first looked at. */
-.menu-item.is-new {
-  border-color: var(--accent-edge);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent);
+/* A screen just opened: its glyph on the rail glows, beside its dot, until first looked at. */
+.rail-item.is-new {
+  color: var(--text);
+  box-shadow: inset 0 0 14px color-mix(in srgb, var(--accent) 30%, transparent);
   animation: new-menu-glow 2.8s ease-in-out infinite;
 }
 
 @keyframes new-menu-glow {
   50% {
-    box-shadow: 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+    box-shadow: inset 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
   }
 }
 
@@ -7019,14 +7279,6 @@ label.beacon-ring {
   --map-depth: #d07a96;
 }
 
-.shell.is-map {
-  grid-template-columns: var(--menu-width) minmax(0, 1fr) 0;
-}
-
-.shell.is-map .context-panel {
-  display: none;
-}
-
 .shell.is-map .main {
   display: flex;
   flex-direction: column;
@@ -8196,4 +8448,123 @@ p.map-above {
   justify-self: end;
   padding: 8px 13px;
   font-size: calc(13px * var(--text-scale));
+}
+
+/* ---------------------------------------------------------------- A2: the shell and the kit */
+
+/* Headings in a panel: the display face, a touch larger. */
+.panel > .panel-heading,
+.tray-head .panel-heading {
+  font-size: calc(20px * var(--text-scale));
+  font-weight: 500;
+}
+
+/* Buttons: a dark lacquer face with a gold hairline, lit on hover; the accent stays theirs, so
+   Settings recolors them. */
+.button {
+  border-color: var(--accent-edge);
+  border-radius: 3px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 10%, rgb(14 13 11)),
+    color-mix(in srgb, var(--accent) 4%, rgb(8 8 9))
+  );
+}
+
+.button:hover:not(:disabled) {
+  filter: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 12px -4px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.button:disabled,
+.button-quiet {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The card that waits on you (A2, dark, as the study): its title in the display face, its text
+   plain, each choice a row with a chevron, the one you can act on edged in the accent. */
+.stack > .story {
+  padding: 16px 18px 14px;
+  border: 1px solid var(--line-faint);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--panel-solid) 70%, transparent);
+}
+
+.stack > .story h3,
+.panel.card-away .panel-heading {
+  font-size: calc(23px * var(--text-scale));
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.stack > .story p {
+  font-size: calc(13.5px * var(--text-scale));
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--text) 88%, transparent);
+}
+
+.stack > .story .button.choice,
+.panel.card-away .button {
+  position: relative;
+  padding: 9px 32px 9px 14px;
+  border-color: var(--line-faint);
+  background: var(--row);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: calc(16px * var(--text-scale));
+  text-align: left;
+}
+
+.stack > .story .button.choice strong {
+  font-weight: 500;
+}
+
+.stack > .story .button.choice::after {
+  content: '›';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  color: var(--muted);
+  font-size: 18px;
+  transform: translateY(-55%);
+}
+
+.stack > .story .button.choice:first-child {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.stack > .story .button.choice .caption {
+  font-family: var(--font-ui);
+}
+
+.stack > .story .button.choice:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+/* The folded cards behind it: thin tabs on a hairline. */
+.stack-sheet {
+  border-color: var(--line-faint);
+  border-radius: 0 0 3px 3px;
+}
+
+/* Toasts and hints on a hairline; a hint carries the accent's still glow. */
+.toast {
+  padding: 12px 10px 12px 16px;
+  border: 1px solid var(--line-faint);
+  border-radius: 3px;
+  background: var(--panel-solid);
+  box-shadow:
+    inset 3px 0 0 var(--rarity-color, var(--accent)),
+    0 8px 24px rgb(0 0 0 / 0.5);
+}
+
+.toast.is-hint {
+  box-shadow:
+    inset 3px 0 0 var(--accent),
+    0 8px 24px rgb(0 0 0 / 0.5),
+    0 0 22px -6px color-mix(in srgb, var(--accent) 60%, transparent);
 }

@@ -14,7 +14,8 @@ import { SeatedFigure, SeatMeter } from './SeatedFigure.tsx';
 import { useGame, type AwaySummary } from './store.ts';
 import { technique } from '../content/techniques.ts';
 import { readingLine } from './bookcase.ts';
-import { AgeBar, LadderBar, LifeEdgeCard, Why } from './widgets.tsx';
+import { AgeBar, EventLine, LadderBar, LifeEdgeCard } from './widgets.tsx';
+import { go, goToTab } from './nav.ts';
 
 /** Up to this many settled cards are told in full; past it, one a kind and the rest folded away. */
 const SHORT_TELLING = 5;
@@ -126,27 +127,30 @@ export function CultivateScreen() {
     ...(reading ? [reading] : []),
   ].join(' · ');
 
-  return (
-    <>
-      {away && <AwayCard away={away} />}
-      <LifeEdgeCard />
+  const recent = game.chronicle.slice(-3).reverse();
+  const r = realm(realmOf(game.player));
 
-      <section className={`panel cultivate-seat${breaking}`} aria-label="The seat">
+  // The scene (A2; docs/mockups/shell-study.html): the seat fills the screen, the figure in its
+  // middle, and over it the cultivator low on the left, what waits on you on the right and the
+  // last few lines of the chronicle at its foot. A3 paints the place behind the seat.
+  return (
+    <div className="cultivate">
+      <section className={`cultivate-seat${breaking}`} aria-label="The seat">
         <div className="seat-flash" aria-hidden="true" />
         <SeatedFigure game={game} />
         <SeatMeter game={game} />
         <BreakthroughRow game={game} />
       </section>
-      <BreakthroughPanel game={game} />
 
-      <section className="panel cultivate-info">
-        <h2 className="realm-title">
-          {formatLadder(game.player.qi)}
-          <small>
-            {game.player.name} · {game.player.pronouns}
-          </small>
-        </h2>
-        <div className="bars">
+      <section className="cultivate-who" aria-label="The cultivator">
+        <h1 className="cultivate-title">
+          Cultivate <span className="hanzi">修炼</span>
+        </h1>
+        <p className="cultivate-name">
+          {game.player.name} <small>{game.player.pronouns}</small>
+        </p>
+        <p className="cultivate-realm">{formatLadder(game.player.qi)}</p>
+        <div className="bars cultivate-bars">
           <LadderBar game={game} which="qi" why={<QiWhy game={game} />} />
           {ladderOpen(game.player, 'body') && (
             <LadderBar game={game} which="body" why={<StepNeeds game={game} which="body" />} />
@@ -156,44 +160,47 @@ export function CultivateScreen() {
           )}
           <AgeBar game={game} />
         </div>
-        <dl className="stats">
-          <div>
-            <dt>Insight</dt>
-            <dd>
-              {formatNumber(game.player.insight.current)}{' '}
-              <Why label="Where insight comes from">
-                {formatNumber(game.player.insight.current)} to spend on tree nodes, and{' '}
-                {formatNumber(game.player.insight.earned)} earned in all. Breakthroughs count what
-                you have earned, so spending never delays them. Today&apos;s wheel gives about{' '}
-                {formatRate(rates.insight)} a day.
-              </Why>
-            </dd>
+        <div className="cultivate-routine">
+          <div className="cultivate-routine-head">
+            <h2>Today&apos;s routine</h2>
+            <small>{rates.routine ? rates.routine.name : 'Your own day'}</small>
+            <span className="caption">
+              Lifespan {r.lifespan} years at {r.name}.
+            </span>
+            <button type="button" className="link-button" onClick={() => goToTab('day')}>
+              Arrange your day →
+            </button>
           </div>
-          <div>
-            <dt>Spirit stones</dt>
-            <dd>
-              {formatNumber(game.player.stones)}{' '}
-              <Why label="What spirit stones do here">
-                {game.player.plan.burnStones
-                  ? `On qi days you burn up to ${rates.stoneCap} stones, each adding ${formatRate(rates.qiPerStone)} qi. Turn burning off on the Routine screen.`
-                  : 'Burning stones is off: they wait in your pouch. Turn it on from the Routine screen.'}
-              </Why>
-            </dd>
-          </div>
-          <div>
-            <dt>Today</dt>
-            <dd>
-              <WheelStrip hours={effectiveWheel(game.player)} /> {today}
-              {rates.routine && ` · ${rates.routine.name}`}
-            </dd>
-          </div>
-        </dl>
-        <p className="caption spaced">
-          Lifespan {realm(realmOf(game.player)).lifespan} years at{' '}
-          {realm(realmOf(game.player)).name}.
-        </p>
+          <WheelStrip hours={effectiveWheel(game.player)} />
+          <p className="cultivate-today">{today}</p>
+        </div>
       </section>
-      <CardFeed />
-    </>
+
+      <div className="cultivate-side">
+        <BreakthroughPanel game={game} />
+        {away && <AwayCard away={away} />}
+        <LifeEdgeCard />
+        <CardFeed />
+        <section className="cultivate-recent" aria-label="Recent events">
+          <h2>
+            Recent events{' '}
+            <button type="button" className="link-button" onClick={() => go('chronicle')}>
+              Read all →
+            </button>
+          </h2>
+          {recent.length === 0 ? (
+            <p className="caption">Nothing has happened yet.</p>
+          ) : (
+            <ol className="chronicle">
+              {recent.map((e, i) => (
+                <li key={`${e.day}-${i}`}>
+                  <EventLine game={game} e={e} />
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      </div>
+    </div>
   );
 }

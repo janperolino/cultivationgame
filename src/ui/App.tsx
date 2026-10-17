@@ -11,6 +11,8 @@ import { MapScreen } from './MapScreen.tsx';
 import { PeopleScreen } from './PeopleScreen.tsx';
 import { GlassBackground } from './GlassBackground.tsx';
 import { SettingsScreen } from './SettingsScreen.tsx';
+import { ShellHeader } from './ShellHeader.tsx';
+import { AbodeMark, ScreenIcon } from './icons.tsx';
 import { Toasts } from './Toasts.tsx';
 import { TreesScreen } from './TreesScreen.tsx';
 import { readyLadders, useScene } from './scene.ts';
@@ -18,10 +20,8 @@ import { useNav } from './nav.ts';
 import { markMoving } from './moving.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
-import { bySeason } from '../core/chronicle.ts';
 import { screenDot, screenIsNew } from '../core/seen.ts';
 import { useBeacons } from './useBeacons.ts';
-import { EventLine, FullscreenButton } from './widgets.tsx';
 
 function SlotNotice() {
   const phase = useGame((s) => s.phase);
@@ -143,102 +143,79 @@ export function App() {
     if (here) useGame.getState().openScreen(here);
   }, [here, hereDot]);
 
-  const recent = game ? game.chronicle.slice(-8).reverse() : [];
-
   return (
     <>
       <GlassBackground />
       <div className="stage-frame">
         <div className="stage">
-          <div className={`shell${current.id === 'map' ? ' is-map' : ''}`}>
-            <nav id="side-menu" className="side-menu" aria-label="Screens">
-              <div className="brand">
-                <span className="brand-name">Severed Heaven</span>
-                <span className="hanzi brand-hanzi">断天</span>
+          <div className={`shell is-${current.id}`}>
+            <nav id="side-menu" className="side-rail" aria-label="Screens">
+              <div className="rail-mark" aria-hidden="true">
+                <AbodeMark />
               </div>
               <ul>
                 {available.map((s) => (
                   <li key={s.id}>
                     <button
                       type="button"
-                      className={`menu-item${s.id === current.id ? ' is-active' : ''}${beaconed.has(s.id) ? ' is-beacon' : fresh.includes(s.id) && s.id !== current.id ? ' is-new' : ''}`}
+                      className={`rail-item${s.id === current.id ? ' is-active' : ''}${beaconed.has(s.id) ? ' is-beacon' : fresh.includes(s.id) && s.id !== current.id ? ' is-new' : ''}`}
                       aria-current={s.id === current.id ? 'page' : undefined}
+                      aria-label={s.name}
                       onClick={() => setScreen(s.id)}
                     >
-                      <span>
-                        {s.name}
-                        {s.id === 'cultivate' && ready && (
-                          <span
-                            className="menu-mark"
-                            role="img"
-                            aria-label="a breakthrough is ready"
-                          />
-                        )}
-                        {dots.includes(s.id) && s.id !== current.id && (
-                          <span
-                            className="menu-mark is-new"
-                            role="img"
-                            aria-label="something new"
-                          />
-                        )}
+                      <ScreenIcon id={s.id} />
+                      {s.id === 'cultivate' && ready && (
+                        <span
+                          className="menu-mark"
+                          role="img"
+                          aria-label="a breakthrough is ready"
+                        />
+                      )}
+                      {dots.includes(s.id) && s.id !== current.id && (
+                        <span className="menu-mark is-new" role="img" aria-label="something new" />
+                      )}
+                      <span className="rail-tip" aria-hidden="true">
+                        {s.name} <span className="hanzi">{s.hanzi}</span>
                       </span>
-                      <span className="hanzi menu-hanzi">{s.hanzi}</span>
                     </button>
                   </li>
                 ))}
               </ul>
-              <FullscreenButton className="menu-foot" />
             </nav>
 
-            <main className="main" ref={main}>
-              <h1 className="screen-title">
-                {current.name} <span className="hanzi">{current.hanzi}</span>
-              </h1>
-              {notice && (
-                <section className="panel notice" role="status">
-                  <p>{notice}</p>
-                  <button type="button" className="button" onClick={dismissNotice}>
-                    Dismiss
-                  </button>
-                </section>
-              )}
-              {phase === 'loading' && <p className="muted">Opening your abode…</p>}
-              {creating && <CreationScreen />}
-              {phase === 'no-slot' && !creating && (
-                <p className="muted">No life is open. Start one or pick a slot below.</p>
-              )}
-              {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
-              {phase !== 'loading' && current.id === 'routine' && <RoutineScreen />}
-              {phase !== 'loading' && current.id === 'map' && <MapScreen />}
-              {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
-              {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
-              {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}
-              {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
-              {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}
-              {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}
-              {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
-            </main>
-
-            <aside id="context-panel" className="context-panel" aria-label="Context">
-              <h2 className="panel-heading">Chronicle</h2>
-              {recent.length === 0 ? (
-                <p className="muted">Nothing has happened yet.</p>
-              ) : (
-                game &&
-                bySeason(recent).map((g, gi) => (
-                  <div key={`${g.when}-${gi}`} className="chronicle-season">
-                    <h3 className={`chronicle-when${gi === 0 ? ' is-newest' : ''}`}>{g.when}</h3>
-                    <ol className="chronicle">
-                      {g.items.map((e, i) => (
-                        <li key={`${e.day}-${i}`}>
-                          <EventLine game={game} e={e} />
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                ))
-              )}
-            </aside>
+            <div className="main-column">
+              <ShellHeader />
+              <main className="main" ref={main}>
+                {current.id !== 'cultivate' && (
+                  <h1 className="screen-title">
+                    {current.name} <span className="hanzi">{current.hanzi}</span>
+                  </h1>
+                )}
+                {notice && (
+                  <section className="panel notice" role="status">
+                    <p>{notice}</p>
+                    <button type="button" className="button" onClick={dismissNotice}>
+                      Dismiss
+                    </button>
+                  </section>
+                )}
+                {phase === 'loading' && <p className="muted">Opening your abode…</p>}
+                {creating && <CreationScreen />}
+                {phase === 'no-slot' && !creating && (
+                  <p className="muted">No life is open. Start one or pick a slot below.</p>
+                )}
+                {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
+                {phase !== 'loading' && current.id === 'routine' && <RoutineScreen />}
+                {phase !== 'loading' && current.id === 'map' && <MapScreen />}
+                {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
+                {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
+                {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}
+                {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
+                {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}
+                {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}
+                {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
+              </main>
+            </div>
 
             <Toasts />
             <SlotNotice />

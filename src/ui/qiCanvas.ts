@@ -735,7 +735,9 @@ export class QiCanvas {
   private moveSparks(dt: number, loops: Point[][], f: FigureFrame, pace: number): void {
     const speed = (f.state === 'full' ? 90 : 50) * pace * dt;
     this.sparks = this.sparks.filter((s) => {
-      const l = loops[s.loop] ?? loops[0]!;
+      const l = loops[s.loop] ?? loops[0];
+      // A figure laid out at no size has empty loops; its sparks go rather than throw each frame.
+      if (!l?.length) return false;
       const v = speed * (s.big ? 1.3 : 1);
       s.i = (s.i + v) % l.length;
       s.run += v;

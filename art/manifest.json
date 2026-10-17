@@ -1,3 +1,14 @@
 {
-  "assets": []
+  "assets": [
+    {
+      "id": "common-sky",
+      "kind": "surface",
+      "out": "src/ui/art/common/sky.webp",
+      "width": 1024,
+      "quality": 80,
+      "budgetKB": 120,
+      "concept": "shell-1",
+      "prompt": "Create a SEAMLESS TILEABLE texture, 1024x1024, for a game UI background. Use the attached concept's starry void as the reference. STYLE: SEVERED HEAVEN, GILDED VOID. Deep void black #040507 with a very quiet cosmic sky: sparse fine stars and faint dark nebula, never behind text. Panels are obsidian, near-black with a subtle lacquer sheen, framed in antique gold filigree #d9b46a: fine double rules, cloud-scroll and fretwork corners, small gold diamond studs. Qi is a muted cyan light #7fc7d9, used sparingly, like light leaking through hairline cracks. Warm ivory #e9e5da type, a refined serif display face with small brush hanzi beside English. Painted Chinese fantasy game art: rich detail in the ornament, calm restrained lighting, no neon, no glow haze over panels. Straight-on, orthographic, no perspective, no device frame, no watermark. Texture: the void sky, sparse fine stars of a few sizes, a handful slightly warm, and the faintest deep blue-black nebula wisps, very dark overall. It must tile on all four sides with no visible seam: even density everywhere, no focal point, no vignette, no border, no moon, no constellation lines, no text."
+    }
+  ]
 }

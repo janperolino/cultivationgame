@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shell study (A2)</title>
+<!-- A2's shell study, round 3 (Jan's pick: the clean dark-jade concept with no top bar). A narrow
+     rail on the left, the brand and the resources floating over the scene at the top, the
+     cultivator's name, bars and routine low on the left over a scrim, the card top right and recent
+     events bottom right; no chronicle column, thin type, hairlines. Serve with the dev server so the
+     shipped art loads: /docs/mockups/shell-study.html. The stand-in scene is cropped from Jan's
+     concept and has a painted cultivator in it; the game keeps its silhouette, and the real scene
+     is A3's. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link
+  href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500&family=Ma+Shan+Zheng&display=swap"
+  rel="stylesheet"
+/>
+<style>
+  :root {
+    --void: #040507;
+    --text: #e9e5da;
+    --accent: #d6ab4c;
+    --gilt: #d9b46a;
+    --crack: #7fc7d9;
+    --silk: #efe7d6;
+    --ink: #2a241d;
+    --ink-muted: #6c604f;
+    --display: 'Cormorant Garamond', Georgia, serif;
+    --brush: 'Ma Shan Zheng', KaiTi, serif;
+    --ui: Inter, system-ui, sans-serif;
+  }
+  .stage[data-palette='jade'] {
+    --panel: rgb(9 17 15 / 0.78);
+    --panel-solid: #0a1311;
+    --rail: rgb(7 12 11 / 0.96);
+    --muted: #8c9a93;
+    --scrim: 6 11 10;
+    --line: color-mix(in srgb, var(--gilt) 40%, transparent);
+    --line-faint: color-mix(in srgb, var(--gilt) 16%, transparent);
+    --row: color-mix(in srgb, #9fd1bd 7%, transparent);
+  }
+  .stage[data-palette='obsidian'] {
+    --panel: rgb(7 8 11 / 0.8);
+    --panel-solid: #08090c;
+    --rail: rgb(5 6 8 / 0.96);
+    --muted: #8d949d;
+    --scrim: 4 5 7;
+    --line: color-mix(in srgb, var(--gilt) 40%, transparent);
+    --line-faint: color-mix(in srgb, var(--gilt) 16%, transparent);
+    --row: rgb(255 255 255 / 0.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: url('/src/ui/art/common/sky.webp') 0 0 / 512px repeat, var(--void);
+    color: var(--text); font-family: var(--ui); font-size: 14px; overflow: hidden;
+  }
+  .hz { font-family: var(--brush); }
+  .frame { position: fixed; inset: 0; display: grid; place-items: center; }
+
+  .stage {
+    position: relative; width: 1920px; height: 1080px; overflow: hidden;
+    display: grid; grid-template-columns: 72px minmax(0, 1fr);
+  }
+  .stage[data-side='full'] { grid-template-columns: 220px minmax(0, 1fr); }
+
+  /* The scene fills everything right of the rail, top to bottom; a scrim darkens its top (for the
+     brand and resources) and its foot (for the name, bars and routine). */
+  .scene {
+    position: absolute; left: 72px; right: 0; top: 0; bottom: 0; z-index: 0;
+    background: url('./shell-study-standin.webp?v=2') center 30% / cover no-repeat;
+  }
+  .stage[data-side='full'] .scene { left: 220px; }
+  .scene::after {
+    content: ''; position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgb(var(--scrim) / 0.88), rgb(var(--scrim) / 0.35) 12%, transparent 22%, transparent 48%, rgb(var(--scrim) / 0.75) 68%, rgb(var(--scrim) / 0.96)),
+      linear-gradient(90deg, rgb(var(--scrim) / 0.5), transparent 30%);
+  }
+  .stage[data-scene='void'] .scene { display: none; }
+  .stage[data-scene='black'] .scene { background: #000; }
+
+  /* The figure on the floor: the game's silhouette as a deep shadow, seated on a lit spot, a rim of
+     light on the side the hour's sun is on, the dantian and meridians glowing in qi, a contact
+     shadow and a faint reflection on the floor. All code; the painting only leaves it a seat. */
+  .seat {
+    position: absolute; z-index: 0; left: 72px; right: 440px; top: 0; bottom: 0; pointer-events: none;
+    display: none;
+  }
+  .stage[data-side='full'] .seat { left: 220px; }
+  .stage[data-scene='black'] .seat { display: block; }
+  .seat svg { position: absolute; left: 50%; top: 47%; width: 460px; transform: translate(-50%, -50%); overflow: visible; }
+
+  /* ------------------------------------------------ the rail */
+  .side {
+    position: relative; z-index: 2; display: flex; flex-direction: column;
+    background: var(--rail); border-right: 1px solid var(--line-faint);
+  }
+  .mark { display: grid; place-items: center; height: 76px; color: var(--accent); }
+  .mark svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.3; }
+  .items { padding-top: 10px; }
+  .item {
+    position: relative; display: grid; grid-template-columns: 1fr; justify-items: center; align-items: center;
+    min-height: 54px; color: var(--muted); cursor: pointer; border-top: 1px solid transparent; border-bottom: 1px solid transparent;
+  }
+  .item svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.4; }
+  .item b, .item .hz { display: none; }
+  .item .dot { position: absolute; right: 14px; top: 14px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .item:hover { color: var(--text); }
+  .item.is-on {
+    color: var(--accent); border-color: var(--line);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 16%, transparent), color-mix(in srgb, var(--accent) 3%, transparent));
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  /* The name shows beside the rail on hover, as a tip. */
+  .item .tip {
+    position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%); z-index: 5;
+    padding: 5px 10px; white-space: nowrap; background: var(--panel-solid); border: 1px solid var(--line-faint);
+    font: 15px var(--display); color: var(--text); opacity: 0; pointer-events: none;
+  }
+  .item .tip .hz { display: inline; color: var(--accent); margin-left: 6px; font-size: 13px; }
+  .item:hover .tip { opacity: 1; }
+  /* Full: the names beside the glyphs. */
+  .stage[data-side='full'] .mark { justify-items: start; padding-left: 22px; }
+  .stage[data-side='full'] .item { grid-template-columns: 20px minmax(0, 1fr) auto; gap: 14px; justify-items: start; padding: 0 20px 0 22px; min-height: 46px; }
+  .stage[data-side='full'] .item b { display: block; font: 400 17px var(--display); color: color-mix(in srgb, var(--text) 78%, transparent); }
+  .stage[data-side='full'] .item > .hz { display: block; font-size: 15px; color: color-mix(in srgb, var(--accent) 55%, var(--muted)); }
+  .stage[data-side='full'] .item.is-on b { color: var(--text); }
+  .stage[data-side='full'] .item.is-on > .hz { color: var(--accent); }
+  .stage[data-side='full'] .item .dot { right: auto; left: 40px; top: 11px; }
+  .stage[data-side='full'] .item .tip { display: none; }
+  .side .foot { margin-top: auto; height: 210px; opacity: 0.8; display: none; }
+  .stage[data-side='full'] .side .foot { display: block; }
+
+  /* ------------------------------------------------ over the scene */
+  .main {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: minmax(0, 1fr) 440px; grid-template-rows: 76px minmax(0, 1fr) auto;
+    column-gap: 48px; padding: 0 40px 30px 44px;
+  }
+  .top { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; }
+  .brand { font: 500 24px var(--display); white-space: nowrap; }
+  .brand .hz { color: var(--accent); font-size: 21px; margin-left: 8px; }
+  .res { display: flex; align-items: center; gap: 26px; white-space: nowrap; }
+  .when b { display: block; font: 500 18px/1.2 var(--display); }
+  .when small { font: 12.5px var(--display); color: var(--muted); }
+  .sep { width: 1px; height: 30px; background: var(--line-faint); }
+  .stat { display: grid; justify-items: center; }
+  .stat svg { width: 14px; height: 14px; fill: var(--gilt); }
+  .stat b { font: 500 20px var(--display); }
+  .q { display: inline-grid; place-items: center; width: 14px; height: 14px; border: 1px solid var(--line); border-radius: 50%; font: 9px var(--ui); color: var(--muted); vertical-align: 2px; }
+
+  /* The card, top right, on a slab of its own; recent events sit at the foot of the column. */
+  .right { grid-column: 2; grid-row: 2 / 4; display: flex; flex-direction: column; justify-content: space-between; padding-top: 28px; }
+  .slab {
+    position: relative; background: var(--panel); border: 1px solid var(--line-faint); border-radius: 4px;
+    box-shadow: 0 30px 60px -30px #000;
+  }
+  .tray { padding: 18px 20px 16px; }
+  .tray .count { margin: 0 0 6px; font: 12.5px var(--display); color: var(--muted); }
+  .tray h2 { margin: 0 0 8px; font: 500 25px var(--display); }
+  .tray p { margin: 0 0 14px; font: 15px/1.5 var(--display); color: color-mix(in srgb, var(--text) 86%, transparent); }
+  .choice {
+    display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 12px; width: 100%;
+    margin-top: 8px; padding: 10px 14px; text-align: left; cursor: pointer; border-radius: 3px;
+    border: 1px solid var(--line-faint); background: var(--row); color: var(--text); font: 17px var(--display);
+  }
+  .choice small { display: block; margin-top: 1px; font: 12px var(--ui); color: var(--muted); }
+  .choice .ico { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 50%; color: var(--accent); font: 13px var(--brush); }
+  .choice::after { content: '›'; font-size: 18px; color: var(--muted); }
+  .choice:hover { border-color: var(--accent); }
+  .folded { margin: 0 8px; }
+  .folded span {
+    display: block; margin: 0 calc(var(--d) * 6px); padding: 5px 14px; font: 14px var(--display); color: var(--muted);
+    border: 1px solid var(--line-faint); border-top: 0; background: color-mix(in srgb, var(--panel-solid) 55%, transparent);
+  }
+  .more { margin: 8px 2px 0; font: 12.5px var(--ui); color: var(--muted); }
+  /* Ivory: the card alone turns to silk. */
+  .stage[data-card='ivory'] .tray { background: var(--silk); color: var(--ink); border-color: #b89a5e; isolation: isolate; }
+  .stage[data-card='ivory'] .tray p { color: var(--ink); }
+  .stage[data-card='ivory'] .tray .count { color: var(--ink-muted); }
+  .stage[data-card='ivory'] .tray::before {
+    content: ''; position: absolute; inset: auto 4px 4px; height: 40%; z-index: -1;
+    background: none;
+    mix-blend-mode: multiply; opacity: 0.7; mask-image: linear-gradient(to top, #000 50%, transparent);
+  }
+  .stage[data-card='ivory'] .choice { background: rgb(255 255 255 / 0.45); color: var(--ink); border-color: rgb(138 109 54 / 0.45); }
+  .stage[data-card='ivory'] .choice small { color: var(--ink-muted); }
+
+  .recent { padding-top: 14px; border-top: 1px solid var(--line-faint); }
+  .recent h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 10px; font: 500 17px var(--display); }
+  .recent h3 a { font: 13px var(--display); color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  .recent ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; font: 14px/1.4 var(--display); }
+  .recent li { display: grid; grid-template-columns: 14px 1fr; color: color-mix(in srgb, var(--text) 86%, transparent); }
+  .recent li::before { content: ''; width: 5px; height: 5px; margin-top: 7px; border-radius: 50%; background: var(--accent); }
+
+  /* The left foot: name and realm, the bars in a row, today's routine; no slab, the scrim holds it. */
+  .who { grid-column: 1; grid-row: 3; align-self: end; text-shadow: 0 1px 10px rgb(0 0 0 / 0.8); }
+  .who h1 { margin: 0; font: 500 46px/1 var(--display); }
+  .who h1 .hz { color: var(--accent); font-size: 32px; margin-left: 10px; }
+  .who .name { margin: 12px 0 0; font: 500 21px var(--display); }
+  .who .name small { margin-left: 8px; font: 13px var(--display); color: var(--muted); }
+  .who .realm { margin: 2px 0 0; font: 15px var(--display); color: color-mix(in srgb, var(--text) 82%, transparent); }
+  .who .hour { margin: 4px 0 0; font: 14px var(--display); color: var(--muted); }
+  .who .hour .hz { color: var(--accent); margin-right: 6px; }
+  .who .hour b { color: var(--crack); font-weight: 500; }
+  .stats {
+    display: grid; grid-template-columns: 1.3fr 1fr 1fr 0.9fr; margin-top: 16px;
+    border-top: 1px solid var(--line-faint); border-bottom: 1px solid var(--line-faint);
+  }
+  .stat-cell { padding: 10px 16px 11px; border-left: 1px solid var(--line-faint); }
+  .stat-cell:first-child { border-left: 0; padding-left: 0; }
+  .stat-cell .row { display: flex; justify-content: space-between; align-items: baseline; font: 15px var(--display); }
+  .stat-cell .row span { color: color-mix(in srgb, var(--text) 88%, transparent); }
+  .stat-cell i { display: block; height: 3px; margin-top: 7px; border-radius: 2px; background: rgb(255 255 255 / 0.08); position: relative; overflow: hidden; }
+  .stat-cell i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--w); background: var(--c); border-radius: 2px; }
+  .stat-cell small { display: block; margin-top: 3px; text-align: right; font: 12px var(--display); color: var(--muted); }
+  .routine { margin-top: 14px; }
+  .routine .head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+  .routine h2 { margin: 0; font: 500 18px var(--display); }
+  .routine .head small { font: 13px var(--display); color: var(--muted); }
+  .routine .head a { margin-left: auto; font: 14px var(--display); color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  .hours { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+  .hours b { height: 3px; border-radius: 2px; background: var(--h); }
+  .kinds { display: flex; justify-content: space-between; margin-top: 10px; padding: 0 6px; font: 14px var(--display); }
+  .kinds span::before { content: '◆'; color: var(--k); font-size: 8px; margin-right: 8px; vertical-align: 2px; }
+
+  .controls {
+    position: fixed; z-index: 10; left: 50%; top: 10px; transform: translateX(-50%); display: flex; gap: 14px; align-items: center;
+    padding: 6px 10px; border: 1px solid rgb(217 180 106 / 0.4); border-radius: 6px; background: rgb(0 0 0 / 0.88); font-size: 12px;
+  }
+  .controls fieldset { border: 0; margin: 0; padding: 0; display: flex; gap: 4px; align-items: center; }
+  .controls legend { float: left; margin-right: 6px; color: #8d949d; }
+  .controls button { padding: 3px 9px; border: 1px solid rgb(217 180 106 / 0.2); border-radius: 4px; background: none; color: #8d949d; cursor: pointer; font: inherit; }
+  .controls button[aria-pressed='true'] { color: var(--accent); border-color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="stage" id="stage" data-side="rail" data-palette="obsidian" data-card="dark" data-scene="black">
+    <div class="scene" aria-hidden="true"></div>
+    <div class="seat" aria-hidden="true">
+      <svg viewBox="0 0 240 260">
+        <defs>
+          <radialGradient id="floor" cx="50%" cy="50%" r="50%">
+            <stop offset="0" stop-color="#d9b46a" stop-opacity="0.16" />
+            <stop offset="0.55" stop-color="#d9b46a" stop-opacity="0.05" />
+            <stop offset="1" stop-color="#d9b46a" stop-opacity="0" />
+          </radialGradient>
+          <radialGradient id="contact" cx="50%" cy="50%" r="50%">
+            <stop offset="0" stop-color="#000" stop-opacity="0.9" />
+            <stop offset="1" stop-color="#000" stop-opacity="0" />
+          </radialGradient>
+          <radialGradient id="dantian" cx="50%" cy="50%" r="50%">
+            <stop offset="0" stop-color="#ffffff" />
+            <stop offset="0.18" stop-color="#bfe7f0" />
+            <stop offset="0.45" stop-color="#7fc7d9" stop-opacity="0.55" />
+            <stop offset="1" stop-color="#7fc7d9" stop-opacity="0" />
+          </radialGradient>
+          <linearGradient id="body" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#0d0f13" />
+            <stop offset="0.7" stop-color="#07080a" />
+            <stop offset="1" stop-color="#050506" />
+          </linearGradient>
+          <linearGradient id="rim" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#e8a874" stop-opacity="0.75" />
+            <stop offset="0.35" stop-color="#e8a874" stop-opacity="0" />
+          </linearGradient>
+          <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff" stop-opacity="0.22" />
+            <stop offset="1" stop-color="#fff" stop-opacity="0" />
+          </linearGradient>
+          <mask id="reflect"><rect x="0" y="196" width="240" height="64" fill="url(#fade)" /></mask>
+          <path id="shape" d="M120 24c-9 0-15 7-15 16 0 6 3 11 7 14-14 3-23 14-25 32-2 17-3 29-14 39-12 4-34 12-38 26-3 11 10 17 26 17h118c16 0 29-6 26-17-4-14-26-22-38-26-11-10-12-22-14-39-2-18-11-29-25-32 4-3 7-8 7-14 0-9-6-16-15-16z" />
+        </defs>
+        <!-- the lit spot on the floor, the seat the painting leaves -->
+        <ellipse cx="120" cy="196" rx="118" ry="30" fill="url(#floor)" />
+        <ellipse cx="120" cy="196" rx="86" ry="12" fill="url(#contact)" />
+        <!-- the reflection on the wet floor -->
+        <g mask="url(#reflect)"><use href="#shape" transform="translate(0 392) scale(1 -1)" fill="#0b0d10" /></g>
+        <!-- the shadow figure, its rim on the sun's side -->
+        <use href="#shape" fill="url(#body)" />
+        <use href="#shape" fill="none" stroke="url(#rim)" stroke-width="1.6" />
+        <use href="#shape" fill="none" stroke="#7fc7d9" stroke-opacity="0.12" stroke-width="0.8" />
+        <!-- the channel and the dantian -->
+        <path d="M120 58v92" stroke="#7fc7d9" stroke-opacity="0.35" stroke-width="0.9" />
+        <circle cx="120" cy="62" r="2" fill="#7fc7d9" fill-opacity="0.6" />
+        <circle cx="120" cy="96" r="2" fill="#7fc7d9" fill-opacity="0.5" />
+        <circle cx="120" cy="150" r="34" fill="url(#dantian)" />
+        <!-- orbs drifting in -->
+        <circle cx="46" cy="70" r="3.2" fill="#e9e5da" />
+        <circle cx="46" cy="70" r="9" fill="#e9e5da" fill-opacity="0.12" />
+        <circle cx="198" cy="96" r="2.6" fill="#e8a874" />
+        <circle cx="198" cy="96" r="8" fill="#e8a874" fill-opacity="0.12" />
+        <circle cx="176" cy="40" r="2.2" fill="#a28fdc" />
+        <circle cx="176" cy="40" r="7" fill="#a28fdc" fill-opacity="0.14" />
+      </svg>
+    </div>
+
+    <nav class="side">
+      <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 4l9 5.5M5 9.5h14M6.5 10v8M10 10v8M14 10v8M17.5 10v8M4 19h16M3 21h18" /></svg></div>
+      <div class="items" id="items"></div>
+      <div class="foot" aria-hidden="true"></div>
+    </nav>
+
+    <main class="main">
+      <header class="top">
+        <div class="brand">Severed Heaven<span class="hz">断天</span></div>
+        <div class="res">
+          <div class="when"><b>Spring 3,131</b><small>Afternoon · hour of Wei</small></div>
+          <span class="sep"></span>
+          <div class="stat" title="Spirit stones"><svg viewBox="0 0 24 24"><path d="M7 4h10l4.5 5.2L12 20.5 2.5 9.2z" /></svg><b>5</b></div>
+          <div class="stat" title="Insight"><svg viewBox="0 0 24 24"><path d="M11 3l1.7 5.6L18 10.5l-5.3 1.9L11 18l-1.7-5.6L4 10.5l5.3-1.9z" /></svg><b>430</b></div>
+        </div>
+      </header>
+
+      <div class="right">
+        <section class="slab tray">
+          <p class="count">17 cards</p>
+          <h2>Something at the Mouth</h2>
+          <p>Something heavy is snuffling round the mouth of the cave in the dark: a stone-hide boar by the smell, drawn by the qi you are leaking.</p>
+          <button class="choice" type="button"><span class="ico">息</span><span>Hold your breath small and wait</span></button>
+          <button class="choice" type="button"><span class="ico">驱</span><span>Drive it off<small>Agility 13 against 10 · clear</small></span></button>
+          <p class="more">Spirit Tide · The Levy · Lecture Day, and 13 more beneath.</p>
+        </section>
+
+        <section class="recent">
+          <h3>Recent events <a href="#">Read all →</a></h3>
+          <ol>
+            <li><span>A tempering art in hand: body hours open beside qi.</span></li>
+            <li><span>Qin Ming takes up the Stone-Bearing Tempering Art.</span></li>
+          </ol>
+        </section>
+      </div>
+
+      <section class="who">
+        <h1>Cultivate<span class="hz">修炼</span></h1>
+        <p class="name">Qin Ming<small>he/him</small></p>
+        <p class="realm">Qi Condensation, fifth layer</p>
+        <p class="hour"><span class="hz">未</span>Afternoon, the hour of Wei · qi · Attention <b>×1.25</b> of ×2.00</p>
+        <div class="stats">
+          <div class="stat-cell"><div class="row">Qi<span>400 / 435 <span class="q">?</span></span></div><i style="--w: 92%; --c: var(--crack)"></i></div>
+          <div class="stat-cell"><div class="row">Body<span>23%</span></div><i style="--w: 23%; --c: var(--crack)"></i><small>first layer</small></div>
+          <div class="stat-cell"><div class="row">Soul<span>3%</span></div><i style="--w: 3%; --c: var(--crack)"></i><small>first layer</small></div>
+          <div class="stat-cell"><div class="row">Age<span>16 y 1 m</span></div><i style="--w: 13%; --c: #d6a65a"></i><small>of 120 years</small></div>
+        </div>
+        <div class="routine">
+          <div class="head"><h2>Today's routine</h2><small>Your own day</small><a href="#">Arrange your day →</a></div>
+          <div class="hours">
+            <b style="--h:#59606b"></b><b style="--h:#59606b"></b><b style="--h:#7fc7d9"></b><b style="--h:#c4a3f0"></b><b style="--h:#7fc7d9"></b><b style="--h:#7fc7d9"></b><b style="--h:#c98a5f"></b><b style="--h:#7fc7d9"></b><b style="--h:#a9b97f"></b><b style="--h:#a9b97f"></b><b style="--h:#7fc7d9"></b><b style="--h:#7fc7d9"></b>
+          </div>
+          <div class="kinds"><span style="--k:#7fc7d9">7 qi</span><span style="--k:#c98a5f">1 body</span><span style="--k:#a9b97f">2 study</span><span style="--k:#59606b">2 sleep</span></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="controls">
+  <fieldset data-key="side"><legend>Sidebar</legend><button data-v="rail">Icon rail</button><button data-v="full">Full</button></fieldset>
+  <fieldset data-key="palette"><legend>Palette</legend><button data-v="jade">Dark jade</button><button data-v="obsidian">Obsidian</button></fieldset>
+  <fieldset data-key="card"><legend>Card</legend><button data-v="dark">Dark</button><button data-v="ivory">Ivory</button></fieldset>
+  <fieldset data-key="scene"><legend>Scene</legend><button data-v="black">Black + figure</button><button data-v="painted">Painted (stand-in)</button><button data-v="void">Void</button></fieldset>
+</div>
+
+<script>
+  const SCREENS = [
+    ['Cultivate', '修炼', 'M12 3c2 2.4 2 5.8 0 8.8-2-3-2-6.4 0-8.8zM5 7.5c3 0 5.6 2.4 6.2 5.6-3 0-5.6-2.4-6.2-5.6zM19 7.5c-3 0-5.6 2.4-6.2 5.6 3 0 5.6-2.4 6.2-5.6zM4 15.5h16c-1 2.8-4.2 4.5-8 4.5s-7-1.7-8-4.5z'],
+    ['Routine', '日课', 'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM12 7v5l3.5 2.5', true],
+    ['Map', '舆图', 'M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14'],
+    ['Trees', '道树', 'M12 21v-7M12 14c-4 0-7-2.5-7-6s3-5 7-5 7 1.5 7 5-3 6-7 6zM9 9l3 3 3-3', true],
+    ['Bag', '行囊', 'M9 3h6l-1.5 3h-3zM8.5 7h7c3 2.5 4.5 5.5 4.5 8.5 0 3-2.5 5.5-5.5 5.5h-5C6.5 21 4 18.5 4 15.5 4 12.5 5.5 9.5 8.5 7z'],
+    ['Combat', '斗法', 'M4 4l14 14M14 20l6-6M20 4L6 18M4 14l6 6', true],
+    ['Character', '根骨', 'M12 3.5a3.8 3.8 0 1 1 0 7.6 3.8 3.8 0 0 1 0-7.6zM4.5 20.5c0-4.2 3.4-7.5 7.5-7.5s7.5 3.3 7.5 7.5'],
+    ['People', '人物', 'M9 5a3.2 3.2 0 1 1 0 6.4A3.2 3.2 0 0 1 9 5zM3 20c0-3.4 2.7-6 6-6s6 2.6 6 6M16 6.2a2.6 2.6 0 1 1 0 5.2M17 14c2.6.4 4 2.8 4 6'],
+    ['Chronicle', '生平', 'M6 3h13v15H8a2 2 0 0 0 0 4h11M6 3a2 2 0 0 0-2 2v14.5'],
+    ['Settings', '设置', 'M12 8.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zM12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1'],
+  ];
+  document.getElementById('items').innerHTML = SCREENS.map(([n, h, d, dot], i) =>
+    `<span class="item${i === 0 ? ' is-on' : ''}"><svg viewBox="0 0 24 24"><path d="${d}"/></svg><b>${n}</b><span class="hz">${h}</span>${dot ? '<span class="dot"></span>' : ''}<span class="tip">${n}<span class="hz">${h}</span></span></span>`).join('');
+
+  const stage = document.getElementById('stage');
+  const sync = () => {
+    for (const fs of document.querySelectorAll('.controls fieldset'))
+      for (const b of fs.querySelectorAll('button'))
+        b.setAttribute('aria-pressed', String(stage.dataset[fs.dataset.key] === b.dataset.v));
+  };
+  document.querySelector('.controls').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    stage.dataset[b.closest('fieldset').dataset.key] = b.dataset.v;
+    sync();
+  });
+  sync();
+  // As the game's stage (ui/stage.ts): 1080 tall, scaled by the window's height, its width
+  // following the window from 1728 to 2520, so the rail sits on the window's edge.
+  const fit = () => {
+    let k = innerHeight / 1080;
+    let w = innerWidth / k;
+    if (w < 1728) { k = innerWidth / 1728; w = 1728; }
+    stage.style.zoom = k;
+    stage.style.width = Math.min(w, 2520) + 'px';
+  };
+  addEventListener('resize', fit);
+  fit();
+</script>
+</body>
+</html>
