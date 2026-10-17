@@ -741,7 +741,22 @@ select {
   transform: translateX(-50%);
   background: url('./art/cultivate/scene.webp') center / 100% 100% no-repeat;
   mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+  filter: brightness(1.22);
   pointer-events: none;
+}
+
+/* Starlight through the cave mouth, lifting the top middle (Jan's call after A3). Still. */
+.cultivate-scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 46% 42% at 50% 22%,
+    rgb(160 180 210 / 0.26),
+    rgb(160 180 210 / 0.08) 60%,
+    transparent 100%
+  );
+  mix-blend-mode: screen;
 }
 
 /* What matters only for a while rises over the scene's right, above the band. */

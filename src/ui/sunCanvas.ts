@@ -27,7 +27,7 @@ const SEAT_H = 230;
 /** Where the figure sits on its floor, in figure units. */
 const BASE_Y = 42;
 /** How much the night dims the painted cave, and how dark the shadow lies on its floor (A3). */
-const NIGHT_DIM = 0.32;
+const NIGHT_DIM = 0.22;
 const SHADOW_ON_PAINT = 0.4;
 /** The sun's hand: from the dantian, this long, in figure units, and this bright at its tip. */
 const HAND_FROM = { x: 0, y: 9 } as const;
