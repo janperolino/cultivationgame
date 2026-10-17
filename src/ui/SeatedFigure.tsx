@@ -301,9 +301,9 @@ export function SeatMeter({ game }: { game: GameState }) {
  * rising clockwise from the lower left, where the factor stands, toward the ceiling at the lower
  * right; heat is a fainter arc just inside it, in red, brighter as it nears its limit.
  */
-const RING = { cx: 0, cy: 9, r: 180, heat: 6 } as const;
+const RING = { cx: 0, cy: 9, r: 255, heat: 8 } as const;
 /** How far below the level the ring's ends stand, in degrees; the rest of the circle is the ring. */
-const RING_END_DEG = 27;
+const RING_END_DEG = 20;
 const RING_SWEEP = (180 + 2 * RING_END_DEG) / 360;
 const RING_START_DEG = 180 - RING_END_DEG;
 

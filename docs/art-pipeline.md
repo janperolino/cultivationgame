@@ -23,7 +23,7 @@ Art is the still set. Code is everything that reads state, changes, moves, or th
 | Bars, buttons and their states | they change |
 | The accent on anything you can act on, and the qi cyan on qi | players recolor both in Settings; paint can't follow |
 | Icons | SVG, drawn after the concept's style, tinted by tokens |
-| The seated figure, its sun, shadow, qi and breakthrough scene | it shows state, and every player looks different: a scene paints the place and at most a featureless black silhouette on the seat, with the code's own silhouette laid exactly over it (A3) |
+| The seated figure, its sun, shadow, qi and breakthrough scene | it shows state, and every player looks different: a scene paints the place and at most a featureless black silhouette on the seat, which then is the figure, the code's own shape kept unseen exactly over it for the qi to run in (A3) |
 | The map's geometry, fog, roads, marks and labels | they come from the atlas; art gives the map only terrain surfaces, cloud stills and marker sprites |
 | The day wheel, the trees' fans, the Chronicle river, the cracks | drawn from data |
 | Anything that animates | art never moves |

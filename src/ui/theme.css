@@ -721,8 +721,8 @@ select {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
-  padding: 392px 40px 0 44px;
+  gap: 8px;
+  padding: 507px 40px 0 44px;
 }
 
 .cultivate-seat > :not(.seat-sun, .seat-flash, .cultivate-scene) {
@@ -1317,18 +1317,18 @@ select {
 
 .focus-track {
   stroke: color-mix(in srgb, var(--gilt) 14%, transparent);
-  stroke-width: 0.5;
+  stroke-width: 0.7;
 }
 
 .focus-arc {
   stroke: color-mix(in srgb, var(--gilt) 60%, transparent);
-  stroke-width: 0.9;
+  stroke-width: 1.3;
   transition: stroke-dasharray 250ms linear;
 }
 
 .heat-arc {
   stroke: color-mix(in srgb, var(--rarity-red) 40%, transparent);
-  stroke-width: 0.6;
+  stroke-width: 0.9;
   transition: stroke-dasharray 250ms linear;
 }
 
@@ -1339,12 +1339,12 @@ select {
 .focus-label {
   fill: color-mix(in srgb, var(--gilt) 85%, transparent);
   font-family: var(--font-display);
-  font-size: 7px;
+  font-size: 10px;
 }
 
 .focus-label.is-ceiling {
   fill: var(--muted);
-  font-size: 5.5px;
+  font-size: 8px;
 }
 
 :root[data-motion='reduced'] .focus-arc,
@@ -1906,23 +1906,18 @@ select {
   stroke-width: 0.6;
 }
 
-.cultivate-seat .seated {
-  filter: drop-shadow(-1.2px 0 0 color-mix(in srgb, var(--sun-warm) 45%, transparent));
-  -webkit-box-reflect: below -6px linear-gradient(transparent 72%, rgb(0 0 0 / 0.2));
+/* On Cultivate the painted silhouette is the figure (Jan's call after A3): the code's own shape
+   stays only as the outline the qi runs in and is clipped to, unseen, sized and placed over the
+   painted one (docs/mockups/cultivate-scene-guide.png is the old size; the painting's figure
+   stands about 0.69 of it). The painting carries the floor, the dais and the reflection. */
+.cultivate-seat .seated-head,
+.cultivate-seat .seated-body {
+  fill: none;
+  stroke: none;
 }
 
-/* The lit spot on the floor, where the painting leaves the seat, and the contact shadow in it. */
-.cultivate-seat .seat-figure::before {
-  content: '';
-  position: absolute;
-  left: -18%;
-  right: -18%;
-  bottom: -9%;
-  height: 26%;
-  background:
-    radial-gradient(closest-side, rgb(0 0 0 / 0.85), transparent 60%) center 60% / 74% 46% no-repeat,
-    radial-gradient(closest-side, color-mix(in srgb, var(--gilt) 16%, transparent), transparent);
-  pointer-events: none;
+.cultivate-seat .seat-figure {
+  width: 316px;
 }
 
 .dantian-stop-mid {

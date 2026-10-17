@@ -53,10 +53,10 @@ const STARS = (() => {
   return out;
 })();
 /** How far out the sun's glow stands, in seat widths and heights from the figure, and its size. */
-const SUN_REACH = { x: 1.75, y: 1.55, r: 1.9, strength: 1.35 } as const;
+const SUN_REACH = { x: 2.55, y: 2.25, r: 2.75, strength: 1.35 } as const;
 /** The sun's hand: from the dantian, this long, in figure units, and this bright at its tip. */
 const HAND_FROM = { x: 0, y: 9 } as const;
-const HAND_LENGTH = 165;
+const HAND_LENGTH = 240;
 const HAND_ALPHA = 0.34;
 const HAND_NIGHT = 0.35;
 
