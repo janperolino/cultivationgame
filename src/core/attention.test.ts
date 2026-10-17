@@ -249,8 +249,8 @@ describe('breathing', () => {
 
   it('reaches only so far, further with Grasping Breath', () => {
     const c = seated();
-    // Just in from the right edge of the cave: out of `breathe`'s reach.
-    const far: Orb = { ...orb(1, INHALE_T, 0), born: INHALE_T - 0.4, arrives: INHALE_T + 3.6 };
+    // On its way in from the right, three seconds into its drift: out of `breathe`'s reach.
+    const far: Orb = { ...orb(1, INHALE_T, 0), born: INHALE_T - 3, arrives: INHALE_T + 4 };
     const a = sitting(c, { t: INHALE_T, orbs: [far] });
     const d = Math.hypot(orbPosition(far, INHALE_T)[0], orbPosition(far, INHALE_T)[1] - 9);
     expect(d).toBeGreaterThan(58);
@@ -282,14 +282,14 @@ describe('breathing', () => {
 });
 
 describe('heat', () => {
-  /** Ten greedy grabs off the breath, one right after another. */
+  /** Twenty greedy grabs off the breath, one right after another. */
   function greedy(c: Cultivator) {
     let a = sitting(c, { t: EXHALE_T });
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
       a = { ...a, orbs: [orb(10 + i, a.t)] };
       const [x, y] = orbPosition(a.orbs[0]!, a.t);
       a = catchAt(a, c, x, y).attention;
-      a = tickAttention(a, c, 0.2, ATTENDING);
+      a = tickAttention(a, c, 0.1, ATTENDING);
     }
     return a;
   }

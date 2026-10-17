@@ -1318,11 +1318,13 @@ select {
   overflow: visible;
 }
 
+/* The qi canvas reaches 35% of the figure's box past it on every side (qiCanvas.ts's QI_PAD), so
+   the orbs come in from well out round the figure. */
 .seat-canvas {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: -35%;
+  width: 170%;
+  height: 170%;
   pointer-events: none;
 }
 

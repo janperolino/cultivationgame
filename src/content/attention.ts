@@ -27,24 +27,25 @@ export const BREATH_S = 6;
 export const INHALE_SHARE = 0.45;
 
 /**
- * An orb drifts in every three to six seconds, while Cultivate's figure is on screen: a steady
+ * An orb drifts in every one and a half to three seconds, while Cultivate's figure is on screen: a steady
  * flow of small orbs rather than a few big ones (Jan's call after P1.10, the design's first guess
- * was ten to twenty). Each is worth a third as much, so a minute of catching fills about the same.
+ * was ten to twenty), twice as many and each worth half since Jan's note after A4. Each catch fills
+ * and heats half what it did, so a minute of catching fills and heats about the same.
  */
-export const ORB_EVERY_S: readonly [min: number, max: number] = [3, 6];
+export const ORB_EVERY_S: readonly [min: number, max: number] = [1.5, 3];
 /** The share of orbs whose arrival is moved onto an inhale. */
 export const ORB_INHALE_LEAN = 0.7;
 /** Seconds an orb takes to drift from the edge of the cave to the figure. */
-export const ORB_DRIFT_S = 4;
+export const ORB_DRIFT_S = 7;
 /** Seconds it then floats near the figure before it fades. */
 export const ORB_LINGER_S = 10;
 /** With Heaven and Earth Resonance, dawn's orbs come this much sooner (the wait is multiplied by it). */
 export const RESONANCE_DAWN_EVERY = 0.6;
 /** At most this many orbs at once, so a long look away doesn't fill the cave. */
-export const ORB_CAP = 6;
+export const ORB_CAP = 10;
 
 /** A catch fills this share of the focus meter; a catch on the inhale is worth this much more. */
-export const ORB_FOCUS = 0.04;
+export const ORB_FOCUS = 0.02;
 export const ORB_TIMED = 1.75;
 
 /** A breath without a pointer (`breathe`) draws in the nearest orb this close to the dantian. */
@@ -59,7 +60,7 @@ export const BREATHE_COOLDOWN_S = 1.5;
  * Catching half the orbs on the inhale stays just under the cooling; grabbing every orb off the
  * breath tips over in about three minutes.
  */
-export const HEAT_PER_BREATH = 0.12;
+export const HEAT_PER_BREATH = 0.06;
 export const HEAT_TIMED = 0.5;
 export const HEAT_LIMIT = 1;
 /** Heat lost each second. */
@@ -69,11 +70,12 @@ export const HEAT_UNSETTLED_S = 40;
 
 /**
  * The figure, in its own units: the head at (0, −41), the dantian below the navel at (0, 9), the
- * crossed legs reaching y 42. Orbs come in from an ellipse round it and float on a ring nearer in.
+ * crossed legs reaching y 42. Orbs come in from an ellipse well out round it (further since Jan's note
+ * after A4) and float on a ring nearer in, where they floated before.
  */
 export const DANTIAN: readonly [x: number, y: number] = [0, 9];
-export const ORB_EDGE: readonly [rx: number, ry: number] = [85, 78];
-export const ORB_RING = 0.55;
+export const ORB_EDGE: readonly [rx: number, ry: number] = [140, 115];
+export const ORB_RING = 0.34;
 
 /**
  * What an orb carries (design § Attended seclusion, orb kinds). The hour's element is the common

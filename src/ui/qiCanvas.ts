@@ -35,6 +35,17 @@ import { canvasDensity } from './stage.ts';
 export const FIGURE_BOX = { x: -96, y: -92, w: 192, h: 156 } as const;
 
 /**
+ * The qi canvas reaches this share of the figure's box past it on every side (theme.css's
+ * `.seat-canvas` insets match), so orbs and motes come in from well out round the figure.
+ */
+const QI_PAD = 0.35;
+const QI_BOX = {
+  x: FIGURE_BOX.x - FIGURE_BOX.w * QI_PAD,
+  y: FIGURE_BOX.y - FIGURE_BOX.h * QI_PAD,
+  w: FIGURE_BOX.w * (1 + 2 * QI_PAD),
+} as const;
+
+/**
  * The seated silhouette, head apart: shoulders, arms resting into the lap, and crossed legs. The
  * two small inner shapes are the gaps between arm and waist, cut out by the even-odd fill.
  */
@@ -415,11 +426,11 @@ export class QiCanvas {
       this.canvas.width = Math.round(w * dpr);
       this.canvas.height = Math.round(h * dpr);
     }
-    const s = w / FIGURE_BOX.w;
+    const s = w / QI_BOX.w;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (!f) return;
-    ctx.setTransform(dpr * s, 0, 0, dpr * s, -FIGURE_BOX.x * s * dpr, -FIGURE_BOX.y * s * dpr);
+    ctx.setTransform(dpr * s, 0, 0, dpr * s, -QI_BOX.x * s * dpr, -QI_BOX.y * s * dpr);
 
     const a = this.attention();
     const t = a ? this.clock(a) : performance.now() / 1000;
