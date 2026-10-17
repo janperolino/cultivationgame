@@ -1,18 +1,21 @@
 // The day wheel (design § Cultivation, § UI and screens): the twelve double-hours from 子 at the top
 // round to 亥, each coloured by what it goes to, with element and dawn markers and locked sleep.
 // Routine shows it twice over, the day at home and the day on the road (design § Travel, the road
-// wheel). Pick an hour, or several (drag across, shift-click for a run, ctrl-click to add or drop
-// one), then pick what they go to; every home hour's yield is in its tooltip.
-import { useEffect, useRef, type KeyboardEvent, type PointerEvent } from 'react';
+// wheel). Pick hours, which build up (A4: a tap adds or drops one, a drag adds those it crosses,
+// shift adds a run), then pick what they go to; every home hour's yield is in its tooltip. On
+// Routine (A4) the wheel sits in a gilt bezel on the left of the scene and its editor under it,
+// which the screen places through `layout`.
+import { useEffect, useRef, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import { ELEMENT_INFO, phaseOf } from '../content/elements.ts';
 import { BRANCHES, HOUR_KIND_IDS, HOUR_KINDS, type HourKind } from '../content/hours.ts';
 import { ROAD_ROUTINES, type RoadHour } from '../content/map/travel.ts';
 import { dayRates, type HourYield } from '../core/cultivation.ts';
+import { Bezel } from './RoutineRings.tsx';
 import { roadRoutine, setRoadHours } from '../core/map/travel.ts';
 import type { GameState } from '../core/state.ts';
 import { hourKindOpen, hourLocked } from '../core/wheel.ts';
 import { formatPercent, formatRate } from './format.ts';
-import { hourRun, pressHour, type HourPick } from './hourPick.ts';
+import { hourRun, joinPicks, pressHour, type HourPick } from './hourPick.ts';
 import { ROAD_NAME, ROAD_WORD } from './roadWords.ts';
 import { useGame } from './store.ts';
 import { readingLine } from './bookcase.ts';
@@ -113,7 +116,11 @@ interface Cell {
   beckoning?: boolean;
 }
 
-/** The ring and its pick. A drag starts on a plain press and runs the short way round. */
+/**
+ * The ring and its pick. Picks build up (A4): a press adds an hour or drops it, shift adds the run
+ * from the last press, and a drag from an hour just added adds every hour it crosses, the short way
+ * round, to what was picked before.
+ */
 function Ring({
   cells,
   pick,
@@ -133,12 +140,11 @@ function Ring({
 }) {
   const anchor = useRef<number | null>(null);
   const drag = useRef<number | null>(null);
-  // A press on the one hour picked lets it go on release, unless it starts a drag.
-  const letGo = useRef(false);
+  // What was picked when the drag began, which the drag's run adds to.
+  const base = useRef<HourPick>([]);
   useEffect(() => {
     const up = () => {
       drag.current = null;
-      letGo.current = false;
     };
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', up);
@@ -148,19 +154,16 @@ function Ring({
     };
   }, []);
 
-  const press = (i: number, shift: boolean, add: boolean) => {
-    const r = pressHour(pick, anchor.current, i, { shift, add });
+  const press = (i: number, shift: boolean) => {
+    const r = pressHour(pick, anchor.current, i, { shift });
     anchor.current = r.anchor;
     onPick(r.pick);
-    return !shift && !add && r.pick.length === 1;
+    return r.pick;
   };
   const sweep = (i: number) => {
     if (drag.current === null) return;
-    const run = hourRun(drag.current, i);
-    if (run.length !== pick.length || run.some((h, k) => pick[k] !== h)) {
-      letGo.current = false;
-      onPick(run);
-    }
+    const next = joinPicks(base.current, hourRun(drag.current, i));
+    if (next.length !== pick.length || next.some((h, k) => pick[k] !== h)) onPick(next);
   };
   // A finger keeps its first target, so a touch drag asks which hour is under it.
   const touchMove = (e: PointerEvent<SVGSVGElement>) => {
@@ -171,17 +174,18 @@ function Ring({
 
   return (
     <svg
-      className={`wheel${beacon ? ' is-beacon' : ''}`}
-      viewBox="-160 -160 320 320"
+      className={`wheel ring${beacon ? ' is-beacon' : ''}`}
+      viewBox="-188 -188 376 376"
       role="group"
       aria-label={label}
       onPointerMove={touchMove}
     >
+      <Bezel quarters />
       {cells.map((cell, i) => {
         const b = BRANCHES[i]!;
         const [hx, hy] = polar(112, i * 30);
         const [kx, ky] = polar(86, i * 30);
-        const [ex, ey] = polar(146, i * 30);
+        const [ex, ey] = polar(148, i * 30);
         const picked = pick.includes(i);
         return (
           <g
@@ -195,19 +199,11 @@ function Ring({
             onPointerDown={(e) => {
               if (e.button !== 0) return;
               e.preventDefault();
-              const add = e.ctrlKey || e.metaKey;
-              if (!e.shiftKey && !add && pick.length === 1 && pick[0] === i) {
-                drag.current = i;
-                letGo.current = true;
-                return;
-              }
-              drag.current = press(i, e.shiftKey, add) ? i : null;
-            }}
-            onPointerUp={() => {
-              if (!letGo.current) return;
-              letGo.current = false;
-              anchor.current = null;
-              onPick([]);
+              const next = press(i, e.shiftKey);
+              // A drag runs from an hour just added; a press that dropped one starts none.
+              const added = !e.shiftKey && next.includes(i);
+              drag.current = added ? i : null;
+              base.current = next;
             }}
             onPointerEnter={(e) => {
               if (e.pointerType !== 'touch') sweep(i);
@@ -215,7 +211,7 @@ function Ring({
             onKeyDown={(e: KeyboardEvent) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                press(i, e.shiftKey, e.ctrlKey || e.metaKey);
+                press(i, e.shiftKey);
               } else if (e.key === 'Escape' && pick.length > 0) {
                 anchor.current = null;
                 onPick([]);
@@ -301,14 +297,6 @@ function LockedNote({ game, pick }: { game: GameState; pick: HourPick }) {
   );
 }
 
-function ClearPick({ onPick }: { onPick: (pick: number[]) => void }) {
-  return (
-    <button type="button" className="link-button wheel-clear" onClick={() => onPick([])}>
-      Clear the pick
-    </button>
-  );
-}
-
 // ---------------------------------------------------------------- the day at home
 
 export function DayWheel({
@@ -317,12 +305,15 @@ export function DayWheel({
   onPick,
   error,
   onError,
+  layout,
 }: {
   game: GameState;
   pick: HourPick;
   onPick: (pick: number[]) => void;
   error: string | null;
   onError: (error: string | null) => void;
+  /** Places the wheel and its editor. */
+  layout: (wheel: ReactNode, editor: ReactNode) => ReactNode;
 }) {
   const setHours = useGame((s) => s.setHours);
   const c = game.player;
@@ -350,77 +341,77 @@ export function DayWheel({
   const kinds = new Set(pick.map((i) => rates.hours[i]!.kind));
   const allLocked = pick.length > 0 && pick.every((i) => hourLocked(c, i));
   const one = pick.length === 1 ? rates.hours[pick[0]!]! : null;
-  return (
-    <div className="wheel-wrap">
-      <Ring
-        cells={cells}
-        pick={pick}
-        onPick={(p) => {
-          onPick(p);
-          onError(null);
-        }}
-        title={rates.routine ? rates.routine.name : 'Your own day'}
-        caption={rates.routine ? 'discipline +10%' : `+${formatRate(rates.qi)} qi a day`}
-        label="The day wheel: twelve double-hours, 子 at midnight at the top"
-        beacon={wants.size > 0}
-      />
-      <div className="wheel-editor">
-        {pick.length > 0 ? (
-          <>
-            <PickHead pick={pick} />
-            {one ? (
-              <p className="caption">
-                {HOUR_KINDS[one.kind].name}: {YIELD_UNITS[one.kind](one)} a day
-                {hourBonuses(one).length > 0 && (
-                  <Why label="This hour's bonuses">
-                    A twelfth of a day's {HOUR_KINDS[one.kind].name.toLowerCase()}, with{' '}
-                    {hourBonuses(one).join(', ')}.
-                  </Why>
-                )}
-                {hourNote(game, one) ? `. ${hourNote(game, one)}` : ''}
-              </p>
-            ) : (
-              <p className="caption">
-                Now {kinds.size === 1 ? HOUR_KINDS[[...kinds][0]!].name.toLowerCase() : 'a mix'}. A
-                kind sets them all.
-              </p>
-            )}
-            <div className="seg wheel-kinds" role="group" aria-label="What these hours go to">
-              {HOUR_KIND_IDS.filter((k) => hourKindOpen(c, k)).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  className={
-                    wants.has(k) && !(kinds.size === 1 && kinds.has(k)) ? 'beacon-ring' : undefined
-                  }
-                  aria-pressed={kinds.size === 1 && kinds.has(k)}
-                  disabled={!!game.ended || (allLocked && k !== 'sleep')}
-                  title={HOUR_KINDS[k].what}
-                  onClick={() => onError(setHours(pick, k))}
-                >
-                  {HOUR_KINDS[k].name}
-                </button>
-              ))}
-            </div>
-            <LockedNote game={game} pick={pick} />
-            {error && <p className="warn">{error}</p>}
-            <ClearPick onPick={onPick} />
-          </>
-        ) : (
+  return layout(
+    <Ring
+      cells={cells}
+      pick={pick}
+      onPick={(p) => {
+        onPick(p);
+        onError(null);
+      }}
+      title={rates.routine ? rates.routine.name : 'Your own day'}
+      caption={rates.routine ? 'discipline +10%' : `+${formatRate(rates.qi)} qi a day`}
+      label="The day wheel: twelve double-hours, 子 at midnight at the top"
+      beacon={wants.size > 0}
+    />,
+    <div className="wheel-editor">
+      {pick.length > 0 ? (
+        <>
+          <PickHead pick={pick} />
+          {one ? (
+            <p className="caption">
+              {HOUR_KINDS[one.kind].name}: {YIELD_UNITS[one.kind](one)} a day
+              {hourBonuses(one).length > 0 && (
+                <Why label="This hour's bonuses">
+                  A twelfth of a day's {HOUR_KINDS[one.kind].name.toLowerCase()}, with{' '}
+                  {hourBonuses(one).join(', ')}.
+                </Why>
+              )}
+              {hourNote(game, one) ? `. ${hourNote(game, one)}` : ''}
+            </p>
+          ) : (
+            <p className="caption">
+              Now {kinds.size === 1 ? HOUR_KINDS[[...kinds][0]!].name.toLowerCase() : 'a mix'}. A
+              kind sets them all.
+            </p>
+          )}
+          <div className="seg wheel-kinds" role="group" aria-label="What these hours go to">
+            {HOUR_KIND_IDS.filter((k) => hourKindOpen(c, k)).map((k) => (
+              <button
+                key={k}
+                type="button"
+                className={
+                  wants.has(k) && !(kinds.size === 1 && kinds.has(k)) ? 'beacon-ring' : undefined
+                }
+                aria-pressed={kinds.size === 1 && kinds.has(k)}
+                disabled={!!game.ended || (allLocked && k !== 'sleep')}
+                title={HOUR_KINDS[k].what}
+                onClick={() => onError(setHours(pick, k))}
+              >
+                {HOUR_KINDS[k].name}
+              </button>
+            ))}
+          </div>
+          <LockedNote game={game} pick={pick} />
+          {error && <p className="warn">{error}</p>}
+        </>
+      ) : (
+        <>
           <p className="muted">
-            Tap an hour to change what it goes to
+            Tap hours to change what they go to
             {wants.size > 0 &&
-              `, then give it to ${[...wants].map((k) => HOUR_KINDS[k].name).join(' or ')}`}
-            . Drag across the wheel, or shift-click, to take several.
+              `, then give them to ${[...wants].map((k) => HOUR_KINDS[k].name).join(' or ')}`}
+            . Each tap adds or drops one, and a drag takes all it crosses.
             <Why label="How the hours pay">
               Qi, study, practice and sleep are yours from the start; body and soul hours open with
               their arts. An hour whose element matches your root pays a quarter more from layer 4,
-              and dawn's purple qi at 卯 adds a tenth to qi. Ctrl-click adds or drops one hour.
+              and dawn's purple qi at 卯 adds a tenth to qi. Shift-click adds the run from the last
+              hour tapped; a tap off the wheel lets them all go.
             </Why>
           </p>
-        )}
-      </div>
-    </div>
+        </>
+      )}
+    </div>,
   );
 }
 
@@ -435,10 +426,12 @@ export function RoadWheel({
   game,
   pick,
   onPick,
+  layout,
 }: {
   game: GameState;
   pick: HourPick;
   onPick: (pick: number[]) => void;
+  layout: (wheel: ReactNode, editor: ReactNode) => ReactNode;
 }) {
   const mapAct = useGame((s) => s.mapAct);
   const c = game.player;
@@ -466,60 +459,57 @@ export function RoadWheel({
   const allLocked = pick.length > 0 && pick.every((i) => hourLocked(c, i));
   const own = !!life?.ownRoutines.some((o) => o.id === r.id);
 
-  return (
-    <div className="wheel-wrap">
-      <Ring
-        cells={cells}
-        pick={pick}
-        onPick={onPick}
-        title={r.short}
-        caption={own ? 'your own road' : `${travelling} hours on the road`}
-        label="The road wheel: twelve double-hours, 子 at midnight at the top"
-        beacon={false}
-      />
-      <div className="wheel-editor">
-        {pick.length > 0 ? (
-          <>
-            <PickHead pick={pick} />
-            <p className="caption">
-              {pick.length === 1
-                ? cells[pick[0]!]!.title.split(': ').slice(1).join(': ')
-                : `Now ${kinds.size === 1 ? ROAD_WORD[[...kinds][0]!] : 'a mix'}. A kind sets them all.`}
-              {!own && !group && ' Changing a way of the road makes it a road of your own.'}
-            </p>
-            <div className="seg wheel-kinds" role="group" aria-label="What these road hours go to">
-              {roadKinds(game).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  aria-pressed={kinds.size === 1 && kinds.has(k)}
-                  disabled={!!game.ended || !!group || (allLocked && k !== 'sleep')}
-                  title={k === 'home' ? 'do what the home wheel does at this hour' : ROAD_WORD[k]}
-                  onClick={() => mapAct((s) => setRoadHours(s, pick, k))}
-                >
-                  {ROAD_NAME[k]}
-                </button>
-              ))}
-            </div>
-            {group && (
-              <p className="caption">{group.name} keeps these hours while you travel with it.</p>
-            )}
-            <LockedNote game={game} pick={pick} />
-            <ClearPick onPick={onPick} />
-          </>
-        ) : (
-          <p className="muted">
-            The day you keep while a course is set. Tap an hour to change it; drag across, or
-            shift-click, to take several.
-            <Why label="How the road hours work">
-              Travel hours move you; looking around makes camp and shows what is near. An hour kept
-              as at home does what your home wheel does then. Riding moves you without your hours,
-              which cultivate at half.
-            </Why>
+  return layout(
+    <Ring
+      cells={cells}
+      pick={pick}
+      onPick={onPick}
+      title={r.short}
+      caption={own ? 'your own road' : `${travelling} hours on the road`}
+      label="The road wheel: twelve double-hours, 子 at midnight at the top"
+      beacon={false}
+    />,
+    <div className="wheel-editor">
+      {pick.length > 0 ? (
+        <>
+          <PickHead pick={pick} />
+          <p className="caption">
+            {pick.length === 1
+              ? cells[pick[0]!]!.title.split(': ').slice(1).join(': ')
+              : `Now ${kinds.size === 1 ? ROAD_WORD[[...kinds][0]!] : 'a mix'}. A kind sets them all.`}
+            {!own && !group && ' Changing a way of the road makes it a road of your own.'}
           </p>
-        )}
-      </div>
-    </div>
+          <div className="seg wheel-kinds" role="group" aria-label="What these road hours go to">
+            {roadKinds(game).map((k) => (
+              <button
+                key={k}
+                type="button"
+                aria-pressed={kinds.size === 1 && kinds.has(k)}
+                disabled={!!game.ended || !!group || (allLocked && k !== 'sleep')}
+                title={k === 'home' ? 'do what the home wheel does at this hour' : ROAD_WORD[k]}
+                onClick={() => mapAct((s) => setRoadHours(s, pick, k))}
+              >
+                {ROAD_NAME[k]}
+              </button>
+            ))}
+          </div>
+          {group && (
+            <p className="caption">{group.name} keeps these hours while you travel with it.</p>
+          )}
+          <LockedNote game={game} pick={pick} />
+        </>
+      ) : (
+        <p className="muted">
+          The day you keep while a course is set. Tap hours to change them: each tap adds or drops
+          one, and a drag takes all it crosses.
+          <Why label="How the road hours work">
+            Travel hours move you; looking around makes camp and shows what is near. An hour kept as
+            at home does what your home wheel does then. Riding moves you without your hours, which
+            cultivate at half.
+          </Why>
+        </p>
+      )}
+    </div>,
   );
 }
 

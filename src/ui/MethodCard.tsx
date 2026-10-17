@@ -1,14 +1,15 @@
 // One ladder's method on the Routine screen (design § Cultivation, methods): its name in its
 // rarity's color with its tier as a word, its mastery, what it builds, what it adds at a
-// breakthrough, its upkeep and properties, and a switch among the methods known for that ladder.
-// Words first, numbers behind the "?".
-import { useState } from 'react';
+// breakthrough, its upkeep and properties, and a switch among the methods known for that ladder,
+// folded to one line like the routine's with Change opening the list (A4, Jan's pick). Words first,
+// numbers behind the "?".
+import { useState, type CSSProperties } from 'react';
 import { ELEMENT_INFO, phaseOf } from '../content/elements.ts';
 import { BRANCHES } from '../content/hours.ts';
 import { MASTERY, METHOD_MASTERY } from '../content/mastery.ts';
 import { copyOf, copyTitle } from '../content/copies.ts';
 import { method as methodOf, nextChapter, type Method, type Upkeep } from '../content/methods.ts';
-import { rarity, type Rarity } from '../content/rarity.ts';
+import { rarity, rarityRank, type Rarity } from '../content/rarity.ts';
 import type { LadderId } from '../core/cultivation.ts';
 import { ladderGrowth, realmGrowthTotal } from '../core/growth.ts';
 import {
@@ -29,7 +30,9 @@ import { goToTab } from './nav.ts';
 import { useGame } from './store.ts';
 import { rings } from './beacons.ts';
 import { useBeacons } from './useBeacons.ts';
-import { Why } from './widgets.tsx';
+import { useCloseOutside } from './useCloseOutside.ts';
+import { METHOD_SEARCH_FROM, methodTiers, orderMethods } from './methodList.ts';
+import { Picker, Why } from './widgets.tsx';
 
 const ART_NAMES: Record<LadderId, string> = {
   qi: 'cultivation method',
@@ -113,66 +116,64 @@ function ActiveMethod({ game, which, m }: { game: GameState; which: LadderId; m:
 
   return (
     <>
-      <div>
+      {/* The name, then what it is with its mastery at the right, just over the bar the row's whole
+          width (A4, Jan's call). */}
+      <div className="method-head">
         <RarityName m={m} className="method-name" /> <span className="hanzi">{m.hanzi}</span>
       </div>
-      <p className="caption">
-        {r.name} · {tierName(m.tier)} · chapter {m.chapter}
-        {m.element && ` · ${ELEMENT_INFO[m.element].name.toLowerCase()}`}
-        <Why label={`About the ${m.name}`}>
-          <span>From {m.source}.</span>
-          <span>
-            Its tier carries {LADDER_LABELS[which].toLowerCase()} to the peak of {tierName(m.tier)};
-            above that it gains nothing. Its rarity, {r.name.toLowerCase()} ({r.note}), sets its
-            speed, its growth and its bonuses.
-          </span>
-          {m.element && (
+      <div className="method-sub">
+        <p className="caption">
+          {r.name} · {tierName(m.tier)} · chapter {m.chapter}
+          {m.element && ` · ${ELEMENT_INFO[m.element].name.toLowerCase()}`}
+          <Why label={`About the ${m.name}`}>
+            <span>From {m.source}.</span>
             <span>
-              Its hours pay a quarter more at {ELEMENT_INFO[m.element].name.toLowerCase()} hours:{' '}
-              {BRANCHES.filter((b) => b.element === phaseOf(m.element!))
-                .map((b) => b.hanzi)
-                .join(' ')}
-              .
+              Its tier carries {LADDER_LABELS[which].toLowerCase()} to the peak of{' '}
+              {tierName(m.tier)}; above that it gains nothing. Its rarity, {r.name.toLowerCase()} (
+              {r.note}), sets its speed, its growth and its bonuses.
             </span>
-          )}
-        </Why>
-      </p>
-      <div className="bars">
-        <div className="bar-row">
-          <span className="label">
-            {level.name} <span className="hanzi">{level.hanzi}</span>
-          </span>
-          <div
-            className="bar"
-            role="progressbar"
-            aria-label={`${m.name} mastery toward ${next?.name ?? 'its peak'}`}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(mastery.fraction * 100)}
-          >
-            <div className="bar-fill" style={{ width: `${mastery.fraction * 100}%` }} />
-          </div>
-          <span className="value">
-            ×{METHOD_MASTERY.speed[mastery.level]}
-            <Why label="How method mastery works">
+            {m.element && (
               <span>
-                Every hour cultivated with it is a twelfth of a practice day:{' '}
-                {formatNumber(mastery.practice)} so far
-                {mastery.next !== null && `, ${next!.name} at ${formatNumber(mastery.next)}`}.
+                Its hours pay a quarter more at {ELEMENT_INFO[m.element].name.toLowerCase()} hours:{' '}
+                {BRANCHES.filter((b) => b.element === phaseOf(m.element!))
+                  .map((b) => b.hanzi)
+                  .join(' ')}
+                .
               </span>
+            )}
+          </Why>
+        </p>
+        <span className="method-level">
+          {level.name} <span className="hanzi">{level.hanzi}</span> · ×
+          {METHOD_MASTERY.speed[mastery.level]}
+          <Why label="How method mastery works">
+            <span>
+              Every hour cultivated with it is a twelfth of a practice day:{' '}
+              {formatNumber(mastery.practice)} so far
+              {mastery.next !== null && `, ${next!.name} at ${formatNumber(mastery.next)}`}.
+            </span>
+            <span>
+              Mastery sets its speed, ×0.6 at Glimpse to ×1.2 at Origin, and each level releases a
+              burst of insight.
+            </span>
+            {!capped && (
               <span>
-                Mastery sets its speed, ×0.6 at Glimpse to ×1.2 at Origin, and each level releases a
-                burst of insight.
+                Its part of the speed now: ×{speed.total.toFixed(2)} (tier ×{speed.tier}, rarity ×
+                {speed.rarity.toFixed(2)}, mastery ×{speed.mastery}); layers 1–3 ignore it.
               </span>
-              {!capped && (
-                <span>
-                  Its part of the speed now: ×{speed.total.toFixed(2)} (tier ×{speed.tier}, rarity ×
-                  {speed.rarity.toFixed(2)}, mastery ×{speed.mastery}); layers 1–3 ignore it.
-                </span>
-              )}
-            </Why>
-          </span>
-        </div>
+            )}
+          </Why>
+        </span>
+      </div>
+      <div
+        className="bar method-bar"
+        role="progressbar"
+        aria-label={`${m.name} mastery toward ${next?.name ?? 'its peak'}`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(mastery.fraction * 100)}
+      >
+        <div className="bar-fill" style={{ width: `${mastery.fraction * 100}%` }} />
       </div>
       {capped && (
         <p className="warn">
@@ -236,13 +237,30 @@ function waitingWords(c: Cultivator, id: string): string {
 }
 
 /** One ladder's row: its active method, or why it has none, and the switch. */
-export function MethodRow({ game, which }: { game: GameState; which: LadderId }) {
+export function MethodRow({
+  game,
+  which,
+  open,
+  onOpen,
+}: {
+  game: GameState;
+  which: LadderId;
+  /** Climb with is open: the panel shows this row alone, with its list under it (A4). */
+  open: boolean;
+  onOpen: (open: boolean) => void;
+}) {
   const setMethod = useGame((s) => s.setMethod);
   const [error, setError] = useState<string | null>(null);
+  const setOpen = onOpen;
+  const [query, setQuery] = useState('');
+  const [tier, setTier] = useState<number | null>(null);
+  const fold = useCloseOutside<HTMLDivElement>(open, () => setOpen(false));
   const c = game.player;
   const m = ladderMethod(c, which);
   const known = knownMethods(c, which);
   const others = known.filter((k) => k.id !== m?.id);
+  const rows = orderMethods(known, known.length > METHOD_SEARCH_FROM ? { query, tier } : {});
+  const tiers = methodTiers(known);
   const copy = m ? null : waitingCopy(c, which);
   const ring = rings(useBeacons(), 'climb-with', { ladder: which });
 
@@ -270,25 +288,81 @@ export function MethodRow({ game, which }: { game: GameState; which: LadderId })
         )}
         {m && others.length === 0 && <span className="caption method-only">Only one known</span>}
         {others.length > 0 && (
-          <label className={`method-switch${ring ? ' beacon-ring' : ''}`}>
-            <span className="caption">Climb with</span>
-            <select
-              value={m?.id ?? ''}
-              disabled={!!game.ended}
-              onChange={(e) => setError(setMethod(which, e.target.value))}
+          <div ref={fold} className={`routine-fold method-fold${open ? ' is-open' : ''}`}>
+            <button
+              type="button"
+              className={`routine-fold-head${ring ? ' beacon-ring' : ''}`}
+              aria-expanded={open}
+              onClick={() => setOpen(!open)}
             >
-              {!m && <option value="">Choose a {ART_NAMES[which]}</option>}
-              {known.map((k) => {
-                const check = canTakeUp(c, which, k.id);
-                return (
-                  <option key={k.id} value={k.id} disabled={!check.ok}>
-                    {k.name} · {rarity(k.rarity).name.toLowerCase()} · {tierName(k.tier)}
-                    {!check.ok && ` (${check.reason.replace(/\.$/, '').toLowerCase()})`}
-                  </option>
-                );
-              })}
-            </select>
-          </label>
+              <span className="routine-fold-label">Climb with</span>
+              <b>{m ? m.name : `no ${ART_NAMES[which]}`}</b>
+              <span className="muted">· {known.length} known</span>
+              <span className="routine-fold-chev">{open ? 'Close' : 'Change'}</span>
+            </button>
+            {open && (
+              <div className="method-pick">
+                {known.length > METHOD_SEARCH_FROM && (
+                  <div className="method-pick-tools">
+                    <input
+                      type="search"
+                      className="technique-search"
+                      aria-label={`Search the ${ART_NAMES[which]}s`}
+                      placeholder="Search"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                    />
+                    {tiers.length > 0 && (
+                      <Picker
+                        label="Tier"
+                        value={tier === null ? '' : String(tier)}
+                        options={[
+                          { id: '', name: 'All tiers' },
+                          ...tiers.map((n) => ({ id: String(n), name: `Tier ${n}` })),
+                        ]}
+                        onChange={(id) => setTier(id ? Number(id) : null)}
+                      />
+                    )}
+                  </div>
+                )}
+                <ul className="method-pick-list">
+                  {rows.map(({ m: k, under }) => {
+                    const check = canTakeUp(c, which, k.id);
+                    const now = k.id === m?.id;
+                    const rare = rarityRank(k.rarity) >= rarityRank('blue');
+                    return (
+                      <li key={k.id}>
+                        <button
+                          type="button"
+                          className={`method-pick-row${now ? ' is-now' : ''}${under ? ' is-under' : ''}${rare ? ' is-rare' : ''}`}
+                          style={{ '--rarity-color': `var(--rarity-${k.rarity})` } as CSSProperties}
+                          disabled={now || !check.ok || !!game.ended}
+                          title={check.ok ? `Take up the ${k.name}` : check.reason}
+                          onClick={() => {
+                            const why = setMethod(which, k.id);
+                            setError(why);
+                            if (!why) setOpen(false);
+                          }}
+                        >
+                          <span className="method-pick-name">
+                            <RarityName m={k} /> <span className="hanzi">{k.hanzi}</span>
+                          </span>
+                          <span className="method-pick-meta">
+                            {now
+                              ? 'Climbing'
+                              : check.ok
+                                ? `${rarity(k.rarity).name} · ${tierName(k.tier)} · ch. ${k.chapter}`
+                                : check.reason.replace(/.$/, '')}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {rows.length === 0 && <p className="caption">Nothing matches.</p>}
+              </div>
+            )}
+          </div>
         )}
         {error && <p className="warn">{error}</p>}
       </div>

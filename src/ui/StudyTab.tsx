@@ -1,8 +1,9 @@
 // Routine › Study (design § UI and screens, the Routine row; § Cultivation, Reading): the copy
 // being read, with its bar, time left, lump and how well it suits you; the queue after it, reordered
 // and pruned, a waiting copy saying why; the unread copies on the shelf, each with Queue; and what
-// study gives.
-import { useState } from 'react';
+// study gives. On Routine's scene (A4) the copy being read is the ring, its figures the page beside
+// it, and the rest the column.
+import { useState, type ReactNode } from 'react';
 import { copyManual, copyTitle, readDays, readLump, SUITS_CAP } from '../content/copies.ts';
 import { MANUAL_KINDS } from '../content/manuals.ts';
 import { rarity } from '../content/rarity.ts';
@@ -28,6 +29,7 @@ import { rings } from './beacons.ts';
 import { useBeacons } from './useBeacons.ts';
 import { practiceTime } from './techniqueList.ts';
 import { Why } from './widgets.tsx';
+import { ReadingRing, RoutineScene } from './RoutineRings.tsx';
 
 /** "White method · 3 study days", what a queued or shelved copy is and how long it reads. */
 function copyMeta(id: string): string {
@@ -74,14 +76,11 @@ function Suits({ c, id }: { c: Cultivator; id: string }) {
   );
 }
 
-function ReadingNow({ game }: { game: GameState }) {
-  const unqueue = useGame((s) => s.unqueue);
-  const c = game.player;
-  const rates = dayRates(c, game.calendar.day);
-  const id = readingCopy(c);
-  const queue = readingQueue(c);
+/** The column's line on reading: how many hours go to study, and a way to the wheel. */
+function ReadingHead({ game }: { game: GameState }) {
+  const rates = dayRates(game.player, game.calendar.day);
   const hours = rates.count.study;
-  const head = (
+  return (
     <div className="study-head">
       <h2 className="panel-heading">Reading now</h2>
       <span className="caption">
@@ -94,13 +93,20 @@ function ReadingNow({ game }: { game: GameState }) {
       </button>
     </div>
   );
+}
+
+/** The page beside the ring: the copy being read, its figures and Stop; or why nothing is. */
+function ReadingPage({ game }: { game: GameState }) {
+  const unqueue = useGame((s) => s.unqueue);
+  const c = game.player;
+  const rates = dayRates(c, game.calendar.day);
+  const id = readingCopy(c);
   if (!id) {
     return (
-      <section className="panel study-now" aria-label="Reading now">
-        {head}
+      <section className="study-now" aria-label="Reading now">
         <p className="muted">
-          {queue.length > 0
-            ? 'Nothing in the queue can be read yet: each waits on something, below.'
+          {readingQueue(c).length > 0
+            ? 'Nothing in the queue can be read yet: each waits on something, in the queue.'
             : 'Nothing is being read. Queue a copy from the shelf, and it begins at once.'}
         </p>
       </section>
@@ -111,35 +117,29 @@ function ReadingNow({ game }: { game: GameState }) {
   const done = readProgress(c, id);
   const lump = readLump(id) * insightMultiplier(c);
   return (
-    <section className="panel study-now" aria-label="Reading now">
-      {head}
+    <section className="study-now" aria-label="Reading now">
+      {/* The ring's hub carries the name; the page keeps it for a screen reader. */}
+      <h3 className="visually-hidden">
+        {m.name} {m.hanzi}
+      </h3>
       <div className="study-book">
         <StillSpine c={c} m={m} />
-        <div className="study-book-body">
-          <h3 className="study-book-name">
-            <RarityName m={m} /> <span className="hanzi">{m.hanzi}</span>
-          </h3>
-          <span className="caption">{copyMeta(id)}</span>
-          <div
-            className="bar study-bar"
-            role="progressbar"
-            aria-label={`Reading ${copyTitle(id)}`}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round((done / need) * 100)}
-          >
-            <div className="bar-fill" style={{ width: `${Math.min(100, (done / need) * 100)}%` }} />
-          </div>
-          <p className="study-figures">
-            <span>
-              {formatNumber(done)} of {formatNumber(need)} study days
-            </span>
-            <span className="muted">done in {leftWords(c, id, rates.study)}</span>
-            <span className="muted">+{formatNumber(lump)} insight when done</span>
-            <Suits c={c} id={id} />
-          </p>
-        </div>
-        <button type="button" className="button button-quiet" onClick={() => unqueue(id)}>
+        <p className="study-figures">
+          <span>
+            {formatNumber(done)} of {formatNumber(need)} study days
+          </span>
+          <span className="muted">done in {leftWords(c, id, rates.study)}</span>
+          <span className="muted">+{formatNumber(lump)} insight when done</span>
+          <Suits c={c} id={id} />
+        </p>
+      </div>
+      <div>
+        <button
+          type="button"
+          className="button button-quiet"
+          aria-label={`Stop reading ${copyTitle(id)}`}
+          onClick={() => unqueue(id)}
+        >
           Stop
         </button>
       </div>
@@ -299,17 +299,20 @@ function StudyGives({ game }: { game: GameState }) {
   );
 }
 
-export function StudyTab({ game }: { game: GameState }) {
+export function StudyTab({ game, head }: { game: GameState; head: ReactNode }) {
   return (
-    <div className="study-split">
-      <div className="study-main">
-        <ReadingNow game={game} />
-        <UpNext game={game} />
-      </div>
-      <div className="study-side">
-        <Shelf game={game} />
-        <StudyGives game={game} />
-      </div>
-    </div>
+    <RoutineScene
+      ring={<ReadingRing c={game.player} id={readingCopy(game.player)} />}
+      page={<ReadingPage game={game} />}
+      column={
+        <>
+          {head}
+          <ReadingHead game={game} />
+          <UpNext game={game} />
+          <Shelf game={game} />
+          <StudyGives game={game} />
+        </>
+      }
+    />
   );
 }

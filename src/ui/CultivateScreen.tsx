@@ -7,6 +7,7 @@ import { daysPerRealMs } from '../core/loop.ts';
 import { ageYears, lifespanYears, type GameState } from '../core/state.ts';
 import { CardFeed } from './CardFeed.tsx';
 import { effectiveWheel } from '../core/wheel.ts';
+import { CaveBackdrop } from './CaveBackdrop.tsx';
 import { WheelStrip } from './DayWheel.tsx';
 import {
   formatAgeShort,
@@ -178,7 +179,7 @@ export function CultivateScreen() {
   return (
     <div className="cultivate">
       <section className={`cultivate-seat${breaking}`} aria-label="The seat">
-        <div className="cultivate-scene" aria-hidden="true" />
+        <CaveBackdrop />
         <div className="seat-flash" aria-hidden="true" />
         <SeatedFigure game={game} />
         <SeatMeter game={game} />

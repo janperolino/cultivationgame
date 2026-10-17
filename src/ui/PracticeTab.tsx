@@ -6,7 +6,14 @@
 // the next, what it gives, its kin, a line on its Art (bought on its tree, design § Cultivation,
 // Where manuals live), and the button that puts it in a free slot. Rarer techniques look it:
 // an edge in the rarity's color from blue, a glow from purple.
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import { techniqueArt, type Manual } from '../content/manuals.ts';
 import { MASTERY, PRACTICE_SLOTS_MAX, TECHNIQUE_MASTERY } from '../content/mastery.ts';
 import { rarity, rarityRank, type RarityId } from '../content/rarity.ts';
@@ -23,7 +30,6 @@ import {
   kinshipBonus,
   knownTechniques,
   mastery,
-  masteryNeed,
   practiced,
   practiceSlots,
   practicingNow,
@@ -40,6 +46,7 @@ import { useGame } from './store.ts';
 import { rings } from './beacons.ts';
 import { useBeacons } from './useBeacons.ts';
 import {
+  finished,
   knownChapters,
   practiceTime,
   TECHNIQUE_ORDERS,
@@ -48,7 +55,8 @@ import {
   TOOLBAR_FROM,
   type TechniqueOrder,
 } from './techniqueList.ts';
-import { Why } from './widgets.tsx';
+import { Picker, Why } from './widgets.tsx';
+import { MasteryRing, RoutineScene } from './RoutineRings.tsx';
 
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -322,9 +330,11 @@ function TechniqueList({
   const [query, setQuery] = useState('');
   const [tier, setTier] = useState<number | null>(null);
   const [dao, setDao] = useState<string | null>(null);
+  const [hideFinished, setHideFinished] = useState(false);
   const known = knownTechniques(c);
   const toolbar = known.length > TOOLBAR_FROM;
-  const rows = techniqueRows(c, toolbar ? { order, query, tier, dao } : {});
+  const rows = techniqueRows(c, toolbar ? { order, query, tier, dao, hideFinished } : {});
+  const done = known.filter((t) => finished(c, t)).length;
   const filters = techniqueFilters(known);
   // While a slot is free, each row that can take practice offers it.
   const inSlots = practiced(c);
@@ -352,52 +362,55 @@ function TechniqueList({
         </span>
       </div>
       {toolbar && (
+        // The study's toolbar (A4): the search on its own line, then the tier and finished chips, with
+        // the Dao and the order as two quiet pickers at the right.
         <div className="technique-toolbar">
-          <div className="technique-toolbar-row">
-            <input
-              type="search"
-              className="technique-search"
-              aria-label="Search techniques"
-              placeholder="Search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            <select
-              aria-label="Order"
-              value={order}
-              onChange={(e) => setOrder(e.target.value as TechniqueOrder)}
+          <input
+            type="search"
+            className="technique-search"
+            aria-label="Search techniques"
+            placeholder="Find a technique…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <div className="technique-chips-filter" role="group" aria-label="Filter">
+            <button
+              type="button"
+              aria-pressed={hideFinished}
+              title="Leave out the techniques at Origin, whose mastery is complete"
+              onClick={() => setHideFinished(!hideFinished)}
             >
-              {TECHNIQUE_ORDERS.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.name}
-                </option>
-              ))}
-            </select>
+              Hide finished{done > 0 && ` · ${done}`}
+            </button>
+            {filters.tiers.length > 0 && (
+              <Picker
+                label="Tier"
+                value={tier === null ? '' : String(tier)}
+                options={[
+                  { id: '', name: 'All tiers' },
+                  ...filters.tiers.map((n) => ({ id: String(n), name: `Tier ${n}` })),
+                ]}
+                onChange={(id) => setTier(id ? Number(id) : null)}
+              />
+            )}
+            {filters.daos.length > 0 && (
+              <Picker
+                label="Dao"
+                value={dao ?? ''}
+                options={[
+                  { id: '', name: 'Any Dao' },
+                  ...filters.daos.map((d) => ({ id: d, name: capital(d) })),
+                ]}
+                onChange={(id) => setDao(id || null)}
+              />
+            )}
+            <Picker
+              label="Order"
+              value={order}
+              options={TECHNIQUE_ORDERS}
+              onChange={(id) => setOrder(id)}
+            />
           </div>
-          {(filters.tiers.length > 0 || filters.daos.length > 0) && (
-            <div className="technique-chips-filter" role="group" aria-label="Filter">
-              {filters.tiers.map((n) => (
-                <button
-                  key={`tier-${n}`}
-                  type="button"
-                  aria-pressed={tier === n}
-                  onClick={() => setTier(tier === n ? null : n)}
-                >
-                  Tier {n}
-                </button>
-              ))}
-              {filters.daos.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  aria-pressed={dao === d}
-                  onClick={() => setDao(dao === d ? null : d)}
-                >
-                  {capital(d)}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       )}
       {rows.length === 0 && <p className="caption technique-none">Nothing matches.</p>}
@@ -528,59 +541,23 @@ function LineStrip({
   );
 }
 
-/** Glimpse to Origin as five steps, each filling within itself, with its insight, and the time to the next. */
-function MasteryBlock({ c, t, rate }: { c: Cultivator; t: Technique; rate: number }) {
+/** The time to the next level, under the page; the five steps themselves are the ring (A4). */
+function MasteryLine({ c, t, rate }: { c: Cultivator; t: Technique; rate: number }) {
   const m = mastery(c, t.id);
   const sealed = techniqueSealed(c, t);
   const rateWords =
     practiced(c).includes(t.id) && !sealed && m.next !== null && rate > 0
       ? ` At ${formatRate(rate * (1 + kinshipBonus(c, t.id)))} practice days a day.`
       : '';
-
   return (
-    <section className={`mastery-block${sealed ? ' is-sealed' : ''}`} aria-label="Mastery">
-      <div className="mastery-block-head">
-        <span className="technique-label">
-          Mastery · each level adds +{CHECKS_A_LEVEL} to checks and releases insight
-        </span>
-        <span className="technique-num">{formatNumber(m.practice)} practice days</span>
-      </div>
-      <ol className="mastery-steps">
-        {MASTERY.map((level, i) => {
-          const from = i === 0 ? 0 : masteryNeed(t, i - 1);
-          const to = masteryNeed(t, i);
-          const fill = i <= m.level ? 1 : i === m.level + 1 ? (m.practice - from) / (to - from) : 0;
-          const state = i === m.level ? ' is-current' : i < m.level ? ' is-reached' : '';
-          const burst = levelBurst(c, t, i);
-          return (
-            <li key={level.id} className={`mastery-step${state}`}>
-              <div
-                className="bar"
-                role="progressbar"
-                aria-label={`${level.name}${i === m.level ? ', the current level' : ''}`}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round(fill * 100)}
-              >
-                <div className="bar-fill" style={{ width: `${fill * 100}%` }} />
-              </div>
-              <span className="mastery-step-name" title={level.name}>
-                {level.name}
-              </span>
-              <span className="hanzi mastery-step-hanzi">{level.hanzi}</span>
-              <span className="caption">{to === 0 ? 'at once' : `${formatNumber(to)} days`}</span>
-              <span className="caption mastery-step-burst">
-                {burst > 0 ? `+${formatNumber(burst)} insight` : ' '}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-      <p className="mastery-eta">
-        {nextLevelWords(c, t, rate)}
-        {rateWords}
-      </p>
-    </section>
+    <p className="mastery-eta">
+      {nextLevelWords(c, t, rate)}
+      {rateWords}
+      <Why label="Mastery">
+        Glimpse to Origin, round the ring: each level adds +{CHECKS_A_LEVEL} to checks and releases
+        the insight under it when it lands.
+      </Why>
+    </p>
   );
 }
 
@@ -692,7 +669,7 @@ function TechniquePage({
           practice it yet.
         </p>
       )}
-      <MasteryBlock c={c} t={t} rate={rate} />
+      <MasteryLine c={c} t={t} rate={rate} />
       <dl className="technique-figures">
         <div>
           <dt>Accuracy</dt>
@@ -749,7 +726,7 @@ function TechniquePage({
   );
 }
 
-export function PracticeTab() {
+export function PracticeTab({ head }: { head: ReactNode }) {
   const game = useGame((s) => s.game);
   const [chosen, setChosen] = useState<string | null>(null);
   const page = useRef<HTMLDivElement>(null);
@@ -780,31 +757,40 @@ export function PracticeTab() {
 
   if (!selected) {
     return (
-      <section className="panel">
-        <p className="muted">You know no techniques yet.</p>
-      </section>
+      <RoutineScene
+        ring={null}
+        page={null}
+        column={
+          <>
+            {head}
+            <p className="muted">You know no techniques yet.</p>
+          </>
+        }
+      />
     );
   }
+  const t = known.find((k) => k.id === selected)!;
 
   return (
-    <>
-      <PracticePanel c={c} rates={rates} total={total} onSelect={select} onKeep={setChosen} />
-      <div className="technique-split">
-        <TechniqueList
-          c={c}
-          selected={selected}
-          fresh={new Set(newIds(game, 'technique'))}
-          onSelect={select}
-        />
+    <RoutineScene
+      ring={<MasteryRing c={c} t={t} />}
+      page={
         <div ref={page} className="technique-page-col">
-          <TechniquePage
+          <TechniquePage c={c} t={t} rate={total / splitFor(c, selected)} onSelect={select} />
+        </div>
+      }
+      column={
+        <>
+          {head}
+          <PracticePanel c={c} rates={rates} total={total} onSelect={select} onKeep={setChosen} />
+          <TechniqueList
             c={c}
-            t={known.find((t) => t.id === selected)!}
-            rate={total / splitFor(c, selected)}
+            selected={selected}
+            fresh={new Set(newIds(game, 'technique'))}
             onSelect={select}
           />
-        </div>
-      </div>
-    </>
+        </>
+      }
+    />
   );
 }

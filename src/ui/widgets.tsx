@@ -15,6 +15,7 @@ import { formatAgeShort, formatNumber, formatPercent, LADDER_LABELS } from './fo
 import { openPanel } from './scene.ts';
 import { rectIn, toggleFullscreen, useStage } from './stage.ts';
 import { useGame } from './store.ts';
+import { useCloseOutside } from './useCloseOutside.ts';
 
 /** Fullscreen on and off (Settings and the foot of the menu); F11 works as well. */
 export function FullscreenButton({ className = '' }: { className?: string }) {
@@ -175,6 +176,8 @@ export function Why({
 }) {
   const [open, setOpen] = useState(false);
   const [side, setSide] = useState<'left' | 'right'>('left');
+  // Low on the stage the tip opens upward, so it never runs off its foot (A4).
+  const [up, setUp] = useState(false);
   /** How wide the tip may grow on its side before it would leave the screen. */
   const [room, setRoom] = useState(290);
   const id = useId();
@@ -205,6 +208,7 @@ export function Why({
     const right = left > stage.width / 2;
     setSide(right ? 'right' : 'left');
     setRoom(Math.floor(right ? left + r.width - 2 : stage.width - left - 2));
+    setUp(r.top - stage.top / stage.factor > stage.height * 0.6);
   };
   return (
     <span ref={wrap} className={`why${open ? ' is-open' : ''}`} onMouseEnter={place}>
@@ -227,7 +231,7 @@ export function Why({
       <span
         role="tooltip"
         id={id}
-        className={`why-tip why-${side}`}
+        className={`why-tip why-${side}${up ? ' is-up' : ''}`}
         style={{ '--tip-room': `${room}px` } as CSSProperties}
       >
         {children}
@@ -243,5 +247,59 @@ export function EventLine({ game, e }: { game: GameState; e: ChronicleEvent }) {
       {eventText(game, e)}
       {settledItself(e) && <span className="settled-mark"> · settled without you</span>}
     </>
+  );
+}
+
+/**
+ * A quiet picker in place of a native select (A4, Jan's call: the system's lists can't be dressed):
+ * a chip naming the choice, opening an obsidian slip of the options like the tips.
+ */
+export function Picker<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: readonly { id: T; name: string }[];
+  onChange: (id: T) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useCloseOutside<HTMLSpanElement>(open, () => setOpen(false));
+  const current = options.find((o) => o.id === value) ?? options[0];
+  return (
+    <span ref={ref} className={`picker${open ? ' is-open' : ''}`}>
+      <button
+        type="button"
+        className="picker-chip"
+        aria-label={`${label}: ${current?.name ?? ''}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        {current?.name}
+      </button>
+      {open && (
+        <ul className="picker-menu" role="listbox" aria-label={label}>
+          {options.map((o) => (
+            <li key={o.id}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={o.id === value}
+                className={o.id === value ? 'is-on' : undefined}
+                onClick={() => {
+                  onChange(o.id);
+                  setOpen(false);
+                }}
+              >
+                {o.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </span>
   );
 }

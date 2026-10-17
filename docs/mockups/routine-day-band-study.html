@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Routine, the day under the wheel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<style>
+  /* A4 study: what sits under the day wheel on Routine › Day when no hour is picked: Home or Road,
+     what the day gives, the routine kept, and the two settings (minor breakthroughs, burning
+     stones). Six takes on the same content, over the cave as the game shows it. */
+  :root {
+    --bg: #040507; --text: #e9e5da; --muted: #8d949d; --accent: #d6ab4c; --gilt: #d9b46a;
+    --line: rgb(217 180 106 / 0.4); --line-faint: rgb(217 180 106 / 0.16); --crack: #7fc7d9;
+    --body: #c98a5f; --soul: #a28fdc; --study: #a9b97f; --practice: #cf7f9f;
+    --display: 'Cormorant Garamond', Georgia, serif; --ui: Inter, system-ui, sans-serif; --brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #000; color: var(--text); font-family: var(--ui); overflow-x: hidden; }
+  .bar-top { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 14px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line-faint); }
+  .bar-top b { color: var(--text); font-weight: 500; }
+  .bar-top button { background: none; border: 1px solid var(--line-faint); color: var(--muted); padding: 4px 11px; font: inherit; border-radius: 3px; cursor: pointer; }
+  .bar-top button.on { color: var(--accent); border-color: var(--line); }
+  .wrap { width: 100%; overflow: clip; }
+  .stage { position: relative; width: 1920px; height: 1080px; transform-origin: 0 0; background: var(--bg); overflow: hidden; }
+  .paint { position: absolute; inset: 0 0 0 72px; background: url('../../src/ui/art/cultivate/scene.webp') center bottom / cover no-repeat; filter: brightness(1.22); }
+  .scrim { position: absolute; inset: 0 0 0 72px; background: linear-gradient(to left, rgb(4 5 7 / .92) 0%, rgb(4 5 7 / .75) 38%, rgb(4 5 7 / .45) 62%, rgb(4 5 7 / .3)), linear-gradient(rgb(4 5 7 / .35), rgb(4 5 7 / .35)); }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(4 5 7 / .94); border-right: 1px solid var(--line-faint); }
+  .col { position: absolute; top: 84px; right: 80px; width: 660px; opacity: .55; }
+  .col h1 { font-family: var(--display); font-weight: 500; font-size: 46px; margin: 0; }
+  .col h1 span { font-family: var(--brush); color: var(--gilt); font-size: 34px; margin-left: 8px; }
+  .col .ghost { height: 14px; background: rgb(255 255 255 / .05); margin: 18px 0; border-radius: 2px; }
+  .col .ghost.s { width: 60%; } .col .ghost.t { height: 36px; }
+  .col p { color: var(--muted); font-size: 13px; }
+  .ring { position: absolute; left: 316px; top: 56px; width: 600px; height: 600px; }
+  .band { position: absolute; left: 206px; top: 680px; width: 820px; }
+
+  /* Shared bits. */
+  .hz { font-family: var(--brush); color: var(--gilt); }
+  .cap { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 20px; padding: 2px; }
+  .seg button { background: none; border: 0; color: var(--muted); font-family: var(--display); font-size: 17px; padding: 2px 18px; border-radius: 18px; cursor: pointer; }
+  .seg button.on { background: rgb(214 171 76 / .16); color: var(--accent); box-shadow: inset 0 0 0 1px var(--line); }
+  .seg button .hz { font-size: 14px; margin-left: 4px; }
+  .link { color: var(--accent); font-size: 13px; cursor: pointer; }
+  .q { display: inline-grid; place-items: center; width: 14px; height: 14px; border: 1px solid rgb(255 255 255 / .2); border-radius: 50%; font-size: 9px; color: var(--muted); margin-left: 5px; vertical-align: 2px; }
+  .chips { display: inline-flex; gap: 0; border: 1px solid var(--line-faint); border-radius: 3px; overflow: hidden; }
+  .chips span { padding: 4px 11px; font-size: 13px; color: var(--muted); }
+  .chips span + span { border-left: 1px solid var(--line-faint); }
+  .chips span.on { color: var(--accent); background: rgb(214 171 76 / .12); }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .toggle i { width: 26px; height: 14px; border-radius: 8px; border: 1px solid var(--line); position: relative; }
+  .toggle i::after { content: ''; position: absolute; left: 2px; top: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .toggle.on i { border-color: var(--accent); background: rgb(214 171 76 / .15); }
+  .toggle.on i::after { left: 14px; background: var(--accent); }
+  .fig { text-align: center; }
+  .fig b { display: block; font-family: var(--display); font-weight: 500; font-size: 26px; line-height: 1.1; }
+  .fig small { display: block; font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-top: 2px; }
+  .fig.qi b { color: var(--crack); } .fig.body b { color: var(--body); } .fig.soul b { color: var(--soul); } .fig.study b { color: var(--study); } .fig.practice b { color: var(--practice); }
+  .rule { height: 1px; background: linear-gradient(to right, transparent, var(--line-faint) 20%, var(--line-faint) 80%, transparent); margin: 14px 0; }
+  .center { text-align: center; }
+  .row { display: flex; align-items: center; gap: 14px; }
+  .between { justify-content: space-between; }
+  .routine b { font-family: var(--display); font-size: 18px; font-weight: 500; }
+  .routine .muted { color: var(--muted); font-size: 13px; }
+  .gl { position: relative; }
+</style>
+</head>
+<body>
+<div class="bar-top">
+  <b>Take</b>
+  <button data-v="A" class="on">A · figures and a line</button>
+  <button data-v="B">B · three columns</button>
+  <button data-v="C">C · the day as a sentence</button>
+  <button data-v="D">D · ledger, settings folded</button>
+  <button data-v="E">E · Cultivate's cells</button>
+  <button data-v="F">F · two wings</button>
+  <span style="margin-left:auto">The right column is greyed: only the part under the wheel changes.</span>
+</div>
+<div class="wrap"><div class="stage" id="stage">
+  <div class="paint"></div><div class="scrim"></div><div class="rail"></div>
+  <div class="col"><h1>Routine<span>日课</span></h1><div class="ghost t"></div><div class="ghost"></div><div class="ghost s"></div><p>Methods…</p><div class="ghost"></div><div class="ghost s"></div><div class="ghost"></div><div class="ghost s"></div></div>
+  <div class="ring" id="ring"></div>
+  <div class="band" id="band"></div>
+</div></div>
+
+<script>
+// The ring, as the game draws it (simplified).
+const KIND = ['sleep','sleep','qi','body','qi','qi','qi','soul','qi','qi','study','study'];
+const BR = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const TINT = { qi: '#3a6670', body: '#6c4a35', soul: '#4f4870', study: '#555e45', sleep: '#2d3036' };
+const WORD = { qi: 'Qi', body: 'Body', soul: 'Soul', study: 'Study', sleep: 'Sleep' };
+function polar(r, d) { const a = (d - 90) * Math.PI / 180; return [r * Math.cos(a), r * Math.sin(a)]; }
+function seg(i, ro, ri) { const f = i * 30 - 15 + .6, t = i * 30 + 15 - .6; const [a, b] = polar(ro, f), [c, d] = polar(ro, t), [e, g] = polar(ri, t), [h, k] = polar(ri, f); return `M${a} ${b}A${ro} ${ro} 0 0 1 ${c} ${d}L${e} ${g}A${ri} ${ri} 0 0 0 ${h} ${k}Z`; }
+let s = '<circle r="164" fill="rgb(6 7 10 / .55)"/><circle r="155" fill="none" stroke="#d9b46a" stroke-opacity=".7" stroke-width=".8"/><circle r="138" fill="none" stroke="#d9b46a" stroke-opacity=".55" stroke-width=".5"/>';
+for (let d = 0; d < 360; d += 3) { const [a, b] = polar(138.5, d), [c, e] = polar(d % 15 ? 140.6 : 143, d); s += `<line x1="${a}" y1="${b}" x2="${c}" y2="${e}" stroke="#d9b46a" stroke-opacity="${d % 15 ? .25 : .55}" stroke-width=".4"/>`; }
+[['水', 0], ['木', 90], ['火', 180], ['金', 270]].forEach(([h, d]) => { const [x, y] = polar(172, d); s += `<text x="${x}" y="${y}" dy=".35em" text-anchor="middle" font-family="Ma Shan Zheng" font-size="14" fill="#d9b46a">${h}</text>`; });
+KIND.forEach((k, i) => { const [x, y] = polar(112, i * 30), [kx, ky] = polar(86, i * 30); s += `<path d="${seg(i, 132, 66)}" fill="${TINT[k]}" stroke="rgb(217 180 106 / .3)" stroke-width=".5"/><text x="${x}" y="${y}" dy=".35em" text-anchor="middle" font-family="Ma Shan Zheng" font-size="20" fill="#e9e5da">${BR[i]}</text><text x="${kx}" y="${ky}" dy=".35em" text-anchor="middle" font-family="Inter" font-size="8.5" fill="rgb(255 255 255 / .78)">${WORD[k]}</text>`; });
+s += '<circle r="60" fill="rgb(7 8 11 / .94)" stroke="#d9b46a" stroke-opacity=".55" stroke-width=".6"/><text y="-6" text-anchor="middle" font-family="Cormorant Garamond" font-size="12.5" fill="#e9e5da">Your own day</text><text y="10" text-anchor="middle" font-family="Inter" font-size="8.5" fill="#7fc7d9">+4.7 qi a day</text>';
+document.getElementById('ring').innerHTML = `<svg viewBox="-188 -188 376 376" width="600" height="600">${s}</svg>`;
+
+// The day's content, the same in every take.
+const homeRoad = '<span class="seg"><button class="on">Home<span class="hz">居</span></button><button>Road<span class="hz">途</span></button></span>';
+const figs = `
+  <div class="fig qi"><b>+4.7</b><small>qi</small></div>
+  <div class="fig body"><b>+2</b><small>tempering</small></div>
+  <div class="fig soul"><b>+0.17</b><small>nourishment</small></div>
+  <div class="fig study"><b>+0.43</b><small>insight</small></div>
+  <div class="fig practice"><b>+0.14</b><small>practice days</small></div>`;
+const routine = '<span class="routine"><span class="cap">Routine</span>&nbsp; <b>Your own day</b> <span class="muted">· no discipline</span></span> <span class="link">Change ▾</span>';
+const minor = '<span class="cap">Minor breakthroughs</span><span class="q">?</span>';
+const minorChips = '<span class="chips"><span class="on">Safe</span><span>Balanced</span><span>Bold</span><span>When I say</span></span>';
+const burn = '<span class="toggle"><i></i>Burn spirit stones in qi hours</span><span class="q">?</span>';
+const hint = '<p class="center" style="color:var(--muted);font-size:13px;margin:14px 0 0">Tap hours on the wheel to change what they go to.</p>';
+
+const TAKES = {
+  // A: Home/Road centred, the day's yields as five figures in a row, then one quiet line of routine and settings.
+  A: `
+    <div class="center">${homeRoad}</div>
+    <div class="row" style="justify-content:center;gap:44px;margin-top:18px">${figs}</div>
+    <div class="rule"></div>
+    <div class="row between">${routine}<span class="row" style="gap:10px">${minor}${minorChips}</span></div>
+    <div class="row" style="justify-content:flex-end;margin-top:10px">${burn}</div>`,
+  // B: three columns under a centred Home/Road: what it gives | the routine | the settings.
+  B: `
+    <div class="center">${homeRoad}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin-top:18px">
+      <div style="padding:0 22px;border-right:1px solid var(--line-faint)"><div class="cap">A day of seclusion</div>
+        <div style="margin-top:8px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px">
+          <b style="color:var(--crack);font-weight:400">+4.7</b><span>qi</span><b style="color:var(--body);font-weight:400">+2</b><span>tempering</span>
+          <b style="color:var(--soul);font-weight:400">+0.17</b><span>nourishment</span><b style="color:var(--study);font-weight:400">+0.43</b><span>insight</span>
+          <b style="color:var(--practice);font-weight:400">+0.14</b><span>practice days</span></div></div>
+      <div style="padding:0 22px;border-right:1px solid var(--line-faint)"><div class="cap">Routine</div>
+        <div style="font-family:var(--display);font-size:22px;margin-top:6px">Your own day</div>
+        <div style="color:var(--muted);font-size:13px">no discipline</div><div class="link" style="margin-top:10px">Change ▾</div></div>
+      <div style="padding:0 22px"><div class="cap">Minor breakthroughs<span class="q">?</span></div>
+        <div style="margin-top:8px">${minorChips}</div><div style="margin-top:14px">${burn}</div></div>
+    </div>`,
+  // C: the day read as a sentence, its numbers coloured, with the settings as two quiet words you can change.
+  C: `
+    <div class="center">${homeRoad}</div>
+    <p class="center" style="font-family:var(--display);font-size:24px;line-height:1.5;margin:18px 40px 0">
+      A day of seclusion gives <b style="color:var(--crack);font-weight:500">4.7 qi</b>, <b style="color:var(--body);font-weight:500">2 tempering</b>,
+      <b style="color:var(--soul);font-weight:500">0.17 nourishment</b>, <b style="color:var(--study);font-weight:500">0.43 insight</b>
+      and <b style="color:var(--practice);font-weight:500">0.14 practice days</b>.</p>
+    <p class="center" style="color:var(--muted);font-size:14px;margin:14px 0 0">
+      Keeping <span style="color:var(--text)">your own day</span>, no discipline <span class="link">change</span> &nbsp;·&nbsp;
+      Minor breakthroughs <span style="color:var(--accent)">safe ▾</span> &nbsp;·&nbsp; Stones <span style="color:var(--accent)">kept ▾</span></p>`,
+  // D: a ledger of the day's yields, centred; routine and settings folded behind one line.
+  D: `
+    <div class="row between"><span class="cap">The day at home</span>${homeRoad}</div>
+    <div class="row" style="justify-content:space-between;margin:16px 0 0;padding:14px 26px;border-top:1px solid var(--line-faint);border-bottom:1px solid var(--line-faint)">${figs}</div>
+    <div class="row between" style="margin-top:12px">${routine}<span class="link">Breakthroughs and stones ▾</span></div>`,
+  // E: Cultivate's band cells: five slim cells with a hairline bar under each, the settings as chips under.
+  E: `
+    <div class="row between"><span style="font-family:var(--display);font-size:20px">The day at home</span>${homeRoad}</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line-faint);border-radius:3px;margin-top:12px">
+      ${['qi:+4.7:qi','body:+2:tempering','soul:+0.17:nourishment','study:+0.43:insight','practice:+0.14:practice days'].map((x, i) => { const [k, v, n] = x.split(':'); return `<div style="padding:10px 14px;${i ? 'border-left:1px solid var(--line-faint);' : ''}"><div class="cap">${n}</div><div style="font-family:var(--display);font-size:22px;color:var(--${k === 'qi' ? 'crack' : k})">${v}</div><div style="height:2px;margin-top:6px;background:var(--${k === 'qi' ? 'crack' : k});opacity:.6;width:${[90, 50, 12, 30, 20][i]}%"></div></div>`; }).join('')}
+    </div>
+    <div class="row between" style="margin-top:14px">${routine}</div>
+    <div class="row between" style="margin-top:10px"><span class="row" style="gap:10px">${minor}${minorChips}</span>${burn}</div>`,
+  // F: two wings either side of the ring's foot: yields on the left, routine and settings on the right, Home/Road between.
+  F: `
+    <div class="center" style="margin-bottom:12px">${homeRoad}</div>
+    <div style="display:grid;grid-template-columns:1fr 1px 1fr;gap:0 30px">
+      <div style="text-align:right"><div class="cap">What a day gives</div>
+        <div style="margin-top:6px;font-size:14px;line-height:1.75"><span style="color:var(--crack)">+4.7 qi</span><br><span style="color:var(--body)">+2 tempering</span> · <span style="color:var(--soul)">+0.17 nourishment</span><br><span style="color:var(--study)">+0.43 insight</span> · <span style="color:var(--practice)">+0.14 practice days</span></div></div>
+      <div style="background:linear-gradient(to bottom,transparent,var(--line-faint),transparent)"></div>
+      <div><div class="cap">Routine</div><div style="font-family:var(--display);font-size:20px;margin-top:4px">Your own day <span class="link" style="font-family:var(--ui)">Change ▾</span></div>
+        <div style="margin-top:10px">${minorChips}</div><div style="margin-top:10px">${burn}</div></div>
+    </div>`,
+};
+
+let take = 'A';
+function render() {
+  document.getElementById('band').innerHTML = TAKES[take] + hint;
+  const st = document.getElementById('stage');
+  const sc = Math.min(window.innerWidth / 1920, (window.innerHeight - 40) / 1080);
+  st.style.transform = `scale(${sc})`; st.parentElement.style.height = 1080 * sc + 'px';
+}
+document.querySelectorAll('[data-v]').forEach((b) => b.addEventListener('click', () => {
+  take = b.dataset.v; document.querySelectorAll('[data-v]').forEach((x) => x.classList.toggle('on', x === b)); render();
+}));
+window.addEventListener('resize', render);
+render();
+</script>
+</body>
+</html>

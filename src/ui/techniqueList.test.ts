@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { newLife, type Cultivator } from '../core/state.ts';
 import { learnTechnique } from '../core/techniques.ts';
 import {
+  finished,
   knownChapters,
   orderTechniques,
   practiceTime,
@@ -102,6 +103,16 @@ describe('ordering, search and filters', () => {
       daos: ['earth', 'fist', 'saber', 'spear'],
     });
     expect(techniqueFilters([LIST[0]!])).toEqual({ tiers: [], daos: [] });
+  });
+});
+
+describe('hiding the finished', () => {
+  it('leaves out a technique at Origin, and only on the chip', () => {
+    const c = withPractice(learn(base, 'rampart-palm', 'undertow-palm'), 'undertow-palm', 1e6);
+    expect(finished(c, technique('undertow-palm'))).toBe(true);
+    expect(finished(c, technique('rampart-palm'))).toBe(false);
+    expect(techniqueRows(c).map((r) => r.t.id)).toEqual(['rampart-palm', 'undertow-palm']);
+    expect(techniqueRows(c, { hideFinished: true }).map((r) => r.t.id)).toEqual(['rampart-palm']);
   });
 });
 

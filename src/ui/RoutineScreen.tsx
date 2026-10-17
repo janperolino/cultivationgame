@@ -1,10 +1,12 @@
 // The Routine screen (design § UI and screens, the Routine row; P2.5f, from the "Cultivate as
-// three tabs" canvas, renamed in P3.7's fix): what your hours do. A strip of the day's twelve hours
-// with their counts across the top, then three tabs, one per kind of work, which an hour on the
-// strip opens: Day (the day wheel at home or on the road, its routines folded under it, the method
-// on each ladder, the auto setting for minor breakthroughs and stone burning), Practice (what was
-// the Techniques screen) and Study (the reading queue). A tab shows once it holds something.
-// Breakthroughs are called on Cultivate (P2.4).
+// three tabs" canvas, renamed in P3.7's fix): what your hours do. Three tabs, one per kind of work,
+// which an hour on the strip of the day's twelve hours opens: Day (the day wheel at home or on the
+// road, its routines folded under it, the method on each ladder, the auto setting for minor
+// breakthroughs and stone burning), Practice (what was the Techniques screen) and Study (the
+// reading queue). A tab shows once it holds something. Breakthroughs are called on Cultivate (P2.4).
+// A4 (docs/mockups/routine-art-study.html, layout B) makes it a scene: the cave behind, each tab's
+// ring in the same place on the left with its page beside it, and a column on the right with the
+// title, the tabs, the strip and the tab's own controls.
 import { useEffect, useState, type ReactNode } from 'react';
 import { AUTO_IDS, AUTO_SETTINGS } from '../content/cultivation.ts';
 import { ELEMENT_INFO } from '../content/elements.ts';
@@ -15,7 +17,7 @@ import { technique } from '../content/techniques.ts';
 import { isNew, newIds } from '../core/seen.ts';
 import { practicingNow } from '../core/techniques.ts';
 import { attentionCeiling } from '../core/attention.ts';
-import { dayRates, inTutorial, qiSpeed } from '../core/cultivation.ts';
+import { dayRates, inTutorial, qiSpeed, type LadderId } from '../core/cultivation.ts';
 import { ladderMethod } from '../core/methods.ts';
 import type { GameState } from '../core/state.ts';
 import { canFollow, effectiveWheel } from '../core/wheel.ts';
@@ -29,6 +31,8 @@ import {
   roadRoutines,
 } from '../core/map/travel.ts';
 import { DayWheel, RoadWheel, WheelStrip } from './DayWheel.tsx';
+import { RoutineScene, RoutineStage } from './RoutineRings.tsx';
+import { useCloseOutside } from './useCloseOutside.ts';
 import { MethodRow } from './MethodCard.tsx';
 import { formatNumber, formatPercent, formatRate } from './format.ts';
 import { ROUTINE_TABS, routineTabs, TAB_OF } from './routineTabs.ts';
@@ -44,13 +48,15 @@ import { LifeEdgeCard, Why } from './widgets.tsx';
 /** A note's first letter raised, for a line of its own. */
 const raise = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
-function DayPanel({ game }: { game: GameState }) {
+function DayTab({ game, head }: { game: GameState; head: ReactNode }) {
   const setPlan = useGame((s) => s.setPlan);
   // The wheel shown: the road's while a course is set, the home one otherwise, until you switch; a
   // link from the Map's bar opens a wheel with its hour picked.
   const [road, setRoad] = useState(() => !!game.map?.course);
   const [pick, setPick] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // The ladder whose method is being switched; its list takes the column (MethodsPanel).
+  const [switching, setSwitching] = useState<LadderId | null>(null);
   const navWheel = useNav((s) => (s.screen === 'routine' ? s.wheel : null));
   const [taken, setTaken] = useState<typeof navWheel>(null);
   if (navWheel && navWheel !== taken) {
@@ -68,6 +74,16 @@ function DayPanel({ game }: { game: GameState }) {
     setPick([]);
     setError(null);
   };
+  // A press anywhere but on an hour or the editor lets go of the pick (A4, Jan's call: no link).
+  const picking = pick.length > 0;
+  useEffect(() => {
+    if (!picking) return;
+    const off = (e: PointerEvent) => {
+      if (!(e.target as Element | null)?.closest('.wheel-hour, .routine-page')) setPick([]);
+    };
+    window.addEventListener('pointerdown', off);
+    return () => window.removeEventListener('pointerdown', off);
+  }, [picking]);
   const bs = useBeacons();
   const burnRing = rings(bs, 'burn-stones');
   const autoRing = rings(bs, 'auto');
@@ -114,23 +130,35 @@ function DayPanel({ game }: { game: GameState }) {
       {rates.unfed.includes('qi') && <span>Its upkeep went unpaid: it stalls today.</span>}
     </>
   );
-  const day = [
-    rates.body > 0 && `+${formatRate(rates.body)} tempering`,
-    rates.soul > 0 && `+${formatRate(rates.soul)} nourishment`,
-    `+${formatRate(rates.insight)} insight`,
-    rates.practice > 0 &&
-      `+${formatRate(rates.practice)} practice days on ${practicingNow(c)
-        .map((id) => technique(id).name)
-        .join(' and ')}`,
-    rates.study > 0 && readingLine(c),
-  ].filter(Boolean);
+  // What a day gives, a figure a line in its ladder's color (A4: the day under the wheel).
+  const yields: { value: number; word: string; kind: string; of?: string }[] = [
+    { value: rates.qi, word: 'qi', kind: 'qi' },
+    ...(rates.body > 0 ? [{ value: rates.body, word: 'tempering', kind: 'body' }] : []),
+    ...(rates.soul > 0 ? [{ value: rates.soul, word: 'nourishment', kind: 'soul' }] : []),
+    { value: rates.insight, word: 'insight', kind: 'study' },
+    ...(rates.practice > 0
+      ? [
+          {
+            value: rates.practice,
+            word: 'practice days',
+            kind: 'practice',
+            of: practicingNow(c)
+              .map((id) => technique(id).name)
+              .join(' and '),
+          },
+        ]
+      : []),
+  ];
+  const reading = rates.study > 0 ? readingLine(c) : null;
 
-  return (
-    <section className="panel" aria-labelledby="day-heading">
-      <div className="day-head">
-        <h2 id="day-heading" className="panel-heading">
-          {road ? 'The day on the road' : 'The day at home'}
-        </h2>
+  // The day under the wheel (Jan's pick, docs/mockups/routine-day-band-study.html take B): Home or
+  // Road over three columns, what the day gives, the routine kept, and the two settings.
+  const daySection = (
+    <section className="panel day-band" aria-labelledby="day-heading">
+      <h2 id="day-heading" className="visually-hidden">
+        {road ? 'The day on the road' : 'The day at home'}
+      </h2>
+      <div className="day-band-switch">
         <div className="seg" role="group" aria-label="Which day">
           <button type="button" aria-pressed={!road} onClick={() => show(false)}>
             Home <span className="hanzi">居</span>
@@ -140,25 +168,36 @@ function DayPanel({ game }: { game: GameState }) {
           </button>
         </div>
       </div>
-      {road ? (
-        <RoadWheel game={game} pick={pick} onPick={setPick} />
-      ) : (
-        <DayWheel game={game} pick={pick} onPick={setPick} error={error} onError={setError} />
-      )}
-      {road ? (
-        <p className="rates spaced">{roadLine(game)}</p>
-      ) : (
-        <p className="rates spaced">
-          A day of seclusion: +{formatRate(rates.qi)} qi
-          <Why label="How qi is worked out">{qiWhy}</Why>
-          {day.length > 0 && ` · ${day.join(' · ')}`}
-        </p>
-      )}
-      {road ? <RoadFold game={game} /> : <HomeFold game={game} />}
-      <div className="settings-row">
-        <div className="field">
-          <span>
-            <span id="auto-label">Minor breakthroughs</span>
+      <div className="day-band-cols">
+        <div className="day-band-col">
+          <p className="day-band-cap">
+            {road ? 'A day on the road' : 'A day of seclusion'}
+            {!road && <Why label="How qi is worked out">{qiWhy}</Why>}
+          </p>
+          {road ? (
+            <p className="day-band-road">{roadLine(game)}</p>
+          ) : (
+            <dl className="day-yields">
+              {yields.map((y) => (
+                <div
+                  key={y.word}
+                  className={`hour-${y.kind}`}
+                  title={y.of ? `on ${y.of}` : undefined}
+                >
+                  <dt>+{formatRate(y.value)}</dt>
+                  <dd>{y.word}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {!road && reading && <p className="day-band-note">{raise(reading)}</p>}
+        </div>
+        <div className="day-band-col">
+          {road ? <RoadFold game={game} /> : <HomeFold game={game} />}
+        </div>
+        <div className="day-band-col">
+          <p className="day-band-cap" id="auto-label">
+            Minor breakthroughs
             <Why label="How minor breakthroughs run">
               {c.plan.auto === 'off'
                 ? 'Minor breakthroughs wait for you; offline, a full bar holds.'
@@ -167,9 +206,9 @@ function DayPanel({ game }: { game: GameState }) {
                   : `Minor breakthroughs go on their own at ${formatPercent(AUTO_SETTINGS[c.plan.auto].minOdds)} odds or a bar at 150%, online and off.`}{' '}
               Major breakthroughs are always yours to call, on Cultivate, and never happen offline.
             </Why>
-          </span>
+          </p>
           <div
-            className={`seg${autoRing ? ' beacon-ring' : ''}`}
+            className={`seg day-band-auto${autoRing ? ' beacon-ring' : ''}`}
             role="group"
             aria-labelledby="auto-label"
           >
@@ -184,24 +223,59 @@ function DayPanel({ game }: { game: GameState }) {
               </button>
             ))}
           </div>
+          <label className={`check day-band-burn${burnRing ? ' beacon-ring' : ''}`}>
+            <input
+              type="checkbox"
+              checked={c.plan.burnStones}
+              onChange={(e) => setPlan({ burnStones: e.target.checked })}
+            />
+            Burn spirit stones in qi hours
+            <Why label="How stones burn">
+              Each stone burned in a qi hour adds a fifth of a full day of qi hours, so a full burn
+              doubles the day.
+              {rates.stoneCap > 0
+                ? ` Today that is up to ${formatNumber(rates.stoneCap)} stones; you hold ${formatNumber(c.stones)}.`
+                : ''}
+            </Why>
+          </label>
         </div>
-        <label className={`check${burnRing ? ' beacon-ring' : ''}`}>
-          <input
-            type="checkbox"
-            checked={c.plan.burnStones}
-            onChange={(e) => setPlan({ burnStones: e.target.checked })}
-          />
-          Burn spirit stones in qi hours
-          <Why label="How stones burn">
-            Each stone burned in a qi hour adds a fifth of a full day of qi hours, so a full burn
-            doubles the day.
-            {rates.stoneCap > 0
-              ? ` Today that is up to ${formatNumber(rates.stoneCap)} stones; you hold ${formatNumber(c.stones)}.`
-              : ''}
-          </Why>
-        </label>
       </div>
     </section>
+  );
+  // The day sits under the wheel (A4, Jan's call), and picked hours swap in the editor there; the
+  // column keeps the title, the tabs, the hours and the methods.
+  const layout = (wheel: ReactNode, editor: ReactNode) => (
+    <RoutineScene
+      ring={wheel}
+      page={
+        pick.length > 0 ? (
+          editor
+        ) : (
+          <>
+            {daySection}
+            {editor}
+          </>
+        )
+      }
+      column={
+        <>
+          {head}
+          <MethodsPanel game={game} switching={switching} onSwitch={setSwitching} />
+        </>
+      }
+    />
+  );
+  return road ? (
+    <RoadWheel game={game} pick={pick} onPick={setPick} layout={layout} />
+  ) : (
+    <DayWheel
+      game={game}
+      pick={pick}
+      onPick={setPick}
+      error={error}
+      onError={setError}
+      layout={layout}
+    />
   );
 }
 
@@ -230,8 +304,9 @@ function Fold({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const ref = useCloseOutside<HTMLDivElement>(open, () => setOpen(false));
   return (
-    <div className={`routine-fold${open ? ' is-open' : ''}`}>
+    <div ref={ref} className={`routine-fold${open ? ' is-open' : ''}`}>
       <button
         type="button"
         className="routine-fold-head"
@@ -240,7 +315,7 @@ function Fold({
       >
         <span className="routine-fold-label">{label}</span>
         <b>{name}</b>
-        <span className="muted">· {note}</span>
+        <span className="muted">{note}</span>
         <span className="routine-fold-chev">{open ? 'Close' : 'Change'}</span>
       </button>
       {open && <div className="routine-fold-body">{children}</div>}
@@ -491,15 +566,37 @@ function RoadFold({ game }: { game: GameState }) {
   );
 }
 
-function MethodsPanel({ game }: { game: GameState }) {
+/**
+ * The methods, a row a ladder. While one ladder's Climb with is open the other two step aside and
+ * its list fills the column under it (A4, Jan's call).
+ */
+function MethodsPanel({
+  game,
+  switching,
+  onSwitch,
+}: {
+  game: GameState;
+  switching: LadderId | null;
+  onSwitch: (which: LadderId | null) => void;
+}) {
+  const ladders = switching ? [switching] : (['qi', 'body', 'soul'] as const);
   return (
-    <section className="panel" aria-labelledby="methods-heading">
+    <section
+      className={`panel methods-panel${switching ? ' is-switching' : ''}`}
+      aria-labelledby="methods-heading"
+    >
       <h2 id="methods-heading" className="panel-heading">
         Methods
       </h2>
       <ul className="methods">
-        {(['qi', 'body', 'soul'] as const).map((which) => (
-          <MethodRow key={which} game={game} which={which} />
+        {ladders.map((which) => (
+          <MethodRow
+            key={which}
+            game={game}
+            which={which}
+            open={switching === which}
+            onOpen={(open) => onSwitch(open ? which : null)}
+          />
         ))}
       </ul>
     </section>
@@ -555,15 +652,6 @@ function HourStrip({
   );
 }
 
-function DayTab({ game }: { game: GameState }) {
-  return (
-    <div className="routine-split">
-      <DayPanel game={game} />
-      <MethodsPanel game={game} />
-    </div>
-  );
-}
-
 export function RoutineScreen() {
   const game = useGame((s) => s.game);
   const [chosen, setChosen] = useState<RoutineTab>('day');
@@ -590,10 +678,12 @@ export function RoutineScreen() {
   // A first time waiting on a tab glows it with motes, over the new glow (ui/beacons.ts).
   const beaconTabs = new Set(beaconsNow.map((b) => b.tab));
 
-  return (
+  const head = (
     <>
       <LifeEdgeCard />
-      <HourStrip game={game} tab={tab} tabs={tabs} onTab={setChosen} />
+      <h1 className="screen-title routine-title">
+        Routine <span className="hanzi">日课</span>
+      </h1>
       {tabs.length > 1 && (
         <div className="seg routine-tabs" role="tablist" aria-label="Kind of work">
           {ROUTINE_TABS.filter((t) => tabs.includes(t.id)).map((t) => (
@@ -620,9 +710,15 @@ export function RoutineScreen() {
           ))}
         </div>
       )}
-      {tab === 'day' && <DayTab game={game} />}
-      {tab === 'practice' && <PracticeTab />}
-      {tab === 'study' && <StudyTab game={game} />}
+      <HourStrip game={game} tab={tab} tabs={tabs} onTab={setChosen} />
     </>
+  );
+
+  return (
+    <RoutineStage day={game.calendar.day}>
+      {tab === 'day' && <DayTab game={game} head={head} />}
+      {tab === 'practice' && <PracticeTab head={head} />}
+      {tab === 'study' && <StudyTab game={game} head={head} />}
+    </RoutineStage>
   );
 }

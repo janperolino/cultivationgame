@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Routine, the art study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<style>
+  /* A4 study: Routine › Day laid out after the GPT concepts Jan picked (2026-10-17). The day
+     wheel is the heart, larger, in a gilt bezel; the rest is thin text on fading glass over one
+     painting. The painting here is a stand-in (Cultivate's cave, darkened) until GPT paints
+     Routine's own. Five layouts, two backdrops, two bezels. */
+  :root {
+    --bg: #040507;
+    --text: #e9e5da;
+    --muted: #8d949d;
+    --accent: #d6ab4c;
+    --gilt: #d9b46a;
+    --line: rgb(217 180 106 / 0.16);
+    --line-mark: rgb(217 180 106 / 0.42);
+    --qi: #7fc7d9;
+    --display: 'Cormorant Garamond', Georgia, serif;
+    --body: Inter, system-ui, sans-serif;
+    --brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #000; color: var(--text); font-family: var(--body); overflow-x: hidden; }
+  .bar-top {
+    display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 10px 16px;
+    font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line);
+  }
+  .bar-top b { color: var(--text); font-weight: 500; margin-right: 4px; }
+  .bar-top .grp { display: flex; gap: 6px; align-items: center; }
+  .bar-top button {
+    background: none; border: 1px solid var(--line); color: var(--muted); padding: 5px 12px;
+    font: inherit; border-radius: 3px; cursor: pointer; white-space: nowrap;
+  }
+  .bar-top button.on { color: var(--accent); border-color: var(--line-mark); }
+  .note { padding: 8px 16px; font-size: 13px; color: var(--muted); }
+  .wrap { width: 100%; overflow: clip; }
+  .stage {
+    position: relative; width: 1920px; margin: 0 auto; height: 1080px; transform-origin: 0 0;
+    background: var(--bg); overflow: hidden;
+  }
+
+  /* The painting and the void. */
+  .backdrop { position: absolute; inset: 0 0 0 72px; overflow: hidden; }
+  .backdrop .sky { position: absolute; inset: 0; background: url('../../src/ui/art/common/sky.webp') 0 0 / 512px repeat; opacity: 0.9; }
+  .backdrop .paint {
+    position: absolute; inset: 0; background: url('../../src/ui/art/cultivate/scene.webp') center / cover no-repeat;
+    filter: brightness(0.62) saturate(0.9);
+    background-size: auto 112%; background-position-y: bottom;
+  }
+  .stage.void .paint { display: none; }
+  .backdrop .scrim { position: absolute; inset: 0; }
+
+  /* The rail and the top, as A2 left them. */
+  .rail {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(4 5 7 / 0.94);
+    border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center;
+    gap: 26px; padding-top: 24px; z-index: 5;
+  }
+  .rail i { width: 22px; height: 22px; border: 1px solid var(--line-mark); border-radius: 50%; display: block; opacity: 0.8; }
+  .rail i:nth-child(3) { border-color: var(--accent); box-shadow: 0 0 10px rgb(214 171 76 / 0.3); opacity: 1; }
+  .top {
+    position: absolute; left: 104px; right: 40px; top: 22px; display: flex; z-index: 4;
+    justify-content: space-between; align-items: baseline; font-family: var(--display); font-size: 22px;
+    text-shadow: 0 1px 10px rgb(0 0 0 / 0.85);
+  }
+  .top .hz { font-family: var(--brush); color: var(--gilt); margin-left: 8px; font-size: 20px; }
+  .top .stats { display: flex; gap: 30px; font-size: 18px; align-items: baseline; }
+  .top .stats small { font-family: var(--body); font-size: 12px; color: var(--muted); margin-right: 6px; }
+
+  /* Blocks, placed by the layout. */
+  .blk { position: absolute; z-index: 3; }
+  h1.title { font-family: var(--display); font-weight: 500; font-size: 52px; margin: 0; letter-spacing: 0.01em; }
+  h1.title .hz { font-family: var(--brush); color: var(--gilt); font-size: 40px; margin-left: 10px; font-weight: 400; }
+  .tabs { display: flex; gap: 4px; margin-top: 14px; }
+  .tabs button {
+    background: none; border: 1px solid transparent; border-bottom-color: var(--line);
+    color: var(--muted); font-family: var(--display); font-size: 22px; padding: 4px 22px 6px; cursor: pointer;
+  }
+  .tabs button .hz { font-family: var(--brush); font-size: 17px; margin-left: 6px; color: rgb(217 180 106 / 0.6); }
+  .tabs button.on { color: var(--text); border: 1px solid var(--line-mark); border-radius: 3px; background: rgb(214 171 76 / 0.1); }
+  .tabs button.on .hz { color: var(--gilt); }
+  .strip { display: flex; gap: 2px; margin-top: 22px; }
+  .strip span {
+    width: 40px; height: 36px; display: grid; place-items: center; font-family: var(--brush); font-size: 21px;
+    color: rgb(255 255 255 / 0.88); border-radius: 2px; cursor: pointer;
+  }
+  .strip span.pick { outline: 1px solid var(--gilt); outline-offset: 1px; }
+  .counts { margin-top: 8px; font-size: 14px; color: var(--muted); display: flex; gap: 14px; }
+  .counts i { display: inline-block; width: 8px; height: 8px; border-radius: 1px; margin-right: 5px; }
+  .row { display: flex; align-items: center; gap: 18px; }
+  .daytitle { font-family: var(--display); font-size: 25px; }
+  .seg { display: inline-flex; border: 1px solid var(--line-mark); border-radius: 20px; padding: 2px; }
+  .seg button {
+    background: none; border: 0; color: var(--muted); font-family: var(--display); font-size: 18px;
+    padding: 3px 22px; border-radius: 18px; cursor: pointer;
+  }
+  .seg button .hz { font-family: var(--brush); font-size: 15px; margin-left: 5px; }
+  .seg button.on { background: rgb(214 171 76 / 0.16); color: var(--accent); box-shadow: inset 0 0 0 1px var(--line-mark); }
+  .hint { font-size: 14px; color: var(--muted); line-height: 1.5; margin: 12px 0 0; max-width: 560px; }
+  .yield { font-size: 16px; margin: 14px 0 0; }
+  .yield b { color: var(--qi); font-weight: 400; }
+  .q { display: inline-grid; place-items: center; width: 15px; height: 15px; border: 1px solid var(--line-mark); border-radius: 50%; font-size: 10px; color: var(--muted); margin-left: 5px; vertical-align: 2px; }
+  .routine { font-size: 15px; margin: 12px 0 0; color: var(--muted); }
+  .routine b { color: var(--text); font-weight: 400; }
+  .routine a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgb(214 171 76 / 0.4); margin-left: 6px; cursor: pointer; }
+  .sub { font-family: var(--display); font-size: 21px; margin: 0 0 10px; }
+  .radios { display: flex; gap: 0; font-size: 15px; color: var(--muted); }
+  .radios span { padding: 0 11px; border-left: 1px solid var(--line); display: flex; align-items: center; gap: 7px; }
+  .radios span:first-child { padding-left: 0; border-left: 0; }
+  .radios span::before { content: ''; width: 13px; height: 13px; border-radius: 50%; border: 1px solid var(--line-mark); }
+  .radios span.on { color: var(--text); }
+  .radios span.on::before { background: radial-gradient(circle, var(--accent) 40%, transparent 46%); border-color: var(--accent); }
+  .check { font-size: 15px; margin-top: 14px; display: flex; align-items: center; gap: 9px; }
+  .check::before { content: '✓'; width: 15px; height: 15px; border: 1px solid var(--accent); display: grid; place-items: center; font-size: 11px; color: var(--accent); border-radius: 2px; }
+
+  .methods .m { display: grid; grid-template-columns: 70px 1fr; gap: 4px 12px; align-items: baseline; padding: 10px 0; }
+  .methods .m + .m { border-top: 1px solid var(--line); }
+  .methods .ladder { font-family: var(--display); font-size: 20px; color: var(--gilt); }
+  .methods .ladder .hz { display: block; font-family: var(--brush); font-size: 14px; color: rgb(217 180 106 / 0.55); }
+  .methods .name { font-family: var(--display); font-size: 19px; }
+  .methods .name .hz { font-family: var(--brush); color: rgb(217 180 106 / 0.75); font-size: 15px; margin-left: 6px; }
+  .methods .meta { grid-column: 2; font-size: 13px; color: var(--muted); }
+  .methods .bar { grid-column: 2; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+  .methods .bar i { flex: 1; height: 5px; background: rgb(255 255 255 / 0.08); border-radius: 3px; position: relative; overflow: hidden; }
+  .methods .bar i::after { content: ''; position: absolute; inset: 0; width: var(--w); background: var(--c); }
+  .methods .none { grid-column: 2; font-size: 14px; color: var(--muted); font-style: italic; }
+  .methods.cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 34px; }
+  .methods.cols .m { grid-template-columns: 1fr; padding: 0; }
+  .methods.cols .m + .m { border-top: 0; border-left: 1px solid var(--line); padding-left: 30px; }
+  .methods.cols .ladder .hz { display: inline; margin-left: 6px; }
+  .methods.cols .meta, .methods.cols .bar, .methods.cols .none { grid-column: 1; }
+
+  /* Glass that fades: under a column, and the band along the foot. */
+  .glass-l { background: linear-gradient(to right, rgb(4 5 7 / 0.88) 60%, rgb(4 5 7 / 0)); }
+  .glass-r { background: linear-gradient(to left, rgb(4 5 7 / 0.88) 60%, rgb(4 5 7 / 0)); }
+  .band { background: linear-gradient(to top, rgb(4 5 7 / 0.94) 55%, rgb(4 5 7 / 0)); }
+  .card { background: rgb(6 7 10 / 0.78); border: 1px solid var(--line); border-radius: 4px; }
+  .corner { position: absolute; width: 14px; height: 14px; border-color: var(--line-mark); border-style: solid; }
+  .corner.tl { left: -1px; top: -1px; border-width: 1px 0 0 1px; }
+  .corner.tr { right: -1px; top: -1px; border-width: 1px 1px 0 0; }
+  .corner.bl { left: -1px; bottom: -1px; border-width: 0 0 1px 1px; }
+  .corner.br { right: -1px; bottom: -1px; border-width: 0 1px 1px 0; }
+
+  /* Day's hour page. */
+  .hour-hd { font-family: var(--display); font-size: 20px; color: var(--muted); margin: 10px 0 0; display: flex; align-items: baseline; gap: 12px; }
+  .hour-hd .hz { font-family: var(--brush); font-size: 54px; color: var(--gilt); line-height: 1; }
+  .hour-kind { font-family: var(--display); font-size: 40px; margin: 10px 0 0; }
+  .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .kinds button { background: rgb(6 7 10 / 0.6); border: 1px solid var(--line); color: var(--text); font: 17px var(--display); padding: 8px 0; border-radius: 3px; cursor: pointer; }
+  .kinds button .hz { font-family: var(--brush); color: rgb(217 180 106 / 0.7); margin-left: 6px; font-size: 15px; }
+  .kinds button.on { border-color: var(--accent); color: var(--accent); background: rgb(214 171 76 / 0.12); }
+  .kinds button.dim { opacity: 0.45; }
+
+  .pg-small .pg-line { font-size: 12px; }
+  .pg-small .quote { font-size: 17px; }
+  .pg-small .figs { font-size: 18px; gap: 18px; }
+  .pg-small .routine, .pg-small .hint { font-size: 13px; }
+  .pg-small .chips span { font-size: 11px; }
+  .pg-small .hour-hd { font-size: 16px; }
+  .pg-small .hour-hd .hz { font-size: 40px; }
+  .pg-small .hour-kind { font-size: 30px; }
+  .pg-small .sub { font-size: 16px !important; }
+  .pg-small .kinds button { font-size: 15px; padding: 6px 0; }
+  .band-under { text-align: center; }
+  .hb-hour { display: inline-flex; align-items: center; gap: 14px; text-align: left; margin-bottom: 12px; }
+  .hb-hour .hz { font-family: var(--brush); font-size: 44px; color: var(--gilt); line-height: 1; }
+  .hb-hour b { font-family: var(--display); font-size: 26px; font-weight: 500; display: block; }
+  .hb-hour small { font-size: 13px; color: var(--muted); }
+  .kinds.row6 { grid-template-columns: repeat(6, 1fr); }
+
+  /* The known list, long or short. */
+  .known { border-left: 2px solid var(--rar, transparent); }
+  .known.glow { box-shadow: inset 6px 0 14px -8px var(--rar); }
+  .known.later { margin-left: 22px; }
+  .known.later::before { content: '└'; color: var(--muted); margin-right: -4px; }
+  .known.on { border-left-color: var(--accent); }
+  .known-list.long { max-height: 330px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgb(217 180 106 / 0.3) transparent; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+  .filters input { flex: 1 0 100%; background: rgb(6 7 10 / 0.6); border: 1px solid var(--line); color: var(--text); font: 14px var(--body); padding: 7px 10px; border-radius: 3px; }
+  .filters .chip, .filters .sel { font-size: 12px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); }
+  .filters .chip { cursor: pointer; }
+  .filters .chip.on { color: var(--accent); border-color: var(--line-mark); }
+  .filters .sel { border-radius: 3px; }
+  .filters .sel:first-of-type { margin-left: auto; }
+
+  /* Practice and Study. */
+  .slot { display: flex; align-items: center; gap: 14px; margin-top: 10px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 3px; background: rgb(6 7 10 / 0.5); font-size: 15px; }
+  .slot b { font-family: var(--display); font-size: 19px; font-weight: 500; }
+  .slot .hz, .known .hz, .qrow .hz { font-family: var(--brush); color: rgb(217 180 106 / 0.75); margin-left: 6px; }
+  .slot .n { width: 22px; height: 22px; border: 1px solid var(--line-mark); border-radius: 50%; display: grid; place-items: center; font-size: 12px; color: var(--gilt); margin-left: 0; }
+  .slot.sealed { border-style: dashed; opacity: 0.75; }
+  .slot .btn { margin-left: auto; }
+  .muted { color: var(--muted); }
+  .btn { background: rgb(214 171 76 / 0.06); border: 1px solid var(--line-mark); color: var(--text); font: 14px var(--body); padding: 5px 14px; border-radius: 3px; cursor: pointer; }
+  .btn.on { color: var(--accent); background: rgb(214 171 76 / 0.14); }
+  .known { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; border-left: 2px solid transparent; font-size: 14px; }
+  .known b { font-family: var(--display); font-size: 18px; font-weight: 500; }
+  .known .muted { margin-left: auto; }
+  .known.on { border-left-color: var(--accent); background: linear-gradient(to right, rgb(214 171 76 / 0.12), transparent); }
+  .known .tag { font-size: 12px; color: var(--accent); }
+  .qrow { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; font-size: 15px; }
+  .qrow + .qrow { border-top: 1px solid var(--line); }
+  .qrow b { font-family: var(--display); font-size: 18px; font-weight: 500; }
+  .qrow .n { color: var(--muted); font-size: 13px; width: 16px; }
+  .qrow .acts { margin-left: auto; color: var(--muted); letter-spacing: 8px; }
+  .give { display: flex; justify-content: space-between; font-size: 15px; padding: 4px 0; color: var(--muted); }
+  .give b { color: var(--text); font-weight: 400; }
+  .pg-line { font-size: 14px; color: var(--muted); margin: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 12px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); }
+  .quote { font-family: var(--display); font-style: italic; font-size: 20px; line-height: 1.35; margin: 18px 0 0; }
+  .figs { display: flex; gap: 26px; margin-top: 18px; font-family: var(--display); font-size: 22px; }
+  .figs small { display: block; font-family: var(--body); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* The wheel. */
+  .wheel { position: absolute; z-index: 3; }
+  .wheel svg { display: block; overflow: visible; }
+  .wheel .seg-h { cursor: pointer; transition: filter 0.12s; }
+  .wheel .seg-h:hover { filter: brightness(1.25); }
+  .wheel .seg-h.pick path { stroke: var(--gilt); stroke-width: 2.4; }
+  .wheel text { font-family: var(--display); fill: var(--text); text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+  .wheel text.hz { font-family: var(--brush); }
+
+  /* The desk (layout E): wood, paper slips and three bound methods. */
+  .stage.desk .backdrop .paint, .stage.desk .backdrop .sky { display: none; }
+  .stage.desk .backdrop {
+    background:
+      radial-gradient(ellipse 700px 500px at 1600px 120px, rgb(240 170 90 / 0.18), transparent 70%),
+      repeating-linear-gradient(176deg, rgb(255 255 255 / 0.015) 0 2px, transparent 2px 9px),
+      linear-gradient(160deg, #20140c, #120b07 55%, #0a0604);
+  }
+  .paper {
+    background: linear-gradient(170deg, #d8ccb0, #c8b994); color: #2a2219; border-radius: 2px;
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.6);
+  }
+  .paper .muted, .paper .hint, .paper .counts, .paper .routine, .paper .radios { color: #5d5242; }
+  .paper .routine b, .paper .radios span.on { color: #2a2219; }
+  .paper h1.title .hz, .paper .tabs button .hz { color: #8a2a1a; }
+  .paper .tabs button { color: #5d5242; border-bottom-color: rgb(42 34 25 / 0.2); }
+  .paper .tabs button.on { color: #f0e6cf; background: #3a2c1e; border-color: #3a2c1e; }
+  .paper .seg { border-color: rgb(42 34 25 / 0.35); }
+  .paper .seg button { color: #5d5242; }
+  .paper .seg button.on { background: #3a2c1e; color: #f0e6cf; box-shadow: none; }
+  .paper .daytitle, .paper .sub { color: #2a2219; }
+  .paper .radios span { border-left-color: rgb(42 34 25 / 0.25); }
+  .paper .radios span::before { border-color: #5d5242; }
+  .paper .radios span.on::before { background: radial-gradient(circle, #2a2219 40%, transparent 46%); border-color: #2a2219; }
+  .paper .check::before { border-color: #2a2219; color: #2a2219; }
+  .paper .routine a { color: #8a2a1a; text-decoration-color: rgb(138 42 26 / 0.4); }
+  .paper .yield b { color: #1f5f6e; }
+  .book {
+    position: absolute; width: 230px; height: 360px; border-radius: 3px 6px 6px 3px; padding: 22px 20px 20px 34px;
+    box-shadow: 0 14px 34px rgb(0 0 0 / 0.65), inset 8px 0 0 rgb(0 0 0 / 0.25);
+  }
+  .book::before {
+    content: ''; position: absolute; left: 10px; top: 14px; bottom: 14px; width: 0;
+    border-left: 2px dotted rgb(217 180 106 / 0.5);
+  }
+  .book .label {
+    background: linear-gradient(170deg, #ddd2b8, #cbbf9f); color: #2a2219; height: 230px; padding: 14px 14px;
+    font-family: var(--display); box-shadow: 0 1px 0 rgb(0 0 0 / 0.3);
+  }
+  .book .label b { display: block; font-size: 22px; font-weight: 500; }
+  .book .label .t { font-size: 18px; margin-top: 8px; line-height: 1.15; }
+  .book .label .hz { font-family: var(--brush); font-size: 18px; color: #8a2a1a; display: block; margin-top: 4px; }
+  .book .label small { display: block; font-family: var(--body); font-size: 11px; color: #5d5242; margin-top: 12px; line-height: 1.5; }
+  .book .bk-bar { position: absolute; left: 34px; right: 50px; bottom: 26px; height: 6px; background: rgb(0 0 0 / 0.45); border-radius: 3px; }
+  .book .bk-bar::after { content: ''; position: absolute; inset: 0; width: var(--w); background: var(--c); border-radius: 3px; }
+  .book .bk-x { position: absolute; right: 16px; bottom: 20px; font-size: 13px; color: #e9e5da; }
+</style>
+</head>
+<body>
+<div class="bar-top">
+  <span class="grp" title="The painting is Cultivate's cave standing in for Routine's own. Click an hour to pick it; the tabs open Practice and Study in A and B (the techniques past the first and the queue are made up)."><b>Layout</b>
+    <button data-l="F">F · text left, ring middle, page right</button>
+    <button data-l="A">A · text left, wheel right</button>
+    <button data-l="B" class="on">B · wheel left, text right</button>
+    <button data-l="C">C · three columns</button>
+    <button data-l="D">D · wheel at the heart</button>
+    <button data-l="E">E · the desk</button>
+  </span>
+  <span class="grp"><b>Behind</b>
+    <button data-b="paint" class="on">painting (stand-in)</button>
+    <button data-b="void">void</button>
+  </span>
+  <span class="grp"><b>Page</b>
+    <button data-p="beside" class="on">beside, small</button>
+    <button data-p="below">under the ring</button>
+  </span>
+  <span class="grp"><b>Known</b>
+    <button data-m="few" class="on">3 techniques</button>
+    <button data-m="many">14 techniques</button>
+  </span>
+  <span class="grp"><b>Bezel</b>
+    <button data-z="gilt" class="on">gilt ring</button>
+    <button data-z="thin">thin</button>
+  </span>
+</div>
+<div class="wrap"><div class="stage" id="stage"></div></div>
+
+<script>
+const BR = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const EL = ['水','土','木','木','土','火','火','土','金','金','土','水'];
+const KIND = ['sleep','sleep','qi','body','qi','qi','qi','qi','qi','qi','study','study'];
+const WORD = { qi: 'Qi', body: 'Body', soul: 'Soul', study: 'Study', practice: 'Practice', sleep: 'Sleep' };
+const TINT = { qi: '#2c6c7a', body: '#8c5634', soul: '#4a4f86', study: '#4f6b4b', practice: '#7a5a2c', sleep: '#22272d' };
+let W = 1920;
+let state = { page: 'beside', many: false, l: 'B', hideDone: false, b: 'paint', z: 'gilt', pick: null, tab: 'day' };
+
+function polar(r, deg) { const a = (deg - 90) * Math.PI / 180; return [r * Math.cos(a), r * Math.sin(a)]; }
+function arc(i, ro, ri, gap = 1.1) {
+  const f = i * 30 - 15 + gap / 2, t = i * 30 + 15 - gap / 2;
+  const [x1, y1] = polar(ro, f), [x2, y2] = polar(ro, t), [x3, y3] = polar(ri, t), [x4, y4] = polar(ri, f);
+  return `M${x1} ${y1}A${ro} ${ro} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${ri} ${ri} 0 0 0 ${x4} ${y4}Z`;
+}
+
+/** The wheel at radius r (its segments' outer edge); the bezel adds about 0.3 r round it. */
+function wheel(r) {
+  const ri = r * 0.5, gilt = state.z === 'gilt';
+  let s = '';
+  // The bezel.
+  if (gilt) {
+    const b1 = r + 12, b2 = r + 46;
+    s += `<circle r="${b2 + 18}" fill="rgb(6 7 10 / 0.55)"/>`;
+    s += `<circle r="${b2}" fill="none" stroke="#d9b46a" stroke-opacity="0.7" stroke-width="1.6"/>`;
+    s += `<circle r="${b2 + 6}" fill="none" stroke="#d9b46a" stroke-opacity="0.35" stroke-width="0.8"/>`;
+    s += `<circle r="${b1}" fill="none" stroke="#d9b46a" stroke-opacity="0.55" stroke-width="1"/>`;
+    for (let d = 0; d < 360; d += 3) {
+      const long = d % 15 === 0;
+      const [x1, y1] = polar(b1 + 1, d), [x2, y2] = polar(b1 + (long ? 9 : 5), d);
+      s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#d9b46a" stroke-opacity="${long ? 0.55 : 0.25}" stroke-width="0.8"/>`;
+    }
+    EL.forEach((e, i) => {
+      const [x, y] = polar(b1 + 24, i * 30);
+      s += `<text class="hz" x="${x}" y="${y}" font-size="${r * 0.075}" fill="#d9b46a" fill-opacity="0.75">${e}</text>`;
+    });
+    // The four quarters and their studs.
+    [['水', 0], ['木', 90], ['火', 180], ['金', 270]].forEach(([e, d]) => {
+      const [x, y] = polar(b2 + 34, d), [sx, sy] = polar(b2, d);
+      s += `<rect x="${sx - 5}" y="${sy - 5}" width="10" height="10" transform="rotate(45 ${sx} ${sy})" fill="#0a0b0e" stroke="#d9b46a" stroke-width="1.2"/>`;
+      s += `<text class="hz" x="${x}" y="${y}" font-size="${r * 0.11}" fill="#d9b46a">${e}</text>`;
+    });
+    [45, 135, 225, 315].forEach((d) => {
+      const [x, y] = polar(b2 + 26, d);
+      s += `<text class="hz" x="${x}" y="${y}" font-size="${r * 0.075}" fill="#d9b46a" fill-opacity="0.6">土</text>`;
+    });
+  } else {
+    s += `<circle r="${r + 8}" fill="none" stroke="#d9b46a" stroke-opacity="0.35" stroke-width="1"/>`;
+    EL.forEach((e, i) => {
+      const [x, y] = polar(r + 26, i * 30);
+      s += `<text class="hz" x="${x}" y="${y}" font-size="${r * 0.07}" fill="#d9b46a" fill-opacity="0.6">${e}</text>`;
+    });
+  }
+  // The hours.
+  KIND.forEach((k, i) => {
+    const [hx, hy] = polar((r + ri) / 2, i * 30);
+    const pick = state.pick === i ? ' pick' : '';
+    s += `<g class="seg-h${pick}" data-h="${i}">`;
+    s += `<path d="${arc(i, r, ri)}" fill="${TINT[k]}" fill-opacity="0.92" stroke="#d9b46a" stroke-opacity="0.3" stroke-width="0.8"/>`;
+    s += `<text class="hz" x="${hx}" y="${hy - r * 0.04}" font-size="${r * 0.15}">${BR[i]}</text>`;
+    s += `<text x="${hx}" y="${hy + r * 0.1}" font-size="${r * 0.068}" fill-opacity="0.8">${WORD[k]}</text>`;
+    if (k === 'sleep') {
+      const [lx, ly] = polar(r * 0.9, i * 30 + 10);
+      s += `<rect x="${lx - 4}" y="${ly - 1}" width="8" height="6" rx="1" fill="#e9e5da" fill-opacity="0.7"/><path d="M${lx - 2.5} ${ly - 1}v-2a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="#e9e5da" stroke-opacity="0.7"/>`;
+    }
+    if (i === 3) {
+      const [dx, dy] = polar(r * 0.9, i * 30 + 11);
+      s += `<circle cx="${dx}" cy="${dy}" r="4" fill="#f0b46a"/><circle cx="${dx}" cy="${dy}" r="8" fill="#f0b46a" fill-opacity="0.25"/>`;
+    }
+    s += '</g>';
+  });
+  // The hub.
+  s += `<circle r="${ri - 4}" fill="#07080b" fill-opacity="0.94" stroke="#d9b46a" stroke-opacity="0.55" stroke-width="1.2"/>`;
+  if (gilt) s += `<circle r="${ri - 12}" fill="none" stroke="#d9b46a" stroke-opacity="0.2" stroke-width="0.8"/>`;
+  const pk = state.pick;
+  if (pk == null) {
+    s += `<text y="${-r * 0.06}" font-size="${r * 0.1}">Your own day</text>`;
+    s += `<text y="${r * 0.08}" font-size="${r * 0.07}" fill="#7fc7d9">+0.69 qi a day</text>`;
+  } else {
+    s += `<text class="hz" y="${-r * 0.12}" font-size="${r * 0.14}" fill="#d9b46a">${BR[pk]}</text>`;
+    s += `<text y="${r * 0.04}" font-size="${r * 0.08}">${WORD[KIND[pk]]}</text>`;
+    s += `<text y="${r * 0.15}" font-size="${r * 0.055}" fill="#8d949d">pick what it goes to</text>`;
+  }
+  const box = Math.ceil((gilt ? r + 100 : r + 50));
+  return `<svg width="${box * 2}" height="${box * 2}" viewBox="${-box} ${-box} ${box * 2} ${box * 2}">${s}</svg>`;
+}
+
+const head = () => `
+  <h1 class="title">Routine<span class="hz">日课</span></h1>
+  <div class="tabs">${[["day","Day","日"],["practice","Practice","练"],["study","Study","读"]].map(([id,n,h]) => `<button data-tab="${id}" class="${state.tab === id ? "on" : ""}">${n}<span class="hz">${h}</span></button>`).join("")}</div>
+  <div class="strip">${KIND.map((k, i) => `<span data-h="${i}" class="${state.pick === i ? 'pick' : ''}" style="background:${TINT[k]}">${BR[i]}</span>`).join('')}</div>
+  <div class="counts">${Object.keys(WORD).map((k) => [k, KIND.filter((x) => x === k).length]).filter(([, n]) => n).map(([k, n]) => `<span><i style="background:${TINT[k]}${k === 'sleep' ? ';outline:1px solid #444' : ''}"></i>${WORD[k]} ${n}</span>`).join('')}</div>`;
+
+/** B's geometry: the ring centred in the room left of the column, its page beside it, the same
+    place on all three tabs so the ring doesn't jump when the tab changes. */
+const RING_R = 268;
+function geomB() {
+  const room0 = 72, room1 = W - 760, room = room1 - room0, half = RING_R + 82;
+  // Beside: the ring and a narrow page as one group, centred in the room; too narrow a room puts
+  // the page under the ring instead.
+  const pageW = 290, group = half * 2 + 40 + pageW;
+  const beside = state.page === 'beside' && room >= group;
+  const ringAt = beside ? Math.round(room0 + (room - group) / 2 + half) : Math.round(room0 + room / 2);
+  return { beside, ringAt, ringY: beside ? 548 : 490, pageAt: ringAt + half + 40, pageW, bandW: Math.min(room - 80, 760) };
+}
+
+/** F (Jan's arrangement): the words on the left, the ring in the middle, and on the right the page
+    of what is picked (an hour on Day, the technique on Practice, the copy on Study). The ring sits
+    in the same place on every tab and doesn't move when the page comes or goes. */
+function geomF() {
+  const room0 = 780, pageW = 330, room1 = W - 60 - pageW - 30, room = room1 - room0;
+  const r = Math.min(RING_R, Math.floor(room / 2) - 92);
+  return { r, ringAt: Math.round(room0 + room / 2), ringY: 548, pageAt: W - 60 - pageW, pageW };
+}
+function layoutF(ring, page, col) {
+  const g = geomF();
+  return {
+    wx: g.ringAt,
+    scrim: `linear-gradient(to right, rgb(4 5 7 / 0.92) 0px, rgb(4 5 7 / 0.78) 700px, rgb(4 5 7 / 0) 900px, rgb(4 5 7 / 0) ${W - 520}px, rgb(4 5 7 / ${page ? 0.85 : 0.4}) ${W - 360}px)`,
+    html: `
+      <div class="blk" style="left:118px;top:96px;width:640px">${col}</div>
+      <div class="wheel" style="left:${g.ringAt}px;top:${g.ringY}px;transform:translate(-50%,-50%)">${ring(g.r)}</div>
+      ${page ? `<div class="blk" style="left:${g.pageAt}px;top:250px;width:${g.pageW}px">${page}</div>` : ''}`,
+  };
+}
+
+/** B's left room on every tab: the ring, and its page beside it or in a band under it. */
+function ringRoom(ring, page, band) {
+  const g = geomB();
+  return `
+    <div class="wheel" style="left:${g.ringAt}px;top:${g.ringY}px;transform:translate(-50%,-50%)">${ring}</div>
+    ${g.beside
+      ? `<div class="blk pg-small" style="left:${g.pageAt}px;top:${g.ringY - 190}px;width:${g.pageW}px">${page}</div>`
+      : `<div class="blk band-under" style="left:${g.ringAt - g.bandW / 2}px;top:${g.ringY + RING_R + 96}px;width:${g.bandW}px">${band}</div>`}`;
+}
+
+/** Day's band under the ring: the hour and its six kinds in one row. */
+function hourBand() {
+  const h = state.pick ?? 7, k = KIND[h], locked = h < 2;
+  return `
+    <div class="hb-hour"><span class="hz">${BR[h]}</span><span><b>${WORD[k]}</b><small>${state.pick == null ? 'Now · ' : ''}${PIN[h]} · ${CLOCK[h]} · ${GIVES[k]}</small></span></div>
+    ${locked ? '<p class="hint" style="margin:0">Locked to sleep while you stand in Qi Condensation.</p>' : `<div class="kinds row6">${KINDS6.map(([id, n, hz]) => `<button data-kind="${id}" class="${k === id ? 'on' : ''}${id === 'soul' ? ' dim' : ''}">${n}<span class="hz">${hz}</span></button>`).join('')}</div>`}`;
+}
+const practiceBand = () => `
+  <div class="chips" style="justify-content:center;margin:0">${['Qi technique, tier 1', 'Thrust', 'Physical', 'Power 45', '10 qi', 'Spear Dao'].map((c) => `<span>${c}</span>`).join('')}</div>
+  <p class="quote" style="text-align:center;margin-top:10px;font-size:18px">The first thrust every cadet learns, and the last one many of them use.</p>
+  <p class="routine" style="text-align:center;margin-top:8px">Accuracy <b>×1.00</b> · To checks <b>+2</b> · Practice speed <b>base</b> · Its Art <b>The Short Recovery 短收</b>, wakes at Comprehension <a>Open it</a></p>`;
+const studyBand = () => `
+  <p class="routine" style="text-align:center;margin:0">When done <b>+6 insight</b> · Suits you <b>×1.1</b><span class="q">?</span> · Teaches <b>The Count of Nine 九数</b> · grafts on the Qi tree</p>
+  <p class="quote" style="text-align:center;margin-top:10px;font-size:18px">The count the March garrisons breathe by on the wall.</p>`;
+
+/** Day's page in B: the hour picked (or the hour now), what it gives and what it can go to. */
+const CLOCK = ['23–1', '1–3', '3–5', '5–7', '7–9', '9–11', '11–13', '13–15', '15–17', '17–19', '19–21', '21–23'];
+const PIN = ['Zi', 'Chou', 'Yin', 'Mao', 'Chen', 'Si', 'Wu', 'Wei', 'Shen', 'You', 'Xu', 'Hai'];
+const TIME = ['midnight', 'deep night', 'before dawn', 'dawn', 'morning', 'late morning', 'noon', 'afternoon', 'late afternoon', 'dusk', 'evening', 'night'];
+const GIVES = { qi: '+0.099 qi a day', body: '+0.091 tempering a day (dawn +10%)', study: '+0.085 insight a day', sleep: 'nothing', soul: 'nothing: no nourishing art yet', practice: 'nothing: no technique in a slot' };
+const KINDS6 = [['qi', 'Qi', '气'], ['body', 'Body', '体'], ['soul', 'Soul', '魂'], ['study', 'Study', '读'], ['practice', 'Practice', '练'], ['sleep', 'Sleep', '睡']];
+function hourPage() {
+  const h = state.pick ?? 7, k = KIND[h], locked = h < 2;
+  return `
+    <p class="pg-line">${state.pick == null ? 'The hour now' : 'The hour picked'}</p>
+    <p class="hour-hd"><span class="hz">${BR[h]}</span>${PIN[h]} · ${CLOCK[h]} · ${TIME[h]}</p>
+    <p class="hour-kind">${WORD[k] ?? k}</p>
+    <p class="routine" style="margin-top:6px">Gives <b>${GIVES[k]}</b></p>
+    <p class="sub" style="margin-top:24px;font-size:18px">Give this hour to</p>
+    ${locked ? '<p class="hint" style="margin-top:0">Locked to sleep while you stand in Qi Condensation.</p>' : `<div class="kinds">${KINDS6.map(([id, n, hz]) => `<button data-kind="${id}" class="${k === id ? 'on' : ''}${id === 'soul' ? ' dim' : ''}">${n}<span class="hz">${hz}</span></button>`).join('')}</div>`}
+    <p class="hint">Drag across the wheel, or shift-click, to take several.</p>`;
+}
+const day = () => `
+  <div class="row"><span class="daytitle">The day at home</span><span class="seg"><button class="on">Home<span class="hz">居</span></button><button>Road<span class="hz">途</span></button></span></div>
+  <p class="hint">Tap an hour to change what it goes to. Drag across the wheel, or shift-click, to take several.</p>
+  <p class="yield">A day of seclusion: <b>+0.69 qi</b><span class="q">?</span> · +0.091 tempering · +0.17 insight</p>
+  <p class="routine">Routine · <b>Your own day</b> · no discipline <a>Change</a></p>`;
+const settings = () => `
+  <p class="sub">Minor breakthroughs<span class="q">?</span></p>
+  <div class="radios"><span class="on">Safe</span><span>Balanced</span><span>Bold</span><span>Only when I say</span></div>
+  <div class="check">Burn spirit stones in qi hours<span class="q">?</span></div>`;
+const methods = (cols) => `
+  <div class="methods${cols ? ' cols' : ''}">
+    <div class="m"><span class="ladder">Qi<span class="hz">炼气</span></span><span class="name">Cadet Spear Method<span class="hz">学枪法</span></span>
+      <span class="meta">White · Qi Condensation · chapter 1 · Origin 归元</span><span class="bar"><i style="--w:100%;--c:#7fc7d9"></i>×1.2</span></div>
+    <div class="m"><span class="ladder">Body<span class="hz">锻体</span></span><span class="name">Stone-Bearing Tempering Art<span class="hz">负石锻体诀</span></span>
+      <span class="meta">White · chapter 1 · earth · Mastery 精通</span><span class="bar"><i style="--w:33%;--c:#c98b5e"></i>×1</span></div>
+    <div class="m"><span class="ladder">Soul<span class="hz">养魂</span></span><span class="none">No nourishing art: the soul grows only from the world until you find one.</span></div>
+  </div>`;
+const corners = '<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>';
+
+const LAYOUTS = {
+  // Text left on fading glass with the methods at its foot (Jan: cleaner in the column than in a
+  // band), the wheel centred in the room right of it.
+  A: () => ({
+    wx: Math.round(760 + (W - 760) / 2),
+    scrim: `linear-gradient(to right, rgb(4 5 7 / 0.92) 0px, rgb(4 5 7 / 0.75) 700px, rgb(4 5 7 / 0) 1000px)`,
+    html: `
+      <div class="blk" style="left:118px;top:96px;width:640px">${head()}<div style="margin-top:28px">${day()}</div><div style="margin-top:26px">${settings()}</div>
+        <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:18px"><p class="sub">Methods</p>${methods(false)}</div></div>
+      <div class="wheel" style="left:${Math.round(760 + (W - 760) / 2)}px;top:560px;transform:translate(-50%,-50%)">${wheel(300)}</div>`,
+  }),
+  // The wheel big on the left, the words in one column on the right, the methods at its foot.
+  B: () => ({
+    wx: geomB().ringAt,
+    scrim: 'linear-gradient(to left, rgb(4 5 7 / 0.92) 0%, rgb(4 5 7 / 0.75) 38%, rgb(4 5 7 / 0.45) 62%, rgb(4 5 7 / 0.3))',
+    html: `
+      ${ringRoom(wheel(RING_R), hourPage(), hourBand())}
+      <div class="blk" style="left:${W - 740}px;top:96px;width:660px">${head()}<div style="margin-top:28px">${day()}</div><div style="margin-top:26px">${settings()}</div>
+        <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:18px"><p class="sub">Methods</p>${methods(false)}</div></div>`,
+  }),
+  F: () => layoutF(
+    (r) => wheel(r),
+    state.pick == null ? '' : hourPage(),
+    `${head()}<div style="margin-top:28px">${day()}</div><div style="margin-top:26px">${settings()}</div>
+      <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:18px"><p class="sub">Methods</p>${methods(false)}</div>`,
+  ),
+  // Three columns: the wheel left, the day in a glass card in the middle, settings and methods right.
+  C: () => ({
+    wx: 470,
+    scrim: 'linear-gradient(to top, rgb(4 5 7 / 0.6), rgb(4 5 7 / 0.2))',
+    html: `
+      <div class="wheel" style="left:470px;top:560px;transform:translate(-50%,-50%)">${wheel(232)}</div>
+      <div class="blk card" style="left:810px;top:250px;width:540px;padding:30px 34px 34px">${corners}${head()}<div style="margin-top:28px">${day()}</div></div>
+      <div class="blk card" style="left:${W - 534}px;top:250px;width:500px;padding:30px 28px">${corners}${settings()}<div style="margin-top:30px;border-top:1px solid var(--line);padding-top:20px"><p class="sub">Methods</p>${methods(false)}</div></div>`,
+  }),
+  // The wheel at the heart, the day left of it and the settings and methods right of it.
+  D: () => ({
+    wx: Math.round(W / 2 + 36),
+    scrim: 'linear-gradient(to right, rgb(4 5 7 / 0.9) 0%, rgb(4 5 7 / 0.5) 26%, rgb(4 5 7 / 0) 40%, rgb(4 5 7 / 0) 60%, rgb(4 5 7 / 0.5) 72%, rgb(4 5 7 / 0.9) 100%)',
+    html: `
+      <div class="blk" style="left:118px;top:96px;width:560px">${head()}<div style="margin-top:30px">${day()}</div></div>
+      <div class="wheel" style="left:${Math.round(W / 2 + 36)}px;top:580px;transform:translate(-50%,-50%)">${wheel(255)}</div>
+      <div class="blk" style="left:${W - 490}px;top:150px;width:440px">${settings()}<div style="margin-top:34px;border-top:1px solid var(--line);padding-top:20px"><p class="sub">Methods</p>${methods(false)}</div></div>`,
+  }),
+  // The desk: the wheel as a dial on dark wood, the words on paper slips, the methods as three bound books.
+  E: () => ({
+    wx: 520,
+    scrim: 'none',
+    html: `
+      <div class="blk" style="left:104px;top:72px;right:40px;text-align:center;font-size:18px">A day of seclusion: <b style="color:#7fc7d9;font-weight:400">+0.69 qi</b> · +0.091 tempering · +0.17 insight</div>
+      <div class="wheel" style="left:520px;top:440px;transform:translate(-50%,-50%)">${wheel(240)}</div>
+      <div class="blk paper" style="left:200px;top:700px;width:640px;padding:24px 34px 26px;transform:rotate(-0.6deg)">
+        <h1 class="title" style="font-size:36px">Routine<span class="hz" style="font-size:28px">日课</span></h1>
+        <div class="tabs" style="margin-top:8px"><button class="on" style="font-size:18px">Day<span class="hz">日</span></button><button style="font-size:18px">Practice<span class="hz">练</span></button><button style="font-size:18px">Study<span class="hz">读</span></button></div>
+        <div class="strip" style="margin-top:14px">${KIND.map((k, i) => `<span data-h="${i}" class="${state.pick === i ? 'pick' : ''}" style="background:${TINT[k]}">${BR[i]}</span>`).join('')}</div>
+        <div class="counts">Qi 7 · Body 1 · Study 2 · Sleep 2</div>
+        <div class="row" style="margin-top:14px"><span class="daytitle" style="font-size:21px">The day at home</span><span class="seg"><button class="on">Home<span class="hz">居</span></button><button>Road<span class="hz">途</span></button></span></div>
+        <p class="hint" style="font-size:13px">Tap an hour to change what it goes to. Drag across the wheel, or shift-click, to take several.</p>
+      </div>
+      <div class="book" style="left:1000px;top:330px;background:linear-gradient(160deg,#1d2b44,#111a2c)"><div class="label"><b>Qi</b><span class="t">Cadet Spear Method</span><span class="hz">学枪法</span><small>White<br>Qi Condensation<br>chapter 1<br>Origin 归元</small></div><i class="bk-bar" style="--w:100%;--c:#7fc7d9"></i><span class="bk-x">×1.2</span></div>
+      <div class="book" style="left:1260px;top:330px;background:linear-gradient(160deg,#4a1f1a,#2a110e)"><div class="label"><b>Body</b><span class="t">Stone-Bearing Tempering Art</span><span class="hz">负石锻体诀</span><small>White<br>chapter 1<br>earth<br>Mastery 精通</small></div><i class="bk-bar" style="--w:33%;--c:#e0a768"></i><span class="bk-x">×1</span></div>
+      <div class="book" style="left:1520px;top:330px;background:linear-gradient(160deg,#1c3a38,#0f2120)"><div class="label"><b>Soul</b><small style="font-size:12px">No nourishing art: the soul grows only from the world until you find one.</small></div></div>
+      <div class="blk paper" style="left:1000px;top:730px;width:560px;padding:20px 30px 24px;transform:rotate(0.5deg)">
+        <p class="routine" style="margin:0 0 14px">Routine · <b>Your own day</b> · no discipline <a>Change</a></p>${settings()}</div>`,
+  }),
+};
+
+/** A gilt bezel like the wheel's, round a ring of radius r. */
+function bezel(r) {
+  if (state.z !== 'gilt') return `<circle r="${r + 8}" fill="none" stroke="#d9b46a" stroke-opacity="0.35"/>`;
+  const b1 = r + 12, b2 = r + 46;
+  let s = `<circle r="${b2 + 18}" fill="rgb(6 7 10 / 0.55)"/><circle r="${b2}" fill="none" stroke="#d9b46a" stroke-opacity="0.7" stroke-width="1.6"/><circle r="${b2 + 6}" fill="none" stroke="#d9b46a" stroke-opacity="0.35" stroke-width="0.8"/><circle r="${b1}" fill="none" stroke="#d9b46a" stroke-opacity="0.55"/>`;
+  for (let d = 0; d < 360; d += 3) {
+    const long = d % 15 === 0;
+    const [x1, y1] = polar(b1 + 1, d), [x2, y2] = polar(b1 + (long ? 9 : 5), d);
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#d9b46a" stroke-opacity="${long ? 0.55 : 0.25}" stroke-width="0.8"/>`;
+  }
+  [0, 90, 180, 270].forEach((d) => {
+    const [sx, sy] = polar(b2, d);
+    s += `<rect x="${sx - 5}" y="${sy - 5}" width="10" height="10" transform="rotate(45 ${sx} ${sy})" fill="#0a0b0e" stroke="#d9b46a" stroke-width="1.2"/>`;
+  });
+  return s;
+}
+const svgBox = (r, inner) => { const b = r + 110; return `<svg width="${b * 2}" height="${b * 2}" viewBox="${-b} ${-b} ${b * 2} ${b * 2}">${inner}</svg>`; };
+function arcPath(r, from, to) {
+  const [x1, y1] = polar(r, from), [x2, y2] = polar(r, to);
+  return `M${x1} ${y1}A${r} ${r} 0 ${to - from > 180 ? 1 : 0} 1 ${x2} ${y2}`;
+}
+
+/** Practice's heart: the mastery as a ring of five steps, the technique in its hub. */
+const STEPS = [['Glimpse', '初窥', 'at once', ''], ['Comprehension', '领悟', '4 days', '+4.1 insight'], ['Mastery', '精通', '30 days', '+16 insight'], ['Perfection', '圆满', '150 days', '+48 insight'], ['Origin', '归元', '600 days', '+121 insight']];
+function masteryRing(r) {
+  const k = r / 235;
+  let s = bezel(r);
+  STEPS.forEach(([n, h, days, ins], i) => {
+    const from = i * 72 + 2, to = i * 72 + 70;
+    s += `<path d="${arcPath(r - 16, from, to)}" fill="none" stroke="rgb(255 255 255 / 0.08)" stroke-width="20"/>`;
+    if (i === 0) s += `<path d="${arcPath(r - 16, from, to)}" fill="none" stroke="#d6ab4c" stroke-width="20"/>`;
+    const [x, y] = polar(r * 0.68, i * 72 + 36);
+    s += `<text class="hz" x="${x}" y="${y - 16 * k}" font-size="${22 * k}" fill="${i === 0 ? '#d9b46a' : '#8d949d'}">${h}</text>`;
+    s += `<text x="${x}" y="${y + 6 * k}" font-size="${15 * k}" fill="${i === 0 ? '#e9e5da' : '#8d949d'}">${n}</text>`;
+    s += `<text x="${x}" y="${y + 24 * k}" font-size="${12 * k}" fill="#8d949d">${days}</text>`;
+    if (ins) s += `<text x="${x}" y="${y + 40 * k}" font-size="${12 * k}" fill="#7fc7d9" fill-opacity="0.8">${ins}</text>`;
+  });
+  s += `<circle r="${r * 0.36}" fill="#07080b" fill-opacity="0.94" stroke="#d9b46a" stroke-opacity="0.55" stroke-width="1.2"/>`;
+  s += `<text class="hz" y="${-30 * k}" font-size="${28 * k}" fill="#d9b46a">积骨刺</text>`;
+  s += `<text y="${4 * k}" font-size="${20 * k}">Piled Bones Thrust</text>`;
+  s += `<text y="${30 * k}" font-size="${13 * k}" fill="#8d949d">Glimpse · 0 / 4 days</text>`;
+  return svgBox(r, s);
+}
+/** Study's heart: the copy being read as a ring filling toward done. */
+function readingRing(r) {
+  const k = r / 235;
+  let s = bezel(r);
+  s += `<circle r="${r - 16}" fill="none" stroke="rgb(255 255 255 / 0.08)" stroke-width="20"/>`;
+  s += `<path d="${arcPath(r - 16, 0, 144)}" fill="none" stroke="#d6ab4c" stroke-width="20"/>`;
+  const [dx, dy] = polar(r - 16, 144);
+  s += `<circle cx="${dx}" cy="${dy}" r="6" fill="#f3d48c"/>`;
+  s += `<circle r="${r * 0.66}" fill="#07080b" fill-opacity="0.94" stroke="#d9b46a" stroke-opacity="0.55" stroke-width="1.2"/>`;
+  s += `<text class="hz" y="${-64 * k}" font-size="${34 * k}" fill="#d9b46a">军中数息诀</text>`;
+  s += `<text y="${-20 * k}" font-size="${26 * k}">Garrison Breath-Count</text>`;
+  s += `<text y="${12 * k}" font-size="${15 * k}" fill="#8d949d">Formula 口诀 · White</text>`;
+  s += `<text y="${56 * k}" font-size="${32 * k}">40%</text>`;
+  s += `<text y="${86 * k}" font-size="${14 * k}" fill="#8d949d">about 9 days left</text>`;
+  return svgBox(r, s);
+}
+
+/** The known techniques: three, or a long life's worth with the search and filters past eight
+    (design § UI and screens, Routine › Practice). Rarity edges from blue, a glow from purple; a
+    line's later chapters sit under the earlier. The made-up ones are marked *. */
+const RAR = { white: '', green: '#6fbf73', blue: '#5b9bd5', purple: '#a678d6', gold: '#e0b850' };
+const KNOWN = [
+  ['Heaven-Splitting Moon Glaive*', '裂天月刀', 'purple', 2, 'Blade', 'Mastery 30 / 150', 0],
+  ['Nine Coils Serpent Spear*', '九蟠蛇枪', 'blue', 2, 'Spear', 'Comprehension 6 / 30', 0],
+  ['Cinder Step*', '烬步', 'green', 1, 'Fire', 'Perfection 90 / 600', 0],
+  ['Piled Bones Thrust', '积骨刺', 'white', 1, 'Spear', 'Glimpse 0 / 4', 1],
+  ['Rampart Palm', '守垣掌', 'white', 1, 'Earth', 'Comprehension 4 / 30', 2],
+  ['Rampart Collapse Palm', '崩垣掌', 'white', 2, 'Earth', 'Glimpse 0 / 4', 0, true],
+  ['Sinkhole Stone Fist', '坑石拳', 'white', 1, 'Earth', 'Mastery 31 / 150', 0],
+  ['Undertow Palm', '暗流掌', 'white', 1, 'Water', 'Glimpse 2 / 4', 0],
+  ['Bone-Splitting Cleave', '劈骨斩', 'white', 1, 'Blade', 'Origin', 0],
+  ['Alley Wind Palm', '巷风掌', 'white', 1, 'Wind', 'Glimpse 0 / 4', 0],
+  ['Lamp-Snuffing Glance', '灭灯一瞥', 'white', 1, 'Soul', 'Comprehension 12 / 30', 0],
+  ['Bulwark of Breath', '息垣诀', 'white', 1, 'Qi', 'Glimpse 1 / 4', 0],
+  ['Iron Cloth Shirt', '铁布衫', 'white', 1, 'Body', 'Mastery 44 / 150', 0],
+  ['Lamp-Shadow Step', '灯影步', 'white', 1, 'Soul', 'Glimpse 0 / 4', 0],
+];
+const knownRow = ([n, hz, rar, tier, dao, lvl, slot, later]) => `
+  <div class="known${n.startsWith('Piled') ? ' on' : ''}${later ? ' later' : ''}${rar === 'purple' || rar === 'gold' ? ' glow' : ''}" style="${RAR[rar] ? `--rar:${RAR[rar]}` : ''}">
+    <b>${n}</b><span class="hz">${hz}</span>${slot ? `<span class="tag">Practicing · ${slot}</span>` : ''}<span class="muted">${lvl}</span></div>`;
+const practiceCol = () => {
+  const many = state.many;
+  const all = many ? KNOWN : KNOWN.filter(([n]) => ['Piled Bones Thrust', 'Rampart Palm', 'Iron Cloth Shirt'].includes(n));
+  const done = all.filter((t) => t[5] === 'Origin').length;
+  const list = state.hideDone ? all.filter((t) => t[5] !== 'Origin') : all;
+  return `
+  <div style="margin-top:28px">
+    <p class="sub">Practicing <span style="font-size:14px;color:var(--muted);font-family:var(--body)">${many ? '1 hour a day, split between two' : 'No hour of the day goes to practice.'} <a style="color:var(--accent)">Change hours on the wheel</a></span></p>
+    <div class="slot"><span class="n">1</span><span><b>Piled Bones Thrust</b><span class="hz">积骨刺</span></span><span class="muted">Glimpse · 0 / 4${many ? ' · 2 days to the next' : ''}</span><button class="btn">Stop</button></div>
+    ${many ? '<div class="slot"><span class="n">2</span><span><b>Rampart Palm</b><span class="hz">守垣掌</span></span><span class="muted">Comprehension · 4 / 30 · 52 days</span><button class="btn">Stop</button></div>' : '<p class="hint" style="margin:8px 0 0">Comprehension waits on practice hours (+4.1 insight when it lands).</p>'}
+    <div class="slot sealed"><span class="n hz">封</span><span class="muted">${many ? 'Opens with the Twin Soul talent' : 'Opens with Split Attention · Soul, tier 2'}</span></div>
+  </div>
+  <div style="margin-top:24px;border-top:1px solid var(--line);padding-top:16px">
+    <p class="sub">Known <span class="muted" style="font-size:15px">${list.length === all.length ? all.length : `${list.length} of ${all.length}`}</span></p>
+    ${all.length > 8 ? `<div class="filters"><input placeholder="Find a technique…"><span class="chip on">All tiers</span><span class="chip">Tier 1</span><span class="chip">Tier 2</span><span class="chip${state.hideDone ? ' on' : ''}" data-done>Hide finished · ${done}</span><span class="sel">Any Dao ▾</span><span class="sel">Rarity ▾</span></div>` : ''}
+    <div class="known-list${all.length > 8 ? ' long' : ''}">${list.map(knownRow).join('')}</div>
+  </div>`;
+};
+const practicePage = () => `
+  <p class="pg-line">White · chapter 1 of the Piled Bones Thrust line<span class="q">?</span></p>
+  <div class="chips"><span>Qi technique, tier 1</span><span>Thrust</span><span>Physical</span><span>Power 45</span><span>10 qi</span><span>Spear Dao</span></div>
+  <p class="quote">The first thrust every cadet learns, and the last one many of them use.</p>
+  <div class="figs"><span><small>Accuracy</small>×1.00</span><span><small>To checks</small>+2</span><span><small>Practice speed</small>base</span></div>
+  <p class="routine" style="margin-top:18px">Its Art · <b>The Short Recovery 短收</b> · 0 of 1 learned · wakes at Comprehension <a>Open it beside the Spear tree</a></p>
+  <p class="hint">The Gongsun garrison's cadet drill on the Wall of Piled Bones.</p>
+  <button class="btn on" style="margin-top:16px">Practicing · stop</button>`;
+const studyCol = () => `
+  <p class="routine" style="margin-top:30px">Reading now · <b>2 of 12 hours</b> · 0.15 study days a day <a>Change hours on the wheel</a></p>
+  <div style="margin-top:26px">
+    <p class="sub">Next in the queue</p>
+    <div class="qrow"><span class="n">2</span><b>Stone Eyes Lamp Formula</b><span class="hz">石眼灯诀</span><span class="acts">↑ ↓ ×</span></div>
+    <div class="qrow"><span class="n">3</span><b>Beast-Butcher Sinew Formula</b><span class="hz">屠兽筋诀</span><span class="acts">↑ ↓ ×</span></div>
+  </div>
+  <div style="margin-top:26px;border-top:1px solid var(--line);padding-top:18px">
+    <p class="sub">Unread on the shelf</p>
+    <div class="qrow"><b>Lamp-Shadow Step</b><span class="hz">灯影步</span><button class="btn" style="margin-left:auto">Queue</button></div>
+    <p class="routine"><a style="margin:0">Open the bookcase →</a></p>
+  </div>
+  <div style="margin-top:22px;border-top:1px solid var(--line);padding-top:18px">
+    <p class="sub">What study gives</p>
+    <div class="give"><span>Insight a day</span><b>+0.14</b></div><div class="give"><span>Study days a day</span><b>0.15</b></div><div class="give"><span>Aptitude</span><b>×0.90</b></div>
+    <p class="hint">Every study hour gives insight whether or not a copy is being read; a copy read gives its lump of insight when done.</p>
+  </div>`;
+const studyPage = () => `
+  <p class="pg-line">Formula 口诀 · White · grafts on the Qi tree</p>
+  <div class="figs"><span><small>When done</small>+6 insight</span><span><small>Suits you</small>×1.1</span></div>
+  <p class="quote">The count the March garrisons breathe by on the wall.</p>
+  <p class="routine" style="margin-top:18px">Teaches · <b>The Count of Nine 九数</b></p>`;
+
+/** Practice and Study in A and B: the ring where the wheel stands, its page beside it. */
+function tabPage() {
+  const B = state.l === 'B';
+  if (state.l === 'F') {
+    const P = state.tab === 'practice';
+    return layoutF((r) => (P ? masteryRing(r) : readingRing(r)), P ? practicePage() : studyPage(), head() + (P ? practiceCol() : studyCol()));
+  }
+  if (B) {
+    const P = state.tab === 'practice';
+    return {
+      wx: geomB().ringAt,
+      scrim: 'linear-gradient(to left, rgb(4 5 7 / 0.92) 0%, rgb(4 5 7 / 0.75) 38%, rgb(4 5 7 / 0.45) 62%, rgb(4 5 7 / 0.3))',
+      html: `
+        ${ringRoom(P ? masteryRing(RING_R) : readingRing(RING_R), P ? practicePage() : studyPage(), P ? practiceBand() : studyBand())}
+        <div class="blk" style="left:${W - 740}px;top:96px;width:660px">${head()}${P ? practiceCol() : studyCol()}</div>`,
+    };
+  }
+  const ring = state.tab === 'practice' ? masteryRing(B ? RING_R : 235) : readingRing(B ? RING_R : 235);
+  const page = state.tab === 'practice' ? practicePage() : studyPage();
+  const col = state.tab === 'practice' ? practiceCol() : studyCol();
+  const room0 = B ? 72 : 740, room1 = B ? W - 760 : W - 40, roomW = room1 - room0;
+  const g = geomB();
+  const ringAt = B ? g.ringAt : Math.round(room0 + roomW * 0.34), pageAt = B ? g.pageAt : Math.round(room0 + roomW * 0.66);
+  return {
+    wx: ringAt,
+    scrim: B
+      ? 'linear-gradient(to left, rgb(4 5 7 / 0.92) 0%, rgb(4 5 7 / 0.75) 38%, rgb(4 5 7 / 0.45) 62%, rgb(4 5 7 / 0.3))'
+      : 'linear-gradient(to right, rgb(4 5 7 / 0.9) 0%, rgb(4 5 7 / 0.7) 30%, rgb(4 5 7 / 0.4) 55%, rgb(4 5 7 / 0.8) 100%)',
+    html: `
+      <div class="wheel" style="left:${ringAt}px;top:560px;transform:translate(-50%,-50%)">${ring}</div>
+      <div class="blk" style="left:${pageAt}px;top:${state.tab === 'practice' ? 330 : 400}px;width:${B ? g.pageW : Math.min(430, Math.round(roomW * 0.32))}px">${page}</div>
+      <div class="blk" style="left:${B ? W - 740 : 118}px;top:96px;width:${B ? 660 : 620}px">${head()}${col}</div>`,
+  };
+}
+
+function paintAt(wx) {
+  const h = Math.max(1210, Math.ceil((W - 72) / 1.5)), pw = h * 1.5;
+  const x = Math.min(0, Math.max(W - 72 - pw, wx - 72 - pw / 2));
+  return `background-size:auto ${h}px;background-position-x:${Math.round(x)}px`;
+}
+
+function render() {
+  size();
+  const st = document.getElementById('stage');
+  st.className = 'stage' + (state.b === 'void' ? ' void' : '') + (state.l === 'E' ? ' desk' : '');
+  if (state.tab !== 'day' && !'ABF'.includes(state.l)) state.tab = 'day';
+  const L = state.tab === 'day' ? LAYOUTS[state.l]() : tabPage();
+  st.innerHTML = `
+    <div class="backdrop"><div class="sky"></div><div class="paint" style="${paintAt(L.wx)}"></div><div class="scrim" style="background:${L.scrim}"></div></div>
+    <nav class="rail"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></nav>
+    <div class="top"><span>Severed Heaven<span class="hz">断天</span></span>
+      <span class="stats"><span><small>Autumn 3,139</small>Afternoon · hour of Wei</span><span><small>Spirit stones</small>5</span><span><small>Insight</small>1,307</span></span></div>
+    ${L.html}`;
+  st.querySelectorAll('[data-done]').forEach((el) => el.addEventListener('click', () => { state.hideDone = !state.hideDone; render(); }));
+  st.querySelectorAll('[data-kind]').forEach((el) => el.addEventListener('click', () => { KIND[state.pick ?? 7] = el.dataset.kind; render(); }));
+  st.querySelectorAll('[data-tab]').forEach((el) => el.addEventListener('click', () => { state.tab = el.dataset.tab; render(); }));
+  st.querySelectorAll('[data-h]').forEach((el) => el.addEventListener('click', () => {
+    const h = +el.dataset.h; state.pick = state.pick === h ? null : h; render();
+  }));
+  fit();
+}
+/** The stage: 1080 tall, scaled to the room under the bar, as wide as the window allows. */
+let S = 1;
+function size() {
+  const room = window.innerHeight - document.querySelector('.bar-top').offsetHeight;
+  S = room / 1080;
+  W = window.innerWidth / S;
+  if (W < 1728) { W = 1728; S = window.innerWidth / 1728; }
+  if (W > 2520) W = 2520;
+  W = Math.floor(W);
+  document.getElementById('stage').style.width = W + 'px';
+}
+function fit() {
+  const st = document.getElementById('stage');
+  const s = S;
+  st.style.transform = `scale(${s})`;
+  st.parentElement.style.height = 1080 * s + 'px';
+}
+document.querySelectorAll('.bar-top button').forEach((b) => b.addEventListener('click', () => {
+  if (b.dataset.p) state.page = b.dataset.p;
+  else if (b.dataset.m) { state.many = b.dataset.m === 'many'; state.tab = 'practice'; }
+  else { const key = b.dataset.l ? 'l' : b.dataset.b ? 'b' : 'z'; state[key] = b.dataset[key]; }
+  b.parentElement.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+  render();
+}));
+window.addEventListener('resize', render);
+render();
+</script>
+</body>
+</html>

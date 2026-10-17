@@ -725,13 +725,25 @@ select {
   padding: 507px 40px 0 44px;
 }
 
-.cultivate-seat > :not(.seat-sun, .seat-flash, .cultivate-scene) {
+.cultivate-seat > :not(.seat-sun, .seat-flash, .cultivate-backdrop) {
   position: relative;
 }
 
-/* The painted cave (A3, art/manifest.json's cultivate-scene): the stage's full height, centred on
-   the figure so its painted seat lands under it (docs/mockups/cultivate-scene-guide.png), its sides
-   fading into the void sky on a wide screen. Still, so it costs nothing to paint. */
+/* The painted cave (A3, art/manifest.json's cultivate-scene) and its wings, under one mask in the
+   seat's own space: the whole width is cave but the two lower corners, cut away along an ellipse
+   round the scene (Jan's sketch after A3) and fading slowly into the void sky. The upper half and
+   the foot's middle stay whole. Still, so it costs nothing to paint. */
+.cultivate-backdrop {
+  position: absolute;
+  inset: 0;
+  mask-image:
+    radial-gradient(ellipse 54% 82% at 50% 30%, #000 85%, transparent 100%),
+    linear-gradient(to bottom, #000 30%, transparent 50%);
+  pointer-events: none;
+}
+
+/* The painting: the stage's full height, centred on the figure so its painted seat lands under it
+   (docs/mockups/cultivate-scene-guide.png). */
 .cultivate-scene {
   position: absolute;
   top: 0;
@@ -740,9 +752,48 @@ select {
   aspect-ratio: 1536 / 1024;
   transform: translateX(-50%);
   background: url('./art/cultivate/scene.webp') center / 100% 100% no-repeat;
-  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
   filter: brightness(1.22);
-  pointer-events: none;
+}
+
+/* A wing: the painting's outer 486 px (of its 1,620 on the 1080 stage) mirrored past its edge, so
+   the cave runs to the stage's sides with no seam (Jan's call after A3). */
+.cultivate-wing {
+  position: absolute;
+  top: 0;
+  width: 486px;
+  height: 100%;
+  background: url('./art/cultivate/scene.webp') left top / 1620px 100% no-repeat;
+  transform: scaleX(-1);
+  filter: brightness(1.22);
+}
+
+/* Shade over a wing's middle height, where the mirrored lanterns and shelves would show twice,
+   clear at the painting's edge so the seam stays hidden (Jan's call). */
+.cultivate-wing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 22%,
+    rgb(4 5 7 / 0.88) 42%,
+    rgb(4 5 7 / 0.88) 76%,
+    transparent 92%
+  );
+  mask-image: linear-gradient(to right, transparent, #000 70px);
+}
+
+.cultivate-wing.is-right::after {
+  mask-image: linear-gradient(to left, transparent, #000 70px);
+}
+
+.cultivate-wing.is-left {
+  left: calc(44px + (100% - 84px) / 2 - 810px - 486px);
+}
+
+.cultivate-wing.is-right {
+  left: calc(44px + (100% - 84px) / 2 + 810px);
+  background-position: right top;
 }
 
 /* Starlight through the cave mouth, lifting the top middle (Jan's call after A3). Still. */
@@ -2148,30 +2199,48 @@ select {
   color: var(--accent);
 }
 
+/* The tip (A4, restyled): an obsidian slip on a gilt hairline with a brighter rule along its top,
+   each reason a short paragraph of its own. */
 .why-tip {
   display: none;
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   z-index: 30;
   width: max-content;
-  max-width: min(290px, var(--tip-room, 290px));
-  padding: 8px 10px;
-  background: var(--glass-strong);
-  border: 1px solid var(--edge-strong);
-  border-radius: var(--radius-small);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
-  color: var(--text);
+  max-width: min(320px, var(--tip-room, 320px));
+  padding: 11px 14px 12px;
+  background: rgb(8 9 12 / 0.97);
+  border: 1px solid var(--line-faint);
+  border-top-color: var(--line);
+  border-radius: 3px;
+  box-shadow:
+    0 14px 34px rgb(0 0 0 / 0.7),
+    inset 0 1px 0 color-mix(in srgb, var(--gilt) 18%, transparent);
+  color: color-mix(in srgb, var(--text) 88%, var(--muted));
   font-family: var(--font-ui);
-  font-size: calc(12px * var(--text-scale));
+  font-size: calc(12.5px * var(--text-scale));
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1.55;
   letter-spacing: normal;
   text-align: left;
   white-space: normal;
 }
 
+.why-tip.is-up {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+
 .why-tip > span {
   display: block;
+}
+
+.why-tip > span + span {
+  margin-top: 7px;
+}
+
+.why-tip > span:first-child {
+  color: var(--text);
 }
 
 .why-left {
@@ -2295,15 +2364,7 @@ select {
   --hour: var(--hour-home);
 }
 
-/* The editor sits beside the wheel when the panel has room, and wraps below it when not. */
-.wheel-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px 28px;
-  align-items: center;
-  margin-top: 6px;
-}
-
+/* The wheel's editor: the hour picked or the hour now, and what the hours go to. */
 .wheel-editor {
   flex: 1 1 260px;
   min-width: 0;
@@ -2341,12 +2402,6 @@ select {
 .wheel-center-caption {
   pointer-events: none;
 }
-
-.wheel-clear {
-  display: inline-block;
-  margin-top: 8px;
-}
-
 .wheel-seg {
   fill: color-mix(in srgb, var(--hour) 15%, transparent);
   stroke: color-mix(in srgb, var(--hour) 50%, transparent);
@@ -2585,7 +2640,7 @@ select {
   gap: 8px;
 }
 
-.methods li {
+.methods > li {
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
   gap: 10px;
@@ -2595,7 +2650,7 @@ select {
   color: var(--muted);
 }
 
-.methods li + li {
+.methods > li + li {
   padding-top: 10px;
   border-top: 1px solid var(--edge);
 }
@@ -2619,23 +2674,6 @@ select {
 .method .warn {
   margin-top: 4px;
 }
-
-.method-switch {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.method-switch select {
-  max-width: 100%;
-  padding: 5px 8px;
-  background: var(--well);
-  border: 1px solid var(--edge);
-  border-radius: var(--radius-small);
-}
-
 /* A thing's name wears its rarity; tiers are words beside it. */
 .rarity-gray {
   color: var(--rarity-gray);
@@ -3444,12 +3482,6 @@ select {
   gap: 8px;
   padding: 0 4px 10px;
 }
-
-.technique-toolbar-row {
-  display: flex;
-  gap: 8px;
-}
-
 .technique-search {
   flex: 1;
   min-width: 0;
@@ -3458,14 +3490,6 @@ select {
   border-radius: var(--radius-small);
   background: var(--well);
 }
-
-.technique-toolbar select {
-  padding: 5px 8px;
-  border: 1px solid var(--edge);
-  border-radius: var(--radius-small);
-  background: var(--well);
-}
-
 .technique-chips-filter {
   display: flex;
   flex-wrap: wrap;
@@ -3507,18 +3531,6 @@ select {
   padding: 2px 10px;
   font-size: calc(12px * var(--text-scale));
 }
-
-.mastery-step-burst {
-  color: var(--accent);
-}
-
-.technique-split {
-  display: grid;
-  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
-}
-
 .technique-split > .panel + .panel,
 .technique-page-col > .panel {
   margin-top: 0;
@@ -3802,70 +3814,6 @@ select {
   border-radius: var(--radius-small);
   background: color-mix(in srgb, var(--warn) 7%, transparent);
   color: var(--warn);
-}
-
-.mastery-block {
-  display: grid;
-  gap: 10px;
-  padding: 14px 16px;
-  border: 1px solid var(--edge);
-  border-radius: 7px;
-  background: var(--well);
-}
-
-.mastery-block-head {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 4px 16px;
-  font-size: calc(13px * var(--text-scale));
-}
-
-.mastery-steps {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.mastery-step {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.mastery-step .bar {
-  height: 6px;
-}
-
-.mastery-block.is-sealed .mastery-step .bar {
-  opacity: 0.45;
-}
-
-.mastery-step-name {
-  overflow: hidden;
-  color: var(--muted);
-  font-size: calc(13px * var(--text-scale));
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mastery-step.is-reached .mastery-step-name {
-  color: var(--text);
-}
-
-.mastery-step.is-current .mastery-step-name {
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.mastery-step-hanzi {
-  margin-top: -4px;
-  color: var(--muted);
-  font-size: calc(14px * var(--text-scale));
 }
 
 .mastery-eta {
@@ -6511,18 +6459,6 @@ button.fight-card {
 .routine-tabs .menu-mark {
   margin-left: 6px;
 }
-
-.routine-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
-}
-
-.routine-split > .panel {
-  margin: 0;
-}
-
 .method-only {
   display: block;
 }
@@ -6558,25 +6494,6 @@ button.fight-card {
 }
 
 /* Study: the copy being read, the queue after it, the shelf. */
-.study-split {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
-}
-
-.study-main,
-.study-side {
-  display: grid;
-  gap: 14px;
-  min-width: 0;
-}
-
-.study-main > .panel,
-.study-side > .panel {
-  margin: 0;
-}
-
 .study-head {
   display: flex;
   flex-wrap: wrap;
@@ -8909,4 +8826,1253 @@ p.map-above {
     inset 3px 0 0 var(--accent),
     0 8px 24px rgb(0 0 0 / 0.5),
     0 0 22px -6px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* Routine as a scene (A4; docs/mockups/routine-art-study.html, layout B, Jan's picks): the cave
+   behind (Cultivate's painting stands in until Routine has its own), each tab's ring in a gilt
+   bezel on the left with its page beside it, and a column on the right with the title, the tabs,
+   the hours and the tab's own controls. The ring keeps its place and size on every tab. Nothing
+   on the scene moves; text over the painting sits on still scrims. */
+.shell.is-routine .main {
+  padding: 0;
+  overflow: hidden;
+}
+
+.shell.is-routine .shell-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.85);
+}
+
+.routine {
+  position: relative;
+  height: 100%;
+}
+
+/* The cave sits exactly where it does on Cultivate (Jan's call), dimmed under still scrims: darker
+   toward the column on the right. */
+.routine-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      to left,
+      rgb(4 5 7 / 0.92) 0%,
+      rgb(4 5 7 / 0.75) 38%,
+      rgb(4 5 7 / 0.45) 62%,
+      rgb(4 5 7 / 0.3)
+    ),
+    linear-gradient(rgb(4 5 7 / 0.35), rgb(4 5 7 / 0.35));
+  pointer-events: none;
+}
+
+/* The ring centred in the room left of the column, its page in a band under it (Jan's pick). */
+.routine-room {
+  position: absolute;
+  top: 56px;
+  bottom: 24px;
+  left: 0;
+  right: 760px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 40px;
+}
+
+.routine-ring {
+  flex: none;
+  width: min(600px, 100%);
+  margin-bottom: 10px;
+}
+
+.routine-ring > svg,
+.routine .wheel {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  margin: 0;
+}
+
+.routine-page {
+  flex: 0 1 auto;
+  width: min(820px, 100%);
+  min-height: 0;
+}
+
+.routine-page:empty {
+  display: none;
+}
+
+/* The column never scrolls (Practice's list does, inside it), so its tips and outlines are never
+   clipped. */
+.routine-col {
+  position: absolute;
+  top: 84px;
+  right: 76px;
+  bottom: 28px;
+  width: 668px;
+  padding: 2px 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.routine-col > * {
+  flex: none;
+}
+
+/* Panels go flat on the scene: hairlines between the column's parts, no boxes. */
+.routine .panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.routine-col > .panel,
+.routine-col > .study-head {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-faint);
+}
+
+.routine-title {
+  margin: 0;
+  font-size: calc(46px * var(--text-scale));
+}
+
+.routine .routine-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 14px 0 0;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.routine .routine-tabs button {
+  padding: 4px 20px 6px;
+  border: 1px solid transparent;
+  border-bottom-color: var(--line-faint);
+  border-radius: 3px 3px 0 0;
+  font-family: var(--font-display);
+  font-size: calc(19px * var(--text-scale));
+}
+
+.routine .routine-tabs button + button {
+  border-left-color: transparent;
+}
+
+.routine .routine-tabs button[aria-pressed='true'] {
+  border-color: var(--line);
+  border-radius: 3px;
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.routine .routine-tabs button .hanzi {
+  margin-left: 4px;
+  color: var(--gilt-soft);
+}
+
+.routine .routine-tabs button[aria-pressed='true'] .hanzi {
+  color: var(--gilt);
+}
+
+/* The hours as a thin row of tinted cells. */
+.routine .hour-strip {
+  margin: 20px 0 0;
+}
+
+.routine .hour-strip-cells {
+  gap: 2px;
+}
+
+.routine .hour-cell {
+  flex: 0 0 44px;
+  height: 36px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--hour) 46%, #07080b);
+  color: rgb(255 255 255 / 0.9);
+  font-size: calc(19px * var(--text-scale));
+}
+
+.routine .hour-cell.hour-sleep {
+  opacity: 1;
+}
+
+.routine .hour-cell.is-open {
+  outline: 1px solid var(--gilt);
+}
+
+/* The bezel and the rings inside it, in the wheel's units. */
+.ring {
+  color: var(--text);
+  overflow: visible;
+}
+
+.ring text {
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.bezel-disc {
+  fill: rgb(6 7 10 / 0.55);
+}
+
+.bezel-rule {
+  fill: none;
+  stroke: var(--gilt);
+  stroke-opacity: 0.7;
+  stroke-width: 0.8;
+}
+
+.bezel-rule.is-faint {
+  stroke-opacity: 0.35;
+  stroke-width: 0.4;
+}
+
+.bezel-rule.is-inner {
+  stroke-opacity: 0.55;
+  stroke-width: 0.5;
+}
+
+.bezel-tick {
+  stroke: var(--gilt);
+  stroke-opacity: 0.25;
+  stroke-width: 0.4;
+}
+
+.bezel-tick.is-long {
+  stroke-opacity: 0.55;
+}
+
+.bezel-stud {
+  fill: #0a0b0e;
+  stroke: var(--gilt);
+  stroke-width: 0.6;
+}
+
+.bezel-quarter {
+  fill: var(--gilt);
+  font-size: 14px;
+}
+
+.bezel-quarter.is-earth {
+  fill-opacity: 0.6;
+  font-size: 9.5px;
+}
+
+.ring-track {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.08);
+  stroke-width: 11;
+}
+
+.ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 11;
+}
+
+.ring-head {
+  fill: var(--gilt-core);
+}
+
+.ring-hub {
+  fill: rgb(7 8 11 / 0.94);
+  stroke: var(--gilt);
+  stroke-opacity: 0.55;
+  stroke-width: 0.6;
+}
+
+.ring-hub-hanzi {
+  fill: var(--gilt);
+  font-size: 15px;
+}
+
+.ring-hub-hanzi.is-large {
+  font-size: 17px;
+}
+
+.ring-hub-name {
+  fill: currentColor;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.ring-hub-caption {
+  fill: var(--muted);
+  font-size: 7.5px;
+}
+
+.ring-hub-figure {
+  fill: var(--text);
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+
+.mastery-arc-hanzi {
+  fill: var(--muted);
+  font-size: 12px;
+}
+
+.mastery-arc-name {
+  fill: var(--muted);
+  font-family: var(--font-display);
+  font-size: 8.5px;
+}
+
+.mastery-arc.is-reached .mastery-arc-hanzi,
+.mastery-arc.is-current .mastery-arc-hanzi {
+  fill: var(--gilt);
+}
+
+.mastery-arc.is-current .mastery-arc-name {
+  fill: var(--text);
+}
+
+.mastery-arc-days,
+.mastery-arc-burst {
+  fill: var(--muted);
+  font-size: 6.5px;
+}
+
+.mastery-arc-burst {
+  fill: var(--crack);
+  fill-opacity: 0.85;
+}
+
+.mastery-ring.is-sealed .ring-hub-caption {
+  fill: var(--warn);
+}
+
+/* The day wheel in its bezel: solid tints, a dark hub, type sized for the ring. */
+.routine .wheel-seg {
+  fill: color-mix(in srgb, var(--hour) 46%, #07080b);
+  stroke: color-mix(in srgb, var(--gilt) 30%, transparent);
+  stroke-width: 0.5;
+}
+
+.routine .wheel-hour:hover .wheel-seg {
+  fill: color-mix(in srgb, var(--hour) 62%, #07080b);
+}
+
+.routine .wheel-hour.is-selected .wheel-seg,
+.routine .wheel-hour:focus-visible .wheel-seg {
+  stroke: var(--accent);
+  stroke-width: 1.6;
+}
+
+.routine .wheel-branch {
+  font-size: 20px;
+}
+
+.routine .wheel-kind {
+  fill: rgb(255 255 255 / 0.78);
+  font-size: 8.5px;
+}
+
+.routine .wheel-element {
+  fill: var(--gilt);
+  font-size: 7px;
+  opacity: 0.55;
+}
+
+.routine .wheel-element.is-match {
+  fill: var(--crack);
+  opacity: 1;
+}
+
+.routine .wheel-centre {
+  fill: rgb(7 8 11 / 0.94);
+  stroke: var(--gilt);
+  stroke-opacity: 0.55;
+  stroke-width: 0.6;
+}
+
+.routine .wheel-center-title {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.routine .wheel-center-caption {
+  fill: var(--crack);
+  font-size: 8.5px;
+}
+
+/* The page beside the ring: narrow and quiet. */
+.routine-page .wheel-editor h3 {
+  font-size: calc(20px * var(--text-scale));
+  font-weight: 500;
+}
+
+.routine-page .wheel-editor h3 .hanzi {
+  margin-right: 4px;
+  color: var(--gilt);
+  font-size: 1.6em;
+}
+.routine-page .wheel-kinds {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  max-width: 620px;
+  margin: 10px auto 0;
+  gap: 6px;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.routine-page .wheel-kinds button {
+  padding: 8px 0;
+  border: 1px solid var(--line-faint);
+  border-radius: 3px;
+  background: rgb(6 7 10 / 0.6);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: calc(16px * var(--text-scale));
+}
+
+.routine-page .wheel-kinds button + button {
+  border-left: 1px solid var(--line-faint);
+}
+
+.routine-page .wheel-kinds button[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.routine-page .technique-page {
+  display: block;
+  column-count: 2;
+  column-gap: 40px;
+}
+
+.routine-page .technique-page > * {
+  margin-bottom: 12px;
+  break-inside: avoid;
+}
+
+.routine-page .wheel-editor {
+  text-align: center;
+}
+
+.routine-page .wheel-editor .caption,
+.routine-page .wheel-editor .muted {
+  margin: 4px auto 0;
+  max-width: 560px;
+}
+
+.routine-page .study-now {
+  justify-items: center;
+  text-align: center;
+}
+
+.routine-page .technique-page-head h2 {
+  font-size: calc(26px * var(--text-scale));
+}
+
+.routine-page .technique-figures > div {
+  flex: 1 1 80px;
+  padding: 6px 10px;
+}
+
+.routine-page .line-strip-tiles {
+  flex-wrap: wrap;
+}
+
+.routine-page .study-now {
+  display: grid;
+  gap: 14px;
+}
+
+.routine-page .study-figures {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 18px;
+}
+
+/* Practice's list takes what the column has left, and only it scrolls. */
+.routine-col > .technique-list-panel {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 180px;
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-faint);
+}
+
+.routine-col .technique-list {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--gilt) 30%, transparent) transparent;
+}
+
+/* A first time waiting on the wheel shows on its free hours alone: a glow round the ring's square
+   box would frame the whole room. */
+.routine .wheel.is-beacon {
+  box-shadow: none;
+}
+
+/* The ring's hub carries the technique's name, so the page beside it keeps only its pinyin in
+   sight; the heading stays for a screen reader. */
+.routine-page .technique-page-head h2 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The known list as the study had it (Jan's pick): no boxes; a rarity edge on the left from blue,
+   a glow along it from purple, and the selected row lit by a gilt edge fading to the right. */
+.routine .technique-row {
+  padding: 9px 12px;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+}
+
+.routine .technique-row.is-rare {
+  border-left-color: var(--rarity-color);
+  box-shadow: none;
+}
+
+.routine .technique-row.is-glowing {
+  border-left-color: var(--rarity-color);
+  box-shadow: inset 6px 0 14px -8px var(--rarity-color);
+}
+
+.routine .technique-row.is-selected {
+  border-left-color: var(--accent);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--accent) 14%, transparent),
+    transparent
+  );
+}
+
+.routine .practicing-mark {
+  color: var(--accent);
+}
+
+/* The star round the bezel: 164 of the ring's 376 units out from its centre, at the hour of the
+   day (--at, a turn a day), gliding over each quarter-second tick (core/loop.ts) at an even pace and
+   spinning on itself. Small and alone in moving; still under reduced motion. */
+.routine-ring {
+  position: relative;
+  container-type: inline-size;
+}
+
+/* The star's layer: laid out like the ring's room, so the star sits on the ring it circles. */
+.routine-orbit-room {
+  pointer-events: none;
+}
+
+.routine-orbit-room .routine-ring {
+  aspect-ratio: 1;
+}
+
+.ring-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4cqw;
+  height: 4cqw;
+  margin: -2cqw 0 0 -2cqw;
+  transform: rotate(var(--at, 0deg)) translateY(-43.6cqw);
+  transition: transform 0.25s linear;
+  pointer-events: none;
+}
+
+.ring-orbit svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: var(--gilt-core);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--gilt) 80%, transparent));
+  animation: ring-spin 9s linear infinite;
+}
+
+@keyframes ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+:root[data-motion='reduced'] .ring-orbit {
+  transition: none;
+}
+
+:root[data-motion='reduced'] .ring-orbit svg {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-orbit {
+    transition: none;
+  }
+
+  .ring-orbit svg {
+    animation: none;
+  }
+}
+
+/* On the big wheel a hint and a pick read apart: an hour the first-time hint wants wears a dashed
+   accent edge, an hour you picked a solid bright one over a lifted tint (Jan's call). */
+.routine .wheel.is-beacon .wheel-hour.is-beckoning .wheel-seg {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 3 2.4;
+  stroke-opacity: 0.9;
+}
+
+.routine .wheel .wheel-hour.is-selected .wheel-seg,
+.routine .wheel.is-beacon .wheel-hour.is-selected .wheel-seg {
+  fill: color-mix(in srgb, var(--hour) 70%, #07080b);
+  stroke: var(--gilt-core);
+  stroke-width: 1.8;
+  stroke-dasharray: none;
+  stroke-opacity: 1;
+}
+
+/* A method's row: its name; under it what it is, with the mastery and speed at the right; then its
+   bar the full width. */
+.method-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+}
+
+.method-sub > .caption {
+  margin: 0;
+}
+
+.method-level {
+  color: var(--muted);
+  font-size: calc(13px * var(--text-scale));
+  white-space: nowrap;
+}
+
+.method-level .hanzi {
+  color: var(--gilt);
+}
+
+.method-bar {
+  height: 5px;
+  margin: 6px 0 4px;
+}
+
+/* Climb with, folded under a method like the routine line: a quieter rule, a little tighter. */
+.method-fold {
+  margin-top: 8px;
+  padding-top: 4px;
+}
+
+/* On Routine a fold's list floats over the column instead of growing it: an obsidian slip like the
+   tips, about six rows high with its own scroll. The routine's opens down; a method's, low in the
+   column, opens up. */
+.routine .routine-fold {
+  position: relative;
+}
+
+.routine .routine-fold-body,
+.routine-col .method-pick {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: 340px;
+  margin: 0;
+  padding: 6px 14px 12px;
+  overflow-y: auto;
+  border: 1px solid var(--line-faint);
+  border-top-color: var(--line);
+  border-radius: 3px;
+  background: rgb(8 9 12 / 0.97);
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.7);
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--gilt) 30%, transparent) transparent;
+}
+
+.routine .routine-fold-body {
+  top: calc(100% + 4px);
+}
+
+/* Under the wheel the day sits low, so its routine list opens upward over the ring. */
+.routine-page .routine-fold-body {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+/* The day under the wheel: its parts on hairlines, the hint after it centred. */
+.routine-page > .panel {
+  text-align: left;
+}
+
+.routine-page > .panel + .wheel-editor {
+  margin-top: 14px;
+}
+
+.routine-col .method-pick {
+  bottom: calc(100% + 4px);
+  max-height: 460px;
+}
+
+/* Climb with's list, like the Known techniques: one line a method, a line's later chapters under
+   the first, a rarity edge from blue; a press on a row takes it up. */
+.method-pick-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 8px;
+}
+
+.method-pick-tools .technique-search {
+  flex: 1 1 160px;
+}
+
+.method-pick-tools button {
+  padding: 3px 10px;
+  border: 1px solid var(--line-faint);
+  border-radius: 12px;
+  background: none;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+  cursor: pointer;
+}
+
+.method-pick-tools button[aria-pressed='true'] {
+  border-color: var(--line);
+  color: var(--accent);
+}
+
+.method-pick-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.method-pick-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.method-pick-row:hover:not(:disabled) {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--accent) 10%, transparent),
+    transparent
+  );
+}
+
+.method-pick-row.is-rare {
+  border-left-color: var(--rarity-color);
+}
+
+.method-pick-row.is-now {
+  border-left-color: var(--accent);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--accent) 14%, transparent),
+    transparent
+  );
+  cursor: default;
+}
+
+.method-pick-row:disabled:not(.is-now) {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.method-pick-row.is-under {
+  padding-left: 30px;
+}
+
+.method-pick-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: calc(16px * var(--text-scale));
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.method-pick-name .hanzi {
+  color: var(--gilt-soft);
+  font-weight: 400;
+}
+
+.method-pick-meta {
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.method-pick-row.is-now .method-pick-meta {
+  color: var(--accent);
+}
+
+/* The picker (widgets.tsx): a chip as quiet as the filter chips, naming its choice, and a slip of
+   options like the tips. The list's two sit at the right of its chips. */
+.picker {
+  position: relative;
+  display: inline-block;
+}
+
+.technique-chips-filter .picker:first-of-type {
+  margin-left: auto;
+}
+
+.picker-chip {
+  padding: 2px 22px 2px 10px;
+  border: 1px solid var(--line-faint);
+  border-radius: 3px;
+  background: none;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+  cursor: pointer;
+}
+
+.picker-chip::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  width: 4px;
+  height: 4px;
+  margin-top: -3px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.picker-chip:hover,
+.picker.is-open .picker-chip {
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.picker-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 40;
+  min-width: 100%;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  border: 1px solid var(--line-faint);
+  border-top-color: var(--line);
+  border-radius: 3px;
+  background: rgb(8 9 12 / 0.97);
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.7);
+}
+
+.picker-menu button {
+  display: block;
+  width: 100%;
+  padding: 5px 14px 5px 12px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-size: calc(12.5px * var(--text-scale));
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.picker-menu button:hover {
+  color: var(--text);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--accent) 10%, transparent),
+    transparent
+  );
+}
+
+.picker-menu button.is-on {
+  border-left-color: var(--accent);
+  color: var(--accent);
+}
+
+/* The known list fades out over a long foot, and scrolls far enough that its last row rises clear of
+   the fade (Jan's call)… */
+.routine-col .technique-list {
+  padding-bottom: 140px;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 150px), transparent 92%);
+}
+
+/* …and stops well short of the stage's foot. */
+.routine-col > .technique-list-panel {
+  margin-bottom: 44px;
+}
+
+/* On Routine a known technique is one line, as in the study: its name and hanzi, the practicing
+   mark, and its level and days at the right. The pips and the accuracy chip live on its page. */
+.routine .technique-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.routine .technique-row-top {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.routine .technique-row-bottom {
+  flex: none;
+  gap: 8px;
+}
+
+.routine .technique-row-bottom .technique-row-gap,
+.routine .technique-row-bottom .mastery-pips,
+.routine .technique-row-bottom .rarity-chip {
+  display: none;
+}
+
+/* Routine's scrolling lists scroll by wheel, drag or keys with no bar showing (Jan's call). */
+.routine .technique-list,
+.routine .routine-fold-body,
+.routine .method-pick {
+  scrollbar-width: none;
+}
+
+.routine .technique-list::-webkit-scrollbar,
+.routine .routine-fold-body::-webkit-scrollbar,
+.routine .method-pick::-webkit-scrollbar {
+  display: none;
+}
+
+/* Switching a method: the panel takes the rest of the column, the one row in it, and its list fills
+   what is left under the row, scrolling alone with the known list's fading foot (Jan's call). */
+.routine-col > .methods-panel.is-switching {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  margin-bottom: 44px;
+}
+
+.methods-panel.is-switching .methods {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.methods-panel.is-switching .methods > li {
+  flex: 1;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+}
+
+.methods-panel.is-switching .methods > li > div,
+.methods-panel.is-switching .method-fold,
+.methods-panel.is-switching .method-pick {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.routine-col .methods-panel.is-switching .method-pick {
+  position: static;
+  max-height: none;
+  margin-top: 8px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.methods-panel.is-switching .method-pick-list {
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 72px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 80px), transparent);
+}
+
+.methods-panel.is-switching .method-pick-list::-webkit-scrollbar {
+  display: none;
+}
+
+.method-pick-tools .picker:first-of-type {
+  margin-left: auto;
+}
+
+/* The day under the wheel (Jan's pick, take B of docs/mockups/routine-day-band-study.html): Home or
+   Road centred, then three columns on hairlines: what a day gives, the routine kept, the settings. */
+.routine-page > .day-band {
+  position: relative;
+}
+
+.day-band-switch {
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+.day-band-switch .seg {
+  border-color: var(--line);
+  border-radius: 20px;
+  padding: 2px;
+}
+
+.day-band-switch .seg button {
+  padding: 2px 18px;
+  border: 0;
+  border-radius: 18px;
+  font-family: var(--font-display);
+  font-size: calc(17px * var(--text-scale));
+}
+
+.day-band-switch .seg button + button {
+  border-left: 0;
+}
+
+.day-band-switch .seg button[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.day-band-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 0.85fr) minmax(0, 1.35fr);
+}
+
+.day-band-col {
+  min-width: 0;
+  padding: 0 22px;
+}
+
+.day-band-col + .day-band-col {
+  border-left: 1px solid var(--line-faint);
+}
+
+.day-band-cap,
+.day-band .routine-fold-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.day-yields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 8px 0 0;
+  font-size: calc(14px * var(--text-scale));
+}
+
+.day-yields > div {
+  display: contents;
+}
+
+.day-yields dt {
+  color: var(--hour);
+  font-variant-numeric: tabular-nums;
+}
+
+.day-yields dd {
+  margin: 0;
+}
+
+.day-band-note,
+.day-band-road {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: calc(12.5px * var(--text-scale));
+}
+
+.day-band-road {
+  color: var(--text);
+  font-size: calc(14px * var(--text-scale));
+}
+
+/* The routine column: the fold's head as a label, a large name, its note, and Change. Its list
+   opens over the ring, as wide as the day. */
+.day-band .routine-fold {
+  position: static;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.day-band .routine-fold-head {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  padding: 0;
+}
+
+.day-band .routine-fold-head b {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: calc(22px * var(--text-scale));
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.day-band .routine-fold-head .muted {
+  font-size: calc(13px * var(--text-scale));
+}
+
+.day-band .routine-fold-chev {
+  margin: 8px 0 0;
+  font-size: calc(13px * var(--text-scale));
+}
+
+/* The settings column: the four choices as quiet chips, the stones as a small switch. */
+.day-band-auto {
+  margin-top: 8px;
+  border-color: var(--line-faint);
+  border-radius: 3px;
+}
+
+.day-band-auto {
+  flex-wrap: nowrap;
+}
+
+.day-band-auto button {
+  padding: 4px 9px;
+  white-space: nowrap;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.day-band-auto button + button {
+  border-left-color: var(--line-faint);
+}
+
+.day-band-burn {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: calc(13px * var(--text-scale));
+}
+
+.day-band-burn input {
+  flex: none;
+  width: 26px;
+  height: 14px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: radial-gradient(circle at 7px 50%, var(--muted) 4px, transparent 4.5px);
+  appearance: none;
+  cursor: pointer;
+}
+
+.day-band-burn input:checked {
+  border-color: var(--accent);
+  background:
+    radial-gradient(circle at 19px 50%, var(--accent) 4px, transparent 4.5px),
+    color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.day-band-burn input:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Between Cultivate and Routine (App.tsx): the cave stays still, and what stands in front of it
+   sinks and fades as the screen leaves, then the next screen's parts rise into place as they come
+   in, the right-hand side a beat behind. One pass each way, by opacity and translate (which leaves
+   the parts' own transforms alone); nothing loops. Routine's scrim only fades. */
+@keyframes scene-sink {
+  to {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+
+@keyframes scene-rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+@keyframes scene-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes scene-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.main.is-leaving .cultivate-seat > :not(.cultivate-backdrop),
+.main.is-leaving .cultivate-rise,
+.main.is-leaving .cultivate-band,
+.main.is-leaving .routine-room,
+.main.is-leaving .routine-orbit-room,
+.main.is-leaving .routine-col {
+  animation: scene-sink 170ms ease-in forwards;
+}
+
+.main.is-leaving .routine-scrim {
+  animation: scene-fade-out 170ms ease-in forwards;
+}
+
+.main.is-entering .cultivate-seat > :not(.cultivate-backdrop),
+.main.is-entering .cultivate-rise,
+.main.is-entering .cultivate-band,
+.main.is-entering .routine-room,
+.main.is-entering .routine-orbit-room,
+.main.is-entering .routine-col {
+  animation: scene-rise 380ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.main.is-entering .cultivate-band,
+.main.is-entering .cultivate-rise,
+.main.is-entering .routine-col {
+  animation-delay: 60ms;
+}
+
+.main.is-entering .routine-scrim {
+  animation: scene-fade-in 300ms ease-out both;
+}
+
+:root[data-motion='reduced'] .main.is-leaving *,
+:root[data-motion='reduced'] .main.is-entering * {
+  animation: none;
 }

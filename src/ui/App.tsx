@@ -49,6 +49,11 @@ function SlotNotice() {
   );
 }
 
+/** The two screens that share the cave, between which a change sinks and rises (theme.css). */
+const SCENE_PAIR: ReadonlySet<ScreenId> = new Set<ScreenId>(['cultivate', 'routine']);
+const LEAVE_MS = 170;
+const ENTER_MS = 420;
+
 export function App() {
   const [screen, setScreen] = useState<ScreenId>('cultivate');
   const phase = useGame((s) => s.phase);
@@ -85,6 +90,30 @@ export function App() {
     const to = useNav.getState().screen;
     if (to) setScreen(to);
   }
+  // Between Cultivate and Routine, which stand in the same cave, what the screen we leave shows
+  // sinks and fades before the next rises into place (A4, Jan's call); every other change is at
+  // once, and so is this one under reduced motion. The rail answers at once either way.
+  const [shown, setShown] = useState<ScreenId>('cultivate');
+  const [entering, setEntering] = useState(false);
+  const glide =
+    SCENE_PAIR.has(screen) &&
+    SCENE_PAIR.has(shown) &&
+    document.documentElement.dataset.motion !== 'reduced';
+  if (screen !== shown && !glide) setShown(screen);
+  useEffect(() => {
+    if (screen === shown) return;
+    const t = setTimeout(() => {
+      setShown(screen);
+      setEntering(true);
+    }, LEAVE_MS);
+    return () => clearTimeout(t);
+  }, [screen, shown]);
+  useEffect(() => {
+    if (!entering) return;
+    const t = setTimeout(() => setEntering(false), ENTER_MS);
+    return () => clearTimeout(t);
+  }, [entering]);
+  const leaving = screen !== shown;
   // A mark on Cultivate in the menu while a breakthrough is ready.
   const ready = useGame((s) => (s.game ? readyLadders(s.game).length > 0 : false));
   const dismissNotice = useGame((s) => s.dismissNotice);
@@ -124,11 +153,15 @@ export function App() {
   const beaconsNow = useBeacons();
   const beaconed = new Set(beaconsNow.map((b) => b.screen));
   // With no life open, Settings is where you pick or start one.
-  const current = creating
-    ? { id: 'creation', name: 'A New Life', hanzi: '新生' }
-    : phase === 'no-slot'
-      ? screens.find((s) => s.id === 'settings')!
-      : (available.find((s) => s.id === screen) ?? available[0]!);
+  const pickScreen = (id: ScreenId) =>
+    creating
+      ? { id: 'creation', name: 'A New Life', hanzi: '新生' }
+      : phase === 'no-slot'
+        ? screens.find((s) => s.id === 'settings')!
+        : (available.find((s) => s.id === id) ?? available[0]!);
+  // What the main column shows, and what the rail lights (ahead of it while a glide runs).
+  const current = pickScreen(shown);
+  const wanted = pickScreen(screen);
 
   // Scrolling anywhere (the page, the main column, a list) pauses the looping animations.
   useEffect(() => {
@@ -158,8 +191,8 @@ export function App() {
                   <li key={s.id}>
                     <button
                       type="button"
-                      className={`rail-item${s.id === current.id ? ' is-active' : ''}${beaconed.has(s.id) ? ' is-beacon' : fresh.includes(s.id) && s.id !== current.id ? ' is-new' : ''}`}
-                      aria-current={s.id === current.id ? 'page' : undefined}
+                      className={`rail-item${s.id === wanted.id ? ' is-active' : ''}${beaconed.has(s.id) ? ' is-beacon' : fresh.includes(s.id) && s.id !== wanted.id ? ' is-new' : ''}`}
+                      aria-current={s.id === wanted.id ? 'page' : undefined}
                       aria-label={s.name}
                       onClick={() => setScreen(s.id)}
                     >
@@ -171,7 +204,7 @@ export function App() {
                           aria-label="a breakthrough is ready"
                         />
                       )}
-                      {dots.includes(s.id) && s.id !== current.id && (
+                      {dots.includes(s.id) && s.id !== wanted.id && (
                         <span className="menu-mark is-new" role="img" aria-label="something new" />
                       )}
                       <span className="rail-tip" aria-hidden="true">
@@ -185,8 +218,11 @@ export function App() {
 
             <div className="main-column">
               <ShellHeader />
-              <main className="main" ref={main}>
-                {current.id !== 'cultivate' && (
+              <main
+                className={`main${leaving ? ' is-leaving' : ''}${entering ? ' is-entering' : ''}`}
+                ref={main}
+              >
+                {current.id !== 'cultivate' && current.id !== 'routine' && (
                   <h1 className="screen-title">
                     {current.name} <span className="hanzi">{current.hanzi}</span>
                   </h1>

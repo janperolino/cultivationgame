@@ -1,11 +1,12 @@
 // The Techniques screen's list (design § UI and screens): every known technique, a line's later
 // chapters right under the earlier one, ordered by rarity, tier or the order learned, a line by its
-// best chapter; searched and filtered by tier and Dao once the list is long. Also the words for
+// best chapter; searched and filtered by tier and Dao once the list is long, and the finished ones
+// hidden on a chip (A4, Jan's call). Also the words for
 // how long the next mastery level is away. Kept apart from the screen so the order is tested.
 import { rarityRank } from '../content/rarity.ts';
 import { type Technique } from '../content/techniques.ts';
 import { DAYS_PER_YEAR, type Cultivator } from '../core/state.ts';
-import { knownTechniques } from '../core/techniques.ts';
+import { knownTechniques, mastery } from '../core/techniques.ts';
 
 export interface TechniqueRow {
   t: Technique;
@@ -27,6 +28,8 @@ export interface TechniqueView {
   query?: string;
   tier?: number | null;
   dao?: string | null;
+  /** Leave out the techniques whose mastery is complete, at Origin. */
+  hideFinished?: boolean;
 }
 
 /** The search and the filters show once the list holds more than this many techniques. */
@@ -83,7 +86,13 @@ export function orderTechniques(
 
 /** The list's rows for a cultivator. */
 export function techniqueRows(c: Cultivator, view: TechniqueView = {}): TechniqueRow[] {
-  return orderTechniques(knownTechniques(c), view);
+  const known = knownTechniques(c);
+  return orderTechniques(view.hideFinished ? known.filter((t) => !finished(c, t)) : known, view);
+}
+
+/** A technique at Origin: its mastery is complete and practice gives it nothing more. */
+export function finished(c: Cultivator, t: Technique): boolean {
+  return mastery(c, t.id).next === null;
 }
 
 /** The tiers and Daos the techniques hold, for the filter chips; a group with one value shows none. */
