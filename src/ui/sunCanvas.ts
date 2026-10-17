@@ -16,6 +16,7 @@ import {
   sunAt,
   type Sun,
 } from '../core/sun.ts';
+import { hashSeed, mulberry32 } from '../core/rng.ts';
 import { parseHex } from './colors.ts';
 import { FIGURE_BOX, FIGURE_HEAD, FIGURE_PATH, type SunLight } from './qiCanvas.ts';
 import { sunDay } from './seat.ts';
@@ -29,6 +30,30 @@ const BASE_Y = 42;
 /** How much the night dims the painted cave, and how dark the shadow lies on its floor (A3). */
 const NIGHT_DIM = 0.22;
 const SHADOW_ON_PAINT = 0.4;
+/**
+ * The night's stars in the cave mouth's sky, in the painting's own pixels (1536 by 1024, centred on
+ * the figure): an ellipse of open sky above the peaks, a seeded scatter, still, brightening as the
+ * light goes (Jan's call after A3).
+ */
+const PAINTING = { w: 1536, h: 1024 } as const;
+const STAR_SKY = { cx: 768, cy: 130, rx: 470, ry: 190, floor: 290 } as const;
+const STAR_COUNT = 90;
+const STARS = (() => {
+  const rng = mulberry32(hashSeed('cultivate-cave-stars'));
+  const out: { x: number; y: number; r: number; warm: boolean }[] = [];
+  while (out.length < STAR_COUNT) {
+    const a = rng() * Math.PI * 2;
+    const d = Math.sqrt(rng());
+    const x = STAR_SKY.cx + Math.cos(a) * d * STAR_SKY.rx;
+    const y = STAR_SKY.cy + Math.sin(a) * d * STAR_SKY.ry;
+    if (y < 8 || y > STAR_SKY.floor) continue;
+    const big = rng();
+    out.push({ x, y, r: big > 0.93 ? 1.9 : big > 0.7 ? 1.2 : 0.7, warm: rng() > 0.85 });
+  }
+  return out;
+})();
+/** How far out the sun's glow stands, in seat widths and heights from the figure, and its size. */
+const SUN_REACH = { x: 1.75, y: 1.55, r: 1.9, strength: 1.35 } as const;
 /** The sun's hand: from the dantian, this long, in figure units, and this bright at its tip. */
 const HAND_FROM = { x: 0, y: 9 } as const;
 const HAND_LENGTH = 165;
@@ -159,6 +184,7 @@ export class SunCanvas {
     const W = SEAT_W * k;
     const H = SEAT_H * k;
     this.drawWash(s, ox, oy, W, H, w, h);
+    this.drawStars(s, ox, h);
     this.drawHand(s, ox, oy, k);
     this.drawPool(s, ox, oy + (BASE_Y + 1) * k, k, fill);
     this.drawFloor(s, ox, oy + BASE_Y * k, k, W, w, h, dpr);
@@ -212,13 +238,39 @@ export class SunCanvas {
       this.ctx.fillRect(0, 0, w, h);
     }
     if (s.light > 0) {
-      const sx = ox + s.dx * W * 0.75;
-      const sy = oy - s.dy * H * 0.95 + H * 0.2;
-      const a = strength * (0.12 + 0.12 * s.elevation) * (1 - 0.3 * s.twilight) * s.light;
-      this.glow(this.ctx, sx, sy, Math.max(W, H) * 1.1, sunColor(s, this.palette), a);
+      // Far out past the ring, so it reads as a distant sun, not a lamp on the dial.
+      const sx = ox + s.dx * W * SUN_REACH.x;
+      const sy = oy - s.dy * H * SUN_REACH.y + H * 0.3;
+      const a =
+        SUN_REACH.strength *
+        strength *
+        (0.12 + 0.12 * s.elevation) *
+        (1 - 0.3 * s.twilight) *
+        s.light;
+      this.glow(this.ctx, sx, sy, Math.max(W, H) * SUN_REACH.r, sunColor(s, this.palette), a);
     }
     this.band(oy, oy + H / 2, this.palette.dusk, strength * 0.16 * s.twilight, w, h);
     this.band(oy + H * 0.05, oy + H / 2, this.palette.yin, strength * 0.2 * (1 - s.light), w, h);
+  }
+
+  /** The stars in the cave mouth's sky, the painting's scale, gone by full day. */
+  private drawStars(s: Sun, ox: number, h: number) {
+    const dark = Math.min(1, (1 - s.light) * 0.85 + s.twilight * 0.25);
+    if (dark <= 0) return;
+    const ctx = this.ctx;
+    const k = h / PAINTING.h;
+    for (const st of STARS) {
+      const x = ox + (st.x - PAINTING.w / 2) * k;
+      const y = st.y * k;
+      const color = st.warm ? '#f1dcb4' : '#dce8ff';
+      if (st.r > 1.5) this.glow(ctx, x, y, st.r * 5 * k, color, 0.35 * dark);
+      ctx.globalAlpha = Math.min(1, (0.55 + st.r * 0.25) * dark);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, st.r * k, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
   }
 
   /** The sun's hand, from the dantian toward the sun on its round, behind the figure. */
