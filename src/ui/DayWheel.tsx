@@ -5,7 +5,14 @@
 // shift adds a run), then pick what they go to; every home hour's yield is in its tooltip. On
 // Routine (A4) the wheel sits in a gilt bezel on the left of the scene and its editor under it,
 // which the screen places through `layout`.
-import { useEffect, useRef, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 import { ELEMENT_INFO, phaseOf } from '../content/elements.ts';
 import { BRANCHES, HOUR_KIND_IDS, HOUR_KINDS, type HourKind } from '../content/hours.ts';
 import { ROAD_ROUTINES, type RoadHour } from '../content/map/travel.ts';
@@ -140,6 +147,7 @@ function Ring({
 }) {
   const anchor = useRef<number | null>(null);
   const drag = useRef<number | null>(null);
+  const pool = `${useId()}-pool`;
   // What was picked when the drag began, which the drag's run adds to.
   const base = useRef<HourPick>([]);
   useEffect(() => {
@@ -181,6 +189,15 @@ function Ring({
       onPointerMove={touchMove}
     >
       <Bezel quarters />
+      {/* The light pooling in from the rim: held on a picked hour, breathing on one a hint wants
+          (Jan's call after A4). */}
+      <defs>
+        <radialGradient id={pool} cx={0} cy={0} r={R_OUTER} gradientUnits="userSpaceOnUse">
+          <stop offset={R_INNER / R_OUTER + 0.12} className="wheel-pool-stop" stopOpacity={0} />
+          <stop offset={0.8} className="wheel-pool-stop" stopOpacity={0.3} />
+          <stop offset={1} className="wheel-pool-stop" stopOpacity={0.95} />
+        </radialGradient>
+      </defs>
       {cells.map((cell, i) => {
         const b = BRANCHES[i]!;
         const [hx, hy] = polar(112, i * 30);
@@ -220,6 +237,9 @@ function Ring({
           >
             <title>{cell.title}</title>
             <path className="wheel-seg" d={segmentPath(i)} />
+            {(picked || (beacon && cell.beckoning)) && (
+              <path className="wheel-pool" d={segmentPath(i)} fill={`url(#${pool})`} />
+            )}
             <text className="wheel-branch hanzi" x={hx} y={hy} dy="0.35em">
               {b.hanzi}
             </text>

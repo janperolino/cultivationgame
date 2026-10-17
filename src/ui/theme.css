@@ -9430,22 +9430,55 @@ p.map-above {
   }
 }
 
-/* On the big wheel a hint and a pick read apart: an hour the first-time hint wants wears a dashed
-   accent edge, an hour you picked a solid bright one over a lifted tint (Jan's call). */
+/* On the big wheel a hint and a pick read apart (Jan's calls after A4). An hour you picked holds
+   still: a solid bright gold edge, its letters lit in the accent and a light pooling in from the
+   rim. An hour the first-time hint wants keeps its accent edge and the same light, breathing, since
+   a pulse says "interact with me"; picked, it holds still. Under reduced motion nothing pulses. */
 .routine .wheel.is-beacon .wheel-hour.is-beckoning .wheel-seg {
   stroke: var(--accent);
-  stroke-width: 1;
-  stroke-dasharray: 3 2.4;
-  stroke-opacity: 0.9;
+  stroke-width: 1.6;
+  stroke-opacity: 1;
 }
 
 .routine .wheel .wheel-hour.is-selected .wheel-seg,
 .routine .wheel.is-beacon .wheel-hour.is-selected .wheel-seg {
-  fill: color-mix(in srgb, var(--hour) 70%, #07080b);
   stroke: var(--gilt-core);
   stroke-width: 1.8;
-  stroke-dasharray: none;
-  stroke-opacity: 1;
+}
+
+.routine .wheel-hour.is-selected .wheel-branch,
+.routine .wheel-hour.is-selected .wheel-kind {
+  fill: var(--accent);
+}
+
+.routine .wheel-hour.is-selected .wheel-branch {
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 80%, transparent));
+}
+
+.wheel-pool-stop {
+  stop-color: var(--accent);
+}
+
+.wheel-pool {
+  pointer-events: none;
+}
+
+.wheel-hour.is-beckoning:not(.is-selected) .wheel-pool {
+  animation: wheel-pool 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes wheel-pool {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+:root[data-motion='reduced'] .wheel-hour.is-beckoning:not(.is-selected) .wheel-pool {
+  animation: none;
+  opacity: 0.7;
 }
 
 /* A method's row: its name; under it what it is, with the mastery and speed at the right; then its

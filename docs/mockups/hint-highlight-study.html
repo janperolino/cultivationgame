@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hint highlight study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500&family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
+<style>
+  /* A study for Jan's note after A4: the first-time hint on Routine's wheel wears a dashed accent
+     edge, which reads badly. Each take marks the same three wanted hours (未 申 酉) beside one
+     picked hour (巳, the solid bright edge it must read apart from). Tokens are the game's. */
+  :root {
+    --text: #e9e5da;
+    --muted: #8d949d;
+    --accent: #d6ab4c;
+    --gilt: #d9b46a;
+    --gilt-core: #fff1c9;
+    --crack: #7fc7d9;
+    --sleep: #59606b;
+    --panel: rgb(7 8 11 / 0.84);
+    --line-faint: color-mix(in srgb, var(--gilt) 16%, transparent);
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-brush: 'Ma Shan Zheng', 'KaiTi', serif;
+    --font-ui: Inter, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(ellipse at 50% 0%, #10131a 0%, #050608 70%);
+    color: var(--text);
+    font: 300 14px/1.5 var(--font-ui);
+    min-height: 100vh;
+    padding: 32px 40px 60px;
+  }
+  h1 { font: 500 30px var(--font-display); margin: 0 0 4px; letter-spacing: 0.02em; }
+  .lede { color: var(--muted); max-width: 900px; margin: 0 0 28px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .take {
+    background: var(--panel);
+    border: 1px solid var(--line-faint);
+    border-radius: 4px;
+    padding: 14px 14px 16px;
+  }
+  .take.is-now { opacity: 0.75; }
+  .take h2 { font: 600 20px var(--font-display); margin: 0; color: var(--gilt); }
+  .take h2 span { font: 400 12px var(--font-ui); color: var(--muted); margin-left: 6px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .take p { color: var(--muted); margin: 4px 0 10px; font-size: 13px; min-height: 58px; }
+  svg { width: 100%; height: auto; display: block; }
+
+  /* The wheel as Routine draws it. */
+  .seg { fill: color-mix(in srgb, var(--hour) 46%, #07080b); stroke: color-mix(in srgb, var(--gilt) 30%, transparent); stroke-width: 0.5; }
+  .is-picked .seg { fill: color-mix(in srgb, var(--hour) 70%, #07080b); stroke: var(--gilt-core); stroke-width: 1.8; }
+  .branch { font: 20px var(--font-brush); fill: var(--text); text-anchor: middle; }
+  .kind { font: 400 10px var(--font-ui); fill: color-mix(in srgb, var(--text) 75%, transparent); text-anchor: middle; letter-spacing: 0.04em; }
+  .element { font: 13px var(--font-brush); fill: color-mix(in srgb, var(--gilt) 55%, transparent); text-anchor: middle; }
+  .bezel { fill: none; stroke: color-mix(in srgb, var(--gilt) 55%, transparent); stroke-width: 1; }
+  .bezel-faint { fill: none; stroke: color-mix(in srgb, var(--gilt) 22%, transparent); stroke-width: 0.6; }
+  .tick { stroke: color-mix(in srgb, var(--gilt) 50%, transparent); stroke-width: 1; }
+  .hub { fill: #07080b; stroke: color-mix(in srgb, var(--gilt) 40%, transparent); stroke-width: 0.8; }
+  .hub-title { font: 600 17px var(--font-display); fill: var(--text); text-anchor: middle; }
+  .hub-cap { font: 400 9.5px var(--font-ui); fill: var(--muted); text-anchor: middle; }
+
+  /* A: today. */
+  .t-now .is-wanted .seg { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 2.4; stroke-opacity: 0.9; }
+
+  /* B: a warm wash, still. The wanted hours' fill leans to the accent, no edge at all. */
+  .t-wash .is-wanted .seg { fill: color-mix(in srgb, var(--accent) 38%, color-mix(in srgb, var(--hour) 40%, #07080b)); }
+  .t-wash .is-wanted .kind { fill: var(--gilt-core); }
+
+  /* C: a rim arc, a gilt bracket just outside the wanted hours, with end studs. */
+  .rim { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 70%, transparent)); }
+  .stud { fill: var(--accent); }
+
+  /* D: diamonds on the bezel, one hollow accent diamond at each wanted hour, the hour star's kin. */
+  .diamond { fill: #07080b; stroke: var(--accent); stroke-width: 1.4; filter: drop-shadow(0 0 3px var(--accent)); }
+
+  /* E: the hour's own letters lit: the branch glows in the accent, the segment is untouched. */
+  .t-glyph .is-wanted .branch { fill: var(--accent); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 80%, transparent)); }
+  .t-glyph .is-wanted .kind { fill: var(--accent); }
+
+  /* F: the beacon's motes, two small sparks running the rim arc, the same as the menu's beacon. */
+  .rim-faint { fill: none; stroke: color-mix(in srgb, var(--accent) 35%, transparent); stroke-width: 1; }
+  .mote { fill: var(--accent); filter: drop-shadow(0 0 3px var(--accent)); }
+
+  /* G: an inner glow from the outer edge, a soft accent light pooling in from the rim. */
+  .t-glow .is-wanted .seg { fill: url(#pool); }
+
+  /* H: wash and diamonds, the two strongest quiet ones together. */
+  .t-mix .is-wanted .seg { fill: color-mix(in srgb, var(--accent) 30%, color-mix(in srgb, var(--hour) 42%, #07080b)); }
+
+  .legend { margin-top: 26px; color: var(--muted); font-size: 13px; }
+  .legend b { color: var(--text); font-weight: 500; }
+</style>
+</head>
+<body>
+<h1>The hint on the wheel</h1>
+<p class="lede">Jan's note after A4: the dashed edge on the hours the first-time hint wants reads badly. Every take below marks the same three wanted hours (未 申 酉) beside one hour you picked (巳, the bright solid edge), so you can judge whether they read apart. All are still, except F's two small motes.</p>
+<div class="grid" id="grid"></div>
+<p class="legend"><b>Picked</b> is always 巳: the solid bright edge over a lifted tint (A4, Jan's call). <b>Wanted</b> is 未 申 酉. Sleep is locked at 子 丑.</p>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="pool" cx="0" cy="0" r="132" gradientUnits="userSpaceOnUse">
+      <stop offset="0.5" stop-color="#0d2a33" />
+      <stop offset="0.78" stop-color="#2a4a4c" />
+      <stop offset="1" stop-color="#d6ab4c" stop-opacity="0.95" />
+    </radialGradient>
+  </defs>
+</svg>
+
+<script>
+  const R_OUT = 132, R_IN = 66, GAP = 1.2;
+  const BR = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  const EL = ['水','土','木','木','土','火','火','土','金','金','土','水'];
+  const PICKED = [5];
+  const WANTED = [7, 8, 9];
+  const polar = (r, d) => { const a = (d - 90) * Math.PI / 180; return [r * Math.cos(a), r * Math.sin(a)]; };
+  const seg = (i) => {
+    const f = i * 30 - 15 + GAP / 2, t = i * 30 + 15 - GAP / 2;
+    const [x1, y1] = polar(R_OUT, f), [x2, y2] = polar(R_OUT, t), [x3, y3] = polar(R_IN, t), [x4, y4] = polar(R_IN, f);
+    return `M${x1} ${y1}A${R_OUT} ${R_OUT} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${R_IN} ${R_IN} 0 0 0 ${x4} ${y4}Z`;
+  };
+  const arc = (r, from, to) => {
+    const [x1, y1] = polar(r, from), [x2, y2] = polar(r, to);
+    return `M${x1} ${y1}A${r} ${r} 0 ${to - from > 180 ? 1 : 0} 1 ${x2} ${y2}`;
+  };
+  const a0 = WANTED[0] * 30 - 14, a1 = WANTED[WANTED.length - 1] * 30 + 14;
+
+  const TAKES = [
+    { cls: 't-now', name: 'A · Today', tag: 'dashed', now: true,
+      text: 'The dashed accent edge from A4, for reference.' },
+    { cls: 't-wash', name: 'B · Warm wash', tag: 'still',
+      text: 'The wanted hours lean amber in their fill, their label bright. No edge, so it never fights the picked hour’s outline.' },
+    { cls: 't-rim', name: 'C · Rim bracket', tag: 'still',
+      text: 'One glowing gilt arc just outside the wanted run, with a stud at each end: “these hours”, said once, off the segments.',
+      extra: () => `<path class="rim" d="${arc(R_OUT + 7, a0, a1)}"/>` +
+        [a0, a1].map((d) => { const [x, y] = polar(R_OUT + 7, d); return `<circle class="stud" cx="${x}" cy="${y}" r="3"/>`; }).join('') },
+    { cls: 't-diamond', name: 'D · Diamonds', tag: 'still',
+      text: 'A small hollow accent diamond on the bezel at each wanted hour, kin to the gilt star that marks the hour of the day.',
+      extra: () => WANTED.map((i) => { const [x, y] = polar(R_OUT + 8, i * 30); return `<rect class="diamond" x="${x - 4}" y="${y - 4}" width="8" height="8" transform="rotate(45 ${x} ${y})"/>`; }).join('') },
+    { cls: 't-glyph', name: 'E · Lit letters', tag: 'still',
+      text: 'The segment stays as it is; the hour’s branch and label glow in the accent. The quietest take.' },
+    { cls: 't-motes', name: 'F · Motes on the rim', tag: 'two small motes',
+      text: 'A faint arc over the wanted run with two small sparks gliding along it, the same motes the menu’s beacon uses. Tiny paint, nothing big moves.',
+      extra: () => `<path id="mp" class="rim-faint" d="${arc(R_OUT + 7, a0, a1)}"/>` +
+        `<circle class="mote" r="2.4"><animateMotion dur="3.2s" repeatCount="indefinite" path="${arc(R_OUT + 7, a0, a1)}"/></circle>` +
+        `<circle class="mote" r="1.8" opacity="0.6"><animateMotion dur="3.2s" begin="-1.6s" repeatCount="indefinite" path="${arc(R_OUT + 7, a0, a1)}"/></circle>` },
+    { cls: 't-glow', name: 'G · Light from the rim', tag: 'still',
+      text: 'An accent light pools inward from each wanted hour’s outer edge, as if the hour were lit from outside the ring.' },
+    { cls: 't-mix', name: 'H · Wash + diamonds', tag: 'still',
+      text: 'B’s warm wash with D’s diamonds: reads from across the room, still nothing dashed.',
+      extra: () => WANTED.map((i) => { const [x, y] = polar(R_OUT + 8, i * 30); return `<rect class="diamond" x="${x - 4}" y="${y - 4}" width="8" height="8" transform="rotate(45 ${x} ${y})"/>`; }).join('') },
+  ];
+
+  const wheel = (t) => {
+    let s = `<svg viewBox="-170 -170 340 340" class="${t.cls}">`;
+    s += `<circle class="bezel" r="${R_OUT + 16}"/><circle class="bezel-faint" r="${R_OUT + 3}"/>`;
+    for (let k = 0; k < 48; k++) {
+      const [x1, y1] = polar(R_OUT + 16, k * 7.5), [x2, y2] = polar(R_OUT + (k % 4 ? 13 : 10), k * 7.5);
+      s += `<line class="tick" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    }
+    for (let i = 0; i < 12; i++) {
+      const sleep = i < 2;
+      const cls = [PICKED.includes(i) ? 'is-picked' : '', WANTED.includes(i) ? 'is-wanted' : ''].join(' ');
+      const [hx, hy] = polar(112, i * 30), [kx, ky] = polar(86, i * 30), [ex, ey] = polar(148, i * 30);
+      s += `<g class="${cls}" style="--hour:${sleep ? 'var(--sleep)' : 'var(--crack)'}">` +
+        `<path class="seg" d="${seg(i)}"/>` +
+        `<text class="branch" x="${hx}" y="${hy}" dy="0.35em">${BR[i]}</text>` +
+        `<text class="kind" x="${kx}" y="${ky}" dy="0.35em">${sleep ? 'Sleep' : 'Qi'}</text>` +
+        `<text class="element" x="${ex}" y="${ey}" dy="0.35em">${EL[i]}</text></g>`;
+    }
+    s += `<circle class="hub" r="${R_IN - 6}"/><text class="hub-title" y="-4">Your day</text><text class="hub-cap" y="13">10 qi · 2 sleep</text>`;
+    if (t.extra) s += t.extra();
+    return s + '</svg>';
+  };
+
+  document.getElementById('grid').innerHTML = TAKES.map((t) =>
+    `<section class="take${t.now ? ' is-now' : ''}"><h2>${t.name}<span>${t.tag}</span></h2><p>${t.text}</p>${wheel(t)}</section>`).join('');
+</script>
+</body>
+</html>
