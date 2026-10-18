@@ -1004,6 +1004,15 @@ function editorName(e){
 }
 // Every id asked for gets a name, even when the lookup fails, so drawFolio never asks again in a loop.
 async function resolveNames(ids){ if (!S.user || !ids.length) return; try { const ps = await S.user.profiles(ids); Object.assign(S.names, ps); } catch (e) {} for (const id of ids) if (!S.names[id]) S.names[id] = { name: "someone" }; }
+// The scale fields (design § World bible, The world at its true size).
+const PROSPERITY = ["ruined","destitute","poor","humble","ordinary","comfortable","prosperous","rich","opulent"];
+const QI_DENSITY = ["barren","sparse","thin","modest","ordinary","rich","abundant","blessed","heaven-touched"];
+const REALM_HEADS = [["mortals","mortals"],["qi","Qi Condensation"],["foundation","Foundation"],["core","Core Formation"],["nascent","Nascent Soul"],["deity","Deity Transformation"],["void","Void Refinement"]];
+function populationText(p){
+  if (!p) return "";
+  const big = n => n >= 1e9 ? `${+(n / 1e9).toFixed(1)} billion` : n >= 1e6 ? `${+(n / 1e6).toFixed(1)} million` : fmt(n);
+  return REALM_HEADS.filter(([k]) => p[k]).map(([k, name]) => `${big(p[k])} ${name}`).join(", ");
+}
 function sizeText(e){
   const m = e.map || {};
   if (e.kind === "continent" && m.rx) return `about ${fmt(2 * Math.max(m.rx, m.ry))} li across (${fmt(Math.max(m.rx, m.ry))} km)`;
@@ -1063,7 +1072,11 @@ function drawFolio(){
   const facts = h("dl", { class:"facts" });
   const fact = (k, v) => { if (v) facts.append(h("dt", {}, k), h("dd", {}, v)); };
   fact("Strongest present", e.top);
-  fact("Size", sizeText(e));
+  fact("Size", e.size ? `about ${fmt(e.size)} li (${fmt(e.size / 2)} km)` : sizeText(e));
+  if (e.prosperity) fact("Prosperity", `${e.prosperity}, ${PROSPERITY[e.prosperity - 1]}`);
+  fact("Population", populationText(e.population));
+  if (e.qiDensity) fact("Qi density", `${e.qiDensity}, ${QI_DENSITY[e.qiDensity - 1]}`);
+  fact("From above", e.fromAbove);
   fact("When", yearsText(e.years));
   if (e.map && isFinite(e.map.x) && e.kind !== "world") fact("Position", `${fmt(e.map.x)}, ${fmt(e.map.y)} li from the Ladder Stump`);
   if (e.map && e.map.sphere) fact("Sphere of influence", `${fmt(e.map.sphere)} li around its seat`);
