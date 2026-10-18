@@ -384,19 +384,20 @@ export function drawMap(f: Frame, s: Scene): boolean {
     ctx.restore();
   }
 
-  // Roads.
+  // Roads: a dark casing under a pale core, so they read on the lit painting (Jan's note in A5.1).
   for (const r of map.roads) {
     const st = known(life, r.id);
     if (st === 'unknown') continue;
     pathLine(ctx, f, r.pts);
     ctx.save();
     ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-    ctx.lineWidth = 3.2;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(4,5,7,0.78)';
+    ctx.lineWidth = 5;
     ctx.stroke();
-    ctx.setLineDash(st === 'sketched' ? [3, 4] : []);
-    ctx.strokeStyle = rgba(C.road, st === 'seen' ? 0.72 : 0.45);
-    ctx.lineWidth = 1.4;
+    ctx.setLineDash(st === 'sketched' ? [4, 4] : []);
+    ctx.strokeStyle = st === 'seen' ? 'rgba(244,232,204,0.95)' : 'rgba(244,232,204,0.6)';
+    ctx.lineWidth = 2;
     ctx.stroke();
     ctx.restore();
   }
@@ -559,19 +560,26 @@ export function drawMap(f: Frame, s: Scene): boolean {
   // Your course and you.
   const course = life.course;
   if (course) {
+    // The course's dots, each on a dark bead so it reads over gold grass (Jan's note in A5.1).
     pathLine(ctx, f, [life.at, ...course.pts.slice(course.at)]);
     ctx.save();
-    ctx.setLineDash([2, 6]);
     ctx.lineCap = 'round';
-    ctx.strokeStyle = rgba(C.accent, 0.95);
-    ctx.lineWidth = 2.2;
+    ctx.setLineDash([2, 7]);
+    ctx.strokeStyle = 'rgba(4,5,7,0.85)';
+    ctx.lineWidth = 6.5;
+    ctx.stroke();
+    ctx.strokeStyle = '#f5c95a';
+    ctx.lineWidth = 3;
     ctx.stroke();
     ctx.restore();
     const [x, y] = at(course.to);
     ctx.beginPath();
     ctx.arc(x, y, 6, 0, 7);
-    ctx.strokeStyle = C.accent;
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(4,5,7,0.85)';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.strokeStyle = '#f5c95a';
+    ctx.lineWidth = 1.8;
     ctx.stroke();
     ctx.beginPath();
     ctx.arc(x, y, 2, 0, 7);
@@ -584,12 +592,19 @@ export function drawMap(f: Frame, s: Scene): boolean {
     if (r > 6) {
       ctx.beginPath();
       ctx.arc(x, y, r, 0, 7);
-      ctx.setLineDash([1, 5]);
-      ctx.strokeStyle = rgba(C.crack, 0.5);
-      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 5]);
+      ctx.strokeStyle = 'rgba(4,5,7,0.7)';
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+      ctx.strokeStyle = rgba(C.crack, 0.9);
+      ctx.lineWidth = 1.4;
       ctx.stroke();
       ctx.setLineDash([]);
     }
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, 7);
+    ctx.fillStyle = 'rgba(4,5,7,0.75)';
+    ctx.fill();
     ctx.beginPath();
     ctx.arc(x, y, 5.5, 0, 7);
     ctx.fillStyle = C.accent;

@@ -2,7 +2,7 @@
 // tile from its reference. The key is OPENROUTER_API_KEY in .env.local, read here and never printed.
 //   npx tsx tools/map-paint.ts region <region-id> <out.png> [--take A|B|C|D] [--style <painting.png>]
 //     [--with <neighbour painting.png> ...]
-//   npx tsx tools/map-paint.ts tile <region-id> <tile-id> [<out.png>]
+//   npx tsx tools/map-paint.ts tile <region-id> <tile-id> [<out.png>] [--note <text>] [--ref <png>]
 // About $0.21 and a minute or two an image with openai/gpt-5.4-image-2.
 import { readFileSync } from 'node:fs';
 import sharp from 'sharp';
@@ -156,16 +156,22 @@ if (mode === 'region' && region && a) {
     a,
   );
 } else if (mode === 'tile' && region && a) {
+  // --note "<text>" adds a line to the prompt for this tile (a place GPT got wrong, A5.1's Stone
+  // Eyes); --ref <png> stands in for the reference (one with the wrong thing painted out).
+  const flag = (f: string) => (rest.includes(f) ? rest[rest.indexOf(f) + 1] : undefined);
+  const note = flag('--note');
   const dir = workDir(region);
-  const out = rest[0] ?? `${dir}/tile-${a}.png`;
+  const out =
+    rest.find((v, i) => !v.startsWith('--') && !rest[i - 1]?.startsWith('--')) ??
+    `${dir}/tile-${a}.png`;
   await paint(
-    TILE_PROMPT,
-    [`${dir}/tile-${a}-ref.png`, `${dir}/tile-${a}-guide.png`, 'art/concepts/map-1.webp'],
+    note ? `${TILE_PROMPT}\n\n${note}` : TILE_PROMPT,
+    [flag('--ref') ?? `${dir}/tile-${a}-ref.png`, `${dir}/tile-${a}-guide.png`, 'art/concepts/map-1.webp'],
     '3:2',
     out,
   );
 } else {
   throw new Error(
-    'usage: map-paint.ts region <region> <out.png> [--take D] [--style <png>] [--with <png>...] | tile <region> <tile> [<out.png>]',
+    'usage: map-paint.ts region <region> <out.png> [--take D] [--style <png>] [--with <png>...] | tile <region> <tile> [<out.png>] [--note <text>] [--ref <png>]',
   );
 }
