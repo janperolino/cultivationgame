@@ -1,20 +1,16 @@
-<!-- The source of truth for the game's rules since 2026-10-11; edit it here. It began as an export of the claude.ai
-     design doc "Cultivation Idle Game: Design & Build Plan" (revision 184), which is now a frozen archive. -->
-# Cultivation Idle Game: Design & Build Plan
+<!-- The source of truth for the game's rules; edit it here. The claude.ai copy it came from is a frozen archive. -->
+# Severed Heaven: Design
 
-{date:2026-10-10} · @Jan
-
-Build it as a web game where idle seclusion and an AI-narrated world are two views of one simulation. Your code owns every number; GLM 5.2 only interprets what you type and narrates what the rules decided. At about 12 hours a week, a playable slice lands around week 10 and the full system list around week 27.
+Build it as a web game where idle seclusion and an AI-narrated world are two views of one simulation. Your code owns every number; GLM 5.2 only interprets what you type and narrates what the rules decided.
 
 ## Decisions so far
 
-Twelve calls are made; the rest of this plan builds on them.
+The calls everything else builds on.
 
 | Decision | Choice | Why |
 |---|---|---|
 | Engine | Web: TypeScript, React, Vite | An idle game is menus and numbers, and the adventure is streamed text. Browsers do both best. |
 | Players and AI bill | You and friends, on your own OpenRouter key | No accounts or backend for now; Tech stack covers how friends get access. |
-| Time | About 12 hours a week | Sets the roadmap: a playable slice by week 10. |
 | Cultivation | Three paths, qi, body and soul: your realm is your highest ladder and the others never count below half of it; each ladder climbs with its own method in the twelve double-hours of your day | The Mortal's Journey model. A routine reads as a cultivator's life, not a budget sheet, and finding a body or soul method is an event. |
 | Progression | The big three, each with a level and a tree, plus Dao and Way trees; insight buys nodes, and mastery is for techniques, methods and recipes | Trees hold what you understand and how you live; mastery holds what you practice. |
 | Power and pedigree | One rarity scale for everything, as a band: purple is your realm's peak, gold, red and pristine the next realm; a six-line sheet with no dice, compared by ratio; a fighting-up ledger the fight sim enforces | Geniuses fight up and ordinary cultivators don't, through the same rules for players and NPCs, and the sheet says in stage words where each line stands. |
@@ -22,22 +18,22 @@ Twelve calls are made; the rest of this plan builds on them.
 | Tone | Cutthroat by default; warmth is earned | GLM leans agreeable, so the rules, not the prose, decide who betrays whom. |
 | Combat | Text only: a turn-based rules engine, with free-text input on top | Creative moves earn bonuses, but your cultivation still decides who wins. |
 | AI model | GLM 5.2, thinking off | Unlike GLM 5.3, its thinking can be switched off, which roughly halves the cost and cuts the wait. |
-| Multiplayer | After v1: friends as NPCs in your world, then co-op go-in sessions; no shared persistent world | Most of the fun of playing with friends, with no server that owns the world, so personal calendars and editable saves stay. The core is built for it from M1: rules take any cultivator, events are typed, randomness runs in named streams and fight turns take many actors. |
-| Story | One card format for everything that happens to you, idle or in the world, built in M1 without the AI; decks grow with the milestones | A seclusion event, a summons, an encounter and the coming-back summary share one engine and one screen pattern, so the game reads as a life rather than a ledger, and the AI only rewrites text. |
+| Multiplayer | After v1: friends as NPCs in your world, then co-op go-in sessions; no shared persistent world | Most of the fun of playing with friends, with no server that owns the world, so personal calendars and editable saves stay. The core is built for it: rules take any cultivator, events are typed, randomness runs in named streams and fight turns take many actors. |
+| Story | One card format for everything that happens to you, idle or in the world, working without the AI | A seclusion event, a summons, an encounter and the coming-back summary share one engine and one screen pattern, so the game reads as a life rather than a ledger, and the AI only rewrites text. |
 
 ## How the two halves connect
-
-> Diagram (in the online doc): seclusion turns time into qi, body, soul and insight; the world turns that power into materials, pills, methods, epiphanies and connections, which flow back into seclusion.
 
 Seclusion turns time into power; the world turns that power into the materials, epiphanies and connections seclusion can't make. Neither half gets far alone.
 
 Idle never stops; it changes hands. While you wander, your formations keep filling a spirit pool that you absorb when you return. Raising the pool's cap is an upgrade, and it sets how long you can stay out without waste.
 
-**Seclusion has two states: attended and away.** You are attending while the game's tab is visible and you have touched it in the last few minutes; otherwise you are away, which is what idle has always been and keeps its name. Away is the floor and never punishes anyone. Attending pays: being there is worth ×1.25 on qi, drawing qi in by hand (Attended seclusion, under Cultivation) lifts it toward ×2, and attended hours leave insight that away hours never do. Both are rates on in-game time, so a slow clock is never stronger, and the ceiling grows later through accessories, abodes, talents, methods and nodes, but it stays a ceiling. The seat is a side income; the world is where power comes from. Go-in is uncapped because a trip brings back what seclusion can't make at all: pills, methods, manuals, epiphanies and people. The sims keep the world meatier than the seat, and the world is designed for a player who is there. Going in is away by definition, so the spirit pool fills at the away rate and nothing is counted twice. Attending counts on any screen; the planning parts of the seat, the day wheel and the trees, stay planning, with no reflex layer, and wherever the seat gets hands-on it reuses one grammar, handling qi: watch, breathe, catch, don't overheat.
+**Seclusion has two states: attended and away.** You are attending while the game's tab is visible and you have touched it in the last few minutes; otherwise you are away. Away is the floor and never punishes anyone. Attending pays: being there is worth ×1.25 on qi, drawing qi in by hand (Attended seclusion, under Cultivation) lifts it toward ×2, and attended hours leave insight that away hours never do. Both are rates on in-game time, and the ceiling grows later through accessories, abodes, talents, methods and nodes, but it stays a ceiling. Attending counts on any screen; the planning parts of the seat, the day wheel and the trees, stay planning, with no reflex layer, and wherever the seat gets hands-on it reuses one grammar, handling qi: watch, breathe, catch, don't overheat.
 
-The calendar runs on seclusion time: one real hour is one in-game year at Qi Condensation, close to the first guess of a minute per week. The clock speeds up with each realm so any realm's full lifespan lasts about 120 real hours: roughly 1.7 years an hour at Foundation, 4 at Core Formation, 8 at Nascent Soul. A year is 360 days, twelve months of thirty.
+**The seat is a side income; the world is where power comes from.** Go-in is uncapped because a trip brings back what seclusion can't make at all: pills, methods, manuals, epiphanies and people. The sims keep the world meatier than the seat, and the world is designed for a player who is there. Going in is away by definition, so the spirit pool fills at the away rate and nothing is counted twice.
 
-**The world's calendar is the Sealed Era** (封纪, the atlas's current era), settled 2026-10-14. World day 0 is the first day of Sealed Era 3,115, so a first life, born that day, reaches its first hour at 12 in 3,127, the atlas's "now". The clock never restarts: when a life ends, the world runs on and the next life in the slot starts in the world's year, which is what lets people, letters, rumors and earlier lives share one time. Years are written as numbers ("Sealed Era 3,137", "age 22"), never spelled out, since they run into the thousands.
+The calendar runs on seclusion time: one real hour is one in-game year at Qi Condensation. The clock speeds up with each realm so any realm's full lifespan lasts about 120 real hours: roughly 1.7 years an hour at Foundation, 4 at Core Formation, 8 at Nascent Soul. A year is 360 days, twelve months of thirty.
+
+**The world's calendar is the Sealed Era** (封纪, the atlas's current era). World day 0 is the first day of Sealed Era 3,115, so a first life, born that day, reaches its first hour at 12 in 3,127, the atlas's "now". The clock never restarts: when a life ends, the world runs on and the next life in the slot starts in the world's year, which is what lets people, letters, rumors and earlier lives share one time. Years are written as numbers ("Sealed Era 3,137", "age 22"), never spelled out, since they run into the thousands.
 
 Actions in the world spend hours or days of in-game time. Death never comes while you're offline: you wake at the edge of your lifespan with a last chance to break through. Offline time counts for up to 12 real hours, and an abode upgrade raises the cap later.
 
@@ -49,9 +45,9 @@ The game plays out in Severed Heaven, one middle thousand world, written by hand
 
 **The world lives in the Severed Heaven Atlas**, `content/atlas/entries.json`, which `node tools/atlas-serve.cjs` opens as a map where every continent, region, kingdom, sect, landmark and era is an entry we both edit. The doc keeps the rules and the atlas keeps the world. Everything in it is a draft until it's marked canon.
 
-**Scale.** Severed Heaven is a flat disc about 1,000,000 li across (1 li is half a kilometer). A kingdom is 5,000-15,000 li across, a region 40,000-80,000 and a continent 200,000-300,000. Six continents ring the Shattered Sea, where the Heaven Ladder to the great world broke 66,000 years ago.
+**Scale.** Severed Heaven is a flat disc about 1,000,000 li across (1 li is half a kilometer). Six continents ring the Shattered Sea, where the Heaven Ladder to the great world broke 66,000 years ago.
 
-**The world at its true size** (A5.2, Jan's call, 2026-10-18). The place lore had been sized for mortals on foot (a watchtower on every corner, skulls the size of carts) in a land where a kingdom is 6,000 km across, and the map's art followed it into a medieval look. This is the yardstick every session reads before writing lore, a prompt or a scene. Severed Heaven is not medieval fantasy: it is vast, crowded at its heart and empty at its edges, and what stands out on it is what cultivation built.
+**The world at its true size.** This is the yardstick every session reads before writing lore, a prompt or a scene. Severed Heaven is not medieval fantasy: it is vast, crowded at its heart and empty at its edges, and what stands out on it is what cultivation built.
 
 | Thing | li | km | For a sense of it |
 |---|---|---|---|
@@ -94,8 +90,6 @@ The bottom of the pyramid grows with the mortals and the qi; the top is held by 
 
 **History is written by hand**, big to small, along with the continents, regions, great sects and their spheres of influence. It explains the present: ruins, feuds, lost inheritances, sealed secret realms and the legends NPCs tell.
 
-GLM gets the cosmology, the history and the powers near you in its cached context, so every scene sits in the same canon.
-
 **Big places are written; small ones fill in.** Villages, minor sects, ruins and spirit veins fill in procedurally around the written anchors, and GLM names and describes them once, as they're made. Your birthplace is rolled from your origin talent.
 
 **Names are translated**, the way webnovel translations do it: Clear Heaven Sword Sect, Morning Star Continent, the Shattered Sea. Pinyin and hanzi sit underneath as flavor (Qingxiao Jianzong, 清霄剑宗). People and family names stay in pinyin: Elder Mo, the Huyan clan.
@@ -113,26 +107,6 @@ GLM gets the cosmology, the history and the powers near you in its cached contex
 | Outer demons | beings from beyond the world barrier that whisper through heart demons and break in during calamities | rarely, and the world shakes when they do |
 
 You play a human in v1; a bloodline can come with a talent roll.
-
-**Money** is spirit stones, and each grade is worth 1,000 of the one below:
-
-| Grade | Worth | Used mostly at |
-|---|---|---|
-| Low | the base unit | Qi Condensation, Foundation Establishment |
-| Mid | 1,000 low | Core Formation |
-| High | 1,000 mid, a million low | Nascent Soul, Deity Transformation |
-| Top | 1,000 high, a billion low | Void Refinement and up |
-
-Stones are also fuel: you can absorb them for qi or burn them to power arrays, so wealth and power are the same thing. Mortals trade in silver and gold, and one low-grade stone is a small fortune to them.
-
-**Stones, silver and shops in play** (D3, 2026-10-14; Jan's calls).
-
-- **Each grade is held as its own count** and shown as such ("3 mid · 240 low"), a price reading in the largest grade that reads cleanly ("2.4 mid"). Qi hours burn the grade your realm uses.
-- **Changing grades always costs, both ways** (Jan's calls in D3 and P3.5): a higher stone is purer and does more for a higher cultivator, so 1,200 of a grade buy one of the next, and a price in a higher grade paid in a lower one costs the same premium; one stone breaks into 1,100 of the grade below, at a money changer or a shop making change. A round trip loses about 8%, so no loop pays.
-- **Silver is the mortal purse.** A low-grade stone is worth 100 taels on the yardstick; inns, ferries, food and mortal shops deal in silver and can't make change for a stone, so a town's money changer breaks one into 110 taels, and 120 taels buy one back.
-- **Shops** follow the loot and shop rules (Items and gear) and draw on the catalogs (Catalogs by place). The kinds: a stall (pills, talismans, herbs), an alchemy shop, a refiner (gear, and repairs), a sect shop for its members, a merchant guild that carries goods from region to region, a black market (better rolls, prices half again, imports first, and it never asks whose a thing was), the bounty office and a mortal shop in silver. Stock refreshes monthly; they buy from you at 40% of their own price, 60% once you are friendly with the keeper or favored by their power; haggling is a people check once a visit, 20% off on a clear pass and 10% on a close one, and the keeper remembers being pressed on a short one; a stolen thing sold to its owner's own power is recognized, which is evidence and heat; and a place's money is finite, so a village can't buy a sack of cores.
-- **Loot sells** at posted rates: cores and beast parts to the bounty office (50%, never haggled), alchemy shops and refiners, and bounties pay on proof.
-- **Your stall:** you set the prices, a customer buys at or under what their wants say a thing is worth, regulars become people the world keeps, and the stall's hours on your wheel go on selling while you are idle.
 
 ## Scale of destruction
 
@@ -195,7 +169,7 @@ The world is original, enormous and nested. Each area feels like everything unti
 - The `famous` tag, which a start reads to rumor the region's famous places.
 - `features` on any place: the tagged features its scenes build from.
 - The scale fields (A5.2), on places and powers; World bible, The world at its true size, has the numbers they follow:
-  - `vein`, 0 to 9: **the tier of the strongest spirit vein a place or power sits on** (Jan's call in A5.2, grounding what a place can keep in a thing in the world), on the same tiers as methods, techniques and artifacts: tier n keeps realm n, 1 Qi Condensation, 2 Foundation, 3 Core Formation, 4 Nascent Soul, 5 Deity Transformation, 6 Void Refinement, 7 Body Integration, 8 Mahayana, 9 Tribulation Transcendence, and 0 is no vein, mortals only. A cultivator climbs only as far as the vein under them feeds, so the strong, and the sects, clans and crowns they lead, are drawn to veins as the one resource that lasts, and pool toward a continent's heart where the veins run strongest. A region's or continent's vein is never written: `atlas:build` takes its strongest place's (the Border Wilds' is 4, from the veins under the City of the Guarded Mouth and the Beast-Butcher Gate; the Imperial Domain's 7, under the Jing Capital). A vein sets three things: an array's realm rating where `access` gives none (arrays burn stones, and a place's are rated to its vein's realm, so a tier 2's stop Foundation and break to Core Formation); the grade of spirit stone it yields, tiers 1 and 2 low-grade, 3 mid, 4 and 5 high, 6 and up top, as the money table uses them; and so what a market's purse can hold. Veins are things in the world: fought over (the Black Jade Vein), found (a hidden vein is a treasure map's best find), new (the Red Rocks' vein that broke the surface last year) or tapped out.
+  - `vein`, 0 to 9: **the tier of the strongest spirit vein a place or power sits on** (Jan's call in A5.2, grounding what a place can keep in a thing in the world), on the same tiers as methods, techniques and artifacts: tier n keeps realm n, 1 Qi Condensation, 2 Foundation, 3 Core Formation, 4 Nascent Soul, 5 Deity Transformation, 6 Void Refinement, 7 Body Integration, 8 Mahayana, 9 Tribulation Transcendence, and 0 is no vein, mortals only. A cultivator climbs only as far as the vein under them feeds, so the strong, and the sects, clans and crowns they lead, are drawn to veins as the one resource that lasts, and pool toward a continent's heart where the veins run strongest. A region's or continent's vein is never written: `atlas:build` takes its strongest place's (the Border Wilds' is 4, from the veins under the City of the Guarded Mouth and the Beast-Butcher Gate; the Imperial Domain's 7, under the Jing Capital). A vein sets three things: an array's realm rating where `access` gives none (arrays burn stones, and a place's are rated to its vein's realm, so a tier 2's stop Foundation and break to Core Formation); the grade of spirit stone it yields, tiers 1 and 2 low-grade, 3 mid, 4 and 5 high, 6 and up top, as the money table (Economy) uses them; and so what a market's purse can hold. Veins are things in the world: fought over (the Black Jade Vein), found (a hidden vein is a treasure map's best find), new (the Red Rocks' vein that broke the surface last year) or tapped out.
   - **`top` above the vein is a story.** `top` says who is there now and `vein` who the place can keep, so someone stronger than the vein feeds needs a reason, written in `top`'s note: duty (a sword-sect elder posted to the foothills), gain (there for the cores), a dead end (an old cultivator who stopped climbing and went home), hiding, or a beast's lair (the Stone Forest's python). `npm run atlas:build` warns on a gap with no note. `top` below the vein needs nothing: the strong of a rich place are often away.
   - **Qi density and veins are two jobs.** Qi density is the land's ambient qi, owned by nobody: it sets how strong the wilds run, how many children are born rooted and how many mortals the land holds. A vein is a point a place or power sits on and can lose: it sets who can be kept there, the stones mined and the arrays. Prosperity, how well-off a place is from trade and war, is M6's and drifts within what its vein allows (Prosperity, under Systems).
   - `population`: about how many live there, mortals and cultivators by realm (`mortals`, `qi`, `foundation`, `core`, `nascent`, `deity`, `void`); a kingdom or region counts its whole land, a city or town its seat, a power its members. Round numbers for the narrator; no rule counts heads.
@@ -1224,6 +1198,26 @@ Production ships across M4 to M6: queues and gardens with the arts, posts and di
 ## Economy
 
 Spirit stones are money and fuel at once, sect contribution is each sect's own currency, and progress splits about half from the world and half from seclusion. The balance sims hold that split: with gate items supplied, playing only one half should take about twice as long.
+
+**Money** is spirit stones, and each grade is worth 1,000 of the one below:
+
+| Grade | Worth | Used mostly at |
+|---|---|---|
+| Low | the base unit | Qi Condensation, Foundation Establishment |
+| Mid | 1,000 low | Core Formation |
+| High | 1,000 mid, a million low | Nascent Soul, Deity Transformation |
+| Top | 1,000 high, a billion low | Void Refinement and up |
+
+Stones are also fuel: you can absorb them for qi or burn them to power arrays, so wealth and power are the same thing. Mortals trade in silver and gold, and one low-grade stone is a small fortune to them.
+
+**Stones, silver and shops in play.**
+
+- **Each grade is held as its own count** and shown as such ("3 mid · 240 low"), a price reading in the largest grade that reads cleanly ("2.4 mid"). Qi hours burn the grade your realm uses.
+- **Changing grades always costs, both ways:** a higher stone is purer and does more for a higher cultivator, so 1,200 of a grade buy one of the next, and a price in a higher grade paid in a lower one costs the same premium; one stone breaks into 1,100 of the grade below, at a money changer or a shop making change. A round trip loses about 8%, so no loop pays.
+- **Silver is the mortal purse.** A low-grade stone is worth 100 taels on the yardstick; inns, ferries, food and mortal shops deal in silver and can't make change for a stone, so a town's money changer breaks one into 110 taels, and 120 taels buy one back.
+- **Shops** follow the loot and shop rules (Items and gear) and draw on the catalogs (Catalogs by place). The kinds: a stall (pills, talismans, herbs), an alchemy shop, a refiner (gear, and repairs), a sect shop for its members, a merchant guild that carries goods from region to region, a black market (better rolls, prices half again, imports first, and it never asks whose a thing was), the bounty office and a mortal shop in silver. Stock refreshes monthly; they buy from you at 40% of their own price, 60% once you are friendly with the keeper or favored by their power; haggling is a people check once a visit, 20% off on a clear pass and 10% on a close one, and the keeper remembers being pressed on a short one; a stolen thing sold to its owner's own power is recognized, which is evidence and heat; and a place's money is finite, so a village can't buy a sack of cores.
+- **Loot sells** at posted rates: cores and beast parts to the bounty office (50%, never haggled), alchemy shops and refiners, and bounties pay on proof.
+- **Your stall:** you set the prices, a customer buys at or under what their wants say a thing is worth, regulars become people the world keeps, and the stall's hours on your wheel go on selling while you are idle.
 
 **Price yardstick.** Most atlas entries already agree on it, and the rest get brought into line:
 
