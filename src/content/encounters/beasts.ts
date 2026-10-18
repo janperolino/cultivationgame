@@ -9,6 +9,7 @@ export const BEAST_ENCOUNTERS: readonly Template[] = [
   {
     id: 'ridge-wolves',
     kind: 'beast',
+    hostile: true,
     title: 'Ridge wolves on the skyline',
     where: { terrain: ['hills', 'plains'] },
     bands: [0, 4],
@@ -60,6 +61,7 @@ export const BEAST_ENCOUNTERS: readonly Template[] = [
   {
     id: 'stone-skin-boar',
     kind: 'beast',
+    hostile: true,
     title: 'A stone-skin boar at the roots',
     where: { terrain: ['forest', 'hills'] },
     bands: [0, 2],
@@ -99,6 +101,7 @@ export const BEAST_ENCOUNTERS: readonly Template[] = [
   {
     id: 'cave-bats',
     kind: 'beast',
+    hostile: true,
     title: 'Cave bats pouring out at dusk',
     where: { terrain: ['karst', 'hills'], hours: 'night' },
     bands: [0, 2],
@@ -138,6 +141,7 @@ export const BEAST_ENCOUNTERS: readonly Template[] = [
   {
     id: 'tide-crabs',
     kind: 'beast',
+    hostile: true,
     title: 'Tide crabs on the wrack line',
     where: { terrain: ['coast'] },
     bands: [0, 2],
@@ -177,6 +181,7 @@ export const BEAST_ENCOUNTERS: readonly Template[] = [
   {
     id: 'karst-python',
     kind: 'beast',
+    hostile: true,
     title: 'A python in the sinkhole',
     where: { terrain: ['karst'] },
     bands: [3, 6],
@@ -271,6 +276,7 @@ export const BEAST_ENCOUNTERS: readonly Template[] = [
   {
     id: 'marsh-crocodile',
     kind: 'beast',
+    hostile: true,
     title: 'A crocodile under the reeds',
     where: { terrain: ['marsh'] },
     bands: [0, 4],
@@ -318,6 +324,7 @@ export const BEAST_ENCOUNTERS: readonly Template[] = [
   {
     id: 'stone-ape-troop',
     kind: 'beast',
+    hostile: true,
     title: 'A stone ape troop in the pillars',
     where: { terrain: ['karst'] },
     bands: [3, 6],

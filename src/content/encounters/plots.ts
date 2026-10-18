@@ -7,6 +7,7 @@ export const PLOT_ENCOUNTERS: readonly Template[] = [
   {
     id: 'grudge-waits-at-the-ford',
     kind: 'plot',
+    hostile: true,
     title: 'Someone who hates you waits ahead',
     where: { needs: 'grudge' },
     bands: [0, 5],

@@ -36,6 +36,11 @@ export const NIGHT_SHIFT: Readonly<Partial<Record<EncounterKind, number>>> = {
   mortal: -10,
   place: -5,
 };
+/**
+ * The watch keeps the road a day's walk round a town or city (Jan's call after A5.1): within this
+ * many li of one, by your spot or the encounter's, the road brings nothing hostile.
+ */
+export const TOWN_PEACE_LI = 240;
 /** On a road, people come at your band and up to this many bands either side. */
 export const ROAD_PEOPLE_SPREAD = 1;
 /** A template the road brought in its last this-many lines comes at this share of its weight. */

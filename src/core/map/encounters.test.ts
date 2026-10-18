@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, encounterTemplate } from '../../content/encounters/index.ts';
 import { MORTALS } from '../../content/encounters/mortals.ts';
-import { NOTICE_OFF, NOTICE_ROAD } from '../../content/encounters/pace.ts';
+import { NOTICE_OFF, NOTICE_ROAD, TOWN_PEACE_LI } from '../../content/encounters/pace.ts';
 import { ENCOUNTER_KINDS, TemplateSchema, TRIP_GOALS } from '../../content/encounters/schema.ts';
 import { hasItem } from '../../content/items.ts';
 import { BORDER_WILDS } from '../../content/roster.ts';
@@ -21,9 +21,11 @@ import {
   canGoRound,
   chooseExit,
   contact,
+  draw,
   exitViews,
   fightEdge,
   goRound,
+  inPeace,
   meet,
   noticeRate,
   onRoadAt,
@@ -178,6 +180,32 @@ describe('the road’s notice', () => {
     expect(a.map!.notice.n).toBe(0);
     expect(a.map!.notice.next).toBeGreaterThanOrEqual(0.6);
     expect(a.map!.notice.next).toBeLessThanOrEqual(1.4);
+  });
+});
+
+describe('the watch keeps the road', () => {
+  it('brings nothing hostile within a day’s walk of a town or city, and can further out', () => {
+    const go = goToPlace(life(), CITY);
+    if (!go.ok) throw new Error(go.reason);
+    const s = go.state;
+    const map = mapOf(s)!;
+    const city = placeById(map, CITY) as MapPlace;
+    const at = (x: number, y: number): GameState => ({ ...s, map: { ...s.map!, at: [x, y] } });
+    const near: [number, number] = [city.x + TOWN_PEACE_LI / 2, city.y];
+    expect(inPeace(map, near)).toBe(true);
+    for (let i = 0; i < 200; i++) {
+      const d = draw(at(...near), map, near, 6, 3, new Rng(i));
+      if (d) expect(d.template.hostile ?? false).toBe(false);
+    }
+    // Out in the wilds, where no town is near, the hostile ones still come.
+    const wild = s.map!.course!.pts.find((q) => !inPeace(map, q) && !inPeace(map, s.map!.at));
+    const far: [number, number] = wild ? [wild[0], wild[1]] : [city.x + 20000, city.y + 20000];
+    let hostile = 0;
+    for (let i = 0; i < 400; i++) {
+      const d = draw(at(...far), map, far, 6, 3, new Rng(i));
+      if (d?.template.hostile) hostile++;
+    }
+    expect(hostile).toBeGreaterThan(0);
   });
 });
 

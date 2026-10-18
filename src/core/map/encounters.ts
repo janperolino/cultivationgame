@@ -29,6 +29,7 @@ import {
   ROBBED_SHARE,
   SHORT_WOUND,
   RECENT_LINES,
+  TOWN_PEACE_LI,
   RECENT_WEIGHT,
   WEAK_LOOKING,
 } from '../../content/encounters/pace.ts';
@@ -880,6 +881,15 @@ export interface Draw {
 }
 
 /** Picks what comes: a kind by its shares, then a template at the band by weight. */
+/** Whether a spot lies within a day's walk of a town or city (TOWN_PEACE_LI), where the watch keeps the road. */
+export function inPeace(map: RegionMap, p: Pt): boolean {
+  return map.places.some(
+    (q) =>
+      (q.sub === 'town' || q.sub === 'city') &&
+      Math.hypot(q.x - p[0], q.y - p[1]) < TOWN_PEACE_LI,
+  );
+}
+
 export function draw(
   s: GameState,
   map: RegionMap,
@@ -889,7 +899,10 @@ export function draw(
   rng: Rng,
 ): Draw | null {
   const onRoad = onRoadAt(map, p);
-  const pool = eligible(s, map, p, hour, onRoad);
+  // The watch keeps the road a day's walk round a town or city: nothing hostile comes there, by
+  // the spot it would come at or where you stand.
+  const calm = inPeace(map, p) || (!!s.map && inPeace(map, s.map.at));
+  const pool = eligible(s, map, p, hour, onRoad).filter((t) => !(calm && t.hostile));
   const shares = { ...KIND_SHARES[onRoad ? 'road' : 'off'] };
   if (hourIsNight(hour))
     for (const [k, n] of Object.entries(NIGHT_SHIFT))

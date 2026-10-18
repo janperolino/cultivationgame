@@ -11,6 +11,7 @@ export const CULTIVATOR_ENCOUNTERS: readonly Template[] = [
   {
     id: 'pine-deserters',
     kind: 'cultivator',
+    hostile: true,
     title: 'Deserters in the pines',
     where: { terrain: ['forest', 'hills'] },
     bands: [0, 3],
@@ -227,6 +228,7 @@ export const CULTIVATOR_ENCOUNTERS: readonly Template[] = [
   {
     id: 'half-blood-raider',
     kind: 'cultivator',
+    hostile: true,
     title: 'A half-blood raider on your trail',
     where: { road: 'off', terrain: ['plains', 'hills', 'steppe'] },
     bands: [1, 5],
@@ -356,6 +358,7 @@ export const CULTIVATOR_ENCOUNTERS: readonly Template[] = [
   {
     id: 'pirate-landing',
     kind: 'cultivator',
+    hostile: true,
     title: 'Pirates of the Raider Isles ashore',
     where: { terrain: ['coast'] },
     bands: [1, 5],

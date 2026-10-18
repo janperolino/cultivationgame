@@ -161,6 +161,8 @@ export const TemplateSchema = z
     weight: z.number().positive().optional(),
     /** It lies in wait: it shows only if your Perception reaches its Stealth, else it springs. */
     lurks: z.boolean().optional(),
+    /** It comes to harm or rob you: never within a day's walk of a town or city (pace.ts). */
+    hostile: z.boolean().optional(),
     /** It moves on: waiting lets it pass. */
     moves: z.boolean().optional(),
     /** A goal template: the trip goal it is, met at the posting's spot. */

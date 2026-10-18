@@ -130,6 +130,7 @@ export const MORTAL_ENCOUNTERS: readonly Template[] = [
   {
     id: 'ditch-bandits',
     kind: 'mortal',
+    hostile: true,
     title: 'Mortal bandits in a ditch',
     where: { road: 'on', terrain: ['hills', 'plains', 'forest', 'marsh'] },
     bands: [0, 1],
