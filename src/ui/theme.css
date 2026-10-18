@@ -7662,6 +7662,19 @@ label.beacon-ring {
   right: auto;
 }
 
+/* In the column the picker is a whole bar, its arrow at the bar's end (Jan's note). */
+.map-col .picker {
+  display: block;
+}
+
+.map-col .picker-chip {
+  width: 100%;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  text-align: left;
+  font-size: calc(13px * var(--text-scale));
+}
+
 .map-canvas {
   position: absolute;
   inset: 0;
