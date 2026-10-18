@@ -177,6 +177,20 @@ describe('ties', () => {
   });
 });
 
+describe('prosperity and top', () => {
+  it('warns when a top stands above what its place keeps with no reason in its note', () => {
+    const r = checkAtlas([
+      entry('bare', 'city', null, { terrain: 'hills', prosperity: 3, top: 'Core Formation' }),
+      entry('told', 'city', null, { terrain: 'hills', prosperity: 3, top: 'Core Formation (duty)' }),
+      entry('fed', 'city', null, { terrain: 'hills', prosperity: 4, top: 'Core Formation' }),
+      entry('rich', 'city', null, { terrain: 'hills', prosperity: 6, top: 'Foundation Establishment' }),
+    ]);
+    expect(r.warnings.filter((w) => w.includes('prosperity'))).toEqual([
+      "bare: its top needs prosperity 4 and it keeps 3; say why in the top's note (duty, gain, a dead end, hiding, a beast's lair)",
+    ]);
+  });
+});
+
 describe('the Border Wilds as data', () => {
   it('has the Realm of Mingled Blood hidden behind its access', () => {
     const realm = byId.get('qm-hexue-jing');

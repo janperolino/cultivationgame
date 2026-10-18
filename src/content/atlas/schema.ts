@@ -278,7 +278,8 @@ const baseFields = {
   qiDensity: z.number().int().min(1).max(9).optional(),
   /**
    * The scale fields (A5.2; design § World bible, The world at its true size), on places and powers.
-   * Prosperity is 1 (ruined) to 9 (opulent), a place without one taking its parent's.
+   * Prosperity is the highest realm a place can keep, 1 (mortals only) to 9 (Mahayana and up), a
+   * place without one taking its parent's.
    */
   prosperity: z.number().int().min(1).max(9).optional(),
   /** About how many live there: mortals, and cultivators by realm. */

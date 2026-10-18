@@ -19,7 +19,7 @@ export interface WrittenTown {
   shops: readonly string[];
   lore: string;
   features: readonly { name: string; tags: FeatureTag[] }[];
-  /** The scale fields, as on an atlas place (design § World bible, The world at its true size). */
+  /** The highest realm the seat can keep, 1 to 9, as on an atlas place (design § The world map, The atlas as data). */
   prosperity: number;
   /** About how many live in the seat itself, mortals and cultivators by realm. */
   population: Population;
@@ -73,7 +73,7 @@ export const BORDER_WILDS: RegionContent = {
         F('the beacon bastion', 'height', 'fire'),
         F('the drill ground on the cut plateau', 'witnesses'),
       ],
-      prosperity: 4,
+      prosperity: 3,
       population: { mortals: 1_500_000, qi: 1500, foundation: 120 },
       size: 40,
       fromAbove:
@@ -91,7 +91,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: ['march-mortal'],
       lore: 'The seat of a farming county two thousand li across, six million strong, where fields are plowed with spears at hand; the county store sells to the patrols.',
       features: [F('fields plowed with spears at hand', 'witnesses'), F('a beast-pit', 'fall')],
-      prosperity: 3,
+      prosperity: 2,
       population: { mortals: 150_000, qi: 40 },
       size: 15,
       fromAbove:
@@ -109,7 +109,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'The last of the March’s beacon peaks before Stone Eyes, its spirit-fire seen a thousand li off, and the March’s border post on the road.',
       features: [F('the beacon tower', 'height', 'fire')],
-      prosperity: 3,
+      prosperity: 2,
       population: { mortals: 40_000, qi: 30 },
       size: 5,
       fromAbove:
@@ -127,7 +127,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'Where the March’s grain is counted, taxed and stolen, in that order: granaries for forty million mouths in tiers along the ford.',
       features: [F('the granaries', 'burnable', 'cover'), F('the ford', 'water', 'crossing')],
-      prosperity: 4,
+      prosperity: 3,
       population: { mortals: 600_000, qi: 150, foundation: 5 },
       size: 25,
       fromAbove:
@@ -200,7 +200,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: ['herders-stall', 'herders-guild', 'herders-mortal'],
       lore: 'The herders’ trading post, where thunder-horned deer and scale-horses are sold by the hundred head and the empire’s buyers keep a standing hall.',
       features: [F('the corrals', 'witnesses', 'fragile'), F('the auction ring', 'witnesses')],
-      prosperity: 5,
+      prosperity: 3,
       population: { mortals: 700_000, qi: 200, foundation: 10 },
       size: 30,
       fromAbove:
@@ -218,7 +218,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'The Night Bridge’s crates come in after dark, and nobody asks what hatches.',
       features: [F('the hatchling barns', 'burnable', 'cover')],
-      prosperity: 4,
+      prosperity: 2,
       population: { mortals: 60_000, qi: 80 },
       size: 6,
       fromAbove:
@@ -236,7 +236,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'A summer camp of yurts where the deer are broken to the saddle, beside a herd a hundred thousand strong.',
       features: [F('open grass to the horizon', 'crossing')],
-      prosperity: 4,
+      prosperity: 2,
       population: { mortals: 30_000, qi: 40 },
       size: 20,
       fromAbove:
@@ -272,7 +272,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'Salt-reed cutters on the last dry ground before the fens.',
       features: [F('reed beds', 'cover', 'burnable'), F('the salt pans', 'water')],
-      prosperity: 2,
+      prosperity: 1,
       population: { mortals: 40_000 },
       size: 10,
       fromAbove: 'Salt-reed beds silvering the last dry ground before the fens.',

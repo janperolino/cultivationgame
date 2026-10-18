@@ -1,7 +1,16 @@
-// The atlas rules that read across entries: terrain falling back to an ancestor's, and ties
-// written on both ends (content/atlas/README.md, How things connect). Pure, so the build and
-// the tests share them.
-import { LAND_KINDS, PLACE_KINDS, TERRAINS, type EntryKind, type Tie } from './schema.ts';
+// The atlas rules that read across entries: terrain falling back to an ancestor's, ties written
+// on both ends (content/atlas/README.md, How things connect), and a top above what its place
+// keeps. Pure, so the build and the tests share them.
+import { realmIndex } from '../realms.ts';
+import {
+  LAND_KINDS,
+  PLACE_KINDS,
+  TERRAINS,
+  parseTop,
+  type EntryKind,
+  type Tie,
+  type Top,
+} from './schema.ts';
 
 type Terrain = (typeof TERRAINS)[number];
 
@@ -16,6 +25,18 @@ export interface CheckedEntry {
   map?: unknown;
   access?: { of?: string };
   ties?: Tie[];
+  prosperity?: number;
+  /** As written in the source, or parsed in the generated atlas. */
+  top?: string | Top;
+}
+
+/**
+ * The prosperity that keeps a realm (design § The world map, The atlas as data): 2 for Qi
+ * Condensation up to 9 for Mahayana and up.
+ */
+export function prosperityKeeping(top: Top): number | null {
+  if (top.realm === '' || top.realm === 'unknown') return null;
+  return Math.min(9, realmIndex(top.realm) + 2);
 }
 
 /**
@@ -85,6 +106,15 @@ export function checkAtlas(entries: readonly CheckedEntry[]): AtlasReport {
       warnings.push(`${e.id}: on the map with no terrain, and none up its parents`);
 
   for (const e of entries) {
+    if (e.prosperity !== undefined) {
+      const parsed =
+        typeof e.top === 'object' ? { ok: true as const, top: e.top } : parseTop(e.top);
+      const needs = parsed.ok ? prosperityKeeping(parsed.top) : null;
+      if (parsed.ok && needs !== null && needs > e.prosperity && !parsed.top.note)
+        warnings.push(
+          `${e.id}: its top needs prosperity ${needs} and it keeps ${e.prosperity}; say why in the top's note (duty, gain, a dead end, hiding, a beast's lair)`,
+        );
+    }
     if (e.access?.of !== undefined && !byId.has(e.access.of))
       errors.push(`${e.id}: access.of "${e.access.of}" doesn't exist`);
 
