@@ -51,6 +51,37 @@ The game plays out in Severed Heaven, one middle thousand world, written by hand
 
 **Scale.** Severed Heaven is a flat disc about 1,000,000 li across (1 li is half a kilometer). A kingdom is 5,000-15,000 li across, a region 40,000-80,000 and a continent 200,000-300,000. Six continents ring the Shattered Sea, where the Heaven Ladder to the great world broke 66,000 years ago.
 
+**The world at its true size** (A5.2, Jan's call, 2026-10-18). The place lore had been sized for mortals on foot (a watchtower on every corner, skulls the size of carts) in a land where a kingdom is 6,000 km across, and the map's art followed it into a medieval look. This is the yardstick every session reads before writing lore, a prompt or a scene. Severed Heaven is not medieval fantasy: it is vast, crowded at its heart and empty at its edges, and what stands out on it is what cultivation built.
+
+| Thing | li | km | For a sense of it |
+|---|---|---|---|
+| The world, a disc | 1,000,000 | 500,000 | about 385 Earths of surface |
+| A continent (Morning Star) | 250,000 × 280,000 | 125,000 × 140,000 | about 90 times Earth's land |
+| A region (the Border Wilds) | about 60,000 | about 30,000 | about 5 times Earth's land |
+| A kingdom (the March of Pacified Borders) | 12,000 | 6,000 | Australia |
+| A square of the map painting, cut round a place | 6,000 | 3,000 | 1,024 px, about 3 km a pixel |
+| A pixel at the map's closest zoom | 6 | 3 | a city 150 li across is 25 px |
+
+- **Kingdoms are islands in the wilds.** A region's kingdoms cover under a tenth of it; the rest is beast wilds, karst, forest and forbidden land, which is why the beasts own the frontier and why a road matters.
+- **A written town or village is a seat.** Two of the March's written villages stand 2,700 km apart; each is the seat of a county the size of a country. `town` and `village` say which doors it has (Entering a place), never how small it is.
+- **What the map's height shows** is what cultivation built, never a mortal building: a place under about 10 li across vanishes. Walls as tall as cliffs, formation arrays as domes of light, beacon spirit-fire as pillars, sect halls on peaks, beast-king bones the size of hills, rivers cut by a sword. The painting draws a place at the size of one of its own peaks, as it draws the peaks larger than they are; an atlas place's `fromAbove` says what that is.
+- **Sizes in prose** are in li or in things of their own scale (a skull the size of a hill, a wall a day's flight long), never in mortal yardsticks (carts, houses, a watchtower) for something meant to be grand. Close in, a scene still has its doors and stalls: the patrol walk, the drill yard, the bounty office stay person-sized.
+- **Distance is time.** Crossing a kingdom on foot is months and a region half a year (Travel); a Core Formation flies a region in a month. Nobody pops over to the next county.
+
+**How many live there.** Approximate, for the narrator and the atlas's `population`; nothing counts heads.
+
+- **Mortals,** per km² of a kingdom's land, by its prosperity (the atlas's `prosperity`, The atlas as data): 1 ruined 0.1, 2 destitute 0.5, 3 poor 2, 4 humble 5, 5 ordinary 12, 6 comfortable 25, 7 prosperous 50, 8 rich 100, 9 opulent 150. Terrain moves it: river plains ×2; steppe, karst and ranchland ×0.5; marsh ×0.3. The wilds hold about a hundredth of their kingdoms' rate: hunters, hermits, hidden clans. So the March holds about 55 million, the whole Border Wilds about 180 million, a heartland region 10 to 20 billion and the Morning Star Continent about 80 billion.
+- **Rooted children,** found on testing day, by qi density: 1 in 3,000 at 3 (thin), 1 in 1,000 at 5 (ordinary), 1 in 300 at 7 (abundant), 1 in 100 at 9 (heaven-touched). Most of them never leave Qi Condensation.
+- **Each realm holds a share of the one below,** narrowing as heaven narrows it (gate pills, tribulations, heart demons): Foundation 1/30 of Qi Condensation, Core Formation 1/60, Nascent Soul 1/50, Deity Transformation 1/20, Void Refinement 1/10. Past that the world counts by name: about twenty Body Integration, under ten Mahayana, a few hidden Tribulation Transcenders.
+
+| | Qi Condensation | Foundation | Core Formation | Nascent Soul | Deity Transformation | Void Refinement |
+|---|---|---|---|---|---|---|
+| A frontier region (the Border Wilds) | about 60,000 | about 2,000 | about 35 | about 3 | | |
+| A heartland region | about 20 million | about 650,000 | about 11,000 | about 200 | about 10 | |
+| The Morning Star Continent | about 100 million | about 3 million | about 55,000 | about 1,100 | about 55 | about 5 |
+
+The bottom of the pyramid grows with the mortals and the qi; the top is held by heaven, so a heartland region holds a thousand times the frontier's Qi Condensation and only a few dozen times its Nascent Souls. A frontier town meets Qi Condensation drifters and a Nascent Soul is an event there; in the heartland a Core Formation elder is a district's patron.
+
 **The tide.** Severed Heaven circles its great world, which hangs in the night sky as the Mirror, on an orbit of about 90,000 years. Close in, the Mirror's qi floods across (the High Tide); far out, it thins (the Ebb). The game is set near the peak of a High Tide, which is why sects are crowded and competition is fierce.
 
 | World rank | What it is | In the game |
@@ -110,10 +141,10 @@ The gap between realms widens as you climb, as in the novels: about ninefold fro
 | Realm | All-out destruction | Senses and travel | How common | How the world treats them |
 |---|---|---|---|---|
 | Mortal martial master | a door, a few bones; worth ~10 soldiers | eyes and ears; a horse's pace | the strongest in most villages | heroes to mortals, insects to cultivators |
-| Qi Condensation | a house; boulders shatter; worth ~50 soldiers | feels qi a few meters away; outruns a horse | thousands per region, mostly sect disciples | mortals call them immortals; sects treat them as servants and recruits |
-| Foundation Establishment | a street; a hill cracks; worth ~1,000 soldiers | divine sense to ~1 km; short sword flights | hundreds per region | inner disciples and small-sect elders; mortal kings court them |
-| Core Formation | a town; a hill splits, a river changes course | divine sense ~10 km; flies ~1,000 km a day | dozens per region | elders and sect masters; one can topple a mortal kingdom |
-| Nascent Soul | a city; a mountain peak falls | ~100 km; blinks short distances; the soul can flee a dying body | a handful per region | sect ancestors; the strongest card a sect holds |
+| Qi Condensation | a house; boulders shatter; worth ~50 soldiers | feels qi a few meters away; outruns a horse | tens of thousands in a frontier region, tens of millions in a heartland one (How many live there), mostly sect disciples | mortals call them immortals; sects treat them as servants and recruits |
+| Foundation Establishment | a street; a hill cracks; worth ~1,000 soldiers | divine sense to ~1 km; short sword flights | thousands in a frontier region, hundreds of thousands in a heartland one | inner disciples and small-sect elders; mortal kings court them |
+| Core Formation | a town; a hill splits, a river changes course | divine sense ~10 km; flies ~1,000 km a day | dozens in a frontier region, about ten thousand in a heartland one | elders and sect masters; one can topple a mortal kingdom |
+| Nascent Soul | a city; a mountain peak falls | ~100 km; blinks short distances; the soul can flee a dying body | a handful in a frontier region, a couple of hundred in a heartland one | sect ancestors; the strongest card a sect holds |
 | Deity Transformation | a mountain range; the weather follows their mood | a whole province; crosses a continent in days | dozens per continent; every great power has several | their seclusion or anger is a political event |
 | Void Refinement | a small country; space tears around them | senses through space; walks the void | a few per continent, kept in seclusion as sect ancestors | a great power's hidden foundation; whole sects exist to serve one |
 | Body Integration | a great region; draws on heaven and earth | senses a continent; steps across it | about twenty in the world | a power of their own; one moving shakes a continent |
@@ -134,7 +165,7 @@ The gap between realms widens as you climb, as in the novels: about ninefold fro
 
 - The table sits in GLM's world bible, so narration keeps scale: a Qi Condensation punch cracks a wall, never a mountain.
 - The interpreter marks out-of-scale actions infeasible.
-- NPC generation follows "How common": a frontier town has Qi Condensation drifters, a capital has a Core Formation patron, and a Nascent Soul arrives as a plot event.
+- NPC generation follows "How common" (and How many live there): a frontier town has Qi Condensation drifters, a capital has a Core Formation patron, and on the frontier a Nascent Soul arrives as a plot event.
 - The engine scales area effects and collateral damage by realm.
 
 ## The world map
@@ -143,8 +174,8 @@ The world is original, enormous and nested. Each area feels like everything unti
 
 | Map tier | What it holds | Who sits at the top | How it opens |
 |---|---|---|---|
-| Kingdom | a mortal state 5,000-15,000 li across, a few small sects, market towns | Foundation Establishment where you can start; harsher lands hold more | where most lives start |
-| Region | 40,000-80,000 li of kingdoms and wilds, rival mid-size sects, a great market city | Core Formation elders, with a handful of Nascent Soul ancestors | reach Core Formation, or a sect posts you outward |
+| Kingdom | a mortal state 5,000-15,000 li across (2,500-7,500 km), tens of millions of mortals to billions, a few small sects, county seats | Foundation Establishment where you can start; harsher lands hold more | where most lives start |
+| Region | 40,000-80,000 li of kingdoms and wilds, rival mid-size sects, a great market city | on the frontier, Core Formation elders and a handful of Nascent Soul ancestors; in the heartland, Nascent Soul ancestors and a Deity Transformation or two | reach Core Formation, or a sect posts you outward |
 | Continent | 200,000-300,000 li holding great sects, ancient clans and demonic strongholds | Deity Transformation, with a few Void Refinement ancestors in seclusion | reach Nascent Soul, find a teleport array, or read a great sect's maps |
 | World | this whole middle thousand world: continents, seas and forbidden lands | about twenty Body Integration, fewer than ten Mahayana, a few hidden Tribulation Transcenders | reach Deity Transformation, or follow a legend |
 | Beyond | the great thousand world, where immortals go | unknown | ascension, after v1 |
@@ -163,6 +194,11 @@ The world is original, enormous and nested. Each area feels like everything unti
 - `ties` on any entry: each names another entry, a kind (enemy, ally, trade, kin, patron, debt, feud, secret), whether it is open or hidden, and a one-line why, written on both ends. The hostile rule reads enemy ties, and rumors and plot encounters travel along them.
 - The `famous` tag, which a start reads to rumor the region's famous places.
 - `features` on any place: the tagged features its scenes build from.
+- The scale fields (A5.2), on places and powers; World bible, The world at its true size, has the numbers they follow:
+  - `prosperity`, 1 to 9 on the qi density ladder's shape: ruined, destitute, poor, humble, ordinary, comfortable, prosperous, rich, opulent. A place without one takes its parent's. It starts near the land's qi density and trade lifts it (the City of the Guarded Mouth trades cores, so it stands at 6 in a land of 3). It sets an array's realm rating where `access` gives none (3 Qi Condensation, 4 and 5 Foundation, 6 and 7 Core Formation, 8 Nascent Soul, 9 Deity Transformation), a market's purse and how many mortals a kingdom's land holds; M6 lets it drift (Prosperity, under Systems).
+  - `population`: about how many live there, mortals and cultivators by realm (`mortals`, `qi`, `foundation`, `core`, `nascent`, `deity`, `void`); a kingdom or region counts its whole land, a city or town its seat, a power its members. Round numbers for the narrator; no rule counts heads.
+  - `size`: li across, or li long for a wall, a road or a river work.
+  - `fromAbove`: one line on what shows from the map's height, which a place painted into the map is painted from (`docs/art-pipeline.md` § The travel map).
 
 A generated site is the same record, kind `site` with a sub-kind (town, village, cave, den, ruin, shrine, herb valley), kept in the save; a hand-written one may join the atlas.
 

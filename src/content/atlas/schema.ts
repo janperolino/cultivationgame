@@ -238,6 +238,23 @@ export const accessSchema = z
 
 export type Access = z.infer<typeof accessSchema>;
 
+const headcount = z.number().int().nonnegative();
+
+/** About how many live in a place or belong to a power, mortals and cultivators by realm. */
+export const populationSchema = z
+  .object({
+    mortals: headcount.optional(),
+    qi: headcount.optional(),
+    foundation: headcount.optional(),
+    core: headcount.optional(),
+    nascent: headcount.optional(),
+    deity: headcount.optional(),
+    void: headcount.optional(),
+  })
+  .strict();
+
+export type Population = z.infer<typeof populationSchema>;
+
 const baseFields = {
   id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),
   name: z.string().min(1),
@@ -259,6 +276,17 @@ const baseFields = {
    * at a land's edge; the generated atlas carries it resolved on every place.
    */
   qiDensity: z.number().int().min(1).max(9).optional(),
+  /**
+   * The scale fields (A5.2; design § World bible, The world at its true size), on places and powers.
+   * Prosperity is 1 (ruined) to 9 (opulent), a place without one taking its parent's.
+   */
+  prosperity: z.number().int().min(1).max(9).optional(),
+  /** About how many live there: mortals, and cultivators by realm. */
+  population: populationSchema.optional(),
+  /** Li across, or li long for a wall, a road or a river work. */
+  size: z.number().positive().optional(),
+  /** What shows from the map's height; a place painted into the map is painted from it. */
+  fromAbove: z.string().min(1).optional(),
   /** A site's sub-kind, on kind `site` only. */
   site: z.enum(SITE_KINDS).optional(),
   /** `true` when a Soul check or divine sense finds it, or the realm a soul must reach to find it. */
@@ -278,6 +306,10 @@ function entryRules(
     hidden?: unknown;
     access?: Access;
     features?: unknown;
+    prosperity?: unknown;
+    population?: unknown;
+    size?: unknown;
+    fromAbove?: unknown;
     tags: string[];
   },
   ctx: z.RefinementCtx,
@@ -288,7 +320,15 @@ function entryRules(
   if (e.kind === 'site' && e.site === undefined) issue('site', 'a site needs its sub-kind');
   if (e.kind !== 'site' && e.site !== undefined) issue('site', 'only a site has a sub-kind');
   if (!place) {
-    for (const k of ['hidden', 'access', 'features'] as const)
+    for (const k of [
+      'hidden',
+      'access',
+      'features',
+      'prosperity',
+      'population',
+      'size',
+      'fromAbove',
+    ] as const)
       if (e[k] !== undefined) issue(k, `${e.kind} is not a place`);
     if (e.tags.includes('famous')) issue('tags', `${e.kind} is not a place, so it can't be famous`);
   }

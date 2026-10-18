@@ -6,6 +6,8 @@
 
 A flat disc 1,000,000 li across (radius 500,000; 1 li = 0.5 km), centered on the Ladder Stump at (0, 0). x runs east and y runs south, in li. A kingdom is 5,000–15,000 li across, a region 40,000–80,000 and a continent 200,000–300,000.
 
+**Write at that size** (A5.2). A kingdom is the size of Australia and a region five times Earth's land, so nothing in the atlas is sized for mortals on foot: a written town is the seat of a county the size of a country, a wall is thousands of li long, and the grand things are what cultivation built. Before writing an entry, read design § World bible, The world at its true size and How many live there, and give every place and power `prosperity`, `population`, `size` and `fromAbove` by them. The Border Wilds are the worked example.
+
 ## Fields
 
 | Field | Meaning |
@@ -24,6 +26,10 @@ A flat disc 1,000,000 li across (radius 500,000; 1 li = 0.5 km), centered on the
 | `way` | orthodox, demonic, buddhist, ghost, wild, sea, neutral or void (mostly on powers) |
 | `terrain` | on any place: plains, hills, mountains, forest, jungle, marsh, desert, steppe, ice, tundra, volcanic, plateau, twilight, islands, coast, canyon, karst, sea. A place without one takes its nearest ancestor's (a kingdom its region's), and `npm run atlas:build` writes the resolved terrain into the generated atlas, so give one only where the place differs from its region |
 | `qiDensity` | on any place: how rich its spirit qi runs, 1 to 9 (barren, sparse, thin, modest, ordinary, rich, abundant, blessed, heaven-touched). A place without one takes its nearest ancestor's, ordinary (5) when none is written; `npm run atlas:build` writes it resolved on every place. It rises toward a continent's heart and its great powers' seats and falls at the frontiers: the Border Wilds are 3, the Soul-Lost Stone Forest 5. It sets what lives at a land's edge, and the travel map counts the depth up from there (design § The world, Depth and qi density) |
+| `prosperity` | on a place or power: how rich it is, 1 to 9 (ruined, destitute, poor, humble, ordinary, comfortable, prosperous, rich, opulent). A place without one takes its parent's. It starts near the land's qi density and trade lifts it. It sets an array's rating where `access` gives none (3 Qi Condensation, 4–5 Foundation, 6–7 Core Formation, 8 Nascent Soul, 9 Deity Transformation), a market's purse and how many mortals a kingdom's land holds (design § World bible, The world at its true size) |
+| `population` | on a place or power: about how many live there, `{ mortals, qi, foundation, core, nascent, deity, void }`, any left out; a kingdom or region counts its whole land, a city its seat, a power its members. Follow the numbers in design § World bible, How many live there |
+| `size` | on a place or power: li across its built or held ground, or li long for a wall, a road or a river work |
+| `fromAbove` | on a place or power: one line on what shows from the map's height (about 3 km a pixel), in what cultivation built: cliff walls, array domes, beacon pillars, sect peaks. A place painted into the map is painted from it |
 | `site` | on kind `site` only, its sub-kind: town, village, cave, den, ruin, shrine, herb-valley, spring, falls (a waterfall), peak, camp, hut, mine, tomb (graves), tree (an ancient one), stele, heart (a wild's centre), checkpoint or ferry. Generated sites are the same record, kept in the save; a hand-written one may sit in the atlas |
 | `hidden` | on a place: `true` when a Soul check or divine sense finds it, or a realm id (`"core-formation"`) when only a soul at that realm finds it; left out when anyone can see it |
 | `access` | on a gated place or a secret realm (see below) |
