@@ -69,7 +69,19 @@ const ROOM = 1.15;
  * The part of the map the column and the screen's top leave open, in stage pixels from the map's
  * edges (left, top, right, bottom): what you've charted fits there, and "You" centres you in it.
  */
-const OPEN = [450, 80, 90, 30] as const;
+const OPEN = [480, 80, 90, 30] as const;
+
+/**
+ * The column's tabs (A5.1, Jan's notes): the journey (where you stand, where you're headed and
+ * what's ahead), how you travel (the wheel, the routine, the mode of travel, the stance), and the
+ * card the road brought. One shows at a time, as Routine's do.
+ */
+type ColumnTab = 'journey' | 'travel' | 'card';
+const COLUMN_TABS: readonly { id: ColumnTab; name: string; hanzi: string }[] = [
+  { id: 'journey', name: 'Journey', hanzi: '途' },
+  { id: 'travel', name: 'Travel', hanzi: '行' },
+  { id: 'card', name: 'Card', hanzi: '遇' },
+];
 
 interface MenuItem {
   t: string;
@@ -129,7 +141,7 @@ function MapView({
   const [view, setView] = useState<View | null>(null);
   // Drawn again when a picture arrives or the fog asks for it.
   const [drawn, redraw] = useState(0);
-  const [tab, setTab] = useState<'journey' | 'card'>('journey');
+  const [tab, setTab] = useState<ColumnTab>('journey');
   const [hover, setHover] = useState<MapPlace | MapArea | null>(null);
   const [tip, setTip] = useState<{ x: number; y: number } | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -255,6 +267,46 @@ function MapView({
         ? [q.x, q.y]
         : life.at;
 
+  /** What you can do where you stand: enter the place, stay and cultivate, go home. */
+  const hereChoices = (atPlace: MapPlace | null): MenuItem[] => {
+    const home = homeOf(game, map);
+    const items: MenuItem[] = [];
+    if (atPlace && placeKindOf(atPlace)) {
+      const gate = gateOf(game, map, atPlace);
+      const goIn = (bribe = false) => {
+        if (!act((s) => enterAt(s, map, atPlace, { bribe }))) onGoIn();
+      };
+      if (life.inside === atPlace.id)
+        items.push({ t: 'Go back in', s: 'its own screen', run: onGoIn });
+      else if (gate.kind === 'refused') {
+        items.push({ t: 'Enter', s: 'the watch knows your face', warn: true, run: () => goIn() });
+        items.push({
+          t: 'Bribe the watch',
+          s: ` low-grade, if he takes it`,
+          run: () => goIn(true),
+        });
+      } else
+        items.push({
+          t: 'Enter',
+          s:
+            gate.kind === 'toll'
+              ? `the toll is ${gate.toll} low-grade`
+              : gate.kind === 'shut'
+                ? 'the gate is shut to you'
+                : 'its own screen',
+          run: () => goIn(),
+        });
+    }
+    items.push({
+      t: 'Stay and cultivate here',
+      s: 'the home wheel turns here',
+      run: () => act(stopHere),
+    });
+    if (home.id !== atPlace?.id)
+      items.push({ t: 'Go home', s: home.name, run: () => act((s) => goToPlace(s, home.id)) });
+    return items;
+  };
+
   const menuFor = (sx: number, sy: number): Menu => {
     const w = toWorld(v, size.W, size.H, sx, sy);
     const q = pickAtSpot(sx, sy);
@@ -305,42 +357,7 @@ function MapView({
     if (here) {
       const atPlace =
         q && 'x' in q && Math.hypot(q.x - life.at[0], q.y - life.at[1]) < 250 ? q : null;
-      const home = homeOf(game, map);
-      const items: MenuItem[] = [];
-      if (atPlace && placeKindOf(atPlace)) {
-        const gate = gateOf(game, map, atPlace);
-        const goIn = (bribe = false) => {
-          if (!act((s) => enterAt(s, map, atPlace, { bribe }))) onGoIn();
-        };
-        if (life.inside === atPlace.id)
-          items.push({ t: 'Go back in', s: 'its own screen', run: onGoIn });
-        else if (gate.kind === 'refused') {
-          items.push({ t: 'Enter', s: 'the watch knows your face', warn: true, run: () => goIn() });
-          items.push({
-            t: 'Bribe the watch',
-            s: ` low-grade, if he takes it`,
-            run: () => goIn(true),
-          });
-        } else
-          items.push({
-            t: 'Enter',
-            s:
-              gate.kind === 'toll'
-                ? `the toll is ${gate.toll} low-grade`
-                : gate.kind === 'shut'
-                  ? 'the gate is shut to you'
-                  : 'its own screen',
-            run: () => goIn(),
-          });
-      }
-      items.push({
-        t: 'Stay and cultivate here',
-        s: 'the home wheel turns here',
-        run: () => act(stopHere),
-      });
-      if (home.id !== atPlace?.id)
-        items.push({ t: 'Go home', s: home.name, run: () => act((s) => goToPlace(s, home.id)) });
-      return { x: sx, y: sy, head: atPlace?.name ?? 'Where you stand', items };
+      return { x: sx, y: sy, head: atPlace?.name ?? 'Where you stand', items: hereChoices(atPlace) };
     }
     if (q && known(life, q.id) === 'rumored') {
       const ring = placeFor(q);
@@ -457,6 +474,20 @@ function MapView({
   );
   const bd = band(b);
   const above = bd && pullsIn(b, band0);
+  // The place you stand at, if any (within 250 li, as the right-click menu reads it), and the lore
+  // of it or of the land round you.
+  const atPlace =
+    map.places
+      .filter(
+        (p) =>
+          known(life, p.id) !== 'unknown' && Math.hypot(p.x - life.at[0], p.y - life.at[1]) < 250,
+      )
+      .sort(
+        (p, q) =>
+          Math.hypot(p.x - life.at[0], p.y - life.at[1]) -
+          Math.hypot(q.x - life.at[0], q.y - life.at[1]),
+      )[0] ?? null;
+  const hereLore = atPlace?.lore || areaAt(map, life.at)?.lore || '';
   // What the road brought: the waiting first, then the sensed nearest first. The card shown is the
   // one opened, else the first waiting; a card that starts waiting opens the Card tab.
   const ahead = [...life.encounters].sort(
@@ -638,59 +669,63 @@ function MapView({
       </div>
       <div className="map-shade" aria-hidden="true" />
       <aside className="map-col" aria-label="Where you stand and the road">
-        <div className="map-where">
-          <span className="map-date">{worldWhen(game.calendar.day)}</span>
-          <span className="map-here">
-            <b>{hereWords(game)}</b> ·{' '}
-            {TERRAIN_WORDS[terrainAt(map, life.at)] ?? terrainAt(map, life.at)} · {QI_NAMES[qd]} qi
-            ({qd}) · you see {sightAt(map, life.at)} li
-          </span>
-          <span className="map-depth">
-            <span className="map-pips" title="How deep into the wilds">
-              {pips}
-            </span>{' '}
-            {d.name}:{' '}
-            {bd ? `beasts of ${bd.name} · ${bd.finds} finds` : 'nothing past mortal beasts'}
-          </span>
-          {above && (
-            <span className="map-above">a realm above you: what lives here finds you first</span>
-          )}
-        </div>
         <div className="seg map-tabs" role="tablist" aria-label="What the column shows">
-          <button
-            type="button"
-            role="tab"
-            aria-pressed={tabNow === 'journey'}
-            aria-selected={tabNow === 'journey'}
-            onClick={() => setTab('journey')}
-          >
-            Journey
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-pressed={tabNow === 'card'}
-            aria-selected={tabNow === 'card'}
-            onClick={() => setTab('card')}
-          >
-            Card
-            {shown?.state === 'waiting' && (
-              <span className="menu-mark" role="img" aria-label="a card waits" />
-            )}
-          </button>
+          {COLUMN_TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-pressed={tabNow === t.id}
+              aria-selected={tabNow === t.id}
+              onClick={() => setTab(t.id)}
+            >
+              {t.name} <span className="hanzi">{t.hanzi}</span>
+              {t.id === 'card' && shown?.state === 'waiting' && (
+                <span className="menu-mark" role="img" aria-label="a card waits" />
+              )}
+            </button>
+          ))}
         </div>
-        {tabNow === 'card' ? (
-          shown ? (
-            <EncounterCard game={game} life={life} enc={shown} act={act} say={say} />
-          ) : (
-            <p className="map-card-none">
-              Nothing waits on you. What the road brings shows here, and opens this tab when it
-              waits.
-            </p>
-          )
-        ) : (
+        {above && (
+          <p className="map-above">A realm above you: what lives here finds you first.</p>
+        )}
+        {tabNow === 'journey' ? (
+          // Where you stand and where you're headed (Jan's notes after A5.1's first look): the place
+          // or the land, how deep, its lore and what you can do there, then the course and what's
+          // ahead. A place's picture stands at the top once places have art.
           <>
-            <RoadPanel game={game} life={life} act={act} />
+          <section className="map-here-tab">
+            <span className="map-label">Currently at</span>
+            <h3 className="map-here-name">
+              {hereWords(game)}
+              {atPlace && <span className="hanzi"> {atPlace.hanzi}</span>}
+            </h3>
+            <p className="map-here-line">
+              {TERRAIN_WORDS[terrainAt(map, life.at)] ?? terrainAt(map, life.at)} · {QI_NAMES[qd]}{' '}
+              qi ({qd}) · you see {sightAt(map, life.at)} li
+            </p>
+            <p className="map-depth">
+              <span className="map-pips" title="How deep into the wilds">
+                {pips}
+              </span>{' '}
+              {d.name}:{' '}
+              {bd ? `beasts of ${bd.name} · ${bd.finds} finds` : 'nothing past mortal beasts'}
+            </p>
+            {hereLore && <p className="map-here-lore">{hereLore}</p>}
+            <div className="map-here-acts">
+              {hereChoices(atPlace).map((it) => (
+                <button
+                  key={it.t}
+                  type="button"
+                  className={it.warn ? 'is-warn' : undefined}
+                  onClick={() => it.run?.()}
+                >
+                  {it.t}
+                  {it.s && <span>{it.s}</span>}
+                </button>
+              ))}
+            </div>
+          </section>
             <CourseCard
               game={game}
               map={map}
@@ -702,6 +737,17 @@ function MapView({
               onLeave={() => setLeaving(true)}
             />
           </>
+        ) : tabNow === 'card' ? (
+          shown ? (
+            <EncounterCard game={game} life={life} enc={shown} act={act} say={say} />
+          ) : (
+            <p className="map-card-none">
+              Nothing waits on you. What the road brings shows here, and opens this tab when it
+              waits.
+            </p>
+          )
+        ) : (
+          <RoadPanel game={game} life={life} act={act} />
         )}
       </aside>
     </div>
@@ -754,6 +800,12 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
   const hours: string[] = road ? roadHours(life, game.player) : [...game.player.wheel];
   const hour = Math.floor((((game.calendar.day % 1) + 1) % 1) * 12);
   const w = WAYS.find((x) => x.id === life.way)!;
+  /** Mount rides a spirit mount if you have one, else a horse. */
+  const mountWay: WayId = canGoBy(game, 'mount').ok
+    ? 'mount'
+    : canGoBy(game, 'horse').ok
+      ? 'horse'
+      : 'mount';
   const riding = !!w.rideHours;
   const cur = hours[hour]!;
   const doing = !road
@@ -855,21 +907,29 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
       </div>
       <div className="map-road-block">
         <div className="map-label">Mode of travel</div>
-        {/* Every way shows, the ones not open to you greyed with why (Jan's note in A5.1). */}
+        {/* Every way shows, the ones not open to you greyed with why (Jan's notes in A5.1). A horse
+            and a spirit mount are one entry, Mount, riding the best you own. */}
         <Picker
           label="Mode of travel"
-          value={life.way}
-          options={WAYS.map((x) => {
-            const check = canGoBy(game, x.id);
-            const shut = !check.ok || (!!life.group && life.way !== x.id);
+          value={life.way === 'horse' ? 'mount' : life.way}
+          options={WAYS.filter((x) => x.id !== 'horse').map((x) => {
+            const id = x.id === 'mount' ? mountWay : x.id;
+            const check = canGoBy(game, id);
+            const shut = !check.ok || (!!life.group && life.way !== id);
             return {
               id: x.id,
-              name: x.name,
+              name: x.id === 'mount' && id === 'horse' ? 'Mount · your horse' : x.name,
               disabled: shut,
-              note: !check.ok ? check.reason : life.group ? `${life.group.name} sets it.` : undefined,
+              note: !check.ok
+                ? x.id === 'mount'
+                  ? 'You have no horse or spirit mount.'
+                  : check.reason
+                : life.group
+                  ? `${life.group.name} sets it.`
+                  : undefined,
             };
           })}
-          onChange={(id) => act((s) => goBy(s, id as WayId))}
+          onChange={(id) => act((s) => goBy(s, (id === 'mount' ? mountWay : id) as WayId))}
         />
       </div>
       <div className="map-road-block">

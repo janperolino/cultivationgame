@@ -1440,12 +1440,16 @@ select {
 
 /* Breakthroughs on Cultivate (P2.4): a row of buttons under the figure, one for each ladder whose
    bar is full, each with its ladder's color on the left; dimmer while not ready. */
+/* Side by side when more than one ladder is full (Jan's note after A5.1): the row grows to hold
+   them, its hairline as wide as the buttons. */
 .bt-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   gap: 8px;
-  width: min(460px, 100%);
+  width: max-content;
+  min-width: min(460px, 100%);
+  max-width: 100%;
   padding-top: 10px;
   border-top: 1px solid var(--edge);
 }
@@ -7591,7 +7595,7 @@ label.beacon-ring {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 500px;
+  width: 540px;
   pointer-events: none;
   background:
     linear-gradient(rgb(4 5 7 / 0.5), rgb(4 5 7 / 0.5)),
@@ -7607,7 +7611,7 @@ label.beacon-ring {
 .map-col {
   position: absolute;
   z-index: 3;
-  left: 8px;
+  left: 36px;
   top: 80px;
   bottom: 24px;
   width: 400px;
@@ -7675,24 +7679,73 @@ label.beacon-ring {
   z-index: 2;
 }
 
-.map-where {
+/* Journey's top: where you stand (A5.1, Jan's notes), then the course under it. */
+.map-here-tab {
   display: grid;
-  gap: 2px;
-  font-size: calc(13px * var(--text-scale));
+  gap: 4px;
 }
 
-.map-date {
+.map-here-name {
+  margin: 0;
   font-family: var(--font-display);
   font-weight: 500;
+  font-size: calc(26px * var(--text-scale));
+  line-height: 1.15;
+}
+
+.map-here-name .hanzi {
+  color: var(--accent);
   font-size: calc(19px * var(--text-scale));
 }
 
-.map-here b {
-  font-weight: 600;
+.map-here-line,
+.map-depth {
+  margin: 0;
+  font-size: calc(13px * var(--text-scale));
+  color: var(--muted);
 }
 
-.map-depth {
+.map-here-lore {
+  margin: 6px 0 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: calc(16px * var(--text-scale));
+  color: #d9d4c7;
+}
+
+.map-here-acts {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.map-here-acts button {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.03);
+  color: var(--text);
+  font: inherit;
+  font-size: calc(13.5px * var(--text-scale));
+  text-align: left;
+  cursor: pointer;
+}
+
+.map-here-acts button:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.map-here-acts button span {
+  margin-left: auto;
+  font-size: calc(12px * var(--text-scale));
   color: var(--muted);
+}
+
+.map-here-acts button.is-warn {
+  color: var(--warn);
 }
 
 .map-pips {
