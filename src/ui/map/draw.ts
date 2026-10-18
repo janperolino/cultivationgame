@@ -100,9 +100,14 @@ const PIECE_FADE = [0.035, 0.06] as const;
 /** How far down the piece its place's spot lies: Jan's pieces are round dioramas, the place in their middle. */
 const PIECE_FOOT = 0.55;
 
-function pieceOf(q: MapPlace): HTMLImageElement | null {
+/** Each piece softened once: its edge feathered out and its colour drained a little, to sit in the land. */
+const PIECE_SOFT = new Map<string, HTMLCanvasElement>();
+
+function pieceOf(q: MapPlace): HTMLCanvasElement | null {
   const id = [`map-place-${q.id}`, `map-place-${q.sub}`].find((x) => PIECE_URLS[x]);
   if (!id) return null;
+  const done = PIECE_SOFT.get(id);
+  if (done) return done;
   let img = PIECE_IMGS.get(id);
   if (!img) {
     img = new Image();
@@ -110,7 +115,26 @@ function pieceOf(q: MapPlace): HTMLImageElement | null {
     img.src = PIECE_URLS[id]!;
     PIECE_IMGS.set(id, img);
   }
-  return img.complete && img.naturalWidth ? img : null;
+  if (!img.complete || !img.naturalWidth) return null;
+  // Jan's note in A5.1: the pieces stuck out like stickers. The round patch of ground under each
+  // fades into the painting from half its radius out, and its colour is drained toward the
+  // painting's.
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const g = c.getContext('2d')!;
+  g.filter = 'saturate(0.75)';
+  g.drawImage(img, 0, 0);
+  g.filter = 'none';
+  g.globalCompositeOperation = 'destination-in';
+  const r = Math.min(c.width, c.height) / 2;
+  const fade = g.createRadialGradient(c.width / 2, c.height / 2, r * 0.45, c.width / 2, c.height / 2, r);
+  fade.addColorStop(0, 'rgba(0,0,0,1)');
+  fade.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = fade;
+  g.fillRect(0, 0, c.width, c.height);
+  PIECE_SOFT.set(id, c);
+  return c;
 }
 
 /** A piece's width on the map, in li: a city's or a famous place's widest, a site's least. */
@@ -281,6 +305,24 @@ export function drawMap(f: Frame, s: Scene): boolean {
     ctx.strokeStyle = 'rgba(127,199,217,0.3)';
     ctx.lineWidth = 1.2 / k;
     ctx.stroke(worldPath(map.land));
+  }
+  // The places' pieces (A5.1), part of the land: under the lift and the fog, so they take the
+  // painting's light and the veil as it does, fading in as you come close.
+  const pieceIn = smoothstep(PIECE_FADE[0], PIECE_FADE[1], k);
+  if (pieceIn > 0) {
+    onScreen();
+    for (const q of map.places) {
+      const st = known(life, q.id);
+      if (st !== 'seen' && st !== 'sketched') continue;
+      const img = pieceOf(q);
+      if (!img) continue;
+      const side = pieceLi(q) * k;
+      const [x, y] = at([q.x, q.y]);
+      if (x + side < 0 || x - side > W || y + side < 0 || y - side > H) continue;
+      ctx.globalAlpha = pieceIn;
+      ctx.drawImage(img, x - side / 2, y - side * PIECE_FOOT, side, side);
+      ctx.globalAlpha = 1;
+    }
   }
   // The land lifted: the canvas added onto itself, so its colors scale and black stays black.
   ctx.save();
@@ -465,22 +507,6 @@ export function drawMap(f: Frame, s: Scene): boolean {
     if (!('x' in q) && isDeadly(map, q, s.yourBand))
       warnTag(ctx, x, y + r + 30, `险 deadly · ${q.top ? realmWords(q.top) : ''}`);
   }
-
-  // The places' pieces (A5.1): each stands at its spot, fading in as you come close.
-  const pieceIn = smoothstep(PIECE_FADE[0], PIECE_FADE[1], k);
-  if (pieceIn > 0)
-    for (const q of map.places) {
-      const st = known(life, q.id);
-      if (st !== 'seen' && st !== 'sketched') continue;
-      const img = pieceOf(q);
-      if (!img) continue;
-      const side = pieceLi(q) * k;
-      const [x, y] = at([q.x, q.y]);
-      if (x + side < 0 || x - side > W || y + side < 0 || y - side > H) continue;
-      ctx.globalAlpha = pieceIn * (st === 'seen' ? 1 : 0.6);
-      ctx.drawImage(img, x - side / 2, y - side * PIECE_FOOT, side, side);
-      ctx.globalAlpha = 1;
-    }
 
   // Sites as seals; the small ones dots until you come close. A seal gives way to its place's piece.
   const showNames = k > 0.03;
