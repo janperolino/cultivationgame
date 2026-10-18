@@ -8,7 +8,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { BRANCHES } from '../content/hours.ts';
 import { realm as realmInfo, stageName, type RealmId } from '../content/realms.ts';
-import { QI_NAMES, ROAD_ROUTINES, WAYS, type RoadHour, type WayId } from '../content/map/travel.ts';
+import { QI_NAMES, WAYS, type RoadHour, type WayId } from '../content/map/travel.ts';
 import { worldWhen } from '../core/chronicle.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import { band, bandAt, depthInfo, pullsIn, qiAt } from '../core/map/depth.ts';
@@ -57,6 +57,7 @@ import { sealOf } from './encounterSeals.ts';
 import { PlaceScreen } from './PlaceScreen.tsx';
 import { canvasDensity, pointIn, stageFactor, useStage } from './stage.ts';
 import { useGame } from './store.ts';
+import { Picker } from './widgets.tsx';
 
 const TERRAIN_WORDS: Record<string, string> = { sea: 'at sea' };
 
@@ -68,7 +69,7 @@ const ROOM = 1.15;
  * The part of the map the column and the screen's top leave open, in stage pixels from the map's
  * edges (left, top, right, bottom): what you've charted fits there, and "You" centres you in it.
  */
-const OPEN = [500, 80, 90, 30] as const;
+const OPEN = [450, 80, 90, 30] as const;
 
 interface MenuItem {
   t: string;
@@ -472,7 +473,15 @@ function MapView({
     setLastWaiting(waitingId);
     if (waitingId) setTab('card');
   }
-  const tabNow = shown && tab === 'card' ? 'card' : 'journey';
+  // The Card tab is always there (Jan's note in A5.1); once the card shown is answered, the column
+  // goes back to the journey.
+  const shownId = shown?.id ?? null;
+  const [lastShown, setLastShown] = useState(shownId);
+  if (lastShown !== shownId) {
+    setLastShown(shownId);
+    if (!shownId) setTab('journey');
+  }
+  const tabNow = tab;
   const openCard = (id: string) => {
     setOpenEnc(id);
     setTab('card');
@@ -657,23 +666,28 @@ function MapView({
           >
             Journey
           </button>
-          {shown && (
-            <button
-              type="button"
-              role="tab"
-              aria-pressed={tabNow === 'card'}
-              aria-selected={tabNow === 'card'}
-              onClick={() => setTab('card')}
-            >
-              Card
-              {shown.state === 'waiting' && (
-                <span className="menu-mark" role="img" aria-label="a card waits" />
-              )}
-            </button>
-          )}
+          <button
+            type="button"
+            role="tab"
+            aria-pressed={tabNow === 'card'}
+            aria-selected={tabNow === 'card'}
+            onClick={() => setTab('card')}
+          >
+            Card
+            {shown?.state === 'waiting' && (
+              <span className="menu-mark" role="img" aria-label="a card waits" />
+            )}
+          </button>
         </div>
-        {tabNow === 'card' && shown ? (
-          <EncounterCard game={game} life={life} enc={shown} act={act} say={say} />
+        {tabNow === 'card' ? (
+          shown ? (
+            <EncounterCard game={game} life={life} enc={shown} act={act} say={say} />
+          ) : (
+            <p className="map-card-none">
+              Nothing waits on you. What the road brings shows here, and opens this tab when it
+              waits.
+            </p>
+          )
         ) : (
           <>
             <RoadPanel game={game} life={life} act={act} />
@@ -755,7 +769,6 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
             : ROAD_WORD[cur as RoadHour];
   const pace = paceOf(game);
   const perDay = liPerDay(game);
-  const routine = roadRoutines(life).find((r) => r.id === life.roadRoutine) ?? ROAD_ROUTINES[0]!;
   const veil = veilReach(game);
   const R1 = 60;
   const R0 = 32;
@@ -841,29 +854,23 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
         </div>
       </div>
       <div className="map-road-block">
-        <div className="map-label">Going by</div>
-        <div className="map-chips">
-          {WAYS.filter((x) => !x.groupOnly).map((x) => {
+        <div className="map-label">Mode of travel</div>
+        {/* Every way shows, the ones not open to you greyed with why (Jan's note in A5.1). */}
+        <Picker
+          label="Mode of travel"
+          value={life.way}
+          options={WAYS.map((x) => {
             const check = canGoBy(game, x.id);
-            return (
-              <button
-                key={x.id}
-                type="button"
-                className="map-chip"
-                aria-pressed={life.way === x.id}
-                disabled={!check.ok || !!life.group}
-                title={check.ok ? x.note : check.reason}
-                onClick={() => act((s) => goBy(s, x.id as WayId))}
-              >
-                {x.name}
-              </button>
-            );
+            const shut = !check.ok || (!!life.group && life.way !== x.id);
+            return {
+              id: x.id,
+              name: x.name,
+              disabled: shut,
+              note: !check.ok ? check.reason : life.group ? `${life.group.name} sets it.` : undefined,
+            };
           })}
-        </div>
-        <p className="map-pace">
-          {routine.note}
-          {w.note ? ` · ${w.note}` : ''}
-        </p>
+          onChange={(id) => act((s) => goBy(s, id as WayId))}
+        />
       </div>
       <div className="map-road-block">
         <div className="map-label">When the road brings something</div>

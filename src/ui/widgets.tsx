@@ -252,7 +252,8 @@ export function EventLine({ game, e }: { game: GameState; e: ChronicleEvent }) {
 
 /**
  * A quiet picker in place of a native select (A4, Jan's call: the system's lists can't be dressed):
- * a chip naming the choice, opening an obsidian slip of the options like the tips.
+ * a chip naming the choice, opening an obsidian slip of the options like the tips. An option can be
+ * shown but not open to you, greyed, with a line saying why (the Map's Mode of Travel, A5.1).
  */
 export function Picker<T extends string>({
   label,
@@ -262,7 +263,7 @@ export function Picker<T extends string>({
 }: {
   label: string;
   value: T;
-  options: readonly { id: T; name: string }[];
+  options: readonly { id: T; name: string; disabled?: boolean; note?: string }[];
   onChange: (id: T) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -289,12 +290,15 @@ export function Picker<T extends string>({
                 role="option"
                 aria-selected={o.id === value}
                 className={o.id === value ? 'is-on' : undefined}
+                disabled={o.disabled}
+                title={o.note}
                 onClick={() => {
                   onChange(o.id);
                   setOpen(false);
                 }}
               >
                 {o.name}
+                {o.note && <span className="picker-note">{o.note}</span>}
               </button>
             </li>
           ))}

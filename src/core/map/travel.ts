@@ -210,7 +210,7 @@ export type WayCheck = { ok: true } | { ok: false; reason: string };
 /** Whether you can go this way now, and why not. */
 export function canGoBy(s: GameState, id: WayId): WayCheck {
   const w = way(id);
-  if (w.groupOnly) return { ok: false, reason: 'Only with a group that sails one.' };
+  if (w.groupOnly) return { ok: false, reason: 'Only while you travel with a group that has one.' };
   if (id === 'fly' && realmIndex(realmOf(s.player)) < 1)
     return { ok: false, reason: 'Flight on your own sword comes at Foundation.' };
   if (id === 'boat')

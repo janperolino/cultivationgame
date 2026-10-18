@@ -7582,30 +7582,35 @@ label.beacon-ring {
   background: #05070a;
 }
 
-/* Dark behind the column and tight to it (Jan's calls: darker, compressed to the left). */
+/* Dark behind the column and tight to it: the void sky (the shell's own) coming in from the left
+   and growing clearer into the map (Jan's calls: darker, compressed to the left, a void texture
+   fading out). Under the top, so the brand reads clear as on Cultivate and Routine. Still. */
 .map-shade {
   position: absolute;
-  z-index: 2;
+  z-index: 1;
   left: 0;
   top: 0;
   bottom: 0;
-  width: 488px;
+  width: 500px;
   pointer-events: none;
-  background: linear-gradient(
-    to right,
-    rgb(4 5 7 / 0.85) 0%,
-    rgb(4 5 7 / 0.78) 76%,
-    transparent
-  );
+  background:
+    linear-gradient(rgb(4 5 7 / 0.5), rgb(4 5 7 / 0.5)),
+    var(--sky-image) 0 0 / 512px repeat,
+    #040507;
+  mask-image: linear-gradient(to right, #000 0%, #000 62%, rgb(0 0 0 / 0.6) 80%, transparent);
+}
+
+.map-stage {
+  z-index: 0;
 }
 
 .map-col {
   position: absolute;
   z-index: 3;
-  left: 24px;
+  left: 8px;
   top: 80px;
   bottom: 24px;
-  width: 430px;
+  width: 400px;
   overflow-y: auto;
   display: grid;
   align-content: start;
@@ -7623,6 +7628,34 @@ label.beacon-ring {
 
 .map-tabs .menu-mark {
   margin-left: 6px;
+}
+
+/* The card in the column wears a glowing row's light (Jan's pick in A5.1): a gilt hairline over its
+   top with a soft haze off it, the rest dark and open; red when it is dangerous. */
+.map-col .enc-card {
+  --glow: var(--accent);
+  border: 0;
+  border-top: 1px solid var(--glow);
+  border-radius: 0;
+  background:
+    linear-gradient(to bottom, color-mix(in srgb, var(--glow) 10%, transparent), transparent 110px),
+    rgb(4 5 7 / 0.35);
+  box-shadow: 0 -10px 18px -12px color-mix(in srgb, var(--glow) 80%, transparent);
+}
+
+.map-col .enc-card.is-danger {
+  --glow: var(--warn);
+}
+
+.map-card-none {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--text-scale));
+}
+
+.map-col .picker-menu {
+  left: 0;
+  right: auto;
 }
 
 .map-canvas {
@@ -9809,6 +9842,20 @@ p.map-above {
 .picker-menu button.is-on {
   border-left-color: var(--accent);
   color: var(--accent);
+}
+
+.picker-menu button:disabled {
+  color: rgb(141 148 157 / 0.55);
+  background: none;
+  cursor: default;
+}
+
+.picker-note {
+  display: block;
+  font-size: calc(11px * var(--text-scale));
+  white-space: normal;
+  max-width: 260px;
+  color: rgb(141 148 157 / 0.7);
 }
 
 /* The known list fades out over a long foot, and scrolls far enough that its last row rises clear of
