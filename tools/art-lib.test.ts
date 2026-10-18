@@ -5,6 +5,7 @@ import sharp from 'sharp';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   checkManifest,
+  checkMaps,
   checkScreens,
   keyOut,
   outputsOf,
@@ -97,6 +98,18 @@ describe('the manifest checks', () => {
     expect(checkScreens(m, [w('map-a', 500), w('map-b', 400)])).toEqual([
       'map: its art is 900 KB, over 800 KB',
     ]);
+  });
+
+  it('holds a map region to its own budget, listed once', () => {
+    const problems = checkManifest({
+      assets: [],
+      maps: [
+        { region: 'qm-bianhuang', budgetMB: 25 },
+        { region: 'qm-bianhuang', budgetMB: 30 },
+      ],
+    }).join('\n');
+    expect(problems).toMatch(/map qm-bianhuang: the region is listed twice/);
+    expect(problems).toMatch(/30 MB is over a region's 25 MB/);
   });
 
   it('keys out a green screen and its spill', () => {
@@ -198,6 +211,18 @@ describe('npm run art', () => {
     const r = await runArt(root);
     expect(r.errors.join()).toMatch(/cultivate-scene: .* KB, over its 20 KB/);
   }, 20_000);
+
+  it('checks a map region shipped, under its budget', () => {
+    root = mkdtempSync(join(tmpdir(), 'art-'));
+    const m: ArtManifest = { assets: [], maps: [{ region: 'qm-test', budgetMB: 0.001 }] };
+    expect(checkMaps(root, m).join()).toMatch(/no public\/map\/qm-test\/painting.webp/);
+    const dir = join(root, 'public', 'map', 'qm-test', 'chunks', '0-0', 'L0');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(root, 'public', 'map', 'qm-test', 'painting.webp'), Buffer.alloc(400));
+    writeFileSync(join(dir, '0-0.webp'), Buffer.alloc(800));
+    expect(checkMaps(root, m).join()).toMatch(/its art is 0.0 MB, over its 0.001 MB/);
+    expect(checkMaps(root, { ...m, maps: [{ region: 'qm-test', budgetMB: 1 }] })).toEqual([]);
+  });
 
   it('fails a missing source and a stray inbox file', async () => {
     await project([frame], { 'stray.png': await testFrame() });

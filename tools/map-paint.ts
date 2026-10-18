@@ -6,6 +6,7 @@
 // About $0.21 and a minute or two an image with openai/gpt-5.4-image-2.
 import { readFileSync } from 'node:fs';
 import sharp from 'sharp';
+import { guideJson, guidePng, paintingPng, workDir } from './map-paths.ts';
 
 const MODEL = 'openai/gpt-5.4-image-2';
 
@@ -135,10 +136,10 @@ if (mode === 'region' && region && a) {
   const take = rest.includes('--take') ? rest[rest.indexOf('--take') + 1]! : 'A';
   const style = rest.includes('--style')
     ? rest[rest.indexOf('--style') + 1]!
-    : `docs/mockups/map-painting-${region}.png`;
+    : paintingPng(region);
   // Neighbours' finished paintings, so the borders match: --with <painting.png>, as many as there are.
   const neighbours = rest.flatMap((v, i) => (rest[i - 1] === '--with' ? [v] : []));
-  const guide = JSON.parse(readFileSync(`docs/mockups/map-guide-${region}.json`, 'utf8')) as {
+  const guide = JSON.parse(readFileSync(guideJson(region), 'utf8')) as {
     W: number;
     H: number;
   };
@@ -150,12 +151,12 @@ if (mode === 'region' && region && a) {
       : '');
   await paint(
     prompt,
-    [`docs/mockups/map-guide-${region}.png`, style, ...neighbours],
+    [guidePng(region), style, ...neighbours],
     portrait ? '2:3' : '3:2',
     a,
   );
 } else if (mode === 'tile' && region && a) {
-  const dir = `docs/mockups/map-tiles/${region}`;
+  const dir = workDir(region);
   const out = rest[0] ?? `${dir}/tile-${a}.png`;
   await paint(
     TILE_PROMPT,

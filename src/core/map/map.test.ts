@@ -2,6 +2,7 @@
 // on the map, looking around, rumors, what a start knows, routing, depth and qi density, the travel
 // step on the day loop, riding at a jostled half, groups, and the v24 migration.
 import { describe, expect, it } from 'vitest';
+import { regionData } from '../../content/map/index.ts';
 import { LOOK_LI, SIGHT_CLOSED, SIGHT_OPEN } from '../../content/map/travel.ts';
 import { advance } from '../loop.ts';
 import { cultivate } from '../life.ts';
@@ -458,6 +459,18 @@ describe('the v29 save', () => {
     expect(loaded.state.mapgen[BW]!.tracts).toEqual(generateRegion(BW, 'any-other-world').tracts);
     expect(loaded.state.map!.course).toBeNull();
     expect(loaded.state.map!.encounters).toEqual([]);
+  });
+});
+
+describe('next door (A5)', () => {
+  it('names the regions and seas round the Border Wilds, and not itself', () => {
+    const near = regionData('qm-bianhuang')!.file.nextDoor!;
+    const names = near.map((n) => n.name);
+    expect(names).toContain('Jade Strait');
+    expect(names).toContain('The Medicine Ridges');
+    expect(near.map((n) => n.id)).not.toContain('qm-bianhuang');
+    // A region carries its edge to draw dotted; a sea only where its name sits.
+    for (const n of near) expect(!!n.outline).toBe(n.kind === 'region');
   });
 });
 

@@ -1,7 +1,8 @@
-// Draws the travel map (design § The world, The travel map) into a canvas: the sea and the land,
-// the relief and its painted marks, the dashed depth lines, the roads, the fog as drifting cloud
-// (thick over the unknown, a few small soft clouds over what you know), the trail you walked, the sites
-// as seals, rumors in their rings, the labels placed by priority, your course, your pins and you.
+// Draws the travel map (design § The world, The travel map) into a canvas: the painted land (A5.1,
+// ui/map/art.ts; plain land for a region not painted yet), the dashed depth lines, the fog (ui/map/
+// fog.ts), the regions and seas next door, the roads, the sites as seals, rumors in their rings, the
+// labels placed by priority, your course, your pins and you.
+import { regionData } from '../../content/map/index.ts';
 import { RUMOR_RING_LI } from '../../content/map/travel.ts';
 import { fieldFrom, heartBand, peopleLi, pullsIn, warped } from '../../core/map/depth.ts';
 import { known, sightAt } from '../../core/map/fog.ts';
@@ -9,7 +10,8 @@ import { type Multi, type Pt, ringCentroid } from '../../core/map/geometry.ts';
 import { band } from '../../core/map/depth.ts';
 import type { MapArea, MapPlace, RegionMap } from '../../core/map/region.ts';
 import type { MapLife } from '../../core/map/schema.ts';
-import { cloudTile, featuresOf, paintFeature, reliefOf, smallCloudTile } from './land.ts';
+import { drawPainted } from './art.ts';
+import { drawFog, fogOf } from './fog.ts';
 
 export interface View {
   x: number;
@@ -20,9 +22,6 @@ export interface View {
 
 export interface Frame {
   ctx: CanvasRenderingContext2D;
-  /** The fog's own canvases, the size of the map's. */
-  fog: CanvasRenderingContext2D;
-  mask: CanvasRenderingContext2D;
   W: number;
   H: number;
   dpr: number;
@@ -60,24 +59,40 @@ export const toWorld = (v: View, W: number, H: number, x: number, y: number): [n
   (y - H / 2) / v.k + v.y,
 ];
 
+/** How much the painted land is lifted under the fog: a gain on its colors (Jan's call in A5.1). */
+const LAND_GAIN = 1.5;
+
+/**
+ * The guide's terrain colors (tools/map-guide.ts), darkened: the plain land a region shows until
+ * it is painted (Jan's call in A5.1).
+ */
+const PLAIN: Record<string, string> = {
+  mountains: '#30323a',
+  karst: '#222a33',
+  hills: '#3a3122',
+  plains: '#3d3a29',
+  forest: '#14251c',
+  jungle: '#142a18',
+  marsh: '#182d30',
+  coast: '#45402f',
+  blight: '#322937',
+};
+
 // ---------------------------------------------------------------- caches
 
-const TILES: { big?: HTMLCanvasElement; small?: HTMLCanvasElement } = {};
-const PATTERNS = new WeakMap<
-  CanvasRenderingContext2D,
-  { big: CanvasPattern; small: CanvasPattern }
->();
-
-function patternsFor(ctx: CanvasRenderingContext2D) {
-  let p = PATTERNS.get(ctx);
+const PATHS = new WeakMap<object, Path2D>();
+/** A shape as a path in world coordinates, made once. */
+function worldPath(m: Multi): Path2D {
+  let p = PATHS.get(m);
   if (!p) {
-    TILES.big ??= cloudTile();
-    TILES.small ??= smallCloudTile();
-    p = {
-      big: ctx.createPattern(TILES.big, 'repeat')!,
-      small: ctx.createPattern(TILES.small, 'repeat')!,
-    };
-    PATTERNS.set(ctx, p);
+    const path = new Path2D();
+    for (const poly of m)
+      for (const r of poly) {
+        r.forEach(([x, y], i) => (i ? path.lineTo(x, y) : path.moveTo(x, y)));
+        path.closePath();
+      }
+    PATHS.set(m, path);
+    p = path;
   }
   return p;
 }
@@ -178,37 +193,60 @@ interface Label {
 /** Whether a place's mark is a minor one, a dot until you zoom in. */
 const minor = (p: MapPlace) => p.kind === 'site' && p.sub !== 'checkpoint' && p.sub !== 'ferry';
 
-export function drawMap(f: Frame, s: Scene): void {
+/**
+ * Draws the map. Returns true when the fog stood in from a moment ago (it is baked again at most
+ * every second and a half while you travel), so the caller draws again shortly.
+ */
+export function drawMap(f: Frame, s: Scene): boolean {
   const { ctx, W, H, dpr, view } = f;
   const { map, life } = s;
   const k = view.k;
   const at = (p: Pt) => toScreen(view, W, H, p);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const [vx0, vy0] = toWorld(view, W, H, 0, 0);
+  const [vx1, vy1] = toWorld(view, W, H, W, H);
+  const box = [vx0, vy0, vx1, vy1] as const;
+  /** Drawing in li from here: the view's transform on the context. */
+  const inWorld = () =>
+    ctx.setTransform(k * dpr, 0, 0, k * dpr, (W / 2 - view.x * k) * dpr, (H / 2 - view.y * k) * dpr);
+  const onScreen = () => ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  // The sea, and the land round the region.
+  // The sea, the land round the region, and the region as plain land by its terrains; then the
+  // painting over it where the region has one (A5.1), and the land lifted.
+  onScreen();
   ctx.fillStyle = '#05070a';
   ctx.fillRect(0, 0, W, H);
-  pathMulti(ctx, f, map.land);
-  ctx.fillStyle = '#14181d';
-  ctx.fill('evenodd');
-
-  // The region: relief, marks, depth lines and rivers of the roads, all clipped to its outline.
+  inWorld();
+  ctx.fillStyle = '#101317';
+  ctx.fill(worldPath(map.land), 'evenodd');
   ctx.save();
-  pathMulti(ctx, f, map.outline);
-  ctx.clip('evenodd');
-  const relief = reliefOf(map);
-  const [rx, ry] = at([relief.x0, relief.y0]);
-  ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(relief.canvas, rx, ry, relief.w * relief.res * k, relief.h * relief.res * k);
-  const [wx0, wy0] = toWorld(view, W, H, -200, -200);
-  const [wx1, wy1] = toWorld(view, W, H, W + 200, H + 200);
-  for (const feat of featuresOf(map)) {
-    if (feat.x < wx0 || feat.x > wx1 || feat.y < wy0 || feat.y > wy1) continue;
-    const size = feat.size * k;
-    if (size < 5) continue;
-    const [x, y] = at([feat.x, feat.y]);
-    paintFeature(ctx, feat, x, y, Math.min(size, 220), Math.min(1, (size - 5) / 10));
+  ctx.clip(worldPath(map.outline), 'evenodd');
+  ctx.fillStyle = PLAIN[map.terrain] ?? '#1a1d22';
+  ctx.fill(worldPath(map.outline), 'evenodd');
+  for (const tracts of [true, false])
+    for (const a of map.areas)
+      if ((a.kind === 'tract') === tracts && PLAIN[a.terrain]) {
+        ctx.fillStyle = PLAIN[a.terrain]!;
+        ctx.fill(worldPath(a.outline), 'evenodd');
+      }
+  ctx.restore();
+  if (!drawPainted(ctx, box)) {
+    ctx.strokeStyle = 'rgba(127,199,217,0.3)';
+    ctx.lineWidth = 1.2 / k;
+    ctx.stroke(worldPath(map.land));
   }
+  // The land lifted: the canvas added onto itself, so its colors scale and black stays black.
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha = LAND_GAIN - 1;
+  ctx.drawImage(ctx.canvas, 0, 0);
+  ctx.restore();
+
+  // The dashed depth lines, under the fog: you see how deep a land runs only as far as you know it.
+  ctx.save();
+  inWorld();
+  ctx.clip(worldPath(map.outline), 'evenodd');
+  onScreen();
   ctx.lineCap = 'round';
   for (const { level, segs } of depthLines(map)) {
     const i = Math.min(6, level - 1);
@@ -227,23 +265,44 @@ export function drawMap(f: Frame, s: Scene): void {
   ctx.setLineDash([]);
   ctx.restore();
 
-  // The coast, with a soft wash of surf.
-  pathMulti(ctx, f, map.land);
-  ctx.lineJoin = 'round';
-  for (const [w, a] of [
-    [Math.max(6, 900 * k), 0.035],
-    [Math.max(3, 400 * k), 0.06],
-  ] as const) {
-    ctx.strokeStyle = `rgba(127,199,217,${a})`;
-    ctx.lineWidth = w;
-    ctx.stroke();
+  // ---- the fog, from what you know (ui/map/fog.ts)
+  let stale = false;
+  if (!s.noFog) {
+    const got = fogOf(map, life);
+    stale = got.stale;
+    inWorld();
+    drawFog(ctx, got.fog, box);
+    onScreen();
   }
-  ctx.strokeStyle = 'rgba(127,199,217,0.3)';
-  ctx.lineWidth = 1.2;
-  ctx.stroke();
 
-  // ---- the fog: a mask of what you know cuts thick cloud; small clouds lie over the known.
-  if (!s.noFog) drawFog(f, s);
+  // The regions and seas next door, faint through the dark, a region's edge dotted (A5).
+  for (const n of regionData(map.id)?.file.nextDoor ?? []) {
+    if (n.outline) {
+      inWorld();
+      ctx.setLineDash([2 / k, 5 / k]);
+      ctx.strokeStyle = 'rgba(214,171,76,0.22)';
+      ctx.lineWidth = 1 / k;
+      ctx.stroke(worldPath(n.outline as Multi));
+      ctx.setLineDash([]);
+      onScreen();
+    }
+    const [sx, sy] = at(n.at);
+    if (sx < -200 || sy < -50 || sx > W + 200 || sy > H + 50) continue;
+    const sea = n.kind === 'sea';
+    ctx.save();
+    ctx.globalAlpha = sea ? 0.55 : 0.5;
+    ctx.textAlign = 'center';
+    ctx.font = "italic 500 18px 'Cormorant Garamond', Georgia, serif";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(4,5,7,0.8)';
+    ctx.strokeText(n.name, sx, sy);
+    ctx.fillStyle = sea ? 'rgba(150,200,215,0.85)' : 'rgba(233,229,218,0.8)';
+    ctx.fillText(n.name, sx, sy);
+    ctx.font = "15px 'Ma Shan Zheng', KaiTi, serif";
+    ctx.fillStyle = sea ? 'rgba(127,199,217,0.75)' : 'rgba(214,171,76,0.8)';
+    ctx.fillText(n.hanzi, sx, sy + 19);
+    ctx.restore();
+  }
 
   // ---- over the fog
   const labels: Label[] = [];
@@ -477,120 +536,7 @@ export function drawMap(f: Frame, s: Scene): void {
     ctx.lineWidth = 1.2;
     ctx.stroke();
   }
-}
-
-function drawFog(f: Frame, s: Scene) {
-  const { fog, mask, W, H, dpr, view } = f;
-  const { map, life } = s;
-  const k = view.k;
-  const at = (p: Pt) => toScreen(view, W, H, p);
-  // The mask: what you know, as how much fog it lifts.
-  mask.setTransform(dpr, 0, 0, dpr, 0, 0);
-  mask.globalCompositeOperation = 'source-over';
-  mask.clearRect(0, 0, W, H);
-  const hole = (m: Multi, a: number) => {
-    pathMulti(mask, f, m);
-    mask.fillStyle = `rgba(0,0,0,${a})`;
-    mask.fill('evenodd');
-    mask.lineJoin = 'round';
-    for (const [w, al] of [
-      [16, 0.25 * a],
-      [8, 0.35 * a],
-    ] as const) {
-      mask.lineWidth = w;
-      mask.strokeStyle = `rgba(0,0,0,${al})`;
-      mask.stroke();
-    }
-  };
-  if (known(life, map.id) !== 'unknown') hole(map.outline, 0.3);
-  for (const a of map.areas) {
-    const st = known(life, a.id);
-    if (st === 'unknown' || st === 'rumored') continue;
-    if (a.kind === 'tract') {
-      mask.save();
-      pathMulti(mask, f, map.outline);
-      mask.clip('evenodd');
-      hole(a.outline, st === 'seen' ? 1 : 0.6);
-      mask.restore();
-    } else hole(a.outline, st === 'seen' ? 1 : 0.85);
-  }
-  if (life.trail.length > 1) {
-    mask.lineCap = 'round';
-    mask.lineJoin = 'round';
-    pathLine(mask, f, life.trail);
-    const r = Math.max(3, 600 * k);
-    for (const [w, a] of [
-      [r * 2.4, 0.3],
-      [r * 2.1, 0.5],
-      [r * 1.8, 1],
-    ] as const) {
-      mask.lineWidth = w;
-      mask.strokeStyle = `rgba(0,0,0,${a})`;
-      mask.stroke();
-    }
-  }
-  for (const q of map.places)
-    if (known(life, q.id) === 'seen') {
-      const [x, y] = at([q.x, q.y]);
-      mask.beginPath();
-      mask.arc(x, y, Math.max(9, 400 * k), 0, 7);
-      mask.fillStyle = 'rgba(0,0,0,0.9)';
-      mask.fill();
-    }
-  {
-    const [x, y] = at(life.at);
-    const r = Math.max(5, sightAt(map, life.at) * k);
-    const g = mask.createRadialGradient(x, y, r * 0.5, x, y, r);
-    g.addColorStop(0, 'rgba(0,0,0,1)');
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    mask.fillStyle = g;
-    mask.beginPath();
-    mask.arc(x, y, r, 0, 7);
-    mask.fill();
-  }
-  // The thick cloud over the unknown, pinned to the world. Each layer of a tile is laid at its
-  // own size and slant, so zoomed out their sum never lines up into a visible grid.
-  const pats = patternsFor(fog);
-  const pinned = (pat: CanvasPattern, liPerPx: number, deg: number) =>
-    pat.setTransform(
-      new DOMMatrix()
-        .translate(W / 2 - view.x * k, H / 2 - view.y * k)
-        .rotate(deg)
-        .scale(liPerPx * k),
-    );
-  fog.setTransform(dpr, 0, 0, dpr, 0, 0);
-  fog.globalCompositeOperation = 'source-over';
-  fog.clearRect(0, 0, W, H);
-  fog.fillStyle = 'rgba(4,6,9,0.84)';
-  fog.fillRect(0, 0, W, H);
-  for (const [scale, deg] of [
-    [1, 0],
-    [0.62, 37],
-    [1.6, -61],
-  ] as const) {
-    pinned(pats.big, 100 * scale, deg);
-    fog.fillStyle = pats.big;
-    fog.fillRect(0, 0, W, H);
-  }
-  fog.setTransform(1, 0, 0, 1, 0, 0);
-  fog.globalCompositeOperation = 'destination-out';
-  fog.drawImage(mask.canvas, 0, 0);
-  // Over what you know, small soft clouds far below you, slipped under the fog so they show
-  // only where it has lifted; two slanted layers, for the same reason.
-  fog.setTransform(dpr, 0, 0, dpr, 0, 0);
-  fog.globalCompositeOperation = 'destination-over';
-  for (const [li, deg] of [
-    [45, 0],
-    [62, 53],
-  ] as const) {
-    pinned(pats.small, li, deg);
-    fog.fillStyle = pats.small;
-    fog.fillRect(0, 0, W, H);
-  }
-  fog.globalCompositeOperation = 'source-over';
-  f.ctx.setTransform(1, 0, 0, 1, 0, 0);
-  f.ctx.drawImage(fog.canvas, 0, 0);
-  f.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return stale;
 }
 
 /** A land whose own heart stands a whole realm above you. */

@@ -8,8 +8,8 @@ One chat per region, at the guide's size. Paint the Border Wilds first.
 
 | Region | Attach, in this order | Size | Save as |
 |---|---|---|---|
-| The Border Wilds | `map-guide-qm-bianhuang.png`, `art/concepts/map-1.webp` | 1024x1536 | `docs/mockups/map-painting-qm-bianhuang.png` |
-| The Medicine Ridges | `map-guide-qm-yaoling.png`, `art/concepts/map-1.webp`, the Border Wilds painting | 1536x1024 | `docs/mockups/map-painting-qm-yaoling.png` |
+| The Border Wilds | `art/map/qm-bianhuang/guide.png`, `art/concepts/map-1.webp` | 1024x1536 | `art/map/qm-bianhuang/painting.png` |
+| The Medicine Ridges | `art/map/qm-yaoling/guide.png`, `art/concepts/map-1.webp`, the Border Wilds painting | 1536x1024 | `art/map/qm-yaoling/painting.png` |
 
 ```
 Repaint the first attached image, a flat color layout guide, as a finished painted fantasy world map, night and moonlit, with the readable regions and rich painted terrain of the second attached image. Same framing and size as the guide. Keep the guide's layout EXACTLY: the coastlines, the borders between areas, the ridges and the rivers stay in the same place and the same shape.
@@ -37,11 +37,11 @@ The third attached image is the painting of the land next door, the Border Wilds
 
 The region painting is sharp from far off and soft up close. For the close zoom each region is cut into overlapping tiles, painted again at about 25 li a pixel, three times sharper, and the map fades from the region painting to the tiles as you zoom in. The wilds' terrain is the same in every world now (the region's land seed), so a painting fits every save.
 
-The Border Wilds' 8 tiles are in `docs/mockups/map-tiles/qm-bianhuang/`: for each tile id (`0-0` to `1-3`, column then row) a `tile-<id>-guide.png` and a `tile-<id>-ref.png`, the region painting cut to that tile. One chat per tile, 1536x1024 landscape.
+The Border Wilds' 8 tiles are in `art/map/qm-bianhuang/` (moved there in A5.1): for each tile id (`0-0` to `1-3`, column then row) a `tile-<id>-guide.png` and a `tile-<id>-ref.png`, the region painting cut to that tile. One chat per tile, 1536x1024 landscape.
 
 | Attach, in this order | Save as | Then run |
 |---|---|---|
-| `tile-<id>-ref.png`, `tile-<id>-guide.png`, `art/concepts/map-1.webp` | `docs/mockups/map-tiles/qm-bianhuang/tile-<id>.png` | `npx tsx tools/map-fit.ts qm-bianhuang --tile <id>` |
+| `tile-<id>-ref.png`, `tile-<id>-guide.png`, `art/concepts/map-1.webp` | `art/map/qm-bianhuang/tile-<id>.png` | `npx tsx tools/map-fit.ts qm-bianhuang --tile <id>` |
 
 ```
 The first attached image is a blurry close-up of a painted fantasy world map. Repaint it sharp and finely detailed at the same size, as if seen through a much better lens: keep EVERYTHING where it is. Every coastline, every edge between terrains, every field of stone pillars, hill, ridge, forest, lake, marsh and patch of mist stays in the same place, shape, size and color. Add only fine detail: individual stone pillars and pines, rock faces, grass and scree, ripples on water, wisps of mist.

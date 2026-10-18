@@ -1,8 +1,10 @@
-// The Map 舆图 (design § The world, The travel map): the Border Wilds under drifting cloud, a click
-// to set a course and the clock carrying you along it, a right-click for choices, and the bar under
-// the map with the road wheel, its routine and the ways of going on the left and the course card on
-// the right. The line under the date says where you stand and how deep. What the road brings shows
-// as round seals on the map and in the course card's Ahead list, the card itself under it (P3.7).
+// The Map 舆图 (design § The world, The travel map): the painted Border Wilds under the fog, full
+// bleed (A5.1), a click to set a course and the clock carrying you along it, a right-click for
+// choices. One column on the left (A5.1, take P of docs/mockups/map-layout-study.html) says where you
+// stand and how deep, and shows one thing at a time under Routine's tabs: Journey (the road wheel,
+// its routine, the ways of going, the stance and the course card with what's ahead) or Card, the
+// card the road brought, which shows only while one waits or is opened and opens itself then (P3.7).
+// What the road brings also shows as round seals on the map.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { BRANCHES } from '../content/hours.ts';
 import { realm as realmInfo, stageName, type RealmId } from '../content/realms.ts';
@@ -47,7 +49,9 @@ import {
 import type { GameState } from '../core/state.ts';
 import { goToWheel } from './nav.ts';
 import { ROAD_WORD } from './roadWords.ts';
+import { onArtLoad } from './map/art.ts';
 import { drawMap, isDeadly, pickAt, toScreen, toWorld, type View } from './map/draw.ts';
+import { fogOf } from './map/fog.ts';
 import { EncounterCard } from './EncounterCard.tsx';
 import { sealOf } from './encounterSeals.ts';
 import { PlaceScreen } from './PlaceScreen.tsx';
@@ -55,6 +59,16 @@ import { canvasDensity, pointIn, stageFactor, useStage } from './stage.ts';
 import { useGame } from './store.ts';
 
 const TERRAIN_WORDS: Record<string, string> = { sea: 'at sea' };
+
+/** The closest zoom, where the upscaled tiles run out (A5). */
+const MAX_K = 0.16;
+/** The farthest zoom fits what you have charted with this much room round it (A5, Jan's call). */
+const ROOM = 1.15;
+/**
+ * The part of the map the column and the screen's top leave open, in stage pixels from the map's
+ * edges (left, top, right, bottom): what you've charted fits there, and "You" centres you in it.
+ */
+const OPEN = [500, 80, 90, 30] as const;
 
 interface MenuItem {
   t: string;
@@ -110,12 +124,11 @@ function MapView({
   const mapAct = useGame((s) => s.mapAct);
   const stage = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const layers = useRef<{
-    fog: CanvasRenderingContext2D;
-    mask: CanvasRenderingContext2D;
-  } | null>(null);
   const [size, setSize] = useState({ W: 0, H: 0, dpr: 1 });
-  const [view, setView] = useState<View>(() => ({ x: life.at[0], y: life.at[1], k: 0.012 }));
+  const [view, setView] = useState<View | null>(null);
+  // Drawn again when a picture arrives or the fog asks for it.
+  const [drawn, redraw] = useState(0);
+  const [tab, setTab] = useState<'journey' | 'card'>('journey');
   const [hover, setHover] = useState<MapPlace | MapArea | null>(null);
   const [tip, setTip] = useState<{ x: number; y: number } | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -137,7 +150,7 @@ function MapView({
     return why;
   };
 
-  // Size the canvases to the map's panel, in stage pixels, drawn at the screen's density.
+  // Size the canvas to the screen, in stage pixels, drawn at the screen's density.
   const zoom = useStage((s) => s.factor);
   useLayoutEffect(() => {
     const el = stage.current;
@@ -146,15 +159,8 @@ function MapView({
       const dpr = canvasDensity();
       const W = Math.max(1, el.clientWidth);
       const H = Math.max(1, el.clientHeight);
-      const mk = () => {
-        const c = document.createElement('canvas');
-        return c.getContext('2d')!;
-      };
-      layers.current ??= { fog: mk(), mask: mk() };
-      for (const c of [canvas.current!, layers.current.fog.canvas, layers.current.mask.canvas]) {
-        c.width = Math.round(W * dpr);
-        c.height = Math.round(H * dpr);
-      }
+      canvas.current!.width = Math.round(W * dpr);
+      canvas.current!.height = Math.round(H * dpr);
       setSize({ W, H, dpr });
     };
     fit();
@@ -162,44 +168,62 @@ function MapView({
     ro.observe(el);
     return () => ro.disconnect();
   }, [zoom]);
+  useEffect(() => onArtLoad(() => redraw((n) => n + 1)), []);
 
-  // Draw on every change of the life, the view or the hover.
+  // The zoom stops where the tiles run out and at what you've charted (A5): never past it.
+  const charted = fogOf(map, life).fog.charted;
+  const openW = Math.max(200, size.W - OPEN[0] - OPEN[2]);
+  const openH = Math.max(200, size.H - OPEN[1] - OPEN[3]);
+  const minK = Math.min(
+    MAX_K,
+    openW / ((charted[2] - charted[0]) * ROOM),
+    openH / ((charted[3] - charted[1]) * ROOM),
+  );
+  const clampK = (k: number) => Math.max(minK, Math.min(MAX_K, k));
+  /** The view that puts a spot at the middle of the open part of the map. */
+  const centred = (p: Pt, k: number): View => ({
+    x: p[0] - (OPEN[0] + openW / 2 - size.W / 2) / k,
+    y: p[1] - (OPEN[1] + openH / 2 - size.H / 2) / k,
+    k,
+  });
+  const fitCharted = () =>
+    setView(centred([(charted[0] + charted[2]) / 2, (charted[1] + charted[3]) / 2], minK));
+  const v: View = view ?? centred(life.at, clampK(0.03));
+
+  // Draw on every change of the life, the view or the hover; again soon when the fog stood in.
   useEffect(() => {
     const c = canvas.current;
-    const L = layers.current;
-    if (!c || !L || !size.W) return;
-    const id = requestAnimationFrame(() =>
-      drawMap(
-        {
-          ctx: c.getContext('2d')!,
-          fog: L.fog,
-          mask: L.mask,
-          W: size.W,
-          H: size.H,
-          dpr: size.dpr,
-          view,
-        },
+    if (!c || !size.W) return;
+    let again = 0;
+    const id = requestAnimationFrame(() => {
+      const stale = drawMap(
+        { ctx: c.getContext('2d')!, W: size.W, H: size.H, dpr: size.dpr, view: v },
         { map, life, yourBand: band0, hover: hover?.id ?? null },
-      ),
-    );
-    return () => cancelAnimationFrame(id);
-  }, [map, life, view, hover, size, band0]);
+      );
+      if (stale) again = window.setTimeout(() => redraw((n) => n + 1), 1600);
+    });
+    return () => {
+      cancelAnimationFrame(id);
+      clearTimeout(again);
+    };
+  }, [map, life, v.x, v.y, v.k, hover, size, band0, drawn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scene = { map, life, yourBand: band0, hover: hover?.id ?? null };
   const pickAtSpot = (sx: number, sy: number) =>
-    pickAt({ view, W: size.W, H: size.H }, scene, sx, sy);
+    pickAt({ view: v, W: size.W, H: size.H }, scene, sx, sy);
   const local = (e: { clientX: number; clientY: number }) => {
     const p = pointIn(e, canvas.current!);
     return [p.x, p.y] as const;
   };
 
   const zoomAt = (sx: number, sy: number, f: number) =>
-    setView((v) => {
-      const before = toWorld(v, size.W, size.H, sx, sy);
-      const k = Math.max(0.004, Math.min(1.2, v.k * f));
-      const nv = { ...v, k };
+    setView((cur) => {
+      const was = cur ?? v;
+      const before = toWorld(was, size.W, size.H, sx, sy);
+      const k = clampK(was.k * f);
+      const nv = { ...was, k };
       const after = toWorld(nv, size.W, size.H, sx, sy);
-      return { x: v.x + before[0] - after[0], y: v.y + before[1] - after[1], k };
+      return { x: was.x + before[0] - after[0], y: was.y + before[1] - after[1], k };
     });
   useEffect(() => {
     const c = canvas.current;
@@ -212,15 +236,6 @@ function MapView({
     c.addEventListener('wheel', onWheel, { passive: false });
     return () => c.removeEventListener('wheel', onWheel);
   });
-
-  const fitRegion = () => {
-    const [x0, y0, x1, y1] = map.bbox;
-    setView({
-      x: (x0 + x1) / 2,
-      y: (y0 + y1) / 2,
-      k: Math.min(size.W / ((x1 - x0) * 1.08), size.H / ((y1 - y0) * 1.06)),
-    });
-  };
 
   // ---------------------------------------------------------------- choices
 
@@ -240,7 +255,7 @@ function MapView({
         : life.at;
 
   const menuFor = (sx: number, sy: number): Menu => {
-    const w = toWorld(view, size.W, size.H, sx, sy);
+    const w = toWorld(v, size.W, size.H, sx, sy);
     const q = pickAtSpot(sx, sy);
     const later = (t: string, s: string, phase: string): MenuItem => ({
       t,
@@ -266,7 +281,7 @@ function MapView({
       };
     }
     const pinI = life.pins.findIndex((p) => {
-      const [x, y] = toScreen(view, size.W, size.H, p);
+      const [x, y] = toScreen(v, size.W, size.H, p);
       return Math.hypot(x - sx, y - sy - 8) < 12;
     });
     if (pinI >= 0)
@@ -279,7 +294,7 @@ function MapView({
           { t: 'Remove the pin', run: () => act((s) => unpin(s, pinI)) },
         ],
       };
-    const [ux, uy] = toScreen(view, size.W, size.H, life.at);
+    const [ux, uy] = toScreen(v, size.W, size.H, life.at);
     // A place under the cursor wins over your own mark beside it, so a place you stand near but
     // not at still offers going there.
     const here =
@@ -396,7 +411,7 @@ function MapView({
 
   const onDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
-    drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false };
+    drag.current = { x: e.clientX, y: e.clientY, vx: v.x, vy: v.y, moved: false };
     (e.target as Element).setPointerCapture(e.pointerId);
     setMenu(null);
   };
@@ -407,7 +422,7 @@ function MapView({
       const dy = (e.clientY - d.y) / stageFactor();
       // A tap's slack is in window pixels, so it feels the same at every window size.
       if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4) d.moved = true;
-      if (d.moved) setView((v) => ({ ...v, x: d.vx - dx / v.k, y: d.vy - dy / v.k }));
+      if (d.moved) setView({ ...v, x: d.vx - dx / v.k, y: d.vy - dy / v.k });
       return;
     }
     const [sx, sy] = local(e);
@@ -423,7 +438,7 @@ function MapView({
     const q = pickAtSpot(sx, sy);
     if (q && 'x' in q) goTo(placeFor(q), q.id);
     else if (q) goTo(placeFor(q), null);
-    else goTo(toWorld(view, size.W, size.H, sx, sy), null);
+    else goTo(toWorld(v, size.W, size.H, sx, sy), null);
   };
   const onContext = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -441,6 +456,27 @@ function MapView({
   );
   const bd = band(b);
   const above = bd && pullsIn(b, band0);
+  // What the road brought: the waiting first, then the sensed nearest first. The card shown is the
+  // one opened, else the first waiting; a card that starts waiting opens the Card tab.
+  const ahead = [...life.encounters].sort(
+    (a, z) =>
+      (a.state === 'waiting' ? -1 : 0) - (z.state === 'waiting' ? -1 : 0) ||
+      Math.hypot(a.at[0] - life.at[0], a.at[1] - life.at[1]) -
+        Math.hypot(z.at[0] - life.at[0], z.at[1] - life.at[1]),
+  );
+  const shown =
+    ahead.find((e) => e.id === openEnc) ?? ahead.find((e) => e.state === 'waiting') ?? null;
+  const waitingId = ahead.find((e) => e.state === 'waiting')?.id ?? null;
+  const [lastWaiting, setLastWaiting] = useState(waitingId);
+  if (lastWaiting !== waitingId) {
+    setLastWaiting(waitingId);
+    if (waitingId) setTab('card');
+  }
+  const tabNow = shown && tab === 'card' ? 'card' : 'journey';
+  const openCard = (id: string) => {
+    setOpenEnc(id);
+    setTab('card');
+  };
   // What the road brings and the postings you hold, as round seals over the map.
   const marks: { id: string; at: Pt; template: string; how?: Encounter['how']; board?: boolean }[] =
     [
@@ -463,26 +499,8 @@ function MapView({
           onPointerLeave={() => setTip(null)}
           onContextMenu={onContext}
         />
-        <div className="map-float map-where panel">
-          <span className="map-date">{worldWhen(game.calendar.day)}</span>
-          <span className="map-here">
-            <b>{hereWords(game)}</b> ·{' '}
-            {TERRAIN_WORDS[terrainAt(map, life.at)] ?? terrainAt(map, life.at)} · {QI_NAMES[qd]} qi
-            ({qd}) · you see {sightAt(map, life.at)} li
-          </span>
-          <span className="map-depth">
-            <span className="map-pips" title="How deep into the wilds">
-              {pips}
-            </span>{' '}
-            {d.name}:{' '}
-            {bd ? `beasts of ${bd.name} · ${bd.finds} finds` : 'nothing past mortal beasts'}
-          </span>
-          {above && (
-            <span className="map-above">a realm above you: what lives here finds you first</span>
-          )}
-        </div>
         {marks.map((e) => {
-          const [x, y] = toScreen(view, size.W, size.H, e.at);
+          const [x, y] = toScreen(v, size.W, size.H, e.at);
           if (x < -40 || y < -40 || x > size.W + 40 || y > size.H + 40) return null;
           const t = encounterTemplate(e.template);
           const danger = !e.board && e.how !== 'seen';
@@ -494,36 +512,39 @@ function MapView({
               style={{ left: x, top: y }}
               title={e.board ? `Bounty: ${t.title}` : t.title}
               onPointerDown={(ev) => ev.stopPropagation()}
-              onClick={() => !e.board && setOpenEnc(e.id)}
+              onClick={() => !e.board && openCard(e.id)}
             >
               <span className="hanzi">{e.board ? '榜' : sealOf(t)}</span>
             </button>
           );
         })}
-        <div className="map-float map-zoom panel">
+        <div className="map-float map-zoom">
           <button
             type="button"
             aria-label="Zoom in"
-            onClick={() => zoomAt(size.W / 2, size.H / 2, 1.6)}
+            onClick={() => zoomAt(OPEN[0] + openW / 2, OPEN[1] + openH / 2, 1.6)}
           >
             +
           </button>
           <button
             type="button"
             aria-label="Zoom out"
-            onClick={() => zoomAt(size.W / 2, size.H / 2, 1 / 1.6)}
+            onClick={() => zoomAt(OPEN[0] + openW / 2, OPEN[1] + openH / 2, 1 / 1.6)}
           >
             −
-          </button>
-          <button type="button" className="is-word" onClick={fitRegion}>
-            Region
           </button>
           <button
             type="button"
             className="is-word"
-            onClick={() =>
-              setView((v) => ({ x: life.at[0], y: life.at[1], k: Math.max(v.k, 0.03) }))
-            }
+            title="All you have charted"
+            onClick={fitCharted}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            className="is-word"
+            onClick={() => setView(centred(life.at, clampK(Math.max(v.k, 0.03))))}
           >
             You
           </button>
@@ -606,19 +627,69 @@ function MapView({
           </div>
         )}
       </div>
-      <div className="map-bar">
-        <RoadPanel game={game} life={life} act={act} />
-        <CourseCard
-          game={game}
-          map={map}
-          life={life}
-          act={act}
-          say={say}
-          open={openEnc}
-          onOpen={setOpenEnc}
-          onLeave={() => setLeaving(true)}
-        />
-      </div>
+      <div className="map-shade" aria-hidden="true" />
+      <aside className="map-col" aria-label="Where you stand and the road">
+        <div className="map-where">
+          <span className="map-date">{worldWhen(game.calendar.day)}</span>
+          <span className="map-here">
+            <b>{hereWords(game)}</b> ·{' '}
+            {TERRAIN_WORDS[terrainAt(map, life.at)] ?? terrainAt(map, life.at)} · {QI_NAMES[qd]} qi
+            ({qd}) · you see {sightAt(map, life.at)} li
+          </span>
+          <span className="map-depth">
+            <span className="map-pips" title="How deep into the wilds">
+              {pips}
+            </span>{' '}
+            {d.name}:{' '}
+            {bd ? `beasts of ${bd.name} · ${bd.finds} finds` : 'nothing past mortal beasts'}
+          </span>
+          {above && (
+            <span className="map-above">a realm above you: what lives here finds you first</span>
+          )}
+        </div>
+        <div className="seg map-tabs" role="tablist" aria-label="What the column shows">
+          <button
+            type="button"
+            role="tab"
+            aria-pressed={tabNow === 'journey'}
+            aria-selected={tabNow === 'journey'}
+            onClick={() => setTab('journey')}
+          >
+            Journey
+          </button>
+          {shown && (
+            <button
+              type="button"
+              role="tab"
+              aria-pressed={tabNow === 'card'}
+              aria-selected={tabNow === 'card'}
+              onClick={() => setTab('card')}
+            >
+              Card
+              {shown.state === 'waiting' && (
+                <span className="menu-mark" role="img" aria-label="a card waits" />
+              )}
+            </button>
+          )}
+        </div>
+        {tabNow === 'card' && shown ? (
+          <EncounterCard game={game} life={life} enc={shown} act={act} say={say} />
+        ) : (
+          <>
+            <RoadPanel game={game} life={life} act={act} />
+            <CourseCard
+              game={game}
+              map={map}
+              life={life}
+              act={act}
+              ahead={ahead}
+              shown={shown?.id ?? null}
+              onOpen={openCard}
+              onLeave={() => setLeaving(true)}
+            />
+          </>
+        )}
+      </aside>
     </div>
   );
 }
@@ -693,7 +764,7 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
     return [r * Math.cos(a), r * Math.sin(a)];
   };
   return (
-    <section className="map-road panel">
+    <section className="map-road">
       <div className="map-wheel-row">
         <svg
           viewBox="-64 -64 128 128"
@@ -839,8 +910,8 @@ function CourseCard({
   map,
   life,
   act,
-  say,
-  open,
+  ahead,
+  shown,
   onOpen,
   onLeave,
 }: {
@@ -848,9 +919,10 @@ function CourseCard({
   map: RegionMap;
   life: MapLife;
   act: Act;
-  say: (t: string) => void;
-  open: string | null;
-  onOpen: (id: string | null) => void;
+  /** What the road brought, the waiting first; a row opens its card in the Card tab. */
+  ahead: Encounter[];
+  shown: string | null;
+  onOpen: (id: string) => void;
   onLeave: () => void;
 }) {
   const course = life.course;
@@ -859,15 +931,6 @@ function CourseCard({
     const s = realSeconds(days);
     return s < 90 ? `${Math.max(1, Math.round(s))} s` : `${Math.round(s / 60)} real minutes`;
   };
-  // What the road brought: the waiting first, then the sensed nearest first.
-  const ahead = [...life.encounters].sort(
-    (a, b) =>
-      (a.state === 'waiting' ? -1 : 0) - (b.state === 'waiting' ? -1 : 0) ||
-      Math.hypot(a.at[0] - life.at[0], a.at[1] - life.at[1]) -
-        Math.hypot(b.at[0] - life.at[0], b.at[1] - life.at[1]),
-  );
-  const shown =
-    ahead.find((e) => e.id === open) ?? ahead.find((e) => e.state === 'waiting') ?? null;
   const aheadList = ahead.length > 0 && (
     <>
       <div className="map-label">Ahead</div>
@@ -878,18 +941,17 @@ function CourseCard({
             e={e}
             life={life}
             game={game}
-            open={shown?.id === e.id}
-            onOpen={() => onOpen(shown?.id === e.id ? null : e.id)}
+            open={shown === e.id}
+            onOpen={() => onOpen(e.id)}
           />
         ))}
       </div>
-      {shown && <EncounterCard game={game} life={life} enc={shown} act={act} say={say} />}
     </>
   );
   if (!course) {
     const counts = Object.values(life.know);
     return (
-      <section className="map-card panel">
+      <section className="map-card">
         <span className="map-label">Where to</span>
         <p>
           Click anywhere on the map to set a course, or a place you know. Right-click for what you
@@ -936,7 +998,7 @@ function CourseCard({
   const halted = waiting(life).length > 0;
   const liLeft = Math.round(liLeftExact / 100) * 100;
   return (
-    <section className="map-card panel">
+    <section className="map-card">
       <span className="map-label">{g ? 'Travelling with a group' : 'On the road'}</span>
       <h3>
         {g ? g.name : `To ${dest}`}

@@ -7,9 +7,10 @@
 // one not built yet draws from a draft json (docs/mockups/medicine-ridges-draft.json is the shape).
 // With --tiles it cuts the region into overlapping detail tiles at --li li a pixel, for the map's
 // close zoom: each a guide and a reference, the region's own fitted painting cut to the tile, so
-// GPT paints the same land closer (docs/mockups/map-tiles/<region>/).
+// GPT paints the same land closer (art/map/<region>/, tools/map-paths.ts).
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import sharp from 'sharp';
+import { guideJson, paintingPng, tilesJson, workDir } from './map-paths.ts';
 import atlas from '../src/content/generated/atlas.json' with { type: 'json' };
 import { REGIONS } from '../src/content/map/index.ts';
 import { generateRegion, regionMap } from '../src/core/map/region.ts';
@@ -229,7 +230,8 @@ if (!tiles) {
     x0: (box[0] + box[2]) / 2 - W / 2 / k,
     y0: (box[1] + box[3]) / 2 - H / 2 / k,
   };
-  const out = `docs/mockups/map-guide-${target}`;
+  mkdirSync(workDir(target), { recursive: true });
+  const out = `${workDir(target)}/guide`;
   await sharp(Buffer.from(render(f)))
     .png()
     .toFile(`${out}.png`);
@@ -239,12 +241,12 @@ if (!tiles) {
   // Detail tiles: landscape 1536×1024 at liPerPx, overlapping a tenth, over the region's box; a
   // tile that misses the region is skipped. The reference is the region's painting through its fit.
   const region = JSON.parse(
-    readFileSync(`docs/mockups/map-guide-${target}.json`, 'utf8'),
+    readFileSync(guideJson(target), 'utf8'),
   ) as Frame & {
     fit?: number[];
   };
   const fit = region.fit ?? [1, 0, 0, 1, 0, 0];
-  const paint = await sharp(`docs/mockups/map-painting-${target}.png`)
+  const paint = await sharp(paintingPng(target))
     .removeAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
@@ -262,7 +264,7 @@ if (!tiles) {
   // Centre the grid on the region's box.
   const gx0 = (box[0] + box[2]) / 2 - ((cols - 1) * stepX + W / k) / 2;
   const gy0 = (box[1] + box[3]) / 2 - ((rows - 1) * stepY + H / k) / 2;
-  const dir = `docs/mockups/map-tiles/${target}`;
+  const dir = workDir(target);
   mkdirSync(dir, { recursive: true });
   const list: (Frame & { id: string })[] = [];
   for (let r = 0; r < rows; r++)
@@ -306,7 +308,7 @@ if (!tiles) {
       list.push({ id, ...f });
     }
   writeFileSync(
-    `${dir}/tiles.json`,
+    tilesJson(target),
     JSON.stringify({ region: target, liPerPx, tiles: list }, null, 1) + '\n',
   );
   console.log(`wrote ${list.length} tiles of ${cols}×${rows} to ${dir} (${liPerPx} li a pixel)`);

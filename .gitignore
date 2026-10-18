@@ -12,8 +12,8 @@ art/source/
 
 # Upscaler models (A5), downloaded, not committed
 tools/models/
-# A5 map study: upscaled tiles and their chunks are rebuilt by tools, not committed
-docs/mockups/map-tiles/*/chunks/
-docs/mockups/map-tiles/*/*-x4.png
-docs/mockups/map-tiles/*/tile-*-ref.png
+# The travel map's working files (A5, tools/map-paths.ts): the upscaled tiles and the references are
+# rebuilt by the tools, not committed. What ships, public/map/<region>/, is committed.
+art/map/*/tile-*-x4.png
+art/map/*/tile-*-ref.png
 docs/mockups/map-takes/*.log

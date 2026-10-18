@@ -26,6 +26,13 @@ export const KIND_BUDGET_KB: Record<ArtKind, number> = {
 /** A screen's art stays under this, shared assets counted once. */
 export const SCREEN_BUDGET_KB = 800;
 
+/**
+ * A travel map region's art (A5.1): its painting and its tiles' chunk pyramids, made by the map
+ * tools (docs/art-pipeline.md § The travel map) and shipped in public/map/<region>/, loaded a chunk
+ * at a time as you zoom, so it has a budget of its own rather than the screen's.
+ */
+export const MAP_BUDGET_MB = 25;
+
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 export const assetSchema = z
@@ -55,7 +62,17 @@ export const assetSchema = z
   .strict();
 export type ArtAsset = z.infer<typeof assetSchema>;
 
-export const manifestSchema = z.object({ assets: z.array(assetSchema) }).strict();
+export const mapArtSchema = z
+  .object({
+    /** The atlas region, its folder in art/map/ and public/map/. */
+    region: z.string().regex(ID),
+    budgetMB: z.number().positive(),
+  })
+  .strict();
+
+export const manifestSchema = z
+  .object({ assets: z.array(assetSchema), maps: z.array(mapArtSchema).optional() })
+  .strict();
 export type ArtManifest = z.infer<typeof manifestSchema>;
 
 /** What is wrong with a manifest beyond its shape; empty when it is sound. */
@@ -93,6 +110,40 @@ export function checkManifest(m: ArtManifest): string[] {
       else if (new Set(a.pieces).size !== a.pieces.length)
         out.push(`${a.id}: a piece's name is used twice`);
     }
+  }
+  const regions = new Set<string>();
+  for (const r of m.maps ?? []) {
+    if (regions.has(r.region)) out.push(`map ${r.region}: the region is listed twice`);
+    regions.add(r.region);
+    if (r.budgetMB > MAP_BUDGET_MB)
+      out.push(`map ${r.region}: ${r.budgetMB} MB is over a region's ${MAP_BUDGET_MB} MB`);
+  }
+  return out;
+}
+
+/** A shipped map region's files, in bytes, walked from its folder. */
+function folderBytes(dir: string): number {
+  let n = 0;
+  for (const f of readdirSync(dir)) {
+    const p = join(dir, f);
+    const st = statSync(p);
+    n += st.isDirectory() ? folderBytes(p) : st.size;
+  }
+  return n;
+}
+
+/** Each listed map region shipped in public/map/<region>/, its painting there, under its budget. */
+export function checkMaps(root: string, m: ArtManifest): string[] {
+  const out: string[] = [];
+  for (const r of m.maps ?? []) {
+    const dir = join(root, 'public', 'map', r.region);
+    if (!existsSync(join(dir, 'painting.webp'))) {
+      out.push(`map ${r.region}: no public/map/${r.region}/painting.webp (npx tsx tools/map-chunks.ts ${r.region})`);
+      continue;
+    }
+    const mb = folderBytes(dir) / 1e6;
+    if (mb > r.budgetMB)
+      out.push(`map ${r.region}: its art is ${mb.toFixed(1)} MB, over its ${r.budgetMB} MB`);
   }
   return out;
 }
@@ -166,6 +217,7 @@ export async function runArt(root: string): Promise<ArtReport> {
     }
   }
   report.errors.push(...checkScreens(m, report.written));
+  report.errors.push(...checkMaps(root, m));
   return report;
 }
 

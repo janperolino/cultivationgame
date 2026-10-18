@@ -193,6 +193,43 @@ writeFileSync(OUT, text);
 // The travel map): its outline, the coast round it, and its places with their outlines and fields,
 // so the game never loads the whole atlas to draw one region.
 
+/**
+ * Next door (A5, design § The travel map): every region whose edge runs within 800 li of a point on
+ * this region's edge, walked every 1,000 li, and every sea whose reach comes within 8,000 li of it.
+ * The map names each faintly through the fog, in its middle, a region's edge dotted.
+ */
+function nextDoor(id: string, ring: Pt[]) {
+  const edge: Pt[] = [];
+  ring.forEach((a, i) => {
+    const b = ring[(i + 1) % ring.length]!;
+    const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 1000));
+    for (let s = 0; s < n; s++)
+      edge.push([a[0] + ((b[0] - a[0]) * s) / n, a[1] + ((b[1] - a[1]) * s) / n]);
+  });
+  const segDist = (p: Pt, a: Pt, b: Pt) => {
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy || 1)));
+    return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+  };
+  const out: { id: string; kind: 'region' | 'sea'; name: string; hanzi: string; at: Pt; outline?: unknown }[] = [];
+  for (const e of atlas.entries) {
+    const s = atlas.shapes[e.id];
+    if (e.kind === 'region' && e.id !== id && s && s.type === 'area') {
+      const r = s.polygons[0]![0]! as Pt[];
+      if (!edge.some((p) => r.some((a, i) => segDist(p, a, r[(i + 1) % r.length]!) < 800))) continue;
+      const cx = r.reduce((n, p) => n + p[0], 0) / r.length;
+      const cy = r.reduce((n, p) => n + p[1], 0) / r.length;
+      out.push({ id: e.id, kind: 'region', name: e.name, hanzi: e.hanzi, at: [Math.round(cx), Math.round(cy)], outline: s.polygons });
+    } else if (e.kind === 'sea' && e.map?.x != null && e.map.y != null && e.map.r) {
+      const { x, y, r } = e.map;
+      if (!edge.some(([px, py]) => Math.hypot(px - x, py - y) < r + 8000)) continue;
+      out.push({ id: e.id, kind: 'sea', name: e.name, hanzi: e.hanzi, at: [x, y] });
+    }
+  }
+  return out;
+}
+
 const REGIONS_OUT = join(ROOT, 'src', 'content', 'generated', 'regions');
 mkdirSync(REGIONS_OUT, { recursive: true });
 const MARGIN = 30000;
@@ -272,6 +309,7 @@ for (const region of atlas.entries) {
     outline: outline.polygons,
     land,
     places,
+    nextDoor: nextDoor(region.id, outline.polygons[0]![0]! as Pt[]),
   };
   writeFileSync(join(REGIONS_OUT, `${region.id}.json`), JSON.stringify(file) + '\n');
   regionsWritten.push(region.id);

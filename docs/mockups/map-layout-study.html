@@ -7,10 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <style>
-  /* A5 study: the Map laid out like Cultivate and Routine. The map is the scene, full bleed, with
-     no panels or hairlines round it; the controls float over it on still scrims. The map here is a
-     stand-in cut from Jan's inspiration 4 (map-inspo-4.jpg) until GPT's standing pieces land on
-     the real one. Four takes on the same content, with or without a card waiting. */
+  /* A5 study, redone on the real map in A5.1: the Map laid out like Cultivate and Routine. The map
+     is the scene, full bleed, with no panels or hairlines round it; the controls float over it on
+     still scrims. The map is the ground study (map-ground-study.html?embed): the painted Border
+     Wilds, its tiles, the fog and a sample save, and it pans and zooms. Four takes on the same
+     content, with or without a card waiting. Runs through the dev server. */
   :root {
     --bg: #040507; --text: #e9e5da; --muted: #8d949d; --accent: #d6ab4c; --gilt: #d9b46a;
     --line: rgb(217 180 106 / 0.4); --line-faint: rgb(217 180 106 / 0.16); --crack: #7fc7d9; --warn: #e08a6a;
@@ -19,18 +20,21 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: #000; color: var(--text); font-family: var(--ui); overflow-x: hidden; }
-  .bar-top { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 14px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line-faint); }
+  /* The study's own controls float over the stage, so the stage has the whole window; H hides them. */
+  .bar-top { position: fixed; top: 0; left: 0; right: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 14px; font-size: 13px; color: var(--muted); background: rgb(4 5 7 / .9); border-bottom: 1px solid var(--line-faint); }
+  .bar-top.hidden { display: none; }
+  .show-bar { position: fixed; top: 6px; right: 10px; z-index: 10; display: none; background: rgb(4 5 7 / .8); border: 1px solid var(--line-faint); color: var(--muted); padding: 3px 10px; font: 12px var(--ui); border-radius: 3px; cursor: pointer; }
+  .show-bar.on { display: block; }
   .bar-top b { color: var(--text); font-weight: 500; }
   .bar-top button { background: none; border: 1px solid var(--line-faint); color: var(--muted); padding: 4px 11px; font: inherit; border-radius: 3px; cursor: pointer; }
   .bar-top button.on { color: var(--accent); border-color: var(--line); }
-  .wrap { width: 100%; overflow: clip; }
+  .wrap { width: 100%; height: 100vh; overflow: clip; }
   .stage { position: relative; width: 1920px; height: 1080px; transform-origin: 0 0; background: var(--bg); overflow: hidden; }
 
   /* The scene: the map, full bleed, fading into the void and the fog at its edges. */
-  .map { position: absolute; inset: 0 0 0 72px; background: url('map-standin.jpg') var(--mx, 50%) var(--my, 46%) / auto var(--ms, 112%) no-repeat, var(--bg); }
-  .fog { position: absolute; inset: 0 0 0 72px; pointer-events: none;
-    background:
-      radial-gradient(ellipse 62% 58% at var(--fx, 50%) var(--fy, 48%), transparent 55%, rgb(4 5 7 / .55) 78%, rgb(4 5 7 / .95) 100%); }
+  .map { position: absolute; inset: 0 0 0 72px; width: calc(100% - 72px); height: 100%; border: 0; display: block; background: var(--bg); }
+  #ui { position: absolute; inset: 0; pointer-events: none; }
+  #ui .block, #ui .rail, #ui .top { pointer-events: auto; }
   .scrim { position: absolute; pointer-events: none; }
   .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(4 5 7 / .94); border-right: 1px solid var(--line-faint); display: flex; flex-direction: column; align-items: center; padding-top: 22px; gap: 26px; }
   .rail i { width: 20px; height: 20px; border: 1.4px solid rgb(233 229 218 / .35); border-radius: 4px; }
@@ -100,6 +104,35 @@
   .block { position: absolute; }
   .gl { padding: 16px 20px; }
 
+  /* E to I. */
+  .fold { display: flex; align-items: center; gap: 8px; padding: 9px 12px; margin-bottom: 18px; font-size: 13px; border: 1px solid var(--line-faint); border-radius: 3px; background: rgb(4 5 7 / .6); }
+  .fold .r { margin-left: auto; color: var(--accent); font-size: 12px; }
+  .rib-h { font-family: var(--display); font-weight: 500; font-size: 24px; margin: 2px 0 6px; display: flex; align-items: baseline; gap: 8px; }
+  .rib-h .hz { font-size: 19px; }
+  .rib-n { margin-left: auto; font-family: var(--ui); font-size: 13px; color: var(--muted); }
+  .tabs { display: flex; gap: 2px; margin-bottom: 18px; border-bottom: 1px solid var(--line-faint); }
+  .tabs span { padding: 7px 12px; font-size: 13px; color: var(--muted); border-bottom: 1.5px solid transparent; margin-bottom: -1px; }
+  .tabs span.on { color: var(--accent); border-bottom-color: var(--accent); }
+  .tabs i { font-style: normal; color: var(--accent); font-size: 9px; vertical-align: 2px; }
+
+  /* M to O: the game's .panel (theme.css), and its waiting rim on the card. */
+  .pnl { padding: 20px 22px; border: 1px solid var(--line-faint); border-radius: 4px; background: rgb(7 8 11 / .84); box-shadow: 0 24px 50px -28px rgb(0 0 0 / .95); }
+  .pnl.waits { border-color: rgb(214 171 76 / .45); box-shadow: 0 24px 50px -28px rgb(0 0 0 / .95), 0 0 24px -8px rgb(214 171 76 / .35); }
+  .pnl-rule { height: 1px; background: var(--line-faint); margin: 14px 0; }
+  .pnl .course h2 { font-size: 24px; margin-top: 2px; }
+
+  /* P: Routine's tabs (theme.css .seg, .routine-tabs, .menu-mark). */
+  .stage { --shade: .85; }
+  .seg { display: inline-flex; border: 1px solid rgb(217 180 106 / .28); border-radius: 7px; overflow: hidden; margin: 18px 0 18px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); padding: 8px 16px; font: 14px var(--ui); cursor: pointer; }
+  .seg button + button { border-left: 1px solid rgb(217 180 106 / .28); }
+  .seg button.on { background: rgb(214 171 76 / .12); color: var(--accent); }
+  .mark { display: inline-block; width: 7px; height: 7px; margin-left: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); vertical-align: middle; }
+  .ptab[hidden] { display: none; }
+  .pcol .course h2 { font-size: 24px; }
+  .pcol .enc .who { grid-template-columns: 1fr; gap: 1px; }
+  .pcol .enc .who span:nth-child(even) { margin-bottom: 4px; }
+
   /* Day/hide toggles. */
   [data-show="road"] .if-card { display: none !important; }
   [data-show="card"] .if-road { display: none !important; }
@@ -108,16 +141,47 @@
 <body>
 <div class="bar-top">
   <b>Take</b>
-  <button data-v="A" class="on">A · Cultivate's band</button>
+  <button data-v="A">A · Cultivate's band</button>
   <button data-v="B">B · Routine's column</button>
   <button data-v="C">C · corners, the most map</button>
   <button data-v="D">D · two wings</button>
+  <button data-v="E">E · column left</button>
+  <button data-v="F">F · one column holds it all</button>
+  <button data-v="G">G · ribbon on top</button>
+  <button data-v="H">H · card in the middle</button>
+  <button data-v="I">I · a narrow book</button>
+  <button data-v="J">J · all left, road on top</button>
+  <button data-v="K">K · all left, road at the foot</button>
+  <button data-v="L">L · all left, split in two</button>
+  <button data-v="M">M · two panels, stacked</button>
+  <button data-v="N">N · two panels, side by side</button>
+  <button data-v="O">O · journey along the foot</button>
+  <button data-v="P">P · one place, tabs</button>
+  <b style="margin-left:18px">P's shade</b>
+  <button data-shade=".95">darker</button>
+  <button data-shade=".85" class="on">dark</button>
+  <button data-shade=".6">light</button>
+  <button data-shade=".35">faint</button>
+  <button data-shade="0">none</button>
   <b style="margin-left:18px">State</b>
   <button data-s="card" class="on">a card waits</button>
   <button data-s="road">on the road</button>
-  <span style="margin-left:auto">The map is a stand-in from inspiration 4; the real one is the atlas with GPT's pieces standing on it.</span>
+  <b style="margin-left:18px">Sample save</b>
+  <button data-sample="arrived">just arrived</button>
+  <button data-sample="map">bought a map</button>
+  <button data-sample="region" class="on">whole region sketched</button>
+  <button data-sample="far">explored further</button>
+  <b style="margin-left:18px">Map brightness</b>
+  <button data-b="1">1×</button>
+  <button data-b="1.25">1.25×</button>
+  <button data-b="1.5" class="on">1.5×</button>
+  <button data-b="1.75">1.75×</button>
+  <button data-b="2">2×</button>
+  <span style="margin-left:auto">Drag and scroll the map. No place pieces yet.</span>
+  <button id="hide-bar">Hide (H)</button>
 </div>
-<div class="wrap"><div class="stage" id="stage" data-show="card"></div></div>
+<button class="show-bar" id="show-bar">Controls (H)</button>
+<div class="wrap"><div class="stage" id="stage" data-show="card"><iframe class="map" id="map" title="The Border Wilds"></iframe><div id="ui"></div></div></div>
 
 <template id="t-wheel">
   <svg class="wheel" viewBox="-60 -60 120 120" width="SIZE" height="SIZE">
@@ -147,9 +211,7 @@ function wheel(size) {
   return document.getElementById('t-wheel').innerHTML.replace(/SIZE/g, size).replace('<g id="segs"></g>', segs);
 }
 
-const where = `<div class="where"><b>Spring 3,177</b>
-  <div>Beast-Butcher Gate · hills · thin qi (3) · you see 600 li</div>
-  <div><span class="pip">○</span> the edge: beasts of layers 1 to 3 · white and green finds</div></div>`;
+let where = '';
 const zoom = `<div class="zoom"><span>+</span><span>−</span><span>Region</span><span>You</span></div>`;
 const routine = `<div class="cap">Road routine</div>
   <div class="chips"><span>By day</span><span>Pressed march</span><span class="on">Night road</span><span>My road 1</span></div>`;
@@ -160,18 +222,8 @@ const going = `<div class="cap">Going by</div>
 const stance = `<div class="cap">When the road brings something</div>
   <div class="chips"><span>Avoid</span><span class="on">Careful</span><span>Bold</span></div>
   <div class="muted" style="font-size:12px;max-width:430px">Hunts the sure kills and takes clear sneaks and flights; gathers finds. Anything else waits for you.</div>`;
-const course = `<div class="course"><div class="cap">On the road</div>
-  <h2>To Beast-Butcher Gate<span class="hz">屠兽门</span></h2>
-  <div class="bar"><i></i></div>
-  <dl class="kv"><dt>Left</dt><dd>100 li · 1 day · 622 cross-country in all</dd>
-  <dt>Arrives</dt><dd>when you go on</dd>
-  <dt>Now</dt><dd class="warn">Stopped: a card waits for you. You camp and cultivate where you stand.</dd></dl></div>`;
-const courseRoad = `<div class="course"><div class="cap">On the road</div>
-  <h2>To Beast-Butcher Gate<span class="hz">屠兽门</span></h2>
-  <div class="bar"><i></i></div>
-  <dl class="kv"><dt>Left</dt><dd>100 li · 1 day · 622 cross-country in all</dd>
-  <dt>Arrives</dt><dd>Spring 3,177, day 12 · about 10 s</dd>
-  <dt>Now</dt><dd>Travelling by night, veiled.</dd></dl></div>`;
+let course = '';
+let courseRoad = '';
 const ahead = `<div class="cap" style="margin-top:14px">Ahead</div><ul class="ahead">
   <li class="wait if-card"><span class="seal">修</span>Deserters in the pines<span class="r">waiting</span></li>
   <li><span class="seal">人</span>A post rider of the Jing<span class="r">3 h</span></li></ul>`;
@@ -185,14 +237,35 @@ const enc = `<div class="enc"><h3>Deserters in the pines</h3><div class="sub">cu
   <div class="choice"><div><b>Fight them</b><small>you'd fall before they do: 15 exchanges to fell them, 9 to fell you</small></div><span class="v short">short</span></div>
   <div class="foot"><span>Stop here</span><span>Turn back home</span></div></div>`;
 
-const shell = `<div class="map"></div><div class="fog"></div><div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+const shell = `<div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="top"><div class="brand">Severed Heaven<span class="hz">断天</span></div>
   <div class="res"><div><b>Spring 3,177</b><small>申 · afternoon</small></div><div><b>9</b><small>low-grade</small></div><div><b>3,315</b><small>insight</small></div></div></div>`;
+
+/** The line under the date and the course card, from the sample save the map shows. */
+let info = null;
+function fill(m) {
+  info = m;
+  const w = m.where;
+  where = `<div class="where"><b>Spring 3,177</b>
+  <div>${w.place} · ${w.terrain} · ${w.qi} · you see ${w.sight} li</div>
+  <div><span class="pip">${w.pips}</span> ${w.depth}</div></div>`;
+  const c = m.course;
+  const days = Math.max(1, Math.round(c.li / 160));
+  const head = `<div class="course"><div class="cap">On the road</div>
+  <h2>To ${c.name}<span class="hz">${c.hanzi}</span></h2>
+  <div class="bar"><i></i></div>`;
+  course = `${head}<dl class="kv"><dt>Left</dt><dd>${c.li.toLocaleString()} li · ${days} day${days > 1 ? 's' : ''} · on the road</dd>
+  <dt>Arrives</dt><dd>when you go on</dd>
+  <dt>Now</dt><dd class="warn">Stopped: a card waits for you. You camp and cultivate where you stand.</dd></dl></div>`;
+  courseRoad = `${head}<dl class="kv"><dt>Left</dt><dd>${c.li.toLocaleString()} li · ${days} day${days > 1 ? 's' : ''} · on the road</dd>
+  <dt>Arrives</dt><dd>Spring 3,177, day ${12 + days} · about ${days * 10} s</dd>
+  <dt>Now</dt><dd>Travelling by day, open.</dd></dl></div>`;
+}
 
 const takes = {
   // A: Cultivate's band. A thin fading band across the foot: the road left, the course or the card
   // in the middle, what's ahead right. The map takes everything above it.
-  A: `${shell}
+  A: () => `${shell}
     <div class="scrim" style="left:72px;right:0;bottom:0;height:430px;background:linear-gradient(to top, rgb(4 5 7 / .96) 0%, rgb(4 5 7 / .88) 55%, rgb(4 5 7 / .5) 80%, transparent)"></div>
     <div class="scrim" style="left:72px;top:0;width:760px;height:220px;background:radial-gradient(ellipse at 0 0, rgb(4 5 7 / .8), transparent 70%)"></div>
     <div class="block" style="left:110px;top:80px">${where}</div>
@@ -204,7 +277,7 @@ const takes = {
 
   // B: Routine's column. Everything you read and choose in one column on the right, fading in
   // from the edge; the wheel low left in its bezel. The column is where P3.9's scene would play.
-  B: `${shell}
+  B: () => `${shell}
     <div class="scrim" style="right:0;top:0;bottom:0;width:820px;background:linear-gradient(to left, rgb(4 5 7 / .95) 0%, rgb(4 5 7 / .88) 60%, rgb(4 5 7 / .4) 85%, transparent)"></div>
     <div class="scrim" style="left:72px;bottom:0;width:820px;height:380px;background:radial-gradient(ellipse at 0 100%, rgb(4 5 7 / .9), transparent 70%)"></div>
     <div class="scrim" style="left:72px;top:0;width:760px;height:220px;background:radial-gradient(ellipse at 0 0, rgb(4 5 7 / .8), transparent 70%)"></div>
@@ -215,20 +288,20 @@ const takes = {
 
   // C: Corners. The most map: where you stand top left, the road low left, the course top right,
   // and the card only when one waits, low and centred like Cultivate's open card.
-  C: `${shell}
+  C: () => `${shell}
     <div class="scrim" style="left:72px;top:0;width:760px;height:220px;background:radial-gradient(ellipse at 0 0, rgb(4 5 7 / .8), transparent 70%)"></div>
     <div class="scrim" style="left:72px;bottom:0;width:760px;height:360px;background:radial-gradient(ellipse at 0 100%, rgb(4 5 7 / .92), transparent 70%)"></div>
     <div class="scrim" style="right:0;top:0;width:700px;height:420px;background:radial-gradient(ellipse at 100% 0, rgb(4 5 7 / .9), transparent 70%)"></div>
-    <div class="scrim if-card" style="left:640px;right:520px;bottom:0;height:560px;background:radial-gradient(ellipse at 50% 100%, rgb(4 5 7 / .96) 30%, rgb(4 5 7 / .7) 55%, transparent 75%)"></div>
+    <div class="scrim if-card" style="left:50%;width:880px;transform:translateX(-50%) translateX(36px);bottom:0;height:560px;background:radial-gradient(ellipse at 50% 100%, rgb(4 5 7 / .96) 30%, rgb(4 5 7 / .7) 55%, transparent 75%)"></div>
     <div class="block" style="left:110px;top:80px">${where}</div>
     <div class="block road" style="left:110px;bottom:36px">${wheel(170)}<div class="lines">${routine}${now}${going}</div></div>
     <div class="block" style="right:56px;top:96px;width:440px">${'<div class="if-card">' + course + '</div><div class="if-road">' + courseRoad + '</div>'}${ahead}</div>
     <div class="block" style="right:56px;bottom:40px">${zoom}</div>
-    <div class="block if-card" style="left:810px;bottom:28px;width:600px">${enc}</div>`,
+    <div class="block if-card" style="left:50%;bottom:28px;width:600px;transform:translateX(-50%) translateX(36px)">${enc}</div>`,
 
   // D: Two wings. The road on a left wing, the course and the card on a right wing, the map
   // between: the same shape as Cultivate's cave with its mirrored wings.
-  D: `${shell}
+  D: () => `${shell}
     <div class="scrim" style="left:72px;top:0;bottom:0;width:640px;background:linear-gradient(to right, rgb(4 5 7 / .95) 0%, rgb(4 5 7 / .85) 60%, transparent)"></div>
     <div class="scrim" style="right:0;top:0;bottom:0;width:760px;background:linear-gradient(to left, rgb(4 5 7 / .95) 0%, rgb(4 5 7 / .85) 60%, transparent)"></div>
     <div class="block" style="left:110px;top:80px;width:470px">${where}
@@ -236,29 +309,258 @@ const takes = {
       <div style="display:grid;gap:12px">${routine}${now}${going}${stance}</div></div>
     <div class="block" style="right:56px;top:96px;width:580px">${'<div class="if-card">' + course + '</div><div class="if-road">' + courseRoad + '</div>'}${ahead}<div class="if-card" style="margin-top:18px">${enc}</div></div>
     <div class="block" style="left:50%;bottom:36px;transform:translateX(-50%)"><div class="zoom" style="flex-direction:row">${zoom.replace('<div class="zoom">', '').replace('</div>', '')}</div></div>`,
+
+  // E: B mirrored. The column on the left, beside the rail, where the eye starts; the road low
+  // right; the map takes the right of the screen.
+  E: () => `${shell}
+    <div class="scrim" style="left:72px;top:0;bottom:0;width:820px;background:linear-gradient(to right, rgb(4 5 7 / .95) 0%, rgb(4 5 7 / .88) 60%, rgb(4 5 7 / .4) 85%, transparent)"></div>
+    <div class="scrim" style="right:0;bottom:0;width:820px;height:380px;background:radial-gradient(ellipse at 100% 100%, rgb(4 5 7 / .9), transparent 70%)"></div>
+    <div class="block" style="left:110px;top:80px;width:600px">${where}<div style="height:26px"></div>${'<div class="if-card">' + course + '</div><div class="if-road">' + courseRoad + '</div>'}${ahead}<div class="if-card" style="margin-top:18px">${enc}</div></div>
+    <div class="block road" style="right:40px;bottom:40px;flex-direction:row-reverse;align-items:flex-end">${wheel(220)}<div class="lines" style="text-align:right;justify-items:end">${routine}${now}${going}${stance}</div></div>
+    <div class="block" style="right:40px;top:96px">${zoom}</div>`,
+
+  // F: One column holds it all. The road sits in the column too, so the map is whole to the
+  // column's edge; with a card waiting the road folds to one line, since the card is what matters.
+  F: () => `${shell}
+    <div class="scrim" style="right:0;top:0;bottom:0;width:760px;background:linear-gradient(to left, rgb(4 5 7 / .96) 0%, rgb(4 5 7 / .9) 66%, rgb(4 5 7 / .4) 88%, transparent)"></div>
+    <div class="scrim" style="left:72px;top:0;width:760px;height:220px;background:radial-gradient(ellipse at 0 0, rgb(4 5 7 / .8), transparent 70%)"></div>
+    <div class="block" style="left:110px;top:80px">${where}</div>
+    <div class="block" style="right:56px;top:96px;width:580px">
+      <div class="if-road" style="display:flex;gap:20px;align-items:center;margin-bottom:22px">${wheel(170)}<div class="lines road" style="display:grid;gap:9px">${routine}${now}${going}</div></div>
+      <div class="if-card fold"><span class="hz">申</span> Night road · Light step · Careful<span class="r">the road ▸</span></div>
+      ${'<div class="if-card">' + course + '</div><div class="if-road">' + courseRoad + '</div>'}${ahead}<div class="if-card" style="margin-top:18px">${enc}</div></div>
+    <div class="block" style="right:676px;top:96px">${zoom}</div>`,
+
+  // G: A ribbon on top. Where you stand and the course run as one strip across the top; the road
+  // is a small dock low left; a card opens as a drawer on the right only when one waits, so on
+  // the road the map has the whole screen under the ribbon.
+  G: () => `${shell}
+    <div class="scrim" style="left:72px;right:0;top:0;height:230px;background:linear-gradient(to bottom, rgb(4 5 7 / .95) 0%, rgb(4 5 7 / .85) 55%, transparent)"></div>
+    <div class="scrim" style="left:72px;bottom:0;width:700px;height:300px;background:radial-gradient(ellipse at 0 100%, rgb(4 5 7 / .9), transparent 70%)"></div>
+    <div class="scrim if-card" style="right:0;top:0;bottom:0;width:740px;background:linear-gradient(to left, rgb(4 5 7 / .96) 0%, rgb(4 5 7 / .9) 66%, transparent)"></div>
+    <div class="block" style="left:110px;top:80px">${where}</div>
+    <div class="block ribbon" style="left:640px;top:84px;width:500px">
+      <div class="cap">On the road</div>
+      <div class="rib-h">To ${info.course.name}<span class="hz">${info.course.hanzi}</span><span class="rib-n">${info.course.li.toLocaleString()} li · ${Math.max(1, Math.round(info.course.li / 160))} days</span></div>
+      <div class="bar"><i></i></div>
+      <div class="if-card warn" style="font-size:13px">Stopped: a card waits for you.</div><div class="if-road muted" style="font-size:13px">Travelling by day, open · arrives in about ${Math.max(1, Math.round(info.course.li / 160)) * 10} s</div></div>
+    <div class="block if-road" style="right:56px;top:84px;width:380px">${ahead}</div>
+    <div class="block road" style="left:110px;bottom:36px">${wheel(150)}<div class="lines">${routine}${now}</div></div>
+    <div class="block if-card" style="right:56px;top:250px;width:600px">${ahead}<div style="margin-top:18px">${enc}</div></div>
+    <div class="block" style="right:56px;bottom:40px">${zoom.replace('class="zoom"', 'class="zoom" style="flex-direction:row"')}</div>`,
+
+  // H: The card in the middle. The map is whole; a card that waits stands at the middle of the
+  // screen like Cultivate's open card, the map dimmed round it, the road and course small in
+  // the corners until you answer it.
+  H: () => `${shell}
+    <div class="scrim" style="left:72px;top:0;width:760px;height:220px;background:radial-gradient(ellipse at 0 0, rgb(4 5 7 / .8), transparent 70%)"></div>
+    <div class="scrim" style="left:72px;bottom:0;width:700px;height:320px;background:radial-gradient(ellipse at 0 100%, rgb(4 5 7 / .92), transparent 70%)"></div>
+    <div class="scrim" style="right:0;bottom:0;width:640px;height:360px;background:radial-gradient(ellipse at 100% 100%, rgb(4 5 7 / .92), transparent 70%)"></div>
+    <div class="scrim if-card" style="left:72px;right:0;top:0;bottom:0;background:radial-gradient(ellipse 30% 46% at 52% 50%, rgb(4 5 7 / .95) 42%, rgb(4 5 7 / .55) 72%, rgb(4 5 7 / .22) 100%)"></div>
+    <div class="block" style="left:110px;top:80px">${where}</div>
+    <div class="block road" style="left:110px;bottom:36px">${wheel(160)}<div class="lines">${routine}${now}${going}</div></div>
+    <div class="block" style="right:56px;bottom:40px;width:420px">${'<div class="if-card">' + course.replace('<h2>', '<h2 style="font-size:22px">') + '</div><div class="if-road">' + courseRoad.replace('<h2>', '<h2 style="font-size:22px">') + '</div>'}</div>
+    <div class="block if-road" style="right:56px;top:96px;width:380px">${ahead}</div>
+    <div class="block if-card" style="left:50%;top:50%;width:640px;transform:translate(-50%,-50%) translateX(36px)">${enc}</div>
+    <div class="block" style="right:56px;top:96px">${zoom.replace('class="zoom"', 'class="zoom if-card"')}</div>`,
+
+  // I: A narrow book at the side. A slim column on the right with three tabs, the card, the course
+  // and the road, one open at a time: the card when one waits, else the course. The wheel lives
+  // in the Road tab, so the map is clear everywhere left of the column.
+  I: () => `${shell}
+    <div class="scrim" style="right:0;top:0;bottom:0;width:620px;background:linear-gradient(to left, rgb(4 5 7 / .97) 0%, rgb(4 5 7 / .92) 72%, transparent)"></div>
+    <div class="scrim" style="left:72px;top:0;width:760px;height:220px;background:radial-gradient(ellipse at 0 0, rgb(4 5 7 / .8), transparent 70%)"></div>
+    <div class="block" style="left:110px;top:80px">${where}</div>
+    <div class="block" style="right:48px;top:96px;width:470px">
+      <div class="tabs"><span class="if-card on">Card <i>●</i></span><span class="if-road on">Course</span><span class="if-card">Course</span><span>Road</span><span>Ahead · 2</span></div>
+      <div class="if-card">${enc}</div><div class="if-road">${courseRoad}${ahead}</div></div>
+    <div class="block" style="right:540px;top:96px">${zoom}</div>
+    <div class="block" style="left:110px;bottom:40px"><div class="fold" style="width:400px"><span class="hz">申</span> Night road · Light step · Careful<span class="r">Road tab ▸</span></div></div>`,
+
+  // J: All in one place, on the left (Jan's note after A to I). One column beside the rail holds
+  // everything, read top to bottom: where you stand, the road, the course, what's ahead, the card.
+  // With a card waiting the road folds to one line; the map has the rest of the screen.
+  J: () => `${shell}
+    <div class="scrim" style="left:72px;top:0;bottom:0;width:860px;background:linear-gradient(to right, rgb(4 5 7 / .96) 0%, rgb(4 5 7 / .9) 64%, rgb(4 5 7 / .4) 86%, transparent)"></div>
+    <div class="block" style="left:110px;top:80px;width:580px">${where}
+      <div class="if-road" style="display:flex;gap:20px;align-items:center;margin:26px 0 24px">${wheel(180)}<div class="lines road" style="display:grid;gap:9px">${routine}${now}${going}${stance}</div></div>
+      <div class="if-card fold" style="margin-top:22px"><span class="hz">申</span> Night road · Light step · Careful<span class="r">the road ▸</span></div>
+      ${'<div class="if-card">' + course + '</div><div class="if-road">' + courseRoad + '</div>'}${ahead}<div class="if-card" style="margin-top:18px">${enc}</div></div>
+    <div class="block" style="right:40px;top:96px">${zoom}</div>`,
+
+  // K: The same column, the road at its foot. Reading runs down from the top (where you stand, the
+  // course, what's ahead, the card) and the controls sit together at the bottom, as Routine's do.
+  K: () => `${shell}
+    <div class="scrim" style="left:72px;top:0;bottom:0;width:720px;background:linear-gradient(to right, rgb(4 5 7 / .9) 0%, rgb(4 5 7 / .82) 78%, rgb(4 5 7 / .35) 92%, transparent)"></div>
+    <div class="block" style="left:110px;top:80px;width:580px">${where}<div style="height:22px"></div>
+      ${'<div class="if-card">' + course.replace('<h2>', '<h2 style="font-size:24px">').replace(/<dl[\s\S]*<\/dl>/, '') + '</div><div class="if-road">' + courseRoad + '</div>'}${ahead}<div class="if-card" style="margin-top:16px">${enc}</div></div>
+    <div class="block road" style="left:110px;bottom:36px">${wheel(190)}<div class="lines">${routine}${now}${going}${stance}</div></div>
+    <div class="block" style="right:40px;top:96px">${zoom}</div>`,
+
+  // L: One wide panel on the left, split in two: the road on its left half, the wheel big; the
+  // course, what's ahead and the card on its right half. Nothing folds; the map is narrower.
+  L: () => `${shell}
+    <div class="scrim" style="left:72px;top:0;bottom:0;width:1160px;background:linear-gradient(to right, rgb(4 5 7 / .96) 0%, rgb(4 5 7 / .9) 72%, rgb(4 5 7 / .4) 90%, transparent)"></div>
+    <div class="block" style="left:110px;top:80px;width:320px">${where}
+      <div style="margin:34px 0 22px;display:grid;place-items:center">${wheel(250)}</div>
+      <div style="display:grid;gap:12px">${routine}${now}${going}${stance}</div></div>
+    <div class="block" style="left:470px;top:96px;width:560px">${'<div class="if-card">' + course + '</div><div class="if-road">' + courseRoad + '</div>'}${ahead}<div class="if-card" style="margin-top:18px">${enc}</div></div>
+    <div class="block" style="right:40px;top:96px">${zoom}</div>`,
+
+  // M to O: two panels and no shade (Jan's note after K: the shade framed the map). The game's own
+  // panels, obsidian with a gilt hairline, one for the journey (where you stand, the course, what's
+  // ahead and the road with its wheel) and one for the card, only while one waits; the map is
+  // untouched everywhere else.
+  // M: stacked on the left, the journey above, the card under it.
+  M: () => `${shell}
+    <div class="block pnl" style="left:104px;top:76px;width:580px">${journey()}</div>
+    <div class="block pnl waits if-card" style="left:104px;top:600px;width:580px">${enc}</div>
+    <div class="block" style="right:40px;top:96px">${zoom}</div>`,
+
+  // N: side by side at the top left, the card beside the journey.
+  N: () => `${shell}
+    <div class="block pnl" style="left:104px;top:76px;width:520px">${journey()}</div>
+    <div class="block pnl waits if-card" style="left:644px;top:76px;width:580px">${enc}</div>
+    <div class="block" style="right:40px;top:96px">${zoom}</div>`,
+
+  // O: the journey as a strip along the foot (wheel, road, course), the card above it on the left.
+  O: () => `${shell}
+    <div class="block pnl" style="left:104px;bottom:28px;display:flex;gap:28px;align-items:center">
+      ${wheel(180)}
+      <div class="lines road" style="display:grid;gap:9px;width:440px">${routine}${now}${going}${stance}</div>
+      <div style="width:470px;align-self:stretch;border-left:1px solid var(--line-faint);padding-left:26px">${where}<div style="height:12px"></div><div class="if-card">${courseHead()}</div><div class="if-road">${courseRoad}</div>${ahead}</div></div>
+    <div class="block pnl waits if-card" style="left:104px;top:76px;width:580px">${enc}</div>
+    <div class="block" style="right:40px;top:96px">${zoom}</div>`,
 };
-const maps = { A: ['50%', '20%', '120%', '50%', '38%'], B: ['22%', '46%', '112%', '38%', '50%'], C: ['50%', '46%', '112%', '50%', '50%'], D: ['50%', '46%', '118%', '50%', '50%'] };
+/** P's open tab: the card when one waits, else the journey; the tabs switch it. */
+let ptab = 'card';
+Object.assign(takes, {
+  // P: one place on the left that shows one thing at a time (Jan's note after M to O), as Routine
+  // switches Day, Practice and Study: where you stand always on top, then Routine's tabs, Journey
+  // (the wheel, the road, the course, what's ahead) and Card, which shows only while a card waits
+  // and opens itself then. Less at once, so the shade behind it is light and tight.
+  P: () => `${shell}
+    <div class="scrim" style="left:72px;top:0;bottom:0;width:560px;background:linear-gradient(to right, rgb(4 5 7 / var(--shade)) 0%, rgb(4 5 7 / calc(var(--shade) * .92)) 76%, transparent)"></div>
+    <div class="block pcol" style="left:96px;top:80px;width:430px">${where}
+      <div class="seg ptabs"><button data-tab="journey" class="${ptab === 'journey' ? 'on' : ''}">Journey</button><button data-tab="card" class="if-card ${ptab === 'card' ? 'on' : ''}">Card<i class="mark"></i></button></div>
+      <div class="ptab" data-show-tab="journey" ${ptab === 'journey' ? '' : 'hidden'}>
+        <div class="road" style="margin-bottom:22px;gap:16px">${wheel(150)}<div class="lines">${routine}${now}${going}${stance}</div></div>
+        <div class="if-card">${course}</div><div class="if-road">${courseRoad}</div>${ahead}</div>
+      <div class="ptab" data-show-tab="card" ${ptab === 'card' ? '' : 'hidden'}>${enc}</div></div>
+    <div class="block" style="right:40px;top:96px">${zoom}</div>`,
+});
+/** The course card's head only, for while a card waits (the card already says you've stopped). */
+const courseHead = () => course.replace(/<dl[\s\S]*<\/dl>/, '');
+/** The journey panel of M and N: where you stand, the course, what's ahead, the road and its wheel. */
+const journey = () => `${where}<div class="pnl-rule"></div>
+  <div class="if-card">${courseHead()}</div><div class="if-road">${courseRoad}</div>${ahead}<div class="pnl-rule"></div>
+  <div class="road if-road" style="gap:18px">${wheel(150)}<div class="lines">${routine}${now}${going}${stance.replace(/<div class="muted"[\s\S]*<\/div>$/, '')}</div></div>
+  <div class="road if-card" style="gap:16px">${wheel(110)}<div class="lines">${routine}${now}</div></div>`;
+
+/** The part of the map each take leaves open, as insets from the map's edges in stage pixels (left,
+    top, right, bottom): what you've charted fits there at the farthest zoom, and the zoom-out stops
+    there. Insets, not shares, since the stage's width follows the window. */
+const open = {
+  A: [55, 108, 55, 432], B: [74, 151, 850, 302], C: [222, 65, 480, 324], D: [640, 54, 760, 86],
+  E: [850, 65, 55, 367], F: [74, 151, 740, 54], G: [55, 216, 700, 281], H: [185, 130, 517, 346], I: [74, 151, 590, 86],
+  J: [760, 65, 55, 54], K: [690, 65, 55, 54], L: [1040, 65, 55, 54],
+  // M to O leave a different part open with a card waiting than on the road.
+  M: [600, 65, 55, 54], N: { road: [580, 65, 55, 54], card: [1180, 65, 55, 54] },
+  O: { road: [55, 65, 55, 300], card: [640, 65, 55, 300] },
+  P: [520, 65, 55, 54],
+};
+function openShare() {
+  const o = open[v];
+  const [l, t, r, b] = Array.isArray(o) ? o : o[stage.dataset.show];
+  const W = mapFrame.clientWidth;
+  return [l / W, t / 1080, 1 - r / W, 1 - b / 1080];
+}
 
 const stage = document.getElementById('stage');
-let v = 'A';
+const ui = document.getElementById('ui');
+const mapFrame = document.getElementById('map');
+let v = 'P';
+let study = null;
+/** The map's lift, picked in the bar. */
+let bright = 1.5;
 function render() {
-  stage.innerHTML = takes[v];
-  const [mx, my, ms, fx, fy] = maps[v];
-  Object.entries({ '--mx': mx, '--my': my, '--ms': ms, '--fx': fx, '--fy': fy }).forEach(([k, x]) => stage.style.setProperty(k, x));
+  if (!study) return;
+  ui.innerHTML = takes[v]();
+  place();
+  study.frame(openShare());
 }
-document.querySelectorAll('[data-v]').forEach((b) => b.onclick = () => {
-  v = b.dataset.v; document.querySelectorAll('[data-v]').forEach((x) => x.classList.toggle('on', x === b)); render();
+function show(state) {
+  stage.dataset.show = state;
+  ptab = state === 'card' ? 'card' : 'journey';
+  if (v === 'P' && study) ui.innerHTML = takes.P();
+  study?.card(state === 'card');
+  place();
+  if (study && !Array.isArray(open[v])) study.frame(openShare());
+}
+/** M's card panel sits under the journey panel, whose height changes with the state. */
+function place() {
+  const j = ui.querySelector('.pnl:not(.waits)');
+  const c = ui.querySelector('.pnl.waits');
+  if (v === 'M' && j && c) c.style.top = j.offsetTop + j.offsetHeight + 16 + 'px';
+}
+mapFrame.onload = () => {
+  study = mapFrame.contentWindow.mapStudy;
+  fill(study);
+  show(stage.dataset.show);
+  study.bright(bright);
+  render();
+};
+function load(sample) {
+  mapFrame.src = 'map-ground-study.html?embed&sample=' + sample;
+  document.querySelectorAll('[data-sample]').forEach((x) => x.classList.toggle('on', x.dataset.sample === sample));
+}
+document.querySelectorAll('[data-v]').forEach((b) => {
+  b.classList.toggle('on', b.dataset.v === v);
+  b.onclick = () => {
+    v = b.dataset.v; document.querySelectorAll('[data-v]').forEach((x) => x.classList.toggle('on', x === b)); render();
+  };
 });
 document.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => {
-  stage.dataset.show = b.dataset.s; document.querySelectorAll('[data-s]').forEach((x) => x.classList.toggle('on', x === b));
+  show(b.dataset.s); document.querySelectorAll('[data-s]').forEach((x) => x.classList.toggle('on', x === b));
 });
+document.querySelectorAll('[data-sample]').forEach((b) => b.onclick = () => load(b.dataset.sample));
+document.querySelectorAll('[data-shade]').forEach((b) => b.onclick = () => {
+  stage.style.setProperty('--shade', b.dataset.shade);
+  document.querySelectorAll('[data-shade]').forEach((x) => x.classList.toggle('on', x === b));
+});
+// P's tabs switch what the column shows.
+ui.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tab]');
+  if (!t) return;
+  ptab = t.dataset.tab;
+  ui.innerHTML = takes.P();
+});
+document.querySelectorAll('[data-b]').forEach((b) => b.onclick = () => {
+  bright = +b.dataset.b; study?.bright(bright);
+  document.querySelectorAll('[data-b]').forEach((x) => x.classList.toggle('on', x === b));
+});
+/** As the game's stage (design § UI and screens, The stage): scaled by the window's height over
+    1080, its width following the window, never narrower than 1728. */
 function fit() {
-  const k = Math.min(window.innerWidth / 1920, (window.innerHeight - 42) / 1080);
+  const k = Math.min(window.innerHeight / 1080, window.innerWidth / 1728);
+  stage.style.width = window.innerWidth / k + 'px';
   stage.style.transform = `scale(${k})`;
-  stage.parentElement.style.height = 1080 * k + 'px';
+  // The map's canvas takes its new size on its own; frame it again once it has.
+  setTimeout(() => study && study.frame(openShare()), 60);
 }
 window.addEventListener('resize', fit);
-render(); fit();
+const bar = document.querySelector('.bar-top');
+const showBar = document.getElementById('show-bar');
+function toggleBar() {
+  bar.classList.toggle('hidden');
+  showBar.classList.toggle('on', bar.classList.contains('hidden'));
+}
+document.getElementById('hide-bar').onclick = toggleBar;
+showBar.onclick = toggleBar;
+window.addEventListener('keydown', (e) => { if (e.key === 'h' || e.key === 'H') toggleBar(); });
+mapFrame.addEventListener('load', () => mapFrame.contentWindow.addEventListener('keydown', (e) => { if (e.key === 'h' || e.key === 'H') toggleBar(); }));
+fit();
+load('region');
 </script>
 </body>
 </html>

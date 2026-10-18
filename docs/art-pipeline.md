@@ -63,6 +63,9 @@ art/
   concepts/       committed: the picked concepts
   inbox/          ignored by git: Jan drops PNGs here
   source/         ignored by git: the originals, kept by ingest
+  map/<region>/   committed: the travel map's guide, painting, fits and detail tiles (A5.1;
+                  the upscaled tiles and references ignored, rebuilt by the tools)
+public/map/<region>/  committed: what the Map loads, the painting as webp and the tiles' chunks
 src/ui/art/
   common/         shared frames, surfaces and ornaments
   <screen>/       one screen's own
@@ -88,7 +91,7 @@ A manifest entry:
 
 An ornament sheet adds `"cells": [cols, rows]` and `"pieces": ["map-marker-known", "map-marker-rumored", ...]`; a green-screen one adds `"key": "#00FF00"`.
 
-**`npm run art`** is `tools/art.ts` run with tsx, with sharp as a dev dependency: Node only, so it runs in PowerShell (Jan's machine has no Python). It moves each `inbox/<id>.png` to `source/`, resizes, cuts sheets into pieces, keys out a green screen, writes webp, and fails when a file is over budget, a screen's art passes 800 KB or a manifest asset has no source. The manifest is `{ "assets": [ ... ] }`, checked before anything is written; a concept's budget is 600 KB. `npm run art -- --root <dir>` runs it on another folder. The prompts live in the manifest, so an asset can be redrawn whenever its original is lost.
+**`npm run art`** is `tools/art.ts` run with tsx, with sharp as a dev dependency: Node only, so it runs in PowerShell (Jan's machine has no Python). It moves each `inbox/<id>.png` to `source/`, resizes, cuts sheets into pieces, keys out a green screen, writes webp, and fails when a file is over budget, a screen's art passes 800 KB or a manifest asset has no source. The manifest's `maps` lists each painted region of the travel map with its own budget, at most 25 MB (A5.1): the run fails when a region's `public/map/<region>/` has no `painting.webp` or passes its budget. The manifest is `{ "assets": [ ... ] }`, checked before anything is written; a concept's budget is 600 KB. `npm run art -- --root <dir>` runs it on another folder. The prompts live in the manifest, so an asset can be redrawn whenever its original is lost.
 
 ## Paint cost
 
@@ -172,12 +175,15 @@ The land a painting shows is the region's own: the wild tracts' cells are seeded
 |---|---|---|
 | 1. Content: the region's atlas fields, towns, roads and `landSeed` (a region file and a content entry, as the Border Wilds has) | by hand | the atlas fill |
 | 2. Guide: the region from the atlas, each terrain a flat color, roads red, a symbol a kind of place, the sea and neighbours | `npx tsx tools/map-guide.ts <region>` | free |
-| 3. Painting, take D, attaching the finished neighbours' paintings so the borders match | `npx tsx tools/map-paint.ts region <region> docs/mockups/map-painting-<region>.png --take D` | ~$0.20 |
+| 3. Painting, take D, attaching the finished neighbours' paintings so the borders match | `npx tsx tools/map-paint.ts region <region> art/map/<region>/painting.png --take D` | ~$0.20 |
 | 4. Fit: GPT squashes and shifts; the fit lays the painted sea and land beyond on the guide's | `npx tsx tools/map-fit.ts <region>` | seconds |
 | 5. Tiles: a grid at 25 li a pixel, overlapping a tenth, skipping a tile under 8% region; each a guide and a reference cut from the fitted painting | `npx tsx tools/map-guide.ts <region> --tiles` | free |
 | 6. Each tile painted again closer, with the cultivation details, then fitted by color with its tone | `map-paint.ts tile <region> <id>`, then `map-fit.ts <region> --tile <id>` | ~$0.21 a tile |
 | 7. Each tile upscaled 4× (Real-ESRGAN x4plus, Qualcomm's ONNX build in `tools/models/`, git-ignored) and cut into a pyramid of 512 px chunks with its tone and feathered edges baked in | `map-upscale.ts`, then `map-chunks.ts <region> <id>` | ~7 min a tile on Jan's PC |
+| 8. Ship: `map-chunks.ts` writes the painting as webp and the chunks to `public/map/<region>/` and each pyramid into `tiles.json`; add the region to the manifest's `maps` and run `npm run art` for its budget | `npx tsx tools/map-chunks.ts <region> [<tile> ...]` | seconds |
+
+The working files are in `art/map/<region>/` (`tools/map-paths.ts`): `guide.png` and `guide.json` (its frame, and the fit once painted), `painting.png`, `tiles.json` (each tile's frame, fit, tone and pyramid) and `tile-<id>.png` with its guide; the references and the upscaled tiles are git-ignored. A region is painted, to the game, once its guide has a fit.
 
 The Border Wilds took 8 tiles; South of the Tides would take about 10. So about $2 to $3 and an hour a region, almost all of it the upscale running in the background.
 
-**How the map draws it** (the study, `docs/mockups/map-ground-study.ts`, until it moves into the game): each painting through its fit, cut to its region plus the sea, so neighbours meet edge to edge and the coast's surf stays; the tiles over it at every zoom, each from the pyramid level the zoom needs and only its chunks on screen, so the land never changes as you zoom and a frame costs one to two milliseconds; the zoom stops at about 0.16 px a li, where the upscaled tiles run out. Close in, the place pieces are the next tier of detail.
+**How the map draws it** (`src/ui/map/art.ts`, the fog in `src/ui/map/fog.ts`, both from the study `docs/mockups/map-ground-study.ts`): each painting through its fit, cut to its region plus the sea, so neighbours meet edge to edge and the coast's surf stays; the tiles over it at every zoom, each from the pyramid level the zoom needs and only its chunks on screen, so the land never changes as you zoom and a frame costs one to two milliseconds; the zoom stops at about 0.16 px a li, where the upscaled tiles run out. Close in, the place pieces are the next tier of detail.

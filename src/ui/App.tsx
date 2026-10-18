@@ -221,7 +221,7 @@ export function App() {
                 className={`main${leaving ? ' is-leaving' : ''}${entering ? ' is-entering' : ''}`}
                 ref={main}
               >
-                {current.id !== 'cultivate' && current.id !== 'routine' && (
+                {current.id !== 'cultivate' && current.id !== 'routine' && current.id !== 'map' && (
                   <h1 className="screen-title">
                     {current.name} <span className="hanzi">{current.hanzi}</span>
                   </h1>

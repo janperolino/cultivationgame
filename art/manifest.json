@@ -67,6 +67,22 @@
         "map-karst-7",
         "map-karst-8"
       ]
+    },
+    {
+      "id": "map-clouds",
+      "kind": "scene",
+      "out": "src/ui/art/map/clouds.webp",
+      "width": 1248,
+      "quality": 80,
+      "budgetKB": 200,
+      "concept": "map-1",
+      "prompt": "The fog's cloud banks (A5, docs/mockups/map-fog/): a sheet of eight separate soft cloud banks, two across and four down, each centred in its cell with dark space round it, on pure black #000000, as seen from high above a painted fantasy world map at night: pale moonlit grey-white, soft billowing edges thinning to wisps, no hard outlines. The map reads each cloud's brightness as its alpha. No land, no text, no frame."
+    }
+  ],
+  "maps": [
+    {
+      "region": "qm-bianhuang",
+      "budgetMB": 25
     }
   ]
 }

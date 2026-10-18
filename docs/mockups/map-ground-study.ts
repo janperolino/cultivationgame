@@ -6,6 +6,9 @@
 import { densify, segDist, type Multi, type Pt } from '../../src/core/map/geometry.ts';
 import { areaAt, generateRegion, regionMap, type RegionMap } from '../../src/core/map/region.ts';
 import { sightAt } from '../../src/core/map/fog.ts';
+import { band, bandAt, depthInfo, qiAt } from '../../src/core/map/depth.ts';
+import { terrainAt } from '../../src/core/map/region.ts';
+import { QI_NAMES } from '../../src/content/map/travel.ts';
 import { hashSeed, mulberry32 } from '../../src/core/rng.ts';
 import { depthLines } from '../../src/ui/map/draw.ts';
 import atlas from '../../src/content/generated/atlas.json';
@@ -13,6 +16,10 @@ import mrDraft from './medicine-ridges-draft.json';
 
 /** A frame is asked for; set before anything loads, since a cached image can call redraw at once. */
 let queued = false;
+/** The layout study shows a card waiting on the course. */
+let cardWaits = false;
+/** How much the painted land is lifted, a gain on its colors under the fog (Jan: brighter, in A5.1). */
+let gain = 1;
 const opts = { tiles: 'on', upscaled: 'on', fit: 'on', labels: 'on', fog: 'on', ink: 'off', erase: 'off', drift: 'off', limit: 'charted' };
 
 // ---------------------------------------------------------------- the paintings
@@ -55,17 +62,12 @@ function outlinePath(m: Multi): Path2D {
   return p;
 }
 
-const guides = import.meta.glob('./map-guide-qm-*.json', { eager: true, import: 'default' }) as Record<string, Guide>;
-const tileLists = import.meta.glob('./map-tiles/*/tiles.json', { eager: true, import: 'default' }) as Record<
+// The map's art moved in A5.1: the pipeline's files to art/map/<region>/, the chunks to public/map/.
+const guides = import.meta.glob('../../art/map/*/guide.json', { eager: true, import: 'default' }) as Record<string, Guide>;
+const tileLists = import.meta.glob('../../art/map/*/tiles.json', { eager: true, import: 'default' }) as Record<
   string,
-  { region: string; tiles: TileFrame[] }
+  { region: string; tiles: (TileFrame & { pyramid?: Omit<ChunkPyramid, 'id'> })[] }
 >;
-const pyramids = import.meta.glob('./map-tiles/*/chunks/*/chunks.json', { eager: true, import: 'default' }) as Record<
-  string,
-  ChunkPyramid
->;
-const pyramidOf = (region: string, id: string) =>
-  Object.entries(pyramids).find(([path]) => path.includes(`/${region}/chunks/${id}/`))?.[1];
 
 /** A tile without chunks yet: its painting with its tone and feathered edges, made once. */
 function feathered(img: HTMLImageElement, tone?: number[]): HTMLCanvasElement {
@@ -104,17 +106,21 @@ const REGIONS = ['qm-bianhuang', 'qm-yaoling'].map((id) => {
     id,
     img,
     ok: false,
-    // The current guide, not a saved earlier one (map-guide-<id>-v1.json).
-    guide: Object.entries(guides).find(([path, g]) => g.region === id && !/-v\d/.test(path))?.[1],
+    // A region is painted once its painting is fitted (its guide has a fit).
+    guide: Object.values(guides).find((g) => g.region === id && g.fit),
     outline: outlinePath(shapeOf(id)!.polygons!),
     tiles: (Object.values(tileLists).find((l) => l.region === id)?.tiles ?? []).map((t) => {
-      const tile = { ...t, canvas: null as HTMLCanvasElement | null, pyramid: pyramidOf(id, t.id) };
+      const tile = {
+        ...t,
+        canvas: null as HTMLCanvasElement | null,
+        pyramid: t.pyramid ? { id: t.id, ...t.pyramid } : undefined,
+      };
       const timg = new Image();
       timg.onload = () => {
         tile.canvas = feathered(timg, t.tone);
         redraw();
       };
-      timg.src = `./map-tiles/${id}/tile-${t.id}.png`;
+      timg.src = `../../art/map/${id}/tile-${t.id}.png`;
       return tile;
     }),
   };
@@ -122,7 +128,7 @@ const REGIONS = ['qm-bianhuang', 'qm-yaoling'].map((id) => {
     r.ok = true;
     redraw();
   };
-  img.src = `./map-painting-${id}.png`;
+  img.src = `../../art/map/${id}/painting.png`;
   return r;
 });
 const continent = outlinePath(shapeOf('qiming')!.polygons!);
@@ -582,7 +588,7 @@ function chunk(region: string, id: string, l: number, c: number, r: number): HTM
     if (CHUNKS.size > 400) CHUNKS.delete(CHUNKS.keys().next().value!);
     img = new Image();
     img.onload = () => redraw();
-    img.src = `./map-tiles/${region}/chunks/${id}/L${l}/${c}-${r}.webp`;
+    img.src = `/map/${region}/chunks/${id}/L${l}/${c}-${r}.webp`;
     CHUNKS.set(key, img);
   }
   return img.complete && img.naturalWidth ? img : null;
@@ -726,6 +732,17 @@ function draw() {
     ctx.restore();
   }
 
+  // The land lifted: the canvas added onto itself, so its colors scale and black stays black.
+  if (gain > 1) {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = 'lighter';
+    for (let g = gain - 1; g > 0; g -= 1) {
+      ctx.globalAlpha = Math.min(1, g);
+      ctx.drawImage(canvas, 0, 0);
+    }
+    ctx.restore();
+  }
   drawFog(opts.drift === 'on' ? performance.now() / 1000 : 0);
 
   if (opts.labels === 'on') {
@@ -873,6 +890,28 @@ function draw() {
     ctx.strokeStyle = '#d6ab4c';
     ctx.lineWidth = 1.5;
     ctx.stroke();
+    // A card the road brought, waiting a little way down the course (the layout study's "a card waits").
+    if (cardWaits) {
+      const [cx, cy] = at(...course[Math.floor(course.length * 0.35)]!);
+      ctx.beginPath();
+      ctx.arc(cx, cy, 13, 0, 7);
+      ctx.fillStyle = 'rgba(8,9,12,0.92)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(214,171,76,0.95)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, 18, 0, 7);
+      ctx.strokeStyle = 'rgba(214,171,76,0.35)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.font = "15px 'Ma Shan Zheng', KaiTi, serif";
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#d6ab4c';
+      ctx.fillText('修', cx, cy + 1);
+      ctx.textBaseline = 'alphabetic';
+    }
     const [x, y] = at(you[0], you[1]);
     const r = sightHere * k;
     if (r > 6) {
@@ -929,9 +968,14 @@ new ResizeObserver(resize).observe(canvas);
 const MAX_K = 0.16;
 /** The farthest zoom (Jan's call in A5): what you have charted, with a little room round it. */
 const ROOM = 1.15;
+/** The part of the canvas the screen leaves open, as shares (the layout study's take sets it). */
+let open = [0, 0, 1, 1];
 const minK = () =>
   opts.limit === 'charted'
-    ? Math.min(W / ((charted[2] - charted[0]) * ROOM), H / ((charted[3] - charted[1]) * ROOM))
+    ? Math.min(
+        (W * (open[2]! - open[0]!)) / ((charted[2] - charted[0]) * ROOM),
+        (H * (open[3]! - open[1]!)) / ((charted[3] - charted[1]) * ROOM),
+      )
     : 0.004;
 const clampK = (k: number) => Math.max(minK(), Math.min(MAX_K, k));
 let drag: { x: number; y: number } | null = null;
@@ -1002,3 +1046,50 @@ document.fonts.ready.then(redraw);
 resize();
 zooms.charted!();
 redraw();
+
+// ---------------------------------------------------------------- inside the layout study
+
+// map-layout-study.html frames this map with the Map screen's controls round it (?embed): it reads
+// the line under the date and the course from here, and puts what you've charted where its take
+// leaves the map open.
+if (new URLSearchParams(location.search).has('embed')) {
+  const placeNear = (p: Pt) =>
+    map.places.reduce((a, b) =>
+      Math.hypot(b.x - p[0], b.y - p[1]) < Math.hypot(a.x - p[0], a.y - p[1]) ? b : a,
+    );
+  const here = placeNear(you);
+  const to = placeNear(course.at(-1)!);
+  const d = depthInfo(map, you);
+  const bd = band(bandAt(map, you));
+  const qd = qiAt(map, you);
+  let li = 0;
+  for (let i = 1; i < course.length; i++)
+    li += Math.hypot(course[i]![0] - course[i - 1]![0], course[i]![1] - course[i - 1]![1]);
+  (window as unknown as { mapStudy: unknown }).mapStudy = {
+    where: {
+      place: here.name,
+      terrain: terrainAt(map, you),
+      qi: `${QI_NAMES[qd]} qi (${qd})`,
+      sight: sightHere,
+      pips: Array.from({ length: Math.max(1, d.of) }, (_, i) => (i < d.ring ? '●' : '○')).join(''),
+      depth: `${d.name}: ${bd ? `beasts of ${bd.name} · ${bd.finds} finds` : 'nothing past mortal beasts'}`,
+    },
+    course: { name: to.name, hanzi: to.hanzi, li: Math.round(li / 10) * 10 },
+    /** The part of the map the take leaves open (shares of the canvas): what you've charted fits in it. */
+    frame(rect: number[]) {
+      open = rect;
+      zooms.charted!();
+      view.x = (charted[0] + charted[2]) / 2 - (((rect[0]! + rect[2]!) / 2 - 0.5) * W) / view.k;
+      view.y = (charted[1] + charted[3]) / 2 - (((rect[1]! + rect[3]!) / 2 - 0.5) * H) / view.k;
+      redraw();
+    },
+    card(on: boolean) {
+      cardWaits = on;
+      redraw();
+    },
+    bright(g: number) {
+      gain = g;
+      redraw();
+    },
+  };
+}

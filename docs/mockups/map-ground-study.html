@@ -40,6 +40,8 @@
 <div class="view"><canvas id="map"></canvas></div>
 <script>
   // The sample save: a reload with ?sample=…, so the fog is built afresh round it.
+  // Inside the layout study (?embed) the map stands alone, without this bar.
+  if (new URLSearchParams(location.search).has('embed')) document.querySelector('.bar').style.display = 'none';
   const sample = new URLSearchParams(location.search).get('sample') ?? 'region';
   document.querySelectorAll('[data-sample]').forEach((b) => {
     b.classList.toggle('on', b.dataset.sample === sample);

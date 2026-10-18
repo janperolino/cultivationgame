@@ -8,15 +8,16 @@
 //   npx tsx tools/map-fit.ts <region-id> [--tile <c-r>]
 import { readFileSync, writeFileSync } from 'node:fs';
 import sharp from 'sharp';
+import { guideJson, guidePng, paintingPng, tilesJson, workDir } from './map-paths.ts';
 
 const args = process.argv.slice(2);
 const region = args[0];
 if (!region) throw new Error('usage: tsx tools/map-fit.ts <region-id> [--tile <c-r>]');
 const tile = args.includes('--tile') ? args[args.indexOf('--tile') + 1]! : null;
-const tileDir = `docs/mockups/map-tiles/${region}`;
-const guideFile = `docs/mockups/map-guide-${region}.png`;
-const paintFile = `docs/mockups/map-painting-${region}.png`;
-const jsonFile = `docs/mockups/map-guide-${region}.json`;
+const tileDir = workDir(region);
+const guideFile = guidePng(region);
+const paintFile = paintingPng(region);
+const jsonFile = guideJson(region);
 
 /** Work at a quarter size. */
 const D = 4;
@@ -248,7 +249,7 @@ const fit = [a, b, -sn, c, cx + tx * D - (a * cx - sn * cy), cy + ty * D - (b * 
 );
 
 if (tile) {
-  const file = `${tileDir}/tiles.json`;
+  const file = tilesJson(region);
   const list = JSON.parse(readFileSync(file, 'utf8')) as {
     tiles: { id: string; fit?: number[]; tone?: number[] }[];
   };

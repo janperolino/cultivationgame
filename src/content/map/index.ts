@@ -41,6 +41,18 @@ export interface RegionFile {
   outline: Ring[][];
   land: Ring[][];
   places: RegionPlace[];
+  /** The regions and seas next door, named faintly through the fog (A5, design § The travel map). */
+  nextDoor?: NextDoor[];
+}
+
+/** A region or sea next door: its name sits at `at`; a region's edge is drawn dotted. */
+export interface NextDoor {
+  id: string;
+  kind: 'region' | 'sea';
+  name: string;
+  hanzi: string;
+  at: [number, number];
+  outline?: Ring[][];
 }
 
 export interface RegionData {
