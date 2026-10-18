@@ -76,7 +76,7 @@ The game plays out in Severed Heaven, one middle thousand world, written by hand
 
 | | Qi Condensation | Foundation | Core Formation | Nascent Soul | Deity Transformation | Void Refinement |
 |---|---|---|---|---|---|---|
-| A frontier region (the Border Wilds) | about 40,000 | about 1,300 | about 25 | about 3 | | |
+| A frontier region (the Border Wilds) | about 50,000 | about 1,700 | about 30 | about 3 | | |
 | The heartland (the Imperial Domain) | about 20 million | about 650,000 | about 11,000 | about 200 | about 10 | |
 | The Morning Star Continent | about 55 million | about 1.8 million | about 30,000 | about 600 | about 20 | about 2, and the Ancestor Emperor at Body Integration |
 

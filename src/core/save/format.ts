@@ -33,7 +33,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 30;
+export const SAVE_VERSION = 31;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -900,6 +900,25 @@ const migrations: Record<number, (old: Raw) => Raw> = {
         }
       : null;
     return { ...old, version: 30, state: { ...s, mapgen, map } };
+  },
+  // v30, A5.2: the Border Wilds gained their missing seats, sects and wild places (Jan's call, the
+  // region held a tenth of the cultivators its people make), with roads to the new seats, so a
+  // saved region is seeded again for its roads and anything sensed on an old course goes with it.
+  30: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const world = ((s.lineage ?? {}) as Raw).id as string;
+    const mapgen = Object.fromEntries(
+      Object.keys((s.mapgen ?? {}) as Raw).map((id) => [id, generateRegion(id, world)]),
+    );
+    const m = s.map as Raw | null | undefined;
+    const map = m
+      ? {
+          ...m,
+          course: null,
+          encounters: ((m.encounters ?? []) as Raw[]).filter((e) => e.state === 'waiting'),
+        }
+      : null;
+    return { ...old, version: 31, state: { ...s, mapgen, map } };
   },
 };
 

@@ -313,6 +313,18 @@ export const BORDER_WILDS: RegionContent = {
     ['foot-of-the-wall', 'qm-yeqiao-hui'],
     ['qm-shoukou-cheng', 'thornpost'],
     ['thornpost', 'reedwater'],
+    // A5.2's seats: the Herders' royal city, the March's market, the strait port, Stone Eyes'
+    // council sinkhole, and the sects that stand on a road.
+    ['qm-qianlan-cheng', 'corral-town'],
+    ['qm-qianlan-cheng', 'hatchling-barns'],
+    ['qm-qianlan-cheng', 'qm-baijiang-zong'],
+    ['qm-hewan-cheng', 'grain-ford'],
+    ['qm-hewan-cheng', 'spear-plow'],
+    ['qm-tuichao-gang', 'hatchling-barns'],
+    ['qm-tuichao-gang', 'qm-shoukou-cheng'],
+    ['qm-tianyan', 'sinkhole-terraces'],
+    ['qm-fugu-ge', 'foot-of-the-wall'],
+    ['qm-jingzhong-si', 'qm-tushou-men'],
   ],
   placeShops: {
     'qm-shoukou-cheng': [
