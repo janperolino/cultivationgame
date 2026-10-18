@@ -12620,7 +12620,7 @@
  },
  {
   "id": "qm-anbian-fu",
-  "editedAt": "2026-10-15T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -12645,7 +12645,7 @@
   ],
   "hanzi": "安边府",
   "kind": "kingdom",
-  "lore": "The Gongsuns have held the march for nine generations and buried most of their sons on the wall. Every family owes one child to the garrison at sixteen. Rooted children are another matter: since the raids tripled, the Gongsuns hold a frontier charter, so the Registry's frontier tester comes at twelve, the age the march can put a child on the wall, and the garrison keeps every rooted child for its cadet school instead of sending them to the capital. Children here learn to read beast tracks before letters and to tell a raid horn from a hunt horn. A beast core turned in at a fort earns a bounty in rice or stones.",
+  "lore": "The Gongsuns have held the march for nine generations and buried most of their sons on the wall. Every family owes one child to the garrison at sixteen, which keeps a million and a half under arms across the march, the [[Wall of Piled Bones]] and the coast. Rooted children are another matter: since the raids tripled, the Gongsuns hold a frontier charter, so the Registry's frontier tester comes at twelve, the age the march can put a child on the wall, and the garrison keeps every rooted child for its cadet school instead of sending them to the capital. Its best leave all the same, for the City of the Guarded Mouth or the Beast-Butcher Gate, so the march itself has no one past Foundation. Children here learn to read beast tracks before letters and to tell a raid horn from a hunt horn. A beast core turned in at a fort earns a bounty in rice or stones.",
   "map": {
    "r": 6000,
    "x": 183000,
@@ -12655,7 +12655,7 @@
   "parent": "qm-bianhuang",
   "pinyin": "Anbian Fu",
   "status": "canon",
-  "summary": "The empire's frontier march, ruled by the Gongsun family of generals. Farmers plow with spears at hand, and every village has a watchtower and a beast-pit.",
+  "summary": "The empire's frontier march, 12,000 li of hill country ruled by the Gongsun family of generals: some forty million farmers who plow with spears at hand, and a line of beacon peaks whose spirit-fire carries a raid warning across the march in a night.",
   "tags": [
    "starting kingdom",
    "frontier",
@@ -12691,7 +12691,15 @@
   ],
   "top": "Foundation Establishment",
   "truth": "Lady Gongsun Wei, the general's widow, has been trading cores and captives to Shared Roost City to buy the weapons the capital stopped sending.",
-  "way": ""
+  "way": "",
+  "prosperity": 3,
+  "population": {
+   "mortals": 44000000,
+   "qi": 12000,
+   "foundation": 300
+  },
+  "size": 12000,
+  "fromAbove": "Folded hill country with its counties' fields in the valleys, the beacon peaks' pillars of spirit-fire along its borders, and the pale dome over Pacified Fort."
  },
  {
   "id": "qm-anlan-gang",
@@ -12824,12 +12832,12 @@
   "way": ""
  },
  {
-  "editedAt": "2026-10-15T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "边荒",
   "id": "qm-bianhuang",
   "kind": "region",
-  "lore": "Across the [[Jade Strait]] lies beast country, and at low tide the island chain is a road in both directions, though walking it island to island is a season's travel at the least. Spirit beasts work north along the chain to raid herds and villages; human sects go over to hunt cores, eggs and herbs; half-bloods and smugglers pass goods island by island, by night, toward [[Shared Roost City]]. The empire holds the coast with fortress towns and conscript garrisons, and pays for every beast core brought in. The karst is honeycombed with caves where raiders, smugglers and beasts all hide. Raids have tripled in five years, and the beasts coming over are older.",
+  "lore": "Across the [[Jade Strait]] lies beast country, and at low tide the island chain is a road in both directions, though walking it island to island is a season's travel at the least. Spirit beasts work north along the chain to raid herds and counties; human sects go over to hunt cores, eggs and herbs; half-bloods and smugglers pass goods island by island, by night, toward [[Shared Roost City]]. The empire holds the coast with the [[Wall of Piled Bones]], the fortress city at the chain's head and a conscript garrison more than a million strong, and pays for every beast core brought in. The kingdoms are islands of farmland in a sea of wild karst, honeycombed with caves where raiders, smugglers and beasts all hide. Raids have tripled in five years, and the beasts coming over are older.",
   "map": {
    "x": 176000,
    "y": 214000
@@ -12839,7 +12847,7 @@
   "pinyin": "Bianhuang",
   "qiDensity": 3,
   "status": "canon",
-  "summary": "Karst hills on the Morning Star Continent's southwest coast where the island chain to Vast Wilds begins. Beasts raid, smugglers cross at low tide and every family owes a child to the wall.",
+  "summary": "Sixty thousand li of karst hills on the Morning Star Continent's southwest coast, where the island chain to Vast Wilds begins. Three kingdoms hold a sliver of it and beasts hold the rest; smugglers cross at low tide and every family owes a child to the wall.",
   "tags": [
    "frontier",
    "beasts",
@@ -12857,7 +12865,17 @@
   ],
   "top": "Nascent Soul",
   "truth": "The Beast Court is not sending the raids. Old beasts are waking in the Vast Wilds Continent's mountains and driving the young ones north across the strait.",
-  "way": ""
+  "way": "",
+  "prosperity": 3,
+  "population": {
+   "mortals": 110000000,
+   "qi": 40000,
+   "foundation": 1300,
+   "core": 25,
+   "nascent": 3
+  },
+  "size": 60000,
+  "fromAbove": "Karst hill country under a sea of cloud, stone pillars standing out of it by the hundred thousand, the Wall's bone-white line along the coastal hills, and the island chain stepping out across the Jade Strait."
  },
  {
   "id": "qm-bingyuan",
@@ -13248,7 +13266,7 @@
  },
  {
   "id": "qm-duigu-qiang",
-  "editedAt": "2026-10-15T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -13259,7 +13277,7 @@
     ]
    },
    {
-    "name": "the old sections faced with cart-sized skulls",
+    "name": "the old stretches faced with beast-king skulls, their eye sockets gates",
     "tags": [
      "height",
      "fall",
@@ -13276,7 +13294,7 @@
   ],
   "hanzi": "堆骨墙",
   "kind": "landmark",
-  "lore": "Each garrison adds the bones of the beasts it kills, and the oldest sections are faced with skulls the size of carts. Beast spirits haunt it in the seventh month, and ghost-hunters and bone-collectors come then. Old bones from the wall are a refining material for beast-taming whistles and Slaughter Dao artifacts, and stealing them is a hanging offense. The [[March of Pacified Borders]] garrisons the southern stretch, and its cadets learn the wall by patrolling it.",
+  "lore": "Each garrison builds in the bones of the beasts it kills, and the oldest stretches are faced with the skulls of beast kings, each the size of a hill, their eye sockets now the wall's gates. Binding arrays run along the top as a thread of light and hold the beast spirits down, all but the seventh month, when they haunt it and ghost-hunters and bone-collectors come. Old bones from the wall are a refining material for beast-taming whistles and Slaughter Dao artifacts, and stealing them is a hanging offense. The [[March of Pacified Borders]] garrisons the southern stretch, and its cadets learn the wall by patrolling it.",
   "map": {
    "x": 176000,
    "y": 196000
@@ -13285,7 +13303,7 @@
   "parent": "qm-bianhuang",
   "pinyin": "Duigu Qiang",
   "status": "canon",
-  "summary": "A wall of earth and beast bones along the coastal hills, built over a thousand years of raids. On Ghost Month nights the bones howl.",
+  "summary": "A wall of rammed earth and beast-king bone 9,000 li long along the coastal hills, as tall as cliffs and built over a thousand years of raids. On Ghost Month nights the bones howl.",
   "tags": [
    "frontier",
    "ghost",
@@ -13303,7 +13321,15 @@
   ],
   "top": "Core Formation",
   "truth": "",
-  "way": ""
+  "way": "",
+  "population": {
+   "mortals": 200000,
+   "qi": 1500,
+   "foundation": 80,
+   "core": 2
+  },
+  "size": 9000,
+  "fromAbove": "A bone-white rampart as tall as cliffs running 9,000 li over the coastal hills, beast-king skulls the size of hills for its gatehouses and a thread of binding-array light along its top."
  },
  {
   "id": "qm-fangmo-di",
@@ -13802,7 +13828,7 @@
     "anchor": 3110
    }
   },
-  "editedAt": "2026-10-15T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -13862,7 +13888,8 @@
   ],
   "top": "Qi Condensation (gate cap)",
   "truth": "",
-  "way": ""
+  "way": "",
+  "fromAbove": "Nothing while it sleeps, its gate a cave mouth in the karst; for the thirty days it opens, a column of green light stands over the cave."
  },
  {
   "id": "qm-hongjiang",
@@ -14714,7 +14741,7 @@
   "way": ""
  },
  {
-  "editedAt": "2026-10-15T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -14742,7 +14769,7 @@
   "hanzi": "迷魂石林",
   "id": "qm-mihun-shilin",
   "kind": "forbidden",
-  "lore": "The Golden Python's grandson, a Nascent Soul serpent, crossed the strait six years ago and took the stone forest as its hunting ground. Its illusions make travelers walk in circles until they starve. Its shed skins are worth a fortune, and its den is said to hold the treasures of everyone it has eaten. Three imperial expeditions have gone in.",
+  "lore": "The Golden Python's grandson, a Nascent Soul serpent several li long, crossed the strait six years ago and took the stone forest as its hunting ground. Its illusions make travelers walk in circles until they starve. A shed skin of its is worth a fortune, and its den is said to hold the treasures of everyone it has eaten. Three imperial expeditions have gone in.",
   "map": {
    "r": 6000,
    "x": 188000,
@@ -14753,7 +14780,7 @@
   "pinyin": "Mihun Shilin",
   "qiDensity": 5,
   "status": "canon",
-  "summary": "A maze of stone pillars where a great python from the Vast Wilds Continent has made its den. Its illusions turn the forest into a trap no map survives.",
+  "summary": "A maze of stone pillars 12,000 li across, each pillar a peak in its own right, where a great python from the Vast Wilds Continent has made its den. Its illusions turn the forest into a trap no map survives.",
   "tags": [
    "beasts",
    "illusion",
@@ -14771,7 +14798,9 @@
   ],
   "top": "Nascent Soul",
   "truth": "",
-  "way": ""
+  "way": "",
+  "size": 12000,
+  "fromAbove": "Stone pillars by the hundred thousand under a lid of mist that never lifts, the mist turning slowly at its heart round the python's den."
  },
  {
   "id": "qm-mingchong-zhai",
@@ -14853,7 +14882,7 @@
  },
  {
   "id": "qm-muling-guo",
-  "editedAt": "2026-10-15T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -14879,7 +14908,7 @@
   ],
   "hanzi": "牧灵国",
   "kind": "kingdom",
-  "lore": "The Kingdom of Spirit Herders's ranches raise thunder-horned deer, scale-horses and war hounds from eggs and cubs bought from smugglers. The empire buys every mount at a good price, and the herder families are rich, armed and hunted. Beast Court agents, half-bloods in its pay and now and then an old beast, cross the strait to kill tamers and free their beasts. Children are bonded to a hatchling at seven and grow up with it.",
+  "lore": "The Kingdom of Spirit Herders's ranches raise thunder-horned deer, scale-horses and war hounds from eggs and cubs bought from smugglers, in herds that take days to ride past. The empire buys every mount at a good price, and the herder families are rich, armed and hunted. Beast Court agents, half-bloods in its pay and now and then an old beast, cross the strait to kill tamers and free their beasts. Children are bonded to a hatchling at seven and grow up with it.",
   "map": {
    "r": 4500,
    "x": 168000,
@@ -14889,7 +14918,7 @@
   "parent": "qm-bianhuang",
   "pinyin": "Muling Guo",
   "status": "canon",
-  "summary": "A kingdom of beast tamers who raise war mounts for the empire from eggs smuggled out of the Vast Wilds Continent. The Beast Court has put a price on every one of them.",
+  "summary": "A kingdom of beast tamers on 9,000 li of grassland, who raise war mounts for the empire by the hundred thousand from eggs smuggled out of the Vast Wilds Continent. The Beast Court has put a price on every one of them.",
   "tags": [
    "starting kingdom",
    "beast taming",
@@ -14925,7 +14954,15 @@
   ],
   "top": "Foundation Establishment",
   "truth": "The kingdom's best stallion bloodline comes from a beast that wandered over the strait on its own and asked to stay. It speaks, though it has never shown a realm that should allow it, and has asked them to keep that quiet.",
-  "way": ""
+  "way": "",
+  "prosperity": 4,
+  "population": {
+   "mortals": 32000000,
+   "qi": 10000,
+   "foundation": 350
+  },
+  "size": 9000,
+  "fromAbove": "Open grass to every edge, the herds' trails worn into it like braided rivers, and the ranch steadings as pale rings of array-fenced pasture."
  },
  {
   "id": "qm-panyun-tian",
@@ -15164,7 +15201,7 @@
  },
  {
   "id": "qm-shiyan-guo",
-  "editedAt": "2026-10-15T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -15192,7 +15229,7 @@
   ],
   "hanzi": "石眼国",
   "kind": "kingdom",
-  "lore": "Stone Eyes is named for the round sinkholes that dot its hills, each with a village around the rim and terraces down the walls. Its people farm in the sinkholes, keep bats for guano and guide smugglers through caves no map shows. The empire counts it as part of the march; the cave clans pay no tax and give no soldiers. Children grow up knowing which neighbors have scales under their sleeves and never saying so.",
+  "lore": "Stone Eyes is named for the round sinkholes that pock its karst. The great ones are tens of li across, each a town terraced down its walls with the farms at the bottom; the small ones hold a village each. Its people farm in the sinkholes, keep bats for guano and guide smugglers through caves that run for thousands of li and that no map shows. The empire counts it as part of the march; the cave clans pay no tax and give no soldiers. Children grow up knowing which neighbors have scales under their sleeves and never saying so.",
   "map": {
    "r": 4500,
    "x": 192000,
@@ -15202,7 +15239,7 @@
   "parent": "qm-bianhuang",
   "pinyin": "Shiyan Guo",
   "status": "canon",
-  "summary": "Sinkhole villages in the karst, ruled by a council of cave clans. Half-blood families hide here, and nobody asks what is in the lower caves.",
+  "summary": "Nine thousand li of sinkhole karst ruled by a council of cave clans. The great sinkholes hold whole towns down their walls; half-blood families hide here, and nobody asks what is in the lower caves.",
   "tags": [
    "starting kingdom",
    "backwater",
@@ -15226,7 +15263,15 @@
   ],
   "top": "Qi Condensation",
   "truth": "",
-  "way": ""
+  "way": "",
+  "prosperity": 3,
+  "population": {
+   "mortals": 13000000,
+   "qi": 4000,
+   "foundation": 120
+  },
+  "size": 9000,
+  "fromAbove": "Pillar karst pocked with round sinkholes, the great ones dark as eyes from above, with cloud pooling in them at dawn."
  },
  {
   "id": "qm-shoukou-cheng",
@@ -15234,7 +15279,7 @@
   "editedBy": "claude",
   "features": [
    {
-    "name": "the skull-faced walls",
+    "name": "the sea-cliff walls, faced with beast-king skulls",
     "tags": [
      "height",
      "fall"
@@ -15264,7 +15309,7 @@
   ],
   "hanzi": "守口城",
   "kind": "city",
-  "lore": "The City of the Guarded Mouth holds the narrow coast where the chain begins, with a garrison of ten thousand and a bounty office that pays for cores by grade. Its markets sell beast parts, smuggled Vast Wilds herbs and frontier saber steel. Every sect with a frontier interest keeps a hall here. At low tide, the reef road appears below the walls.",
+  "lore": "The City of the Guarded Mouth holds the narrow coast where the chain begins, a ring of walls 150 li across with a garrison of three hundred thousand soldiers and five thousand cultivators, under a commander who has reached Nascent Soul. A ward array caps the harbour mouth, and its bounty office pays for cores by grade. Its markets sell beast parts, smuggled Vast Wilds herbs and frontier saber steel. Every sect with a frontier interest keeps a hall here. At low tide, the reef road appears below the walls.",
   "map": {
    "x": 151047,
    "y": 212587
@@ -15273,7 +15318,7 @@
   "parent": "qm-bianhuang",
   "pinyin": "Shoukou Cheng",
   "status": "canon",
-  "summary": "The fortress city at the head of the island chain, the empire's frontier headquarters. Its walls are faced with the skulls of beasts that tried them.",
+  "summary": "The empire's frontier headquarters, a fortress city of eight million on the coast where the island chain begins. Its walls rise out of the surf as tall as sea cliffs, faced with the skulls of the beast kings that tried them.",
   "tags": [
    "frontier",
    "fortress",
@@ -15298,7 +15343,17 @@
   ],
   "top": "Nascent Soul",
   "truth": "",
-  "way": ""
+  "way": "",
+  "prosperity": 6,
+  "population": {
+   "mortals": 8000000,
+   "qi": 5000,
+   "foundation": 600,
+   "core": 12,
+   "nascent": 1
+  },
+  "size": 150,
+  "fromAbove": "A ring of sea-cliff walls 150 li across rising out of the surf, faced with beast-king skulls, a ward dome over the harbour mouth and the reef road showing at low tide."
  },
  {
   "id": "qm-shuangling",
@@ -15601,7 +15656,7 @@
    ],
    "array": "core-formation"
   },
-  "editedAt": "2026-10-15T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -15636,7 +15691,7 @@
   "parent": "qm-bianhuang",
   "pinyin": "Tushou Men",
   "status": "canon",
-  "summary": "A frontier sect of saber cultivators who raid across the strait for beast cores. Brutal, rich and the beasts' favorite target.",
+  "summary": "A frontier sect of three thousand saber cultivators who raid across the strait for beast cores, on three peaks its founder sheared flat with one cut. Brutal, rich and the beasts' favorite target.",
   "tags": [
    "saber",
    "slaughter",
@@ -15672,7 +15727,17 @@
   ],
   "top": "Nascent Soul",
   "truth": "The sect's Nascent Soul master killed a young Beast Court prince fifty years ago. The prince's mother has finally woken from seclusion.",
-  "way": "orthodox"
+  "way": "orthodox",
+  "prosperity": 6,
+  "population": {
+   "mortals": 20000,
+   "qi": 3000,
+   "foundation": 250,
+   "core": 8,
+   "nascent": 1
+  },
+  "size": 300,
+  "fromAbove": "Three peaks above the karst with their tops sheared flat, the halls on them lit red by the core furnaces, under a blood-red sect array."
  },
  {
   "id": "qm-wangti",
@@ -16128,7 +16193,7 @@
  },
  {
   "id": "qm-yeqiao-hui",
-  "editedAt": "2026-10-15T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -16201,7 +16266,14 @@
   ],
   "top": "Core Formation",
   "truth": "",
-  "way": "neutral"
+  "way": "neutral",
+  "prosperity": 4,
+  "population": {
+   "qi": 600,
+   "foundation": 120,
+   "core": 4
+  },
+  "fromAbove": "Nothing they would let you see: sea caves along the chain, and lantern lights moving island to island at low tide."
  },
  {
   "id": "qm-yinlei-zong",

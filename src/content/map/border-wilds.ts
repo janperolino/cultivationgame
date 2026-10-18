@@ -2,6 +2,7 @@
 // written by hand, the roads that join them, the names of its wild tracts, and where each start
 // stands. The wild sites are seeded from content/map/sites.ts; the outlines are the atlas's.
 // Drafted in P3.6 for Jan's review; best reviewed on the map.
+import type { Population } from '../atlas/schema.ts';
 import type { FeatureTag } from './sites.ts';
 
 export interface WrittenTown {
@@ -18,6 +19,14 @@ export interface WrittenTown {
   shops: readonly string[];
   lore: string;
   features: readonly { name: string; tags: FeatureTag[] }[];
+  /** The scale fields, as on an atlas place (design § World bible, The world at its true size). */
+  prosperity: number;
+  /** About how many live in the seat itself, mortals and cultivators by realm. */
+  population: Population;
+  /** Li across. */
+  size: number;
+  /** What shows from the map's height. */
+  fromAbove: string;
 }
 
 export interface RegionContent {
@@ -59,8 +68,16 @@ export const BORDER_WILDS: RegionContent = {
       y: 217200,
       parent: 'qm-anbian-fu',
       shops: ['march-stall'],
-      lore: 'The Gongsun garrison’s seat and its cadet school, a watchtower on every corner of the wall.',
-      features: [F('the watchtower', 'height', 'burnable'), F('the drill yard', 'witnesses')],
+      lore: 'The Gongsun garrison’s seat and its cadet school, cut into the crown of a hill the first general flattened with one stroke. Its walls are the hill’s own rock, raised by formation to the height of cliffs, and a lockdown array rises over it as a dome of pale light when beasts come.',
+      features: [
+        F('the beacon bastion', 'height', 'fire'),
+        F('the drill ground on the cut plateau', 'witnesses'),
+      ],
+      prosperity: 4,
+      population: { mortals: 1_500_000, qi: 1500, foundation: 120 },
+      size: 40,
+      fromAbove:
+        'A hill crown cut flat and ringed by walls of its own rock as tall as cliffs, a pale lockdown dome over it, and the March’s beacon as a pillar of spirit-fire on the highest bastion.',
     },
     {
       id: 'spear-plow',
@@ -72,8 +89,13 @@ export const BORDER_WILDS: RegionContent = {
       y: 220600,
       parent: 'qm-anbian-fu',
       shops: ['march-mortal'],
-      lore: 'Fields plowed with spears at hand; the village store sells to the patrols.',
+      lore: 'The seat of a farming county two thousand li across, six million strong, where fields are plowed with spears at hand; the county store sells to the patrols.',
       features: [F('fields plowed with spears at hand', 'witnesses'), F('a beast-pit', 'fall')],
+      prosperity: 3,
+      population: { mortals: 150_000, qi: 40 },
+      size: 15,
+      fromAbove:
+        'The county’s fields in a patchwork down the valleys, and a beacon peak over the seat.',
     },
     {
       id: 'ninth-beacon',
@@ -85,8 +107,13 @@ export const BORDER_WILDS: RegionContent = {
       y: 214600,
       parent: 'qm-anbian-fu',
       shops: [],
-      lore: 'The last beacon tower before Stone Eyes, and the March’s border post on the road.',
+      lore: 'The last of the March’s beacon peaks before Stone Eyes, its spirit-fire seen a thousand li off, and the March’s border post on the road.',
       features: [F('the beacon tower', 'height', 'fire')],
+      prosperity: 3,
+      population: { mortals: 40_000, qi: 30 },
+      size: 5,
+      fromAbove:
+        'A lone peak with a pillar of spirit-fire standing on it, the ninth of the March’s beacons.',
     },
     {
       id: 'grain-ford',
@@ -98,8 +125,13 @@ export const BORDER_WILDS: RegionContent = {
       y: 221800,
       parent: 'qm-anbian-fu',
       shops: [],
-      lore: 'Where the March’s grain is counted, taxed and stolen, in that order.',
+      lore: 'Where the March’s grain is counted, taxed and stolen, in that order: granaries for forty million mouths in tiers along the ford.',
       features: [F('the granaries', 'burnable', 'cover'), F('the ford', 'water', 'crossing')],
+      prosperity: 4,
+      population: { mortals: 600_000, qi: 150, foundation: 5 },
+      size: 25,
+      fromAbove:
+        'Granary terraces in tiers along a river crossing, their warding talismans a faint gold net over them.',
     },
     // The Kingdom of Stone Eyes, karst
     {
@@ -112,8 +144,13 @@ export const BORDER_WILDS: RegionContent = {
       y: 211300,
       parent: 'qm-shiyan-guo',
       shops: ['eyes-stall', 'eyes-alchemy', 'eyes-mortal'],
-      lore: 'Terraces down the walls of a sinkhole, and the Registry’s testing stone at the top one.',
+      lore: 'A town of two million terraced down the walls of a sinkhole thirty li across, its farms at the bottom, and the Registry’s testing stone on the top terrace.',
       features: [F('the sinkhole rim', 'height', 'fall'), F('the testing stone', 'witnesses')],
+      prosperity: 3,
+      population: { mortals: 2_000_000, qi: 600, foundation: 20 },
+      size: 30,
+      fromAbove:
+        'A sinkhole thirty li across, dark as an eye from above, terraced all the way down its walls, with cloud pooling in it at dawn.',
     },
     {
       id: 'bat-roost',
@@ -125,8 +162,13 @@ export const BORDER_WILDS: RegionContent = {
       y: 214300,
       parent: 'qm-shiyan-guo',
       shops: [],
-      lore: 'Guano diggers and their ropes, and a smell you stop noticing on the third day.',
+      lore: 'Guano diggers and their ropes in a cave mouth a li high, the swarms pouring out at dusk, and a smell you stop noticing on the third day.',
       features: [F('bat roosts heaped with guano', 'dark', 'burnable')],
+      prosperity: 2,
+      population: { mortals: 80_000 },
+      size: 8,
+      fromAbove:
+        'A cave mouth in a cliff, bat swarms pouring out of it at dusk like smoke a hundred li long.',
     },
     {
       id: 'lower-caves',
@@ -140,6 +182,10 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'Cave clans who guide the Night Bridge’s runners through passages no map shows.',
       features: [F('caves no map shows', 'dark', 'cover', 'narrow')],
+      prosperity: 2,
+      population: { mortals: 50_000, qi: 40 },
+      size: 6,
+      fromAbove: 'Nothing: it is all underground.',
     },
     // The Kingdom of Spirit Herders, plains
     {
@@ -152,8 +198,13 @@ export const BORDER_WILDS: RegionContent = {
       y: 191300,
       parent: 'qm-muling-guo',
       shops: ['herders-stall', 'herders-guild', 'herders-mortal'],
-      lore: 'Thunder-horned deer and scale-horses sold by the head, and the herders’ trading post.',
+      lore: 'The herders’ trading post, where thunder-horned deer and scale-horses are sold by the hundred head and the empire’s buyers keep a standing hall.',
       features: [F('the corrals', 'witnesses', 'fragile'), F('the auction ring', 'witnesses')],
+      prosperity: 5,
+      population: { mortals: 700_000, qi: 200, foundation: 10 },
+      size: 30,
+      fromAbove:
+        'Rings of array-fenced paddock a few li wide each, and the herds moving between them like cloud shadow.',
     },
     {
       id: 'hatchling-barns',
@@ -167,6 +218,11 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'The Night Bridge’s crates come in after dark, and nobody asks what hatches.',
       features: [F('the hatchling barns', 'burnable', 'cover')],
+      prosperity: 4,
+      population: { mortals: 60_000, qi: 80 },
+      size: 6,
+      fromAbove:
+        'Long barns sunk into a valley under a warmth array that keeps the frost off them, a faint amber haze.',
     },
     {
       id: 'thunderhorn-camp',
@@ -178,8 +234,13 @@ export const BORDER_WILDS: RegionContent = {
       y: 188200,
       parent: 'qm-muling-guo',
       shops: [],
-      lore: 'A summer camp of yurts where the deer are broken to the saddle.',
+      lore: 'A summer camp of yurts where the deer are broken to the saddle, beside a herd a hundred thousand strong.',
       features: [F('open grass to the horizon', 'crossing')],
+      prosperity: 4,
+      population: { mortals: 30_000, qi: 40 },
+      size: 20,
+      fromAbove:
+        'A herd of thunder-horned deer a hundred thousand strong on the open grass, sparks off their horns flickering over it on stormy nights.',
     },
     // The wilds between
     {
@@ -194,6 +255,10 @@ export const BORDER_WILDS: RegionContent = {
       shops: ['wall-stall'],
       lore: 'Bone-carters and the women who feed the patrols, in the Wall’s long shadow.',
       features: [F('bone heaps waiting to be built in', 'cover', 'fragile')],
+      prosperity: 2,
+      population: { mortals: 120_000, qi: 60 },
+      size: 10,
+      fromAbove: 'A sprawl in the Wall’s shadow under the smoke of the bone-carters’ kilns.',
     },
     {
       id: 'reedwater',
@@ -207,6 +272,10 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'Salt-reed cutters on the last dry ground before the fens.',
       features: [F('reed beds', 'cover', 'burnable'), F('the salt pans', 'water')],
+      prosperity: 2,
+      population: { mortals: 40_000 },
+      size: 10,
+      fromAbove: 'Salt-reed beds silvering the last dry ground before the fens.',
     },
     {
       id: 'thornpost',
@@ -218,8 +287,12 @@ export const BORDER_WILDS: RegionContent = {
       y: 226000,
       parent: null,
       shops: [],
-      lore: 'A hunters’ stockade on the way to the fens, thorn-hedged against what comes out of them.',
-      features: [F('the thorn stockade', 'cover', 'burnable')],
+      lore: 'A hunters’ post on the way to the fens, ringed by a thorn hedge as tall as a tower that a wood-root cultivator grew a century ago against what comes out of them.',
+      features: [F('the thorn hedge', 'cover', 'burnable', 'height')],
+      prosperity: 2,
+      population: { mortals: 15_000, qi: 20 },
+      size: 4,
+      fromAbove: 'A ring of dark thorn hedge forty li round, plain against the fen.',
     },
   ],
   roads: [

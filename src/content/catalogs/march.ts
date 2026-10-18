@@ -2,7 +2,7 @@
 // March is a frontier of farming villages under watchtowers, fields plowed with a spear within
 // reach and a beast-pit at the field's edge, where every family owes a child to the Wall and the
 // garrison drills the cadets: its things are metal, the spear, rations and the watch. The Wall is
-// faced with cart-sized beast skulls, with a patrol walk along the top and the bone heaps waiting
+// faced with beast-king skulls the size of hills, with a patrol walk along the top and the bone heaps waiting
 // to be built in: its things are bone, endurance and the dead. Drafted for P3.5 to the Guarded
 // Mouth's pattern. **Awaiting Jan's review.**
 import type { Catalog } from './types.ts';
