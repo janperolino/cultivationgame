@@ -12563,7 +12563,7 @@
  },
  {
   "id": "qiming",
-  "editedAt": "2026-10-11T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "启明",
   "kind": "continent",
@@ -12590,7 +12590,18 @@
   ],
   "terrain": "plains",
   "top": "Body Integration (the Ancestor Emperor, unseen and rumored dying)",
-  "truth": "The three spirit veins under Jing Capital are being drained to keep the Ancestor Emperor alive, and the heartland's harvests are failing because of it."
+  "truth": "The three spirit veins under Jing Capital are being drained to keep the Ancestor Emperor alive, and the heartland's harvests are failing because of it.",
+  "prosperity": 6,
+  "population": {
+   "mortals": 75000000000,
+   "qi": 55000000,
+   "foundation": 1900000,
+   "core": 31000,
+   "nascent": 620,
+   "deity": 21,
+   "void": 2
+  },
+  "size": 260000
  },
  {
   "id": "qingxiao",
@@ -12957,7 +12968,7 @@
  },
  {
   "id": "qm-chaonan",
-  "editedAt": "2026-10-11T13:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "潮南",
   "kind": "region",
@@ -12980,7 +12991,17 @@
   "terrain": "coast",
   "top": "Nascent Soul",
   "truth": "The fleet's commander is Prince Rui's man. If the succession comes to war, the southern fleet will decide who controls the sea road to the frontier.",
-  "way": ""
+  "way": "",
+  "qiDensity": 4,
+  "prosperity": 6,
+  "population": {
+   "mortals": 5000000000,
+   "qi": 2000000,
+   "foundation": 67000,
+   "core": 1100,
+   "nascent": 22
+  },
+  "size": 76000
  },
  {
   "id": "qm-chaoxi-jing",
@@ -13063,7 +13084,7 @@
  },
  {
   "id": "qm-chiyan",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "赤岩",
   "kind": "region",
@@ -13086,7 +13107,17 @@
   "terrain": "volcanic",
   "top": "Nascent Soul",
   "truth": "The new vein is not natural. It is the core of an Ascent Age fire array waking with the tide, and the whole range is its wall.",
-  "way": ""
+  "way": "",
+  "qiDensity": 5,
+  "prosperity": 4,
+  "population": {
+   "mortals": 1500000000,
+   "qi": 750000,
+   "foundation": 25000,
+   "core": 420,
+   "nascent": 8
+  },
+  "size": 65000
  },
  {
   "id": "qm-chuyang-cheng",
@@ -13214,7 +13245,7 @@
  },
  {
   "id": "qm-dongyu",
-  "editedAt": "2026-10-11T13:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "东隅",
   "kind": "region",
@@ -13237,7 +13268,17 @@
   "terrain": "coast",
   "top": "Nascent Soul",
   "truth": "The Dawn League has been offered help by the Night Banquet. The price is the passes, and the League's elder council is about to say yes.",
-  "way": ""
+  "way": "",
+  "qiDensity": 4,
+  "prosperity": 5,
+  "population": {
+   "mortals": 3000000000,
+   "qi": 1200000,
+   "foundation": 40000,
+   "core": 670,
+   "nascent": 13
+  },
+  "size": 62000
  },
  {
   "id": "qm-duanfeng-jing",
@@ -13409,7 +13450,7 @@
  },
  {
   "id": "qm-fengxia",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "峰下",
   "kind": "region",
@@ -13432,7 +13473,17 @@
   "terrain": "hills",
   "top": "Nascent Soul",
   "truth": "The Clear Heaven Sword Sect has quietly doubled its recruiting since its founder fell silent. The sect masters want more swords before anyone tests them.",
-  "way": ""
+  "way": "",
+  "qiDensity": 6,
+  "prosperity": 6,
+  "population": {
+   "mortals": 8000000000,
+   "qi": 5300000,
+   "foundation": 180000,
+   "core": 3000,
+   "nascent": 59
+  },
+  "size": 67000
  },
  {
   "id": "qm-fubo-men",
@@ -13543,7 +13594,7 @@
  },
  {
   "id": "qm-gucang",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "谷仓",
   "kind": "region",
@@ -13566,7 +13617,17 @@
   "terrain": "plains",
   "top": "Nascent Soul",
   "truth": "The thinning spreads south from the Jing Capital along the old vein courses. The Granary's soil is fine; the qi under it is being pulled north.",
-  "way": ""
+  "way": "",
+  "qiDensity": 5,
+  "prosperity": 4,
+  "population": {
+   "mortals": 12000000000,
+   "qi": 6000000,
+   "foundation": 200000,
+   "core": 3300,
+   "nascent": 67
+  },
+  "size": 67000
  },
  {
   "id": "qm-guhuai-ling",
@@ -13951,7 +14012,7 @@
  },
  {
   "id": "qm-huangji",
-  "editedAt": "2026-10-11T08:35:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "皇畿",
   "kind": "region",
@@ -13975,7 +14036,18 @@
   "terrain": "plains",
   "top": "Body Integration (the Ancestor Emperor, unseen and rumored dying)",
   "truth": "The dead fields form rings around the Jing Capital that match the palace array's draw. Court astrologers who noticed were posted to the frontier; two never arrived.",
-  "way": ""
+  "way": "",
+  "qiDensity": 7,
+  "prosperity": 9,
+  "population": {
+   "mortals": 20000000000,
+   "qi": 20000000,
+   "foundation": 670000,
+   "core": 11000,
+   "nascent": 220,
+   "deity": 11
+  },
+  "size": 68000
  },
  {
   "id": "qm-huangqu",
@@ -14137,7 +14209,7 @@
  },
  {
   "id": "qm-jianyu",
-  "editedAt": "2026-10-11T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "剑域",
   "kind": "region",
@@ -14160,7 +14232,19 @@
   "terrain": "mountains",
   "top": "Void Refinement (the founder in seclusion; Qingxiao's masters at Deity Transformation)",
   "truth": "The main peak's sword hum, which every disciple hears in meditation, faded two hundred years ago. The elders replaced it with an array that imitates it.",
-  "way": ""
+  "way": "",
+  "qiDensity": 8,
+  "prosperity": 6,
+  "population": {
+   "mortals": 4000000000,
+   "qi": 5700000,
+   "foundation": 190000,
+   "core": 3200,
+   "nascent": 63,
+   "deity": 6,
+   "void": 1
+  },
+  "size": 88000
  },
  {
   "id": "qm-jianzhong-gu",
@@ -14531,7 +14615,7 @@
  },
  {
   "id": "qm-leiya",
-  "editedAt": "2026-10-11T13:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "雷崖",
   "kind": "region",
@@ -14554,7 +14638,17 @@
   "terrain": "forest",
   "top": "Nascent Soul",
   "truth": "The storms have doubled in ten years. Something far out toward the Rim is drawing them, and the lightning sect's elders have felt it calling.",
-  "way": ""
+  "way": "",
+  "qiDensity": 5,
+  "prosperity": 4,
+  "population": {
+   "mortals": 1500000000,
+   "qi": 750000,
+   "foundation": 25000,
+   "core": 420,
+   "nascent": 8
+  },
+  "size": 72000
  },
  {
   "id": "qm-liexu-tan",
@@ -14855,7 +14949,7 @@
  },
  {
   "id": "qm-mozhao",
-  "editedAt": "2026-10-11T13:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "墨沼",
   "kind": "region",
@@ -14878,7 +14972,18 @@
   "terrain": "marsh",
   "top": "Deity Transformation (the Banquet Master, hidden)",
   "truth": "The marsh grows wherever the Banquet Master's aura settles. That cultivation has outgrown Nascent Soul, and the land is the first thing that cannot hide it.",
-  "way": ""
+  "way": "",
+  "qiDensity": 5,
+  "prosperity": 4,
+  "population": {
+   "mortals": 2000000000,
+   "qi": 1000000,
+   "foundation": 33000,
+   "core": 560,
+   "nascent": 11,
+   "deity": 1
+  },
+  "size": 75000
  },
  {
   "id": "qm-muling-guo",
@@ -15410,7 +15515,7 @@
  },
  {
   "id": "qm-shuofeng",
-  "editedAt": "2026-10-11T13:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "朔风",
   "kind": "region",
@@ -15433,7 +15538,17 @@
   "terrain": "plateau",
   "top": "Nascent Soul",
   "truth": "The ghosts on the battlefield have started marching in formation toward the coast every Ghost Month, as if called to a wall.",
-  "way": ""
+  "way": "",
+  "qiDensity": 4,
+  "prosperity": 3,
+  "population": {
+   "mortals": 2000000000,
+   "qi": 800000,
+   "foundation": 27000,
+   "core": 440,
+   "nascent": 9
+  },
+  "size": 91000
  },
  {
   "id": "qm-shuri-meng",
@@ -15741,7 +15856,7 @@
  },
  {
   "id": "qm-wangti",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "望梯",
   "kind": "region",
@@ -15764,7 +15879,17 @@
   "terrain": "coast",
   "top": "Nascent Soul",
   "truth": "Those who sit on the beach long enough start to hear the hum as a song. Some fishing villages have been singing along for a year.",
-  "way": ""
+  "way": "",
+  "qiDensity": 6,
+  "prosperity": 7,
+  "population": {
+   "mortals": 9000000000,
+   "qi": 6000000,
+   "foundation": 200000,
+   "core": 3300,
+   "nascent": 67
+  },
+  "size": 67000
  },
  {
   "id": "qm-wangyue-guo",
@@ -16166,7 +16291,7 @@
  },
  {
   "id": "qm-yaoling",
-  "editedAt": "2026-10-11T08:35:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "药岭",
   "kind": "region",
@@ -16189,7 +16314,19 @@
   "terrain": "hills",
   "top": "Void Refinement (the Valley Master, by rumor older than the trees)",
   "truth": "The blight the Apricot Grove Valley seeds in rival gardens has started jumping to its own tenants' fields, and the valley's healers cannot cure what their elders made.",
-  "way": ""
+  "way": "",
+  "qiDensity": 7,
+  "prosperity": 6,
+  "population": {
+   "mortals": 5000000000,
+   "qi": 5000000,
+   "foundation": 170000,
+   "core": 2800,
+   "nascent": 56,
+   "deity": 3,
+   "void": 1
+  },
+  "size": 64000
  },
  {
   "id": "qm-yeqiao-hui",
@@ -16547,7 +16684,7 @@
  },
  {
   "id": "qm-zhupu",
-  "editedAt": "2026-10-11T07:45:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "珠浦",
   "kind": "region",
@@ -16570,7 +16707,17 @@
   "terrain": "hills",
   "top": "Nascent Soul",
   "truth": "A jiao of the Azure Wave Palace's court nests its young in a sea cave off this coast. If one is ever taken, the sea clans will come ashore.",
-  "way": ""
+  "way": "",
+  "qiDensity": 4,
+  "prosperity": 4,
+  "population": {
+   "mortals": 2000000000,
+   "qi": 800000,
+   "foundation": 27000,
+   "core": 440,
+   "nascent": 9
+  },
+  "size": 63000
  },
  {
   "id": "qm-zicai-guo",

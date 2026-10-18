@@ -70,17 +70,17 @@ The game plays out in Severed Heaven, one middle thousand world, written by hand
 
 **How many live there.** Approximate, for the narrator and the atlas's `population`; nothing counts heads.
 
-- **Mortals,** per km² of a kingdom's land, by its prosperity (the atlas's `prosperity`, The atlas as data): 1 ruined 0.1, 2 destitute 0.5, 3 poor 2, 4 humble 5, 5 ordinary 12, 6 comfortable 25, 7 prosperous 50, 8 rich 100, 9 opulent 150. Terrain moves it: river plains ×2; steppe, karst and ranchland ×0.5; marsh ×0.3. The wilds hold about a hundredth of their kingdoms' rate: hunters, hermits, hidden clans. So the March holds about 44 million, the whole Border Wilds about 110 million (its 750 million km² mostly wild), a heartland region 10 to 20 billion and the Morning Star Continent about 80 billion.
-- **Rooted children,** found on testing day, by qi density: 1 in 3,000 at 3 (thin), 1 in 1,000 at 5 (ordinary), 1 in 300 at 7 (abundant), 1 in 100 at 9 (heaven-touched). Most of them never leave Qi Condensation.
+- **Mortals,** per km² of a kingdom's land, by its prosperity (the atlas's `prosperity`, The atlas as data): 1 ruined 0.1, 2 destitute 0.5, 3 poor 2, 4 humble 5, 5 ordinary 12, 6 comfortable 25, 7 prosperous 50, 8 rich 100, 9 opulent 150. Terrain moves it: river plains ×2; steppe, karst and ranchland ×0.5; marsh ×0.3. The wilds hold about a hundredth of their kingdoms' rate: hunters, hermits, hidden clans. So the March holds about 44 million, the whole Border Wilds about 110 million (its 750 million km² mostly wild), the Imperial Domain, the heartland, about 20 billion and the Morning Star Continent about 75 billion. The atlas names only a few of a region's kingdoms; in a settled region the unnamed ones hold most of its people, while on the frontier the named few are nearly all there is.
+- **Rooted children,** found on testing day, by qi density: 1 in 3,000 at 3 (thin), 1 in 2,500 at 4, 1 in 2,000 at 5 (ordinary), 1 in 1,500 at 6, 1 in 1,000 at 7 (abundant), 1 in 700 at 8, 1 in 500 at 9 (heaven-touched). Most of them never leave Qi Condensation.
 - **Each realm holds a share of the one below,** narrowing as heaven narrows it (gate pills, tribulations, heart demons): Foundation 1/30 of Qi Condensation, Core Formation 1/60, Nascent Soul 1/50, Deity Transformation 1/20, Void Refinement 1/10. Past that the world counts by name: about twenty Body Integration, under ten Mahayana, a few hidden Tribulation Transcenders.
 
 | | Qi Condensation | Foundation | Core Formation | Nascent Soul | Deity Transformation | Void Refinement |
 |---|---|---|---|---|---|---|
 | A frontier region (the Border Wilds) | about 40,000 | about 1,300 | about 25 | about 3 | | |
-| A heartland region | about 20 million | about 650,000 | about 11,000 | about 200 | about 10 | |
-| The Morning Star Continent | about 100 million | about 3 million | about 55,000 | about 1,100 | about 55 | about 5 |
+| The heartland (the Imperial Domain) | about 20 million | about 650,000 | about 11,000 | about 200 | about 10 | |
+| The Morning Star Continent | about 55 million | about 1.8 million | about 30,000 | about 600 | about 20 | about 2, and the Ancestor Emperor at Body Integration |
 
-The bottom of the pyramid grows with the mortals and the qi; the top is held by heaven, so a heartland region holds a thousand times the frontier's Qi Condensation and only a few dozen times its Nascent Souls. A frontier town meets Qi Condensation drifters and a Nascent Soul is an event there; in the heartland a Core Formation elder is a district's patron.
+The bottom of the pyramid grows with the mortals and the qi; the top is held by heaven, so the heartland holds five hundred times the frontier's Qi Condensation and only some sixty times its Nascent Souls. A frontier town meets Qi Condensation drifters and a Nascent Soul is an event there; in the heartland a Core Formation elder is a district's patron.
 
 **The tide.** Severed Heaven circles its great world, which hangs in the night sky as the Mirror, on an orbit of about 90,000 years. Close in, the Mirror's qi floods across (the High Tide); far out, it thins (the Ebb). The game is set near the peak of a High Tide, which is why sects are crowded and competition is fierce.
 
