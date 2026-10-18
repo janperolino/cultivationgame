@@ -81,7 +81,7 @@
     {
       "id": "map-places-kinds",
       "kind": "ornament",
-      "out": "src/ui/art/map/places",
+      "out": "src/ui/art/map/places/kinds",
       "width": 256,
       "quality": 86,
       "budgetKB": 30,
@@ -105,7 +105,7 @@
     {
       "id": "map-places-famous",
       "kind": "ornament",
-      "out": "src/ui/art/map/places",
+      "out": "src/ui/art/map/places/famous",
       "width": 256,
       "quality": 86,
       "budgetKB": 30,

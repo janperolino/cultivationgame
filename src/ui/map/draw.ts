@@ -87,7 +87,7 @@ const PLAIN: Record<string, string> = {
  */
 const PIECE_URLS: Record<string, string> = Object.fromEntries(
   Object.entries(
-    import.meta.glob<string>('../art/map/places/*.webp', {
+    import.meta.glob<string>('../art/map/places/**/*.webp', {
       eager: true,
       query: '?url',
       import: 'default',
@@ -97,8 +97,8 @@ const PIECE_URLS: Record<string, string> = Object.fromEntries(
 const PIECE_IMGS = new Map<string, HTMLImageElement>();
 /** The zoom, in px a li, over which a piece fades in and its seal out. */
 const PIECE_FADE = [0.035, 0.06] as const;
-/** How far down the piece its place's spot lies: the base sits in the cell's lower third. */
-const PIECE_FOOT = 0.72;
+/** How far down the piece its place's spot lies: Jan's pieces are round dioramas, the place in their middle. */
+const PIECE_FOOT = 0.55;
 
 function pieceOf(q: MapPlace): HTMLImageElement | null {
   const id = [`map-place-${q.id}`, `map-place-${q.sub}`].find((x) => PIECE_URLS[x]);
@@ -115,10 +115,10 @@ function pieceOf(q: MapPlace): HTMLImageElement | null {
 
 /** A piece's width on the map, in li: a city's or a famous place's widest, a site's least. */
 function pieceLi(q: MapPlace): number {
-  if (q.sub === 'city') return 900;
-  if (q.kind === 'atlas') return 800;
-  if (q.sub === 'town') return 700;
-  return 450;
+  if (q.sub === 'city') return 2400;
+  if (q.kind === 'atlas') return 2000;
+  if (q.sub === 'town') return 1700;
+  return 1100;
 }
 
 const smoothstep = (a: number, b: number, v: number) => {
