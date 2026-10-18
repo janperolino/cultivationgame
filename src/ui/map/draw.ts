@@ -10,7 +10,7 @@ import { type Multi, type Pt, ringCentroid } from '../../core/map/geometry.ts';
 import { band } from '../../core/map/depth.ts';
 import type { MapArea, MapPlace, RegionMap } from '../../core/map/region.ts';
 import type { MapLife } from '../../core/map/schema.ts';
-import { drawPainted } from './art.ts';
+import { artArrived, drawPainted } from './art.ts';
 import { drawFog, fogOf } from './fog.ts';
 
 export interface View {
@@ -76,6 +76,54 @@ const PLAIN: Record<string, string> = {
   marsh: '#182d30',
   coast: '#45402f',
   blight: '#322937',
+};
+
+// ---------------------------------------------------------------- the places' pieces
+
+/**
+ * The pieces that stand at places (A5.1; design § The travel map, The look): cut from the sheets
+ * Jan paints in ChatGPT (`map-places-*` in art/manifest.json). A place shows its own piece, else
+ * its kind's, else only its seal.
+ */
+const PIECE_URLS: Record<string, string> = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>('../art/map/places/*.webp', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    }),
+  ).map(([path, url]) => [path.replace(/^.*\/(.+)\.webp$/, '$1'), url]),
+);
+const PIECE_IMGS = new Map<string, HTMLImageElement>();
+/** The zoom, in px a li, over which a piece fades in and its seal out. */
+const PIECE_FADE = [0.035, 0.06] as const;
+/** How far down the piece its place's spot lies: the base sits in the cell's lower third. */
+const PIECE_FOOT = 0.72;
+
+function pieceOf(q: MapPlace): HTMLImageElement | null {
+  const id = [`map-place-${q.id}`, `map-place-${q.sub}`].find((x) => PIECE_URLS[x]);
+  if (!id) return null;
+  let img = PIECE_IMGS.get(id);
+  if (!img) {
+    img = new Image();
+    img.onload = () => artArrived();
+    img.src = PIECE_URLS[id]!;
+    PIECE_IMGS.set(id, img);
+  }
+  return img.complete && img.naturalWidth ? img : null;
+}
+
+/** A piece's width on the map, in li: a city's or a famous place's widest, a site's least. */
+function pieceLi(q: MapPlace): number {
+  if (q.sub === 'city') return 900;
+  if (q.kind === 'atlas') return 800;
+  if (q.sub === 'town') return 700;
+  return 450;
+}
+
+const smoothstep = (a: number, b: number, v: number) => {
+  const t = Math.max(0, Math.min(1, (v - a) / (b - a)));
+  return t * t * (3 - 2 * t);
 };
 
 // ---------------------------------------------------------------- caches
@@ -417,14 +465,30 @@ export function drawMap(f: Frame, s: Scene): boolean {
       warnTag(ctx, x, y + r + 30, `险 deadly · ${q.top ? realmWords(q.top) : ''}`);
   }
 
-  // Sites as seals; the small ones dots until you come close.
+  // The places' pieces (A5.1): each stands at its spot, fading in as you come close.
+  const pieceIn = smoothstep(PIECE_FADE[0], PIECE_FADE[1], k);
+  if (pieceIn > 0)
+    for (const q of map.places) {
+      const st = known(life, q.id);
+      if (st !== 'seen' && st !== 'sketched') continue;
+      const img = pieceOf(q);
+      if (!img) continue;
+      const side = pieceLi(q) * k;
+      const [x, y] = at([q.x, q.y]);
+      if (x + side < 0 || x - side > W || y + side < 0 || y - side > H) continue;
+      ctx.globalAlpha = pieceIn * (st === 'seen' ? 1 : 0.6);
+      ctx.drawImage(img, x - side / 2, y - side * PIECE_FOOT, side, side);
+      ctx.globalAlpha = 1;
+    }
+
+  // Sites as seals; the small ones dots until you come close. A seal gives way to its place's piece.
   const showNames = k > 0.03;
   for (const q of map.places) {
     const st = known(life, q.id);
     if (st !== 'seen' && st !== 'sketched') continue;
     const [x, y] = at([q.x, q.y]);
     if (x < -40 || y < -40 || x > W + 40 || y > H + 40) continue;
-    const dim = st === 'seen' ? 1 : 0.55;
+    const dim = (st === 'seen' ? 1 : 0.55) * (pieceOf(q) ? 1 - pieceIn : 1);
     const major = q.kind === 'atlas';
     if (minor(q) && k < 0.016) {
       const t = Math.max(0, (k - 0.009) / 0.007);
