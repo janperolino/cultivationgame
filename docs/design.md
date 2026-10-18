@@ -1585,20 +1585,25 @@ Five rules keep it sane:
 
 ## Roadmap
 
-| Milestone | Weeks | Contents |
-|---|---|---|
-| M0 Lore, setup, AI spike | 1–2 | world bible; GLM spike: JSON, thinking off |
-| M1 Idle core | 3–5 | Qi to Foundation, body, soul, insight; story cards and the first decks; no AI |
-| M2 Combat engine | 6–7 | rolls, damage types, v1 Daos; fight sim |
-| M3 Go-in slice | 8–10 | one fogged region; free text; loot flows home (the playable slice) |
-| M4 Crafts | 11–14 | four great arts, spirit farming; Core Formation |
-| M5 People and powers | 15–18 | NPC memory, romance, sect posts, factions |
-| M6 Living world | 19–21 | map tiers, markets, events, beast taming |
-| M7 Big moments | 22–24 | Nascent Soul, tribulations, heart demons |
-| M8 Rebirth and friends | 25–27 | lifespan, reincarnation, friends build |
-| After v1 | | friends as NPCs, then co-op go-in sessions |
+Built bottom-up since 2026-10-18 (Jan's call): what other systems read comes first, each layer thin (the least the layers after it need) and ending with a play session, and a screen is painted once its features stop changing. `plan.md` holds the order and the phases.
 
-Each milestone ends playable, so stopping at any point still leaves you a game. Each milestone opens with a design session that works down the Still to design checklist for its topics.
+| Stage | Contents |
+|---|---|
+| M0 to M2, done | world bible and GLM spike; the idle core with Qi, body, soul, insight and the first decks; the combat engine, breakthroughs, manuals, the trees and the Chronicle |
+| M3's first half, done | the atlas as data, three paths, the resolver, people and followers, catalogs and shops, the travel map, places and encounters; the art overhaul's A1 to A5.2, the world at its true size |
+| The economy, thin | veins and the stones they yield, prosperity, shops' stock and money, prices that move, markets by reach |
+| Organizations, thin | one skeleton for sects, clans, guilds and factions; ranks, posts, contribution |
+| Jobs | jobs as posts, duty hours, the gather hour |
+| M4 Crafts | four great arts, spirit farming, abodes as sites; Core Formation |
+| The atlas fill | the other continents, on the Morning Star Continent's pattern |
+| Trade and the living world | the rest of M5 and M6: guilds trading, caravans, commissions, the black market, auctions, events, NPC depth, romance, founding a sect, map tiers and long travel, beast taming |
+| M3's AI half | GLM roles, going in, the Ways, ruins and inheritances, the decks and the starts, the tone pass |
+| M7 Big moments | Nascent Soul, tribulations, heart demons |
+| M8 Rebirth and friends | lifespan, reincarnation, friends build |
+| After v1 | friends as NPCs, then co-op go-in sessions |
+| Backlog | the art overhaul's rest, A5.3 to A9, as each screen settles |
+
+Each stage ends playable, so stopping at any point still leaves you a game. Each opens with a design session that works down the Still to design checklist for its topics.
 
 ## Risks
 
@@ -1616,20 +1621,18 @@ The biggest unknowns are how GLM behaves through OpenRouter, so the week-1 spike
 
 ## Still to design
 
-Settle each before the milestone that needs it. World content is drafted and checked in the atlas. The week-1 test and the M3 slice play in the Border Wilds, the Morning Star Continent's beast frontier.
+Settle each before the stage that needs it (Roadmap; since 2026-10-18 the open items are grouped by the layer that settles them). World content is drafted and checked in the atlas. The week-1 test and the M3 slice play in the Border Wilds, the Morning Star Continent's beast frontier.
 
 **Before M0 and M1**
 
 - [x] World bible basics: cosmology, naming style, currency, races, random start
 - [x] World content: drafted in the atlas, with 6 continents, 86 regions, about 200 kingdoms, about 150 sects and clans, history and cosmology
 - [x] Atlas review: consistency pass done (borders, names, prices, realm ceilings, the top tier); the start corner is the Border Wilds
-- [ ] Canon pass: mark atlas entries canon as you read them, the Border Wilds first
-- [ ] Atlas export for the game (a build task for plan.md): a JSON download, coastlines and borders saved as fixed outlines, and a strict realm field instead of free text
+- [x] Atlas export for the game (a build task for plan.md): a JSON download, coastlines and borders saved as fixed outlines, and a strict realm field instead of free text (P0.2 and P3.1)
 - [x] Character creation and the first hour: talent roll, origin, tutorial, first breakthrough, first trip out
 - [x] UI and screens: abode dashboard, tree views, crafting, inventory, world map, go-in screen, chronicle, settings, visual style
 - [x] Economy: spirit stones, sect contribution, prices, money sinks, what the balance sims measure; then bring the atlas's dozen luxury prices into line
 - [x] Saves: format, versioning, export and import, save slots
-- [ ] Node lists: tiers 1 and 2 of each v1 tree, 25 to 30 nodes a tier for the big three and 10 to 15 for the combat Daos (skeletons drafted in D2 under The combat Daos, the nodes written in P2.3), drafted with AI help and curated. The Qi, Body and Soul trees in the M1 build, reviewed by Jan, the combat Daos before M2, the Ways in the M3 phase that builds them (D3), the craft Daos before M4
 - [x] plan.md for Claude Code: the build split into one-session phases, written once planning is done
 
 **Before M2 and M3**
@@ -1639,23 +1642,40 @@ Settle each before the milestone that needs it. World content is drafted and che
 - [x] Combat outcome tags for effects and sound (D2, § Combat, Effects fill the wait): form, element or damage type, realm and result on every outcome
 - [x] Exploration (D3): travel, trips, look around, the fog, encounters on the map, scene templates, escape and death, and ruins, inheritances and secret realms are settled under The world; the Border Wilds' tables are drafted in M3's phases
 - [x] NPC basics (D3, § Professions, people and powers, NPC basics; opinion and standing under The resolver, What lasts): motives, what each NPC knows, ties, bonds, the lucky rogue, origin people as roles, years between lives
-- [ ] Story decks: the seclusion deck in M1, then a deck per milestone; what each card trades and how often it comes
 - [x] Procedural methods and items (D2): replaced in P3.5 by hand-written catalogs (§ Catalogs by place), with rarity rolled as quality and gold and red on their own written list. Loot and shops hand them out on the shared table
-- [ ] NPC pace (D2): NPCs progress at the away rate, so an attended player outpaces a same-pedigree NPC by about double; the pedigree tables are tuned against the away row, and that gap is the player's edge for playing
-- [ ] The Breath branch beyond tier 1 (tier 2 drafted in D2 under The Breath branch; Core Formation up later): Attuned Breath, Heaven and Earth Resonance, Circulating Thought, Unknotting, and what each realm's vocabulary adds
-- [ ] Hands-on crafts (D4): alchemy's fire control and formations as placing, laying nodes on the abode's grid so the lines close, on the qi-handling grammar; the effect table behind generated recipes; styles and their chapters; technique forms in practice hours as a maybe, the first thing to cut if it feels like filler
+**Before the economy layer**
 
-**Before M5 to M8, sketched now**
+- [ ] The economy in play (pulled from D6, 2026-10-18): veins and the stones they yield, prosperity drifting within the vein, what a place makes and needs, shops' stock and money by it, prices that move with supply, and markets by reach
+
+**Before the organizations layer**
+
+- [ ] Sects: ranks, politics, founding your own, sect wars; faction strength weighted by the realm curve, so a sect is mostly its ancestor; every organization on the shared skeleton (Professions, people and powers), with the atlas's powers tagged by type and an assassins' organization added (the skeleton, ranks, posts and contribution in the thin layer; politics, wars and founding in trade and the living world)
+
+**Before crafts (D4)**
+
+- [ ] Hands-on crafts (D4): alchemy's fire control and formations as placing, laying nodes on the abode's grid so the lines close, on the qi-handling grammar; the effect table behind generated recipes; styles and their chapters; technique forms in practice hours as a maybe, the first thing to cut if it feels like filler
+- [ ] Node lists: tiers 1 and 2 of each v1 tree, 25 to 30 nodes a tier for the big three and 10 to 15 for the combat Daos (skeletons drafted in D2 under The combat Daos, the nodes written in P2.3), drafted with AI help and curated. The Qi, Body and Soul trees in the M1 build, reviewed by Jan, the combat Daos before M2, the Ways in the M3 phase that builds them (D3), the craft Daos before M4
+
+**Before trade and the living world**
 
 - [ ] NPC depth: aging and death, NPCs who climb on their own, rivals who return stronger, disciple loyalty and betrayal; a cast list of the atlas's named people (a person kind or a people file) with fixed looks, so portraits can follow
+- [ ] NPC pace (D2): NPCs progress at the away rate, so an attended player outpaces a same-pedigree NPC by about double; the pedigree tables are tuned against the away row, and that gap is the player's edge for playing
 - [ ] Write a manual (M5): turning knowledge you hold into a manual item to teach, sell or lose, and sects handing out a style's next chapter by contribution, rank or favor
-- [ ] Sects: ranks, politics, founding your own, sect wars; faction strength weighted by the realm curve, so a sect is mostly its ancestor; every organization on the shared skeleton (Professions, people and powers), with the atlas's powers tagged by type and an assassins' organization added
 - [ ] World simulation: events calendar, secret realms, auctions, tournaments, wars
+
+**Before M3's AI half**
+
+- [ ] Story decks: the seclusion deck in M1, then a deck per milestone; what each card trades and how often it comes
+
+**Before M7 and M8**
+
 - [ ] Death, rebirth and legacy: what carries over, what the world remembers (D3 settled the twelve years between lives and leaving things for the next life, under The world, Escape and death)
 - [ ] Art and sound: how much, and from where. Settled so far: location art and portraits are made at design time and shipped as data, never generated in play, with shared art by tag for filled-in places; portraits wait for the cast list; sound hangs off the same engine events as combat effects
 
 **Anytime**
 
+- [ ] Canon pass: mark atlas entries canon as you read them, the Border Wilds first
+- [ ] The Breath branch beyond tier 1 (tier 2 drafted in D2 under The Breath branch; Core Formation up later): Attuned Breath, Heaven and Earth Resonance, Circulating Thought, Unknotting, and what each realm's vocabulary adds
 - [ ] The game's name
 
 ## Sources
