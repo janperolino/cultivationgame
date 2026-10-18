@@ -9043,7 +9043,7 @@
   "top": "Body Integration (the Ancestor Emperor, dying)",
   "truth": "The Ancestor Emperor is dying. The palace array feeds him the capital's veins, and he has decided the dynasty can starve first. He reached Body Integration nine hundred years ago, and a body that strong eats spirit veins the way a mortal eats rice.",
   "way": "orthodox",
-  "prosperity": 8,
+  "vein": 7,
   "population": {
    "mortals": 300000000,
    "qi": 5000000,
@@ -12592,7 +12592,7 @@
   ],
   "top": "Body Integration (the Ancestor Emperor, in the palace)",
   "truth": "",
-  "prosperity": 8,
+  "vein": 7,
   "population": {
    "mortals": 40000000,
    "qi": 1200000,
@@ -12753,7 +12753,7 @@
   "top": "Deity Transformation (the Banquet Master, hidden)",
   "truth": "The Banquet Master reached Deity Transformation sixty years ago and is hiding it, waiting for the Clear Heaven Sword Sect's ancestor to die.",
   "way": "demonic",
-  "prosperity": 6,
+  "vein": 5,
   "population": {
    "mortals": 300000,
    "qi": 45000,
@@ -13023,7 +13023,6 @@
   "terrain": "plains",
   "top": "Body Integration (the Ancestor Emperor, unseen and rumored dying)",
   "truth": "The three spirit veins under Jing Capital are being drained to keep the Ancestor Emperor alive, and the heartland's harvests are failing because of it.",
-  "prosperity": 8,
   "population": {
    "mortals": 75000000000,
    "qi": 55000000,
@@ -13061,7 +13060,7 @@
   "top": "Void Refinement (the founding ancestor, silent in seclusion)",
   "truth": "The founding ancestor, a Void Refinement sword cultivator, is still in seclusion under the main peak. He stopped answering summons two hundred years ago, and the elders are afraid to look.",
   "way": "orthodox",
-  "prosperity": 7,
+  "vein": 6,
   "population": {
    "mortals": 300000,
    "qi": 30000,
@@ -13271,7 +13270,7 @@
   "top": "Foundation Establishment",
   "truth": "Lady Gongsun Wei, the general's widow, has been trading cores and captives to Shared Roost City to buy the weapons the capital stopped sending.",
   "way": "",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 44000000,
    "qi": 12000,
@@ -13306,7 +13305,7 @@
   "truth": "",
   "way": "",
   "terrain": "coast",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 6000000,
    "qi": 4500,
@@ -13483,7 +13482,7 @@
   "top": "Foundation Establishment (the quota-master)",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 2,
   "population": {
    "mortals": 263000000,
    "qi": 80000,
@@ -13554,7 +13553,7 @@
   "top": "Qi Condensation (the Registry tester, every twelve years)",
   "truth": "The wreck's hold is sealed and still warm.",
   "way": "",
-  "prosperity": 3,
+  "vein": 1,
   "population": {
    "mortals": 33000000,
    "qi": 6000
@@ -13631,10 +13630,9 @@
     "why": "Walkers, poachers and smugglers leave our coast down the chain, and cores come back up it."
    }
   ],
-  "top": "Nascent Soul (the City's commander, posted there; the Beast-Butcher Gate's master, there for the cores; the Stone Forest's python, in its lair)",
+  "top": "Nascent Soul (the City's commander, the Beast-Butcher Gate's master and the Stone Forest's python)",
   "truth": "The Beast Court is not sending the raids. Old beasts are waking in the Vast Wilds Continent's mountains and driving the young ones north across the strait.",
   "way": "",
-  "prosperity": 4,
   "population": {
    "mortals": 110000000,
    "qi": 50000,
@@ -13741,7 +13739,7 @@
   "top": "Core Formation",
   "truth": "",
   "way": "",
-  "prosperity": 6,
+  "vein": 5,
   "population": {
    "mortals": 15000000,
    "qi": 150000,
@@ -13838,7 +13836,7 @@
   "top": "Core Formation (Prince Rui)",
   "truth": "The prince's 'grain shortfall' is stockpiled in a hollowed mountain under his horse farms, enough to feed an army of millions for two years.",
   "way": "",
-  "prosperity": 7,
+  "vein": 3,
   "population": {
    "mortals": 2000000000,
    "qi": 800000,
@@ -13917,7 +13915,6 @@
   "truth": "The fleet's commander is Prince Rui's man. If the succession comes to war, the southern fleet will decide who controls the sea road to the frontier.",
   "way": "",
   "qiDensity": 4,
-  "prosperity": 5,
   "population": {
    "mortals": 5000000000,
    "qi": 2000000,
@@ -14113,7 +14110,7 @@
   "top": "Core Formation",
   "truth": "",
   "way": "orthodox",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 20000,
    "qi": 8000,
@@ -14199,7 +14196,6 @@
   "truth": "The new vein is not natural. It is the core of an Ascent Age fire array waking with the tide, and the whole range is its wall.",
   "way": "",
   "qiDensity": 5,
-  "prosperity": 4,
   "population": {
    "mortals": 1500000000,
    "qi": 750000,
@@ -14243,7 +14239,7 @@
   "top": "Core Formation (the governor's patron)",
   "truth": "",
   "way": "",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 12000000,
    "qi": 9000,
@@ -14423,7 +14419,7 @@
   "top": "Nascent Soul (the master)",
   "truth": "The Cinnabar Hill Sect's master is buying blight samples from the Netherworm Stockade to make a blight of his own.",
   "way": "orthodox",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 30000,
    "qi": 15000,
@@ -14573,7 +14569,6 @@
   "truth": "The Dawn League has been offered help by the Night Banquet. The price is the passes, and the League's elder council is about to say yes.",
   "way": "",
   "qiDensity": 4,
-  "prosperity": 4,
   "population": {
    "mortals": 3000000000,
    "qi": 1200000,
@@ -14997,11 +14992,10 @@
    "smuggling"
   ],
   "terrain": "hills",
-  "top": "Nascent Soul",
+  "top": "Nascent Soul (a Clear Heaven Sword Sect elder, posted to the foothills to claim their rooted children)",
   "truth": "The Clear Heaven Sword Sect has quietly doubled its recruiting since its founder fell silent. The sect masters want more swords before anyone tests them.",
   "way": "",
   "qiDensity": 6,
-  "prosperity": 5,
   "population": {
    "mortals": 8000000000,
    "qi": 5300000,
@@ -15052,7 +15046,7 @@
   "top": "Core Formation (the gate master)",
   "truth": "",
   "way": "orthodox",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 40000,
    "qi": 6000,
@@ -15136,7 +15130,7 @@
   "top": "Nascent Soul",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 800000,
    "qi": 40000,
@@ -15218,7 +15212,7 @@
   "truth": "",
   "way": "",
   "terrain": "plateau",
-  "prosperity": 3,
+  "vein": 1,
   "population": {
    "mortals": 13000000,
    "qi": 8000
@@ -15289,7 +15283,7 @@
   "top": "Core Formation",
   "truth": "The tide tables have stopped matching the sea. As the Mirror swells, its pull lifts the outer ocean a little higher every year, and the pavilion's tables were built for a world that is gone.",
   "way": "orthodox",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 40000,
    "qi": 6000,
@@ -15384,7 +15378,6 @@
   "truth": "The thinning spreads south from the Jing Capital along the old vein courses. The Granary's soil is fine; the qi under it is being pulled north.",
   "way": "",
   "qiDensity": 5,
-  "prosperity": 5,
   "population": {
    "mortals": 12000000000,
    "qi": 6000000,
@@ -15434,7 +15427,7 @@
   "top": "Core Formation",
   "truth": "The tree can feel the drain flowing toward the palace and could lead anyone to the array's outer nodes. It has not found anyone it trusts.",
   "way": "wild",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 60000,
    "core": 1
@@ -15499,7 +15492,7 @@
   "top": "Foundation Establishment (the Wall-Warden)",
   "truth": "",
   "way": "",
-  "prosperity": 4,
+  "vein": 2,
   "population": {
    "mortals": 92500000,
    "qi": 28000,
@@ -15570,7 +15563,7 @@
   "top": "Nascent Soul (Admiral Hou, when the fleet is in)",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 12000000,
    "qi": 9000,
@@ -15669,7 +15662,7 @@
   "top": "Core Formation (the guild-mother)",
   "truth": "The guild pays the Azure Wave Palace with information about the coast, not silk.",
   "way": "sea",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 3000,
    "qi": 2000,
@@ -15748,7 +15741,7 @@
   "top": "Foundation Establishment (King Qian)",
   "truth": "",
   "way": "",
-  "prosperity": 6,
+  "vein": 2,
   "population": {
    "mortals": 607000000,
    "qi": 120000,
@@ -15820,7 +15813,7 @@
   "top": "Core Formation",
   "truth": "",
   "way": "",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 6000000,
    "qi": 20000,
@@ -15906,7 +15899,7 @@
   "top": "Nascent Soul",
   "truth": "The glacier the Cold Forge depends on is melting as the tide rises. The clan has twenty years of ice left and has told nobody.",
   "way": "orthodox",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 40000,
    "qi": 4000,
@@ -16004,7 +15997,7 @@
   "top": "Foundation Establishment (the Pearl Queen)",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 2,
   "population": {
    "mortals": 151000000,
    "qi": 24000,
@@ -16075,7 +16068,7 @@
   "top": "Core Formation (the fence-master)",
   "truth": "",
   "way": "",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 3000000,
    "qi": 4000,
@@ -16346,7 +16339,6 @@
   "truth": "The dead fields form rings around the Jing Capital that match the palace array's draw. Court astrologers who noticed were posted to the frontier; two never arrived.",
   "way": "",
   "qiDensity": 7,
-  "prosperity": 8,
   "population": {
    "mortals": 20000000000,
    "qi": 20000000,
@@ -16470,7 +16462,7 @@
   "top": "Foundation Establishment",
   "truth": "",
   "way": "",
-  "prosperity": 4,
+  "vein": 2,
   "population": {
    "mortals": 52000000,
    "qi": 15000,
@@ -16625,7 +16617,7 @@
   "top": "Nascent Soul (the Pill Hall head)",
   "truth": "",
   "way": "",
-  "prosperity": 6,
+  "vein": 5,
   "population": {
    "mortals": 20000000,
    "qi": 30000,
@@ -16788,7 +16780,7 @@
   "top": "Core Formation",
   "truth": "Half of the Gate of Fine Grain's failure really is the Apricot Grove Valley blight, planted ten years ago. The other half is the drain. The elders cannot tell the two apart, and that is the problem.",
   "way": "orthodox",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 40000,
    "qi": 20000,
@@ -16874,7 +16866,6 @@
   "truth": "The main peak's sword hum, which every disciple hears in meditation, faded two hundred years ago. The elders replaced it with an array that imitates it.",
   "way": "",
   "qiDensity": 8,
-  "prosperity": 7,
   "population": {
    "mortals": 4000000000,
    "qi": 5700000,
@@ -17072,7 +17063,7 @@
   "top": "Core Formation",
   "truth": "",
   "way": "",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 4000000,
    "qi": 12000,
@@ -17156,7 +17147,7 @@
   "top": "Nascent Soul (Admiral Hou)",
   "truth": "",
   "way": "orthodox",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 900000,
    "qi": 30000,
@@ -17253,7 +17244,7 @@
   "top": "Core Formation (the Grain Intendant)",
   "truth": "",
   "way": "",
-  "prosperity": 8,
+  "vein": 3,
   "population": {
    "mortals": 4600000000,
    "qi": 2000000,
@@ -17324,7 +17315,7 @@
   "top": "Nascent Soul",
   "truth": "The commander has received orders under the Ancestor Emperor's seal for forty years. Lately the brushwork has changed.",
   "way": "orthodox",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 200000,
    "qi": 40000,
@@ -17481,7 +17472,7 @@
   "top": "Core Formation (a pirate chief)",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 3,
   "population": {
    "mortals": 46000000,
    "qi": 12000,
@@ -17555,7 +17546,7 @@
   "top": "Foundation Establishment (a disgraced Earth Dao cultivator)",
   "truth": "",
   "way": "neutral",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 2500000,
    "qi": 1500,
@@ -17705,7 +17696,7 @@
   "top": "Core Formation (the abbot)",
   "truth": "The logs show the Stump's hum rising with the tide, faster each decade. The abbot sent the figures to the Armillary Pavilion and has been paid every year since to stop publishing them.",
   "way": "orthodox",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 25000,
    "qi": 8000,
@@ -17796,7 +17787,7 @@
   "top": "Foundation Establishment",
   "truth": "Fang Ru was sent down from the inner sect for a crime the sect never names. He has been writing to the Night Banquet.",
   "way": "",
-  "prosperity": 5,
+  "vein": 2,
   "population": {
    "mortals": 88000000,
    "qi": 40000,
@@ -17878,7 +17869,7 @@
   "top": "Core Formation (the wolf king)",
   "truth": "Beast Court envoys have offered the king a seat at the Court's lowest table if his packs drive the loggers out of the groves for good. He has not decided.",
   "way": "wild",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 300000,
    "qi": 6000,
@@ -17956,7 +17947,7 @@
   "top": "Core Formation",
   "truth": "The Jiao patriarch has bought one of the Gate's immortal-corpse puppets in secret to study it. It watches him when he works.",
   "way": "neutral",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 150000,
    "qi": 5000,
@@ -18044,7 +18035,6 @@
   "truth": "The storms have doubled in ten years. Something far out toward the Rim is drawing them, and the lightning sect's elders have felt it calling.",
   "way": "",
   "qiDensity": 5,
-  "prosperity": 4,
   "population": {
    "mortals": 1500000000,
    "qi": 750000,
@@ -18159,7 +18149,7 @@
   "top": "Nascent Soul",
   "truth": "Since the harvests failed the Registry has been ordered to send every root above middling straight to the palace, unrecorded. None of those children have been assigned anywhere.",
   "way": "orthodox",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 3000000,
    "qi": 300000,
@@ -18274,7 +18264,7 @@
   "top": "Foundation Establishment",
   "truth": "",
   "way": "",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 6000000,
    "qi": 12000,
@@ -18359,7 +18349,7 @@
   "top": "Core Formation (the Banquet chamberlain)",
   "truth": "The ones who come back are not all the ones who left. A few are Banquet disciples wearing their faces, and they go on to serve in noble houses across the Morning Star Continent.",
   "way": "",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 31000000,
    "qi": 20000,
@@ -18425,7 +18415,7 @@
   "top": "Core Formation (the punitive column's commander)",
   "truth": "The Banner's leader hums a tune nobody taught him, and his followers have started humming it too.",
   "way": "",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 50000000,
    "qi": 20000,
@@ -18581,7 +18571,7 @@
   "truth": "Prince Rui's agents have been buying the best foals through false sales. The Stables' master knows and has been paid to know.",
   "way": "",
   "terrain": "steppe",
-  "prosperity": 5,
+  "vein": 2,
   "population": {
    "mortals": 140000000,
    "qi": 40000,
@@ -18720,7 +18710,7 @@
   "top": "Core Formation",
   "truth": "Three of their strains were stolen from a Jar-Mother village. The thief is the Stockade's master, and the Jar-Mothers already know.",
   "way": "demonic",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 20000,
    "qi": 6000,
@@ -18882,7 +18872,6 @@
   "truth": "The marsh grows wherever the Banquet Master's aura settles. That cultivation has outgrown Nascent Soul, and the land is the first thing that cannot hide it.",
   "way": "",
   "qiDensity": 5,
-  "prosperity": 6,
   "population": {
    "mortals": 2000000000,
    "qi": 1000000,
@@ -18995,7 +18984,7 @@
   "top": "Foundation Establishment",
   "truth": "The kingdom's best stallion bloodline comes from a beast that wandered over the strait on its own and asked to stay. It speaks, though it has never shown a realm that should allow it, and has asked them to keep that quiet.",
   "way": "",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 32000000,
    "qi": 10000,
@@ -19105,7 +19094,7 @@
   "top": "Core Formation (the master)",
   "truth": "The last crew back brought up a jade token that hums in time with the Stump. The Society's master has hidden it and is selling dive rights to the spot.",
   "way": "neutral",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 150000,
    "qi": 12000,
@@ -19190,7 +19179,7 @@
   "truth": "The king's eldest daughter tested as a heaven-grade root. He hid it, and now both sides know.",
   "way": "",
   "terrain": "plains",
-  "prosperity": 7,
+  "vein": 2,
   "population": {
    "mortals": 1200000000,
    "qi": 300000,
@@ -19268,7 +19257,7 @@
   "top": "Core Formation (the Li patriarch)",
   "truth": "The Li patriarch's grandson was conscripted by the Registry eight years ago and has not been heard from. The patriarch blames the throne.",
   "way": "",
-  "prosperity": 5,
+  "vein": 3,
   "terrain": "mountains",
   "population": {
    "mortals": 95000000,
@@ -19361,7 +19350,7 @@
   "top": "Foundation Establishment",
   "truth": "One in ten children never reaches the Stair. They go south down the river to the marsh buyers, and the Gang tells the families they failed the climb.",
   "way": "neutral",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 40000,
    "qi": 2500,
@@ -19438,7 +19427,7 @@
   "top": "Core Formation",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 12000000,
    "qi": 30000,
@@ -19534,7 +19523,7 @@
   "top": "Foundation Establishment (King Dou)",
   "truth": "King Dou sells captured pirates to the Convict Prefecture as miners instead of hanging them. Three of his recent captures were pirate lords' sons, sent to recruit in the pits.",
   "way": "",
-  "prosperity": 4,
+  "vein": 2,
   "population": {
    "mortals": 94500000,
    "qi": 25000,
@@ -19677,7 +19666,7 @@
   "top": "Nascent Soul",
   "truth": "The abbot has read the drain in the earth and knows who causes it. He keeps silent because the court has promised the temple a hundred thousand acres when the famine ends.",
   "way": "buddhist",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 200000,
    "qi": 8000,
@@ -19808,7 +19797,7 @@
   "top": "Qi Condensation",
   "truth": "",
   "way": "",
-  "prosperity": 3,
+  "vein": 1,
   "population": {
    "mortals": 13000000,
    "qi": 4000,
@@ -19900,7 +19889,7 @@
   "top": "Nascent Soul",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 8000000,
    "qi": 5000,
@@ -20009,7 +19998,7 @@
   "top": "Foundation Establishment (the queen)",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 2,
   "population": {
    "mortals": 180000000,
    "qi": 70000,
@@ -20082,7 +20071,6 @@
   "truth": "The ghosts on the battlefield have started marching in formation toward the coast every Ghost Month, as if called to a wall.",
   "way": "",
   "qiDensity": 4,
-  "prosperity": 4,
   "population": {
    "mortals": 2000000000,
    "qi": 800000,
@@ -20126,7 +20114,7 @@
   "top": "Nascent Soul",
   "truth": "",
   "way": "neutral",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 1000000,
    "qi": 12000,
@@ -20225,7 +20213,7 @@
   "top": "Foundation Establishment (a logging boss's guard captain)",
   "truth": "",
   "way": "",
-  "prosperity": 4,
+  "vein": 2,
   "population": {
    "mortals": 120000000,
    "qi": 55000,
@@ -20309,7 +20297,7 @@
   "top": "Core Formation (the king's best hired guard)",
   "truth": "King Hao's court geomancer has found that the soil's qi runs north like water down a drain, and is too frightened to tell him why.",
   "way": "",
-  "prosperity": 6,
+  "vein": 3,
   "population": {
    "mortals": 730000000,
    "qi": 300000,
@@ -20380,7 +20368,7 @@
   "top": "Core Formation (the Bai patriarch)",
   "truth": "The Bais bribe the Registry with one rooted child in three to keep the other two. They do not choose randomly.",
   "way": "",
-  "prosperity": 5,
+  "vein": 3,
   "population": {
    "mortals": 190000000,
    "qi": 40000,
@@ -20455,7 +20443,7 @@
   "truth": "Old Ma has been luring the Azure Wave Palace's own toll ships onto the reefs, and blaming the storms.",
   "way": "",
   "terrain": "coast",
-  "prosperity": 4,
+  "vein": 2,
   "population": {
    "mortals": 75000000,
    "qi": 35000,
@@ -20598,7 +20586,7 @@
   "top": "Core Formation (the house elders)",
   "truth": "The Coin Treasure Trading House insures grain ships, then sells their routes to pirates. It profits twice and has done so for forty years.",
   "way": "neutral",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 500000,
    "qi": 8000,
@@ -20676,7 +20664,7 @@
   "top": "Foundation Establishment (the Kang patriarch)",
   "truth": "The cave-in was deliberate. The buried shaft broke into an Ascent Age gallery, and the Kangs wanted no witnesses.",
   "way": "",
-  "prosperity": 5,
+  "vein": 2,
   "population": {
    "mortals": 90000000,
    "qi": 30000,
@@ -20840,7 +20828,7 @@
   "top": "Nascent Soul",
   "truth": "The sect's Nascent Soul master killed a young Beast Court prince fifty years ago. The prince's mother has finally woken from seclusion.",
   "way": "orthodox",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 20000,
    "qi": 3000,
@@ -20878,7 +20866,6 @@
   "truth": "Those who sit on the beach long enough start to hear the hum as a song. Some fishing villages have been singing along for a year.",
   "way": "",
   "qiDensity": 6,
-  "prosperity": 6,
   "population": {
    "mortals": 9000000000,
    "qi": 6000000,
@@ -20917,7 +20904,7 @@
   "truth": "One exile is not bloodless: his bloodline was sealed at birth by a rival clan. The Conclave has learned of it and wants him back, quietly.",
   "way": "",
   "terrain": "coast",
-  "prosperity": 6,
+  "vein": 2,
   "population": {
    "mortals": 630000000,
    "qi": 100000,
@@ -20995,7 +20982,7 @@
   "top": "Nascent Soul (the harbor patron)",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 30000000,
    "qi": 40000,
@@ -21167,7 +21154,7 @@
   "top": "Core Formation",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 4000000,
    "qi": 20000,
@@ -21245,7 +21232,7 @@
   "top": "Foundation Establishment (the warden)",
   "truth": "The warden has been writing off living convicts as dead and selling them south to the marsh buyers.",
   "way": "",
-  "prosperity": 4,
+  "vein": 2,
   "population": {
    "mortals": 25000000,
    "qi": 10000,
@@ -21334,7 +21321,7 @@
   "top": "Core Formation (a hill-holder)",
   "truth": "",
   "way": "",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 2700000,
    "qi": 20000,
@@ -21420,7 +21407,7 @@
   "truth": "",
   "way": "",
   "terrain": "plains",
-  "prosperity": 7,
+  "vein": 2,
   "population": {
    "mortals": 1240000000,
    "qi": 330000,
@@ -21504,7 +21491,7 @@
   "top": "Core Formation (the senior healer)",
   "truth": "The Society's doctors have mapped the blight's spread across three regions. Their map points back to the valley.",
   "way": "orthodox",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 400000,
    "qi": 12000,
@@ -21793,7 +21780,7 @@
   "truth": "",
   "way": "",
   "terrain": "coast",
-  "prosperity": 5,
+  "vein": 2,
   "population": {
    "mortals": 157000000,
    "qi": 40000,
@@ -21878,7 +21865,7 @@
   "top": "Foundation Establishment (a salt lord's guard captain)",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 2,
   "terrain": "plains",
   "population": {
    "mortals": 240000000,
@@ -21957,7 +21944,7 @@
   "top": "Nascent Soul",
   "truth": "",
   "way": "orthodox",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 150000,
    "qi": 14000,
@@ -22066,7 +22053,6 @@
   "truth": "The blight the Apricot Grove Valley seeds in rival gardens has started jumping to its own tenants' fields, and the valley's healers cannot cure what their elders made.",
   "way": "",
   "qiDensity": 7,
-  "prosperity": 7,
   "population": {
    "mortals": 5000000000,
    "qi": 5000000,
@@ -22179,7 +22165,7 @@
   "top": "Core Formation",
   "truth": "",
   "way": "neutral",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "qi": 600,
    "foundation": 120,
@@ -22213,7 +22199,7 @@
   "top": "Nascent Soul",
   "truth": "The master can hear a voice in the storms from the east. He believes it is his Dao calling him to the Rim.",
   "way": "orthodox",
-  "prosperity": 5,
+  "vein": 4,
   "terrain": "coast",
   "qiDensity": 7,
   "population": {
@@ -22406,7 +22392,7 @@
   "truth": "The vein under the Imperial Grain Prefecture is a capillary of the Jing Capital veins. It is not failing. It is being pulled.",
   "way": "",
   "terrain": "hills",
-  "prosperity": 8,
+  "vein": 3,
   "population": {
    "mortals": 1800000000,
    "qi": 600000,
@@ -22473,7 +22459,7 @@
   "truth": "The manuals are a Dim Age Wind Dao method, complete through Core Formation.",
   "way": "",
   "terrain": "mountains",
-  "prosperity": 3,
+  "vein": 1,
   "population": {
    "mortals": 12000000,
    "qi": 5000
@@ -22545,7 +22531,7 @@
   "top": "Nascent Soul",
   "truth": "The sect's banners can no longer turn the dead. They are being pulled toward the coast by something stronger, and the sect is pretending it planned the marches.",
   "way": "ghost",
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 25000,
    "qi": 8000,
@@ -22637,7 +22623,7 @@
   "top": "Core Formation",
   "truth": "",
   "way": "",
-  "prosperity": 5,
+  "vein": 3,
   "population": {
    "mortals": 234000000,
    "qi": 160000,
@@ -22810,7 +22796,7 @@
   "top": "Foundation Establishment (the king)",
   "truth": "The Apricot Grove Valley's blight was carried into the caves by a gardener the valley bought. He still works for the king.",
   "way": "",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 38800000,
    "qi": 12000,
@@ -22888,7 +22874,7 @@
   "top": "Core Formation",
   "truth": "The Vermilion Talisman Sect's cinnabar seam runs into the root of the Clear Heaven Sword Sect's main peak. The miners have started hearing a sword hum in the rock, very faintly.",
   "way": "orthodox",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 15000,
    "qi": 6000,
@@ -22980,7 +22966,6 @@
   "truth": "A jiao of the Azure Wave Palace's court nests its young in a sea cave off this coast. If one is ever taken, the sea clans will come ashore.",
   "way": "",
   "qiDensity": 4,
-  "prosperity": 4,
   "population": {
    "mortals": 2000000000,
    "qi": 800000,
@@ -23017,7 +23002,7 @@
   "top": "Qi Condensation (a hedge cultivator)",
   "truth": "The villagers have started humming a tune nobody taught them, all at the same hour of the night.",
   "way": "",
-  "prosperity": 3,
+  "vein": 1,
   "population": {
    "mortals": 20000000,
    "qi": 3000
@@ -26039,7 +26024,7 @@
   "way": "orthodox",
   "terrain": "forest",
   "qiDensity": 8,
-  "prosperity": 7,
+  "vein": 6,
   "population": {
    "mortals": 3000000,
    "qi": 60000,
@@ -29030,7 +29015,7 @@
    "y": 134000,
    "sphere": 12000
   },
-  "prosperity": 5,
+  "vein": 4,
   "population": {
    "mortals": 80000,
    "qi": 9000,
@@ -29125,7 +29110,7 @@
    }
   ],
   "top": "Core Formation (the royal bondmaster)",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 3000000,
    "qi": 2500,
@@ -29195,7 +29180,7 @@
    }
   ],
   "top": "Foundation Establishment (the Gongsun intendant)",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 3000000,
    "qi": 2000,
@@ -29265,7 +29250,7 @@
    }
   ],
   "top": "Foundation Establishment (the harbormaster)",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 1000000,
    "qi": 800,
@@ -29335,7 +29320,7 @@
    }
   ],
   "top": "Foundation Establishment (the council's eldest)",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 5000000,
    "qi": 1500,
@@ -29404,7 +29389,7 @@
    }
   ],
   "top": "Core Formation (Uncle Ash, who stopped climbing and keeps the peace for a tenth)",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 200000,
    "qi": 2000,
@@ -29474,7 +29459,7 @@
    }
   ],
   "top": "Core Formation (the Pavilion Master)",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 15000,
    "qi": 2500,
@@ -29557,7 +29542,7 @@
    }
   ],
   "top": "Core Formation (the Sect Master and her storm-hawk)",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 20000,
    "qi": 3000,
@@ -29641,7 +29626,7 @@
    }
   ],
   "top": "Foundation Establishment (the abbot)",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 3000,
    "qi": 300,
@@ -29713,7 +29698,7 @@
    }
   ],
   "top": "Foundation Establishment (the Lamp Mother)",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 2000,
    "qi": 500,
@@ -29780,7 +29765,7 @@
    }
   ],
   "top": "Core Formation (the Blood Elder)",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "qi": 400,
    "foundation": 25,
@@ -29844,7 +29829,7 @@
    }
   ],
   "top": "Foundation Establishment (the clan matriarch)",
-  "prosperity": 3,
+  "vein": 2,
   "population": {
    "mortals": 40000,
    "qi": 300,
@@ -29909,7 +29894,7 @@
    }
   ],
   "top": "Foundation Establishment (the clan head)",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 5000,
    "qi": 200,
@@ -29978,7 +29963,7 @@
    }
   ],
   "top": "Core Formation (the hall master, posted from the Valley)",
-  "prosperity": 4,
+  "vein": 3,
   "population": {
    "mortals": 600,
    "qi": 150,

@@ -2,7 +2,7 @@
 // the Border Wilds carrying them in the generated atlas.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { checkAtlas, resolveTerrain, type CheckedEntry } from './checks.ts';
+import { checkAtlas, resolveTerrain, resolveVein, type CheckedEntry } from './checks.ts';
 import { generatedAtlasSchema, siteSchema, sourceEntrySchema, type Tie } from './schema.ts';
 
 const read = (path: string): unknown =>
@@ -178,17 +178,30 @@ describe('ties', () => {
   });
 });
 
-describe('prosperity and top', () => {
-  it('warns when a top stands above what its place keeps with no reason in its note', () => {
+describe('veins and top', () => {
+  it('warns on a top above its vein with no reason, reading a region by its strongest place', () => {
     const r = checkAtlas([
-      entry('bare', 'city', null, { terrain: 'hills', prosperity: 3, top: 'Core Formation' }),
-      entry('told', 'city', null, { terrain: 'hills', prosperity: 3, top: 'Core Formation (duty)' }),
-      entry('fed', 'city', null, { terrain: 'hills', prosperity: 4, top: 'Core Formation' }),
-      entry('rich', 'city', null, { terrain: 'hills', prosperity: 6, top: 'Foundation Establishment' }),
+      entry('w', 'world', null),
+      entry('c', 'continent', 'w', { terrain: 'hills' }),
+      entry('r', 'region', 'c', { top: 'Nascent Soul' }),
+      entry('bare', 'city', 'r', { terrain: 'hills', vein: 2, top: 'Core Formation' }),
+      entry('told', 'city', 'r', { terrain: 'hills', vein: 2, top: 'Core Formation (duty)' }),
+      entry('fed', 'city', 'r', { terrain: 'hills', vein: 3, top: 'Core Formation' }),
+      entry('rich', 'city', 'r', { terrain: 'hills', vein: 5, top: 'Foundation Establishment' }),
     ]);
-    expect(r.warnings.filter((w) => w.includes('prosperity'))).toEqual([
-      "bare: its top needs prosperity 4 and it keeps 3; say why in the top's note (duty, gain, a dead end, hiding, a beast's lair)",
+    expect(resolveVein([entry('x', 'region', null)]).size).toBe(0);
+    expect(r.warnings.filter((w) => w.includes('vein'))).toEqual([
+      "bare: its top needs a tier 3 vein and it sits on tier 2; say why in the top's note (duty, gain, a dead end, hiding, a beast's lair)",
     ]);
+    const written = checkAtlas([entry('r', 'region', null, { terrain: 'hills', vein: 4 })]);
+    expect(written.errors).toContain(
+      "r: a region's vein is its strongest place's, so don't write one",
+    );
+  });
+
+  it('gives the Border Wilds the tier 4 vein its Nascent Souls need', () => {
+    expect(byId.get('qm-bianhuang')?.vein).toBe(4);
+    expect(byId.get('qm-shoukou-cheng')?.vein).toBe(4);
   });
 });
 

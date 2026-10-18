@@ -1005,7 +1005,16 @@ function editorName(e){
 // Every id asked for gets a name, even when the lookup fails, so drawFolio never asks again in a loop.
 async function resolveNames(ids){ if (!S.user || !ids.length) return; try { const ps = await S.user.profiles(ids); Object.assign(S.names, ps); } catch (e) {} for (const id of ids) if (!S.names[id]) S.names[id] = { name: "someone" }; }
 // The scale fields (design § World bible, The world at its true size).
-const PROSPERITY = ["mortals only","keeps Qi Condensation","keeps Foundation","keeps Core Formation","keeps Nascent Soul","keeps Deity Transformation","keeps Void Refinement","keeps Body Integration","keeps Mahayana and up"];
+const VEIN_KEEPS = ["Qi Condensation","Foundation","Core Formation","Nascent Soul","Deity Transformation","Void Refinement","Body Integration","Mahayana","Tribulation Transcendence"];
+const STONE_OF_VEIN = ["","low","low","mid","high","high","top","top","top","top"];
+// A place's own vein, or a region's or continent's strongest place's, as atlas:build takes it.
+function veinOf(e){
+  if (e.kind !== "region" && e.kind !== "continent") return e.vein;
+  let best;
+  const walk = id => (S.kids.get(id) || []).forEach(k => { if (k.kind !== "region" && k.kind !== "continent" && k.vein !== undefined) best = Math.max(best ?? 0, k.vein); walk(k.id); });
+  walk(e.id);
+  return best;
+}
 const QI_DENSITY = ["barren","sparse","thin","modest","ordinary","rich","abundant","blessed","heaven-touched"];
 const REALM_HEADS = [["mortals","mortals"],["qi","Qi Condensation"],["foundation","Foundation"],["core","Core Formation"],["nascent","Nascent Soul"],["deity","Deity Transformation"],["void","Void Refinement"]];
 function populationText(p){
@@ -1073,7 +1082,8 @@ function drawFolio(){
   const fact = (k, v) => { if (v) facts.append(h("dt", {}, k), h("dd", {}, v)); };
   fact("Strongest present", e.top);
   fact("Size", e.size ? `about ${fmt(e.size)} li (${fmt(e.size / 2)} km)` : sizeText(e));
-  if (e.prosperity) fact("Prosperity", `${e.prosperity}, ${PROSPERITY[e.prosperity - 1]}`);
+  const vein = veinOf(e);
+  if (vein !== undefined) fact("Spirit vein", vein ? `tier ${vein}, keeps ${VEIN_KEEPS[vein - 1]}, yields ${STONE_OF_VEIN[vein]}-grade stones${e.vein === undefined ? " (its strongest place's)" : ""}` : "none, mortals only");
   fact("Population", populationText(e.population));
   if (e.qiDensity) fact("Qi density", `${e.qiDensity}, ${QI_DENSITY[e.qiDensity - 1]}`);
   fact("From above", e.fromAbove);

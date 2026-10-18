@@ -25,18 +25,41 @@ export interface CheckedEntry {
   map?: unknown;
   access?: { of?: string };
   ties?: Tie[];
-  prosperity?: number;
+  vein?: number;
   /** As written in the source, or parsed in the generated atlas. */
   top?: string | Top;
 }
 
 /**
- * The prosperity that keeps a realm (design § The world map, The atlas as data): 2 for Qi
- * Condensation up to 9 for Mahayana and up.
+ * The vein tier that keeps a realm (design § The world map, The atlas as data): tier n keeps realm
+ * n, 1 for Qi Condensation up to 9 for Tribulation Transcendence.
  */
-export function prosperityKeeping(top: Top): number | null {
+export function veinKeeping(top: Top): number | null {
   if (top.realm === '' || top.realm === 'unknown') return null;
-  return Math.min(9, realmIndex(top.realm) + 2);
+  return realmIndex(top.realm) + 1;
+}
+
+/** The kinds whose vein is their strongest place's, never written. */
+export const VEIN_FROM_PLACES: readonly EntryKind[] = ['continent', 'region'];
+
+/**
+ * Each entry's vein: its own, or for a region or continent the strongest written anywhere
+ * under it. Entries with none are left out.
+ */
+export function resolveVein(entries: readonly CheckedEntry[]): Map<string, number> {
+  const byId = new Map(entries.map((e) => [e.id, e]));
+  const out = new Map<string, number>();
+  for (const e of entries) {
+    if (e.vein === undefined || VEIN_FROM_PLACES.includes(e.kind)) continue;
+    out.set(e.id, Math.max(out.get(e.id) ?? 0, e.vein));
+    const seen = new Set<string>([e.id]);
+    for (let at = e.parent === null ? undefined : byId.get(e.parent); at && !seen.has(at.id);) {
+      seen.add(at.id);
+      if (VEIN_FROM_PLACES.includes(at.kind)) out.set(at.id, Math.max(out.get(at.id) ?? 0, e.vein));
+      at = at.parent === null ? undefined : byId.get(at.parent);
+    }
+  }
+  return out;
 }
 
 /**
@@ -105,14 +128,18 @@ export function checkAtlas(entries: readonly CheckedEntry[]): AtlasReport {
     if (LAND_KINDS.includes(e.kind) && e.map && !terrain.has(e.id))
       warnings.push(`${e.id}: on the map with no terrain, and none up its parents`);
 
+  const veins = resolveVein(entries);
   for (const e of entries) {
-    if (e.prosperity !== undefined) {
+    if (e.vein !== undefined && VEIN_FROM_PLACES.includes(e.kind))
+      errors.push(`${e.id}: a ${e.kind}'s vein is its strongest place's, so don't write one`);
+    const vein = veins.get(e.id);
+    if (vein !== undefined) {
       const parsed =
         typeof e.top === 'object' ? { ok: true as const, top: e.top } : parseTop(e.top);
-      const needs = parsed.ok ? prosperityKeeping(parsed.top) : null;
-      if (parsed.ok && needs !== null && needs > e.prosperity && !parsed.top.note)
+      const needs = parsed.ok ? veinKeeping(parsed.top) : null;
+      if (parsed.ok && needs !== null && needs > vein && !parsed.top.note)
         warnings.push(
-          `${e.id}: its top needs prosperity ${needs} and it keeps ${e.prosperity}; say why in the top's note (duty, gain, a dead end, hiding, a beast's lair)`,
+          `${e.id}: its top needs a tier ${needs} vein and it sits on tier ${vein}; say why in the top's note (duty, gain, a dead end, hiding, a beast's lair)`,
         );
     }
     if (e.access?.of !== undefined && !byId.has(e.access.of))

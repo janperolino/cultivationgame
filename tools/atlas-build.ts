@@ -6,7 +6,12 @@ import { createRequire } from 'node:module';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import polygonClipping, { type MultiPolygon, type Polygon } from 'polygon-clipping';
-import { checkAtlas, resolveQiDensity, resolveTerrain } from '../src/content/atlas/checks.ts';
+import {
+  checkAtlas,
+  resolveQiDensity,
+  resolveTerrain,
+  resolveVein,
+} from '../src/content/atlas/checks.ts';
 import {
   GENERATED_ATLAS_VERSION,
   generatedAtlasSchema,
@@ -83,6 +88,7 @@ problems.push(...report.errors.map((p) => `  ${p}`));
 if (problems.length) fail([`entries.json failed validation (${problems.length}):`, ...problems]);
 const terrain = resolveTerrain(source);
 const qiDensity = resolveQiDensity(source);
+const veins = resolveVein(source);
 
 // --- Parse `top`. ---
 
@@ -106,6 +112,9 @@ const entries: AtlasEntry[] = source.map((e) => {
   delete out.qiDensity;
   const q = qiDensity.get(e.id);
   if (q !== undefined) out.qiDensity = q;
+  // And a region's or continent's vein, its strongest place's.
+  const v = veins.get(e.id);
+  if (v !== undefined) out.vein = v;
   return out as AtlasEntry;
 });
 
@@ -209,18 +218,36 @@ function nextDoor(id: string, ring: Pt[]) {
   const segDist = (p: Pt, a: Pt, b: Pt) => {
     const dx = b[0] - a[0];
     const dy = b[1] - a[1];
-    const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy || 1)));
+    const t = Math.max(
+      0,
+      Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy || 1)),
+    );
     return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
   };
-  const out: { id: string; kind: 'region' | 'sea'; name: string; hanzi: string; at: Pt; outline?: unknown }[] = [];
+  const out: {
+    id: string;
+    kind: 'region' | 'sea';
+    name: string;
+    hanzi: string;
+    at: Pt;
+    outline?: unknown;
+  }[] = [];
   for (const e of atlas.entries) {
     const s = atlas.shapes[e.id];
     if (e.kind === 'region' && e.id !== id && s && s.type === 'area') {
       const r = s.polygons[0]![0]! as Pt[];
-      if (!edge.some((p) => r.some((a, i) => segDist(p, a, r[(i + 1) % r.length]!) < 800))) continue;
+      if (!edge.some((p) => r.some((a, i) => segDist(p, a, r[(i + 1) % r.length]!) < 800)))
+        continue;
       const cx = r.reduce((n, p) => n + p[0], 0) / r.length;
       const cy = r.reduce((n, p) => n + p[1], 0) / r.length;
-      out.push({ id: e.id, kind: 'region', name: e.name, hanzi: e.hanzi, at: [Math.round(cx), Math.round(cy)], outline: s.polygons });
+      out.push({
+        id: e.id,
+        kind: 'region',
+        name: e.name,
+        hanzi: e.hanzi,
+        at: [Math.round(cx), Math.round(cy)],
+        outline: s.polygons,
+      });
     } else if (e.kind === 'sea' && e.map?.x != null && e.map.y != null && e.map.r) {
       const { x, y, r } = e.map;
       if (!edge.some(([px, py]) => Math.hypot(px - x, py - y) < r + 8000)) continue;

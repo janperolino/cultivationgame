@@ -19,8 +19,8 @@ export interface WrittenTown {
   shops: readonly string[];
   lore: string;
   features: readonly { name: string; tags: FeatureTag[] }[];
-  /** The highest realm the seat can keep, 1 to 9, as on an atlas place (design § The world map, The atlas as data). */
-  prosperity: number;
+  /** The tier of the strongest spirit vein the seat sits on, 0 for none, as on an atlas place. */
+  vein: number;
   /** About how many live in the seat itself, mortals and cultivators by realm. */
   population: Population;
   /** Li across. */
@@ -73,7 +73,7 @@ export const BORDER_WILDS: RegionContent = {
         F('the beacon bastion', 'height', 'fire'),
         F('the drill ground on the cut plateau', 'witnesses'),
       ],
-      prosperity: 3,
+      vein: 2,
       population: { mortals: 1_500_000, qi: 1500, foundation: 120 },
       size: 40,
       fromAbove:
@@ -91,7 +91,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: ['march-mortal'],
       lore: 'The seat of a farming county two thousand li across, six million strong, where fields are plowed with spears at hand; the county store sells to the patrols.',
       features: [F('fields plowed with spears at hand', 'witnesses'), F('a beast-pit', 'fall')],
-      prosperity: 2,
+      vein: 1,
       population: { mortals: 150_000, qi: 40 },
       size: 15,
       fromAbove:
@@ -109,7 +109,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'The last of the March’s beacon peaks before Stone Eyes, its spirit-fire seen a thousand li off, and the March’s border post on the road.',
       features: [F('the beacon tower', 'height', 'fire')],
-      prosperity: 2,
+      vein: 1,
       population: { mortals: 40_000, qi: 30 },
       size: 5,
       fromAbove:
@@ -127,7 +127,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'Where the March’s grain is counted, taxed and stolen, in that order: granaries for forty million mouths in tiers along the ford.',
       features: [F('the granaries', 'burnable', 'cover'), F('the ford', 'water', 'crossing')],
-      prosperity: 3,
+      vein: 2,
       population: { mortals: 600_000, qi: 150, foundation: 5 },
       size: 25,
       fromAbove:
@@ -146,7 +146,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: ['eyes-stall', 'eyes-alchemy', 'eyes-mortal'],
       lore: 'A town of two million terraced down the walls of a sinkhole thirty li across, its farms at the bottom, and the Registry’s testing stone on the top terrace.',
       features: [F('the sinkhole rim', 'height', 'fall'), F('the testing stone', 'witnesses')],
-      prosperity: 3,
+      vein: 2,
       population: { mortals: 2_000_000, qi: 600, foundation: 20 },
       size: 30,
       fromAbove:
@@ -164,7 +164,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'Guano diggers and their ropes in a cave mouth a li high, the swarms pouring out at dusk, and a smell you stop noticing on the third day.',
       features: [F('bat roosts heaped with guano', 'dark', 'burnable')],
-      prosperity: 2,
+      vein: 1,
       population: { mortals: 80_000 },
       size: 8,
       fromAbove:
@@ -182,7 +182,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'Cave clans who guide the Night Bridge’s runners through passages no map shows.',
       features: [F('caves no map shows', 'dark', 'cover', 'narrow')],
-      prosperity: 2,
+      vein: 1,
       population: { mortals: 50_000, qi: 40 },
       size: 6,
       fromAbove: 'Nothing: it is all underground.',
@@ -200,7 +200,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: ['herders-stall', 'herders-guild', 'herders-mortal'],
       lore: 'The herders’ trading post, where thunder-horned deer and scale-horses are sold by the hundred head and the empire’s buyers keep a standing hall.',
       features: [F('the corrals', 'witnesses', 'fragile'), F('the auction ring', 'witnesses')],
-      prosperity: 3,
+      vein: 2,
       population: { mortals: 700_000, qi: 200, foundation: 10 },
       size: 30,
       fromAbove:
@@ -218,7 +218,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'The Night Bridge’s crates come in after dark, and nobody asks what hatches.',
       features: [F('the hatchling barns', 'burnable', 'cover')],
-      prosperity: 2,
+      vein: 1,
       population: { mortals: 60_000, qi: 80 },
       size: 6,
       fromAbove:
@@ -236,7 +236,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'A summer camp of yurts where the deer are broken to the saddle, beside a herd a hundred thousand strong.',
       features: [F('open grass to the horizon', 'crossing')],
-      prosperity: 2,
+      vein: 1,
       population: { mortals: 30_000, qi: 40 },
       size: 20,
       fromAbove:
@@ -255,7 +255,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: ['wall-stall'],
       lore: 'Bone-carters and the women who feed the patrols, in the Wall’s long shadow.',
       features: [F('bone heaps waiting to be built in', 'cover', 'fragile')],
-      prosperity: 2,
+      vein: 1,
       population: { mortals: 120_000, qi: 60 },
       size: 10,
       fromAbove: 'A sprawl in the Wall’s shadow under the smoke of the bone-carters’ kilns.',
@@ -272,7 +272,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'Salt-reed cutters on the last dry ground before the fens.',
       features: [F('reed beds', 'cover', 'burnable'), F('the salt pans', 'water')],
-      prosperity: 1,
+      vein: 0,
       population: { mortals: 40_000 },
       size: 10,
       fromAbove: 'Salt-reed beds silvering the last dry ground before the fens.',
@@ -289,7 +289,7 @@ export const BORDER_WILDS: RegionContent = {
       shops: [],
       lore: 'A hunters’ post on the way to the fens, ringed by a thorn hedge as tall as a tower that a wood-root cultivator grew a century ago against what comes out of them.',
       features: [F('the thorn hedge', 'cover', 'burnable', 'height')],
-      prosperity: 2,
+      vein: 1,
       population: { mortals: 15_000, qi: 20 },
       size: 4,
       fromAbove: 'A ring of dark thorn hedge forty li round, plain against the fen.',

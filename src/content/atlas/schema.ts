@@ -278,10 +278,11 @@ const baseFields = {
   qiDensity: z.number().int().min(1).max(9).optional(),
   /**
    * The scale fields (A5.2; design § World bible, The world at its true size), on places and powers.
-   * Prosperity is the highest realm a place can keep, 1 (mortals only) to 9 (Mahayana and up), a
-   * place without one taking its parent's.
+   * The vein is the tier of the strongest spirit vein a place or power sits on, 0 (none) to 9, and
+   * tier n keeps realm n (design § The world map, The atlas as data). A region's or continent's is
+   * never written: `atlas:build` takes its strongest place's.
    */
-  prosperity: z.number().int().min(1).max(9).optional(),
+  vein: z.number().int().min(0).max(9).optional(),
   /** About how many live there: mortals, and cultivators by realm. */
   population: populationSchema.optional(),
   /** Li across, or li long for a wall, a road or a river work. */
@@ -307,7 +308,7 @@ function entryRules(
     hidden?: unknown;
     access?: Access;
     features?: unknown;
-    prosperity?: unknown;
+    vein?: unknown;
     population?: unknown;
     size?: unknown;
     fromAbove?: unknown;
@@ -325,7 +326,7 @@ function entryRules(
       'hidden',
       'access',
       'features',
-      'prosperity',
+      'vein',
       'population',
       'size',
       'fromAbove',
