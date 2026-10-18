@@ -457,7 +457,7 @@ What each kind of thing does with tier and rarity:
 
 ## Items and gear
 
-Everything you can carry is one record, the way a method is a bundle of fields, and what an item can do is a list of uses rather than a kind. A spirit fruit can be eaten, thrown into a furnace and sat with, and a new sort of thing is a new use or a new tag on an old one, never a new record. Settled in D2; every number is a starting value for the sims.
+Everything you can carry is one record, the way a method is a bundle of fields, and what an item can do is a list of uses rather than a kind. A spirit fruit can be eaten, thrown into a furnace and sat with, and a new sort of thing is a new use or a new tag on an old one, never a new record.
 
 **The item record.** An item has an id, a name with pinyin and hanzi, a tier and a rarity (Tier, rarity and pedigree), the properties its rarity grants, a source, a kind for the Bag's glyph and stacking (gear, pill, talisman, herb, material, beast part, manual, treasure, vessel, mount, beast), its bulk in squares and stack size, and its uses. Each use is a field with its own shape, and an item holds any set of them:
 
@@ -473,15 +473,15 @@ Everything you can carry is one record, the way a method is a bundle of fields, 
 | carry | squares it adds while it is with you | a storage pouch, a cart, a mount |
 | key | opens a place, a card or a lock | a sect token, a smuggler's map, a letter |
 | chart | the places it Sketches on the map when used, kept after (The world, The fog) | a kingdom map, a sect's region map, a treasure map |
-| inscribe | a formation slot for M4's enchantments | an empty slot on a blade or a robe |
+| inscribe | a formation slot for enchantments | an empty slot on a blade or a robe |
 
-A pill has consume alone; an old ginseng has consume, ingredient and contemplate; a beast core has ingredient, a dangerous consume and a price; a cart has carry alone. Anything you can consume and anything with ingredient tags can go into a recipe, so a fruit and the pill brewed from it are two items that share tags, not two systems. Unknown things show every use as "?" until appraised (M6).
+A pill has consume alone; an old ginseng has consume, ingredient and contemplate; a beast core has ingredient, a dangerous consume and a price; a cart has carry alone. Anything you can consume and anything with ingredient tags can go into a recipe, so a fruit and the pill brewed from it are two items that share tags, not two systems. Unknown things show every use as "?" until appraised.
 
-**Weapons** come in kinds, one per combat Dao: sword (剑), saber (刀), spear (枪) and fist (拳: gauntlets, claws and bare hands). Bare hands are a white tier 1 fist weapon, so unarmed strikes run through the same rule. New kinds come with their Daos later, the axe, bow, dagger, hammer and staff among them, each an entry. A weapon sizes Attack for techniques tagged with its Dao at half its band and basic strikes at the full one (Tier, rarity and pedigree), multiplies Accuracy only at gold (×1.1) and red (×1.2), half a technique's, and carries its properties. A weapon of a lower tier than yours still works, only weaker, since its band counts in its own tier's realm.
+**Weapons** come in kinds, one per combat Dao: sword (剑), saber (刀), spear (枪) and fist (拳: gauntlets, claws and bare hands). Bare hands are a white tier 1 fist weapon, so unarmed strikes run through the same rule. New kinds come with their Daos later, the axe, bow, dagger, hammer and staff among them, each an entry. A weapon sizes Attack for techniques tagged with its Dao at half its band and basic strikes at the full one (Tier, rarity and pedigree), multiplies Accuracy from gold up, half a technique's: about ×1.1, ×1.2 and ×1.25 at gold, red and pristine, and carries its properties. A weapon of a lower tier than yours still works, only weaker, since its band counts in its own tier's realm.
 
 **Armor** is one piece, whatever its shape: lamellar, a robe, a beast hide, a cassock. It is a bar of its own between the qi shield and the body (Combat, The sheet): its size is its tier's realm at its band, which is its Defense, and its durability is three times that, so white armor is the ordinary baseline the fighting-up ledger assumes and a red robe stands at the next realm's middle. Its material names one damage type it resists, a quarter off at any rarity (water-silk against fire, as in the worked turn), on the armor alone, and its properties add the rest. Its wear carries from fight to fight, and a refiner mends a full bar for a fifth of its price.
 
-**Enchantments** (low priority, M4's artifact refining): weapons, armor and storage items carry an inscribe slot, empty until a formation is laid into it, and an inscribed formation adds one property of its own rarity. A formation on a blade is a craft like a pill; the slot is here so the record never changes.
+**Enchantments** come with artifact refining (Professions): weapons, armor and storage items carry an inscribe slot, empty until a formation is laid into it, and an inscribed formation adds one property of its own rarity. A formation on a blade is a craft like a pill; the slot is here so the record never changes.
 
 **Storage.** The pouch slot and the ring slot both carry squares, and both count at once:
 
@@ -496,7 +496,7 @@ A pouch is cloth: anyone can open it, a thief can cut it off, and it goes with y
 
 **Treasure slots** hold artifacts that are properties alone: a fire bead, a warding jade, a treasure ring, a soul-calming bell. They carry no squares and no weapon rule, only their rarity's properties and a bond. You start with none, and the slots come from nodes: one notable in each tier of the Qi tree and one in each tier of the Soul tree opens a slot, so a realm is worth two and the count leans on both trees. The Bag shows them beside the four gear squares as they open.
 
-**Bonding.** Artifacts from blue up bond to a cultivator by use, on the mastery scale, Glimpse to Origin (Cultivation, mastery): fight turns with it count as practice, and feeding it stones in seclusion counts as hours. Each level unlocks one of its properties, in the order the item lists them, and cuts the above-your-realm penalty a step: −4 to hit at Glimpse, −2 at Mastery, nothing at Perfection, and at Origin a weapon a tier up counts its full tier gap. At gold and red an artifact spirit wakes at Perfection, and a pristine artifact is born with one awake: it carries the unique property, speaks in scenes (GLM gives it a voice, the engine its wants), and can refuse an owner it hates. A bonded artifact works at white for anyone else, and a lineage heirloom's bond passes to an heir at Glimpse.
+**Bonding.** Artifacts from blue up bond to a cultivator by use, on the mastery scale, Glimpse to Origin (Cultivation, mastery): fight turns with it count as practice, and feeding it stones in seclusion counts as hours. Each level unlocks one of its properties, in the order the item lists them, and cuts the above-your-realm penalty: Accuracy ×0.8 at Glimpse and Comprehension, ×0.9 at Mastery and the full ×1 at Perfection, and at Origin a weapon a tier up counts its full tier step rather than half (`src/content/gear.ts`). At gold and red an artifact spirit wakes at Perfection, and a pristine artifact is born with one awake: it carries the unique property, speaks in scenes (GLM gives it a voice, the engine its wants), and can refuse an owner it hates. A bonded artifact works at white for anyone else, and a lineage heirloom's bond passes to an heir at Glimpse.
 
 **Pills and toxicity.** Every cultivator has one toxicity meter, 0 to 100. A pill adds its dose: 10 at your own tier for a white pill, triple for a pill a tier above you, a third for one below. Higher rarity is purer, so the dose scales ×1.5 at gray, ×1 at white, ×0.9 at green, ×0.8 at blue, ×0.65 at purple, ×0.4 at gold, ×0.25 at red and ×0.15 at pristine; a red pill is almost clean. Toxicity decays about 1 a day at Qi Condensation and faster by realm, every pill's effect scales by 1 minus toxicity over 100, and reaching 100 unsettles the ladder the last pill fed. Detox pills and the Body tree's Hundred Poisons branch cut it. Toxicity is why pills are a boost and never the road.
 
@@ -509,7 +509,7 @@ A pouch is cloth: anyone can open it, a thief can cut it off, and it goes with y
 
 ## Catalogs by place
 
-The world's things are written by hand, a place at a time, and only rarity is rolled (Jan's call in P3.5's talk, replacing D2's generator: a written catalog is not much more work than the property pools a generator needs, and everything a player finds has been written by someone). Gold and red are on their own written list. A new place is a new catalog, not new code.
+The world's things are written by hand, a place at a time, and only rarity is rolled, since a written catalog is not much more work than the property pools a generator needs, and everything a player finds has been written by someone. Gold and red are on their own written list. A new place is a new catalog, not new code.
 
 **Layers.** A catalog belongs to one atlas entry, and a shop draws on four at once, so most of a shelf is shared and each place writes only what is its own:
 
@@ -520,7 +520,7 @@ The world's things are written by hand, a place at a time, and only rarity is ro
 | Place | what only that place makes | the Guarded Mouth's strait gear, the March's and the Wall's spear and bone, the Gate's sabers and blood pills, the Herders' horn and storm, the Night Bridge's contraband, Stone Eyes' fists and lamps, the Stone Forest's soul things |
 | Imports | goods that travel along the atlas's ties into the region | Red Rocks steel and ore and Medicine Ridges herbs by the merchant guild, a Sword Domain blade now and then, Vast Wilds and Ink Marsh contraband over the Night Bridge |
 
-A shop's kind weighs the layers (place 50, region 25, continent 15, imports 10; a merchant guild counts imports double, a black market takes them first). A region without catalogs of its own falls back on its continent's until the atlas fill reaches it.
+A shop's kind weighs the layers (place 50, region 25, continent 15, imports 10; a merchant guild counts imports double, a black market takes them first). A region without catalogs of its own falls back on its continent's.
 
 **What a catalog writes.** Items, methods, techniques with their Arts, and loose manuals, in the records they already have (Items and gear; Cultivation, methods and Where manuals live), and its lots: each thing, the shop kinds that stock it, how often against the others of its layer, and how many come in a lot. A thing with no shop is found only on the dead, in rings and in ruins.
 
