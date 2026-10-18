@@ -389,7 +389,7 @@ describe('a crossing of the Border Wilds', () => {
     const map = mapOf(s)!;
     let sensedAtEdge = 0;
     let waited = 0;
-    for (let day = 0; day < 140 && s.map!.course; day++) {
+    for (let day = 0; day < 220 && s.map!.course; day++) {
       const before = new Set(s.map!.encounters.map((e) => e.id));
       s = run(s, 1);
       for (const e of s.map!.encounters) {

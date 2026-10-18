@@ -33,7 +33,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 29;
+export const SAVE_VERSION = 30;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -878,7 +878,34 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       : null;
     return { ...old, version: 29, state: { ...s, mapgen, map } };
   },
+  // v29, after A5.1: the City of the Guarded Mouth moved from the Ghost-Lamp Fens to the coast
+  // (Jan's call, the atlas put it 16,000 li inland), so a saved region is seeded again for its
+  // roads, a course over the old roads goes with what was sensed on it, and a life standing at the
+  // old City stands at the new one.
+  29: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const world = ((s.lineage ?? {}) as Raw).id as string;
+    const mapgen = Object.fromEntries(
+      Object.keys((s.mapgen ?? {}) as Raw).map((id) => [id, generateRegion(id, world)]),
+    );
+    const m = s.map as Raw | null | undefined;
+    const at = (m?.at ?? null) as [number, number] | null;
+    const atOldCity = !!at && Math.hypot(at[0] - OLD_CITY[0], at[1] - OLD_CITY[1]) < 300;
+    const map = m
+      ? {
+          ...m,
+          at: atOldCity ? [...NEW_CITY] : m.at,
+          course: null,
+          encounters: ((m.encounters ?? []) as Raw[]).filter((e) => e.state === 'waiting'),
+        }
+      : null;
+    return { ...old, version: 30, state: { ...s, mapgen, map } };
+  },
 };
+
+/** The City of the Guarded Mouth before and after it moved to the coast (v30). */
+const OLD_CITY = [166000, 210000] as const;
+const NEW_CITY = [151047, 212587] as const;
 
 export class SaveError extends Error {}
 

@@ -462,6 +462,24 @@ describe('the v29 save', () => {
   });
 });
 
+describe('the v30 save', () => {
+  it('moves a life standing at the old City to the City on the coast, and reroutes its roads', () => {
+    const s = life();
+    const raw = JSON.parse(JSON.stringify(makeSave(s, 0))) as {
+      version: number;
+      state: { map: Record<string, unknown> };
+    };
+    raw.version = 29;
+    raw.state.map.at = [166000, 210000];
+    raw.state.map.course = { stale: true };
+    const loaded = loadSave(raw);
+    const city = placeById(mapOf(loaded.state)!, 'qm-shoukou-cheng')!;
+    expect(loaded.state.map!.at).toEqual([city.x, city.y]);
+    expect(loaded.state.map!.course).toBeNull();
+    expect(loaded.state.mapgen[BW]).toEqual(generateRegion(BW, s.lineage.id));
+  });
+});
+
 describe('next door (A5)', () => {
   it('names the regions and seas round the Border Wilds, and not itself', () => {
     const near = regionData('qm-bianhuang')!.file.nextDoor!;

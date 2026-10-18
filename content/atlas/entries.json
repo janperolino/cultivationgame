@@ -15230,7 +15230,7 @@
  },
  {
   "id": "qm-shoukou-cheng",
-  "editedAt": "2026-10-15T12:00:00Z",
+  "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -15266,8 +15266,8 @@
   "kind": "city",
   "lore": "The City of the Guarded Mouth holds the narrow coast where the chain begins, with a garrison of ten thousand and a bounty office that pays for cores by grade. Its markets sell beast parts, smuggled Vast Wilds herbs and frontier saber steel. Every sect with a frontier interest keeps a hall here. At low tide, the reef road appears below the walls.",
   "map": {
-   "x": 166000,
-   "y": 210000
+   "x": 151047,
+   "y": 212587
   },
   "name": "City of the Guarded Mouth",
   "parent": "qm-bianhuang",
