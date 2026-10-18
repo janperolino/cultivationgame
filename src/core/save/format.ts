@@ -28,11 +28,12 @@ import { peopleIn } from '../people.ts';
 import { seeAll } from '../seen.ts';
 import { flipHour } from '../wheel.ts';
 import { emptyWorld } from '../resolver/world.ts';
+import { generateRegion } from '../map/region.ts';
 import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 28;
+export const SAVE_VERSION = 29;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
@@ -857,6 +858,25 @@ const migrations: Record<number, (old: Raw) => Raw> = {
         }
       : null;
     return { ...old, version: 28, state: { ...s, map } };
+  },
+  // v28, A5: each world seeded its own wilds. v29 keeps the land the same in every world (Jan's
+  // call, so the map's painting fits each), so a saved region is seeded again; its places keep their
+  // ids. A course laid over the old land goes, and with it what was sensed ahead on it.
+  28: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const world = ((s.lineage ?? {}) as Raw).id as string;
+    const mapgen = Object.fromEntries(
+      Object.keys((s.mapgen ?? {}) as Raw).map((id) => [id, generateRegion(id, world)]),
+    );
+    const m = s.map as Raw | null | undefined;
+    const map = m
+      ? {
+          ...m,
+          course: null,
+          encounters: ((m.encounters ?? []) as Raw[]).filter((e) => e.state === 'waiting'),
+        }
+      : null;
+    return { ...old, version: 29, state: { ...s, mapgen, map } };
   },
 };
 

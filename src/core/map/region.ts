@@ -431,7 +431,9 @@ const short = (name: string) => name.replace(/^(The |Kingdom of |March of )/, ''
 /**
  * Seeds a region's wilds for a world (`world` is the lineage's id): its tracts' cells, roads'
  * bends, checkpoints, hearts and wild sites, in that order. The same world and region always give
- * the same places.
+ * the same places. The tracts' cells, and so the land's terrain, are the region's own and the same
+ * in every world (A5, Jan's call), seeded by the region's `landSeed`, since the map's painting is
+ * of one land; what stands on it varies by world.
  */
 export function generateRegion(regionId: string, world: string): RegionGen {
   const data = regionData(regionId);
@@ -446,7 +448,7 @@ export function generateRegion(regionId: string, world: string): RegionGen {
   const seedOf = (what: string) => hashSeed(`${world}/${regionId}/${what}`);
 
   // Tracts: one cell to each written name, the wet names to the cells nearest the sea.
-  const rt = mulberry32(seedOf('tracts'));
+  const rt = mulberry32(hashSeed(`${content.landSeed}/${regionId}/tracts`));
   const seeds: Pt[] = [];
   const spacing = Math.sqrt(((box[2] - box[0]) * (box[3] - box[1])) / content.tracts.length) * 0.55;
   for (let guard = 0; seeds.length < content.tracts.length && guard < 20000; guard++) {

@@ -1,0 +1,175 @@
+{
+  "_note": "A5 map test only (Jan's call: just enough for the map test). The Medicine Ridges (qm-yaoling), next to the Border Wilds across its north-east edge: terrains for its atlas areas, a few towns and villages and the roads that join them to each other and to the Border Wilds. Not in the game; the outline and the atlas places come from src/content/generated/atlas.json. Coordinates in li, as the atlas's.",
+  "region": "qm-yaoling",
+  "terrain": "hills",
+  "color": "#8fae6a",
+  "look": "green hills terraced with herb gardens and apricot groves, gentler and greener than the Border Wilds",
+  "areas": {
+    "qm-baicao-guo": {
+      "terrain": "plains",
+      "look": "a patchwork of herb fields and terraces"
+    },
+    "qm-zhiyuan-guo": {
+      "terrain": "forest",
+      "look": "old shaded woods where lingzhi is grown under the trees"
+    },
+    "qm-bingyuan": {
+      "terrain": "blight",
+      "look": "the Sick Gardens: withered, greyed herb gardens, dead terraces and pale dust, a forbidden blight"
+    }
+  },
+  "towns": [
+    {
+      "id": "apricot-steps",
+      "name": "Apricot Steps",
+      "pinyin": "Xingjie",
+      "hanzi": "杏阶",
+      "sub": "town",
+      "x": 192000,
+      "y": 180000
+    },
+    {
+      "id": "gourd-market",
+      "name": "Gourd Market",
+      "pinyin": "Hulu Shi",
+      "hanzi": "葫芦市",
+      "sub": "town",
+      "x": 186000,
+      "y": 170000
+    },
+    {
+      "id": "herb-tithe",
+      "name": "Herb Tithe",
+      "pinyin": "Yaoshui",
+      "hanzi": "药税镇",
+      "sub": "town",
+      "x": 207000,
+      "y": 168000
+    },
+    {
+      "id": "lingzhi-ford",
+      "name": "Lingzhi Ford",
+      "pinyin": "Zhidu",
+      "hanzi": "芝渡",
+      "sub": "town",
+      "x": 212000,
+      "y": 196000
+    },
+    {
+      "id": "cinnabar-foot",
+      "name": "Cinnabar Foot",
+      "pinyin": "Danlu",
+      "hanzi": "丹麓",
+      "sub": "town",
+      "x": 219000,
+      "y": 184000
+    },
+    {
+      "id": "bitterleaf",
+      "name": "Bitterleaf",
+      "pinyin": "Kuye",
+      "hanzi": "苦叶村",
+      "sub": "village",
+      "x": 168000,
+      "y": 178000
+    },
+    {
+      "id": "mulberry-hollow",
+      "name": "Mulberry Hollow",
+      "pinyin": "Sang'ao",
+      "hanzi": "桑坳",
+      "sub": "village",
+      "x": 176000,
+      "y": 172000
+    },
+    {
+      "id": "seven-kilns",
+      "name": "Seven Kilns",
+      "pinyin": "Qiyao",
+      "hanzi": "七窑",
+      "sub": "village",
+      "x": 199000,
+      "y": 158000
+    },
+    {
+      "id": "ash-garden",
+      "name": "Ash Garden",
+      "pinyin": "Huipu",
+      "hanzi": "灰圃",
+      "sub": "village",
+      "x": 222000,
+      "y": 203000
+    },
+    {
+      "id": "dew-terraces",
+      "name": "Dew Terraces",
+      "pinyin": "Lutai",
+      "hanzi": "露台",
+      "sub": "village",
+      "x": 228000,
+      "y": 190000
+    }
+  ],
+  "roads": [
+    [
+      "thunderhorn-camp",
+      "bitterleaf"
+    ],
+    [
+      "bitterleaf",
+      "mulberry-hollow"
+    ],
+    [
+      "mulberry-hollow",
+      "gourd-market"
+    ],
+    [
+      "gourd-market",
+      "qm-xuanhu-hui"
+    ],
+    [
+      "gourd-market",
+      "apricot-steps"
+    ],
+    [
+      "qm-yeqiao-hui",
+      "apricot-steps"
+    ],
+    [
+      "apricot-steps",
+      "xinglin"
+    ],
+    [
+      "apricot-steps",
+      "qm-huichun-cheng"
+    ],
+    [
+      "qm-huichun-cheng",
+      "herb-tithe"
+    ],
+    [
+      "herb-tithe",
+      "seven-kilns"
+    ],
+    [
+      "qm-huichun-cheng",
+      "lingzhi-ford"
+    ],
+    [
+      "lingzhi-ford",
+      "ash-garden"
+    ],
+    [
+      "qm-huichun-cheng",
+      "cinnabar-foot"
+    ],
+    [
+      "cinnabar-foot",
+      "qm-danqiu-zong"
+    ],
+    [
+      "qm-danqiu-zong",
+      "dew-terraces"
+    ]
+  ]
+}

@@ -78,6 +78,12 @@ describe('the region, seeded once for a world', () => {
     expect(JSON.stringify(a.sites)).not.toBe(JSON.stringify(c.sites));
   });
 
+  it('keeps the land the same in every world, so the painting fits each (A5)', () => {
+    const a = generateRegion(BW, 'world-a');
+    const c = generateRegion(BW, 'world-b');
+    expect(JSON.stringify(a.tracts)).toBe(JSON.stringify(c.tracts));
+  });
+
   it('names fifteen tracts, seeds wild sites to every area, hides about one in five', () => {
     const g = generateRegion(BW, 'world-a');
     expect(g.tracts).toHaveLength(15);
@@ -429,6 +435,29 @@ describe('the v24 save', () => {
     const back = loadSave(JSON.parse(JSON.stringify(makeSave(s, 0))));
     expect(back.state.map).toEqual(s.map);
     expect(back.state.mapgen[BW]).toEqual(s.mapgen[BW]);
+  });
+});
+
+describe('the v29 save', () => {
+  it('seeds a v28 save’s region again on the land every world shares, and drops its course', () => {
+    const s = life();
+    const raw = JSON.parse(JSON.stringify(makeSave(s, 0))) as {
+      version: number;
+      state: {
+        mapgen: Record<string, { tracts: { cell: unknown[] }[] }>;
+        map: Record<string, unknown>;
+      };
+    };
+    raw.version = 28;
+    // A v28 world seeded its own tracts.
+    for (const t of raw.state.mapgen[BW]!.tracts) t.cell = [...t.cell].reverse();
+    raw.state.map.course = { stale: true };
+    raw.state.map.encounters = [{ state: 'sensed', meetAt: 3 }];
+    const loaded = loadSave(raw);
+    expect(loaded.state.mapgen[BW]).toEqual(generateRegion(BW, s.lineage.id));
+    expect(loaded.state.mapgen[BW]!.tracts).toEqual(generateRegion(BW, 'any-other-world').tracts);
+    expect(loaded.state.map!.course).toBeNull();
+    expect(loaded.state.map!.encounters).toEqual([]);
   });
 });
 

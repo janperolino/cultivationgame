@@ -19,6 +19,54 @@
       "budgetKB": 300,
       "concept": "shell-1",
       "prompt": "Template E, with docs/mockups/cultivate-scene-guide.png as the layout guide. Create a landscape 1536x1024 illustration AS AN ASSET, placed behind real HTML text and buttons. Use the first attached concept's mood and palette as the reference, and the second attached image as an exact LAYOUT GUIDE (do not draw the guide's flat colors or blocks). STYLE: SEVERED HEAVEN, GILDED VOID. Deep void black #040507 with a very quiet cosmic sky: sparse fine stars and faint dark nebula, never behind text. Panels are obsidian, near-black with a subtle lacquer sheen, framed in antique gold filigree #d9b46a: fine double rules, cloud-scroll and fretwork corners, small gold diamond studs. Qi is a muted cyan light #7fc7d9, used sparingly, like light leaking through hairline cracks. Warm ivory #e9e5da type, a refined serif display face with small brush hanzi beside English. Painted Chinese fantasy game art: rich detail in the ornament, calm restrained lighting, no neon, no glow haze over panels. Straight-on, orthographic, no perspective, no device frame, no watermark. Scene: a cultivator's cave abode, a hall carved into a mountain cliff. Straight ahead, behind the seat, a wide natural cave mouth opens onto misty peaks and a quiet starry void sky. On a floor of dark polished stone that faintly reflects, a low round stone dais with a worn meditation mat sits exactly where the guide's olive ellipse is: centred horizontally, its center about 66% down from the top. On it sits a cultivator cross-legged, painted as a pure featureless deep-black silhouette that fills exactly the guide's grey seated shape, same size and outline: no face, no clothing detail, no glow, only its soft dark reflection in the floor below it. A few dim lanterns low on the side walls, shelves of scrolls in the rock, a small incense burner. Light: soft, dim and even, as if from the cave mouth's starlight; NO visible sun or moon, no strong cast shadows on the floor, so code can add the hour's sunlight later. Keep clear: the area around the figure plain and dark so small glowing particles read over it; the top strip (guide's top bar) quiet; everything in the guide's bottom brown band is dark shadowed floor with little detail. The left and right edges fall off into darkness. No other people, no creatures. Full-bleed, no frame, no sidebars. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, NO symbols, no watermark."
+    },
+    {
+      "id": "map-mountains",
+      "kind": "ornament",
+      "out": "src/ui/art/map/mountains",
+      "width": 384,
+      "quality": 82,
+      "budgetKB": 30,
+      "concept": "map-1",
+      "prompt": "Create a sprite sheet AS AN ASSET, 1536x1024: 8 separate standing map pieces on a flat pure #FF00FF magenta background with no shading or shadow (or a transparent background), on an even 4x2 grid of 384 px cells, each piece centered left to right in its cell with its base resting on the bottom of the cell and a 10% margin at the sides and top, none touching. The pieces are seen from a high three-quarter view looking down at about 40 degrees, like the standing mountains, woods and towns of an illustrated fantasy map Match the attached map painting exactly: its pieces, palette, light and level of detail; paint them as if cut out of it. STYLE: SEVERED HEAVEN, GILDED VOID. Painted Chinese fantasy game art for a night-dark illustrated world map: deep void black #040507 around everything, the land in dark, desaturated, moonlit tones (slate and blue-grey stone, deep pine green, muted ochre and umber earth, dark teal water), soft mist in the hollows, fine painterly detail, calm restrained lighting from the upper left, a faint cool rim of starlight, occasional tiny warm lantern points on buildings only. Antique gold #d9b46a appears only as small accents on roofs and gates. No neon, no glow haze, no saturated greens, no bright daylight. Each piece's base fades out softly into nothing: no ground slab, no plinth, no cast shadow, no reflection. The same light from the upper left and the same scale on every piece. No text, no labels, no seals, no people, no roads, no grid lines, no watermark. Pieces, left to right, top to bottom: 1. a single sharp peak with a light snow cap; 2. a tall twin peak; 3. a long ridge of three peaks; 4. a massive broad peak, the tallest, its top in a thin wisp of cloud; 5. a jagged dark crag; 6. a peak with a small waterfall down its face; 7. a low mountain shoulder, half the height; 8. a cluster of three narrow spires.",
+      "cells": [
+        4,
+        2
+      ],
+      "pieces": [
+        "map-mountain-1",
+        "map-mountain-2",
+        "map-mountain-3",
+        "map-mountain-4",
+        "map-mountain-5",
+        "map-mountain-6",
+        "map-mountain-7",
+        "map-mountain-8"
+      ]
+    },
+    {
+      "id": "map-karst",
+      "kind": "ornament",
+      "out": "src/ui/art/map/karst",
+      "width": 384,
+      "quality": 82,
+      "budgetKB": 30,
+      "concept": "map-1",
+      "prompt": "Create a sprite sheet AS AN ASSET, 1536x1024: 8 separate standing map pieces on a flat pure #FF00FF magenta background with no shading or shadow (or a transparent background), on an even 4x2 grid of 384 px cells, each piece centered left to right in its cell with its base resting on the bottom of the cell and a 10% margin at the sides and top, none touching. The pieces are seen from a high three-quarter view looking down at about 40 degrees, like the standing mountains, woods and towns of an illustrated fantasy map Match the attached map painting exactly: its pieces, palette, light and level of detail; paint them as if cut out of it. STYLE: SEVERED HEAVEN, GILDED VOID. Painted Chinese fantasy game art for a night-dark illustrated world map: deep void black #040507 around everything, the land in dark, desaturated, moonlit tones (slate and blue-grey stone, deep pine green, muted ochre and umber earth, dark teal water), soft mist in the hollows, fine painterly detail, calm restrained lighting from the upper left, a faint cool rim of starlight, occasional tiny warm lantern points on buildings only. Antique gold #d9b46a appears only as small accents on roofs and gates. No neon, no glow haze, no saturated greens, no bright daylight. Each piece's base fades out softly into nothing: no ground slab, no plinth, no cast shadow, no reflection. The same light from the upper left and the same scale on every piece. No text, no labels, no seals, no people, no roads, no grid lines, no watermark. Pieces, left to right, top to bottom: pillar karst like Zhangjiajie and Guilin. 1. one tall narrow stone pillar with a pine on top; 2. two pillars, one taller; 3. a cluster of five pillars of mixed heights; 4. a broad pillar with a flat wooded top; 5. a leaning pillar; 6. three short pillars in mist; 7. a pillar with a natural arch; 8. a tall cluster of seven pillars, the largest piece.",
+      "cells": [
+        4,
+        2
+      ],
+      "pieces": [
+        "map-karst-1",
+        "map-karst-2",
+        "map-karst-3",
+        "map-karst-4",
+        "map-karst-5",
+        "map-karst-6",
+        "map-karst-7",
+        "map-karst-8"
+      ]
     }
   ]
 }

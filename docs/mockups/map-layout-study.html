@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Map layout study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<style>
+  /* A5 study: the Map laid out like Cultivate and Routine. The map is the scene, full bleed, with
+     no panels or hairlines round it; the controls float over it on still scrims. The map here is a
+     stand-in cut from Jan's inspiration 4 (map-inspo-4.jpg) until GPT's standing pieces land on
+     the real one. Four takes on the same content, with or without a card waiting. */
+  :root {
+    --bg: #040507; --text: #e9e5da; --muted: #8d949d; --accent: #d6ab4c; --gilt: #d9b46a;
+    --line: rgb(217 180 106 / 0.4); --line-faint: rgb(217 180 106 / 0.16); --crack: #7fc7d9; --warn: #e08a6a;
+    --travel: #c2ae8c; --look: #9fc4ad; --sleep: #59606b; --qi: #7fc7d9;
+    --display: 'Cormorant Garamond', Georgia, serif; --ui: Inter, system-ui, sans-serif; --brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #000; color: var(--text); font-family: var(--ui); overflow-x: hidden; }
+  .bar-top { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 14px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line-faint); }
+  .bar-top b { color: var(--text); font-weight: 500; }
+  .bar-top button { background: none; border: 1px solid var(--line-faint); color: var(--muted); padding: 4px 11px; font: inherit; border-radius: 3px; cursor: pointer; }
+  .bar-top button.on { color: var(--accent); border-color: var(--line); }
+  .wrap { width: 100%; overflow: clip; }
+  .stage { position: relative; width: 1920px; height: 1080px; transform-origin: 0 0; background: var(--bg); overflow: hidden; }
+
+  /* The scene: the map, full bleed, fading into the void and the fog at its edges. */
+  .map { position: absolute; inset: 0 0 0 72px; background: url('map-standin.jpg') var(--mx, 50%) var(--my, 46%) / auto var(--ms, 112%) no-repeat, var(--bg); }
+  .fog { position: absolute; inset: 0 0 0 72px; pointer-events: none;
+    background:
+      radial-gradient(ellipse 62% 58% at var(--fx, 50%) var(--fy, 48%), transparent 55%, rgb(4 5 7 / .55) 78%, rgb(4 5 7 / .95) 100%); }
+  .scrim { position: absolute; pointer-events: none; }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(4 5 7 / .94); border-right: 1px solid var(--line-faint); display: flex; flex-direction: column; align-items: center; padding-top: 22px; gap: 26px; }
+  .rail i { width: 20px; height: 20px; border: 1.4px solid rgb(233 229 218 / .35); border-radius: 4px; }
+  .rail i.on { border-color: var(--accent); box-shadow: 0 0 0 5px rgb(214 171 76 / .1); }
+  .rail i:first-child { border-radius: 50%; border-color: var(--gilt); }
+
+  /* The top floats over the map, as on Cultivate. */
+  .top { position: absolute; top: 22px; left: 104px; right: 40px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .brand { font-family: var(--display); font-size: 22px; }
+  .brand .hz { font-size: 18px; margin-left: 6px; }
+  .res { display: flex; gap: 22px; align-items: baseline; text-align: right; }
+  .res b { font-family: var(--display); font-weight: 500; font-size: 20px; display: block; }
+  .res small { font-size: 11px; color: var(--muted); }
+
+  /* Pieces shared by the takes. */
+  .hz { font-family: var(--brush); color: var(--gilt); }
+  .cap { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .muted { color: var(--muted); }
+  .warn { color: var(--warn); }
+  .chips { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line-faint); border-radius: 3px; overflow: hidden; }
+  .chips span { padding: 4px 10px; font-size: 13px; color: var(--muted); }
+  .chips span + span { border-left: 1px solid var(--line-faint); }
+  .chips span.on { color: var(--accent); background: rgb(214 171 76 / .12); }
+  .chips span.off { opacity: .4; }
+  .where b { font-family: var(--display); font-weight: 500; font-size: 19px; }
+  .where div { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .where .pip { color: var(--accent); }
+  .zoom { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  .zoom span { display: grid; place-items: center; min-width: 30px; height: 28px; padding: 0 8px; border: 1px solid var(--line-faint); border-radius: 3px; background: rgb(4 5 7 / .6); color: var(--muted); font-size: 13px; }
+
+  .course h2 { font-family: var(--display); font-weight: 500; font-size: 28px; margin: 4px 0 8px; }
+  .course h2 .hz { font-size: 21px; margin-left: 6px; }
+  .bar { height: 2px; background: rgb(255 255 255 / .08); margin: 4px 0 12px; }
+  .bar i { display: block; height: 100%; width: 84%; background: linear-gradient(to right, var(--gilt), var(--accent)); }
+  .kv { display: grid; grid-template-columns: 70px 1fr; gap: 6px 12px; font-size: 13px; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; }
+  .ahead { list-style: none; margin: 0; padding: 0; }
+  .ahead li { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 14px; border-bottom: 1px solid rgb(255 255 255 / .05); }
+  .ahead li .seal { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--line); border-radius: 3px; font-family: var(--brush); color: var(--gilt); font-size: 14px; }
+  .ahead li .r { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .ahead li.wait .r { color: var(--accent); }
+  .ahead li.wait { color: var(--text); }
+
+  .enc h3 { font-family: var(--display); font-weight: 500; font-size: 25px; margin: 0; }
+  .enc .sub { font-size: 12px; color: var(--muted); margin: 2px 0 10px; }
+  .enc p { font-family: var(--display); font-style: italic; font-size: 17px; margin: 0 0 10px; color: #d9d4c7; }
+  .enc .who { display: grid; grid-template-columns: 1fr auto; font-size: 13px; gap: 3px 10px; margin-bottom: 10px; }
+  .enc .who span:nth-child(even) { color: var(--muted); }
+  .enc .stake { font-size: 13px; margin-bottom: 10px; }
+  .enc .stake b { color: var(--accent); font-weight: 500; margin-right: 4px; }
+  .choice { display: flex; align-items: center; gap: 10px; padding: 8px 12px; margin-top: 4px; border-radius: 3px; background: rgb(255 255 255 / .03); }
+  .choice:first-of-type { background: rgb(214 171 76 / .1); box-shadow: inset 0 0 0 1px var(--line); }
+  .choice b { font-weight: 500; font-size: 14px; display: block; }
+  .choice small { font-size: 12px; color: var(--muted); }
+  .choice .v { margin-left: auto; font-size: 12px; padding: 1px 8px; border-radius: 9px; border: 1px solid var(--line-faint); color: var(--muted); }
+  .choice .v.short { color: var(--warn); border-color: rgb(224 138 106 / .4); }
+  .choice .v.sure { color: var(--look); }
+  .foot { display: flex; gap: 18px; margin-top: 10px; font-size: 13px; color: var(--accent); }
+
+  .road { display: flex; gap: 22px; align-items: center; }
+  .road .lines { display: grid; gap: 9px; font-size: 13px; }
+  .road .now { font-size: 14px; }
+  .road .now .hz { margin-right: 6px; }
+  .wheel { flex: none; }
+
+  .block { position: absolute; }
+  .gl { padding: 16px 20px; }
+
+  /* Day/hide toggles. */
+  [data-show="road"] .if-card { display: none !important; }
+  [data-show="card"] .if-road { display: none !important; }
+</style>
+</head>
+<body>
+<div class="bar-top">
+  <b>Take</b>
+  <button data-v="A" class="on">A · Cultivate's band</button>
+  <button data-v="B">B · Routine's column</button>
+  <button data-v="C">C · corners, the most map</button>
+  <button data-v="D">D · two wings</button>
+  <b style="margin-left:18px">State</b>
+  <button data-s="card" class="on">a card waits</button>
+  <button data-s="road">on the road</button>
+  <span style="margin-left:auto">The map is a stand-in from inspiration 4; the real one is the atlas with GPT's pieces standing on it.</span>
+</div>
+<div class="wrap"><div class="stage" id="stage" data-show="card"></div></div>
+
+<template id="t-wheel">
+  <svg class="wheel" viewBox="-60 -60 120 120" width="SIZE" height="SIZE">
+    <g id="segs"></g>
+    <circle r="31" fill="#07080b" stroke="rgb(217 180 106 / .5)" stroke-width="1"/>
+    <circle r="57" fill="none" stroke="rgb(217 180 106 / .55)" stroke-width="1.2"/>
+    <circle r="54" fill="none" stroke="rgb(217 180 106 / .18)" stroke-width="0.6"/>
+    <line x1="0" y1="0" x2="20" y2="-14" stroke="#d9b46a" stroke-width="1.6" stroke-linecap="round"/>
+    <circle r="3" fill="#d9b46a"/>
+  </svg>
+</template>
+
+<script>
+const H = '子丑寅卯辰巳午未申酉戌亥';
+const kinds = ['sleep','sleep','look','travel','travel','travel','travel','travel','travel','travel','sleep','sleep'];
+const col = { sleep: '#59606b', look: '#9fc4ad', travel: '#c2ae8c' };
+function wheel(size) {
+  let segs = '';
+  for (let i = 0; i < 12; i++) {
+    const a0 = (i / 12) * Math.PI * 2 - Math.PI / 2 - Math.PI / 12, a1 = a0 + Math.PI * 2 / 12;
+    const p = (r, a) => `${(r * Math.cos(a)).toFixed(2)} ${(r * Math.sin(a)).toFixed(2)}`;
+    const c = col[kinds[i]];
+    segs += `<path d="M${p(33, a0)} L${p(52, a0)} A52 52 0 0 1 ${p(52, a1)} L${p(33, a1)} A33 33 0 0 0 ${p(33, a0)}Z" fill="${c}" fill-opacity="${i === 8 ? .55 : .26}" stroke="#040507" stroke-width="1"/>`;
+    const am = (a0 + a1) / 2;
+    segs += `<text x="${(42.5 * Math.cos(am)).toFixed(2)}" y="${(42.5 * Math.sin(am) + 3).toFixed(2)}" text-anchor="middle" font-family="Ma Shan Zheng, KaiTi" font-size="9" fill="${i === 8 ? '#fff1c9' : 'rgb(233 229 218 / .7)'}">${H[i]}</text>`;
+  }
+  return document.getElementById('t-wheel').innerHTML.replace(/SIZE/g, size).replace('<g id="segs"></g>', segs);
+}
+
+const where = `<div class="where"><b>Spring 3,177</b>
+  <div>Beast-Butcher Gate · hills · thin qi (3) · you see 600 li</div>
+  <div><span class="pip">○</span> the edge: beasts of layers 1 to 3 · white and green finds</div></div>`;
+const zoom = `<div class="zoom"><span>+</span><span>−</span><span>Region</span><span>You</span></div>`;
+const routine = `<div class="cap">Road routine</div>
+  <div class="chips"><span>By day</span><span>Pressed march</span><span class="on">Night road</span><span>My road 1</span></div>`;
+const now = `<div class="now"><span class="hz">申</span>camped: a card waits for you</div>
+  <div class="muted" style="font-size:12px">160 li a day, 40 a double-hour · tap an hour to set it in Routine</div>`;
+const going = `<div class="cap">Going by</div>
+  <div class="chips"><span class="on">Light step</span><span class="off">Horse</span><span class="off">Mount</span><span class="off">Passage</span><span class="off">Fly</span><span class="off">Someone's sword</span></div>`;
+const stance = `<div class="cap">When the road brings something</div>
+  <div class="chips"><span>Avoid</span><span class="on">Careful</span><span>Bold</span></div>
+  <div class="muted" style="font-size:12px;max-width:430px">Hunts the sure kills and takes clear sneaks and flights; gathers finds. Anything else waits for you.</div>`;
+const course = `<div class="course"><div class="cap">On the road</div>
+  <h2>To Beast-Butcher Gate<span class="hz">屠兽门</span></h2>
+  <div class="bar"><i></i></div>
+  <dl class="kv"><dt>Left</dt><dd>100 li · 1 day · 622 cross-country in all</dd>
+  <dt>Arrives</dt><dd>when you go on</dd>
+  <dt>Now</dt><dd class="warn">Stopped: a card waits for you. You camp and cultivate where you stand.</dd></dl></div>`;
+const courseRoad = `<div class="course"><div class="cap">On the road</div>
+  <h2>To Beast-Butcher Gate<span class="hz">屠兽门</span></h2>
+  <div class="bar"><i></i></div>
+  <dl class="kv"><dt>Left</dt><dd>100 li · 1 day · 622 cross-country in all</dd>
+  <dt>Arrives</dt><dd>Spring 3,177, day 12 · about 10 s</dd>
+  <dt>Now</dt><dd>Travelling by night, veiled.</dd></dl></div>`;
+const ahead = `<div class="cap" style="margin-top:14px">Ahead</div><ul class="ahead">
+  <li class="wait if-card"><span class="seal">修</span>Deserters in the pines<span class="r">waiting</span></li>
+  <li><span class="seal">人</span>A post rider of the Jing<span class="r">3 h</span></li></ul>`;
+const enc = `<div class="enc"><h3>Deserters in the pines</h3><div class="sub">cultivator · it waits for you</div>
+  <p>Three men in cut-off garrison coats step out of the blackpines across the trail, spears low.</p>
+  <div class="who"><span>a garrison deserter, the one talking</span><span>Qi Condensation, fifth layer</span><span>2 more deserters</span><span>Qi Condensation, second layer</span></div>
+  <div class="stake"><b>Win</b>what they carry · <b class="warn">Short</b>a wound, 30% for 10 days, half your stones and a thing from the bag</div>
+  <div class="choice"><div><b>Run for it · your stance</b><small>Speed against theirs</small></div><span class="v">clear</span></div>
+  <div class="choice"><div><b>Pay the road toll they ask</b><small>It costs 12 low-grade stones.</small></div><span class="v sure">sure</span></div>
+  <div class="choice"><div><b>Threaten them off</b><small>your presence against their nerve</small></div><span class="v">clear</span></div>
+  <div class="choice"><div><b>Fight them</b><small>you'd fall before they do: 15 exchanges to fell them, 9 to fell you</small></div><span class="v short">short</span></div>
+  <div class="foot"><span>Stop here</span><span>Turn back home</span></div></div>`;
+
+const shell = `<div class="map"></div><div class="fog"></div><div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="top"><div class="brand">Severed Heaven<span class="hz">断天</span></div>
+  <div class="res"><div><b>Spring 3,177</b><small>申 · afternoon</small></div><div><b>9</b><small>low-grade</small></div><div><b>3,315</b><small>insight</small></div></div></div>`;
+
+const takes = {
+  // A: Cultivate's band. A thin fading band across the foot: the road left, the course or the card
+  // in the middle, what's ahead right. The map takes everything above it.
+  A: `${shell}
+    <div class="scrim" style="left:72px;right:0;bottom:0;height:430px;background:linear-gradient(to top, rgb(4 5 7 / .96) 0%, rgb(4 5 7 / .88) 55%, rgb(4 5 7 / .5) 80%, transparent)"></div>
+    <div class="scrim" style="left:72px;top:0;width:760px;height:220px;background:radial-gradient(ellipse at 0 0, rgb(4 5 7 / .8), transparent 70%)"></div>
+    <div class="block" style="left:110px;top:80px">${where}</div>
+    <div class="block" style="right:40px;top:96px">${zoom}</div>
+    <div class="block road" style="left:110px;bottom:40px;width:620px;align-items:flex-end">${wheel(200)}<div class="lines">${routine}${now}${going}${stance}</div></div>
+    <div class="block if-card" style="left:770px;bottom:30px;width:640px">${enc}</div>
+    <div class="block if-road" style="left:770px;bottom:60px;width:560px">${courseRoad}</div>
+    <div class="block" style="left:1460px;bottom:40px;width:400px"><div class="if-card">${course.replace('<h2>', '<h2 style="font-size:22px">')}</div>${ahead}</div>`,
+
+  // B: Routine's column. Everything you read and choose in one column on the right, fading in
+  // from the edge; the wheel low left in its bezel. The column is where P3.9's scene would play.
+  B: `${shell}
+    <div class="scrim" style="right:0;top:0;bottom:0;width:820px;background:linear-gradient(to left, rgb(4 5 7 / .95) 0%, rgb(4 5 7 / .88) 60%, rgb(4 5 7 / .4) 85%, transparent)"></div>
+    <div class="scrim" style="left:72px;bottom:0;width:820px;height:380px;background:radial-gradient(ellipse at 0 100%, rgb(4 5 7 / .9), transparent 70%)"></div>
+    <div class="scrim" style="left:72px;top:0;width:760px;height:220px;background:radial-gradient(ellipse at 0 0, rgb(4 5 7 / .8), transparent 70%)"></div>
+    <div class="block" style="left:110px;top:80px">${where}</div>
+    <div class="block" style="left:110px;bottom:40px;display:flex;gap:22px;align-items:flex-end">${wheel(220)}<div class="lines road" style="display:grid;gap:9px">${routine}${now}${going}${stance}</div></div>
+    <div class="block" style="right:56px;top:96px;width:600px">${'<div class="if-card">' + course + '</div><div class="if-road">' + courseRoad + '</div>'}${ahead}<div class="if-card" style="margin-top:18px">${enc}</div></div>
+    <div class="block" style="right:676px;top:96px">${zoom}</div>`,
+
+  // C: Corners. The most map: where you stand top left, the road low left, the course top right,
+  // and the card only when one waits, low and centred like Cultivate's open card.
+  C: `${shell}
+    <div class="scrim" style="left:72px;top:0;width:760px;height:220px;background:radial-gradient(ellipse at 0 0, rgb(4 5 7 / .8), transparent 70%)"></div>
+    <div class="scrim" style="left:72px;bottom:0;width:760px;height:360px;background:radial-gradient(ellipse at 0 100%, rgb(4 5 7 / .92), transparent 70%)"></div>
+    <div class="scrim" style="right:0;top:0;width:700px;height:420px;background:radial-gradient(ellipse at 100% 0, rgb(4 5 7 / .9), transparent 70%)"></div>
+    <div class="scrim if-card" style="left:640px;right:520px;bottom:0;height:560px;background:radial-gradient(ellipse at 50% 100%, rgb(4 5 7 / .96) 30%, rgb(4 5 7 / .7) 55%, transparent 75%)"></div>
+    <div class="block" style="left:110px;top:80px">${where}</div>
+    <div class="block road" style="left:110px;bottom:36px">${wheel(170)}<div class="lines">${routine}${now}${going}</div></div>
+    <div class="block" style="right:56px;top:96px;width:440px">${'<div class="if-card">' + course + '</div><div class="if-road">' + courseRoad + '</div>'}${ahead}</div>
+    <div class="block" style="right:56px;bottom:40px">${zoom}</div>
+    <div class="block if-card" style="left:810px;bottom:28px;width:600px">${enc}</div>`,
+
+  // D: Two wings. The road on a left wing, the course and the card on a right wing, the map
+  // between: the same shape as Cultivate's cave with its mirrored wings.
+  D: `${shell}
+    <div class="scrim" style="left:72px;top:0;bottom:0;width:640px;background:linear-gradient(to right, rgb(4 5 7 / .95) 0%, rgb(4 5 7 / .85) 60%, transparent)"></div>
+    <div class="scrim" style="right:0;top:0;bottom:0;width:760px;background:linear-gradient(to left, rgb(4 5 7 / .95) 0%, rgb(4 5 7 / .85) 60%, transparent)"></div>
+    <div class="block" style="left:110px;top:80px;width:470px">${where}
+      <div style="margin:46px 0 22px;display:grid;place-items:center">${wheel(300)}</div>
+      <div style="display:grid;gap:12px">${routine}${now}${going}${stance}</div></div>
+    <div class="block" style="right:56px;top:96px;width:580px">${'<div class="if-card">' + course + '</div><div class="if-road">' + courseRoad + '</div>'}${ahead}<div class="if-card" style="margin-top:18px">${enc}</div></div>
+    <div class="block" style="left:50%;bottom:36px;transform:translateX(-50%)"><div class="zoom" style="flex-direction:row">${zoom.replace('<div class="zoom">', '').replace('</div>', '')}</div></div>`,
+};
+const maps = { A: ['50%', '20%', '120%', '50%', '38%'], B: ['22%', '46%', '112%', '38%', '50%'], C: ['50%', '46%', '112%', '50%', '50%'], D: ['50%', '46%', '118%', '50%', '50%'] };
+
+const stage = document.getElementById('stage');
+let v = 'A';
+function render() {
+  stage.innerHTML = takes[v];
+  const [mx, my, ms, fx, fy] = maps[v];
+  Object.entries({ '--mx': mx, '--my': my, '--ms': ms, '--fx': fx, '--fy': fy }).forEach(([k, x]) => stage.style.setProperty(k, x));
+}
+document.querySelectorAll('[data-v]').forEach((b) => b.onclick = () => {
+  v = b.dataset.v; document.querySelectorAll('[data-v]').forEach((x) => x.classList.toggle('on', x === b)); render();
+});
+document.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => {
+  stage.dataset.show = b.dataset.s; document.querySelectorAll('[data-s]').forEach((x) => x.classList.toggle('on', x === b));
+});
+function fit() {
+  const k = Math.min(window.innerWidth / 1920, (window.innerHeight - 42) / 1080);
+  stage.style.transform = `scale(${k})`;
+  stage.parentElement.style.height = 1080 * k + 'px';
+}
+window.addEventListener('resize', fit);
+render(); fit();
+</script>
+</body>
+</html>

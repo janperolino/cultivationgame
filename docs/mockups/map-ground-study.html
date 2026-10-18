@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Map ground study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<style>
+  /* A5 study: the Map's land as GPT paints it, on the real Border Wilds. Runs through the dev server
+     (it imports the game's atlas code): npm run dev, then /docs/mockups/map-ground-study.html. */
+  :root { --text: #e9e5da; --muted: #8d949d; --accent: #d6ab4c; --line: rgb(217 180 106 / .4); --line-faint: rgb(217 180 106 / .16); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #040507; color: var(--text); font-family: Inter, system-ui, sans-serif; overflow: hidden; }
+  body { display: flex; flex-direction: column; }
+  .bar { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding: 8px 14px; font-size: 12.5px; color: var(--muted); border-bottom: 1px solid var(--line-faint); }
+  .grp { display: inline-flex; align-items: center; gap: 4px; }
+  .grp b { color: var(--text); font-weight: 500; margin-right: 2px; }
+  .bar button { background: none; border: 1px solid var(--line-faint); color: var(--muted); padding: 3px 9px; font: inherit; border-radius: 3px; cursor: pointer; }
+  .bar button.on { color: var(--accent); border-color: var(--line); }
+  #readout { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .view { position: relative; flex: 1; }
+  #map { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <span class="grp"><b>Sample save</b><button data-sample="arrived">just arrived</button><button data-sample="map">bought a map</button><button data-sample="region">whole region sketched</button><button data-sample="far">explored further</button></span>
+  <span class="grp"><b>Zoom</b><button data-k="zoom" data-v="charted">all you've charted</button><button data-k="zoom" data-v="region">the region</button><button data-k="zoom" data-v="both">both regions</button><button data-k="zoom" data-v="fort">the fort</button><button data-k="zoom" data-v="tile">the new tile</button><button data-k="zoom" data-v="tileClose">the new tile, close</button></span>
+  <span class="grp"><b>Zoom out to</b><button data-k="limit" data-v="charted" class="on">what you've charted</button><button data-k="limit" data-v="none">anywhere</button></span>
+  <span class="grp"><b>Fog</b><button data-k="fog" data-v="off">off</button><button data-k="fog" data-v="on" class="on">on</button></span>
+  <span class="grp"><b>Sketched land</b><button data-k="ink" data-v="off" class="on">veil</button><button data-k="ink" data-v="on">ink</button></span>
+  <span class="grp"><b>Clouds over your land</b><button data-k="erase" data-v="off" class="on">a little</button><button data-k="erase" data-v="on">never</button></span>
+  <span class="grp"><b>Drift</b><button data-k="drift" data-v="off" class="on">still</button><button data-k="drift" data-v="on">drifting</button></span>
+  <span class="grp"><b>Tiles</b><button data-k="tiles" data-v="off">off</button><button data-k="tiles" data-v="on" class="on">on</button></span>
+  <span class="grp"><b>Upscaled</b><button data-k="upscaled" data-v="off">off</button><button data-k="upscaled" data-v="on" class="on">on</button></span>
+  <span class="grp"><b>Roads and names</b><button data-k="labels" data-v="off">off</button><button data-k="labels" data-v="on" class="on">on</button></span>
+  <span id="readout"></span>
+</div>
+<div class="view"><canvas id="map"></canvas></div>
+<script>
+  // The sample save: a reload with ?sample=…, so the fog is built afresh round it.
+  const sample = new URLSearchParams(location.search).get('sample') ?? 'region';
+  document.querySelectorAll('[data-sample]').forEach((b) => {
+    b.classList.toggle('on', b.dataset.sample === sample);
+    b.onclick = () => { location.search = '?sample=' + b.dataset.sample; };
+  });
+</script>
+<script type="module" src="./map-ground-study.ts"></script>
+</body>
+</html>

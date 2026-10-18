@@ -159,3 +159,25 @@ Stays code: the name, pronouns, realm, bars and numbers, recent events, the seat
 ## The overhaul
 
 `plan.md` runs the pipeline as phases A1 to A9, before P3.8: A1 builds the stage and `npm run art`, A2 the shell and the shared kit (and rewrites design.md § Look), then the screens one or a few at a time.
+
+## The travel map: a region painted whole (A5)
+
+Jan's call in A5: the Map's land is painted, not drawn. Stamped sprites on a code ground read as stickers; a whole painting holds together. Each region is painted once by GPT from a guide drawn off the atlas, then sharpened in detail tiles for the close zoom, so the map shows one picture at every zoom. The places stand on it as transparent pieces and the roads, seals, names and fog stay code. The look is **take D**: the peaks and stone pillars jut up out of the map with real height and shadow, at half the scale of Jan's first painting, tilted about 50° like a carved relief model, moonlit but clear, in a xianxia mood (seas of cloud round the karst, ink-wash ridges, faint cyan qi). The Border Wilds' is `docs/mockups/map-takes/bw-take-D.png`.
+
+The land a painting shows is the region's own: the wild tracts' cells are seeded by the region's `landSeed`, the same in every world, so one painting fits every save (save v29). What stands on the land (sites, road bends, hearts) still varies by world, which is why places are pieces, not paint.
+
+**For a region** (the key is `OPENROUTER_API_KEY` in `.env.local`; images are `openai/gpt-5.4-image-2`, about $0.21 each):
+
+| Step | Tool | Cost |
+|---|---|---|
+| 1. Content: the region's atlas fields, towns, roads and `landSeed` (a region file and a content entry, as the Border Wilds has) | by hand | the atlas fill |
+| 2. Guide: the region from the atlas, each terrain a flat color, roads red, a symbol a kind of place, the sea and neighbours | `npx tsx tools/map-guide.ts <region>` | free |
+| 3. Painting, take D, attaching the finished neighbours' paintings so the borders match | `npx tsx tools/map-paint.ts region <region> docs/mockups/map-painting-<region>.png --take D` | ~$0.20 |
+| 4. Fit: GPT squashes and shifts; the fit lays the painted sea and land beyond on the guide's | `npx tsx tools/map-fit.ts <region>` | seconds |
+| 5. Tiles: a grid at 25 li a pixel, overlapping a tenth, skipping a tile under 8% region; each a guide and a reference cut from the fitted painting | `npx tsx tools/map-guide.ts <region> --tiles` | free |
+| 6. Each tile painted again closer, with the cultivation details, then fitted by color with its tone | `map-paint.ts tile <region> <id>`, then `map-fit.ts <region> --tile <id>` | ~$0.21 a tile |
+| 7. Each tile upscaled 4× (Real-ESRGAN x4plus, Qualcomm's ONNX build in `tools/models/`, git-ignored) and cut into a pyramid of 512 px chunks with its tone and feathered edges baked in | `map-upscale.ts`, then `map-chunks.ts <region> <id>` | ~7 min a tile on Jan's PC |
+
+The Border Wilds took 8 tiles; South of the Tides would take about 10. So about $2 to $3 and an hour a region, almost all of it the upscale running in the background.
+
+**How the map draws it** (the study, `docs/mockups/map-ground-study.ts`, until it moves into the game): each painting through its fit, cut to its region plus the sea, so neighbours meet edge to edge and the coast's surf stays; the tiles over it at every zoom, each from the pyramid level the zoom needs and only its chunks on screen, so the land never changes as you zoom and a frame costs one to two milliseconds; the zoom stops at about 0.16 px a li, where the upscaled tiles run out. Close in, the place pieces are the next tier of detail.

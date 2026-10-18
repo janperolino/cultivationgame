@@ -22,6 +22,11 @@ export interface WrittenTown {
 
 export interface RegionContent {
   region: string;
+  /**
+   * Seeds the land, the wild tracts' cells, the same in every world (A5): the seed the region's
+   * map painting was made from, so the painting and the rules agree.
+   */
+  landSeed: string;
   towns: readonly WrittenTown[];
   /** Roads as pairs of places they join, a written town or an atlas place. */
   roads: readonly (readonly [string, string])[];
@@ -41,6 +46,7 @@ const F = (name: string, ...tags: FeatureTag[]) => ({ name, tags });
 
 export const BORDER_WILDS: RegionContent = {
   region: 'qm-bianhuang',
+  landSeed: 'guide',
   towns: [
     // The March of Pacified Borders, hills
     {

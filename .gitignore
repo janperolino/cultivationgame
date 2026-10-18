@@ -9,3 +9,11 @@ coverage
 # The art pipeline: what Jan drops in and the originals ingest keeps (docs/art-pipeline.md).
 art/inbox/
 art/source/
+
+# Upscaler models (A5), downloaded, not committed
+tools/models/
+# A5 map study: upscaled tiles and their chunks are rebuilt by tools, not committed
+docs/mockups/map-tiles/*/chunks/
+docs/mockups/map-tiles/*/*-x4.png
+docs/mockups/map-tiles/*/tile-*-ref.png
+docs/mockups/map-takes/*.log
