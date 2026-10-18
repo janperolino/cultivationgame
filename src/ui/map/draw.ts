@@ -82,7 +82,7 @@ const PLAIN: Record<string, string> = {
 
 /**
  * The pieces that stand at places (A5.1; design § The travel map, The look): cut from the sheets
- * Jan paints in ChatGPT (`map-places-*` in art/manifest.json). A place shows its own piece, else
+ * Jan paints in ChatGPT (`map-places-*` in art/manifest.json, painted on transparent). A place shows its own piece, else
  * its kind's, else only its seal.
  */
 const PIECE_URLS: Record<string, string> = Object.fromEntries(
