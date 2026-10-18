@@ -532,7 +532,7 @@ A shop's kind weighs the layers (place 50, region 25, continent 15, imports 10; 
 
 ## Enemies, beasts and the people you meet
 
-NPCs run on the player's rules, and pedigree is only access (Tier, rarity and pedigree). This is how they are made, how beasts fight, what the dead leave behind and who stays in your life. Settled in D2; every number is a starting value for the fight sim.
+NPCs run on the player's rules, and pedigree is only access (Tier, rarity and pedigree). This is how they are made, how beasts fight, what the dead leave behind and who stays in your life.
 
 **A cultivator is generated, not authored.** The template is a pedigree, a realm and stage, a weapon and its Dao, a path (qi, body, soul or balanced; the pedigree's unless the template names one: rogues and small sects walk qi, the great sects and above teach all three), a profile, a name in the region's naming style and a seed. Everything else is rolled from the pedigree's table on the `people` stream: method rarity, which sets the growth that built their pool and HP; technique rarity and mastery, which their path art and a guard art for every path share; a weapon and an armor; zero to two consumables; a storage item; and a breakthrough grade. Named people from the atlas are the same record with the rolls pinned, so an elder and a bandit differ in access, never in rules.
 
@@ -548,7 +548,7 @@ NPCs run on the player's rules, and pedigree is only access (Tier, rarity and pe
 
 Each realm's ordinary baseline rises on top, since anyone who reached Nascent Soul has lived for centuries: the bias is multiplied by ×1 at Qi Condensation and Foundation, ×1.3 at Core Formation and ×1.6 from Nascent Soul up. Mastery rises one level for every realm past the first, up to Origin, because practice days pile up. The biases are midpoints of ranges the sim tunes; the fighting-up ledger's rows are what they must reproduce.
 
-**NPC pace.** An NPC's realm comes from its age and pedigree: it climbs at the away rate on its pedigree's typical method, read off the pacing sim's away row, so a rogue at sixty sits at Qi Condensation's peak while a great-sect disciple reaches Foundation around thirty. The expected realm at each age per pedigree is a sim output, filled in by P2.2 and read by M3's encounters and M5's rivals. An attended player outpaces a same-pedigree NPC by up to double (How the two halves connect), and that gap is the edge for playing.
+**NPC pace.** An NPC's realm comes from its age and pedigree: it climbs at the away rate on its pedigree's typical method, read off the pacing sim's away row, so a rogue at sixty sits at Qi Condensation's peak while a great-sect disciple reaches Foundation around thirty. The expected realm at each age per pedigree is a sim output in `src/content/pace.ts`, read by encounters and rivals. An attended player outpaces a same-pedigree NPC by up to double (How the two halves connect), and that gap is the edge for playing.
 
 **Profiles are five numbers.** The engine owns every choice; GLM gives it a voice.
 
@@ -586,41 +586,23 @@ At Nascent Soul a beast takes human form and becomes a cultivator record on a be
 **Who stays.** The world is three layers, and nobody is simulated who hasn't touched you:
 
 - Transient: a generated enemy or passer-by exists for its scene and is thrown away.
-- Kept: a scene that ends with a thread keeps them. You talked and traded names, haggled at their stall, spared, robbed, healed or bargained with them, survived a fight with them or they with you, or a card named them. A kept person is stored as a seed plus pins: the seed regenerates their kit and rolls on demand, and the pins are what changed, regard, realm, whereabouts, what you took. That is the People screen (Professions, people and powers), dozens to a few hundred a life, mortals included. Named atlas people are kept from the start with everything pinned. From M5 they tick on a coarse clock, a season or a year: climb at the away rate on their pedigree, age, roll for death, move, and roll an event that may write to their log.
-- The world: powers have strength on the realm curve and prosperity drifts (M6), and encounters generate from tables. A place's people are generated from the place's seed, so the same keeper stands at the same stall next time, and a rumor about "a Foundation elder of the Beast-Butcher Gate" carries a seed, so when you meet them they match the rumor.
+- Kept: a scene that ends with a thread keeps them. You talked and traded names, haggled at their stall, spared, robbed, healed or bargained with them, survived a fight with them or they with you, or a card named them. A kept person is stored as a seed plus pins: the seed regenerates their kit and rolls on demand, and the pins are what changed, regard, realm, whereabouts, what you took. That is the People screen (Professions, people and powers), dozens to a few hundred a life, mortals included. Named atlas people are kept from the start with everything pinned. They tick on a coarse clock, a season or a year: climb at the away rate on their pedigree, age, roll for death, move, and roll an event that may write to their log.
+- The world: powers have strength on the realm curve and prosperity drifts, and encounters generate from tables. A place's people are generated from the place's seed, so the same keeper stands at the same stall next time, and a rumor about "a Foundation elder of the Beast-Butcher Gate" carries a seed, so when you meet them they match the rumor.
 
-**The Border Wilds roster**, drafted for P2.2's sim and M3's encounters on the map, in the Qi Condensation and Foundation bands. The parts and names follow the atlas entries the canon pass reads.
-
-| Template | Band | Kind | Element | Profile | Notes |
-|---|---|---|---|---|---|
-| Cave bat swarm | Qi Condensation | beast, pack of 6 to 12 | wind | aggressive | screech dazes; wings and guano |
-| Stone-skin boar | Qi Condensation | beast | earth | aggressive | stone skin at green; hide and marrow |
-| Tide crab | Qi Condensation | beast, pack of 3 to 5 | water | cautious | shell, meat |
-| Karst python | Foundation | beast | soul | cunning | illusion; the Soul-Lost Stone Forest's great one is Nascent Soul |
-| Reef ape | Foundation | beast, pack of 2 to 4 | metal | aggressive | Ape's Palm Reef; fists, blade feathers at blue |
-| Strait shark | Foundation | beast | water | aggressive | the Shark Caves' kin; fang, fin |
-| Vast Wilds raider beast | Foundation | beast, rolled species | rolled | aggressive | what the raids bring over; old and better-blooded than the local stock |
-| March conscript | Qi Condensation | cultivator, rogue | none | cautious | spear; a garrison method; a token of the March |
-| Garrison deserter | Qi Condensation | cultivator, rogue | none | cowardly | spear; stolen stones; a price on their head |
-| Half-blood raider | Qi Condensation to Foundation | cultivator, rogue, with a bloodline | the bloodline's | aggressive | fist and beast abilities; hunted by the wall |
-| Night Bridge smuggler | Qi Condensation to Foundation | cultivator, rogue | none | cunning | fist; an escape talisman; the Night Bridge method at night |
-| Raider Isles pirate | Qi Condensation to Foundation | cultivator, rogue | none | cunning | saber; White Fang Stockade's token |
-| Beast-Butcher Gate disciple | Qi Condensation to Foundation | cultivator, small sect | none | aggressive | saber; cores on them; the Gate's token |
-| Sea-Taming Sect disciple | Foundation | cultivator, small sect | water | cautious | spear; a water-silk robe |
-
+**The Border Wilds roster**, the beasts and cultivators its encounters draw on in the Qi Condensation and Foundation bands, is in `src/content/roster.ts`.
 
 ## Character creation and the first hour
 
-Play opens at age 12 on root-testing day in the Border Wilds. Creation takes about 3 minutes, and by the end of the first real hour you sit at Qi Condensation layer 3 with a first technique, a first tree node and, from M3, a first trip into the frontier.
+Play opens at age 12 on root-testing day in the Border Wilds. Creation takes about 3 minutes, and by the end of the first real hour you sit at Qi Condensation layer 3 with a first technique, a first tree node and a first trip into the frontier.
 
 **Creation, in order**
 
 1. Name and look: a family and given name (pinyin, with suggestions), one line of appearance, and pronouns.
 2. The talent roll: one talent of each kind (spirit root, body, soul, fate, origin), most of them plain. You get three free rerolls, each rerolling all five at once, and the last roll stands. Later lives earn more rerolls, as Death and rebirth describes.
-3. Childhood: a short paragraph per origin. M1 ships it as fixed text; from M3, GLM writes it from your rolls.
+3. Childhood: a short paragraph per origin, fixed text that GLM rewrites from your rolls when a key is set.
 4. Testing day: the stone lights up, and your first choice decides where you stand when play begins.
 
-**Spirit roots.** Everyone rolls one; the floor is a mixed root. Odds and speeds are starting values for the balance sim:
+**Spirit roots.** Everyone rolls one; the floor is a mixed root:
 
 | Root | Odds | Qi speed | Notes |
 |---|---|---|---|
@@ -632,7 +614,7 @@ Play opens at age 12 on root-testing day in the Border Wilds. Creation takes abo
 
 The red root is the chaos root, 0.1%: every element in balance, ×3.0, and it fits every method fully. The pristine root is the Primordial Root 鸿蒙灵根, 0.01%: the qi of before the heavens were cut, every element, ×3.5, fitting every method fully, with a point of Aptitude and faster insight besides. Every root holds elements, rolled at creation from its kind: one for a single or heavenly root, two or three for a true root, four or five for a mixed root, one of lightning, ice or wind for a mutated root, and all five for the chaos root. The element hours read them, and a named root like the Innate Sword Root is a root with effects beyond its speed, like any talent.
 
-**Three origins in the first playable**, all in the Border Wilds. The beast-ranch child, the merchant's child in the fortress city and the smuggler's ward arrive by M5, with the taming, trade and smuggling systems they need.
+**Three origins**, all in the Border Wilds. More come with the systems they need: the beast-ranch child with taming, the merchant's child in the fortress city with trade, the smuggler's ward with smuggling.
 
 | Origin | Testing day | If you go along | If you refuse |
 |---|---|---|---|
@@ -651,19 +633,19 @@ Refusing is harder but never a dead end. The two refusals that start without a m
 | 5–20 | layer 2; the first insight trickles in; the first node, a Breath node or a starter | the first node to buy |
 | 20–35 | your origin's first technique; practice takes it to Comprehension | practice hours and technique mastery |
 | 35–45 | the layer 3 breakthrough, with a small check and choice | the breakthrough screen |
-| 45–60 | the first trip out, from M3: a cave guiding job, a night patrol or a core hunt with a senior | the go-in screen, the map's first fog, loot flowing home |
+| 45–60 | the first trip out: a cave guiding job, a night patrol or a core hunt with a senior | the go-in screen, the map's first fog, loot flowing home |
 
-There are no tutorial walls. Each system appears when you first reach it, with one line of hint and a chronicle entry. In M1, which has no AI, the first trip out is a fixed errand card with set outcomes.
+There are no tutorial walls. Each system appears when you first reach it, with one line of hint and a chronicle entry.
 
-Body and soul methods are found, not given. In M1 the errand card hands over a copy of a common tempering art, which opens body hours once read, and a later card a common nourishing art, taught if you sit the night with the lamp-keeper and a copy if you take it and go, which opens soul hours; from M3 the world supplies them. The Foundation chapter that comes with the layer 9 pill is a copy too, read before it can be taken up. Both are tier 1, so in M1 body and soul stop at layer 9, and the Foundation grade's body and soul points wait for M3.
+Layers 1 to 3 are the tutorial and ignore root speed, method fit, the method's tier, rarity and mastery, and the element hours, so every root reaches layer 3 in about 45 minutes; dawn, discipline, Aptitude and nodes still count. The rest counts from layer 4. Pacing targets for the sim, which takes an attended fraction (none, a third, all) and reports a row per schedule: away, an ordinary true root reaches layer 9 in about 15–20 real hours, around age 30; attended throughout, about half that, around age 21, with a bigger insight purse. The away row is the floor, not the goal; attended play is faster by design. Foundation then waits on a Foundation Pill from the world, and a heavenly root gets there in about half the time.
 
-Layers 1 to 3 are the tutorial and ignore root speed, method fit, the method's tier, rarity and mastery, and the element hours, so every root reaches layer 3 in about 45 minutes; dawn, discipline, Aptitude and nodes still count. The rest counts from layer 4. Pacing targets for the sim, which takes an attended fraction (none, a third, all) and reports a row per schedule: away, an ordinary true root reaches layer 9 in about 15–20 real hours, around age 30; attended throughout, about half that, around age 21, with a bigger insight purse. The away row is the floor, not the goal; attended play is faster by design. Foundation then waits on a Foundation Pill from the world, and a heavenly root gets there in about half the time. Until M3 the world can't supply that pill, so in M1 your origin hands you one at layer 9, as a reward or a trade, with the next chapter of your method, since a Qi Condensation method stops at the peak of its realm.
+**Stand-ins until the world supplies them.** Body and soul methods are found, not given, and the Foundation Pill comes from the world; until going in can hand them out, cards do. The first trip out is a fixed errand card with set outcomes, and it hands over a copy of a common tempering art, which opens body hours once read; a later card hands over a common nourishing art, taught if you sit the night with the lamp-keeper and a copy if you take it and go, which opens soul hours. At layer 9 your origin hands you a Foundation Pill, as a reward or a trade, with the next chapter of your method, since a Qi Condensation method stops at the peak of its realm; that chapter is a copy too, read before it can be taken up. Both arts are tier 1, so body and soul stop at layer 9, and the Foundation grade's body and soul points wait for higher arts.
 
 ## Story cards and events
 
-Everything that happens to you is a card, in seclusion and in the world alike: a seclusion event, a beat of the first hour, a sect summons, a headline, a go-in encounter, the coming-back summary. One format and one engine, built in M1 without the AI; every milestone after adds decks, not systems, and the Scribe rewrites a card's text when a key is set.
+Everything that happens to you is a card, in seclusion and in the world alike: a seclusion event, a beat of the first hour, a sect summons, a headline, a go-in encounter, the coming-back summary. One format and one engine, working without the AI; new systems add decks, not new kinds of card, and the Scribe rewrites a card's text when a key is set.
 
-**The seclusion deck, rewritten** (D3, 2026-10-14; Jan's review of P1.8). Every card is grounded in the atlas's places, powers and beasts, scaled by realm band so a threat is a threat at your realm, and carries a concrete stake and payoff, never mystery alone; a card with a person or a place is a hook you can go into (The world, Encounters on the map); its checks are the resolver's comparisons, not a d20; and the first-hour cards and the origins' text read roles, never names (NPC basics). The rewrite is its own phase, once going in exists.
+**Every card is concrete.** Every card is grounded in the atlas's places, powers and beasts, scaled by realm band so a threat is a threat at your realm, and carries a concrete stake and payoff, never mystery alone; a card with a person or a place is a hook you can go into (The world, Encounters on the map); its checks are the resolver's comparisons, not a d20; and the first-hour cards and the origins' text read roles, never names (NPC basics).
 
 **A card is data:** a trigger on your state (realm, layer, bar, age, season, hour, flags, items, standing, where you are), a weight, once-only or a cooldown, a short text with slots for names and places, one to three choices, each with a cost or a check (hours, stones, an item, a check on the resolver) and effects the engine applies (stones, items, bar, insight, injury, a flag, standing, a method, technique or routine, a go-in scene), and a chronicle line. Cards draw on the `world` stream.
 
@@ -671,13 +653,13 @@ Everything that happens to you is a card, in seclusion and in the world alike: a
 
 **Where they live.** Cultivate carries the feed: pending cards stack in a tray under the figure, the top one open and the rest fanned behind it, each rising onto the stack as it arrives and sliding off once settled, and resolved ones fall into the Chronicle. Cards wait for you; no timer punishes absence. A few urgent ones resolve by default if ignored for some days, a thief takes the stones, and offline at most three queue while the rest resolve by default and show in the coming-back card, which becomes a story rather than a ledger.
 
-**Pacing:** about one card every five to eight real minutes while you idle, two or three an in-game season at Qi Condensation, with the chance per season scaled down at higher realms so the real-time pace holds whatever the clock does. The orbs are Cultivate's pulse (Attended seclusion), so cards don't have to be: they can be rarer and heavier than that rate as the deck grows, and meatier beats a clicker stream, so the deck needs enough cards that repeats stay rare, and a long absence tells its many small cards as a story. A starting value for the sims. No streaks, dailies or missed-out counters, ever, and the coming-back card never mentions what attending would have earned.
+**Pacing:** about one card every five to eight real minutes while you idle, two or three an in-game season at Qi Condensation, with the chance per season scaled down at higher realms so the real-time pace holds whatever the clock does. The orbs are Cultivate's pulse (Attended seclusion), so cards don't have to be: they can be rarer and heavier than that rate as the deck grows, and meatier beats a clicker stream, so the deck needs enough cards that repeats stay rare, and a long absence tells its many small cards as a story. No streaks, dailies or missed-out counters, ever, and the coming-back card never mentions what attending would have earned.
 
-**Decks grow with the game:** M1 ships the first hour's cards and the seclusion deck; M2 fight cards; M3 encounter cards; M4 craft cards; M5 people cards; M6 world cards.
+**Decks grow with the game:** the first hour's cards and the seclusion deck, then fight, encounter, craft, people and world cards as each system arrives.
 
 **Seclusion is quiet, not silent.** Five kinds of event:
 
-- At the door: a peddler with a pill you can't afford yet, a junior begging help, a sect summons, a tax collector, a beast sniffing round the cave, a thief. Choices trade hours, stones, risk and standing, and from M3 a choice can open a go-in scene.
+- At the door: a peddler with a pill you can't afford yet, a junior begging help, a sect summons, a tax collector, a beast sniffing round the cave, a thief. Choices trade hours, stones, risk and standing, and a choice can open a go-in scene.
 - Inside you: a qi deviation scare on a bar past 150%, an epiphany that lumps insight and discounts a Dao, a dream that wakes a sleeping talent.
 - Sky and season: a thunderstorm over the peak, sit it out for Lightning insight at a body risk; a spirit tide that doubles qi density for a day; a yin night that favors ghost work.
 - Named days: new year, the sect's lecture day, the beast tide, each a recurring card with its own choice.
