@@ -1781,8 +1781,7 @@ Built bottom-up: what other systems read comes first, each layer thin (the least
 | M0 to M2, done | world bible and GLM spike; the idle core with Qi, body, soul, insight and the first decks; the combat engine, breakthroughs, manuals, the trees and the Chronicle |
 | M3's first half, done | the atlas as data, three paths, the resolver, people and followers, catalogs and shops, the travel map, places and encounters; the art overhaul's A1 to A5.2, the world at its true size |
 | The economy, thin | money by grade, prosperity, what a market holds, supply and prices, markets by reach, trading yourself and methods in the market |
-| Organizations, thin | one skeleton for sects, clans, guilds and factions; ranks, posts, contribution |
-| Jobs | jobs as posts, duty hours, the gather hour |
+| Organizations, thin | one skeleton for every organization, seats and the currency, what membership gives and asks, guarded methods; jobs as posts, duty hours and the gather hour (O1 to O5) |
 | M4 Crafts | four great arts, spirit farming, abodes as sites; Core Formation |
 | The atlas fill | the other continents, on the Morning Star Continent's pattern |
 | Guild trade and the living world | the rest of M5 and M6: guilds trading, caravans, commissions, the black market, auctions, events, NPC depth, romance, founding a sect, map tiers and long travel, beast taming |
@@ -1818,7 +1817,7 @@ Settle each before the stage that needs it (Roadmap), grouped by the layer that 
 **Before the organizations layer**
 
 - [x] A power's methods guarded (settled in Professions, people and powers, Guarded methods): how a sect learns of a leak and hunts it, and what a copy of its method costs whoever holds it (Economy, Methods in the market)
-- [ ] Sects: ranks, politics, founding your own, sect wars; faction strength weighted by the realm curve, so a sect is mostly its ancestor; every organization on the shared skeleton (Professions, people and powers), with the atlas's powers tagged by type and an assassins' organization added (the skeleton, ranks, posts and contribution in the thin layer; politics, wars and founding in trade and the living world)
+- [ ] Sects: politics, founding your own, sect wars (the skeleton, seats, posts, contribution and the atlas's types settled in Professions, people and powers, 2026-10-19); faction strength weighted by the realm curve, so a sect is mostly its ancestor; every organization on the shared skeleton (Professions, people and powers), with the atlas's powers tagged by type and an assassins' organization added (the skeleton, ranks, posts and contribution in the thin layer; politics, wars and founding in trade and the living world)
 
 **Before crafts**
 
