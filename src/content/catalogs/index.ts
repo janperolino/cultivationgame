@@ -9,6 +9,8 @@ import { MARCH, PILED_BONES_WALL } from './march.ts';
 import { MORNING_STAR } from './morning-star.ts';
 import { NIGHT_BRIDGE } from './night-bridge.ts';
 import { RARE } from './rare.ts';
+import { EBB_HARBOR, HEAVENS_EYE, NAMELESS_MARKET, RIVER_BEND, THOUSAND_PADDOCKS } from './seats.ts';
+import { BOUND_BONES, HUNDRED_REINS, LAMP_KEEPERS } from './sects.ts';
 import { STONE_EYES, STONE_FOREST } from './stone-eyes.ts';
 import type { Catalog } from './types.ts';
 
@@ -24,6 +26,14 @@ export const CATALOGS: readonly Catalog[] = [
   NIGHT_BRIDGE,
   STONE_EYES,
   STONE_FOREST,
+  RIVER_BEND,
+  THOUSAND_PADDOCKS,
+  HEAVENS_EYE,
+  EBB_HARBOR,
+  NAMELESS_MARKET,
+  HUNDRED_REINS,
+  BOUND_BONES,
+  LAMP_KEEPERS,
 ];
 
 /** Everything written, catalogs and the gold and red list alike. */

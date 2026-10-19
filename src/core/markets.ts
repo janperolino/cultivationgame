@@ -137,6 +137,22 @@ function chain(id: string): string[] {
   return out;
 }
 
+const isRegion = (id: string) => Object.values(REGIONS).some((r) => r.file.id === id);
+
+/**
+ * A place and the places above it short of its region, nearest first: the place catalogs a shop
+ * there reads, so a seat sells its kingdom's goods as its own (River-Bend the March's).
+ */
+const chainCache = new Map<string, string[]>();
+export function placeChain(place: string): string[] {
+  let out = chainCache.get(place);
+  if (!out) {
+    out = chain(place).filter((id) => !isRegion(id));
+    chainCache.set(place, out);
+  }
+  return out;
+}
+
 /** What a deed did to one place's prosperity, eased back a step a year. */
 function offsetOf(w: World, id: string, day: number): number {
   const o = w.prosperity[id];
@@ -226,11 +242,12 @@ export function reachOf(m: Market): Market[] {
 }
 
 const placeCache = new Map<string, Lot[]>();
-/** A place catalog's lots that are made for sale. */
+/** A place's catalogs' lots that are made for sale: its own and its kingdom's (`placeChain`). */
 function placeLots(place: string): Lot[] {
   let lots = placeCache.get(place);
   if (!lots) {
-    lots = CATALOGS.filter((c) => c.layer === 'place' && c.at === place).flatMap((c) =>
+    const at = placeChain(place);
+    lots = CATALOGS.filter((c) => c.layer === 'place' && at.includes(c.at)).flatMap((c) =>
       c.lots.filter((l) => l.shops.length > 0),
     );
     placeCache.set(place, lots);

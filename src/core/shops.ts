@@ -36,6 +36,7 @@ import {
   marketFactor,
   marketOfShop,
   moveSupply,
+  placeChain,
   shopLots,
   shopPurse,
   shopTiers,
@@ -72,11 +73,15 @@ export function priceFactor(s: Shop): number {
   return PRICE_SPREAD[0] + u * (PRICE_SPREAD[1] - PRICE_SPREAD[0]);
 }
 
-/** The catalogs a shop draws on: its place's, its region's, its continent's and the imports. */
+/**
+ * The catalogs a shop draws on: its place's and its kingdom's, its region's, its continent's and
+ * the imports.
+ */
 export function catalogsFor(s: Shop): Catalog[] {
+  const at = placeChain(s.at);
   return CATALOGS.filter(
     (c) =>
-      (c.layer === 'place' && c.at === s.at) ||
+      (c.layer === 'place' && at.includes(c.at)) ||
       (c.layer === 'region' && c.at === s.region) ||
       (c.layer === 'continent' && c.at === s.continent) ||
       (c.layer === 'import' && c.at === s.region),

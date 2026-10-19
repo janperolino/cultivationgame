@@ -29145,7 +29145,7 @@
    "y": 193300
   },
   "editedBy": "claude",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "ties": [
    {
     "to": "qm-muling-guo",
@@ -29159,7 +29159,8 @@
     "open": true,
     "why": "The Hundred Reins bond our royal stud, and we house their tamers."
    }
-  ]
+  ],
+  "prosperity": 6
  },
  {
   "id": "qm-hewan-cheng",
@@ -29214,7 +29215,7 @@
    "y": 220300
   },
   "editedBy": "claude",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "ties": [
    {
     "to": "qm-anbian-fu",
@@ -29228,7 +29229,8 @@
     "open": true,
     "why": "The Qians' agents buy the March's cores here, and pay in grain and stones."
    }
-  ]
+  ],
+  "prosperity": 6
  },
  {
   "id": "qm-tuichao-gang",
@@ -29284,7 +29286,7 @@
    "y": 186000
   },
   "editedBy": "claude",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "ties": [
    {
     "to": "qm-shoukou-cheng",
@@ -29298,7 +29300,8 @@
     "open": false,
     "why": "The east quay's warehouses are the Night Bridge's under other names."
    }
-  ]
+  ],
+  "prosperity": 5
  },
  {
   "id": "qm-tianyan",
@@ -29354,7 +29357,7 @@
    "y": 209200
   },
   "editedBy": "claude",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "ties": [
    {
     "to": "qm-shiyan-guo",
@@ -29368,7 +29371,8 @@
     "open": true,
     "why": "The Hu clan holds a stretch of our wall and a council vote."
    }
-  ]
+  ],
+  "prosperity": 5
  },
  {
   "id": "qm-wuming-ji",
@@ -29424,7 +29428,7 @@
    "y": 242000
   },
   "editedBy": "claude",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "ties": [
    {
     "to": "qm-yeqiao-hui",
@@ -29438,7 +29442,8 @@
     "open": false,
     "why": "Uncle Ash sells the Red Marrow Cave's blood pills from his stalls."
    }
-  ]
+  ],
+  "prosperity": 6
  },
  {
   "id": "qm-fugu-ge",
@@ -29495,7 +29500,7 @@
    "sphere": 9000
   },
   "editedBy": "claude",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "ties": [
    {
     "to": "qm-duigu-qiang",
@@ -29521,7 +29526,8 @@
     "open": true,
     "why": "Our miners hold the vein's upper galleries."
    }
-  ]
+  ],
+  "prosperity": 5
  },
  {
   "id": "qm-baijiang-zong",
@@ -29578,7 +29584,7 @@
    "sphere": 12000
   },
   "editedBy": "claude",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "ties": [
    {
     "to": "qm-qianlan-cheng",
@@ -29604,7 +29610,8 @@
     "open": true,
     "why": "We want a thunder-ape cub, and the troop has killed three teams."
    }
-  ]
+  ],
+  "prosperity": 5
  },
  {
   "id": "qm-jingzhong-si",
@@ -29733,7 +29740,7 @@
    "sphere": 6000
   },
   "editedBy": "claude",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "ties": [
    {
     "to": "qm-shoukou-cheng",
@@ -29741,7 +29748,8 @@
     "open": true,
     "why": "The City pays us to keep the lamps lit so its dead stay in the fens."
    }
-  ]
+  ],
+  "prosperity": 4
  },
  {
   "id": "qm-chisui-dong",

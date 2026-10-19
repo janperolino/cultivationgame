@@ -157,10 +157,23 @@ describe('purses, lots and tiers', () => {
 describe('markets by reach', () => {
   it('reach as the design names it', () => {
     const names = (id: string) => reachOf(m(id)).map((o) => o.id);
+    // E2.1's seats stand beside the written towns: River-Bend 3,400 li from Pacified Fort,
+    // Heaven's Eye 2,700 from Sinkhole Terraces, Thousand Paddocks 2,100 from Corral Town.
     expect(names('pacified-fort').sort()).toEqual(
-      ['qm-tushou-men', 'sinkhole-terraces', 'spear-plow'].sort(),
+      ['qm-hewan-cheng', 'qm-tianyan', 'qm-tushou-men', 'sinkhole-terraces', 'spear-plow'].sort(),
     );
-    expect(names('corral-town')).toEqual(['foot-of-the-wall']);
+    expect(names('corral-town').sort()).toEqual(
+      [
+        'foot-of-the-wall',
+        'qm-baijiang-zong',
+        'qm-fugu-ge',
+        'qm-qianlan-cheng',
+        'qm-tuichao-gang',
+      ].sort(),
+    );
+    expect(names('qm-wuming-ji').sort()).toEqual(
+      ['pacified-fort', 'qm-hewan-cheng', 'spear-plow'].sort(),
+    );
     expect(names(CITY)).toEqual(
       expect.arrayContaining(['qm-tushou-men', 'corral-town', 'foot-of-the-wall']),
     );

@@ -411,11 +411,11 @@ describe('loot', () => {
     expect(ring).toMatchInlineSnapshot(`
       {
         "items": {
-          "antler-velvet-pill~green": 1,
+          "array-plate-blank": 6,
           "beast-core": 1,
           "beast-fang": 3,
-          "method:butcher-saber": 1,
-          "python-skin-jerkin": 1,
+          "python-skin-jerkin~green": 1,
+          "stone-milk-pill": 4,
         },
         "stones": 181,
       }

@@ -345,6 +345,15 @@ export const BORDER_WILDS: RegionContent = {
     ],
     'qm-tushou-men': ['gate-sect'],
     'qm-yeqiao-hui': ['bridge-black', 'bridge-stall'],
+    // A5.2's seats and the sects that keep a shop (E2.1).
+    'qm-hewan-cheng': ['bend-stall', 'bend-refiner', 'bend-guild', 'bend-mortal'],
+    'qm-qianlan-cheng': ['paddocks-stall', 'paddocks-refiner', 'paddocks-guild', 'paddocks-mortal'],
+    'qm-tianyan': ['eye-stall', 'eye-alchemy', 'eye-mortal'],
+    'qm-tuichao-gang': ['ebb-stall', 'ebb-guild', 'ebb-black', 'ebb-mortal'],
+    'qm-wuming-ji': ['nameless-stall', 'nameless-refiner', 'nameless-black'],
+    'qm-baijiang-zong': ['reins-sect'],
+    'qm-fugu-ge': ['bones-sect'],
+    'qm-shoudeng-zong': ['lamps-sect'],
   },
   needs: {
     // An army's headquarters on the strait: it bleeds, and its karst and surf grow few herbs or ore.
@@ -363,6 +372,22 @@ export const BORDER_WILDS: RegionContent = {
     'corral-town': ['beast-part', 'healing', 'armor'],
     // The Wall's patrols: healing pills and talismans (design § Economy, Supply and prices).
     'foot-of-the-wall': ['healing', 'talisman'],
+    // E2.1's markets. The Qians' agents buy the March's cores here, and the levy barges burn wards.
+    'qm-hewan-cheng': ['beast-part', 'talisman'],
+    // The royal stud and its riders: barding, healing for the king's games, fodder herbs.
+    'qm-qianlan-cheng': ['armor', 'healing', 'herb'],
+    // Karst with no iron in it, and two li of stairs that drain a climber's qi.
+    'qm-tianyan': ['weapon', 'qi-restoring'],
+    // The chain forts it ships to burn talismans, and its breakwaters eat material.
+    'qm-tuichao-gang': ['talisman', 'material'],
+    // Rogues who bleed for what they sell and hide from whoever it was taken from.
+    'qm-wuming-ji': ['healing', 'hiding'],
+    // Bonded beasts that eat beast parts, and a hatchery that eats herbs.
+    'qm-baijiang-zong': ['beast-part', 'herb'],
+    // Array plates along 9,000 li of Wall, and the relay walkers' talismans.
+    'qm-fugu-ge': ['material', 'talisman'],
+    // Ten thousand lamps to keep lit, and keepers who spend their qi on them.
+    'qm-shoudeng-zong': ['material', 'qi-restoring'],
   },
   tracts: [
     { name: 'Saltreed Flats', hanzi: '盐苇滩', terrain: 'coast' },
