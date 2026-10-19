@@ -247,8 +247,16 @@ export const CORE_FLIGHT_PACE = 300;
 
 /** A cave, hut or shrine you have found within this many li shelters you for the night. */
 export const SHELTER_LI = 300;
-/** A caravan guard who walks off loses the pay owed, and this much standing with the guild. */
-export const CARAVAN_LEAVE_STANDING = -5;
+/**
+ * A checkpoint's toll for a cultivator passing it, in low-grade stones: the City watch's own.
+ * Renown in the region waives it, as at the watch (design § The world, Wherever you like).
+ */
+export const CHECKPOINT_TOLL_LOW = 1;
+/**
+ * The guild whose caravans these are, standing in for the one the atlas will name (plan.md, Which
+ * merchant guild). A guard who walks off owes it the `walked-off` row (content/memories.ts).
+ */
+export const MERCHANT_GUILD = 'merchant-guild';
 
 // ---------------------------------------------------------------- depth and qi density
 

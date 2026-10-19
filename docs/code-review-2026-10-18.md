@@ -65,7 +65,7 @@ Ranked by how much a player would feel it. "Doc" means design.md should change, 
 - *Code fixed:* 8 (the biased roll for NPC kits, loot and shops is held at red, so pristine is placed by hand; the birth roll keeps its 0.01%) and 19 (the world bible's scale matches the table, and its realm pressure reads your soul).
 - *15, flipped on Jan's note:* Avoid already scales with your stats (their Perception, from soul, against your Stealth, from body and Agility), so the engine stays. The doc's "can't be gone round" and the Map's warnings now say "likely finds you first".
 - *Noted for later:* 9, 10 and 13 in plan.md for P3.9; 11 in design.md, with taming.
-- *14 waits on Jan.*
+- *14 done (Jan's go):* a checkpoint on your course takes 1 low-grade as you pass it (renown 3 waives it, nothing to pay and you are waved through), with a Chronicle line and the toll on the course card; a guard who walks off a caravan once it has left loses 5 standing with the merchant guild (a placeholder id until the atlas names the guild). Late debts wait for the economy.
 
 **Low**
 - The attending hint says qi runs faster "while Cultivate is open" and focus "fades once you leave"; attending counts on any screen and focus drains steadily. Fix the hint and the doc's phrase.

@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { advance } from '../loop.ts';
 import { cultivate } from '../life.ts';
 import { join, addFame } from '../resolver/names.ts';
+import { MERCHANT_GUILD } from '../../content/map/travel.ts';
+import { standingOf } from '../resolver/world.ts';
 import { loadSave, makeSave } from '../save/format.ts';
 import { buy, haggle, sell, shelf } from '../shops.ts';
 import { addItem, itemCount, newLife, withPlayer, type GameState } from '../state.ts';
@@ -216,6 +218,14 @@ describe('inside the City', () => {
     const left = leaveGroup(s);
     if (!left.ok) throw new Error(left.reason);
     expect(left.state.map!.roadRoutine).toBe('by-day');
+    // Before it leaves town that costs nothing; once on the road the guild remembers it.
+    const day = left.state.calendar.day;
+    expect(standingOf(left.state.world, MERCHANT_GUILD, s.player.id, day).total).toBe(0);
+    const onRoad = run(s, c.departs - s.calendar.day + 1);
+    const off = leaveGroup(onRoad);
+    if (!off.ok) throw new Error(off.reason);
+    const later = off.state.calendar.day;
+    expect(standingOf(off.state.world, MERCHANT_GUILD, s.player.id, later).total).toBe(-5);
   });
 
   it('hires a guide to a place they know, paid for the days', () => {

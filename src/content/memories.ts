@@ -205,6 +205,7 @@ export const STANDING_ROWS = {
   mission: { reason: 'A mission done for us', value: 10, fade: YEAR },
   tribute: { reason: 'Tribute', value: 5, fade: SEASON, own: true },
   member: { reason: 'One of ours', value: 10, fade: null },
+  'walked-off': { reason: 'Walked off one of our caravans', value: -5, fade: SEASON },
 } as const satisfies Record<string, StandingRow>;
 export type StandingId = keyof typeof STANDING_ROWS;
 export const STANDING_IDS = Object.keys(STANDING_ROWS) as StandingId[];

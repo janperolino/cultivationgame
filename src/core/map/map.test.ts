@@ -211,6 +211,18 @@ describe('routing', () => {
     expect(r.route.tolls.length).toBeGreaterThan(0);
   });
 
+  it('takes each checkpoint’s toll once, as you pass it', () => {
+    const go = goToPlace(life(), 'qm-shoukou-cheng');
+    if (!go.ok) throw new Error(go.reason);
+    const n = go.state.map!.course!.tolls.length;
+    expect(n).toBeGreaterThan(0);
+    const s = run(go.state, Math.ceil(go.state.map!.course!.days) + 2);
+    expect(s.map!.course).toBeNull();
+    const tolls = s.chronicle.filter((e) => e.type === 'toll');
+    expect(tolls).toHaveLength(n);
+    expect(String(tolls[0]!.data.how)).toMatch(/toll|waved/);
+  });
+
   it('keeps off them on the night road, and flies straight over the land', () => {
     const s = life();
     const map = mapFor(s);

@@ -8,7 +8,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { BRANCHES } from '../content/hours.ts';
 import { realm as realmInfo, stageName, type RealmId } from '../content/realms.ts';
-import { QI_NAMES, WAYS, type RoadHour, type WayId } from '../content/map/travel.ts';
+import {
+  CHECKPOINT_TOLL_LOW,
+  QI_NAMES,
+  WAYS,
+  type RoadHour,
+  type WayId,
+} from '../content/map/travel.ts';
 import { worldWhen } from '../core/chronicle.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import { band, bandAt, depthInfo, pullsIn, qiAt } from '../core/map/depth.ts';
@@ -1121,7 +1127,7 @@ function CourseCard({
             ? 'Stopped: a card waits for you. You camp and cultivate where you stand.'
             : life.detour > 0
               ? `Going round, ${Math.round(life.detour)} li cross-country before the road.`
-              : `On the move. ${course.tolls.length ? `${course.tolls.length} checkpoints on the way.` : ''}`}
+              : `On the move. ${course.tolls.length ? `${course.tolls.length} checkpoints on the way, a toll of ${CHECKPOINT_TOLL_LOW} low-grade each.` : ''}`}
         </dd>
       </dl>
       {above && (

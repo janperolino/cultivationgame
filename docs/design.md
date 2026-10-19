@@ -773,7 +773,7 @@ A mortal on foot makes 20 li a double-hour. A kingdom of 10,000 li is half a yea
 - Hostile: inside the sphere of a power at the bottom of its standing with you, or whose enemy you serve. You can cross, but encounters there are hunts for you, and the map says so. Not built yet: it comes with organizations, which give powers their spheres in play.
 - Deadly: a land whose own hazard sits above your realm, the forbidden lands and the beast ranges. The fog shows the warning, and going in anyway is how most cultivators die.
 
-Checkpoints inside a sphere charge tolls from the Economy's fee list, and your fame decides whether the guard knows your face.
+Checkpoints inside a sphere charge tolls from the Economy's fee list, and your fame decides whether the guard knows your face. Until that list exists, a checkpoint on your course takes 1 low-grade as you pass it, renown 3 in the region waives it as at the watch, and a cultivator with nothing to pay is waved through; the night road goes round them.
 
 **Entering a place** (the look study is `docs/mockups/place-screen-study.html`). Right-click a place you stand at and choose Enter, or arrive on a course marked to go in: the place's own screen stands in for the Map, which is one step back (← Map looks at the map without leaving). Entering takes no time and the clock runs on; you are inside until you set a course or step out, the home wheel turning there. The screen: the place's head and lore, the gate strip, its doors on the left grouped as Trade, Hear and hire, Rest and Later, and the open door's counter beside them.
 

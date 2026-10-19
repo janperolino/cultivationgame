@@ -4,10 +4,13 @@
 // sleep, and travelling with a group. Riding hands your hours back at a jostled half; the day step
 // cultivates on the wheel this returns.
 import { HOME_MAP_REGION, regionData } from '../../content/map/index.ts';
+import { ENTER_LI, WATCH_WAIVES_AT } from '../../content/map/places.ts';
 import {
+  CHECKPOINT_TOLL_LOW,
   CORE_FLIGHT_PACE,
   FOUNDATION_FLIGHT_HOURS,
   GUARD_PACE,
+  MERCHANT_GUILD,
   OFFROAD_FACTOR,
   ON_ROAD_LI,
   ROAD_ROUTINES,
@@ -23,6 +26,9 @@ import {
 import { HOURS_PER_DAY, type HourKind } from '../../content/hours.ts';
 import { origin } from '../../content/origins.ts';
 import { realmIndex } from '../../content/realms.ts';
+import { pay, stonesOf, withStones } from '../purse.ts';
+import { fameOf } from '../resolver/names.ts';
+import { addStanding } from '../resolver/opinion.ts';
 import { addEvent, itemCount, realmOf, type Cultivator, type GameState } from '../state.ts';
 import { hourLocked } from '../wheel.ts';
 import { bandAt, bandOfRealm } from './depth.ts';
@@ -388,20 +394,52 @@ export function joinGroup(
   return { ok: true, state: withLife(r.state, { ...r.state.map!, group: { ...group, owed: 0 } }) };
 }
 
-/** Leaves the group where it stands, if you can: the pay owed is lost. */
+/**
+ * A checkpoint passed: its toll paid, or waived for a name the region knows. A cultivator with
+ * nothing to pay is waved through: no guard stops a cultivator over one stone.
+ */
+function payToll(s: GameState, map: RegionMap, id: string): GameState {
+  const p = placeById(map, id);
+  if (!p) return s;
+  const day = s.calendar.day;
+  const region = s.map?.region ?? map.id;
+  if (fameOf(s.world, s.player.id, region, 'renown', day) >= WATCH_WAIVES_AT)
+    return addEvent(s, 'toll', { place: p.name, how: 'is known by name and waved through' });
+  const after = pay(stonesOf(s.player), CHECKPOINT_TOLL_LOW);
+  if (!after)
+    return addEvent(s, 'toll', { place: p.name, how: 'has nothing to pay and is waved through' });
+  const next = { ...s, player: withStones(s.player, after) };
+  return addEvent(next, 'toll', {
+    place: p.name,
+    how: `pays the checkpoint's toll, ${CHECKPOINT_TOLL_LOW} low-grade`,
+  });
+}
+
+/**
+ * Leaves the group where it stands, if you can: the pay owed is lost, and a guard who walks off a
+ * caravan on the road loses standing with its guild.
+ */
 export function leaveGroup(s: GameState): CourseCheck {
   const g = s.map?.group;
   if (!g) return { ok: false, reason: 'You travel alone.' };
   const flies = realmIndex(realmOf(s.player)) >= 1;
   if (!g.canLeave && !flies) return { ok: false, reason: g.leaveCost };
+  const day = s.calendar.day;
+  const walkedOff = g.kind === 'caravan' && g.pay > 0 && day >= (g.departs ?? 0);
+  const world = walkedOff
+    ? addStanding(s.world, { power: MERCHANT_GUILD, about: s.player.id, row: 'walked-off' }, day)
+    : s.world;
   return {
     ok: true,
-    state: withLife(s, {
-      ...s.map!,
-      group: null,
-      course: null,
-      ...alone(s.map!),
-    }),
+    state: withLife(
+      { ...s, world },
+      {
+        ...s.map!,
+        group: null,
+        course: null,
+        ...alone(s.map!),
+      },
+    ),
   };
 }
 
@@ -495,6 +533,7 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
   const foundationFlight = w.id === 'fly' && realmIndex(realmOf(c)) === 1;
   const notes: TravelNote[] = [];
   let paid = 0;
+  const passed: string[] = [];
   let enterTarget: MapPlace | null = null;
   const take = (r: Seeing) => {
     life = r.life;
@@ -564,6 +603,16 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
           ? [...life.trail, [Math.round(at[0]), Math.round(at[1])] as [number, number]]
           : life.trail;
       life = { ...life, at: [at[0], at[1]], trail, course: { ...course, at: i } };
+      // A checkpoint on the course takes its toll as you pass it, once.
+      const reached = life.course!.tolls.filter((id) => {
+        const p = placeById(map, id);
+        return !!p && Math.hypot(p.x - at[0], p.y - at[1]) < ENTER_LI;
+      });
+      if (reached.length) {
+        passed.push(...reached);
+        const tolls = life.course!.tolls.filter((id) => !reached.includes(id));
+        life = { ...life, course: { ...life.course!, tolls } };
+      }
       take(seeFrom(map, life, life.at, sb, sense));
       if (i >= course.pts.length) {
         // Arrived: a look round, and the course is done.
@@ -609,6 +658,7 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
   }
   next = { ...next, map: life };
   if (paid > 0) next = { ...next, player: { ...next.player, stones: next.player.stones + paid } };
+  for (const id of passed) next = payToll(next, map, id);
   for (const n of notes) {
     const p = placeById(map, n.place);
     if (p) next = addEvent(next, n.type, { place: p.name });
