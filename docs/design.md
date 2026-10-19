@@ -1224,6 +1224,28 @@ Stones are also fuel: you can absorb them for qi or burn them to power arrays, s
   Ten lots of herbs sold where an ordinary market needs them take it from 50% to 150%, and the price from ×1.4 to ×0.8 (the City takes twenty): with the purse, that is why a village can't buy a sack of cores.
 - **It eases back** a tenth of the way to its written supply each month, and the save keeps only the goods off theirs. The later layers' caravans and guilds move these same supplies from market to market, so trade between powers is supply carried, not new prices.
 
+**People make and use** (E4; the review after E2.2, Jan's call: people make things, people use things up, and the gap is the price). Once a month each market adds up what its people make, what they use and what is carried in, and its supplies move by it: arithmetic per market, never simulated shoppers.
+
+- **Who lives there** is a place's population read through the world: its written value plus an offset the save keeps, as prosperity is, so a place that grows or empties moves its shops, tiers, baskets and making with it (Still to design, Lasting changes to places). E4 sets no offsets.
+- **Needs** are the tags goods already carry (Supply and prices), and a need is filled at its people's own level: mortals by mortal goods in taels, cultivators by goods at their realm's tier, so grain is millet to a farmer and spirit rice to a Qi Condensation cultivator.
+- **The monthly basket**, in pieces a head:
+
+| Need | Mortal | Qi Condensation (tier 1) | Foundation (tier 2) | Core Formation (tier 3) |
+|---|---|---|---|---|
+| grain | 0.8 sack | 2 sacks of spirit rice | 1, as fasting begins | none, fasting |
+| salt | 0.05 | | | |
+| oil | 0.1 jar | | | |
+| cloth (wool or hide) | 0.02 bale | | | |
+| qi-fuel | | 2 | 2 | 2 |
+| qi-restoring | | 1 | 1 | 1 |
+| healing | | 1 | 1 | 1 |
+| talisman | | 1 | 1 | 1 |
+| detox | | 0.2 | 0.2 | 0.2 |
+| body-fuel, soul-fuel | | 0.3, 0.2: few walk those paths | the same | the same |
+| weapon, armor | | 0.03 each, a piece every three years or so | the same | the same |
+
+  Prosperity scales a basket by its wages (×0.6 ruined to ×1.4 golden), since the rich use more, and a need's use is shared evenly among the goods that fill it at that market, so a market whose layers hold three healing pills uses a third of its healing from each. On the realm curve a Qi Condensation basket costs about 23 low a month of the 30 earned and a Foundation one about 200 of 270, nearly everything, as the novels' cultivators spend it; a mortal's costs about 0.2 taels of the 3 earned. So the City's 5,000 Qi Condensation cultivators use about 5,000 healing pills a month and Pacified Fort's 1.5 million farmers 1.2 million sacks of millet, which is why a Bag barely moves a city and a village of forty cultivators floods after two lots.
+
 **Trading yourself.** Staples are the bulk end of the kinds that already exist, sold by the lot: salt, spirit rice, hides, horn, ore, lamp oil, common herbs, each marked `trade` on its catalog line and tiered like anything else, so a Foundation trader hauls tier 2 ore; mortal staples trade in taels, real money to a child of twelve and small change by Qi Condensation. Bought where they are made at ×0.8 and sold where they are needed at 80% of ×1.4, a lot clears about 38%, less as both supplies move. The mark: a full Bag of ten lots carried across a kingdom pays about one and a half times the wages for the same days (Pacified Fort to Sinkhole Terraces, 11,245 li by road or 47 days at a fresh life's walk, earns about 74 low over 47 of wages; `npm run sim -- haul`). What bounds it is already built: the Bag's squares, a hand cart or a ring, the tolls on the road, the road's encounters (a robbery takes what you carry), and the need itself, which pays only the shop's rate once you have filled it.
 
 - **A lot is a Bag square** (E3's talk): twenty sacks, bales or jars, a staple stacking twenty to a square, so a full Bag is ten lots. A tier 1 spirit staple is about a low-grade stone a piece (spirit rice 1.2, the dearest thunderhorn 3), a mortal one a fifth of a tael (millet 0.15), sized so the haul makes the mark.
