@@ -45,6 +45,20 @@ export const REACH_LI: Record<MarketKind, number> = {
   city: 30_000,
 };
 
+/**
+ * A market's size by who lives there (E2.2): a lot sold or bought moves its supply less by this,
+ * so a city takes a Bag that floods a village. log10 of its cultivators ÷ 50, from ×0.5 (under
+ * about 150) to ×2 (5,000 and up): ×1 at 500, about ×1.5 at 1,600.
+ */
+export const SIZE = { per: 50, min: 0.5, max: 2 } as const;
+
+/**
+ * The highest tier a market's people buy, within its vein (E2.2): tier 3 where a Core Formation
+ * cultivator lives, tier 2 where twenty Foundation cultivators do, tier 1 otherwise. Nobody stocks
+ * tier 4, which three Nascent Souls don't make a market for.
+ */
+export const TIER_BY_PEOPLE = { core: 1, foundation: 20 } as const;
+
 /** The place weight the markets in reach share between them, beside the market's own 50. */
 export const LENT_WEIGHT = 15;
 

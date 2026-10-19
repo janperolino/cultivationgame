@@ -4,6 +4,7 @@
 // Generation reads only the region's data and the world's id, so every life in a slot finds the
 // same places, and a region is built the same way whatever its content.
 import { regionData, type RegionData, type RegionPlace } from '../../content/map/index.ts';
+import { shopsAt } from '../../content/shops.ts';
 import {
   BANDS,
   HEART_BASE_RINGS,
@@ -282,7 +283,7 @@ function buildFrom(data: RegionData, gen: RegionGen): RegionMap {
     });
   const places: MapPlace[] = [];
   for (const p of file.places) {
-    const mp = atlasPlace(p, content.placeShops[p.id] ?? []);
+    const mp = atlasPlace(p, shopsAt(p.id));
     if (mp) places.push(mp);
   }
   for (const t of content.towns)
@@ -304,7 +305,7 @@ function buildFrom(data: RegionData, gen: RegionGen): RegionMap {
       lore: t.lore,
       top: null,
       gated: false,
-      shops: t.shops,
+      shops: shopsAt(t.id),
       features: t.features,
       settled: true,
     });
@@ -668,7 +669,10 @@ export function generateRegion(regionId: string, world: string): RegionGen {
 
 /** The first band of a realm (its early third), from the atlas's top realm; Qi Condensation's is 0. */
 export function firstBandOf(realm: string): number {
-  return Math.max(0, BANDS.findIndex((b) => b.realm === realm));
+  return Math.max(
+    0,
+    BANDS.findIndex((b) => b.realm === realm),
+  );
 }
 
 function HEART_NAMES_FOR(terrain: string): readonly [string, string] {

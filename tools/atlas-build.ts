@@ -331,6 +331,7 @@ for (const region of atlas.entries) {
         vein: e.vein ?? null,
         parent: e.parent,
         prosperity: e.prosperity ?? 5,
+        population: e.population ?? null,
         hidden: e.hidden ?? null,
         access: e.access ?? null,
         top: e.top.realm,

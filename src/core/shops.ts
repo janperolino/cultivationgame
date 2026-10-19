@@ -19,7 +19,6 @@ import {
   TIER_LEAN,
   TIER_LEAN_FROM,
 } from '../content/markets.ts';
-import { shopVein } from '../content/map/index.ts';
 import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
 import {
   DAMAGE_REPAIR_SHARE,
@@ -33,6 +32,7 @@ import {
   type Shop,
   type ShopKind,
   type Ware,
+  shopVein,
 } from '../content/shops.ts';
 import { rollBiased } from './combat/generate.ts';
 import { lotShape } from './loot.ts';

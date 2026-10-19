@@ -1,16 +1,20 @@
 // E2's markets (design § Economy, Prosperity, What a market holds, Supply and prices, Markets by
 // reach): prices by where a thing is made and needed, a flooded market recovering, purses by
-// prosperity and tier, reach lending, prosperity moved and easing back, and tier 3 kept rare.
+// prosperity and tier, reach lending, prosperity moved and easing back, and tier 3 kept rare; and
+// E2.2's shops, tiers and depth by who lives there.
 import { describe, expect, it } from 'vitest';
 import { CATALOGS } from '../content/catalogs/index.ts';
 import { hasCopy } from '../content/copies.ts';
 import { baseOf, item } from '../content/items.ts';
-import { shop } from '../content/shops.ts';
+import { peopleAt } from '../content/map/index.ts';
+import { shop, SHOP_KINDS, shopsWanted } from '../content/shops.ts';
 import {
   addProsperity,
   lentLots,
   market,
   marketFactor,
+  MARKETS,
+  marketSize,
   prosperityOf,
   reachOf,
   seenFrom,
@@ -72,14 +76,15 @@ describe('supply moves and eases back', () => {
   it('drop the offer when ten lots are sold, and recover over months', () => {
     // The City needs herbs: Medicine Ridges kernels come in lots of about three.
     const thing = 'old-apricot-kernel';
-    const s = withPlayer(life(), addItem(life().player, thing, 40));
+    const s = withPlayer(life(), addItem(life().player, thing, 70));
     const before = offerFor(s, 'mouth-alchemy', thing);
     if (!before.ok) throw new Error(before.reason);
     expect(before.wanted).toBe(true);
-    const r = sell(s, 'mouth-alchemy', thing, 30);
+    const r = sell(s, 'mouth-alchemy', thing, 60);
     if (!r.ok) throw new Error(r.reason);
     const day = r.state.calendar.day;
-    // Ten lots at 10 points each take it from 50% to 150% at an ordinary market.
+    // Twenty lots at 10 points each take it from 50% to 150%: the City is ordinary, and twice an
+    // ordinary market's size, so each lot moves it 5.
     expect(supplyOf(r.state.world, m(CITY), thing, day)).toBeCloseTo(150);
     const after = offerFor(r.state, 'mouth-alchemy', thing);
     if (!after.ok) throw new Error(after.reason);
@@ -96,12 +101,13 @@ describe('supply moves and eases back', () => {
 
   it('move a lean market further than an ordinary one', () => {
     const s = withPlayer(life(), addItem(life().player, 'calm-heart-grass', 30));
-    // The Wall's stall, lean (lots ×0.75): its own herb, made there, rises 10 ÷ 0.75 a lot.
+    // The Wall's stall, lean (lots ×0.75) and small (sixty cultivators, ×0.5): its own herb, made
+    // there, rises 10 ÷ 0.375 a lot.
     const r = sell(s, 'wall-stall', 'calm-heart-grass', 4);
     if (!r.ok) throw new Error(r.reason);
     expect(
       supplyOf(r.state.world, m('foot-of-the-wall'), 'calm-heart-grass', r.state.calendar.day),
-    ).toBeCloseTo(150 + 10 / 0.75);
+    ).toBeCloseTo(150 + 10 / 0.375);
   });
 });
 
@@ -139,7 +145,7 @@ describe('purses, lots and tiers', () => {
         if (item(l.thing).tier === 3) t3++;
       }
       for (const l of stockOf('mouth-stall', month))
-        if (!hasCopy(l.thing)) expect(item(l.thing).tier).toBe(1);
+        if (!hasCopy(l.thing)) expect(item(l.thing).tier).toBeLessThan(3);
     }
     expect(t3).toBeGreaterThan(0);
     expect(t3 / 10).toBeLessThan(6);
@@ -154,13 +160,62 @@ describe('purses, lots and tiers', () => {
   });
 });
 
+describe('markets sized by who lives there (E2.2)', () => {
+  const lotsOf = (id: string) =>
+    m(id).shops.reduce((t, sid) => t + shopLots(emptyWorld(), shop(sid), 0), 0);
+  const kinds = (id: string) => m(id).shops.map((sid) => shop(sid).kind);
+
+  it('open as many shops of each kind as the market’s people keep', () => {
+    for (const mk of MARKETS)
+      for (const kind of SHOP_KINDS)
+        expect(
+          kinds(mk.id).filter((k) => k === kind).length,
+          `${mk.id}: ${kind}`,
+        ).toBeGreaterThanOrEqual(mk.kind === 'seat' ? 0 : shopsWanted(peopleAt(mk.id), kind));
+    // The City of 8 million keeps five stalls and three mortal shops; Spear-Plow one store.
+    expect(kinds(CITY).filter((k) => k === 'stall')).toHaveLength(5);
+    expect(kinds(CITY).filter((k) => k === 'mortal')).toHaveLength(3);
+    expect(kinds('spear-plow')).toEqual(['mortal']);
+  });
+
+  it('stock Foundation goods at Pacified Fort, beside a mortal shop for its farmers', () => {
+    expect(shopTiers(shop('march-stall'))).toEqual([1, 2]);
+    expect(kinds('pacified-fort')).toContain('mortal');
+    expect(kinds('pacified-fort')).toContain('alchemy');
+    // A stall's wares stop at Foundation's even in the City; its alchemy shop reaches tier 3.
+    expect(shopTiers(shop('mouth-stall'))).toEqual([1, 2]);
+    expect(shopTiers(shop('mouth-alchemy'))).toEqual([1, 2, 3]);
+    // Corral Town's ten Foundation cultivators don't make a tier 2 market.
+    expect(shopTiers(shop('herders-stall'))).toEqual([1]);
+  });
+
+  it('give a city more lots than a village at the same prosperity, and move it less a lot', () => {
+    // The March's three, all modest: the fort of 1,620 cultivators, the ford of 155, the village of 40.
+    for (const id of ['pacified-fort', 'grain-ford', 'spear-plow'])
+      expect(prosperityOf(emptyWorld(), id, 0)).toBe(4);
+    expect(lotsOf('pacified-fort')).toBeGreaterThan(lotsOf('grain-ford'));
+    expect(lotsOf('grain-ford')).toBeGreaterThan(lotsOf('spear-plow'));
+    expect(lotsOf(CITY)).toBeGreaterThan(3 * lotsOf('foot-of-the-wall'));
+    expect(marketSize(m(CITY))).toBe(2);
+    expect(marketSize(m('foot-of-the-wall'))).toBe(0.5);
+    expect(marketSize(m('pacified-fort'))).toBeCloseTo(1.5, 1);
+  });
+});
+
 describe('markets by reach', () => {
   it('reach as the design names it', () => {
     const names = (id: string) => reachOf(m(id)).map((o) => o.id);
     // E2.1's seats stand beside the written towns: River-Bend 3,400 li from Pacified Fort,
     // Heaven's Eye 2,700 from Sinkhole Terraces, Thousand Paddocks 2,100 from Corral Town.
     expect(names('pacified-fort').sort()).toEqual(
-      ['qm-hewan-cheng', 'qm-tianyan', 'qm-tushou-men', 'sinkhole-terraces', 'spear-plow'].sort(),
+      [
+        'grain-ford',
+        'qm-hewan-cheng',
+        'qm-tianyan',
+        'qm-tushou-men',
+        'sinkhole-terraces',
+        'spear-plow',
+      ].sort(),
     );
     expect(names('corral-town').sort()).toEqual(
       [
@@ -172,7 +227,7 @@ describe('markets by reach', () => {
       ].sort(),
     );
     expect(names('qm-wuming-ji').sort()).toEqual(
-      ['pacified-fort', 'qm-hewan-cheng', 'spear-plow'].sort(),
+      ['grain-ford', 'pacified-fort', 'qm-hewan-cheng', 'spear-plow'].sort(),
     );
     expect(names(CITY)).toEqual(
       expect.arrayContaining(['qm-tushou-men', 'corral-town', 'foot-of-the-wall']),

@@ -18,6 +18,7 @@ import { generateBeast, generateCultivator } from './combat/generate.ts';
 import { keep, keptHaul, keptNpc, noteTaken, threaded } from './kept.ts';
 import { damageArmor, findOf, kitOf, openRings, opensRing, ringOf, ringTier } from './loot.ts';
 import { priceOf } from './prices.ts';
+import { shopTiers } from './markets.ts';
 import {
   changeDown,
   changeUp,
@@ -199,8 +200,8 @@ describe('shops', () => {
       [
         "qi-gathering-pill~green",
         "shark-marrow-pill",
+        "method:still-lantern",
         "ash-wood-spear",
-        "ember-talisman",
         "method:market-stall",
         "undertow-talisman",
       ]
@@ -213,7 +214,7 @@ describe('shops', () => {
         for (const lot of stockOf(s.id, m)) {
           expect(real(lot.thing), `${s.id}: ${lot.thing}`).toBe(true);
           expect(lot.price).toBeGreaterThan(0);
-          if (!hasCopy(lot.thing)) expect(s.tiers).toContain(item(lot.thing).tier);
+          if (!hasCopy(lot.thing)) expect(shopTiers(s)).toContain(item(lot.thing).tier);
           if (s.kind === 'mortal') expect(item(lot.thing).taels).toBeDefined();
         }
       }
@@ -285,10 +286,12 @@ describe('shops', () => {
     // Ten swords flood the City: the next one fetches less (core/markets.ts).
     const after = offerFor(s, 'mouth-refiner', 'iron-sword');
     expect(after.ok && offer.ok && after.each < offer.each).toBe(true);
-    // A refiner's 1,500 a month runs out before two hundred swords are bought at once,
-    // even sold lot by lot at a falling price (E3).
-    const fresh = withPlayer(life(), addItem(life().player, 'iron-sword', 200));
-    expect(sell(fresh, 'mouth-refiner', 'iron-sword', 200)).toMatchObject({ ok: false });
+    // A refiner's purse runs out: Grain Ford has none, and Sinkhole Terraces' one, at tier 2 and
+    // lean, holds 8,100 a month, less than two thousand swords sold lot by lot (E3).
+    const fresh = withPlayer(life(), addItem(life().player, 'iron-sword', 2000));
+    expect(sell(fresh, 'sinkhole-terraces.refiner-1', 'iron-sword', 2000)).toMatchObject({
+      ok: false,
+    });
   });
 
   it('serve a sect shop’s members only', () => {

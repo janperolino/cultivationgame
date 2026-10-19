@@ -4,8 +4,8 @@
 // kept as a fraction, and the save carries it (v33).
 import { describe, expect, it } from 'vitest';
 import { ITEMS, item, itemKind } from '../content/items.ts';
-import { shopVein, veinAt } from '../content/map/index.ts';
-import { shop } from '../content/shops.ts';
+import { veinAt } from '../content/map/index.ts';
+import { shop, shopVein } from '../content/shops.ts';
 import { openRings } from './loot.ts';
 import {
   burnable,

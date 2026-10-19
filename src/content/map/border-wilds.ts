@@ -38,6 +38,8 @@ export interface RegionContent {
    * map painting was made from, so the painting and the rules agree.
    */
   landSeed: string;
+  /** The continent it stands on, whose catalogs its shops read. */
+  continent: string;
   towns: readonly WrittenTown[];
   /** Roads as pairs of places they join, a written town or an atlas place. */
   roads: readonly (readonly [string, string])[];
@@ -63,6 +65,7 @@ const F = (name: string, ...tags: FeatureTag[]) => ({ name, tags });
 
 export const BORDER_WILDS: RegionContent = {
   region: 'qm-bianhuang',
+  continent: 'qiming',
   landSeed: 'guide',
   towns: [
     // The March of Pacified Borders, hills

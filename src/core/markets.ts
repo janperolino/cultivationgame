@@ -9,7 +9,8 @@ import { RARE } from '../content/catalogs/rare.ts';
 import type { Lot } from '../content/catalogs/types.ts';
 import { copyChapter, copyForm, copyOf, hasCopy } from '../content/copies.ts';
 import { baseOf, hasItem, item, itemKind, variantId, type Item } from '../content/items.ts';
-import { REGIONS, shopVein } from '../content/map/index.ts';
+import type { Population } from '../content/atlas/schema.ts';
+import { peopleAt, REGIONS } from '../content/map/index.ts';
 import {
   COVETED_MADE_SUPPLY,
   DEPTH,
@@ -18,10 +19,12 @@ import {
   PROSPERITY_EASE_DAYS,
   REACH_LI,
   ROAD,
+  SIZE,
   SOURCE_SUPPLY,
   SUPPLY_EASE,
   SUPPLY_MAX,
   SUPPLY_MIN,
+  TIER_BY_PEOPLE,
   WAGE_LOW,
   WAGE_TAELS,
   type MarketKind,
@@ -29,7 +32,16 @@ import {
 } from '../content/markets.ts';
 import { rarityRank } from '../content/rarity.ts';
 import { realmScale, tierRealm } from '../content/realms.ts';
-import { SHOP_KIND_INFO, SHOPS, shop as shopById, type Shop } from '../content/shops.ts';
+import {
+  headcount,
+  SHOP_KIND_INFO,
+  SHOPS,
+  shop as shopById,
+  shopPeople,
+  shopsAt,
+  shopVein,
+  type Shop,
+} from '../content/shops.ts';
 import { lotShape } from './loot.ts';
 import type { World } from './resolver/world.ts';
 
@@ -57,8 +69,9 @@ function buildMarkets(): Market[] {
   for (const r of Object.values(REGIONS)) {
     const needs = r.content.needs;
     for (const t of r.content.towns) {
-      if (t.shops.length === 0) continue;
-      const first = shopById(t.shops[0]!);
+      const shops = shopsAt(t.id);
+      if (shops.length === 0) continue;
+      const first = shopById(shops[0]!);
       out.push({
         id: t.id,
         name: t.name,
@@ -68,13 +81,14 @@ function buildMarkets(): Market[] {
         place: first.at,
         region: first.region,
         continent: first.continent,
-        shops: t.shops,
+        shops,
         needs: needs[t.id] ?? [],
       });
     }
-    for (const [id, shops] of Object.entries(r.content.placeShops)) {
-      const p = r.file.places.find((x) => x.id === id);
-      if (!p || p.x === null || p.y === null || shops.length === 0) continue;
+    for (const p of r.file.places) {
+      const id = p.id;
+      const shops = shopsAt(id);
+      if (p.x === null || p.y === null || shops.length === 0) continue;
       const first = shopById(shops[0]!);
       out.push({
         id,
@@ -209,11 +223,38 @@ export function shopProsperity(w: World, sh: Shop, day: number): number {
   return prosperityOf(w, marketOfShop(sh.id)?.id ?? sh.at, day);
 }
 
-/** The tiers a shop stocks: its written ones within its place's vein, tier 1 on no vein. */
+/**
+ * The highest tier a place's people buy (`TIER_BY_PEOPLE`): tier 3 where a Core Formation
+ * cultivator lives, tier 2 where twenty Foundation cultivators do, tier 1 otherwise.
+ */
+export function peopleTier(pop: Population): number {
+  const core = (pop.core ?? 0) + (pop.nascent ?? 0) + (pop.deity ?? 0) + (pop.void ?? 0);
+  if (core >= TIER_BY_PEOPLE.core) return 3;
+  if ((pop.foundation ?? 0) >= TIER_BY_PEOPLE.foundation) return 2;
+  return 1;
+}
+
+/**
+ * The tiers a shop stocks (E2.2): up to the highest its place's people buy, within the vein (tier 1
+ * on no vein) and its kind's top (a stall's stop at Foundation's).
+ */
 export function shopTiers(sh: Shop): number[] {
-  const top = Math.max(1, shopVein(sh));
-  const tiers = sh.tiers.filter((t) => t <= top);
-  return tiers.length ? tiers : [1];
+  const top = Math.min(
+    Math.max(1, shopVein(sh)),
+    peopleTier(shopPeople(sh)),
+    SHOP_KIND_INFO[sh.kind].top ?? 3,
+  );
+  return Array.from({ length: Math.max(1, top) }, (_, i) => i + 1);
+}
+
+/**
+ * A market's size by who lives there (`SIZE`): log10 of its cultivators ÷ 50, ×0.5 to ×2. A lot
+ * moves its supply less by this, so the City takes a Bag that floods a village.
+ */
+export function marketSize(m: Market): number {
+  const n = headcount(peopleAt(m.id), 'cultivators');
+  const x = n > 0 ? Math.log10(n / SIZE.per) : SIZE.min;
+  return Math.min(SIZE.max, Math.max(SIZE.min, x));
 }
 
 /**
@@ -539,12 +580,12 @@ export function lotSize(thing: string): number {
 
 /**
  * Moves a good's supply by `pieces` sold to the market (negative when bought from it): by its
- * depth a lot, divided by prosperity's lots, so a bigger market moves less.
+ * depth a lot, divided by prosperity's lots and the market's size, so a bigger market moves less.
  */
 export function moveSupply(w: World, m: Market, thing: string, pieces: number, day: number): World {
   if (pieces === 0) return w;
   const base = seenIn(w, m, thing).supply;
-  const lots = PROSPERITY[prosperityOf(w, m.id, day)]!.lots;
+  const lots = PROSPERITY[prosperityOf(w, m.id, day)]!.lots * marketSize(m);
   const delta = ((pieces / lotSize(thing)) * depthOf(thing)) / lots;
   const n = Math.min(SUPPLY_MAX, Math.max(SUPPLY_MIN, supplyOf(w, m, thing, day) + delta));
   const good = goodOf(thing);

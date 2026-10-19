@@ -9,7 +9,15 @@ import { COPY_FORM_WORDS, copyForm } from '../content/copies.ts';
 import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { item } from '../content/items.ts';
 import { bagStacks } from './gear.ts';
-import { guardedBy, market, seenIn, spreads, standingCopies, supplyOf } from './markets.ts';
+import {
+  guardedBy,
+  market,
+  marketSize,
+  seenIn,
+  spreads,
+  standingCopies,
+  supplyOf,
+} from './markets.ts';
 import { shop } from '../content/shops.ts';
 import { heatOf, standingOf } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
@@ -99,7 +107,7 @@ describe('selling lot by lot', () => {
     expect(later.ok && first.ok && later.each < first.each).toBe(true);
     expect(
       supplyOf(s.world, market('sinkhole-terraces')!, 'spirit-rice', s.calendar.day),
-    ).toBeCloseTo(50 + 10 * (2 / 0.75), 0);
+    ).toBeCloseTo(50 + 10 * (2 / (0.75 * marketSize(market('sinkhole-terraces')!))), 0);
   });
 });
 
@@ -178,8 +186,8 @@ describe('sealed slips', () => {
     if (!r.ok) throw new Error(r.reason);
     const city = market('qm-shoukou-cheng')!;
     expect(r.state.world.copied[city.id]?.[SEALED]).toBeUndefined();
-    // One piece at 25 points: a written supply of 100 stands at 125.
-    expect(supplyOf(r.state.world, city, SEALED, s.calendar.day)).toBeCloseTo(125, 0);
+    // One piece at 25 points, in a market twice an ordinary one's size: 100 stands at 112.5.
+    expect(supplyOf(r.state.world, city, SEALED, s.calendar.day)).toBeCloseTo(112.5, 0);
     const next = nextMonth(r.state);
     for (const id of city.shops) expect(standing(next, id, SEALED)).toBeUndefined();
   });

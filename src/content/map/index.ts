@@ -1,6 +1,7 @@
 // The regions the travel map can draw: each one's atlas outline and places (written by
 // `npm run atlas:build` into src/content/generated/regions/) beside the content written below the
 // atlas. A new region is a generated file and a content entry, not new code.
+import type { Population } from '../atlas/schema.ts';
 import bianhuang from '../generated/regions/qm-bianhuang.json';
 import { BORDER_WILDS, type RegionContent } from './border-wilds.ts';
 
@@ -21,6 +22,8 @@ export interface RegionPlace {
   parent: string | null;
   /** How well-off it is, 1 to 9: its own or its nearest ancestor's (design § Economy, Prosperity). */
   prosperity: number;
+  /** Who lives there, as the atlas counts them (design § World bible, How many live there). */
+  population: Population | null;
   hidden: boolean | string | null;
   access: unknown;
   top: string;
@@ -92,13 +95,14 @@ export function veinAt(id: string | null | undefined): number {
   return 0;
 }
 
-/** The vein a shop's place sits on: the written town it stands in, else its atlas place. */
-export function shopVein(shop: { id: string; at: string }): number {
+/** Who lives at a written town or an atlas place: its mortals and its cultivators by realm. */
+export function peopleAt(id: string | null | undefined): Population {
+  if (!id) return {};
   for (const r of Object.values(REGIONS)) {
-    const t = r.content.towns.find((x) => x.shops.includes(shop.id));
-    if (t) return t.vein;
-    const at = Object.entries(r.content.placeShops).find(([, ids]) => ids.includes(shop.id));
-    if (at) return veinAt(at[0]);
+    const t = r.content.towns.find((x) => x.id === id);
+    if (t) return t.population;
+    const p = r.file.places.find((x) => x.id === id);
+    if (p) return p.population ?? {};
   }
-  return veinAt(shop.at);
+  return {};
 }
