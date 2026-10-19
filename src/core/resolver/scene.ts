@@ -36,12 +36,22 @@ import {
   type ShortId,
   type Traffic,
 } from '../../content/resolver.ts';
+import { veinAt } from '../../content/map/index.ts';
 import { realmIndex } from '../../content/realms.ts';
 import { combatant, topRung, wearFrom } from '../combat/combatant.ts';
 import { startFight } from '../combat/fight.ts';
 import { runFight } from '../combat/profile.ts';
+import { canPay, stonesOf, tierGrade } from '../purse.ts';
 import { withStream, type GameState } from '../state.ts';
-import { lowestShown, plainActor, realmOfActor, sizeAt, YOU, type Actor } from './actor.ts';
+import {
+  lowestShown,
+  plainActor,
+  purseGrade,
+  realmOfActor,
+  sizeAt,
+  YOU,
+  type Actor,
+} from './actor.ts';
 import {
   capability,
   composure,
@@ -381,7 +391,12 @@ function refusal(
   if (st.act === 'recruit' && aimed) {
     if (aimed.follows === a.id) return 'they already follow you';
     const bond = st.bond ?? 'pay';
-    if (bond === 'pay' && a.stones < wageFor(aimed)) {
+    // Your purse pays as any price is paid, across the grades; an NPC's is one count.
+    const canWage =
+      a.id === s.player.id
+        ? canPay(stonesOf(s.player), wageFor(aimed))
+        : a.stones >= wageFor(aimed);
+    if (bond === 'pay' && !canWage) {
       return `you can't pay their wage, ${wageFor(aimed)} stones a month`;
     }
     if (bond === 'goal' && !projectById(s.world, st.goal ?? '')) return 'no goal to share';
@@ -849,7 +864,7 @@ export function doStep(
             thing === 'stones'
               ? [
                   { do: 'stones', who: target.id, n: -took },
-                  { do: 'stones', who: a.id, n: took },
+                  { do: 'stones', who: a.id, n: took, grade: purseGrade(target) },
                 ]
               : [
                   { do: 'item', who: target.id, id: thing, n: -took, how: 'lost' },
@@ -871,7 +886,10 @@ export function doStep(
       // What a burglary takes is the place's, so it simply comes to you.
       if (passed && st.thing && st.thing !== 'stones') {
         apply(w, [{ do: 'item', who: a.id, id: st.thing, n, how: 'gained' }]);
-      } else if (passed && st.thing === 'stones') apply(w, [{ do: 'stones', who: a.id, n }]);
+      } else if (passed && st.thing === 'stones') {
+        const grade = tierGrade(veinAt(w.scene.place));
+        apply(w, [{ do: 'stones', who: a.id, n, grade }]);
+      }
       break;
     case 'loot':
       if (target && (target.state === 'down' || target.state === 'dead')) {
@@ -885,7 +903,7 @@ export function doStep(
         if (target.stones > 0) {
           effects.push(
             { do: 'stones', who: target.id, n: -target.stones },
-            { do: 'stones', who: a.id, n: target.stones },
+            { do: 'stones', who: a.id, n: target.stones, grade: purseGrade(target) },
           );
         }
         // A storage ring opens on the spot to a realm at its tier; otherwise it stays sealed.
@@ -898,7 +916,10 @@ export function doStep(
             for (const [id, k] of Object.entries(ring.items)) {
               effects.push({ do: 'item', who: a.id, id, n: k, how: 'gained' });
             }
-            if (ring.stones > 0) effects.push({ do: 'stones', who: a.id, n: ring.stones });
+            if (ring.stones > 0) {
+              const grade = purseGrade(target);
+              effects.push({ do: 'stones', who: a.id, n: ring.stones, grade });
+            }
           } else {
             const sealed = { from: target.id, name: target.name, tier, ...ring };
             w.s = { ...w.s, world: { ...w.s.world, sealed: [...w.s.world.sealed, sealed] } };
@@ -927,7 +948,7 @@ export function doStep(
           thing === 'stones'
             ? [
                 { do: 'stones', who: a.id, n: -n },
-                { do: 'stones', who: target.id, n },
+                { do: 'stones', who: target.id, n, grade: purseGrade(a) },
               ]
             : [
                 { do: 'item', who: a.id, id: thing, n: -n, how: 'lost' },
@@ -1010,7 +1031,7 @@ export function doStep(
         if (wage) {
           apply(w, [
             { do: 'stones', who: a.id, n: -wage },
-            { do: 'stones', who: target.id, n: wage },
+            { do: 'stones', who: target.id, n: wage, grade: purseGrade(a) },
           ]);
         }
         apply(w, [{ do: 'bond', who: target.id, with: a.id, bond, wage, goal: st.goal }]);

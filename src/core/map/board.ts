@@ -9,7 +9,9 @@ import {
   POSTINGS_PER_MONTH,
 } from '../../content/encounters/pace.ts';
 import type { Template, TripGoal } from '../../content/encounters/schema.ts';
+import { veinAt } from '../../content/map/index.ts';
 import { PLACE_KIND_INFO } from '../../content/map/places.ts';
+import { receive, stonesOf, tierGrade, withStones } from '../purse.ts';
 import { hashSeed, Rng } from '../rng.ts';
 import { monthOf } from '../shops.ts';
 import { addEvent, withPlayer, type GameState } from '../state.ts';
@@ -155,7 +157,9 @@ export function claimPosting(s: GameState, map: RegionMap, id: string): BoardChe
       reason: `It is paid at the board in ${b?.name ?? 'the town that posted it'}.`,
     };
   }
-  let st = withPlayer(s, { ...s.player, stones: s.player.stones + p.pay });
+  // The board pays as its town counts it, in its vein's grade at most.
+  const purse = receive(stonesOf(s.player), p.pay, tierGrade(veinAt(p.board)));
+  let st = withPlayer(s, withStones(s.player, purse));
   st = { ...st, map: { ...st.map!, postings: st.map!.postings.filter((x) => x.id !== id) } };
   const b = placeById(map, p.board);
   return {

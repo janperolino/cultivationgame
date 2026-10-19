@@ -34,7 +34,7 @@ import {
 } from '../core/map/place.ts';
 import { areaById, placeById, type MapPlace, type RegionMap } from '../core/map/region.ts';
 import { pin, stopHere } from '../core/map/travel.ts';
-import { priceWords } from '../core/purse.ts';
+import { gradeCount, priceWords, stonesOf, stonesWords } from '../core/purse.ts';
 import { isMember } from '../core/resolver/names.ts';
 import {
   buy,
@@ -244,13 +244,17 @@ export function PlaceScreen({
         </div>
         <div className="place-purse">
           <span>
-            <b>{Math.floor(game.player.stones)}</b> low-grade
-            {game.player.higherStones.mid > 0 && (
-              <>
-                {' '}
-                · <b>{game.player.higherStones.mid}</b> mid
-              </>
-            )}
+            {stonesWords(stonesOf(game.player))
+              .split(' · ')
+              .map((part, i) => {
+                const [n, grade] = part.split(' ');
+                return (
+                  <span key={grade}>
+                    {i > 0 && ' · '}
+                    <b>{n}</b> {grade}
+                  </span>
+                );
+              })}
           </span>
           <span>
             <b>{Math.floor(game.player.silver)}</b> taels
@@ -624,7 +628,7 @@ function ChangerCounter({ game, place, act }: { game: GameState; place: MapPlace
       'break-mid',
       'Break a mid-grade stone',
       'for 1,100 low',
-      `you hold ${game.player.higherStones.mid} mid`,
+      `you hold ${gradeCount(stonesOf(game.player), 1)} mid`,
     ],
     ['buy-mid', 'Buy a mid-grade stone', 'for 1,200 low', ''],
   ];

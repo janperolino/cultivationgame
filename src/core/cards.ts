@@ -37,6 +37,7 @@ import { holdsManual } from './manuals.ts';
 import { copyCount } from './reading.ts';
 import { daysPerRealMs, type DayStep } from './loop.ts';
 import { applyPersonEffect, knowsSlot, peopleIn, resolveWho } from './people.ts';
+import { canPay, pay, receive, spend, stonesOf, withStones, worthOf } from './purse.ts';
 import type { Rng } from './rng.ts';
 import {
   addEvent,
@@ -98,7 +99,7 @@ export function triggerHolds(s: GameState, t: Trigger, day = s.calendar.day): bo
     if (d < t.yearDay[0] || d >= t.yearDay[1]) return false;
   }
   if (t.people && !t.people.every((slot) => knowsSlot(c, slot))) return false;
-  if (t.minStones !== undefined && c.stones < t.minStones) return false;
+  if (t.minStones !== undefined && worthOf(stonesOf(c)) < t.minStones) return false;
   if (t.intentReady && readyDaos(c).length === 0) return false;
   return true;
 }
@@ -140,7 +141,7 @@ export function choiceOffered(choice: CardChoice, vars: Readonly<Record<string, 
 /** Whether the player can pay a choice's cost. */
 export function canChoose(c: Cultivator, choice: CardChoice): ChoiceCheck {
   const cost = choice.cost;
-  if (cost?.stones && c.stones < cost.stones) {
+  if (cost?.stones && !canPay(stonesOf(c), cost.stones)) {
     return { ok: false, reason: `It costs ${cost.stones} spirit stones.` };
   }
   if (cost?.item && itemCount(c, cost.item.id) < cost.item.n) {
@@ -177,7 +178,11 @@ function applyEffect(s: GameState, e: CardEffect): GameState {
   const c = s.player;
   switch (e.do) {
     case 'stones':
-      return withPlayer(s, { ...c, stones: Math.max(0, c.stones + e.n) });
+      // A loss is paid as a price, as far as the purse reaches; a gain comes in low.
+      return withPlayer(
+        s,
+        withStones(c, e.n < 0 ? spend(stonesOf(c), -e.n) : receive(stonesOf(c), e.n)),
+      );
     case 'item':
       return withPlayer(s, addItem(c, e.id, e.n));
     case 'fuel': {
@@ -302,8 +307,10 @@ export function resolveCard(
 
   let next: GameState = s;
   const cost = choice.cost;
-  if (cost?.stones)
-    next = withPlayer(next, { ...next.player, stones: next.player.stones - cost.stones });
+  if (cost?.stones) {
+    const after = pay(stonesOf(next.player), cost.stones)!;
+    next = withPlayer(next, withStones(next.player, after));
+  }
   if (cost?.item) next = withPlayer(next, addItem(next.player, cost.item.id, -cost.item.n));
 
   const check = cardCheck(next.player, choice) ?? undefined;

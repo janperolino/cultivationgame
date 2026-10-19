@@ -1,8 +1,7 @@
 import { BRANCHES } from '../content/hours.ts';
-import { GRADES } from '../content/money.ts';
 import { dayRates } from '../core/cultivation.ts';
 import { worldWhen } from '../core/chronicle.ts';
-import { purseWords, stonesOf } from '../core/purse.ts';
+import { purseWords, stonesOf, stonesWords } from '../core/purse.ts';
 import { hourOfDay } from '../core/wheel.ts';
 import { formatNumber, formatRate } from './format.ts';
 import { useGame } from './store.ts';
@@ -12,12 +11,7 @@ import { Why } from './widgets.tsx';
 /** The stones as the top shows them: the low-grade count alone, or every grade held. */
 function stoneWords(stones: ReturnType<typeof stonesOf>): string {
   if (stones.slice(1).every((n) => n === 0)) return formatNumber(Math.floor(stones[0]));
-  const parts: string[] = [];
-  for (let g = GRADES.length - 1; g >= 0; g--) {
-    const n = g === 0 ? Math.floor(stones[g]!) : stones[g]!;
-    if (n > 0) parts.push(`${formatNumber(n)} ${GRADES[g]}`);
-  }
-  return parts.join(' · ');
+  return stonesWords(stones, formatNumber);
 }
 
 /**

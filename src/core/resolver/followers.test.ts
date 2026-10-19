@@ -87,6 +87,20 @@ const places = placeIndex(atlas.entries as unknown as PlaceEntry[]);
 setPlaces(places);
 
 describe('bonds', () => {
+  it('pay wages from a purse with no low, breaking a mid for change (E1)', () => {
+    const s = life();
+    const w = makeBond(
+      s.world,
+      { follower: 'guard', leader: s.player.id, kind: 'pay', wage: 30 },
+      0,
+    );
+    const mid = { ...s.player, stones: 0, higherStones: { mid: 1, high: 0, top: 0 } };
+    const st = followersDay({ ...withPlayer({ ...s, world: w }, mid), calendar: { day: 61 } });
+    expect(st.player.stones).toBe(1040);
+    expect(st.player.higherStones.mid).toBe(0);
+    expect(bondOf(st.world, 'guard')!.paidTo).toBe(90);
+  });
+
   it('pay wages each month from your stones, and the paid leave when you run dry', () => {
     const s = life();
     let w = makeBond(s.world, { follower: 'guard', leader: s.player.id, kind: 'pay', wage: 30 }, 0);

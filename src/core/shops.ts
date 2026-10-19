@@ -10,6 +10,7 @@ import { RARE } from '../content/catalogs/rare.ts';
 import type { Catalog, Lot } from '../content/catalogs/types.ts';
 import { hasCopy } from '../content/copies.ts';
 import { hasItem, item, itemKind, variantId } from '../content/items.ts';
+import { shopVein } from '../content/map/index.ts';
 import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
 import {
   DAMAGE_REPAIR_SHARE,
@@ -27,7 +28,7 @@ import { lotShape } from './loot.ts';
 import { wornIds } from './gear.ts';
 import { gainCopy } from './life.ts';
 import { priceOf } from './prices.ts';
-import { pay, paySilver, receive, stonesOf, withStones } from './purse.ts';
+import { pay, paySilver, receive, stonesOf, tierGrade, withStones } from './purse.ts';
 import { actorFromCultivator, plainActor } from './resolver/actor.ts';
 import { isMember } from './resolver/names.ts';
 import { rollNature } from './resolver/nature.ts';
@@ -277,7 +278,9 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
   const total = offer.each * n;
   if (sm.paid + total > info.purse)
     return { ok: false, reason: 'The shop hasn’t the money this month.' };
-  let player = withStones(s.player, receive(stonesOf(s.player), total));
+  // Paid as the shop counts it, in its place's vein's grade at most.
+  const grade = tierGrade(shopVein(sh));
+  let player = withStones(s.player, receive(stonesOf(s.player), total, grade));
   if (hasCopy(thing)) player = { ...player, copies: { ...player.copies, [thing]: held - n } };
   else player = addItem(player, thing, -n);
   return {

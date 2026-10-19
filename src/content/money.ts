@@ -16,6 +16,14 @@ export const UP_COST = 1200;
 /** Stones of the grade below that one stone breaks into. */
 export const DOWN_GIVES = 1100;
 
+/**
+ * The grade a purse deals in by tier (design § Economy, Money; Stones, silver and shops in play):
+ * tier n is realm n's, and a vein of tier n keeps realm n, so a person and a market read the same
+ * row. Low to Foundation, mid at Core Formation, high to Deity Transformation, top above; index 0
+ * is no vein, which deals in low. An index into GRADES.
+ */
+export const GRADE_BY_TIER = [0, 0, 0, 1, 2, 2, 3, 3, 3, 3] as const;
+
 /** Taels a low-grade stone breaks into at a money changer. */
 export const STONE_TO_SILVER = 110;
 /** Taels that buy one low-grade stone. */

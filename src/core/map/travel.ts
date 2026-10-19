@@ -3,7 +3,7 @@
 // clock turns, looking around at its look-around hour and on arriving, the ways of going, where you
 // sleep, and travelling with a group. Riding hands your hours back at a jostled half; the day step
 // cultivates on the wheel this returns.
-import { HOME_MAP_REGION, regionData } from '../../content/map/index.ts';
+import { HOME_MAP_REGION, regionData, veinAt } from '../../content/map/index.ts';
 import { ENTER_LI, WATCH_WAIVES_AT } from '../../content/map/places.ts';
 import {
   CHECKPOINT_TOLL_LOW,
@@ -26,7 +26,7 @@ import {
 import { HOURS_PER_DAY, SLEEP_HOURS, type HourKind } from '../../content/hours.ts';
 import { origin } from '../../content/origins.ts';
 import { realmIndex } from '../../content/realms.ts';
-import { pay, stonesOf, withStones } from '../purse.ts';
+import { pay, receive, stonesOf, tierGrade, withStones } from '../purse.ts';
 import { fameOf } from '../resolver/names.ts';
 import { addStanding } from '../resolver/opinion.ts';
 import { addEvent, itemCount, realmOf, type Cultivator, type GameState } from '../state.ts';
@@ -541,6 +541,8 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
   const foundationFlight = w.id === 'fly' && realmIndex(realmOf(c)) === 1;
   const notes: TravelNote[] = [];
   let paid = 0;
+  // Where a group pays out: it pays in that place's vein's grade at most.
+  let paidAt: string | null = null;
   const passed: string[] = [];
   let enterTarget: MapPlace | null = null;
   const take = (r: Seeing) => {
@@ -645,7 +647,10 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
         )
           enterTarget = target;
         // A group pays what it owes on arriving.
-        if (life.group && life.group.owed > 0) paid += Math.round(life.group.owed);
+        if (life.group && life.group.owed > 0) {
+          paid += Math.round(life.group.owed);
+          paidAt = course.target ?? paidAt;
+        }
         life = {
           ...life,
           course: null,
@@ -667,7 +672,10 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
     h0 = end;
   }
   next = { ...next, map: life };
-  if (paid > 0) next = { ...next, player: { ...next.player, stones: next.player.stones + paid } };
+  if (paid > 0) {
+    const purse = receive(stonesOf(next.player), paid, tierGrade(veinAt(paidAt)));
+    next = { ...next, player: withStones(next.player, purse) };
+  }
   for (const id of passed) next = payToll(next, map, id);
   for (const n of notes) {
     const p = placeById(map, n.place);

@@ -28,6 +28,7 @@ import { realmIndex, tierStep } from '../content/realms.ts';
 import type { Effect } from '../content/stats.ts';
 import { masteryAt, type Mastery } from './mastery.ts';
 import { tierScale } from './combat/sheet.ts';
+import { pay, stonesOf, withStones } from './purse.ts';
 import { realmOf, type Cultivator } from './state.ts';
 import { ownTier } from './toxicity.ts';
 
@@ -92,10 +93,12 @@ export function stonesPerBondDay(it: Item): number {
 
 /** Feeds a worn or carried artifact this many stones in seclusion; unchanged if it can't. */
 export function feedArtifact(c: Cultivator, id: string, stones: number): Cultivator {
-  if (!hasItem(id) || !bonds(item(id)) || stones <= 0 || c.stones < stones) return c;
+  if (!hasItem(id) || !bonds(item(id)) || stones <= 0) return c;
   if (!wornIds(c).includes(id) && (c.items[id] ?? 0) <= 0) return c;
-  const fed = addBond(c, [id], stones / stonesPerBondDay(item(id)));
-  return { ...fed, stones: c.stones - stones };
+  // Paid as any price is, across the grades.
+  const after = pay(stonesOf(c), stones);
+  if (!after) return c;
+  return withStones(addBond(c, [id], stones / stonesPerBondDay(item(id))), after);
 }
 
 // ---------------------------------------------------------------- above your realm

@@ -322,6 +322,7 @@ for (const region of atlas.entries) {
         kind: e.kind,
         terrain: e.terrain ?? null,
         qiDensity: e.qiDensity ?? null,
+        vein: e.vein ?? null,
         hidden: e.hidden ?? null,
         access: e.access ?? null,
         top: e.top.realm,

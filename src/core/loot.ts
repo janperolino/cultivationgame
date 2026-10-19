@@ -19,6 +19,7 @@ import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
 import { realmIndex, type RealmId } from '../content/realms.ts';
 import { technique } from '../content/techniques.ts';
 import { pedigreeBias, rollBiased, type LuckySlot, type Npc } from './combat/generate.ts';
+import { receive, stonesOf, tierGrade, withStones } from './purse.ts';
 import { gainCopy as ownCopy } from './reading.ts';
 import { hashSeed, Rng } from './rng.ts';
 import { addEvent, addItem, withPlayer, type Cultivator, type GameState } from './state.ts';
@@ -282,7 +283,8 @@ export function openRings(s: GameState): GameState {
       if (hasCopy(id)) c = ownCopy(c, id, n);
       else if (hasItem(id)) c = addItem(c, id, n);
     }
-    c = { ...c, stones: c.stones + r.stones };
+    // Its stones as its owner counted them, in the grade of the ring's tier at most.
+    c = withStones(c, receive(stonesOf(c), r.stones, tierGrade(r.tier)));
   }
   let next: GameState = {
     ...withPlayer(s, c),

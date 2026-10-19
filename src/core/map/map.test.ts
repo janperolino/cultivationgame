@@ -240,6 +240,23 @@ describe('routing', () => {
     expect(String(tolls[0]!.data.how)).toMatch(/toll|waved/);
   });
 
+  it('breaks a purse of one mid for a toll’s change (E1)', () => {
+    const base = life();
+    const mid = withPlayer(base, {
+      ...base.player,
+      stones: 0,
+      higherStones: { mid: 1, high: 0, top: 0 },
+    });
+    const go = goToPlace(mid, 'qm-shoukou-cheng');
+    if (!go.ok) throw new Error(go.reason);
+    const n = go.state.map!.course!.tolls.length;
+    const s = run(go.state, Math.ceil(go.state.map!.course!.days) + 2);
+    const paid = s.chronicle.filter((e) => e.type === 'toll' && /pays/.test(String(e.data.how)));
+    expect(paid).toHaveLength(n);
+    expect(s.player.higherStones.mid).toBe(0);
+    expect(s.player.stones).toBe(1100 - n);
+  });
+
   it('keeps off them on the night road, and flies straight over the land', () => {
     const s = life();
     const map = mapFor(s);
@@ -413,6 +430,33 @@ describe('travel on the day loop', () => {
     s = run(s, Math.ceil(s.map!.course!.days) + 2);
     expect(s.map!.group).toBeNull();
     expect(s.player.stones).toBeGreaterThan(stones);
+  });
+
+  it('pays a caravan guard as the town it arrives at counts it (E1)', () => {
+    const go = (bound: string, from: 'cave-orphan' | 'frontier-orphan') => {
+      const j = joinGroup(life(from), {
+        kind: 'caravan',
+        name: 'the Iron-Shod caravan',
+        leader: 'caravan master Lu',
+        bound,
+        stops: [],
+        pay: 500,
+        canLeave: true,
+        leaveCost: 'You lose the pay owed.',
+        leading: false,
+      });
+      if (!j.ok) throw new Error(j.reason);
+      return run(j.state, Math.ceil(j.state.map!.course!.days) + 2);
+    };
+    // Corral Town sits on a tier 2 vein and pays all in low; the City, on a tier 4, in mid.
+    const corral = go('corral-town', 'frontier-orphan');
+    expect(corral.map!.group).toBeNull();
+    expect(corral.player.stones).toBeGreaterThan(1000);
+    expect(corral.player.higherStones.mid).toBe(0);
+    const city = go('qm-shoukou-cheng', 'cave-orphan');
+    expect(city.map!.group).toBeNull();
+    expect(city.player.higherStones.mid).toBeGreaterThan(0);
+    expect(city.player.stones).toBeLessThan(1000);
   });
 
   it('won’t let you step off a ship without flight of your own', () => {

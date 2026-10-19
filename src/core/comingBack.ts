@@ -13,6 +13,14 @@ import { countWord, spanWords, timesWord } from '../content/words.ts';
 import { renderEvent, whoFor } from './chronicle.ts';
 import { barFill, majorCheck, type LadderId } from './cultivation.ts';
 import { firstsWaitingLines } from './firsts.ts';
+import {
+  burnedGradesWords,
+  fuelRanOut,
+  priceWords,
+  realmGrade,
+  stonesOf,
+  worthOf,
+} from './purse.ts';
 import type { GameState, Ladder } from './state.ts';
 
 export interface StorySection {
@@ -132,15 +140,21 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
   }
   const insight = after.player.insight.earned - before.player.insight.earned;
   if (insight >= 1) growth.push(`Understanding gathers: ${Math.floor(insight)} insight.`);
-  const stones = after.player.stones - before.player.stones;
+  const stones = worthOf(stonesOf(after.player)) - worthOf(stonesOf(before.player));
   // Burning ran the pouch dry while you were away: the toast that says so at the seat doesn't come.
-  const ranOut =
-    before.player.stones > 0 && after.player.stones <= 1e-9 && after.player.plan.burnStones;
-  if (ranOut)
+  const ranOut = fuelRanOut(before.player, after.player);
+  if (ranOut?.waits) {
+    const burned = burnedGradesWords(realmGrade(after.player.qi.realm));
+    growth.push(
+      `Your ${burned} stones burned out: ${ranOut.waits} waits whole, unbroken, and the qi hours burn none until you break it or have more.`,
+    );
+  } else if (ranOut)
     growth.push('Your spirit stones ran out: the qi hours burn none until you have more.');
   else if (stones <= -1)
-    growth.push(`${Math.floor(-stones)} spirit stones are gone, burned or spent.`);
-  else if (stones >= 1) growth.push(`Your pouch is ${Math.floor(stones)} spirit stones heavier.`);
+    growth.push(
+      `Spirit stones worth ${priceWords(Math.floor(-stones))} are gone, burned or spent.`,
+    );
+  else if (stones >= 1) growth.push(`Your pouch is ${priceWords(Math.floor(stones))} heavier.`);
 
   // Each card settled without you, once, with the line its last coming wrote.
   const who = whoFor(after.player);

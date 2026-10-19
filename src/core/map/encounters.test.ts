@@ -331,6 +331,11 @@ describe('settling', () => {
     expect(r.verdict).toBe('short');
     expect(r.state.player.stones).toBe(20);
     expect(r.state.world.states.some((x) => x.data.kind === 'wound')).toBe(true);
+    // Robbers take their share of every grade, whole stones of each (E1).
+    const mids = withPlayer(s, { ...s.player, higherStones: { mid: 3, high: 0, top: 0 } });
+    const robbed = chooseExit(withEnc(mids, enc('pine-deserters', 1)), 'e-test', 0)!;
+    expect(robbed.state.player.stones).toBe(20);
+    expect(robbed.state.player.higherStones.mid).toBe(2);
     expect(r.state.ended).toBeFalsy();
   });
 
@@ -375,6 +380,13 @@ describe('what waits', () => {
     const rich = withPlayer(later, { ...later.player, stones: 50 });
     const r = chooseExit(rich, 'e-test', pay)!;
     expect(r.state.player.stones).toBe(38);
+    // A purse of one mid pays the deal by breaking it (E1).
+    const mid = withPlayer(later, {
+      ...later.player,
+      stones: 0,
+      higherStones: { mid: 1, high: 0, top: 0 },
+    });
+    expect(chooseExit(mid, 'e-test', pay)!.state.player.stones).toBe(1088);
     const on = travelDays(r.state, r.state.calendar.day, r.state.calendar.day + 3);
     expect(on.map!.at).not.toEqual(at);
   });

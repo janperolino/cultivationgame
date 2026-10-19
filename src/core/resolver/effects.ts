@@ -8,6 +8,7 @@ import { KIN_RELATIONS, TIE_IDS } from '../../content/people.ts';
 import { GIFT_KINDS } from '../../content/personality.ts';
 import { PERSON_STATES, PLACE_STATES, TICKS_PER_DAY } from '../../content/resolver.ts';
 import { BOND_IDS } from '../../content/bonds.ts';
+import { receive, spend, stonesOf, withStones } from '../purse.ts';
 import { addItem, withPlayer, type GameState } from '../state.ts';
 import { endBond, makeBond } from './followers.ts';
 import { see } from './knows.ts';
@@ -31,7 +32,17 @@ export const EffectSchema = z.discriminatedUnion('do', [
   z.object({ do: z.literal('hp'), who: Who, n: z.number() }),
   z.object({ do: z.literal('qi'), who: Who, n: z.number() }),
   z.object({ do: z.literal('wound'), who: Who, share: z.number().min(0).max(1), days: z.number() }),
-  z.object({ do: z.literal('stones'), who: Who, n: z.number().int() }),
+  /**
+   * Stones gained or lost, in low-grade stones' worth. A loss from your purse is paid as a price
+   * (core/purse.ts); a gain arrives as the payer counts it, never above `grade` (the payer's, an
+   * index into GRADES; low when unnamed).
+   */
+  z.object({
+    do: z.literal('stones'),
+    who: Who,
+    n: z.number().int(),
+    grade: z.number().int().min(0).max(3).optional(),
+  }),
   z.object({
     do: z.literal('item'),
     who: Who,
@@ -161,10 +172,9 @@ export function applyEffects(
       }
       case 'stones':
         if (e.who === you) {
-          state = withPlayer(state, {
-            ...state.player,
-            stones: Math.max(0, state.player.stones + e.n),
-          });
+          const purse = stonesOf(state.player);
+          const after = e.n < 0 ? spend(purse, -e.n) : receive(purse, e.n, e.grade ?? 0);
+          state = withPlayer(state, withStones(state.player, after));
         }
         sc = withActor(sc, e.who, (a) => ({ ...a, stones: Math.max(0, a.stones + e.n) }));
         break;

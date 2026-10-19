@@ -15,6 +15,8 @@ export interface RegionPlace {
   kind: string;
   terrain: string | null;
   qiDensity: number | null;
+  /** The tier of the strongest spirit vein it sits on, null when it names none. */
+  vein: number | null;
   hidden: boolean | string | null;
   access: unknown;
   top: string;
@@ -68,4 +70,30 @@ export const HOME_MAP_REGION = 'qm-bianhuang';
 
 export function regionData(id: string): RegionData | undefined {
   return REGIONS[id];
+}
+
+/**
+ * The vein a written town or an atlas place sits on, 0 for none (design § Economy, Prosperity: the
+ * vein sets the grade its market pays in).
+ */
+export function veinAt(id: string | null | undefined): number {
+  if (!id) return 0;
+  for (const r of Object.values(REGIONS)) {
+    const t = r.content.towns.find((x) => x.id === id);
+    if (t) return t.vein;
+    const p = r.file.places.find((x) => x.id === id);
+    if (p) return p.vein ?? 0;
+  }
+  return 0;
+}
+
+/** The vein a shop's place sits on: the written town it stands in, else its atlas place. */
+export function shopVein(shop: { id: string; at: string }): number {
+  for (const r of Object.values(REGIONS)) {
+    const t = r.content.towns.find((x) => x.shops.includes(shop.id));
+    if (t) return t.vein;
+    const at = Object.entries(r.content.placeShops).find(([, ids]) => ids.includes(shop.id));
+    if (at) return veinAt(at[0]);
+  }
+  return veinAt(shop.at);
 }

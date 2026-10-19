@@ -26,6 +26,7 @@ import {
   practiceNeed,
   type Mastery,
 } from './mastery.ts';
+import { canPay, pay, stonesOf, withStones } from './purse.ts';
 import type { Cultivator, Ladder } from './state.ts';
 
 export type MethodCheck = { ok: true } | { ok: false; reason: string };
@@ -224,15 +225,16 @@ export function setActiveMethod(
 
 // ---------------------------------------------------------------- upkeep
 
-function canPay(c: Cultivator, up: Upkeep): boolean {
-  if ((up.stones ?? 0) > c.stones) return false;
+// The stones are paid as any price is (core/purse.ts), across the grades.
+function canFeed(c: Cultivator, up: Upkeep): boolean {
+  if (!canPay(stonesOf(c), up.stones ?? 0)) return false;
   return Object.entries(up.items ?? {}).every(([id, n]) => (c.items[id] ?? 0) >= n);
 }
 
-function pay(c: Cultivator, up: Upkeep): Cultivator {
+function payUpkeep(c: Cultivator, up: Upkeep): Cultivator {
   const items = { ...c.items };
   for (const [id, n] of Object.entries(up.items ?? {})) items[id] = (items[id] ?? 0) - n;
-  return { ...c, stones: c.stones - (up.stones ?? 0), items };
+  return { ...withStones(c, pay(stonesOf(c), up.stones ?? 0)!), items };
 }
 
 /**
@@ -252,11 +254,11 @@ export function feedMethod(
   let until = Math.max(c.methods[m.id]!.fedUntil, day);
   let fed = true;
   while (until < day + days - 1e-9) {
-    if (!canPay(next, m.upkeep)) {
+    if (!canFeed(next, m.upkeep)) {
       fed = false;
       break;
     }
-    next = pay(next, m.upkeep);
+    next = payUpkeep(next, m.upkeep);
     until += 1;
   }
   const rec = { ...next.methods[m.id]!, fedUntil: until };
@@ -267,5 +269,5 @@ export function feedMethod(
 export function methodFed(c: Cultivator, which: LadderId, day: number): boolean {
   const m = ladderMethod(c, which);
   if (!m?.upkeep || methodCapped(c, m)) return true;
-  return c.methods[m.id]!.fedUntil > day || canPay(c, m.upkeep);
+  return c.methods[m.id]!.fedUntil > day || canFeed(c, m.upkeep);
 }

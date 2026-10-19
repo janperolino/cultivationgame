@@ -193,6 +193,25 @@ describe('choosing', () => {
     expect(resolveCard(poor, 1, 1)).toMatchObject({ ok: false, state: poor });
   });
 
+  it('pays a cost across the grades, and a trigger reads the whole purse (E1)', () => {
+    const one = withPlayer(life(), {
+      ...life().player,
+      stones: 0,
+      higherStones: { mid: 1, high: 0, top: 0 },
+    });
+    // The five stones break the mid for change: 1,100 low less five.
+    const r = resolveCard(pend(one, 'first-technique-cave-along', 1), 1, 1);
+    expect(r.ok).toBe(true);
+    expect(r.state.player.stones).toBe(1095);
+    expect(r.state.player.higherStones.mid).toBe(0);
+    expect(triggerHolds(one, { minStones: 10 })).toBe(true);
+    expect(
+      triggerHolds(withPlayer(one, { ...one.player, higherStones: { mid: 0, high: 0, top: 0 } }), {
+        minStones: 10,
+      }),
+    ).toBe(false);
+  });
+
   it('makes its check as a comparison, the same answer every time, with the fail outcome when short', () => {
     const at = (agility: number) => {
       const s = life('cave-orphan', 'along', 'check');

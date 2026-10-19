@@ -54,6 +54,16 @@ import type { Combatant } from '../combat/combatant.ts';
 import { generateBeast, generateCultivator, generatePack } from '../combat/generate.ts';
 import type { Npc } from '../combat/generate.ts';
 import { kitOf } from '../loot.ts';
+import {
+  canPay,
+  pay,
+  realmGrade,
+  receive,
+  spend,
+  stonesOf,
+  takeShare,
+  withStones,
+} from '../purse.ts';
 import { nameOf, personSlots } from '../people.ts';
 import { hashSeed, Rng } from '../rng.ts';
 import {
@@ -298,7 +308,7 @@ export function exitViews(s: GameState, m: Met): ExitView[] {
   return m.template.exits.map((exit, i) => {
     const tried = m.enc.tried.includes(i);
     let refused: string | null = tried ? 'Tried, and it fell short: nothing has changed.' : null;
-    if (exit.cost?.stones && s.player.stones < exit.cost.stones)
+    if (exit.cost?.stones && !canPay(stonesOf(s.player), exit.cost.stones))
       refused = `It costs ${exit.cost.stones} low-grade stones.`;
     if (exit.cost?.item && itemCount(s.player, exit.cost.item) <= 0)
       refused = `You have no ${hasItem(exit.cost.item) ? item(exit.cost.item).name : exit.cost.item}.`;
@@ -438,11 +448,18 @@ function applyStakes(s: GameState, m: Met, stakes: readonly Stake[], rng: Rng): 
         ]).state;
         break;
       case 'stones':
-        st = withPlayer(st, { ...st.player, stones: Math.max(0, st.player.stones + k.n) });
+        // A loss is paid as a price, as far as the purse reaches; a gain comes in low.
+        st = withPlayer(
+          st,
+          withStones(
+            st.player,
+            k.n < 0 ? spend(stonesOf(st.player), -k.n) : receive(stonesOf(st.player), k.n),
+          ),
+        );
         break;
       case 'robbed': {
-        const lost = Math.floor(st.player.stones * k.share);
-        st = withPlayer(st, { ...st.player, stones: st.player.stones - lost });
+        // A share of every grade, whole stones of each.
+        st = withPlayer(st, withStones(st.player, takeShare(stonesOf(st.player), k.share)));
         if (k.item) {
           const held = Object.entries(st.player.items)
             .filter(([, n]) => n > 0)
@@ -462,7 +479,9 @@ function applyStakes(s: GameState, m: Met, stakes: readonly Stake[], rng: Rng): 
           if (!npc) continue;
           const h = kitOf(npc);
           for (const [id, n] of Object.entries(h.items)) st = gain(st, id, n);
-          st = withPlayer(st, { ...st.player, stones: st.player.stones + h.stones });
+          // What they carried arrives as they counted it, in their realm's grade at most.
+          const purse = receive(stonesOf(st.player), h.stones, realmGrade(npc.realm));
+          st = withPlayer(st, withStones(st.player, purse));
         }
         break;
       }
@@ -592,8 +611,10 @@ export function settle(
   if (!view || view.refused) return null;
   const e = view.exit;
   let st = s;
-  if (e.cost?.stones)
-    st = withPlayer(st, { ...st.player, stones: st.player.stones - e.cost.stones });
+  if (e.cost?.stones) {
+    const after = pay(stonesOf(st.player), e.cost.stones)!;
+    st = withPlayer(st, withStones(st.player, after));
+  }
   if (e.cost?.item) st = withPlayer(st, addItem(st.player, e.cost.item, -1));
   const rng = new Rng(hashSeed(`${enc.id}/settle/${i}`));
   const { o, extra, stays } = outcomeOf(m, e, view.verdict);

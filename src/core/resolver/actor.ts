@@ -12,6 +12,7 @@ import type { StatId } from '../../content/stats.ts';
 import { generateCultivator, type Npc } from '../combat/generate.ts';
 import { fromCultivator, topRung, type Combatant } from '../combat/combatant.ts';
 import { kitOf } from '../loot.ts';
+import { realmGrade, stonesOf, worthOf } from '../purse.ts';
 import { rungSize, type Rung } from '../combat/sheet.ts';
 import { Rng } from '../rng.ts';
 import { stats } from '../stats.ts';
@@ -38,6 +39,10 @@ export interface Actor {
   techniques: Record<string, number>;
   /** Items held, by id. */
   items: Record<string, number>;
+  /**
+   * Stones held, in low-grade stones' worth: an NPC's purse is one count, yours your whole purse
+   * at face; what crosses into your purse is counted out by grade (core/purse.ts).
+   */
   stones: number;
   /** The weapon they can draw: none, an ordinary one, or one of gold or better. */
   weapon: 'none' | 'plain' | 'gold';
@@ -80,6 +85,11 @@ export const YOU = 'you';
 export function realmOfActor(a: Pick<Actor, 'rungs'>): RealmStage {
   const r = topRung(a);
   return { realm: r.realm, stage: r.stage };
+}
+
+/** The grade someone pays out in: their realm's (design § Economy, Stones, silver and shops). */
+export function purseGrade(a: Pick<Actor, 'rungs'>): number {
+  return realmGrade(realmOfActor(a).realm);
 }
 
 /** The size of one of their lines, through their wounds. */
@@ -150,7 +160,7 @@ export function actorFromCultivator(s: GameState, id = s.player.id, side = YOU):
     stats: statsHeld,
     techniques,
     items: { ...c.items },
-    stones: c.stones,
+    stones: Math.floor(worthOf(stonesOf(c))),
     weapon,
     wound: woundShare(s.world, id, day),
     shown: cover?.data.shown,

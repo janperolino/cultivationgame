@@ -310,6 +310,14 @@ describe('upkeep', () => {
     expect(two.stones).toBe(2);
   });
 
+  it('pays upkeep across the grades: a purse of one mid breaks it for change (E1)', () => {
+    const mid = { ...furnace, stones: 0, higherStones: { mid: 1, high: 0, top: 0 } };
+    const fed = cultivateDays(mid, 1, roll(0.5)).cultivator;
+    expect(fed.stones).toBe(1099);
+    expect(fed.higherStones.mid).toBe(0);
+    expect(fed.methods['ember-furnace']!.fedUntil).toBe(DAY + 1);
+  });
+
   it('drinks nothing on a day with no hours for its ladder', () => {
     const idle = { ...furnace, stones: 3, wheel: furnace.wheel.map(() => 'study' as const) };
     expect(cultivateDays(idle, 1, roll(0.5)).cultivator.stones).toBe(3);

@@ -14,6 +14,7 @@ import { hasMethod, method } from '../content/methods.ts';
 import type { RarityId } from '../content/rarity.ts';
 import { hasTechnique, technique } from '../content/techniques.ts';
 import { tree } from '../content/trees/index.ts';
+import { ranOutWords } from '../core/purse.ts';
 import type { Gain } from '../core/seen.ts';
 import type { GameState } from '../core/state.ts';
 import { mastery, MAX_MASTERY } from '../core/techniques.ts';
@@ -256,9 +257,12 @@ export function raiseStartToasts(s: GameState): void {
   if (stones > 0) raiseToast('stones', `${stones} low-grade ${stones === 1 ? 'stone' : 'stones'}`);
 }
 
-/** Whether burning emptied the pouch between two states: the last stone went into a qi hour. */
-export function stonesRanOut(before: GameState, after: GameState): boolean {
-  return after.player.plan.burnStones && before.player.stones > 0 && after.player.stones <= 1e-9;
+/**
+ * The toast when burning emptied the pouch between two states, or null: the last stone of your
+ * grade and below went into a qi hour, naming a higher stone that waits whole.
+ */
+export function stonesRanOut(before: GameState, after: GameState): string | null {
+  return ranOutWords(before.player, after.player);
 }
 
 /** The techniques that reached Origin and left their slot between two states. */

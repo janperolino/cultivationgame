@@ -916,7 +916,8 @@ useGame.subscribe((now, was) => {
   if (now.game !== was.game) driveHints();
   if (quiet || now.game === was.game || !was.game) return;
   raiseToasts(gains(was.game, now.game), now.game);
-  if (stonesRanOut(was.game, now.game)) raiseToast('stones', 'none left to burn');
+  const ranOut = stonesRanOut(was.game, now.game);
+  if (ranOut) raiseToast('stones', ranOut);
   // A technique reaching Origin leaves its slot, which stays empty until the player fills it.
   for (const id of leftSlots(was.game, now.game)) {
     raiseToast('slot', `${technique(id).name} reached Origin and left its slot`, {

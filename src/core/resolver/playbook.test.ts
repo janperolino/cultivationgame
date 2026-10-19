@@ -9,7 +9,7 @@ import { withPlayer, type GameState } from '../state.ts';
 import { bondOf, followersDay, post } from './followers.ts';
 import { believesDead } from './knows.ts';
 import { karmaOf } from './names.ts';
-import { plainActor, YOU, type Actor } from './actor.ts';
+import { actorFromCultivator, plainActor, YOU, type Actor } from './actor.ts';
 import { PlanSchema, step } from './plan.ts';
 import { doStep, leaveScene, round, runPlan, startScene, type SceneInit } from './scene.ts';
 import type { Nature } from '../../content/personality.ts';
@@ -413,8 +413,31 @@ describe('the playbook', () => {
     expect(heatOf(swept, GATE, s.calendar.day)).toBe(1);
   });
 
+  it('hires from a purse of one mid, breaking it for the wage (E1)', () => {
+    const base = life();
+    const s0 = withPlayer(base, {
+      ...base.player,
+      stones: 0,
+      higherStones: { mid: 1, high: 0, top: 0 },
+    });
+    const s = { ...s0, world: revealNature(s0.world, 'sword', ['motive:greed']) };
+    const sword = { ...npc('sword', { realm: QC(5) }), nature: nature(['greed']) };
+    // You stand in a scene with your whole purse at face.
+    expect(actorFromCultivator(s).stones).toBe(1000);
+    const r = runPlan(
+      s,
+      at('a-road', [you(s, { realm: FE(1), stones: 1000 }), sword]),
+      plan(s, step('recruit', { target: 'sword', offer: 'greed', bond: 'pay' })),
+    );
+    expect(r.stopped).toBeNull();
+    expect(bondOf(r.state.world, 'sword')).toMatchObject({ kind: 'pay', wage: 30 });
+    expect(r.state.player.stones).toBe(1070);
+    expect(r.state.player.higherStones.mid).toBe(0);
+  });
+
   it('gathers a crew by pay, loyalty and fear, and coerces a village into hiding you', () => {
-    const s = life();
+    // The wage is paid from your own purse, which a recruit reads (core/purse.ts).
+    const s = withPlayer(life(), { ...life().player, stones: 50 });
     const sword = { ...npc('sword', { realm: QC(5) }), nature: nature(['greed']) };
     const thug = npc('thug', { realm: QC(3), side: 'thug' });
     const crewScene = () =>

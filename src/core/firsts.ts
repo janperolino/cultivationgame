@@ -19,6 +19,7 @@ import { HOUR_KINDS } from '../content/hours.ts';
 import { hasMethod, method } from '../content/methods.ts';
 import { hasTechnique, technique } from '../content/techniques.ts';
 import { knownMethods, meetsRequirements } from './methods.ts';
+import { burnable, realmGrade, stonesOf } from './purse.ts';
 import { ownedCopies, knowsCopy, unqueuedCopies } from './reading.ts';
 import type { Cultivator, GameState } from './state.ts';
 import { canPractice, knownTechniques, practiced } from './techniques.ts';
@@ -98,7 +99,7 @@ export function firstsWaiting(s: GameState): FirstStep[] {
     if (step) out.push(step);
   }
   const layer2 = c.qi.realm !== 'qi-condensation' || c.qi.stage >= FIRST_STONES_LAYER;
-  if (todo('stones') && layer2 && c.stones >= FIRST_STONES) {
+  if (todo('stones') && layer2 && burnable(stonesOf(c), realmGrade(c.qi.realm)) >= FIRST_STONES) {
     out.push({ first: 'stones', hint: 'stones' });
   }
   if (todo('node') && c.insight.current >= FIRST_NODE_INSIGHT) {

@@ -34,7 +34,7 @@ import { itemTag, toxicityWords, useLines } from './itemWords.ts';
 import { useNav } from './nav.ts';
 import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
-import { purseWords } from '../core/purse.ts';
+import { canPay, purseWords, stonesOf } from '../core/purse.ts';
 
 const SQUARES: { slot: Exclude<EquipSlot, 'treasure'>; label: string; hanzi: string }[] = [
   { slot: 'weapon', label: 'Weapon', hanzi: '兵' },
@@ -431,7 +431,7 @@ function Detail({ c, id, onClear }: { c: Cultivator; id: string; onClear: () => 
           <button
             type="button"
             className="button button-quiet"
-            disabled={c.stones < feedCost * 10}
+            disabled={!canPay(stonesOf(c), feedCost * 10)}
             onClick={() => feed(id, feedCost * 10)}
           >
             Feed {formatNumber(feedCost * 10)} stones

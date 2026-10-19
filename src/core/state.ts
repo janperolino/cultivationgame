@@ -133,15 +133,15 @@ export const CultivatorSchema = z.object({
   }),
   /**
    * Low-grade spirit stones, the grade Qi Condensation and Foundation burn and pay with. Each grade
-   * is held as its own count (design § World bible, Stones, silver and shops in play): the higher
+   * is held as its own count (design § Economy, Stones, silver and shops in play): the higher
    * grades are in `higherStones`, and core/purse.ts changes and pays across them.
    */
   stones: z.number().min(0),
-  /** Mid-, high- and top-grade stones, each its own count. */
+  /** Mid-, high- and top-grade stones, each its own count; a stone part drunk is a fraction. */
   higherStones: z.object({
-    mid: z.number().int().min(0),
-    high: z.number().int().min(0),
-    top: z.number().int().min(0),
+    mid: z.number().min(0),
+    high: z.number().min(0),
+    top: z.number().min(0),
   }),
   /** Silver taels, the mortal purse: inns, ferries, food and mortal shops deal in it. */
   silver: z.number().min(0),

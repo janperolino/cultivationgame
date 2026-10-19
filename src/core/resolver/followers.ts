@@ -18,6 +18,7 @@ import {
 } from '../../content/bonds.ts';
 import { hasPerson, person } from '../../content/people.ts';
 import type { Nature } from '../../content/personality.ts';
+import { pay, stonesOf, withStones } from '../purse.ts';
 import { addEvent, withPlayer, type GameState } from '../state.ts';
 import { realmOfActor, realmSizeOf, type Actor } from './actor.ts';
 import { composure, isBeyond, presence, verdict } from './check.ts';
@@ -312,16 +313,17 @@ export function followersDay(s: GameState): GameState {
     let why: BondEnd | null = null;
     let paid = b;
     if (b.kind === 'pay' && b.paidTo !== undefined && day >= b.paidTo) {
-      let stones = state.player.stones;
+      // Each wage is paid as any price is, across the grades (core/purse.ts).
+      let purse = stonesOf(state.player);
       let paidTo = b.paidTo;
       const wage = b.wage ?? 0;
-      while (day >= paidTo && stones >= wage) {
-        stones -= wage;
+      while (day >= paidTo) {
+        const after = pay(purse, wage);
+        if (!after) break;
+        purse = after;
         paidTo += WAGE_DAYS;
       }
-      if (stones !== state.player.stones) {
-        state = withPlayer(state, { ...state.player, stones });
-      }
+      if (paidTo !== b.paidTo) state = withPlayer(state, withStones(state.player, purse));
       paid = { ...b, paidTo };
       if (day >= paidTo) why = 'unpaid';
     } else if (b.kind === 'loyalty' && !loyaltyHolds(w, b, day)) why = 'loyalty';

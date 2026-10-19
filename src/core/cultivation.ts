@@ -71,6 +71,7 @@ import { AWAY, type Seat } from './attention.ts';
 import { gradesOdds, gradesSpeed } from './grades.ts';
 import { stageGrowth } from './growth.ts';
 import { gainInsight, masteryBurst } from './insight.ts';
+import { burn, burnable, realmGrade, stonesOf, withStones } from './purse.ts';
 import { addReading } from './reading.ts';
 import {
   addMethodPractice,
@@ -1014,20 +1015,23 @@ export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): Cu
   }
   const rates = dayRates(fed, ctx.day, unfed, ctx.seat ?? AWAY, ctx.hourFactor);
   // No stone burns past the qi bar's cap: the qi would be lost. Near it, only what fits burns.
+  // The fuel is your realm's grade and the grades below at the premium, by the stone's worth
+  // against the realm's day; a higher stone stays whole (core/purse.ts).
   const room = barSize(fed.qi) * BAR_CAP - fed.qi.bar - rates.qi * days;
+  const grade = realmGrade(fed.qi.realm);
+  const purse = stonesOf(fed);
   const burned =
     rates.qiPerStone > 0 && room > 1e-9
-      ? Math.min(fed.stones, rates.stoneCap * days, room / rates.qiPerStone)
+      ? Math.min(burnable(purse, grade), rates.stoneCap * days, room / rates.qiPerStone)
       : 0;
   const qiGain = rates.qi * days + burned * rates.qiPerStone;
   const practiced = practiceDays(
     gainInsight(
       {
-        ...fed,
+        ...withStones(fed, burned > 0 ? burn(purse, burned, grade) : purse),
         qi: { ...fed.qi, bar: capBar(fed.qi, fed.qi.bar + qiGain) },
         body: { ...fed.body, bar: capBar(fed.body, fed.body.bar + rates.body * days) },
         soul: { ...fed.soul, bar: capBar(fed.soul, fed.soul.bar + rates.soul * days) },
-        stones: fed.stones - burned,
       },
       rates.insight * days,
     ),

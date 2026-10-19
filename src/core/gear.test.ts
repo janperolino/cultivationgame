@@ -173,6 +173,15 @@ describe('bonding', () => {
     expect(bondMastery(c, 'soul-calming-bell').level).toBe(3);
     expect(spiritAwake(c, item('soul-calming-bell'))).toBe(true);
     expect(feedArtifact(c, 'soul-calming-bell', 5000)).toBe(c);
+    // Paid across the grades (E1): a mid breaks for the change.
+    const mid = {
+      ...holding(life().player, 'soul-calming-bell'),
+      stones: 0,
+      higherStones: { mid: 1, high: 0, top: 0 },
+    };
+    const fed = feedArtifact(mid, 'soul-calming-bell', 750);
+    expect(fed.stones).toBe(350);
+    expect(fed.higherStones.mid).toBe(0);
   });
 });
 

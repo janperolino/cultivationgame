@@ -34,7 +34,8 @@ import { DayWheel, RoadWheel, WheelStrip } from './DayWheel.tsx';
 import { RoutineScene, RoutineStage } from './RoutineRings.tsx';
 import { useCloseOutside } from './useCloseOutside.ts';
 import { MethodRow } from './MethodCard.tsx';
-import { formatNumber, formatPercent, formatRate } from './format.ts';
+import { burnable, priceWords, realmGrade, stonesOf } from '../core/purse.ts';
+import { formatPercent, formatRate } from './format.ts';
 import { ROUTINE_TABS, routineTabs, TAB_OF } from './routineTabs.ts';
 import { useNav, type RoutineTab } from './nav.ts';
 import { PracticeTab } from './PracticeTab.tsx';
@@ -242,7 +243,7 @@ function DayTab({ game, head }: { game: GameState; head: ReactNode }) {
               Each stone burned in a qi hour adds a fifth of a full day of qi hours, so a full burn
               doubles the day.
               {rates.stoneCap > 0
-                ? ` Today that is up to ${formatNumber(rates.stoneCap)} stones; you hold ${formatNumber(c.stones)}.`
+                ? ` Today that is up to ${priceWords(rates.stoneCap)}; you hold ${priceWords(burnable(stonesOf(c), realmGrade(c.qi.realm)))} to burn, the grades below yours at a sixth less and a higher stone never broken.`
                 : ''}
             </Why>
           </label>
