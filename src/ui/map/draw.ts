@@ -7,11 +7,11 @@ import { RUMOR_RING_LI } from '../../content/map/travel.ts';
 import { fieldFrom, heartBand, peopleLi, pullsIn, warped } from '../../core/map/depth.ts';
 import { known, sightAt } from '../../core/map/fog.ts';
 import { type Multi, type Pt, ringCentroid, smoothstep } from '../../core/map/geometry.ts';
-import { rgba } from '../colors.ts';
+import { parseHex, rgba } from '../colors.ts';
 import { band } from '../../core/map/depth.ts';
 import type { MapArea, MapPlace, RegionMap } from '../../core/map/region.ts';
 import type { MapLife } from '../../core/map/schema.ts';
-import { artArrived, drawPainted } from './art.ts';
+import { artArrived, drawPainted, LAND_GAIN } from './art.ts';
 import { drawFog, fogOf } from './fog.ts';
 
 export interface View {
@@ -56,24 +56,33 @@ export const toWorld = (v: View, W: number, H: number, x: number, y: number): [n
   (y - H / 2) / v.k + v.y,
 ];
 
-/** How much the painted land is lifted under the fog: a gain on its colors (Jan's call in A5.1). */
-const LAND_GAIN = 1.5;
+/** A color lifted by the land's gain (art.ts, LAND_GAIN), as the pictures are. */
+const lift = (hex: string) => {
+  const c = parseHex(hex)!;
+  return `rgb(${c.map((v) => Math.min(255, Math.round(v * LAND_GAIN))).join(',')})`;
+};
 
 /**
  * The guide's terrain colors (tools/map-guide.ts), darkened: the plain land a region shows until
- * it is painted (Jan's call in A5.1).
+ * it is painted (Jan's call in A5.1), already lifted.
  */
-const PLAIN: Record<string, string> = {
-  mountains: '#30323a',
-  karst: '#222a33',
-  hills: '#3a3122',
-  plains: '#3d3a29',
-  forest: '#14251c',
-  jungle: '#142a18',
-  marsh: '#182d30',
-  coast: '#45402f',
-  blight: '#322937',
-};
+const PLAIN: Record<string, string> = Object.fromEntries(
+  Object.entries({
+    mountains: '#30323a',
+    karst: '#222a33',
+    hills: '#3a3122',
+    plains: '#3d3a29',
+    forest: '#14251c',
+    jungle: '#142a18',
+    marsh: '#182d30',
+    coast: '#45402f',
+    blight: '#322937',
+  }).map(([k, v]) => [k, lift(v)]),
+);
+/** The sea, the land round the region and the plain land's fallback, lifted. */
+const SEA = lift('#05070a');
+const AROUND = lift('#101317');
+const PLAIN_ELSE = lift('#1a1d22');
 
 // ---------------------------------------------------------------- the places' pieces
 
@@ -120,7 +129,8 @@ function pieceOf(q: MapPlace): HTMLCanvasElement | null {
   c.width = img.naturalWidth;
   c.height = img.naturalHeight;
   const g = c.getContext('2d')!;
-  g.filter = 'saturate(0.75)';
+  // Lifted with the land (art.ts, LAND_GAIN): colors only, so the feathered edge stays as it is.
+  g.filter = `saturate(0.75) brightness(${LAND_GAIN})`;
   g.drawImage(img, 0, 0);
   g.filter = 'none';
   g.globalCompositeOperation = 'destination-in';
@@ -276,16 +286,17 @@ export function drawMap(f: Frame, s: Scene): boolean {
   const onScreen = () => ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   // The sea, the land round the region, and the region as plain land by its terrains; then the
-  // painting over it where the region has one (A5.1), and the land lifted.
+  // painting over it where the region has one (A5.1). All of it lifted already: the colors here
+  // and each picture as it arrived (art.ts), never the whole canvas a frame.
   onScreen();
-  ctx.fillStyle = '#05070a';
+  ctx.fillStyle = SEA;
   ctx.fillRect(0, 0, W, H);
   inWorld();
-  ctx.fillStyle = '#101317';
+  ctx.fillStyle = AROUND;
   ctx.fill(worldPath(map.land), 'evenodd');
   ctx.save();
   ctx.clip(worldPath(map.outline), 'evenodd');
-  ctx.fillStyle = PLAIN[map.terrain] ?? '#1a1d22';
+  ctx.fillStyle = PLAIN[map.terrain] ?? PLAIN_ELSE;
   ctx.fill(worldPath(map.outline), 'evenodd');
   for (const tracts of [true, false])
     for (const a of map.areas)
@@ -295,7 +306,7 @@ export function drawMap(f: Frame, s: Scene): boolean {
       }
   ctx.restore();
   if (!drawPainted(ctx, box)) {
-    ctx.strokeStyle = 'rgba(127,199,217,0.3)';
+    ctx.strokeStyle = 'rgba(191,255,255,0.3)'; // the coast line, lifted
     ctx.lineWidth = 1.2 / k;
     ctx.stroke(worldPath(map.land));
   }
@@ -317,13 +328,6 @@ export function drawMap(f: Frame, s: Scene): boolean {
       ctx.globalAlpha = 1;
     }
   }
-  // The land lifted: the canvas added onto itself, so its colors scale and black stays black.
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.globalCompositeOperation = 'lighter';
-  ctx.globalAlpha = LAND_GAIN - 1;
-  ctx.drawImage(ctx.canvas, 0, 0);
-  ctx.restore();
 
   // The dashed depth lines, under the fog: you see how deep a land runs only as far as you know it.
   ctx.save();

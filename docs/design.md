@@ -1524,7 +1524,7 @@ Five rules keep it sane:
 
 - `core/` never imports React or calls the network, so the same code runs in tests and in the Node sims.
 - Content is data: a new pill, node, beast or region is an entry, not new code.
-- Randomness is seeded (mulberry32) and runs in named streams, one per system, so the same seed replays the same fight, bugs reproduce and a new system never shifts another's rolls.
+- Randomness is seeded (mulberry32): a system rolls from its own named stream (a fight, a breakthrough, the cards, the road), or from a seed keyed by what it rolls for (a shop and its month, an NPC's seed, a region and the lineage), so the same seed replays the same fight, bugs reproduce and a new system never shifts another's rolls.
 - Saves carry a version number and migrations.
 - The loop ticks a few times a second. On load it applies offline time, capped, and shows what happened while you were in seclusion.
 

@@ -96,18 +96,20 @@ function choose(xs: Option[], pick: Profile['picks']): Option | undefined {
 }
 
 /** The foe a fighter goes after: the one it can hurt most, as a share of their HP left. */
-function targetOf(f: Fight, me: Combatant): Combatant | undefined {
+function targetOf(f: Fight, me: Combatant): { target: Combatant; xs: Option[] } | undefined {
   const foes = f.combatants.filter((c) => c.side !== me.side && c.state === 'fighting');
-  let pick: Combatant | undefined;
+  let pick: { target: Combatant; xs: Option[] } | undefined;
   let score = -1;
   for (const c of foes) {
-    const top = best(options(f, me, c, false), (o) => o.value);
+    const xs = options(f, me, c, false);
+    const top = best(xs, (o) => o.value);
     const s = top ? top.value / Math.max(1, c.hp) : 0;
     if (s > score) {
       score = s;
-      pick = c;
+      pick = { target: c, xs };
     }
   }
+  // The chosen foe's options come back priced, so the turn never prices them twice.
   return pick;
 }
 
@@ -115,8 +117,9 @@ function targetOf(f: Fight, me: Combatant): Combatant | undefined {
 export function chooseAction(f: Fight, id: string, p: Profile): Action {
   const me = combatantIn(f, id);
   if (!me || me.state !== 'fighting') return { actor: id };
-  const target = targetOf(f, me);
-  if (!target) return { actor: id };
+  const chosen = targetOf(f, me);
+  if (!chosen) return { actor: id };
+  const target = chosen.target;
   const share = me.hp / me.maxHp;
 
   if (p.fleeAt !== null && share <= p.fleeAt) {
@@ -137,7 +140,7 @@ export function chooseAction(f: Fight, id: string, p: Profile): Action {
 
   const opening = f.turn === 0;
   if (opening && p.opens === 'defend') return { actor: id, main: { type: 'defend' } };
-  const xs = options(f, me, target, opening && p.opens === 'talisman');
+  const xs = opening && p.opens === 'talisman' ? options(f, me, target, true) : chosen.xs;
   if (opening && p.opens === 'talisman') {
     const talisman = xs.find((o) => o.main.type === 'item');
     return { actor: id, main: talisman ? talisman.main : { type: 'defend' } };

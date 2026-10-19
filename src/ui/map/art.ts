@@ -71,17 +71,36 @@ export function artArrived(): void {
   onLoad();
 }
 
+/** How much the painted land is lifted under the fog: a gain on its colors (Jan's call in A5.1). */
+export const LAND_GAIN = 1.5;
+
 /**
- * Pictures decoded and ready. An image is drawn only once the browser has decoded it off the main
- * thread (`decode()`), so a chunk arriving mid-pan never stalls a frame decoding in drawImage.
+ * Each picture lifted by LAND_GAIN once, as it arrives, rather than the whole canvas copied onto
+ * itself every frame. Its colors scale and black stays black, as the old lift did; alpha is kept.
  */
-const DECODED = new WeakSet<HTMLImageElement>();
+export function lifted(
+  img: CanvasImageSource & { width: number; height: number },
+): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = img.width;
+  c.height = img.height;
+  const g = c.getContext('2d')!;
+  g.filter = `brightness(${LAND_GAIN})`;
+  g.drawImage(img, 0, 0);
+  return c;
+}
+
+/**
+ * Pictures decoded and lifted, ready to draw. An image is drawn only once the browser has decoded
+ * it off the main thread (`decode()`), so a chunk arriving mid-pan never stalls a frame.
+ */
+const READY = new WeakMap<HTMLImageElement, HTMLCanvasElement>();
 
 function load(src: string): HTMLImageElement {
   const img = new Image();
   img.src = src;
   const ready = () => {
-    DECODED.add(img);
+    READY.set(img, lifted(img));
     artArrived();
   };
   // A decode that fails still leaves a loaded image the canvas can draw; a broken one draws nothing.
@@ -91,9 +110,9 @@ function load(src: string): HTMLImageElement {
   return img;
 }
 
-function paintingOf(r: RegionArt): HTMLImageElement | null {
+function paintingOf(r: RegionArt): HTMLCanvasElement | null {
   r.painting ??= load(url(`${r.id}/painting.webp`));
-  return DECODED.has(r.painting) ? r.painting : null;
+  return READY.get(r.painting) ?? null;
 }
 
 /** Fetches every region's painting ahead of the Map, so its first visit shows painted land. */
@@ -115,7 +134,7 @@ function chunk(region: string, id: string, l: number, c: number, r: number) {
     img = load(url(key));
     CHUNKS.set(key, img);
   }
-  return DECODED.has(img) ? img : null;
+  return READY.get(img) ?? null;
 }
 
 /** From a painting's own pixels to the world: its frame, then the inverse of its fit. */
@@ -164,8 +183,8 @@ function drawPyramid(ctx: CanvasRenderingContext2D, region: string, t: TileFrame
           img,
           c * span,
           r * span,
-          img.naturalWidth * z + z * 0.6,
-          img.naturalHeight * z + z * 0.6,
+          img.width * z + z * 0.6,
+          img.height * z + z * 0.6,
         );
       }
   }

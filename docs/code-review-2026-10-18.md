@@ -135,7 +135,9 @@ Ranked by how much a player would feel it. "Doc" means design.md should change, 
 - S5 in part: map chunks and paintings draw only once decoded off the main thread, and the paintings are fetched at idle. The land's brightness lift stays as is, since baking it in changes the look.
 - S6: the People web lays itself out once a day or a change, never on a tick or a pan frame.
 - S10 in part: `seeFrom` skips what is seen, `roadHours` reads the realm once, `realmScale` and `realmSize` are tables, the place index builds its child lists in one pass, and a course with no road hours is refused before routing.
-- Left: the land lift, the encounter card's memo, `chooseAction`'s double pricing, the deeds index and archiving old lives' chronicles.
+- The land lift: each picture (the painting, its chunks, the place pieces) is lifted once as it arrives and the flat colors are lifted in code, so the full-canvas self-copy is gone. Measured against the old Map at the same view: a mean difference of 0.3 to 0.5 in 255, and 0.03% of pixels off by more than 24, where a color meets white.
+- `chooseAction` prices each foe's options once a turn.
+- Left, on purpose: the encounter card's memo (it reads most of your sheet, about 0.3 ms), the deeds index (with the living world) and archiving old lives' chronicles (with M8).
 
 Ranked by what you'd feel.
 
@@ -152,7 +154,7 @@ Ranked by what you'd feel.
 
 ## Code against code
 
-**Done:** one Agility rule (`agilityShare`) and `isBeyond` everywhere; `DAYS_PER_MONTH` and `DAYS_PER_YEAR` in content/calendar.ts and read by all; `ENTER_LI`, `sightAt` and `BANDS` read where they were copied; one `lotShape` (with mortal goods for shops) and ring pools shaped once; the map's `PLACE_KINDS` is `PLACE_KIND_INFO` and knows.ts' set `NAMED_PLACE_KINDS`; `useCloseOutside` in the tip and the offering picker; `rgba`, `lighten` and `smoothstep` shared. **Left:** the hashSeed RNGs (they replay; renaming them to named streams would change every seeded roll).
+**Done:** one Agility rule (`agilityShare`) and `isBeyond` everywhere; `DAYS_PER_MONTH` and `DAYS_PER_YEAR` in content/calendar.ts and read by all; `ENTER_LI`, `sightAt` and `BANDS` read where they were copied; one `lotShape` (with mortal goods for shops) and ring pools shaped once; the map's `PLACE_KINDS` is `PLACE_KIND_INFO` and knows.ts' set `NAMED_PLACE_KINDS`; `useCloseOutside` in the tip and the offering picker; `rgba`, `lighten` and `smoothstep` shared. **Settled:** the hashSeed RNGs stay. They replay and keep each thing's rolls to itself; CLAUDE.md and design.md now say a system rolls from a named stream or from a seed keyed by what it rolls for.
 
 - The Agility factor is written twice (`content/combat.ts` and `content/resolver.ts`, both 10 and 0.05 today), and `isBeyond` three times (check, intent, followers).
 - 360 days a year and 30 a month are bare literals in about eight places; `DAYS_PER_MONTH` beside `DAYS_PER_YEAR` would end that.
