@@ -8657,6 +8657,13 @@ p.map-above {
   white-space: nowrap;
 }
 
+/* A standing line's buys: one, ten, a Bag square (E5). */
+.place-buys {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
 .place-btn {
   border: 1px solid var(--edge-strong);
   background: transparent;

@@ -1,8 +1,9 @@
 // The haul's mark (design § Economy, Trading yourself; E3): a full Bag of ten lots of a staple,
 // bought where it is made and carried across a kingdom to where it is needed, pays about one and a
-// half times the wages for the same days. A fresh Qi Condensation life buys ten lots of spirit rice
-// off the sutler's standing line at Pacified Fort, walks the road to Sinkhole Terraces at its own
-// pace paying the tolls, and sells lot by lot to whichever shop there offers more, the price falling
+// half times the wages for the same days. A fresh Qi Condensation life buys ten Bag squares of
+// spirit rice off the shelves of Pacified Fort's free market (since E5, from whichever shop there
+// holds the most), walks the road to Sinkhole Terraces at its own pace paying the tolls, and sells
+// lot by lot to whichever shop there offers most, the price falling
 // as the terraces fill. The profit is set against the days' wages at an ordinary place (1 low a day
 // at Qi Condensation). A second row hauls the mortal staple the same way, millet from Spear-Plow to
 // Sinkhole Terraces, against a laborer's 0.1 tael a day. Since E4 the harvest moves both ends, so
@@ -19,6 +20,7 @@ import { planRoute } from '../src/core/map/route.ts';
 import { ensureMap, liPerDay, mapOf } from '../src/core/map/travel.ts';
 import { mortalWages, wages } from '../src/core/markets.ts';
 import { stonesOf, worthOf } from '../src/core/purse.ts';
+import { shopsAt } from '../src/content/shops.ts';
 import { buy, offerFor, sell, shelf } from '../src/core/shops.ts';
 import { newLife, withPlayer, type GameState } from '../src/core/state.ts';
 
@@ -29,8 +31,8 @@ const BAND = [1.3, 1.7] as const;
 interface Haul {
   name: string;
   staple: string;
-  from: { place: string; shop: string };
-  to: { place: string; shops: readonly string[] };
+  from: string;
+  to: string;
   silver: boolean;
 }
 
@@ -38,15 +40,15 @@ const HAULS: readonly Haul[] = [
   {
     name: 'spirit rice, Pacified Fort to Sinkhole Terraces',
     staple: 'spirit-rice',
-    from: { place: 'pacified-fort', shop: 'march-stall' },
-    to: { place: 'sinkhole-terraces', shops: ['eyes-alchemy', 'eyes-stall'] },
+    from: 'pacified-fort',
+    to: 'sinkhole-terraces',
     silver: false,
   },
   {
     name: 'millet, Spear-Plow to Sinkhole Terraces',
     staple: 'frontier-millet',
-    from: { place: 'spear-plow', shop: 'march-mortal' },
-    to: { place: 'sinkhole-terraces', shops: ['eyes-mortal'] },
+    from: 'spear-plow',
+    to: 'sinkhole-terraces',
     silver: true,
   },
 ];
@@ -70,11 +72,16 @@ function run(
   s = { ...s, calendar: { ...s.calendar, day: year + month * DAYS_PER_MONTH } };
   const map = mapOf(s)!;
   const before = purse(s, h.silver);
-  // Ten lots off the standing line, each dearer than the last.
+  // Ten Bag squares off the shelves, each dearer than the last, from the shop holding the most.
+  const lot = item(h.staple).stack ?? 20;
   for (let i = 0; i < LOTS; i++) {
-    const line = shelf(s, h.from.shop).find((l) => l.standing && l.thing === h.staple);
-    if (!line) throw new Error(`${h.from.shop} has no standing line of ${h.staple}`);
-    const r = buy(s, h.from.shop, line.slot);
+    const lines = shopsAt(h.from)
+      .flatMap((id) => shelf(s, id).map((l) => ({ id, l })))
+      .filter((x) => x.l.standing && x.l.thing === h.staple && x.l.n >= lot)
+      .sort((x, y) => y.l.n - x.l.n);
+    const best = lines[0];
+    if (!best) throw new Error(`${h.from} has no shelf of ${h.staple} left`);
+    const r = buy(s, best.id, best.l.slot, lot);
     if (!r.ok) throw new Error(r.reason);
     s = r.state;
   }
@@ -82,8 +89,8 @@ function run(
   if (squares !== LOTS) throw new Error(`the haul fills ${squares} squares, not ${LOTS}`);
   const cost = before - purse(s, h.silver);
   // The road, at this life's own pace, and its tolls.
-  const a = placeById(map, h.from.place)!;
-  const b = placeById(map, h.to.place)!;
+  const a = placeById(map, h.from)!;
+  const b = placeById(map, h.to)!;
   const route = planRoute(map, [a.x, a.y], [b.x, b.y]);
   if (!route.ok) throw new Error(route.reason);
   const li = route.route.roadLi + route.route.crossLi;
@@ -91,10 +98,9 @@ function run(
   const tolls = h.silver ? 0 : route.route.tolls.length * CHECKPOINT_TOLL_LOW;
   s = { ...s, calendar: { ...s.calendar, day: s.calendar.day + days } };
   // Sold lot by lot to the best offer that can pay.
-  const lot = item(h.staple).stack ?? 20;
   const start = purse(s, h.silver);
   for (let i = 0; i < LOTS; i++) {
-    const best = h.to.shops
+    const best = shopsAt(h.to)
       .map((id) => ({ id, o: offerFor(s, id, h.staple) }))
       .filter((x) => x.o.ok)
       .sort((x, y) => (y.o.ok ? y.o.each : 0) - (x.o.ok ? x.o.each : 0));

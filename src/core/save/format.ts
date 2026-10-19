@@ -31,9 +31,10 @@ import { emptyWorld } from '../resolver/world.ts';
 import { generateRegion } from '../map/region.ts';
 import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
+import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 36;
+export const SAVE_VERSION = 37;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -961,6 +962,24 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const s = (old.state ?? {}) as Raw;
     const world = { ...((s.world ?? {}) as Raw), population: {} };
     return { ...old, version: 36, state: { ...s, world } };
+  },
+
+  // v36, E5: markets as districts. A shop's month keeps the pieces of each standing line bought;
+  // the shops a market's people opened are opened again by district, so a month kept at a shop
+  // that no longer stands goes, and so does its keeper; a keeper still standing takes its shop's
+  // name (Old Liu).
+  36: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const w = (s.world ?? {}) as Raw;
+    const shops: Raw = {};
+    for (const [id, sm] of Object.entries((w.shops ?? {}) as Record<string, Raw>))
+      if (hasShop(id)) shops[id] = { ...sm, took: {} };
+    const kept: Raw = {};
+    for (const [id, k] of Object.entries((w.kept ?? {}) as Record<string, Raw>)) {
+      if (!id.startsWith('keeper:')) kept[id] = k;
+      else if (hasShop(id.slice(7))) kept[id] = { ...k, name: keeperName(shop(id.slice(7))) };
+    }
+    return { ...old, version: 37, state: { ...s, world: { ...w, shops, kept } } };
   },
 };
 

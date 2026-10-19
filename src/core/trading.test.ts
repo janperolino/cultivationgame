@@ -10,11 +10,11 @@ import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { item } from '../content/items.ts';
 import { bagStacks } from './gear.ts';
 import { monthUse, restOf } from './making.ts';
-import { guardedBy, market, seenIn, spreads, standingCopies, supplyOf } from './markets.ts';
+import { goodOf, guardedBy, market, seenIn, spreads, standingCopies, supplyOf } from './markets.ts';
 import { shop } from '../content/shops.ts';
-import { heatOf, standingOf } from './resolver/world.ts';
+import { emptyWorld, heatOf, standingOf } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
-import { buy, offerFor, sell, shelf, stockOf } from './shops.ts';
+import { buy, offerFor, sell, shelf, standsAt, stockOf } from './shops.ts';
 import { addItem, newLife, withPlayer, type GameState } from './state.ts';
 
 const life = (seed = 'trading'): GameState => {
@@ -38,19 +38,26 @@ const GATE = 'method:butcher-saber';
 const SEALED = 'method:bone-marrow-fire-art';
 
 describe('staples stand on the shelf where they are made', () => {
-  it('the March’s sutler carries spirit rice every month, as many lots as you buy', () => {
+  it('Pacified Fort’s free market stands spirit rice every month, its count falling as you buy', () => {
+    // The sutler, a notable stall, always carries its street's biggest good (E5).
     for (let month = 0; month < 12; month++)
       expect(
         stockOf('march-stall', month).some((l) => l.standing && l.thing === 'spirit-rice'),
       ).toBe(true);
     let s = life();
-    const first = standing(s, 'march-stall', 'spirit-rice')!;
-    expect(first.n).toBe(20);
+    const small = 'pacified-fort.stall-small';
+    const first = standing(s, small, 'spirit-rice')!;
+    expect(first.n).toBeGreaterThan(200);
     for (let i = 0; i < 3; i++) {
-      const r = buy(s, 'march-stall', first.slot);
+      const r = buy(s, small, first.slot, 20);
       if (!r.ok) throw new Error(r.reason);
       s = r.state;
     }
+    expect(standing(s, small, 'spirit-rice')!.n).toBe(first.n - 60);
+    // The sutler's own count is its own: what the small shops sold doesn't empty it.
+    expect(standing(s, 'march-stall', 'spirit-rice')!.n).toBe(
+      standing(life(), 'march-stall', 'spirit-rice')!.n,
+    );
     // Each lot leaves less: the Fort eats about 2,700 sacks a month, so three lots move it a few
     // points, under the shelf's rounding of a tenth of a stone (E4).
     const fort = market('pacified-fort')!;
@@ -61,20 +68,23 @@ describe('staples stand on the shelf where they are made', () => {
     expect(bagStacks(s.player).filter((x) => x.id === 'spirit-rice').length).toBe(3);
   });
 
-  it('is tiered like anything else: River-Bend’s Foundation stall stands tier 2 rice', () => {
+  it('is tiered like anything else: River-Bend’s Foundation free market stands tier 2 rice', () => {
     const s = life();
-    const lines = shelf(s, 'bend-stall').filter((l) => l.standing);
+    const small = 'qm-hewan-cheng.stall-small';
+    const lines = shelf(s, small).filter((l) => l.standing);
     expect(lines.some((l) => l.thing === 'spirit-rice')).toBe(true);
     const t2 = lines.find((l) => l.thing.startsWith('spirit-rice~') && item(l.thing).tier === 2);
     expect(t2).toBeDefined();
-    expect(t2!.price).toBeGreaterThan(standing(s, 'bend-stall', 'spirit-rice')!.price * 5);
+    expect(t2!.price).toBeGreaterThan(standing(s, small, 'spirit-rice')!.price * 5);
   });
 
-  it('a staple made elsewhere still rolls, and only a staple stands', () => {
-    for (let month = 0; month < 12; month++)
+  it('a trading house stands only what its market’s sum counts, and its copies', () => {
+    const city = market('qm-shoukou-cheng')!;
+    for (let month = 0; month < 12; month++) {
+      const stands = standsAt(emptyWorld(), city, month);
       for (const l of stockOf('mouth-guild', month))
-        if (l.standing)
-          expect((item(l.thing).tags ?? []).includes('trade') || l.n === 1).toBe(true);
+        if (l.standing) expect(l.endless || stands.has(goodOf(l.thing))).toBe(true);
+    }
   });
 });
 
@@ -227,7 +237,7 @@ describe('the save', () => {
     raw.version = 34;
     delete raw.state.world.copied;
     const old = loadSave(raw);
-    expect(old.version).toBe(36);
+    expect(old.version).toBe(37);
     expect(old.state.world.copied).toEqual({});
   });
 });

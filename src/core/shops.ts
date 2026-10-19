@@ -13,8 +13,10 @@ import type { Catalog, Lot } from '../content/catalogs/types.ts';
 import { copyChapter, copyManual, hasCopy } from '../content/copies.ts';
 import { hasItem, item, itemKind, variantId } from '../content/items.ts';
 import {
+  HOUSE_TAKE,
   LENT_WEIGHT,
   NEED_RATE,
+  SHELF_SHARE,
   OPENING_CHAPTERS,
   TIER_LEAN,
   TIER_LEAN_FROM,
@@ -26,9 +28,13 @@ import {
   HAGGLE_OFF,
   PRICE_SPREAD,
   REPAIR_SHARE,
+  doorOf,
+  doorsAt,
+  keeperName,
   SHOP_KIND_INFO,
-  SHOP_KINDS,
   shop as shopById,
+  STREET_ORDER,
+  STREETS,
   type Shop,
   type ShopKind,
   type Ware,
@@ -40,6 +46,7 @@ import { wornIds } from './gear.ts';
 import { gainCopy } from './life.ts';
 import {
   copyInto,
+  goodOf,
   guardedBy,
   isStaple,
   lentLots,
@@ -47,7 +54,9 @@ import {
   lotTiers,
   marketFactor,
   marketOfShop,
+  marketTopTier,
   moveSupply,
+  openSupply,
   placeChain,
   shopLots,
   shopPurse,
@@ -55,7 +64,9 @@ import {
   spreads,
   standingCopies,
   wanted,
+  type Market,
 } from './markets.ts';
+import { marketSum } from './making.ts';
 import { priceOf } from './prices.ts';
 import { pay, paySilver, receive, stonesOf, tierGrade, withStones } from './purse.ts';
 import { actorFromCultivator, plainActor } from './resolver/actor.ts';
@@ -87,6 +98,8 @@ export interface StockLot {
    * bought by the lot as often as you like, its price climbing as the supply falls.
    */
   standing?: boolean;
+  /** A standing line that never runs out: a copy, or a staple a sect's hall makes (E3). */
+  endless?: boolean;
 }
 
 /** A shop's prices against the posted rate, drawn once from its id: 0.9 to 1.15. */
@@ -116,6 +129,8 @@ interface Candidate {
   w: number;
   tier: number;
   rarities: RarityId[];
+  /** Its good at its lowest rarity: what a shelf may already stand (E5). */
+  floor: string;
 }
 
 /**
@@ -127,29 +142,244 @@ export function tierLean(tier: number, written: number, made: boolean): number {
   return TIER_LEAN ** Math.max(0, steps);
 }
 
-/** The wares each kind of shop stocks somewhere in the catalogs: what a lent lot may go to. */
-let sells: Map<ShopKind, Set<Ware>> | null = null;
-function dealsIn(kind: ShopKind, ware: Ware): boolean {
-  if (!sells) {
-    sells = new Map(SHOP_KINDS.map((k) => [k, new Set<Ware>()]));
-    for (const c of [...CATALOGS, RARE])
-      for (const l of c.lots) {
-        const w = wareOf(l.thing);
-        if (w) for (const k of l.shops) sells.get(k)!.add(w);
-      }
-  }
-  return sells.get(kind)!.has(ware);
+/** Whether a catalog line is the market's (E5): sold by some shop, not only a power's hall or a black market. */
+function honest(l: Lot): boolean {
+  return l.shops.some((k) => k !== 'sect' && k !== 'black-market');
 }
 
 /**
- * What a shop could stock: each lot of its catalogs weighted by its layer's share and its own
- * weight, at each tier it comes at, and what the markets in its reach lend, sharing 15 of the
- * place weight. A sect shop stocks only its power's, and a black market takes imports first, so
- * neither borrows.
+ * The district that claims a thing (`STREET_ORDER`): a mortal good the grain and cloth market, then
+ * a tag (ink, ore, hide or horn, grain), then its kind; anything else the free market.
  */
-function candidates(s: Shop): Candidate[] {
+const claimCache = new Map<string, ShopKind>();
+export function claimOf(thing: string): ShopKind {
+  let k = claimCache.get(thing);
+  if (!k) {
+    k = claimFresh(thing);
+    claimCache.set(thing, k);
+  }
+  return k;
+}
+
+function claimFresh(thing: string): ShopKind {
+  if (hasCopy(thing)) return 'stall';
+  const it = item(thing);
+  if (it.taels !== undefined) return 'mortal';
+  const tags: readonly string[] = it.tags ?? [];
+  const streets = STREET_ORDER.filter((k) => k !== 'mortal');
+  for (const k of streets) if (STREETS[k]!.tags.some((t) => tags.includes(t))) return k;
+  const kind = itemKind(it);
+  for (const k of streets) if (STREETS[k]!.wares.includes(kind)) return k;
+  return 'stall';
+}
+
+/**
+ * The district at a market that sells a thing (E5): its own, else the free market, else none, when
+ * only a trading house carries it. A mortal good has only the grain and cloth market.
+ */
+const sellerCache = new Map<string, ShopKind | null>();
+export function sellerAt(m: Market, thing: string): ShopKind | null {
+  const key = `${m.id}|${thing}`;
+  let seller = sellerCache.get(key);
+  if (seller === undefined) {
+    seller = sellerFresh(m, thing);
+    sellerCache.set(key, seller);
+  }
+  return seller;
+}
+
+function sellerFresh(m: Market, thing: string): ShopKind | null {
+  const kinds = new Set(doorsAt(m.id).map((d) => d.kind));
+  const k = claimOf(thing);
+  if (kinds.has(k)) return k;
+  if (k === 'mortal') return null;
+  return kinds.has('stall') ? 'stall' : null;
+}
+
+/** Whether a district shop or a trading house deals in a thing at its market. */
+function sellsHere(s: Shop, m: Market | undefined, thing: string): boolean {
+  if (!m) return false;
+  if (s.kind === 'house') return hasCopy(thing) || item(thing).taels === undefined;
+  return sellerAt(m, thing) === s.kind;
+}
+
+/** A shop that keeps its own written stock (a sect's hall, a black market), not a window on its market's. */
+const keepsOwn = (s: Shop) => s.kind === 'sect' || s.kind === 'black-market';
+
+/** One good a market's shelves can stand: a thing at its lowest rarity and a tier, and whether it is imported. */
+interface PoolGood {
+  thing: string;
+  good: string;
+  tier: number;
+  imported: boolean;
+}
+
+/**
+ * What a market's shops can stand (E5, Shelves): every honest line of its catalogs and the gold and
+ * red list, and all its reach lends, at its lowest rarity and each tier the market stocks.
+ */
+const poolCache = new Map<string, PoolGood[]>();
+function poolOf(m: Market): PoolGood[] {
+  let out = poolCache.get(m.id);
+  if (out) return out;
+  out = [];
+  const seen = new Set<string>();
+  const tiers = Array.from({ length: marketTopTier(m) }, (_, i) => i + 1);
+  const at = placeChain(m.place);
+  const add = (lots: readonly Lot[], imported: boolean, lent = false) => {
+    for (const lot of lots) {
+      if ((!lent && !honest(lot)) || hasCopy(lot.thing)) continue;
+      const shape = lotShape(lot.thing, { mortal: true });
+      if (!shape) continue;
+      for (const tier of lotTiers(lot.thing, shape.tier, tiers)) {
+        const thing = variantId(lot.thing, shape.rarities[0], { tier });
+        const good = goodOf(thing);
+        if (seen.has(good)) continue;
+        seen.add(good);
+        out!.push({ thing, good, tier, imported });
+      }
+    }
+  };
+  for (const c of CATALOGS) {
+    const mine =
+      (c.layer === 'place' && at.includes(c.at)) ||
+      (c.layer === 'region' && c.at === m.region) ||
+      (c.layer === 'continent' && c.at === m.continent);
+    if (mine) add(c.lots, false);
+  }
+  add(RARE.lots, false);
+  // What a market in reach lends is the market's here, whoever sells it at home (E2).
+  add(
+    lentLots(m).map((l) => l.lot),
+    false,
+    true,
+  );
+  for (const c of CATALOGS) if (c.layer === 'import' && c.at === m.region) add(c.lots, true);
+  poolCache.set(m.id, out);
+  return out;
+}
+
+/**
+ * Whether a shop of a district carries a good (E5): every shop of a district listed whole and the
+ * small shops carry everything; a notable shop beside the small shops carries its district's
+ * biggest good (a grain store its grain) and each other on an even chance seeded by its id.
+ */
+function carries(sh: Shop, good: string, biggest: string | null): boolean {
+  const door = doorOf(sh.id);
+  if (!door || sh.small || good === biggest || !door.shops.some((id) => shopById(id).small))
+    return true;
+  return hashSeed(`carry/${sh.id}/${good}`) / 4294967296 < SPECIALTY;
+}
+
+/**
+ * A market's shelves for a month, worked out once a world: each pool good's month (what its people
+ * use of it, or make where nobody here uses it) and the goods that stand, those its sum counts.
+ */
+interface ShelfPlan {
+  flow: Map<string, number>;
+  stands: Set<string>;
+}
+const planCache = new WeakMap<World, Map<string, ShelfPlan>>();
+function planOf(w: World, m: Market, month: number): ShelfPlan {
+  let byKey = planCache.get(w);
+  if (!byKey) {
+    byKey = new Map();
+    planCache.set(w, byKey);
+  }
+  const key = `${m.id}|${month}`;
+  let plan = byKey.get(key);
+  if (!plan) {
+    const sum = marketSum(w, m, month);
+    const flow = new Map<string, number>();
+    for (const g of poolOf(m)) {
+      const gs = sum.goods.get(g.good);
+      flow.set(g.good, gs ? (gs.used > 0 ? gs.used : gs.made) : 0);
+    }
+    const stands = new Set([...flow].filter(([, f]) => f > 0).map(([good]) => good));
+    plan = { flow, stands };
+    byKey.set(key, plan);
+  }
+  return plan;
+}
+
+/** The goods in a market's pool that stand on its shelves this month: those its sum counts. */
+export function standsAt(w: World, m: Market, month: number): ReadonlySet<string> {
+  return planOf(w, m, month).stands;
+}
+
+/** The share of a good a notable shop beside the small shops carries. */
+const SPECIALTY = 0.5;
+
+/**
+ * The goods a district shop or a trading house stands on its shelf this month (E5, Shelves): of each
+ * good in its market's sum that it sells, a tenth of the month's use (or making, where nobody here
+ * uses it) times its supply as the month opened, a trading house taking a fifth off the top (two
+ * fifths of an import) and the district's shops sharing the rest by their weights among those that
+ * carry it.
+ */
+function standingGoods(s: Shop, w: World, month: number): { thing: string; n: number }[] {
+  const m = marketOfShop(s.id);
+  if (!m || keepsOwn(s) || s.kind === 'bounty') return [];
+  const tiers = shopTiers(s);
+  const houses = doorsAt(m.id).filter((d) => d.kind === 'house').length;
+  const door = doorOf(s.id);
+  const plan = planOf(w, m, month);
+  const mine = poolOf(m).filter((g) => sellsHere(s, m, g.thing));
+  let biggest: string | null = null;
+  let most = 0;
+  for (const g of mine) {
+    const f = plan.flow.get(g.good)!;
+    if (f > most) [biggest, most] = [g.good, f];
+  }
+  const out: { thing: string; n: number }[] = [];
+  for (const g of mine) {
+    if (!tiers.includes(g.tier)) continue;
+    const good = g.good;
+    const flow = plan.flow.get(good)!;
+    if (flow <= 0) continue;
+    const onHand = (flow * openSupply(w, m, g.thing, month) * SHELF_SHARE) / 100;
+    const take = houses ? HOUSE_TAKE[g.imported ? 'import' : 'plain'] : 0;
+    let n: number;
+    if (s.kind === 'house') n = (onHand * take) / houses;
+    else {
+      const carriers = (door?.shops ?? [s.id])
+        .map((id) => shopById(id))
+        .filter((x) => carries(x, good, biggest));
+      if (!carriers.some((x) => x.id === s.id)) continue;
+      const weights = carriers.reduce((t, x) => t + x.weight, 0);
+      n = (onHand * (1 - take) * s.weight) / weights;
+    }
+    n = Math.floor(n);
+    if (n >= 1) out.push({ thing: g.thing, n });
+  }
+  return out;
+}
+
+/**
+ * What a shop could roll for its display lots: each lot of its catalogs weighted by its layer's
+ * share and its own weight, at each tier it comes at, and what the markets in its reach lend,
+ * sharing 15 of the place weight. A district shop or a trading house takes the honest lines its
+ * door sells (E5), never at the rarity it already stands on the shelf; a sect's hall and a black
+ * market take the lines that name their kind, and neither borrows.
+ */
+function candidates(s: Shop, standing: ReadonlySet<string>): Candidate[] {
+  const out: Candidate[] = [];
+  for (const c of everyCandidate(s)) {
+    if (!standing.has(c.floor)) out.push(c);
+    else if (c.rarities.length > 1) out.push({ ...c, rarities: c.rarities.slice(1) });
+  }
+  return out;
+}
+
+/** Everything a shop could roll, before what its market stands this month: worked out once. */
+const candidateCache = new Map<string, Candidate[]>();
+function everyCandidate(s: Shop): Candidate[] {
+  const kept = candidateCache.get(s.id);
+  if (kept) return kept;
   const info = SHOP_KIND_INFO[s.kind];
   const tiers = shopTiers(s);
+  const m = marketOfShop(s.id);
+  const own = keepsOwn(s);
   const out: Candidate[] = [];
   const add = (
     lots: readonly Lot[],
@@ -157,14 +387,15 @@ function candidates(s: Shop): Candidate[] {
     o: { made?: boolean; lent?: boolean } = {},
   ) => {
     const fit = lots.filter((l) => {
-      // A staple made here stands on the shelf (`standingLines`), and a style's later chapters
-      // are a sect's, a ruin's or an auction's, never a market's (Methods in the market).
-      if (o.made && isStaple(l.thing)) return false;
+      // A style's later chapters are a sect's, a ruin's or an auction's, never a market's.
       if (s.kind !== 'sect' && hasCopy(l.thing) && copyChapter(l.thing) > OPENING_CHAPTERS)
         return false;
-      if (!o.lent) return l.shops.includes(s.kind);
-      const ware = wareOf(l.thing);
-      return !!ware && dealsIn(s.kind, ware);
+      if (own) {
+        // A staple made here stands in the hall all month (`hallLines`).
+        if (o.made && isStaple(l.thing)) return false;
+        return l.shops.includes(s.kind);
+      }
+      return (o.lent || honest(l)) && hasStock(l.thing) && sellsHere(s, m, l.thing);
     });
     const sum = fit.reduce((t, l) => t + (l.weight ?? 1), 0);
     for (const lot of fit) {
@@ -175,27 +406,30 @@ function candidates(s: Shop): Candidate[] {
         continue;
       const lean = info.leans?.[wareOf(lot.thing) ?? 'copy'] ?? 1;
       const w = (layerWeight * (lot.weight ?? 1) * lean) / sum;
-      for (const tier of lotTiers(lot.thing, shape.tier, tiers))
-        out.push({
-          lot,
-          w: w * tierLean(tier, shape.tier, !!o.made),
-          tier,
-          rarities: shape.rarities,
-        });
+      for (const tier of lotTiers(lot.thing, shape.tier, tiers)) {
+        const floor = hasCopy(lot.thing)
+          ? lot.thing
+          : goodOf(variantId(lot.thing, shape.rarities[0], { tier }));
+        const rarities = shape.rarities;
+        out.push({ lot, w: w * tierLean(tier, shape.tier, !!o.made), tier, rarities, floor });
+      }
     }
   };
   for (const c of catalogsFor(s)) add(c.lots, info.layers[c.layer], { made: c.layer === 'place' });
   // The gold and red list: a shop that stocks such a thing at all rolls for it like any other.
   add(RARE.lots, info.layers.continent);
-  const m = marketOfShop(s.id);
-  if (m && s.kind !== 'sect' && s.kind !== 'black-market')
+  if (m && !own)
     add(
       lentLots(m).map((l) => l.lot),
       LENT_WEIGHT,
       { lent: true },
     );
+  candidateCache.set(s.id, out);
   return out;
 }
+
+/** A thing a shelf can hold: a copy or an item. */
+const hasStock = (thing: string) => hasCopy(thing) || hasItem(thing);
 
 function weighted(rng: Rng, cs: readonly Candidate[]): Candidate {
   const total = cs.reduce((t, c) => t + c.w, 0);
@@ -207,15 +441,18 @@ function weighted(rng: Rng, cs: readonly Candidate[]): Candidate {
   return cs[cs.length - 1]!;
 }
 
+/** The world nothing has happened in: a shop's stock read without one. */
+const EMPTY = emptyWorld();
+
 /** Where the standing lines start on the shelf, past any month's rolled lots. */
 const STANDING_SLOT = 1000;
 
 /**
- * The lines a shop stands all month (E3's talk): each staple its place makes that its kind sells,
- * at each tier it stocks, a lot of its catalog count; then the copies its market made (core/
- * markets.ts `standingCopies`), one at a time.
+ * The lines a sect's hall or a black market stands all month (E3's talk): each staple its place
+ * makes that its kind sells, at each tier it stocks, a lot of its catalog count, bought as often as
+ * you like.
  */
-function standingLines(s: Shop, w: World, month: number): { thing: string; n: number }[] {
+function hallLines(s: Shop): { thing: string; n: number }[] {
   const out: { thing: string; n: number }[] = [];
   const tiers = shopTiers(s);
   for (const c of catalogsFor(s)) {
@@ -223,14 +460,12 @@ function standingLines(s: Shop, w: World, month: number): { thing: string; n: nu
     for (const lot of c.lots) {
       if (!isStaple(lot.thing) || !lot.shops.includes(s.kind)) continue;
       const it = item(lot.thing);
-      if ((s.kind === 'mortal') !== (it.taels !== undefined)) continue;
       const [lo, hi] = lot.count ?? [1, 1];
       const n = Math.max(1, Math.round((lo + hi) / 2));
       for (const tier of lotTiers(lot.thing, it.tier, tiers))
         out.push({ thing: variantId(lot.thing, it.rarity, { tier }), n });
     }
   }
-  for (const thing of standingCopies(w, s, month)) out.push({ thing, n: 1 });
   return out;
 }
 
@@ -246,16 +481,25 @@ function settleRarity(r: RarityId, cs: readonly Candidate[]): RarityId | null {
   return null;
 }
 
+/** A shop's prices against the posted rate: its own spread and its kind's markup; the small shops at the posted rate. */
+function shopFactor(s: Shop): number {
+  return (s.small ? 1 : priceFactor(s)) * SHOP_KIND_INFO[s.kind].markup;
+}
+
 /**
- * A shop's stock for a month, at its posted prices: the same lots for the same shop and month in
- * the same world, as many as its prosperity gives it as the month opens.
+ * A shop's stock for a month, at its posted prices (E5): the goods standing on its shelf by the
+ * count, then its display lots, the same for the same shop and month in the same world.
  */
-export function stockOf(shopId: string, month: number, w: World = emptyWorld()): StockLot[] {
+export function stockOf(shopId: string, month: number, w: World = EMPTY): StockLot[] {
   const s = shopById(shopId);
   const info = SHOP_KIND_INFO[s.kind];
   const rng = new Rng(hashSeed(`stock/${s.id}/${month}`));
-  let pool = candidates(s);
-  const factor = priceFactor(s) * info.markup;
+  const goods = standingGoods(s, w, month);
+  const m = marketOfShop(s.id);
+  // A display lot is a better rarity, or a thing the sum doesn't stand: never a shelf's own.
+  let pool = candidates(s, m && !keepsOwn(s) ? standsAt(w, m, month) : new Set());
+  const factor = shopFactor(s);
+  const posted = (thing: string) => (s.kind === 'mortal' ? item(thing).taels! : priceOf(thing));
   const out: StockLot[] = [];
   const lots = shopLots(w, s, month * DAYS_PER_MONTH);
   for (let slot = 0; slot < lots && pool.length > 0; slot++) {
@@ -272,13 +516,28 @@ export function stockOf(shopId: string, month: number, w: World = emptyWorld()):
       : variantId(pick.lot.thing, r, { tier: pick.tier });
     const [lo, hi] = pick.lot.count ?? [1, 1];
     const n = rng.int(lo, hi);
-    const base = s.kind === 'mortal' ? item(thing).taels! : priceOf(thing);
-    out.push({ slot, thing, n, price: Math.max(0.1, Math.round(base * factor * 10) / 10) });
+    out.push({
+      slot,
+      thing,
+      n,
+      price: Math.max(0.1, Math.round(posted(thing) * factor * 10) / 10),
+    });
   }
-  standingLines(s, w, month).forEach(({ thing, n }, i) => {
-    const base = s.kind === 'mortal' ? item(thing).taels! : priceOf(thing);
-    const price = Math.max(0.01, Math.round(base * factor * 100) / 100);
-    out.push({ slot: STANDING_SLOT + i, thing, n, price, standing: true });
+  const lines: { thing: string; n: number; endless?: boolean }[] = [
+    ...goods,
+    ...(keepsOwn(s) ? hallLines(s).map((l) => ({ ...l, endless: true })) : []),
+    ...standingCopies(w, s, month).map((thing) => ({ thing, n: 1, endless: true })),
+  ];
+  lines.forEach(({ thing, n, endless }, i) => {
+    const price = Math.max(0.01, Math.round(posted(thing) * factor * 100) / 100);
+    out.push({
+      slot: STANDING_SLOT + i,
+      thing,
+      n,
+      price,
+      standing: true,
+      ...(endless ? { endless } : {}),
+    });
   });
   return out;
 }
@@ -287,20 +546,27 @@ export function stockOf(shopId: string, month: number, w: World = emptyWorld()):
 export function shopMonth(w: World, shopId: string, day: number): ShopMonth {
   const m = monthOf(day);
   const kept = w.shops[shopId];
-  return kept && kept.month === m ? kept : { month: m, bought: [], paid: 0, haggle: null };
+  return kept && kept.month === m
+    ? kept
+    : { month: m, bought: [], took: {}, paid: 0, haggle: null };
 }
 
 function withShopMonth(s: GameState, shopId: string, sm: ShopMonth): GameState {
   return { ...s, world: { ...s.world, shops: { ...s.world.shops, [shopId]: sm } } };
 }
 
-/** The lots still on the shelf today, priced by its market's supply of each. */
+/**
+ * The lots still on the shelf today, priced by its market's supply of each: a standing line less
+ * what you bought of it this month, a display lot until it is bought.
+ */
 export function shelf(s: GameState, shopId: string): StockLot[] {
   const sm = shopMonth(s.world, shopId, s.calendar.day);
   const m = marketOfShop(shopId);
   const day = s.calendar.day;
   return stockOf(shopId, sm.month, s.world)
     .filter((l) => l.standing || !sm.bought.includes(l.slot))
+    .map((l) => (l.standing && !l.endless ? { ...l, n: l.n - (sm.took[l.thing] ?? 0) } : l))
+    .filter((l) => l.n > 0)
     .map((l) => {
       if (!m) return l;
       const price = l.price * marketFactor(s.world, m, l.thing, day);
@@ -315,10 +581,20 @@ function haggleOff(sm: ShopMonth, day: number): number {
   return sm.haggle && sm.haggle.day === Math.floor(day) ? sm.haggle.off : 0;
 }
 
-/** A lot's price to you today: posted, less what haggling won this visit. */
-export function priceToYou(s: GameState, shopId: string, lot: StockLot): number {
+/**
+ * How many of a line a buy takes: a display lot whole, a standing line `count` (one, ten or a Bag
+ * square) up to what stands, an endless line a lot of its catalog count unless told.
+ */
+export function buyCount(lot: StockLot, count?: number): number {
+  if (!lot.standing) return lot.n;
+  if (lot.endless) return Math.max(1, count ?? lot.n);
+  return Math.min(lot.n, Math.max(1, count ?? 1));
+}
+
+/** A buy's price to you today: posted, less what haggling won this visit. */
+export function priceToYou(s: GameState, shopId: string, lot: StockLot, count?: number): number {
   const sm = shopMonth(s.world, shopId, s.calendar.day);
-  return lot.price * lot.n * (1 - haggleOff(sm, s.calendar.day));
+  return lot.price * buyCount(lot, count) * (1 - haggleOff(sm, s.calendar.day));
 }
 
 /** A shop's answer; a refusal may still change the world (a stolen thing recognized). */
@@ -333,14 +609,18 @@ function serves(s: GameState, sh: Shop): string | null {
   return null;
 }
 
-/** Buys a whole lot off the shelf. */
-export function buy(s: GameState, shopId: string, slot: number): ShopResult {
+/**
+ * Buys off the shelf: a display lot whole, or `count` of a standing line (E5: one, ten or a Bag
+ * square). What you buy lowers its market's supply, so every shop's price there climbs.
+ */
+export function buy(s: GameState, shopId: string, slot: number, count?: number): ShopResult {
   const sh = shopById(shopId);
   const refused = serves(s, sh);
   if (refused) return { ok: false, reason: refused };
   const lot = shelf(s, shopId).find((l) => l.slot === slot);
   if (!lot) return { ok: false, reason: 'That lot is gone.' };
-  const price = priceToYou(s, shopId, lot);
+  const k = buyCount(lot, count);
+  const price = priceToYou(s, shopId, lot, k);
   let next: GameState;
   if (SHOP_KIND_INFO[sh.kind].money === 'silver') {
     const paid = paySilver(s.player, price);
@@ -352,16 +632,20 @@ export function buy(s: GameState, shopId: string, slot: number): ShopResult {
     next = withPlayer(s, withStones(s.player, after));
   }
   if (hasCopy(lot.thing)) {
-    for (let i = 0; i < lot.n; i++) next = gainCopy(next, lot.thing, 'buys');
+    for (let i = 0; i < k; i++) next = gainCopy(next, lot.thing, 'buys');
   } else {
-    next = withPlayer(next, addItem(next.player, lot.thing, lot.n));
+    next = withPlayer(next, addItem(next.player, lot.thing, k));
   }
-  // Each lot bought lowers its market's supply of it.
+  // Each piece bought lowers its market's supply.
   const m = marketOfShop(shopId);
-  if (m) next = { ...next, world: moveSupply(next.world, m, lot.thing, -lot.n, s.calendar.day) };
+  if (m) next = { ...next, world: moveSupply(next.world, m, lot.thing, -k, s.calendar.day) };
   const sm = shopMonth(next.world, shopId, s.calendar.day);
   const bought = lot.standing ? sm.bought : [...sm.bought, slot];
-  return { ok: true, state: withShopMonth(next, shopId, { ...sm, bought }) };
+  const took =
+    lot.standing && !lot.endless
+      ? { ...sm.took, [lot.thing]: (sm.took[lot.thing] ?? 0) + k }
+      : sm.took;
+  return { ok: true, state: withShopMonth(next, shopId, { ...sm, bought, took }) };
 }
 
 /** What the shop deals in, for a thing you hold: its Bag kind, or a copy. */
@@ -513,7 +797,7 @@ function withKeeper(w: World, sh: Shop): World {
     kept: {
       ...w.kept,
       [id]: {
-        name: `the ${SHOP_KIND_INFO[sh.kind].name}'s keeper`,
+        name: keeperName(sh),
         nature,
         power: sh.power,
         home: sh.at,

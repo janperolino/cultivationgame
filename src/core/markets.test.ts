@@ -7,7 +7,7 @@ import { CATALOGS } from '../content/catalogs/index.ts';
 import { hasCopy } from '../content/copies.ts';
 import { baseOf, item } from '../content/items.ts';
 import { peopleAt } from '../content/map/index.ts';
-import { shop, SHOP_KINDS, shopsWanted } from '../content/shops.ts';
+import { doorsAt, shop, SHOP_KINDS, streetCount } from '../content/shops.ts';
 import {
   addProsperity,
   lentLots,
@@ -120,10 +120,10 @@ describe('supply moves and eases back', () => {
 describe('purses, lots and tiers', () => {
   it('size a purse by its tier and prosperity: the Wall’s stall can’t buy a Foundation Pill', () => {
     const w = emptyWorld();
-    // Half of what a market's people earn, split by the kinds' weights (E4): the Wall's sixty
-    // cultivators keep one stall, so it holds about 720; the City's alchemy shop about 7 mid.
+    // Half of what a market's people earn, shared by door (E5): the Wall's sixty cultivators keep
+    // one stall, so it holds about 720; Apricot Grove's branch on Pill Street about 3 mid.
     expect(shopPurse(w, shop('wall-stall'), 0)).toBe(720);
-    expect(shopPurse(w, shop('mouth-alchemy'), 0)).toBeCloseTo(7000, -3);
+    expect(shopPurse(w, shop('mouth-alchemy'), 0)).toBeCloseTo(3000, -3);
     const s = withPlayer(life(), addItem(life().player, 'foundation-pill', 1));
     expect(sell(s, 'wall-stall', 'foundation-pill', 1)).toMatchObject({ ok: false });
     const city = sell(s, 'mouth-alchemy', 'foundation-pill', 1);
@@ -135,7 +135,7 @@ describe('purses, lots and tiers', () => {
     const w = emptyWorld();
     expect(shopLots(w, shop('wall-stall'), 0)).toBe(5);
     expect(shopLots(w, shop('mouth-stall'), 0)).toBe(6);
-    expect(stockOf('wall-stall', 40)).toHaveLength(5);
+    expect(stockOf('wall-stall', 40).filter((l) => !l.standing)).toHaveLength(5);
     expect(shopTiers(shop('mouth-alchemy'))).toEqual([1, 2, 3]);
     expect(shopTiers(shop('wall-stall'))).toEqual([1]);
   });
@@ -172,17 +172,36 @@ describe('markets sized by who lives there (E2.2)', () => {
     m(id).shops.reduce((t, sid) => t + shopLots(emptyWorld(), shop(sid), 0), 0);
   const kinds = (id: string) => m(id).shops.map((sid) => shop(sid).kind);
 
-  it('open as many shops of each kind as the market’s people keep', () => {
+  it('open a district for each street its people keep, three shops notable and the rest one counter', () => {
     for (const mk of MARKETS)
-      for (const kind of SHOP_KINDS)
-        expect(
-          kinds(mk.id).filter((k) => k === kind).length,
-          `${mk.id}: ${kind}`,
-        ).toBeGreaterThanOrEqual(mk.kind === 'seat' ? 0 : shopsWanted(peopleAt(mk.id), kind));
-    // The City of 8 million keeps five stalls and three mortal shops; Spear-Plow one store.
-    expect(kinds(CITY).filter((k) => k === 'stall')).toHaveLength(5);
-    expect(kinds(CITY).filter((k) => k === 'mortal')).toHaveLength(3);
-    expect(kinds('spear-plow')).toEqual(['mortal']);
+      for (const kind of SHOP_KINDS) {
+        const want = mk.kind === 'seat' ? 0 : streetCount(peopleAt(mk.id), kind);
+        const door = doorsAt(mk.id).find((d) => d.kind === kind && d.id.includes('/'));
+        if (want > 0) expect(door?.count, `${mk.id}: ${kind}`).toBeGreaterThanOrEqual(want);
+        if (door) expect(door.shops.length).toBeLessThanOrEqual(4);
+      }
+    // The City of 8 million: eight doors, its five hundred-odd shops behind them.
+    expect(doorsAt(CITY).map((d) => d.name)).toEqual([
+      'the free market',
+      'Pill Street',
+      'Refiners’ Row',
+      'Talisman Lane',
+      'the beast-part market',
+      'the Qian Clan’s trading hall',
+      'the bounty office',
+      'the grain and cloth market',
+    ]);
+    const pills = doorsAt(CITY).find((d) => d.kind === 'alchemy')!;
+    expect(pills.count).toBe(27);
+    expect(pills.shops[0]).toBe('mouth-alchemy');
+    expect(shop(pills.shops.at(-1)!)).toMatchObject({ small: true, weight: 24 });
+    // The stalls fold into one district; Spear-Plow keeps one door, its three stores listed whole.
+    expect(doorsAt(CITY).filter((d) => d.kind === 'stall')).toHaveLength(1);
+    expect(doorsAt('spear-plow').map((d) => [d.kind, d.count])).toEqual([['mortal', 3]]);
+    expect(doorsAt('spear-plow')[0]!.shops.every((id) => shop(id).weight === 1)).toBe(true);
+    // Every door names its owner or its kind: no merchant guild, nobody's guild hall.
+    for (const mk of MARKETS)
+      for (const id of mk.shops) expect(shop(id).name).not.toMatch(/merchant guild/);
   });
 
   it('stock Foundation goods at Pacified Fort, beside a mortal shop for its farmers', () => {
@@ -303,7 +322,7 @@ describe('prosperity', () => {
     delete raw.state.world.prosperity;
     delete raw.state.world.supply;
     const old = loadSave(raw);
-    expect(old.version).toBe(36);
+    expect(old.version).toBe(37);
     expect(old.state.world.supply).toEqual({});
     expect(old.state.world.prosperity).toEqual({});
   });

@@ -5,11 +5,18 @@
 // guides, caravans, the money changer and the bed you sleep in by rule.
 import { useState } from 'react';
 import { COPY_FORM_WORDS, copyForm, copyItem, copyTitle, hasCopy } from '../content/copies.ts';
-import { item } from '../content/items.ts';
+import { item, stackSize } from '../content/items.ts';
 import { PLACE_KIND_INFO, type PlaceKindInfo } from '../content/map/places.ts';
 import { QI_NAMES, TERRAIN_NAMES } from '../content/map/travel.ts';
 import { REALM_IDS, realm, realmIdFromName, type RealmId } from '../content/realms.ts';
-import { SHOP_KIND_INFO, shop as shopById } from '../content/shops.ts';
+import {
+  doorsAt,
+  keeperName,
+  SHOP_KIND_INFO,
+  shop as shopById,
+  STREETS,
+  type Door as MarketDoor,
+} from '../content/shops.ts';
 import { worldWhen } from '../core/chronicle.ts';
 import { encounterTemplate } from '../content/encounters/index.ts';
 import { claimPosting, dropPosting, postingsAt, takePosting } from '../core/map/board.ts';
@@ -59,6 +66,7 @@ import {
   sell,
   shelf,
   shopMonth,
+  type StockLot,
 } from '../core/shops.ts';
 import type { GameState } from '../core/state.ts';
 import { useGame } from './store.ts';
@@ -102,14 +110,15 @@ const STATE_WORDS: Record<string, string> = {
 
 function doorsOf(s: GameState, p: MapPlace, info: PlaceKindInfo): [string, Door[]][] {
   const kind = placeKindOf(p);
-  const shops: Door[] = p.shops.map((id) => {
-    const sh = shopById(id);
-    const k = SHOP_KIND_INFO[sh.kind];
+  // A door is a district, or a firm, a hall or the office alone (E5).
+  const shops: Door[] = doorsAt(p.id).map((d) => {
+    const k = SHOP_KIND_INFO[d.kind];
+    const st = STREETS[d.kind];
     return {
-      id,
-      seal: k.hanzi.slice(0, 1),
-      name: sh.name[0]!.toUpperCase() + sh.name.slice(1),
-      sub: k.name,
+      id: d.id,
+      seal: (st?.hanzi ?? k.hanzi).slice(0, 1),
+      name: cap(d.name),
+      sub: st ? `${d.count === 1 ? 'one shop' : `${d.count} shops`} · ${st.sells}` : k.name,
       tag: k.members ? 'members' : k.money === 'silver' ? 'silver' : k.posted ? 'posted rates' : '',
     };
   });
@@ -196,7 +205,7 @@ export function PlaceScreen({
   onMap: () => void;
 }) {
   const mapAct = useGame((s) => s.mapAct);
-  const [door, setDoor] = useState<string | null>(() => place.shops[0] ?? null);
+  const [door, setDoor] = useState<string | null>(() => doorsAt(place.id)[0]?.id ?? null);
   const [toast, setToast] = useState<string | null>(null);
   const kind = placeKindOf(place)!;
   const info = PLACE_KIND_INFO[kind];
@@ -390,8 +399,8 @@ function Counter({
   act: Act;
   say: (t: string) => void;
 }) {
-  if (place.shops.includes(door))
-    return <ShopCounter key={door} game={game} shopId={door} act={act} say={say} />;
+  const md = doorsAt(place.id).find((d) => d.id === door);
+  if (md) return <DoorCounter key={door} game={game} door={md} act={act} say={say} />;
   switch (door) {
     case 'changer':
       return <ChangerCounter game={game} place={place} act={act} />;
@@ -423,6 +432,48 @@ function Counter({
     default:
       return null;
   }
+}
+
+// ---------------------------------------------------------------- a district and its shops
+
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/** A district's door (E5): its notable shops and the small shops along the top, one counter below. */
+function DoorCounter({
+  game,
+  door,
+  act,
+  say,
+}: {
+  game: GameState;
+  door: MarketDoor;
+  act: Act;
+  say: (t: string) => void;
+}) {
+  const [at, setAt] = useState(door.shops[0]!);
+  return (
+    <>
+      {door.shops.length > 1 && (
+        <div className="place-tabs" role="tablist" aria-label="Shops">
+          {door.shops.map((id) => {
+            const sh = shopById(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={at === id}
+                onClick={() => setAt(id)}
+              >
+                {sh.small ? 'The small shops' : cap(sh.name)}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <ShopCounter key={at} game={game} shopId={at} act={act} say={say} />
+    </>
+  );
 }
 
 // ---------------------------------------------------------------- a shop
@@ -469,12 +520,17 @@ function ShopCounter({
   // A token gets you through a sect's gate; its shop serves members only (core/shops.ts).
   if (kinfo.members && sh.power && !isMember(game.world, game.player.id, sh.power))
     return <p className="place-note">It sells only to its own.</p>;
-  const lots = shelf(game, shopId);
+  // The shelf by the count first, then the month's display lots (E5).
+  const lots = shelf(game, shopId).sort((a, b) => Number(!!b.standing) - Number(!!a.standing));
   // What you carry and the copies on your bookcase, whatever this shop will buy.
   const held = [...Object.entries(game.player.items), ...Object.entries(game.player.copies)]
     .filter(([, n]) => n > 0)
     .map(([thing, n]) => ({ thing, n, offer: offerFor(game, shopId, thing) }))
     .filter((x) => x.offer.ok);
+  // A standing line is bought one, ten or a Bag square at a time (E5).
+  const counted = (l: StockLot) => !!l.standing && !l.endless;
+  const amounts = (l: StockLot) =>
+    [...new Set([1, 10, hasCopy(l.thing) ? 1 : stackSize(item(l.thing))])].filter((k) => k <= l.n);
   // A staple sells by the lot, a Bag square at a time (E3).
   const lotOf = (thing: string, n: number) => (isStaple(thing) ? Math.min(n, lotSize(thing)) : 1);
   const worn = [
@@ -492,8 +548,8 @@ function ShopCounter({
     <>
       <div className="place-keeper">
         <span>
-          The {kinfo.name}’s keeper · they can pay out {silver ? `${left} taels` : priceWords(left)}{' '}
-          this month
+          {cap(keeperName(sh))} · {sh.small ? 'together they' : 'they'} can pay out{' '}
+          {silver ? `${Math.round(left).toLocaleString('en')} taels` : priceWords(left)} this month
         </span>
         {kinfo.posted ? (
           <span className="muted">Posted rates, never haggled.</span>
@@ -552,23 +608,36 @@ function ShopCounter({
                   </span>{' '}
                   <span className="place-sub">
                     ·{' '}
-                    {[w.sub, ...(l.standing ? ['by the lot'] : []), ...origin(l.thing)].join(' · ')}
+                    {[
+                      w.sub,
+                      ...(l.standing ? [l.endless ? 'by the lot' : 'on the shelf'] : []),
+                      ...origin(l.thing),
+                    ].join(' · ')}
                   </span>
                 </span>
-                <span className="place-price">{cost(priceToYou(game, shopId, l))}</span>
-                <button
-                  type="button"
-                  className="place-btn"
-                  onClick={() =>
-                    act((s) => {
-                      const r = buy(s, shopId, l.slot);
-                      if (r.ok) say(`Bought ${w.name}.`);
-                      return r;
-                    })
-                  }
-                >
-                  Buy
-                </button>
+                <span className="place-price">
+                  {counted(l)
+                    ? `${cost(priceToYou(game, shopId, l, 1))} each`
+                    : cost(priceToYou(game, shopId, l))}
+                </span>
+                <span className="place-buys">
+                  {(counted(l) ? amounts(l) : [undefined]).map((k) => (
+                    <button
+                      key={k ?? 'lot'}
+                      type="button"
+                      className="place-btn"
+                      onClick={() =>
+                        act((s) => {
+                          const r = buy(s, shopId, l.slot, k);
+                          if (r.ok) say(`Bought ${k && k > 1 ? `${k} ` : ''}${w.name}.`);
+                          return r;
+                        })
+                      }
+                    >
+                      {k === undefined ? 'Buy' : `Buy ${k}`}
+                    </button>
+                  ))}
+                </span>
               </div>
             );
           })}

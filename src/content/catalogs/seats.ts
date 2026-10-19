@@ -89,8 +89,8 @@ export const RIVER_BEND: Catalog = {
   lots: [
     { thing: 'levy-halberd', shops: ['refiner', 'stall'] },
     { thing: 'intendant-guard-glaive', shops: ['refiner'], weight: 0.5 },
-    { thing: 'barge-ward-talisman', shops: ['stall', 'guild'], count: [1, 3] },
-    { thing: 'bend-water-lotus-seed', shops: ['stall', 'guild'], count: [2, 8] },
+    { thing: 'barge-ward-talisman', shops: ['stall', 'house'], count: [1, 3] },
+    { thing: 'bend-water-lotus-seed', shops: ['stall', 'house'], count: [2, 8] },
     { thing: 'conscript-straw-sandals', shops: ['mortal'], count: [2, 8] },
   ],
 };
@@ -172,10 +172,10 @@ export const THOUSAND_PADDOCKS: Catalog = {
     },
   ],
   lots: [
-    { thing: 'remount-lamellar', shops: ['refiner', 'guild'] },
+    { thing: 'remount-lamellar', shops: ['refiner', 'house'] },
     { thing: 'royal-stud-barding', shops: ['refiner'], weight: 0.4 },
-    { thing: 'paddock-post-talisman', shops: ['stall', 'guild'], count: [1, 3] },
-    { thing: 'horse-heart-grass', shops: ['stall', 'guild'], count: [2, 8] },
+    { thing: 'paddock-post-talisman', shops: ['stall', 'house'], count: [1, 3] },
+    { thing: 'horse-heart-grass', shops: ['stall', 'house'], count: [2, 8] },
     { thing: 'paddock-felt-boots', shops: ['mortal'], count: [1, 3] },
   ],
 };
@@ -347,9 +347,9 @@ export const EBB_HARBOR: Catalog = {
       count: [20, 20],
       land: ['coast', 'islands', 'desert'],
     },
-    { thing: 'bound-reef-scale', shops: ['stall', 'guild'] },
-    { thing: 'ebb-tide-talisman', shops: ['stall', 'guild'], count: [1, 3] },
-    { thing: 'harbor-mud-razor-shell', shops: ['stall', 'guild'], count: [2, 8] },
+    { thing: 'bound-reef-scale', shops: ['stall', 'house'] },
+    { thing: 'ebb-tide-talisman', shops: ['stall', 'house'], count: [1, 3] },
+    { thing: 'harbor-mud-razor-shell', shops: ['stall', 'house'], count: [2, 8] },
     { thing: 'tarred-cargo-net', shops: ['mortal'], count: [1, 3] },
   ],
 };

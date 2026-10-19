@@ -187,9 +187,24 @@ export const REST_STEP = 1 / 3;
 
 /**
  * Half of what a market's people earn passes through its shops (What a market holds, a shop's
- * purse), split among its stone shops by their kinds' `purse`, a mortal shop's among its mortals.
+ * purse), shared among its doors by `DOOR_SHARE` (E5); the mortals' money is their basket's.
  */
 export const PURSE_SHARE = 0.5;
+
+/**
+ * A mortal's month in the shops (E5): their basket's worth, about 0.2 taels at an ordinary place,
+ * not half their earnings, since a farmer eats what he grows. The grain and cloth market's money.
+ */
+export const MORTAL_SPEND_TAELS = 0.2;
+
+/**
+ * What stands on a district's shelves of a good in the monthly sum (E5, Shelves): this share of its
+ * market's month of use, about three days' trade, times its supply.
+ */
+export const SHELF_SHARE = 0.1;
+
+/** A trading house takes this share of every good it sells off the top, before the district's split. */
+export const HOUSE_TAKE = { plain: 0.2, import: 0.4 } as const;
 
 /** What the line of why calls a need, and whether it reads as one thing ("salt runs short"). */
 export const NEED_WORDS: Readonly<Record<string, { word: string; one?: boolean }>> = {

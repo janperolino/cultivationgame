@@ -66,11 +66,11 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
       },
     ],
     lots: [
-      { thing: 'red-rocks-iron-ore', shops: ['refiner', 'guild'], count: [20, 20] },
-      { thing: 'black-iron-saber', shops: ['refiner', 'guild'] },
-      { thing: 'cinnabar-ore', shops: ['refiner', 'guild'], count: [2, 10] },
-      { thing: 'fire-bead', shops: ['guild', 'refiner'], weight: 0.3 },
-      { thing: 'method:ember-furnace', shops: ['guild'], weight: 0.3 },
+      { thing: 'red-rocks-iron-ore', shops: ['refiner', 'house'], count: [20, 20] },
+      { thing: 'black-iron-saber', shops: ['refiner', 'house'] },
+      { thing: 'cinnabar-ore', shops: ['refiner', 'house'], count: [2, 10] },
+      { thing: 'fire-bead', shops: ['house', 'refiner'], weight: 0.3 },
+      { thing: 'method:ember-furnace', shops: ['house'], weight: 0.3 },
     ],
   },
   {
@@ -111,9 +111,9 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
       },
     ],
     lots: [
-      { thing: 'ridge-bitterroot', shops: ['alchemy', 'guild'], count: [20, 20] },
-      { thing: 'old-apricot-kernel', shops: ['alchemy', 'guild'], count: [1, 5] },
-      { thing: 'clear-spring-lotus', shops: ['alchemy', 'guild'], weight: 0.4 },
+      { thing: 'ridge-bitterroot', shops: ['alchemy', 'house'], count: [20, 20] },
+      { thing: 'old-apricot-kernel', shops: ['alchemy', 'house'], count: [1, 5] },
+      { thing: 'clear-spring-lotus', shops: ['alchemy', 'house'], weight: 0.4 },
     ],
   },
   {
@@ -121,7 +121,7 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
     layer: 'import',
     from: 'qm-jianyu',
     via: 'a Clear Heaven Sword Sect blade the guild bought off someone who needed money more',
-    lots: [{ thing: 'azure-cloud-sword', shops: ['guild'], weight: 0.15 }],
+    lots: [{ thing: 'azure-cloud-sword', shops: ['house'], weight: 0.15 }],
   },
   {
     at: AT,

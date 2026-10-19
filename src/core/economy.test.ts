@@ -198,12 +198,12 @@ describe('shops', () => {
     // The seeded stall, pinned: a change to the catalogs or the roll shows here.
     expect(stockOf('mouth-stall', 1300).map((l) => l.thing)).toMatchInlineSnapshot(`
       [
-        "qi-gathering-pill~green",
-        "shark-marrow-pill",
+        "method:pine-wind",
+        "manual:garrison-breath-count",
+        "technique:iron-cloth-shirt",
         "method:still-lantern",
-        "ash-wood-spear",
         "method:market-stall",
-        "undertow-talisman",
+        "manual:core-grading-eye",
       ]
     `);
   });

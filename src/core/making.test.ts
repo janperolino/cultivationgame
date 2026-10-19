@@ -115,11 +115,13 @@ describe('a lot against a month of use', () => {
 describe('purses from what people earn', () => {
   it('fills the City’s purses as the design reads them, and the Fort’s', () => {
     const purse = (id: string) => shopPurse(w, shop(id), 0);
-    // In low-grade stones' worth: about 37 mid at the guild hall and 93 at the bounty office.
-    expect(purse('mouth-guild') / 1000).toBeCloseTo(37, 0);
-    expect(purse('mouth-bounty') / 1000).toBeCloseTo(93, 0);
+    // In low-grade stones' worth (E5, by door): about 32 mid at the Qians' hall, 48 at the bounty
+    // office, and Apricot Grove's branch about 3 of Pill Street's 32.
+    expect(purse('mouth-guild') / 1000).toBeCloseTo(32, 0);
+    expect(purse('mouth-bounty') / 1000).toBeCloseTo(48, 0);
+    expect(purse('mouth-alchemy') / 1000).toBeCloseTo(2.9, 0);
     expect(purse('march-stall')).toBeGreaterThan(150);
-    expect(purse('march-stall')).toBeLessThan(190);
+    expect(purse('march-stall')).toBeLessThan(260);
     // A sect's hall reads its power's members: the Gate's 3,000 Qi Condensation and more.
     expect(purse('gate-sect')).toBeGreaterThan(purse('march-stall'));
   });
@@ -127,8 +129,8 @@ describe('purses from what people earn', () => {
   it('moves a market’s sum and purses with its people', () => {
     const grown: World = { ...w, population: { [FORT]: { qi: 1500 } } };
     expect(populationOf(grown, FORT).qi).toBe(3000);
-    expect(shopPurse(grown, shop('pacified-fort.guild-1'), 0)).toBeGreaterThan(
-      1.5 * shopPurse(w, shop('pacified-fort.guild-1'), 0),
+    expect(shopPurse(grown, shop('pacified-fort.house-1'), 0)).toBeGreaterThan(
+      1.5 * shopPurse(w, shop('pacified-fort.house-1'), 0),
     );
     const used = (world: World) =>
       marketSum(world, m(FORT), 0).goods.get('qi-gathering-pill')!.used;

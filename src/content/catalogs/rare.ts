@@ -605,7 +605,7 @@ export const RARE: Catalog = {
     { thing: 'method:bone-marrow-fire-art', shops: ['sect'], weight: 0.05 },
     { thing: 'method:seven-tides-scripture', shops: [] },
     { thing: 'technique:collapsing-karst-palm', shops: [] },
-    { thing: 'technique:night-heron-spear', shops: ['guild'], weight: 0.05 },
+    { thing: 'technique:night-heron-spear', shops: ['house'], weight: 0.05 },
     { thing: 'technique:tiger-splitting-saber', shops: ['sect'], weight: 0.05 },
     { thing: 'technique:severed-sky-sword', shops: [] },
   ],

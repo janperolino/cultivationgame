@@ -25,6 +25,7 @@ import {
   OPENING_CHAPTERS,
   PROSPERITY,
   PROSPERITY_EASE_DAYS,
+  MORTAL_SPEND_TAELS,
   PURSE_SHARE,
   REST_STEP,
   REACH_LI,
@@ -44,6 +45,9 @@ import { monthUse, restOf } from './making.ts';
 import { rarityRank } from '../content/rarity.ts';
 import { realmScale, tierRealm } from '../content/realms.ts';
 import {
+  DOOR_SHARE,
+  doorOf,
+  doorsAt,
   headcount,
   SHOP_KIND_INFO,
   SHOPS,
@@ -51,7 +55,9 @@ import {
   shopPeople,
   shopsAt,
   shopVein,
+  STREET_ORDER,
   type Shop,
+  type ShopKind,
 } from '../content/shops.ts';
 import { lotShape } from './loot.ts';
 import type { World } from './resolver/world.ts';
@@ -355,12 +361,43 @@ function stoneTopTier(m: Market): number {
 }
 
 /**
- * A shop's purse a month (E4): half of what its market's people earn passes through its shops,
- * split among its stone shops by their kinds' weights (`purse`: a stall 150, an alchemy shop or a
- * refiner 1,500, a guild hall 8,000, the bounty office 20,000), never under its weight times
- * prosperity's purse; a mortal shop shares half its mortals' earnings in taels. In low-grade
- * stones' worth, paid in its market's grade. The City's alchemy shops hold about 7 mid each, its
- * bounty office about 93; the Foot of the Wall's stall about 720 low.
+ * Each door's share of its market's stone money (E5, `DOOR_SHARE`): a missing district's share
+ * goes to the free market where the market grows its own shops, and the shares present are scaled
+ * to the whole. Two trading houses split theirs.
+ */
+const shareCache = new Map<string, Map<string, number>>();
+function doorShares(m: Market): Map<string, number> {
+  let out = shareCache.get(m.id);
+  if (out) return out;
+  out = new Map<string, number>();
+  const doors = doorsAt(m.id).filter((d) => SHOP_KIND_INFO[d.kind].money === 'stones');
+  const has = (k: ShopKind) => doors.some((d) => d.kind === k);
+  const grows = SHOPS.some((sh) => sh.id.startsWith(`${m.id}.`));
+  let spare = 0;
+  if (grows && has('stall'))
+    for (const k of STREET_ORDER)
+      if (k !== 'mortal' && k !== 'stall' && !has(k)) spare += DOOR_SHARE[k];
+  const houses = doors.filter((d) => d.kind === 'house').length;
+  for (const d of doors) {
+    let x = DOOR_SHARE[d.kind];
+    if (d.kind === 'house') x /= houses;
+    if (d.kind === 'stall') x += spare;
+    out.set(d.id, x);
+  }
+  const total = [...out.values()].reduce((t, x) => t + x, 0);
+  for (const [k, x] of out) out.set(k, x / total);
+  shareCache.set(m.id, out);
+  return out;
+}
+
+/**
+ * A shop's purse a month (E4, E5): half of what its market's people earn passes through its shops,
+ * shared among its doors (`DOOR_SHARE`: the bounty office 0.3, a trading house 0.2, Pill Street
+ * 0.2, Refiners' Row 0.15, a black market 0.3, the rest 0.05), and a door's among its shops as its
+ * stock is, a shop 1 and a notable one 3, the small shops sharing the rest; never under its kind's
+ * weight times prosperity's purse. The grain and cloth market shares a month of its mortals'
+ * basket in taels. So Pill Street in the City holds about 32 mid, of which Apricot Grove's branch
+ * can pay out about 3.
  */
 export function shopPurse(w: World, sh: Shop, day: number): number {
   const info = SHOP_KIND_INFO[sh.kind];
@@ -368,18 +405,19 @@ export function shopPurse(w: World, sh: Shop, day: number): number {
   const floor = info.purse * PROSPERITY[p]!.purse;
   const m = marketOfShop(sh.id);
   if (!m) return Math.round(floor);
-  const peers = m.shops
-    .map((id) => SHOP_KIND_INFO[shopById(id).kind])
-    .filter((k) => k.money === info.money);
-  const weight = peers.reduce((t, k) => t + k.purse, 0);
-  const share = (earnings(w, m, p, info.money === 'silver') * PURSE_SHARE * info.purse) / weight;
-  return Math.round(Math.max(floor, share));
+  const door = doorOf(sh.id);
+  const weights = (door?.shops ?? [sh.id]).reduce((t, id) => t + shopById(id).weight, 0);
+  const mortal = info.money === 'silver';
+  const money = mortal
+    ? (populationOf(w, m.id).mortals ?? 0) * MORTAL_SPEND_TAELS * PROSPERITY[p]!.wages
+    : earnings(w, m, p, false) * PURSE_SHARE * (doorShares(m).get(door?.id ?? sh.id) ?? 0);
+  return Math.round(Math.max(floor, (money * sh.weight) / weights));
 }
 
-/** A shop's lots a month: its kind's times prosperity's lots, never under one. */
+/** A shop's display lots a month (E5): a notable shop's kind's times prosperity's, the small shops none. */
 export function shopLots(w: World, sh: Shop, day: number): number {
   const n = SHOP_KIND_INFO[sh.kind].lots;
-  if (n === 0) return 0;
+  if (n === 0 || sh.small) return 0;
   return Math.max(1, Math.round(n * PROSPERITY[shopProsperity(w, sh, day)]!.lots));
 }
 
@@ -612,7 +650,7 @@ export function copyInto(w: World, m: Market, thing: string, day: number): World
 }
 
 /** The shops that stand a market's copies: the kinds that sell copies, a sect's hall aside. */
-const COPY_SHOPS: readonly Shop['kind'][] = ['stall', 'guild', 'black-market'];
+const COPY_SHOPS: readonly Shop['kind'][] = ['stall', 'house', 'black-market'];
 
 /**
  * The copies a shop stands on its shelf this month: its market's own, bought before this month,
@@ -661,6 +699,16 @@ export function supplyOf(w: World, m: Market, thing: string, day: number): numbe
   if (!kept) return base;
   const months = Math.max(0, month - kept.month);
   return base + (kept.n - base) * (1 - SUPPLY_EASE) ** months;
+}
+
+/**
+ * A good's supply as this month opened, before your trade this month moved it (E5): what a
+ * district's shelves hold of it.
+ */
+export function openSupply(w: World, m: Market, thing: string, month: number): number {
+  const kept = w.supply[m.id]?.[goodOf(thing)];
+  if (kept && kept.month === month && kept.open !== undefined) return kept.open;
+  return supplyOf(w, m, thing, month * DAYS_PER_MONTH);
 }
 
 /** How many months a kept supply is followed back to its rest before it is read as at rest. */
@@ -722,11 +770,18 @@ export function moveSupply(w: World, m: Market, thing: string, pieces: number, d
     rest !== null
       ? pieces * Math.min(perLot, 100 / monthUse(w, m, thing, month)!)
       : (pieces * perLot) / (PROSPERITY[prosperityOf(w, m.id, day)]!.lots * marketSize(m));
-  const n = Math.min(SUPPLY_MAX, Math.max(SUPPLY_MIN, supplyOf(w, m, thing, day) + delta));
+  const now = supplyOf(w, m, thing, day);
+  const n = Math.min(SUPPLY_MAX, Math.max(SUPPLY_MIN, now + delta));
   const good = goodOf(thing);
   const ledger = { ...(w.supply[m.id] ?? {}) };
-  if (Math.abs(n - base) < 0.5) delete ledger[good];
-  else ledger[good] = { n, month };
+  const was = ledger[good];
+  // What the month opened at, kept the first time this month moves it.
+  const open =
+    was && was.month === month && was.open !== undefined
+      ? was.open
+      : openSupply(w, m, thing, month);
+  if (Math.abs(n - base) < 0.5 && Math.abs(open - base) < 0.5) delete ledger[good];
+  else ledger[good] = { n, month, open };
   const supply = { ...w.supply };
   if (Object.keys(ledger).length) supply[m.id] = ledger;
   else delete supply[m.id];

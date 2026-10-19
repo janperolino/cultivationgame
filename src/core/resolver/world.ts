@@ -185,6 +185,8 @@ export type Sealed = z.infer<typeof SealedSchema>;
 export const ShopMonthSchema = z.object({
   month: z.number().int().min(0),
   bought: z.array(z.number().int().min(0)),
+  /** The pieces of each standing line bought this month (E5): the shelf's count falls by them. */
+  took: z.record(z.string(), z.number().int().min(0)),
   /** What the shop has paid out buying from you this month, in its own money. */
   paid: z.number().min(0),
   /** The day of your last haggle there and the share it took off; one check a visit. */
@@ -237,7 +239,15 @@ export const WorldSchema = z.object({
    */
   supply: z.record(
     z.string(),
-    z.record(z.string(), z.object({ n: z.number(), month: z.number().int() })),
+    z.record(
+      z.string(),
+      z.object({
+        n: z.number(),
+        month: z.number().int(),
+        /** The supply as that month opened, before your trade moved it: what the shelves hold (E5). */
+        open: z.number().optional(),
+      }),
+    ),
   ),
   /**
    * The copies each market bought and copied (design § Economy, Methods in the market), by market

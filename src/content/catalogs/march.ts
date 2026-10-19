@@ -23,8 +23,8 @@ export const MARCH: Catalog = {
       kind: 'material',
       stack: 20,
       tags: ['trade', 'grain'],
-      // Tuned to the haul's mark in both seasons once the harvest moved both ends (E4; 1.2 in E3).
-      price: 0.95,
+      // Tuned to the haul's mark in both seasons (E5, once a district's many shops bid for it; 0.95 in E4, 1.2 in E3).
+      price: 0.9,
       uses: { ingredient: { tags: ['wood', 'vitality'], age: 1 } },
       source:
         'the March’s spirit-field counties, whose sacks load at River-Bend’s grain market and every sutler’s door',
@@ -294,7 +294,7 @@ export const MARCH: Catalog = {
   lots: [
     // Staples (E3)
     // Grain from any plain (E4's land tags, for Jan's review).
-    { thing: 'spirit-rice', shops: ['stall', 'guild'], count: [20, 20], land: ['plains'] },
+    { thing: 'spirit-rice', shops: ['stall', 'house'], count: [20, 20], land: ['plains'] },
     { thing: 'frontier-millet', shops: ['mortal'], count: [20, 20], land: ['plains'] },
     { thing: 'watchtower-spear', shops: ['stall'] },
     { thing: 'cadet-scale-coat', shops: ['stall'] },

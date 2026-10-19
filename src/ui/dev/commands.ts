@@ -309,7 +309,7 @@ export const COMMANDS: Record<string, Command> = {
     },
   },
   shop: {
-    usage: 'shop [id] [buy <slot> | sell <thing> [n] | haggle | repair <thing>]',
+    usage: 'shop [id] [buy <slot> [n] | sell <thing> [n] | haggle | repair <thing>]',
     help: 'Lists the shops; with an id, its shelf this month, and buys, sells, haggles or mends there.',
     run([id, verb, arg, n], store) {
       if (!id) return SHOPS.map((x) => `${x.id}: ${x.name} (${x.kind})`);
@@ -317,7 +317,8 @@ export const COMMANDS: Record<string, Command> = {
       const s = needGame(store);
       const act = (r: ShopResult, done: string): Output =>
         r.ok ? apply(store, () => r.state, done) : r.reason;
-      if (verb === 'buy') return act(buy(s, id, Number(arg)), `Bought lot ${arg}.`);
+      if (verb === 'buy')
+        return act(buy(s, id, Number(arg), n ? Number(n) : undefined), `Bought from line ${arg}.`);
       if (verb === 'sell' && arg) return act(sell(s, id, arg, n ? Number(n) : 1), `Sold ${arg}.`);
       if (verb === 'haggle') {
         const r = haggle(s, id);
@@ -331,7 +332,7 @@ export const COMMANDS: Record<string, Command> = {
         `${shop(id).name}, this month · you hold ${purseWords(s.player)}`,
         ...shelf(s, id).map(
           (l) =>
-            `  ${l.slot}. ${ware(l.thing)} ×${l.n} (${l.thing}): ${cost(l.price)} each${l.standing ? ' · stands all month' : ''}`,
+            `  ${l.slot}. ${ware(l.thing)} ×${l.n} (${l.thing}): ${cost(l.price)} each${l.standing ? (l.endless ? ' · stands all month' : ' · on the shelf') : ''}`,
         ),
       ];
     },
@@ -391,7 +392,7 @@ export const COMMANDS: Record<string, Command> = {
           const purse = shopPurse(s.world, sh, day);
           const money =
             SHOP_KIND_INFO[sh.kind].money === 'silver' ? `${purse} taels` : priceWords(purse);
-          return `  ${sid}: purse ${money}, ${shopLots(s.world, sh, day)} lots, tiers ${shopTiers(sh).join(', ')}`;
+          return `  ${sh.door.split('/').at(-1)} · ${sid}: ${sh.name}, purse ${money}, ${shopLots(s.world, sh, day)} display lots, tiers ${shopTiers(sh).join(', ')}`;
         }),
         `  copies made here: ${
           Object.keys(s.world.copied[m.id] ?? {})

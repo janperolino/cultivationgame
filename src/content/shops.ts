@@ -1,10 +1,9 @@
 // Shops (design § World bible, Stones, silver and shops in play; § Items and gear, Loot and
 // shops): the kinds of shop, what each stocks and buys, its bias on the shared rarity table, its
-// purse, and the Border Wilds' shops where they stand. A shop's stock comes from the catalogs of
-// its place, its region, its continent and the imports along their ties (content/catalogs/),
-// weighted by the layer weights below. Stock and money are kept per shop, so M6's markets by reach
-// and standing orders grow from these. P3.6 stands them in its towns. Every number is a starting
-// value; M6 tunes them.
+// purse, the Border Wilds' written shops, and since E5 the districts a market keeps them in (city →
+// district → shop: the stock lives in the market and a shop is a window onto it). A shop's display
+// lots come from the catalogs of its place, its region, its continent and the imports along their
+// ties (content/catalogs/), weighted by the layer weights below. Every number is a starting value.
 import type { Population } from './atlas/schema.ts';
 import type { Layer } from './catalogs/types.ts';
 import type { ItemKind } from './items.ts';
@@ -14,8 +13,10 @@ export const SHOP_KINDS = [
   'stall',
   'alchemy',
   'refiner',
+  'talisman',
+  'parts',
   'sect',
-  'guild',
+  'house',
   'black-market',
   'bounty',
   'mortal',
@@ -36,9 +37,8 @@ export interface ShopKindInfo {
   buys: readonly Ware[];
   buyRate: number;
   /**
-   * Its purse a month at tier 1 and ordinary, in its own money: what it can pay out buying from
-   * you. A shop's own is this times the realm curve at its top tier and its prosperity's purse
-   * (core/markets.ts `shopPurse`).
+   * The least it can pay out a month at an ordinary place, in its own money, times prosperity's
+   * purse; above that its purse is its share of its market's money (core/markets.ts `shopPurse`).
    */
   purse: number;
   money: 'stones' | 'silver';
@@ -110,6 +110,32 @@ export const SHOP_KIND_INFO: Record<ShopKind, ShopKindInfo> = {
     recognizes: true,
     repairs: true,
   },
+  talisman: {
+    name: 'talisman shop',
+    hanzi: '符铺',
+    bias: 1,
+    lots: 6,
+    buys: ['talisman', 'material'],
+    buyRate: 0.4,
+    purse: 150,
+    money: 'stones',
+    markup: 1,
+    layers: BY_PLACE,
+    recognizes: true,
+  },
+  parts: {
+    name: 'part dealer',
+    hanzi: '兽材行',
+    bias: 1,
+    lots: 6,
+    buys: ['beast-part', 'material'],
+    buyRate: 0.4,
+    purse: 1500,
+    money: 'stones',
+    markup: 1,
+    layers: BY_PLACE,
+    recognizes: true,
+  },
   sect: {
     name: 'sect shop',
     hanzi: '宗门坊',
@@ -124,17 +150,18 @@ export const SHOP_KIND_INFO: Record<ShopKind, ShopKindInfo> = {
     recognizes: true,
     members: true,
   },
-  guild: {
-    name: 'merchant guild',
-    hanzi: '商会',
+  // A big general firm (E5: the guild kind, renamed; a door named for its owner or its family).
+  house: {
+    name: 'trading house',
+    hanzi: '商行',
     bias: 1,
-    lots: 16,
+    lots: 8,
     buys: ['pill', 'talisman', 'herb', 'beast-part', 'material', 'gear', 'treasure', 'copy'],
     buyRate: 0.4,
     purse: 8000,
     money: 'stones',
     markup: 1,
-    // A guild carries goods from region to region, so its imports count double.
+    // A trading house carries goods from region to region, so its imports count double.
     layers: { place: 40, region: 25, continent: 15, import: 20 },
     recognizes: true,
   },
@@ -210,18 +237,32 @@ export interface Shop {
   /** The power that owns it: whose stolen goods it knows, whose members a sect shop serves. */
   power: string | null;
   name: string;
+  /**
+   * The door it stands behind (E5): its district, `<market>/<kind>`, or itself for a door of one
+   * (a trading house, the bounty office, a black market, a sect's hall).
+   */
+  door: string;
+  /** Its weight in its district's stock and purse: a shop 1, a notable shop 3, the small shops their count. */
+  weight: number;
+  /** The small shops: one counter for the rest of a district. */
+  small?: boolean;
+  /** The keeper a shop is named for (Old Liu), if any. */
+  keeper?: string;
 }
+
+/** A shop as written: where it stands, its owner and its name; its door and weight are worked out. */
+type WrittenShop = Omit<Shop, 'door' | 'weight' | 'small' | 'keeper'>;
 
 /**
  * The Border Wilds' written shops: the ones with a keeper or a power of their own; each market's
- * people open the rest (`SHOPS_BY_PEOPLE`). The City's merchant guild hall is the Qian Clan's, who
+ * people open the rest (`STREETS`, `FIRMS`). The City's trading hall is the Qian Clan's, who
  * take a cut of every core that leaves the region (E2). Where a Core Formation cultivator lives on
  * a tier 3 vein or better, the shops stock tier 3 too, rarely (core/markets.ts `shopTiers`,
  * `tierLean`; E2's talk).
  */
 const BW = { region: 'qm-bianhuang', continent: 'qiming' } as const;
 
-const WRITTEN: readonly Shop[] = [
+const WRITTEN: readonly WrittenShop[] = [
   {
     id: 'mouth-stall',
     kind: 'stall',
@@ -248,11 +289,11 @@ const WRITTEN: readonly Shop[] = [
   },
   {
     id: 'mouth-guild',
-    kind: 'guild',
+    kind: 'house',
     at: 'qm-shoukou-cheng',
     ...BW,
     power: 'qm-qian-shi',
-    name: 'the merchant guild hall',
+    name: 'the Qian Clan’s trading hall',
   },
   {
     id: 'mouth-bounty',
@@ -352,7 +393,7 @@ const WRITTEN: readonly Shop[] = [
   },
   {
     id: 'herders-guild',
-    kind: 'guild',
+    kind: 'house',
     at: 'qm-muling-guo',
     ...BW,
     power: null,
@@ -386,7 +427,7 @@ const WRITTEN: readonly Shop[] = [
   },
   {
     id: 'bend-guild',
-    kind: 'guild',
+    kind: 'house',
     at: 'qm-hewan-cheng',
     ...BW,
     power: 'qm-qian-shi',
@@ -418,7 +459,7 @@ const WRITTEN: readonly Shop[] = [
   },
   {
     id: 'paddocks-guild',
-    kind: 'guild',
+    kind: 'house',
     at: 'qm-qianlan-cheng',
     ...BW,
     power: null,
@@ -466,7 +507,7 @@ const WRITTEN: readonly Shop[] = [
   },
   {
     id: 'ebb-guild',
-    kind: 'guild',
+    kind: 'house',
     at: 'qm-tuichao-gang',
     ...BW,
     power: null,
@@ -538,70 +579,184 @@ const WRITTEN: readonly Shop[] = [
   },
 ];
 
-// ── Shops by people ───────────────────────────────────────────────────────────────────────────
+// ── Districts and shops ───────────────────────────────────────────────────────────────────────
 
-/** A rule for how many shops of a kind a market keeps: one each `per` of its people, from `from`. */
-export interface ShopsByPeople {
+/**
+ * A district (E5, design § Economy, Districts and shops): a street of a market named by what it
+ * sells, with as many shops as its people keep, three of them notable and the rest one counter.
+ */
+export interface Street {
+  name: string;
+  hanzi: string;
+  /** What it sells: Bag kinds (and `copy`), and tags that claim a thing whatever its kind. */
+  wares: readonly Ware[];
+  tags: readonly string[];
+  /** It opens from this many of its people: cultivators, or mortals for the grain and cloth market. */
   of: 'cultivators' | 'mortals';
-  per: number;
   from: number;
-  max: number;
+  /** One shop each so many of them: how many it really has, for a scene to seed. */
+  per: number;
+  /** Its notable shops' names: `{K}` the keeper (Old Liu), `{S}` the keeper's surname. */
+  names: readonly string[];
+  /** What its keepers are called before their surname. */
+  titles: readonly string[];
+  /** What its door says it sells. */
+  sells: string;
 }
 
 /**
- * How many shops of each kind a market keeps by who lives there (E2.2, Jan's call: a place with a
- * lot of people has a lot of shops): one for each `per` of its cultivators (a mortal shop, of its
- * mortals), rounded and never under one, from `from` of them up, at most `max`. Its written shops
- * count toward these and the rest open under the names below, so the City of 8 million keeps five
- * stalls where a village of a hundred cultivators keeps one. A sect's hall and a black market are
- * written only: who keeps one is a power's business, not a crowd's.
+ * The districts a market keeps, by its people (E5). A ware with no district of its own at a market
+ * falls to the free market, so Pacified Fort's talismans sell on stalls and the City's in Talisman
+ * Lane. A power's seat keeps only its written shops.
  */
-export const SHOPS_BY_PEOPLE: Partial<Record<ShopKind, ShopsByPeople>> = {
-  stall: { of: 'cultivators', per: 1000, from: 100, max: 5 },
-  alchemy: { of: 'cultivators', per: 2500, from: 500, max: 3 },
-  refiner: { of: 'cultivators', per: 2500, from: 500, max: 3 },
-  guild: { of: 'cultivators', per: 5000, from: 1000, max: 2 },
-  bounty: { of: 'cultivators', per: 10_000, from: 1000, max: 1 },
-  mortal: { of: 'mortals', per: 2_000_000, from: 100_000, max: 3 },
+export const STREETS: Partial<Record<ShopKind, Street>> = {
+  stall: {
+    name: 'the free market',
+    hanzi: '散市',
+    wares: ['copy', 'mount'],
+    tags: ['grain'],
+    of: 'cultivators',
+    from: 100,
+    per: 25,
+    names: ['{K}’s mat', '{K}’s stall', 'the {S} brothers’ stall'],
+    titles: ['Old', 'Granny', 'Third Brother', 'Auntie', 'Young'],
+    sells: 'copies and odd lots',
+  },
+  alchemy: {
+    name: 'Pill Street',
+    hanzi: '丹街',
+    wares: ['pill', 'herb', 'material'],
+    tags: [],
+    of: 'cultivators',
+    from: 500,
+    per: 200,
+    names: ['{K}’s furnace house', 'the {S} family pill shop', '{K}’s herb hall'],
+    titles: ['Old', 'Widow', 'Elder Brother', 'Auntie'],
+    sells: 'pills and herbs',
+  },
+  refiner: {
+    name: 'Refiners’ Row',
+    hanzi: '器街',
+    wares: ['gear', 'treasure'],
+    tags: ['ore'],
+    of: 'cultivators',
+    from: 500,
+    per: 200,
+    names: ['{K}’s refinery', 'the {S} artifact hall', '{K}’s quench house'],
+    titles: ['Master'],
+    sells: 'gear and mending',
+  },
+  talisman: {
+    name: 'Talisman Lane',
+    hanzi: '符巷',
+    wares: ['talisman'],
+    tags: ['ink'],
+    of: 'cultivators',
+    from: 2500,
+    per: 400,
+    names: ['{K}’s talisman shop', 'the {S} ink house'],
+    titles: ['Old', 'Master', 'Widow'],
+    sells: 'talismans and ink',
+  },
+  parts: {
+    name: 'the beast-part market',
+    hanzi: '兽市',
+    wares: ['beast-part'],
+    tags: ['hide', 'horn'],
+    of: 'cultivators',
+    from: 2500,
+    per: 400,
+    names: ['the {S} bone-and-hide house', '{K}’s hide stall'],
+    titles: ['Old', 'Big', 'Butcher'],
+    sells: 'beast parts and hides',
+  },
+  mortal: {
+    name: 'the grain and cloth market',
+    hanzi: '粮布市',
+    wares: [],
+    tags: [],
+    of: 'mortals',
+    from: 100_000,
+    per: 50_000,
+    names: ['the {S} grain store', '{K}’s salt-and-oil shop', 'the {S} cloth shop'],
+    titles: ['Old', 'Widow', 'Auntie'],
+    sells: 'mortal goods, in silver',
+  },
 };
 
-/** The names a market's shops by people open under, taken in turn from a place in the list. */
-export const SHOP_NAMES: Partial<Record<ShopKind, readonly string[]>> = {
-  stall: [
-    'a pill stall in the morning market',
-    'a talisman stall by the gate',
-    'a herb stall in the side lanes',
-    'a stall in the covered arcade',
-    'a stall at the crossroads',
-    'a stall at the temple fair',
-    'a stall on the lantern street',
-    'a stall by the caravan yard',
-  ],
-  alchemy: [
-    'an alchemy shop under a green banner',
-    'a family alchemy shop off the main street',
-    'an alchemy shop by the herb market',
-    'a furnace house behind the temple',
-  ],
-  refiner: [
-    'a refiner by the quench pools',
-    'a refiner of secondhand gear',
-    'a refiner in the back lanes',
-    'a refiner who works to order',
-  ],
-  guild: ['a merchant guild branch', 'a trading house by the warehouses'],
-  bounty: ['the bounty office'],
-  mortal: [
-    'a rice merchant',
-    'a salt-and-oil shop',
-    'a dry-goods store',
-    'a cloth-and-sundries store',
-    'a grain store by the gate',
-  ],
+/**
+ * Which district claims a thing first: a mortal good the grain and cloth market, then a tag
+ * (ink, ore, hide or horn, grain), then its kind. Anything no district claims is the free market's.
+ */
+export const STREET_ORDER: readonly ShopKind[] = [
+  'mortal',
+  'talisman',
+  'refiner',
+  'parts',
+  'stall',
+  'alchemy',
+];
+
+/**
+ * A firm is a door of its own: a trading house each 5,000 cultivators from 1,000 (two at most), the
+ * bounty office from 1,000.
+ */
+export const FIRMS: Partial<Record<ShopKind, { per: number; from: number; max: number }>> = {
+  house: { per: 5000, from: 1000, max: 2 },
+  bounty: { per: Infinity, from: 1000, max: 1 },
 };
+
+/**
+ * Each door's share of its market's stone money (E5): what passes through its shops, a missing
+ * district's going to the free market, and all of it shared out among the doors there. A sect's
+ * hall stands alone at its seat, and the grain and cloth market has the mortals' money to itself.
+ */
+export const DOOR_SHARE: Record<ShopKind, number> = {
+  stall: 0.05,
+  alchemy: 0.2,
+  refiner: 0.15,
+  talisman: 0.05,
+  parts: 0.05,
+  house: 0.2,
+  bounty: 0.3,
+  'black-market': 0.1,
+  sect: 1,
+  mortal: 1,
+};
+
+/** A district lists at most three notable shops, each weighing three of the small ones. */
+export const NOTABLE = { most: 3, weight: 3 } as const;
+
+/** The surnames keepers are named by: none a power's (no Qian). */
+export const KEEPER_SURNAMES = [
+  'Liu',
+  'Hu',
+  'Zhou',
+  'Gu',
+  'Wen',
+  'Fang',
+  'Lin',
+  'Xu',
+  'Song',
+  'Pan',
+  'Yan',
+  'Cao',
+  'Dong',
+  'Jiang',
+  'Luo',
+  'Meng',
+  'Tang',
+  'Xie',
+  'Yao',
+  'Bai',
+  'Ma',
+  'Guo',
+  'Du',
+  'Gao',
+] as const;
 
 /** A market's head count of one sort: its mortals, or its cultivators of every realm. */
-export function headcount(pop: Population, of: ShopsByPeople['of']): number {
+export function headcount(pop: Population, of: Street['of']): number {
   if (of === 'mortals') return pop.mortals ?? 0;
   return (
     (pop.qi ?? 0) +
@@ -613,13 +768,22 @@ export function headcount(pop: Population, of: ShopsByPeople['of']): number {
   );
 }
 
-/** How many shops of a kind a market of these people keeps (`SHOPS_BY_PEOPLE`). */
-export function shopsWanted(pop: Population, kind: ShopKind): number {
-  const rule = SHOPS_BY_PEOPLE[kind];
-  if (!rule) return 0;
-  const n = headcount(pop, rule.of);
-  if (n < rule.from) return 0;
-  return Math.min(rule.max, Math.max(1, Math.round(n / rule.per)));
+/** How many shops a district of these people really has, from its threshold up; none below it. */
+export function streetCount(pop: Population, kind: ShopKind): number {
+  const st = STREETS[kind];
+  if (!st) return 0;
+  const n = headcount(pop, st.of);
+  if (n < st.from) return 0;
+  return Math.max(1, Math.round(n / st.per));
+}
+
+/** How many of a firm a market of these people keeps. */
+export function firmCount(pop: Population, kind: ShopKind): number {
+  const f = FIRMS[kind];
+  if (!f) return 0;
+  const n = headcount(pop, 'cultivators');
+  if (n < f.from) return 0;
+  return Math.min(f.max, Math.max(1, Math.round(n / f.per)));
 }
 
 /** A place that keeps a market: a written town, or an atlas city or seat with shops of its own. */
@@ -676,56 +840,124 @@ function spot(text: string, n: number): number {
   return h % n;
 }
 
-/** The shops a seat's people open beyond its written ones: `pacified-fort.stall-2`, and so on. */
-function grown(seat: Seat): Shop[] {
-  if (!seat.grows) return [];
-  const out: Shop[] = [];
-  const used = new Set(seat.written.map((id) => writtenById.get(id)?.name));
+/** A door in a market: a district and its shops, or a firm, a hall or the office alone. */
+export interface Door {
+  id: string;
+  kind: ShopKind;
+  name: string;
+  /** Its shops, the notable ones first and the small shops last. */
+  shops: readonly string[];
+  /** How many shops it really has. */
+  count: number;
+}
+
+/** A notable shop's name and keeper, seeded by its id, with a surname nobody else here has. */
+function named(id: string, kind: ShopKind, used: Set<string>): { name: string; keeper: string } {
+  const st = STREETS[kind];
+  let i = spot(id, KEEPER_SURNAMES.length);
+  for (let tries = 0; used.has(KEEPER_SURNAMES[i]!) && tries < KEEPER_SURNAMES.length; tries++)
+    i = (i + 1) % KEEPER_SURNAMES.length;
+  const surname = KEEPER_SURNAMES[i]!;
+  used.add(surname);
+  if (!st) return { name: `the ${surname} trading house`, keeper: `Master ${surname}` };
+  const keeper = `${st.titles[spot(`${id}/title`, st.titles.length)]!} ${surname}`;
+  const form = st.names[spot(`${id}/name`, st.names.length)]!;
+  return { name: form.replace('{K}', keeper).replace('{S}', surname), keeper };
+}
+
+/** A seat's doors and every shop behind them: the written ones, then those its people keep. */
+function open(seat: Seat): { doors: Door[]; shops: Shop[] } {
+  const doors: Door[] = [];
+  const shops: Shop[] = [];
+  const where = { at: seat.at, region: seat.region, continent: seat.continent };
+  const used = new Set<string>();
+  const written = (kind: ShopKind) =>
+    seat.written.map((id) => writtenById.get(id)!).filter((w) => w.kind === kind);
   for (const kind of SHOP_KINDS) {
-    const have = seat.written.filter((id) => writtenById.get(id)?.kind === kind).length;
-    const names = SHOP_NAMES[kind] ?? [];
-    const start = spot(seat.id, Math.max(1, names.length));
-    let j = 0;
-    const next = () => names[(start + j++) % names.length]!;
-    for (let k = have + 1; k <= shopsWanted(seat.people, kind); k++) {
-      let name = next();
-      for (let tries = 1; used.has(name) && tries < names.length; tries++) name = next();
-      used.add(name);
-      out.push({
-        id: `${seat.id}.${kind}-${k}`,
-        kind,
-        at: seat.at,
-        region: seat.region,
-        continent: seat.continent,
-        power: null,
-        name,
-      });
+    const mine = written(kind);
+    const st = STREETS[kind];
+    if (st) {
+      const count = Math.max(mine.length, seat.grows ? streetCount(seat.people, kind) : 0);
+      if (count === 0) continue;
+      const door = `${seat.id}/${kind}`;
+      const listed: Shop[] = mine.map((w) => ({ ...w, door, weight: NOTABLE.weight }));
+      for (let k = listed.length + 1; k <= Math.min(NOTABLE.most, count); k++) {
+        const id = `${seat.id}.${kind}-${k}`;
+        listed.push({
+          id,
+          kind,
+          ...where,
+          power: null,
+          door,
+          weight: NOTABLE.weight,
+          ...named(id, kind, used),
+        });
+      }
+      // Three or fewer it lists whole, each a shop of one.
+      if (count <= listed.length) for (const x of listed) x.weight = 1;
+      else
+        listed.push({
+          id: `${seat.id}.${kind}-small`,
+          kind,
+          ...where,
+          power: null,
+          name: `the small shops of ${st.name}`,
+          door,
+          weight: count - listed.length,
+          small: true,
+        });
+      shops.push(...listed);
+      doors.push({ id: door, kind, name: st.name, shops: listed.map((x) => x.id), count });
+      continue;
+    }
+    const firms: Shop[] = mine.map((w) => ({ ...w, door: w.id, weight: 1 }));
+    const want = seat.grows ? firmCount(seat.people, kind) : 0;
+    for (let k = firms.length + 1; k <= want; k++) {
+      const id = `${seat.id}.${kind}-${k}`;
+      const name = kind === 'bounty' ? { name: 'the bounty office' } : named(id, kind, used);
+      firms.push({ id, kind, ...where, power: null, door: id, weight: 1, ...name });
+    }
+    for (const f of firms) {
+      shops.push(f);
+      doors.push({ id: f.id, kind, name: f.name, shops: [f.id], count: 1 });
     }
   }
-  return out;
+  return { doors, shops };
 }
 
 const SEATS = seats();
 const shopsAtSeat = new Map<string, string[]>();
+const doorsAtSeat = new Map<string, Door[]>();
 const marketOf = new Map<string, string>();
-const all: Shop[] = [...WRITTEN];
+const all: Shop[] = [];
 for (const seat of SEATS) {
-  const more = grown(seat);
-  all.push(...more);
-  // Grouped by kind, the written one first: the City's five stalls stand together.
-  const rank = (id: string) =>
-    SHOP_KINDS.indexOf((writtenById.get(id) ?? more.find((x) => x.id === id))!.kind);
-  const ids = [...seat.written, ...more.map((s) => s.id)].sort((x, y) => rank(x) - rank(y));
-  shopsAtSeat.set(seat.id, ids);
-  for (const id of ids) marketOf.set(id, seat.id);
+  const { doors, shops } = open(seat);
+  all.push(...shops);
+  doorsAtSeat.set(seat.id, doors);
+  shopsAtSeat.set(
+    seat.id,
+    shops.map((s) => s.id),
+  );
+  for (const s of shops) marketOf.set(s.id, seat.id);
 }
 
-/** Every shop: the written ones, then those each market's people open (`SHOPS_BY_PEOPLE`). */
+/** Every shop: the written ones and those each market's people keep, by door. */
 export const SHOPS: readonly Shop[] = all;
 
-/** The shops that stand at a written town or an atlas place, by kind, the written ones first. */
+/** The shops that stand at a written town or an atlas place, by door. */
 export function shopsAt(id: string): readonly string[] {
   return shopsAtSeat.get(id) ?? [];
+}
+
+/** The doors of a written town's or an atlas place's market: its districts and firms (E5). */
+export function doorsAt(id: string): readonly Door[] {
+  return doorsAtSeat.get(id) ?? [];
+}
+
+/** The door a shop stands behind. */
+export function doorOf(shopId: string): Door | undefined {
+  const seat = marketOf.get(shopId);
+  return seat ? doorsAt(seat).find((d) => d.shops.includes(shopId)) : undefined;
 }
 
 /** The written town or atlas place a shop stands at. */
@@ -745,6 +977,20 @@ export function shopPeople(sh: { id: string; at: string }): Population {
 }
 
 const byId = new Map(SHOPS.map((s) => [s.id, s]));
+
+/**
+ * What the world calls a shop's keeper (E5): the keeper a shop is named for (Old Liu), else its
+ * kind's ("the alchemy shop's keeper"), or a shopkeeper on the street for the small shops.
+ */
+export function keeperName(sh: Shop): string {
+  if (sh.keeper) return sh.keeper;
+  if (sh.small) return `a shopkeeper on ${STREETS[sh.kind]?.name ?? 'the street'}`;
+  return `the ${SHOP_KIND_INFO[sh.kind].name}'s keeper`;
+}
+
+export function hasShop(id: string): boolean {
+  return byId.has(id);
+}
 
 export function shop(id: string): Shop {
   const s = byId.get(id);

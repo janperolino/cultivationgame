@@ -261,19 +261,19 @@ export const SPIRIT_HERDERS: Catalog = {
   lots: [
     // Staples (E3)
     // Horn and wool from any steppe (E4's land tags, for Jan's review).
-    { thing: 'thunderhorn', shops: ['stall', 'guild'], count: [20, 20], land: ['steppe'] },
+    { thing: 'thunderhorn', shops: ['stall', 'house'], count: [20, 20], land: ['steppe'] },
     { thing: 'cloud-goat-wool', shops: ['mortal'], count: [20, 20], land: ['steppe'] },
-    { thing: 'scale-horse', shops: ['guild'], weight: 0.4 },
-    { thing: 'horn-head-lance', shops: ['stall', 'guild'] },
-    { thing: 'deer-horn-whistle', shops: ['guild', 'stall'], weight: 0.5 },
-    { thing: 'antler-velvet-pill', shops: ['stall', 'guild'], count: [1, 4] },
-    { thing: 'storm-call-talisman', shops: ['stall', 'guild'], count: [1, 3] },
+    { thing: 'scale-horse', shops: ['house'], weight: 0.4 },
+    { thing: 'horn-head-lance', shops: ['stall', 'house'] },
+    { thing: 'deer-horn-whistle', shops: ['house', 'stall'], weight: 0.5 },
+    { thing: 'antler-velvet-pill', shops: ['stall', 'house'], count: [1, 4] },
+    { thing: 'storm-call-talisman', shops: ['stall', 'house'], count: [1, 3] },
     { thing: 'thunderhead-clover', shops: ['stall'], count: [2, 6] },
-    { thing: 'storm-peach-stone', shops: ['stall', 'guild'], weight: 0.5 },
+    { thing: 'storm-peach-stone', shops: ['stall', 'house'], weight: 0.5 },
     { thing: 'dried-deer-meat', shops: ['mortal'], count: [2, 8] },
     { thing: 'felt-saddle-blanket', shops: ['mortal'] },
-    { thing: 'method:open-plain-wind-breathing', shops: ['guild'], weight: 0.5 },
-    { thing: 'technique:thunder-deer-charge', shops: ['guild', 'stall'], weight: 0.5 },
+    { thing: 'method:open-plain-wind-breathing', shops: ['house'], weight: 0.5 },
+    { thing: 'technique:thunder-deer-charge', shops: ['house', 'stall'], weight: 0.5 },
     { thing: 'technique:gale-ride-lance', shops: [], weight: 0.2 },
   ],
 };
