@@ -33,7 +33,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 33;
+export const SAVE_VERSION = 34;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -939,6 +939,14 @@ const migrations: Record<number, (old: Raw) => Raw> = {
   // stone part drunk as a fraction. The whole counts saved before read the same, so only the
   // version moves.
   32: (old) => ({ ...old, version: 33 }),
+
+  // v33, E2: markets keep what was done to them. v34 adds the world's prosperity offsets and each
+  // market's supplies, none moved yet.
+  33: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const world = { ...((s.world ?? {}) as Raw), prosperity: {}, supply: {} };
+    return { ...old, version: 34, state: { ...s, world } };
+  },
 };
 
 /** The City of the Guarded Mouth before and after it moved to the coast (v30). */

@@ -283,6 +283,12 @@ const baseFields = {
    * never written: `atlas:build` takes its strongest place's.
    */
   vein: z.number().int().min(0).max(9).optional(),
+  /**
+   * How well-off it is from trade and war, 1 (ruined) to 9 (golden), on a place or a power; one
+   * without it takes its nearest ancestor's, ordinary (5) when none is written (design § Economy,
+   * Prosperity). The vein says how high its market reaches, prosperity how full it is.
+   */
+  prosperity: z.number().int().min(1).max(9).optional(),
   /** About how many live there: mortals, and cultivators by realm. */
   population: populationSchema.optional(),
   /** Li across, or li long for a wall, a road or a river work. */
@@ -309,6 +315,7 @@ function entryRules(
     access?: Access;
     features?: unknown;
     vein?: unknown;
+    prosperity?: unknown;
     population?: unknown;
     size?: unknown;
     fromAbove?: unknown;
@@ -327,6 +334,7 @@ function entryRules(
       'access',
       'features',
       'vein',
+      'prosperity',
       'population',
       'size',
       'fromAbove',

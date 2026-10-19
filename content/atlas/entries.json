@@ -13192,7 +13192,7 @@
  },
  {
   "id": "qm-anbian-fu",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -13271,6 +13271,7 @@
   "truth": "Lady Gongsun Wei, the general's widow, has been trading cores and captives to Shared Roost City to buy the weapons the capital stopped sending.",
   "way": "",
   "vein": 2,
+  "prosperity": 4,
   "population": {
    "mortals": 44000000,
    "qi": 12000,
@@ -13599,7 +13600,7 @@
   ]
  },
  {
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "边荒",
   "id": "qm-bianhuang",
@@ -13633,6 +13634,7 @@
   "top": "Nascent Soul (the City's commander, the Beast-Butcher Gate's master and the Stone Forest's python)",
   "truth": "The Beast Court is not sending the raids. Old beasts are waking in the Vast Wilds Continent's mountains and driving the young ones north across the strait.",
   "way": "",
+  "prosperity": 3,
   "population": {
    "mortals": 110000000,
    "qi": 50000,
@@ -13890,7 +13892,7 @@
  },
  {
   "id": "qm-chaonan",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "潮南",
   "kind": "region",
@@ -13915,6 +13917,7 @@
   "truth": "The fleet's commander is Prince Rui's man. If the succession comes to war, the southern fleet will decide who controls the sea road to the frontier.",
   "way": "",
   "qiDensity": 4,
+  "prosperity": 7,
   "population": {
    "mortals": 5000000000,
    "qi": 2000000,
@@ -14171,7 +14174,7 @@
  },
  {
   "id": "qm-chiyan",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "赤岩",
   "kind": "region",
@@ -14196,6 +14199,7 @@
   "truth": "The new vein is not natural. It is the core of an Ascent Age fire array waking with the tide, and the whole range is its wall.",
   "way": "",
   "qiDensity": 5,
+  "prosperity": 6,
   "population": {
    "mortals": 1500000000,
    "qi": 750000,
@@ -14544,7 +14548,7 @@
  },
  {
   "id": "qm-dongyu",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "东隅",
   "kind": "region",
@@ -14569,6 +14573,7 @@
   "truth": "The Dawn League has been offered help by the Night Banquet. The price is the passes, and the League's elder council is about to say yes.",
   "way": "",
   "qiDensity": 4,
+  "prosperity": 4,
   "population": {
    "mortals": 3000000000,
    "qi": 1200000,
@@ -14670,7 +14675,7 @@
  },
  {
   "id": "qm-duigu-qiang",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -14732,6 +14737,7 @@
   "top": "Core Formation",
   "truth": "",
   "way": "",
+  "prosperity": 3,
   "population": {
    "mortals": 200000,
    "qi": 1500,
@@ -14971,7 +14977,7 @@
  },
  {
   "id": "qm-fengxia",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "峰下",
   "kind": "region",
@@ -14996,6 +15002,7 @@
   "truth": "The Clear Heaven Sword Sect has quietly doubled its recruiting since its founder fell silent. The sect masters want more swords before anyone tests them.",
   "way": "",
   "qiDensity": 6,
+  "prosperity": 4,
   "population": {
    "mortals": 8000000000,
    "qi": 5300000,
@@ -15353,7 +15360,7 @@
  },
  {
   "id": "qm-gucang",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "谷仓",
   "kind": "region",
@@ -15378,6 +15385,7 @@
   "truth": "The thinning spreads south from the Jing Capital along the old vein courses. The Granary's soil is fine; the qi under it is being pulled north.",
   "way": "",
   "qiDensity": 5,
+  "prosperity": 4,
   "population": {
    "mortals": 12000000000,
    "qi": 6000000,
@@ -16313,7 +16321,7 @@
  },
  {
   "id": "qm-huangji",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "皇畿",
   "kind": "region",
@@ -16339,6 +16347,7 @@
   "truth": "The dead fields form rings around the Jing Capital that match the palace array's draw. Court astrologers who noticed were posted to the frontier; two never arrived.",
   "way": "",
   "qiDensity": 7,
+  "prosperity": 7,
   "population": {
    "mortals": 20000000000,
    "qi": 20000000,
@@ -16841,7 +16850,7 @@
  },
  {
   "id": "qm-jianyu",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "剑域",
   "kind": "region",
@@ -16866,6 +16875,7 @@
   "truth": "The main peak's sword hum, which every disciple hears in meditation, faded two hundred years ago. The elders replaced it with an array that imitates it.",
   "way": "",
   "qiDensity": 8,
+  "prosperity": 6,
   "population": {
    "mortals": 4000000000,
    "qi": 5700000,
@@ -18010,7 +18020,7 @@
  },
  {
   "id": "qm-leiya",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "雷崖",
   "kind": "region",
@@ -18035,6 +18045,7 @@
   "truth": "The storms have doubled in ten years. Something far out toward the Rim is drawing them, and the lightning sect's elders have felt it calling.",
   "way": "",
   "qiDensity": 5,
+  "prosperity": 5,
   "population": {
    "mortals": 1500000000,
    "qi": 750000,
@@ -18847,7 +18858,7 @@
  },
  {
   "id": "qm-mozhao",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "墨沼",
   "kind": "region",
@@ -18872,6 +18883,7 @@
   "truth": "The marsh grows wherever the Banquet Master's aura settles. That cultivation has outgrown Nascent Soul, and the land is the first thing that cannot hide it.",
   "way": "",
   "qiDensity": 5,
+  "prosperity": 5,
   "population": {
    "mortals": 2000000000,
    "qi": 1000000,
@@ -18899,7 +18911,7 @@
  },
  {
   "id": "qm-muling-guo",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -18985,6 +18997,7 @@
   "truth": "The kingdom's best stallion bloodline comes from a beast that wandered over the strait on its own and asked to stay. It speaks, though it has never shown a realm that should allow it, and has asked them to keep that quiet.",
   "way": "",
   "vein": 2,
+  "prosperity": 4,
   "population": {
    "mortals": 32000000,
    "qi": 10000,
@@ -19722,7 +19735,7 @@
  },
  {
   "id": "qm-shiyan-guo",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -19798,6 +19811,7 @@
   "truth": "",
   "way": "",
   "vein": 1,
+  "prosperity": 3,
   "population": {
    "mortals": 13000000,
    "qi": 4000,
@@ -19808,7 +19822,7 @@
  },
  {
   "id": "qm-shoukou-cheng",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -19890,6 +19904,7 @@
   "truth": "",
   "way": "",
   "vein": 4,
+  "prosperity": 5,
   "population": {
    "mortals": 8000000,
    "qi": 5000,
@@ -20046,7 +20061,7 @@
  },
  {
   "id": "qm-shuofeng",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "朔风",
   "kind": "region",
@@ -20071,6 +20086,7 @@
   "truth": "The ghosts on the battlefield have started marching in formation toward the coast every Ghost Month, as if called to a wall.",
   "way": "",
   "qiDensity": 4,
+  "prosperity": 3,
   "population": {
    "mortals": 2000000000,
    "qi": 800000,
@@ -20726,7 +20742,7 @@
    ],
    "array": "core-formation"
   },
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -20829,6 +20845,7 @@
   "truth": "The sect's Nascent Soul master killed a young Beast Court prince fifty years ago. The prince's mother has finally woken from seclusion.",
   "way": "orthodox",
   "vein": 4,
+  "prosperity": 5,
   "population": {
    "mortals": 20000,
    "qi": 3000,
@@ -20841,7 +20858,7 @@
  },
  {
   "id": "qm-wangti",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "望梯",
   "kind": "region",
@@ -20866,6 +20883,7 @@
   "truth": "Those who sit on the beach long enough start to hear the hum as a song. Some fishing villages have been singing along for a year.",
   "way": "",
   "qiDensity": 6,
+  "prosperity": 6,
   "population": {
    "mortals": 9000000000,
    "qi": 6000000,
@@ -22028,7 +22046,7 @@
  },
  {
   "id": "qm-yaoling",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "药岭",
   "kind": "region",
@@ -22053,6 +22071,7 @@
   "truth": "The blight the Apricot Grove Valley seeds in rival gardens has started jumping to its own tenants' fields, and the valley's healers cannot cure what their elders made.",
   "way": "",
   "qiDensity": 7,
+  "prosperity": 6,
   "population": {
    "mortals": 5000000000,
    "qi": 5000000,
@@ -22067,7 +22086,7 @@
  },
  {
   "id": "qm-yeqiao-hui",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -22166,6 +22185,7 @@
   "truth": "",
   "way": "neutral",
   "vein": 3,
+  "prosperity": 4,
   "population": {
    "qi": 600,
    "foundation": 120,
@@ -22941,7 +22961,7 @@
  },
  {
   "id": "qm-zhupu",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "珠浦",
   "kind": "region",
@@ -22966,6 +22986,7 @@
   "truth": "A jiao of the Azure Wave Palace's court nests its young in a sea cave off this coast. If one is ever taken, the sea clans will come ashore.",
   "way": "",
   "qiDensity": 4,
+  "prosperity": 5,
   "population": {
    "mortals": 2000000000,
    "qi": 800000,
@@ -29895,6 +29916,7 @@
   ],
   "top": "Foundation Establishment (the clan head)",
   "vein": 3,
+  "prosperity": 6,
   "population": {
    "mortals": 5000,
    "qi": 200,
@@ -29908,7 +29930,7 @@
    "sphere": 3000
   },
   "editedBy": "claude",
-  "editedAt": "2026-10-18T12:00:00Z",
+  "editedAt": "2026-10-19T12:00:00Z",
   "ties": [
    {
     "to": "qm-hewan-cheng",

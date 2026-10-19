@@ -195,6 +195,9 @@ export interface ItemProperty {
   unique?: boolean;
 }
 
+/** A thing's market tags: `coveted` is needed everywhere; E3's `trade` marks staples. */
+export type ItemTag = 'coveted' | 'trade';
+
 export interface Item {
   id: string;
   name: string;
@@ -224,6 +227,11 @@ export interface Item {
    * (`variantId`) taking as many of the properties as its rarity grants.
    */
   upTo?: RarityId;
+  /**
+   * What markets make of it (design § Economy, Supply and prices): `coveted` for what raises
+   * talent, aptitude, a root, lifespan or a breakthrough's odds, which every market needs.
+   */
+  tags?: readonly ItemTag[];
   /** Its price in low-grade stones at its own rarity, when not its kind's (content/money.ts). */
   price?: number;
   /** A mortal good's price in silver taels; a mortal shop sells only these. */
@@ -244,6 +252,7 @@ const WRITTEN: readonly Item[] = [
     hanzi: '筑基丹',
     tier: 1,
     rarity: 'white',
+    tags: ['coveted'],
     price: 1000,
     kind: 'pill',
     uses: { offer: { tags: [] } },
@@ -259,6 +268,7 @@ const WRITTEN: readonly Item[] = [
     hanzi: '洗髓丹',
     tier: 1,
     rarity: 'white',
+    tags: ['coveted'],
     price: 1000,
     kind: 'pill',
     uses: { offer: { tags: [] } },
@@ -272,6 +282,7 @@ const WRITTEN: readonly Item[] = [
     hanzi: '凝魂丹',
     tier: 1,
     rarity: 'white',
+    tags: ['coveted'],
     price: 1000,
     kind: 'pill',
     uses: { offer: { tags: [] } },
@@ -285,6 +296,7 @@ const WRITTEN: readonly Item[] = [
     hanzi: '结丹丹',
     tier: 2,
     rarity: 'white',
+    tags: ['coveted'],
     price: 30_000,
     kind: 'pill',
     uses: { offer: { tags: [] } },
@@ -351,6 +363,7 @@ const WRITTEN: readonly Item[] = [
     hanzi: '千年灵参',
     tier: 1,
     rarity: 'gold',
+    tags: ['coveted'],
     element: 'wood',
     kind: 'herb',
     uses: {
@@ -671,7 +684,7 @@ const rarityIds = new Set<RarityId>(RARITY_IDS);
  * Kinds whose tier is the source's: a beast's core and parts take the beast's realm, and a pill or
  * talisman is drawn at its maker's tier.
  */
-const TIERED: readonly ItemKind[] = ['beast-part', 'material', 'pill', 'talisman'];
+export const TIERED: readonly ItemKind[] = ['beast-part', 'material', 'pill', 'talisman'];
 
 /**
  * The id of a written thing at a rarity, a tier or damaged: "shark-tooth-spear~green",

@@ -34,6 +34,16 @@ import {
 } from '../core/map/place.ts';
 import { areaById, placeById, type MapPlace, type RegionMap } from '../core/map/region.ts';
 import { pin, stopHere } from '../core/map/travel.ts';
+import {
+  market,
+  marketOfShop,
+  prosperityOf,
+  prosperityWord,
+  seenFrom,
+  shopPurse,
+  supplyOf,
+  writtenProsperity,
+} from '../core/markets.ts';
 import { gradeCount, priceWords, stonesOf, stonesWords } from '../core/purse.ts';
 import { isMember } from '../core/resolver/names.ts';
 import {
@@ -199,8 +209,14 @@ export function PlaceScreen({
   const open = doors.find((d) => d.id === door && !d.later) ?? null;
   const area = place.area ? areaById(map, place.area) : null;
   const qd = qiAt(map, [place.x, place.y]);
+  // A place's prosperity names its kind: a lean town, a thriving city (design § Economy, Prosperity).
+  const prosperity = prosperityOf(game.world, place.id, game.calendar.day);
+  const usual = writtenProsperity(place.id);
   const line = [
-    kind === 'site' ? place.sub.replace('-', ' ') : info.name,
+    kind === 'site'
+      ? place.sub.replace('-', ' ')
+      : `${prosperityWord(prosperity)} ${info.name}` +
+        (prosperity === usual ? '' : ` (usually ${prosperityWord(usual)})`),
     TERRAIN_NAMES[place.terrain] ?? place.terrain,
     `qi density ${qd}, ${QI_NAMES[qd]}`,
     area?.name,
@@ -427,7 +443,20 @@ function ShopCounter({
   const cost = (p: number) => (silver ? `${Math.round(p * 10) / 10} taels` : priceWords(p));
   const sm = shopMonth(game.world, shopId, game.calendar.day);
   const haggled = sm.haggle?.day === Math.floor(game.calendar.day) ? sm.haggle.off : null;
-  const left = Math.max(0, kinfo.purse - sm.paid);
+  const left = Math.max(0, shopPurse(game.world, sh, game.calendar.day) - sm.paid);
+  const m = marketOfShop(shopId);
+  // Where a lot comes from and how much of it there is (Supply and prices).
+  const origin = (thing: string): string[] => {
+    if (!m) return [];
+    const seen = seenFrom(m, thing);
+    const out: string[] = [];
+    if (seen.source === 'made') out.push('made here');
+    if (seen.source === 'reach' && seen.from)
+      out.push(`from ${market(seen.from)?.name ?? 'nearby'}`);
+    if (seen.source === 'import') out.push('imported');
+    if (supplyOf(game.world, m, thing, game.calendar.day) < 100) out.push('scarce');
+    return out;
+  };
   // A token gets you through a sect's gate; its shop serves members only (core/shops.ts).
   if (kinfo.members && sh.power && !isMember(game.world, game.player.id, sh.power))
     return <p className="place-note">It sells only to its own.</p>;
@@ -509,7 +538,7 @@ function ShopCounter({
                     {w.name}
                     {l.n > 1 ? ` ×${l.n}` : ''}
                   </span>{' '}
-                  <span className="place-sub">· {w.sub}</span>
+                  <span className="place-sub">· {[w.sub, ...origin(l.thing)].join(' · ')}</span>
                 </span>
                 <span className="place-price">{cost(priceToYou(game, shopId, l))}</span>
                 <button
@@ -542,6 +571,7 @@ function ShopCounter({
                   <span>
                     <span className="place-row-name">{w.name}</span>{' '}
                     <span className="place-sub">· you hold {n}</span>
+                    {offer.ok && offer.wanted && <span className="place-good"> · wanted here</span>}
                   </span>
                   <span className="place-price">{offer.ok ? cost(offer.each) : ''}</span>
                   <button
@@ -563,8 +593,10 @@ function ShopCounter({
           </div>
           <p className="place-sub">
             {kinfo.posted
-              ? 'The bounty office buys cores and beast parts at half their price.'
-              : 'They buy at 40% of their own price, 60% once their power favors you.'}
+              ? 'The bounty office buys cores and beast parts at half their price, 80% for what is wanted here.'
+              : sh.kind === 'black-market'
+                ? 'They buy anything at 30% of their own price, and never ask whose it was.'
+                : 'They buy at 40% of their own price (60% once their power favors you), and 80% for what is wanted here.'}
           </p>
         </>
       )}

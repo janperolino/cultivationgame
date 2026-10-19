@@ -57,6 +57,22 @@ import type { GameStore } from '../store.ts';
 import { shop, SHOP_KIND_INFO, SHOPS } from '../../content/shops.ts';
 import { priceWords, purseWords } from '../../core/purse.ts';
 import { buy, haggle, repair, sell, shelf, type ShopResult } from '../../core/shops.ts';
+import {
+  addProsperity,
+  goodName,
+  market,
+  MARKETS,
+  prosperityOf,
+  prosperityWord,
+  reachOf,
+  seenFrom,
+  shopLots,
+  shopPurse,
+  shopTiers,
+  supplyOf,
+  thingOfGood,
+  writtenProsperity,
+} from '../../core/markets.ts';
 
 export type Output = string | string[];
 
@@ -279,6 +295,62 @@ export const COMMANDS: Record<string, Command> = {
         ...shelf(s, id).map(
           (l) => `  ${l.slot}. ${ware(l.thing)} ×${l.n} (${l.thing}): ${cost(l.price)} each`,
         ),
+      ];
+    },
+  },
+  prosper: {
+    usage: 'prosper <place id> [±n]',
+    help: 'Shows a place’s prosperity, or moves it by n; it eases back a step a year.',
+    run([id, n], store) {
+      if (!id) return 'Give a place: a town’s id or an atlas place’s.';
+      const s = needGame(store);
+      const day = s.calendar.day;
+      const words = (w: typeof s.world) => {
+        const p = prosperityOf(w, id, day);
+        const was = writtenProsperity(id);
+        return `${id}: ${prosperityWord(p)} (${p})${p === was ? '' : `, written ${prosperityWord(was)} (${was})`}`;
+      };
+      if (n === undefined) return words(s.world);
+      const v = Number(n);
+      if (!Number.isInteger(v)) return 'Give a whole number, like +2 or -1.';
+      const world = addProsperity(s.world, id, v, day);
+      return apply(store, (g) => ({ ...g, world }), words(world));
+    },
+  },
+  market: {
+    usage: 'market [town or place id]',
+    help: 'Lists the markets; with an id, its prosperity, needs, reach, shops and the supplies moved off their written.',
+    run([id], store) {
+      const s = needGame(store);
+      const day = s.calendar.day;
+      const line = (m: (typeof MARKETS)[number]) =>
+        `${m.id}: ${m.name} (${m.kind}, ${prosperityWord(prosperityOf(s.world, m.id, day))})`;
+      if (!id) return MARKETS.map(line);
+      const m = market(id);
+      if (!m) return `No market ${id}.`;
+      const off = Object.keys(s.world.supply[m.id] ?? {});
+      return [
+        line(m),
+        `  needs: ${m.needs.join(', ') || 'nothing written'}`,
+        `  reaches: ${
+          reachOf(m)
+            .map((o) => o.name)
+            .join(', ') || 'only its own goods'
+        }`,
+        ...m.shops.map((sid) => {
+          const sh = shop(sid);
+          const purse = shopPurse(s.world, sh, day);
+          const money =
+            SHOP_KIND_INFO[sh.kind].money === 'silver' ? `${purse} taels` : priceWords(purse);
+          return `  ${sid}: purse ${money}, ${shopLots(s.world, sh, day)} lots, tiers ${shopTiers(sh).join(', ')}`;
+        }),
+        ...(off.length ? ['  supplies moved:'] : ['  every supply at its written value']),
+        ...off.map((good) => {
+          const thingId = thingOfGood(good);
+          const seen = seenFrom(m, thingId);
+          const now = Math.round(supplyOf(s.world, m, thingId, day));
+          return `    ${goodName(thingId)} (${good}): ${now}%, written ${seen.supply}% (${seen.source})`;
+        }),
       ];
     },
   },

@@ -3,7 +3,7 @@
 // grade (a shop's or a power's its place's vein's, a person's their realm's); a part-drunk stone is
 // kept as a fraction, and the save carries it (v33).
 import { describe, expect, it } from 'vitest';
-import { ITEMS } from '../content/items.ts';
+import { ITEMS, item, itemKind } from '../content/items.ts';
 import { shopVein, veinAt } from '../content/map/index.ts';
 import { shop } from '../content/shops.ts';
 import { openRings } from './loot.ts';
@@ -101,7 +101,9 @@ describe('sales by the vein', () => {
     expect(city.state.player.higherStones.mid).toBe(Math.floor(total / 1000));
     expect(city.state.player.stones).toBeCloseTo(total % 1000, 6);
     // The Wall's stall, in a village on a tier 1 vein, pays in low whatever it buys.
-    const herb = ITEMS.map((x) => x.id).find((id) => offerFor(s, 'wall-stall', id).ok)!;
+    const herb = ITEMS.map((x) => x.id).find(
+      (id) => itemKind(item(id)) === 'herb' && offerFor(s, 'wall-stall', id).ok,
+    )!;
     const village = sell(withPlayer(s, addItem(s.player, herb, 10)), 'wall-stall', herb, 10);
     if (!village.ok) throw new Error(village.reason);
     expect(village.state.player.higherStones).toEqual({ mid: 0, high: 0, top: 0 });
@@ -142,7 +144,7 @@ describe('the v33 save', () => {
     const s = life();
     const part = withPlayer(s, { ...s.player, higherStones: { mid: 2.4375, high: 1, top: 0 } });
     const loaded = loadSave(JSON.parse(JSON.stringify(makeSave(part, 1))));
-    expect(loaded.version).toBe(33);
+    expect(loaded.version).toBe(34);
     expect(loaded.state.player.higherStones).toEqual({ mid: 2.4375, high: 1, top: 0 });
     const raw = JSON.parse(JSON.stringify(makeSave(s, 1))) as { version: number };
     raw.version = 32;

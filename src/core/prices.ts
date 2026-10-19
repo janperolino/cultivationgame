@@ -1,12 +1,13 @@
 // What things cost (design § Economy, Price yardstick; content/money.ts): a white thing of tier 1
 // at its kind's price, times its rarity's price (×2 green, ×5 blue, ×15 purple…) against the
-// written thing's own, times the realm curve by tier, times what its region does to it. A copy is
-// priced by what it teaches. Prices are in low-grade stones; a mortal good is priced in taels.
+// written thing's own, times the realm curve by tier. A copy is priced by what it teaches. This is
+// the posted price; a market's supply moves it (core/markets.ts). Prices are in low-grade stones;
+// a mortal good is priced in taels.
 import { copyOf, hasCopy } from '../content/copies.ts';
 import { hasItem, item, itemKind, type Item } from '../content/items.ts';
 import { hasManual, manual } from '../content/manuals.ts';
 import { method } from '../content/methods.ts';
-import { BASE_PRICE, COPY_PRICE, REGION_PRICE, STORAGE_PRICE } from '../content/money.ts';
+import { BASE_PRICE, COPY_PRICE, STORAGE_PRICE } from '../content/money.ts';
 import { rarity } from '../content/rarity.ts';
 import { realmScale, tierRealm } from '../content/realms.ts';
 import { technique } from '../content/techniques.ts';
@@ -22,9 +23,8 @@ function basePrice(it: Item): number {
   return BASE_PRICE[kind];
 }
 
-/** An item's posted price in low-grade stones, in a region when given. */
-export function itemPrice(it: Item, region?: string): number {
-  const regional = region ? (REGION_PRICE[region]?.[it.id.split('~')[0]!] ?? 1) : 1;
+/** An item's posted price in low-grade stones. */
+export function itemPrice(it: Item): number {
   // A written price is the thing at its own tier and its worst rarity; the kind's is a white tier 1.
   // A variant at another tier or rarity moves from the written thing's.
   const w = written(it);
@@ -33,7 +33,7 @@ export function itemPrice(it: Item, region?: string): number {
       ? (it.price * tierPrice(it.tier)) / tierPrice(w.tier)
       : basePrice(it) * tierPrice(it.tier);
   const ref = it.price !== undefined ? rarity(w.rarity).price : 1;
-  return Math.max(0.1, (own * rarity(it.rarity).price * regional) / ref);
+  return Math.max(0.1, (own * rarity(it.rarity).price) / ref);
 }
 
 /** The written thing a variant is priced from, at the tier and rarity it was written at. */
@@ -59,8 +59,8 @@ export function copyPrice(id: string): number {
   return COPY_PRICE[kind] * rarity(t.rarity).price * tierPrice(t.tier);
 }
 
-/** Anything's price in low-grade stones: an item (a variant included) or a copy. */
-export function priceOf(thing: string, region?: string): number {
+/** Anything's posted price in low-grade stones: an item (a variant included) or a copy. */
+export function priceOf(thing: string): number {
   if (hasCopy(thing)) return copyPrice(thing);
-  return itemPrice(item(thing), region);
+  return itemPrice(item(thing));
 }

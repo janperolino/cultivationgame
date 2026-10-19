@@ -8,6 +8,7 @@ import { KIN_RELATIONS, TIE_IDS } from '../../content/people.ts';
 import { GIFT_KINDS } from '../../content/personality.ts';
 import { PERSON_STATES, PLACE_STATES, TICKS_PER_DAY } from '../../content/resolver.ts';
 import { BOND_IDS } from '../../content/bonds.ts';
+import { addProsperity } from '../markets.ts';
 import { receive, spend, stonesOf, withStones } from '../purse.ts';
 import { addItem, withPlayer, type GameState } from '../state.ts';
 import { endBond, makeBond } from './followers.ts';
@@ -91,6 +92,8 @@ export const EffectSchema = z.discriminatedUnion('do', [
     ends: z.boolean().optional(),
   }),
   z.object({ do: z.literal('heat'), holder: z.string(), n: z.number().int() }),
+  /** A place's or a power's prosperity moved (design § Economy, Prosperity): war drains, trade raises. */
+  z.object({ do: z.literal('prosperity'), place: z.string(), n: z.number().int() }),
   /** Heaven's ledger: moves whether or not anyone saw. */
   z.object({ do: z.literal('karma'), who: Who, n: z.number().int() }),
   z.object({ do: z.literal('renown'), who: Who, region: z.string(), n: z.number().int() }),
@@ -222,6 +225,9 @@ export function applyEffects(
         break;
       case 'heat':
         state = { ...state, world: addHeat(state.world, e.holder, e.n, day) };
+        break;
+      case 'prosperity':
+        state = { ...state, world: addProsperity(state.world, e.place, e.n, day) };
         break;
       case 'knowledge': {
         // Seen for yourself: what you heard of it settles, and a lie about it is found out.

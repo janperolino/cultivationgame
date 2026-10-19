@@ -142,11 +142,9 @@ describe('prices', () => {
     expect(priceOf('beast-core~white~t2')).toBe(5 * 9);
   });
 
-  it('price a region’s gates as Jan’s note has it, and a copy by what it teaches', () => {
+  it('post a gate pill at its own price, and a copy by what it teaches', () => {
+    // Where it is dearer or cheaper is its market's supply (core/markets.test.ts).
     expect(priceOf('foundation-pill')).toBe(1000);
-    expect(priceOf('foundation-pill', 'qm-bianhuang')).toBe(1500);
-    expect(priceOf('soul-condensing-pill', 'qm-bianhuang')).toBe(2000);
-    expect(priceOf('marrow-washing-pill', 'qm-bianhuang')).toBe(600);
     expect(priceOf('method:garrison-standard')).toBe(60);
     expect(priceOf('technique:reef-road-thrust')).toBe(30 * 2);
   });
@@ -200,11 +198,11 @@ describe('shops', () => {
     expect(stockOf('mouth-stall', 1300).map((l) => l.thing)).toMatchInlineSnapshot(`
       [
         "qi-gathering-pill~green",
-        "technique:porters-charge",
+        "shark-marrow-pill",
         "ash-wood-spear",
         "ember-talisman",
         "method:market-stall",
-        "shark-marrow-pill",
+        "undertow-talisman",
       ]
     `);
   });
@@ -283,9 +281,13 @@ describe('shops', () => {
     expect(r.ok).toBe(true);
     s = r.state;
     expect(s.player.items['iron-sword']).toBe(110);
-    expect(s.player.stones).toBeGreaterThan(150);
-    // A refiner's 1,500 a month runs out before a hundred more swords are bought.
-    expect(sell(s, 'mouth-refiner', 'iron-sword', 100)).toMatchObject({ ok: false });
+    expect(s.player.stones).toBeGreaterThan(120);
+    // Ten swords flood the City: the next one fetches less (core/markets.ts).
+    const after = offerFor(s, 'mouth-refiner', 'iron-sword');
+    expect(after.ok && offer.ok && after.each < offer.each).toBe(true);
+    // A refiner's 1,500 a month runs out before a hundred swords are bought at once.
+    const fresh = withPlayer(life(), addItem(life().player, 'iron-sword', 120));
+    expect(sell(fresh, 'mouth-refiner', 'iron-sword', 100)).toMatchObject({ ok: false });
   });
 
   it('serve a sect shop’s members only', () => {

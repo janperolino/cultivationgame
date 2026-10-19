@@ -17,6 +17,10 @@ export interface RegionPlace {
   qiDensity: number | null;
   /** The tier of the strongest spirit vein it sits on, null when it names none. */
   vein: number | null;
+  /** The atlas entry it stands under. */
+  parent: string | null;
+  /** How well-off it is, 1 to 9: its own or its nearest ancestor's (design § Economy, Prosperity). */
+  prosperity: number;
   hidden: boolean | string | null;
   access: unknown;
   top: string;
@@ -38,6 +42,7 @@ export interface RegionFile {
   hanzi: string;
   terrain: string;
   qiDensity: number;
+  prosperity: number;
   top: string;
   bbox: [number, number, number, number];
   outline: Ring[][];

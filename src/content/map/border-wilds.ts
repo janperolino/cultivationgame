@@ -21,6 +21,8 @@ export interface WrittenTown {
   features: readonly { name: string; tags: FeatureTag[] }[];
   /** The tier of the strongest spirit vein the seat sits on, 0 for none, as on an atlas place. */
   vein: number;
+  /** How well-off it is, 1 to 9, when not its atlas place's (or, with none, its region's). */
+  prosperity?: number;
   /** About how many live in the seat itself, mortals and cultivators by realm. */
   population: Population;
   /** Li across. */
@@ -41,6 +43,12 @@ export interface RegionContent {
   roads: readonly (readonly [string, string])[];
   /** The atlas places that keep shops of their own (a city, a sect's gate, a society's hall). */
   placeShops: Readonly<Record<string, readonly string[]>>;
+  /**
+   * What each market needs, by its town or atlas place (design § Economy, Supply and prices): two
+   * to four item kinds or tags (core/markets.ts `goodTags`), held at half supply. Drafted in E2
+   * for Jan's review.
+   */
+  needs: Readonly<Record<string, readonly string[]>>;
   /** The wild tracts' names; their cells are seeded, and the wet names go to the cells nearest the sea. */
   tracts: readonly { name: string; hanzi: string; terrain: string }[];
   /** The hearts the atlas names, by the forbidden land they rule: their name and hanzi. */
@@ -337,6 +345,24 @@ export const BORDER_WILDS: RegionContent = {
     ],
     'qm-tushou-men': ['gate-sect'],
     'qm-yeqiao-hui': ['bridge-black', 'bridge-stall'],
+  },
+  needs: {
+    // An army's headquarters on the strait: it bleeds, and its karst and surf grow few herbs or ore.
+    'qm-shoukou-cheng': ['healing', 'herb', 'material'],
+    // Raiders who burn talismans by the bundle and drain their qi across the strait.
+    'qm-tushou-men': ['talisman', 'qi-restoring'],
+    // Smugglers who pass cubs and blood up the chain and patch their runners as they go.
+    'qm-yeqiao-hui': ['beast-part', 'healing'],
+    // The cadet school eats gathering pills and restoring pills faster than the sutler stocks them.
+    'pacified-fort': ['qi-fuel', 'qi-restoring'],
+    // Frontier farmers always short of horses and carts.
+    'spear-plow': ['mount', 'vessel'],
+    // Cave clans far from any alchemist, on thin qi.
+    'sinkhole-terraces': ['healing', 'qi-fuel'],
+    // Tamers who feed their herds on beast parts, mend their riders and armor their mounts.
+    'corral-town': ['beast-part', 'healing', 'armor'],
+    // The Wall's patrols: healing pills and talismans (design § Economy, Supply and prices).
+    'foot-of-the-wall': ['healing', 'talisman'],
   },
   tracts: [
     { name: 'Saltreed Flats', hanzi: '盐苇滩', terrain: 'coast' },

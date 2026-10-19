@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import polygonClipping, { type MultiPolygon, type Polygon } from 'polygon-clipping';
 import {
   checkAtlas,
+  resolveProsperity,
   resolveQiDensity,
   resolveTerrain,
   resolveVein,
@@ -91,6 +92,7 @@ if (problems.length) fail([`entries.json failed validation (${problems.length}):
 const terrain = resolveTerrain(source);
 const qiDensity = resolveQiDensity(source);
 const veins = resolveVein(source);
+const prosperity = resolveProsperity(source);
 
 // --- Parse `top`. ---
 
@@ -117,6 +119,10 @@ const entries: AtlasEntry[] = source.map((e) => {
   // And a region's or continent's vein, its strongest place's.
   const v = veins.get(e.id);
   if (v !== undefined) out.vein = v;
+  // And prosperity, its own or its nearest ancestor's, so a market reads it straight off its place.
+  delete out.prosperity;
+  const pr = prosperity.get(e.id);
+  if (pr !== undefined) out.prosperity = pr;
   return out as AtlasEntry;
 });
 
@@ -323,6 +329,8 @@ for (const region of atlas.entries) {
         terrain: e.terrain ?? null,
         qiDensity: e.qiDensity ?? null,
         vein: e.vein ?? null,
+        parent: e.parent,
+        prosperity: e.prosperity ?? 5,
         hidden: e.hidden ?? null,
         access: e.access ?? null,
         top: e.top.realm,
@@ -343,6 +351,7 @@ for (const region of atlas.entries) {
     hanzi: region.hanzi,
     terrain: region.terrain ?? 'plains',
     qiDensity: region.qiDensity ?? 5,
+    prosperity: region.prosperity ?? 5,
     top: region.top.realm,
     bbox,
     outline: outline.polygons,

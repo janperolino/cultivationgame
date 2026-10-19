@@ -22,6 +22,7 @@ export interface CheckedEntry {
   status: 'draft' | 'canon';
   terrain?: Terrain | '';
   qiDensity?: number;
+  prosperity?: number;
   map?: unknown;
   access?: { of?: string };
   ties?: Tie[];
@@ -99,6 +100,30 @@ export function resolveQiDensity(entries: readonly CheckedEntry[]): Map<string, 
       seen.add(at.id);
       if (at.qiDensity !== undefined) {
         v = at.qiDensity;
+        break;
+      }
+      at = at.parent === null ? undefined : byId.get(at.parent);
+    }
+    out.set(e.id, v);
+  }
+  return out;
+}
+
+/** Prosperity where none is written anywhere up the parents: ordinary (design § Economy, Prosperity). */
+export const DEFAULT_PROSPERITY = 5;
+
+/** Every place's and power's prosperity: its own, or its nearest ancestor's, or ordinary (5). */
+export function resolveProsperity(entries: readonly CheckedEntry[]): Map<string, number> {
+  const byId = new Map(entries.map((e) => [e.id, e]));
+  const out = new Map<string, number>();
+  for (const e of entries) {
+    if (!PLACE_KINDS.includes(e.kind)) continue;
+    let v = DEFAULT_PROSPERITY;
+    const seen = new Set<string>();
+    for (let at: CheckedEntry | undefined = e; at && !seen.has(at.id);) {
+      seen.add(at.id);
+      if (at.prosperity !== undefined) {
+        v = at.prosperity;
         break;
       }
       at = at.parent === null ? undefined : byId.get(at.parent);

@@ -227,6 +227,19 @@ export const WorldSchema = z.object({
   /** Things taken from someone, by item id, and the power that owned them: stolen goods. */
   taken: z.record(z.string(), z.string()),
   /**
+   * Prosperity moved from the written (core/markets.ts), by place: the offset and the day it was
+   * last moved; it eases back a step a year, and a place back at its written value is dropped.
+   */
+  prosperity: z.record(z.string(), z.object({ n: z.number().int(), day: z.number() })),
+  /**
+   * Each market's supplies off their written ones, by market and good: the supply in % and the
+   * month it was set; it eases a tenth of the way back each month.
+   */
+  supply: z.record(
+    z.string(),
+    z.record(z.string(), z.object({ n: z.number(), month: z.number().int() })),
+  ),
+  /**
    * Storage rings you took that won't open to you yet (core/loot.ts): whose they were, what is in
    * them and their tier, until your soul or your realm reaches it.
    */
@@ -256,6 +269,8 @@ export function emptyWorld(): World {
     members: [],
     shops: {},
     taken: {},
+    prosperity: {},
+    supply: {},
     sealed: [],
     next: 1,
   };

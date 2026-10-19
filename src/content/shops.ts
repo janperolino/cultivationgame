@@ -28,12 +28,16 @@ export interface ShopKindInfo {
   hanzi: string;
   /** The bias on the shared rarity table (Items and gear): a stall 0.6, a vault 1.6. */
   bias: number;
-  /** Lots in a month's stock. */
+  /** Lots in a month's stock at an ordinary place; prosperity's lots multiply it. */
   lots: number;
   /** What it buys from you, and at what share of its own price. */
   buys: readonly Ware[];
   buyRate: number;
-  /** Its purse a month, in its own money: what it can pay out buying from you. */
+  /**
+   * Its purse a month at tier 1 and ordinary, in its own money: what it can pay out buying from
+   * you. A shop's own is this times the realm curve at its top tier and its prosperity's purse
+   * (core/markets.ts `shopPurse`).
+   */
   purse: number;
   money: 'stones' | 'silver';
   /** Its prices against the posted rate: the black market's risk. */
@@ -60,7 +64,8 @@ export const SHOP_KIND_INFO: Record<ShopKind, ShopKindInfo> = {
     hanzi: '摊',
     bias: 0.6,
     lots: 6,
-    buys: ['herb', 'beast-part', 'material'],
+    // It deals in pills, talismans and herbs (Items and gear), so it buys them too (E2's talk).
+    buys: ['pill', 'talisman', 'herb', 'beast-part', 'material'],
     buyRate: 0.4,
     purse: 150,
     money: 'stones',
@@ -193,13 +198,14 @@ export interface Shop {
   /** The power that owns it: whose stolen goods it knows, whose members a sect shop serves. */
   power: string | null;
   name: string;
-  /** The tiers it stocks; a Border Wilds shop sells tier 1, a sect shop a little of tier 2. */
+  /** The tiers it may stock, within its place's vein (core/markets.ts `shopTiers`). */
   tiers: readonly number[];
 }
 
 /**
- * The Border Wilds' shops. The merchant guild's hall in the City belongs to no atlas power yet:
- * which guild runs the strait trade is for the atlas fill or M6 (Open questions).
+ * The Border Wilds' shops. The City's merchant guild hall is the Qian Clan's, who take a cut of
+ * every core that leaves the region (E2). The vein-rich markets, the City, the Gate and the Night
+ * Bridge, stock tier 3 too, rarely (core/markets.ts `tierLean`; E2's talk).
  */
 const BW = { region: 'qm-bianhuang', continent: 'qiming' } as const;
 
@@ -220,7 +226,7 @@ export const SHOPS: readonly Shop[] = [
     ...BW,
     power: 'xinglin',
     name: 'the Apricot Grove branch shop',
-    tiers: [1, 2],
+    tiers: [1, 2, 3],
   },
   {
     id: 'mouth-refiner',
@@ -236,9 +242,9 @@ export const SHOPS: readonly Shop[] = [
     kind: 'guild',
     at: 'qm-shoukou-cheng',
     ...BW,
-    power: null,
+    power: 'qm-qian-shi',
     name: 'the merchant guild hall',
-    tiers: [1, 2],
+    tiers: [1, 2, 3],
   },
   {
     id: 'mouth-bounty',
@@ -247,7 +253,7 @@ export const SHOPS: readonly Shop[] = [
     ...BW,
     power: null,
     name: 'the bounty office',
-    tiers: [1, 2],
+    tiers: [1, 2, 3],
   },
   {
     id: 'mouth-mortal',
@@ -265,7 +271,7 @@ export const SHOPS: readonly Shop[] = [
     ...BW,
     power: 'qm-yeqiao-hui',
     name: 'the sea-cave market',
-    tiers: [1, 2],
+    tiers: [1, 2, 3],
   },
   {
     id: 'bridge-stall',
@@ -283,7 +289,7 @@ export const SHOPS: readonly Shop[] = [
     ...BW,
     power: 'qm-tushou-men',
     name: 'the Gate’s exchange hall',
-    tiers: [1, 2],
+    tiers: [1, 2, 3],
   },
   {
     id: 'march-stall',

@@ -64,15 +64,6 @@ export const COPY_PRICE: Record<ManualKind | 'method' | 'technique', number> = {
   technique: 30,
 };
 
-/**
- * What a region does to an item's price, by region and item id (Jan's note in P3.2's talk): in
- * the Border Wilds the Foundation Pill is dearer, the Soul-Condensing Pill rarer and dearer still,
- * and the Marrow-Washing Pill cheaper, since the Gate brews it.
- */
-export const REGION_PRICE: Record<string, Record<string, number>> = {
-  'qm-bianhuang': {
-    'foundation-pill': 1.5,
-    'soul-condensing-pill': 2,
-    'marrow-washing-pill': 0.6,
-  },
-};
+// A region's dearer or cheaper price is its markets' supply, said by tags (E2, design § Economy,
+// Supply and prices): the gate pills are coveted and needed everywhere, and the Marrow-Washing
+// Pill is cheap at the Gate because the Gate makes it (core/markets.ts).
