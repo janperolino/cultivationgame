@@ -638,7 +638,8 @@ export function generateRegion(regionId: string, world: string): RegionGen {
       made++;
     }
   };
-  // A hidden site is rated by the band its ground holds: the edge's, plus a ring away from people.
+  // A hidden site's rough rating, the edge's band plus a ring away from people; the fog reads it
+  // as never less than the ground's own band where the site stands (fog.ts, siteRating).
   const edge = file.qiDensity - 3;
   const roughBand = (p: Pt) => edge + (peopleLi(p) > 1500 ? 1 : 0);
   for (const k of file.places) {

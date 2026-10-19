@@ -22,6 +22,15 @@ import {
   type RegionMap,
 } from './region.ts';
 import type { KnowState, MapLife } from './schema.ts';
+import { bandAt } from './depth.ts';
+
+/**
+ * What it takes to sense a hidden site: its own rating, and never less than the band of the ground
+ * it stands on, so a site deep in a heart's rings is as hard to find as the land around it.
+ */
+export function siteRating(map: RegionMap, q: MapPlace): number {
+  return Math.max(q.rating, bandAt(map, [q.x, q.y]));
+}
 
 const RANK: Record<KnowState, number> = { unknown: 0, rumored: 1, sketched: 2, seen: 3 };
 
@@ -85,7 +94,12 @@ export function seeFrom(
     const d = Math.hypot(q.x - p[0], q.y - p[1]);
     if (!q.hidden) {
       if (d <= r) see(q.id);
-    } else if (sense > 0 && d <= sense && soulBand >= q.rating && known(next, q.id) !== 'seen') {
+    } else if (
+      sense > 0 &&
+      d <= sense &&
+      soulBand >= siteRating(map, q) &&
+      known(next, q.id) !== 'seen'
+    ) {
       see(q.id);
       found.push(q.id);
     }
@@ -133,8 +147,8 @@ export function lookAround(
       ring &&
       Math.hypot(ring[0] - p[0], ring[1] - p[1]) <= RUMOR_RING_LI / 2;
     if (
-      (q.hidden && d <= reach && soulBand >= q.rating) ||
-      (inRing && (!q.hidden || soulBand >= q.rating))
+      (q.hidden && d <= reach && soulBand >= siteRating(map, q)) ||
+      (inRing && (!q.hidden || soulBand >= siteRating(map, q)))
     ) {
       next = raise(next, q.id, 'seen');
       found.push(q.id);

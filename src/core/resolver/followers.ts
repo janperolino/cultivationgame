@@ -327,10 +327,13 @@ export function followersDay(s: GameState): GameState {
       if (day >= paidTo) why = 'unpaid';
     } else if (b.kind === 'loyalty' && !loyaltyHolds(w, b, day)) why = 'loyalty';
     else if (b.kind === 'goal' && goalOver(w, b)) why = 'goal';
+    // A fear bond breaks only apart: a follower not posted anywhere travels with you, in reach
+    // every day, and one posted is in reach while you stand at that place.
     else if (
       b.kind === 'fear' &&
-      day - b.seen > FEAR_APART_DAYS &&
-      !(b.posted && b.posted === state.player.place)
+      !!b.posted &&
+      b.posted !== state.player.place &&
+      day - b.seen > FEAR_APART_DAYS
     ) {
       why = 'fear';
     }

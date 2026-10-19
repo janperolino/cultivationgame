@@ -1,8 +1,8 @@
 // Routing (design § The world, Going somewhere): along the roads where they serve and cross-country
 // where they don't, the cheapest way by time. Off the road the terrain slows you; a flyer goes
 // straight over it. The night road keeps off the roads; caravan guards keep to them.
-import { OFFROAD_FACTOR } from '../../content/map/travel.ts';
-import { densify, type Pt } from './geometry.ts';
+import { NIGHT_ROAD_HOP_LI, OFFROAD_FACTOR, ON_ROAD_LI } from '../../content/map/travel.ts';
+import { densify, lineDist, type Pt } from './geometry.ts';
 import { inRegion, onLand, placeById, terrainAt, type MapRoad, type RegionMap } from './region.ts';
 
 export interface RouteOptions {
@@ -26,15 +26,31 @@ export interface Route {
 
 export type RouteResult = { ok: true; route: Route } | { ok: false; reason: string };
 
-/** Your pace off the road on a stretch, as a share of the road's: the harmonic mean over its terrain. */
-export function crossFactor(map: RegionMap, a: Pt, b: Pt): number {
+/** Whether a spot is on a road: within a short walk of one. */
+export function nearRoad(map: RegionMap, p: Pt): boolean {
+  return map.roads.some((r) => lineDist(p, r.pts) < ON_ROAD_LI);
+}
+
+/**
+ * Your pace on foot or horse at a spot, as a share of the road's: 1 on a road (unless you keep off
+ * them), the terrain's factor off it, 0 on open sea. The one rule the course's days are planned by
+ * and the hours are walked by, so the arrival date holds. A flyer goes at 1 over anything.
+ */
+export function groundFactor(map: RegionMap, p: Pt, roads = true): number {
+  if (roads && nearRoad(map, p)) return 1;
+  const tr = terrainAt(map, p);
+  return tr === 'sea' ? 0 : (OFFROAD_FACTOR[tr] ?? 0.5);
+}
+
+/** Your pace off the road on a stretch, as a share of the road's: the harmonic mean over its ground. */
+export function crossFactor(map: RegionMap, a: Pt, b: Pt, roads = true): number {
   const n = Math.max(4, Math.min(24, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 1500)));
   let s = 0;
   for (let i = 0; i < n; i++) {
     const t = (i + 0.5) / n;
-    const tr = terrainAt(map, [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
-    if (tr === 'sea') return 0;
-    s += 1 / (OFFROAD_FACTOR[tr] ?? 0.5);
+    const f = groundFactor(map, [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], roads);
+    if (!f) return 0;
+    s += 1 / f;
   }
   return n / s;
 }
@@ -57,6 +73,11 @@ export function planRoute(map: RegionMap, from: Pt, to: Pt, opts: RouteOptions =
     ['end', to],
   ]);
   const useRoads = !opts.hidden && !opts.flies;
+  // The night road keeps off the roads but not off the land: it goes from town to town across
+  // country, so water on the straight line between two points never strands it.
+  if (opts.hidden && !opts.flies)
+    for (const p of map.places)
+      if (p.kind === 'town' || p.sub === 'city') pos.set(p.id, [p.x, p.y]);
   if (useRoads)
     for (const r of map.roads)
       for (const id of [r.a, r.b]) {
@@ -68,12 +89,22 @@ export function planRoute(map: RegionMap, from: Pt, to: Pt, opts: RouteOptions =
     const A = pos.get(a)!;
     const B = pos.get(b)!;
     const li = Math.hypot(B[0] - A[0], B[1] - A[1]);
-    const f = opts.flies ? 1 : crossFactor(map, A, B);
+    if (opts.hidden && li > NIGHT_ROAD_HOP_LI && a !== 'start' && b !== 'end') return;
+    const f = opts.flies ? 1 : crossFactor(map, A, B, !opts.hidden);
     if (!f) return;
     edges.get(a)!.push({ to: b, cost: li / f, li, road: null });
     edges.get(b)!.push({ to: a, cost: li / f, li, road: null });
   };
   if (!opts.roadsOnly) cross('start', 'end');
+  if (opts.hidden && !opts.flies) {
+    const towns = [...pos.keys()].filter((n) => n !== 'start' && n !== 'end');
+    for (const n of towns) {
+      cross('start', n);
+      cross(n, 'end');
+    }
+    for (let i = 0; i < towns.length; i++)
+      for (let j = i + 1; j < towns.length; j++) cross(towns[i]!, towns[j]!);
+  }
   if (useRoads) {
     for (const n of pos.keys()) {
       if (n === 'start' || n === 'end') continue;

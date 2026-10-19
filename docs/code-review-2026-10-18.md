@@ -82,6 +82,23 @@ Ranked by how much a player would feel it. "Doc" means design.md should change, 
 
 ## Bugs that need a call
 
+**Done (Jan's picks), the fifteen below:**
+- The detour stays owed only when you set the same course again.
+- The night road plans cross-country from town to town, so water never strands it.
+- A hidden site reads as never under its ground's band (`siteRating`).
+- One ground rule (`groundFactor`) plans the course and walks it: a trip planned at 199.2 days arrives on day 200.
+- A fear follower who travels with you stays in reach; only one posted elsewhere can drift off.
+- A romance ends when the word you see reads wary.
+- The sect shop's screen asks for membership, as its rules do; a token still opens the gate.
+- A sealed ring keeps its own tier but never seals under its owner's realm, and opens to your soul or qi, not your body.
+- A pill that feeds no ladder unsettles nothing (there is no record of the last pill fed, so "the last fuel pill's ladder" became "this pill's").
+- A count at nothing leaves the Bag (save v32 cleans old ones).
+- The narrator's client gives up after 90 s or 30 s of silence, and retries a busy host once before any text.
+- `atlas-serve` reads the body before the file, retries the swap on Windows' locks and refuses other hosts.
+- `map-paint` says what's missing and what the host said.
+- The unread card flags and `carries` are noted in plan.md for P3.12 and P3.9.
+- **Not done, on evidence:** shop settling stayed down-then-up. Down-only left 12% of all lots empty over 24 months, and the Gate's sect shop with no stock at all for a month, since a sect shop's stock starts above most rolls. design.md now says "the nearest above when nothing is that low".
+
 **Done (Jan's go), the first two:** a scene fight now leaves each fighter with the HP and qi it ended on (the shield refills at every fight's start, as before), and a deceitful, wary NPC claims to know nothing instead of handing over the truth marked false, until the world can write false facts (design.md says so).
 
 - **Fights never write HP back to the scene.** `runSceneFight` copies back only down or fled, so a victor starts the next fight whole, and `looksWeak`, `projectionDue` and the hurt check can only fire from the `hp` effect. Copy `hp`, `qi` and `shield` back, or drop the readers.

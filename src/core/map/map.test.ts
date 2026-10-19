@@ -18,7 +18,7 @@ import {
   peopleLi,
   pullsIn,
 } from './depth.ts';
-import { known, lookAround, raise, rumor, seeFrom, sightAt } from './fog.ts';
+import { known, lookAround, raise, rumor, seeFrom, siteRating, sightAt } from './fog.ts';
 import type { Pt } from './geometry.ts';
 import {
   areaAt,
@@ -177,8 +177,11 @@ describe('what you know', () => {
     const map = mapFor(s);
     const hidden = map.places.find((p) => p.kind === 'site' && p.hidden)!;
     const by: Pt = [hidden.x + LOOK_LI / 2, hidden.y];
-    expect(known(lookAround(map, s.map!, by, hidden.rating, 0).life, hidden.id)).toBe('seen');
-    expect(known(lookAround(map, s.map!, by, hidden.rating - 1, 0).life, hidden.id)).toBe(
+    // Its rating is never under the band of the ground it stands on.
+    const rating = siteRating(map, hidden);
+    expect(rating).toBeGreaterThanOrEqual(hidden.rating);
+    expect(known(lookAround(map, s.map!, by, rating, 0).life, hidden.id)).toBe('seen');
+    expect(known(lookAround(map, s.map!, by, rating - 1, 0).life, hidden.id)).toBe(
       'unknown',
     );
     const off: Pt = [hidden.x + LOOK_LI * 3, hidden.y];
@@ -209,6 +212,20 @@ describe('routing', () => {
     if (!r.ok) return;
     expect(r.route.roadLi).toBeGreaterThan(r.route.crossLi);
     expect(r.route.tolls.length).toBeGreaterThan(0);
+  });
+
+  it('arrives about when the course card says: planned and walked by one ground rule', () => {
+    const go = goToPlace(life(), 'qm-shoukou-cheng');
+    if (!go.ok) throw new Error(go.reason);
+    const planned = go.state.map!.course!.days;
+    let s = go.state;
+    let days = 0;
+    while (s.map!.course && days < planned * 2) {
+      s = run(s, 1);
+      days += 1;
+    }
+    expect(s.map!.course).toBeNull();
+    expect(Math.abs(days - planned) / planned).toBeLessThan(0.1);
   });
 
   it('takes each checkpoint’s toll once, as you pass it', () => {

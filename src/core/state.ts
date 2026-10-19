@@ -631,8 +631,12 @@ export function itemCount(c: Cultivator, id: string): number {
 }
 
 /** A copy holding `n` more of the item (negative to use some up), never below zero. */
+/** Adds or takes items; a count that reaches nothing leaves the Bag (saves keep no zero lines). */
 export function addItem(c: Cultivator, id: string, n: number): Cultivator {
-  return { ...c, items: { ...c.items, [id]: Math.max(0, itemCount(c, id) + n) } };
+  const count = Math.max(0, itemCount(c, id) + n);
+  const items = { ...c.items, [id]: count };
+  if (count === 0) delete items[id];
+  return { ...c, items };
 }
 
 export function hasFlag(c: Cultivator, flag: string): boolean {

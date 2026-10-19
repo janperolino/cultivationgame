@@ -146,8 +146,8 @@ export const TRUST_AT = [
 
 /** A never-fading memory weighing this or worse makes an enemy. */
 export const ENEMY_AT = -80;
-/** A lover whose opinion falls under this becomes a former lover. */
-export const FORMER_LOVER_BELOW = -9;
+/** A lover whose opinion reads one of these words becomes a former lover: the word you see. */
+export const FORMER_LOVER_AT: readonly (typeof TRUST_AT)[number]['word'][] = ['wary', 'hostile'];
 
 // ── Deeds into memories ──────────────────────────────────────────────────────────────────────
 

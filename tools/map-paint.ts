@@ -4,16 +4,18 @@
 //     [--with <neighbour painting.png> ...]
 //   npx tsx tools/map-paint.ts tile <region-id> <tile-id> [<out.png>] [--note <text>] [--ref <png>]
 // About $0.21 and a minute or two an image with openai/gpt-5.4-image-2.
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import sharp from 'sharp';
 import { guideJson, guidePng, paintingPng, workDir } from './map-paths.ts';
 
 const MODEL = 'openai/gpt-5.4-image-2';
 
+if (!existsSync('.env.local'))
+  throw new Error('No .env.local in the repo root: add a line OPENROUTER_API_KEY=… to it first.');
 const KEY = readFileSync('.env.local', 'utf8')
   .match(/^OPENROUTER_API_KEY=(.*)$/m)?.[1]
   ?.trim();
-if (!KEY) throw new Error('no OPENROUTER_API_KEY in .env.local');
+if (!KEY) throw new Error('No OPENROUTER_API_KEY line in .env.local.');
 
 const PALETTE =
   'Night-dark and moonlit, desaturated: slate and blue-grey stone, deep pine green, muted ochre and umber earth, dark teal water, soft mist, a faint cool rim of starlight. No neon, no glow haze, no bright daylight.';
@@ -114,12 +116,21 @@ async function paint(prompt: string, images: string[], aspect: string, out: stri
       image_config: { aspect_ratio: aspect },
     }),
   });
+  // A failing host may send a page, not JSON: report its status and the start of what it sent.
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    let message = text.slice(0, 200);
+    try {
+      message = (JSON.parse(text) as { error?: { message?: string } }).error?.message ?? message;
+    } catch {
+      // Not JSON: the raw start of the page stands.
+    }
+    throw new Error(`OpenRouter ${res.status}: ${message || 'no message'}`);
+  }
   const json = (await res.json()) as {
     choices?: { message?: { images?: { image_url?: { url?: string } }[] } }[];
     usage?: { cost_details?: { upstream_inference_cost?: number } };
-    error?: { message?: string };
   };
-  if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${json.error?.message ?? 'no message'}`);
   const url = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
   if (!url) throw new Error('the model sent no image');
   const buf = Buffer.from(url.split(',')[1]!, 'base64');
@@ -134,9 +145,7 @@ async function paint(prompt: string, images: string[], aspect: string, out: stri
 const [mode, region, a, ...rest] = process.argv.slice(2);
 if (mode === 'region' && region && a) {
   const take = rest.includes('--take') ? rest[rest.indexOf('--take') + 1]! : 'A';
-  const style = rest.includes('--style')
-    ? rest[rest.indexOf('--style') + 1]!
-    : paintingPng(region);
+  const style = rest.includes('--style') ? rest[rest.indexOf('--style') + 1]! : paintingPng(region);
   // Neighbours' finished paintings, so the borders match: --with <painting.png>, as many as there are.
   const neighbours = rest.flatMap((v, i) => (rest[i - 1] === '--with' ? [v] : []));
   const guide = JSON.parse(readFileSync(guideJson(region), 'utf8')) as {
@@ -149,12 +158,7 @@ if (mode === 'region' && region && a) {
     (neighbours.length
       ? `\n\nThe last ${neighbours.length === 1 ? 'attached image is the painting' : `${neighbours.length} attached images are the paintings`} of the land next door, which the guide shows round its edges. Paint those parts to match, and carry their light, palette, scale and detail on across the borders without a seam.`
       : '');
-  await paint(
-    prompt,
-    [guidePng(region), style, ...neighbours],
-    portrait ? '2:3' : '3:2',
-    a,
-  );
+  await paint(prompt, [guidePng(region), style, ...neighbours], portrait ? '2:3' : '3:2', a);
 } else if (mode === 'tile' && region && a) {
   // --note "<text>" adds a line to the prompt for this tile (a place GPT got wrong, A5.1's Stone
   // Eyes); --ref <png> stands in for the reference (one with the wrong thing painted out).
@@ -166,7 +170,11 @@ if (mode === 'region' && region && a) {
     `${dir}/tile-${a}.png`;
   await paint(
     note ? `${TILE_PROMPT}\n\n${note}` : TILE_PROMPT,
-    [flag('--ref') ?? `${dir}/tile-${a}-ref.png`, `${dir}/tile-${a}-guide.png`, 'art/concepts/map-1.webp'],
+    [
+      flag('--ref') ?? `${dir}/tile-${a}-ref.png`,
+      `${dir}/tile-${a}-guide.png`,
+      'art/concepts/map-1.webp',
+    ],
     '3:2',
     out,
   );

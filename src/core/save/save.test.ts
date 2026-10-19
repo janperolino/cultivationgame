@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { eventText } from '../chronicle.ts';
-import { chronicleEvent, newLife, noteBreakthrough, type GameState } from '../state.ts';
+import { addItem, chronicleEvent, newLife, noteBreakthrough, type GameState } from '../state.ts';
 import { ensureMap } from '../map/travel.ts';
 import { decodeSaveFile, encodeSaveFile } from './file.ts';
 import { loadSave, makeSave, SAVE_VERSION, SaveError } from './format.ts';
@@ -49,6 +49,18 @@ const withStones = (s: GameState, stones: number): GameState => ({
 });
 
 describe('save format', () => {
+  it('drops items held at nothing, in play and from a v31 save', () => {
+    const s = played();
+    const gone = addItem(addItem(s.player, 'qi-gathering-pill', 1), 'qi-gathering-pill', -1);
+    expect('qi-gathering-pill' in gone.items).toBe(false);
+    const v31 = {
+      ...makeSave(s, 1),
+      version: 31,
+      state: { ...s, player: { ...s.player, items: { ...s.player.items, 'old-thing': 0 } } },
+    };
+    expect('old-thing' in loadSave(v31).state.player.items).toBe(false);
+  });
+
   it('migrates the v0 fixture', () => {
     const save = loadSave(v0);
     expect(save.version).toBe(SAVE_VERSION);

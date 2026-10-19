@@ -62,6 +62,20 @@ describe('streamChat', () => {
     ).rejects.toBeInstanceOf(OpenRouterError);
   });
 
+  it('tries once more on a busy host before any text, and only once', async () => {
+    const busy = () => new Response('busy', { status: 503 });
+    const answers = [busy(), sseResponse('Here.', { pieces: 1 })];
+    let calls = 0;
+    const twice: typeof fetch = async () => answers[calls++]!;
+    const r = await streamChat({ messages: [] }, { apiKey: 'test', fetch: twice, retryWaitMs: 0 });
+    expect(r.text).toBe('Here.');
+    expect(calls).toBe(2);
+    const always: typeof fetch = async () => busy();
+    await expect(
+      streamChat({ messages: [] }, { apiKey: 'test', fetch: always, retryWaitMs: 0 }),
+    ).rejects.toBeInstanceOf(OpenRouterError);
+  });
+
   it('throws on an error chunk mid-stream', async () => {
     const body = 'data: {"error":{"code":502,"message":"upstream died"}}\n\n';
     await expect(

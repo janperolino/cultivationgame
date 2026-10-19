@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { createLife, type Creation } from '../creation.ts';
 import { withPlayer, type GameState } from '../state.ts';
-import { bondOf, followersDay } from './followers.ts';
+import { bondOf, followersDay, post } from './followers.ts';
 import { believesDead } from './knows.ts';
 import { karmaOf } from './names.ts';
 import { plainActor, YOU, type Actor } from './actor.ts';
@@ -483,8 +483,12 @@ describe('the playbook', () => {
     expect(fall.broke).toEqual([{ follower: 'thug', why: 'fear', how: 'leave' }]);
     expect(fall.scene.actors.find((x) => x.id === 'thug')!.state).toBe('gone');
     // A month on, with 20 stones against a wage of 30, the pay stops and the sword leaves; the
-    // thug, a week and more out of your reach, slips away as well.
-    const month = { ...village.state, calendar: { day: s.calendar.day + 31 } };
+    // thug, left posted at the village and a week and more out of your reach, slips away as well.
+    // A follower who travels with you is never out of reach.
+    const stays = followersDay({ ...village.state, calendar: { day: s.calendar.day + 31 } });
+    expect(bondOf(stays.world, 'thug')!.kind).toBe('fear');
+    const posted = { ...village.state, world: post(village.state.world, 'thug', 'a-village') };
+    const month = { ...posted, calendar: { day: s.calendar.day + 31 } };
     const later = followersDay(withPlayer(month, { ...month.player, stones: 20 }));
     expect(bondOf(later.world, 'sword')).toBeUndefined();
     expect(bondOf(later.world, 'thug')).toBeUndefined();

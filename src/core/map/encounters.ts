@@ -46,7 +46,6 @@ import { hasItem, item, rarityRange, variantId } from '../../content/items.ts';
 import {
   BANDS,
   CLOSED_TERRAINS,
-  ON_ROAD_LI,
   SIGHT_CLOSED,
   SIGHT_OPEN,
 } from '../../content/map/travel.ts';
@@ -81,10 +80,10 @@ import { addEvent, addItem, itemCount, withPlayer, withStream, type GameState } 
 import { seasonOf } from '../chronicle.ts';
 import { bandAt, edgeBand } from './depth.ts';
 import type { Pt } from './geometry.ts';
-import { lineDist } from './geometry.ts';
 import { known, raise } from './fog.ts';
 import { bedAt } from './gate.ts';
 import { areaAt, terrainAt, type RegionMap } from './region.ts';
+import { nearRoad } from './route.ts';
 import type { Encounter, MapLife, Stance } from './schema.ts';
 
 // ---------------------------------------------------------------- hooks
@@ -753,7 +752,7 @@ export function setVeil(s: GameState, on: boolean): VeilCheck {
 // ---------------------------------------------------------------- sensing
 
 export function onRoadAt(map: RegionMap, p: Pt): boolean {
-  return map.roads.some((r) => lineDist(p, r.pts) < ON_ROAD_LI);
+  return nearRoad(map, p);
 }
 
 /** How far you see on the map where you stand, or sense, whichever is farther. */

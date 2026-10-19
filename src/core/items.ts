@@ -42,7 +42,9 @@ export function consumeItem(c: Cultivator, id: string, day: number): ConsumeResu
   const scale = toxicityScale(c);
   let next = addItem(c, id, -1);
   let fuel = 0;
-  let fed: LadderId = 'qi';
+  // The ladder this pill fed: toxicity past the meter unsettles it. A pill that feeds none (a
+  // restore pill, a detox) unsettles nothing, though its dose still counts.
+  let fed: LadderId | null = null;
   for (const e of use.effects) {
     if (e.effect === 'fuel') {
       const tierRealm = REALMS[Math.min(it.tier, REALMS.length) - 1]!.id;
@@ -61,7 +63,7 @@ export function consumeItem(c: Cultivator, id: string, day: number): ConsumeResu
   const dose = pillDose(c, it);
   next = addToxicity(next, dose);
   const notes: Note[] = [];
-  if (dose > 0 && next.toxicity >= TOXICITY_MAX) {
+  if (fed && dose > 0 && next.toxicity >= TOXICITY_MAX) {
     const l = next[fed];
     next = {
       ...next,

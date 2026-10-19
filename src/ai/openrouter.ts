@@ -72,6 +72,23 @@ export interface ChatOptions {
   fetch?: typeof fetch;
   /** Sent as X-Title, so calls show up by name in the OpenRouter dashboard. */
   appTitle?: string;
+  /** How long to wait before the one retry of a busy or failing host; tests set 0. */
+  retryWaitMs?: number;
+}
+
+/** A whole request gives up after this long. */
+export const REQUEST_TIMEOUT_MS = 90_000;
+/** A stream that sends nothing for this long has stalled, and is dropped. */
+export const STALL_MS = 30_000;
+/** Statuses worth one more try before the first token: rate limits and a host falling over. */
+const RETRY_STATUSES = [429, 502, 503];
+const RETRY_WAIT_MS = 1_500;
+
+/** The first of several signals to abort, where the platform can merge them. */
+function anySignal(signals: (AbortSignal | undefined)[]): AbortSignal | undefined {
+  const live = signals.filter((x): x is AbortSignal => !!x);
+  if (live.length <= 1) return live[0];
+  return typeof AbortSignal.any === 'function' ? AbortSignal.any(live) : live[0];
 }
 
 /** Anything that answers a chat request: OpenRouter, or the mock provider in tests. */
@@ -156,22 +173,44 @@ interface Chunk {
 
 const now = () => performance.now();
 
+/**
+ * One chat over the stream. It gives up after REQUEST_TIMEOUT_MS, or when the host goes quiet for
+ * STALL_MS mid-stream, and tries once more on a rate limit or a failing host before any text has
+ * come (never after, so nothing is told twice).
+ */
 export async function streamChat(request: ChatRequest, options: ChatOptions): Promise<ChatResult> {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const start = now();
-  const response = await doFetch(OPENROUTER_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${options.apiKey}`,
-      'Content-Type': 'application/json',
-      'X-Title': options.appTitle ?? 'Severed Heaven',
-    },
-    body: JSON.stringify(buildBody(request)),
-    signal: options.signal,
-  });
+  const stall = new AbortController();
+  const timeout =
+    typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(REQUEST_TIMEOUT_MS) : undefined;
+  const signal = anySignal([options.signal, timeout, stall.signal]);
+  const send = () =>
+    doFetch(OPENROUTER_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${options.apiKey}`,
+        'Content-Type': 'application/json',
+        'X-Title': options.appTitle ?? 'Severed Heaven',
+      },
+      body: JSON.stringify(buildBody(request)),
+      signal,
+    });
+  let response = await send();
+  if (RETRY_STATUSES.includes(response.status)) {
+    await response.body?.cancel().catch(() => {});
+    await new Promise((r) => setTimeout(r, options.retryWaitMs ?? RETRY_WAIT_MS));
+    response = await send();
+  }
   if (!response.ok || !response.body) {
     throw new OpenRouterError(response.status, await response.text().catch(() => ''));
   }
+  let quiet: ReturnType<typeof setTimeout> | undefined;
+  const heard = () => {
+    clearTimeout(quiet);
+    quiet = setTimeout(() => stall.abort(new Error('The host went quiet.')), STALL_MS);
+  };
+  heard();
 
   const result: ChatResult = {
     text: '',
@@ -192,33 +231,39 @@ export async function streamChat(request: ChatRequest, options: ChatOptions): Pr
     totalMs: 0,
   };
 
-  for await (const raw of readSse(response.body)) {
-    const chunk = raw as Chunk;
-    // Errors after the stream has started arrive as a chunk with a 200 status.
-    if (chunk.error) throw new OpenRouterError(chunk.error.code ?? 500, chunk.error.message ?? '');
-    if (chunk.id) result.id = chunk.id;
-    if (chunk.model) result.model = chunk.model;
-    if (chunk.provider) result.provider = chunk.provider;
-    const choice = chunk.choices?.[0];
-    if (choice?.delta?.reasoning) result.reasoning += choice.delta.reasoning;
-    const text = choice?.delta?.content;
-    if (text) {
-      if (result.ttftMs < 0) result.ttftMs = now() - start;
-      result.text += text;
-      options.onToken?.(text);
+  try {
+    for await (const raw of readSse(response.body)) {
+      heard();
+      const chunk = raw as Chunk;
+      // Errors after the stream has started arrive as a chunk with a 200 status.
+      if (chunk.error)
+        throw new OpenRouterError(chunk.error.code ?? 500, chunk.error.message ?? '');
+      if (chunk.id) result.id = chunk.id;
+      if (chunk.model) result.model = chunk.model;
+      if (chunk.provider) result.provider = chunk.provider;
+      const choice = chunk.choices?.[0];
+      if (choice?.delta?.reasoning) result.reasoning += choice.delta.reasoning;
+      const text = choice?.delta?.content;
+      if (text) {
+        if (result.ttftMs < 0) result.ttftMs = now() - start;
+        result.text += text;
+        options.onToken?.(text);
+      }
+      if (choice?.finish_reason) result.finishReason = choice.finish_reason;
+      if (chunk.usage) {
+        const u = chunk.usage;
+        result.usage = {
+          promptTokens: u.prompt_tokens ?? 0,
+          completionTokens: u.completion_tokens ?? 0,
+          cachedTokens: u.prompt_tokens_details?.cached_tokens ?? 0,
+          cacheWriteTokens: u.prompt_tokens_details?.cache_write_tokens ?? 0,
+          reasoningTokens: u.completion_tokens_details?.reasoning_tokens ?? 0,
+          cost: u.cost ?? 0,
+        };
+      }
     }
-    if (choice?.finish_reason) result.finishReason = choice.finish_reason;
-    if (chunk.usage) {
-      const u = chunk.usage;
-      result.usage = {
-        promptTokens: u.prompt_tokens ?? 0,
-        completionTokens: u.completion_tokens ?? 0,
-        cachedTokens: u.prompt_tokens_details?.cached_tokens ?? 0,
-        cacheWriteTokens: u.prompt_tokens_details?.cache_write_tokens ?? 0,
-        reasoningTokens: u.completion_tokens_details?.reasoning_tokens ?? 0,
-        cost: u.cost ?? 0,
-      };
-    }
+  } finally {
+    clearTimeout(quiet);
   }
   result.totalMs = now() - start;
   return result;

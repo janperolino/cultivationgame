@@ -33,7 +33,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 31;
+export const SAVE_VERSION = 32;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -920,6 +920,19 @@ const migrations: Record<number, (old: Raw) => Raw> = {
         }
       : null;
     return { ...old, version: 31, state: { ...s, mapgen, map } };
+  },
+
+  // v31, the code review: a count that fell to nothing stayed in the Bag's record forever. v32
+  // keeps only what is held.
+  31: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const items = Object.fromEntries(
+      Object.entries((p.items ?? {}) as Record<string, unknown>).filter(
+        ([, n]) => typeof n === 'number' && n > 0,
+      ),
+    );
+    return { ...old, version: 32, state: { ...s, player: { ...p, items } } };
   },
 };
 

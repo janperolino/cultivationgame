@@ -16,7 +16,7 @@ import { techniqueArt } from '../content/manuals.ts';
 import { fromCultivator, wearFrom, wornArmor } from './combat/combatant.ts';
 import { generateBeast, generateCultivator } from './combat/generate.ts';
 import { keep, keptHaul, keptNpc, noteTaken, threaded } from './kept.ts';
-import { damageArmor, findOf, kitOf, openRings, ringOf } from './loot.ts';
+import { damageArmor, findOf, kitOf, openRings, opensRing, ringOf, ringTier } from './loot.ts';
 import { priceOf } from './prices.ts';
 import {
   changeDown,
@@ -359,7 +359,7 @@ describe('armor’s wear and repairs', () => {
     expect(repairCost(s, dmg)).toBeCloseTo((priceOf('crab-shell-vest~green') - priceOf(dmg)) * 0.5);
     const r = repair(s, 'mouth-refiner', dmg) as { ok: true; state: GameState };
     expect(r.state.player.items['crab-shell-vest~green']).toBe(1);
-    expect(r.state.player.items[dmg]).toBe(0);
+    expect(r.state.player.items[dmg] ?? 0).toBe(0);
   });
 });
 
@@ -557,5 +557,18 @@ describe('rarity grants', () => {
         expect(v.properties?.filter((p) => !p.unique).length ?? 0, v.id).toBe(rarity(r).properties);
       }
     }
+  });
+});
+
+describe('a dead cultivator’s ring', () => {
+  it('is sealed at its owner’s realm, never under its own tier, and opens to soul or qi', () => {
+    expect(ringTier('storage-ring', 'qi-condensation')).toBe(2);
+    expect(ringTier('storage-ring', 'core-formation')).toBe(3);
+    const p = newLife({ name: 'Han Li', seed: 'ring' }).player;
+    const FE = 'foundation-establishment' as const;
+    expect(opensRing(p, 2)).toBe(false);
+    expect(opensRing({ ...p, body: { ...p.body, realm: FE } }, 2)).toBe(false);
+    expect(opensRing({ ...p, soul: { ...p.soul, realm: FE } }, 2)).toBe(true);
+    expect(opensRing({ ...p, qi: { ...p.qi, realm: FE } }, 2)).toBe(true);
   });
 });

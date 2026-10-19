@@ -16,7 +16,7 @@ import {
   ENEMY_KILLED,
   EVIL_DEEDS,
   FADING_SHARE,
-  FORMER_LOVER_BELOW,
+  FORMER_LOVER_AT,
   HEAT_CAPS,
   LIKED_GIFT,
   MEMORIES,
@@ -390,7 +390,7 @@ function afterMemory(w: World, m: NewMemory, value: number, day: number): World 
   }
   const tie = tieOf(world, m.holder, m.about);
   if (tie === 'lover' || tie === 'betrothed' || tie === 'dao-companion') {
-    if (opinion(world, m.holder, m.about, day).total < FORMER_LOVER_BELOW) {
+    if (FORMER_LOVER_AT.includes(opinion(world, m.holder, m.about, day).word)) {
       world = addTie(world, { a: m.about, b: m.holder, kind: 'former-lover' });
     }
   }

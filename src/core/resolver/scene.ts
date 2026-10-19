@@ -79,7 +79,7 @@ import {
   type RealmStage,
 } from './world.ts';
 import { keepThreaded, noteTaken, npcFrom } from '../kept.ts';
-import { opensRing, ringOf, type Haul } from '../loot.ts';
+import { opensRing, ringOf, ringTier, type Haul } from '../loot.ts';
 
 /** A thing in the scene that can be used, searched, broken or hidden behind. */
 export interface SceneFeature {
@@ -892,14 +892,15 @@ export function doStep(
         const ring = youAre(a) ? ringHaul(target) : null;
         let opened: Record<string, number> = {};
         if (ring && (target.items['storage-ring'] ?? 0) > 0) {
-          if (opensRing(w.s.player, 2)) {
+          const tier = ringTier('storage-ring', target.npc?.realm ?? topRung(target).realm);
+          if (opensRing(w.s.player, tier)) {
             opened = ring.items;
             for (const [id, k] of Object.entries(ring.items)) {
               effects.push({ do: 'item', who: a.id, id, n: k, how: 'gained' });
             }
             if (ring.stones > 0) effects.push({ do: 'stones', who: a.id, n: ring.stones });
           } else {
-            const sealed = { from: target.id, name: target.name, tier: 2, ...ring };
+            const sealed = { from: target.id, name: target.name, tier, ...ring };
             w.s = { ...w.s, world: { ...w.s.world, sealed: [...w.s.world.sealed, sealed] } };
           }
         }

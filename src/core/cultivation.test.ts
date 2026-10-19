@@ -251,8 +251,8 @@ describe('major breakthroughs', () => {
     const loss = results.find((r) => !r.success)!.cultivator;
     expect(win.qi).toMatchObject({ realm: 'foundation-establishment', stage: 1, bar: 0 });
     expect(win.qi.grades).toEqual(['flawed']);
-    expect(win.items['foundation-pill']).toBe(0);
-    expect(loss.items['foundation-pill']).toBe(0);
+    expect(win.items['foundation-pill'] ?? 0).toBe(0);
+    expect(loss.items['foundation-pill'] ?? 0).toBe(0);
     expect(barFill(loss.qi)).toBeCloseTo(0.5);
     expect(loss.qi.injuredUntil).toBeGreaterThan(DAY + 360);
   });
@@ -375,11 +375,9 @@ describe('offerings', () => {
       attemptBreakthrough(c, 'qi', ctx(i), { offerings: offered }),
     );
     for (const r of results) {
-      expect(r.cultivator.items).toMatchObject({
-        'foundation-pill': 0,
-        'root-binding-jade': 0,
-        'clear-spring-lotus': 0,
-      });
+      // All three spent: none left in the Bag.
+      for (const id of ['foundation-pill', 'root-binding-jade', 'clear-spring-lotus'])
+        expect(r.cultivator.items[id] ?? 0).toBe(0);
       // A blue purifying offering clears 50 points.
       expect(r.cultivator.toxicity).toBe(0);
     }

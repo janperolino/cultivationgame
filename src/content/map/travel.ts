@@ -245,6 +245,8 @@ export const CORE_FLIGHT_PACE = 300;
 
 // ---------------------------------------------------------------- sleep and groups
 
+/** The night road's longest hop between two towns, cross-country, when it plans round water. */
+export const NIGHT_ROAD_HOP_LI = 8_000;
 /** A cave, hut or shrine you have found within this many li shelters you for the night. */
 export const SHELTER_LI = 300;
 /**

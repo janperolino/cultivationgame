@@ -71,7 +71,7 @@ describe('wearing gear', () => {
     let c = holding(life().player, 'iron-sword', 'green-steel-saber');
     c = wear(c, 'iron-sword');
     expect(c.gear.weapon).toBe('iron-sword');
-    expect(c.items['iron-sword']).toBe(0);
+    expect(c.items['iron-sword'] ?? 0).toBe(0);
     c = wear(c, 'green-steel-saber');
     expect(c.gear.weapon).toBe('green-steel-saber');
     expect(c.items['iron-sword']).toBe(1);

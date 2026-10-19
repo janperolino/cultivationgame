@@ -16,19 +16,12 @@ import { CARRIED_STONES, PART_ITEM, RING_LOTS } from '../content/loot.ts';
 import { manual } from '../content/manuals.ts';
 import { method } from '../content/methods.ts';
 import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
-import { realmIndex } from '../content/realms.ts';
+import { realmIndex, type RealmId } from '../content/realms.ts';
 import { technique } from '../content/techniques.ts';
 import { pedigreeBias, rollBiased, type LuckySlot, type Npc } from './combat/generate.ts';
 import { gainCopy as ownCopy } from './reading.ts';
 import { hashSeed, Rng } from './rng.ts';
-import {
-  addEvent,
-  addItem,
-  realmOf,
-  withPlayer,
-  type Cultivator,
-  type GameState,
-} from './state.ts';
+import { addEvent, addItem, withPlayer, type Cultivator, type GameState } from './state.ts';
 
 /** What someone carries or leaves: item ids with counts, and low-grade stones. */
 export interface Haul {
@@ -214,9 +207,21 @@ export function kitOf(n: Npc): Haul {
   return h;
 }
 
-/** Whether a cultivator can open a storage ring of a tier: their realm reaches it (Items and gear). */
+/**
+ * Whether a cultivator can open a storage ring of a tier: it opens to divine sense, so their soul or
+ * their qi reaches the tier, whichever is first; a body ahead of both doesn't (Items and gear).
+ */
 export function opensRing(c: Cultivator, tier: number): boolean {
-  return realmIndex(realmOf(c)) + 1 >= tier;
+  return Math.max(realmIndex(c.soul.realm), realmIndex(c.qi.realm)) + 1 >= tier;
+}
+
+/**
+ * The tier a dead cultivator's ring is sealed at: its own, and never under its owner's realm, since
+ * an elder's ring holds an elder's things.
+ */
+export function ringTier(ringId: string, ownerRealm: RealmId): number {
+  const own = hasItem(ringId) ? item(ringId).tier : 1;
+  return Math.max(own, realmIndex(ownerRealm) + 1);
 }
 
 /**

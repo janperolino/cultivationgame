@@ -12,7 +12,6 @@ import {
   GUARD_PACE,
   MERCHANT_GUILD,
   OFFROAD_FACTOR,
-  ON_ROAD_LI,
   ROAD_ROUTINES,
   SHELTER_LI,
   TERRAIN_NAMES,
@@ -32,7 +31,7 @@ import { addStanding } from '../resolver/opinion.ts';
 import { addEvent, itemCount, realmOf, type Cultivator, type GameState } from '../state.ts';
 import { hourLocked } from '../wheel.ts';
 import { bandAt, bandOfRealm } from './depth.ts';
-import { lineDist, type Pt } from './geometry.ts';
+import type { Pt } from './geometry.ts';
 import { known, lookAround, seeFrom, senseLi, startKnowledge, type Seeing } from './fog.ts';
 import { roadHour, setMapOf, waiting } from './encounters.ts';
 import { reachPostings } from './board.ts';
@@ -46,7 +45,7 @@ import {
   type MapPlace,
   type RegionMap,
 } from './region.ts';
-import { planRoute } from './route.ts';
+import { groundFactor, planRoute } from './route.ts';
 import type { Course, Group, MapLife } from './schema.ts';
 
 // ---------------------------------------------------------------- the life's map
@@ -333,7 +332,12 @@ export function setCourse(
   const map = mapOf(s);
   if (!map || !s.map) return { ok: false, reason: 'The map isn’t ready.' };
   if (s.map.group) return { ok: false, reason: `${s.map.group.name} sets the course.` };
-  return courseFrom(s, map, to, target, enter);
+  // A way round owed on this trip stays owed if you set the same course again; going somewhere
+  // else leaves the encounter, and the detour, behind.
+  const was = s.map.course?.to;
+  const same = !!was && Math.hypot(was[0] - to[0], was[1] - to[1]) < ENTER_LI;
+  const fresh = same || s.map.detour === 0 ? s : withLife(s, { ...s.map, detour: 0 });
+  return courseFrom(fresh, map, to, target, enter);
 }
 
 export function goToPlace(s: GameState, id: string, enter = false): CourseCheck {
@@ -582,10 +586,12 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
       const course: Course = life.course!;
       let at: Pt = life.at;
       let i = course.at;
+      // The ground rule the course was planned by (route.ts); the night road gets no road speed,
+      // and a course point that samples as sea is a coastline's edge, walked at the coast's pace.
+      const roads = !roadRoutine(life).hidden;
       while (budget > 1e-6 && i < course.pts.length) {
         const nextPt = course.pts[i]!;
-        const onRoad = w.flies || map.roads.some((r) => lineDist(nextPt, r.pts) < ON_ROAD_LI);
-        const f = onRoad ? 1 : (OFFROAD_FACTOR[terrainAt(map, nextPt)] ?? 0.5);
+        const f = w.flies ? 1 : groundFactor(map, nextPt, roads) || OFFROAD_FACTOR.coast!;
         const d = Math.hypot(nextPt[0] - at[0], nextPt[1] - at[1]);
         const can = budget * f;
         if (d <= can) {

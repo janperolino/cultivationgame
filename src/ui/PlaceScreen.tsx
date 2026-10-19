@@ -35,6 +35,7 @@ import {
 import { areaById, placeById, type MapPlace, type RegionMap } from '../core/map/region.ts';
 import { pin, stopHere } from '../core/map/travel.ts';
 import { priceWords } from '../core/purse.ts';
+import { isMember } from '../core/resolver/names.ts';
 import {
   buy,
   haggle,
@@ -423,7 +424,8 @@ function ShopCounter({
   const sm = shopMonth(game.world, shopId, game.calendar.day);
   const haggled = sm.haggle?.day === Math.floor(game.calendar.day) ? sm.haggle.off : null;
   const left = Math.max(0, kinfo.purse - sm.paid);
-  if (kinfo.members && sh.power && !game.world.known.includes(`token:${sh.power}`))
+  // A token gets you through a sect's gate; its shop serves members only (core/shops.ts).
+  if (kinfo.members && sh.power && !isMember(game.world, game.player.id, sh.power))
     return <p className="place-note">It sells only to its own.</p>;
   const lots = shelf(game, shopId);
   const held = Object.entries(game.player.items)

@@ -331,7 +331,7 @@ describe('the first hour', () => {
       if (r.attempted && !r.success) failed = r.state;
     }
     if (!failed) throw new Error('no failing roll found');
-    expect(failed.player.items['foundation-pill']).toBe(0);
+    expect(failed.player.items['foundation-pill'] ?? 0).toBe(0);
     expect(failed.cards.marks[FOUNDATION_FAILED]).toBe(failed.calendar.day);
     const soon = drawCards({ ...failed, calendar: { day: failed.calendar.day + 3599 } }, FIRST);
     expect(soon.cards.pending.map((p) => p.card)).not.toContain('foundation-again');
