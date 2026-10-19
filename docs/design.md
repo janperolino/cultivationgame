@@ -1613,12 +1613,12 @@ Built bottom-up: what other systems read comes first, each layer thin (the least
 |---|---|
 | M0 to M2, done | world bible and GLM spike; the idle core with Qi, body, soul, insight and the first decks; the combat engine, breakthroughs, manuals, the trees and the Chronicle |
 | M3's first half, done | the atlas as data, three paths, the resolver, people and followers, catalogs and shops, the travel map, places and encounters; the art overhaul's A1 to A5.2, the world at its true size |
-| The economy, thin | veins and the stones they yield, prosperity, shops' stock and money, prices that move, markets by reach |
+| The economy, thin | money by grade, prosperity, what a market holds, supply and prices, markets by reach, trading yourself and methods in the market |
 | Organizations, thin | one skeleton for sects, clans, guilds and factions; ranks, posts, contribution |
 | Jobs | jobs as posts, duty hours, the gather hour |
 | M4 Crafts | four great arts, spirit farming, abodes as sites; Core Formation |
 | The atlas fill | the other continents, on the Morning Star Continent's pattern |
-| Trade and the living world | the rest of M5 and M6: guilds trading, caravans, commissions, the black market, auctions, events, NPC depth, romance, founding a sect, map tiers and long travel, beast taming |
+| Guild trade and the living world | the rest of M5 and M6: guilds trading, caravans, commissions, the black market, auctions, events, NPC depth, romance, founding a sect, map tiers and long travel, beast taming |
 | M3's AI half | GLM roles, going in, the Ways, ruins and inheritances, the decks and the starts, the tone pass |
 | M7 Big moments | Nascent Soul, tribulations, heart demons |
 | M8 Rebirth and friends | lifespan, reincarnation, friends build |
@@ -1646,10 +1646,11 @@ Settle each before the stage that needs it (Roadmap), grouped by the layer that 
 
 **Before the economy layer**
 
-- [ ] The economy in play: veins and the stones they yield, prosperity drifting within the vein, what a place makes and needs, shops' stock and money by it, prices that move with supply, and markets by reach
+- [x] The economy in play: settled in Economy (money by grade, prosperity, what a market holds, supply and prices, markets by reach, trading yourself, methods in the market); a sect hunting its leaked methods waits for the organizations layer
 
 **Before the organizations layer**
 
+- [ ] A power's methods guarded: how a sect learns of a leak and hunts it, and what a copy of its method costs whoever holds it (Economy, Methods in the market)
 - [ ] Sects: ranks, politics, founding your own, sect wars; faction strength weighted by the realm curve, so a sect is mostly its ancestor; every organization on the shared skeleton (Professions, people and powers), with the atlas's powers tagged by type and an assassins' organization added (the skeleton, ranks, posts and contribution in the thin layer; politics, wars and founding in trade and the living world)
 
 **Before crafts**
@@ -1657,7 +1658,7 @@ Settle each before the stage that needs it (Roadmap), grouped by the layer that 
 - [ ] Hands-on crafts: alchemy's fire control and formations as placing, laying nodes on the abode's grid so the lines close, on the qi-handling grammar; the effect table behind generated recipes; styles and their chapters; technique forms in practice hours as a maybe, the first thing to cut if it feels like filler
 - [ ] The craft Daos' node lists, tiers 1 and 2, drafted with AI help and curated
 
-**Before trade and the living world**
+**Before guild trade and the living world**
 
 - [ ] NPC depth: aging and death, NPCs who climb on their own, rivals who return stronger, disciple loyalty and betrayal; a cast list of the atlas's named people (a person kind or a people file) with fixed looks, so portraits can follow
 - [ ] A regional cast that lives on its own (a sketch, as in Tale of Immortal), widening Who stays: about 200 notables a region, seeded with the world, live whether or not you have met them: all its Core Formation and Nascent Soul cultivators, about 100 Foundation elders and inner disciples, and about 70 rising Qi Condensation cultivators (geniuses, clan heirs, sect prospects), the atlas's named people among them. Each season they cultivate at their pedigree's pace and roll at most one life event: a breakthrough on your rules, travel, joining or leaving a power, taking a disciple, a dao companion or a child, a feud or a duel along an enemy tie, a death. Each event is a deed on the resolver, so their ties and opinions move among themselves. They never seek you out: they go where their own wants take them, and you cross paths where they are, a rival bidding on the same lot because they want it, an elder at the gate you walk through. The famous reach you first as rumors and headlines; once met they are kept, their log already written. The cast outlives your lives, since the world's clock never restarts, and only the region you stand in ticks in detail, the rest in yearly summaries.
