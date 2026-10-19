@@ -1197,6 +1197,13 @@ Stones are also fuel: you can absorb them for qi or burn them to power arrays, s
 - **Wages:** a day's work is 1 low-grade stone times the realm curve times prosperity's wages, so at an ordinary place Qi Condensation earns 1 low, Foundation 9, Core Formation 270 and Nascent Soul 27,000; mortal work pays in taels the same way, a laborer 0.1 tael at ordinary. Jobs, posts and hires read it.
 - **A vein yields** 1,000 low-grade stones' worth a month times the realm curve at its tier, in its own grade, to whoever holds it: 1,000 low at tier 1, 9,000 low at tier 2, 270 mid at tier 3, 27 high at tier 4. Prosperity doesn't touch it, since a vein is rock, not trade. A power's treasury and an abode on a vein read it.
 
+**Supply and prices.** A market keeps a supply of each good, 25% to 200%, and its price follows it.
+
+- **What it makes and what it needs.** A good's written supply is 150% where it is made (its place's own catalog), 50% where it is needed, and 100% everywhere else. A market writes two to four needs, as item kinds or tags (the Wall of Piled Bones: healing pills and talismans).
+- **The price** is the posted price times √(100 ÷ supply): ×2 at 25%, ×1.4 at 50% (needed), ×1 at 100%, ×0.8 at 150% (made), ×0.7 at 200%. A thing carried in on the imports layer costs ×1.2 on top, for the road along its tie. A shop buys from you at its rate (40%, 60%, the black market's 30%) of this price, so a needed thing sells for 56% of its base where it is needed.
+- **What moves it.** Each lot's worth you sell to a market raises its supply of that thing by 10 points, and each lot you buy lowers it by 10 (a lot is as many as its catalog line comes in), divided by prosperity's lots, so a bigger market moves less. Ten lots of herbs sold where they are needed take it from 50% to 150%, and the price from ×1.4 to ×0.8: with the purse, that is why a village can't buy a sack of cores.
+- **It eases back** a tenth of the way to its written supply each month, and the save keeps only the goods off theirs. The later layers' caravans and guilds move these same supplies from market to market, so trade between powers is supply carried, not new prices.
+
 **Price yardstick.**
 
 | What | Price |
