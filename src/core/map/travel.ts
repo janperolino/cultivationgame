@@ -239,12 +239,25 @@ export function wayOf(life: MapLife): Way {
 
 /** Li a double-hour on the way you go: a guard keeps the caravan's, and Core flies faster. */
 export function paceOf(s: GameState): number {
+  return basePace(s) * devPace;
+}
+
+function basePace(s: GameState): number {
   const life = s.map!;
   const w = wayOf(life);
   if (w.id === 'fly' && realmIndex(realmOf(s.player)) >= 3) return NASCENT_FLIGHT_PACE;
   if (w.id === 'fly' && realmIndex(realmOf(s.player)) >= 2) return CORE_FLIGHT_PACE;
   if (!w.rideHours && roadRoutine(life).hours.includes('guard')) return GUARD_PACE;
   return w.pace;
+}
+
+/** The dev console's `fast`: a multiplier on every pace, 1 outside it. Never saved. */
+let devPace = 1;
+export function setDevPace(n: number): void {
+  devPace = n;
+}
+export function getDevPace(): number {
+  return devPace;
 }
 
 /** The double-hours a ride runs: six from 辰, or all twelve. */

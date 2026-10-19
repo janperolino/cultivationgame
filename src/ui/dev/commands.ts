@@ -9,7 +9,7 @@ import {
   hasEncounterTemplate,
 } from '../../content/encounters/index.ts';
 import { contact } from '../../core/map/encounters.ts';
-import { ensureMap, hereWords, mapOf } from '../../core/map/travel.ts';
+import { ensureMap, getDevPace, hereWords, mapOf, setDevPace } from '../../core/map/travel.ts';
 import { raise } from '../../core/map/fog.ts';
 import { placeById } from '../../core/map/region.ts';
 import type { Encounter } from '../../core/map/schema.ts';
@@ -251,6 +251,20 @@ export const COMMANDS: Record<string, Command> = {
         },
         `At ${p.name}.`,
       );
+    },
+  },
+  fast: {
+    usage: 'fast [n | off]',
+    help: 'Travels n times as far a day on the map (×10 unless told); off turns it back. Not saved.',
+    run([n]) {
+      if (n === 'off') {
+        setDevPace(1);
+        return 'Travel at your own pace.';
+      }
+      const v = n === undefined ? (getDevPace() === 1 ? 10 : 1) : Number(n);
+      if (!Number.isFinite(v) || v <= 0 || v > 10_000) return 'Give a number above 0, or off.';
+      setDevPace(v);
+      return v === 1 ? 'Travel at your own pace.' : `Travel ×${v}: a day covers ${v} days of road.`;
     },
   },
   reveal: {
