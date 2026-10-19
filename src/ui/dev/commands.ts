@@ -10,6 +10,7 @@ import {
 } from '../../content/encounters/index.ts';
 import { contact } from '../../core/map/encounters.ts';
 import { ensureMap, hereWords, mapOf } from '../../core/map/travel.ts';
+import { raise } from '../../core/map/fog.ts';
 import { placeById } from '../../core/map/region.ts';
 import type { Encounter } from '../../core/map/schema.ts';
 import { HOME_REGION } from '../../content/resolver.ts';
@@ -249,6 +250,27 @@ export const COMMANDS: Record<string, Command> = {
           return { ...m, map: { ...m.map!, at: [p.x, p.y], course: null, inside: null } };
         },
         `At ${p.name}.`,
+      );
+    },
+  },
+  reveal: {
+    usage: 'reveal [all]',
+    help: 'Shows the whole region: every area and place Seen; all takes the hidden sites too.',
+    run([which], store) {
+      const s = needGame(store);
+      const map = s && mapOf(ensureMap(s));
+      if (!map) return 'No map yet.';
+      const withHidden = which === 'all';
+      return apply(
+        store,
+        (g) => {
+          const m = ensureMap(g);
+          let life = raise(m.map!, map.id, 'seen');
+          for (const a of map.areas) life = raise(life, a.id, 'seen');
+          for (const p of map.places) if (withHidden || !p.hidden) life = raise(life, p.id, 'seen');
+          return { ...m, map: life };
+        },
+        `${map.name}: all Seen${withHidden ? ', hidden sites and all' : ''}.`,
       );
     },
   },
