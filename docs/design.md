@@ -1259,6 +1259,24 @@ Stones are also fuel: you can absorb them for qi or burn them to power arrays, s
   These are defaults by family, and a catalog line may write its own (the City's refiners cut thunderhorn for grips, so their blades use a horn each). Inputs use nothing: herbs are picked, ore dug, horn cut. A pressure on an input doubles what the makers use of it.
 - **Needs the sum doesn't count** stay as written, at 50%: mounts, carts and a herd's beast-part feed (Spear-Plow, Corral Town, the Hundred Reins) are a place's habits, as coveted things are needed everywhere, not baskets.
 
+- **Making.** A place makes its own catalog's goods (its place's and its kingdom's, as since E2.1) and what its land gives: a herb, material or staple line in the continent's or region's catalog may name the land that yields it, and a place on that land makes it unwritten, its vein capping the tier (a tier 1 vein digs tier 1 ore). The guide the land tags are drafted from:
+
+| Land | Gives |
+|---|---|
+| plains, river plains | grain |
+| hills, mountains | ore; jade on a vein of tier 2 or more |
+| forest, jungle | herbs, spirit wood |
+| marsh | herbs (the poisonous ones), reed |
+| coast, islands | salt, pearls |
+| steppe | hides, horn, wool |
+| karst | cave herbs, lamp oil from the bat roosts |
+| volcanic | fire ore, sulfur |
+| desert | salt, sand jade |
+| ice, tundra | furs |
+
+  A maker makes half again what its own people use, its makers' inputs counted as use, so a good rests at 150% where it is made; one its own people don't use it makes at half again what the markets in its reach use, and it stands at the 200% cap there (the Gate's bone meal). Beast parts and cores come from hunting, yours and the bounty office's, and keep the written supply until the living world's hunters.
+- **Harvests.** Grain is reaped in autumn and herbs picked through spring and summer, at the same yearly total: a seasonal good is made at ×1.4 just after its harvest, falling to ×0.6 just before the next, as granaries fill and empty. So rice runs about ×0.7 at a maker after the harvest and about ×1 by spring, and where it is needed climbs from ×1.2 toward ×2 before the next: hauling rice has a season, bought in autumn and sold in spring.
+
 **Trading yourself.** Staples are the bulk end of the kinds that already exist, sold by the lot: salt, spirit rice, hides, horn, ore, lamp oil, common herbs, each marked `trade` on its catalog line and tiered like anything else, so a Foundation trader hauls tier 2 ore; mortal staples trade in taels, real money to a child of twelve and small change by Qi Condensation. Bought where they are made at ×0.8 and sold where they are needed at 80% of ×1.4, a lot clears about 38%, less as both supplies move. The mark: a full Bag of ten lots carried across a kingdom pays about one and a half times the wages for the same days (Pacified Fort to Sinkhole Terraces, 11,245 li by road or 47 days at a fresh life's walk, earns about 74 low over 47 of wages; `npm run sim -- haul`). What bounds it is already built: the Bag's squares, a hand cart or a ring, the tolls on the road, the road's encounters (a robbery takes what you carry), and the need itself, which pays only the shop's rate once you have filled it.
 
 - **A lot is a Bag square** (E3's talk): twenty sacks, bales or jars, a staple stacking twenty to a square, so a full Bag is ten lots. A tier 1 spirit staple is about a low-grade stone a piece (spirit rice 1.2, the dearest thunderhorn 3), a mortal one a fifth of a tael (millet 0.15), sized so the haul makes the mark.
