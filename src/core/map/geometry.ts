@@ -25,6 +25,12 @@ function boxOf(ring: Ring): readonly [number, number, number, number] {
   return b;
 }
 
+/** The smooth ease from 0 at a to 1 at b. */
+export function smoothstep(a: number, b: number, v: number): number {
+  const t = Math.max(0, Math.min(1, (v - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+}
+
 export function inRing(p: Pt, ring: Ring): boolean {
   // Outside its box a point is outside the ring; the travel hours ask this of every outline.
   const b = boxOf(ring);

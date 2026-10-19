@@ -2,11 +2,11 @@
 // of kinds and rarities a long life gathers (most of them formulas, a few scriptures above the
 // trees), most of them finished. Seeded, so the same count gives the same shelf. Nothing here is
 // game content; the game's manuals are in content/manuals.ts.
-import { ART_NODES, type Manual, type ManualKind, type ManualNode } from '../content/manuals.ts';
-import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
-import type { StatId } from '../content/stats.ts';
-import { TREES } from '../content/trees/index.ts';
-import { hashSeed, mulberry32 } from './rng.ts';
+import { ART_NODES, type Manual, type ManualKind, type ManualNode } from '../../content/manuals.ts';
+import { RARITY_IDS, rarityRank, type RarityId } from '../../content/rarity.ts';
+import type { StatId } from '../../content/stats.ts';
+import { TREES } from '../../content/trees/index.ts';
+import { hashSeed, mulberry32 } from '../rng.ts';
 
 /** Out of 150: 4 scriptures, 2 inheritances, 14 methods, 30 arts, 8 styles, the rest formulas. */
 const MIX: readonly [ManualKind, number][] = [

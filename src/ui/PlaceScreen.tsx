@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { copyItem, copyTitle, hasCopy } from '../content/copies.ts';
 import { item } from '../content/items.ts';
-import { PLACE_KINDS, type PlaceKindInfo } from '../content/map/places.ts';
+import { PLACE_KIND_INFO, type PlaceKindInfo } from '../content/map/places.ts';
 import { QI_NAMES, TERRAIN_NAMES } from '../content/map/travel.ts';
 import { REALM_IDS, realm, realmIdFromName, type RealmId } from '../content/realms.ts';
 import { SHOP_KIND_INFO, shop as shopById } from '../content/shops.ts';
@@ -184,7 +184,7 @@ export function PlaceScreen({
   const [door, setDoor] = useState<string | null>(() => place.shops[0] ?? null);
   const [toast, setToast] = useState<string | null>(null);
   const kind = placeKindOf(place)!;
-  const info = PLACE_KINDS[kind];
+  const info = PLACE_KIND_INFO[kind];
   const say = (t: string) => {
     setToast(t);
     window.setTimeout(() => setToast((cur) => (cur === t ? null : cur)), 2800);
@@ -377,7 +377,7 @@ function Counter({
     case 'board':
       return <BoardCounter game={game} map={map} place={place} act={act} say={say} />;
     case 'bed': {
-      const bed = PLACE_KINDS[placeKindOf(place)!].bed;
+      const bed = PLACE_KIND_INFO[placeKindOf(place)!].bed;
       return (
         <>
           <p className="place-sub">
@@ -666,7 +666,7 @@ function TalkCounter({
   act: Act;
 }) {
   const [heard, setHeard] = useState<string | null>(null);
-  const elder = PLACE_KINDS[placeKindOf(place)!].rumors === 'elder';
+  const elder = PLACE_KIND_INFO[placeKindOf(place)!].rumors === 'elder';
   const today = rumorToday(game, place.id);
   const q = heard ? placeById(map, heard) : null;
   if (q) {

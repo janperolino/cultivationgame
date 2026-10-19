@@ -3,18 +3,18 @@
 // a gate without a pill, Foundation, eighteen years of seclusion and a return. The dev console's
 // `chronicle` writes it over the open life's chronicle; the tests read the same one. Seeded, so
 // the same life comes every time. Only the chronicle and the dates change, not the cultivator.
-import { CARDS } from '../content/cards/index.ts';
-import type { CardLineKind } from '../content/cards/schema.ts';
-import type { EventData } from '../content/chronicle.ts';
-import { TECHNIQUES } from '../content/techniques.ts';
-import { mulberry32 } from './rng.ts';
+import { CARDS } from '../../content/cards/index.ts';
+import type { CardLineKind } from '../../content/cards/schema.ts';
+import type { EventData } from '../../content/chronicle.ts';
+import { TECHNIQUES } from '../../content/techniques.ts';
+import { mulberry32 } from '../rng.ts';
 import {
   DAYS_PER_YEAR,
   START_AGE,
   chronicleEvent,
   type ChronicleEvent,
   type GameState,
-} from './state.ts';
+} from '../state.ts';
 
 type Line = [type: string, data: EventData];
 

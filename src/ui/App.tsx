@@ -142,7 +142,10 @@ export function App() {
 
   useEffect(() => {
     void useGame.getState().init();
-    const fetchScreens = () => Object.values(SCREENS).forEach((load) => void load());
+    const fetchScreens = () => {
+      Object.values(SCREENS).forEach((load) => void load());
+      void import('./map/art.ts').then((art) => art.prefetchPaintings());
+    };
     const idle = window.requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 2000));
     idle(fetchScreens);
     // What people know of places reads the atlas's index (core/resolver/knows.ts); it loads on its

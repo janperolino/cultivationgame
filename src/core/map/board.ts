@@ -9,7 +9,7 @@ import {
   POSTINGS_PER_MONTH,
 } from '../../content/encounters/pace.ts';
 import type { Template, TripGoal } from '../../content/encounters/schema.ts';
-import { PLACE_KINDS } from '../../content/map/places.ts';
+import { PLACE_KIND_INFO } from '../../content/map/places.ts';
 import { hashSeed, Rng } from '../rng.ts';
 import { monthOf } from '../shops.ts';
 import { addEvent, withPlayer, type GameState } from '../state.ts';
@@ -36,7 +36,7 @@ export const RETRY_DAYS = 30;
 
 export function hasBoard(p: MapPlace): boolean {
   const k = placeKindOf(p);
-  return !!k && PLACE_KINDS[k].board;
+  return !!k && PLACE_KIND_INFO[k].board;
 }
 
 /** Ordered by id, code point by code point: a seeded pick must not lean on the machine's locale. */

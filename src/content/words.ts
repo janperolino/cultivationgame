@@ -1,4 +1,5 @@
 // Words for numbers, so realms, layers and years read as words (design § UI, less spreadsheet).
+import { DAYS_PER_MONTH, DAYS_PER_YEAR } from './calendar.ts';
 
 const ONES = [
   '',
@@ -88,8 +89,8 @@ export function spanWords(days: number): { text: string; plural: boolean } {
   if (days < 7) return { text: 'a few days', plural: true };
   if (days < 20) return { text: 'half a month', plural: false };
   if (days < 45) return { text: 'a month', plural: false };
-  if (days < 90) return { text: `${countWord(Math.round(days / 30))} months`, plural: true };
-  if (days < 360) {
+  if (days < 90) return { text: `${countWord(Math.round(days / DAYS_PER_MONTH))} months`, plural: true };
+  if (days < DAYS_PER_YEAR) {
     const seasons = Math.floor(days / 90);
     return seasons === 1
       ? { text: 'a season', plural: false }
@@ -97,5 +98,5 @@ export function spanWords(days: number): { text: string; plural: boolean } {
   }
   if (days < 540) return { text: 'a year', plural: false };
   if (days < 720) return { text: 'a year and a half', plural: false };
-  return { text: `${countWord(Math.round(days / 360))} years`, plural: true };
+  return { text: `${countWord(Math.round(days / DAYS_PER_YEAR))} years`, plural: true };
 }

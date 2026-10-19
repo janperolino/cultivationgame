@@ -7,7 +7,7 @@
 // remember of you and their ties as you know them; their log is your chronicle filtered by them.
 // A follower's page says why they follow and how that breaks, and your name's reach by region
 // sits under the powers (P3.4b). Full in M5.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { placeName } from '../content/origins.ts';
 import { person, TIES, type TieId } from '../content/people.ts';
 import type { TrustWord } from '../content/resolver.ts';
@@ -353,28 +353,35 @@ function Web({
   selected: string;
   onSelect: (id: string) => void;
 }) {
-  const everyone = knownPeople(game.player);
-  const views = new Map(everyone.map((p) => [p.id, personView(game, p.id)]));
-  const shown = nearest(
-    everyone.map((p) => {
-      const v = views.get(p.id)!;
-      return { id: p.id, tie: v.tie, level: v.level, heard: p.record.heard };
-    }),
-  ).map((p) => ({ ...p, name: person(p.id).name, bond: tieWords(p.tie) }));
-  const nodes = webLayout(shown);
-  // The faint threads between people you know are tied to each other.
-  const links = tieLinks(
-    nodes,
-    game.world.ties.filter(
-      (t) => t.a !== game.player.id && t.b !== game.player.id && knowsTie(t, game.player.id),
-    ),
-  );
-  // The ring labels go where nobody sits, and the view frames them with everyone.
-  const labels = ringLabels(nodes);
-  const bounds = webBounds(
-    nodes,
-    labels.map((l) => l.box),
-  );
+  // Who sits where reads only the people, the world and the day: worked out once a day or a
+  // change, never on a tick or a pan frame.
+  const day = Math.floor(game.calendar.day);
+  const { everyone, views, nodes, links, labels, bounds } = useMemo(() => {
+    const everyone = knownPeople(game.player);
+    const views = new Map(everyone.map((p) => [p.id, personView(game, p.id)]));
+    const shown = nearest(
+      everyone.map((p) => {
+        const v = views.get(p.id)!;
+        return { id: p.id, tie: v.tie, level: v.level, heard: p.record.heard };
+      }),
+    ).map((p) => ({ ...p, name: person(p.id).name, bond: tieWords(p.tie) }));
+    const nodes = webLayout(shown);
+    // The faint threads between people you know are tied to each other.
+    const links = tieLinks(
+      nodes,
+      game.world.ties.filter(
+        (t) => t.a !== game.player.id && t.b !== game.player.id && knowsTie(t, game.player.id),
+      ),
+    );
+    // The ring labels go where nobody sits, and the view frames them with everyone.
+    const labels = ringLabels(nodes);
+    const bounds = webBounds(
+      nodes,
+      labels.map((l) => l.box),
+    );
+    return { everyone, views, nodes, links, labels, bounds };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.player.people, game.world, day]);
   const home = (screen: Size): View => {
     const k = clampZoom(Math.min(HOME_MAX_ZOOM, screen.w / bounds.w, screen.h / bounds.h));
     return viewAt(

@@ -13,7 +13,7 @@ import {
   GUIDE_PAY_LOW,
   GUIDE_TRADES,
   MAPS,
-  PLACE_KINDS,
+  PLACE_KIND_INFO,
   RUMOR_CHOICES,
   RUMOR_LI,
   RUMOR_LINE_ELSE,
@@ -40,7 +40,7 @@ import {
 import { Rng } from '../rng.ts';
 import { monthOf } from '../shops.ts';
 import { addItem, withPlayer, type GameState } from '../state.ts';
-import { known, raise, rumor, sketchKingdom } from './fog.ts';
+import { known, raise, rumor, sketchKingdom, sketchRegion } from './fog.ts';
 import { placeKindOf, standsAt } from './gate.ts';
 import { areaById, placeById, type MapPlace, type RegionMap } from './region.ts';
 import type { KnowState, MapLife } from './schema.ts';
@@ -57,7 +57,7 @@ export function insideOf(
   const place = map && id ? placeById(map, id) : undefined;
   const kind = place && placeKindOf(place);
   if (!map || !place || !kind) return null;
-  return { map, place, info: PLACE_KINDS[kind] };
+  return { map, place, info: PLACE_KIND_INFO[kind] };
 }
 
 function inPlace(
@@ -189,11 +189,7 @@ export function useChart(s: GameState, itemId: string): GameState {
   if (!map || !s.map || !chart) return s;
   const why = item(itemId).name.replace(/^Map/, 'the map');
   if (chart.scope === 'kingdom') return withLife(s, sketchKingdom(map, s.map, chart.of, why));
-  let life = raise(s.map, map.id, 'sketched', why);
-  for (const a of map.areas) if (a.kind !== 'tract') life = raise(life, a.id, 'sketched', why);
-  for (const p of map.places)
-    if (p.kind === 'atlas' && !p.hidden) life = raise(life, p.id, 'sketched', why);
-  return withLife(s, life);
+  return withLife(s, sketchRegion(map, s.map, why));
 }
 
 /** Buys a map from the place's seller: it goes in the Bag and Sketches its ground at once. */

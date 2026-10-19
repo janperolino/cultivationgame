@@ -1,6 +1,7 @@
 // Reading the typed chronicle: an event's text from its type's template (content/chronicle.ts),
 // with its subject's name, pronouns and story slots, and the world's calendar ("Winter 3,137", the
 // Sealed Era). The person log (P1.8) filters events by actor.
+import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { EVENT_TEMPLATES, pronounWords, type EventData, type Who } from '../content/chronicle.ts';
 import { ERA_START_YEAR } from '../content/calendar.ts';
 import { placeName } from '../content/origins.ts';
@@ -57,7 +58,7 @@ export function seasonOf(day: number): Season {
 
 /** The season of a world day as 0–3, spring first. */
 export function seasonIndex(day: number): number {
-  const month = Math.floor((((day % DAYS_PER_YEAR) + DAYS_PER_YEAR) % DAYS_PER_YEAR) / 30);
+  const month = Math.floor((((day % DAYS_PER_YEAR) + DAYS_PER_YEAR) % DAYS_PER_YEAR) / DAYS_PER_MONTH);
   return Math.floor(month / 3);
 }
 

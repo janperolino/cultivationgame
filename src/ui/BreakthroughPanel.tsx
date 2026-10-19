@@ -5,7 +5,7 @@
 // meter, the requirements as a checklist, three offering slots and a strip of the things you hold
 // that can be offered, each saying what it does on this attempt. At the lifespan edge the same
 // panel holds the last chance, with the gate pill alone. Every rule lives in core.
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import {
   GRADE_SCORES,
   GRADES,
@@ -42,6 +42,7 @@ import {
 } from './scene.ts';
 import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
+import { useCloseOutside } from './useCloseOutside.ts';
 
 /** The meter's scale: the margin score runs 0 to 4. */
 const METER_MAX = 4;
@@ -249,24 +250,7 @@ function Panel({ game, panel }: { game: GameState; panel: PanelOpen }) {
   const [chosen, setChosen] = useState<string[]>([]);
   // The floating picker of what can be laid, opened from an empty slot (A3).
   const [picking, setPicking] = useState(false);
-  const slotsRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!picking) return;
-    const close = (e: Event) => {
-      if (
-        e instanceof KeyboardEvent
-          ? e.key === 'Escape'
-          : !slotsRef.current?.contains(e.target as Node)
-      )
-        setPicking(false);
-    };
-    document.addEventListener('pointerdown', close);
-    document.addEventListener('keydown', close);
-    return () => {
-      document.removeEventListener('pointerdown', close);
-      document.removeEventListener('keydown', close);
-    };
-  }, [picking]);
+  const slotsRef = useCloseOutside<HTMLDivElement>(picking, () => setPicking(false));
   const c = game.player;
   const which = panel.ladder;
   const last = panel.lastChance;

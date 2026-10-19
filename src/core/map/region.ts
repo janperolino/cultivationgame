@@ -5,6 +5,7 @@
 // same places, and a region is built the same way whatever its content.
 import { regionData, type RegionData, type RegionPlace } from '../../content/map/index.ts';
 import {
+  BANDS,
   HEART_BASE_RINGS,
   HEART_LARGE_TRACT,
   HEART_MID_TRACT,
@@ -667,20 +668,7 @@ export function generateRegion(regionId: string, world: string): RegionGen {
 
 /** The first band of a realm (its early third), from the atlas's top realm; Qi Condensation's is 0. */
 export function firstBandOf(realm: string): number {
-  const order = [
-    'qi-condensation',
-    'foundation-establishment',
-    'core-formation',
-    'nascent-soul',
-    'deity-transformation',
-    'void-refinement',
-  ];
-  const i = order.indexOf(realm);
-  if (i >= 0) return i * 3;
-  if (realm === 'body-integration') return 18;
-  if (realm === 'mahayana') return 19;
-  if (realm === 'tribulation-transcendence') return 20;
-  return 0;
+  return Math.max(0, BANDS.findIndex((b) => b.realm === realm));
 }
 
 function HEART_NAMES_FOR(terrain: string): readonly [string, string] {

@@ -201,9 +201,14 @@ export function nextRealm(id: RealmId): Realm | null {
  * Qi needs, qi gained per day and income all scale by it, so a low-grade stone is worth a ninth
  * as much at Foundation.
  */
+const SCALES = new Map<RealmId, number>();
 export function realmScale(id: RealmId): number {
-  let scale = 1;
-  for (let i = 1; i <= realmIndex(id); i++) scale *= CURVE[i] ?? 1;
+  let scale = SCALES.get(id);
+  if (scale === undefined) {
+    scale = 1;
+    for (let i = 1; i <= realmIndex(id); i++) scale *= CURVE[i] ?? 1;
+    SCALES.set(id, scale);
+  }
   return scale;
 }
 
@@ -220,9 +225,14 @@ export const SIZE_BASE = 10;
 export const SPREAD_SHARE = 0.8;
 
 /** The size of this realm's first stage: 10 at Qi Condensation, 31 at Foundation, 143 at Core Formation. */
+const SIZES = new Map<RealmId, number>();
 export function realmSize(id: RealmId): number {
-  let size = SIZE_BASE;
-  for (let i = 1; i <= realmIndex(id); i++) size *= REALMS[i]!.step;
+  let size = SIZES.get(id);
+  if (size === undefined) {
+    size = SIZE_BASE;
+    for (let i = 1; i <= realmIndex(id); i++) size *= REALMS[i]!.step;
+    SIZES.set(id, size);
+  }
   return size;
 }
 

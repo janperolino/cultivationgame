@@ -2,6 +2,7 @@
 // a few long fractures from impact points, a fine web only around the impacts, and qi light
 // leaking through every crack. Seeded per life, redrawn to fit the screen.
 import { mulberry32 } from '../core/rng.ts';
+import { lighten as mixWhite, rgba } from './colors.ts';
 
 type Point = [number, number];
 interface CrackPath {
@@ -148,17 +149,6 @@ export function buildCracks(
     });
   }
   return paths;
-}
-
-function rgba(hex: string, a: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
-}
-
-function mixWhite(hex: string, t: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  const c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * t));
-  return '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
 }
 
 function stroke(

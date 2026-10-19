@@ -1,5 +1,6 @@
 // The seclusion and breakthrough constants (design § Cultivation and § Economy). Starting values
 // that sim/pacing.ts tunes; rules that read them live in src/core/cultivation.ts.
+import { DAYS_PER_YEAR } from './calendar.ts';
 
 /** The big three: each climbs its own ladder of realms and stages. */
 export const LADDERS = ['qi', 'body', 'soul'] as const;
@@ -92,7 +93,7 @@ export const TOXICITY_DECAY = 1;
 
 /** A failed major breakthrough halves the bar and injures for a few in-game years. */
 export const MAJOR_FAIL_KEEP = 0.5;
-export const MAJOR_INJURY_DAYS = 3 * 360;
+export const MAJOR_INJURY_DAYS = 3 * DAYS_PER_YEAR;
 /** An injured ladder cultivates at this fraction of its pace. */
 export const INJURY_SPEED = 0.5;
 

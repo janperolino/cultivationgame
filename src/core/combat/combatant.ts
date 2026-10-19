@@ -10,7 +10,7 @@
 // from a cultivator, `sheet` reads the lines for the Character screen.
 import {
   AGILITY_BASE,
-  AGILITY_PER_POINT,
+  agilityShare,
   ARMOR_PER_SIZE,
   BIND_EVASION,
   GUARD_SHARE,
@@ -401,7 +401,7 @@ export function topRung(c: Pick<Combatant, 'rungs'>): Rung {
 
 /** What Agility does to Evasion and fleeing: 5% a point above 10. */
 export function agilityFactor(c: Combatant): number {
-  return Math.max(0.1, 1 + AGILITY_PER_POINT * (c.agility - AGILITY_BASE));
+  return agilityShare(c.agility);
 }
 
 /** The product of one status field over everything afflicting a combatant, 1 with none. */

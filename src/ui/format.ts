@@ -1,3 +1,4 @@
+import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { statInfo, type Effect } from '../content/stats.ts';
 import { realm, REALMS, stageName } from '../content/realms.ts';
 import {
@@ -23,7 +24,7 @@ export function formatAge(years: number): string {
 /** In-game days as the largest sensible unit: "12 days", "3.2 years". */
 export function formatDays(days: number): string {
   if (days < 60) return `${Math.round(days)} ${Math.round(days) === 1 ? 'day' : 'days'}`;
-  if (days < DAYS_PER_YEAR) return `${Math.round(days / 30)} months`;
+  if (days < DAYS_PER_YEAR) return `${Math.round(days / DAYS_PER_MONTH)} months`;
   const years = days / DAYS_PER_YEAR;
   return `${years < 10 ? years.toFixed(1) : Math.round(years)} years`;
 }

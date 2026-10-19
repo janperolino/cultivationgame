@@ -112,7 +112,14 @@ function allLots(): Lot[] {
   return [...CATALOGS.flatMap((c) => c.lots), ...RARE.lots];
 }
 
-function lotShape(thing: string): { tier: number; rarities: RarityId[] } | null {
+/**
+ * A lot's thing as the rolls see it: its tier and the rarities it comes at; null for what isn't
+ * written, and for mortal goods unless `mortal` (a shop sells them; a ring or a drop never holds them).
+ */
+export function lotShape(
+  thing: string,
+  opts: { mortal?: boolean } = {},
+): { tier: number; rarities: RarityId[] } | null {
   if (hasCopy(thing)) {
     const of = copyOf(thing)!;
     const t =
@@ -125,8 +132,14 @@ function lotShape(thing: string): { tier: number; rarities: RarityId[] } | null 
   }
   if (!hasItem(thing)) return null;
   const it = item(thing);
-  if (it.taels !== undefined) return null;
+  if (it.taels !== undefined && !opts.mortal) return null;
   return { tier: it.tier, rarities: rarityRange(it) };
+}
+
+/** Every lot with its shape, worked out once: the catalogs never change. */
+let shaped: { lot: Lot; shape: ReturnType<typeof lotShape> }[] | null = null;
+function shapedLots() {
+  return (shaped ??= allLots().map((lot) => ({ lot, shape: lotShape(lot.thing) })));
 }
 
 /**
@@ -139,9 +152,9 @@ export function ringOf(n: Npc): Haul | null {
   const rng = rngFor(n, 'ring');
   const tier = npcTier(n);
   const bias = pedigreeBias(n.pedigree ?? 'rogue', n.realm);
-  const pool = allLots()
-    .map((lot) => ({ lot, shape: lotShape(lot.thing) }))
-    .filter((x) => x.shape && x.shape.tier <= tier && x.shape.tier >= tier - 1);
+  const pool = shapedLots().filter(
+    (x) => x.shape && x.shape.tier <= tier && x.shape.tier >= tier - 1,
+  );
   const h: Haul = { items: {}, stones: 0 };
   const lots = rng.int(RING_LOTS[0], RING_LOTS[1]);
   for (let i = 0; i < lots; i++) {
@@ -248,10 +261,9 @@ export function fortuneDrop(rng: Rng, n: Npc, fortune: number): string | null {
   if (!rng.chance(Math.max(0, fortune - 10) * FORTUNE_DROP)) return null;
   const tier = npcTier(n);
   const r = rollBiased(rng, pedigreeBias(n.pedigree ?? 'rogue', n.realm));
-  const pool = allLots().filter((l) => {
-    const s = lotShape(l.thing);
-    return s && s.tier === tier && s.rarities.includes(r);
-  });
+  const pool = shapedLots()
+    .filter(({ shape: s }) => s && s.tier === tier && s.rarities.includes(r))
+    .map((x) => x.lot);
   if (!pool.length) return null;
   const lot = rng.pick(pool);
   return hasCopy(lot.thing) ? lot.thing : variantId(lot.thing, r);

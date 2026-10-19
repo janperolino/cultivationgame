@@ -7,6 +7,7 @@
 // when someone there sees it done, and on a power when one of its people learns who did it.
 // Knowing who did a deed lands it as a memory and as standing (opinion.ts) and carries its renown
 // or infamy across its region (names.ts); its karma lands as it is done, seen or not.
+import { DAYS_PER_MONTH } from '../../content/calendar.ts';
 import { z } from 'zod';
 import {
   CAPABILITY_IDS,
@@ -495,7 +496,7 @@ export function lateDebts(
   const out: { state: LastingState; to: string; months: number }[] = [];
   for (const s of w.states) {
     if (s.data.kind !== 'debt' || day < s.data.due) continue;
-    out.push({ state: s, to: s.data.to, months: Math.floor((day - s.data.due) / 30) });
+    out.push({ state: s, to: s.data.to, months: Math.floor((day - s.data.due) / DAYS_PER_MONTH) });
   }
   return out;
 }

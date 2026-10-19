@@ -68,6 +68,9 @@ Ranked by how much a player would feel it. "Doc" means design.md should change, 
 - *14 done (Jan's go):* a checkpoint on your course takes 1 low-grade as you pass it (renown 3 waives it, nothing to pay and you are waved through), with a Chronicle line and the toll on the course card; a guard who walks off a caravan once it has left loses 5 standing with the merchant guild (a placeholder id until the atlas names the guild). Late debts wait for the economy.
 
 **Low**
+
+**Done (on Jan's "do what needs no decision"):** the attending hint and its doc phrase; five notches; the UI table's unbuilt things marked with their layers; Old Soul's lost chapter, take down and write a manual marked later; the Art host rule; deviation at 140%; regions to 90,000 li and the population table to the atlas; a black market's 30% and the cloud ship written in; yin orbs through 丑; a keeper you're friendly with buys at 60%; the bounty office's posted 50% flat; staged deaths spread by telling; divine sense sweeps with no check; Nascent Soul flight at 600; a sect or clan start holds its region's map (`map:<region>` is now read). **For Jan:** whether afraid followers turn on the Memory axis's "vengeful" or the revenge motive, and whether the body and soul arts get a first each (one tutorial step today). **Later, with their phases:** core disciples' talismans, the group's best talker and a talk that fell short (P3.9), the deck and roots (P3.12).
+
 - The attending hint says qi runs faster "while Cultivate is open" and focus "fades once you leave"; attending counts on any screen and focus drains steadily. Fix the hint and the doc's phrase.
 - People notches: the doc says seven, there are five trust words. *Doc*.
 - The UI table describes unbuilt things as present now that "Ships in" is gone: the key and cost meter, the mature switch, Go In and Crafts screens, the abode's store and unappraised "?" items in the Bag, sect and faction groups on People, letters and Seek them out, the steward's report. *Doc*: mark them later.
@@ -129,7 +132,10 @@ Ranked by how much a player would feel it. "Doc" means design.md should change, 
 - S8: the game loads `atlas-index.json`, 150 KB written by `atlas:build`, rather than the 1.37 MB atlas, and a test keeps it in step. The eight screens past Cultivate and Routine load lazily and are fetched once the page is idle. At start that is about 1.36 MB of script rather than 2.8 MB.
 - S9: only the page's last write on unload trusts a save this tab wrote or checked. The regular autosave keeps its check, since `makeSave` validates nothing and that check is what keeps a broken save out of the backup.
 - S7: a first-hour seed stops once every mark is set. The sim took 86 s, against 225 s before this review.
-- Left: S5 (the Map's blits and chunk decoding), S6 (People), S10, and archiving old lives' chronicles.
+- S5 in part: map chunks and paintings draw only once decoded off the main thread, and the paintings are fetched at idle. The land's brightness lift stays as is, since baking it in changes the look.
+- S6: the People web lays itself out once a day or a change, never on a tick or a pan frame.
+- S10 in part: `seeFrom` skips what is seen, `roadHours` reads the realm once, `realmScale` and `realmSize` are tables, the place index builds its child lists in one pass, and a course with no road hours is refused before routing.
+- Left: the land lift, the encounter card's memo, `chooseAction`'s double pricing, the deeds index and archiving old lives' chronicles.
 
 Ranked by what you'd feel.
 
@@ -146,6 +152,8 @@ Ranked by what you'd feel.
 
 ## Code against code
 
+**Done:** one Agility rule (`agilityShare`) and `isBeyond` everywhere; `DAYS_PER_MONTH` and `DAYS_PER_YEAR` in content/calendar.ts and read by all; `ENTER_LI`, `sightAt` and `BANDS` read where they were copied; one `lotShape` (with mortal goods for shops) and ring pools shaped once; the map's `PLACE_KINDS` is `PLACE_KIND_INFO` and knows.ts' set `NAMED_PLACE_KINDS`; `useCloseOutside` in the tip and the offering picker; `rgba`, `lighten` and `smoothstep` shared. **Left:** the hashSeed RNGs (they replay; renaming them to named streams would change every seeded roll).
+
 - The Agility factor is written twice (`content/combat.ts` and `content/resolver.ts`, both 10 and 0.05 today), and `isBeyond` three times (check, intent, followers).
 - 360 days a year and 30 a month are bare literals in about eight places; `DAYS_PER_MONTH` beside `DAYS_PER_YEAR` would end that.
 - `250` is `ENTER_LI` in five places; `senseReach` repeats `sightAt`; `onRoadAt` is inlined in `travelDays`; the stage-to-third formula is in two files; `firstBandOf` hard-codes what `BANDS` holds.
@@ -155,6 +163,8 @@ Ranked by what you'd feel.
 - Many core RNGs are `new Rng(hashSeed('<id>/…'))` rather than named streams. They replay, but aren't literally "one stream per system".
 
 ## Dead code still left
+
+**Done:** the thirteen dead CSS classes, the unused `sheet-rise` and three orphaned comments; the made-up fixtures moved to `src/core/fixtures/`. The rest below waits on the phases that give it a reader.
 
 - Content: `TECHNIQUE_FORMS` and `BEAST_FORMS` (they name the form vocabulary), `VOW_KARMA`, `DEBT_OPINION`, `FIRST_LOOK_EACH`, `COMPOSURE_AXIS`, `GOAL_MOTIVES`, `CARAVAN_LEAVE_STANDING`, `NPC_PACE` (test only): each is a rule to wire or drop (above).
 - Test-only exports that look like unwired features: `lateDebts`, `leaveScene`, `projectionDue`, `payBloodPrice`, `heatWord`, `rosterActor`, `stageSize`, `damageArmor`, `fortuneDrop` and the unused `loot` stream.

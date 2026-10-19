@@ -69,7 +69,7 @@ export const HINTS: Readonly<Record<HintId, string>> = {
     'Your wheel is all qi, and qi hours give nothing until you know a method. Turn an hour to Study to read it; more hours read it sooner.',
   orbs: 'Qi drifts toward your figure on Cultivate. Pass the pointer through an orb to draw it in.',
   attending:
-    'That orb filled your focus. While Cultivate is open your qi runs ×1.25, and focus lifts it toward ×2; an orb drawn on the inhale fills it faster. Focus fades once you leave.',
+    'That orb filled your focus. While you attend, on any screen, your qi runs ×1.25, and focus lifts it toward ×2; an orb drawn on the inhale fills it faster. Focus drains while you are away.',
   method:
     'You have learned your first cultivation method, the {method}. Take it up under Climb with to start cultivating.',
   'qi-hours':

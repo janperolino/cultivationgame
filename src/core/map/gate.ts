@@ -5,7 +5,7 @@
 // a secret realm, asks for what opens it. Kept apart from travel.ts so arriving on a course can go in.
 import {
   ENTER_LI,
-  PLACE_KINDS,
+  PLACE_KIND_INFO,
   WATCH_BRIBE_LOW,
   WATCH_REFUSES_AT,
   WATCH_WAIVES_AT,
@@ -44,7 +44,7 @@ export function bedAt(
 ): { place: MapPlace; kind: PlaceKindId; taels: number } | null {
   for (const p of map.places) {
     const kind = placeKindOf(p);
-    const taels = kind ? PLACE_KINDS[kind].bed : null;
+    const taels = kind ? PLACE_KIND_INFO[kind].bed : null;
     if (kind && taels !== null && Math.hypot(p.x - at[0], p.y - at[1]) < ENTER_LI)
       return { place: p, kind, taels };
   }
@@ -128,7 +128,7 @@ export function gateOf(s: GameState, map: RegionMap, p: MapPlace): GateRead {
       words: `The guards ask for ${access.by.map((b) => ACCESS_WORDS[b]).join(' or ')}.`,
     };
   }
-  const info = PLACE_KINDS[kind];
+  const info = PLACE_KIND_INFO[kind];
   if (!info.watch) return { kind: 'open', words: '' };
   const region = map.id;
   const day = s.calendar.day;

@@ -1,5 +1,5 @@
 // The Chronicle as a river (P2.9): the world's year, every event type's kind, and the river and
-// almanac cut from a made-up long life (core/madeUpLife.ts).
+// almanac cut from a made-up long life (core/fixtures/madeUpLife.ts).
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../content/cards/index.ts';
 import {
@@ -10,7 +10,7 @@ import {
   eventKind,
 } from '../content/chronicle.ts';
 import { worldWhen, worldYear, yearDigits, yearStartDay } from '../core/chronicle.ts';
-import { madeUpLife } from '../core/madeUpLife.ts';
+import { madeUpLife } from '../core/fixtures/madeUpLife.ts';
 import { DAYS_PER_YEAR, newLife } from '../core/state.ts';
 import {
   ageIn,

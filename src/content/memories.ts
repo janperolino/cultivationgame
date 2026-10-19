@@ -4,12 +4,13 @@
 // (content/personality.ts). A fade runs straight from full to nothing over its span; a stacking
 // row adds up to its cap, any other row restarts at full when it happens again. GLM's memory
 // effect names a row and can't invent one. core/resolver/opinion.ts holds the rules.
+import { DAYS_PER_MONTH, DAYS_PER_YEAR } from './calendar.ts';
 import type { DeedKind } from './resolver.ts';
 
 const WEEK = 7;
-const MONTH = 30;
+const MONTH = DAYS_PER_MONTH;
 const SEASON = 90;
-const YEAR = 360;
+const YEAR = DAYS_PER_YEAR;
 
 /** What a memory is about, for the motives and leans that weight it. */
 export const MEMORY_TAGS = [

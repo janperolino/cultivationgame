@@ -242,6 +242,8 @@ export function way(id: WayId): Way {
 /** Flight on your own sword: hours a day at Foundation before you must stop for your qi, and Core's pace. */
 export const FOUNDATION_FLIGHT_HOURS = 4;
 export const CORE_FLIGHT_PACE = 300;
+/** From Nascent Soul, blinks and flight: li a double-hour. */
+export const NASCENT_FLIGHT_PACE = 600;
 
 // ---------------------------------------------------------------- sleep and groups
 

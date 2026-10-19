@@ -6,7 +6,8 @@ import { regionData } from '../../content/map/index.ts';
 import { RUMOR_RING_LI } from '../../content/map/travel.ts';
 import { fieldFrom, heartBand, peopleLi, pullsIn, warped } from '../../core/map/depth.ts';
 import { known, sightAt } from '../../core/map/fog.ts';
-import { type Multi, type Pt, ringCentroid } from '../../core/map/geometry.ts';
+import { type Multi, type Pt, ringCentroid, smoothstep } from '../../core/map/geometry.ts';
+import { rgba } from '../colors.ts';
 import { band } from '../../core/map/depth.ts';
 import type { MapArea, MapPlace, RegionMap } from '../../core/map/region.ts';
 import type { MapLife } from '../../core/map/schema.ts';
@@ -44,10 +45,6 @@ const C = {
   warn: '#e08a6a',
   road: '#c2ae8c',
   depth: '208,122,150',
-};
-const rgba = (hex: string, a: number) => {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
 };
 
 export const toScreen = (v: View, W: number, H: number, p: Pt): [number, number] => [
@@ -145,10 +142,6 @@ function pieceLi(q: MapPlace): number {
   return 1100;
 }
 
-const smoothstep = (a: number, b: number, v: number) => {
-  const t = Math.max(0, Math.min(1, (v - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-};
 
 // ---------------------------------------------------------------- caches
 

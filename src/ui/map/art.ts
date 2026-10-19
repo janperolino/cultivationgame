@@ -71,14 +71,34 @@ export function artArrived(): void {
   onLoad();
 }
 
+/**
+ * Pictures decoded and ready. An image is drawn only once the browser has decoded it off the main
+ * thread (`decode()`), so a chunk arriving mid-pan never stalls a frame decoding in drawImage.
+ */
+const DECODED = new WeakSet<HTMLImageElement>();
+
+function load(src: string): HTMLImageElement {
+  const img = new Image();
+  img.src = src;
+  const ready = () => {
+    DECODED.add(img);
+    artArrived();
+  };
+  // A decode that fails still leaves a loaded image the canvas can draw; a broken one draws nothing.
+  img.decode().then(ready, () => {
+    if (img.complete && img.naturalWidth) ready();
+  });
+  return img;
+}
+
 function paintingOf(r: RegionArt): HTMLImageElement | null {
-  if (!r.painting) {
-    const img = new Image();
-    img.onload = () => artArrived();
-    img.src = url(`${r.id}/painting.webp`);
-    r.painting = img;
-  }
-  return r.painting.complete && r.painting.naturalWidth ? r.painting : null;
+  r.painting ??= load(url(`${r.id}/painting.webp`));
+  return DECODED.has(r.painting) ? r.painting : null;
+}
+
+/** Fetches every region's painting ahead of the Map, so its first visit shows painted land. */
+export function prefetchPaintings(): void {
+  for (const r of ART) paintingOf(r);
 }
 
 /** The chunks loaded, oldest first, held to a few hundred so a long session never grows. */
@@ -92,12 +112,10 @@ function chunk(region: string, id: string, l: number, c: number, r: number) {
     CHUNKS.set(key, img);
   } else {
     if (CHUNKS.size >= MAX_CHUNKS) CHUNKS.delete(CHUNKS.keys().next().value!);
-    img = new Image();
-    img.onload = () => artArrived();
-    img.src = url(key);
+    img = load(url(key));
     CHUNKS.set(key, img);
   }
-  return img.complete && img.naturalWidth ? img : null;
+  return DECODED.has(img) ? img : null;
 }
 
 /** From a painting's own pixels to the world: its frame, then the inverse of its fit. */

@@ -40,7 +40,7 @@ export interface PlaceIndex {
 }
 
 /** The kinds of entry that are places someone can know the way to. */
-const PLACE_KINDS = new Set([
+const NAMED_PLACE_KINDS = new Set([
   'region',
   'kingdom',
   'city',
@@ -61,7 +61,11 @@ export function placeIndex(entries: readonly PlaceEntry[]): PlaceIndex {
     ties.get(a)!.add(b);
   };
   for (const e of entries) {
-    if (e.parent) kids.set(e.parent, [...(kids.get(e.parent) ?? []), e]);
+    if (e.parent) {
+      const list = kids.get(e.parent);
+      if (list) list.push(e);
+      else kids.set(e.parent, [e]);
+    }
     for (const t of e.ties ?? []) {
       link(e.id, t.to);
       link(t.to, e.id);
@@ -75,7 +79,7 @@ export function placeIndex(entries: readonly PlaceEntry[]): PlaceIndex {
   };
 }
 
-const isPlace = (e: PlaceEntry) => PLACE_KINDS.has(e.kind);
+const isPlace = (e: PlaceEntry) => NAMED_PLACE_KINDS.has(e.kind);
 const open = (e: PlaceEntry) => isPlace(e) && !e.hidden;
 
 /** The region a place lies in: itself if it is one, else the nearest region above it. */
@@ -157,7 +161,8 @@ export function knowledgeOf(
     for (const kind of TRADE_SITES[n.trade]) priv.add(`sites:${kind}:${region}`);
   }
   for (const d of w.deeds) {
-    if (d.knownBy[id]?.who && !d.staged) priv.add(`deed:${d.id}`);
+    // A staged death is told like any deed: whoever believes it spreads it (A staged death, below).
+    if (d.knownBy[id]?.who) priv.add(`deed:${d.id}`);
   }
   for (const t of tiesOf(w, id)) {
     if (t.kind === 'backer') secret.add(`tie:${t.other}:${id}`);

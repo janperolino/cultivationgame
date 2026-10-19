@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { MANUALS, type Manual, type ManualNode } from '../content/manuals.ts';
 import type { RarityId } from '../content/rarity.ts';
-import { madeUpManuals } from '../core/madeUpManuals.ts';
+import { madeUpManuals } from '../core/fixtures/madeUpManuals.ts';
 import { TIER_COUNT, TREES } from '../content/trees/index.ts';
 import {
   bloom,

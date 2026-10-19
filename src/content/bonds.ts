@@ -2,6 +2,7 @@
 // pay, loyalty, fear or a shared goal, and the way each one breaks. A bond is made by recruiting
 // someone, which names the bond, and keeps the follower tie while it holds. Wages follow the realm
 // curve: a day's work at Qi Condensation is a low-grade stone (design § Economy).
+import { DAYS_PER_MONTH } from './calendar.ts';
 import type { RealmId } from './realms.ts';
 import { realmScale } from './realms.ts';
 import type { MotiveId } from './personality.ts';
@@ -22,8 +23,8 @@ export const BONDS: Record<BondId, BondInfo> = {
   goal: { name: 'a shared goal', breaks: 'leaves when the goal is done or dropped' },
 };
 
-/** Days in a wage's month; wages fall due on each. */
-export const WAGE_DAYS = 30;
+/** Days in a wage's month, the calendar's; wages fall due on each. */
+export const WAGE_DAYS = DAYS_PER_MONTH;
 
 /** A day's wage at a realm, in low-grade stones: 1 at Qi Condensation, 9 at Foundation. */
 export function dayWage(realm: RealmId): number {

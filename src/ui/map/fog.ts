@@ -7,7 +7,7 @@
 // the world, so the same knowledge always gives the same clouds. Nothing drifts (Jan's pick).
 import { SIGHT_OPEN } from '../../content/map/travel.ts';
 import { known, sightAt } from '../../core/map/fog.ts';
-import type { Multi, Pt } from '../../core/map/geometry.ts';
+import { smoothstep as smooth, type Multi, type Pt } from '../../core/map/geometry.ts';
 import type { RegionMap } from '../../core/map/region.ts';
 import type { MapLife } from '../../core/map/schema.ts';
 import { hashSeed, mulberry32 } from '../../core/rng.ts';
@@ -69,10 +69,6 @@ function pathOf(m: Multi): Path2D {
   return p;
 }
 
-const smooth = (a: number, b: number, v: number) => {
-  const t = Math.max(0, Math.min(1, (v - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-};
 
 /**
  * A field over the land, 0 to 1: what `paint` fills, faded outward only past its edge (Jan's note:

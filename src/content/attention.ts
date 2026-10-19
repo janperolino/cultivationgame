@@ -6,6 +6,7 @@
 // them. Times are real seconds: focus is a multiplier on in-game rates, so a slower clock is never
 // stronger.
 import type { PhaseElement } from './elements.ts';
+import { NIGHT_HOURS } from './hours.ts';
 
 /** Being there: the attention factor's floor, ×1.25 on qi. */
 export const ATTENTION_FLOOR = 0.25;
@@ -97,8 +98,8 @@ export const ORB_KINDS = {
 } as const satisfies Record<string, OrbKind>;
 export type OrbKindId = keyof typeof ORB_KINDS;
 
-/** The hours whose orbs are dark yin: 子 and 亥, the water hours of the night. */
-export const YIN_HOURS: readonly number[] = [0, 11];
+/** The hours whose orbs are dark yin: the night's, 亥 to 丑 (content/hours.ts). */
+export const YIN_HOURS: readonly number[] = NIGHT_HOURS;
 
 /** The tint of an orb or a mote: an element's, or dawn's purple and the night's yin. */
 export type QiTint = PhaseElement | 'dawn' | 'yin';

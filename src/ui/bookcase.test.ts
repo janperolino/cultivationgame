@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { manual } from '../content/manuals.ts';
 import { registerManuals } from '../content/nodes.ts';
 import { gainManual, gainTechnique } from '../core/life.ts';
-import { madeUpManuals } from '../core/madeUpManuals.ts';
+import { madeUpManuals } from '../core/fixtures/madeUpManuals.ts';
 import { newLife } from '../core/state.ts';
 import {
   cardMeta,

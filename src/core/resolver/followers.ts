@@ -18,10 +18,9 @@ import {
 } from '../../content/bonds.ts';
 import { hasPerson, person } from '../../content/people.ts';
 import type { Nature } from '../../content/personality.ts';
-import { BEYOND_RATIO } from '../../content/resolver.ts';
 import { addEvent, withPlayer, type GameState } from '../state.ts';
 import { realmOfActor, realmSizeOf, type Actor } from './actor.ts';
-import { composure, presence, verdict } from './check.ts';
+import { composure, isBeyond, presence, verdict } from './check.ts';
 import {
   addTie,
   lean,
@@ -256,7 +255,7 @@ export function checkBonds(
         },
         day,
       ).world;
-      const past = realmSizeOf(leader) >= realmSizeOf(f) * BEYOND_RATIO;
+      const past = isBeyond(realmSizeOf(f), realmSizeOf(leader));
       const plan = past ? [step('flee')] : [step('attack', { target: leader.id })];
       sc = {
         ...sc,

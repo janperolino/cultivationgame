@@ -45,6 +45,11 @@ export const ARMOR_PER_SIZE = 3;
 /** Each point of Agility above 10 adds this to Evasion and to fleeing. */
 export const AGILITY_BASE = 10;
 export const AGILITY_PER_POINT = 0.05;
+
+/** What Agility multiplies, in a fight and in a check alike: 5% a point above 10, never under 0.1. */
+export function agilityShare(agility: number): number {
+  return Math.max(0.1, 1 + AGILITY_PER_POINT * (agility - AGILITY_BASE));
+}
 /** Each point of the Hit stat (nodes, gear) adds this to Accuracy. */
 export const HIT_PER_POINT = 0.05;
 /** Crits: this plus CRIT_PER_FORTUNE per point of Fortune above 10, at ×1.5 damage. */

@@ -6,7 +6,7 @@ import { manual } from '../content/manuals.ts';
 import { registerManuals } from '../content/nodes.ts';
 import { rarityRank } from '../content/rarity.ts';
 import { gainManual } from './life.ts';
-import { madeUpManuals } from './madeUpManuals.ts';
+import { madeUpManuals } from './fixtures/madeUpManuals.ts';
 import {
   heldManuals,
   manualFinished,

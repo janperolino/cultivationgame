@@ -4,13 +4,12 @@
 // refiner's repairs. A shop's stock is seeded by its id and the month, so the same stall shows the
 // same lots to anyone with the same world, and buying draws no stream. What you have done to a
 // shop this month is kept in `world.shops`.
+import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { CATALOGS } from '../content/catalogs/index.ts';
 import { RARE } from '../content/catalogs/rare.ts';
 import type { Catalog, Lot } from '../content/catalogs/types.ts';
-import { copyOf, hasCopy } from '../content/copies.ts';
-import { hasItem, item, itemKind, rarityRange, variantId } from '../content/items.ts';
-import { manual } from '../content/manuals.ts';
-import { method } from '../content/methods.ts';
+import { hasCopy } from '../content/copies.ts';
+import { hasItem, item, itemKind, variantId } from '../content/items.ts';
 import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
 import {
   DAMAGE_REPAIR_SHARE,
@@ -23,8 +22,8 @@ import {
   type Shop,
   type Ware,
 } from '../content/shops.ts';
-import { technique } from '../content/techniques.ts';
 import { rollBiased } from './combat/generate.ts';
+import { lotShape } from './loot.ts';
 import { wornIds } from './gear.ts';
 import { gainCopy } from './life.ts';
 import { priceOf } from './prices.ts';
@@ -32,14 +31,11 @@ import { pay, paySilver, receive, stonesOf, withStones } from './purse.ts';
 import { actorFromCultivator, plainActor } from './resolver/actor.ts';
 import { isMember } from './resolver/names.ts';
 import { rollNature } from './resolver/nature.ts';
-import { remember } from './resolver/opinion.ts';
+import { opinion, remember } from './resolver/opinion.ts';
 import { talkCheck } from './resolver/talk.ts';
 import { addHeat, standingOf, type ShopMonth, type World } from './resolver/world.ts';
 import { hashSeed, Rng } from './rng.ts';
 import { addItem, itemCount, withPlayer, type GameState } from './state.ts';
-
-/** Thirty days to a month, as the calendar keeps them. */
-const DAYS_PER_MONTH = 30;
 
 export function monthOf(day: number): number {
   return Math.floor(day / DAYS_PER_MONTH);
@@ -73,22 +69,6 @@ export function catalogsFor(s: Shop): Catalog[] {
 }
 
 /** The tier and the rarities a lot's thing comes at. */
-function lotShape(thing: string): { tier: number; rarities: RarityId[] } | null {
-  if (hasCopy(thing)) {
-    const of = copyOf(thing)!;
-    const t =
-      of.kind === 'method'
-        ? method(of.id)
-        : of.kind === 'technique'
-          ? technique(of.id)
-          : manual(of.id);
-    return { tier: t.tier, rarities: [t.rarity] };
-  }
-  if (!hasItem(thing)) return null;
-  const it = item(thing);
-  return { tier: it.tier, rarities: rarityRange(it) };
-}
-
 interface Candidate {
   lot: Lot;
   w: number;
@@ -104,7 +84,7 @@ function candidates(s: Shop): Candidate[] {
     const fit = lots.filter((l) => l.shops.includes(s.kind));
     const sum = fit.reduce((t, l) => t + (l.weight ?? 1), 0);
     for (const lot of fit) {
-      const shape = lotShape(lot.thing);
+      const shape = lotShape(lot.thing, { mortal: true });
       if (!shape || !s.tiers.includes(shape.tier)) continue;
       if (s.kind === 'mortal' && item(lot.thing).taels === undefined) continue;
       const lean = info.leans?.[wareOf(lot.thing) ?? 'copy'] ?? 1;
@@ -238,7 +218,10 @@ function wareOf(thing: string): Ware | null {
   return hasItem(thing) ? itemKind(item(thing)) : null;
 }
 
-/** The rate a shop buys at from you: 40%, 60% once its power favors you, a bounty office's posted 50%. */
+/**
+ * The rate a shop buys at from you: 40%, 60% once you are friendly with its keeper or its power
+ * favors you, a bounty office's posted 50%.
+ */
 export function buyRate(s: GameState, sh: Shop): number {
   const info = SHOP_KIND_INFO[sh.kind];
   if (info.posted) return info.buyRate;
@@ -247,7 +230,12 @@ export function buyRate(s: GameState, sh: Shop): number {
     ['favored', 'honored'].includes(
       standingOf(s.world, sh.power, s.player.id, s.calendar.day).word,
     );
-  return Math.max(info.buyRate, favored ? FRIENDLY_BUY_RATE : info.buyRate);
+  // The keeper is someone the world keeps from your first haggle on; a stranger has no opinion.
+  const keeper = keeperId(sh.id);
+  const friendly =
+    !!s.world.kept[keeper] &&
+    ['friendly', 'trusting'].includes(opinion(s.world, keeper, s.player.id, s.calendar.day).word);
+  return Math.max(info.buyRate, favored || friendly ? FRIENDLY_BUY_RATE : info.buyRate);
 }
 
 /** What a shop offers for one of a thing, or the reason it won't buy. */
@@ -261,7 +249,9 @@ export function offerFor(
   const ware = wareOf(thing);
   if (!ware || !info.buys.includes(ware))
     return { ok: false, reason: `The ${info.name} doesn’t buy that.` };
-  const each = Math.round(priceOf(thing, sh.region) * buyRate(s, sh) * priceFactor(sh) * 10) / 10;
+  // A posted rate is the posted rate: the bounty office's 50% doesn't drift with the shop.
+  const drift = info.posted ? 1 : priceFactor(sh);
+  const each = Math.round(priceOf(thing, sh.region) * buyRate(s, sh) * drift * 10) / 10;
   return { ok: true, each };
 }
 

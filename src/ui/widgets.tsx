@@ -150,23 +150,7 @@ export function Why({
   const [room, setRoom] = useState(290);
   const id = useId();
   const button = useRef<HTMLButtonElement>(null);
-  const wrap = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: Event) => {
-      if (
-        e instanceof KeyboardEvent ? e.key === 'Escape' : !wrap.current?.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('pointerdown', close);
-    document.addEventListener('keydown', close);
-    return () => {
-      document.removeEventListener('pointerdown', close);
-      document.removeEventListener('keydown', close);
-    };
-  }, [open]);
+  const wrap = useCloseOutside<HTMLSpanElement>(open, () => setOpen(false));
   const place = () => {
     if (!button.current) return;
     // The room to the stage's edge, in stage pixels.

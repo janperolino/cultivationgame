@@ -28,7 +28,7 @@ export interface PlaceKindInfo {
   board: boolean;
 }
 
-export const PLACE_KINDS: Record<PlaceKindId, PlaceKindInfo> = {
+export const PLACE_KIND_INFO: Record<PlaceKindId, PlaceKindInfo> = {
   city: {
     name: 'city',
     watch: true,

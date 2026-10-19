@@ -49,10 +49,6 @@ export const HELPER_MAX = 2;
 export const MASTERY_EACH = 1.05;
 export const MASTERY_ORIGIN = 1.25;
 
-/** Agility counts as it does in a fight: 5% a point above 10. */
-export const AGILITY_BASE = 10;
-export const AGILITY_STEP = 0.05;
-
 // ── Capabilities ─────────────────────────────────────────────────────────────────────────────
 
 /**

@@ -644,13 +644,6 @@ select {
   font-size: calc(13px * var(--text-scale));
 }
 
-.bar-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  font-variant-numeric: tabular-nums;
-}
-
 .bar {
   position: relative;
   height: 8px;
@@ -674,12 +667,6 @@ select {
   inset: 0 auto 0 0;
   background: color-mix(in srgb, var(--crack) 55%, white);
   box-shadow: 0 0 12px var(--crack);
-}
-
-.bar-age {
-  background: var(--accent);
-  box-shadow: none;
-  opacity: 0.85;
 }
 
 /* Cultivate's seated cultivator, the dantian glowing with qi as the bar fills. */
@@ -2091,23 +2078,6 @@ select {
   font-size: calc(13px * var(--text-scale));
 }
 
-.chronicle-season + .chronicle-season {
-  margin-top: 14px;
-}
-
-.chronicle-when {
-  margin: 0 0 6px;
-  color: var(--muted);
-  font-family: var(--font-ui);
-  font-size: calc(11.5px * var(--text-scale));
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-
-.chronicle-when.is-newest {
-  color: var(--accent);
-}
-
 /* The Routine screen. */
 .field {
   display: grid;
@@ -2168,14 +2138,6 @@ select {
 
 .check input {
   accent-color: var(--accent);
-}
-
-.settings-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px 24px;
-  align-items: end;
-  margin-top: 14px;
 }
 
 /* The "?" beside a number: its sums open on hover, focus or a tap. */
@@ -2309,21 +2271,6 @@ select {
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--edge);
-}
-
-.ladder-head {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 4px 12px;
-}
-
-.ladder-head h3 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: calc(18px * var(--text-scale));
-  margin: 0;
 }
 
 .rates {
@@ -3984,17 +3931,6 @@ select {
   margin-top: 14px;
 }
 
-.tray-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 8px;
-}
-
-.tray-head .panel-heading {
-  margin: 0;
-}
-
 .tray-quiet {
   color: var(--muted);
   padding: 14px 0 6px;
@@ -4112,58 +4048,6 @@ select {
   background: color-mix(in srgb, var(--text) 3%, var(--void));
 }
 
-/* Each sheet is only the strip that shows, tucked a little under the one above it. */
-.stack-sheet {
-  --depth: 1;
-  position: relative;
-  z-index: calc(4 - var(--depth));
-  display: flex;
-  align-items: flex-end;
-  width: calc(100% - var(--depth) * 20px);
-  height: 34px;
-  margin: -8px auto 0;
-  padding: 0 14px 5px;
-  border: 1px solid var(--accent-edge);
-  border-top: 0;
-  border-radius: 0 0 var(--radius-small) var(--radius-small);
-  background: rgb(14 16 21 / calc(1 - var(--depth) * 0.12));
-  color: var(--muted);
-  font: inherit;
-  font-family: var(--font-display);
-  font-size: calc(14px * var(--text-scale));
-  text-align: left;
-  cursor: pointer;
-  animation: sheet-rise 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-.stack-sheet span {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.stack-sheet:hover,
-.stack-sheet:focus-visible {
-  color: var(--text);
-  border-color: var(--accent);
-}
-
-@keyframes sheet-rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-:root[data-motion='reduced'] .stack-sheet {
-  animation: none;
-}
-
 .attributes {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -4241,10 +4125,6 @@ select {
 }
 
 /* The coming-back story: an opening line, then what happened by kind. */
-.away-opening {
-  font-family: var(--font-display);
-  font-size: calc(19px * var(--text-scale));
-}
 
 .away-section h3 {
   margin: 12px 0 2px;
@@ -5088,21 +4968,6 @@ select {
   flex-wrap: wrap;
   gap: 14px 26px;
   align-items: flex-start;
-}
-
-/* The coming-back card's fold: everything that settled on its own, behind one line. */
-.away-more {
-  margin-top: 10px;
-}
-
-.away-more summary {
-  cursor: pointer;
-  color: var(--accent);
-  font-size: calc(13px * var(--text-scale));
-}
-
-.away-more[open] summary {
-  margin-bottom: 4px;
 }
 
 /* A card that settled itself: said quietly beside its line, not in it. */
@@ -6310,17 +6175,6 @@ button.fight-card {
   opacity: 0.85;
 }
 
-.icon-button:has(.is-on-button) {
-  position: relative;
-}
-
-.menu-mark.is-on-button {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  margin: 0;
-}
-
 /* Toasts and hints in the top right, under the season and the stones (Jan's call in A3). */
 .toasts {
   position: fixed;
@@ -6561,20 +6415,6 @@ button.fight-card {
   display: flex;
   align-items: center;
   gap: 18px;
-}
-
-.study-book-body {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  gap: 4px;
-}
-
-.study-book-name {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: calc(24px * var(--text-scale));
-  font-weight: 600;
 }
 
 .study-bar {
@@ -8892,8 +8732,7 @@ p.map-above {
 /* ---------------------------------------------------------------- A2: the shell and the kit */
 
 /* Headings in a panel: the display face, a touch larger. */
-.panel > .panel-heading,
-.tray-head .panel-heading {
+.panel > .panel-heading {
   font-size: calc(20px * var(--text-scale));
   font-weight: 500;
 }
@@ -8982,12 +8821,6 @@ p.map-above {
 
 .stack > .story .button.choice:hover:not(:disabled) {
   border-color: var(--accent);
-}
-
-/* The folded cards behind it: thin tabs on a hairline. */
-.stack-sheet {
-  border-color: var(--line-faint);
-  border-radius: 0 0 3px 3px;
 }
 
 /* Toasts and hints on a hairline; a hint carries the accent's still glow. */

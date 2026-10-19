@@ -1,6 +1,7 @@
 // The dev console's commands: testing shortcuts that change the open life through the same rules
 // the game uses where they can (time runs through the day step, breakthroughs roll their odds,
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
+import { DAYS_PER_YEAR } from '../../content/calendar.ts';
 import { BOND_IDS, type BondId } from '../../content/bonds.ts';
 import {
   ENCOUNTERS,
@@ -46,8 +47,8 @@ import {
   readCopy,
 } from '../../core/life.ts';
 import { advance, daysPerRealMs } from '../../core/loop.ts';
-import { madeUpLife } from '../../core/madeUpLife.ts';
-import { madeUpManuals } from '../../core/madeUpManuals.ts';
+import { madeUpLife } from '../../core/fixtures/madeUpLife.ts';
+import { madeUpManuals } from '../../core/fixtures/madeUpManuals.ts';
 import { addItem, ageYears, daysLived, withPlayer, type GameState } from '../../core/state.ts';
 import { formatDays, formatLadder, formatNumber } from '../format.ts';
 import { screens } from '../screens.ts';
@@ -82,7 +83,7 @@ export function parseTime(text: string | undefined, s: GameState): number | null
   const n = Number(m[1]);
   const unit = m[2] ?? 'm';
   if (unit === 'd') return n / daysPerRealMs(s);
-  if (unit === 'y') return (n * 360) / daysPerRealMs(s);
+  if (unit === 'y') return (n * DAYS_PER_YEAR) / daysPerRealMs(s);
   return n * UNITS[unit]!;
 }
 

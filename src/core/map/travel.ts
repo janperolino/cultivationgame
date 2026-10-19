@@ -11,6 +11,7 @@ import {
   FOUNDATION_FLIGHT_HOURS,
   GUARD_PACE,
   MERCHANT_GUILD,
+  NASCENT_FLIGHT_PACE,
   OFFROAD_FACTOR,
   ROAD_ROUTINES,
   SHELTER_LI,
@@ -22,14 +23,14 @@ import {
   type Way,
   type WayId,
 } from '../../content/map/travel.ts';
-import { HOURS_PER_DAY, type HourKind } from '../../content/hours.ts';
+import { HOURS_PER_DAY, SLEEP_HOURS, type HourKind } from '../../content/hours.ts';
 import { origin } from '../../content/origins.ts';
 import { realmIndex } from '../../content/realms.ts';
 import { pay, stonesOf, withStones } from '../purse.ts';
 import { fameOf } from '../resolver/names.ts';
 import { addStanding } from '../resolver/opinion.ts';
 import { addEvent, itemCount, realmOf, type Cultivator, type GameState } from '../state.ts';
-import { hourLocked } from '../wheel.ts';
+import { hourLocked, sleepLocked } from '../wheel.ts';
 import { bandAt, bandOfRealm } from './depth.ts';
 import type { Pt } from './geometry.ts';
 import { known, lookAround, seeFrom, senseLi, startKnowledge, type Seeing } from './fog.ts';
@@ -104,7 +105,7 @@ export function ensureMap(s: GameState): GameState {
     postings: [],
     road: [],
   };
-  return { ...s, mapgen, map: startKnowledge(map, blank, home) };
+  return { ...s, mapgen, map: startKnowledge(map, blank, home, s.world.known) };
 }
 
 setMapOf(mapOf);
@@ -153,8 +154,9 @@ export function roadRoutine(life: MapLife): RoadRoutine {
 
 /** The road wheel's hours as you follow it: `home` reads the home wheel, and locked sleep sleeps. */
 export function roadHours(life: MapLife, c: Cultivator): RoadHour[] {
+  const locked = sleepLocked(c);
   return roadRoutine(life).hours.map((h, i) => {
-    if (hourLocked(c, i)) return 'sleep';
+    if (locked && SLEEP_HOURS.includes(i)) return 'sleep';
     return h === 'home' ? (c.wheel[i] ?? 'qi') : h;
   });
 }
@@ -239,6 +241,7 @@ export function wayOf(life: MapLife): Way {
 export function paceOf(s: GameState): number {
   const life = s.map!;
   const w = wayOf(life);
+  if (w.id === 'fly' && realmIndex(realmOf(s.player)) >= 3) return NASCENT_FLIGHT_PACE;
   if (w.id === 'fly' && realmIndex(realmOf(s.player)) >= 2) return CORE_FLIGHT_PACE;
   if (!w.rideHours && roadRoutine(life).hours.includes('guard')) return GUARD_PACE;
   return w.pace;
@@ -288,14 +291,15 @@ function courseFrom(
   const life = s.map!;
   const r = roadRoutine(life);
   const w = wayOf(life);
+  // No hours on the road wheel, no course: say so before routing anything.
+  const perDay = liPerDay(s);
+  if (perDay <= 0) return { ok: false, reason: 'Your road wheel gives no hours to travel.' };
   const res = planRoute(map, life.at, to, {
     hidden: r.hidden,
     roadsOnly: r.roadsOnly,
     flies: w.flies,
   });
   if (!res.ok) return res;
-  const perDay = liPerDay(s);
-  if (perDay <= 0) return { ok: false, reason: 'Your road wheel gives no hours to travel.' };
   const cost = w.flies
     ? res.route.roadLi + res.route.crossLi
     : res.route.roadLi + res.route.crossCost;
@@ -619,7 +623,7 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
         const tolls = life.course!.tolls.filter((id) => !reached.includes(id));
         life = { ...life, course: { ...life.course!, tolls } };
       }
-      take(seeFrom(map, life, life.at, sb, sense));
+      take(seeFrom(map, life, life.at, sense));
       if (i >= course.pts.length) {
         // Arrived: a look round, and the course is done.
         take(lookAround(map, life, life.at, sb, sense));
@@ -628,7 +632,7 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
           target &&
           !life.been.includes(target.id) &&
           // A rumor's ring is near the place, not at it: only standing there counts.
-          Math.hypot(target.x - life.at[0], target.y - life.at[1]) < 250 &&
+          Math.hypot(target.x - life.at[0], target.y - life.at[1]) < ENTER_LI &&
           (target.kind === 'town' || target.kind === 'atlas')
         ) {
           notes.push({ type: 'arrived', place: target.id });
@@ -637,7 +641,7 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
         if (
           course.enter &&
           target &&
-          Math.hypot(target.x - life.at[0], target.y - life.at[1]) < 250
+          Math.hypot(target.x - life.at[0], target.y - life.at[1]) < ENTER_LI
         )
           enterTarget = target;
         // A group pays what it owes on arriving.
@@ -683,7 +687,7 @@ export function hereWords(s: GameState): string {
   if (!map || !s.map) return '';
   const at = s.map.at;
   const near = map.places.find(
-    (p) => (p.kind === 'town' || p.kind === 'atlas') && Math.hypot(p.x - at[0], p.y - at[1]) < 250,
+    (p) => (p.kind === 'town' || p.kind === 'atlas') && Math.hypot(p.x - at[0], p.y - at[1]) < ENTER_LI,
   );
   if (near) return near.name;
   if (terrainAt(map, at) === 'sea') return 'at sea';

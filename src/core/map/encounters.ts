@@ -43,12 +43,7 @@ import {
   type Template,
 } from '../../content/encounters/schema.ts';
 import { hasItem, item, rarityRange, variantId } from '../../content/items.ts';
-import {
-  BANDS,
-  CLOSED_TERRAINS,
-  SIGHT_CLOSED,
-  SIGHT_OPEN,
-} from '../../content/map/travel.ts';
+import { BANDS, CLOSED_TERRAINS } from '../../content/map/travel.ts';
 import { RARITY_IDS, type RarityId } from '../../content/rarity.ts';
 import { realm as realmInfo, realmIndex, REALMS, type RealmId } from '../../content/realms.ts';
 import { CLOSE_WOUND } from '../../content/resolver.ts';
@@ -80,7 +75,7 @@ import { addEvent, addItem, itemCount, withPlayer, withStream, type GameState } 
 import { seasonOf } from '../chronicle.ts';
 import { bandAt, edgeBand } from './depth.ts';
 import type { Pt } from './geometry.ts';
-import { known, raise } from './fog.ts';
+import { known, raise, sightAt } from './fog.ts';
 import { bedAt } from './gate.ts';
 import { areaAt, terrainAt, type RegionMap } from './region.ts';
 import { nearRoad } from './route.ts';
@@ -757,8 +752,7 @@ export function onRoadAt(map: RegionMap, p: Pt): boolean {
 
 /** How far you see on the map where you stand, or sense, whichever is farther. */
 export function senseReach(map: RegionMap, p: Pt, sense: number): number {
-  const sight = CLOSED_TERRAINS.includes(terrainAt(map, p)) ? SIGHT_CLOSED : SIGHT_OPEN;
-  return Math.max(sight, sense);
+  return Math.max(sightAt(map, p), sense);
 }
 
 function tierOfRealm(r: RealmId): number {

@@ -2,6 +2,7 @@
 // What belongs to a cultivator (ladders, insight, attributes, root, talents, origin, methods, the
 // day wheel, items, nodes and techniques) lives in a `Cultivator`, so NPCs and co-op guests later
 // run on the same rules. The chronicle is a typed event log (content/chronicle.ts writes the text).
+import { DAYS_PER_YEAR } from '../content/calendar.ts';
 import { z } from 'zod';
 import type { EventData } from '../content/chronicle.ts';
 import { AUTO_IDS, GRADE_IDS } from '../content/cultivation.ts';
@@ -25,8 +26,8 @@ import { startingWorld } from './resolver/opinion.ts';
 import { emptyWorld, WorldSchema } from './resolver/world.ts';
 import { MapLifeSchema, RegionGenSchema } from './map/schema.ts';
 
-/** The in-game calendar: twelve months of thirty days. */
-export const DAYS_PER_YEAR = 360;
+/** The in-game calendar's year (content/calendar.ts), here for core's many readers. */
+export { DAYS_PER_YEAR };
 /** Play opens at age 12 on root-testing day (design § Character creation). */
 export const START_AGE = 12;
 /** The player's cultivator id; NPCs get their own. */

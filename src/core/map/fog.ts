@@ -72,15 +72,9 @@ export interface Seeing {
 
 /**
  * What a spot shows: every visible place within sight, the kingdom or tract you stand in or see
- * into, the roads you see, and with divine sense the hidden sites in its sweep your soul can find.
+ * into, the roads you see, and with divine sense every hidden site in its sweep.
  */
-export function seeFrom(
-  map: RegionMap,
-  life: MapLife,
-  p: Pt,
-  soulBand: number,
-  sense: number,
-): Seeing {
+export function seeFrom(map: RegionMap, life: MapLife, p: Pt, sense: number): Seeing {
   const r = sightAt(map, p);
   let next = life;
   const seen: string[] = [];
@@ -94,24 +88,23 @@ export function seeFrom(
     const d = Math.hypot(q.x - p[0], q.y - p[1]);
     if (!q.hidden) {
       if (d <= r) see(q.id);
-    } else if (
-      sense > 0 &&
-      d <= sense &&
-      soulBand >= siteRating(map, q) &&
-      known(next, q.id) !== 'seen'
-    ) {
+    } else if (sense > 0 && d <= sense && known(next, q.id) !== 'seen') {
+      // Divine sense sweeps with no check: anything hidden in its reach is found (design § The
+      // world, Look around). Looking around without it is the band check below.
       see(q.id);
       found.push(q.id);
     }
   }
   const here = areaAt(map, p);
   if (here) see(here.id);
+  // What is seen stays seen: only the rest is measured, every moving hour.
   for (const a of map.areas) {
-    if (a.kind === 'tract') continue;
+    if (a.kind === 'tract' || known(next, a.id) === 'seen') continue;
     if (multiDist(p, a.outline) <= r) see(a.id);
   }
   // A tract is seen when your sight reaches into it.
-  for (let i = 0; i < 12; i++) {
+  const tractsLeft = map.areas.some((a) => a.kind === 'tract' && known(next, a.id) !== 'seen');
+  for (let i = 0; tractsLeft && i < 12; i++) {
     const ang = (i / 12) * Math.PI * 2;
     const q: Pt = [p[0] + Math.cos(ang) * r, p[1] + Math.sin(ang) * r];
     const a = areaAt(map, q);
@@ -192,12 +185,28 @@ export function sketchKingdom(
   return next;
 }
 
+/** A region map: the region's outline, its kingdoms and its named places Sketched. */
+export function sketchRegion(map: RegionMap, life: MapLife, why: string): MapLife {
+  let next = raise(life, map.id, 'sketched', why);
+  for (const a of map.areas) if (a.kind !== 'tract') next = raise(next, a.id, 'sketched', why);
+  for (const p of map.places)
+    if (p.kind === 'atlas' && !p.hidden) next = raise(next, p.id, 'sketched', why);
+  return next;
+}
+
 /**
  * What every start knows: its home kingdom Sketched, a day's walk round its home Seen, the
- * region's famous places Rumored, and the region's outline.
+ * region's famous places Rumored, and the region's outline; a start with a sect or clan behind it
+ * (`map:<region>` among what the world says you know, set on joining) holds the region's map too.
  */
-export function startKnowledge(map: RegionMap, life: MapLife, home: MapPlace): MapLife {
+export function startKnowledge(
+  map: RegionMap,
+  life: MapLife,
+  home: MapPlace,
+  knows: readonly string[] = [],
+): MapLife {
   let next = raise(life, map.id, 'sketched', 'where you were born');
+  if (knows.includes(`map:${map.id}`)) next = sketchRegion(map, next, 'the map your people keep');
   const at: Pt = [home.x, home.y];
   const kingdom = map.areas.find(
     (a) => a.kind === 'kingdom' && (a.id === home.area || inMulti(at, a.outline)),

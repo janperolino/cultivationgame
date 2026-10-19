@@ -7,12 +7,12 @@
 // reckless fight what is beyond them, the hot-tempered answer an insult with blows. What they act
 // on is what you learn of them. A plan given them overrides it all. Before any motive, a power's
 // people who see a face its death talisman marked come at it, or call the law if it is past them.
-import { BEYOND_RATIO, LAW } from '../../content/resolver.ts';
+import { LAW } from '../../content/resolver.ts';
 import { realmIndex } from '../../content/realms.ts';
 import type { AxisId, MotiveId } from '../../content/personality.ts';
 import type { GameState } from '../state.ts';
 import { realmOfActor, realmSizeOf, type Actor } from './actor.ts';
-import { readRealm } from './check.ts';
+import { isBeyond, readRealm } from './check.ts';
 import { traceFor } from './backers.ts';
 import { lean, opinion, tieOf } from './opinion.ts';
 import { LOVE_TIES } from '../../content/people.ts';
@@ -42,7 +42,7 @@ function readAbove(me: Actor, them: Actor): number {
 
 /** Whether a fight with them is past them: a whole realm's step stronger. */
 function pastMe(me: Actor, them: Actor): boolean {
-  return realmSizeOf(them) >= realmSizeOf(me) * BEYOND_RATIO;
+  return isBeyond(realmSizeOf(me), realmSizeOf(them));
 }
 
 /** What an NPC means to do this round, or null to wait. */

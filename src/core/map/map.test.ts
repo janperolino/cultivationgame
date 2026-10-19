@@ -162,12 +162,12 @@ describe('what you know', () => {
     const site = map.places.find((p) => p.kind === 'site' && !p.hidden && p.sub !== 'checkpoint')!;
     const hidden = map.places.find((p) => p.kind === 'site' && p.hidden)!;
     const near: Pt = [site.x + 50, site.y];
-    expect(known(seeFrom(map, s.map!, near, 0, 0).life, site.id)).toBe('seen');
+    expect(known(seeFrom(map, s.map!, near, 0).life, site.id)).toBe('seen');
     const far: Pt = [site.x + 5000, site.y];
-    expect(known(seeFrom(map, s.map!, far, 0, 0).life, site.id)).toBe('unknown');
+    expect(known(seeFrom(map, s.map!, far, 0).life, site.id)).toBe('unknown');
     const atHidden: Pt = [hidden.x + 10, hidden.y];
-    expect(known(seeFrom(map, s.map!, atHidden, 99, 0).life, hidden.id)).toBe('unknown');
-    const sensed = seeFrom(map, s.map!, atHidden, 99, 60);
+    expect(known(seeFrom(map, s.map!, atHidden, 0).life, hidden.id)).toBe('unknown');
+    const sensed = seeFrom(map, s.map!, atHidden, 60);
     expect(known(sensed.life, hidden.id)).toBe('seen');
     expect(sensed.found).toContain(hidden.id);
   });

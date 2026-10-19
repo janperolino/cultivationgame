@@ -3,6 +3,10 @@
 // at 12 in 3,127, the atlas's "now". The clock never restarts between lives. Years are written as
 // digits, never spelled out, since they run into the thousands.
 
+/** The in-game calendar: twelve months of thirty days. */
+export const DAYS_PER_MONTH = 30;
+export const DAYS_PER_YEAR = 360;
+
 export const ERA_START_YEAR = 3115;
 
 export const ERA = { name: 'Sealed Era', hanzi: '封纪' } as const;

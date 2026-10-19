@@ -4,7 +4,7 @@
 
 ## Scale
 
-A flat disc 1,000,000 li across (radius 500,000; 1 li = 0.5 km), centered on the Ladder Stump at (0, 0). x runs east and y runs south, in li. A kingdom is 5,000–15,000 li across, a region 40,000–80,000 and a continent 200,000–300,000.
+A flat disc 1,000,000 li across (radius 500,000; 1 li = 0.5 km), centered on the Ladder Stump at (0, 0). x runs east and y runs south, in li. A kingdom is 5,000–15,000 li across, a region 40,000–90,000 and a continent 200,000–300,000.
 
 **Write at that size** (A5.2). A kingdom is the size of Australia and a region five times Earth's land, so nothing in the atlas is sized for mortals on foot: a written town is the seat of a county the size of a country, a wall is thousands of li long, and the grand things are what cultivation built. Before writing an entry, read design § World bible, The world at its true size and How many live there, and give every place and power `vein`, `population`, `size` and `fromAbove` by them. The Border Wilds are the worked example.
 

@@ -45,6 +45,28 @@ export function parseHex(hex: string): [number, number, number] | null {
   return [n >> 16, (n >> 8) & 255, n & 255];
 }
 
+/** A hex color as rgba() at an alpha; a color it can't read comes back as given. */
+export function rgba(hex: string, a: number): string {
+  const c = parseHex(hex);
+  return c ? `rgba(${c[0]},${c[1]},${c[2]},${a})` : hex;
+}
+
+/** A hex color mixed toward white by t (0 to 1), as hex. */
+export function lighten(hex: string, t: number): string {
+  const c = parseHex(hex);
+  if (!c) return hex;
+  return (
+    '#' +
+    c
+      .map((v) =>
+        Math.round(v + (255 - v) * t)
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')
+  );
+}
+
 /** WCAG relative luminance. */
 export function luminance(hex: string): number {
   const rgb = parseHex(hex);

@@ -7,8 +7,6 @@
 // judge: against someone whose realm you can't read the verdict shows "?".
 import { REALMS, realmIndex } from '../../content/realms.ts';
 import {
-  AGILITY_BASE,
-  AGILITY_STEP,
   BEYOND_RATIO,
   CAPABILITIES,
   CLEAR_RATIO,
@@ -33,6 +31,7 @@ import {
   type CapabilityId,
   type TrustWord,
 } from '../../content/resolver.ts';
+import { agilityShare } from '../../content/combat.ts';
 import { MAX_MASTERY } from '../../content/mastery.ts';
 import { lineSize, realmOfActor, realmSizeOf, sizeAt, type Actor } from './actor.ts';
 import { backerComposure } from './backers.ts';
@@ -79,7 +78,7 @@ export function helpFactor(h: Help): number {
 
 /** What Agility does to a check that counts it: 5% a point above 10. */
 export function agilityFactor(agility: number): number {
-  return Math.max(0.1, 1 + AGILITY_STEP * (agility - AGILITY_BASE));
+  return agilityShare(agility);
 }
 
 export interface CapabilityOpts {
