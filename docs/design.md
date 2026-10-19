@@ -1177,6 +1177,26 @@ Stones are also fuel: you can absorb them for qi or burn them to power arrays, s
 - **What moves it.** Effects only: `prosperity ±n` on a place or a power is one of the resolver's effects (The resolver, What lasts), so any deed or event can name it; war drains it and trade raises it once the living world runs them. A place eases back a step a year toward its written value, and the save keeps only the places that differ from it.
 - **Seen in play.** The place screen's head names it: a lean town, a thriving city.
 
+**What a market holds.** A place's shops together are its market, and prosperity sizes three things in it:
+
+| Prosperity | Purse | Lots | Wages |
+|---|---|---|---|
+| 1 ruined | ×0.25 | ×0.5 | ×0.6 |
+| 2 poor | ×0.4 | ×0.6 | ×0.7 |
+| 3 lean | ×0.6 | ×0.75 | ×0.8 |
+| 4 modest | ×0.8 | ×0.9 | ×0.9 |
+| 5 ordinary | ×1 | ×1 | ×1 |
+| 6 thriving | ×1.3 | ×1.15 | ×1.1 |
+| 7 rich | ×1.7 | ×1.3 | ×1.2 |
+| 8 flourishing | ×2.2 | ×1.5 | ×1.3 |
+| 9 golden | ×3 | ×1.75 | ×1.4 |
+
+- **A shop's purse** is the money it has each month to buy from you; once it is spent, the shop buys nothing more until the month turns and it refills. It is its kind's purse at tier 1 (`content/shops.ts`) times the realm curve at the highest tier it stocks, times prosperity, paid out in its market's grade: the City's alchemy shop, tiers 1 and 2 and ordinary, holds 13,500 low; the Wall's stall, tier 1 and lean, 90; the City's bounty office 180,000, the deepest pocket, as the office that buys cores should be. A purse never limits what a shop sells you; its lots do.
+- **Lots** are its kind's lots times prosperity, rounded, never under one: a lean stall shows five where an ordinary one shows six.
+- **Tiers.** A shop's written tiers stand within its place's vein, never above it; a place on no vein stocks tier 1 at most.
+- **Wages:** a day's work is 1 low-grade stone times the realm curve times prosperity's wages, so at an ordinary place Qi Condensation earns 1 low, Foundation 9, Core Formation 270 and Nascent Soul 27,000; mortal work pays in taels the same way, a laborer 0.1 tael at ordinary. Jobs, posts and hires read it.
+- **A vein yields** 1,000 low-grade stones' worth a month times the realm curve at its tier, in its own grade, to whoever holds it: 1,000 low at tier 1, 9,000 low at tier 2, 270 mid at tier 3, 27 high at tier 4. Prosperity doesn't touch it, since a vein is rock, not trade. A power's treasury and an abode on a vein read it.
+
 **Price yardstick.**
 
 | What | Price |
