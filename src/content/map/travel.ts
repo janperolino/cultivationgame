@@ -245,8 +245,6 @@ export const CORE_FLIGHT_PACE = 300;
 
 // ---------------------------------------------------------------- sleep and groups
 
-/** A night at an inn, in silver taels. */
-export const INN_TAELS = 20;
 /** A cave, hut or shrine you have found within this many li shelters you for the night. */
 export const SHELTER_LI = 300;
 /** A caravan guard who walks off loses the pay owed, and this much standing with the guild. */

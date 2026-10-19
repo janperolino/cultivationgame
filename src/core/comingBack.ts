@@ -5,6 +5,7 @@
 // many times it came, and ends on what still waits. It never mentions what attending would have
 // earned.
 import { card, type CardKind } from '../content/cards/index.ts';
+import { LADDERS } from '../content/cultivation.ts';
 import { encounterTemplate } from '../content/encounters/index.ts';
 import { stepLabel } from '../content/chronicle.ts';
 import { realm } from '../content/realms.ts';
@@ -196,12 +197,18 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
     : null;
   const waiting = [onTheRoad, tray].filter(Boolean).join(' ') || null;
 
-  const major = majorCheck(after.player, 'qi');
-  const ready = major?.bar
-    ? major.ready
-      ? `Qi presses against the gate of ${major.target.name}. The breakthrough is yours to call.`
-      : `Your qi is full; ${major.target.name} still waits on its requirements.`
-    : null;
+  // A major waits for you on every ladder, never offline: each full one says so.
+  const ready =
+    LADDERS.map((l) => {
+      const major = majorCheck(after.player, l);
+      if (!major?.bar) return null;
+      const who = l === 'qi' ? 'Qi' : `Your ${l}`;
+      return major.ready
+        ? `${who} presses against the gate of ${major.target.name}. The breakthrough is yours to call.`
+        : `Your ${l} is full; ${major.target.name} still waits on its requirements.`;
+    })
+      .filter(Boolean)
+      .join(' ') || null;
 
   const firsts = firstsWaitingLines(after);
   return { opening, growth, sections, highlights, settled, waiting, ready, firsts };

@@ -8,7 +8,6 @@ import {
   CORE_FLIGHT_PACE,
   FOUNDATION_FLIGHT_HOURS,
   GUARD_PACE,
-  INN_TAELS,
   OFFROAD_FACTOR,
   ON_ROAD_LI,
   ROAD_ROUTINES,
@@ -31,7 +30,7 @@ import { lineDist, type Pt } from './geometry.ts';
 import { known, lookAround, seeFrom, senseLi, startKnowledge, type Seeing } from './fog.ts';
 import { roadHour, setMapOf, waiting } from './encounters.ts';
 import { reachPostings } from './board.ts';
-import { enterAt } from './gate.ts';
+import { bedAt, enterAt } from './gate.ts';
 import {
   areaAt,
   generateRegion,
@@ -422,10 +421,11 @@ export function sleepPlace(s: GameState): string {
   const life = s.map;
   if (!map || !life) return 'at home';
   const at = life.at;
-  const town = map.places.find(
-    (p) => (p.kind === 'town' || p.sub === 'city') && Math.hypot(p.x - at[0], p.y - at[1]) < 250,
-  );
-  if (town) return `at an inn in ${town.name} · ${INN_TAELS} taels`;
+  const bed = bedAt(map, at);
+  if (bed) {
+    const where = bed.kind === 'village' ? 'in a barn' : 'at an inn';
+    return `${where} in ${bed.place.name} · ${bed.taels} taels`;
+  }
   const shelter = map.places.find(
     (p) =>
       ['cave', 'hut', 'shrine'].includes(p.sub) &&

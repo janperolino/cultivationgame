@@ -21,6 +21,7 @@ import { talkCheck } from '../resolver/talk.ts';
 import { statesOf, type World } from '../resolver/world.ts';
 import { realmOf, withPlayer, type GameState } from '../state.ts';
 import { regionData } from '../../content/map/index.ts';
+import type { Pt } from './geometry.ts';
 import type { MapPlace, RegionMap } from './region.ts';
 
 /** The kind of place a map place is, for its screen; null for what can't be gone into (a heart). */
@@ -31,6 +32,23 @@ export function placeKindOf(p: MapPlace): PlaceKindId | null {
   if (p.gated) return 'gate';
   if (p.sub === 'city') return 'city';
   return 'hall';
+}
+
+/**
+ * The bed where you stand, if a place you stand at has one: a city's or a town's inn, a village's
+ * barn. Null in the wilds, where a found shelter or a camp is the night.
+ */
+export function bedAt(
+  map: RegionMap,
+  at: Pt,
+): { place: MapPlace; kind: PlaceKindId; taels: number } | null {
+  for (const p of map.places) {
+    const kind = placeKindOf(p);
+    const taels = kind ? PLACE_KINDS[kind].bed : null;
+    if (kind && taels !== null && Math.hypot(p.x - at[0], p.y - at[1]) < ENTER_LI)
+      return { place: p, kind, taels };
+  }
+  return null;
 }
 
 /** Whether you stand at a place: within a short walk of it. */

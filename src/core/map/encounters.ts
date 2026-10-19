@@ -83,6 +83,7 @@ import { bandAt, edgeBand } from './depth.ts';
 import type { Pt } from './geometry.ts';
 import { lineDist } from './geometry.ts';
 import { known, raise } from './fog.ts';
+import { bedAt } from './gate.ts';
 import { areaAt, terrainAt, type RegionMap } from './region.ts';
 import type { Encounter, MapLife, Stance } from './schema.ts';
 
@@ -1061,14 +1062,8 @@ export function roadHour(
   let st = s;
   const life = st.map!;
   if (!life.course || waiting(life).length) return st;
-  // Inns and found shelters are safe: only a camp in the open or a moving hour fills it.
-  const sheltered =
-    !moving &&
-    map.places.some(
-      (p) =>
-        (p.kind === 'town' || p.sub === 'city') &&
-        Math.hypot(p.x - life.at[0], p.y - life.at[1]) < 250,
-    );
+  // A bed indoors (an inn, a village's barn) is safe: a camp in the open or a moving hour fills it.
+  const sheltered = !moving && bedAt(map, life.at) !== null;
   if (!sheltered) {
     const n = life.notice.n + noticeRate(st, map, hour, moving, flying) * share;
     if (n >= life.notice.next) {

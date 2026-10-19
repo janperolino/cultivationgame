@@ -179,6 +179,7 @@ Write questions here when a phase hits something the design doesn't cover, with 
 
 #### For the layers
 
+- **Money by grade** (code review, 2026-10-18, Jan's yes). design § Economy has qi hours burn the grade your realm uses, but stone burning, wages, recruits, method upkeep, tolls and card costs all read the low-grade count (`c.stones`); only shops use the purse across grades. The economy's design session settles how each pays from the purse by grade.
 - **The Raider Isles share the Border Wilds' pinyin** (raised 2026-10-12, D2). Bianhuang 边荒 names the starting region and Bianhuang Qundao 边荒群岛 the Raider Isles, a separate Thousand Isles region far to the south. Left as is, both being frontiers; rename the isles if it confuses once M6's long travel reaches them.
 - **The beast-ranch origin and taming** (raised 2026-10-15, planning). Design § Character creation has the beast-ranch child arrive by M5 "with the taming, trade and smuggling systems they need", but beast taming is M6 (§ Professions, people and powers). Same root as the Realm of Mingled Blood's bonded beast, which P3.11's talk settles for M3. Either the origin moves to M6 or a thin taming lands in M5; D5 decides.
 - **Body and soul past Foundation** (assumed in P3.2). Body and soul share the Core-Forming Pill as their Core gate until M4 designs their cores; nobody reaches Core in M3.

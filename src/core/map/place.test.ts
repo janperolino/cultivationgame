@@ -25,7 +25,7 @@ import {
   rumorWords,
 } from './place.ts';
 import { placeById, type MapPlace } from './region.ts';
-import { ensureMap, goToPlace, leaveGroup, mapOf } from './travel.ts';
+import { ensureMap, goToPlace, leaveGroup, mapOf, sleepPlace } from './travel.ts';
 
 const BW = 'qm-bianhuang';
 const CITY = 'qm-shoukou-cheng';
@@ -65,6 +65,12 @@ describe('the gate and the watch', () => {
     expect(placeKindOf(place(s, 'spear-plow'))).toBe('village');
     expect(placeKindOf(place(s, GATE))).toBe('gate');
     expect(placeKindOf(place(s, 'qm-yeqiao-hui'))).toBe('hall');
+  });
+
+  it('beds you at the City’s inn, a village’s barn, or a camp out in the wilds', () => {
+    const s = life();
+    expect(sleepPlace(at(s, CITY))).toMatch(/^at an inn in .* · 20 taels$/);
+    expect(sleepPlace(at(s, 'spear-plow'))).toBe('in a barn in Spear-Plow Village · 5 taels');
   });
 
   it('takes the City’s toll, and lets you into a town for nothing', () => {
