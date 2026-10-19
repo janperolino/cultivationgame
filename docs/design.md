@@ -522,7 +522,7 @@ The world's things are written by hand, a place at a time, and only rarity is ro
 | Place | what only that place makes | the Guarded Mouth's strait gear, the March's and the Wall's spear and bone, the Gate's sabers and blood pills, the Herders' horn and storm, the Night Bridge's contraband, Stone Eyes' fists and lamps, the Stone Forest's soul things |
 | Imports | goods that travel along the atlas's ties into the region | Red Rocks steel and ore and Medicine Ridges herbs by the merchant guild, a Sword Domain blade now and then, Vast Wilds and Ink Marsh contraband over the Night Bridge |
 
-A shop's kind weighs the layers (place 50, region 25, continent 15, imports 10; a merchant guild counts imports double, a black market takes them first). A region without catalogs of its own falls back on its continent's.
+A shop's kind weighs the layers (place 50, region 25, continent 15, imports 10; a merchant guild counts imports double, a black market takes them first). A region without catalogs of its own falls back on its continent's. The markets in a shop's reach lend their place catalogs too, sharing 15 between them (Economy, Markets by reach).
 
 **What a catalog writes.** Items, methods, techniques with their Arts, and loose manuals, in the records they already have (Items and gear; Cultivation, methods and Where manuals live), and its lots: each thing, the shop kinds that stock it, how often against the others of its layer, and how many come in a lot. A thing with no shop is found only on the dead, in rings and in ruins.
 
@@ -1203,6 +1203,11 @@ Stones are also fuel: you can absorb them for qi or burn them to power arrays, s
 - **The price** is the posted price times √(100 ÷ supply): ×2 at 25%, ×1.4 at 50% (needed), ×1 at 100%, ×0.8 at 150% (made), ×0.7 at 200%. A thing carried in on the imports layer costs ×1.2 on top, for the road along its tie. A shop buys from you at its rate (40%, 60%, the black market's 30%) of this price, so a needed thing sells for 56% of its base where it is needed.
 - **What moves it.** Each lot's worth you sell to a market raises its supply of that thing by 10 points, and each lot you buy lowers it by 10 (a lot is as many as its catalog line comes in), divided by prosperity's lots, so a bigger market moves less. Ten lots of herbs sold where they are needed take it from 50% to 150%, and the price from ×1.4 to ×0.8: with the purse, that is why a village can't buy a sack of cores.
 - **It eases back** a tenth of the way to its written supply each month, and the save keeps only the goods off theirs. The later layers' caravans and guilds move these same supplies from market to market, so trade between powers is supply carried, not new prices.
+
+**Markets by reach.** A market draws on the markets around it, as far as its kind reaches, in a straight line: a village only its own goods; a town or a power's seat 15,000 li, about a kingdom and its edges; a city 30,000 li, about half a region. So in the Border Wilds Pacified Fort reaches the Beast-Butcher Gate, Sinkhole Terraces and Spear-Plow Village, Corral Town the Foot of the Wall, and the City of the Guarded Mouth the Gate, Corral Town and the Foot of the Wall.
+
+- **On the shelf.** Each market in reach lends its place catalog, the lot sharing 15 of the place weight between them beside the market's own 50 (Catalogs by place), at ×1.1 for the road and 100% supply, since it isn't made here: the City's stalls carry a little of the Gate's sabers and the Herders' horn, and a village sells only its own. A sect shop stocks only its power's, and a black market already takes imports first.
+- **For later.** Reach is also how far a market's prices and news carry: standing orders, your stall's customers and the living world's rumors read it.
 
 **Price yardstick.**
 
