@@ -1039,7 +1039,13 @@ export function noticeRate(
   const onRoad = onRoadAt(map, life.at);
   let n = moving ? (onRoad ? NOTICE_ROAD : NOTICE_OFF) : NOTICE_CAMP;
   if (moving && hourIsNight(hour)) n *= NOTICE_NIGHT;
-  n *= 1 + heatOf(s.world, s.player.id, s.calendar.day) / NOTICE_HEAT;
+  // Heat is held by a region or a power, never by you: the hotter of the region and the land you
+  // stand in (a kingdom, a power's ground) is what hunts you on the road.
+  const day = s.calendar.day;
+  const area = areaAt(map, life.at);
+  const landHeat = area ? heatOf(s.world, area.id, day) : 0;
+  const heat = Math.max(heatOf(s.world, life.region, day), landHeat);
+  n *= 1 + heat / NOTICE_HEAT;
   if (flying) n *= NOTICE_FLYING;
   if (life.group) n *= NOTICE_GROUP;
   return n;

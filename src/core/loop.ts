@@ -73,11 +73,14 @@ export interface AdvanceResult {
   atEdge: boolean;
 }
 
-/** Runs `realMs` of real time through the calendar, one in-game day or less per step. */
+/**
+ * Runs `realMs` of real time through the calendar, one in-game day or less per step. With
+ * `maxSteps` it stops early, and calling it again with the time left runs the same steps on.
+ */
 export function advance(
   s: GameState,
   realMs: number,
-  opts: { step?: DayStep; offline?: boolean; seat?: Seat } = {},
+  opts: { step?: DayStep; offline?: boolean; seat?: Seat; maxSteps?: number } = {},
 ): AdvanceResult {
   const step = opts.step ?? passTime;
   // Offline time is away by definition: going in or closing the tab never counts as attending.
@@ -86,8 +89,9 @@ export function advance(
   let state = s;
   let remaining = Math.max(0, realMs);
   let days = 0;
+  let steps = 0;
 
-  while (remaining > 0) {
+  while (remaining > 0 && steps < (opts.maxSteps ?? Infinity)) {
     // A life that has ended stands still until a new one begins.
     if (state.ended) break;
     const edge = lifespanEdgeDay(state.player);
@@ -101,6 +105,7 @@ export function advance(
     const day = Math.min(edge, state.calendar.day + chunkDays);
     state = step({ ...state, calendar: { ...state.calendar, day } }, chunkDays, ctx);
     days += chunkDays;
+    steps += 1;
     remaining -= chunkMs;
     // Float dust left by the division would otherwise run a whole extra step for nothing.
     if (remaining < 1e-6) remaining = 0;
@@ -136,4 +141,50 @@ export function catchUp(
   const countedMs = offlineMs(savedAt, now, opts.capMs);
   const result = advance(s, countedMs, { step: opts.step, offline: true });
   return { ...result, awayMs: Math.max(0, now - savedAt), countedMs };
+}
+
+/** Day steps a slice of a long catch-up runs before the page may draw: about a tenth of a second. */
+export const CATCH_UP_SLICE = 1_000;
+
+/**
+ * `catchUp` in slices, `pause` awaited between them, so a long time away never freezes the page
+ * (12 hours at Nascent Soul is about 36,000 day steps). The slices run the steps one call would.
+ * The caller supplies the pause (a timer in the browser), so core keeps no clock of its own.
+ */
+export async function catchUpInSlices(
+  s: GameState,
+  savedAt: number,
+  now: number,
+  opts: {
+    step?: DayStep;
+    capMs?: number;
+    pause: () => Promise<void>;
+    onProgress?: (share: number) => void;
+  },
+): Promise<OfflineResult> {
+  const countedMs = offlineMs(savedAt, now, opts.capMs);
+  let state = s;
+  let remaining = countedMs;
+  let days = 0;
+  for (;;) {
+    const r = advance(state, remaining, {
+      step: opts.step,
+      offline: true,
+      maxSteps: CATCH_UP_SLICE,
+    });
+    state = r.state;
+    days += r.days;
+    remaining = Math.max(0, remaining - r.usedMs);
+    if (remaining < 1e-6 || r.usedMs <= 0 || r.atEdge || state.ended) break;
+    opts.onProgress?.(1 - remaining / countedMs);
+    await opts.pause();
+  }
+  return {
+    state,
+    days,
+    usedMs: countedMs - remaining,
+    atEdge: state.calendar.day >= lifespanEdgeDay(state.player),
+    awayMs: Math.max(0, now - savedAt),
+    countedMs,
+  };
 }

@@ -284,6 +284,10 @@ describe('the playbook', () => {
     const r = runPlan(st, cave, plan(s, step('ambush', { target: 'crew-a' })));
     expect(r.results[0]!.check!.verdict).toBe('clear');
     expect(r.results[0]!.fight!.winner).toBe(YOU);
+    // The wounds stay for the next fight in the scene, and the shield is full again.
+    const crew = r.scene.actors.find((x) => x.id === 'crew-a')!.combatant!;
+    expect(crew.hp).toBeLessThan(crew.maxHp);
+    expect(crew.shield).toBe(crew.maxShield);
     // From hiding too: the ambusher fights, and is in the open after.
     const hid = at('karst-cave', [{ ...sc.actors[0]!, side: YOU, state: 'hidden' }, first]);
     const h = runPlan(st, hid, plan(s, step('ambush', { target: 'crew-a' })));

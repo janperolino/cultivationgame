@@ -415,7 +415,7 @@ describe('what an NPC knows and tells', () => {
     expect(telling(hostile, places, 'old-sha', s.player.id, day).refused).toBe(true);
   });
 
-  it('lies when deceitful and wary, and a lie seen through is remembered', () => {
+  it('feigns knowing nothing when deceitful and wary, and a lie seen through is remembered', () => {
     const s = life();
     const day = s.calendar.day;
     const liar = nature([], { honesty: 2 });
@@ -425,13 +425,15 @@ describe('what an NPC knows and tells', () => {
     };
     w = remember(w, { holder: 'liar', about: s.player.id, row: 'threatened' }, day);
     const t = telling(w, places, 'liar', s.player.id, day);
-    expect(t.lie).toBe(true);
-    w = hear(w, t.facts, 'liar', day, false);
+    // No truth handed over marked false: a liar tells nothing until the world can write a lie.
+    expect(t).toMatchObject({ lie: true, facts: [], refused: false });
+    // A false thing heard from them, seen for yourself, catches them.
+    const fact = 'place:qm-yeqiao-hui';
+    w = hear(w, [fact], 'liar', day, false);
     expect(w.heard[0]).toMatchObject({ from: 'liar', true: false });
-    // You go and see the place for yourself.
-    w = see(w, t.facts[0]!, s.player.id, 'qm-yeqiao-hui', day);
-    expect(w.known).toContain(t.facts[0]);
-    expect(w.heard.some((h) => h.fact === t.facts[0])).toBe(false);
+    w = see(w, fact, s.player.id, 'qm-yeqiao-hui', day);
+    expect(w.known).toContain(fact);
+    expect(w.heard.some((h) => h.fact === fact)).toBe(false);
     expect(opinion(w, s.player.id, 'liar', day).lines[0]!.memory.row).toBe('lied');
   });
 

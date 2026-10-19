@@ -680,7 +680,9 @@ function asked(w: Working, a: Actor, target: Actor) {
     w,
     t.refused
       ? `${target.name} won't say.`
-      : `${target.name} tells what they know (${t.facts.length}).`,
+      : t.lie
+        ? `${target.name} claims to know nothing.`
+        : `${target.name} tells what they know (${t.facts.length}).`,
   );
   return world;
 }
@@ -1232,7 +1234,8 @@ export function doStep(
 
 /**
  * A fight run whole on the combat engine: the two sides present, and the two who started it even
- * from hiding (an ambush), on the `combat` stream.
+ * from hiding (an ambush), on the `combat` stream. Each fighter leaves it with the HP and qi it
+ * ended on.
  */
 function runSceneFight(
   w: Working,
@@ -1255,7 +1258,12 @@ function runSceneFight(
   // Blows struck from hiding give you away.
   for (const x of fighters)
     if (x.state === 'hidden') setActor(w, x.id, (y) => ({ ...y, state: 'present' }));
+  const before = new Map(combatants.map((c) => [c.id, c]));
   for (const c of r.value.fight.combatants) {
+    // The wounds and the spent qi stay for the next fight in the scene; the shield refills, as it
+    // does at every fight's start, and nothing else of the fight (statuses, turns) carries.
+    const was = before.get(c.id);
+    if (was) setActor(w, c.id, (x) => ({ ...x, combatant: { ...was, hp: c.hp, qi: c.qi } }));
     // The armor you wore keeps the wear the fight left (P3.5).
     if (c.id === w.s.player.id) w.s = { ...w.s, player: wearFrom(w.s.player, c) };
     const state =

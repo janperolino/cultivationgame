@@ -27,7 +27,7 @@ import {
   wearItem,
 } from '../core/life.ts';
 import type { EquipSlot } from '../content/items.ts';
-import { advance, catchUp, setClock, TICK_MS, type OfflineResult } from '../core/loop.ts';
+import { advance, catchUpInSlices, setClock, TICK_MS, type OfflineResult } from '../core/loop.ts';
 import { seePerson } from '../core/people.ts';
 import { gains, openScreen, see, type SeenKind } from '../core/seen.ts';
 import type { RealmId } from '../content/realms.ts';
@@ -231,6 +231,10 @@ function db(): SaveSlots {
 let tickTimer: ReturnType<typeof setInterval> | null = null;
 let autosaveTimer: ReturnType<typeof setInterval> | null = null;
 let lastTick = 0;
+/** A long time away is being caught up, a slice at a time: the ticks wait for it. */
+let catching = false;
+/** Lets the page draw between a catch-up's slices. */
+const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 let releaseLock: (() => void) | null = null;
 let holdsLock = false;
 let initStarted: Promise<void> | null = null;
@@ -278,23 +282,41 @@ export const useGame = create<GameStore>()((set, get) => {
       void get().saveNow({ rewindPoint: true });
   }
 
+  /**
+   * Catches a long time away up in slices while the abode shows as opening, so the page never
+   * freezes, then shows what happened. Dropped if the slot changed meanwhile.
+   */
+  async function catchUpAway(from: GameState, savedAt: number, now: number) {
+    const slot = get().slot;
+    catching = true;
+    set({ phase: 'loading' });
+    try {
+      const away = await catchUpInSlices(from, savedAt, now, { step: playDay, pause });
+      if (get().slot !== slot) return;
+      quietly(() => {
+        set({ phase: 'playing', away: { ...away, before: from } });
+        update(away.state);
+      });
+      void get().saveNow();
+    } finally {
+      catching = false;
+      lastTick = Date.now();
+    }
+  }
+
   function tick() {
     const { game, speed } = get();
-    if (!game) return;
+    if (!game || catching) return;
     const now = Date.now();
     const gap = now - lastTick;
     lastTick = now;
     // The seat runs on real seconds; a long gap is time away, which the seat spends fading.
     const { seat, state } = tickSeat(game, gap / 1000);
     if (gap > OFFLINE_GAP_MS) {
-      const away = catchUp(state, now - gap, now, { step: playDay });
-      quietly(() => {
-        set({ away: { ...away, before: game } });
-        update(away.state);
-      });
-    } else {
-      update(advance(state, gap * speed, { step: playDay, seat }).state);
+      void catchUpAway(state, now - gap, now);
+      return;
     }
+    update(advance(state, gap * speed, { step: playDay, seat }).state);
     playScene(seat);
   }
 
@@ -377,7 +399,11 @@ export const useGame = create<GameStore>()((set, get) => {
       return;
     }
     const now = Date.now();
-    const away = catchUp(loaded.save.state, loaded.save.savedAt, now, { step: playDay });
+    catching = true;
+    const away = await catchUpInSlices(loaded.save.state, loaded.save.savedAt, now, {
+      step: playDay,
+      pause,
+    }).finally(() => (catching = false));
     set({
       phase: 'playing',
       slot,
@@ -873,12 +899,7 @@ export const useGame = create<GameStore>()((set, get) => {
       const { game } = get();
       if (!game || !holdsLock) return 'No life is open in this tab.';
       const now = Date.now();
-      const away = catchUp(game, now - ms, now, { step: playDay });
-      quietly(() => {
-        set({ away: { ...away, before: game } });
-        update(away.state);
-      });
-      void get().saveNow();
+      void catchUpAway(game, now - ms, now);
       return null;
     },
   };

@@ -38,13 +38,13 @@ Ranked by how much a player would feel it. "Doc" means design.md should change, 
 
 **High**
 1. **Offline majors bank overfill for free** (Cultivation, Breakthroughs: "the bar holds at full"). Every ladder fills to 150% offline, so a major waiting while you're away banks the full +35 points of overfill odds and the grade's qi margin. The coming-back card also only announces a ready qi major, never body or soul. *Code*, if "holds at full" is the rule; *doc* if banking overfill is meant. **Settled (Jan): 150% is right.** design.md now says the bar fills on to 150% and waits, and the coming-back card names every ready ladder.
-2. **Heat never raises the road's notice** (The road's encounters: ×(1 + heat/6)). It reads heat under the player's id, but heat is only ever stored under a place or power, so the factor is always ×1. *Code*: read the heat of the region or place you're in.
+2. **Heat never raises the road's notice** (The road's encounters: ×(1 + heat/6)). It reads heat under the player's id, but heat is only ever stored under a place or power, so the factor is always ×1. *Code*: read the heat of the region or place you're in. **Done (Jan's go):** the road reads the hotter of the region's heat and the heat of the land you stand in.
 3. **Villages count as towns for sleep and notice.** Written villages are `kind: 'town', sub: 'village'`, and `sleepPlace` and the sheltered test check `kind`. So a camp within 250 li of a village reads "at an inn · 20 taels" and fills no notice, where the doc gives a village a 5-tael barn bed. *Code* should test `sub`; the barn bed needs writing. **Settled (Jan): fixed.** One rule (`bedAt`) now gives a town or city its 20-tael inn and a village its 5-tael barn, each a bed indoors that fills no notice.
 4. **Money is low-grade only** (Economy: "Qi hours burn the grade your realm uses"). Stone burning, wages, recruits, method upkeep, tolls and card costs all read `c.stones`; only shops use the purse across grades. Doc is the intent; this is the economy layer's to build, so it belongs in its design session. **Settled (Jan): yes**, parked in plan.md's Open questions for the economy's design session.
 
 **Medium**
 
-5. **An extra odds source on majors nobody wrote down.** `MAJOR_ODDS_PER_MARGIN` adds 8 points of odds per insight and other-ladder margin point, up to +24, since P1.2. The doc and the archive say margin feeds the grade, not the odds. Document it or drop it.
+5. **An extra odds source on majors nobody wrote down.** `MAJOR_ODDS_PER_MARGIN` adds 8 points of odds per insight and other-ladder margin point, up to +24, since P1.2. The doc and the archive say margin feeds the grade, not the odds. Document it or drop it. **Done (Jan's go): kept and written into design.md** beside the grade margin.
 6. **Method tier-above bonus** (Methods): the doc says ×3 / ×5.5 / ×10; the code uses the step out of your realm (×3.1, ×4.6, ×6.7, ×10), which is what Tier, rarity and pedigree says. *Doc*.
 7. **Method growth totals** (Methods, Growth): the listed percentages (+130% gold, +280% pristine) are the pre-D2.0.1 curve; the doc's own formula on today's curve gives the code's (+147%, +670%). *Doc*, unless the old totals were meant.
 8. **Pristine is common for chosen NPCs.** The literal b^step rule gives a chosen Foundation cultivator 4% pristine a roll and a chosen Nascent Soul one 14%, across seven rolls, so most carry something pristine; the doc says most pristine things are placed. *Doc* needs a cap or a separate pristine rule.
@@ -75,6 +75,8 @@ Ranked by how much a player would feel it. "Doc" means design.md should change, 
 
 ## Bugs that need a call
 
+**Done (Jan's go), the first two:** a scene fight now leaves each fighter with the HP and qi it ended on (the shield refills at every fight's start, as before), and a deceitful, wary NPC claims to know nothing instead of handing over the truth marked false, until the world can write false facts (design.md says so).
+
 - **Fights never write HP back to the scene.** `runSceneFight` copies back only down or fled, so a victor starts the next fight whole, and `looksWeak`, `projectionDue` and the hurt check can only fire from the `hp` effect. Copy `hp`, `qi` and `shield` back, or drop the readers.
 - **A deceitful NPC's "lie" is the truth flagged false**: `knows.ts` returns the true common facts with `lie: true`, so visiting the place records a lie against someone who told the truth (−25, Honesty revealed). A lie needs false facts.
 - **The go-round detour carries to a new course**, but resetting it in `setCourse` would let you dodge it by re-setting the same course. Decide which.
@@ -94,6 +96,16 @@ Ranked by how much a player would feel it. "Doc" means design.md should change, 
 - **`tools/map-paint.ts`** reads `.env.local` at import (bare ENOENT) and parses JSON before checking `res.ok`.
 
 ## Speed proposals, for Jan to pick
+
+**Done (Jan's go): S1, S2, S3, S4, S7 and most of S8 and S9.**
+- S3: rain, snow and wind move by `transform` on layers a tile larger than the glass, the mist lost its blur, and the "new" glows are opacity-only rings like the jewels'.
+- S2: the Trees world compares a signature of what it draws (each node's state, seal and price, each jewel's pips, each band's line) instead of the player object. Checked in the browser: no DOM change over three seconds of ticks, and buying a node still redraws it.
+- S4: the rim light fills a margin past the figure with no blur.
+- S1: a long time away catches up in slices of 1,000 day steps behind "Opening your abode…", the page drawing between them (`catchUpInSlices`; a test holds it to one call's result). It covers opening a slot, a laptop waking and the dev console's `away`.
+- S8: the game loads `atlas-index.json`, 150 KB written by `atlas:build`, rather than the 1.37 MB atlas, and a test keeps it in step. The eight screens past Cultivate and Routine load lazily and are fetched once the page is idle. At start that is about 1.36 MB of script rather than 2.8 MB.
+- S9: only the page's last write on unload trusts a save this tab wrote or checked. The regular autosave keeps its check, since `makeSave` validates nothing and that check is what keeps a broken save out of the backup.
+- S7: a first-hour seed stops once every mark is set. The sim took 86 s, against 225 s before this review.
+- Left: S5 (the Map's blits and chunk decoding), S6 (People), S10, and archiving old lives' chronicles.
 
 Ranked by what you'd feel.
 

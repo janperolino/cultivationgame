@@ -13,6 +13,7 @@ import {
   resolveVein,
 } from '../src/content/atlas/checks.ts';
 import {
+  atlasIndex,
   GENERATED_ATLAS_VERSION,
   generatedAtlasSchema,
   parseTop,
@@ -38,6 +39,7 @@ const atlasGeo = require('./atlas-geo.cjs') as { build: (E: Map<string, unknown>
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = join(ROOT, 'content', 'atlas', 'entries.json');
 const OUT = join(ROOT, 'src', 'content', 'generated', 'atlas.json');
+const INDEX_OUT = join(ROOT, 'src', 'content', 'generated', 'atlas-index.json');
 /** Outlines are rounded to this many li. */
 const PRECISION = 10;
 const DROPPED = new Set(['notes', 'order', 'editedBy', 'editedAt']);
@@ -196,6 +198,15 @@ const text =
   `\n}}\n`;
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, text);
+// What the game reads at start to know its places: a tenth of the atlas (core/resolver/knows.ts).
+writeFileSync(
+  INDEX_OUT,
+  '[\n' +
+    atlasIndex(atlas.entries)
+      .map((e) => JSON.stringify(e))
+      .join(',\n') +
+    '\n]\n',
+);
 
 // --- Region maps. ---
 // Each canon region gets a small file of what its travel map draws and reads (design § The world,

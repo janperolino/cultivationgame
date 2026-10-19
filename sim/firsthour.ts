@@ -73,6 +73,8 @@ function run(
     if (p.qi.stage >= 3) at.L3 ??= min;
     if ('stone-bearing' in p.methods) at.errand ??= min;
     if ('still-lantern' in p.methods) at.soul ??= min;
+    // Every mark set: the rest of the run can't change what this seed reports.
+    if (MARKS.every((m) => at[m] !== undefined)) break;
   }
   return at;
 }

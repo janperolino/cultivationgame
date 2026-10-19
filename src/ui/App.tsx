@@ -1,20 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { CultivateScreen } from './CultivateScreen.tsx';
-import { BagScreen } from './BagScreen.tsx';
-import { CharacterScreen } from './CharacterScreen.tsx';
-import { ChronicleScreen } from './ChronicleScreen.tsx';
-import { CombatScreen } from './CombatScreen.tsx';
 import { CreationScreen } from './CreationScreen.tsx';
 import { DevConsole } from './dev/DevConsole.tsx';
 import { RoutineScreen } from './RoutineScreen.tsx';
-import { MapScreen } from './MapScreen.tsx';
-import { PeopleScreen } from './PeopleScreen.tsx';
 import { GlassBackground } from './GlassBackground.tsx';
-import { SettingsScreen } from './SettingsScreen.tsx';
 import { ShellHeader } from './ShellHeader.tsx';
 import { AbodeMark, ScreenIcon } from './icons.tsx';
 import { Toasts } from './Toasts.tsx';
-import { TreesScreen } from './TreesScreen.tsx';
 import { readyLadders, useScene } from './scene.ts';
 import { useNav } from './nav.ts';
 import { markMoving } from './moving.ts';
@@ -53,6 +45,35 @@ function SlotNotice() {
 
 /** The two screens that share the cave, between which a change sinks and rises (theme.css). */
 const SCENE_PAIR: ReadonlySet<ScreenId> = new Set<ScreenId>(['cultivate', 'routine']);
+/**
+ * The screens past Cultivate and Routine load on their own, off the first screen's path, and are
+ * fetched once the page is idle so the first open never waits.
+ */
+const SCREENS = {
+  BagScreen: () => import('./BagScreen.tsx'),
+  CharacterScreen: () => import('./CharacterScreen.tsx'),
+  ChronicleScreen: () => import('./ChronicleScreen.tsx'),
+  CombatScreen: () => import('./CombatScreen.tsx'),
+  MapScreen: () => import('./MapScreen.tsx'),
+  PeopleScreen: () => import('./PeopleScreen.tsx'),
+  SettingsScreen: () => import('./SettingsScreen.tsx'),
+  TreesScreen: () => import('./TreesScreen.tsx'),
+};
+const BagScreen = lazy(() => SCREENS.BagScreen().then((m) => ({ default: m.BagScreen })));
+const CharacterScreen = lazy(() =>
+  SCREENS.CharacterScreen().then((m) => ({ default: m.CharacterScreen })),
+);
+const ChronicleScreen = lazy(() =>
+  SCREENS.ChronicleScreen().then((m) => ({ default: m.ChronicleScreen })),
+);
+const CombatScreen = lazy(() => SCREENS.CombatScreen().then((m) => ({ default: m.CombatScreen })));
+const MapScreen = lazy(() => SCREENS.MapScreen().then((m) => ({ default: m.MapScreen })));
+const PeopleScreen = lazy(() => SCREENS.PeopleScreen().then((m) => ({ default: m.PeopleScreen })));
+const SettingsScreen = lazy(() =>
+  SCREENS.SettingsScreen().then((m) => ({ default: m.SettingsScreen })),
+);
+const TreesScreen = lazy(() => SCREENS.TreesScreen().then((m) => ({ default: m.TreesScreen })));
+
 /** Kept one array, so the shell doesn't re-render on every tick for a fresh empty list. */
 const NO_UNLOCKS: readonly string[] = [];
 const LEAVE_MS = 170;
@@ -121,10 +142,13 @@ export function App() {
 
   useEffect(() => {
     void useGame.getState().init();
-    // What people know of places reads the whole atlas (core/resolver/knows.ts); it loads on its own,
-    // after the game, so the first screen never waits for it.
-    void import('../content/generated/atlas.json').then((atlas) =>
-      setPlaces(placeIndex(atlas.default.entries)),
+    const fetchScreens = () => Object.values(SCREENS).forEach((load) => void load());
+    const idle = window.requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 2000));
+    idle(fetchScreens);
+    // What people know of places reads the atlas's index (core/resolver/knows.ts); it loads on its
+    // own, after the game, so the first screen never waits for it.
+    void import('../content/generated/atlas-index.json').then((index) =>
+      setPlaces(placeIndex(index.default)),
     );
   }, []);
 
@@ -242,14 +266,16 @@ export function App() {
                 )}
                 {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
                 {phase !== 'loading' && current.id === 'routine' && <RoutineScreen />}
-                {phase !== 'loading' && current.id === 'map' && <MapScreen />}
-                {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
-                {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
-                {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}
-                {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
-                {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}
-                {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}
-                {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
+                <Suspense fallback={null}>
+                  {phase !== 'loading' && current.id === 'map' && <MapScreen />}
+                  {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
+                  {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
+                  {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}
+                  {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
+                  {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}
+                  {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}
+                  {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
+                </Suspense>
               </main>
             </div>
 

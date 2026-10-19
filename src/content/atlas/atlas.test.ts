@@ -1,6 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { generatedAtlasSchema, parseTop, sourceEntrySchema, type Shape } from './schema.ts';
+import {
+  atlasIndex,
+  generatedAtlasSchema,
+  parseTop,
+  sourceEntrySchema,
+  type Shape,
+} from './schema.ts';
 
 const read = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'));
@@ -111,5 +117,11 @@ describe('generated atlas', () => {
         expect(x >= x0 && x <= x1 && y >= y0 && y <= y1, e.id).toBe(true);
       }
     }
+  });
+});
+
+describe('the atlas index', () => {
+  it('is the atlas cut to what the place index reads; rerun atlas:build if not', () => {
+    expect(read('../generated/atlas-index.json')).toEqual(atlasIndex(atlas.entries));
   });
 });

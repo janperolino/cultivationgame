@@ -162,7 +162,7 @@ describe('the road’s notice', () => {
       expect(noticeRate(off, map, 6, true, false)).toBeCloseTo(NOTICE_OFF);
     const hot = {
       ...t,
-      world: { ...t.world, heat: { [t.player.id]: { n: 6, day: t.calendar.day } } },
+      world: { ...t.world, heat: { [t.map!.region]: { n: 6, day: t.calendar.day } } },
     };
     expect(noticeRate(hot, map, 6, true, false)).toBeCloseTo(NOTICE_ROAD * 2);
     expect(noticeRate(t, map, 6, true, true)).toBeCloseTo(NOTICE_ROAD * 1.5);

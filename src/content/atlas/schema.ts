@@ -443,3 +443,28 @@ export const generatedAtlasSchema = z
   .strict();
 
 export type GeneratedAtlas = z.infer<typeof generatedAtlasSchema>;
+
+/** What the game's place index reads of an entry (core/resolver/knows.ts `PlaceEntry`). */
+export interface AtlasIndexEntry {
+  id: string;
+  kind: string;
+  parent?: string;
+  hidden?: true | string;
+  ties?: { to: string }[];
+  truth?: string;
+}
+
+/**
+ * Only what the place index reads of each entry. The build writes these as
+ * `content/generated/atlas-index.json`, so the game loads a tenth of the atlas to know its places.
+ */
+export function atlasIndex(entries: readonly AtlasEntry[]): AtlasIndexEntry[] {
+  return entries.map((e) => ({
+    id: e.id,
+    kind: e.kind,
+    ...(e.parent ? { parent: e.parent } : {}),
+    ...(e.hidden ? { hidden: e.hidden } : {}),
+    ...(e.ties?.length ? { ties: e.ties.map((t) => ({ to: t.to })) } : {}),
+    ...(e.truth ? { truth: e.truth } : {}),
+  }));
+}

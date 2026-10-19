@@ -206,9 +206,9 @@ export function telling(
   const shift = bearing >= 2 ? 1 : bearing <= -2 ? -1 : 0;
   const know = knowledgeOf(w, places, teller, n);
   const lies = (word === 'hostile' || word === 'wary') && honesty >= 1;
-  if (lies) {
-    return { facts: know.common, lie: true, refused: false, tiers: 1 };
-  }
+  // A lie needs a false fact to tell, and the world writes none yet: until it does, a liar feigns
+  // knowing nothing rather than handing over the truth marked false.
+  if (lies) return { facts: [], lie: true, refused: false, tiers: 0 };
   if (word === 'hostile' && honesty <= 0) {
     return { facts: [], lie: false, refused: true, tiers: 0 };
   }

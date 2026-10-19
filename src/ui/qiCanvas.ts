@@ -33,6 +33,8 @@ import { canvasDensity } from './stage.ts';
 
 /** The figure's box in its own units: x from −96, y from −92, 192 by 156. */
 export const FIGURE_BOX = { x: -96, y: -92, w: 192, h: 156 } as const;
+/** How far past the figure the rim light is filled, so only the body's clip shapes it. */
+const RIM_MARGIN = 30;
 
 /**
  * The qi canvas reaches this share of the figure's box past it on every side, handed to theme.css's
@@ -451,7 +453,7 @@ export class QiCanvas {
           : this.palette.crack;
 
     const light = this.sun();
-    if (light && light.sun.light > 0) this.drawRim(light, s * dpr);
+    if (light && light.sun.light > 0) this.drawRim(light);
 
     // The circulation itself, faint, reddening with heat, and kept inside the silhouette.
     if (f.state !== 'dormant') {
@@ -575,10 +577,12 @@ export class QiCanvas {
 
   /**
    * The lit side of the figure: a faint light across the whole body from the sun's direction,
-   * with a constant span and blurred, so near noon it comes from above rather than collapsing to a
-   * hard line down the middle, and it never reads as a bar half filled.
+   * with a constant span, so near noon it comes from above rather than collapsing to a hard line
+   * down the middle, and it never reads as a bar half filled. The gradient is soft on its own; the
+   * fill runs a margin past the figure so the clip, not the rect, is its edge, with no blur to pay
+   * for every frame.
    */
-  private drawRim({ sun, color }: SunLight, px: number): void {
+  private drawRim({ sun, color }: SunLight): void {
     const ctx = this.ctx;
     ctx.save();
     ctx.clip(this.body());
@@ -591,8 +595,8 @@ export class QiCanvas {
     g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.globalAlpha = (0.1 + 0.08 * sun.elevation) * sun.light;
     ctx.fillStyle = g;
-    ctx.filter = `blur(${(10 * px) / 2.1}px)`;
-    ctx.fillRect(FIGURE_BOX.x, FIGURE_BOX.y, FIGURE_BOX.w, FIGURE_BOX.h);
+    const m = RIM_MARGIN;
+    ctx.fillRect(FIGURE_BOX.x - m, FIGURE_BOX.y - m, FIGURE_BOX.w + 2 * m, FIGURE_BOX.h + 2 * m);
     ctx.restore();
   }
 

@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   advance,
   catchUp,
+  catchUpInSlices,
   OFFLINE_CAP_MS,
   offlineMs,
   yearsPerRealHour,
   type DayStep,
 } from './loop.ts';
+import { cultivate } from './life.ts';
 import { ageYears, DAYS_PER_YEAR, lifespanEdgeDay, newLife, START_AGE } from './state.ts';
 
 const HOUR = 3_600_000;
@@ -74,5 +76,24 @@ describe('offline catch-up', () => {
     expect(r.usedMs).toBeCloseTo(HOUR / 4, 0);
     // Nothing more passes once at the edge.
     expect(advance(r.state, HOUR).days).toBe(0);
+  });
+});
+
+describe('a long time away in slices', () => {
+  it('lands where one catch-up does, pausing between slices', async () => {
+    const s = newLife({ name: 'A', seed: 'slices' });
+    const whole = catchUp(s, 0, 12 * HOUR, { step: cultivate });
+    let pauses = 0;
+    const sliced = await catchUpInSlices(s, 0, 12 * HOUR, {
+      step: cultivate,
+      pause: async () => {
+        pauses += 1;
+      },
+    });
+    expect(pauses).toBeGreaterThan(0);
+    expect(sliced.days).toBeCloseTo(whole.days, 6);
+    expect(sliced.state.calendar.day).toBeCloseTo(whole.state.calendar.day, 6);
+    expect(sliced.state.player.qi).toEqual(whole.state.player.qi);
+    expect(sliced.state.chronicle.length).toBe(whole.state.chronicle.length);
   });
 });

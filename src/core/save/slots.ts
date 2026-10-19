@@ -65,6 +65,8 @@ export class SaveSlots {
    * so a save can be one put with no read in front of it, which still lands when the page unloads.
    */
   private readonly known = new Map<number, SlotRecord>();
+  /** Saves this tab wrote or checked: the page's last write trusts them rather than checking again. */
+  private readonly checked = new WeakSet<object>();
 
   constructor(name = 'severed-heaven', opts?: DexieOptions) {
     this.db = new SaveDb(name, opts);
@@ -79,7 +81,10 @@ export class SaveSlots {
     const rec = await this.fetch(slot);
     if (!rec || (rec.current === undefined && rec.backup === undefined)) return null;
     const current = tryLoad(rec.current);
-    if (current.save) return { save: current.save, from: 'current' };
+    if (current.save) {
+      if (typeof rec.current === 'object' && rec.current) this.checked.add(rec.current);
+      return { save: current.save, from: 'current' };
+    }
     const backup = tryLoad(rec.backup);
     if (backup.save) {
       return {
@@ -98,6 +103,8 @@ export class SaveSlots {
   async write(slot: SlotId, save: Save, opts: { rewindPoint?: boolean } = {}): Promise<void> {
     const rec = this.known.get(slot) ?? (await this.fetch(slot)) ?? { slot };
     const oldIsGood = tryLoad(rec.current).save !== undefined;
+    if (oldIsGood && rec.current) this.checked.add(rec.current);
+    this.checked.add(save);
     await this.put({
       ...rec,
       current: save,
@@ -114,7 +121,11 @@ export class SaveSlots {
   writeNow(slot: SlotId, save: Save): boolean {
     const rec = this.known.get(slot);
     if (!rec || !this.db.isOpen()) return false;
-    const oldIsGood = tryLoad(rec.current).save !== undefined;
+    // A closing page has no time for a full check: a save this tab wrote or checked is trusted.
+    const old = rec.current;
+    const oldIsGood =
+      (typeof old === 'object' && old !== null && this.checked.has(old)) ||
+      tryLoad(old).save !== undefined;
     const next: SlotRecord = {
       ...rec,
       current: save,

@@ -4845,6 +4845,7 @@ select {
   position: fixed;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
   pointer-events: none;
   opacity: var(--weather-strength);
   transition: background-color 4s ease;
@@ -4873,8 +4874,11 @@ select {
   background: radial-gradient(ellipse at 50% 0%, rgb(170 200 240 / 0.08), transparent 65%);
 }
 
+/* Weather moves by transform alone, on layers a tile larger than the glass, so it runs on the
+   compositor and never repaints the page (design § UI and screens, Look: no looping paint). */
 .weather-rain::before,
 .weather-storm::before {
+  inset: -140px -40px 0 0;
   background: repeating-linear-gradient(
     104deg,
     transparent 0 22px,
@@ -4891,43 +4895,55 @@ select {
   animation: weather-flash 9s steps(1) infinite;
 }
 
-.weather-snow::before {
-  background-image:
-    radial-gradient(circle, rgb(240 245 255 / 0.22) 0 1.2px, transparent 1.6px),
-    radial-gradient(circle, rgb(240 245 255 / 0.14) 0 1px, transparent 1.4px);
-  background-size:
-    90px 90px,
-    53px 53px;
-  background-position:
-    0 0,
-    20px 30px;
-  animation: weather-snow 14s linear infinite;
+/* Two drifts of flakes at their own speeds, one a layer. */
+.weather-snow::before,
+.weather-snow::after {
+  animation: 14s linear infinite;
 }
 
+.weather-snow::before {
+  inset: -360px 0 0 -40px;
+  background-image: radial-gradient(circle, rgb(240 245 255 / 0.22) 0 1.2px, transparent 1.6px);
+  background-size: 90px 90px;
+  animation-name: weather-snow-near;
+}
+
+.weather-snow::after {
+  inset: -212px 0 0;
+  background-image: radial-gradient(circle, rgb(240 245 255 / 0.14) 0 1px, transparent 1.4px);
+  background-position: 20px 30px;
+  background-size: 53px 53px;
+  animation-name: weather-snow-far;
+}
+
+/* Soft already: a gradient needs no blur. */
 .weather-mist::before {
   background: linear-gradient(180deg, transparent 30%, rgb(200 210 220 / 0.06) 70%, transparent);
-  filter: blur(12px);
   animation: weather-drift 30s ease-in-out infinite alternate;
 }
 
 .weather-wind::before {
+  right: auto;
+  width: 60%;
   background: linear-gradient(90deg, transparent, rgb(200 120 70 / 0.05), transparent);
-  background-size: 60% 100%;
-  background-repeat: no-repeat;
   animation: weather-gust 7s ease-in-out infinite;
 }
 
 @keyframes weather-fall {
   to {
-    background-position: -32px 140px;
+    transform: translate3d(-32px, 140px, 0);
   }
 }
 
-@keyframes weather-snow {
+@keyframes weather-snow-near {
   to {
-    background-position:
-      40px 360px,
-      0 212px;
+    transform: translate3d(40px, 360px, 0);
+  }
+}
+
+@keyframes weather-snow-far {
+  to {
+    transform: translate3d(0, 212px, 0);
   }
 }
 
@@ -4941,13 +4957,14 @@ select {
   }
 }
 
+/* The gust crosses from just off the left edge to past the right, as its old background did. */
 @keyframes weather-gust {
   from {
-    background-position: -60% 0;
+    transform: translateX(-40%);
   }
 
   to {
-    background-position: 160% 0;
+    transform: translateX(107%);
   }
 }
 
@@ -6234,10 +6251,24 @@ button.fight-card {
 /* ---------------------------------------------------------------- what's new (P2.5d) */
 
 /* A new thing glows faintly in the accent until it is selected: a Bag square, a technique's row,
-   a tree's tab, a spine (a jewel wears its own ring, under Trees). A drop shadow, so it sits over each thing's own look. */
+   a tree's tab, a spine (a jewel wears its own ring, under Trees). The glow is a ring over the
+   thing that only fades in and out, on its own layer, as the jewels' does: a long list of them
+   never repaints for it. */
 .is-new:is(.technique-row, .bag-item, .spine, .hostless-pick),
 .seg button.is-new {
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 70%, transparent));
+  position: relative;
+}
+
+.is-new:is(.technique-row, .bag-item, .spine, .hostless-pick)::after,
+.seg button.is-new::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--accent) 60%, transparent);
+  pointer-events: none;
+  opacity: 0.35;
+  will-change: opacity;
   animation: new-glow 2.8s ease-in-out infinite;
 }
 
@@ -6249,7 +6280,7 @@ button.fight-card {
 
 @keyframes new-glow {
   50% {
-    filter: drop-shadow(0 0 2px color-mix(in srgb, var(--accent) 40%, transparent));
+    opacity: 1;
   }
 }
 
@@ -6266,7 +6297,8 @@ button.fight-card {
   }
 }
 
-:root[data-motion='reduced'] .is-new {
+:root[data-motion='reduced'] .is-new,
+:root[data-motion='reduced'] .is-new::after {
   animation: none;
 }
 
