@@ -545,8 +545,3 @@ export function viewCard(s: GameState, p: PendingCard): CardView {
       })),
   };
 }
-
-/** The cards resolved without the player since a day, for the coming-back story. */
-export function defaultedSince(s: GameState, day: number) {
-  return s.chronicle.filter((e) => e.type === 'card' && e.data.byDefault && e.day > day);
-}

@@ -25,6 +25,7 @@ import {
 } from '../content/shops.ts';
 import { technique } from '../content/techniques.ts';
 import { rollBiased } from './combat/generate.ts';
+import { wornIds } from './gear.ts';
 import { gainCopy } from './life.ts';
 import { priceOf } from './prices.ts';
 import { pay, paySilver, receive, stonesOf, withStones } from './purse.ts';
@@ -270,6 +271,8 @@ export function offerFor(
  */
 export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopResult {
   const sh = shopById(shopId);
+  const refused = serves(s, sh);
+  if (refused) return { ok: false, reason: refused };
   const info = SHOP_KIND_INFO[sh.kind];
   const held = hasCopy(thing) ? (s.player.copies[thing] ?? 0) : itemCount(s.player, thing);
   if (held < n || n <= 0) return { ok: false, reason: 'You don’t have that many.' };
@@ -377,6 +380,8 @@ export function repairCost(s: GameState, thing: string): number | null {
 export function repair(s: GameState, shopId: string, thing: string): ShopResult {
   const sh = shopById(shopId);
   if (!SHOP_KIND_INFO[sh.kind].repairs) return { ok: false, reason: 'Only a refiner mends gear.' };
+  if (itemCount(s.player, thing) <= 0 && !wornIds(s.player).includes(thing))
+    return { ok: false, reason: 'You don’t have that piece.' };
   const cost = repairCost(s, thing);
   if (cost === null) return { ok: false, reason: 'It needs no mending.' };
   const after = pay(stonesOf(s.player), cost);

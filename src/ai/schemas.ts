@@ -50,7 +50,7 @@ export const interpretedActionSchema = z.object({
 
 export type InterpretedAction = z.infer<typeof interpretedActionSchema>;
 
-const nullableString = { type: ['string', 'null'], maxLength: 60 } as const;
+const nullableString = { type: ['string', 'null'], minLength: 1, maxLength: 60 } as const;
 
 /**
  * The same shape as JSON Schema for `response_format`. Strict hosts want every key required,
@@ -83,7 +83,7 @@ export const interpretedActionJsonSchema = {
         id: nullableString,
       },
     },
-    uses: { type: 'array', items: { type: 'string' }, maxItems: 6 },
+    uses: { type: 'array', items: { type: 'string', minLength: 1, maxLength: 60 }, maxItems: 6 },
     creativity: { type: 'integer', minimum: 0, maximum: 3 },
     feasible: { type: 'boolean' },
     reason: { type: ['string', 'null'], maxLength: 200 },
@@ -115,7 +115,7 @@ export const narratorTailJsonSchema = {
   properties: {
     choices: {
       type: 'array',
-      items: { type: 'string', maxLength: 80 },
+      items: { type: 'string', minLength: 1, maxLength: 80 },
       minItems: 3,
       maxItems: 4,
     },
@@ -126,7 +126,10 @@ export const narratorTailJsonSchema = {
         type: 'object',
         additionalProperties: false,
         required: ['about', 'note'],
-        properties: { about: { type: 'string' }, note: { type: 'string', maxLength: 200 } },
+        properties: {
+          about: { type: 'string', minLength: 1 },
+          note: { type: 'string', minLength: 1, maxLength: 200 },
+        },
       },
     },
     names: {
@@ -137,7 +140,7 @@ export const narratorTailJsonSchema = {
         additionalProperties: false,
         required: ['name', 'kind', 'note'],
         properties: {
-          name: { type: 'string' },
+          name: { type: 'string', minLength: 1 },
           kind: { type: 'string', enum: [...NAME_KINDS] },
           note: { type: 'string', maxLength: 200 },
         },
@@ -163,8 +166,10 @@ export function splitNarration(text: string): NarratorReply {
   if (last) return { prose: text.slice(0, last.index).trim(), tailText: last[1]!.trim() };
   const brace = text.lastIndexOf('\n{');
   const start = brace >= 0 ? brace + 1 : text.trimStart().startsWith('{') ? text.indexOf('{') : -1;
-  if (start >= 0) return { prose: text.slice(0, start).trim(), tailText: text.slice(start).trim() };
-  return { prose: text.trim(), tailText: null };
+  // A tail cut off by the token limit leaves its opening fence unclosed: keep it out of the prose.
+  const prose = (s: string) => s.replace(/```(?:json)?\s*$/i, '').trim();
+  if (start >= 0) return { prose: prose(text.slice(0, start)), tailText: text.slice(start).trim() };
+  return { prose: prose(text), tailText: null };
 }
 
 export type TailCheck =

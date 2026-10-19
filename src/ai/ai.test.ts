@@ -96,13 +96,13 @@ describe('mockProvider', () => {
 describe('interpreter schema', () => {
   it("accepts the design's example action", () => {
     const example = {
-      main: { type: 'technique', id: 'ember_palm', target: 'elder_mo' },
-      minor: { type: 'interact', feature: 'brazier', onto: 'spirit_grass' },
-      uses: ['brazier', 'spirit_grass'],
+      main: { type: 'technique', id: 'ember-palm', target: 'elder-mo' },
+      minor: { type: 'interact', feature: 'brazier', onto: 'spirit-grass' },
+      uses: ['brazier', 'spirit-grass'],
       creativity: 2,
       feasible: true,
     };
-    expect(interpretedActionSchema.parse(example).main.id).toBe('ember_palm');
+    expect(interpretedActionSchema.parse(example).main.id).toBe('ember-palm');
   });
 
   it('rejects out-of-range creativity and unknown action types', () => {
@@ -132,7 +132,7 @@ describe('interpreter schema', () => {
 describe('narrator tail', () => {
   const tail = {
     choices: ['Chase him', 'Bind the wound', 'Report to the fort'],
-    memory: [{ about: 'runner_hu', note: 'Took your beast core at knifepoint.' }],
+    memory: [{ about: 'runner-hu', note: 'Took your beast core at knifepoint.' }],
     names: [{ name: 'Old Gao', kind: 'person', note: 'the ferryman who watched' }],
   };
 
@@ -147,6 +147,12 @@ describe('narrator tail', () => {
     const { prose, tailText } = splitNarration(`Rain.\n${JSON.stringify(tail)}`);
     expect(prose).toBe('Rain.');
     expect(checkTail(tailText).ok).toBe(true);
+  });
+
+  it('keeps a tail cut off by the token limit out of the prose', () => {
+    const { prose, tailText } = splitNarration('He takes it.\n```json\n{"choices": ["a", "b", "na');
+    expect(prose).toBe('He takes it.');
+    expect(checkTail(tailText)).toMatchObject({ stage: 'json' });
   });
 
   it('reports a missing, broken or wrong tail', () => {

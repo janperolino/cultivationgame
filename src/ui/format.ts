@@ -53,6 +53,9 @@ export function formatWhen(ms: number | undefined | null): string {
 /** Numbers in short forms past ten thousand: 1,248, 12.4k, 3.1M. Small fractions keep a digit. */
 export function formatNumber(n: number): string {
   const a = Math.abs(n);
+  if (a >= 1e18) return n.toExponential(1);
+  if (a >= 1e15) return `${(n / 1e15).toFixed(1)}Qa`;
+  if (a >= 1e12) return `${(n / 1e12).toFixed(1)}T`;
   if (a >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
   if (a >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
   if (a >= 1e4) return `${(n / 1e3).toFixed(1)}k`;

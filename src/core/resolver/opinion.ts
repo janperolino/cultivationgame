@@ -17,8 +17,6 @@ import {
   EVIL_DEEDS,
   FADING_SHARE,
   FORMER_LOVER_BELOW,
-  GIFT_MAX,
-  GIFT_MIN,
   HEAT_CAPS,
   LIKED_GIFT,
   MEMORIES,
@@ -315,11 +313,6 @@ export interface NewMemory {
   deed?: number;
   /** Who sees it land; the one it's about knows of it if they're among them. */
   known?: readonly string[];
-}
-
-/** A gift's value as a memory: its worth, held to +5 to +30. */
-export function giftValue(worth: number): number {
-  return Math.min(GIFT_MAX, Math.max(GIFT_MIN, Math.round(worth)));
 }
 
 /**

@@ -182,7 +182,11 @@ export function kitOf(n: Npc): Haul {
     const blood = n.rolls.bloodline ?? 'white';
     for (const p of n.carries) {
       const id = PART_ITEM[p];
-      if (id) add(h, variantId(id, blood, { tier }));
+      if (!id) continue;
+      // A part comes only in its written range: a pristine bloodline leaves a red part.
+      const range = rarityRange(item(id));
+      const at = rarityRank(blood) - rarityRank(range[0]!);
+      add(h, variantId(id, range[Math.max(0, Math.min(range.length - 1, at))], { tier }));
     }
     return h;
   }

@@ -181,6 +181,8 @@ function nearestEntry(x: number, y: number): Point {
 
 /** The palette the canvas reads from the page's tokens, so the player's colors carry over. */
 interface Palette {
+  /** Read once with the rest, never a frame: a style read each frame forces a recalc. */
+  accent: string;
   crack: string;
   warn: string;
   core: string;
@@ -194,6 +196,7 @@ function readPalette(): Palette {
   const v = (name: string, d: string) => css.getPropertyValue(name).trim() || d;
   const crack = v('--crack', '#7fc7d9');
   return {
+    accent: v('--accent', '#d6ab4c'),
     crack,
     warn: v('--warn', '#e08a6a'),
     core: '#e2f4f8',
@@ -560,7 +563,7 @@ export class QiCanvas {
 
     if (this.pointer && !play) {
       ctx.globalAlpha = 0.35;
-      ctx.strokeStyle = getComputedStyle(this.canvas).getPropertyValue('--accent') || '#d6ab4c';
+      ctx.strokeStyle = this.palette.accent;
       ctx.lineWidth = 0.5;
       ctx.beginPath();
       ctx.arc(this.pointer[0], this.pointer[1], f.reach, 0, Math.PI * 2);
@@ -605,7 +608,7 @@ export class QiCanvas {
     loop: Point[],
     f: FigureFrame,
   ): void {
-    const accent = getComputedStyle(this.canvas).getPropertyValue('--accent').trim() || '#d6ab4c';
+    const accent = this.palette.accent;
     const at = (laps: number): Point => {
       const frac = ((laps % 1) + 1) % 1;
       return loop[Math.floor(frac * loop.length) % loop.length]!;

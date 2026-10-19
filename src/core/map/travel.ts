@@ -298,6 +298,8 @@ function courseFrom(
   let maxBand = -9;
   for (let i = 0; i < res.route.pts.length; i += 10)
     maxBand = Math.max(maxBand, bandAt(map, res.route.pts[i]!));
+  // The sampling can step past the end, and where you are going is often the deepest ground.
+  maxBand = Math.max(maxBand, bandAt(map, res.route.pts.at(-1)!));
   const course: Course = {
     to: [to[0], to[1]],
     target,
@@ -399,8 +401,17 @@ export function leaveGroup(s: GameState): CourseCheck {
       ...s.map!,
       group: null,
       course: null,
-      way: s.map!.way === 'ship' ? 'light-step' : s.map!.way,
+      ...alone(s.map!),
     }),
+  };
+}
+
+/** Travelling alone again: a group's own way and routine stay with the group. */
+function alone(life: MapLife): Pick<MapLife, 'way' | 'roadRoutine'> {
+  const routine = ROAD_ROUTINES.find((r) => r.id === life.roadRoutine);
+  return {
+    way: way(life.way).groupOnly ? 'light-step' : life.way,
+    roadRoutine: routine?.groupOnly ? 'by-day' : life.roadRoutine,
   };
 }
 
@@ -580,7 +591,7 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
           ...life,
           course: null,
           group: null,
-          way: life.way === 'ship' ? 'light-step' : life.way,
+          ...alone(life),
           encounters: life.encounters.filter((e) => e.state === 'waiting'),
         };
       }
@@ -608,11 +619,6 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
     if (r.ok) next = r.state;
   }
   return next;
-}
-
-/** The region you stand in, for a scene's renown and infamy (core/resolver/scene.ts); P3.9's scenes start here. */
-export function regionHere(s: GameState): string {
-  return s.map?.region ?? HOME_MAP_REGION;
 }
 
 /** Where you stand on the map, for the line under the date. */

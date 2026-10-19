@@ -153,10 +153,6 @@ export function knowsName(
 
 // ── Membership ───────────────────────────────────────────────────────────────────────────────
 
-export function memberOf(w: World, who: string): string[] {
-  return w.members.filter((m) => m.who === who).map((m) => m.power);
-}
-
 export function isMember(w: World, who: string, power: string): boolean {
   return w.members.some((m) => m.who === who && m.power === power);
 }

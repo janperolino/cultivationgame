@@ -6289,7 +6289,6 @@ button.fight-card {
   margin: 0;
 }
 
-/* Toasts: bottom right on desktop, under the top bar on a phone. */
 /* Toasts and hints in the top right, under the season and the stones (Jan's call in A3). */
 .toasts {
   position: fixed;

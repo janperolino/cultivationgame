@@ -121,10 +121,6 @@ export const MEMORIES = {
 export type MemoryId = keyof typeof MEMORIES;
 export const MEMORY_IDS = Object.keys(MEMORIES) as MemoryId[];
 
-export function memoryRow(id: MemoryId): MemoryRow {
-  return MEMORIES[id];
-}
-
 /** A gift's worth as a memory: its value in stones, held to +5 to +30. */
 export const GIFT_MIN = 5;
 export const GIFT_MAX = 30;

@@ -155,6 +155,15 @@ describe('the reading queue', () => {
     expect(readingQueue(out)).toEqual([]);
     expect(out.reading.days[TIDE]).toBe(3);
   });
+
+  it('drops a queued copy taught another way, so the next copy joins by itself', () => {
+    let s = gainCopy(base, RAMPART);
+    expect(readingQueue(s.player)).toEqual([RAMPART]);
+    s = gainTechnique(s, 'rampart-palm');
+    expect(readingQueue(s.player)).toEqual([]);
+    s = gainCopy(s, TIDE);
+    expect(readingCopy(s.player)).toBe(TIDE);
+  });
 });
 
 describe('suits you', () => {

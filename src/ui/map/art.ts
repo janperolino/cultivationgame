@@ -71,11 +71,6 @@ export function artArrived(): void {
   onLoad();
 }
 
-/** Whether a region has its painting, so the map draws it rather than the plain land. */
-export function isPainted(region: string): boolean {
-  return ART.some((r) => r.id === region);
-}
-
 function paintingOf(r: RegionArt): HTMLImageElement | null {
   if (!r.painting) {
     const img = new Image();

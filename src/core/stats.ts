@@ -69,8 +69,20 @@ function cacheKey(c: Cultivator): string {
   return `${ladders}|${c.root}|${c.talents.join(',')}|${woke}|${unsealing}|${arts}|${gear}|${bonded}`;
 }
 
+/**
+ * The same cultivator object asks for its stats many times a day-step (rates, speed, slots); a
+ * cultivator is never changed in place, so its object is answer enough before the key is built.
+ */
+const byObject = new WeakMap<Cultivator, Readonly<Stats>>();
+
 /** Every stat's total from nodes, active methods' properties, growth, the root and talents. */
 export function stats(c: Cultivator): Readonly<Stats> {
+  let hit = byObject.get(c);
+  if (!hit) byObject.set(c, (hit = statsFor(c)));
+  return hit;
+}
+
+function statsFor(c: Cultivator): Readonly<Stats> {
   const key = cacheKey(c);
   const growth = LADDERS.map((l) => c[l].growth);
   const hit = cache.get(c.nodes);

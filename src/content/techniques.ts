@@ -50,13 +50,6 @@ export type Form =
 export const GUARDS = ['shield', 'hardening', 'movement'] as const;
 export type GuardId = (typeof GUARDS)[number];
 
-/** The ladder each guard reads. */
-export const GUARD_LADDER: Record<GuardId, LadderId> = {
-  shield: 'qi',
-  hardening: 'body',
-  movement: 'soul',
-};
-
 export interface Technique {
   id: string;
   name: string;

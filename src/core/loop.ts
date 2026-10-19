@@ -102,6 +102,8 @@ export function advance(
     state = step({ ...state, calendar: { ...state.calendar, day } }, chunkDays, ctx);
     days += chunkDays;
     remaining -= chunkMs;
+    // Float dust left by the division would otherwise run a whole extra step for nothing.
+    if (remaining < 1e-6) remaining = 0;
   }
 
   return {

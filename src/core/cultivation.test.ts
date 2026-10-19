@@ -353,21 +353,15 @@ describe('offerings', () => {
     ).toBeCloseTo(0.05);
   });
 
-  it('surge the grade for odds, and two surging items clash', () => {
+  it('surge the grade for odds, and two surging items simply add up', () => {
     const c = herbs(readyForFoundation(), 'storm-peach-stone', 'storm-peach-stone');
+    const bare = majorCheck(c, 'qi')!;
     const one = majorCheck(c, 'qi', ['storm-peach-stone'])!;
-    expect(one.score - majorCheck(c, 'qi')!.score).toBeCloseTo(0.13);
-    expect(one.odds).toBeCloseTo(majorCheck(c, 'qi')!.odds - 0.04);
+    expect(one.score - bare.score).toBeCloseTo(0.13);
+    expect(one.odds).toBeCloseTo(bare.odds - 0.04);
     const both = majorCheck(c, 'qi', ['storm-peach-stone', 'storm-peach-stone'])!;
-    expect(both.offerings.clash).toBe(true);
-    // A natural 1 fails whatever the odds: find a seed whose roll is in the worst twentieth.
-    const seed = Array.from({ length: 500 }, (_, i) => i).find((i) => new Rng(i).next() >= 0.95)!;
-    const lucky = { ...c, insight: { current: 0, earned: 1e6 } };
-    const r = attemptBreakthrough(lucky, 'qi', ctx(seed), {
-      offerings: ['storm-peach-stone', 'storm-peach-stone'],
-    });
-    expect(r).toMatchObject({ attempted: true, success: false });
-    expect(r.cultivator.qi.injuredUntil).toBeGreaterThan(DAY + 360);
+    expect(both.score - bare.score).toBeCloseTo(0.26);
+    expect(both.odds).toBeCloseTo(bare.odds - 0.08);
   });
 
   it('are spent either way; guarding keeps the bar and purifying halves the injury', () => {

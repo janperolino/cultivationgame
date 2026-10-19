@@ -60,7 +60,7 @@ export function regionBrief(region: BriefEntry, inside: BriefEntry[]): string {
 
 export const INTERPRETER_TASK = `# Your job: interpreter
 Map the player's typed words to legal game actions as JSON. Pick one main action and at most one minor action.
-- Use only ids that appear in the scene, the player's techniques or the player's items. Map plain words to the nearest id ("my fire palm" -> ember_palm).
+- Use only ids that appear in the scene, the player's techniques or the player's items. Map plain words to the nearest id ("my fire palm" -> ember-palm).
 - main.type: technique (id = technique id), strike (plain weapon or fist attack), defend, item (id = item id), command (id = the player's beast), talk (style = bluff, intimidate, bargain or surrender), flee.
 - main.target: the id of the enemy or NPC targeted, else null.
 - main.style: only for talk; null for every other type.

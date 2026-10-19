@@ -776,7 +776,7 @@ export const QI_TREE = defineTree({
     },
 
     // Cloud-Treading Breath 踏云, a side path: flight on your own qi or any vessel. Flight on a
-    // sword is the Sword Dao's (design § Cultivation, The placement pass).
+    // sword is the Sword Dao's (design § Cultivation, Every tree has the same shape).
     {
       id: 'qi-treading-air',
       name: 'Treading Air',

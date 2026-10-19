@@ -4,14 +4,8 @@ import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode 
 import { stageName } from '../content/realms.ts';
 import { barFill, barSize, lastChance, type LadderId } from '../core/cultivation.ts';
 import { eventText, settledItself } from '../core/chronicle.ts';
-import {
-  ageYears,
-  atLifespanEdge,
-  lifespanYears,
-  type ChronicleEvent,
-  type GameState,
-} from '../core/state.ts';
-import { formatAgeShort, formatNumber, formatPercent, LADDER_LABELS } from './format.ts';
+import { atLifespanEdge, type ChronicleEvent, type GameState } from '../core/state.ts';
+import { formatNumber, formatPercent, LADDER_LABELS } from './format.ts';
 import { openPanel } from './scene.ts';
 import { rectIn, toggleFullscreen, useStage } from './stage.ts';
 import { useGame } from './store.ts';
@@ -73,32 +67,6 @@ export function LadderBar({
             <Why label={`How the ${LADDER_LABELS[which].toLowerCase()} bar fills`}>{why}</Why>
           </>
         )}
-      </span>
-    </div>
-  );
-}
-
-export function AgeBar({ game }: { game: GameState }) {
-  const age = ageYears(game.player, game.calendar.day);
-  const lifespan = lifespanYears(game.player);
-  return (
-    <div className="bar-row">
-      <span className="label">Age</span>
-      <div
-        className="bar"
-        role="progressbar"
-        aria-label="Age against lifespan"
-        aria-valuemin={0}
-        aria-valuemax={lifespan}
-        aria-valuenow={Math.floor(age)}
-      >
-        <div
-          className="bar-fill bar-age"
-          style={{ width: `${Math.min(100, (age / lifespan) * 100)}%` }}
-        />
-      </div>
-      <span className="value">
-        {formatAgeShort(age)} of {lifespan}
       </span>
     </div>
   );

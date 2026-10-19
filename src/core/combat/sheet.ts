@@ -9,7 +9,6 @@ import { gradesStages } from '../grades.ts';
 import {
   REALMS,
   realm,
-  realmIndex,
   realmSize,
   realmSpread,
   SIZE_BASE,
@@ -95,9 +94,4 @@ export function bandOf(size: number): { realm: RealmId; stage: number; name: str
   const at = span > 0 ? Math.log(Math.max(size, realmSize(r.id)) / realmSize(r.id)) / span : 0;
   const stage = Math.min(r.stages, Math.max(1, Math.round(at * (r.stages - 1)) + 1));
   return { realm: r.id, stage, name: `${r.name}, ${stageName(r.id, stage)}` };
-}
-
-/** Whether a size is sized at or past a realm's first stage. */
-export function sizedAt(size: number, id: RealmId): boolean {
-  return realmIndex(bandOf(size).realm) >= realmIndex(id);
 }

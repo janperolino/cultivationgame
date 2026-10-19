@@ -1,6 +1,6 @@
-// The toasts in the corner (ui/toasts.ts): bottom right on desktop, under the top bar on a phone,
-// each gone after about six seconds unless hovered or focused, read out politely. A hint stays
-// until its action is done or it is dismissed, and its link leaves it showing.
+// The toasts in the corner (ui/toasts.ts): top right, under the season and the stones, each gone
+// after about six seconds unless hovered or focused, read out politely. A hint stays until its
+// action is done or it is dismissed, and its link leaves it showing.
 import { useEffect, useState, type CSSProperties } from 'react';
 import { go } from './nav.ts';
 import { useGame } from './store.ts';

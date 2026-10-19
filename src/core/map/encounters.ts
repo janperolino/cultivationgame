@@ -1086,7 +1086,8 @@ export function roadHour(
           ),
         };
       });
-      st = { ...value.after, rng: state.rng };
+      // Only the road's stream moved here; any stream `arrive` advanced keeps its roll.
+      st = { ...value.after, rng: { ...value.after.rng, road: state.rng.road! } };
     } else st = { ...st, map: { ...life, notice: { ...life.notice, n } } };
   }
   return meetReached(st);

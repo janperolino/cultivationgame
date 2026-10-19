@@ -39,6 +39,9 @@ export function hasBoard(p: MapPlace): boolean {
   return !!k && PLACE_KINDS[k].board;
 }
 
+/** Ordered by id, code point by code point: a seeded pick must not lean on the machine's locale. */
+const byId = (a: { id: string }, b: { id: string }) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+
 function goalTemplates(): Template[] {
   return ENCOUNTERS.filter((t) => t.goal && POSTED_GOALS.includes(t.goal));
 }
@@ -57,7 +60,7 @@ function spotFor(map: RegionMap, board: MapPlace, t: Template, rng: Rng): MapPla
     ? wanted.filter((p) => t.where.site!.includes(p.sub as never))
     : wanted;
   const pool = bySite.filter((p) => !p.hidden);
-  return pool.length ? rng.pick([...pool].sort((a, b) => a.id.localeCompare(b.id))) : null;
+  return pool.length ? rng.pick([...pool].sort(byId)) : null;
 }
 
 function payFor(band: number): number {
@@ -88,7 +91,7 @@ export function postingsAt(s: GameState, map: RegionMap, board: MapPlace): Posti
   const pool = goalTemplates();
   const out: Posting[] = [];
   // A month's postings are different goals, each with a spot of its kind in reach.
-  const order = [...pool].sort((a, b) => a.id.localeCompare(b.id));
+  const order = [...pool].sort(byId);
   for (let i = order.length - 1; i > 0; i--) {
     const j = rng.int(0, i);
     [order[i], order[j]] = [order[j]!, order[i]!];

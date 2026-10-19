@@ -46,10 +46,6 @@ export function tree(id: string): Tree {
   return t;
 }
 
-export function hasNode(id: string): boolean {
-  return nodes.has(id);
-}
-
 export function treeNode(id: string): TreeNode {
   const n = nodes.get(id);
   if (!n) throw new RangeError(`Unknown tree node ${id}`);
@@ -88,9 +84,4 @@ export function tierNode(
   kind: 'starter' | 'capstone',
 ): TreeNode | undefined {
   return t.nodes.find((n) => n.tier === tier && n.kind === kind);
-}
-
-/** The branch a node grows on, if any. */
-export function branchOf(n: TreeNode): Branch | undefined {
-  return n.branch ? treeOf(n.id).branches.find((b) => b.id === n.branch) : undefined;
 }

@@ -2,7 +2,7 @@
 // where they don't, the cheapest way by time. Off the road the terrain slows you; a flyer goes
 // straight over it. The night road keeps off the roads; caravan guards keep to them.
 import { OFFROAD_FACTOR } from '../../content/map/travel.ts';
-import { densify, lineLength, type Pt } from './geometry.ts';
+import { densify, type Pt } from './geometry.ts';
 import { inRegion, onLand, placeById, terrainAt, type MapRoad, type RegionMap } from './region.ts';
 
 export interface RouteOptions {
@@ -132,9 +132,4 @@ export function planRoute(map: RegionMap, from: Pt, to: Pt, opts: RouteOptions =
     pts.push(...(pts.length ? seg.slice(1) : seg));
   }
   return { ok: true, route: { pts: densify(pts, 60), roadLi, crossLi, crossCost, tolls } };
-}
-
-/** The li along a route from its point `at` to its end. */
-export function liLeft(pts: readonly Pt[], at: number, here: Pt): number {
-  return lineLength([here, ...pts.slice(at)]);
 }

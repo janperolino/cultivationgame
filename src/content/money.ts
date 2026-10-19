@@ -56,9 +56,6 @@ export const COPY_PRICE: Record<ManualKind | 'method' | 'technique', number> = {
   technique: 30,
 };
 
-/** Price by tier, on the realm curve that sizes qi needs and income (design § Scale of destruction). */
-export const TIER_PRICE = [1, 9, 270, 27_000, 2_700_000] as const;
-
 /**
  * What a region does to an item's price, by region and item id (Jan's note in P3.2's talk): in
  * the Border Wilds the Foundation Pill is dearer, the Soul-Condensing Pill rarer and dearer still,

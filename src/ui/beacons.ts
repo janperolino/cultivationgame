@@ -1,5 +1,5 @@
 // The beacon (design § UI and screens, You do it the first time): while a first-time action waits,
-// its screen's menu button glows with motes drifting along its edges (the phone's ☰ too), the tab
+// its screen's menu button glows with motes drifting along its edges, the tab
 // it lives in glows the same, and the exact control wears a soft ring. Each first waiting
 // (core/firsts.ts) maps here to its screen, tab and control; all clear the moment you act, since
 // they are read from the live state. A beacon outranks the "new screen" glow.

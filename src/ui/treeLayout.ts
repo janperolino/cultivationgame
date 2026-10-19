@@ -48,10 +48,10 @@ const RIM_GAP = 52;
 const EDGE_GAP = 30;
 
 /**
- * The crown (design § Cultivation, Where manuals live): a slot every PITCH px of rim, CROWN_PAST
- * degrees past the band on each side, a PEAK_GAP either side of the peak for the climb, and another
- * row ROW px out when one fills. 42 px rather than the design's starting 44, so Qi Condensation
- * holds 80 in two rows.
+ * The crown (design § UI and screens, Manuals on the trees): a slot every PITCH px of rim,
+ * CROWN_PAST degrees past the band on each side, a PEAK_GAP either side of the peak for the climb,
+ * and another row ROW px out when one fills. 42 px rather than the design's starting 44, so Qi
+ * Condensation holds 80 in two rows.
  */
 export const PITCH = 42;
 export const ROW = 46;
@@ -592,13 +592,6 @@ export function bandFocus(f: Fan, tier: number): Point {
   return { x: p.x + f.hub.x, y: p.y + f.hub.y };
 }
 
-/** How wide and tall a band shows, for fitting it to the screen: its outer arc's box. */
-export function bandSize(f: Fan, tier: number): { w: number; h: number } {
-  const b = f.bands[tier - 1]!;
-  const sideways = b.span >= 90 ? b.outer : b.outer * Math.sin(rad(b.span));
-  return { w: sideways * 2, h: b.outer - b.inner + 120 };
-}
-
 /** A bloom (design § Cultivation, Where manuals live): a disc over its neighbours, nodes on a ring. */
 export const BLOOM_DISC = 176;
 export const BLOOM_RING = 36;
@@ -729,7 +722,7 @@ export interface OwnFan {
 }
 
 /**
- * A manual with no host, as a small fan of its own (design § UI and screens, A manual's own tree):
+ * A manual with no host, as a small fan of its own (design § UI and screens, Manuals on the trees):
  * a radial tree opening upward from its first node at the hub, one band a tier in ascending order,
  * tier 1 innermost. A node sits a ring past every node it needs, and never inside its own tier's
  * band. Each branch keeps its own wedge: the outermost nodes share the opening evenly in the

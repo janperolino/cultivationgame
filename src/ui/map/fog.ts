@@ -281,16 +281,19 @@ function* bake(map: RegionMap, life: MapLife, sig: string): Generator<void, Fog>
   return fog;
 }
 
-/** Each region's fog, when its bake began, and the bake under way, if any. */
-const FOGS = new Map<string, { fog: Fog; at: number; baking: boolean }>();
+/**
+ * Each map's fog, when its bake began, and the bake under way, if any. Keyed by the map itself:
+ * every lineage generates its own, so two lives on one region never share a fog.
+ */
+const FOGS = new WeakMap<RegionMap, { fog: Fog; at: number; baking: boolean }>();
 
 /** Runs a bake a step a task, so the frames between its steps still draw; then draws again. */
-function bakeLater(region: string, steps: Generator<void, Fog>) {
+function bakeLater(map: RegionMap, steps: Generator<void, Fog>) {
   const step = () => {
     const r = steps.next();
-    const held = FOGS.get(region)!;
+    const held = FOGS.get(map)!;
     if (r.done) {
-      FOGS.set(region, { ...held, fog: r.value, baking: false });
+      FOGS.set(map, { ...held, fog: r.value, baking: false });
       artArrived();
     } else setTimeout(step, 0);
   };
@@ -304,19 +307,19 @@ function bakeLater(region: string, steps: Generator<void, Fog>) {
  */
 export function fogOf(map: RegionMap, life: MapLife): { fog: Fog; stale: boolean } {
   const sig = signature(map, life);
-  const held = FOGS.get(map.id);
+  const held = FOGS.get(map);
   const now = performance.now();
   if (!held) {
     const steps = bake(map, life, sig);
     let r = steps.next();
     while (!r.done) r = steps.next();
-    FOGS.set(map.id, { fog: r.value, at: now, baking: false });
+    FOGS.set(map, { fog: r.value, at: now, baking: false });
     return { fog: r.value, stale: false };
   }
   if (held.fog.sig === sig) return { fog: held.fog, stale: false };
   if (!held.baking && now - held.at >= REBAKE_MS) {
-    FOGS.set(map.id, { ...held, at: now, baking: true });
-    bakeLater(map.id, bake(map, life, sig));
+    FOGS.set(map, { ...held, at: now, baking: true });
+    bakeLater(map, bake(map, life, sig));
   }
   return { fog: held.fog, stale: true };
 }

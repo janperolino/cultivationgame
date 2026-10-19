@@ -6,7 +6,29 @@ export type Ring = readonly Pt[];
 /** Polygons, each an outer ring and its holes, as the atlas's outlines are. */
 export type Multi = readonly (readonly Ring[])[];
 
+/** Each ring's bounding box, [minX, minY, maxX, maxY], worked out once: rings never change. */
+const BOXES = new WeakMap<Ring, readonly [number, number, number, number]>();
+
+function boxOf(ring: Ring): readonly [number, number, number, number] {
+  let b = BOXES.get(ring);
+  if (!b) {
+    let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+    for (const [x, y] of ring) {
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+    b = [x0, y0, x1, y1];
+    BOXES.set(ring, b);
+  }
+  return b;
+}
+
 export function inRing(p: Pt, ring: Ring): boolean {
+  // Outside its box a point is outside the ring; the travel hours ask this of every outline.
+  const b = boxOf(ring);
+  if (p[0] < b[0] || p[0] > b[2] || p[1] < b[1] || p[1] > b[3]) return false;
   let c = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const [xi, yi] = ring[i]!;
@@ -18,7 +40,13 @@ export function inRing(p: Pt, ring: Ring): boolean {
 
 /** Inside an outline: in some polygon's outer ring and none of its holes. */
 export function inMulti(p: Pt, m: Multi): boolean {
-  return m.some((poly) => inRing(p, poly[0]!) && !poly.slice(1).some((hole) => inRing(p, hole)));
+  for (const poly of m) {
+    if (!inRing(p, poly[0]!)) continue;
+    let inHole = false;
+    for (let i = 1; i < poly.length && !inHole; i++) inHole = inRing(p, poly[i]!);
+    if (!inHole) return true;
+  }
+  return false;
 }
 
 export function segDist(p: Pt, a: Pt, b: Pt): number {

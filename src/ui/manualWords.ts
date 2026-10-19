@@ -1,28 +1,8 @@
 // Manuals in words, for the screens that show them: when a sealed node wakes, how a manual's
 // nodes wake.
-import { manual, type Manual, type ManualNode } from '../content/manuals.ts';
-import { MASTERY } from '../content/mastery.ts';
-import { REALMS } from '../content/realms.ts';
+import type { Manual } from '../content/manuals.ts';
 import { technique } from '../content/techniques.ts';
-import { methodMastery } from '../core/methods.ts';
-import type { Cultivator } from '../core/state.ts';
-import { mastery } from '../core/techniques.ts';
 import { LADDER_LABELS } from './format.ts';
-
-/** When a sealed manual node will work, in words. */
-export function sealWords(c: Cultivator, n: ManualNode): string {
-  const m = manual(n.manual);
-  if (m.method && n.mastery !== undefined) {
-    const now = MASTERY[methodMastery(c, m.method).level]!.name;
-    return `Sealed until the method reaches ${MASTERY[n.mastery]!.name} (it stands at ${now}).`;
-  }
-  if (m.technique && n.mastery !== undefined) {
-    const t = technique(m.technique);
-    const now = MASTERY[mastery(c, t.id).level]!.name;
-    return `Sealed until ${t.name} reaches ${MASTERY[n.mastery]!.name} (it stands at ${now}).`;
-  }
-  return `Sealed until your ${LADDER_LABELS[m.ladder].toLowerCase()} reaches ${REALMS[n.tier - 1]!.name}.`;
-}
 
 /** How a manual's nodes wake, in a line. */
 export function wakeWords(m: Manual): string {

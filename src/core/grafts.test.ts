@@ -1,6 +1,6 @@
-// P2.5: manuals on the trees (design § Cultivation, Where manuals live, The placement pass). Every
-// manual's host, the Arts and their waking, an Art's passives on its technique in a fight, the
-// placement pass's renames and the v13 save.
+// P2.5: manuals on the trees (design § Cultivation, Where manuals live; Every tree has the same
+// shape). Every manual's host, the Arts and their waking, an Art's passives on its technique in a
+// fight, the placement pass's renames and the v13 save.
 import { describe, expect, it } from 'vitest';
 import {
   ART_NODES,

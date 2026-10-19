@@ -50,6 +50,7 @@ import type { GameState } from '../core/state.ts';
 import { goToWheel } from './nav.ts';
 import { ROAD_WORD } from './roadWords.ts';
 import { onArtLoad } from './map/art.ts';
+import { markMoving } from './moving.ts';
 import { drawMap, isDeadly, pickAt, toScreen, toWorld, type View } from './map/draw.ts';
 import { fogOf } from './map/fog.ts';
 import { EncounterCard } from './EncounterCard.tsx';
@@ -181,7 +182,16 @@ function MapView({
     ro.observe(el);
     return () => ro.disconnect();
   }, [zoom]);
-  useEffect(() => onArtLoad(() => redraw((n) => n + 1)), []);
+  // Art and web fonts arrive late: the canvas draws again for each, or labels keep a fallback.
+  useEffect(() => {
+    const again = () => redraw((n) => n + 1);
+    document.fonts?.addEventListener('loadingdone', again);
+    const off = onArtLoad(again);
+    return () => {
+      document.fonts?.removeEventListener('loadingdone', again);
+      off();
+    };
+  }, []);
 
   // The zoom stops where the tiles run out and at what you've charted (A5): never past it.
   const charted = fogOf(map, life).fog.charted;
@@ -243,6 +253,7 @@ function MapView({
     if (!c) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      markMoving();
       const p = pointIn(e, c);
       zoomAt(p.x, p.y, Math.exp(-e.deltaY * 0.0015));
     };
@@ -440,7 +451,11 @@ function MapView({
       const dy = (e.clientY - d.y) / stageFactor();
       // A tap's slack is in window pixels, so it feels the same at every window size.
       if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4) d.moved = true;
-      if (d.moved) setView({ ...v, x: d.vx - dx / v.k, y: d.vy - dy / v.k });
+      if (d.moved) {
+        // The glass and the glows hold still while the map moves (ui/moving.ts).
+        markMoving();
+        setView({ ...v, x: d.vx - dx / v.k, y: d.vy - dy / v.k });
+      }
       return;
     }
     const [sx, sy] = local(e);

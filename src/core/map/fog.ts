@@ -12,7 +12,7 @@ import {
 } from '../../content/map/travel.ts';
 import { REALMS, realmIndex, type RealmId } from '../../content/realms.ts';
 import { hashSeed, mulberry32 } from '../rng.ts';
-import { inMulti, lineDist, multiDist, type Pt } from './geometry.ts';
+import { inMulti, lineDist, multiDist, ringCentroid, type Pt } from './geometry.ts';
 import {
   areaAt,
   inRegion,
@@ -147,7 +147,7 @@ export function lookAround(
 export function rumor(life: MapLife, place: MapPlace | MapArea, why: string): MapLife {
   if (known(life, place.id) !== 'unknown') return life;
   const next = raise(life, place.id, 'rumored', why);
-  const c: Pt = 'x' in place ? [place.x, place.y] : place.outline[0]![0]![0]!;
+  const c: Pt = 'x' in place ? [place.x, place.y] : ringCentroid(place.outline[0]![0]!);
   const rng = mulberry32(hashSeed(`ring:${place.id}`));
   const off = rng() * (RUMOR_RING_LI / 2) * 0.6;
   const ang = rng() * Math.PI * 2;

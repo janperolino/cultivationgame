@@ -235,11 +235,6 @@ export function hear(
   return fresh.length ? { ...w, heard: [...w.heard, ...fresh] } : w;
 }
 
-/** What you've heard of a fact, and from whom. */
-export function heardOf(w: World, fact: string): Heard[] {
-  return w.heard.filter((h) => h.fact === fact);
-}
-
 /**
  * You see a fact for yourself: it is known, and what you heard of it drops away; whoever lied to
  * you about it is caught in the lie, which you remember, and their Honesty shows.

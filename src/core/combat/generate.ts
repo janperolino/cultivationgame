@@ -88,15 +88,20 @@ export function biasedTable(bias: number): { id: RarityId; p: number }[] {
   return RARITIES.map((r, i) => ({ id: r.id, p: w[i]! / total }));
 }
 
+/** The tables rolled on so far, by bias: a pedigree at a realm always brings the same few. */
+const TABLES = new Map<number, readonly { id: RarityId; p: number }[]>();
+
 /** One roll on the shared table at this bias. */
 export function rollBiased(rng: Rng, bias: number): RarityId {
+  let table = TABLES.get(bias);
+  if (!table) TABLES.set(bias, (table = biasedTable(bias)));
   const u = rng.next();
   let acc = 0;
-  for (const { id, p } of biasedTable(bias)) {
+  for (const { id, p } of table) {
     acc += p;
     if (u < acc) return id;
   }
-  // Pristine rolls at 0, so the table ends at red.
+  // Only float rounding gets here, past the table's last step; it lands on red.
   return 'red';
 }
 

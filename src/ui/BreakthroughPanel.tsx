@@ -450,12 +450,6 @@ function Panel({ game, panel }: { game: GameState; panel: PanelOpen }) {
             <span className="caption">
               Click an empty slot to lay an offering, a laid one to lift it off.
             </span>
-            {check.offerings.clash && (
-              <p className="caption warn">
-                Two surging things clash: the worst twentieth of rolls fails and injures, whatever
-                the odds.
-              </p>
-            )}
           </div>
         ) : (
           <p className="caption">

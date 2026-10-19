@@ -11,7 +11,7 @@ import {
   WATCH_WAIVES_AT,
   type PlaceKindId,
 } from '../../content/map/places.ts';
-import { realm, realmIndex, stageName, type RealmId } from '../../content/realms.ts';
+import { realm, stageName, type RealmId } from '../../content/realms.ts';
 import { pay, stonesOf, withStones } from '../purse.ts';
 import { actorFromCultivator, plainActor } from '../resolver/actor.ts';
 import { fameOf, isMember } from '../resolver/names.ts';
@@ -145,11 +145,6 @@ const ACCESS_WORDS: Record<string, string> = {
   invitation: 'an invitation',
   toll: 'the toll',
 };
-
-/** Whether your realm could force a gated place's array: only one above its rating. */
-export function canForce(s: GameState, access: Access): boolean {
-  return !!access.array && realmIndex(realmOf(s.player)) > realmIndex(access.array);
-}
 
 /** A refusal may still change the world: a sergeant remembers the bribe he turned down. */
 export type EnterResult =

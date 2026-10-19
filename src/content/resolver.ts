@@ -129,10 +129,6 @@ export const CAPABILITIES = {
 export type CapabilityId = keyof typeof CAPABILITIES;
 export const CAPABILITY_IDS = Object.keys(CAPABILITIES) as CapabilityId[];
 
-export function capabilityInfo(id: CapabilityId): CapabilityInfo {
-  return CAPABILITIES[id];
-}
-
 // ── Costs ────────────────────────────────────────────────────────────────────────────────────
 
 /** What a close pass costs (design § The resolver): the act's first unless the step names one. */
@@ -768,7 +764,6 @@ export const LASTING = {
   },
 } as const;
 export type LastingKind = keyof typeof LASTING;
-export const LASTING_KINDS = Object.keys(LASTING) as LastingKind[];
 
 /** Karma a broken vow costs. */
 export const VOW_KARMA = -10;

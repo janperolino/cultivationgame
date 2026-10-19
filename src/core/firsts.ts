@@ -25,10 +25,6 @@ import { canPractice, knownTechniques, practiced } from './techniques.ts';
 
 export { ALL_FIRSTS, FIRST_IDS, type FirstId } from '../content/firsts.ts';
 
-export function firstDone(done: readonly FirstId[], id: FirstId): boolean {
-  return done.includes(id);
-}
-
 const ART_LADDERS = ['body', 'soul'] as const satisfies readonly LadderId[];
 
 /**

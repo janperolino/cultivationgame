@@ -45,11 +45,6 @@ export function noteText(n: Note, c: Cultivator): string {
   return renderEvent(n.type, n.data, whoFor(c));
 }
 
-/** The events that name a cultivator, oldest first: the person log reads this. */
-export function eventsOf(s: GameState, id: string): ChronicleEvent[] {
-  return s.chronicle.filter((e) => e.actors.includes(id));
-}
-
 export { ordinal };
 
 const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
@@ -87,17 +82,3 @@ export function worldWhen(day: number): string {
 }
 
 const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
-
-/** Events grouped by "Winter 3,137", in the order given. */
-export function bySeason(
-  events: readonly ChronicleEvent[],
-): { when: string; items: ChronicleEvent[] }[] {
-  const groups: { when: string; items: ChronicleEvent[] }[] = [];
-  for (const e of events) {
-    const when = worldWhen(e.day);
-    const last = groups.at(-1);
-    if (last?.when === when) last.items.push(e);
-    else groups.push({ when, items: [e] });
-  }
-  return groups;
-}

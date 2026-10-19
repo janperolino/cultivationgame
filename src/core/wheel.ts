@@ -34,14 +34,15 @@ export function hourLocked(c: Cultivator, hour: number): boolean {
   return sleepLocked(c) && SLEEP_HOURS.includes(hour);
 }
 
-/** What each hour goes to: the wheel, with locked hours asleep whatever it says. */
 /** The hour of the day wheel a world day stands in: 0 at 子 (midnight), 11 at 亥. */
 export function hourOfDay(day: number): number {
   return Math.floor((((day % 1) + 1) % 1) * HOURS_PER_DAY) % HOURS_PER_DAY;
 }
 
+/** What each hour goes to: the wheel, with locked hours asleep whatever it says. */
 export function effectiveWheel(c: Cultivator): HourKind[] {
-  return c.wheel.map((kind, i) => (hourLocked(c, i) ? 'sleep' : kind));
+  const locked = sleepLocked(c);
+  return c.wheel.map((kind, i) => (locked && SLEEP_HOURS.includes(i) ? 'sleep' : kind));
 }
 
 const openFlag = (kind: HourKind) => `hours-${kind}`;

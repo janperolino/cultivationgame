@@ -26,9 +26,3 @@ export const MORTALS: Readonly<Record<string, MortalKind>> = {
   'post-rider': { name: 'a post rider of the Jing', taels: [10, 30] },
   pilgrim: { name: 'a pilgrim', taels: [2, 15] },
 };
-
-export function mortalKind(id: string): MortalKind {
-  const m = MORTALS[id];
-  if (!m) throw new RangeError(`Unknown mortal kind: ${id}`);
-  return m;
-}

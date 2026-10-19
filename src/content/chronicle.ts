@@ -229,8 +229,6 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   rewind: () => 'Time folds back.',
 };
 
-export const EVENT_TYPES = Object.keys(EVENT_TEMPLATES);
-
 // ---------------------------------------------------------------- kinds
 
 /**
@@ -342,6 +340,3 @@ export function eventKind(type: string, data: EventData): ChronicleKind {
   if (!k) return 'opening';
   return typeof k === 'function' ? k(data) : k;
 }
-
-/** The events a coming-back summary, the Chronicle and the sims treat as setbacks. */
-export const SETBACK_TYPES: readonly string[] = ['setback', 'major-setback'];

@@ -29,11 +29,6 @@ export function withStones<C extends Pick<Cultivator, 'stones' | 'higherStones'>
   return { ...c, stones: s[0], higherStones: { mid: s[1], high: s[2], top: s[3] } };
 }
 
-/** The purse at face value, in low-grade stones: what it is worth on the yardstick. */
-export function faceValue(s: Stones): number {
-  return s.reduce((sum, n, g) => sum + n * GRADE_FACE ** g, 0);
-}
-
 /** The grade a price is posted in: the largest one it is at least a whole stone of. */
 export function postedGrade(price: number): number {
   let g = 0;
@@ -107,7 +102,8 @@ export function canPay(s: Stones, price: number): boolean {
 
 /** Low-grade stones into the purse: what shops, bounties and wages pay out. */
 export function receive(s: Stones, low: number): Stones {
-  return [s[0] + low, s[1], s[2], s[3]];
+  // Rounded as pay() rounds, so tenths of a stone never leave 0.9999… for a 1.
+  return [Math.round((s[0] + low) * 1e6) / 1e6, s[1], s[2], s[3]];
 }
 
 /** Buys one stone of a grade with UP_COST of the grade below, or null when short. */

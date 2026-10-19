@@ -138,6 +138,8 @@ describe('prices', () => {
     expect(priceOf('storage-pouch')).toBe(60);
     expect(priceOf('beast-core')).toBe(2.5);
     expect(priceOf('beast-core~white')).toBe(5);
+    // A written price moves with the tier too: a Foundation beast's core is Foundation money.
+    expect(priceOf('beast-core~white~t2')).toBe(5 * 9);
   });
 
   it('price a region’s gates as Jan’s note has it, and a copy by what it teaches', () => {

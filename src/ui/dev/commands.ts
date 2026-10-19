@@ -18,7 +18,7 @@ import { CARDS, hasCard } from '../../content/cards/index.ts';
 import { COMBAT_DAO_IDS, isCombatDao } from '../../content/daos.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
 import { COPY_KINDS, copyId, copyTitle, hasCopy } from '../../content/copies.ts';
-import { item, ITEMS } from '../../content/items.ts';
+import { hasItem, item, ITEMS } from '../../content/items.ts';
 import { hasManual, MANUALS } from '../../content/manuals.ts';
 import { registerManuals } from '../../content/nodes.ts';
 import { hasMethod, METHODS } from '../../content/methods.ts';
@@ -330,6 +330,8 @@ export const COMMANDS: Record<string, Command> = {
     run([id, n], store) {
       if (!id) return 'Give an item id, like foundation-pill.';
       const v = n === undefined ? 1 : Number(n);
+      if (!hasItem(id)) return `No item ${id}.`;
+      if (!Number.isInteger(v)) return 'Give a whole number.';
       return apply(store, (s) => withPlayer(s, addItem(s.player, id, v)), `${id} +${v}.`);
     },
   },

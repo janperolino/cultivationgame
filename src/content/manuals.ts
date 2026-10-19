@@ -10,10 +10,10 @@
 // White to blue manuals are generated from an effect table from D4 on; these are written by hand.
 // Drafted in P1.10 for Jan's review; the Arts in P2.5.
 //
-// Where manuals live (design § Cultivation, D2.2): every manual names a host tree and the Trees
-// screen draws it grafted beside that tree, joined to none of its nodes. A Method's host is its
-// ladder's tree, an Art's its technique's first Dao, a Formula's the tree its effects touch; a
-// manual with none stands under the Manuals category on its own.
+// Where manuals live (design § Cultivation, Where manuals live): every manual names a host tree
+// and the Trees screen draws it grafted beside that tree, joined to none of its nodes. A Method's
+// host is its ladder's tree, an Art's its technique's first Dao, a Formula's the tree its effects
+// touch; a manual with none stands under the Manuals category on its own.
 import type { LadderId } from './cultivation.ts';
 import { COMBAT_DAO_IDS, DAO_STAT_KINDS } from './daos.ts';
 import { method } from './methods.ts';

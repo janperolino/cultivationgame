@@ -36,10 +36,10 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 export const SAVE_VERSION = 31;
 
 /**
- * Node ids the placement pass renamed (P2.5, design § Cultivation, The placement pass), and the
- * Sword tree's Sword Intent, now Sword Bearing (P2.6), old to new. The v12 and v16 migrations
- * carry a learned node across; the v5 one reads old ids through it, since it checks owned nodes
- * against today's trees.
+ * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
+ * shape), and the Sword tree's Sword Intent, now Sword Bearing (P2.6), old to new. The v12 and v16
+ * migrations carry a learned node across; the v5 one reads old ids through it, since it checks
+ * owned nodes against today's trees.
  */
 export const RENAMED_NODES: Readonly<Record<string, string>> = {
   'qi-sword-riding-breath': 'qi-treading-air',
@@ -696,9 +696,10 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const you = typeof p.id === 'string' ? p.id : 'player';
     const w = (s.world ?? {}) as Raw;
     let next = typeof w.next === 'number' ? w.next : 1;
-    const memories = (Array.isArray(w.memories) ? w.memories : []) as Raw[];
-    const ties = (Array.isArray(w.ties) ? w.ties : []) as Raw[];
-    const known = (Array.isArray(w.known) ? w.known : []) as string[];
+    // Copies: the raw save may be read again (a slot's backup check), so it is never changed.
+    const memories = [...(Array.isArray(w.memories) ? w.memories : [])] as Raw[];
+    const ties = [...(Array.isArray(w.ties) ? w.ties : [])] as Raw[];
+    const known = [...(Array.isArray(w.known) ? w.known : [])] as string[];
     const people: Raw = {};
     for (const [id, rec] of Object.entries((p.people ?? {}) as Record<string, Raw>)) {
       const { bond, regard, ...rest } = rec;

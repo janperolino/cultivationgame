@@ -17,7 +17,6 @@ import {
   INSIGHT_MARGIN_FULL,
   INSIGHT_PER_STUDY_DAY,
   INSIGHT_TRICKLE,
-  CLASH_ROLL,
   LADDERS,
   LAST_CHANCE_ODDS,
   MAJOR_FAIL_KEEP,
@@ -136,11 +135,6 @@ export function ladderOpen(c: Cultivator, which: LadderId): boolean {
 }
 
 // ---------------------------------------------------------------- grades
-
-/** The grade of the major breakthrough that opened this ladder's realm; none below Foundation. */
-export function currentGrade(l: Ladder): GradeId | undefined {
-  return l.grades.at(-1);
-}
 
 /**
  * The grades' multiplier on the ladder's speed: the latest in full for the realm it opened, each
@@ -602,11 +596,6 @@ export function standingMargin(c: Cultivator, which: LadderId, target: Realm): M
   ];
 }
 
-/** The margin you bring, 0 to 4, before the method, talents and offerings. */
-export function marginScore(c: Cultivator, which: LadderId, target: Realm): number {
-  return standingMargin(c, which, target).reduce((sum, p) => sum + p.value, 0);
-}
-
 /**
  * Where a ladder stands against its next major breakthrough with these offerings laid (the gate
  * pill is laid on its own); null if its next step is minor.
@@ -810,10 +799,7 @@ export function attemptBreakthrough(
   const allowed = last ? check.raises && check.insight && check.gate : check.ready;
   if (!allowed) return none;
   const odds = last ? lastChanceOdds(c, check) : sceneOdds(check.odds, opts.scene ?? 0);
-  const roll = rng.next();
-  // Two surging offerings clash: a natural 1 fails whatever the odds.
-  const clashed = check.offerings.clash && roll >= CLASH_ROLL;
-  const success = roll < odds && !clashed;
+  const success = rng.next() < odds;
   const laid = check.offerings;
   let next = laid.laid.reduce((acc, id) => addItem(acc, id, -1), c);
   if (laid.detox > 0) next = addToxicity(next, -laid.detox);
@@ -1027,9 +1013,12 @@ export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): Cu
     if (!r.fed) unfed.push(which);
   }
   const rates = dayRates(fed, ctx.day, unfed, ctx.seat ?? AWAY, ctx.hourFactor);
-  // No stones burn once the qi bar is at its cap: the qi would be lost.
-  const capped = barFill(fed.qi) >= BAR_CAP - 1e-9;
-  const burned = capped ? 0 : Math.min(fed.stones, rates.stoneCap * days);
+  // No stone burns past the qi bar's cap: the qi would be lost. Near it, only what fits burns.
+  const room = barSize(fed.qi) * BAR_CAP - fed.qi.bar - rates.qi * days;
+  const burned =
+    rates.qiPerStone > 0 && room > 1e-9
+      ? Math.min(fed.stones, rates.stoneCap * days, room / rates.qiPerStone)
+      : 0;
   const qiGain = rates.qi * days + burned * rates.qiPerStone;
   const practiced = practiceDays(
     gainInsight(

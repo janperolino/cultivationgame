@@ -606,16 +606,6 @@ function blowCover(w: Working, a: Actor, why: string, seenBy: Actor[]): void {
   note(w, `${a.name}'s cover is blown: ${why}.`);
 }
 
-/**
- * Someone looks at a veiled cultivator: perception at or above their soul sees through it, and the
- * cover breaks; below it they believe the shown realm, and are fooled.
- */
-export function inspect(s: GameState, scene: Scene, observerId: string, targetId: string) {
-  const w: Working = { s, scene, deeds: [], surprise: null };
-  inspectInto(w, observerId, targetId);
-  return { state: w.s, scene: w.scene, surprise: w.surprise };
-}
-
 function inspectInto(w: Working, observerId: string, targetId: string): void {
   const o = actorIn(w.scene, observerId);
   const t = actorIn(w.scene, targetId);
@@ -1240,14 +1230,20 @@ export function doStep(
   return { state: w.s, scene: w.scene, result: result({ cost, short, ticks, fight }) };
 }
 
-/** A fight run whole on the combat engine: the two sides present, on the `combat` stream. */
+/**
+ * A fight run whole on the combat engine: the two sides present, and the two who started it even
+ * from hiding (an ambush), on the `combat` stream.
+ */
 function runSceneFight(
   w: Working,
   a: Actor,
   target: Actor,
 ): { winner: string | null; turns: number } {
   const sides = new Set([a.side, target.side]);
-  const fighters = w.scene.actors.filter((x) => sides.has(x.side) && x.state === 'present');
+  const starts = (x: Actor) => x.id === a.id || x.id === target.id;
+  const fighters = w.scene.actors.filter(
+    (x) => sides.has(x.side) && (x.state === 'present' || (x.state === 'hidden' && starts(x))),
+  );
   const combatants = fighters.map((x) => {
     const c =
       x.combatant ??
@@ -1256,6 +1252,9 @@ function runSceneFight(
   });
   const r = withStream(w.s, 'combat', (rng) => runFight(startFight(combatants), rng));
   w.s = r.state;
+  // Blows struck from hiding give you away.
+  for (const x of fighters)
+    if (x.state === 'hidden') setActor(w, x.id, (y) => ({ ...y, state: 'present' }));
   for (const c of r.value.fight.combatants) {
     // The armor you wore keeps the wear the fight left (P3.5).
     if (c.id === w.s.player.id) w.s = { ...w.s, player: wearFrom(w.s.player, c) };
@@ -1289,7 +1288,9 @@ export interface RoundResult {
 
 /** Agility order, the faster first, then by id so the order never wobbles. */
 function order(actors: Actor[]): Actor[] {
-  return [...actors].sort((x, y) => y.agility - x.agility || x.id.localeCompare(y.id));
+  return [...actors].sort(
+    (x, y) => y.agility - x.agility || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0),
+  );
 }
 
 /**

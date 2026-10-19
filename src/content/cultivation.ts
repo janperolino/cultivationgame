@@ -59,8 +59,8 @@ export const UNSETTLED_DAYS = 5;
 export const MINOR_INJURY_DAYS = 180;
 /**
  * Offerings (design § Cultivation, Offerings): a major attempt on any ladder takes up to this many
- * items with the offer use, spent whether it succeeds or fails. A qi major's gate pill counts as
- * one; body and soul majors need no gate.
+ * items with the offer use, spent whether it succeeds or fails. The gate a major that raises your
+ * realm needs counts as one.
  */
 export const MAX_OFFERINGS = 3;
 /**
@@ -78,11 +78,6 @@ export const OFFER_LADDER_MULTIPLIER = 2;
 export const OFFER_INJURY = 0.5;
 /** An offering of your root's element adds a step of odds, like a tenth of overfill. */
 export const OFFER_ELEMENT_ODDS = ODDS_PER_TENTH;
-/**
- * Two surging offerings clash: on the worst twentieth of the breakthrough's own roll the attempt
- * fails and injures as a failed major would, whatever the odds.
- */
-export const CLASH_ROLL = 0.95;
 
 /**
  * Pill toxicity (design § Items and gear): one meter, 0 to 100. A pill adds its dose, ×3 for each

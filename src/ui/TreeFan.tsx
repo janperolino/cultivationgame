@@ -773,7 +773,7 @@ export function TreeFan({
 }
 
 /**
- * A hostless manual's own tree as a small fan (design § UI and screens, A manual's own tree): its
+ * A hostless manual's own tree as a small fan (design § UI and screens, Manuals on the trees): its
  * first node at the bottom, its tier bands in ascending order, each named for its realm. Its nodes
  * act as a tree's do: a card beside one on hover or focus, pinned open by a click, with Learn. Too
  * wide for its box, it scrolls sideways, opening centred.

@@ -284,6 +284,12 @@ describe('the playbook', () => {
     const r = runPlan(st, cave, plan(s, step('ambush', { target: 'crew-a' })));
     expect(r.results[0]!.check!.verdict).toBe('clear');
     expect(r.results[0]!.fight!.winner).toBe(YOU);
+    // From hiding too: the ambusher fights, and is in the open after.
+    const hid = at('karst-cave', [{ ...sc.actors[0]!, side: YOU, state: 'hidden' }, first]);
+    const h = runPlan(st, hid, plan(s, step('ambush', { target: 'crew-a' })));
+    expect(h.results[0]!.fight!.turns).toBeGreaterThan(0);
+    expect(h.results[0]!.fight!.winner).toBe(YOU);
+    expect(h.scene.actors.find((x) => x.side === YOU)!.state).toBe('present');
   });
 
   it("kidnaps the Spirit Herders' speaking stallion and ransoms it to the Beast Court", () => {

@@ -43,6 +43,7 @@ import {
   type YearRow,
 } from './chronicleRiver.ts';
 import { useGame } from './store.ts';
+import { reducedMotion } from './settings.ts';
 
 /** Years a page of the river holds; "Further back" adds as many again. */
 const PAGE_YEARS = 40;
@@ -56,13 +57,6 @@ interface Picked {
 
 const kc = (k: ChronicleKind) => ({ '--kc': `var(--k-${k})` }) as CSSProperties;
 const sc = (s: number) => ({ '--sc': `var(--s-${SEASONS[s]})` }) as CSSProperties;
-
-function reducedMotion(): boolean {
-  return (
-    document.documentElement.dataset.motion === 'reduced' ||
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
-}
 
 /** Scrolls an element into view and flashes it once. */
 function flashTo(id: string) {

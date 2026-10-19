@@ -109,9 +109,12 @@ export function readProgress(c: Cultivator, id: string): number {
 
 // ---------------------------------------------------------------- the queue
 
-/** The reading queue, in order, without copies no longer written or owned. */
+/**
+ * The reading queue, in order, without copies no longer written or owned, or whose content you
+ * have since learned another way (a senior taught it, a card gave it).
+ */
 export function readingQueue(c: Cultivator): string[] {
-  return c.reading.queue.filter((id) => hasCopy(id) && copyCount(c, id) > 0);
+  return c.reading.queue.filter((id) => hasCopy(id) && copyCount(c, id) > 0 && !knowsCopy(c, id));
 }
 
 /** The copy the study hours read now: the first in the queue that can be read. */

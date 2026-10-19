@@ -6,18 +6,13 @@ import { copyOf, hasCopy } from '../content/copies.ts';
 import { hasItem, item, itemKind, type Item } from '../content/items.ts';
 import { hasManual, manual } from '../content/manuals.ts';
 import { method } from '../content/methods.ts';
-import {
-  BASE_PRICE,
-  COPY_PRICE,
-  REGION_PRICE,
-  STORAGE_PRICE,
-  TIER_PRICE,
-} from '../content/money.ts';
-import { rarity, type RarityId } from '../content/rarity.ts';
+import { BASE_PRICE, COPY_PRICE, REGION_PRICE, STORAGE_PRICE } from '../content/money.ts';
+import { rarity } from '../content/rarity.ts';
+import { realmScale, tierRealm } from '../content/realms.ts';
 import { technique } from '../content/techniques.ts';
 
 function tierPrice(tier: number): number {
-  return TIER_PRICE[Math.max(0, Math.min(TIER_PRICE.length - 1, tier - 1))]!;
+  return realmScale(tierRealm(tier).id);
 }
 
 /** The kind's price for a white thing of tier 1. */
@@ -31,15 +26,20 @@ function basePrice(it: Item): number {
 export function itemPrice(it: Item, region?: string): number {
   const regional = region ? (REGION_PRICE[region]?.[it.id.split('~')[0]!] ?? 1) : 1;
   // A written price is the thing at its own tier and its worst rarity; the kind's is a white tier 1.
-  const own = it.price ?? basePrice(it) * tierPrice(it.tier);
-  const ref = it.price !== undefined ? rarity(writtenRarity(it)).price : 1;
+  // A variant at another tier or rarity moves from the written thing's.
+  const w = written(it);
+  const own =
+    it.price !== undefined
+      ? (it.price * tierPrice(it.tier)) / tierPrice(w.tier)
+      : basePrice(it) * tierPrice(it.tier);
+  const ref = it.price !== undefined ? rarity(w.rarity).price : 1;
   return Math.max(0.1, (own * rarity(it.rarity).price * regional) / ref);
 }
 
-/** The rarity a written thing is priced at: its own, before any variant moved it. */
-function writtenRarity(it: Item): RarityId {
+/** The written thing a variant is priced from, at the tier and rarity it was written at. */
+function written(it: Item): Item {
   const base = it.id.split('~')[0]!;
-  return base !== it.id && hasItem(base) ? item(base).rarity : it.rarity;
+  return base !== it.id && hasItem(base) ? item(base) : it;
 }
 
 /** A copy's price: what it teaches, by kind, rarity and tier. */
@@ -63,9 +63,4 @@ export function copyPrice(id: string): number {
 export function priceOf(thing: string, region?: string): number {
   if (hasCopy(thing)) return copyPrice(thing);
   return itemPrice(item(thing), region);
-}
-
-/** Whether a thing is a mortal good, priced in taels. */
-export function isMortalGood(thing: string): boolean {
-  return !hasCopy(thing) && hasItem(thing) && item(thing).taels !== undefined;
 }

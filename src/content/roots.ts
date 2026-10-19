@@ -131,7 +131,7 @@ export const ROOTS = [
     elements: {
       count: [5, 5],
       from: 'phases',
-      defaults: ['wood', 'fire', 'earth', 'metal', 'water'],
+      defaults: [...FIVE_PHASES],
     },
   },
   {
@@ -146,7 +146,7 @@ export const ROOTS = [
     elements: {
       count: [5, 5],
       from: 'phases',
-      defaults: ['wood', 'fire', 'earth', 'metal', 'water'],
+      defaults: [...FIVE_PHASES],
       fixed: true,
     },
     effects: [

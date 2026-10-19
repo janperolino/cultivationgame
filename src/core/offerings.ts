@@ -1,11 +1,10 @@
 // Offerings (design § Cultivation, Offerings): a major attempt on any ladder takes up to three
-// items with the offer use, spent whether it succeeds or fails. A qi major's gate pill is always
-// laid and counts as one of the three; body and soul majors need no gate. What an offering does
-// is its tags, each sized by rarity: steadying adds odds, surging adds grade margin for the same
-// odds taken away, purifying halves a failure's injury and clears toxicity, guarding keeps the
-// bar on failure, and a ladder tag doubles the item on its own ladder. Tags meet: two surging
-// items clash, an offering of your root's element adds a step of odds, and a gold or red one
-// carries the grade to heavenly as a gold method does.
+// items with the offer use, spent whether it succeeds or fails. The gate a major that raises your
+// realm needs is always laid and counts as one of the three. What an offering does is its tags,
+// each sized by rarity: steadying adds odds, surging adds grade margin for the same odds taken
+// away, purifying halves a failure's injury and clears toxicity, guarding keeps the bar on
+// failure, and a ladder tag doubles the item on its own ladder. An offering of your root's element
+// adds a step of odds, and a gold or red one carries the grade to heavenly as a gold method does.
 import {
   MAX_OFFERINGS,
   OFFER_DETOX,
@@ -27,7 +26,6 @@ export interface OfferEffect {
   detox: number;
   purifying: boolean;
   guarding: boolean;
-  surging: boolean;
   /** Gold or better: the grade may reach heavenly. */
   heavenly: boolean;
 }
@@ -48,8 +46,6 @@ export interface Offerings {
   detox: number;
   /** A failure keeps the bar. */
   guarding: boolean;
-  /** Two surging items: a natural 1 fails and injures. */
-  clash: boolean;
   /** A gold or red offering lets the grade reach heavenly. */
   heavenly: boolean;
 }
@@ -78,7 +74,6 @@ export function offerEffect(c: Cultivator, which: LadderId, id: string): OfferEf
     detox: 0,
     purifying: false,
     guarding: false,
-    surging: false,
     heavenly: false,
   };
   if (!offer) return out;
@@ -89,7 +84,6 @@ export function offerEffect(c: Cultivator, which: LadderId, id: string): OfferEf
     if (tag === 'surging') {
       out.margin += OFFER_MARGIN[rank]! * m;
       out.odds -= OFFER_ODDS[rank]! * m;
-      out.surging = true;
     }
     if (tag === 'purifying') {
       out.purifying = true;
@@ -122,7 +116,6 @@ export function offerings(
     purifying: false,
     detox: 0,
     guarding: false,
-    clash: false,
     heavenly: false,
   };
   const invalid = (reason: string): Offerings => ({ ...out, valid: false, reason });
@@ -133,7 +126,6 @@ export function offerings(
     if (!hasItem(id) || !item(id).uses.offer) return invalid(`${id} can't be offered.`);
     if (itemCount(c, id) < n) return invalid(`You hold too few of ${item(id).name}.`);
   }
-  let surging = 0;
   for (const id of laid) {
     const e = offerEffect(c, which, id);
     out.odds += e.odds;
@@ -143,8 +135,6 @@ export function offerings(
     out.purifying ||= e.purifying;
     out.guarding ||= e.guarding;
     out.heavenly ||= e.heavenly;
-    if (e.surging) surging += 1;
   }
-  out.clash = surging >= 2;
   return out;
 }

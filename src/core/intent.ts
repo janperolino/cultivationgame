@@ -63,11 +63,16 @@ export function readyingTier(c: Cultivator, dao: string, stage: number): number 
   return INTENT_CAPSTONE_TIER[stage]! - (geniusIn(c, dao) ? GENIUS_TIERS_EARLY : 0);
 }
 
+const CAPSTONES = new Map<string, string | null>();
+
 /** A Dao tree's capstone in a tier, or null when that tier isn't written yet. */
 export function capstoneOf(dao: string, tier: number): string | null {
-  const t = DAOS.find((x) => x.dao === dao);
-  if (!t) return null;
-  return tierNodes(t, tier).find((n) => n.kind === 'capstone')?.id ?? null;
+  const key = `${dao}/${tier}`;
+  if (!CAPSTONES.has(key)) {
+    const t = DAOS.find((x) => x.dao === dao);
+    CAPSTONES.set(key, (t && tierNodes(t, tier).find((n) => n.kind === 'capstone')?.id) ?? null);
+  }
+  return CAPSTONES.get(key)!;
 }
 
 /**

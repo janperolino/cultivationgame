@@ -115,7 +115,8 @@ export async function* readSse(stream: ReadableStream<Uint8Array>): AsyncGenerat
   try {
     for (;;) {
       const { value, done } = await reader.read();
-      buffer += decoder.decode(value, { stream: !done });
+      // The stream's end closes its last line, so a final `data:` with no newline still counts.
+      buffer += decoder.decode(value, { stream: !done }) + (done ? '\n' : '');
       let newline: number;
       while ((newline = buffer.indexOf('\n')) >= 0) {
         const line = buffer.slice(0, newline).replace(/\r$/, '');
@@ -129,6 +130,8 @@ export async function* readSse(stream: ReadableStream<Uint8Array>): AsyncGenerat
       if (done) return;
     }
   } finally {
+    // Stopping early ([DONE], or the caller leaving) lets go of the connection too.
+    await reader.cancel().catch(() => {});
     reader.releaseLock();
   }
 }

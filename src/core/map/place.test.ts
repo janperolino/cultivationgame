@@ -25,7 +25,7 @@ import {
   rumorWords,
 } from './place.ts';
 import { placeById, type MapPlace } from './region.ts';
-import { ensureMap, goToPlace, mapOf } from './travel.ts';
+import { ensureMap, goToPlace, leaveGroup, mapOf } from './travel.ts';
 
 const BW = 'qm-bianhuang';
 const CITY = 'qm-shoukou-cheng';
@@ -189,6 +189,8 @@ describe('inside the City', () => {
     const wait = c.departs - s.calendar.day;
     s = run(s, Math.ceil(wait + s.map!.course!.days) + 3);
     expect(s.map!.group).toBeNull();
+    // Off the wagon, you go on your own legs again.
+    expect(s.map!.way).toBe('light-step');
     const b = place(s, c.bound);
     expect(Math.hypot(s.map!.at[0] - b.x, s.map!.at[1] - b.y)).toBeLessThan(250);
   });
@@ -204,6 +206,10 @@ describe('inside the City', () => {
     s = run(s, 0.5);
     expect(s.map!.at).toEqual(start);
     expect(s.map!.roadRoutine).toBe('caravan');
+    // Walking off leaves the caravan's routine with it.
+    const left = leaveGroup(s);
+    if (!left.ok) throw new Error(left.reason);
+    expect(left.state.map!.roadRoutine).toBe('by-day');
   });
 
   it('hires a guide to a place they know, paid for the days', () => {

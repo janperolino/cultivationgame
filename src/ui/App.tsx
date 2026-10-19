@@ -21,6 +21,7 @@ import { markMoving } from './moving.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
+import { placeIndex, setPlaces } from '../core/resolver/knows.ts';
 import { screenDot, screenIsNew } from '../core/seen.ts';
 import { useBeacons } from './useBeacons.ts';
 
@@ -52,13 +53,14 @@ function SlotNotice() {
 
 /** The two screens that share the cave, between which a change sinks and rises (theme.css). */
 const SCENE_PAIR: ReadonlySet<ScreenId> = new Set<ScreenId>(['cultivate', 'routine']);
+/** Kept one array, so the shell doesn't re-render on every tick for a fresh empty list. */
+const NO_UNLOCKS: readonly string[] = [];
 const LEAVE_MS = 170;
 const ENTER_MS = 420;
 
 export function App() {
   const [screen, setScreen] = useState<ScreenId>('cultivate');
   const phase = useGame((s) => s.phase);
-  const game = useGame((s) => s.game);
   const notice = useGame((s) => s.notice);
   const creating = useGame((s) => s.creating);
   // A life begins at home: once creation closes, Cultivate shows.
@@ -121,13 +123,12 @@ export function App() {
     void useGame.getState().init();
     // What people know of places reads the whole atlas (core/resolver/knows.ts); it loads on its own,
     // after the game, so the first screen never waits for it.
-    void Promise.all([
-      import('../content/generated/atlas.json'),
-      import('../core/resolver/knows.ts'),
-    ]).then(([atlas, knows]) => knows.setPlaces(knows.placeIndex(atlas.default.entries)));
+    void import('../content/generated/atlas.json').then((atlas) =>
+      setPlaces(placeIndex(atlas.default.entries)),
+    );
   }, []);
 
-  const unlocks = game?.unlocks ?? [];
+  const unlocks = useGame((s) => s.game?.unlocks ?? NO_UNLOCKS);
   const available = screens.filter((s) => !s.unlock || unlocks.includes(s.unlock));
   // A dot on a menu item while its screen holds something new you haven't opened it on.
   const dots = useGame((s) =>
