@@ -6,14 +6,14 @@ A middle thousand world: a flat disc about 1,000,000 li across (1 li is half a k
 Money is spirit stones: low, mid (1,000 low), high, top. Stones are also fuel, so wealth is power. Mortals use silver; one low-grade stone is a small fortune to them.
 Names are translated, English first (Clear Heaven Sword Sect, the Border Wilds). People keep pinyin names (Elder Mo, the Gongsun family).
 
-# Scale of destruction (each major realm is about tenfold)
+# Scale of destruction (the gap widens as you climb: about ninefold Qi Condensation to Foundation, thirtyfold to Core Formation, a hundredfold from Nascent Soul up)
 - Mortal martial master: breaks a door; worth ~10 soldiers.
-- Qi Condensation (layers 1-9): wrecks a house, shatters boulders; feels qi a few meters away; outruns a horse. Thousands per region; mortals call them immortals.
-- Foundation Establishment: wrecks a street, cracks a hill; divine sense ~1 km; short sword flights.
-- Core Formation: wrecks a town; flies ~1,000 km a day. Dozens per region; can topple a mortal kingdom.
-- Nascent Soul: a city, a mountain peak; the soul can flee a dying body. A handful per region.
+- Qi Condensation (layers 1-9): wrecks a house, shatters boulders; feels qi a few meters away; outruns a horse. Tens of thousands in a frontier region like the Border Wilds; mortals call them immortals.
+- Foundation Establishment: wrecks a street, cracks a hill; divine sense ~1 km; short sword flights. Thousands in a frontier region.
+- Core Formation: wrecks a town; flies ~1,000 km a day. Dozens in a frontier region; can topple a mortal kingdom.
+- Nascent Soul: a city, a mountain peak; the soul can flee a dying body. A handful in a frontier region, an event when one arrives.
 - Above that (Deity Transformation, Void Refinement, Body Integration, Mahayana, Tribulation Transcendence) are continental powers the player will not meet in the Border Wilds.
-A foe two or more major realms above you can pin you with their aura: you can only talk, beg or burn an escape talisman. Cultivators can hide their realm.`;
+A foe two or more major realms above your soul can pin you with their aura, and from Nascent Soul up one realm is enough: you can only talk, beg or burn an escape talisman. Cultivators can hide their realm.`;
 
 export const RULES = `# Rules you work under
 The game engine owns every number, item and outcome. You never decide whether an action succeeds, how much damage it does, what anyone gains or loses, or who lives. You receive the engine's outcome and play it out exactly.

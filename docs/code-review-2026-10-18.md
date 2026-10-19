@@ -60,6 +60,13 @@ Ranked by how much a player would feel it. "Doc" means design.md should change, 
 18. **The full-screen weather loops and blurs** (rain, snow and wind animate `background-position` over the whole viewport forever; mist uses `filter: blur(12px)`). That breaks "no looping animation on anything larger than a button". *Code* (proposal S3 below), or write the weather in as an exception.
 19. **The world bible in `src/ai/prompts.ts` contradicts Scale of destruction**: "each realm about tenfold" (the doc has 9, 30, 100), Qi Condensation "thousands per region" (tens of thousands), and a two-realm aura pin. P3.8 rewrites `RULES` but not the bible. *Code*.
 
+**Settled (Jan's picks), 6 to 19 except 14:**
+- *Doc fixed:* 6 (the bonus is the step out of your realm: ×3.1, ×4.6, ×6.7, ×10), 7 (growth −20% to +666%), 12 (Domain waits on Dao tiers 3 and 4), 16 (hostile ground comes with organizations), 17 (12 to 18 nodes) and 18 (weather is the one looping exception, since it moves only by transform). Also "five hundred times" is now four hundred.
+- *Code fixed:* 8 (the biased roll for NPC kits, loot and shops is held at red, so pristine is placed by hand; the birth roll keeps its 0.01%) and 19 (the world bible's scale matches the table, and its realm pressure reads your soul).
+- *15, flipped on Jan's note:* Avoid already scales with your stats (their Perception, from soul, against your Stealth, from body and Agility), so the engine stays. The doc's "can't be gone round" and the Map's warnings now say "likely finds you first".
+- *Noted for later:* 9, 10 and 13 in plan.md for P3.9; 11 in design.md, with taming.
+- *14 waits on Jan.*
+
 **Low**
 - The attending hint says qi runs faster "while Cultivate is open" and focus "fades once you leave"; attending counts on any screen and focus drains steadily. Fix the hint and the doc's phrase.
 - People notches: the doc says seven, there are five trust words. *Doc*.

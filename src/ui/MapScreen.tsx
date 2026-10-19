@@ -702,7 +702,10 @@ function MapView({
           ))}
         </div>
         {above && (
-          <p className="map-above">A realm above you: what lives here finds you first.</p>
+          <p className="map-above">
+            A realm above you: what lives here likely finds you first, unless your Stealth outdoes
+            its Perception.
+          </p>
         )}
         {tabNow === 'journey' ? (
           // Where you stand and where you're headed (Jan's notes after A5.1's first look): the place
@@ -1124,7 +1127,7 @@ function CourseCard({
       {above && (
         <p className="map-above">
           The course crosses ground a realm above you ({band(course.maxBand)?.name}). What lives
-          there finds you first.
+          there likely finds you first, and Avoid only goes round what hasn't.
         </p>
       )}
       {aheadList}

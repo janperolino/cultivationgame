@@ -142,7 +142,10 @@ export function bandOfRealm(realm: RealmId, stage: number): number {
   return i + third - 1;
 }
 
-/** Ground a whole realm above you finds you before you find it. */
+/**
+ * Ground a whole realm above you, where what lives likely finds you first: the Map warns of it.
+ * Whether a thing does is its Perception against your Stealth (core/map/encounters.ts, senseHow).
+ */
 export function pullsIn(spotBand: number, yourBand: number): boolean {
   return spotBand - yourBand >= PULL_IN_BANDS;
 }
