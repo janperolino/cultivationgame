@@ -63,6 +63,7 @@ import {
   shopTiers,
   spreads,
   standingCopies,
+  shortAtRest,
   wanted,
   type Market,
 } from './markets.ts';
@@ -591,10 +592,16 @@ export function buyCount(lot: StockLot, count?: number): number {
   return Math.min(lot.n, Math.max(1, count ?? 1));
 }
 
-/** A buy's price to you today: posted, less what haggling won this visit. */
+/**
+ * A buy's price to you today: posted, less what haggling won this visit. A keeper won't haggle over
+ * what the market is short of at rest, so a wanted thing bought cheap never sells back at the 80% it
+ * fetches.
+ */
 export function priceToYou(s: GameState, shopId: string, lot: StockLot, count?: number): number {
   const sm = shopMonth(s.world, shopId, s.calendar.day);
-  return lot.price * buyCount(lot, count) * (1 - haggleOff(sm, s.calendar.day));
+  const m = marketOfShop(shopId);
+  const short = !!m && shortAtRest(s.world, m, lot.thing, s.calendar.day);
+  return lot.price * buyCount(lot, count) * (1 - (short ? 0 : haggleOff(sm, s.calendar.day)));
 }
 
 /** A shop's answer; a refusal may still change the world (a stolen thing recognized). */
@@ -713,8 +720,48 @@ export function offerFor(
   const posted = mortalGood ? item(thing).taels! : priceOf(thing);
   const price = posted * (m ? marketFactor(s.world, m, thing, day) : 1);
   const round = mortalGood ? 100 : 10;
-  const each = Math.round(price * rate * drift * round) / round;
+  let each = Math.round(price * rate * drift * round) / round;
+  // No loop pays: an offer never tops the cheapest it could be bought for in the same market, so a
+  // thing bought from one shop never sells back to another for more. A haggle can take a fifth off
+  // that, so a thing the market isn't short of at rest is capped a fifth under; one it is short of
+  // is never haggled.
+  const short = !!m && shortAtRest(s.world, m, thing, day);
+  const ask = m ? cheapestAsk(m.shops, ware, mortalGood, posted, price / posted) : null;
+  if (ask !== null)
+    each = Math.min(
+      each,
+      Math.floor(ask * (short ? 1 : 1 - HAGGLE_OFF.clear) * round + 1e-9) / round,
+    );
   return { ok: true, each, wanted: needs };
+}
+
+/**
+ * The lowest price one of this thing could stand on a shelf at in the market, by any shop dealing
+ * in its ware, rounded as `stockOf` and `shelf` round a display lot or a standing line, whichever
+ * is lower; null where none sells it. The bounty office, which only buys, never counts.
+ */
+function cheapestAsk(
+  shops: readonly string[],
+  ware: Ware,
+  mortalGood: boolean,
+  posted: number,
+  market: number,
+): number | null {
+  const at = (n: number, step: number, floor: number) =>
+    Math.max(floor, Math.round(n * step) / step);
+  let low: number | null = null;
+  for (const id of shops) {
+    const sh = shopById(id);
+    const info = SHOP_KIND_INFO[sh.kind];
+    if (info.posted || !info.buys.includes(ware)) continue;
+    if ((info.money === 'silver') !== mortalGood) continue;
+    const f = shopFactor(sh);
+    const display = at(at(posted * f, 10, 0.1) * market, 10, 0.1);
+    const standing = at(at(posted * f, 100, 0.01) * market, 100, 0.01);
+    const ask = Math.min(display, standing);
+    if (low === null || ask < low) low = ask;
+  }
+  return low;
 }
 
 /**

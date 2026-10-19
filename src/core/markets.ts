@@ -730,6 +730,17 @@ export function wanted(w: World, m: Market, thing: string, day: number): boolean
   return seenIn(w, m, thing).supply < 100 && supplyOf(w, m, thing, day) < 100;
 }
 
+/**
+ * Whether a market is short of a good at rest, whatever you have bought or sold of it: one in the
+ * monthly sum resting under 100%, and any other written at half supply. A keeper won't haggle over
+ * it (core/shops.ts `priceToYou`), and no shop's offer for it tops the cheapest asking price.
+ */
+export function shortAtRest(w: World, m: Market, thing: string, day: number): boolean {
+  const rest = restOf(w, m, thing, Math.floor(day / DAYS_PER_MONTH));
+  if (rest !== null) return rest < 100;
+  return seenIn(w, m, thing).supply < 100;
+}
+
 /** Supply points a lot of this good moves, before prosperity's lots divide it. */
 function depthOf(thing: string): number {
   if (hasCopy(thing)) {

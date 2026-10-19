@@ -7,11 +7,19 @@ import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { hasCopy } from '../content/copies.ts';
 import { baseOf, item } from '../content/items.ts';
 import { lotShape } from './loot.ts';
-import { doorsAt, keeperName, shop, SHOP_KIND_INFO } from '../content/shops.ts';
-import { goodOf, market, MARKETS, shopPurse, supplyOf } from './markets.ts';
+import { doorsAt, HAGGLE_OFF, keeperName, shop, SHOP_KIND_INFO } from '../content/shops.ts';
+import {
+  goodOf,
+  market,
+  MARKETS,
+  moveSupply,
+  shopPurse,
+  shortAtRest,
+  supplyOf,
+} from './markets.ts';
 import { emptyWorld } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
-import { buy, claimOf, haggle, shelf, standsAt, stockOf } from './shops.ts';
+import { buy, claimOf, haggle, offerFor, shelf, standsAt, stockOf } from './shops.ts';
 import { newLife, withPlayer, type GameState } from './state.ts';
 
 const CITY = 'qm-shoukou-cheng';
@@ -149,5 +157,47 @@ describe('the save', () => {
     expect(back.state.world.kept[`keeper:${CITY}.alchemy-2`]!.name).toBe(
       shop(`${CITY}.alchemy-2`).keeper,
     );
+  });
+});
+
+describe('no loop pays', () => {
+  // The cheapest each thing can be bought for in a market today: a clear haggle off, except what the
+  // market is short of at rest, which no keeper haggles over.
+  const loopsIn = (s: GameState, markets = MARKETS): string[] => {
+    const out: string[] = [];
+    for (const m of markets) {
+      const cheapest = new Map<string, number>();
+      for (const id of m.shops)
+        for (const l of shelf(s, id)) {
+          const short = shortAtRest(s.world, m, l.thing, s.calendar.day);
+          const ask = l.price * (short ? 1 : 1 - HAGGLE_OFF.clear);
+          if (ask < (cheapest.get(l.thing) ?? Infinity)) cheapest.set(l.thing, ask);
+        }
+      for (const [thing, ask] of cheapest)
+        for (const id of m.shops) {
+          const o = offerFor(s, id, thing);
+          if (o.ok && o.each > ask + 1e-9) out.push(`${m.id} ${id} ${thing} ${o.each} > ${ask}`);
+        }
+    }
+    return out;
+  };
+
+  it('never offers more for a thing than its market sells it for, in spring or after the harvest', () => {
+    const s = life();
+    expect(loopsIn(s)).toEqual([]);
+    expect(
+      loopsIn({ ...s, calendar: { ...s.calendar, day: s.calendar.day + 7 * DAYS_PER_MONTH } }),
+    ).toEqual([]);
+  });
+
+  it('pays no loop when buying drops a made good under 100% and the market starts to want it', () => {
+    const s0 = life();
+    const fort = market('pacified-fort')!;
+    // Bought down hard: the Fort's own rice, resting at 150%, now stands short and wanted.
+    const world = moveSupply(s0.world, fort, 'spirit-rice', -1e9, s0.calendar.day);
+    const s = { ...s0, world };
+    expect(supplyOf(world, fort, 'spirit-rice', s.calendar.day)).toBeLessThan(100);
+    expect(shortAtRest(world, fort, 'spirit-rice', s.calendar.day)).toBe(false);
+    expect(loopsIn(s, [fort])).toEqual([]);
   });
 });
