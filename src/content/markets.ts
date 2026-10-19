@@ -83,6 +83,13 @@ export const DEPTH = { staple: 2, common: 10, rare: 25 } as const;
 /** Supply eases back this share of the way to its written value each month. */
 export const SUPPLY_EASE = 0.1;
 
+/**
+ * A style's opening chapters, the ones a market sells (design § Economy, Methods in the market,
+ * Fragments; E3's talk): Qi Condensation's and Foundation's. Later chapters are a sect's for
+ * contribution, a ruin's or an auction's, so a market neither stocks nor copies them.
+ */
+export const OPENING_CHAPTERS = 2;
+
 /** What a market pays for what it needs, of its own price; never a black market. */
 export const NEED_RATE = 0.8;
 

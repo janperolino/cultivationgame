@@ -33,7 +33,7 @@ import { meetingShows, natureKey } from '../resolver/nature.ts';
 import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 34;
+export const SAVE_VERSION = 35;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -946,6 +946,13 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const s = (old.state ?? {}) as Raw;
     const world = { ...((s.world ?? {}) as Raw), prosperity: {}, supply: {} };
     return { ...old, version: 34, state: { ...s, world } };
+  },
+
+  // v34, E3: a market keeps the copies it bought and copied, none yet.
+  34: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const world = { ...((s.world ?? {}) as Raw), copied: {} };
+    return { ...old, version: 35, state: { ...s, world } };
   },
 };
 

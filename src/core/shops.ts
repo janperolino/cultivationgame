@@ -4,14 +4,21 @@
 // with a purse its prosperity sizes, one haggle a visit, stolen goods recognized, and a refiner's
 // repairs. A shop's stock is seeded by its id and the month, so the same stall shows the same lots
 // to anyone with the same world, and buying draws no stream. What you have done to a shop this
-// month is kept in `world.shops`, and to its market's supplies in `world.supply`.
+// month is kept in `world.shops`, and to its market's supplies in `world.supply`. Since E3 a staple
+// stands on the shelf where it is made and a copy where its market bought one, sold lot by lot.
 import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { CATALOGS } from '../content/catalogs/index.ts';
 import { RARE } from '../content/catalogs/rare.ts';
 import type { Catalog, Lot } from '../content/catalogs/types.ts';
-import { hasCopy } from '../content/copies.ts';
+import { copyChapter, copyManual, hasCopy } from '../content/copies.ts';
 import { hasItem, item, itemKind, variantId, type ItemKind } from '../content/items.ts';
-import { LENT_WEIGHT, NEED_RATE, TIER_LEAN, TIER_LEAN_FROM } from '../content/markets.ts';
+import {
+  LENT_WEIGHT,
+  NEED_RATE,
+  OPENING_CHAPTERS,
+  TIER_LEAN,
+  TIER_LEAN_FROM,
+} from '../content/markets.ts';
 import { shopVein } from '../content/map/index.ts';
 import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
 import {
@@ -32,7 +39,10 @@ import { lotShape } from './loot.ts';
 import { wornIds } from './gear.ts';
 import { gainCopy } from './life.ts';
 import {
+  copyInto,
+  guardedBy,
   lentLots,
+  lotSize,
   marketFactor,
   marketOfShop,
   moveSupply,
@@ -40,6 +50,8 @@ import {
   shopLots,
   shopPurse,
   shopTiers,
+  spreads,
+  standingCopies,
   wanted,
 } from './markets.ts';
 import { priceOf } from './prices.ts';
@@ -47,7 +59,7 @@ import { pay, paySilver, receive, stonesOf, tierGrade, withStones } from './purs
 import { actorFromCultivator, plainActor } from './resolver/actor.ts';
 import { isMember } from './resolver/names.ts';
 import { rollNature } from './resolver/nature.ts';
-import { opinion, remember } from './resolver/opinion.ts';
+import { addStanding, opinion, remember } from './resolver/opinion.ts';
 import { talkCheck } from './resolver/talk.ts';
 import { addHeat, emptyWorld, standingOf, type ShopMonth, type World } from './resolver/world.ts';
 import { hashSeed, Rng } from './rng.ts';
@@ -65,6 +77,11 @@ export interface StockLot {
   n: number;
   /** In low-grade stones, or taels at a mortal shop. */
   price: number;
+  /**
+   * A line that stands on the shelf all month (E3): a staple made here or a copy its market made,
+   * bought by the lot as often as you like, its price climbing as the supply falls.
+   */
+  standing?: boolean;
 }
 
 /** A shop's prices against the posted rate, drawn once from its id: 0.9 to 1.15. */
@@ -107,13 +124,19 @@ const MAKER_TIERED: readonly ItemKind[] = ['pill', 'talisman', 'beast-part'];
 function lotTiers(thing: string, written: number, tiers: readonly number[]): number[] {
   if (hasCopy(thing)) return tiers.includes(written) ? [written] : [];
   const it = item(thing);
+  // A staple is tiered like anything else, so a Foundation trader hauls tier 2 ore (E3).
   const fixed =
-    !MAKER_TIERED.includes(itemKind(it)) ||
+    (!MAKER_TIERED.includes(itemKind(it)) && !isStaple(thing)) ||
     !!it.uses.offer ||
     !!it.uses.hide ||
     it.taels !== undefined ||
     (it.tags ?? []).includes('coveted');
   return tiers.filter((t) => t === written || (!fixed && t > written));
+}
+
+/** A staple: the `trade` tag, the bulk end of a kind (design § Economy, Trading yourself). */
+export function isStaple(thing: string): boolean {
+  return !hasCopy(thing) && hasItem(thing) && (item(thing).tags ?? []).includes('trade');
 }
 
 /**
@@ -155,6 +178,11 @@ function candidates(s: Shop): Candidate[] {
     o: { made?: boolean; lent?: boolean } = {},
   ) => {
     const fit = lots.filter((l) => {
+      // A staple made here stands on the shelf (`standingLines`), and a style's later chapters
+      // are a sect's, a ruin's or an auction's, never a market's (Methods in the market).
+      if (o.made && isStaple(l.thing)) return false;
+      if (s.kind !== 'sect' && hasCopy(l.thing) && copyChapter(l.thing) > OPENING_CHAPTERS)
+        return false;
       if (!o.lent) return l.shops.includes(s.kind);
       const ware = wareOf(l.thing);
       return !!ware && dealsIn(s.kind, ware);
@@ -163,7 +191,9 @@ function candidates(s: Shop): Candidate[] {
     for (const lot of fit) {
       const shape = lotShape(lot.thing, { mortal: true });
       if (!shape) continue;
-      if (s.kind === 'mortal' && item(lot.thing).taels === undefined) continue;
+      // A mortal shop deals in mortal goods and nothing else does, lent or not (E3).
+      if (!hasCopy(lot.thing) && (s.kind === 'mortal') !== (item(lot.thing).taels !== undefined))
+        continue;
       const lean = info.leans?.[wareOf(lot.thing) ?? 'copy'] ?? 1;
       const w = (layerWeight * (lot.weight ?? 1) * lean) / sum;
       for (const tier of lotTiers(lot.thing, shape.tier, tiers))
@@ -196,6 +226,33 @@ function weighted(rng: Rng, cs: readonly Candidate[]): Candidate {
     if (u < 0) return c;
   }
   return cs[cs.length - 1]!;
+}
+
+/** Where the standing lines start on the shelf, past any month's rolled lots. */
+const STANDING_SLOT = 1000;
+
+/**
+ * The lines a shop stands all month (E3's talk): each staple its place makes that its kind sells,
+ * at each tier it stocks, a lot of its catalog count; then the copies its market made (core/
+ * markets.ts `standingCopies`), one at a time.
+ */
+function standingLines(s: Shop, w: World, month: number): { thing: string; n: number }[] {
+  const out: { thing: string; n: number }[] = [];
+  const tiers = shopTiers(s);
+  for (const c of catalogsFor(s)) {
+    if (c.layer !== 'place') continue;
+    for (const lot of c.lots) {
+      if (!isStaple(lot.thing) || !lot.shops.includes(s.kind)) continue;
+      const it = item(lot.thing);
+      if ((s.kind === 'mortal') !== (it.taels !== undefined)) continue;
+      const [lo, hi] = lot.count ?? [1, 1];
+      const n = Math.max(1, Math.round((lo + hi) / 2));
+      for (const tier of lotTiers(lot.thing, it.tier, tiers))
+        out.push({ thing: variantId(lot.thing, it.rarity, { tier }), n });
+    }
+  }
+  for (const thing of standingCopies(w, s, month)) out.push({ thing, n: 1 });
+  return out;
 }
 
 /**
@@ -239,6 +296,11 @@ export function stockOf(shopId: string, month: number, w: World = emptyWorld()):
     const base = s.kind === 'mortal' ? item(thing).taels! : priceOf(thing);
     out.push({ slot, thing, n, price: Math.max(0.1, Math.round(base * factor * 10) / 10) });
   }
+  standingLines(s, w, month).forEach(({ thing, n }, i) => {
+    const base = s.kind === 'mortal' ? item(thing).taels! : priceOf(thing);
+    const price = Math.max(0.01, Math.round(base * factor * 100) / 100);
+    out.push({ slot: STANDING_SLOT + i, thing, n, price, standing: true });
+  });
   return out;
 }
 
@@ -259,11 +321,13 @@ export function shelf(s: GameState, shopId: string): StockLot[] {
   const m = marketOfShop(shopId);
   const day = s.calendar.day;
   return stockOf(shopId, sm.month, s.world)
-    .filter((l) => !sm.bought.includes(l.slot))
+    .filter((l) => l.standing || !sm.bought.includes(l.slot))
     .map((l) => {
       if (!m) return l;
       const price = l.price * marketFactor(s.world, m, l.thing, day);
-      return { ...l, price: Math.max(0.1, Math.round(price * 10) / 10) };
+      const floor = l.standing ? 0.01 : 0.1;
+      const round = l.standing ? 100 : 10;
+      return { ...l, price: Math.max(floor, Math.round(price * round) / round) };
     });
 }
 
@@ -317,7 +381,8 @@ export function buy(s: GameState, shopId: string, slot: number): ShopResult {
   const m = marketOfShop(shopId);
   if (m) next = { ...next, world: moveSupply(next.world, m, lot.thing, -lot.n, s.calendar.day) };
   const sm = shopMonth(next.world, shopId, s.calendar.day);
-  return { ok: true, state: withShopMonth(next, shopId, { ...sm, bought: [...sm.bought, slot] }) };
+  const bought = lot.standing ? sm.bought : [...sm.bought, slot];
+  return { ok: true, state: withShopMonth(next, shopId, { ...sm, bought }) };
 }
 
 /** What the shop deals in, for a thing you hold: its Bag kind, or a copy. */
@@ -360,47 +425,92 @@ export function offerFor(
   const ware = wareOf(thing);
   if (!ware || !info.buys.includes(ware))
     return { ok: false, reason: `The ${info.name} doesn’t buy that.` };
+  // A mortal shop deals in taels and mortal goods, and a cultivator's shop in neither (E3).
+  const mortalGood = !hasCopy(thing) && item(thing).taels !== undefined;
+  if (mortalGood !== (info.money === 'silver'))
+    return { ok: false, reason: `The ${info.name} doesn’t buy that.` };
+  if (hasCopy(thing) && copyManual(thing).kind === 'inheritance')
+    return { ok: false, reason: 'An inheritance passes to one heir. No shop buys it.' };
+  // A power's own method is known for what it is: an honest shop won't touch it.
+  const guard = guardedBy(thing);
+  if (guard && info.recognizes)
+    return {
+      ok: false,
+      reason:
+        sh.power === guard
+          ? 'The hall keeps its own methods.'
+          : 'No honest shop buys a sect’s own method.',
+    };
   // A posted rate is the posted rate: the bounty office's 50% doesn't drift with the shop.
   const drift = info.posted ? 1 : priceFactor(sh);
   const m = marketOfShop(shopId);
   const day = s.calendar.day;
   const needs = !!m && sh.kind !== 'black-market' && wanted(s.world, m, thing, day);
   const rate = needs ? Math.max(NEED_RATE, buyRate(s, sh)) : buyRate(s, sh);
-  const price = priceOf(thing) * (m ? marketFactor(s.world, m, thing, day) : 1);
-  const each = Math.round(price * rate * drift * 10) / 10;
+  const posted = mortalGood ? item(thing).taels! : priceOf(thing);
+  const price = posted * (m ? marketFactor(s.world, m, thing, day) : 1);
+  const round = mortalGood ? 100 : 10;
+  const each = Math.round(price * rate * drift * round) / round;
   return { ok: true, each, wanted: needs };
 }
 
 /**
- * Sells `n` of a thing. A shop pays out of its month's purse; a stolen thing offered to the power
- * it was taken from is recognized: the sale is refused, and that power's heat rises.
+ * Sells `n` of a thing, lot by lot: each lot raises its market's supply before the next is priced
+ * (E3's talk). A shop pays out of its month's purse, a mortal shop in taels; a stolen thing, or a
+ * copy of a power's own method, offered to that power's own shop is recognized: the sale is
+ * refused, and that power's heat rises (and its standing falls, for a method). A copy a market
+ * buys it copies (core/markets.ts `spreads`), so it is paid its scarce price once.
  */
 export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopResult {
   const sh = shopById(shopId);
+  const info = SHOP_KIND_INFO[sh.kind];
+  const day = s.calendar.day;
+  const guard = guardedBy(thing);
+  if (guard && guard === sh.power && info.recognizes && !isMember(s.world, s.player.id, guard)) {
+    let world = addHeat(s.world, guard, 2, day);
+    world = addStanding(world, { power: guard, about: s.player.id, row: 'sold-our-method' }, day);
+    return {
+      ok: false,
+      reason: 'The keeper knows that method for the hall’s own.',
+      state: { ...s, world },
+    };
+  }
   const refused = serves(s, sh);
   if (refused) return { ok: false, reason: refused };
-  const info = SHOP_KIND_INFO[sh.kind];
   const held = hasCopy(thing) ? (s.player.copies[thing] ?? 0) : itemCount(s.player, thing);
   if (held < n || n <= 0) return { ok: false, reason: 'You don’t have that many.' };
   const offer = offerFor(s, shopId, thing);
   if (!offer.ok) return offer;
   const owner = s.world.taken[thing];
   if (owner && info.recognizes && owner === sh.power) {
-    const world = addHeat(s.world, owner, 2, s.calendar.day);
+    const world = addHeat(s.world, owner, 2, day);
     return { ok: false, reason: 'The keeper knows whose that was.', state: { ...s, world } };
   }
-  const sm = shopMonth(s.world, shopId, s.calendar.day);
-  const total = offer.each * n;
-  if (sm.paid + total > shopPurse(s.world, sh, s.calendar.day))
+  // Lot by lot: what you sell raises its market's supply, so the next lot fetches less.
+  const m = marketOfShop(shopId);
+  const size = lotSize(thing);
+  let world = s.world;
+  let total = 0;
+  for (let left = n; left > 0;) {
+    const k = Math.min(size, left);
+    const o = left === n ? offer : offerFor({ ...s, world }, shopId, thing);
+    if (!o.ok) return o;
+    total += o.each * k;
+    if (m) world = moveSupply(world, m, thing, k, day);
+    left -= k;
+  }
+  total = Math.round(total * 100) / 100;
+  const sm = shopMonth(s.world, shopId, day);
+  if (sm.paid + total > shopPurse(s.world, sh, day))
     return { ok: false, reason: 'The shop hasn’t the money this month.' };
-  // Paid as the shop counts it, in its place's vein's grade at most.
-  const grade = tierGrade(shopVein(sh));
-  let player = withStones(s.player, receive(stonesOf(s.player), total, grade));
+  // Paid as the shop counts it: a mortal shop in taels, any other in its vein's grade at most.
+  let player =
+    info.money === 'silver'
+      ? { ...s.player, silver: s.player.silver + total }
+      : withStones(s.player, receive(stonesOf(s.player), total, tierGrade(shopVein(sh))));
   if (hasCopy(thing)) player = { ...player, copies: { ...player.copies, [thing]: held - n } };
   else player = addItem(player, thing, -n);
-  // What you sell raises its market's supply of it, so the next one fetches less.
-  const m = marketOfShop(shopId);
-  const world = m ? moveSupply(s.world, m, thing, n, s.calendar.day) : s.world;
+  if (m && spreads(thing, sh.kind === 'black-market')) world = copyInto(world, m, thing, day);
   return {
     ok: true,
     state: withShopMonth(withPlayer({ ...s, world }, player), shopId, {

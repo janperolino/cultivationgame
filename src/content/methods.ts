@@ -81,6 +81,11 @@ export interface Method {
   growth: GrowthProfile;
   properties: readonly MethodProperty[];
   /**
+   * Written as sealed (禁制, design § Economy, Methods in the market): its slip can't be copied, so a
+   * market buys it as one piece and never stocks it. Every slip at gold and up is sealed anyway.
+   */
+  sealed?: boolean;
+  /**
    * The pattern a qi method's sparks run on the figure (content/circulation.ts); its rarity's
    * default when absent.
    */

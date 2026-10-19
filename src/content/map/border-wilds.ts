@@ -356,28 +356,34 @@ export const BORDER_WILDS: RegionContent = {
     'qm-shoudeng-zong': ['lamps-sect'],
   },
   needs: {
-    // An army's headquarters on the strait: it bleeds, and its karst and surf grow few herbs or ore.
-    'qm-shoukou-cheng': ['healing', 'herb', 'material'],
+    // An army's headquarters on the strait: it bleeds, its karst and surf grow few herbs or ore, and
+    // its refiners cut thunderhorn for grips (E3).
+    'qm-shoukou-cheng': ['healing', 'herb', 'material', 'horn'],
     // Raiders who burn talismans by the bundle and drain their qi across the strait.
     'qm-tushou-men': ['talisman', 'qi-restoring'],
     // Smugglers who pass cubs and blood up the chain and patch their runners as they go.
     'qm-yeqiao-hui': ['beast-part', 'healing'],
-    // The cadet school eats gathering pills and restoring pills faster than the sutler stocks them.
-    'pacified-fort': ['qi-fuel', 'qi-restoring'],
+    // The cadet school eats gathering pills and restoring pills faster than the sutler stocks them,
+    // and the spirit fields round the fort want bone meal every season (E3).
+    'pacified-fort': ['qi-fuel', 'qi-restoring', 'bone-meal'],
     // Frontier farmers always short of horses and carts.
     'spear-plow': ['mount', 'vessel'],
-    // Cave clans far from any alchemist, on thin qi.
-    'sinkhole-terraces': ['healing', 'qi-fuel'],
-    // Tamers who feed their herds on beast parts, mend their riders and armor their mounts.
-    'corral-town': ['beast-part', 'healing', 'armor'],
-    // The Wall's patrols: healing pills and talismans (design § Economy, Supply and prices).
-    'foot-of-the-wall': ['healing', 'talisman'],
-    // E2.1's markets. The Qians' agents buy the March's cores here, and the levy barges burn wards.
-    'qm-hewan-cheng': ['beast-part', 'talisman'],
-    // The royal stud and its riders: barding, healing for the king's games, fodder herbs.
-    'qm-qianlan-cheng': ['armor', 'healing', 'herb'],
-    // Karst with no iron in it, and two li of stairs that drain a climber's qi.
-    'qm-tianyan': ['weapon', 'qi-restoring'],
+    // Cave clans far from any alchemist, on thin qi, farming terraces that never fill a granary.
+    'sinkhole-terraces': ['healing', 'qi-fuel', 'grain'],
+    // Tamers who feed their herds on beast parts, mend their riders, armor their mounts and salt
+    // their herds, a hundred li from the sea (E3).
+    'corral-town': ['beast-part', 'healing', 'armor', 'salt'],
+    // The Wall's patrols: healing pills and talismans (design § Economy, Supply and prices), and
+    // the rice they eat on 9,000 li of wall (E3).
+    'foot-of-the-wall': ['healing', 'talisman', 'grain'],
+    // E2.1's markets. The Qians' agents buy the March's cores here, the levy barges burn wards,
+    // and the levy is sent to the Wall in wool (E3).
+    'qm-hewan-cheng': ['beast-part', 'talisman', 'wool'],
+    // The royal stud and its riders: barding, healing for the king's games, fodder herbs, and lamp
+    // oil on a plain with no caves to render it (E3).
+    'qm-qianlan-cheng': ['armor', 'healing', 'herb', 'oil'],
+    // Karst with no iron in it, two li of stairs that drain a climber's qi, and no salt inland (E3).
+    'qm-tianyan': ['weapon', 'qi-restoring', 'salt'],
     // The chain forts it ships to burn talismans, and its breakwaters eat material.
     'qm-tuichao-gang': ['talisman', 'material'],
     // Rogues who bleed for what they sell and hide from whoever it was taken from.

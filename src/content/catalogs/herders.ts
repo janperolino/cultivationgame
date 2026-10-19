@@ -9,6 +9,39 @@ export const SPIRIT_HERDERS: Catalog = {
   at: 'qm-muling-guo',
   layer: 'place',
   items: [
+    // A staple (E3): bulk goods sold by the lot, a Bag square of twenty, standing on the shelf
+    // where they are made. **Awaiting Jan’s review.**
+    {
+      id: 'thunderhorn',
+      name: 'Thunderhorn',
+      pinyin: 'Lei Jiao',
+      hanzi: '雷角',
+      tier: 1,
+      rarity: 'white',
+      kind: 'beast-part',
+      stack: 20,
+      tags: ['trade', 'horn'],
+      price: 3,
+      uses: { ingredient: { tags: ['lightning', 'horn'], age: 1 } },
+      source:
+        'the herds of thunder-horned deer, which shed their horn each spring across the plain round Thousand Paddocks',
+      text: 'A bundle of shed thunder-deer horn, still prickling with the storm. Refiners in the City cut it for grips and inlays.',
+    },
+    {
+      id: 'cloud-goat-wool',
+      name: 'Cloud-Goat Wool',
+      pinyin: 'Yunyang Mao',
+      hanzi: '云羊毛',
+      tier: 1,
+      rarity: 'white',
+      kind: 'material',
+      stack: 20,
+      tags: ['trade', 'wool'],
+      taels: 0.25,
+      uses: {},
+      source: 'the herder families’ flocks, combed in the long tents each autumn',
+      text: 'A bale of white wool so fine it drifts. The March’s levy wears it under its armor through the Wall’s winters.',
+    },
     {
       id: 'scale-horse',
       name: 'Scale-Horse',
@@ -226,6 +259,9 @@ export const SPIRIT_HERDERS: Catalog = {
     },
   ],
   lots: [
+    // Staples (E3)
+    { thing: 'thunderhorn', shops: ['stall', 'guild'], count: [20, 20] },
+    { thing: 'cloud-goat-wool', shops: ['mortal'], count: [20, 20] },
     { thing: 'scale-horse', shops: ['guild'], weight: 0.4 },
     { thing: 'horn-head-lance', shops: ['stall', 'guild'] },
     { thing: 'deer-horn-whistle', shops: ['guild', 'stall'], weight: 0.5 },

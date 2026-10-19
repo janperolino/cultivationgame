@@ -285,9 +285,10 @@ describe('shops', () => {
     // Ten swords flood the City: the next one fetches less (core/markets.ts).
     const after = offerFor(s, 'mouth-refiner', 'iron-sword');
     expect(after.ok && offer.ok && after.each < offer.each).toBe(true);
-    // A refiner's 1,500 a month runs out before a hundred swords are bought at once.
-    const fresh = withPlayer(life(), addItem(life().player, 'iron-sword', 120));
-    expect(sell(fresh, 'mouth-refiner', 'iron-sword', 100)).toMatchObject({ ok: false });
+    // A refiner's 1,500 a month runs out before two hundred swords are bought at once,
+    // even sold lot by lot at a falling price (E3).
+    const fresh = withPlayer(life(), addItem(life().player, 'iron-sword', 200));
+    expect(sell(fresh, 'mouth-refiner', 'iron-sword', 200)).toMatchObject({ ok: false });
   });
 
   it('serve a sect shop’s members only', () => {
@@ -412,10 +413,10 @@ describe('loot', () => {
       {
         "items": {
           "array-plate-blank": 6,
+          "basalt-gauntlets": 1,
           "beast-core": 1,
           "beast-fang": 3,
           "python-skin-jerkin~green": 1,
-          "stone-milk-pill": 4,
         },
         "stones": 181,
       }

@@ -87,6 +87,11 @@ export interface Manual {
   /** The tier band it grafts into: a Method's or an Art's own tier, else its first node's. */
   tier: number;
   nodes: readonly ManualNode[];
+  /**
+   * Written as sealed (禁制, design § Economy, Methods in the market): its slip can't be copied, so a
+   * market buys it as one piece and never stocks it. Every slip at gold and up is sealed anyway.
+   */
+  sealed?: boolean;
 }
 
 export type ManualDef = Omit<Manual, 'nodes' | 'ladder' | 'host' | 'tier'> & {

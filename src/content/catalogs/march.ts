@@ -11,6 +11,39 @@ export const MARCH: Catalog = {
   at: 'qm-anbian-fu',
   layer: 'place',
   items: [
+    // A staple (E3): bulk goods sold by the lot, a Bag square of twenty, standing on the shelf
+    // where they are made. **Awaiting Jan’s review.**
+    {
+      id: 'spirit-rice',
+      name: 'Spirit Rice',
+      pinyin: 'Lingmi',
+      hanzi: '灵米',
+      tier: 1,
+      rarity: 'white',
+      kind: 'material',
+      stack: 20,
+      tags: ['trade', 'grain'],
+      price: 1.2,
+      uses: { ingredient: { tags: ['wood', 'vitality'], age: 1 } },
+      source:
+        'the March’s spirit-field counties, whose sacks load at River-Bend’s grain market and every sutler’s door',
+      text: 'A sack of rice grown on fields laid over a thin vein, each grain faintly warm. A cultivator eats it instead of mortal food; the Wall eats it by the barge.',
+    },
+    {
+      id: 'frontier-millet',
+      name: 'Frontier Millet',
+      pinyin: 'Bian Su',
+      hanzi: '边粟',
+      tier: 1,
+      rarity: 'white',
+      kind: 'material',
+      stack: 20,
+      tags: ['trade', 'grain'],
+      taels: 0.15,
+      uses: {},
+      source: 'the March’s farming villages, threshed under the watchtowers and sold by the sack',
+      text: 'A sack of coarse yellow millet. The March grows more than it eats, and the strait forts eat more than they grow.',
+    },
     {
       id: 'watchtower-spear',
       name: 'Watchtower Spear',
@@ -257,6 +290,9 @@ export const MARCH: Catalog = {
     },
   ],
   lots: [
+    // Staples (E3)
+    { thing: 'spirit-rice', shops: ['stall', 'guild'], count: [20, 20] },
+    { thing: 'frontier-millet', shops: ['mortal'], count: [20, 20] },
     { thing: 'watchtower-spear', shops: ['stall'] },
     { thing: 'cadet-scale-coat', shops: ['stall'] },
     { thing: 'watch-bell-charm', shops: ['stall'], weight: 0.5 },

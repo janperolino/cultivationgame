@@ -7,12 +7,13 @@ import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { CATALOGS } from '../content/catalogs/index.ts';
 import { RARE } from '../content/catalogs/rare.ts';
 import type { Lot } from '../content/catalogs/types.ts';
-import { copyOf, hasCopy } from '../content/copies.ts';
+import { copyChapter, copyForm, copyOf, hasCopy } from '../content/copies.ts';
 import { baseOf, hasItem, item, itemKind, variantId, type Item } from '../content/items.ts';
 import { REGIONS, shopVein } from '../content/map/index.ts';
 import {
   COVETED_MADE_SUPPLY,
   DEPTH,
+  OPENING_CHAPTERS,
   PROSPERITY,
   PROSPERITY_EASE_DAYS,
   REACH_LI,
@@ -28,7 +29,7 @@ import {
 } from '../content/markets.ts';
 import { rarityRank } from '../content/rarity.ts';
 import { realmScale, tierRealm } from '../content/realms.ts';
-import { SHOP_KIND_INFO, shop as shopById, type Shop } from '../content/shops.ts';
+import { SHOP_KIND_INFO, SHOPS, shop as shopById, type Shop } from '../content/shops.ts';
 import { lotShape } from './loot.ts';
 import type { World } from './resolver/world.ts';
 
@@ -263,7 +264,7 @@ export interface LentLot {
 
 /**
  * What the markets in reach lend: each one's place catalog as its own shops stock it, a method's
- * copy aside (methods in the market are E3's), and nothing this market makes itself.
+ * copy aside (a copy spreads by `standingCopies`), and nothing this market makes itself.
  */
 const lentCache = new Map<string, LentLot[]>();
 export function lentLots(m: Market): LentLot[] {
@@ -387,9 +388,112 @@ function seeFresh(m: Market, thing: string): Seen {
   return at('none');
 }
 
+/**
+ * A good seen from a market in a world (Methods in the market): a copy the market bought is made
+ * there now, and one a market in whose reach it stands bought is lent at ×1.1; anything else is as
+ * written (`seenFrom`). A guarded copy a black market took leaks only there, so it lends nowhere.
+ */
+export function seenIn(w: World, m: Market, thing: string): Seen {
+  if (!hasCopy(thing)) return seenFrom(m, thing);
+  if (w.copied[m.id]?.[thing] !== undefined) return { source: 'made', supply: SOURCE_SUPPLY.made };
+  if (!guardedBy(thing)) {
+    const from = lendersOf(m).find((o) => w.copied[o.id]?.[thing] !== undefined);
+    if (from) return { source: 'reach', supply: SOURCE_SUPPLY.reach, from: from.id };
+  }
+  return seenFrom(m, thing);
+}
+
+/** The markets whose reach takes this one in: where a market's copies are lent from. */
+const lenderCache = new Map<string, Market[]>();
+function lendersOf(m: Market): Market[] {
+  let out = lenderCache.get(m.id);
+  if (!out) {
+    out = MARKETS.filter((o) => o.id !== m.id && reachOf(o).includes(m));
+    lenderCache.set(m.id, out);
+  }
+  return out;
+}
+
+// ── Methods in the market ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Whose own method a copy is, if a power's (design § Economy, Methods in the market): a copy that
+ * only a power's own hall stocks, as the Gate's Butcher Saber is, and nobody else in the catalogs.
+ * It is recognized as stolen goods are.
+ */
+const guardCache = new Map<string, string | null>();
+export function guardedBy(thing: string): string | null {
+  if (!hasCopy(thing)) return null;
+  let owner = guardCache.get(thing);
+  if (owner === undefined) {
+    owner = null;
+    const lines = [...CATALOGS, RARE].flatMap((c) =>
+      c.lots.filter((l) => l.thing === thing && l.shops.length > 0).map((l) => ({ c, l })),
+    );
+    if (
+      lines.length > 0 &&
+      lines.every(({ c, l }) => c.layer === 'place' && l.shops.every((k) => k === 'sect'))
+    ) {
+      const powers = new Set(
+        lines.map(({ c }) => SHOPS.find((sh) => sh.kind === 'sect' && sh.at === c.at)?.power),
+      );
+      const [only] = [...powers];
+      if (powers.size === 1 && only) owner = only;
+    }
+    guardCache.set(thing, owner);
+  }
+  return owner;
+}
+
+/**
+ * Whether a copy a market buys turns common there: it is copied unless it is a sealed slip or a
+ * later chapter, and a power's own only where a black market takes it (the leak).
+ */
+export function spreads(thing: string, blackMarket: boolean): boolean {
+  if (!hasCopy(thing)) return false;
+  if (copyForm(thing) === 'sealed' || copyChapter(thing) > OPENING_CHAPTERS) return false;
+  return !guardedBy(thing) || blackMarket;
+}
+
+/** A market copies a copy it bought: on its own shelves from next month, and lent through its reach. */
+export function copyInto(w: World, m: Market, thing: string, day: number): World {
+  if (w.copied[m.id]?.[thing] !== undefined) return w;
+  const month = Math.floor(day / DAYS_PER_MONTH);
+  return { ...w, copied: { ...w.copied, [m.id]: { ...(w.copied[m.id] ?? {}), [thing]: month } } };
+}
+
+/** The shops that stand a market's copies: the kinds that sell copies, a sect's hall aside. */
+const COPY_SHOPS: readonly Shop['kind'][] = ['stall', 'guild', 'black-market'];
+
+/**
+ * The copies a shop stands on its shelf this month: its market's own, bought before this month,
+ * and those lent by the markets whose reach takes it in, at the tiers the shop stocks. An honest
+ * stall or guild hall stocks the honest ones; a black market only the guarded copies it leaked; a
+ * sect's hall none of them.
+ */
+export function standingCopies(w: World, sh: Shop, month: number): string[] {
+  const m = marketOfShop(sh.id);
+  if (!m || !COPY_SHOPS.includes(sh.kind)) return [];
+  const black = sh.kind === 'black-market';
+  const tiers = shopTiers(sh);
+  const out: string[] = [];
+  const take = (ledger: Record<string, number> | undefined, lent: boolean) => {
+    for (const [thing, at] of Object.entries(ledger ?? {})) {
+      if (at >= month || out.includes(thing) || !hasCopy(thing)) continue;
+      if (!tiers.includes(tierOf(thing))) continue;
+      const guarded = !!guardedBy(thing);
+      if (black ? !guarded || lent : guarded) continue;
+      out.push(thing);
+    }
+  };
+  take(w.copied[m.id], false);
+  if (!black) for (const o of lendersOf(m)) take(w.copied[o.id], true);
+  return out;
+}
+
 /** A good's supply in a market today: its written supply, with what was done to it easing back. */
 export function supplyOf(w: World, m: Market, thing: string, day: number): number {
-  const base = seenFrom(m, thing).supply;
+  const base = seenIn(w, m, thing).supply;
   const kept = w.supply[m.id]?.[goodOf(thing)];
   if (!kept) return base;
   const months = Math.max(0, Math.floor(day / DAYS_PER_MONTH) - kept.month);
@@ -398,7 +502,7 @@ export function supplyOf(w: World, m: Market, thing: string, day: number): numbe
 
 /** What a market's price does to a good's posted price: √(100 ÷ supply), and the road's share. */
 export function marketFactor(w: World, m: Market, thing: string, day: number): number {
-  return Math.sqrt(100 / supplyOf(w, m, thing, day)) * ROAD[seenFrom(m, thing).source];
+  return Math.sqrt(100 / supplyOf(w, m, thing, day)) * ROAD[seenIn(w, m, thing).source];
 }
 
 /**
@@ -406,13 +510,14 @@ export function marketFactor(w: World, m: Market, thing: string, day: number): n
  * of its layers) and still stands under 100%. Once filled, it pays only the shop's rate.
  */
 export function wanted(w: World, m: Market, thing: string, day: number): boolean {
-  return seenFrom(m, thing).supply < 100 && supplyOf(w, m, thing, day) < 100;
+  return seenIn(w, m, thing).supply < 100 && supplyOf(w, m, thing, day) < 100;
 }
 
 /** Supply points a lot of this good moves, before prosperity's lots divide it. */
 function depthOf(thing: string): number {
   if (hasCopy(thing)) {
     const shape = lotShape(thing);
+    if (copyForm(thing) === 'sealed') return DEPTH.rare;
     return shape && rarityRank(shape.rarities[0]!) >= rarityRank('purple')
       ? DEPTH.rare
       : DEPTH.common;
@@ -438,7 +543,7 @@ export function lotSize(thing: string): number {
  */
 export function moveSupply(w: World, m: Market, thing: string, pieces: number, day: number): World {
   if (pieces === 0) return w;
-  const base = seenFrom(m, thing).supply;
+  const base = seenIn(w, m, thing).supply;
   const lots = PROSPERITY[prosperityOf(w, m.id, day)]!.lots;
   const delta = ((pieces / lotSize(thing)) * depthOf(thing)) / lots;
   const n = Math.min(SUPPLY_MAX, Math.max(SUPPLY_MIN, supplyOf(w, m, thing, day) + delta));

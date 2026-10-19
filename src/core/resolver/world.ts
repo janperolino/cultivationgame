@@ -240,6 +240,12 @@ export const WorldSchema = z.object({
     z.record(z.string(), z.object({ n: z.number(), month: z.number().int() })),
   ),
   /**
+   * The copies each market bought and copied (design § Economy, Methods in the market), by market
+   * and copy: the month it bought the first. It stocks them from the next month on and lends the
+   * honest ones through its reach.
+   */
+  copied: z.record(z.string(), z.record(z.string(), z.number().int())),
+  /**
    * Storage rings you took that won't open to you yet (core/loot.ts): whose they were, what is in
    * them and their tier, until your soul or your realm reaches it.
    */
@@ -271,6 +277,7 @@ export function emptyWorld(): World {
     taken: {},
     prosperity: {},
     supply: {},
+    copied: {},
     sealed: [],
     next: 1,
   };

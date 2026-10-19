@@ -4,7 +4,7 @@
 // Everything done in a place is done here: its shops on P3.5's calls, the teahouse, the map seller,
 // guides, caravans, the money changer and the bed you sleep in by rule.
 import { useState } from 'react';
-import { copyItem, copyTitle, hasCopy } from '../content/copies.ts';
+import { COPY_FORM_WORDS, copyForm, copyItem, copyTitle, hasCopy } from '../content/copies.ts';
 import { item } from '../content/items.ts';
 import { PLACE_KIND_INFO, type PlaceKindInfo } from '../content/map/places.ts';
 import { QI_NAMES, TERRAIN_NAMES } from '../content/map/travel.ts';
@@ -35,11 +35,12 @@ import {
 import { areaById, placeById, type MapPlace, type RegionMap } from '../core/map/region.ts';
 import { pin, stopHere } from '../core/map/travel.ts';
 import {
+  lotSize,
   market,
   marketOfShop,
   prosperityOf,
   prosperityWord,
-  seenFrom,
+  seenIn,
   shopPurse,
   supplyOf,
   writtenProsperity,
@@ -49,6 +50,7 @@ import { isMember } from '../core/resolver/names.ts';
 import {
   buy,
   haggle,
+  isStaple,
   offerFor,
   priceToYou,
   repair,
@@ -82,7 +84,9 @@ function ware(thing: string): { name: string; rarity: string; sub: string } {
   if (hasCopy(thing)) {
     const it = copyItem(thing);
     const title = copyTitle(thing);
-    return { name: title[0]!.toUpperCase() + title.slice(1), rarity: it.rarity, sub: 'a copy' };
+    // A book at tier 1, a jade slip from tier 2 (E3, Methods in the market).
+    const sub = COPY_FORM_WORDS[copyForm(thing)];
+    return { name: title[0]!.toUpperCase() + title.slice(1), rarity: it.rarity, sub };
   }
   const it = item(thing);
   return { name: it.name, rarity: it.rarity, sub: `tier ${it.tier}` };
@@ -448,7 +452,7 @@ function ShopCounter({
   // Where a lot comes from and how much of it there is (Supply and prices).
   const origin = (thing: string): string[] => {
     if (!m) return [];
-    const seen = seenFrom(m, thing);
+    const seen = seenIn(game.world, m, thing);
     const out: string[] = [];
     if (seen.source === 'made') out.push('made here');
     if (seen.source === 'reach' && seen.from)
@@ -461,10 +465,13 @@ function ShopCounter({
   if (kinfo.members && sh.power && !isMember(game.world, game.player.id, sh.power))
     return <p className="place-note">It sells only to its own.</p>;
   const lots = shelf(game, shopId);
-  const held = Object.entries(game.player.items)
+  // What you carry and the copies on your bookcase, whatever this shop will buy.
+  const held = [...Object.entries(game.player.items), ...Object.entries(game.player.copies)]
     .filter(([, n]) => n > 0)
     .map(([thing, n]) => ({ thing, n, offer: offerFor(game, shopId, thing) }))
     .filter((x) => x.offer.ok);
+  // A staple sells by the lot, a Bag square at a time (E3).
+  const lotOf = (thing: string, n: number) => (isStaple(thing) ? Math.min(n, lotSize(thing)) : 1);
   const worn = [
     ...new Set([
       ...Object.keys(game.player.wear),
@@ -538,7 +545,10 @@ function ShopCounter({
                     {w.name}
                     {l.n > 1 ? ` ×${l.n}` : ''}
                   </span>{' '}
-                  <span className="place-sub">· {[w.sub, ...origin(l.thing)].join(' · ')}</span>
+                  <span className="place-sub">
+                    ·{' '}
+                    {[w.sub, ...(l.standing ? ['by the lot'] : []), ...origin(l.thing)].join(' · ')}
+                  </span>
                 </span>
                 <span className="place-price">{cost(priceToYou(game, shopId, l))}</span>
                 <button
@@ -573,13 +583,16 @@ function ShopCounter({
                     <span className="place-sub">· you hold {n}</span>
                     {offer.ok && offer.wanted && <span className="place-good"> · wanted here</span>}
                   </span>
-                  <span className="place-price">{offer.ok ? cost(offer.each) : ''}</span>
+                  <span className="place-price">
+                    {offer.ok ? cost(offer.each) : ''}
+                    {lotOf(thing, n) > 1 ? ` each, a lot of ${lotOf(thing, n)}` : ''}
+                  </span>
                   <button
                     type="button"
                     className="place-btn"
                     onClick={() =>
                       act((s) => {
-                        const r = sell(s, shopId, thing, 1);
+                        const r = sell(s, shopId, thing, lotOf(thing, n));
                         if (r.ok) say(`Sold ${w.name}.`);
                         return r;
                       })

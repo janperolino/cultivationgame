@@ -9,6 +9,39 @@ export const BUTCHER_GATE: Catalog = {
   at: 'qm-tushou-men',
   layer: 'place',
   items: [
+    // A staple (E3): bulk goods sold by the lot, a Bag square of twenty, standing on the shelf
+    // where they are made. **Awaiting Jan’s review.**
+    {
+      id: 'gate-tanned-hide',
+      name: 'Gate-Tanned Beast Hide',
+      pinyin: 'Tushou Shupi',
+      hanzi: '屠兽熟皮',
+      tier: 1,
+      rarity: 'white',
+      kind: 'beast-part',
+      stack: 20,
+      tags: ['trade', 'hide'],
+      price: 2.5,
+      uses: { ingredient: { tags: ['blood', 'hide'], age: 1 } },
+      source:
+        'the Gate’s butchering yards, where every raid’s beasts are skinned and the hides tanned in blood',
+      text: 'A bale of beast hide tanned the Gate’s way, stiff and dark and hard to cut. The Herders’ saddlers buy it and pretend not to know whose it was.',
+    },
+    {
+      id: 'bone-meal',
+      name: 'Bone Meal',
+      pinyin: 'Gu Fen',
+      hanzi: '骨粉',
+      tier: 1,
+      rarity: 'white',
+      kind: 'material',
+      stack: 20,
+      tags: ['trade', 'bone-meal'],
+      price: 1.5,
+      uses: { ingredient: { tags: ['earth', 'bone'], age: 1 } },
+      source: 'the Gate’s bone mills, which grind what the butchering yards leave',
+      text: 'A sack of ground beast bone, grey and gritty. Dug into a spirit field it feeds the vein under it for a season.',
+    },
     {
       id: 'gutting-saber',
       name: 'Gutting Saber',
@@ -233,6 +266,9 @@ export const BUTCHER_GATE: Catalog = {
     },
   ],
   lots: [
+    // Staples (E3)
+    { thing: 'gate-tanned-hide', shops: ['sect'], count: [20, 20] },
+    { thing: 'bone-meal', shops: ['sect'], count: [20, 20] },
     { thing: 'gutting-saber', shops: ['sect'] },
     { thing: 'green-steel-saber', shops: ['sect'] },
     { thing: 'hide-apron', shops: ['sect'] },

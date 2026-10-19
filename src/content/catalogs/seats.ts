@@ -266,6 +266,24 @@ export const EBB_HARBOR: Catalog = {
   at: 'qm-tuichao-gang',
   layer: 'place',
   items: [
+    // A staple (E3): bulk goods sold by the lot, a Bag square of twenty, standing on the shelf
+    // where they are made. **Awaiting Jan’s review.**
+    {
+      id: 'broken-tide-salt',
+      name: 'Broken-Tide Sea Salt',
+      pinyin: 'Duanchao Haiyan',
+      hanzi: '断潮海盐',
+      tier: 1,
+      rarity: 'white',
+      kind: 'material',
+      stack: 20,
+      tags: ['trade', 'salt'],
+      taels: 0.2,
+      uses: {},
+      source:
+        'the salt flats of the Field of the Broken Tide, raked between the bones and shipped out of Ebb Harbor',
+      text: 'A sack of coarse white salt from the old battlefield. Nobody asks what else is in the flats; the herds inland lick it all the same.',
+    },
     {
       id: 'bound-reef-scale',
       name: 'Bound-Reef Scale Coat',
@@ -321,6 +339,8 @@ export const EBB_HARBOR: Catalog = {
     },
   ],
   lots: [
+    // Staples (E3)
+    { thing: 'broken-tide-salt', shops: ['mortal'], count: [20, 20] },
     { thing: 'bound-reef-scale', shops: ['stall', 'guild'] },
     { thing: 'ebb-tide-talisman', shops: ['stall', 'guild'], count: [1, 3] },
     { thing: 'harbor-mud-razor-shell', shops: ['stall', 'guild'], count: [2, 8] },

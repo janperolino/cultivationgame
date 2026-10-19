@@ -64,6 +64,11 @@ export interface Technique {
   /** The line it belongs to, and its chapter in that line, from 1 (design § Cultivation, lines). */
   line: string;
   chapter: number;
+  /**
+   * Written as sealed (禁制, design § Economy, Methods in the market): its slip can't be copied, so a
+   * market buys it as one piece and never stocks it. Every slip at gold and up is sealed anyway.
+   */
+  sealed?: boolean;
   /** Dao tags: each tier you hold in one adds to checks with it, from M2. */
   daos: readonly string[];
   form: Form;

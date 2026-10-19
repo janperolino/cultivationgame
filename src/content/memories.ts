@@ -207,6 +207,8 @@ export const STANDING_ROWS = {
   tribute: { reason: 'Tribute', value: 5, fade: SEASON, own: true },
   member: { reason: 'One of ours', value: 10, fade: null },
   'walked-off': { reason: 'Walked off one of our caravans', value: -5, fade: SEASON },
+  // E3: a copy of a power's own method offered at its own hall (design § Economy, Methods in the market).
+  'sold-our-method': { reason: 'Offered one of our methods for sale', value: -15, fade: YEAR },
 } as const satisfies Record<string, StandingRow>;
 export type StandingId = keyof typeof STANDING_ROWS;
 export const STANDING_IDS = Object.keys(STANDING_ROWS) as StandingId[];

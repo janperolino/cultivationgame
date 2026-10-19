@@ -195,8 +195,23 @@ export interface ItemProperty {
   unique?: boolean;
 }
 
-/** A thing's market tags: `coveted` is needed everywhere; E3's `trade` marks staples. */
-export type ItemTag = 'coveted' | 'trade';
+/**
+ * What a staple is (E3), so a market's needs can name it: grain, salt, hides, horn, wool, lamp oil,
+ * ore and bone meal. Common herbs are needed by their kind.
+ */
+export const STAPLE_TAGS = [
+  'grain',
+  'salt',
+  'hide',
+  'horn',
+  'wool',
+  'oil',
+  'ore',
+  'bone-meal',
+] as const;
+export type StapleTag = (typeof STAPLE_TAGS)[number];
+/** A thing's market tags: `coveted` is needed everywhere, `trade` marks a staple and its kind (E3). */
+export type ItemTag = 'coveted' | 'trade' | StapleTag;
 
 export interface Item {
   id: string;
@@ -720,7 +735,7 @@ function variant(id: string): Item | null {
   const damaged = rest.includes('dmg');
   const tierPart = rest.find((x) => /^t\d+$/.test(x));
   const tier = tierPart ? Number(tierPart.slice(1)) : b.tier;
-  if (tierPart && !TIERED.includes(itemKind(b))) return null;
+  if (tierPart && !TIERED.includes(itemKind(b)) && !(b.tags ?? []).includes('trade')) return null;
   if (rest.some((x) => x !== 'dmg' && x !== tierPart)) return null;
   // A damaged piece stands a step below what it was, so the range shifts down one.
   const lo = rarityRank(b.rarity) - (damaged ? 1 : 0);

@@ -163,9 +163,12 @@ export const SHOP_KIND_INFO: Record<ShopKind, ShopKindInfo> = {
     hanzi: '铺',
     bias: 0.6,
     lots: 4,
-    buys: [],
+    // It buys the mortal staples, in taels (E3): salt, millet, wool and lamp oil.
+    buys: ['material'],
     buyRate: 0.4,
-    purse: 30,
+    // A hundred taels a month, five farm families' living for a year: enough to take a hauler's
+    // Bag of mortal staples (E3; it was 30).
+    purse: 100,
     money: 'silver',
     markup: 1,
     layers: BY_PLACE,

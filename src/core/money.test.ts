@@ -93,13 +93,16 @@ describe('sales by the vein', () => {
       return o.ok && o.each >= 100 && o.each <= 1000;
     })!;
     const each = (offerFor(s, 'mouth-guild', thing) as { each: number }).each;
-    const n = Math.ceil(2400 / each);
+    // Lot by lot the price falls as the City fills (E3), so offer well past 2,400.
+    const n = Math.ceil(10_000 / each);
     const held = withPlayer(s, addItem(s.player, thing, n));
     const city = sell(held, 'mouth-guild', thing, n);
     if (!city.ok) throw new Error(city.reason);
-    const total = each * n;
+    // Sold lot by lot (E3), the price falls as the City fills, so the total is under each × n.
+    const total = worthOf(stonesOf(city.state.player)) - worthOf(stonesOf(held.player));
+    expect(total).toBeGreaterThan(2000);
     expect(city.state.player.higherStones.mid).toBe(Math.floor(total / 1000));
-    expect(city.state.player.stones).toBeCloseTo(total % 1000, 6);
+    expect(city.state.player.stones - held.player.stones).toBeCloseTo(total % 1000, 6);
     // The Wall's stall, in a village on a tier 1 vein, pays in low whatever it buys.
     const herb = ITEMS.map((x) => x.id).find(
       (id) => itemKind(item(id)) === 'herb' && offerFor(s, 'wall-stall', id).ok,
@@ -144,7 +147,7 @@ describe('the v33 save', () => {
     const s = life();
     const part = withPlayer(s, { ...s.player, higherStones: { mid: 2.4375, high: 1, top: 0 } });
     const loaded = loadSave(JSON.parse(JSON.stringify(makeSave(part, 1))));
-    expect(loaded.version).toBe(34);
+    expect(loaded.version).toBe(35);
     expect(loaded.state.player.higherStones).toEqual({ mid: 2.4375, high: 1, top: 0 });
     const raw = JSON.parse(JSON.stringify(makeSave(s, 1))) as { version: number };
     raw.version = 32;

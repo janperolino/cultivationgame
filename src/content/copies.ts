@@ -6,7 +6,7 @@
 import type { Item } from './items.ts';
 import { hasManual, manual, methodManual, techniqueArt, type Manual } from './manuals.ts';
 import { hasMethod, method } from './methods.ts';
-import type { RarityId } from './rarity.ts';
+import { rarityRank, type RarityId } from './rarity.ts';
 import { hasTechnique, technique } from './techniques.ts';
 import { TREES } from './trees/index.ts';
 
@@ -87,6 +87,39 @@ export function copyManual(id: string): Manual {
   if (of.kind === 'manual') return manual(of.id);
   if (of.kind === 'method') return methodManual(of.id) ?? bareManual('method', of.id);
   return techniqueArt(of.id) ?? bareManual('technique', of.id);
+}
+
+/**
+ * A copy's form (design § Economy, Methods in the market, A book or a slip): a tier 1 manual is a
+ * bound book, copied by hand; from tier 2 up it is a jade slip, read and copied by divine sense.
+ * Only a slip can be sealed: one at gold and up, or one written as sealed.
+ */
+export type CopyForm = 'book' | 'slip' | 'sealed';
+export const COPY_FORM_WORDS: Record<CopyForm, string> = {
+  book: 'a bound book',
+  slip: 'a jade slip',
+  sealed: 'a sealed jade slip',
+};
+
+export function copyForm(id: string): CopyForm {
+  const of = copyOf(id);
+  if (!of) throw new RangeError(`Unknown copy ${id}`);
+  const t =
+    of.kind === 'method'
+      ? method(of.id)
+      : of.kind === 'technique'
+        ? technique(of.id)
+        : manual(of.id);
+  if (t.tier < 2) return 'book';
+  return t.sealed || rarityRank(t.rarity) >= rarityRank('gold') ? 'sealed' : 'slip';
+}
+
+/** A copy's chapter in its line: a loose manual stands alone, as a first. */
+export function copyChapter(id: string): number {
+  const of = copyOf(id);
+  if (of?.kind === 'method') return method(of.id).chapter;
+  if (of?.kind === 'technique') return technique(of.id).chapter;
+  return 1;
 }
 
 /** What a copy teaches, in a phrase: "the Tide-Counting Formula", "Rampart Palm". */

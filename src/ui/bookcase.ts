@@ -2,6 +2,7 @@
 // screen so they are tested: how wide and tall a spine stands, what its hover card says of the
 // manual and each node, and what a search finds.
 import {
+  copyForm,
   copyManual,
   copyOf,
   copyOfManual,
@@ -178,6 +179,8 @@ export function spineReadLabel(c: Cultivator, m: Manual, copies: number): string
 }
 
 export interface ReadWords {
+  /** What the copy is in the hand (E3): a bound book, a jade slip, a sealed slip. */
+  form: string;
   /** What reading it would give. */
   teaches: string;
   /** Its reading time, how far it has come, and the lump when done. */
@@ -185,6 +188,14 @@ export interface ReadWords {
   /** Why it can't be read yet, when it can't. */
   refused?: string;
 }
+
+/** A copy's form on its card (design § Economy, Methods in the market, A book or a slip). */
+const FORM_LINE = {
+  book: 'A bound book, copied by hand.',
+  slip: 'A jade slip, read and copied by divine sense.',
+  sealed:
+    'A sealed jade slip: it can’t be copied, so a market buys it as itself and never stocks it.',
+} as const;
 
 /** What an unread copy's card says of reading it. */
 export function readWords(c: Cultivator, id: string): ReadWords {
@@ -204,6 +215,7 @@ export function readWords(c: Cultivator, id: string): ReadWords {
   const days = done > 0 ? `${readSoFar(c, id)} read` : `${formatNumber(readDays(id))} study days`;
   const hours = effectiveWheel(c).includes('study') ? '' : ' Your wheel has no study hour yet.';
   const time = `${now ? 'Reading on your study hours: ' : ''}${days} · +${lump} insight when done.${hours}`;
+  const form = FORM_LINE[copyForm(id)];
   const check = readCheck(c, id);
-  return check.ok ? { teaches, time } : { teaches, time, refused: check.reason };
+  return check.ok ? { form, teaches, time } : { form, teaches, time, refused: check.reason };
 }

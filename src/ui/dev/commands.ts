@@ -65,7 +65,7 @@ import {
   prosperityOf,
   prosperityWord,
   reachOf,
-  seenFrom,
+  seenIn,
   shopLots,
   shopPurse,
   shopTiers,
@@ -293,7 +293,8 @@ export const COMMANDS: Record<string, Command> = {
       return [
         `${shop(id).name}, this month · you hold ${purseWords(s.player)}`,
         ...shelf(s, id).map(
-          (l) => `  ${l.slot}. ${ware(l.thing)} ×${l.n} (${l.thing}): ${cost(l.price)} each`,
+          (l) =>
+            `  ${l.slot}. ${ware(l.thing)} ×${l.n} (${l.thing}): ${cost(l.price)} each${l.standing ? ' · stands all month' : ''}`,
         ),
       ];
     },
@@ -319,7 +320,7 @@ export const COMMANDS: Record<string, Command> = {
   },
   market: {
     usage: 'market [town or place id]',
-    help: 'Lists the markets; with an id, its prosperity, needs, reach, shops and the supplies moved off their written.',
+    help: 'Lists the markets; with an id, its prosperity, needs, reach, shops, the copies it made and the supplies moved off their written.',
     run([id], store) {
       const s = needGame(store);
       const day = s.calendar.day;
@@ -344,10 +345,15 @@ export const COMMANDS: Record<string, Command> = {
             SHOP_KIND_INFO[sh.kind].money === 'silver' ? `${purse} taels` : priceWords(purse);
           return `  ${sid}: purse ${money}, ${shopLots(s.world, sh, day)} lots, tiers ${shopTiers(sh).join(', ')}`;
         }),
+        `  copies made here: ${
+          Object.keys(s.world.copied[m.id] ?? {})
+            .map(copyTitle)
+            .join(', ') || 'none'
+        }`,
         ...(off.length ? ['  supplies moved:'] : ['  every supply at its written value']),
         ...off.map((good) => {
           const thingId = thingOfGood(good);
-          const seen = seenFrom(m, thingId);
+          const seen = seenIn(s.world, m, thingId);
           const now = Math.round(supplyOf(s.world, m, thingId, day));
           return `    ${goodName(thingId)} (${good}): ${now}%, written ${seen.supply}% (${seen.source})`;
         }),

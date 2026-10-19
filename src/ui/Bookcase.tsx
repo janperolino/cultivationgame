@@ -219,6 +219,7 @@ function ReadBlock({ c, m, pinned }: { c: Cultivator; m: Manual; pinned: boolean
   const ring = rings(useBeacons(), 'read-now', { id });
   return (
     <div className="bookcase-read">
+      <span className="caption">{w.form}</span>
       <span>{w.teaches}</span>
       <span className="caption">{w.time}</span>
       {w.refused && <span className="caption is-refused">{w.refused}</span>}

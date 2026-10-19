@@ -14,6 +14,23 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
     from: 'qm-chiyan',
     via: 'the merchant guild’s caravans down from the Red Rocks’ forges',
     items: [
+      // A staple (E3): bulk goods sold by the lot, a Bag square of twenty, standing on the shelf
+      // where they are made. **Awaiting Jan’s review.**
+      {
+        id: 'red-rocks-iron-ore',
+        name: 'Red Rocks Iron Ore',
+        pinyin: 'Chiyan Tiekuang',
+        hanzi: '赤岩铁矿',
+        tier: 1,
+        rarity: 'white',
+        kind: 'material',
+        stack: 20,
+        tags: ['trade', 'ore'],
+        price: 2,
+        uses: { ingredient: { tags: ['ore', 'metal'], age: 1 } },
+        source: 'the Red Rocks’ open pits, carted to the frontier by the merchant guild',
+        text: 'A crate of red-streaked iron ore. The Border Wilds’ karst gives up little iron, so every edge on the frontier starts in someone else’s mountain.',
+      },
       {
         id: 'black-iron-saber',
         name: 'Black Iron Saber',
@@ -47,6 +64,7 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
       },
     ],
     lots: [
+      { thing: 'red-rocks-iron-ore', shops: ['refiner', 'guild'], count: [20, 20] },
       { thing: 'black-iron-saber', shops: ['refiner', 'guild'] },
       { thing: 'cinnabar-ore', shops: ['refiner', 'guild'], count: [2, 10] },
       { thing: 'fire-bead', shops: ['guild', 'refiner'], weight: 0.3 },
@@ -59,6 +77,23 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
     from: 'qm-yaoling',
     via: 'the Apricot Grove Valley’s herb carts, by the guild',
     items: [
+      // A staple (E3): bulk goods sold by the lot, a Bag square of twenty, standing on the shelf
+      // where they are made. **Awaiting Jan’s review.**
+      {
+        id: 'ridge-bitterroot',
+        name: 'Ridge Bitterroot',
+        pinyin: 'Ling Kugen',
+        hanzi: '岭苦根',
+        tier: 1,
+        rarity: 'white',
+        kind: 'herb',
+        stack: 20,
+        tags: ['trade'],
+        price: 2,
+        uses: { ingredient: { tags: ['wood', 'cleansing'], age: 1 } },
+        source: 'the Medicine Ridges’ terraced herb gardens, dried and baled for the guild’s carts',
+        text: 'A bale of dried bitterroot, the commonest herb in a common pill. The Ridges grow it by the hillside; the frontier has none.',
+      },
       {
         id: 'old-apricot-kernel',
         name: 'Old Apricot Kernel',
@@ -74,6 +109,7 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
       },
     ],
     lots: [
+      { thing: 'ridge-bitterroot', shops: ['alchemy', 'guild'], count: [20, 20] },
       { thing: 'old-apricot-kernel', shops: ['alchemy', 'guild'], count: [1, 5] },
       { thing: 'clear-spring-lotus', shops: ['alchemy', 'guild'], weight: 0.4 },
     ],
