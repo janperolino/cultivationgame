@@ -88,7 +88,7 @@ Built bottom-up from here (planning, 2026-10-18, Jan's call): what other systems
 - [x] Design: E4 people make and use (the baskets, pressures and materials by land, from the economy review)
 - [x] E4 People make and use
 - [x] E5 Markets as districts (found at the economy's play checkpoint: thin, scattered shops; built before the checkpoint goes on, Jan's call)
-- [ ] The economy's play checkpoint (the Border Wilds' markets on the dev console)
+- [x] The economy's play checkpoint (the Border Wilds' markets on the dev console; it found the thin shops, which became E5, and a trade check found one loop, fixed)
 - [ ] Design: organizations, thin (from M5: one skeleton for sects, clans, guilds and factions; ranks, posts, contribution, membership), then its phases and a play checkpoint
 - [ ] P3.7b Jobs and duty hours, with the gather hour (Open questions), a job read as a post at an organization; then a play checkpoint
 - [ ] D4 Design: crafts, then M4's phases (the producers that feed the markets) and a play checkpoint
@@ -276,6 +276,8 @@ A screen is painted once its features stop changing (planning, 2026-10-18). A5.3
 ## Log
 
 Newest first. 3–5 lines per phase. M0 to A5.2 are one line a phase here; their full entries, with the sim tables and the hand-offs, are in `docs/plan-archive.md`.
+
+- 2026-10-19, the economy's play checkpoint: Jan played the Border Wilds' markets in the browser (the City, the Map revealed with the new `reveal`, travel sped with `fast`) and called the play done. It found the shops thin and scattered (a family shop of 8 lots, mortal stores selling travel rations ×2, a keeper paying out 4 million taels, too many stalls), which became E5, markets as districts; a scripted trade check across all 17 markets then found buying low and selling high works between cities and one loop inside a market, fixed. Not played by hand: a full haul, a market flooded and recovering, `prosper`, a found method spreading, a Core Formation life; the sims and tests cover them. The economy layer is closed; organizations is next.
 
 - 2026-10-19, fix after E5: buying low and selling high checked across all 17 markets (a throwaway script: 252 of 272 market pairs have a profitable good, the median trade pays under a tenth of a day's wages, the best are one-off pieces; Jan: fine as long as it's reasonable). One real bug, a loop: at Ebb Harbor a thing bought from one keeper sold back to another for 2–4% more (the shops' price spread against the 80% for a need, and a haggle on top). Now no offer tops the cheapest asking price in its market, and no keeper haggles over what the market is short of at rest (`shortAtRest`); two tests in `districts.test.ts`. Spirit rice back to 0.95 so the haul holds its mark (1.66× spring, 1.33× autumn); the mortal millet row reads 0.8× and 0.97×, unenforced as before. Also two dev commands: `reveal` (the region Seen) and `fast` (travel ×n).
 
