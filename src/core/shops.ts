@@ -11,7 +11,7 @@ import { CATALOGS } from '../content/catalogs/index.ts';
 import { RARE } from '../content/catalogs/rare.ts';
 import type { Catalog, Lot } from '../content/catalogs/types.ts';
 import { copyChapter, copyManual, hasCopy } from '../content/copies.ts';
-import { hasItem, item, itemKind, variantId, type ItemKind } from '../content/items.ts';
+import { hasItem, item, itemKind, variantId } from '../content/items.ts';
 import {
   LENT_WEIGHT,
   NEED_RATE,
@@ -41,8 +41,10 @@ import { gainCopy } from './life.ts';
 import {
   copyInto,
   guardedBy,
+  isStaple,
   lentLots,
   lotSize,
+  lotTiers,
   marketFactor,
   marketOfShop,
   moveSupply,
@@ -64,6 +66,9 @@ import { talkCheck } from './resolver/talk.ts';
 import { addHeat, emptyWorld, standingOf, type ShopMonth, type World } from './resolver/world.ts';
 import { hashSeed, Rng } from './rng.ts';
 import { addItem, itemCount, withPlayer, type GameState } from './state.ts';
+
+/** A staple: the `trade` tag (core/markets.ts). */
+export { isStaple } from './markets.ts';
 
 export function monthOf(day: number): number {
   return Math.floor(day / DAYS_PER_MONTH);
@@ -111,32 +116,6 @@ interface Candidate {
   w: number;
   tier: number;
   rarities: RarityId[];
-}
-
-/** What takes its maker's tier on a shelf (design § Catalogs by place, Rarity as quality). */
-const MAKER_TIERED: readonly ItemKind[] = ['pill', 'talisman', 'beast-part'];
-
-/**
- * The tiers a lot comes at in a shop: its written one, and for a pill, a talisman or a beast part
- * any tier above it the shop stocks, since those take their maker's or their beast's. A gate pill,
- * a hiding talisman and a mortal good keep their own.
- */
-function lotTiers(thing: string, written: number, tiers: readonly number[]): number[] {
-  if (hasCopy(thing)) return tiers.includes(written) ? [written] : [];
-  const it = item(thing);
-  // A staple is tiered like anything else, so a Foundation trader hauls tier 2 ore (E3).
-  const fixed =
-    (!MAKER_TIERED.includes(itemKind(it)) && !isStaple(thing)) ||
-    !!it.uses.offer ||
-    !!it.uses.hide ||
-    it.taels !== undefined ||
-    (it.tags ?? []).includes('coveted');
-  return tiers.filter((t) => t === written || (!fixed && t > written));
-}
-
-/** A staple: the `trade` tag, the bulk end of a kind (design § Economy, Trading yourself). */
-export function isStaple(thing: string): boolean {
-  return !hasCopy(thing) && hasItem(thing) && (item(thing).tags ?? []).includes('trade');
 }
 
 /**

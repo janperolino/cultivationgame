@@ -210,8 +210,11 @@ export const STAPLE_TAGS = [
   'bone-meal',
 ] as const;
 export type StapleTag = (typeof STAPLE_TAGS)[number];
-/** A thing's market tags: `coveted` is needed everywhere, `trade` marks a staple and its kind (E3). */
-export type ItemTag = 'coveted' | 'trade' | StapleTag;
+/**
+ * A thing's market tags: `coveted` is needed everywhere, `trade` marks a staple and its kind (E3),
+ * and `ink` what a talisman's maker uses (E4).
+ */
+export type ItemTag = 'coveted' | 'trade' | 'ink' | StapleTag;
 
 export interface Item {
   id: string;

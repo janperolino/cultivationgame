@@ -225,14 +225,21 @@ export const GUARDED_MOUTH: Catalog = {
     },
   ],
   lots: [
-    { thing: 'shark-tooth-spear', shops: ['refiner', 'guild'] },
+    // Its refiners cut thunderhorn for the grips (E4, for Jan's review).
+    { thing: 'shark-tooth-spear', shops: ['refiner', 'guild'], uses: { ore: 5, horn: 1 } },
     { thing: 'crab-shell-vest', shops: ['refiner', 'guild'] },
     { thing: 'water-silk-robe', shops: ['refiner', 'guild'], weight: 0.5 },
     { thing: 'tide-reading-shell', shops: ['guild', 'stall'], weight: 0.5 },
     { thing: 'shark-marrow-pill', shops: ['alchemy', 'stall', 'guild'], count: [1, 4] },
     { thing: 'undertow-talisman', shops: ['stall', 'guild'], count: [1, 3] },
     { thing: 'blood-salt-kelp', shops: ['stall', 'alchemy'], count: [2, 8] },
-    { thing: 'soul-settling-pearl', shops: ['alchemy', 'guild'], weight: 0.3 },
+    // Pearls from any coast or isle (E4's land tags, for Jan's review).
+    {
+      thing: 'soul-settling-pearl',
+      shops: ['alchemy', 'guild'],
+      weight: 0.3,
+      land: ['coast', 'islands'],
+    },
     { thing: 'method:mouth-tide-breath', shops: ['guild'], weight: 0.5 },
     { thing: 'technique:reef-road-thrust', shops: ['guild', 'stall'], weight: 0.5 },
     { thing: 'technique:strait-splitting-saber', shops: ['guild'], weight: 0.2 },

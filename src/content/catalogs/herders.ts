@@ -260,8 +260,9 @@ export const SPIRIT_HERDERS: Catalog = {
   ],
   lots: [
     // Staples (E3)
-    { thing: 'thunderhorn', shops: ['stall', 'guild'], count: [20, 20] },
-    { thing: 'cloud-goat-wool', shops: ['mortal'], count: [20, 20] },
+    // Horn and wool from any steppe (E4's land tags, for Jan's review).
+    { thing: 'thunderhorn', shops: ['stall', 'guild'], count: [20, 20], land: ['steppe'] },
+    { thing: 'cloud-goat-wool', shops: ['mortal'], count: [20, 20], land: ['steppe'] },
     { thing: 'scale-horse', shops: ['guild'], weight: 0.4 },
     { thing: 'horn-head-lance', shops: ['stall', 'guild'] },
     { thing: 'deer-horn-whistle', shops: ['guild', 'stall'], weight: 0.5 },

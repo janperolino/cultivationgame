@@ -5,8 +5,11 @@
 // pace paying the tolls, and sells lot by lot to whichever shop there offers more, the price falling
 // as the terraces fill. The profit is set against the days' wages at an ordinary place (1 low a day
 // at Qi Condensation). A second row hauls the mortal staple the same way, millet from Spear-Plow to
-// Sinkhole Terraces, against a laborer's 0.1 tael a day.
+// Sinkhole Terraces, against a laborer's 0.1 tael a day. Since E4 the harvest moves both ends, so
+// each haul runs twice: set out in spring, when the granaries are emptying, and just after the
+// autumn harvest, when the March's rice is cheapest and the terraces' least short.
 // Run: npm run sim -- haul
+import { DAYS_PER_MONTH, DAYS_PER_YEAR } from '../src/content/calendar.ts';
 import { CHECKPOINT_TOLL_LOW } from '../src/content/map/travel.ts';
 import { PACK_SQUARES } from '../src/content/gear.ts';
 import { item } from '../src/content/items.ts';
@@ -51,9 +54,20 @@ const HAULS: readonly Haul[] = [
 const purse = (s: GameState, silver: boolean) =>
   silver ? s.player.silver : worthOf(stonesOf(s.player));
 
-function run(h: Haul): { days: number; cost: number; paid: number; profit: number; ratio: number } {
+/** The seasons a haul sets out in: spring's first month and autumn's harvest month. */
+const SEASONS = [
+  { name: 'spring', month: 0 },
+  { name: 'autumn', month: 7 },
+] as const;
+
+function run(
+  h: Haul,
+  month: number,
+): { days: number; cost: number; paid: number; profit: number; ratio: number } {
   let s = ensureMap(newLife({ name: 'Han Li', seed: 'haul' }));
   s = withPlayer(s, { ...s.player, stones: 2000, silver: 200, items: {} });
+  const year = Math.floor(s.calendar.day / DAYS_PER_YEAR) * DAYS_PER_YEAR;
+  s = { ...s, calendar: { ...s.calendar, day: year + month * DAYS_PER_MONTH } };
   const map = mapOf(s)!;
   const before = purse(s, h.silver);
   // Ten lots off the standing line, each dearer than the last.
@@ -106,7 +120,7 @@ console.log(
   `The haul's mark: a full Bag of ${LOTS} lots pays about ${MARK}× the wages for its days.`,
 );
 console.log(
-  'haul'.padEnd(48),
+  'haul'.padEnd(56),
   'days',
   'cost'.padStart(8),
   'paid'.padStart(8),
@@ -114,22 +128,23 @@ console.log(
   'ratio',
 );
 let pass = true;
-for (const h of HAULS) {
-  const r = run(h);
-  const ok = r.ratio >= BAND[0] && r.ratio <= BAND[1];
-  if (h === HAULS[0] && !ok) pass = false;
-  console.log(
-    h.name.padEnd(48),
-    String(r.days).padStart(4),
-    fmt(r.cost).padStart(8),
-    fmt(r.paid).padStart(8),
-    fmt(r.profit).padStart(8),
-    `${fmt(r.ratio)}×${ok ? '' : '  (off the mark)'}`,
-  );
-}
+for (const h of HAULS)
+  for (const season of SEASONS) {
+    const r = run(h, season.month);
+    const ok = r.ratio >= BAND[0] && r.ratio <= BAND[1];
+    if (h === HAULS[0] && !ok) pass = false;
+    console.log(
+      `${h.name}, ${season.name}`.padEnd(56),
+      String(r.days).padStart(4),
+      fmt(r.cost).padStart(8),
+      fmt(r.paid).padStart(8),
+      fmt(r.profit).padStart(8),
+      `${fmt(r.ratio)}×${ok ? '' : '  (off the mark)'}`,
+    );
+  }
 console.log(
   pass
-    ? 'PASS: the spirit rice haul is on the mark.'
+    ? 'PASS: the spirit rice haul is on the mark in both seasons.'
     : 'FAIL: the spirit rice haul is off the mark.',
 );
 if (!pass) process.exitCode = 1;

@@ -26,6 +26,20 @@ export interface Lot {
   weight?: number;
   /** How many come in one lot: pills and herbs by the handful. One unless set. */
   count?: readonly [min: number, max: number];
+  /**
+   * The land that yields it (design § Economy, People make and use, Making): a herb, material or
+   * staple line naming terrains, so every market on that land in its catalog's region (a
+   * continent's: anywhere on it) makes it too, its vein capping the tier. Drafted in E4 for Jan's
+   * review.
+   */
+  land?: readonly string[];
+  /** The vein the land needs to yield it: jade on a vein of tier 2 or more. */
+  landVein?: number;
+  /**
+   * What its makers use a piece, when not its family's (content/markets.ts `MAKER_USES`), by the
+   * need each input fills: the City's blades a horn each beside their ore.
+   */
+  uses?: Readonly<Record<string, number>>;
 }
 
 /** A technique's Art, written beside the technique: its passives, waking as it masters. */

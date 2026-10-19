@@ -184,7 +184,14 @@ export const MORNING_STAR: Catalog = {
     { thing: 'qi-restoring-pill', shops: ['stall', 'alchemy', 'guild', 'sect'], count: [1, 4] },
     { thing: 'spring-returning-pill', shops: ['stall', 'alchemy', 'guild', 'sect'], count: [1, 4] },
     { thing: 'poison-purging-pill', shops: ['alchemy', 'guild'], weight: 0.6, count: [1, 3] },
-    { thing: 'root-binding-jade', shops: ['alchemy', 'guild'], weight: 0.4 },
+    // Jade from hills and mountains on a vein of tier 2 or more (E4's land tags, for Jan's review).
+    {
+      thing: 'root-binding-jade',
+      shops: ['alchemy', 'guild'],
+      weight: 0.4,
+      land: ['hills', 'mountains'],
+      landVein: 2,
+    },
     { thing: 'foundation-pill', shops: ['alchemy', 'guild'], weight: 0.15 },
     { thing: 'core-forming-pill', shops: [], weight: 0.1 },
     // The Jing's standard issue

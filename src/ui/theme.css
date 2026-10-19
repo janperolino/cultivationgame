@@ -8385,6 +8385,14 @@ p.map-above {
   font-weight: 500;
 }
 
+/* The market's line of why (E4): its biggest gap and its cause. */
+.place-why {
+  font-size: calc(12.5px * var(--text-scale));
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 4px;
+}
+
 .place-purse {
   text-align: right;
   font-size: calc(12.5px * var(--text-scale));

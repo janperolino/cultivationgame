@@ -244,9 +244,10 @@ export const STONE_EYES: Catalog = {
     { thing: 'iron-knuckles', shops: ['stall'], weight: 0.5 },
     { thing: 'hooded-cave-lamp', shops: ['stall'], weight: 0.5 },
     { thing: 'stone-milk-pill', shops: ['alchemy', 'stall'], count: [1, 4] },
-    { thing: 'glow-cap-mushroom', shops: ['alchemy', 'stall'], count: [2, 8] },
+    // Cave herbs and lamp oil from the bat roosts, in any karst (E4's land tags, for Jan's review).
+    { thing: 'glow-cap-mushroom', shops: ['alchemy', 'stall'], count: [2, 8], land: ['karst'] },
     { thing: 'rockfall-talisman', shops: ['stall'], count: [1, 3] },
-    { thing: 'bat-fat-lamp-oil', shops: ['mortal'], count: [20, 20] },
+    { thing: 'bat-fat-lamp-oil', shops: ['mortal'], count: [20, 20], land: ['karst'] },
     { thing: 'knotted-rope-ladder', shops: ['mortal'] },
     { thing: 'method:terrace-climbing', shops: ['stall'], weight: 0.4 },
     { thing: 'technique:stalactite-thrust', shops: ['stall'], weight: 0.5 },

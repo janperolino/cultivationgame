@@ -267,7 +267,8 @@ export const BUTCHER_GATE: Catalog = {
   ],
   lots: [
     // Staples (E3)
-    { thing: 'gate-tanned-hide', shops: ['sect'], count: [20, 20] },
+    // Steppe hides, wherever herds graze the open grass (E4's land tags, for Jan's review).
+    { thing: 'gate-tanned-hide', shops: ['sect'], count: [20, 20], land: ['steppe'] },
     { thing: 'bone-meal', shops: ['sect'], count: [20, 20] },
     { thing: 'gutting-saber', shops: ['sect'] },
     { thing: 'green-steel-saber', shops: ['sect'] },

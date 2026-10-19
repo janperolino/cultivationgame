@@ -23,7 +23,8 @@ export const MARCH: Catalog = {
       kind: 'material',
       stack: 20,
       tags: ['trade', 'grain'],
-      price: 1.2,
+      // Tuned to the haul's mark in both seasons once the harvest moved both ends (E4; 1.2 in E3).
+      price: 0.95,
       uses: { ingredient: { tags: ['wood', 'vitality'], age: 1 } },
       source:
         'the March’s spirit-field counties, whose sacks load at River-Bend’s grain market and every sutler’s door',
@@ -39,7 +40,8 @@ export const MARCH: Catalog = {
       kind: 'material',
       stack: 20,
       tags: ['trade', 'grain'],
-      taels: 0.15,
+      // Tuned with spirit rice in E4 (0.15 in E3), once the mortal shops' purses held a Bag.
+      taels: 0.09,
       uses: {},
       source: 'the March’s farming villages, threshed under the watchtowers and sold by the sack',
       text: 'A sack of coarse yellow millet. The March grows more than it eats, and the strait forts eat more than they grow.',
@@ -291,8 +293,9 @@ export const MARCH: Catalog = {
   ],
   lots: [
     // Staples (E3)
-    { thing: 'spirit-rice', shops: ['stall', 'guild'], count: [20, 20] },
-    { thing: 'frontier-millet', shops: ['mortal'], count: [20, 20] },
+    // Grain from any plain (E4's land tags, for Jan's review).
+    { thing: 'spirit-rice', shops: ['stall', 'guild'], count: [20, 20], land: ['plains'] },
+    { thing: 'frontier-millet', shops: ['mortal'], count: [20, 20], land: ['plains'] },
     { thing: 'watchtower-spear', shops: ['stall'] },
     { thing: 'cadet-scale-coat', shops: ['stall'] },
     { thing: 'watch-bell-charm', shops: ['stall'], weight: 0.5 },

@@ -1,7 +1,7 @@
 // The dev console's commands: testing shortcuts that change the open life through the same rules
 // the game uses where they can (time runs through the day step, breakthroughs roll their odds,
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
-import { DAYS_PER_YEAR } from '../../content/calendar.ts';
+import { DAYS_PER_MONTH, DAYS_PER_YEAR } from '../../content/calendar.ts';
 import { BOND_IDS, type BondId } from '../../content/bonds.ts';
 import {
   ENCOUNTERS,
@@ -55,6 +55,7 @@ import { screens } from '../screens.ts';
 import { useSeat } from '../seat.ts';
 import type { GameStore } from '../store.ts';
 import { shop, SHOP_KIND_INFO, SHOPS } from '../../content/shops.ts';
+import { marketSum, restAt, restOf, whyOf } from '../../core/making.ts';
 import { priceWords, purseWords } from '../../core/purse.ts';
 import { buy, haggle, repair, sell, shelf, type ShopResult } from '../../core/shops.ts';
 import {
@@ -320,10 +321,11 @@ export const COMMANDS: Record<string, Command> = {
   },
   market: {
     usage: 'market [town or place id]',
-    help: 'Lists the markets; with an id, its prosperity, needs, reach, shops, the copies it made and the supplies moved off their written.',
+    help: 'Lists the markets; with an id, its prosperity, needs, line of why, monthly sum, reach, shops, the copies it made and the supplies moved off their rest.',
     run([id], store) {
       const s = needGame(store);
       const day = s.calendar.day;
+      const month = Math.floor(day / DAYS_PER_MONTH);
       const line = (m: (typeof MARKETS)[number]) =>
         `${m.id}: ${m.name} (${m.kind}, ${prosperityWord(prosperityOf(s.world, m.id, day))})`;
       if (!id) return MARKETS.map(line);
@@ -333,6 +335,16 @@ export const COMMANDS: Record<string, Command> = {
       return [
         line(m),
         `  needs: ${m.needs.join(', ') || 'nothing written'}`,
+        `  why: ${whyOf(s.world, m, day) ?? 'nothing is off'}`,
+        '  the monthly sum, furthest off first (used, made, carried a month; rest):',
+        ...[...marketSum(s.world, m, month).goods.values()]
+          .map((g) => ({ g, rest: restAt(g, month) }))
+          .sort((a, b) => Math.abs(Math.log(b.rest / 100)) - Math.abs(Math.log(a.rest / 100)))
+          .slice(0, 8)
+          .map(
+            ({ g, rest }) =>
+              `    ${goodName(g.thing)} (${g.need}): ${Math.round(g.used)} used ×${g.pressure}, ${Math.round(g.made)} made, ${Math.round(g.carried)} carried; ${Math.round(rest)}%`,
+          ),
         `  reaches: ${
           reachOf(m)
             .map((o) => o.name)
@@ -350,12 +362,14 @@ export const COMMANDS: Record<string, Command> = {
             .map(copyTitle)
             .join(', ') || 'none'
         }`,
-        ...(off.length ? ['  supplies moved:'] : ['  every supply at its written value']),
+        ...(off.length ? ['  supplies moved:'] : ['  every supply at its rest']),
         ...off.map((good) => {
           const thingId = thingOfGood(good);
           const seen = seenIn(s.world, m, thingId);
           const now = Math.round(supplyOf(s.world, m, thingId, day));
-          return `    ${goodName(thingId)} (${good}): ${now}%, written ${seen.supply}% (${seen.source})`;
+          const rest = restOf(s.world, m, thingId, month);
+          const at = rest !== null ? `rest ${Math.round(rest)}%` : `written ${seen.supply}%`;
+          return `    ${goodName(thingId)} (${good}): ${now}%, ${at} (${seen.source})`;
         }),
       ];
     },

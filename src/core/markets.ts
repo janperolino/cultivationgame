@@ -8,7 +8,15 @@ import { CATALOGS } from '../content/catalogs/index.ts';
 import { RARE } from '../content/catalogs/rare.ts';
 import type { Lot } from '../content/catalogs/types.ts';
 import { copyChapter, copyForm, copyOf, hasCopy } from '../content/copies.ts';
-import { baseOf, hasItem, item, itemKind, variantId, type Item } from '../content/items.ts';
+import {
+  baseOf,
+  hasItem,
+  item,
+  itemKind,
+  variantId,
+  type Item,
+  type ItemKind,
+} from '../content/items.ts';
 import type { Population } from '../content/atlas/schema.ts';
 import { peopleAt, REGIONS } from '../content/map/index.ts';
 import {
@@ -17,6 +25,8 @@ import {
   OPENING_CHAPTERS,
   PROSPERITY,
   PROSPERITY_EASE_DAYS,
+  PURSE_SHARE,
+  REST_STEP,
   REACH_LI,
   ROAD,
   SIZE,
@@ -30,6 +40,7 @@ import {
   type MarketKind,
   type Source,
 } from '../content/markets.ts';
+import { monthUse, restOf } from './making.ts';
 import { rarityRank } from '../content/rarity.ts';
 import { realmScale, tierRealm } from '../content/realms.ts';
 import {
@@ -62,6 +73,8 @@ export interface Market {
   shops: readonly string[];
   /** Item kinds and tags it needs (`goodTags`). */
   needs: readonly string[];
+  /** Each need's written reason: the place screen's line of why (People make and use). */
+  why: Readonly<Record<string, string>>;
 }
 
 function buildMarkets(): Market[] {
@@ -82,7 +95,8 @@ function buildMarkets(): Market[] {
         region: first.region,
         continent: first.continent,
         shops,
-        needs: needs[t.id] ?? [],
+        needs: Object.keys(needs[t.id] ?? {}),
+        why: needs[t.id] ?? {},
       });
     }
     for (const p of r.file.places) {
@@ -100,7 +114,8 @@ function buildMarkets(): Market[] {
         region: first.region,
         continent: first.continent,
         shops,
-        needs: needs[id] ?? [],
+        needs: Object.keys(needs[id] ?? {}),
+        why: needs[id] ?? {},
       });
     }
   }
@@ -215,6 +230,37 @@ export function mortalWages(prosperity: number): number {
   return WAGE_TAELS * PROSPERITY[clampProsperity(prosperity)]!.wages;
 }
 
+// ── Who lives there ───────────────────────────────────────────────────────────────────────────
+
+/** A population's head count keys, mortals first, then the realms in order. */
+export const POPULATION_KEYS = [
+  'mortals',
+  'qi',
+  'foundation',
+  'core',
+  'nascent',
+  'deity',
+  'void',
+] as const;
+
+/**
+ * Who lives at a written town or an atlas place today (People make and use): its written people
+ * moved by what the world did to them (`world.population`), never under none. The monthly sum and
+ * the purses read it; the shops a market keeps and its tiers still read the written people until
+ * something sets an offset.
+ */
+export function populationOf(w: World, id: string): Population {
+  const pop = peopleAt(id);
+  const off = w.population[id];
+  if (!off) return pop;
+  const out: Population = {};
+  for (const k of POPULATION_KEYS) {
+    const n = Math.max(0, (pop[k] ?? 0) + (off[k] ?? 0));
+    if (n > 0) out[k] = n;
+  }
+  return out;
+}
+
 // ── Shops by prosperity and vein ──────────────────────────────────────────────────────────────
 
 /** The prosperity a shop reads: a sect shop its power's, any other its market's. */
@@ -247,6 +293,32 @@ export function shopTiers(sh: Shop): number[] {
   return Array.from({ length: Math.max(1, top) }, (_, i) => i + 1);
 }
 
+/** What takes its maker's tier on a shelf (design § Catalogs by place, Rarity as quality). */
+const MAKER_TIERED: readonly ItemKind[] = ['pill', 'talisman', 'beast-part'];
+
+/** A staple: the `trade` tag, the bulk end of a kind (design § Economy, Trading yourself). */
+export function isStaple(thing: string): boolean {
+  return !hasCopy(thing) && hasItem(thing) && (item(thing).tags ?? []).includes('trade');
+}
+
+/**
+ * The tiers a lot comes at among `tiers`: its written one, and for a pill, a talisman, a beast
+ * part or a staple any tier above it, since those take their maker's or their beast's. A gate
+ * pill, a hiding talisman and a mortal good keep their own.
+ */
+export function lotTiers(thing: string, written: number, tiers: readonly number[]): number[] {
+  if (hasCopy(thing)) return tiers.includes(written) ? [written] : [];
+  const it = item(thing);
+  // A staple is tiered like anything else, so a Foundation trader hauls tier 2 ore (E3).
+  const fixed =
+    (!MAKER_TIERED.includes(itemKind(it)) && !isStaple(thing)) ||
+    !!it.uses.offer ||
+    !!it.uses.hide ||
+    it.taels !== undefined ||
+    (it.tags ?? []).includes('coveted');
+  return tiers.filter((t) => t === written || (!fixed && t > written));
+}
+
 /**
  * A market's size by who lives there (`SIZE`): log10 of its cultivators ÷ 50, ×0.5 to ×2. A lot
  * moves its supply less by this, so the City takes a Bag that floods a village.
@@ -258,14 +330,50 @@ export function marketSize(m: Market): number {
 }
 
 /**
- * A shop's purse a month: its kind's at tier 1, times the realm curve at the highest tier it
- * stocks, times prosperity's purse. The City's alchemy shop, to tier 3 and ordinary, holds 405 mid.
+ * What a market's people earn in a month (What a market holds, a shop's purse): each cultivator a
+ * month of wages at their realm and its prosperity, counting only the realms whose tier its shops
+ * stock (a Nascent Soul's spending doesn't pass through tier 3 shops), in low-grade stones; or,
+ * for its mortals, a month of a laborer's wages each, in taels.
+ */
+export function earnings(w: World, m: Market, prosperity: number, mortals: boolean): number {
+  const pop = populationOf(w, m.id);
+  if (mortals) return (pop.mortals ?? 0) * mortalWages(prosperity) * DAYS_PER_MONTH;
+  const top = stoneTopTier(m);
+  return POPULATION_KEYS.slice(1, top + 1).reduce(
+    (t, k, i) => t + (pop[k] ?? 0) * wages(i + 1, prosperity) * DAYS_PER_MONTH,
+    0,
+  );
+}
+
+/** The highest tier a market's stone shops stock (a mortal shop aside). */
+function stoneTopTier(m: Market): number {
+  const tiers = m.shops
+    .map((id) => shopById(id))
+    .filter((sh) => SHOP_KIND_INFO[sh.kind].money === 'stones')
+    .map((sh) => Math.max(...shopTiers(sh)));
+  return tiers.length ? Math.max(...tiers) : 1;
+}
+
+/**
+ * A shop's purse a month (E4): half of what its market's people earn passes through its shops,
+ * split among its stone shops by their kinds' weights (`purse`: a stall 150, an alchemy shop or a
+ * refiner 1,500, a guild hall 8,000, the bounty office 20,000), never under its weight times
+ * prosperity's purse; a mortal shop shares half its mortals' earnings in taels. In low-grade
+ * stones' worth, paid in its market's grade. The City's alchemy shops hold about 7 mid each, its
+ * bounty office about 93; the Foot of the Wall's stall about 720 low.
  */
 export function shopPurse(w: World, sh: Shop, day: number): number {
   const info = SHOP_KIND_INFO[sh.kind];
-  const top = Math.max(...shopTiers(sh));
-  const curve = info.money === 'silver' ? 1 : realmScale(tierRealm(top).id);
-  return Math.round(info.purse * curve * PROSPERITY[shopProsperity(w, sh, day)]!.purse);
+  const p = shopProsperity(w, sh, day);
+  const floor = info.purse * PROSPERITY[p]!.purse;
+  const m = marketOfShop(sh.id);
+  if (!m) return Math.round(floor);
+  const peers = m.shops
+    .map((id) => SHOP_KIND_INFO[shopById(id).kind])
+    .filter((k) => k.money === info.money);
+  const weight = peers.reduce((t, k) => t + k.purse, 0);
+  const share = (earnings(w, m, p, info.money === 'silver') * PURSE_SHARE * info.purse) / weight;
+  return Math.round(Math.max(floor, share));
 }
 
 /** A shop's lots a month: its kind's times prosperity's lots, never under one. */
@@ -285,7 +393,7 @@ export function reachOf(m: Market): Market[] {
 
 const placeCache = new Map<string, Lot[]>();
 /** A place's catalogs' lots that are made for sale: its own and its kingdom's (`placeChain`). */
-function placeLots(place: string): Lot[] {
+export function placeLots(place: string): Lot[] {
   let lots = placeCache.get(place);
   if (!lots) {
     const at = placeChain(place);
@@ -532,14 +640,31 @@ export function standingCopies(w: World, sh: Shop, month: number): string[] {
   return out;
 }
 
-/** A good's supply in a market today: its written supply, with what was done to it easing back. */
+/**
+ * A good's supply in a market today. A good in the monthly sum (core/making.ts) rests where the sum
+ * says, and what was done to it moves a third of the way back to that rest each month, the rest
+ * moving with the harvest as it goes; any other good eases a tenth of the way back to its written
+ * supply.
+ */
 export function supplyOf(w: World, m: Market, thing: string, day: number): number {
-  const base = seenIn(w, m, thing).supply;
+  const month = Math.floor(day / DAYS_PER_MONTH);
   const kept = w.supply[m.id]?.[goodOf(thing)];
+  const rest = restOf(w, m, thing, month);
+  if (rest !== null) {
+    // Two years of thirds leave nothing of the old supply worth counting.
+    if (!kept || month - kept.month > REST_MONTHS) return rest;
+    let n = kept.n;
+    for (let k = kept.month + 1; k <= month; k++) n += (restOf(w, m, thing, k)! - n) * REST_STEP;
+    return n;
+  }
+  const base = seenIn(w, m, thing).supply;
   if (!kept) return base;
-  const months = Math.max(0, Math.floor(day / DAYS_PER_MONTH) - kept.month);
+  const months = Math.max(0, month - kept.month);
   return base + (kept.n - base) * (1 - SUPPLY_EASE) ** months;
 }
+
+/** How many months a kept supply is followed back to its rest before it is read as at rest. */
+const REST_MONTHS = 24;
 
 /** What a market's price does to a good's posted price: √(100 ÷ supply), and the road's share. */
 export function marketFactor(w: World, m: Market, thing: string, day: number): number {
@@ -547,10 +672,13 @@ export function marketFactor(w: World, m: Market, thing: string, day: number): n
 }
 
 /**
- * Whether a market needs a good: it is written at half supply (a need, a coveted thing, or in none
- * of its layers) and still stands under 100%. Once filled, it pays only the shop's rate.
+ * Whether a market needs a good: one in the monthly sum while it stands under 100%, and any other
+ * while it is written at half supply (a need, a coveted thing, or in none of its layers) and still
+ * stands under 100%. Once filled, it pays only the shop's rate.
  */
 export function wanted(w: World, m: Market, thing: string, day: number): boolean {
+  if (restOf(w, m, thing, Math.floor(day / DAYS_PER_MONTH)) !== null)
+    return supplyOf(w, m, thing, day) < 100;
   return seenIn(w, m, thing).supply < 100 && supplyOf(w, m, thing, day) < 100;
 }
 
@@ -579,19 +707,26 @@ export function lotSize(thing: string): number {
 }
 
 /**
- * Moves a good's supply by `pieces` sold to the market (negative when bought from it): by its
- * depth a lot, divided by prosperity's lots and the market's size, so a bigger market moves less.
+ * Moves a good's supply by `pieces` sold to the market (negative when bought from it). A good in
+ * the monthly sum moves by its share of the market's month of use, 100 points for a month's worth,
+ * at most its depth a lot, so a Bag barely moves the City; any other good moves by its depth a lot,
+ * divided by prosperity's lots and the market's size.
  */
 export function moveSupply(w: World, m: Market, thing: string, pieces: number, day: number): World {
   if (pieces === 0) return w;
-  const base = seenIn(w, m, thing).supply;
-  const lots = PROSPERITY[prosperityOf(w, m.id, day)]!.lots * marketSize(m);
-  const delta = ((pieces / lotSize(thing)) * depthOf(thing)) / lots;
+  const month = Math.floor(day / DAYS_PER_MONTH);
+  const rest = restOf(w, m, thing, month);
+  const base = rest ?? seenIn(w, m, thing).supply;
+  const perLot = depthOf(thing) / lotSize(thing);
+  const delta =
+    rest !== null
+      ? pieces * Math.min(perLot, 100 / monthUse(w, m, thing, month)!)
+      : (pieces * perLot) / (PROSPERITY[prosperityOf(w, m.id, day)]!.lots * marketSize(m));
   const n = Math.min(SUPPLY_MAX, Math.max(SUPPLY_MIN, supplyOf(w, m, thing, day) + delta));
   const good = goodOf(thing);
   const ledger = { ...(w.supply[m.id] ?? {}) };
   if (Math.abs(n - base) < 0.5) delete ledger[good];
-  else ledger[good] = { n, month: Math.floor(day / DAYS_PER_MONTH) };
+  else ledger[good] = { n, month };
   const supply = { ...w.supply };
   if (Object.keys(ledger).length) supply[m.id] = ledger;
   else delete supply[m.id];

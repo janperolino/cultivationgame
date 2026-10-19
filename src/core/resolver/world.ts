@@ -246,6 +246,12 @@ export const WorldSchema = z.object({
    */
   copied: z.record(z.string(), z.record(z.string(), z.number().int())),
   /**
+   * Who lives at a place moved from the written (design § Economy, People make and use), by place
+   * and realm: heads added or lost, so a town that grows or empties moves its baskets, its making
+   * and its purses. E4 sets none.
+   */
+  population: z.record(z.string(), z.record(z.string(), z.number().int())),
+  /**
    * Storage rings you took that won't open to you yet (core/loot.ts): whose they were, what is in
    * them and their tier, until your soul or your realm reaches it.
    */
@@ -278,6 +284,7 @@ export function emptyWorld(): World {
     prosperity: {},
     supply: {},
     copied: {},
+    population: {},
     sealed: [],
     next: 1,
   };

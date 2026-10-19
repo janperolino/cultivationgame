@@ -116,3 +116,99 @@ export const NEED_RATE = 0.8;
 export const TIER_LEAN = 0.1;
 /** The highest tier that weighs in full. */
 export const TIER_LEAN_FROM = 2;
+
+// ── People make and use (E4) ──────────────────────────────────────────────────────────────────
+
+/**
+ * What a head uses a month by need (design § Economy, People make and use, the monthly basket):
+ * a mortal, then a cultivator at tiers 1 to 3 (Qi Condensation, Foundation, Core Formation), each
+ * filled by goods at their own level, a mortal's in taels. Prosperity's wages scale it.
+ */
+export const BASKET = {
+  grain: [0.8, 2, 1, 0],
+  salt: [0.05, 0, 0, 0],
+  oil: [0.1, 0, 0, 0],
+  cloth: [0.02, 0, 0, 0],
+  'qi-fuel': [0, 2, 2, 2],
+  'qi-restoring': [0, 1, 1, 1],
+  healing: [0, 1, 1, 1],
+  talisman: [0, 1, 1, 1],
+  detox: [0, 0.2, 0.2, 0.2],
+  'body-fuel': [0, 0.3, 0.3, 0.3],
+  'soul-fuel': [0, 0.2, 0.2, 0.2],
+  weapon: [0, 0.03, 0.03, 0.03],
+  armor: [0, 0.03, 0.03, 0.03],
+} as const satisfies Record<string, readonly [number, number, number, number]>;
+export type BasketNeed = keyof typeof BASKET;
+
+/** The tags that fill a need, when not its own name: cloth is wool or hide. */
+export const FILLED_BY: Partial<Record<string, readonly string[]>> = { cloth: ['wool', 'hide'] };
+
+/**
+ * What a maker uses a piece, by what it makes (design § Economy, What makers use): a pill a herb of
+ * its tier, a talisman its ink, a weapon or armor 5 ore, a sack of spirit grain 0.1 of bone meal.
+ * A catalog line may write its own (`Lot.uses`). Inputs use nothing.
+ */
+export const MAKER_USES = {
+  pill: { herb: 1 },
+  talisman: { ink: 1 },
+  gear: { ore: 5 },
+  grain: { 'bone-meal': 0.1 },
+} as const satisfies Record<string, Record<string, number>>;
+
+/**
+ * Pressures turn a need up (People make and use): a written need ×2, marsh or jungle land doubles
+ * detox, thin qi (a density of 3 or less) raises qi-fuel by half; together at most ×3.
+ */
+export const PRESSURE = {
+  written: 2,
+  wet: { lands: ['marsh', 'jungle'], tag: 'detox', x: 2 },
+  thin: { qi: 3, tag: 'qi-fuel', x: 1.5 },
+  max: 3,
+} as const;
+
+/** A maker makes half again what its own people use (or, using none, what its reach uses). */
+export const MAKE_SHARE = 1.5;
+
+/**
+ * Harvests (People make and use): a seasonal good is made at ×1.4 the month after its harvest,
+ * falling evenly to ×0.6 the month before the next, at the same yearly total. Grain is reaped in
+ * autumn's middle month, herbs picked through spring and summer, counted from midsummer. Months
+ * count from the year's first, spring's first.
+ */
+export const HARVEST = {
+  months: { grain: 7, herb: 4 },
+  high: 1.4,
+  low: 0.6,
+} as const;
+
+/** A supply in the sum moves this share of the way to its rest each month. */
+export const REST_STEP = 1 / 3;
+
+/**
+ * Half of what a market's people earn passes through its shops (What a market holds, a shop's
+ * purse), split among its stone shops by their kinds' `purse`, a mortal shop's among its mortals.
+ */
+export const PURSE_SHARE = 0.5;
+
+/** What the line of why calls a need, and whether it reads as one thing ("salt runs short"). */
+export const NEED_WORDS: Readonly<Record<string, { word: string; one?: boolean }>> = {
+  grain: { word: 'grain', one: true },
+  salt: { word: 'salt', one: true },
+  oil: { word: 'lamp oil', one: true },
+  cloth: { word: 'cloth', one: true },
+  'qi-fuel': { word: 'gathering pills' },
+  'qi-restoring': { word: 'restoring pills' },
+  healing: { word: 'healing pills' },
+  talisman: { word: 'talismans' },
+  detox: { word: 'detox pills' },
+  'body-fuel': { word: 'body-tempering pills' },
+  'soul-fuel': { word: 'soul pills' },
+  weapon: { word: 'weapons' },
+  armor: { word: 'armor', one: true },
+  herb: { word: 'herbs' },
+  ink: { word: 'talisman ink', one: true },
+  ore: { word: 'ore', one: true },
+  'bone-meal': { word: 'bone meal', one: true },
+  horn: { word: 'horn', one: true },
+};

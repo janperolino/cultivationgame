@@ -47,10 +47,11 @@ export interface RegionContent {
   placeShops: Readonly<Record<string, readonly string[]>>;
   /**
    * What each market needs, by its town or atlas place (design § Economy, Supply and prices): two
-   * to four item kinds or tags (core/markets.ts `goodTags`), held at half supply. Drafted in E2
-   * for Jan's review.
+   * to four item kinds or tags (core/markets.ts `goodTags`), each with its reason. A need is a
+   * pressure, doubling what the market uses of it, and its reason is the place screen's line of why
+   * (People make and use). Drafted in E2 for Jan's review, the reasons in E4.
    */
-  needs: Readonly<Record<string, readonly string[]>>;
+  needs: Readonly<Record<string, Readonly<Record<string, string>>>>;
   /** The wild tracts' names; their cells are seeded, and the wet names go to the cells nearest the sea. */
   tracts: readonly { name: string; hanzi: string; terrain: string }[];
   /** The hearts the atlas names, by the forbidden land they rule: their name and hanzi. */
@@ -361,42 +362,101 @@ export const BORDER_WILDS: RegionContent = {
   needs: {
     // An army's headquarters on the strait: it bleeds, its karst and surf grow few herbs or ore, and
     // its refiners cut thunderhorn for grips (E3).
-    'qm-shoukou-cheng': ['healing', 'herb', 'material', 'horn'],
+    'qm-shoukou-cheng': {
+      healing: "an army's headquarters bleeds faster than the markets round it carry them in",
+      herb: 'its karst and surf grow few herbs for its alchemists',
+      material: 'its karst and surf give its makers little ore or ink',
+      horn: 'its refiners cut thunderhorn for every grip',
+    },
     // Raiders who burn talismans by the bundle and drain their qi across the strait.
-    'qm-tushou-men': ['talisman', 'qi-restoring'],
+    'qm-tushou-men': {
+      talisman: 'its raiders burn talismans by the bundle',
+      'qi-restoring': 'raids across the strait drain its butchers dry',
+    },
     // Smugglers who pass cubs and blood up the chain and patch their runners as they go.
-    'qm-yeqiao-hui': ['beast-part', 'healing'],
+    'qm-yeqiao-hui': {
+      'beast-part': 'its smugglers pass cubs and blood up the chain',
+      healing: 'its runners come back cut and patch themselves as they go',
+    },
     // The cadet school eats gathering pills and restoring pills faster than the sutler stocks them,
     // and the spirit fields round the fort want bone meal every season (E3).
-    'pacified-fort': ['qi-fuel', 'qi-restoring', 'bone-meal'],
+    'pacified-fort': {
+      'qi-fuel': 'the cadet school eats them faster than the sutler stocks them',
+      'qi-restoring': 'the cadets drill their qi dry every day',
+      'bone-meal': 'the spirit fields round the fort want it every season',
+    },
     // Frontier farmers always short of horses and carts.
-    'spear-plow': ['mount', 'vessel'],
+    'spear-plow': {
+      mount: 'frontier farmers are always short of horses',
+      vessel: 'frontier farmers are always short of carts',
+    },
     // Cave clans far from any alchemist, on thin qi, farming terraces that never fill a granary.
-    'sinkhole-terraces': ['healing', 'qi-fuel', 'grain'],
+    'sinkhole-terraces': {
+      healing: 'the cave clans live far from any alchemist',
+      'qi-fuel': 'the cave clans brew no pills of their own',
+      grain: 'the terraces eat more than they grow, and the March is far',
+    },
     // Tamers who feed their herds on beast parts, mend their riders, armor their mounts and salt
     // their herds, a hundred li from the sea (E3).
-    'corral-town': ['beast-part', 'healing', 'armor', 'salt'],
+    'corral-town': {
+      'beast-part': 'the tamers feed their herds on beast parts',
+      healing: 'riders come off half-broken mounts every day',
+      armor: 'the tamers armor their mounts as well as themselves',
+      salt: 'the herds want salt, a hundred li from the sea',
+    },
     // The Wall's patrols: healing pills and talismans (design § Economy, Supply and prices), and
     // the rice they eat on 9,000 li of wall (E3).
-    'foot-of-the-wall': ['healing', 'talisman', 'grain'],
+    'foot-of-the-wall': {
+      healing: 'the patrols bleed along 9,000 li of wall faster than the stall stocks them',
+      talisman: 'the patrols burn talismans on every watch',
+      grain: 'the patrols eat rice carried from the March',
+    },
     // E2.1's markets. The Qians' agents buy the March's cores here, the levy barges burn wards,
     // and the levy is sent to the Wall in wool (E3).
-    'qm-hewan-cheng': ['beast-part', 'talisman', 'wool'],
+    'qm-hewan-cheng': {
+      'beast-part': "the Qians' agents buy the March's cores here",
+      talisman: 'the levy barges burn wards on every crossing',
+      wool: 'the levy is sent to the Wall in wool',
+    },
     // The royal stud and its riders: barding, healing for the king's games, fodder herbs, and lamp
     // oil on a plain with no caves to render it (E3).
-    'qm-qianlan-cheng': ['armor', 'healing', 'herb', 'oil'],
+    'qm-qianlan-cheng': {
+      armor: 'the royal stud wants barding for every mount',
+      healing: "the king's games break riders every season",
+      herb: 'the herds eat fodder herbs faster than the plain grows them',
+      oil: 'the plain has no caves to render lamp oil',
+    },
     // Karst with no iron in it, two li of stairs that drain a climber's qi, and no salt inland (E3).
-    'qm-tianyan': ['weapon', 'qi-restoring', 'salt'],
+    'qm-tianyan': {
+      weapon: 'its karst holds no iron',
+      'qi-restoring': "two li of stairs drain a climber's qi",
+      salt: 'no salt comes this far inland',
+    },
     // The chain forts it ships to burn talismans, and its breakwaters eat material.
-    'qm-tuichao-gang': ['talisman', 'material'],
+    'qm-tuichao-gang': {
+      talisman: 'the chain forts it ships to burn them by the crate',
+      material: 'its breakwaters eat whatever its makers are sent',
+    },
     // Rogues who bleed for what they sell and hide from whoever it was taken from.
-    'qm-wuming-ji': ['healing', 'hiding'],
+    'qm-wuming-ji': {
+      healing: 'its rogues bleed for what they sell',
+      hiding: 'its rogues hide from whoever it was taken from',
+    },
     // Bonded beasts that eat beast parts, and a hatchery that eats herbs.
-    'qm-baijiang-zong': ['beast-part', 'herb'],
+    'qm-baijiang-zong': {
+      'beast-part': 'its bonded beasts eat beast parts',
+      herb: 'its hatchery eats herbs',
+    },
     // Array plates along 9,000 li of Wall, and the relay walkers' talismans.
-    'qm-fugu-ge': ['material', 'talisman'],
+    'qm-fugu-ge': {
+      material: 'its array plates run along 9,000 li of Wall',
+      talisman: 'its relay walkers burn talismans on every stage',
+    },
     // Ten thousand lamps to keep lit, and keepers who spend their qi on them.
-    'qm-shoudeng-zong': ['material', 'qi-restoring'],
+    'qm-shoudeng-zong': {
+      material: 'ten thousand lamps want keeping lit',
+      'qi-restoring': 'its keepers spend their qi on the lamps',
+    },
   },
   tracts: [
     { name: 'Saltreed Flats', hanzi: '盐苇滩', terrain: 'coast' },

@@ -340,7 +340,13 @@ export const EBB_HARBOR: Catalog = {
   ],
   lots: [
     // Staples (E3)
-    { thing: 'broken-tide-salt', shops: ['mortal'], count: [20, 20] },
+    // Salt from any coast, isle or desert (E4's land tags, for Jan's review).
+    {
+      thing: 'broken-tide-salt',
+      shops: ['mortal'],
+      count: [20, 20],
+      land: ['coast', 'islands', 'desert'],
+    },
     { thing: 'bound-reef-scale', shops: ['stall', 'guild'] },
     { thing: 'ebb-tide-talisman', shops: ['stall', 'guild'], count: [1, 3] },
     { thing: 'harbor-mud-razor-shell', shops: ['stall', 'guild'], count: [2, 8] },

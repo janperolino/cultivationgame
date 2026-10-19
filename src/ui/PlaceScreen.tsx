@@ -45,6 +45,7 @@ import {
   supplyOf,
   writtenProsperity,
 } from '../core/markets.ts';
+import { whyOf } from '../core/making.ts';
 import { gradeCount, priceWords, stonesOf, stonesWords } from '../core/purse.ts';
 import { isMember } from '../core/resolver/names.ts';
 import {
@@ -225,6 +226,9 @@ export function PlaceScreen({
     `qi density ${qd}, ${QI_NAMES[qd]}`,
     area?.name,
   ].filter(Boolean);
+  // The market's biggest gap and its cause (design § Economy, People make and use, the guards).
+  const here = kind === 'site' ? undefined : market(place.id);
+  const why = here ? whyOf(game.world, here, game.calendar.day) : null;
 
   return (
     <div className="place-screen">
@@ -261,6 +265,7 @@ export function PlaceScreen({
               </>
             )}
           </div>
+          {why && <div className="place-why">{why}</div>}
         </div>
         <div className="place-purse">
           <span>

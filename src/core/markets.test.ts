@@ -42,13 +42,18 @@ const CITY = 'qm-shoukou-cheng';
 describe('prices by where a thing is made and needed', () => {
   it('sell the same healing pill cheap where it is made and dear where it is needed', () => {
     const w = emptyWorld();
-    // The March makes the Garrison Ration Pill; the City, an army's seat, needs healing.
+    // The March makes the Garrison Ration Pill; the City, an army's seat, needs healing. Since E4
+    // the sum says so: the Fort makes half again what it uses (150%), and the City's healing is
+    // carried in at its unpressured use and used twice over (50%); the March's own pill reaches
+    // nothing in the City's layers, so it is a basket good from nowhere there (25%).
     expect(seenFrom(m('pacified-fort'), 'garrison-ration-pill')).toMatchObject({ source: 'made' });
     expect(seenFrom(m(CITY), 'garrison-ration-pill')).toMatchObject({ source: 'need', supply: 50 });
     const made = marketFactor(w, m('pacified-fort'), 'garrison-ration-pill', 0);
-    const needed = marketFactor(w, m(CITY), 'garrison-ration-pill', 0);
+    const needed = marketFactor(w, m(CITY), 'spring-returning-pill', 0);
+    const nowhere = marketFactor(w, m(CITY), 'garrison-ration-pill', 0);
     expect(made).toBeCloseTo(Math.sqrt(100 / 150));
     expect(needed).toBeCloseTo(Math.SQRT2);
+    expect(nowhere).toBeCloseTo(2);
     // The City buys what it needs at 80% of its own price, the black market never.
     const s = withPlayer(life(), addItem(life().player, 'garrison-ration-pill', 1));
     const city = offerFor(s, 'mouth-alchemy', 'garrison-ration-pill');
@@ -74,13 +79,14 @@ describe('prices by where a thing is made and needed', () => {
 
 describe('supply moves and eases back', () => {
   it('drop the offer when ten lots are sold, and recover over months', () => {
-    // The City needs herbs: Medicine Ridges kernels come in lots of about three.
-    const thing = 'old-apricot-kernel';
+    // The City needs material: root-binding jade fills no basket and no maker's need, so it stays
+    // outside the monthly sum, written at half supply and moved by the depth table.
+    const thing = 'root-binding-jade';
     const s = withPlayer(life(), addItem(life().player, thing, 70));
     const before = offerFor(s, 'mouth-alchemy', thing);
     if (!before.ok) throw new Error(before.reason);
     expect(before.wanted).toBe(true);
-    const r = sell(s, 'mouth-alchemy', thing, 60);
+    const r = sell(s, 'mouth-alchemy', thing, 20);
     if (!r.ok) throw new Error(r.reason);
     const day = r.state.calendar.day;
     // Twenty lots at 10 points each take it from 50% to 150%: the City is ordinary, and twice an
@@ -100,23 +106,24 @@ describe('supply moves and eases back', () => {
   });
 
   it('move a lean market further than an ordinary one', () => {
-    const s = withPlayer(life(), addItem(life().player, 'calm-heart-grass', 30));
-    // The Wall's stall, lean (lots ×0.75) and small (sixty cultivators, ×0.5): its own herb, made
-    // there, rises 10 ÷ 0.375 a lot.
-    const r = sell(s, 'wall-stall', 'calm-heart-grass', 4);
+    const s = withPlayer(life(), addItem(life().player, 'beast-core', 3));
+    // The Wall's stall, lean (lots ×0.75) and small (sixty cultivators, ×0.5): a beast core, the
+    // hunt's and outside the monthly sum, rises 10 ÷ 0.375 a lot from its written 100%.
+    const r = sell(s, 'wall-stall', 'beast-core', 1);
     if (!r.ok) throw new Error(r.reason);
     expect(
-      supplyOf(r.state.world, m('foot-of-the-wall'), 'calm-heart-grass', r.state.calendar.day),
-    ).toBeCloseTo(150 + 10 / 0.375);
+      supplyOf(r.state.world, m('foot-of-the-wall'), 'beast-core', r.state.calendar.day),
+    ).toBeCloseTo(100 + 10 / 0.375);
   });
 });
 
 describe('purses, lots and tiers', () => {
   it('size a purse by its tier and prosperity: the Wall’s stall can’t buy a Foundation Pill', () => {
     const w = emptyWorld();
-    expect(shopPurse(w, shop('wall-stall'), 0)).toBe(90);
-    // The City's alchemy shop stocks to tier 3 now, and is ordinary: 1,500 × 270.
-    expect(shopPurse(w, shop('mouth-alchemy'), 0)).toBe(405_000);
+    // Half of what a market's people earn, split by the kinds' weights (E4): the Wall's sixty
+    // cultivators keep one stall, so it holds about 720; the City's alchemy shop about 7 mid.
+    expect(shopPurse(w, shop('wall-stall'), 0)).toBe(720);
+    expect(shopPurse(w, shop('mouth-alchemy'), 0)).toBeCloseTo(7000, -3);
     const s = withPlayer(life(), addItem(life().player, 'foundation-pill', 1));
     expect(sell(s, 'wall-stall', 'foundation-pill', 1)).toMatchObject({ ok: false });
     const city = sell(s, 'mouth-alchemy', 'foundation-pill', 1);
@@ -296,7 +303,7 @@ describe('prosperity', () => {
     delete raw.state.world.prosperity;
     delete raw.state.world.supply;
     const old = loadSave(raw);
-    expect(old.version).toBe(35);
+    expect(old.version).toBe(36);
     expect(old.state.world.supply).toEqual({});
     expect(old.state.world.prosperity).toEqual({});
   });

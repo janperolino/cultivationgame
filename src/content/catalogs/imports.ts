@@ -58,6 +58,8 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
         upTo: 'blue',
         kind: 'material',
         stack: 20,
+        // Talisman ink (E4): what a talisman's maker uses a piece.
+        tags: ['ink'],
         uses: { ingredient: { tags: ['ore', 'fire'] } },
         source: 'the Red Rocks’ mines',
         text: 'Red ore that stains the fingers. Refiners want it for edges, talisman-makers for ink.',

@@ -9,15 +9,8 @@ import { COPY_FORM_WORDS, copyForm } from '../content/copies.ts';
 import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { item } from '../content/items.ts';
 import { bagStacks } from './gear.ts';
-import {
-  guardedBy,
-  market,
-  marketSize,
-  seenIn,
-  spreads,
-  standingCopies,
-  supplyOf,
-} from './markets.ts';
+import { monthUse, restOf } from './making.ts';
+import { guardedBy, market, seenIn, spreads, standingCopies, supplyOf } from './markets.ts';
 import { shop } from '../content/shops.ts';
 import { heatOf, standingOf } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
@@ -58,8 +51,12 @@ describe('staples stand on the shelf where they are made', () => {
       if (!r.ok) throw new Error(r.reason);
       s = r.state;
     }
-    const after = standing(s, 'march-stall', 'spirit-rice')!;
-    expect(after.price).toBeGreaterThan(first.price);
+    // Each lot leaves less: the Fort eats about 2,700 sacks a month, so three lots move it a few
+    // points, under the shelf's rounding of a tenth of a stone (E4).
+    const fort = market('pacified-fort')!;
+    expect(supplyOf(s.world, fort, 'spirit-rice', s.calendar.day)).toBeLessThan(
+      supplyOf(life().world, fort, 'spirit-rice', s.calendar.day),
+    );
     // Three lots, three Bag squares.
     expect(bagStacks(s.player).filter((x) => x.id === 'spirit-rice').length).toBe(3);
   });
@@ -105,9 +102,15 @@ describe('selling lot by lot', () => {
     s = r.state;
     const later = offerFor(s, 'eyes-alchemy', 'spirit-rice');
     expect(later.ok && first.ok && later.each < first.each).toBe(true);
-    expect(
-      supplyOf(s.world, market('sinkhole-terraces')!, 'spirit-rice', s.calendar.day),
-    ).toBeCloseTo(50 + 10 * (2 / (0.75 * marketSize(market('sinkhole-terraces')!))), 0);
+    // The terraces eat about 1,900 sacks a month, so ten lots move it 100 points a month's worth
+    // (E4): about ten.
+    const terraces = market('sinkhole-terraces')!;
+    const month = Math.floor(s.calendar.day / DAYS_PER_MONTH);
+    expect(supplyOf(s.world, terraces, 'spirit-rice', s.calendar.day)).toBeCloseTo(
+      restOf(s.world, terraces, 'spirit-rice', month)! +
+        (200 * 100) / monthUse(s.world, terraces, 'spirit-rice', month)!,
+      1,
+    );
   });
 });
 
@@ -224,7 +227,7 @@ describe('the save', () => {
     raw.version = 34;
     delete raw.state.world.copied;
     const old = loadSave(raw);
-    expect(old.version).toBe(35);
+    expect(old.version).toBe(36);
     expect(old.state.world.copied).toEqual({});
   });
 });
