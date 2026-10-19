@@ -41,6 +41,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = join(ROOT, 'content', 'atlas', 'entries.json');
 const OUT = join(ROOT, 'src', 'content', 'generated', 'atlas.json');
 const INDEX_OUT = join(ROOT, 'src', 'content', 'generated', 'atlas-index.json');
+const ORGS_OUT = join(ROOT, 'src', 'content', 'generated', 'organizations.json');
 /** Outlines are rounded to this many li. */
 const PRECISION = 10;
 const DROPPED = new Set(['notes', 'order', 'editedBy', 'editedAt']);
@@ -210,6 +211,39 @@ writeFileSync(
   '[\n' +
     atlasIndex(atlas.entries)
       .map((e) => JSON.stringify(e))
+      .join(',\n') +
+    '\n]\n',
+);
+
+// What organizations read (O1; design § Professions, people and powers): every power, and every
+// kingdom, which reads as a dynasty when no power rules it, with what its seats are read from.
+const regionOf = (id: string): string | null => {
+  for (let e = atlas.entries.find((x) => x.id === id); e;) {
+    if (e.kind === 'region') return e.id;
+    const parent = e.parent;
+    e = parent === null ? undefined : atlas.entries.find((x) => x.id === parent);
+  }
+  return null;
+};
+const orgRow = (e: AtlasEntry) => ({
+  id: e.id,
+  name: e.name,
+  pinyin: e.pinyin,
+  hanzi: e.hanzi,
+  ...(e.type ? { type: e.type } : {}),
+  parent: e.parent,
+  region: regionOf(e.id),
+  top: e.top.realm,
+  ...(e.population ? { population: e.population } : {}),
+  ...(e.vein !== undefined ? { vein: e.vein } : {}),
+  foes: (e.ties ?? []).filter((t) => t.kind === 'enemy' || t.kind === 'feud').map((t) => t.to),
+});
+writeFileSync(
+  ORGS_OUT,
+  '[\n' +
+    atlas.entries
+      .filter((e) => e.kind === 'power' || e.kind === 'kingdom')
+      .map((e) => JSON.stringify(orgRow(e)))
       .join(',\n') +
     '\n]\n',
 );

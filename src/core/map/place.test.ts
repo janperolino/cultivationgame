@@ -4,7 +4,8 @@
 import { describe, expect, it } from 'vitest';
 import { advance } from '../loop.ts';
 import { cultivate } from '../life.ts';
-import { join, addFame } from '../resolver/names.ts';
+import { addFame } from '../resolver/names.ts';
+import { joinPower } from '../organizations.ts';
 import { MERCHANT_GUILD } from '../../content/map/travel.ts';
 import { standingOf } from '../resolver/world.ts';
 import { loadSave, makeSave } from '../save/format.ts';
@@ -120,7 +121,10 @@ describe('the gate and the watch', () => {
     const s = at(life(), GATE);
     expect(gateOf(s, mapOf(s)!, place(s, GATE)).kind).toBe('shut');
     expect(enterAt(s, mapOf(s)!, place(s, GATE)).ok).toBe(false);
-    const member = { ...s, world: join(s.world, s.player.id, GATE, s.calendar.day, { you: true }) };
+    const member = {
+      ...s,
+      world: joinPower(s.world, s.player.id, GATE, s.calendar.day, { you: true }).world,
+    };
     expect(gateOf(member, mapOf(s)!, place(s, GATE)).kind).toBe('member');
     expect(enterAt(member, mapOf(s)!, place(s, GATE)).ok).toBe(true);
   });

@@ -135,6 +135,25 @@ export const TERRAINS = [
   'sea',
 ] as const;
 
+/**
+ * What kind of organization a power is (design § Professions, people and powers, Organizations
+ * share one skeleton): each a preset in src/content/organizations.ts. Every power carries one.
+ */
+export const ORG_TYPES = [
+  'sect',
+  'clan',
+  'guild',
+  'gang',
+  'society',
+  'assassins',
+  'academy',
+  'temple',
+  'dynasty',
+  'tribe',
+  'beast',
+] as const;
+export type OrgType = (typeof ORG_TYPES)[number];
+
 export const LINE_STYLES = ['river', 'ridge', 'span', 'array', 'wall', 'road'] as const;
 
 const point = z.tuple([z.number(), z.number()]);
@@ -262,6 +281,8 @@ const baseFields = {
   hanzi: z.string(),
   meaning: z.string().optional(),
   kind: z.enum(ENTRY_KINDS),
+  /** A power's organization type (O1); a power always has one, nothing else does. */
+  type: z.enum(ORG_TYPES).optional(),
   parent: z.string().nullable(),
   status: z.enum(['draft', 'canon']),
   summary: z.string(),
@@ -310,6 +331,7 @@ const baseFields = {
 function entryRules(
   e: {
     kind: EntryKind;
+    type?: unknown;
     site?: unknown;
     hidden?: unknown;
     access?: Access;
@@ -328,6 +350,8 @@ function entryRules(
   const place = PLACE_KINDS.includes(e.kind);
   if (e.kind === 'site' && e.site === undefined) issue('site', 'a site needs its sub-kind');
   if (e.kind !== 'site' && e.site !== undefined) issue('site', 'only a site has a sub-kind');
+  if (e.kind === 'power' && e.type === undefined) issue('type', 'a power needs its type');
+  if (e.kind !== 'power' && e.type !== undefined) issue('type', 'only a power has a type');
   if (!place) {
     for (const k of [
       'hidden',
@@ -437,7 +461,7 @@ export const shapeSchema = z.discriminatedUnion('type', [
 
 export type Shape = z.infer<typeof shapeSchema>;
 
-export const GENERATED_ATLAS_VERSION = 3;
+export const GENERATED_ATLAS_VERSION = 4;
 
 export const generatedAtlasSchema = z
   .object({

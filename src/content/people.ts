@@ -9,6 +9,7 @@
 import type { MemoryId } from './memories.ts';
 import { pathKey, type OriginChoice, type OriginId } from './origins.ts';
 import type { Nature } from './personality.ts';
+import type { SeatId } from './organizations.ts';
 import type { RealmId } from './realms.ts';
 
 // ── Ties ─────────────────────────────────────────────────────────────────────────────────────
@@ -203,6 +204,8 @@ export interface Person {
   home: string | null;
   /** The power they answer to, an atlas id. */
   power?: string;
+  /** Their seat in it, as written (design: named people keep the seat written for them; O1). */
+  seat?: SeatId;
   /** Written, not rolled: named people are kept with everything pinned. */
   nature: Nature;
 }
@@ -236,6 +239,7 @@ export const PEOPLE: readonly Person[] = [
     summary: 'The imperial tester who came down to the sinkholes with a grey stone and a ledger.',
     home: 'qm-anbian-fu',
     power: 'great-jing',
+    seat: 'outer',
     nature: {
       motives: ['duty', 'ambition'],
       axes: { pride: 1, trust: -1 },
@@ -257,6 +261,7 @@ export const PEOPLE: readonly Person[] = [
     summary: "The garrison school's drill sergeant, missing two fingers and none of his patience.",
     home: 'qm-anbian-fu',
     power: 'great-jing',
+    seat: 'outer',
     nature: {
       motives: ['duty'],
       axes: { temper: 2, heart: 1, fidelity: 1 },
@@ -278,6 +283,7 @@ export const PEOPLE: readonly Person[] = [
     summary: 'The sergeant who keeps the list of lit children and walks the Wall of Piled Bones.',
     home: 'qm-duigu-qiang',
     power: 'great-jing',
+    seat: 'outer',
     nature: {
       motives: ['duty', 'loyalty'],
       axes: { memory: 2, conscience: 1 },
@@ -300,6 +306,7 @@ export const PEOPLE: readonly Person[] = [
       'A half-blood ferryman with gills behind his ears, who rows for the Night Bridge Society.',
     home: 'qm-yeqiao-hui',
     power: 'qm-yeqiao-hui',
+    seat: 'outer',
     nature: {
       motives: ['greed'],
       axes: { bearing: 2, memory: 1, hand: -1 },
@@ -321,6 +328,7 @@ export const PEOPLE: readonly Person[] = [
     summary: 'An outer disciple of the Beast-Butcher Gate who counts contribution in cores.',
     home: 'qm-tushou-men',
     power: 'qm-tushou-men',
+    seat: 'outer',
     nature: {
       motives: ['ambition', 'pride'],
       axes: { pride: 2, hand: -1 },

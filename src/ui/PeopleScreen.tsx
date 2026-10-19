@@ -25,6 +25,7 @@ import {
   powersView,
   type PersonView,
 } from '../core/people.ts';
+import { membershipsView, personSeat } from '../core/organizations.ts';
 import { knowsTie } from '../core/resolver/opinion.ts';
 import type { GameState, PersonRecord } from '../core/state.ts';
 import { capitalize } from './format.ts';
@@ -166,6 +167,7 @@ function PersonPage({ game, id }: { game: GameState; id: string }) {
   const r = game.player.people[id]!;
   const view = personView(game, id);
   const bond = bondView(game, id);
+  const seat = personSeat(game.world, id, r.realm?.realm);
   const n = view.nature;
   const log = personLog(game, id).slice().reverse();
   return (
@@ -180,6 +182,7 @@ function PersonPage({ game, id }: { game: GameState; id: string }) {
         </div>
       </div>
       <p className="person-summary">{p.summary}</p>
+      {seat && <p className="caption">{capitalize(seat)}</p>}
       <dl className="person-facts person-nature">
         <div>
           <dt>Nature</dt>
@@ -532,12 +535,23 @@ function Web({
 
 /** The powers that know you, and your standing with each; heat's cap shows beside it. */
 function Powers({ game }: { game: GameState }) {
-  const powers = powersView(game);
-  if (!powers.length) return null;
+  const yours = membershipsView(game);
+  const mine = new Set(yours.map((m) => m.power));
+  const powers = powersView(game).filter((x) => !mine.has(x.power));
+  if (!powers.length && !yours.length) return null;
   return (
     <div className="people-powers">
       <h3 className="sub-heading">Powers that know you</h3>
       <dl>
+        {yours.map((m) => (
+          <div key={m.power}>
+            <dt>{m.name}</dt>
+            <dd>
+              {m.title.name} <span className="hanzi">{m.title.hanzi}</span> · {m.balance}{' '}
+              {m.currency}
+            </dd>
+          </div>
+        ))}
         {powers.map((x) => (
           <div key={x.power}>
             <dt>{capitalize(x.name)}</dt>

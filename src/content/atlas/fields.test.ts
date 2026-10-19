@@ -116,8 +116,8 @@ describe('terrain', () => {
   });
 
   it('is written into the generated atlas for every Border Wilds place', () => {
-    // The region and its nine places, and the fourteen A5.2 added straight under it.
-    expect(borderWilds).toHaveLength(24);
+    // The region and its nine places, the fourteen A5.2 added straight under it and O1's Low-Tide Tower.
+    expect(borderWilds).toHaveLength(25);
     for (const e of borderWilds) expect(e.terrain, e.id).toBeTruthy();
     expect(byId.get('qm-shiyan-guo')?.terrain).toBe('karst');
     expect(byId.get('qm-anbian-fu')?.terrain).toBe('hills');

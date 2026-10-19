@@ -206,6 +206,11 @@ export const STANDING_ROWS = {
   mission: { reason: 'A mission done for us', value: 10, fade: YEAR },
   tribute: { reason: 'Tribute', value: 5, fade: SEASON, own: true },
   member: { reason: 'One of ours', value: 10, fade: null },
+  // O1 (design § Organizations share one skeleton): a member of other blood, while they belong;
+  // leaving by the rule, kept as a memory and not a grudge; leaving as a betrayal.
+  'not-our-blood': { reason: 'Not of our blood', value: -15, fade: null },
+  parted: { reason: 'Left us by our rule', value: 0, fade: null },
+  'betrayed-us': { reason: 'Betrayed us', value: -30, fade: null },
   'walked-off': { reason: 'Walked off one of our caravans', value: -5, fade: SEASON },
   // E3: a copy of a power's own method offered at its own hall (design § Economy, Methods in the market).
   'sold-our-method': { reason: 'Offered one of our methods for sale', value: -15, fade: YEAR },

@@ -16,6 +16,22 @@ import type { Encounter } from '../../core/map/schema.ts';
 import { HOME_REGION } from '../../content/resolver.ts';
 import { makeBond } from '../../core/resolver/followers.ts';
 import { addFame } from '../../core/resolver/names.ts';
+import { SEAT_IDS } from '../../content/organizations.ts';
+import {
+  carriesGuarded,
+  donate,
+  innerTrial,
+  isOrganization,
+  joinPower,
+  leavePower,
+  membershipsView,
+  organization,
+  rangeWords,
+  realmStageOf,
+  seatRanges,
+  seatTitle,
+  theName,
+} from '../../core/organizations.ts';
 import { CARDS, hasCard } from '../../content/cards/index.ts';
 import { COMBAT_DAO_IDS, isCombatDao } from '../../content/daos.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
@@ -286,6 +302,67 @@ export const COMMANDS: Record<string, Command> = {
         },
         `${map.name}: all Seen${withHidden ? ', hidden sites and all' : ''}.`,
       );
+    },
+  },
+  org: {
+    usage:
+      'org [power id] [join [birth|adoption|marriage] | leave [to <id>] | trial | donate <low>]',
+    help: 'Your memberships; with an id, its type, seats and treatment, and joins, leaves, sits the inner trial or donates stones there (O1).',
+    run([id, verb, arg, to], store) {
+      const s = needGame(store);
+      const you = s.player.id;
+      if (!id) {
+        const rows = membershipsView(s);
+        if (!rows.length) return 'You belong to no power.';
+        return rows.map(
+          (m) =>
+            `${m.power}: ${m.title.name} ${m.title.hanzi} · ${m.balance} ${m.currency}${m.trial ? ` · ${m.trial}` : ''}`,
+        );
+      }
+      if (!isOrganization(id)) return `${id} is no organization.`;
+      const day = s.calendar.day;
+      if (verb === 'join') {
+        const by = arg === 'birth' || arg === 'adoption' || arg === 'marriage' ? arg : undefined;
+        const r = joinPower(s.world, you, id, day, { you: true, realm: realmStageOf(s), by });
+        return r.ok
+          ? apply(store, (g) => ({ ...g, world: r.world }), `Joined ${theName(id)}.`)
+          : r.why;
+      }
+      if (verb === 'leave') {
+        const r = leavePower(s.world, you, id, day, {
+          you: true,
+          to: arg === 'to' ? to : undefined,
+          carries: carriesGuarded(s, id),
+        });
+        if (!r.parting) return 'You don’t belong to it.';
+        return apply(
+          store,
+          (g) => ({ ...g, world: r.world }),
+          `Left: ${r.parting.kind}, ${r.parting.why}.`,
+        );
+      }
+      if (verb === 'trial') {
+        const r = innerTrial(s, id);
+        if (!r.ok) return r.why;
+        const words = `${r.verdict}: ${r.yours.toFixed(1)} against ${r.theirs.toFixed(1)}${r.passed ? ', the inner seat is yours' : ''}.`;
+        return apply(store, () => r.state, words);
+      }
+      if (verb === 'donate') {
+        const r = donate(s, id, { stones: Number(arg) });
+        return r.ok ? apply(store, () => r.state, `+${r.points} to ${theName(id)}.`) : r.why;
+      }
+      const o = organization(id);
+      const ranges = seatRanges(id);
+      return [
+        `${o.name} ${o.hanzi}: ${o.type}, ${o.treatment}${o.branchOf ? `, a branch of ${o.branchOf}` : ''}`,
+        `  joins by ${o.preset.join.join(', ')} · ${o.preset.currency.name} · leaves ${o.preset.leave.words}`,
+        `  gives ${o.gives.join(', ')}`,
+        ...SEAT_IDS.slice()
+          .reverse()
+          .map(
+            (k) => `  ${seatTitle(id, k).name} ${seatTitle(id, k).hanzi}: ${rangeWords(ranges[k])}`,
+          ),
+      ];
     },
   },
   purse: {

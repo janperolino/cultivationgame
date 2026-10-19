@@ -303,7 +303,18 @@ describe('shops', () => {
     });
     const member = {
       ...s,
-      world: { ...s.world, members: [{ who: s.player.id, power: 'qm-tushou-men', since: 0 }] },
+      world: {
+        ...s.world,
+        members: [
+          {
+            who: s.player.id,
+            power: 'qm-tushou-men',
+            since: 0,
+            seat: 'outer' as const,
+            balance: 0,
+          },
+        ],
+      },
     };
     expect(buy(member, 'gate-sect', lot.slot).ok).toBe(true);
   });
@@ -328,7 +339,18 @@ describe('shops', () => {
     s = { ...s, world: { ...s.world, taken: { 'gutting-saber': 'qm-tushou-men' } } };
     s = {
       ...s,
-      world: { ...s.world, members: [{ who: s.player.id, power: 'qm-tushou-men', since: 0 }] },
+      world: {
+        ...s.world,
+        members: [
+          {
+            who: s.player.id,
+            power: 'qm-tushou-men',
+            since: 0,
+            seat: 'outer' as const,
+            balance: 0,
+          },
+        ],
+      },
     };
     const r = sell(s, 'gate-sect', 'gutting-saber');
     expect(r).toMatchObject({ ok: false, reason: 'The keeper knows whose that was.' });

@@ -2,8 +2,8 @@
 // Karma is heaven's ledger, a number per actor that moves as a deed is done, seen or not, and that
 // no person reads. Renown and infamy are how far your name has carried, in points per region: a
 // deed's points land once someone learns who did it, once per deed and region, and a point fades
-// each season after the last gain. A thin membership is a record of who belongs to which power;
-// joining gives the power's token, standing as one of theirs and the region map. Nothing here
+// each season after the last gain. Who belongs to which power is read here; joining, leaving and seats
+// are core/organizations.ts (O1). Nothing here
 // imports world.ts at run time, so the world can import this.
 import {
   deedInfo,
@@ -15,7 +15,6 @@ import {
   VILLAIN_AT,
   VILLAIN_RENOWN,
 } from '../../content/resolver.ts';
-import { addStanding } from './opinion.ts';
 import type { Deed, Fame, World } from './world.ts';
 
 // ── Karma ────────────────────────────────────────────────────────────────────────────────────
@@ -155,39 +154,4 @@ export function knowsName(
 
 export function isMember(w: World, who: string, power: string): boolean {
   return w.members.some((m) => m.who === who && m.power === power);
-}
-
-/**
- * Joining a power: its token opens its gate ("token:<power>"), standing as one of its own (+10
- * while you belong), and its region map ("map:<region>", which P3.6's fog reads) when the one
- * joining is the player, whose learning is `known`.
- */
-export function join(
-  w: World,
-  who: string,
-  power: string,
-  day: number,
-  opts: { you?: boolean; region?: string } = {},
-): World {
-  if (isMember(w, who, power)) return w;
-  let world: World = { ...w, members: [...w.members, { who, power, since: day }] };
-  world = addStanding(world, { power, about: who, row: 'member' }, day);
-  if (opts.you) {
-    const learned = [`token:${power}`, `map:${opts.region ?? HOME_REGION}`];
-    world = { ...world, known: [...world.known, ...learned.filter((k) => !w.known.includes(k))] };
-  }
-  return world;
-}
-
-/** Leaving a power: the membership and its standing go, the token with them. */
-export function leave(w: World, who: string, power: string, opts: { you?: boolean } = {}): World {
-  if (!isMember(w, who, power)) return w;
-  return {
-    ...w,
-    members: w.members.filter((m) => !(m.who === who && m.power === power)),
-    standing: w.standing.filter(
-      (s) => !(s.power === power && s.about === who && s.row === 'member'),
-    ),
-    known: opts.you ? w.known.filter((k) => k !== `token:${power}`) : w.known,
-  };
 }

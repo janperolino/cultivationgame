@@ -13,7 +13,8 @@ import { receive, spend, stonesOf, withStones } from '../purse.ts';
 import { addItem, withPlayer, type GameState } from '../state.ts';
 import { endBond, makeBond } from './followers.ts';
 import { see } from './knows.ts';
-import { addFame, addKarma, join, leave } from './names.ts';
+import { addFame, addKarma } from './names.ts';
+import { joinPower, leavePower, realmStageOf } from '../organizations.ts';
 import { addStanding, addTie, remember } from './opinion.ts';
 import type { Scene } from './scene.ts';
 import {
@@ -109,7 +110,7 @@ export const EffectSchema = z.discriminatedUnion('do', [
   z.object({ do: z.literal('project'), id: z.string(), steps: z.number().int() }),
   z.object({ do: z.literal('place'), id: z.string(), state: z.enum(PLACE_STATES) }),
   z.object({ do: z.literal('person'), id: z.string(), state: z.enum(PERSON_STATES) }),
-  /** Joining or leaving a power: a thin membership (P3.4b). */
+  /** Joining or leaving a power (P3.4b; seats and the one-house rule in O1). */
   z.object({
     do: z.literal('member'),
     who: Who,
@@ -117,6 +118,8 @@ export const EffectSchema = z.discriminatedUnion('do', [
     joins: z.boolean(),
     /** The region whose map it gives. */
     region: z.string().optional(),
+    /** How a clan takes them. */
+    by: z.enum(['birth', 'adoption', 'marriage']).optional(),
   }),
 ]);
 export type Effect = z.infer<typeof EffectSchema>;
@@ -262,8 +265,13 @@ export function applyEffects(
         state = {
           ...state,
           world: e.joins
-            ? join(state.world, e.who, e.power, day, { you: e.who === you, region: e.region })
-            : leave(state.world, e.who, e.power, { you: e.who === you }),
+            ? joinPower(state.world, e.who, e.power, day, {
+                you: e.who === you,
+                region: e.region,
+                by: e.by,
+                ...(e.who === you ? { realm: realmStageOf(state) } : {}),
+              }).world
+            : leavePower(state.world, e.who, e.power, day, { you: e.who === you }).world,
         };
         break;
       case 'state-start': {

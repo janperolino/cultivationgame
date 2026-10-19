@@ -8,6 +8,7 @@
 // Knowing who did a deed lands it as a memory and as standing (opinion.ts) and carries its renown
 // or infamy across its region (names.ts); its karma lands as it is done, seen or not.
 import { DAYS_PER_MONTH } from '../../content/calendar.ts';
+import { SEAT_IDS } from '../../content/organizations.ts';
 import { z } from 'zod';
 import {
   CAPABILITY_IDS,
@@ -167,8 +168,19 @@ export const HeardSchema = z.object({
 });
 export type Heard = z.infer<typeof HeardSchema>;
 
-/** A thin membership (design § NPC basics): who belongs to which power, and since when. */
-export const MemberSchema = z.object({ who: z.string(), power: z.string(), since: z.number() });
+/**
+ * A membership (design § NPC basics; § Professions, people and powers, Seats and the currency):
+ * who belongs to which power and since when, the seat they hold by deed (O1, v38), their balance
+ * of its currency, and the year they last sat its inner trial.
+ */
+export const MemberSchema = z.object({
+  who: z.string(),
+  power: z.string(),
+  since: z.number(),
+  seat: z.enum(SEAT_IDS),
+  balance: z.number().min(0),
+  tried: z.number().int().optional(),
+});
 export type Member = z.infer<typeof MemberSchema>;
 
 /** A sealed storage ring: whose it was, its tier, and what is in it. */

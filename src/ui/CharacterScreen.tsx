@@ -18,7 +18,8 @@ import { fromCultivator, sheet, type SheetLine } from '../core/combat/combatant.
 import { realmGrowth } from '../core/growth.ts';
 import { readyDaos, readyFor, stageName } from '../core/intent.ts';
 import { agility, aptitude, fortune, stats, talentAwake, talentsOf } from '../core/stats.ts';
-import type { Cultivator } from '../core/state.ts';
+import type { Cultivator, GameState } from '../core/state.ts';
+import { membershipsView } from '../core/organizations.ts';
 import { TalentRow } from './CreationScreen.tsx';
 import { manualCount } from '../core/manuals.ts';
 import { go } from './nav.ts';
@@ -330,6 +331,23 @@ function Growth({ c, which }: { c: Cultivator; which: LadderId }) {
   );
 }
 
+/** The powers you belong to (O1): "Beast-Butcher Gate · outer Gate disciple 外门弟子 · 12 contribution". */
+function Memberships({ game }: { game: GameState }) {
+  const rows = membershipsView(game);
+  if (!rows.length) return null;
+  return (
+    <ul className="memberships">
+      {rows.map((m) => (
+        <li key={m.power}>
+          {m.name} · {m.title.name} <span className="hanzi">{m.title.hanzi}</span> · {m.balance}{' '}
+          {m.currency}
+          {m.trial && <span className="caption"> · {m.trial}</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function CharacterScreen() {
   const game = useGame((s) => s.game);
   if (!game) return null;
@@ -342,6 +360,7 @@ export function CharacterScreen() {
           <small>{c.pronouns}</small>
         </h2>
         {c.look && <p className="muted spaced">{c.look}</p>}
+        <Memberships game={game} />
       </section>
       <section className="panel">
         <h2 className="panel-heading">Talents</h2>

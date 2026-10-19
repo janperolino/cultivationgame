@@ -5,6 +5,7 @@
   "editedBy": "claude",
   "hanzi": "万山兽庭",
   "kind": "power",
+  "type": "beast",
   "lore": "The White Ape King and the Storm Roc have both reached Deity Transformation and taken human form; the Golden Python and the Old Tortoise are close behind. Humans who enter without leave are prey. Beast tamers are hunted on sight, and their tamed beasts are 'freed' and eaten. The Court still trades with Apricot Grove Valley, because even beasts get sick.",
   "map": {
    "sphere": 90000,
@@ -57,6 +58,7 @@
   "editedBy": "claude",
   "hanzi": "沧澜宫",
   "kind": "power",
+  "type": "dynasty",
   "lore": "The Sea Sovereign is an old jiao, a flood dragon at Deity Transformation, who means to pass a tribulation and become a true dragon before the tide turns. Its court holds shark-folk generals, turtle sages and things from the deep trenches that nobody names. Humans who pay toll sail safely. Humans who fish the sea clans' young are hunted down in their own ports.",
   "map": {
    "sphere": 110000,
@@ -1106,6 +1108,7 @@
   "editedBy": "claude",
   "hanzi": "江豚族",
   "kind": "power",
+  "type": "beast",
   "lore": "The porpoises carry the Tortoise's word from the delta to the falls in a month and know every channel, sandbar and drowned village on the river. Travelers who pay their toll in salted fish are guided past the whirlpools; those who do not find the whirlpools by themselves. The clan teaches river beasts the Water Dao and keeps the old river laws: no nets across the full channel, no killing at the fords in the elephants' season. Their leader, the Grey Smile, is Core Formation and speaks perfect human.",
   "map": {
    "sphere": 30000,
@@ -1187,6 +1190,7 @@
   "editedBy": "claude",
   "hanzi": "戒牙寺",
   "kind": "power",
+  "type": "temple",
   "lore": "Nine hundred years ago a tiger heard a wandering monk of the [[Thousand Lamps Temple]] preach on a mountain road, ate him, and spent the rest of its life in remorse. The temple it founded takes any beast that stops killing. Monks learn sutra breathing, a way to cultivate without devouring, and the vajra body; a few half-bloods and runaway tamed beasts shelter there too. The abbot, a Core Formation tiger with no fangs, offers to mediate between the Ape and the Roc. The White Ape King's mother took her vows here.",
   "map": {
    "sphere": 8000,
@@ -1381,6 +1385,7 @@
   "editedBy": "claude",
   "hanzi": "锯牙帮",
   "kind": "power",
+  "type": "gang",
   "lore": "The gang is sixty killers out of the Morning Star Continent's southern marshes, led by a Core Formation woman called Sister Hook who once worked the [[Night Banquet Sect]] kitchens. They hunt in the dry season, when the herds are thirsty, poisoning waterholes with Gu from the [[Jarless Gang]] and sawing tusks from the paralyzed. An old matriarch's core sells for more than a kingdom's yearly revenue. Every beast on the river wants them dead, and they move through the jungle on maps nobody can explain.",
   "map": {
    "sphere": 20000,
@@ -1436,6 +1441,7 @@
   "editedBy": "claude",
   "hanzi": "雷隼族",
   "kind": "power",
+  "type": "beast",
   "lore": "A thunder falcon can cross the Vast Wilds Continent in five months and strikes at the speed of the bolt it rides. The clan carries the Roc's messages, guards the passes of the [[Sheer Spine Range]] and enforces the Court's oldest law: the tamer dies, the tamed beast is freed and eaten. Young beasts of any clan may learn the falcons' Lightning and Wind Dao techniques in exchange for a term of service. They hate the [[Gate of One Heart]] above all things. This year they are drilling in formation, which falcons have never needed against humans.",
   "map": {
    "sphere": 35000,
@@ -1789,6 +1795,7 @@
   "editedBy": "claude",
   "hanzi": "蟠蛇族",
   "kind": "power",
+  "type": "beast",
   "lore": "Every snake clan from the rift to the Yellow Marsh owes the Python tithe, and the Coiled Serpents collect it. They teach young serpents the Metal Dao of scales and the patience of the ambush, and they recruit by eating rivals who will not join. Their envoys are the most polite beasts at court. They guard the ore veins the Python feeds on and kill prospectors efficiently. Lately they have been patrolling the [[Fire Rat Warren]] burrows, less to keep anyone out than to keep something in.",
   "map": {
    "sphere": 35000,
@@ -1843,6 +1850,7 @@
   "editedBy": "claude",
   "hanzi": "牵绳会",
   "kind": "power",
+  "type": "guild",
   "lore": "Guides learn which plants are awake, which are listening and which are hungry, and keep clients alive with three rules: never use a blade on anything green, never sleep on bare roots, never pick what has not fallen. Most deaths in the forest are clients who broke a rule. The guild charges a third of the harvest, sells maps it swears are accurate, and trains apprentices for ten years before they may lead. Half its guides are half-bloods with a plant-sense nobody can explain.",
   "map": {
    "sphere": 30000,
@@ -1969,6 +1977,7 @@
   "editedBy": "claude",
   "hanzi": "取丹会",
   "kind": "power",
+  "type": "society",
   "lore": "Anyone with a blade and ten low-grade spirit stones can join a crew. Members learn tracking, scent-masking with river mud, snare formations and the core cut: how to open a beast and lift its core before the qi bleeds out. Seniors appraise cores by color and heat. The Society pays a widow's share if a crew dies inside its maps, which is why everyone buys the maps. It hates beast tamers, who waste good cores on leashes, and it wants one thing badly: a Nascent Soul core, worth more than the Society itself.",
   "map": {
    "sphere": 25000,
@@ -2103,6 +2112,7 @@
   "editedBy": "claude",
   "hanzi": "兽巧门",
   "kind": "power",
+  "type": "sect",
   "lore": "Master Qiu Yan learned corpse refining in the Long Dusk Continent and came east with one idea: an immortal's corpse is rare, but a beast's is everywhere. The Gate's puppets are refined spirit beasts, tigers and eagles and once an elephant, that fight at their old realm and obey a bone flute. Disciples learn puppetry, corpse preservation and refining; recruits come from the [[Kingdom of the Dark Crossing]]'s stitching guilds. The Beast Court calls them robbers of its dead and pays a bounty on every disciple's head. The [[Thousand Puppet Gate]] would also like Qiu Yan back, in pieces.",
   "map": {
    "sphere": 18000,
@@ -2156,6 +2166,7 @@
   "editedBy": "claude",
   "hanzi": "锁血帮",
   "kind": "power",
+  "type": "gang",
   "lore": "Their trade rests on one technique: a blood-lock talisman pressed into the skin that seals a half-blood's beast blood and leaves them as weak as a mortal. They hunt new arrivals in the [[Gate-Waiting Town]] before Shared Roost City admits them, sell shark-blooded divers to pearl lords and roc-blooded girls to collectors, and sell the rest to the [[Night Banquet Sect]] by the dozen. Their boss, a Core Formation woman called Aunt Lan, never sets foot inside Shared Roost City; she does not need to. Locks can be broken, but the breaking usually kills.",
   "map": {
    "sphere": 20000,
@@ -2236,6 +2247,7 @@
   "editedBy": "claude",
   "hanzi": "同心门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Gate teaches the heart-bond, a contract in which a tamer and a beast share a sliver of each other's soul and feel each other's pain. Members call it partnership, not slavery; the Court says a bonded beast is no longer a beast and has it eaten. Disciples learn beast raising, feeding, bond seals and beast speech, and children who can hear beasts are recruited from the coast's fishing villages. They smuggle bonded beasts out to the Thousand Isles and the Morning Star Continent and want the Court to recognize the bond. The [[Thunder Falcon Clan]] hunts them.",
   "map": {
    "sphere": 25000,
@@ -2324,6 +2336,7 @@
   "editedBy": "claude",
   "hanzi": "鼍鼓族",
   "kind": "power",
+  "type": "beast",
   "lore": "The clan numbers some three hundred spirit alligators, from Qi Condensation hatchlings to the Core Formation Drum-Mother, whose hide is like lacquered iron and whose grudges run a century deep. They patrol the channels, count the rice that goes into the river, and take payment in flesh from villages that short the tribute. They do not eat children, a rule the Tortoise imposed and they resent. Their shed scutes make the best drum-heads and shield faces in the delta, and the Drum-Mother sells them herself.",
   "map": {
    "sphere": 25000,
@@ -2510,6 +2523,7 @@
   "editedBy": "claude",
   "hanzi": "无瓮帮",
   "kind": "power",
+  "type": "gang",
   "lore": "Among the Jar-Mothers only women may keep a jar, and men who raise Gu are exiled. The exiles found that a body can serve as a jar: feed the Gu your blood, let them fight inside you, and become the jar's last survivor. The Jarless are gaunt, fearless and short-lived, and their curses cost a tenth of a clan curse. They sell to poachers, slavers and anyone else the clans refuse. Recruits are exiles, runaways and anyone willing to swallow a centipede. They want a Gu that can eat a Core Formation, and a jar to bring down on the clans.",
   "map": {
    "sphere": 22000,
@@ -2617,6 +2631,7 @@
   "editedBy": "claude",
   "hanzi": "醒血堂",
   "kind": "power",
+  "type": "sect",
   "lore": "Applicants bleed into a basin of spirit water and the Hall reads the colors: shark, roc, tiger, python and stranger things. Disciples learn body tempering, bloodline breathing and partial beast forms, and the best learn to fight a realm above their own for the length of one breath. The Hall takes every half-blood child who reaches [[Shared Roost City]] and asks nothing about where they came from. It hates the [[Blood-Lock Gang]] above everything and wants a method of full awakening that does not end, as it always has so far, in madness.",
   "map": {
    "sphere": 18000,
@@ -2697,6 +2712,7 @@
   "editedBy": "claude",
   "hanzi": "雪猿族",
   "kind": "power",
+  "type": "beast",
   "lore": "Snow apes are born grey and whiten as they grow strong; a pure white ape is at least Core Formation. The clan teaches the Fist Dao and stone-climbing body arts, and its young train by breaking karst pillars bare-handed. The King's sons and grandsons lead it, two of them Nascent Soul. They hold the inner pillars, guard the [[Heart-Vein Spring]] and carry out the Court's sentences. They despise the Roc's falcons as noisy and are itching to prove it.",
   "map": {
    "sphere": 30000,
@@ -2985,6 +3001,7 @@
   "editedBy": "claude",
   "hanzi": "译语行",
   "kind": "power",
+  "type": "guild",
   "lore": "Most beasts below Nascent Soul cannot take human form or shape human words, so nearly every deal between the races needs a go-between. The House trains half-bloods with good ears in beast speech, carries letters to the Court, negotiates passage, ransoms captives and writes contracts for both sides. Its interpreters travel under both kings' seals. A Qi Condensation interpreter earns more than a Foundation guard, and a good one can get a human out of the [[Forest of Peaks]] alive.",
   "map": {
    "sphere": 25000,
@@ -3172,6 +3189,7 @@
   "editedBy": "claude",
   "hanzi": "兆龟堂",
   "kind": "power",
+  "type": "sect",
   "lore": "Founded by former shell pages who wanted to be paid for what they had learned, the Hall teaches plastron divination, flood-and-star calendars and the Karma of questions: every question asked changes the answer a little. Novices spend their first year cleaning plastrons and their second learning which questions not to ask. Caravans buy route omens, kingdoms buy war omens, and in the last two years both beast kings have bought omens about each other. The Hall wants to learn the question the Tortoise has been asking the cracks for sixty thousand years.",
   "map": {
    "sphere": 15000,
@@ -3254,6 +3272,7 @@
   "editedBy": "claude",
   "hanzi": "植棘门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Gate's founder planted the first stretch of the [[Thornwall]] with blood-fed spirit thorn 180 years ago, and the three human polities have paid the Gate to extend and tend it ever since. Disciples learn spirit farming, thorn formations and talisman making; the entry test is to keep a blood-thorn cutting alive for a month on your own blood. Their Tiger-Bane talismans sell for two low-grade spirit stones in the [[Bridgehead Town]] and twenty in [[Ten Thousand Sails]]. They loathe the [[Core-Takers' Society]], whose crews hack gaps in the wall to save a day's walk, and they want one cutting of the Root Mother's line from the [[Mother's Shade]] to make it unbreakable.",
   "map": {
    "sphere": 15000,
@@ -3445,6 +3464,7 @@
   "editedBy": "claude",
   "hanzi": "抱阳宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The Sun-Embracing Sect disciples sit in the coast's three hours of sun every day and store it in their meridians, a slow body-refining art that leaves them warm to the touch and hard for ghosts to grip. The sect teaches Fire Dao, medicine for grave cold, and the farming of sun-loving herbs on mirror-lit terraces. It recruits at the harvest fairs: children hold a sun-salt crystal, and those who make it glow are taken. It despises the Shadow-Refining Sect, owes the Court nothing, and pays the Year Tithe anyway.",
   "map": {
    "sphere": 15000,
@@ -3526,6 +3546,7 @@
   "editedBy": "claude",
   "hanzi": "残霞剑派",
   "kind": "power",
+  "type": "sect",
   "lore": "Fading Glow swords are tempered at sunset and the school's techniques are strongest in the last hour of light, so it duels, hunts and trains at dusk. It teaches Sword Dao, Fire Dao and some medicine. It recruits at the evening markets with a test: hold a blade still while the sun goes down, and those whose blade catches the last light are taken. It hates corpse refiners on principle and kills Gate agents on sight, which pleases the Court and costs the coast, which pays its fee in grain.",
   "map": {
    "sphere": 18000,
@@ -3633,6 +3654,7 @@
   "editedBy": "claude",
   "hanzi": "持灯会",
   "kind": "power",
+  "type": "society",
   "lore": "Members carry a brass lamp stamped with their rank and swear one oath: never put out a partner's lamp. The Society keeps its hall in the Kingdom of Broken Doors and posts along the whole span, buys finds at seven tenths of auction price, and sends rescue crews into the halls for a fee paid in advance. Appraisers, formation breakers and geomancers learn the trade here. Its founder, a Nascent Soul raider, came out of the deep halls blind and has not left the hall since. It pays the Court's licenses and sells bodies to the Gate, and both hate it.",
   "map": {
    "sphere": 25000,
@@ -3739,6 +3761,7 @@
   "editedBy": "claude",
   "hanzi": "存光会",
   "kind": "power",
+  "type": "guild",
   "lore": "The guild grades every crystal, keeps the warehouses where sun-salt is stored in black jars, and lends against stored light the way banks lend against spirit stones. It trains formation masters to build light-storage arrays and alchemists to refine sun-salt into yang pills, and it recruits from salt-raking families. Officially it sells only to the coasts; in fact it runs the smuggling routes into the ghost lands and pays the Prefecture of the Shaded Sands to look away. Its rival is the Sun-Reflecting Gate, whose mirrors make sun-salt less necessary.",
   "map": {
    "sphere": 20000,
@@ -4057,6 +4080,7 @@
   "editedBy": "claude",
   "hanzi": "河灯寺",
   "kind": "power",
+  "type": "temple",
   "lore": "Monks crossed the strait four thousand years ago to guide the Long Dusk Continent's lost dead. Each Ghost Month they launch lantern boats down the Soul-Sending River, and a soul that boards one is carried out to sea and past the Nether Shard's pull. The Court licenses them to ferry only strays it has not registered, so grieving families pay the temple to get their dead aboard before the registrars arrive. The monks train in vajra body, Karma Dao and medicine, and treat the grey cold of the pass brush for free. The abbot, a Nascent Soul, came from the Thousand Lamps Temple's lamp hall.",
   "map": {
    "sphere": 25000,
@@ -4243,6 +4267,7 @@
   "editedBy": "claude",
   "hanzi": "检骸会",
   "kind": "power",
+  "type": "guild",
   "lore": "Every licensed load crosses a guild scale and gets a grade; unlicensed loads get one too, for a bigger fee. The guild trains appraisers who can tell a cultivator's bone from a mortal's by touch and read its old realm from the marrow, and it recruits the orphans of the pits. It keeps the peace in the Bone Fair, and its masters sit on both sides of the bone war: the guild pays the Court's licenses and the Gate's protection, and both know it.",
   "map": {
    "sphere": 20000,
@@ -4539,6 +4564,7 @@
   "editedBy": "claude",
   "hanzi": "炼影宗",
   "kind": "power",
+  "type": "sect",
   "lore": "Disciples learn to step out of the body and sit as a shade in the yin vein, where Ghost Way cultivation runs three times faster, and faster still in Ghost Month. The sect teaches Death Dao, soul arts, yin pills and ghost taming, and recruits children born in the seventh month, whose shadows it calls thin. The danger is the body: a disciple out too long comes back to find it cold, or occupied. The Vermilion Brush Academy has registered dozens of them as dead while they were out, and the sect has killed two of its clerks over it.",
   "map": {
    "sphere": 25000,
@@ -5159,6 +5185,7 @@
   "editedBy": "claude",
   "hanzi": "脱籍会",
   "kind": "power",
+  "type": "society",
   "lore": "A ghost struck from the registers has no fief, no salary of years and no protection, but also no judge. The Society forges erasures, smuggles souls out of the Pale City in memory jars, and sells passes that look real. It recruits unregistered dead and pays them in stolen years. The Court's hunters raid the drowned towns every Ghost Month, so the Society moves house every year. Living Ghost Way cultivators who want to die outside the Court's reach pay it handsomely in advance.",
   "map": {
    "sphere": 15000,
@@ -5640,6 +5667,7 @@
   "editedBy": "claude",
   "hanzi": "映日门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Gate teaches artifact refining and formations built around light: bronze mirrors polished with sun-salt, jars that trap the first hour of morning, arrays that throw stored light across a valley. It recruits children with metal or fire roots from every coastal kingdom and pays well for anyone who can grind a true mirror. Its towers guard the Kingdom of Morning Radiance for a fee in grain and conscripts. It wants to sell towers to every coast in the Long Dusk Continent, and the Court has said that any kingdom that buys one will be judged.",
   "map": {
    "sphere": 15000,
@@ -5914,6 +5942,7 @@
   "editedBy": "claude",
   "hanzi": "朱笔院",
   "kind": "power",
+  "type": "academy",
   "lore": "The Academy trains the Court's living hands: registrars, pass clerks and talisman writers. Students cultivate yin through calligraphy and learn to write a soul's name so that it stays written. Graduates serve the Court alive and, if they die in good standing, take office as ghosts: a career that does not end is the Academy's real recruiting pitch. It tests children with a blank register page and keeps those whose ink does not fade. It hates the Shadow-Refining Sect, whose out-of-body cultivators keep turning up in its ledgers as dead.",
   "map": {
    "sphere": 18000,
@@ -6072,6 +6101,7 @@
   "editedBy": "claude",
   "hanzi": "永夜宫",
   "kind": "power",
+  "type": "sect",
   "lore": "In the Eternal Night Palace, rank is whatever you can take and hold. Disciples are encouraged to kill their seniors, and elders who weaken are eaten. The Night Sovereign has ruled for nine hundred years by never once looking weak. The Palace holds the black ranges, taxes the Frost Fair and raids the steppes, and despises the Clear Heaven Sword Sect's sermons more than its swords.",
   "map": {
    "sphere": 70000,
@@ -6163,6 +6193,7 @@
   "editedBy": "claude",
   "hanzi": "长青渊",
   "kind": "power",
+  "type": "beast",
   "lore": "Herbs in the Evergreen Deep are tens of thousands of years old, and one root can make an alchemist's career. Walking trees, strangling vines and ginseng children that run when you look at them keep most of it unharvested. At its heart stands the Root Mother, a tree whose canopy covers a kingdom. Nobody knows her realm. Nobody who tried to find out came back.",
   "map": {
    "sphere": 45000,
@@ -6288,6 +6319,7 @@
   "editedBy": "claude",
   "hanzi": "百里氏",
   "kind": "power",
+  "type": "clan",
   "lore": "Kun blood lives in water or air, and a woken Baili breathes fog and swims through cloud. Their peaks float low, which costs them precedence at the Conclave, and they do not care: their whales carry most of the freight between peaks, and every clan owes them money. They hire ground-born whalers, lice scrapers and tamers, and they will take any beast tamer who can calm a frightened calf. They treat the sea clans as relatives they do not like.",
   "map": {
    "sphere": 28000,
@@ -6907,6 +6939,7 @@
   "editedBy": "claude",
   "hanzi": "耕云宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The Cloud-Plowing Sect's terraces climb the hills until their highest steps stand in the cloud sea, where cloud rice grows a grain that glows faintly. A bowl a day keeps a Qi Condensation cultivator's progress steady, and the sect sells it to the clans and to anyone with silver. It teaches spirit farming, herb lore, alchemy and medicine, and it takes in farm children with green thumbs and no spirit stones. This year the black-ear blight is spreading through its upper terraces, and its elders will pay anyone who finds the cause.",
   "map": {
    "sphere": 15000,
@@ -7066,6 +7099,7 @@
   "editedBy": "claude",
   "hanzi": "鹤葬寺",
   "kind": "power",
+  "type": "temple",
   "lore": "The Crane Burial Temple's monks carry the dead up to the glacier altars and give them to the cranes, teaching that a body should feed something on its last day. Pilgrims climb with their dead on their backs, and the temple lends them breath jade. The monks practice a slow breath method that needs little qi and lets them live above the clouds, and they teach it to anyone who stays a year. They treat altitude sickness and qi burn for free, the only healers in the Utmost Summits who do. The Zhangsun tolerate them because the cranes like them.",
   "map": {
    "sphere": 10000,
@@ -7093,6 +7127,7 @@
   "editedBy": "claude",
   "hanzi": "皇甫氏",
   "kind": "power",
+  "type": "clan",
   "lore": "Qilin blood sickens if its bearer kills, so no Huangfu has struck a killing blow in ten thousand years; the clan keeps the largest corps of rootless enforcers in the Floating Peak Continent and hires outsiders for the rest. Woken children command fire and earth, and grass is said not to bruise under their feet. Their highest peak, over a High-grade heart, gives them the Conclave's first seat, their alchemists brew Qilin Ember pills for every clan, and they recruit gifted ground-born as 'hands', on contracts that end the day a hand becomes inconvenient.",
   "map": {
    "sphere": 22000,
@@ -7148,6 +7183,7 @@
   "editedBy": "claude",
   "hanzi": "呼延氏",
   "kind": "power",
+  "type": "clan",
   "lore": "A woken Huyan's voice carries for miles and their blood calls lightning; their elders fight with drums of Kui hide whose beat can stop a heart. They hold the peaks over the Thunder Plateau and the thunder-ox herds below, and they have won more duels on the Cloud-Settling Terrace than any other clan. Their highest peak has climbed to within twenty li of the Huangfu's, which under Conclave law lets them challenge for the first seat, and they have. They recruit lightning cultivators from any sect and pay them in thunder-struck wood, and a cadet branch keeps a trading lodge across the northern strait in the Black Frost Continent.",
   "map": {
    "sphere": 26000,
@@ -7175,6 +7211,7 @@
   "editedBy": "claude",
   "hanzi": "鲛窟部",
   "kind": "power",
+  "type": "tribe",
   "lore": "The tribe has lived in the cliffs since before the clans, and its chief, a Nascent Soul shark-folk, carries the Sea Sovereign's seal. It counts every whale born over the sea as its own and takes them at night. Ships that pay toll sail safely; ships that do not lose their crews one by one. The tribe sells sea silk, pearls and shark-tear gems in the harbor and buys iron and captives. Humans who net its young are hunted down inside Fog-Shoal Harbor itself.",
   "map": {
    "sphere": 16000,
@@ -7254,6 +7291,7 @@
   "editedBy": "claude",
   "hanzi": "惊蛰宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The Waking Thunder Sect's applicants stand on a hilltop in the afternoon storms holding a copper rod; those who are struck and live are accepted. The sect teaches the Lightning Dao, thunder talismans written on struck jujube, and tribulation craft, and its elders run the tribulation ground at the Forest of Lightning Rods for a fee. It is orthodox, proud and in debt to the Huyan, who own the plateau it stands on and remind it often.",
   "map": {
    "sphere": 18000,
@@ -7335,6 +7373,7 @@
   "editedBy": "claude",
   "hanzi": "堪舆会",
   "kind": "power",
+  "type": "guild",
   "lore": "The Geomancers' Guild pilots read the qi winds on compass plates and steer peaks by throttling their hearts, a craft that takes ten years to learn and one mistake to forget. The guild also surveys shade rights, settles boundary disputes on the ground and casts geomantic charts for tombs and sect halls. It takes apprentices of any birth who can feel qi currents, and its pilots are bonded for twenty years. The clans hate depending on it and pay anyway.",
   "map": {
    "sphere": 18000,
@@ -7701,6 +7740,7 @@
   "editedBy": "claude",
   "hanzi": "落叶会",
   "kind": "power",
+  "type": "society",
   "lore": "A clan child whose blood has not woken by twelve is given a jade tag and a post on the ground. These rootless become stewards, rent collectors, generals and keepers of the mooring pillars, and the Fallen Leaf Society is how they look after one another. It keeps lodges in every city in the Floating Peak Continent, lends to members, finds work for ground-born talents who make themselves useful, and watches rootless grandchildren closely, since blood sometimes wakes a generation late and a woken child is taken back up. Its masters bow to the clans and keep the books.",
   "map": {
    "sphere": 30000,
@@ -7864,6 +7904,7 @@
   "editedBy": "claude",
   "hanzi": "南宫氏",
   "kind": "power",
+  "type": "clan",
   "lore": "Luan blood carries sound: a woken Nangong can sing a crowd calm or into a riot, and their elders fight with voices that crack jade. They broker the Conclave's marriages, keep its music and hold the peaks over the Streams of the Luan, which makes them the richest clan in grain. They sell to whoever pays most, which this year is the Morning Star Continent, and they are the clan most willing to deal with outsiders. They also collect the Conclave's toll at the chained rock over the southern narrows. The Clear Heaven Sword Sect's recruiters annoy them; the Clear Heaven Sword Sect's money does not.",
   "map": {
    "sphere": 26000,
@@ -7943,6 +7984,7 @@
   "editedBy": "claude",
   "hanzi": "窃血门",
   "kind": "power",
+  "type": "sect",
   "lore": "A woken bloodline can be cut out of a child and sewn into another body if the surgeon is fast and does not care whether the child lives. The Blood-Thief Gate does this for anyone with enough high-grade spirit stones; its buyers include rootless desperate to be recalled and ground-born kings who want a qilin heir. It recruits rootless with grudges, struck-off physicians and anyone with steady hands. Its halls move every few years, and clan children are told never to go below the drift line alone.",
   "map": {
    "sphere": 20000,
@@ -8045,6 +8087,7 @@
   "editedBy": "claude",
   "hanzi": "绳墨院",
   "kind": "power",
+  "type": "academy",
   "lore": "The Academy of the Chalk Line teaches formations, array carving and geomancy to anyone who passes its entrance test: lay a nine-palace array in an hour with chalk and spirit sand. Its graduates build the wards of half the sects in the Floating Peak Continent. Its license forbids it to teach transfer arrays, and an Armillary Pavilion Measurer sits in on every lecture. Each year the best students are offered posts with the Pavilion; some accept, and their families get letters for a while. Students pay in spirit stones or service, and the academy sells their debts on.",
   "map": {
    "sphere": 14000,
@@ -8072,6 +8115,7 @@
   "editedBy": "claude",
   "hanzi": "守烟宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The Smoke-Keeping Sect teaches saber and ice arts, and its entry test is a winter night on a tower without fire. Disciples serve ten years on the beacon line; those who live learn the Frostwall Saber, which can stop a charge on open ice. The sect is paid by the Conclave in spirit stones and grain, always late and always short, and its elders have begun to say that a sect which bleeds for the clans deserves a peak of its own. The clans have not answered.",
   "map": {
    "sphere": 24000,
@@ -8124,6 +8168,7 @@
   "editedBy": "claude",
   "hanzi": "司寇氏",
   "kind": "power",
+  "type": "clan",
   "lore": "A woken Sikou feels guilt in a room like a draft, and their magistrates need neither torture nor bribes. They referee each duel on the Cloud-Settling Terrace, witness every peak deed and sit in the ground courts of the Kingdom of True Speech. Anyone can hire a Sikou witness for a contract, and an oath broken before one is punished in all nine clans' lands. Their one-horned guardian beasts patrol the arena. They are respected, feared and lonely: other clans marry into the Sikou only when the Conclave orders it, because nobody wants a spouse who hears every lie at dinner.",
   "map": {
    "sphere": 15000,
@@ -8204,6 +8249,7 @@
   "editedBy": "claude",
   "hanzi": "澹台氏",
   "kind": "power",
+  "type": "clan",
   "lore": "The bixi carries steles on its back, and a woken Tantai can bear weights no body should; their elders have held a drifting peak by hand while its chains were fixed. They own the craft of mooring and the Ascent Age records of the pillars, they rent both to every clan, and by salvage right they claim every peak that falls in the Floating Peak Continent. Their own peaks ride heavy, low and ugly, and their vaults are full. They hire ground-born miners, chain-smiths and claim guards, and everyone who owes them dislikes them.",
   "map": {
    "sphere": 25000,
@@ -8231,6 +8277,7 @@
   "editedBy": "claude",
   "hanzi": "探墟会",
   "kind": "power",
+  "type": "guild",
   "lore": "A Ruin-Seekers' Guild token costs ten low-grade spirit stones and a season as a rope-hand under a licensed diver; divers without one are treated as salvage. The guild teaches breath arts, ward-breaking and appraisal, and its charts mark which halls still have live arrays and guardian puppets. It takes a fifth of every find. Its first rule is never wake a guardian, and its second is never be first through a door. It sells array fragments to the Armillary Pavilion at a fixed price and to everyone else at a better one.",
   "map": {
    "sphere": 22000,
@@ -8284,6 +8331,7 @@
   "editedBy": "claude",
   "hanzi": "托云坊",
   "kind": "power",
+  "type": "guild",
   "lore": "The Cloud-Bearing Works's yards fill a karst valley with hulls hanging from chains. Its refiners cut, cure and balance floatstone, and a boat's keel decides how high it can fly and how much it can lift. It teaches artifact refining to apprentices who sign for fifteen years, and it buys floatstone from anyone at a price it sets. Clans buy its yachts, sects its transports, and the Blood-Thief Gate its fast couriers, through a go-between the workshop pretends not to know.",
   "map": {
    "sphere": 12000,
@@ -8310,6 +8358,7 @@
   "editedBy": "claude",
   "hanzi": "闻人氏",
   "kind": "power",
+  "type": "clan",
   "lore": "The Baize knew the name of every creature under heaven, and a woken Wenren can look at a beast, a Gu, a curse or a corpse and say what it is and what kills it. They sell these namings at the gate of their peak, one question per visitor per year, starting at a mid-grade spirit stone. They call the Armillary Pavilion's star tables arithmetic and say so in public. Their rootless work as appraisers in every auction house in the Floating Peak Continent, and their bestiary is the best in the world. Their peak drifts within sight of the Star Dial, and neither house likes being watched.",
   "map": {
    "sphere": 18000,
@@ -8677,6 +8726,7 @@
   "editedBy": "claude",
   "hanzi": "宇文氏",
   "kind": "power",
+  "type": "clan",
   "lore": "A woken Yuwen's eyes shine in the dark and see by their own light; their elders can turn night to day over a valley. They led the Conclave before the Huangfu, and they still hold the vault where the dragon pearl sleeps. Fewer of their children wake each generation, their peak is sinking, and their debts trade at the Peak-Pawn Market like anyone's. Azure Wave Palace has offered a fortune for the pearl, the Baili have offered to broker it, and the Huangfu have offered to keep it safe. The Yuwen have refused all three, so far.",
   "map": {
    "sphere": 20000,
@@ -8729,6 +8779,7 @@
   "editedBy": "claude",
   "hanzi": "长孙氏",
   "kind": "power",
+  "type": "clan",
   "lore": "The Zhangsun say their ancestor was the crane the first cultivator watched, and their elders live a thousand years. Woken children take to wind and longevity and can ride the great cranes; fewer wake each generation, and the clan now has more elders than children. They hold the peaks over the Utmost Summits and the breath-jade mines below, raise cranes for the Conclave's couriers, and sell crane eggs to beast tamers at prices that would buy a county. They are courteous, patient and impossible to hurry.",
   "map": {
    "sphere": 20000,
@@ -8930,6 +8981,7 @@
   "editedBy": "claude",
   "hanzi": "大靖皇朝",
   "kind": "power",
+  "type": "dynasty",
   "lore": "The Jing emperors have ruled for 2,400 years by one law: every child born with a spirit root in their lands is registered, tested and, if good enough, conscripted. The sects call it theft and recruit in secret anyway. The dynasty holds a hundred vassal kingdoms, each the size of a country, by garrison and quota, and fields armies of millions of Qi Condensation conscripts under Foundation officers. The Ancestor Emperor, a Deity Transformation spear cultivator, has not left the palace in three centuries, and his descendants are already fighting over who inherits.",
   "map": {
    "sphere": 125000,
@@ -9536,6 +9588,7 @@
   "editedBy": "claude",
   "hanzi": "穿隙宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The Sect of the Passing Crack teaches the Crack-Walking Art: sensing the seams in space and stepping through a rift before it closes. Its senior disciples reach a floating shard in a day that ships take a month to find, and bring back salvage the scavenger sects never see. Disciples train on the Strand of Tangled Space, where the folds are small and only sometimes fatal. The sect recruits at the Kingdom of the White Delta's harvest fair by throwing a coin into a fold and asking children where it went. One disciple in ten is lost each year.",
   "map": {
    "sphere": 18000,
@@ -9618,6 +9671,7 @@
   "editedBy": "claude",
   "hanzi": "慈刀寺",
   "kind": "power",
+  "type": "temple",
   "lore": "The Merciful Blade was founded by a Lion's Roar monk who released a captured blood cultivator and watched him kill a village. Its monks carry one saber each and recite a sutra of release before every killing. They take bounties from caravan houses and give the money to orphanages. The [[Thousand Lamps Temple]] calls them heretics and will not light their lamps, yet its arbiters send them names. Recruits are survivors of bandit raids, and training begins with a year of nursing the wounded, so the monks know what they are preventing.",
   "map": {
    "sphere": 15000,
@@ -9701,6 +9755,7 @@
   "editedBy": "claude",
   "hanzi": "定魂观",
   "kind": "power",
+  "type": "temple",
   "lore": "The abbey teaches thunder talismans, soul-settling rites and the peachwood sword, and every village on the coast hires its priests in the seventh month. Where the Court of No Light registers a soul and claims it, the abbey sends it onward, and the Court's clerks have lodged eleven formal protests. The abbey pays bounties for corpse drivers' bells and has burned three Society of Corpse Drivers columns this year. It recruits children who see ghosts, of whom this coast has many. Talisman makers come from three continents to buy its thunder paper.",
   "map": {
    "sphere": 15000,
@@ -9784,6 +9839,7 @@
   "editedBy": "claude",
   "hanzi": "分水堂",
   "kind": "power",
+  "type": "sect",
   "lore": "The Hall judges water disputes for anyone who asks and everyone who doesn't. Its verdicts are cast on bronze plates at every channel head, and a king who opens a sluice against a plate finds the Askers at his door. The judges are incorruptible in the narrow sense: they take no bribes, only donations to the temple, posted publicly by size. Novices learn geomancy, measurement and the Water Sutras, and senior judges can tell a well's depth by touching its rim. The Hall recruits the children of drowned and dried villages, who have reasons to care.",
   "map": {
    "sphere": 25000,
@@ -9896,6 +9952,7 @@
   "editedBy": "claude",
   "hanzi": "赶尸会",
   "kind": "power",
+  "type": "society",
   "lore": "A corpse driver binds a body with a talisman on its forehead and a bell in his hand, and the dead follow him by night, avoiding the sun. The Society of Corpse Drivers crews buy bodies from grave robbers, glacier thieves, bandits and the families of the poor, and drive them south along the corpse road from the City Beneath the Lamps to the City of Evening Light in columns of fifty. They pay tolls to everyone on the road and are killed on sight by the [[Vulture Burial Temple]]. The society recruits talisman makers and Ghost Way cultivators for its binding arts and takes orphans as bell-boys.",
   "map": {
    "sphere": 25000,
@@ -9980,6 +10037,7 @@
   "editedBy": "claude",
   "hanzi": "观蜃台",
   "kind": "power",
+  "type": "sect",
   "lore": "The Terrace is a tower of salt-glazed brick on the pan's edge, and its watchers spend their lives on the roof recording every mirage: where, when and what it showed. They claim the mirages show the past, the future and far places, and sell readings at a low-grade stone a question. They also teach mirage-sight, a divination method for telling true images from false, and every caravan master on the pan wants a Mirage-Watching Terrace watcher aboard. The Terrace is neutral, poor and extremely well informed.",
   "map": {
    "sphere": 8000,
@@ -10063,6 +10121,7 @@
   "editedBy": "claude",
   "hanzi": "寒潮部",
   "kind": "power",
+  "type": "tribe",
   "lore": "The Cold Tide Clan numbers a few thousand shark-folk under a Nascent Soul matriarch with a jaw of black teeth. As vassals of the [[Azure Wave Palace]] they collect its toll from every boat on the coast: a tenth of the cargo, or one sailor who does not come back. On truce days they trade pearls, sea-silk and ambergris for iron and salt at Whalebone Harbor. Humans who net one of their young are hunted to their homes. They teach nothing to humans, but coast-born half-bloods sometimes swim out to them and are not seen again.",
   "map": {
    "sphere": 15000,
@@ -10091,6 +10150,7 @@
   "editedBy": "claude",
   "hanzi": "汗血群",
   "kind": "power",
+  "type": "beast",
   "lore": "The herd's horses sweat red when they run, and a blood-sweat horse can outpace a Foundation cultivator in flight. The stallion, the Red Wind, is a Nascent Soul beast older than any tribe, and has refused human form out of contempt. The herd follows the rains and keeps an old understanding with the tribes: nobody rides inside its range, and it does not trample the camps. A stolen foal sells for a mid-grade stone in Fallen Star City, if the thief lives. The khan has sworn to ride the Red Wind.",
   "map": {
    "sphere": 20000,
@@ -10428,6 +10488,7 @@
   "editedBy": "claude",
   "hanzi": "疾风营",
   "kind": "power",
+  "type": "sect",
   "lore": "The Gale Camp has no mountain and no gate: it is three hundred tents that move every month, and its disciples are born, trained and buried on horseback. It teaches the Gale Spear, a Wind Dao lance method built for the charge, and bonding arts that let a rider share qi with a mount. The Camp hires its lancers to caravan houses and oasis kings at prices that keep it rich and neutral, and recruits at the Tea-Horse Market with a race. The khan has demanded its oath, and its master answered that the Camp swears only to the wind.",
   "map": {
    "sphere": 18000,
@@ -10537,6 +10598,7 @@
   "editedBy": "claude",
   "hanzi": "净瓶庵",
   "kind": "power",
+  "type": "temple",
   "lore": "The Pure Vase nuns compound the Roof's medicine: snow lotus, worm-grass, saffron and minerals ground for days and blessed for months into pills that can pull a Foundation cultivator back from a burst meridian. Their best, the Precious Pill, contains the Kingdom of Cinnabar quicksilver that only they know how to render harmless. They treat anyone who reaches the gate, monk or raider, and send the bill to the [[Lion's Roar Cloister]]. Novices learn medicine, alchemy and the Healing Sutra, and each spends a winter in the wall's field hospitals.",
   "map": {
    "sphere": 8000,
@@ -10565,6 +10627,7 @@
   "editedBy": "claude",
   "hanzi": "鹫葬寺",
   "kind": "power",
+  "type": "temple",
   "lore": "The Vulture Burial Temple monks carry the bone hammer and the vulture whistle. They teach the Bone Release, a Death Dao method that loosens a corpse's last qi so the birds will take it, and they tame bone vultures that can strip a Core Formation beast in an hour. They take orphans as novices and pay herders in medicine. Since the glaciers began giving up the frozen dead, southern corpse buyers have offered fortunes for bodies, and the order now hangs the thieves it catches from its burial cliffs, alive, for the vultures to judge.",
   "map": {
    "sphere": 14000,
@@ -10652,6 +10715,7 @@
   "editedBy": "claude",
   "hanzi": "开城行",
   "kind": "power",
+  "type": "guild",
   "lore": "The House of City-Openers holds digging charters on every major ruin in the Buried Cities, bought from the nomads, the Kingdom of the High Tower Sun family and anyone else with a claim. Its crews include formation breakers, puppet killers and sand-rats, children small enough to crawl into collapsed halls. Pay is a share of the finds, appraised at the company's own hall. The House recruits at every oasis and promotes anyone who comes back alive three times. It hates freelance looters, whom it calls thieves, and the Heavenly Scale Pavilion's appraisers, whom it calls partners.",
   "map": {
    "sphere": 25000,
@@ -10708,6 +10772,7 @@
   "editedBy": "claude",
   "hanzi": "渴心宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The sect teaches that water is a debt the body owes the desert, and its Dry Blood Art collects it: a disciple's touch pulls the water from a victim and turns it into qi. Victims are found as light as paper. The sect raids caravans and poisons the wells of oases that refuse to pay. Inner disciples walk into the [[Thirsting Sands]] each year to pour water on the sand and pray, and most come back stronger. Recruits come from dying-oasis refugees, who are offered water and asked nothing. The [[Gate of Gathered Dew]] kills its disciples on sight.",
   "map": {
    "sphere": 20000,
@@ -10736,6 +10801,7 @@
   "editedBy": "claude",
   "hanzi": "空城门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Gate cultivates illusion arts that ride on real mirages, so its phantoms are as solid to the eye as the pan's own. A caravan that turns toward a mirage oasis walks into a salt marsh, a pit or a camp of waiting disciples. The sect takes the goods, keeps useful people as servants and feeds the rest to its illusion furnaces, which turn terror into qi. It recruits salt-cutters' children who are good at seeing what isn't there. The Mirage-Watching Terrace diviners can spot its phantoms, and the sect has killed four of them.",
   "map": {
    "sphere": 15000,
@@ -10899,6 +10965,7 @@
   "editedBy": "claude",
   "hanzi": "领驼会",
   "kind": "power",
+  "type": "guild",
   "lore": "No single merchant can afford to cross the Sand Sea alone, so the Lead Camels organize convoys of a thousand beasts and sell space by the pack. A guild caravan carries water, guards, a geomancer and a Heavenly Scale Pavilion clerk, and its departure dates are posted in every oasis a year ahead. The guild hires the Kingdom of Escorts escorts, buys water at a discount and blacklists oases that overcharge. Caravan masters serve a seven-year apprenticeship that starts with mucking out camels and ends with a solo crossing. The guild's old enemy is the Thirsting Heart Sect, which it pays anyway.",
   "map": {
    "sphere": 30000,
@@ -11200,6 +11267,7 @@
   "editedBy": "claude",
   "hanzi": "凝露门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Gate of Gathered Dew's founding art, the Dew-Gathering Palm, condenses water from desert air; a Core Formation elder can fill a cistern under a cloudless sky. The sect sells dew arrays to oases, which makes it rich and makes the water court its enemy, since a dew array needs no allotment. It tests children by leaving them in a dry room with an empty cup for a day. Disciples study Water Dao, array making and medicine, and spend their third year on water service in a dying village, which is how the sect learns which villages to buy.",
   "map": {
    "sphere": 15000,
@@ -11514,6 +11582,7 @@
   "editedBy": "claude",
   "hanzi": "狮吼院",
   "kind": "power",
+  "type": "temple",
   "lore": "The Cloister teaches the Vajra Body in nine layers, each tempered with bronze bells, ice water and beatings, and a Fist Dao whose roar can stop a charging yak. Entry is the Bell: stand under the great bell while it is struck, and if you are still standing when the sound dies, you are in. Monks serve three winters on the wall before they may teach. They hate the [[Eternal Night Palace]] with calm thoroughness. Captured blood cultivators have their meridians broken and are then fed and taught sutras until they repent or die of old age.",
   "map": {
    "sphere": 18000,
@@ -11569,6 +11638,7 @@
   "editedBy": "claude",
   "hanzi": "誓愿堂",
   "kind": "power",
+  "type": "sect",
   "lore": "A Hall of Vows monk chooses a vow, of silence, of standing, of never refusing a beggar, and keeps it until it carves itself into his meridians; then it is a power, and breaking it shatters his cultivation. Old vow-keepers are frightening: one has not lain down in three hundred years and cannot be knocked over. The Hall also witnesses oaths. Every karmic contract the [[Heavenly Scale Pavilion]] writes is sealed before a Hall of Vows monk for a mid-grade stone, and the Hall keeps a copy. It recruits by asking what you would never do, and waiting to see if you lie.",
   "map": {
    "sphere": 10000,
@@ -11652,6 +11722,7 @@
   "editedBy": "claude",
   "hanzi": "碎玉坊",
   "kind": "power",
+  "type": "guild",
   "lore": "When the fragment struck it shattered, and splinters of Ladder jade are still found in the crater walls, each holding a trace of the arrays carved into the Ladder. The Broken Jade Workshop buys every splinter dug up, refines them over the crater's fire vein and sells the results at the Grand Auction: blades that cut space a little, rings that hold a room. Apprentices spend their first five years at the bellows and their first burn scar is a badge. The master is a Nascent Soul refiner who has not left the forge in eighty years.",
   "map": {
    "sphere": 8000,
@@ -11707,6 +11778,7 @@
   "editedBy": "claude",
   "hanzi": "铜人坊",
   "kind": "power",
+  "type": "guild",
   "lore": "An Ascent Age bronze guardian, rekeyed to a new master, fights at the realm it was built for, and the Workshop has learned to rekey them. It buys broken puppets from City-Opener crews and salvage captains, rebuilds them around new array cores and sells them to caravan houses, oasis kings and the Heavenly Scale Pavilion vaults. Apprentices learn puppetry, formations and casting, and spend their first year being knocked down by test puppets. The [[Thousand Puppet Gate]] has tried to buy the Workshop twice and burn it once, and the founder kept a puppet from each attempt.",
   "map": {
    "sphere": 8000,
@@ -11983,6 +12055,7 @@
   "editedBy": "claude",
   "hanzi": "血沙门",
   "kind": "power",
+  "type": "sect",
   "lore": "Blood Sand disciples cultivate a Saber Dao fed on blood: each kill is drawn into the blade and dried into red sand that hardens the body. They hold three canyon forts, raid caravans that do not pay, sell captives to corpse buyers and the Thirsting Heart Sect, and sell safe passage to those who do pay. The sect recruits by offer: survivors of a raid are asked whether they would rather join or die, and most join. The [[Temple of the Merciful Blade]] kills them, they kill the Temple of the Merciful Blade's monks, and the caravan houses pay both.",
   "map": {
    "sphere": 20000,
@@ -12094,6 +12167,7 @@
   "editedBy": "claude",
   "hanzi": "验真阁",
   "kind": "power",
+  "type": "guild",
   "lore": "The Pavilion was founded by appraisers who walked out of the Heavenly Scale Pavilion over a forged lot, and it lives on one promise: it will appraise against anyone, the Heavenly Scale Pavilion included. Its masters read age, origin and curse from a shard by touch, and its ledger of Ascent Age maker's marks is the best in the Myriad Sands Continent. Apprenticeship lasts ten years and begins with a year of sorting sand by grain. The Heavenly Scale Pavilion tolerates it because buyers trust an auction more when a rival has checked the lots, and hates it for the same reason.",
   "map": {
    "sphere": 12000,
@@ -12447,6 +12521,7 @@
   "editedBy": "claude",
   "hanzi": "铁骨诸部",
   "kind": "power",
+  "type": "tribe",
   "lore": "The tribes temper their bodies in blizzards and fight bare-handed to show contempt. A tribe's chief is whoever can lift the clan's ancestor stone. Every few generations they unite under a Great Khan and ride south across the ice, and every coast they reach remembers why it built walls.",
   "map": {
    "sphere": 80000,
@@ -12475,6 +12550,7 @@
   "editedBy": "claude",
   "hanzi": "千屿盟",
   "kind": "power",
+  "type": "society",
   "lore": "The League meets in Ten Thousand Sails when an outside power threatens the islands, and otherwise robs itself.",
   "map": {
    "sphere": 60000,
@@ -12539,6 +12615,7 @@
   "editedBy": "claude",
   "hanzi": "蛊母诸寨",
   "kind": "power",
+  "type": "clan",
   "lore": "A Jar-Mother seals a hundred venomous creatures in a jar and lets them fight until one remains; that one becomes the Gu. Their villages hang in miasma no outsider can breathe. They trade antidotes to Apricot Grove Valley and curses to anyone who pays, and they have never lost a war, because nobody who starts one survives the year.",
   "map": {
    "sphere": 35000,
@@ -12732,6 +12809,7 @@
   "editedBy": "claude",
   "hanzi": "夜宴宗",
   "kind": "power",
+  "type": "sect",
   "lore": "Night Banquet Sect cultivators devour qi from the living, and they do it with exquisite manners. They run the black markets of half of the Morning Star Continent, buy secrets from every court, and hold a banquet each new moon, in a hall nobody finds twice, to which rival cultivators are invited. Not all of them leave. The Clear Heaven Sword Sect has sworn three times to burn them out.",
   "map": {
    "sphere": 40000,
@@ -12876,6 +12954,7 @@
   "editedBy": "claude",
   "hanzi": "九族盟",
   "kind": "power",
+  "type": "clan",
   "lore": "Each clan carries a bloodline: thunder, crane, qilin and six more. Their children are born with it awake or not at all, and those without it are sent down to the ground to serve. They marry among themselves, sneer at every sect founded after the Severance, and settle disputes by duel on an arena floating above the clouds.",
   "map": {
    "sphere": 60000,
@@ -12911,6 +12990,7 @@
   "editedBy": "claude",
   "hanzi": "无明庭",
   "kind": "power",
+  "type": "dynasty",
   "lore": "The Court registers every death under the Fallen Ladder, judges each soul and assigns it a place. Living visitors need a pass, paid in years of lifespan. The Pale Sovereign has ruled since the Severance; she was there when the Ladder fell, and she has never said what she saw.",
   "map": {
    "sphere": 70000,
@@ -12964,6 +13044,7 @@
   "editedBy": "claude",
   "hanzi": "千灯寺",
   "kind": "power",
+  "type": "temple",
   "lore": "Each monk who takes vows lights a life lamp in the great hall; when a lamp goes out, the temple knows its monk has died and sends someone to ask why. The Thousand Lamps Temple arbitrates disputes for all sides because it claims no territory. Its arhats will not kill, but they will beat a demonic cultivator to within an inch of his life and then offer to shave his head.",
   "map": {
    "sphere": 60000,
@@ -13041,6 +13122,7 @@
   "editedBy": "claude",
   "hanzi": "清霄剑宗",
   "kind": "power",
+  "type": "sect",
   "lore": "Entry is the Sword Stair: nine thousand nine hundred steps up the face of the first peak, each heavier than the last, climbed in front of the whole sect gathered on the terraces below. Rank is decided by duels. The Clear Heaven Sword Sect calls itself the shield of the righteous and keeps a list of demonic cultivators it means to kill; the Night Banquet Sect's master has topped it for four hundred years. Its seventy-two peaks stand along the Snow Blade Ridge for twenty thousand li, each with its own halls and vassal sects beneath, and over the main peak a dome of pale sword-light holds the sect's great array.",
   "map": {
    "sphere": 60000,
@@ -14094,6 +14176,7 @@
   "editedBy": "claude",
   "hanzi": "乘风门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Wind-Riding Gate teaches flight before fighting: disciples ride spirit kites in the dust storms until they can ride the wind alone. The sect holds the imperial courier contract for the north, with a relay tower on every bare mesa, carrying sealed letters across the plateau in a week, faster than horses. It recruits light, quick children from the cave villages and trains them to read the sky. Its couriers know everyone's secrets and are paid not to.",
   "map": {
    "sphere": 12000,
@@ -14403,6 +14486,7 @@
   "editedBy": "claude",
   "hanzi": "丹丘宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The Cinnabar Hill Sect teaches alchemy through the Fire Dao from furnace halls on the hill's crown, where the fires burn day and night, and refuses to grow its own herbs anymore, buying everything from outside the Apricot Grove Valley's network: Vast Wilds smugglers, shard-realm teams, the marsh. It recruits alchemy talents the Apricot Grove Valley rejected, and it pays bounties for proof of the blight. Its Nascent Soul master has sworn to burn the apricot forest if the proof comes.",
   "map": {
    "sphere": 15000,
@@ -15033,6 +15117,7 @@
   "editedBy": "claude",
   "hanzi": "伏波门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Wave-Quelling Gate recruits sailors' children and drills them on decks until they can fight in a storm. Its three flagship spirit ships, each a li from stem to stern, and two hundred escorts patrol the coast, and its bounties are posted in every port. It holds an imperial commission and a quiet arrangement with two pirate lords, whose rivals it hunts with real zeal. It hires outside cultivators for raids on pirate nests.",
   "map": {
    "sphere": 15000,
@@ -15270,6 +15355,7 @@
   "editedBy": "claude",
   "hanzi": "观潮阁",
   "kind": "power",
+  "type": "sect",
   "lore": "The Tide-Watching Pavilion teaches the Water and Wind Daos through observation: disciples spend years on the sea wall, a line of terraces 600 li long, counting waves before they learn a technique. The pavilion predicts storms, sea-clan migrations and the tide's surges, and sells its tables to captains, farmers and other sects. It has served the eastern kings for centuries and despises the Armillary Pavilion for charging more for less.",
   "map": {
    "sphere": 12000,
@@ -15416,6 +15502,7 @@
   "editedBy": "claude",
   "hanzi": "古槐灵",
   "kind": "power",
+  "type": "beast",
   "lore": "The villagers of Huaixia have prayed to the tree for centuries; ten years ago it answered. Its roots run for a hundred li and reach deep enough to feel the capital's veins, and it trades leaves that clear the mind, seeds and old memories of the land for help. Lately it asks every cultivator the same question: where is the water going? Woodcutters with court permits have twice come to fell it for palace timber and twice been strangled by its roots.",
   "map": {
    "sphere": 6000,
@@ -15650,6 +15737,7 @@
   "editedBy": "claude",
   "hanzi": "海丝坊",
   "kind": "power",
+  "type": "guild",
   "lore": "The weavers spin silk from the threads of deep-sea mussels, whole beds of them a li across, and weave it underwater at night. Their robes are sought by every sect in the Morning Star Continent. Most members have a shark-folk grandmother and hide it; the gills close if they never swim. The guild trades quietly with [[Shared Roost City]] and smuggles half-blood children out of human villages that discover them.",
   "map": {
    "sphere": 8000,
@@ -15887,6 +15975,7 @@
   "editedBy": "claude",
   "hanzi": "寒炉朱氏",
   "kind": "power",
+  "type": "clan",
   "lore": "The Zhu clan has forged for the Clear Heaven Sword Sect for six thousand years and trains its children in Metal and Fire Daos from the cradle. Its forge-halls run for a hundred and fifty li along the glacier's foot, a smoke-banner visible from the plain. It takes outside apprentices with good fire roots and binds them for thirty years. The clan's Cold Forge quenches blades in glacier meltwater mixed with sword intent, and nobody has copied the method. The Zhus despise artifact refiners who use fire alone, and say so.",
   "map": {
    "sphere": 12000,
@@ -16769,6 +16858,7 @@
   "editedBy": "claude",
   "hanzi": "嘉禾门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Gate of Fine Grain teaches the Wood and Earth Daos through farming: disciples learn to read soil, call rain and graft spirit herbs before they learn a single attack. It recruits farm children with good roots and sells its seed strains everywhere. Now its elders blame the [[Apricot Grove Valley]] for a blight they cannot cure, and its young disciples are being hired out as field hands to anyone who pays the sect, including people who should not have them.",
   "map": {
    "sphere": 15000,
@@ -17137,6 +17227,7 @@
   "editedBy": "claude",
   "hanzi": "靖海卫",
   "kind": "power",
+  "type": "dynasty",
   "lore": "The Command patrols the southern sea lanes, escorts convoys to the Thousand Isles and ferries troops to the Jade Strait, its great junks a li from stem to stern and its anchorage three hundred li across. Its marines are Registry conscripts who drew sea duty, and its spear-and-water drills are brutal. It pays bounties for pirates, buys pearls cheap from captured smugglers and hires outside cultivators as convoy guards. Admiral Hou, a Nascent Soul, answers to the throne on paper and to Prince Rui in letters.",
   "map": {
    "sphere": 25000,
@@ -17305,6 +17396,7 @@
   "editedBy": "claude",
   "hanzi": "金枪卫",
   "kind": "power",
+  "type": "dynasty",
   "lore": "The Guard trains the empire's finest rooted conscripts in the imperial spear method and the Metal and Slaughter Daos, then posts them to the palace, the princes and the frontier. Its parade ground is a plain, and a full parade is forty thousand spears in one ring of gold light. A Guard captain outranks a provincial governor. Its commander, a Nascent Soul, swears loyalty only to the Ancestor Emperor, whom she has never seen. Its junior officers drink in factions and duel at night, and the princes pay their debts.",
   "map": {
    "sphere": 20000,
@@ -17537,6 +17629,7 @@
   "editedBy": "claude",
   "hanzi": "矿工会",
   "kind": "power",
+  "type": "society",
   "lore": "The Brotherhood smuggles food, medicine and cultivation manuals into the pits and smuggles people out, through galleries under the pit walls that run for hundreds of li. Its members are miners, escaped convicts and a few disgraced cultivators who learned Earth Dao underground. It wants the Convict Prefecture emptied and the Kangs dead. It pays in ore, recruits anyone the overseers have whipped, and is already planning to use the vein rush as cover.",
   "map": {
    "sphere": 8000,
@@ -17687,6 +17780,7 @@
   "editedBy": "claude",
   "hanzi": "窥天观",
   "kind": "power",
+  "type": "temple",
   "lore": "The Abbey has logged the Stump's hum and the Mirror's width every night for two thousand years, from a stack of bronze rings and star-terraces cut into the cliff, its largest dial open to the whole sky. It teaches divination, star-reading and a slow Time Dao method that ages its masters gracefully. Kings buy horoscopes; sects buy dates for breakthroughs; the Armillary Pavilion buys the logs and pretends not to need them. Its novices are orphans of the coast with good eyes and no families to miss them.",
   "map": {
    "sphere": 10000,
@@ -17860,6 +17954,7 @@
   "editedBy": "claude",
   "hanzi": "雷狼族",
   "kind": "power",
+  "type": "beast",
   "lore": "The wolves den where lightning strikes most, and their fur stores enough charge to stop a heart. The wolf king lets logging crews into the groves in exchange for salt and the bodies of poachers. Beast tamers prize thunder-wolf pups above any other beast in the north, and poachers who take them start feuds that last generations. The king speaks in a growl that sounds like words to anyone with good ears.",
   "map": {
    "sphere": 10000,
@@ -17938,6 +18033,7 @@
   "editedBy": "claude",
   "hanzi": "雷木焦氏",
   "kind": "power",
+  "type": "clan",
   "lore": "The Jiao clan buys every thunder-struck pine in the Thunder Cliffs and carves it into puppets animated by lightning arrays, in timber yards that cover a mountain's shoulder. Its best puppets fight at Core Formation and sell to princes and sects across the Morning Star Continent. Outsiders can apprentice for ten years of service. The clan hates the Thousand Puppet Gate, whose corpse puppets it calls 'grave meat on strings', and refuses to sell to anyone who buys from it.",
   "map": {
    "sphere": 10000,
@@ -18141,6 +18237,7 @@
   "editedBy": "claude",
   "hanzi": "灵籍院",
   "kind": "power",
+  "type": "dynasty",
   "lore": "The Registry keeps a jade slip for every rooted child in a hundred kingdoms, in an archive that fills a mountain, and sends testers on a six-year circuit with a root-reading mirror, each tester working a hundred counties. Top roots go to the palace academies, middling ones to the army, poor ones to the arsenals and granaries as qi laborers. Sect recruiters who take a registered child are outlaws in the Great Jing Dynasty. The Registry pays informers, hires bounty cultivators to track runaways, and quietly sells its rejects' slips to the highest bidder.",
   "map": {
    "sphere": 30000,
@@ -18702,6 +18799,7 @@
   "editedBy": "claude",
   "hanzi": "冥虫寨",
   "kind": "power",
+  "type": "sect",
   "lore": "The Stockade breeds Gu in jars sunk in marsh mud, crossing Vast Wilds strains with marsh leeches and corpse worms, in rows of jars that run for li across the island. Its masters teach Gu raising to anyone who survives a year of feeding the jars, and their curses kill from twenty li, given a hair or a name. They buy eggs from frontier smugglers at any price and are terrified of the Jar-Mothers ever finding out where their strains came from.",
   "map": {
    "sphere": 12000,
@@ -19087,6 +19185,7 @@
   "editedBy": "claude",
   "hanzi": "潜渊会",
   "kind": "power",
+  "type": "society",
   "lore": "The Society teaches water-breathing arts, appraisal and formation breaking, and outfits crews for months-long dives among the shattered islands and the drowned provinces beneath them. Its drydocks build dive-ships a li long with pressure arrays in their hulls. It buys anything brought up, sells to the [[Heavenly Scale Pavilion]] and the marsh, and runs the coast's best appraisal hall. New divers sign a ten-year contract and get a tenth of what they find. The Seal Watch has forbidden them to sail inside the marker buoys, and the Society has lost two crews who tried.",
   "map": {
    "sphere": 15000,
@@ -19344,6 +19443,7 @@
   "editedBy": "claude",
   "hanzi": "山路帮",
   "kind": "power",
+  "type": "gang",
   "lore": "The Gang charges a family a year's harvest to take a child uphill, and it knows every goat trail and every bribable patrol across thousands of li of foothills. Its leaders are failed Clear Heaven Sword Sect applicants with Foundation cultivation and no love for either master. It also runs forged Registry slips, contraband talismans and runaway soldiers. General Yan Ku has hanged four hundred of its guides this year.",
   "map": {
    "sphere": 12000,
@@ -19659,6 +19759,7 @@
   "editedBy": "claude",
   "hanzi": "施食寺",
   "kind": "power",
+  "type": "temple",
   "lore": "The temple feeds anyone who asks, and asks only that they listen to a sermon and leave their name in the merit ledger. Its mother-house is a hall-city on a river terrace, and its branch kitchens feed millions. Its monks cultivate karma and the vajra body, heal for free and refuse to fight unless a mortal is attacked in front of them. Rooted children fed at its kitchens often take vows, which puts them beyond the Registry's reach. The abbot, a Nascent Soul monk from the [[Thousand Lamps Temple]], has been offered land by three princes.",
   "map": {
    "sphere": 20000,
@@ -19822,7 +19923,7 @@
  },
  {
   "id": "qm-shoukou-cheng",
-  "editedAt": "2026-10-19T12:00:00Z",
+  "editedAt": "2026-10-19T18:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -19898,6 +19999,12 @@
     "kind": "trade",
     "open": true,
     "why": "We pay the Lamp-Keepers to keep the fens' lamps lit, since the night the dead came to our walls."
+   },
+   {
+    "to": "qm-luochao-lou",
+    "kind": "secret",
+    "open": false,
+    "why": "The City’s great families settle their quarrels through a house nobody names, and the watch closes those cases fast."
    }
   ],
   "top": "Nascent Soul",
@@ -20111,6 +20218,7 @@
   "editedBy": "claude",
   "hanzi": "曙日盟",
   "kind": "power",
+  "type": "society",
   "lore": "The League began as a drinking society of eastern princes and is now a conspiracy with treasury, couriers and a Nascent Soul elder on its council. It hides rooted children from the Registry, runs salt to fund itself and recruits cultivators with grudges against the empire. Members know each other by a rising-sun token cut in half. Its plan needs the passes, a navy and a reason; the famine levy may provide the reason.",
   "map": {
    "sphere": 30000,
@@ -20582,6 +20690,7 @@
   "editedBy": "claude",
   "hanzi": "通宝行",
   "kind": "power",
+  "type": "guild",
   "lore": "The Coin Treasure Trading House issues letters of credit the Heavenly Scale Pavilion will honor, which makes it the second most important bank in the south. It runs fleets to the Thousand Isles and caravans to the frontier, hires appraisers and guards by the hundred thousand and has a standing arrangement with half the pirate lords. Its young masters are cultivators of middling talent and expensive habits.",
   "map": {
    "sphere": 15000,
@@ -20767,6 +20876,7 @@
   ],
   "hanzi": "屠兽门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Beast-Butcher Gate teaches Saber and Slaughter Daos and recruits frontier orphans who have already lost someone to beasts. Disciples earn rank by cores taken. The sect sells cores to the Apricot Grove Valley, hides to the Zhu clan's rivals and meat to anyone, and leads the empire's punitive raids across the island chain. It despises beast tamers as collaborators and half-bloods as vermin.",
   "map": {
    "sphere": 20000,
@@ -21489,6 +21599,7 @@
   "editedBy": "claude",
   "hanzi": "悬壶会",
   "kind": "power",
+  "type": "society",
   "lore": "Members carry a gourd on a staff and go where the famine and the raids are, a chain of roadside healing camps across the continent. They teach acupuncture, herb lore and the Life Dao at the camps, and their students become village doctors across the Morning Star Continent. The Apricot Grove Valley tolerates them as long as they sell no pills. They know which villages are sick before anyone else does.",
   "map": {
    "sphere": 10000,
@@ -21942,6 +22053,7 @@
   "editedBy": "claude",
   "hanzi": "炎炉宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The Blazing Furnace Sect teaches the Fire and Metal Daos at the anvil: its forge-halls step down a volcano's flanks in rings, lava channels run through them, and disciples stoke vent-forges for three years before they may strike. The sect takes apprentices with fire roots from any family, sells weapons to anyone and hires out refiners to repair sect treasures. Its rivalry with the Zhu Clan of the Cold Forge is three thousand years old and mostly settled by forging contests, sometimes by murder. Its claim teams, a few hundred disciples each, shoot first at the new vein.",
   "map": {
    "sphere": 15000,
@@ -22086,7 +22198,7 @@
  },
  {
   "id": "qm-yeqiao-hui",
-  "editedAt": "2026-10-19T12:00:00Z",
+  "editedAt": "2026-10-19T18:00:00Z",
   "editedBy": "claude",
   "features": [
    {
@@ -22114,6 +22226,7 @@
   ],
   "hanzi": "夜桥会",
   "kind": "power",
+  "type": "society",
   "lore": "The Society knows the tides, the reefs and which islands have something living on them this month. Most of its runners are Qi Condensation or Foundation half-bloods who know one stretch by heart, and each crew waits on its own tide, so a cargo takes about half a year to pass end to end; only the Core Formation leaders fly the whole chain, in about a month. It runs half-bloods out of human villages, beast eggs to the Kingdom of Spirit Herders's ranches, Gu to the marsh and Vast Wilds herbs to anyone. Its leaders are half-bloods with beast senses and long grudges. It pays tribute to nobody and has informers in every fort. Passage costs five low-grade stones, or a favor.",
   "map": {
    "sphere": 26000,
@@ -22179,6 +22292,12 @@
     "kind": "kin",
     "open": false,
     "why": "The Hu are half-bloods like us; we run their children out when the Registry gets curious."
+   },
+   {
+    "to": "qm-luochao-lou",
+    "kind": "secret",
+    "open": false,
+    "why": "Some of what our relays carry are killers, and the crews are paid not to know which."
    }
   ],
   "top": "Core Formation",
@@ -22194,11 +22313,93 @@
   "fromAbove": "Nothing they would let you see: sea caves along the chain, and lantern lights moving island to island at low tide."
  },
  {
+  "id": "qm-luochao-lou",
+  "editedAt": "2026-10-19T18:00:00Z",
+  "editedBy": "claude",
+  "features": [
+   {
+    "name": "a drowned watchtower that stands clear of the sea only at the lowest tide",
+    "tags": [
+     "water",
+     "dark",
+     "narrow"
+    ]
+   },
+   {
+    "name": "the contract wall, names scratched into wet stone",
+    "tags": [
+     "cover"
+    ]
+   },
+   {
+    "name": "the reef path out, gone when the tide turns",
+    "tags": [
+     "water",
+     "fall",
+     "crossing"
+    ]
+   }
+  ],
+  "hanzi": "落潮楼",
+  "hidden": true,
+  "kind": "power",
+  "type": "assassins",
+  "lore": "The Low-Tide Tower is an assassins’ house of perhaps a hundred killers who cross the strait with the Night Bridge crews and come back with them, so a killing on the chain or in the City is half a year cold before anyone looks for who did it. A contract is left at the Nameless Market as a name and a price in a sealed jade slip; the Tower takes it or the slip comes back blank. Its killers are graded bronze, silver and gold by the contracts they have closed, and none of them knows more than one runner of the Society by face. It keeps no hall above the water: its house is a drowned watchtower that stands clear of the sea for an hour at the lowest tide.",
+  "map": {
+   "sphere": 4000,
+   "x": 186000,
+   "y": 197000
+  },
+  "name": "Low-Tide Tower",
+  "parent": "qm-bianhuang",
+  "pinyin": "Luochao Lou",
+  "status": "canon",
+  "summary": "An assassins’ house hidden inside the Night Bridge Society, whose killers cross the strait in the Society’s relays at low tide and are gone again before the tide turns.",
+  "tags": [
+   "assassins",
+   "half-bloods",
+   "contracts",
+   "poisons"
+  ],
+  "ties": [
+   {
+    "to": "qm-yeqiao-hui",
+    "kind": "secret",
+    "open": false,
+    "why": "The Society carries our killers in its relays and takes a tenth of every contract; its runners think they carry cargo."
+   },
+   {
+    "to": "qm-wuming-ji",
+    "kind": "trade",
+    "open": false,
+    "why": "Contracts reach us as sealed slips left with one stall at the Nameless Market; the stall keeps a share and its mouth shut."
+   },
+   {
+    "to": "qm-shoukou-cheng",
+    "kind": "secret",
+    "open": false,
+    "why": "Half the City’s sudden deaths this decade were ours, paid for by the City’s own families."
+   }
+  ],
+  "top": "Core Formation (the house master, whom no runner has seen)",
+  "truth": "The house master is the Night Bridge’s fifth Core Formation leader, the one the Society counts as dead.",
+  "way": "demonic",
+  "vein": 3,
+  "prosperity": 4,
+  "population": {
+   "qi": 80,
+   "foundation": 15,
+   "core": 1
+  },
+  "fromAbove": "Nothing: open sea over a reef, and at the lowest tide the top of a drowned tower."
+ },
+ {
   "id": "qm-yinlei-zong",
   "editedAt": "2026-10-18T12:00:00Z",
   "editedBy": "claude",
   "hanzi": "引雷宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The Thunder-Drawing Sect recruits from storm survivors: anyone struck by lightning and still alive gets an invitation. Its method tempers meridians with lightning, fast and brutal, and its disciples reach Foundation years ahead of most sects; hundreds of rod-spires crown the cliff to feed them. It sells lightning-charged talisman ink, trains tribulation survival for a fee and treats the Clear Heaven Sword Sect as an old rival. Its Nascent Soul master has not left the cliff in ten years.",
   "map": {
    "sphere": 15000,
@@ -22531,6 +22732,7 @@
   "editedBy": "claude",
   "hanzi": "招魂宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The sect has lived at the battlefield's edge for four thousand years, cultivating yin from its ghosts and keeping them penned with a line of banners nine thousand li long. The empire pays it to stop the dead from walking south, and orthodox sects hold their noses and let it. It teaches the Ghost and Death Daos, talks to the dead for a fee and recruits children who see things others don't. Its strength peaks in the seventh month.",
   "map": {
    "sphere": 12000,
@@ -22874,6 +23076,7 @@
   "editedBy": "claude",
   "hanzi": "朱符宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The Vermilion Talisman Sect disciples learn calligraphy before cultivation and spend their first three years grinding cinnabar from a peak mined red for thousands of years. The sect teaches the Fire and Lightning Daos through talisman script, and its exploding talismans are standard issue in the imperial army. It is a Clear Heaven Sword Sect vassal on paper and a supplier to everyone in practice. Its outer disciples sell seconds in Boundary Head Town at a third of the price, some of which work.",
   "map": {
    "sphere": 15000,
@@ -23423,6 +23626,7 @@
   "editedBy": "claude",
   "hanzi": "补阵堂",
   "kind": "power",
+  "type": "sect",
   "lore": "The Hall teaches formations the hard way: apprentices redraw seal script on the forts' outer walls while the walls are live, and a wrong stroke burns off fingers. It examines candidates every spring in the [[Harbor of the Changing Watch]]; anyone with a steady hand and a Qi Condensation base may sit. Its graduates are the best seal-script masters alive. The [[Armillary Pavilion]] has tried for three thousand years to buy the Hall's methods and been refused every time; the Hall's masters call the Armillary Pavilion's arrays toll booths.",
   "map": {
    "sphere": 10000,
@@ -23501,6 +23705,7 @@
   "editedBy": "claude",
   "hanzi": "潮生阁",
   "kind": "power",
+  "type": "sect",
   "lore": "The Pavilion of the Rising Tide teaches the Water and Wind Daos through the tides: disciples meditate in the surf and rise a rank for every tide-race won against the current. Its escorts guard convoys through the isles for a twentieth of the cargo, and a convoy that declines is usually robbed within the week. It recruits at the Kingdom of Hazy Waters auctions and pays the best prices for spirit-root children. Its patriarch hates the [[Raider Isles]] raiders for drawing the Beast Court's anger onto the isles.",
   "map": {
    "sphere": 20000,
@@ -23554,6 +23759,7 @@
   "editedBy": "claude",
   "hanzi": "刺鲸门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Whale-Spear Gate teaches the Spear and Ice Daos and a cold-blooded body art for working wet in winter wind. Disciples hunt from floes with harpoons tempered in whale blood and sell cores to refiners at the [[Frost Fair]]. It recruits whaling children by the throw: put an iron harpoon through a seal's skull at forty paces and you are in. It is at war with the whale-riding sea clans, who sink its boats, and pays the [[Eternal Night Palace]] to be left alone on land.",
   "map": {
    "sphere": 15000,
@@ -23732,6 +23938,7 @@
   "editedBy": "claude",
   "hanzi": "浮沉门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Gate of Sinking and Rising teaches turtle breath, the Water Dao and a body art that hardens the chest against the deep. Its divers map the valleys and sell licenses by the season; an unlicensed diver is tied to a stone and allowed to keep whatever he finds at the bottom. It recruits the dock children who stay under longest in the summer contest. It is at war with the [[Corpse-Diver School]], whose corpse divers need no beads and no licenses.",
   "map": {
    "sphere": 30000,
@@ -23808,6 +24015,7 @@
   "editedBy": "claude",
   "hanzi": "龟书院",
   "kind": "power",
+  "type": "academy",
   "lore": "The archive is carved into the shell of its eldest sage, a turtle the size of a hill who has not moved in nine thousand years. Its scholars write law on shells: what a ship owes, what a poacher owes, which human ports are in debt. Their faction holds the Sovereign back from war. Humans may petition the archive to lower a toll or settle a blood debt; it takes years and costs more than the debt, but it is the only appeal there is.",
   "map": {
    "sphere": 20000,
@@ -23861,6 +24069,7 @@
   "editedBy": "claude",
   "hanzi": "海莲寺",
   "kind": "power",
+  "type": "temple",
   "lore": "When a whaler has a whale on the line, a monk rows out with spirit stones and pays its price to have it cut free. Whalers have learned to harpoon more whales. The temple teaches the vajra body and a chant that calms sea beasts, and takes in the orphans of drowned whalers, who make devout and very strong monks. Sea-clan pilgrims come to its lower caves to hear the sutras, and a few shark-folk have taken vows.",
   "map": {
    "sphere": 20000,
@@ -24638,6 +24847,7 @@
   "editedBy": "claude",
   "hanzi": "纳虚阁",
   "kind": "power",
+  "type": "sect",
   "lore": "The Pavilion That Holds the Void teaches the Space Dao, rift-reading and the refining of storage artifacts, and its ring-smiths are the best artifact refiners in the Shattered Sea. Crystal hunters sell to it because nobody pays better. It tests children for spatial sense: blindfolded, a candidate must find a coin hidden in a fold of space. It is locked in a bitter quarrel with the [[Armillary Pavilion]], which wants its rift charts and calls its rings unlicensed.",
   "map": {
    "sphere": 20000,
@@ -24767,6 +24977,7 @@
   "editedBy": "claude",
   "hanzi": "尸潜派",
   "kind": "power",
+  "type": "sect",
   "lore": "The school buys drowned bodies from fishing villages, and from anyone else who can supply them, and refines them into diving puppets that work the deep for a month at a time. It sells salvage under the Gate of Sinking and Rising's prices and teaches puppetry, corpse refining and the Death Dao to anyone who pays tuition. Its puppets are crude beside the [[Thousand Puppet Gate]]'s, and the Gate sells it the cores that run them. The Gate of Sinking and Rising has burned its island twice; twice it moved.",
   "map": {
    "sphere": 12000,
@@ -24793,6 +25004,7 @@
   "editedBy": "claude",
   "hanzi": "拾遗宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The Sect of Gleaned Relics teaches appraisal before fighting: a novice must date a potsherd to the right millennium before learning a sword form. It sends its finds to the [[Clear Heaven Sword Sect]] first, which keeps the swords and returns a stipend. It recruits from the beach sifters by watching which children find things. It despises the [[Hall of Seed-Seekers]] as the Apricot Grove Valley's gardeners and has fought it over the [[Peak of Sword Graves]] claim for ninety years.",
   "map": {
    "sphere": 18000,
@@ -25001,6 +25213,7 @@
   "editedBy": "claude",
   "hanzi": "铁鳃部",
   "kind": "power",
+  "type": "dynasty",
   "lore": "Iron Gill warriors cultivate the Water and Slaughter Daos and fight with tridents and teeth; a general's rank is the number of hulls he has opened. They enforce the tolls in all the Sovereign's waters and hunt poachers down in their own ports, sometimes years later. Their chief, a Nascent Soul shark lord, leads the faction that wants war with Floating Peak now. They despise the turtle sages as cowards and the [[Thousand Isles League]] as thieves who have been allowed to live.",
   "map": {
    "sphere": 35000,
@@ -25055,6 +25268,7 @@
   "editedBy": "claude",
   "hanzi": "听渊书院",
   "kind": "power",
+  "type": "academy",
   "lore": "The master is a gentle old scholar who never leaves the reef and never seems to age. The academy teaches the Water Dao, the eighteen tolls of the Shoreless Sea, the etiquette for addressing a jiao, and the sea clans' script. Captains who want to pay toll and survive the conversation hire its graduates. It takes ten students a year, chosen by an essay on the law of the sea.",
   "map": {
    "sphere": 15000,
@@ -25081,6 +25295,7 @@
   "editedBy": "claude",
   "hanzi": "替身会",
   "kind": "power",
+  "type": "society",
   "lore": "Folk belief holds that a water ghost is freed when it drowns a living soul to take its place. The Society runs that as a business: its ghosts keep a strict queue, and a captain who pays toll in grave goods at the right buoy is passed by. Unpaid ships lose a sailor a night. Its living members, mostly Ghost Way cultivators, sell protection, broker substitutes from prisons and slave markets and teach the Death Dao. The Court of No Light calls them unregistered.",
   "map": {
    "sphere": 25000,
@@ -25213,6 +25428,7 @@
   "editedBy": "claude",
   "hanzi": "系索门",
   "kind": "power",
+  "type": "sect",
   "lore": "The Tethering Gate disciples cultivate the Wind and Earth Daos for climbing and forge chain from black iron and beast tendon, which makes its smiths decent artifact refiners. Recruitment is a climb: any child who reaches the first shard up a chain without help is taken in. The Gate fights a quiet war with sky pirates who cut chains to drop shards on rival claims. Its master wants a chain on the [[Heaven-Gazing Shard]] before the [[Conclave of Nine Clans]] gets one there.",
   "map": {
    "sphere": 25000,
@@ -25267,6 +25483,7 @@
   "editedBy": "claude",
   "hanzi": "寻种堂",
   "kind": "power",
+  "type": "sect",
   "lore": "The Hall teaches spirit farming, the Wood Dao and vault-breaking. Seeds sixty-six thousand years old sometimes sprout in its terraced gardens, and one living strain can make an alchemy hall's century. The [[Apricot Grove Valley]] buys first and pays well. Recruits are handed a dead seed; the ones it sprouts for stay. It claims the [[Peak of Sword Graves]] because the sword sect's herb terraces lie under the graves.",
   "map": {
    "sphere": 18000,
@@ -25319,6 +25536,7 @@
   "editedBy": "claude",
   "hanzi": "夜桨帮",
   "kind": "power",
+  "type": "gang",
   "lore": "Night Oar boats are low, black and silent, rowed by Qi Condensation fishermen with hush talismans on the oarlocks. The gang buys from anyone and sells to the best price, and teaches its rowers enough water arts to swim home when the boat goes down. Its boss is a Core Formation former Jing customs officer who knows every patrol on both sides. The fishing towns hate it, because they are the ones that burn when it fails.",
   "map": {
    "sphere": 12000,
@@ -25396,6 +25614,7 @@
   "editedBy": "claude",
   "hanzi": "引雷观",
   "kind": "power",
+  "type": "temple",
   "lore": "The abbey teaches the Lightning and Wind Daos and a body art that requires being struck: novices begin on the lowest rod with a copper chain round one ankle. It makes the best thunder talisman paper in the world, charged under the storm for a year, and sells sealed jars of storm qi to refiners. It recruits from wrecks: children pulled alive out of the belt are held to be chosen by thunder. It hates the [[Eternal Night Palace]] raiders who steal its jars and blames them for every novice lost.",
   "map": {
    "sphere": 22000,
@@ -25423,6 +25642,7 @@
   "editedBy": "claude",
   "hanzi": "引水会",
   "kind": "power",
+  "type": "guild",
   "lore": "Pilot families sound the channels every spring after the winter falls and keep the maps in their heads; writing one down is death under guild law. Pilots read stone the way geomancers read land and can tell which arch will fall within the year. Merchant captains pay them to go through instead of around, which is either a bargain or an ambush. The guild teaches Earth and Water sense to its children and adopts orphans with good ears.",
   "map": {
    "sphere": 20000,
@@ -25499,6 +25719,7 @@
   "editedBy": "claude",
   "hanzi": "驭海宗",
   "kind": "power",
+  "type": "sect",
   "lore": "The Sea-Taming Sect teaches taming by blood contract and the Wood and Water arts that keep a bonded beast healthy. Its serpents tow the fastest ships in the isles, and its gulls carry letters to [[Ten Thousand Sails]] in a day. Every apprentice is handed a cub and told their rank depends on what it grows into. The Beast Court calls the sect slavers and has posted a price: one tamer's core for every beast they free.",
   "map": {
    "sphere": 15000,
@@ -25576,6 +25797,7 @@
   "editedBy": "claude",
   "hanzi": "镇渊司",
   "kind": "power",
+  "type": "dynasty",
   "lore": "Founded at the Second Sealing, the Seal Watch answers to no sect. Every great power sends elders to serve a term, and refusing is the one thing all the others will punish. Its fortress rings the Ladder Stump, and a second fortress watches the Demon-Sealing Glacier. Seal Watch elders are forbidden to speak of what they see on duty.",
   "map": {
    "sphere": 32000,
@@ -25753,6 +25975,7 @@
   "editedBy": "claude",
   "hanzi": "千傀门",
   "kind": "power",
+  "type": "sect",
   "lore": "A body that once held immortal qi never rots. The Gate digs them out of the Fallen Ladder, refines them into puppets that fight at their old realm, and sells them to anyone who pays. The Court of No Light calls this theft of its subjects and is at war with the Gate in all but name. Nobody makes better puppets.",
   "map": {
    "sphere": 40000,
@@ -25788,6 +26011,7 @@
   "editedBy": "claude",
   "hanzi": "天平阁",
   "kind": "power",
+  "type": "guild",
   "lore": "From Fallen Star City, the Heavenly Scale Pavilion runs branches in every great city on every continent. Its one law is written over every door: no blood on the scale. Fight inside a hall of the Heavenly Scale Pavilion and every branch in the world will refuse you, forever. It lends to empires, bankrolls both sides of most wars, and sets the price of a Foundation Pill for the whole world each spring.",
   "map": {
    "sphere": 40000,
@@ -25842,6 +26066,7 @@
   "editedBy": "claude",
   "hanzi": "虚鸣会",
   "kind": "power",
+  "type": "society",
   "lore": "Most people think the Void Choir is a story to frighten disciples. Its members hide in every sect and every city. Their sign is a cultivator humming a tune nobody taught them.",
   "name": "Void Choir",
   "notes": "",
@@ -25960,6 +26185,7 @@
   "editedBy": "claude",
   "hanzi": "杏林谷",
   "kind": "power",
+  "type": "sect",
   "lore": "Apricot Grove Valley's founder healed the poor for free and asked only that each patient plant an apricot tree. The valley is now a forest of a billion trees a thousand li across, around the richest herb gardens on the continent, the pill towers of the Alchemy Hall standing out of the canopy like peaks. They heal all sides for a price, sell pills to empires and demonic sects alike, and their Alchemy Hall heads are courted like princes.",
   "map": {
    "sphere": 45000,
@@ -26197,6 +26423,7 @@
   "editedBy": "claude",
   "hanzi": "暴雪营",
   "kind": "power",
+  "type": "sect",
   "lore": "The camp sits in the open on the northern steppe for the whole polar night. Entrance is the Blizzard Run: a night walking naked in the storm, and whoever stops, dies. Those who finish are fed, beaten, and taught to break stone with their fists and take a sword cut on the forearm. The teachers rode with the last Great Khan; they despise qi cultivators and teach them twice as hard. A student who reaches Foundation Establishment in body gets a tribe name and a place in the next raid.",
   "map": {
    "sphere": 9000,
@@ -26223,6 +26450,7 @@
   "editedBy": "claude",
   "hanzi": "北熊庭",
   "kind": "power",
+  "type": "beast",
   "lore": "The Bear King walks among humans as a huge, silent man in a sealskin coat and buys salt and honey at the Floe Market. His court is a dozen Core Formation bears and several hundred lesser ones. They hold the pack ice and the shore cliffs, hunt anyone who takes their cubs and leave alone those who leave them alone. Beast tamers prize white bear cubs above any mount on the continent. The Seal Tribe blames the bears for its missing hunters, and the Bear King has let it.",
   "map": {
    "sphere": 20000,
@@ -26511,6 +26739,7 @@
   "editedBy": "claude",
   "hanzi": "奠基帮",
   "kind": "power",
+  "type": "gang",
   "lore": "The Cornerstone Gang runs the Fair's smuggling, pickpockets and protection, and it helps rebuild the Fair every winter, which is where it got its name. Its real trade is the ice burial: a body set in the foundations as the water freezes, found in spring when nobody can say when it died. It is mortals and Qi Condensation cultivators with a few Foundation enforcers, and it recruits orphans off the docks. It pays the Palace's tax collectors more than the honest merchants do, and they leave it alone.",
   "map": {
    "sphere": 6000,
@@ -26614,6 +26843,7 @@
   "editedBy": "claude",
   "hanzi": "渡海寺",
   "kind": "power",
+  "type": "temple",
   "lore": "Forty monks and a Nascent Soul abbot crossed from Myriad Sands two centuries ago and built a hospital before they built a hall. They teach medicine, the vajra body and patience. They will not kill, but they have broken the arms of three Palace slavers who came for their orphans. They ransom captives from the tribes with temple money and settle the freed on temple land, and raiders who wake in the temple's beds sometimes stay. The coastal kings love them and owe them, which is how the temple prefers it.",
   "map": {
    "sphere": 15000,
@@ -26822,6 +27052,7 @@
   "editedBy": "claude",
   "hanzi": "寒焰谷",
   "kind": "power",
+  "type": "sect",
   "lore": "The Valley's founder learned to balance fire and ice herbs in one cauldron, and its pills are the only ones on the continent that treat frozen meridians and fire deviation alike. It brews tempering baths for the Iron Bone tribes, salves for the Seal Watch and, quietly, blood pills for the Palace. It recruits farm children with good noses and teaches alchemy, medicine and the Fire and Ice Daos. It wants the Earth's Eye Spring's vein for a new furnace hall, and hates the Palace's herb officers, who take the best roots before the auction.",
   "map": {
    "sphere": 12000,
@@ -27164,6 +27395,7 @@
   "editedBy": "claude",
   "hanzi": "老象族",
   "kind": "power",
+  "type": "beast",
   "lore": "The herds migrate in a great circle around the tableland and down to the Warm Basin's edge, and the matriarchs choose the route. The Gray Matriarch took human form sixty years ago to bargain with the last Great Khan; he got his mammoths for the ride south, most of them never came back, and she has not forgiven the tribes. Anyone who harms a calf is trampled. Anyone who returns a stolen one is owed a favor. Her herds would decide any war on the continent, and both claimants know it.",
   "map": {
    "sphere": 30000,
@@ -27190,6 +27422,7 @@
   "editedBy": "claude",
   "hanzi": "雷羽馆",
   "kind": "power",
+  "type": "clan",
   "lore": "A Nascent Soul elder of the thunder clan runs the lodge with twenty clan members and two hundred hired guards. It buys amber, ivory and mammoth calves, lends to the coastal kingdoms at kind rates, and tests local children for traces of old bloodlines; any who show one are shipped to the Floating Peak Continent. Its walls have been rebuilt three times in ten years, each time thicker. The Black Pine Tribe says the lodge is cutting a road into the forest toward the Pine of Ten Thousand Ages.",
   "map": {
    "sphere": 8000,
@@ -27217,6 +27450,7 @@
   "editedBy": "claude",
   "hanzi": "冷蛟府",
   "kind": "power",
+  "type": "dynasty",
   "lore": "The Cold Jiao Lord is a Nascent Soul flood dragon of the cold seas, sworn to the Sea Sovereign of the [[Azure Wave Palace]], ruling from a palace of ice beneath the outer fjords. Every ship that sails past the fjord mouths pays a tenth of its catch or a tenth of its crew. The jiao leave alone humans who pay and hunt to the last cousin those who kill their young. This winter a Whale Tooth ship killed one of the Lord's grandchildren, and the Lord has given the Whale Tooth king until the first dawn to hand over the captain's line.",
   "map": {
    "sphere": 25000,
@@ -27531,6 +27765,7 @@
   "editedBy": "claude",
   "hanzi": "凝辉观",
   "kind": "power",
+  "type": "sect",
   "lore": "A Morning Star sword cultivator came north for the steles three centuries ago and never left; the Observatory she founded keeps sixty disciples, teaches the Ice Dao and aurora divination, and recruits only those who can sit a full night at the steles without moving. Its readings predict storms, secret realm openings and, its elders claim, deaths. It rents the best stele seats for fifty low-grade spirit stones a week. It hates the Palace, which raids it once a generation, wants the Broken Tower's library, and resents the Armillary Pavilion, which calls its readings guesswork and copies them.",
   "map": {
    "sphere": 10000,
@@ -27978,6 +28213,7 @@
   "editedBy": "claude",
   "hanzi": "朔剑门",
   "kind": "power",
+  "type": "sect",
   "lore": "A Myriad Sands Continent-born sword cultivator came north to hunt the tribe that killed his family and stayed to sell his sword to the coast. The Gate he founded teaches a Sword Dao made for cold: short, fast forms that do not need warm muscles, and qi circulation that keeps blood moving in a blizzard. It recruits from the coastal kingdoms' guard families and rents its disciples to whichever king pays. It hates the Iron Bone tribes and the Palace equally, and it wants a fief of its own; the debt-ridden White Walls kingdom is starting to look like one.",
   "map": {
    "sphere": 9000,
@@ -28110,6 +28346,7 @@
   "editedBy": "claude",
   "hanzi": "听冰社",
   "kind": "power",
+  "type": "society",
   "lore": "The Listeners live in snow huts just past the Watch's patrol line, write the Host's dreams in ledgers and sell blizzard warnings to caravans and the fortress alike; their forecasts are right more often than anyone's. They take in anyone who hears singing in their sleep and cannot stop hearing it, and teach them to write it down. They want the Watch to let them closer to the ice, and resent the Palace miners who chase them away from the Melt Caves. The Watch thinks them harmless.",
   "map": {
    "sphere": 6000,
@@ -28266,6 +28503,7 @@
   "editedBy": "claude",
   "hanzi": "温阵坊",
   "kind": "power",
+  "type": "guild",
   "lore": "Each winter the Workshop lays the Fair's foundation arrays: heat circles under every street that keep the ice firm but not lethal. It sells warming talismans in three grades, from a mortal's one-night charm to a Foundation cultivator's month-long seal, and teaches formations and talisman making to apprentices who pay with five years' labor. Everyone needs it, so it is neutral. Its masters want the empty seat on the Fair's truce council, and despise the Armillary Pavilion array keepers, who treat them as tinkers.",
   "map": {
    "sphere": 7000,
@@ -28398,6 +28636,7 @@
   "editedBy": "claude",
   "hanzi": "雪蚕寨",
   "kind": "power",
+  "type": "sect",
   "lore": "Their founders were cast out of the [[Jar-Mother Clans]] for breeding Gu that survive cold, and came north to prove it could be done. Snow silkworms live on frostleaf at the basin's edge and spin ice silk, which refiners make into robes that turn blades and hold heat; a bolt sells for a mid-grade spirit stone. Their cold Gu stop a heart without leaving a mark, and the Palace buys them. They teach Gu raising to girls only.",
   "map": {
    "sphere": 6000,
@@ -28706,6 +28945,7 @@
   "editedBy": "claude",
   "hanzi": "阴火宗",
   "kind": "power",
+  "type": "sect",
   "lore": "Yin fire burns blue, gives almost no heat and melts black iron in a breath; the sect draws it from vents too deep for mortals to survive. It makes the Palace's blood blades and armor and sells the seconds in Dawnless City. It recruits by buying slave children who can stand near a vent without fainting, and teaches the Fire Dao, artifact refining and the blood quench. It hates the Hearth Clan, who sit on the best vents, and wants the Earth Heart Fire said to be waking under the Spine. Bring it a fire salamander core and you get a month at its forges.",
   "map": {
    "sphere": 12000,
@@ -28733,6 +28973,7 @@
   "editedBy": "claude",
   "hanzi": "驭兽寨",
   "kind": "power",
+  "type": "sect",
   "lore": "The Stockade sells mounts to the Frost Fair, the Floating Peak Continent and the Myriad Sands Continent, trains tamers for a fee or seven years' labor, and takes children whom animals follow home. Its masters teach beast taming, beast medicine and the patience to wait a week beside a den. Its most profitable line is mammoth calves stolen from the tableland and raised in the forest, where the herds cannot follow. The Old Mammoth clan knows where the Stockade is and has not come yet; its master thinks that is because she pays the Cliff-Climb khan.",
   "map": {
    "sphere": 10000,
@@ -28888,6 +29129,7 @@
   "editedBy": "claude",
   "hanzi": "璇玑阁",
   "kind": "power",
+  "type": "sect",
   "lore": "From the Star Dial on the highest floating peak of the Floating Peak Continent, Armillary Pavilion astronomers chart the Mirror and the Shard Worlds and publish the calendar of secret realm openings every sect depends on. They rebuilt the transfer arrays eight thousand years ago and have never let anyone else learn how they work. They are strictly neutral, and will move an army for anyone who pays.",
   "map": {
    "sphere": 40000,
@@ -29024,6 +29266,7 @@
   "pinyin": "Jiukou Zong",
   "hanzi": "九口宗",
   "kind": "power",
+  "type": "sect",
   "parent": "qm-wangti",
   "status": "draft",
   "summary": "A water Dao sect with a Nascent Soul master that holds the nine mouths of the Imperial River, dredging its channels, keeping its flood-gates and piloting every barge and junk through the delta's bars.",
@@ -29428,7 +29671,7 @@
    "y": 242000
   },
   "editedBy": "claude",
-  "editedAt": "2026-10-19T12:00:00Z",
+  "editedAt": "2026-10-19T18:00:00Z",
   "ties": [
    {
     "to": "qm-yeqiao-hui",
@@ -29441,6 +29684,12 @@
     "kind": "secret",
     "open": false,
     "why": "Uncle Ash sells the Red Marrow Cave's blood pills from his stalls."
+   },
+   {
+    "to": "qm-luochao-lou",
+    "kind": "trade",
+    "open": false,
+    "why": "One stall here takes sealed slips for the Tower and never says who left them."
    }
   ],
   "prosperity": 6
@@ -29451,6 +29700,7 @@
   "pinyin": "Fugu Ge",
   "hanzi": "缚骨阁",
   "kind": "power",
+  "type": "sect",
   "parent": "qm-bianhuang",
   "status": "draft",
   "terrain": "hills",
@@ -29535,6 +29785,7 @@
   "pinyin": "Baijiang Zong",
   "hanzi": "百缰宗",
   "kind": "power",
+  "type": "sect",
   "parent": "qm-muling-guo",
   "status": "draft",
   "terrain": "plains",
@@ -29619,6 +29870,7 @@
   "pinyin": "Jingzhong Si",
   "hanzi": "静钟寺",
   "kind": "power",
+  "type": "temple",
   "parent": "qm-bianhuang",
   "status": "draft",
   "terrain": "hills",
@@ -29690,6 +29942,7 @@
   "pinyin": "Shoudeng Zong",
   "hanzi": "守灯宗",
   "kind": "power",
+  "type": "sect",
   "parent": "qm-bianhuang",
   "status": "draft",
   "terrain": "marsh",
@@ -29757,6 +30010,7 @@
   "pinyin": "Chisui Dong",
   "hanzi": "赤髓洞",
   "kind": "power",
+  "type": "sect",
   "parent": "qm-bianhuang",
   "status": "draft",
   "terrain": "karst",
@@ -29830,6 +30084,7 @@
   "pinyin": "Hu Shi",
   "hanzi": "胡氏",
   "kind": "power",
+  "type": "clan",
   "parent": "qm-shiyan-guo",
   "status": "draft",
   "terrain": "karst",
@@ -29894,6 +30149,7 @@
   "pinyin": "Qian Shi",
   "hanzi": "钱氏",
   "kind": "power",
+  "type": "clan",
   "parent": "qm-bianhuang",
   "status": "draft",
   "terrain": "coast",
@@ -29966,6 +30222,7 @@
   "pinyin": "Xinglin Bianguan",
   "hanzi": "杏林边馆",
   "kind": "power",
+  "type": "sect",
   "parent": "qm-bianhuang",
   "status": "draft",
   "terrain": "coast",

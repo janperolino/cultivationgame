@@ -6,7 +6,7 @@ import { baseOf, item } from '../content/items.ts';
 import { BORDER_WILDS } from '../content/map/border-wilds.ts';
 import { shop } from '../content/shops.ts';
 import { market, prosperityOf, seenFrom } from './markets.ts';
-import { join } from './resolver/names.ts';
+import { joinPower } from './organizations.ts';
 import { emptyWorld } from './resolver/world.ts';
 import { buy, offerFor, shelf, stockOf } from './shops.ts';
 import { addItem, newLife, withPlayer, type GameState } from './state.ts';
@@ -72,7 +72,7 @@ describe('a sect’s hall serves its own', () => {
     const lot = shelf(s, 'reins-sect')[0]!;
     const out = buy(s, 'reins-sect', lot.slot);
     expect(out.ok).toBe(false);
-    const member = { ...s, world: join(s.world, s.player.id, 'qm-baijiang-zong', day) };
+    const member = { ...s, world: joinPower(s.world, s.player.id, 'qm-baijiang-zong', day).world };
     expect(buy(member, 'reins-sect', lot.slot).ok).toBe(true);
   });
 });

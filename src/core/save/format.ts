@@ -34,7 +34,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 37;
+export const SAVE_VERSION = 38;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -980,6 +980,14 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       else if (hasShop(id.slice(7))) kept[id] = { ...k, name: keeperName(shop(id.slice(7))) };
     }
     return { ...old, version: 37, state: { ...s, world: { ...w, shops, kept } } };
+  },
+  // O1: a membership holds a seat and a balance of its power's currency (design § Seats and the
+  // currency). A membership kept before then starts at the outer seat with nothing banked.
+  37: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const w = (s.world ?? {}) as Raw;
+    const members = ((w.members ?? []) as Raw[]).map((m) => ({ ...m, seat: 'outer', balance: 0 }));
+    return { ...old, version: 38, state: { ...s, world: { ...w, members } } };
   },
 };
 

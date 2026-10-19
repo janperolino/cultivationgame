@@ -3,7 +3,8 @@
 Game content as data: realms, trees and nodes, techniques, recipes, items, talents, regions, factions. Never imports React, `src/ui` or `src/ai` (lint enforces it).
 
 - `atlas/schema.ts`: Zod schemas for the atlas source and the generated file, and `parseTop`.
-- `generated/atlas.json`: written by `npm run atlas:build`, never by hand. Rerun it after any atlas edit and commit the result.
+- `generated/atlas.json`: written by `npm run atlas:build`, never by hand. Rerun it after any atlas edit and commit the result. `generated/organizations.json` beside it is every power and kingdom with what its seats are read from.
+- `organizations.ts`: the eleven organization types' presets (how you join, the currency, what it asks, how you leave, what it gives, the six seats' names), the beast titles by realm, the powers' overrides by id, the kingdoms a power or council rules, and the inner trial's and donations' numbers (O1).
 - `realms.ts`: the nine realms with stages, lifespans, gates, insight thresholds, bar sizes, odds, the realm curve (`realmScale`) and the gap out of each realm (`realmGap`, `tierGap`).
 - `rarity.ts`: the seven rarities from gray to red, as bands in stage words (`rarityMultiplier`), Accuracy multipliers, property counts, prices, the roll table and what a method of each adds at a breakthrough.
 - `roots.ts`: spirit roots with odds, grade, qi speed and how many elements each kind holds (`rollRoot`, `rollElements`), including the named Innate Sword Root and Yin-Yang Twin Root with fixed elements and effects.
