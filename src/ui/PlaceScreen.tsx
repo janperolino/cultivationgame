@@ -54,7 +54,17 @@ import {
 } from '../core/markets.ts';
 import { whyOf } from '../core/making.ts';
 import { gradeCount, priceWords, stonesOf, stonesWords } from '../core/purse.ts';
-import { isMember } from '../core/resolver/names.ts';
+import { buyChapter, hallTerms, pavilion, pavilionChapters } from '../core/halls.ts';
+import {
+  becomeGuest,
+  guestOffered,
+  houseOf,
+  isOrganization,
+  membership,
+  organization,
+  seatTitle,
+  theName,
+} from '../core/organizations.ts';
 import {
   buy,
   haggle,
@@ -122,6 +132,15 @@ function doorsOf(s: GameState, p: MapPlace, info: PlaceKindInfo): [string, Door[
       tag: k.members ? 'members' : k.money === 'silver' ? 'silver' : k.posted ? 'posted rates' : '',
     };
   });
+  // A power's own chapters, sold to its disciples by seat (O2).
+  if (isOrganization(p.id) && pavilionChapters(p.id).length > 0)
+    shops.push({
+      id: 'pavilion',
+      seal: '经',
+      name: 'Scripture pavilion',
+      sub: `${cap(theName(p.id))}’s own chapters, by seat`,
+      tag: 'members',
+    });
   if (kind === 'gate') return [['Behind the gate', shops]];
   const trade = [...shops];
   if (info.changer)
@@ -402,6 +421,8 @@ function Counter({
   const md = doorsAt(place.id).find((d) => d.id === door);
   if (md) return <DoorCounter key={door} game={game} door={md} act={act} say={say} />;
   switch (door) {
+    case 'pavilion':
+      return <PavilionCounter game={game} power={place.id} act={act} say={say} />;
     case 'changer':
       return <ChangerCounter game={game} place={place} act={act} />;
     case 'talk':
@@ -500,7 +521,18 @@ function ShopCounter({
   if (kinfo.repairs) tabs.push(['mend', 'Mend']);
   const [tab, setTab] = useState(tabs[0]![0]);
   const silver = kinfo.money === 'silver';
-  const cost = (p: number) => (silver ? `${Math.round(p * 10) / 10} taels` : priceWords(p));
+  // A sect's hall: its own pay in its currency, an outsider at friendly at the open counter (O2).
+  const terms = hallTerms(game, sh);
+  const house = sh.power && isOrganization(sh.power) ? houseOf(sh.power) : null;
+  const yours =
+    terms?.as === 'member' && house ? membership(game.world, game.player.id, house) : undefined;
+  const currency = house ? organization(house).preset.currency.name : '';
+  const cost = (p: number) =>
+    yours
+      ? `${Math.round(p * 100) / 100} ${currency}`
+      : silver
+        ? `${Math.round(p * 10) / 10} taels`
+        : priceWords(p);
   const sm = shopMonth(game.world, shopId, game.calendar.day);
   const haggled = sm.haggle?.day === Math.floor(game.calendar.day) ? sm.haggle.off : null;
   const left = Math.max(0, shopPurse(game.world, sh, game.calendar.day) - sm.paid);
@@ -517,9 +549,7 @@ function ShopCounter({
     if (supplyOf(game.world, m, thing, game.calendar.day) < 100) out.push('scarce');
     return out;
   };
-  // A token gets you through a sect's gate; its shop serves members only (core/shops.ts).
-  if (kinfo.members && sh.power && !isMember(game.world, game.player.id, sh.power))
-    return <p className="place-note">It sells only to its own.</p>;
+  if (terms?.as === 'shut') return <p className="place-note">{terms.why}</p>;
   // The shelf by the count first, then the month's display lots (E5).
   const lots = shelf(game, shopId).sort((a, b) => Number(!!b.standing) - Number(!!a.standing));
   // What you carry and the copies on your bookcase, whatever this shop will buy.
@@ -551,7 +581,11 @@ function ShopCounter({
           {cap(keeperName(sh))} · {sh.small ? 'together they' : 'they'} can pay out{' '}
           {silver ? `${Math.round(left).toLocaleString('en')} taels` : priceWords(left)} this month
         </span>
-        {kinfo.posted ? (
+        {yours ? (
+          <span className="muted">
+            Your balance: {Math.round(yours.balance * 10) / 10} {currency}, at the market’s price
+          </span>
+        ) : kinfo.posted ? (
           <span className="muted">Posted rates, never haggled.</span>
         ) : haggled !== null ? (
           <span className={haggled > 0 ? 'place-good' : 'muted'}>
@@ -593,6 +627,29 @@ function ShopCounter({
           </button>
         ))}
       </div>
+      {terms?.as === 'counter' && (
+        <p className="place-sub">
+          The open counter: ×1.25 in stones, never the members’ lines or the chapters.
+          {house && guestOffered(game, house) && (
+            <>
+              {' '}
+              <button
+                type="button"
+                className="place-btn"
+                onClick={() =>
+                  act((s) => {
+                    const r = becomeGuest(s, house);
+                    if (r.ok) say(`You sit as a guest elder of ${theName(house)}.`);
+                    return r.ok ? r : { ok: false, reason: r.why };
+                  })
+                }
+              >
+                Take the guest elder’s seat they offer
+              </button>
+            </>
+          )}
+        </p>
+      )}
       {tab === 'buy' && (
         <div className="place-rows">
           {lots.length === 0 && <p className="muted">The shelf is bare until the month turns.</p>}
@@ -723,6 +780,70 @@ function ShopCounter({
           })}
         </div>
       )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- the scripture pavilion
+
+/** A power's own chapters, a copy each, bought in its currency by a seat that reaches them (O2). */
+function PavilionCounter({
+  game,
+  power,
+  act,
+  say,
+}: {
+  game: GameState;
+  power: string;
+  act: Act;
+  say: (t: string) => void;
+}) {
+  const lines = pavilion(game, power);
+  if (!lines) return <p className="place-note">The pavilion is for its own disciples.</p>;
+  const m = membership(game.world, game.player.id, houseOf(power))!;
+  const currency = organization(houseOf(power)).preset.currency.name;
+  return (
+    <>
+      <div className="place-keeper">
+        <span>
+          A copy of any chapter your seat reaches · your balance {Math.round(m.balance * 10) / 10}{' '}
+          {currency}
+        </span>
+      </div>
+      <div className="place-rows">
+        {lines.map((l) => {
+          const w = ware(l.thing);
+          const seat = seatTitle(power, l.seat);
+          return (
+            <div key={l.thing} className="place-row">
+              <i className="place-dot" style={{ background: `var(--rarity-${w.rarity})` }} />
+              <span>
+                <span className="place-row-name">{w.name}</span>{' '}
+                <span className="place-sub">
+                  · chapter {l.chapter} · {l.open ? w.sub : `from ${seat.name}`}
+                </span>
+              </span>
+              <span className="place-price">
+                {l.points} {currency}
+              </span>
+              <button
+                type="button"
+                className="place-btn"
+                disabled={!l.open}
+                onClick={() =>
+                  act((s) => {
+                    const r = buyChapter(s, power, l.thing);
+                    if (r.ok) say(`Copied ${w.name}.`);
+                    return r;
+                  })
+                }
+              >
+                Copy
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 }

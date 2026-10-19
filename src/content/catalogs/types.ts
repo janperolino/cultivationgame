@@ -40,6 +40,11 @@ export interface Lot {
    * need each input fills: the City's blades a horn each beside their ore.
    */
   uses?: Readonly<Record<string, number>>;
+  /**
+   * A sect hall's members' line (design § What membership gives and asks; O2): sold only to its
+   * members, never at the open counter an outsider at friendly buys from.
+   */
+  members?: boolean;
 }
 
 /** A technique's Art, written beside the technique: its passives, waking as it masters. */

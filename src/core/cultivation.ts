@@ -115,6 +115,11 @@ export interface RuleContext {
   firsts?: readonly FirstId[];
   /** Each hour's share of its work: a ride's jostled half (core/map/travel.ts); whole when not given. */
   hourFactor?: readonly number[];
+  /**
+   * Qi density where you seclude: a power's dwelling by your seat (core/organizations.ts
+   * `dwellingDensity`), 1 elsewhere. It lifts the air's qi and with it a stone's share of the day.
+   */
+  density?: number;
 }
 
 // ---------------------------------------------------------------- the ladders
@@ -159,7 +164,7 @@ export interface QiSpeed {
   rarity: number;
   mastery: number;
   fit: number;
-  /** Qi density, 1 until abodes and spirit veins arrive in M4. */
+  /** Qi density: a power's dwelling by seat while you seclude there (O2), else 1. */
   density: number;
   aptitude: number;
   /** Tree nodes' and the method's qi gain, as a multiplier. */
@@ -178,7 +183,7 @@ export interface QiSpeed {
  * the realm's grade × attention. Zero without a qi method, or with one past its tier. Layers 1–3
  * ignore the root, the method part and the fit.
  */
-export function qiSpeed(c: Cultivator, seat: Seat = AWAY): QiSpeed {
+export function qiSpeed(c: Cultivator, seat: Seat = AWAY, density = 1): QiSpeed {
   const m = ladderMethod(c, 'qi');
   const apt = aptitudeMultiplier(c);
   const nodes = 1 + stats(c).qiGain;
@@ -187,12 +192,11 @@ export function qiSpeed(c: Cultivator, seat: Seat = AWAY): QiSpeed {
   if (!m) {
     const none = { root: 0, tier: 0, rarity: 0, mastery: 0, fit: 0 };
     const attention = seat.factor;
-    return { ...none, density: 1, aptitude: apt, nodes, attention, grade, capped: false, total: 0 };
+    return { ...none, density, aptitude: apt, nodes, attention, grade, capped: false, total: 0 };
   }
   const tutorial = inTutorial(c.qi);
   const rootSpeed = tutorial ? 1 : root(c.root).speed;
   const fit = tutorial ? 1 : methodFitSpeed(c, m);
-  const density = 1;
   return {
     root: rootSpeed,
     tier: part.tier,
@@ -234,7 +238,13 @@ interface DayBase {
  * What a full day of each kind of work gives. `unfed` names the ladders whose method's upkeep went
  * unpaid, which stall and gain nothing.
  */
-function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[], seat: Seat): DayBase {
+function dayBase(
+  c: Cultivator,
+  day: number,
+  unfed: readonly LadderId[],
+  seat: Seat,
+  density = 1,
+): DayBase {
   const m = stats(c);
   const apt = aptitudeMultiplier(c);
   const insight = realm(realmOf(c)).insightRate * apt * (1 + m.insightGain);
@@ -254,7 +264,7 @@ function dayBase(c: Cultivator, day: number, unfed: readonly LadderId[], seat: S
     qi:
       QI_PER_DAY *
       realmScale(c.qi.realm) *
-      qiSpeed(c, seat).total *
+      qiSpeed(c, seat, density).total *
       setbackMultiplier(c.qi, day) *
       fed('qi'),
     body: art('body', BODY_PER_DAY, m.bodyGain),
@@ -317,8 +327,9 @@ export function hourYields(
   unfed: readonly LadderId[] = [],
   seat: Seat = AWAY,
   hourFactor?: readonly number[],
+  density = 1,
 ): HourYield[] {
-  const base = dayBase(c, day, unfed, seat);
+  const base = dayBase(c, day, unfed, seat, density);
   const discipline = followedRoutine(c) ? DISCIPLINE_BONUS : 0;
   const night = stats(c).nightQi;
   return effectiveWheel(c).map((kind, hour) => {
@@ -399,8 +410,9 @@ export function dayRates(
   unfed: readonly LadderId[] = [],
   seat: Seat = AWAY,
   hourFactor?: readonly number[],
+  density = 1,
 ): DayRates {
-  const hours = hourYields(c, day, unfed, seat, hourFactor);
+  const hours = hourYields(c, day, unfed, seat, hourFactor, density);
   const count = Object.fromEntries(HOUR_KIND_IDS.map((k) => [k, 0])) as Record<HourKind, number>;
   const sum = { qi: 0, body: 0, soul: 0, insight: 0, practice: 0, study: 0 };
   for (const h of hours) {
@@ -1013,7 +1025,7 @@ export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): Cu
     fed = r.cultivator;
     if (!r.fed) unfed.push(which);
   }
-  const rates = dayRates(fed, ctx.day, unfed, ctx.seat ?? AWAY, ctx.hourFactor);
+  const rates = dayRates(fed, ctx.day, unfed, ctx.seat ?? AWAY, ctx.hourFactor, ctx.density);
   // No stone burns past the qi bar's cap: the qi would be lost. Near it, only what fits burns.
   // The fuel is your realm's grade and the grades below at the premium, by the stone's worth
   // against the realm's day; a higher stone stays whole (core/purse.ts).

@@ -21,6 +21,7 @@ import {
   TIER_LEAN,
   TIER_LEAN_FROM,
 } from '../content/markets.ts';
+import { OPEN_COUNTER } from '../content/organizations.ts';
 import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
 import {
   DAMAGE_REPAIR_SHARE,
@@ -67,7 +68,9 @@ import {
   wanted,
   type Market,
 } from './markets.ts';
+import { counterSells, hallTerms, pavilionKeeps, titheFor } from './halls.ts';
 import { marketSum } from './making.ts';
+import { addBalance, houseOf, membership } from './organizations.ts';
 import { priceOf } from './prices.ts';
 import { pay, paySilver, receive, stonesOf, tierGrade, withStones } from './purse.ts';
 import { actorFromCultivator, plainActor } from './resolver/actor.ts';
@@ -564,7 +567,12 @@ export function shelf(s: GameState, shopId: string): StockLot[] {
   const sm = shopMonth(s.world, shopId, s.calendar.day);
   const m = marketOfShop(shopId);
   const day = s.calendar.day;
+  // A sect's hall leaves its own chapters to the pavilion, and its open counter shows an outsider
+  // neither the members' lines nor a copy (O2).
+  const sh = shopById(shopId);
+  const counter = hallTerms(s, sh)?.as === 'counter';
   return stockOf(shopId, sm.month, s.world)
+    .filter((l) => !pavilionKeeps(sh, l.thing) && (!counter || counterSells(sh, l.thing)))
     .filter((l) => l.standing || !sm.bought.includes(l.slot))
     .map((l) => (l.standing && !l.endless ? { ...l, n: l.n - (sm.took[l.thing] ?? 0) } : l))
     .filter((l) => l.n > 0)
@@ -598,22 +606,36 @@ export function buyCount(lot: StockLot, count?: number): number {
  * fetches.
  */
 export function priceToYou(s: GameState, shopId: string, lot: StockLot, count?: number): number {
+  const sh = shopById(shopId);
+  const terms = hallTerms(s, sh);
+  if (terms?.as === 'member') return hallPoints(sh, lot) * buyCount(lot, count);
   const sm = shopMonth(s.world, shopId, s.calendar.day);
   const m = marketOfShop(shopId);
   const short = !!m && shortAtRest(s.world, m, lot.thing, s.calendar.day);
-  return lot.price * buyCount(lot, count) * (1 - (short ? 0 : haggleOff(sm, s.calendar.day)));
+  const counter = terms?.as === 'counter' ? OPEN_COUNTER.markup : 1;
+  return (
+    lot.price * counter * buyCount(lot, count) * (1 - (short ? 0 : haggleOff(sm, s.calendar.day)))
+  );
+}
+
+/**
+ * A lot's price to a member at their hall, in the power's currency (design: at the market's price
+ * and never above it): a point a low-grade stone, the shelf's price without the hall's own markup.
+ */
+export function hallPoints(sh: Shop, lot: StockLot): number {
+  const round = lot.standing ? 100 : 10;
+  const points = lot.price / Math.max(1, priceFactor(sh));
+  return Math.max(1 / round, Math.round(points * round) / round);
 }
 
 /** A shop's answer; a refusal may still change the world (a stolen thing recognized). */
 export type ShopResult =
   { ok: true; state: GameState } | { ok: false; reason: string; state?: GameState };
 
-/** Whether the shop serves you: a sect shop only its own members. */
+/** Whether the shop serves you: a sect's hall its own, and from friendly an outsider at its counter. */
 function serves(s: GameState, sh: Shop): string | null {
-  if (SHOP_KIND_INFO[sh.kind].members && sh.power && !isMember(s.world, s.player.id, sh.power)) {
-    return 'It sells only to its own.';
-  }
-  return null;
+  const terms = hallTerms(s, sh);
+  return terms?.as === 'shut' ? terms.why : null;
 }
 
 /**
@@ -629,7 +651,13 @@ export function buy(s: GameState, shopId: string, slot: number, count?: number):
   const k = buyCount(lot, count);
   const price = priceToYou(s, shopId, lot, k);
   let next: GameState;
-  if (SHOP_KIND_INFO[sh.kind].money === 'silver') {
+  if (hallTerms(s, sh)?.as === 'member') {
+    // A member pays in the power's currency, from their balance (O2).
+    const house = houseOf(sh.power!);
+    const m = membership(s.world, s.player.id, house)!;
+    if (m.balance + 1e-9 < price) return { ok: false, reason: 'Your balance won’t cover it.' };
+    next = { ...s, world: addBalance(s.world, s.player.id, house, -price) };
+  } else if (SHOP_KIND_INFO[sh.kind].money === 'silver') {
     const paid = paySilver(s.player, price);
     if (!paid) return { ok: false, reason: `It costs ${price} taels.` };
     next = withPlayer(s, paid);
@@ -810,14 +838,16 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
     left -= k;
   }
   total = Math.round(total * 100) / 100;
+  // A harsh power takes its tithe of what its lower seats bring in (O2): a bounty, loot at its hall.
+  const kept = Math.round(total * (1 - titheFor(s, sh)) * 100) / 100;
   const sm = shopMonth(s.world, shopId, day);
   if (sm.paid + total > shopPurse(s.world, sh, day))
     return { ok: false, reason: 'The shop hasn’t the money this month.' };
   // Paid as the shop counts it: a mortal shop in taels, any other in its vein's grade at most.
   let player =
     info.money === 'silver'
-      ? { ...s.player, silver: s.player.silver + total }
-      : withStones(s.player, receive(stonesOf(s.player), total, tierGrade(shopVein(sh))));
+      ? { ...s.player, silver: s.player.silver + kept }
+      : withStones(s.player, receive(stonesOf(s.player), kept, tierGrade(shopVein(sh))));
   if (hasCopy(thing)) player = { ...player, copies: { ...player.copies, [thing]: held - n } };
   else player = addItem(player, thing, -n);
   if (m && spreads(thing, sh.kind === 'black-market')) world = copyInto(world, m, thing, day);

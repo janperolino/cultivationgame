@@ -322,7 +322,7 @@ describe('prosperity', () => {
     delete raw.state.world.prosperity;
     delete raw.state.world.supply;
     const old = loadSave(raw);
-    expect(old.version).toBe(38);
+    expect(old.version).toBe(39);
     expect(old.state.world.supply).toEqual({});
     expect(old.state.world.prosperity).toEqual({});
   });

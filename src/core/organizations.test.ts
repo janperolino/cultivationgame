@@ -16,6 +16,7 @@ import {
   ladderOf,
   leavePower,
   membership,
+  monthIndex,
   monthOfYear,
   organization,
   seatByRealm,
@@ -269,9 +270,16 @@ describe('the save', () => {
     raw.version = 37;
     raw.state.world.members = [{ who: YOU, power: GATE, since: 5 }];
     const back = loadSave(raw);
-    expect(back.version).toBe(38);
+    expect(back.version).toBe(39);
     expect(back.state.world.members).toEqual([
-      { who: YOU, power: GATE, since: 5, seat: 'outer', balance: 0 },
+      {
+        who: YOU,
+        power: GATE,
+        since: 5,
+        seat: 'outer',
+        balance: 0,
+        paid: monthIndex(back.state.calendar.day),
+      },
     ]);
   });
 });

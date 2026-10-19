@@ -1,5 +1,6 @@
 // The save envelope, its version number and the migrations that bring old saves up to date.
 import { z } from 'zod';
+import { DAYS_PER_MONTH } from '../../content/calendar.ts';
 import { LADDERS } from '../../content/cultivation.ts';
 import type { Element } from '../../content/elements.ts';
 import type { FirstId } from '../../content/firsts.ts';
@@ -34,7 +35,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 38;
+export const SAVE_VERSION = 39;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -988,6 +989,17 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const w = (s.world ?? {}) as Raw;
     const members = ((w.members ?? []) as Raw[]).map((m) => ({ ...m, seat: 'outer', balance: 0 }));
     return { ...old, version: 38, state: { ...s, world: { ...w, members } } };
+  },
+  // O2: a membership keeps the month its allowance last came (design § What membership gives and
+  // asks), so one kept before then counts as paid for its month and the next month's turn pays.
+  38: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const w = (s.world ?? {}) as Raw;
+    const day =
+      typeof (s.calendar as Raw | undefined)?.day === 'number' ? (s.calendar as Raw).day : 0;
+    const paid = Math.floor((day as number) / DAYS_PER_MONTH);
+    const members = ((w.members ?? []) as Raw[]).map((m) => ({ ...m, paid }));
+    return { ...old, version: 39, state: { ...s, world: { ...w, members } } };
   },
 };
 

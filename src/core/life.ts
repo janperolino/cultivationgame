@@ -60,6 +60,7 @@ import { learnNode, type LearnCheck } from './trees.ts';
 import { followWheel, hourToFlip, learnRoutine, setHours, type WheelCheck } from './wheel.ts';
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
+import { dwellingOf, payAllowances } from './organizations.ts';
 import { bedNights } from './map/place.ts';
 import { setCopyGain } from './map/encounters.ts';
 import { cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
@@ -144,6 +145,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
       seat: ctx?.seat,
       firsts: s.lineage.firsts,
       hourFactor: road?.factor,
+      // A power's dwelling by your seat, while you seclude inside its seat (O2).
+      density: road ? 1 : (dwellingOf(s)?.density ?? 1),
     }),
   );
   const cultivated = road ? { ...r.cultivator, wheel: s.player.wheel } : r.cultivator;
@@ -155,6 +158,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   for (const b of r.breakthroughs) if (b.success) next = flare(next, b.ladder, b.major);
   // Your followers' wages and bonds run on through the days (P3.4b).
   next = followersDay(next);
+  // Each power you belong to pays its allowance as the month turns (O2).
+  next = payAllowances(next);
   return noteFirsts(checkScreens(next));
 };
 

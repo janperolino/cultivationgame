@@ -16,9 +16,15 @@ import type { Encounter } from '../../core/map/schema.ts';
 import { HOME_REGION } from '../../content/resolver.ts';
 import { makeBond } from '../../core/resolver/followers.ts';
 import { addFame } from '../../core/resolver/names.ts';
-import { SEAT_IDS } from '../../content/organizations.ts';
+import { SEAT_IDS, type SeatId } from '../../content/organizations.ts';
 import {
+  addBalance,
+  allowanceOf,
+  becomeGuest,
   carriesGuarded,
+  houseOf,
+  membership,
+  setSeat,
   donate,
   innerTrial,
   isOrganization,
@@ -306,8 +312,8 @@ export const COMMANDS: Record<string, Command> = {
   },
   org: {
     usage:
-      'org [power id] [join [birth|adoption|marriage] | leave [to <id>] | trial | donate <low>]',
-    help: 'Your memberships; with an id, its type, seats and treatment, and joins, leaves, sits the inner trial or donates stones there (O1).',
+      'org [power id] [join [birth|adoption|marriage] | leave [to <id>] | trial | donate <low> | seat <seat> | points <n> | guest]',
+    help: 'Your memberships; with an id, its type, seats, treatment and allowances, and joins, leaves, sits the inner trial, donates stones, sets your seat, adds to your balance or takes a guest elder seat there (O1, O2).',
     run([id, verb, arg, to], store) {
       const s = needGame(store);
       const you = s.player.id;
@@ -316,7 +322,7 @@ export const COMMANDS: Record<string, Command> = {
         if (!rows.length) return 'You belong to no power.';
         return rows.map(
           (m) =>
-            `${m.power}: ${m.title.name} ${m.title.hanzi} · ${m.balance} ${m.currency}${m.trial ? ` · ${m.trial}` : ''}`,
+            `${m.power}: ${m.title.name} ${m.title.hanzi} · ${m.balance} ${m.currency}${m.trial ? ` · ${m.trial}` : ''} · ${m.allowance}${m.dwelling ? ` · ${m.dwelling}` : ''}`,
         );
       }
       if (!isOrganization(id)) return `${id} is no organization.`;
@@ -351,8 +357,38 @@ export const COMMANDS: Record<string, Command> = {
         const r = donate(s, id, { stones: Number(arg) });
         return r.ok ? apply(store, () => r.state, `+${r.points} to ${theName(id)}.`) : r.why;
       }
+      if (verb === 'seat') {
+        if (!membership(s.world, you, houseOf(id))) return 'You don’t belong to it.';
+        const seat = SEAT_IDS.find((k) => k === arg);
+        if (!seat) return `A seat: ${SEAT_IDS.join(', ')}.`;
+        return apply(
+          store,
+          (g) => ({ ...g, world: setSeat(g.world, you, id, seat) }),
+          `Seated ${seat}.`,
+        );
+      }
+      if (verb === 'points') {
+        if (!membership(s.world, you, houseOf(id))) return 'You don’t belong to it.';
+        const n = Number(arg);
+        if (!Number.isFinite(n)) return 'Give a number.';
+        return apply(
+          store,
+          (g) => ({ ...g, world: addBalance(g.world, you, id, n) }),
+          `+${n} to your balance.`,
+        );
+      }
+      if (verb === 'guest') {
+        const r = becomeGuest(s, id);
+        return r.ok ? apply(store, () => r.state, `A guest elder of ${theName(id)}.`) : r.why;
+      }
       const o = organization(id);
       const ranges = seatRanges(id);
+      const holder = realmStageOf(s).realm;
+      const monthly = (k: SeatId) => {
+        const lower = k === 'outer' || k === 'inner' || k === 'true';
+        const a = allowanceOf(id, k, lower ? holder : ranges[k].to.realm);
+        return `${a.stones} low${a.pills ? ` and ${a.pills} pills` : ''} a month`;
+      };
       return [
         `${o.name} ${o.hanzi}: ${o.type}, ${o.treatment}${o.branchOf ? `, a branch of ${o.branchOf}` : ''}`,
         `  joins by ${o.preset.join.join(', ')} · ${o.preset.currency.name} · leaves ${o.preset.leave.words}`,
@@ -360,7 +396,8 @@ export const COMMANDS: Record<string, Command> = {
         ...SEAT_IDS.slice()
           .reverse()
           .map(
-            (k) => `  ${seatTitle(id, k).name} ${seatTitle(id, k).hanzi}: ${rangeWords(ranges[k])}`,
+            (k) =>
+              `  ${seatTitle(id, k).name} ${seatTitle(id, k).hanzi}: ${rangeWords(ranges[k])} · ${monthly(k)}`,
           ),
       ];
     },

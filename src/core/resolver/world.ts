@@ -171,7 +171,8 @@ export type Heard = z.infer<typeof HeardSchema>;
 /**
  * A membership (design § NPC basics; § Professions, people and powers, Seats and the currency):
  * who belongs to which power and since when, the seat they hold by deed (O1, v38), their balance
- * of its currency, and the year they last sat its inner trial.
+ * of its currency, and the year they last sat its inner trial; since O2 (v39) the month its
+ * allowance last came, and whether they sit as a guest elder 客卿, an honored outsider's seat.
  */
 export const MemberSchema = z.object({
   who: z.string(),
@@ -180,6 +181,8 @@ export const MemberSchema = z.object({
   seat: z.enum(SEAT_IDS),
   balance: z.number().min(0),
   tried: z.number().int().optional(),
+  paid: z.number().int().optional(),
+  guest: z.boolean().optional(),
 });
 export type Member = z.infer<typeof MemberSchema>;
 

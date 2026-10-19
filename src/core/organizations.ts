@@ -8,8 +8,13 @@
 import { DAYS_PER_MONTH, DAYS_PER_YEAR } from '../content/calendar.ts';
 import { copyId } from '../content/copies.ts';
 import {
+  ALLOWANCE,
+  ALLOWANCE_PILL,
   BEAST_TITLES,
   DONATION,
+  DWELLING,
+  ELDER_ALLOWANCE,
+  GUEST_ELDER,
   HUMAN_BLOOD,
   INNER_TRIAL,
   ORG_OVERRIDES,
@@ -17,7 +22,9 @@ import {
   ORG_ROWS,
   RETIRE_YEARS,
   RULED_KINGDOMS,
+  TREATMENT_RULES,
   TYPE_BLOOD,
+  VEIN_DENSITY,
   type Ladder,
   type OrgPreset,
   type OrgRow,
@@ -28,16 +35,24 @@ import {
   type Treatment,
 } from '../content/organizations.ts';
 import { hasPerson, person } from '../content/people.ts';
-import { realm, realmIndex, REALM_IDS, REALMS, type RealmId } from '../content/realms.ts';
+import { veinAt } from '../content/map/index.ts';
+import {
+  realm,
+  realmIndex,
+  realmScale,
+  REALM_IDS,
+  REALMS,
+  type RealmId,
+} from '../content/realms.ts';
 import { HOME_REGION } from '../content/resolver.ts';
 import { guardedBy } from './markets.ts';
 import { priceOf } from './prices.ts';
-import { pay, stonesOf, withStones } from './purse.ts';
+import { pay, priceWords, realmGrade, receive, stonesOf, withStones } from './purse.ts';
 import { realmSizeOf, sizeAt, actorFromCultivator } from './resolver/actor.ts';
 import { verdict, type Verdict } from './resolver/check.ts';
 import { isMember } from './resolver/names.ts';
 import { addStanding } from './resolver/opinion.ts';
-import type { Member, RealmStage, World } from './resolver/world.ts';
+import { standingOf, type Member, type RealmStage, type World } from './resolver/world.ts';
 import { addItem, itemCount, realmOf, stageOf, withPlayer, type GameState } from './state.ts';
 
 // ── The record ───────────────────────────────────────────────────────────────────────────────
@@ -300,8 +315,12 @@ export function canJoin(
   if (org.type === 'clan' && !o.by)
     return { ok: false, why: 'A clan takes you by birth, adoption or marriage.' };
   if (org.preset.bond !== 'stack') {
+    // A guest elder's seat is an outsider's, and binds no house (O2).
     const held = membershipsOf(w, who).find(
-      (m) => isOrganization(m.power) && organization(m.power).preset.bond === org.preset.bond,
+      (m) =>
+        !m.guest &&
+        isOrganization(m.power) &&
+        organization(m.power).preset.bond === org.preset.bond,
     );
     if (held) {
       const word = org.preset.bond === 'house' ? 'serve' : 'are of';
@@ -335,7 +354,10 @@ export function joinPower(
   const seat = o.realm ? entrySeat(house, o.realm) : 'outer';
   let world: World = {
     ...w,
-    members: [...w.members, { who, power: house, since: day, seat, balance: 0 }],
+    members: [
+      ...w.members,
+      { who, power: house, since: day, seat, balance: 0, paid: monthIndex(day) },
+    ],
   };
   world = addStanding(world, { power: house, about: who, row: 'member' }, day);
   if ((o.blood ?? HUMAN_BLOOD) !== org.blood)
@@ -570,6 +592,165 @@ export function donate(
   };
 }
 
+// ── What membership gives (O2) ───────────────────────────────────────────────────────────────
+
+/** The month a day falls in, counted from day 0: what an allowance is paid by. */
+export function monthIndex(day: number): number {
+  return Math.floor(day / DAYS_PER_MONTH);
+}
+
+/** True disciple and up: the seats a harsh power pays ×1.5 and never tithes. */
+function isTop(seat: SeatId): boolean {
+  return seatRank(seat) >= seatRank('true');
+}
+
+/**
+ * A seat's monthly allowance 月例 (design § What membership gives and asks): outer 3 low and a
+ * Qi-Gathering Pill, inner 15 low and three, true 60 low, from elder up 60 low on the realm curve
+ * from Foundation by the holder's realm; scaled by how the power treats its own. A guest elder
+ * draws an elder's at their realm, as a fair power pays it.
+ */
+export function allowanceOf(
+  power: string,
+  seat: SeatId,
+  holder: RealmId,
+  guest = false,
+): { stones: number; pills: number } {
+  const base =
+    seat === 'outer' || seat === 'inner' || seat === 'true'
+      ? ALLOWANCE[seat]
+      : {
+          stones: (ELDER_ALLOWANCE.stones * realmScale(holder)) / realmScale(ELDER_ALLOWANCE.at),
+          pills: 0,
+        };
+  const round = (n: number) => Math.round(n * 10) / 10;
+  if (guest) return { stones: round(base.stones), pills: base.pills };
+  const t = TREATMENT_RULES[organization(houseOf(power)).treatment];
+  const top = isTop(seat);
+  return {
+    stones: round(base.stones * (top ? t.top : t.low)),
+    pills: Math.floor(base.pills * (top ? t.top : t.lowPills)),
+  };
+}
+
+/**
+ * The share of what a member brings in that their power takes (design: harsh, a tithe of 30% on
+ * the bounties and loot its outer and inner seats bring in); nothing at a fair or generous power,
+ * from the true seat up, or for a guest.
+ */
+export function titheOf(w: World, who: string, power: string, r: RealmStage): number {
+  const house = houseOf(power);
+  const m = membership(w, who, house);
+  if (!m || m.guest) return 0;
+  const seat = seatOf(w, who, house, r)!;
+  return isTop(seat) ? 0 : TREATMENT_RULES[organization(house).treatment].tithe;
+}
+
+/**
+ * The player's allowances come as each month turns, from every power they belong to, for each
+ * month since the last one paid: stones in their realm's grade and below, and the pills. A
+ * membership with no month kept starts counting now.
+ */
+export function payAllowances(s: GameState): GameState {
+  const month = monthIndex(s.calendar.day);
+  const who = s.player.id;
+  const mine = s.world.members.filter((m) => m.who === who && isOrganization(m.power));
+  if (!mine.some((m) => m.paid === undefined || m.paid < month)) return s;
+  const r = realmStageOf(s);
+  let player = s.player;
+  for (const m of mine) {
+    const months = m.paid === undefined ? 0 : month - m.paid;
+    if (months <= 0) continue;
+    const seat = m.guest ? 'elder' : seatOf(s.world, who, m.power, r)!;
+    const a = allowanceOf(m.power, seat, r.realm, m.guest);
+    if (a.stones > 0)
+      player = withStones(
+        player,
+        receive(stonesOf(player), a.stones * months, realmGrade(r.realm)),
+      );
+    if (a.pills > 0) player = addItem(player, ALLOWANCE_PILL, a.pills * months);
+  }
+  const members = s.world.members.map((m) =>
+    m.who === who && isOrganization(m.power) ? { ...m, paid: month } : m,
+  );
+  return { ...withPlayer(s, player), world: { ...s.world, members } };
+}
+
+/** Where the player dwells by seat while secluding: the power, the seat and its qi density. */
+export interface Dwelling {
+  power: string;
+  seat: SeatId;
+  density: number;
+}
+
+/** A power's dwelling's density at a place: its seat's, capped by the place's vein (O2's talk). */
+export function dwellingDensity(seat: SeatId, place: string): number {
+  const vein = Math.max(0, Math.min(VEIN_DENSITY.length - 1, veinAt(place)));
+  return Math.min(DWELLING[seat], VEIN_DENSITY[vein]!);
+}
+
+/**
+ * The dwelling the player secludes in (design: a dwelling by seat, qi density's first use in
+ * seclusion): inside the seat of a power they belong to, or a branch hall of it, the density their
+ * seat holds there. Only while they seclude there: on the road, or anywhere else, none. A guest
+ * elder keeps no dwelling.
+ */
+export function dwellingOf(s: GameState): Dwelling | null {
+  const place = s.map?.inside;
+  if (!place) return null;
+  const r = realmStageOf(s);
+  let best: Dwelling | null = null;
+  for (const m of membershipsOf(s.world, s.player.id)) {
+    if (m.guest || !isOrganization(m.power)) continue;
+    const branch = isOrganization(place) && organization(place).branchOf === m.power;
+    if (place !== m.power && !branch) continue;
+    const seat = seatOf(s.world, s.player.id, m.power, r)!;
+    const density = dwellingDensity(seat, place);
+    if (!best || density > best.density) best = { power: m.power, seat, density };
+  }
+  return best;
+}
+
+/**
+ * Whether a power offers the player its guest elder 客卿 seat (design: an honored outsider): they
+ * aren't its member and stand honored with it. A beast power keeps no outsiders' seats.
+ */
+export function guestOffered(s: GameState, power: string): boolean {
+  if (!isOrganization(power)) return false;
+  const house = houseOf(power);
+  if (organization(house).type === 'beast' || membership(s.world, s.player.id, house)) return false;
+  return standingOf(s.world, house, s.player.id, s.calendar.day).word === GUEST_ELDER.from;
+}
+
+/**
+ * Taking the guest elder seat: an allowance and access to the hall at members' terms, no quota,
+ * backing both ways; never the pavilion's chapters or a dwelling, and no house is bound by it.
+ */
+export function becomeGuest(
+  s: GameState,
+  power: string,
+): { ok: true; state: GameState } | { ok: false; why: string } {
+  if (!guestOffered(s, power)) return { ok: false, why: 'They offer you no seat.' };
+  const house = houseOf(power);
+  const day = s.calendar.day;
+  const guest: Member = {
+    who: s.player.id,
+    power: house,
+    since: day,
+    seat: 'elder',
+    balance: 0,
+    paid: monthIndex(day),
+    guest: true,
+  };
+  const known = s.world.known.includes(`token:${house}`)
+    ? s.world.known
+    : [...s.world.known, `token:${house}`];
+  return {
+    ok: true,
+    state: { ...s, world: { ...s.world, members: [...s.world.members, guest], known } },
+  };
+}
+
 // ── Views ────────────────────────────────────────────────────────────────────────────────────
 
 /** A seat's realms in words: "Qi Condensation 7–9", "Foundation Establishment", "Core Formation and below". */
@@ -600,14 +781,22 @@ export function membershipsView(s: GameState) {
     .filter((m) => isOrganization(m.power))
     .map((m) => {
       const org = organization(m.power);
-      const seat = seatOf(s.world, s.player.id, m.power, r)!;
+      const seat = m.guest ? 'elder' : seatOf(s.world, s.player.id, m.power, r)!;
+      const a = allowanceOf(m.power, seat, r.realm, m.guest);
+      const pills = a.pills > 0 ? ` and ${a.pills === 1 ? 'a pill' : `${a.pills} pills`}` : '';
+      const dwelling = m.guest ? null : dwellingDensity(seat, m.power);
       return {
         power: m.power,
         name: org.name,
-        title: seatTitle(m.power, seat, r.realm),
+        title: m.guest
+          ? { name: GUEST_ELDER.name, hanzi: GUEST_ELDER.hanzi }
+          : seatTitle(m.power, seat, r.realm),
         balance: m.balance,
         currency: org.preset.currency.name,
-        trial: trialWords(m, seat, s.calendar.day),
+        trial: m.guest ? null : trialWords(m, seat, s.calendar.day),
+        allowance:
+          a.stones > 0 || a.pills > 0 ? `${priceWords(a.stones)}${pills} a month` : 'no allowance',
+        dwelling: dwelling && dwelling > 1 ? `qi ×${dwelling} secluding there` : null,
       };
     });
 }

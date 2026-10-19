@@ -265,6 +265,9 @@ export const BUTCHER_GATE: Catalog = {
       ],
     },
   ],
+  // The members' lines (O2, for Jan's review): the Gate's own pills, its marrow and its saber
+  // talisman. The rest stand at the open counter too, for an outsider at friendly; its methods and
+  // techniques are the scripture pavilion's (core/halls.ts).
   lots: [
     // Staples (E3)
     // Steppe hides, wherever herds graze the open grass (E4's land tags, for Jan's review).
@@ -274,13 +277,13 @@ export const BUTCHER_GATE: Catalog = {
     { thing: 'green-steel-saber', shops: ['sect'] },
     { thing: 'hide-apron', shops: ['sect'] },
     { thing: 'core-weighing-scale', shops: ['sect'], weight: 0.5 },
-    { thing: 'beast-blood-pill', shops: ['sect'], count: [1, 4] },
+    { thing: 'beast-blood-pill', shops: ['sect'], count: [1, 4], members: true },
     { thing: 'wound-knitting-pill', shops: ['sect'], count: [1, 4] },
-    { thing: 'phantom-saber-talisman', shops: ['sect'], count: [1, 3] },
+    { thing: 'phantom-saber-talisman', shops: ['sect'], count: [1, 3], members: true },
     { thing: 'beast-blood-vine', shops: ['sect'], count: [2, 6] },
-    { thing: 'core-blood-pill', shops: ['sect'], count: [1, 2], weight: 0.3 },
-    { thing: 'tempered-marrow', shops: ['sect'], weight: 0.3 },
-    { thing: 'marrow-washing-pill', shops: ['sect'], weight: 0.5 },
+    { thing: 'core-blood-pill', shops: ['sect'], count: [1, 2], weight: 0.3, members: true },
+    { thing: 'tempered-marrow', shops: ['sect'], weight: 0.3, members: true },
+    { thing: 'marrow-washing-pill', shops: ['sect'], weight: 0.5, members: true },
     { thing: 'method:butcher-saber', shops: ['sect'], weight: 0.5 },
     { thing: 'method:butcher-saber-foundation', shops: ['sect'], weight: 0.2 },
     { thing: 'method:stone-bearing-foundation', shops: ['sect'], weight: 0.2 },

@@ -3,7 +3,9 @@
 // members out of its own hall, as the Beast-Butcher Gate does; their methods wait for the
 // organizations layer, where a sect shop prices in contribution. The Temple of the Quiet Bell asks
 // no fee, the Hu Clan trades in Heaven's Eye and Red Marrow Cave through the Nameless Market, so
-// they keep none. Drafted in E2.1. **Awaiting Jan's review.**
+// they keep none. Drafted in E2.1. **Awaiting Jan's review.** The members' lines (O2, for review
+// too): the Reins' paired lance and shared-blood pill, the Pavilion's bone-binding talisman and the
+// Lamp-Keepers' drowned-word talisman and fen-yin pill; the rest stand at the open counter as well.
 import type { Catalog } from './types.ts';
 
 export const HUNDRED_REINS: Catalog = {
@@ -55,9 +57,9 @@ export const HUNDRED_REINS: Catalog = {
     },
   ],
   lots: [
-    { thing: 'paired-rider-lance', shops: ['sect'], weight: 0.5 },
+    { thing: 'paired-rider-lance', shops: ['sect'], weight: 0.5, members: true },
     { thing: 'storm-hawk-pinion-talisman', shops: ['sect'], count: [1, 3] },
-    { thing: 'shared-blood-pill', shops: ['sect'], count: [1, 4] },
+    { thing: 'shared-blood-pill', shops: ['sect'], count: [1, 4], members: true },
   ],
 };
 
@@ -111,7 +113,7 @@ export const BOUND_BONES: Catalog = {
   ],
   lots: [
     { thing: 'skull-socket-robe', shops: ['sect'], weight: 0.5 },
-    { thing: 'bone-binding-talisman', shops: ['sect'], count: [1, 3] },
+    { thing: 'bone-binding-talisman', shops: ['sect'], count: [1, 3], members: true },
     { thing: 'array-plate-blank', shops: ['sect'], count: [2, 6] },
   ],
 };
@@ -166,7 +168,7 @@ export const LAMP_KEEPERS: Catalog = {
   ],
   lots: [
     { thing: 'yin-fire-lantern', shops: ['sect'], weight: 0.5 },
-    { thing: 'drowned-word-talisman', shops: ['sect'], count: [1, 3] },
-    { thing: 'fen-yin-pill', shops: ['sect'], count: [1, 4] },
+    { thing: 'drowned-word-talisman', shops: ['sect'], count: [1, 3], members: true },
+    { thing: 'fen-yin-pill', shops: ['sect'], count: [1, 4], members: true },
   ],
 };

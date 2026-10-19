@@ -363,6 +363,70 @@ export const DONATION = {
 /** A dynasty's member may retire after this many years' service; leaving sooner is deserting. */
 export const RETIRE_YEARS = 10;
 
+// ── What membership gives (design § What membership gives and asks; O2) ────────────────────────
+
+/**
+ * The monthly allowance 月例 by seat, in low-grade stones and Qi-Gathering Pills, at fair
+ * treatment. From elder up it is the true disciple's on the realm curve: 60 low at Foundation,
+ * times the holder's realm scale over Foundation's (`ELDER_ALLOWANCE`).
+ */
+export const ALLOWANCE: Record<'outer' | 'inner' | 'true', { stones: number; pills: number }> = {
+  outer: { stones: 3, pills: 1 },
+  inner: { stones: 15, pills: 3 },
+  true: { stones: 60, pills: 0 },
+};
+export const ALLOWANCE_PILL = 'qi-gathering-pill';
+export const ELDER_ALLOWANCE = { stones: 60, at: 'foundation-establishment' as RealmId };
+
+/**
+ * How a power's treatment scales the allowance (O2's talk): harsh pays its outer and inner seats
+ * half the stones and none of the pills ("half or none") and takes a tithe of what they bring in,
+ * its top seats ×1.5; generous pays every seat ×1.5, the pills rounded down.
+ */
+export const TREATMENT_RULES: Record<
+  Treatment,
+  { low: number; lowPills: number; top: number; tithe: number }
+> = {
+  generous: { low: 1.5, lowPills: 1.5, top: 1.5, tithe: 0 },
+  fair: { low: 1, lowPills: 1, top: 1, tithe: 0 },
+  harsh: { low: 0.5, lowPills: 0, top: 1.5, tithe: 0.3 },
+};
+
+/**
+ * The dwelling by seat as qi density in seclusion: a shared hall on the power's vein, a cave, a
+ * true disciple's courtyard, a peak from elder up. Counted only while you seclude inside the
+ * power's seat, and capped by its vein: a vein of tier n holds the n-th density (O2's talk), so
+ * the Gate's tier 4 vein holds them all and the Lamp-Keepers' tier 2 stops at a cave's.
+ */
+export const DWELLING: Record<SeatId, number> = {
+  outer: 1.1,
+  inner: 1.3,
+  true: 1.6,
+  elder: 2,
+  grand: 2,
+  head: 2,
+};
+export const VEIN_DENSITY = [1, 1.1, 1.3, 1.6, 2] as const;
+
+/**
+ * The open counter (design: outsiders at the hall): from friendly standing, the power's "known"
+ * (+10, where loyalty's "below friendly" sits), at ×1.25 in stones, never the members' lines or
+ * the chapters. An honored outsider is offered the guest elder 客卿 seat.
+ */
+export const OPEN_COUNTER = { from: 'known', markup: 1.25 } as const;
+export const GUEST_ELDER: Title & { from: 'honored' } = {
+  name: 'guest elder',
+  hanzi: '客卿',
+  from: 'honored',
+};
+
+/**
+ * The scripture pavilion 藏经阁 sells the power's own chapters by seat (design § Lines, chapters
+ * and kinship): chapter 1 to any member, chapter 2 from inner, chapter 3 from true.
+ */
+export const PAVILION_SEAT: Record<number, SeatId> = { 1: 'outer', 2: 'inner', 3: 'true' };
+export const PAVILION: Title = { name: 'scripture pavilion', hanzi: '藏经阁' };
+
 /** An atlas power or kingdom as organizations read it (written by `npm run atlas:build`). */
 export interface OrgRow {
   id: string;

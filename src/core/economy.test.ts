@@ -299,7 +299,7 @@ describe('shops', () => {
     const lot = shelf(s, 'gate-sect')[0]!;
     expect(buy(s, 'gate-sect', lot.slot)).toMatchObject({
       ok: false,
-      reason: 'It sells only to its own.',
+      reason: 'It sells only to its own, and its people don’t know you.',
     });
     const member = {
       ...s,
@@ -311,7 +311,7 @@ describe('shops', () => {
             power: 'qm-tushou-men',
             since: 0,
             seat: 'outer' as const,
-            balance: 0,
+            balance: 1000,
           },
         ],
       },
