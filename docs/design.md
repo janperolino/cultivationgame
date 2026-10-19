@@ -1038,26 +1038,59 @@ Formation puzzles show the engine-and-GLM split well. The engine hides which nod
 **Organizations share one skeleton.** Sects, clans, guilds, gangs and the rest are one kind of record: how you join, how you rise, the currency you rise by, what it asks, how you leave and what it gives. Each has its own rank names, halls or branches, and the chapters each rank unlocks. A type is a preset for that skeleton, and any organization can mix parts: a sect run like a gang, or a clan that owns a guild. Settled in the organizations design (2026-10-19):
 
 - **Every atlas power carries a `type`**, one of the eleven below. A kingdom with no ruling power written reads as a dynasty, so the March's garrison takes the conscript's child without an entry of its own. The assassins get one entry, a house in the Border Wilds hidden behind the Night Bridge Society.
-- **A type is a preset in content** (`src/content/organizations.ts`), its six fields the table's columns. A power overrides any field, keyed by its id; the atlas keeps only the type. Rank names stay in the cultivation world's words (outer disciple 外门弟子, inner disciple 内门弟子, true disciple 真传弟子, deacon 执事, elder 长老, grand elder 太上长老, sect master 宗主, and their clan, guild and court equivalents), never a fantasy title; an override renames within that vocabulary (a palace's palace disciples, the Gate's Gate disciples).
+- **A type is a preset in content** (`src/content/organizations.ts`), its fields the table's columns and its seats' names (Seats, below). A power overrides any field, keyed by its id; the atlas keeps only the type. Rank names stay in the cultivation world's words (outer disciple 外门弟子, inner disciple 内门弟子, true disciple 真传弟子, deacon 执事, elder 长老, grand elder 太上长老, sect master 宗主, and their clan, guild and court equivalents), never a fantasy title; an override renames within that vocabulary (a palace's palace disciples, the Gate's Gate disciples).
 - **Mixing is an override, not a second type.** The Qian Clan is a clan whose "what it gives" adds the guild hall it runs.
 - **Houses and the rest.** You serve one house at a time: a sect, academy, temple, dynasty or assassins' house. Guilds, societies and gangs stack, and your clan comes by birth, adoption or marriage and stays. Joining a second house means leaving the first by its rule.
 - **Leaving is not betrayal by itself.** Leaving by the type's rule (released, graduating, retiring, selling out) is a clean parting, kept as a memory, not a grudge. Betrayal is leaving where the rule says hunted (a society, assassins, deserting a dynasty), going over to a power the first is hostile to, or carrying off its guarded methods (Economy, Methods in the market).
 - **NPCs are members by the same rule.** A membership holds a rank and a balance of the type's currency (a save change), so Elder Mo is an elder as you would be.
 - **Beast powers and tribes take outsiders.** Their own join by bloodline, birth or a beast bond, and anyone else joins as they would, by a trial or tribute, the same skeleton. An outsider of another race carries "not of our blood" on every member's opinion, −15, never fading; the rule runs the other way too, so a beast in a human sect carries it with the humans.
 
-| Type | How you join | How you rise | What it asks | How you leave | What it gives | In the atlas |
+| Type | How you join | Its currency | What it asks | How you leave | What it gives | In the atlas |
 |---|---|---|---|---|---|---|
 | Sect, gate or palace | a test | contribution | duties, quotas | released or expelled | methods, a library | Waking Thunder Sect, Gate of Beast Craft |
-| Clan | birth, adoption, marriage | bloodline, seniority | blood duty | never quite | inheritance, protection | Baili Clan, Nangong Clan |
-| Guild or works | buying in, apprenticeship | capital, shares, craft rank | dues, trade quotas | selling out | markets, caravans, workshops | Geomancers' Guild, Cloud-Bearing Works |
-| Gang | a blood oath | force, loyalty | territory, tribute | in a box | streets, fences | Tusk-Saw Gang, Jarless Gang |
-| Society | recruited or sponsored | trust, secrets kept | silence, favors | hunted | intelligence, smuggling, contacts | Night Bridge Society, Core-Takers' Society |
-| Assassins | recruited | kills, contracts | contracts, silence | hunted | poisons, marks | none yet |
-| Academy | an exam | grades, exams | attendance, tests | graduating | teachers, alumni | Vermilion Brush Academy, Academy of the Chalk Line |
-| Temple or abbey | vows | piety, merit | vows, service | breaking your vows | sanctuary, Buddhist arts | River Lamp Temple, Abbey of Settled Souls |
-| Dynasty or army | conscription, office | merit, rank | service, taxes, war | deserting (hunted) or retiring | stipends, garrisons, authority | Great Jing Dynasty |
-| Tribe | birth, a trial | deeds, age | the hunt, feuds | exile | land, beasts, old rites | Tribe of the Shark Caves |
-| Beast power | bloodline, or a beast bond | strength | tribute, territory | devoured | beast lore, mounts, bloodline gifts | Beast Court of Ten Thousand Mountains |
+| Clan | birth, adoption, marriage | contribution | blood duty | never quite | inheritance, protection | Baili Clan, Nangong Clan |
+| Guild or works | buying in, apprenticeship | contribution, beside a craft grade | dues, trade quotas | selling out | markets, caravans, workshops | Geomancers' Guild, Cloud-Bearing Works |
+| Gang | a blood oath | face | territory, tribute | in a box | streets, fences | Tusk-Saw Gang, Jarless Gang |
+| Society | recruited or sponsored | trust | silence, favors | hunted | intelligence, smuggling, contacts | Night Bridge Society, Core-Takers' Society |
+| Assassins | recruited | trust | contracts, silence | hunted | poisons, marks | none yet |
+| Academy | an exam | contribution | attendance, tests | graduating | teachers, alumni | Vermilion Brush Academy, Academy of the Chalk Line |
+| Temple or abbey | vows | merit 功德 | vows, service | breaking your vows | sanctuary, Buddhist arts | River Lamp Temple, Abbey of Settled Souls |
+| Dynasty or army | conscription, office | military merit 军功 | service, taxes, war | deserting (hunted) or retiring | stipends, garrisons, authority | Great Jing Dynasty |
+| Tribe | birth, a trial | deeds | the hunt, feuds | exile | land, beasts, old rites | Tribe of the Shark Caves |
+| Beast power | bloodline, or a beast bond | tribute | tribute, territory | devoured | beast lore, mounts, bloodline gifts | Beast Court of Ten Thousand Mountains |
+
+**Seats and the currency.** Every organization has the same six seats, as Tale of Immortal's sects do, and a greater power fills them with stronger cultivators.
+
+- **Rank is realm and a deed; the currency only buys.** As the novels have it, contribution is spent at the exchange hall, and promotion is the realm and a trial: you are eligible for a seat on reaching its realm, and take it by its trial (the yearly inner trial, a capability check of your sheet against its number, never a roll) or by appointment (an elder taking you as their disciple makes you a true disciple; the elder and head seats are appointed). Reaching the inner seat's realm makes you an inner disciple outright. A seat sets what you may buy and which posts you may hold.
+- **A seat's realm is read from its power's population, top down:** the head and grand elders at its top realm, the head its strongest (when one alone stands at the top, the grand elders are the strongest of the realm below); elders the realm below the top, or the top itself when ten or more stand there; true and inner the realm below the elders; outer everything under that, and when nothing is under, one realm splits at layer 7, inner above and outer below. A power without a population yet takes its top realm from its vein. A power overrides any seat's range or name.
+
+| | Lamp-Keeper Sect | Beast-Butcher Gate | Great Jing Dynasty |
+|---|---|---|---|
+| Head | Foundation | Nascent Soul | Body Integration (the Ancestor Emperor) |
+| Grand elders | Foundation | the strongest Core Formation | the strongest Deity Transformation |
+| Elders | Foundation | Core Formation | Deity Transformation |
+| True and inner | Qi Condensation 7–9 | Foundation | Nascent Soul |
+| Outer | Qi Condensation 1–6 | Qi Condensation | Core Formation and below |
+
+- **The seats by type**, drafted for review in the build phase. A guild's seat also needs its craft grade, first-grade 一品 to ninth-grade, read from the craft Dao (crafts).
+
+| Type | Outer | Inner | True | Elder | Grand elder | Head |
+|---|---|---|---|---|---|---|
+| Sect | outer disciple 外门弟子 | inner disciple 内门弟子 | true disciple 真传弟子 | elder 长老 | grand elder 太上长老 | sect master 宗主 |
+| Clan | branch clansman 旁系 | direct-line 嫡系 | heir 嫡传 | clan elder 族老 | old ancestor 老祖 | patriarch 家主 |
+| Guild | member 会员 | senior member 高级会员 | guild steward 执事 | guild elder 长老 | guest elder 客卿 | guild master 会长 |
+| Dynasty | soldier 兵卒 | captain 校尉 | commander 统领 | general 将军 | great general 大将军 | king 王, emperor 皇帝 |
+| Gang | gang member 帮众 | incense master 香主 | hall master 堂主 | elder 长老 | great elder 大长老 | gang chief 帮主 |
+| Society | informant 眼线 | member 会众 | hall master 堂主 | elder 长老 | great elder 大长老 | society head 会首 |
+| Assassins | bronze-medal killer 铜牌 | silver-medal 银牌 | gold-medal 金牌 | elder 长老 | great elder 大长老 | house master 楼主 |
+| Academy | student 学子 | inner student 内院 | personal student 亲传 | teacher 教习 | grand teacher 大教习 | academy head 院长 |
+| Temple | novice 沙弥 | monk 比丘 | abbot's disciple 亲传 | elder monk 长老 | first seat 首座 | abbot 方丈 |
+| Tribe | tribesman 族人 | warrior 勇士 | chosen warrior 神选 | elder 长老 | shaman 巫, great shaman 大巫 | chief 族长 |
+| Beast power | by realm | by realm | by realm | by realm | by realm | by realm |
+
+- **A title that claims greatness needs the realm for it.** A beast power's titles are its holders' realms, as the novels' beast ranks are: beast soldier 兽兵 at Qi Condensation, beast captain 兽将 at Foundation, beast commander 兽帅 at Core Formation, beast king 兽王 at Nascent Soul, great king 大王 at Deity Transformation, beast sovereign 兽皇 from Void Refinement; so a Core Formation beast at the head of its power is a beast commander, never a sovereign. Likewise a tribe's shaman is a great shaman only from Nascent Soul, and a dynasty's head is a king below Deity Transformation and an emperor from it.
+- **Each type's currency** (the table's column) works the same underneath: contribution 贡献 in a sect, clan, guild or academy, merit 功德 in a temple, military merit 军功 in a dynasty, trust in a society or an assassins' house, face in a gang, deeds in a tribe, tribute in a beast power. **One point is about a low-grade stone's worth**, so it follows the realm curve as income does: a day's duty earns about 1 at Qi Condensation and a few tens at Foundation. It comes from posts, the mission hall and donations (goods at half their sell price, stones at 2 low a point; Economy, Sect contribution). The balance stays with the power, and leaving gives it up.
+- **NPCs take their seat by their realm** through the same rule; named people keep the seat written for them.
 
 **People, from the first hour.** Every person you've met has a record: name, where you met, what they are to you, friend, rival, senior, master, sworn sibling, dao companion, enemy, how they feel about you, a word read off the reasons they remember, each listed with its weight (The resolver, What lasts), and their last known realm and whereabouts, which is only what you've seen or heard, so the same fog applies to people as to places. Who gets a record is the kept rule under Enemies, beasts and the people you meet. Each has a log: everything in your chronicle they were part of, since the typed chronicle stores actors by id, plus updates about them. Updates come from cards that name them (a letter from your senior, the sergeant posted to the wall), from their own lives ticking on (bonded people send a yearly letter card), from rumors and headlines, and after v1 from a friend's exported snapshot of their real progress. The People screen shows them as circles and a web of threads (§ UI and screens, The People screen), with portraits.
 
@@ -1366,7 +1399,7 @@ Income follows the realm curve. A Qi Condensation cultivator earns a few low-gra
 - Auctions, the biggest sink, where you bid against NPCs who want the same lot.
 - Losses: robbery, raided gardens, repairs after fights, and everything you carried when you die.
 
-**Sect contribution** comes from duties while you idle, missions in the world and donated goods. It buys the sect's manuals, methods, pills, a better cave abode and a master's time. Stones buy contribution only by donation, at a poor rate, so a rich outsider can't buy a sect's vault.
+**Sect contribution** comes from duties while you idle, missions in the world and donated goods. It buys the sect's manuals, methods, pills, a better cave abode and a master's time. Stones buy contribution only by donation, at a poor rate (2 low a point, goods at half their sell price; Professions, people and powers, Seats and the currency), so a rich outsider can't buy a sect's vault.
 
 **What the balance sims measure:**
 
