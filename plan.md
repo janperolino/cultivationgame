@@ -94,10 +94,10 @@ Built bottom-up from here (planning, 2026-10-18, Jan's call): what other systems
 - [x] O2 The hall, the pavilion and the dwelling
 - [x] O3 Backing, tutelage and what it asks
 - [x] C1 The realm gap against numbers (protective qi; found in O4's talk, when one Foundation cultivator lost to three at Qi Condensation's peak)
-- [ ] C2 Arts that strike many (C1's other half: a white early Foundation against 50 white QC9s)
 - [ ] O4 Jobs, posts and duty hours (was P3.7b), with the gather hour
 - [ ] O5 Guarded methods
 - [ ] The organizations play checkpoint
+- [ ] C2 Arts that strike many (C1's other half: a white early Foundation against 50 white QC9s; after the organizations playtest, Jan's call)
 - [ ] D4 Design: crafts, then M4's phases (the producers that feed the markets) and a play checkpoint
 - [ ] The atlas fill: the other continents, on A5.2's pattern (can run beside the layers above once A5.2 lands; one session on `entries.json` at a time)
 - [ ] Design: guild trade and the living world (the rest of M5 and M6: guilds trading between regions, caravans, commissions, the black market, auctions, the events calendar, NPCs who age and climb, rumors), then its phases and a play checkpoint
@@ -162,7 +162,7 @@ Settled in the design session of 2026-10-19 (design § Professions, people and p
 
 ### Combat: C1 and C2
 
-- **C2 Arts that strike many** (design § Combat, Arts that strike many; Protective qi). `targets` on a technique (1 by default) and on a fight item; each target takes the full hit with its own hit and crit roll, the first the chosen foe and the rest the nearest in the fight's order (`others`), one outcome each; qi cost × √targets; an art that strikes all gives the full hit to ten and splits it past ten. The preview prices the whole cast and the profiles sum it over the foes it reaches, so a fighter sweeps a crowd and strikes one foe alone. Content for Jan's review: per path, white tier 1 and tier 2 arts striking 3 to 5 and one striking 10 (qi: wind blades, icicle volley, fireball; body: sweeping strike, palm wind, ground-shaking stomp; soul: soul-shaking roar, divine-sense needles), and flying swords striking all, rare; NPC kits from small sect up carry one as their second art, and the sim's white kits their path's 10-target art. Sword Rain and the spear's Whirl read the same rule. `npm run sim -- fights`: the crowds rows run with the art, and the targets become a white early Foundation beating 50 white QC9 and 50 QC5 over 90%, a Foundation peak 100 QC9, an early Core Formation 50 Foundation peaks; the ledger, the paths and the roster hold, the qi cost tuned to hold them. *Talk through first:* the arts' names and counts, and whether rarity adds reach. Done when every path can sweep a crowd from Qi Condensation, the targets hold, and tests cover the count, the rolls, the cost, the split past ten and the profiles' pick.
+- **C2 Arts that strike many** (design § Combat, Arts that strike many; Protective qi). `targets` on a technique (1 by default) and on a fight item; each target takes the full hit with its own hit and crit roll, the first the chosen foe and the rest the nearest in the fight's order (`others`), one outcome each; qi cost × √targets; an art that strikes all gives the full hit to ten and splits it past ten. The preview prices the whole cast and the profiles sum it over the foes it reaches, so a fighter sweeps a crowd and strikes one foe alone. Content for Jan's review: per path, white tier 1 and tier 2 arts striking 3 to 5 and one striking 10 (qi: wind blades, icicle volley, fireball; body: sweeping strike, palm wind, ground-shaking stomp; soul: soul-shaking roar, divine-sense needles), and flying swords striking all, rare; every generated cultivator rolls one or two of their path's on the pedigree's table (one from Qi Condensation, a second from small sect up or from Foundation; Jan's call), and the sim's white kits carry their path's 10-target art. Sword Rain and the spear's Whirl read the same rule. `npm run sim -- fights`: the crowds rows run with the art, and the targets become a white early Foundation beating 50 white QC9 and 50 QC5 over 90%, a Foundation peak 100 QC9, an early Core Formation 50 Foundation peaks; the ledger, the paths and the roster hold, the qi cost tuned to hold them. *Talk through first:* the arts' names and counts, and whether rarity adds reach. Done when every path can sweep a crowd from Qi Condensation, the targets hold, and tests cover the count, the rolls, the cost, the split past ten and the profiles' pick.
 
 ### M3's AI half
 
@@ -197,6 +197,8 @@ Write questions here when a phase hits something the design doesn't cover, with 
 ### Open
 
 #### Rules and balance, for a design session
+
+- **Lifespans** (Jan, 2026-10-19: "a little wrong", to revisit eventually). Today by realm: Qi Condensation 120 years, Foundation 200, Core Formation 500, Nascent Soul 1,000, Deity Transformation 2,000, Void Refinement 3,000, Body Integration 5,000, Mahayana 8,000, Tribulation Transcendence 12,000 (`src/content/realms.ts`, design § Cultivation). The calendar runs each realm's full lifespan in about 120 real hours, and NPC pace and the clock read them, so a change reaches pacing, `pace.ts` and the calendar speeds.
 
 - **Two curves** (Jan's call, 2026-10-12, D2.0.1). Combat's realm sizes (×3.1 to ×46 a realm on each stat) are steeper than the realm curve that sizes qi needs, income and prices (1, 9, 270, 27,000), and they stay separate: fights feel the novels' gap, the economy stays tradeable (design § Scale of destruction). Revisit at D5 if a Nascent Soul elder's income reads too small beside his sheet.
 - **A method's growth profile** (assumed 2026-10-12, P1.5). The profile's shares add up to 1 and split the method's total, so a balanced red method leaves about +56% on each of its three stats. A later design session may want the whole curve on one axis instead, now that combat reads the growth.
