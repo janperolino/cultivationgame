@@ -1053,6 +1053,26 @@ Gu raising, puppetry, divination and medicine come after v1.
 - **You craft wherever you seclude**, with your tool and your Craft hours.
 - **Places lend a hand** (Jan's call). Earth fire 地火 on volcanic land, and an alchemy or refining room over it, adds +0.25 lift and 10 points to whether a batch holds for alchemy and refining; a place whose element matches a recipe's (a thunder peak for lightning talismans, a cold spring for ice pills) does the same for those recipes; and a written site, a famous furnace cave or a sect's earth-fire hall, may give up to +0.5 lift. A power's hall rents its rooms by the day, in its currency to members and in stones at the open counter. Which places carry what is written in the atlas, settled with sites (block 8).
 
+**The craft Dao trees** (D4, block 4).
+
+- **Five trees**: Alchemy 丹道, Refining 器道, Talismans 符道, Formations 阵道 and Spirit Farming 灵植, whose recipes are its crops and whose perks are growth. Geomancy has no tree yet; its site reading leans on the Earth Dao's geomancy side.
+- **Three branches, the same in every craft** (Jan's call), so one breath explains all five: **Hand 手**, the hands-on side (lift, Steady hands' reach, the minigame's forgiveness); **Line 炉**, the idle side (whether a batch holds, yield, speed, fewer blow-ups, what makes a queue or a hired hand pay); **Lore 方**, the recipes (their nodes, experimentation's odds, the discoveries edge).
+- **Each branch has its own capstone a tier, and it opens that branch's next tier**, so a branch climbs on its own: a pure Line alchemist or a pure Hand one. A tier is held at half of all its nodes, as every tree's is, so touching two branches pays. About 12 nodes a tier, four a branch with its capstone. Perks: whether a batch holds +5 points, yield +10%, lift +0.1, Steady hands' reach +0.25 band, speed −10% hours, blow-ups fewer.
+- **Tier 1's capstones:**
+
+| Craft | Hand | Line | Lore |
+|---|---|---|---|
+| Alchemy | Steady Flame: reach +0.5 band | Twin Furnace: two batches at once | Pill Sense: experimentation's pity ×2 |
+| Refining | Clear Tempering: reach +0.5 | Second Piece: a second piece from the same ore | Pattern Memory: pity ×2 |
+| Talismans | One Breath: reach +0.5 | The Stack: ×2 sheets | Brush Lore: pity ×2 |
+| Formations | True Placement: reach +0.5 | One More Array: an array more held at a site | Array Sight: +1 array sight |
+| Spirit Farming | Green Thumb: tending's hand +0.5 | Second Harvest: a plot's second harvest a year | Seed Lore: crossing crops finds new strains |
+
+- **A recipe node is a square seal**, as a slip is, where a perk is a round jewel; discoveries on the edge are seals too, so a tier's recipes read at a glance whatever door they came by.
+- **Insight is the one pool.** A Craft hour leaves the trickle every hour leaves, and a family's mastery level releases its burst as a technique's does.
+- **The element Daos' craft side paths** (`stats.ts`, waiting for crafting) switch on: Fire's into the furnace, Wood's and Water's into the fields.
+- **Drafting.** Tiers 1 and 2 of all five go in as data in their build phases, drafted by a cheap agent to the combat Daos' pattern for Jan's review; tiers 3 to 9 carry only their names and capstones.
+
 Formation puzzles show the engine-and-GLM split well. The engine hides which node is the array's eye, GLM describes the clues, Soul checks reveal hints, and a wrong strike backfires.
 
 **People and powers** run on the same idle-and-world split:
@@ -1875,6 +1895,7 @@ Settle each before the stage that needs it (Roadmap), grouped by the layer that 
 
 - [ ] Hands-on crafts: alchemy's fire control and formations as placing, laying nodes on the abode's grid so the lines close, on the qi-handling grammar; the effect table behind generated recipes; styles and their chapters; technique forms in practice hours as a maybe, the first thing to cut if it feels like filler
 - [ ] The craft Daos' node lists, tiers 1 and 2, drafted with AI help and curated
+- [ ] Branches in every tree (a sketch, Jan's idea in D4): the Qi, Body and Soul trees and the combat Daos split into distinct branches, as the craft trees' Hand, Line and Lore (the Qi tree's combat, growth both attended and idle, stone swallowing, utility), each with its own capstone a tier opening its next. Rebuilds P1.3, P1.6 and P2.7's fans, so it waits until the craft trees have proved the shape in play; then its own phase after the crafts checkpoint
 
 **Before guild trade and the living world**
 
