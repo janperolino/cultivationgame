@@ -10,7 +10,7 @@ import { DUTY_PAY, job } from '../content/jobs.ts';
 import { EDGE_LI, GATHER, RING_LI } from '../content/map/travel.ts';
 import { realmScale } from '../content/realms.ts';
 import { createLife, type Creation } from './creation.ts';
-import { atPost, jobPay, jobsDay, quitJob, takeJob } from './jobs.ts';
+import { atHome, atPost, jobPay, jobsDay, quitJob, takeJob } from './jobs.ts';
 import { cultivate } from './life.ts';
 import { claimPosting, isMissionHall, postingsAt, takePosting } from './map/board.ts';
 import { peopleLi } from './map/depth.ts';
@@ -18,7 +18,7 @@ import { gatherHour, gatherLines, gatherRarity, landYield } from './map/gather.t
 import { placeById, type RegionMap } from './map/region.ts';
 import { stancePick, type ExitView } from './map/encounters.ts';
 import { encounterTemplate } from '../content/encounters/index.ts';
-import { ensureMap, mapOf } from './map/travel.ts';
+import { ensureMap, mapOf, mapPlaceOf } from './map/travel.ts';
 import {
   addBalance,
   joinPower,
@@ -242,6 +242,29 @@ describe('a missed shift', () => {
       },
     };
     expect(rows(days(spent, 3), MARCH, 'missed-shift')).toBe(3);
+  });
+});
+
+describe('home for a house member', () => {
+  const leaveTaken = (s: GameState) => membership(s.world, YOU, MARCH)?.leave?.days ?? 0;
+
+  it('is their own post: the cadet on the Wall spends no leave', () => {
+    const s = posted(createLife(creation('conscript')));
+    const wall = days(ensureMap(s), 20);
+    expect(wall.player.jobs[0]!.missed).toBe(0);
+    expect(leaveTaken(wall)).toBe(0);
+    expect(rows(wall, MARCH, 'overstayed')).toBe(0);
+  });
+
+  it('is any town of a dynasty’s kingdom, and leave runs only outside it', () => {
+    const s = ensureMap(posted(createLife(creation('conscript'))));
+    const fort = mapPlaceOf(mapOf(s)!, MARCH)!;
+    const atFort = { ...s, map: { ...s.map!, at: [fort.x, fort.y] as Pt, inside: fort.id } };
+    expect(atHome(atFort, MARCH)).toBe(true);
+    expect(leaveTaken(days(atFort, 5))).toBe(0);
+    const away = inside(s, CITY);
+    expect(atHome(away, MARCH)).toBe(false);
+    expect(leaveTaken(days(away, 5))).toBe(5);
   });
 });
 

@@ -20,14 +20,15 @@ import {
   type Job,
 } from '../content/jobs.ts';
 import { STANDING_ROWS } from '../content/memories.ts';
-import { veinAt } from '../content/map/index.ts';
+import { parentsOf, veinAt } from '../content/map/index.ts';
 import { ENTER_LI } from '../content/map/places.ts';
 import { realmScale, type RealmId } from '../content/realms.ts';
 import { mapOf, mapPlaceOf } from './map/travel.ts';
-import type { RegionMap } from './map/region.ts';
+import { areaAt, type RegionMap } from './map/region.ts';
 import { drilling } from './wheel.ts';
 import {
   addBalance,
+  atSeat,
   houseOf,
   isOrganization,
   leaveOf,
@@ -83,6 +84,29 @@ export function atPost(s: GameState, j: Job): boolean {
   const p = map ? mapPlaceOf(map, j.place) : null;
   if (life.inside) return life.inside === j.place || life.inside === p?.id;
   return !!p && Math.hypot(p.x - life.at[0], p.y - life.at[1]) < ENTER_LI;
+}
+
+/**
+ * Whether a house member is home, not on leave (the checkpoint's first finding): at the power's
+ * seat or a branch hall, at a post of its they hold, or, for a dynasty, at any town or garrison of
+ * its kingdom with no course set.
+ */
+export function atHome(s: GameState, power: string): boolean {
+  if (atSeat(s, power)) return true;
+  const house = houseOf(power);
+  const posts = s.player.jobs.filter((h) => hasJob(h.id) && !isHire(job(h.id)));
+  if (posts.some((h) => houseOf(job(h.id).power!) === house && atPost(s, job(h.id)))) return true;
+  if (organization(house).type !== 'dynasty') return false;
+  const life = s.map;
+  const map = mapOf(s);
+  if (!life || life.course || !map) return false;
+  const inLand = (id: string | null) => !!id && (id === house || parentsOf(id).includes(house));
+  return map.places.some(
+    (p) =>
+      p.settled &&
+      Math.hypot(p.x - life.at[0], p.y - life.at[1]) < ENTER_LI &&
+      (inLand(p.id) || inLand(p.area) || inLand(areaAt(map, [p.x, p.y])?.id ?? null)),
+  );
 }
 
 /** The jobs whose shift you can keep where you stand: their hours are Duty on the wheel today. */

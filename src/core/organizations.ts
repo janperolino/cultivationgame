@@ -1079,7 +1079,11 @@ function overstayRows(days: number): number {
  * balance, and each month overstayed a standing row ("Overstayed our leave"). The count starts
  * over as the year turns.
  */
-export function countLeave(s: GameState, days: number): GameState {
+export function countLeave(
+  s: GameState,
+  days: number,
+  home: (s: GameState, power: string) => boolean = atSeat,
+): GameState {
   if (days <= 0) return s;
   const who = s.player.id;
   const day = s.calendar.day;
@@ -1087,7 +1091,7 @@ export function countLeave(s: GameState, days: number): GameState {
   const r = realmStageOf(s);
   let state = s;
   for (const m of membershipsOf(s.world, who)) {
-    if (!isOrganization(m.power) || m.guest || atSeat(s, m.power)) continue;
+    if (!isOrganization(m.power) || m.guest || home(s, m.power)) continue;
     const allowed = leaveOf(m.power, seatOf(s.world, who, m.power, r)!);
     if (allowed === Infinity) continue;
     const before = m.leave?.year === year ? m.leave.days : 0;
@@ -1132,13 +1136,18 @@ export function raiseEarly(s: GameState): GameState {
 
 /**
  * Membership's day (O2, O3): the allowances as the month turns, then the quotas, the true seat for
- * a member well ahead of their years, and the leave the days away have taken.
+ * a member well ahead of their years, and the leave the days away have taken; `home` says where a
+ * member is home (core/jobs.ts `atHome`, which knows the posts and the map).
  */
-export function membershipDay(s: GameState, days: number): GameState {
+export function membershipDay(
+  s: GameState,
+  days: number,
+  home: (s: GameState, power: string) => boolean = atSeat,
+): GameState {
   let next = payAllowances(s);
   next = settleQuotas(next);
   next = raiseEarly(next);
-  return countLeave(next, days);
+  return countLeave(next, days, home);
 }
 
 // ── Views ────────────────────────────────────────────────────────────────────────────────────

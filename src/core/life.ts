@@ -71,7 +71,7 @@ import { dwellingOf, membershipDay, protectorOf, protectorSpent } from './organi
 import { bedNights } from './map/place.ts';
 import { setCopyGain } from './map/encounters.ts';
 import { cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
-import { jobsDay, onShift } from './jobs.ts';
+import { atHome, jobsDay, onShift } from './jobs.ts';
 
 /**
  * The Trees screen opens with anything that lives there (design § UI and screens, Only what you
@@ -175,7 +175,7 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   next = jobsDay(next, s.calendar.day - days, s.calendar.day);
   // Each power you belong to pays its allowance as the month turns (O2), takes its quota and
   // counts your leave (O3).
-  next = membershipDay(next, days);
+  next = membershipDay(next, days, atHome);
   return noteFirsts(checkScreens(next));
 };
 

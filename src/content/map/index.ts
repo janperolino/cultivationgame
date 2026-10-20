@@ -95,6 +95,27 @@ export function veinAt(id: string | null | undefined): number {
   return 0;
 }
 
+/**
+ * The atlas entries a written town or an atlas place stands under, nearest first: the March for
+ * Pacified Fort, then the Border Wilds. Empty for a place the regions don't write.
+ */
+export function parentsOf(id: string | null | undefined): string[] {
+  const out: string[] = [];
+  let at = id ?? null;
+  for (let i = 0; at && i < 12; i++) {
+    let parent: string | null | undefined;
+    for (const r of Object.values(REGIONS)) {
+      parent = r.content.towns.find((x) => x.id === at)?.parent;
+      if (parent === undefined) parent = r.file.places.find((x) => x.id === at)?.parent;
+      if (parent !== undefined) break;
+    }
+    if (!parent || out.includes(parent)) break;
+    out.push(parent);
+    at = parent;
+  }
+  return out;
+}
+
 /** A power's seat and the radius of its influence in li, where the atlas writes one (O5). */
 export function sphereOf(id: string): { x: number; y: number; sphere: number } | null {
   for (const r of Object.values(REGIONS)) {
