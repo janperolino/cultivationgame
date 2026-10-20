@@ -69,6 +69,7 @@ function pathOf(m: Multi): Path2D {
   return p;
 }
 
+
 /**
  * A field over the land, 0 to 1: what `paint` fills, faded outward only past its edge (Jan's note:
  * what you know stays clear to its edge, the dark comes on past it). It grows the shape by half the
@@ -211,8 +212,7 @@ function* bake(map: RegionMap, life: MapLife, sig: string): Generator<void, Fog>
   const seenPaint = (g: CanvasRenderingContext2D) => {
     g.save();
     g.clip(region, 'evenodd');
-    for (const a of map.areas)
-      if (known(life, a.id) === 'seen') g.fill(pathOf(a.outline), 'evenodd');
+    for (const a of map.areas) if (known(life, a.id) === 'seen') g.fill(pathOf(a.outline), 'evenodd');
     g.restore();
     g.lineCap = 'round';
     g.lineJoin = 'round';
