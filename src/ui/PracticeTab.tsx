@@ -6,6 +6,7 @@
 // the next, what it gives, its kin, a line on its Art (bought on its tree, design § Cultivation,
 // Where manuals live), and the button that puts it in a free slot. Rarer techniques look it:
 // an edge in the rarity's color from blue, a glow from purple.
+import { ratesHere } from '../core/life.ts';
 import {
   useEffect,
   useRef,
@@ -744,7 +745,7 @@ export function PracticeTab({ head }: { head: ReactNode }) {
   if (!game) return null;
   const c = game.player;
   const known = knownTechniques(c);
-  const rates = dayRates(c, game.calendar.day);
+  const rates = ratesHere(game);
   const total = dayPractice(c, game.calendar.day);
   const has = (id: string | null | undefined): id is string =>
     !!id && known.some((t) => t.id === id);

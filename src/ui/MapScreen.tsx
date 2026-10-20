@@ -898,16 +898,20 @@ function hereAt(map: RegionMap, w: Pt): string {
 
 // ---------------------------------------------------------------- the road wheel
 
-const ROAD_COLOR: Record<string, string> = {
+/** Every road hour's color; a new kind of hour fails to compile here until it has one. */
+const ROAD_COLOR: Record<RoadHour, string> = {
   travel: 'var(--hour-travel)',
   look: 'var(--hour-look)',
   guard: 'var(--hour-guard)',
+  home: 'var(--hour-home)',
+  gather: 'var(--hour-gather)',
   qi: 'var(--hour-qi)',
   body: 'var(--hour-body)',
   soul: 'var(--hour-soul)',
   study: 'var(--hour-study)',
   practice: 'var(--hour-practice)',
   sleep: 'var(--hour-sleep)',
+  duty: 'var(--hour-duty)',
 };
 
 /** The three stances (P3.7): what the road brings settles by them, whether you watch or not. */
@@ -930,7 +934,7 @@ type Act = (change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0]
 
 function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: Act }) {
   const road = !!life.course;
-  const hours: string[] = road ? roadHours(life, game.player) : [...game.player.wheel];
+  const hours: RoadHour[] = road ? roadHours(life, game.player) : [...game.player.wheel];
   const hour = Math.floor((((game.calendar.day % 1) + 1) % 1) * 12);
   const w = WAYS.find((x) => x.id === life.way)!;
   /** Mount rides a spirit mount if you have one, else a horse. */
@@ -942,7 +946,7 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
   const riding = !!w.rideHours;
   const cur = hours[hour]!;
   const doing = !road
-    ? ROAD_WORD[cur as RoadHour]
+    ? ROAD_WORD[cur]
     : waiting(life).length
       ? 'camped: a card waits for you'
       : riding && hour >= 4 && hour < 4 + (w.rideHours ?? 0)
@@ -951,7 +955,7 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
           ? `asleep ${sleepPlace(game)}`
           : cur === 'travel'
             ? 'on the road'
-            : ROAD_WORD[cur as RoadHour];
+            : ROAD_WORD[cur];
   const pace = paceOf(game);
   const perDay = liPerDay(game);
   const veil = veilReach(game);
@@ -980,12 +984,12 @@ function RoadPanel({ game, life, act }: { game: GameState; life: MapLife; act: A
               <g key={i} className="is-editable" onClick={() => goToWheel(road, i)}>
                 <path
                   d={`M${x1} ${y1}A${R1} ${R1} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${R0} ${R0} 0 0 0 ${x4} ${y4}Z`}
-                  fill={ROAD_COLOR[h] ?? 'var(--hour-qi)'}
+                  fill={ROAD_COLOR[h]}
                   opacity={i === hour ? 1 : h === 'sleep' ? 0.55 : 0.78}
                   stroke={i === hour ? '#e9e5da' : 'none'}
                   strokeWidth={1.3}
                 >
-                  <title>{`${BRANCHES[i]!.hanzi}: ${ROAD_WORD[h as RoadHour] ?? h}`}</title>
+                  <title>{`${BRANCHES[i]!.hanzi}: ${ROAD_WORD[h] ?? h}`}</title>
                 </path>
                 <text x={tx} y={ty + 4} textAnchor="middle" className="map-wheel-branch">
                   {BRANCHES[i]!.hanzi}

@@ -1,5 +1,5 @@
+import { ratesHere } from '../core/life.ts';
 import { BRANCHES } from '../content/hours.ts';
-import { dayRates } from '../core/cultivation.ts';
 import { worldWhen } from '../core/chronicle.ts';
 import { purseWords, stonesOf, stonesWords } from '../core/purse.ts';
 import { hourOfDay } from '../core/wheel.ts';
@@ -22,7 +22,7 @@ function stoneWords(stones: ReturnType<typeof stonesOf>): string {
 export function ShellHeader() {
   const game = useGame((s) => s.game);
   const c = game?.player;
-  const rates = game && c ? dayRates(c, game.calendar.day) : null;
+  const rates = game ? ratesHere(game) : null;
   const branch = game ? BRANCHES[hourOfDay(game.calendar.day)]! : null;
   return (
     <header className="shell-top">

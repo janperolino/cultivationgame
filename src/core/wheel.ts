@@ -245,16 +245,22 @@ export function flipHour(
 
 /** Whether the cultivator can now do a kind of work, opened or not. */
 function kindPossible(c: Cultivator, kind: HourKind): boolean {
-  switch (kind) {
-    case 'practice':
-      return knownTechniques(c).some((t) => !techniqueSealed(c, t));
-    case 'body':
-    case 'soul':
-      return c.activeMethods[kind] !== null;
-    default:
-      return true;
-  }
+  return POSSIBLE[kind](c);
 }
+
+/**
+ * When each kind of hour is possible. Every kind has a row, so a new one (the crafts' Craft 艺)
+ * fails to compile until it says when it opens, rather than opening for everyone.
+ */
+const POSSIBLE: Record<HourKind, (c: Cultivator) => boolean> = {
+  qi: () => true,
+  study: () => true,
+  sleep: () => true,
+  duty: () => true,
+  practice: (c) => knownTechniques(c).some((t) => !techniqueSealed(c, t)),
+  body: (c) => c.activeMethods.body !== null,
+  soul: (c) => c.activeMethods.soul !== null,
+};
 
 /** The first time each kind opening by the rule stands for: a technique's, or an art's. */
 const FIRST_OF: Partial<Record<HourKind, FirstId>> = {

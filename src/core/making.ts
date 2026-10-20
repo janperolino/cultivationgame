@@ -502,6 +502,64 @@ function worth(thing: string): number {
   return it.taels !== undefined ? it.taels / 100 : priceOf(thing);
 }
 
+/** A need a market runs short of this month, from the monthly sum. */
+export interface Shortage {
+  need: string;
+  /** The gap's worth a month in low-grade stones: what is used less what is made and carried in. */
+  worth: number;
+  /** The goods short in it, biggest gap first. */
+  goods: string[];
+  /** Some of it is carried in from reach, so it isn't for want of a maker. */
+  carried: boolean;
+  /** Short only by the season: unpressured, it is made and carried in enough. */
+  seasonal: boolean;
+  /** A written need of the market's, with its reason. */
+  written: boolean;
+}
+
+/** Each good's gap this month: short by need, and the biggest surplus of a good made here. */
+function gaps(sum: MarketSum, m: Market, month: number) {
+  const short = new Map<string, Shortage & { by: Map<string, number> }>();
+  let surplus: { g: GoodSum; worth: number } | null = null;
+  for (const g of sum.goods.values()) {
+    const h = harvestFactor(g.season, month);
+    const gap = (g.used - (g.made + g.carried) * h) * worth(g.thing);
+    if (gap > 0 && restAt(g, month) < 100) {
+      const s = short.get(g.need) ?? {
+        need: g.need,
+        worth: 0,
+        goods: [],
+        carried: false,
+        seasonal: false,
+        written: !!reasonFor(m, g.need),
+        by: new Map<string, number>(),
+      };
+      s.worth += gap;
+      s.by.set(g.thing, (s.by.get(g.thing) ?? 0) + gap);
+      s.carried ||= g.carried > 0;
+      s.seasonal ||= g.pressure === 1 && g.made + g.carried >= g.plain;
+      short.set(g.need, s);
+    } else if (gap < 0 && g.made > 0 && (!surplus || -gap > surplus.worth))
+      surplus = { g, worth: -gap };
+  }
+  return { short: [...short.values()], surplus };
+}
+
+/**
+ * A market's shortages this month, a written need's ahead of the rest and each by its gap's worth
+ * (the line of why's order). The first is the market's biggest shortage, which K12's commissions
+ * post for.
+ */
+export function shortages(w: World, m: Market, month: number): Shortage[] {
+  return ranked(gaps(marketSum(w, m, month), m, month).short);
+}
+
+function ranked(short: ReturnType<typeof gaps>['short']): Shortage[] {
+  return short
+    .sort((a, b) => Number(b.written) - Number(a.written) || b.worth - a.worth)
+    .map(({ by, ...s }) => ({ ...s, goods: [...by].sort((a, b) => b[1] - a[1]).map(([t]) => t) }));
+}
+
 /**
  * The place screen's line of why (The guards, One line of why): a market's biggest gap and its
  * cause, from the sum's own terms. A shortage of a written need comes first, with its written
@@ -509,26 +567,9 @@ function worth(thing: string): number {
  */
 export function whyOf(w: World, m: Market, day: number): string | null {
   const month = Math.floor(day / DAYS_PER_MONTH);
-  const sum = marketSum(w, m, month);
-  const short = new Map<string, { worth: number; carried: boolean; seasonal: boolean }>();
-  let surplus: { g: GoodSum; worth: number } | null = null;
-  for (const g of sum.goods.values()) {
-    const h = harvestFactor(g.season, month);
-    const gap = (g.used - (g.made + g.carried) * h) * worth(g.thing);
-    if (gap > 0 && restAt(g, month) < 100) {
-      const s = short.get(g.need) ?? { worth: 0, carried: false, seasonal: false };
-      s.worth += gap;
-      s.carried ||= g.carried > 0;
-      s.seasonal ||= g.pressure === 1 && g.made + g.carried >= g.plain;
-      short.set(g.need, s);
-    } else if (gap < 0 && g.made > 0 && (!surplus || -gap > surplus.worth))
-      surplus = { g, worth: -gap };
-  }
-  const written = [...short].filter(([need]) => reasonFor(m, need));
-  const pick = (xs: typeof written) => xs.sort((a, b) => b[1].worth - a[1].worth)[0];
-  const top = pick(written) ?? pick([...short]);
-  if (top && (written.length > 0 || !surplus || top[1].worth >= surplus.worth))
-    return shortLine(m, top[0], top[1]);
+  const { short, surplus } = gaps(marketSum(w, m, month), m, month);
+  const top = ranked(short)[0];
+  if (top && (top.written || !surplus || top.worth >= surplus.worth)) return shortLine(m, top);
   return surplus ? surplusLine(m, surplus.g) : null;
 }
 
@@ -538,7 +579,8 @@ function reasonFor(m: Market, need: string): string | undefined {
   return undefined;
 }
 
-function shortLine(m: Market, need: string, s: { carried: boolean; seasonal: boolean }): string {
+function shortLine(m: Market, s: Shortage): string {
+  const need = s.need;
   const word = NEED_WORDS[need] ?? { word: need };
   const head = `${cap(word.word)} ${word.one ? 'runs' : 'run'} short`;
   const land = landOf(m);

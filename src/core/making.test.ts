@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { shop } from '../content/shops.ts';
-import { harvestFactor, marketSum, monthUse, restOf, whyOf } from './making.ts';
+import { harvestFactor, marketSum, monthUse, restOf, shortages, whyOf } from './making.ts';
 import {
   market,
   marketFactor,
@@ -161,5 +161,16 @@ describe('the line of why', () => {
     expect(whyOf(w, m('grain-ford'), REAPED * DAYS_PER_MONTH)).toBe(
       'Frontier millet is cheap: Grain Ford grows half again what it eats.',
     );
+  });
+
+  it('lists the shortages as data, the biggest first, as commissions will read them', () => {
+    const city = shortages(w, m(CITY), 0);
+    expect(city[0]).toMatchObject({ need: 'healing', written: true });
+    expect(city[0]!.goods).toContain('spring-returning-pill');
+    expect(city[0]!.worth).toBeGreaterThan(0);
+    // Ranked: written needs first, then by worth.
+    const order = city.map((s) => [Number(s.written), s.worth] as const);
+    for (let i = 1; i < order.length; i++)
+      expect(order[i - 1]![0] > order[i]![0] || order[i - 1]![1] >= order[i]![1]).toBe(true);
   });
 });

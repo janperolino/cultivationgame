@@ -10,6 +10,8 @@ import { realmIndex } from '../content/realms.ts';
 import { hasRoutine } from '../content/routines.ts';
 import {
   attemptBreakthrough,
+  dayRates,
+  type DayRates,
   checkUnlocks,
   cultivateDays,
   lastChance,
@@ -17,6 +19,7 @@ import {
   type LadderId,
   type Note,
 } from './cultivation.ts';
+import type { Seat } from './attention.ts';
 import type { DayStep } from './loop.ts';
 import { gainInsight } from './insight.ts';
 import type { EquipSlot } from '../content/items.ts';
@@ -67,7 +70,13 @@ import {
 } from './wheel.ts';
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
-import { dwellingOf, membershipDay, protectorOf, protectorSpent } from './organizations.ts';
+import {
+  densityHere,
+  dwellingOf,
+  membershipDay,
+  protectorOf,
+  protectorSpent,
+} from './organizations.ts';
 import { bedNights } from './map/place.ts';
 import { setCopyGain } from './map/encounters.ts';
 import { cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
@@ -135,6 +144,15 @@ export function checkScreens(s: GameState): GameState {
   const holds = Object.values(p.items).some((n) => n > 0) || wornIds(p).length > 0;
   if (holds) next = unlock(next, 'bag');
   return next;
+}
+
+/**
+ * A day's rates as the day step plays them where you stand: a shift is Duty only at its post (O4),
+ * and a power's dwelling counts while you seclude in its seat (O2). Every screen that shows what a
+ * day gives reads this, so the screens and `cultivate` agree; the crafts' bench joins here.
+ */
+export function ratesHere(s: GameState, seat?: Seat): DayRates {
+  return dayRates(onShift(s), s.calendar.day, [], seat, undefined, densityHere(s));
 }
 
 /**

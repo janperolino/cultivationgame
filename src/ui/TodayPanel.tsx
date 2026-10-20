@@ -2,11 +2,11 @@
 // from docs/mockups/cultivate-empty-study.html): the copy being read, what is practiced, and the
 // qi a day with when the bar fills. Only today's work, never the other ladders' next steps (Jan's
 // call). With nothing read or practiced, its row says so and links to the tab that sets it up.
+import { ratesHere } from '../core/life.ts';
 import { copyTitle, readDays } from '../content/copies.ts';
 import { MASTERY } from '../content/mastery.ts';
 import { technique } from '../content/techniques.ts';
-import { barSize, dayRates } from '../core/cultivation.ts';
-import { densityHere } from '../core/organizations.ts';
+import { barSize } from '../core/cultivation.ts';
 import { ladderMethod } from '../core/methods.ts';
 import { readingCopy, readProgress } from '../core/reading.ts';
 import type { GameState } from '../core/state.ts';
@@ -37,7 +37,7 @@ function inAbout(days: number | null, stalled: string): string {
 
 function todayRows(game: GameState): Row[] {
   const c = game.player;
-  const rates = dayRates(c, game.calendar.day, [], undefined, undefined, densityHere(game));
+  const rates = ratesHere(game);
   const rows: Row[] = [];
 
   const reading = readingCopy(c);

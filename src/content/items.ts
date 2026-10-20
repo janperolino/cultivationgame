@@ -782,13 +782,17 @@ export function rarityRange(it: Item): RarityId[] {
   return RARITY_IDS.slice(lo, hi + 1);
 }
 
-/** The kind the Bag files it under: its own, or read off its uses. */
+/**
+ * The kind the Bag files it under: its own, or read off its uses. One with neither throws rather
+ * than filing as a pill, so a new kind of thing (the crafts' furnace) can't slip onto Pill Street.
+ */
 export function itemKind(it: Item): ItemKind {
   if (it.kind) return it.kind;
   if (it.uses.equip) return it.uses.equip.slot === 'treasure' ? 'treasure' : 'gear';
   if (it.uses.fight) return 'talisman';
   if (it.uses.read) return 'manual';
-  return 'pill';
+  if (it.uses.consume) return 'pill';
+  throw new Error(`${it.id} names no kind, and none of its uses names one`);
 }
 
 /** How many share a square. */

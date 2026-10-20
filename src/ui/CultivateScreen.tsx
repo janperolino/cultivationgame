@@ -1,9 +1,9 @@
+import { ratesHere } from '../core/life.ts';
 import { HOUR_KIND_IDS, HOUR_KINDS } from '../content/hours.ts';
 import { useState, type CSSProperties } from 'react';
 import { eventKind, KIND_WORDS } from '../content/chronicle.ts';
 import { comingBackStory, type StorySection } from '../core/comingBack.ts';
-import { barSize, dayRates, ladderOpen } from '../core/cultivation.ts';
-import { densityHere } from '../core/organizations.ts';
+import { barSize, ladderOpen } from '../core/cultivation.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import { ageYears, lifespanYears, type GameState } from '../core/state.ts';
 import { CardFeed } from './CardFeed.tsx';
@@ -116,7 +116,7 @@ function AwayStory({ away, onClose }: { away: AwaySummary; onClose: () => void }
 /** How the qi bar fills: the day's qi, the stones burned, and how long it takes at this clock. */
 function QiWhy({ game }: { game: GameState }) {
   const c = game.player;
-  const rates = dayRates(c, game.calendar.day, [], undefined, undefined, densityHere(game));
+  const rates = ratesHere(game);
   const stones = c.plan.burnStones ? Math.min(rates.stoneCap, Math.floor(c.stones)) : 0;
   const perDay = rates.qi + stones * rates.qiPerStone;
   const left = Math.max(0, barSize(c.qi) - c.qi.bar);
@@ -158,7 +158,7 @@ export function CultivateScreen() {
   if (!game) return null;
 
   const c = game.player;
-  const rates = dayRates(c, game.calendar.day, [], undefined, undefined, densityHere(game));
+  const rates = ratesHere(game);
   const studying = rates.study > 0 ? readingLine(c) : null;
   const drilled = Object.keys(rates.practiceEach).map((id) => technique(id).name);
   const today = [

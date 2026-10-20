@@ -11,7 +11,7 @@ import { EDGE_LI, GATHER, RING_LI } from '../content/map/travel.ts';
 import { realmScale } from '../content/realms.ts';
 import { createLife, type Creation } from './creation.ts';
 import { atHome, atPost, jobAsks, jobPay, jobsDay, quitJob, takeJob } from './jobs.ts';
-import { cultivate } from './life.ts';
+import { cultivate, ratesHere } from './life.ts';
 import { comingBackStory } from './comingBack.ts';
 import { claimPosting, isMissionHall, postingsAt, takePosting } from './map/board.ts';
 import { peopleLi } from './map/depth.ts';
@@ -115,6 +115,18 @@ describe('the cadet’s patrols', () => {
       ],
     });
     expect(followedRoutine(drilled.player)?.id).toBe('wall-drill');
+  });
+
+  it('shows the day as the loop plays it: away from the Wall, the shift is your own hours again', () => {
+    const s = ensureMap(posted(createLife(creation('conscript'))));
+    expect(ratesHere(s).count.duty).toBe(job('wall-patrol').shift.length);
+    // Walked far off, no post is kept, and the screens read the hours beneath as the loop does.
+    const away = {
+      ...s,
+      map: { ...s.map!, at: [s.map!.at[0] + 5000, s.map!.at[1]] as [number, number] },
+    };
+    expect(ratesHere(away).count.duty).toBe(0);
+    expect(ratesHere(away).count.qi).toBeGreaterThan(ratesHere(s).count.qi);
   });
 
   it('never pay more, burned as stones, than the same four hours give secluding', () => {

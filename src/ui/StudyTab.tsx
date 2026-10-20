@@ -3,11 +3,11 @@
 // and pruned, a waiting copy saying why; the unread copies on the shelf, each with Queue; and what
 // study gives. On Routine's scene (A4) the copy being read is the ring, its figures the page beside
 // it, and the rest the column.
+import { ratesHere } from '../core/life.ts';
 import { useState, type ReactNode } from 'react';
 import { copyManual, copyTitle, readDays, readLump, SUITS_CAP } from '../content/copies.ts';
 import { MANUAL_KINDS } from '../content/manuals.ts';
 import { rarity } from '../content/rarity.ts';
-import { dayRates } from '../core/cultivation.ts';
 import { insightMultiplier } from '../core/insight.ts';
 import {
   readingCopy,
@@ -78,7 +78,7 @@ function Suits({ c, id }: { c: Cultivator; id: string }) {
 
 /** The column's line on reading: how many hours go to study, and a way to the wheel. */
 function ReadingHead({ game }: { game: GameState }) {
-  const rates = dayRates(game.player, game.calendar.day);
+  const rates = ratesHere(game);
   const hours = rates.count.study;
   return (
     <div className="study-head">
@@ -99,7 +99,7 @@ function ReadingHead({ game }: { game: GameState }) {
 function ReadingPage({ game }: { game: GameState }) {
   const unqueue = useGame((s) => s.unqueue);
   const c = game.player;
-  const rates = dayRates(c, game.calendar.day);
+  const rates = ratesHere(game);
   const id = readingCopy(c);
   if (!id) {
     return (
@@ -150,7 +150,7 @@ function ReadingPage({ game }: { game: GameState }) {
 function UpNext({ game }: { game: GameState }) {
   const { unqueue, moveQueued } = useGame.getState();
   const c = game.player;
-  const rates = dayRates(c, game.calendar.day);
+  const rates = ratesHere(game);
   const queue = readingQueue(c);
   const now = readingCopy(c);
   const rest = queue.filter((id) => id !== now);
@@ -276,7 +276,7 @@ function Shelf({ game }: { game: GameState }) {
 
 function StudyGives({ game }: { game: GameState }) {
   const c = game.player;
-  const rates = dayRates(c, game.calendar.day);
+  const rates = ratesHere(game);
   const insight = rates.hours.filter((h) => h.kind === 'study').reduce((a, h) => a + h.insight, 0);
   return (
     <section className="panel" aria-labelledby="study-gives-heading">

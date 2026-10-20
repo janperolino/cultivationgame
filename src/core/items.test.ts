@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { UNSETTLED_DAYS } from '../content/cultivation.ts';
-import { item, ITEMS } from '../content/items.ts';
+import { item, itemKind, ITEMS } from '../content/items.ts';
 import { RARITY_IDS } from '../content/rarity.ts';
 import { cultivateDays } from './cultivation.ts';
 import { consumeItem } from './items.ts';
@@ -76,6 +76,15 @@ describe('items', () => {
       // Mortal goods (rations, a saddle blanket) are bought for silver and do nothing yet.
       if (i.taels === undefined) expect(Object.keys(i.uses).length, i.id).toBeGreaterThan(0);
     }
+  });
+
+  it('file by their own kind or a use that names one, and refuse to guess past that', () => {
+    for (const i of ITEMS) expect(() => itemKind(i), i.id).not.toThrow();
+    const pill = item('qi-gathering-pill');
+    expect(itemKind({ ...pill, kind: undefined })).toBe('pill');
+    // A thing with no kind and only an ingredient's use (a furnace written carelessly) is no pill.
+    const loose = { ...pill, id: 'loose-furnace', kind: undefined, uses: { ingredient: {} } };
+    expect(() => itemKind(loose as typeof pill)).toThrow(/names no kind/);
   });
 });
 

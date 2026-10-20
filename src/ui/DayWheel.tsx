@@ -5,6 +5,7 @@
 // shift adds a run), then pick what they go to; every home hour's yield is in its tooltip. On
 // Routine (A4) the wheel sits in a gilt bezel on the left of the scene and its editor under it,
 // which the screen places through `layout`.
+import { ratesHere } from '../core/life.ts';
 import {
   useEffect,
   useId,
@@ -22,8 +23,7 @@ import {
   type HourKind,
 } from '../content/hours.ts';
 import { ROAD_ROUTINES, type RoadHour } from '../content/map/travel.ts';
-import { dayRates, type HourYield } from '../core/cultivation.ts';
-import { densityHere } from '../core/organizations.ts';
+import type { HourYield } from '../core/cultivation.ts';
 import { Bezel } from './RoutineRings.tsx';
 import { roadRoutine, setRoadHours } from '../core/map/travel.ts';
 import type { GameState } from '../core/state.ts';
@@ -429,7 +429,7 @@ export function DayWheel({
 }) {
   const setHours = useGame((s) => s.setHours);
   const c = game.player;
-  const rates = dayRates(c, game.calendar.day, [], undefined, undefined, densityHere(game));
+  const rates = ratesHere(game);
   // A first time waiting on an hour (ui/beacons.ts): the free qi hours wear the ring, and so does
   // the kind it wants once an hour is picked.
   const wants = new Set(

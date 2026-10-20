@@ -15,6 +15,12 @@ Ranked by what a player would feel, then by what K1 trips on.
 **Round 1, Jan's picks:**
 - *1 to 3 fixed as proposed.* `gathered` and a job's `owed` are held at 0, with tests that tip a sum a hair under a whole find or stone. Without the fix, the duty test's save fails to load. Struck off is a clean parting under the oath, kept as "Struck from our rolls", with the power's copies handed back, at every type. A test strikes a Night Bridge member off: no betrayal, no leak, and the slip is gone. A kept post meets the quota without touching the balance, and the post test now checks a banked 50 stays 50.
 - *4 waits for the realm gap's design session* (Jan's call), since it changes what a cast at a crowd costs. Under Open questions.
+- *6 and 7 done in round 2, as proposed:*
+  - `hourYields` reads a table with a row per kind (`HOUR_FEEDS`), and `kindPossible` reads another (`POSSIBLE`), so a new kind fails to compile until it says what it yields and when it opens.
+  - The Map's `ROAD_COLOR` is typed by every road hour (gather, home and duty gained their colors).
+  - `ratesHere(s)` (`core/life.ts`) gives a day's rates as the loop plays them where you stand: a shift is Duty only at its post, and the dwelling counts. All thirteen UI rate sites read it, so away from your post the screens show the hours beneath as the loop cultivates them. K1's bench joins there.
+  - `itemKind` throws on an item with no kind and no use that names one (all 157 written items carry a kind).
+  - `shortages(w, market, month)` returns the needs short as data, a written need's first and then by worth, each with its goods. `whyOf` formats its head. Tests cover each.
 - *5 dropped on evidence.* E4 makes the ration pill from nowhere at the City on purpose (`markets.test.ts:48` pins it at 25%). The reviewer's "unbounded" doesn't hold: at 0.03 points a piece, a full Bag of 990 pills moves the City about 30 points (×2 to about ×1.35). The City shop's monthly purse caps a sale, and Pacified Fort's shelves can't fill a Bag of the pill (the haul sim, with a pill row tried and taken out, stops at "no shelf left"). So it's a fat haul, not a loop.
 
 1. **Float dust writes saves that won't load.** *(run)*

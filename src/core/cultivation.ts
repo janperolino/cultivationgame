@@ -348,7 +348,8 @@ export function hourYields(
       practice: 0,
       study: 0,
     };
-    if (kind === 'sleep' || kind === 'duty') return y;
+    const feed = HOUR_FEEDS[kind];
+    if (!feed) return y;
     y.element = elementMatch(c, kind, hour) ? ELEMENT_BONUS : 0;
     y.dawn = kind === 'qi' && hour === DAWN_HOUR ? DAWN_BONUS : 0;
     y.night = kind === 'qi' && NIGHT_HOURS.includes(hour) ? night : 0;
@@ -357,16 +358,37 @@ export function hourYields(
       ((1 + y.element + y.dawn + y.night + y.discipline) * (hourFactor?.[hour] ?? 1)) /
       HOURS_PER_DAY;
     y.insight = base.trickle / HOURS_PER_DAY;
-    if (kind === 'qi') y.qi = base.qi * share;
-    else if (kind === 'body') y.body = base.body * share;
-    else if (kind === 'soul') y.soul = base.soul * share;
-    else if (kind === 'study') {
-      y.insight += base.study * share;
-      y.study = base.studyDays * share;
-    } else y.practice = base.practice * share;
+    feed(y, base, share);
     return y;
   });
 }
+
+/**
+ * What an hour of each kind feeds from the day's base, at its share of the day; null gives
+ * nothing (sleep, and duty, which pays through its job). Every kind has a row, so a new one (the
+ * crafts' Craft 艺) fails to compile until it says what it yields.
+ */
+type Feed = (y: HourYield, base: DayBase, share: number) => void;
+const HOUR_FEEDS: Record<HourKind, Feed | null> = {
+  qi: (y, b, share) => {
+    y.qi = b.qi * share;
+  },
+  body: (y, b, share) => {
+    y.body = b.body * share;
+  },
+  soul: (y, b, share) => {
+    y.soul = b.soul * share;
+  },
+  study: (y, b, share) => {
+    y.insight += b.study * share;
+    y.study = b.studyDays * share;
+  },
+  practice: (y, b, share) => {
+    y.practice = b.practice * share;
+  },
+  sleep: null,
+  duty: null,
+};
 
 export interface DayRates {
   hours: HourYield[];

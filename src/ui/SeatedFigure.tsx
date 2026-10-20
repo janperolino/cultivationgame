@@ -7,6 +7,7 @@
 // race: a tap or click on the figure as the spark passes each gate, and the meter tells the scene
 // instead. Behind it all, over the whole seat panel, the sun of the hour (ui/sunCanvas.ts): the
 // figure is a sundial, and the caption under it names the hour in words.
+import { ratesHere } from '../core/life.ts';
 import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { HEAT_UNSETTLED_S, POINTER_REACH } from '../content/attention.ts';
 import { circulation, RARITY_SPARKS } from '../content/circulation.ts';
@@ -23,7 +24,7 @@ import {
   seatOf,
   type Attention,
 } from '../core/attention.ts';
-import { barFill, barSize, dayRates } from '../core/cultivation.ts';
+import { barFill, barSize } from '../core/cultivation.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import { ladderMethod } from '../core/methods.ts';
 import { sceneBonus, windingUp } from '../core/scene.ts';
@@ -68,7 +69,7 @@ function frameOf(
   const m = ladderMethod(c, 'qi');
   const state = figureState(game, a);
   const seat = a ? seatOf(a, c) : undefined;
-  const qiPerDay = dayRates(c, game.calendar.day, [], seat).qi;
+  const qiPerDay = ratesHere(game, seat).qi;
   const barPerSecond = (qiPerDay * daysPerRealMs(game) * 1000 * speed) / barSize(c.qi);
   const motes = state === 'dormant' ? 3 : Math.min(12, Math.max(0.6, barPerSecond * MOTES_PER_BAR));
   return {

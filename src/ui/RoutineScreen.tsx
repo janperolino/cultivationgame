@@ -7,6 +7,7 @@
 // A4 (docs/mockups/routine-art-study.html, layout B) makes it a scene: the cave behind, each tab's
 // ring in the same place on the left with its page beside it, and a column on the right with the
 // title, the tabs, the strip and the tab's own controls.
+import { ratesHere } from '../core/life.ts';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AUTO_IDS, AUTO_SETTINGS } from '../content/cultivation.ts';
 import { ELEMENT_INFO } from '../content/elements.ts';
@@ -17,7 +18,7 @@ import { technique } from '../content/techniques.ts';
 import { isNew, newIds } from '../core/seen.ts';
 import { practicingNow } from '../core/techniques.ts';
 import { attentionCeiling } from '../core/attention.ts';
-import { dayRates, inTutorial, qiSpeed, type LadderId } from '../core/cultivation.ts';
+import { inTutorial, qiSpeed, type LadderId } from '../core/cultivation.ts';
 import { ladderMethod } from '../core/methods.ts';
 import { densityHere } from '../core/organizations.ts';
 import type { GameState } from '../core/state.ts';
@@ -101,7 +102,7 @@ function DayTab({ game, head }: { game: GameState; head: ReactNode }) {
   const c = game.player;
   // A power's dwelling by your seat while you seclude inside its seat (O2).
   const density = densityHere(game);
-  const rates = dayRates(c, game.calendar.day, [], undefined, undefined, density);
+  const rates = ratesHere(game);
   const speed = qiSpeed(c, undefined, density);
   const r = root(c.root);
   const m = ladderMethod(c, 'qi');
@@ -368,7 +369,7 @@ function HomeFold({ game }: { game: GameState }) {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const c = game.player;
-  const following = dayRates(c, game.calendar.day).routine;
+  const following = ratesHere(game).routine;
   const learned = c.routines.filter(hasRoutine).map(routine);
   const same = (hours: readonly string[]) => hours.every((k, i) => c.wheel[i] === k);
   const saved = c.savedRoutines.find((r) => same(r.hours));
