@@ -31,6 +31,8 @@ import {
   joinPower,
   leavePower,
   membershipsView,
+  takeLesson,
+  engageProtector,
   organization,
   rangeWords,
   realmStageOf,
@@ -312,8 +314,8 @@ export const COMMANDS: Record<string, Command> = {
   },
   org: {
     usage:
-      'org [power id] [join [birth|adoption|marriage] | leave [to <id>] | trial | donate <low> | seat <seat> | points <n> | guest]',
-    help: 'Your memberships; with an id, its type, seats, treatment and allowances, and joins, leaves, sits the inner trial, donates stones, sets your seat, adds to your balance or takes a guest elder seat there (O1, O2).',
+      'org [power id] [join [birth|adoption|marriage] | leave [to <id>] | trial | donate <low> | seat <seat> | points <n> | guest | lesson | protector]',
+    help: 'Your memberships; with an id, its type, seats, treatment and allowances, and joins, leaves, sits the inner trial, donates stones, sets your seat, adds to your balance, takes a guest elder seat, buys an elder’s lesson or a protector there (O1 to O3).',
     run([id, verb, arg, to], store) {
       const s = needGame(store);
       const you = s.player.id;
@@ -322,7 +324,7 @@ export const COMMANDS: Record<string, Command> = {
         if (!rows.length) return 'You belong to no power.';
         return rows.map(
           (m) =>
-            `${m.power}: ${m.title.name} ${m.title.hanzi} · ${m.balance} ${m.currency}${m.trial ? ` · ${m.trial}` : ''} · ${m.allowance}${m.dwelling ? ` · ${m.dwelling}` : ''}`,
+            `${m.power}: ${m.title.name} ${m.title.hanzi} · ${m.balance} ${m.currency}${m.trial ? ` · ${m.trial}` : ''} · ${m.allowance}${m.dwelling ? ` · ${m.dwelling}` : ''}${m.quota ? ` · ${m.quota}` : ''}${m.leave ? ` · ${m.leave}` : ''}${m.protector ? ' · protector' : ''}`,
         );
       }
       if (!isOrganization(id)) return `${id} is no organization.`;
@@ -350,7 +352,7 @@ export const COMMANDS: Record<string, Command> = {
       if (verb === 'trial') {
         const r = innerTrial(s, id);
         if (!r.ok) return r.why;
-        const words = `${r.verdict}: ${r.yours.toFixed(1)} against ${r.theirs.toFixed(1)}${r.passed ? ', the inner seat is yours' : ''}.`;
+        const words = `${r.verdict}: ${r.yours.toFixed(1)} against ${r.theirs.toFixed(1)}${r.passed ? ', the inner seat is yours' : ''}; ranked ${r.rank}${r.pill ? ', a Foundation Pill' : ''}.`;
         return apply(store, () => r.state, words);
       }
       if (verb === 'donate') {
@@ -376,6 +378,14 @@ export const COMMANDS: Record<string, Command> = {
           (g) => ({ ...g, world: addBalance(g.world, you, id, n) }),
           `+${n} to your balance.`,
         );
+      }
+      if (verb === 'lesson' || verb === 'protector') {
+        const r = verb === 'lesson' ? takeLesson(s, id) : engageProtector(s, id);
+        const words =
+          verb === 'lesson'
+            ? 'An elder teaches you a day.'
+            : 'An elder stands by your next breakthrough.';
+        return r.ok ? apply(store, () => r.state, words) : r.why;
       }
       if (verb === 'guest') {
         const r = becomeGuest(s, id);

@@ -65,6 +65,7 @@ import {
   type Verdict,
 } from './check.ts';
 import { applyEffects, type Effect } from './effects.ts';
+import { theName } from '../organizations.ts';
 import { eraseNumbers, knowsErasing, leaveTrace, strongestTrace, talismanOf } from './backers.ts';
 import { bondOf, checkBonds, wageFor, type BondBreak } from './followers.ts';
 import { intentOf } from './intent.ts';
@@ -1022,6 +1023,10 @@ export function doStep(
       if (target?.backer && youAre(a)) {
         apply(w, [{ do: 'knowledge', kind: 'truth', id: `backer:${target.id}` }]);
         note(w, `${target.name} names ${target.backer.name} as their backer.`);
+      }
+      // "I am of the Beast-Butcher Gate!": a member names the power behind them (O3).
+      if (target?.backing && youAre(a)) {
+        note(w, `${target.name} names ${theName(target.backing.power)} behind them.`);
       }
       break;
     case 'recruit':

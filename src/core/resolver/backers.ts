@@ -21,10 +21,15 @@ export function higher(
   return d > 0 || (d === 0 && a.stage >= b.stage) ? a : b;
 }
 
-/** How safe a backer makes their charge feel: ×1.5 a realm above them, ×2 two or more. */
+/**
+ * How safe a backer makes their charge feel: ×1.5 a realm above them, ×2 two or more. Their power
+ * counts on the same rule by its head's realm (O3), and the taller of the two stands; they never
+ * stack.
+ */
 export function backerComposure(a: Actor): number {
-  if (!a.backer) return 1;
-  const gap = realmIndex(a.backer.realm.realm) - realmIndex(realmOfActor(a).realm);
+  const behind = higher(a.backer?.realm, a.backing?.realm ?? undefined);
+  if (!behind) return 1;
+  const gap = realmIndex(behind.realm) - realmIndex(realmOfActor(a).realm);
   return gap >= 2 ? BACKER_COMPOSURE.two : gap >= 1 ? BACKER_COMPOSURE.one : 1;
 }
 

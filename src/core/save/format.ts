@@ -35,7 +35,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 39;
+export const SAVE_VERSION = 40;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1000,6 +1000,16 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const paid = Math.floor((day as number) / DAYS_PER_MONTH);
     const members = ((w.members ?? []) as Raw[]).map((m) => ({ ...m, paid }));
     return { ...old, version: 39, state: { ...s, world: { ...w, members } } };
+  },
+  // O3: a membership settles its quota as each month turns (design § What membership gives and
+  // asks), so one kept before then counts its quota settled for the month its allowance last came.
+  39: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const w = (s.world ?? {}) as Raw;
+    const members = ((w.members ?? []) as Raw[]).map((m) =>
+      typeof m.paid === 'number' ? { ...m, quota: m.paid } : m,
+    );
+    return { ...old, version: 40, state: { ...s, world: { ...w, members } } };
   },
 };
 

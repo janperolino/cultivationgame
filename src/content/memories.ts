@@ -118,6 +118,9 @@ export const MEMORIES = {
   'first-look': { reason: 'A first impression', value: 0, fade: SEASON, tag: null, own: true },
   'good-turn': { reason: 'Did right by me', value: 10, fade: SEASON, tag: null, own: true },
   'bad-turn': { reason: 'Did me wrong', value: -10, fade: SEASON, tag: null, own: true },
+  // O3 (design § What membership gives and asks, Connections): worked out while two people share a
+  // power, never stored, so it goes when either leaves.
+  fellow: { reason: 'One of ours', value: 10, fade: null, tag: null },
 } as const satisfies Record<string, MemoryRow>;
 export type MemoryId = keyof typeof MEMORIES;
 export const MEMORY_IDS = Object.keys(MEMORIES) as MemoryId[];
@@ -214,6 +217,11 @@ export const STANDING_ROWS = {
   'walked-off': { reason: 'Walked off one of our caravans', value: -5, fade: SEASON },
   // E3: a copy of a power's own method offered at its own hall (design § Economy, Methods in the market).
   'sold-our-method': { reason: 'Offered one of our methods for sale', value: -15, fade: YEAR },
+  // O3 (design § What membership gives and asks, What it asks): the quota missed two months
+  // running, the third striking you off, and leave overstayed, a row each month past it.
+  'missed-quota': { reason: 'Missed our quota', value: -10, fade: SEASON },
+  'struck-off': { reason: 'Struck from our rolls', value: -10, fade: YEAR },
+  overstayed: { reason: 'Overstayed our leave', value: -5, fade: SEASON },
 } as const satisfies Record<string, StandingRow>;
 export type StandingId = keyof typeof STANDING_ROWS;
 export const STANDING_IDS = Object.keys(STANDING_ROWS) as StandingId[];

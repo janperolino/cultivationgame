@@ -52,9 +52,13 @@ export interface Actor {
   shown?: RealmStage;
   /** Whether they wear another face. */
   disguised?: boolean;
-  /** The power they answer to (an atlas id), and what kind stands behind them. */
+  /** The power they answer to (an atlas id). */
   power?: string | null;
-  backing?: 'sect' | 'great-sect' | null;
+  /**
+   * Their power behind them, named when threatened (O3): the power and its head's realm, read on
+   * the backer rule beside a backer, never stacking with one.
+   */
+  backing?: { power: string; realm: RealmStage } | null;
   /** A soul lamp kept for them: their power learns when they die, and with `face` who killed them. */
   lamp?: 'lamp' | 'face';
   /** A death talisman: killing them leaves a trace this strong (P3.4b). */
@@ -186,6 +190,9 @@ export function actorFromNpc(n: Npc, extra: Partial<Actor> = {}): Actor {
     : undefined;
   const c = n.combatant;
   const kit = kitOf(n);
+  // The power their template belongs to (O3): what they name when threatened.
+  const t = template(n.template);
+  const power = t.kind === 'cultivator' ? t.power : undefined;
   const techniques: Record<string, number> = {};
   for (const t of Object.keys(c.techniques)) techniques[t] = n.rolls.mastery;
   const statsHeld: Actor['stats'] = {};
@@ -208,6 +215,7 @@ export function actorFromNpc(n: Npc, extra: Partial<Actor> = {}): Actor {
     combatant: c,
     ...(sect ? { talisman: sect } : {}),
     ...(backer ? { backer } : {}),
+    ...(power ? { power } : {}),
     ...extra,
   };
 }

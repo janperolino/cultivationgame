@@ -35,6 +35,8 @@ export interface CultivatorTemplate extends TemplateBase {
   bloodline?: BeastElement | 'rolled';
   /** Key items that drop with them: a token, a bounty. */
   carries?: readonly string[];
+  /** The power they belong to, an atlas id: whose name they give when threatened (O3). */
+  power?: string;
   /** The one damage type their armor's material resists: water-silk turns fire. */
   resists?: DamageType;
 }
@@ -155,6 +157,7 @@ export const BORDER_WILDS: readonly Template[] = [
     band: QC,
     profile: 'cautious',
     carries: ['token of the March'],
+    power: 'great-jing',
     notes: 'spear; a garrison method; a token of the March',
   },
   {
@@ -192,6 +195,7 @@ export const BORDER_WILDS: readonly Template[] = [
     band: BOTH,
     profile: 'cunning',
     carries: ['escape talisman'],
+    power: 'qm-yeqiao-hui',
     notes: 'fist; an escape talisman; the Night Bridge method at night',
   },
   {
@@ -217,6 +221,7 @@ export const BORDER_WILDS: readonly Template[] = [
     band: BOTH,
     profile: 'aggressive',
     carries: ['beast cores', "the Gate's token"],
+    power: 'qm-tushou-men',
     notes: "saber; cores on them; the Gate's token",
   },
   {
