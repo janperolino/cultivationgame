@@ -6,8 +6,10 @@
 // list. Then the three paths (P3.2): white kits walking one path each, qi, body or soul, the
 // others at the floor, against each other at the same top rung, and a balanced kit (all three at
 // the top, the ledger's ordinary kit) against each. Then the Border Wilds roster against a white
-// and a purple kit at each realm it is met at. Each matchup prints both sheets beside its win rate.
-// Run: npm run sim -- fights [--fights=10000] [--roster=2000] [--sheets]
+// and a purple kit at each realm it is met at. Then crowds (C1): one white fighter against many
+// fighters a realm below, white and then purple, which protective qi decides. Each matchup prints
+// both sheets beside its win rate.
+// Run: npm run sim -- fights [--fights=10000] [--roster=2000] [--crowds=200] [--sheets]
 import {
   FOE_BASELINE,
   KITS,
@@ -35,6 +37,7 @@ const arg = (name: string, fallback: number) => {
 };
 const FIGHTS = arg('fights', 10_000);
 const ROSTER = arg('roster', 2_000);
+const CROWDS = arg('crowds', 200);
 const SHEETS = process.argv.includes('--sheets');
 
 const kit = (id: string): Kit => KITS.find((k) => k.id === id)!;
@@ -55,13 +58,14 @@ function bout(
   theirs: (rng: Rng) => Combatant[],
   n: number,
   seed: string,
+  turns = 60,
 ): Tally {
   const rng = Rng.fromString(seed);
   const t: Tally = { win: 0, loss: 0, fled: 0, draw: 0, turns: 0 };
   for (let i = 0; i < n; i++) {
     const a = mine(rng).map((c) => ({ ...c, side: 'a' }));
     const b = theirs(rng).map((c) => ({ ...c, side: 'b' }));
-    const r = runFight(startFight(rng.chance(0.5) ? [...a, ...b] : [...b, ...a]), rng);
+    const r = runFight(startFight(rng.chance(0.5) ? [...a, ...b] : [...b, ...a]), rng, turns);
     t.turns += r.turns;
     const theyFled = r.fled.some((id) => b.some((c) => c.id === id));
     const iFled = r.fled.some((id) => a.some((c) => c.id === id));
@@ -293,6 +297,79 @@ for (const t of BORDER_WILDS) {
       `  ${t.name.padEnd(28)}${realm(r).name.split(' ')[0]!.padEnd(11)}white ${row[0]!.padEnd(24)}purple ${row[1]!.padEnd(24)}${SHEETS ? sheetLine(sample) : ''}`,
     );
   }
+}
+
+// ---------------------------------------------------------------- crowds
+
+const CROWD_ROWS: {
+  me: [RealmId, number];
+  them: [RealmId, number];
+  /** The crowd's kit: white, or a great-sect disciple's purple. */
+  crowd?: string;
+  sizes: number[];
+  target: number;
+}[] = [
+  {
+    me: ['foundation-establishment', 1],
+    them: ['qi-condensation', 9],
+    sizes: [3, 5, 10, 15, 20],
+    target: 10,
+  },
+  {
+    me: ['foundation-establishment', 1],
+    them: ['qi-condensation', 5],
+    sizes: [10, 20, 30, 50],
+    target: 20,
+  },
+  {
+    me: ['foundation-establishment', 4],
+    them: ['qi-condensation', 9],
+    sizes: [20, 50, 100],
+    target: 50,
+  },
+  {
+    me: ['core-formation', 1],
+    them: ['foundation-establishment', 4],
+    sizes: [5, 10, 20, 50],
+    target: 10,
+  },
+  // Purple at layer 9 beats an early Foundation's Defense, so that is the half-step fight on the
+  // sheets; a Foundation peak's Defense holds them.
+  {
+    me: ['foundation-establishment', 4],
+    them: ['qi-condensation', 9],
+    crowd: 'great-sect',
+    sizes: [1, 3, 5, 10],
+    target: 3,
+  },
+];
+const short = (r: RealmId, stage: number) => `${realm(r).name.split(' ')[0]} ${stage}`;
+console.log(
+  `\nCrowds: one white fighter against fighters a realm below, all at once, ${CROWDS} fights a cell`,
+);
+for (const row of CROWD_ROWS) {
+  const [mr, ms] = row.me;
+  const [tr, ts] = row.them;
+  const cells = row.sizes.map((n) => {
+    const crowd = () =>
+      Array.from({ length: n }, (_, j) =>
+        kitFighter(kit(row.crowd ?? 'ordinary'), tr, ts, { id: `b${j}`, side: 'b' }),
+      );
+    const x = bout(
+      fixed(kit('ordinary'), mr, ms, 'a'),
+      crowd,
+      CROWDS,
+      `crowd/${row.crowd ?? 'ordinary'}/${tr}/${ts}/${n}`,
+      400,
+    );
+    return [n, rate(x)] as const;
+  });
+  const them = `${row.crowd ? 'purple ' : ''}${short(tr, ts)}`;
+  console.log(
+    `  ${short(mr, ms).padEnd(14)}against ${them.padEnd(15)}${cells.map(([n, x]) => `${n}: ${pct(x)}`.padStart(13)).join('')}`,
+  );
+  const x = cells.find(([n]) => n === row.target)![1];
+  check(`${short(mr, ms)} beats ${row.target} ${them} at once over 90%`, x, 0.9, 1);
 }
 
 console.log('\nTargets');
