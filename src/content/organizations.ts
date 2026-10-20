@@ -363,6 +363,59 @@ export const DONATION = {
 /** A dynasty's member may retire after this many years' service; leaving sooner is deserting. */
 export const RETIRE_YEARS = 10;
 
+// ── Membership's doors (the organizations checkpoint's fixes) ───────────────────────────────────
+
+/**
+ * The way in by type, asked at the power's seat (a dynasty's at any town of its kingdom): a test,
+ * an exam or a trial is the strongest ladder against the outer seat's bottom (Qi Condensation 1,
+ * so any rooted child passes); vows and the blood oath are sworn; enlisting takes anyone; buying
+ * in costs stones on the realm curve; a society or an assassins' house sponsors only one it stands
+ * favored with; a clan takes you by birth, adoption or marriage, never at a door.
+ */
+export type EntryBy = 'test' | 'vows' | 'enlist' | 'buy' | 'oath' | 'sponsor' | 'kin';
+export const ENTRY: Record<OrgType, { by: EntryBy } & Title> = {
+  sect: { by: 'test', name: 'Ask to sit the entrance test', hanzi: '入门考核' },
+  academy: { by: 'test', name: 'Sit the entrance exam', hanzi: '入学考' },
+  tribe: { by: 'test', name: 'Ask to face the trial', hanzi: '试炼' },
+  beast: { by: 'test', name: 'Ask to face the trial', hanzi: '试炼' },
+  temple: { by: 'vows', name: 'Ask to take the vows', hanzi: '受戒' },
+  dynasty: { by: 'enlist', name: 'Enlist', hanzi: '从军' },
+  guild: { by: 'buy', name: 'Buy in', hanzi: '入会' },
+  gang: { by: 'oath', name: 'Swear the blood oath', hanzi: '歃血' },
+  society: { by: 'sponsor', name: 'Ask to be sponsored', hanzi: '引荐' },
+  assassins: { by: 'sponsor', name: 'Ask to be sponsored', hanzi: '引荐' },
+  clan: { by: 'kin', name: 'Born, adopted or married in', hanzi: '血脉' },
+};
+/** Buying into a guild: low-grade stones on the realm curve by your realm. */
+export const BUY_IN = 30;
+/** A sponsor takes on one their power stands this well with. */
+export const SPONSOR_FROM = 'favored';
+
+/**
+ * The door where a member's seat is settled, by type (the elders' hall 长老院 of a sect): an
+ * elder's lesson, a protector, the inner trial in its month, and asking to be released.
+ */
+export const SEAT_HALL: Record<OrgType, Title> = {
+  sect: { name: 'Elders’ hall', hanzi: '长老院' },
+  academy: { name: 'Teachers’ hall', hanzi: '教习院' },
+  temple: { name: 'Elders’ hall', hanzi: '长老院' },
+  dynasty: { name: 'Commandery', hanzi: '军府' },
+  guild: { name: 'Stewards’ office', hanzi: '执事房' },
+  gang: { name: 'Incense hall', hanzi: '香堂' },
+  society: { name: 'Inner hall', hanzi: '内堂' },
+  assassins: { name: 'Inner hall', hanzi: '内堂' },
+  tribe: { name: 'Elders’ fire', hanzi: '长老火塘' },
+  clan: { name: 'Ancestral hall', hanzi: '祠堂' },
+  beast: { name: 'Elders’ den', hanzi: '长老洞' },
+};
+
+/**
+ * A gift at a power's gate or hall (tribute): one worth this much in low-grade stones on the realm
+ * curve by the giver's realm (15 low at Qi Condensation, 135 at Foundation) is "Tribute", +5 for a
+ * season, and one gift a month counts.
+ */
+export const GIFT = { low: 15, value: 5 } as const;
+
 // ── What membership gives (design § What membership gives and asks; O2) ────────────────────────
 
 /**

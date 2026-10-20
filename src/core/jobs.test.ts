@@ -259,7 +259,7 @@ describe('home for a house member', () => {
   it('is any town of a dynasty’s kingdom, and leave runs only outside it', () => {
     const s = ensureMap(posted(createLife(creation('conscript'))));
     const fort = mapPlaceOf(mapOf(s)!, MARCH)!;
-    const atFort = { ...s, map: { ...s.map!, at: [fort.x, fort.y] as Pt, inside: fort.id } };
+    const atFort = { ...s, map: { ...s.map!, at: [fort.x, fort.y] as [number, number], inside: fort.id } };
     expect(atHome(atFort, MARCH)).toBe(true);
     expect(leaveTaken(days(atFort, 5))).toBe(0);
     const away = inside(s, CITY);

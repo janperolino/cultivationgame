@@ -21,6 +21,15 @@ import { band, bandAt, depthInfo, pullsIn, qiAt } from '../core/map/depth.ts';
 import { setStance, setVeil, veilReach, waiting } from '../core/map/encounters.ts';
 import { known, sightAt } from '../core/map/fog.ts';
 import { enterAt, gateOf, placeKindOf } from '../core/map/gate.ts';
+import {
+  askToJoin,
+  entryOf,
+  giftFloor,
+  giftThisMonth,
+  offerGift,
+  seatPowerAt,
+} from '../core/joining.ts';
+import { theName } from '../core/organizations.ts';
 import type { Pt } from '../core/map/geometry.ts';
 import {
   areaAt,
@@ -284,6 +293,47 @@ function MapView({
         ? [q.x, q.y]
         : life.at;
 
+  /** What an outsider can ask at a power's shut gate: to join by its way in, and to leave a gift. */
+  const gateAsks = (power: string, goIn: () => void): MenuItem[] => {
+    const items: MenuItem[] = [];
+    const entry = entryOf(game, power);
+    if (entry)
+      items.push({
+        t: entry.title.name,
+        s: entry.shut ?? entry.sub,
+        warn: !!entry.shut,
+        run: () => {
+          let joined = false;
+          const why = act((s) => {
+            const r = askToJoin(s, power);
+            if (!r.ok) return r;
+            joined = r.joined;
+            say(
+              r.joined
+                ? `${cap(theName(power))} takes you in.`
+                : `Short: ${r.yours?.toFixed(1)} against ${r.bar?.toFixed(1)}. They send you away.`,
+            );
+            return r;
+          });
+          if (!why && joined) goIn();
+        },
+      });
+    const floor = giftFloor(game);
+    items.push({
+      t: 'Offer a gift',
+      s: giftThisMonth(game, power)
+        ? `${floor} low; they have counted one this month`
+        : `${floor} low, remembered as tribute`,
+      run: () =>
+        act((s) => {
+          const r = offerGift(s, power, { stones: floor });
+          if (r.ok) say(r.counted ? 'The guards take it in; it is noted.' : 'They take it.');
+          return r;
+        }),
+    });
+    return items;
+  };
+
   /** What you can do where you stand: enter the place, stay and cultivate, go home. */
   const hereChoices = (atPlace: MapPlace | null): MenuItem[] => {
     const home = homeOf(game, map);
@@ -313,6 +363,9 @@ function MapView({
                 : 'its own screen',
           run: () => goIn(),
         });
+      // A power's shut gate: its way in, a gift, and restitution for a marked face (the checkpoint).
+      const power = gate.kind === 'shut' ? seatPowerAt(map, atPlace) : null;
+      if (power) items.push(...gateAsks(power, goIn));
     }
     items.push({
       t: 'Stay and cultivate here',
@@ -374,7 +427,12 @@ function MapView({
     if (here) {
       const atPlace =
         q && 'x' in q && Math.hypot(q.x - life.at[0], q.y - life.at[1]) < 250 ? q : null;
-      return { x: sx, y: sy, head: atPlace?.name ?? 'Where you stand', items: hereChoices(atPlace) };
+      return {
+        x: sx,
+        y: sy,
+        head: atPlace?.name ?? 'Where you stand',
+        items: hereChoices(atPlace),
+      };
     }
     if (q && known(life, q.id) === 'rumored') {
       const ring = placeFor(q);
@@ -718,38 +776,38 @@ function MapView({
           // or the land, how deep, its lore and what you can do there, then the course and what's
           // ahead. A place's picture stands at the top once places have art.
           <>
-          <section className="map-here-tab">
-            <span className="map-label">Currently at</span>
-            <h3 className="map-here-name">
-              {hereWords(game)}
-              {atPlace && <span className="hanzi"> {atPlace.hanzi}</span>}
-            </h3>
-            <p className="map-here-line">
-              {TERRAIN_WORDS[terrainAt(map, life.at)] ?? terrainAt(map, life.at)} · {QI_NAMES[qd]}{' '}
-              qi ({qd}) · you see {sightAt(map, life.at)} li
-            </p>
-            <p className="map-depth">
-              <span className="map-pips" title="How deep into the wilds">
-                {pips}
-              </span>{' '}
-              {d.name}:{' '}
-              {bd ? `beasts of ${bd.name} · ${bd.finds} finds` : 'nothing past mortal beasts'}
-            </p>
-            {hereLore && <p className="map-here-lore">{hereLore}</p>}
-            <div className="map-here-acts">
-              {hereChoices(atPlace).map((it) => (
-                <button
-                  key={it.t}
-                  type="button"
-                  className={it.warn ? 'is-warn' : undefined}
-                  onClick={() => it.run?.()}
-                >
-                  {it.t}
-                  {it.s && <span>{it.s}</span>}
-                </button>
-              ))}
-            </div>
-          </section>
+            <section className="map-here-tab">
+              <span className="map-label">Currently at</span>
+              <h3 className="map-here-name">
+                {hereWords(game)}
+                {atPlace && <span className="hanzi"> {atPlace.hanzi}</span>}
+              </h3>
+              <p className="map-here-line">
+                {TERRAIN_WORDS[terrainAt(map, life.at)] ?? terrainAt(map, life.at)} · {QI_NAMES[qd]}{' '}
+                qi ({qd}) · you see {sightAt(map, life.at)} li
+              </p>
+              <p className="map-depth">
+                <span className="map-pips" title="How deep into the wilds">
+                  {pips}
+                </span>{' '}
+                {d.name}:{' '}
+                {bd ? `beasts of ${bd.name} · ${bd.finds} finds` : 'nothing past mortal beasts'}
+              </p>
+              {hereLore && <p className="map-here-lore">{hereLore}</p>}
+              <div className="map-here-acts">
+                {hereChoices(atPlace).map((it) => (
+                  <button
+                    key={it.t}
+                    type="button"
+                    className={it.warn ? 'is-warn' : undefined}
+                    onClick={() => it.run?.()}
+                  >
+                    {it.t}
+                    {it.s && <span>{it.s}</span>}
+                  </button>
+                ))}
+              </div>
+            </section>
             <CourseCard
               game={game}
               map={map}
@@ -1192,3 +1250,5 @@ function AheadRow({
     </button>
   );
 }
+
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);

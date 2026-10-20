@@ -26,6 +26,7 @@ import { realmScale, type RealmId } from '../content/realms.ts';
 import { mapOf, mapPlaceOf } from './map/travel.ts';
 import { areaAt, type RegionMap } from './map/region.ts';
 import { drilling } from './wheel.ts';
+import { guardedBy } from './markets.ts';
 import {
   addBalance,
   atSeat,
@@ -175,24 +176,36 @@ export function quitJob(s: GameState, id: string): JobCheck {
     ...s.player,
     jobs: s.player.jobs.filter((h) => h.id !== id),
   });
-  if (j.leave === 'power' && j.power) {
-    const left = leavePower(st.world, s.player.id, j.power, s.calendar.day, {
-      you: true,
-      knows: guardedKnown(s.player, j.power),
-    });
-    st = { ...st, world: left.world };
-    st = dropLost(st);
-    if (left.parting)
-      st = addEvent(st, 'power', {
-        power: houseOf(j.power),
-        what: left.parting.kind === 'clean' ? 'left' : 'betrayed',
-      });
-  }
+  if (j.leave === 'power' && j.power) st = partWays(st, j.power);
   return { ok: true, state: addEvent(st, 'job', { job: id, what: 'left' }) };
 }
 
+/**
+ * The player leaves a power by its rule, as asking to be released or quitting a soldier's post
+ * does: its copies handed back to its pavilion (the novels' sect takes its book back), the
+ * membership and its balance gone, its posts dropped, and the chronicle's line.
+ */
+export function partWays(s: GameState, power: string, o: { to?: string } = {}): GameState {
+  const house = houseOf(power);
+  const knows = guardedKnown(s.player, house);
+  const copies = { ...s.player.copies };
+  for (const thing of Object.keys(copies)) if (guardedBy(thing) === house) delete copies[thing];
+  let st = withPlayer(s, { ...s.player, copies });
+  const left = leavePower(st.world, s.player.id, house, s.calendar.day, {
+    you: true,
+    knows,
+    ...(o.to ? { to: o.to } : {}),
+  });
+  if (!left.parting) return s;
+  st = dropLost({ ...st, world: left.world });
+  return addEvent(st, 'power', {
+    power: house,
+    what: left.parting.kind === 'clean' ? 'left' : 'betrayed',
+  });
+}
+
 /** A post goes with its power: one whose membership is gone (struck off, left) is dropped. */
-function dropLost(s: GameState): GameState {
+export function dropLost(s: GameState): GameState {
   const c = s.player;
   const jobs = c.jobs.filter((h) => {
     if (!hasJob(h.id)) return false;

@@ -608,7 +608,10 @@ export function innerTrial(s: GameState, power: string): TrialResult {
   // ranks ahead of you, as the senior.
   const rank = 1 + trialField(s.world, house, who).filter((size) => size >= yours).length;
   const pill = passed && rank <= yearsPills(house);
-  let state: GameState = { ...s, world };
+  let state: GameState = addEvent({ ...s, world }, 'power', {
+    power: house,
+    what: passed ? 'trial-passed' : 'trial-short',
+  });
   if (pill) {
     state = withPlayer(state, addItem(state.player, YEARS_PILLS.pill, 1));
     state = addEvent(state, 'power', { power: house, what: 'pill' });

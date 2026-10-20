@@ -122,6 +122,12 @@ const POWER_LINES: Record<string, (w: Who, p: string) => string> = {
     `${w.name} misses ${p}'s quota a second month running, and it is noted.`,
   'struck-off': (w, p) => `${capital(p)} strikes ${w.name} from its rolls for three missed quotas.`,
   'leave-over': (w, p) => `${w.name}'s leave from ${p} runs out; each day away now costs.`,
+  // The organizations checkpoint: joining, the trials and the mark lifted by joining.
+  joined: (w, p) => `${w.name} is taken into ${p}.`,
+  'entry-short': (w, p) => `${w.name} falls short at ${p}'s gate and is sent away.`,
+  'trial-passed': (w, p) => `${w.name} passes ${p}'s inner trial.`,
+  'trial-short': (w, p) => `${w.name} sits ${p}'s inner trial and falls short.`,
+  lifted: (w, p) => `${capital(p)} lifts its mark from ${w.name}, one of its own now.`,
   left: (w, p) => `${w.name} leaves ${p} by its rule.`,
   betrayed: (w, p) => `${w.name} walks out on ${p}, and it will not forget.`,
   // O5: a guarded method seen in use, and the mark lifted.

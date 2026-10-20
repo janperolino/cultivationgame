@@ -61,12 +61,30 @@ import {
   writtenProsperity,
 } from '../core/markets.ts';
 import { whyOf } from '../core/making.ts';
+import { priceOf as priceOfThing } from '../core/prices.ts';
 import { gradeCount, priceWords, stonesOf, stonesWords } from '../core/purse.ts';
 import { buyChapter, hallTerms, pavilion, pavilionChapters } from '../core/halls.ts';
 import { lawHallAt, liftByPaying, marksHere, yourMark } from '../core/guarded.ts';
 import {
+  askRelease,
+  askToJoin,
+  eldersHall,
+  entryOf,
+  giftFloor,
+  giftThisMonth,
+  offerGift,
+  releaseView,
+  seatPowerAt,
+  trialThisMonth,
+} from '../core/joining.ts';
+import {
   becomeGuest,
+  donate,
+  donationPoints,
+  engageProtector,
   guestOffered,
+  innerTrial,
+  takeLesson,
   houseOf,
   isOrganization,
   membership,
@@ -127,8 +145,41 @@ const STATE_WORDS: Record<string, string> = {
   seen: 'you’ve seen it',
 };
 
-function doorsOf(s: GameState, p: MapPlace, info: PlaceKindInfo): [string, Door[]][] {
+function doorsOf(
+  s: GameState,
+  map: RegionMap,
+  p: MapPlace,
+  info: PlaceKindInfo,
+): [string, Door[]][] {
   const kind = placeKindOf(p);
+  // The power whose seat this is: its way in and a gift for an outsider, its elders' hall for a
+  // member (the organizations checkpoint).
+  const seat = seatPowerAt(map, p);
+  const own: Door[] = [];
+  if (seat) {
+    const hall = eldersHall(s, seat);
+    const entry = entryOf(s, seat);
+    if (hall && !hall.guest)
+      own.push({
+        id: 'elders',
+        seal: hall.title.hanzi.slice(0, 1),
+        name: hall.title.name,
+        sub: hall.trial?.open
+          ? 'the inner trial is held this month'
+          : 'an elder’s lesson, a protector, being released',
+        tag: hall.trial?.open ? 'trial' : 'members',
+      });
+    if (entry)
+      own.push({
+        id: 'join',
+        seal: entry.title.hanzi.slice(0, 1),
+        name: entry.title.name,
+        sub: entry.shut ?? entry.sub,
+      });
+    if (!hall)
+      own.push({ id: 'gift', seal: '礼', name: 'Offer a gift', sub: 'remembered as tribute' });
+  }
+  const ownGroup: [string, Door[]] = [seat ? cap(theName(seat)) : '', own];
   // A door is a district, or a firm, a hall or the office alone (E5).
   const shops: Door[] = doorsAt(p.id).map((d) => {
     const k = SHOP_KIND_INFO[d.kind];
@@ -181,12 +232,9 @@ function doorsOf(s: GameState, p: MapPlace, info: PlaceKindInfo): [string, Door[
     });
   }
   if (kind === 'gate')
-    return (
-      [
-        ['Behind the gate', shops],
-        ['Work', work],
-      ] as [string, Door[]][]
-    ).filter(([, d]) => d.length > 0);
+    return ([['Behind the gate', shops], ownGroup, ['Work', work]] as [string, Door[]][]).filter(
+      ([, d]) => d.length > 0,
+    );
   const trade = [...shops];
   if (info.changer)
     trade.push({
@@ -251,6 +299,7 @@ function doorsOf(s: GameState, p: MapPlace, info: PlaceKindInfo): [string, Door[
   return (
     [
       ['Trade', trade],
+      ownGroup,
       ['Work', work],
       [info.guides > 0 ? 'Hear and hire' : 'Hear', hear],
       ['Rest', rest],
@@ -283,7 +332,7 @@ export function PlaceScreen({
     if (why) say(why);
     return why;
   };
-  const groups = kind === 'site' ? [] : doorsOf(game, place, info);
+  const groups = kind === 'site' ? [] : doorsOf(game, map, place, info);
   const doors = groups.flatMap(([, d]) => d);
   const open = doors.find((d) => d.id === door && !d.later) ?? null;
   const area = place.area ? areaById(map, place.area) : null;
@@ -303,6 +352,7 @@ export function PlaceScreen({
   // The market's biggest gap and its cause (design § Economy, People make and use, the guards).
   const here = kind === 'site' ? undefined : market(place.id);
   const why = here ? whyOf(game.world, here, game.calendar.day) : null;
+  const seat = kind === 'site' ? null : seatPowerAt(map, place);
 
   return (
     <div className="place-screen">
@@ -340,6 +390,12 @@ export function PlaceScreen({
             )}
           </div>
           {why && <div className="place-why">{why}</div>}
+          {seat && trialThisMonth(game, seat) && (
+            <div className="place-why">
+              The inner trial is held this month: sit it at the{' '}
+              {eldersHall(game, seat)!.title.name.toLowerCase()}.
+            </div>
+          )}
         </div>
         <div className="place-purse">
           <span>
@@ -513,6 +569,14 @@ function Counter({
   const md = doorsAt(place.id).find((d) => d.id === door);
   if (md) return <DoorCounter key={door} game={game} door={md} act={act} say={say} />;
   switch (door) {
+    case 'elders':
+    case 'join':
+    case 'gift': {
+      const power = seatPowerAt(map, place)!;
+      if (door === 'join') return <JoinCounter game={game} power={power} act={act} say={say} />;
+      if (door === 'gift') return <GiftCounter game={game} power={power} act={act} say={say} />;
+      return <EldersCounter game={game} power={power} act={act} say={say} />;
+    }
     case 'pavilion':
       return <PavilionCounter game={game} power={place.id} act={act} say={say} />;
     case 'law-hall':
@@ -623,6 +687,8 @@ function ShopCounter({
   const yours =
     terms?.as === 'member' && house ? membership(game.world, game.player.id, house) : undefined;
   const currency = house ? organization(house).preset.currency.name : '';
+  // A member donates at its hall: stones at 2 low a point, goods at half their sell price (O1).
+  if (yours && house) tabs.push(['donate', 'Donate']);
   const cost = (p: number) =>
     yours
       ? `${Math.round(p * 100) / 100} ${currency}`
@@ -840,6 +906,7 @@ function ShopCounter({
           </p>
         </>
       )}
+      {tab === 'donate' && house && <DonateRows game={game} power={house} act={act} say={say} />}
       {tab === 'mend' && (
         <div className="place-rows">
           {worn.length === 0 && <p className="muted">Nothing you carry needs mending.</p>}
@@ -989,6 +1056,277 @@ function LawHallCounter({
       </div>
     </>
   );
+}
+
+// ---------------------------------------------------------------- a power's own doors
+
+/** Donating at the exchange hall, the points shown before you give. */
+function DonateRows({ game, power, act, say }: CounterProps) {
+  const currency = organization(power).preset.currency.name;
+  const give = (gift: { stones?: number; things?: Record<string, number> }, what: string) =>
+    act((s) => {
+      const r = donate(s, power, gift);
+      if (r.ok) say(`${what} donated: ${r.points} ${currency}.`);
+      return r.ok ? r : { ok: false, reason: r.why };
+    });
+  const things = Object.entries(game.player.items).filter(([, n]) => n > 0);
+  return (
+    <div className="place-rows">
+      {[10, 50, 200].map((n) => (
+        <div key={n} className="place-row is-plain">
+          <span className="place-row-name">{n} low-grade stones</span>
+          <span className="place-price">
+            {donationPoints({ stones: n })} {currency}
+          </span>
+          <button
+            type="button"
+            className="place-btn"
+            onClick={() => give({ stones: n }, `${n} low`)}
+          >
+            Donate
+          </button>
+        </div>
+      ))}
+      {things.map(([t]) => {
+        const w = ware(t);
+        return (
+          <div key={t} className="place-row">
+            <i className="place-dot" style={{ background: `var(--rarity-${w.rarity})` }} />
+            <span className="place-row-name">{w.name}</span>
+            <span className="place-price">
+              {donationPoints({ things: { [t]: 1 } })} {currency}
+            </span>
+            <button
+              type="button"
+              className="place-btn"
+              onClick={() => give({ things: { [t]: 1 } }, w.name)}
+            >
+              Donate one
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+type CounterProps = { game: GameState; power: string; act: Act; say: (t: string) => void };
+
+/** The way into a power, asked at its seat: a test, vows, enlisting, buying in, an oath, a sponsor. */
+function JoinCounter({ game, power, act, say }: CounterProps) {
+  const e = entryOf(game, power);
+  if (!e) return <p className="place-note">You are one of theirs already.</p>;
+  return (
+    <>
+      <p className="place-sub">{cap(e.sub)}.</p>
+      {e.shut && <p className="place-note">{e.shut}</p>}
+      <button
+        type="button"
+        className="place-btn"
+        disabled={!!e.shut}
+        onClick={() =>
+          act((s) => {
+            const r = askToJoin(s, power);
+            if (r.ok)
+              say(
+                r.joined
+                  ? `${cap(theName(power))} takes you in.`
+                  : `Short: ${r.yours?.toFixed(1)} against ${r.bar?.toFixed(1)}.`,
+              );
+            return r;
+          })
+        }
+      >
+        {e.title.name}
+      </button>
+    </>
+  );
+}
+
+/** A gift for a power you don't belong to: stones or a thing from the Bag, tribute once a month. */
+function GiftCounter({ game, power, act, say }: CounterProps) {
+  const floor = giftFloor(game);
+  const counted = giftThisMonth(game, power);
+  const give = (gift: { stones?: number; things?: Record<string, number> }) =>
+    act((s) => {
+      const r = offerGift(s, power, gift);
+      if (r.ok) say(r.counted ? 'It is taken in, and noted.' : 'It is taken in.');
+      return r;
+    });
+  const things = Object.entries(game.player.items)
+    .filter(([t, n]) => n > 0 && priceOfThing(t) >= floor)
+    .slice(0, 8);
+  return (
+    <>
+      <p className="place-sub">
+        A gift worth {floor} low or more is remembered as tribute for a season; one a month counts.
+        {counted && ' They have counted one of yours this month.'}
+      </p>
+      <div className="place-rows">
+        {[floor, floor * 3].map((n) => (
+          <div key={n} className="place-row is-plain">
+            <span className="place-row-name">{n} low-grade stones</span>
+            <span />
+            <button type="button" className="place-btn" onClick={() => give({ stones: n })}>
+              Give
+            </button>
+          </div>
+        ))}
+        {things.map(([t]) => {
+          const w = ware(t);
+          return (
+            <div key={t} className="place-row">
+              <i className="place-dot" style={{ background: `var(--rarity-${w.rarity})` }} />
+              <span className="place-row-name">{w.name}</span>
+              <span className="place-price">worth {priceWords(priceOfThing(t))}</span>
+              <button
+                type="button"
+                className="place-btn"
+                onClick={() => give({ things: { [t]: 1 } })}
+              >
+                Give one
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/** The elders' hall: an elder's lesson, a protector, the inner trial in its month, being released. */
+function EldersCounter({ game, power, act, say }: CounterProps) {
+  const [asking, setAsking] = useState(false);
+  const h = eldersHall(game, power);
+  if (!h) return <p className="place-note">The elders see only their own.</p>;
+  const release = releaseView(game, power);
+  const pts = (n: number) => `${Math.round(n * 10) / 10} ${h.currency}`;
+  return (
+    <>
+      <div className="place-keeper">
+        <span>Your balance: {pts(h.balance)}</span>
+      </div>
+      <div className="place-rows">
+        <div className="place-row is-plain">
+          <span>
+            <span className="place-row-name">An elder’s lesson</span>{' '}
+            <span className="place-sub">· a day’s teaching, three days of your own study</span>
+          </span>
+          <span className="place-price">{pts(h.lesson.price)}</span>
+          <button
+            type="button"
+            className="place-btn"
+            disabled={h.lesson.taken}
+            onClick={() =>
+              act((s) => {
+                const r = takeLesson(s, power);
+                if (r.ok) say('An elder spends the day on you.');
+                return r.ok ? r : { ok: false, reason: r.why };
+              })
+            }
+          >
+            {h.lesson.taken ? 'Taught this month' : 'Ask'}
+          </button>
+        </div>
+        <div className="place-row is-plain">
+          <span>
+            <span className="place-row-name">A protector 护法</span>{' '}
+            <span className="place-sub">
+              · at your next breakthrough, +5% and a failure softened
+            </span>
+          </span>
+          <span className="place-price">{pts(h.protector.price)}</span>
+          <button
+            type="button"
+            className="place-btn"
+            disabled={h.protector.standing}
+            onClick={() =>
+              act((s) => {
+                const r = engageProtector(s, power);
+                if (r.ok) say('An elder will stand by you.');
+                return r.ok ? r : { ok: false, reason: r.why };
+              })
+            }
+          >
+            {h.protector.standing ? 'Standing by' : 'Ask'}
+          </button>
+        </div>
+        {h.trial && (
+          <div className="place-row is-plain">
+            <span>
+              <span className="place-row-name">The inner trial</span>{' '}
+              <span className="place-sub">· {h.trial.words}</span>
+            </span>
+            <span />
+            <button
+              type="button"
+              className="place-btn"
+              disabled={!h.trial.open}
+              onClick={() =>
+                act((s) => {
+                  const r = innerTrial(s, power);
+                  if (!r.ok) return { ok: false, reason: r.why };
+                  say(trialWords(r));
+                  return r;
+                })
+              }
+            >
+              Sit it
+            </button>
+          </div>
+        )}
+      </div>
+      {release && (
+        <div className="place-release">
+          {!asking ? (
+            <button type="button" className="place-btn is-quiet" onClick={() => setAsking(true)}>
+              Ask to be released
+            </button>
+          ) : (
+            <>
+              <p className="place-sub">
+                {release.parting.kind === 'clean'
+                  ? `A clean parting, ${release.parting.why}: you keep what you learned under the heart-demon oath, never to teach or sell it.`
+                  : `This is a betrayal (${release.parting.why}): ${theName(power)} will remember it and hunt for what you know.`}
+              </p>
+              <p className="place-sub">
+                You give up {pts(release.balance)}
+                {release.dwelling ? `, the dwelling’s qi ×${release.dwelling}` : ''}
+                {release.posts.length ? `, your post (${release.posts.join(', ')})` : ''}
+                {release.copies.length
+                  ? `, and hand back ${release.copies.join(', ')} to the pavilion`
+                  : ''}
+                .
+              </p>
+              <button
+                type="button"
+                className={`place-btn${release.parting.kind === 'clean' ? '' : ' is-bad'}`}
+                onClick={() =>
+                  act((s) => {
+                    const r = askRelease(s, power);
+                    if (r.ok) say(`You leave ${theName(power)}.`);
+                    return r;
+                  })
+                }
+              >
+                Leave {theName(power)}
+              </button>{' '}
+              <button type="button" className="place-btn is-quiet" onClick={() => setAsking(false)}>
+                Stay
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
+/** A trial's outcome in words: passed with its rank among those who sat it, or short. */
+function trialWords(r: Extract<ReturnType<typeof innerTrial>, { ok: true }>): string {
+  const sizes = `${r.yours.toFixed(1)} against ${r.theirs.toFixed(1)}`;
+  if (!r.passed) return `Short: ${sizes}.`;
+  return `Passed, ${sizes}; ranked ${r.rank} of the outer disciples who sat it${r.pill ? ', and handed a Foundation Pill' : ''}.`;
 }
 
 // ---------------------------------------------------------------- the other doors

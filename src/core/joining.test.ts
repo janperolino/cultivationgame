@@ -1,0 +1,147 @@
+// Membership's doors (the organizations checkpoint's fixes): the way in by type at a power's seat,
+// the elders' hall's trial and release, and a gift remembered as tribute.
+import { describe, expect, it } from 'vitest';
+import { DAYS_PER_MONTH, DAYS_PER_YEAR } from '../content/calendar.ts';
+import { copyId } from '../content/copies.ts';
+import {
+  askRelease,
+  askToJoin,
+  buyInPrice,
+  eldersHall,
+  entryOf,
+  giftFloor,
+  offerGift,
+  releaseView,
+  seatPowerAt,
+} from './joining.ts';
+import { takeJob } from './jobs.ts';
+import { placeById } from './map/region.ts';
+import { ensureMap, mapOf, mapPlaceOf } from './map/travel.ts';
+import { joinPower, membership } from './organizations.ts';
+import { receive, stonesOf, withStones, worthOf } from './purse.ts';
+import { addStanding } from './resolver/opinion.ts';
+import { standingOf } from './resolver/world.ts';
+import { newLife, PLAYER_ID, withPlayer, type GameState } from './state.ts';
+
+const GATE = 'qm-tushou-men';
+const REINS = 'qm-baijiang-zong';
+const NIGHT_BRIDGE = 'qm-yeqiao-hui';
+const MARCH = 'qm-anbian-fu';
+const GUILD = 'qm-haisi-fang';
+const YOU = PLAYER_ID;
+
+const rich = (s: GameState, low = 1000): GameState =>
+  withPlayer(s, withStones(s.player, receive(stonesOf(s.player), low)));
+const life = () => rich(ensureMap(newLife({ name: 'Ye Chen', seed: 'doors' })));
+const joined = (s: GameState, power: string): GameState => {
+  const r = askToJoin(s, power);
+  if (!r.ok || !r.joined) throw new Error(r.ok ? 'short' : r.reason);
+  return r.state;
+};
+
+describe('the way in', () => {
+  it('lets a rooted child sit the Gate’s entrance test and walk in with its token', () => {
+    const s = life();
+    const e = entryOf(s, GATE)!;
+    expect(e.by).toBe('test');
+    expect(e.title.name).toBe('Ask to sit the entrance test');
+    const r = askToJoin(s, GATE);
+    if (!r.ok) throw new Error(r.reason);
+    expect(r.joined).toBe(true);
+    expect(r.verdict).not.toBe('short');
+    expect(membership(r.state.world, YOU, GATE)?.seat).toBe('outer');
+    expect(r.state.world.known).toContain(`token:${GATE}`);
+    expect(r.state.chronicle.at(-1)?.data).toMatchObject({ power: GATE, what: 'joined' });
+    expect(entryOf(r.state, GATE)).toBeNull();
+  });
+
+  it('keeps one house at a time: a Gate disciple can’t join the Reins without leaving', () => {
+    const s = joined(life(), GATE);
+    expect(askToJoin(s, REINS)).toMatchObject({ ok: false });
+  });
+
+  it('has a society sponsor only one it favors', () => {
+    const s = life();
+    expect(entryOf(s, NIGHT_BRIDGE)?.shut).toBeTruthy();
+    const favored = {
+      ...s,
+      world: addStanding(
+        s.world,
+        { power: NIGHT_BRIDGE, about: YOU, row: 'tribute', value: 40 },
+        s.calendar.day,
+      ),
+    };
+    expect(entryOf(favored, NIGHT_BRIDGE)?.shut).toBeNull();
+    expect(askToJoin(favored, NIGHT_BRIDGE)).toMatchObject({ ok: true, joined: true });
+  });
+
+  it('enlists at a town of a dynasty’s kingdom, and a guild takes its buying-in price', () => {
+    const s = life();
+    const map = mapOf(s)!;
+    const fort = mapPlaceOf(map, MARCH)!;
+    expect(seatPowerAt(map, fort)).toBe(MARCH);
+    expect(seatPowerAt(map, placeById(map, GATE)!)).toBe(GATE);
+    expect(entryOf(s, MARCH)?.by).toBe('enlist');
+    expect(membership(joined(s, MARCH).world, YOU, MARCH)?.seat).toBe('outer');
+    const before = worthOf(stonesOf(s.player));
+    const guild = joined(s, GUILD);
+    expect(before - worthOf(stonesOf(guild.player))).toBeCloseTo(buyInPrice(s), 5);
+  });
+});
+
+describe('the elders’ hall', () => {
+  it('holds the inner trial in the first month only', () => {
+    const s = joined(life(), GATE);
+    const year = Math.ceil(s.calendar.day / DAYS_PER_YEAR) * DAYS_PER_YEAR;
+    const first = { ...s, calendar: { ...s.calendar, day: year + 3 } };
+    expect(eldersHall(first, GATE)?.trial).toMatchObject({ open: true });
+    const later = { ...s, calendar: { ...s.calendar, day: year + 3 * DAYS_PER_MONTH } };
+    expect(eldersHall(later, GATE)?.trial).toMatchObject({ open: false });
+  });
+
+  it('tells what being released gives up, then hands the pavilion’s copies back', () => {
+    let s = joined(life(), GATE);
+    s = {
+      ...s,
+      world: {
+        ...s.world,
+        members: s.world.members.map((m) => (m.power === GATE ? { ...m, balance: 40 } : m)),
+      },
+    };
+    const took = takeJob(s, 'gate-garden');
+    if (!took.ok) throw new Error(took.reason);
+    const saber = copyId('method', 'butcher-saber');
+    s = withPlayer(took.state, { ...took.state.player, copies: { [saber]: 1 } });
+    const view = releaseView(s, GATE)!;
+    expect(view.parting.kind).toBe('clean');
+    expect(view.balance).toBe(40);
+    expect(view.posts).toHaveLength(1);
+    expect(view.copies.length).toBe(1);
+    const r = askRelease(s, GATE);
+    if (!r.ok) throw new Error(r.reason);
+    expect(membership(r.state.world, YOU, GATE)).toBeUndefined();
+    expect(r.state.player.jobs).toEqual([]);
+    expect(r.state.player.copies[saber]).toBeUndefined();
+    expect(r.state.chronicle.at(-1)?.data).toMatchObject({ power: GATE, what: 'left' });
+  });
+});
+
+describe('a gift', () => {
+  it('is remembered as tribute, one a month, and brings a stranger toward known', () => {
+    const s = life();
+    const floor = giftFloor(s);
+    const small = offerGift(s, REINS, { stones: floor - 1 });
+    expect(small).toMatchObject({ ok: true, counted: false });
+    const r = offerGift(s, REINS, { stones: floor });
+    if (!r.ok) throw new Error(r.reason);
+    expect(r.counted).toBe(true);
+    expect(standingOf(r.state.world, REINS, YOU, s.calendar.day).total).toBe(5);
+    const again = offerGift(r.state, REINS, { stones: floor });
+    expect(again).toMatchObject({ ok: true, counted: false });
+    const m = joinPower(s.world, YOU, REINS, s.calendar.day, { you: true });
+    if (!m.ok) throw new Error(m.why);
+    expect(offerGift({ ...s, world: m.world }, REINS, { stones: floor })).toMatchObject({
+      ok: false,
+    });
+  });
+});
