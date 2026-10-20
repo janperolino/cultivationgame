@@ -22,10 +22,12 @@ import {
   realmStageOf,
   seatOf,
   seatRank,
+  theName,
   titheOf,
 } from './organizations.ts';
 import { priceOf } from './prices.ts';
 import { isMember } from './resolver/names.ts';
+import { foeHeld } from './resolver/opinion.ts';
 import { standingOf } from './resolver/world.ts';
 import type { GameState } from './state.ts';
 
@@ -45,6 +47,12 @@ export function hallTerms(s: GameState, sh: Shop): HallTerms | null {
   if (isMember(s.world, s.player.id, house)) return { as: 'member' };
   const word = standingOf(s.world, house, s.player.id, s.calendar.day).word;
   if (wordRank(word) >= wordRank(OPEN_COUNTER.from)) return { as: 'counter' };
+  const foe = foeHeld(s.world, house, s.player.id);
+  if (foe)
+    return {
+      as: 'shut',
+      why: `It sells nothing to one of ${theName(foe)}'s people: they are at feud.`,
+    };
   return { as: 'shut', why: 'It sells only to its own, and its people don’t know you.' };
 }
 

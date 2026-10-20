@@ -7,6 +7,7 @@
 // Border Wilds powers' overrides and treatment.
 import type { OrgType, Population } from './atlas/schema.ts';
 import type { RealmId } from './realms.ts';
+import type { TripGoal } from './encounters/schema.ts';
 import generated from './generated/organizations.json';
 
 export { ORG_TYPES, type OrgType } from './atlas/schema.ts';
@@ -386,6 +387,16 @@ export const ENTRY: Record<OrgType, { by: EntryBy } & Title> = {
   assassins: { by: 'sponsor', name: 'Ask to be sponsored', hanzi: '引荐' },
   clan: { by: 'kin', name: 'Born, adopted or married in', hanzi: '血脉' },
 };
+/**
+ * The kinds of work a sect's mission hall posts (the checkpoint's fix): its own errands in its
+ * sphere, never a town's. A sect not named posts core hunts and herb runs.
+ */
+export const MISSION_GOALS: Record<string, readonly TripGoal[]> & { default: readonly TripGoal[] } = {
+  default: ['core-hunt', 'herb-run'],
+  // The Gate's outer disciples hunt cores and raid across the strait.
+  'qm-tushou-men': ['core-hunt', 'raid'],
+};
+
 /** Buying into a guild: low-grade stones on the realm curve by your realm. */
 export const BUY_IN = 30;
 /** A sponsor takes on one their power stands this well with. */

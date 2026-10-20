@@ -228,6 +228,9 @@ export const STANDING_ROWS = {
   // O5 (design § Guarded methods): a leak traced to you, kept until the mark lifts, so a stranger
   // caught stands cold (a fine) and a traitor hostile (on sight).
   'stole-our-method': { reason: 'Stole one of our methods', value: -20, fade: null },
+  // The organizations checkpoint: one of a power at feud with this one, while they belong to it.
+  // Worked out from the memberships and the atlas's feuds, never stored.
+  'foe-member': { reason: 'One of our enemies’ people', value: -20, fade: null },
 } as const satisfies Record<string, StandingRow>;
 export type StandingId = keyof typeof STANDING_ROWS;
 export const STANDING_IDS = Object.keys(STANDING_ROWS) as StandingId[];

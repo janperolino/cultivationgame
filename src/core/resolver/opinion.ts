@@ -68,7 +68,7 @@ import {
   type TieId,
 } from '../../content/people.ts';
 import { LADDERS } from '../../content/cultivation.ts';
-import { ORG_OVERRIDES } from '../../content/organizations.ts';
+import { ORG_OVERRIDES, ORG_ROWS } from '../../content/organizations.ts';
 import type { TrustWord } from '../../content/resolver.ts';
 import type { OriginChoice, OriginId } from '../../content/origins.ts';
 import { likesOf, meetingShows, revealNature } from './nature.ts';
@@ -648,6 +648,20 @@ export interface Standing {
   cap: { heat: number; at: number } | null;
 }
 
+const ORG_BY_ID = new Map(ORG_ROWS.map((r) => [r.id, r]));
+
+/** The power someone belongs to that is at feud with another (the atlas's enemy and feud ties). */
+export function foeHeld(w: World, power: string, about: string): string | null {
+  const row = ORG_BY_ID.get(power);
+  if (!row) return null;
+  for (const m of w.members) {
+    if (m.who !== about || m.power === power || m.guest) continue;
+    const theirs = ORG_BY_ID.get(m.power);
+    if (row.foes.includes(m.power) || theirs?.foes.includes(power)) return m.power;
+  }
+  return null;
+}
+
 /** A power's standing with someone: its reasons, held under the cap its heat sets. */
 export function readStanding(
   w: World,
@@ -663,6 +677,21 @@ export function readStanding(
     const share = fade === null ? 1 : Math.max(0, 1 - Math.max(0, day - s.day) / fade);
     if (share > 0)
       lines.push({ memory: s, now: s.value * share, share, fading: share < FADING_SHARE });
+  }
+  // One of a power at feud with this one stands at the feud's chill while they belong (the
+  // organizations checkpoint), worked out and never stored.
+  const foe = foeHeld(w, power, about);
+  if (foe) {
+    const row = STANDING_ROWS['foe-member'];
+    const memory: StandingMemory = {
+      id: -1,
+      power,
+      about,
+      row: 'foe-member',
+      value: row.value,
+      day,
+    };
+    lines.push({ memory, now: row.value, share: 1, fading: false });
   }
   const sum = lines.reduce((t, l) => t + l.now, 0);
   const capRow = HEAT_CAPS.find((c) => heat >= c.heat);

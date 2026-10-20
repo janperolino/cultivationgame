@@ -192,6 +192,9 @@ describe('the Gate’s mission hall', () => {
     const posts = postingsAt(s, map, hall);
     expect(posts.length).toBeGreaterThan(0);
     expect(posts.every((p) => p.power === GATE)).toBe(true);
+    // Its own kinds of work, never a town's: core hunts and raids across the strait.
+    for (const p of posts)
+      expect(['core-hunt', 'raid']).toContain(encounterTemplate(p.template).goal);
     expect(takePosting(s, map, hall, posts[0]!.id)).toMatchObject({ ok: false });
     s = member(s, GATE);
     const took = takePosting(s, map, hall, posts[0]!.id);

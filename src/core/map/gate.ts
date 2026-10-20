@@ -18,7 +18,7 @@ import { isOrganization, theName } from '../organizations.ts';
 import { actorFromCultivator, plainActor } from '../resolver/actor.ts';
 import { fameOf, isMember } from '../resolver/names.ts';
 import { rollNature } from '../resolver/nature.ts';
-import { remember } from '../resolver/opinion.ts';
+import { foeHeld, remember } from '../resolver/opinion.ts';
 import { talkCheck } from '../resolver/talk.ts';
 import { statesOf, type World } from '../resolver/world.ts';
 import { realmOf, withPlayer, type GameState } from '../state.ts';
@@ -138,14 +138,27 @@ export function gateOf(s: GameState, map: RegionMap, p: MapPlace): GateRead {
     if (isMember(s.world, s.player.id, power) || s.world.known.includes(`token:${power}`)) {
       return { kind: 'member', words: 'You show the token, and the guards step aside.' };
     }
+    // One of a power at feud with this one is known for it at the gate (the checkpoint's fix).
+    const foe = isOrganization(power) ? foeHeld(s.world, power, s.player.id) : null;
     return {
       kind: 'shut',
       access,
-      words: `The guards ask for ${access.by.map((b) => ACCESS_WORDS[b]).join(' or ')}.`,
+      words: foe
+        ? `The guards know you for one of ${theName(foe)}'s people, at feud with ${theName(power)}; they ask for ${access.by.map((b) => ACCESS_WORDS[b]).join(' or ')} and watch your hands.`
+        : `The guards ask for ${access.by.map((b) => ACCESS_WORDS[b]).join(' or ')}.`,
     };
   }
   const info = PLACE_KIND_INFO[kind];
-  if (!info.watch) return { kind: 'open', words: '' };
+  if (!info.watch) {
+    // A power's open hall knows one of its foes' people (the checkpoint's fix).
+    const foe = isOrganization(p.id) ? foeHeld(s.world, p.id, s.player.id) : null;
+    return {
+      kind: 'open',
+      words: foe
+        ? `Its people know you for one of ${theName(foe)}'s, at feud with ${theName(p.id)}, and watch you cold.`
+        : '',
+    };
+  }
   const region = map.id;
   const day = s.calendar.day;
   const realm = shownRealm(s);

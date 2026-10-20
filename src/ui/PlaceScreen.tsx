@@ -483,7 +483,16 @@ export function PlaceScreen({
 
 function GateStrip({ game, map, place }: { game: GameState; map: RegionMap; place: MapPlace }) {
   const kind = placeKindOf(place);
-  if (kind === 'site' || kind === 'hall') return null;
+  if (kind === 'site') return null;
+  if (kind === 'hall') {
+    const g = gateOf(game, map, place);
+    return g.words ? (
+      <div className="place-gate panel is-bad">
+        <span className="place-seal is-small">敌</span>
+        <p>{g.words}</p>
+      </div>
+    ) : null;
+  }
   if (kind === 'village')
     return (
       <div className="place-gate panel">

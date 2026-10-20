@@ -17,6 +17,7 @@ import {
 import { takeJob } from './jobs.ts';
 import { claimPosting, postingsAt, takePosting } from './map/board.ts';
 import { placeById } from './map/region.ts';
+import { gateOf } from './map/gate.ts';
 import { ensureMap, mapOf, mapPlaceOf } from './map/travel.ts';
 import { innerTrial, joinPower, membership, seatsByRealm } from './organizations.ts';
 import { renderEvent } from './chronicle.ts';
@@ -200,5 +201,15 @@ describe('the chronicle', () => {
     const r = askRelease(s, GATE);
     if (!r.ok) throw new Error(r.reason);
     expect(line(r.state)).toBe('Ye Chen leaves the Beast-Butcher Gate by its rule.');
+  });
+});
+
+describe('a feud', () => {
+  it('stands a Gate disciple cold with the Reins, and its gate says why', () => {
+    const s = joined(life(), GATE);
+    expect(standingOf(s.world, REINS, YOU, s.calendar.day).word).toBe('cold');
+    const map = mapOf(s)!;
+    expect(gateOf(s, map, placeById(map, REINS)!).words).toContain('at feud');
+    expect(standingOf(life().world, REINS, YOU, 0).word).toBe('unknown');
   });
 });

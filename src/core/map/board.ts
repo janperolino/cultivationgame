@@ -11,6 +11,7 @@ import {
 } from '../../content/encounters/pace.ts';
 import type { Template, TripGoal } from '../../content/encounters/schema.ts';
 import { parentsOf, veinAt } from '../../content/map/index.ts';
+import { MISSION_GOALS } from '../../content/organizations.ts';
 import { addStanding } from '../resolver/opinion.ts';
 import { PLACE_KIND_INFO } from '../../content/map/places.ts';
 import {
@@ -61,8 +62,12 @@ export function isMissionHall(id: string): boolean {
 /** Ordered by id, code point by code point: a seeded pick must not lean on the machine's locale. */
 const byId = (a: { id: string }, b: { id: string }) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
-function goalTemplates(): Template[] {
-  return ENCOUNTERS.filter((t) => t.goal && POSTED_GOALS.includes(t.goal));
+/** The goals a board posts: a town's, or a mission hall's power's own kinds (the checkpoint). */
+function goalTemplates(board: MapPlace): Template[] {
+  const goals = isMissionHall(board.id)
+    ? (MISSION_GOALS[houseOf(board.id)] ?? MISSION_GOALS.default)
+    : POSTED_GOALS;
+  return ENCOUNTERS.filter((t) => t.goal && goals.includes(t.goal));
 }
 
 function spotFor(map: RegionMap, board: MapPlace, t: Template, rng: Rng): MapPlace | null {
@@ -122,7 +127,7 @@ export function postingsAt(s: GameState, map: RegionMap, board: MapPlace): Posti
   if (!hasBoard(board)) return [];
   const month = monthOf(s.calendar.day);
   const rng = new Rng(hashSeed(`board/${board.id}/${month}`));
-  const pool = goalTemplates();
+  const pool = goalTemplates(board);
   const out: Posting[] = [];
   // A month's postings are different goals, each with a spot of its kind in reach.
   const order = [...pool].sort(byId);
