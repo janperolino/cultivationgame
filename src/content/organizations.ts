@@ -44,8 +44,11 @@ export interface OrgPreset {
   join: readonly string[];
   currency: Title;
   asks: readonly string[];
-  /** Leaving by the rule: its words, and whether the rule is hunted (betrayal by itself). */
-  leave: { words: string; hunted: boolean };
+  /**
+   * Leaving by the rule: its words, whether the rule is hunted (betrayal by itself), and the word
+   * for a clean parting ("released", never "released or expelled").
+   */
+  leave: { words: string; hunted: boolean; clean: string };
   gives: readonly string[];
   seats: Record<SeatId, SeatName>;
   /** Titles are the holders' realms (a beast power's), whatever the seat. */
@@ -62,7 +65,7 @@ export const ORG_PRESETS: Record<OrgType, OrgPreset> = {
     join: ['a test'],
     currency: CONTRIBUTION,
     asks: ['duties', 'quotas'],
-    leave: { words: 'released or expelled', hunted: false },
+    leave: { words: 'released or expelled', hunted: false, clean: 'released' },
     gives: ['methods', 'a library'],
     seats: {
       outer: t('outer disciple', '外门弟子'),
@@ -79,7 +82,7 @@ export const ORG_PRESETS: Record<OrgType, OrgPreset> = {
     join: ['birth', 'adoption', 'marriage'],
     currency: CONTRIBUTION,
     asks: ['blood duty'],
-    leave: { words: 'never quite', hunted: false },
+    leave: { words: 'never quite', hunted: false, clean: 'released from the clan' },
     gives: ['inheritance', 'protection'],
     seats: {
       outer: t('branch clansman', '旁系'),
@@ -96,7 +99,7 @@ export const ORG_PRESETS: Record<OrgType, OrgPreset> = {
     join: ['buying in', 'apprenticeship'],
     currency: CONTRIBUTION,
     asks: ['dues', 'trade quotas'],
-    leave: { words: 'selling out', hunted: false },
+    leave: { words: 'selling out', hunted: false, clean: 'selling out' },
     gives: ['markets', 'caravans', 'workshops'],
     seats: {
       outer: t('member', '会员'),
@@ -113,7 +116,7 @@ export const ORG_PRESETS: Record<OrgType, OrgPreset> = {
     join: ['a blood oath'],
     currency: { name: 'face', hanzi: '面子' },
     asks: ['territory', 'tribute'],
-    leave: { words: 'in a box', hunted: true },
+    leave: { words: 'in a box', hunted: true, clean: 'in a box' },
     gives: ['streets', 'fences'],
     seats: {
       outer: t('gang member', '帮众'),
@@ -130,7 +133,7 @@ export const ORG_PRESETS: Record<OrgType, OrgPreset> = {
     join: ['recruited', 'sponsored'],
     currency: { name: 'trust', hanzi: '信' },
     asks: ['silence', 'favors'],
-    leave: { words: 'hunted', hunted: true },
+    leave: { words: 'hunted', hunted: true, clean: 'hunted' },
     gives: ['intelligence', 'smuggling', 'contacts'],
     seats: {
       outer: t('informant', '眼线'),
@@ -147,7 +150,7 @@ export const ORG_PRESETS: Record<OrgType, OrgPreset> = {
     join: ['recruited'],
     currency: { name: 'trust', hanzi: '信' },
     asks: ['contracts', 'silence'],
-    leave: { words: 'hunted', hunted: true },
+    leave: { words: 'hunted', hunted: true, clean: 'hunted' },
     gives: ['poisons', 'marks'],
     seats: {
       outer: t('bronze-medal killer', '铜牌'),
@@ -164,7 +167,7 @@ export const ORG_PRESETS: Record<OrgType, OrgPreset> = {
     join: ['an exam'],
     currency: CONTRIBUTION,
     asks: ['attendance', 'tests'],
-    leave: { words: 'graduating', hunted: false },
+    leave: { words: 'graduating', hunted: false, clean: 'graduating' },
     gives: ['teachers', 'alumni'],
     seats: {
       outer: t('student', '学子'),
@@ -181,7 +184,7 @@ export const ORG_PRESETS: Record<OrgType, OrgPreset> = {
     join: ['vows'],
     currency: { name: 'merit', hanzi: '功德' },
     asks: ['vows', 'service'],
-    leave: { words: 'breaking your vows', hunted: false },
+    leave: { words: 'breaking your vows', hunted: false, clean: 'returning to lay life' },
     gives: ['sanctuary', 'Buddhist arts'],
     seats: {
       outer: t('novice', '沙弥'),
@@ -198,7 +201,7 @@ export const ORG_PRESETS: Record<OrgType, OrgPreset> = {
     join: ['conscription', 'office'],
     currency: { name: 'military merit', hanzi: '军功' },
     asks: ['service', 'taxes', 'war'],
-    leave: { words: 'deserting (hunted) or retiring', hunted: false },
+    leave: { words: 'deserting (hunted) or retiring', hunted: false, clean: 'retiring' },
     gives: ['stipends', 'garrisons', 'authority'],
     seats: {
       outer: t('soldier', '兵卒'),
@@ -219,7 +222,7 @@ export const ORG_PRESETS: Record<OrgType, OrgPreset> = {
     join: ['birth', 'a trial'],
     currency: { name: 'deeds', hanzi: '功' },
     asks: ['the hunt', 'feuds'],
-    leave: { words: 'exile', hunted: false },
+    leave: { words: 'exile', hunted: false, clean: 'leaving the tribe' },
     gives: ['land', 'beasts', 'old rites'],
     seats: {
       outer: t('tribesman', '族人'),
@@ -240,7 +243,7 @@ export const ORG_PRESETS: Record<OrgType, OrgPreset> = {
     join: ['bloodline', 'a beast bond', 'tribute'],
     currency: { name: 'tribute', hanzi: '供奉' },
     asks: ['tribute', 'territory'],
-    leave: { words: 'devoured', hunted: true },
+    leave: { words: 'devoured', hunted: true, clean: 'devoured' },
     gives: ['beast lore', 'mounts', 'bloodline gifts'],
     // By realm: the seats keep these only as a fallback; titles read BEAST_TITLES.
     seats: {
@@ -391,11 +394,12 @@ export const ENTRY: Record<OrgType, { by: EntryBy } & Title> = {
  * The kinds of work a sect's mission hall posts (the checkpoint's fix): its own errands in its
  * sphere, never a town's. A sect not named posts core hunts and herb runs.
  */
-export const MISSION_GOALS: Record<string, readonly TripGoal[]> & { default: readonly TripGoal[] } = {
-  default: ['core-hunt', 'herb-run'],
-  // The Gate's outer disciples hunt cores and raid across the strait.
-  'qm-tushou-men': ['core-hunt', 'raid'],
-};
+export const MISSION_GOALS: Record<string, readonly TripGoal[]> & { default: readonly TripGoal[] } =
+  {
+    default: ['core-hunt', 'herb-run'],
+    // The Gate's outer disciples hunt cores and raid across the strait.
+    'qm-tushou-men': ['core-hunt', 'raid'],
+  };
 
 /** Buying into a guild: low-grade stones on the realm curve by your realm. */
 export const BUY_IN = 30;

@@ -21,7 +21,7 @@ import { technique } from './techniques.ts';
 import { anyNode, hasAnyNode } from './nodes.ts';
 import { ORG_ROWS } from './organizations.ts';
 import { hasJob, job, type Job } from './jobs.ts';
-import { countWord } from './words.ts';
+import { countWord, possessive } from './words.ts';
 
 export type EventValue = string | number | boolean | null;
 export type EventData = Readonly<Record<string, EventValue>>;
@@ -108,6 +108,12 @@ function cardOutcome(d: EventData): CardOutcome {
 
 type Template = (d: EventData, who: Who) => string;
 
+/** A place's name as a sentence takes it: "the Beast-Butcher Gate" for a power's seat. */
+function withThe(where: string): string {
+  const isPower = ORG_ROWS.some((r) => r.name === where && r.type !== undefined);
+  return isPower && !/^the /i.test(where) ? `the ${where}` : where;
+}
+
 /** A power by its name, with "the" before it unless it carries one. */
 function powerName(id: string): string {
   const n = ORG_ROWS.find((r) => r.id === id)?.name ?? id;
@@ -120,22 +126,23 @@ const POWER_LINES: Record<string, (w: Who, p: string, d: EventData) => string> =
   true: (w, p, d) =>
     `${capital(p)} makes ${w.name} its ${s(d.title) || 'true disciple'}, well ahead of ${w.their} years.`,
   'quota-missed': (w, p) =>
-    `${w.name} misses ${p}'s quota a second month running, and it is noted.`,
+    `${w.name} misses ${possessive(p)} quota a second month running, and it is noted.`,
   'struck-off': (w, p) => `${capital(p)} strikes ${w.name} from its rolls for three missed quotas.`,
   'leave-over': (w, p) => `${w.name}'s leave from ${p} runs out; each day away now costs.`,
   // The organizations checkpoint: joining, the trials and the mark lifted by joining.
   joined: (w, p) => `${w.name} is taken into ${p}.`,
-  'entry-short': (w, p) => `${w.name} falls short at ${p}'s gate and is sent away.`,
+  'entry-short': (w, p) => `${w.name} falls short at ${possessive(p)} gate and is sent away.`,
   raised: (w, p, d) => `${capital(p)} seats ${w.name} as its ${s(d.title)}.`,
-  'trial-passed': (w, p) => `${w.name} passes ${p}'s inner trial.`,
-  'trial-short': (w, p) => `${w.name} sits ${p}'s inner trial and falls short.`,
+  'trial-passed': (w, p) => `${w.name} passes ${possessive(p)} inner trial.`,
+  'trial-short': (w, p) => `${w.name} sits ${possessive(p)} inner trial and falls short.`,
   lifted: (w, p) => `${capital(p)} lifts its mark from ${w.name}, one of its own now.`,
   left: (w, p) => `${w.name} leaves ${p} by its rule.`,
   betrayed: (w, p) => `${w.name} walks out on ${p}, and it will not forget.`,
   // O5: a guarded method seen in use, and the mark lifted.
   marked: (w, p) =>
     `${capital(p)} knows ${w.name}'s face now: one of its methods, in a stranger's hands.`,
-  fined: (w, p) => `${w.name} pays ${p}'s fine for its method and swears never to teach it.`,
+  fined: (w, p) =>
+    `${w.name} pays ${possessive(p)} fine for its method and swears never to teach it.`,
   restitution: (w, p) =>
     `${w.name} makes restitution to ${p} for its method and swears never to teach it.`,
 };
@@ -258,7 +265,7 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   found: (d, w) => `${w.name} finds ${s(d.place)}, which no road shows.`,
   toll: (d, w) => `At ${s(d.place)}, ${w.name} ${s(d.how)}.`,
   // Encounters on the map (P3.7): what the road brought and how it went.
-  encounter: (d, w) => `In ${s(d.where)}, ${w.name} ${s(d.line)}.`,
+  encounter: (d, w) => `In ${withThe(s(d.where))}, ${w.name} ${s(d.line)}.`,
   reading: (d, w) => `${w.name} begins reading ${copyTitle(s(d.copy))}.`,
   technique: (d, w) => `${w.name} ${s(d.how)} ${technique(s(d.technique)).name}.`,
   method: (d, w) => `${w.name} ${s(d.how)} the ${method(s(d.method)).name}.`,

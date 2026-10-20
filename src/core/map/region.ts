@@ -3,6 +3,7 @@
 // save: the wild tracts' cells, the wild sites, the hearts, the roads' bends and the checkpoints.
 // Generation reads only the region's data and the world's id, so every life in a slot finds the
 // same places, and a region is built the same way whatever its content.
+import { possessive } from '../../content/words.ts';
 import { regionData, type RegionData, type RegionPlace } from '../../content/map/index.ts';
 import { shopsAt } from '../../content/shops.ts';
 import {
@@ -241,7 +242,7 @@ const atlasPlace = (p: RegionPlace, shops: readonly string[]): MapPlace | null =
     hidden: p.hidden !== null && p.hidden !== false,
     rating: p.hidden === true ? 0 : 3,
     famous: p.famous,
-    lore: p.lore,
+    lore: plainLore(p.lore),
     top: p.top,
     gated: p.access !== null,
     shops,
@@ -265,7 +266,7 @@ function buildFrom(data: RegionData, gen: RegionGen): RegionMap {
       qiDensity: p.qiDensity ?? file.qiDensity,
       top: p.kind === 'forbidden' ? p.top : null,
       famous: p.famous,
-      lore: p.lore,
+      lore: plainLore(p.lore),
     });
   }
   for (const t of gen.tracts)
@@ -518,7 +519,7 @@ export function generateRegion(regionId: string, world: string): RegionGen {
       sites.push({
         id: `${r.id}:post:${j}`,
         sub: 'checkpoint',
-        name: `${short(k.name)}’s border post`,
+        name: `${possessive(short(k.name), '’')} border post`,
         x: inside[0],
         y: inside[1],
         area: k.id,
@@ -677,4 +678,9 @@ export function firstBandOf(realm: string): number {
 
 function HEART_NAMES_FOR(terrain: string): readonly [string, string] {
   return HEART_NAMES[terrain] ?? HEART_NAMES.karst!;
+}
+
+/** Atlas lore for the map: its [[links]] read as plain names (the checkpoint's small words). */
+export function plainLore(t: string): string {
+  return t.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_m, a: string, b?: string) => b ?? a);
 }

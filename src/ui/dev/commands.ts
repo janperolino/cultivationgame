@@ -382,7 +382,9 @@ export const COMMANDS: Record<string, Command> = {
       if (verb === 'trial') {
         const r = innerTrial(s, id);
         if (!r.ok) return r.why;
-        const words = `${r.verdict}: ${r.yours.toFixed(1)} against ${r.theirs.toFixed(1)}${r.passed ? ', the inner seat is yours' : ''}; ranked ${r.rank}${r.pill ? ', a Foundation Pill' : ''}.`;
+        const words = r.passed
+          ? `${r.verdict}: ${r.yours.toFixed(1)} against ${r.theirs.toFixed(1)}, the inner seat is yours; ranked ${r.rank} of the outer disciples who sat it${r.pill ? ', a Foundation Pill' : ''}.`
+          : `short: ${r.yours.toFixed(1)} against ${r.theirs.toFixed(1)}.`;
         return apply(store, () => r.state, words);
       }
       if (verb === 'donate') {
@@ -445,7 +447,7 @@ export const COMMANDS: Record<string, Command> = {
       const monthly = (k: SeatId) => {
         const lower = k === 'outer' || k === 'inner' || k === 'true';
         const a = allowanceOf(id, k, lower ? holder : ranges[k].to.realm);
-        return `${a.stones} low${a.pills ? ` and ${a.pills} pills` : ''} a month`;
+        return `${a.stones} low${a.pills ? ` and ${a.pills === 1 ? 'a pill' : `${a.pills} pills`}` : ''} a month`;
       };
       return [
         `${o.name} ${o.hanzi}: ${o.type}, ${o.treatment}${o.branchOf ? `, a branch of ${o.branchOf}` : ''}`,

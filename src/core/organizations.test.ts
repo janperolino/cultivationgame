@@ -171,7 +171,7 @@ describe('membership', () => {
     expect(canJoin(w, YOU, 'qm-qian-shi').ok).toBe(false);
     expect(canJoin(w, YOU, 'qm-qian-shi', { by: 'marriage' }).ok).toBe(true);
     const left = leavePower(w, YOU, GATE, 10);
-    expect(left.parting).toEqual({ kind: 'clean', why: 'released or expelled' });
+    expect(left.parting).toEqual({ kind: 'clean', why: 'released' });
     w = left.world;
     expect(rows(w, GATE).some((s) => s.row === 'parted')).toBe(true);
     expect(canJoin(w, YOU, LAMPS).ok).toBe(true);

@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { COPY_FORM_WORDS, copyForm, copyItem, copyTitle, hasCopy } from '../content/copies.ts';
 import { item, stackSize } from '../content/items.ts';
 import { PLACE_KIND_INFO, type PlaceKindInfo } from '../content/map/places.ts';
+import { possessive } from '../content/words.ts';
 import { QI_NAMES, TERRAIN_NAMES } from '../content/map/travel.ts';
 import { REALM_IDS, realm, realmIdFromName, type RealmId } from '../content/realms.ts';
 import {
@@ -210,7 +211,7 @@ function doorsOf(
       id: 'pavilion',
       seal: '经',
       name: 'Scripture pavilion',
-      sub: `${cap(theName(p.id))}’s own chapters, by seat`,
+      sub: `${possessive(cap(theName(p.id)), '’')} own chapters, by seat`,
       tag: 'members',
     });
   // Work (O4): the posts and hires taken here, and a sect's mission hall, its bounty office.
@@ -866,7 +867,8 @@ function ShopCounter({
                       onClick={() =>
                         act((s) => {
                           const r = buy(s, shopId, l.slot, k);
-                          if (r.ok) say(`Bought ${k && k > 1 ? `${k} ` : ''}${w.name}.`);
+                          if (r.ok)
+                            say(`Bought ${w.name}${(k ?? l.n) > 1 ? ` ×${k ?? l.n}` : ''}.`);
                           return r;
                         })
                       }
@@ -922,7 +924,7 @@ function ShopCounter({
                 ? 'They buy anything at 30% of their own price, and never ask whose it was.'
                 : 'They buy at 40% of their own price (60% once their power favors you), and 80% for what is wanted here.'}
             {tithe > 0 &&
-              ` The prices shown are what you keep after ${theName(titheFrom!)}’s ${Math.round(tithe * 100)}% tithe.`}
+              ` The prices shown are what you keep after ${possessive(theName(titheFrom!), '’')} ${Math.round(tithe * 100)}% tithe.`}
           </p>
         </>
       )}
@@ -1016,7 +1018,7 @@ function PavilionCounter({
                 onClick={() =>
                   act((s) => {
                     const r = buyChapter(s, power, l.thing);
-                    if (r.ok) say(`Copied ${w.name}.`);
+                    if (r.ok) say(`The pavilion copies you ${w.name}.`);
                     return r;
                   })
                 }

@@ -75,6 +75,11 @@ export function countWord(n: number): string {
   return COUNT_WORDS[n] ?? String(n);
 }
 
+/** A name's possessive: "the Gate's", "the Spirit Herders'" (the checkpoint's small words). */
+export function possessive(name: string, mark = "'"): string {
+  return name.endsWith('s') ? `${name}${mark}` : `${name}${mark}s`;
+}
+
 /** 1 → "once", 2 → "twice", 5 → "five times". */
 export function timesWord(n: number): string {
   return n === 1 ? 'once' : n === 2 ? 'twice' : `${countWord(n)} times`;
@@ -89,7 +94,8 @@ export function spanWords(days: number): { text: string; plural: boolean } {
   if (days < 7) return { text: 'a few days', plural: true };
   if (days < 20) return { text: 'half a month', plural: false };
   if (days < 45) return { text: 'a month', plural: false };
-  if (days < 90) return { text: `${countWord(Math.round(days / DAYS_PER_MONTH))} months`, plural: true };
+  if (days < 90)
+    return { text: `${countWord(Math.round(days / DAYS_PER_MONTH))} months`, plural: true };
   if (days < DAYS_PER_YEAR) {
     const seasons = Math.floor(days / 90);
     return seasons === 1

@@ -16,10 +16,11 @@ import {
 } from './joining.ts';
 import { takeJob } from './jobs.ts';
 import { claimPosting, postingsAt, takePosting } from './map/board.ts';
-import { placeById } from './map/region.ts';
+import { placeById, plainLore } from './map/region.ts';
+import { possessive } from '../content/words.ts';
 import { gateOf } from './map/gate.ts';
 import { ensureMap, mapOf, mapPlaceOf } from './map/travel.ts';
-import { innerTrial, joinPower, membership, seatsByRealm } from './organizations.ts';
+import { innerTrial, joinPower, membership, rangeWords, seatsByRealm } from './organizations.ts';
 import { renderEvent } from './chronicle.ts';
 import { receive, stonesOf, withStones, worthOf } from './purse.ts';
 import { addStanding } from './resolver/opinion.ts';
@@ -211,5 +212,23 @@ describe('a feud', () => {
     const map = mapOf(s)!;
     expect(gateOf(s, map, placeById(map, REINS)!).words).toContain('at feud');
     expect(standingOf(life().world, REINS, YOU, 0).word).toBe('unknown');
+  });
+});
+
+describe('small words', () => {
+  it('read right: ranges, possessives, links and a clean parting', () => {
+    expect(rangeWords({ from: null, to: { realm: 'qi-condensation', stage: 6 } })).toBe(
+      'Qi Condensation 1–6',
+    );
+    expect(rangeWords({ from: null, to: { realm: 'qi-condensation', stage: 9 } })).toBe(
+      'Qi Condensation',
+    );
+    expect(possessive('the Spirit Herders')).toBe("the Spirit Herders'");
+    expect(possessive('the Gate', '’')).toBe('the Gate’s');
+    expect(plainLore('the [[Wall of Piled Bones]] and [[x|the coast]]')).toBe(
+      'the Wall of Piled Bones and the coast',
+    );
+    const s = joined(life(), GATE);
+    expect(releaseView(s, GATE)!.parting.why).toBe('released');
   });
 });

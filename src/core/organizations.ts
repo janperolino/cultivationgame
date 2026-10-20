@@ -469,7 +469,7 @@ export function partingOf(
       return { kind: 'betrayal', why: `going over to ${theName(to)}` };
   }
   if (o.carries) return { kind: 'betrayal', why: 'carrying off its guarded methods' };
-  return { kind: 'clean', why: org.preset.leave.words };
+  return { kind: 'clean', why: org.preset.leave.clean };
 }
 
 /**
@@ -1254,7 +1254,9 @@ export function rangeWords(r: SeatRange): string {
     a === 1 && b === realm(r.to.realm).stages ? '' : ` ${a}–${b}`;
   if (r.from === null) {
     const all = r.to.stage === realm(r.to.realm).stages;
-    return all ? `${name(r.to.realm)} and below` : `${name(r.to.realm)} 1–${r.to.stage} and below`;
+    // Nothing stands below the first realm, and a split realm has nothing under it.
+    if (!all) return `${name(r.to.realm)} 1–${r.to.stage}`;
+    return realmIndex(r.to.realm) === 0 ? name(r.to.realm) : `${name(r.to.realm)} and below`;
   }
   return `${name(r.from.realm)}${layers(r.from.stage, r.to.stage)}`;
 }
