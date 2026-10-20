@@ -2,11 +2,12 @@
 // `seen`: by kind, the ids the player has looked at. Anything held and not yet seen is new: a toast
 // names it as it comes, its screen's menu item wears a dot until that screen is opened (which
 // "notices" it), and on the screen it glows until selected (which "sees" it). Which trees show is
-// decided here too: a combat Dao once something of it is held, and any tree a held manual grafts
-// on, even before that tree's ladder opens.
+// decided here too: a combat Dao once something of it is held, a craft Dao once its craft is
+// touched, and any tree a held manual grafts on, even before that tree's ladder opens.
 import { actionDaos } from '../content/daos.ts';
 import { hasItem, item } from '../content/items.ts';
-import { BIG_THREE, DAOS, type Tree } from '../content/trees/index.ts';
+import { BIG_THREE, CRAFT_DAOS, DAOS, type Tree } from '../content/trees/index.ts';
+import { knownRecipes, toolsHeld } from './crafts.ts';
 import { ladderOpen } from './cultivation.ts';
 import { wornIds } from './gear.ts';
 import { graftsOn, heldManuals } from './manuals.ts';
@@ -38,17 +39,23 @@ export function emptySeen(): Seen {
 
 /** Whether the tree's own nodes are drawn: a Dao's always, Qi, Body and Soul once their ladder opens. */
 export function treeOpen(c: Cultivator, t: Tree): boolean {
-  return t.dao !== undefined || ladderOpen(c, t.ladder);
+  return t.dao !== undefined || t.craft !== undefined || ladderOpen(c, t.ladder);
 }
 
 /**
  * Whether the Trees screen shows the tree. Any tree a held manual grafts on shows, whatever its
  * ladder; Qi, Body and Soul show with their ladders; a combat Dao once you know a technique that
- * counts it, carry or wear a weapon of its kind, or own a node in it. A root's element doesn't
- * count.
+ * counts it, carry or wear a weapon of its kind, or own a node in it, and a craft Dao once you
+ * carry its tool, know a recipe of it or own a node in it. A root's element doesn't count.
  */
 export function treeShown(c: Cultivator, t: Tree): boolean {
   if (graftsOn(c, t.id).length > 0) return true;
+  if (t.craft) {
+    // A craft Dao once its craft is touched: a tool of it carried, a recipe of it known, a node.
+    const craft = t.craft;
+    if (t.nodes.some((n) => c.nodes.includes(n.id))) return true;
+    return toolsHeld(c, craft).length > 0 || knownRecipes(c).some((r) => r.craft === craft);
+  }
   if (!t.dao) return ladderOpen(c, t.ladder);
   const dao = t.dao;
   if (t.nodes.some((n) => c.nodes.includes(n.id))) return true;
@@ -57,9 +64,9 @@ export function treeShown(c: Cultivator, t: Tree): boolean {
   return things.some((id) => hasItem(id) && item(id).uses.equip?.weapon === dao);
 }
 
-/** The trees the screen shows, the big three first, then the Daos, in the content's order. */
+/** The trees the screen shows, the big three first, then the Daos and crafts, in the content's order. */
 export function shownTrees(c: Cultivator): Tree[] {
-  return [...BIG_THREE, ...DAOS].filter((t) => treeShown(c, t));
+  return [...BIG_THREE, ...DAOS, ...CRAFT_DAOS].filter((t) => treeShown(c, t));
 }
 
 // ---------------------------------------------------------------- what is held, and what is new

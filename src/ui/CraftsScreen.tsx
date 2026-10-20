@@ -5,12 +5,13 @@
 // fire control is K3's.
 import { useState } from 'react';
 import type { Recipe } from '../content/catalogs/types.ts';
-import { CRAFTS, CRAFT_IDS, FAMILIES, FAMILY_IDS, recipe, recipeHours } from '../content/crafts.ts';
+import { CRAFTS, CRAFT_IDS, FAMILIES, FAMILY_IDS, recipe } from '../content/crafts.ts';
 import type { CraftId, FamilyId } from '../content/crafts.ts';
 import { item } from '../content/items.ts';
 import { MASTERY } from '../content/mastery.ts';
 import { rarity } from '../content/rarity.ts';
 import {
+  batchHours,
   batchesHeld,
   benchWaits,
   craftReach,
@@ -36,6 +37,9 @@ import { formatPercent } from './format.ts';
 import { itemTag } from './itemWords.ts';
 import { go } from './nav.ts';
 import { useGame } from './store.ts';
+
+/** Hours to a tenth, as the bench counts them. */
+const round1 = (h: number) => Math.round(h * 10) / 10;
 
 /** The crafts K1 builds; the rest show as pages yet to open. */
 const BUILT: readonly CraftId[] = ['alchemy'];
@@ -198,8 +202,8 @@ function RecipeCard({
         ))}
       </p>
       <p className="muted">
-        {recipeHours(r)} craft hours · holds {formatPercent(holdOdds(c, r))} · {yieldOf(c, r)} pills
-        · {lands}
+        {round1(batchHours(c, r))} craft hours · holds {formatPercent(holdOdds(c, r))} ·{' '}
+        {yieldOf(c, r)} pills · {lands}
       </p>
       <p className="muted">
         The Bag fills {batchesHeld(c, r)} batch{batchesHeld(c, r) === 1 ? '' : 'es'}
@@ -234,7 +238,7 @@ function Bench({
         {bench.map((e, i) => {
           const r = recipe(e.recipe);
           const inTool = i === 0 && front?.recipe === e.recipe;
-          const share = inTool ? front.hours / recipeHours(r) : 0;
+          const share = inTool ? front.hours / batchHours(c, r) : 0;
           return (
             <li key={`${e.recipe}-${i}`} className="crafts-entry">
               <div className="crafts-entry-top">
@@ -242,9 +246,7 @@ function Bench({
                   {item(e.recipe).name} ×{e.batches}
                 </span>
                 <span className="muted">
-                  {inTool
-                    ? `${Math.round(front.hours * 10) / 10} of ${recipeHours(r)} h`
-                    : 'waiting'}
+                  {inTool ? `${round1(front.hours)} of ${round1(batchHours(c, r))} h` : 'waiting'}
                 </span>
               </div>
               {inTool && (
@@ -283,8 +285,8 @@ function Bench({
       </ol>
       {front && !bench.some((e) => e.recipe === front.recipe) && (
         <p className="muted">
-          A batch of {item(front.recipe).name} finishes in the furnace:{' '}
-          {Math.round(front.hours * 10) / 10} of {recipeHours(recipe(front.recipe))} h.
+          A batch of {item(front.recipe).name} finishes in the furnace: {round1(front.hours)} of{' '}
+          {round1(batchHours(c, recipe(front.recipe)))} h.
         </p>
       )}
       {waits && <p className="crafts-waits">{waits}</p>}

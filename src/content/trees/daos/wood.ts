@@ -111,9 +111,9 @@ export const WOOD_DAO = defineDao({
           name: 'Herb Sense',
           nodes: [
             {
-              id: 'wood-green-thumb',
-              name: 'Green Thumb',
-              hanzi: '绿指',
+              id: 'wood-rooting-hand',
+              name: 'Rooting Hand',
+              hanzi: '扶苗手',
               effects: [{ stat: 'herbSense', value: 0.05 }],
               text: 'Seedlings take to the soil under your hand.',
             },

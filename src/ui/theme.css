@@ -19,6 +19,10 @@
   --gilt: #d9b46a;
   --gilt-soft: color-mix(in srgb, var(--gilt) 45%, transparent);
   --gilt-core: #fff1c9;
+  /* The craft Daos' wedges: Hand cool, Line the furnace's ember, Lore green as a herb ledger. */
+  --craft-hand: #8fb7d9;
+  --craft-line: #d99a6a;
+  --craft-lore: #a9c98a;
   --iron: #57534a;
   --iron-deep: #12110e;
   --crack: #7fc7d9;
@@ -2870,6 +2874,32 @@ select {
   stroke-dasharray: 3 4;
 }
 
+/* A capstone a later tier will carry, named under its place (K2). */
+.fan-planned-name {
+  fill: color-mix(in srgb, var(--gilt) 45%, var(--muted));
+  font-family: var(--font-ui);
+  font-size: 12px;
+  text-anchor: middle;
+}
+
+/* A craft Dao's three wedges, Hand, Line and Lore (K2, take B): a still tint, nothing painted live. */
+.fan-wedge {
+  stroke: none;
+  opacity: 0.06;
+}
+
+.fan-wedge.is-hand {
+  fill: var(--craft-hand);
+}
+
+.fan-wedge.is-line {
+  fill: var(--craft-line);
+}
+
+.fan-wedge.is-lore {
+  fill: var(--craft-lore);
+}
+
 .fan-edge {
   stroke-width: 1.4;
 }
@@ -2923,6 +2953,12 @@ select {
 .fan-node.is-medallion {
   outline: 1px solid currentColor;
   outline-offset: 3px;
+}
+
+/* A recipe seal is square, as a slip is, where a perk is round (design § The craft Dao trees). */
+.fan-node.is-seal,
+.fan-node.is-seal::before {
+  border-radius: 3px;
 }
 
 .fan-node-glyph {

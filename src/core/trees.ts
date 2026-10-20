@@ -4,7 +4,7 @@
 // manual, only that manual's own nodes, and you must hold the manual. A tree node above its tree's
 // matching level stays sealed, doing nothing, until that ladder reaches the node's tier; a loose
 // manual's node waits on the manual's ladder the same way, a method's node on the method's
-// mastery, and an Art's on its technique's.
+// mastery, and an Art's on its technique's; a craft Dao's node waits on the craft reach.
 import { manual, techniqueArt, type Manual } from '../content/manuals.ts';
 import { anyNode, hasAnyNode, type AnyNode } from '../content/nodes.ts';
 import { realmIndex } from '../content/realms.ts';
@@ -16,12 +16,13 @@ import type { Cultivator } from './state.ts';
 import { knowsTechnique, mastery as techniqueMastery } from './techniques.ts';
 
 /**
- * True while the node can't work yet: a tree node while its tree's ladder sits below its tier; a
+ * True while the node can't work yet: a tree node while its tree's ladder (a craft Dao's craft
+ * reach) sits below its tier; a
  * loose manual's node the same on the manual's ladder; a method's node until the method reaches
  * its mastery level, and an Art's until its technique does.
  */
 export function nodeSealed(c: Cultivator, node: AnyNode): boolean {
-  if (node.home === 'tree') return realmIndex(c[treeOf(node.id).ladder].realm) + 1 < node.tier;
+  if (node.home === 'tree') return treeTier(c, treeOf(node.id)) < node.tier;
   const m = manual(node.manual);
   if (m.method && node.mastery !== undefined) {
     return !knowsMethod(c, m.method) || methodMastery(c, m.method).level < node.mastery;
@@ -30,6 +31,17 @@ export function nodeSealed(c: Cultivator, node: AnyNode): boolean {
     return !knowsTechnique(c, m.technique) || techniqueMastery(c, m.technique).level < node.mastery;
   }
   return realmIndex(c[m.ladder].realm) + 1 < node.tier;
+}
+
+/**
+ * The tier a tree's nodes work up to: its ladder's realm, from 1; a craft Dao's by the craft reach,
+ * the better of your realm and your soul (K1's soul gate).
+ */
+export function treeTier(c: Cultivator, t: Tree): number {
+  if (t.craft) {
+    return Math.max(realmIndex(c.qi.realm), realmIndex(c.body.realm), realmIndex(c.soul.realm)) + 1;
+  }
+  return realmIndex(c[t.ladder].realm) + 1;
 }
 
 export function hasLearned(c: Cultivator, id: string): boolean {
@@ -73,7 +85,10 @@ export function tierHoldCount(t: Tree, tier: number): number {
   return Math.ceil(tierNodes(t, tier).length * TIER_HOLD);
 }
 
-/** A Dao's tier bonus counts once you own half its nodes (M2). Tier 0 is always held. */
+/**
+ * A Dao's tier bonus counts once you own half its nodes (M2), a craft Dao's as a combat Dao's.
+ * Tier 0 is always held.
+ */
 export function tierHeld(c: Cultivator, t: Tree, tier: number): boolean {
   return tier < 1 || tierOwned(c, t, tier) >= tierHoldCount(t, tier);
 }

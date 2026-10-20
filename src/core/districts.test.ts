@@ -166,7 +166,7 @@ describe('the save', () => {
       [`keeper:${CITY}.stall-5`]: keeper,
     };
     const back = loadSave(raw);
-    expect(back.version).toBe(43);
+    expect(back.version).toBe(44);
     expect(back.state.world.shops).toEqual({ 'mouth-alchemy': { ...month, took: {} } });
     expect(Object.keys(back.state.world.kept)).toEqual([`keeper:${CITY}.alchemy-2`]);
     expect(back.state.world.kept[`keeper:${CITY}.alchemy-2`]!.name).toBe(
