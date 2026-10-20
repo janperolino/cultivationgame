@@ -95,7 +95,8 @@ export function gatherHour(
   const perception = Math.max(0, stats(c).perception ?? 0);
   const dug = life.gathered + landYield(map, life.at) * (1 + perception) * share;
   const whole = Math.floor(dug + 1e-9);
-  const next = { ...life, gathered: dug - whole };
+  // Held at 0: a sum just under a whole leaves float dust below it, which the save refuses.
+  const next = { ...life, gathered: Math.max(0, dug - whole) };
   if (whole <= 0) return { life: next, player: c, finds: {} };
   const rarity = gatherRarity(c, soulBand, Math.max(0, bandAt(map, life.at)));
   const rng = new Rng(

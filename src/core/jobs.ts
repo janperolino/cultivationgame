@@ -344,7 +344,11 @@ export function jobsDay(s: GameState, from: number, to: number): GameState {
         held = {
           ...held,
           kept: held.kept + share,
-          owed: { stones: owed.stones - stones, points: owed.points - points },
+          // Held at 0, as a sum just under a whole leaves float dust below it, which the save refuses.
+          owed: {
+            stones: Math.max(0, owed.stones - stones),
+            points: Math.max(0, owed.points - points),
+          },
         };
       } else if (!(j.power && !isHire(j) && onLeave(st, j.power))) {
         const before = held.missed;

@@ -302,6 +302,19 @@ describe('what it asks', () => {
     expect(membership(settleQuotas(months(s, 3)).world, ME, GATE)).toBeUndefined();
   });
 
+  it('struck off is a parting by the rule, even where leaving is betrayal, and takes the copies back', () => {
+    const NIGHT_BRIDGE = 'qm-yeqiao-hui';
+    const SLIP = 'method:night-bridge';
+    let s = member(life(), NIGHT_BRIDGE);
+    s = withPlayer(s, { ...s.player, copies: { ...s.player.copies, [SLIP]: 1 } });
+    const off = settleQuotas(months(s, 3));
+    expect(membership(off.world, ME, NIGHT_BRIDGE)).toBeUndefined();
+    expect(rows(off.world, NIGHT_BRIDGE)).toContain('struck-off');
+    expect(rows(off.world, NIGHT_BRIDGE)).not.toContain('betrayed-us');
+    expect(off.world.deeds.some((d) => d.kind === 'leak' && d.actor === ME)).toBe(false);
+    expect(off.player.copies[SLIP]).toBeUndefined();
+  });
+
   it('leave runs out with its cost: a point a day and standing', () => {
     const base = member(life(), GATE, 'outer', 20);
     const away: GameState = {

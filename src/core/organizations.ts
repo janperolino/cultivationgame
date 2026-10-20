@@ -444,6 +444,8 @@ export interface LeaveOpts {
   carries?: boolean;
   /** The copies of its guarded methods and arts they know (`guardedKnown`), for the parting (O5). */
   knows?: readonly string[];
+  /** Struck from its rolls for three missed quotas: a parting by the rule, kept as its own row. */
+  struck?: boolean;
 }
 
 /**
@@ -460,6 +462,7 @@ export function partingOf(
 ): Parting {
   const house = houseOf(power);
   const org = organization(house);
+  if (o.struck) return { kind: 'clean', why: 'struck from its rolls' };
   if (org.preset.leave.hunted) return { kind: 'betrayal', why: org.preset.leave.words };
   const m = membership(w, who, house);
   if (org.type === 'dynasty' && m && day - m.since < RETIRE_YEARS * DAYS_PER_YEAR)
@@ -505,7 +508,11 @@ export function leavePower(
   };
   world = addStanding(
     world,
-    { power: house, about: who, row: parting.kind === 'clean' ? 'parted' : 'betrayed-us' },
+    {
+      power: house,
+      about: who,
+      row: o.struck ? 'struck-off' : parting.kind === 'clean' ? 'parted' : 'betrayed-us',
+    },
     day,
   );
   // What they learned (O5, design § Guarded methods): a clean parting keeps it under the
@@ -1061,17 +1068,19 @@ export function quotaOf(power: string, seat: SeatId, guest = false): number {
 }
 
 /**
- * Struck off the rolls for three missed quotas: the membership goes as leaving by the rule would,
- * kept as "Struck from our rolls" in place of the parting.
+ * Struck off the rolls for three missed quotas: a parting by the rule, never a betrayal whatever
+ * the type, kept as "Struck from our rolls" in place of the parting. Its copies go back to its
+ * pavilion as they do when you ask to be released, and what you learned stays under the oath.
  */
 function strikeOff(s: GameState, power: string): GameState {
-  const day = s.calendar.day;
-  const who = s.player.id;
-  const left = leavePower(s.world, who, power, day, { you: true }).world;
-  // The parting's row is the last one leaving adds; being struck off is its own.
-  const world: World = { ...left, standing: left.standing.slice(0, -1) };
-  const struck = addStanding(world, { power, about: who, row: 'struck-off' }, day);
-  return addEvent({ ...s, world: struck }, 'power', { power, what: 'struck-off' });
+  const house = houseOf(power);
+  const knows = guardedKnown(s.player, house);
+  const copies = { ...s.player.copies };
+  for (const thing of Object.keys(copies)) if (guardedBy(thing) === house) delete copies[thing];
+  const opts = { you: true, knows, struck: true };
+  const left = leavePower(s.world, s.player.id, house, s.calendar.day, opts);
+  const st = { ...withPlayer(s, { ...s.player, copies }), world: left.world };
+  return addEvent(st, 'power', { power: house, what: 'struck-off' });
 }
 
 /**
@@ -1093,10 +1102,13 @@ export function settleQuotas(s: GameState): GameState {
       if (!m) break;
       const seat = m.guest ? 'elder' : seatOf(state.world, who, m.power, r)!;
       const due = quotaOf(m.power, seat, m.guest);
-      // A post kept the month before counts as the quota kept (O4).
-      const met = due === 0 || postKeptFor(state.player, m.power, k - 1) || m.balance >= due;
+      // A post kept the month before meets the quota by the work (O4); otherwise it is paid in
+      // from the balance.
+      const kept = postKeptFor(state.player, m.power, k - 1);
+      const met = due === 0 || kept || m.balance >= due;
       const missed = met ? 0 : (m.missed ?? 0) + 1;
-      let world = met && due > 0 ? addBalance(state.world, who, m.power, -due) : state.world;
+      const paid = met && !kept && due > 0;
+      let world = paid ? addBalance(state.world, who, m.power, -due) : state.world;
       world = withMember(world, m, { quota: k, missed });
       state = { ...state, world };
       if (missed >= QUOTA_MISSED.struck) {

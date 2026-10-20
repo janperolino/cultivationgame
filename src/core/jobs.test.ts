@@ -371,6 +371,31 @@ describe('a post kept', () => {
     const broke = { ...s, world: addBalance(s.world, YOU, MARCH, -m.balance) };
     expect(membership(settleQuotas(broke).world, YOU, MARCH)!.missed ?? 0).toBe(0);
     expect(monthIndex(s.calendar.day)).toBeGreaterThan(0);
+    // The work met it, so the balance pays nothing in.
+    const month = monthIndex(s.calendar.day);
+    const fifty = addBalance(broke.world, YOU, MARCH, 50);
+    const members = fifty.members.map((x) =>
+      x.who === YOU && x.power === MARCH ? { ...x, quota: month - 1 } : x,
+    );
+    const banked = { ...broke, world: { ...fifty, members } };
+    expect(balance(settleQuotas(banked), MARCH)).toBe(50);
+  });
+
+  it('never owes below nothing, so a save taken mid-shift loads', () => {
+    const s = posted(createLife(creation('conscript')));
+    const day = Math.floor(s.calendar.day);
+    // Owed just under a whole stone and point: a sliver of shift tips it to one, and the float
+    // dust left must not dip below zero, which the save refuses.
+    const held = { ...s.player.jobs[0]!, owed: { stones: 1 - 1e-10, points: 1 - 1e-10 } };
+    const owing = withPlayer(s, { ...s.player, jobs: [held] });
+    const from = day + 7 / 12;
+    const to = from + 1e-12;
+    const paid = jobsDay({ ...owing, calendar: { ...owing.calendar, day: to } }, from, to);
+    const owed = paid.player.jobs[0]!.owed;
+    expect(owed.stones).toBeGreaterThanOrEqual(0);
+    expect(owed.points).toBeGreaterThanOrEqual(0);
+    expect(owed.stones).toBeLessThan(0.5);
+    expect(() => loadSave(makeSave(paid, 1))).not.toThrow();
   });
 
   it('pays nothing and misses nothing in a stretch with no shift hours in it', () => {
@@ -428,6 +453,16 @@ describe('the gather hour', () => {
       0.5,
     );
     expect(half.life.gathered).toBeCloseTo(0.5);
+    // A sum a hair under a whole find makes the find and leaves nothing below zero.
+    const dust = gatherHour(
+      map,
+      { ...s.map!, at: [near[0], near[1]] as [number, number], gathered: 1 - 1e-10 },
+      s.player,
+      0,
+      0,
+      1e-12,
+    );
+    expect(dust.life.gathered).toBe(0);
   });
 
   it('reads the rarity off your soul against the land, never above purple unless your soul leads', () => {

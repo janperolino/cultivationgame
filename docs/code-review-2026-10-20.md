@@ -12,6 +12,11 @@ Unlike last time, nothing is fixed in the commit that adds this file. Each fix w
 
 Ranked by what a player would feel, then by what K1 trips on.
 
+**Round 1, Jan's picks:**
+- *1 to 3 fixed as proposed.* `gathered` and a job's `owed` are held at 0, with tests that tip a sum a hair under a whole find or stone. Without the fix, the duty test's save fails to load. Struck off is a clean parting under the oath, kept as "Struck from our rolls", with the power's copies handed back, at every type. A test strikes a Night Bridge member off: no betrayal, no leak, and the slip is gone. A kept post meets the quota without touching the balance, and the post test now checks a banked 50 stays 50.
+- *4 waits for the realm gap's design session* (Jan's call), since it changes what a cast at a crowd costs. Under Open questions.
+- *5 dropped on evidence.* E4 makes the ration pill from nowhere at the City on purpose (`markets.test.ts:48` pins it at 25%). The reviewer's "unbounded" doesn't hold: at 0.03 points a piece, a full Bag of 990 pills moves the City about 30 points (×2 to about ×1.35). The City shop's monthly purse caps a sale, and Pacified Fort's shelves can't fill a Bag of the pill (the haul sim, with a pill row tried and taken out, stops at "no shelf left"). So it's a fat haul, not a loop.
+
 1. **Float dust writes saves that won't load.** *(run)*
    - Where: `core/map/gather.ts:98` keeps `gathered: dug - whole`, and `core/jobs.ts:347` keeps `owed: { stones: owed.stones - stones, … }`. Both come after `Math.floor(x + 1e-9)`, so a sum sitting just under a whole number leaves about −4e-11. The schemas say `min(0)` (`map/schema.ts:193`, `state.ts:193`).
    - Failure: on a road wheel with gather hours, 143 of 4,000 irregular steps left `gathered` negative, and 11 of 80,000 duty steps left `owed` negative. `loadSave(makeSave(s))` threw "The save failed its check" each time.
