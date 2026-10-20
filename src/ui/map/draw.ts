@@ -11,6 +11,7 @@ import { parseHex, rgba } from '../colors.ts';
 import { band } from '../../core/map/depth.ts';
 import type { MapArea, MapPlace, RegionMap } from '../../core/map/region.ts';
 import type { MapLife } from '../../core/map/schema.ts';
+import { hashSeed } from '../../core/rng.ts';
 import { artArrived, drawPainted, LAND_GAIN } from './art.ts';
 import { drawFog, fogOf } from './fog.ts';
 
@@ -89,9 +90,12 @@ const PLAIN_ELSE = lift('#1a1d22');
 // ---------------------------------------------------------------- the places' pieces
 
 /**
- * The pieces that stand at places (A5.1; design § The travel map, The look): cut from the sheets
- * Jan paints in ChatGPT (`map-places-*` in art/manifest.json, painted on transparent). A place shows its own piece, else
- * its kind's, else only its seal.
+ * The pieces that stand at places (A5.1, A5.3; design § The travel map, The look): cut from the
+ * sheets Jan paints in ChatGPT (`map-places-*` in art/manifest.json, painted on transparent). A
+ * place shows its own piece, else one of its kind's variants (`map-place-<kind>-<n>`), picked by
+ * its seed so the land doesn't repeat, else its kind's, else only its seal. The fixed places are
+ * painted into the land instead (tools/map-place.ts), and most kinds of site stay seals (Jan's call
+ * in A5.3: only what reads as land from that height has a piece).
  */
 const PIECE_URLS: Record<string, string> = Object.fromEntries(
   Object.entries(
@@ -102,17 +106,26 @@ const PIECE_URLS: Record<string, string> = Object.fromEntries(
     }),
   ).map(([path, url]) => [path.replace(/^.*\/(.+)\.webp$/, '$1'), url]),
 );
+/** Each kind's variants, `map-place-<kind>-<n>`, in order. */
+const VARIANTS = new Map<string, string[]>();
+for (const id of Object.keys(PIECE_URLS).sort()) {
+  const m = /^map-place-(.+)-\d+$/.exec(id);
+  if (m) VARIANTS.set(m[1]!, [...(VARIANTS.get(m[1]!) ?? []), id]);
+}
 const PIECE_IMGS = new Map<string, HTMLImageElement>();
 /** The zoom, in px a li, over which a piece fades in and its seal out. */
 const PIECE_FADE = [0.035, 0.06] as const;
-/** How far down the piece its place's spot lies: Jan's pieces are round dioramas, the place in their middle. */
-const PIECE_FOOT = 0.55;
+/** How far down the piece its place's spot lies: the mark is centred in its cell. */
+const PIECE_FOOT = 0.5;
 
 /** Each piece softened once: its edge feathered out and its colour drained a little, to sit in the land. */
 const PIECE_SOFT = new Map<string, HTMLCanvasElement>();
 
+/** The piece a place shows, its variant picked by the place's id and spot, which a site keeps in its world. */
 function pieceOf(q: MapPlace): HTMLCanvasElement | null {
-  const id = [`map-place-${q.id}`, `map-place-${q.sub}`].find((x) => PIECE_URLS[x]);
+  const kinds = VARIANTS.get(q.sub);
+  const variant = kinds?.[hashSeed(`${q.id}@${q.x},${q.y}`) % kinds.length];
+  const id = [`map-place-${q.id}`, variant, `map-place-${q.sub}`].find((x) => x && PIECE_URLS[x]);
   if (!id) return null;
   const done = PIECE_SOFT.get(id);
   if (done) return done;
@@ -124,9 +137,9 @@ function pieceOf(q: MapPlace): HTMLCanvasElement | null {
     PIECE_IMGS.set(id, img);
   }
   if (!img.complete || !img.naturalWidth) return null;
-  // Jan's note in A5.1: the pieces stuck out like stickers. The round patch of ground under each
-  // fades into the painting from half its radius out, and its colour is drained toward the
-  // painting's.
+  // Jan's note in A5.1: the pieces stuck out like stickers. A piece has no ground of its own (A5.3);
+  // its cell fades out in an ellipse from 70% of the way to its edge, so nothing ends in a line,
+  // and its colour is drained a little toward the painting's.
   const c = document.createElement('canvas');
   c.width = img.naturalWidth;
   c.height = img.naturalHeight;
@@ -136,29 +149,79 @@ function pieceOf(q: MapPlace): HTMLCanvasElement | null {
   g.drawImage(img, 0, 0);
   g.filter = 'none';
   g.globalCompositeOperation = 'destination-in';
-  const r = Math.min(c.width, c.height) / 2;
-  const fade = g.createRadialGradient(
-    c.width / 2,
-    c.height / 2,
-    r * 0.45,
-    c.width / 2,
-    c.height / 2,
-    r,
-  );
+  const r = c.width / 2;
+  g.translate(r, c.height / 2);
+  g.scale(1, c.height / c.width);
+  const fade = g.createRadialGradient(0, 0, r * 0.7, 0, 0, r);
   fade.addColorStop(0, 'rgba(0,0,0,1)');
   fade.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = fade;
-  g.fillRect(0, 0, c.width, c.height);
+  g.fillRect(-r, -r, 2 * r, 2 * r);
   PIECE_SOFT.set(id, c);
   return c;
 }
 
-/** A piece's width on the map, in li: a city's or a famous place's widest, a site's least. */
+/**
+ * A piece's width on the map, in li: a city's or a famous place's widest, a site's least. Larger
+ * than life, as the painting draws its peaks (Jan's call in A5.3: readable, not the lore's size).
+ */
 function pieceLi(q: MapPlace): number {
   if (q.sub === 'city') return 2400;
   if (q.kind === 'atlas') return 2000;
   if (q.sub === 'town') return 1700;
-  return 1100;
+  return 1000;
+}
+
+// ---------------------------------------------------------------- the painted places
+
+/** A place painted into the land (tools/map-place.ts): its crop's frame in li. */
+interface Painted {
+  id: string;
+  x0: number;
+  y0: number;
+  w: number;
+  h: number;
+}
+const PAINTED = new Map<string, Painted & { region: string }>(
+  Object.values(
+    import.meta.glob<{ region: string; places: Painted[] }>('../../../art/map/*/places.json', {
+      eager: true,
+      import: 'default',
+    }),
+  ).flatMap((f) => f.places.map((p) => [p.id, { ...p, region: f.region }] as const)),
+);
+/** The glow's gold. */
+const GLOW = '#e2b65a';
+/** How strong the glow is close in, and on hover from afar. */
+const GLOW_CLOSE = 0.45;
+const GLOW_HOVER = 0.7;
+const GLOWS = new Map<string, HTMLCanvasElement | HTMLImageElement>();
+
+/**
+ * A painted place's glow (A5.3, Jan's call over an outline): baked by the tool as a white picture
+ * whose alpha is the glow, tinted gold here once it arrives. Null until then.
+ */
+function glowOf(p: Painted & { region: string }): HTMLCanvasElement | null {
+  const held = GLOWS.get(p.id);
+  if (held instanceof HTMLCanvasElement) return held;
+  if (!held) {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      const g = c.getContext('2d')!;
+      g.drawImage(img, 0, 0);
+      g.globalCompositeOperation = 'source-in';
+      g.fillStyle = GLOW;
+      g.fillRect(0, 0, c.width, c.height);
+      GLOWS.set(p.id, c);
+      artArrived();
+    };
+    img.src = `${import.meta.env.BASE_URL}map/${p.region}/places/${p.id}-glow.webp`;
+    GLOWS.set(p.id, img);
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------- caches
@@ -336,10 +399,11 @@ export function drawMap(f: Frame, s: Scene): boolean {
       const img = pieceOf(q);
       if (!img) continue;
       const side = pieceLi(q) * k;
+      const tall = (side * img.height) / img.width;
       const [x, y] = at([q.x, q.y]);
-      if (x + side < 0 || x - side > W || y + side < 0 || y - side > H) continue;
+      if (x + side < 0 || x - side > W || y + tall < 0 || y - tall > H) continue;
       ctx.globalAlpha = pieceIn;
-      ctx.drawImage(img, x - side / 2, y - side * PIECE_FOOT, side, side);
+      ctx.drawImage(img, x - side / 2, y - tall * PIECE_FOOT, side, tall);
       ctx.globalAlpha = 1;
     }
   }
@@ -520,24 +584,51 @@ export function drawMap(f: Frame, s: Scene): boolean {
       warnTag(ctx, x, y + r + 30, `险 deadly · ${q.top ? realmWords(q.top) : ''}`);
   }
 
-  // Sites as seals; the small ones dots until you come close. A seal gives way to its place's piece.
+  // The places painted into the land (A5.3), each in a soft gold glow where its seal gives way to
+  // it, and on hover from afar (Jan's call): so the eye finds the place in the paint.
+  inWorld();
+  ctx.globalCompositeOperation = 'screen';
+  for (const q of map.places) {
+    const p = PAINTED.get(q.id);
+    if (!p) continue;
+    const st = known(life, q.id);
+    if (st !== 'seen' && st !== 'sketched') continue;
+    if (p.x0 > box[2] || p.y0 > box[3] || p.x0 + p.w < box[0] || p.y0 + p.h < box[1]) continue;
+    const show = Math.max(pieceIn * GLOW_CLOSE, s.hover === q.id ? GLOW_HOVER : 0) * (st === 'seen' ? 1 : 0.55);
+    const img = show > 0 ? glowOf(p) : null;
+    if (!img) continue;
+    ctx.globalAlpha = show;
+    ctx.drawImage(img, p.x0, p.y0, p.w, p.h);
+  }
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+  onScreen();
+
+  // Sites as seals; the small ones dots until you come close. A seal gives way to its place's piece,
+  // or to the place painted in.
   const showNames = k > 0.03;
   for (const q of map.places) {
     const st = known(life, q.id);
     if (st !== 'seen' && st !== 'sketched') continue;
     const [x, y] = at([q.x, q.y]);
     if (x < -40 || y < -40 || x > W + 40 || y > H + 40) continue;
-    const dim = (st === 'seen' ? 1 : 0.55) * (pieceOf(q) ? 1 - pieceIn : 1);
+    const dim = st === 'seen' ? 1 : 0.55;
+    // Close in, the seal goes, box and all, where a piece or the painted place stands for it.
+    const fade = PAINTED.has(q.id) || pieceOf(q) ? 1 - pieceIn : 1;
     const major = q.kind === 'atlas';
     if (minor(q) && k < 0.016) {
       const t = Math.max(0, (k - 0.009) / 0.007);
       ctx.beginPath();
       ctx.arc(x, y, 1.6 + t, 0, 7);
-      ctx.fillStyle = rgba(q.sub === 'heart' ? '#e6b3c3' : C.text, (0.45 + t * 0.3) * dim);
+      ctx.fillStyle = rgba(q.sub === 'heart' ? '#e6b3c3' : C.text, (0.45 + t * 0.3) * dim * fade);
       ctx.fill();
       continue;
     }
-    seal(ctx, q, x, y, dim);
+    if (fade > 0.01) {
+      ctx.globalAlpha = fade;
+      seal(ctx, q, x, y, dim);
+      ctx.globalAlpha = 1;
+    }
     if (major || q.sub === 'town' || showNames || s.hover === q.id) {
       const font = `${major ? '500 12.5px' : '11.5px'} Inter, sans-serif`;
       ctx.font = font;

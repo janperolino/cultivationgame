@@ -3,10 +3,14 @@
 //   npx tsx tools/map-paint.ts region <region-id> <out.png> [--take A|B|C|D] [--style <painting.png>]
 //     [--with <neighbour painting.png> ...]
 //   npx tsx tools/map-paint.ts tile <region-id> <tile-id> [<out.png>] [--note <text>] [--ref <png>]
+//   npx tsx tools/map-paint.ts place <region-id> <place-id> [<out.png>]
+// A place (A5.3) is painted into its crop (tools/map-crop.ts) with the prompt beside it, as its
+// folder's painted.png unless one is there already, which it never overwrites. Tried in A5.3 and
+// set aside (Jan's call): it keeps the land well, but ChatGPT paints the places better.
 // About $0.21 and a minute or two an image with openai/gpt-5.4-image-2.
 import { existsSync, readFileSync } from 'node:fs';
 import sharp from 'sharp';
-import { guideJson, guidePng, paintingPng, workDir } from './map-paths.ts';
+import { guideJson, guidePng, paintingPng, placeFolder, workDir } from './map-paths.ts';
 
 const MODEL = 'openai/gpt-5.4-image-2';
 
@@ -178,8 +182,16 @@ if (mode === 'region' && region && a) {
     '3:2',
     out,
   );
+} else if (mode === 'place' && region && a) {
+  const dir = placeFolder(region, a)?.dir;
+  if (!dir) throw new Error(`${a} has no folder yet: cut it first (tools/map-crop.ts)`);
+  const crop = JSON.parse(readFileSync(`${dir}/place.json`, 'utf8')) as { w: number; h: number };
+  const out = rest[0] ?? `${dir}/painted.png`;
+  if (!rest[0] && existsSync(out)) throw new Error(`${out} is there already; name another file to paint into`);
+  const aspect = crop.w === crop.h ? '1:1' : crop.w < crop.h ? '2:3' : '3:2';
+  await paint(readFileSync(`${dir}/prompt.txt`, 'utf8'), [`${dir}/crop.png`], aspect, out);
 } else {
   throw new Error(
-    'usage: map-paint.ts region <region> <out.png> [--take D] [--style <png>] [--with <png>...] | tile <region> <tile> [<out.png>] [--note <text>] [--ref <png>]',
+    'usage: map-paint.ts region <region> <out.png> [--take D] [--style <png>] [--with <png>...] | tile <region> <tile> [<out.png>] [--note <text>] [--ref <png>] | place <region> <place> [<out.png>]',
   );
 }
