@@ -1033,6 +1033,15 @@ Gu raising, puppetry, divination and medicine come after v1.
 - **Each craft has a hands-on version**, as seclusion has the seat: a batch can be queued and left, or sat at and played, and playing it gives a **steady hand** from 0 to 1. The hand moves only the rarity roll, never whether the batch holds. How far it can move it is a capability, Steady hands (`craftPrecision`): one band at the base, up to two as talents, craft Dao nodes and a matched soul raise it, so the minigame is the skill and its ceiling the stat. Their shapes, each fleshed out in its phase's talk: alchemy's fire control, the furnace's heat kept in its band as the herbs go in, on the seat's breathing grammar; refining's tempering, struck as the metal's glow passes the right color and quenched at the end; talismans' one-breath drawing, the stroke path traced without lifting as the qi ink thins; formations' placing, nodes laid on the grid so the lines close.
 - **Phases** are K1 and on (C is combat's).
 
+**Recipes** (D4, block 2).
+
+- **Every made good has a recipe**: the catalogs' pills, talismans and gear (about 84 at D4) and the formations' flags and discs, each written by hand beside its catalog line. Herbs, materials and treasures have none; they are picked, dug or found.
+- **Inputs come from the line's own story** where it tells one (the Garrison Ration Pill's cooks press millet and boar fat, so those are its inputs), and every input is a good some catalog sells, which a test checks. A recipe's inputs replace the makers' defaults for its good (Economy, People make and use), so a town's alchemy shop brews its stock by the recipe you would use and its making pulls the same herbs off the land.
+- **A recipe makes its line's range**, `rarity` to `upTo`; mastery, the steady hand and the inputs move you inside it (A batch, below), so rarity is the only roll.
+- **A lone recipe is a recipe slip**: 丹方 for a pill, 符谱 for a talisman, 器谱 for gear, 阵图 for an array. It is a manual of one node, read on study hours as a formula is; markets sell slips by rarity, and a power's own is guarded as its methods are. The other doors stay: the craft Dao's nodes, a style, experimentation and a teacher.
+- **Starter recipes.** Each craft Dao's first tier 1 node gives the commonest white tier 1 good of its craft on the continent: alchemy the Qi-Gathering Pill, talismans the Ember Talisman, refining a plain iron blade, formations a set of concealing flags.
+- **Mastery is per family** (Jan's call): a family is what a recipe does (qi-fuel pills, healing pills, projectile talismans, blades, armor), about 15 across the crafts, each with one mastery bar, Glimpse to Origin. Every recipe in a family works at the family's level, so learning a new healing pill starts at your healing mastery; tier is answered by the craft Dao against the recipe's tier, not by the bar. Experimentation reads the family's level.
+
 Formation puzzles show the engine-and-GLM split well. The engine hides which node is the array's eye, GLM describes the clues, Soul checks reveal hints, and a wrong strike backfires.
 
 **People and powers** run on the same idle-and-world split:
