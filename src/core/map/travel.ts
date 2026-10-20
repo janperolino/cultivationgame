@@ -757,4 +757,18 @@ export function hereWords(s: GameState): string {
   return areaAt(map, at)?.name ?? map.name;
 }
 
+/**
+ * Where the bench stands (K3, places lend a hand): the terrain under you and the atlas place you
+ * are at, or null off the map.
+ */
+export function benchSpot(s: GameState): { terrain: string; place: string | null } | null {
+  const map = mapOf(s);
+  if (!map || !s.map) return null;
+  const at = s.map.at;
+  const near = map.places.find(
+    (p) => p.kind === 'atlas' && Math.hypot(p.x - at[0], p.y - at[1]) < ENTER_LI,
+  );
+  return { terrain: terrainAt(map, at), place: near?.id ?? null };
+}
+
 export { WAYS };

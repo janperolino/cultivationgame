@@ -10459,3 +10459,33 @@ p.map-above {
 .crafts-failed {
   color: var(--warn);
 }
+
+/* Sitting at the furnace (K3): the middle column turns into the furnace, side on. */
+.crafts-furnace-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.crafts-furnace-top .panel-heading {
+  margin: 0;
+}
+
+.furnace-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 760 / 560;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.crafts-furnace-line {
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.crafts-furnace-batch {
+  border-top: 1px solid var(--edge);
+  padding-top: 10px;
+}

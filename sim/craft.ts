@@ -8,6 +8,8 @@
 // The marks: Glimpse about four gather hours on average over the markets (and at least 0.4× at
 // each), Comprehension at least 13.5 low (a duty day a realm up, D4), Mastery at least 25. The net
 // is per four craft hours; the batches a month are what the market's shelves feed, the rein.
+// Played (K3): the same months sat at the furnace at a 0.8 hand, which should beat queuing by a
+// fair margin, at least ×1.5 the queued net at each level (the steady hand moves only rarity).
 // Run: npm run sim -- craft
 import { DAYS_PER_MONTH, DAYS_PER_YEAR } from '../src/content/calendar.ts';
 import { CRAFT_MASTERY, recipe, recipeHours } from '../src/content/crafts.ts';
@@ -96,6 +98,7 @@ function run(
   market: string,
   level: number,
   seed: number,
+  hand = 0,
 ): { batches: number; herbs: number; bought: number; pills: number; mend: number } {
   const tally = { herbs: 0, bought: 0, pills: 0, mend: 0 };
   let s = newLife({ name: 'Han Li', seed: `craft-${market}-${level}-${seed}` });
@@ -126,7 +129,7 @@ function run(
       ...s.player,
       crafts: { ...s.player.crafts, bench: [{ recipe: RECIPE, batches: 99 }] },
     };
-    const r = workBench(queued, HOURS, s.calendar.day, rng);
+    const r = workBench(queued, HOURS, s.calendar.day, rng, { hand });
     batches += r.batches;
     s = withPlayer(s, { ...r.cultivator, crafts: { ...r.cultivator.crafts, mastery: keep } });
     spent = purse(s);
@@ -161,6 +164,8 @@ function gatherDay(market: string): number {
 }
 
 const SEEDS = 4;
+const PLAYED = 0.8;
+const PLAYED_MARGIN = 1.5;
 const fmt = (n: number) => (Math.round(n * 10) / 10).toFixed(1);
 console.log(
   `A crafter's month: ${HOURS} Craft hours a day, the ${item(RECIPE).name}, herbs bought and pills sold each day, ${SEEDS} months a row.`,
@@ -172,19 +177,29 @@ for (const m of MARKETS) {
   const gather = gatherDay(m.id);
   console.log('');
   console.log(`${m.name}: a duty day ${fmt(DUTY_DAY)} low, four gather hours ${fmt(gather)} low`);
-  for (const l of LEVELS) {
+  const netOf = (level: number, hand: number) => {
     const t = { batches: 0, herbs: 0, bought: 0, pills: 0, mend: 0 };
     for (let k = 0; k < SEEDS; k++) {
-      const r = run(m.id, l.level, k);
+      const r = run(m.id, level, k, hand);
       for (const key of Object.keys(t) as (keyof typeof t)[]) t[key] += r[key];
     }
     const perBatch = t.pills / t.batches - t.herbs / Math.max(1, t.bought) - t.mend / t.batches;
-    const net = (perBatch * HOURS) / recipeHours(recipe(RECIPE));
+    return { t, net: (perBatch * HOURS) / recipeHours(recipe(RECIPE)) };
+  };
+  for (const l of LEVELS) {
+    const { t, net } = netOf(l.level, 0);
     if (l.level === 0) glimpse.push(net / gather);
     const ok = l.level === 0 ? net >= gather * 0.4 : l.level === 1 ? net >= 13.5 : net >= 25;
     if (!ok) pass = false;
     console.log(
       `  ${l.name.padEnd(14)} ${fmt(net).padStart(6)} low per four hours; ${fmt(t.batches / SEEDS)} batches a month, herbs ${fmt(t.herbs / Math.max(1, t.bought))} and pills ${fmt(t.pills / t.batches)} a batch${ok ? '' : '  (off the mark)'}`,
+    );
+    const played = netOf(l.level, PLAYED);
+    const margin = played.net / net;
+    const playedOk = margin >= PLAYED_MARGIN;
+    if (!playedOk) pass = false;
+    console.log(
+      `  ${'  played'.padEnd(14)} ${fmt(played.net).padStart(6)} low per four hours at a ${PLAYED} hand, ×${fmt(margin)} queued; pills ${fmt(played.t.pills / played.t.batches)} a batch${playedOk ? '' : '  (off the mark)'}`,
     );
   }
 }
@@ -194,7 +209,7 @@ console.log('');
 console.log(`Glimpse earns ${fmt(mean)}× four gather hours, on average over the markets.`);
 console.log(
   pass
-    ? 'PASS: a crafter out-earns a life with no craft, and mastery pays.'
+    ? 'PASS: a crafter out-earns a life with no craft, mastery pays, and playing beats queuing.'
     : 'FAIL: off the mark.',
 );
 if (!pass) process.exitCode = 1;

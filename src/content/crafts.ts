@@ -6,6 +6,7 @@
 // so their phases add recipes, not shapes. Every number is the design's; the sims tune them.
 import { CATALOG_RECIPES } from './catalogs/index.ts';
 import type { Recipe } from './catalogs/types.ts';
+import type { Element } from './elements.ts';
 import { baseOf, item, type ItemKind } from './items.ts';
 
 export const CRAFTS = {
@@ -120,9 +121,54 @@ export const BLOW_UP = { share: 0.2, matched: 0.1, mend: 0.1 } as const;
 /**
  * Rarity is lift in bands from the recipe's floor (only the fraction rolled): +0.25 a mastery
  * level past Glimpse and +1 at Origin, +0.5 when every input is a rarity above the floor, +0.25 a
- * band of the tool above white. The steady hand (K3) and places (K9) add theirs.
+ * band of the tool above white. The steady hand and the land add theirs (K3, below).
  */
 export const LIFT = { mastery: [0, 0.25, 0.5, 0.75, 1], inputs: 0.5, toolBand: 0.25 } as const;
+
+/**
+ * The steady hand (K3; design § Crafts, thin, the hands-on version): played at the bench, a hand
+ * from 0 to 1 adds the hand times Steady hands' reach to the lift, never to whether a batch holds.
+ * The reach is one band at the base, raised by the craft's Hand nodes, `craftPrecision` one for
+ * one and a matched soul, never past two (Jan's guardrail). Hand's lift and the element Daos'
+ * craft side paths count only by hand too (K3's talk).
+ */
+export const HAND = { base: 1, matched: 0.25, most: 2 } as const;
+
+/**
+ * Places lend a hand (design § A batch, Jan's call): earth fire 地火 on volcanic land adds lift
+ * and holding to alchemy and refining; a land whose element is a recipe's does the same for it;
+ * a written site may give up to half a band.
+ */
+export const LAND = { lift: 0.25, hold: 0.1, siteMost: 0.5 } as const;
+export const EARTH_FIRE_CRAFTS: readonly CraftId[] = ['alchemy', 'refining'];
+export const EARTH_FIRE_TERRAIN = 'volcanic';
+
+/**
+ * The element a land carries, by its terrain (K3's small call; spirit farming's plots read it
+ * too). Only lands with a plain element of their own carry one: hills, plains and the like don't.
+ */
+export const LAND_ELEMENT: Readonly<Record<string, Element>> = {
+  volcanic: 'fire',
+  marsh: 'water',
+  coast: 'water',
+  islands: 'water',
+  sea: 'water',
+  forest: 'wood',
+  jungle: 'wood',
+  karst: 'earth',
+  canyon: 'earth',
+  ice: 'ice',
+  tundra: 'ice',
+};
+
+/**
+ * Written sites that lend a hand: a famous furnace cave, a sect's earth-fire hall. Keyed by the
+ * atlas place they stand at, each with its lift (up to `LAND.siteMost`) and the crafts it serves.
+ * None in the Border Wilds yet; sites (K9) write them.
+ */
+export const CRAFT_SITES: Readonly<
+  Record<string, { name: string; lift: number; crafts: readonly CraftId[] }>
+> = {};
 
 /** Yield: +10% a mastery level past Glimpse, +40% at Origin. The Dao's +5% a tier is K2's. */
 export const YIELD_BY_MASTERY = [0, 0.1, 0.2, 0.3, 0.4] as const;
@@ -184,4 +230,19 @@ export function recipeHours(r: Recipe): number {
 /** Pieces a batch makes before mastery: its own, or its craft's. */
 export function recipeYield(r: Recipe): number {
   return r.yield ?? BATCH[r.craft].yield;
+}
+
+/**
+ * A recipe's element (K3's small call): the element most of its inputs carry, counted by
+ * pieces, or none when no element leads or none carries one.
+ */
+export function recipeElement(r: Recipe): Element | null {
+  const count = new Map<Element, number>();
+  for (const i of r.inputs) {
+    const e = item(i.thing).element;
+    if (e) count.set(e, (count.get(e) ?? 0) + i.count);
+  }
+  const ranked = [...count].sort((a, b) => b[1] - a[1]);
+  if (ranked.length === 0 || ranked[1]?.[1] === ranked[0]![1]) return null;
+  return ranked[0]![0];
 }

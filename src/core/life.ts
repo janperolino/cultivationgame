@@ -79,7 +79,7 @@ import {
 } from './organizations.ts';
 import { bedNights } from './map/place.ts';
 import { setCopyGain } from './map/encounters.ts';
-import { cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
+import { benchSpot, cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 import { atHome, jobsDay, onShift } from './jobs.ts';
 import { craftsOpen, workBench } from './crafts.ts';
 
@@ -160,14 +160,15 @@ export function ratesHere(s: GameState, seat?: Seat): DayRates {
 
 /**
  * The bench's share of a stretch (core/crafts.ts, K1): the Craft hours of the wheel as played
- * where you stand, a shift's hours Duty at its post, worked from the front of the queue.
+ * where you stand, a shift's hours Duty at its post, worked from the front of the queue, at the
+ * steady hand you sit with (K3; none away) and with what the land lends.
  */
-function benchDay(s: GameState, days: number): GameState {
+function benchDay(s: GameState, days: number, hand = 0): GameState {
   if (s.player.crafts.bench.length === 0 && !s.player.crafts.front) return s;
   const hours = ratesHere(s).count.craft * days;
   if (hours <= 0) return s;
   const { value: r, state } = withStream(s, 'craft', (rng) =>
-    workBench(s.player, hours, s.calendar.day, rng),
+    workBench(s.player, hours, s.calendar.day, rng, { hand, spot: benchSpot(s) }),
   );
   let next = withPlayer(state, r.cultivator);
   for (const e of r.events)
@@ -216,7 +217,7 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   // counts your leave (O3).
   next = membershipDay(next, days, atHome);
   // The bench works its Craft hours wherever you seclude, never on the road (K1).
-  if (!road) next = benchDay(next, days);
+  if (!road) next = benchDay(next, days, ctx?.seat?.hand);
   return noteFirsts(checkScreens(next));
 };
 
