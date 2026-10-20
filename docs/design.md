@@ -1941,8 +1941,8 @@ Built bottom-up: what other systems read comes first, each layer thin (the least
 | Organizations, thin | one skeleton for every organization, seats and the currency, what membership gives and asks, guarded methods; jobs as posts, duty hours and the gather hour (O1 to O5) |
 | M4 Crafts | four great arts, spirit farming, abodes as sites; Core Formation |
 | The atlas fill | the other continents, on the Morning Star Continent's pattern |
+| M3's AI half | GLM roles, the opening, going in, the Ways, ruins and inheritances, the decks and rebirth, the tone pass |
 | Guild trade and the living world | the rest of M5 and M6: guilds trading, caravans, commissions, the black market, auctions, events, NPC depth, romance, founding a sect, map tiers and long travel, beast taming |
-| M3's AI half | GLM roles, going in, the Ways, ruins and inheritances, the decks and the starts, the tone pass |
 | M7 Big moments | Nascent Soul, tribulations, heart demons |
 | M8 Rebirth and friends | lifespan, reincarnation, friends build |
 | After v1 | friends as NPCs, then co-op go-in sessions |
@@ -2003,7 +2003,7 @@ Settle each before the stage that needs it (Roadmap), grouped by the layer that 
 - [ ] The Ways' node lists, tiers 1 and 2, at the combat Daos' shape
 
 - [x] The realm gap (found in C2, 2026-10-20; settled in its design session the same day, under Combat: A climb, then a jump; The half-step; Protective qi's second floor; A crowd that can't scratch you breaks; Speed is tempo; and Cultivation, grades as a share of the step; C3 builds it): a realm's stages climb half the step out and the border jumps the other half, the half-step is the gap, per line, reached only by what lifts a line; grades keep their worth as 0.27 of the step a grade; purple names the half-step and pristine the next realm's, the multipliers unchanged; a junior under half a bar's Defense does a hundredth and a crowd that can't scratch you breaks, so an early Foundation beats 80 layer 9s; speed is tempo on the fleeing rule, a movement art lifting it.
-- [ ] The opening redone (Sean's playtest, 2026-10-20; its design session just before P3.12): settled so far, Foundation in about 2–3 attended hours, a payoff by minute 10–15, the world taking a prodigy as one, and the game less idle and more a sim; it rewrites Character creation and the first hour's table and pacing targets, and adds first tasks that teach by doing (a spar for a technique, a gathering bounty, the travel stances), the rogue start with work it can find, and how a first time is shown when it appears
+- [ ] The opening redone (Sean's playtest, 2026-10-20; its design session first on the friends' line, built by The opening, built): settled so far, Foundation in about 2–3 attended hours, a payoff by minute 10–15, the world taking a prodigy as one, and the game less idle and more a sim; it rewrites Character creation and the first hour's table and pacing targets, and adds first tasks that teach by doing (a spar for a technique, a gathering bounty, the travel stances), the rogue start with work it can find, and how a first time is shown when it appears
 
 **Before M7 and M8**
 
