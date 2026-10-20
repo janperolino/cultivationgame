@@ -10297,3 +10297,129 @@ p.map-above {
 .place-mark p + p {
   margin-top: 2px;
 }
+
+/* ---------------------------------------------------------------- the Crafts screen 艺 (K1) */
+/* A page a craft along the top, then three columns: the furnace and recipes, the bench, and
+   mastery with the soul gate (K1's talk, its mockup). Flat panels: no blur, nothing looping. */
+.crafts-pages {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.crafts-page {
+  padding: 2px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.crafts-page.is-current {
+  color: var(--text);
+  border-bottom-color: var(--hour-craft);
+}
+
+.crafts-page:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.crafts-hours {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.crafts-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 0.9fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.crafts-list {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.crafts-list > li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.crafts-tool {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.crafts-recipe {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.crafts-recipe.is-selected {
+  color: var(--hour-craft);
+}
+
+.crafts-card {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-faint);
+  border-radius: 4px;
+}
+
+.crafts-card p {
+  margin: 0 0 6px;
+}
+
+.crafts-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.crafts-entry-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.crafts-bar {
+  height: 4px;
+  margin: 5px 0;
+  border-radius: 2px;
+  background: var(--line-faint);
+}
+
+.crafts-bar > div {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--hour-craft);
+}
+
+.crafts-waits {
+  color: var(--warn);
+}
+
+.crafts-tray {
+  margin: 10px 0 14px;
+}
+
+.crafts-failed {
+  color: var(--warn);
+}
