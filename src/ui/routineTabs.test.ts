@@ -12,11 +12,7 @@ describe('Routine tabs', () => {
   });
 
   it('show Practice with the first technique', () => {
-    expect(routineTabs(gainTechnique(base, 'rampart-palm'))).toEqual([
-      'day',
-      'practice',
-      'study',
-    ]);
+    expect(routineTabs(gainTechnique(base, 'rampart-palm'))).toEqual(['day', 'practice', 'study']);
   });
 
   it('send each kind of hour to its tab', () => {

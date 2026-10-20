@@ -3,6 +3,8 @@
 // far a lot moves it and how fast it eases back. The rules that read these are core/markets.ts;
 // each market's needs are its region's (content/map/border-wilds.ts `needs`). Every number is the
 // design's; the play checkpoint tunes them.
+import type { CraftId } from './crafts.ts';
+import type { ShopKind } from './shops.ts';
 
 /** One step of prosperity: its word, and what it does to a market's purses, lots and wages. */
 interface ProsperityRow {
@@ -169,6 +171,22 @@ export const PRESSURE = {
 
 /** A maker makes half again what its own people use (or, using none, what its reach uses). */
 export const MAKE_SHARE = 1.5;
+
+/**
+ * A market's own workshops brew this share of the recipe goods it uses but doesn't make (K1): "a
+ * town's alchemy shop brews its stock by the recipe you would use", so its furnaces pull the herbs
+ * onto its shelves, while the goods themselves still come in by the wider trade as E4 has it.
+ */
+export const BREWED_HERE = 0.5;
+
+/** The workshop that brews each craft's goods at a market. */
+export const WORKSHOP: Record<CraftId, ShopKind | null> = {
+  alchemy: 'alchemy',
+  refining: 'refiner',
+  talismans: 'talisman',
+  formations: null,
+  farming: null,
+};
 
 /**
  * Harvests (People make and use): a seasonal good is made at ×1.4 the month after its harvest,

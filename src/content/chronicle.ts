@@ -244,8 +244,8 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
     d.family
       ? `Your ${FAMILIES[s(d.family) as FamilyId].name.toLowerCase()} reach ${MASTERY[n(d.level)]!.name}: the fire answers the hand.`
       : d.technique
-      ? `${technique(s(d.technique)).name} reaches ${MASTERY[n(d.level)]!.name}; the form finally clicks.`
-      : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
+        ? `${technique(s(d.technique)).name} reaches ${MASTERY[n(d.level)]!.name}; the form finally clicks.`
+        : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
   // A follower who left or turned (P3.4b): the card P3.12 writes says it at more length.
   follower: (d, w) => `${s(d.name)} ${FOLLOWER_ENDS[s(d.why)] ?? 'leaves'} ${w.name}.`,
   power: (d, w) => POWER_LINES[s(d.what)]?.(w, powerName(s(d.power)), d) ?? '',

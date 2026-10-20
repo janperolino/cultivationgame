@@ -71,14 +71,19 @@ describe('the monthly sum', () => {
     // written need, carried from the Gate.
     const fort = marketSum(w, m(FORT), 0).goods;
     const meal = fort.get('bone-meal')!;
-    expect(meal.used).toBeCloseTo(0.1 * fort.get('spirit-rice')!.made * 2);
+    // The spirit fields' share, and since K1 its alchemy shops' furnaces brewing half the pills
+    // it carries in whose recipes take bone meal (`BREWED_HERE`).
+    const fields = 0.1 * fort.get('spirit-rice')!.made * 2;
+    expect(meal.used).toBeGreaterThan(fields);
     expect(meal.from).toBe('reach');
     expect(restOf(w, m(FORT), 'bone-meal', 0)).toBeCloseTo(50);
     // The Gate's own alchemists use its bone meal for the Wound-Knitting Pill (K1's recipe), so
     // it makes half again what they use: 150%.
     expect(restOf(w, m('qm-tushou-men'), 'bone-meal', 0)).toBe(150);
     // A recipe's inputs are used by thing: the Gate's beast-blood pills pull on the vine.
-    expect(marketSum(w, m('qm-tushou-men'), 0).goods.get('beast-blood-vine')!.used).toBeGreaterThan(0);
+    expect(marketSum(w, m('qm-tushou-men'), 0).goods.get('beast-blood-vine')!.used).toBeGreaterThan(
+      0,
+    );
     // The City's refiners cut thunderhorn for their blades' grips.
     expect(marketSum(w, m(CITY), 0).goods.get('thunderhorn')!.used).toBeGreaterThan(0);
   });

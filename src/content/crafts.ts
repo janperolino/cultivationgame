@@ -12,7 +12,12 @@ export const CRAFTS = {
   alchemy: { name: 'Alchemy', hanzi: '丹', tool: 'furnace', page: 'Alchemy' },
   refining: { name: 'Artifact Refining', hanzi: '器', tool: 'forge', page: 'Refining' },
   talismans: { name: 'Talisman Drawing', hanzi: '符', tool: 'brush', page: 'Talismans' },
-  formations: { name: 'Formation Inscribing', hanzi: '阵', tool: 'array plate', page: 'Formations' },
+  formations: {
+    name: 'Formation Inscribing',
+    hanzi: '阵',
+    tool: 'array plate',
+    page: 'Formations',
+  },
   farming: { name: 'Spirit Farming', hanzi: '植', tool: 'field', page: 'Farming' },
 } as const;
 export type CraftId = keyof typeof CRAFTS;

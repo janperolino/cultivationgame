@@ -187,7 +187,11 @@ export function liftOdds(r: Recipe, lift: number): { rarity: RarityId; chance: n
 // ---------------------------------------------------------------- inputs
 
 /** The pieces of an input you hold at a tier, by id, worst rarity first. */
-function heldOf(c: Cultivator, thing: string, tier: number): { id: string; n: number; rank: number }[] {
+function heldOf(
+  c: Cultivator,
+  thing: string,
+  tier: number,
+): { id: string; n: number; rank: number }[] {
   return Object.entries(c.items)
     .filter(([id, n]) => n > 0 && baseOf(id) === thing && hasItem(id))
     .map(([id, n]) => ({ id, n, it: item(id) }))
@@ -237,7 +241,9 @@ export function planInputs(c: Cultivator, r: Recipe): InputPlan {
 export function batchesHeld(c: Cultivator, r: Recipe): number {
   const tier = recipeTier(r);
   return Math.min(
-    ...r.inputs.map((i) => Math.floor(heldOf(c, i.thing, tier).reduce((t, h) => t + h.n, 0) / i.count)),
+    ...r.inputs.map((i) =>
+      Math.floor(heldOf(c, i.thing, tier).reduce((t, h) => t + h.n, 0) / i.count),
+    ),
   );
 }
 
@@ -405,7 +411,6 @@ export function workBench(c: Cultivator, hours: number, day: number, rng: Rng): 
     const need = recipeHours(recipe(front.recipe)) - front.hours;
     if (left + 1e-9 < need) {
       next = withCrafts(next, { front: { ...front, hours: front.hours + left } });
-      left = 0;
       break;
     }
     left -= need;

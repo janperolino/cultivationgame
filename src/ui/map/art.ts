@@ -143,7 +143,14 @@ function intoFrame(ctx: CanvasRenderingContext2D, f: Frame) {
   if (f.fit) {
     const [a, b, c, d, e, g] = f.fit as [number, number, number, number, number, number];
     const det = a * d - b * c;
-    ctx.transform(d / det, -b / det, -c / det, a / det, (c * g - d * e) / det, (b * e - a * g) / det);
+    ctx.transform(
+      d / det,
+      -b / det,
+      -c / det,
+      a / det,
+      (c * g - d * e) / det,
+      (b * e - a * g) / det,
+    );
   }
 }
 
@@ -179,13 +186,7 @@ function drawPyramid(ctx: CanvasRenderingContext2D, region: string, t: TileFrame
         if (!img) continue;
         // A hair larger than the chunk, so neighbours meet without a seam.
         const z = 2 ** l;
-        ctx.drawImage(
-          img,
-          c * span,
-          r * span,
-          img.width * z + z * 0.6,
-          img.height * z + z * 0.6,
-        );
+        ctx.drawImage(img, c * span, r * span, img.width * z + z * 0.6, img.height * z + z * 0.6);
       }
   }
   ctx.restore();

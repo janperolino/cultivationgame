@@ -58,7 +58,10 @@ export function useLines(it: Item): string[] {
     const element = it.element ? `${ELEMENT_INFO[it.element].name.toLowerCase()}, ` : '';
     out.push(`An ingredient: ${element}${listWords([...u.ingredient.properties])}${age}.`);
   }
-  if (u.tool) out.push(`A ${CRAFTS[u.tool.craft].tool} for ${CRAFTS[u.tool.craft].name.toLowerCase()}: it works tier ${it.tier} recipes and below.`);
+  if (u.tool)
+    out.push(
+      `A ${CRAFTS[u.tool.craft].tool} for ${CRAFTS[u.tool.craft].name.toLowerCase()}: it works tier ${it.tier} recipes and below.`,
+    );
   if (it.cracked) out.push('Cracked: it works nothing until a refiner mends it.');
   if (u.read)
     out.push(`Read on the study hours, it teaches ${copyTitle(copyId(u.read.kind, u.read.id))}.`);

@@ -170,7 +170,8 @@ function benchDay(s: GameState, days: number): GameState {
     workBench(s.player, hours, s.calendar.day, rng),
   );
   let next = withPlayer(state, r.cultivator);
-  for (const e of r.events) next = addEvent(next, e.type === 'craft-level' ? 'mastery' : e.type, e.data);
+  for (const e of r.events)
+    next = addEvent(next, e.type === 'craft-level' ? 'mastery' : e.type, e.data);
   return next;
 }
 

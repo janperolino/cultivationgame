@@ -38,7 +38,7 @@ export const BASE_PRICE: Record<ItemKind, number> = {
   pill: 3,
   talisman: 4,
   // A herb at about 1 low, so a batch of ten pills nets its crafter a living (K1's talk).
-  herb: 1,
+  herb: 0.7,
   material: 1,
   'beast-part': 1,
   gear: 45,

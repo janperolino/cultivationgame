@@ -94,7 +94,8 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
         kind: 'herb',
         stack: 20,
         tags: ['trade'],
-        price: 2,
+        // At a herb's 1 low since K1, so the commonest pill's herbs leave its brewer a living.
+        price: 1,
         uses: { ingredient: { properties: ['purging'], age: 1 } },
         source: 'the Medicine Ridges’ terraced herb gardens, dried and baled for the guild’s carts',
         text: 'A bale of dried bitterroot, the commonest herb in a common pill. The Ridges grow it by the hillside; the frontier has none.',

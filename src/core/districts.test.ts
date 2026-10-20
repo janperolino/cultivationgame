@@ -7,7 +7,14 @@ import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { hasCopy } from '../content/copies.ts';
 import { baseOf, item } from '../content/items.ts';
 import { lotShape } from './loot.ts';
-import { DOOR_SHARE, doorsAt, HAGGLE_OFF, keeperName, shop, SHOP_KIND_INFO } from '../content/shops.ts';
+import {
+  DOOR_SHARE,
+  doorsAt,
+  HAGGLE_OFF,
+  keeperName,
+  shop,
+  SHOP_KIND_INFO,
+} from '../content/shops.ts';
 import {
   goodOf,
   market,
