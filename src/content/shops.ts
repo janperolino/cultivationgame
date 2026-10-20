@@ -701,7 +701,7 @@ export const STREET_ORDER: readonly ShopKind[] = [
  * A firm is a door of its own: a trading house each 5,000 cultivators from 1,000 (two at most), the
  * bounty office from 1,000.
  */
-export const FIRMS: Partial<Record<ShopKind, { per: number; from: number; max: number }>> = {
+const FIRMS: Partial<Record<ShopKind, { per: number; from: number; max: number }>> = {
   house: { per: 5000, from: 1000, max: 2 },
   bounty: { per: Infinity, from: 1000, max: 1 },
 };
@@ -725,10 +725,10 @@ export const DOOR_SHARE: Record<ShopKind, number> = {
 };
 
 /** A district lists at most three notable shops, each weighing three of the small ones. */
-export const NOTABLE = { most: 3, weight: 3 } as const;
+const NOTABLE = { most: 3, weight: 3 } as const;
 
 /** The surnames keepers are named by: none a power's (no Qian). */
-export const KEEPER_SURNAMES = [
+const KEEPER_SURNAMES = [
   'Liu',
   'Hu',
   'Zhou',
@@ -778,7 +778,7 @@ export function streetCount(pop: Population, kind: ShopKind): number {
 }
 
 /** How many of a firm a market of these people keeps. */
-export function firmCount(pop: Population, kind: ShopKind): number {
+function firmCount(pop: Population, kind: ShopKind): number {
   const f = FIRMS[kind];
   if (!f) return 0;
   const n = headcount(pop, 'cultivators');
@@ -958,11 +958,6 @@ export function doorsAt(id: string): readonly Door[] {
 export function doorOf(shopId: string): Door | undefined {
   const seat = marketOf.get(shopId);
   return seat ? doorsAt(seat).find((d) => d.shops.includes(shopId)) : undefined;
-}
-
-/** The written town or atlas place a shop stands at. */
-export function shopSeat(shopId: string): string | undefined {
-  return marketOf.get(shopId);
 }
 
 /** The vein a shop's place sits on: the written town it stands in, else its atlas place. */

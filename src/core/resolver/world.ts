@@ -179,7 +179,7 @@ export type Heard = z.infer<typeof HeardSchema>;
  * of its currency, and the year they last sat its inner trial; since O2 (v39) the month its
  * allowance last came, and whether they sit as a guest elder 客卿, an honored outsider's seat.
  */
-export const MemberSchema = z.object({
+const MemberSchema = z.object({
   who: z.string(),
   power: z.string(),
   since: z.number(),

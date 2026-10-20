@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { COPY_FORM_WORDS, copyForm, copyItem, copyTitle, hasCopy } from '../content/copies.ts';
 import { item, stackSize } from '../content/items.ts';
 import { PLACE_KIND_INFO, type PlaceKindInfo } from '../content/map/places.ts';
-import { possessive } from '../content/words.ts';
+import { capitalize, possessive } from '../content/words.ts';
 import { QI_NAMES, TERRAIN_NAMES } from '../content/map/travel.ts';
 import { REALM_IDS, realm, realmIdFromName, type RealmId } from '../content/realms.ts';
 import {
@@ -182,7 +182,7 @@ function doorsOf(
     if (!hall)
       own.push({ id: 'gift', seal: '礼', name: 'Offer a gift', sub: 'remembered as tribute' });
   }
-  const ownGroup: [string, Door[]] = [seat ? cap(theName(seat)) : '', own];
+  const ownGroup: [string, Door[]] = [seat ? capitalize(theName(seat)) : '', own];
   // A door is a district, or a firm, a hall or the office alone (E5).
   const shops: Door[] = doorsAt(p.id).map((d) => {
     const k = SHOP_KIND_INFO[d.kind];
@@ -190,7 +190,7 @@ function doorsOf(
     return {
       id: d.id,
       seal: (st?.hanzi ?? k.hanzi).slice(0, 1),
-      name: cap(d.name),
+      name: capitalize(d.name),
       sub: st ? `${d.count === 1 ? 'one shop' : `${d.count} shops`} · ${st.sells}` : k.name,
       tag: k.members ? 'members' : k.money === 'silver' ? 'silver' : k.posted ? 'posted rates' : '',
     };
@@ -211,7 +211,7 @@ function doorsOf(
       id: 'pavilion',
       seal: '经',
       name: 'Scripture pavilion',
-      sub: `${possessive(cap(theName(p.id)), '’')} own chapters, by seat`,
+      sub: `${possessive(capitalize(theName(p.id)), '’')} own chapters, by seat`,
       tag: 'members',
     });
   // Work (O4): the posts and hires taken here, and a sect's mission hall, its bounty office.
@@ -545,7 +545,7 @@ function MarkStrip({ game, place }: { game: GameState; place: MapPlace }) {
                 <b>Marked by {theName(m.power)}</b>
               </p>
               <p className="place-sub">
-                {cap(m.method)}, chapter {m.chapter} ·{' '}
+                {capitalize(m.method)}, chapter {m.chapter} ·{' '}
                 {m.onSight
                   ? 'hostile: its people take you on sight'
                   : `a fine of ${m.fineWords}${m.slip ? ' and the slip' : ''}`}
@@ -633,8 +633,6 @@ function Counter({
 
 // ---------------------------------------------------------------- a district and its shops
 
-const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
-
 /** A district's door (E5): its notable shops and the small shops along the top, one counter below. */
 function DoorCounter({
   game,
@@ -664,7 +662,7 @@ function DoorCounter({
                 aria-selected={at === id}
                 onClick={() => setAt(id)}
               >
-                {sh.small ? 'The small shops' : cap(sh.name)}
+                {sh.small ? 'The small shops' : capitalize(sh.name)}
               </button>
             );
           })}
@@ -762,7 +760,7 @@ function ShopCounter({
     <>
       <div className="place-keeper">
         <span>
-          {cap(keeperName(sh))} · {sh.small ? 'together they' : 'they'} can pay out{' '}
+          {capitalize(keeperName(sh))} · {sh.small ? 'together they' : 'they'} can pay out{' '}
           {silver ? `${Math.round(left).toLocaleString('en')} taels` : priceWords(left)} this month
         </span>
         {yours ? (
@@ -1058,14 +1056,14 @@ function LawHallCounter({
   return (
     <>
       <p className="place-sub">
-        {cap(theName(power))} knows its {m.method} in your hands. Restitution is three times the
-        copy’s price{m.slip ? ', and the slip handed back' : ''}; you swear the heart-demon oath
+        {capitalize(theName(power))} knows its {m.method} in your hands. Restitution is three times
+        the copy’s price{m.slip ? ', and the slip handed back' : ''}; you swear the heart-demon oath
         never to teach or sell what you learned, and the mark lifts. Joining it lifts it too.
       </p>
       <div className="place-rows">
         <div className="place-row">
           <span>
-            <span className="place-row-name">{cap(m.method)}</span>{' '}
+            <span className="place-row-name">{capitalize(m.method)}</span>{' '}
             <span className="place-sub">· chapter {m.chapter}</span>
           </span>
           <span className="place-price">{m.restitutionWords}</span>
@@ -1075,7 +1073,7 @@ function LawHallCounter({
             onClick={() =>
               act((s) => {
                 const r = liftByPaying(s, power, 'restitution');
-                if (r.ok) say(`${cap(theName(power))} lifts its mark.`);
+                if (r.ok) say(`${capitalize(theName(power))} lifts its mark.`);
                 return r;
               })
             }
@@ -1148,7 +1146,7 @@ function JoinCounter({ game, power, act, say }: CounterProps) {
   if (!e) return <p className="place-note">You are one of theirs already.</p>;
   return (
     <>
-      <p className="place-sub">{cap(e.sub)}.</p>
+      <p className="place-sub">{capitalize(e.sub)}.</p>
       {e.shut && <p className="place-note">{e.shut}</p>}
       <button
         type="button"
@@ -1160,7 +1158,7 @@ function JoinCounter({ game, power, act, say }: CounterProps) {
             if (r.ok)
               say(
                 r.joined
-                  ? `${cap(theName(power))} takes you in.`
+                  ? `${capitalize(theName(power))} takes you in.`
                   : `Short: ${r.yours?.toFixed(1)} against ${r.bar?.toFixed(1)}.`,
               );
             return r;

@@ -1,4 +1,5 @@
 import { DAYS_PER_MONTH } from '../content/calendar.ts';
+import { capitalize } from '../content/words.ts';
 import { statInfo, type Effect } from '../content/stats.ts';
 import { realm, REALMS, stageName } from '../content/realms.ts';
 import {
@@ -105,10 +106,7 @@ export function formatEffect(e: Effect): string {
   return `${info.name} ${amount}`;
 }
 
-/** "orphaned by a raid" → "Orphaned by a raid". */
-export function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
+export { capitalize };
 
 /** ["wood", "fire", "water"] → "wood, fire and water". */
 export function listWords(xs: readonly string[]): string {

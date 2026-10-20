@@ -71,7 +71,7 @@ function found(id: string, r: RarityId): string {
   return variantId(id, at, {});
 }
 
-export interface Gathered {
+interface Gathered {
   life: MapLife;
   player: Cultivator;
   /** What was found this hour, by id and count. */

@@ -248,7 +248,7 @@ export function memoryLine(m: Memory, n: Nature, day: number): MemoryLine {
  * The powers someone belongs to, a branch hall read as its parent: their memberships (a guest
  * elder's seat is an outsider's, so not among them) and the power a named or kept person answers to.
  */
-export function housesOf(w: World, id: string): string[] {
+function housesOf(w: World, id: string): string[] {
   const out = w.members.filter((m) => m.who === id && !m.guest).map((m) => m.power);
   const p = powerOf(w, id);
   if (p) out.push(ORG_OVERRIDES[p]?.branchOf ?? p);
@@ -256,7 +256,7 @@ export function housesOf(w: World, id: string): string[] {
 }
 
 /** The power two people share, if any: fellow members meet each other as "one of ours" (O3). */
-export function fellowPower(w: World, a: string, b: string): string | null {
+function fellowPower(w: World, a: string, b: string): string | null {
   const theirs = housesOf(w, b);
   return housesOf(w, a).find((p) => theirs.includes(p)) ?? null;
 }

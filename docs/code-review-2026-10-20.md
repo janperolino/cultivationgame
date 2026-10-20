@@ -191,6 +191,19 @@ What K1 to K12 build on, judged ready or not.
 
 ## Dead code
 
+**Round 3, Jan's go:**
+- *Removed:*
+  - Never read: `PAVILION`, `PROTECTOR`, `LAW_HALL_TITLE`, `shopSeat`, `dutyHours`, `carriesGuarded`.
+  - `LeaveOpts.carries` and its betrayal branch. A parting by carrying off methods was never set; design's betrayal is going over to a foe, the hunted types and deserting.
+  - `earnings`' mortal branch.
+- *69 names unexported*, being used only in their own file. `TREATMENTS` keeps its export, since lint wants it for its type.
+- *Duplicates merged:*
+  - One `capitalize` in `content/words.ts`, which `ui/format.ts` re-exports. It replaces eight copies, PracticeTab's and RoutineScreen's among them.
+  - `wordRank` lives in `content/memories.ts`, and `monthOf` became `monthIndex`.
+  - The Map reads `ENTER_LI` at its three 250s.
+- The orphaned comment sits on `homeOf`.
+- *Left:* `ALLOWANCE.true.stones`, whose table type wants the field. `.place-release`, which is harmless. `takeAsDisciple` and `yearsPills` wait with medium 16. The `organizations.ts` split waits for K6.
+
 **Never read anywhere:** `PAVILION`, `PROTECTOR`, `LAW_HALL_TITLE` (`content/organizations.ts`); `shopSeat` (`content/shops.ts`, see S4); `dutyHours` (`wheel.ts:67`); `carriesGuarded` and `LeaveOpts.carries` (the "carries off its guarded methods" betrayal can never fire, and `partWays` passes `knows`, which `partingOf` ignores); `earnings(…, mortals)`'s mortal branch; `ALLOWANCE.true.stones` (60; the true seat reads the curve, 22.5 at Qi Condensation).
 
 **Tests only:** `takeAsDisciple` (medium 16), `canJoin`, `entrySeat`, `yearsPills`, `lessonInsight`, `treatmentWords`, `membersLine`, `atPost`, `buyInPrice`, `harvestFactor`, `landYield`, `gatherLines`, `gatherRarity`, `plainLore`, `marketSize`, `seenFrom`, `claimOf`, `stockOf`, `hallPoints`, `streetCount`. Most are pieces of a live rule exported for their test, which is fine. `takeAsDisciple` and `yearsPills` are rules nobody calls.

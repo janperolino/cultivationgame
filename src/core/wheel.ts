@@ -63,11 +63,6 @@ export function freeWheel(c: Cultivator): HourKind[] {
   return c.wheel.map((k, i) => (dutyAt(c, i) ? 'duty' : k));
 }
 
-/** The hours the jobs you hold put on the wheel. */
-export function dutyHours(c: Cultivator): number[] {
-  return c.wheel.map((_, i) => i).filter((i) => dutyAt(c, i) !== null);
-}
-
 /** The hour of the day wheel a world day stands in: 0 at 子 (midnight), 11 at 亥. */
 export function hourOfDay(day: number): number {
   return Math.floor((((day % 1) + 1) % 1) * HOURS_PER_DAY) % HOURS_PER_DAY;

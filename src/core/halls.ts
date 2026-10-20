@@ -9,7 +9,7 @@
 import { CATALOGS } from '../content/catalogs/index.ts';
 import { copyChapter, hasCopy } from '../content/copies.ts';
 import { baseOf } from '../content/items.ts';
-import { STANDING_WORDS } from '../content/memories.ts';
+import { wordRank } from '../content/memories.ts';
 import { OPEN_COUNTER, PAVILION_SEAT, type SeatId } from '../content/organizations.ts';
 import { SHOP_KIND_INFO, type Shop } from '../content/shops.ts';
 import { gainCopy } from './life.ts';
@@ -32,10 +32,8 @@ import { standingOf } from './resolver/world.ts';
 import type { GameState } from './state.ts';
 
 /** How a members' shop serves you: as its own, as its guest elder, at its open counter, or not. */
-export type HallTerms =
+type HallTerms =
   { as: 'member' } | { as: 'guest' } | { as: 'counter' } | { as: 'shut'; why: string };
-
-const wordRank = (word: string) => STANDING_WORDS.findIndex((w) => w.word === word);
 
 /**
  * How a sect's hall serves the player (O2): its members in its currency; a guest elder, who earns
@@ -118,11 +116,11 @@ export function pavilionChapters(power: string): readonly string[] {
 }
 
 /** The lowest seat that buys a chapter: 1 any member, 2 from inner, 3 from true, past it elder. */
-export function chapterSeat(thing: string): SeatId {
+function chapterSeat(thing: string): SeatId {
   return PAVILION_SEAT[copyChapter(thing)] ?? 'elder';
 }
 
-export interface PavilionLine {
+interface PavilionLine {
   thing: string;
   chapter: number;
   seat: SeatId;

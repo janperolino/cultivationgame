@@ -24,7 +24,7 @@ function basePrice(it: Item): number {
 }
 
 /** An item's posted price in low-grade stones. */
-export function itemPrice(it: Item): number {
+function itemPrice(it: Item): number {
   // A written price is the thing at its own tier and its worst rarity; the kind's is a white tier 1.
   // A variant at another tier or rarity moves from the written thing's.
   const w = written(it);

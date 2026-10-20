@@ -283,7 +283,7 @@ export interface Ladder {
   split: boolean;
 }
 
-export interface OrgOverride {
+interface OrgOverride {
   /** A seat's name within the vocabulary (the Gate's Gate disciples, a march's marquis). */
   seats?: Partial<Record<SeatId, SeatName>>;
   /** Seat realms where the population reads wrong. */
@@ -504,7 +504,6 @@ export const GUEST_ELDER: Title & { from: 'honored' } = {
  * and kinship): chapter 1 to any member, chapter 2 from inner, chapter 3 from true.
  */
 export const PAVILION_SEAT: Record<number, SeatId> = { 1: 'outer', 2: 'inner', 3: 'true' };
-export const PAVILION: Title = { name: 'scripture pavilion', hanzi: '藏经阁' };
 
 // ── Backing, tutelage and what it asks (design § What membership gives and asks; O3) ─────────────
 
@@ -524,7 +523,6 @@ export const ELDER_TIME = {
   lesson: { points: 20, studyDays: 3 },
   protector: { points: 100, odds: 0.05 },
 } as const;
-export const PROTECTOR: Title = { name: 'protector', hanzi: '护法' };
 
 /**
  * Investment: each year the trial's ranking takes a few Foundation Pills, one for every thousand
@@ -610,7 +608,6 @@ export const LAW_HALL_PARTY: Record<1 | 2 | 3, { seat: SeatId; count: number }> 
   2: { seat: 'inner', count: 2 },
   3: { seat: 'elder', count: 1 },
 };
-export const LAW_HALL_TITLE: Title = { name: 'law hall', hanzi: '执法堂' };
 
 /** An atlas power or kingdom as organizations read it (written by `npm run atlas:build`). */
 export interface OrgRow {

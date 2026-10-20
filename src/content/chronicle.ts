@@ -21,7 +21,7 @@ import { technique } from './techniques.ts';
 import { anyNode, hasAnyNode } from './nodes.ts';
 import { ORG_ROWS } from './organizations.ts';
 import { hasJob, job, type Job } from './jobs.ts';
-import { countWord, possessive } from './words.ts';
+import { capitalize, countWord, possessive } from './words.ts';
 
 export type EventValue = string | number | boolean | null;
 export type EventData = Readonly<Record<string, EventValue>>;
@@ -122,25 +122,26 @@ function powerName(id: string): string {
 
 /** What a power did with you as its member (O3): the year's pill, the true seat, a quota, leave. */
 const POWER_LINES: Record<string, (w: Who, p: string, d: EventData) => string> = {
-  pill: (w, p) => `${capital(p)} hands ${w.name} a Foundation Pill from the year's ranking.`,
+  pill: (w, p) => `${capitalize(p)} hands ${w.name} a Foundation Pill from the year's ranking.`,
   true: (w, p, d) =>
-    `${capital(p)} makes ${w.name} its ${s(d.title) || 'true disciple'}, well ahead of ${w.their} years.`,
+    `${capitalize(p)} makes ${w.name} its ${s(d.title) || 'true disciple'}, well ahead of ${w.their} years.`,
   'quota-missed': (w, p) =>
     `${w.name} misses ${possessive(p)} quota a second month running, and it is noted.`,
-  'struck-off': (w, p) => `${capital(p)} strikes ${w.name} from its rolls for three missed quotas.`,
+  'struck-off': (w, p) =>
+    `${capitalize(p)} strikes ${w.name} from its rolls for three missed quotas.`,
   'leave-over': (w, p) => `${w.name}'s leave from ${p} runs out; each day away now costs.`,
   // The organizations checkpoint: joining, the trials and the mark lifted by joining.
   joined: (w, p) => `${w.name} is taken into ${p}.`,
   'entry-short': (w, p) => `${w.name} falls short at ${possessive(p)} gate and is sent away.`,
-  raised: (w, p, d) => `${capital(p)} seats ${w.name} as its ${s(d.title)}.`,
+  raised: (w, p, d) => `${capitalize(p)} seats ${w.name} as its ${s(d.title)}.`,
   'trial-passed': (w, p) => `${w.name} passes ${possessive(p)} inner trial.`,
   'trial-short': (w, p) => `${w.name} sits ${possessive(p)} inner trial and falls short.`,
-  lifted: (w, p) => `${capital(p)} lifts its mark from ${w.name}, one of its own now.`,
+  lifted: (w, p) => `${capitalize(p)} lifts its mark from ${w.name}, one of its own now.`,
   left: (w, p) => `${w.name} leaves ${p} by its rule.`,
   betrayed: (w, p) => `${w.name} walks out on ${p}, and it will not forget.`,
   // O5: a guarded method seen in use, and the mark lifted.
   marked: (w, p) =>
-    `${capital(p)} knows ${w.name}'s face now: one of its methods, in a stranger's hands.`,
+    `${capitalize(p)} knows ${w.name}'s face now: one of its methods, in a stranger's hands.`,
   fined: (w, p) =>
     `${w.name} pays ${possessive(p)} fine for its method and swears never to teach it.`,
   restitution: (w, p) =>
@@ -156,7 +157,7 @@ const JOB_LINES: Record<string, (w: Who, j: Job, giver: string, d: EventData) =>
     const at = j.hall.replace(/s*[㐀-鿿]+$/u, '');
     return `${w.name} misses ${n === 1 ? 'a shift' : `${countWord(n)} shifts`} at ${at}, and it is noted.`;
   },
-  'let-go': (w, _j, g) => `${capital(g)} lets ${w.name} go for the shifts missed.`,
+  'let-go': (w, _j, g) => `${capitalize(g)} lets ${w.name} go for the shifts missed.`,
 };
 
 function lower(t: string): string {
@@ -169,10 +170,6 @@ function jobLine(d: EventData, w: Who): string {
   const j = job(id);
   const giver = j.power && !j.hire ? powerName(j.power) : j.hall;
   return JOB_LINES[s(d.what)]?.(w, j, giver, d) ?? '';
-}
-
-function capital(t: string): string {
-  return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
 /** How a follower's bond ended, as the chronicle says it. */

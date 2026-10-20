@@ -68,13 +68,13 @@ export function mapOf(s: GameState): RegionMap | null {
   return gen ? regionMap(gen) : null;
 }
 
-/** Where a life starts: its origin's home town, or the region's default. */
 /** An atlas place on the map: itself, or the town that stands for it (a kingdom's seat). */
 export function mapPlaceOf(map: RegionMap, id: string): MapPlace | null {
   const content = regionData(map.id)?.content;
   return placeById(map, content?.homes[id] ?? id) ?? null;
 }
 
+/** Where a life starts: its origin's home town, or the region's default. */
 export function homeOf(s: GameState, map: RegionMap): MapPlace {
   const content = regionData(map.id)!.content;
   // A post you hold keeps you where its shift is kept: the cadet starts on the Wall (O4).

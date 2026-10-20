@@ -259,6 +259,9 @@ export const STANDING_WORDS = [
 ] as const;
 export type StandingWord = (typeof STANDING_WORDS)[number]['word'];
 
+/** A standing word's place in the ladder, hunted 0 up to honored. */
+export const wordRank = (word: string) => STANDING_WORDS.findIndex((w) => w.word === word);
+
 /** Heat caps standing: at each heat, the best standing it allows (design § What lasts). */
 export const HEAT_CAPS = [
   { heat: 9, cap: -60 },

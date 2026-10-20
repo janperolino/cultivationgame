@@ -111,7 +111,7 @@ function handMethod(s: GameState, c: Creation): GameState {
  * The origin path's post (O4): the oath seats you in its power at the outer seat and hands you
  * the post, so the cadet's patrols stand on the wheel from the first day.
  */
-export function handPost(s: GameState, c: Creation): GameState {
+function handPost(s: GameState, c: Creation): GameState {
   const id = originPath(c.roll.origin, c.choice).job;
   if (!id || !hasJob(id)) return s;
   const power = job(id).power;

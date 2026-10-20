@@ -41,6 +41,7 @@ import {
 } from './markets.ts';
 import { priceOf } from './prices.ts';
 import type { World } from './resolver/world.ts';
+import { capitalize } from '../content/words.ts';
 
 /** Who a basket is for: a mortal (0) or a cultivator of a tier (1 to 3). */
 type Who = 0 | 1 | 2 | 3;
@@ -50,7 +51,7 @@ const WHO_KEYS = ['mortals', 'qi', 'foundation', 'core'] as const;
 type Carrier = 'reach' | 'import' | 'local';
 
 /** One good in a market's sum, a month's worth, before the harvest. */
-export interface GoodSum {
+interface GoodSum {
   /** Its ledger name (`goodOf`) and a thing of it at its tier. */
   good: string;
   thing: string;
@@ -71,7 +72,7 @@ export interface GoodSum {
 }
 
 /** A market's whole sum: its goods, and what each need uses among how many goods. */
-export interface MarketSum {
+interface MarketSum {
   goods: Map<string, GoodSum>;
   /** A basket or maker's need at a tier, mortal or not: its use and the goods that fill it. */
   needs: Map<string, { used: number; plain: number; fillers: number }>;
@@ -495,8 +496,6 @@ export function monthUse(w: World, m: Market, thing: string, month: number): num
 
 // ── The line of why ───────────────────────────────────────────────────────────────────────────
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
 /** A good's worth a piece in low-grade stones, a mortal good's taels counted at 100 to the stone. */
 function worth(thing: string): number {
   const it = item(thing);
@@ -583,7 +582,7 @@ function reasonFor(m: Market, need: string): string | undefined {
 function shortLine(m: Market, s: Shortage): string {
   const need = s.need;
   const word = NEED_WORDS[need] ?? { word: need };
-  const head = `${cap(word.word)} ${word.one ? 'runs' : 'run'} short`;
+  const head = `${capitalize(word.word)} ${word.one ? 'runs' : 'run'} short`;
   const land = landOf(m);
   const thin = need === PRESSURE.thin.tag && land.qi <= PRESSURE.thin.qi;
   const wet =
@@ -605,11 +604,11 @@ function surplusLine(m: Market, g: GoodSum): string {
   const is = one ? 'is' : 'are';
   const it_ = one ? 'it' : 'them';
   if (g.used <= 0)
-    return `${cap(name)} ${one ? 'piles' : 'pile'} up: ${m.name} makes ${it_} for the markets round it.`;
+    return `${capitalize(name)} ${one ? 'piles' : 'pile'} up: ${m.name} makes ${it_} for the markets round it.`;
   if (g.land)
-    return `${cap(name)} ${is} cheap: the ${landOf(m).terrain} round ${m.name} gives half again what it uses.`;
+    return `${capitalize(name)} ${is} cheap: the ${landOf(m).terrain} round ${m.name} gives half again what it uses.`;
   const grain = g.season === 'grain';
-  return `${cap(name)} ${is} cheap: ${m.name} ${grain ? 'grows' : 'makes'} half again what it ${grain ? 'eats' : 'uses'}.`;
+  return `${capitalize(name)} ${is} cheap: ${m.name} ${grain ? 'grows' : 'makes'} half again what it ${grain ? 'eats' : 'uses'}.`;
 }
 
 /**

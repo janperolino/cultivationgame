@@ -7,7 +7,7 @@
 // released, told first what it gives up.
 import { copyTitle } from '../content/copies.ts';
 import { regionData, parentsOf } from '../content/map/index.ts';
-import { STANDING_WORDS } from '../content/memories.ts';
+import { wordRank } from '../content/memories.ts';
 import {
   BUY_IN,
   ENTRY,
@@ -49,8 +49,7 @@ import { markFor } from './resolver/marks.ts';
 import { addStanding } from './resolver/opinion.ts';
 import { standingOf } from './resolver/world.ts';
 import { addEvent, addItem, itemCount, realmOf, withPlayer, type GameState } from './state.ts';
-
-const wordRank = (word: string) => STANDING_WORDS.findIndex((w) => w.word === word);
+import { capitalize } from '../content/words.ts';
 
 // ── Whose seat a place is ────────────────────────────────────────────────────────────────────
 
@@ -73,7 +72,7 @@ export function seatPowerAt(map: RegionMap | null, p: MapPlace): string | null {
 // ── The way in ───────────────────────────────────────────────────────────────────────────────
 
 /** The way in as the door shows it: what it is, what it asks, and whether you may ask now. */
-export interface EntryView {
+interface EntryView {
   power: string;
   by: EntryBy;
   title: Title;
@@ -83,7 +82,7 @@ export interface EntryView {
 }
 
 /** The strength a test, an exam or a trial asks: the outer seat's bottom, Qi Condensation 1. */
-export function entryBar(): number {
+function entryBar(): number {
   return sizeAt({ realm: REALMS[0]!.id, stage: 1 });
 }
 
@@ -112,7 +111,7 @@ export function entryOf(s: GameState, power: string): EntryView | null {
     kin: '',
   };
   let shut: string | null = null;
-  if (wordRank(word) <= wordRank('hostile')) shut = `${cap(theName(house))} won't hear you.`;
+  if (wordRank(word) <= wordRank('hostile')) shut = `${capitalize(theName(house))} won't hear you.`;
   else if (e.by === 'sponsor' && wordRank(word) < wordRank(SPONSOR_FROM))
     shut = `Nobody of ${theName(house)} would vouch for you; they don't know you well enough.`;
   return { power: house, by: e.by, title: { name: e.name, hanzi: e.hanzi }, sub: subs[e.by], shut };
@@ -229,7 +228,7 @@ export function offerGift(
 // ── The elders' hall ─────────────────────────────────────────────────────────────────────────
 
 /** What asking to be released gives up, told before you confirm. */
-export interface ReleaseView {
+interface ReleaseView {
   parting: Parting;
   balance: number;
   currency: string;
@@ -300,5 +299,3 @@ export function eldersHall(s: GameState, power: string) {
 export function trialThisMonth(s: GameState, power: string): boolean {
   return eldersHall(s, power)?.trial?.open === true;
 }
-
-const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);

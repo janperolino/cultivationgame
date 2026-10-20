@@ -357,7 +357,7 @@ describe('leaving and what you learned', () => {
     s = { ...s, world: setSeat(joinPower(once.world, YOU, GATE, 0).world, YOU, GATE, 'inner') };
     const left = leavePower(s.world, YOU, GATE, 0, {
       you: true,
-      carries: true,
+      to: 'qm-baijiang-zong',
       knows: [SABER, SABER_2],
     });
     expect(left.parting!.kind).toBe('betrayal');

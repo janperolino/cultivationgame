@@ -144,7 +144,7 @@ export function catchUp(
 }
 
 /** Day steps a slice of a long catch-up runs before the page may draw: about a tenth of a second. */
-export const CATCH_UP_SLICE = 1_000;
+const CATCH_UP_SLICE = 1_000;
 
 /**
  * `catchUp` in slices, `pause` awaited between them, so a long time away never freezes the page

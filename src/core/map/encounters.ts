@@ -597,7 +597,7 @@ function applyStakes(s: GameState, m: Met, stakes: readonly Stake[], rng: Rng): 
  * The art your fight on the road rides on: the technique of yours that lands the most on those you
  * face, unrolled, if it beats your plain strike (O5: what the watchers see you throw).
  */
-export function artThrown(you: Combatant, foes: readonly Combatant[]): string | null {
+function artThrown(you: Combatant, foes: readonly Combatant[]): string | null {
   const f = startFight([{ ...you, side: YOU }, ...foes.map((c) => ({ ...c, side: THEM }))]);
   let best: { id: string | null; n: number } = { id: null, n: 0 };
   for (const t of foes) {
@@ -988,7 +988,7 @@ function powersOn(map: RegionMap): string[] {
 }
 
 /** The law hall walking the road at a spot (O5): the most hunting power whose sphere holds it. */
-export function lawHallHere(s: GameState, map: RegionMap, p: Pt) {
+function lawHallHere(s: GameState, map: RegionMap, p: Pt) {
   return lawHallAt(s.world, powersOn(map), p, s.calendar.day, map);
 }
 

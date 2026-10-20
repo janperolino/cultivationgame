@@ -59,7 +59,7 @@ type Pt = readonly [number, number];
  * Whether someone may use a power's own art openly: one of its members, or one who swore its oath
  * at a clean parting, a fine or restitution.
  */
-export function mayUse(w: World, who: string, power: string, day: number): boolean {
+function mayUse(w: World, who: string, power: string, day: number): boolean {
   const house = houseOf(power);
   return isMember(w, who, house) || !!oathFor(w, who, house, day);
 }
@@ -80,7 +80,7 @@ export function recognizes(w: World, a: Actor, thing: string): boolean {
 }
 
 /** What a power's people saw: whose art, and whether the face went with it. */
-export interface Sighting {
+interface Sighting {
   power: string;
   thing: string;
   /** They know the face: a mark. */
@@ -247,7 +247,7 @@ export function huntOf(w: World, power: string, day: number): number {
  * Whether a spot lies inside a power's sphere: within its atlas radius of its seat, or for one with
  * no radius (a kingdom read as a dynasty, the March) on its own land, read off the map's areas.
  */
-export function inSphere(power: string, at: Pt, map?: RegionMap | null): boolean {
+function inSphere(power: string, at: Pt, map?: RegionMap | null): boolean {
   const house = houseOf(power);
   const s = sphereOf(power) ?? sphereOf(house);
   if (s) return Math.hypot(at[0] - s.x, at[1] - s.y) <= s.sphere;
@@ -262,7 +262,7 @@ export function lawHallRoster(power: string): string | null {
 }
 
 /** The hunt's chapter as the law hall's party reads it: 1, 2, or 3 and up. */
-export function partyChapter(hunt: number): 1 | 2 | 3 {
+function partyChapter(hunt: number): 1 | 2 | 3 {
   return hunt >= 3 ? 3 : hunt >= 2 ? 2 : 1;
 }
 
@@ -307,13 +307,13 @@ export function onSight(w: World, who: string, power: string, day: number): bool
 }
 
 /** What lifting a mark costs, in low-grade stones: the fine (twice) or restitution (three times). */
-export function liftPrice(mark: Mark, how: 'fine' | 'restitution'): number {
+function liftPrice(mark: Mark, how: 'fine' | 'restitution'): number {
   const m = mark.data.method!;
   return Math.round((isSecrets(m) ? COPY_PRICE.method : priceOf(m)) * GUARDED[how]);
 }
 
 /** A mark, read for the place screen and the law hall: whose, what leaked, and what it costs. */
-export interface MarkView {
+interface MarkView {
   power: string;
   name: string;
   method: string;
@@ -328,7 +328,7 @@ export interface MarkView {
   slip: boolean;
 }
 
-export function markView(s: GameState, m: Mark): MarkView {
+function markView(s: GameState, m: Mark): MarkView {
   const power = m.data.power!;
   const fine = liftPrice(m, 'fine');
   const restitution = liftPrice(m, 'restitution');

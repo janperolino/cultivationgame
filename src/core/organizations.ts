@@ -97,7 +97,7 @@ import {
 // ── The record ───────────────────────────────────────────────────────────────────────────────
 
 /** An organization: its atlas row, its type's preset with the power's overrides laid over it. */
-export interface Organization {
+interface Organization {
   id: string;
   name: string;
   hanzi: string;
@@ -207,7 +207,7 @@ export function ladderOf(power: string): Ladder {
 }
 
 /** A seat's realms: from (null for anyone below) to, both inclusive. */
-export interface SeatRange {
+interface SeatRange {
   from: RealmStage | null;
   to: RealmStage;
 }
@@ -324,9 +324,9 @@ export function membershipsOf(w: World, who: string): Member[] {
 }
 
 /** Why a join is refused: already one of theirs, another house or clan held, or the wrong way in. */
-export type Refusal = { ok: false; why: string; holds?: string };
+type Refusal = { ok: false; why: string; holds?: string };
 
-export interface JoinOpts {
+interface JoinOpts {
   /** The one joining is the player, who learns its token and region map. */
   you?: boolean;
   region?: string;
@@ -436,12 +436,10 @@ export interface Parting {
   why: string;
 }
 
-export interface LeaveOpts {
+interface LeaveOpts {
   you?: boolean;
   /** The power they go over to, if any. */
   to?: string;
-  /** They carry off its guarded methods (`carriesGuarded`). */
-  carries?: boolean;
   /** The copies of its guarded methods and arts they know (`guardedKnown`), for the parting (O5). */
   knows?: readonly string[];
   /** Struck from its rolls for three missed quotas: a parting by the rule, kept as its own row. */
@@ -451,7 +449,7 @@ export interface LeaveOpts {
 /**
  * How leaving reads (design: leaving is not betrayal by itself): betrayal where the type's rule
  * is hunted (a gang, a society, assassins, a beast power), deserting a dynasty before its years of
- * service, going over to a power it is hostile to, or carrying off its guarded methods.
+ * service, or going over to a power it is hostile to.
  */
 export function partingOf(
   w: World,
@@ -474,7 +472,6 @@ export function partingOf(
     if (org.row.foes.includes(to) || organization(to).row.foes.includes(house))
       return { kind: 'betrayal', why: `going over to ${theName(to)}` };
   }
-  if (o.carries) return { kind: 'betrayal', why: 'carrying off its guarded methods' };
   return { kind: 'clean', why: org.preset.leave.clean };
 }
 
@@ -554,11 +551,6 @@ export function guardedKnown(c: Cultivator, power: string): string[] {
   return ids.filter((id) => guardedBy(id) === house || guardedBy(id) === power);
 }
 
-/** Whether the player carries off a power's guarded methods: any method or art its hall alone sells. */
-export function carriesGuarded(s: GameState, power: string): boolean {
-  return guardedKnown(s.player, power).length > 0;
-}
-
 /** A member's seat moved by a deed: a trial won, an elder's master tie, an appointment. */
 export function setSeat(w: World, who: string, power: string, seat: SeatId): World {
   const house = houseOf(power);
@@ -595,7 +587,7 @@ export function realmStageOf(s: GameState): RealmStage {
   return { realm: realmOf(s.player), stage: stageOf(s.player) };
 }
 
-export type TrialResult =
+type TrialResult =
   | { ok: false; why: string }
   | {
       ok: true;
@@ -668,7 +660,7 @@ export function yearsPills(power: string): number {
  * Who else the year's trial ranks: the people the world keeps of the power with a realm in its
  * outer seat, by their size. The world keeps no roster of the rest (O3's talk).
  */
-export function trialField(w: World, power: string, you: string): number[] {
+function trialField(w: World, power: string, you: string): number[] {
   const house = houseOf(power);
   const top = seatRanges(house).outer.to;
   return Object.entries(w.kept)
@@ -858,7 +850,7 @@ export function payAllowances(s: GameState): GameState {
 }
 
 /** Where the player dwells by seat while secluding: the power, the seat and its qi density. */
-export interface Dwelling {
+interface Dwelling {
   power: string;
   seat: SeatId;
   density: number;
@@ -959,7 +951,7 @@ export function becomeGuest(
  * belong to, a guest elder's seat last (backing both ways); for anyone the world keeps without a
  * membership, the power written for them.
  */
-export function powerHeld(w: World, who: string): string | null {
+function powerHeld(w: World, who: string): string | null {
   const order = { house: 0, kin: 1, stack: 2 } as const;
   const mine = membershipsOf(w, who)
     .filter((m) => isOrganization(m.power))
@@ -977,7 +969,7 @@ export function headRealm(power: string): RealmStage {
 }
 
 /** Whether a seat carries the power's death talisman: from the true seat up, under a Core-led head. */
-export function carriesTalisman(power: string, seat: SeatId | null): boolean {
+function carriesTalisman(power: string, seat: SeatId | null): boolean {
   return (
     !!seat &&
     seatRank(seat) >= seatRank(TALISMAN.seat) &&
@@ -1087,7 +1079,7 @@ export function protectorSpent(s: GameState): GameState {
 // ── What it asks (O3) ────────────────────────────────────────────────────────────────────────
 
 /** A seat's monthly quota in the power's currency: none at a generous power or for a guest. */
-export function quotaOf(power: string, seat: SeatId, guest = false): number {
+function quotaOf(power: string, seat: SeatId, guest = false): number {
   if (guest || organization(houseOf(power)).treatment === 'generous') return 0;
   return QUOTA[seat];
 }

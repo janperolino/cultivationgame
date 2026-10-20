@@ -48,9 +48,7 @@ import { readingLine } from './bookcase.ts';
 import { useBeacons } from './useBeacons.ts';
 import { rings } from './beacons.ts';
 import { LifeEdgeCard, Why } from './widgets.tsx';
-
-/** A note's first letter raised, for a line of its own. */
-const raise = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+import { capitalize } from '../content/words.ts';
 
 function DayTab({ game, head }: { game: GameState; head: ReactNode }) {
   const setPlan = useGame((s) => s.setPlan);
@@ -204,7 +202,7 @@ function DayTab({ game, head }: { game: GameState; head: ReactNode }) {
               ))}
             </dl>
           )}
-          {!road && reading && <p className="day-band-note">{raise(reading)}</p>}
+          {!road && reading && <p className="day-band-note">{capitalize(reading)}</p>}
         </div>
         <div className="day-band-col">
           {road ? <RoadFold game={game} /> : <HomeFold game={game} />}
@@ -298,9 +296,9 @@ function DayTab({ game, head }: { game: GameState; head: ReactNode }) {
 function roadLine(game: GameState): string {
   const life = game.map;
   const r = life ? roadRoutine(life) : ROAD_ROUTINES[0]!;
-  if (!life) return `${raise(r.note)}.`;
+  if (!life) return `${capitalize(r.note)}.`;
   const w = WAYS.find((x) => x.id === life.way)!;
-  return `${raise(r.note)} · ${w.name.toLowerCase()}, ${Math.round(liPerDay(game)).toLocaleString('en-US')} li a day`;
+  return `${capitalize(r.note)} · ${w.name.toLowerCase()}, ${Math.round(liPerDay(game)).toLocaleString('en-US')} li a day`;
 }
 
 /**
@@ -502,7 +500,7 @@ function RoadFold({ game }: { game: GameState }) {
             name={r.name}
             hours={r.hours}
             now={current.id === r.id}
-            note={`${raise(r.note)}.`}
+            note={`${capitalize(r.note)}.`}
           >
             {current.id !== r.id && (
               <button

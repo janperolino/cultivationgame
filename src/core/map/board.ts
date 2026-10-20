@@ -18,6 +18,7 @@ import {
   addBalance,
   houseOf,
   isOrganization,
+  monthIndex,
   organization,
   realmStageOf,
   theName,
@@ -26,7 +27,6 @@ import {
 import { receive, stonesOf, tierGrade, withStones } from '../purse.ts';
 import { isMember } from '../resolver/names.ts';
 import { hashSeed, Rng } from '../rng.ts';
-import { monthOf } from '../shops.ts';
 import { addEvent, withPlayer, type GameState } from '../state.ts';
 import { bandAt } from './depth.ts';
 import { contact } from './encounters.ts';
@@ -111,7 +111,7 @@ function bearing(from: MapPlace, to: MapPlace): string {
  * The power a town board posts for: the nearest power whose land the town stands in, up its atlas
  * parents (Pacified Fort's board posts for the March). A posting paid out is a mission done for it.
  */
-export function landPowerOf(board: MapPlace): string | null {
+function landPowerOf(board: MapPlace): string | null {
   for (const id of [board.id, board.area, ...parentsOf(board.id)])
     if (id && isOrganization(id)) return houseOf(id);
   return null;
@@ -125,7 +125,7 @@ function patronOf(board: MapPlace): { patron?: string } {
 /** This month's postings on a board: seeded by the place and the month, the same for every visit. */
 export function postingsAt(s: GameState, map: RegionMap, board: MapPlace): Posting[] {
   if (!hasBoard(board)) return [];
-  const month = monthOf(s.calendar.day);
+  const month = monthIndex(s.calendar.day);
   const rng = new Rng(hashSeed(`board/${board.id}/${month}`));
   const pool = goalTemplates(board);
   const out: Posting[] = [];

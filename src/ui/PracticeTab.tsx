@@ -58,8 +58,7 @@ import {
 } from './techniqueList.ts';
 import { Picker, Why } from './widgets.tsx';
 import { MasteryRing, RoutineScene } from './RoutineRings.tsx';
-
-const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+import { capitalize } from '../content/words.ts';
 
 /** Each mastery level adds this to checks with the technique (design § Cultivation, Mastery). */
 const CHECKS_A_LEVEL = 2;
@@ -400,7 +399,7 @@ function TechniqueList({
                 value={dao ?? ''}
                 options={[
                   { id: '', name: 'Any Dao' },
-                  ...filters.daos.map((d) => ({ id: d, name: capital(d) })),
+                  ...filters.daos.map((d) => ({ id: d, name: capitalize(d) })),
                 ]}
                 onChange={(id) => setDao(id || null)}
               />
@@ -631,12 +630,12 @@ function TechniquePage({
   const art = techniqueArt(t.id);
   const look = rarityLook(t.rarity);
   const chips = [
-    `${capital(ladder)} technique, tier ${t.tier} (${realmName})`,
-    capital(t.form),
-    capital(t.damage),
+    `${capitalize(ladder)} technique, tier ${t.tier} (${realmName})`,
+    capitalize(t.form),
+    capitalize(t.damage),
     `Power ${t.power}`,
     `${t.qiCost} qi`,
-    ...(t.daos.length > 0 ? [`${t.daos.map(capital).join(', ')} Dao`] : []),
+    ...(t.daos.length > 0 ? [`${t.daos.map(capitalize).join(', ')} Dao`] : []),
   ];
 
   return (
@@ -700,7 +699,7 @@ function TechniquePage({
       )}
       {art && <ArtLine c={c} art={art} />}
       <div className="technique-page-foot">
-        <span className="caption">{capital(t.source)}.</span>
+        <span className="caption">{capitalize(t.source)}.</span>
         <button
           type="button"
           className={`button${ring ? ' beacon-ring' : ''}`}

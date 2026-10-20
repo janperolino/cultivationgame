@@ -186,7 +186,6 @@ describe('membership', () => {
       why: 'going over to the Hundred Reins Sect',
     });
     expect(rows(toReins.world, GATE).some((s) => s.row === 'betrayed-us')).toBe(true);
-    expect(leavePower(w, YOU, GATE, 10, { carries: true }).parting?.kind).toBe('betrayal');
     const soldier = join(emptyWorld(), 'qm-anbian-fu');
     expect(leavePower(soldier, YOU, 'qm-anbian-fu', 360).parting?.why).toBe('deserting');
     expect(leavePower(soldier, YOU, 'qm-anbian-fu', 3600).parting?.kind).toBe('clean');

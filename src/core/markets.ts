@@ -268,7 +268,7 @@ export function mortalWages(prosperity: number): number {
 // ── Who lives there ───────────────────────────────────────────────────────────────────────────
 
 /** A population's head count keys, mortals first, then the realms in order. */
-export const POPULATION_KEYS = [
+const POPULATION_KEYS = [
   'mortals',
   'qi',
   'foundation',
@@ -299,7 +299,7 @@ export function populationOf(w: World, id: string): Population {
 // ── Shops by prosperity and vein ──────────────────────────────────────────────────────────────
 
 /** The prosperity a shop reads: a sect shop its power's, any other its market's. */
-export function shopProsperity(w: World, sh: Shop, day: number): number {
+function shopProsperity(w: World, sh: Shop, day: number): number {
   if (SHOP_KIND_INFO[sh.kind].members && sh.power) return prosperityOf(w, sh.power, day);
   return prosperityOf(w, marketOfShop(sh.id)?.id ?? sh.at, day);
 }
@@ -308,7 +308,7 @@ export function shopProsperity(w: World, sh: Shop, day: number): number {
  * The highest tier a place's people buy (`TIER_BY_PEOPLE`): tier 3 where a Core Formation
  * cultivator lives, tier 2 where twenty Foundation cultivators do, tier 1 otherwise.
  */
-export function peopleTier(pop: Population): number {
+function peopleTier(pop: Population): number {
   const core = (pop.core ?? 0) + (pop.nascent ?? 0) + (pop.deity ?? 0) + (pop.void ?? 0);
   if (core >= TIER_BY_PEOPLE.core) return 3;
   if ((pop.foundation ?? 0) >= TIER_BY_PEOPLE.foundation) return 2;
@@ -367,12 +367,10 @@ export function marketSize(m: Market): number {
 /**
  * What a market's people earn in a month (What a market holds, a shop's purse): each cultivator a
  * month of wages at their realm and its prosperity, counting only the realms whose tier its shops
- * stock (a Nascent Soul's spending doesn't pass through tier 3 shops), in low-grade stones; or,
- * for its mortals, a month of a laborer's wages each, in taels.
+ * stock (a Nascent Soul's spending doesn't pass through tier 3 shops), in low-grade stones.
  */
-export function earnings(w: World, m: Market, prosperity: number, mortals: boolean): number {
+export function earnings(w: World, m: Market, prosperity: number): number {
   const pop = populationOf(w, m.id);
-  if (mortals) return (pop.mortals ?? 0) * mortalWages(prosperity) * DAYS_PER_MONTH;
   const top = stoneTopTier(m);
   return POPULATION_KEYS.slice(1, top + 1).reduce(
     (t, k, i) => t + (pop[k] ?? 0) * wages(i + 1, prosperity) * DAYS_PER_MONTH,
@@ -439,7 +437,7 @@ export function shopPurse(w: World, sh: Shop, day: number): number {
   const mortal = info.money === 'silver';
   const money = mortal
     ? (populationOf(w, m.id).mortals ?? 0) * MORTAL_SPEND_TAELS * PROSPERITY[p]!.wages
-    : earnings(w, m, p, false) * PURSE_SHARE * (doorShares(m).get(door?.id ?? sh.id) ?? 0);
+    : earnings(w, m, p) * PURSE_SHARE * (doorShares(m).get(door?.id ?? sh.id) ?? 0);
   return Math.round(Math.max(floor, (money * sh.weight) / weights));
 }
 
@@ -473,7 +471,7 @@ export function placeLots(place: string): Lot[] {
 }
 
 /** A lent lot: what a market in reach makes and its own shops stock, and which market lends it. */
-export interface LentLot {
+interface LentLot {
   lot: Lot;
   from: string;
 }
@@ -687,7 +685,7 @@ export function copyInto(w: World, m: Market, thing: string, day: number): World
  * Whether a leaked copy is gone from the black market's shelf: its power, told it leaked, buys the
  * copy out within a season (design § Guarded methods), three months after the month it was sold.
  */
-export function boughtOut(soldMonth: number, month: number): boolean {
+function boughtOut(soldMonth: number, month: number): boolean {
   return month - soldMonth >= GUARDED.buyoutMonths;
 }
 

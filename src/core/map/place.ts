@@ -39,7 +39,7 @@ import {
   withStones,
 } from '../purse.ts';
 import { Rng } from '../rng.ts';
-import { monthOf } from '../shops.ts';
+import { monthIndex } from '../organizations.ts';
 import { addItem, realmOf, withPlayer, type GameState } from '../state.ts';
 import { known, raise, rumor, sketchKingdom, sketchRegion } from './fog.ts';
 import { placeKindOf, standsAt } from './gate.ts';
@@ -220,7 +220,7 @@ export interface Guide {
 export function guidesAt(s: GameState, placeId: string): Guide[] {
   const here = insideOf(s);
   if (!here || here.place.id !== placeId) return [];
-  const month = monthOf(s.calendar.day);
+  const month = monthIndex(s.calendar.day);
   const rng = Rng.fromString(`guides/${placeId}/${month}`);
   const trades = [...GUIDE_TRADES];
   const out: Guide[] = [];

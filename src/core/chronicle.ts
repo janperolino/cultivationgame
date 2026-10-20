@@ -6,7 +6,7 @@ import { EVENT_TEMPLATES, pronounWords, type EventData, type Who } from '../cont
 import { ERA_START_YEAR } from '../content/calendar.ts';
 import { placeName } from '../content/origins.ts';
 import { personSlots } from './people.ts';
-import { ordinal } from '../content/words.ts';
+import { capitalize, ordinal } from '../content/words.ts';
 import type { Note } from './cultivation.ts';
 import { DAYS_PER_YEAR, type ChronicleEvent, type Cultivator, type GameState } from './state.ts';
 
@@ -58,7 +58,9 @@ export function seasonOf(day: number): Season {
 
 /** The season of a world day as 0–3, spring first. */
 export function seasonIndex(day: number): number {
-  const month = Math.floor((((day % DAYS_PER_YEAR) + DAYS_PER_YEAR) % DAYS_PER_YEAR) / DAYS_PER_MONTH);
+  const month = Math.floor(
+    (((day % DAYS_PER_YEAR) + DAYS_PER_YEAR) % DAYS_PER_YEAR) / DAYS_PER_MONTH,
+  );
   return Math.floor(month / 3);
 }
 
@@ -81,5 +83,3 @@ export function yearDigits(year: number): string {
 export function worldWhen(day: number): string {
   return `${capitalize(seasonOf(day))} ${yearDigits(worldYear(day))}`;
 }
-
-const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);

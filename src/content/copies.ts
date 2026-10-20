@@ -94,7 +94,7 @@ export function copyManual(id: string): Manual {
  * bound book, copied by hand; from tier 2 up it is a jade slip, read and copied by divine sense.
  * Only a slip can be sealed: one at gold and up, or one written as sealed.
  */
-export type CopyForm = 'book' | 'slip' | 'sealed';
+type CopyForm = 'book' | 'slip' | 'sealed';
 export const COPY_FORM_WORDS: Record<CopyForm, string> = {
   book: 'a bound book',
   slip: 'a jade slip',

@@ -9,7 +9,7 @@ import { LADDERS } from '../content/cultivation.ts';
 import { encounterTemplate } from '../content/encounters/index.ts';
 import { stepLabel } from '../content/chronicle.ts';
 import { realm } from '../content/realms.ts';
-import { countWord, spanWords, timesWord } from '../content/words.ts';
+import { capitalize, countWord, spanWords, timesWord } from '../content/words.ts';
 import { renderEvent, whoFor } from './chronicle.ts';
 import { barFill, majorCheck, type LadderId } from './cultivation.ts';
 import { firstsWaitingLines } from './firsts.ts';
@@ -76,7 +76,6 @@ const LADDER_WORDS: Record<LadderId, { name: string; verb: string }> = {
   soul: { name: 'soul', verb: 'deepens' },
 };
 
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /** Lines from the road told before the rest are summed up. */

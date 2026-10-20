@@ -5,7 +5,7 @@
 // design's; the play checkpoint tunes them.
 
 /** One step of prosperity: its word, and what it does to a market's purses, lots and wages. */
-export interface ProsperityRow {
+interface ProsperityRow {
   word: string;
   purse: number;
   lots: number;

@@ -15,6 +15,7 @@ import {
   type RoadHour,
   type WayId,
 } from '../content/map/travel.ts';
+import { ENTER_LI } from '../content/map/places.ts';
 import { worldWhen } from '../core/chronicle.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import { band, bandAt, depthInfo, pullsIn, qiAt } from '../core/map/depth.ts';
@@ -85,6 +86,7 @@ function pileWords(items: Record<string, number>): string {
     .join(', ');
 }
 import { Picker } from './widgets.tsx';
+import { capitalize } from '../content/words.ts';
 
 const TERRAIN_WORDS: Record<string, string> = { sea: 'at sea' };
 
@@ -321,7 +323,7 @@ function MapView({
             joined = r.joined;
             say(
               r.joined
-                ? `${cap(theName(power))} takes you in.`
+                ? `${capitalize(theName(power))} takes you in.`
                 : `Short: ${r.yours?.toFixed(1)} against ${r.bar?.toFixed(1)}. They send you away.`,
             );
             return r;
@@ -338,7 +340,7 @@ function MapView({
         run: () =>
           act((s) => {
             const r = liftByPaying(s, power, 'restitution');
-            if (r.ok) say(`${cap(theName(power))} lifts its mark.`);
+            if (r.ok) say(`${capitalize(theName(power))} lifts its mark.`);
             return r;
           }),
       });
@@ -473,11 +475,11 @@ function MapView({
     // not at still offers going there.
     const here =
       q && 'x' in q
-        ? Math.hypot(q.x - life.at[0], q.y - life.at[1]) < 250
+        ? Math.hypot(q.x - life.at[0], q.y - life.at[1]) < ENTER_LI
         : Math.hypot(ux - sx, uy - sy) < 16;
     if (here) {
       const atPlace =
-        q && 'x' in q && Math.hypot(q.x - life.at[0], q.y - life.at[1]) < 250 ? q : null;
+        q && 'x' in q && Math.hypot(q.x - life.at[0], q.y - life.at[1]) < ENTER_LI ? q : null;
       return {
         x: sx,
         y: sy,
@@ -604,13 +606,14 @@ function MapView({
   );
   const bd = band(b);
   const above = bd && pullsIn(b, band0);
-  // The place you stand at, if any (within 250 li, as the right-click menu reads it), and the lore
+  // The place you stand at, if any (within ENTER_LI, as the right-click menu reads it), and the lore
   // of it or of the land round you.
   const atPlace =
     map.places
       .filter(
         (p) =>
-          known(life, p.id) !== 'unknown' && Math.hypot(p.x - life.at[0], p.y - life.at[1]) < 250,
+          known(life, p.id) !== 'unknown' &&
+          Math.hypot(p.x - life.at[0], p.y - life.at[1]) < ENTER_LI,
       )
       .sort(
         (p, q) =>
@@ -1306,5 +1309,3 @@ function AheadRow({
     </button>
   );
 }
-
-const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);

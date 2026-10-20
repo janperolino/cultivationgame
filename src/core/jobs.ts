@@ -67,7 +67,7 @@ export function jobPay(j: Job, r: RealmId): { points: number; stones: number } {
     : { points: day, stones: 0 };
 }
 
-export function heldJob(c: Cultivator, id: string): Held | undefined {
+function heldJob(c: Cultivator, id: string): Held | undefined {
   return c.jobs.find((h) => h.id === id);
 }
 
@@ -123,7 +123,7 @@ export function onShift(s: GameState): Cultivator {
   return jobs.length === c.jobs.length ? c : { ...c, jobs };
 }
 
-export type JobCheck = { ok: true; state: GameState } | { ok: false; reason: string };
+type JobCheck = { ok: true; state: GameState } | { ok: false; reason: string };
 
 /**
  * What a job asks of whoever takes it, as its posting says it before you take it: a post's seat,
@@ -184,7 +184,7 @@ export function takeJob(s: GameState, id: string): JobCheck {
 }
 
 /** What leaving a job costs, in words, by its giver's rule. */
-export function leavingWords(j: Job): string {
+function leavingWords(j: Job): string {
   if (j.leave === 'free' || !j.power) return 'You may leave it freely.';
   return `Leaving it is leaving ${theName(houseOf(j.power))}.`;
 }
@@ -230,7 +230,7 @@ export function partWays(s: GameState, power: string, o: { to?: string } = {}): 
 }
 
 /** A post goes with its power: one whose membership is gone (struck off, left) is dropped. */
-export function dropLost(s: GameState): GameState {
+function dropLost(s: GameState): GameState {
   const c = s.player;
   const jobs = c.jobs.filter((h) => {
     if (!hasJob(h.id)) return false;

@@ -39,6 +39,11 @@ const TENS_TH = [
   'ninetieth',
 ];
 
+/** "orphaned by a raid" → "Orphaned by a raid". */
+export function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 /** 14 → "fourteenth", 32 → "thirty-second"; past 99, "137th". */
 export function ordinal(n: number): string {
   if (n < 1 || n > 99 || !Number.isInteger(n)) {

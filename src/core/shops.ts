@@ -70,7 +70,14 @@ import {
 } from './markets.ts';
 import { counterSells, hallTerms, pavilionKeeps, titheFor } from './halls.ts';
 import { marketSum } from './making.ts';
-import { addBalance, givenBy, houseOf, isOrganization, membership } from './organizations.ts';
+import {
+  addBalance,
+  givenBy,
+  houseOf,
+  isOrganization,
+  membership,
+  monthIndex,
+} from './organizations.ts';
 import { priceOf } from './prices.ts';
 import { pay, paySilver, receive, stonesOf, tierGrade, withStones } from './purse.ts';
 import { actorFromCultivator, plainActor } from './resolver/actor.ts';
@@ -85,10 +92,6 @@ import { addItem, itemCount, withPlayer, type GameState } from './state.ts';
 
 /** A staple: the `trade` tag (core/markets.ts). */
 export { isStaple } from './markets.ts';
-
-export function monthOf(day: number): number {
-  return Math.floor(day / DAYS_PER_MONTH);
-}
 
 /** One lot on a shop's shelf this month: what, how many, and the posted price of one. */
 export interface StockLot {
@@ -183,7 +186,7 @@ function claimFresh(thing: string): ShopKind {
  * only a trading house carries it. A mortal good has only the grain and cloth market.
  */
 const sellerCache = new Map<string, ShopKind | null>();
-export function sellerAt(m: Market, thing: string): ShopKind | null {
+function sellerAt(m: Market, thing: string): ShopKind | null {
   const key = `${m.id}|${thing}`;
   let seller = sellerCache.get(key);
   if (seller === undefined) {
@@ -549,7 +552,7 @@ export function stockOf(shopId: string, month: number, w: World = EMPTY): StockL
 
 /** What you have done to a shop this month: nothing, when the month has turned. */
 export function shopMonth(w: World, shopId: string, day: number): ShopMonth {
-  const m = monthOf(day);
+  const m = monthIndex(day);
   const kept = w.shops[shopId];
   return kept && kept.month === m
     ? kept
@@ -595,7 +598,7 @@ function haggleOff(sm: ShopMonth, day: number): number {
  * How many of a line a buy takes: a display lot whole, a standing line `count` (one, ten or a Bag
  * square) up to what stands, an endless line a lot of its catalog count unless told.
  */
-export function buyCount(lot: StockLot, count?: number): number {
+function buyCount(lot: StockLot, count?: number): number {
   if (!lot.standing) return lot.n;
   // A count that isn't a whole number (a typed "abc") is no count: the lot's own.
   if (count !== undefined && !Number.isFinite(count)) count = undefined;

@@ -77,9 +77,9 @@ export interface ChatOptions {
 }
 
 /** A whole request gives up after this long. */
-export const REQUEST_TIMEOUT_MS = 90_000;
+const REQUEST_TIMEOUT_MS = 90_000;
 /** A stream that sends nothing for this long has stalled, and is dropped. */
-export const STALL_MS = 30_000;
+const STALL_MS = 30_000;
 /** Statuses worth one more try before the first token: rate limits and a host falling over. */
 const RETRY_STATUSES = [429, 502, 503];
 const RETRY_WAIT_MS = 1_500;

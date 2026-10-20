@@ -477,7 +477,7 @@ export const generatedAtlasSchema = z
 export type GeneratedAtlas = z.infer<typeof generatedAtlasSchema>;
 
 /** What the game's place index reads of an entry (core/resolver/knows.ts `PlaceEntry`). */
-export interface AtlasIndexEntry {
+interface AtlasIndexEntry {
   id: string;
   kind: string;
   parent?: string;

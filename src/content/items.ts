@@ -211,12 +211,12 @@ export const STAPLE_TAGS = [
   'ore',
   'bone-meal',
 ] as const;
-export type StapleTag = (typeof STAPLE_TAGS)[number];
+type StapleTag = (typeof STAPLE_TAGS)[number];
 /**
  * A thing's market tags: `coveted` is needed everywhere, `trade` marks a staple and its kind (E3),
  * and `ink` what a talisman's maker uses (E4).
  */
-export type ItemTag = 'coveted' | 'trade' | 'ink' | StapleTag;
+type ItemTag = 'coveted' | 'trade' | 'ink' | StapleTag;
 
 export interface Item {
   id: string;
@@ -704,7 +704,7 @@ const rarityIds = new Set<RarityId>(RARITY_IDS);
  * Kinds whose tier is the source's: a beast's core and parts take the beast's realm, and a pill or
  * talisman is drawn at its maker's tier.
  */
-export const TIERED: readonly ItemKind[] = ['beast-part', 'material', 'pill', 'talisman'];
+const TIERED: readonly ItemKind[] = ['beast-part', 'material', 'pill', 'talisman'];
 
 /**
  * The id of a written thing at a rarity, a tier or damaged: "shark-tooth-spear~green",

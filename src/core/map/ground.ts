@@ -9,7 +9,7 @@ import { addItem, withPlayer, type Cultivator, type GameState } from '../state.t
 import type { Pt } from './geometry.ts';
 import type { MapLife } from './schema.ts';
 
-export type Pile = NonNullable<MapLife['ground']>[number];
+type Pile = NonNullable<MapLife['ground']>[number];
 
 const live = (day: number) => (p: Pile) => day - p.day < GROUND_DAYS;
 
@@ -33,7 +33,7 @@ export function pilesHere(s: GameState): { pile: Pile; i: number }[] {
  * Sets things down on the ground of a map life: onto a pile within reach of the spot, which then
  * lies from today, or as a new one. Piles past their days are swept away.
  */
-export function dropOn(life: MapLife, at: Pt, day: number, items: Record<string, number>): MapLife {
+function dropOn(life: MapLife, at: Pt, day: number, items: Record<string, number>): MapLife {
   const piles = (life.ground ?? []).filter(live(day));
   // The nearest pile in reach, not the first written.
   let i = -1;
@@ -93,7 +93,7 @@ export function gainInto(
   return { c: r.c, life: r.left > 0 ? dropOn(life, life.at, day, { [id]: r.left }) : life };
 }
 
-export type GroundCheck = { ok: true; state: GameState } | { ok: false; reason: string };
+type GroundCheck = { ok: true; state: GameState } | { ok: false; reason: string };
 
 /** Sets one of the Bag's stacks down where you stand: the `at`-th stack of the item, whole. */
 export function dropStack(s: GameState, id: string, at: number): GroundCheck {

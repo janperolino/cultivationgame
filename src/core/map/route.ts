@@ -43,7 +43,7 @@ export function groundFactor(map: RegionMap, p: Pt, roads = true): number {
 }
 
 /** Your pace off the road on a stretch, as a share of the road's: the harmonic mean over its ground. */
-export function crossFactor(map: RegionMap, a: Pt, b: Pt, roads = true): number {
+function crossFactor(map: RegionMap, a: Pt, b: Pt, roads = true): number {
   const n = Math.max(4, Math.min(24, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 1500)));
   let s = 0;
   for (let i = 0; i < n; i++) {
