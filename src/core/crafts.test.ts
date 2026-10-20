@@ -254,7 +254,9 @@ describe('in play', () => {
     const wheel = s.player.wheel.map((k, i) => (i >= 4 && i < 8 ? 'craft' : k));
     s = withPlayer(s, queueBatches({ ...s.player, wheel }, QI_PILL, 2).cultivator);
     for (let d = 0; d < 3; d++) {
-      s = cultivate({ ...s, calendar: { ...s.calendar, day: s.calendar.day + 1 } }, 1);
+      s = cultivate({ ...s, calendar: { ...s.calendar, day: s.calendar.day + 1 } }, 1, {
+        offline: false,
+      });
     }
     expect(s.player.crafts.recent.length).toBe(2);
     expect(s.player.crafts.bench).toEqual([]);
