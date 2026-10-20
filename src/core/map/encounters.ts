@@ -54,7 +54,17 @@ import type { Combatant } from '../combat/combatant.ts';
 import { generateBeast, generateCultivator, generatePack } from '../combat/generate.ts';
 import type { Npc } from '../combat/generate.ts';
 import { kitOf } from '../loot.ts';
-import { asMember } from '../organizations.ts';
+import { asMember, isOrganization } from '../organizations.ts';
+import { LAW_HALL_PARTY } from '../../content/organizations.ts';
+import {
+  artCopy,
+  lawHallAt,
+  lawHallBand,
+  lawHallRoster,
+  liftByPaying,
+  seenUsing,
+  yourMark,
+} from '../guarded.ts';
 import {
   canPay,
   pay,
@@ -162,6 +172,18 @@ function roleActors(s: GameState, enc: Encounter, role: Role, npcs: Record<strin
     return Array.from({ length: n }, (_, i) =>
       plainActor({ id: idOf(i), name: role.name, side: THEM }),
     );
+  }
+  // The hunting power's law hall: its own disciples, as many as the hunt sends (O5).
+  if ('lawHall' in who) {
+    const roster = enc.power ? lawHallRoster(enc.power) : null;
+    const t = roster ? rosterTemplate(roster) : null;
+    if (!t || t.kind !== 'cultivator') return [];
+    const ch = encounterTemplate(enc.template).where.lawHall ?? 1;
+    return Array.from({ length: LAW_HALL_PARTY[ch].count }, (_, i) => {
+      const npc = generateCultivator(t, at.realm, at.stage, rng, { id: idOf(i), side: THEM });
+      npcs[idOf(i)] = npc;
+      return actorFromNpc(npc, { name: role.name });
+    });
   }
   // A person the world keeps: the one with a grudge, or someone from home.
   const person = plotPerson(s, who.person);
@@ -314,6 +336,19 @@ export function exitViews(s: GameState, m: Met): ExitView[] {
       refused = `It costs ${exit.cost.stones} low-grade stones.`;
     if (exit.cost?.item && itemCount(s.player, exit.cost.item) <= 0)
       refused = `You have no ${hasItem(exit.cost.item) ? item(exit.cost.item).name : exit.cost.item}.`;
+    // The law hall's fine is taken only from a face it marked, at cold and up; while it knows your
+    // face it won't let you walk on (O5).
+    const fines = [exit.pass, exit.close, exit.short].some((o) =>
+      o?.stakes?.some((k) => k.do === 'fine'),
+    );
+    const mark = m.template.where.lawHall && m.enc.power ? yourMark(s, m.enc.power) : null;
+    if (fines && !refused) {
+      if (!mark) refused = 'They hold nothing against you.';
+      else if (mark.onSight) refused = 'They won’t take a fine from you now.';
+      else if (!canPay(stonesOf(s.player), mark.fine)) refused = `The fine is ${mark.fineWords}.`;
+    }
+    if (mark && exit.road === 'pass' && !refused)
+      refused = 'They know your face; they won’t let you walk on.';
     const them = faced(m, exit);
     if (exit.road === 'fight') {
       const edge = fightEdge(m.you.combatant!, them.map((a) => a.combatant!).filter(Boolean));
@@ -329,11 +364,15 @@ export function exitViews(s: GameState, m: Met): ExitView[] {
     if (exit.road === 'take' || exit.road === 'pass' || exit.road === 'deal') {
       const why =
         exit.road === 'deal'
-          ? exit.cost?.stones
-            ? `${exit.cost.stones} low-grade stones`
-            : exit.cost?.item
-              ? `one ${hasItem(exit.cost.item) ? item(exit.cost.item).name : exit.cost.item}`
-              : 'a deal'
+          ? fines
+            ? mark
+              ? `the fine: ${mark.fineWords}${mark.slip ? ' and the slip' : ''}`
+              : 'a fine'
+            : exit.cost?.stones
+              ? `${exit.cost.stones} low-grade stones`
+              : exit.cost?.item
+                ? `one ${hasItem(exit.cost.item) ? item(exit.cost.item).name : exit.cost.item}`
+                : 'a deal'
           : exit.road === 'take'
             ? 'an hour off your road'
             : 'walk on';
@@ -536,9 +575,40 @@ function applyStakes(s: GameState, m: Met, stakes: readonly Stake[], rng: Rng): 
         break;
       case 'place':
         break;
+      case 'fine':
+        if (m.enc.power) {
+          const r = liftByPaying(st, m.enc.power, 'fine');
+          if (r.ok) st = r.state;
+        }
+        break;
+      case 'their-standing':
+        if (m.enc.power)
+          st = applyEffects(st, null, [
+            { do: 'standing', power: m.enc.power, about: pid, row: k.row },
+          ]).state;
+        break;
     }
   }
   return st;
+}
+
+/**
+ * The art your fight on the road rides on: the technique of yours that lands the most on those you
+ * face, unrolled, if it beats your plain strike (O5: what the watchers see you throw).
+ */
+export function artThrown(you: Combatant, foes: readonly Combatant[]): string | null {
+  const f = startFight([{ ...you, side: YOU }, ...foes.map((c) => ({ ...c, side: THEM }))]);
+  let best: { id: string | null; n: number } = { id: null, n: 0 };
+  for (const t of foes) {
+    const strike = preview(f, you.id, { type: 'strike', target: t.id });
+    if (strike && strike.chance * strike.damage > best.n)
+      best = { id: null, n: strike.chance * strike.damage };
+    for (const id of Object.keys(you.techniques)) {
+      const p = preview(f, you.id, { type: 'technique', id, target: t.id });
+      if (p && p.chance * p.damage > best.n) best = { id, n: p.chance * p.damage };
+    }
+  }
+  return best.id;
 }
 
 /** The nearest hidden site that isn't Seen turns Seen: a lead followed. */
@@ -628,6 +698,20 @@ export function settle(
   const rng = new Rng(hashSeed(`${enc.id}/settle/${i}`));
   const { o, extra, stays } = outcomeOf(m, e, view.verdict);
   st = applyStakes(st, m, [...(o.stakes ?? []), ...extra], rng);
+  // A fight shows the art you throw to everyone there; a power's own is known for it (O5).
+  if (e.road === 'fight' && m.you.combatant) {
+    const art = artThrown(
+      m.you.combatant,
+      faced(m, e)
+        .map((a) => a.combatant)
+        .filter((c): c is Combatant => !!c),
+    );
+    if (art)
+      st = seenUsing(st, [artCopy(art)], m.actors, m.you, {
+        place: enc.id,
+        ...(life.region ? { region: life.region } : {}),
+      }).state;
+  }
   const l = st.map!;
   if (stays) {
     return {
@@ -880,8 +964,25 @@ function eligible(s: GameState, map: RegionMap, p: Pt, hour: number, onRoad: boo
     )
       return false;
     if (w.needs && !plotPerson(s, w.needs)) return false;
+    if (w.lawHall && lawHallHere(s, map, p)?.chapter !== w.lawHall) return false;
     return true;
   });
+}
+
+/** The powers whose seats stand on a map. */
+const powersCache = new Map<string, string[]>();
+function powersOn(map: RegionMap): string[] {
+  let out = powersCache.get(map.id);
+  if (!out) {
+    out = map.places.filter((q) => q.kind === 'atlas' && isOrganization(q.id)).map((q) => q.id);
+    powersCache.set(map.id, out);
+  }
+  return out;
+}
+
+/** The law hall walking the road at a spot (O5): the most hunting power whose sphere holds it. */
+export function lawHallHere(s: GameState, map: RegionMap, p: Pt) {
+  return lawHallAt(s.world, powersOn(map), p, s.calendar.day);
 }
 
 /** The band an encounter of a kind comes at: the spot's off the road, people at yours ±1 on it. */
@@ -904,6 +1005,8 @@ function bandFor(
 export interface Draw {
   template: Template;
   band: number;
+  /** The power whose law hall walks it, for a law hall's encounter. */
+  power?: string;
 }
 
 /** Picks what comes: a kind by its shares, then a template at the band by weight. */
@@ -958,6 +1061,9 @@ export function draw(
   const wTotal = fits.reduce((n, t) => n + weight(t), 0);
   let v = rng.next() * wTotal;
   const template = fits.find((t) => (v -= weight(t)) < 0) ?? fits[fits.length - 1]!;
+  // The law hall comes as the strongest of the seat its hunt sends, whatever your band (O5).
+  const law = template.where.lawHall ? lawHallHere(s, map, p) : null;
+  if (law) return { template, band: lawHallBand(law.power, law.chapter), power: law.power };
   return { template, band: Math.max(0, band) };
 }
 
@@ -1014,6 +1120,7 @@ export function arrive(
     tried: [],
     day: s.calendar.day,
     where: whereWords(map, ahead.at),
+    ...(d.power ? { power: d.power } : {}),
   };
   const closed = CLOSED_TERRAINS.includes(terrainAt(map, life.at));
   const m = meet(s, enc);

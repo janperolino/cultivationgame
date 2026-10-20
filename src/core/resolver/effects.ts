@@ -14,7 +14,7 @@ import { addItem, withPlayer, type GameState } from '../state.ts';
 import { endBond, makeBond } from './followers.ts';
 import { see } from './knows.ts';
 import { addFame, addKarma } from './names.ts';
-import { joinPower, leavePower, realmStageOf } from '../organizations.ts';
+import { guardedKnown, joinPower, leavePower, realmStageOf } from '../organizations.ts';
 import { addStanding, addTie, remember } from './opinion.ts';
 import type { Scene } from './scene.ts';
 import {
@@ -271,7 +271,10 @@ export function applyEffects(
                 by: e.by,
                 ...(e.who === you ? { realm: realmStageOf(state) } : {}),
               }).world
-            : leavePower(state.world, e.who, e.power, day, { you: e.who === you }).world,
+            : leavePower(state.world, e.who, e.power, day, {
+                you: e.who === you,
+                ...(e.who === you ? { knows: guardedKnown(state.player, e.power) } : {}),
+              }).world,
         };
         break;
       case 'state-start': {

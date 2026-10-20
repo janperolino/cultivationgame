@@ -45,6 +45,8 @@ const fill = z.union([
   z.object({ roster: z.string().min(1) }).strict(),
   z.object({ mortal: z.string().min(1) }).strict(),
   z.object({ person: z.enum(PLOT_NEEDS) }).strict(),
+  /** The hunting power's law hall (O5): its disciples at the seat the hunt sends, as many. */
+  z.object({ lawHall: z.literal(true) }).strict(),
 ]);
 
 export const RoleSchema = z
@@ -98,6 +100,10 @@ export const StakeSchema = z.discriminatedUnion('do', [
   z.object({ do: z.literal('heat'), n: z.number().int() }).strict(),
   z.object({ do: z.literal('karma'), n: z.number().int() }).strict(),
   z.object({ do: z.literal('place'), state: z.enum(PLACE_STATES) }).strict(),
+  /** The law hall's fine paid, lifting your mark for its method (O5). */
+  z.object({ do: z.literal('fine') }).strict(),
+  /** Standing with the encounter's power, the law hall's (O5). */
+  z.object({ do: z.literal('their-standing'), row: z.enum(STANDING_IDS) }).strict(),
 ]);
 export type Stake = z.infer<typeof StakeSchema>;
 
@@ -154,6 +160,11 @@ export const TemplateSchema = z
         needs: z.enum(PLOT_NEEDS).optional(),
         /** The events calendar's key (M6 fills it). */
         calendar: z.string().optional(),
+        /**
+         * A law hall's walk (O5): met only inside a hunting power's sphere, at this chapter of
+         * its hunt (3 for a third chapter and up).
+         */
+        lawHall: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
       })
       .strict(),
     /** The bands it is met at, lowest and highest (content/map/travel.ts `BANDS`). */

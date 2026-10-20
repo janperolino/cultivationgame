@@ -95,6 +95,15 @@ export function veinAt(id: string | null | undefined): number {
   return 0;
 }
 
+/** A power's seat and the radius of its influence in li, where the atlas writes one (O5). */
+export function sphereOf(id: string): { x: number; y: number; sphere: number } | null {
+  for (const r of Object.values(REGIONS)) {
+    const p = r.file.places.find((x) => x.id === id);
+    if (p && p.x !== null && p.y !== null && p.sphere) return { x: p.x, y: p.y, sphere: p.sphere };
+  }
+  return null;
+}
+
 /** Who lives at a written town or an atlas place: its mortals and its cultivators by realm. */
 export function peopleAt(id: string | null | undefined): Population {
   if (!id) return {};

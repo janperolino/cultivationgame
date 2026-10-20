@@ -10277,3 +10277,8 @@ p.map-above {
   color: var(--hour-duty);
   margin-left: 4px;
 }
+
+/* O5: a face a power marked for its leaked method, under the gate strip. */
+.place-mark p + p {
+  margin-top: 2px;
+}

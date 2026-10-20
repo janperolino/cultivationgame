@@ -174,6 +174,11 @@ export const DEEDS = {
   mission: { name: 'a mission', heat: 0, renown: 1 },
   /** A death, real or staged: a decoy believed is a death the hunter knows of and tells. */
   death: { name: 'a death', heat: 0 },
+  /**
+   * A power's guarded technique seen in use, or its copy sold where it leaks (O5, design § Guarded
+   * methods): the evidence is the copy. It moves no heat; the hunt is read from the leaks.
+   */
+  leak: { name: 'a method leaked', heat: 0 },
 } as const satisfies Record<string, DeedInfo>;
 export type DeedKind = keyof typeof DEEDS;
 export const DEED_KINDS = Object.keys(DEEDS) as DeedKind[];

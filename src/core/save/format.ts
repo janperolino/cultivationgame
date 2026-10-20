@@ -35,7 +35,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 41;
+export const SAVE_VERSION = 42;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1018,6 +1018,26 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const p = (s.player ?? {}) as Raw;
     const map = s.map ? { ...(s.map as Raw), gathered: 0 } : s.map;
     return { ...old, version: 41, state: { ...s, player: { ...p, jobs: [] }, map } };
+  },
+  // O5: a clean parting swears the heart-demon oath never to teach or sell the power's methods
+  // (design § Guarded methods), so one made before then swears it as of its parting's day.
+  41: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const w = (s.world ?? {}) as Raw;
+    let next = typeof w.next === 'number' ? w.next : 1;
+    const states = [...((w.states ?? []) as Raw[])];
+    for (const r of (w.standing ?? []) as Raw[]) {
+      if (r.row !== 'parted') continue;
+      const vow = `never-teach:${r.power as string}`;
+      if (states.some((x) => x.holder === r.about && (x.data as Raw)?.vow === vow)) continue;
+      states.push({
+        id: next++,
+        holder: r.about,
+        since: r.day,
+        data: { kind: 'vow', vow, way: r.power },
+      });
+    }
+    return { ...old, version: 42, state: { ...s, world: { ...w, states, next } } };
   },
 };
 

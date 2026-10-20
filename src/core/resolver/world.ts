@@ -103,8 +103,13 @@ const StateData = z.discriminatedUnion('kind', [
     power: z.string().nullable(),
     /** How strong it is: the sect's or the backer's realm. */
     strength: RealmStage,
-    /** Whose death left it. */
-    victim: z.string(),
+    /** Whose death left it; none for a leak's mark. */
+    victim: z.string().optional(),
+    /**
+     * A leak's mark (O5, design § Guarded methods): the copy of the power's own that leaked, the
+     * highest chapter it knows of. The power's people demand it back, or take you on sight.
+     */
+    method: z.string().optional(),
   }),
 ]);
 export type StateData = z.infer<typeof StateData>;

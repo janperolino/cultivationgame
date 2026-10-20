@@ -7,6 +7,7 @@
 // reckless fight what is beyond them, the hot-tempered answer an insult with blows. What they act
 // on is what you learn of them. A plan given them overrides it all. Before any motive, a power's
 // people who see a face its death talisman marked come at it, or call the law if it is past them.
+import { GUARDED } from '../../content/organizations.ts';
 import { LAW } from '../../content/resolver.ts';
 import { realmIndex } from '../../content/realms.ts';
 import type { AxisId, MotiveId } from '../../content/personality.ts';
@@ -19,6 +20,7 @@ import { LOVE_TIES } from '../../content/people.ts';
 import { step, type Step } from './plan.ts';
 import type { Scene } from './scene.ts';
 import { actorNature } from './talk.ts';
+import { standingOf } from './world.ts';
 
 export interface Intent {
   /** The step they take, or none when they call the law instead. */
@@ -81,6 +83,13 @@ export function intentOf(s: GameState, scene: Scene, a: Actor): Intent | null {
   // A face their power's death talisman marked: they come at it, or call the law if it's past them.
   if (a.power) {
     const marked = present.find((x) => !x.disguised && traceFor(w, x.id, a.power!, day));
+    const leak = marked ? traceFor(w, marked.id, a.power, day)?.data.method : undefined;
+    // A leak's mark at cold and up is a fine demanded, not a blade (O5); hostile and below, on sight.
+    if (marked && leak && !GUARDED.onSight.includes(standingOf(w, a.power, marked.id, day).word))
+      return {
+        why: 'trace',
+        means: `knows ${marked.name}'s face, and demands the method back and a fine for it`,
+      };
     if (marked) {
       if (!pastMe(a, marked))
         return {

@@ -3,6 +3,7 @@
 // price that follows it, and the markets round it that lend their goods. A market is a written town
 // with shops or an atlas place that keeps its own (content/map/). Prosperity and supply move by
 // what happens and ease back with time, and the world keeps only what differs from the written.
+import { GUARDED } from '../content/organizations.ts';
 import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { CATALOGS } from '../content/catalogs/index.ts';
 import { RARE } from '../content/catalogs/rare.ts';
@@ -644,9 +645,19 @@ export function spreads(thing: string, blackMarket: boolean): boolean {
 
 /** A market copies a copy it bought: on its own shelves from next month, and lent through its reach. */
 export function copyInto(w: World, m: Market, thing: string, day: number): World {
-  if (w.copied[m.id]?.[thing] !== undefined) return w;
   const month = Math.floor(day / DAYS_PER_MONTH);
+  const had = w.copied[m.id]?.[thing];
+  // A leaked copy its power bought out leaks again with the next one sold (O5).
+  if (had !== undefined && !(guardedBy(thing) && boughtOut(had, month))) return w;
   return { ...w, copied: { ...w.copied, [m.id]: { ...(w.copied[m.id] ?? {}), [thing]: month } } };
+}
+
+/**
+ * Whether a leaked copy is gone from the black market's shelf: its power, told it leaked, buys the
+ * copy out within a season (design § Guarded methods), three months after the month it was sold.
+ */
+export function boughtOut(soldMonth: number, month: number): boolean {
+  return month - soldMonth >= GUARDED.buyoutMonths;
 }
 
 /** The shops that stand a market's copies: the kinds that sell copies, a sect's hall aside. */
@@ -670,6 +681,7 @@ export function standingCopies(w: World, sh: Shop, month: number): string[] {
       if (!tiers.includes(tierOf(thing))) continue;
       const guarded = !!guardedBy(thing);
       if (black ? !guarded || lent : guarded) continue;
+      if (guarded && boughtOut(at, month)) continue;
       out.push(thing);
     }
   };

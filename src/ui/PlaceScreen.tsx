@@ -63,6 +63,7 @@ import {
 import { whyOf } from '../core/making.ts';
 import { gradeCount, priceWords, stonesOf, stonesWords } from '../core/purse.ts';
 import { buyChapter, hallTerms, pavilion, pavilionChapters } from '../core/halls.ts';
+import { lawHallAt, liftByPaying, marksHere, yourMark } from '../core/guarded.ts';
 import {
   becomeGuest,
   guestOffered,
@@ -140,6 +141,16 @@ function doorsOf(s: GameState, p: MapPlace, info: PlaceKindInfo): [string, Door[
       tag: k.members ? 'members' : k.money === 'silver' ? 'silver' : k.posted ? 'posted rates' : '',
     };
   });
+  // Its law hall, where a face it marked makes restitution (O5).
+  const mark = isOrganization(p.id) ? yourMark(s, p.id) : null;
+  if (mark)
+    shops.push({
+      id: 'law-hall',
+      seal: '律',
+      name: 'Law hall',
+      sub: `restitution for ${mark.method}`,
+      tag: 'marked',
+    });
   // A power's own chapters, sold to its disciples by seat (O2).
   if (isOrganization(p.id) && pavilionChapters(p.id).length > 0)
     shops.push({
@@ -352,6 +363,7 @@ export function PlaceScreen({
       </header>
       {place.lore && <p className="place-lore">{place.lore}</p>}
       <GateStrip game={game} map={map} place={place} />
+      <MarkStrip game={game} place={place} />
       {kind === 'site' ? (
         <SiteCounter game={game} map={map} place={place} act={act} onMap={onMap} />
       ) : (
@@ -438,6 +450,51 @@ function GateStrip({ game, map, place }: { game: GameState; map: RegionMap; plac
   );
 }
 
+/** How many and who a law hall walks the roads as, by its hunt's chapter (O5). */
+const PARTY_WORDS = { 1: 'two outer disciples', 2: 'two inner disciples', 3: 'an elder' } as const;
+
+/**
+ * A face a power marked for its leaked method, while you stand in its sphere or at its seat (O5's
+ * mockup): the method, what its people demand at your standing, and its law hall on the roads.
+ */
+function MarkStrip({ game, place }: { game: GameState; place: MapPlace }) {
+  const marks = marksHere(game, [place.x, place.y], place.id);
+  if (marks.length === 0) return null;
+  return (
+    <>
+      {marks.map((m) => {
+        const law = lawHallAt(game.world, [m.power], [place.x, place.y], game.calendar.day);
+        const seat = place.id === m.power;
+        return (
+          <div key={m.power} className="place-gate place-mark panel is-bad">
+            <span className="place-seal is-small">印</span>
+            <div>
+              <p>
+                <b>Marked by {theName(m.power)}</b>
+              </p>
+              <p className="place-sub">
+                {cap(m.method)}, chapter {m.chapter} ·{' '}
+                {m.onSight
+                  ? 'hostile: its people take you on sight'
+                  : `a fine of ${m.fineWords}${m.slip ? ' and the slip' : ''}`}
+              </p>
+              {seat ? (
+                <p className="place-sub">Its disciples know your face here.</p>
+              ) : (
+                law && (
+                  <p className="place-sub">
+                    Its law hall walks these roads: {PARTY_WORDS[law.chapter]}.
+                  </p>
+                )
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 function Counter({
   game,
   map,
@@ -458,6 +515,8 @@ function Counter({
   switch (door) {
     case 'pavilion':
       return <PavilionCounter game={game} power={place.id} act={act} say={say} />;
+    case 'law-hall':
+      return <LawHallCounter game={game} power={place.id} act={act} say={say} />;
     case 'changer':
       return <ChangerCounter game={game} place={place} act={act} />;
     case 'talk':
@@ -880,6 +939,53 @@ function PavilionCounter({
             </div>
           );
         })}
+      </div>
+    </>
+  );
+}
+
+/** A power's law hall, where a face it marked makes restitution: three times, the slip back (O5). */
+function LawHallCounter({
+  game,
+  power,
+  act,
+  say,
+}: {
+  game: GameState;
+  power: string;
+  act: Act;
+  say: (t: string) => void;
+}) {
+  const m = yourMark(game, power);
+  if (!m) return <p className="place-note">The law hall has nothing against you.</p>;
+  return (
+    <>
+      <p className="place-sub">
+        {cap(theName(power))} knows its {m.method} in your hands. Restitution is three times the
+        copy’s price{m.slip ? ', and the slip handed back' : ''}; you swear the heart-demon oath
+        never to teach or sell what you learned, and the mark lifts. Joining it lifts it too.
+      </p>
+      <div className="place-rows">
+        <div className="place-row">
+          <span>
+            <span className="place-row-name">{cap(m.method)}</span>{' '}
+            <span className="place-sub">· chapter {m.chapter}</span>
+          </span>
+          <span className="place-price">{m.restitutionWords}</span>
+          <button
+            type="button"
+            className="place-btn"
+            onClick={() =>
+              act((s) => {
+                const r = liftByPaying(s, power, 'restitution');
+                if (r.ok) say(`${cap(theName(power))} lifts its mark.`);
+                return r;
+              })
+            }
+          >
+            Make restitution
+          </button>
+        </div>
       </div>
     </>
   );

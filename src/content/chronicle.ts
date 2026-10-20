@@ -124,6 +124,12 @@ const POWER_LINES: Record<string, (w: Who, p: string) => string> = {
   'leave-over': (w, p) => `${w.name}'s leave from ${p} runs out; each day away now costs.`,
   left: (w, p) => `${w.name} leaves ${p} by its rule.`,
   betrayed: (w, p) => `${w.name} walks out on ${p}, and it will not forget.`,
+  // O5: a guarded method seen in use, and the mark lifted.
+  marked: (w, p) =>
+    `${capital(p)} knows ${w.name}'s face now: one of its methods, in a stranger's hands.`,
+  fined: (w, p) => `${w.name} pays ${p}'s fine for its method and swears never to teach it.`,
+  restitution: (w, p) =>
+    `${w.name} makes restitution to ${p} for its method and swears never to teach it.`,
 };
 
 /** A job taken, left, a shift missed, a hire let go (O4). */

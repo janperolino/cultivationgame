@@ -492,6 +492,47 @@ export const LEAVE_OVER = { pointsPerDay: 1, rowEvery: 30 } as const;
 /** The law hall's heat on a member who kills or robs one of their own power (design: the law). */
 export const LAW_HALL = { heat: 3, deeds: ['killing', 'massacre', 'robbery', 'theft'] } as const;
 
+// ── Guarded methods (design § Professions, people and powers, Guarded methods; O5) ─────────────
+
+/**
+ * A leak and its mark (O5's talk): a fine on the road at cold standing and up, twice the copy's
+ * price; restitution at the power's law hall, three times; a black market's leaked copy bought out
+ * three months after the sale; the hunt cooling a chapter a season. At these standing words the
+ * power's people take a marked face on sight instead of fining it.
+ */
+export const GUARDED = {
+  fine: 2,
+  restitution: 3,
+  buyoutMonths: 3,
+  coolDays: 90,
+  onSight: ['hostile', 'hunted'] as readonly string[],
+} as const;
+
+/**
+ * The chapters a seat knows of its power's methods (design: an outer disciple chapter 1, an elder
+ * all of them): what a member recognizes when they see it used.
+ */
+export const KNOWS_CHAPTER: Record<SeatId, number> = {
+  outer: 1,
+  inner: 2,
+  true: 3,
+  elder: Infinity,
+  grand: Infinity,
+  head: Infinity,
+};
+
+/**
+ * The law hall on the road, by the hunt's chapter (O5's talk): a chapter 1 leak two outer
+ * disciples, a chapter 2 leak two inner disciples, a chapter 3 leak and up an elder, each the
+ * strongest of their seat.
+ */
+export const LAW_HALL_PARTY: Record<1 | 2 | 3, { seat: SeatId; count: number }> = {
+  1: { seat: 'outer', count: 2 },
+  2: { seat: 'inner', count: 2 },
+  3: { seat: 'elder', count: 1 },
+};
+export const LAW_HALL_TITLE: Title = { name: 'law hall', hanzi: '执法堂' };
+
 /** An atlas power or kingdom as organizations read it (written by `npm run atlas:build`). */
 export interface OrgRow {
   id: string;

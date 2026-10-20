@@ -1,6 +1,8 @@
 // The dev console's commands: testing shortcuts that change the open life through the same rules
 // the game uses where they can (time runs through the day step, breakthroughs roll their odds,
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
+import { huntOf, seeUse } from '../../core/guarded.ts';
+import { actorFromCultivator, plainActor } from '../../core/resolver/actor.ts';
 import { DAYS_PER_MONTH, DAYS_PER_YEAR } from '../../content/calendar.ts';
 import { BOND_IDS, type BondId } from '../../content/bonds.ts';
 import {
@@ -24,7 +26,7 @@ import {
   addBalance,
   allowanceOf,
   becomeGuest,
-  carriesGuarded,
+  guardedKnown,
   houseOf,
   membership,
   setSeat,
@@ -317,8 +319,8 @@ export const COMMANDS: Record<string, Command> = {
   },
   org: {
     usage:
-      'org [power id] [join [birth|adoption|marriage] | leave [to <id>] | trial | donate <low> | seat <seat> | points <n> | guest | lesson | protector]',
-    help: 'Your memberships; with an id, its type, seats, treatment and allowances, and joins, leaves, sits the inner trial, donates stones, sets your seat, adds to your balance, takes a guest elder seat, buys an elder’s lesson or a protector there (O1 to O3).',
+      'org [power id] [join [birth|adoption|marriage] | leave [to <id>] | trial | donate <low> | seat <seat> | points <n> | guest | lesson | protector | mark <copy> | hunt]',
+    help: 'Your memberships; with an id, its type, seats, treatment and allowances, and joins, leaves, sits the inner trial, donates stones, sets your seat, adds to your balance, takes a guest elder seat, buys an elder’s lesson or a protector there (O1 to O3); marks your face for one of its guarded copies, as an elder saw it, or reads its hunt (O5).',
     run([id, verb, arg, to], store) {
       const s = needGame(store);
       const you = s.player.id;
@@ -343,7 +345,7 @@ export const COMMANDS: Record<string, Command> = {
         const r = leavePower(s.world, you, id, day, {
           you: true,
           to: arg === 'to' ? to : undefined,
-          carries: carriesGuarded(s, id),
+          knows: guardedKnown(s.player, id),
         });
         if (!r.parting) return 'You don’t belong to it.';
         return apply(
@@ -390,6 +392,24 @@ export const COMMANDS: Record<string, Command> = {
             : 'An elder stands by your next breakthrough.';
         return r.ok ? apply(store, () => r.state, words) : r.why;
       }
+      if (verb === 'mark') {
+        const thing = arg ?? guardedKnown(s.player, id)[0];
+        if (!thing) return 'Name one of its guarded copies: org <id> mark method:butcher-saber.';
+        // A grand elder of the power, who knows every chapter, sees it.
+        const elder = {
+          ...plainActor({
+            id: 'dev:elder',
+            name: 'a grand elder',
+            side: 'them',
+            realm: { realm: 'mahayana', stage: 1 },
+          }),
+          power: houseOf(id),
+        };
+        const r = seeUse(s.world, actorFromCultivator(s), [thing], [elder], { place: 'dev' }, day);
+        if (!r.seen.length) return `${theName(id)} saw nothing it could hold against you.`;
+        return apply(store, (g) => ({ ...g, world: r.world }), `Marked by ${theName(id)}.`);
+      }
+      if (verb === 'hunt') return `${theName(id)} hunts at chapter ${huntOf(s.world, id, day)}.`;
       if (verb === 'guest') {
         const r = becomeGuest(s, id);
         return r.ok ? apply(store, () => r.state, `A guest elder of ${theName(id)}.`) : r.why;

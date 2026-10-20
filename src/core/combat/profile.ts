@@ -163,21 +163,29 @@ export interface FightResult {
   turns: number;
   /** Who fled or yielded, by id. */
   fled: string[];
+  /** The techniques each fighter threw, by id: what those watching saw (O5). */
+  used: Record<string, string[]>;
 }
 
 /** Plays a fight out, every fighter on its own profile (fanatical when it has none). */
 export function runFight(start: Fight, rng: Rng, maxTurns = 60): FightResult {
   let f = start;
+  const used: Record<string, string[]> = {};
   while (!fightOver(f) && f.turn < maxTurns) {
     const actions = f.combatants
       .filter((c) => c.state === 'fighting')
       .map((c) => chooseAction(f, c.id, profile(c.profile ?? 'fanatical')));
-    f = resolveTurn(f, actions, rng).fight;
+    const r = resolveTurn(f, actions, rng);
+    for (const o of r.outcomes)
+      if (o.action === 'technique' && o.id && !(used[o.actor] ?? []).includes(o.id))
+        used[o.actor] = [...(used[o.actor] ?? []), o.id];
+    f = r.fight;
   }
   return {
     fight: f,
     winner: fightOver(f) ? winner(f) : null,
     turns: f.turn,
     fled: f.combatants.filter((c) => c.state === 'fled' || c.state === 'yielded').map((c) => c.id),
+    used,
   };
 }

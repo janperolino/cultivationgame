@@ -91,6 +91,7 @@ import {
 } from './world.ts';
 import { keepThreaded, noteTaken, npcFrom } from '../kept.ts';
 import { opensRing, ringOf, ringTier, type Haul } from '../loot.ts';
+import { artCopy, seenUsing } from '../guarded.ts';
 
 /** A thing in the scene that can be used, searched, broken or hidden behind. */
 export interface SceneFeature {
@@ -570,6 +571,25 @@ function deed(
   return r.id;
 }
 
+/**
+ * A player's arts seen by those there (O5): a power's members who know its art tell it, and the
+ * scene says so.
+ */
+function artsSeen(w: Working, a: Actor, arts: readonly string[], watchers: readonly Actor[]) {
+  const r = seenUsing(w.s, arts, watchers, a, {
+    place: w.scene.place,
+    ...(w.scene.region ? { region: w.scene.region } : {}),
+  });
+  w.s = r.state;
+  for (const x of r.seen)
+    note(
+      w,
+      x.marked
+        ? `${theName(x.power)}'s people know that art for their own, and ${a.name}'s face with it.`
+        : `${theName(x.power)}'s people know that art for their own, though not the face behind it.`,
+    );
+}
+
 /** The best-placed watcher, who sees when a close pass costs a witness. */
 function sharpest(scene: Scene, a: Actor, among: Actor[]): Actor | undefined {
   return (
@@ -790,6 +810,11 @@ export function doStep(
   let short: ShortId | null = null;
   const faced = (check?.faced ?? []).map((id) => actorIn(w.scene, id)!).filter(Boolean);
   let seenBy: Actor[] = [];
+  // An art you lean on is seen by everyone there, and a power's own is known for it (O5).
+  if (w.scene.players.includes(a.id)) {
+    const arts = (st.uses ?? []).filter((u) => a.techniques[u] !== undefined).map(artCopy);
+    if (arts.length) artsSeen(w, a, arts, w.scene.actors.filter(active));
+  }
 
   if (v === 'close') {
     cost = preview.cost;
@@ -1280,8 +1305,13 @@ function runSceneFight(
       combatant({ id: x.id, name: x.name, side: x.side, rungs: x.rungs, agility: x.agility });
     return { ...c, id: x.id, side: x.side };
   });
+  // Everyone there sees the arts thrown, before anyone falls (O5).
+  const saw = w.scene.actors.filter(active);
   const r = withStream(w.s, 'combat', (rng) => runFight(startFight(combatants), rng));
   w.s = r.state;
+  for (const x of fighters)
+    if (w.scene.players.includes(x.id) && r.value.used[x.id])
+      artsSeen(w, x, r.value.used[x.id]!.map(artCopy), saw);
   // Blows struck from hiding give you away.
   for (const x of fighters)
     if (x.state === 'hidden') setActor(w, x.id, (y) => ({ ...y, state: 'present' }));
@@ -1361,6 +1391,12 @@ export function round(
       const law = LAW[sc.kind];
       if (law && sc.lawDue === null) sc = { ...sc, lawDue: sc.tick + law.ticks };
       sc = { ...sc, log: [...sc.log, `${now.name} ${intent.means}.`] };
+      continue;
+    }
+    // A demand with no step of its own (a leak's fine, O5): said once.
+    if (!mine && !own && intent && !intent.step) {
+      const line = `${now.name} ${intent.means}.`;
+      if (!sc.log.includes(line)) sc = { ...sc, log: [...sc.log, line] };
       continue;
     }
     const st = mine ?? own ?? intent?.step;

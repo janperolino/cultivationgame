@@ -139,6 +139,8 @@ export const EncounterSchema = z.object({
   where: z.string(),
   /** The bounty posting whose goal it is. */
   posting: z.string().optional(),
+  /** The power whose law hall walks the road, for a law hall's encounter (O5). */
+  power: z.string().optional(),
 });
 export type Encounter = z.infer<typeof EncounterSchema>;
 

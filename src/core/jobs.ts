@@ -32,6 +32,7 @@ import {
   isOrganization,
   leaveOf,
   leavePower,
+  guardedKnown,
   membership,
   monthIndex,
   organization,
@@ -151,7 +152,10 @@ export function quitJob(s: GameState, id: string): JobCheck {
     jobs: s.player.jobs.filter((h) => h.id !== id),
   });
   if (j.leave === 'power' && j.power) {
-    const left = leavePower(st.world, s.player.id, j.power, s.calendar.day, { you: true });
+    const left = leavePower(st.world, s.player.id, j.power, s.calendar.day, {
+      you: true,
+      knows: guardedKnown(s.player, j.power),
+    });
     st = { ...st, world: left.world };
     st = dropLost(st);
     if (left.parting)

@@ -6,7 +6,7 @@
 // rule is a clean parting, and betrayal is a hunted rule, going over to a foe or carrying off its
 // guarded methods. The same rules take any cultivator: actions name who acts.
 import { DAYS_PER_MONTH, DAYS_PER_YEAR } from '../content/calendar.ts';
-import { copyId } from '../content/copies.ts';
+import { copyChapter, copyId } from '../content/copies.ts';
 import {
   ALLOWANCE,
   ALLOWANCE_PILL,
@@ -67,6 +67,7 @@ import {
   type Actor,
 } from './resolver/actor.ts';
 import { higher } from './resolver/backers.ts';
+import { breakOath, liftMark, startMark, swearOath } from './resolver/marks.ts';
 import { verdict, type Verdict } from './resolver/check.ts';
 import { currentPlaces, powerPrivate } from './resolver/knows.ts';
 import { isMember } from './resolver/names.ts';
@@ -80,6 +81,7 @@ import {
   realmOf,
   stageOf,
   withPlayer,
+  type Cultivator,
   type GameState,
 } from './state.ts';
 
@@ -397,6 +399,8 @@ export function joinPower(
     ],
   };
   world = addStanding(world, { power: house, about: who, row: 'member' }, day);
+  // A member may hold its methods: joining lifts the mark of a leak (O5).
+  world = liftMark(world, who, house, day);
   if ((o.blood ?? HUMAN_BLOOD) !== org.blood)
     world = addStanding(world, { power: house, about: who, row: 'not-our-blood' }, day);
   if (o.you) {
@@ -429,6 +433,8 @@ export interface LeaveOpts {
   to?: string;
   /** They carry off its guarded methods (`carriesGuarded`). */
   carries?: boolean;
+  /** The copies of its guarded methods and arts they know (`guardedKnown`), for the parting (O5). */
+  knows?: readonly string[];
 }
 
 /**
@@ -493,17 +499,32 @@ export function leavePower(
     { power: house, about: who, row: parting.kind === 'clean' ? 'parted' : 'betrayed-us' },
     day,
   );
+  // What they learned (O5, design § Guarded methods): a clean parting keeps it under the
+  // heart-demon oath never to teach or sell it; a betrayal guards all of it against them, marked
+  // for the highest chapter they know.
+  const known = (o.knows ?? []).filter((c) => guardedBy(c) === house);
+  if (parting.kind === 'clean') world = swearOath(world, who, house, day);
+  else world = breakOath(world, who, house, day);
+  if (parting.kind === 'betrayal' && known.length > 0) {
+    const top = [...known].sort((a, b) => copyChapter(b) - copyChapter(a))[0]!;
+    world = startMark(world, who, house, top, headRealm(house), day);
+  }
   return { world, parting };
+}
+
+/** The copies of a power's guarded methods and arts someone knows: those its hall alone sells. */
+export function guardedKnown(c: Cultivator, power: string): string[] {
+  const house = houseOf(power);
+  const ids = [
+    ...Object.keys(c.methods).map((m) => copyId('method', m)),
+    ...Object.keys(c.techniques).map((t) => copyId('technique', t)),
+  ];
+  return ids.filter((id) => guardedBy(id) === house || guardedBy(id) === power);
 }
 
 /** Whether the player carries off a power's guarded methods: any method or art its hall alone sells. */
 export function carriesGuarded(s: GameState, power: string): boolean {
-  const house = houseOf(power);
-  const ids = [
-    ...Object.keys(s.player.methods).map((m) => copyId('method', m)),
-    ...Object.keys(s.player.techniques).map((t) => copyId('technique', t)),
-  ];
-  return ids.some((c) => guardedBy(c) === house || guardedBy(c) === power);
+  return guardedKnown(s.player, power).length > 0;
 }
 
 /** A member's seat moved by a deed: a trial won, an elder's master tie, an appointment. */

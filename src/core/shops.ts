@@ -79,6 +79,7 @@ import { rollNature } from './resolver/nature.ts';
 import { addStanding, opinion, remember } from './resolver/opinion.ts';
 import { talkCheck } from './resolver/talk.ts';
 import { addHeat, emptyWorld, standingOf, type ShopMonth, type World } from './resolver/world.ts';
+import { leakSold, oathRefusal } from './guarded.ts';
 import { hashSeed, Rng } from './rng.ts';
 import { addItem, itemCount, withPlayer, type GameState } from './state.ts';
 
@@ -804,6 +805,9 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
   const info = SHOP_KIND_INFO[sh.kind];
   const day = s.calendar.day;
   const guard = guardedBy(thing);
+  // A clean parting, a fine or restitution swore never to sell its methods (O5).
+  const sworn = oathRefusal(s.world, s.player.id, thing, day);
+  if (sworn) return { ok: false, reason: sworn };
   if (guard && guard === sh.power && info.recognizes && !isMember(s.world, s.player.id, guard)) {
     let world = addHeat(s.world, guard, 2, day);
     world = addStanding(world, { power: guard, about: s.player.id, row: 'sold-our-method' }, day);
@@ -851,6 +855,8 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
   if (hasCopy(thing)) player = { ...player, copies: { ...player.copies, [thing]: held - n } };
   else player = addItem(player, thing, -n);
   if (m && spreads(thing, sh.kind === 'black-market')) world = copyInto(world, m, thing, day);
+  // A power's own sold to a black market: it learns that it leaked, never who (O5).
+  if (guard && sh.kind === 'black-market') world = leakSold(world, s.player.id, thing, sh.at, day);
   return {
     ok: true,
     state: withShopMonth(withPlayer({ ...s, world }, player), shopId, {

@@ -225,6 +225,9 @@ export const STANDING_ROWS = {
   // O4 (design § Cultivation, Duty hours): a duty day missed, and a month of shifts kept.
   'missed-shift': { reason: 'Missed our shifts', value: -1, fade: SEASON },
   'kept-watch': { reason: 'Keeps our watch', value: 2, fade: YEAR },
+  // O5 (design § Guarded methods): a leak traced to you, kept until the mark lifts, so a stranger
+  // caught stands cold (a fine) and a traitor hostile (on sight).
+  'stole-our-method': { reason: 'Stole one of our methods', value: -20, fade: null },
 } as const satisfies Record<string, StandingRow>;
 export type StandingId = keyof typeof STANDING_ROWS;
 export const STANDING_IDS = Object.keys(STANDING_ROWS) as StandingId[];
@@ -238,6 +241,7 @@ export const DEED_STANDING: Partial<Record<DeedKind, StandingId>> = {
   theft: 'robbed-us',
   assault: 'attacked-ours',
   exposure: 'lied-to-us',
+  leak: 'stole-our-method',
 };
 
 /** The standing words, each the lowest total for it, and what it counts in a people check. */

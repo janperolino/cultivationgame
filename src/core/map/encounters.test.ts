@@ -98,11 +98,12 @@ const view = (exit: ExitView['exit'], judged: ExitView['judged'], i = 0): ExitVi
 });
 
 describe('the templates', () => {
-  it('parses every one, ids unique, 30 the road brings and one for each trip goal', () => {
+  it('parses every one, ids unique, 30 the road brings, three law halls and one for each trip goal', () => {
     for (const t of ENCOUNTERS) expect(() => TemplateSchema.parse(t), t.id).not.toThrow();
     expect(new Set(ENCOUNTERS.map((t) => t.id)).size).toBe(ENCOUNTERS.length);
-    const road = ENCOUNTERS.filter((t) => !t.goal);
+    const road = ENCOUNTERS.filter((t) => !t.goal && !t.where.lawHall);
     expect(road.length).toBe(30);
+    expect(ENCOUNTERS.filter((t) => t.where.lawHall).length).toBe(3);
     for (const k of ENCOUNTER_KINDS)
       expect(
         road.some((t) => t.kind === k),
