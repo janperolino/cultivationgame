@@ -67,12 +67,18 @@ import {
   type Actor,
 } from './resolver/actor.ts';
 import { higher } from './resolver/backers.ts';
-import { breakOath, liftMark, startMark, swearOath } from './resolver/marks.ts';
+import { breakOath, liftMark, secretsOf, startMark, swearOath } from './resolver/marks.ts';
 import { verdict, type Verdict } from './resolver/check.ts';
 import { currentPlaces, powerPrivate } from './resolver/knows.ts';
 import { isMember } from './resolver/names.ts';
 import { addStanding, powerOf } from './resolver/opinion.ts';
-import { standingOf, type Member, type RealmStage, type World } from './resolver/world.ts';
+import {
+  recordDeed,
+  standingOf,
+  type Member,
+  type RealmStage,
+  type World,
+} from './resolver/world.ts';
 import {
   addEvent,
   addItem,
@@ -505,9 +511,23 @@ export function leavePower(
   const known = (o.knows ?? []).filter((c) => guardedBy(c) === house);
   if (parting.kind === 'clean') world = swearOath(world, who, house, day);
   else world = breakOath(world, who, house, day);
-  if (parting.kind === 'betrayal' && known.length > 0) {
-    const top = [...known].sort((a, b) => copyChapter(b) - copyChapter(a))[0]!;
-    world = startMark(world, who, house, top, headRealm(house), day);
+  if (parting.kind === 'betrayal') {
+    // A traitor is hunted (the checkpoint's fix): a leak its law hall knows of, at the highest
+    // chapter of its own they know, or "its secrets" at chapter 1 when they know none.
+    const top = [...known].sort((a, b) => copyChapter(b) - copyChapter(a))[0] ?? secretsOf(house);
+    const r = recordDeed(
+      world,
+      {
+        kind: 'leak',
+        actor: who,
+        place: house,
+        power: house,
+        evidence: [top],
+        witnesses: [{ id: 'hall:' + house, power: house }],
+      },
+      day,
+    );
+    world = startMark(r.world, who, house, top, headRealm(house), day);
   }
   return { world, parting };
 }

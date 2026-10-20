@@ -9,6 +9,7 @@ import { CATALOGS } from '../content/catalogs/index.ts';
 import { RARE } from '../content/catalogs/rare.ts';
 import type { Lot } from '../content/catalogs/types.ts';
 import { copyChapter, copyForm, copyOf, hasCopy } from '../content/copies.ts';
+import { hasMethod, method } from '../content/methods.ts';
 import {
   baseOf,
   hasItem,
@@ -614,11 +615,14 @@ export function guardedBy(thing: string): string | null {
   if (!hasCopy(thing)) return null;
   let owner = guardCache.get(thing);
   if (owner === undefined) {
-    owner = null;
+    // A method written as a power's own is its, whoever sells it (the checkpoint's fix).
+    const of = copyOf(thing);
+    owner = of?.kind === 'method' && hasMethod(of.id) ? (method(of.id).guardedBy ?? null) : null;
     const lines = [...CATALOGS, RARE].flatMap((c) =>
       c.lots.filter((l) => l.thing === thing && l.shops.length > 0).map((l) => ({ c, l })),
     );
     if (
+      !owner &&
       lines.length > 0 &&
       lines.every(({ c, l }) => c.layer === 'place' && l.shops.every((k) => k === 'sect'))
     ) {
@@ -628,9 +632,9 @@ export function guardedBy(thing: string): string | null {
       const [only] = [...powers];
       if (powers.size === 1 && only) owner = only;
     }
-    guardCache.set(thing, owner);
+    guardCache.set(thing, owner ?? null);
   }
-  return owner;
+  return owner ?? null;
 }
 
 /**

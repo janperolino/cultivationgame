@@ -17,6 +17,22 @@ export type Mark = LastingState & {
   data: { kind: 'trace'; power: string | null; strength: RealmStage; method?: string };
 };
 
+/**
+ * What a betrayal marks when its traitor knows none of the power's copies, or it guards none (a
+ * gang): "its secrets", a chapter 1 leak priced as a white chapter 1 method's copy (the checkpoint).
+ */
+export function secretsOf(power: string): string {
+  return 'secrets:' + power;
+}
+export function isSecrets(thing: string): boolean {
+  return thing.startsWith('secrets:');
+}
+
+/** A leak's chapter: its copy's, or 1 for a power's secrets. */
+export function leakChapter(thing: string): number {
+  return isSecrets(thing) ? 1 : copyChapter(thing);
+}
+
 /** Someone's leak marks, one a power. */
 export function marksOf(w: World, who: string, day: number): Mark[] {
   return statesOf(w, who, 'trace', day).filter((t) => !!t.data.method) as Mark[];
@@ -41,7 +57,7 @@ export function startMark(
 ): World {
   const had = markFor(w, who, power, day);
   if (!had) return startState(w, who, { kind: 'trace', power, strength, method }, day).world;
-  if (copyChapter(method) <= copyChapter(had.data.method!)) return w;
+  if (leakChapter(method) <= leakChapter(had.data.method!)) return w;
   return {
     ...w,
     states: w.states.map((s) => (s.id === had.id ? { ...had, data: { ...had.data, method } } : s)),

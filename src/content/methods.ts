@@ -68,6 +68,11 @@ export interface Method {
   /** The realm it carries you to the peak of: 1 for Qi Condensation, 2 for Foundation. */
   tier: number;
   rarity: RarityId;
+  /**
+   * The power that guards it, written where the catalogs can't tell (a society keeps no hall): its
+   * copy is that power's whatever shop sells it (the organizations checkpoint).
+   */
+  guardedBy?: string;
   /** The line it belongs to, and its chapter in that line, from 1 (design § Cultivation, lines). */
   line: string;
   chapter: number;
@@ -221,6 +226,7 @@ const WRITTEN: readonly Method[] = [
     ladder: 'qi',
     tier: 1,
     line: 'night-bridge',
+    guardedBy: 'qm-yeqiao-hui',
     chapter: 1,
     growth: { qiPool: 0.3, techniquePower: 0.2, qiRecovery: 0.5 },
     circulation: 'night-bridge',
@@ -236,6 +242,7 @@ const WRITTEN: readonly Method[] = [
     ladder: 'qi',
     tier: 2,
     line: 'night-bridge',
+    guardedBy: 'qm-yeqiao-hui',
     chapter: 2,
     growth: { qiPool: 0.3, techniquePower: 0.2, qiRecovery: 0.5 },
     circulation: 'night-bridge',

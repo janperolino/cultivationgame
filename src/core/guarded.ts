@@ -23,10 +23,13 @@ import {
   seatRanges,
   theName,
 } from './organizations.ts';
+import { COPY_PRICE } from '../content/money.ts';
 import { priceOf } from './prices.ts';
 import { pay, priceWords, stonesOf, withStones } from './purse.ts';
 import { realmOfActor, type Actor } from './resolver/actor.ts';
 import {
+  isSecrets,
+  leakChapter,
   liftMark,
   markFor,
   marksOf,
@@ -110,7 +113,7 @@ export function seeUse(
     );
     if (by.length === 0) continue;
     const had = markFor(world, who.id, house, day);
-    if (!who.disguised && had && copyChapter(had.data.method!) >= copyChapter(thing)) continue;
+    if (!who.disguised && had && leakChapter(had.data.method!) >= copyChapter(thing)) continue;
     const learners: Learner[] = by.map((x) => ({ id: x.id, power: house }));
     const r = recordDeed(
       world,
@@ -217,7 +220,7 @@ export function huntOf(w: World, power: string, day: number): number {
     if (d.kind !== 'leak' || d.power !== house || !d.evidence[0]) continue;
     if (!Object.values(d.knownBy).some((k) => k.power === house)) continue;
     const left =
-      copyChapter(d.evidence[0]) - Math.floor(Math.max(0, day - d.day) / GUARDED.coolDays);
+      leakChapter(d.evidence[0]) - Math.floor(Math.max(0, day - d.day) / GUARDED.coolDays);
     top = Math.max(top, left);
   }
   return top;
@@ -280,7 +283,8 @@ export function onSight(w: World, who: string, power: string, day: number): bool
 
 /** What lifting a mark costs, in low-grade stones: the fine (twice) or restitution (three times). */
 export function liftPrice(mark: Mark, how: 'fine' | 'restitution'): number {
-  return Math.round(priceOf(mark.data.method!) * GUARDED[how]);
+  const m = mark.data.method!;
+  return Math.round((isSecrets(m) ? COPY_PRICE.method : priceOf(m)) * GUARDED[how]);
 }
 
 /** A mark, read for the place screen and the law hall: whose, what leaked, and what it costs. */
@@ -306,8 +310,8 @@ export function markView(s: GameState, m: Mark): MarkView {
   return {
     power,
     name: theName(power),
-    method: copyTitle(m.data.method!),
-    chapter: copyChapter(m.data.method!),
+    method: isSecrets(m.data.method!) ? 'its secrets' : copyTitle(m.data.method!),
+    chapter: leakChapter(m.data.method!),
     onSight: onSight(s.world, s.player.id, power, s.calendar.day),
     fine,
     restitution,

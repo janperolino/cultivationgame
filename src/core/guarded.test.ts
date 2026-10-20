@@ -16,7 +16,8 @@ import {
   seeUse,
   yourMark,
 } from './guarded.ts';
-import { standingCopies } from './markets.ts';
+import { guardedBy, standingCopies } from './markets.ts';
+import { COPY_PRICE } from '../content/money.ts';
 import { chooseExit, draw, exitViews, meet } from './map/encounters.ts';
 import type { Encounter } from './map/schema.ts';
 import { ensureMap, mapOf } from './map/travel.ts';
@@ -25,7 +26,7 @@ import { asMember, joinPower, leavePower, setSeat } from './organizations.ts';
 import { stonesOf, worthOf } from './purse.ts';
 import { actorFromCultivator, actorFromNpc, type Actor } from './resolver/actor.ts';
 import { intentOf } from './resolver/intent.ts';
-import { markFor, oathFor } from './resolver/marks.ts';
+import { markFor, oathFor, secretsOf } from './resolver/marks.ts';
 import { addStanding } from './resolver/opinion.ts';
 import { standingOf } from './resolver/world.ts';
 import { Rng } from './rng.ts';
@@ -34,6 +35,7 @@ import { sell } from './shops.ts';
 import { newLife, PLAYER_ID, withPlayer, type GameState } from './state.ts';
 
 const GATE = 'qm-tushou-men';
+const NIGHT_BRIDGE = 'qm-yeqiao-hui';
 const YOU = PLAYER_ID;
 const CLEAVE = 'technique:bone-splitting-cleave';
 const SABER = 'method:butcher-saber';
@@ -314,6 +316,36 @@ describe('leaving and what you learned', () => {
     expect(m.data.method).toBe(SABER_2);
     expect(oathFor(left.world, YOU, GATE, 0)).toBeUndefined();
     expect(['hostile', 'hunted']).toContain(standingOf(left.world, GATE, YOU, 0).word);
+    // The traitor is hunted: the law hall walks for the highest chapter they know.
+    expect(huntOf(left.world, GATE, 0)).toBe(2);
+    expect(lawHallAt(left.world, [GATE], GATE_SEAT, 0)?.chapter).toBe(2);
+  });
+
+  it('going over to a foe sets the hunt, and a society’s own breathing method is guarded', () => {
+    const s = life();
+    const joined = joinPower(s.world, YOU, GATE, 0).world;
+    const left = leavePower(joined, YOU, GATE, 0, {
+      you: true,
+      to: 'qm-baijiang-zong',
+      knows: [SABER],
+    });
+    expect(left.parting!.kind).toBe('betrayal');
+    expect(huntOf(left.world, GATE, 0)).toBe(1);
+    expect(guardedBy('method:night-bridge')).toBe(NIGHT_BRIDGE);
+  });
+
+  it('a hunted rule marks a traitor who knows none of its methods for its secrets', () => {
+    const s = life();
+    const left = leavePower(joinPower(s.world, YOU, NIGHT_BRIDGE, 0).world, YOU, NIGHT_BRIDGE, 0, {
+      you: true,
+    });
+    expect(left.parting!.kind).toBe('betrayal');
+    const m = markFor(left.world, YOU, NIGHT_BRIDGE, 0)!;
+    expect(m.data.method).toBe(secretsOf(NIGHT_BRIDGE));
+    expect(huntOf(left.world, NIGHT_BRIDGE, 0)).toBe(1);
+    const view = yourMark({ ...s, world: left.world }, NIGHT_BRIDGE)!;
+    expect(view.method).toBe('its secrets');
+    expect(view.restitution).toBe(COPY_PRICE.method * 3);
   });
 });
 
