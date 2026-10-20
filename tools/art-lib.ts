@@ -19,7 +19,7 @@ export const KIND_BUDGET_KB: Record<ArtKind, number> = {
   frame: 150,
   surface: 120,
   scene: 300,
-  ornament: 30,
+  ornament: 60,
   concept: 600,
 };
 

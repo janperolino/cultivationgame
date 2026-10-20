@@ -1,0 +1,14 @@
+Attached is a 1024×1024 square of a painted world map, about 3,000 km across, each pixel about 3 km, seen from very high and tilted about 50 degrees like a carved relief model. Paint Pacified Fort into its very centre, into the land itself. Keep everything else exactly as it is: the same land, peaks, light, palette and brushwork, and leave the outer 15% untouched, pixel for pixel, so it joins the map around it without a seam. Return the image at exactly the attached size.
+
+What shows of it from this height, and what to paint: A war city on a hill crown cut flat, ringed by walls of its own rock as tall as cliffs, its drill grounds pale scars across the plateau, a pale lockdown dome over it, and the March’s beacon as a pillar of spirit-fire on its highest bastion.
+
+Paint it about 170 px across, grand and larger than life, far larger than its true 40 li (20 km), the way the map draws its peaks larger than they are, so it reads at once from this height. It is a city where cultivators and mortals live: fill it with halls, pagodas, terraced streets and warm lamp light, packed and grand.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, never medieval European and never sci-fi. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges and peak tops, long carved stone stairs, jade bridges between peaks, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light, beast-king skulls the size of hills. Rock stays natural rock: crags, sheared cliffs and peaks, never cylinders, silos, machines, reactors, metal, pipes or neon. No roads, people, text, labels or frame.
+
+About the place, for its look and mood (none of this is written on the image):
+- Pacified Fort, Anbian Bao 安边堡 in the March of Pacified Borders in the Border Wilds.
+- The Gongsun war city and the March’s seat, cut into the crown of a hill the first general flattened with one stroke. Its walls are the hill’s own rock, raised by formation to the height of cliffs; inside them, barracks, armouries and drill grounds hold four hundred thousand under arms, and every sixteen-year-old the March owes the garrison passes through its cadet school. The March’s beacon burns on its highest bastion, and a lockdown array rises over it as a dome of pale light when beasts come.
+- Within it: the beacon bastion; the drill ground on the cut plateau; the armouries under the walls; the cadet school’s lecture halls.
+- Who lives there: about 1,500,000 mortals, 1,500 at Qi Condensation, 120 at Foundation.
+- The land round it, as the map shows it: Karst hill country under a sea of cloud, stone pillars standing out of it by the hundred thousand, the Wall's bone-white line along the coastal hills, and the island chain stepping out across the Jade Strait.

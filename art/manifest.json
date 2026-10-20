@@ -34,24 +34,24 @@
       "id": "map-places-kinds",
       "kind": "ornament",
       "out": "src/ui/art/map/places/kinds",
-      "width": 256,
+      "width": 320,
       "quality": 86,
-      "budgetKB": 30,
+      "budgetKB": 40,
       "concept": "map-1",
-      "prompt": "Create a sprite sheet AS AN ASSET, 1536x1024: 8 separate map landmarks on a TRANSPARENT background, on an even 4x2 grid of 384x512 cells, each landmark centred left to right in its cell with its base in the lower third, a clear margin all round, none touching. They will stand on the attached painted world map as small pieces at the places they mark: match its high, tilted view (about 50 degrees, like a carved relief model), its scale of detail, its palette and its moonlit light exactly. Painted Chinese xianxia fantasy game art, night-dark and moonlit, desaturated: slate and blue-grey stone, deep pine green, muted ochre and umber earth, soft mist; calm light from the upper left, a faint cool rim of starlight, warm lantern points only on buildings, antique gold only as small accents on roofs and gates. Each stands on a small irregular patch of its own ground (earth, rock, a few trees) that fades out softly at its edges so it settles into the land beneath. Nothing touches the edge of its cell. No text, no labels, no symbols, no roads leading away, no people, no frame, no grid lines, no background, no cast shadow outside its own patch of ground. Left to right, top to bottom: 1. a frontier village: a dozen low tiled roofs round a well inside a stockade of stakes, one warm light; 2. a checkpoint: a timber and stone gate tower straddling a short stretch of road, a low wall either side, one banner; 3. a cave mouth in a rock face, dark inside, a faint path up to it, a pine leaning over it; 4. a beast den: a hollow under tumbled boulders, gnawed bones at its mouth, claw-scored rock; 5. a ruin: broken walls and a fallen pavilion roof overgrown with vines, a cracked stone stair; 6. a wayside shrine: a small tiled shrine with an incense burner and two stone lanterns under an old pine; 7. a camp: a few hide tents round a fire pit, a drying rack, a picket line; 8. old graves: a cluster of grass-grown burial mounds with weathered stone tablets and a dead tree.",
+      "prompt": "Create a sprite sheet AS AN ASSET, 1536x1024: 8 separate map marks on a TRANSPARENT background, on an even 4x2 grid of 384x512 cells, each mark centred in its cell with a clear margin all round, none touching. They will be laid over the attached painted world map at the wild places they mark. The map is seen from very high, tilted about 50 degrees like a carved relief model, and each cell's width stands for about 500 km of land: match its view, its scale of detail, its palette and its moonlit light exactly. This is Chinese xianxia, not medieval fantasy: at this height nothing mortal-built shows at all, no huts, roofs, walls or paths. Each mark is the land itself as spirit qi has shaped it, painted larger than life the way the map paints its own peaks. No ground patch, no base, no plinth, no island of earth: each mark fades softly into transparency at its edges so it can sit on any land. No text, labels, symbols, people, frame, grid lines or background. Left to right, top to bottom: 1. a herb valley: a deep hollow in the hills brimming with luminous green spirit mist, faint jade light on terraced ledges inside it; 2. a herb valley: a sinkhole ringed by sheer cliffs, its floor a glowing carpet of spirit grass under a haze of qi; 3. a spirit spring: a pool of luminous cyan water among dark rocks, its vapour rising in a thin pale column; 4. a spirit spring: stepped pools of milky jade water steaming in a ravine, mist pooling round them; 5. a waterfall: a long white thread falling down a sheer cliff into a basin of mist, a faint shimmer of qi in its spray; 6. a waterfall: a broad curtain of water pouring off the lip of a stone pillar into a sea of cloud below; 7. an ancient spirit tree the size of a hill, its canopy a dark green dome flecked with faint golden motes; 8. an ancient spirit tree, gnarled and silver-barked, its roots gripping a crag, its canopy as wide as a hilltop under a faint aura.",
       "cells": [
         4,
         2
       ],
       "pieces": [
-        "map-place-village",
-        "map-place-checkpoint",
-        "map-place-cave",
-        "map-place-den",
-        "map-place-ruin",
-        "map-place-shrine",
-        "map-place-camp",
-        "map-place-tomb"
+        "map-place-herb-valley-1",
+        "map-place-herb-valley-2",
+        "map-place-spring-1",
+        "map-place-spring-2",
+        "map-place-falls-1",
+        "map-place-falls-2",
+        "map-place-tree-1",
+        "map-place-tree-2"
       ]
     }
   ],

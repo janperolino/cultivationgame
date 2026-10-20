@@ -1,0 +1,15 @@
+Attached is a 1024×1024 square of a painted world map, about 3,000 km across, each pixel about 3 km, seen from very high and tilted about 50 degrees like a carved relief model. Paint Lamp-Keeper Sect into its very centre, into the land itself. Keep everything else exactly as it is: the same land, peaks, light, palette and brushwork, and leave the outer 15% untouched, pixel for pixel, so it joins the map around it without a seam. Return the image at exactly the attached size.
+
+What shows of it from this height, and what to paint: Ten thousand pale-green lamp points strung in lines across black fen water, and a stilt hall at their centre.
+
+Paint it about 130 px across, grand and larger than life, far larger than its true 40 li (20 km), the way the map draws its peaks larger than they are, so it reads at once from this height; but never wider than a fifth of the image, and the land round it stays as it is. It is a sect's seat: its halls, pagodas and pavilions crown its ground, linked by stairs and bridges.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, never medieval European and never sci-fi. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges and peak tops, long carved stone stairs, jade bridges between peaks, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light, beast-king skulls the size of hills. Rock stays natural rock: crags, sheared cliffs and peaks, never cylinders, silos, machines, reactors, metal, pipes or neon. No roads, people, text, labels or frame.
+
+About the place, for its look and mood (none of this is written on the image):
+- Lamp-Keeper Sect, Shoudeng Zong 守灯宗: a ghost sect in the Border Wilds on marsh.
+- A ghost-way sect of five hundred that keeps the lamps of the Ghost-Lamp Fens lit, so the drowned stay in the water instead of walking to the City of the Guarded Mouth.
+- The Ghost-Lamp Fens are named for the sect's lamps: ten thousand of them on poles across the water, burning yin fire that the drowned follow in circles instead of walking out. The City of the Guarded Mouth pays the sect to keep them lit, and has since the night a lamp line failed and the dead came to its walls. The Lamp-Keepers cultivate on the fens' yin qi, speak to the drowned, and sell what the drowned tell them.
+- Within it: lamp poles across the black water; the stilt hall in the fens; the drowned, circling under the lamps.
+- Who lives there: about 2,000 mortals, 500 at Qi Condensation, 20 at Foundation.
+- The land round it, as the map shows it: Karst hill country under a sea of cloud, stone pillars standing out of it by the hundred thousand, the Wall's bone-white line along the coastal hills, and the island chain stepping out across the Jade Strait.

@@ -17,3 +17,6 @@ tools/models/
 art/map/*/tile-*-x4.png
 art/map/*/tile-*-ref.png
 docs/mockups/map-takes/*.log
+# A5.3: the unpainted tiles and painting tools/map-place.ts lays places into, kept per machine
+art/map/*/places/unpainted/
+art/map/*/places/takes/

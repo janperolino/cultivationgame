@@ -1,0 +1,15 @@
+Attached is a 1024×1024 square of a painted world map, about 3,000 km across, each pixel about 3 km, seen from very high and tilted about 50 degrees like a carved relief model. Paint City of the Guarded Mouth into its very centre, into the land itself. Keep everything else exactly as it is: the same land, peaks, light, palette and brushwork, and leave the outer 15% untouched, pixel for pixel, so it joins the map around it without a seam. Return the image at exactly the attached size.
+
+What shows of it from this height, and what to paint: A ring of sea-cliff walls 150 li across rising out of the surf, faced with beast-king skulls, a ward dome over the harbour mouth and the reef road showing at low tide.
+
+Paint it about 220 px across, grand and larger than life, far larger than its true 150 li (75 km), the way the map draws its peaks larger than they are, so it reads at once from this height. It is a city where cultivators and mortals live: fill it with halls, pagodas, terraced streets and warm lamp light, packed and grand.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, never medieval European and never sci-fi. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges and peak tops, long carved stone stairs, jade bridges between peaks, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light, beast-king skulls the size of hills. Rock stays natural rock: crags, sheared cliffs and peaks, never cylinders, silos, machines, reactors, metal, pipes or neon. No roads, people, text, labels or frame.
+
+About the place, for its look and mood (none of this is written on the image):
+- City of the Guarded Mouth, Shoukou Cheng 守口城: a city in the Border Wilds on coast.
+- The empire's frontier headquarters, a fortress city of eight million on the coast where the island chain begins. Its walls rise out of the surf as tall as sea cliffs, faced with the skulls of the beast kings that tried them.
+- The City of the Guarded Mouth holds the narrow coast where the chain begins, a ring of walls 150 li across with a garrison of three hundred thousand soldiers and five thousand cultivators, under a commander who has reached Nascent Soul. A ward array caps the harbour mouth, and its bounty office pays for cores by grade. Its markets sell beast parts, smuggled Vast Wilds herbs and frontier saber steel. Every sect with a frontier interest keeps a hall here. At low tide, the reef road appears below the walls.
+- Within it: the sea-cliff walls, faced with beast-king skulls; the bounty office, paying for cores by grade; the beast-part market; the reef road below the walls at low tide.
+- Who lives there: about 8,000,000 mortals, 5,000 at Qi Condensation, 400 at Foundation, 8 at Core Formation, 1 at Nascent Soul.
+- The land round it, as the map shows it: Karst hill country under a sea of cloud, stone pillars standing out of it by the hundred thousand, the Wall's bone-white line along the coastal hills, and the island chain stepping out across the Jade Strait.

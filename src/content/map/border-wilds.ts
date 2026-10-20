@@ -80,16 +80,18 @@ export const BORDER_WILDS: RegionContent = {
       y: 217200,
       parent: 'qm-anbian-fu',
       shops: ['march-stall'],
-      lore: 'The Gongsun garrison’s seat and its cadet school, cut into the crown of a hill the first general flattened with one stroke. Its walls are the hill’s own rock, raised by formation to the height of cliffs, and a lockdown array rises over it as a dome of pale light when beasts come.',
+      lore: 'The Gongsun war city and the March’s seat, cut into the crown of a hill the first general flattened with one stroke. Its walls are the hill’s own rock, raised by formation to the height of cliffs; inside them, barracks, armouries and drill grounds hold four hundred thousand under arms, and every sixteen-year-old the March owes the garrison passes through its cadet school. The March’s beacon burns on its highest bastion, and a lockdown array rises over it as a dome of pale light when beasts come.',
       features: [
         F('the beacon bastion', 'height', 'fire'),
         F('the drill ground on the cut plateau', 'witnesses'),
+        F('the armouries under the walls', 'narrow', 'dark'),
+        F('the cadet school’s lecture halls', 'witnesses'),
       ],
       vein: 2,
       population: { mortals: 1_500_000, qi: 1500, foundation: 120 },
       size: 40,
       fromAbove:
-        'A hill crown cut flat and ringed by walls of its own rock as tall as cliffs, a pale lockdown dome over it, and the March’s beacon as a pillar of spirit-fire on the highest bastion.',
+        'A war city on a hill crown cut flat, ringed by walls of its own rock as tall as cliffs, its drill grounds pale scars across the plateau, a pale lockdown dome over it, and the March’s beacon as a pillar of spirit-fire on its highest bastion.',
     },
     {
       id: 'spear-plow',
