@@ -208,18 +208,23 @@ describe('shops', () => {
     `);
   });
 
-  it('stock only real things, inside their ranges, at the shop’s tiers', () => {
-    for (const s of SHOPS) {
-      for (let m = 1290; m < 1300; m++) {
-        for (const lot of stockOf(s.id, m)) {
-          expect(real(lot.thing), `${s.id}: ${lot.thing}`).toBe(true);
-          expect(lot.price).toBeGreaterThan(0);
-          if (!hasCopy(lot.thing)) expect(shopTiers(s)).toContain(item(lot.thing).tier);
-          if (s.kind === 'mortal') expect(item(lot.thing).taels).toBeDefined();
+  // Every shop for months: about 3 s alone, past the 5 s default under a full parallel run.
+  it(
+    'stock only real things, inside their ranges, at the shop’s tiers',
+    { timeout: 20_000 },
+    () => {
+      for (const s of SHOPS) {
+        for (let m = 1290; m < 1300; m++) {
+          for (const lot of stockOf(s.id, m)) {
+            expect(real(lot.thing), `${s.id}: ${lot.thing}`).toBe(true);
+            expect(lot.price).toBeGreaterThan(0);
+            if (!hasCopy(lot.thing)) expect(shopTiers(s)).toContain(item(lot.thing).tier);
+            if (s.kind === 'mortal') expect(item(lot.thing).taels).toBeDefined();
+          }
         }
       }
-    }
-  });
+    },
+  );
 
   it('roll a stall’s rarities low and a black market’s higher', () => {
     const rank = (id: string) => {

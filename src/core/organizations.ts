@@ -647,8 +647,9 @@ export function innerTrial(s: GameState, power: string): TrialResult {
     what: passed ? 'trial-passed' : 'trial-short',
   });
   if (pill) {
+    const held = itemCount(state.player, YEARS_PILLS.pill);
     state = gainItem(state, YEARS_PILLS.pill, 1).state;
-    state = { ...state, world: addGiven(state.world, house, YEARS_PILLS.pill, 1) };
+    state = { ...state, world: addGiven(state.world, house, YEARS_PILLS.pill, 1, held) };
     state = addEvent(state, 'power', { power: house, what: 'pill' });
   }
   return { ok: true, verdict: v, passed, yours, theirs, rank, pill, state };
@@ -683,9 +684,14 @@ export function givenBy(w: World, power: string, thing: string): number {
   return w.given?.[houseOf(power) + '|' + thing] ?? 0;
 }
 
-function addGiven(w: World, power: string, thing: string, n: number): World {
+/**
+ * Counts a gift. What it gave before counts only as far as you still hold the thing (`held`, before
+ * this gift), so gifts used up never make the hall refuse the ones you bought.
+ */
+function addGiven(w: World, power: string, thing: string, n: number, held: number): World {
   const key = houseOf(power) + '|' + thing;
-  return { ...w, given: { ...w.given, [key]: (w.given?.[key] ?? 0) + n } };
+  const kept = Math.min(w.given?.[key] ?? 0, held);
+  return { ...w, given: { ...w.given, [key]: kept + n } };
 }
 
 /** The points a gift is worth (design: stones at 2 low a point, goods at half their sell price). */
@@ -702,17 +708,31 @@ export function donationPoints(gift: {
 /** A member's balance moved: earned, donated or spent, never below nothing. */
 export function addBalance(w: World, who: string, power: string, n: number): World {
   const house = houseOf(power);
+  if (!Number.isFinite(n)) return w;
+  // To a hundredth, as a standing line's price is posted: a tenth would make one under 0.05 free.
   return {
     ...w,
     members: w.members.map((m) =>
       m.who === who && m.power === house
-        ? { ...m, balance: Math.max(0, Math.round((m.balance + n) * 10) / 10) }
+        ? { ...m, balance: Math.max(0, Math.round((m.balance + n) * 100) / 100) }
         : m,
     ),
   };
 }
 
 /** The player donates stones (low's worth) and things to a power they belong to. */
+/** What is wrong with a gift's counts, or null: stones a number above nothing, things whole. */
+export function giftFlaw(gift: {
+  stones?: number;
+  things?: Readonly<Record<string, number>>;
+}): string | null {
+  if (gift.stones !== undefined && !(Number.isFinite(gift.stones) && gift.stones >= 0))
+    return 'Name how many stones.';
+  for (const n of Object.values(gift.things ?? {}))
+    if (!Number.isInteger(n) || n <= 0) return 'Name how many.';
+  return null;
+}
+
 export function donate(
   s: GameState,
   power: string,
@@ -720,6 +740,8 @@ export function donate(
 ): { ok: true; points: number; state: GameState } | { ok: false; why: string } {
   const house = houseOf(power);
   if (!isMember(s.world, s.player.id, house)) return { ok: false, why: 'Only their own donate.' };
+  const flaw = giftFlaw(gift);
+  if (flaw) return { ok: false, why: flaw };
   let player = s.player;
   if (gift.stones) {
     const paid = pay(stonesOf(player), gift.stones);
@@ -823,7 +845,8 @@ export function payAllowances(s: GameState): GameState {
       );
     if (a.pills > 0) {
       pills[ALLOWANCE_PILL] = (pills[ALLOWANCE_PILL] ?? 0) + a.pills * months;
-      world = addGiven(world, m.power, ALLOWANCE_PILL, a.pills * months);
+      const held = itemCount(s.player, ALLOWANCE_PILL);
+      world = addGiven(world, m.power, ALLOWANCE_PILL, a.pills * months, held);
     }
   }
   const members = world.members.map((m) =>

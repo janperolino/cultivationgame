@@ -323,6 +323,22 @@ describe('a harsh power’s lower seats', () => {
       after.map!.road.some((r) => r.template === 'goal-raid-strait') ||
       after.chronicle.some((e) => String(e.data.line ?? '').includes('strait'));
     expect(raided).toBe(true);
+    // Kept all month, but away from the post at its turn: those on watch meet it, not you.
+    const kept = days(fixed, 24);
+    const far = {
+      ...kept,
+      map: {
+        ...kept.map!,
+        inside: null,
+        at: [kept.map!.at[0] + 5000, kept.map!.at[1]] as [number, number],
+      },
+    };
+    const met = (st: GameState) =>
+      st.map!.encounters.some((e) => e.template === 'goal-raid-strait') ||
+      st.map!.road.some((r) => r.template === 'goal-raid-strait');
+    expect(met(kept)).toBe(false);
+    expect(met(days(kept, 3))).toBe(true);
+    expect(met(days(far, 3))).toBe(false);
   });
 });
 
@@ -348,6 +364,8 @@ describe('a coming-back story', () => {
     const story = comingBackStory(spent, after);
     const lines = story.growth.filter((l) => l.includes('Overstayed') || l.includes('leave'));
     expect(lines.length).toBeLessThanOrEqual(1);
+    // The shifts missed while away are told there too, not only in the Chronicle.
+    expect(story.growth.some((l) => /shift/i.test(l))).toBe(true);
   });
 });
 

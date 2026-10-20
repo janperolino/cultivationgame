@@ -647,7 +647,9 @@ function DoorCounter({
   act: Act;
   say: (t: string) => void;
 }) {
-  const [at, setAt] = useState(door.shops[0]!);
+  const [picked, setAt] = useState(door.shops[0]!);
+  // A new month can change a door's shops: a tab no longer among them falls back to the first.
+  const at = door.shops.includes(picked) ? picked : door.shops[0]!;
   return (
     <>
       {door.shops.length > 1 && (

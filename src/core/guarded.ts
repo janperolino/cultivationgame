@@ -115,6 +115,9 @@ export function seeUse(
     if (by.length === 0) continue;
     const had = markFor(world, who.id, house, day);
     if (!who.disguised && had && leakChapter(had.data.method!) >= copyChapter(thing)) continue;
+    // Veiled, a leak its power already knows of at this chapter or higher is news to no one, so
+    // using the art again adds no deed (the review's: one a fight, without end).
+    if (who.disguised && knownLeak(world, who.id, house, copyChapter(thing))) continue;
     const learners: Learner[] = by.map((x) => ({ id: x.id, power: house }));
     const r = recordDeed(
       world,
@@ -139,6 +142,19 @@ export function seeUse(
     seen.push({ power: house, thing, marked: !who.disguised });
   }
   return { world, seen };
+}
+
+/** Whether a power already knows of a leak by someone at a chapter or higher. */
+function knownLeak(w: World, who: string, house: string, chapter: number): boolean {
+  return w.deeds.some(
+    (d) =>
+      d.kind === 'leak' &&
+      d.actor === who &&
+      d.power === house &&
+      !!d.evidence[0] &&
+      leakChapter(d.evidence[0]) >= chapter &&
+      Object.values(d.knownBy).some((k) => k.power === house),
+  );
 }
 
 /** One "Stole one of our methods" a power, however many leaks it traced to you. */

@@ -35,7 +35,13 @@ export function pilesHere(s: GameState): { pile: Pile; i: number }[] {
  */
 export function dropOn(life: MapLife, at: Pt, day: number, items: Record<string, number>): MapLife {
   const piles = (life.ground ?? []).filter(live(day));
-  const i = piles.findIndex((p) => near(p.at, at));
+  // The nearest pile in reach, not the first written.
+  let i = -1;
+  for (let j = 0; j < piles.length; j++) {
+    const d = Math.hypot(piles[j]!.at[0] - at[0], piles[j]!.at[1] - at[1]);
+    const best = i < 0 ? Infinity : Math.hypot(piles[i]!.at[0] - at[0], piles[i]!.at[1] - at[1]);
+    if (near(piles[j]!.at, at) && d < best) i = j;
+  }
   const into = i >= 0 ? piles[i]!.items : {};
   const merged = { ...into };
   for (const [id, n] of Object.entries(items)) if (n > 0) merged[id] = (merged[id] ?? 0) + n;
@@ -64,7 +70,8 @@ export function gainItem(s: GameState, id: string, n: number): { state: GameStat
   if (n <= 0) return { state: withPlayer(s, addItem(s.player, id, n)), left: 0 };
   const { c, left } = stow(s.player, id, n);
   let state = withPlayer(s, c);
-  if (left > 0 && state.map) {
+  // A thing no catalog writes could never be picked up again: it is never set down.
+  if (left > 0 && state.map && hasItem(id)) {
     const life = dropOn(state.map, state.map.at, s.calendar.day, { [id]: left });
     state = {
       ...state,

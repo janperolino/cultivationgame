@@ -134,6 +134,9 @@ describe('seen in use', () => {
     const r = seeUse(s.world, you, [CLEAVE], [outer], { place: 'road' }, s.calendar.day);
     expect(markFor(r.world, YOU, GATE, s.calendar.day)).toBeUndefined();
     expect(huntOf(r.world, GATE, s.calendar.day)).toBe(1);
+    // Seen again veiled, the same leak is news to no one: no new deed.
+    const again = seeUse(r.world, you, [CLEAVE], [outer], { place: 'road' }, s.calendar.day);
+    expect(again.world.deeds.length).toBe(r.world.deeds.length);
   });
 
   it('a Gate member or an outsider who saw nothing is never marked, and one grudge a power', () => {

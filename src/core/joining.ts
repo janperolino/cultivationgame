@@ -27,6 +27,7 @@ import {
   dwellingDensity,
   elderPrice,
   houseOf,
+  giftFlaw,
   isOrganization,
   joinPower,
   membership,
@@ -199,6 +200,8 @@ export function offerGift(
   const house = houseOf(power);
   if (membership(s.world, s.player.id, house))
     return { ok: false, reason: 'A member donates at the exchange hall.' };
+  const flaw = giftFlaw(gift);
+  if (flaw) return { ok: false, reason: flaw };
   let player = s.player;
   if (gift.stones) {
     const after = pay(stonesOf(player), gift.stones);

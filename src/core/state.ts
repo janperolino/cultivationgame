@@ -658,8 +658,13 @@ export function itemCount(c: Cultivator, id: string): number {
 export function addItem(c: Cultivator, id: string, n: number): Cultivator {
   const count = Math.max(0, itemCount(c, id) + n);
   const items = { ...c.items, [id]: count };
-  if (count === 0) delete items[id];
-  return { ...c, items };
+  if (count > 0) return { ...c, items };
+  delete items[id];
+  // Its split stacks go with the last of it, so none comes back on the next gain.
+  if (!c.splits?.[id]) return { ...c, items };
+  const splits = { ...c.splits };
+  delete splits[id];
+  return { ...c, items, splits };
 }
 
 export function hasFlag(c: Cultivator, flag: string): boolean {

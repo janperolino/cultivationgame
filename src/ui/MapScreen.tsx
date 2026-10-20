@@ -846,9 +846,10 @@ function MapView({
               </p>
               {hereLore && <p className="map-here-lore">{hereLore}</p>}
               <div className="map-here-acts">
-                {hereChoices(atPlace).map((it) => (
+                {hereChoices(atPlace).map((it, i) => (
                   <button
-                    key={it.t}
+                    // Two piles in reach share a title, so the key takes the place in the list too.
+                    key={`${i}:${it.t}`}
                     type="button"
                     className={it.warn ? 'is-warn' : undefined}
                     onClick={() => it.run?.()}

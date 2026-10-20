@@ -99,9 +99,11 @@ export function gatherHour(
   const next = { ...life, gathered: Math.max(0, dug - whole) };
   if (whole <= 0) return { life: next, player: c, finds: {} };
   const rarity = gatherRarity(c, soulBand, Math.max(0, bandAt(map, life.at)));
-  const rng = new Rng(
-    hashSeed(`gather/${Math.round(life.at[0])}/${Math.round(life.at[1])}/${hourIndex}`),
-  );
+  // Keyed by who digs, the spot, the hour and how far into a find they were, so an hour split
+  // across day steps doesn't repeat its first pick, and two at one spot find their own.
+  const at = `${Math.round(life.at[0])}/${Math.round(life.at[1])}`;
+  const into = Math.round(life.gathered * 1e6);
+  const rng = new Rng(hashSeed(`gather/${c.id}/${at}/${hourIndex}/${into}`));
   let player = c;
   const finds: Record<string, number> = {};
   for (let i = 0; i < whole; i++) {

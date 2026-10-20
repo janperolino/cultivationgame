@@ -137,9 +137,16 @@ export function market(id: string): Market | undefined {
   return marketById.get(id);
 }
 
-/** The market a shop stands in. */
+const shopMarket = new Map<string, Market | undefined>();
+
+/** The market a shop stands in, looked up once a shop (every price and purse asks). */
 export function marketOfShop(shopId: string): Market | undefined {
-  return MARKETS.find((m) => m.shops.includes(shopId));
+  if (!shopMarket.has(shopId))
+    shopMarket.set(
+      shopId,
+      MARKETS.find((m) => m.shops.includes(shopId)),
+    );
+  return shopMarket.get(shopId);
 }
 
 // ── Prosperity ────────────────────────────────────────────────────────────────────────────────
@@ -191,12 +198,22 @@ export function placeChain(place: string): string[] {
   return out;
 }
 
+/** The whole years a place's offset has eased by a day. */
+function easedYears(o: { day: number }, day: number): number {
+  return Math.floor(Math.max(0, day - o.day) / PROSPERITY_EASE_DAYS);
+}
+
 /** What a deed did to one place's prosperity, eased back a step a year. */
 function offsetOf(w: World, id: string, day: number): number {
   const o = w.prosperity[id];
   if (!o) return 0;
-  const eased = Math.floor(Math.max(0, day - o.day) / PROSPERITY_EASE_DAYS);
-  return Math.sign(o.n) * Math.max(0, Math.abs(o.n) - eased);
+  return Math.sign(o.n) * Math.max(0, Math.abs(o.n) - easedYears(o, day));
+}
+
+/** Whether any place's prosperity stands off its written value on a day. */
+export function prosperityMoved(w: World, day: number): boolean {
+  for (const id in w.prosperity) if (offsetOf(w, id, day) !== 0) return true;
+  return false;
 }
 
 const clampProsperity = (n: number) => Math.min(9, Math.max(1, Math.round(n)));
@@ -210,13 +227,23 @@ export function prosperityOf(w: World, id: string, day: number): number {
   return clampProsperity(writtenProsperity(id) + off);
 }
 
-/** Moves a place's prosperity by `n` from where it stands today (the `prosperity` effect). */
+/**
+ * Moves a place's prosperity by `n` from where it stands today (the `prosperity` effect). The
+ * year it is easing through carries on, so a second deed within a year doesn't restart the clock;
+ * offsets eased all the way back are dropped.
+ */
 export function addProsperity(w: World, id: string, n: number, day: number): World {
   const base = writtenProsperity(id);
   const off = Math.min(9 - base, Math.max(1 - base, offsetOf(w, id, day) + n));
-  const prosperity = { ...w.prosperity };
+  const prosperity: World['prosperity'] = {};
+  for (const k in w.prosperity) if (offsetOf(w, k, day) !== 0) prosperity[k] = w.prosperity[k]!;
+  const was = w.prosperity[id];
   if (off === 0) delete prosperity[id];
-  else prosperity[id] = { n: off, day: Math.floor(day) };
+  else
+    prosperity[id] = {
+      n: off,
+      day: was ? was.day + easedYears(was, day) * PROSPERITY_EASE_DAYS : Math.floor(day),
+    };
   return { ...w, prosperity };
 }
 

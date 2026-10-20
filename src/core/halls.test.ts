@@ -26,6 +26,7 @@ import {
   becomeGuest,
   canJoin,
   densityHere,
+  donate,
   dwellingOf,
   dwellingWords,
   givenBy,
@@ -210,6 +211,21 @@ describe('the monthly allowance', () => {
     });
     const r = sell({ ...more, map: { ...more.map!, inside: REINS } }, 'reins-sect', pill, 1);
     if (!r.ok) expect(r.reason).not.toContain('gave you');
+    // Gifts used up don't count on: eaten before the next month, only that month's gift is its.
+    const ate = withPlayer(paid, { ...paid.player, items: { ...paid.player.items, [pill]: 0 } });
+    expect(givenBy(payAllowances(nextMonth(ate)).world, REINS, pill)).toBe(1);
+  });
+
+  it('takes no gift or sale of a count that isn’t whole and above nothing', () => {
+    const s = member(life(), REINS);
+    const pill = 'qi-gathering-pill';
+    expect(donate(s, REINS, { things: { [pill]: -3 } })).toMatchObject({ ok: false });
+    expect(donate(s, REINS, { stones: NaN })).toMatchObject({ ok: false });
+    const inside = { ...s, map: { ...ensureMap(s).map!, inside: REINS } };
+    expect(sell(inside, 'reins-sect', pill, NaN)).toMatchObject({
+      ok: false,
+      reason: 'Name how many.',
+    });
   });
 
   it('arrives as the month turns, once', () => {

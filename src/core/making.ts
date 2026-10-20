@@ -34,6 +34,7 @@ import {
   MARKETS,
   placeLots,
   populationOf,
+  prosperityMoved,
   prosperityOf,
   reachOf,
   type Market,
@@ -414,9 +415,9 @@ function carrierOf(m: Market, good: string): Carrier | null {
 const sumCache = new Map<string, Map<string, MarketSum>>();
 
 function worldKey(w: World, month: number): string {
-  if (Object.keys(w.prosperity).length === 0 && Object.keys(w.population).length === 0)
-    return 'written';
   const day = month * DAYS_PER_MONTH;
+  // Offsets eased all the way back move nothing, so the written sums still hold.
+  if (!prosperityMoved(w, day) && Object.keys(w.population).length === 0) return 'written';
   return `${MARKETS.map((m) => prosperityOf(w, m.id, day)).join(',')}|${JSON.stringify(w.population)}`;
 }
 

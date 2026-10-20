@@ -443,7 +443,8 @@ function worldSig(
   here: number,
 ): string {
   const node = (n: AnyNode) =>
-    `${nodeState(c, n)[0]}${nodeSealed(c, n) ? 1 : 0}${canLearn(c, n.id).ok ? 1 : 0}`;
+    // The state's first two letters: 'le'arned and 'lo'cked share their first.
+    `${nodeState(c, n).slice(0, 2)}${nodeSealed(c, n) ? 1 : 0}${canLearn(c, n.id).ok ? 1 : 0}`;
   const nodes = own ? [...f.nodes.values()].map((p) => node(p.node)).join('') : '';
   const jewels = grafts
     .map(

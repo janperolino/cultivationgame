@@ -56,6 +56,9 @@ describe('the grades', () => {
     // 1.3 mid and the last 0.2 mid in low at the premium.
     expect(pay(at(240, 1.3), 1500)).toEqual(at(0, 0));
     expect(pay(at(0, 0.3), 200)).toBeNull();
+    // Owing more of the last stone than breaking it would cover at the premium, it goes whole.
+    expect(pay(at(0, 2), 1935.9)).toEqual(at(0, 0));
+    expect(pay(at(0, 2), 1900)).toEqual(at(20, 0));
     expect(canPay(at(0, 0, 1), 5)).toBe(true);
     expect(worthOf(at(240, 2.5))).toBe(2740);
     expect(

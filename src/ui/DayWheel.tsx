@@ -618,8 +618,8 @@ export function RoadWheel({
                 disabled={!!game.ended || !!group || (allLocked && k !== 'sleep')}
                 title={k === 'home' ? 'do what the home wheel does at this hour' : ROAD_WORD[k]}
                 onClick={() => {
-                  mapAct((s) => setRoadHours(s, pick, k));
-                  onPick([]);
+                  // As on the home wheel: a change lets go of the pick, a refusal keeps it.
+                  if (!mapAct((s) => setRoadHours(s, pick, k))) onPick([]);
                 }}
               >
                 {ROAD_NAME[k]}

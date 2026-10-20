@@ -597,6 +597,9 @@ function haggleOff(sm: ShopMonth, day: number): number {
  */
 export function buyCount(lot: StockLot, count?: number): number {
   if (!lot.standing) return lot.n;
+  // A count that isn't a whole number (a typed "abc") is no count: the lot's own.
+  if (count !== undefined && !Number.isFinite(count)) count = undefined;
+  else if (count !== undefined) count = Math.floor(count);
   if (lot.endless) return Math.max(1, count ?? lot.n);
   return Math.min(lot.n, Math.max(1, count ?? 1));
 }
@@ -829,7 +832,8 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
   const refused = serves(s, sh);
   if (refused) return { ok: false, reason: refused };
   const held = hasCopy(thing) ? (s.player.copies[thing] ?? 0) : itemCount(s.player, thing);
-  if (held < n || n <= 0) return { ok: false, reason: 'You don’t have that many.' };
+  if (!Number.isInteger(n) || n <= 0) return { ok: false, reason: 'Name how many.' };
+  if (held < n) return { ok: false, reason: 'You don’t have that many.' };
   const offer = offerFor(s, shopId, thing);
   if (!offer.ok) return offer;
   // What its power handed you, its own hall won't buy back (the checkpoint's fix).

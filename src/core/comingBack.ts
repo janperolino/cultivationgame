@@ -156,13 +156,15 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
     );
   else if (stones >= 1) growth.push(`Your pouch is ${priceWords(Math.floor(stones))} heavier.`);
 
-  // What your powers did while you were away (O3): a quota missed away is missed, and told here.
+  // What your powers did while you were away (O3): a quota missed away is missed, and told here;
+  // so are the shifts a job counted missed and a hire letting you go for them (the review's).
   const who = whoFor(after.player);
   // A power's repeated line is one line with its count (the checkpoint's fix).
   const told = new Map<string, { line: string; times: number }>();
   for (const e of since) {
-    if (e.type !== 'power') continue;
-    const key = `${String(e.data.power)}|${String(e.data.what)}`;
+    const job = e.type === 'job' && (e.data.what === 'missed' || e.data.what === 'let-go');
+    if (e.type !== 'power' && !job) continue;
+    const key = `${e.type}|${String(e.data.power ?? e.data.job)}|${String(e.data.what)}`;
     const g = told.get(key);
     if (g) g.times++;
     else told.set(key, { line: renderEvent(e.type, e.data, who), times: 1 });

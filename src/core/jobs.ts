@@ -378,13 +378,15 @@ export function jobsDay(s: GameState, from: number, to: number, walked = false):
 }
 
 /**
- * A dangerous post's raid (the organizations checkpoint): its template met where you stand, at the
+ * A dangerous post's raid (the organizations checkpoint): its template met at the post, at the
  * strongest band of the post's seat, settled by your stance as a road card is or waiting for you.
  */
 function raid(s: GameState, j: Job, month: number): GameState {
   const life = s.map;
   const map = mapOf(s);
   if (!life || !map || !j.danger || !j.power) return s;
+  // The raid comes to the post: away from it at the month's turn, those on watch meet it.
+  if (!atPost(s, j)) return s;
   const id = `raid-${j.id}-${month}`;
   if (life.encounters.some((e) => e.id === id)) return s;
   const seat = seatRanges(houseOf(j.power))[j.seat ?? 'outer'].to;

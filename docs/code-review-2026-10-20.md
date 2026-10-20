@@ -99,6 +99,28 @@ Ranked by what a player would feel, then by what K1 trips on.
 
 ## Low
 
+**Round 3, Jan's go on the low bugs:**
+- *Fixed, with tests:*
+  - `pay` tenders the posted grade's last stone whole when breaking it can't cover the rest, the keeper keeping the change under the premium: 2 mid pays 1.94 mid.
+  - A second prosperity deed carries on the year it was easing through.
+  - A hall's gift count holds only as far as you still hold the thing.
+  - Gifts, donations and sales refuse counts that aren't whole and above nothing, so the dev console's NaN gets "Name how many." Balances keep hundredths, as standing lines are posted.
+  - The strait raid comes to the post: away from it at the month's turn, those on watch meet it.
+  - A veiled user's leak already known at that chapter adds no new deed.
+  - The gather roll is keyed by who digs and how far into a find they were.
+  - The coming-back story tells missed shifts and a hire letting you go.
+  - A used-up stack's splits go with it. A drop lands on the nearest pile, and an id no catalog writes is never set down.
+  - The road wheel keeps its pick on a refusal. The Map's here-list keys are unique. The Trees' signature tells learned from locked. A door's shop tab falls back when the month changes its shops.
+  - Silver is cleaned of float dust.
+- *Left, with the reason:*
+  - `followWheel` writing the routine under a shift is right: following a routine is a choice for all twelve hours, and the routine's hours come back when the job goes.
+  - A pile lying "from today" on any drop is what `dropOn` says it does.
+  - The loading screen on a 60 s tick gap needs a call on throttled tabs.
+  - The v36 migration reading live shop content can't be frozen without copying that content into the migration.
+  - The collapsed ladders of about 100 powers with no population need a call on where a small power's elders sit. Under Open questions.
+  - Sword Rain and Dragon Thrust go with major 4 to the realm gap.
+- The test "stock only real things" (about 3 s alone) has a 20 s timeout, since a full parallel run pushed it past the 5 s default.
+
 **Bugs**
 - `purse.ts:109` `pay`: 2 mid can't pay 1.94 mid (`pay([0,2,0,0], 1935.9)` is null). The break gives 1,100 low and the remainder at the premium is 1,123. Any remainder of 0.917 to 1 stone is unpayable with no spare lows. *Fix:* tender the whole stone and give change.
 - `markets.ts:214` `addProsperity` stores `floor(day)` with the eased offset. A second deed within a year restarts the easing, so a place hit twice a year never eases.
@@ -129,6 +151,11 @@ Ranked by what a player would feel, then by what K1 trips on.
 - Land tags on `steppe` lines make nowhere, since no Border Wilds market is steppe (`gate-tanned-hide`, `thunderhorn`, `cloud-goat-wool`), so the Herders' and the Gate's land making is inert. *Content*.
 
 ## Speed
+
+**Round 3, Jan's go on S1, S3 and S4:**
+- S1: each foe is priced once an art per target pick (`previewCache`, `previewAt`, `priceFoe`), the Banner and sword-aura scan is skipped in a turn where nobody carries one, and `ownRealm` and `landing` allocate nothing. The crowd fights are bit-identical: a hash of every turn's actions, outcomes and final state over 10 seeds each of 15, 50 and 150 foes matched before and after. The 150-foe rows take 2.3–2.9 s, down from 5.2 s, and `sim fights` takes 4 min 8 s, down from 9 min 24 s. The rest is per-foe arithmetic in `sheet.ts` and `realms.ts`.
+- S3: eased prosperity offsets are dropped when one is written, and the sum's cache keeps its fast path while no offset still moves anything (`prosperityMoved`).
+- S4: `marketOfShop` looks a shop up once.
 
 Measured on this machine, at the branch's head.
 

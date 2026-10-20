@@ -18,7 +18,7 @@ import {
 import { dropStack, gainItem, groundPiles, pickUp, pilesHere } from './map/ground.ts';
 import { ensureMap } from './map/travel.ts';
 import { buy, shelf } from './shops.ts';
-import { newLife, withPlayer, type GameState } from './state.ts';
+import { addItem, newLife, withPlayer, type GameState } from './state.ts';
 
 const PILL = ITEMS.find((i) => i.kind === 'pill' && stackSize(i) >= 20)!.id;
 const BLADE = ITEMS.find((i) => i.uses.equip?.slot === 'weapon' && (i.bulk ?? 1) === 1)!.id;
@@ -103,6 +103,9 @@ describe('the Bag in squares', () => {
     // Using some up comes out of the pile first.
     const used = { ...again, items: { [PILL]: 20 } };
     expect(bagStacks(used).map((x) => x.n)).toEqual([5, 8, 7]);
+    // Used to the last, its splits go with it: the next gain is one stack again.
+    const gone = addItem(again, PILL, -30);
+    expect(bagStacks(addItem(gone, PILL, 7)).map((x) => x.n)).toEqual([7]);
     // A stack of one doesn't split, nor anything into a full pack.
     expect(splitStack({ ...s.player, items: { [PILL]: 1 } }, PILL, 0)).toBeNull();
     const packed = gainItem(s, BLADE, PACK_SQUARES - 1).state.player;

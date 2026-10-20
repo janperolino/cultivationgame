@@ -131,6 +131,13 @@ export function pay(s: Stones, price: number): Stones | null {
     // Break the smallest whole stone at or above the posted grade into the grade below.
     const h = [1, 2, 3].find((x) => x >= Math.max(g, 1) && out[x]! >= 1 - EPS);
     if (h === undefined) return null;
+    // Broken, a stone of the posted grade pays only DOWN_GIVES ÷ UP_COST of itself at the premium;
+    // owing more of it than that, it is tendered whole and the keeper keeps the change under the
+    // premium (the review's 1.94 mid from 2 mid).
+    if (h === g && owed * UP_COST > DOWN_GIVES + EPS && owed <= 1 + EPS) {
+      out[h] = out[h]! - 1;
+      return clean(out);
+    }
     out[h] = out[h]! - 1;
     out[h - 1] = out[h - 1]! + DOWN_GIVES;
   }
@@ -281,5 +288,6 @@ export function toStones<C extends Pick<Cultivator, 'stones' | 'silver'>>(
 /** Pays a price in silver, or null when short: mortal shops make no change for a stone. */
 export function paySilver<C extends Pick<Cultivator, 'silver'>>(c: C, taels: number): C | null {
   if (c.silver + EPS < taels) return null;
-  return { ...c, silver: c.silver - taels };
+  // Cleaned of float dust as the stones are, so 3 taels never read as 2.9999….
+  return { ...c, silver: Math.max(0, Math.round((c.silver - taels) * 1e6) / 1e6) };
 }
