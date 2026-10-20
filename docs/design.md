@@ -1145,8 +1145,8 @@ Gu raising, puppetry, divination and medicine come after v1.
 
 **Production, commissions and the craft deck** (D4, block 10).
 
-- **You do the work, for now** (Jan's call). The layer builds the first and third of the four automation steps (Idle production): your own queue on Craft hours, and **standing orders**, which at markets in your reach buy inputs under a price and sell outputs over one, a courier's fee of 2% a day of road taken off. Hired hands, keepers and disciples running a queue wait for the living world or founding your own power (Still to design, Sects); the full chain waits with them.
-- **Where it sells**: your goods move a market by the lot rule, so a village floods and a city hardly notices, and standing orders across your reach are how a crafter stays rich.
+- **You do the work, for now** (Jan's call). The layer builds only the first of the four automation steps (Idle production), your own queue on Craft hours, so you gather enough inputs before you leave it to run. Standing orders (buying inputs under a price and selling outputs over one at markets in your reach, a courier's fee of 2% a day of road), hired hands, keepers and disciples running a queue, and the full chain wait for the living world or founding your own power (Still to design, Sects).
+- **Where it sells**: you carry your goods to market yourself (Economy, Trading yourself), and they move it by the lot rule, so a village floods and a city hardly notices, and a crafter who wants to stay rich travels.
 - **Commissions posted.** Each alchemy shop, refiner and talisman stall posts one a month for its market's biggest shortage, the one its line of why already names (Economy, People make and use), so a commission always has a reason you can see: "Ten Wound-Knitting Pills, green or better, by the month's end, at ×1.5 the market." A graded one asks for the badge, and from craft renown 3 the shops you stand in offer some by name.
 - **Commissions you place**, a piece made to your wants: at a refiner or an alchemy shop you pick a recipe it knows and bring the inputs or pay for its own, at ×1.25 the market, ready after the crafter's hours, its rarity from their mastery; rarer inputs you bring add their lift.
 - **Mending is refining**: P3.5's refiner's mend is a refining action, a craft hour a tier of the piece, and you mend your own once you refine.
@@ -1973,8 +1973,9 @@ Settle each before the stage that needs it (Roadmap), grouped by the layer that 
 
 **Before crafts**
 
-- [ ] Hands-on crafts: alchemy's fire control and formations as placing, laying nodes on the abode's grid so the lines close, on the qi-handling grammar; the effect table behind generated recipes; styles and their chapters; technique forms in practice hours as a maybe, the first thing to cut if it feels like filler
-- [ ] The craft Daos' node lists, tiers 1 and 2, drafted with AI help and curated
+- [x] Hands-on crafts (settled in D4, 2026-10-20, under Professions, people and powers: Crafts, thin, to Production, commissions and the craft deck; technique forms in practice hours dropped): alchemy's fire control and formations as placing, laying nodes on the abode's grid so the lines close, on the qi-handling grammar; the effect table behind generated recipes; styles and their chapters; technique forms in practice hours as a maybe, the first thing to cut if it feels like filler
+- [ ] The craft Daos' node lists, tiers 1 and 2, drafted with AI help and curated (their shape settled in D4: Hand, Line and Lore; drafted in K2)
+- [ ] Core Formation, its own layer (Jan's call in D4: not part of crafts). Tier 3 chapters for the written methods (no qi method reaches it today), the Core-Forming Pill brewed, Core's own breakthrough. With it, Jan's thought to weigh there: breakthrough pills as supplements, not requirements, so a genius who "needs no pill" breaks through to Foundation or Core Formation without one, as the novels have it, and a pill adds safety and about 25–30% to the odds
 - [ ] Branches in every tree (a sketch, Jan's idea in D4): the Qi, Body and Soul trees and the combat Daos split into distinct branches, as the craft trees' Hand, Line and Lore (the Qi tree's combat, growth both attended and idle, stone swallowing, utility), each with its own capstone a tier opening its next. Rebuilds P1.3, P1.6 and P2.7's fans, so it waits until the craft trees have proved the shape in play; then its own phase after the crafts checkpoint
 
 **Before guild trade and the living world**
