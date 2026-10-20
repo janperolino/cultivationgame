@@ -113,13 +113,16 @@ export const AUTO_SETTINGS = {
 export type AutoSetting = keyof typeof AUTO_SETTINGS;
 export const AUTO_IDS = Object.keys(AUTO_SETTINGS) as [AutoSetting, ...AutoSetting[]];
 
-/** Breakthrough grades, worth −1 to +3 stages in a fight (design § Cultivation). */
+/**
+ * Breakthrough grades (design § Cultivation): `shares` is what each is worth in a fight, in shares
+ * of the step out of its realm (GRADE_SHARE, content/realms.ts), −1 flawed to +3 heavenly.
+ */
 export const GRADES = [
-  { id: 'flawed', name: 'Flawed', stages: -1 },
-  { id: 'ordinary', name: 'Ordinary', stages: 0 },
-  { id: 'superior', name: 'Superior', stages: 1 },
-  { id: 'perfect', name: 'Perfect', stages: 2 },
-  { id: 'heavenly', name: 'Heavenly', stages: 3 },
+  { id: 'flawed', name: 'Flawed', shares: -1 },
+  { id: 'ordinary', name: 'Ordinary', shares: 0 },
+  { id: 'superior', name: 'Superior', shares: 1 },
+  { id: 'perfect', name: 'Perfect', shares: 2 },
+  { id: 'heavenly', name: 'Heavenly', shares: 3 },
 ] as const;
 export type GradeId = (typeof GRADES)[number]['id'];
 export const GRADE_IDS = GRADES.map((g) => g.id) as unknown as readonly [GradeId, ...GradeId[]];

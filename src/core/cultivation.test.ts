@@ -26,7 +26,7 @@ import {
   type LadderId,
 } from './cultivation.ts';
 import { rungOf } from './combat/sheet.ts';
-import { gradesOdds, gradesSpeed, gradesStages } from './grades.ts';
+import { gradesOdds, gradesSpeed, gradesShare } from './grades.ts';
 import { attemptLastChance, breakThrough, cultivate } from './life.ts';
 import { advance } from './loop.ts';
 import { learnMethod, methodNeed, setActiveMethod } from './methods.ts';
@@ -569,8 +569,8 @@ describe('breakthrough grades (D2.1)', () => {
     expect(echoed.gradeOdds).toBeCloseTo(0.1 / 3);
     // A fight reads the latest grade alone: the ledger is a cliff a third of a stage tips.
     expect(rungOf(at(fe, 'qi', { grades: ['heavenly', 'ordinary'] }).qi).grade).toBe(0);
-    expect(rungOf(at(fe, 'qi', { grades: ['ordinary', 'heavenly'] }).qi).grade).toBe(3);
-    expect(gradesStages([])).toBe(0);
+    expect(rungOf(at(fe, 'qi', { grades: ['ordinary', 'heavenly'] }).qi).grade).toBeCloseTo(0.8);
+    expect(gradesShare([])).toBe(0);
   });
 });
 

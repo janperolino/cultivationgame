@@ -75,7 +75,7 @@ import {
   type CultivatorTemplate,
 } from '../../content/roster.ts';
 import { GUARDS, type Technique } from '../../content/techniques.ts';
-import { gradesStages } from '../grades.ts';
+import { gradesShare } from '../grades.ts';
 import { npcIntent } from '../intent.ts';
 import { Rng } from '../rng.ts';
 import { armor, combatant, guardArt, NO_GUARDS, weapon, type Combatant } from './combatant.ts';
@@ -293,7 +293,7 @@ function rungAt(realmId: RealmId, stage: number, grade: GradeId): Rung {
   return {
     realm: realmId,
     stage,
-    grade: realmId === 'qi-condensation' ? 0 : gradesStages([grade]),
+    grade: realmId === 'qi-condensation' ? 0 : gradesShare([grade]),
   };
 }
 
@@ -328,6 +328,15 @@ interface Build {
   intent?: number;
 }
 
+/**
+ * The movement art a generated cultivator knows: a band below their other arts from green
+ * (C3: movement arts are the rare ones, and tempo and fleeing read them).
+ */
+export function movementRarity(arts: RarityId): RarityId {
+  const rank = rarityRank(arts);
+  return rank <= rarityRank('white') ? arts : (RARITIES[rank - 1]!.id as RarityId);
+}
+
 /** Puts the rolls together into a combatant on the player's rules. */
 function build(b: Build): Combatant {
   const tier = realmIndex(b.realm) + 1;
@@ -342,10 +351,14 @@ function build(b: Build): Combatant {
   const gBody = growth('body', body);
   // A guard art is a technique anyone can learn, so they know one for every path at their arts'
   // rarity, whatever ladders they cultivate; a beast's hide is its guard, and it raises no qi shield.
+  // Movement arts are the rare ones, so theirs is a band below (C3, Jan's call: tempo reads it).
   const guards = { ...NO_GUARDS };
   for (const g of GUARDS) {
     if (b.beast) guards[g] = g === 'hardening' ? 1 : 0;
-    else guards[g] = guardArt({ rarity: b.rolls.technique, tier }, tier);
+    else {
+      const rarity = g === 'movement' ? movementRarity(b.rolls.technique) : b.rolls.technique;
+      guards[g] = guardArt({ rarity, tier }, tier);
+    }
   }
   const share = (l: LadderId, stat: string) => NPC_GROWTH[l][stat] ?? 0;
   const passives = (b.abilities ?? []).map((a) => a.passive).filter((p) => p !== undefined);

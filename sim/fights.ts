@@ -8,8 +8,10 @@
 // the top, the ledger's ordinary kit) against each. Then the Border Wilds roster against a white
 // and a purple kit at each realm it is met at. Then crowds (C1): one white fighter against many
 // fighters a realm below, white and then purple, which protective qi and the arts that strike
-// many decide (C2: every kit carries its tier's blast). Each matchup prints
-// both sheets beside its win rate.
+// many decide (C2: every kit carries its tier's blast), and a crowd that can't scratch its foe
+// breaks (C3), which counts as the fighter's win; and the half-step fight, an early Foundation
+// against one purple layer 9. Every fight runs with tempo (C3). Each matchup prints both sheets
+// beside its win rate.
 // Run: npm run sim -- fights [--fights=10000] [--roster=2000] [--crowds=200] [--sheets]
 import {
   FOE_BASELINE,
@@ -51,6 +53,8 @@ interface Tally {
   fled: number;
   draw: number;
   turns: number;
+  /** Wins where the other side broke and ran: counted in `fled` too. */
+  broke: number;
 }
 
 /** Fights a side against another many times, a fresh draw of who moves first each fight. */
@@ -62,7 +66,7 @@ function bout(
   turns = 60,
 ): Tally {
   const rng = Rng.fromString(seed);
-  const t: Tally = { win: 0, loss: 0, fled: 0, draw: 0, turns: 0 };
+  const t: Tally = { win: 0, loss: 0, fled: 0, draw: 0, turns: 0, broke: 0 };
   for (let i = 0; i < n; i++) {
     const a = mine(rng).map((c) => ({ ...c, side: 'a' }));
     const b = theirs(rng).map((c) => ({ ...c, side: 'b' }));
@@ -71,8 +75,10 @@ function bout(
     const theyFled = r.fled.some((id) => b.some((c) => c.id === id));
     const iFled = r.fled.some((id) => a.some((c) => c.id === id));
     if (r.winner === 'a') {
-      if (theyFled) t.fled++;
-      else t.win++;
+      if (theyFled) {
+        t.fled++;
+        t.broke++;
+      } else t.win++;
     } else if (r.winner === 'b') {
       if (iFled) t.fled++;
       else t.loss++;
@@ -82,6 +88,8 @@ function bout(
 }
 
 const rate = (t: Tally) => t.win / (t.win + t.loss + t.fled + t.draw);
+/** A crowd's fight: the fighter wins by felling it or by breaking it. */
+const held = (t: Tally) => (t.win + t.broke) / (t.win + t.loss + t.fled + t.draw);
 
 /** One line of a sheet: the six numbers, Attack on the ladder its art uses. */
 function sheetLine(c: Combatant): string {
@@ -224,6 +232,43 @@ for (const r of ['foundation-establishment', 'core-formation'] as const) {
   check(`${name}: a great-sect disciple overcomes an ordinary foe a stage up`, stageUp, 0.5, 1);
 }
 
+// ---------------------------------------------------------------- rare against rare
+
+// The kits against each other (C3, Jan's question): at the same realm and first stage, row
+// against column, and each against its own kit a realm up. No targets but the ledger's own.
+console.log(
+  `\nRare against rare: row against column at the same realm and first stage, then against its own kit a realm up, ${ROSTER} fights a cell`,
+);
+for (const r of ['foundation-establishment', 'core-formation'] as const) {
+  console.log(
+    `  ${realm(r).name}`.padEnd(26) +
+      KITS.map((k) => k.name.split(' ')[0]!.padStart(13)).join('') +
+      '  a realm up'.padStart(14),
+  );
+  for (const a of KITS) {
+    const cells = KITS.map((b) =>
+      a === b
+        ? '—'
+        : pct(
+            rate(
+              bout(fixed(a, r, 1, 'a'), fixed(b, r, 1, 'b'), ROSTER, `rare/${a.id}/${b.id}/${r}`),
+            ),
+          ),
+    );
+    const up = rate(
+      bout(
+        fixed(a, r, 1, 'a'),
+        fixed(a, rungAhead(r, 1).realm, 1, 'b'),
+        ROSTER,
+        `rare/${a.id}/up/${r}`,
+      ),
+    );
+    console.log(
+      `    ${a.name.padEnd(22)}${cells.map((c) => c.padStart(13)).join('')}${pct(up).padStart(14)}`,
+    );
+  }
+}
+
 // ---------------------------------------------------------------- the three paths
 
 const pathKit = (path: NpcPath): Kit => ({
@@ -302,9 +347,9 @@ for (const t of BORDER_WILDS) {
 
 // ---------------------------------------------------------------- crowds
 
-// The targets are what full-hit sweeps paid in qi reach on today's sizes (C2). The design's 50
-// layer-9s to an early Foundation need a gap at the realm's border that the sizes don't have:
-// the realm gap's design session (plan.md) takes that target.
+// The design's crowds (design § Combat, Protective qi), on the realm gap's sizes (C3): the
+// junior's blow loses ninety-nine parts in a hundred far under the guard, and a crowd that can't
+// scratch you breaks once a third of it has fallen, which counts as a win.
 const CROWD_ROWS: {
   me: [RealmId, number];
   them: [RealmId, number];
@@ -316,40 +361,41 @@ const CROWD_ROWS: {
   {
     me: ['foundation-establishment', 1],
     them: ['qi-condensation', 9],
-    sizes: [10, 15, 20, 50],
-    target: 10,
+    sizes: [20, 50, 80],
+    target: 50,
   },
   {
     me: ['foundation-establishment', 1],
     them: ['qi-condensation', 5],
-    sizes: [20, 30, 50],
-    target: 20,
+    sizes: [50, 100],
+    target: 100,
   },
   {
     me: ['foundation-establishment', 4],
     them: ['qi-condensation', 9],
     sizes: [50, 100, 150],
-    target: 100,
+    target: 150,
   },
   {
     me: ['core-formation', 1],
     them: ['foundation-establishment', 4],
-    sizes: [10, 20, 30, 50],
-    target: 20,
+    sizes: [20, 50, 100],
+    target: 50,
   },
-  // Purple at layer 9 beats an early Foundation's Defense, so that is the half-step fight on the
-  // sheets; a Foundation peak's Defense holds them.
+  // Purple at layer 9 stands in the half-step and beats an early Foundation's Defense; a
+  // Foundation peak's Defense holds them.
   {
     me: ['foundation-establishment', 4],
     them: ['qi-condensation', 9],
     crowd: 'great-sect',
-    sizes: [1, 3, 5, 10],
-    target: 3,
+    sizes: [3, 5, 10],
+    target: 10,
   },
 ];
 const short = (r: RealmId, stage: number) => `${realm(r).name.split(' ')[0]} ${stage}`;
 console.log(
-  `\nCrowds: one white fighter against fighters a realm below, all at once, ${CROWDS} fights a cell`,
+  `
+Crowds: one white fighter against fighters a realm below, all at once, ${CROWDS} fights a cell (won, the share of it a rout)`,
 );
 for (const row of CROWD_ROWS) {
   const [mr, ms] = row.me;
@@ -366,14 +412,32 @@ for (const row of CROWD_ROWS) {
       `crowd/${row.crowd ?? 'ordinary'}/${tr}/${ts}/${n}`,
       400,
     );
-    return [n, rate(x)] as const;
+    return [n, held(x), x.broke / CROWDS] as const;
   });
   const them = `${row.crowd ? 'purple ' : ''}${short(tr, ts)}`;
   console.log(
-    `  ${short(mr, ms).padEnd(14)}against ${them.padEnd(15)}${cells.map(([n, x]) => `${n}: ${pct(x)}`.padStart(13)).join('')}`,
+    `  ${short(mr, ms).padEnd(14)}against ${them.padEnd(15)}${cells.map(([n, x, b]) => `${n}: ${pct(x)} (${pct(b)})`.padStart(22)).join('')}`,
   );
   const x = cells.find(([n]) => n === row.target)![1];
   check(`${short(mr, ms)} beats ${row.target} ${them} at once over 90%`, x, 0.9, 1);
+}
+
+// The half-step fight (design § Combat, Protective qi): a great-sect disciple's purple at layer 9
+// crosses an early Foundation's guard, so the Foundation wins about two in three, and two such
+// disciples win.
+{
+  const purple = (n: number) => () =>
+    Array.from({ length: n }, (_, j) =>
+      kitFighter(kit('great-sect'), 'qi-condensation', 9, { id: `b${j}`, side: 'b' }),
+    );
+  const me = fixed(kit('ordinary'), 'foundation-establishment', 1, 'a');
+  const one = rate(bout(me, purple(1), CROWDS * 5, 'half-step/1'));
+  const two = rate(bout(me, purple(2), CROWDS * 5, 'half-step/2'));
+  console.log(
+    `  The half-step: an early Foundation against one purple layer 9 ${pct(one)}, against two ${pct(two)}`,
+  );
+  check('An early Foundation beats one purple layer 9 about 60–70%', one, 0.58, 0.72);
+  check('Two purple layer 9s beat an early Foundation', two, 0, 0.5);
 }
 
 console.log('\nTargets');

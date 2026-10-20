@@ -68,7 +68,8 @@ export function startSpar(s: GameState, templateId: string): SparStart | null {
 
 /**
  * One turn: the player's action, every foe's on its profile, resolved on the `combat` stream so
- * a seed replays the same fight.
+ * a seed replays the same fight. A foe whose tempo earns it a second action picks it on its
+ * profile; the player's repeats their main action (design § Combat, Speed is tempo).
  */
 export function playTurn(
   s: GameState,
@@ -79,7 +80,12 @@ export function playTurn(
     .filter((c) => c.side !== YOU && c.state === 'fighting')
     .map((c) => chooseAction(fight, c.id, profile(c.profile ?? 'fanatical')));
   const { value: turn, state } = withStream(s, 'combat', (rng) =>
-    resolveTurn(fight, [action, ...foes], rng),
+    resolveTurn(fight, [action, ...foes], rng, (f, id) => {
+      const c = combatantIn(f, id);
+      return c && c.side !== YOU
+        ? chooseAction(f, id, profile(c.profile ?? 'fanatical'))
+        : undefined;
+    }),
   );
   return { state, turn };
 }
