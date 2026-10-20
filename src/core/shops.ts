@@ -11,7 +11,8 @@ import { CATALOGS } from '../content/catalogs/index.ts';
 import { RARE } from '../content/catalogs/rare.ts';
 import type { Catalog, Lot } from '../content/catalogs/types.ts';
 import { copyChapter, copyManual, hasCopy } from '../content/copies.ts';
-import { hasItem, item, itemKind, variantId } from '../content/items.ts';
+import { baseOf, hasItem, item, itemKind, variantId } from '../content/items.ts';
+import { CRACK_MEND_SHARE } from './crafts.ts';
 import {
   HOUSE_TAKE,
   LENT_WEIGHT,
@@ -953,11 +954,14 @@ export function haggle(s: GameState, shopId: string): ShopResult & { off?: numbe
 
 /**
  * What a refiner asks to mend a piece: worn armor at a fifth of its price for a full bar, a
- * damaged piece back to its rarity at half the price between the two. Null when nothing needs it.
+ * damaged piece back to its rarity at half the price between the two, and a cracked tool at a
+ * tenth of its worth (K1). Null when nothing needs it.
  */
 export function repairCost(s: GameState, thing: string): number | null {
   if (!hasItem(thing)) return null;
   const it = item(thing);
+  if (it.cracked)
+    return Math.round(priceOf(variantId(baseOf(thing), it.rarity)) * CRACK_MEND_SHARE * 10) / 10;
   if (it.damaged) {
     const up = RARITY_IDS[rarityRank(it.rarity) + 1]!;
     const mended = variantId(thing.split('~')[0]!, up);
@@ -979,7 +983,9 @@ export function repair(s: GameState, shopId: string, thing: string): ShopResult 
   if (!after) return { ok: false, reason: 'You can’t pay that.' };
   let c = withStones(s.player, after);
   const it = item(thing);
-  if (it.damaged) {
+  if (it.cracked) {
+    c = addItem(addItem(c, thing, -1), variantId(baseOf(thing), it.rarity), 1);
+  } else if (it.damaged) {
     const up = RARITY_IDS[rarityRank(it.rarity) + 1]!;
     const mended = variantId(thing.split('~')[0]!, up);
     const worn = Object.entries(c.gear).find(([, v]) => v === thing)?.[0];

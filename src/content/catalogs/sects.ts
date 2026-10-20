@@ -106,6 +106,19 @@ export const HUNDRED_REINS: Catalog = {
       ],
     },
   ],
+  // The recipes for its pills (K1), each brewed by the inputs its line tells of.
+  recipes: [
+    // Brewed in pairs: the beast's blood and the grass the war mounts are fattened on.
+    {
+      output: 'shared-blood-pill',
+      craft: 'alchemy',
+      family: 'healing-pills',
+      inputs: [
+        { thing: 'beast-blood', count: 5 },
+        { thing: 'horse-heart-grass', count: 5 },
+      ],
+    },
+  ],
   lots: [
     { thing: 'paired-rider-lance', shops: ['sect'], weight: 0.5, members: true },
     { thing: 'storm-hawk-pinion-talisman', shops: ['sect'], count: [1, 3] },
@@ -155,9 +168,10 @@ export const BOUND_BONES: Catalog = {
       hanzi: '阵盘坯',
       tier: 1,
       rarity: 'white',
+      element: 'earth',
       upTo: 'green',
       kind: 'material',
-      uses: { ingredient: { tags: ['earth', 'array'], age: 1 } },
+      uses: { ingredient: { properties: ['resonant', 'binding'], age: 1 } },
       source: 'the Pavilion’s plate cutters, who work grey jade for want of the Black Jade Vein’s',
       text: 'A palm-sized disc of grey jade, faced and ready to be cut with an array. The Pavilion goes through ten thousand a year along the Wall.',
     },
@@ -468,6 +482,19 @@ export const LAMP_KEEPERS: Catalog = {
           own: [{ stat: 'techniqueCost', value: -0.12 }],
           text: 'A dirge sung through a night costs less each hour of it.',
         },
+      ],
+    },
+  ],
+  // The recipes for its pills (K1), each brewed by the inputs its line tells of.
+  recipes: [
+    // Grave-shade grass and the slow river's lotus, for the fens' dead taste.
+    {
+      output: 'fen-yin-pill',
+      craft: 'alchemy',
+      family: 'soul-pills',
+      inputs: [
+        { thing: 'calm-heart-grass', count: 6 },
+        { thing: 'bend-water-lotus-seed', count: 4 },
       ],
     },
   ],

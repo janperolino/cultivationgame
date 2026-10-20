@@ -11,6 +11,9 @@ const SCREEN_ICONS: Record<ScreenId, string> = {
     'M12 3c2 2.4 2 5.8 0 8.8-2-3-2-6.4 0-8.8zM5 7.5c3 0 5.6 2.4 6.2 5.6-3 0-5.6-2.4-6.2-5.6zM19 7.5c-3 0-5.6 2.4-6.2 5.6 3 0 5.6-2.4 6.2-5.6zM4 15.5h16c-1 2.8-4.2 4.5-8 4.5s-7-1.7-8-4.5z',
   // The day wheel, its hand at an hour.
   routine: 'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM12 7v5l3.5 2.5',
+  // A pill furnace on three legs, its lid's knob and a curl of smoke.
+  crafts:
+    'M6 10h12v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4zM5 10h14M9 7h6l1 3H8zM12 7V5.5M7.5 19l-1 2.5M16.5 19l1 2.5M12 19v2.5',
   // A folded map.
   map: 'M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14',
   // A tree.

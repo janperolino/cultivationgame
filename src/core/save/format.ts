@@ -20,6 +20,7 @@ import {
   START_AGE,
   freshCards,
   startingPeople,
+  emptyCrafts,
   type Cultivator,
   type GameState,
   type Ladder,
@@ -35,7 +36,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 42;
+export const SAVE_VERSION = 43;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1038,6 +1039,12 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       });
     }
     return { ...old, version: 42, state: { ...s, world: { ...w, states, next } } };
+  },
+  // K1: the crafts' bench, its tray and the families' mastery; an old life has none yet.
+  42: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    return { ...old, version: 43, state: { ...s, player: { ...p, crafts: emptyCrafts() } } };
   },
 };
 

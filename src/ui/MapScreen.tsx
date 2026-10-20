@@ -916,6 +916,7 @@ const ROAD_COLOR: Record<RoadHour, string> = {
   practice: 'var(--hour-practice)',
   sleep: 'var(--hour-sleep)',
   duty: 'var(--hour-duty)',
+  craft: 'var(--hour-craft)',
 };
 
 /** The three stances (P3.7): what the road brings settles by them, whether you watch or not. */

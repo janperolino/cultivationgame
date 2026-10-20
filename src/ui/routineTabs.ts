@@ -11,6 +11,7 @@ export const TAB_OF: Record<HourKind, RoutineTab> = {
   soul: 'day',
   sleep: 'day',
   duty: 'day',
+  craft: 'day',
   practice: 'practice',
   study: 'study',
 };

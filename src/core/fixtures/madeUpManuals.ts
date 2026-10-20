@@ -66,6 +66,7 @@ const SUFFIX: Record<ManualKind, [string, string]> = {
   style: ['Style', '流'],
   scripture: ['Scripture', '经'],
   inheritance: ['Legacy', '遗承'],
+  recipe: ['Recipe', '方'],
 };
 const NODE_NAMES: readonly [string, string][] = [
   ['First Count', '初数'],

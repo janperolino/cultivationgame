@@ -22,7 +22,7 @@ export const BUTCHER_GATE: Catalog = {
       stack: 20,
       tags: ['trade', 'hide'],
       price: 2.5,
-      uses: { ingredient: { tags: ['blood', 'hide'], age: 1 } },
+      uses: { ingredient: { properties: ['hard'], age: 1 } },
       source:
         'the Gate’s butchering yards, where every raid’s beasts are skinned and the hides tanned in blood',
       text: 'A bale of beast hide tanned the Gate’s way, stiff and dark and hard to cut. The Herders’ saddlers buy it and pretend not to know whose it was.',
@@ -34,11 +34,12 @@ export const BUTCHER_GATE: Catalog = {
       hanzi: '骨粉',
       tier: 1,
       rarity: 'white',
+      element: 'earth',
       kind: 'material',
       stack: 20,
       tags: ['trade', 'bone-meal'],
       price: 1.5,
-      uses: { ingredient: { tags: ['earth', 'bone'], age: 1 } },
+      uses: { ingredient: { properties: ['tempering'], age: 1 } },
       source: 'the Gate’s bone mills, which grind what the butchering yards leave',
       text: 'A sack of ground beast bone, grey and gritty. Dug into a spirit field it feeds the vein under it for a season.',
     },
@@ -133,9 +134,10 @@ export const BUTCHER_GATE: Catalog = {
       hanzi: '兽血藤',
       tier: 1,
       rarity: 'white',
+      element: 'wood',
       upTo: 'green',
       kind: 'herb',
-      uses: { ingredient: { tags: ['blood', 'vitality'], age: 2 } },
+      uses: { ingredient: { properties: ['mending', 'tempering'], age: 2 } },
       source: 'the Gate’s slaughter yard, where it grows up the drain wall',
       text: 'A red-veined vine that roots where the butchering runs off. The boiling room buys it by the armful.',
     },
@@ -431,6 +433,37 @@ export const BUTCHER_GATE: Catalog = {
   // The members' lines (O2, for Jan's review): the Gate's own pills, its marrow and its saber
   // talisman. The rest stand at the open counter too, for an outsider at friendly; its methods and
   // techniques are the scripture pavilion's (core/halls.ts).
+  // The recipes for its pills (K1), each brewed by the inputs its line tells of.
+  recipes: [
+    {
+      output: 'beast-blood-pill',
+      craft: 'alchemy',
+      family: 'tempering-pills',
+      inputs: [
+        { thing: 'beast-blood', count: 5 },
+        { thing: 'beast-blood-vine', count: 5 },
+      ],
+    },
+    {
+      output: 'wound-knitting-pill',
+      craft: 'alchemy',
+      family: 'healing-pills',
+      inputs: [
+        { thing: 'beast-blood-vine', count: 6 },
+        { thing: 'bone-meal', count: 4 },
+      ],
+    },
+    // Tier 2: the core and the blood at Foundation's tier.
+    {
+      output: 'core-blood-pill',
+      craft: 'alchemy',
+      family: 'tempering-pills',
+      inputs: [
+        { thing: 'beast-core', count: 2 },
+        { thing: 'beast-blood', count: 8 },
+      ],
+    },
+  ],
   lots: [
     // Staples (E3)
     // Steppe hides, wherever herds graze the open grass (E4's land tags, for Jan's review).

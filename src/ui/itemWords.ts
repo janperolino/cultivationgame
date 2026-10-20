@@ -1,5 +1,7 @@
 // An item's uses and toxicity in words, for the Bag and the Combat screen (design § UI, less
 // spreadsheet: words first, the numbers behind the "?").
+import { CRAFTS } from '../content/crafts.ts';
+import { ELEMENT_INFO } from '../content/elements.ts';
 import { contemplationSource } from '../content/contemplation.ts';
 import type { ConsumeEffect, Item } from '../content/items.ts';
 import { copyId, copyTitle } from '../content/copies.ts';
@@ -53,8 +55,14 @@ export function useLines(it: Item): string[] {
   }
   if (u.ingredient) {
     const age = u.ingredient.age ? `, ${u.ingredient.age} years old` : '';
-    out.push(`An ingredient: ${listWords([...u.ingredient.tags])}${age} (crafts arrive in M4).`);
+    const element = it.element ? `${ELEMENT_INFO[it.element].name.toLowerCase()}, ` : '';
+    out.push(`An ingredient: ${element}${listWords([...u.ingredient.properties])}${age}.`);
   }
+  if (u.tool)
+    out.push(
+      `A ${CRAFTS[u.tool.craft].tool} for ${CRAFTS[u.tool.craft].name.toLowerCase()}: it works tier ${it.tier} recipes and below.`,
+    );
+  if (it.cracked) out.push('Cracked: it works nothing until a refiner mends it.');
   if (u.read)
     out.push(`Read on the study hours, it teaches ${copyTitle(copyId(u.read.kind, u.read.id))}.`);
   if (u.carry) out.push(`Carries ${u.carry.squares} squares while it travels with you.`);

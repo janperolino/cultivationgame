@@ -388,6 +388,8 @@ const HOUR_FEEDS: Record<HourKind, Feed | null> = {
   },
   sleep: null,
   duty: null,
+  // Craft hours work the bench (core/crafts.ts), which the day step runs: no cultivation.
+  craft: null,
 };
 
 export interface DayRates {

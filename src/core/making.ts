@@ -8,15 +8,18 @@ import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { CATALOGS } from '../content/catalogs/index.ts';
 import type { Catalog, Lot } from '../content/catalogs/types.ts';
 import { hasCopy } from '../content/copies.ts';
-import { item, itemKind, STAPLE_TAGS, variantId, type Item } from '../content/items.ts';
+import { recipeFor, recipeYield } from '../content/crafts.ts';
+import { hasItem, item, itemKind, STAPLE_TAGS, variantId, type Item } from '../content/items.ts';
 import { REGIONS, veinAt } from '../content/map/index.ts';
-import { SHOPS } from '../content/shops.ts';
+import { SHOPS, shopsAt } from '../content/shops.ts';
 import {
   BASKET,
   FILLED_BY,
   HARVEST,
+  BREWED_HERE,
   MAKE_SHARE,
   MAKER_USES,
+  WORKSHOP,
   NEED_WORDS,
   PRESSURE,
   PROSPERITY,
@@ -42,6 +45,8 @@ import {
 import { priceOf } from './prices.ts';
 import type { World } from './resolver/world.ts';
 import { capitalize } from '../content/words.ts';
+
+const shopKindOf = new Map(SHOPS.map((sh) => [sh.id, sh.kind]));
 
 /** Who a basket is for: a mortal (0) or a cultivator of a tier (1 to 3). */
 type Who = 0 | 1 | 2 | 3;
@@ -233,9 +238,13 @@ function pressureOn(m: Market, thing: string): number {
   return Math.min(PRESSURE.max, x);
 }
 
-/** What a maker uses a piece of a thing: its line's own, else its family's. */
+/**
+ * What a maker uses a piece of a thing, by need: its line's own, else its family's. A thing with a
+ * recipe uses its recipe's inputs by thing instead (`recipeUses`, K1).
+ */
 function makerUses(l: Line): Readonly<Record<string, number>> {
   if (l.lot.uses) return l.lot.uses;
+  if (recipeFor(l.lot.thing)) return {};
   const kind = itemKind(l.it);
   if (kind === 'pill') return MAKER_USES.pill;
   if (kind === 'talisman') return MAKER_USES.talisman;
@@ -246,6 +255,31 @@ function makerUses(l: Line): Readonly<Record<string, number>> {
 }
 
 // ── The sum ───────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * What a maker uses a piece of a thing by its recipe (K1): each input by thing, a batch's count
+ * over its yield, at the made thing's tier where the input comes at it, else its own.
+ */
+function recipeUses(l: Line, tier: number): { thing: string; each: number }[] {
+  if (l.lot.uses) return [];
+  const r = recipeFor(l.lot.thing);
+  if (!r) return [];
+  return r.inputs.map((i) => {
+    const at = variantId(i.thing, undefined, { tier });
+    return { thing: hasItem(at) ? at : i.thing, each: i.count / recipeYield(r) };
+  });
+}
+
+/** Adds a maker's use of one thing at a market, into that thing's own good. */
+function addThingUse(sum: MarketSum, m: Market, thing: string, plain: number): void {
+  if (plain <= 0) return;
+  const it = item(thing);
+  const g = goodIn(sum, goodOf(thing), thing, needOf(thing, it), it);
+  const pressure = pressureOn(m, thing);
+  g.plain += plain;
+  g.used += plain * pressure;
+  g.pressure = pressure;
+}
 
 /** The tiers a market's sum counts: those its shops stock. */
 const tiersOf = (m: Market) => Array.from({ length: marketTopTier(m) }, (_, i) => i + 1);
@@ -359,7 +393,7 @@ function sumWorld(w: World, month: number): Map<string, MarketSum> {
               : reachOf(m).reduce((t, o) => t + (sums.get(o.id)!.goods.get(good)?.used ?? 0), 0);
           const made = MAKE_SHARE * (own || theirs);
           if (made <= 0) continue;
-          const g = goodIn(sum, good, thing, needOfThing(line), line.it);
+          const g = goodIn(sum, good, thing, needOf(line.lot.thing, line.it), line.it);
           g.made = made;
           g.land = line.made === 'land';
         }
@@ -377,6 +411,25 @@ function sumWorld(w: World, month: number): Map<string, MarketSum> {
       const tier = item(g.thing).tier;
       for (const [need, each] of Object.entries(makerUses(line)))
         addUse(sum, m, need, tier, false, each * g.made);
+      for (const u of recipeUses(line, tier)) addThingUse(sum, m, u.thing, u.each * g.made);
+    }
+  }
+  // A market's own workshops brew a share of the recipe goods it uses but doesn't make (K1), so
+  // their inputs are used here too and stand on its shelves.
+  for (const m of MARKETS) {
+    const sum = sums.get(m.id)!;
+    const kinds = new Set(shopsAt(m.id).map((id) => shopKindOf.get(id)));
+    for (const g of [...sum.goods.values()]) {
+      if (g.made > 0 || g.plain <= 0) continue;
+      const r = recipeFor(g.thing);
+      const shop = r && WORKSHOP[r.craft];
+      if (!r || !shop || !kinds.has(shop)) continue;
+      const tier = item(g.thing).tier;
+      for (const i of r.inputs) {
+        const at = variantId(i.thing, undefined, { tier });
+        const thing = hasItem(at) ? at : i.thing;
+        addThingUse(sum, m, thing, (BREWED_HERE * g.plain * i.count) / recipeYield(r));
+      }
     }
   }
   makeAll();
@@ -393,12 +446,12 @@ function sumWorld(w: World, month: number): Map<string, MarketSum> {
   return sums;
 }
 
-/** The need a made thing's good is filed under, for the line of why. */
-function needOfThing(line: Line): string {
-  const tags = goodTags(line.lot.thing);
+/** The need a thing's good is filed under, for the line of why. */
+function needOf(thing: string, it: Item): string {
+  const tags = goodTags(thing);
   const fills = Object.keys(BASKET).find((n) => fillTags(n).some((t) => tags.includes(t)));
   if (fills) return fills;
-  return Object.keys(NEED_WORDS).find((n) => tags.includes(n)) ?? itemKind(line.it);
+  return Object.keys(NEED_WORDS).find((n) => tags.includes(n)) ?? itemKind(it);
 }
 
 /** Where a good a market doesn't make comes from. */

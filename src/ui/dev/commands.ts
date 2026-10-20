@@ -23,6 +23,8 @@ import { addFame } from '../../core/resolver/names.ts';
 import { SEAT_IDS, type SeatId } from '../../content/organizations.ts';
 import { hasJob, job, JOBS } from '../../content/jobs.ts';
 import { BRANCHES } from '../../content/hours.ts';
+import { RECIPES, hasRecipe, recipe } from '../../content/crafts.ts';
+import { slipId } from '../../content/catalogs/index.ts';
 import { jobsView, quitJob, takeJob } from '../../core/jobs.ts';
 import {
   addBalance,
@@ -661,6 +663,34 @@ export const COMMANDS: Record<string, Command> = {
       if (!hasItem(id)) return `No item ${id}.`;
       if (!Number.isInteger(v)) return 'Give a whole number.';
       return apply(store, (s) => withPlayer(s, addItem(s.player, id, v)), `${id} +${v}.`);
+    },
+  },
+  craft: {
+    usage: 'craft [recipe] [mastery batches]',
+    help: 'Sets up an alchemist (K1): a crude clay furnace, the recipe known (the Qi-Gathering Pill unless told), herbs for five batches, four Craft hours from 辰, and the family at that many batches.',
+    run([id, batches], store) {
+      const r = id ?? 'qi-gathering-pill';
+      if (!hasRecipe(r)) return `No recipe ${r}: ${RECIPES.map((x) => x.output).join(', ')}.`;
+      const n = batches === undefined ? 0 : Number(batches);
+      if (!Number.isFinite(n) || n < 0) return 'Give a number of batches.';
+      return apply(
+        store,
+        (s) => {
+          const rec = recipe(r);
+          let c = addItem(s.player, 'crude-clay-furnace', 1);
+          for (const i of rec.inputs) c = addItem(c, i.thing, i.count * 5);
+          const node = `${slipId(r)}-node`;
+          if (!c.nodes.includes(node)) c = { ...c, nodes: [...c.nodes, node] };
+          c = { ...c, crafts: { ...c.crafts, mastery: { ...c.crafts.mastery, [rec.family]: n } } };
+          c = {
+            ...c,
+            flags: c.flags.includes('hours-craft') ? c.flags : [...c.flags, 'hours-craft'],
+          };
+          const wheel = c.wheel.map((k, i) => (i >= 4 && i < 8 && k !== 'sleep' ? 'craft' : k));
+          return withPlayer(s, { ...c, wheel });
+        },
+        `An alchemist: ${r}, herbs for five batches, Craft hours from 辰 to 未.`,
+      );
     },
   },
   kit: {

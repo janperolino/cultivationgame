@@ -109,6 +109,7 @@ const YIELD_UNITS: Record<HourKind, (y: HourYield) => string> = {
   practice: (y) => `+${formatRate(y.practice)} practice days`,
   sleep: () => 'nothing',
   duty: () => "the job's pay",
+  craft: () => 'the bench',
 };
 
 /** The bonuses on an hour's work: "element +25%", "dawn +10%", "discipline +10%". */

@@ -53,6 +53,7 @@ const SCREENS = {
   BagScreen: () => import('./BagScreen.tsx'),
   CharacterScreen: () => import('./CharacterScreen.tsx'),
   ChronicleScreen: () => import('./ChronicleScreen.tsx'),
+  CraftsScreen: () => import('./CraftsScreen.tsx'),
   CombatScreen: () => import('./CombatScreen.tsx'),
   MapScreen: () => import('./MapScreen.tsx'),
   PeopleScreen: () => import('./PeopleScreen.tsx'),
@@ -66,6 +67,7 @@ const CharacterScreen = lazy(() =>
 const ChronicleScreen = lazy(() =>
   SCREENS.ChronicleScreen().then((m) => ({ default: m.ChronicleScreen })),
 );
+const CraftsScreen = lazy(() => SCREENS.CraftsScreen().then((m) => ({ default: m.CraftsScreen })));
 const CombatScreen = lazy(() => SCREENS.CombatScreen().then((m) => ({ default: m.CombatScreen })));
 const MapScreen = lazy(() => SCREENS.MapScreen().then((m) => ({ default: m.MapScreen })));
 const PeopleScreen = lazy(() => SCREENS.PeopleScreen().then((m) => ({ default: m.PeopleScreen })));
@@ -272,6 +274,7 @@ export function App() {
                 <Suspense fallback={null}>
                   {phase !== 'loading' && current.id === 'map' && <MapScreen />}
                   {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
+                  {phase !== 'loading' && current.id === 'crafts' && <CraftsScreen />}
                   {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
                   {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}
                   {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}

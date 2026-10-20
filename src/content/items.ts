@@ -5,6 +5,7 @@
 // A new item is an entry here, not new code. **Awaiting Jan's review:** the offerings and pills
 // (P2.1) and the gear (P2.3) below are drafts.
 import type { WeaponKind } from './combat.ts';
+import type { CraftId, Property } from './crafts.ts';
 import type { LadderId } from './cultivation.ts';
 import type { Element } from './elements.ts';
 import { RARITY_IDS, rarity, rarityRank, type RarityId } from './rarity.ts';
@@ -27,6 +28,7 @@ export const ITEM_KINDS = [
   'mount',
   'beast',
   'map',
+  'tool',
 ] as const;
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
@@ -47,6 +49,7 @@ export const STACK_BY_KIND: Record<ItemKind, number> = {
   mount: 1,
   beast: 1,
   map: 1,
+  tool: 1,
 };
 
 /** The glyph a square shows for a kind, until design-time art arrives. */
@@ -63,6 +66,7 @@ export const KIND_GLYPH: Record<ItemKind, string> = {
   mount: '骑',
   beast: '兽',
   map: '图',
+  tool: '炉',
 };
 
 /**
@@ -125,9 +129,12 @@ export interface ContemplateUse {
   source: string;
 }
 
-/** Recipe tags for the furnace, forge and brush (M4), and an age for herbs. */
+/**
+ * What it brings to the furnace, forge and brush (design § Professions, The effect table): one or
+ * two of the eighteen properties, beside the item's element; and an age for herbs.
+ */
 export interface IngredientUse {
-  tags: readonly string[];
+  properties: readonly Property[];
   /** Years, for herbs. */
   age?: number;
 }
@@ -165,6 +172,11 @@ export interface HideUse {
   tier: number;
 }
 
+/** A craft's tool (K1): a furnace, a forge, a brush or an array plate; its tier caps the recipes it works. */
+export interface ToolUse {
+  craft: CraftId;
+}
+
 /** Formation slots for M4's enchantments. */
 export interface InscribeUse {
   slots: number;
@@ -183,6 +195,7 @@ export interface ItemUses {
   inscribe?: InscribeUse;
   chart?: ChartUse;
   hide?: HideUse;
+  tool?: ToolUse;
 }
 
 /**
@@ -258,6 +271,8 @@ export interface Item {
   taels?: number;
   /** Damaged when the killing blow fell on it: one rarity lower until a refiner mends it. */
   damaged?: boolean;
+  /** Cracked by a blow-up (K1): a tool that works nothing until a refiner mends it. */
+  cracked?: boolean;
   uses: ItemUses;
   source: string;
   text: string;
@@ -333,7 +348,7 @@ const WRITTEN: readonly Item[] = [
     upTo: 'green',
     element: 'wood',
     kind: 'herb',
-    uses: { offer: { tags: ['steadying'] }, ingredient: { tags: ['calming', 'wood'], age: 3 } },
+    uses: { offer: { tags: ['steadying'] }, ingredient: { properties: ['soul-calming'], age: 3 } },
     source: 'Border Wilds herb stalls',
     text: 'A pale grass that grows in the shade of old graves. Burned at an attempt, it slows the heart.',
   },
@@ -346,7 +361,7 @@ const WRITTEN: readonly Item[] = [
     rarity: 'green',
     element: 'lightning',
     kind: 'material',
-    uses: { offer: { tags: ['surging'] }, ingredient: { tags: ['lightning', 'surging'] } },
+    uses: { offer: { tags: ['surging'] }, ingredient: { properties: ['burning', 'swift'] } },
     source: 'peach trees the lightning struck',
     text: 'A pit still crackling from the strike. It drives an attempt harder and less safely.',
   },
@@ -359,7 +374,10 @@ const WRITTEN: readonly Item[] = [
     rarity: 'blue',
     element: 'water',
     kind: 'herb',
-    uses: { offer: { tags: ['purifying'] }, ingredient: { tags: ['cleansing', 'water'], age: 10 } },
+    uses: {
+      offer: { tags: ['purifying'] },
+      ingredient: { properties: ['purging', 'soul-calming'], age: 10 },
+    },
     source: 'spring pools in the hills',
     text: 'Laid at an attempt, it washes the channels clean and softens a fall.',
   },
@@ -372,7 +390,7 @@ const WRITTEN: readonly Item[] = [
     rarity: 'green',
     element: 'earth',
     kind: 'material',
-    uses: { offer: { tags: ['guarding'] } },
+    uses: { ingredient: { properties: ['binding', 'hard'] }, offer: { tags: ['guarding'] } },
     source: 'jade cutters at the river markets',
     text: 'A plain jade disc that holds what you have gathered if the attempt breaks.',
   },
@@ -388,7 +406,7 @@ const WRITTEN: readonly Item[] = [
     kind: 'herb',
     uses: {
       offer: { tags: ['steadying'] },
-      ingredient: { tags: ['vitality', 'wood'], age: 1000 },
+      ingredient: { properties: ['nourishing', 'restoring'], age: 1000 },
     },
     source: 'a ruin or an inheritance, never a stall',
     text: 'A root shaped like a sleeping child. Laid at an attempt, it lets heaven itself take notice.',
@@ -401,7 +419,10 @@ const WRITTEN: readonly Item[] = [
     tier: 2,
     rarity: 'blue',
     kind: 'material',
-    uses: { offer: { tags: ['steadying'], ladder: 'body' } },
+    uses: {
+      ingredient: { properties: ['tempering'] },
+      offer: { tags: ['steadying'], ladder: 'body' },
+    },
     source: "refined from a Foundation beast's marrow",
     text: "The body's offering: a beast's strength boiled down to a grey paste.",
   },
@@ -412,8 +433,12 @@ const WRITTEN: readonly Item[] = [
     hanzi: '定魂珠',
     tier: 2,
     rarity: 'blue',
+    element: 'water',
     kind: 'material',
-    uses: { offer: { tags: ['steadying'], ladder: 'soul' } },
+    uses: {
+      ingredient: { properties: ['soul-calming'] },
+      offer: { tags: ['steadying'], ladder: 'soul' },
+    },
     source: 'grown in old river clams of the Border Wilds',
     text: "The soul's offering: a cold pearl that keeps the mind from scattering.",
   },
@@ -714,15 +739,16 @@ const TIERED: readonly ItemKind[] = ['beast-part', 'material', 'pill', 'talisman
 export function variantId(
   base: string,
   r?: RarityId,
-  o: { tier?: number; damaged?: boolean } = {},
+  o: { tier?: number; damaged?: boolean; cracked?: boolean } = {},
 ): string {
   const b = byId.get(base);
   const parts = [base];
   const rarityDiffers = r !== undefined && (!b || r !== b.rarity);
   const tierDiffers = o.tier !== undefined && (!b || o.tier !== b.tier);
-  if (rarityDiffers || tierDiffers || o.damaged) parts.push(r ?? b?.rarity ?? 'white');
+  if (rarityDiffers || tierDiffers || o.damaged || o.cracked) parts.push(r ?? b?.rarity ?? 'white');
   if (tierDiffers) parts.push(`t${o.tier}`);
   if (o.damaged) parts.push('dmg');
+  if (o.cracked) parts.push('crk');
   return parts.join('~');
 }
 
@@ -738,10 +764,12 @@ function variant(id: string): Item | null {
   if (!b || !r || !rarityIds.has(r as RarityId)) return null;
   const rar = r as RarityId;
   const damaged = rest.includes('dmg');
+  const cracked = rest.includes('crk');
+  if (cracked && !b.uses.tool) return null;
   const tierPart = rest.find((x) => /^t\d+$/.test(x));
   const tier = tierPart ? Number(tierPart.slice(1)) : b.tier;
   if (tierPart && !TIERED.includes(itemKind(b)) && !(b.tags ?? []).includes('trade')) return null;
-  if (rest.some((x) => x !== 'dmg' && x !== tierPart)) return null;
+  if (rest.some((x) => x !== 'dmg' && x !== 'crk' && x !== tierPart)) return null;
   // A damaged piece stands a step below what it was, so the range shifts down one.
   const lo = rarityRank(b.rarity) - (damaged ? 1 : 0);
   const hi = rarityRank(b.upTo ?? b.rarity) - (damaged ? 1 : 0);
@@ -750,6 +778,7 @@ function variant(id: string): Item | null {
     ...atRarity(b, id, rar),
     tier,
     ...(damaged ? { name: `Damaged ${b.name}`, damaged: true } : {}),
+    ...(cracked ? { name: `Cracked ${b.name}`, cracked: true } : {}),
   };
 }
 
