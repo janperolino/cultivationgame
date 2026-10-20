@@ -19,7 +19,7 @@ import { practicingNow } from '../core/techniques.ts';
 import { attentionCeiling } from '../core/attention.ts';
 import { dayRates, inTutorial, qiSpeed, type LadderId } from '../core/cultivation.ts';
 import { ladderMethod } from '../core/methods.ts';
-import { dwellingOf } from '../core/organizations.ts';
+import { densityHere } from '../core/organizations.ts';
 import type { GameState } from '../core/state.ts';
 import { canFollow, effectiveWheel } from '../core/wheel.ts';
 import { ROAD_ROUTINES, WAYS, type RoadHour } from '../content/map/travel.ts';
@@ -100,7 +100,7 @@ function DayTab({ game, head }: { game: GameState; head: ReactNode }) {
   const autoRing = rings(bs, 'auto');
   const c = game.player;
   // A power's dwelling by your seat while you seclude inside its seat (O2).
-  const density = game.map?.course ? 1 : (dwellingOf(game)?.density ?? 1);
+  const density = densityHere(game);
   const rates = dayRates(c, game.calendar.day, [], undefined, undefined, density);
   const speed = qiSpeed(c, undefined, density);
   const r = root(c.root);

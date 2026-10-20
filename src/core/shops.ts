@@ -70,7 +70,7 @@ import {
 } from './markets.ts';
 import { counterSells, hallTerms, pavilionKeeps, titheFor } from './halls.ts';
 import { marketSum } from './making.ts';
-import { addBalance, houseOf, membership } from './organizations.ts';
+import { addBalance, givenBy, houseOf, isOrganization, membership } from './organizations.ts';
 import { priceOf } from './prices.ts';
 import { pay, paySilver, receive, stonesOf, tierGrade, withStones } from './purse.ts';
 import { actorFromCultivator, plainActor } from './resolver/actor.ts';
@@ -823,6 +823,11 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
   if (held < n || n <= 0) return { ok: false, reason: 'You don’t have that many.' };
   const offer = offerFor(s, shopId, thing);
   if (!offer.ok) return offer;
+  // What its power handed you, its own hall won't buy back (the checkpoint's fix).
+  const gift =
+    sh.power && isOrganization(sh.power) ? Math.min(held, givenBy(s.world, sh.power, thing)) : 0;
+  if (gift > 0 && n > held - gift)
+    return { ok: false, reason: 'The hall won’t buy back what it gave you.' };
   const owner = s.world.taken[thing];
   if (owner && info.recognizes && owner === sh.power) {
     const world = addHeat(s.world, owner, 2, day);

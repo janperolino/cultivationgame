@@ -257,6 +257,11 @@ export const WorldSchema = z.object({
   /** Things taken from someone, by item id, and the power that owned them: stolen goods. */
   taken: z.record(z.string(), z.string()),
   /**
+   * What a power handed its member, by "power|item": the year's pills and the allowance's, which
+   * its own hall won't buy back (the organizations checkpoint).
+   */
+  given: z.record(z.string(), z.number()).optional(),
+  /**
    * Prosperity moved from the written (core/markets.ts), by place: the offset and the day it was
    * last moved; it eases back a step a year, and a place back at its written value is dropped.
    */

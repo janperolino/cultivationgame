@@ -6,6 +6,7 @@ import { copyTitle, readDays } from '../content/copies.ts';
 import { MASTERY } from '../content/mastery.ts';
 import { technique } from '../content/techniques.ts';
 import { barSize, dayRates } from '../core/cultivation.ts';
+import { densityHere } from '../core/organizations.ts';
 import { ladderMethod } from '../core/methods.ts';
 import { readingCopy, readProgress } from '../core/reading.ts';
 import type { GameState } from '../core/state.ts';
@@ -36,7 +37,7 @@ function inAbout(days: number | null, stalled: string): string {
 
 function todayRows(game: GameState): Row[] {
   const c = game.player;
-  const rates = dayRates(c, game.calendar.day);
+  const rates = dayRates(c, game.calendar.day, [], undefined, undefined, densityHere(game));
   const rows: Row[] = [];
 
   const reading = readingCopy(c);

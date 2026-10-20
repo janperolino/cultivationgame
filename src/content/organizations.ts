@@ -462,6 +462,15 @@ export const DWELLING: Record<SeatId, number> = {
   head: 2,
 };
 export const VEIN_DENSITY = [1, 1.1, 1.3, 1.6, 2] as const;
+/** The dwelling by seat, as the place's head names it while you stand in it (the checkpoint). */
+export const DWELLING_NAMES: Record<SeatId, string> = {
+  outer: 'Your bed in the outer disciples’ hall',
+  inner: 'Your cave',
+  true: 'Your courtyard',
+  elder: 'Your peak',
+  grand: 'Your peak',
+  head: 'Your peak',
+};
 
 /**
  * The open counter (design: outsiders at the hall): from friendly standing, the power's "known"

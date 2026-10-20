@@ -14,6 +14,7 @@ import {
   BEAST_TITLES,
   DONATION,
   DWELLING,
+  DWELLING_NAMES,
   EARLY_TRUE,
   ELDER_ALLOWANCE,
   ELDER_TIME,
@@ -635,6 +636,7 @@ export function innerTrial(s: GameState, power: string): TrialResult {
   });
   if (pill) {
     state = withPlayer(state, addItem(state.player, YEARS_PILLS.pill, 1));
+    state = { ...state, world: addGiven(state.world, house, YEARS_PILLS.pill, 1) };
     state = addEvent(state, 'power', { power: house, what: 'pill' });
   }
   return { ok: true, verdict: v, passed, yours, theirs, rank, pill, state };
@@ -663,6 +665,16 @@ export function trialField(w: World, power: string, you: string): number[] {
 }
 
 // ── The currency ─────────────────────────────────────────────────────────────────────────────
+
+/** What a power handed someone of a thing: its gift, never bought back at its own hall. */
+export function givenBy(w: World, power: string, thing: string): number {
+  return w.given?.[houseOf(power) + '|' + thing] ?? 0;
+}
+
+function addGiven(w: World, power: string, thing: string, n: number): World {
+  const key = houseOf(power) + '|' + thing;
+  return { ...w, given: { ...w.given, [key]: (w.given?.[key] ?? 0) + n } };
+}
 
 /** The points a gift is worth (design: stones at 2 low a point, goods at half their sell price). */
 export function donationPoints(gift: {
@@ -747,7 +759,9 @@ export function allowanceOf(
   for (let k = seatRank('true'); k <= seatRank(seat); k++)
     stones = Math.max(curve, stones * ALLOWANCE_STEP);
   const base =
-    seat === 'outer' || seat === 'inner' ? ALLOWANCE[seat] : { stones, pills: ALLOWANCE.true.pills };
+    seat === 'outer' || seat === 'inner'
+      ? ALLOWANCE[seat]
+      : { stones, pills: ALLOWANCE.true.pills };
   const round = (n: number) => Math.round(n * 10) / 10;
   if (guest) return { stones: round(base.stones), pills: base.pills };
   const t = TREATMENT_RULES[organization(houseOf(power)).treatment];
@@ -783,6 +797,7 @@ export function payAllowances(s: GameState): GameState {
   if (!mine.some((m) => m.paid === undefined || m.paid < month)) return s;
   const r = realmStageOf(s);
   let player = s.player;
+  let world = s.world;
   for (const m of mine) {
     const months = m.paid === undefined ? 0 : month - m.paid;
     if (months <= 0) continue;
@@ -793,12 +808,15 @@ export function payAllowances(s: GameState): GameState {
         player,
         receive(stonesOf(player), a.stones * months, realmGrade(r.realm)),
       );
-    if (a.pills > 0) player = addItem(player, ALLOWANCE_PILL, a.pills * months);
+    if (a.pills > 0) {
+      player = addItem(player, ALLOWANCE_PILL, a.pills * months);
+      world = addGiven(world, m.power, ALLOWANCE_PILL, a.pills * months);
+    }
   }
-  const members = s.world.members.map((m) =>
+  const members = world.members.map((m) =>
     m.who === who && isOrganization(m.power) ? { ...m, paid: month } : m,
   );
-  return { ...withPlayer(s, player), world: { ...s.world, members } };
+  return { ...withPlayer(s, player), world: { ...world, members } };
 }
 
 /** Where the player dwells by seat while secluding: the power, the seat and its qi density. */
@@ -806,6 +824,26 @@ export interface Dwelling {
   power: string;
   seat: SeatId;
   density: number;
+}
+
+/** The dwelling where you stand, in words for the place's head, or null outside one. */
+export function dwellingWords(s: GameState): string | null {
+  const d = dwellingOf(s);
+  if (!d || d.density <= 1) return null;
+  const name = theName(d.power);
+  return (
+    DWELLING_NAMES[d.seat] +
+    ' on ' +
+    name +
+    '’s vein: qi ×' +
+    d.density +
+    ' while you seclude here.'
+  );
+}
+
+/** The qi density your seclusion has today: a dwelling's while no course is set, else the open air's. */
+export function densityHere(s: GameState): number {
+  return s.map?.course ? 1 : (dwellingOf(s)?.density ?? 1);
 }
 
 /** A power's dwelling's density at a place: its seat's, capped by the place's vein (O2's talk). */

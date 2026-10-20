@@ -23,6 +23,7 @@ import {
 } from '../content/hours.ts';
 import { ROAD_ROUTINES, type RoadHour } from '../content/map/travel.ts';
 import { dayRates, type HourYield } from '../core/cultivation.ts';
+import { densityHere } from '../core/organizations.ts';
 import { Bezel } from './RoutineRings.tsx';
 import { roadRoutine, setRoadHours } from '../core/map/travel.ts';
 import type { GameState } from '../core/state.ts';
@@ -428,7 +429,7 @@ export function DayWheel({
 }) {
   const setHours = useGame((s) => s.setHours);
   const c = game.player;
-  const rates = dayRates(c, game.calendar.day);
+  const rates = dayRates(c, game.calendar.day, [], undefined, undefined, densityHere(game));
   // A first time waiting on an hour (ui/beacons.ts): the free qi hours wear the ring, and so does
   // the kind it wants once an hour is picked.
   const wants = new Set(

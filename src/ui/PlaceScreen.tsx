@@ -81,6 +81,7 @@ import {
   becomeGuest,
   donate,
   donationPoints,
+  dwellingWords,
   engageProtector,
   guestOffered,
   innerTrial,
@@ -390,6 +391,9 @@ export function PlaceScreen({
             )}
           </div>
           {why && <div className="place-why">{why}</div>}
+          {game.map?.inside === place.id && dwellingWords(game) && (
+            <div className="place-why">{dwellingWords(game)}</div>
+          )}
           {seat && trialThisMonth(game, seat) && (
             <div className="place-why">
               The inner trial is held this month: sit it at the{' '}

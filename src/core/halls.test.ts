@@ -25,7 +25,10 @@ import {
   allowanceOf,
   becomeGuest,
   canJoin,
+  densityHere,
   dwellingOf,
+  dwellingWords,
+  givenBy,
   guestOffered,
   joinPower,
   membership,
@@ -36,7 +39,7 @@ import { worthOf, stonesOf } from './purse.ts';
 import { addStanding } from './resolver/opinion.ts';
 import { emptyWorld } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
-import { buy, hallPoints, shelf, stockOf } from './shops.ts';
+import { buy, hallPoints, sell, shelf, stockOf } from './shops.ts';
 import { itemCount, newLife, PLAYER_ID, withPlayer, type GameState } from './state.ts';
 
 const GATE = 'qm-tushou-men';
@@ -191,6 +194,23 @@ describe('the monthly allowance', () => {
     expect(allowanceOf(BELL, 'inner', QC)).toEqual({ stones: 22.5, pills: 4 });
   });
 
+  it('hands out pills its own hall won’t buy back', () => {
+    const s = member(life(), REINS);
+    const paid = payAllowances(nextMonth(s));
+    const pill = 'qi-gathering-pill';
+    const held = itemCount(paid.player, pill);
+    expect(givenBy(paid.world, REINS, pill)).toBe(1);
+    const back = sell({ ...paid, map: { ...paid.map!, inside: REINS } }, 'reins-sect', pill, 1);
+    expect(back).toMatchObject({ ok: false, reason: expect.stringContaining('gave you') });
+    // One bought elsewhere sells: only what it gave is refused.
+    const more = withPlayer(paid, {
+      ...paid.player,
+      items: { ...paid.player.items, [pill]: held + 1 },
+    });
+    const r = sell({ ...more, map: { ...more.map!, inside: REINS } }, 'reins-sect', pill, 1);
+    if (!r.ok) expect(r.reason).not.toContain('gave you');
+  });
+
   it('arrives as the month turns, once', () => {
     const s = member(life(), REINS);
     expect(payAllowances(s)).toBe(s);
@@ -233,6 +253,15 @@ describe('the dwelling', () => {
     // Only while you seclude there.
     expect(dwellingOf(inside(member(life(), GATE), REINS))).toBeNull();
     expect(dwellingOf(member(life(), GATE))).toBeNull();
+  });
+
+  it('is named where you stand, and the day’s qi reads it', () => {
+    const cave = inside(member(life(), GATE, 'inner'), GATE);
+    expect(dwellingWords(cave)).toBe(
+      'Your cave on the Beast-Butcher Gate’s vein: qi ×1.3 while you seclude here.',
+    );
+    expect(densityHere(cave)).toBe(1.3);
+    expect(dwellingWords(member(life(), GATE))).toBeNull();
   });
 
   it('runs seclusion at the Gate faster by seat', () => {
