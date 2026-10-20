@@ -1042,6 +1042,17 @@ Gu raising, puppetry, divination and medicine come after v1.
 - **Starter recipes.** Each craft Dao's first tier 1 node gives the commonest white tier 1 good of its craft on the continent: alchemy the Qi-Gathering Pill, talismans the Ember Talisman, refining a plain iron blade, formations a set of concealing flags.
 - **Mastery is per family** (Jan's call): a family is what a recipe does (qi-fuel pills, healing pills, projectile talismans, blades, armor), about 15 across the crafts, each with one mastery bar, Glimpse to Origin. Every recipe in a family works at the family's level, so learning a new healing pill starts at your healing mastery; tier is answered by the craft Dao against the recipe's tier, not by the bar. Experimentation reads the family's level.
 
+**A batch** (D4, block 3).
+
+- **Whether it holds** is a roll (Jan keeps craft success as one). At your tier, by the family's mastery: Glimpse 50%, Comprehension 70%, Mastery 85%, Perfection 95%, Origin 99%. A recipe a tier below yours adds 15 points, two or more below 25; one above, where your soul reaches it, takes 30. A matched soul multiplies it by 1.25, and it never passes 99%.
+- **A failed batch** loses its inputs, and one failure in five (one in ten with a matched soul) is a **blow-up** that cracks the tool as well: a tenth of its worth to mend at a refiner.
+- **Rarity is lift**, counted in bands from the recipe's floor, never past its `upTo`. Its whole bands are certain and only the fraction is rolled, so 1.3 lift is a band up for sure and 30% for a second. Lift sums mastery (+0.25 a level past Glimpse, +1 at Origin), the steady hand (the hand times Steady hands' reach, one band to two), the inputs (+0.5 when every input is a rarity above the floor), the tool (+0.25 a band above white) and the place (below). A Comprehension alchemist at a 0.8 hand has 1.05: green for certain on a white-to-blue pill and a 5% shot at blue.
+- **Yield** is the written yield, +10% a mastery level past Glimpse (+40% at Origin) and +5% a craft Dao tier held (the Dao bonus); capstones such as two batches at once come from the trees.
+- **Mastery grows by batches**: Comprehension at 10, Mastery at 40, Perfection at 120, Origin at 300. A batch at your tier counts 1, one below ¼, a failed one half; the sims check the pace in the phase.
+- **Tools are items** with a tier and a rarity: a furnace, a forge, a talisman brush, an array plate. The tier caps the recipes it works, the rarity adds lift, and a furnace or forge is bulk. Refiners sell them; the starter is a crude clay furnace or its craft's like.
+- **You craft wherever you seclude**, with your tool and your Craft hours.
+- **Places lend a hand** (Jan's call). Earth fire 地火 on volcanic land, and an alchemy or refining room over it, adds +0.25 lift and 10 points to whether a batch holds for alchemy and refining; a place whose element matches a recipe's (a thunder peak for lightning talismans, a cold spring for ice pills) does the same for those recipes; and a written site, a famous furnace cave or a sect's earth-fire hall, may give up to +0.5 lift. A power's hall rents its rooms by the day, in its currency to members and in stones at the open counter. Which places carry what is written in the atlas, settled with sites (block 8).
+
 Formation puzzles show the engine-and-GLM split well. The engine hides which node is the array's eye, GLM describes the clues, Soul checks reveal hints, and a wrong strike backfires.
 
 **People and powers** run on the same idle-and-world split:
