@@ -102,7 +102,7 @@ export function entryOf(s: GameState, power: string): EntryView | null {
   const day = s.calendar.day;
   const word = standingOf(s.world, house, s.player.id, day).word;
   const subs: Record<EntryBy, string> = {
-    test: `an outer ${org.seats.outer.name}'s seat for any rooted child who passes`,
+    test: `a seat as ${org.seats.outer.name} for any rooted child who passes`,
     vows: `a ${org.seats.outer.name}'s robe, by the vows`,
     enlist: `a ${org.seats.outer.name} of ${theName(house)}, ten years' service before retiring`,
     buy: `${priceWords(buyInPrice(s))} to buy in`,
