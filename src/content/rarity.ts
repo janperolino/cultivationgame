@@ -190,14 +190,6 @@ export function rarityAccuracy(id: RarityId): number {
   return rarity(id).accuracy;
 }
 
-/**
- * How many realms past its tier's a thing of this rarity reaches (design § Combat, Protective
- * qi): 1 from gold up, whose band is the next realm's, else 0.
- */
-export function rarityReach(id: RarityId): number {
-  return rarity(id).exponent >= 1 ? 1 : 0;
-}
-
 /** Where a rarity sits on the scale: 0 for gray up to 6 for red. */
 export function rarityRank(id: RarityId): number {
   return RARITY_IDS.indexOf(id);

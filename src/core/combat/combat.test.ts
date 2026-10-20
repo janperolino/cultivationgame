@@ -11,6 +11,7 @@ import {
   combatant,
   fromCultivator,
   sheet,
+  shieldDefense,
   weapon,
   type CombatantInit,
 } from './combatant.ts';
@@ -348,47 +349,53 @@ describe('protective qi (design § Combat)', () => {
   const at = (id: string, rungs: ReturnType<typeof all>, extra: Partial<CombatantInit> = {}) =>
     fighter({ id, name: id, side: id, rungs, ...extra });
 
-  it('leaves a twentieth of a hit from a realm below, unless what is behind it reaches', () => {
-    const junior = at('j', all(QC(9)));
-    const senior = at('s', all(FE(1)));
-    // A white tier 1 art reaches Qi Condensation, a gold one Foundation, a white tier 2 one too.
-    expect(protection(junior, senior, 0)).toBe(0.05);
-    expect(protection(junior, senior, 1)).toBe(1);
-    // Never from above or at the same realm, whatever the art: your realm reaches itself.
-    expect(protection(senior, junior, 0)).toBe(1);
-    expect(protection(senior, at('t', all(FE(4))), 0)).toBe(1);
-    // A realm is your highest ladder, either way.
-    const bodyAhead = at('b', { qi: QC(1), body: FE(1), soul: QC(1) });
-    expect(protection(bodyAhead, senior, 0)).toBe(1);
-    expect(protection(junior, bodyAhead, 0)).toBe(0.05);
-    // Two realms up holds the same twentieth, and a gold art reaches only one realm past its tier.
-    expect(protection(junior, at('c', all(CF(1))), 1)).toBe(0.05);
+  it('lets a twentieth through up to the Defense, all of it from a quarter past', () => {
+    expect(protection(50, 100)).toBe(0.05);
+    expect(protection(100, 100)).toBe(0.05);
+    expect(protection(112.5, 100)).toBeCloseTo(0.525);
+    expect(protection(125, 100)).toBe(1);
+    expect(protection(300, 100)).toBe(1);
   });
 
-  it('reads the art, the weapon and the talisman, and the preview shows it', () => {
+  it('holds hits from a realm below by their Attack, each bar by its own Defense', () => {
     const arts = {
       white: { technique: tech({ id: 'white', power: 400 }), accuracy: 1 },
+      blue: { technique: tech({ id: 'blue', power: 400, rarity: 'blue' }), accuracy: 1 },
       gold: { technique: tech({ id: 'gold', power: 400, rarity: 'gold' }), accuracy: 1 },
-      deep: { technique: tech({ id: 'deep', power: 400, tier: 2 }), accuracy: 1 },
     };
-    const junior = at('j', all(QC(9)), { techniques: arts });
-    const f = startFight([junior, at('s', all(FE(1)))]);
-    const dmg = (id: string) => preview(f, 'j', { type: 'technique', id, target: 's' })!.damage;
-    const full = (400 * rungSize(QC(9))) / rungSize(FE(1));
-    expect(dmg('white')).toBe(Math.round(full * 0.05));
-    expect(dmg('gold')).toBe(Math.round(full * 3.1));
-    expect(dmg('deep')).toBe(Math.round(full * 3.1));
-    // Strikes reach by the weapon: bare hands from below are held, a gold sword passes.
-    expect(weapon('sword', 1, 'white').reach).toBe(0);
-    expect(weapon('sword', 1, 'gold').reach).toBe(1);
-    expect(weapon('sword', 2, 'purple').reach).toBe(1);
-    const armed = startFight([
-      at('j', all(QC(9)), { weapon: weapon('sword', 1, 'gold') }),
-      at('s', all(FE(1))),
+    const qc9 = rungSize(QC(9));
+    const fe1 = rungSize(FE(1));
+    const dmg = (f: Fight, id: string) =>
+      preview(f, 'j', { type: 'technique', id, target: 's' })!.damage;
+    // A body at Foundation's first stage, no shield: a white art from layer 9 sits at four-fifths
+    // of its Defense, a blue one on the ramp past it, a gold one far past it.
+    const f = startFight([at('j', all(QC(9)), { techniques: arts }), at('s', all(FE(1)))]);
+    const full = (400 * qc9) / fe1;
+    expect(dmg(f, 'white')).toBe(Math.round(full * protection(qc9, fe1)));
+    expect(dmg(f, 'white')).toBeLessThan(full / 10);
+    expect(dmg(f, 'blue')).toBe(Math.round(full * 1.5 * protection(qc9 * 1.5, fe1)));
+    expect(protection(qc9 * 1.5, fe1)).toBeGreaterThan(0.5);
+    expect(dmg(f, 'gold')).toBe(Math.round(full * 3.1));
+    // A shield on a qi ladder at the peak holds the blue art the body would let through.
+    const qi = { qi: FE(4), body: FE(1), soul: FE(1) };
+    const shielded = startFight([
+      at('j', all(QC(9)), { techniques: arts }),
+      at('s', qi, { maxShield: 100_000, shield: 100_000 }),
     ]);
-    const bare = preview(f, 'j', { type: 'strike', target: 's' })!.damage;
-    const sword = preview(armed, 'j', { type: 'strike', target: 's' })!.damage;
-    expect(sword / bare).toBeGreaterThan(20);
+    const s = combatantIn(shielded, 's')!;
+    const wall = shieldDefense(s);
+    expect(dmg(shielded, 'blue')).toBe(
+      Math.round(((400 * qc9 * 1.5) / wall) * protection(qc9 * 1.5, wall)),
+    );
+    // Never at the same realm or from above, however weak the art.
+    const peers = startFight([at('j', all(FE(1)), { techniques: arts }), at('s', all(FE(4)))]);
+    expect(dmg(peers, 'white')).toBe(Math.round((400 * fe1) / rungSize(FE(4))));
+    // A realm is the highest ladder: a body a realm ahead stands behind protective qi.
+    const ahead = startFight([
+      at('j', all(QC(9)), { techniques: arts }),
+      at('s', { qi: QC(1), body: FE(1), soul: QC(1) }),
+    ]);
+    expect(dmg(ahead, 'white')).toBe(dmg(f, 'white'));
   });
 });
 

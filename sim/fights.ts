@@ -7,8 +7,8 @@
 // others at the floor, against each other at the same top rung, and a balanced kit (all three at
 // the top, the ledger's ordinary kit) against each. Then the Border Wilds roster against a white
 // and a purple kit at each realm it is met at. Then crowds (C1): one white fighter against many
-// white fighters a realm below, which protective qi decides. Each matchup prints both sheets
-// beside its win rate.
+// fighters a realm below, white and then purple, which protective qi decides. Each matchup prints
+// both sheets beside its win rate.
 // Run: npm run sim -- fights [--fights=10000] [--roster=2000] [--crowds=200] [--sheets]
 import {
   FOE_BASELINE,
@@ -304,6 +304,8 @@ for (const t of BORDER_WILDS) {
 const CROWD_ROWS: {
   me: [RealmId, number];
   them: [RealmId, number];
+  /** The crowd's kit: white, or a great-sect disciple's purple. */
+  crowd?: string;
   sizes: number[];
   target: number;
 }[] = [
@@ -331,10 +333,19 @@ const CROWD_ROWS: {
     sizes: [5, 10, 20, 50],
     target: 10,
   },
+  // Purple at layer 9 beats an early Foundation's Defense, so that is the half-step fight on the
+  // sheets; a Foundation peak's Defense holds them.
+  {
+    me: ['foundation-establishment', 4],
+    them: ['qi-condensation', 9],
+    crowd: 'great-sect',
+    sizes: [1, 3, 5, 10],
+    target: 3,
+  },
 ];
 const short = (r: RealmId, stage: number) => `${realm(r).name.split(' ')[0]} ${stage}`;
 console.log(
-  `\nCrowds: one white fighter against white fighters a realm below, all at once, ${CROWDS} fights a cell`,
+  `\nCrowds: one white fighter against fighters a realm below, all at once, ${CROWDS} fights a cell`,
 );
 for (const row of CROWD_ROWS) {
   const [mr, ms] = row.me;
@@ -342,22 +353,23 @@ for (const row of CROWD_ROWS) {
   const cells = row.sizes.map((n) => {
     const crowd = () =>
       Array.from({ length: n }, (_, j) =>
-        kitFighter(kit('ordinary'), tr, ts, { id: `b${j}`, side: 'b' }),
+        kitFighter(kit(row.crowd ?? 'ordinary'), tr, ts, { id: `b${j}`, side: 'b' }),
       );
     const x = bout(
       fixed(kit('ordinary'), mr, ms, 'a'),
       crowd,
       CROWDS,
-      `crowd/${tr}/${ts}/${n}`,
+      `crowd/${row.crowd ?? 'ordinary'}/${tr}/${ts}/${n}`,
       400,
     );
     return [n, rate(x)] as const;
   });
+  const them = `${row.crowd ? 'purple ' : ''}${short(tr, ts)}`;
   console.log(
-    `  ${short(mr, ms).padEnd(14)}against ${short(tr, ts).padEnd(8)}${cells.map(([n, x]) => `${n}: ${pct(x)}`.padStart(13)).join('')}`,
+    `  ${short(mr, ms).padEnd(14)}against ${them.padEnd(15)}${cells.map(([n, x]) => `${n}: ${pct(x)}`.padStart(13)).join('')}`,
   );
   const x = cells.find(([n]) => n === row.target)![1];
-  check(`${short(mr, ms)} beats ${row.target} ${short(tr, ts)} at once over 90%`, x, 0.9, 1);
+  check(`${short(mr, ms)} beats ${row.target} ${them} at once over 90%`, x, 0.9, 1);
 }
 
 console.log('\nTargets');

@@ -35,12 +35,7 @@ import { DAOS, tierNodes } from '../../content/trees/index.ts';
 import { gearBand, weaponAccuracy } from '../gear.ts';
 import { ownTier } from '../toxicity.ts';
 import { artOwn, tierHeld } from '../trees.ts';
-import {
-  rarityAccuracy,
-  rarityMultiplier,
-  rarityReach,
-  type RarityId,
-} from '../../content/rarity.ts';
+import { rarityAccuracy, rarityMultiplier, type RarityId } from '../../content/rarity.ts';
 import { realmSize, tierRealm, tierStep } from '../../content/realms.ts';
 import {
   GUARDS,
@@ -64,8 +59,6 @@ export interface Weapon {
   accuracy: number;
   /** The share of the qi pool each strike drinks: a weapon above your realm. */
   drink: number;
-  /** The realm its strikes reach by themselves, 0 for Qi Condensation: its tier's, a realm more from gold up. */
-  reach: number;
 }
 
 /** A weapon of a kind, tier and rarity: its band on strikes, the square root on techniques of its Dao. */
@@ -77,7 +70,6 @@ export function weapon(kind: WeaponKind, tier: number, r: RarityId): Weapon {
     technique: Math.sqrt(m),
     accuracy: Math.sqrt(rarityAccuracy(r)),
     drink: 0,
-    reach: tier - 1 + rarityReach(r),
   };
 }
 
@@ -276,7 +268,6 @@ export function wornWeapon(c: Cultivator): Weapon {
     technique: Math.sqrt(band.band),
     accuracy: weaponAccuracy(it, band.accuracy),
     drink: band.qi,
-    reach: it.tier - 1 + rarityReach(it.rarity),
   };
 }
 
