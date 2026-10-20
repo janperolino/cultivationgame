@@ -213,6 +213,13 @@ export const MapLifeSchema = z.object({
   postings: z.array(PostingSchema),
   /** The day each power's law hall last met a face it marked: once a season no stance slips it. */
   lawMet: z.record(z.string(), z.number()).optional(),
+  /**
+   * What lies on the ground where it was dropped (C2, Jan's call): what the Bag couldn't hold or
+   * you set down, marked on the map until it is picked up or GROUND_DAYS pass.
+   */
+  ground: z
+    .array(z.object({ at: pt, day: z.number(), items: z.record(z.string(), z.number().int()) }))
+    .optional(),
   /** Lines from the road since you last looked: what the stance settled. */
   road: z.array(
     z.object({

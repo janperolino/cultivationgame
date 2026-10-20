@@ -7,7 +7,8 @@
 // others at the floor, against each other at the same top rung, and a balanced kit (all three at
 // the top, the ledger's ordinary kit) against each. Then the Border Wilds roster against a white
 // and a purple kit at each realm it is met at. Then crowds (C1): one white fighter against many
-// fighters a realm below, white and then purple, which protective qi decides. Each matchup prints
+// fighters a realm below, white and then purple, which protective qi and the arts that strike
+// many decide (C2: every kit carries its tier's blast). Each matchup prints
 // both sheets beside its win rate.
 // Run: npm run sim -- fights [--fights=10000] [--roster=2000] [--crowds=200] [--sheets]
 import {
@@ -301,6 +302,9 @@ for (const t of BORDER_WILDS) {
 
 // ---------------------------------------------------------------- crowds
 
+// The targets are what full-hit sweeps paid in qi reach on today's sizes (C2). The design's 50
+// layer-9s to an early Foundation need a gap at the realm's border that the sizes don't have:
+// the realm gap's design session (plan.md) takes that target.
 const CROWD_ROWS: {
   me: [RealmId, number];
   them: [RealmId, number];
@@ -312,26 +316,26 @@ const CROWD_ROWS: {
   {
     me: ['foundation-establishment', 1],
     them: ['qi-condensation', 9],
-    sizes: [3, 5, 10, 15, 20],
+    sizes: [10, 15, 20, 50],
     target: 10,
   },
   {
     me: ['foundation-establishment', 1],
     them: ['qi-condensation', 5],
-    sizes: [10, 20, 30, 50],
+    sizes: [20, 30, 50],
     target: 20,
   },
   {
     me: ['foundation-establishment', 4],
     them: ['qi-condensation', 9],
-    sizes: [20, 50, 100],
-    target: 50,
+    sizes: [50, 100, 150],
+    target: 100,
   },
   {
     me: ['core-formation', 1],
     them: ['foundation-establishment', 4],
-    sizes: [5, 10, 20, 50],
-    target: 10,
+    sizes: [10, 20, 30, 50],
+    target: 20,
   },
   // Purple at layer 9 beats an early Foundation's Defense, so that is the half-step fight on the
   // sheets; a Foundation peak's Defense holds them.

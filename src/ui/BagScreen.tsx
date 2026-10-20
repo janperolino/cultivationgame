@@ -18,6 +18,10 @@ import {
   bondMastery,
   bonds,
   canEquip,
+  canUnequip,
+  mergeStacks,
+  splitStack,
+  splitsOf,
   gearBand,
   spiritAwake,
   stonesPerBondDay,
@@ -25,7 +29,9 @@ import {
   treasureSlots,
   wornIds,
 } from '../core/gear.ts';
+import { dropStack, pickUp, pilesHere } from '../core/map/ground.ts';
 import { isNew } from '../core/seen.ts';
+import { withPlayer } from '../core/state.ts';
 import type { Cultivator } from '../core/state.ts';
 import { stats } from '../core/stats.ts';
 import { pillDose, toxicityDecay } from '../core/toxicity.ts';
@@ -330,7 +336,123 @@ function Toxicity({ c }: { c: Cultivator }) {
   );
 }
 
-function Detail({ c, id, onClear }: { c: Cultivator; id: string; onClear: () => void }) {
+/** What the picked stack can do in the pack: split in two, go back on its pile, or be set down. */
+function StackActions({
+  c,
+  id,
+  at,
+  onDone,
+}: {
+  c: Cultivator;
+  id: string;
+  at: number;
+  onDone: () => void;
+}) {
+  const mapAct = useGame((s) => s.mapAct);
+  const [why, setWhy] = useState<string | null>(null);
+  const stack = bagStacks(c).filter((s) => s.id === id)[at];
+  if (!stack) return null;
+  const canSplit = splitStack(c, id, at) !== null;
+  const split = () =>
+    setWhy(
+      mapAct((s) => {
+        const next = splitStack(s.player, id, at);
+        return next
+          ? withPlayer(s, next)
+          : { ok: false, reason: 'No square is free to split it into.' };
+      }),
+    );
+  return (
+    <>
+      <div className="actions">
+        {stack.n > 1 && (
+          <button
+            type="button"
+            className="button button-quiet"
+            disabled={!canSplit}
+            title={canSplit ? undefined : 'No square is free to split it into.'}
+            onClick={split}
+          >
+            Split in two
+          </button>
+        )}
+        {splitsOf(c, id).length > 0 && (
+          <button
+            type="button"
+            className="button button-quiet"
+            onClick={() => setWhy(mapAct((s) => withPlayer(s, mergeStacks(s.player, id))))}
+          >
+            Stack together
+          </button>
+        )}
+        <button
+          type="button"
+          className="button button-quiet"
+          onClick={() => {
+            const r = mapAct((s) => dropStack(s, id, at));
+            setWhy(r);
+            if (!r) onDone();
+          }}
+        >
+          Leave {stack.n > 1 ? `all ${stack.n} ` : ''}on the ground
+        </button>
+      </div>
+      {why && <p className="warn">{why}</p>}
+    </>
+  );
+}
+
+/** What lies on the ground within reach, to pick up as far as the pack has room. */
+function Ground() {
+  const game = useGame((s) => s.game);
+  const mapAct = useGame((s) => s.mapAct);
+  const [why, setWhy] = useState<string | null>(null);
+  if (!game) return null;
+  const here = pilesHere(game);
+  if (!here.length) return null;
+  return (
+    <div className="bag-ground" aria-label="On the ground here">
+      <h3 className="sub-heading">
+        On the ground <span className="hanzi">地上</span>
+        <span className="caption">
+          Gone a month after it fell
+          <Why label="The ground">
+            What your pack can't hold falls where you stand, and so does anything you set down. It
+            is marked on the map, and lies there a month before someone else takes it.
+          </Why>
+        </span>
+      </h3>
+      <ul className="place-work-list">
+        {here.map(({ pile, i }) => (
+          <li key={i} className="place-work-row">
+            <span className="caption">
+              {Object.entries(pile.items)
+                .map(([id, n]) => (hasItem(id) ? `${item(id).name}${n > 1 ? ` ×${n}` : ''}` : id))
+                .join(', ')}
+            </span>
+            <button type="button" onClick={() => setWhy(mapAct((s) => pickUp(s, i)))}>
+              Pick up
+            </button>
+          </li>
+        ))}
+      </ul>
+      {why && <p className="warn">{why}</p>}
+    </div>
+  );
+}
+
+function Detail({
+  c,
+  id,
+  at,
+  onClear,
+}: {
+  c: Cultivator;
+  id: string;
+  /** The picked stack among the item's stacks, when picked from the pack. */
+  at: number | null;
+  onClear: () => void;
+}) {
   const wear = useGame((s) => s.wear);
   const takeOff = useGame((s) => s.takeOff);
   const eat = useGame((s) => s.eat);
@@ -414,6 +536,8 @@ function Detail({ c, id, onClear }: { c: Cultivator; id: string; onClear: () => 
           <button
             type="button"
             className="button button-quiet"
+            disabled={!canUnequip(c, slot, id).ok}
+            title={canUnequip(c, slot, id).ok ? undefined : 'Your pack has no room for it.'}
             onClick={() => {
               takeOff(slot, id);
               setWhy(null);
@@ -445,6 +569,7 @@ function Detail({ c, id, onClear }: { c: Cultivator; id: string; onClear: () => 
         <p className="caption">Adds {Math.round(pillDose(c, it))} residue.</p>
       )}
       {why && <p className="warn">{why}</p>}
+      {at !== null && !worn && held > 0 && <StackActions c={c} id={id} at={at} onDone={onClear} />}
     </section>
   );
 }
@@ -453,11 +578,14 @@ export function BagScreen() {
   const game = useGame((s) => s.game);
   const takeOff = useGame((s) => s.takeOff);
   const [picked, setPicked] = useState<string | null>(null);
+  // Which of the picked item's stacks, when it was picked from the pack (a split stack is its own).
+  const [pickedAt, setPickedAt] = useState<number | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const see = useGame((s) => s.see);
   // Picking a thing up sees it, so its glow goes; a toast's link arrives with it picked up.
-  const pick = (id: string | null) => {
+  const pick = (id: string | null, at: number | null = null) => {
     setPicked(id);
+    setPickedAt(at);
     if (id) see('item', [id]);
   };
   const target = useNav((s) => (s.screen === 'bag' ? s.select : null));
@@ -510,26 +638,30 @@ export function BagScreen() {
         </div>
         {used > cap && <p className="warn">Over by {used - cap} squares: nothing more fits.</p>}
         <div className="bag-grid" onDragOver={(e) => e.preventDefault()} onDrop={onDropGrid}>
-          {stacks.map((s, i) => (
-            <ItemSquare
-              key={`${s.id}-${i}`}
-              it={item(s.id)}
-              n={s.n}
-              wide={s.squares > 1}
-              selected={picked === s.id}
-              fresh={isNew(game, 'item', s.id)}
-              onPick={() => pick(s.id)}
-              onHold={setDragging}
-            />
-          ))}
+          {stacks.map((s, i) => {
+            const at = stacks.slice(0, i).filter((x) => x.id === s.id).length;
+            return (
+              <ItemSquare
+                key={`${s.id}-${i}`}
+                it={item(s.id)}
+                n={s.n}
+                wide={s.squares > 1}
+                selected={picked === s.id && (pickedAt === null || pickedAt === at)}
+                fresh={isNew(game, 'item', s.id)}
+                onPick={() => pick(s.id, at)}
+                onHold={setDragging}
+              />
+            );
+          })}
           {Array.from({ length: free }, (_, i) => (
             <span key={`free-${i}`} className="bag-free" aria-hidden="true" />
           ))}
         </div>
         <Toxicity c={c} />
+        <Ground />
       </section>
       {shown ? (
-        <Detail c={c} id={picked} onClear={() => pick(null)} />
+        <Detail c={c} id={picked} at={pickedAt} onClear={() => pick(null)} />
       ) : (
         <section className="panel">
           <p className="muted">

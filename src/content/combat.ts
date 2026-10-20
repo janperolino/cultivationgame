@@ -101,6 +101,41 @@ export const COMBO_STEP = 0.1;
 export const COMBO_MAX = 3;
 /** A basic strike's base damage at tier 1: physical, on the body ladder, with whatever weapon you hold. */
 export const STRIKE_POWER = 20;
+
+/**
+ * Arts that strike many (design § Combat): how many foes an art of a tier reaches, by its tier,
+ * never the realm it is cast at. A tier's common art, its blast (stomp, roar), and how many an art
+ * that strikes all takes at the full hit before it splits; from tier 5 every foe in sight.
+ */
+export const REACH: readonly { common: number; blast: number; all: number }[] = [
+  { common: 3, blast: 5, all: 10 },
+  { common: 5, blast: 10, all: 20 },
+  { common: 10, blast: 30, all: 50 },
+  { common: 20, blast: 100, all: Infinity },
+  { common: Infinity, blast: Infinity, all: Infinity },
+];
+
+/** How many foes an art strikes: a count, or every foe (`all`, split past its tier's full count). */
+export type Targets = number | 'all';
+
+export function reachOf(tier: number): (typeof REACH)[number] {
+  return REACH[Math.min(REACH.length, Math.max(1, tier)) - 1]!;
+}
+
+/** The most foes an art strikes at the full hit: its count, or its tier's full count for `all`. */
+export function fullCount(targets: Targets | undefined, tier: number): number {
+  return targets === 'all' ? reachOf(tier).all : Math.max(1, targets ?? 1);
+}
+
+/**
+ * What the reach costs (Jan's call in C2's talk: every foe takes the full hit, and the qi pays):
+ * the written qi times the square root of the foes it strikes, so a single art is the cheap one.
+ * An art that strikes all pays for its full count, or, from tier 4, for 100.
+ */
+export function reachCost(targets: Targets | undefined, tier: number): number {
+  const n = fullCount(targets, tier);
+  return Math.sqrt(Number.isFinite(n) ? n : REACH[3]!.blast);
+}
 /** Armor's material turns aside this much of one damage type, at any rarity. */
 export const MATERIAL_RESIST = 0.25;
 /** No resistance turns aside more than this. */

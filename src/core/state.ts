@@ -148,6 +148,11 @@ export const CultivatorSchema = z.object({
   /** Item counts by id, carried in the Bag; what is worn sits in `gear` instead. */
   items: z.record(z.string(), z.number().int().min(0)),
   /**
+   * Stacks split off an item's pile in the Bag, by id, each its own square (Sean's playtest,
+   * 2026-10-20); the rest of the count fills whole stacks as before (core/gear.ts, bagStacks).
+   */
+  splits: z.record(z.string(), z.array(z.number().int().min(1))).optional(),
+  /**
    * What is worn (design § Items and gear): the four gear squares and the treasure slots the Qi
    * and Soul trees open, each an item id taken out of `items`.
    */

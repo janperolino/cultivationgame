@@ -45,6 +45,7 @@ import { known, raise, rumor, sketchKingdom, sketchRegion } from './fog.ts';
 import { placeKindOf, standsAt } from './gate.ts';
 import { areaById, placeById, type MapPlace, type RegionMap } from './region.ts';
 import type { KnowState, MapLife } from './schema.ts';
+import { roomFor } from '../gear.ts';
 import { goToPlace, homeOf, joinGroup, mapOf, soulBand } from './travel.ts';
 
 export type PlaceResult = { ok: true; state: GameState } | { ok: false; reason: string };
@@ -197,6 +198,7 @@ export function useChart(s: GameState, itemId: string): GameState {
 export function buyMap(s: GameState, placeId: string, itemId: string): PlaceResult {
   const m = mapsAt(s, placeId).find((x) => x.id === itemId);
   if (!m) return { ok: false, reason: 'No one here sells that map.' };
+  if (roomFor(s.player, m.id) < 1) return { ok: false, reason: 'Your pack has no room for it.' };
   const after = pay(stonesOf(s.player), m.price);
   if (!after) return { ok: false, reason: `It costs ${m.price} low-grade.` };
   const bought = withPlayer(s, addItem(withStones(s.player, after), m.id, 1));

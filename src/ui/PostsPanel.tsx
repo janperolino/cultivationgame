@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { BRANCHES } from '../content/hours.ts';
 import { isHire, type Job } from '../content/jobs.ts';
-import { canTakeJob, jobPay, jobsAt, jobsView, quitJob, takeJob } from '../core/jobs.ts';
+import { canTakeJob, jobAsks, jobPay, jobsAt, jobsView, quitJob, takeJob } from '../core/jobs.ts';
 import { houseOf, organization, theName } from '../core/organizations.ts';
 import { realmOf, type GameState } from '../core/state.ts';
 import type { RegionMap } from '../core/map/region.ts';
@@ -108,6 +108,7 @@ export function WorkHere({ game, map, place }: { game: GameState; map: RegionMap
         {jobs.map((j) => {
           const held = game.player.jobs.some((h) => h.id === j.id);
           const can = canTakeJob(game, j.id);
+          const asks = jobAsks(j);
           const pay = jobPay(j, realm);
           const currency =
             j.power && !isHire(j) ? organization(houseOf(j.power)).preset.currency.name : null;
@@ -125,6 +126,7 @@ export function WorkHere({ game, map, place }: { game: GameState; map: RegionMap
               <span className="caption">
                 {giverOf(j)} · <span className="hanzi">{shiftWords(j.shift)}</span> · {payWords} a
                 duty day · {j.perk}
+                {asks && ` · ${asks}`}
                 {j.danger && ' · dangerous: a raid each month the shifts are kept'}
               </span>
               {held ? (

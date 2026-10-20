@@ -22,7 +22,8 @@ import { pedigreeBias, rollBiased, type LuckySlot, type Npc } from './combat/gen
 import { receive, stonesOf, tierGrade, withStones } from './purse.ts';
 import { gainCopy as ownCopy } from './reading.ts';
 import { hashSeed, Rng } from './rng.ts';
-import { addEvent, addItem, withPlayer, type Cultivator, type GameState } from './state.ts';
+import { gainItem } from './map/ground.ts';
+import { addEvent, withPlayer, type Cultivator, type GameState } from './state.ts';
 
 /** What someone carries or leaves: item ids with counts, and low-grade stones. */
 export interface Haul {
@@ -278,10 +279,11 @@ export function openRings(s: GameState): GameState {
   const ready = s.world.sealed.filter((r) => opensRing(s.player, r.tier));
   if (!ready.length) return s;
   let c = s.player;
+  const things: [string, number][] = [];
   for (const r of ready) {
     for (const [id, n] of Object.entries(r.items)) {
       if (hasCopy(id)) c = ownCopy(c, id, n);
-      else if (hasItem(id)) c = addItem(c, id, n);
+      else if (hasItem(id)) things.push([id, n]);
     }
     // Its stones as its owner counted them, in the grade of the ring's tier at most.
     c = withStones(c, receive(stonesOf(c), r.stones, tierGrade(r.tier)));
@@ -290,6 +292,7 @@ export function openRings(s: GameState): GameState {
     ...withPlayer(s, c),
     world: { ...s.world, sealed: s.world.sealed.filter((r) => !ready.includes(r)) },
   };
+  for (const [id, n] of things) next = gainItem(next, id, n).state;
   for (const r of ready) next = addEvent(next, 'ring-opened', { name: r.name });
   return next;
 }

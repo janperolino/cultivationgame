@@ -74,7 +74,13 @@ export interface Technique {
   form: Form;
   damage: DamageType;
   power: number;
+  /** What one foe costs; an art that strikes many pays √ of its count (content/combat.ts, reachCost). */
   qiCost: number;
+  /**
+   * How many foes it strikes (design § Combat, Arts that strike many), 1 unless written: each takes
+   * the full hit with its own roll. `all` strikes every foe, splitting past its tier's full count.
+   */
+  targets?: number | 'all';
   /**
    * A guard art: known, it gives its guard's half at its band and is never cast, so its form,
    * damage, power and cost are unused (power 0, cost 0).

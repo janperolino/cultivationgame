@@ -55,6 +55,7 @@ import {
   type PendingCard,
 } from './state.ts';
 import { verdict, type Verdict } from './resolver/check.ts';
+import { gainItem } from './map/ground.ts';
 import { agility, aptitude, fortune, stats } from './stats.ts';
 
 // ---------------------------------------------------------------- triggers
@@ -184,7 +185,7 @@ function applyEffect(s: GameState, e: CardEffect): GameState {
         withStones(c, e.n < 0 ? spend(stonesOf(c), -e.n) : receive(stonesOf(c), e.n)),
       );
     case 'item':
-      return withPlayer(s, addItem(c, e.id, e.n));
+      return gainItem(s, e.id, e.n).state;
     case 'fuel': {
       const amount = e.share * barSize(c[e.ladder]);
       if (amount >= 0) return withPlayer(s, fromWorld(c, e.ladder, amount));

@@ -10,7 +10,7 @@ import { DUTY_PAY, job } from '../content/jobs.ts';
 import { EDGE_LI, GATHER, RING_LI } from '../content/map/travel.ts';
 import { realmScale } from '../content/realms.ts';
 import { createLife, type Creation } from './creation.ts';
-import { atHome, atPost, jobPay, jobsDay, quitJob, takeJob } from './jobs.ts';
+import { atHome, atPost, jobAsks, jobPay, jobsDay, quitJob, takeJob } from './jobs.ts';
 import { cultivate } from './life.ts';
 import { comingBackStory } from './comingBack.ts';
 import { claimPosting, isMissionHall, postingsAt, takePosting } from './map/board.ts';
@@ -170,6 +170,17 @@ describe('a job in the City of the Guarded Mouth', () => {
     const guard = takeJob(r.state, 'qian-warehouse');
     expect(guard.ok).toBe(true);
     expect(takeJob(r.state, 'gate-garden')).toMatchObject({ ok: false });
+  });
+
+  it('turns a hire away below the realm it asks, and its posting says so first (Sean’s playtest)', () => {
+    const s = inside(newLife({ name: 'Han Li', seed: 'city' }), CITY);
+    expect(s.player.qi.stage).toBeLessThan(4);
+    expect(jobAsks(job('qian-warehouse'))).toBe('from Qi Condensation, fourth layer');
+    const r = takeJob(s, 'qian-warehouse');
+    expect(r).toEqual({ ok: false, reason: 'It is given from Qi Condensation, fourth layer.' });
+    expect(takeJob(posted(s), 'qian-warehouse').ok).toBe(true);
+    // A post's posting names its seat.
+    expect(jobAsks(job('gate-garden'))).toMatch(/^from the .+'s seat$/);
   });
 
   it('turns a post away from those who aren’t the power’s own, or not at its seat', () => {

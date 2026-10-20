@@ -43,7 +43,7 @@ import {
 } from '../content/shops.ts';
 import { rollBiased } from './combat/generate.ts';
 import { lotShape } from './loot.ts';
-import { wornIds } from './gear.ts';
+import { roomFor, wornIds } from './gear.ts';
 import { gainCopy } from './life.ts';
 import {
   copyInto,
@@ -650,6 +650,15 @@ export function buy(s: GameState, shopId: string, slot: number, count?: number):
   const lot = shelf(s, shopId).find((l) => l.slot === slot);
   if (!lot) return { ok: false, reason: 'That lot is gone.' };
   const k = buyCount(lot, count);
+  // The Bag holds no more than its squares (Sean's playtest): a buy that won't fit is refused.
+  if (!hasCopy(lot.thing)) {
+    const room = roomFor(s.player, lot.thing);
+    if (room < k)
+      return {
+        ok: false,
+        reason: room > 0 ? `Your pack holds only ${room} more.` : 'Your pack has no room for it.',
+      };
+  }
   const price = priceToYou(s, shopId, lot, k);
   let next: GameState;
   if (hallTerms(s, sh)?.as === 'member') {

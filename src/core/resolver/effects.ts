@@ -10,13 +10,14 @@ import { PERSON_STATES, PLACE_STATES, TICKS_PER_DAY } from '../../content/resolv
 import { BOND_IDS } from '../../content/bonds.ts';
 import { addProsperity } from '../markets.ts';
 import { receive, spend, stonesOf, withStones } from '../purse.ts';
-import { addItem, withPlayer, type GameState } from '../state.ts';
+import { withPlayer, type GameState } from '../state.ts';
 import { endBond, makeBond } from './followers.ts';
 import { see } from './knows.ts';
 import { addFame, addKarma } from './names.ts';
 import { guardedKnown, joinPower, leavePower, realmStageOf } from '../organizations.ts';
 import { addStanding, addTie, remember } from './opinion.ts';
 import type { Scene } from './scene.ts';
+import { gainItem } from '../map/ground.ts';
 import {
   addHeat,
   addProject,
@@ -185,7 +186,7 @@ export function applyEffects(
         sc = withActor(sc, e.who, (a) => ({ ...a, stones: Math.max(0, a.stones + e.n) }));
         break;
       case 'item':
-        if (e.who === you) state = withPlayer(state, addItem(state.player, e.id, e.n));
+        if (e.who === you) state = gainItem(state, e.id, e.n).state;
         sc = withActor(sc, e.who, (a) => ({
           ...a,
           items: { ...a.items, [e.id]: Math.max(0, (a.items[e.id] ?? 0) + e.n) },

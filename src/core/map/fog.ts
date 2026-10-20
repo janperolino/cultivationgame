@@ -219,5 +219,6 @@ export function startKnowledge(
   for (const q of [...map.places, ...map.areas])
     if (q.famous && known(next, q.id) === 'unknown')
       next = rumor(next, q, 'everyone in the region has heard of it');
-  return next;
+  // And what you see from your door, before the first step (Sean's playtest: the map opened dark).
+  return seeFrom(map, next, at, 0).life;
 }

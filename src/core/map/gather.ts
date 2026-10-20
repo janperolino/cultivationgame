@@ -14,10 +14,11 @@ import { realmIndex } from '../../content/realms.ts';
 import { landLines } from '../making.ts';
 import { hashSeed, Rng } from '../rng.ts';
 import { stats } from '../stats.ts';
-import { addItem, realmOf, type Cultivator } from '../state.ts';
+import { realmOf, type Cultivator } from '../state.ts';
 import { bandAt, peopleLi } from './depth.ts';
 import type { Pt } from './geometry.ts';
 import { atlasAreaAt, terrainAt, type RegionMap } from './region.ts';
+import { gainInto } from './ground.ts';
 import type { MapLife } from './schema.ts';
 
 /** What the land yields an hour where you stand, before Perception. */
@@ -105,7 +106,13 @@ export function gatherHour(
   for (let i = 0; i < whole; i++) {
     const id = found(rng.pick(lines), rarity);
     finds[id] = (finds[id] ?? 0) + 1;
-    player = addItem(player, id, 1);
   }
-  return { life: next, player, finds };
+  // What the Bag can't hold falls where you stand (core/map/ground.ts).
+  let ground = next;
+  for (const [id, n] of Object.entries(finds)) {
+    const r = gainInto(player, ground, Math.floor(hourIndex / 12), id, n);
+    player = r.c;
+    ground = r.life;
+  }
+  return { life: ground, player, finds };
 }

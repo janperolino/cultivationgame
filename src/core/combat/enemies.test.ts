@@ -88,14 +88,15 @@ describe('generated cultivators', () => {
     expect(a.carries).toContain("White Fang Stockade's token");
   });
 
-  it('rolls access, never rules: one art for a rogue, two for a sect, mastery a level a realm', () => {
+  it("rolls access, never rules: a rogue's art and sweep, a sect's four, mastery a level a realm", () => {
     const rogue = generateCultivator(
       cultivator('march-conscript'),
       'qi-condensation',
       3,
       new Rng(1),
     );
-    expect(Object.keys(rogue.combatant.techniques)).toHaveLength(1);
+    expect(Object.keys(rogue.combatant.techniques)).toHaveLength(2);
+    expect(rogue.combatant.techniques['march-conscript-sweep']!.technique.targets).toBe(3);
     expect(rogue.rolls.mastery).toBe(1);
     const sect = generateCultivator(
       cultivator('beast-butcher-disciple'),
@@ -103,7 +104,9 @@ describe('generated cultivators', () => {
       2,
       new Rng(1),
     );
-    expect(Object.keys(sect.combatant.techniques)).toHaveLength(2);
+    expect(Object.keys(sect.combatant.techniques)).toHaveLength(4);
+    expect(sect.combatant.techniques['beast-butcher-disciple-sweep']!.technique.targets).toBe(5);
+    expect(sect.combatant.techniques['beast-butcher-disciple-blast']!.technique.targets).toBe(10);
     expect(sect.rolls.mastery).toBe(3);
     expect(sect.storage).toBe('storage ring');
     const t = Object.values(sect.combatant.techniques)[0]!.technique;
@@ -290,7 +293,7 @@ describe('the preview', () => {
   it('prices a technique as the turn resolves it, before the spread', () => {
     const f = startFight([fighter('a', 'a'), fighter('b', 'b')]);
     const p = preview(f, 'a', { type: 'technique', id: 'palm', target: 'b' })!;
-    expect(p).toEqual({ chance: 0.5, damage: 40, qi: 10 });
+    expect(p).toEqual({ chance: 0.5, damage: 40, qi: 10, foes: 1, expected: 20 });
     expect(preview(f, 'a', { type: 'defend' })).toBeNull();
     const broke = startFight([fighter('a', 'a', { qi: 5 }), fighter('b', 'b')]);
     expect(preview(broke, 'a', { type: 'technique', id: 'palm', target: 'b' })).toBeNull();

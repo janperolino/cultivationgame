@@ -6,6 +6,15 @@ import type { RarityId } from './rarity.ts';
 /** Squares the pack holds on foot, before a pouch or ring (design § UI, the Bag: small). */
 export const PACK_SQUARES = 10;
 
+/**
+ * What the Bag can't hold falls to the ground where you stand (C2, Jan's call): it lies there,
+ * marked on the map, for this many days, and is picked up from within GROUND_LI of it. Jan said
+ * "a few days"; at Qi Condensation's calendar three days pass in half a real minute, so a month
+ * (about five real minutes there): a value to tune by feel.
+ */
+export const GROUND_DAYS = 30;
+export const GROUND_LI = 250;
+
 /** Artifacts from this rarity up bond to their owner; below it, every property simply works. */
 export const BOND_FROM: RarityId = 'blue';
 

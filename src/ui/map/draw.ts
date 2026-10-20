@@ -36,6 +36,8 @@ export interface Scene {
   hover: string | null;
   /** Hide the fog (for looking at the land). */
   noFog?: boolean;
+  /** What lies on the ground today (core/map/ground.ts), each pile marked where it fell. */
+  ground?: readonly { at: Pt }[];
 }
 
 const C = {
@@ -135,7 +137,14 @@ function pieceOf(q: MapPlace): HTMLCanvasElement | null {
   g.filter = 'none';
   g.globalCompositeOperation = 'destination-in';
   const r = Math.min(c.width, c.height) / 2;
-  const fade = g.createRadialGradient(c.width / 2, c.height / 2, r * 0.45, c.width / 2, c.height / 2, r);
+  const fade = g.createRadialGradient(
+    c.width / 2,
+    c.height / 2,
+    r * 0.45,
+    c.width / 2,
+    c.height / 2,
+    r,
+  );
   fade.addColorStop(0, 'rgba(0,0,0,1)');
   fade.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = fade;
@@ -151,7 +160,6 @@ function pieceLi(q: MapPlace): number {
   if (q.sub === 'town') return 1700;
   return 1100;
 }
-
 
 // ---------------------------------------------------------------- caches
 
@@ -282,7 +290,14 @@ export function drawMap(f: Frame, s: Scene): boolean {
   const box = [vx0, vy0, vx1, vy1] as const;
   /** Drawing in li from here: the view's transform on the context. */
   const inWorld = () =>
-    ctx.setTransform(k * dpr, 0, 0, k * dpr, (W / 2 - view.x * k) * dpr, (H / 2 - view.y * k) * dpr);
+    ctx.setTransform(
+      k * dpr,
+      0,
+      0,
+      k * dpr,
+      (W / 2 - view.x * k) * dpr,
+      (H / 2 - view.y * k) * dpr,
+    );
   const onScreen = () => ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   // The sea, the land round the region, and the region as plain land by its terrains; then the
@@ -540,6 +555,23 @@ export function drawMap(f: Frame, s: Scene): boolean {
       });
     }
   }
+
+  // What lies on the ground: a small bundle where it fell, until it is picked up or taken.
+  (s.ground ?? []).forEach((g) => {
+    const [x, y] = at(g.at);
+    ctx.fillStyle = 'rgba(4,5,7,0.8)';
+    ctx.beginPath();
+    ctx.arc(x, y, 6.5, 0, 7);
+    ctx.fill();
+    ctx.strokeStyle = C.accent;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - 3.5, y - 3, 7, 6);
+    ctx.beginPath();
+    ctx.moveTo(x - 1.5, y - 3);
+    ctx.lineTo(x, y - 5.5);
+    ctx.lineTo(x + 1.5, y - 3);
+    ctx.stroke();
+  });
 
   // Pins.
   life.pins.forEach((p, i) => {

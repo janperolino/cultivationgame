@@ -5,6 +5,7 @@
 // shop or office with no power behind it, or a power's post opened to outsiders, is a hire, paid in
 // stones. The M3 posts, hires and perks are drafted for Jan's review. core/jobs.ts reads them.
 import type { SeatId } from './organizations.ts';
+import type { RealmId } from './realms.ts';
 
 export interface Job {
   id: string;
@@ -21,6 +22,11 @@ export interface Job {
   place: string | null;
   /** The lowest seat that holds a post. */
   seat?: SeatId;
+  /**
+   * The least realm and stage a hire takes on (Sean's playtest, 2026-10-20: a layer-1 child was
+   * hired to guard a warehouse), said on its posting before you take it.
+   */
+  from?: { realm: RealmId; stage: number };
   /** A deacon's or elder's post: one holder, not every member. */
   one?: boolean;
   /** Its hours on the home wheel, 0 at 子 round to 11 at 亥. */
@@ -176,6 +182,7 @@ export const JOBS: readonly Job[] = [
     power: null,
     hall: 'the bounty office',
     place: 'qm-shoukou-cheng',
+    from: { realm: 'qi-condensation', stage: 4 },
     shift: r(3, 4),
     perk: "first pick of the board's postings",
     leave: 'free',
@@ -188,6 +195,7 @@ export const JOBS: readonly Job[] = [
     hire: true,
     hall: "the Qian Clan's trading house",
     place: 'qm-shoukou-cheng',
+    from: { realm: 'qi-condensation', stage: 4 },
     shift: r(8, 4),
     perk: "the trading house's goods at its own price",
     leave: 'free',
@@ -200,6 +208,7 @@ export const JOBS: readonly Job[] = [
     power: null,
     hall: 'a caravan',
     place: null,
+    from: { realm: 'qi-condensation', stage: 4 },
     shift: [],
     perk: 'the road paid for, on the roads',
     leave: 'free',

@@ -5211,6 +5211,15 @@ select {
   margin: 12px 0;
 }
 
+/* What lies on the ground within reach (C2), under the pack. */
+.bag-ground {
+  margin-top: 14px;
+}
+.bag-ground .sub-heading .caption {
+  margin-left: 10px;
+  font-weight: normal;
+}
+
 .bag-free {
   border-radius: 8px;
   border: 1px dashed var(--edge);

@@ -100,6 +100,7 @@ import { known, raise, sightAt } from './fog.ts';
 import { bedAt } from './gate.ts';
 import { areaAt, terrainAt, type RegionMap } from './region.ts';
 import { nearRoad } from './route.ts';
+import { gainItem } from './ground.ts';
 import type { Encounter, MapLife, Stance } from './schema.ts';
 
 // ---------------------------------------------------------------- hooks
@@ -473,7 +474,7 @@ function findId(id: string, band: number, rng: Rng): string {
 
 function gain(s: GameState, id: string, n: number): GameState {
   if (hasCopy(id)) return copyGain(s, id);
-  return withPlayer(s, addItem(s.player, id, n));
+  return gainItem(s, id, n).state;
 }
 
 export interface Settled {

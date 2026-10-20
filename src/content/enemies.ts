@@ -303,6 +303,8 @@ export interface ArtShape {
   form: Form;
   power: number;
   qiCost: number;
+  /** An art that strikes many: its tier's common count or blast (content/combat.ts, REACH). */
+  reach?: 'common' | 'blast';
 }
 
 export const PATH_ART: ArtShape = {
@@ -323,6 +325,29 @@ export const SECOND_ART: ArtShape = {
   form: 'projectile',
   power: 30,
   qiCost: 6,
+};
+
+/**
+ * The arts that strike many a generated cultivator rolls on their pedigree's table (C2, Jan's
+ * calls): everyone from Qi Condensation knows their path's art at its tier's common count, and
+ * from small sect up, or from Foundation, a blast. Each foe takes the full hit, so they carry a
+ * path art's power and its cost, and the reach pays √ of its count in qi.
+ */
+export const SWEEP_ART: ArtShape = {
+  key: 'sweep',
+  name: 'sweeping art',
+  form: 'projectile',
+  power: 40,
+  qiCost: 10,
+  reach: 'common',
+};
+export const BLAST_ART: ArtShape = {
+  key: 'blast',
+  name: 'blast',
+  form: 'aura',
+  power: 40,
+  qiCost: 10,
+  reach: 'blast',
 };
 
 /** The form each weapon kind's art takes. */

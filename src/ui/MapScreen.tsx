@@ -74,6 +74,16 @@ import { sealOf } from './encounterSeals.ts';
 import { PlaceScreen } from './PlaceScreen.tsx';
 import { canvasDensity, pointIn, stageFactor, useStage } from './stage.ts';
 import { useGame } from './store.ts';
+import { groundPiles, pickUp, pilesHere } from '../core/map/ground.ts';
+import { hasItem, item } from '../content/items.ts';
+import { GROUND_DAYS, GROUND_LI } from '../content/gear.ts';
+
+/** What a pile on the ground holds, in words: "Iron Ore ×3, Ember Talisman". */
+function pileWords(items: Record<string, number>): string {
+  return Object.entries(items)
+    .map(([id, n]) => `${hasItem(id) ? item(id).name : id}${n > 1 ? ` ×${n}` : ''}`)
+    .join(', ');
+}
 import { Picker } from './widgets.tsx';
 
 const TERRAIN_WORDS: Record<string, string> = { sea: 'at sea' };
@@ -237,7 +247,7 @@ function MapView({
     const id = requestAnimationFrame(() => {
       const stale = drawMap(
         { ctx: c.getContext('2d')!, W: size.W, H: size.H, dpr: size.dpr, view: v },
-        { map, life, yourBand: band0, hover: hover?.id ?? null },
+        { map, life, yourBand: band0, hover: hover?.id ?? null, ground: groundPiles(game) },
       );
       if (stale) again = window.setTimeout(() => redraw((n) => n + 1), 1600);
     });
@@ -247,7 +257,7 @@ function MapView({
     };
   }, [map, life, v.x, v.y, v.k, hover, size, band0, drawn]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const scene = { map, life, yourBand: band0, hover: hover?.id ?? null };
+  const scene = { map, life, yourBand: band0, hover: hover?.id ?? null, ground: groundPiles(game) };
   const pickAtSpot = (sx: number, sy: number) =>
     pickAt({ view: v, W: size.W, H: size.H }, scene, sx, sy);
   const local = (e: { clientX: number; clientY: number }) => {
@@ -352,6 +362,14 @@ function MapView({
   const hereChoices = (atPlace: MapPlace | null): MenuItem[] => {
     const home = homeOf(game, map);
     const items: MenuItem[] = [];
+    // What lies on the ground within reach (C2): picked up from where you stand.
+    for (const { pile, i } of pilesHere(game)) {
+      items.push({
+        t: 'Pick up what lies here',
+        s: pileWords(pile.items),
+        run: () => act((s) => pickUp(s, i)),
+      });
+    }
     if (atPlace && placeKindOf(atPlace)) {
       const gate = gateOf(game, map, atPlace);
       const goIn = (bribe = false) => {
@@ -414,6 +432,25 @@ function MapView({
             warn: true,
             run: () => setLeaving(true),
           },
+        ],
+      };
+    }
+    // A pile on the ground out of reach: what it holds, and going back for it. One within reach
+    // is picked up from your own menu, where you stand.
+    const pileI = groundPiles(game).findIndex((g) => {
+      const [x, y] = toScreen(v, size.W, size.H, g.at);
+      const far = Math.hypot(g.at[0] - life.at[0], g.at[1] - life.at[1]) > GROUND_LI;
+      return far && Math.hypot(x - sx, y - sy) < 10;
+    });
+    if (pileI >= 0) {
+      const g = groundPiles(game)[pileI]!;
+      return {
+        x: sx,
+        y: sy,
+        head: 'On the ground',
+        items: [
+          { t: pileWords(g.items), s: `gone ${GROUND_DAYS} days after it fell` },
+          { t: 'Go here', run: () => goTo(g.at, null) },
         ],
       };
     }

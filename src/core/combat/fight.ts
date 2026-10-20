@@ -29,12 +29,15 @@ import {
   STRIKE_FORM,
   STRIKE_POWER,
   UNBREAKING_DEFENSE,
+  fullCount,
+  reachCost,
   statusInfo,
   statusOf,
   type DamageType,
   type OutcomeForm,
   type OutcomeResult,
   type StatusId,
+  type Targets,
 } from '../../content/combat.ts';
 import { TOXICITY_MAX, type LadderId } from '../../content/cultivation.ts';
 import { actionDaos, isCombatDao, type DaoStatKind } from '../../content/daos.ts';
@@ -463,6 +466,9 @@ interface Attack {
   qi: boolean;
   /** The Daos it counts (content/daos.ts): its tags and its damage type's element. */
   daos: readonly string[];
+  /** How many foes it strikes, and the tier its reach is read at (design § Combat). */
+  targets: Targets;
+  tier: number;
 }
 
 /** What a technique costs this actor in qi, its Daos' cost nodes included. */
@@ -471,6 +477,7 @@ export function techniqueCost(actor: Combatant, t: Technique): number {
   return Math.round(
     t.qiCost *
       tierScale(t.tier) *
+      reachCost(t.targets, t.tier) *
       actor.techniqueCost *
       (actor.techniques[t.id]?.cost ?? 1) *
       Math.max(0, 1 + daoMod(actor, daos, 'Cost')),
@@ -511,6 +518,8 @@ function techniqueAttack(actor: Combatant, id: string, creativity: number): Atta
       (onWeapon ? actor.weapon.technique : 1),
     qi: t.qiCost > 0,
     daos,
+    targets: t.targets ?? 1,
+    tier: t.tier,
   };
 }
 
@@ -533,6 +542,8 @@ function strikeAttack(actor: Combatant, creativity: number): Attack {
     attack: actor.weapon.strike * dao * (1 + daoMod(actor, daos, 'Power')) * actor.physicalPower,
     qi: false,
     daos,
+    targets: 1,
+    tier: realmIndex(body.realm) + 1,
   };
 }
 
@@ -556,6 +567,8 @@ function itemAttack(actor: Combatant, it: Item, creativity: number): Attack | nu
       typePower(actor, use.damage),
     qi: false,
     daos,
+    targets: use.targets ?? 1,
+    tier: it.tier,
   };
 }
 
@@ -757,17 +770,24 @@ function barsOf(c: Combatant, took: { shield: number; armor: number }): Bars {
 
 /** What an attack would do before it rolls: its chance of landing and its damage on a plain hit. */
 export interface Preview {
+  /** The chance of landing on the chosen foe. */
   chance: number;
+  /** A plain hit's damage, summed over every foe the cast reaches. */
   damage: number;
   /** The qi it costs. */
   qi: number;
+  /** The foes it reaches, the chosen one first. */
+  foes: number;
+  /** Expected damage over them all: each foe's chance times its plain hit. */
+  expected: number;
 }
 
 /**
  * Prices an attacking main action against its target without rolling: the hit chance and a
- * plain hit's damage at the spread's middle, element, resist, combo and the Dao rules included.
- * Null for an action that doesn't attack, can't be paid, or has no standing target. The Combat
- * screen shows this beside every technique, and the profiles pick by it.
+ * plain hit's damage at the spread's middle, element, resist, combo and the Dao rules included,
+ * over the whole cast for an art that strikes many. Null for an action that doesn't attack, can't
+ * be paid, or has no standing target. The Combat screen shows this beside every technique, and
+ * the profiles pick by it.
  */
 export function preview(f: Fight, actorId: string, m: MainAction): Preview | null {
   const actor = combatantIn(f, actorId);
@@ -791,17 +811,82 @@ export function preview(f: Fight, actorId: string, m: MainAction): Preview | nul
   if (!a || typeof a === 'string') return null;
   const target = foe(f, actor, 'target' in m ? (m.target ?? '') : '');
   if (!target) return null;
-  const n = numbers(f, actor, target, a);
-  const hit = force({
-    base: a.base,
-    attack: n.attack,
-    element: n.element,
-    result: 'hit',
-    combo: comboMultiplier(nextCombo(actor.combo, damagePhase(a.type))),
+  const spec = m.type === 'technique' ? rained(actor, a) : a;
+  const { foes, share } = reached(f, actor, target, spec);
+  let damage = 0;
+  let expected = 0;
+  let chance = 0;
+  foes.forEach((c, i) => {
+    const n = numbers(f, actor, c, spec);
+    const hit = force({
+      base: spec.base * share,
+      attack: n.attack,
+      element: n.element,
+      result: 'hit',
+      combo: comboMultiplier(nextCombo(actor.combo, damagePhase(spec.type))),
+    });
+    const l = landing(c, hit, spec.type, n);
+    const dealt = l.shield + l.armor + l.hp;
+    const p = n.sure ? 1 : hitChance(n.accuracy, n.evasion);
+    if (i === 0) chance = p;
+    damage += dealt;
+    expected += p * dealt;
   });
-  const l = landing(target, hit, a.type, n);
-  const dealt = l.shield + l.armor + l.hp;
-  return { chance: n.sure ? 1 : hitChance(n.accuracy, n.evasion), damage: dealt, qi };
+  return { chance, damage, qi, foes: foes.length, expected };
+}
+
+/**
+ * The foes a cast reaches (design § Combat, Arts that strike many): the chosen one, then the
+ * nearest in the fight's order up to its count; an art that strikes all takes every foe, each at
+ * its full count over their number past it.
+ */
+function reached(
+  f: Fight,
+  actor: Combatant,
+  target: Combatant,
+  a: Attack,
+): { foes: Combatant[]; share: number } {
+  const all = [target, ...others(f, actor, target)];
+  const count = fullCount(a.targets, a.tier);
+  if (a.targets !== 'all') return { foes: all.slice(0, count), share: 1 };
+  return { foes: all, share: all.length > count ? count / all.length : 1 };
+}
+
+/** Sword Rain: once a fight, a sword technique strikes all, as an art that strikes all does. */
+function rained(actor: Combatant, a: Attack): Attack {
+  const rain = a.daos.includes('sword') && mod(actor, 'swordRain') > 0 && !actor.marks.swordRain;
+  return rain ? { ...a, targets: 'all' } : a;
+}
+
+/**
+ * One cast at every foe it reaches, each with its own roll for the hit and the crit and one
+ * outcome each. The cast is one action: the first strike's and the combo's marks count the same
+ * on every foe, and what spills over (a sweep, a cleave) spills from the chosen foe only.
+ */
+function cast(
+  f: Fight,
+  actor: Combatant,
+  target: Combatant,
+  rng: Rng,
+  a: Attack,
+): Omit<Outcome, 'action'>[] {
+  const { foes, share } = reached(f, actor, target, a);
+  const spec = share < 1 ? { ...a, base: a.base * share } : a;
+  const before = { combo: actor.combo, struck: actor.marks.struck, oneSword: actor.marks.oneSword };
+  const out: Omit<Outcome, 'action'>[] = [];
+  foes.forEach((c, i) => {
+    if (i > 0) {
+      const marks = { ...actor.marks };
+      for (const k of ['struck', 'oneSword'] as const) {
+        if (before[k] === undefined) delete marks[k];
+        else marks[k] = before[k];
+      }
+      actor.marks = marks;
+      actor.combo = before.combo;
+    }
+    if (c.state === 'fighting') out.push(...attack(f, actor, c, rng, spec, i === 0));
+  });
+  return out;
 }
 
 /** The qi a basic strike drinks: a weapon above your realm takes a share of the pool. */
@@ -833,18 +918,13 @@ function main(
       if (actor.qi < cost) return 'not enough qi';
       const target = foe(f, actor, m.target);
       if (!target) return 'no target';
-      const spec = techniqueAttack(actor, m.id, creativity);
-      if (typeof spec === 'string') return spec;
+      const art = techniqueAttack(actor, m.id, creativity);
+      if (typeof art === 'string') return art;
       actor.qi -= cost;
-      const os = attack(f, actor, target, rng, spec);
-      // Sword Rain: once a fight, a sword technique strikes every foe.
-      if (spec.daos.includes('sword') && mod(actor, 'swordRain') > 0 && !actor.marks.swordRain) {
-        mark(actor, 'swordRain');
-        for (const other of f.combatants) {
-          if (other === target || other.side === actor.side || other.state !== 'fighting') continue;
-          os.push(...attack(f, actor, other, rng, spec));
-        }
-      }
+      // Sword Rain: once a fight, a sword technique strikes all, split past its tier's full count.
+      const spec = rained(actor, art);
+      if (spec !== art) mark(actor, 'swordRain');
+      const os = cast(f, actor, target, rng, spec);
       return os.map((o, i) => ({
         ...o,
         action: 'technique' as const,
@@ -916,7 +996,7 @@ function main(
         const target = foe(f, actor, m.target ?? '');
         if (!target) return 'no target';
         spend(actor, m.id);
-        return attack(f, actor, target, rng, strike).map((o) => ({
+        return cast(f, actor, target, rng, strike).map((o) => ({
           ...o,
           action: 'item' as const,
           id: it.id,
@@ -1182,6 +1262,7 @@ function attack(
   target: Combatant,
   rng: Rng,
   a: Attack,
+  spill = true,
 ): Omit<Outcome, 'action'>[] {
   const n = numbers(f, actor, target, a);
   if (n.sure) mark(actor, 'dragonTurn', f.turn);
@@ -1287,12 +1368,17 @@ function attack(
       bars: barsOf(target, { shield: landed.shield, armor: landed.armor }),
     },
   ];
-  // A spear's sweep: a second foe takes a share, every other foe with Whirl.
+  if (!spill) return outcomes;
+  // A spear's sweep: a second foe takes a share. With Whirl every other foe does, as an art that
+  // strikes all: split past the art's tier's full count.
   const sweep = a.daos.includes('spear') ? mod(actor, 'sweep') : 0;
   if (sweep > 0) {
     const rest = others(f, actor, target);
-    for (const c of mod(actor, 'whirl') > 0 ? rest : rest.slice(0, 1)) {
-      outcomes.push(splash(f, actor, c, a, dealt * sweep, n));
+    const whirl = mod(actor, 'whirl') > 0;
+    const count = fullCount('all', a.tier);
+    const share = whirl && rest.length + 1 > count ? count / (rest.length + 1) : 1;
+    for (const c of whirl ? rest : rest.slice(0, 1)) {
+      outcomes.push(splash(f, actor, c, a, dealt * sweep * share, n));
     }
   }
   // A saber's critical carries a share to a second foe.

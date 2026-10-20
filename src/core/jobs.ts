@@ -22,7 +22,7 @@ import {
 import { STANDING_ROWS } from '../content/memories.ts';
 import { parentsOf, veinAt } from '../content/map/index.ts';
 import { ENTER_LI } from '../content/map/places.ts';
-import { realmScale, type RealmId } from '../content/realms.ts';
+import { realm as realmInfo, realmScale, stageName, type RealmId } from '../content/realms.ts';
 import { mapOf, mapPlaceOf } from './map/travel.ts';
 import { contact } from './map/encounters.ts';
 import type { Encounter } from './map/schema.ts';
@@ -42,6 +42,7 @@ import {
   membership,
   monthIndex,
   organization,
+  rank,
   realmStageOf,
   seatOf,
   seatRanges,
@@ -124,12 +125,31 @@ export function onShift(s: GameState): Cultivator {
 
 export type JobCheck = { ok: true; state: GameState } | { ok: false; reason: string };
 
-/** Whether you may take a job: a post's seat, no shift on top of another's, not held already. */
+/**
+ * What a job asks of whoever takes it, as its posting says it before you take it: a post's seat,
+ * a hire's realm and stage; null when it asks nothing.
+ */
+export function jobAsks(j: Job): string | null {
+  if (!isHire(j) && j.seat && j.power) {
+    return `from the ${organization(houseOf(j.power)).seats[j.seat].name}'s seat`;
+  }
+  if (j.from)
+    return `from ${realmInfo(j.from.realm).name}, ${stageName(j.from.realm, j.from.stage)}`;
+  return null;
+}
+
+/**
+ * Whether you may take a job: a hire's realm, a post's seat, no shift on top of another's, not
+ * held already.
+ */
 export function canTakeJob(s: GameState, id: string): { ok: true } | { ok: false; reason: string } {
   if (!hasJob(id)) return { ok: false, reason: 'There is no such work.' };
   const j = job(id);
   const c = s.player;
   if (heldJob(c, id)) return { ok: false, reason: 'You hold it already.' };
+  if (j.from && rank(realmStageOf(s)) < rank(j.from)) {
+    return { ok: false, reason: `It is given ${jobAsks(j)}.` };
+  }
   if (!isHire(j)) {
     const m = membership(s.world, c.id, houseOf(j.power!));
     if (!m || m.guest) return { ok: false, reason: `Only ${theName(j.power!)}'s own hold it.` };

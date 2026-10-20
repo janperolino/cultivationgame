@@ -29,7 +29,7 @@ export function profile(id: ProfileId): Profile {
 interface Option {
   main: MainAction;
   p: Preview;
-  /** Expected damage: chance × a plain hit. */
+  /** Expected damage: chance × a plain hit, summed over every foe the cast reaches. */
   value: number;
   /** Whether the hit carries a status the target doesn't have yet. */
   status: boolean;
@@ -65,7 +65,7 @@ function options(f: Fight, me: Combatant, target: Combatant, items: boolean): Op
     out.push({
       main,
       p,
-      value: p.chance * p.damage,
+      value: p.expected,
       status: st !== null && !target.statuses.some((s) => s.id === st),
       element: elementMultiplier(damagePhase(type), target.element),
     });
@@ -73,8 +73,17 @@ function options(f: Fight, me: Combatant, target: Combatant, items: boolean): Op
   return out;
 }
 
+/**
+ * The option a key ranks highest; on a tie the cheaper in qi, so one foe alone takes the single
+ * art and not the sweep that does it no more harm (design § Combat, Arts that strike many).
+ */
 const best = (xs: Option[], key: (o: Option) => number) =>
-  xs.reduce<Option | undefined>((b, o) => (!b || key(o) > key(b) ? o : b), undefined);
+  xs.reduce<Option | undefined>((b, o) => {
+    if (!b) return o;
+    const [x, y] = [key(o), key(b)];
+    const tie = Math.abs(x - y) <= 1e-9 * Math.max(1, Math.abs(y));
+    return tie ? (o.p.qi < b.p.qi ? o : b) : x > y ? o : b;
+  }, undefined);
 
 /** The pick a profile makes among priced options. */
 function choose(xs: Option[], pick: Profile['picks']): Option | undefined {

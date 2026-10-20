@@ -125,10 +125,11 @@ describe('what you know', () => {
     expect(known(m, 'x')).toBe('seen');
   });
 
-  it('starts a cave orphan with Stone Eyes sketched, home seen and the famous places rumored', () => {
+  it('starts a cave orphan with Stone Eyes seen from the door, home seen and the famous places rumored', () => {
     const s = life('cave-orphan');
     const m = s.map!;
-    expect(known(m, 'qm-shiyan-guo')).toBe('sketched');
+    // The kingdom you stand in is seen from your door before the first step (C2, Sean's playtest).
+    expect(known(m, 'qm-shiyan-guo')).toBe('seen');
     expect(known(m, 'sinkhole-terraces')).toBe('seen');
     expect(known(m, 'qm-shoukou-cheng')).toBe('rumored');
     expect(known(m, 'qm-mihun-shilin')).toBe('rumored');
@@ -181,9 +182,7 @@ describe('what you know', () => {
     const rating = siteRating(map, hidden);
     expect(rating).toBeGreaterThanOrEqual(hidden.rating);
     expect(known(lookAround(map, s.map!, by, rating, 0).life, hidden.id)).toBe('seen');
-    expect(known(lookAround(map, s.map!, by, rating - 1, 0).life, hidden.id)).toBe(
-      'unknown',
-    );
+    expect(known(lookAround(map, s.map!, by, rating - 1, 0).life, hidden.id)).toBe('unknown');
     const off: Pt = [hidden.x + LOOK_LI * 3, hidden.y];
     expect(known(lookAround(map, s.map!, off, 99, 0).life, hidden.id)).toBe('unknown');
   });

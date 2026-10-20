@@ -81,6 +81,7 @@ import {
   type RealmStage,
   type World,
 } from './resolver/world.ts';
+import { gainItem } from './map/ground.ts';
 import {
   addEvent,
   addItem,
@@ -637,7 +638,7 @@ export function innerTrial(s: GameState, power: string): TrialResult {
     what: passed ? 'trial-passed' : 'trial-short',
   });
   if (pill) {
-    state = withPlayer(state, addItem(state.player, YEARS_PILLS.pill, 1));
+    state = gainItem(state, YEARS_PILLS.pill, 1).state;
     state = { ...state, world: addGiven(state.world, house, YEARS_PILLS.pill, 1) };
     state = addEvent(state, 'power', { power: house, what: 'pill' });
   }
@@ -800,6 +801,7 @@ export function payAllowances(s: GameState): GameState {
   const r = realmStageOf(s);
   let player = s.player;
   let world = s.world;
+  const pills: Record<string, number> = {};
   for (const m of mine) {
     const months = m.paid === undefined ? 0 : month - m.paid;
     if (months <= 0) continue;
@@ -811,14 +813,16 @@ export function payAllowances(s: GameState): GameState {
         receive(stonesOf(player), a.stones * months, realmGrade(r.realm)),
       );
     if (a.pills > 0) {
-      player = addItem(player, ALLOWANCE_PILL, a.pills * months);
+      pills[ALLOWANCE_PILL] = (pills[ALLOWANCE_PILL] ?? 0) + a.pills * months;
       world = addGiven(world, m.power, ALLOWANCE_PILL, a.pills * months);
     }
   }
   const members = world.members.map((m) =>
     m.who === who && isOrganization(m.power) ? { ...m, paid: month } : m,
   );
-  return { ...withPlayer(s, player), world: { ...world, members } };
+  let state: GameState = { ...withPlayer(s, player), world: { ...world, members } };
+  for (const [id, n] of Object.entries(pills)) state = gainItem(state, id, n).state;
+  return state;
 }
 
 /** Where the player dwells by seat while secluding: the power, the seat and its qi density. */

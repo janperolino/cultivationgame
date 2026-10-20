@@ -28,6 +28,7 @@ import {
   LADDER_FLOOR,
   QI_PER_SIZE,
   RESOLVE_BASE,
+  reachOf,
   type DamageType,
   type WeaponKind,
 } from '../../content/combat.ts';
@@ -38,11 +39,13 @@ import {
   GRADE_BY_RARITY,
   MASTERY_PER_REALM,
   NPC_GROWTH,
+  BLAST_ART,
   PATH_ART,
   PEDIGREES,
   PROFILES,
   REALM_BASELINE,
   SECOND_ART,
+  SWEEP_ART,
   SOUL_ART_POWER,
   STORAGE_BY_REALM,
   type ArtShape,
@@ -160,6 +163,7 @@ export function art(
     damage: o.damage,
     power: shape.power,
     qiCost: shape.qiCost,
+    ...(shape.reach ? { targets: reachOf(o.tier)[shape.reach] } : {}),
     source: 'generated',
     text: '',
   };
@@ -489,6 +493,21 @@ export function generateCultivator(
       }),
     );
   }
+  // Arts that strike many: the common count from Qi Condensation, a blast from small sect up or
+  // from Foundation.
+  const sweeps = [SWEEP_ART, ...(t.pedigree !== 'rogue' || tier >= 2 ? [BLAST_ART] : [])];
+  for (const shape of sweeps) {
+    const s = pathArt(path, shape, t.element ?? 'physical');
+    techniques.push(
+      art(`${t.id}-${shape.key}`, s.shape, {
+        tier,
+        rarity: rolls.technique,
+        dao: t.element ?? t.weapon,
+        damage: s.damage,
+        ladder: s.ladder,
+      }),
+    );
+  }
 
   let abilities: Ability[] = [];
   let element: BeastElement | null = t.element;
@@ -662,6 +681,7 @@ export function kitFighter(
   const tier = realmIndex(realmId) + 1;
   const path = kit.path ?? 'balanced';
   const main = pathArt(path, { ...PATH_ART, form: 'thrust' }, 'physical');
+  const blast = pathArt(path, BLAST_ART, 'physical');
   const rolls: Rolls = {
     method: { qi: kit.method, body: kit.method, soul: kit.method },
     technique: kit.technique,
@@ -681,6 +701,7 @@ export function kitFighter(
     element: null,
     bodyAhead: kit.bodyAhead,
     path,
+    // The path art, and its blast for the crowds (C2): one foe alone takes the cheaper art.
     techniques: [
       art(`${kit.id}-art`, main.shape, {
         tier,
@@ -688,6 +709,13 @@ export function kitFighter(
         dao: 'sword',
         damage: main.damage,
         ladder: main.ladder,
+      }),
+      art(`${kit.id}-blast`, blast.shape, {
+        tier,
+        rarity: kit.technique,
+        dao: 'sword',
+        damage: blast.damage,
+        ladder: blast.ladder,
       }),
     ],
     profile: o.profile ?? 'fanatical',

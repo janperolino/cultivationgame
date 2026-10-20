@@ -99,6 +99,8 @@ export interface FightUse {
   form: Form;
   damage: DamageType;
   power: number;
+  /** How many foes it strikes (design § Combat, Arts that strike many): 1 unless written. */
+  targets?: number | 'all';
 }
 
 /** Where a worn thing goes: the four gear squares, or a treasure slot the trees open. */
