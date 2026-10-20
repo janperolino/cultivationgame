@@ -63,6 +63,8 @@ export interface Seat {
   scene?: 'ready' | 'playing';
   /** The ladder a playing scene is on; qi when unsaid. */
   sceneLadder?: LadderId;
+  /** The steady hand while you sit at the bench, 0 to 1 (K3); none away. */
+  hand?: number;
 }
 
 /** Away: exactly today's rates. Offline time and the sims' away rows run on this. */

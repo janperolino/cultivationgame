@@ -178,12 +178,14 @@ describe('the perks at the bench', () => {
     expect(blowUpShare(c, 'alchemy')).toBeCloseTo(blowUpShare(base, 'alchemy') * 0.75, 9);
   });
 
-  it('lifts by the Hand, and by the Fire Dao’s side path into the furnace', () => {
+  it('lifts by the Hand, and by the Fire Dao’s side path into the furnace, only when played', () => {
+    // K3's talk: Hand's lift and Fire control count by the hand, so a queued batch has none.
     const hand = learnAll(base, ['alchemy-steady-pinch']);
-    expect(liftOf(hand, r, false, null)).toBeCloseTo(liftOf(base, r, false, null) + 0.1, 9);
+    expect(liftOf(hand, r, false, null)).toBeCloseTo(liftOf(base, r, false, null), 9);
+    expect(liftOf(hand, r, false, null, 1)).toBeCloseTo(liftOf(base, r, false, null, 1) + 0.1, 9);
     const fire = learnAll(base, ['fire-first-spark', 'fire-warm-hands']);
     expect(stats(fire).fireControl).toBeCloseTo(0.05, 9);
-    expect(liftOf(fire, r, false, null)).toBeCloseTo(liftOf(base, r, false, null) + 0.05, 9);
+    expect(liftOf(fire, r, false, null, 1)).toBeCloseTo(liftOf(base, r, false, null, 1) + 0.05, 9);
   });
 
   it('yields 5% more a tier held, as well as the Line’s own yield', () => {

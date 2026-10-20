@@ -6,13 +6,22 @@
 // Rolls come from the `craft` stream (core/rng.ts), so a seed replays the same batches. The craft
 // Dao trees (K2) teach recipes by their seals and move a batch's numbers by their perks: holding,
 // lift, yield, speed and blow-ups by the craft's own stats, +5% yield a tier held, and Twin Furnace.
+// The steady hand (K3) is played at the bench: each batch reads the mean hand over its hours, times
+// Steady hands' reach and Hand's lift, and the land lends its hand (earth fire, a matching element,
+// a written site).
 import type { Recipe } from '../content/catalogs/types.ts';
 import {
   BLOW_UP,
   CRAFT_IDS,
   CRAFT_MASTERY,
+  CRAFT_SITES,
+  EARTH_FIRE_CRAFTS,
+  EARTH_FIRE_TERRAIN,
   FAMILIES,
+  HAND,
   HOLDS,
+  LAND,
+  LAND_ELEMENT,
   LIFT,
   MATCHED_SOUL,
   MAX_HOLD,
@@ -21,6 +30,7 @@ import {
   YIELD_BY_MASTERY,
   hasRecipe,
   recipe,
+  recipeElement,
   recipeHours,
   recipeTier,
   recipeYield,
@@ -181,14 +191,78 @@ export function cantBrew(c: Cultivator, id: string): string | null {
   return null;
 }
 
+// ---------------------------------------------------------------- the steady hand and the land
+
+/**
+ * Steady hands' reach for a craft (K3): one band, the craft's Hand nodes, `craftPrecision` one for
+ * one and a matched soul, never past two.
+ */
+export function handReach(c: Cultivator, craft: CraftId): number {
+  const reach =
+    HAND.base +
+    own(c, craft, 'Reach') +
+    stats(c).craftPrecision +
+    (craftReach(c).matched ? HAND.matched : 0);
+  return Math.min(HAND.most, Math.max(0, reach));
+}
+
+/**
+ * The lift a hand adds (K3's talk): the hand times the reach and what Hand's nodes and the element
+ * Daos' side paths add, so a queued batch, at no hand, gets none of them.
+ */
+export function handLift(c: Cultivator, craft: CraftId, hand: number): number {
+  const element = ELEMENT_LIFT[craft];
+  const known = own(c, craft, 'Lift') + (element ? stats(c)[element] : 0);
+  return Math.max(0, Math.min(1, hand)) * (handReach(c, craft) + known);
+}
+
+/** What the land lends a recipe where you work (design § A batch, Places lend a hand). */
+export interface LandHand {
+  lift: number;
+  hold: number;
+  /** Why, for the page: earth fire, the land's element, a written site. */
+  why: string[];
+}
+
+export const NO_LAND: LandHand = { lift: 0, hold: 0, why: [] };
+
+/** Where the bench stands: the terrain under you and the atlas place you are at, if any. */
+export interface BenchSpot {
+  terrain: string;
+  place: string | null;
+}
+
+/**
+ * The land's hand for a recipe: earth fire on volcanic land for alchemy and refining, a land of
+ * the recipe's element, each +0.25 lift and +10 holding (once, not twice, on volcanic land for a
+ * fire pill), and a written site's lift beside them.
+ */
+export function landHand(r: Recipe, spot: BenchSpot | null): LandHand {
+  if (!spot) return NO_LAND;
+  const why: string[] = [];
+  const earthFire = spot.terrain === EARTH_FIRE_TERRAIN && EARTH_FIRE_CRAFTS.includes(r.craft);
+  if (earthFire) why.push('earth fire 地火');
+  const element = recipeElement(r);
+  const matched = !!element && LAND_ELEMENT[spot.terrain] === element;
+  if (matched && !earthFire) why.push(`a land of ${element}`);
+  let lift = earthFire || matched ? LAND.lift : 0;
+  const hold = earthFire || matched ? LAND.hold : 0;
+  const site = spot.place ? CRAFT_SITES[spot.place] : undefined;
+  if (site && site.crafts.includes(r.craft)) {
+    lift += Math.min(LAND.siteMost, site.lift);
+    why.push(site.name);
+  }
+  return { lift, hold, why };
+}
+
 /** Whether a batch holds (A batch): the family's mastery, the tier against yours, a matched soul. */
-export function holdOdds(c: Cultivator, r: Recipe): number {
+export function holdOdds(c: Cultivator, r: Recipe, land: LandHand = NO_LAND): number {
   const { tier, matched } = craftReach(c);
   const gap = tier - recipeTier(r);
   const adj =
     gap >= 2 ? TIER_ODDS.farBelow : gap === 1 ? TIER_ODDS.below : gap < 0 ? TIER_ODDS.above : 0;
   const base = HOLDS[familyLevel(c, r.family)]! + adj;
-  const odds = base * (matched ? MATCHED_SOUL : 1) + own(c, r.craft, 'Hold');
+  const odds = base * (matched ? MATCHED_SOUL : 1) + own(c, r.craft, 'Hold') + land.hold;
   return Math.max(0, Math.min(MAX_HOLD, odds));
 }
 
@@ -198,14 +272,22 @@ export function blowUpShare(c: Cultivator, craft: CraftId): number {
   return share * Math.max(0, 1 - own(c, craft, 'Safety'));
 }
 
-/** The lift a batch carries, in bands from the recipe's floor (A batch, Rarity is lift). */
-export function liftOf(c: Cultivator, r: Recipe, above: boolean, tool: Item | null): number {
+/**
+ * The lift a batch carries, in bands from the recipe's floor (A batch, Rarity is lift): mastery,
+ * the inputs, the tool, the steady hand it was played at and the land.
+ */
+export function liftOf(
+  c: Cultivator,
+  r: Recipe,
+  above: boolean,
+  tool: Item | null,
+  hand = 0,
+  land: LandHand = NO_LAND,
+): number {
   const mastery = LIFT.mastery[familyLevel(c, r.family)]!;
   const inputs = above ? LIFT.inputs : 0;
   const toolBands = tool ? Math.max(0, rarityRank(tool.rarity) - rarityRank('white')) : 0;
-  const element = ELEMENT_LIFT[r.craft];
-  const dao = own(c, r.craft, 'Lift') + (element ? stats(c)[element] : 0);
-  return mastery + inputs + toolBands * LIFT.toolBand + dao;
+  return mastery + inputs + toolBands * LIFT.toolBand + handLift(c, r.craft, hand) + land.lift;
 }
 
 /**
@@ -406,23 +488,32 @@ function masteryFrom(c: Cultivator, r: Recipe, held: boolean): number {
   return at * (held ? 1 : CRAFT_MASTERY.failed);
 }
 
+/** Where a stretch of the bench is worked: the hand you sit with, and the spot it stands on. */
+export interface BenchAt {
+  /** The steady hand while you sit at the bench, 0 to 1; 0 away (K3). */
+  hand?: number;
+  spot?: BenchSpot | null;
+}
+
 /** Resolves one batch: whether it holds, a blow-up, the lift, the yield and mastery. */
 function resolve(
   c: Cultivator,
   r: Recipe,
   above: boolean,
+  hand: number,
+  land: LandHand,
   day: number,
   rng: Rng,
   events: BenchEvent[],
 ): Cultivator {
   const tool = toolFor(c, r);
   let next = c;
-  const held = rng.chance(holdOdds(c, r));
+  const held = rng.chance(holdOdds(c, r, land));
   let made: string | null = null;
   let count = 0;
   let blew = false;
   if (held) {
-    const lift = liftOf(c, r, above, tool);
+    const lift = liftOf(c, r, above, tool, hand, land);
     const range = rarityRange(item(r.output));
     const bands = Math.floor(lift) + (rng.chance(lift - Math.floor(lift)) ? 1 : 0);
     const rar = range[Math.min(range.length - 1, bands)]!;
@@ -456,20 +547,36 @@ function resolve(
     };
     events.push({ type: 'craft-level', data: { family: r.family, level } });
   }
-  const recent = [{ day, recipe: r.output, made, count, blew }, ...next.crafts.recent].slice(
-    0,
-    RECENT_BATCHES,
-  );
+  const played = hand > 0 ? { hand: Math.round(hand * 100) / 100 } : {};
+  const recent = [
+    { day, recipe: r.output, made, count, blew, ...played },
+    ...next.crafts.recent,
+  ].slice(0, RECENT_BATCHES);
   return withCrafts(next, { recent });
 }
 
+/** The mean steady hand a batch was played at over its hours. */
+function meanHand(c: Cultivator, front: NonNullable<CraftsState['front']>): number {
+  const hours = batchHours(c, recipe(front.recipe));
+  return hours > 0 ? Math.min(1, (front.hand ?? 0) / hours) : 0;
+}
+
 /** Resolves the front's batches, each rolled alone, and moves the bench on past them. */
-function finish(c: Cultivator, day: number, rng: Rng, events: BenchEvent[]): Cultivator {
+function finish(
+  c: Cultivator,
+  day: number,
+  rng: Rng,
+  events: BenchEvent[],
+  spot: BenchSpot | null,
+): Cultivator {
   const front = c.crafts.front!;
   const r = recipe(front.recipe);
   const batches = front.batches ?? 1;
+  const hand = meanHand(c, front);
+  const land = landHand(r, spot);
   let next = c;
-  for (let i = 0; i < batches; i++) next = resolve(next, r, front.above, day, rng, events);
+  for (let i = 0; i < batches; i++)
+    next = resolve(next, r, front.above, hand, land, day, rng, events);
   // The bench moves on.
   const [entry, ...rest] = next.crafts.bench;
   const bench =
@@ -485,8 +592,17 @@ function finish(c: Cultivator, day: number, rng: Rng, events: BenchEvent[]): Cul
  * Works the bench for this many Craft hours: the front batch loads its inputs when its first hour
  * starts, runs its hours, and resolves; the next one loads after it. A batch that can't load (no
  * whole tool, the Bag short) leaves the hours idle. The hours carry no further than the day step.
+ * Each hour a batch runs takes the hand you sit with (`at.hand`), and it resolves at their mean.
  */
-export function workBench(c: Cultivator, hours: number, day: number, rng: Rng): BenchResult {
+export function workBench(
+  c: Cultivator,
+  hours: number,
+  day: number,
+  rng: Rng,
+  at: BenchAt = {},
+): BenchResult {
+  const hand = Math.max(0, Math.min(1, at.hand ?? 0));
+  const spot = at.spot ?? null;
   let next = c;
   let left = hours;
   let batches = 0;
@@ -500,14 +616,24 @@ export function workBench(c: Cultivator, hours: number, day: number, rng: Rng): 
     const front = next.crafts.front!;
     const need = batchHours(next, recipe(front.recipe)) - front.hours;
     if (left + 1e-9 < need) {
-      next = withCrafts(next, { front: { ...front, hours: front.hours + left } });
+      next = withCrafts(next, { front: withHand(front, left, hand) });
       break;
     }
     left -= need;
     batches += front.batches ?? 1;
-    next = finish(next, day, rng, events);
+    next = finish(withCrafts(next, { front: withHand(front, need, hand) }), day, rng, events, spot);
   }
   return { cultivator: next, events, batches };
+}
+
+/** The front after `hours` more at a hand: its hours, and the hand put in beside them. */
+function withHand(
+  front: NonNullable<CraftsState['front']>,
+  hours: number,
+  hand: number,
+): NonNullable<CraftsState['front']> {
+  const put = (front.hand ?? 0) + hand * hours;
+  return { ...front, hours: front.hours + hours, ...(put > 0 ? { hand: put } : {}) };
 }
 
 /** What the bench waits on, for the page: nothing, the tool, the inputs or the soul. */

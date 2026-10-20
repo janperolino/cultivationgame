@@ -1,8 +1,8 @@
 // The Crafts screen 艺 (design § Professions, Where crafts live; K1's talk and its mockup): a hub
 // with a page a craft, Alchemy first. The page holds the furnace and the recipes known on the left,
 // the bench's queue, the tray and the last batches in the middle, and mastery by family and the
-// soul gate on the right. Which hours are Craft hours stays on Routine. Queued only: the hands-on
-// fire control is K3's.
+// soul gate on the right. Which hours are Craft hours stays on Routine. A batch queued and left
+// runs at no hand; sat at, it reads the steady hand (K3), and the land lends its own.
 import { useState } from 'react';
 import type { Recipe } from '../content/catalogs/types.ts';
 import { CRAFTS, CRAFT_IDS, FAMILIES, FAMILY_IDS, recipe } from '../content/crafts.ts';
@@ -16,9 +16,12 @@ import {
   benchWaits,
   craftReach,
   familyBatches,
+  handLift,
+  handReach,
   familyLevel,
   holdOdds,
   knownRecipes,
+  landHand,
   liftOdds,
   liftOf,
   moveOnBench,
@@ -30,8 +33,10 @@ import {
   toolsHeld,
   unqueue,
   yieldOf,
+  type BenchSpot,
 } from '../core/crafts.ts';
 import { ratesHere } from '../core/life.ts';
+import { benchSpot } from '../core/map/travel.ts';
 import { withPlayer, type Cultivator } from '../core/state.ts';
 import { formatPercent } from './format.ts';
 import { itemTag } from './itemWords.ts';
@@ -53,6 +58,7 @@ export function CraftsScreen() {
   if (!game) return null;
   const c = game.player;
   const hours = ratesHere(game).count.craft;
+  const spot = benchSpot(game);
   const change = (f: (c: Cultivator) => Cultivator) => applyLife((s) => withPlayer(s, f(s.player)));
   const queue = (id: string, n: number) => {
     let reason: string | null = null;
@@ -95,7 +101,7 @@ export function CraftsScreen() {
           <Tools c={c} craft={page} />
           <h2 className="panel-heading">Recipes known</h2>
           <Recipes c={c} craft={page} pick={pick} onPick={setPick} />
-          {pick && <RecipeCard c={c} r={recipe(pick)} onQueue={queue} />}
+          {pick && <RecipeCard c={c} r={recipe(pick)} spot={spot} onQueue={queue} />}
           {why && <p className="warn">{why}</p>}
         </section>
         <section className="panel crafts-bench">
@@ -109,6 +115,10 @@ export function CraftsScreen() {
           <Families c={c} craft={page} />
           <h2 className="panel-heading">The soul gate</h2>
           <SoulGate c={c} />
+          <h2 className="panel-heading">Steady hands 稳手</h2>
+          <SteadyHands c={c} craft={page} />
+          <h2 className="panel-heading">The land</h2>
+          <Land c={c} spot={spot} />
         </section>
       </div>
     </div>
@@ -180,17 +190,22 @@ function Recipes({
 function RecipeCard({
   c,
   r,
+  spot,
   onQueue,
 }: {
   c: Cultivator;
   r: Recipe;
+  spot: BenchSpot | null;
   onQueue: (id: string, n: number) => void;
 }) {
   const plan = planInputs(c, r);
-  const lift = liftOf(c, r, plan.above, toolFor(c, r));
-  const lands = liftOdds(r, lift)
-    .map((x) => `${rarity(x.rarity).name.toLowerCase()} ${formatPercent(x.chance)}`)
-    .join(', ');
+  const land = landHand(r, spot);
+  const tool = toolFor(c, r);
+  const odds = (hand: number) =>
+    liftOdds(r, liftOf(c, r, plan.above, tool, hand, land))
+      .map((x) => `${rarity(x.rarity).name.toLowerCase()} ${formatPercent(x.chance)}`)
+      .join(', ');
+  const lands = odds(0);
   return (
     <div className="crafts-card">
       <p>
@@ -202,9 +217,10 @@ function RecipeCard({
         ))}
       </p>
       <p className="muted">
-        {round1(batchHours(c, r))} craft hours · holds {formatPercent(holdOdds(c, r))} ·{' '}
+        {round1(batchHours(c, r))} craft hours · holds {formatPercent(holdOdds(c, r, land))} ·{' '}
         {yieldOf(c, r)} pills · {lands}
       </p>
+      <p className="muted">Sat at with a full hand: {odds(1)}.</p>
       <p className="muted">
         The Bag fills {batchesHeld(c, r)} batch{batchesHeld(c, r) === 1 ? '' : 'es'}
         {plan.above ? ', every herb a rarity above the floor' : ''}.
@@ -325,7 +341,7 @@ function Recent({ c }: { c: Cultivator }) {
         {recent.map((b, i) => (
           <li key={i} className={b.made ? `rarity-${item(b.made).rarity}` : 'crafts-failed'}>
             {b.made
-              ? `${b.count} ${item(b.made).name}, ${rarity(item(b.made).rarity).name.toLowerCase()}`
+              ? `${b.count} ${item(b.made).name}, ${rarity(item(b.made).rarity).name.toLowerCase()}${b.hand ? `, played at a ${b.hand.toFixed(2)} hand` : ''}`
               : b.blew
                 ? `${item(b.recipe).name}: the furnace burst, the herbs lost`
                 : `${item(b.recipe).name}: the batch failed, the herbs lost`}
@@ -382,6 +398,34 @@ function SoulGate({ c }: { c: Cultivator }) {
       {g.matched
         ? ' · your soul keeps pace: ×1.25 the odds, half the blow-ups'
         : ' · your soul lags your realm'}
+    </p>
+  );
+}
+
+/** Steady hands' reach, and what the Hand's nodes add when you play. */
+function SteadyHands({ c, craft }: { c: Cultivator; craft: CraftId }) {
+  const reach = handReach(c, craft);
+  const full = handLift(c, craft, 1);
+  return (
+    <p className="muted">
+      Reach {reach.toFixed(2)} of 2 bands
+      {full > reach + 1e-9 ? `, ${full.toFixed(2)} with your hands’ craft` : ''}. Sat at, a batch
+      lifts by your hand times this; queued, it runs at no hand.
+    </p>
+  );
+}
+
+/** What the land where you stand lends the bench. */
+function Land({ c, spot }: { c: Cultivator; spot: BenchSpot | null }) {
+  const known = knownRecipes(c);
+  const why = [...new Set(known.flatMap((r) => landHand(r, spot).why))];
+  return (
+    <p className="muted">
+      {why.length > 0
+        ? `Here: ${why.join(', ')}, +0.25 lift and +10 holding for what it serves.`
+        : 'No earth fire here.'}{' '}
+      Earth fire 地火 on volcanic land lends alchemy and refining +0.25 lift and +10 holding; a land
+      of a recipe’s element does the same for it.
     </p>
   );
 }

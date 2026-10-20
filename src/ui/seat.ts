@@ -17,6 +17,7 @@ import {
   type Seat,
 } from '../core/attention.ts';
 import { firstBreath } from '../core/life.ts';
+import { handNow } from './furnace.ts';
 import { lifeKey, scenePlaying, useScene } from './scene.ts';
 import type { GameState } from '../core/state.ts';
 import { hourOfDay } from '../core/wheel.ts';
@@ -90,8 +91,15 @@ export function tickSeat(s: GameState, dt: number): { seat: Seat; state: GameSta
   const seat = seatOf(a, s.player);
   const scene = playing ? 'playing' : attended && atFigure ? 'ready' : undefined;
   const sceneLadder = playing ? useScene.getState().play?.ladder : undefined;
+  // The steady hand while you sit at the furnace (K3), read by the bench.
+  const hand = handNow(attended);
   return {
-    seat: scene ? { ...seat, scene, ...(sceneLadder ? { sceneLadder } : {}) } : seat,
+    seat: {
+      ...seat,
+      ...(scene ? { scene } : {}),
+      ...(sceneLadder ? { sceneLadder } : {}),
+      ...(hand !== undefined ? { hand } : {}),
+    },
     state: keepOrbStream(s, a),
   };
 }

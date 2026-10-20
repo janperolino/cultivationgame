@@ -106,6 +106,8 @@ const CraftsSchema = z.object({
       hours: z.number().min(0),
       /** Batches brewing at once, each from its own inputs: one, or two at Twin Furnace (K2). */
       batches: z.number().int().min(1).optional(),
+      /** The steady hand put in so far, as hand × craft hours: the batch reads its mean (K3). */
+      hand: z.number().min(0).optional(),
     })
     .nullable(),
   tray: z.record(z.string(), z.number().int().min(0)),
@@ -119,6 +121,8 @@ const CraftsSchema = z.object({
       count: z.number().int().min(0),
       /** A failed batch that cracked the tool. */
       blew: z.boolean(),
+      /** The steady hand it was played at, when it was played (K3). */
+      hand: z.number().min(0).max(1).optional(),
     }),
   ),
 });
