@@ -260,7 +260,17 @@ describe('investment', () => {
     });
     const by = year(atRealm(member(life(), LAMPS), QC, 9));
     expect(membership(raiseEarly(by).world, ME, LAMPS)?.seat).toBe('outer');
-    const won = year(atRealm(member(life(), LAMPS, 'inner'), QC, 9));
+    const inner = member(life(), LAMPS, 'inner');
+    const won = year(
+      atRealm(
+        {
+          ...inner,
+          world: { ...inner.world, members: inner.world.members.map((m) => ({ ...m, won: true })) },
+        },
+        QC,
+        9,
+      ),
+    );
     expect(membership(raiseEarly(won).world, ME, LAMPS)?.seat).toBe('true');
   });
 });

@@ -15,7 +15,7 @@ import { gainCopy } from './life.ts';
 import { joinPower, realmStageOf } from './organizations.ts';
 import { hashSeed, Rng } from './rng.ts';
 import { seeAll } from './seen.ts';
-import { newLife, nextLife, type GameState, type NewLifeOptions } from './state.ts';
+import { addEvent, newLife, nextLife, type GameState, type NewLifeOptions } from './state.ts';
 
 /** Free rerolls at creation; later lives earn more (design § Death and rebirth, M8). */
 export const FREE_REROLLS = 3;
@@ -122,7 +122,7 @@ export function handPost(s: GameState, c: Creation): GameState {
       realm: realmStageOf(st),
     });
     if (!joined.ok) return st;
-    st = { ...st, world: joined.world };
+    st = addEvent({ ...st, world: joined.world }, 'power', { power, what: 'joined' });
   }
   const took = takeJob(st, id);
   return took.ok ? took.state : st;

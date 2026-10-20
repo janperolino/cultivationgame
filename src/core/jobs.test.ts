@@ -12,6 +12,7 @@ import { realmScale } from '../content/realms.ts';
 import { createLife, type Creation } from './creation.ts';
 import { atHome, atPost, jobPay, jobsDay, quitJob, takeJob } from './jobs.ts';
 import { cultivate } from './life.ts';
+import { comingBackStory } from './comingBack.ts';
 import { claimPosting, isMissionHall, postingsAt, takePosting } from './map/board.ts';
 import { peopleLi } from './map/depth.ts';
 import { gatherHour, gatherLines, gatherRarity, landYield } from './map/gather.ts';
@@ -265,6 +266,31 @@ describe('home for a house member', () => {
     const away = inside(s, CITY);
     expect(atHome(away, MARCH)).toBe(false);
     expect(leaveTaken(days(away, 5))).toBe(5);
+  });
+});
+
+describe('a coming-back story', () => {
+  it('tells missed shifts once a month with their count, and folds a power’s repeated lines', () => {
+    const s = posted(createLife(creation('conscript')));
+    const away = { ...ensureMap(s), map: { ...ensureMap(s).map!, inside: CITY } };
+    const year = Math.floor(away.calendar.day / 360);
+    const spent = {
+      ...away,
+      world: {
+        ...away.world,
+        members: away.world.members.map((m) =>
+          m.power === MARCH ? { ...m, leave: { year, days: 200 } } : m,
+        ),
+      },
+    };
+    const after = days(spent, 70);
+    const missed = after.chronicle.filter((e) => e.type === 'job' && e.data.what === 'missed');
+    expect(missed.length).toBeGreaterThanOrEqual(1);
+    expect(missed.length).toBeLessThanOrEqual(3);
+    expect(Number(missed[0]!.data.count)).toBeGreaterThan(1);
+    const story = comingBackStory(spent, after);
+    const lines = story.growth.filter((l) => l.includes('Overstayed') || l.includes('leave'));
+    expect(lines.length).toBeLessThanOrEqual(1);
   });
 });
 

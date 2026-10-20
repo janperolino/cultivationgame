@@ -623,7 +623,9 @@ export function innerTrial(s: GameState, power: string): TrialResult {
   const passed = v === 'clear' || (v === 'close' && INNER_TRIAL.pass === 'close');
   let world: World = {
     ...s.world,
-    members: s.world.members.map((x) => (x === m ? { ...x, tried: yearOf(day) } : x)),
+    members: s.world.members.map((x) =>
+      x === m ? { ...x, tried: yearOf(day), ...(passed ? { won: true } : {}) } : x,
+    ),
   };
   if (passed) world = setSeat(world, who, house, 'inner');
   // Investment: the year's Foundation Pills go down the ranking to those who passed; an equal
@@ -1192,7 +1194,7 @@ export function raiseEarly(s: GameState): GameState {
     const seat = seatOf(s.world, who, m.power, r)!;
     if (seatRank(seat) >= seatRank('true') || seat !== 'inner') continue;
     if (s.calendar.day - m.since < DAYS_PER_YEAR) continue;
-    if (ladderOf(m.power).split && m.seat !== 'inner') continue;
+    if (ladderOf(m.power).split && !m.won) continue;
     const from = seatRanges(m.power).true.from;
     if (!from || rank(r) < rank(from)) continue;
     if (age >= realm(from.realm).lifespan * EARLY_TRUE.share) continue;
@@ -1201,6 +1203,26 @@ export function raiseEarly(s: GameState): GameState {
       power: m.power,
       what: 'true',
       title: seatTitle(m.power, 'true', r.realm).name,
+    });
+  }
+  return state;
+}
+
+/**
+ * The inner seat taken outright on reaching its realm (design: reaching the inner seat's realm
+ * makes you an inner disciple outright): kept on the membership, and the chronicle says so.
+ */
+export function seatsByRealm(s: GameState): GameState {
+  const r = realmStageOf(s);
+  let state = s;
+  for (const m of membershipsOf(s.world, s.player.id)) {
+    if (!isOrganization(m.power) || m.guest || m.seat !== 'outer') continue;
+    if (seatOf(s.world, s.player.id, m.power, r) !== 'inner') continue;
+    state = { ...state, world: setSeat(state.world, s.player.id, m.power, 'inner') };
+    state = addEvent(state, 'power', {
+      power: m.power,
+      what: 'raised',
+      title: seatTitle(m.power, 'inner', r.realm).name,
     });
   }
   return state;
@@ -1218,6 +1240,7 @@ export function membershipDay(
 ): GameState {
   let next = payAllowances(s);
   next = settleQuotas(next);
+  next = seatsByRealm(next);
   next = raiseEarly(next);
   return countLeave(next, days, home);
 }

@@ -186,6 +186,8 @@ export const MemberSchema = z.object({
   seat: z.enum(SEAT_IDS),
   balance: z.number().min(0),
   tried: z.number().int().optional(),
+  /** The inner trial won, not the inner seat reached by realm (the organizations checkpoint). */
+  won: z.boolean().optional(),
   paid: z.number().int().optional(),
   guest: z.boolean().optional(),
   /** O3: the month the quota was last settled, and the months missed running. */

@@ -21,6 +21,7 @@ import { technique } from './techniques.ts';
 import { anyNode, hasAnyNode } from './nodes.ts';
 import { ORG_ROWS } from './organizations.ts';
 import { hasJob, job, type Job } from './jobs.ts';
+import { countWord } from './words.ts';
 
 export type EventValue = string | number | boolean | null;
 export type EventData = Readonly<Record<string, EventValue>>;
@@ -125,6 +126,7 @@ const POWER_LINES: Record<string, (w: Who, p: string, d: EventData) => string> =
   // The organizations checkpoint: joining, the trials and the mark lifted by joining.
   joined: (w, p) => `${w.name} is taken into ${p}.`,
   'entry-short': (w, p) => `${w.name} falls short at ${p}'s gate and is sent away.`,
+  raised: (w, p, d) => `${capital(p)} seats ${w.name} as its ${s(d.title)}.`,
   'trial-passed': (w, p) => `${w.name} passes ${p}'s inner trial.`,
   'trial-short': (w, p) => `${w.name} sits ${p}'s inner trial and falls short.`,
   lifted: (w, p) => `${capital(p)} lifts its mark from ${w.name}, one of its own now.`,
@@ -139,10 +141,14 @@ const POWER_LINES: Record<string, (w: Who, p: string, d: EventData) => string> =
 };
 
 /** A job taken, left, a shift missed, a hire let go (O4). */
-const JOB_LINES: Record<string, (w: Who, j: Job, giver: string) => string> = {
+const JOB_LINES: Record<string, (w: Who, j: Job, giver: string, d: EventData) => string> = {
   taken: (w, j, g) => `${w.name} is set to ${lower(j.name)} for ${g}.`,
   left: (w, j) => `${w.name} gives up the work: ${lower(j.name)}.`,
-  missed: (w, j) => `${w.name} misses a shift (${lower(j.name)}), and it is noted.`,
+  missed: (w, j, _g, d) => {
+    const n = Math.max(1, Number(d.count ?? 1));
+    const at = j.hall.replace(/s*[㐀-鿿]+$/u, '');
+    return `${w.name} misses ${n === 1 ? 'a shift' : `${countWord(n)} shifts`} at ${at}, and it is noted.`;
+  },
   'let-go': (w, _j, g) => `${capital(g)} lets ${w.name} go for the shifts missed.`,
 };
 
@@ -155,7 +161,7 @@ function jobLine(d: EventData, w: Who): string {
   if (!hasJob(id)) return '';
   const j = job(id);
   const giver = j.power && !j.hire ? powerName(j.power) : j.hall;
-  return JOB_LINES[s(d.what)]?.(w, j, giver) ?? '';
+  return JOB_LINES[s(d.what)]?.(w, j, giver, d) ?? '';
 }
 
 function capital(t: string): string {

@@ -268,6 +268,10 @@ function turnMonth(s: GameState, held: Held, month: number): { state: GameState;
     if (liveRows(st.world, power, who, KEPT_MONTH.row, day) < KEPT_MONTH.most)
       st = { ...st, world: addStanding(st.world, { power, about: who, row: KEPT_MONTH.row }, day) };
   }
+  // The shifts missed are one line a month, with their count (the checkpoint's fix).
+  const missed = Math.floor(held.missed + 1e-9);
+  if (j.power && !isHire(j) && missed > 0)
+    st = addEvent(st, 'job', { job: held.id, what: 'missed', count: missed });
   const last = { month: held.month, kept: held.kept, missed: held.missed };
   return { state: st, held: { ...held, month, kept: 0, missed: 0, last } };
 }
@@ -328,7 +332,6 @@ export function jobsDay(s: GameState, from: number, to: number): GameState {
             const row = { power, about: who, row: MISSED_SHIFT.row } as const;
             st = { ...st, world: addStanding(st.world, row, st.calendar.day) };
           }
-          if (before === 0) st = addEvent(st, 'job', { job: j.id, what: 'missed' });
         }
         if (isHire(j) && held.missed >= HIRE_LETS_GO) {
           st = addEvent(st, 'job', { job: j.id, what: 'let-go' });

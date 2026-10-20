@@ -158,7 +158,16 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
 
   // What your powers did while you were away (O3): a quota missed away is missed, and told here.
   const who = whoFor(after.player);
-  for (const e of since) if (e.type === 'power') growth.push(renderEvent(e.type, e.data, who));
+  // A power's repeated line is one line with its count (the checkpoint's fix).
+  const told = new Map<string, { line: string; times: number }>();
+  for (const e of since) {
+    if (e.type !== 'power') continue;
+    const key = `${String(e.data.power)}|${String(e.data.what)}`;
+    const g = told.get(key);
+    if (g) g.times++;
+    else told.set(key, { line: renderEvent(e.type, e.data, who), times: 1 });
+  }
+  for (const g of told.values()) growth.push(withTimes(g.line, g.times));
 
   // Each card settled without you, once, with the line its last coming wrote.
   const groups = new Map<string, { kind: CardKind | 'story'; line: string; times: number }>();

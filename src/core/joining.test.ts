@@ -18,7 +18,8 @@ import { takeJob } from './jobs.ts';
 import { claimPosting, postingsAt, takePosting } from './map/board.ts';
 import { placeById } from './map/region.ts';
 import { ensureMap, mapOf, mapPlaceOf } from './map/travel.ts';
-import { joinPower, membership } from './organizations.ts';
+import { innerTrial, joinPower, membership, seatsByRealm } from './organizations.ts';
+import { renderEvent } from './chronicle.ts';
 import { receive, stonesOf, withStones, worthOf } from './purse.ts';
 import { addStanding } from './resolver/opinion.ts';
 import { standingOf } from './resolver/world.ts';
@@ -169,5 +170,35 @@ describe('a gift', () => {
     expect(offerGift({ ...s, world: m.world }, REINS, { stones: floor })).toMatchObject({
       ok: false,
     });
+  });
+});
+
+describe('the chronicle', () => {
+  const who = { name: 'Ye Chen', they: 'they', them: 'them', their: 'their', slots: {} };
+  const line = (s: GameState) => {
+    const e = s.chronicle.at(-1)!;
+    return renderEvent(e.type, e.data, who);
+  };
+
+  it('tells the join, the trial passed or short, a seat raised and the parting', () => {
+    let s = joined(life(), GATE);
+    expect(line(s)).toBe('Ye Chen is taken into the Beast-Butcher Gate.');
+    const year = Math.ceil(s.calendar.day / DAYS_PER_YEAR) * DAYS_PER_YEAR;
+    s = { ...s, calendar: { ...s.calendar, day: year + 1 } };
+    const short = innerTrial(s, GATE);
+    if (!short.ok) throw new Error(short.why);
+    expect(line(short.state)).toBe(
+      "Ye Chen sits the Beast-Butcher Gate's inner trial and falls short.",
+    );
+    const strong = withPlayer(s, {
+      ...s.player,
+      qi: { ...s.player.qi, realm: 'foundation-establishment', stage: 1 },
+    });
+    expect(line(seatsByRealm(strong))).toBe(
+      'The Beast-Butcher Gate seats Ye Chen as its inner Gate disciple.',
+    );
+    const r = askRelease(s, GATE);
+    if (!r.ok) throw new Error(r.reason);
+    expect(line(r.state)).toBe('Ye Chen leaves the Beast-Butcher Gate by its rule.');
   });
 });
