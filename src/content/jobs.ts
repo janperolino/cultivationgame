@@ -29,6 +29,11 @@ export interface Job {
   perk: string;
   /** How it is left: freely, or only by leaving its power (a dynasty's soldier deserts). */
   leave: 'free' | 'power';
+  /**
+   * A dangerous post (design: a harsh power's lower seats hold them): its pay times this, and the
+   * raid template met once a month its shifts are kept, as a road card's risk (the checkpoint).
+   */
+  danger?: { pay: number; raid: string };
 }
 
 /**
@@ -99,6 +104,19 @@ export const JOBS: readonly Job[] = [
     shift: r(7, 4),
     perk: 'a share of the ore dug',
     leave: 'free',
+  },
+  {
+    id: 'gate-strait-raid',
+    name: 'Raid across the strait',
+    hanzi: '渡海',
+    power: 'qm-tushou-men',
+    hall: 'the raiding boats 渡海船',
+    place: 'qm-tushou-men',
+    seat: 'outer',
+    shift: r(8, 4),
+    perk: 'a share of the cores cut',
+    leave: 'free',
+    danger: { pay: 2, raid: 'goal-raid-strait' },
   },
   {
     id: 'gate-law-deacon',

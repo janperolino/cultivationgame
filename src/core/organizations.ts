@@ -1268,6 +1268,21 @@ function trialWords(m: Member, seat: SeatId, day: number): string | null {
   return `inner trial in ${months} month${months === 1 ? '' : 's'}`;
 }
 
+/**
+ * How a power treats your seat, in words (the checkpoint's fix): "a harsh gate: half the allowance,
+ * a 30% tithe on what you bring in", or null at a fair one.
+ */
+export function treatmentWords(power: string, seat: SeatId): string | null {
+  const org = organization(houseOf(power));
+  const t = TREATMENT_RULES[org.treatment];
+  const kind = org.preset.name.split(/[ ,]/)[0]!.toLowerCase();
+  if (org.treatment === 'generous')
+    return `a generous ${kind}: the allowance ×${t.low}${t.tithe ? '' : ' and no quota'}`;
+  if (org.treatment !== 'harsh') return null;
+  if (isTop(seat)) return `a harsh ${kind}, but your seat draws ×${t.top} and pays no tithe`;
+  return `a harsh ${kind}: half the allowance, a ${Math.round(t.tithe * 100)}% tithe on what you bring in`;
+}
+
 /** Your memberships as the Character and People screens show them. */
 export function membershipsView(s: GameState) {
   const r = realmStageOf(s);
@@ -1293,6 +1308,7 @@ export function membershipsView(s: GameState) {
         balance: m.balance,
         currency: org.preset.currency.name,
         trial: m.guest ? null : trialWords(m, seat, s.calendar.day),
+        treatment: m.guest ? null : treatmentWords(m.power, seat),
         allowance:
           a.stones > 0 || a.pills > 0 ? `${priceWords(a.stones)}${pills} a month` : 'no allowance',
         dwelling: dwelling && dwelling > 1 ? `qi ×${dwelling} secluding there` : null,

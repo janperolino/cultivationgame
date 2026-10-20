@@ -125,6 +125,7 @@ export function WorkHere({ game, map, place }: { game: GameState; map: RegionMap
               <span className="caption">
                 {giverOf(j)} · <span className="hanzi">{shiftWords(j.shift)}</span> · {payWords} a
                 duty day · {j.perk}
+                {j.danger && ' · dangerous: a raid each month the shifts are kept'}
               </span>
               {held ? (
                 <span className="caption">yours</span>

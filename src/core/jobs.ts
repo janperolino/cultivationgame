@@ -24,6 +24,10 @@ import { parentsOf, veinAt } from '../content/map/index.ts';
 import { ENTER_LI } from '../content/map/places.ts';
 import { realmScale, type RealmId } from '../content/realms.ts';
 import { mapOf, mapPlaceOf } from './map/travel.ts';
+import { contact } from './map/encounters.ts';
+import type { Encounter } from './map/schema.ts';
+import { bandOf } from './guarded.ts';
+import { hashSeed } from './rng.ts';
 import { areaAt, type RegionMap } from './map/region.ts';
 import { drilling } from './wheel.ts';
 import { guardedBy } from './markets.ts';
@@ -40,6 +44,7 @@ import {
   organization,
   realmStageOf,
   seatOf,
+  seatRanges,
   seatRank,
   theName,
   yearOf,
@@ -53,7 +58,7 @@ export type Held = Cultivator['jobs'][number];
 
 /** What a duty day pays at a realm: points of the power's currency and low-grade stones. */
 export function jobPay(j: Job, r: RealmId): { points: number; stones: number } {
-  const day = DUTY_PAY * realmScale(r);
+  const day = DUTY_PAY * realmScale(r) * (j.danger?.pay ?? 1);
   if (isHire(j)) return { points: 0, stones: day };
   const type = organization(houseOf(j.power!)).type;
   return PAYS_STONES.includes(type)
@@ -295,6 +300,9 @@ export function jobsDay(s: GameState, from: number, to: number): GameState {
     const turned = turnMonth(st, h0, month);
     st = turned.state;
     let held = turned.held;
+    // A dangerous post's raid, met once for each month its shifts were kept.
+    if (j.danger && held.month !== h0.month && h0.kept >= KEPT_MONTH.share * DAYS_PER_MONTH)
+      st = raid(st, j, h0.month);
     // Through the tutorial layers you are at drill: no shift is worked or missed.
     const share = drilling(st.player) ? 0 : shiftShare(j, from, to);
     if (share > 0) {
@@ -342,6 +350,34 @@ export function jobsDay(s: GameState, from: number, to: number): GameState {
     kept.push(held);
   }
   return withPlayer(st, { ...st.player, jobs: kept });
+}
+
+/**
+ * A dangerous post's raid (the organizations checkpoint): its template met where you stand, at the
+ * strongest band of the post's seat, settled by your stance as a road card is or waiting for you.
+ */
+function raid(s: GameState, j: Job, month: number): GameState {
+  const life = s.map;
+  const map = mapOf(s);
+  if (!life || !map || !j.danger || !j.power) return s;
+  const id = `raid-${j.id}-${month}`;
+  if (life.encounters.some((e) => e.id === id)) return s;
+  const seat = seatRanges(houseOf(j.power))[j.seat ?? 'outer'].to;
+  const place = j.place ? mapPlaceOf(map, j.place) : null;
+  const enc: Encounter = {
+    id,
+    template: j.danger.raid,
+    seed: hashSeed(id),
+    band: bandOf(seat),
+    at: [life.at[0], life.at[1]],
+    meetAt: null,
+    state: 'sensed',
+    how: 'seen',
+    tried: [],
+    day: s.calendar.day,
+    where: place?.name ?? map.name,
+  };
+  return contact({ ...s, map: { ...life, encounters: [...life.encounters, enc] } }, id);
 }
 
 /** Your jobs as the Routine and Character screens show them. */

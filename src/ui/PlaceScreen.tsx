@@ -63,7 +63,7 @@ import {
 import { whyOf } from '../core/making.ts';
 import { priceOf as priceOfThing } from '../core/prices.ts';
 import { gradeCount, priceWords, stonesOf, stonesWords } from '../core/purse.ts';
-import { buyChapter, hallTerms, pavilion, pavilionChapters } from '../core/halls.ts';
+import { buyChapter, hallTerms, pavilion, pavilionChapters, titheFor } from '../core/halls.ts';
 import { lawHallAt, liftByPaying, marksHere, yourMark } from '../core/guarded.ts';
 import {
   askRelease,
@@ -85,6 +85,7 @@ import {
   engageProtector,
   guestOffered,
   innerTrial,
+  membershipsOf,
   takeLesson,
   houseOf,
   isOrganization,
@@ -691,6 +692,10 @@ function ShopCounter({
   const yours =
     terms?.as === 'member' && house ? membership(game.world, game.player.id, house) : undefined;
   const currency = house ? organization(house).preset.currency.name : '';
+  // What a harsh power's lower seats keep of a sale after its tithe (the checkpoint's fix).
+  const tithe = titheFor(game, sh);
+  const titheFrom =
+    tithe > 0 ? (house ?? membershipsOf(game.world, game.player.id)[0]?.power ?? null) : null;
   // A member donates at its hall: stones at 2 low a point, goods at half their sell price (O1).
   if (yours && house) tabs.push(['donate', 'Donate']);
   const cost = (p: number) =>
@@ -881,7 +886,7 @@ function ShopCounter({
                     {offer.ok && offer.wanted && <span className="place-good"> · wanted here</span>}
                   </span>
                   <span className="place-price">
-                    {offer.ok ? cost(offer.each) : ''}
+                    {offer.ok ? cost(Math.round(offer.each * (1 - tithe) * 100) / 100) : ''}
                     {lotOf(thing, n) > 1 ? ` each, a lot of ${lotOf(thing, n)}` : ''}
                   </span>
                   <button
@@ -907,6 +912,8 @@ function ShopCounter({
               : sh.kind === 'black-market'
                 ? 'They buy anything at 30% of their own price, and never ask whose it was.'
                 : 'They buy at 40% of their own price (60% once their power favors you), and 80% for what is wanted here.'}
+            {tithe > 0 &&
+              ` The prices shown are what you keep after ${theName(titheFrom!)}’s ${Math.round(tithe * 100)}% tithe.`}
           </p>
         </>
       )}

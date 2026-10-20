@@ -342,6 +342,7 @@ function Memberships({ game }: { game: GameState }) {
           {m.name} · {m.title.name} <span className="hanzi">{m.title.hanzi}</span> · {m.balance}{' '}
           {m.currency}
           {m.trial && <span className="caption"> · {m.trial}</span>}
+          {m.treatment && <span className="caption"> · {m.treatment}</span>}
           <span className="caption">
             {' '}
             · {m.allowance}

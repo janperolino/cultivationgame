@@ -20,6 +20,8 @@ export const TRIP_GOALS = [
   'core-hunt',
   'delivery',
   'escort',
+  // A dangerous post's raid, met once a month it is kept (the organizations checkpoint).
+  'raid',
 ] as const;
 export type TripGoal = (typeof TRIP_GOALS)[number];
 

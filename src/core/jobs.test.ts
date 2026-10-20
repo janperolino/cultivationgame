@@ -26,6 +26,7 @@ import {
   membership,
   monthIndex,
   setSeat,
+  treatmentWords,
   settleQuotas,
 } from './organizations.ts';
 import { worthOf, stonesOf } from './purse.ts';
@@ -260,12 +261,42 @@ describe('home for a house member', () => {
   it('is any town of a dynasty’s kingdom, and leave runs only outside it', () => {
     const s = ensureMap(posted(createLife(creation('conscript'))));
     const fort = mapPlaceOf(mapOf(s)!, MARCH)!;
-    const atFort = { ...s, map: { ...s.map!, at: [fort.x, fort.y] as [number, number], inside: fort.id } };
+    const atFort = {
+      ...s,
+      map: { ...s.map!, at: [fort.x, fort.y] as [number, number], inside: fort.id },
+    };
     expect(atHome(atFort, MARCH)).toBe(true);
     expect(leaveTaken(days(atFort, 5))).toBe(0);
     const away = inside(s, CITY);
     expect(atHome(away, MARCH)).toBe(false);
     expect(leaveTaken(days(away, 5))).toBe(5);
+  });
+});
+
+describe('a harsh power’s lower seats', () => {
+  it('are told the treatment, and hold a dangerous post that pays double and raids monthly', () => {
+    expect(treatmentWords(GATE, 'outer')).toContain('30% tithe');
+    expect(treatmentWords('qm-baijiang-zong', 'outer')).toBeNull();
+    expect(jobPay(job('gate-strait-raid'), 'qi-condensation').points).toBe(DUTY_PAY * 2);
+    let s = posted(inside(newLife({ name: 'Han Li', seed: 'raid' }), GATE));
+    s = member(s, GATE);
+    const took = takeJob(s, 'gate-strait-raid');
+    if (!took.ok) throw new Error(took.reason);
+    const month = monthIndex(took.state.calendar.day);
+    const start = {
+      ...took.state,
+      calendar: { ...took.state.calendar, day: (month + 1) * DAYS_PER_MONTH - 25 },
+    };
+    const fixed = withPlayer(start, {
+      ...start.player,
+      jobs: start.player.jobs.map((h) => ({ ...h, month: monthIndex(start.calendar.day) })),
+    });
+    const after = days(fixed, 30);
+    const raided =
+      after.map!.encounters.some((e) => e.template === 'goal-raid-strait') ||
+      after.map!.road.some((r) => r.template === 'goal-raid-strait') ||
+      after.chronicle.some((e) => String(e.data.line ?? '').includes('strait'));
+    expect(raided).toBe(true);
   });
 });
 

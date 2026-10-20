@@ -337,4 +337,55 @@ export const GOAL_ENCOUNTERS: readonly Template[] = [
     opening:
       'Dust rises behind the ridge, too much for a herd, and the carters begin to look at you as if you had a say in it.',
   },
+  {
+    id: 'goal-raid-strait',
+    kind: 'beast',
+    title: 'A raid across the strait',
+    where: { terrain: ['coast'] },
+    goal: 'raid',
+    bands: [1, 4],
+    weight: 1,
+    place: {
+      traffic: 'wilds',
+      features: [
+        { name: 'sea-towers of karst', tags: ['height', 'cover'] },
+        { name: 'a nursery pool under the cliff', tags: ['water', 'fall'] },
+      ],
+    },
+    roles: [
+      {
+        id: 'guardian',
+        name: 'the nursery’s guardian python',
+        who: { roster: 'karst-python' },
+      },
+    ],
+    exits: [
+      {
+        act: 'attack',
+        road: 'fight',
+        label: 'Kill the guardian and cut the cores',
+        pass: {
+          text: 'The guardian dies in the pool it kept. The raiding party cuts cores from the young by torchlight and rows back before the eagles wake.',
+          line: 'kills a nursery’s guardian across the strait, and the raid cuts its cores',
+          stakes: [{ do: 'loot' }],
+        },
+        short: {
+          text: 'The guardian breaks the boats and half the party with them. You are dragged back over the gunwale, bleeding.',
+          line: 'is mauled on a raid across the strait',
+          stakes: [{ do: 'wound', share: 0.25, days: 10 }],
+        },
+      },
+      {
+        act: 'leave',
+        road: 'pass',
+        label: 'Hold the boats',
+        pass: {
+          text: 'You keep the boats while the others go up the cliff, and row whoever comes back.',
+          line: 'holds the boats on a raid across the strait',
+        },
+      },
+    ],
+    opening:
+      'Three boats, no lamps, and the karst towers black against the stars: the nursery pool is under the far cliff, and something long is lying across its mouth.',
+  },
 ];
