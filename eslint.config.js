@@ -26,7 +26,7 @@ const noClock = 'src/core takes the time as an input; pass `now` in.';
 const noRandom = 'src/core draws from a named seeded stream (core/rng.ts), never Math.random.';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'tools/atlas', 'src/content/generated'] },
+  { ignores: ['dist', 'node_modules', 'tools/atlas', 'src/content/generated', '.claude'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
