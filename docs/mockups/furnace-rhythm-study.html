@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fire control study, take B: the rhythm (K3)</title>
+<style>
+  :root {
+    --void: #040507; --glass: rgb(10 12 16 / 0.8); --edge: rgb(255 255 255 / 0.075);
+    --edge-strong: rgb(255 255 255 / 0.14); --text: #e9e5da; --muted: #8d949d;
+    --accent: #d6ab4c; --gilt: #d9b46a; --warn: #e08a6a; --craft-hand: #8fb7d9;
+    --qi-fire: #ee9670; --qi-wood: #86d19a; --qi-earth: #dcb359; --qi-water: #7fc7d9;
+    --rarity-white: #ece8de; --rarity-green: #7fca8c; --rarity-blue: #6ea6f0;
+    --font-display: 'Cormorant Garamond', Georgia, serif; --font-ui: Inter, system-ui, 'Segoe UI', sans-serif;
+  }
+  html, body { margin: 0; height: 100%; background: var(--void); color: var(--text); font: 15px/1.45 var(--font-ui); overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0;
+    background: radial-gradient(1200px 700px at 55% 40%, #15120d 0%, #07080b 60%, #040507 100%); }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(7 8 11 / 0.96); border-right: 1px solid var(--edge); }
+  .rail i { display: block; width: 28px; height: 28px; margin: 22px auto; border-radius: 6px; background: rgb(255 255 255 / 0.06); }
+  .rail i.on { background: color-mix(in srgb, var(--accent) 40%, transparent); box-shadow: -22px 0 0 -18px var(--accent); }
+  .screen { position: absolute; left: 72px; right: 0; top: 0; bottom: 0; padding: 40px 48px; box-sizing: border-box; }
+  h1 { font: 500 34px var(--font-display); margin: 0 0 4px; letter-spacing: .02em; }
+  h1 .hz { color: var(--muted); font-size: 22px; margin-left: 8px; }
+  .pages { display: flex; gap: 22px; align-items: baseline; margin: 6px 0 22px; color: var(--muted); }
+  .pages b { color: var(--text); font-weight: 500; border-bottom: 1px solid var(--accent); padding-bottom: 3px; }
+  .pages .sp { flex: 1; }
+  .cols { display: grid; grid-template-columns: 380px 1fr 400px; gap: 22px; height: 880px; }
+  .panel { background: var(--glass); border: 1px solid var(--edge); border-radius: 10px; padding: 20px 22px; box-sizing: border-box; overflow: hidden; }
+  .ph { font: 500 13px var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  .panel > .ph:not(:first-child) { margin-top: 28px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { padding: 8px 0; border-bottom: 1px solid var(--edge); display: flex; justify-content: space-between; gap: 10px; }
+  .muted { color: var(--muted); }
+  .white { color: var(--rarity-white); } .green { color: var(--rarity-green); } .blue { color: var(--rarity-blue); }
+  .sel { background: rgb(214 171 76 / 0.08); border-radius: 6px; padding-left: 8px; padding-right: 8px; }
+  .btn { display: inline-block; border: 1px solid var(--edge-strong); border-radius: 6px; padding: 7px 14px; margin: 10px 8px 0 0; cursor: pointer; background: none; color: var(--text); font: inherit; }
+  .btn.main { border-color: color-mix(in srgb, var(--accent) 55%, transparent); color: var(--accent); }
+  /* The furnace column */
+  .furnace { position: relative; padding: 0; display: flex; flex-direction: column; }
+  .furnace .top { padding: 18px 22px 0; display: flex; justify-content: space-between; align-items: baseline; }
+  .furnace .top .title { font: 500 22px var(--font-display); }
+  canvas { display: block; margin: 0 auto; cursor: crosshair; }
+  .line { text-align: center; color: var(--muted); margin-top: -6px; }
+  .line b { color: var(--text); font-weight: 500; }
+  .doses { display: flex; justify-content: center; gap: 10px; margin: 14px 0 6px; }
+  .dose { width: 86px; padding: 6px 4px; text-align: center; border: 1px solid var(--edge); border-radius: 6px; font-size: 12px; color: var(--muted); }
+  .dose.next { border-color: color-mix(in srgb, var(--accent) 50%, transparent); color: var(--text); }
+  .dose.done { opacity: .35; }
+  .dose .dot { display: block; width: 9px; height: 9px; border-radius: 50%; margin: 0 auto 4px; }
+  .bench { margin: auto 22px 18px; border-top: 1px solid var(--edge); padding-top: 12px; }
+  .bar { height: 4px; background: rgb(255 255 255 / 0.06); border-radius: 2px; margin-top: 6px; }
+  .bar > div { height: 100%; background: var(--accent); border-radius: 2px; }
+  .kv { display: grid; grid-template-columns: 1fr auto; row-gap: 8px; column-gap: 14px; }
+  .kv span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; }
+  .sum { border-top: 1px solid var(--edge-strong); padding-top: 8px; }
+  .odds { display: flex; height: 10px; border-radius: 3px; overflow: hidden; margin: 10px 0 6px; }
+  .odds div { transition: width .3s; }
+  .note { font-size: 13px; color: var(--muted); margin-top: 18px; line-height: 1.5; }
+  .place { margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--edge-strong); border-radius: 8px; font-size: 13px; }
+  .place b { color: var(--qi-fire); font-weight: 500; }
+  .toggle { position: fixed; right: 12px; bottom: 10px; z-index: 9; font-size: 12px; color: var(--muted); }
+  .toggle label { margin-left: 10px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
+  <div class="screen">
+    <h1>Crafts <span class="hz">艺</span></h1>
+    <div class="pages"><b>Alchemy 丹</b><span>Refining 器</span><span>Talismans 符</span><span>Formations 阵</span><span>Spirit Farming 灵植</span><span class="sp"></span><span>4 craft hours a day · set on Routine</span></div>
+    <div class="cols">
+      <section class="panel">
+        <h2 class="ph">The furnace</h2>
+        <ul><li><span class="white">Crude Clay Furnace <span class="muted">陶炉</span></span><span class="muted">tier 1 · whole</span></li></ul>
+        <h2 class="ph">Recipes known</h2>
+        <ul>
+          <li class="sel"><span>Qi-Gathering Pill</span><span class="muted">qi pills</span></li>
+          <li><span>Wound-Knitting Pill</span><span class="muted">healing pills</span></li>
+        </ul>
+        <p class="muted" style="margin-top:14px">6 Old Apricot Kernel + 4 Ridge Bitterroot<br>3 craft hours · holds 70% · 11 pills</p>
+        <button class="btn">Queue a batch</button><button class="btn">Queue five</button>
+        <h2 class="ph">The bench</h2>
+        <ul>
+          <li><span>Qi-Gathering Pill ×4</span><span class="muted">in the furnace</span></li>
+          <li><span>Wound-Knitting Pill ×2</span><span class="muted">waiting</span></li>
+        </ul>
+      </section>
+
+      <section class="panel furnace">
+        <div class="top"><span class="title">At the furnace <span class="muted" style="font-size:16px">守炉</span></span><button class="btn" id="stand" style="margin:0">Stand up</button></div>
+        <canvas id="fx" width="760" height="560" style="width:760px;height:560px"></canvas>
+        <div class="line" id="line">Strike each herb as its ring closes (click, or Z / X). Follow the fire’s run. Spin to fan the flame.</div>
+        <div class="doses" id="doses"></div>
+        <div class="bench">
+          <div style="display:flex;justify-content:space-between"><span>Qi-Gathering Pill, batch 1 of 4</span><span class="muted" id="bh">0.0 of 3 h</span></div>
+          <div class="bar"><div id="bb" style="width:0%"></div></div>
+          <div class="muted" style="margin-top:6px;font-size:13px">It reads your hand (your accuracy) over its hours: <b id="bm" style="color:var(--text)">0.00</b> so far. Away, the furnace runs itself at no hand.</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="ph">This batch</h2>
+        <div class="kv">
+          <span>Mastery, Comprehension</span><span>+0.25</span>
+          <span>Inputs above the floor</span><span class="muted">—</span>
+          <span>Furnace, white</span><span class="muted">—</span>
+          <span>The hand <span class="muted" id="hx">0.00 × reach 1.25</span></span><span id="hl">+0.00</span>
+          <span>The land</span><span class="muted">—</span>
+          <span class="sum">Lift</span><span class="sum" id="lift">0.25</span>
+        </div>
+        <div class="odds" id="odds"></div>
+        <div class="muted" id="oddsw" style="font-size:13px"></div>
+        <h2 class="ph">Steady hands 稳手</h2>
+        <div class="kv">
+          <span>Base</span><span>1 band</span>
+          <span>Lid Watching</span><span>+0.25</span>
+          <span class="sum">Reach</span><span class="sum">1.25 of 2</span>
+        </div>
+        <p class="note">The hand moves only the rarity, never whether the batch holds. Steady Flame adds half a band; nodes, talents and a matched soul raise the reach, never past two.</p>
+        <h2 class="ph">The land</h2>
+        <div class="place muted">River-Bend City: no earth fire here.<br><span style="opacity:.8">Earth fire 地火 on volcanic land: <b>+0.25 lift, +10 holding</b> for alchemy and refining. A land of the recipe's element: the same for its recipes.</span></div>
+      </section>
+    </div>
+  </div>
+</div>
+<div class="toggle">mockup: <label><input type="checkbox" id="rm"> reduced motion</label> <label><input type="checkbox" id="hard"> tier 2 pill (faster)</label></div>
+<script>
+// ---- the stage
+const stage = document.getElementById('stage');
+function fit() { const k = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transformOrigin = 'center'; stage.style.transform = `translate(-50%,-50%) scale(${k})`; }
+addEventListener('resize', fit); fit();
+const reduced = () => document.getElementById('rm').checked;
+const hard = () => document.getElementById('hard').checked;
+
+// ---- the rules (starting values to tune by feel)
+const TIER = {
+  1: { beat: 0.6, approach: 1.1 },   // 100 beats a minute, a ring closes in 1.1 s
+  2: { beat: 0.46, approach: 0.85 },
+};
+const WIN = { true: 0.06, good: 0.12, rough: 0.18 };       // seconds either side of the beat
+const WORTH = { true: 1, good: 1 / 3, rough: 1 / 6, miss: 0 }; // as osu's 300, 100, 50
+const MARK = { true: ['妙', '#fff1c9'], good: ['良', '#ece8de'], rough: ['粗', '#8d949d'], miss: ['失', '#e0503f'] };
+const KEEP = 40;   // the hand is your accuracy over the last 40 strikes
+const R_NOTE = 30, CX = 380, CY = 270;
+const HERBS = [
+  { name: 'Apricot Kernel', col: '#86d19a' },   // a kernel: three strikes
+  { name: 'Ridge Bitterroot', col: '#dcb359' }, // a bitterroot: the fire's run, then a strike
+];
+const DOSES = [0, 0, 1, 0, 1, 0, 0, 1, 0, 1];
+const reach = 1.25, mastery = 0.25;
+
+// ---- the map: written from the recipe's doses, the same every time (no rolls)
+function buildMap(tier) {
+  const { beat } = TIER[tier];
+  const objs = []; let t = 3, th = -Math.PI / 2 - 0.9, n = 0;
+  const pos = (a, r) => [CX + Math.cos(a) * r, CY + Math.sin(a) * r * 0.82];
+  DOSES.forEach((h, di) => {
+    const col = HERBS[h].col; n = 0;
+    if (h === 0) {
+      for (let k = 0; k < 3; k++) { th += 0.55; const r = k === 1 ? 120 : 190; objs.push({ kind: 'circle', t, at: pos(th, r), col, n: ++n, dose: di }); t += beat; }
+      t += beat;
+    } else {
+      const a0 = th + 0.5, a1 = a0 + (di % 2 ? 1.1 : -1.1), r = 190;
+      objs.push({ kind: 'slider', t, end: t + beat * 2, a0, a1, r, at: pos(a0, r), col, n: ++n, dose: di });
+      th = a1; t += beat * 3;
+      th += 0.6; objs.push({ kind: 'circle', t, at: pos(th, 120), col, n: ++n, dose: di }); t += beat;
+    }
+  });
+  objs.push({ kind: 'spin', t, end: t + beat * 5, at: [CX, CY], col: '#ee9670' }); t += beat * 7;
+  return { objs, length: t };
+}
+
+// ---- state
+let tier = 1, map = buildMap(1), t = 0, lap = 0, judged = [], combo = 0, bursts = [];
+let pointer = [CX, CY], held = 0, batchH = 0, batchHand = 0, guttered = -9, doseShown = 0;
+const hand = () => judged.length ? judged.slice(-KEEP).reduce((s, x) => s + x, 0) / KEEP : 0;
+let live = [];
+function refill() {
+  // the next lap waits queued, so the map loops without a seam
+  while (lap * map.length < t + 3) {
+    for (const o of map.objs) live.push({ ...o, t: o.t + lap * map.length, end: o.end && o.end + lap * map.length, state: null, track: 0, spun: 0 });
+    lap++;
+  }
+}
+
+// ---- input: a click, or Z / X with the pointer over the note
+const cv = document.getElementById('fx'), g = cv.getContext('2d');
+const DPR = Math.min(2, devicePixelRatio || 1); cv.width = 760 * DPR; cv.height = 560 * DPR; g.scale(DPR, DPR);
+const toCanvas = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * 760, (e.clientY - r.top) / r.height * 560]; };
+cv.addEventListener('pointermove', (e) => { pointer = toCanvas(e); });
+cv.addEventListener('pointerdown', (e) => { pointer = toCanvas(e); held++; press(); });
+addEventListener('pointerup', () => { held = Math.max(0, held - 1); });
+const keys = new Set();
+addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if ((k === 'z' || k === 'x') && !keys.has(k)) { keys.add(k); held++; press(); } });
+addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if (keys.delete(k)) held = Math.max(0, held - 1); });
+
+const sliderAt = (o, p) => { const a = o.a0 + (o.a1 - o.a0) * p; return [CX + Math.cos(a) * o.r, CY + Math.sin(a) * o.r * 0.82]; };
+function judge(o, how) {
+  o.state = how; judged.push(WORTH[how]); if (judged.length > 400) judged.splice(0, 200);
+  if (how === 'miss') { combo = 0; guttered = t; } else combo++;
+  bursts.push({ at: o.kind === 'slider' ? sliderAt(o, 1) : o.at, how, t });
+}
+function press() {
+  const o = live.find((o) => !o.state && !o.pressed && (o.kind === 'circle' || o.kind === 'slider') && Math.abs(t - o.t) <= WIN.rough && Math.hypot(o.at[0] - pointer[0], o.at[1] - pointer[1]) <= R_NOTE + 6);
+  if (!o) return;
+  const d = Math.abs(t - o.t), how = d <= WIN.true ? 'true' : d <= WIN.good ? 'good' : 'rough';
+  if (o.kind === 'circle') judge(o, how); else { o.pressed = true; o.head = how; }
+}
+let lastAngle = null;
+
+function step(dt) {
+  t += dt; refill();
+  for (const o of live) {
+    if (o.state) continue;
+    if (o.kind === 'circle' && t > o.t + WIN.rough) judge(o, 'miss');
+    if (o.kind === 'slider') {
+      if (!o.pressed && t > o.t + WIN.rough) { o.pressed = true; o.head = 'miss'; }
+      if (t >= o.t && t <= o.end) { const b = sliderAt(o, (t - o.t) / (o.end - o.t)); if (held && Math.hypot(b[0] - pointer[0], b[1] - pointer[1]) < R_NOTE * 1.6) o.track += dt; }
+      if (t > o.end) { const share = o.track / (o.end - o.t), head = WORTH[o.head]; judge(o, share >= 0.85 && head === 1 ? 'true' : share >= 0.6 && head > 0 ? 'good' : share >= 0.3 ? 'rough' : 'miss'); }
+    }
+    if (o.kind === 'spin' && t >= o.t && t <= o.end) {
+      const a = Math.atan2(pointer[1] - CY, pointer[0] - CX);
+      if (held && lastAngle !== null) { let d = a - lastAngle; if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; o.spun += Math.abs(d); }
+      lastAngle = a;
+    }
+    if (o.kind === 'spin' && t > o.end) { const turns = o.spun / (2 * Math.PI); judge(o, turns >= 4 ? 'true' : turns >= 2.5 ? 'good' : turns >= 1 ? 'rough' : 'miss'); lastAngle = null; }
+  }
+  live = live.filter((o) => !o.state || t - (o.end || o.t) < 0.3);
+  bursts = bursts.filter((b) => t - b.t < 0.7);
+  const cur = live.find((o) => !o.state && o.dose !== undefined); if (cur) doseShown = cur.dose;
+  // the batch: 3 craft hours, about 7.5 real seconds of the wheel at Qi Condensation, reading the hand over them
+  batchH += dt * 0.4; batchHand += hand() * dt * 0.4; if (batchH >= 3) { batchH = 0; batchHand = 0; }
+}
+
+// ---- drawing
+function drawFurnace(fire) {
+  g.save(); g.translate(CX, CY + 20); g.scale(1.15, 1.15);
+  for (let i = -2; i <= 2; i++) {
+    const h = (24 + 46 * fire) * (1 - Math.abs(i) * 0.2) * (reduced() ? 1 : 0.85 + 0.15 * Math.sin(t * 9 + i * 1.7));
+    g.beginPath(); g.moveTo(i * 16 - 10, 92); g.quadraticCurveTo(i * 16, 92 - h * 1.2, i * 16 + 10, 92);
+    g.fillStyle = `rgba(${210 + fire * 45},${150 - fire * 40},70,${0.3 + fire * 0.45})`; g.fill();
+  }
+  g.fillStyle = '#2a2219'; g.strokeStyle = '#6b5638'; g.lineWidth = 2;
+  for (const lx of [-48, 0, 48]) { g.beginPath(); g.moveTo(lx - 5, 40); g.lineTo(lx - 7, 92); g.lineTo(lx + 7, 92); g.lineTo(lx + 5, 40); g.fill(); g.stroke(); }
+  g.beginPath(); g.moveTo(-82, -40); g.bezierCurveTo(-90, 10, -70, 50, 0, 52); g.bezierCurveTo(70, 50, 90, 10, 82, -40); g.closePath(); g.fill(); g.stroke();
+  g.strokeStyle = '#8a7046'; g.beginPath(); g.moveTo(-84, -22); g.lineTo(84, -22); g.stroke();
+  g.fillStyle = `rgba(238,150,112,${0.15 + fire * 0.55})`; g.font = '20px KaiTi, serif'; g.textAlign = 'center'; g.fillText('丹', 0, 18);
+  g.fillStyle = '#2a2219'; g.strokeStyle = '#6b5638';
+  for (const ex of [-70, 70]) { g.beginPath(); g.rect(ex - 9, -66, 18, 26); g.fill(); g.stroke(); }
+  // the lid jumps on every beat, so the furnace keeps the time
+  const beatP = (t / TIER[tier].beat) % 1, lid = reduced() ? 0 : Math.max(0, 1 - beatP * 4) * 4;
+  g.beginPath(); g.ellipse(0, -44 - lid, 78, 12, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+  g.beginPath(); g.arc(0, -58 - lid, 9, 0, Math.PI * 2); g.fill(); g.stroke();
+  g.restore();
+}
+
+function draw() {
+  g.clearRect(0, 0, 760, 560);
+  const h = hand(), fire = Math.min(1, combo / 30);
+  const glow = g.createRadialGradient(CX, CY + 120, 10, CX, CY + 120, 240);
+  glow.addColorStop(0, `rgba(238,150,112,${0.1 + fire * 0.3})`); glow.addColorStop(1, 'rgba(238,150,112,0)');
+  g.fillStyle = glow; g.fillRect(0, 0, 760, 560);
+  // the hand as the seat's ring: 65% of a circle open toward the floor
+  const SPAN = Math.PI * 2 * 0.65, START = Math.PI / 2 + (Math.PI * 2 - SPAN) / 2;
+  g.lineCap = 'round'; g.lineWidth = 3;
+  g.strokeStyle = 'rgba(217,180,106,0.14)'; g.beginPath(); g.arc(CX, CY, 248, START, START + SPAN); g.stroke();
+  g.strokeStyle = 'rgba(217,180,106,0.85)'; g.beginPath(); g.arc(CX, CY, 248, START, START + SPAN * Math.max(0.002, h)); g.stroke();
+  drawFurnace(fire);
+  const gut = t - guttered; if (gut < 0.5 && !reduced()) { g.globalAlpha = (1 - gut / 0.5) * 0.25; g.fillStyle = '#7fc7d9'; g.beginPath(); g.arc(CX, CY + 80, 90, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1; }
+  const { approach } = TIER[tier];
+  // notes, the latest drawn first so the next one sits on top
+  const shown = live.filter((o) => !o.state && t >= o.t - approach && !(o.kind === 'slider' && t > o.end)).reverse();
+  for (const o of shown) {
+    const p = Math.min(1, (o.t - t) / approach), alpha = Math.min(1, (1 - p) / 0.35);
+    g.globalAlpha = alpha;
+    if (o.kind === 'spin') {
+      const left = Math.max(0, (o.end - Math.max(t, o.t)) / (o.end - o.t)), turns = o.spun / (2 * Math.PI);
+      g.strokeStyle = 'rgba(238,150,112,0.6)'; g.lineWidth = 4; g.beginPath(); g.arc(CX, CY, 60 + 170 * left, 0, Math.PI * 2); g.stroke();
+      g.fillStyle = '#e9e5da'; g.font = '500 22px Georgia, serif'; g.textAlign = 'center'; g.fillText(t < o.t ? 'Fan the flame: hold and circle' : `${turns.toFixed(1)} turns`, CX, CY - 150);
+      g.globalAlpha = 1; continue;
+    }
+    if (o.kind === 'slider') {
+      const lo = Math.min(o.a0, o.a1), hi = Math.max(o.a0, o.a1);
+      g.strokeStyle = 'rgba(255,255,255,0.10)'; g.lineWidth = R_NOTE * 2; g.beginPath(); g.ellipse(CX, CY, o.r, o.r * 0.82, 0, lo, hi); g.stroke();
+      g.strokeStyle = o.col; g.globalAlpha = alpha * 0.5; g.lineWidth = 2; g.beginPath(); g.ellipse(CX, CY, o.r, o.r * 0.82, 0, lo, hi); g.stroke(); g.globalAlpha = alpha;
+      if (t >= o.t) { const b = sliderAt(o, Math.min(1, (t - o.t) / (o.end - o.t))); g.fillStyle = '#fff1c9'; g.beginPath(); g.arc(b[0], b[1], R_NOTE * 0.55, 0, Math.PI * 2); g.fill(); g.strokeStyle = 'rgba(255,241,201,0.5)'; g.lineWidth = 2; g.beginPath(); g.arc(b[0], b[1], R_NOTE * 1.6, 0, Math.PI * 2); g.stroke(); }
+    }
+    if (!(o.kind === 'slider' && o.pressed)) {
+      const [x, y] = o.at;
+      g.fillStyle = 'rgba(12,12,14,0.85)'; g.beginPath(); g.arc(x, y, R_NOTE, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = o.col; g.lineWidth = 3; g.stroke();
+      g.fillStyle = o.col; g.font = '600 18px Inter, system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(o.n, x, y + 1); g.textBaseline = 'alphabetic';
+      if (p > 0) {
+        // under reduced motion the ring doesn't close: a clock fills round the note instead
+        if (reduced()) { g.strokeStyle = 'rgba(255,241,201,0.8)'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, R_NOTE + 6, -Math.PI / 2, -Math.PI / 2 + (1 - p) * Math.PI * 2); g.stroke(); }
+        else { g.strokeStyle = o.col; g.lineWidth = 2; g.beginPath(); g.arc(x, y, R_NOTE * (1 + 2.2 * p), 0, Math.PI * 2); g.stroke(); }
+      }
+    }
+    g.globalAlpha = 1;
+  }
+  for (const b of bursts) {
+    const k = (t - b.t) / 0.7, [m, c] = MARK[b.how];
+    g.globalAlpha = 1 - k; g.fillStyle = c; g.font = '28px KaiTi, serif'; g.textAlign = 'center'; g.fillText(m, b.at[0], b.at[1] - 34 - (reduced() ? 0 : k * 14)); g.globalAlpha = 1;
+  }
+  g.fillStyle = '#8d949d'; g.font = '13px Inter, system-ui, sans-serif'; g.textAlign = 'left'; g.fillText(`hand ${h.toFixed(2)}`, 40, 540);
+  g.textAlign = 'right'; g.fillText(combo > 1 ? `${combo} in a row` : '', 720, 540);
+}
+
+const COL = { white: '#ece8de', green: '#7fca8c', blue: '#6ea6f0' };
+function panel() {
+  const h = hand(), handLift = h * reach, lift = mastery + handLift;
+  document.getElementById('hx').textContent = `${h.toFixed(2)} × reach ${reach}`;
+  document.getElementById('hl').textContent = `+${handLift.toFixed(2)}`;
+  document.getElementById('lift').textContent = lift.toFixed(2);
+  const whole = Math.floor(lift), frac = lift - whole, names = ['white', 'green', 'blue'];
+  const a = names[Math.min(2, whole)], b = names[Math.min(2, whole + 1)];
+  const parts = a === b ? [[a, 1]] : [[a, 1 - frac], [b, frac]];
+  document.getElementById('odds').innerHTML = parts.map(([n, p]) => `<div style="width:${p * 100}%;background:${COL[n]}"></div>`).join('');
+  document.getElementById('oddsw').textContent = parts.map(([n, p]) => `${n} ${Math.round(p * 100)}%`).join(' · ') + '  (queued: white 75% · green 25%)';
+  document.getElementById('bh').textContent = `${batchH.toFixed(1)} of 3 h`;
+  document.getElementById('bb').style.width = `${batchH / 3 * 100}%`;
+  document.getElementById('bm').textContent = (batchH > 0 ? batchHand / batchH : 0).toFixed(2);
+  document.getElementById('doses').innerHTML = DOSES.map((d, i) => `<div class="dose ${i < doseShown ? 'done' : i === doseShown ? 'next' : ''}"><span class="dot" style="background:${HERBS[d].col}"></span>${HERBS[d].name.split(' ')[1]}</div>`).join('');
+}
+
+let running = true, last = performance.now();
+document.getElementById('stand').onclick = () => { running = !running; document.getElementById('stand').textContent = running ? 'Stand up' : 'Sit at the furnace'; };
+document.getElementById('hard').onchange = () => { tier = hard() ? 2 : 1; map = buildMap(tier); live = []; lap = 0; t = 0; };
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (running && document.visibilityState === 'visible') { step(dt); draw(); panel(); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
