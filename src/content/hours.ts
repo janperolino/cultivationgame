@@ -48,8 +48,9 @@ export const BRANCHES: readonly Branch[] = [
 ];
 
 /**
- * What an hour can go to. Furnace, forge, garden, beast, sect-duty and shop hours join as those
- * systems arrive (M4 to M6).
+ * What an hour can go to. Furnace, forge, garden, beast and shop hours join as those systems
+ * arrive (M4 to M6). Duty 值 is never set by hand: a job you hold puts it on its shift's hours,
+ * locked like sleep and named for the work (O4).
  */
 export const HOUR_KINDS = {
   qi: { name: 'Qi', what: 'cultivate qi with your method' },
@@ -58,6 +59,7 @@ export const HOUR_KINDS = {
   study: { name: 'Study', what: 'study for insight' },
   practice: { name: 'Practice', what: 'practice a technique' },
   sleep: { name: 'Sleep', what: 'sleep; it gives nothing' },
+  duty: { name: 'Duty', what: "a job's shift: its pay, not your cultivation" },
 } as const;
 export type HourKind = keyof typeof HOUR_KINDS;
 export const HOUR_KIND_IDS = Object.keys(HOUR_KINDS) as [HourKind, ...HourKind[]];
@@ -83,6 +85,9 @@ export const SLEEP_FREED_TEXT = 'You no longer need sleep; two more hours are yo
 export const FRESH_WHEEL: readonly HourKind[] = BRANCHES.map((_, i) =>
   SLEEP_HOURS.includes(i) ? 'sleep' : 'qi',
 );
+
+/** The Duty hour's seal on the wheel. */
+export const DUTY_HANZI = '值';
 
 /** Kinds of hour open from the start: qi, study and sleep. */
 export const ALWAYS_OPEN_HOURS: readonly HourKind[] = ['qi', 'study', 'sleep'];

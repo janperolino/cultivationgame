@@ -348,7 +348,7 @@ export function hourYields(
       practice: 0,
       study: 0,
     };
-    if (kind === 'sleep') return y;
+    if (kind === 'sleep' || kind === 'duty') return y;
     y.element = elementMatch(c, kind, hour) ? ELEMENT_BONUS : 0;
     y.dawn = kind === 'qi' && hour === DAWN_HOUR ? DAWN_BONUS : 0;
     y.night = kind === 'qi' && NIGHT_HOURS.includes(hour) ? night : 0;

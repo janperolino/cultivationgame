@@ -17,6 +17,9 @@ import { HOME_REGION } from '../../content/resolver.ts';
 import { makeBond } from '../../core/resolver/followers.ts';
 import { addFame } from '../../core/resolver/names.ts';
 import { SEAT_IDS, type SeatId } from '../../content/organizations.ts';
+import { hasJob, job, JOBS } from '../../content/jobs.ts';
+import { BRANCHES } from '../../content/hours.ts';
+import { jobsView, quitJob, takeJob } from '../../core/jobs.ts';
 import {
   addBalance,
   allowanceOf,
@@ -410,6 +413,30 @@ export const COMMANDS: Record<string, Command> = {
               `  ${seatTitle(id, k).name} ${seatTitle(id, k).hanzi}: ${rangeWords(ranges[k])} · ${monthly(k)}`,
           ),
       ];
+    },
+  },
+  job: {
+    usage: 'job [<job id> [take | leave]]',
+    help: 'Your jobs and their shifts kept and missed; with an id, takes it or leaves it by its giver’s rule (O4). `job all` lists every job.',
+    run([id, verb], store) {
+      const s = needGame(store);
+      if (!id) {
+        const rows = jobsView(s);
+        if (!rows.length) return 'You hold no job.';
+        return rows.map(
+          (j) =>
+            `${j.id}: ${j.name} ${j.hanzi} for ${j.giver} · ${j.shift.map((h) => BRANCHES[h]!.hanzi).join('')} · ${j.pay} · kept ${j.kept}, missed ${j.missed} this month${j.here ? '' : ' · away from the post'}`,
+        );
+      }
+      if (id === 'all')
+        return JOBS.map(
+          (j) =>
+            `${j.id}: ${j.name} · ${j.place ?? 'on the road'} · ${j.power ?? 'no power'}${j.seat ? ` from ${j.seat}` : ''}`,
+        );
+      if (!hasJob(id)) return `No job ${id}; \`job all\` lists them.`;
+      const r = verb === 'leave' ? quitJob(s, id) : takeJob(s, id);
+      if (!r.ok) return r.reason;
+      return apply(store, () => r.state, `${verb === 'leave' ? 'Left' : 'Took'} ${job(id).name}.`);
     },
   },
   purse: {

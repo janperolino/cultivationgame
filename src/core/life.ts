@@ -57,13 +57,21 @@ import {
 } from './techniques.ts';
 import { FIRST_IDS, firstsWaiting, noteFirsts, type FirstStep } from './firsts.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
-import { followWheel, hourToFlip, learnRoutine, setHours, type WheelCheck } from './wheel.ts';
+import {
+  followWheel,
+  freeWheel,
+  hourToFlip,
+  learnRoutine,
+  setHours,
+  type WheelCheck,
+} from './wheel.ts';
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
 import { dwellingOf, membershipDay, protectorOf, protectorSpent } from './organizations.ts';
 import { bedNights } from './map/place.ts';
 import { setCopyGain } from './map/encounters.ts';
 import { cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
+import { jobsDay, onShift } from './jobs.ts';
 
 /**
  * The Trees screen opens with anything that lives there (design § UI and screens, Only what you
@@ -139,7 +147,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   // On the road the road wheel's hours are spent travelling, and a ride's at a jostled half.
   const road = cultivationWheel(s);
   const { value: r, state } = withStream(s, 'breakthrough', (rng) =>
-    cultivateDays(road ? { ...s.player, wheel: road.wheel } : s.player, days, {
+    // A shift is Duty only where it is kept: at its place, with no course set (O4).
+    cultivateDays(road ? { ...s.player, wheel: road.wheel, jobs: [] } : onShift(s), days, {
       day: s.calendar.day,
       rng,
       seat: ctx?.seat,
@@ -149,7 +158,11 @@ export const cultivate: DayStep = (s0, days, ctx) => {
       density: road ? 1 : (dwellingOf(s)?.density ?? 1),
     }),
   );
-  const cultivated = road ? { ...r.cultivator, wheel: s.player.wheel } : r.cultivator;
+  const cultivated = {
+    ...r.cultivator,
+    wheel: road ? s.player.wheel : r.cultivator.wheel,
+    jobs: s.player.jobs,
+  };
   let next = addNotes(withPlayer(state, cultivated), r.notes);
   // The hours on the road carry you along your course.
   next = travelDays(next, s.calendar.day - days, s.calendar.day);
@@ -158,6 +171,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   for (const b of r.breakthroughs) if (b.success) next = flare(next, b.ladder, b.major);
   // Your followers' wages and bonds run on through the days (P3.4b).
   next = followersDay(next);
+  // The jobs you hold: shifts kept at their place pay, missed ones cost standing (O4).
+  next = jobsDay(next, s.calendar.day - days, s.calendar.day);
   // Each power you belong to pays its allowance as the month turns (O2), takes its quota and
   // counts your leave (O3).
   next = membershipDay(next, days);
@@ -407,7 +422,7 @@ export function takeItem(s: GameState, id: string): GameState {
 
 /** Gives a kind of work the hour the default rule would: the qi hour worth least. */
 function giveHourTo(s: GameState, kind: HourKind): GameState {
-  const hour = hourToFlip(s.player.wheel, s.player.rootElements);
+  const hour = hourToFlip(freeWheel(s.player), s.player.rootElements);
   return hour === null ? s : giveHours(s, [hour], kind).state;
 }
 

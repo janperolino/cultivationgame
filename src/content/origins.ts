@@ -26,6 +26,8 @@ export interface OriginPath {
   flags: readonly string[];
   /** Where you live once play begins: an atlas entry id. */
   place: string;
+  /** The post the path hands you (content/jobs.ts), seating you in its power at the outer seat. */
+  job?: string;
   /** The chronicle line for testing day, a biography; {name} fills in. */
   chronicle: string;
 }
@@ -69,6 +71,7 @@ export const ORIGINS: readonly Origin[] = [
       stones: 10,
       flags: [],
       place: 'qm-anbian-fu',
+      job: 'school-watch',
       chronicle:
         "On root-testing day, {name} walks to the tester's stone and is taken to the March's garrison school.",
     },
@@ -105,6 +108,7 @@ export const ORIGINS: readonly Origin[] = [
       stones: 30,
       flags: ['cadet'],
       place: 'qm-duigu-qiang',
+      job: 'wall-patrol',
       chronicle:
         'On root-testing day, {name} takes the cadet oath and is sent to the Wall of Piled Bones.',
     },

@@ -158,6 +158,8 @@ export const PostingSchema = z.object({
   done: z.boolean(),
   /** The day its goal was last met, so one fallen short waits a month to be met again. */
   met: z.number().optional(),
+  /** A sect's mission hall posted it: paid in the power's contribution to its members (O4). */
+  power: z.string().optional(),
 });
 export type Posting = z.infer<typeof PostingSchema>;
 
@@ -183,6 +185,8 @@ export const MapLifeSchema = z.object({
   ),
   way: z.enum(WAY_IDS),
   group: GroupSchema.nullable(),
+  /** What a gather hour has dug toward the next find, short of a whole piece (O4). */
+  gathered: z.number().min(0),
   /** The last double-hour (counted from day 0) that looked around, so an hour looks once. */
   lookedAt: z.number().int(),
   /** Flight hours spent today on your own sword, and the day they count for. */

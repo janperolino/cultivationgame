@@ -222,6 +222,9 @@ export const STANDING_ROWS = {
   'missed-quota': { reason: 'Missed our quota', value: -10, fade: SEASON },
   'struck-off': { reason: 'Struck from our rolls', value: -10, fade: YEAR },
   overstayed: { reason: 'Overstayed our leave', value: -5, fade: SEASON },
+  // O4 (design § Cultivation, Duty hours): a duty day missed, and a month of shifts kept.
+  'missed-shift': { reason: 'Missed our shifts', value: -1, fade: SEASON },
+  'kept-watch': { reason: 'Keeps our watch', value: 2, fade: YEAR },
 } as const satisfies Record<string, StandingRow>;
 export type StandingId = keyof typeof STANDING_ROWS;
 export const STANDING_IDS = Object.keys(STANDING_ROWS) as StandingId[];

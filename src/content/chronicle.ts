@@ -20,6 +20,7 @@ import { talent } from './talents.ts';
 import { technique } from './techniques.ts';
 import { anyNode, hasAnyNode } from './nodes.ts';
 import { ORG_ROWS } from './organizations.ts';
+import { hasJob, job, type Job } from './jobs.ts';
 
 export type EventValue = string | number | boolean | null;
 export type EventData = Readonly<Record<string, EventValue>>;
@@ -121,7 +122,29 @@ const POWER_LINES: Record<string, (w: Who, p: string) => string> = {
     `${w.name} misses ${p}'s quota a second month running, and it is noted.`,
   'struck-off': (w, p) => `${capital(p)} strikes ${w.name} from its rolls for three missed quotas.`,
   'leave-over': (w, p) => `${w.name}'s leave from ${p} runs out; each day away now costs.`,
+  left: (w, p) => `${w.name} leaves ${p} by its rule.`,
+  betrayed: (w, p) => `${w.name} walks out on ${p}, and it will not forget.`,
 };
+
+/** A job taken, left, a shift missed, a hire let go (O4). */
+const JOB_LINES: Record<string, (w: Who, j: Job, giver: string) => string> = {
+  taken: (w, j, g) => `${w.name} is set to ${lower(j.name)} for ${g}.`,
+  left: (w, j) => `${w.name} gives up the work: ${lower(j.name)}.`,
+  missed: (w, j) => `${w.name} misses a shift (${lower(j.name)}), and it is noted.`,
+  'let-go': (w, _j, g) => `${capital(g)} lets ${w.name} go for the shifts missed.`,
+};
+
+function lower(t: string): string {
+  return t.charAt(0).toLowerCase() + t.slice(1);
+}
+
+function jobLine(d: EventData, w: Who): string {
+  const id = s(d.job);
+  if (!hasJob(id)) return '';
+  const j = job(id);
+  const giver = j.power && !j.hire ? powerName(j.power) : j.hall;
+  return JOB_LINES[s(d.what)]?.(w, j, giver) ?? '';
+}
 
 function capital(t: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
@@ -197,6 +220,7 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   // A follower who left or turned (P3.4b): the card P3.12 writes says it at more length.
   follower: (d, w) => `${s(d.name)} ${FOLLOWER_ENDS[s(d.why)] ?? 'leaves'} ${w.name}.`,
   power: (d, w) => POWER_LINES[s(d.what)]?.(w, powerName(s(d.power))) ?? '',
+  job: (d, w) => jobLine(d, w),
   spar: (d, w) =>
     `${w.name} spars with ${s(d.foe)} ${SPAR_ENDS[s(d.result)] ?? 'and walks away'}${n(d.turns) > 0 ? ` in ${n(d.turns)} exchange${n(d.turns) === 1 ? '' : 's'}` : ''}.`,
   // A node or manual a save names but the game no longer holds (a made-up one, a removed one) is
@@ -333,6 +357,7 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   spar: 'fight',
   follower: 'people',
   power: 'people',
+  job: 'settled',
   node: 'learned',
   manual: 'learned',
   copy: 'learned',

@@ -41,6 +41,7 @@ import { ROUTINE_TABS, routineTabs, TAB_OF } from './routineTabs.ts';
 import { useNav, type RoutineTab } from './nav.ts';
 import { PracticeTab } from './PracticeTab.tsx';
 import { useGame } from './store.ts';
+import { PostsPanel } from './PostsPanel.tsx';
 import { StudyTab } from './StudyTab.tsx';
 import { readingLine } from './bookcase.ts';
 import { useBeacons } from './useBeacons.ts';
@@ -273,6 +274,7 @@ function DayTab({ game, head }: { game: GameState; head: ReactNode }) {
         <>
           {head}
           <MethodsPanel game={game} switching={switching} onSwitch={setSwitching} />
+          {!switching && <PostsPanel game={game} />}
         </>
       }
     />

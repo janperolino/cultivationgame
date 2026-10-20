@@ -13,6 +13,7 @@ export const ROAD_WORD: Record<RoadHour, string> = {
   look: 'look around and make camp',
   guard: 'guard the caravan',
   home: 'as at home',
+  gather: 'gather what the land grows',
   ...homeWords,
 };
 
@@ -22,6 +23,7 @@ export const ROAD_NAME: Record<RoadHour, string> = {
   look: 'Look around',
   guard: 'Guard',
   home: 'As at home',
+  gather: 'Gather',
   ...(Object.fromEntries(Object.entries(HOUR_KINDS).map(([k, v]) => [k, v.name])) as Record<
     keyof typeof HOUR_KINDS,
     string

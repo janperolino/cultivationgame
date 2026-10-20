@@ -4,7 +4,7 @@ import { comingBackStory } from '../core/comingBack.ts';
 import { createLife, type Creation } from '../core/creation.ts';
 import { gainMethod, giveHours, readCopy, switchMethod } from '../core/life.ts';
 import type { GameState } from '../core/state.ts';
-import { hourToFlip } from '../core/wheel.ts';
+import { freeWheel, hourToFlip } from '../core/wheel.ts';
 import { beacons, rings } from './beacons.ts';
 import { HINTS_OFF_DAYS } from '../content/firsts.ts';
 import { hintDone, hintsWaiting, nextHint } from './hints.ts';
@@ -29,7 +29,7 @@ const creation: Creation = {
 const s0 = () => createLife(creation);
 
 const study = (s: GameState) =>
-  giveHours(s, [hourToFlip(s.player.wheel, s.player.rootElements)!], 'study').state;
+  giveHours(s, [hourToFlip(freeWheel(s.player), s.player.rootElements)!], 'study').state;
 
 describe('beacons', () => {
   it('stand on Routine for a new life: Read now on Study and the wheel; stones from layer 2', () => {

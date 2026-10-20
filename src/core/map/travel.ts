@@ -29,8 +29,18 @@ import { realmIndex } from '../../content/realms.ts';
 import { pay, receive, stonesOf, tierGrade, withStones } from '../purse.ts';
 import { fameOf } from '../resolver/names.ts';
 import { addStanding } from '../resolver/opinion.ts';
-import { addEvent, itemCount, realmOf, type Cultivator, type GameState } from '../state.ts';
+import {
+  addEvent,
+  itemCount,
+  realmOf,
+  withPlayer,
+  type Cultivator,
+  type GameState,
+} from '../state.ts';
+import { hasItem, item } from '../../content/items.ts';
 import { hourLocked, sleepLocked } from '../wheel.ts';
+import { gatherHour } from './gather.ts';
+import { hasJob, job } from '../../content/jobs.ts';
 import { bandAt, bandOfRealm } from './depth.ts';
 import type { Pt } from './geometry.ts';
 import { known, lookAround, seeFrom, senseLi, startKnowledge, type Seeing } from './fog.ts';
@@ -59,8 +69,20 @@ export function mapOf(s: GameState): RegionMap | null {
 }
 
 /** Where a life starts: its origin's home town, or the region's default. */
+/** An atlas place on the map: itself, or the town that stands for it (a kingdom's seat). */
+export function mapPlaceOf(map: RegionMap, id: string): MapPlace | null {
+  const content = regionData(map.id)?.content;
+  return placeById(map, content?.homes[id] ?? id) ?? null;
+}
+
 export function homeOf(s: GameState, map: RegionMap): MapPlace {
   const content = regionData(map.id)!.content;
+  // A post you hold keeps you where its shift is kept: the cadet starts on the Wall (O4).
+  for (const h of s.player.jobs) {
+    const place = hasJob(h.id) ? job(h.id).place : null;
+    const p = place ? mapPlaceOf(map, place) : null;
+    if (p) return p;
+  }
   const atlasHome = s.player.origin ? origin(s.player.origin.id).home : s.player.place;
   const id = (atlasHome && content.homes[atlasHome]) || content.defaultHome;
   return placeById(map, id) ?? placeById(map, content.defaultHome)!;
@@ -93,6 +115,7 @@ export function ensureMap(s: GameState): GameState {
     way: 'light-step',
     group: null,
     lookedAt: -1,
+    gathered: 0,
     flown: { day: -1, hours: 0 },
     inside: null,
     heard: {},
@@ -516,7 +539,7 @@ export function cultivationWheel(s: GameState): { wheel: HourKind[]; factor: num
         ? w.rideHours
           ? (s.player.wheel[i] ?? 'qi')
           : 'sleep'
-        : k === 'look' || k === 'home'
+        : k === 'look' || k === 'home' || k === 'gather'
           ? 'sleep'
           : k;
     wheel.push(kind);
@@ -553,6 +576,7 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
   const w = wayOf(life);
   const foundationFlight = w.id === 'fly' && realmIndex(realmOf(c)) === 1;
   const notes: TravelNote[] = [];
+  const gathered: Record<string, number> = {};
   let paid = 0;
   // Where a group pays out: it pays in that place's vein's grade at most.
   let paidAt: string | null = null;
@@ -572,6 +596,13 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
     const kind = roadHours(life, c)[hour];
     if (kind === 'look' && life.lookedAt !== hourIndex) {
       take(lookAround(map, { ...life, lookedAt: hourIndex }, life.at, sb, sense));
+    }
+    // A gather hour stops you and searches the land where you stand (O4).
+    if (kind === 'gather') {
+      const g = gatherHour(map, life, next.player, sb, hourIndex, end - h0);
+      life = g.life;
+      if (g.player !== next.player) next = withPlayer(next, g.player);
+      for (const [id, n] of Object.entries(g.finds)) gathered[id] = (gathered[id] ?? 0) + n;
     }
     // A group you joined before it left waits for its day.
     const waiting = !!life.group?.departs && h0 < life.group.departs * HOURS_PER_DAY - 1e-9;
@@ -690,6 +721,16 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
     next = { ...next, player: withStones(next.player, purse) };
   }
   for (const id of passed) next = payToll(next, map, id);
+  if (Object.keys(gathered).length) {
+    const what = Object.entries(gathered)
+      .map(([id, n]) => `${hasItem(id) ? item(id).name : id} ×${n}`)
+      .join(', ');
+    const road = [
+      ...next.map!.road,
+      { day: next.calendar.day, kind: 'gather', text: `You gather ${what}.` },
+    ];
+    next = { ...next, map: { ...next.map!, road } };
+  }
   for (const n of notes) {
     const p = placeById(map, n.place);
     if (p) next = addEvent(next, n.type, { place: p.name });
@@ -708,7 +749,8 @@ export function hereWords(s: GameState): string {
   if (!map || !s.map) return '';
   const at = s.map.at;
   const near = map.places.find(
-    (p) => (p.kind === 'town' || p.kind === 'atlas') && Math.hypot(p.x - at[0], p.y - at[1]) < ENTER_LI,
+    (p) =>
+      (p.kind === 'town' || p.kind === 'atlas') && Math.hypot(p.x - at[0], p.y - at[1]) < ENTER_LI,
   );
   if (near) return near.name;
   if (terrainAt(map, at) === 'sea') return 'at sea';

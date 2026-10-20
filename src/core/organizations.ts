@@ -42,6 +42,7 @@ import {
   type Title,
   type Treatment,
 } from '../content/organizations.ts';
+import { hasJob, job, KEPT_MONTH } from '../content/jobs.ts';
 import { hasPerson, person } from '../content/people.ts';
 import { veinAt } from '../content/map/index.ts';
 import {
@@ -1001,7 +1002,8 @@ export function settleQuotas(s: GameState): GameState {
       if (!m) break;
       const seat = m.guest ? 'elder' : seatOf(state.world, who, m.power, r)!;
       const due = quotaOf(m.power, seat, m.guest);
-      const met = due === 0 || m.balance >= due;
+      // A post kept the month before counts as the quota kept (O4).
+      const met = due === 0 || postKeptFor(state.player, m.power, k - 1) || m.balance >= due;
       const missed = met ? 0 : (m.missed ?? 0) + 1;
       let world = met && due > 0 ? addBalance(state.world, who, m.power, -due) : state.world;
       world = withMember(world, m, { quota: k, missed });
@@ -1018,6 +1020,16 @@ export function settleQuotas(s: GameState): GameState {
     }
   }
   return state;
+}
+
+/** Whether a power's post was kept a month: half its shifts or more (core/jobs.ts keeps the tally). */
+function postKeptFor(c: GameState['player'], power: string, month: number): boolean {
+  return c.jobs.some((h) => {
+    if (!hasJob(h.id)) return false;
+    const j = job(h.id);
+    if (!j.power || j.hire || houseOf(j.power) !== houseOf(power)) return false;
+    return h.last?.month === month && h.last.kept >= KEPT_MONTH.share * DAYS_PER_MONTH;
+  });
 }
 
 /** A seat's leave a year in days, counted only by a house; Infinity where none is counted. */

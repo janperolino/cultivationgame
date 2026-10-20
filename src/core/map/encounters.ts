@@ -43,7 +43,7 @@ import {
   type Template,
 } from '../../content/encounters/schema.ts';
 import { hasItem, item, rarityRange, variantId } from '../../content/items.ts';
-import { BANDS, CLOSED_TERRAINS } from '../../content/map/travel.ts';
+import { BANDS, CLOSED_TERRAINS, ROAD_ROUTINES } from '../../content/map/travel.ts';
 import { RARITY_IDS, type RarityId } from '../../content/rarity.ts';
 import { realm as realmInfo, realmIndex, REALMS, type RealmId } from '../../content/realms.ts';
 import { CLOSE_WOUND } from '../../content/resolver.ts';
@@ -379,14 +379,21 @@ export function isBig(t: Template): boolean {
 /**
  * The exit your stance takes, or null when it can't settle it (P3.7's talk). Avoid slips away,
  * takes finds and walks on; Careful hunts the sure kills too; Bold takes clear or close. No stance
- * talks or spends, and the big things always wait.
+ * talks or spends, and the big things always wait. Gathering is the gather hour's (O4): a stance
+ * gathers a find only on a road wheel that keeps one, and otherwise leaves it.
  */
-export function stancePick(t: Template, views: readonly ExitView[], stance: Stance): number | null {
+export function stancePick(
+  t: Template,
+  views: readonly ExitView[],
+  stance: Stance,
+  gathers = true,
+): number | null {
   if (isBig(t)) return null;
   const ok = (v: Verdict | '?') => v === 'clear' || (stance === 'bold' && v === 'close');
   const roads = stance === 'avoid' ? ['slip', 'take', 'pass'] : ['fight', 'slip', 'take', 'pass'];
   for (const v of views) {
     if (v.refused || v.exit.big || !roads.includes(v.exit.road)) continue;
+    if (!gathers && v.exit.act === 'gather') continue;
     if (ok(v.judged)) return v.i;
   }
   return null;
@@ -696,7 +703,9 @@ export function contact(s: GameState, encId: string): GameState {
   const enc = life?.encounters.find((e) => e.id === encId);
   if (!life || !enc) return s;
   const m = meet(s, enc);
-  const pick = stancePick(m.template, exitViews(s, m), life.stance);
+  const routine = [...ROAD_ROUTINES, ...life.ownRoutines].find((r) => r.id === life.roadRoutine);
+  const gathers = !!routine?.hours.includes('gather');
+  const pick = stancePick(m.template, exitViews(s, m), life.stance, gathers);
   if (pick !== null) {
     const r = settle(s, encId, pick, 'stance');
     if (r && !r.stays) return r.state;

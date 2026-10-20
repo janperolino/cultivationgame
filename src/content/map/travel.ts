@@ -72,8 +72,11 @@ export const TERRAIN_NAMES: Readonly<Record<string, string>> = {
 /** A spot within this many li of a road counts as on it. */
 export const ON_ROAD_LI = 80;
 
-/** The road wheel's own kinds of hour, beside the home wheel's; `home` takes the home wheel's hour. */
-export const ROAD_HOUR_KINDS = ['travel', 'look', 'guard', 'home'] as const;
+/**
+ * The road wheel's own kinds of hour, beside the home wheel's; `home` takes the home wheel's hour,
+ * and `gather` searches the land where you stand (O4).
+ */
+export const ROAD_HOUR_KINDS = ['travel', 'look', 'guard', 'home', 'gather'] as const;
 export type RoadHourKind = (typeof ROAD_HOUR_KINDS)[number];
 export type RoadHour = RoadHourKind | HourKind;
 
@@ -127,16 +130,21 @@ export const ROAD_ROUTINES: readonly RoadRoutine[] = [
     id: 'caravan',
     name: 'Caravan guard',
     short: 'Caravan guard',
-    note: 'paid a low-grade stone a day; slow, safe, and on the roads',
+    note: "paid a hire's day in stones; slow, safe, and on the roads",
     hours: [z, z, h, h, g, g, g, g, g, g, l, h],
     roadsOnly: true,
     groupOnly: true,
   },
 ];
 
-/** A guard keeps the caravan's pace, and is paid for the day. */
+/**
+ * The gather hour (O4's talk): pieces an hour finds before Perception, deep in the wilds (a ring
+ * or more past the edge), in the wilds, and near people, where the land is picked over.
+ */
+export const GATHER = { deep: 3, wild: 2, near: 1 } as const;
+
+/** A guard keeps the caravan's pace; the pay is a hire's (content/jobs.ts, caravan-guard). */
 export const GUARD_PACE = 20;
-export const GUARD_PAY_LOW = 1;
 
 // ---------------------------------------------------------------- ways of going
 
