@@ -9,6 +9,7 @@ import type { Manual, ManualNode } from '../content/manuals.ts';
 import { method } from '../content/methods.ts';
 import { rarityRank, type RarityId } from '../content/rarity.ts';
 import { technique } from '../content/techniques.ts';
+import { craftBranchOf, CRAFT_BRANCH_INFO, type CraftBranch } from '../content/trees/craft.ts';
 import { TIER_COUNT, TIER_DEPTH, type Tree, type TreeNode } from '../content/trees/index.ts';
 
 export interface Point {
@@ -204,6 +205,10 @@ export interface Band {
   nameInward: boolean;
   /** Where the capstone stands, or would stand. */
   capstone: Point;
+  /** A craft Dao's three wedges, Hand, Line and Lore, as SVG paths in world px (K2, take B). */
+  wedges: { branch: CraftBranch; d: string }[];
+  /** The capstones a tier not yet written will carry, named, where each will stand. */
+  planned: (Point & { branch: CraftBranch | null; name: string; hanzi: string; text: string })[];
 }
 
 /** A tree node placed on the fan: its point, its angle and ring, and its label's box. */
@@ -269,6 +274,28 @@ function edgePath(a: FanNode, b: FanNode, turn: number, hub: Point): string {
   return `${start} L${out.x + hub.x} ${out.y + hub.y}${arcTo(turn, a.angle, b.angle, hub)} L${b.x} ${b.y}`;
 }
 
+/**
+ * A craft Dao's branches stand at two thirds of the opening either side of the peak, each in the
+ * middle of its wedge: its across over this, where another tree's widest node reads as the edge.
+ */
+const CRAFT_WIDEST = 4.5;
+/** Where a craft Dao's wedges part, as a share of the band's half-opening either side of the peak. */
+const WEDGE_SPLIT = 1 / 3;
+/** A craft Dao's first band starts its wedges this far out, clear of the root seal. */
+const WEDGE_FROM = 70;
+
+/** A branch's spoke angle on a craft Dao: its wedge's middle. */
+const craftAngle = (b: CraftBranch, tier: number) =>
+  (CRAFT_BRANCH_INFO[b].x / CRAFT_WIDEST) * halfOpening(tier) * WIDEST;
+
+/** A wedge from one angle to another between two rings, hub-relative points shifted by `o`. */
+function wedgePath(from: number, to: number, inner: number, outer: number, o: Point): string {
+  const a = polar(from, inner);
+  const b = polar(from, outer);
+  const d = polar(to, inner);
+  return `M${a.x + o.x} ${a.y + o.y} L${b.x + o.x} ${b.y + o.y}${arcTo(outer, from, to, o)} L${d.x + o.x} ${d.y + o.y}${arcTo(inner, to, from, o)} Z`;
+}
+
 /** Px of arc kept between neighbouring spokes, and between a fork's nodes, at the band's middle. */
 const SPOKE_GAP = 120;
 const FORK_GAP = 80;
@@ -327,7 +354,7 @@ function spokeAngles(t: Tree): Map<string, number> {
       else out.set(n.id, 0);
     }
     const reach = halfOpening(tier) * WIDEST;
-    const widest = Math.max(1, ...inTier.map((n) => Math.abs(n.at[0])));
+    const widest = t.craft ? CRAFT_WIDEST : Math.max(1, ...inTier.map((n) => Math.abs(n.at[0])));
     const middle = firstRing(tier) + (TIER_DEPTH / 2) * depthStep(tier);
     const fork = deg(FORK_GAP / middle);
     const branches = [...groups.values()]
@@ -457,6 +484,14 @@ export function fan(t: Tree, grafts: readonly Manual[] = []): Fan {
       nameSize: bandNameSize(ring),
       nameInward: half + 9 > NAME_LOWEST,
       capstone: polar(0, ring + TIER_DEPTH * depthStep(tier)),
+      wedges: [],
+      planned: (t.planned ?? [])
+        .filter((p) => p.tier === tier)
+        .map((p) => {
+          const branch = craftBranchOf(p.branch);
+          const angle = branch ? craftAngle(branch, tier) : 0;
+          return { ...polar(angle, ring + TIER_DEPTH * depthStep(tier)), ...p, branch };
+        }),
     });
   }
   // A node's ring is its authored depth, except that nodes on one spoke keep `spokeStep` apart
@@ -532,6 +567,17 @@ export function fan(t: Tree, grafts: readonly Manual[] = []): Fan {
   for (const b of bands) {
     b.name = at(b.name);
     b.capstone = at(b.capstone);
+    b.planned = b.planned.map((p) => ({ ...p, ...at(p) }));
+    if (!t.craft) continue;
+    // A craft Dao's wedges split the band in thirds, from its inner edge to its outer one.
+    const edge = Math.min(LEVEL, b.half);
+    const split = b.half * WEDGE_SPLIT;
+    const inner = b.tier === 1 ? WEDGE_FROM : b.inner;
+    b.wedges = [
+      { branch: 'hand', d: wedgePath(-edge, -split, inner, b.outer, hub) },
+      { branch: 'line', d: wedgePath(-split, split, inner, b.outer, hub) },
+      { branch: 'lore', d: wedgePath(split, edge, inner, b.outer, hub) },
+    ];
   }
   const nodes = new Map<string, FanNode>();
   for (const [id, p] of placed) {

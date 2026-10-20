@@ -3,11 +3,14 @@
 import { MANUAL_KINDS, manual, type Manual } from '../content/manuals.ts';
 import type { AnyNode } from '../content/nodes.ts';
 import { rarity } from '../content/rarity.ts';
-import { REALMS, realmIndex } from '../content/realms.ts';
+import { CRAFTS, hasRecipe } from '../content/crafts.ts';
+import { hasItem, item } from '../content/items.ts';
+import { REALMS } from '../content/realms.ts';
+import { craftBranchOf, CRAFT_BRANCH_INFO } from '../content/trees/craft.ts';
 import { treeOf, type Tree } from '../content/trees/index.ts';
 import { manualReady } from '../core/manuals.ts';
 import type { Cultivator } from '../core/state.ts';
-import { canLearn, hasLearned, nodeSealed } from '../core/trees.ts';
+import { canLearn, hasLearned, nodeSealed, treeTier } from '../core/trees.ts';
 import { learnedCount, nodeWords } from './bookcase.ts';
 import { formatEffect, formatNumber } from './format.ts';
 import { wakeWords } from './manualWords.ts';
@@ -22,9 +25,18 @@ export function nodeState(c: Cultivator, n: AnyNode): NodeState {
   return check.ok || check.reason.startsWith('Needs') ? 'available' : 'locked';
 }
 
-/** The band you cultivate in on a tree: its ladder's realm, from 1. */
+/** The band you cultivate in on a tree: its ladder's realm, from 1 (a craft Dao's craft reach). */
 export function hereTier(c: Cultivator, t: Tree): number {
-  return realmIndex(c[t.ladder].realm) + 1;
+  return treeTier(c, t);
+}
+
+/** What a craft Dao's seal says it does: the recipe it teaches, or will once its craft opens. */
+export function sealWords(n: AnyNode): string | null {
+  if (n.home !== 'tree' || !n.recipe) return null;
+  const name = hasItem(n.recipe) ? item(n.recipe).name : n.name;
+  if (hasRecipe(n.recipe)) return `Teaches the ${name} recipe`;
+  const craft = treeOf(n.id).craft;
+  return `Teaches the ${name} recipe once ${craft ? CRAFTS[craft].name : 'its craft'} opens`;
 }
 
 /** What a hover card says: a title, a line under it, the effects, the state, and flavor. */
@@ -44,7 +56,9 @@ export interface TipWords {
 export function nodeTip(c: Cultivator, n: AnyNode): TipWords {
   const state = nodeState(c, n);
   const sealed = nodeSealed(c, n);
+  const seal = sealWords(n);
   const effects = [
+    ...(seal ? [seal] : []),
     ...n.effects.map(formatEffect),
     ...('own' in n && n.own ? n.own.map((e) => `${formatEffect(e)} on its technique`) : []),
   ].join(', ');
@@ -62,6 +76,11 @@ export function nodeTip(c: Cultivator, n: AnyNode): TipWords {
   }
   const t = treeOf(n.id);
   const realmName = REALMS[n.tier - 1]!.name;
+  const branch = craftBranchOf(n.branch);
+  const where = branch
+    ? ` · ${CRAFT_BRANCH_INFO[branch].name} ${CRAFT_BRANCH_INFO[branch].hanzi}`
+    : '';
+  const kind = n.recipe ? 'seal' : n.kind;
   const status =
     state === 'learned'
       ? sealed
@@ -73,7 +92,7 @@ export function nodeTip(c: Cultivator, n: AnyNode): TipWords {
   return {
     title: n.name,
     hanzi: n.hanzi,
-    sub: `${t.name} · tier ${n.tier} · ${n.kind}`,
+    sub: `${t.name} · tier ${n.tier}${where} · ${kind}`,
     effects,
     status,
     tone: state === 'learned' ? 'learned' : state === 'available' ? 'ready' : 'plain',

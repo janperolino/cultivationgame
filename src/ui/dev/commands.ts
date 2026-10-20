@@ -55,6 +55,7 @@ import { LADDERS, type LadderId } from '../../content/cultivation.ts';
 import { COPY_KINDS, copyId, copyTitle, hasCopy } from '../../content/copies.ts';
 import { hasItem, item, ITEMS } from '../../content/items.ts';
 import { hasManual, MANUALS } from '../../content/manuals.ts';
+import { TREES, treeNode } from '../../content/trees/index.ts';
 import { registerManuals } from '../../content/nodes.ts';
 import { hasMethod, METHODS } from '../../content/methods.ts';
 import { hasRoutine, ROUTINES } from '../../content/routines.ts';
@@ -827,6 +828,33 @@ export const COMMANDS: Record<string, Command> = {
         return METHODS.map((m) => `${m.id.padEnd(30)} ${m.ladder} · ${m.rarity} · tier ${m.tier}`);
       if (!hasMethod(id)) return `No method "${id}".`;
       return apply(store, (s) => gainMethod(s, id, 'is handed'), `Handed the ${id}.`);
+    },
+  },
+  node: {
+    usage: 'node <id|tree>',
+    help: 'Learns a tree node and every node it grows from, free; a tree id learns its whole tree, to review a draft (K2).',
+    run([id], store) {
+      if (!id) return 'Give a node id, or a tree id like alchemy.';
+      const whole = TREES.find((t) => t.id === id);
+      if (!whole && !TREES.some((t) => t.nodes.some((n) => n.id === id))) return `No node ${id}.`;
+      const want = new Set<string>();
+      const walk = (n: string) => {
+        if (want.has(n)) return;
+        want.add(n);
+        for (const r of treeNode(n).requires) walk(r);
+      };
+      for (const n of whole ? whole.nodes.map((x) => x.id) : [id]) walk(n);
+      return apply(
+        store,
+        (s) => {
+          const nodes = [
+            ...s.player.nodes,
+            ...[...want].filter((n) => !s.player.nodes.includes(n)),
+          ];
+          return withPlayer(s, { ...s.player, nodes });
+        },
+        `Learned ${want.size} node${want.size === 1 ? '' : 's'}.`,
+      );
     },
   },
   manual: {

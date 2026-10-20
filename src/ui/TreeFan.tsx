@@ -93,7 +93,7 @@ function bandName(b: Band, manuals: number): string {
 /** Under a band's name: how much of it is learned, or why it is sealed or empty. */
 function bandStatus(c: Cultivator, t: Tree, b: Band, own: boolean, here: number): string {
   const nodes = tierNodes(t, b.tier);
-  const ladder = LADDER_LABELS[t.ladder].toLowerCase();
+  const ladder = t.craft ? 'realm or soul' : LADDER_LABELS[t.ladder].toLowerCase();
   const mark = b.tier === here ? 'you are here · ' : b.tier === here + 1 ? 'next · ' : '';
   if (!b.charted) return `${mark}not yet charted`;
   if (!own) return `${mark}its own nodes open with your ${ladder}`;
@@ -145,7 +145,10 @@ interface TipControl {
   pinned: string | null;
 }
 
-/** A node as a gilded shape: a ring, a notable's double rim, a medallion with a hanzi. */
+/**
+ * A node as a gilded shape: a ring, a notable's double rim, a medallion with a hanzi; a craft
+ * Dao's recipe seal square, as a slip is.
+ */
 function NodeShape({
   c,
   n,
@@ -177,7 +180,7 @@ function NodeShape({
   return (
     <button
       type="button"
-      className={`fan-node is-${n.kind} is-${state}${buyable ? ' is-buyable' : ''}${sealed ? ' is-sealed' : ''}${medallion ? ' is-medallion' : ''}${selected ? ' is-selected' : ''}`}
+      className={`fan-node is-${n.kind} is-${state}${'recipe' in n && n.recipe ? ' is-seal' : ''}${buyable ? ' is-buyable' : ''}${sealed ? ' is-sealed' : ''}${medallion ? ' is-medallion' : ''}${selected ? ' is-selected' : ''}`}
       style={{ left: at.x - size / 2, top: at.y - size / 2, width: size, height: size }}
       aria-pressed={selected}
       aria-label={`${n.name}, ${n.kind}, ${state}${sealed ? ', sealed' : ''}${state === 'available' ? `, ${n.cost} insight` : ''}`}
@@ -502,6 +505,9 @@ const FanWorld = memo(
           <svg className="fan-lines is-world" width={f.width} height={f.height} aria-hidden="true">
             {f.bands.map((b) => (
               <g key={b.tier} className={b.tier > here ? 'is-sealed' : undefined}>
+                {b.wedges.map((w) => (
+                  <path key={w.branch} className={`fan-wedge is-${w.branch}`} d={w.d} />
+                ))}
                 <path
                   className="fan-band-edge"
                   d={bandArc(b.outer, Math.min(LEVEL, b.span + 4), f.hub)}
@@ -513,7 +519,7 @@ const FanWorld = memo(
                     d={bandArc(b.rim + k * ROW, Math.min(LEVEL, b.span + 2), f.hub)}
                   />
                 ))}
-                {!b.charted && (
+                {!b.charted && b.planned.length === 0 && (
                   <circle
                     className="fan-capstone-place"
                     cx={b.capstone.x}
@@ -521,6 +527,15 @@ const FanWorld = memo(
                     r={20}
                   />
                 )}
+                {b.planned.map((p) => (
+                  <g key={p.name}>
+                    <title>{`${p.name} ${p.hanzi}: ${p.text}`}</title>
+                    <circle className="fan-capstone-place" cx={p.x} cy={p.y} r={20} />
+                    <text className="fan-planned-name" x={p.x} y={p.y + 38}>
+                      {p.name}
+                    </text>
+                  </g>
+                ))}
               </g>
             ))}
             {own && <EdgePaths c={c} edges={f.edges} />}

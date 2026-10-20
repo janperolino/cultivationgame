@@ -36,11 +36,13 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 43;
+export const SAVE_VERSION = 44;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
- * shape), and the Sword tree's Sword Intent, now Sword Bearing (P2.6), old to new. The v12 and v16
+ * shape), the Sword tree's Sword Intent, now Sword Bearing (P2.6), and the Soul tree's Steady
+ * Flame and the Wood Dao's Green Thumb, now Still Flame and Rooting Hand so the names are the
+ * Alchemy and Spirit Farming capstones' (K2), old to new. The v12, v16 and v43
  * migrations carry a learned node across; the v5 one reads old ids through it, since it checks
  * owned nodes against today's trees.
  */
@@ -50,6 +52,8 @@ export const RENAMED_NODES: Readonly<Record<string, string>> = {
   'soul-furnace-hands': 'soul-unshaking-fingers',
   'fist-bone-hardening': 'fist-hard-knuckle-bones',
   'sword-sword-intent': 'sword-sword-bearing',
+  'soul-steady-flame': 'soul-still-flame',
+  'wood-green-thumb': 'wood-rooting-hand',
 };
 
 const renamedNode = (id: string) => RENAMED_NODES[id] ?? id;
@@ -1045,6 +1049,16 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const s = (old.state ?? {}) as Raw;
     const p = (s.player ?? {}) as Raw;
     return { ...old, version: 43, state: { ...s, player: { ...p, crafts: emptyCrafts() } } };
+  },
+  // K2: the Soul tree's Steady Flame is Still Flame and the Wood Dao's Green Thumb Rooting Hand
+  // (`RENAMED_NODES`), their names now the Alchemy and Spirit Farming capstones'.
+  43: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const nodes = Array.isArray(p.nodes)
+      ? (p.nodes as unknown[]).map((id) => (typeof id === 'string' ? renamedNode(id) : id))
+      : p.nodes;
+    return { ...old, version: 44, state: { ...s, player: { ...p, nodes } } };
   },
 };
 

@@ -29,6 +29,12 @@ export interface StatInfo {
   arrives?:
     | 'combat'
     | 'crafting'
+    | 'the steady hand'
+    | 'experimentation'
+    | 'refining'
+    | 'talismans'
+    | 'formations'
+    | 'spirit farming'
     | 'the map'
     | 'the Daos'
     | 'the Ways'
@@ -480,6 +486,30 @@ const BASE_STATS = {
     what: 'cover anywhere, and escape underground',
     arrives: 'encounters',
   },
+  // The craft Dao trees' capstones that change a rule rather than a number (K2).
+  twinFurnace: {
+    name: 'Twin furnace',
+    unit: 'points',
+    what: 'alchemy batches brewed at once, each from its own inputs',
+  },
+  arraysHeld: {
+    name: 'Arrays held',
+    unit: 'points',
+    what: 'arrays more held at one site',
+    arrives: 'formations',
+  },
+  secondHarvest: {
+    name: 'Second harvest',
+    unit: 'points',
+    what: 'harvests more a plot gives a year',
+    arrives: 'spirit farming',
+  },
+  seedCrossing: {
+    name: 'Seed lore',
+    unit: 'points',
+    what: 'crossing crops to find new strains',
+    arrives: 'spirit farming',
+  },
 } as const satisfies Record<string, StatInfo>;
 
 const DAO_STAT_INFO: Record<DaoStatKind, { unit: StatUnit; what: string }> = {
@@ -509,7 +539,106 @@ const DAO_STATS = Object.fromEntries(
   ),
 ) as Record<DaoStatId, StatInfo>;
 
-export const STATS = { ...BASE_STATS, ...DAO_STATS };
+/**
+ * The five crafts, as the craft Dao trees name them (content/crafts.ts `CRAFT_IDS`, kept apart so
+ * the stats never pull in the catalogs; a test holds the two lists alike).
+ */
+export const CRAFT_STAT_CRAFTS = [
+  'alchemy',
+  'refining',
+  'talismans',
+  'formations',
+  'farming',
+] as const;
+type CraftStatCraft = (typeof CRAFT_STAT_CRAFTS)[number];
+const CRAFT_LABEL: Record<CraftStatCraft, string> = {
+  alchemy: 'Alchemy',
+  refining: 'Refining',
+  talismans: 'Talismans',
+  formations: 'Formations',
+  farming: 'Spirit Farming',
+};
+/** The system that reads a craft's stats, while its phase is still to come. */
+const CRAFT_ARRIVES: Record<CraftStatCraft, StatInfo['arrives']> = {
+  alchemy: undefined,
+  refining: 'refining',
+  talismans: 'talismans',
+  formations: 'formations',
+  farming: 'spirit farming',
+};
+
+/**
+ * What the craft Dao trees' perks move (design § Professions, The craft Dao trees): Hand's lift
+ * and Steady hands' reach, Line's holding, yield, speed and fewer blow-ups, Lore's
+ * experimentation odds and pity.
+ */
+export const CRAFT_STAT_KINDS = [
+  'Hold',
+  'Yield',
+  'Lift',
+  'Reach',
+  'Speed',
+  'Safety',
+  'Odds',
+  'Pity',
+] as const;
+export type CraftStatKind = (typeof CRAFT_STAT_KINDS)[number];
+const CRAFT_STAT_INFO: Record<
+  CraftStatKind,
+  { name: string; unit: StatUnit; what: string; arrives?: StatInfo['arrives'] }
+> = {
+  Hold: { name: 'holding', unit: 'odds', what: 'the odds a batch holds' },
+  Yield: { name: 'yield', unit: 'percent', what: 'the pieces a batch makes' },
+  Lift: { name: 'lift', unit: 'points', what: 'bands of rarity a batch lifts' },
+  Reach: {
+    name: 'reach',
+    unit: 'points',
+    what: "bands Steady hands' reach spans when you work by hand",
+    arrives: 'the steady hand',
+  },
+  Speed: { name: 'speed', unit: 'percent', what: 'the craft hours a batch takes' },
+  Safety: { name: 'safety', unit: 'percent', what: 'blow-ups: a failed batch cracking the tool' },
+  Odds: {
+    name: 'experiment',
+    unit: 'odds',
+    what: 'the odds experimenting finds a recipe',
+    arrives: 'experimentation',
+  },
+  Pity: {
+    name: 'pity',
+    unit: 'times',
+    what: 'how fast failed experiments build toward a find',
+    arrives: 'experimentation',
+  },
+};
+
+type CraftStatId = `${CraftStatCraft}${CraftStatKind}`;
+
+/** Each craft's own stats: alchemyHold, refiningLift, talismansYield and so on. */
+const CRAFT_STATS = Object.fromEntries(
+  CRAFT_STAT_CRAFTS.flatMap((c) =>
+    CRAFT_STAT_KINDS.map((k) => {
+      const info = CRAFT_STAT_INFO[k];
+      const arrives = info.arrives ?? CRAFT_ARRIVES[c];
+      return [
+        `${c}${k}`,
+        {
+          name: `${CRAFT_LABEL[c]} ${info.name}`,
+          unit: info.unit,
+          what: `${info.what} in ${CRAFT_LABEL[c]}`,
+          ...(arrives ? { arrives } : {}),
+        },
+      ];
+    }),
+  ),
+) as Record<CraftStatId, StatInfo>;
+
+/** A craft's own stat: `craftStat('alchemy', 'Hold')` is alchemyHold. */
+export function craftStat(c: CraftStatCraft, k: CraftStatKind): StatId {
+  return `${c}${k}`;
+}
+
+export const STATS = { ...BASE_STATS, ...DAO_STATS, ...CRAFT_STATS };
 
 /** A combat Dao's own stat: `daoStat('fire', 'Power')` is firePower. */
 export function daoStat(d: CombatDaoId, k: DaoStatKind): StatId {

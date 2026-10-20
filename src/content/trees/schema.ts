@@ -4,6 +4,7 @@
 // and owning those ends unlocks it. The others are side paths. The capstone links to the next
 // tier's starter, so a tree climbs as one path. Nodes cost insight; a node above its tree's
 // matching level can be learned but stays sealed, doing nothing, until you grow into it.
+import type { CraftId } from '../crafts.ts';
 import type { LadderId } from '../cultivation.ts';
 import type { CombatDaoId } from '../daos.ts';
 import type { Effect } from '../stats.ts';
@@ -63,6 +64,21 @@ export interface TreeNode {
   effects: readonly Effect[];
   /** One line of flavor. */
   text: string;
+  /**
+   * The recipe a craft Dao's seal teaches, by its output's id (design § Professions, The craft Dao
+   * trees): drawn as a square seal, where a perk is round.
+   */
+  recipe?: string;
+}
+
+/** A capstone a tier not yet written will carry: its name and place, before its nodes. */
+export interface PlannedCapstone {
+  tier: number;
+  /** The branch it closes, for a craft Dao's three; none for a tree's one. */
+  branch?: string;
+  name: string;
+  hanzi: string;
+  text: string;
 }
 
 export interface Tree {
@@ -78,6 +94,13 @@ export interface Tree {
    * hold once you own half their nodes. The big three have none.
    */
   dao?: CombatDaoId;
+  /**
+   * A craft Dao's craft (content/crafts.ts): its nodes unseal by your craft reach, the better of
+   * your realm and your soul, and its tiers held add to the craft's yield.
+   */
+  craft?: CraftId;
+  /** The capstones of tiers not yet written, named so their places on the fan carry them. */
+  planned?: readonly PlannedCapstone[];
   branches: readonly Branch[];
   nodes: readonly TreeNode[];
 }

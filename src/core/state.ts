@@ -104,6 +104,8 @@ const CraftsSchema = z.object({
       above: z.boolean(),
       /** Craft hours put in so far. */
       hours: z.number().min(0),
+      /** Batches brewing at once, each from its own inputs: one, or two at Twin Furnace (K2). */
+      batches: z.number().int().min(1).optional(),
     })
     .nullable(),
   tray: z.record(z.string(), z.number().int().min(0)),

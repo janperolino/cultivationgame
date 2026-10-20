@@ -3,7 +3,9 @@
 // worked from the front on Craft hours 艺, and a batch rolls whether it holds by the family's
 // mastery and the tier, then lifts its rarity in bands from the recipe's floor with only the
 // fraction rolled. The furnace is an item in the Bag; a blow-up cracks it until a refiner mends it.
-// Rolls come from the `craft` stream (core/rng.ts), so a seed replays the same batches.
+// Rolls come from the `craft` stream (core/rng.ts), so a seed replays the same batches. The craft
+// Dao trees (K2) teach recipes by their seals and move a batch's numbers by their perks: holding,
+// lift, yield, speed and blow-ups by the craft's own stats, +5% yield a tier held, and Twin Furnace.
 import type { Recipe } from '../content/catalogs/types.ts';
 import {
   BLOW_UP,
@@ -30,15 +32,21 @@ import { MANUALS } from '../content/manuals.ts';
 import { MAX_MASTERY } from '../content/mastery.ts';
 import { rarityRank, type RarityId } from '../content/rarity.ts';
 import { realmIndex } from '../content/realms.ts';
+import { craftStat, type CraftStatKind, type StatId } from '../content/stats.ts';
+import { CRAFT_DAOS, tierNodes, type Tree } from '../content/trees/index.ts';
 import { stow } from './gear.ts';
 import type { Rng } from './rng.ts';
 import { addItem, type Cultivator, type CraftsState } from './state.ts';
+import { stats } from './stats.ts';
+import { tierHeld } from './trees.ts';
 
 // ---------------------------------------------------------------- what you know and reach
 
-/** The recipe each node teaches: a slip's one node now, K2's craft Dao seals later. */
+/** The recipe each node teaches: a slip's one node, or a craft Dao's seal. */
 const TEACHES = new Map(
-  MANUALS.flatMap((m) => m.nodes.filter((n) => n.recipe).map((n) => [n.id, n.recipe!] as const)),
+  [...MANUALS.flatMap((m) => m.nodes), ...CRAFT_DAOS.flatMap((t) => t.nodes)]
+    .filter((n) => n.recipe)
+    .map((n) => [n.id, n.recipe!] as const),
 );
 
 /** The recipes a cultivator knows, in the order their nodes were learned. */
@@ -79,6 +87,38 @@ export function craftReach(c: Cultivator): CraftReach {
 /** Whether the crafts are open to you: a tool held or a recipe known (Where crafts live). */
 export function craftsOpen(c: Cultivator): boolean {
   return knownRecipes(c).length > 0 || CRAFT_IDS.some((k) => toolsHeld(c, k).length > 0);
+}
+
+// ---------------------------------------------------------------- the craft Dao
+
+/** A craft's Dao tree. */
+export function craftDao(craft: CraftId): Tree {
+  return CRAFT_DAOS.find((t) => t.craft === craft)!;
+}
+
+/** The craft Dao's tiers held, from tier 1 up while each is held at half its nodes. */
+export function craftTiersHeld(c: Cultivator, craft: CraftId): number {
+  const t = craftDao(craft);
+  let n = 0;
+  while (tierNodes(t, n + 1).length > 0 && tierHeld(c, t, n + 1)) n++;
+  return n;
+}
+
+/** Yield a craft Dao tier held adds (A batch, the Dao bonus). */
+export const DAO_YIELD = 0.05;
+
+/**
+ * The element Daos' craft side paths (design § The combat Daos): Fire control adds to alchemy's
+ * lift one for one, and Metal's forge sense to refining's.
+ */
+const ELEMENT_LIFT: Partial<Record<CraftId, StatId>> = {
+  alchemy: 'fireControl',
+  refining: 'forgeSense',
+};
+
+/** A craft's own stat from the trees, talents and gear: `own(c, 'alchemy', 'Hold')`. */
+function own(c: Cultivator, craft: CraftId, kind: CraftStatKind): number {
+  return stats(c)[craftStat(craft, kind)];
 }
 
 // ---------------------------------------------------------------- mastery
@@ -148,12 +188,14 @@ export function holdOdds(c: Cultivator, r: Recipe): number {
   const adj =
     gap >= 2 ? TIER_ODDS.farBelow : gap === 1 ? TIER_ODDS.below : gap < 0 ? TIER_ODDS.above : 0;
   const base = HOLDS[familyLevel(c, r.family)]! + adj;
-  return Math.max(0, Math.min(MAX_HOLD, base * (matched ? MATCHED_SOUL : 1)));
+  const odds = base * (matched ? MATCHED_SOUL : 1) + own(c, r.craft, 'Hold');
+  return Math.max(0, Math.min(MAX_HOLD, odds));
 }
 
-/** A failed batch's share that blows up and cracks the tool. */
-export function blowUpShare(c: Cultivator): number {
-  return craftReach(c).matched ? BLOW_UP.matched : BLOW_UP.share;
+/** A failed batch's share that blows up and cracks the tool, fewer by the craft's safety. */
+export function blowUpShare(c: Cultivator, craft: CraftId): number {
+  const share = craftReach(c).matched ? BLOW_UP.matched : BLOW_UP.share;
+  return share * Math.max(0, 1 - own(c, craft, 'Safety'));
 }
 
 /** The lift a batch carries, in bands from the recipe's floor (A batch, Rarity is lift). */
@@ -161,12 +203,34 @@ export function liftOf(c: Cultivator, r: Recipe, above: boolean, tool: Item | nu
   const mastery = LIFT.mastery[familyLevel(c, r.family)]!;
   const inputs = above ? LIFT.inputs : 0;
   const toolBands = tool ? Math.max(0, rarityRank(tool.rarity) - rarityRank('white')) : 0;
-  return mastery + inputs + toolBands * LIFT.toolBand;
+  const element = ELEMENT_LIFT[r.craft];
+  const dao = own(c, r.craft, 'Lift') + (element ? stats(c)[element] : 0);
+  return mastery + inputs + toolBands * LIFT.toolBand + dao;
 }
 
-/** The pieces a batch that holds makes: the recipe's yield and +10% a mastery level. */
+/**
+ * The pieces a batch that holds makes: the recipe's yield, +10% a mastery level, +5% a craft Dao
+ * tier held and the craft's own yield.
+ */
 export function yieldOf(c: Cultivator, r: Recipe): number {
-  return Math.round(recipeYield(r) * (1 + YIELD_BY_MASTERY[familyLevel(c, r.family)]!));
+  const share =
+    YIELD_BY_MASTERY[familyLevel(c, r.family)]! +
+    DAO_YIELD * craftTiersHeld(c, r.craft) +
+    own(c, r.craft, 'Yield');
+  return Math.round(recipeYield(r) * (1 + share));
+}
+
+/** The fewest hours speed can bring a batch to, as a share of its own. */
+export const FASTEST = 0.5;
+
+/** Craft hours a batch takes for you: the recipe's, less the craft's speed. */
+export function batchHours(c: Cultivator, r: Recipe): number {
+  return recipeHours(r) * Math.max(FASTEST, 1 + own(c, r.craft, 'Speed'));
+}
+
+/** Batches brewed at once: one, and one more a Twin Furnace, for alchemy (K2). */
+export function atOnce(c: Cultivator, r: Recipe): number {
+  return 1 + (r.craft === 'alchemy' ? Math.floor(stats(c).twinFurnace) : 0);
 }
 
 /**
@@ -312,17 +376,28 @@ export interface BenchResult {
   batches: number;
 }
 
-/** Loads the front batch: the tool must be whole and the Bag must fill it. */
+/**
+ * Loads the front batch: the tool must be whole and the Bag must fill it. A Twin Furnace loads a
+ * second batch of the same entry beside it when the entry and the Bag hold one, each from its own
+ * inputs; the inputs' lift counts only when every batch has them above the floor.
+ */
 function load(c: Cultivator): Cultivator | null {
   const entry = c.crafts.bench[0];
   if (!entry) return null;
   const r = recipe(entry.recipe);
   if (cantBrew(c, r.output) || !toolFor(c, r)) return null;
-  const plan = planInputs(c, r);
-  if (plan.short.length > 0) return null;
   let next = c;
-  for (const [id, n] of Object.entries(plan.take)) next = addItem(next, id, -n);
-  return withCrafts(next, { front: { recipe: r.output, above: plan.above, hours: 0 } });
+  let batches = 0;
+  let above = true;
+  while (batches < Math.min(entry.batches, atOnce(c, r))) {
+    const plan = planInputs(next, r);
+    if (plan.short.length > 0) break;
+    for (const [id, n] of Object.entries(plan.take)) next = addItem(next, id, -n);
+    above &&= plan.above;
+    batches++;
+  }
+  if (batches === 0) return null;
+  return withCrafts(next, { front: { recipe: r.output, above, hours: 0, batches } });
 }
 
 /** Mastery from one batch: 1 at your tier, a quarter below it, half that when it failed. */
@@ -331,10 +406,15 @@ function masteryFrom(c: Cultivator, r: Recipe, held: boolean): number {
   return at * (held ? 1 : CRAFT_MASTERY.failed);
 }
 
-/** Resolves the front batch: whether it holds, a blow-up, the lift, the yield and mastery. */
-function finish(c: Cultivator, day: number, rng: Rng, events: BenchEvent[]): Cultivator {
-  const front = c.crafts.front!;
-  const r = recipe(front.recipe);
+/** Resolves one batch: whether it holds, a blow-up, the lift, the yield and mastery. */
+function resolve(
+  c: Cultivator,
+  r: Recipe,
+  above: boolean,
+  day: number,
+  rng: Rng,
+  events: BenchEvent[],
+): Cultivator {
   const tool = toolFor(c, r);
   let next = c;
   const held = rng.chance(holdOdds(c, r));
@@ -342,7 +422,7 @@ function finish(c: Cultivator, day: number, rng: Rng, events: BenchEvent[]): Cul
   let count = 0;
   let blew = false;
   if (held) {
-    const lift = liftOf(c, r, front.above, tool);
+    const lift = liftOf(c, r, above, tool);
     const range = rarityRange(item(r.output));
     const bands = Math.floor(lift) + (rng.chance(lift - Math.floor(lift)) ? 1 : 0);
     const rar = range[Math.min(range.length - 1, bands)]!;
@@ -354,7 +434,7 @@ function finish(c: Cultivator, day: number, rng: Rng, events: BenchEvent[]): Cul
       next = withCrafts(next, {
         tray: { ...next.crafts.tray, [made]: (next.crafts.tray[made] ?? 0) + s.left },
       });
-  } else if (tool && rng.chance(blowUpShare(c))) {
+  } else if (tool && rng.chance(blowUpShare(c, r.craft))) {
     blew = true;
     const cracked = variantId(baseOf(tool.id), tool.rarity, { cracked: true });
     next = addItem(addItem(next, tool.id, -1), cracked, 1);
@@ -376,19 +456,29 @@ function finish(c: Cultivator, day: number, rng: Rng, events: BenchEvent[]): Cul
     };
     events.push({ type: 'craft-level', data: { family: r.family, level } });
   }
-  // The bench moves on.
-  const [entry, ...rest] = next.crafts.bench;
-  const bench =
-    entry && entry.recipe === r.output && entry.batches > 1
-      ? [{ ...entry, batches: entry.batches - 1 }, ...rest]
-      : entry?.recipe === r.output
-        ? rest
-        : next.crafts.bench;
   const recent = [{ day, recipe: r.output, made, count, blew }, ...next.crafts.recent].slice(
     0,
     RECENT_BATCHES,
   );
-  return withCrafts(next, { bench, front: null, recent });
+  return withCrafts(next, { recent });
+}
+
+/** Resolves the front's batches, each rolled alone, and moves the bench on past them. */
+function finish(c: Cultivator, day: number, rng: Rng, events: BenchEvent[]): Cultivator {
+  const front = c.crafts.front!;
+  const r = recipe(front.recipe);
+  const batches = front.batches ?? 1;
+  let next = c;
+  for (let i = 0; i < batches; i++) next = resolve(next, r, front.above, day, rng, events);
+  // The bench moves on.
+  const [entry, ...rest] = next.crafts.bench;
+  const bench =
+    entry && entry.recipe === r.output && entry.batches > batches
+      ? [{ ...entry, batches: entry.batches - batches }, ...rest]
+      : entry?.recipe === r.output
+        ? rest
+        : next.crafts.bench;
+  return withCrafts(next, { bench, front: null });
 }
 
 /**
@@ -408,14 +498,14 @@ export function workBench(c: Cultivator, hours: number, day: number, rng: Rng): 
       next = loaded;
     }
     const front = next.crafts.front!;
-    const need = recipeHours(recipe(front.recipe)) - front.hours;
+    const need = batchHours(next, recipe(front.recipe)) - front.hours;
     if (left + 1e-9 < need) {
       next = withCrafts(next, { front: { ...front, hours: front.hours + left } });
       break;
     }
     left -= need;
+    batches += front.batches ?? 1;
     next = finish(next, day, rng, events);
-    batches++;
   }
   return { cultivator: next, events, batches };
 }
