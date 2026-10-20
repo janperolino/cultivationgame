@@ -173,6 +173,22 @@ export const CultivatorSchema = z.object({
   routines: z.array(z.string()),
   /** Wheels the cultivator saved under a name; they earn no discipline bonus. */
   savedRoutines: z.array(z.object({ name: z.string(), hours: Wheel })),
+  /**
+   * Jobs held (content/jobs.ts, O4): each puts its shift on the wheel as Duty hours. This month's
+   * duty days kept and missed, the pay owed short of a whole stone or point, and last month's tally, which
+   * the quota and the standing read as the month turns.
+   */
+  jobs: z.array(
+    z.object({
+      id: z.string(),
+      since: z.number(),
+      month: z.number().int(),
+      kept: z.number().min(0),
+      missed: z.number().min(0),
+      owed: z.object({ stones: z.number().min(0), points: z.number().min(0) }),
+      last: z.object({ month: z.number().int(), kept: z.number(), missed: z.number() }).optional(),
+    }),
+  ),
   /** When minor breakthroughs happen on their own, and whether qi hours burn stones. */
   plan: z.object({
     auto: z.enum(AUTO_IDS),
@@ -424,6 +440,7 @@ export function newCultivator(
     wheel: studied ? flipHour(FRESH_WHEEL, elements, 'study').wheel : [...FRESH_WHEEL],
     routines: opts.routines ?? [],
     savedRoutines: [],
+    jobs: [],
     plan: { auto: 'safe', burnStones: opts.burnStones ?? false },
     flags: opts.flags ?? [],
     nodes: [],

@@ -19,7 +19,15 @@ import {
 } from '../content/shops.ts';
 import { worldWhen } from '../core/chronicle.ts';
 import { encounterTemplate } from '../content/encounters/index.ts';
-import { claimPosting, dropPosting, postingsAt, takePosting } from '../core/map/board.ts';
+import {
+  claimPosting,
+  dropPosting,
+  isMissionHall,
+  postingsAt,
+  takePosting,
+} from '../core/map/board.ts';
+import { jobsAt } from '../core/jobs.ts';
+import { WorkHere } from './PostsPanel.tsx';
 import { band, bandAt, depthInfo, qiAt } from '../core/map/depth.ts';
 import { known } from '../core/map/fog.ts';
 import { gateOf, placeKindOf, shownRealm, stepOut } from '../core/map/gate.ts';
@@ -40,7 +48,7 @@ import {
   type Change,
 } from '../core/map/place.ts';
 import { areaById, placeById, type MapPlace, type RegionMap } from '../core/map/region.ts';
-import { pin, stopHere } from '../core/map/travel.ts';
+import { mapOf, pin, stopHere } from '../core/map/travel.ts';
 import {
   lotSize,
   market,
@@ -141,7 +149,33 @@ function doorsOf(s: GameState, p: MapPlace, info: PlaceKindInfo): [string, Door[
       sub: `${cap(theName(p.id))}’s own chapters, by seat`,
       tag: 'members',
     });
-  if (kind === 'gate') return [['Behind the gate', shops]];
+  // Work (O4): the posts and hires taken here, and a sect's mission hall, its bounty office.
+  const work: Door[] = [];
+  const jobs = jobsAt(p.id, s.map ? mapOf(s) : null);
+  if (jobs.length > 0)
+    work.push({
+      id: 'work',
+      seal: '差',
+      name: 'Work',
+      sub: `${jobs.length === 1 ? 'one post' : `${jobs.length} posts and hires`}, by the shift`,
+    });
+  if (isMissionHall(p.id)) {
+    const held = s.map?.postings.filter((x) => x.board === p.id && x.done).length ?? 0;
+    work.push({
+      id: 'board',
+      seal: '任',
+      name: 'Mission hall',
+      sub: held ? `${held} to be paid here` : 'the sect’s postings, paid in contribution',
+      tag: held ? 'paid' : 'members',
+    });
+  }
+  if (kind === 'gate')
+    return (
+      [
+        ['Behind the gate', shops],
+        ['Work', work],
+      ] as [string, Door[]][]
+    ).filter(([, d]) => d.length > 0);
   const trade = [...shops];
   if (info.changer)
     trade.push({
@@ -193,7 +227,7 @@ function doorsOf(s: GameState, p: MapPlace, info: PlaceKindInfo): [string, Door[
             sub: `you sleep here by rule: ${info.bed} taels a night`,
           },
         ];
-  if (info.board) {
+  if (info.board && !isMissionHall(p.id)) {
     const held = s.map?.postings.filter((x) => x.board === p.id && x.done).length ?? 0;
     hear.push({
       id: 'board',
@@ -206,6 +240,7 @@ function doorsOf(s: GameState, p: MapPlace, info: PlaceKindInfo): [string, Door[
   return (
     [
       ['Trade', trade],
+      ['Work', work],
       [info.guides > 0 ? 'Hear and hire' : 'Hear', hear],
       ['Rest', rest],
     ] as [string, Door[]][]
@@ -435,6 +470,8 @@ function Counter({
       return <CaravansCounter game={game} map={map} place={place} act={act} say={say} />;
     case 'board':
       return <BoardCounter game={game} map={map} place={place} act={act} say={say} />;
+    case 'work':
+      return <WorkHere game={game} map={map} place={place.id} />;
     case 'bed': {
       const bed = PLACE_KIND_INFO[placeKindOf(place)!].bed;
       return (

@@ -40,6 +40,10 @@
   --hour-look: #9fc4ad;
   --hour-guard: #b98a6e;
   --hour-home: #7d8692;
+  --hour-gather: #8fae6a;
+  /* A job's Duty hours 值 (O4): seal vermilion, and the red of a shift gone unkept. */
+  --hour-duty: #c4553d;
+  --shift-missed: #e0503f;
   /* Dawn's purple qi at 卯. */
   --dawn: #c4a3f0;
   /* Qi as the figure draws it in, tinted by the hour (ui/qiCanvas.ts); dawn's purple is --dawn. */
@@ -2325,6 +2329,44 @@ select {
 
 .hour-home {
   --hour: var(--hour-home);
+}
+
+.hour-gather {
+  --hour: var(--hour-gather);
+}
+
+.hour-duty {
+  --hour: var(--hour-duty);
+}
+
+/* A Duty hour: the 值 seal over a lock, and its shift as an arc on the bezel naming the work. */
+.wheel-duty {
+  fill: var(--hour-duty);
+  font-size: calc(17px * var(--text-scale));
+  text-anchor: middle;
+}
+
+.wheel-shift-arc {
+  fill: none;
+  stroke: var(--hour-duty);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.wheel-shift-name {
+  fill: color-mix(in srgb, var(--hour-duty) 70%, var(--text));
+  font-size: calc(10px * var(--text-scale));
+  letter-spacing: 0.04em;
+  text-anchor: middle;
+}
+
+.wheel-shift.is-missed .wheel-shift-arc {
+  stroke: var(--shift-missed);
+  stroke-dasharray: 2 4;
+}
+
+.wheel-shift.is-missed .wheel-shift-name {
+  fill: var(--shift-missed);
 }
 
 /* The wheel's editor: the hour picked or the hour now, and what the hours go to. */
@@ -10158,4 +10200,80 @@ p.map-above {
 :root[data-motion='reduced'] .main.is-leaving *,
 :root[data-motion='reduced'] .main.is-entering * {
   animation: none;
+}
+
+/* The post card in Routine's column (O4): the work, its giver, shift, pay and perk, and the way out. */
+.posts-panel .post + .post {
+  border-top: 1px solid var(--line, rgb(255 255 255 / 0.08));
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.post-name {
+  margin: 0;
+  font-size: calc(15px * var(--text-scale));
+}
+
+.post-name .hanzi {
+  color: var(--hour-duty);
+  margin-left: 4px;
+}
+
+.post-giver {
+  margin: 2px 0 8px;
+}
+
+.post-rows {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 3px 14px;
+  margin: 0;
+  font-size: calc(12.5px * var(--text-scale));
+}
+
+.post-rows dt {
+  color: var(--muted);
+}
+
+.post-rows dd {
+  margin: 0;
+}
+
+.post-leave {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+/* The work a place gives, at its Work door (O4). */
+.place-work-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.place-work-row {
+  display: grid;
+  grid-template-columns: 1fr max-content;
+  gap: 2px 12px;
+  align-items: center;
+}
+
+.place-work-row > .caption {
+  grid-column: 1;
+}
+
+.place-work-row > button,
+.place-work-row > .caption:nth-child(3) {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.place-work-name .hanzi {
+  color: var(--hour-duty);
+  margin-left: 4px;
 }

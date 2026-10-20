@@ -10,6 +10,7 @@ import type { Catalog, Lot } from '../content/catalogs/types.ts';
 import { hasCopy } from '../content/copies.ts';
 import { item, itemKind, STAPLE_TAGS, variantId, type Item } from '../content/items.ts';
 import { REGIONS, veinAt } from '../content/map/index.ts';
+import { SHOPS } from '../content/shops.ts';
 import {
   BASKET,
   FILLED_BY,
@@ -566,4 +567,21 @@ function surplusLine(m: Market, g: GoodSum): string {
     return `${cap(name)} ${is} cheap: the ${landOf(m).terrain} round ${m.name} gives half again what it uses.`;
   const grain = g.season === 'grain';
   return `${cap(name)} ${is} cheap: ${m.name} ${grain ? 'grows' : 'makes'} half again what it ${grain ? 'eats' : 'uses'}.`;
+}
+
+/**
+ * What the land grows at a spot in the wilds (O4, the gather hour): the herb, material and staple
+ * lines naming its terrain in its region's catalogs and its continent's, on a vein at least as
+ * strong as the line asks. Sorted by thing, so a seeded pick holds on any machine.
+ */
+export function landLines(region: string, terrain: string, vein: number): string[] {
+  const continent = SHOPS.find((sh) => sh.region === region)?.continent ?? null;
+  const things = new Set<string>();
+  for (const c of CATALOGS) {
+    const mine = c.layer === 'continent' ? c.at === continent : catalogRegion(c) === region;
+    if (!mine) continue;
+    for (const l of c.lots)
+      if (l.land?.includes(terrain) && vein >= (l.landVein ?? 0)) things.add(l.thing);
+  }
+  return [...things].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }

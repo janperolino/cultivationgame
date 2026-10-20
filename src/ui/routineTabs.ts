@@ -10,6 +10,7 @@ export const TAB_OF: Record<HourKind, RoutineTab> = {
   body: 'day',
   soul: 'day',
   sleep: 'day',
+  duty: 'day',
   practice: 'practice',
   study: 'study',
 };

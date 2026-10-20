@@ -22,7 +22,7 @@ import { advance } from './loop.ts';
 import { loadSave, makeSave, SAVE_VERSION } from './save/format.ts';
 import { newLife, withPlayer, type GameState } from './state.ts';
 import { stopPractice } from './techniques.ts';
-import { hourToFlip } from './wheel.ts';
+import { freeWheel, hourToFlip } from './wheel.ts';
 
 const METHOD = 'method:garrison-standard';
 
@@ -53,7 +53,7 @@ const waiting = (s: GameState) => firstsWaiting(s).map((w) => w.hint);
 
 /** Turns the qi hour the default rule would pick to a kind of work. */
 const give = (s: GameState, kind: HourKind): GameState =>
-  giveHours(s, [hourToFlip(s.player.wheel, s.player.rootElements)!], kind).state;
+  giveHours(s, [hourToFlip(freeWheel(s.player), s.player.rootElements)!], kind).state;
 
 describe('a new lineage', () => {
   it('starts all qi with its method unread, and nothing moves until it is read and taken up', () => {

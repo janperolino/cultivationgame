@@ -14,13 +14,20 @@ import {
   type ReactNode,
 } from 'react';
 import { ELEMENT_INFO, phaseOf } from '../content/elements.ts';
-import { BRANCHES, HOUR_KIND_IDS, HOUR_KINDS, type HourKind } from '../content/hours.ts';
+import {
+  BRANCHES,
+  DUTY_HANZI,
+  HOUR_KIND_IDS,
+  HOUR_KINDS,
+  type HourKind,
+} from '../content/hours.ts';
 import { ROAD_ROUTINES, type RoadHour } from '../content/map/travel.ts';
 import { dayRates, type HourYield } from '../core/cultivation.ts';
 import { Bezel } from './RoutineRings.tsx';
 import { roadRoutine, setRoadHours } from '../core/map/travel.ts';
 import type { GameState } from '../core/state.ts';
-import { hourKindOpen, hourLocked } from '../core/wheel.ts';
+import { dutyAt, hourKindOpen, hourLocked } from '../core/wheel.ts';
+import { jobsView } from '../core/jobs.ts';
 import { formatPercent, formatRate } from './format.ts';
 import { hourRun, joinPicks, pressHour, type HourPick } from './hourPick.ts';
 import { ROAD_NAME, ROAD_WORD } from './roadWords.ts';
@@ -36,6 +43,47 @@ const GAP_DEG = 1.2;
 function polar(r: number, deg: number): [number, number] {
   const a = ((deg - 90) * Math.PI) / 180;
   return [r * Math.cos(a), r * Math.sin(a)];
+}
+
+/** An arc along the bezel from one clock angle to another, the short way, as a path. */
+function arcPath(r: number, from: number, to: number, reverse = false): string {
+  const [x0, y0] = polar(r, reverse ? to : from);
+  const [x1, y1] = polar(r, reverse ? from : to);
+  return `M ${x0} ${y0} A ${r} ${r} 0 0 ${reverse ? 0 : 1} ${x1} ${y1}`;
+}
+
+/** A job's shift on the ring (O4): its hours, the work's name, and whether it goes unkept today. */
+export interface Shift {
+  id: string;
+  hours: readonly number[];
+  name: string;
+  missed?: boolean;
+}
+
+/** Where a shift's arc runs on the bezel, and its name outside it. */
+const SHIFT_R = 160;
+const SHIFT_NAME_R = 179;
+
+/** A shift as an arc on the bezel naming the work, or ticked red while it goes unkept. */
+function ShiftArc({ shift }: { shift: Shift }) {
+  const id = `shift-${useId()}`;
+  if (!shift.hours.length) return null;
+  const from = shift.hours[0]! * 30 - 15 + GAP_DEG;
+  const to = shift.hours[shift.hours.length - 1]! * 30 + 15 - GAP_DEG;
+  const mid = ((((from + to) / 2) % 360) + 360) % 360;
+  // Names in the lower half run the other way, so they read left to right.
+  const lower = mid > 90 && mid < 270;
+  return (
+    <g className={`wheel-shift${shift.missed ? ' is-missed' : ''}`} aria-hidden="true">
+      <path className="wheel-shift-arc" d={arcPath(SHIFT_R, from, to)} />
+      <path id={id} d={arcPath(SHIFT_NAME_R, from, to, lower)} fill="none" />
+      <text className="wheel-shift-name" dy={lower ? '0.7em' : '0'}>
+        <textPath href={`#${id}`} startOffset="50%">
+          {shift.missed ? `${shift.name}: missed` : shift.name}
+        </textPath>
+      </text>
+    </g>
+  );
 }
 
 /** Where dawn's marker sits: inside 卯's segment, near its outer edge. */
@@ -59,6 +107,7 @@ const YIELD_UNITS: Record<HourKind, (y: HourYield) => string> = {
   study: (y) => `+${formatRate(y.insight)} insight`,
   practice: (y) => `+${formatRate(y.practice)} practice days`,
   sleep: () => 'nothing',
+  duty: () => "the job's pay",
 };
 
 /** The bonuses on an hour's work: "element +25%", "dawn +10%", "discipline +10%". */
@@ -121,6 +170,8 @@ interface Cell {
   /** The hour's element matches your root, so its marker is lit. */
   match: boolean;
   beckoning?: boolean;
+  /** A shift's Duty hour: the 值 seal over a lock. */
+  duty?: boolean;
 }
 
 /**
@@ -136,7 +187,9 @@ function Ring({
   caption,
   label,
   beacon,
+  shifts = [],
 }: {
+  shifts?: readonly Shift[];
   cells: readonly Cell[];
   pick: HourPick;
   onPick: (pick: number[]) => void;
@@ -248,7 +301,19 @@ function Ring({
             <text className="wheel-branch hanzi" x={hx} y={hy} dy="0.35em">
               {b.hanzi}
             </text>
-            {cell.label === null ? (
+            {cell.duty ? (
+              <>
+                <text
+                  className="wheel-duty hanzi"
+                  x={polar(94, i * 30)[0]}
+                  y={polar(94, i * 30)[1]}
+                  dy="0.35em"
+                >
+                  {DUTY_HANZI}
+                </text>
+                <LockIcon x={polar(76, i * 30)[0]} y={polar(76, i * 30)[1]} />
+              </>
+            ) : cell.label === null ? (
               <LockIcon x={kx} y={ky} />
             ) : (
               <text className="wheel-kind" x={kx} y={ky} dy="0.35em">
@@ -271,6 +336,9 @@ function Ring({
           </g>
         );
       })}
+      {shifts.map((sh) => (
+        <ShiftArc key={sh.id} shift={sh} />
+      ))}
       <circle className="wheel-centre" r={R_INNER - 6} />
       <text className="wheel-center-title" x={0} y={-8}>
         {title}
@@ -299,6 +367,31 @@ function PickHead({ pick }: { pick: HourPick }) {
       <span className="hanzi">{pick.map((i) => BRANCHES[i]!.hanzi).join(' ')}</span>
     </h3>
   );
+}
+
+/** The picked hours on a shift, which no kind can take while the job is held (O4). */
+function DutyNote({ game, pick }: { game: GameState; pick: HourPick }) {
+  const on = pick.filter((i) => dutyAt(game.player, i));
+  if (on.length === 0) return null;
+  const names = [...new Set(on.map((i) => dutyAt(game.player, i)!.name))];
+  return (
+    <p className="caption">
+      {on.map((i) => BRANCHES[i]!.hanzi).join(' and ')} {on.length === 1 ? 'is' : 'are'} your shift
+      ({names.join(', ')}): Duty, locked while you hold the work.
+    </p>
+  );
+}
+
+/** The wheel's shifts: each job you hold, missed while you are away from its post. */
+function shiftsOf(game: GameState, road = false): Shift[] {
+  return jobsView(game)
+    .filter((j) => j.shift.length > 0)
+    .map((j) => ({
+      id: j.id,
+      hours: j.shift,
+      name: j.drilling ? `${j.name} from layer 4` : j.name,
+      missed: !j.drilling && (road || !j.here),
+    }));
 }
 
 /** The picked hours locked to sleep, which a kind other than sleep passes over. */
@@ -347,10 +440,14 @@ export function DayWheel({
     const b = BRANCHES[i]!;
     const locked = hourLocked(c, i);
     const element = ELEMENT_INFO[b.element].name.toLowerCase();
+    const duty = y.kind === 'duty' ? dutyAt(c, i) : null;
     return {
       tint: y.kind,
       label: locked ? null : HOUR_KINDS[y.kind].name,
-      title: `${b.hanzi} ${b.name} (${b.clock}), ${element}: ${HOUR_KINDS[y.kind].name} · ${hourYieldText(y)}${locked ? ' · locked to sleep at Qi Condensation' : ''}`,
+      duty: !!duty,
+      title: duty
+        ? `${b.hanzi} ${b.name} (${b.clock}), ${element}: Duty · ${duty.name}, your shift`
+        : `${b.hanzi} ${b.name} (${b.clock}), ${element}: ${HOUR_KINDS[y.kind].name} · ${hourYieldText(y)}${locked ? ' · locked to sleep at Qi Condensation' : ''}`,
       aria: `${b.hanzi} ${b.name}, ${b.clock}, ${element} hour: ${HOUR_KINDS[y.kind].name.toLowerCase()}${locked ? ', locked' : ''}`,
       match: matches(c, i),
       beckoning: wants.size > 0 && y.kind === 'qi' && !locked,
@@ -371,6 +468,7 @@ export function DayWheel({
       caption={rates.routine ? 'discipline +10%' : `+${formatRate(rates.qi)} qi a day`}
       label="The day wheel: twelve double-hours, 子 at midnight at the top"
       beacon={wants.size > 0}
+      shifts={shiftsOf(game)}
     />,
     <div className="wheel-editor">
       {pick.length > 0 ? (
@@ -411,6 +509,7 @@ export function DayWheel({
             ))}
           </div>
           <LockedNote game={game} pick={pick} />
+          <DutyNote game={game} pick={pick} />
           {error && <p className="warn">{error}</p>}
         </>
       ) : (
@@ -437,7 +536,13 @@ export function DayWheel({
 
 /** What a road hour can be set to: the road's own, then the home kinds that are open. */
 function roadKinds(game: GameState): RoadHour[] {
-  return ['travel', 'look', 'home', ...HOUR_KIND_IDS.filter((k) => hourKindOpen(game.player, k))];
+  return [
+    'travel',
+    'look',
+    'gather',
+    'home',
+    ...HOUR_KIND_IDS.filter((k) => hourKindOpen(game.player, k)),
+  ];
 }
 
 export function RoadWheel({
@@ -486,6 +591,7 @@ export function RoadWheel({
       caption={own ? 'your own road' : `${travelling} hours on the road`}
       label="The road wheel: twelve double-hours, 子 at midnight at the top"
       beacon={false}
+      shifts={shiftsOf(game, true)}
     />,
     <div className="wheel-editor">
       {pick.length > 0 ? (
@@ -521,9 +627,11 @@ export function RoadWheel({
           The day you keep while a course is set. Tap hours to change them: each tap adds or drops
           one, and a drag takes all it crosses.
           <Why label="How the road hours work">
-            Travel hours move you; looking around makes camp and shows what is near. An hour kept as
-            at home does what your home wheel does then. Riding moves you without your hours, which
-            cultivate at half.
+            Travel hours move you; looking around makes camp and shows what is near; a gather hour
+            stops to search the land where you stand, more the deeper the wilds and the sharper your
+            perception, and only a road with one takes the finds you pass. An hour kept as at home
+            does what your home wheel does then. A job's shift goes unkept while you travel. Riding
+            moves you without your hours, which cultivate at half.
           </Why>
         </p>
       )}

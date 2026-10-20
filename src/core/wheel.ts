@@ -17,9 +17,11 @@ import {
   type HourKind,
 } from '../content/hours.ts';
 import { ALL_FIRSTS, type FirstId } from '../content/firsts.ts';
+import { hasJob, job, type Job } from '../content/jobs.ts';
 import { hasRoutine, routine, type Routine } from '../content/routines.ts';
 import type { Note } from './cultivation.ts';
 import { hasFlag, realmOf, type Cultivator } from './state.ts';
+import { inTutorial } from './methods.ts';
 import { knownTechniques, techniqueSealed } from './techniques.ts';
 
 /** How many wheels a cultivator can keep under a name. */
@@ -34,15 +36,49 @@ export function hourLocked(c: Cultivator, hour: number): boolean {
   return sleepLocked(c) && SLEEP_HOURS.includes(hour);
 }
 
+/**
+ * Still at drill (O4): through the tutorial layers a post you hold isn't worked yet, so the first
+ * hour's pace holds; its shift stands from layer 4.
+ */
+export function drilling(c: Cultivator): boolean {
+  return inTutorial(c.qi);
+}
+
+/**
+ * The job whose shift holds an hour (O4): its Duty hour, locked like sleep. Your own choice for the
+ * hour stays on the wheel underneath, and comes back when you leave the job.
+ */
+export function dutyAt(c: Cultivator, hour: number): Job | null {
+  if (!c.jobs.length || drilling(c)) return null;
+  for (const h of c.jobs) {
+    if (!hasJob(h.id)) continue;
+    const j = job(h.id);
+    if (j.shift.includes(hour)) return j;
+  }
+  return null;
+}
+
+/** The wheel as yours to give: your own hours, with a shift's marked Duty so no rule picks them. */
+export function freeWheel(c: Cultivator): HourKind[] {
+  return c.wheel.map((k, i) => (dutyAt(c, i) ? 'duty' : k));
+}
+
+/** The hours the jobs you hold put on the wheel. */
+export function dutyHours(c: Cultivator): number[] {
+  return c.wheel.map((_, i) => i).filter((i) => dutyAt(c, i) !== null);
+}
+
 /** The hour of the day wheel a world day stands in: 0 at 子 (midnight), 11 at 亥. */
 export function hourOfDay(day: number): number {
   return Math.floor((((day % 1) + 1) % 1) * HOURS_PER_DAY) % HOURS_PER_DAY;
 }
 
-/** What each hour goes to: the wheel, with locked hours asleep whatever it says. */
+/** What each hour goes to: the wheel, with locked hours asleep and a shift's on duty whatever it says. */
 export function effectiveWheel(c: Cultivator): HourKind[] {
   const locked = sleepLocked(c);
-  return c.wheel.map((kind, i) => (locked && SLEEP_HOURS.includes(i) ? 'sleep' : kind));
+  return c.wheel.map((kind, i) =>
+    dutyAt(c, i) ? 'duty' : locked && SLEEP_HOURS.includes(i) ? 'sleep' : kind,
+  );
 }
 
 const openFlag = (kind: HourKind) => `hours-${kind}`;
@@ -65,6 +101,8 @@ export function canSetHour(c: Cultivator, hour: number, kind: HourKind): WheelCh
   if (!Number.isInteger(hour) || hour < 0 || hour >= c.wheel.length) {
     return { ok: false, reason: 'There is no such hour.' };
   }
+  const duty = dutyAt(c, hour);
+  if (duty) return { ok: false, reason: `That hour is your shift: ${duty.name}.` };
   if (hourLocked(c, hour) && kind !== 'sleep') {
     return { ok: false, reason: 'At Qi Condensation the body still needs its sleep at 子 and 丑.' };
   }
@@ -117,13 +155,16 @@ export function followWheel(
   return { cultivator: { ...c, wheel: [...hours] }, check };
 }
 
-/** The learned routine the wheel follows exactly, all twelve hours, if any. */
+/**
+ * The learned routine the wheel follows exactly, all twelve hours, if any. A Duty hour counts as
+ * kept whatever the routine sets there, so a cadet on patrol keeps Wall Drill's discipline (O4).
+ */
 export function followedRoutine(c: Cultivator): Routine | null {
   const wheel = effectiveWheel(c);
   for (const id of c.routines) {
     if (!hasRoutine(id)) continue;
     const r = routine(id);
-    if (r.hours.every((k, i) => wheel[i] === k)) return r;
+    if (r.hours.every((k, i) => wheel[i] === 'duty' || wheel[i] === k)) return r;
   }
   return null;
 }
@@ -242,7 +283,10 @@ export function openHours(
       notes.push({ type: 'hours', data: { kind: o.kind, hour: null } });
       continue;
     }
-    const { wheel, hour } = flipHour(next.wheel, next.rootElements, o.kind);
+    // A shift's hours aren't yours to flip: the hour is picked among the rest.
+    const { hour } = flipHour(freeWheel(next), next.rootElements, o.kind);
+    const wheel = [...next.wheel];
+    if (hour !== null) wheel[hour] = o.kind;
     next = { ...next, wheel, flags };
     notes.push({ type: 'hours', data: { kind: o.kind, hour } });
   }

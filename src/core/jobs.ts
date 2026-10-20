@@ -1,0 +1,336 @@
+// Jobs, posts and duty hours (design § Cultivation, Duty hours; § Professions, people and powers,
+// Posts; O4). A job you hold puts its shift on your wheel as Duty hours, locked like sleep. A shift
+// is kept when you stand at the job's place with no course set as its hours pass: each duty day
+// pays on the realm curve, in the power's currency, in stones where its type pays them, or all in
+// stones for a hire. A shift missed costs standing with its giver, unless a house's leave covers
+// it; a month with half its shifts kept is remembered, and counts as the quota kept. Leaving is
+// the giver's own way out: a sect's post is dropped freely, a dynasty's soldier deserts.
+import { DAYS_PER_MONTH } from '../content/calendar.ts';
+import { HOURS_PER_DAY } from '../content/hours.ts';
+import {
+  DUTY_PAY,
+  HIRE_LETS_GO,
+  KEPT_MONTH,
+  MISSED_SHIFT,
+  PAYS_STONES,
+  hasJob,
+  isHire,
+  job,
+  JOBS,
+  type Job,
+} from '../content/jobs.ts';
+import { STANDING_ROWS } from '../content/memories.ts';
+import { veinAt } from '../content/map/index.ts';
+import { ENTER_LI } from '../content/map/places.ts';
+import { realmScale, type RealmId } from '../content/realms.ts';
+import { mapOf, mapPlaceOf } from './map/travel.ts';
+import type { RegionMap } from './map/region.ts';
+import { drilling } from './wheel.ts';
+import {
+  addBalance,
+  houseOf,
+  isOrganization,
+  leaveOf,
+  leavePower,
+  membership,
+  monthIndex,
+  organization,
+  realmStageOf,
+  seatOf,
+  seatRank,
+  theName,
+  yearOf,
+} from './organizations.ts';
+import { receive, stonesOf, tierGrade, withStones } from './purse.ts';
+import { addStanding } from './resolver/opinion.ts';
+import type { World } from './resolver/world.ts';
+import { addEvent, realmOf, withPlayer, type Cultivator, type GameState } from './state.ts';
+
+export type Held = Cultivator['jobs'][number];
+
+/** What a duty day pays at a realm: points of the power's currency and low-grade stones. */
+export function jobPay(j: Job, r: RealmId): { points: number; stones: number } {
+  const day = DUTY_PAY * realmScale(r);
+  if (isHire(j)) return { points: 0, stones: day };
+  const type = organization(houseOf(j.power!)).type;
+  return PAYS_STONES.includes(type)
+    ? { points: day / 2, stones: day / 2 }
+    : { points: day, stones: 0 };
+}
+
+export function heldJob(c: Cultivator, id: string): Held | undefined {
+  return c.jobs.find((h) => h.id === id);
+}
+
+/** The jobs taken at a place: its posts and hires, a kingdom's at the town that stands for it. */
+export function jobsAt(place: string, map?: RegionMap | null): Job[] {
+  return JOBS.filter(
+    (j) => j.place === place || (!!j.place && !!map && mapPlaceOf(map, j.place)?.id === place),
+  );
+}
+
+/**
+ * Whether you stand at a job's place to keep its shift: inside it, or at it with no course set.
+ * Before the map has opened, you are at home.
+ */
+export function atPost(s: GameState, j: Job): boolean {
+  if (!j.place) return false;
+  const life = s.map;
+  if (!life) return true;
+  if (life.course) return false;
+  const map = mapOf(s);
+  const p = map ? mapPlaceOf(map, j.place) : null;
+  if (life.inside) return life.inside === j.place || life.inside === p?.id;
+  return !!p && Math.hypot(p.x - life.at[0], p.y - life.at[1]) < ENTER_LI;
+}
+
+/** The jobs whose shift you can keep where you stand: their hours are Duty on the wheel today. */
+export function onShift(s: GameState): Cultivator {
+  const c = s.player;
+  const jobs = c.jobs.filter((h) => hasJob(h.id) && atPost(s, job(h.id)));
+  return jobs.length === c.jobs.length ? c : { ...c, jobs };
+}
+
+export type JobCheck = { ok: true; state: GameState } | { ok: false; reason: string };
+
+/** Whether you may take a job: a post's seat, no shift on top of another's, not held already. */
+export function canTakeJob(s: GameState, id: string): { ok: true } | { ok: false; reason: string } {
+  if (!hasJob(id)) return { ok: false, reason: 'There is no such work.' };
+  const j = job(id);
+  const c = s.player;
+  if (heldJob(c, id)) return { ok: false, reason: 'You hold it already.' };
+  if (!isHire(j)) {
+    const m = membership(s.world, c.id, houseOf(j.power!));
+    if (!m || m.guest) return { ok: false, reason: `Only ${theName(j.power!)}'s own hold it.` };
+    const seat = seatOf(s.world, c.id, m.power, realmStageOf(s))!;
+    if (j.seat && seatRank(seat) < seatRank(j.seat)) {
+      const t = organization(m.power).seats[j.seat];
+      return { ok: false, reason: `It is held from the ${t.name}'s seat.` };
+    }
+  }
+  const clash = c.jobs.find(
+    (h) => hasJob(h.id) && job(h.id).shift.some((x) => j.shift.includes(x)),
+  );
+  if (clash) return { ok: false, reason: `Its hours fall on your shift: ${job(clash.id).name}.` };
+  return { ok: true };
+}
+
+/** Takes a job: its shift goes on your wheel as Duty from today. */
+export function takeJob(s: GameState, id: string): JobCheck {
+  const can = canTakeJob(s, id);
+  if (!can.ok) return can;
+  const day = s.calendar.day;
+  const held: Held = {
+    id,
+    since: day,
+    month: monthIndex(day),
+    kept: 0,
+    missed: 0,
+    owed: { stones: 0, points: 0 },
+  };
+  const st = withPlayer(s, { ...s.player, jobs: [...s.player.jobs, held] });
+  return { ok: true, state: addEvent(st, 'job', { job: id, what: 'taken' }) };
+}
+
+/** What leaving a job costs, in words, by its giver's rule. */
+export function leavingWords(j: Job): string {
+  if (j.leave === 'free' || !j.power) return 'You may leave it freely.';
+  return `Leaving it is leaving ${theName(houseOf(j.power))}.`;
+}
+
+/**
+ * Leaves a job by its giver's way out: one held freely just goes; a soldier's post goes only with
+ * the power, as leaving it by its rule (a dynasty's deserter before ten years' service, a betrayal).
+ */
+export function quitJob(s: GameState, id: string): JobCheck {
+  const held = heldJob(s.player, id);
+  if (!held) return { ok: false, reason: 'You hold no such work.' };
+  const j = job(id);
+  let st: GameState = withPlayer(s, {
+    ...s.player,
+    jobs: s.player.jobs.filter((h) => h.id !== id),
+  });
+  if (j.leave === 'power' && j.power) {
+    const left = leavePower(st.world, s.player.id, j.power, s.calendar.day, { you: true });
+    st = { ...st, world: left.world };
+    st = dropLost(st);
+    if (left.parting)
+      st = addEvent(st, 'power', {
+        power: houseOf(j.power),
+        what: left.parting.kind === 'clean' ? 'left' : 'betrayed',
+      });
+  }
+  return { ok: true, state: addEvent(st, 'job', { job: id, what: 'left' }) };
+}
+
+/** A post goes with its power: one whose membership is gone (struck off, left) is dropped. */
+function dropLost(s: GameState): GameState {
+  const c = s.player;
+  const jobs = c.jobs.filter((h) => {
+    if (!hasJob(h.id)) return false;
+    const j = job(h.id);
+    return isHire(j) || !!membership(s.world, c.id, houseOf(j.power!));
+  });
+  return jobs.length === c.jobs.length ? s : withPlayer(s, { ...c, jobs });
+}
+
+/** Rows of a kind about you, still unfaded: what a stacking row is capped by. */
+function liveRows(
+  w: World,
+  power: string,
+  who: string,
+  row: keyof typeof STANDING_ROWS,
+  day: number,
+) {
+  const fade = STANDING_ROWS[row].fade ?? Infinity;
+  return w.standing.filter(
+    (x) => x.power === power && x.about === who && x.row === row && day - x.day < fade,
+  ).length;
+}
+
+/** Duty-hours of a shift falling between two world days, as a share of its duty day. */
+function shiftShare(j: Job, from: number, to: number): number {
+  if (!j.shift.length || to <= from) return 0;
+  let hours = 0;
+  const h0 = from * HOURS_PER_DAY;
+  const h1 = to * HOURS_PER_DAY;
+  for (let h = Math.floor(h0); h < h1; h++) {
+    const hour = ((h % HOURS_PER_DAY) + HOURS_PER_DAY) % HOURS_PER_DAY;
+    if (!j.shift.includes(hour)) continue;
+    hours += Math.min(h + 1, h1) - Math.max(h, h0);
+  }
+  return hours / j.shift.length;
+}
+
+/** Whether a house's leave covers you this year: days away still within the seat's allowance. */
+function onLeave(s: GameState, power: string): boolean {
+  const m = membership(s.world, s.player.id, houseOf(power));
+  if (!m || m.guest) return false;
+  const allowed = leaveOf(m.power, seatOf(s.world, s.player.id, m.power, realmStageOf(s))!);
+  if (allowed === Infinity) return false;
+  const taken = m.leave?.year === yearOf(s.calendar.day) ? m.leave.days : 0;
+  return taken < allowed;
+}
+
+/**
+ * The month turns for a job: its tally becomes last month's, and a month with half its shifts
+ * kept is remembered by its power ("Keeps our watch", +2, up to +10).
+ */
+function turnMonth(s: GameState, held: Held, month: number): { state: GameState; held: Held } {
+  if (held.month >= month) return { state: s, held };
+  const j = job(held.id);
+  let st = s;
+  const day = s.calendar.day;
+  const who = s.player.id;
+  if (j.power && held.kept >= KEPT_MONTH.share * DAYS_PER_MONTH) {
+    const power = houseOf(j.power);
+    if (liveRows(st.world, power, who, KEPT_MONTH.row, day) < KEPT_MONTH.most)
+      st = { ...st, world: addStanding(st.world, { power, about: who, row: KEPT_MONTH.row }, day) };
+  }
+  const last = { month: held.month, kept: held.kept, missed: held.missed };
+  return { state: st, held: { ...held, month, kept: 0, missed: 0, last } };
+}
+
+/**
+ * Jobs' days between two world days: each shift's hours kept where you stand at its place pay
+ * their share of a duty day; missed ones, past a house's leave, cost standing ("Missed our shifts",
+ * −1 a duty day, to −10). A hire lets you go after seven days missed in a month. Stones are paid in
+ * the place's vein's grade as whole stones come due; points go to the power's balance.
+ */
+export function jobsDay(s: GameState, from: number, to: number): GameState {
+  let st = dropLost(s);
+  if (!st.player.jobs.length) return st;
+  const who = st.player.id;
+  const month = monthIndex(to);
+  const realm = realmOf(st.player);
+  const kept: Held[] = [];
+  for (const h0 of st.player.jobs) {
+    if (!hasJob(h0.id)) continue;
+    const j = job(h0.id);
+    const turned = turnMonth(st, h0, month);
+    st = turned.state;
+    let held = turned.held;
+    // Through the tutorial layers you are at drill: no shift is worked or missed.
+    const share = drilling(st.player) ? 0 : shiftShare(j, from, to);
+    if (share > 0) {
+      if (atPost(st, j)) {
+        const pay = jobPay(j, realm);
+        // Pay comes due a whole stone and a whole point at a time; the rest waits on the next shift.
+        const owed = {
+          stones: held.owed.stones + pay.stones * share,
+          points: held.owed.points + pay.points * share,
+        };
+        const stones = Math.floor(owed.stones + 1e-9);
+        const points = Math.floor(owed.points + 1e-9);
+        if (stones > 0) {
+          const purse = receive(stonesOf(st.player), stones, tierGrade(veinAt(j.place ?? '')));
+          st = withPlayer(st, withStones(st.player, purse));
+        }
+        if (points > 0 && j.power)
+          st = { ...st, world: addBalance(st.world, who, houseOf(j.power), points) };
+        held = {
+          ...held,
+          kept: held.kept + share,
+          owed: { stones: owed.stones - stones, points: owed.points - points },
+        };
+      } else if (!(j.power && !isHire(j) && onLeave(st, j.power))) {
+        const before = held.missed;
+        held = { ...held, missed: before + share };
+        const days = Math.floor(held.missed + 1e-9) - Math.floor(before + 1e-9);
+        if (j.power && days > 0) {
+          const power = houseOf(j.power);
+          for (let i = 0; i < days; i++) {
+            if (
+              liveRows(st.world, power, who, MISSED_SHIFT.row, st.calendar.day) >= MISSED_SHIFT.most
+            )
+              break;
+            const row = { power, about: who, row: MISSED_SHIFT.row } as const;
+            st = { ...st, world: addStanding(st.world, row, st.calendar.day) };
+          }
+          if (before === 0) st = addEvent(st, 'job', { job: j.id, what: 'missed' });
+        }
+        if (isHire(j) && held.missed >= HIRE_LETS_GO) {
+          st = addEvent(st, 'job', { job: j.id, what: 'let-go' });
+          continue;
+        }
+      }
+    }
+    kept.push(held);
+  }
+  return withPlayer(st, { ...st.player, jobs: kept });
+}
+
+/** Your jobs as the Routine and Character screens show them. */
+export function jobsView(s: GameState) {
+  const realm = realmOf(s.player);
+  return s.player.jobs
+    .filter((h) => hasJob(h.id))
+    .map((h) => {
+      const j = job(h.id);
+      const pay = jobPay(j, realm);
+      const currency =
+        j.power && !isHire(j) ? organization(houseOf(j.power)).preset.currency.name : null;
+      const parts = [
+        pay.points > 0 && currency ? `${round(pay.points)} ${currency}` : null,
+        pay.stones > 0 ? `${round(pay.stones)} low` : null,
+      ].filter(Boolean);
+      return {
+        id: j.id,
+        name: j.name,
+        hanzi: j.hanzi,
+        giver: j.power && isOrganization(j.power) ? theName(houseOf(j.power)) : j.hall,
+        hall: j.hall,
+        shift: j.shift,
+        pay: `${parts.join(' and ')} a duty day`,
+        perk: j.perk,
+        kept: round(h.kept),
+        missed: round(h.missed),
+        here: atPost(s, j),
+        drilling: drilling(s.player),
+        leaving: leavingWords(j),
+        hire: isHire(j),
+      };
+    });
+}
+
+const round = (n: number) => Math.round(n * 100) / 100;

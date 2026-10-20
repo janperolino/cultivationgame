@@ -1,6 +1,7 @@
 // The bounty board (P3.7's talk, in P3.6b's slot): a city's or town's postings, three a month from
 // the goal templates, each a goal met at a spot on the map like any encounter and paid at the board
-// on your return. P3.9 makes the goal a scene; the posting stays the same.
+// on your return. P3.9 makes the goal a scene; the posting stays the same. A sect's mission hall
+// 任务堂 is its bounty office (O4): the same postings, taken by its members and paid in contribution.
 import { ENCOUNTERS, encounterTemplate } from '../../content/encounters/index.ts';
 import {
   POSTING_LI,
@@ -11,7 +12,17 @@ import {
 import type { Template, TripGoal } from '../../content/encounters/schema.ts';
 import { veinAt } from '../../content/map/index.ts';
 import { PLACE_KIND_INFO } from '../../content/map/places.ts';
+import {
+  addBalance,
+  houseOf,
+  isOrganization,
+  organization,
+  realmStageOf,
+  theName,
+  titheOf,
+} from '../organizations.ts';
 import { receive, stonesOf, tierGrade, withStones } from '../purse.ts';
+import { isMember } from '../resolver/names.ts';
 import { hashSeed, Rng } from '../rng.ts';
 import { monthOf } from '../shops.ts';
 import { addEvent, withPlayer, type GameState } from '../state.ts';
@@ -38,7 +49,12 @@ export const RETRY_DAYS = 30;
 
 export function hasBoard(p: MapPlace): boolean {
   const k = placeKindOf(p);
-  return !!k && PLACE_KIND_INFO[k].board;
+  return (!!k && PLACE_KIND_INFO[k].board) || isMissionHall(p.id);
+}
+
+/** A sect's seat keeps a mission hall: its board, paying contribution (design § Posts). */
+export function isMissionHall(id: string): boolean {
+  return isOrganization(id) && organization(id).type === 'sect';
 }
 
 /** Ordered by id, code point by code point: a seeded pick must not lean on the machine's locale. */
@@ -119,6 +135,7 @@ export function postingsAt(s: GameState, map: RegionMap, board: MapPlace): Posti
       pay: payFor(band),
       taken: s.calendar.day,
       done: false,
+      ...(isMissionHall(board.id) ? { power: houseOf(board.id) } : {}),
     });
   }
   return out;
@@ -135,6 +152,8 @@ export function takePosting(s: GameState, map: RegionMap, board: MapPlace, id: s
     return { ok: false, reason: `You can hold ${MAX_TAKEN} postings at once.` };
   const p = postingsAt(s, map, board).find((x) => x.id === id);
   if (!p) return { ok: false, reason: 'It is gone from the board.' };
+  if (p.power && !isMember(s.world, s.player.id, p.power))
+    return { ok: false, reason: `The mission hall posts for ${theName(p.power)}'s own.` };
   return {
     ok: true,
     state: {
@@ -157,15 +176,26 @@ export function claimPosting(s: GameState, map: RegionMap, id: string): BoardChe
       reason: `It is paid at the board in ${b?.name ?? 'the town that posted it'}.`,
     };
   }
-  // The board pays as its town counts it, in its vein's grade at most.
-  const purse = receive(stonesOf(s.player), p.pay, tierGrade(veinAt(p.board)));
-  let st = withPlayer(s, withStones(s.player, purse));
+  // A mission hall pays its members in contribution, a point a low-grade stone, less a harsh
+  // power's tithe; a board pays as its town counts it, in its vein's grade at most.
+  let st: GameState;
+  let paid: string;
+  if (p.power) {
+    const tithe = titheOf(s.world, s.player.id, p.power, realmStageOf(s));
+    const points = Math.round(p.pay * (1 - tithe) * 10) / 10;
+    st = { ...s, world: addBalance(s.world, s.player.id, p.power, points) };
+    paid = `${points} ${organization(p.power).preset.currency.name} at the mission hall`;
+  } else {
+    const purse = receive(stonesOf(s.player), p.pay, tierGrade(veinAt(p.board)));
+    st = withPlayer(s, withStones(s.player, purse));
+    paid = `${p.pay} low-grade stones at the bounty board`;
+  }
   st = { ...st, map: { ...st.map!, postings: st.map!.postings.filter((x) => x.id !== id) } };
   const b = placeById(map, p.board);
   return {
     ok: true,
     state: addEvent(st, 'encounter', {
-      line: `is paid ${p.pay} low-grade stones at the bounty board for ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}`,
+      line: `is paid ${paid} for ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}`,
       where: b?.name ?? map.name,
       kind: 'choice',
     }),

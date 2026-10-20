@@ -9,7 +9,10 @@ import type { Element } from '../content/elements.ts';
 import { rollElements, rollRoot, type RootId } from '../content/roots.ts';
 import { talentsOf, TALENT_KINDS, type Talent, type TalentKind } from '../content/talents.ts';
 import { copyId } from '../content/copies.ts';
+import { hasJob, job } from '../content/jobs.ts';
+import { takeJob } from './jobs.ts';
 import { gainCopy } from './life.ts';
+import { joinPower, realmStageOf } from './organizations.ts';
 import { hashSeed, Rng } from './rng.ts';
 import { seeAll } from './seen.ts';
 import { newLife, nextLife, type GameState, type NewLifeOptions } from './state.ts';
@@ -104,12 +107,33 @@ function handMethod(s: GameState, c: Creation): GameState {
   return id ? gainCopy(s, copyId('method', id), 'is handed') : s;
 }
 
+/**
+ * The origin path's post (O4): the oath seats you in its power at the outer seat and hands you
+ * the post, so the cadet's patrols stand on the wheel from the first day.
+ */
+export function handPost(s: GameState, c: Creation): GameState {
+  const id = originPath(c.roll.origin, c.choice).job;
+  if (!id || !hasJob(id)) return s;
+  const power = job(id).power;
+  let st = s;
+  if (power) {
+    const joined = joinPower(st.world, st.player.id, power, st.calendar.day, {
+      you: true,
+      realm: realmStageOf(st),
+    });
+    if (!joined.ok) return st;
+    st = { ...st, world: joined.world };
+  }
+  const took = takeJob(st, id);
+  return took.ok ? took.state : st;
+}
+
 /** A first life from creation's choices, holding nothing new. */
 export function createLife(c: Creation): GameState {
-  return seeAll(handMethod(newLife(lifeOptions(c)), c));
+  return seeAll(handPost(handMethod(newLife(lifeOptions(c)), c), c));
 }
 
 /** The next life in a slot after a death, from creation's choices; the chronicle carries on. */
 export function createNextLife(prev: GameState, c: Creation): GameState {
-  return seeAll(handMethod(nextLife(prev, lifeOptions(c)), c));
+  return seeAll(handPost(handMethod(nextLife(prev, lifeOptions(c)), c), c));
 }

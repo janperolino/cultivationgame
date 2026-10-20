@@ -23,7 +23,8 @@ import {
   type MapForSale,
   type PlaceKindInfo,
 } from '../../content/map/places.ts';
-import { GUARD_PAY_LOW } from '../../content/map/travel.ts';
+import { job } from '../../content/jobs.ts';
+import { jobPay } from '../jobs.ts';
 import { HOURS_PER_DAY } from '../../content/hours.ts';
 import { item } from '../../content/items.ts';
 import { BORDER_WILDS_NAMES } from '../../content/roster.ts';
@@ -39,7 +40,7 @@ import {
 } from '../purse.ts';
 import { Rng } from '../rng.ts';
 import { monthOf } from '../shops.ts';
-import { addItem, withPlayer, type GameState } from '../state.ts';
+import { addItem, realmOf, withPlayer, type GameState } from '../state.ts';
 import { known, raise, rumor, sketchKingdom, sketchRegion } from './fog.ts';
 import { placeKindOf, standsAt } from './gate.ts';
 import { areaById, placeById, type MapPlace, type RegionMap } from './region.ts';
@@ -349,7 +350,7 @@ export function caravansAt(s: GameState, placeId: string): Caravan[] {
 
 /**
  * Joins a caravan: riding its wagon for the fare, your hours free at half, or guarding it on the
- * Caravan guard routine, paid a stone a day on arriving. It owns the course, and sets off on its day.
+ * Caravan guard routine, paid a hire's day on arriving (O4). It owns the course, and sets off on its day.
  */
 export function joinCaravan(
   s: GameState,
@@ -373,7 +374,8 @@ export function joinCaravan(
       leader: c.leader,
       bound: c.bound,
       stops: [],
-      pay: as === 'guard' ? GUARD_PAY_LOW : 0,
+      // Guarding is a hire (O4): a duty day's stones at your realm.
+      pay: as === 'guard' ? jobPay(job('caravan-guard'), realmOf(s.player)).stones : 0,
       canLeave: true,
       leaveCost:
         as === 'guard'

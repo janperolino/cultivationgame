@@ -304,7 +304,7 @@ describe('the save', () => {
     raw.version = 39;
     delete raw.state.world.members[0]!.quota;
     const back = loadSave(raw);
-    expect(back.version).toBe(40);
+    expect(back.version).toBe(41);
     const m = back.state.world.members[0]!;
     expect(m.quota).toBe(m.paid);
     expect(emptyWorld().members).toEqual([]);

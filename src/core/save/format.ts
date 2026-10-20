@@ -35,7 +35,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 40;
+export const SAVE_VERSION = 41;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1010,6 +1010,14 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       typeof m.paid === 'number' ? { ...m, quota: m.paid } : m,
     );
     return { ...old, version: 40, state: { ...s, world: { ...w, members } } };
+  },
+  // O4: a cultivator holds jobs (design § Cultivation, Duty hours), none before then, and the road
+  // carries the share of a find a gather hour has dug toward.
+  40: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const map = s.map ? { ...(s.map as Raw), gathered: 0 } : s.map;
+    return { ...old, version: 41, state: { ...s, player: { ...p, jobs: [] }, map } };
   },
 };
 
