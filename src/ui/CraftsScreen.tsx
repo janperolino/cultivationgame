@@ -3,7 +3,7 @@
 // the bench's queue, the tray and the last batches in the middle, and mastery by family and the
 // soul gate on the right. Which hours are Craft hours stays on Routine. A batch queued and left
 // runs at no hand; sat at, it reads the steady hand (K3), and the land lends its own.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Recipe } from '../content/catalogs/types.ts';
 import { CRAFTS, CRAFT_IDS, FAMILIES, FAMILY_IDS, recipe } from '../content/crafts.ts';
 import type { CraftId, FamilyId } from '../content/crafts.ts';
@@ -39,6 +39,8 @@ import { ratesHere } from '../core/life.ts';
 import { benchSpot } from '../core/map/travel.ts';
 import { withPlayer, type Cultivator } from '../core/state.ts';
 import { formatPercent } from './format.ts';
+import { sitDown, standUp, useFurnace } from './furnace.ts';
+import { FurnaceScene } from './FurnaceScene.tsx';
 import { itemTag } from './itemWords.ts';
 import { go } from './nav.ts';
 import { useGame } from './store.ts';
@@ -55,8 +57,15 @@ export function CraftsScreen() {
   const [page, setPage] = useState<CraftId>('alchemy');
   const [pick, setPick] = useState<string | null>(null);
   const [why, setWhy] = useState<string | null>(null);
+  const sitting = useFurnace((f) => f.sitting);
+  const satAt = useFurnace((f) => f.recipe);
+  // Leaving the page stands you up: the furnace runs itself.
+  useEffect(() => standUp, []);
   if (!game) return null;
   const c = game.player;
+  // The recipe at the furnace: the batch in it, else the next queued, else the one you sat down to.
+  const atFurnace = c.crafts.front?.recipe ?? c.crafts.bench[0]?.recipe ?? null;
+  const playing = atFurnace ?? (sitting ? satAt : null);
   const hours = ratesHere(game).count.craft;
   const spot = benchSpot(game);
   const change = (f: (c: Cultivator) => Cultivator) => applyLife((s) => withPlayer(s, f(s.player)));
@@ -103,13 +112,50 @@ export function CraftsScreen() {
           <Recipes c={c} craft={page} pick={pick} onPick={setPick} />
           {pick && <RecipeCard c={c} r={recipe(pick)} spot={spot} onQueue={queue} />}
           {why && <p className="warn">{why}</p>}
+          {sitting && (
+            <>
+              <h2 className="panel-heading">The bench</h2>
+              <Bench c={c} onChange={change} />
+              <Tray c={c} onTake={() => change(takeTray)} />
+            </>
+          )}
         </section>
-        <section className="panel crafts-bench">
-          <h2 className="panel-heading">The bench</h2>
-          <Bench c={c} onChange={change} />
-          <Tray c={c} onTake={() => change(takeTray)} />
-          <Recent c={c} />
-        </section>
+        {sitting && playing ? (
+          <section className="panel crafts-furnace">
+            <div className="crafts-furnace-top">
+              <h2 className="panel-heading">
+                At the furnace <span className="hanzi">守炉</span>
+              </h2>
+              <button type="button" className="button button-quiet" onClick={standUp}>
+                Stand up
+              </button>
+            </div>
+            <FurnaceScene game={game} recipe={recipe(playing)} />
+            <p className="crafts-furnace-line muted">
+              Click the dark dross to burn it to ash; let the gold essence fall back into the pill.
+              Every flick heats the furnace.
+            </p>
+            <BatchHand c={c} />
+          </section>
+        ) : (
+          <section className="panel crafts-bench">
+            <div className="crafts-furnace-top">
+              <h2 className="panel-heading">The bench</h2>
+              <button
+                type="button"
+                className="button"
+                disabled={!playing}
+                title={playing ? undefined : 'Queue a batch to sit at it.'}
+                onClick={() => atFurnace && sitDown(atFurnace)}
+              >
+                Sit at the furnace
+              </button>
+            </div>
+            <Bench c={c} onChange={change} />
+            <Tray c={c} onTake={() => change(takeTray)} />
+            <Recent c={c} />
+          </section>
+        )}
         <section className="panel crafts-right">
           <h2 className="panel-heading">Mastery by family</h2>
           <Families c={c} craft={page} />
@@ -119,6 +165,7 @@ export function CraftsScreen() {
           <SteadyHands c={c} craft={page} />
           <h2 className="panel-heading">The land</h2>
           <Land c={c} spot={spot} />
+          {sitting && <Recent c={c} />}
         </section>
       </div>
     </div>
@@ -427,5 +474,36 @@ function Land({ c, spot }: { c: Cultivator; spot: BenchSpot | null }) {
       Earth fire 地火 on volcanic land lends alchemy and refining +0.25 lift and +10 holding; a land
       of a recipe’s element does the same for it.
     </p>
+  );
+}
+
+/** The batch in the furnace and the hand it has read so far. */
+function BatchHand({ c }: { c: Cultivator }) {
+  const front = c.crafts.front;
+  if (!front)
+    return (
+      <p className="muted crafts-furnace-batch">
+        Nothing in the furnace yet: the next batch goes in on your next craft hour.
+      </p>
+    );
+  const r = recipe(front.recipe);
+  const hours = batchHours(c, r);
+  const mean = front.hours > 0 ? (front.hand ?? 0) / front.hours : 0;
+  return (
+    <div className="crafts-furnace-batch">
+      <div className="crafts-entry-top">
+        <span>{item(front.recipe).name}</span>
+        <span className="muted">
+          {round1(front.hours)} of {round1(hours)} h
+        </span>
+      </div>
+      <div className="crafts-bar" aria-hidden="true">
+        <div style={{ width: `${Math.round((front.hours / hours) * 100)}%` }} />
+      </div>
+      <p className="muted">
+        It reads your hand over its hours: {mean.toFixed(2)} so far. Away, the furnace runs itself
+        at no hand.
+      </p>
+    </div>
   );
 }

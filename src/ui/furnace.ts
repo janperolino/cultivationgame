@@ -10,18 +10,24 @@ interface FurnaceStore {
   sitting: boolean;
   /** The steady hand, 0 to 1, as the minigame keeps it. */
   hand: number;
+  /** The recipe you sat down to, played on if the bench empties while you sit. */
+  recipe: string | null;
 }
 
-export const useFurnace = create<FurnaceStore>()(() => ({ sitting: false, hand: 0 }));
+export const useFurnace = create<FurnaceStore>()(() => ({
+  sitting: false,
+  hand: 0,
+  recipe: null,
+}));
 
-/** Sits down at the furnace: the hand starts from nothing. */
-export function sitDown(): void {
-  useFurnace.setState({ sitting: true, hand: 0 });
+/** Sits down at the furnace for the batch at its front: the hand starts from nothing. */
+export function sitDown(recipe: string): void {
+  useFurnace.setState({ sitting: true, hand: 0, recipe });
 }
 
 /** Stands up: no hand from here on. */
 export function standUp(): void {
-  useFurnace.setState({ sitting: false, hand: 0 });
+  useFurnace.setState({ sitting: false, hand: 0, recipe: null });
 }
 
 /** The minigame sets the hand as it plays. */
