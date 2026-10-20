@@ -114,10 +114,10 @@ function powerName(id: string): string {
 }
 
 /** What a power did with you as its member (O3): the year's pill, the true seat, a quota, leave. */
-const POWER_LINES: Record<string, (w: Who, p: string) => string> = {
+const POWER_LINES: Record<string, (w: Who, p: string, d: EventData) => string> = {
   pill: (w, p) => `${capital(p)} hands ${w.name} a Foundation Pill from the year's ranking.`,
-  true: (w, p) =>
-    `${capital(p)} raises ${w.name} to a true disciple's seat, well ahead of ${w.their} years.`,
+  true: (w, p, d) =>
+    `${capital(p)} makes ${w.name} its ${s(d.title) || 'true disciple'}, well ahead of ${w.their} years.`,
   'quota-missed': (w, p) =>
     `${w.name} misses ${p}'s quota a second month running, and it is noted.`,
   'struck-off': (w, p) => `${capital(p)} strikes ${w.name} from its rolls for three missed quotas.`,
@@ -231,7 +231,7 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
       : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
   // A follower who left or turned (P3.4b): the card P3.12 writes says it at more length.
   follower: (d, w) => `${s(d.name)} ${FOLLOWER_ENDS[s(d.why)] ?? 'leaves'} ${w.name}.`,
-  power: (d, w) => POWER_LINES[s(d.what)]?.(w, powerName(s(d.power))) ?? '',
+  power: (d, w) => POWER_LINES[s(d.what)]?.(w, powerName(s(d.power)), d) ?? '',
   job: (d, w) => jobLine(d, w),
   spar: (d, w) =>
     `${w.name} spars with ${s(d.foe)} ${SPAR_ENDS[s(d.result)] ?? 'and walks away'}${n(d.turns) > 0 ? ` in ${n(d.turns)} exchange${n(d.turns) === 1 ? '' : 's'}` : ''}.`,

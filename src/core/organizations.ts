@@ -10,6 +10,7 @@ import { copyChapter, copyId } from '../content/copies.ts';
 import {
   ALLOWANCE,
   ALLOWANCE_PILL,
+  ALLOWANCE_STEP,
   BEAST_TITLES,
   DONATION,
   DWELLING,
@@ -728,8 +729,9 @@ function isTop(seat: SeatId): boolean {
 
 /**
  * A seat's monthly allowance 月例 (design § What membership gives and asks): outer 3 low and a
- * Qi-Gathering Pill, inner 15 low and three, true 60 low, from elder up 60 low on the realm curve
- * from Foundation by the holder's realm; scaled by how the power treats its own. A guest elder
+ * Qi-Gathering Pill, inner 15 low and three, from true up 60 low on the realm curve from
+ * Foundation by the holder's realm, each seat at least ×1.5 the one below; scaled by how the power
+ * treats its own. A guest elder
  * draws an elder's at their realm, as a fair power pays it.
  */
 export function allowanceOf(
@@ -738,13 +740,14 @@ export function allowanceOf(
   holder: RealmId,
   guest = false,
 ): { stones: number; pills: number } {
+  // From the true seat up, 60 low on the realm curve by the holder's realm, and every seat at
+  // least ×1.5 the one below it (the checkpoint's fix), so a head never draws a disciple's.
+  const curve = (ELDER_ALLOWANCE.stones * realmScale(holder)) / realmScale(ELDER_ALLOWANCE.at);
+  let stones: number = ALLOWANCE.inner.stones;
+  for (let k = seatRank('true'); k <= seatRank(seat); k++)
+    stones = Math.max(curve, stones * ALLOWANCE_STEP);
   const base =
-    seat === 'outer' || seat === 'inner' || seat === 'true'
-      ? ALLOWANCE[seat]
-      : {
-          stones: (ELDER_ALLOWANCE.stones * realmScale(holder)) / realmScale(ELDER_ALLOWANCE.at),
-          pills: 0,
-        };
+    seat === 'outer' || seat === 'inner' ? ALLOWANCE[seat] : { stones, pills: ALLOWANCE.true.pills };
   const round = (n: number) => Math.round(n * 10) / 10;
   if (guest) return { stones: round(base.stones), pills: base.pills };
   const t = TREATMENT_RULES[organization(houseOf(power)).treatment];
@@ -1136,8 +1139,10 @@ export function countLeave(
 
 /**
  * Investment (design: a member who reaches a realm well before the seat's usual age is offered a
- * true disciple's treatment early): an outer or inner member who has reached the true seat's realm
- * before 15% of that realm's lifespan is raised to the true seat (O3's talk).
+ * true disciple's treatment early): an inner member of a year's standing who has reached the true
+ * seat's realm before 15% of that realm's lifespan is raised to the true seat (O3's talk). Where
+ * the inner seat is held by realm within one (a split realm), it must have been won by the trial,
+ * so the raise never skips it (the checkpoint's fix).
  */
 export function raiseEarly(s: GameState): GameState {
   const who = s.player.id;
@@ -1147,12 +1152,18 @@ export function raiseEarly(s: GameState): GameState {
   for (const m of membershipsOf(s.world, who)) {
     if (!isOrganization(m.power) || m.guest || organization(m.power).preset.byRealm) continue;
     const seat = seatOf(s.world, who, m.power, r)!;
-    if (seatRank(seat) >= seatRank('true')) continue;
+    if (seatRank(seat) >= seatRank('true') || seat !== 'inner') continue;
+    if (s.calendar.day - m.since < DAYS_PER_YEAR) continue;
+    if (ladderOf(m.power).split && m.seat !== 'inner') continue;
     const from = seatRanges(m.power).true.from;
     if (!from || rank(r) < rank(from)) continue;
     if (age >= realm(from.realm).lifespan * EARLY_TRUE.share) continue;
     state = { ...state, world: setSeat(state.world, who, m.power, 'true') };
-    state = addEvent(state, 'power', { power: m.power, what: 'true' });
+    state = addEvent(state, 'power', {
+      power: m.power,
+      what: 'true',
+      title: seatTitle(m.power, 'true', r.realm).name,
+    });
   }
   return state;
 }

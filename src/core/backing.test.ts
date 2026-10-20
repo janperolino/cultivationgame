@@ -237,14 +237,31 @@ describe('investment', () => {
     expect(itemCount(lost.state.player, 'foundation-pill')).toBe(0);
   });
 
-  it('a member at Foundation well before thirty takes the true seat', () => {
-    const s = atRealm(member(life()), FE, 1);
-    expect(seatOf(s.world, ME, GATE, { realm: FE, stage: 1 })).toBe('inner');
+  it('a member at Foundation well before thirty takes the true seat, after a year’s standing', () => {
+    const joined = atRealm(member(life()), FE, 1);
+    expect(seatOf(joined.world, ME, GATE, { realm: FE, stage: 1 })).toBe('inner');
+    // Never on joining day.
+    expect(membership(raiseEarly(joined).world, ME, GATE)?.seat).toBe('outer');
+    const s = { ...joined, calendar: { ...joined.calendar, day: joined.calendar.day + 360 } };
     const raised = raiseEarly(s);
     expect(membership(raised.world, ME, GATE)?.seat).toBe('true');
-    expect(raised.chronicle.at(-1)?.type).toBe('power');
+    expect(raised.chronicle.at(-1)?.data).toMatchObject({
+      what: 'true',
+      title: 'true Gate disciple',
+    });
     const old = { ...s, calendar: { ...s.calendar, day: s.calendar.day + 30 * 360 } };
     expect(membership(raiseEarly(old).world, ME, GATE)?.seat).toBe('outer');
+  });
+
+  it('never skips the inner trial where the inner seat is held within a realm', () => {
+    const year = (x: GameState) => ({
+      ...x,
+      calendar: { ...x.calendar, day: x.calendar.day + 360 },
+    });
+    const by = year(atRealm(member(life(), LAMPS), QC, 9));
+    expect(membership(raiseEarly(by).world, ME, LAMPS)?.seat).toBe('outer');
+    const won = year(atRealm(member(life(), LAMPS, 'inner'), QC, 9));
+    expect(membership(raiseEarly(won).world, ME, LAMPS)?.seat).toBe('true');
   });
 });
 

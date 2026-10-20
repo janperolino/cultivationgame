@@ -429,6 +429,8 @@ export const ALLOWANCE: Record<'outer' | 'inner' | 'true', { stones: number; pil
   true: { stones: 60, pills: 0 },
 };
 export const ALLOWANCE_PILL = 'qi-gathering-pill';
+/** Each seat from the true seat up draws at least this many times the seat below it. */
+export const ALLOWANCE_STEP = 1.5;
 export const ELDER_ALLOWANCE = { stones: 60, at: 'foundation-establishment' as RealmId };
 
 /**

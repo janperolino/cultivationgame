@@ -171,13 +171,22 @@ describe('the monthly allowance', () => {
   it('reads the seat and the treatment', () => {
     expect(allowanceOf(REINS, 'outer', QC)).toEqual({ stones: 3, pills: 1 });
     expect(allowanceOf(REINS, 'inner', QC)).toEqual({ stones: 15, pills: 3 });
-    expect(allowanceOf(REINS, 'true', QC)).toEqual({ stones: 60, pills: 0 });
+    // From true up on the realm curve, each seat at least ×1.5 the one below: a Qi Condensation
+    // true disciple 22.5, a Foundation one 60.
+    expect(allowanceOf(REINS, 'true', QC)).toEqual({ stones: 22.5, pills: 0 });
+    expect(allowanceOf(REINS, 'true', 'foundation-establishment')).toEqual({
+      stones: 60,
+      pills: 0,
+    });
+    expect(allowanceOf(REINS, 'head', 'foundation-establishment').stones).toBeGreaterThan(
+      allowanceOf(REINS, 'elder', 'foundation-establishment').stones * 1.4,
+    );
     // Harsh: half the stones and none of the pills below true, ×1.5 above.
     expect(allowanceOf(GATE, 'outer', QC)).toEqual({ stones: 1.5, pills: 0 });
     expect(allowanceOf(GATE, 'inner', QC)).toEqual({ stones: 7.5, pills: 0 });
-    expect(allowanceOf(GATE, 'true', QC)).toEqual({ stones: 90, pills: 0 });
-    // From elder up, on the realm curve: a Core Formation elder 60 × 30 at fair.
-    expect(allowanceOf(REINS, 'elder', CF)).toEqual({ stones: 1800, pills: 0 });
+    expect(allowanceOf(GATE, 'true', QC)).toEqual({ stones: 33.8, pills: 0 });
+    // A Core Formation elder ×1.5 a Core Formation true disciple's 60 × 30, at fair.
+    expect(allowanceOf(REINS, 'elder', CF)).toEqual({ stones: 2700, pills: 0 });
     // Generous: ×1.5, the pills rounded down.
     expect(allowanceOf(BELL, 'inner', QC)).toEqual({ stones: 22.5, pills: 4 });
   });
@@ -262,7 +271,7 @@ describe('the guest elder', () => {
     expect(hallTerms(r.state, shop('gate-sect'))).toEqual({ as: 'member' });
     expect(pavilion(r.state, GATE)).toBeNull();
     expect(canJoin(r.state.world, YOU, REINS).ok).toBe(true);
-    expect(allowanceOf(GATE, 'elder', QC, true)).toEqual({ stones: 6.7, pills: 0 });
+    expect(allowanceOf(GATE, 'elder', QC, true)).toEqual({ stones: 33.8, pills: 0 });
   });
 });
 
