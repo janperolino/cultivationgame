@@ -18,6 +18,8 @@ import { comboMultiplier, damage, damagePhase, elementMultiplier, nextCombo } fr
 import {
   combatantIn,
   fightOver,
+  preview,
+  protection,
   resolveTurn,
   startFight,
   winner,
@@ -339,6 +341,54 @@ describe('damage', () => {
     );
     // Bare hands at Foundation: 20 × 3.1.
     expect(turn(f, [{ actor: 'x', main: hit('y') }], SEED_HIT).outcomes[0]!.damage).toBe(62);
+  });
+});
+
+describe('protective qi (design § Combat)', () => {
+  const at = (id: string, rungs: ReturnType<typeof all>, extra: Partial<CombatantInit> = {}) =>
+    fighter({ id, name: id, side: id, rungs, ...extra });
+
+  it('leaves a twentieth of a hit from a realm below, unless what is behind it reaches', () => {
+    const junior = at('j', all(QC(9)));
+    const senior = at('s', all(FE(1)));
+    // A white tier 1 art reaches Qi Condensation, a gold one Foundation, a white tier 2 one too.
+    expect(protection(junior, senior, 0)).toBe(0.05);
+    expect(protection(junior, senior, 1)).toBe(1);
+    // Never from above or at the same realm, whatever the art: your realm reaches itself.
+    expect(protection(senior, junior, 0)).toBe(1);
+    expect(protection(senior, at('t', all(FE(4))), 0)).toBe(1);
+    // A realm is your highest ladder, either way.
+    const bodyAhead = at('b', { qi: QC(1), body: FE(1), soul: QC(1) });
+    expect(protection(bodyAhead, senior, 0)).toBe(1);
+    expect(protection(junior, bodyAhead, 0)).toBe(0.05);
+    // Two realms up holds the same twentieth, and a gold art reaches only one realm past its tier.
+    expect(protection(junior, at('c', all(CF(1))), 1)).toBe(0.05);
+  });
+
+  it('reads the art, the weapon and the talisman, and the preview shows it', () => {
+    const arts = {
+      white: { technique: tech({ id: 'white', power: 400 }), accuracy: 1 },
+      gold: { technique: tech({ id: 'gold', power: 400, rarity: 'gold' }), accuracy: 1 },
+      deep: { technique: tech({ id: 'deep', power: 400, tier: 2 }), accuracy: 1 },
+    };
+    const junior = at('j', all(QC(9)), { techniques: arts });
+    const f = startFight([junior, at('s', all(FE(1)))]);
+    const dmg = (id: string) => preview(f, 'j', { type: 'technique', id, target: 's' })!.damage;
+    const full = (400 * rungSize(QC(9))) / rungSize(FE(1));
+    expect(dmg('white')).toBe(Math.round(full * 0.05));
+    expect(dmg('gold')).toBe(Math.round(full * 3.1));
+    expect(dmg('deep')).toBe(Math.round(full * 3.1));
+    // Strikes reach by the weapon: bare hands from below are held, a gold sword passes.
+    expect(weapon('sword', 1, 'white').reach).toBe(0);
+    expect(weapon('sword', 1, 'gold').reach).toBe(1);
+    expect(weapon('sword', 2, 'purple').reach).toBe(1);
+    const armed = startFight([
+      at('j', all(QC(9)), { weapon: weapon('sword', 1, 'gold') }),
+      at('s', all(FE(1))),
+    ]);
+    const bare = preview(f, 'j', { type: 'strike', target: 's' })!.damage;
+    const sword = preview(armed, 'j', { type: 'strike', target: 's' })!.damage;
+    expect(sword / bare).toBeGreaterThan(20);
   });
 });
 

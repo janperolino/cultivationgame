@@ -20,6 +20,7 @@ import {
   HALVED_HIT,
   MAX_CREATIVITY,
   MAX_RESIST,
+  PROTECTIVE_QI,
   QI_REGEN,
   RESOLVE_BASE,
   SLOWED_ORDER,
@@ -37,7 +38,7 @@ import {
 import { TOXICITY_MAX, type LadderId } from '../../content/cultivation.ts';
 import { actionDaos, isCombatDao, type DaoStatKind } from '../../content/daos.ts';
 import type { Item } from '../../content/items.ts';
-import { rarityAccuracy, rarityMultiplier } from '../../content/rarity.ts';
+import { rarityAccuracy, rarityMultiplier, rarityReach } from '../../content/rarity.ts';
 import { realmIndex, tierStep, type RealmId } from '../../content/realms.ts';
 import {
   BRINK_HP,
@@ -461,6 +462,8 @@ interface Attack {
   qi: boolean;
   /** The Daos it counts (content/daos.ts): its tags and its damage type's element. */
   daos: readonly string[];
+  /** The realm the art, weapon or talisman reaches by itself, 0 for Qi Condensation (Protective qi). */
+  reach: number;
 }
 
 /** What a technique costs this actor in qi, its Daos' cost nodes included. */
@@ -509,6 +512,7 @@ function techniqueAttack(actor: Combatant, id: string, creativity: number): Atta
       (onWeapon ? actor.weapon.technique : 1),
     qi: t.qiCost > 0,
     daos,
+    reach: t.tier - 1 + rarityReach(t.rarity),
   };
 }
 
@@ -531,6 +535,7 @@ function strikeAttack(actor: Combatant, creativity: number): Attack {
     attack: actor.weapon.strike * dao * (1 + daoMod(actor, daos, 'Power')) * actor.physicalPower,
     qi: false,
     daos,
+    reach: actor.weapon.reach,
   };
 }
 
@@ -554,6 +559,7 @@ function itemAttack(actor: Combatant, it: Item, creativity: number): Attack | nu
       typePower(actor, use.damage),
     qi: false,
     daos,
+    reach: it.tier - 1 + rarityReach(it.rarity),
   };
 }
 
@@ -591,9 +597,25 @@ interface Numbers {
   critAttack: number;
   /** It cannot miss: Dragon Thrust. */
   sure: boolean;
+  /** What the target's protective qi leaves of the hit: 1, or a twentieth. */
+  ward: number;
 }
 
 const hasStatus = (c: Combatant, id: StatusId) => c.statuses.some((s) => s.id === id);
+
+/** A combatant's realm, as an index: their highest ladder's (design § Scale of destruction). */
+function ownRealm(c: Combatant): number {
+  return Math.max(...Object.values(c.rungs).map((r) => realmIndex(r.realm)));
+}
+
+/**
+ * Protective qi (design § Combat): a hit on a foe of a higher realm does a twentieth, unless the
+ * art, weapon or talisman behind it reaches their realm on its own, as gold and up reach a realm
+ * past their tier's. Your own realm always reaches itself, so it only bites from below.
+ */
+export function protection(actor: Combatant, target: Combatant, reach: number): number {
+  return Math.max(ownRealm(actor), reach) >= ownRealm(target) ? 1 : PROTECTIVE_QI;
+}
 
 /**
  * What the Intent ladder does to one attack (design § The combat Daos, The Intent ladder). The
@@ -636,7 +658,8 @@ function numbers(f: Fight, actor: Combatant, target: Combatant, a: Attack): Numb
   let weaken = edge.defense;
   if (hasStatus(target, 'bleeding') && mod(actor, 'unbreaking') > 0) weaken *= UNBREAKING_DEFENSE;
   const wounded = target.hp < target.maxHp / 2;
-  attack *= edge.attack;
+  const ward = protection(actor, target, a.reach);
+  attack *= edge.attack * ward;
   const pierce = Math.max(0, 1 - daoMod(actor, a.daos, 'Pierce'));
   return {
     accuracy: attackAccuracy(f, actor, a) * edge.accuracy,
@@ -651,6 +674,7 @@ function numbers(f: Fight, actor: Combatant, target: Combatant, a: Attack): Numb
     critAttack: (1 + mod(actor, 'critDamage')) * (wounded ? 1 + mod(actor, 'executioner') : 1),
     sure:
       a.form === 'thrust' && mod(actor, 'dragonThrust') > 0 && actor.marks.dragonTurn !== f.turn,
+    ward,
   };
 }
 
@@ -909,8 +933,7 @@ function main(
           actor.hp = Math.min(actor.maxHp, actor.hp + Math.round(e.share * actor.maxHp * scale));
       }
       // A pill doses by your realm, your highest ladder (P3.2).
-      const own = Math.max(...Object.values(actor.rungs).map((r) => realmIndex(r.realm)));
-      const dose = doseAt(it, own + 1);
+      const dose = doseAt(it, ownRealm(actor) + 1);
       actor.toxicity = Math.min(TOXICITY_MAX, actor.toxicity + dose);
       return [
         {
@@ -1106,7 +1129,10 @@ function applyStatus(
   return true;
 }
 
-/** Damage that spills onto another foe without a roll: a spear's sweep, a saber's cleave. */
+/**
+ * Damage that spills onto another foe without a roll: a spear's sweep, a saber's cleave. `dealt`
+ * is the share before protective qi, which this foe's own realm then meets.
+ */
 function splash(
   f: Fight,
   actor: Combatant,
@@ -1114,7 +1140,8 @@ function splash(
   a: Attack,
   dealt: number,
 ): Omit<Outcome, 'action'> {
-  const l = soak(target, Math.max(1, Math.round(guarded(f, target, dealt))));
+  const warded = dealt * protection(actor, target, a.reach);
+  const l = soak(target, Math.max(1, Math.round(guarded(f, target, warded))));
   const d = land(target, l);
   return {
     turn: f.turn,
@@ -1255,14 +1282,14 @@ function attack(
   if (sweep > 0) {
     const rest = others(f, actor, target);
     for (const c of mod(actor, 'whirl') > 0 ? rest : rest.slice(0, 1)) {
-      outcomes.push(splash(f, actor, c, a, dealt * sweep));
+      outcomes.push(splash(f, actor, c, a, (dealt / n.ward) * sweep));
     }
   }
   // A saber's critical carries a share to a second foe.
   const cleave = crit && a.daos.includes('saber') ? mod(actor, 'cleave') : 0;
   if (cleave > 0) {
     const next = others(f, actor, target)[0];
-    if (next) outcomes.push(splash(f, actor, next, a, dealt * cleave));
+    if (next) outcomes.push(splash(f, actor, next, a, (dealt / n.ward) * cleave));
   }
   return outcomes;
 }

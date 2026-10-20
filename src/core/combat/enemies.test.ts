@@ -301,11 +301,14 @@ describe('the preview', () => {
     const low = { realm: 'qi-condensation' as const, stage: 1, grade: 0 };
     const rungs = { qi: high, body: low, soul: low };
     const palm = { type: 'technique' as const, id: 'palm', target: 'b' };
+    // The attacker's soul stands at Foundation too, so the palm is no hit from below and passes
+    // B's protective qi.
+    const a = () => fighter('a', 'a', { rungs: { qi: low, body: low, soul: high } });
     // The shield up: the palm meets Defense 31 from the qi ladder, 40 × 10 ÷ 31.
-    const shielded = startFight([fighter('a', 'a'), fighter('b', 'b', { rungs })]);
+    const shielded = startFight([a(), fighter('b', 'b', { rungs })]);
     expect(preview(shielded, 'a', palm)!.damage).toBe(Math.round(400 / rungSize(high)));
     // The shield down: Defense 10 from the body, and the palm lands at full 40.
-    const bare = startFight([fighter('a', 'a'), fighter('b', 'b', { rungs, maxShield: 0 })]);
+    const bare = startFight([a(), fighter('b', 'b', { rungs, maxShield: 0 })]);
     expect(preview(bare, 'a', palm)!.damage).toBe(40);
     expect(rungSize(high)).toBeCloseTo(31, 0);
   });

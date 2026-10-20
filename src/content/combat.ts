@@ -61,6 +61,11 @@ export const CRIT_DAMAGE = 1.5;
 export const FORTUNE_DROP = 0.02;
 /** Damage lands anywhere from 1 − this to 1 + this of the formula. */
 export const DAMAGE_SPREAD = 0.15;
+/**
+ * Protective qi (design § Combat): a hit on a foe of a higher realm does this share, unless the
+ * art, weapon or talisman behind it reaches that realm.
+ */
+export const PROTECTIVE_QI = 0.05;
 /** Defending multiplies Evasion by this until your next action, and taking cover by COVER_EVASION. */
 export const DEFEND_EVASION = 1.5;
 export const COVER_EVASION = 1.25;
