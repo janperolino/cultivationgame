@@ -1073,6 +1073,14 @@ Gu raising, puppetry, divination and medicine come after v1.
 - **The element Daos' craft side paths** (`stats.ts`, waiting for crafting) switch on: Fire's into the furnace, Wood's and Water's into the fields.
 - **Drafting.** Tiers 1 and 2 of all five go in as data in their build phases, drafted by a cheap agent to the combat Daos' pattern for Jan's review; tiers 3 to 9 carry only their names and capstones.
 
+**Styles and the craft grade** (D4, block 5).
+
+- **A style is a small grafted tree** beside its craft Dao, a chapter a realm. Chapter 1 is about five nodes: two or three recipes as seals and two perks that lean one branch, which is the style's character (a guild's leans Line, a hands-on master's Hand).
+- **Most powers use a common style** (Jan's call): styles are written in layers as catalogs are. Each area keeps one common style a craft, sold in its markets and taught openly, never guarded, and most powers that craft at all, a clan, a gang, a garrison, simply hold it, mostly bought; the clans of one area brew alike. Only a power whose trade is the craft (an alchemy sect, a refining works) writes its own, and a few hold a bought or inherited style from elsewhere, written as an import along an atlas tie. The Border Wilds: five common styles, one a craft, and two or three of its own.
+- **An own style's chapters and guarding work as a method's**: chapter 2 for inner disciples and 3 for true at the pavilion, markets selling chapters 1 and 2 as fragments, the leak, the mark and the hunt unchanged. Its recipes are why its hall stocks lines found nowhere else, and selling its guarded goods where its people trade is seen in use: they know their own pill. A common style's later chapters come from a guild.
+- **The craft grade, first-grade 一品 to ninth-grade 九品,** is the craft Dao tier you hold (a second-grade alchemist 二品丹师 holds Alchemy's tier 2), certified at a guild's hall by one test batch of that tier that holds, played or queued. Its badge opens doors: a guild seat needs the grade of its own realm's tier (a guild whose elders are Core Formation wants third-grade for elder), and a graded commission asks for it.
+- **In the atlas** a guild or works carries `crafts`, what it practices; new crafting powers wait for the atlas fill.
+
 Formation puzzles show the engine-and-GLM split well. The engine hides which node is the array's eye, GLM describes the clues, Soul checks reveal hints, and a wrong strike backfires.
 
 **People and powers** run on the same idle-and-world split:
