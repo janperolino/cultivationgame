@@ -576,12 +576,20 @@ function itemAttack(actor: Combatant, it: Item, creativity: number): Attack | nu
  * An attack's Accuracy: the rung's size times what feeds it, the Hit stat and the actor's
  * statuses, the Banners their allies carry and the sword pressure their foes carry.
  */
-function attackAccuracy(f: Fight, actor: Combatant, a: Attack): number {
+function attackAccuracy(f: Fight, actor: Combatant, a: Attack, quiet = false): number {
   let around = 1;
+  // With no one carrying a Banner or a sword's pressure (`quiet`) it is exactly 1, and unread.
   for (const c of f.combatants) {
+    if (quiet) break;
     if (c === actor || c.state !== 'fighting') continue;
-    if (c.side === actor.side) around *= 1 + mod(c, 'banner');
-    else around *= Math.max(0, 1 - mod(c, 'swordAura'));
+    // A bearer of neither multiplies by exactly 1, so only the ones who carry it are met.
+    if (c.side === actor.side) {
+      const banner = mod(c, 'banner');
+      if (banner !== 0) around *= 1 + banner;
+    } else {
+      const aura = mod(c, 'swordAura');
+      if (aura !== 0) around *= Math.max(0, 1 - aura);
+    }
   }
   return rungSize(a.rung) * a.accuracy * actor.accuracy * statusFactor(actor, 'accuracy') * around;
 }
@@ -614,7 +622,12 @@ const hasStatus = (c: Combatant, id: StatusId) => c.statuses.some((s) => s.id ==
 
 /** A combatant's realm, as an index: their highest ladder's (design § Scale of destruction). */
 function ownRealm(c: Combatant): number {
-  return Math.max(...Object.values(c.rungs).map((r) => realmIndex(r.realm)));
+  let top = -Infinity;
+  for (const r of Object.values(c.rungs)) {
+    const i = realmIndex(r.realm);
+    if (i > top) top = i;
+  }
+  return top;
 }
 
 /**
@@ -653,27 +666,72 @@ export function intentEdge(
   };
 }
 
+/** What `numbers` reads of the actor and the attack alone, the same against every target. */
+interface Fixed {
+  /** The attack's Attack through the first strike, the one sword and the saber's run. */
+  attack: number;
+  riptide: number;
+  temperedEdge: number;
+  crush: number;
+  unbreaking: boolean;
+  pierce: number;
+  crit: number;
+  woundedCrit: number;
+  critDamage: number;
+  executioner: number;
+  sure: boolean;
+  realm: number;
+}
+
+function fixedOf(f: Fight, actor: Combatant, a: Attack): Fixed {
+  let attack = rungSize(a.rung) * a.attack;
+  if (!actor.marks.struck) attack *= 1 + mod(actor, 'firstStrike');
+  if (a.daos.includes('sword') && !actor.marks.oneSword) attack *= 1 + mod(actor, 'oneSword');
+  if (a.daos.includes('saber')) attack *= 1 + mod(actor, 'momentum') * (actor.marks.momentum ?? 0);
+  return {
+    attack,
+    riptide: 1 + mod(actor, 'riptide'),
+    temperedEdge: 1 + mod(actor, 'temperedEdge'),
+    crush: 1 + mod(actor, 'crush'),
+    unbreaking: mod(actor, 'unbreaking') > 0,
+    pierce: Math.max(0, 1 - daoMod(actor, a.daos, 'Pierce')),
+    crit: daoMod(actor, a.daos, 'Crit'),
+    woundedCrit: mod(actor, 'woundedCrit'),
+    critDamage: 1 + mod(actor, 'critDamage'),
+    executioner: 1 + mod(actor, 'executioner'),
+    sure:
+      a.form === 'thrust' && mod(actor, 'dragonThrust') > 0 && actor.marks.dragonTurn !== f.turn,
+    realm: ownRealm(actor),
+  };
+}
+
 /**
  * The two sheets compared, with the Dao rules that move them: a first attack and the first sword
  * action of a fight, a saber's run of hits, water on the chilled, metal on the bleeding and earth
  * on the staggered, Unbreaking's lower armor, pierce, crits against the wounded, Dragon Thrust.
  */
-function numbers(f: Fight, actor: Combatant, target: Combatant, a: Attack): Numbers {
-  let attack = rungSize(a.rung) * a.attack;
-  if (!actor.marks.struck) attack *= 1 + mod(actor, 'firstStrike');
-  if (a.daos.includes('sword') && !actor.marks.oneSword) attack *= 1 + mod(actor, 'oneSword');
-  if (a.daos.includes('saber')) attack *= 1 + mod(actor, 'momentum') * (actor.marks.momentum ?? 0);
-  if (a.type === 'water' && hasStatus(target, 'chilled')) attack *= 1 + mod(actor, 'riptide');
-  if (a.type === 'metal' && hasStatus(target, 'bleeding')) attack *= 1 + mod(actor, 'temperedEdge');
-  if (a.type === 'earth' && hasStatus(target, 'staggered')) attack *= 1 + mod(actor, 'crush');
+function numbers(
+  f: Fight,
+  actor: Combatant,
+  target: Combatant,
+  a: Attack,
+  /** The attack's Accuracy before the target's intent, when the caller already has it. */
+  accuracy: number = attackAccuracy(f, actor, a),
+  /** What the actor and the attack alone give, when the caller already has it. */
+  fx: Fixed = fixedOf(f, actor, a),
+): Numbers {
+  let attack = fx.attack;
+  if (a.type === 'water' && hasStatus(target, 'chilled')) attack *= fx.riptide;
+  if (a.type === 'metal' && hasStatus(target, 'bleeding')) attack *= fx.temperedEdge;
+  if (a.type === 'earth' && hasStatus(target, 'staggered')) attack *= fx.crush;
   const edge = intentEdge(actor, target, a.daos);
   let weaken = edge.defense;
-  if (hasStatus(target, 'bleeding') && mod(actor, 'unbreaking') > 0) weaken *= UNBREAKING_DEFENSE;
+  if (fx.unbreaking && hasStatus(target, 'bleeding')) weaken *= UNBREAKING_DEFENSE;
   const wounded = target.hp < target.maxHp / 2;
   attack *= edge.attack;
-  const pierce = Math.max(0, 1 - daoMod(actor, a.daos, 'Pierce'));
+  const pierce = fx.pierce;
   return {
-    accuracy: attackAccuracy(f, actor, a) * edge.accuracy,
+    accuracy: accuracy * edge.accuracy,
     evasion: evasion(target, a.ladder) * edge.evasion,
     attack,
     defense: defense(target, guardLadder(a.type)) * weaken,
@@ -681,11 +739,10 @@ function numbers(f: Fight, actor: Combatant, target: Combatant, a: Attack): Numb
     element: elementMultiplier(damagePhase(a.type), target.element),
     resist: (target.resist[a.type] ?? 0) * pierce,
     pierce,
-    crit: daoMod(actor, a.daos, 'Crit') + (wounded ? mod(actor, 'woundedCrit') : 0),
-    critAttack: (1 + mod(actor, 'critDamage')) * (wounded ? 1 + mod(actor, 'executioner') : 1),
-    sure:
-      a.form === 'thrust' && mod(actor, 'dragonThrust') > 0 && actor.marks.dragonTurn !== f.turn,
-    below: ownRealm(actor) < ownRealm(target),
+    crit: fx.crit + (wounded ? fx.woundedCrit : 0),
+    critAttack: fx.critDamage * (wounded ? fx.executioner : 1),
+    sure: fx.sure,
+    below: fx.realm < ownRealm(target),
   };
 }
 
@@ -705,33 +762,45 @@ interface Landing {
  */
 function landing(target: Combatant, hit: number, type: DamageType, n: Numbers): Landing {
   let left = hit;
-  // Each bar's protective qi reads the hit's plain Attack, before a crit or a combo, against it.
-  const ward = (def: number) => (n.below ? protection(n.attack, def) : 1);
-  const take = (pool: number, def: number, resist: number): number => {
-    const full = (left * (1 - Math.min(MAX_RESIST, resist)) * ward(def)) / def;
-    if (full <= pool) {
-      left = 0;
-      return Math.round(full);
-    }
-    left *= 1 - pool / full;
-    return pool;
-  };
   const out: Landing = { shield: 0, armor: 0, hp: 0 };
   if (type !== 'soul') {
-    if (target.shield > 0) out.shield = take(target.shield, shieldDefense(target) * n.weaken, 0);
+    if (target.shield > 0) {
+      const full = barFull(left, shieldDefense(target) * n.weaken, 0, n);
+      if (full <= target.shield) {
+        left = 0;
+        out.shield = Math.round(full);
+      } else {
+        left *= 1 - target.shield / full;
+        out.shield = target.shield;
+      }
+    }
     const worn = target.armor;
     if (left > 0 && worn && worn.hp > 0) {
-      out.armor = take(worn.hp, worn.defense * n.weaken, (worn.resist[type] ?? 0) * n.pierce);
+      const full = barFull(left, worn.defense * n.weaken, (worn.resist[type] ?? 0) * n.pierce, n);
+      if (full <= worn.hp) {
+        left = 0;
+        out.armor = Math.round(full);
+      } else {
+        left *= 1 - worn.hp / full;
+        out.armor = worn.hp;
+      }
     }
   }
   if (left > 0) {
     const wound = type === 'soul' ? soulWound(target) : 1;
     out.hp = Math.round(
-      (left * (1 - Math.min(MAX_RESIST, n.resist)) * wound * ward(n.defense)) / n.defense,
+      (left * (1 - Math.min(MAX_RESIST, n.resist)) * wound * ward(n, n.defense)) / n.defense,
     );
   }
   return out;
 }
+
+/** Each bar's protective qi reads the hit's plain Attack, before a crit or a combo, against it. */
+const ward = (n: Numbers, def: number) => (n.below ? protection(n.attack, def) : 1);
+
+/** What the force left would take from a bar of this Defense and resist, were it all to land. */
+const barFull = (left: number, def: number, resist: number, n: Numbers): number =>
+  (left * (1 - Math.min(MAX_RESIST, resist)) * ward(n, def)) / def;
 
 /** Takes a landing off the target's bars and HP; returns everything it dealt. */
 function land(target: Combatant, l: Landing): number {
@@ -792,6 +861,36 @@ export interface Preview {
 export function preview(f: Fight, actorId: string, m: MainAction): Preview | null {
   const actor = combatantIn(f, actorId);
   if (!actor || actor.state !== 'fighting') return null;
+  const pr = priced(f, actor, m);
+  if (!pr) return null;
+  const target = foe(f, actor, 'target' in m ? (m.target ?? '') : '');
+  if (!target) return null;
+  const { foes, share } = reached(f, actor, target, pr.spec);
+  let damage = 0;
+  let expected = 0;
+  let chance = 0;
+  foes.forEach((c, i) => {
+    const { dealt, p } = priceFoe(f, actor, c, pr, share);
+    if (i === 0) chance = p;
+    damage += dealt;
+    expected += p * dealt;
+  });
+  return { chance, damage, qi: pr.qi, foes: foes.length, expected };
+}
+
+/** An attacking main action priced but for its foes: the attack itself and what it reads of them. */
+interface Priced {
+  spec: Attack;
+  qi: number;
+  /** The attack's Accuracy before any foe's intent, the same against every foe. */
+  accuracy: number;
+  /** What the combo multiplies a plain hit by. */
+  combo: number;
+  fixed: Fixed;
+}
+
+/** The attack an action is, its qi paid for; null when it doesn't attack or can't be paid. */
+function priced(f: Fight, actor: Combatant, m: MainAction, quiet = false): Priced | null {
   let a: Attack | string | null;
   let qi = 0;
   if (m.type === 'technique') {
@@ -809,30 +908,120 @@ export function preview(f: Fight, actorId: string, m: MainAction): Preview | nul
     a = held && held.n > 0 ? itemAttack(actor, held.item, 1) : null;
   } else return null;
   if (!a || typeof a === 'string') return null;
-  const target = foe(f, actor, 'target' in m ? (m.target ?? '') : '');
-  if (!target) return null;
   const spec = m.type === 'technique' ? rained(actor, a) : a;
-  const { foes, share } = reached(f, actor, target, spec);
+  return {
+    spec,
+    qi,
+    accuracy: attackAccuracy(f, actor, spec, quiet),
+    combo: comboMultiplier(nextCombo(actor.combo, damagePhase(spec.type))),
+    fixed: fixedOf(f, actor, spec),
+  };
+}
+
+/** One foe's plain hit, summed over its bars, and the chance the attack lands on it. */
+function priceFoe(
+  f: Fight,
+  actor: Combatant,
+  c: Combatant,
+  pr: Priced,
+  share: number,
+): { dealt: number; p: number } {
+  const n = numbers(f, actor, c, pr.spec, pr.accuracy, pr.fixed);
+  const hit = force({
+    base: pr.spec.base * share,
+    attack: n.attack,
+    element: n.element,
+    result: 'hit',
+    combo: pr.combo,
+  });
+  const l = landing(c, hit, pr.spec.type, n);
+  return {
+    dealt: l.shield + l.armor + l.hp,
+    p: n.sure ? 1 : hitChance(n.accuracy, n.evasion),
+  };
+}
+
+/**
+ * Whether no one in the fight carries a Banner or a sword's pressure, so every attack's Accuracy
+ * is the same against everyone and needs no look around the field. Read once per turn, before
+ * anyone acts: nothing in a fight changes what a combatant carries.
+ */
+export function quietFight(f: Fight): boolean {
+  return f.combatants.every((c) => mod(c, 'banner') === 0 && mod(c, 'swordAura') === 0);
+}
+
+/**
+ * What pricing every foe as the target in turn shares: one foe's numbers don't depend on which foe
+ * is the target, so each is priced once per attack however many foes are tried. Valid for one
+ * actor, for as long as the fight stands as it did when it was made.
+ */
+export interface PreviewCache {
+  actor: Combatant;
+  /** No one in the fight carries a Banner or a sword's pressure (`quiet`). */
+  quiet: boolean;
+  /** The actor's living foes, in the fight's order. */
+  living: Combatant[];
+  index: Map<Combatant, number>;
+  entries: Map<
+    string,
+    { pr: Priced; dealt: (number | undefined)[]; chance: (number | undefined)[] } | null
+  >;
+}
+
+export function previewCache(f: Fight, actor: Combatant, quiet = false): PreviewCache {
+  const living = f.combatants.filter((c) => c.side !== actor.side && c.state === 'fighting');
+  return { actor, quiet, living, index: new Map(living.map((c, i) => [c, i])), entries: new Map() };
+}
+
+/**
+ * `preview` for an actor and a living foe in hand, over a cache shared by the foes tried: the same
+ * numbers, summed in the same order, without pricing each foe once per target.
+ */
+export function previewAt(
+  f: Fight,
+  actor: Combatant,
+  m: MainAction,
+  target: Combatant,
+  cache: PreviewCache,
+): Preview | null {
+  const t = cache.index.get(target);
+  if (actor !== cache.actor || actor.state !== 'fighting' || t === undefined) {
+    return preview(f, actor.id, m);
+  }
+  const key = m.type === 'technique' || m.type === 'item' ? `${m.type}:${m.id}` : m.type;
+  let e = cache.entries.get(key);
+  if (e === undefined) {
+    const pr = priced(f, actor, m, cache.quiet);
+    e = pr && { pr, dealt: [], chance: [] };
+    cache.entries.set(key, e);
+  }
+  if (!e) return null;
+  const { living } = cache;
+  const spec = e.pr.spec;
+  const count = fullCount(spec.targets, spec.tier);
+  const all = spec.targets === 'all';
+  const share = all && living.length > count ? count / living.length : 1;
+  const limit = all ? living.length : Math.min(count, living.length);
   let damage = 0;
   let expected = 0;
   let chance = 0;
-  foes.forEach((c, i) => {
-    const n = numbers(f, actor, c, spec);
-    const hit = force({
-      base: spec.base * share,
-      attack: n.attack,
-      element: n.element,
-      result: 'hit',
-      combo: comboMultiplier(nextCombo(actor.combo, damagePhase(spec.type))),
-    });
-    const l = landing(c, hit, spec.type, n);
-    const dealt = l.shield + l.armor + l.hp;
-    const p = n.sure ? 1 : hitChance(n.accuracy, n.evasion);
-    if (i === 0) chance = p;
+  // The chosen foe first, then the rest in the fight's order, as `reached` lists them.
+  for (let j = -1, taken = 0; taken < limit && j < living.length; j++) {
+    const i: number = j < 0 ? t : j;
+    if (j >= 0 && i === t) continue;
+    let dealt = e.dealt[i];
+    let p = e.chance[i];
+    if (dealt === undefined || p === undefined) {
+      const r = priceFoe(f, actor, living[i]!, e.pr, share);
+      dealt = e.dealt[i] = r.dealt;
+      p = e.chance[i] = r.p;
+    }
+    if (taken === 0) chance = p;
     damage += dealt;
     expected += p * dealt;
-  });
-  return { chance, damage, qi, foes: foes.length, expected };
+    taken++;
+  }
+  return { chance, damage, qi: e.pr.qi, foes: limit, expected };
 }
 
 /**

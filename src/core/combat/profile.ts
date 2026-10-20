@@ -12,12 +12,16 @@ import {
   combatantIn,
   fightOver,
   preview,
+  previewAt,
+  previewCache,
+  quietFight,
   resolveTurn,
   winner,
   type Action,
   type Fight,
   type MainAction,
   type Preview,
+  type PreviewCache,
 } from './fight.ts';
 
 export function profile(id: ProfileId): Profile {
@@ -37,7 +41,13 @@ interface Option {
 }
 
 /** Every attack the actor can pay for against a target, priced. */
-function options(f: Fight, me: Combatant, target: Combatant, items: boolean): Option[] {
+function options(
+  f: Fight,
+  me: Combatant,
+  target: Combatant,
+  items: boolean,
+  cache?: PreviewCache,
+): Option[] {
   const mains: MainAction[] = [
     ...Object.keys(me.techniques).map((id) => ({
       type: 'technique' as const,
@@ -53,7 +63,7 @@ function options(f: Fight, me: Combatant, target: Combatant, items: boolean): Op
   }
   const out: Option[] = [];
   for (const main of mains) {
-    const p = preview(f, me.id, main);
+    const p = cache ? previewAt(f, me, main, target, cache) : preview(f, me.id, main);
     if (!p) continue;
     const type =
       main.type === 'technique'
@@ -105,12 +115,17 @@ function choose(xs: Option[], pick: Profile['picks']): Option | undefined {
 }
 
 /** The foe a fighter goes after: the one it can hurt most, as a share of their HP left. */
-function targetOf(f: Fight, me: Combatant): { target: Combatant; xs: Option[] } | undefined {
-  const foes = f.combatants.filter((c) => c.side !== me.side && c.state === 'fighting');
+function targetOf(
+  f: Fight,
+  me: Combatant,
+  quiet: boolean,
+): { target: Combatant; xs: Option[] } | undefined {
+  const cache = previewCache(f, me, quiet);
+  const foes = cache.living;
   let pick: { target: Combatant; xs: Option[] } | undefined;
   let score = -1;
   for (const c of foes) {
-    const xs = options(f, me, c, false);
+    const xs = options(f, me, c, false, cache);
     const top = best(xs, (o) => o.value);
     const s = top ? top.value / Math.max(1, c.hp) : 0;
     if (s > score) {
@@ -123,10 +138,16 @@ function targetOf(f: Fight, me: Combatant): { target: Combatant; xs: Option[] } 
 }
 
 /** What a fighter does this turn on its profile. */
-export function chooseAction(f: Fight, id: string, p: Profile): Action {
+export function chooseAction(
+  f: Fight,
+  id: string,
+  p: Profile,
+  /** `quietFight(f)`, when the caller picks for many fighters on one standing fight. */
+  quiet = quietFight(f),
+): Action {
   const me = combatantIn(f, id);
   if (!me || me.state !== 'fighting') return { actor: id };
-  const chosen = targetOf(f, me);
+  const chosen = targetOf(f, me, quiet);
   if (!chosen) return { actor: id };
   const target = chosen.target;
   const share = me.hp / me.maxHp;
@@ -181,9 +202,10 @@ export function runFight(start: Fight, rng: Rng, maxTurns = 60): FightResult {
   let f = start;
   const used: Record<string, string[]> = {};
   while (!fightOver(f) && f.turn < maxTurns) {
+    const quiet = quietFight(f);
     const actions = f.combatants
       .filter((c) => c.state === 'fighting')
-      .map((c) => chooseAction(f, c.id, profile(c.profile ?? 'fanatical')));
+      .map((c) => chooseAction(f, c.id, profile(c.profile ?? 'fanatical'), quiet));
     const r = resolveTurn(f, actions, rng);
     for (const o of r.outcomes)
       if (o.action === 'technique' && o.id && !(used[o.actor] ?? []).includes(o.id))
