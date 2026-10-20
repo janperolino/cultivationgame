@@ -108,6 +108,17 @@ export const HUNDRED_REINS: Catalog = {
   ],
   // The recipes for its pills (K1), each brewed by the inputs its line tells of.
   recipes: [
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'storm-hawk-pinion-talisman',
+      craft: 'talismans',
+      family: 'strikes',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'beast-wing', count: 1 },
+      ],
+    },
     // Brewed in pairs: the beast's blood and the grass the war mounts are fattened on.
     {
       output: 'shared-blood-pill',
@@ -275,6 +286,17 @@ export const BOUND_BONES: Catalog = {
   ],
   // Its gear's recipes (K4), each refined from what its line tells of.
   recipes: [
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'bone-binding-talisman',
+      craft: 'talismans',
+      family: 'strikes',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'array-plate-blank', count: 1 },
+      ],
+    },
     {
       output: 'skull-socket-robe',
       craft: 'refining',
@@ -510,6 +532,17 @@ export const LAMP_KEEPERS: Catalog = {
   ],
   // The recipes for its pills (K1), each brewed by the inputs its line tells of.
   recipes: [
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'drowned-word-talisman',
+      craft: 'talismans',
+      family: 'strikes',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'thunderhorn', count: 1 },
+      ],
+    },
     // Grave-shade grass and the slow river's lotus, for the fens' dead taste.
     {
       output: 'fen-yin-pill',

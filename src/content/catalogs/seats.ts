@@ -89,6 +89,17 @@ export const RIVER_BEND: Catalog = {
   ],
   // Its gear's recipes (K4), each refined from what its line tells of.
   recipes: [
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'barge-ward-talisman',
+      craft: 'talismans',
+      family: 'strikes',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'beast-shell', count: 1 },
+      ],
+    },
     {
       output: 'levy-halberd',
       craft: 'refining',
@@ -193,6 +204,17 @@ export const THOUSAND_PADDOCKS: Catalog = {
   ],
   // Its gear's recipes (K4), each refined from what its line tells of.
   recipes: [
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'paddock-post-talisman',
+      craft: 'talismans',
+      family: 'strikes',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'bone-meal', count: 1 },
+      ],
+    },
     {
       output: 'remount-lamellar',
       craft: 'refining',
@@ -294,6 +316,17 @@ export const HEAVENS_EYE: Catalog = {
   ],
   // The recipes for its pills (K1), each brewed by the inputs its line tells of.
   recipes: [
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'council-stair-talisman',
+      craft: 'talismans',
+      family: 'strikes',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'split-slate', count: 1 },
+      ],
+    },
     {
       output: 'noonless-eye-pill',
       craft: 'alchemy',
@@ -504,6 +537,17 @@ export const EBB_HARBOR: Catalog = {
   ],
   // Its gear's recipes (K4), each refined from what its line tells of.
   recipes: [
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'ebb-tide-talisman',
+      craft: 'talismans',
+      family: 'strikes',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'reef-coral', count: 1 },
+      ],
+    },
     {
       output: 'bound-reef-scale',
       craft: 'refining',

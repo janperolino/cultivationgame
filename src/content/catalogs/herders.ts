@@ -414,6 +414,17 @@ export const SPIRIT_HERDERS: Catalog = {
   ],
   // The recipes for its pills (K1), each brewed by the inputs its line tells of.
   recipes: [
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'storm-call-talisman',
+      craft: 'talismans',
+      family: 'strikes',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'thunderhorn', count: 1 },
+      ],
+    },
     {
       output: 'antler-velvet-pill',
       craft: 'alchemy',

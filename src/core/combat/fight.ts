@@ -24,6 +24,7 @@ import {
   PROTECTIVE_DEEP_AT,
   PROTECTIVE_FULL,
   PROTECTIVE_QI,
+  SHIELD_PER_SIZE,
   QI_REGEN,
   RESOLVE_BASE,
   SLOWED_ORDER,
@@ -297,7 +298,7 @@ export function resolveTurn(
     }
     if (!a.main) return true;
     if (statusFlag(actor, 'skipMain')) {
-      skipped.push({ actor: a.actor, reason: 'frozen' });
+      skipped.push({ actor: a.actor, reason: hasStatus(actor, 'held') ? 'held' : 'frozen' });
       return true;
     }
     const creativity = creative(f, actor, a);
@@ -603,8 +604,7 @@ function strikeAttack(actor: Combatant, creativity: number): Attack {
 function itemAttack(actor: Combatant, it: Item, creativity: number): Attack | null {
   const use = it.uses.fight;
   if (!use) return null;
-  const own = actor.rungs.qi;
-  const rung = realmIndex(own.realm) + 1 >= it.tier ? own : tierRung(it.tier);
+  const rung = itemRung(actor, it);
   const daos = actionDaos([], use.damage);
   return {
     form: use.form,
@@ -1365,6 +1365,23 @@ function main(
           id: it.id,
         }));
       }
+      if (it.uses.ward) {
+        spend(actor, m.id);
+        return [wardOf(actor, it, base)];
+      }
+      if (it.uses.fix) {
+        const target = foe(f, actor, m.target ?? '');
+        if (!target) return 'no target';
+        if (it.uses.fix.keep && actor.marks[`kept:${it.id}`])
+          return `${it.name} is spent this fight`;
+        if (it.uses.fix.keep) mark(actor, `kept:${it.id}`);
+        else spend(actor, m.id);
+        return [fixWith(f, actor, target, it, creativity, rng, base)];
+      }
+      if (it.uses.escape) {
+        spend(actor, m.id);
+        return [escapeBy(f, actor, it, base)];
+      }
       const consume = it.uses.consume;
       if (!consume) return `${m.id} can't be used in a fight`;
       spend(actor, m.id);
@@ -1459,6 +1476,90 @@ function main(
       return [{ ...out, result: escaped ? 'escaped' : 'failed', chance }];
     }
   }
+}
+
+type OutcomeBase = Omit<Outcome, 'target' | 'form' | 'type' | 'realm' | 'result'>;
+
+/** A fight item works at its own tier's rung, or yours when you stand at or above it. */
+function itemRung(actor: Combatant, it: Item): Rung {
+  const own = actor.rungs.qi;
+  return realmIndex(own.realm) + 1 >= it.tier ? own : tierRung(it.tier);
+}
+
+/**
+ * Golden Light (K5): a gold ward over your qi shield, past its cap, for the fight: its share of a
+ * full qi shield at the talisman's rung, times its rarity.
+ */
+function wardOf(actor: Combatant, it: Item, base: OutcomeBase): Outcome {
+  const ward = Math.round(
+    it.uses.ward!.share *
+      SHIELD_PER_SIZE *
+      rungSize(itemRung(actor, it)) *
+      rarityMultiplier(it.rarity, tierStep(it.tier)),
+  );
+  actor.shield += ward;
+  return {
+    ...base,
+    id: it.id,
+    target: null,
+    form: 'item',
+    type: null,
+    realm: actor.rungs.qi.realm,
+    result: 'held',
+    bars: barsOf(actor, { shield: -ward, armor: 0 }),
+  };
+}
+
+/**
+ * Body-Fixing and the binding rope (K5): holds a foe still, its rung and rarity's Accuracy against
+ * their soul. A foe a realm above its tier shrugs it off.
+ */
+function fixWith(
+  f: Fight,
+  actor: Combatant,
+  target: Combatant,
+  it: Item,
+  creativity: number,
+  rng: Rng,
+  base: OutcomeBase,
+): Outcome {
+  const out = {
+    ...base,
+    id: it.id,
+    target: target.id,
+    form: 'item' as const,
+    type: null,
+    realm: actor.rungs.soul.realm,
+  };
+  if (ownRealm(target) + 1 > it.tier) return { ...out, result: 'failed', chance: 0 };
+  const mine = rungSize(itemRung(actor, it)) * rarityAccuracy(it.rarity) * creativity;
+  const chance = hitChance(mine, rungSize(target.rungs.soul));
+  if (!rng.chance(chance)) return { ...out, result: 'miss', chance };
+  target.statuses = [
+    ...target.statuses.filter((s) => s.id !== 'held'),
+    { id: 'held', turns: it.uses.fix!.turns, dot: 0, since: f.turn },
+  ];
+  return { ...out, result: 'hit', status: 'held', chance };
+}
+
+/**
+ * Earth Escape (K5): a sure flee from foes up to its tier, unless you are held or rooted. A foe a
+ * realm above it holds the ground shut.
+ */
+function escapeBy(f: Fight, actor: Combatant, it: Item, base: OutcomeBase): Outcome {
+  const out = {
+    ...base,
+    id: it.id,
+    target: null,
+    form: 'flee' as const,
+    type: null,
+    realm: actor.rungs.qi.realm,
+  };
+  const foes = f.combatants.filter((c) => c.side !== actor.side && c.state === 'fighting');
+  if (statusFlag(actor, 'noFlee') || foes.some((c) => ownRealm(c) + 1 > it.tier))
+    return { ...out, result: 'failed', chance: 0 };
+  actor.state = 'fled';
+  return { ...out, result: 'escaped', chance: 1 };
 }
 
 /** Flurry: a fist strike as the minor action, at the share of a strike the Fist Dao gives. */

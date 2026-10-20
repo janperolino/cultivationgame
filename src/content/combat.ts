@@ -205,8 +205,8 @@ export const GENERATES: Record<PhaseElement, PhaseElement> = {
 export interface StatusInfo {
   id: string;
   name: string;
-  /** The damage type that applies it. */
-  from: DamageType;
+  /** The damage type that applies it; none for a status only an item puts on (held). */
+  from?: DamageType;
   turns: number;
   dot?: number;
   accuracy?: number;
@@ -230,12 +230,17 @@ export const STATUSES = [
   { id: 'frozen', name: 'frozen', from: 'ice', turns: 1, skipMain: true },
   { id: 'dazed', name: 'dazed', from: 'soul', turns: 2, accuracy: 0.85 },
   { id: 'poisoned', name: 'poisoned', from: 'poison', turns: 4, dot: 0.08 },
+  // Held still 定 (K5): a Body-Fixing talisman or a binding rope, never a hit's status. Its turns
+  // are the item's.
+  { id: 'held', name: 'held', turns: 1, skipMain: true, noFlee: true },
 ] as const satisfies readonly StatusInfo[];
 
 export type StatusId = (typeof STATUSES)[number]['id'];
 
 const statusById = new Map<string, StatusInfo>(STATUSES.map((s) => [s.id, s]));
-const statusByType = new Map<DamageType, StatusInfo>(STATUSES.map((s) => [s.from, s]));
+const statusByType = new Map<DamageType, StatusInfo>(
+  STATUSES.flatMap((s): [DamageType, StatusInfo][] => ('from' in s ? [[s.from, s]] : [])),
+);
 
 export function statusInfo(id: StatusId): StatusInfo {
   const s = statusById.get(id);

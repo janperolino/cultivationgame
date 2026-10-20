@@ -79,9 +79,9 @@ describe('prices by where a thing is made and needed', () => {
 
 describe('supply moves and eases back', () => {
   it('drop the offer when ten lots are sold, and recover over months', () => {
-    // The City needs material: root-binding jade fills no basket and no maker's need, so it stays
+    // The City needs material: storm peach stone fills no basket and no maker's need, so it stays
     // outside the monthly sum, written at half supply and moved by the depth table.
-    const thing = 'root-binding-jade';
+    const thing = 'storm-peach-stone';
     const s = withPlayer(life(), addItem(life().player, thing, 70));
     const before = offerFor(s, 'mouth-alchemy', thing);
     if (!before.ok) throw new Error(before.reason);

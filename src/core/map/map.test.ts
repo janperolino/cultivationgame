@@ -39,6 +39,7 @@ import {
   goToPlace,
   joinGroup,
   leaveGroup,
+  burnSwift,
   liPerDay,
   mapOf,
   setCourse,
@@ -282,6 +283,25 @@ describe('routing', () => {
     expect(s.map!.course!.days).toBeLessThan(walk.state.map!.course!.days);
     expect(liPerDay(walk.state)).toBe(40 * 6);
     expect(liPerDay(s)).toBe(40 * 10);
+  });
+});
+
+describe('Divine Travel (K5)', () => {
+  it('doubles your pace on foot for a day, burned from the Bag', () => {
+    const s = life();
+    const walk = goToPlace(s, 'qm-shoukou-cheng');
+    if (!walk.ok) throw new Error(walk.reason);
+    const w = walk.state;
+    expect(burnSwift(w, 'divine-travel-talisman')).toMatchObject({ ok: false });
+    const r = burnSwift(
+      withPlayer(w, addItem(w.player, 'divine-travel-talisman', 1)),
+      'divine-travel-talisman',
+    );
+    if (!r.ok) throw new Error(r.reason);
+    expect(r.state.player.items['divine-travel-talisman'] ?? 0).toBe(0);
+    expect(liPerDay(r.state)).toBe(2 * liPerDay(w));
+    const next = { ...r.state, calendar: { ...r.state.calendar, day: r.state.calendar.day + 1 } };
+    expect(liPerDay(next)).toBe(liPerDay(w));
   });
 });
 

@@ -48,6 +48,7 @@ import { formatPercent } from './format.ts';
 import { sitDown, standUp, useFurnace } from './furnace.ts';
 import { ForgeScene } from './ForgeScene.tsx';
 import { FurnaceScene } from './FurnaceScene.tsx';
+import { TalismanScene } from './TalismanScene.tsx';
 import { itemTag } from './itemWords.ts';
 import { go } from './nav.ts';
 import { useGame } from './store.ts';
@@ -55,19 +56,28 @@ import { useGame } from './store.ts';
 /** Hours to a tenth, as the bench counts them. */
 const round1 = (h: number) => Math.round(h * 10) / 10;
 
-/** The crafts built so far (alchemy in K1, refining in K4); the rest show as pages yet to open. */
-const BUILT: readonly CraftId[] = ['alchemy', 'refining'];
+/** The crafts built so far (alchemy in K1, refining in K4, talismans in K5); the rest show as pages yet to open. */
+const BUILT: readonly CraftId[] = ['alchemy', 'refining', 'talismans'];
 
 /** What each built craft's page calls its things. */
 const WORDS: Partial<
   Record<
     CraftId,
-    { at: string; hanzi: string; line: string; unit: [string, string]; none: string; slip: string }
+    {
+      at: string;
+      hanzi: string;
+      sit: string;
+      line: string;
+      unit: [string, string];
+      none: string;
+      slip: string;
+    }
   >
 > = {
   alchemy: {
     at: 'At the furnace',
     hanzi: '守炉',
+    sit: 'Sit at the furnace',
     line: 'Click the dark dross to burn it to ash; let the gold essence fall back into the pill. Every flick heats the furnace.',
     unit: ['pill', 'pills'],
     none: 'Refiners sell them; a crude clay furnace is 30 low.',
@@ -76,10 +86,20 @@ const WORDS: Partial<
   refining: {
     at: 'At the forge',
     hanzi: '炼器',
+    sit: 'Sit at the forge',
     line: 'Press a seal into each rune point as its glow passes orange: too hot it blurs, too cold it won’t take. On the last heat, quench the piece as it passes cherry.',
     unit: ['piece', 'pieces'],
     none: 'Refiners sell them; a crude iron forge is 60 low.',
     slip: 'A gear slip 器谱 is read on study hours, as a formula is; every refiner sells the Iron Sword’s.',
+  },
+  talismans: {
+    at: 'At the desk',
+    hanzi: '画符',
+    sit: 'Sit at the desk',
+    line: 'Press on the vermilion head and draw the whole talisman in one breath. The ink thins as you go and the line narrows with it: hurry the open curves, take the foot with care, and don’t lift.',
+    unit: ['sheet', 'sheets'],
+    none: 'Talisman stalls sell them; a wolf-hair talisman brush is 30 low.',
+    slip: 'A talisman slip 符谱 is read on study hours, as a formula is; every stall that sells the Ember Talisman sells its slip.',
   },
 };
 const words = (k: CraftId) => WORDS[k] ?? WORDS.alchemy!;
@@ -196,6 +216,8 @@ export function CraftsScreen() {
             </div>
             {atCraft === 'refining' ? (
               <ForgeScene key="forge" game={game} family={family} />
+            ) : atCraft === 'talismans' ? (
+              <TalismanScene key="desk" game={game} family={family} />
             ) : (
               <FurnaceScene key="furnace" game={game} recipe={recipe(playing!)} />
             )}
@@ -213,7 +235,7 @@ export function CraftsScreen() {
                 title={head ? undefined : 'Queue a batch to sit at it.'}
                 onClick={() => head && headCraft && sitDown(head.recipe, headCraft)}
               >
-                Sit at the {CRAFTS[headCraft ?? page].tool}
+                {words(headCraft ?? page).sit}
               </button>
             </div>
             <Bench c={c} onChange={change} />
@@ -333,7 +355,7 @@ function RecipeCard({
       </p>
       <div className="crafts-actions">
         <button type="button" className="button" onClick={() => onQueue(r.output, 1)}>
-          Queue a {r.craft === 'alchemy' ? 'batch' : 'piece'}
+          Queue a {r.craft === 'refining' ? 'piece' : 'batch'}
         </button>
         <button type="button" className="button button-quiet" onClick={() => onQueue(r.output, 5)}>
           Queue five

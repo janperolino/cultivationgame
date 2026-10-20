@@ -16,12 +16,20 @@ function tierPrice(tier: number): number {
   return realmScale(tierRealm(tier).id);
 }
 
-/** The kind's price for a white thing of tier 1. */
+/**
+ * The kind's price for a white thing of tier 1. A fight item striking many is dearer by the root of
+ * its reach (K5's talk, from the code review): material pays its reach as an art's qi does, so its
+ * recipe takes as many more of its carrier.
+ */
 function basePrice(it: Item): number {
   const kind = itemKind(it);
   if (kind === 'gear' && it.uses.equip?.squares) return STORAGE_PRICE;
-  return BASE_PRICE[kind];
+  const reach = it.uses.fight?.targets ?? 1;
+  return BASE_PRICE[kind] * Math.sqrt(reach === 'all' ? ALL_REACH : reach);
 }
+
+/** What a fight item striking all counts as for its price: tier 1's widest reach. */
+const ALL_REACH = 10;
 
 /** An item's posted price in low-grade stones. */
 function itemPrice(it: Item): number {

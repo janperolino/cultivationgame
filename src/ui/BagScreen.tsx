@@ -30,6 +30,7 @@ import {
   wornIds,
 } from '../core/gear.ts';
 import { dropStack, pickUp, pilesHere } from '../core/map/ground.ts';
+import { burnSwift } from '../core/map/travel.ts';
 import { isNew } from '../core/seen.ts';
 import { withPlayer } from '../core/state.ts';
 import type { Cultivator } from '../core/state.ts';
@@ -457,6 +458,7 @@ function Detail({
   const takeOff = useGame((s) => s.takeOff);
   const eat = useGame((s) => s.eat);
   const feed = useGame((s) => s.feedStones);
+  const mapAct = useGame((s) => s.mapAct);
   const [why, setWhy] = useState<string | null>(null);
   const it = item(id);
   const slot = it.uses.equip?.slot;
@@ -549,6 +551,15 @@ function Detail({
         {eatsOut && held > 0 && (
           <button type="button" className="button" onClick={() => eat(id)}>
             Eat one
+          </button>
+        )}
+        {it.uses.swift && held > 0 && (
+          <button
+            type="button"
+            className="button"
+            onClick={() => setWhy(mapAct((s) => burnSwift(s, id)))}
+          >
+            Burn one for the road
           </button>
         )}
         {bonding && bond.level < 4 && (

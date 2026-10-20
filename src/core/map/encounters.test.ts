@@ -325,6 +325,25 @@ describe('settling', () => {
     expect(byStance.map!.road.at(-1)!.template).toBe('ridge-wolves');
   });
 
+  it('a flee that would fall short burns an Earth Escape talisman and comes clear (K5)', () => {
+    const w = withEnc(atLayer(life(), 1), enc('ridge-wolves', 2));
+    const flee = (st: GameState) =>
+      exitViews(st, meet(st, st.map!.encounters[0]!)).find((v) => v.exit.act === 'flee')!;
+    expect(flee(w).verdict).not.toBe('clear');
+    expect(flee(w).burns).toBeUndefined();
+    const held = withPlayer(w, addItem(w.player, 'earth-escape-talisman', 2));
+    const v = flee(held);
+    expect(v).toMatchObject({ verdict: 'clear', burns: 'earth-escape-talisman' });
+    const r = chooseExit(held, 'e-test', v.i)!;
+    expect(r.verdict).toBe('clear');
+    expect(r.state.player.items['earth-escape-talisman']).toBe(1);
+    // Foundation wolves stand a realm above the tier 1 talisman: it holds the ground shut.
+    const up = withEnc(atLayer(life(), 1), enc('ridge-wolves', 3));
+    expect(flee(withPlayer(up, addItem(up.player, 'earth-escape-talisman', 1))).burns).toBe(
+      undefined,
+    );
+  });
+
   it('a lost fight leaves a wound and what robbers take, never a death', () => {
     const s = withPlayer(atLayer(life(), 1), { ...atLayer(life(), 1).player, stones: 40 });
     const w = withEnc(s, enc('pine-deserters', 1));
