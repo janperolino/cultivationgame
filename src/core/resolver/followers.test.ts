@@ -15,6 +15,7 @@ import { loadSave, makeSave } from '../save/format.ts';
 import { withPlayer, type GameState } from '../state.ts';
 import { actorFromNpc, plainActor, realmSizeOf, YOU, type Actor } from './actor.ts';
 import { projection, projectionDue, traceFor } from './backers.ts';
+import { startMark } from './marks.ts';
 import { composure, presence } from './check.ts';
 import { applyEffects, EffectSchema } from './effects.ts';
 import { bondOf, followersDay, loyaltyFloor, makeBond, treacherous } from './followers.ts';
@@ -85,6 +86,19 @@ const plan = (s: GameState, ...steps: ReturnType<typeof step>[]) =>
 
 const places = placeIndex(atlas.entries as unknown as PlaceEntry[]);
 setPlaces(places);
+
+/** The player marked by a power for a leaked chapter 1, before anything else happens. */
+const withMarkFirst = (s: GameState, power: string, day: number): GameState => ({
+  ...s,
+  world: startMark(
+    s.world,
+    s.player.id,
+    power,
+    'method:butcher-saber',
+    { realm: 'foundation-establishment', stage: 1 },
+    day,
+  ),
+});
 
 describe('bonds', () => {
   it('pay wages from a purse with no low, breaking a mid for change (E1)', () => {
@@ -563,6 +577,15 @@ describe('backers and traces', () => {
     expect(intentOf(r.state, face, elder)).toMatchObject({ why: 'trace', step: { act: 'attack' } });
     const masked = at([you(s, { realm: QC(9), disguised: true }), elder]);
     expect(intentOf(r.state, masked, elder)).toBeNull();
+    // A leak's mark made first doesn't hide the killing's trace behind it.
+    const leaked = withMarkFirst(s, SECT, day);
+    const both = doStep(
+      leaked,
+      at([you(leaked, { realm: QC(9) }), disciple]),
+      leaked.player.id,
+      step('finish', { target: 'core-disciple' }),
+    );
+    expect(traceFor(both.state.world, s.player.id, SECT, day)!.data.method).toBeUndefined();
     // You don't know how to erase it; a Foundation soul knows how but is weaker than it; a
     // Core Formation soul above it burns it off.
     const self = at([you(s, { realm: QC(9) }), elder]);

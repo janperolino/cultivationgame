@@ -719,7 +719,7 @@ export const DOOR_SHARE: Record<ShopKind, number> = {
   parts: 0.05,
   house: 0.2,
   bounty: 0.3,
-  'black-market': 0.1,
+  'black-market': 0.3,
   sect: 1,
   mortal: 1,
 };

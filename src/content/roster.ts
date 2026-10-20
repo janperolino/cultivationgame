@@ -157,7 +157,7 @@ export const BORDER_WILDS: readonly Template[] = [
     band: QC,
     profile: 'cautious',
     carries: ['token of the March'],
-    power: 'great-jing',
+    power: 'qm-anbian-fu',
     notes: 'spear; a garrison method; a token of the March',
   },
   {

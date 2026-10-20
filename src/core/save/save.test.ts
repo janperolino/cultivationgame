@@ -292,6 +292,19 @@ describe('save slots', () => {
     expect((await db.load(1))?.save).toEqual(first);
   });
 
+  it('never lets the unload write rotate a broken autosave into the backup', async () => {
+    const db = slots();
+    const good = makeSave(played(), 1000);
+    await db.write(1, good);
+    // An autosave written broken (a field outside its schema) is kept as current, never trusted.
+    const broken = makeSave(withStones(played(), -1), 2000);
+    await db.write(1, broken);
+    const last = makeSave(withStones(played(), 9), 3000);
+    expect(db.writeNow(1, last)).toBe(true);
+    await db.writeRaw(1, 'corrupt');
+    expect((await db.load(1))?.save).toEqual(good);
+  });
+
   it('throws when both the save and the backup are damaged', async () => {
     const db = slots();
     await db.writeRaw(3, 'corrupt');

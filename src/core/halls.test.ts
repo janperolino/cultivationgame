@@ -32,6 +32,7 @@ import {
   guestOffered,
   joinPower,
   membership,
+  partingOf,
   payAllowances,
   setSeat,
 } from './organizations.ts';
@@ -39,7 +40,7 @@ import { worthOf, stonesOf } from './purse.ts';
 import { addStanding } from './resolver/opinion.ts';
 import { emptyWorld } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
-import { buy, hallPoints, sell, shelf, stockOf } from './shops.ts';
+import { buy, hallPoints, priceToYou, sell, shelf, stockOf } from './shops.ts';
 import { itemCount, newLife, PLAYER_ID, withPlayer, type GameState } from './state.ts';
 
 const GATE = 'qm-tushou-men';
@@ -297,7 +298,22 @@ describe('the guest elder', () => {
     expect(guestOffered(s, GATE)).toBe(true);
     const r = becomeGuest(s, GATE);
     if (!r.ok) throw new Error(r.why);
-    expect(hallTerms(r.state, shop('gate-sect'))).toEqual({ as: 'member' });
+    expect(hallTerms(r.state, shop('gate-sect'))).toEqual({ as: 'guest' });
+    // A guest earns no points, so pays in stones at the market's price, the members' lines too.
+    const lots = shelf(r.state, 'gate-sect');
+    expect(lots.some((l) => membersLine(shop('gate-sect'), l.thing))).toBe(true);
+    const lot = lots.find((l) => !l.standing)!;
+    expect(priceToYou(r.state, 'gate-sect', lot)).toBeCloseTo(lot.price);
+    const before = worthOf(stonesOf(r.state.player));
+    const bought = buy(r.state, 'gate-sect', lot.slot);
+    if (!bought.ok) throw new Error(bought.reason);
+    expect(worthOf(stonesOf(bought.state.player))).toBeLessThan(before);
+    // Its leaving is always clean, even from a house whose leaving is betrayal.
+    const NIGHT_BRIDGE = 'qm-yeqiao-hui';
+    const row = { ...membership(r.state.world, YOU, GATE)!, power: NIGHT_BRIDGE };
+    const w = { ...r.state.world, members: [...r.state.world.members, row] };
+    expect(partingOf(w, YOU, NIGHT_BRIDGE, r.state.calendar.day).kind).toBe('clean');
+    expect(partingOf(r.state.world, YOU, NIGHT_BRIDGE, r.state.calendar.day).kind).toBe('betrayal');
     expect(pavilion(r.state, GATE)).toBeNull();
     expect(canJoin(r.state.world, YOU, REINS).ok).toBe(true);
     expect(allowanceOf(GATE, 'elder', QC, true)).toEqual({ stones: 33.8, pills: 0 });

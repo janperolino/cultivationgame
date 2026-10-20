@@ -293,11 +293,16 @@ export const useGame = create<GameStore>()((set, get) => {
     try {
       const away = await catchUpInSlices(from, savedAt, now, { step: playDay, pause });
       if (get().slot !== slot) return;
+      // Caught up: saves may go again, the breakthrough's rewind point among them.
+      catching = false;
       quietly(() => {
         set({ phase: 'playing', away: { ...away, before: from } });
         update(away.state);
       });
       void get().saveNow();
+    } catch (e) {
+      // A day step that throws leaves the game where it was rather than on the loading screen.
+      set({ phase: 'playing', notice: `The time away could not be caught up: ${message(e)}` });
     } finally {
       catching = false;
       lastTick = Date.now();
@@ -461,7 +466,9 @@ export const useGame = create<GameStore>()((set, get) => {
     });
     window.addEventListener('pagehide', () => {
       const { game, slot } = get();
-      if (game && slot && holdsLock) db().writeNow(slot, makeSave(game, Date.now()));
+      // Mid catch-up the game is still the one before the time away; leaving the save as it was
+      // keeps that time owed to the next load.
+      if (game && slot && holdsLock && !catching) db().writeNow(slot, makeSave(game, Date.now()));
     });
     try {
       await refreshSlots();
@@ -554,7 +561,8 @@ export const useGame = create<GameStore>()((set, get) => {
 
     async saveNow(opts) {
       const { game, slot } = get();
-      if (!game || !slot || !holdsLock) return;
+      // Mid catch-up the game is still the one before the time away (see pagehide).
+      if (!game || !slot || !holdsLock || catching) return;
       const savedAt = Date.now();
       await db().write(slot, makeSave(game, savedAt), opts);
       set({ savedAt });

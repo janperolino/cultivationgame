@@ -529,12 +529,13 @@ const PARTY_WORDS = { 1: 'two outer disciples', 2: 'two inner disciples', 3: 'an
  * mockup): the method, what its people demand at your standing, and its law hall on the roads.
  */
 function MarkStrip({ game, place }: { game: GameState; place: MapPlace }) {
-  const marks = marksHere(game, [place.x, place.y], place.id);
+  const map = game.map ? mapOf(game) : null;
+  const marks = marksHere(game, [place.x, place.y], place.id, map);
   if (marks.length === 0) return null;
   return (
     <>
       {marks.map((m) => {
-        const law = lawHallAt(game.world, [m.power], [place.x, place.y], game.calendar.day);
+        const law = lawHallAt(game.world, [m.power], [place.x, place.y], game.calendar.day, map);
         const seat = place.id === m.power;
         return (
           <div key={m.power} className="place-gate place-mark panel is-bad">
@@ -808,6 +809,11 @@ function ShopCounter({
           </button>
         ))}
       </div>
+      {terms?.as === 'guest' && (
+        <p className="place-sub">
+          A guest elder’s terms: the market’s price in stones, the members’ lines among them.
+        </p>
+      )}
       {terms?.as === 'counter' && (
         <p className="place-sub">
           The open counter: ×1.25 in stones, never the members’ lines or the chapters.

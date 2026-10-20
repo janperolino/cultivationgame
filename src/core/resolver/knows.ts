@@ -161,6 +161,11 @@ export function knowledgeOf(
     if (p.id === id) continue;
     if (home && p.home === home) common.add(`name:${p.id}`);
   }
+  // A member knows each power's private tier while a member, the player too (O3): read off the
+  // memberships each time, so it never misses a place written later and goes when they leave.
+  for (const m of w.members)
+    if (m.who === id && m.power !== power)
+      for (const f of powerPrivate(places, m.power)) if (f !== `name:${id}`) priv.add(f);
   if (power) {
     for (const f of powerPrivate(places, power)) if (f !== `name:${id}`) priv.add(f);
     const pe = places.get(power);

@@ -290,6 +290,22 @@ describe('the law hall on the road', () => {
     expect(lawHallAt(deep, [GATE], GATE_SEAT, 0)!.chapter).toBe(2);
   });
 
+  it('walks for the March after a deserter, its conscripts written under the March', () => {
+    const MARCH = 'qm-anbian-fu';
+    const s = life('desert');
+    const day = s.calendar.day;
+    const joined = joinPower(s.world, YOU, MARCH, day, { you: true });
+    if (!joined.ok) throw new Error(joined.why);
+    const deserted = leavePower(joined.world, YOU, MARCH, day, { you: true });
+    expect(deserted.parting?.kind).toBe('betrayal');
+    const fort = placeById(mapOf(s)!, 'pacified-fort')!;
+    // The March has no seat and radius: its land is its sphere.
+    const map = mapOf(s)!;
+    expect(lawHallAt(deserted.world, [MARCH], [fort.x, fort.y], day, map)).toMatchObject({
+      power: MARCH,
+    });
+  });
+
   it('meets you on a road in its sphere, as two of the Gate’s own disciples', () => {
     const s = marked();
     const map = mapOf(s)!;

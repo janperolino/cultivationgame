@@ -2,7 +2,8 @@
 // § Economy, Methods in the market, Sect contribution; § Cultivation, Lines, chapters and kinship;
 // O2). The exchange hall sells to its members in the power's currency, at the market's price and
 // never above it, its members' lines among the rest; from friendly standing an outsider buys at its
-// open counter in stones at ×1.25, never the members' lines or the chapters. The scripture
+// open counter in stones at ×1.25, never the members' lines or the chapters; a guest elder in
+// stones at the market's price, the members' lines among them (the review's call). The scripture
 // pavilion keeps the power's own chapters, every copy its hall alone sells, and sells them by
 // seat. The shop rules that price and take the coin are core/shops.ts's.
 import { CATALOGS } from '../content/catalogs/index.ts';
@@ -26,25 +27,26 @@ import {
   titheOf,
 } from './organizations.ts';
 import { priceOf } from './prices.ts';
-import { isMember } from './resolver/names.ts';
 import { foeHeld } from './resolver/opinion.ts';
 import { standingOf } from './resolver/world.ts';
 import type { GameState } from './state.ts';
 
-/** How a members' shop serves you: as one of its own, at its open counter, or not at all. */
-export type HallTerms = { as: 'member' } | { as: 'counter' } | { as: 'shut'; why: string };
+/** How a members' shop serves you: as its own, as its guest elder, at its open counter, or not. */
+export type HallTerms =
+  { as: 'member' } | { as: 'guest' } | { as: 'counter' } | { as: 'shut'; why: string };
 
 const wordRank = (word: string) => STANDING_WORDS.findIndex((w) => w.word === word);
 
 /**
- * How a sect's hall serves the player (O2): its members and guest elders in its currency, an
- * outsider its power stands friendly with or better at the open counter. Null for a shop that
- * serves anyone.
+ * How a sect's hall serves the player (O2): its members in its currency; a guest elder, who earns
+ * none, in stones at the market's price with the members' lines; an outsider its power stands
+ * friendly with or better at the open counter. Null for a shop that serves anyone.
  */
 export function hallTerms(s: GameState, sh: Shop): HallTerms | null {
   if (!SHOP_KIND_INFO[sh.kind].members || !sh.power) return null;
   const house = isOrganization(sh.power) ? houseOf(sh.power) : sh.power;
-  if (isMember(s.world, s.player.id, house)) return { as: 'member' };
+  const m = membership(s.world, s.player.id, house);
+  if (m) return m.guest ? { as: 'guest' } : { as: 'member' };
   const word = standingOf(s.world, house, s.player.id, s.calendar.day).word;
   if (wordRank(word) >= wordRank(OPEN_COUNTER.from)) return { as: 'counter' };
   const foe = foeHeld(s.world, house, s.player.id);

@@ -8,12 +8,13 @@
 // sized by what leaked, the hunt cooling a chapter a season. Only what you do is seen: an art
 // thrown in a fight, never the method you cultivate by (O5's talk, Jan's call).
 import { copyChapter, copyId, copyTitle, hasCopy } from '../content/copies.ts';
-import { sphereOf } from '../content/map/index.ts';
+import { parentsOf, sphereOf } from '../content/map/index.ts';
 import { BANDS } from '../content/map/travel.ts';
 import { GUARDED, KNOWS_CHAPTER, LAW_HALL_PARTY, type SeatId } from '../content/organizations.ts';
 import { realm as realmInfo } from '../content/realms.ts';
 import { BORDER_WILDS } from '../content/roster.ts';
 import { guardedBy } from './markets.ts';
+import { areaAt, type RegionMap } from './map/region.ts';
 import {
   headRealm,
   houseOf,
@@ -226,10 +227,16 @@ export function huntOf(w: World, power: string, day: number): number {
   return top;
 }
 
-/** Whether a spot lies inside a power's sphere: within its atlas radius of its seat. */
-export function inSphere(power: string, at: Pt): boolean {
-  const s = sphereOf(power) ?? sphereOf(houseOf(power));
-  return !!s && Math.hypot(at[0] - s.x, at[1] - s.y) <= s.sphere;
+/**
+ * Whether a spot lies inside a power's sphere: within its atlas radius of its seat, or for one with
+ * no radius (a kingdom read as a dynasty, the March) on its own land, read off the map's areas.
+ */
+export function inSphere(power: string, at: Pt, map?: RegionMap | null): boolean {
+  const house = houseOf(power);
+  const s = sphereOf(power) ?? sphereOf(house);
+  if (s) return Math.hypot(at[0] - s.x, at[1] - s.y) <= s.sphere;
+  const area = map ? areaAt(map, at) : null;
+  return !!area && (area.id === house || parentsOf(area.id).includes(house));
 }
 
 /** The roster template a power's law hall walks the roads as: its own disciples, if written. */
@@ -252,10 +259,12 @@ export function lawHallAt(
   powers: readonly string[],
   at: Pt,
   day: number,
+  map?: RegionMap | null,
 ): { power: string; chapter: 1 | 2 | 3 } | null {
   let best: { power: string; hunt: number } | null = null;
   for (const p of powers) {
-    if (!isOrganization(p) || houseOf(p) !== p || !lawHallRoster(p) || !inSphere(p, at)) continue;
+    if (!isOrganization(p) || houseOf(p) !== p || !lawHallRoster(p) || !inSphere(p, at, map))
+      continue;
     const hunt = huntOf(w, p, day);
     if (hunt > 0 && (!best || hunt > best.hunt)) best = { power: p, hunt };
   }
@@ -322,11 +331,16 @@ export function markView(s: GameState, m: Mark): MarkView {
 }
 
 /** Your marks whose power's sphere holds a spot, or whose seat it is. */
-export function marksHere(s: GameState, at: Pt | null, place?: string): MarkView[] {
+export function marksHere(
+  s: GameState,
+  at: Pt | null,
+  place?: string,
+  map?: RegionMap | null,
+): MarkView[] {
   return marksOf(s.world, s.player.id, s.calendar.day)
     .filter((m) => {
       const p = m.data.power!;
-      return place === p || (!!at && inSphere(p, at));
+      return place === p || (!!at && inSphere(p, at, map));
     })
     .map((m) => markView(s, m));
 }

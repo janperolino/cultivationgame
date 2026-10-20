@@ -21,6 +21,7 @@ import {
   engageProtector,
   innerTrial,
   joinPower,
+  leavePower,
   lessonInsight,
   membership,
   protectorOf,
@@ -40,7 +41,13 @@ import {
   YOU,
 } from './resolver/actor.ts';
 import { composure } from './resolver/check.ts';
-import { placeIndex, powerPrivate, setPlaces, type PlaceEntry } from './resolver/knows.ts';
+import {
+  knowledgeOf,
+  placeIndex,
+  powerPrivate,
+  setPlaces,
+  type PlaceEntry,
+} from './resolver/knows.ts';
 import { opinion } from './resolver/opinion.ts';
 import { step } from './resolver/plan.ts';
 import { doStep, startScene } from './resolver/scene.ts';
@@ -155,6 +162,11 @@ describe('connections and knowledge', () => {
     expect(facts).toContain('name:senior-zhao');
     const s = member(life());
     for (const f of facts) expect(s.world.known).toContain(f);
+    // What they know reads the membership, with or without the copy, and leaves when they do.
+    const mine = (w: World) => knowledgeOf(w, places, ME).private;
+    for (const f of facts) expect(mine({ ...s.world, known: [] })).toContain(f);
+    const left = leavePower(s.world, ME, GATE, s.calendar.day, { you: true }).world;
+    expect(mine(left)).not.toContain('place:qm-heiyu-mai');
     setPlaces(placeIndex([]));
   });
 });

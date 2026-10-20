@@ -7,7 +7,7 @@ import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { hasCopy } from '../content/copies.ts';
 import { baseOf, item } from '../content/items.ts';
 import { lotShape } from './loot.ts';
-import { doorsAt, HAGGLE_OFF, keeperName, shop, SHOP_KIND_INFO } from '../content/shops.ts';
+import { DOOR_SHARE, doorsAt, HAGGLE_OFF, keeperName, shop, SHOP_KIND_INFO } from '../content/shops.ts';
 import {
   goodOf,
   market,
@@ -103,6 +103,21 @@ describe('shelves as slices of the market', () => {
 });
 
 describe('purses, owners and names', () => {
+  it('shares a market’s money among its doors as the design lists them', () => {
+    // design § Economy, a shop's purse: the bounty office 0.3, a black market 0.3, a trading
+    // house 0.2, Pill Street 0.2, Refiners' Row 0.15, the small markets 0.05.
+    expect(DOOR_SHARE).toMatchObject({
+      bounty: 0.3,
+      'black-market': 0.3,
+      house: 0.2,
+      alchemy: 0.2,
+      refiner: 0.15,
+      talisman: 0.05,
+      parts: 0.05,
+      stall: 0.05,
+    });
+  });
+
   it('reads a keeper’s purse as a share of the district’s', () => {
     const purse = (id: string) => shopPurse(w, shop(id), 0);
     const pills = doorsAt(CITY).find((d) => d.kind === 'alchemy')!;

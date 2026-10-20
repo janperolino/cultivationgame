@@ -190,7 +190,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   // Your followers' wages and bonds run on through the days (P3.4b).
   next = followersDay(next);
   // The jobs you hold: shifts kept at their place pay, missed ones cost standing (O4).
-  next = jobsDay(next, s.calendar.day - days, s.calendar.day);
+  // A stretch walked in on the road kept no shift, though it ends at the post.
+  next = jobsDay(next, s.calendar.day - days, s.calendar.day, !!road);
   // Each power you belong to pays its allowance as the month turns (O2), takes its quota and
   // counts your leave (O3).
   next = membershipDay(next, days, atHome);

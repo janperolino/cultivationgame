@@ -463,6 +463,8 @@ export function partingOf(
   const house = houseOf(power);
   const org = organization(house);
   if (o.struck) return { kind: 'clean', why: 'struck from its rolls' };
+  // A guest elder's seat is an outsider's and binds no house: its leaving is always clean.
+  if (membership(w, who, house)?.guest) return { kind: 'clean', why: org.preset.leave.clean };
   if (org.preset.leave.hunted) return { kind: 'betrayal', why: org.preset.leave.words };
   const m = membership(w, who, house);
   if (org.type === 'dynasty' && m && day - m.since < RETIRE_YEARS * DAYS_PER_YEAR)

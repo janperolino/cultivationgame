@@ -65,7 +65,7 @@ export class SaveSlots {
    * so a save can be one put with no read in front of it, which still lands when the page unloads.
    */
   private readonly known = new Map<number, SlotRecord>();
-  /** Saves this tab wrote or checked: the page's last write trusts them rather than checking again. */
+  /** Saves this tab checked and found good: later writes trust them rather than checking again. */
   private readonly checked = new WeakSet<object>();
 
   constructor(name = 'severed-heaven', opts?: DexieOptions) {
@@ -102,9 +102,13 @@ export class SaveSlots {
    */
   async write(slot: SlotId, save: Save, opts: { rewindPoint?: boolean } = {}): Promise<void> {
     const rec = this.known.get(slot) ?? (await this.fetch(slot)) ?? { slot };
-    const oldIsGood = tryLoad(rec.current).save !== undefined;
-    if (oldIsGood && rec.current) this.checked.add(rec.current);
-    this.checked.add(save);
+    const old = rec.current;
+    const oldIsGood =
+      (typeof old === 'object' && old !== null && this.checked.has(old)) ||
+      tryLoad(old).save !== undefined;
+    // The new save is checked as it goes in, once, so the next write and the page's last one can
+    // trust it; one that fails is never trusted and never pushes out a good backup.
+    if (tryLoad(save).save !== undefined) this.checked.add(save);
     await this.put({
       ...rec,
       current: save,

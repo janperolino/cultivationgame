@@ -410,6 +410,16 @@ describe('a post kept', () => {
     expect(() => loadSave(makeSave(paid, 1))).not.toThrow();
   });
 
+  it('keeps no shift in a stretch walked in on the road, though it ends at the post', () => {
+    const s = posted(createLife(creation('conscript')));
+    const from = Math.floor(s.calendar.day) + 7 / 12;
+    const to = from + 0.05;
+    const at = { ...s, calendar: { ...s.calendar, day: to } };
+    expect(jobsDay(at, from, to).player.jobs[0]!.kept).toBeGreaterThan(0);
+    // Missed rather than kept (the cadet's leave covers the cost).
+    expect(jobsDay(at, from, to, true).player.jobs[0]!.kept).toBe(0);
+  });
+
   it('pays nothing and misses nothing in a stretch with no shift hours in it', () => {
     const s = posted(createLife(creation('conscript')));
     const day = Math.floor(s.calendar.day);

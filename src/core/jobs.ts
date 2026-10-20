@@ -305,9 +305,10 @@ function turnMonth(s: GameState, held: Held, month: number): { state: GameState;
  * Jobs' days between two world days: each shift's hours kept where you stand at its place pay
  * their share of a duty day; missed ones, past a house's leave, cost standing ("Missed our shifts",
  * −1 a duty day, to −10). A hire lets you go after seven days missed in a month. Stones are paid in
- * the place's vein's grade as whole stones come due; points go to the power's balance.
+ * the place's vein's grade as whole stones come due; points go to the power's balance. A stretch
+ * that began on the road (`walked`) kept no shift, though it ends at the post.
  */
-export function jobsDay(s: GameState, from: number, to: number): GameState {
+export function jobsDay(s: GameState, from: number, to: number, walked = false): GameState {
   let st = dropLost(s);
   if (!st.player.jobs.length) return st;
   const who = st.player.id;
@@ -326,7 +327,7 @@ export function jobsDay(s: GameState, from: number, to: number): GameState {
     // Through the tutorial layers you are at drill: no shift is worked or missed.
     const share = drilling(st.player) ? 0 : shiftShare(j, from, to);
     if (share > 0) {
-      if (atPost(st, j)) {
+      if (!walked && atPost(st, j)) {
         const pay = jobPay(j, realm);
         // Pay comes due a whole stone and a whole point at a time; the rest waits on the next shift.
         const owed = {

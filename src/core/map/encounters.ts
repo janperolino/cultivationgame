@@ -989,7 +989,7 @@ function powersOn(map: RegionMap): string[] {
 
 /** The law hall walking the road at a spot (O5): the most hunting power whose sphere holds it. */
 export function lawHallHere(s: GameState, map: RegionMap, p: Pt) {
-  return lawHallAt(s.world, powersOn(map), p, s.calendar.day);
+  return lawHallAt(s.world, powersOn(map), p, s.calendar.day, map);
 }
 
 /** The band an encounter of a kind comes at: the spot's off the road, people at yours ±1 on it. */

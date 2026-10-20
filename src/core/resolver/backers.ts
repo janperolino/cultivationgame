@@ -79,9 +79,13 @@ export function tracesOf(w: World, who: string, day: number) {
   return statesOf(w, who, 'trace', day);
 }
 
-/** A trace on someone that marks them for a power's people. */
+/**
+ * A trace on someone that marks them for a power's people: a killing's before a leak's mark, so a
+ * face that both stole a method and killed one of theirs is met with a blade, not a fine.
+ */
 export function traceFor(w: World, who: string, power: string, day: number) {
-  return tracesOf(w, who, day).find((t) => t.data.power === power);
+  const theirs = tracesOf(w, who, day).filter((t) => t.data.power === power);
+  return theirs.find((t) => !t.data.method) ?? theirs[0];
 }
 
 /** The strongest trace on someone, the one an erasing faces. */

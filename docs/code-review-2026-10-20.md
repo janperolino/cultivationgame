@@ -71,6 +71,17 @@ Ranked by what a player would feel, then by what K1 trips on.
 
 ## Medium
 
+**Round 3, Jan's picks: 8 to 15 fixed, 16 to 21 into their phases.**
+- 8: `write()` checks the new save once as it goes in, and `checked` holds only saves that passed, so the unload write never rotates a broken one into the backup. Same cost: one check per autosave. A test writes a broken autosave, then the unload write, then corrupts current: the good save is the one loaded.
+- 9: no save is written while the time away is being caught up (`saveNow` and pagehide skip), so closing the tab leaves that time owed to the next load. A day step that throws now puts you back to playing with a notice.
+- 10: the black market's share is 0.3, and a test pins every door's share to design.md's list.
+- 11: the March conscript is the March's (`qm-anbian-fu`, "a token of the March"), and a power with no seat and radius (a kingdom read as a dynasty) has its own land as its sphere, read off the map's areas. A deserter meets the March's law hall on its roads.
+- 12 (Jan: the open counter's way): a guest elder buys in stones at the market's price, the members' lines included, never the chapters. Its leaving is always clean.
+- 13: a stretch that began on the road keeps no shift, though it ends at the post.
+- 14: `knowledgeOf` reads each membership's private tier every time, so it never misses a place and goes when you leave. The copy into `world.known` at joining stays, since the map's first reveal reads it.
+- 15: `traceFor` gives a killing's trace before a leak's mark.
+- 16 to 21 are under plan.md's Open questions and in the K bullets (end of this file).
+
 8. **The pagehide write can back up a save it never checked** (`core/save/slots.ts:105-108, 124-128`). `write()` adds the save it writes to `checked` without loading it, and `writeNow()` trusts what is in `checked` when choosing the backup. A broken autosave (major 1) followed by closing the tab leaves no good save. *Fix:* add to `checked` only what passed `tryLoad`.
 9. **Closing the tab during catch-up loses the time away** (`ui/store.ts:289-305`). `catchUpAway` is async, and `saveNow`, the autosave and the pagehide write aren't held off while `catching`, so they write the pre-gap game with `savedAt = now`. It also has no `catch`: a throwing day step leaves the phase on "loading" forever, with ticks running underneath. *Fix:* skip saving while catching; on an error, restore `playing` and keep the pre-gap state.
 10. **The black market's share is 0.1, not 0.3** (`content/shops.ts:725`). design.md: "a black market 0.3". plan.md's E5 Small calls say it was set. The Night Bridge's sea-cave market holds about 24,800 low instead of about 31,900. *Fix:* 0.3, and a test pinning the shares to the design list.
