@@ -37,6 +37,7 @@ import {
   type GradeId,
   type LadderId,
 } from '../content/cultivation.ts';
+import { ELDER_TIME } from '../content/organizations.ts';
 import { stepLabel, type EventData } from '../content/chronicle.ts';
 import { phaseOf } from '../content/elements.ts';
 import { ALL_FIRSTS, type FirstId } from '../content/firsts.ts';
@@ -750,7 +751,13 @@ export function attemptBreakthrough(
   c: Cultivator,
   which: LadderId,
   ctx: RuleContext,
-  opts: { lastChance?: boolean; scene?: number; offerings?: readonly string[] } = {},
+  opts: {
+    lastChance?: boolean;
+    scene?: number;
+    offerings?: readonly string[];
+    /** An elder stands by as protector 护法 (O3): +5% to the odds, and a failure takes no injury. */
+    protector?: boolean;
+  } = {},
 ): BreakthroughResult {
   const l = c[which];
   const step = nextStep(l);
@@ -764,10 +771,12 @@ export function attemptBreakthrough(
   };
   if (step.kind === 'top') return none;
   const { day, rng } = ctx;
+  const guard = opts.protector ? ELDER_TIME.protector.odds : 0;
+  const guarded = (odds: number) => (odds >= 1 ? 1 : Math.min(MAX_ODDS, odds + guard));
 
   if (step.kind === 'minor') {
     if (barFill(l) < 1) return none;
-    const odds = sceneOdds(minorOdds(c, which), opts.scene ?? 0);
+    const odds = guarded(sceneOdds(minorOdds(c, which), opts.scene ?? 0));
     const success = rng.next() < odds;
     if (success) {
       return {
@@ -784,7 +793,7 @@ export function attemptBreakthrough(
         ],
       };
     }
-    const injured = realmIndex(l.realm) >= 1;
+    const injured = realmIndex(l.realm) >= 1 && !opts.protector;
     return {
       cultivator: withLadder(c, which, {
         ...l,
@@ -811,7 +820,7 @@ export function attemptBreakthrough(
   const check = majorCheck(c, which, last ? [] : (opts.offerings ?? []))!;
   const allowed = last ? check.raises && check.insight && check.gate : check.ready;
   if (!allowed) return none;
-  const odds = last ? lastChanceOdds(c, check) : sceneOdds(check.odds, opts.scene ?? 0);
+  const odds = guarded(last ? lastChanceOdds(c, check) : sceneOdds(check.odds, opts.scene ?? 0));
   const success = rng.next() < odds;
   const laid = check.offerings;
   let next = laid.laid.reduce((acc, id) => addItem(acc, id, -1), c);
@@ -833,7 +842,10 @@ export function attemptBreakthrough(
     }
     return { cultivator: next, attempted: true, success, major: true, grade, odds, notes };
   }
-  const injury = injuryDays(c, which, MAJOR_INJURY_DAYS) * (laid.purifying ? OFFER_INJURY : 1);
+  // A protector catches the qi as it breaks: the failure takes no injury (O3).
+  const injury = opts.protector
+    ? 0
+    : injuryDays(c, which, MAJOR_INJURY_DAYS) * (laid.purifying ? OFFER_INJURY : 1);
   next = withLadder(next, which, {
     ...l,
     bar: laid.guarding ? l.bar : failedBar(c, which, l, 1 - MAJOR_FAIL_KEEP),

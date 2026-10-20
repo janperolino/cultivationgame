@@ -60,7 +60,7 @@ import { learnNode, type LearnCheck } from './trees.ts';
 import { followWheel, hourToFlip, learnRoutine, setHours, type WheelCheck } from './wheel.ts';
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
-import { dwellingOf, payAllowances } from './organizations.ts';
+import { dwellingOf, membershipDay, protectorOf, protectorSpent } from './organizations.ts';
 import { bedNights } from './map/place.ts';
 import { setCopyGain } from './map/encounters.ts';
 import { cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
@@ -158,8 +158,9 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   for (const b of r.breakthroughs) if (b.success) next = flare(next, b.ladder, b.major);
   // Your followers' wages and bonds run on through the days (P3.4b).
   next = followersDay(next);
-  // Each power you belong to pays its allowance as the month turns (O2).
-  next = payAllowances(next);
+  // Each power you belong to pays its allowance as the month turns (O2), takes its quota and
+  // counts your leave (O3).
+  next = membershipDay(next, days);
   return noteFirsts(checkScreens(next));
 };
 
@@ -184,11 +185,13 @@ export function breakThrough(
 ): LifeBreakthrough {
   const none = { state: s, attempted: false, success: false, major: false, odds: 0 };
   if (s.ended) return none;
+  // An elder your power sent stands by as protector (O3), and their watch ends with the attempt.
+  const protector = !!protectorOf(s);
   const { value: r, state } = withStream(s, 'breakthrough', (rng) =>
-    attemptBreakthrough(s.player, which, { day: s.calendar.day, rng }, opts),
+    attemptBreakthrough(s.player, which, { day: s.calendar.day, rng }, { ...opts, protector }),
   );
   if (!r.attempted) return none;
-  let next = addNotes(withPlayer(state, r.cultivator), r.notes);
+  let next = addNotes(withPlayer(protectorSpent(state), r.cultivator), r.notes);
   if (r.success) next = wakeTalents(flare(next, which, r.major));
   else if (r.major && which === 'qi') next = setMark(next, FOUNDATION_FAILED);
   return { state: next, attempted: true, success: r.success, major: r.major, odds: r.odds };

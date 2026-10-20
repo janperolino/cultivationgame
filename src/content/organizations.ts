@@ -427,6 +427,71 @@ export const GUEST_ELDER: Title & { from: 'honored' } = {
 export const PAVILION_SEAT: Record<number, SeatId> = { 1: 'outer', 2: 'inner', 3: 'true' };
 export const PAVILION: Title = { name: 'scripture pavilion', hanzi: '藏经阁' };
 
+// ── Backing, tutelage and what it asks (design § What membership gives and asks; O3) ─────────────
+
+/**
+ * A death talisman 命牌 is carried from the true seat up, in a power whose head stands at Core
+ * Formation or above, as strong as its head's realm (O3's talk).
+ */
+export const TALISMAN = { seat: 'true' as SeatId, from: 'core-formation' as RealmId };
+
+/**
+ * An elder's time, bought with the currency (O3's talk), priced on the realm curve by the buyer's
+ * realm (Qi Condensation ×1, Foundation ×9): a lesson is a day of an elder's teaching, worth three
+ * days of your own study's insight, one a month; a protector 护法 stands by your next breakthrough,
+ * +5% to the odds, and a failure under one takes no injury.
+ */
+export const ELDER_TIME = {
+  lesson: { points: 20, studyDays: 3 },
+  protector: { points: 100, odds: 0.05 },
+} as const;
+export const PROTECTOR: Title = { name: 'protector', hanzi: '护法' };
+
+/**
+ * Investment: each year the trial's ranking takes a few Foundation Pills, one for every thousand
+ * Qi Condensation cultivators the power counts, at least one and at most ten (O3's talk).
+ */
+export const YEARS_PILLS = { pill: 'foundation-pill', per: 1000, min: 1, max: 10 } as const;
+
+/**
+ * A member who reaches a seat's realm young is offered a true disciple's treatment early: the
+ * inner seat's realm reached before this share of that realm's lifespan (Foundation by 30).
+ */
+export const EARLY_TRUE = { share: 0.15 } as const;
+
+/**
+ * The monthly quota by seat, in the power's currency (design: outer 10 points): paid in from the
+ * balance as each month turns; from elder up the seat's post is its quota (O4). A generous power
+ * and a guest elder ask none. Two months missed running cost standing, the third strikes you off.
+ */
+export const QUOTA: Record<SeatId, number> = {
+  outer: 10,
+  inner: 20,
+  true: 30,
+  elder: 0,
+  grand: 0,
+  head: 0,
+};
+export const QUOTA_MISSED = { standing: 2, struck: 3 } as const;
+
+/**
+ * Leave a year, in days, by seat: three months at the outer and inner seats, more as you climb,
+ * none counted from elder up. Only a house counts leave (a sect, academy, temple, dynasty or
+ * assassins' house). Past it a point a day, and a standing row each month overstayed.
+ */
+export const LEAVE: Record<SeatId, number> = {
+  outer: 90,
+  inner: 90,
+  true: 180,
+  elder: Infinity,
+  grand: Infinity,
+  head: Infinity,
+};
+export const LEAVE_OVER = { pointsPerDay: 1, rowEvery: 30 } as const;
+
+/** The law hall's heat on a member who kills or robs one of their own power (design: the law). */
+export const LAW_HALL = { heat: 3, deeds: ['killing', 'massacre', 'robbery', 'theft'] } as const;
+
 /** An atlas power or kingdom as organizations read it (written by `npm run atlas:build`). */
 export interface OrgRow {
   id: string;

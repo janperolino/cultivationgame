@@ -54,6 +54,7 @@ import type { Combatant } from '../combat/combatant.ts';
 import { generateBeast, generateCultivator, generatePack } from '../combat/generate.ts';
 import type { Npc } from '../combat/generate.ts';
 import { kitOf } from '../loot.ts';
+import { asMember } from '../organizations.ts';
 import {
   canPay,
   pay,
@@ -189,12 +190,13 @@ export function meet(s: GameState, enc: Encounter): Met {
   const npcs: Record<string, Npc> = {};
   const roles: Record<string, Actor[]> = {};
   const actors: Actor[] = [];
+  // Each stands as their power stands behind them: named, backed, its talisman carried (O3).
   for (const r of template.roles) {
-    const a = roleActors(s, enc, r, npcs);
+    const a = roleActors(s, enc, r, npcs).map((x) => asMember(s.world, x));
     roles[r.id] = a;
     actors.push(...a);
   }
-  const you = actorFromCultivator(s);
+  const you = asMember(s.world, actorFromCultivator(s));
   const features: SceneFeature[] = template.place.features.map((f, i) => ({
     id: `f${i + 1}`,
     name: f.name,
@@ -900,8 +902,7 @@ export interface Draw {
 export function inPeace(map: RegionMap, p: Pt): boolean {
   return map.places.some(
     (q) =>
-      (q.sub === 'town' || q.sub === 'city') &&
-      Math.hypot(q.x - p[0], q.y - p[1]) < TOWN_PEACE_LI,
+      (q.sub === 'town' || q.sub === 'city') && Math.hypot(q.x - p[0], q.y - p[1]) < TOWN_PEACE_LI,
   );
 }
 

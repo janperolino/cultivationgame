@@ -649,8 +649,6 @@ export const PRESENCE = {
   followers: 3,
 } as const;
 export const COMPOSURE = {
-  sect: 1.5,
-  greatSect: 2,
   /** Each of their crew, three at most. */
   crew: 1.1,
   crews: 3,

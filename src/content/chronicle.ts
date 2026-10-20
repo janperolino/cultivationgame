@@ -19,6 +19,7 @@ import { routine } from './routines.ts';
 import { talent } from './talents.ts';
 import { technique } from './techniques.ts';
 import { anyNode, hasAnyNode } from './nodes.ts';
+import { ORG_ROWS } from './organizations.ts';
 
 export type EventValue = string | number | boolean | null;
 export type EventData = Readonly<Record<string, EventValue>>;
@@ -105,6 +106,27 @@ function cardOutcome(d: EventData): CardOutcome {
 
 type Template = (d: EventData, who: Who) => string;
 
+/** A power by its name, with "the" before it unless it carries one. */
+function powerName(id: string): string {
+  const n = ORG_ROWS.find((r) => r.id === id)?.name ?? id;
+  return n.startsWith('The ') ? n : `the ${n}`;
+}
+
+/** What a power did with you as its member (O3): the year's pill, the true seat, a quota, leave. */
+const POWER_LINES: Record<string, (w: Who, p: string) => string> = {
+  pill: (w, p) => `${capital(p)} hands ${w.name} a Foundation Pill from the year's ranking.`,
+  true: (w, p) =>
+    `${capital(p)} raises ${w.name} to a true disciple's seat, well ahead of ${w.their} years.`,
+  'quota-missed': (w, p) =>
+    `${w.name} misses ${p}'s quota a second month running, and it is noted.`,
+  'struck-off': (w, p) => `${capital(p)} strikes ${w.name} from its rolls for three missed quotas.`,
+  'leave-over': (w, p) => `${w.name}'s leave from ${p} runs out; each day away now costs.`,
+};
+
+function capital(t: string): string {
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 /** How a follower's bond ended, as the chronicle says it. */
 const FOLLOWER_ENDS: Record<string, string> = {
   unpaid: 'goes unpaid and leaves',
@@ -174,6 +196,7 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
       : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
   // A follower who left or turned (P3.4b): the card P3.12 writes says it at more length.
   follower: (d, w) => `${s(d.name)} ${FOLLOWER_ENDS[s(d.why)] ?? 'leaves'} ${w.name}.`,
+  power: (d, w) => POWER_LINES[s(d.what)]?.(w, powerName(s(d.power))) ?? '',
   spar: (d, w) =>
     `${w.name} spars with ${s(d.foe)} ${SPAR_ENDS[s(d.result)] ?? 'and walks away'}${n(d.turns) > 0 ? ` in ${n(d.turns)} exchange${n(d.turns) === 1 ? '' : 's'}` : ''}.`,
   // A node or manual a save names but the game no longer holds (a made-up one, a removed one) is
@@ -309,6 +332,7 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   death: 'death',
   spar: 'fight',
   follower: 'people',
+  power: 'people',
   node: 'learned',
   manual: 'learned',
   copy: 'learned',

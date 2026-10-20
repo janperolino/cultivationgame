@@ -13,18 +13,26 @@ import {
   BEAST_TITLES,
   DONATION,
   DWELLING,
+  EARLY_TRUE,
   ELDER_ALLOWANCE,
+  ELDER_TIME,
   GUEST_ELDER,
   HUMAN_BLOOD,
   INNER_TRIAL,
+  LEAVE,
+  LEAVE_OVER,
   ORG_OVERRIDES,
   ORG_PRESETS,
   ORG_ROWS,
+  QUOTA,
+  QUOTA_MISSED,
   RETIRE_YEARS,
   RULED_KINGDOMS,
+  TALISMAN,
   TREATMENT_RULES,
   TYPE_BLOOD,
   VEIN_DENSITY,
+  YEARS_PILLS,
   type Ladder,
   type OrgPreset,
   type OrgRow,
@@ -44,16 +52,35 @@ import {
   REALMS,
   type RealmId,
 } from '../content/realms.ts';
+import { INSIGHT_PER_STUDY_DAY } from '../content/cultivation.ts';
 import { HOME_REGION } from '../content/resolver.ts';
+import { insightMultiplier, gainInsight } from './insight.ts';
 import { guardedBy } from './markets.ts';
 import { priceOf } from './prices.ts';
 import { pay, priceWords, realmGrade, receive, stonesOf, withStones } from './purse.ts';
-import { realmSizeOf, sizeAt, actorFromCultivator } from './resolver/actor.ts';
+import {
+  realmOfActor,
+  realmSizeOf,
+  sizeAt,
+  actorFromCultivator,
+  type Actor,
+} from './resolver/actor.ts';
+import { higher } from './resolver/backers.ts';
 import { verdict, type Verdict } from './resolver/check.ts';
+import { currentPlaces, powerPrivate } from './resolver/knows.ts';
 import { isMember } from './resolver/names.ts';
-import { addStanding } from './resolver/opinion.ts';
+import { addStanding, powerOf } from './resolver/opinion.ts';
 import { standingOf, type Member, type RealmStage, type World } from './resolver/world.ts';
-import { addItem, itemCount, realmOf, stageOf, withPlayer, type GameState } from './state.ts';
+import {
+  addEvent,
+  addItem,
+  ageYears,
+  itemCount,
+  realmOf,
+  stageOf,
+  withPlayer,
+  type GameState,
+} from './state.ts';
 
 // ── The record ───────────────────────────────────────────────────────────────────────────────
 
@@ -115,6 +142,7 @@ export function theName(id: string): string {
 
 /** Where a membership is held: a branch hall's is its parent power's. */
 export function houseOf(id: string): string {
+  if (!isOrganization(id)) return id;
   return organization(id).branchOf ?? id;
 }
 
@@ -356,18 +384,33 @@ export function joinPower(
     ...w,
     members: [
       ...w.members,
-      { who, power: house, since: day, seat, balance: 0, paid: monthIndex(day) },
+      {
+        who,
+        power: house,
+        since: day,
+        seat,
+        balance: 0,
+        paid: monthIndex(day),
+        quota: monthIndex(day),
+      },
     ],
   };
   world = addStanding(world, { power: house, about: who, row: 'member' }, day);
   if ((o.blood ?? HUMAN_BLOOD) !== org.blood)
     world = addStanding(world, { power: house, about: who, row: 'not-our-blood' }, day);
   if (o.you) {
+    // Its token, its region map and its private tier: its places and its people (O3).
     const region = o.region ?? org.row.region ?? HOME_REGION;
-    const learned = [...new Set([`token:${house}`, `token:${power}`]), `map:${region}`];
+    const learned = [
+      ...new Set([`token:${house}`, `token:${power}`]),
+      `map:${region}`,
+      ...powerPrivate(currentPlaces(), house),
+    ];
+    const fresh = learned.filter((k) => !world.known.includes(k));
     world = {
       ...world,
-      known: [...world.known, ...learned.filter((k) => !world.known.includes(k))],
+      known: [...world.known, ...fresh],
+      heard: world.heard.filter((h) => !fresh.includes(h.fact)),
     };
   }
   return { ok: true, world };
@@ -506,6 +549,9 @@ export type TrialResult =
       passed: boolean;
       yours: number;
       theirs: number;
+      /** Your place in the year's ranking, 1 the first, and whether it took one of the year's pills. */
+      rank: number;
+      pill: boolean;
       state: GameState;
     };
 
@@ -536,7 +582,38 @@ export function innerTrial(s: GameState, power: string): TrialResult {
     members: s.world.members.map((x) => (x === m ? { ...x, tried: yearOf(day) } : x)),
   };
   if (passed) world = setSeat(world, who, house, 'inner');
-  return { ok: true, verdict: v, passed, yours, theirs, state: { ...s, world } };
+  // Investment: the year's Foundation Pills go down the ranking to those who passed; an equal
+  // ranks ahead of you, as the senior.
+  const rank = 1 + trialField(s.world, house, who).filter((size) => size >= yours).length;
+  const pill = passed && rank <= yearsPills(house);
+  let state: GameState = { ...s, world };
+  if (pill) {
+    state = withPlayer(state, addItem(state.player, YEARS_PILLS.pill, 1));
+    state = addEvent(state, 'power', { power: house, what: 'pill' });
+  }
+  return { ok: true, verdict: v, passed, yours, theirs, rank, pill, state };
+}
+
+/**
+ * How many Foundation Pills a power hands down its trial's ranking a year (O3's talk): one for
+ * every thousand Qi Condensation cultivators it counts, at least one and at most ten.
+ */
+export function yearsPills(power: string): number {
+  const qi = organization(houseOf(power)).row.population?.qi ?? 0;
+  return Math.max(YEARS_PILLS.min, Math.min(YEARS_PILLS.max, Math.round(qi / YEARS_PILLS.per)));
+}
+
+/**
+ * Who else the year's trial ranks: the people the world keeps of the power with a realm in its
+ * outer seat, by their size. The world keeps no roster of the rest (O3's talk).
+ */
+export function trialField(w: World, power: string, you: string): number[] {
+  const house = houseOf(power);
+  const top = seatRanges(house).outer.to;
+  return Object.entries(w.kept)
+    .filter(([id, k]) => id !== you && k.realm && houseOf(k.power ?? '') === house)
+    .filter(([, k]) => rank(k.realm!) <= rank(top))
+    .map(([, k]) => sizeAt(k.realm!));
 }
 
 // ── The currency ─────────────────────────────────────────────────────────────────────────────
@@ -751,6 +828,286 @@ export function becomeGuest(
   };
 }
 
+// ── Backing (O3) ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The power someone answers to: a house they serve first, then their blood, then any other they
+ * belong to, a guest elder's seat last (backing both ways); for anyone the world keeps without a
+ * membership, the power written for them.
+ */
+export function powerHeld(w: World, who: string): string | null {
+  const order = { house: 0, kin: 1, stack: 2 } as const;
+  const mine = membershipsOf(w, who)
+    .filter((m) => isOrganization(m.power))
+    .sort(
+      (a, b) =>
+        Number(!!a.guest) - Number(!!b.guest) ||
+        order[organization(a.power).preset.bond] - order[organization(b.power).preset.bond],
+    );
+  return mine[0]?.power ?? powerOf(w, who);
+}
+
+/** What stands behind a member: their power's head, at the foot of its realm. */
+export function headRealm(power: string): RealmStage {
+  return { realm: ladderOf(power).head, stage: 1 };
+}
+
+/** Whether a seat carries the power's death talisman: from the true seat up, under a Core-led head. */
+export function carriesTalisman(power: string, seat: SeatId | null): boolean {
+  return (
+    !!seat &&
+    seatRank(seat) >= seatRank(TALISMAN.seat) &&
+    realmIndex(ladderOf(power).head) >= realmIndex(TALISMAN.from)
+  );
+}
+
+/**
+ * Someone as their power stands behind them in a scene (design § What membership gives and asks,
+ * Backing): they answer to it, so a deed done to them lands on it as one of its own; threatened,
+ * they name it, on the backer rule by its head's realm; and from the true seat up in a Core-led
+ * power they carry its death talisman, as strong as its head.
+ */
+export function asMember(w: World, a: Actor): Actor {
+  const held = a.power ?? powerHeld(w, a.id);
+  if (!held || !isOrganization(held)) return a;
+  const house = houseOf(held);
+  const head = headRealm(house);
+  const seat = seatOf(w, a.id, house, realmOfActor(a));
+  const talisman = carriesTalisman(house, seat) ? higher(a.talisman, head) : a.talisman;
+  return {
+    ...a,
+    power: a.power ?? house,
+    backing: { power: house, realm: head },
+    ...(talisman ? { talisman } : {}),
+  };
+}
+
+// ── Tutelage (O3) ────────────────────────────────────────────────────────────────────────────
+
+/** An elder's time in the power's currency, on the realm curve by the buyer's realm (O3's talk). */
+export function elderPrice(kind: keyof typeof ELDER_TIME, r: RealmId): number {
+  return ELDER_TIME[kind].points * realmScale(r);
+}
+
+type Bought = { ok: true; state: GameState } | { ok: false; why: string };
+
+/** A member, not a guest, with the points for an elder's time. */
+function buyer(s: GameState, power: string, price: number): Member | string {
+  const m = membership(s.world, s.player.id, houseOf(power));
+  if (!m || m.guest) return 'Only their own buy an elder’s time.';
+  if (m.balance < price) return `You haven’t the ${organization(m.power).preset.currency.name}.`;
+  return m;
+}
+
+/** The insight an elder's lesson gives: three days of your own study's. */
+export function lessonInsight(s: GameState): number {
+  const c = s.player;
+  return (
+    INSIGHT_PER_STUDY_DAY *
+    realm(realmOf(c)).insightRate *
+    insightMultiplier(c) *
+    ELDER_TIME.lesson.studyDays
+  );
+}
+
+/** A membership changed in place. */
+function withMember(w: World, m: Member, change: Partial<Member>): World {
+  return {
+    ...w,
+    members: w.members.map((x) =>
+      x.who === m.who && x.power === m.power ? { ...x, ...change } : x,
+    ),
+  };
+}
+
+/**
+ * An elder's lesson (design: any member buys an elder's time with contribution, insight hours):
+ * a day of their teaching, worth three days of your own study, one a month.
+ */
+export function takeLesson(s: GameState, power: string): Bought {
+  const price = elderPrice('lesson', realmOf(s.player));
+  const m = buyer(s, power, price);
+  if (typeof m === 'string') return { ok: false, why: m };
+  const month = monthIndex(s.calendar.day);
+  if (m.taught === month) return { ok: false, why: 'An elder has taught you this month.' };
+  const player = gainInsight(s.player, lessonInsight(s));
+  const world = withMember(addBalance(s.world, m.who, m.power, -price), m, { taught: month });
+  return { ok: true, state: { ...withPlayer(s, player), world } };
+}
+
+/**
+ * An elder as protector 护法 at your next breakthrough (design: +5% to the odds and a failure
+ * softened a step): paid now, standing by until you next attempt one.
+ */
+export function engageProtector(s: GameState, power: string): Bought {
+  const price = elderPrice('protector', realmOf(s.player));
+  const m = buyer(s, power, price);
+  if (typeof m === 'string') return { ok: false, why: m };
+  if (protectorOf(s)) return { ok: false, why: 'An elder already stands by you.' };
+  const world = withMember(addBalance(s.world, m.who, m.power, -price), m, { protector: true });
+  return { ok: true, state: { ...s, world } };
+}
+
+/** The power whose elder stands by your next breakthrough, if any. */
+export function protectorOf(s: GameState): string | null {
+  return membershipsOf(s.world, s.player.id).find((m) => m.protector)?.power ?? null;
+}
+
+/** A protector's watch is over once the breakthrough is tried, whatever came of it. */
+export function protectorSpent(s: GameState): GameState {
+  const power = protectorOf(s);
+  const m = power ? membership(s.world, s.player.id, power) : undefined;
+  return m ? { ...s, world: withMember(s.world, m, { protector: false }) } : s;
+}
+
+// ── What it asks (O3) ────────────────────────────────────────────────────────────────────────
+
+/** A seat's monthly quota in the power's currency: none at a generous power or for a guest. */
+export function quotaOf(power: string, seat: SeatId, guest = false): number {
+  if (guest || organization(houseOf(power)).treatment === 'generous') return 0;
+  return QUOTA[seat];
+}
+
+/**
+ * Struck off the rolls for three missed quotas: the membership goes as leaving by the rule would,
+ * kept as "Struck from our rolls" in place of the parting.
+ */
+function strikeOff(s: GameState, power: string): GameState {
+  const day = s.calendar.day;
+  const who = s.player.id;
+  const left = leavePower(s.world, who, power, day, { you: true }).world;
+  // The parting's row is the last one leaving adds; being struck off is its own.
+  const world: World = { ...left, standing: left.standing.slice(0, -1) };
+  const struck = addStanding(world, { power, about: who, row: 'struck-off' }, day);
+  return addEvent({ ...s, world: struck }, 'power', { power, what: 'struck-off' });
+}
+
+/**
+ * The monthly quota (design: a post kept or contribution paid in): as each month turns, each
+ * power takes its seat's quota from the balance. Short, the month is missed: the second running
+ * costs standing, the third strikes you off. A quota met clears the count.
+ */
+export function settleQuotas(s: GameState): GameState {
+  const month = monthIndex(s.calendar.day);
+  const who = s.player.id;
+  const r = realmStageOf(s);
+  let state = s;
+  for (const first of membershipsOf(s.world, who)) {
+    if (!isOrganization(first.power)) continue;
+    const from = first.quota ?? first.paid;
+    if (from === undefined || from >= month) continue;
+    for (let k = from + 1; k <= month; k++) {
+      const m = membership(state.world, who, first.power);
+      if (!m) break;
+      const seat = m.guest ? 'elder' : seatOf(state.world, who, m.power, r)!;
+      const due = quotaOf(m.power, seat, m.guest);
+      const met = due === 0 || m.balance >= due;
+      const missed = met ? 0 : (m.missed ?? 0) + 1;
+      let world = met && due > 0 ? addBalance(state.world, who, m.power, -due) : state.world;
+      world = withMember(world, m, { quota: k, missed });
+      state = { ...state, world };
+      if (missed >= QUOTA_MISSED.struck) {
+        state = strikeOff(state, m.power);
+        break;
+      }
+      if (missed === QUOTA_MISSED.standing) {
+        const row = { power: m.power, about: who, row: 'missed-quota' } as const;
+        state = { ...state, world: addStanding(state.world, row, state.calendar.day) };
+        state = addEvent(state, 'power', { power: m.power, what: 'quota-missed' });
+      }
+    }
+  }
+  return state;
+}
+
+/** A seat's leave a year in days, counted only by a house; Infinity where none is counted. */
+export function leaveOf(power: string, seat: SeatId, guest = false): number {
+  const org = organization(houseOf(power));
+  if (guest || org.preset.bond !== 'house') return Infinity;
+  return LEAVE[seat];
+}
+
+/** Whether the player is at a power's seat or a branch hall of it: home, not on leave. */
+export function atSeat(s: GameState, power: string): boolean {
+  if (!s.map) return true;
+  const place = s.map.inside;
+  if (!place) return false;
+  return place === power || (isOrganization(place) && organization(place).branchOf === power);
+}
+
+/** How many standing rows an overstay of so many days has earned: one a month begun. */
+function overstayRows(days: number): number {
+  return days <= 0 ? 0 : Math.ceil(days / LEAVE_OVER.rowEvery);
+}
+
+/**
+ * Leave (design: three months a year at the outer and inner seats, more as you climb): days away
+ * from the power's seat count against the year's leave. Past it each day costs a point of the
+ * balance, and each month overstayed a standing row ("Overstayed our leave"). The count starts
+ * over as the year turns.
+ */
+export function countLeave(s: GameState, days: number): GameState {
+  if (days <= 0) return s;
+  const who = s.player.id;
+  const day = s.calendar.day;
+  const year = yearOf(day);
+  const r = realmStageOf(s);
+  let state = s;
+  for (const m of membershipsOf(s.world, who)) {
+    if (!isOrganization(m.power) || m.guest || atSeat(s, m.power)) continue;
+    const allowed = leaveOf(m.power, seatOf(s.world, who, m.power, r)!);
+    if (allowed === Infinity) continue;
+    const before = m.leave?.year === year ? m.leave.days : 0;
+    const after = before + days;
+    let world = withMember(state.world, m, { leave: { year, days: after } });
+    const over = Math.max(0, after - allowed) - Math.max(0, before - allowed);
+    if (over > 0) {
+      world = addBalance(world, who, m.power, -over * LEAVE_OVER.pointsPerDay);
+      const rows = overstayRows(after - allowed) - overstayRows(before - allowed);
+      for (let i = 0; i < rows; i++)
+        world = addStanding(world, { power: m.power, about: who, row: 'overstayed' }, day);
+    }
+    state = { ...state, world };
+    if (over > 0 && before <= allowed)
+      state = addEvent(state, 'power', { power: m.power, what: 'leave-over' });
+  }
+  return state;
+}
+
+/**
+ * Investment (design: a member who reaches a realm well before the seat's usual age is offered a
+ * true disciple's treatment early): an outer or inner member who has reached the true seat's realm
+ * before 15% of that realm's lifespan is raised to the true seat (O3's talk).
+ */
+export function raiseEarly(s: GameState): GameState {
+  const who = s.player.id;
+  const r = realmStageOf(s);
+  const age = ageYears(s.player, s.calendar.day);
+  let state = s;
+  for (const m of membershipsOf(s.world, who)) {
+    if (!isOrganization(m.power) || m.guest || organization(m.power).preset.byRealm) continue;
+    const seat = seatOf(s.world, who, m.power, r)!;
+    if (seatRank(seat) >= seatRank('true')) continue;
+    const from = seatRanges(m.power).true.from;
+    if (!from || rank(r) < rank(from)) continue;
+    if (age >= realm(from.realm).lifespan * EARLY_TRUE.share) continue;
+    state = { ...state, world: setSeat(state.world, who, m.power, 'true') };
+    state = addEvent(state, 'power', { power: m.power, what: 'true' });
+  }
+  return state;
+}
+
+/**
+ * Membership's day (O2, O3): the allowances as the month turns, then the quotas, the true seat for
+ * a member well ahead of their years, and the leave the days away have taken.
+ */
+export function membershipDay(s: GameState, days: number): GameState {
+  let next = payAllowances(s);
+  next = settleQuotas(next);
+  next = raiseEarly(next);
+  return countLeave(next, days);
+}
+
 // ── Views ────────────────────────────────────────────────────────────────────────────────────
 
 /** A seat's realms in words: "Qi Condensation 7–9", "Foundation Establishment", "Core Formation and below". */
@@ -785,6 +1142,11 @@ export function membershipsView(s: GameState) {
       const a = allowanceOf(m.power, seat, r.realm, m.guest);
       const pills = a.pills > 0 ? ` and ${a.pills === 1 ? 'a pill' : `${a.pills} pills`}` : '';
       const dwelling = m.guest ? null : dwellingDensity(seat, m.power);
+      // What it asks (O3): the quota, and the leave left this year where a house counts it.
+      const quota = quotaOf(m.power, seat, m.guest);
+      const missed = m.missed ? `, ${m.missed} missed` : '';
+      const allowed = m.guest ? Infinity : leaveOf(m.power, seat);
+      const taken = m.leave?.year === yearOf(s.calendar.day) ? m.leave.days : 0;
       return {
         power: m.power,
         name: org.name,
@@ -797,6 +1159,14 @@ export function membershipsView(s: GameState) {
         allowance:
           a.stones > 0 || a.pills > 0 ? `${priceWords(a.stones)}${pills} a month` : 'no allowance',
         dwelling: dwelling && dwelling > 1 ? `qi ×${dwelling} secluding there` : null,
+        quota: quota > 0 ? `quota ${quota} a month${missed}` : null,
+        leave:
+          allowed === Infinity
+            ? null
+            : taken > allowed
+              ? `leave overstayed by ${Math.ceil(taken - allowed)} days`
+              : `${Math.floor(allowed - taken)} days' leave left`,
+        protector: !!m.protector,
       };
     });
 }

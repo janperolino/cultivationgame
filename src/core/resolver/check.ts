@@ -205,14 +205,7 @@ export function presence(
  * their crew and despair, held to ×2.
  */
 export function composure(them: Actor, crew = 0): number {
-  const sect = Math.max(
-    them.backing === 'great-sect'
-      ? COMPOSURE.greatSect
-      : them.backing === 'sect'
-        ? COMPOSURE.sect
-        : 1,
-    backerComposure(them),
-  );
+  const sect = backerComposure(them);
   const f =
     sect *
     COMPOSURE.crew ** Math.min(COMPOSURE.crews, crew) *

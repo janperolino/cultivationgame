@@ -3,7 +3,7 @@
 // says how each ladder grew and what broke, then tells the cards that settled without you by kind,
 // at the door, within, under the sky, on the named days and among people, each card once with how
 // many times it came, and ends on what still waits. It never mentions what attending would have
-// earned.
+// earned. What your powers did with you while you were away is told beside the growth (O3).
 import { card, type CardKind } from '../content/cards/index.ts';
 import { LADDERS } from '../content/cultivation.ts';
 import { encounterTemplate } from '../content/encounters/index.ts';
@@ -156,8 +156,11 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
     );
   else if (stones >= 1) growth.push(`Your pouch is ${priceWords(Math.floor(stones))} heavier.`);
 
-  // Each card settled without you, once, with the line its last coming wrote.
+  // What your powers did while you were away (O3): a quota missed away is missed, and told here.
   const who = whoFor(after.player);
+  for (const e of since) if (e.type === 'power') growth.push(renderEvent(e.type, e.data, who));
+
+  // Each card settled without you, once, with the line its last coming wrote.
   const groups = new Map<string, { kind: CardKind | 'story'; line: string; times: number }>();
   for (const e of since) {
     if (e.type !== 'card' || !e.data.byDefault) continue;

@@ -68,6 +68,7 @@ import {
   type TieId,
 } from '../../content/people.ts';
 import { LADDERS } from '../../content/cultivation.ts';
+import { ORG_OVERRIDES } from '../../content/organizations.ts';
 import type { TrustWord } from '../../content/resolver.ts';
 import type { OriginChoice, OriginId } from '../../content/origins.ts';
 import { likesOf, meetingShows, revealNature } from './nature.ts';
@@ -243,7 +244,28 @@ export function memoryLine(m: Memory, n: Nature, day: number): MemoryLine {
   };
 }
 
-/** Everything a holder remembers of someone, as lines; faded ones and ones they don't feel left out. */
+/**
+ * The powers someone belongs to, a branch hall read as its parent: their memberships (a guest
+ * elder's seat is an outsider's, so not among them) and the power a named or kept person answers to.
+ */
+export function housesOf(w: World, id: string): string[] {
+  const out = w.members.filter((m) => m.who === id && !m.guest).map((m) => m.power);
+  const p = powerOf(w, id);
+  if (p) out.push(ORG_OVERRIDES[p]?.branchOf ?? p);
+  return [...new Set(out)];
+}
+
+/** The power two people share, if any: fellow members meet each other as "one of ours" (O3). */
+export function fellowPower(w: World, a: string, b: string): string | null {
+  const theirs = housesOf(w, b);
+  return housesOf(w, a).find((p) => theirs.includes(p)) ?? null;
+}
+
+/**
+ * Everything a holder remembers of someone, as lines; faded ones and ones they don't feel left out.
+ * A fellow member's "One of ours" (+10) is among them while they share a power, worked out and
+ * never stored, and known to both.
+ */
 export function memoriesOf(
   w: World,
   holder: string,
@@ -251,10 +273,20 @@ export function memoriesOf(
   day: number,
   n: Nature = natureOf(w, holder),
 ): MemoryLine[] {
-  return w.memories
-    .filter((m) => m.holder === holder && m.about === about)
-    .map((m) => memoryLine(m, n, day))
-    .filter((l) => l.share > 0 && l.weight > 0);
+  const held = w.memories.filter((m) => m.holder === holder && m.about === about);
+  if (holder !== about && fellowPower(w, holder, about)) {
+    const fellow = MEMORIES.fellow;
+    held.push({
+      id: -1,
+      holder,
+      about,
+      row: 'fellow',
+      value: fellow.value,
+      day,
+      known: [holder, about],
+    });
+  }
+  return held.map((m) => memoryLine(m, n, day)).filter((l) => l.share > 0 && l.weight > 0);
 }
 
 /** The trust word a total reads as. */

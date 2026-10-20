@@ -346,6 +346,9 @@ function Memberships({ game }: { game: GameState }) {
             {' '}
             · {m.allowance}
             {m.dwelling && ` · ${m.dwelling}`}
+            {m.quota && ` · ${m.quota}`}
+            {m.leave && ` · ${m.leave}`}
+            {m.protector && ' · a protector stands by your next breakthrough'}
           </span>
         </li>
       ))}

@@ -8,7 +8,7 @@
 // Knowing who did a deed lands it as a memory and as standing (opinion.ts) and carries its renown
 // or infamy across its region (names.ts); its karma lands as it is done, seen or not.
 import { DAYS_PER_MONTH } from '../../content/calendar.ts';
-import { SEAT_IDS } from '../../content/organizations.ts';
+import { LAW_HALL, SEAT_IDS } from '../../content/organizations.ts';
 import { z } from 'zod';
 import {
   CAPABILITY_IDS,
@@ -34,7 +34,7 @@ import {
   TieSchema,
   type Standing,
 } from './opinion.ts';
-import { addKarma, landFame } from './names.ts';
+import { addKarma, isMember, landFame } from './names.ts';
 
 const RealmStage = z.object({ realm: z.enum(REALM_IDS), stage: z.number().int().min(1) });
 export type RealmStage = z.infer<typeof RealmStage>;
@@ -183,6 +183,14 @@ export const MemberSchema = z.object({
   tried: z.number().int().optional(),
   paid: z.number().int().optional(),
   guest: z.boolean().optional(),
+  /** O3: the month the quota was last settled, and the months missed running. */
+  quota: z.number().int().optional(),
+  missed: z.number().int().min(0).optional(),
+  /** O3: the month of the last elder's lesson, and a protector standing by the next breakthrough. */
+  taught: z.number().int().optional(),
+  protector: z.boolean().optional(),
+  /** O3: leave taken this year, in days away from the power's seat. */
+  leave: z.object({ year: z.number().int(), days: z.number().min(0) }).optional(),
 });
 export type Member = z.infer<typeof MemberSchema>;
 
@@ -407,6 +415,19 @@ function landHeat(w: World, id: number, holder: string, day: number): World {
   return heat > 0 ? addHeat(marked, holder, heat, day) : marked;
 }
 
+/**
+ * The law hall (design § What membership gives and asks, What it asks): a member who kills or robs
+ * one of their own power takes its law hall's heat on top of the deed's, once, as the power learns.
+ */
+function lawHall(w: World, id: number, power: string, day: number): World {
+  const d = deedById(w, id)!;
+  const key = `law:${power}`;
+  if (d.landed.includes(key) || d.power !== power || !isMember(w, d.actor, power)) return w;
+  if (!(LAW_HALL.deeds as readonly string[]).includes(d.kind)) return w;
+  const marked = replaceDeed(w, { ...d, landed: [...d.landed, key] });
+  return addHeat(marked, power, LAW_HALL.heat, day);
+}
+
 function replaceDeed(w: World, d: Deed): World {
   return { ...w, deeds: w.deeds.map((x) => (x.id === d.id ? d : x)) };
 }
@@ -429,7 +450,10 @@ export function learn(
   const had = d.knownBy[by.id];
   const knows = { who: who || (had?.who ?? false), power: by.power ?? had?.power ?? null };
   let world = replaceDeed(w, { ...d, knownBy: { ...d.knownBy, [by.id]: knows } });
-  if (knows.who && knows.power) world = landHeat(world, id, knows.power, day);
+  if (knows.who && knows.power) {
+    world = landHeat(world, id, knows.power, day);
+    world = lawHall(world, id, knows.power, day);
+  }
   if (knows.who && !d.staged) {
     world = landDeed(world, deedById(world, id)!, { ...by, power: knows.power }, day, seen);
     world = landFame(world, deedById(world, id)!, day);

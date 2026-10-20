@@ -270,7 +270,7 @@ describe('the save', () => {
     raw.version = 37;
     raw.state.world.members = [{ who: YOU, power: GATE, since: 5 }];
     const back = loadSave(raw);
-    expect(back.version).toBe(39);
+    expect(back.version).toBe(40);
     expect(back.state.world.members).toEqual([
       {
         who: YOU,
@@ -279,6 +279,7 @@ describe('the save', () => {
         seat: 'outer',
         balance: 0,
         paid: monthIndex(back.state.calendar.day),
+        quota: monthIndex(back.state.calendar.day),
       },
     ]);
   });

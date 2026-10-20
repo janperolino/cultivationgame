@@ -118,6 +118,20 @@ function homeOf(w: World, id: string): string | null {
   return w.kept[id]?.home ?? null;
 }
 
+/**
+ * A power's private tier (design § What an NPC knows; § What membership gives and asks, Knowledge):
+ * the places under it and tied to it that aren't hidden, and its named people. Every member knows
+ * it, the player from the day they join (O3).
+ */
+export function powerPrivate(places: PlaceIndex, power: string): string[] {
+  const out = new Set<string>();
+  for (const c of [...places.children(power), ...places.tied(power)]) {
+    if (open(c)) out.add(`place:${c.id}`);
+  }
+  for (const p of PEOPLE) if (p.power === power) out.add(`name:${p.id}`);
+  return [...out];
+}
+
 /** What someone knows, by tier: facts as "place:<id>", "name:<id>", "sites:<kind>:<region>", "deed:<id>", "truth:<id>", "tie:<a>:<b>". */
 export function knowledgeOf(
   w: World,
@@ -146,13 +160,12 @@ export function knowledgeOf(
   for (const p of PEOPLE) {
     if (p.id === id) continue;
     if (home && p.home === home) common.add(`name:${p.id}`);
-    else if (power && p.power === power) priv.add(`name:${p.id}`);
   }
   if (power) {
+    for (const f of powerPrivate(places, power)) if (f !== `name:${id}`) priv.add(f);
     const pe = places.get(power);
     for (const c of [...places.children(power), ...places.tied(power)]) {
-      if (open(c)) priv.add(`place:${c.id}`);
-      else if (isPlace(c) && c.hidden) secret.add(`place:${c.id}`);
+      if (isPlace(c) && c.hidden) secret.add(`place:${c.id}`);
     }
     if (pe?.truth) secret.add(`truth:${power}`);
   }
