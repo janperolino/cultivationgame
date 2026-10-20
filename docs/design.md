@@ -1862,10 +1862,12 @@ Settle each before the stage that needs it (Roadmap), grouped by the layer that 
 - [ ] Story decks: a deck per system; what each card trades and how often it comes
 - [ ] The Ways' node lists, tiers 1 and 2, at the combat Daos' shape
 
+- [ ] The opening redone (Sean's playtest, 2026-10-20; its design session just before P3.12): settled so far, Foundation in about 2–3 attended hours, a payoff by minute 10–15, the world taking a prodigy as one, and the game less idle and more a sim; it rewrites Character creation and the first hour's table and pacing targets, and adds first tasks that teach by doing (a spar for a technique, a gathering bounty, the travel stances), the rogue start with work it can find, and how a first time is shown when it appears
+
 **Before M7 and M8**
 
 - [ ] Death, rebirth and legacy: what carries over, what the world remembers (the twelve years between lives and leaving things for the next life are settled under The world, Escape and death)
-- [ ] Art and sound: how much, and from where. Settled so far: location art and portraits are made at design time and shipped as data, never generated in play, with shared art by tag for filled-in places; portraits wait for the cast list; sound hangs off the same engine events as combat effects
+- [ ] Art and sound: how much, and from where. Settled so far: location art and portraits are made at design time and shipped as data, never generated in play, with shared art by tag for filled-in places; portraits wait for the cast list; sound hangs off the same engine events as combat effects. Waiting here from Sean's playtest, 2026-10-20 (Jan's call), the feel pass: a chime and a +n by the figure on every gain from a card or encounter, a chime when one arrives, an alert when an encounter comes while you are on another screen and a chime for one you can pass by, a breakthrough's fanfare and a warning before its first circle, the screen dimmed when something new appears, a hint when stones run low, stones and insight placed where they are seen, your affiliation shown, warmer sunlight and godrays (still, no looping paint), pictures on cards and encounters, and a voiced intro in painted stills for each start (skippable or not, open)
 
 **Anytime**
 
