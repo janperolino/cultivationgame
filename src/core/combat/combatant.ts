@@ -21,6 +21,7 @@ import {
   QI_PER_SIZE,
   SHIELD_PER_SIZE,
   RESOLVE_BASE,
+  SOFT_GAP,
   statusInfo,
   type DamageType,
   type StatusId,
@@ -402,6 +403,24 @@ export function topRung(c: Pick<Combatant, 'rungs'>): Rung {
 /** What Agility does to Evasion and fleeing: 5% a point above 10. */
 export function agilityFactor(c: Combatant): number {
   return agilityShare(c.agility);
+}
+
+/**
+ * What a movement art lifts the Agility tempo and fleeing read by (design § Combat, Speed is
+ * tempo): the square root of its band against your realm, so white of your tier is ×1, purple at
+ * tier 1 ×1.6 and gold ×1.8; never under 1, with none or one below your tier.
+ */
+export function movementLift(c: Pick<Combatant, 'guards'>): number {
+  return Math.sqrt(Math.max(1, c.guards.movement));
+}
+
+/**
+ * Tempo (design § Combat, Speed is tempo), which fleeing reads too: Agility, lifted by the
+ * movement art, times the square root of their size, their highest rung's, so realm counts,
+ * softened, as it does when you run.
+ */
+export function tempo(c: Combatant): number {
+  return agilityFactor(c) * movementLift(c) * rungSize(topRung(c)) ** SOFT_GAP;
 }
 
 /** The product of one status field over everything afflicting a combatant, 1 with none. */

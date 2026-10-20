@@ -146,7 +146,7 @@ describe('reading a realm', () => {
     const peak = them('peak', { realm: QC(9) });
     const early = them('early', { realm: FE(1) });
     expect(readRealm(peak, early).kind).toBe('beyond');
-    expect(readRealm({ ...peak, stats: { perception: 0.3 } }, early).kind).toBe('true');
+    expect(readRealm({ ...peak, stats: { perception: 0.8 } }, early).kind).toBe('true');
   });
 
   it('veils as many stages down as concealment allows', () => {

@@ -1,7 +1,8 @@
 // Rarity (design § Tier, rarity and pedigree): one scale for everything you can own or be born
 // with, as a band: the stage the thing is sized at in its own tier's realm. White is the realm's
-// first stage, blue its middle, purple its peak, gold the next realm's first stage, red the
-// next realm's middle and pristine its peak, one roll in ten thousand. In numbers, with s the step out of the thing's tier (`tierStep` in
+// first stage, blue its middle, purple the half-step past its peak, gold the next realm's first
+// stage, red the next realm's middle and pristine its half-step, one roll in ten thousand (the
+// realm gap's design moved the words, not the numbers). In numbers, with s the step out of the thing's tier (`tierStep` in
 // content/realms.ts, ×3.1 at tier 1): mult × s^exponent. Every number is a starting value for the sims.
 
 export interface Rarity {
@@ -107,7 +108,7 @@ export const RARITIES = [
     id: 'purple',
     name: 'Purple',
     note: 'rare',
-    band: 'peak',
+    band: 'the half-step',
     mult: 1,
     exponent: 0.8,
     accuracy: 1,
@@ -151,8 +152,8 @@ export const RARITIES = [
   {
     id: 'pristine',
     name: 'Pristine',
-    note: 'without a flaw: sized at the next realm’s peak',
-    band: 'the next realm, peak',
+    note: 'without a flaw: sized at the next realm’s half-step',
+    band: 'the next realm’s half-step',
     mult: 1,
     exponent: 1.8,
     accuracy: 1.6,

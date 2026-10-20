@@ -16,6 +16,7 @@ import {
   previewCache,
   quietFight,
   resolveTurn,
+  routed,
   winner,
   type Action,
   type Fight,
@@ -114,7 +115,11 @@ function choose(xs: Option[], pick: Profile['picks']): Option | undefined {
   }
 }
 
-/** The foe a fighter goes after: the one it can hurt most, as a share of their HP left. */
+/**
+ * The foe a fighter goes after: the one it can hurt most, as a share of their HP left, on what
+ * its best option does to that foe alone, so a sweep doesn't aim at the weakest foe whoever
+ * else it reaches (the code review's medium 21). The cast is priced whole for the pick after.
+ */
 function targetOf(
   f: Fight,
   me: Combatant,
@@ -126,8 +131,8 @@ function targetOf(
   let score = -1;
   for (const c of foes) {
     const xs = options(f, me, c, false, cache);
-    const top = best(xs, (o) => o.value);
-    const s = top ? top.value / Math.max(1, c.hp) : 0;
+    const top = best(xs, (o) => o.p.first);
+    const s = top ? top.p.first / Math.max(1, c.hp) : 0;
     if (s > score) {
       score = s;
       pick = { target: c, xs };
@@ -147,6 +152,8 @@ export function chooseAction(
 ): Action {
   const me = combatantIn(f, id);
   if (!me || me.state !== 'fighting') return { actor: id };
+  // A crowd that can't scratch its foes breaks once a third of it has fallen.
+  if (!statusFlag(me, 'noFlee') && routed(f, me)) return { actor: id, main: { type: 'flee' } };
   const chosen = targetOf(f, me, quiet);
   if (!chosen) return { actor: id };
   const target = chosen.target;
@@ -206,7 +213,10 @@ export function runFight(start: Fight, rng: Rng, maxTurns = 60): FightResult {
     const actions = f.combatants
       .filter((c) => c.state === 'fighting')
       .map((c) => chooseAction(f, c.id, profile(c.profile ?? 'fanatical'), quiet));
-    const r = resolveTurn(f, actions, rng);
+    const r = resolveTurn(f, actions, rng, (at, id) => {
+      const c = combatantIn(at, id);
+      return c && chooseAction(at, id, profile(c.profile ?? 'fanatical'));
+    });
     for (const o of r.outcomes)
       if (o.action === 'technique' && o.id && !(used[o.actor] ?? []).includes(o.id))
         used[o.actor] = [...(used[o.actor] ?? []), o.id];

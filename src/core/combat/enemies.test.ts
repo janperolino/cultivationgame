@@ -4,6 +4,7 @@ import { HP_PER_SIZE } from '../../content/combat.ts';
 import { KITS, PEDIGREES } from '../../content/enemies.ts';
 import { NPC_PACE, PACE_AGES } from '../../content/pace.ts';
 import { RARITIES, rarityRank } from '../../content/rarity.ts';
+import { GRADE_SHARE } from '../../content/realms.ts';
 import {
   BORDER_WILDS,
   template,
@@ -256,7 +257,7 @@ describe('the ledger kits', () => {
     });
     const c = kitFighter(kit('chosen'), 'foundation-establishment', 1, { id: 'c', side: 'c' });
     expect(c.rungs.body.realm).toBe('core-formation');
-    expect(c.rungs.qi.grade).toBe(3);
+    expect(c.rungs.qi.grade).toBeCloseTo(3 * GRADE_SHARE);
     const o = kitFighter(kit('ordinary'), 'foundation-establishment', 1, { id: 'o', side: 'o' });
     expect(o.maxHp).toBe(Math.round(HP_PER_SIZE * stageSize('foundation-establishment', 1)));
   });
@@ -293,7 +294,7 @@ describe('the preview', () => {
   it('prices a technique as the turn resolves it, before the spread', () => {
     const f = startFight([fighter('a', 'a'), fighter('b', 'b')]);
     const p = preview(f, 'a', { type: 'technique', id: 'palm', target: 'b' })!;
-    expect(p).toEqual({ chance: 0.5, damage: 40, qi: 10, foes: 1, expected: 20 });
+    expect(p).toEqual({ chance: 0.5, damage: 40, qi: 10, foes: 1, expected: 20, first: 20 });
     expect(preview(f, 'a', { type: 'defend' })).toBeNull();
     const broke = startFight([fighter('a', 'a', { qi: 5 }), fighter('b', 'b')]);
     expect(preview(broke, 'a', { type: 'technique', id: 'palm', target: 'b' })).toBeNull();

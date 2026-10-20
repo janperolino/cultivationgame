@@ -209,7 +209,7 @@ describe('the playbook', () => {
     const deacon = npc('deacon', { realm: QC(9), side: 'gate', power: GATE });
     let r = runPlan(
       s,
-      at('qm-shoukou-cheng', [you(s, { realm: QC(6) }), courier]),
+      at('qm-shoukou-cheng', [you(s, { realm: QC(8) }), courier]),
       plan(s, step('steal', { target: 'courier', thing: 'court-token' })),
     );
     expect(r.scene.actors[0]!.items['court-token']).toBe(1);
@@ -362,7 +362,7 @@ describe('the playbook', () => {
       stones: 12,
       items: { 'spring-returning-pill': 1 },
     });
-    const sergeant = npc('sergeant', { realm: QC(8), side: 'wall', knows: [s.player.id] });
+    const sergeant = npc('sergeant', { realm: QC(9), side: 'wall', knows: [s.player.id] });
     let r = runPlan(
       s,
       at('qm-duigu-qiang', [you(s, { realm: QC(6), agility: 14 }), fallen]),
@@ -385,7 +385,7 @@ describe('the playbook', () => {
     const s = life();
     const vault = { id: 'vault', name: 'the pill vault', tags: [], realm: FE(1) };
     const night = { id: 'night', name: 'a moonless night', tags: [], favors: ['stealth' as const] };
-    const me = you(s, { realm: QC(9), agility: 12 });
+    const me = you(s, { realm: QC(9), agility: 18 });
     const brother = plainActor({ id: 'brother', name: 'a sworn brother', side: YOU, realm: QC(9) });
     const r = runPlan(
       s,

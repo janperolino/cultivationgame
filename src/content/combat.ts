@@ -64,17 +64,28 @@ export const DAMAGE_SPREAD = 0.15;
 /**
  * Protective qi (design § Combat): from a lower realm, a hit whose Attack is no more than a bar's
  * Defense does PROTECTIVE_QI to that bar, rising in a straight line to the full hit at
- * PROTECTIVE_FULL times the Defense.
+ * PROTECTIVE_FULL times the Defense. Its second floor (the realm gap's design): at or under
+ * PROTECTIVE_DEEP_AT of the Defense the bar takes PROTECTIVE_DEEP, ramping to PROTECTIVE_QI at it.
  */
 export const PROTECTIVE_QI = 0.05;
 export const PROTECTIVE_FULL = 1.25;
+export const PROTECTIVE_DEEP = 0.01;
+export const PROTECTIVE_DEEP_AT = 0.5;
 /** Defending multiplies Evasion by this until your next action, and taking cover by COVER_EVASION. */
 export const DEFEND_EVASION = 1.5;
 export const COVER_EVASION = 1.25;
 /** Talking: the listener's resolve over this is what their soul size is multiplied by. */
 export const RESOLVE_BASE = 10;
-/** Fleeing and talking feel only the square root of the size gap. */
+/** Fleeing, tempo and talking feel only the square root of the size gap. */
 export const SOFT_GAP = 0.5;
+/**
+ * Speed is tempo (design § Combat, the realm gap's design): each turn a fighter banks how far its
+ * tempo outruns the fastest foe standing, and acts again at each whole action banked, never more
+ * than TEMPO_MOST actions a turn. The bank holds at most TEMPO_BANK after acting, so a fighter
+ * far ahead never stores turns.
+ */
+export const TEMPO_MOST = 2;
+export const TEMPO_BANK = 1;
 /** The most creativity a free-text action can earn, each point multiplying Accuracy by CREATIVITY_STEP. */
 export const MAX_CREATIVITY = 3;
 export const CREATIVITY_STEP = 1.1;

@@ -16,6 +16,7 @@ import {
   type LadderId,
 } from './cultivation.ts';
 import { ladderGrowth, realmGrowth, stageGrowth } from './growth.ts';
+import { bandOf } from './combat/sheet.ts';
 import { contemplate, contemplationLeft, masteryBurst } from './insight.ts';
 import { gainTechnique, switchMethod } from './life.ts';
 import { burstAt, chapterStartLevel } from './mastery.ts';
@@ -99,8 +100,11 @@ describe('rarity', () => {
         expect(rarityMultiplier(r.id, Number(step)), `${r.id} at ×${step}`).toBeCloseTo(row[i]!, 1);
       });
     }
-    // Purple is the realm's peak, gold the next realm's first stage.
-    expect(rarityMultiplier('purple', 3.1)).toBeCloseTo(realmSpread('qi-condensation'));
+    // Purple is the half-step, past the realm's peak and short of the next realm; gold the next
+    // realm's first stage.
+    expect(rarityMultiplier('purple', 3.1)).toBeGreaterThan(realmSpread('qi-condensation'));
+    expect(bandOf(10 * rarityMultiplier('purple', 3.1)).halfStep).toBe(true);
+    expect(rarity('purple').band).toBe('the half-step');
     expect(10 * rarityMultiplier('gold', 3.1)).toBeCloseTo(realmSize('foundation-establishment'));
   });
 

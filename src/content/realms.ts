@@ -221,8 +221,17 @@ export function stepSize(id: RealmId, stage: number): number {
 
 /** The sheet's size at Qi Condensation layer 1: every line of a fresh cultivator starts here. */
 export const SIZE_BASE = 10;
-/** A realm's stages climb to this share of the step out of it, so a peak sits just under the next realm. */
-export const SPREAD_SHARE = 0.8;
+/**
+ * A climb, then a jump (design § Combat): a realm's stages climb this share of the step out of it,
+ * and the rest is the border, the half-step a line reaches only by what lifts it.
+ */
+export const SPREAD_SHARE = 0.5;
+/**
+ * A breakthrough grade's worth in a fight (design § Cultivation, grades): this share of the step out
+ * of its realm a grade, −1 flawed to +3 heavenly. 0.27, written as the old climb's stage at
+ * Foundation (0.8 of the step over three stages), so the ledger reads as it did.
+ */
+export const GRADE_SHARE = 0.8 / 3;
 
 /** The size of this realm's first stage: 10 at Qi Condensation, 31 at Foundation, 143 at Core Formation. */
 const SIZES = new Map<RealmId, number>();

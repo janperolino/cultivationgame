@@ -203,7 +203,8 @@ describe('the rule twists', () => {
       ],
       new Rng(1),
     );
-    expect(r.outcomes.map((o) => o.actor)).toEqual(['me', 'foe1']);
+    // The foe, five times as quick, acts again after (Speed is tempo); First Blood still leads.
+    expect(r.outcomes.map((o) => o.actor)).toEqual(['me', 'foe1', 'foe1']);
   });
 
   it('Hundred Fists: a critical grants a second main action, once a fight', () => {

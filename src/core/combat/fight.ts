@@ -20,6 +20,8 @@ import {
   HALVED_HIT,
   MAX_CREATIVITY,
   MAX_RESIST,
+  PROTECTIVE_DEEP,
+  PROTECTIVE_DEEP_AT,
   PROTECTIVE_FULL,
   PROTECTIVE_QI,
   QI_REGEN,
@@ -28,6 +30,8 @@ import {
   SOFT_GAP,
   STRIKE_FORM,
   STRIKE_POWER,
+  TEMPO_BANK,
+  TEMPO_MOST,
   UNBREAKING_DEFENSE,
   fullCount,
   reachCost,
@@ -59,9 +63,8 @@ import type { Form, Technique } from '../../content/techniques.ts';
 import type { Rng } from '../rng.ts';
 import { topStage } from '../intent.ts';
 import { doseAt } from '../toxicity.ts';
-import { judge } from './check.ts';
+import { backfireChance, judge } from './check.ts';
 import {
-  agilityFactor,
   defense,
   evasion,
   mod,
@@ -69,6 +72,7 @@ import {
   soulWound,
   statusFactor,
   statusFlag,
+  tempo,
   type Combatant,
 } from './combatant.ts';
 import {
@@ -79,6 +83,7 @@ import {
   elementMultiplier,
   nextCombo,
   rollSpread,
+  type Combo,
 } from './damage.ts';
 import { hitChance, rungSize, tierRung, tierScale, type Rung } from './sheet.ts';
 
@@ -219,8 +224,18 @@ export function winner(f: Fight): string | null {
 
 // ---------------------------------------------------------------- the turn
 
-/** Resolves one turn: statuses tick, then every action in Agility order, then durations run down. */
-export function resolveTurn(fight: Fight, actions: readonly Action[], rng: Rng): TurnResult {
+/**
+ * Resolves one turn: statuses tick, then every action in Agility order, then each fighter whose
+ * tempo has banked a whole action acts again (design § Combat, Speed is tempo), then durations run
+ * down. An extra action comes from `again`, the fighter's profile when the engine fights it; with
+ * none, or none given, it repeats the main action, at another foe if its target fell.
+ */
+export function resolveTurn(
+  fight: Fight,
+  actions: readonly Action[],
+  rng: Rng,
+  again?: (f: Fight, actor: string) => Action | undefined,
+): TurnResult {
   const f: Fight = {
     turn: fight.turn + 1,
     combatants: fight.combatants.map((c) => ({ ...c, statuses: [...c.statuses] })),
@@ -257,15 +272,16 @@ export function resolveTurn(fight: Fight, actions: readonly Action[], rng: Rng):
     }
   }
 
-  for (const a of order) {
+  /** One action: the minor, then the main; false when the actor couldn't act at all. */
+  const perform = (a: Action): boolean => {
     const actor = combatantIn(f, a.actor)!;
     if (actor.state !== 'fighting') {
       skipped.push({ actor: a.actor, reason: actor.state });
-      continue;
+      return false;
     }
     if (actor.needsCommand && !commanded.has(actor.id)) {
       skipped.push({ actor: a.actor, reason: 'not commanded' });
-      continue;
+      return false;
     }
     actor.guard = 1;
     // Undertow: a foe chilled by it loses its minor action.
@@ -279,29 +295,65 @@ export function resolveTurn(fight: Fight, actions: readonly Action[], rng: Rng):
         else outcomes.push(...o);
       } else lit = minor(f, actor, a.minor);
     }
-    if (!a.main) continue;
+    if (!a.main) return true;
     if (statusFlag(actor, 'skipMain')) {
       skipped.push({ actor: a.actor, reason: 'frozen' });
-      continue;
+      return true;
     }
     const creativity = creative(f, actor, a);
     const os = main(f, actor, a.main, creativity, rng);
     if (typeof os === 'string') {
       skipped.push({ actor: a.actor, reason: os });
-      continue;
+      return true;
     }
     if (lit.length > 0) os[0]!.features = lit;
     outcomes.push(...os);
     // Hundred Fists: a critical grants a second main action, once a fight.
     if (actor.marks.extraMain === f.turn && actor.state === 'fighting') {
-      const again = retarget(f, actor, a.main);
-      const more = again ? main(f, actor, again, 1, rng) : 'no target';
-      if (typeof more !== 'string') outcomes.push(...more);
+      const more = retarget(f, actor, a.main);
+      const res = more ? main(f, actor, more, 1, rng) : 'no target';
+      if (typeof res !== 'string') outcomes.push(...res);
     }
+    return true;
+  };
+
+  const acted = order.filter(perform);
+  // Tempo: each who acted banks how far they outrun the fastest foe still standing, and acts again
+  // on a whole action, in the turn's order, never more than twice a turn.
+  for (const a of acted) {
+    const actor = combatantIn(f, a.actor)!;
+    if (actor.state !== 'fighting' || fightOver(f)) continue;
+    if (!bank(f, actor)) continue;
+    const next = again?.(f, actor.id) ?? repeat(f, actor, a);
+    if (next) perform({ ...next, actor: actor.id });
   }
 
   endOfTurn(f);
   return { fight: f, outcomes, ticks, skipped };
+}
+
+/**
+ * Banks this turn's tempo (design § Combat, Speed is tempo): how far the actor's tempo outruns the
+ * fastest foe still standing. True when the bank reaches a whole action, which it spends; it
+ * holds at most TEMPO_BANK after, so a fighter far ahead never stores turns.
+ */
+function bank(f: Fight, actor: Combatant): boolean {
+  let fastest = 0;
+  for (const c of f.combatants) {
+    if (c.side !== actor.side && c.state === 'fighting') fastest = Math.max(fastest, tempo(c));
+  }
+  if (fastest <= 0) return false;
+  let banked = (actor.marks.tempo ?? 0) + Math.max(0, tempo(actor) / fastest - 1);
+  const extra = Math.min(TEMPO_MOST - 1, Math.floor(banked + 1e-9));
+  banked = Math.min(TEMPO_BANK, banked - extra);
+  mark(actor, 'tempo', banked);
+  return extra > 0;
+}
+
+/** An extra action with no profile to choose it: the same main again, at another foe if its target fell. */
+function repeat(f: Fight, actor: Combatant, a: Action): Action | undefined {
+  const m = a.main && retarget(f, actor, a.main);
+  return m ? { actor: actor.id, main: m } : undefined;
 }
 
 /**
@@ -537,7 +589,7 @@ function strikeAttack(actor: Combatant, creativity: number): Attack {
     type: 'physical',
     base: STRIKE_POWER * tierScale(realmIndex(body.realm) + 1),
     ladder: 'body',
-    rung: asOne > 0 ? { ...body, grade: body.grade + asOne } : body,
+    rung: asOne > 0 ? { ...body, stage: body.stage + asOne } : body,
     accuracy: dao * (1 + daoMod(actor, daos, 'Hit')) * actor.weapon.accuracy * creativity,
     attack: actor.weapon.strike * dao * (1 + daoMod(actor, daos, 'Power')) * actor.physicalPower,
     qi: false,
@@ -632,13 +684,20 @@ function ownRealm(c: Combatant): number {
 
 /**
  * Protective qi (design § Combat): what a bar lets through of a hit from a lower realm, by the
- * hit's Attack against the bar's Defense. A twentieth up to the Defense, the full hit from a
- * quarter past it, and a straight ramp between, so a small edge moves a little.
+ * hit's Attack against the bar's Defense. A hundredth at or under half the Defense, a twentieth at
+ * it, the full hit from a quarter past it, and straight ramps between, so a small edge moves a
+ * little.
  */
 export function protection(attack: number, defense: number): number {
   const r = attack / defense;
   if (r >= PROTECTIVE_FULL) return 1;
-  if (r <= 1) return PROTECTIVE_QI;
+  if (r <= PROTECTIVE_DEEP_AT) return PROTECTIVE_DEEP;
+  if (r <= 1) {
+    return (
+      PROTECTIVE_DEEP +
+      ((PROTECTIVE_QI - PROTECTIVE_DEEP) * (r - PROTECTIVE_DEEP_AT)) / (1 - PROTECTIVE_DEEP_AT)
+    );
+  }
   return PROTECTIVE_QI + ((1 - PROTECTIVE_QI) * (r - 1)) / (PROTECTIVE_FULL - 1);
 }
 
@@ -849,6 +908,8 @@ export interface Preview {
   foes: number;
   /** Expected damage over them all: each foe's chance times its plain hit. */
   expected: number;
+  /** Expected damage on the chosen foe alone. */
+  first: number;
 }
 
 /**
@@ -869,13 +930,17 @@ export function preview(f: Fight, actorId: string, m: MainAction): Preview | nul
   let damage = 0;
   let expected = 0;
   let chance = 0;
+  let first = 0;
   foes.forEach((c, i) => {
     const { dealt, p } = priceFoe(f, actor, c, pr, share);
-    if (i === 0) chance = p;
+    if (i === 0) {
+      chance = p;
+      first = p * dealt;
+    }
     damage += dealt;
     expected += p * dealt;
   });
-  return { chance, damage, qi: pr.qi, foes: foes.length, expected };
+  return { chance, damage, qi: pr.qi, foes: foes.length, expected, first };
 }
 
 /** An attacking main action priced but for its foes: the attack itself and what it reads of them. */
@@ -908,7 +973,7 @@ function priced(f: Fight, actor: Combatant, m: MainAction, quiet = false): Price
     a = held && held.n > 0 ? itemAttack(actor, held.item, 1) : null;
   } else return null;
   if (!a || typeof a === 'string') return null;
-  const spec = m.type === 'technique' ? rained(actor, a) : a;
+  const spec = m.type === 'technique' ? rained(f, actor, a) : a;
   return {
     spec,
     qi,
@@ -916,6 +981,44 @@ function priced(f: Fight, actor: Combatant, m: MainAction, quiet = false): Price
     combo: comboMultiplier(nextCombo(actor.combo, damagePhase(spec.type))),
     fixed: fixedOf(f, actor, spec),
   };
+}
+
+/**
+ * A crowd that can't scratch you breaks (design § Combat): once a third of its side has fallen, a
+ * fighter whose every hit is held to a twentieth or less, by protective qi on every bar still
+ * standing of every foe it faces, flees on its turn. One who can still hurt someone holds on.
+ */
+export function routed(f: Fight, me: Combatant): boolean {
+  let side = 0;
+  let fallen = 0;
+  for (const c of f.combatants) {
+    if (c.side !== me.side) continue;
+    side++;
+    if (c.state !== 'fighting') fallen++;
+  }
+  if (fallen * 3 < side) return false;
+  const foes = f.combatants.filter((c) => c.side !== me.side && c.state === 'fighting');
+  if (foes.length === 0) return false;
+  const mains: MainAction[] = [
+    ...Object.keys(me.techniques).map((id) => ({ type: 'technique' as const, id, target: '' })),
+    { type: 'strike', target: '' },
+    ...Object.keys(me.items).map((id) => ({ type: 'item' as const, id, target: '' })),
+  ];
+  for (const m of mains) {
+    const pr = priced(f, me, m);
+    if (!pr) continue;
+    for (const c of foes) {
+      const n = numbers(f, me, c, pr.spec, pr.accuracy, pr.fixed);
+      if (!n.below) return false;
+      const bars = [n.defense];
+      if (pr.spec.type !== 'soul') {
+        if (c.shield > 0) bars.push(shieldDefense(c) * n.weaken);
+        if (c.armor && c.armor.hp > 0) bars.push(c.armor.defense * n.weaken);
+      }
+      if (bars.some((d) => protection(n.attack, d) > PROTECTIVE_QI)) return false;
+    }
+  }
+  return true;
 }
 
 /** One foe's plain hit, summed over its bars, and the chance the attack lands on it. */
@@ -1005,6 +1108,7 @@ export function previewAt(
   let damage = 0;
   let expected = 0;
   let chance = 0;
+  let first = 0;
   // The chosen foe first, then the rest in the fight's order, as `reached` lists them.
   for (let j = -1, taken = 0; taken < limit && j < living.length; j++) {
     const i: number = j < 0 ? t : j;
@@ -1016,12 +1120,15 @@ export function previewAt(
       dealt = e.dealt[i] = r.dealt;
       p = e.chance[i] = r.p;
     }
-    if (taken === 0) chance = p;
+    if (taken === 0) {
+      chance = p;
+      first = p * dealt;
+    }
     damage += dealt;
     expected += p * dealt;
     taken++;
   }
-  return { chance, damage, qi: e.pr.qi, foes: limit, expected };
+  return { chance, damage, qi: e.pr.qi, foes: limit, expected, first };
 }
 
 /**
@@ -1041,16 +1148,38 @@ function reached(
   return { foes: all, share: all.length > count ? count / all.length : 1 };
 }
 
-/** Sword Rain: once a fight, a sword technique strikes all, as an art that strikes all does. */
-function rained(actor: Combatant, a: Attack): Attack {
+/**
+ * Sword Rain: once a fight, a sword technique strikes all, as an art that strikes all does. It is
+ * kept for a cast it widens: never on an art that strikes all already, or with no more foes
+ * standing than the art reaches.
+ */
+function rained(f: Fight, actor: Combatant, a: Attack): Attack {
   const rain = a.daos.includes('sword') && mod(actor, 'swordRain') > 0 && !actor.marks.swordRain;
-  return rain ? { ...a, targets: 'all' } : a;
+  if (!rain || a.targets === 'all') return a;
+  let living = 0;
+  for (const c of f.combatants) if (c.side !== actor.side && c.state === 'fighting') living++;
+  return living > fullCount(a.targets, a.tier) ? { ...a, targets: 'all' } : a;
+}
+
+/** What a cast reads once for every foe it strikes: one action, one set of numbers. */
+interface CastCtx {
+  /** The attack's Accuracy before each foe's intent. */
+  accuracy: number;
+  fixed: Fixed;
+  /** The combo the cast builds, which every foe's hit reads. */
+  combo: Combo | null;
+  /** The foes the cast strikes itself, which a sweep or a cleave never spills onto. */
+  struck: ReadonlySet<Combatant>;
 }
 
 /**
  * One cast at every foe it reaches, each with its own roll for the hit and the crit and one
- * outcome each. The cast is one action: the first strike's and the combo's marks count the same
- * on every foe, and what spills over (a sweep, a cleave) spills from the chosen foe only.
+ * outcome each (design § Combat, Arts that strike many). The cast is one action (the code
+ * review's major 4): qi deviation rolls once before it, and on a backfire no foe is struck; the
+ * actor's numbers, a first strike and Dragon Thrust's sure hit are read once for every foe; it
+ * stops when the caster is down; what spills over (a sweep, a cleave) spills from the chosen foe
+ * onto foes the cast doesn't strike; and the combo, a saber's run and qi on a hit come from any
+ * foe hit, once. Every attack, a single strike too, goes through here.
  */
 function cast(
   f: Fight,
@@ -1061,21 +1190,66 @@ function cast(
 ): Omit<Outcome, 'action'>[] {
   const { foes, share } = reached(f, actor, target, a);
   const spec = share < 1 ? { ...a, base: a.base * share } : a;
-  const before = { combo: actor.combo, struck: actor.marks.struck, oneSword: actor.marks.oneSword };
+  const deviate = spec.qi ? backfireChance(actor.toxicity) : 0;
+  if (deviate > 0 && rng.chance(deviate)) return [backfire(f, actor, target, spec)];
+  const ctx: CastCtx = {
+    accuracy: attackAccuracy(f, actor, spec),
+    fixed: fixedOf(f, actor, spec),
+    combo: nextCombo(actor.combo, damagePhase(spec.type)),
+    struck: new Set(foes),
+  };
   const out: Omit<Outcome, 'action'>[] = [];
+  let hit = false;
   foes.forEach((c, i) => {
-    if (i > 0) {
-      const marks = { ...actor.marks };
-      for (const k of ['struck', 'oneSword'] as const) {
-        if (before[k] === undefined) delete marks[k];
-        else marks[k] = before[k];
-      }
-      actor.marks = marks;
-      actor.combo = before.combo;
-    }
-    if (c.state === 'fighting') out.push(...attack(f, actor, c, rng, spec, i === 0));
+    if (actor.state !== 'fighting' || c.state !== 'fighting') return;
+    const os = attack(f, actor, c, rng, spec, ctx, i === 0);
+    if (os[0]!.result === 'hit' || os[0]!.result === 'critical') hit = true;
+    out.push(...os);
   });
+  if (hit) {
+    actor.combo = ctx.combo;
+    if (spec.daos.includes('saber')) mark(actor, 'momentum', (actor.marks.momentum ?? 0) + 1);
+    const back = mod(actor, 'qiOnHit');
+    if (back > 0) actor.qi = Math.min(actor.maxQi, actor.qi + Math.round(back * actor.maxQi));
+  } else {
+    actor.combo = null;
+    if (mod(actor, 'cleavingTide') <= 0) mark(actor, 'momentum', 0);
+  }
   return out;
+}
+
+/** Qi deviation: the action turns on its actor at half strength, with no element. */
+function backfire(
+  f: Fight,
+  actor: Combatant,
+  target: Combatant,
+  a: Attack,
+): Omit<Outcome, 'action'> {
+  const n = numbers(f, actor, target, a);
+  const dealt = damage({
+    base: a.base * BACKFIRE_DAMAGE,
+    attack: rungSize(a.rung) * a.attack,
+    defense: defense(actor, guardLadder(a.type)),
+    element: 1,
+    resist: actor.resist[a.type] ?? 0,
+    result: 'hit',
+  });
+  hurt(actor, dealt);
+  actor.combo = null;
+  return {
+    turn: f.turn,
+    actor: actor.id,
+    target: target.id,
+    id: null,
+    form: a.form,
+    type: a.type,
+    realm: a.rung.realm,
+    result: 'backfire',
+    status: null,
+    chance: n.sure ? 1 : hitChance(n.accuracy, n.evasion),
+    damage: dealt,
+    hp: { id: actor.id, hp: actor.hp, max: actor.maxHp },
+  };
 }
 
 /** The qi a basic strike drinks: a weapon above your realm takes a share of the pool. */
@@ -1111,7 +1285,7 @@ function main(
       if (typeof art === 'string') return art;
       actor.qi -= cost;
       // Sword Rain: once a fight, a sword technique strikes all, split past its tier's full count.
-      const spec = rained(actor, art);
+      const spec = rained(f, actor, art);
       if (spec !== art) mark(actor, 'swordRain');
       const os = cast(f, actor, target, rng, spec);
       return os.map((o, i) => ({
@@ -1128,7 +1302,7 @@ function main(
       const drink = strikeDrink(actor);
       if (actor.qi < drink) return 'not enough qi';
       actor.qi -= drink;
-      const os = attack(f, actor, target, rng, strikeAttack(actor, creativity));
+      const os = cast(f, actor, target, rng, strikeAttack(actor, creativity));
       return os.map((o, i) => ({
         ...o,
         action: 'strike' as const,
@@ -1275,15 +1449,10 @@ function main(
         actor.state = 'fled';
         return [{ ...out, result: 'escaped' }];
       }
-      // Agility against Agility, feeling the square root of the gap to whichever foe is hardest to outrun.
-      const mine =
-        rungSize(actor.rungs.qi) ** SOFT_GAP *
-        agilityFactor(actor) *
-        creativity *
-        statusFactor(actor, 'accuracy');
-      const theirs = Math.max(
-        ...foes.map((c) => rungSize(c.rungs.qi) ** SOFT_GAP * agilityFactor(c)),
-      );
+      // Tempo against tempo (Agility, feeling the square root of the gap) to whichever foe is
+      // hardest to outrun.
+      const mine = tempo(actor) * creativity * statusFactor(actor, 'accuracy');
+      const theirs = Math.max(...foes.map((c) => tempo(c)));
       const chance = hitChance(mine, theirs);
       const escaped = rng.chance(chance);
       if (escaped) actor.state = 'fled';
@@ -1300,7 +1469,7 @@ function flurry(f: Fight, actor: Combatant, targetId: string, rng: Rng): Outcome
   const target = foe(f, actor, targetId);
   if (!target) return 'no target';
   const spec = strikeAttack(actor, 1);
-  return attack(f, actor, target, rng, { ...spec, base: spec.base * share }).map((o) => ({
+  return cast(f, actor, target, rng, { ...spec, base: spec.base * share }).map((o) => ({
     ...o,
     action: 'strike' as const,
   }));
@@ -1439,11 +1608,12 @@ function splash(
 }
 
 /**
- * An attack: Accuracy against Evasion, then Attack over Defense, with its status on a critical
- * and the backfire, then what the Dao rules add: a run of saber hits, qi back on a hit, Severing's
- * bleed on any metal hit, a critical's frozen chill, spreading burn and falling mountain, Hundred
- * Fists' second action, and the spear's sweep and the saber's cleave onto other foes. The first
- * outcome is the target's; any others are the foes the action spilled onto.
+ * One foe of a cast: Accuracy against Evasion, then Attack over Defense, with its status on a
+ * critical, then what the Dao rules add: Severing's bleed on any metal hit, a critical's frozen
+ * chill, spreading burn and falling mountain, Hundred Fists' second action, and from the chosen
+ * foe the spear's sweep and the saber's cleave onto foes the cast doesn't strike. The backfire,
+ * the combo, a saber's run and qi on a hit are the cast's. The first outcome is the target's; any
+ * others are the foes the action spilled onto.
  */
 function attack(
   f: Fight,
@@ -1451,14 +1621,13 @@ function attack(
   target: Combatant,
   rng: Rng,
   a: Attack,
-  spill = true,
+  ctx: CastCtx,
+  spill: boolean,
 ): Omit<Outcome, 'action'>[] {
-  const n = numbers(f, actor, target, a);
+  const n = numbers(f, actor, target, a, ctx.accuracy, ctx.fixed);
   if (n.sure) mark(actor, 'dragonTurn', f.turn);
   const { result, chance } = judge(rng, n.accuracy, n.evasion, {
     fortune: actor.fortune,
-    qi: a.qi,
-    toxicity: actor.toxicity,
     crit: n.crit,
     sure: n.sure,
   });
@@ -1468,7 +1637,6 @@ function attack(
   if (actor.hp < BRINK_HP * actor.maxHp) {
     for (const d of a.daos) if (isCombatDao(d)) mark(actor, brinkMark(d));
   }
-  const phase = damagePhase(a.type);
   const out = {
     turn: f.turn,
     actor: actor.id,
@@ -1482,30 +1650,10 @@ function attack(
     chance,
   };
 
-  if (result === 'miss') {
-    actor.combo = null;
-    if (mod(actor, 'cleavingTide') <= 0) mark(actor, 'momentum', 0);
-    return [out];
-  }
-  if (result === 'backfire') {
-    // Qi deviation: the action turns on its actor at half strength, with no element.
-    const dealt = damage({
-      base: a.base * BACKFIRE_DAMAGE,
-      attack: rungSize(a.rung) * a.attack,
-      defense: defense(actor, guardLadder(a.type)),
-      element: 1,
-      resist: actor.resist[a.type] ?? 0,
-      result: 'hit',
-    });
-    hurt(actor, dealt);
-    actor.combo = null;
-    return [{ ...out, damage: dealt, hp: { id: actor.id, hp: actor.hp, max: actor.maxHp } }];
-  }
+  if (result === 'miss' || result === 'backfire') return [out];
 
   const crit = result === 'critical';
   const chilled = hasStatus(target, 'chilled');
-  const combo = nextCombo(actor.combo, phase);
-  actor.combo = combo;
   const hit = guarded(
     f,
     target,
@@ -1514,15 +1662,12 @@ function attack(
       attack: n.attack * (crit ? n.critAttack : 1),
       element: n.element,
       result,
-      combo: comboMultiplier(combo),
+      combo: comboMultiplier(ctx.combo),
       spread: rollSpread(rng),
     }),
   );
   const landed = landing(target, hit, a.type, n);
   const dealt = land(target, landed);
-  if (a.daos.includes('saber')) mark(actor, 'momentum', (actor.marks.momentum ?? 0) + 1);
-  const back = mod(actor, 'qiOnHit');
-  if (back > 0) actor.qi = Math.min(actor.maxQi, actor.qi + Math.round(back * actor.maxQi));
 
   // Statuses: a critical applies its type's, Severing bleeds on any metal hit.
   let status: StatusId | null = null;
@@ -1559,10 +1704,10 @@ function attack(
   ];
   if (!spill) return outcomes;
   // A spear's sweep: a second foe takes a share. With Whirl every other foe does, as an art that
-  // strikes all: split past the art's tier's full count.
+  // strikes all: split past the art's tier's full count. Only onto foes the cast doesn't strike.
+  const rest = others(f, actor, target).filter((c) => !ctx.struck.has(c));
   const sweep = a.daos.includes('spear') ? mod(actor, 'sweep') : 0;
   if (sweep > 0) {
-    const rest = others(f, actor, target);
     const whirl = mod(actor, 'whirl') > 0;
     const count = fullCount('all', a.tier);
     const share = whirl && rest.length + 1 > count ? count / (rest.length + 1) : 1;
@@ -1573,7 +1718,7 @@ function attack(
   // A saber's critical carries a share to a second foe.
   const cleave = crit && a.daos.includes('saber') ? mod(actor, 'cleave') : 0;
   if (cleave > 0) {
-    const next = others(f, actor, target)[0];
+    const next = rest[0];
     if (next) outcomes.push(splash(f, actor, next, a, dealt * cleave, n));
   }
   return outcomes;

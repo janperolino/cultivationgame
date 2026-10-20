@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DAMAGE_TYPES, STATUSES, statusOf } from '../../content/combat.ts';
 import { item } from '../../content/items.ts';
-import { realmSize, realmSpread } from '../../content/realms.ts';
+import { GRADE_SHARE, realmSize, realmSpread, stepOut } from '../../content/realms.ts';
 import type { Technique } from '../../content/techniques.ts';
 import { Rng } from '../rng.ts';
 import { newLife } from '../state.ts';
@@ -33,7 +33,9 @@ import { bandOf, hitChance, rungSize, stageSize, tierScale, type Rung } from './
 
 const rung = (realm: Rung['realm'], stage: number, grade = 0): Rung => ({ realm, stage, grade });
 const QC = (layer: number) => rung('qi-condensation', layer);
-const FE = (stage: number, grade = 0) => rung('foundation-establishment', stage, grade);
+/** Foundation at a stage, with a grade counted in grades (0.27 of the step each). */
+const FE = (stage: number, grades = 0) =>
+  rung('foundation-establishment', stage, grades * GRADE_SHARE);
 const CF = (stage: number) => rung('core-formation', stage);
 const NS = (stage: number) => rung('nascent-soul', stage);
 const all = (r: Rung) => ({ qi: r, body: r, soul: r });
@@ -88,24 +90,24 @@ const hit = (target: string, technique?: string): Action['main'] =>
   technique ? { type: 'technique', id: technique, target } : { type: 'strike', target };
 
 describe('the worked turn (design § Combat, one turn)', () => {
-  it('reproduces exactly: 57%, 40 fire on his shield, Mo 176/176, qi 52/94, the grass burning', () => {
+  it('reproduces exactly: 58%, 41 fire on his shield, Mo 176/176, qi 52/98, the grass burning', () => {
     const you = fighter({
       id: 'you',
       name: 'Han Li',
       side: 'you',
-      rungs: all(QC(5)),
+      rungs: all(QC(8)),
       qi: 64,
       // Ember Palm at Comprehension: ×1.15.
       techniques: { ember_palm: { technique: EMBER_PALM, accuracy: 1.15 } },
       daos: { fire: 1 },
     });
-    expect(you.maxQi).toBe(94);
+    expect(you.maxQi).toBe(98);
     const mo = combatant({
       id: 'elder_mo',
       name: 'Elder Mo',
       side: 'mo',
       // One layer above you, his qi shield up and his water-silk robe on behind it.
-      rungs: all(QC(6)),
+      rungs: all(QC(9)),
       armor: armor(1, 'green', 'fire'),
     });
     expect(mo).toMatchObject({ maxHp: 176, maxShield: 176 });
@@ -127,22 +129,22 @@ describe('the worked turn (design § Combat, one turn)', () => {
       SEED_WORKED,
     );
     const o = r.outcomes[0]!;
-    // Accuracy 15.7 × 1.15 (Comprehension) × 1.05 (Fire Dao 1) × 1.21 (creativity 2) = 23.0 against Evasion 17.6.
-    const accuracy = stageSize('qi-condensation', 5) * 1.15 * 1.05 * 1.1 ** 2;
-    expect(hitChance(accuracy, stageSize('qi-condensation', 6))).toBeCloseTo(0.566, 3);
-    expect(o).toMatchObject({ result: 'hit', damage: 40, qi: 12 });
-    expect(o.chance).toBeCloseTo(0.566, 3);
-    // His shield holds it all: 40 × Attack 16.5 ÷ its Defense 17.6 × 1.057 = 39.6, rounded; the
+    // Accuracy 16.4 × 1.15 (Comprehension) × 1.05 (Fire Dao 1) × 1.21 (creativity 2) = 24.0 against Evasion 17.6.
+    const accuracy = stageSize('qi-condensation', 8) * 1.15 * 1.05 * 1.1 ** 2;
+    expect(hitChance(accuracy, stageSize('qi-condensation', 9))).toBeCloseTo(0.577, 3);
+    expect(o).toMatchObject({ result: 'hit', damage: 41, qi: 12 });
+    expect(o.chance).toBeCloseTo(0.577, 3);
+    // His shield holds it all: 40 × Attack 17.2 ÷ its Defense 17.6 × 1.057 = 41.4, rounded; the
     // robe and its quarter against fire are never reached.
-    const attack = stageSize('qi-condensation', 5) * 1.05;
-    const def = stageSize('qi-condensation', 6);
-    expect(((40 * attack) / def) * 1.057).toBeCloseTo(39.6, 1);
+    const attack = stageSize('qi-condensation', 8) * 1.05;
+    const def = stageSize('qi-condensation', 9);
+    expect(((40 * attack) / def) * 1.057).toBeCloseTo(41.4, 1);
     const after = combatantIn(r.fight, 'elder_mo')!;
-    expect(after).toMatchObject({ hp: 176, shield: 136 });
+    expect(after).toMatchObject({ hp: 176, shield: 135 });
     expect(after.armor!.hp).toBe(after.armor!.max);
     expect(r.fight.features.find((x) => x.id === 'spirit_grass')!.burning).toBe(2);
     expect(logLine(r.fight, o)).toBe(
-      'Hit 57% · 40 fire · shield 136/176 · Elder Mo 176/176 · Qi 52/94 · grass burning (2 turns)',
+      'Hit 58% · 41 fire · shield 135/176 · Elder Mo 176/176 · Qi 52/98 · grass burning (2 turns)',
     );
     // The five tags.
     expect(o).toMatchObject({
@@ -166,25 +168,39 @@ describe('sizes (design § Combat, Realms are sizes)', () => {
     expect(tierScale(2)).toBeCloseTo(3.1);
   });
 
-  it('climb a realm’s stages to four-fifths of the step out, so a peak sits just under the next realm', () => {
-    expect(realmSpread('qi-condensation')).toBeCloseTo(3.1 ** 0.8);
-    expect(rungSize(QC(9))).toBeCloseTo(24.7, 1);
-    expect(rungSize(QC(9))).toBeLessThan(rungSize(FE(1)));
-    expect(rungSize(FE(4))).toBeCloseTo(105.1, 1);
-    expect(rungSize(FE(4))).toBeLessThan(rungSize(CF(1)));
-    // The half-step fight: layer 9 against early Foundation hits 44%.
-    expect(hitChance(rungSize(QC(9)), rungSize(FE(1)))).toBeCloseTo(0.44, 2);
+  it('climb a realm’s stages half the step out, and jump the other half at the border', () => {
+    expect(realmSpread('qi-condensation')).toBeCloseTo(3.1 ** 0.5);
+    expect(rungSize(QC(9))).toBeCloseTo(17.6, 1);
+    expect(rungSize(FE(1)) / rungSize(QC(9))).toBeCloseTo(1.76, 2);
+    expect(rungSize(FE(4))).toBeCloseTo(66.5, 1);
+    expect(rungSize(CF(1)) / rungSize(FE(4))).toBeCloseTo(2.14, 2);
+    // A stage inside a realm stays small: ×1.07 a layer, ×1.29 a Foundation stage.
+    expect(rungSize(QC(2)) / rungSize(QC(1))).toBeCloseTo(1.07, 2);
+    expect(rungSize(FE(2)) / rungSize(FE(1))).toBeCloseTo(1.29, 2);
+    // Across the border: layer 9 against early Foundation hits 36%.
+    expect(hitChance(rungSize(QC(9)), rungSize(FE(1)))).toBeCloseTo(0.36, 2);
     // One realm up at the same stage: 24%, 18%, 13%.
     expect(hitChance(rungSize(QC(1)), rungSize(FE(1)))).toBeCloseTo(0.24, 2);
     expect(hitChance(rungSize(FE(1)), rungSize(CF(1)))).toBeCloseTo(0.18, 2);
     expect(hitChance(rungSize(CF(1)), rungSize(NS(1)))).toBeCloseTo(0.13, 2);
   });
 
-  it('count a breakthrough grade as stages along the climb', () => {
-    expect(rungSize(FE(1, 2))).toBeCloseTo(rungSize(FE(3)));
-    expect(rungSize(FE(2, -1))).toBeCloseTo(rungSize(FE(1)));
-    // Heavenly at the first stage: the peak's size.
-    expect(rungSize(FE(1, 3))).toBeCloseTo(rungSize(FE(4)));
+  it('count a breakthrough grade as a share of the step, beside the stage and never as one', () => {
+    // At Foundation: ×0.67 flawed, ×1.50 superior, ×2.26 perfect, ×3.39 heavenly.
+    expect(rungSize(FE(1, -1)) / rungSize(FE(1))).toBeCloseTo(0.67, 2);
+    expect(rungSize(FE(1, 1)) / rungSize(FE(1))).toBeCloseTo(1.5, 2);
+    expect(rungSize(FE(1, 2)) / rungSize(FE(1))).toBeCloseTo(2.26, 2);
+    expect(rungSize(FE(1, 3)) / rungSize(FE(1))).toBeCloseTo(3.39, 2);
+    expect(rungSize(FE(1, 3)) / rungSize(FE(1))).toBeCloseTo(
+      stepOut('foundation-establishment') ** 0.8,
+    );
+    // The same at any stage: a grade keeps its worth however the stages are spaced.
+    expect(rungSize(FE(3, 2)) / rungSize(FE(3))).toBeCloseTo(2.26, 2);
+    // A perfect early Foundation fights as about the peak; a perfect peak stands past early Core.
+    expect(rungSize(FE(1, 2)) / rungSize(FE(4))).toBeCloseTo(1.05, 2);
+    expect(rungSize(FE(4, 2))).toBeGreaterThan(rungSize(CF(1)));
+    // A heavenly early Foundation stands in the half-step to Core.
+    expect(bandOf(rungSize(FE(1, 3))).name).toBe('half-step Core Formation');
   });
 
   it('size HP at ten times and the qi pool at six, on the body and qi ladders', () => {
@@ -200,11 +216,18 @@ describe('sizes (design § Combat, Realms are sizes)', () => {
     expect(high.maxQi).toBe(93);
   });
 
-  it('name the band a size sits in, in stage words', () => {
+  it('name the band a size sits in, in stage words, the gap as the half-step', () => {
     expect(bandOf(10).name).toBe('Qi Condensation, first layer');
-    expect(bandOf(24.7).name).toBe('Qi Condensation, ninth layer');
+    expect(bandOf(17.6).name).toBe('Qi Condensation, ninth layer');
+    // Past the peak and under the next realm: the half-step (design § Combat, The half-step).
+    expect(bandOf(30.6)).toMatchObject({
+      name: 'half-step Foundation Establishment',
+      halfStep: true,
+    });
+    expect(bandOf(17.6).halfStep).toBe(false);
     expect(bandOf(31).name).toBe('Foundation Establishment, early');
-    expect(bandOf(70).name).toBe('Foundation Establishment, late');
+    expect(bandOf(51.6).name).toBe('Foundation Establishment, late');
+    expect(bandOf(100).name).toBe('half-step Core Formation');
     expect(bandOf(1000).name).toBe('Nascent Soul, early');
     expect(bandOf(1).name).toBe('Qi Condensation, first layer');
   });
@@ -349,8 +372,10 @@ describe('protective qi (design § Combat)', () => {
   const at = (id: string, rungs: ReturnType<typeof all>, extra: Partial<CombatantInit> = {}) =>
     fighter({ id, name: id, side: id, rungs, ...extra });
 
-  it('lets a twentieth through up to the Defense, all of it from a quarter past', () => {
-    expect(protection(50, 100)).toBe(0.05);
+  it('lets a hundredth through under half the Defense, a twentieth at it, all from a quarter past', () => {
+    expect(protection(20, 100)).toBe(0.01);
+    expect(protection(50, 100)).toBe(0.01);
+    expect(protection(75, 100)).toBeCloseTo(0.03);
     expect(protection(100, 100)).toBe(0.05);
     expect(protection(112.5, 100)).toBeCloseTo(0.525);
     expect(protection(125, 100)).toBe(1);
@@ -361,20 +386,24 @@ describe('protective qi (design § Combat)', () => {
     const arts = {
       white: { technique: tech({ id: 'white', power: 400 }), accuracy: 1 },
       blue: { technique: tech({ id: 'blue', power: 400, rarity: 'blue' }), accuracy: 1 },
+      purple: { technique: tech({ id: 'purple', power: 400, rarity: 'purple' }), accuracy: 1 },
       gold: { technique: tech({ id: 'gold', power: 400, rarity: 'gold' }), accuracy: 1 },
     };
     const qc9 = rungSize(QC(9));
     const fe1 = rungSize(FE(1));
     const dmg = (f: Fight, id: string) =>
       preview(f, 'j', { type: 'technique', id, target: 's' })!.damage;
-    // A body at Foundation's first stage, no shield: a white art from layer 9 sits at four-fifths
-    // of its Defense, a blue one on the ramp past it, a gold one far past it.
+    // A body at Foundation's first stage, no shield: a white art from layer 9 sits at 0.57 of its
+    // Defense, near the second floor; a blue one at 0.85, under it; a purple one, in the
+    // half-step, past it.
     const f = startFight([at('j', all(QC(9)), { techniques: arts }), at('s', all(FE(1)))]);
     const full = (400 * qc9) / fe1;
+    expect(qc9 / fe1).toBeCloseTo(0.57, 2);
     expect(dmg(f, 'white')).toBe(Math.round(full * protection(qc9, fe1)));
-    expect(dmg(f, 'white')).toBeLessThan(full / 10);
+    expect(dmg(f, 'white')).toBeLessThan(full / 50);
     expect(dmg(f, 'blue')).toBe(Math.round(full * 1.5 * protection(qc9 * 1.5, fe1)));
-    expect(protection(qc9 * 1.5, fe1)).toBeGreaterThan(0.5);
+    expect(protection(qc9 * 1.5, fe1)).toBeLessThan(0.05);
+    expect(dmg(f, 'purple')).toBe(Math.round(full * 3.1 ** 0.8));
     expect(dmg(f, 'gold')).toBe(Math.round(full * 3.1));
     // A shield on a qi ladder at the peak holds the blue art the body would let through.
     const qi = { qi: FE(4), body: FE(1), soul: FE(1) };
@@ -643,7 +672,7 @@ describe('creativity, talk and flight', () => {
     const chance = hitChance(Math.sqrt(rungSize(FE(1))), Math.sqrt(rungSize(FE(3))));
     expect(r.outcomes[0]).toMatchObject({ form: 'talk', result: 'failed' });
     expect(r.outcomes[0]!.chance).toBeCloseTo(chance);
-    expect(chance).toBeCloseTo(0.4, 2);
+    expect(chance).toBeCloseTo(0.44, 2);
     // Firm resolve halves the odds.
     const firm = startFight([x(), { ...y(), resolve: 20 }]);
     expect(
@@ -666,11 +695,15 @@ describe('creativity, talk and flight', () => {
     expect(r.outcomes[0]).toMatchObject({ result: 'escaped' });
     expect(r.outcomes[0]!.chance).toBeCloseTo(hitChance(1, 1.2));
     expect(combatantIn(r.fight, 'x')!.state).toBe('fled');
-    // Four layers up is ×1.57 in size, felt as ×1.25.
-    const up = startFight([x(), { ...y(), agility: 14, rungs: all(QC(5)) }]);
+    // A realm up is ×3.1 in size, felt as ×1.76.
+    const up = startFight([x(), { ...y(), agility: 14, rungs: all(FE(1)) }]);
     const out = turn(up, [{ actor: 'x', main: { type: 'flee' } }], SEED_HIT_30).outcomes[0]!;
-    expect(out.chance).toBeCloseTo(hitChance(Math.sqrt(10), Math.sqrt(rungSize(QC(5))) * 1.2));
-    expect(out.chance).toBeLessThan(0.41);
+    expect(out.chance).toBeCloseTo(hitChance(Math.sqrt(10), Math.sqrt(rungSize(FE(1))) * 1.2));
+    expect(out.chance).toBeLessThan(0.33);
+    // A movement art lifts the Agility fleeing reads by the square root of its band.
+    const swift = startFight([{ ...x(), guards: { ...x().guards, movement: 3.1 } }, y()]);
+    const ran = turn(swift, [{ actor: 'x', main: { type: 'flee' } }], SEED_HIT_30).outcomes[0]!;
+    expect(ran.chance).toBeCloseTo(hitChance(Math.sqrt(3.1), 1));
   });
 });
 

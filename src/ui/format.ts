@@ -113,19 +113,23 @@ export function listWords(xs: readonly string[]): string {
   return xs.length <= 1 ? (xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`;
 }
 
+/** A grade's share of the realm in words, by its count of shares (0.27 of the step each). */
+const QUARTERS = ['', '¼', '½', '¾'];
+
 /**
- * What a breakthrough grade gives, in a line (D2.1): "+20% speed in Foundation Establishment, +2
- * stages in a fight, +6 odds on the next major".
+ * What a breakthrough grade gives, in a line (D2.1): "+20% speed in Foundation Establishment, +½
+ * a realm in a fight, +6 odds on the next major". A grade is a share of the step, about a quarter
+ * of a realm (the realm gap's design).
  */
 export function gradeGives(id: GradeId, realmName: string): string {
-  const stages = GRADES.find((g) => g.id === id)!.stages;
+  const shares = GRADES.find((g) => g.id === id)!.shares;
   const speed = GRADE_SPEED[id] - 1;
   const odds = GRADE_NEXT_ODDS[id];
-  if (speed === 0 && stages === 0 && odds === 0) return 'nothing gained, nothing lost';
+  if (speed === 0 && shares === 0 && odds === 0) return 'nothing gained, nothing lost';
   const sign = (x: number) => (x >= 0 ? '+' : '−');
   return [
     `${sign(speed)}${Math.round(Math.abs(speed) * 100)}% speed in ${realmName}`,
-    `${sign(stages)}${Math.abs(stages)} ${Math.abs(stages) === 1 ? 'stage' : 'stages'} in a fight`,
+    `${sign(shares)}${QUARTERS[Math.abs(shares)]} a realm in a fight`,
     `${sign(odds)}${Math.round(Math.abs(odds) * 100)} odds on the next major`,
   ].join(', ');
 }
