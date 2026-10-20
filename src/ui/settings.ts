@@ -1,7 +1,9 @@
 // Settings live in localStorage; saves never do (design § Saves). These are the player's, not the
-// life's: text size, motion, colors and the glass. The clock speed belongs to the life and saves
+// life's: text size, motion, colors and the glass, and for going in the OpenRouter key and what the
+// calls have cost (src/ai, the cost meter). The clock speed belongs to the life and saves
 // with the slot instead. Only this file and the save layer touch browser storage.
 import { create } from 'zustand';
+import { emptyTotals, type MeterTotals } from '../ai/openrouter.ts';
 import { RARITY_IDS, type RarityId } from '../content/rarity.ts';
 import { DEFAULT_ACCENT, DEFAULT_CRACK, DEFAULT_RARITY, parseHex } from './colors.ts';
 
@@ -25,6 +27,10 @@ export interface Settings {
   weather: number;
   /** How bright the panels' rims are, as a multiple of the default. */
   rim: number;
+  /** The player's OpenRouter key, typed in Settings; empty when none. Never in a save or a commit. */
+  openRouterKey: string;
+  /** What going in's calls have cost, since the meter was last reset. */
+  aiMeter: MeterTotals;
 }
 
 export const TEXT_SCALES = [
@@ -46,11 +52,32 @@ export const DEFAULT_SETTINGS: Settings = {
   web: 1,
   weather: 1,
   rim: 1,
+  openRouterKey: '',
+  aiMeter: emptyTotals(),
 };
 
 const clamp = (x: unknown, lo: number, hi: number, d: number) =>
   typeof x === 'number' && Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : d;
 const color = (x: unknown, d: string) => (typeof x === 'string' && parseHex(x) ? x : d);
+const count = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) && x >= 0 ? x : 0);
+
+/** The meter's totals as stored, made safe. */
+function cleanMeter(raw: unknown): MeterTotals {
+  const m = (raw ?? {}) as Partial<Record<keyof MeterTotals, unknown>>;
+  const byRole: MeterTotals['byRole'] = {};
+  for (const [role, r] of Object.entries((m.byRole ?? {}) as Record<string, unknown>)) {
+    const x = (r ?? {}) as { calls?: unknown; cost?: unknown };
+    byRole[role] = { calls: count(x.calls), cost: count(x.cost) };
+  }
+  return {
+    calls: count(m.calls),
+    cost: count(m.cost),
+    promptTokens: count(m.promptTokens),
+    cachedTokens: count(m.cachedTokens),
+    completionTokens: count(m.completionTokens),
+    byRole,
+  };
+}
 
 /** Whatever was stored, made safe: unknown keys dropped, bad values back to the defaults. */
 export function cleanSettings(raw: Partial<Record<keyof Settings, unknown>>): Settings {
@@ -70,6 +97,8 @@ export function cleanSettings(raw: Partial<Record<keyof Settings, unknown>>): Se
     web: Math.round(clamp(raw.web, 0, 3, d.web)),
     weather: clamp(raw.weather, 0, 1, d.weather),
     rim: clamp(raw.rim, 0.3, 1.6, d.rim),
+    openRouterKey: typeof raw.openRouterKey === 'string' ? raw.openRouterKey.trim() : '',
+    aiMeter: cleanMeter(raw.aiMeter),
   };
 }
 

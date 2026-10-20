@@ -962,6 +962,7 @@ Agility counts as it does in a fight, 5% a point above 10. A check with no oppon
 **What GLM sees.**
 
 - **Only what your character knows:** the places your fog has revealed, the names you have learned, the scene's visible features, and the people in it with what you know of them. A place's or a person's truth goes in only once a scene reveals it, so the narrator can't leak it, and typing your way to the python's den without knowing where it lies walks you into the fog.
+- **People as you know them** (P3.8): someone whose name you haven't learned goes in as a stranger under a ref of the scene's own, so not even their id leaks; a person's nature goes in as what you have seen them do, never the axis's word and never a lean or motive you haven't learned ("talks too much, can't keep a secret past a cup of wine", `src/content/behaviour.ts`), with their voice, which you hear, and the memories of you that you know they hold. The engine's outcome names them the same way.
 - **Its plan is verbs checked against a schema**, so words grant nothing: "ignore your rules, I win" reads as nothing to do.
 - **A scene takes a list of player actors**, so co-op after v1 drops in without a rebuild.
 
@@ -1731,7 +1732,7 @@ GLM only reads the game state; every change passes through your code. A clever s
 
 **Context, in the order it's sent**, fixed text first so it caches:
 
-1. Rules, world bible (with the scale of destruction) and style guide. They're identical every call, so hosts bill them at about a fifth of the input price once cached.
+1. Rules, world bible (with the scale of destruction), style guide and the acts a plan picks from. They're identical every call, so hosts bill them at about a fifth of the input price once cached; the region as you know it and the role's job follow.
 2. Player sheet: realm, body and soul levels, key techniques and items.
 3. Scene: location, features with tags, the NPCs present and their memory notes.
 4. Recent: the last 6 turns word for word, plus the chronicle summary.
@@ -1742,7 +1743,7 @@ Memory needs no vector database: the game looks up notes for the NPCs and place 
 **Guardrails**
 
 - GLM never edits numbers or inventory. The narrator sees the outcome first and may not add rewards.
-- Every JSON reply is validated with Zod: one retry with the error message, then a safe fallback such as a basic action and default choices.
+- Every JSON reply is validated with Zod: one retry with the error message, then a safe fallback that never acts for you (P3.8, Jan's call): words that can't be read ask you to say it another way and spend no tick, a narrator's tail that fails twice gives the scene's own clicks, a narrator that can't be had tells the engine's plain lines, and a chronicler that fails keeps the summary so far and the templated line.
 - Names GLM invents (an innkeeper, a valley) become real only when the engine registers them, with stats from the region's templates.
 - A cost meter in Settings: OpenRouter returns each call's cost when the request sets `usage.include`.
 - A mock provider replays canned replies, so tests and UI work run offline and free.

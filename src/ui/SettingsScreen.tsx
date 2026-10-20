@@ -1,5 +1,5 @@
 // Settings (design § UI and screens, the Settings row): saves, the life's clock speed, colors and
-// glass, text size and motion. The clock belongs to the life and saves with the slot; the rest
+// glass, text size and motion, and going in's OpenRouter key and cost meter. The clock belongs to the life and saves with the slot; the rest
 // are the player's and live in ui/settings.ts.
 import { useRef, useState } from 'react';
 import { RARITIES, type RarityId } from '../content/rarity.ts';
@@ -26,6 +26,8 @@ import {
 } from './settings.ts';
 import { realmOf } from '../core/state.ts';
 import { useGame } from './store.ts';
+import { meter } from './ai.ts';
+import { ROLES } from '../ai/call.ts';
 import { FullscreenButton, Why } from './widgets.tsx';
 
 const WEEK_MS = 7 * 24 * 3_600_000;
@@ -549,7 +551,95 @@ export function SettingsScreen() {
       <LookPanel />
       <ReadingPanel />
       <HintsPanel />
+      <GoingInPanel />
     </>
+  );
+}
+
+const ROLE_NAMES: Record<(typeof ROLES)[number], string> = {
+  interpreter: 'Reading your words',
+  fight: 'Reading a fight turn',
+  narrator: 'Telling',
+  tail: 'Scene notes',
+  chronicler: 'Chronicle',
+};
+
+const dollars = (x: number) => `$${x < 1 ? x.toFixed(4) : x.toFixed(2)}`;
+
+/**
+ * Going in (src/ai): the OpenRouter key, kept in this browser and never in a save, and what the
+ * calls have cost, every call by its role, until reset.
+ */
+function GoingInPanel() {
+  const key = useSettings((s) => s.openRouterKey);
+  const totals = useSettings((s) => s.aiMeter);
+  const [draft, setDraft] = useState(key);
+  const save = () => saveSettings({ openRouterKey: draft });
+  return (
+    <section className="panel" aria-labelledby="going-in-heading">
+      <h2 id="going-in-heading" className="panel-heading">
+        Going in
+      </h2>
+      <div className="look-grid">
+        <label className="field">
+          <span>OpenRouter key</span>
+          <input
+            type="password"
+            className="wide"
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="sk-or-…"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={save}
+            onKeyDown={(e) => e.key === 'Enter' && save()}
+          />
+        </label>
+        <div className="actions">
+          <button type="button" className="button" disabled={draft === key} onClick={save}>
+            Keep key
+          </button>
+          <button
+            type="button"
+            className="button button-quiet"
+            disabled={!key}
+            onClick={() => {
+              setDraft('');
+              saveSettings({ openRouterKey: '' });
+            }}
+          >
+            Forget key
+          </button>
+        </div>
+      </div>
+      <p className="caption spaced">
+        {key
+          ? 'A key is kept in this browser.'
+          : 'No key: trips run on the engine, with nothing to go into.'}{' '}
+        It stays in this browser and never goes in a save or an export.
+      </p>
+      <h3 className="sub-heading spaced">What the calls have cost</h3>
+      <p>
+        {totals.calls} calls · {dollars(totals.cost)}
+      </p>
+      <ul className="caption">
+        {ROLES.filter((r) => totals.byRole[r]).map((r) => (
+          <li key={r}>
+            {ROLE_NAMES[r]}: {totals.byRole[r]!.calls} · {dollars(totals.byRole[r]!.cost)}
+          </li>
+        ))}
+      </ul>
+      <div className="actions">
+        <button
+          type="button"
+          className="button"
+          disabled={totals.calls === 0}
+          onClick={() => meter.reset()}
+        >
+          Reset the meter
+        </button>
+      </div>
+    </section>
   );
 }
 

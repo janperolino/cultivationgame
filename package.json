@@ -18,7 +18,8 @@
     "atlas:build": "tsx tools/atlas-build.ts",
     "atlas:serve": "node tools/atlas-serve.cjs",
     "art": "tsx tools/art.ts",
-    "spike": "node --env-file=.env.local --import tsx sim/spike.ts"
+    "spike": "node --env-file=.env.local --import tsx sim/spike.ts",
+    "glm": "node --env-file=.env.local --import tsx sim/glm.ts"
   },
   "dependencies": {
     "dexie": "^4.4.6",
