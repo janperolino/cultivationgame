@@ -30,6 +30,7 @@ import {
   seatPowerAt,
 } from '../core/joining.ts';
 import { theName } from '../core/organizations.ts';
+import { liftByPaying, yourMark } from '../core/guarded.ts';
 import type { Pt } from '../core/map/geometry.ts';
 import {
   areaAt,
@@ -317,6 +318,19 @@ function MapView({
           });
           if (!why && joined) goIn();
         },
+      });
+    // A marked face makes restitution at the gate itself: the guards fetch the law hall's deacon.
+    const mark = yourMark(game, power);
+    if (mark)
+      items.push({
+        t: 'Make restitution at the gate',
+        s: `${mark.restitutionWords}${mark.slip ? ' and the slip' : ''}, the oath sworn`,
+        run: () =>
+          act((s) => {
+            const r = liftByPaying(s, power, 'restitution');
+            if (r.ok) say(`${cap(theName(power))} lifts its mark.`);
+            return r;
+          }),
       });
     const floor = giftFloor(game);
     items.push({

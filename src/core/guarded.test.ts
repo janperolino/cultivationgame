@@ -18,7 +18,9 @@ import {
 } from './guarded.ts';
 import { guardedBy, standingCopies } from './markets.ts';
 import { COPY_PRICE } from '../content/money.ts';
-import { chooseExit, draw, exitViews, meet } from './map/encounters.ts';
+import { chooseExit, contact, draw, exitViews, meet } from './map/encounters.ts';
+import { gateOf } from './map/gate.ts';
+import { placeById } from './map/region.ts';
 import type { Encounter } from './map/schema.ts';
 import { ensureMap, mapOf } from './map/travel.ts';
 import { priceOf } from './prices.ts';
@@ -158,6 +160,34 @@ describe('seen in use', () => {
       world: addStanding(s.world, { power: GATE, about: YOU, row: 'massacre' }, 0),
     };
     expect(intentOf(hostile, m.scene, m.actors[0]!)!.step?.act).toBe('attack');
+  });
+});
+
+describe('the mark paid off', () => {
+  it('a law hall that knows your face waits for you the first time a season, whatever the stance', () => {
+    const s = marked();
+    const w = {
+      ...withEnc(s, enc('law-hall-outer', 2, { power: GATE, state: 'sensed' })),
+    };
+    const avoid = { ...w, map: { ...w.map!, stance: 'avoid' as const } };
+    const first = contact(avoid, 'e-test');
+    expect(first.map!.encounters[0]!.state).toBe('waiting');
+    expect(first.map!.lawMet?.[GATE]).toBe(s.calendar.day);
+    // Met once this season, the next party is the stance's again.
+    const views = exitViews(first, meet(first, first.map!.encounters[0]!));
+    expect(views.find((v) => v.exit.road === 'deal')!.refused).toBeNull();
+  });
+
+  it('a marked face is known at its gate and makes restitution there', () => {
+    const s = marked();
+    const map = mapOf(s)!;
+    const gate = placeById(map, GATE)!;
+    const g = gateOf(s, map, gate);
+    expect(g.kind).toBe('shut');
+    expect(g.words).toContain('know your face');
+    const r = liftByPaying(s, GATE, 'restitution');
+    if (!r.ok) throw new Error(r.reason);
+    expect(gateOf(r.state, map, gate).words).not.toContain('know your face');
   });
 });
 

@@ -55,7 +55,7 @@ import { generateBeast, generateCultivator, generatePack } from '../combat/gener
 import type { Npc } from '../combat/generate.ts';
 import { kitOf } from '../loot.ts';
 import { asMember, isOrganization } from '../organizations.ts';
-import { LAW_HALL_PARTY } from '../../content/organizations.ts';
+import { GUARDED, LAW_HALL_PARTY } from '../../content/organizations.ts';
 import {
   artCopy,
   lawHallAt,
@@ -789,7 +789,12 @@ export function contact(s: GameState, encId: string): GameState {
   const m = meet(s, enc);
   const routine = [...ROAD_ROUTINES, ...life.ownRoutines].find((r) => r.id === life.roadRoutine);
   const gathers = !!routine?.hours.includes('gather');
-  const pick = stancePick(m.template, exitViews(s, m), life.stance, gathers);
+  // A law hall that knows your face waits for you like a plot, the first time a season (the
+  // checkpoint's fix): no stance slips it, so the fine is put to you.
+  const law = m.template.where.lawHall && enc.power && yourMark(s, enc.power) ? enc.power : null;
+  const lastMet = law ? life.lawMet?.[law] : undefined;
+  const holds = !!law && (lastMet === undefined || s.calendar.day - lastMet >= GUARDED.coolDays);
+  const pick = holds ? null : stancePick(m.template, exitViews(s, m), life.stance, gathers);
   if (pick !== null) {
     const r = settle(s, encId, pick, 'stance');
     if (r && !r.stays) return r.state;
@@ -798,6 +803,7 @@ export function contact(s: GameState, encId: string): GameState {
     ...s,
     map: {
       ...life,
+      ...(holds && law ? { lawMet: { ...life.lawMet, [law]: s.calendar.day } } : {}),
       encounters: life.encounters.map((e) =>
         e.id === encId ? { ...e, state: 'waiting', meetAt: null } : e,
       ),

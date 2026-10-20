@@ -13,6 +13,8 @@ import {
 } from '../../content/map/places.ts';
 import { realm, stageName, type RealmId } from '../../content/realms.ts';
 import { pay, stonesOf, withStones } from '../purse.ts';
+import { yourMark } from '../guarded.ts';
+import { isOrganization, theName } from '../organizations.ts';
 import { actorFromCultivator, plainActor } from '../resolver/actor.ts';
 import { fameOf, isMember } from '../resolver/names.ts';
 import { rollNature } from '../resolver/nature.ts';
@@ -117,6 +119,20 @@ export function gateOf(s: GameState, map: RegionMap, p: MapPlace): GateRead {
         kind: 'shut',
         access,
         words: 'The way in opens on its own cycle; going in is P3.11’s.',
+      };
+    }
+    // A face its power marked is known at its gate (the checkpoint's fix): refused, and told why;
+    // at hostile the guards draw, but restitution is still taken at the gate.
+    const mark =
+      isOrganization(power) && !isMember(s.world, s.player.id, power) ? yourMark(s, power) : null;
+    if (mark) {
+      const who = theName(power);
+      return {
+        kind: 'shut',
+        access,
+        words: mark.onSight
+          ? `The guards know your face: ${who} marked you for ${mark.method}. They draw on you; you may still kneel and make restitution.`
+          : `The guards know your face: ${who} marked you for ${mark.method}. They will send for the law hall's deacon if you make restitution.`,
       };
     }
     if (isMember(s.world, s.player.id, power) || s.world.known.includes(`token:${power}`)) {

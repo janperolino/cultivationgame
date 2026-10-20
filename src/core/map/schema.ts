@@ -211,6 +211,8 @@ export const MapLifeSchema = z.object({
   /** The day a burned hiding talisman's cover ends, and its tier. */
   hidden: z.object({ until: z.number(), tier: z.number().int() }).nullable(),
   postings: z.array(PostingSchema),
+  /** The day each power's law hall last met a face it marked: once a season no stance slips it. */
+  lawMet: z.record(z.string(), z.number()).optional(),
   /** Lines from the road since you last looked: what the stance settled. */
   road: z.array(
     z.object({
