@@ -1677,6 +1677,13 @@ function BoardCounter({
   const held = game.map?.postings ?? [];
   const here = held.filter((p) => p.board === place.id);
   const goalWords = (id: string) => encounterTemplate(id).goal?.replace('-', ' ') ?? 'goal';
+  // A mission hall pays in its power's currency, a town board in stones (the checkpoint).
+  const pays = (p: { pay: number; power?: string }) =>
+    p.power && isOrganization(p.power)
+      ? p.pay + ' ' + organization(p.power).preset.currency.name
+      : p.pay + ' low';
+  const forWhom = (p: { patron?: string }) =>
+    p.patron && isOrganization(p.patron) ? ' · for ' + theName(p.patron) : '';
   return (
     <>
       <p className="place-sub">
@@ -1703,12 +1710,12 @@ function BoardCounter({
                   onClick={() =>
                     act((s) => {
                       const r = claimPosting(s, map, p.id);
-                      if (r.ok) say(`Paid ${p.pay} low-grade.`);
+                      if (r.ok) say('Paid ' + pays(p) + '.');
                       return r;
                     })
                   }
                 >
-                  Claim · {p.pay} low
+                  Claim · {pays(p)}
                 </button>
               ) : (
                 <button
@@ -1734,6 +1741,7 @@ function BoardCounter({
                 <br />
                 <span className="place-sub">
                   {goalWords(p.template)} · {band(p.band)?.name ?? 'mortal'} · {p.text}
+                  {forWhom(p)}
                 </span>
               </span>
               <button
@@ -1748,7 +1756,7 @@ function BoardCounter({
                   })
                 }
               >
-                {taken ? 'Taken' : `Take · pays ${p.pay}`}
+                {taken ? 'Taken' : 'Take · pays ' + pays(p)}
               </button>
             </div>
           );

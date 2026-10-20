@@ -162,6 +162,8 @@ export const PostingSchema = z.object({
   met: z.number().optional(),
   /** A sect's mission hall posted it: paid in the power's contribution to its members (O4). */
   power: z.string().optional(),
+  /** A town board posted it for the power whose land the town stands in: paid out, a mission done for it. */
+  patron: z.string().optional(),
 });
 export type Posting = z.infer<typeof PostingSchema>;
 

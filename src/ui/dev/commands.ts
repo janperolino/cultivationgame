@@ -1,6 +1,8 @@
 // The dev console's commands: testing shortcuts that change the open life through the same rules
 // the game uses where they can (time runs through the day step, breakthroughs roll their odds,
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
+import { addStanding } from '../../core/resolver/opinion.ts';
+import { standingOf } from '../../core/resolver/world.ts';
 import { huntOf, seeUse } from '../../core/guarded.ts';
 import { actorFromCultivator, plainActor } from '../../core/resolver/actor.ts';
 import { DAYS_PER_MONTH, DAYS_PER_YEAR } from '../../content/calendar.ts';
@@ -315,6 +317,29 @@ export const COMMANDS: Record<string, Command> = {
         },
         `${map.name}: all Seen${withHidden ? ', hidden sites and all' : ''}.`,
       );
+    },
+  },
+  standing: {
+    usage: 'standing <power id> [n]',
+    help: 'Reads a power’s standing with you; with n, adds a row of n (a tribute row, fading a season).',
+    run([id, n], store) {
+      const s = needGame(store);
+      if (!id || !isOrganization(id)) return 'Name a power: standing qm-baijiang-zong 20.';
+      const house = houseOf(id);
+      const day = s.calendar.day;
+      const read = (w: typeof s.world) => {
+        const st = standingOf(w, house, s.player.id, day);
+        return `${theName(house)}: ${st.word} (${Math.round(st.total)}).`;
+      };
+      if (n === undefined) return read(s.world);
+      const v = Number(n);
+      if (!Number.isFinite(v)) return 'Give a number.';
+      const world = addStanding(
+        s.world,
+        { power: house, about: s.player.id, row: 'tribute', value: v },
+        day,
+      );
+      return apply(store, (g) => ({ ...g, world }), read(world));
     },
   },
   org: {

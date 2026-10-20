@@ -15,6 +15,7 @@ import {
   seatPowerAt,
 } from './joining.ts';
 import { takeJob } from './jobs.ts';
+import { claimPosting, postingsAt, takePosting } from './map/board.ts';
 import { placeById } from './map/region.ts';
 import { ensureMap, mapOf, mapPlaceOf } from './map/travel.ts';
 import { joinPower, membership } from './organizations.ts';
@@ -123,6 +124,31 @@ describe('the elders’ hall', () => {
     expect(r.state.player.jobs).toEqual([]);
     expect(r.state.player.copies[saber]).toBeUndefined();
     expect(r.state.chronicle.at(-1)?.data).toMatchObject({ power: GATE, what: 'left' });
+  });
+});
+
+describe('a town board’s posting', () => {
+  it('is posted for the power whose land it is, and paid out brings a stranger to known', () => {
+    let s = life();
+    const map = mapOf(s)!;
+    const fort = mapPlaceOf(map, MARCH)!;
+    const posts = postingsAt(s, map, fort);
+    expect(posts.length).toBeGreaterThan(0);
+    expect(posts.every((p) => p.patron === MARCH)).toBe(true);
+    const took = takePosting(s, map, fort, posts[0]!.id);
+    if (!took.ok) throw new Error(took.reason);
+    s = took.state;
+    s = {
+      ...s,
+      map: {
+        ...s.map!,
+        inside: fort.id,
+        postings: s.map!.postings.map((p) => ({ ...p, done: true })),
+      },
+    };
+    const paid = claimPosting(s, map, posts[0]!.id);
+    if (!paid.ok) throw new Error(paid.reason);
+    expect(standingOf(paid.state.world, MARCH, YOU, s.calendar.day).word).toBe('known');
   });
 });
 

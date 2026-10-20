@@ -10,7 +10,8 @@ import {
   POSTINGS_PER_MONTH,
 } from '../../content/encounters/pace.ts';
 import type { Template, TripGoal } from '../../content/encounters/schema.ts';
-import { veinAt } from '../../content/map/index.ts';
+import { parentsOf, veinAt } from '../../content/map/index.ts';
+import { addStanding } from '../resolver/opinion.ts';
 import { PLACE_KIND_INFO } from '../../content/map/places.ts';
 import {
   addBalance,
@@ -101,6 +102,21 @@ function bearing(from: MapPlace, to: MapPlace): string {
   return DIRS[((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8]!;
 }
 
+/**
+ * The power a town board posts for: the nearest power whose land the town stands in, up its atlas
+ * parents (Pacified Fort's board posts for the March). A posting paid out is a mission done for it.
+ */
+export function landPowerOf(board: MapPlace): string | null {
+  for (const id of [board.id, board.area, ...parentsOf(board.id)])
+    if (id && isOrganization(id)) return houseOf(id);
+  return null;
+}
+
+function patronOf(board: MapPlace): { patron?: string } {
+  const p = landPowerOf(board);
+  return p ? { patron: p } : {};
+}
+
 /** This month's postings on a board: seeded by the place and the month, the same for every visit. */
 export function postingsAt(s: GameState, map: RegionMap, board: MapPlace): Posting[] {
   if (!hasBoard(board)) return [];
@@ -135,7 +151,7 @@ export function postingsAt(s: GameState, map: RegionMap, board: MapPlace): Posti
       pay: payFor(band),
       taken: s.calendar.day,
       done: false,
-      ...(isMissionHall(board.id) ? { power: houseOf(board.id) } : {}),
+      ...(isMissionHall(board.id) ? { power: houseOf(board.id) } : patronOf(board)),
     });
   }
   return out;
@@ -191,6 +207,16 @@ export function claimPosting(s: GameState, map: RegionMap, id: string): BoardChe
     paid = `${p.pay} low-grade stones at the bounty board`;
   }
   st = { ...st, map: { ...st.map!, postings: st.map!.postings.filter((x) => x.id !== id) } };
+  // A town board's posting is done for the power whose land it is: "A mission done for us".
+  if (p.patron && isOrganization(p.patron))
+    st = {
+      ...st,
+      world: addStanding(
+        st.world,
+        { power: p.patron, about: s.player.id, row: 'mission' },
+        s.calendar.day,
+      ),
+    };
   const b = placeById(map, p.board);
   return {
     ok: true,
