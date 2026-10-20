@@ -1100,7 +1100,23 @@ Gu raising, puppetry, divination and medicine come after v1.
 - **Experimenting** is a batch of the unknown on Craft hours, the inputs thrown in and spent, at the odds above (Experimentation) with its pity per ingredient set; attended, the hand's lift applies to whatever is found.
 - **Finding a power's guarded recipe yourself is no leak**: you stole nothing. Selling its goods where its people trade is still seen in use, the novels' scandal.
 
-**Where crafts live** (D4, Jan's call). One **Crafts 艺** screen, a hub with a page a craft (Alchemy, Refining, Talismans, Formations) flipped between: the bench's queue, the tool, the recipes known, experimenting, and the minigame when you sit at it. Farming is its own **Fields 田** screen for rented plots and your own fields (block 7). Which hours are Craft hours stays on Routine. Each screen opens where it lives, the first time you hold a tool or a field.
+**Where crafts live** (D4, Jan's call). One **Crafts 艺** screen on the rail, under Routine, a hub with a page a craft flipped between: Alchemy, Artifact Refining, Formation Inscribing and Spirit Farming. Each page holds its bench's queue, the tool, the recipes known, experimenting, and its minigame when you sit at it; Spirit Farming's page holds your fields, each locked to its place. Which hours are Craft hours stays on Routine. The screen opens where it lives, and a page the first time you hold its tool or a field.
+
+**Spirit farming** (D4, block 7).
+
+- **Three ways to hold a field**, and as many as you like: **rent a plot** in a village or town with farmland, by the season (a tier 1 plot of 9 beds about 6 low a season, up the realm curve with the place's vein); **buy one** for about ten seasons' rent; or **make your own** at a site you hold (Sites, block 8). A post's fields stay its Duty hours.
+- **A plot** has beds, a soil tier (from the place's vein) and an element (from its land: a marsh plot water, a volcanic one fire); a crop of the plot's element grows ×1.25.
+- **Crops** are spirit rice and the catalogs' herbs, from seeds or cuttings sold where the herb sells at a tenth of its price, or a live herb dug up on a trip and replanted. Spirit rice and a tier 1 herb ripen in a season.
+- **Herb age is the payoff.** A ripe herb left in the ground keeps aging, its rarity a band up at 10, 100 and 1,000 years, never past its written top. On the clock (about a year an attended hour) a hundred-year herb is most of a life, which is what the boosters are for.
+- **Boosters** multiply a bed's growth and its aging: soil a tier above the vein ×1.25 a tier, raised with spirit soil sold by tier; aged earth milk 地乳, which adds its own years at once (a dose of twelve-year milk ages a bed twelve years); a growing array 育灵阵 ×2 while its stones last; a Spring-Rain talisman ×1.5 on a bed for a season; a Wood spell cast at the field ×1.5 for a season; and the Farming tree's Line perks.
+- **Tending is its minigame and needs you there** (Jan's call): clearing the knots of foul qi as they rise from the beds, the hand adding lift to the harvest's rarity. Planting and harvesting are done at the plot too; the page lists every field anywhere and acts only where you stand.
+- **How long a field goes untended**, three spans a plot, each with its own covers (Jan's call):
+  - *Growth*: a month after you were last there, then it stops, the herbs holding their age. Covered by a growing array while its stones last, a Spring-Rain talisman for a season, or a keeper.
+  - *Pests*: a month on forest, jungle and marsh, three on plains, two elsewhere, and a month more for each soil tier above the vein; past it pests take a bed a month. Covered by a pest-warding talisman 驱虫符 for a season, a warding array, or a keeper.
+  - *Thieves*: none at a rented or bought plot, which its village watches, until your heat there reaches 3; at your own site, a field worth more than its guard brings a thief as a card (The world comes to you). Covered by a guarding array, a concealing one (they never find it), or a keeper against small thieves.
+  - *A keeper* is a hired hand from the village, about 1 low a month at a tier 1 plot on the realm curve: they cover all three at a village's strength and tend at no hand, so they never add lift.
+- **Fields move** (Jan's idea): a plot's spirit soil dug up is one bulk item, 2×2 in the Bag, carrying its soil tier and whatever grows in it, paused while carried, and laid down at a site you hold. Rented soil is the village's and never moves.
+- **What it's worth**: a plain tier 1 plot nets about 7 low a month with no hours spent; it feeds your furnace, and the aged herbs are the fortune.
 
 Formation puzzles show the engine-and-GLM split well. The engine hides which node is the array's eye, GLM describes the clues, Soul checks reveal hints, and a wrong strike backfires.
 
