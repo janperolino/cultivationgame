@@ -37,7 +37,8 @@ export const SILVER_TO_STONE = 120;
 export const BASE_PRICE: Record<ItemKind, number> = {
   pill: 3,
   talisman: 4,
-  herb: 2,
+  // A herb at about 1 low, so a batch of ten pills nets its crafter a living (K1's talk).
+  herb: 1,
   material: 1,
   'beast-part': 1,
   gear: 45,
@@ -48,6 +49,8 @@ export const BASE_PRICE: Record<ItemKind, number> = {
   beast: 100,
   // A map sets its own price (content/map/places.ts): a kingdom's 30, a region's 360.
   map: 30,
+  // A craft's tool: the crude clay furnace at 30 (K1's talk).
+  tool: 30,
 };
 
 /** Gear that carries squares is dearer than a blade. */
@@ -56,6 +59,7 @@ export const STORAGE_PRICE = 60;
 /** A copy's price by what it teaches: a loose manual by its kind, a method, a technique. */
 export const COPY_PRICE: Record<ManualKind | 'method' | 'technique', number> = {
   formula: 20,
+  recipe: 30,
   art: 30,
   method: 60,
   style: 40,

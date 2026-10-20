@@ -10,6 +10,8 @@ import { RARE } from '../content/catalogs/rare.ts';
 import type { Lot } from '../content/catalogs/types.ts';
 import { copyChapter, copyForm, copyOf, hasCopy } from '../content/copies.ts';
 import { hasMethod, method } from '../content/methods.ts';
+import { hasManual, manual } from '../content/manuals.ts';
+import { recipeFor, recipeYield } from '../content/crafts.ts';
 import {
   baseOf,
   hasItem,
@@ -642,7 +644,12 @@ export function guardedBy(thing: string): string | null {
   if (owner === undefined) {
     // A method written as a power's own is its, whoever sells it (the checkpoint's fix).
     const of = copyOf(thing);
-    owner = of?.kind === 'method' && hasMethod(of.id) ? (method(of.id).guardedBy ?? null) : null;
+    owner =
+      of?.kind === 'method' && hasMethod(of.id)
+        ? (method(of.id).guardedBy ?? null)
+        : of?.kind === 'manual' && hasManual(of.id)
+          ? (manual(of.id).guardedBy ?? null)
+          : null;
     const lines = [...CATALOGS, RARE].flatMap((c) =>
       c.lots.filter((l) => l.thing === thing && l.shops.length > 0).map((l) => ({ c, l })),
     );
@@ -798,11 +805,17 @@ function depthOf(thing: string): number {
   return DEPTH.common;
 }
 
-/** How many come in one lot of a thing: its catalog line's count, at its middle. */
+/**
+ * How many come in one lot of a thing: its catalog line's count, at its middle, else a batch of
+ * its recipe (K1), so a batch sold moves a market as one lot does.
+ */
 export function lotSize(thing: string): number {
   const base = hasCopy(thing) ? thing : baseOf(thing);
   const line = [...CATALOGS.flatMap((c) => c.lots), ...RARE.lots].find((l) => l.thing === base);
-  if (!line?.count) return 1;
+  if (!line?.count) {
+    const r = hasCopy(thing) ? null : recipeFor(thing);
+    return r ? recipeYield(r) : 1;
+  }
   return Math.max(1, Math.round((line.count[0] + line.count[1]) / 2));
 }
 

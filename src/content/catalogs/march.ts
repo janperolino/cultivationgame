@@ -20,13 +20,14 @@ export const MARCH: Catalog = {
       hanzi: '灵米',
       tier: 1,
       rarity: 'white',
+      element: 'wood',
       kind: 'material',
       stack: 20,
       tags: ['trade', 'grain'],
       // Tuned to the haul's mark in both seasons (0.95 again once no offer tops the market's cheapest
       // asking price; 0.9 in E5, when a district's many shops bid for it; 0.95 in E4, 1.2 in E3).
       price: 0.95,
-      uses: { ingredient: { tags: ['wood', 'vitality'], age: 1 } },
+      uses: { ingredient: { properties: ['nourishing'], age: 1 } },
       source:
         'the March’s spirit-field counties, whose sacks load at River-Bend’s grain market and every sutler’s door',
       text: 'A sack of rice grown on fields laid over a thin vein, each grain faintly warm. A cultivator eats it instead of mortal food; the Wall eats it by the barge.',
@@ -43,7 +44,7 @@ export const MARCH: Catalog = {
       tags: ['trade', 'grain'],
       // Tuned with spirit rice in E4 (0.15 in E3), once the mortal shops' purses held a Bag.
       taels: 0.09,
-      uses: {},
+      uses: { ingredient: { properties: ['nourishing'] } },
       source: 'the March’s farming villages, threshed under the watchtowers and sold by the sack',
       text: 'A sack of coarse yellow millet. The March grows more than it eats, and the strait forts eat more than they grow.',
     },
@@ -122,9 +123,10 @@ export const MARCH: Catalog = {
       hanzi: '坑沿荨麻',
       tier: 1,
       rarity: 'white',
+      element: 'wood',
       upTo: 'green',
       kind: 'herb',
-      uses: { ingredient: { tags: ['poison', 'wood'], age: 1 } },
+      uses: { ingredient: { properties: ['purging', 'toxic'], age: 1 } },
       source: 'the lips of the beast-pits, where the villagers cut it before the beasts do',
       text: 'A grey nettle that thrives on the rot at the pit’s edge. Boiled down, it draws the venom out of a bite and puts some in the next one.',
     },
@@ -399,6 +401,19 @@ export const MARCH: Catalog = {
       ],
     },
   ],
+  // The recipes for its pills (K1), each brewed by the inputs its line tells of.
+  recipes: [
+    // The cooks press millet and fat; the March's beast meat stands for the boar fat.
+    {
+      output: 'garrison-ration-pill',
+      craft: 'alchemy',
+      family: 'healing-pills',
+      inputs: [
+        { thing: 'frontier-millet', count: 5 },
+        { thing: 'beast-meat', count: 5 },
+      ],
+    },
+  ],
   lots: [
     // Staples (E3)
     // Grain from any plain (E4's land tags, for Jan's review).
@@ -410,6 +425,8 @@ export const MARCH: Catalog = {
     { thing: 'garrison-ration-pill', shops: ['stall'], count: [1, 4] },
     { thing: 'iron-rain-talisman', shops: ['stall'], count: [1, 3] },
     { thing: 'pit-edge-nettle', shops: ['stall'], count: [2, 6] },
+    // The Garrison Ration Pill's fat (K1's talk): the hunters' meat, sold by the cooks' stalls.
+    { thing: 'beast-meat', shops: ['stall'], weight: 0.5, count: [2, 6] },
     { thing: 'millet-cake', shops: ['mortal'], count: [2, 8] },
     { thing: 'ash-spear-shaft', shops: ['mortal'], count: [1, 3] },
     { thing: 'method:plowman-spear-tempering', shops: ['stall'], weight: 0.3 },
@@ -520,6 +537,18 @@ export const PILED_BONES_WALL: Catalog = {
           own: [{ stat: 'hit', value: 1 }],
           text: 'The wind that finds its way through a hundred skulls never has to aim; neither do the blades.',
         },
+      ],
+    },
+  ],
+  // The recipes for its pills (K1), each brewed by the inputs its line tells of.
+  recipes: [
+    {
+      output: 'bone-meal-pill',
+      craft: 'alchemy',
+      family: 'tempering-pills',
+      inputs: [
+        { thing: 'bone-meal', count: 7 },
+        { thing: 'ridge-bitterroot', count: 3 },
       ],
     },
   ],

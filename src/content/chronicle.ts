@@ -7,6 +7,7 @@ import type { CardOutcome } from './cards/schema.ts';
 import { GRADES, type GradeId, type LadderId } from './cultivation.ts';
 import { BRANCHES, HOUR_KINDS, HOUR_OPENINGS, SLEEP_FREED_TEXT, type HourKind } from './hours.ts';
 import { copyTitle } from './copies.ts';
+import { FAMILIES, type FamilyId } from './crafts.ts';
 import { COMBAT_DAOS, type CombatDaoId } from './daos.ts';
 import { item } from './items.ts';
 import { INTENT_HANZI, INTENT_STAGES } from './intent.ts';
@@ -84,6 +85,7 @@ export function stepLabel(id: RealmId, stage: number): string {
 export const SCREEN_TEXT: Record<string, string> = {
   trees: 'The trees open: what you hold grafts on them, and insight buys their nodes.',
   techniques: 'A first technique to drill: the techniques open.',
+  crafts: 'A furnace or a recipe in hand: the crafts open, and the bench waits for craft hours.',
 };
 
 /** How a spar ended, from the subject's side (core/spar.ts). */
@@ -235,8 +237,13 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
       : `${press} against the gate of ${r.name}, but you hold no ${pill ? item(pill).name : r.gate.replace(/^an? /, '')}.`;
   },
   screen: (d) => SCREEN_TEXT[s(d.screen)] ?? `The ${s(d.screen)} open.`,
+  // A failed batch that cracked the furnace (K1).
+  'blow-up': (d) =>
+    `The furnace bursts over a batch of ${item(s(d.recipe)).name}s: the ${item(s(d.tool)).name} is cracked, and wants a refiner.`,
   mastery: (d) =>
-    d.technique
+    d.family
+      ? `Your ${FAMILIES[s(d.family) as FamilyId].name.toLowerCase()} reach ${MASTERY[n(d.level)]!.name}: the fire answers the hand.`
+      : d.technique
       ? `${technique(s(d.technique)).name} reaches ${MASTERY[n(d.level)]!.name}; the form finally clicks.`
       : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
   // A follower who left or turned (P3.4b): the card P3.12 writes says it at more length.
@@ -403,6 +410,7 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   'study-back': 'opening',
   screen: 'opening',
   'method-capped': 'opening',
+  'blow-up': 'hurt',
   rewind: 'opening',
   card: (d) => (d.byDefault === true ? 'settled' : (cardOutcome(d).kind ?? 'choice')),
 };

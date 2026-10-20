@@ -125,9 +125,10 @@ export const NIGHT_BRIDGE: Catalog = {
       hanzi: '月光海葡萄',
       tier: 1,
       rarity: 'white',
+      element: 'water',
       upTo: 'green',
       kind: 'herb',
-      uses: { ingredient: { tags: ['water', 'night'], age: 1 } },
+      uses: { ingredient: { properties: ['restoring'], age: 1 } },
       source:
         'the tide pools on the far islands, picked at the lowest water and carried across in wet cloth',
       text: 'Pale green beads that glow a little in the dark, and stop if you leave them in the sun.',
@@ -353,6 +354,18 @@ export const NIGHT_BRIDGE: Catalog = {
           effects: [{ stat: 'stealth', value: 0.05 }],
           text: 'Count the swells between the lights and you know how long the reef stays open, and how long you have to be gone.',
         },
+      ],
+    },
+  ],
+  // The recipes for its pills (K1), each brewed by the inputs its line tells of.
+  recipes: [
+    {
+      output: 'blood-tide-pill',
+      craft: 'alchemy',
+      family: 'tempering-pills',
+      inputs: [
+        { thing: 'beast-blood', count: 6 },
+        { thing: 'blood-salt-kelp', count: 4 },
       ],
     },
   ],

@@ -5,6 +5,7 @@
 // say which shops stock each thing and how often. A shop draws on its place's catalog, its region's,
 // its continent's and the region's imports, weighted by its kind (content/shops.ts). A new place is
 // a new catalog file, not new code.
+import type { CraftId, FamilyId } from '../crafts.ts';
 import type { Item } from '../items.ts';
 import type { ArtNodeDef, ManualDef } from '../manuals.ts';
 import type { Method } from '../methods.ts';
@@ -53,6 +54,25 @@ export interface ArtDef {
   nodes: readonly ArtNodeDef[];
 }
 
+/**
+ * A recipe (design § Professions, people and powers, Recipes; K1): written by hand beside its
+ * catalog line, it makes its output's range (`rarity` to `upTo`) at its tier, from inputs named by
+ * thing, in its craft's tool. Its inputs replace the makers' defaults for its good (§ Economy,
+ * People make and use), so a town's alchemy shop brews by the recipe you would use.
+ */
+export interface Recipe {
+  /** The item it makes; the recipe's id is the output's. */
+  output: string;
+  craft: CraftId;
+  family: FamilyId;
+  /** What a batch takes, by thing (an item id, at the recipe's tier) and count. */
+  inputs: readonly { thing: string; count: number }[];
+  /** Craft hours a batch takes, when not its craft's by tier. */
+  hours?: number;
+  /** Pieces a batch makes, when not its craft's. */
+  yield?: number;
+}
+
 export interface Catalog {
   /** The atlas entry it belongs to: the continent, region or place; for imports, the region they reach. */
   at: string;
@@ -65,5 +85,7 @@ export interface Catalog {
   techniques?: readonly Technique[];
   arts?: readonly ArtDef[];
   manuals?: readonly ManualDef[];
+  /** The recipes for the goods it writes or lots (K1). */
+  recipes?: readonly Recipe[];
   lots: readonly Lot[];
 }

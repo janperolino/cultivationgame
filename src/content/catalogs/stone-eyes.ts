@@ -76,12 +76,28 @@ export const STONE_EYES: Catalog = {
       hanzi: '夜光菇',
       tier: 1,
       rarity: 'white',
+      element: 'earth',
       upTo: 'green',
       kind: 'herb',
-      uses: { ingredient: { tags: ['earth', 'dark'], age: 2 } },
+      uses: { ingredient: { properties: ['soul-calming', 'light'], age: 2 } },
       source:
         'the guano heaps under the bat roosts, picked by the clans in the hour the bats are out',
       text: 'A grey mushroom that grows on bat guano and gives off enough light to read a label by.',
+    },
+    // The Stone-Milk Pill's milk (K1's talk): its line names it, so it is a line of its own.
+    {
+      id: 'stalactite-milk',
+      name: 'Stalactite Milk',
+      pinyin: 'Shi Ru',
+      hanzi: '石乳',
+      tier: 1,
+      rarity: 'white',
+      element: 'earth',
+      upTo: 'green',
+      kind: 'material',
+      uses: { ingredient: { properties: ['tempering'] } },
+      source: 'the drip-cups the clans set under the oldest stalactites, emptied once a season',
+      text: 'A stoppered gourd of white water that has run down stone for a thousand years. It is heavier than it looks.',
     },
     {
       id: 'rockfall-talisman',
@@ -404,6 +420,18 @@ export const STONE_EYES: Catalog = {
       ],
     },
   ],
+  // The recipes for its pills (K1), each brewed by the inputs its line tells of.
+  recipes: [
+    {
+      output: 'stone-milk-pill',
+      craft: 'alchemy',
+      family: 'tempering-pills',
+      inputs: [
+        { thing: 'stalactite-milk', count: 6 },
+        { thing: 'glow-cap-mushroom', count: 4 },
+      ],
+    },
+  ],
   lots: [
     { thing: 'slate-plate-vest', shops: ['stall'] },
     { thing: 'basalt-gauntlets', shops: ['stall'] },
@@ -412,6 +440,7 @@ export const STONE_EYES: Catalog = {
     { thing: 'stone-milk-pill', shops: ['alchemy', 'stall'], count: [1, 4] },
     // Cave herbs and lamp oil from the bat roosts, in any karst (E4's land tags, for Jan's review).
     { thing: 'glow-cap-mushroom', shops: ['alchemy', 'stall'], count: [2, 8], land: ['karst'] },
+    { thing: 'stalactite-milk', shops: ['alchemy', 'stall'], count: [2, 6], land: ['karst'] },
     { thing: 'rockfall-talisman', shops: ['stall'], count: [1, 3] },
     { thing: 'bat-fat-lamp-oil', shops: ['mortal'], count: [20, 20], land: ['karst'] },
     { thing: 'knotted-rope-ladder', shops: ['mortal'] },
@@ -500,6 +529,18 @@ export const STONE_FOREST: Catalog = {
           text: 'Keep one still thing in mind and the forest cannot move the rest.',
           effects: [{ stat: 'soulDefense', value: 0.04 }],
         },
+      ],
+    },
+  ],
+  // The recipes for its pills (K1), each brewed by the inputs its line tells of.
+  recipes: [
+    {
+      output: 'soul-returning-pill',
+      craft: 'alchemy',
+      family: 'soul-pills',
+      inputs: [
+        { thing: 'never-noon-fern', count: 5 },
+        { thing: 'calm-heart-grass', count: 5 },
       ],
     },
   ],

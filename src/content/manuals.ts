@@ -14,14 +14,17 @@
 // and the Trees screen draws it grafted beside that tree, joined to none of its nodes. A Method's
 // host is its ladder's tree, an Art's its technique's first Dao, a Formula's the tree its effects
 // touch; a manual with none stands under the Manuals category on its own.
+import { CRAFTS, SLIP_INSIGHT } from './crafts.ts';
 import type { LadderId } from './cultivation.ts';
 import { COMBAT_DAO_IDS, DAO_STAT_KINDS } from './daos.ts';
 import { method } from './methods.ts';
-import type { RarityId } from './rarity.ts';
+import { item } from './items.ts';
+import { rarityRank, type RarityId } from './rarity.ts';
 import type { Effect, StatId } from './stats.ts';
 import { technique } from './techniques.ts';
 import { BIG_THREE, TREES } from './trees/index.ts';
-import { CATALOG_ARTS, CATALOG_MANUALS } from './catalogs/index.ts';
+import { CATALOG_ARTS, CATALOG_MANUALS, CATALOG_RECIPES, slipId } from './catalogs/index.ts';
+import type { Recipe } from './catalogs/types.ts';
 
 export const MANUAL_KINDS = {
   formula: { name: 'Formula', plural: 'Formulas', hanzi: '口诀', glyph: '诀' },
@@ -30,6 +33,7 @@ export const MANUAL_KINDS = {
   style: { name: 'Style', plural: 'Styles', hanzi: '流', glyph: '流' },
   scripture: { name: 'Scripture', plural: 'Scriptures', hanzi: '经', glyph: '经' },
   inheritance: { name: 'Inheritance', plural: 'Inheritances', hanzi: '传承', glyph: '承' },
+  recipe: { name: 'Recipe', plural: 'Recipes', hanzi: '方', glyph: '方' },
 } as const;
 export type ManualKind = keyof typeof MANUAL_KINDS;
 export const MANUAL_KIND_IDS = Object.keys(MANUAL_KINDS) as ManualKind[];
@@ -60,6 +64,8 @@ export interface ManualNode {
    * power, qi cost and Accuracy (`ART_OWN_STATS`). `effects` are the cultivator's.
    */
   own?: readonly Effect[];
+  /** The recipe it teaches (K1): a recipe slip's one node, and K2's craft Dao seals. */
+  recipe?: string;
   /** Where it sits in its cluster, columns across and rows down; laid out from `requires` if unset. */
   at?: readonly [col: number, row: number];
   text: string;
@@ -92,6 +98,11 @@ export interface Manual {
    * market buys it as one piece and never stocks it. Every slip at gold and up is sealed anyway.
    */
   sealed?: boolean;
+  /**
+   * The power whose own it is, when the catalogs can't tell (code review 2026-10-20, major 19):
+   * a copy of it is guarded as that power's methods are.
+   */
+  guardedBy?: string;
 }
 
 export type ManualDef = Omit<Manual, 'nodes' | 'ladder' | 'host' | 'tier'> & {
@@ -216,6 +227,51 @@ function forTechnique(id: string, nodes: readonly ArtNodeDef[]): Manual {
     tier: t.tier,
     kind: 'art',
     nodes: nodes.map((n, i) => ({ ...n, tier: t.tier, mastery: artWake(i, nodes.length) })),
+  });
+}
+
+/** What a recipe slip is called by its craft (Recipes): 丹方, 器谱, 符谱 and 阵图. */
+const SLIP_WORD: Record<keyof typeof CRAFTS, { word: string; pinyin: string; hanzi: string }> = {
+  alchemy: { word: 'Recipe', pinyin: 'Fang', hanzi: '方' },
+  refining: { word: 'Pattern', pinyin: 'Pu', hanzi: '谱' },
+  talismans: { word: 'Pattern', pinyin: 'Pu', hanzi: '谱' },
+  formations: { word: 'Diagram', pinyin: 'Tu', hanzi: '图' },
+  farming: { word: 'Almanac', pinyin: 'Pu', hanzi: '谱' },
+};
+
+/**
+ * A lone recipe's slip (Recipes; K1): a manual of one node, read on study hours, whose node
+ * teaches the recipe. It takes its output's name and floor rarity; its node costs `SLIP_INSIGHT`
+ * at white tier 1, ×1.5 a rarity step above white and ×3 a tier.
+ */
+function forRecipe(r: Recipe): Manual {
+  const out = item(r.output);
+  const w = SLIP_WORD[r.craft];
+  const steps = Math.max(0, rarityRank(out.rarity) - rarityRank('white'));
+  return defineManual({
+    id: slipId(r.output),
+    name: `${out.name} ${w.word}`,
+    pinyin: `${out.pinyin} ${w.pinyin}`,
+    hanzi: `${out.hanzi}${w.hanzi}`,
+    kind: 'recipe',
+    rarity: out.rarity,
+    source: out.source,
+    host: null,
+    tier: 1,
+    nodes: [
+      {
+        id: `${slipId(r.output)}-node`,
+        name: `${out.name}`,
+        hanzi: out.hanzi,
+        tier: 1,
+        kind: 'minor',
+        cost: Math.round(SLIP_INSIGHT * 1.5 ** steps * 3 ** (out.tier - 1)),
+        requires: [],
+        effects: [],
+        recipe: r.output,
+        text: `How to brew the ${out.name}, step by step: the herbs, their order and the fire.`,
+      },
+    ],
   });
 }
 
@@ -668,6 +724,7 @@ export const MANUALS: readonly Manual[] = [
   ...WRITTEN,
   ...CATALOG_MANUALS.map(defineManual),
   ...CATALOG_ARTS.map((a) => forTechnique(a.technique, a.nodes)),
+  ...CATALOG_RECIPES.map(forRecipe),
 ];
 
 const byId = new Map(MANUALS.map((m) => [m.id, m]));

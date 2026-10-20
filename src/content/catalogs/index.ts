@@ -18,7 +18,27 @@ import {
 } from './seats.ts';
 import { BOUND_BONES, HUNDRED_REINS, LAMP_KEEPERS } from './sects.ts';
 import { STONE_EYES, STONE_FOREST } from './stone-eyes.ts';
-import type { Catalog } from './types.ts';
+import type { Catalog, Lot } from './types.ts';
+
+/** A recipe's slip 丹方 as a manual id (content/manuals.ts writes it from the recipe, K1). */
+export const slipId = (output: string) => `recipe-${output}`;
+
+/**
+ * A recipe's slip stands where its good is sold, by the same doors and a third as often (K1's
+ * talk), so a sect's own pill's slip is guarded as its methods are (core/markets.ts `guardedBy`).
+ */
+function withSlips(c: Catalog): Catalog {
+  if (!c.recipes?.length) return c;
+  const slips: Lot[] = c.recipes.map((r) => {
+    const line = c.lots.find((l) => l.thing === r.output);
+    return {
+      thing: `manual:${slipId(r.output)}`,
+      shops: line?.shops ?? [],
+      weight: (line?.weight ?? 1) / 3,
+    };
+  });
+  return { ...c, lots: [...c.lots, ...slips] };
+}
 
 export const CATALOGS: readonly Catalog[] = [
   MORNING_STAR,
@@ -40,10 +60,12 @@ export const CATALOGS: readonly Catalog[] = [
   HUNDRED_REINS,
   BOUND_BONES,
   LAMP_KEEPERS,
-];
+].map(withSlips);
 
 /** Everything written, catalogs and the gold and red list alike. */
 const WRITERS = [...CATALOGS, RARE];
+
+export const CATALOG_RECIPES = WRITERS.flatMap((c) => c.recipes ?? []);
 
 export const CATALOG_ITEMS = WRITERS.flatMap((c) => c.items ?? []);
 export const CATALOG_METHODS = WRITERS.flatMap((c) => c.methods ?? []);

@@ -81,6 +81,7 @@ import { bedNights } from './map/place.ts';
 import { setCopyGain } from './map/encounters.ts';
 import { cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 import { atHome, jobsDay, onShift } from './jobs.ts';
+import { craftsOpen, workBench } from './crafts.ts';
 
 /**
  * The Trees screen opens with anything that lives there (design § UI and screens, Only what you
@@ -143,6 +144,8 @@ export function checkScreens(s: GameState): GameState {
   const p = s.player;
   const holds = Object.values(p.items).some((n) => n > 0) || wornIds(p).length > 0;
   if (holds) next = unlock(next, 'bag');
+  // The crafts open where they live: the first time you hold a tool or know a recipe (K1).
+  if (craftsOpen(p)) next = unlock(next, 'crafts', true);
   return next;
 }
 
@@ -153,6 +156,22 @@ export function checkScreens(s: GameState): GameState {
  */
 export function ratesHere(s: GameState, seat?: Seat): DayRates {
   return dayRates(onShift(s), s.calendar.day, [], seat, undefined, densityHere(s));
+}
+
+/**
+ * The bench's share of a stretch (core/crafts.ts, K1): the Craft hours of the wheel as played
+ * where you stand, a shift's hours Duty at its post, worked from the front of the queue.
+ */
+function benchDay(s: GameState, days: number): GameState {
+  if (s.player.crafts.bench.length === 0 && !s.player.crafts.front) return s;
+  const hours = ratesHere(s).count.craft * days;
+  if (hours <= 0) return s;
+  const { value: r, state } = withStream(s, 'craft', (rng) =>
+    workBench(s.player, hours, s.calendar.day, rng),
+  );
+  let next = withPlayer(state, r.cultivator);
+  for (const e of r.events) next = addEvent(next, e.type === 'craft-level' ? 'mastery' : e.type, e.data);
+  return next;
 }
 
 /**
@@ -195,6 +214,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   // Each power you belong to pays its allowance as the month turns (O2), takes its quota and
   // counts your leave (O3).
   next = membershipDay(next, days, atHome);
+  // The bench works its Craft hours wherever you seclude, never on the road (K1).
+  if (!road) next = benchDay(next, days);
   return noteFirsts(checkScreens(next));
 };
 

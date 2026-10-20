@@ -3,6 +3,8 @@
 // Valley's pills, which "everyone needs, so nobody touches them", the common storage and charms,
 // mortal goods for the road, and the parts and cores of beasts anywhere, whose tier and rarity are
 // the beast's (core/loot.ts). **Awaiting Jan's review** (P3.5): the new items below.
+import type { Property } from '../crafts.ts';
+import type { Element } from '../elements.ts';
 import type { Item } from '../items.ts';
 import type { Catalog } from './types.ts';
 
@@ -12,7 +14,8 @@ function part(
   name: string,
   pinyin: string,
   hanzi: string,
-  tags: string[],
+  element: Element | null,
+  properties: Property[],
   text: string,
 ): Item {
   return {
@@ -23,8 +26,9 @@ function part(
     tier: 1,
     rarity: 'gray',
     upTo: 'red',
+    ...(element ? { element } : {}),
     kind: 'beast-part',
-    uses: { ingredient: { tags } },
+    uses: { ingredient: { properties } },
     source: 'any beast, by its species',
     text,
   };
@@ -45,7 +49,7 @@ export const MORNING_STAR: Catalog = {
       kind: 'beast-part',
       // 5 low for a white core: the written rarity is gray, at half that.
       price: 2.5,
-      uses: { ingredient: { tags: ['core'] } },
+      uses: { ingredient: { properties: ['nourishing'] } },
       source: 'a beast of Foundation or above, and half the beasts below it',
       text: 'A bead of a beast’s gathered qi, clouded or clear by its bloodline. Bounty offices pay by the grade.',
     },
@@ -54,7 +58,8 @@ export const MORNING_STAR: Catalog = {
       'Beast Hide',
       'Shoupi',
       '兽皮',
-      ['hide'],
+      null,
+      ['hard'],
       'A hide off a spirit beast, stiff with what its qi made of it.',
     ),
     part(
@@ -62,7 +67,8 @@ export const MORNING_STAR: Catalog = {
       'Beast Marrow',
       'Shousui',
       '兽髓',
-      ['marrow', 'body'],
+      null,
+      ['tempering'],
       'Marrow scraped from a spirit beast’s long bones; tempering pills start here.',
     ),
     part(
@@ -70,7 +76,8 @@ export const MORNING_STAR: Catalog = {
       'Beast Fang',
       'Shouya',
       '兽牙',
-      ['fang', 'metal'],
+      'metal',
+      ['sharp'],
       'A fang or tusk, still sharp enough to cut the hand that pulls it.',
     ),
     part(
@@ -78,7 +85,8 @@ export const MORNING_STAR: Catalog = {
       'Beast Blood',
       'Shouxue',
       '兽血',
-      ['blood'],
+      null,
+      ['tempering', 'mending'],
       'A sealed vial of a spirit beast’s blood. It stays warm.',
     ),
     part(
@@ -86,7 +94,8 @@ export const MORNING_STAR: Catalog = {
       'Beast Shell',
       'Shouke',
       '兽壳',
-      ['shell', 'water'],
+      'water',
+      ['hard'],
       'Shell plate from a crab or turtle, harder than the iron it is laced to.',
     ),
     part(
@@ -94,7 +103,8 @@ export const MORNING_STAR: Catalog = {
       'Spirit Beast Meat',
       'Lingshou Rou',
       '灵兽肉',
-      ['meat'],
+      null,
+      ['mending'],
       'Meat with qi in it; a mortal who eats it sweats for a day.',
     ),
     part(
@@ -102,7 +112,8 @@ export const MORNING_STAR: Catalog = {
       'Beast Wing',
       'Shouyi',
       '兽翼',
-      ['wing', 'wind'],
+      'wind',
+      ['light', 'swift'],
       'A leather wing, folded; the membrane hums when the wind crosses it.',
     ),
     part(
@@ -110,7 +121,8 @@ export const MORNING_STAR: Catalog = {
       'Cave Bat Guano',
       'Bianfu Fen',
       '蝙蝠粪',
-      ['dung', 'fire'],
+      'fire',
+      ['burning'],
       'Black and dry, it burns hot and smells worse. Talisman-makers grind it into ink.',
     ),
     part(
@@ -118,7 +130,8 @@ export const MORNING_STAR: Catalog = {
       'Beast Gall',
       'Shoudan',
       '兽胆',
-      ['gall', 'poison'],
+      null,
+      ['toxic', 'purging'],
       'A bitter green sac; alchemists want it whole.',
     ),
     part(
@@ -126,7 +139,8 @@ export const MORNING_STAR: Catalog = {
       'Beast Fin',
       'Shouqi',
       '兽鳍',
-      ['fin', 'water'],
+      'water',
+      ['swift'],
       'A shark’s fin, the cartilage threaded with qi.',
     ),
     part(
@@ -134,9 +148,24 @@ export const MORNING_STAR: Catalog = {
       'Ape Fist',
       'Yuanquan',
       '猿拳',
-      ['bone', 'metal'],
+      'metal',
+      ['hard'],
       'A reef ape’s fist, knuckles like river stones. Fist-cultivators boil them for the bones.',
     ),
+    // The crafts' starter tool (K1's talk): every refiner on the continent fires them.
+    {
+      id: 'crude-clay-furnace',
+      name: 'Crude Clay Furnace',
+      pinyin: 'Cutao Lu',
+      hanzi: '粗陶炉',
+      tier: 1,
+      rarity: 'white',
+      kind: 'tool',
+      bulk: 2,
+      uses: { tool: { craft: 'alchemy' } },
+      source: 'any refiner, fired by the dozen',
+      text: 'A squat clay furnace on three legs, its lid sealed with a mud rim. It holds a tier 1 fire, and cracks if you ask more of it.',
+    },
     {
       id: 'travel-rations',
       name: 'Travel Rations',
@@ -178,6 +207,47 @@ export const MORNING_STAR: Catalog = {
       text: 'A sound mortal horse with a post-station brand. Thirty li a double-hour, six hours a day, and it never complains about the weather. (P3.6: the Horse way of going.)',
     },
   ],
+  // The recipes for its pills (K1), each brewed by the inputs its line tells of.
+  recipes: [
+    // Apricot Grove's way: half the continent's pills start with an old kernel, and the bitterroot is the commonest herb in a common pill.
+    {
+      output: 'qi-gathering-pill',
+      craft: 'alchemy',
+      family: 'qi-pills',
+      inputs: [
+        { thing: 'old-apricot-kernel', count: 6 },
+        { thing: 'ridge-bitterroot', count: 4 },
+      ],
+    },
+    {
+      output: 'qi-restoring-pill',
+      craft: 'alchemy',
+      family: 'healing-pills',
+      inputs: [
+        { thing: 'old-apricot-kernel', count: 5 },
+        { thing: 'moon-sea-grape', count: 5 },
+      ],
+    },
+    {
+      output: 'spring-returning-pill',
+      craft: 'alchemy',
+      family: 'healing-pills',
+      inputs: [
+        { thing: 'blood-salt-kelp', count: 6 },
+        { thing: 'old-apricot-kernel', count: 4 },
+      ],
+    },
+    // The harbor shell is ground for these, as its own line says.
+    {
+      output: 'poison-purging-pill',
+      craft: 'alchemy',
+      family: 'healing-pills',
+      inputs: [
+        { thing: 'harbor-mud-razor-shell', count: 6 },
+        { thing: 'ridge-bitterroot', count: 4 },
+      ],
+    },
+  ],
   lots: [
     // Apricot Grove's pills, everywhere
     { thing: 'qi-gathering-pill', shops: ['stall', 'alchemy', 'house', 'sect'], count: [1, 5] },
@@ -205,6 +275,7 @@ export const MORNING_STAR: Catalog = {
     { thing: 'storage-pouch', shops: ['refiner', 'house'], weight: 0.5 },
     { thing: 'storage-ring', shops: ['house'], weight: 0.2 },
     { thing: 'warding-jade', shops: ['refiner', 'house', 'stall'], weight: 0.4 },
+    { thing: 'crude-clay-furnace', shops: ['refiner', 'house'], weight: 0.5 },
     // Beast parts, sold as well as bought
     { thing: 'beast-core', shops: ['alchemy', 'house'], weight: 0.6 },
     { thing: 'beast-hide', shops: ['refiner', 'house'], weight: 0.4, count: [1, 3] },

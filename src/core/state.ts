@@ -90,6 +90,43 @@ const PersonRecord = z.object({
 });
 export type PersonRecord = z.infer<typeof PersonRecord>;
 
+/**
+ * The crafts (core/crafts.ts, K1): the bench's queue, worked from the front on Craft hours; the
+ * front batch, its inputs already in the tool; the tray where finished pieces wait when the Bag is
+ * full; the batches counted toward each family's mastery; and the bench's last few batches.
+ */
+const CraftsSchema = z.object({
+  bench: z.array(z.object({ recipe: z.string(), batches: z.number().int().min(1) })),
+  front: z
+    .object({
+      recipe: z.string(),
+      /** Every input stood a rarity above the recipe's floor: +0.5 lift. */
+      above: z.boolean(),
+      /** Craft hours put in so far. */
+      hours: z.number().min(0),
+    })
+    .nullable(),
+  tray: z.record(z.string(), z.number().int().min(0)),
+  mastery: z.record(z.string(), z.number().min(0)),
+  recent: z.array(
+    z.object({
+      day: z.number(),
+      recipe: z.string(),
+      /** What came out, by id, or null when the batch failed. */
+      made: z.string().nullable(),
+      count: z.number().int().min(0),
+      /** A failed batch that cracked the tool. */
+      blew: z.boolean(),
+    }),
+  ),
+});
+export type CraftsState = z.infer<typeof CraftsSchema>;
+
+/** An empty bench, no mastery: every new life's, and every old save's (v43). */
+export function emptyCrafts(): CraftsState {
+  return { bench: [], front: null, tray: {}, mastery: {}, recent: [] };
+}
+
 export const CultivatorSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -236,6 +273,7 @@ export const CultivatorSchema = z.object({
    * 2 Domain. A Dao absent stands at Qi, or below it.
    */
   intent: z.record(z.string(), z.number().int().min(1)),
+  crafts: CraftsSchema,
 });
 export type Cultivator = z.infer<typeof CultivatorSchema>;
 
@@ -461,6 +499,7 @@ export function newCultivator(
       opts.place ?? null,
     ),
     intent: {},
+    crafts: emptyCrafts(),
   };
 }
 

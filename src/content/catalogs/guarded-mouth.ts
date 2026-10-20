@@ -10,6 +10,20 @@ export const GUARDED_MOUTH: Catalog = {
   layer: 'place',
   items: [
     {
+      id: 'bronze-pill-furnace',
+      name: 'Bronze Pill Furnace',
+      pinyin: 'Qingtong Danlu',
+      hanzi: '青铜丹炉',
+      tier: 1,
+      rarity: 'green',
+      upTo: 'blue',
+      kind: 'tool',
+      bulk: 2,
+      uses: { tool: { craft: 'alchemy' } },
+      source: "the furnace-casters on the City's Refiners' Row",
+      text: 'A three-legged bronze furnace with a fire-door of beaten copper. It holds its heat evenly, and the pills come out a shade cleaner.',
+    },
+    {
       id: 'shark-tooth-spear',
       name: 'Shark-Tooth Spear',
       pinyin: 'Shaya Qiang',
@@ -84,9 +98,10 @@ export const GUARDED_MOUTH: Catalog = {
       hanzi: '血盐藻',
       tier: 1,
       rarity: 'white',
+      element: 'water',
       upTo: 'green',
       kind: 'herb',
-      uses: { ingredient: { tags: ['water', 'blood'], age: 1 } },
+      uses: { ingredient: { properties: ['mending'], age: 1 } },
       source: 'the rocks below the skull walls, where the beast-part market washes its knives',
       text: 'Red kelp that grows only where blood runs into the sea. Alchemists pay for it by the bundle.',
     },
@@ -260,7 +275,21 @@ export const GUARDED_MOUTH: Catalog = {
       ],
     },
   ],
+  // The recipes for its pills (K1), each brewed by the inputs its line tells of.
+  recipes: [
+    {
+      output: 'shark-marrow-pill',
+      craft: 'alchemy',
+      family: 'tempering-pills',
+      inputs: [
+        { thing: 'beast-marrow', count: 5 },
+        { thing: 'blood-salt-kelp', count: 5 },
+      ],
+    },
+  ],
   lots: [
+    // A better furnace (K1's talk), cast on Refiners' Row: its rarity adds lift.
+    { thing: 'bronze-pill-furnace', shops: ['refiner'], weight: 0.4 },
     // Its refiners cut thunderhorn for the grips (E4, for Jan's review).
     { thing: 'shark-tooth-spear', shops: ['refiner', 'house'], uses: { ore: 5, horn: 1 } },
     { thing: 'crab-shell-vest', shops: ['refiner', 'house'] },

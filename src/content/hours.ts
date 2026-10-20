@@ -48,8 +48,8 @@ export const BRANCHES: readonly Branch[] = [
 ];
 
 /**
- * What an hour can go to. Furnace, forge, garden, beast and shop hours join as those systems
- * arrive (M4 to M6). Duty 值 is never set by hand: a job you hold puts it on its shift's hours,
+ * What an hour can go to. Craft 艺 works the bench's queue for every craft (K1, design § Crafts,
+ * thin); garden, beast and shop hours join as those systems arrive (M5 to M6). Duty 值 is never set by hand: a job you hold puts it on its shift's hours,
  * locked like sleep and named for the work (O4).
  */
 export const HOUR_KINDS = {
@@ -60,6 +60,7 @@ export const HOUR_KINDS = {
   practice: { name: 'Practice', what: 'practice a technique' },
   sleep: { name: 'Sleep', what: 'sleep; it gives nothing' },
   duty: { name: 'Duty', what: "a job's shift: its pay, not your cultivation" },
+  craft: { name: 'Craft', what: 'work the bench: the front batch of your queue (艺)' },
 } as const;
 export type HourKind = keyof typeof HOUR_KINDS;
 export const HOUR_KIND_IDS = Object.keys(HOUR_KINDS) as [HourKind, ...HourKind[]];
@@ -106,4 +107,5 @@ export const HOUR_OPENINGS: readonly { kind: HourKind; text: string }[] = [
   { kind: 'practice', text: 'A technique to drill: practice hours now raise its mastery.' },
   { kind: 'body', text: 'A tempering art in hand: body hours open beside qi.' },
   { kind: 'soul', text: 'A nourishing art in hand: soul hours open.' },
+  { kind: 'craft', text: 'A furnace or a recipe in hand: craft hours open on the wheel.' },
 ];

@@ -43,6 +43,8 @@
   --hour-gather: #8fae6a;
   /* A job's Duty hours 值 (O4): seal vermilion, and the red of a shift gone unkept. */
   --hour-duty: #c4553d;
+  /* Craft hours 艺 (K1): the furnace's banked ember. */
+  --hour-craft: #d9a441;
   --shift-missed: #e0503f;
   /* Dawn's purple qi at 卯. */
   --dawn: #c4a3f0;
@@ -2337,6 +2339,10 @@ select {
 
 .hour-duty {
   --hour: var(--hour-duty);
+}
+
+.hour-craft {
+  --hour: var(--hour-craft);
 }
 
 /* A Duty hour: the 值 seal over a lock, and its shift as an arc on the bezel naming the work. */

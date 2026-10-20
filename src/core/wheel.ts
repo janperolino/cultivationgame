@@ -23,6 +23,7 @@ import type { Note } from './cultivation.ts';
 import { hasFlag, realmOf, type Cultivator } from './state.ts';
 import { inTutorial } from './methods.ts';
 import { knownTechniques, techniqueSealed } from './techniques.ts';
+import { craftsOpen } from './crafts.ts';
 
 /** How many wheels a cultivator can keep under a name. */
 export const SAVED_ROUTINES_MAX = 8;
@@ -255,7 +256,12 @@ const POSSIBLE: Record<HourKind, (c: Cultivator) => boolean> = {
   practice: (c) => knownTechniques(c).some((t) => !techniqueSealed(c, t)),
   body: (c) => c.activeMethods.body !== null,
   soul: (c) => c.activeMethods.soul !== null,
+  // The bench opens when you hold a tool or know a recipe (K1), and flips no hour of yours.
+  craft: craftsOpen,
 };
+
+/** Kinds that open without taking an hour: which hours craft is the player's call (Where crafts live). */
+const OPEN_ONLY: readonly HourKind[] = ['craft'];
 
 /** The first time each kind opening by the rule stands for: a technique's, or an art's. */
 const FIRST_OF: Partial<Record<HourKind, FirstId>> = {
@@ -279,7 +285,7 @@ export function openHours(
     if (hourKindOpen(next, o.kind) || !kindPossible(next, o.kind)) continue;
     const flags = [...next.flags, openFlag(o.kind)];
     const first = FIRST_OF[o.kind];
-    if (first && !firsts.includes(first)) {
+    if (OPEN_ONLY.includes(o.kind) || (first && !firsts.includes(first))) {
       next = { ...next, flags };
       notes.push({ type: 'hours', data: { kind: o.kind, hour: null } });
       continue;

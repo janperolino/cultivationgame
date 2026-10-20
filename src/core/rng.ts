@@ -42,6 +42,7 @@ export const STREAMS = [
   'scene',
   'loot',
   'road',
+  'craft',
 ] as const;
 export type StreamName = (typeof STREAMS)[number];
 

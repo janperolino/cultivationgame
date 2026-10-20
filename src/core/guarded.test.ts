@@ -409,7 +409,7 @@ describe('the save', () => {
     raw.version = 41;
     raw.state.world.states = raw.state.world.states.filter((x) => x.data.kind !== 'vow');
     const back = loadSave(raw);
-    expect(back.version).toBe(42);
+    expect(back.version).toBe(43);
     expect(oathFor(back.state.world, YOU, GATE, 0)).toBeDefined();
   });
 });

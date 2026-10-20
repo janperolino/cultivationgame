@@ -39,6 +39,7 @@ const BASE_HEIGHT: Record<Manual['kind'], number> = {
   style: 130,
   scripture: 136,
   inheritance: 136,
+  recipe: 110,
 };
 
 /** A spine's height in px: its kind's, and 4 more a node up to four, never past 146. */
