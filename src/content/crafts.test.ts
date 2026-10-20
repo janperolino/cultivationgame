@@ -11,6 +11,9 @@ import {
   RECIPES,
   REFINING_MAKES,
   REFINING_PROPERTIES,
+  ESCAPE_THROUGH,
+  STRIKE_NEEDS,
+  TALISMAN_MAKES,
   recipeHours,
 } from './crafts.ts';
 import { ITEMS, item, itemKind } from './items.ts';
@@ -109,12 +112,54 @@ describe('the recipes', () => {
     }
   });
 
+  it('give every talisman a recipe (K5)', () => {
+    for (const t of ITEMS.filter((i) => itemKind(i) === 'talisman'))
+      expect(
+        RECIPES.some((r) => r.output === t.id && r.craft === 'talismans'),
+        t.id,
+      ).toBe(true);
+  });
+
+  it('could each make their talisman by talismans’ row of the effect table', () => {
+    for (const r of RECIPES.filter((x) => x.craft === 'talismans')) {
+      const ins = r.inputs.map((i) => item(i.thing));
+      const props = new Set(ins.flatMap((i) => i.uses.ingredient?.properties ?? []));
+      const elements = new Set(ins.map((i) => i.element));
+      const uses = item(r.output).uses;
+      const made = (Object.keys(TALISMAN_MAKES) as (keyof typeof TALISMAN_MAKES)[]).filter(
+        (k) => uses[k],
+      );
+      expect(made.length, r.output).toBe(1);
+      for (const k of made)
+        expect(
+          TALISMAN_MAKES[k].some((p) => props.has(p)),
+          `${r.output} needs ${TALISMAN_MAKES[k].join(' or ')}`,
+        ).toBe(true);
+      const strike = uses.fight;
+      if (strike) {
+        const needs = STRIKE_NEEDS[strike.damage];
+        if (needs) expect(props.has(needs), `${r.output} needs ${needs}`).toBe(true);
+        else if (strike.damage !== 'physical')
+          expect(elements.has(strike.damage as never), `${r.output} needs ${strike.damage}`).toBe(
+            true,
+          );
+      }
+      if (uses.escape)
+        expect(
+          ESCAPE_THROUGH.some((e) => elements.has(e)),
+          `${r.output} goes through earth or water`,
+        ).toBe(true);
+    }
+  });
+
   it('file each in one of its craft’s families, at its craft’s hours by tier', () => {
     for (const r of RECIPES) expect(FAMILIES[r.family].craft).toBe(r.craft);
     expect(recipeHours(RECIPES.find((r) => r.output === 'qi-gathering-pill')!)).toBe(3);
     expect(recipeHours(RECIPES.find((r) => r.output === 'core-blood-pill')!)).toBe(4.5);
     expect(recipeHours(RECIPES.find((r) => r.output === 'iron-sword')!)).toBe(8);
     expect(recipeHours(RECIPES.find((r) => r.output === 'azure-cloud-sword')!)).toBe(12);
+    expect(recipeHours(RECIPES.find((r) => r.output === 'ember-talisman')!)).toBe(2);
+    expect(recipeHours(RECIPES.find((r) => r.output === 'shade-hiding-talisman')!)).toBe(3);
   });
 
   it('each have a slip of one node teaching it, lotted where its good is', () => {

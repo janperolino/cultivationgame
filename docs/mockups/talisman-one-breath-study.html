@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>One-breath study (K5): the stroke traced without lifting as the qi ink thins</title>
+<style>
+  :root {
+    --void: #040507; --glass: rgb(10 12 16 / 0.8); --edge: rgb(255 255 255 / 0.075);
+    --edge-strong: rgb(255 255 255 / 0.14); --text: #e9e5da; --muted: #8d949d;
+    --accent: #d6ab4c; --gilt: #d9b46a; --warn: #e08a6a; --cinnabar: #c8402c;
+    --rarity-white: #ece8de; --rarity-green: #7fca8c; --rarity-blue: #6ea6f0;
+    --font-display: 'Cormorant Garamond', Georgia, serif; --font-ui: Inter, system-ui, 'Segoe UI', sans-serif;
+  }
+  html, body { margin: 0; height: 100%; background: var(--void); color: var(--text); font: 15px/1.45 var(--font-ui); overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0;
+    background: radial-gradient(1200px 700px at 55% 40%, #14110c 0%, #07080b 60%, #040507 100%); }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(7 8 11 / 0.96); border-right: 1px solid var(--edge); }
+  .rail i { display: block; width: 28px; height: 28px; margin: 22px auto; border-radius: 6px; background: rgb(255 255 255 / 0.06); }
+  .rail i.on { background: color-mix(in srgb, var(--accent) 40%, transparent); }
+  .screen { position: absolute; left: 72px; right: 0; top: 0; bottom: 0; padding: 40px 48px; box-sizing: border-box; }
+  h1 { font: 500 34px var(--font-display); margin: 0 0 4px; letter-spacing: .02em; }
+  h1 .hz { color: var(--muted); font-size: 22px; margin-left: 8px; }
+  .pages { display: flex; gap: 22px; align-items: baseline; margin: 6px 0 22px; color: var(--muted); }
+  .pages b { color: var(--text); font-weight: 500; border-bottom: 1px solid var(--accent); padding-bottom: 3px; }
+  .cols { display: grid; grid-template-columns: 380px 1fr 400px; gap: 22px; height: 880px; }
+  .panel { background: var(--glass); border: 1px solid var(--edge); border-radius: 10px; padding: 20px 22px; box-sizing: border-box; overflow: hidden; }
+  .ph { font: 500 13px var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  .panel > .ph:not(:first-child) { margin-top: 26px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { padding: 8px 0; border-bottom: 1px solid var(--edge); display: flex; justify-content: space-between; gap: 10px; }
+  .muted { color: var(--muted); }
+  .white { color: var(--rarity-white); } .green { color: var(--rarity-green); } .blue { color: var(--rarity-blue); }
+  .sel { background: rgb(214 171 76 / 0.08); border-radius: 6px; padding-left: 8px; padding-right: 8px; cursor: pointer; }
+  li.pick { cursor: pointer; }
+  .desk { position: relative; padding: 0; display: flex; flex-direction: column; align-items: center; }
+  canvas { display: block; margin-top: 18px; cursor: crosshair; }
+  .say { position: absolute; left: 0; right: 0; bottom: 26px; text-align: center; color: var(--muted); font-size: 14px; }
+  .meter { height: 8px; background: rgb(255 255 255 / 0.06); border-radius: 4px; overflow: hidden; margin: 6px 0 4px; }
+  .meter b { display: block; height: 100%; background: var(--gilt); width: 0; transition: width .25s; }
+  .big { font: 500 30px var(--font-display); }
+  .note { color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .res { font-family: var(--font-display); font-size: 18px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i></div>
+  <div class="screen">
+    <h1>Crafts <span class="hz">艺</span></h1>
+    <div class="pages"><span>Alchemy</span><span>Artifact Refining</span><b>Talisman Drawing</b><span>Formation Inscribing</span><span>Spirit Farming</span></div>
+    <div class="cols">
+      <div class="panel">
+        <div class="ph">Bench</div>
+        <ul>
+          <li><span>Ember Talisman ×5</span><span class="muted">2 craft hours</span></li>
+          <li><span>Golden Light Talisman ×5</span><span class="muted">queued</span></li>
+        </ul>
+        <div class="ph">Tool</div>
+        <ul><li><span>Wolf-Hair Talisman Brush <span class="muted">狼毫符笔</span></span><span class="white">white, tier 1</span></li></ul>
+        <div class="ph">Recipes known <span class="muted" style="text-transform:none;letter-spacing:0">(click to change the path)</span></div>
+        <ul id="recipes">
+          <li class="pick" data-p="strike"><span>Ember Talisman <span class="muted">火符</span></span><span class="muted">Strikes</span></li>
+          <li class="pick" data-p="ward"><span>Golden Light Talisman <span class="muted">金光符</span></span><span class="muted">Wards</span></li>
+          <li class="pick" data-p="passage"><span>Divine Travel Talisman <span class="muted">神行符</span></span><span class="muted">Passage</span></li>
+          <li class="pick" data-p="fix"><span>Body-Fixing Talisman <span class="muted">定身符</span></span><span class="muted">Wards</span></li>
+        </ul>
+        <p class="note" style="margin-top:22px">Each sheet: talisman paper and the recipe's ink (cinnabar for fire, beast blood, gold dust). A batch of five in two craft hours; the hand is the mean of the sheets drawn over its hours.</p>
+      </div>
+
+      <div class="panel desk">
+        <canvas id="cv" width="760" height="760" style="width:760px;height:760px"></canvas>
+        <div class="say" id="say">Press on the vermilion head and draw the whole talisman in one breath. Don't lift.</div>
+      </div>
+
+      <div class="panel">
+        <div class="ph">Steady hand</div>
+        <div class="big" id="hand">0.00</div>
+        <div class="meter"><b id="handbar"></b></div>
+        <div class="note" id="lift">At Comprehension, reach 1 band: lift 0.25 + hand × 1.</div>
+        <div class="ph">The breath</div>
+        <div class="note">The brush holds one breath of qi ink. It thins as you draw, by time, not by distance: dawdle and it runs dry before the foot. The thinner the ink, the narrower the line you must stay on, so the foot is the hard part; hurry the open curves to bank ink for it. Stray off the line and that stretch is spoiled; stray far and the qi snaps. Lift and the breath breaks.</div>
+        <div class="ph">Sheets this sitting</div>
+        <ul id="log"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const stage = document.getElementById('stage');
+function fit() { const k = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transformOrigin = 'center'; stage.style.transform = `translate(-50%,-50%) scale(${k})`; }
+addEventListener('resize', fit); fit();
+
+// ---- the rules (what core/talisman.ts would hold)
+const PAPER = { x: 230, y: 40, w: 300, h: 680 };
+const STEP = 4;               // px between path samples
+const PACE = 200;             // px a second the breath allows on average
+const SLACK = 1.15;           // the breath lasts the path at PACE, and this much more
+const BAND = [7, 19];         // the line's half-width when the ink is dry and when it is full
+const SNAP = 2.6;             // stray past this many bands and the qi snaps
+const START_REACH = 22;
+const SETTLE = 0.35;          // a sheet moves the hand this share toward its quality
+const LAY_S = 0.7, SHOW_S = 1.1;
+
+// ---- the paths, in the scene's frame
+function crown(cx, top) { // the head 符头: three hooks, like 敕
+  return [[cx - 60, top + 40], [cx - 40, top + 8], [cx - 22, top + 44], [cx, top], [cx + 22, top + 44], [cx + 40, top + 8], [cx + 60, top + 40], [cx + 10, top + 70], [cx, top + 100]];
+}
+function catmull(pts, step) {
+  const out = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const len = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+    const n = Math.max(2, Math.ceil(len / 1.5));
+    for (let k = 0; k < n; k++) {
+      const t = k / n, t2 = t * t, t3 = t2 * t;
+      out.push([0, 1].map((j) => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3)));
+    }
+  }
+  out.push(pts[pts.length - 1]);
+  // resample evenly
+  const res = [out[0]]; let acc = 0;
+  for (let i = 1; i < out.length; i++) {
+    const d = Math.hypot(out[i][0] - out[i - 1][0], out[i][1] - out[i - 1][1]); acc += d;
+    if (acc >= step) { res.push(out[i]); acc = 0; }
+  }
+  res.push(out[out.length - 1]);
+  return res;
+}
+const CX = 380, TOP = 90;
+const PATHS = {
+  // Strikes 攻: a flame crown, a zigzag bolt down the body, a knot, a sharp tail.
+  strike: [...crown(CX, TOP), [CX - 70, TOP + 170], [CX + 70, TOP + 230], [CX - 70, TOP + 300], [CX + 70, TOP + 360], [CX - 20, TOP + 420], [CX - 60, TOP + 470], [CX, TOP + 500], [CX + 50, TOP + 460], [CX, TOP + 430], [CX, TOP + 540], [CX - 30, TOP + 600]],
+  // Wards 护: the crown, then a square spiral turning in to the gall 符胆.
+  ward: [...crown(CX, TOP), [CX - 100, TOP + 160], [CX - 100, TOP + 590], [CX + 100, TOP + 590], [CX + 100, TOP + 230], [CX - 45, TOP + 230], [CX - 45, TOP + 520], [CX + 45, TOP + 520], [CX + 45, TOP + 330], [CX, TOP + 380]],
+  // Passage 行: the crown, then long cloud curves sweeping down and off the foot.
+  passage: [...crown(CX, TOP), [CX + 90, TOP + 150], [CX + 80, TOP + 230], [CX - 90, TOP + 260], [CX - 90, TOP + 340], [CX + 90, TOP + 370], [CX + 90, TOP + 450], [CX - 80, TOP + 480], [CX - 70, TOP + 560], [CX + 40, TOP + 590], [CX + 110, TOP + 560]],
+  // Body-Fixing 定: the crown, a 定-like roof, a long straight spine, crossbars, a nail at the foot.
+  fix: [...crown(CX, TOP), [CX - 90, TOP + 150], [CX + 90, TOP + 150], [CX, TOP + 190], [CX, TOP + 330], [CX - 80, TOP + 330], [CX + 80, TOP + 330], [CX, TOP + 370], [CX, TOP + 480], [CX - 80, TOP + 520], [CX + 80, TOP + 520], [CX, TOP + 560], [CX, TOP + 610]],
+};
+let pathId = 'strike';
+let path = catmull(PATHS[pathId], STEP);
+let total = path.length - 1;
+
+// ---- the sitting
+const S = { hand: 0, phase: 'lay', at: 0, t: 0, ink: 1, idx: 0, down: false, on: [], broke: null, q: 0, drawn: 0, pts: [] };
+function newSheet() { Object.assign(S, { phase: 'lay', at: S.t, ink: 1, idx: 0, down: false, on: new Array(total).fill(null), broke: null, q: 0, pts: [] }); }
+newSheet();
+const inkSeconds = () => (total * STEP) / PACE * SLACK;
+const band = () => BAND[0] + (BAND[1] - BAND[0]) * S.ink;
+
+// The brush's place on the path: the nearest sample a little behind or ahead of where it was, and
+// never further ahead than the brush really moved, so a hook folding back on itself can't be skipped.
+function nearest(x, y, moved) {
+  let best = -1, bd = Infinity;
+  const lo = Math.max(0, S.idx - 15), hi = Math.min(path.length - 1, S.idx + 2 + Math.ceil(moved / STEP));
+  for (let i = lo; i <= hi; i++) { const d = Math.hypot(path[i][0] - x, path[i][1] - y); if (d < bd) { bd = d; best = i; } }
+  return { i: best, d: bd };
+}
+function finish(broke) {
+  const good = S.on.filter((v) => v === true).length;
+  S.q = broke ? 0 : good / total;
+  S.broke = broke;
+  S.hand += (S.q - S.hand) * SETTLE;
+  S.phase = 'show'; S.at = S.t; S.down = false; S.drawn++;
+  const word = broke ? broke : S.q >= 0.9 ? '妙 flawless' : S.q >= 0.7 ? '成 drawn' : '粗 rough';
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="res">Sheet ${S.drawn}: ${word}</span><span class="muted">${broke ? '0.00' : S.q.toFixed(2)}</span>`;
+  const log = document.getElementById('log'); log.prepend(li); while (log.children.length > 9) log.lastChild.remove();
+  document.getElementById('hand').textContent = S.hand.toFixed(2);
+  document.getElementById('handbar').style.width = `${S.hand * 100}%`;
+  const lift = 0.25 + S.hand;
+  document.getElementById('lift').textContent = `At Comprehension, reach 1 band: lift 0.25 + hand × 1 = ${lift.toFixed(2)}, ${lift >= 1 ? 'green for certain' : 'green ' + Math.round(lift * 100) + '%'}${lift > 1 ? ', blue ' + Math.round((lift - 1) * 100) + '%' : ''}.`;
+}
+
+const cv = document.getElementById('cv'), g = cv.getContext('2d');
+const DPR = Math.min(2, devicePixelRatio || 1); cv.width = 760 * DPR; cv.height = 760 * DPR; g.scale(DPR, DPR);
+function toScene(e) {
+  const r = cv.getBoundingClientRect();
+  return [((e.clientX - r.left) / r.width) * 760, ((e.clientY - r.top) / r.height) * 760];
+}
+cv.addEventListener('pointerdown', (e) => {
+  if (S.phase !== 'ready') return;
+  const [x, y] = toScene(e);
+  if (Math.hypot(x - path[0][0], y - path[0][1]) > START_REACH) return;
+  cv.setPointerCapture(e.pointerId);
+  S.phase = 'draw'; S.down = true; S.pts = [[x, y, S.ink]];
+});
+cv.addEventListener('pointermove', (e) => {
+  if (S.phase !== 'draw') return;
+  const [x, y] = toScene(e);
+  const [px, py] = S.pts[S.pts.length - 1];
+  const n = nearest(x, y, Math.hypot(x - px, y - py)), b = band();
+  S.pts.push([x, y, S.ink, n.d <= b]);
+  if (n.d > b * SNAP) return finish('断 the qi snapped');
+  if (n.i > S.idx) { for (let i = S.idx; i < n.i; i++) if (S.on[i] === null) S.on[i] = n.d <= b; S.idx = n.i; }
+  if (S.idx >= path.length - 3) { for (let i = 0; i < total; i++) if (S.on[i] === null) S.on[i] = false; finish(null); }
+});
+cv.addEventListener('pointerup', () => { if (S.phase === 'draw') finish('散 the breath broke'); });
+document.querySelectorAll('#recipes li').forEach((li) => li.addEventListener('click', () => {
+  document.querySelectorAll('#recipes li').forEach((o) => o.classList.remove('sel')); li.classList.add('sel');
+  pathId = li.dataset.p; path = catmull(PATHS[pathId], STEP); total = path.length - 1; newSheet();
+}));
+document.querySelector('#recipes li').classList.add('sel');
+
+function step(dt) {
+  S.t += dt;
+  if (S.phase === 'lay' && S.t - S.at >= LAY_S) S.phase = 'ready';
+  if (S.phase === 'draw') { S.ink -= dt / inkSeconds(); if (S.ink <= 0) { S.ink = 0; finish('枯 the ink ran dry'); } }
+  if (S.phase === 'show' && S.t - S.at >= SHOW_S) newSheet();
+  const say = { lay: 'A fresh sheet…', ready: 'Press on the vermilion head and draw the whole talisman in one breath. Don\'t lift.', draw: 'Keep the breath. Stay on the line.', show: '' };
+  document.getElementById('say').textContent = say[S.phase];
+}
+
+function draw() {
+  g.clearRect(0, 0, 760, 760);
+  // the desk's glow, drawn flat
+  const slide = S.phase === 'lay' ? 1 - Math.min(1, (S.t - S.at) / LAY_S) : 0;
+  const away = S.phase === 'show' ? Math.min(1, (S.t - S.at) / SHOW_S) : 0;
+  g.save();
+  g.translate(slide * 420 + (away > 0.6 ? (away - 0.6) * 900 : 0), 0);
+  // the paper
+  const spoiled = S.phase === 'show' && S.broke;
+  g.fillStyle = spoiled ? '#6d6450' : '#d8b65e';
+  g.fillRect(PAPER.x, PAPER.y, PAPER.w, PAPER.h);
+  g.strokeStyle = 'rgba(120,70,20,0.35)'; g.lineWidth = 2; g.strokeRect(PAPER.x + 8, PAPER.y + 8, PAPER.w - 16, PAPER.h - 16);
+  // the path's ghost
+  g.strokeStyle = 'rgba(160,60,30,0.22)'; g.lineWidth = 2; g.setLineDash([3, 6]);
+  g.beginPath(); path.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke(); g.setLineDash([]);
+  // the head
+  if (S.phase === 'ready') { g.fillStyle = '#c8402c'; g.beginPath(); g.arc(path[0][0], path[0][1], 9, 0, Math.PI * 2); g.fill(); }
+  // the ink laid down: width by the ink it was laid with, astray stretches brown and thin
+  for (let i = 1; i < S.pts.length; i++) {
+    const [x0, y0] = S.pts[i - 1], [x1, y1, ink, ok] = S.pts[i];
+    g.strokeStyle = spoiled ? '#3b332a' : ok === false ? '#7a5a3a' : '#a3241a';
+    g.lineWidth = ok === false ? 2 : 3 + ink * 9; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  }
+  // flawless: one gold pass along the finished line, then gone
+  if (S.phase === 'show' && !S.broke && S.q >= 0.9 && away < 0.6) {
+    const k = Math.floor((away / 0.6) * path.length);
+    g.strokeStyle = 'rgba(255,215,120,0.9)'; g.lineWidth = 4;
+    g.beginPath(); for (let i = Math.max(0, k - 30); i < Math.min(path.length, k); i++) { const [x, y] = path[i]; i === Math.max(0, k - 30) ? g.moveTo(x, y) : g.lineTo(x, y); } g.stroke();
+  }
+  g.restore();
+  // the breath: a thin vertical stem beside the paper, the brush's ink
+  g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(588, 120, 6, 520);
+  g.fillStyle = S.ink > 0.25 ? '#c8402c' : '#e08a6a'; g.fillRect(588, 120 + 520 * (1 - S.ink), 6, 520 * S.ink);
+  g.fillStyle = '#8d949d'; g.font = '13px Inter, system-ui'; g.fillText('墨 ink', 572, 660);
+  // the band, shown round the brush while drawing
+  if (S.phase === 'draw' && S.pts.length) {
+    const [x, y] = S.pts[S.pts.length - 1];
+    g.strokeStyle = 'rgba(217,180,106,0.45)'; g.lineWidth = 1; g.beginPath(); g.arc(x, y, band(), 0, Math.PI * 2); g.stroke();
+  }
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  step(dt); draw(); requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

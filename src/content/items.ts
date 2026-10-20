@@ -172,6 +172,39 @@ export interface HideUse {
   tier: number;
 }
 
+/**
+ * A ward (K5, Golden Light 金光符): a main action that lays a gold ward over your qi shield, past
+ * its cap, for the fight: this share of a full qi shield at the talisman's rung, times its rarity.
+ */
+export interface WardUse {
+  share: number;
+}
+
+/**
+ * Holding a foe still (K5, Body-Fixing 定身符, the binding rope 捆仙绳): a main action that holds
+ * one foe, no main action and no fleeing, for these turns, on its rung against the foe's soul; a
+ * foe a realm above its tier shrugs it off. `keep`: it is not spent, but used once a fight.
+ */
+export interface FixUse {
+  turns: number;
+  keep?: boolean;
+}
+
+/**
+ * An escape talisman (K5, Earth Escape 土遁符): in a fight a sure flee from foes up to its tier,
+ * unless you are held or rooted; on the road it is burned by rule when a flee would fall short.
+ */
+export interface EscapeUse {
+  /** The ground it goes through, for the words: earth for Earth Escape. */
+  through: string;
+}
+
+/** A road talisman (K5, Divine Travel 神行符): burned from the Bag, your pace on foot times this for days. */
+export interface SwiftUse {
+  pace: number;
+  days: number;
+}
+
 /** A craft's tool (K1): a furnace, a forge, a brush or an array plate; its tier caps the recipes it works. */
 export interface ToolUse {
   craft: CraftId;
@@ -196,6 +229,10 @@ export interface ItemUses {
   chart?: ChartUse;
   hide?: HideUse;
   tool?: ToolUse;
+  ward?: WardUse;
+  fix?: FixUse;
+  escape?: EscapeUse;
+  swift?: SwiftUse;
 }
 
 /**

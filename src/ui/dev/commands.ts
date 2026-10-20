@@ -23,7 +23,7 @@ import { addFame } from '../../core/resolver/names.ts';
 import { SEAT_IDS, type SeatId } from '../../content/organizations.ts';
 import { hasJob, job, JOBS } from '../../content/jobs.ts';
 import { BRANCHES } from '../../content/hours.ts';
-import { RECIPES, hasRecipe, recipe } from '../../content/crafts.ts';
+import { RECIPES, STARTER_TOOLS, hasRecipe, recipe } from '../../content/crafts.ts';
 import { slipId } from '../../content/catalogs/index.ts';
 import { jobsView, quitJob, takeJob } from '../../core/jobs.ts';
 import {
@@ -668,7 +668,7 @@ export const COMMANDS: Record<string, Command> = {
   },
   craft: {
     usage: 'craft [recipe] [mastery batches]',
-    help: 'Sets up a crafter (K1, K4): its craft’s crude tool (a clay furnace, an iron forge), the recipe known (the Qi-Gathering Pill unless told), inputs for five batches, four Craft hours from 辰, and the family at that many batches. `craft iron-sword` makes a refiner.',
+    help: 'Sets up a crafter (K1, K4): its craft’s crude tool (a clay furnace, an iron forge, a wolf-hair brush), the recipe known (the Qi-Gathering Pill unless told), inputs for five batches, four Craft hours from 辰, and the family at that many batches. `craft iron-sword` makes a refiner, `craft ember-talisman` a talisman master.',
     run([id, batches], store) {
       const r = id ?? 'qi-gathering-pill';
       if (!hasRecipe(r)) return `No recipe ${r}: ${RECIPES.map((x) => x.output).join(', ')}.`;
@@ -678,7 +678,7 @@ export const COMMANDS: Record<string, Command> = {
         store,
         (s) => {
           const rec = recipe(r);
-          const tool = rec.craft === 'refining' ? 'crude-iron-forge' : 'crude-clay-furnace';
+          const tool = STARTER_TOOLS[rec.craft] ?? 'crude-clay-furnace';
           let c = addItem(s.player, tool, 1);
           for (const i of rec.inputs) c = addItem(c, i.thing, i.count * 5);
           const node = `${slipId(r)}-node`;

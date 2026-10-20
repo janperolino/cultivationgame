@@ -192,6 +192,19 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
         text: 'Thick and nearly black. The Wall burns anyone it catches carrying it.',
       },
     ],
+    // Its talisman's recipe (K5), drawn with the moulted pinion its line tells of.
+    recipes: [
+      {
+        output: 'roc-feather-talisman',
+        craft: 'talismans',
+        family: 'strikes',
+        inputs: [
+          { thing: 'yellow-talisman-paper', count: 5 },
+          { thing: 'cinnabar-ore', count: 1 },
+          { thing: 'beast-wing', count: 1 },
+        ],
+      },
+    ],
     lots: [
       { thing: 'roc-feather-talisman', shops: ['black-market'], count: [1, 2] },
       { thing: 'raider-beast-blood', shops: ['black-market'], weight: 0.6 },

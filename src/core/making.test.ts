@@ -162,8 +162,9 @@ describe('the line of why', () => {
       'Gathering pills run short: the cadet school eats them faster than the sutler stocks them, on thin qi.',
     );
     expect(whyOf(w, m(TERRACES), 0)).toMatch(/^Gathering pills run short: the cave clans/);
+    // The Wall's talismans outrank its healing pills since K5's escape and binding talismans.
     expect(whyOf(w, m(WALL), 0)).toBe(
-      'Healing pills run short: the patrols bleed along 9,000 li of wall faster than the stall stocks them.',
+      'Talismans run short: the patrols burn talismans on every watch.',
     );
     // Where nothing written is short, the biggest gap is a surplus: the March's millet.
     expect(whyOf(w, m('grain-ford'), REAPED * DAYS_PER_MONTH)).toBe(

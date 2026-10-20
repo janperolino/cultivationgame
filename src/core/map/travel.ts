@@ -31,6 +31,7 @@ import { fameOf } from '../resolver/names.ts';
 import { addStanding } from '../resolver/opinion.ts';
 import {
   addEvent,
+  addItem,
   itemCount,
   realmOf,
   withPlayer,
@@ -271,7 +272,38 @@ function basePace(s: GameState): number {
   if (w.id === 'fly' && realmIndex(realmOf(s.player)) >= 3) return NASCENT_FLIGHT_PACE;
   if (w.id === 'fly' && realmIndex(realmOf(s.player)) >= 2) return CORE_FLIGHT_PACE;
   if (!w.rideHours && roadRoutine(life).hours.includes('guard')) return GUARD_PACE;
-  return w.pace;
+  return w.pace * swiftPace(s);
+}
+
+/** A burned Divine Travel talisman's pace on foot while its day lasts (K5), else 1. */
+export function swiftPace(s: GameState): number {
+  const life = s.map;
+  const sw = life?.swift;
+  if (!life || !sw || sw.until <= s.calendar.day || wayOf(life).id !== ON_FOOT) return 1;
+  return sw.pace;
+}
+const ON_FOOT = 'light-step';
+
+export type BurnCheck = { ok: true; state: GameState } | { ok: false; reason: string };
+
+/**
+ * Burns a road talisman from the Bag (K5, Divine Travel 神行符): its wind is in your legs for its
+ * days, on foot. A second one burned while the first lasts adds nothing but the days.
+ */
+export function burnSwift(s: GameState, id: string): BurnCheck {
+  const life = s.map;
+  const use = hasItem(id) ? item(id).uses.swift : undefined;
+  if (!use) return { ok: false, reason: 'That is no road talisman.' };
+  if (!life) return { ok: false, reason: 'You are not on the road.' };
+  if (itemCount(s.player, id) <= 0) return { ok: false, reason: `You have no ${item(id).name}.` };
+  if (wayOf(life).id !== ON_FOOT) return { ok: false, reason: 'It speeds only your own legs.' };
+  const day = s.calendar.day;
+  const from = life.swift && life.swift.until > day ? life.swift.until : day;
+  const st = withPlayer(s, addItem(s.player, id, -1));
+  return {
+    ok: true,
+    state: { ...st, map: { ...life, swift: { until: from + use.days, pace: use.pace } } },
+  };
 }
 
 /** The dev console's `fast`: a multiplier on every pace, 1 outside it. Never saved. */

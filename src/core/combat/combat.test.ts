@@ -332,7 +332,10 @@ describe('damage', () => {
   it('gives each of the eleven types its resistance, and all but physical a status', () => {
     expect(DAMAGE_TYPES).toHaveLength(11);
     expect(DAMAGE_TYPES.filter((t) => !statusOf(t))).toEqual(['physical']);
-    expect(new Set(STATUSES.map((s) => s.from)).size).toBe(STATUSES.length);
+    // One status a type; held (K5) comes from no type.
+    const typed = STATUSES.flatMap((s) => ('from' in s ? [s.from] : []));
+    expect(new Set(typed).size).toBe(typed.length);
+    expect(STATUSES.filter((s) => !('from' in s)).map((s) => s.id)).toEqual(['held']);
     const wet = fighter({ id: 'a', name: 'A', side: 'a', resist: { water: 0.5 } });
     const f = startFight([
       fighter({
@@ -749,6 +752,79 @@ describe('items in a fight', () => {
     const r = turn(f, [{ actor: 'x', main: { type: 'item', id: 'qi-restoring-pill' } }]);
     expect(r.outcomes[0]).toMatchObject({ form: 'item', result: 'held', qi: -15 });
     expect(combatantIn(r.fight, 'x')).toMatchObject({ qi: 15, toxicity: 60 });
+  });
+
+  it('lay a Golden Light ward over the qi shield, past its cap (K5)', () => {
+    const x = fighter({
+      id: 'x',
+      name: 'X',
+      side: 'x',
+      maxShield: 20,
+      items: { 'golden-light-talisman': { item: item('golden-light-talisman'), n: 1 } },
+    });
+    const f = startFight([x, fighter({ id: 'y', name: 'Y', side: 'y' })]);
+    const r = turn(f, [{ actor: 'x', main: { type: 'item', id: 'golden-light-talisman' } }]);
+    // Half a full qi shield at a white tier 1 talisman's rung, Qi Condensation 1: 0.5 × 10 × 10.
+    expect(r.outcomes[0]).toMatchObject({ form: 'item', result: 'held' });
+    expect(combatantIn(r.fight, 'x')).toMatchObject({ shield: 70, maxShield: 20 });
+    expect(combatantIn(r.fight, 'x')!.items['golden-light-talisman']!.n).toBe(0);
+  });
+
+  it('hold a foe still with Body-Fixing: no main action, no fleeing, a realm up shrugs it off (K5)', () => {
+    const fix = { item: item('body-fixing-talisman'), n: 2 };
+    const x = fighter({ id: 'x', name: 'X', side: 'x', items: { 'body-fixing-talisman': fix } });
+    const f = startFight([x, fighter({ id: 'y', name: 'Y', side: 'y' })]);
+    const r = turn(
+      f,
+      [
+        { actor: 'x', main: { type: 'item', id: 'body-fixing-talisman', target: 'y' } },
+        { actor: 'y', main: { type: 'strike', target: 'x' } },
+      ],
+      SEED_HIT_30,
+    );
+    expect(r.outcomes[0]).toMatchObject({ result: 'hit', status: 'held', target: 'y' });
+    expect(r.skipped).toContainEqual({ actor: 'y', reason: 'held' });
+    const fled = turn(r.fight, [{ actor: 'y', main: { type: 'flee' } }]);
+    expect(combatantIn(fled.fight, 'y')!.state).toBe('fighting');
+    // A Foundation foe stands a realm above the tier 1 talisman.
+    const up = startFight([x, fighter({ id: 'y', name: 'Y', side: 'y', rungs: all(FE(1)) })]);
+    const shrug = turn(
+      up,
+      [{ actor: 'x', main: { type: 'item', id: 'body-fixing-talisman', target: 'y' } }],
+      SEED_HIT_30,
+    );
+    expect(shrug.outcomes[0]).toMatchObject({ result: 'failed' });
+  });
+
+  it('throw a binding rope once a fight and keep it (K5)', () => {
+    const rope = { item: item('binding-rope'), n: 1 };
+    const x = fighter({ id: 'x', name: 'X', side: 'x', items: { 'binding-rope': rope } });
+    const f = startFight([x, fighter({ id: 'y', name: 'Y', side: 'y' })]);
+    const use = [
+      { actor: 'x', main: { type: 'item', id: 'binding-rope', target: 'y' } },
+    ] as Action[];
+    const r = turn(f, use, SEED_HIT_30);
+    expect(r.outcomes[0]).toMatchObject({ status: 'held' });
+    expect(combatantIn(r.fight, 'x')!.items['binding-rope']!.n).toBe(1);
+    expect(turn(r.fight, use, SEED_HIT_30).skipped).toEqual([
+      { actor: 'x', reason: 'Immortal-Binding Rope is spent this fight' },
+    ]);
+  });
+
+  it('flee for sure with Earth Escape, unless held or a foe stands above its tier (K5)', () => {
+    const esc = () => ({ item: item('earth-escape-talisman'), n: 1 });
+    const x = () =>
+      fighter({ id: 'x', name: 'X', side: 'x', items: { 'earth-escape-talisman': esc() } });
+    const use = [{ actor: 'x', main: { type: 'item', id: 'earth-escape-talisman' } }] as Action[];
+    const fast = fighter({ id: 'y', name: 'Y', side: 'y', agility: 40 });
+    const r = turn(startFight([x(), fast]), use);
+    expect(r.outcomes[0]).toMatchObject({ form: 'flee', result: 'escaped' });
+    expect(combatantIn(r.fight, 'x')!.state).toBe('fled');
+    const up = fighter({ id: 'y', name: 'Y', side: 'y', rungs: all(FE(1)) });
+    expect(turn(startFight([x(), up]), use).outcomes[0]).toMatchObject({ result: 'failed' });
+    const held = startFight([x(), fast]);
+    combatantIn(held, 'x')!.statuses = [{ id: 'held', turns: 1, dot: 0, since: 1 }];
+    expect(turn(held, use).skipped).toEqual([{ actor: 'x', reason: 'held' }]);
   });
 
   it('take gear as bands: a weapon at its full band on strikes and half on its Dao’s techniques', () => {

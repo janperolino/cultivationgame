@@ -199,9 +199,9 @@ describe('shops', () => {
     expect(stockOf('mouth-stall', 1300).map((l) => l.thing)).toMatchInlineSnapshot(`
       [
         "method:pine-wind",
-        "technique:piled-bones-thrust",
-        "method:bounty-scrap",
-        "manual:recipe-storage-pouch",
+        "technique:rampart-palm",
+        "method:cadet-spear",
+        "manual:recipe-spring-returning-pill",
         "method:market-stall",
         "manual:core-grading-eye",
       ]
@@ -444,9 +444,9 @@ describe('loot', () => {
         "items": {
           "beast-blood": 1,
           "beast-core": 1,
-          "method:terrace-climbing": 1,
+          "manual:recipe-bone-binding-talisman": 1,
+          "rockfall-talisman~green": 1,
           "stone-milk-pill": 4,
-          "technique:divine-sense-needles": 1,
         },
         "stones": 181,
       }

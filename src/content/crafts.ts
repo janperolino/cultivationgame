@@ -109,11 +109,38 @@ export const REFINING_PROPERTIES: readonly Property[] = [
 ];
 
 /**
+ * Talismans' row of the effect table (K5): what a sheet's inputs carry for its use. A strike takes
+ * a burning, chilling or sharp input (the cinnabar ink is burning) and an input of its element, a
+ * poison strike a toxic one and a soul strike a resonant one; an escape goes through earth or
+ * water, so it takes an input of either. A test checks the recipes.
+ */
+export const TALISMAN_MAKES = {
+  fight: ['burning', 'chilling', 'sharp'],
+  ward: ['hard'],
+  fix: ['binding'],
+  escape: ['swift'],
+  swift: ['swift'],
+  hide: ['concealing'],
+} as const satisfies Record<string, readonly Property[]>;
+export const STRIKE_NEEDS: Partial<Record<string, Property>> = {
+  poison: 'toxic',
+  soul: 'resonant',
+};
+export const ESCAPE_THROUGH: readonly Element[] = ['earth', 'water'];
+
+/**
  * Mending is refining (design § Production, commissions and the craft deck; K4): a craft hour a
  * tier of the piece at a whole forge of its tier, and one piece of what it was made of (its
  * recipe's first input, or this ore when it has none). It never fails and counts no mastery.
  */
 export const MEND = { hours: 1, ore: 'red-rocks-iron-ore' } as const;
+
+/** Each craft's starter tool, the crude one its shops sell (K1, K4, K5). */
+export const STARTER_TOOLS: Partial<Record<CraftId, string>> = {
+  alchemy: 'crude-clay-furnace',
+  refining: 'crude-iron-forge',
+  talismans: 'wolf-hair-talisman-brush',
+};
 
 /** The kind of tool each craft works with: a furnace, a forge, a brush and an array plate. */
 export const TOOL_KIND: ItemKind = 'tool';

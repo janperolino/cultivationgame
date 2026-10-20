@@ -45,6 +45,24 @@ export function useLines(it: Item): string[] {
       `Thrown in a fight: a ${u.fight.damage} ${u.fight.form} of power ${u.fight.power}, spent on use.`,
     );
   }
+  if (u.ward)
+    out.push(
+      `In a fight: a gold ward over your qi shield, past its cap, ${Math.round(u.ward.share * 100)}% of a full shield at its rung; spent on use.`,
+    );
+  if (u.fix)
+    out.push(
+      u.fix.keep
+        ? `In a fight, once a fight: holds a foe still ${u.fix.turns === 1 ? 'a turn' : `${u.fix.turns} turns`}, no strike and no step, against their soul; it comes back to you.`
+        : `In a fight: holds a foe still ${u.fix.turns === 1 ? 'a turn' : `${u.fix.turns} turns`}, no strike and no step, against their soul; spent on use.`,
+    );
+  if (u.escape)
+    out.push(
+      `A sure flee through the ${u.escape.through}, in a fight or on the road, from anyone up to its tier; burned by rule when a flee on the road would fall short.`,
+    );
+  if (u.swift)
+    out.push(
+      `Burned on the road: ×${u.swift.pace} your pace on foot for ${u.swift.days === 1 ? 'a day' : `${u.swift.days} days`}.`,
+    );
   if (u.offer) {
     const tags = u.offer.tags.length ? listWords([...u.offer.tags]) : 'the gate itself';
     const ladder = u.offer.ladder ? `, doubled on the ${u.offer.ladder}` : '';

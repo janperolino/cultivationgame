@@ -230,6 +230,16 @@ function Arena({ f, me }: { f: Fight; me: Combatant }) {
   );
 }
 
+/** What a fight item does, in a word under its button. */
+function itemWord(it: Combatant['items'][string]['item']): string {
+  const u = it.uses;
+  if (u.fight) return u.fight.damage;
+  if (u.ward) return 'a gold ward over your shield';
+  if (u.fix) return u.fix.keep ? 'holds a foe, once a fight' : 'holds a foe a turn';
+  if (u.escape) return `a sure flee through the ${u.escape.through}`;
+  return 'restores';
+}
+
 function Actions({ f, me }: { f: Fight; me: Combatant }) {
   const target = useFight((s) => s.target) ?? '';
   const result = useFight((s) => s.result);
@@ -238,7 +248,11 @@ function Actions({ f, me }: { f: Fight; me: Combatant }) {
   const items = Object.values(me.items).filter(
     (h) =>
       h.n > 0 &&
-      (h.item.uses.fight || h.item.uses.consume?.effects.some((e) => e.effect === 'restore')),
+      (h.item.uses.fight ||
+        h.item.uses.ward ||
+        h.item.uses.fix ||
+        h.item.uses.escape ||
+        h.item.uses.consume?.effects.some((e) => e.effect === 'restore')),
   );
   const flurry = mod(me, 'flurry') > 0 && me.weapon.kind === 'fist';
   return (
@@ -309,7 +323,7 @@ function Actions({ f, me }: { f: Fight; me: Combatant }) {
                 me={me.id}
                 m={{ type: 'item', id: h.item.id, target }}
                 name={`${h.item.name} (${h.n})`}
-                extra={h.item.uses.fight ? h.item.uses.fight.damage : 'restores'}
+                extra={itemWord(h.item)}
               />
             ))}
           </div>

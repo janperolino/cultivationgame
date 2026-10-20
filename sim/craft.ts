@@ -11,10 +11,11 @@
 // Played (K3): the same months sat at the furnace at a 0.8 hand, which should beat queuing by a
 // fair margin, at least ×1.5 the queued net at each level (the steady hand moves only rarity).
 // Refining (K4): the same month at a crude iron forge, `npm run sim -- craft iron-sword`; a piece
-// takes eight craft hours, so the net is still per four of them.
+// takes eight craft hours, so the net is still per four of them. Talismans (K5): the same at a
+// wolf-hair brush, `npm run sim -- craft ember-talisman`, five sheets in two craft hours.
 // Run: npm run sim -- craft [recipe]
 import { DAYS_PER_MONTH, DAYS_PER_YEAR } from '../src/content/calendar.ts';
-import { CRAFT_MASTERY, recipe, recipeHours } from '../src/content/crafts.ts';
+import { CRAFT_MASTERY, STARTER_TOOLS, recipe, recipeHours } from '../src/content/crafts.ts';
 import { baseOf, item } from '../src/content/items.ts';
 import { GATHER } from '../src/content/map/travel.ts';
 import { slipId } from '../src/content/catalogs/index.ts';
@@ -27,7 +28,7 @@ import { SHOPS } from '../src/content/shops.ts';
 import { addItem, newLife, withPlayer, type GameState } from '../src/core/state.ts';
 
 const RECIPE = process.argv[3] ?? 'qi-gathering-pill';
-const TOOL = recipe(RECIPE).craft === 'refining' ? 'crude-iron-forge' : 'crude-clay-furnace';
+const TOOL = STARTER_TOOLS[recipe(RECIPE).craft]!;
 const HOURS = 4;
 const DAYS = DAYS_PER_MONTH;
 const DUTY_DAY = 1.5;

@@ -314,6 +314,8 @@ export interface ExitView {
   /** Why it can't be chosen now. */
   refused: string | null;
   tried: boolean;
+  /** An escape talisman the flee burns to come clear (K5), by rule. */
+  burns?: string;
 }
 
 function faced(m: Met, e: Exit): Actor[] {
@@ -330,83 +332,109 @@ function readsAll(you: Actor, them: readonly Actor[]): boolean {
 const round = (n: number) => (Number.isFinite(n) ? Math.max(1, Math.round(n)) : '∞');
 
 export function exitViews(s: GameState, m: Met): ExitView[] {
-  return m.template.exits.map((exit, i) => {
-    const tried = m.enc.tried.includes(i);
-    let refused: string | null = tried ? 'Tried, and it fell short: nothing has changed.' : null;
-    if (exit.cost?.stones && !canPay(stonesOf(s.player), exit.cost.stones))
-      refused = `It costs ${exit.cost.stones} low-grade stones.`;
-    if (exit.cost?.item && itemCount(s.player, exit.cost.item) <= 0)
-      refused = `You have no ${hasItem(exit.cost.item) ? item(exit.cost.item).name : exit.cost.item}.`;
-    // The law hall's fine is taken only from a face it marked, at cold and up; while it knows your
-    // face it won't let you walk on (O5).
-    const fines = [exit.pass, exit.close, exit.short].some((o) =>
-      o?.stakes?.some((k) => k.do === 'fine'),
-    );
-    const mark = m.template.where.lawHall && m.enc.power ? yourMark(s, m.enc.power) : null;
-    if (fines && !refused) {
-      if (!mark) refused = 'They hold nothing against you.';
-      else if (mark.onSight) refused = 'They won’t take a fine from you now.';
-      else if (!canPay(stonesOf(s.player), mark.fine)) refused = `The fine is ${mark.fineWords}.`;
-    }
-    if (mark && exit.road === 'pass' && !refused)
-      refused = 'They know your face; they won’t let you walk on.';
-    const them = faced(m, exit);
-    if (exit.road === 'fight') {
-      const edge = fightEdge(m.you.combatant!, them.map((a) => a.combatant!).filter(Boolean));
-      const judged = readsAll(m.you, them) ? edge.verdict : '?';
-      const why =
-        judged === '?'
-          ? 'fight · you can’t read them'
-          : edge.costs >= 1
-            ? `fight · you’d fall before they do: ${round(edge.yours)} exchanges to fell them, ${round(edge.theirs)} to fell you`
-            : `fight · you’d fell them in ${round(edge.yours)} exchanges, at about ${Math.round(edge.costs * 100)}% of your strength (×${edge.ratio >= 10 ? '10+' : edge.ratio.toFixed(2)})`;
-      return { i, exit, verdict: edge.verdict, judged, why, refused, tried };
-    }
-    if (exit.road === 'take' || exit.road === 'pass' || exit.road === 'deal') {
-      const why =
-        exit.road === 'deal'
-          ? fines
-            ? mark
-              ? `the fine: ${mark.fineWords}${mark.slip ? ' and the slip' : ''}`
-              : 'a fine'
-            : exit.cost?.stones
-              ? `${exit.cost.stones} low-grade stones`
-              : exit.cost?.item
-                ? `one ${hasItem(exit.cost.item) ? item(exit.cost.item).name : exit.cost.item}`
-                : 'a deal'
-          : exit.road === 'take'
-            ? 'an hour off your road'
-            : 'walk on';
-      return { i, exit, verdict: 'clear', judged: 'clear', why, refused, tried };
-    }
-    const target = them[0];
-    const check = checkFor(
-      s,
-      m.scene,
-      m.you,
-      step(exit.act, target && exit.road === 'talk' ? { target: target.id } : {}),
-    );
-    if (!check)
-      return {
-        i,
-        exit,
-        verdict: 'clear',
-        judged: 'clear',
-        why: 'nothing stands against it',
-        refused,
-        tried,
-      };
-    const words: Record<string, string> = {
-      sneak: 'Stealth against their senses',
-      hide: 'Stealth with the cover against their senses',
-      flee: 'Speed against theirs',
-      threaten: 'your presence against their nerve',
-    };
+  return m.template.exits.map((exit, i) => withEscape(s, m, exitView(s, m, exit, i)));
+}
+
+/**
+ * A flee that would fall short burns an escape talisman by rule (K5, Earth Escape 土遁符), the
+ * lowest that reaches the tier of whoever it flees, and comes clear.
+ */
+function withEscape(s: GameState, m: Met, v: ExitView): ExitView {
+  if (v.exit.act !== 'flee' || v.verdict === 'clear' || v.refused) return v;
+  const top = Math.max(1, ...faced(m, v.exit).map((a) => tierOfRealm(realmOfTop(a))));
+  const tal = Object.keys(s.player.items)
+    .filter(
+      (id) =>
+        itemCount(s.player, id) > 0 && hasItem(id) && item(id).uses.escape && item(id).tier >= top,
+    )
+    .sort((a, b) => item(a).tier - item(b).tier)[0];
+  if (!tal) return v;
+  const it = item(tal);
+  return {
+    ...v,
+    verdict: 'clear',
+    judged: 'clear',
+    why: `an ${it.name} burned: you go through the ${it.uses.escape!.through}`,
+    burns: tal,
+  };
+}
+
+function exitView(s: GameState, m: Met, exit: Exit, i: number): ExitView {
+  const tried = m.enc.tried.includes(i);
+  let refused: string | null = tried ? 'Tried, and it fell short: nothing has changed.' : null;
+  if (exit.cost?.stones && !canPay(stonesOf(s.player), exit.cost.stones))
+    refused = `It costs ${exit.cost.stones} low-grade stones.`;
+  if (exit.cost?.item && itemCount(s.player, exit.cost.item) <= 0)
+    refused = `You have no ${hasItem(exit.cost.item) ? item(exit.cost.item).name : exit.cost.item}.`;
+  // The law hall's fine is taken only from a face it marked, at cold and up; while it knows your
+  // face it won't let you walk on (O5).
+  const fines = [exit.pass, exit.close, exit.short].some((o) =>
+    o?.stakes?.some((k) => k.do === 'fine'),
+  );
+  const mark = m.template.where.lawHall && m.enc.power ? yourMark(s, m.enc.power) : null;
+  if (fines && !refused) {
+    if (!mark) refused = 'They hold nothing against you.';
+    else if (mark.onSight) refused = 'They won’t take a fine from you now.';
+    else if (!canPay(stonesOf(s.player), mark.fine)) refused = `The fine is ${mark.fineWords}.`;
+  }
+  if (mark && exit.road === 'pass' && !refused)
+    refused = 'They know your face; they won’t let you walk on.';
+  const them = faced(m, exit);
+  if (exit.road === 'fight') {
+    const edge = fightEdge(m.you.combatant!, them.map((a) => a.combatant!).filter(Boolean));
+    const judged = readsAll(m.you, them) ? edge.verdict : '?';
     const why =
-      words[exit.act] ??
-      (exit.road === 'talk' ? 'a talk: what you bring against what stands against it' : '');
-    return { i, exit, verdict: check.verdict, judged: check.judged, why, refused, tried };
-  });
+      judged === '?'
+        ? 'fight · you can’t read them'
+        : edge.costs >= 1
+          ? `fight · you’d fall before they do: ${round(edge.yours)} exchanges to fell them, ${round(edge.theirs)} to fell you`
+          : `fight · you’d fell them in ${round(edge.yours)} exchanges, at about ${Math.round(edge.costs * 100)}% of your strength (×${edge.ratio >= 10 ? '10+' : edge.ratio.toFixed(2)})`;
+    return { i, exit, verdict: edge.verdict, judged, why, refused, tried };
+  }
+  if (exit.road === 'take' || exit.road === 'pass' || exit.road === 'deal') {
+    const why =
+      exit.road === 'deal'
+        ? fines
+          ? mark
+            ? `the fine: ${mark.fineWords}${mark.slip ? ' and the slip' : ''}`
+            : 'a fine'
+          : exit.cost?.stones
+            ? `${exit.cost.stones} low-grade stones`
+            : exit.cost?.item
+              ? `one ${hasItem(exit.cost.item) ? item(exit.cost.item).name : exit.cost.item}`
+              : 'a deal'
+        : exit.road === 'take'
+          ? 'an hour off your road'
+          : 'walk on';
+    return { i, exit, verdict: 'clear', judged: 'clear', why, refused, tried };
+  }
+  const target = them[0];
+  const check = checkFor(
+    s,
+    m.scene,
+    m.you,
+    step(exit.act, target && exit.road === 'talk' ? { target: target.id } : {}),
+  );
+  if (!check)
+    return {
+      i,
+      exit,
+      verdict: 'clear',
+      judged: 'clear',
+      why: 'nothing stands against it',
+      refused,
+      tried,
+    };
+  const words: Record<string, string> = {
+    sneak: 'Stealth against their senses',
+    hide: 'Stealth with the cover against their senses',
+    flee: 'Speed against theirs',
+    threaten: 'your presence against their nerve',
+  };
+  const why =
+    words[exit.act] ??
+    (exit.road === 'talk' ? 'a talk: what you bring against what stands against it' : '');
+  return { i, exit, verdict: check.verdict, judged: check.judged, why, refused, tried };
 }
 
 // ---------------------------------------------------------------- the stance
@@ -691,6 +719,7 @@ export function settle(
   if (!view || view.refused) return null;
   const e = view.exit;
   let st = s;
+  if (view.burns) st = withPlayer(st, addItem(st.player, view.burns, -1));
   if (e.cost?.stones) {
     const after = pay(stonesOf(st.player), e.cost.stones)!;
     st = withPlayer(st, withStones(st.player, after));

@@ -437,6 +437,17 @@ export const STONE_EYES: Catalog = {
   ],
   // The recipes for its pills (K1), each brewed by the inputs its line tells of.
   recipes: [
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'rockfall-talisman',
+      craft: 'talismans',
+      family: 'strikes',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'split-slate', count: 2 },
+      ],
+    },
     {
       output: 'stone-milk-pill',
       craft: 'alchemy',

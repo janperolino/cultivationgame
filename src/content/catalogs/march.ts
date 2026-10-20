@@ -404,6 +404,17 @@ export const MARCH: Catalog = {
   ],
   // The recipes for its pills (K1), each brewed by the inputs its line tells of.
   recipes: [
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'iron-rain-talisman',
+      craft: 'talismans',
+      family: 'strikes',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'red-rocks-iron-ore', count: 1 },
+      ],
+    },
     // The cooks press millet and fat; the March's beast meat stands for the boar fat.
     {
       output: 'garrison-ration-pill',
@@ -568,6 +579,17 @@ export const PILED_BONES_WALL: Catalog = {
   ],
   // The recipes for its pills (K1), each brewed by the inputs its line tells of.
   recipes: [
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'bone-shard-talisman',
+      craft: 'talismans',
+      family: 'strikes',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'beast-fang', count: 3 },
+      ],
+    },
     {
       output: 'bone-meal-pill',
       craft: 'alchemy',
