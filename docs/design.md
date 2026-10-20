@@ -1134,6 +1134,15 @@ Gu raising, puppetry, divination and medicine come after v1.
 - **Geomancy, thin**: your soul with the Earth Dao against a spot's hidden number, a few hours at the spot, revealing its local vein, its soil and any ore or herb beds; a geomancer can be hired for the same reading.
 - **The store and moving** stay as written (Idle production): the site's store is the Bag's second grid, opened only there, and moving your abode is a trip, by cart or caravan, robbery the road's risk.
 
+**Methods that eat resources, and arts that burn goods** (D4, block 9).
+
+- **What upkeep buys** (Jan's call: methods that are costly to run but good). While fed, an upkeep method cultivates and leaves its growth as if it were rarer, a band for light upkeep and two for heavy, on the curve everything shares; unfed, it stalls as written (Cultivation, Methods). It is priced at its written rarity, so the poor can buy the slip and not feed it, and the rich climb like a sect's genius.
+- **What they drink**, tied to the crafts: qi methods stones by the day or a pill a day, so an alchemist's furnace feeds their own method; tempering arts an herb bath 药浴 (an herb of their tier a day), a vial of beast blood or ore powder for a metal body; nourishing arts incense or soul-calming herbs; demonic methods blood or others' qi, as written.
+- **About eight written** at tiers 1 and 2, three qi, three body and two soul, placed in the Border Wilds' catalogs where they belong (the Gate's beast-blood tempering, the Night Bridge's pill-fed breathing) and a few as rare finds.
+- **Stone swallowing 吞灵石** is a method property: it doubles the stone-burning cap (Economy, Stones as fuel), at half the worth a stone past the old cap, so a crafter's fortune at last becomes qi.
+- **Arts whose cost is goods**, combat content beside qi: a talisman volley, a talisman master's art throwing 3, 5 or 10 talismans in one action, each at full power; artifact detonation 自爆法宝, a piece destroyed for one strike at ×5 its power; flags set mid-fight, an active array from the flags you carry for a turn and its disc's stones; a burning pill 燃血丹, a realm step for three turns and weakened for the rest of the day.
+- **The world uses them**: a great-sect young master runs a heavy method and carries the stones for it.
+
 Formation puzzles show the engine-and-GLM split well. The engine hides which node is the array's eye, GLM describes the clues, Soul checks reveal hints, and a wrong strike backfires.
 
 **People and powers** run on the same idle-and-world split:
@@ -1972,6 +1981,7 @@ Settle each before the stage that needs it (Roadmap), grouped by the layer that 
 
 **Before M3's AI half**
 
+- [ ] Speed as tempo (a sketch, Jan's question in D4): today Agility only sets turn order and everyone acts once a turn (`core/combat/fight.ts`); a fighter much faster than a foe might act twice, a second action every turn at twice the foe's turn order and every other turn at one and a half. For the next combat pass, not crafts
 - [ ] Story decks: a deck per system; what each card trades and how often it comes
 - [ ] The Ways' node lists, tiers 1 and 2, at the combat Daos' shape
 
