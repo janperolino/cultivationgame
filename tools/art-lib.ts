@@ -30,8 +30,10 @@ export const SCREEN_BUDGET_KB = 800;
  * A travel map region's art (A5.1): its painting and its tiles' chunk pyramids, made by the map
  * tools (docs/art-pipeline.md § The travel map) and shipped in public/map/<region>/, loaded a chunk
  * at a time as you zoom, so it has a budget of its own rather than the screen's.
+ * Raised from 25 to 60 MB in A5.3 as places were painted in: loading hygiene, never a reason to
+ * cut art (Jan's call); the real limit is the repository's, and the art moves to its own host first.
  */
-export const MAP_BUDGET_MB = 25;
+export const MAP_BUDGET_MB = 60;
 
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 

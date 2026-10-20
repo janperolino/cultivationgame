@@ -105,11 +105,11 @@ describe('the manifest checks', () => {
       assets: [],
       maps: [
         { region: 'qm-bianhuang', budgetMB: 25 },
-        { region: 'qm-bianhuang', budgetMB: 30 },
+        { region: 'qm-bianhuang', budgetMB: 70 },
       ],
     }).join('\n');
     expect(problems).toMatch(/map qm-bianhuang: the region is listed twice/);
-    expect(problems).toMatch(/30 MB is over a region's 25 MB/);
+    expect(problems).toMatch(/70 MB is over a region's 60 MB/);
   });
 
   it('keys out a green screen and its spill', () => {
