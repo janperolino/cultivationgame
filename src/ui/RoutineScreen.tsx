@@ -641,7 +641,9 @@ function HourStrip({
             <button
               key={b.id}
               type="button"
-              className={`hour-cell hour-${kind}${TAB_OF[kind] === tab ? ' is-open' : ''}`}
+              // The open tab's hours are ringed only on Study and Practice: on Day nearly every
+              // hour is the tab's, and the rings read as a pick left standing (Jan's call).
+              className={`hour-cell hour-${kind}${tab !== 'day' && TAB_OF[kind] === tab ? ' is-open' : ''}`}
               aria-label={`${b.hanzi} ${b.name}, ${b.clock}: ${HOUR_KINDS[kind].name.toLowerCase()}`}
               title={`${b.hanzi} ${b.name} (${b.clock}): ${HOUR_KINDS[kind].name}`}
               onClick={() => onTab(to)}

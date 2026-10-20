@@ -502,7 +502,12 @@ export function DayWheel({
                 aria-pressed={kinds.size === 1 && kinds.has(k)}
                 disabled={!!game.ended || (allLocked && k !== 'sleep')}
                 title={HOUR_KINDS[k].what}
-                onClick={() => onError(setHours(pick, k))}
+                onClick={() => {
+                  // A change lets go of the pick (Jan's call); a refusal keeps it to show why.
+                  const refused = setHours(pick, k);
+                  onError(refused);
+                  if (!refused) onPick([]);
+                }}
               >
                 {HOUR_KINDS[k].name}
               </button>
@@ -611,7 +616,10 @@ export function RoadWheel({
                 aria-pressed={kinds.size === 1 && kinds.has(k)}
                 disabled={!!game.ended || !!group || (allLocked && k !== 'sleep')}
                 title={k === 'home' ? 'do what the home wheel does at this hour' : ROAD_WORD[k]}
-                onClick={() => mapAct((s) => setRoadHours(s, pick, k))}
+                onClick={() => {
+                  mapAct((s) => setRoadHours(s, pick, k));
+                  onPick([]);
+                }}
               >
                 {ROAD_NAME[k]}
               </button>
