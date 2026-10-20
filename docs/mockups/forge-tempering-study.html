@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tempering study (K4): struck on the color, quenched at the end</title>
+<style>
+  :root {
+    --void: #040507; --glass: rgb(10 12 16 / 0.8); --edge: rgb(255 255 255 / 0.075);
+    --edge-strong: rgb(255 255 255 / 0.14); --text: #e9e5da; --muted: #8d949d;
+    --accent: #d6ab4c; --gilt: #d9b46a; --warn: #e08a6a;
+    --qi-fire: #ee9670; --qi-metal: #c9d1d9;
+    --rarity-white: #ece8de; --rarity-green: #7fca8c; --rarity-blue: #6ea6f0;
+    --font-display: 'Cormorant Garamond', Georgia, serif; --font-ui: Inter, system-ui, 'Segoe UI', sans-serif;
+  }
+  html, body { margin: 0; height: 100%; background: var(--void); color: var(--text); font: 15px/1.45 var(--font-ui); overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0;
+    background: radial-gradient(1200px 700px at 55% 40%, #15120d 0%, #07080b 60%, #040507 100%); }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(7 8 11 / 0.96); border-right: 1px solid var(--edge); }
+  .rail i { display: block; width: 28px; height: 28px; margin: 22px auto; border-radius: 6px; background: rgb(255 255 255 / 0.06); }
+  .rail i.on { background: color-mix(in srgb, var(--accent) 40%, transparent); box-shadow: -22px 0 0 -18px var(--accent); }
+  .screen { position: absolute; left: 72px; right: 0; top: 0; bottom: 0; padding: 40px 48px; box-sizing: border-box; }
+  h1 { font: 500 34px var(--font-display); margin: 0 0 4px; letter-spacing: .02em; }
+  h1 .hz { color: var(--muted); font-size: 22px; margin-left: 8px; }
+  .pages { display: flex; gap: 22px; align-items: baseline; margin: 6px 0 22px; color: var(--muted); }
+  .pages b { color: var(--text); font-weight: 500; border-bottom: 1px solid var(--accent); padding-bottom: 3px; }
+  .pages .sp { flex: 1; }
+  .cols { display: grid; grid-template-columns: 380px 1fr 400px; gap: 22px; height: 880px; }
+  .panel { background: var(--glass); border: 1px solid var(--edge); border-radius: 10px; padding: 20px 22px; box-sizing: border-box; overflow: hidden; }
+  .ph { font: 500 13px var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  .panel > .ph:not(:first-child) { margin-top: 26px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { padding: 8px 0; border-bottom: 1px solid var(--edge); display: flex; justify-content: space-between; gap: 10px; }
+  .muted { color: var(--muted); }
+  .white { color: var(--rarity-white); } .green { color: var(--rarity-green); } .blue { color: var(--rarity-blue); }
+  .sel { background: rgb(214 171 76 / 0.08); border-radius: 6px; padding-left: 8px; padding-right: 8px; }
+  .btn { display: inline-block; border: 1px solid var(--edge-strong); border-radius: 6px; padding: 7px 14px; margin: 10px 8px 0 0; cursor: pointer; background: none; color: var(--text); font: inherit; }
+  .forge { position: relative; padding: 0; display: flex; flex-direction: column; }
+  .forge .top { padding: 18px 22px 0; display: flex; justify-content: space-between; align-items: baseline; }
+  .forge .top .title { font: 500 22px var(--font-display); }
+  canvas { display: block; margin: 0 auto; cursor: default; }
+  .line { text-align: center; color: var(--muted); margin: -4px 30px 0; }
+  .bench { margin: auto 22px 18px; border-top: 1px solid var(--edge); padding-top: 12px; }
+  .bar { height: 4px; background: rgb(255 255 255 / 0.06); border-radius: 2px; margin-top: 6px; }
+  .bar > div { height: 100%; background: var(--accent); border-radius: 2px; }
+  .kv { display: grid; grid-template-columns: 1fr auto; row-gap: 8px; column-gap: 14px; }
+  .kv span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; }
+  .sum { border-top: 1px solid var(--edge-strong); padding-top: 8px; }
+  .odds { display: flex; height: 10px; border-radius: 3px; overflow: hidden; margin: 10px 0 6px; }
+  .note { font-size: 13px; color: var(--muted); margin-top: 16px; line-height: 1.5; }
+  .mend { margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--edge-strong); border-radius: 8px; font-size: 13px; }
+  .toggle { position: fixed; right: 12px; bottom: 10px; z-index: 9; font-size: 12px; color: var(--muted); }
+  .toggle label { margin-left: 10px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
+  <div class="screen">
+    <h1>Crafts <span class="hz">艺</span></h1>
+    <div class="pages"><span>Alchemy 丹</span><b>Refining 器</b><span>Talismans 符</span><span>Formations 阵</span><span>Spirit Farming 灵植</span><span class="sp"></span><span>4 craft hours a day · set on Routine</span></div>
+    <div class="cols">
+      <section class="panel">
+        <h2 class="ph">The forge</h2>
+        <ul><li><span class="white">Crude Iron Forge <span class="muted">粗铁炉</span></span><span class="muted">tier 1 · whole · 4 squares</span></li></ul>
+        <h2 class="ph">Recipes known</h2>
+        <ul>
+          <li class="sel"><span>Iron Sword</span><span class="muted">blades</span></li>
+          <li><span>Boar-Hide Vest</span><span class="muted">armor</span></li>
+          <li><span>Storage Pouch</span><span class="muted">vessels</span></li>
+        </ul>
+        <p class="muted" style="margin-top:14px">5 Red Rocks Iron Ore<br>8 craft hours · holds 50% · 1 sword · white 100%</p>
+        <button class="btn">Queue a piece</button><button class="btn">Queue five</button>
+        <h2 class="ph">The bench</h2>
+        <ul>
+          <li><span>Iron Sword ×2</span><span class="muted">on the anvil</span></li>
+          <li><span>Mend: Damaged Boar-Hide Vest</span><span class="muted">1 h · 1 hide</span></li>
+        </ul>
+        <div class="mend muted">To mend: worn or damaged gear you carry, a craft hour a tier at your forge and one piece of what it was made of; a cracked furnace the same, with one ore. A refiner in town still does it for stones.</div>
+      </section>
+
+      <section class="panel forge">
+        <div class="top"><span class="title">Refining <span class="muted" style="font-size:16px">炼器</span></span><button class="btn" id="stand" style="margin:0">Stand up</button></div>
+        <canvas id="fx" width="760" height="560" style="width:760px;height:560px"></canvas>
+        <div class="line" id="line">Each heat the piece rises out of the true fire with rune points on it. Press a seal into each (click) as its glow passes <b style="color:#ff9a3c">orange</b>: too hot and the rune blurs, too cold and it won't take. Every fourth heat, quench it: click the spirit spring as the whole piece passes <b style="color:#c8323a">cherry</b>.</div>
+        <div class="bench">
+          <div style="display:flex;justify-content:space-between"><span>Iron Sword, piece 1 of 2</span><span class="muted" id="bh">0.0 of 8 h</span></div>
+          <div class="bar"><div id="bb" style="width:0%"></div></div>
+          <div class="muted" style="margin-top:6px;font-size:13px">It reads your hand over its hours: <b id="bm" style="color:var(--text)">0.00</b> so far. Away, the forge works itself at no hand.</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="ph">This piece</h2>
+        <div class="kv">
+          <span>Mastery, Glimpse</span><span class="muted">—</span>
+          <span>Ore above the floor</span><span class="muted">—</span>
+          <span>Forge, white</span><span class="muted">—</span>
+          <span>The hand <span class="muted" id="hx">0.00 × reach 1</span></span><span id="hl">+0.00</span>
+          <span>The land</span><span class="muted">—</span>
+          <span class="sum">Lift</span><span class="sum" id="lift">0.00</span>
+        </div>
+        <div class="odds" id="odds"></div>
+        <div class="muted" id="oddsw" style="font-size:13px"></div>
+        <h2 class="ph">Steady hands 稳手</h2>
+        <div class="kv">
+          <span>Base</span><span>1 band</span>
+          <span class="sum">Reach</span><span class="sum">1 of 2</span>
+        </div>
+        <p class="note">The hand moves only the rarity, never whether the piece holds. Clear Tempering adds half a band; nodes, talents and a matched soul raise the reach, never past two.</p>
+        <h2 class="ph">The land</h2>
+        <div class="mend muted">Beast-Butcher Gate: no earth fire here.<br><span style="opacity:.8">Earth fire 地火 on volcanic land: <b style="color:var(--qi-fire);font-weight:500">+0.25 lift, +10 holding</b> for alchemy and refining. A metal land? None by terrain yet.</span></div>
+      </section>
+    </div>
+  </div>
+</div>
+<div class="toggle">mockup: <label><input type="checkbox" id="rm"> reduced motion</label><label><input type="checkbox" id="ticks" checked> spots' ticks on the strip</label></div>
+<script>
+const stage = document.getElementById('stage');
+function fit() { const k = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transformOrigin = 'center'; stage.style.transform = `translate(-50%,-50%) scale(${k})`; }
+addEventListener('resize', fit); fit();
+const reduced = () => document.getElementById('rm').checked;
+const ticks = () => document.getElementById('ticks').checked;
+const cv = document.getElementById('fx'), g = cv.getContext('2d');
+const DPR = Math.min(2, devicePixelRatio || 1); cv.width = 760 * DPR; cv.height = 560 * DPR; g.scale(DPR, DPR);
+const toCanvas = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * 760, (e.clientY - r.top) / r.height * 560]; };
+const CX = 380, CY = 300;
+const SPAN = Math.PI * 2 * 0.65, START = Math.PI / 2 + (Math.PI * 2 - SPAN) / 2;
+const ang = (v) => START + SPAN * v;
+const reach = 1, mastery = 0;
+
+// ---- the rules (the numbers K4 would put in content/forge.ts)
+const R = {
+  fireS: 1.0,              // seconds the blade is back in the fire between heats
+  base: 0.70, hot: 0.28,   // a heat's glow along the blade: base, and a hot spot on top of it
+  spotW: 120,              // the hot spot's width, px
+  cool: 0.3, cool0: 0.15,  // cooling: dT/dt = -cool × (T + cool0), so the hottest cools fastest
+  spots: [2, 4],           // raised spots a heat
+  strike: [0.50, 0.64],    // strike as the glow passes orange
+  quench: [0.34, 0.44],    // quench as the whole blade passes cherry
+  dark: 0.26,              // a spot still raised when its metal goes this dark is left in the piece
+  quenchEvery: 4,          // every fourth heat is the last of a fold: no spots, the quench
+  blow: 0.02,              // every blow knocks this much heat out of the whole blade
+  swing: 0.3,              // a hammer swing, s: no blow faster
+  reachPx: 24,             // a blow lands on a spot within this
+  rough: 0.25,             // a spot struck too hot smears: the hand moves toward this
+  quenchCounts: 3,         // the quench counts three times
+  settle: 0.09,            // how far each outcome moves the hand (K3's)
+};
+
+// ---- the glow: a temperature 0..1 as the colors a refiner reads, black to white
+const STOPS = [[0, [24, 20, 18]], [0.2, [70, 18, 14]], [0.34, [150, 26, 30]], [0.44, [200, 50, 40]], [0.57, [255, 140, 50]], [0.72, [255, 200, 80]], [0.86, [255, 240, 170]], [1, [255, 255, 245]]];
+function glow(T) {
+  T = Math.max(0, Math.min(1, T));
+  for (let i = 1; i < STOPS.length; i++) if (T <= STOPS[i][0]) {
+    const [a, ca] = STOPS[i - 1], [b, cb] = STOPS[i], k = (T - a) / (b - a);
+    return ca.map((v, j) => Math.round(v + (cb[j] - v) * k));
+  }
+  return STOPS[STOPS.length - 1][1];
+}
+const rgb = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+// ---- the scene's frame: the forge's mouth left, the anvil in the middle, the trough right
+const BLADE = { x0: 250, x1: 540, y: 262, h: 16 };
+const TROUGH = { x: 612, y: 400, w: 112, h: 34 };
+let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+let t = 0, hand = 0, batchH = 0, batchHand = 0;
+let phase = 'fire', phaseAt = 0, heatN = 0, hotX = 400, Tbase = 0, spots = [], swingAt = -9, quenched = null, sparks = [], bursts = [];
+const profile = (x) => Tbase + R.hot * Math.exp(-(((x - hotX) / R.spotW) ** 2));
+let elapsedCool = 0; // seconds of cooling since the blade left the fire, plus blows
+/** The glow of a point on the blade: its heat out of the fire, cooled for the time since. */
+function Tat(x) {
+  const T0 = phase === 'quench' ? Tbase : profile(x);
+  return (T0 + R.cool0) * Math.exp(-R.cool * elapsedCool) - R.cool0;
+}
+function outcome(q, n = 1) { for (let i = 0; i < n; i++) hand += (q - hand) * R.settle; }
+function newHeat() {
+  heatN++;
+  phase = heatN % R.quenchEvery === 0 ? 'quench' : 'work';
+  phaseAt = t; elapsedCool = 0; quenched = null;
+  if (phase === 'quench') { Tbase = 0.86 + rnd() * 0.08; spots = []; return; }
+  Tbase = R.base; hotX = BLADE.x0 + 40 + rnd() * (BLADE.x1 - BLADE.x0 - 80);
+  const n = R.spots[0] + Math.floor(rnd() * (R.spots[1] - R.spots[0] + 1));
+  spots = [];
+  for (let tries = 0; spots.length < n && tries < 50; tries++) {
+    const x = BLADE.x0 + 30 + rnd() * (BLADE.x1 - BLADE.x0 - 50);
+    if (spots.every((s) => Math.abs(s.x - x) > 52)) spots.push({ x, done: false, rune: RUNES[Math.floor(rnd() * RUNES.length)] });
+  }
+}
+function burst(at, how) { bursts.push({ at, how, t }); }
+const MARK = { true: ['妙', '#fff1c9'], rough: ['粗', '#8d949d'], miss: ['失', '#e0503f'] };
+
+cv.addEventListener('pointerdown', (e) => {
+  const p = toCanvas(e);
+  if (t - swingAt < R.swing) return;
+  if (phase === 'quench' && !quenched) {
+    const T = Tat(0);
+    quenched = { t, T };
+    if (T > R.quench[1]) { outcome(0, R.quenchCounts); burst([CX, 200], 'miss'); }
+    else if (T >= R.quench[0]) { outcome(1, R.quenchCounts); burst([CX, 200], 'true'); }
+    else { outcome(R.rough, R.quenchCounts); burst([CX, 200], 'rough'); }
+    return;
+  }
+  if (phase !== 'work') return;
+  swingAt = t; elapsedCool += R.blow / R.cool; // a blow knocks heat out of the blade
+  const hit = spots.filter((s) => !s.done).map((s) => ({ s, d: Math.hypot(s.x - p[0], BLADE.y - 26 - p[1]) })).filter((x) => x.d < R.reachPx).sort((a, b) => a.d - b.d)[0];
+  if (!hit) return;
+  const T = Tat(hit.s.x); hit.s.done = true;
+  const at = [hit.s.x, BLADE.y - 58]; sealAt = { x: hit.s.x, y: BLADE.y - 26, t };
+  if (T > R.strike[1]) { outcome(R.rough); burst(at, 'rough'); }
+  else if (T >= R.strike[0]) { outcome(1); burst(at, 'true'); }
+  else { outcome(0); burst(at, 'miss'); hit.s.crack = true; }
+  if (!reduced()) for (let i = 0; i < 9; i++) sparks.push({ x: hit.s.x, y: BLADE.y - 26, vx: (rnd() - 0.5) * 260, vy: -80 - rnd() * 200, t, c: glow(T) });
+});
+
+function step(dt) {
+  if (phase === 'fire') { if (t - phaseAt >= R.fireS) newHeat(); return; }
+  elapsedCool += dt;
+  if (phase === 'work') {
+    for (const s of spots) if (!s.done && Tat(s.x) < R.dark) { s.done = true; s.left = true; outcome(0); }
+    if (spots.every((s) => s.done) && t - swingAt > 0.35) { phase = 'fire'; phaseAt = t; }
+  } else if (phase === 'quench') {
+    if (!quenched && Tat(0) < R.dark) { quenched = { t, T: Tat(0) }; outcome(0, R.quenchCounts); burst([CX, 200], 'miss'); }
+    if (quenched && t - quenched.t > 0.9) { phase = 'fire'; phaseAt = t; }
+  }
+  sparks = sparks.filter((s) => t - s.t < 0.6);
+}
+
+// ---- drawing: the piece floats over the cauldron's true fire 真火 inside a faint array, rune
+// points 禁制 rising on it; a hand seal 法诀 is pressed into each, and the last heat is quenched in a
+// jade basin of spirit-spring water 灵泉. No hammer and no anvil: the refiner's hands never touch it.
+function arc(cx, cy, r, v0, v1, w, col, alpha) { g.beginPath(); g.arc(cx, cy, r, ang(v0), ang(v1)); g.strokeStyle = col; g.globalAlpha = alpha; g.lineWidth = w; g.lineCap = 'round'; g.stroke(); g.globalAlpha = 1; }
+const RUNES = ['锋', '坚', '灵', '御', '破', '凝', '固', '利'];
+/** The array under the piece: two rings of runes, drawn still. */
+function array() {
+  g.save(); g.translate(CX, BLADE.y); g.scale(1, 0.32);
+  g.strokeStyle = 'rgba(217,180,106,0.16)'; g.lineWidth = 2;
+  for (const r of [190, 150]) { g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.stroke(); }
+  g.fillStyle = 'rgba(217,180,106,0.22)'; g.font = '26px KaiTi, serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; g.fillText(RUNES[i % 8], Math.cos(a) * 170, Math.sin(a) * 170); }
+  g.restore(); g.textBaseline = 'alphabetic';
+}
+/** The refining cauldron 炼器炉 below, its true fire rising out of its mouth to the piece. */
+function cauldron() {
+  const fire = phase === 'fire' ? 1 : 0.5, cy = 430;
+  const gr = g.createRadialGradient(CX, cy - 70, 10, CX, cy - 70, 220);
+  gr.addColorStop(0, `rgba(120,200,230,${0.1 + 0.18 * fire})`); gr.addColorStop(1, 'rgba(120,200,230,0)');
+  g.fillStyle = gr; g.fillRect(140, 180, 480, 320);
+  for (let i = -3; i <= 3; i++) { // the true fire: pale blue at the heart, gold at the edges
+    const f = reduced() ? 1 : 0.85 + 0.15 * Math.sin(t * 6 + i * 1.9), h = (60 + 110 * fire) * (1 - Math.abs(i) * 0.18) * f;
+    g.beginPath(); g.moveTo(CX + i * 17 - 13, cy - 40); g.quadraticCurveTo(CX + i * 17, cy - 40 - h * 1.2, CX + i * 17 + 13, cy - 40);
+    g.fillStyle = Math.abs(i) <= 1 ? `rgba(190,235,255,${0.25 + 0.35 * fire})` : `rgba(255,205,120,${0.18 + 0.3 * fire})`; g.fill();
+  }
+  g.fillStyle = '#1f2a2a'; g.strokeStyle = '#5b7a6e'; g.lineWidth = 2;
+  for (const lx of [-58, 58]) { g.beginPath(); g.moveTo(CX + lx - 6, cy + 20); g.lineTo(CX + lx - 9, cy + 66); g.lineTo(CX + lx + 9, cy + 66); g.lineTo(CX + lx + 6, cy + 20); g.fill(); g.stroke(); }
+  g.beginPath(); g.moveTo(CX - 96, cy - 40); g.bezierCurveTo(CX - 104, cy + 10, CX - 80, cy + 36, CX, cy + 38); g.bezierCurveTo(CX + 80, cy + 36, CX + 104, cy + 10, CX + 96, cy - 40); g.closePath(); g.fill(); g.stroke();
+  g.beginPath(); g.ellipse(CX, cy - 40, 96, 13, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+  g.fillStyle = `rgba(190,235,255,${0.2 + 0.4 * fire})`; g.beginPath(); g.ellipse(CX, cy - 40, 80, 8, 0, 0, Math.PI * 2); g.fill();
+  g.fillStyle = 'rgba(217,180,106,0.55)'; g.font = '22px KaiTi, serif'; g.textAlign = 'center'; g.fillText('器', CX, cy + 6);
+}
+function trough() { // the jade basin of spirit-spring water
+  const { x, y, w, h } = TROUGH, ready = phase === 'quench' && !quenched;
+  g.fillStyle = '#16302a'; g.strokeStyle = '#6fae96'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + w / 2, y + h * 1.6, x + w, y); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = ready ? 'rgba(160,230,240,0.6)' : 'rgba(127,199,217,0.25)'; g.beginPath(); g.ellipse(x + w / 2, y, w / 2 - 3, 7, 0, 0, Math.PI * 2); g.fill();
+  if (quenched && t - quenched.t < 0.9 && !reduced()) { for (let i = 0; i < 6; i++) { const k = (t - quenched.t) / 0.9; g.globalAlpha = 0.5 * (1 - k); g.fillStyle = '#d8f1f5'; g.beginPath(); g.arc(x + 20 + i * 18, y - 10 - k * 70 - (i % 3) * 10, 6 + k * 10, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1; } }
+  g.fillStyle = '#8d949d'; g.font = '13px Inter, system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('spirit spring 灵泉', x + w / 2, y + h + 26);
+}
+/** The piece's float: it sinks into the fire between heats and hangs over it to be worked. */
+const bob = () => (reduced() ? 0 : Math.sin(t * 1.6) * 3);
+function blade() {
+  const { x0, x1, h } = BLADE, y = BLADE.y + bob();
+  if (phase === 'fire') {
+    // sunk into the true fire, glowing whole, the flames over it (as the game draws it, K4)
+    const fy = 352, T = 0.55 + 0.35 * Math.min(1, (t - phaseAt) / R.fireS);
+    for (let i = 0; i < 40; i++) { const xa = x0 + (x1 - x0) * i / 40, taper = i > 34 ? (40 - i) / 6 : 1; g.fillStyle = rgb(glow(T)); g.fillRect(xa, fy - h / 2 * taper, (x1 - x0) / 40 + 0.5, h * taper); }
+    g.fillStyle = '#6b5638'; g.fillRect(x0 - 8, fy - 18, 8, 36); g.fillStyle = '#2f3a3a'; g.fillRect(x0 - 58, fy - 4, 50, 8);
+    for (let i = -3; i <= 3; i++) { const hh = 170 * (1 - Math.abs(i) * 0.18); g.beginPath(); g.moveTo(CX + i * 17 - 13, 390); g.quadraticCurveTo(CX + i * 17, 390 - hh * 1.2, CX + i * 17 + 13, 390); g.fillStyle = Math.abs(i) <= 1 ? 'rgba(190,235,255,0.33)' : 'rgba(255,205,120,0.27)'; g.fill(); }
+    return;
+  }
+  if (phase === 'quench' && quenched) return;
+  // the qi it gives off, tinted by its glow
+  const hot = glow(Tat((x0 + x1) / 2)), halo = g.createRadialGradient(CX, y, 20, CX, y, 220);
+  halo.addColorStop(0, rgb(hot, 0.22)); halo.addColorStop(1, rgb(hot, 0));
+  g.fillStyle = halo; g.fillRect(140, y - 140, 480, 280);
+  const steps = 40;
+  for (let i = 0; i < steps; i++) {
+    const xa = x0 + (x1 - x0) * i / steps, xb = x0 + (x1 - x0) * (i + 1) / steps;
+    g.fillStyle = rgb(glow(Tat((xa + xb) / 2)));
+    const taper = i > steps - 6 ? (steps - i) / 6 : 1; // the point
+    g.fillRect(xa, y - h / 2 * taper, xb - xa + 0.5, h * taper);
+  }
+  g.fillStyle = 'rgba(255,255,255,0.18)'; g.fillRect(x0, y - 1, x1 - x0 - 30, 2); // the ridge
+  g.fillStyle = '#6b5638'; g.fillRect(x0 - 8, y - 18, 8, 36); g.fillStyle = '#2f3a3a'; g.fillRect(x0 - 58, y - 4, 50, 8); // guard, hilt
+  g.fillStyle = '#d9b46a'; g.beginPath(); g.arc(x0 - 62, y, 5, 0, Math.PI * 2); g.fill();
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const s of spots) {
+    const sy = y - 26;
+    if (s.done && !s.crack && !s.left) { g.fillStyle = 'rgba(255,217,138,0.75)'; g.font = '15px KaiTi, serif'; g.fillText(s.rune, s.x, y + 1); continue; }
+    if (s.crack) { g.strokeStyle = '#0a0806'; g.lineWidth = 2; g.beginPath(); g.moveTo(s.x - 6, y - 6); g.lineTo(s.x + 2, y + 2); g.lineTo(s.x - 2, y + 7); g.stroke(); continue; }
+    if (s.left) { g.fillStyle = 'rgba(141,148,157,0.45)'; g.font = '18px KaiTi, serif'; g.fillText(s.rune, s.x, sy); continue; }
+    const T = Tat(s.x), inBand = T >= R.strike[0] && T <= R.strike[1];
+    g.strokeStyle = inBand ? 'rgba(255,241,201,0.95)' : 'rgba(255,255,255,0.2)'; g.lineWidth = inBand ? 2 : 1;
+    g.beginPath(); g.arc(s.x, sy, R.reachPx - 6, 0, Math.PI * 2); g.stroke();
+    g.strokeStyle = rgb(glow(T), 0.6); g.lineWidth = 1; g.beginPath(); g.moveTo(s.x, sy + R.reachPx - 6); g.lineTo(s.x, y - h / 2); g.stroke();
+    g.fillStyle = rgb(glow(T)); g.font = '20px KaiTi, serif'; g.fillText(s.rune, s.x, sy + 1);
+  }
+  g.textBaseline = 'alphabetic';
+}
+/** The hand seal: a gold seal 印 pressed down onto the rune point. */
+let sealAt = null;
+function seal() {
+  if (!sealAt) return;
+  const k = (t - sealAt.t) / R.swing; if (k > 1) return;
+  const s = 46 * (1 - k * 0.6);
+  g.globalAlpha = reduced() ? 0.8 * (1 - k) : 1 - k;
+  g.strokeStyle = '#d9b46a'; g.lineWidth = 2; g.strokeRect(sealAt.x - s / 2, sealAt.y - s / 2, s, s);
+  g.fillStyle = '#d9b46a'; g.font = `${Math.round(s * 0.6)}px KaiTi, serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('印', sealAt.x, sealAt.y + 1);
+  g.textBaseline = 'alphabetic'; g.globalAlpha = 1;
+}
+function strip() {
+  const x0 = 150, x1 = 610, y = 54, w = x1 - x0;
+  for (let i = 0; i < 92; i++) { g.fillStyle = rgb(glow(i / 91)); g.fillRect(x0 + w * i / 92, y, w / 92 + 0.6, 12); }
+  const X = (T) => x0 + w * T;
+  g.strokeStyle = '#fff1c9'; g.lineWidth = 2; g.strokeRect(X(R.strike[0]), y - 4, X(R.strike[1]) - X(R.strike[0]), 20);
+  g.strokeStyle = '#7fc7d9'; g.strokeRect(X(R.quench[0]), y - 4, X(R.quench[1]) - X(R.quench[0]), 20);
+  g.font = '15px KaiTi, serif'; g.textAlign = 'center';
+  g.fillStyle = '#fff1c9'; g.fillText('打 strike', X((R.strike[0] + R.strike[1]) / 2), y + 38);
+  g.fillStyle = '#7fc7d9'; g.fillText('淬 quench', X((R.quench[0] + R.quench[1]) / 2), y + 38);
+  g.fillStyle = '#8d949d'; g.font = '12px Inter, system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('dark', x0, y - 10); g.textAlign = 'right'; g.fillText('white', x1, y - 10);
+  if (!ticks() || phase === 'fire') return;
+  const marks = phase === 'quench' ? (quenched ? [] : [Tat(0)]) : spots.filter((s) => !s.done).map((s) => Tat(s.x));
+  for (const T of marks) { if (T < 0) continue; g.fillStyle = '#e9e5da'; g.beginPath(); g.moveTo(X(T), y + 14); g.lineTo(X(T) - 5, y + 24); g.lineTo(X(T) + 5, y + 24); g.fill(); }
+}
+function drawBursts() {
+  bursts = bursts.filter((b) => t - b.t < 0.8);
+  for (const b of bursts) { const k = (t - b.t) / 0.8, [m, c] = MARK[b.how]; g.globalAlpha = 1 - k; g.fillStyle = c; g.font = '30px KaiTi, serif'; g.textAlign = 'center'; g.fillText(m, b.at[0], b.at[1] - (reduced() ? 0 : k * 16)); g.globalAlpha = 1; }
+}
+function draw() {
+  g.clearRect(0, 0, 760, 560);
+  arc(CX, CY, 262, 0, 1, 3, '#d9b46a', 0.14); arc(CX, CY, 262, 0, Math.max(0.002, hand), 3, '#d9b46a', 0.85);
+  array(); cauldron(); trough(); blade(); seal();
+  // qi motes rising off a sealed rune
+  for (const s of sparks) { const k = (t - s.t); g.globalAlpha = Math.max(0, 1 - k / 0.6); g.fillStyle = rgb(s.c); g.beginPath(); g.arc(s.x + s.vx * k * 0.4, s.y - 60 * k - Math.abs(s.vy) * k * 0.2, 2.2, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1; }
+  strip(); drawBursts();
+  g.fillStyle = '#e9e5da'; g.font = '500 17px Georgia, serif'; g.textAlign = 'center';
+  const head = phase === 'fire' ? 'In the fire' : phase === 'quench' ? (quenched ? '' : 'The last heat: quench it on the cherry') : `Heat ${heatN}`;
+  g.fillText(head, CX, 150);
+  g.fillStyle = '#8d949d'; g.font = '13px Inter, system-ui, sans-serif'; g.textAlign = 'left'; g.fillText(`hand ${hand.toFixed(2)}`, 40, 540); g.textAlign = 'right'; g.fillText('seal on the orange · quench on the cherry', 720, 540);
+}
+
+const COL = { white: '#ece8de', green: '#7fca8c', blue: '#6ea6f0' };
+function panel() {
+  const hl = hand * reach, lift = mastery + hl;
+  document.getElementById('hx').textContent = `${hand.toFixed(2)} × reach ${reach}`;
+  document.getElementById('hl').textContent = `+${hl.toFixed(2)}`;
+  document.getElementById('lift').textContent = lift.toFixed(2);
+  const whole = Math.floor(lift), frac = lift - whole, names = ['white', 'green'];
+  const a = names[Math.min(1, whole)], b = names[Math.min(1, whole + 1)];
+  const parts = a === b ? [[a, 1]] : [[a, 1 - frac], [b, frac]];
+  document.getElementById('odds').innerHTML = parts.map(([n, p]) => `<div style="width:${p * 100}%;background:${COL[n]}"></div>`).join('');
+  document.getElementById('oddsw').textContent = parts.map(([n, p]) => `${n} ${Math.round(p * 100)}%`).join(' · ') + '  (queued: white 100%; the Iron Sword runs white to green)';
+  document.getElementById('bh').textContent = `${batchH.toFixed(1)} of 8 h`;
+  document.getElementById('bb').style.width = `${batchH / 8 * 100}%`;
+  document.getElementById('bm').textContent = (batchH > 0 ? batchHand / batchH : 0).toFixed(2);
+}
+/** The piece on the bench: 8 craft hours, about 20 real seconds of the wheel at Qi Condensation. */
+function benchTick(dt) { batchH += dt * 0.4; batchHand += hand * dt * 0.4; if (batchH >= 8) { batchH = 0; batchHand = 0; } }
+
+let running = true, last = performance.now();
+document.getElementById('stand').onclick = () => { running = !running; document.getElementById('stand').textContent = running ? 'Stand up' : 'Sit at the forge'; };
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (running && document.visibilityState === 'visible') { t += dt; step(dt); benchTick(dt); draw(); panel(); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

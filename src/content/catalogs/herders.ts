@@ -39,7 +39,7 @@ export const SPIRIT_HERDERS: Catalog = {
       stack: 20,
       tags: ['trade', 'wool'],
       taels: 0.25,
-      uses: {},
+      uses: { ingredient: { properties: ['light'] } },
       source: 'the herder families’ flocks, combed in the long tents each autumn',
       text: 'A bale of white wool so fine it drifts. The March’s levy wears it under its armor through the Wall’s winters.',
     },
@@ -66,7 +66,7 @@ export const SPIRIT_HERDERS: Catalog = {
       kind: 'gear',
       uses: { equip: { slot: 'weapon', weapon: 'spear' }, inscribe: { slots: 1 } },
       properties: [{ name: 'Static Point', effects: [{ stat: 'spearHit', value: 0.03 }] }],
-      source: 'the corral smiths, who set a shed thunder-deer tine in an ash shaft',
+      source: 'the corral refiners, who set a shed thunder-deer tine in an ash shaft',
       text: 'A rider’s lance with a deer tine for a head. The hair on your arm stands up when a storm is near.',
     },
     {
@@ -422,6 +422,23 @@ export const SPIRIT_HERDERS: Catalog = {
         { thing: 'thunderhorn', count: 5 },
         { thing: 'thunderhead-clover', count: 5 },
       ],
+    },
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    {
+      output: 'horn-head-lance',
+      craft: 'refining',
+      family: 'blades',
+      inputs: [
+        { thing: 'thunderhorn', count: 1 },
+        { thing: 'ash-spear-shaft', count: 1 },
+        { thing: 'red-rocks-iron-ore', count: 1 },
+      ],
+    },
+    {
+      output: 'deer-horn-whistle',
+      craft: 'refining',
+      family: 'vessels',
+      inputs: [{ thing: 'thunderhorn', count: 1 }],
     },
   ],
   lots: [

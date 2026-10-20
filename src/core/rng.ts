@@ -44,6 +44,7 @@ export const STREAMS = [
   'road',
   'craft',
   'furnace',
+  'forge',
 ] as const;
 export type StreamName = (typeof STREAMS)[number];
 

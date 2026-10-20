@@ -8,10 +8,12 @@
 // lift, yield, speed and blow-ups by the craft's own stats, +5% yield a tier held, and Twin Furnace.
 // The steady hand (K3) is played at the bench: each batch reads the mean hand over its hours, times
 // Steady hands' reach and Hand's lift, and the land lends its hand (earth fire, a matching element,
-// a written site).
+// a written site). Refining (K4) runs the same bench at a forge, and mends gear there too: a bench
+// entry that mends a piece takes a craft hour a tier and a piece of what it was made of.
 import type { Recipe } from '../content/catalogs/types.ts';
 import {
   BLOW_UP,
+  CRAFTS,
   CRAFT_IDS,
   CRAFT_MASTERY,
   CRAFT_SITES,
@@ -24,6 +26,7 @@ import {
   LAND_ELEMENT,
   LIFT,
   MATCHED_SOUL,
+  MEND,
   MAX_HOLD,
   RECENT_BATCHES,
   TIER_ODDS,
@@ -31,6 +34,7 @@ import {
   hasRecipe,
   recipe,
   recipeElement,
+  recipeFor,
   recipeHours,
   recipeTier,
   recipeYield,
@@ -40,11 +44,11 @@ import {
 import { baseOf, hasItem, item, rarityRange, variantId, type Item } from '../content/items.ts';
 import { MANUALS } from '../content/manuals.ts';
 import { MAX_MASTERY } from '../content/mastery.ts';
-import { rarityRank, type RarityId } from '../content/rarity.ts';
+import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
 import { realmIndex } from '../content/realms.ts';
 import { craftStat, type CraftStatKind, type StatId } from '../content/stats.ts';
 import { CRAFT_DAOS, tierNodes, type Tree } from '../content/trees/index.ts';
-import { stow } from './gear.ts';
+import { stow, wornIds } from './gear.ts';
 import type { Rng } from './rng.ts';
 import { addItem, type Cultivator, type CraftsState } from './state.ts';
 import { stats } from './stats.ts';
@@ -168,16 +172,89 @@ export function toolsHeld(c: Cultivator, craft: CraftId): Item[] {
     .map(item);
 }
 
-/** The tool a batch is worked with: the best whole one whose tier reaches the recipe's. */
-export function toolFor(c: Cultivator, r: Recipe): Item | null {
-  const tier = recipeTier(r);
-  const fit = toolsHeld(c, r.craft).filter((t) => !t.cracked && t.tier >= tier);
+/** The best whole tool of a craft whose tier reaches this one. */
+function toolAt(c: Cultivator, craft: CraftId, tier: number): Item | null {
+  const fit = toolsHeld(c, craft).filter((t) => !t.cracked && t.tier >= tier);
   fit.sort((a, b) => rarityRank(b.rarity) - rarityRank(a.rarity) || b.tier - a.tier);
   return fit[0] ?? null;
 }
 
+/** The tool a batch is worked with: the best whole one whose tier reaches the recipe's. */
+export function toolFor(c: Cultivator, r: Recipe): Item | null {
+  return toolAt(c, r.craft, recipeTier(r));
+}
+
 /** What a refiner asks to mend a cracked tool: a tenth of its worth. */
 export const CRACK_MEND_SHARE = BLOW_UP.mend;
+
+// ---------------------------------------------------------------- mending (K4)
+
+/** Whether a piece you carry or wear needs mending: a cracked tool, a damaged piece, worn armor. */
+export function needsMend(c: Cultivator, thing: string): boolean {
+  if (!hasItem(thing)) return false;
+  if ((c.items[thing] ?? 0) <= 0 && !wornIds(c).includes(thing)) return false;
+  const it = item(thing);
+  return !!it.cracked || !!it.damaged || (c.wear[thing] ?? 0) > 0;
+}
+
+/** The pieces you carry or wear that need mending. */
+export function toMend(c: Cultivator): string[] {
+  return [...new Set([...wornIds(c), ...Object.keys(c.items)])].filter((id) => needsMend(c, id));
+}
+
+/** The id a piece mends to: whole, its rarity back, or itself once its wear is gone. */
+export function mendedId(thing: string): string {
+  const it = item(thing);
+  if (it.cracked) return variantId(baseOf(thing), it.rarity);
+  if (it.damaged) return variantId(thing.split('~')[0]!, RARITY_IDS[rarityRank(it.rarity) + 1]!);
+  return thing;
+}
+
+/**
+ * The piece mended, wherever it is (Bag or worn): the refiner's shop and your own forge alike
+ * (design § Production, commissions and the craft deck: mending is refining).
+ */
+export function mended(c: Cultivator, thing: string): Cultivator {
+  const it = item(thing);
+  const whole = mendedId(thing);
+  if (it.cracked || it.damaged) {
+    const worn = Object.entries(c.gear).find(([, v]) => v === thing)?.[0];
+    if (worn && worn !== 'treasures') return { ...c, gear: { ...c.gear, [worn]: whole } };
+    return addItem(addItem(c, thing, -1), whole, 1);
+  }
+  const wear = { ...c.wear };
+  delete wear[thing];
+  return { ...c, wear };
+}
+
+/** What mending a piece takes at the forge: a craft hour a tier, and a piece of what it was made of. */
+export function mendNeeds(thing: string): { hours: number; tier: number; input: string } {
+  const it = item(thing);
+  const r = recipeFor(thing);
+  return { hours: MEND.hours * it.tier, tier: it.tier, input: r?.inputs[0]?.thing ?? MEND.ore };
+}
+
+/** Why a piece can't go on the bench to be mended, or null when it can. */
+export function cantMend(c: Cultivator, thing: string): string | null {
+  if (!toMend(c).includes(thing)) return 'It needs no mending.';
+  const tier = item(thing).tier;
+  if (!toolAt(c, 'refining', tier))
+    return `You carry no whole forge that holds a tier ${tier} fire.`;
+  return null;
+}
+
+/** Queues a piece to be mended at the bench's end. */
+export function queueMend(
+  c: Cultivator,
+  thing: string,
+): { cultivator: Cultivator; reason: string | null } {
+  const why = cantMend(c, thing);
+  if (why) return { cultivator: c, reason: why };
+  if (c.crafts.bench.some((e) => e.mend === thing))
+    return { cultivator: c, reason: 'It is on the bench already.' };
+  const bench = [...c.crafts.bench, { recipe: baseOf(thing), batches: 1, mend: thing }];
+  return { cultivator: withCrafts(c, { bench }), reason: null };
+}
 
 // ---------------------------------------------------------------- a batch's numbers
 
@@ -410,7 +487,8 @@ export function queueBatches(
   if (why) return { cultivator: c, reason: why };
   const bench = [...c.crafts.bench];
   const last = bench[bench.length - 1];
-  if (last?.recipe === id) bench[bench.length - 1] = { ...last, batches: last.batches + batches };
+  if (last?.recipe === id && !last.mend)
+    bench[bench.length - 1] = { ...last, batches: last.batches + batches };
   else bench.push({ recipe: id, batches });
   return { cultivator: withCrafts(c, { bench }), reason: null };
 }
@@ -466,6 +544,7 @@ export interface BenchResult {
 function load(c: Cultivator): Cultivator | null {
   const entry = c.crafts.bench[0];
   if (!entry) return null;
+  if (entry.mend) return loadMend(c, entry.mend);
   const r = recipe(entry.recipe);
   if (cantBrew(c, r.output) || !toolFor(c, r)) return null;
   let next = c;
@@ -480,6 +559,16 @@ function load(c: Cultivator): Cultivator | null {
   }
   if (batches === 0) return null;
   return withCrafts(next, { front: { recipe: r.output, above, hours: 0, batches } });
+}
+
+/** Loads a mend: the piece still needing it, a whole forge, and a piece of what it was made of. */
+function loadMend(c: Cultivator, thing: string): Cultivator | null {
+  if (cantMend(c, thing)) return null;
+  const need = mendNeeds(thing);
+  const have = heldOf(c, need.input, need.tier)[0];
+  if (!have) return null;
+  const front = { recipe: baseOf(thing), above: false, hours: 0, mend: thing };
+  return withCrafts(addItem(c, have.id, -1), { front });
 }
 
 /** Mastery from one batch: 1 at your tier, a quarter below it, half that when it failed. */
@@ -557,8 +646,35 @@ function resolve(
 
 /** The mean steady hand a batch was played at over its hours. */
 function meanHand(c: Cultivator, front: NonNullable<CraftsState['front']>): number {
-  const hours = batchHours(c, recipe(front.recipe));
+  const hours = frontHours(c, front);
   return hours > 0 ? Math.min(1, (front.hand ?? 0) / hours) : 0;
+}
+
+/** Craft hours the front takes: its batch's, or a mend's craft hour a tier. */
+export function frontHours(c: Cultivator, front: NonNullable<CraftsState['front']>): number {
+  return front.mend ? mendNeeds(front.mend).hours : batchHours(c, recipe(front.recipe));
+}
+
+/** Finishes a mend: the piece mended if you still have it, and the bench moves on. */
+function finishMend(c: Cultivator, day: number): Cultivator {
+  const thing = c.crafts.front!.mend!;
+  const still = needsMend(c, thing);
+  const next = still ? mended(c, thing) : c;
+  const done = {
+    day,
+    recipe: baseOf(thing),
+    made: mendedId(thing),
+    count: 1,
+    blew: false,
+    mend: true,
+  };
+  const recent = (still ? [done, ...next.crafts.recent] : next.crafts.recent).slice(
+    0,
+    RECENT_BATCHES,
+  );
+  const [entry, ...rest] = next.crafts.bench;
+  const bench = entry?.mend === thing ? rest : next.crafts.bench;
+  return withCrafts(next, { bench, front: null, recent });
 }
 
 /** Resolves the front's batches, each rolled alone, and moves the bench on past them. */
@@ -570,6 +686,7 @@ function finish(
   spot: BenchSpot | null,
 ): Cultivator {
   const front = c.crafts.front!;
+  if (front.mend) return finishMend(c, day);
   const r = recipe(front.recipe);
   const batches = front.batches ?? 1;
   const hand = meanHand(c, front);
@@ -609,21 +726,29 @@ export function workBench(
   const events: BenchEvent[] = [];
   while (left > 1e-9) {
     if (!next.crafts.front) {
+      next = dropStaleMends(next);
       const loaded = load(next);
       if (!loaded) break;
       next = loaded;
     }
     const front = next.crafts.front!;
-    const need = batchHours(next, recipe(front.recipe)) - front.hours;
+    const need = frontHours(next, front) - front.hours;
     if (left + 1e-9 < need) {
       next = withCrafts(next, { front: withHand(front, left, hand) });
       break;
     }
     left -= need;
-    batches += front.batches ?? 1;
+    if (!front.mend) batches += front.batches ?? 1;
     next = finish(withCrafts(next, { front: withHand(front, need, hand) }), day, rng, events, spot);
   }
   return { cultivator: next, events, batches };
+}
+
+/** Mends at the bench's head for pieces no longer needing it (sold, or mended in town) leave it. */
+function dropStaleMends(c: Cultivator): Cultivator {
+  let i = 0;
+  while (c.crafts.bench[i]?.mend && !needsMend(c, c.crafts.bench[i]!.mend!)) i++;
+  return i === 0 ? c : withCrafts(c, { bench: c.crafts.bench.slice(i) });
 }
 
 /** The front after `hours` more at a hand: its hours, and the hand put in beside them. */
@@ -641,14 +766,21 @@ export function benchWaits(c: Cultivator): string | null {
   if (c.crafts.front) return null;
   const entry = c.crafts.bench[0];
   if (!entry) return null;
+  if (entry.mend) {
+    const why = cantMend(c, entry.mend);
+    if (why) return why;
+    const need = mendNeeds(entry.mend);
+    return heldOf(c, need.input, need.tier).length > 0 ? null : `Short 1 ${item(need.input).name}.`;
+  }
   const r = recipe(entry.recipe);
   const why = cantBrew(c, r.output);
   if (why) return why;
   if (!toolFor(c, r)) {
+    const tool = CRAFTS[r.craft].tool;
     const cracked = toolsHeld(c, r.craft).some((t) => t.cracked);
     return cracked
-      ? 'Your furnace is cracked: a refiner mends it for a tenth of its worth.'
-      : `You carry no ${r.craft === 'alchemy' ? 'furnace' : 'tool'} that holds a tier ${recipeTier(r)} fire.`;
+      ? `Your ${tool} is cracked: a refiner mends it for a tenth of its worth, or mend it at a forge.`
+      : `You carry no ${tool} that holds a tier ${recipeTier(r)} fire.`;
   }
   const short = planInputs(c, r).short;
   if (short.length > 0)

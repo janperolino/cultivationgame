@@ -118,6 +118,24 @@ export const BORDER_WILDS: Catalog = {
       ],
     },
   ],
+  // Its gear's recipes (K4), each refined from what its line tells of.
+  recipes: [
+    {
+      output: 'ash-wood-spear',
+      craft: 'refining',
+      family: 'blades',
+      inputs: [
+        { thing: 'red-rocks-iron-ore', count: 3 },
+        { thing: 'ash-spear-shaft', count: 1 },
+      ],
+    },
+    {
+      output: 'boar-hide-vest',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [{ thing: 'beast-hide', count: 3 }],
+    },
+  ],
   lots: [
     // Wall issue
     { thing: 'ash-wood-spear', shops: ['refiner', 'house', 'stall'] },

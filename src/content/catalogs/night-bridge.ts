@@ -368,6 +368,43 @@ export const NIGHT_BRIDGE: Catalog = {
         { thing: 'blood-salt-kelp', count: 4 },
       ],
     },
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    {
+      output: 'lampless-saber',
+      craft: 'refining',
+      family: 'blades',
+      inputs: [
+        { thing: 'red-rocks-iron-ore', count: 5 },
+        { thing: 'bat-fat-lamp-oil', count: 1 },
+      ],
+    },
+    {
+      output: 'black-oilcloth-coat',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [
+        { thing: 'tarred-cargo-net', count: 2 },
+        { thing: 'beast-shell', count: 2 },
+      ],
+    },
+    {
+      output: 'night-ferry-shroud',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [
+        { thing: 'spirit-silk', count: 3 },
+        { thing: 'bat-fat-lamp-oil', count: 1 },
+      ],
+    },
+    {
+      output: 'shuttered-lantern',
+      craft: 'refining',
+      family: 'vessels',
+      inputs: [
+        { thing: 'red-rocks-iron-ore', count: 2 },
+        { thing: 'bat-fat-lamp-oil', count: 1 },
+      ],
+    },
   ],
   lots: [
     // Hiding talismans (P3.7): the one way to cross a realm unseen on the road.

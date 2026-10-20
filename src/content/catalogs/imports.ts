@@ -67,6 +67,24 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
         text: 'Red ore that stains the fingers. Refiners want it for edges, talisman-makers for ink.',
       },
     ],
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    recipes: [
+      {
+        output: 'black-iron-saber',
+        craft: 'refining',
+        family: 'blades',
+        inputs: [{ thing: 'red-rocks-iron-ore', count: 5 }],
+      },
+      {
+        output: 'fire-bead',
+        craft: 'refining',
+        family: 'vessels',
+        inputs: [
+          { thing: 'beast-core', count: 1 },
+          { thing: 'cinnabar-ore', count: 1 },
+        ],
+      },
+    ],
     lots: [
       { thing: 'red-rocks-iron-ore', shops: ['refiner', 'house'], count: [20, 20] },
       { thing: 'black-iron-saber', shops: ['refiner', 'house'] },
@@ -126,6 +144,18 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
     layer: 'import',
     from: 'qm-jianyu',
     via: 'a Clear Heaven Sword Sect blade the guild bought off someone who needed money more',
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    recipes: [
+      {
+        output: 'azure-cloud-sword',
+        craft: 'refining',
+        family: 'blades',
+        inputs: [
+          { thing: 'red-rocks-iron-ore', count: 6 },
+          { thing: 'beast-wing', count: 1 },
+        ],
+      },
+    ],
     lots: [{ thing: 'azure-cloud-sword', shops: ['house'], weight: 0.15 }],
   },
   {

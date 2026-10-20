@@ -12,7 +12,7 @@ import { RARE } from '../content/catalogs/rare.ts';
 import type { Catalog, Lot } from '../content/catalogs/types.ts';
 import { copyChapter, copyManual, hasCopy } from '../content/copies.ts';
 import { baseOf, hasItem, item, itemKind, variantId } from '../content/items.ts';
-import { CRACK_MEND_SHARE } from './crafts.ts';
+import { CRACK_MEND_SHARE, mended } from './crafts.ts';
 import {
   HOUSE_TAKE,
   LENT_WEIGHT,
@@ -971,7 +971,7 @@ export function repairCost(s: GameState, thing: string): number | null {
   return wear > 0 ? Math.round(priceOf(thing) * REPAIR_SHARE * wear * 10) / 10 : null;
 }
 
-/** A refiner mends a piece you hold or wear. */
+/** A refiner mends a piece you hold or wear: the refining action you'd do at your own forge (K4). */
 export function repair(s: GameState, shopId: string, thing: string): ShopResult {
   const sh = shopById(shopId);
   if (!SHOP_KIND_INFO[sh.kind].repairs) return { ok: false, reason: 'Only a refiner mends gear.' };
@@ -981,20 +981,5 @@ export function repair(s: GameState, shopId: string, thing: string): ShopResult 
   if (cost === null) return { ok: false, reason: 'It needs no mending.' };
   const after = pay(stonesOf(s.player), cost);
   if (!after) return { ok: false, reason: 'You can’t pay that.' };
-  let c = withStones(s.player, after);
-  const it = item(thing);
-  if (it.cracked) {
-    c = addItem(addItem(c, thing, -1), variantId(baseOf(thing), it.rarity), 1);
-  } else if (it.damaged) {
-    const up = RARITY_IDS[rarityRank(it.rarity) + 1]!;
-    const mended = variantId(thing.split('~')[0]!, up);
-    const worn = Object.entries(c.gear).find(([, v]) => v === thing)?.[0];
-    if (worn && worn !== 'treasures') c = { ...c, gear: { ...c.gear, [worn]: mended } };
-    else c = addItem(addItem(c, thing, -1), mended, 1);
-  } else {
-    const wear = { ...c.wear };
-    delete wear[thing];
-    c = { ...c, wear };
-  }
-  return { ok: true, state: withPlayer(s, c) };
+  return { ok: true, state: withPlayer(s, mended(withStones(s.player, after), thing)) };
 }

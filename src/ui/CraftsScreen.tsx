@@ -2,10 +2,12 @@
 // with a page a craft, Alchemy first. The page holds the furnace and the recipes known on the left,
 // the bench's queue, the tray and the last batches in the middle, and mastery by family and the
 // soul gate on the right. Which hours are Craft hours stays on Routine. A batch queued and left
-// runs at no hand; sat at, it reads the steady hand (K3), and the land lends its own.
+// runs at no hand; sat at, it reads the steady hand (K3), and the land lends its own. Refining (K4)
+// is its own page on the same bench: the forge, its recipes, tempering when you sit, and the pieces
+// you carry or wear that a craft hour a tier at the forge would mend.
 import { useEffect, useState } from 'react';
 import type { Recipe } from '../content/catalogs/types.ts';
-import { CRAFTS, CRAFT_IDS, FAMILIES, FAMILY_IDS, recipe } from '../content/crafts.ts';
+import { CRAFTS, CRAFT_IDS, FAMILIES, FAMILY_IDS, recipe, recipeFor } from '../content/crafts.ts';
 import type { CraftId, FamilyId } from '../content/crafts.ts';
 import { item } from '../content/items.ts';
 import { MASTERY } from '../content/mastery.ts';
@@ -24,11 +26,15 @@ import {
   landHand,
   liftOdds,
   liftOf,
+  mendNeeds,
+  frontHours,
   moveOnBench,
   nextLevelAt,
   planInputs,
   queueBatches,
+  queueMend,
   takeTray,
+  toMend,
   toolFor,
   toolsHeld,
   unqueue,
@@ -40,6 +46,7 @@ import { benchSpot } from '../core/map/travel.ts';
 import { withPlayer, type Cultivator } from '../core/state.ts';
 import { formatPercent } from './format.ts';
 import { sitDown, standUp, useFurnace } from './furnace.ts';
+import { ForgeScene } from './ForgeScene.tsx';
 import { FurnaceScene } from './FurnaceScene.tsx';
 import { itemTag } from './itemWords.ts';
 import { go } from './nav.ts';
@@ -48,8 +55,34 @@ import { useGame } from './store.ts';
 /** Hours to a tenth, as the bench counts them. */
 const round1 = (h: number) => Math.round(h * 10) / 10;
 
-/** The crafts K1 builds; the rest show as pages yet to open. */
-const BUILT: readonly CraftId[] = ['alchemy'];
+/** The crafts built so far (alchemy in K1, refining in K4); the rest show as pages yet to open. */
+const BUILT: readonly CraftId[] = ['alchemy', 'refining'];
+
+/** What each built craft's page calls its things. */
+const WORDS: Partial<
+  Record<
+    CraftId,
+    { at: string; hanzi: string; line: string; unit: [string, string]; none: string; slip: string }
+  >
+> = {
+  alchemy: {
+    at: 'At the furnace',
+    hanzi: '守炉',
+    line: 'Click the dark dross to burn it to ash; let the gold essence fall back into the pill. Every flick heats the furnace.',
+    unit: ['pill', 'pills'],
+    none: 'Refiners sell them; a crude clay furnace is 30 low.',
+    slip: 'A recipe slip 丹方 is read on study hours, as a formula is; every alchemy shop sells the Qi-Gathering Pill’s.',
+  },
+  refining: {
+    at: 'At the forge',
+    hanzi: '炼器',
+    line: 'Press a seal into each rune point as its glow passes orange: too hot it blurs, too cold it won’t take. On the last heat, quench the piece as it passes cherry.',
+    unit: ['piece', 'pieces'],
+    none: 'Refiners sell them; a crude iron forge is 60 low.',
+    slip: 'A gear slip 器谱 is read on study hours, as a formula is; every refiner sells the Iron Sword’s.',
+  },
+};
+const words = (k: CraftId) => WORDS[k] ?? WORDS.alchemy!;
 
 export function CraftsScreen() {
   const game = useGame((s) => s.game);
@@ -59,13 +92,27 @@ export function CraftsScreen() {
   const [why, setWhy] = useState<string | null>(null);
   const sitting = useFurnace((f) => f.sitting);
   const satAt = useFurnace((f) => f.recipe);
+  const satCraft = useFurnace((f) => f.craft);
   // Leaving the page stands you up: the furnace runs itself.
   useEffect(() => standUp, []);
   if (!game) return null;
   const c = game.player;
-  // The recipe at the furnace: the batch in it, else the next queued, else the one you sat down to.
-  const atFurnace = c.crafts.front?.recipe ?? c.crafts.bench[0]?.recipe ?? null;
+  // The work at the bench: the batch or mend in the tool, else the next queued, else the one you
+  // sat down to; a mend is the forge's.
+  const head = c.crafts.front ?? c.crafts.bench[0] ?? null;
+  const atFurnace = head?.recipe ?? null;
+  const headCraft: CraftId | null = head
+    ? head.mend
+      ? 'refining'
+      : recipe(head.recipe).craft
+    : null;
   const playing = atFurnace ?? (sitting ? satAt : null);
+  const atCraft: CraftId = headCraft ?? satCraft ?? page;
+  const family = head
+    ? head.mend
+      ? (recipeFor(head.mend)?.family ?? null)
+      : recipe(head.recipe).family
+    : null;
   const hours = ratesHere(game).count.craft;
   const spot = benchSpot(game);
   const change = (f: (c: Cultivator) => Cultivator) => applyLife((s) => withPlayer(s, f(s.player)));
@@ -106,12 +153,29 @@ export function CraftsScreen() {
       </nav>
       <div className="crafts-columns">
         <section className="panel crafts-left">
-          <h2 className="panel-heading">The furnace</h2>
+          <h2 className="panel-heading">The {CRAFTS[page].tool}</h2>
           <Tools c={c} craft={page} />
           <h2 className="panel-heading">Recipes known</h2>
           <Recipes c={c} craft={page} pick={pick} onPick={setPick} />
           {pick && <RecipeCard c={c} r={recipe(pick)} spot={spot} onQueue={queue} />}
           {why && <p className="warn">{why}</p>}
+          {page === 'refining' && (
+            <>
+              <h2 className="panel-heading">To mend</h2>
+              <Mends
+                c={c}
+                onMend={(thing) => {
+                  let reason: string | null = null;
+                  change((p) => {
+                    const r = queueMend(p, thing);
+                    reason = r.reason;
+                    return r.cultivator;
+                  });
+                  setWhy(reason);
+                }}
+              />
+            </>
+          )}
           {sitting && (
             <>
               <h2 className="panel-heading">The bench</h2>
@@ -120,21 +184,22 @@ export function CraftsScreen() {
             </>
           )}
         </section>
-        {sitting && playing ? (
+        {sitting && (atCraft === 'refining' || playing) ? (
           <section className="panel crafts-furnace">
             <div className="crafts-furnace-top">
               <h2 className="panel-heading">
-                At the furnace <span className="hanzi">守炉</span>
+                {words(atCraft).at} <span className="hanzi">{words(atCraft).hanzi}</span>
               </h2>
               <button type="button" className="button button-quiet" onClick={standUp}>
                 Stand up
               </button>
             </div>
-            <FurnaceScene game={game} recipe={recipe(playing)} />
-            <p className="crafts-furnace-line muted">
-              Click the dark dross to burn it to ash; let the gold essence fall back into the pill.
-              Every flick heats the furnace.
-            </p>
+            {atCraft === 'refining' ? (
+              <ForgeScene key="forge" game={game} family={family} />
+            ) : (
+              <FurnaceScene key="furnace" game={game} recipe={recipe(playing!)} />
+            )}
+            <p className="crafts-furnace-line muted">{words(atCraft).line}</p>
             <BatchHand c={c} />
           </section>
         ) : (
@@ -144,11 +209,11 @@ export function CraftsScreen() {
               <button
                 type="button"
                 className="button"
-                disabled={!playing}
-                title={playing ? undefined : 'Queue a batch to sit at it.'}
-                onClick={() => atFurnace && sitDown(atFurnace)}
+                disabled={!head}
+                title={head ? undefined : 'Queue a batch to sit at it.'}
+                onClick={() => head && headCraft && sitDown(head.recipe, headCraft)}
               >
-                Sit at the furnace
+                Sit at the {CRAFTS[headCraft ?? page].tool}
               </button>
             </div>
             <Bench c={c} onChange={change} />
@@ -164,7 +229,7 @@ export function CraftsScreen() {
           <h2 className="panel-heading">Steady hands 稳手</h2>
           <SteadyHands c={c} craft={page} />
           <h2 className="panel-heading">The land</h2>
-          <Land c={c} spot={spot} />
+          <Land c={c} craft={page} spot={spot} />
           {sitting && <Recent c={c} />}
         </section>
       </div>
@@ -177,7 +242,7 @@ function Tools({ c, craft }: { c: Cultivator; craft: CraftId }) {
   if (tools.length === 0)
     return (
       <p className="muted">
-        You carry no {CRAFTS[craft].tool}. Refiners sell them; a crude clay furnace is 30 low.
+        You carry no {CRAFTS[craft].tool}. {words(craft).none}
       </p>
     );
   return (
@@ -208,13 +273,7 @@ function Recipes({
   onPick: (id: string) => void;
 }) {
   const known = knownRecipes(c).filter((r) => r.craft === craft);
-  if (known.length === 0)
-    return (
-      <p className="muted">
-        None yet. A recipe slip 丹方 is read on study hours, as a formula is; every alchemy shop
-        sells the Qi-Gathering Pill’s.
-      </p>
-    );
+  if (known.length === 0) return <p className="muted">None yet. {words(craft).slip}</p>;
   return (
     <ul className="crafts-list">
       {known.map((r) => (
@@ -265,16 +324,16 @@ function RecipeCard({
       </p>
       <p className="muted">
         {round1(batchHours(c, r))} craft hours · holds {formatPercent(holdOdds(c, r, land))} ·{' '}
-        {yieldOf(c, r)} pills · {lands}
+        {yieldOf(c, r)} {words(r.craft).unit[yieldOf(c, r) === 1 ? 0 : 1]} · {lands}
       </p>
       <p className="muted">Sat at with a full hand: {odds(1)}.</p>
       <p className="muted">
         The Bag fills {batchesHeld(c, r)} batch{batchesHeld(c, r) === 1 ? '' : 'es'}
-        {plan.above ? ', every herb a rarity above the floor' : ''}.
+        {plan.above ? ', every input a rarity above the floor' : ''}.
       </p>
       <div className="crafts-actions">
         <button type="button" className="button" onClick={() => onQueue(r.output, 1)}>
-          Queue a batch
+          Queue a {r.craft === 'alchemy' ? 'batch' : 'piece'}
         </button>
         <button type="button" className="button button-quiet" onClick={() => onQueue(r.output, 5)}>
           Queue five
@@ -299,17 +358,21 @@ function Bench({
     <>
       <ol className="crafts-list">
         {bench.map((e, i) => {
-          const r = recipe(e.recipe);
-          const inTool = i === 0 && front?.recipe === e.recipe;
-          const share = inTool ? front.hours / batchHours(c, r) : 0;
+          const inTool = i === 0 && front?.recipe === e.recipe && front.mend === e.mend;
+          const hours = inTool
+            ? frontHours(c, front)
+            : e.mend
+              ? mendNeeds(e.mend).hours
+              : batchHours(c, recipe(e.recipe));
+          const share = inTool ? front.hours / hours : 0;
           return (
             <li key={`${e.recipe}-${i}`} className="crafts-entry">
               <div className="crafts-entry-top">
                 <span>
-                  {item(e.recipe).name} ×{e.batches}
+                  {e.mend ? `Mend: ${item(e.mend).name}` : `${item(e.recipe).name} ×${e.batches}`}
                 </span>
                 <span className="muted">
-                  {inTool ? `${round1(front.hours)} of ${round1(batchHours(c, r))} h` : 'waiting'}
+                  {inTool ? `${round1(front.hours)} of ${round1(hours)} h` : 'waiting'}
                 </span>
               </div>
               {inTool && (
@@ -348,8 +411,10 @@ function Bench({
       </ol>
       {front && !bench.some((e) => e.recipe === front.recipe) && (
         <p className="muted">
-          A batch of {item(front.recipe).name} finishes in the furnace: {round1(front.hours)} of{' '}
-          {round1(batchHours(c, recipe(front.recipe)))} h.
+          {front.mend
+            ? `${item(front.mend).name} is mended at the forge`
+            : `A batch of ${item(front.recipe).name} finishes`}
+          : {round1(front.hours)} of {round1(frontHours(c, front))} h.
         </p>
       )}
       {waits && <p className="crafts-waits">{waits}</p>}
@@ -387,15 +452,47 @@ function Recent({ c }: { c: Cultivator }) {
       <ul className="crafts-list crafts-recent">
         {recent.map((b, i) => (
           <li key={i} className={b.made ? `rarity-${item(b.made).rarity}` : 'crafts-failed'}>
-            {b.made
-              ? `${b.count} ${item(b.made).name}, ${rarity(item(b.made).rarity).name.toLowerCase()}${b.hand ? `, played at a ${b.hand.toFixed(2)} hand` : ''}`
-              : b.blew
-                ? `${item(b.recipe).name}: the furnace burst, the herbs lost`
-                : `${item(b.recipe).name}: the batch failed, the herbs lost`}
+            {b.mend && b.made
+              ? `${item(b.made).name}, mended`
+              : b.made
+                ? `${b.count} ${item(b.made).name}, ${rarity(item(b.made).rarity).name.toLowerCase()}${b.hand ? `, played at a ${b.hand.toFixed(2)} hand` : ''}`
+                : b.blew
+                  ? `${item(b.recipe).name}: the ${toolWord(b.recipe)} burst, the inputs lost`
+                  : `${item(b.recipe).name}: the batch failed, the inputs lost`}
           </li>
         ))}
       </ul>
     </>
+  );
+}
+
+/** The tool a made thing's recipe works in: the furnace or the forge. */
+function toolWord(thing: string): string {
+  const r = recipeFor(thing);
+  return r ? CRAFTS[r.craft].tool : 'furnace';
+}
+
+/** The pieces you carry or wear that need mending, and what each takes at the forge. */
+function Mends({ c, onMend }: { c: Cultivator; onMend: (thing: string) => void }) {
+  const list = toMend(c);
+  if (list.length === 0) return <p className="muted">Nothing you carry or wear needs mending.</p>;
+  return (
+    <ul className="crafts-list">
+      {list.map((thing) => {
+        const need = mendNeeds(thing);
+        return (
+          <li key={thing} className="crafts-tool">
+            <span>{item(thing).name}</span>
+            <span className="muted">
+              {need.hours} h · 1 {item(need.input).name}{' '}
+              <button type="button" className="link-button" onClick={() => onMend(thing)}>
+                mend
+              </button>
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -440,7 +537,7 @@ function SoulGate({ c }: { c: Cultivator }) {
   const g = craftReach(c);
   return (
     <p className="muted">
-      Brews tier {g.reach}
+      Crafts tier {g.reach}
       {g.reach > g.tier ? `, your soul a tier ahead of your realm` : ''}
       {g.matched
         ? ' · your soul keeps pace: ×1.25 the odds, half the blow-ups'
@@ -463,8 +560,8 @@ function SteadyHands({ c, craft }: { c: Cultivator; craft: CraftId }) {
 }
 
 /** What the land where you stand lends the bench. */
-function Land({ c, spot }: { c: Cultivator; spot: BenchSpot | null }) {
-  const known = knownRecipes(c);
+function Land({ c, craft, spot }: { c: Cultivator; craft: CraftId; spot: BenchSpot | null }) {
+  const known = knownRecipes(c).filter((r) => r.craft === craft);
   const why = [...new Set(known.flatMap((r) => landHand(r, spot).why))];
   return (
     <p className="muted">
@@ -483,16 +580,15 @@ function BatchHand({ c }: { c: Cultivator }) {
   if (!front)
     return (
       <p className="muted crafts-furnace-batch">
-        Nothing in the furnace yet: the next batch goes in on your next craft hour.
+        Nothing on the bench yet: the next goes in on your next craft hour.
       </p>
     );
-  const r = recipe(front.recipe);
-  const hours = batchHours(c, r);
+  const hours = frontHours(c, front);
   const mean = front.hours > 0 ? (front.hand ?? 0) / front.hours : 0;
   return (
     <div className="crafts-furnace-batch">
       <div className="crafts-entry-top">
-        <span>{item(front.recipe).name}</span>
+        <span>{front.mend ? `Mending ${item(front.mend).name}` : item(front.recipe).name}</span>
         <span className="muted">
           {round1(front.hours)} of {round1(hours)} h
         </span>
@@ -501,8 +597,9 @@ function BatchHand({ c }: { c: Cultivator }) {
         <div style={{ width: `${Math.round((front.hours / hours) * 100)}%` }} />
       </div>
       <p className="muted">
-        It reads your hand over its hours: {mean.toFixed(2)} so far. Away, the furnace runs itself
-        at no hand.
+        {front.mend
+          ? 'A mend reads no hand: it only takes its hours.'
+          : `It reads your hand over its hours: ${mean.toFixed(2)} so far. Away, it runs itself at no hand.`}
       </p>
     </div>
   );

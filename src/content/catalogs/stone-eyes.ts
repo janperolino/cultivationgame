@@ -99,6 +99,21 @@ export const STONE_EYES: Catalog = {
       source: 'the drip-cups the clans set under the oldest stalactites, emptied once a season',
       text: 'A stoppered gourd of white water that has run down stone for a thousand years. It is heavier than it looks.',
     },
+    // The Slate-Plate Vest's slate (K4's talk): its line names it, so it is a line of its own.
+    {
+      id: 'split-slate',
+      name: 'Split Slate',
+      pinyin: 'Pian Yan',
+      hanzi: '片岩',
+      tier: 1,
+      rarity: 'white',
+      element: 'earth',
+      kind: 'material',
+      price: 1.5,
+      uses: { ingredient: { properties: ['hard'] } },
+      source: 'the terrace quarries, where slate comes away from the sinkhole walls in sheets',
+      text: 'Grey slate split no thicker than a coin. It rings when you tap it and cuts when you don’t.',
+    },
     {
       id: 'rockfall-talisman',
       name: 'Rockfall Talisman',
@@ -124,7 +139,7 @@ export const STONE_EYES: Catalog = {
       stack: 20,
       tags: ['trade', 'oil'],
       taels: 0.2,
-      uses: {},
+      uses: { ingredient: { properties: ['burning', 'concealing'] } },
       source: 'the terrace stores, rendered from the roost-keepers’ catch and sold by the crate',
       text: 'Rendered bat fat in a stoppered jar. It burns slowly, stinks, and lasts a long tunnel; the open plains have no caves to render it from.',
     },
@@ -431,6 +446,31 @@ export const STONE_EYES: Catalog = {
         { thing: 'glow-cap-mushroom', count: 4 },
       ],
     },
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    {
+      output: 'iron-knuckles',
+      craft: 'refining',
+      family: 'blades',
+      inputs: [{ thing: 'red-rocks-iron-ore', count: 4 }],
+    },
+    {
+      output: 'slate-plate-vest',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [
+        { thing: 'split-slate', count: 4 },
+        { thing: 'beast-hide', count: 1 },
+      ],
+    },
+    {
+      output: 'hooded-cave-lamp',
+      craft: 'refining',
+      family: 'vessels',
+      inputs: [
+        { thing: 'thunderhorn', count: 1 },
+        { thing: 'bat-fat-lamp-oil', count: 1 },
+      ],
+    },
   ],
   lots: [
     { thing: 'slate-plate-vest', shops: ['stall'] },
@@ -441,6 +481,7 @@ export const STONE_EYES: Catalog = {
     // Cave herbs and lamp oil from the bat roosts, in any karst (E4's land tags, for Jan's review).
     { thing: 'glow-cap-mushroom', shops: ['alchemy', 'stall'], count: [2, 8], land: ['karst'] },
     { thing: 'stalactite-milk', shops: ['alchemy', 'stall'], count: [2, 6], land: ['karst'] },
+    { thing: 'split-slate', shops: ['refiner', 'stall'], count: [4, 10], land: ['karst'] },
     { thing: 'rockfall-talisman', shops: ['stall'], count: [1, 3] },
     { thing: 'bat-fat-lamp-oil', shops: ['mortal'], count: [20, 20], land: ['karst'] },
     { thing: 'knotted-rope-ladder', shops: ['mortal'] },
@@ -542,6 +583,13 @@ export const STONE_FOREST: Catalog = {
         { thing: 'never-noon-fern', count: 5 },
         { thing: 'calm-heart-grass', count: 5 },
       ],
+    },
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    {
+      output: 'python-skin-jerkin',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [{ thing: 'beast-hide', count: 3 }],
     },
   ],
   lots: [

@@ -86,6 +86,35 @@ export const ALCHEMY_MAKES = {
   detox: 'purging',
 } as const satisfies Record<string, Property>;
 
+/**
+ * Refining's row of the effect table (K4): what a piece's inputs carry for its slot, a blade an
+ * edge, armor firmness, a pouch or ring space. A treasure or a tool takes any of refining's
+ * properties, or an element for its rune (a fire bead's cinnabar). A test checks the recipes.
+ */
+export const REFINING_MAKES = {
+  weapon: 'sharp',
+  armor: 'hard',
+  pouch: 'spatial',
+  ring: 'spatial',
+} as const satisfies Record<string, Property>;
+export const REFINING_PROPERTIES: readonly Property[] = [
+  'sharp',
+  'hard',
+  'light',
+  'swift',
+  'spatial',
+  'binding',
+  'resonant',
+  'concealing',
+];
+
+/**
+ * Mending is refining (design § Production, commissions and the craft deck; K4): a craft hour a
+ * tier of the piece at a whole forge of its tier, and one piece of what it was made of (its
+ * recipe's first input, or this ore when it has none). It never fails and counts no mastery.
+ */
+export const MEND = { hours: 1, ore: 'red-rocks-iron-ore' } as const;
+
 /** The kind of tool each craft works with: a furnace, a forge, a brush and an array plate. */
 export const TOOL_KIND: ItemKind = 'tool';
 

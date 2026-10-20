@@ -10,7 +10,9 @@
 // is per four craft hours; the batches a month are what the market's shelves feed, the rein.
 // Played (K3): the same months sat at the furnace at a 0.8 hand, which should beat queuing by a
 // fair margin, at least ×1.5 the queued net at each level (the steady hand moves only rarity).
-// Run: npm run sim -- craft
+// Refining (K4): the same month at a crude iron forge, `npm run sim -- craft iron-sword`; a piece
+// takes eight craft hours, so the net is still per four of them.
+// Run: npm run sim -- craft [recipe]
 import { DAYS_PER_MONTH, DAYS_PER_YEAR } from '../src/content/calendar.ts';
 import { CRAFT_MASTERY, recipe, recipeHours } from '../src/content/crafts.ts';
 import { baseOf, item } from '../src/content/items.ts';
@@ -24,7 +26,8 @@ import { buy, offerFor, repair, sell, shelf } from '../src/core/shops.ts';
 import { SHOPS } from '../src/content/shops.ts';
 import { addItem, newLife, withPlayer, type GameState } from '../src/core/state.ts';
 
-const RECIPE = 'qi-gathering-pill';
+const RECIPE = process.argv[3] ?? 'qi-gathering-pill';
+const TOOL = recipe(RECIPE).craft === 'refining' ? 'crude-iron-forge' : 'crude-clay-furnace';
 const HOURS = 4;
 const DAYS = DAYS_PER_MONTH;
 const DUTY_DAY = 1.5;
@@ -104,7 +107,7 @@ function run(
   let s = newLife({ name: 'Han Li', seed: `craft-${market}-${level}-${seed}` });
   const year = Math.floor(s.calendar.day / DAYS_PER_YEAR) * DAYS_PER_YEAR;
   s = { ...s, calendar: { ...s.calendar, day: year + (2 + seed) * DAYS_PER_MONTH } };
-  let p = addItem({ ...s.player, stones: 2000, items: {} }, 'crude-clay-furnace', 1);
+  let p = addItem({ ...s.player, stones: 2000, items: {} }, TOOL, 1);
   p = { ...p, nodes: [...p.nodes, `${slipId(RECIPE)}-node`] };
   // A qi cultivator whose soul lags, as most do: unmatched, so the odds are the table's own.
   p = { ...p, qi: { ...p.qi, stage: 5 }, soul: { ...p.soul, stage: 3 } };

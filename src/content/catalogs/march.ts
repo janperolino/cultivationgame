@@ -150,9 +150,10 @@ export const MARCH: Catalog = {
       hanzi: '白蜡枪杆',
       tier: 1,
       rarity: 'white',
+      element: 'wood',
       kind: 'material',
       taels: 4,
-      uses: {},
+      uses: { ingredient: { properties: ['light'] } },
       source: 'the village store, where the wheelwright sells them by the dozen',
       text: 'A bare ash pole, straight and well seasoned. Every household keeps a spare one, since you break more of them than you would think.',
     },
@@ -413,6 +414,31 @@ export const MARCH: Catalog = {
         { thing: 'beast-meat', count: 5 },
       ],
     },
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    {
+      output: 'watchtower-spear',
+      craft: 'refining',
+      family: 'blades',
+      inputs: [
+        { thing: 'red-rocks-iron-ore', count: 3 },
+        { thing: 'ash-spear-shaft', count: 1 },
+      ],
+    },
+    {
+      output: 'cadet-scale-coat',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [
+        { thing: 'red-rocks-iron-ore', count: 4 },
+        { thing: 'cloud-goat-wool', count: 1 },
+      ],
+    },
+    {
+      output: 'watch-bell-charm',
+      craft: 'refining',
+      family: 'vessels',
+      inputs: [{ thing: 'red-rocks-iron-ore', count: 2 }],
+    },
   ],
   lots: [
     // Staples (E3)
@@ -549,6 +575,25 @@ export const PILED_BONES_WALL: Catalog = {
       inputs: [
         { thing: 'bone-meal', count: 7 },
         { thing: 'ridge-bitterroot', count: 3 },
+      ],
+    },
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    {
+      output: 'bone-plate-cuirass',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [
+        { thing: 'beast-shell', count: 3 },
+        { thing: 'gate-tanned-hide', count: 1 },
+      ],
+    },
+    {
+      output: 'patrol-walk-lantern',
+      craft: 'refining',
+      family: 'vessels',
+      inputs: [
+        { thing: 'thunderhorn', count: 1 },
+        { thing: 'beast-shell', count: 1 },
       ],
     },
   ],

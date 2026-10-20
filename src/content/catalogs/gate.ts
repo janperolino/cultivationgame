@@ -54,7 +54,7 @@ export const BUTCHER_GATE: Catalog = {
       kind: 'gear',
       uses: { equip: { slot: 'weapon', weapon: 'saber' }, inscribe: { slots: 1 } },
       properties: [{ name: 'Blood Groove', effects: [{ stat: 'saberCrit', value: 0.03 }] }],
-      source: 'the drill yard’s smith, who forges one for every disciple who counts a first core',
+      source: 'the drill yard’s refiner, who forges one for every disciple who counts a first core',
       text: 'A short, heavy saber with a groove down the back that the disciples call the blood channel. It is not a duelist’s blade.',
     },
     {
@@ -462,6 +462,31 @@ export const BUTCHER_GATE: Catalog = {
         { thing: 'beast-core', count: 2 },
         { thing: 'beast-blood', count: 8 },
       ],
+    },
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    {
+      output: 'green-steel-saber',
+      craft: 'refining',
+      family: 'blades',
+      inputs: [{ thing: 'red-rocks-iron-ore', count: 6 }],
+    },
+    {
+      output: 'gutting-saber',
+      craft: 'refining',
+      family: 'blades',
+      inputs: [{ thing: 'red-rocks-iron-ore', count: 5 }],
+    },
+    {
+      output: 'hide-apron',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [{ thing: 'gate-tanned-hide', count: 3 }],
+    },
+    {
+      output: 'core-weighing-scale',
+      craft: 'refining',
+      family: 'vessels',
+      inputs: [{ thing: 'red-rocks-iron-ore', count: 2 }],
     },
   ],
   lots: [

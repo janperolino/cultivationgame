@@ -118,6 +118,17 @@ export const HUNDRED_REINS: Catalog = {
         { thing: 'horse-heart-grass', count: 5 },
       ],
     },
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    {
+      output: 'paired-rider-lance',
+      craft: 'refining',
+      family: 'blades',
+      inputs: [
+        { thing: 'red-rocks-iron-ore', count: 3 },
+        { thing: 'ash-spear-shaft', count: 1 },
+        { thing: 'thunderhorn', count: 1 },
+      ],
+    },
   ],
   lots: [
     { thing: 'paired-rider-lance', shops: ['sect'], weight: 0.5, members: true },
@@ -259,6 +270,18 @@ export const BOUND_BONES: Catalog = {
           effects: [{ stat: 'soulDefense', value: 0.05 }],
           text: 'Whoever sings with the Wall is not sung at.',
         },
+      ],
+    },
+  ],
+  // Its gear's recipes (K4), each refined from what its line tells of.
+  recipes: [
+    {
+      output: 'skull-socket-robe',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [
+        { thing: 'spirit-silk', count: 3 },
+        { thing: 'array-plate-blank', count: 1 },
       ],
     },
   ],
@@ -495,6 +518,16 @@ export const LAMP_KEEPERS: Catalog = {
       inputs: [
         { thing: 'calm-heart-grass', count: 6 },
         { thing: 'bend-water-lotus-seed', count: 4 },
+      ],
+    },
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    {
+      output: 'yin-fire-lantern',
+      craft: 'refining',
+      family: 'vessels',
+      inputs: [
+        { thing: 'red-rocks-iron-ore', count: 1 },
+        { thing: 'bat-fat-lamp-oil', count: 1 },
       ],
     },
   ],

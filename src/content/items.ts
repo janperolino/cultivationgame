@@ -523,7 +523,7 @@ const WRITTEN: readonly Item[] = [
     kind: 'gear',
     properties: [{ name: 'Honest Temper', effects: [{ stat: 'swordPower', value: 0.03 }] }],
     uses: { equip: { slot: 'weapon', weapon: 'sword' }, inscribe: { slots: 1 } },
-    source: 'any smithy in the Border Wilds',
+    source: 'any refiner in the Border Wilds',
     text: 'Plain iron, honestly forged, the edge a little soft.',
   },
   {
@@ -552,7 +552,7 @@ const WRITTEN: readonly Item[] = [
     bulk: 2,
     properties: [{ name: 'Springing Shaft', effects: [{ stat: 'spearHit', value: 0.03 }] }],
     uses: { equip: { slot: 'weapon', weapon: 'spear' }, inscribe: { slots: 1 } },
-    source: 'any smithy in the Border Wilds',
+    source: 'any refiner in the Border Wilds',
     text: 'A long ash shaft that bends before it breaks, with an iron head.',
   },
   {

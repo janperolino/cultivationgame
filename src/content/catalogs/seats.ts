@@ -87,6 +87,24 @@ export const RIVER_BEND: Catalog = {
       text: 'Straw sandals in the levy’s pattern, sold by the pair to boys who will walk to the Wall in them.',
     },
   ],
+  // Its gear's recipes (K4), each refined from what its line tells of.
+  recipes: [
+    {
+      output: 'levy-halberd',
+      craft: 'refining',
+      family: 'blades',
+      inputs: [
+        { thing: 'red-rocks-iron-ore', count: 4 },
+        { thing: 'ash-spear-shaft', count: 1 },
+      ],
+    },
+    {
+      output: 'intendant-guard-glaive',
+      craft: 'refining',
+      family: 'blades',
+      inputs: [{ thing: 'red-rocks-iron-ore', count: 6 }],
+    },
+  ],
   lots: [
     { thing: 'levy-halberd', shops: ['refiner', 'stall'] },
     { thing: 'intendant-guard-glaive', shops: ['refiner'], weight: 0.5 },
@@ -171,6 +189,24 @@ export const THOUSAND_PADDOCKS: Catalog = {
       uses: {},
       source: 'the boot-felters of the outer rings, who sell to the herder families’ halls',
       text: 'Riding boots of thick felt with a horn sole, stitched with a family’s mark. A herder buys two pairs a life.',
+    },
+  ],
+  // Its gear's recipes (K4), each refined from what its line tells of.
+  recipes: [
+    {
+      output: 'remount-lamellar',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [{ thing: 'thunderhorn', count: 4 }],
+    },
+    {
+      output: 'royal-stud-barding',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [
+        { thing: 'beast-hide', count: 3 },
+        { thing: 'thunderhorn', count: 1 },
+      ],
     },
   ],
   lots: [
@@ -267,6 +303,16 @@ export const HEAVENS_EYE: Catalog = {
         { thing: 'glow-cap-mushroom', count: 3 },
       ],
     },
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    {
+      output: 'terrace-wall-mantle',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [
+        { thing: 'cloud-goat-wool', count: 3 },
+        { thing: 'split-slate', count: 1 },
+      ],
+    },
   ],
   lots: [
     { thing: 'terrace-wall-mantle', shops: ['stall'] },
@@ -281,6 +327,21 @@ export const EBB_HARBOR: Catalog = {
   at: 'qm-tuichao-gang',
   layer: 'place',
   items: [
+    // The Bound-Reef Scale Coat's coral (K4's talk): its line names it, so it is a line of its own.
+    {
+      id: 'reef-coral',
+      name: 'Reef Coral',
+      pinyin: 'Jiao Shanhu',
+      hanzi: '礁珊瑚',
+      tier: 1,
+      rarity: 'white',
+      element: 'water',
+      kind: 'material',
+      price: 2,
+      uses: { ingredient: { properties: ['hard'] } },
+      source: 'the breakwater menders, who cut the offcuts from the bound reef',
+      text: 'A hand of red coral, still faintly warm with the dead sect’s array that holds the reef together.',
+    },
     // A staple (E3): bulk goods sold by the lot, a Bag square of twenty, standing on the shelf
     // where they are made. **Awaiting Jan’s review.**
     {
@@ -349,7 +410,7 @@ export const EBB_HARBOR: Catalog = {
       rarity: 'white',
       kind: 'material',
       taels: 4,
-      uses: {},
+      uses: { ingredient: { properties: ['binding'] } },
       source: 'the net lofts on the west quay, where the honest cargo is slung',
       text: 'A tarred rope net for slinging bales into a hold. The east quay buys them too and does not say what for.',
     },
@@ -441,7 +502,20 @@ export const EBB_HARBOR: Catalog = {
       ],
     },
   ],
+  // Its gear's recipes (K4), each refined from what its line tells of.
+  recipes: [
+    {
+      output: 'bound-reef-scale',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [
+        { thing: 'reef-coral', count: 3 },
+        { thing: 'beast-hide', count: 1 },
+      ],
+    },
+  ],
   lots: [
+    { thing: 'reef-coral', shops: ['refiner', 'stall'], count: [2, 6], land: ['coast'] },
     // Staples (E3)
     // Salt from any coast, isle or desert (E4's land tags, for Jan's review).
     {
@@ -629,6 +703,15 @@ export const NAMELESS_MARKET: Catalog = {
           text: 'Two lines that cross once leave nowhere in the middle to stand.',
         },
       ],
+    },
+  ],
+  // Its gear's recipes (K4), each refined from what its line tells of.
+  recipes: [
+    {
+      output: 'patchwork-rogue-robe',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [{ thing: 'spirit-silk', count: 4 }],
     },
   ],
   lots: [

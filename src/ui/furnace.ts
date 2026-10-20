@@ -2,8 +2,9 @@
 // steady hand, kept apart from the game like the seat's focus, so it is never saved and starts at
 // zero on load. While you sit at the furnace and attend, the store's loop hands it to the day step
 // (ui/seat.ts), and every batch reads its mean over its hours; standing up, leaving the page or
-// going away hands none, and the furnace runs itself.
+// going away hands none, and the furnace runs itself. The forge's tempering (K4) sits the same way.
 import { create } from 'zustand';
+import type { CraftId } from '../content/crafts.ts';
 
 interface FurnaceStore {
   /** You sit at the furnace on the Crafts page. */
@@ -12,22 +13,25 @@ interface FurnaceStore {
   hand: number;
   /** The recipe you sat down to, played on if the bench empties while you sit. */
   recipe: string | null;
+  /** The craft you sat down at: the furnace or the forge. */
+  craft: CraftId | null;
 }
 
 export const useFurnace = create<FurnaceStore>()(() => ({
   sitting: false,
   hand: 0,
   recipe: null,
+  craft: null,
 }));
 
-/** Sits down at the furnace for the batch at its front: the hand starts from nothing. */
-export function sitDown(recipe: string): void {
-  useFurnace.setState({ sitting: true, hand: 0, recipe });
+/** Sits down at the furnace or the forge for the work at its front: the hand starts from nothing. */
+export function sitDown(recipe: string, craft: CraftId = 'alchemy'): void {
+  useFurnace.setState({ sitting: true, hand: 0, recipe, craft });
 }
 
 /** Stands up: no hand from here on. */
 export function standUp(): void {
-  useFurnace.setState({ sitting: false, hand: 0, recipe: null });
+  useFurnace.setState({ sitting: false, hand: 0, recipe: null, craft: null });
 }
 
 /** The minigame sets the hand as it plays. */

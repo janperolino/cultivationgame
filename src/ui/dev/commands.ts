@@ -668,7 +668,7 @@ export const COMMANDS: Record<string, Command> = {
   },
   craft: {
     usage: 'craft [recipe] [mastery batches]',
-    help: 'Sets up an alchemist (K1): a crude clay furnace, the recipe known (the Qi-Gathering Pill unless told), herbs for five batches, four Craft hours from 辰, and the family at that many batches.',
+    help: 'Sets up a crafter (K1, K4): its craft’s crude tool (a clay furnace, an iron forge), the recipe known (the Qi-Gathering Pill unless told), inputs for five batches, four Craft hours from 辰, and the family at that many batches. `craft iron-sword` makes a refiner.',
     run([id, batches], store) {
       const r = id ?? 'qi-gathering-pill';
       if (!hasRecipe(r)) return `No recipe ${r}: ${RECIPES.map((x) => x.output).join(', ')}.`;
@@ -678,7 +678,8 @@ export const COMMANDS: Record<string, Command> = {
         store,
         (s) => {
           const rec = recipe(r);
-          let c = addItem(s.player, 'crude-clay-furnace', 1);
+          const tool = rec.craft === 'refining' ? 'crude-iron-forge' : 'crude-clay-furnace';
+          let c = addItem(s.player, tool, 1);
           for (const i of rec.inputs) c = addItem(c, i.thing, i.count * 5);
           const node = `${slipId(r)}-node`;
           if (!c.nodes.includes(node)) c = { ...c, nodes: [...c.nodes, node] };
@@ -690,7 +691,7 @@ export const COMMANDS: Record<string, Command> = {
           const wheel = c.wheel.map((k, i) => (i >= 4 && i < 8 && k !== 'sleep' ? 'craft' : k));
           return withPlayer(s, { ...c, wheel });
         },
-        `An alchemist: ${r}, herbs for five batches, Craft hours from 辰 to 未.`,
+        `A crafter: ${r}, inputs for five batches, Craft hours from 辰 to 未.`,
       );
     },
   },

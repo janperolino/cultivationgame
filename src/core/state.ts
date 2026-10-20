@@ -93,10 +93,18 @@ export type PersonRecord = z.infer<typeof PersonRecord>;
 /**
  * The crafts (core/crafts.ts, K1): the bench's queue, worked from the front on Craft hours; the
  * front batch, its inputs already in the tool; the tray where finished pieces wait when the Bag is
- * full; the batches counted toward each family's mastery; and the bench's last few batches.
+ * full; the batches counted toward each family's mastery; and the bench's last few batches. A bench
+ * entry with `mend` mends that piece at the forge (K4): its `recipe` is the piece's own id.
  */
 const CraftsSchema = z.object({
-  bench: z.array(z.object({ recipe: z.string(), batches: z.number().int().min(1) })),
+  bench: z.array(
+    z.object({
+      recipe: z.string(),
+      batches: z.number().int().min(1),
+      /** The piece mended at the forge, by its id, when the entry is a mend (K4). */
+      mend: z.string().optional(),
+    }),
+  ),
   front: z
     .object({
       recipe: z.string(),
@@ -108,6 +116,8 @@ const CraftsSchema = z.object({
       batches: z.number().int().min(1).optional(),
       /** The steady hand put in so far, as hand × craft hours: the batch reads its mean (K3). */
       hand: z.number().min(0).optional(),
+      /** The piece being mended, when the front is a mend (K4). */
+      mend: z.string().optional(),
     })
     .nullable(),
   tray: z.record(z.string(), z.number().int().min(0)),
@@ -123,6 +133,8 @@ const CraftsSchema = z.object({
       blew: z.boolean(),
       /** The steady hand it was played at, when it was played (K3). */
       hand: z.number().min(0).max(1).optional(),
+      /** A piece mended rather than a batch made (K4). */
+      mend: z.boolean().optional(),
     }),
   ),
 });

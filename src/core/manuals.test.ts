@@ -66,7 +66,7 @@ describe('manual content', () => {
       ...CATALOG_MANUALS.map((m) => m.id),
       ...CATALOG_TECHNIQUES.map((t) => `art-${t.id}`),
     ]);
-    const loose = MANUALS.filter((m) => !m.method && !catalog.has(m.id));
+    const loose = MANUALS.filter((m) => !m.method && m.kind !== 'recipe' && !catalog.has(m.id));
     const white = loose.filter((m) => m.kind === 'formula' && m.rarity === 'white');
     expect(white.length).toBeGreaterThanOrEqual(3);
     expect(white.length).toBeLessThanOrEqual(4);

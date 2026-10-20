@@ -286,6 +286,40 @@ export const GUARDED_MOUTH: Catalog = {
         { thing: 'blood-salt-kelp', count: 5 },
       ],
     },
+    // Its gear's recipes (K4), each refined from what its line tells of.
+    {
+      output: 'shark-tooth-spear',
+      craft: 'refining',
+      family: 'blades',
+      inputs: [
+        { thing: 'beast-fang', count: 1 },
+        { thing: 'ash-spear-shaft', count: 1 },
+      ],
+    },
+    {
+      output: 'water-silk-robe',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [{ thing: 'spirit-silk', count: 3 }],
+    },
+    {
+      output: 'crab-shell-vest',
+      craft: 'refining',
+      family: 'armor',
+      inputs: [
+        { thing: 'beast-shell', count: 3 },
+        { thing: 'beast-hide', count: 1 },
+      ],
+    },
+    {
+      output: 'bronze-pill-furnace',
+      craft: 'refining',
+      family: 'vessels',
+      inputs: [
+        { thing: 'red-rocks-iron-ore', count: 6 },
+        { thing: 'cinnabar-ore', count: 1 },
+      ],
+    },
   ],
   lots: [
     // A better furnace (K1's talk), cast on Refiners' Row: its rarity adds lift.
