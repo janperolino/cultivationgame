@@ -1,0 +1,269 @@
+<!doctype html>
+<!-- P3.9's look study: the go-in screen on the 1920×1080 stage. Mock data: a teahouse on River-Bend
+     City's wharf, from the atlas's lore; nothing here is wired to the game. Open it in a browser. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Go-in Screen Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap">
+<style>
+:root {
+  --page: #020203;
+  --obsidian: rgb(7 8 11 / 0.84);
+  --edge: rgb(255 255 255 / 0.075);
+  --edge-strong: rgb(255 255 255 / 0.14);
+  --text: #e9e5da;
+  --muted: #8d949d;
+  --accent: #d6ab4c;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-edge: color-mix(in srgb, var(--accent) 45%, transparent);
+  --warn: #e08a6a;
+  --good: #9fc4ad;
+  --close: #d9c27a;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  --font-ui: Inter, system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--page); color: var(--text); font: 15px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; overflow: hidden; }
+.hanzi { font-family: var(--font-brush); font-weight: 400; }
+.muted { color: var(--muted); }
+
+/* Study controls (not part of the game). */
+.study { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; gap: 8px; align-items: center; padding: 6px 10px; border: 1px dashed var(--edge-strong); border-radius: 10px; background: #07080aee; font-size: 12px; }
+.study span { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.seg { display: inline-flex; border: 1px solid var(--edge-strong); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 4px 10px; font: inherit; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--edge); }
+.seg button[aria-pressed="true"] { background: rgb(255 255 255 / 0.08); color: var(--text); }
+
+/* The stage: 1920×1080, scaled to the window. */
+.stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: center; overflow: hidden; background: #0b0c10; }
+.painting { position: absolute; inset: 0; background: url('inspo/rumors/quiet-moon-teahouse.webp') center / cover no-repeat; }
+.shade { position: absolute; inset: 0; background:
+  linear-gradient(90deg, rgb(3 4 6 / 0.88) 0%, rgb(3 4 6 / 0.55) 22%, rgb(3 4 6 / 0.72) 50%, rgb(3 4 6 / 0.55) 78%, rgb(3 4 6 / 0.88) 100%),
+  linear-gradient(0deg, rgb(3 4 6 / 0.9) 0%, transparent 40%); }
+
+.cols { position: absolute; inset: 40px 180px 36px; display: grid; grid-template-columns: 360px 760px 360px; gap: 40px; }
+.panel { background: var(--obsidian); border: 1px solid var(--edge); border-radius: 10px; box-shadow: 0 8px 28px rgb(0 0 0 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.04); }
+.label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+
+/* Left: where you are. */
+.where { padding: 18px; display: grid; gap: 18px; align-content: start; }
+.place { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.seal { width: 48px; height: 48px; border: 1.5px solid var(--accent-edge); border-radius: 8px; display: grid; place-items: center; color: var(--accent); font-family: var(--font-brush); font-size: 28px; background: var(--accent-soft); }
+.place h2 { font-family: var(--font-display); font-weight: 600; font-size: 26px; margin: 0; line-height: 1.05; }
+.place .sub { font-size: 12.5px; color: var(--muted); }
+.clock { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 10px; border: 1px solid var(--edge); border-radius: 8px; }
+.clock b { font-weight: 500; }
+.clock .hanzi { color: var(--accent); font-size: 17px; margin-right: 6px; }
+.moves { display: grid; gap: 2px; }
+.move { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 7px 10px; border-radius: 7px; border: 1px solid transparent; cursor: pointer; font-size: 13.5px; }
+.move:hover { background: rgb(255 255 255 / 0.03); border-color: var(--edge); }
+.move .t { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.move.follow { color: var(--accent); }
+.feat { display: flex; flex-wrap: wrap; gap: 6px; }
+.feat span { font-size: 12.5px; padding: 4px 9px; border: 1px solid var(--edge-strong); border-radius: 999px; cursor: help; }
+.feat span i { font-style: normal; color: var(--muted); font-size: 11px; margin-left: 4px; }
+
+/* Middle: the story. */
+.story { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 14px; min-height: 0; }
+.river { overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 22px; padding: 0 8px; mask-image: linear-gradient(transparent 0, #000 120px); }
+.turn { display: grid; gap: 8px; }
+.you { font-size: 14px; color: var(--muted); font-style: italic; display: flex; gap: 10px; align-items: baseline; }
+.you::before { content: '›'; color: var(--accent); font-style: normal; }
+.flag { margin-left: auto; font-style: normal; font-size: 11.5px; color: var(--muted); opacity: 0; border: 1px solid var(--edge-strong); border-radius: 999px; padding: 1px 8px; cursor: pointer; white-space: nowrap; }
+.turn:hover .flag { opacity: 1; }
+.prose { font-family: var(--font-display); font-size: 21px; line-height: 1.5; margin: 0; color: #ece7da; text-shadow: 0 1px 2px #000; }
+.prose q { color: #f3e6c4; }
+.prose q::before { content: '“'; } .prose q::after { content: '”'; }
+.line { font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.line .q { width: 16px; height: 16px; border: 1px solid var(--edge-strong); border-radius: 50%; display: inline-grid; place-items: center; font-size: 10px; cursor: help; }
+.v { font-weight: 600; }
+.v.clear { color: var(--good); } .v.close { color: var(--close); } .v.short { color: var(--warn); } .v.unk { color: var(--muted); }
+.cursor { display: inline-block; width: 9px; height: 20px; background: var(--accent); vertical-align: -3px; margin-left: 3px; opacity: 0.7; }
+
+.act { padding: 14px; display: grid; gap: 12px; }
+.pending { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--accent-edge); border-radius: 9px; background: var(--accent-soft); }
+.pending .head { font-size: 12px; color: var(--muted); }
+.step { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: baseline; font-size: 14px; }
+.step .n { color: var(--muted); font-size: 12px; }
+.step .stakes { grid-column: 2 / -1; font-size: 12.5px; color: var(--muted); margin-top: -4px; }
+.btns { display: flex; gap: 8px; justify-content: flex-end; }
+.btn { border: 1px solid var(--edge-strong); background: transparent; color: var(--text); border-radius: 7px; padding: 6px 14px; font: inherit; font-size: 13.5px; cursor: pointer; }
+.btn.go { border-color: var(--accent); background: var(--accent); color: #1a1408; font-weight: 600; }
+.reading { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 9px 12px; border: 1px solid var(--edge-strong); border-radius: 8px; cursor: pointer; font-size: 14px; }
+.reading:hover { border-color: var(--accent-edge); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--edge-strong); border-radius: 999px; padding: 6px 13px; font-size: 13.5px; cursor: pointer; background: rgb(255 255 255 / 0.02); }
+.chip:hover { border-color: var(--accent-edge); }
+.box { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
+.input { border: 1px solid var(--edge-strong); border-radius: 8px; padding: 10px 12px; font-size: 15px; color: var(--muted); background: rgb(0 0 0 / 0.35); }
+.input b { color: var(--text); font-weight: 400; }
+.cost { position: absolute; right: 24px; bottom: 12px; font-size: 11.5px; color: var(--muted); }
+
+/* Right: who's here, then you. */
+.who { padding: 18px; display: grid; gap: 16px; align-content: start; }
+.people { display: grid; gap: 4px; }
+.person { display: grid; grid-template-columns: 38px 1fr; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; }
+.person:hover { background: rgb(255 255 255 / 0.03); border-color: var(--edge); }
+.person .s { width: 38px; height: 38px; border: 1px solid var(--edge-strong); border-radius: 7px; display: grid; place-items: center; font-family: var(--font-brush); font-size: 20px; color: var(--muted); }
+.person .s.cult { color: var(--accent); border-color: var(--accent-edge); }
+.person .n { font-size: 14px; }
+.person .d { font-size: 12px; color: var(--muted); }
+.person .d .wary { color: var(--warn); } .person .d .friendly { color: var(--good); }
+.crowd { font-size: 12.5px; color: var(--muted); padding: 2px 8px; }
+.me { border-top: 1px solid var(--edge); padding-top: 14px; display: grid; gap: 10px; }
+.bar { display: grid; grid-template-columns: 34px 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }
+.bar .track { height: 5px; border-radius: 3px; background: rgb(255 255 255 / 0.08); overflow: hidden; }
+.bar .fill { height: 100%; }
+.status { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; }
+.status span { padding: 3px 8px; border-radius: 999px; border: 1px solid var(--edge-strong); }
+.status .hurt { border-color: color-mix(in srgb, var(--warn) 50%, transparent); color: var(--warn); }
+.tabs { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); border-bottom: 1px solid var(--edge); }
+.tabs span { padding-bottom: 6px; cursor: pointer; }
+.tabs .on { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+.carried { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+.carried div { aspect-ratio: 1; border: 1px solid var(--edge); border-radius: 5px; display: grid; place-items: center; font-family: var(--font-brush); font-size: 17px; color: var(--muted); }
+.leave { justify-self: start; }
+</style>
+
+<div class="study">
+  <span>Study · what waits at the box</span>
+  <div class="seg" id="mode">
+    <button aria-pressed="true" data-m="plan">A plan at stake</button>
+    <button aria-pressed="false" data-m="read">Two readings</button>
+    <button aria-pressed="false" data-m="free">Nothing pending</button>
+    <button aria-pressed="false" data-m="stream">Streaming</button>
+  </div>
+</div>
+
+<div class="stage" id="stage">
+  <div class="painting"></div>
+  <div class="shade"></div>
+
+  <div class="cols">
+    <!-- Left: where you are -->
+    <aside class="panel where">
+      <div class="place">
+        <div class="seal">茶</div>
+        <div>
+          <h2>The Quiet Moon</h2>
+          <div class="sub">a teahouse · the wharf district<br>River-Bend City 河湾城</div>
+        </div>
+      </div>
+      <div class="clock"><span><span class="hanzi">酉</span><b>evening</b></span><span class="muted">2 hours in</span></div>
+      <div>
+        <p class="label">Go</p>
+        <div class="moves">
+          <div class="move"><span>The wharf streets</span><span class="t">½ hour</span></div>
+          <div class="move"><span>Ferry Gate Inn</span><span class="t">½ hour</span></div>
+          <div class="move"><span>The Qian clan's grain office</span><span class="t">½ hour</span></div>
+          <div class="move"><span>The market district</span><span class="t">2 hours</span></div>
+          <div class="move"><span>Somewhere quiet</span><span class="t">the back stairs</span></div>
+          <div class="move follow"><span>Follow the man in grey</span><span class="t">he just rose</span></div>
+        </div>
+      </div>
+      <div>
+        <p class="label">Here</p>
+        <div class="feat">
+          <span title="height · witnesses">the window over the wharf<i>height</i></span>
+          <span title="cover · witnesses · noise">the storyteller's dais<i>a crowd</i></span>
+          <span title="fire · burnable">paper lanterns<i>fire</i></span>
+          <span title="water · a fall">the river under the stilts<i>a drop</i></span>
+        </div>
+      </div>
+      <button class="btn leave">Leave the city</button>
+    </aside>
+
+    <!-- Middle: the story -->
+    <section class="story">
+      <div class="river">
+        <div class="turn">
+          <p class="prose">The Quiet Moon stands over the wharf on stilts, and the river's stink comes up through its floorboards with the steam. Bargemen crowd the long benches under the dais, where an old storyteller is killing the intendant's third concubine for the second time tonight. Auntie Wen pours without looking. Nobody here has a root worth testing except the man in grey by the far pillar, and every bargeman has found a reason not to sit near him.</p>
+        </div>
+        <div class="turn">
+          <div class="you">I sit by the window and listen to what the bargemen say about Black Pine pass.<span class="flag">⚑ not what I meant</span></div>
+          <p class="prose">The levy barges are late. Three days, says one; five, says another, and the Qian buyers have stopped bidding on anything that has to cross Black Pine. A boy at the end of the bench says the pass ate a whole caravan, mules and all. The man beside him cuffs him for saying it where the grey robe can hear.</p>
+          <div class="line"><span>listened · nothing at stake · ½ hour</span></div>
+        </div>
+        <div class="turn" id="last">
+          <div class="you">Ask Auntie Wen who the man in grey is.<span class="flag">⚑ not what I meant</span></div>
+          <p class="prose" id="lastProse"><q>A buyer,</q> she says, and fills your cup to the brim so you have to hold still. <q>He buys what the barges don't bring.</q> She doesn't look at him once while she says it. Behind her, the man in grey sets two stones on his table, rises, and goes out toward the back stairs.</p>
+          <div class="line"><span>asked · <span class="v clear">clear</span> · she likes you · ½ hour</span><span class="q" title="your leverage 1.5 (friendly) against her resistance 1 (she fears him ×2, you paid well ×0.75)">?</span></div>
+        </div>
+      </div>
+
+      <div class="panel act" id="act"></div>
+    </section>
+
+    <!-- Right: who's here, then you -->
+    <aside class="panel who">
+      <div>
+        <p class="label">Who's here</p>
+        <div class="people">
+          <div class="person"><div class="s">温</div><div><div class="n">Auntie Wen</div><div class="d">the keeper · mortal · <span class="friendly">friendly</span></div></div></div>
+          <div class="person"><div class="s">吏</div><div><div class="n">A stranger</div><div class="d">a granary clerk by the look · mortal · neutral</div></div></div>
+          <div class="person"><div class="s cult">灰</div><div><div class="n">A stranger in grey</div><div class="d">you can't see through him · <span class="wary">wary</span> · leaving</div></div></div>
+          <div class="person"><div class="s">书</div><div><div class="n">The storyteller</div><div class="d">mortal · neutral</div></div></div>
+          <div class="crowd">and about twenty bargemen</div>
+        </div>
+      </div>
+      <div class="me">
+        <p class="label">You · Qi Condensation, layer 6</p>
+        <div class="bar"><span>HP</span><div class="track"><div class="fill" style="width:82%;background:#c46a5a"></div></div><span>82%</span></div>
+        <div class="bar"><span>Qi</span><div class="track"><div class="fill" style="width:64%;background:#7fc7d9"></div></div><span>64%</span></div>
+        <div class="status"><span class="hurt">a cracked rib · 2 days</span><span>veiled as layer 3</span></div>
+        <div class="tabs"><span class="on">Carried</span><span>Arts</span></div>
+        <div class="carried">
+          <div>剑</div><div>丹</div><div>丹</div><div>符</div><div>符</div><div>石</div>
+          <div></div><div></div><div></div><div></div><div></div><div></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <div class="cost">this scene: 3.1¢</div>
+</div>
+
+<script>
+const act = document.getElementById('act');
+const chips = `<div class="chips">
+    <span class="chip">Follow the man in grey</span><span class="chip">Ask the clerk about the levy barges</span>
+    <span class="chip">Listen to the storyteller</span><span class="chip">Wait</span></div>`;
+const box = (t) => `<div class="box"><div class="input">${t}</div><button class="btn">Wait</button><button class="btn">Leave</button></div>`;
+const modes = {
+  plan: `<div class="pending">
+      <div class="head">› follow him down the back stairs without him noticing, and see who he meets</div>
+      <div class="step"><span class="n">1</span><span>Follow the man in grey to the back stairs, unseen</span><span class="v unk">?</span>
+        <span class="stakes">you can't read him · Stealth against his Perception · if short: he knows you're there</span></div>
+      <div class="step"><span class="n">2</span><span>Watch who he meets</span><span class="v clear">clear</span>
+        <span class="stakes">from the dark under the stilts, which counts for you</span></div>
+      <div class="btns"><button class="btn">Change it</button><button class="btn go">Do it</button></div>
+    </div>` + box('<b>follow him down the back stairs without him noticing, and see who he meets</b>'),
+  read: `<div class="label">Which did you mean?</div>
+    <div class="reading"><span>Ask him to step outside with you</span><span class="v unk">persuade · ?</span></div>
+    <div class="reading"><span>Follow him when he leaves, unseen</span><span class="v unk">sneak · ?</span></div>
+    <div class="reading"><span>Corner him somewhere quiet and make him talk</span><span class="v unk">threaten · ?</span></div>` + box('<b>get the man in grey alone</b>'),
+  free: chips + box('What do you do?'),
+  stream: chips.replace('class="chips"', 'class="chips" style="opacity:.35"') + box('…'),
+};
+const full = document.getElementById('lastProse').innerHTML;
+function show(m) {
+  act.innerHTML = modes[m];
+  document.querySelectorAll('#mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.m === m)));
+  document.getElementById('lastProse').innerHTML = m === 'stream'
+    ? full.slice(0, full.indexOf('She doesn')) + '<span class="cursor"></span>'
+    : full;
+}
+document.getElementById('mode').addEventListener('click', (e) => { if (e.target.dataset.m) show(e.target.dataset.m); });
+show('plan');
+
+const stage = document.getElementById('stage');
+function fit() {
+  const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+  stage.style.transform = `translate(-50%, -50%) scale(${k})`;
+}
+addEventListener('resize', fit); fit();
+</script>
