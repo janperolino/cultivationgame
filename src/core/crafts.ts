@@ -118,9 +118,13 @@ export function craftReach(c: Cultivator): CraftReach {
   return { tier, reach: Math.max(tier, soul), matched: rung(c.soul) >= rung(top) };
 }
 
-/** Whether the crafts are open to you: a tool held or a recipe known (Where crafts live). */
+/** Whether the crafts are open to you: a tool held, a recipe known or a plot held (Where crafts live). */
 export function craftsOpen(c: Cultivator): boolean {
-  return knownRecipes(c).length > 0 || CRAFT_IDS.some((k) => toolsHeld(c, k).length > 0);
+  return (
+    knownRecipes(c).length > 0 ||
+    CRAFT_IDS.some((k) => toolsHeld(c, k).length > 0) ||
+    c.crafts.plots.length > 0
+  );
 }
 
 // ---------------------------------------------------------------- the craft Dao
@@ -392,11 +396,16 @@ export function liftOf(
  * tier held and the craft's own yield.
  */
 export function yieldOf(c: Cultivator, r: Recipe): number {
-  const share =
+  return Math.round(recipeYield(r) * (1 + yieldShare(c, r)));
+}
+
+/** What a batch's yield gains on its own: mastery, the craft Dao's tiers held and the craft's yield. */
+export function yieldShare(c: Cultivator, r: Recipe): number {
+  return (
     YIELD_BY_MASTERY[familyLevel(c, r.family)]! +
     DAO_YIELD * craftTiersHeld(c, r.craft) +
-    own(c, r.craft, 'Yield');
-  return Math.round(recipeYield(r) * (1 + share));
+    own(c, r.craft, 'Yield')
+  );
 }
 
 /** The fewest hours speed can bring a batch to, as a share of its own. */
@@ -602,6 +611,32 @@ function masteryFrom(c: Cultivator, r: Recipe, held: boolean): number {
   return at * (held ? 1 : CRAFT_MASTERY.failed);
 }
 
+/**
+ * Batches counted toward a recipe's family, and the insight each mastery level reached releases;
+ * a bed harvested counts as a batch (K8).
+ */
+export function countBatches(
+  c: Cultivator,
+  r: Recipe,
+  batches: number,
+  events: BenchEvent[],
+): Cultivator {
+  const before = familyLevel(c, r.family);
+  let next = withCrafts(c, {
+    mastery: { ...c.crafts.mastery, [r.family]: familyBatches(c, r.family) + batches },
+  });
+  const after = familyLevel(next, r.family);
+  for (let level = before + 1; level <= after; level++) {
+    const burst = CRAFT_MASTERY.burst[level]! * 3 ** (recipeTier(r) - 1);
+    next = {
+      ...next,
+      insight: { current: next.insight.current + burst, earned: next.insight.earned + burst },
+    };
+    events.push({ type: 'craft-level', data: { family: r.family, level } });
+  }
+  return next;
+}
+
 /** Where a stretch of the bench is worked: the hand you sit with, and the spot it stands on. */
 export interface BenchAt {
   /** The steady hand while you sit at the bench, 0 to 1; 0 away (K3). */
@@ -656,22 +691,7 @@ export function resolve(
     next = addItem(addItem(next, tool.id, -1), cracked, 1);
     events.push({ type: 'blow-up', data: { recipe: r.output, tool: baseOf(tool.id) } });
   }
-  // Mastery, and the insight each level reached releases.
-  const before = familyLevel(next, r.family);
-  const mastery = {
-    ...next.crafts.mastery,
-    [r.family]: familyBatches(next, r.family) + masteryFrom(c, r, held),
-  };
-  next = withCrafts(next, { mastery });
-  const after = familyLevel(next, r.family);
-  for (let level = before + 1; level <= after; level++) {
-    const burst = CRAFT_MASTERY.burst[level]! * 3 ** (recipeTier(r) - 1);
-    next = {
-      ...next,
-      insight: { current: next.insight.current + burst, earned: next.insight.earned + burst },
-    };
-    events.push({ type: 'craft-level', data: { family: r.family, level } });
-  }
+  next = countBatches(next, r, masteryFrom(c, r, held), events);
   const played = hand > 0 ? { hand: Math.round(hand * 100) / 100 } : {};
   const recent = [
     { day, recipe: r.output, made, count, blew, ...played },

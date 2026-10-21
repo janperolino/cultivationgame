@@ -259,9 +259,16 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
       ? `${w.name} throws things in until something takes: the ${it.name} ${it.hanzi}, a recipe nobody wrote.`
       : `${w.name} throws things in until something takes: the ${it.name}, found by ${w.name}’s own hand rather than taught.`;
   },
+  // A plot's bed lost while you were away, or its lease run out (K8).
+  'plot-pests': (d) =>
+    `Spirit insects strip a bed of ${item(s(d.crop)).name} at your plot in ${s(d.name)}: it went untended too long.`,
+  'plot-thief': (d) =>
+    `Someone lifts a ripe bed of ${item(s(d.crop)).name} from your plot in ${s(d.name)} while you are away. The village knows your face.`,
+  'plot-lost': (d) =>
+    `The lease on your plot in ${s(d.name)} runs out, and the village takes it back.`,
   mastery: (d) =>
     d.family
-      ? `Your ${FAMILIES[s(d.family) as FamilyId].name.toLowerCase()} reach ${MASTERY[n(d.level)]!.name}: the fire answers the hand.`
+      ? `Your ${FAMILIES[s(d.family) as FamilyId].name.toLowerCase()} reach ${MASTERY[n(d.level)]!.name}: ${FAMILIES[s(d.family) as FamilyId].craft === 'farming' ? 'the field answers the hand' : 'the fire answers the hand'}.`
       : d.technique
         ? `${technique(s(d.technique)).name} reaches ${MASTERY[n(d.level)]!.name}; the form finally clicks.`
         : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
@@ -437,6 +444,9 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   'method-capped': 'opening',
   'blow-up': 'hurt',
   'recipe-found': 'learned',
+  'plot-pests': 'hurt',
+  'plot-thief': 'hurt',
+  'plot-lost': 'settled',
   graded: 'mastery',
   rewind: 'opening',
   card: (d) => (d.byDefault === true ? 'settled' : (cardOutcome(d).kind ?? 'choice')),

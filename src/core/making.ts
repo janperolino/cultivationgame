@@ -8,7 +8,7 @@ import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { CATALOGS } from '../content/catalogs/index.ts';
 import type { Catalog, Lot } from '../content/catalogs/types.ts';
 import { hasCopy } from '../content/copies.ts';
-import { recipeFor, recipeYield } from '../content/crafts.ts';
+import { recipeFor as anyRecipe, recipeYield } from '../content/crafts.ts';
 import { hasItem, item, itemKind, STAPLE_TAGS, variantId, type Item } from '../content/items.ts';
 import { REGIONS, veinAt } from '../content/map/index.ts';
 import { SHOPS, shopsAt } from '../content/shops.ts';
@@ -236,6 +236,15 @@ function pressureOn(m: Market, thing: string): number {
     x *= PRESSURE.wet.x;
   if (tags.includes(PRESSURE.thin.tag) && land.qi <= PRESSURE.thin.qi) x *= PRESSURE.thin.x;
   return Math.min(PRESSURE.max, x);
+}
+
+/**
+ * The recipe a market's makers make a thing by (K1): a crop's (K8) is a farmer's, and the land
+ * that grows it keeps its family's defaults (a sack of spirit grain, its bone meal).
+ */
+function recipeFor(thing: string) {
+  const r = anyRecipe(thing);
+  return r && r.craft !== 'farming' ? r : null;
 }
 
 /**

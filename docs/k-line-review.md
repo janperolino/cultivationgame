@@ -16,7 +16,9 @@ Crafters should be clearly richer than gathering or duty from Glimpse on (D4, K1
 - **The minigames as the whole of an active craft** (K6). Playing could be the full making of the item, the active half apart from the idle bench, rather than lifting a queued batch. For the playtest.
 - **The hand before the queue** (K5). Today a queue's first batches run before the hand is up. Your idea: play the minigame first, before the queue starts, to fill the bar.
 - **Trees more tree-like** (K2). Middle ground between branches, and branches that don't all lead to the next band. With *Branches in every tree*, for a design session.
-- **The gather hour and divine sense** (K1). Gathering should scale with Spirit Farming and the soul's reach. K8 decides it.
+- **The gather hour and divine sense** (K1). Settled in K8: ×3 a soul realm from Foundation's divine sense, +25% a Herbs mastery level; worth feeling in play whether a Foundation gatherer now earns too close to a crafter.
+- **Sects' resource nodes** (K8's talk). Herb grounds, mines and training grounds held in rotation inside a sect's sphere, found and fought over; a sketch in design § Still to design, for the living world.
+- **Building your own base** (K8's talk). Lots of ways to customize a dwelling, a wild one most; parked for K9 and K10.
 - **Crafters are respected** (K1). For P3.9's scenes and K6's renown.
 - **More insight for the new sinks** (after K2). A sketch in design.md; the checkpoint measures insight earned against nodes worth buying.
 
@@ -30,6 +32,7 @@ Each is listed under *Awaiting Jan's review* in `plan.md`, with where to look.
 - **K5:** the 25 talisman recipes, the wolf-hair brush and talisman paper, Golden Light, Body-Fixing, Earth Escape, Divine Travel and the Immortal-Binding Rope. The Talisman Drawing page.
 - **K6:** the eight styles' chapter 1s (the five frontier common styles, the Pavilion's, Red Marrow's and the Valley's), the four new pills, who holds which style, and the Myriad Crafts Guild's atlas entry. The City's Examination hall and the guild's counter, with the dev console's `grade` and `craftfame`.
 - **K7:** the generated recipes' names (two words an element, an effect word and a kind each, Fierce for a toxic pill), their sizes and the floor's odds, and the Experiment tab's words. Any craft page's Experiment tab: `herbs 20` fills the shelf, and after a miss `pity` makes the next throw of that set all but find.
+- **K8:** the sixteen crops and their bed counts (30 at a white floor down to 1 at gold), the packets' names, the four boosters (Spirit Soil, Earth Milk, the Spring-Rain and Pest-Warding Talismans) and the Fields door's words. Dev console `at spear-plow`, then `farm` (and `farm 100` to age the beds), on the Crafts screen's Farming page.
 
 ## 4. Small calls the phases made on their own
 
@@ -43,4 +46,6 @@ Under Open questions in `plan.md`, "Small calls in K1" to "K7". The ones you're 
 - **K6:** only chapter 1 of each style is written; the exam takes no hours and can be resat at once; a certified grade never lapses; the mark is a count per thing, spent first when you sell; "where its people trade" is a power's shops and its trade and secret ties. The rest are under Open questions, Small calls in K6.
 - **K7:** experimenting reads your craft Dao's tiers *held*, so a fresh alchemist finds tier 1 at 1.5% a try (about nine tries with pity); a hit makes every set thrown as a batch, sure to hold; a miss gives no mastery; the panel tells you plainly whether something written lies close, and refuses a set that is your own recipe's; generated gear and talismans carry no special properties at green or blue; the shelf can run long with a full Bag. The rest are under Open questions, Small calls in K7.
 
-All three minigames play the same at every tier. Worth a look in play: should a higher tier quicken them?
+- **K8:** a plot is held only at a written village or town, and every Border Wilds plot sits at qi density 3 (6 low a season); a lease running out takes the plot back with whatever grows on it; a tending sitting counts only after 10 seconds; the Wood spell is free once a season; no shop buys packets back yet; Lore's pity and seed crossing wait. The rest are under Open questions, Small calls in K8.
+
+All four minigames play the same at every tier. Worth a look in play: should a higher tier quicken them?

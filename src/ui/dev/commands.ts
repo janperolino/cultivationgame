@@ -35,6 +35,9 @@ import {
   type CraftId,
 } from '../../content/crafts.ts';
 import { slipId } from '../../content/catalogs/index.ts';
+import { CROPS, seedId } from '../../content/farming.ts';
+import { takePlot } from '../../core/farming.ts';
+import { farmHere } from '../../core/map/fields.ts';
 import { jobsView, quitJob, takeJob } from '../../core/jobs.ts';
 import {
   addBalance,
@@ -63,7 +66,7 @@ import { CARDS, hasCard } from '../../content/cards/index.ts';
 import { COMBAT_DAO_IDS, isCombatDao } from '../../content/daos.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
 import { COPY_KINDS, copyId, copyTitle, hasCopy } from '../../content/copies.ts';
-import { hasItem, item, ITEMS } from '../../content/items.ts';
+import { hasItem, item, ITEMS, variantId } from '../../content/items.ts';
 import { hasManual, MANUALS } from '../../content/manuals.ts';
 import { TREES, treeNode } from '../../content/trees/index.ts';
 import { registerManuals } from '../../content/nodes.ts';
@@ -758,6 +761,48 @@ export const COMMANDS: Record<string, Command> = {
           return withPlayer(s, c);
         },
         `${v} of every ingredient.`,
+      );
+    },
+  },
+  farm: {
+    usage: 'farm [years]',
+    help: 'Sets up a spirit farmer (K8): every crop known, three packets of each, spirit soil, earth milk, Spring-Rain and pest-warding talismans, and a bought plot where you stand if it is a village or town. `farm 100` ages every sown bed a hundred years instead.',
+    run([n], store) {
+      if (n !== undefined) {
+        const y = Number(n);
+        if (!Number.isFinite(y) || y < 0) return 'Give a number of years.';
+        return apply(
+          store,
+          (s) => {
+            const plots = s.player.crafts.plots.map((pl) => ({
+              ...pl,
+              beds: pl.beds.map((b) => (b ? { ...b, grown: b.grown + y * DAYS_PER_YEAR } : b)),
+            }));
+            return withPlayer(s, { ...s.player, crafts: { ...s.player.crafts, plots } });
+          },
+          `Every sown bed is ${y} years older.`,
+        );
+      }
+      return apply(
+        store,
+        (s0) => {
+          const s = ensureMap(s0);
+          let c = s.player;
+          const nodes = new Set(c.nodes);
+          nodes.add('farming-spirit-rice-seal');
+          for (const crop of Object.keys(CROPS)) {
+            if (hasRecipe(crop)) nodes.add(`${slipId(crop)}-node`);
+            c = addItem(c, seedId(crop), 3);
+          }
+          c = { ...c, nodes: [...nodes], stones: c.stones + 200 };
+          c = addItem(addItem(c, 'spirit-soil', 2), variantId('earth-milk', 'purple'), 1);
+          c = addItem(addItem(c, variantId('earth-milk', 'green'), 2), 'spring-rain-talisman', 2);
+          c = addItem(c, 'pest-warding-talisman', 2);
+          const here = farmHere(s);
+          if (here) c = takePlot(c, here, 'bought', s.calendar.day).cultivator;
+          return withPlayer(s, c);
+        },
+        'A spirit farmer: every crop known, packets, boosters and 200 low; a bought plot if you stand at a village or town (`at spear-plow` first).',
       );
     },
   },
