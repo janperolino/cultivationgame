@@ -14,6 +14,7 @@ import { rarityMultiplier } from '../content/rarity.ts';
 import { REALMS, realmScale, tierStep } from '../content/realms.ts';
 import { fromWorld, type Note } from './cultivation.ts';
 import { addItem, itemCount, type Cultivator } from './state.ts';
+import { stats } from './stats.ts';
 import { addToxicity, pillDose, toxicityScale } from './toxicity.ts';
 
 const PER_DAY: Record<LadderId, number> = {
@@ -53,6 +54,7 @@ export function consumeItem(c: Cultivator, id: string, day: number): ConsumeResu
         PER_DAY[e.ladder] *
         realmScale(tierRealm) *
         rarityMultiplier(it.rarity, tierStep(it.tier)) *
+        (1 + stats(c).pillFuel) *
         scale;
       next = fromWorld(next, e.ladder, fuel);
       fed = e.ladder;

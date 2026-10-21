@@ -78,9 +78,14 @@ export function fightEdge(
       return { need: blow > 0 ? pool(t) / blow : Infinity, hits };
     })
     .sort((a, b) => a.need - b.need);
+  let standing = order.reduce((n, o) => n + o.hits, 0);
+  // A foe you can't hurt is never felled: the fight is short of a win however little they hit.
+  if (order.some((o) => !Number.isFinite(o.need))) {
+    const theirs = standing > 0 ? pool(me) / standing : Infinity;
+    return { yours: Infinity, theirs, ratio: 0, costs: standing > 0 ? 1 : 0, verdict: 'short' };
+  }
   let yours = 0;
   let taken = 0;
-  let standing = order.reduce((n, o) => n + o.hits, 0);
   for (const o of order) {
     yours += o.need;
     taken += o.need * standing;
@@ -101,6 +106,7 @@ const round = (n: number) => (Number.isFinite(n) ? Math.max(1, Math.round(n)) : 
 
 /** The edge in words, as the road's cards and the seclusion cards show it. */
 export function edgeWords(edge: FightEdge): string {
+  if (!Number.isFinite(edge.yours) && edge.costs < 1) return 'you can’t hurt them, nor they you';
   return edge.costs >= 1
     ? `you’d fall before they do: ${round(edge.yours)} exchanges to fell them, ${round(edge.theirs)} to fell you`
     : `you’d fell them in ${round(edge.yours)} exchanges, at about ${Math.round(edge.costs * 100)}% of your strength (×${edge.ratio >= 10 ? '10+' : edge.ratio.toFixed(2)})`;

@@ -9,6 +9,7 @@ import type { Rng } from '../rng.ts';
 import { statusFlag, type Combatant } from './combatant.ts';
 import { damagePhase, elementMultiplier } from './damage.ts';
 import {
+  burnWhy,
   combatantIn,
   fightOver,
   preview,
@@ -143,6 +144,9 @@ function targetOf(
 }
 
 /** What a fighter does this turn on its profile. */
+/** The share of HP under which an engine-fought fighter drinks a burning pill it carries (K11). */
+export const BURN_AT = 0.5;
+
 export function chooseAction(
   f: Fight,
   id: string,
@@ -164,6 +168,13 @@ export function chooseAction(
     if (p.id === 'cowardly') {
       return { actor: id, main: { type: 'talk', style: 'surrender', target: target.id } };
     }
+  }
+  // On the brink, a young master burns the blood (K11): a burning pill once under half HP.
+  if (share < BURN_AT) {
+    const burn = Object.entries(me.items).find(
+      ([, h]) => h.n > 0 && h.item.uses.burn && !burnWhy(me, h.item),
+    );
+    if (burn) return { actor: id, main: { type: 'item', id: burn[0] } };
   }
   if (p.guardAt !== null && share <= p.guardAt) {
     const pill = Object.entries(me.items).find(

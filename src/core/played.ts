@@ -17,7 +17,8 @@ import { chooseAction, profile } from './combat/profile.ts';
 import { wearFrom } from './combat/combatant.ts';
 import { bondFromFight } from './gear.ts';
 import { Rng } from './rng.ts';
-import { withPlayer, withStream, type FightFrom, type GameState } from './state.ts';
+import { pay, stonesOf, withStones, worthOf } from './purse.ts';
+import { addItem, withPlayer, withStream, type FightFrom, type GameState } from './state.ts';
 
 /** A fight that runs this long ends with both sides drawing off. */
 export const FIGHT_TURNS = 60;
@@ -28,10 +29,14 @@ export type FightEnd = 'won' | 'lost' | 'fled' | 'yielded' | 'talked' | 'draw';
 /** Your action, without who acts: the fight knows it is yours. */
 export type YourAction = Omit<Action, 'actor'>;
 
-/** Opens a fight on the stage: its rolls start from one drawn off the life's `combat` stream. */
-export function openFight(s: GameState, from: FightFrom): GameState {
-  const { value: start, state } = withStream(s, 'combat', (rng) => rng.int(0, 0x7fffffff));
-  return { ...state, fight: { from, start, now: start, actions: [] } };
+/**
+ * Opens a fight on the stage: its rolls start from one drawn off the life's `combat` stream. The
+ * caller passes the start it built (core/playFight.ts `fightStart`); without one it refuses, null.
+ */
+export function openFight(s: GameState, from: FightFrom, start: Fight | null): GameState | null {
+  if (!start) return null;
+  const { value: seed, state } = withStream(s, 'combat', (rng) => rng.int(0, 0x7fffffff));
+  return { ...state, fight: { from, start: seed, now: seed, actions: [] } };
 }
 
 function foesAct(f: Fight, me: string): Action[] {
@@ -86,8 +91,10 @@ export function fightEnd(f: Fight, me: string): FightEnd | null {
   if (fightOver(f)) {
     const foes = f.combatants.filter((c) => c.side !== you.side);
     if (foes.some((c) => c.state === 'fighting')) return 'lost';
-    if (foes.every((c) => c.state !== 'down') && foes.some((c) => c.state === 'yielded'))
-      return 'talked';
+    // Talked only when a foe yielded to your side's words: a coward's own surrender is a win.
+    const toWords = (c: (typeof foes)[number]) =>
+      c.state === 'yielded' && !!c.yieldedTo && combatantIn(f, c.yieldedTo)?.side === you.side;
+    if (foes.every((c) => c.state !== 'down') && foes.some(toWords)) return 'talked';
     return 'won';
   }
   if (f.turn >= FIGHT_TURNS) return 'draw';
@@ -110,7 +117,30 @@ export function afterFight(s: GameState, f: Fight): GameState {
   const me = combatantIn(f, p.id);
   if (!me) return { ...s, fight: null };
   const items = { ...p.items };
-  for (const [id, held] of Object.entries(me.items)) if (id in items) items[id] = held.n;
-  const back = wearFrom(bondFromFight({ ...p, items, toxicity: me.toxicity }, f.turn), me);
+  for (const [id, held] of Object.entries(me.items)) {
+    if (!(id in items)) continue;
+    if (held.n > 0) items[id] = held.n;
+    else delete items[id];
+  }
+  let back = wearFrom(bondFromFight({ ...p, items, toxicity: me.toxicity }, f.turn), me);
+  // What the arts that burn goods leave (K11): the stones an array's eye drew, and a burned blood's
+  // weakness until the day ends.
+  const spent = worthOf(stonesOf(p)) - (me.stones ?? worthOf(stonesOf(p)));
+  if (spent > 0) back = withStones(back, pay(stonesOf(back), spent) ?? stonesOf(back));
+  if (me.marks.burned) back = { ...back, weakUntil: Math.floor(s.calendar.day) + 1 };
   return { ...withPlayer(s, back), fight: null };
+}
+
+/**
+ * Flags set mid-fight are taken up again by whoever holds the field (K11): you, unless you fled or
+ * fell; a spar's fall still leaves them yours.
+ */
+export function takeUpFlags(s: GameState, f: Fight, end: FightEnd, spar: boolean): GameState {
+  const me = combatantIn(f, s.player.id);
+  if (!me || end === 'fled' || (end === 'lost' && !spar)) return s;
+  const set = Object.keys(me.marks).filter((k) => k.startsWith('set:'));
+  if (!set.length) return s;
+  let c = s.player;
+  for (const k of set) c = addItem(c, k.slice(4), 1);
+  return withPlayer(s, c);
 }

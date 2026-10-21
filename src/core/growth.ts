@@ -6,7 +6,7 @@
 // dominates. Growth is set, never rolled. core/stats.ts folds it in beside the nodes.
 import type { LadderId } from '../content/cultivation.ts';
 import { GROWTH_STATS, type Method } from '../content/methods.ts';
-import { rarityMultiplier } from '../content/rarity.ts';
+import { rarityMultiplier, type RarityId } from '../content/rarity.ts';
 import {
   climbsIn,
   REALMS,
@@ -20,9 +20,12 @@ import type { Ladder, StageGrowth } from './state.ts';
 
 export type Growth = Partial<Record<StatId, number>>;
 
-/** What a method leaves over a full realm, as a fraction: the rarity band × fit − 1. */
-export function realmGrowthTotal(m: Method | null, fit: number): number {
-  return m ? rarityMultiplier(m.rarity, tierStep(m.tier)) * fit - 1 : 0;
+/**
+ * What a method leaves over a full realm, as a fraction: the rarity band × fit − 1. A fed upkeep
+ * method leaves the band it climbs as (core/methods.ts, `runningRarity`).
+ */
+export function realmGrowthTotal(m: Method | null, fit: number, as?: RarityId): number {
+  return m ? rarityMultiplier(as ?? m.rarity, tierStep(m.tier)) * fit - 1 : 0;
 }
 
 /** The record one stage leaves, climbed with this method (or none) at this fit. */
@@ -32,12 +35,19 @@ export function stageGrowth(
   which: LadderId,
   realmId: RealmId,
   stage: number,
+  as?: RarityId,
 ): StageGrowth {
-  const share = realmGrowthTotal(m, fit) / climbsIn(realmId);
+  const share = realmGrowthTotal(m, fit, as) / climbsIn(realmId);
   const stats = GROWTH_STATS[which];
   const growth: Record<string, number> = {};
   for (const stat of stats) growth[stat] = share * (m ? (m.growth[stat] ?? 0) : 1 / stats.length);
-  return { realm: realmId, stage, method: m?.id ?? null, rarity: m?.rarity ?? 'white', growth };
+  return {
+    realm: realmId,
+    stage,
+    method: m?.id ?? null,
+    rarity: as ?? m?.rarity ?? 'white',
+    growth,
+  };
 }
 
 /** Every stage a ladder has climbed, oldest first: layers 2–9, then each realm's stages. */

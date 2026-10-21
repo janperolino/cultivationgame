@@ -6,7 +6,7 @@ import { ratesHere } from '../core/life.ts';
 import { copyTitle, readDays } from '../content/copies.ts';
 import { MASTERY } from '../content/mastery.ts';
 import { technique } from '../content/techniques.ts';
-import { barSize } from '../core/cultivation.ts';
+import { barSize, stonesQi } from '../core/cultivation.ts';
 import { ladderMethod } from '../core/methods.ts';
 import { readingCopy, readProgress } from '../core/reading.ts';
 import type { GameState } from '../core/state.ts';
@@ -105,7 +105,7 @@ function todayRows(game: GameState): Row[] {
     rows.push({ key: 'qi', title: 'No method yet', line: 'the qi drifts close and slides off' });
   } else {
     const stones = c.plan.burnStones ? Math.min(rates.stoneCap, Math.floor(c.stones)) : 0;
-    const perDay = rates.qi + stones * rates.qiPerStone;
+    const perDay = rates.qi + stonesQi(rates, 1, stones);
     const left = Math.max(0, barSize(c.qi) - c.qi.bar);
     rows.push({
       key: 'qi',

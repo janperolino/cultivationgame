@@ -259,7 +259,10 @@ export const QI_TREE = defineTree({
       at: [-3, 0.9],
       cost: 20,
       requires: ['qi-sensing-breath'],
-      effects: [{ stat: 'stoneQi', value: 0.05 }],
+      effects: [
+        { stat: 'stoneQi', value: 0.05 },
+        { stat: 'stoneCap', value: 0.1 },
+      ],
       text: 'You draw a spirit stone dry instead of leaving half its qi in the dust.',
     },
     {
@@ -521,8 +524,11 @@ export const QI_TREE = defineTree({
       at: [-1.9, 2.8],
       cost: 200,
       requires: ['qi-liquid-qi'],
-      effects: [{ stat: 'qiPool', value: 0.05 }],
-      text: 'Every drop weighs what a cup of mist did.',
+      effects: [
+        { stat: 'qiPool', value: 0.05 },
+        { stat: 'pillFuel', value: 0.1 },
+      ],
+      text: 'Every drop weighs what a cup of mist did, and a pill melts into more of them.',
     },
     {
       id: 'qi-tidal-return',
@@ -579,7 +585,10 @@ export const QI_TREE = defineTree({
       at: [0, 1.9],
       cost: 150,
       requires: ['qi-foundation-circulation'],
-      effects: [{ stat: 'stoneQi', value: 0.06 }],
+      effects: [
+        { stat: 'stoneQi', value: 0.06 },
+        { stat: 'stoneCap', value: 0.2 },
+      ],
       text: 'Your meridians burn stones like a furnace burns charcoal.',
     },
     {
@@ -592,8 +601,8 @@ export const QI_TREE = defineTree({
       at: [0, 3.5],
       cost: 200,
       requires: ['qi-stone-furnace'],
-      effects: [{ stat: 'qiGain', value: 0.02 }],
-      text: 'You sit over the earth’s vein and drink from it like a well.',
+      effects: [{ stat: 'upkeepCut', value: 0.1 }],
+      text: 'You sit over the earth’s vein and drink from it like a well, and your method asks less of the purse.',
     },
     {
       id: 'qi-settled-bed',
@@ -605,8 +614,11 @@ export const QI_TREE = defineTree({
       at: [-0.75, 4.9],
       cost: 250,
       requires: ['qi-vein-drinking'],
-      effects: [{ stat: 'qiGain', value: 0.02 }],
-      text: 'The bed your qi runs in no longer shifts with every flood.',
+      effects: [
+        { stat: 'qiGain', value: 0.02 },
+        { stat: 'stoneCap', value: 0.2 },
+      ],
+      text: 'The bed your qi runs in no longer shifts with every flood, however many stones pour in.',
     },
     {
       id: 'qi-gate-patience',

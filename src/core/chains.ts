@@ -5,7 +5,7 @@
 // always teaches, the rogue's first big job), and the board quest's road holds one fixed beast,
 // Avoid round it or Bold through it, met once.
 import { pathKey } from '../content/origins.ts';
-import { CHAINS, quest, type Quest, type QuestAct } from '../content/quests.ts';
+import { CHAINS, hasQuest, quest, type Quest, type QuestAct } from '../content/quests.ts';
 import { applyEffect, pushCard } from './cards.ts';
 import {
   handIn,
@@ -21,7 +21,14 @@ import { placeAhead } from './map/encounters.ts';
 import type { RegionMap } from './map/region.ts';
 import { askSpar } from './playFight.ts';
 import { readCopy } from './life.ts';
-import { addEvent, addFlag, hasFlag, withPlayer, type GameState } from './state.ts';
+import {
+  addEvent,
+  addFlag,
+  hasFlag,
+  withPlayer,
+  type ChronicleEvent,
+  type GameState,
+} from './state.ts';
 
 /** The life's chain, its quests' ids in order; empty for a start with none (or an old life). */
 export function chainOf(s: GameState): readonly string[] {
@@ -58,6 +65,22 @@ export function takeChainOffer(s: GameState): JournalCheck {
   const r = takeQuest(s, q.id);
   if (!r.ok) return r;
   return { ok: true, state: { ...r.state, journal: { ...r.state.journal, followed: q.id } } };
+}
+
+/**
+ * This life's first work, as the chronicle has it: its line in this life, for a quest in this
+ * life's journal (the chronicle carries over into the next life; the journal starts fresh).
+ */
+export function firstWorkDone(s: GameState): ChronicleEvent | null {
+  return (
+    s.chronicle.find(
+      (e) =>
+        e.type === 'work' &&
+        e.day >= s.player.bornDay &&
+        !!questState(s, String(e.data.quest)) &&
+        hasQuest(String(e.data.quest)),
+    ) ?? null
+  );
 }
 
 /** The act the quest's step under way offers, or null. */
@@ -133,7 +156,7 @@ export function questRoad(s: GameState, map: RegionMap): GameState {
   if (!life || !course) return s;
   let st = s;
   for (const q of st.journal.quests) {
-    if (q.handed !== null) continue;
+    if (q.handed !== null || !hasQuest(q.id)) continue;
     const qp = quest(q.id).posting;
     if (!qp?.road || hasFlag(st.player, roadFlag(q.id))) continue;
     const held = life.postings.find((p) => p.id === questPostingId(q.id));

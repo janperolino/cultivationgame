@@ -7,16 +7,25 @@
 import { TUTORIAL_LAYERS, type LadderId } from '../content/cultivation.ts';
 import { ALL_FIRSTS, type FirstId } from '../content/firsts.ts';
 import { METHOD_MASTERY } from '../content/mastery.ts';
+import { baseOf, hasItem, item, itemKind } from '../content/items.ts';
 import {
   FIT_SPEED,
   hasMethod,
   method,
   methodFit,
   previousChapter,
+  UPKEEP_BANDS,
   type Method,
   type Upkeep,
 } from '../content/methods.ts';
-import { rarity, rarityMultiplier, type Rarity } from '../content/rarity.ts';
+import {
+  rarity,
+  rarityMultiplier,
+  rarityRank,
+  RARITY_IDS,
+  type Rarity,
+  type RarityId,
+} from '../content/rarity.ts';
 import { realmIndex, stepOut, tierStep } from '../content/realms.ts';
 import { root } from '../content/roots.ts';
 import {
@@ -27,13 +36,15 @@ import {
   type Mastery,
 } from './mastery.ts';
 import { canPay, pay, stonesOf, withStones } from './purse.ts';
-import type { Cultivator, Ladder } from './state.ts';
+import { addItem, type Cultivator, type Ladder } from './state.ts';
+import { stats } from './stats.ts';
 
 export type MethodCheck = { ok: true } | { ok: false; reason: string };
 
 /**
- * Qi Condensation layers 1–3 are the tutorial: root speed, method fit, the method's tier, rarity
- * and mastery, and the element hours don't count there. The same holds for body and soul.
+ * Qi Condensation layers 1–3 are the tutorial: method fit, the method's tier, rarity and mastery,
+ * and the element hours don't count there, and root speed doesn't through layer 2 (layer 3's bar
+ * counts it). The same holds for body and soul.
  */
 export function inTutorial(l: Ladder): boolean {
   return l.realm === 'qi-condensation' && l.stage <= TUTORIAL_LAYERS;
@@ -118,7 +129,7 @@ export function tierBonus(c: Cultivator, m: Method): number {
 
 export interface MethodSpeed {
   tier: number;
-  /** The rarity band, measured in the step out of the method's own tier. */
+  /** The rarity band it climbs as (fed upkeep lifts it), in the step out of its own tier. */
   rarity: number;
   mastery: number;
   /** The method's tier sits below the ladder's realm, so it gains nothing. */
@@ -136,7 +147,7 @@ export function methodSpeed(c: Cultivator, which: LadderId): MethodSpeed {
     return { tier: 1, rarity: 1, mastery: 1, capped, total: capped ? 0 : 1 };
   }
   const tier = tierBonus(c, m);
-  const rar = rarityMultiplier(m.rarity, tierStep(m.tier));
+  const rar = rarityMultiplier(runningRarity(c, m), tierStep(m.tier));
   const mastery = METHOD_MASTERY.speed[methodMastery(c, m.id).level]!;
   return { tier, rarity: rar, mastery, capped, total: capped ? 0 : tier * rar * mastery };
 }
@@ -225,22 +236,66 @@ export function setActiveMethod(
 
 // ---------------------------------------------------------------- upkeep
 
+/**
+ * The things in the Bag that pay an upkeep's goods, plainest first: a written thing at any rarity
+ * (its variants), or any thing of the kind and tier asked.
+ */
+function upkeepGoods(c: Cultivator, up: Upkeep): { ids: string[]; n: number }[] {
+  const held = Object.keys(c.items).filter((id) => (c.items[id] ?? 0) > 0 && hasItem(id));
+  const plainest = (ids: string[]) =>
+    ids.sort((a, b) => rarityRank(item(a).rarity) - rarityRank(item(b).rarity));
+  const asks = Object.entries(up.items ?? {}).map(([base, n]) => ({
+    ids: plainest(held.filter((id) => baseOf(id) === base)),
+    n,
+  }));
+  if (up.any) {
+    const { kind, tier, n } = up.any;
+    const fits = held.filter((id) => itemKind(item(id)) === kind && item(id).tier === tier);
+    asks.push({ ids: plainest(fits), n });
+  }
+  return asks;
+}
+
 // The stones are paid as any price is (core/purse.ts), across the grades.
 function canFeed(c: Cultivator, up: Upkeep): boolean {
   if (!canPay(stonesOf(c), up.stones ?? 0)) return false;
-  return Object.entries(up.items ?? {}).every(([id, n]) => (c.items[id] ?? 0) >= n);
+  return upkeepGoods(c, up).every(({ ids, n }) => ids.reduce((t, id) => t + c.items[id]!, 0) >= n);
 }
 
 function payUpkeep(c: Cultivator, up: Upkeep): Cultivator {
-  const items = { ...c.items };
-  for (const [id, n] of Object.entries(up.items ?? {})) items[id] = (items[id] ?? 0) - n;
-  return { ...withStones(c, pay(stonesOf(c), up.stones ?? 0)!), items };
+  let next = withStones(c, pay(stonesOf(c), up.stones ?? 0)!);
+  for (const { ids, n } of upkeepGoods(c, up)) {
+    let left = n;
+    for (const id of ids) {
+      const take = Math.min(left, next.items[id] ?? 0);
+      next = addItem(next, id, -take);
+      left -= take;
+      if (left <= 0) break;
+    }
+  }
+  return next;
+}
+
+/** The days one day's upkeep feeds, after Frugal upkeep (K11): 1 ÷ (1 − the cut). */
+export function upkeepDays(c: Cultivator): number {
+  return 1 / Math.max(0.2, 1 - stats(c).upkeepCut);
+}
+
+/**
+ * The rarity a method climbs as (design § Professions, people and powers, What upkeep buys): its
+ * written rarity, a band rarer fed on light upkeep and two on heavy. Unfed it stalls, gaining
+ * nothing, so only a starved method's growth reads the written band.
+ */
+export function runningRarity(c: Cultivator, m: Method): RarityId {
+  if (!m.upkeep || c.methods[m.id]?.starved) return m.rarity;
+  const at = Math.min(RARITY_IDS.length - 1, rarityRank(m.rarity) + UPKEEP_BANDS[m.upkeep.weight]);
+  return RARITY_IDS[at]!;
 }
 
 /**
  * Feeds a ladder's method for a stretch of days, paying a whole day's upkeep at a time from
  * stones and items. A method with no upkeep, or one past its tier that gains nothing anyway, is
- * always fed. When a day can't be paid, the method stalls for the stretch.
+ * always fed. When a day can't be paid, the method stalls for the stretch and is starved.
  */
 export function feedMethod(
   c: Cultivator,
@@ -253,15 +308,18 @@ export function feedMethod(
   let next = c;
   let until = Math.max(c.methods[m.id]!.fedUntil, day);
   let fed = true;
+  const each = upkeepDays(c);
   while (until < day + days - 1e-9) {
     if (!canFeed(next, m.upkeep)) {
       fed = false;
       break;
     }
     next = payUpkeep(next, m.upkeep);
-    until += 1;
+    until += each;
   }
   const rec = { ...next.methods[m.id]!, fedUntil: until };
+  if (fed) delete rec.starved;
+  else rec.starved = true;
   return { cultivator: { ...next, methods: { ...next.methods, [m.id]: rec } }, fed };
 }
 

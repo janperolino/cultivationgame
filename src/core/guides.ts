@@ -153,9 +153,35 @@ export function finishAllGuides(s: GameState): GameState {
   return GUIDE_IDS.reduce(finishGuide, s);
 }
 
-/** Ends every guide whose thing the state already shows done; the same state if none. */
+/**
+ * With guides off, whether the life has passed the moment of a guide with nothing in the state to
+ * end on (the qi bar, focus, the sheet, sense), so it ends there and the codex meets its entries.
+ */
+function passedUnguided(s: GameState, id: GuideId): boolean {
+  const p = s.player;
+  switch (id) {
+    case 'qi-bar':
+      return p.activeMethods.qi !== null;
+    case 'focus':
+      return p.flags.includes(FIRST_BREATH);
+    case 'sheet':
+      return s.chronicle.some((e) => e.type === 'spar' && e.data.result === 'won');
+    case 'sense':
+      return !!s.map?.course;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Ends every guide whose thing the state already shows done (and, with guides off, every one whose
+ * moment has passed); the same state if none.
+ */
 export function noteGuides(s: GameState): GameState {
-  const fresh = GUIDE_IDS.filter((id) => !guideDone(s, id) && doneInState(s, id));
+  const off = !guidesOn(s);
+  const fresh = GUIDE_IDS.filter(
+    (id) => !guideDone(s, id) && (doneInState(s, id) || (off && passedUnguided(s, id))),
+  );
   return fresh.reduce(finishGuide, s);
 }
 
@@ -166,6 +192,15 @@ export function noteGuides(s: GameState): GameState {
 export function guidedStart(s: GameState): GameState {
   if (guideDone(s, 'first-minor')) return s;
   return withPlayer(s, { ...s.player, plan: { ...s.player.plan, auto: 'off' } });
+}
+
+/**
+ * Guides turned off: the first minor breakthrough no longer waits on its veil, so a guided start's
+ * hold on the auto setting is let go, as that guide's end lets it go.
+ */
+export function unguidedStart(s: GameState): GameState {
+  if (guideDone(s, 'first-minor') || s.player.plan.auto !== 'off') return s;
+  return withPlayer(s, { ...s.player, plan: { ...s.player.plan, auto: 'safe' } });
 }
 
 /** The pieces of the screen the first seclusion builds, a piece at a time. */

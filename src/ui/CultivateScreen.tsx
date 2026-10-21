@@ -1,9 +1,9 @@
 import { ratesHere } from '../core/life.ts';
 import { HOUR_KIND_IDS, HOUR_KINDS } from '../content/hours.ts';
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { eventKind, KIND_WORDS } from '../content/chronicle.ts';
 import { comingBackStory, type StorySection } from '../core/comingBack.ts';
-import { barSize, ladderOpen } from '../core/cultivation.ts';
+import { barSize, ladderOpen, stonesQi } from '../core/cultivation.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import { ageYears, lifespanYears, type GameState } from '../core/state.ts';
 import { CardFeed } from './CardFeed.tsx';
@@ -30,6 +30,7 @@ import { readingLine } from './bookcase.ts';
 import { EventLine, LadderBar, LifeEdgeCard } from './widgets.tsx';
 import { go, goToTab } from './nav.ts';
 import { built } from '../core/guides.ts';
+import { meetCodex } from '../core/codex.ts';
 import { knownMethods } from '../core/methods.ts';
 
 /** Up to this many settled cards are told in full; past it, one a kind and the rest folded away. */
@@ -53,7 +54,12 @@ function Sections({ sections }: { sections: StorySection[] }) {
 /** The coming-back story in the band: its opening and what grew, the rest raised over the scene. */
 function AwayCard({ away, onRead }: { away: AwaySummary; onRead: () => void }) {
   const dismissAway = useGame((s) => s.dismissAway);
+  const applyLife = useGame((s) => s.applyLife);
   const story = comingBackStory(away.before, away.state);
+  // The story told: the codex meets it.
+  useEffect(() => {
+    applyLife((s) => meetCodex(s, 'came-back'));
+  }, [applyLife]);
   return (
     <article className="story story-away" aria-labelledby="away-heading">
       <p className="band-kicker">
@@ -122,13 +128,13 @@ function QiWhy({ game }: { game: GameState }) {
   const c = game.player;
   const rates = ratesHere(game);
   const stones = c.plan.burnStones ? Math.min(rates.stoneCap, Math.floor(c.stones)) : 0;
-  const perDay = rates.qi + stones * rates.qiPerStone;
+  const perDay = rates.qi + stonesQi(rates, 1, stones);
   const left = Math.max(0, barSize(c.qi) - c.qi.bar);
   const days = perDay > 0 ? left / perDay : Infinity;
   return (
     <>
       {formatRate(rates.qi)} qi a day from today&apos;s wheel
-      {stones > 0 && `, and ${formatRate(stones * rates.qiPerStone)} from ${stones} stones`}.{' '}
+      {stones > 0 && `, and ${formatRate(stonesQi(rates, 1, stones))} from ${stones} stones`}.{' '}
       {left <= 0
         ? 'The bar is full; past full raises the odds of the breakthrough.'
         : Number.isFinite(days)

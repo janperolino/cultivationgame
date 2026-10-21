@@ -85,6 +85,8 @@ export const ALCHEMY_MAKES = {
   'restore:qi': 'restoring',
   'restore:hp': 'mending',
   detox: 'purging',
+  // A burning pill (K11): it burns the blood.
+  burn: 'burning',
 } as const satisfies Record<string, Property>;
 
 /**

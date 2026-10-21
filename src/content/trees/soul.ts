@@ -495,8 +495,11 @@ export const SOUL_TREE = defineTree({
       at: [0, 2.4],
       cost: 150,
       requires: ['soul-foundation-soul'],
-      effects: [{ stat: 'soulGain', value: 0.02 }],
-      text: 'The lamp burns lower and hotter.',
+      effects: [
+        { stat: 'soulGain', value: 0.02 },
+        { stat: 'upkeepCut', value: 0.1 },
+      ],
+      text: 'The lamp burns lower and hotter, and a stick of incense lasts the night.',
     },
     {
       id: 'soul-mind-tides',
