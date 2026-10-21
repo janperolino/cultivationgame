@@ -226,7 +226,7 @@ export const CRAFT_CARDS: readonly Card[] = [
     setAt: 'market',
     title: 'The Old Master’s Slip',
     text: 'In the room behind {shop} in {where}, the old {crafter} who worked there forty years is dying. The family can’t read the recipe slips in the old one’s box and want them gone.',
-    trigger: { craft: { crafts: ['alchemy', 'refining', 'talismans'] } },
+    trigger: { craft: { crafts: ['alchemy', 'refining', 'talismans'], slip: true } },
     cooldown: 1080,
     choices: [
       {

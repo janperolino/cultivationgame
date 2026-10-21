@@ -31,6 +31,7 @@ import {
   craftTiersHeld,
   knowsRecipe,
   lentTools,
+  toolFor,
   toolsHeld,
   withCrafts,
 } from './crafts.ts';
@@ -89,6 +90,8 @@ export function craftTriggerHolds(s: GameState, t: Trigger['craft']): boolean {
   // An order for your make: one to name, and room to hold it (review 2026-10-21: the card said
   // "on your list" when neither held).
   if (t.made && (!yourMake(c, craft) || openCommissions(c).length >= COMMISSION.most)) return false;
+  // A slip to give, or the card would sell you nothing (review 2026-10-21).
+  if (t.slip && !slipFor(c, craft)) return false;
   return true;
 }
 
@@ -243,9 +246,10 @@ export function applyCraftEffect(
       if (!front) return s;
       if (e.outcome === 'finer')
         return withPlayer(s, withCrafts(c, { front: { ...front, above: true } }));
-      const r = recipe(front.recipe);
-      const tool = toolsHeld(c, r.craft).find((t) => !t.cracked && t.tier >= item(r.output).tier);
-      if (!tool) return s;
+      // The tool the batch is worked with, and only your own: a lent furnace isn't yours to crack
+      // (review 2026-10-21).
+      const tool = toolFor(c, recipe(front.recipe));
+      if (!tool || (c.items[tool.id] ?? 0) <= 0) return s;
       const cracked = variantId(baseOf(tool.id), tool.rarity, { cracked: true });
       return withPlayer(s, addItem(addItem(c, tool.id, -1), cracked, 1));
     }

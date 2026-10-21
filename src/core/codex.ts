@@ -183,7 +183,3 @@ export function seeCodex(s: GameState, id: string): GameState {
 export function codexMet(s: GameState): CodexEntry[] {
   return CODEX.filter((e) => e.id in s.lineage.codex);
 }
-
-export function codexNew(s: GameState): number {
-  return Object.values(s.lineage.codex).filter((v) => v === 'new').length;
-}

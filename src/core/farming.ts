@@ -38,7 +38,6 @@ import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
 import { realmScale, tierRealm } from '../content/realms.ts';
 import {
   countBatches,
-  familyLevel,
   knowsRecipe,
   liftOf,
   withCrafts,
@@ -74,10 +73,6 @@ export function rentOf(density: number): number {
 export function buyOf(density: number): number {
   return rentOf(density) * PLOT.buySeasons;
 }
-
-export const plotsOf = (c: Cultivator): readonly Plot[] => c.crafts.plots;
-export const plotsAt = (c: Cultivator, place: string): Plot[] =>
-  c.crafts.plots.filter((p) => p.place === place);
 
 export function plotOf(c: Cultivator, id: string): Plot | null {
   return c.crafts.plots.find((p) => p.id === id) ?? null;
@@ -562,14 +557,4 @@ export function tendPlot(c: Cultivator, id: string, hand: number): Cultivator {
     ...plot,
     beds: plot.beds.map((b) => (b ? { ...b, hand: b.hand + h, sat: b.sat + 1 } : b)),
   });
-}
-
-/** The page's word for a bed: ripe, its hardiness's word, or the days it still needs. */
-export function bedWord(c: Cultivator, b: Bed): string {
-  return hardiness(c, b).word;
-}
-
-/** The family a crop's mastery is kept by, and its level. */
-export function cropMastery(c: Cultivator, crop: string): number {
-  return familyLevel(c, recipe(crop).family);
 }

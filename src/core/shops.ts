@@ -750,15 +750,12 @@ export function buyRate(s: GameState, sh: Shop): number {
 
 /**
  * What a shop offers for one of a thing, or the reason it won't buy: its rate of its market's
- * price, and 80% of it for what the market needs (`wanted`), except at a black market. A `fixed`
- * price (a commission's, K12) is paid as it stands, past the rate and the loop's cap, once the
- * shop would buy the thing at all.
+ * price, and 80% of it for what the market needs (`wanted`), except at a black market.
  */
 export function offerFor(
   s: GameState,
   shopId: string,
   thing: string,
-  fixed?: number,
 ): { ok: true; each: number; wanted: boolean } | { ok: false; reason: string } {
   const sh = shopById(shopId);
   const info = SHOP_KIND_INFO[sh.kind];
@@ -781,7 +778,6 @@ export function offerFor(
           ? 'The hall keeps its own methods.'
           : 'No honest shop buys a sect’s own method.',
     };
-  if (fixed !== undefined) return { ok: true, each: fixed, wanted: false };
   // A posted rate is the posted rate: the bounty office's 50% doesn't drift with the shop.
   const drift = info.posted ? 1 : priceFactor(sh);
   const m = marketOfShop(shopId);

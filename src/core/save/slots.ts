@@ -108,7 +108,11 @@ export class SaveSlots {
       tryLoad(old).save !== undefined;
     // The new save is checked as it goes in, once, so the next write and the page's last one can
     // trust it; one that fails is never trusted and never pushes out a good backup.
-    if (tryLoad(save).save !== undefined) this.checked.add(save);
+    // One that fails says where at once, so a playtest finds the step that wrote it rather than
+    // the next load (review 2026-10-21).
+    const fresh = tryLoad(save);
+    if (fresh.save !== undefined) this.checked.add(save);
+    else console.error(`A save failed its check as it was written: ${fresh.error ?? 'unknown'}`);
     await this.put({
       ...rec,
       current: save,

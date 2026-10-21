@@ -111,7 +111,8 @@ function treeWords(t: Tree): string {
 /** What one tree gives, totted up by stat: the "?" by its name. */
 function Totals({ c, tree }: { c: Cultivator; tree: Tree }) {
   const t = treeTotals(c, tree);
-  const ladderName = LADDER_LABELS[tree.ladder].toLowerCase();
+  // A craft Dao's gate is the better of realm and soul (TreeFan says the same).
+  const ladderName = tree.craft ? 'realm or soul' : LADDER_LABELS[tree.ladder].toLowerCase();
   return (
     <Why label={`What the ${treeWords(tree)} gives`}>
       <>

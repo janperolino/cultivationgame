@@ -29,7 +29,7 @@ import { goodTags, marketFactor, MARKETS } from './markets.ts';
 import { shortages, whyOf } from './making.ts';
 import { priceOf } from './prices.ts';
 import { stonesOf, worthOf } from './purse.ts';
-import { keeperId, askAt, offerFor } from './shops.ts';
+import { keeperId, askAt } from './shops.ts';
 import { addItem, newLife, withPlayer, type GameState } from './state.ts';
 
 const CITY = 'City of the Guarded Mouth';
@@ -209,13 +209,6 @@ describe('the code review’s asks', () => {
     expect(askAt(1.234, true)).toBe(1.23);
     expect(askAt(0.001)).toBe(0.1);
     expect(askAt(0.001, true)).toBe(0.01);
-  });
-
-  it('pays a fixed price past the rate', () => {
-    const s = life();
-    const id = shopsOf(CITY, 'alchemy')[0]!;
-    const o = offerFor(s, id, 'qi-gathering-pill', 9);
-    expect(o.ok && o.each).toBe(9);
   });
 
   it('lends the alchemy hall’s furnace to the bench while you hold its post', () => {

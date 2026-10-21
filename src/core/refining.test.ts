@@ -119,6 +119,21 @@ describe('mending at the bench', () => {
     expect(r.items[ORE]).toBe(1);
   });
 
+  it('gives a mend’s ore back when the piece leaves mid-mend (review 2026-10-21)', () => {
+    const dmg = variantId('iron-sword', 'white', { damaged: true });
+    const input = mendNeeds(dmg).input;
+    let c = addItem(addItem(refiner(), dmg, 1), input, 1);
+    c = queueMend(c, dmg).cultivator;
+    c = workBench(c, 0.5, 1, new Rng(1)).cultivator;
+    expect(c.items[input] ?? 0).toBe(0);
+    expect(c.crafts.front?.mend).toBe(dmg);
+    // Sold while it waited.
+    c = addItem(c, dmg, -1);
+    const r = workBench(c, 1, 1, new Rng(1)).cultivator;
+    expect(r.crafts.front).toBeNull();
+    expect(r.items[input]).toBe(1);
+  });
+
   it('counts the hours a tier: a tier 2 piece takes two', () => {
     const ring = 'storage-ring';
     expect(mendNeeds(ring).hours).toBe(2);

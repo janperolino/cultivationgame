@@ -10,6 +10,7 @@
 // are worth, ready after the crafter's hours, its rarity from the house's mastery and your rarer
 // inputs, rolled once from the shop and the day. The world rolls the posting; nothing is kept but
 // what you took and ordered (`crafts.commissions`, `crafts.orders`).
+import { roomFor } from './gear.ts';
 import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { ASKERS, COMMISSION, MAKES_TO_ORDER, ORDER, POSTS_FOR } from '../content/commissions.ts';
 import {
@@ -480,6 +481,9 @@ export function collectOrder(s: GameState, at: number): CommissionResult {
   const o = orders[at];
   if (!o) return { ok: false, reason: 'No such order.' };
   if (s.calendar.day < o.ready) return { ok: false, reason: 'It isn’t ready yet.' };
+  // Room first, as a shop asks when you buy (review 2026-10-21).
+  if (roomFor(s.player, o.made) < o.n)
+    return { ok: false, reason: 'Your pack has no room for it.' };
   const kept = withPlayer(s, {
     ...s.player,
     crafts: { ...s.player.crafts, orders: orders.filter((_, i) => i !== at) },

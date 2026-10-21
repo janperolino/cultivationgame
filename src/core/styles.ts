@@ -5,7 +5,7 @@
 // where they trade: selling one there is a leak seen in use.
 import { copyId } from '../content/copies.ts';
 import type { CraftId } from '../content/crafts.ts';
-import { hasRecipe, recipe } from '../content/crafts.ts';
+import { hasRecipe } from '../content/crafts.ts';
 import { baseOf, hasItem, item, itemKind, variantId } from '../content/items.ts';
 import { MANUALS, type Manual } from '../content/manuals.ts';
 import { ORG_ROWS } from '../content/organizations.ts';
@@ -16,16 +16,6 @@ import { market, marketOfShop, shopTiers } from './markets.ts';
 import { houseOf, isOrganization } from './organizations.ts';
 
 const STYLES: readonly Manual[] = MANUALS.filter((m) => m.kind === 'style');
-
-/** Every style written, common and own. */
-export function allStyles(): readonly Manual[] {
-  return STYLES;
-}
-
-/** A style's craft: the craft Dao it grafts beside. */
-export function styleCraft(m: Manual): CraftId {
-  return m.host as CraftId;
-}
 
 /** The goods a style's seals teach that have a recipe written today. */
 export function styleGoods(m: Manual): string[] {
@@ -112,11 +102,4 @@ export function styleLines(sh: Shop): { thing: string; n: number }[] {
     }
   }
   return out;
-}
-
-/** A recipe's style seal, for a card: the style that teaches it, if any. */
-export function styleTeaching(output: string): Manual | null {
-  if (!hasRecipe(output)) return null;
-  const r = recipe(output);
-  return STYLES.find((m) => m.nodes.some((n) => n.recipe === r.output)) ?? null;
 }

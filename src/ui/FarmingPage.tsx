@@ -47,13 +47,19 @@ const years = (b: Bed) => {
     : `${Math.floor(y)} year${Math.floor(y) === 1 ? '' : 's'}`;
 };
 
-function heldWords(p: Plot, day: number): string {
+/** Sowing and reaping wait while you sit: a bed sown mid-sitting would take a hand it never had. */
+const SOWING_SITTING = 'Stand up from tending first: what you sow or reap waits for your hands.';
+
+function heldWords(c: Cultivator, p: Plot, day: number): string {
   if (p.held === 'bought') return 'bought';
-  // A dwelling's land (K9): it ends only with a rented dwelling's lease.
-  if (p.held === 'slot')
-    return p.until === null
+  // A dwelling's land (K9): it ends only with a rented dwelling's lease, read off the dwelling
+  // since a paid rent moves it on (review 2026-10-21).
+  if (p.held === 'slot') {
+    const until = c.dwellings.find((d) => d.place === p.place)?.until ?? p.until;
+    return until === null
       ? 'a dwelling’s land'
-      : `a dwelling’s land, ${Math.max(0, Math.ceil(p.until - day))} days of rent`;
+      : `a dwelling’s land, ${Math.max(0, Math.ceil(until - day))} days of rent`;
+  }
   const left = Math.max(0, Math.ceil((p.until ?? day) - day));
   return `rented, ${left} day${left === 1 ? '' : 's'} left`;
 }
@@ -124,6 +130,8 @@ export function FarmingPage({ game, families }: { game: GameState; families: Rea
                     className={`crafts-recipe${plot?.id === p.id ? ' is-selected' : ''}`}
                     disabled={!isHere}
                     onClick={() => {
+                      // Another plot stands you up from this one, its hand given (review 2026-10-21).
+                      if (p.id !== plot?.id) standUp();
                       setChosen(p.id);
                       setBed(null);
                     }}
@@ -131,7 +139,7 @@ export function FarmingPage({ game, families }: { game: GameState; families: Rea
                     <span>
                       {plotPlaceName(game, p.place)}
                       <span className="farm-sub">
-                        {heldWords(p, day)} · {p.land} · {soilWords(p)} · qi density {p.density}
+                        {heldWords(c, p, day)} · {p.land} · {soilWords(p)} · qi density {p.density}
                       </span>
                     </span>
                     <span className="muted">{isHere ? 'here' : 'away'}</span>
@@ -265,8 +273,10 @@ export function FarmingPage({ game, families }: { game: GameState; families: Rea
             plot={plot}
             bed={bed}
             b={picked}
-            onRun={run}
-            onHarvest={() => run((p, d) => harvest(p, plot.id, bed, d))}
+            onRun={sitting ? () => setWhy(SOWING_SITTING) : run}
+            onHarvest={() =>
+              sitting ? setWhy(SOWING_SITTING) : run((p, d) => harvest(p, plot.id, bed, d))
+            }
           />
         )}
         {plot && (

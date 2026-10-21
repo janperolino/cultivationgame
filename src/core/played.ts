@@ -18,7 +18,14 @@ import { wearFrom } from './combat/combatant.ts';
 import { bondFromFight } from './gear.ts';
 import { Rng } from './rng.ts';
 import { pay, stonesOf, withStones, worthOf } from './purse.ts';
-import { addItem, withPlayer, withStream, type FightFrom, type GameState } from './state.ts';
+import {
+  addItem,
+  withPlayer,
+  withStream,
+  type Cultivator,
+  type FightFrom,
+  type GameState,
+} from './state.ts';
 
 /** A fight that runs this long ends with both sides drawing off. */
 export const FIGHT_TURNS = 60;
@@ -116,13 +123,13 @@ export function afterFight(s: GameState, f: Fight): GameState {
   const p = s.player;
   const me = combatantIn(f, p.id);
   if (!me) return { ...s, fight: null };
-  const items = { ...p.items };
+  // Through addItem, so a stack spent to nothing takes its splits with it (review 2026-10-21).
+  let used: Cultivator = p;
   for (const [id, held] of Object.entries(me.items)) {
-    if (!(id in items)) continue;
-    if (held.n > 0) items[id] = held.n;
-    else delete items[id];
+    if (!(id in p.items)) continue;
+    used = addItem(used, id, held.n - (p.items[id] ?? 0));
   }
-  let back = wearFrom(bondFromFight({ ...p, items, toxicity: me.toxicity }, f.turn), me);
+  let back = wearFrom(bondFromFight({ ...used, toxicity: me.toxicity }, f.turn), me);
   // What the arts that burn goods leave (K11): the stones an array's eye drew, and a burned blood's
   // weakness until the day ends.
   const spent = worthOf(stonesOf(p)) - (me.stones ?? worthOf(stonesOf(p)));

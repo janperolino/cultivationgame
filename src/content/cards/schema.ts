@@ -68,6 +68,8 @@ export interface Trigger {
     ungraded?: boolean;
     /** Something of the craft made lately and room for a commission: an order for your make. */
     made?: boolean;
+    /** A recipe slip of the craft at your tier you don't know, for the card to hand over. */
+    slip?: boolean;
   };
 }
 
