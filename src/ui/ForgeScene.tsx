@@ -36,6 +36,7 @@ import { setHand } from './furnace.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { canvasDensity } from './stage.ts';
 import { useGame } from './store.ts';
+import { cue } from './cues.ts';
 
 const { w: W, h: H } = FORGE_BOX;
 const CX = W / 2;
@@ -187,11 +188,15 @@ export function ForgeScene({ game, family }: { game: GameState; family: FamilyId
     forge.current = r.forge;
     setHand(r.forge.hand);
     if (r.sealed) {
+      cue('craft-hammer');
       const [x, y] = runeAt(r.sealed.rune);
       marks.current.push({ at: [x, y - 32], how: r.sealed.how, t: f.t });
       motes.current.push({ x, t: f.t, glow: glowAt(f, x) });
     }
-    if (r.quenched) marks.current.push({ at: [CX, 200], how: r.quenched, t: f.t });
+    if (r.quenched) {
+      cue('craft-quench');
+      marks.current.push({ at: [CX, 200], how: r.quenched, t: f.t });
+    }
   };
 
   return (

@@ -132,7 +132,7 @@ let floatKey = 1;
 
 /** S1's cue for a choice's changes, as its outcome is read: a gain's, else a loss's. */
 export function cueGains(ds: readonly Delta[]): void {
-  if (ds.length > 0) cue(ds.some((d) => d.n > 0) ? 'gain' : 'loss');
+  if (ds.length > 0) cue(ds.some((d) => d.n > 0) ? 'feel-gain' : 'feel-loss');
 }
 
 /**

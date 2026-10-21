@@ -31,6 +31,7 @@ import { useGame } from './store.ts';
 import { meter } from './ai.ts';
 import { ROLES } from '../ai/call.ts';
 import { FullscreenButton, Why } from './widgets.tsx';
+import { SHIPPED } from './sound/engine.ts';
 
 const WEEK_MS = 7 * 24 * 3_600_000;
 
@@ -499,6 +500,65 @@ function ReadingPanel() {
   );
 }
 
+const VOLUMES = [
+  ['master', 'Master'],
+  ['music', 'Music'],
+  ['ambience', 'Ambience'],
+  ['effects', 'Effects'],
+] as const;
+
+/**
+ * Sound (S1): master over music, ambience and effects, 0 to 100, and quiet while the window isn't
+ * focused; then the credits the sounds' licences ask for, from `npm run sound`'s list.
+ */
+function SoundPanel() {
+  const s = useSettings();
+  const credits = [...new Set(SHIPPED.map((x) => x.credit))].sort();
+  return (
+    <section className="panel" aria-labelledby="sound-heading">
+      <h2 id="sound-heading" className="panel-heading">
+        Sound
+      </h2>
+      <div className="look-grid">
+        {VOLUMES.map(([key, name]) => (
+          <label key={key} className="field">
+            <span>
+              {name} · {s[key]}
+            </span>
+            <input
+              type="range"
+              className="volume"
+              min={0}
+              max={100}
+              step={1}
+              value={s[key]}
+              onChange={(e) => saveSettings({ [key]: Number(e.target.value) })}
+            />
+          </label>
+        ))}
+      </div>
+      <label className="check spaced">
+        <input
+          type="checkbox"
+          checked={s.muteUnfocused}
+          onChange={(e) => saveSettings({ muteUnfocused: e.target.checked })}
+        />
+        Quiet while the window isn't focused
+      </label>
+      <h3 className="sub-heading spaced">Credits</h3>
+      {credits.length === 0 ? (
+        <p className="caption">No sounds yet.</p>
+      ) : (
+        <ul className="sound-credits caption">
+          {credits.map((c) => (
+            <li key={c}>{c}</li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 /**
  * Guides and hints (design § UI and screens, Introductions): the open life's switch for both,
  * the hints shown again, and any of the guides replayed at its control. Guides run once a
@@ -569,6 +629,7 @@ export function SettingsScreen() {
       <ClockPanel />
       <LookPanel />
       <ReadingPanel />
+      <SoundPanel />
       <GuidesPanel />
       <GoingInPanel />
     </>

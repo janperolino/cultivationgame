@@ -27,6 +27,7 @@ import type { GameState } from '../core/state.ts';
 import { setHand } from './furnace.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { canvasDensity } from './stage.ts';
+import { cue } from './cues.ts';
 
 const { w: W, h: H } = DESK_BOX;
 const CX = PAPER.x + PAPER.w / 2;
@@ -124,13 +125,18 @@ export function TalismanScene({ game, family }: { game: GameState; family: strin
   };
   const onDown = (ev: React.PointerEvent<HTMLCanvasElement>) => {
     const d = brushDown(desk.current, who, at(ev));
-    if (d.phase === 'draw') ev.currentTarget.setPointerCapture(ev.pointerId);
+    if (d.phase === 'draw') {
+      ev.currentTarget.setPointerCapture(ev.pointerId);
+      cue('craft-brush');
+    }
     desk.current = d;
   };
   const onMove = (ev: React.PointerEvent<HTMLCanvasElement>) => {
     if (desk.current.phase !== 'draw') return;
     desk.current = brushMove(desk.current, who, at(ev));
     setHand(desk.current.hand);
+    // The sheet drawn whole in one breath snaps alight.
+    if (desk.current.phase === 'show' && desk.current.last?.end === 'drawn') cue('craft-talisman');
   };
   const onUp = () => {
     desk.current = brushUp(desk.current, who);

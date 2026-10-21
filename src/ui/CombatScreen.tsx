@@ -25,6 +25,7 @@ import { mod, topRung, type Combatant } from '../core/combat/combatant.ts';
 import { stageName as intentName } from '../core/intent.ts';
 import type { FightEnd } from '../core/played.ts';
 import { FxLayer, type FxShot } from './combatFx.ts';
+import { playShot } from './sound/index.ts';
 import {
   act,
   dismissAfter,
@@ -208,7 +209,7 @@ function Arena({ f, me }: { f: Fight; me: Combatant }) {
 
   useEffect(() => {
     if (!canvas.current || !arena.current) return;
-    layer.current = new FxLayer(canvas.current, arena.current);
+    layer.current = new FxLayer(canvas.current, arena.current, playShot);
     return () => layer.current?.dispose();
   }, []);
 

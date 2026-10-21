@@ -129,6 +129,7 @@ import {
   thingOfGood,
   writtenProsperity,
 } from '../../core/markets.ts';
+import { soundConsole } from '../sound/index.ts';
 
 export type Output = string | string[];
 
@@ -194,6 +195,11 @@ export const COMMANDS: Record<string, Command> = {
       }
       return Object.values(COMMANDS).map((c) => `${c.usage.padEnd(30)} ${c.help}`);
     },
+  },
+  sound: {
+    usage: 'sound [cue]',
+    help: 'Shows what music and ambience play now, or plays an effect from the cue table.',
+    run: ([id]) => soundConsole(id),
   },
   speed: {
     usage: 'speed [n]',

@@ -1,0 +1,284 @@
+{
+  "sounds": [
+    {
+      "id": "act-defend",
+      "kind": "effect",
+      "file": "act-defend.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "47f5d5185025"
+    },
+    {
+      "id": "act-flee",
+      "kind": "effect",
+      "file": "act-flee.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "a2ae0c6373b4"
+    },
+    {
+      "id": "bag-equip",
+      "kind": "effect",
+      "file": "bag-equip.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "16319a3de4cd"
+    },
+    {
+      "id": "bag-stones",
+      "kind": "effect",
+      "file": "bag-stones.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "7b742615c373"
+    },
+    {
+      "id": "book-graft",
+      "kind": "effect",
+      "file": "book-graft.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "ef0e62d4e06f"
+    },
+    {
+      "id": "book-page",
+      "kind": "effect",
+      "file": "book-page.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "79cd83bb634a"
+    },
+    {
+      "id": "craft-brush",
+      "kind": "effect",
+      "file": "craft-brush.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "3fa83d9ec58f"
+    },
+    {
+      "id": "craft-hammer",
+      "kind": "effect",
+      "file": "craft-hammer.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "47f5d5185025"
+    },
+    {
+      "id": "craft-pill",
+      "kind": "effect",
+      "file": "craft-pill.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "3d972da199d8"
+    },
+    {
+      "id": "el-earth",
+      "kind": "effect",
+      "file": "el-earth.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "7b742615c373"
+    },
+    {
+      "id": "el-ice",
+      "kind": "effect",
+      "file": "el-ice.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "cd6ba7fd24cf"
+    },
+    {
+      "id": "el-metal",
+      "kind": "effect",
+      "file": "el-metal.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "c33abd05828c"
+    },
+    {
+      "id": "el-wood",
+      "kind": "effect",
+      "file": "el-wood.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "0709348bb261"
+    },
+    {
+      "id": "feel-alert",
+      "kind": "effect",
+      "file": "feel-alert.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "f8b3125dba5f"
+    },
+    {
+      "id": "feel-arrive",
+      "kind": "effect",
+      "file": "feel-arrive.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "e1e6c5a88de5"
+    },
+    {
+      "id": "feel-fail",
+      "kind": "effect",
+      "file": "feel-fail.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "ddaf2b9bfe3e"
+    },
+    {
+      "id": "feel-gain",
+      "kind": "effect",
+      "file": "feel-gain.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "0ed773ff7a02"
+    },
+    {
+      "id": "feel-layer",
+      "kind": "effect",
+      "file": "feel-layer.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "c820bc6aaaac"
+    },
+    {
+      "id": "feel-loss",
+      "kind": "effect",
+      "file": "feel-loss.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "ca71ce6f7640"
+    },
+    {
+      "id": "feel-pass",
+      "kind": "effect",
+      "file": "feel-pass.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "068a9562871b"
+    },
+    {
+      "id": "feel-settle",
+      "kind": "effect",
+      "file": "feel-settle.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "f8b3125dba5f"
+    },
+    {
+      "id": "feel-sheathe",
+      "kind": "effect",
+      "file": "feel-sheathe.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "c9caa4a71cbe"
+    },
+    {
+      "id": "feel-stage",
+      "kind": "effect",
+      "file": "feel-stage.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "f8b3125dba5f"
+    },
+    {
+      "id": "hit-charge",
+      "kind": "effect",
+      "file": "hit-charge.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "3838627305d2"
+    },
+    {
+      "id": "hit-palm",
+      "kind": "effect",
+      "file": "hit-palm.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "806702c9ef9b"
+    },
+    {
+      "id": "hit-slash",
+      "kind": "effect",
+      "file": "hit-slash.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "68f5f1f4badc"
+    },
+    {
+      "id": "hit-thrust",
+      "kind": "effect",
+      "file": "hit-thrust.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "68f5f1f4badc"
+    },
+    {
+      "id": "map-depart",
+      "kind": "effect",
+      "file": "map-depart.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "a2ae0c6373b4"
+    },
+    {
+      "id": "music-cave-1",
+      "kind": "music",
+      "file": "music-cave-1.mp3",
+      "credit": "\"Chinese Bamboo Flute & Guzheng – Relaxing Zen Music\" by ChineseZenMusic, via Pixabay",
+      "made": "724ee5f0ec27"
+    },
+    {
+      "id": "music-map-1",
+      "kind": "music",
+      "file": "music-map-1.mp3",
+      "credit": "\"Breezes Through The Golden Bamboo\" by kaazoom, via Pixabay",
+      "made": "dbaf3e57a8d0"
+    },
+    {
+      "id": "music-map-2",
+      "kind": "music",
+      "file": "music-map-2.mp3",
+      "credit": "\"Guqin Reflection\" by RainStreetCat, via Pixabay",
+      "made": "3f210f4e2f1b"
+    },
+    {
+      "id": "music-map-3",
+      "kind": "music",
+      "file": "music-map-3.mp3",
+      "credit": "\"Cinematic, Film Score Version 9\" by Guzheng-Soundtrack, via Pixabay",
+      "made": "6e1398bc4420"
+    },
+    {
+      "id": "shop-buy",
+      "kind": "effect",
+      "file": "shop-buy.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "9a597467e2b8"
+    },
+    {
+      "id": "shop-sell",
+      "kind": "effect",
+      "file": "shop-sell.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "9a597467e2b8"
+    },
+    {
+      "id": "tree-node",
+      "kind": "effect",
+      "file": "tree-node.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "45eaff7bf8be"
+    },
+    {
+      "id": "ui-click",
+      "kind": "effect",
+      "file": "ui-click.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "1db123a25e2b"
+    },
+    {
+      "id": "ui-close",
+      "kind": "effect",
+      "file": "ui-close.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "461cb1fc50c3"
+    },
+    {
+      "id": "ui-open",
+      "kind": "effect",
+      "file": "ui-open.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "63717848bfaf"
+    },
+    {
+      "id": "ui-tab",
+      "kind": "effect",
+      "file": "ui-tab.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "ca9ac0b9c9f7"
+    },
+    {
+      "id": "ui-toast",
+      "kind": "effect",
+      "file": "ui-toast.mp3",
+      "credit": "Kenney (kenney.nl), CC0",
+      "made": "068a9562871b"
+    }
+  ]
+}

@@ -54,6 +54,8 @@ const lerp = (a: number, b: number, p: number) => a + (b - a) * p;
 /** How long one effect plays, in ms, and the gap before the next starts. */
 export const FX_MS = 720;
 export const FX_GAP = 420;
+/** Where in an effect the blow lands, as a share of its time. */
+const LAND = 0.55;
 
 interface Running {
   shot: FxShot;
@@ -62,6 +64,8 @@ interface Running {
   /** 0 at Qi Condensation, 1 at Foundation, 2 at Core Formation, 3 from Nascent Soul up. */
   scale: number;
   reduced: boolean;
+  /** Whether it has reached the blow, when its sound plays. */
+  landed: boolean;
 }
 
 /**
@@ -77,6 +81,8 @@ export class FxLayer {
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly arena: HTMLElement,
+    /** Called as each shot's blow lands (S1's sound hangs off it). */
+    private readonly onLand?: (shot: FxShot) => void,
   ) {
     this.ctx = canvas.getContext('2d')!;
   }
@@ -91,6 +97,7 @@ export class FxLayer {
         color: color(shot.type, shot.form),
         scale: Math.min(3, realmIndex(shot.realm)),
         reduced,
+        landed: false,
       });
     });
     if (!this.frame) this.frame = requestAnimationFrame(this.tick);
@@ -119,6 +126,10 @@ export class FxLayer {
     for (const r of this.running) {
       const p = (now - r.start) / FX_MS;
       if (p < 0) continue;
+      if (!r.landed && p >= LAND) {
+        r.landed = true;
+        this.onLand?.(r.shot);
+      }
       const hitting = p > 0.55 && p < 0.9 && r.shot.result !== 'miss';
       if (!r.reduced && hitting && r.scale >= 2) shaking = true;
       if (!r.reduced && hitting && r.scale >= 3) flooded = true;

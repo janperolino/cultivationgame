@@ -9,6 +9,11 @@ coverage
 # The art pipeline: what Jan drops in and the originals ingest keeps (docs/art-pipeline.md).
 art/inbox/
 art/source/
+# The sound pipeline (docs/art-pipeline.md § Sound): what Jan drops in, the originals and the
+# candidates sound:find lays out. What ships, public/sound/, is committed.
+sound/inbox/
+sound/source/
+sound/takes/
 
 # Upscaler models (A5), downloaded, not committed
 tools/models/

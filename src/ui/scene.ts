@@ -152,7 +152,7 @@ export function startScene(
   if (scenePlaying()) return false;
   const attempt = attemptOf(s, which, offerings);
   if (!attempt) return false;
-  if (!warned) cue('warn');
+  if (!warned) cue('feel-warn');
   const l = s.player[which];
   useScene.setState({
     play: {
@@ -195,7 +195,7 @@ export function warnThenStart(
   }
   if (!warn || warn.ladder !== which || warn.key !== key) {
     useScene.setState({ warn: { key, ladder: which, at: now } });
-    cue('warn');
+    cue('feel-warn');
     return false;
   }
   if (now - warn.at < WARN_MS) return false;

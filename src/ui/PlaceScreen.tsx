@@ -150,6 +150,7 @@ import { FurnaceScene } from './FurnaceScene.tsx';
 import { TalismanScene } from './TalismanScene.tsx';
 import { groundPartners, sparWhy } from '../core/spar.ts';
 import { askSpar } from '../core/playFight.ts';
+import { cue } from './cues.ts';
 
 type Act = (change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0]) => string | null;
 
@@ -1015,8 +1016,10 @@ function ShopCounter({
                         endGuide('first-buy');
                         act((s) => {
                           const r = buy(s, shopId, l.slot, k);
-                          if (r.ok)
+                          if (r.ok) {
                             say(`Bought ${w.name}${(k ?? l.n) > 1 ? ` ×${k ?? l.n}` : ''}.`);
+                            cue('shop-buy');
+                          }
                           return r;
                         });
                       }}
@@ -1055,7 +1058,10 @@ function ShopCounter({
                     onClick={() =>
                       act((s) => {
                         const r = sell(s, shopId, thing, lotOf(thing, n));
-                        if (r.ok) say(`Sold ${w.name}.`);
+                        if (r.ok) {
+                          say(`Sold ${w.name}.`);
+                          cue('shop-sell');
+                        }
                         return r;
                       })
                     }
@@ -2038,7 +2044,10 @@ function MapsCounter({
                 onClick={() =>
                   act((s) => {
                     const r = buyMap(s, place.id, m.id);
-                    if (r.ok) say(`${m.name}: its ground is Sketched on your map.`);
+                    if (r.ok) {
+                      say(`${m.name}: its ground is Sketched on your map.`);
+                      cue('shop-buy');
+                    }
                     return r;
                   })
                 }

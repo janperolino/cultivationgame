@@ -59,6 +59,7 @@ import { ensureMap, mapOf } from '../core/map/travel.ts';
 import { areaAt } from '../core/map/region.ts';
 import { encounterTemplate } from '../content/encounters/index.ts';
 import { cue } from './cues.ts';
+import { momentsOf } from './sound/moments.ts';
 import { cueGains, deltas, lowStonesRearms, lowStonesWords, type Delta } from './feel.ts';
 import { useNav } from './nav.ts';
 import { clearSquare } from './square.ts';
@@ -370,7 +371,6 @@ export const useGame = create<GameStore>()((set, get) => {
       update(r.state);
       if (!r.success) void get().saveNow();
       sceneRolled({ success: r.success, major: r.major, odds: r.odds });
-      if (r.success) cue('fanfare');
       return;
     }
     // Never over the breakthrough panel while you lay offerings; a warning stands over the figure
@@ -698,6 +698,7 @@ export const useGame = create<GameStore>()((set, get) => {
       const { game } = get();
       if (!game || !holdsLock) return;
       set({ game: feedStones(game, id, stones) });
+      cue('bag-stones');
     },
 
     applyLife(change) {
@@ -728,6 +729,7 @@ export const useGame = create<GameStore>()((set, get) => {
       const r = readCopy(game, id);
       if (!r.check.ok) return r.check.reason;
       set({ game: r.state });
+      cue('book-page');
       return null;
     },
 
@@ -771,7 +773,9 @@ export const useGame = create<GameStore>()((set, get) => {
       const { game } = get();
       if (!game || !holdsLock || game.ended) return;
       const next = catchNow(game, x, y, inPlace);
-      if (next !== game) set({ game: next });
+      if (next === game) return;
+      set({ game: next });
+      cue('feel-orb');
     },
 
     setClock(realm) {
@@ -980,6 +984,7 @@ useGame.subscribe((now, was) => {
   const ranOut = stonesRanOut(was.game, now.game);
   if (ranOut) raiseToast('stones', ranOut);
   feelFor(was.game, now.game);
+  for (const m of momentsOf(was.game, now.game)) cue(m);
   // A technique reaching Origin leaves its slot, which stays empty until the player fills it.
   for (const id of leftSlots(was.game, now.game)) {
     raiseToast('slot', `${technique(id).name} reached Origin and left its slot`, {
@@ -1004,16 +1009,16 @@ let lowStonesArmed = true;
  * the square pops instead), and the pouch falling under a day's burn.
  */
 function feelFor(was: GameState, now: GameState): void {
-  if (now.cards.nextUid > was.cards.nextUid) cue('arrive');
+  if (now.cards.nextUid > was.cards.nextUid) cue('feel-arrive');
   const before = new Map((was.map?.encounters ?? []).map((e) => [e.id, e.state]));
   const stopped = (now.map?.encounters ?? []).filter(
     (e) => e.state === 'waiting' && before.get(e.id) !== 'waiting',
   );
   const fresh = (now.map?.encounters ?? []).some((e) => !before.has(e.id));
-  if (fresh && stopped.length === 0) cue('arrive');
+  if (fresh && stopped.length === 0) cue('feel-pass');
   const here = useNav.getState().here;
   for (const e of stopped) {
-    cue('alert');
+    cue('feel-alert');
     if (here === 'map' || here === 'cultivate') continue;
     const t = encounterTemplate(e.template);
     const map = mapOf(now);
