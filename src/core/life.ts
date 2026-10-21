@@ -145,7 +145,6 @@ export function checkScreens(s: GameState): GameState {
   }
   if (Object.keys(s.player.techniques).length > 0) {
     next = unlock(next, 'techniques');
-    next = unlock(next, 'combat');
   }
   const p = s.player;
   const holds = Object.values(p.items).some((n) => n > 0) || wornIds(p).length > 0;
@@ -235,8 +234,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
     jobs: s.player.jobs,
   };
   let next = addNotes(withPlayer(state, cultivated), r.notes);
-  // The hours on the road carry you along your course.
-  next = travelDays(next, s.calendar.day - days, s.calendar.day);
+  // The hours on the road carry you along your course; a fight you're there for is played.
+  next = travelDays(next, s.calendar.day - days, s.calendar.day, ctx?.seat?.attended === true);
   // Nights inside a town away from home are paid at its inn by rule (P3.6b).
   next = bedNights(next, s.calendar.day - days, s.calendar.day);
   for (const b of r.breakthroughs) if (b.success) next = flare(next, b.ladder, b.major);

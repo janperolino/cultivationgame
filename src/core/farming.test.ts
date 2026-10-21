@@ -269,14 +269,14 @@ describe('the gather hour on divine sense', () => {
 });
 
 describe('the save', () => {
-  it('keeps a plot and its beds, and brings a v46 life up with none', () => {
+  it('keeps a plot and its beds, and brings a v47 life up with none', () => {
     const { c } = sown();
     const s = newLife({ name: 'Han Li', seed: 'farm' });
     const save = makeSave({ ...s, player: c }, 1);
     const back = loadSave(JSON.parse(JSON.stringify(save)));
     expect(back.state.player.crafts.plots).toEqual(c.crafts.plots);
     const raw = JSON.parse(JSON.stringify(makeSave(s, 1)));
-    raw.version = 46;
+    raw.version = 47;
     delete raw.state.player.crafts.plots;
     expect(loadSave(raw).state.player.crafts.plots).toEqual([]);
   });

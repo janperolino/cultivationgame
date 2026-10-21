@@ -1,124 +1,163 @@
-// Button fights for the player (design § Combat): the Combat screen's flow, on the rules in
-// core/combat/. Until M3's encounters bring fights into the world, the player spars: a foe rolled
-// from the Border Wilds roster at their own realm and stage on the `people` stream, fought turn by
-// turn on the life's `combat` stream. Nothing dies in a spar and nothing drops; what the fight
-// spends comes home: the pills and talismans used, the toxicity the pills left, and the bond
-// every worn artifact gained. A spar won from the brink is a moment on the Intent ladder.
-import { BORDER_WILDS, template, type Template } from '../content/roster.ts';
-import { realm } from '../content/realms.ts';
-import { fromCultivator, wearFrom, type Combatant } from './combat/combatant.ts';
-import {
-  brinkDaos,
-  combatantIn,
-  fightOver,
-  resolveTurn,
-  startFight,
-  winner,
-  type Action,
-  type Fight,
-  type TurnResult,
-} from './combat/fight.ts';
-import { generateCultivator, generatePack } from './combat/generate.ts';
-import { chooseAction, profile } from './combat/profile.ts';
-import { bondFromFight } from './gear.ts';
+// Sparring, asked of people (design § The world, The Combat screen leaves the rail; Fights you
+// play): a partner at your power's training ground, a door at its seat, or someone you know who
+// stands where you are. A spar is a fight you play on the stage: nobody dies, nothing drops, and it
+// ends at the first fall. What the fight spends comes home as any fight's does (core/played.ts), and
+// a spar won from the brink is a moment on the Intent ladder. Each partner spars once a day.
+import { person } from '../content/people.ts';
+import { realm, type RealmId } from '../content/realms.ts';
+import { template } from '../content/roster.ts';
+import { fromCultivator } from './combat/combatant.ts';
+import { brinkDaos, startFight, type Fight } from './combat/fight.ts';
+import { generateCultivator } from './combat/generate.ts';
+import { lawHallRoster } from './guarded.ts';
 import { intentMoment } from './intent.ts';
-import { addEvent, realmOf, stageOf, withPlayer, withStream, type GameState } from './state.ts';
+import { seatPowerAt } from './joining.ts';
+import { placeById } from './map/region.ts';
+import { mapOf } from './map/travel.ts';
+import { monthIndex } from './orgs/contribution.ts';
+import { houseOf } from './orgs/identity.ts';
+import { membership } from './orgs/membership.ts';
+import { nameOf } from './people.ts';
+import { fightEnd, type FightEnd } from './played.ts';
+import { hashSeed, Rng } from './rng.ts';
+import { addEvent, realmOf, stageOf, type GameState } from './state.ts';
 
-/** The player's side and the foe's in a spar. */
+/** The player's side in a spar. */
 export const YOU = 'you';
-export const FOES = 'foes';
-/** A spar that runs this long is called a draw. */
-export const SPAR_TURNS = 60;
 
-export type SparResult = 'won' | 'lost' | 'fled' | 'yielded' | 'draw';
+/** Who you can ask at a training ground, a month at a time: stages from yours. */
+export const GROUND_RANKS = [
+  { id: 'senior', words: 'a senior', stages: 2 },
+  { id: 'fellow', words: 'a fellow disciple', stages: 0 },
+  { id: 'junior', words: 'a junior', stages: -2 },
+] as const;
 
-/** The roster's templates met at the player's realm, sparring partners for now. */
-export function sparFoes(s: GameState): Template[] {
-  const at = realmOf(s.player);
-  return BORDER_WILDS.filter((t) => t.band.includes(at));
+/** Whoever a spar is with when the roster gives nothing better: a plain cultivator of the March. */
+const PLAIN = 'march-conscript';
+
+export interface Partner {
+  /** `ground:<power>:<month>:<rank>` or `person:<id>`. */
+  who: string;
+  name: string;
+  /** "a senior", or the person's name again. */
+  words: string;
+  realm: RealmId;
+  stage: number;
+  /** The roster template they fight as, and its seed. */
+  roster: string;
+  seed: number;
 }
 
-export interface SparStart {
-  state: GameState;
-  fight: Fight;
-  /** Who the player faces, as the screen and the chronicle name them. */
-  foe: string;
+function partnerAt(who: string, roster: string, r: RealmId, stage: number): Partner {
+  const seed = hashSeed(`spar/${who}`);
+  const t = template(roster);
+  const name =
+    t.kind === 'cultivator'
+      ? generateCultivator(t, r, stage, new Rng(seed), { id: who, side: 'them' }).name
+      : t.name;
+  return { who, name, words: name, realm: r, stage, roster, seed };
 }
 
-/**
- * Rolls a foe from a roster template at the player's realm and stage, on the `people` stream,
- * and opens the fight with the player first in the fight's order. A beast template rolls its
- * whole pack. Null when the template isn't met at the player's realm.
- */
-export function startSpar(s: GameState, templateId: string): SparStart | null {
-  const t = template(templateId);
-  const at = realmOf(s.player);
-  if (s.ended || !t.band.includes(at)) return null;
-  const stage = Math.min(stageOf(s.player), realm(at).stages);
-  const { value: npcs, state } = withStream(s, 'people', (rng) =>
-    t.kind === 'beast'
-      ? generatePack(t, at, stage, rng, FOES)
-      : [generateCultivator(t, at, stage, rng, { id: `${t.id}-1`, side: FOES })],
+/** Your power's training ground's partners this month: a senior, a fellow disciple, a junior. */
+export function groundPartners(s: GameState, power: string): Partner[] {
+  const house = houseOf(power);
+  const r = realmOf(s.player);
+  const month = monthIndex(s.calendar.day);
+  const roster = lawHallRoster(house) ?? PLAIN;
+  return GROUND_RANKS.map((k) => {
+    const stage = Math.max(1, Math.min(realm(r).stages, stageOf(s.player) + k.stages));
+    const p = partnerAt(`ground:${house}:${month}:${k.id}`, roster, r, stage);
+    return { ...p, words: k.words };
+  });
+}
+
+/** Where someone you know is, as you last heard: their record's place, or their home. */
+export function whereIs(s: GameState, id: string): string | null {
+  const rec = s.player.people[id];
+  return rec?.where ?? (rec ? person(id).home : null) ?? null;
+}
+
+/** A person you know as a sparring partner, at their realm as you last knew it. */
+export function personPartner(s: GameState, id: string): Partner | null {
+  const rec = s.player.people[id];
+  if (!rec?.realm || person(id).mortal) return null;
+  const power = person(id).power;
+  const roster = (power && lawHallRoster(houseOf(power))) || PLAIN;
+  const p = partnerAt(`person:${id}`, roster, rec.realm.realm, rec.realm.stage);
+  const name = nameOf(s, id);
+  return { ...p, name, words: name };
+}
+
+/** The partner a spar's `who` names, or null when there is none. */
+export function partnerOf(s: GameState, who: string): Partner | null {
+  if (who.startsWith('person:')) return personPartner(s, who.slice('person:'.length));
+  const [, power, , rank] = who.split(':');
+  if (!power) return null;
+  return groundPartners(s, power).find((p) => p.who.endsWith(`:${rank}`)) ?? null;
+}
+
+/** Whether you sparred with them today. */
+function sparredToday(s: GameState, who: string): boolean {
+  const today = Math.floor(s.calendar.day);
+  return s.chronicle.some(
+    (e) => e.type === 'spar' && e.data.who === who && Math.floor(e.day) === today,
   );
-  const me = fromCultivator(s.player, YOU);
-  const fight = startFight([me, ...npcs.map((n) => n.combatant)]);
-  const foe = npcs.length > 1 ? `${t.name.toLowerCase()} (${npcs.length})` : npcs[0]!.name;
-  return { state, fight, foe };
 }
 
-/**
- * One turn: the player's action, every foe's on its profile, resolved on the `combat` stream so
- * a seed replays the same fight. A foe whose tempo earns it a second action picks it on its
- * profile; the player's repeats their main action (design § Combat, Speed is tempo).
- */
-export function playTurn(
-  s: GameState,
-  fight: Fight,
-  action: Action,
-): { state: GameState; turn: TurnResult } {
-  const foes = fight.combatants
-    .filter((c) => c.side !== YOU && c.state === 'fighting')
-    .map((c) => chooseAction(fight, c.id, profile(c.profile ?? 'fanatical')));
-  const { value: turn, state } = withStream(s, 'combat', (rng) =>
-    resolveTurn(fight, [action, ...foes], rng, (f, id) => {
-      const c = combatantIn(f, id);
-      return c && c.side !== YOU
-        ? chooseAction(f, id, profile(c.profile ?? 'fanatical'))
-        : undefined;
-    }),
-  );
-  return { state, turn };
-}
-
-/** The player in the fight. */
-export function you(fight: Fight, id: string): Combatant {
-  return combatantIn(fight, id)!;
-}
-
-/** How the spar stands for the player: null while it runs. */
-export function sparResult(fight: Fight, id: string): SparResult | null {
-  const me = you(fight, id);
-  if (me.state === 'fled') return 'fled';
-  if (me.state === 'yielded') return 'yielded';
-  if (me.state === 'down') return 'lost';
-  if (fightOver(fight)) return winner(fight) === YOU ? 'won' : 'lost';
-  if (fight.turn >= SPAR_TURNS) return 'draw';
+/** Why you can't spar with them now, or null when you can. */
+export function sparWhy(s: GameState, who: string): string | null {
+  if (s.ended) return 'The life is over.';
+  if (s.fight) return 'You are in a fight.';
+  const here = s.map?.inside ?? null;
+  if (who.startsWith('person:')) {
+    const id = who.slice('person:'.length);
+    if (!s.player.people[id]) return 'You don’t know them.';
+    if (person(id).mortal) return 'They aren’t a cultivator.';
+    if (!personPartner(s, id)) return 'You don’t know their realm.';
+    const where = whereIs(s, id);
+    if (!here || where !== here) return 'They aren’t where you are.';
+  } else {
+    const [, power] = who.split(':');
+    if (!power || !membership(s.world, s.player.id, power)) return 'You aren’t one of theirs.';
+    const map = s.map ? mapOf(s) : null;
+    const place = map && here ? placeById(map, here) : undefined;
+    const seat = map && place ? seatPowerAt(map, place) : null;
+    if (!seat || houseOf(seat) !== power) return 'Their training ground is at their seat.';
+    if (!partnerOf(s, who)) return 'No one of that rank trains here.';
+  }
+  if (sparredToday(s, who)) return 'You sparred today; tomorrow.';
   return null;
 }
 
+/** The spar's start: you against your partner, their kit seeded by who they are. */
+export function sparFight(s: GameState, who: string): Fight | null {
+  const p = partnerOf(s, who);
+  if (!p) return null;
+  const t = template(p.roster);
+  if (t.kind !== 'cultivator') return null;
+  const npc = generateCultivator(t, p.realm, p.stage, new Rng(p.seed), {
+    id: `spar-${p.who}`,
+    side: 'them',
+  });
+  return startFight([fromCultivator(s.player, YOU), { ...npc.combatant, name: p.name }]);
+}
+
 /**
- * Closes a spar: the pills and talismans the player used leave the Bag, the toxicity the pills
- * left stays, every worn artifact bonds by the turns fought, and the chronicle gets a line.
+ * Closes a spar: the chronicle gets a line, and a spar won after acting with a Dao from the brink
+ * is that Dao's moment (core/intent.ts). What the fight spent is `afterFight`'s.
  */
-export function endSpar(s: GameState, fight: Fight, foe: string): GameState {
-  const p = s.player;
-  const me = you(fight, p.id);
-  const items = { ...p.items };
-  for (const [id, held] of Object.entries(me.items)) if (id in items) items[id] = held.n;
-  const back = wearFrom(bondFromFight({ ...p, items, toxicity: me.toxicity }, fight.turn), me);
-  const result = sparResult(fight, p.id) ?? 'draw';
-  let next = addEvent(withPlayer(s, back), 'spar', { foe, result, turns: fight.turn });
-  // A fight won after acting with a Dao from the brink is that Dao's moment (core/intent.ts).
-  if (result === 'won') for (const d of brinkDaos(me)) next = intentMoment(next, d, 'brink');
+export function endSpar(
+  s: GameState,
+  fight: Fight,
+  foe: string,
+  ended?: FightEnd,
+  who?: string,
+): GameState {
+  const end = ended ?? fightEnd(fight, s.player.id) ?? 'draw';
+  const data: Record<string, string | number> = { foe, result: end, turns: fight.turn };
+  if (who) data.who = who;
+  let next = addEvent(s, 'spar', data);
+  const me = fight.combatants.find((c) => c.id === s.player.id);
+  if (me && end === 'won') for (const d of brinkDaos(me)) next = intentMoment(next, d, 'brink');
   return next;
 }

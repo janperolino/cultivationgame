@@ -25,12 +25,24 @@ import {
 } from './gear.ts';
 import { checkScreens, takeOff, wearItem } from './life.ts';
 import { loadSave } from './save/format.ts';
-import { endSpar, playTurn, sparFoes, sparResult, startSpar, YOU } from './spar.ts';
+import { endSpar, YOU } from './spar.ts';
+import { startFight, type Fight } from './combat/fight.ts';
+import { generateCultivator } from './combat/generate.ts';
+import { afterFight, fightEnd, openFight, playTurn } from './played.ts';
+import { Rng } from './rng.ts';
+import { template } from '../content/roster.ts';
 import { addItem, newLife, withPlayer, type Cultivator, type GameState } from './state.ts';
 import { stats } from './stats.ts';
 import { learnNode } from './trees.ts';
 
 const life = () => newLife({ name: 'Han Li', seed: 'gear', techniques: ['rampart-palm'] });
+/** You against a march conscript at your layer, the same for the same life. */
+const against = (s: GameState): Fight => {
+  const t = template('march-conscript');
+  if (t.kind !== 'cultivator') throw new Error('not a cultivator');
+  const npc = generateCultivator(t, 'qi-condensation', 1, new Rng(1), { id: 'foe', side: 'foes' });
+  return startFight([fromCultivator(s.player, YOU), npc.combatant]);
+};
 const holding = (c: Cultivator, ...ids: string[]) =>
   ids.reduce((acc, id) => addItem(acc, id, 1), c);
 const wear = (c: Cultivator, id: string, opened = 0) => {
@@ -145,11 +157,9 @@ describe('a weapon above your realm', () => {
     expect(home).toMatchObject({ accuracy: 1, qi: 0 });
     // A strike prices its qi on the Combat screen.
     const s = withPlayer(life(), c);
-    const start = startSpar(s, sparFoes(s).find((t) => t.kind === 'cultivator')!.id)!;
-    const foe = start.fight.combatants.find((x) => x.side !== YOU)!;
-    expect(preview(start.fight, 'player', { type: 'strike', target: foe.id })!.qi).toBeGreaterThan(
-      0,
-    );
+    const f = against(s);
+    const foe = f.combatants.find((x) => x.side !== YOU)!;
+    expect(preview(f, 'player', { type: 'strike', target: foe.id })!.qi).toBeGreaterThan(0);
   });
 });
 
@@ -204,9 +214,9 @@ describe('the Bag in squares', () => {
     expect(bagUsed(c)).toBe(4);
   });
 
-  it('opens the Bag screen once something is held, and the Combat screen with a technique', () => {
+  it('opens the Bag screen once something is held; the Combat screen is off the rail', () => {
     const s = checkScreens(life());
-    expect(s.unlocks).toContain('combat');
+    expect(s.unlocks).not.toContain('combat');
     expect(s.unlocks).not.toContain('bag');
     const held = checkScreens(withPlayer(s, addItem(s.player, 'iron-sword', 1)));
     expect(held.unlocks).toContain('bag');
@@ -220,23 +230,8 @@ describe('the Bag in squares', () => {
   });
 });
 
-describe('sparring', () => {
-  function spar(s: GameState) {
-    const id = sparFoes(s).find((t) => t.kind === 'cultivator')!.id;
-    return startSpar(s, id)!;
-  }
-
-  it('rolls a foe from the roster at your realm, the same for the same seed', () => {
-    const s = life();
-    expect(sparFoes(s).every((t) => t.band.includes('qi-condensation'))).toBe(true);
-    const a = spar(s);
-    const b = spar(s);
-    expect(a.foe).toBe(b.foe);
-    expect(a.fight.combatants.map((c) => c.maxHp)).toEqual(b.fight.combatants.map((c) => c.maxHp));
-    expect(a.state.rng.people).not.toBe(s.rng.people);
-  });
-
-  it('plays turns on the combat stream and brings home pills, toxicity and bond', () => {
+describe('a fight on the stage', () => {
+  it('plays turns on the fight’s own seed and brings home pills, toxicity and bond', () => {
     let s = life();
     s = withPlayer(
       s,
@@ -245,23 +240,24 @@ describe('sparring', () => {
         'cold-moon-sword',
       ),
     );
-    const start = spar(s);
-    s = start.state;
-    let f = start.fight;
-    const r = playTurn(s, f, {
-      actor: 'player',
-      main: { type: 'item', id: 'spring-returning-pill' },
-    });
-    expect(r.state.rng.combat).not.toBe(s.rng.combat);
+    s = openFight(s, { kind: 'spar', who: 'person:test' });
+    expect(s.rng.combat).toBeDefined();
+    let f = against(s);
+    const r = playTurn(s, f, { main: { type: 'item', id: 'spring-returning-pill' } })!;
+    const began = s.fight!.start;
     s = r.state;
     f = r.turn.fight;
-    while (sparResult(f, 'player') === null) {
+    while (fightEnd(f, 'player') === null) {
       const foe = f.combatants.find((c) => c.side !== YOU && c.state === 'fighting')!;
-      const t = playTurn(s, f, { actor: 'player', main: { type: 'strike', target: foe.id } });
+      const t = playTurn(s, f, { main: { type: 'strike', target: foe.id } })!;
       s = t.state;
       f = t.turn.fight;
     }
-    const end = endSpar(s, f, start.foe);
+    // The rolls ran on the fight's own seed, and the save kept every action.
+    expect(s.fight!.now).not.toBe(began);
+    expect(s.fight!.actions).toHaveLength(f.turn);
+    const end = endSpar(afterFight(s, f), f, 'a foe');
+    expect(end.fight).toBeNull();
     expect(end.player.items['spring-returning-pill']).toBe(1);
     expect(end.player.toxicity).toBe(10);
     expect(end.player.bonds['cold-moon-sword']).toBeCloseTo(f.turn * 0.25);

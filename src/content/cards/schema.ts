@@ -126,6 +126,21 @@ export interface CardOutcome {
   next?: string;
 }
 
+/**
+ * A fight a choice goes into (Fights you play): a foe from the roster at your realm, played on the
+ * stage unless it is a sure win. Won or talked down is `pass`; fallen or yielded is `fail`; fled
+ * or drawn off is `fled`, or `fail` when it isn't written. Settled by its edge's verdict, as a
+ * check is, when the card resolves without you.
+ */
+export interface CardFight {
+  /** A roster template (content/roster.ts): a beast or a cultivator. */
+  roster: string;
+  /** Stages from yours, held inside your realm: 1 is a layer above you. 0 when absent. */
+  stages?: number;
+  /** A people slot ({rival}) the foe is, by name. */
+  person?: string;
+}
+
 /** Offers a choice only while one of the card's variables is in range (0 when unset). */
 export interface VarCheck {
   id: string;
@@ -145,11 +160,15 @@ export interface CardChoice {
    * reads no realm. `fail` applies when short. P3.3 converted the old d20 difficulty as `dc − 2`.
    */
   check?: { attribute: CheckAttribute; against: number };
+  /** A fight in place of a check (Fights you play). */
+  fight?: CardFight;
   /** What happens, or what happens on a pass when there is a check. */
   pass: CardOutcome;
   /** What a close pass does, its cost paid; `pass` when absent (P3.12 writes them). */
   close?: CardOutcome;
   fail?: CardOutcome;
+  /** A fight you broke away from, or drew off; `fail` when absent. */
+  fled?: CardOutcome;
 }
 
 /** A later step of a multi-step card: its own text, choices and default. */

@@ -1431,7 +1431,8 @@ function main(
 
     case 'talk': {
       const target = foe(f, actor, m.target);
-      if (!target) return 'no one to talk to';
+      // A beast hears no words, and takes no surrender.
+      if (!target || target.beast) return 'no one to talk to';
       // Soul against soul, feeling the square root of the gap, against the listener's resolve.
       const pressing = m.style === 'intimidate' || m.style === 'bluff';
       const mine =
@@ -1442,9 +1443,17 @@ function main(
       const theirs = rungSize(target.rungs.soul) ** SOFT_GAP * (target.resolve / RESOLVE_BASE);
       const chance = hitChance(mine, theirs);
       const swayed = rng.chance(chance);
-      // Surrender, accepted, takes you out of the fight; what the other styles win is the
-      // speaker's profile and the story's (P2.2, P3.9).
+      // Surrender, accepted, takes you out of the fight. A bluff or a threat that lands on a
+      // person already hurt past half ends their fight: they yield (Fights you play). What the
+      // rest win is the speaker's profile and the story's (P2.2, P3.9).
       if (swayed && m.style === 'surrender') actor.state = 'yielded';
+      if (
+        swayed &&
+        (m.style === 'bluff' || m.style === 'intimidate') &&
+        !target.beast &&
+        target.hp < target.maxHp / 2
+      )
+        target.state = 'yielded';
       return [
         {
           ...base,

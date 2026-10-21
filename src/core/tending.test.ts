@@ -31,7 +31,7 @@ function clearOfSprouts(s: Tending, p: Pt[]): boolean {
   );
 }
 
-/** A bot: it rings the oldest knot past `react` seconds, as wide as `most` and, careful, clear of sprouts. */
+/** A bot: it rings the oldest knot past `react` seconds, as wide as it can, clear of the sprouts unless careless. */
 function play(
   react: number,
   o: { careless?: boolean; idle?: boolean; secs?: number } = {},

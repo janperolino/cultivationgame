@@ -255,14 +255,19 @@ function liveRows(
 }
 
 /** Duty-hours of a shift falling between two world days, as a share of its duty day. */
-function shiftShare(j: Job, from: number, to: number): number {
-  if (!j.shift.length || to <= from) return 0;
+/** A shift's hours you put Duty on yourself, at drill. */
+function dutyHours(c: Cultivator, j: Job): number[] {
+  return j.shift.filter((h) => c.wheel[h] === 'duty');
+}
+
+function shiftShare(j: Job, from: number, to: number, worked: readonly number[] = j.shift): number {
+  if (!j.shift.length || !worked.length || to <= from) return 0;
   let hours = 0;
   const h0 = from * HOURS_PER_DAY;
   const h1 = to * HOURS_PER_DAY;
   for (let h = Math.floor(h0); h < h1; h++) {
     const hour = ((h % HOURS_PER_DAY) + HOURS_PER_DAY) % HOURS_PER_DAY;
-    if (!j.shift.includes(hour)) continue;
+    if (!worked.includes(hour)) continue;
     hours += Math.min(h + 1, h1) - Math.max(h, h0);
   }
   return hours / j.shift.length;
@@ -324,8 +329,9 @@ export function jobsDay(s: GameState, from: number, to: number, walked = false):
     // A dangerous post's raid, met once for each month its shifts were kept.
     if (j.danger && held.month !== h0.month && h0.kept >= KEPT_MONTH.share * DAYS_PER_MONTH)
       st = raid(st, j, h0.month);
-    // Through the tutorial layers you are at drill: no shift is worked or missed.
-    const share = drilling(st.player) ? 0 : shiftShare(j, from, to);
+    // Through the tutorial layers you are at drill: a shift is worked, or missed, only on the
+    // hours you put Duty on yourself.
+    const share = shiftShare(j, from, to, drilling(st.player) ? dutyHours(st.player, j) : j.shift);
     if (share > 0) {
       if (!walked && atPost(st, j)) {
         const pay = jobPay(j, realm);

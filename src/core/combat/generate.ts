@@ -410,6 +410,7 @@ function build(b: Build): Combatant {
     intent: b.intent ? { [b.weaponKind]: b.intent } : {},
     items,
     profile: b.profile,
+    ...(b.beast ? { beast: true } : {}),
     resolve: PROFILES.find((x) => x.id === b.profile)?.resolve ?? RESOLVE_BASE,
   });
 }

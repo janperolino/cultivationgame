@@ -172,6 +172,8 @@ export interface Combatant {
   profile?: ProfileId;
   /** A beast that acts only on a turn its owner commands it. */
   needsCommand?: boolean;
+  /** A beast: it can't be talked to, and doesn't take a surrender (Fights you play). */
+  beast?: boolean;
   /**
    * The stats that shape a fight beyond the sheet (content/stats.ts): each Dao's power, hit, crit,
    * cost and pierce, and the rule twists the Dao nodes carry. Nonzero ones only; NPCs carry none yet.

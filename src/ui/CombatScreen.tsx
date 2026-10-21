@@ -1,7 +1,9 @@
-// The Combat screen (design § Combat, § UI and screens): button-only fights. Every technique
-// shows its hit chance and damage against the selected foe before you press it, and every
-// outcome plays as an effect layered from its five tags, with a still flash under reduced motion.
-// Until M3's encounters, fights are spars against the Border Wilds roster at your realm.
+// The Combat screen (design § Combat, § UI and screens; § The world, The Combat screen leaves the
+// rail): button-only fights. A fight happens to you: it takes the whole stage with the rail hidden
+// and the clock held, and ends only by a win, a flight, a surrender, a talk or a fall. Every
+// technique shows its hit chance and damage against the selected foe before you press it, and
+// every outcome plays as an effect layered from its five tags, with a still flash under reduced
+// motion. P3.9 moves the same fight into the scene; only this frame changes.
 import { useEffect, useRef } from 'react';
 import { realm, stageName } from '../content/realms.ts';
 import {
@@ -14,22 +16,32 @@ import {
 import { isCombatDao, type CombatDaoId } from '../content/daos.ts';
 import { mod, topRung, type Combatant } from '../core/combat/combatant.ts';
 import { stageName as intentName } from '../core/intent.ts';
-import { sparFoes, YOU } from '../core/spar.ts';
+import type { FightEnd } from '../core/played.ts';
 import { FxLayer, type FxShot } from './combatFx.ts';
-import { act, beginSpar, leaveSpar, selectTarget, takePending, useFight } from './fight.ts';
+import {
+  act,
+  dismissAfter,
+  fightTitle,
+  leaveFight,
+  selectTarget,
+  syncFight,
+  takePending,
+  useFight,
+} from './fight.ts';
 import { capitalize, formatNumber } from './format.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
 import { rectIn } from './stage.ts';
 
-const RESULT_WORDS = {
+const END_WORDS: Record<FightEnd, string> = {
   won: 'You bring them down.',
-  lost: 'You are brought down. It was a spar: you get up.',
+  lost: 'You are brought down.',
   fled: 'You break away.',
   yielded: 'You yield.',
-  draw: 'Neither of you can go on.',
-} as const;
+  talked: 'You talk them down: they yield.',
+  draw: 'Neither side can go on, and you draw off.',
+};
 
 function Meter({
   label,
@@ -209,7 +221,7 @@ function Arena({ f, me }: { f: Fight; me: Combatant }) {
     takePending();
   }, [pending, settings]);
 
-  const foes = f.combatants.filter((c) => c.side !== YOU);
+  const foes = f.combatants.filter((c) => c.side !== me.side);
   return (
     <div className="fight-arena" ref={arena}>
       <div className="fight-side">
@@ -242,8 +254,10 @@ function itemWord(it: Combatant['items'][string]['item']): string {
 
 function Actions({ f, me }: { f: Fight; me: Combatant }) {
   const target = useFight((s) => s.target) ?? '';
-  const result = useFight((s) => s.result);
-  if (result) return null;
+  const end = useFight((s) => s.end);
+  if (end) return null;
+  // A beast hears no words: no talk, no surrender.
+  const heard = !combatantIn(f, target)?.beast;
   const techniques = Object.values(me.techniques);
   const items = Object.values(me.items).filter(
     (h) =>
@@ -331,7 +345,7 @@ function Actions({ f, me }: { f: Fight; me: Combatant }) {
       )}
       <h3 className="sub-heading">Words and feet</h3>
       <div className="fight-actions">
-        {TALK_STYLES.map((style) => (
+        {(heard ? TALK_STYLES : []).map((style) => (
           <button
             key={style}
             type="button"
@@ -375,72 +389,55 @@ function Log() {
   );
 }
 
-function Spars() {
-  const game = useGame((s) => s.game);
-  if (!game) return null;
-  const foes = sparFoes(game);
-  if (!game) return null;
-  return (
-    <section className="panel">
-      <h2 className="panel-heading">Spar</h2>
-      <p className="caption spaced">
-        Until the Border Wilds open, you test your techniques against fighters and beasts of the
-        hills at your own realm and stage. Nothing dies in a spar and nothing drops; the pills you
-        swallow are spent, and the gear you wear bonds a little each exchange.
-      </p>
-      <ul className="spar-list">
-        {foes.map((t) => (
-          <li key={t.id}>
-            <div>
-              <strong>{t.name}</strong>
-              <div className="caption">
-                {t.kind === 'beast' ? 'beast' : t.pedigree.replace('-', ' ')} · {t.profile} ·{' '}
-                {t.notes}
-              </div>
-            </div>
-            <button type="button" className="button" onClick={() => beginSpar(t.id)}>
-              Spar
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 export function CombatScreen() {
   const game = useGame((s) => s.game);
   const f = useFight((s) => s.fight);
-  const foe = useFight((s) => s.foe);
-  const result = useFight((s) => s.result);
+  const end = useFight((s) => s.end);
+  const after = useFight((s) => s.after);
+  // The life's fight comes onto the stage: one the rules just opened, or one a reload brought back.
+  useEffect(() => {
+    if (game) syncFight(game);
+  }, [game]);
   if (!game) return null;
-  if (!f) return <Spars />;
+  if (!f) {
+    if (!after) return null;
+    return (
+      <section className="panel fight-after">
+        <p>{after}</p>
+        <button type="button" className="button" onClick={dismissAfter}>
+          Go on
+        </button>
+      </section>
+    );
+  }
   const me = combatantIn(f, game.player.id);
-  if (!me) return <Spars />;
+  if (!me) return null;
   return (
-    <>
+    <div className="fight-stage">
       <section className="panel">
         <div className="panel-top">
-          <h2 className="panel-heading">Sparring with {foe}</h2>
+          <h2 className="panel-heading">{fightTitle(game, f)}</h2>
           <span className="caption">Exchange {f.turn}</span>
         </div>
         <Arena f={f} me={me} />
-        {result && (
+        {end && (
           <div className="fight-end">
             <p>
-              <strong>{RESULT_WORDS[result]}</strong>
+              <strong>{END_WORDS[end]}</strong>
             </p>
-            <button type="button" className="button" onClick={leaveSpar}>
-              Leave the ground
+            <button type="button" className="button" onClick={leaveFight}>
+              Go on
             </button>
           </div>
         )}
       </section>
-      <Actions f={f} me={me} />
-      <section className="panel">
-        <h2 className="panel-heading">The exchanges</h2>
-        <Log />
-      </section>
-    </>
+      <div className="fight-stage-lower">
+        <Actions f={f} me={me} />
+        <section className="panel">
+          <h2 className="panel-heading">The exchanges</h2>
+          <Log />
+        </section>
+      </div>
+    </div>
   );
 }

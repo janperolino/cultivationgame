@@ -27,6 +27,12 @@ function Choices({ open, onChose }: { open: CardView; onChose: (error: string | 
           className="button choice"
           disabled={!c.check.ok}
           onClick={() => onChose(chooseCard(open.uid, c.index, open.title))}
+          onContextMenu={(e) => {
+            // A sure fight plays on the stage anyway on a right-click (Fights you play).
+            if (!c.fight?.sure || !c.check.ok) return;
+            e.preventDefault();
+            onChose(chooseCard(open.uid, c.index, open.title, true));
+          }}
         >
           <strong>{c.label}</strong>
           {c.choice.cost?.stones ? (
@@ -36,6 +42,12 @@ function Choices({ open, onChose }: { open: CardView; onChose: (error: string | 
             <span className="caption">
               {statInfo(c.choice.check.attribute).name} {c.comparison.yours} against{' '}
               {c.comparison.against} · {c.comparison.verdict}
+            </span>
+          )}
+          {c.fight && (
+            <span className="caption">
+              Fight · {c.fight.words} ·{' '}
+              {c.fight.sure ? 'sure: right-click to play it' : 'you play it'}
             </span>
           )}
           {!c.check.ok && <span className="caption warn">{c.check.reason}</span>}
