@@ -741,6 +741,39 @@ export const COMMANDS: Record<string, Command> = {
       );
     },
   },
+  herbs: {
+    usage: 'herbs [n]',
+    help: 'Adds n of every herb, material and beast part that carries properties (ten unless told), to throw in on a craft page’s Experiment tab (K7).',
+    run([n], store) {
+      const v = n === undefined ? 10 : Number(n);
+      if (!Number.isInteger(v) || v <= 0) return 'Give a whole number.';
+      return apply(
+        store,
+        (s) => {
+          let c = s.player;
+          for (const it of ITEMS) if (it.uses.ingredient) c = addItem(c, it.id, v);
+          return withPlayer(s, c);
+        },
+        `${v} of every ingredient.`,
+      );
+    },
+  },
+  pity: {
+    usage: 'pity [misses]',
+    help: 'Sets the misses on every set you have thrown in and missed to this many (90 unless told), so the next throw of it all but finds (K7).',
+    run([n], store) {
+      const v = n === undefined ? 90 : Number(n);
+      if (!Number.isInteger(v) || v < 0) return 'Give a whole number.';
+      return apply(
+        store,
+        (s) => {
+          const pity = Object.fromEntries(Object.keys(s.player.crafts.pity).map((k) => [k, v]));
+          return withPlayer(s, { ...s.player, crafts: { ...s.player.crafts, pity } });
+        },
+        `Every set missed now stands at ${v} misses.`,
+      );
+    },
+  },
   kit: {
     usage: 'kit',
     help: 'Adds one of every gear item, five Mending and Qi-Restoring Pills and three talismans.',

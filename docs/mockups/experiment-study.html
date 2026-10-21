@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Experiment Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
+<style>
+  /* K7 study: experimenting on each craft's page (takes A and B), what a find looks like, and the
+     discoveries edge on the craft Dao. Tokens copied from src/ui/theme.css, as craft-grade-study. */
+  :root {
+    --void: #040507; --text: #e9e5da; --muted: #8d949d; --accent: #d6ab4c; --gilt: #d9b46a;
+    --panel: rgb(7 8 11 / 0.84); --line-faint: color-mix(in srgb, var(--gilt) 16%, transparent);
+    --edge-strong: rgb(255 255 255 / 0.14); --hour-craft: #d9a441; --warn: #e08a6a;
+    --craft-hand: #8fb7d9; --craft-line: #d99a6a; --craft-lore: #a9c98a;
+    --rarity-white: #ece8de; --rarity-green: #7fca8c; --rarity-blue: #78a6e0; --seal: #b8432f;
+    --el-wood: #7fbf6a; --el-water: #6aa8d9; --el-lightning: #b9a6f0; --el-fire: #e0784e; --el-earth: #c9a46a; --el-none: #9aa0a8; --el-wind: #9fd6c6; --el-metal: #cfd3d8;
+    --font-display: 'Cormorant Garamond', Georgia, serif; --font-brush: 'Ma Shan Zheng', KaiTi, serif;
+    --font-ui: Inter, system-ui, 'Segoe UI', sans-serif;
+  }
+  body { margin: 0; background: var(--void); color: var(--text); font-family: var(--font-ui); font-size: 14px; }
+  .note { max-width: 1100px; margin: 28px auto 8px; padding: 0 16px; color: var(--muted); line-height: 1.5; }
+  .note h1 { font-family: var(--font-display); color: var(--text); font-weight: 600; font-size: 30px; margin: 0 0 4px; }
+  .note b { color: var(--text); font-weight: 600; }
+  .frame { width: 100%; overflow: hidden; margin: 10px 0 34px; }
+  .stage { width: 1920px; height: 1080px; transform-origin: 0 0; position: relative;
+    background: radial-gradient(1200px 700px at 60% 30%, #0d1522 0%, #05070b 60%, #030405 100%); }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 64px; border-right: 1px solid var(--line-faint); background: rgb(5 6 8 / 0.9); }
+  .rail i { display: block; width: 26px; height: 26px; margin: 22px auto; border: 1px solid var(--line-faint); border-radius: 5px; }
+  .rail i.on { border-color: var(--hour-craft); background: color-mix(in srgb, var(--hour-craft) 20%, transparent); }
+  .screen { position: absolute; left: 110px; top: 70px; right: 110px; bottom: 60px; }
+  .crumb { font-family: var(--font-display); font-size: 22px; color: var(--text); }
+  .hz { color: var(--accent); font-family: var(--font-brush); }
+  .title { font-family: var(--font-display); font-size: 40px; font-weight: 600; margin: 10px 0 18px; }
+  .pages { display: flex; align-items: baseline; gap: 26px; padding-bottom: 10px; border-bottom: 1px solid var(--line-faint); margin-bottom: 18px; font-size: 16px; }
+  .pages span { color: var(--muted); padding-bottom: 3px; }
+  .pages span.cur { color: var(--text); border-bottom: 2px solid var(--hour-craft); }
+  .pages span.off { opacity: .45; }
+  .pages .hours { margin-left: auto; font-size: 14px; }
+  .cols { display: grid; grid-template-columns: 1fr 1.35fr 0.9fr; gap: 20px; align-items: start; }
+  .panel { padding: 20px 22px; border: 1px solid var(--line-faint); border-radius: 4px; background: var(--panel); box-shadow: 0 24px 50px -28px #000; }
+  .panel + .panel { margin-top: 16px; }
+  h2 { font-family: var(--font-display); font-weight: 600; font-size: 21px; margin: 0 0 10px; }
+  ul + h2, p + h2, .slots + h2 { margin-top: 18px; }
+  h3 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 500; margin: 14px 0 6px; }
+  .muted { color: var(--muted); } .small { font-size: 12.5px; }
+  p { margin: 4px 0; line-height: 1.5; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line-faint); }
+  .green { color: var(--rarity-green); } .white { color: var(--rarity-white); } .blue { color: var(--rarity-blue); }
+  .mark { font-family: var(--font-brush); color: var(--seal); font-size: 15px; margin-left: 6px; }
+  .button { display: inline-block; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 6px 14px; border-radius: 3px; font-size: 13px; }
+  .button.quiet { color: var(--muted); border-color: var(--edge-strong); background: none; }
+  .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .tag { font-size: 11px; color: var(--muted); border: 1px solid var(--line-faint); padding: 0 6px; border-radius: 2px; margin-left: 4px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+  /* the slots */
+  .slots { display: grid; gap: 6px; margin-top: 6px; }
+  .slot { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; padding: 7px 10px;
+    border: 1px solid var(--line-faint); border-radius: 3px; background: rgb(255 255 255 / 0.02); }
+  .slot.empty { border-style: dashed; color: var(--muted); }
+  .slot .props { font-size: 11.5px; color: var(--muted); margin-left: 14px; }
+  .count { display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+  .count b { width: 20px; height: 20px; display: grid; place-items: center; border: 1px solid var(--edge-strong); border-radius: 2px; color: var(--muted); font-weight: 400; }
+  .read { margin-top: 12px; padding: 10px 12px; border-left: 2px solid var(--craft-lore); background: color-mix(in srgb, var(--craft-lore) 7%, transparent); }
+  .read p { margin: 2px 0; }
+  .read .big { font-family: var(--font-display); font-size: 18px; }
+  .bar { height: 5px; background: rgb(255 255 255 / 0.07); border-radius: 1px; margin: 8px 0 3px; position: relative; }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--craft-lore); border-radius: 1px; }
+  .bar u { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--craft-lore) 45%, transparent); }
+  .seg { display: inline-flex; border: 1px solid var(--edge-strong); border-radius: 3px; overflow: hidden; font-size: 12.5px; }
+  .seg span { padding: 3px 10px; color: var(--muted); border-right: 1px solid var(--edge-strong); }
+  .seg span:last-child { border-right: none; }
+  .seg span.on { color: var(--text); background: rgb(255 255 255 / 0.07); }
+  .found { border: 1px solid color-mix(in srgb, var(--seal) 50%, transparent); background: color-mix(in srgb, var(--seal) 8%, transparent); padding: 10px 12px; border-radius: 3px; margin-top: 10px; }
+  .found .nm { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+  .tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line-faint); margin: -4px 0 12px; }
+  .tabs span { padding: 4px 0 6px; color: var(--muted); }
+  .tabs span.cur { color: var(--text); border-bottom: 2px solid var(--craft-lore); }
+  /* take B shelf */
+  .shelfgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .shelf li { padding: 5px 0; font-size: 13px; }
+  .shelf li.in { color: var(--accent); }
+  .mouth { border: 1px solid var(--line-faint); border-radius: 50% 50% 8px 8px / 30% 30% 8px 8px; padding: 26px 18px 16px; text-align: center;
+    background: radial-gradient(ellipse at 50% 0%, rgb(217 164 65 / 0.13), transparent 60%); }
+  .mouth .ring { display: flex; justify-content: center; gap: 10px; margin: 6px 0 12px; }
+  .mouth .ring div { width: 82px; height: 82px; border-radius: 50%; border: 1px solid var(--edge-strong); display: grid; place-items: center; font-size: 12px; line-height: 1.25; padding: 4px; box-sizing: border-box; }
+  .mouth .ring div.empty { border-style: dashed; color: var(--muted); }
+  /* strip */
+  .strip { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 20px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td, th { text-align: left; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line-faint); vertical-align: top; }
+  th { font-weight: 500; color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<div class="note">
+  <h1>Experimentation on the craft pages</h1>
+  K7 study. Three frames, each the 1920×1080 stage. <b>A</b> and <b>B</b> are two takes on where throwing things in sits on the Crafts page.
+  <b>C</b> is the same thing on the Talismans and Refining pages, what a find looks like on the craft Dao's discoveries edge, and a generated recipe beside a written one.
+  Real Border Wilds goods; the numbers are the proposal's.
+</div>
+
+<!-- ============================================================ TAKE A -->
+<div class="note"><b>Take A: an "Experiment" panel in the left column, under Recipes known.</b> Up to four things from the Bag, a count each.
+The furnace reads what they lean to before you commit: the property and element they carry most, whether anything written lies close, and the odds. Queue it like a batch, or sit at it and play fire control (the hand lifts what comes out on a hit, never the odds).</div>
+<div class="frame"><div class="stage">
+  <div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+  <div class="screen">
+    <div class="crumb">Severed Heaven <span class="hz">断天</span></div>
+    <div class="title">Crafts <span class="hz">艺</span></div>
+    <div class="pages">
+      <span class="cur">Alchemy <span class="hz">丹</span></span><span>Refining <span class="hz">器</span></span>
+      <span>Talismans <span class="hz">符</span></span><span class="off">Formations <span class="hz">阵</span></span><span class="off">Farming <span class="hz">植</span></span>
+      <span class="hours muted">4 craft hours a day · set on Routine</span>
+    </div>
+    <div class="cols">
+      <div>
+        <div class="panel">
+          <h2>The furnace</h2>
+          <p>Crude Clay Furnace <span class="hz">粗陶炉</span></p><p class="muted small">White · Qi Condensation · whole</p>
+          <h2>Recipes known</h2>
+          <ul><li><span>Qi-Gathering Pill</span><span class="muted">qi pills</span></li>
+              <li><span>Bone-Meal Pill</span><span class="muted">tempering pills</span></li></ul>
+        </div>
+        <div class="panel">
+          <h2>Experiment <span class="hz">试丹</span></h2>
+          <p class="muted small">Throw in what you like. What you throw is spent, hit or miss.</p>
+          <div class="slots">
+            <div class="slot"><span><span class="dot" style="background:var(--el-wood)"></span>Old Apricot Kernel<span class="props">nourishing</span></span><span class="count"><b>−</b>6<b>+</b></span></div>
+            <div class="slot"><span><span class="dot" style="background:var(--el-lightning)"></span>Thunderhead Clover<span class="props">nourishing · swift</span></span><span class="count"><b>−</b>4<b>+</b></span></div>
+            <div class="slot empty"><span>+ from the Bag: herbs, materials, beast parts</span><span></span></div>
+          </div>
+          <div class="read">
+            <p class="big">Leans <b>nourishing</b>, of <span style="color:var(--el-wood)">wood</span></p>
+            <p class="muted small">nourishing 10 · swift 4 &nbsp;·&nbsp; wood 6 · lightning 4</p>
+            <p>Nothing written answers these. The furnace would make its own: a qi pill of wood.</p>
+            <div class="bar"><i style="width:10.4%"></i><u style="left:10.4%;width:4%"></u></div>
+            <p class="small"><b>10%</b> a try at ×2 &nbsp;<span class="muted">(7.5% one batch; +3 from 3 misses on this set)</span></p>
+          </div>
+          <div class="actions" style="align-items:center">
+            <span class="seg"><span>×1</span><span class="on">×2</span><span>×3</span><span>×4</span></span>
+            <span class="muted small">×2: 20 herbs, 1.4 tries, 3 craft hours</span>
+          </div>
+          <div class="actions">
+            <span class="button">Queue the experiment</span><span class="button quiet">Sit at the furnace</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <h2>The bench</h2>
+          <ul>
+            <li><span>Experiment ×2 <span class="muted small">· 6 Old Apricot Kernel, 4 Thunderhead Clover</span></span><span class="muted">2 h left</span></li>
+            <li><span>Qi-Gathering Pill ×3</span><span class="muted">waiting</span></li>
+          </ul>
+          <h2>The last batches</h2>
+          <ul>
+            <li><span class="muted">Experiment: nothing took · 5 Calm-Heart Grass, 5 Ridge Bitterroot</span><span class="muted small">queued</span></li>
+            <li><span class="muted">Experiment: nothing took, and the furnace cracked</span><span class="muted small">queued</span></li>
+            <li><span class="white">12 Qi-Gathering Pill, white <span class="mark">记</span></span><span class="muted small">queued</span></li>
+          </ul>
+          <div class="found">
+            <p class="muted small">Found, day 412 · laid on Alchemy's discoveries edge, tier 1</p>
+            <p class="nm">Spring-Tempering Pill <span class="hz">春锻体丹</span> <span class="muted small">Chunduanti Dan</span></p>
+            <p class="green">11 Spring-Tempering Pill, green <span class="mark">记</span> <span class="muted small">played at 0.84</span></p>
+            <p class="muted small">Tier 1 · white to blue · tempering pills · 3 days of the body's seclusion · 6 Beast-Blood Vine, 4 Calm-Heart Grass</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <h2>Mastery by family</h2>
+          <ul><li><span>Qi pills <span class="hz">聚气</span></span><span>Comprehension</span></li>
+              <li><span>Tempering pills <span class="hz">炼体</span></span><span>Glimpse</span></li></ul>
+          <h2>Experiments <span class="hz">试</span></h2>
+          <ul>
+            <li><span>Odds a try</span><span>at your tier 6%</span></li>
+            <li><span class="muted">a tier below 15% · two or more 25%</span><span class="muted">a tier above 1.5%</span></li>
+            <li><span>Pity <span class="muted small">a miss adds, per set</span></span><span>+1 point</span></li>
+            <li><span>Found</span><span>1 · on the edge</span></li>
+          </ul>
+          <h2>The soul gate</h2>
+          <p class="muted">Qi Condensation 6 · your soul matches</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ============================================================ TAKE B -->
+<div class="note"><b>Take B: the left column flips between Recipes and Experiment, and the furnace's mouth takes the middle while you choose.</b>
+The Bag's ingredients stand on a shelf grouped by what they carry, so you pick by property; four rings in the furnace's mouth hold what goes in. More room, one more click.</div>
+<div class="frame"><div class="stage">
+  <div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+  <div class="screen">
+    <div class="crumb">Severed Heaven <span class="hz">断天</span></div>
+    <div class="title">Crafts <span class="hz">艺</span></div>
+    <div class="pages">
+      <span class="cur">Alchemy <span class="hz">丹</span></span><span>Refining <span class="hz">器</span></span>
+      <span>Talismans <span class="hz">符</span></span><span class="off">Formations <span class="hz">阵</span></span><span class="off">Farming <span class="hz">植</span></span>
+      <span class="hours muted">4 craft hours a day · set on Routine</span>
+    </div>
+    <div class="cols">
+      <div>
+        <div class="panel">
+          <div class="tabs"><span>Recipes</span><span class="cur">Experiment <span class="hz">试</span></span></div>
+          <div class="shelfgrid shelf">
+            <div>
+              <h3 style="margin-top:0">Nourishing</h3>
+              <ul><li class="in"><span><span class="dot" style="background:var(--el-wood)"></span>Old Apricot Kernel</span><span>24</span></li>
+                  <li><span><span class="dot" style="background:var(--el-lightning)"></span>Thunderhead Clover</span><span>9</span></li>
+                  <li><span><span class="dot" style="background:var(--el-none)"></span>Raider Beast Blood <span class="tag">toxic</span></span><span>3</span></li></ul>
+              <h3>Soul-calming</h3>
+              <ul><li class="in"><span><span class="dot" style="background:var(--el-wood)"></span>Calm-Heart Grass</span><span>12</span></li>
+                  <li><span><span class="dot" style="background:var(--el-earth)"></span>Glow-Cap Mushroom</span><span>4</span></li></ul>
+            </div>
+            <div>
+              <h3 style="margin-top:0">Mending</h3>
+              <ul><li><span><span class="dot" style="background:var(--el-water)"></span>Blood-Salt Kelp</span><span>10</span></li>
+                  <li><span><span class="dot" style="background:var(--el-wood)"></span>Beast-Blood Vine</span><span>6</span></li></ul>
+              <h3>Purging</h3>
+              <ul><li><span><span class="dot" style="background:var(--el-wood)"></span>Ridge Bitterroot</span><span>14</span></li></ul>
+              <h3>Tempering</h3>
+              <ul><li><span><span class="dot" style="background:var(--el-earth)"></span>Bone Meal</span><span>20</span></li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <h2>The furnace's mouth</h2>
+          <div class="mouth">
+            <div class="ring">
+              <div>Calm-Heart Grass<br /><b>5</b></div>
+              <div>Old Apricot Kernel<br /><b>5</b></div>
+              <div class="empty">empty</div>
+              <div class="empty">empty</div>
+            </div>
+            <p class="big" style="font-family:var(--font-display);font-size:20px">Leans <b>soul-calming</b>, of <span style="color:var(--el-wood)">wood</span></p>
+            <p class="muted small">soul-calming 5 · nourishing 5, soul-calming first by the table's order · wood 10</p>
+            <p style="margin-top:8px">These stir like something written.</p>
+            <p class="small"><b>7.5%</b> a try <span class="muted">· ×1 · 10 herbs · 3 craft hours</span></p>
+            <div class="actions" style="justify-content:center"><span class="button">Queue the experiment</span><span class="button quiet">Sit at the furnace</span><span class="button quiet">Empty the mouth</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>The bench</h2>
+          <ul><li><span>Qi-Gathering Pill ×3</span><span class="muted">1 h left</span></li></ul>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <h2>How the furnace reads</h2>
+          <p class="muted small">What you throw carries one element and one or two properties each. The furnace makes what most of it carries:</p>
+          <ul class="small">
+            <li><span>nourishing</span><span class="muted">a qi pill</span></li>
+            <li><span>tempering</span><span class="muted">a body pill</span></li>
+            <li><span>soul-calming</span><span class="muted">a soul pill</span></li>
+            <li><span>restoring</span><span class="muted">qi back in a fight</span></li>
+            <li><span>mending</span><span class="muted">wounds closed</span></li>
+            <li><span>purging</span><span class="muted">a poison drawn out</span></li>
+            <li><span>toxic</span><span class="muted">stronger, and more poison</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ============================================================ C -->
+<div class="note"><b>C: the other two pages, the discoveries edge, and a generated recipe beside a written one.</b>
+On Talismans the sheet is always five Yellow Talisman Paper and a Cinnabar Ore; you choose what goes into the ink. On Refining you throw ore and parts as they are.
+A find lands as a seal on the craft Dao's rim at its tier, on Lore's side, unlinked.</div>
+<div class="frame"><div class="stage">
+  <div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+  <div class="screen">
+    <div class="strip">
+      <div class="panel">
+        <h2>Experiment <span class="hz">试符</span> <span class="muted small">· Talismans</span></h2>
+        <p class="muted small">The sheet: 5 Yellow Talisman Paper, 1 Cinnabar Ore. Into the ink:</p>
+        <div class="slots">
+          <div class="slot"><span><span class="dot" style="background:var(--el-fire)"></span>Bat Guano<span class="props">burning</span></span><span class="count"><b>−</b>1<b>+</b></span></div>
+          <div class="slot empty"><span>+ from the Bag</span><span></span></div>
+        </div>
+        <div class="read"><p class="big">Leans <b>burning</b>, of <span style="color:var(--el-fire)">fire</span></p>
+          <p>Nothing written answers this ink. The brush would make its own: a strike of fire.</p>
+          <p class="small"><b>7.5%</b> a try</p></div>
+        <h2>Experiment <span class="hz">试器</span> <span class="muted small">· Refining</span></h2>
+        <div class="slots">
+          <div class="slot"><span><span class="dot" style="background:var(--el-water)"></span>Reef Coral<span class="props">hard</span></span><span class="count"><b>−</b>3<b>+</b></span></div>
+          <div class="slot"><span><span class="dot" style="background:var(--el-none)"></span>Cloud-Goat Wool<span class="props">light</span></span><span class="count"><b>−</b>2<b>+</b></span></div>
+        </div>
+        <div class="read"><p class="big">Leans <b>hard</b>, of <span style="color:var(--el-water)">water</span></p>
+          <p>Nothing written answers these. The forge would make its own: armor that turns water.</p></div>
+      </div>
+      <div class="panel">
+        <h2>The discoveries edge <span class="hz">悟</span></h2>
+        <svg viewBox="0 0 420 330" width="100%">
+          <defs><radialGradient id="g" cx="50%" cy="100%" r="80%"><stop offset="0" stop-color="#d9b46a" stop-opacity=".10"/><stop offset="1" stop-color="#d9b46a" stop-opacity="0"/></radialGradient></defs>
+          <path d="M210 310 L40 140 A240 240 0 0 1 380 140 Z" fill="url(#g)" stroke="rgb(217 180 106 / .25)"/>
+          <path d="M210 310 L40 140 A240 240 0 0 1 97 95 Z" fill="rgb(143 183 217 / .06)"/>
+          <path d="M210 310 L323 95 A240 240 0 0 1 380 140 Z" fill="rgb(169 201 138 / .08)"/>
+          <text x="96" y="200" fill="#8fb7d9" font-size="12">Hand</text><text x="196" y="160" fill="#d99a6a" font-size="12">Line</text><text x="300" y="200" fill="#a9c98a" font-size="12">Lore</text>
+          <rect x="200" y="290" width="20" height="20" fill="none" stroke="#b8432f"/>
+          <circle cx="150" cy="220" r="6" fill="#8fb7d9"/><circle cx="130" cy="170" r="6" fill="none" stroke="#8fb7d9"/>
+          <circle cx="210" cy="230" r="6" fill="#d99a6a"/><circle cx="210" cy="180" r="6" fill="#d99a6a"/>
+          <rect x="262" y="214" width="13" height="13" fill="#b8432f"/><rect x="284" y="170" width="13" height="13" fill="none" stroke="#b8432f"/>
+          <path d="M40 140 A240 240 0 0 1 380 140" fill="none" stroke="rgb(217 180 106 / .5)" stroke-dasharray="3 4"/>
+          <g fill="#b8432f" stroke="#e9e5da" stroke-width=".6">
+            <rect x="330" y="122" width="14" height="14"/><rect x="352" y="140" width="14" height="14"/><rect x="345" y="104" width="14" height="14" fill="none" stroke="#b8432f" stroke-dasharray="2 2"/>
+          </g>
+          <text x="300" y="80" fill="#e9e5da" font-size="12">Spring-Tempering Pill</text>
+          <text x="300" y="94" fill="#8d949d" font-size="11">found · tier 1 rim</text>
+          <text x="20" y="325" fill="#8d949d" font-size="11">Tier 1 of Alchemy 丹道 · two found, a third's place shown</text>
+        </svg>
+        <p class="muted small">Found recipes are laid past the rim on Lore's side, in the order found, so a tier full of finds reads fatter there. A written seal of your own tree you find instead lights in its own place, already yours.</p>
+      </div>
+      <div class="panel">
+        <h2>A generated recipe beside a written one</h2>
+        <table>
+          <tr><th></th><th>Written</th><th>Generated</th></tr>
+          <tr><td>Qi pill</td><td>Qi-Gathering Pill: 3 days, dose 10</td><td>Verdant-Nourishing Pill: 3 days, dose 10</td></tr>
+          <tr><td>Toxic in it</td><td>Blood-Feast Pill (3 of 10 toxic): 6 days, dose 30</td><td>3 of 10 toxic: 5 days, dose 25</td></tr>
+          <tr><td>Wounds</td><td>Spring-Returning Pill: 30% HP</td><td>Tide-Mending Pill: 30% HP</td></tr>
+          <tr><td>Strike</td><td>Ember Talisman: power 45, one foe; Bone-Shard: 40 at five</td><td>Blaze-Searing Talisman: 44, one foe</td></tr>
+          <tr><td>Ward</td><td>Golden Light: half a qi shield</td><td>Stone-Warding Talisman: half</td></tr>
+          <tr><td>Armor</td><td>Bound-Reef Scale Coat, white to blue</td><td>Tide-Warded Coat, white to blue</td></tr>
+          <tr><td>Rarity</td><td>as written, up to gold and red</td><td>floor rolled white 50 · green 35 · blue 15, never past blue</td></tr>
+        </table>
+        <p class="muted small" style="margin-top:8px">Generated ones are the common written one of their effect, at its tier and rarity on the same curves. What is special stays written: more foes, longer holds, extra days, gold and up.</p>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<script>
+  // Fit each 1920×1080 stage to the page width, as the game's stage does to its window.
+  function fit() {
+    for (const f of document.querySelectorAll('.frame')) {
+      const s = f.querySelector('.stage');
+      const k = f.clientWidth / 1920;
+      s.style.transform = `scale(${k})`;
+      f.style.height = `${1080 * k}px`;
+    }
+  }
+  addEventListener('resize', fit);
+  fit();
+</script>
+</body>
+</html>

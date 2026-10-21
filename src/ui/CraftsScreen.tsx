@@ -4,10 +4,20 @@
 // soul gate on the right. Which hours are Craft hours stays on Routine. A batch queued and left
 // runs at no hand; sat at, it reads the steady hand (K3), and the land lends its own. Refining (K4)
 // is its own page on the same bench: the forge, its recipes, tempering when you sit, and the pieces
-// you carry or wear that a craft hour a tier at the forge would mend.
+// you carry or wear that a craft hour a tier at the forge would mend. Experimenting (K7, Jan's take
+// B) flips the left column to the shelf and the middle to the bench's mouth (ExperimentPanels.tsx).
 import { useEffect, useState } from 'react';
 import type { Recipe } from '../content/catalogs/types.ts';
-import { CRAFTS, CRAFT_IDS, FAMILIES, FAMILY_IDS, recipe, recipeFor } from '../content/crafts.ts';
+import {
+  CRAFTS,
+  CRAFT_IDS,
+  FAMILIES,
+  FAMILY_IDS,
+  hasRecipe,
+  recipe,
+  recipeFor,
+} from '../content/crafts.ts';
+import { EXPERIMENT_CRAFTS, FOUND_FAMILY, type ExperimentCraft } from '../content/found.ts';
 import type { CraftId, FamilyId } from '../content/crafts.ts';
 import { item } from '../content/items.ts';
 import { MASTERY } from '../content/mastery.ts';
@@ -41,6 +51,14 @@ import {
   yieldOf,
   type BenchSpot,
 } from '../core/crafts.ts';
+import {
+  EXPERIMENT_ENTRY,
+  experimentHours,
+  lean,
+  queueExperiment,
+  thrown,
+  type Throw,
+} from '../core/experiment.ts';
 import { ratesHere } from '../core/life.ts';
 import { benchSpot } from '../core/map/travel.ts';
 import { withPlayer, type Cultivator, type GameState } from '../core/state.ts';
@@ -54,6 +72,8 @@ import { CRAFT_GRADES } from '../content/styles.ts';
 import { capitalize } from '../content/words.ts';
 import { formatPercent } from './format.ts';
 import { sitDown, standUp, useFurnace } from './furnace.ts';
+import { addThing, countThing, type Tossed } from './experiment.ts';
+import { Mouth, Reads, Shelf } from './ExperimentPanels.tsx';
 import { ForgeScene } from './ForgeScene.tsx';
 import { FurnaceScene } from './FurnaceScene.tsx';
 import { TalismanScene } from './TalismanScene.tsx';
@@ -112,12 +132,57 @@ const WORDS: Partial<
 };
 const words = (k: CraftId) => WORDS[k] ?? WORDS.alchemy!;
 
+const experiments = (k: CraftId): k is ExperimentCraft =>
+  (EXPERIMENT_CRAFTS as readonly CraftId[]).includes(k);
+
+/** What each page calls its bench's mouth when you experiment, and how it reads. */
+const MOUTH_HEADS: Record<ExperimentCraft, [string, string]> = {
+  alchemy: ['The furnace’s mouth', 'How the furnace reads'],
+  refining: ['The forge’s bed', 'How the forge reads'],
+  talismans: ['The ink', 'How the brush reads'],
+};
+
+/**
+ * What the bench's scene plays for a throw (K7): its things as a recipe's inputs, so the furnace
+ * doses them in; kept by the throw, so a rerender keeps the scene's dose.
+ */
+const throwScenes = new WeakMap<object, Recipe>();
+function sceneRecipe(t: Throw): Recipe {
+  let r = throwScenes.get(t);
+  if (!r) {
+    const effect = lean(t).effect;
+    r = {
+      output: EXPERIMENT_ENTRY,
+      craft: t.craft,
+      family: effect ? FOUND_FAMILY[effect] : 'qi-pills',
+      inputs: thrown(t),
+    };
+    throwScenes.set(t, r);
+  }
+  return r;
+}
+
+/** A bench entry's name for the page: a batch's thing, a mend, or an experiment. */
+function entryName(e: { recipe: string; mend?: string; experiment?: Throw }): string {
+  if (e.mend) return `Mend: ${item(e.mend).name}`;
+  if (e.experiment) return 'An experiment';
+  return item(e.recipe).name;
+}
+
+/** What a throw takes, in words. */
+function throwWords(t: { inputs: readonly { thing: string; count: number }[] }): string {
+  return t.inputs.map((i) => `${i.count} ${item(i.thing).name}`).join(', ');
+}
+
 export function CraftsScreen() {
   const game = useGame((s) => s.game);
   const applyLife = useGame((s) => s.applyLife);
   const [page, setPage] = useState<CraftId>('alchemy');
   const [pick, setPick] = useState<string | null>(null);
   const [why, setWhy] = useState<string | null>(null);
+  const [tab, setTab] = useState<'recipes' | 'experiment'>('recipes');
+  const [tossed, setTossed] = useState<Tossed>([]);
+  const [sets, setSets] = useState(1);
   const sitting = useFurnace((f) => f.sitting);
   const satAt = useFurnace((f) => f.recipe);
   const satCraft = useFurnace((f) => f.craft);
@@ -132,18 +197,40 @@ export function CraftsScreen() {
   const headCraft: CraftId | null = head
     ? head.mend
       ? 'refining'
-      : recipe(head.recipe).craft
+      : head.experiment
+        ? head.experiment.craft
+        : recipe(head.recipe).craft
     : null;
   const playing = atFurnace ?? (sitting ? satAt : null);
   const atCraft: CraftId = headCraft ?? satCraft ?? page;
+  const playRecipe = head?.experiment
+    ? sceneRecipe(head.experiment)
+    : playing && hasRecipe(playing)
+      ? recipe(playing)
+      : null;
   const family = head
     ? head.mend
       ? (recipeFor(head.mend)?.family ?? null)
-      : recipe(head.recipe).family
+      : head.experiment
+        ? sceneRecipe(head.experiment).family
+        : recipe(head.recipe).family
     : null;
+  const experimenting = tab === 'experiment' && experiments(page);
   const hours = ratesHere(game).count.craft;
   const spot = benchSpot(game);
   const change = (f: (c: Cultivator) => Cultivator) => applyLife((s) => withPlayer(s, f(s.player)));
+  const throwNow = (sit: boolean) => {
+    if (!experiments(page)) return;
+    const craft = page;
+    let reason: string | null = null;
+    change((p) => {
+      const r = queueExperiment(p, { craft, inputs: tossed }, sets);
+      reason = r.reason;
+      return r.cultivator;
+    });
+    setWhy(reason);
+    if (!reason && sit) sitDown(EXPERIMENT_ENTRY, craft);
+  };
   const queue = (id: string, n: number) => {
     let reason: string | null = null;
     change((p) => {
@@ -164,7 +251,11 @@ export function CraftsScreen() {
             className={`crafts-page${k === page ? ' is-current' : ''}`}
             disabled={!BUILT.includes(k)}
             title={BUILT.includes(k) ? undefined : 'Opens with its own phase.'}
-            onClick={() => setPage(k)}
+            onClick={() => {
+              setPage(k);
+              setTossed([]);
+              setWhy(null);
+            }}
           >
             {CRAFTS[k].page} <span className="hanzi">{CRAFTS[k].hanzi}</span>
           </button>
@@ -181,13 +272,52 @@ export function CraftsScreen() {
       </nav>
       <div className="crafts-columns">
         <section className="panel crafts-left">
-          <h2 className="panel-heading">The {CRAFTS[page].tool}</h2>
-          <Tools c={c} craft={page} />
-          <h2 className="panel-heading">Recipes known</h2>
-          <Recipes c={c} craft={page} pick={pick} onPick={setPick} />
-          {pick && <RecipeCard c={c} r={recipe(pick)} spot={spot} onQueue={queue} />}
-          {why && <p className="warn">{why}</p>}
-          {page === 'refining' && (
+          {experiments(page) && (
+            <div className="exp-tabs" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={!experimenting}
+                className={!experimenting ? 'is-current' : ''}
+                onClick={() => setTab('recipes')}
+              >
+                Recipes
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={experimenting}
+                className={experimenting ? 'is-current' : ''}
+                onClick={() => {
+                  setTab('experiment');
+                  setWhy(null);
+                }}
+              >
+                Experiment <span className="hanzi">试</span>
+              </button>
+            </div>
+          )}
+          {experimenting && experiments(page) ? (
+            <Shelf
+              c={c}
+              craft={page}
+              tossed={tossed}
+              onAdd={(thing) => {
+                setTossed((t) => addThing(t, page, thing));
+                setWhy(null);
+              }}
+            />
+          ) : (
+            <>
+              <h2 className="panel-heading">The {CRAFTS[page].tool}</h2>
+              <Tools c={c} craft={page} />
+              <h2 className="panel-heading">Recipes known</h2>
+              <Recipes c={c} craft={page} pick={pick} onPick={setPick} />
+              {pick && <RecipeCard c={c} r={recipe(pick)} spot={spot} onQueue={queue} />}
+              {why && <p className="warn">{why}</p>}
+            </>
+          )}
+          {!experimenting && page === 'refining' && (
             <>
               <h2 className="panel-heading">To mend</h2>
               <Mends
@@ -227,45 +357,80 @@ export function CraftsScreen() {
             ) : atCraft === 'talismans' ? (
               <TalismanScene key="desk" game={game} family={family} />
             ) : (
-              <FurnaceScene key="furnace" game={game} recipe={recipe(playing!)} />
+              playRecipe && <FurnaceScene key="furnace" game={game} recipe={playRecipe} />
             )}
             <p className="crafts-furnace-line muted">{words(atCraft).line}</p>
             <BatchHand c={c} />
           </section>
         ) : (
-          <section className="panel crafts-bench">
-            <div className="crafts-furnace-top">
-              <h2 className="panel-heading">The bench</h2>
-              <button
-                type="button"
-                className="button"
-                disabled={!head}
-                title={head ? undefined : 'Queue a batch to sit at it.'}
-                onClick={() => head && headCraft && sitDown(head.recipe, headCraft)}
-              >
-                {words(headCraft ?? page).sit}
-              </button>
-            </div>
-            <Bench c={c} onChange={change} />
-            <Tray c={c} onTake={() => change(takeTray)} />
-            <Recent c={c} />
+          <div className="crafts-middle">
+            {experimenting && experiments(page) && (
+              <section className="panel">
+                <h2 className="panel-heading">{MOUTH_HEADS[page][0]}</h2>
+                <Mouth
+                  c={c}
+                  craft={page}
+                  tossed={tossed}
+                  sets={sets}
+                  onSets={setSets}
+                  onCount={(thing, by) => {
+                    setTossed((t) => countThing(t, thing, by));
+                    setWhy(null);
+                  }}
+                  onEmpty={() => {
+                    setTossed([]);
+                    setWhy(null);
+                  }}
+                  onQueue={() => throwNow(false)}
+                  onSit={() => throwNow(true)}
+                  why={why}
+                />
+              </section>
+            )}
+            <section className="panel crafts-bench">
+              <div className="crafts-furnace-top">
+                <h2 className="panel-heading">The bench</h2>
+                <button
+                  type="button"
+                  className="button"
+                  disabled={!head}
+                  title={head ? undefined : 'Queue a batch to sit at it.'}
+                  onClick={() => head && headCraft && sitDown(head.recipe, headCraft)}
+                >
+                  {words(headCraft ?? page).sit}
+                </button>
+              </div>
+              <Bench c={c} onChange={change} />
+              <Tray c={c} onTake={() => change(takeTray)} />
+              <Recent c={c} />
+            </section>
+          </div>
+        )}
+        {experimenting && experiments(page) ? (
+          <section className="panel crafts-right">
+            <h2 className="panel-heading">{MOUTH_HEADS[page][1]}</h2>
+            <Reads craft={page} />
+            <h2 className="panel-heading">Mastery by family</h2>
+            <Families c={c} craft={page} />
+            {sitting && <Recent c={c} />}
+          </section>
+        ) : (
+          <section className="panel crafts-right">
+            <h2 className="panel-heading">
+              Grade and name <span className="hanzi">品 · 名</span>
+            </h2>
+            <GradeAndName game={game} craft={page} />
+            <h2 className="panel-heading">Mastery by family</h2>
+            <Families c={c} craft={page} />
+            <h2 className="panel-heading">The soul gate</h2>
+            <SoulGate c={c} />
+            <h2 className="panel-heading">Steady hands 稳手</h2>
+            <SteadyHands c={c} craft={page} />
+            <h2 className="panel-heading">The land</h2>
+            <Land c={c} craft={page} spot={spot} />
+            {sitting && <Recent c={c} />}
           </section>
         )}
-        <section className="panel crafts-right">
-          <h2 className="panel-heading">
-            Grade and name <span className="hanzi">品 · 名</span>
-          </h2>
-          <GradeAndName game={game} craft={page} />
-          <h2 className="panel-heading">Mastery by family</h2>
-          <Families c={c} craft={page} />
-          <h2 className="panel-heading">The soul gate</h2>
-          <SoulGate c={c} />
-          <h2 className="panel-heading">Steady hands 稳手</h2>
-          <SteadyHands c={c} craft={page} />
-          <h2 className="panel-heading">The land</h2>
-          <Land c={c} craft={page} spot={spot} />
-          {sitting && <Recent c={c} />}
-        </section>
       </div>
     </div>
   );
@@ -454,13 +619,16 @@ function Bench({
             ? frontHours(c, front)
             : e.mend
               ? mendNeeds(e.mend).hours
-              : batchHours(c, recipe(e.recipe));
+              : e.experiment
+                ? experimentHours(c, e.experiment)
+                : batchHours(c, recipe(e.recipe));
           const share = inTool ? front.hours / hours : 0;
           return (
             <li key={`${e.recipe}-${i}`} className="crafts-entry">
               <div className="crafts-entry-top">
                 <span>
-                  {e.mend ? `Mend: ${item(e.mend).name}` : `${item(e.recipe).name} ×${e.batches}`}
+                  {e.mend ? entryName(e) : `${entryName(e)} ×${e.batches}`}
+                  {e.experiment && <span className="muted"> · {throwWords(e.experiment)}</span>}
                 </span>
                 <span className="muted">
                   {inTool ? `${round1(front.hours)} of ${round1(hours)} h` : 'waiting'}
@@ -504,7 +672,9 @@ function Bench({
         <p className="muted">
           {front.mend
             ? `${item(front.mend).name} is mended at the forge`
-            : `A batch of ${item(front.recipe).name} finishes`}
+            : front.experiment
+              ? 'An experiment finishes'
+              : `A batch of ${item(front.recipe).name} finishes`}
           : {round1(front.hours)} of {round1(frontHours(c, front))} h.
         </p>
       )}
@@ -545,11 +715,13 @@ function Recent({ c }: { c: Cultivator }) {
           <li key={i} className={b.made ? `rarity-${item(b.made).rarity}` : 'crafts-failed'}>
             {b.mend && b.made
               ? `${item(b.made).name}, mended`
-              : b.made
-                ? `${b.count} ${item(b.made).name}, ${rarity(item(b.made).rarity).name.toLowerCase()}${b.hand ? `, played at a ${b.hand.toFixed(2)} hand` : ''}`
-                : b.blew
-                  ? `${item(b.recipe).name}: the ${toolWord(b.recipe)} burst, the inputs lost`
-                  : `${item(b.recipe).name}: the batch failed, the inputs lost`}
+              : b.experiment && !b.made
+                ? `Experiment: ${b.experiment.near ? 'a near miss' : 'nothing took'}${b.blew ? ', and the tool burst' : ''} · ${throwWords(b.experiment)}`
+                : b.made
+                  ? `${b.count} ${item(b.made).name}, ${rarity(item(b.made).rarity).name.toLowerCase()}${b.hand ? `, played at a ${b.hand.toFixed(2)} hand` : ''}${b.experiment?.found ? ' · found by experiment' : ''}`
+                  : b.blew
+                    ? `${item(b.recipe).name}: the ${toolWord(b.recipe)} burst, the inputs lost`
+                    : `${item(b.recipe).name}: the batch failed, the inputs lost`}
           </li>
         ))}
       </ul>
@@ -679,7 +851,13 @@ function BatchHand({ c }: { c: Cultivator }) {
   return (
     <div className="crafts-furnace-batch">
       <div className="crafts-entry-top">
-        <span>{front.mend ? `Mending ${item(front.mend).name}` : item(front.recipe).name}</span>
+        <span>
+          {front.mend
+            ? `Mending ${item(front.mend).name}`
+            : front.experiment
+              ? `An experiment: ${throwWords(front.experiment)}`
+              : item(front.recipe).name}
+        </span>
         <span className="muted">
           {round1(front.hours)} of {round1(hours)} h
         </span>

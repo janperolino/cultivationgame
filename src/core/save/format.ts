@@ -36,7 +36,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 46;
+export const SAVE_VERSION = 47;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1067,17 +1067,22 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const crafts = { grades: {}, marked: {}, renown: {}, ...((p.crafts ?? {}) as Raw) };
     return { ...old, version: 45, state: { ...s, player: { ...p, crafts } } };
   },
+  // K7: experimentation's finds, generated recipes and pity; an old life has found nothing yet.
+  45: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const crafts = { found: [], recipes: [], pity: {}, ...((p.crafts ?? {}) as Raw) };
+    return { ...old, version: 46, state: { ...s, player: { ...p, crafts } } };
+  },
   // Fights you play: a fight under way is saved, and the Combat screen left the rail, so its
   // unlock and its seen mark go.
-  45: (old) => {
+  46: (old) => {
     const s = (old.state ?? {}) as Raw;
     const unlocks = ((s.unlocks ?? []) as string[]).filter((u) => u !== 'combat');
     const seen = { ...((s.seen ?? {}) as Record<string, Record<string, unknown>>) };
-    if (seen.screen) {
-      const { combat: _gone, ...screens } = seen.screen;
-      seen.screen = screens;
-    }
-    return { ...old, version: 46, state: { ...s, unlocks, seen, fight: null } };
+    if (seen.screen)
+      seen.screen = Object.fromEntries(Object.entries(seen.screen).filter(([k]) => k !== 'combat'));
+    return { ...old, version: 47, state: { ...s, unlocks, seen, fight: null } };
   },
 };
 

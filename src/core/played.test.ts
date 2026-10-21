@@ -313,15 +313,15 @@ describe('a threat that lands ends a hurt person’s fight', () => {
   });
 });
 
-describe('the v46 save', () => {
-  it('migrates a v45 save: no fight under way, and the Combat screen off the rail', () => {
+describe('the v47 save', () => {
+  it('migrates a v46 save: no fight under way, and the Combat screen off the rail', () => {
     const s = life();
     const raw = makeSave(s, 0) as unknown as Record<string, unknown>;
     const state = { ...(raw.state as Record<string, unknown>) };
     delete state.fight;
     state.unlocks = [...(state.unlocks as string[]), 'combat'];
     state.seen = { screen: { combat: 'seen', map: 'seen' } };
-    const back = loadSave({ ...raw, version: 45, state }).state;
+    const back = loadSave({ ...raw, version: 46, state }).state;
     expect(back.fight).toBeNull();
     expect(back.unlocks).not.toContain('combat');
     expect(back.seen.screen).toEqual({ map: 'seen' });

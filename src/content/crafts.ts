@@ -7,6 +7,7 @@
 import { CATALOG_RECIPES } from './catalogs/index.ts';
 import type { Recipe } from './catalogs/types.ts';
 import type { Element } from './elements.ts';
+import { isFound } from './found.ts';
 import { baseOf, item, type ItemKind } from './items.ts';
 
 export const CRAFTS = {
@@ -256,6 +257,15 @@ const byOutput = new Map(CATALOG_RECIPES.map((r) => [r.output, r]));
 
 /** Every written recipe, by the catalogs' order. */
 export const RECIPES: readonly Recipe[] = CATALOG_RECIPES;
+
+/**
+ * Generated recipes (K7, content/found.ts) join the lookup as their finders' saves hold them: only
+ * their inputs aren't in their ids. Core adds a cultivator's own before reading them
+ * (core/experiment.ts `keepFound`); a written recipe's id is never taken.
+ */
+export function addFoundRecipes(rs: readonly Recipe[]): void {
+  for (const r of rs) if (!byOutput.has(r.output) && isFound(r.output)) byOutput.set(r.output, r);
+}
 
 export function hasRecipe(id: string): boolean {
   return byOutput.has(id);

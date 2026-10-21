@@ -22,6 +22,9 @@ import type { AnyNode } from '../content/nodes.ts';
 import { rarity } from '../content/rarity.ts';
 import { REALMS } from '../content/realms.ts';
 import { tierNodes, type Tree } from '../content/trees/index.ts';
+import { hasRecipe, recipe, recipeTier } from '../content/crafts.ts';
+import { item } from '../content/items.ts';
+import { sealFor } from '../core/crafts.ts';
 import { manualReady } from '../core/manuals.ts';
 import type { Cultivator } from '../core/state.ts';
 import { canLearn, hasLearned, nodeSealed, tierOwned } from '../core/trees.ts';
@@ -48,6 +51,7 @@ import {
   OWN_NAME_W,
   OWN_R,
   ownFan,
+  edgeSeals,
   placeTip,
   ROW,
   type Band,
@@ -456,7 +460,27 @@ function worldSig(
     )
     .join('|');
   const bands = f.bands.map((b) => bandStatus(c, tree, b, own, here)).join('|');
-  return `${nodes}#${jewels}#${bands}`;
+  return `${nodes}#${jewels}#${bands}#${tree.craft ? c.crafts.found.join(',') : ''}`;
+}
+
+/**
+ * The discoveries edge (K7): the recipes found by experiment that no seal of this craft Dao teaches
+ * (a generated one, a slip's, a style's), each a small square seal at its tier's rim on Lore's side.
+ */
+function Discoveries({ c, tree, f }: { c: Cultivator; tree: Tree; f: Fan }) {
+  const found = c.crafts.found
+    .filter((id) => hasRecipe(id) && recipe(id).craft === tree.craft && !sealFor(id))
+    .map((id) => ({ id, tier: recipeTier(recipe(id)) }));
+  return (
+    <g className="fan-discoveries">
+      {edgeSeals(f, found).map((p) => (
+        <g key={p.id}>
+          <title>{`${item(p.id).name} ${item(p.id).hanzi}: found by experiment`}</title>
+          <rect className="fan-found" x={p.x - 8} y={p.y - 8} width={16} height={16} />
+        </g>
+      ))}
+    </g>
+  );
 }
 
 const sameIds = (a: ReadonlySet<string>, b: ReadonlySet<string>) =>
@@ -539,6 +563,7 @@ const FanWorld = memo(
               </g>
             ))}
             {own && <EdgePaths c={c} edges={f.edges} />}
+            {own && tree.craft && <Discoveries c={c} tree={tree} f={f} />}
           </svg>
           {f.bands.map((b) => {
             const box = nameBox(b);

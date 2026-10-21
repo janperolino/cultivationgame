@@ -250,7 +250,14 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   },
   // A failed batch that cracked the furnace (K1).
   'blow-up': (d) =>
-    `The furnace bursts over a batch of ${item(s(d.recipe)).name}s: the ${item(s(d.tool)).name} is cracked, and wants a refiner.`,
+    `The furnace bursts over ${s(d.recipe) === 'experiment' ? 'an experiment' : `a batch of ${item(s(d.recipe)).name}s`}: the ${item(s(d.tool)).name} is cracked, and wants a refiner.`,
+  // A recipe found by experiment (K7): one nobody wrote, or a written one found by your own hand.
+  'recipe-found': (d, w) => {
+    const it = item(s(d.recipe));
+    return d.made
+      ? `${w.name} throws things in until something takes: the ${it.name} ${it.hanzi}, a recipe nobody wrote.`
+      : `${w.name} throws things in until something takes: the ${it.name}, found by ${w.name}’s own hand rather than taught.`;
+  },
   mastery: (d) =>
     d.family
       ? `Your ${FAMILIES[s(d.family) as FamilyId].name.toLowerCase()} reach ${MASTERY[n(d.level)]!.name}: the fire answers the hand.`
@@ -422,6 +429,7 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   screen: 'opening',
   'method-capped': 'opening',
   'blow-up': 'hurt',
+  'recipe-found': 'learned',
   graded: 'mastery',
   rewind: 'opening',
   card: (d) => (d.byDefault === true ? 'settled' : (cardOutcome(d).kind ?? 'choice')),

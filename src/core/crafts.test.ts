@@ -285,7 +285,7 @@ describe('the save', () => {
     raw.version = 42;
     delete raw.state.player.crafts;
     const back = loadSave(raw);
-    expect(back.version).toBe(45);
+    expect(back.version).toBe(46);
     expect(back.state.player.crafts).toEqual({
       bench: [],
       front: null,
@@ -295,6 +295,9 @@ describe('the save', () => {
       grades: {},
       marked: {},
       renown: {},
+      found: [],
+      recipes: [],
+      pity: {},
     });
   });
 

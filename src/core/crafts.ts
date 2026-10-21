@@ -10,6 +10,8 @@
 // Steady hands' reach and Hand's lift, and the land lends its hand (earth fire, a matching element,
 // a written site). Refining (K4) runs the same bench at a forge, and mends gear there too: a bench
 // entry that mends a piece takes a craft hour a tier and a piece of what it was made of.
+// Experimenting (K7, core/experiment.ts) runs on the same bench: an entry that throws things in
+// loads them as a batch does, and on its last hour finds a recipe or spends them for nothing.
 import type { Recipe } from '../content/catalogs/types.ts';
 import {
   BLOW_UP,
@@ -53,6 +55,13 @@ import { stow, wornIds } from './gear.ts';
 import type { Rng } from './rng.ts';
 import { addItem, type Cultivator, type CraftsState } from './state.ts';
 import { stats } from './stats.ts';
+import {
+  experimentHours,
+  experimentWaits,
+  finishExperiment,
+  keepFound,
+  loadExperiment,
+} from './experiment.ts';
 import { tierHeld } from './trees.ts';
 
 // ---------------------------------------------------------------- what you know and reach
@@ -64,10 +73,20 @@ const TEACHES = new Map(
     .map((n) => [n.id, n.recipe!] as const),
 );
 
-/** The recipes a cultivator knows, in the order their nodes were learned. */
+/**
+ * The recipes a cultivator knows, in the order their nodes were learned, then those found by
+ * experiment (K7) in the order found.
+ */
 export function knownRecipes(c: Cultivator): Recipe[] {
+  keepFound(c);
   const ids = c.nodes.map((n) => TEACHES.get(n)).filter((r): r is string => !!r);
-  return [...new Set(ids)].filter(hasRecipe).map(recipe);
+  return [...new Set([...ids, ...(c.crafts?.found ?? [])])].filter(hasRecipe).map(recipe);
+}
+
+/** The craft Dao seal that teaches a recipe, if one does (K7: a find lights it in its place). */
+export function sealFor(id: string): string | null {
+  const n = CRAFT_DAOS.flatMap((t) => t.nodes).find((x) => x.recipe === id);
+  return n?.id ?? null;
 }
 
 export function knowsRecipe(c: Cultivator, id: string): boolean {
@@ -132,7 +151,7 @@ const ELEMENT_LIFT: Partial<Record<CraftId, StatId>> = {
 };
 
 /** A craft's own stat from the trees, talents and gear: `own(c, 'alchemy', 'Hold')`. */
-function own(c: Cultivator, craft: CraftId, kind: CraftStatKind): number {
+export function own(c: Cultivator, craft: CraftId, kind: CraftStatKind): number {
   return stats(c)[craftStat(craft, kind)];
 }
 
@@ -174,7 +193,7 @@ export function toolsHeld(c: Cultivator, craft: CraftId): Item[] {
 }
 
 /** The best whole tool of a craft whose tier reaches this one. */
-function toolAt(c: Cultivator, craft: CraftId, tier: number): Item | null {
+export function toolAt(c: Cultivator, craft: CraftId, tier: number): Item | null {
   const fit = toolsHeld(c, craft).filter((t) => !t.cracked && t.tier >= tier);
   fit.sort((a, b) => rarityRank(b.rarity) - rarityRank(a.rarity) || b.tier - a.tier);
   return fit[0] ?? null;
@@ -411,7 +430,7 @@ export function liftOdds(r: Recipe, lift: number): { rarity: RarityId; chance: n
 // ---------------------------------------------------------------- inputs
 
 /** The pieces of an input you hold at a tier, by id, worst rarity first. */
-function heldOf(
+export function heldOf(
   c: Cultivator,
   thing: string,
   tier: number,
@@ -473,7 +492,7 @@ export function batchesHeld(c: Cultivator, r: Recipe): number {
 
 // ---------------------------------------------------------------- the bench
 
-const withCrafts = (c: Cultivator, crafts: Partial<CraftsState>): Cultivator => ({
+export const withCrafts = (c: Cultivator, crafts: Partial<CraftsState>): Cultivator => ({
   ...c,
   crafts: { ...c.crafts, ...crafts },
 });
@@ -530,7 +549,9 @@ export type BenchEvent =
   | { type: 'craft-level'; data: { family: string; level: number } }
   | { type: 'blow-up'; data: { recipe: string; tool: string } }
   /** A gold piece or better made (K6): craft renown where it was made. */
-  | { type: 'made-rare'; data: { made: string; craft: CraftId } };
+  | { type: 'made-rare'; data: { made: string; craft: CraftId } }
+  /** A recipe found by experiment (K7); `made` when the furnace made its own. */
+  | { type: 'recipe-found'; data: { recipe: string; craft: CraftId; made: boolean } };
 
 export interface BenchResult {
   cultivator: Cultivator;
@@ -548,6 +569,7 @@ function load(c: Cultivator): Cultivator | null {
   const entry = c.crafts.bench[0];
   if (!entry) return null;
   if (entry.mend) return loadMend(c, entry.mend);
+  if (entry.experiment) return loadExperiment(c, entry);
   const r = recipe(entry.recipe);
   if (cantBrew(c, r.output) || !toolFor(c, r)) return null;
   let next = c;
@@ -590,8 +612,9 @@ export interface BenchAt {
 /**
  * Resolves one batch: whether it holds, a blow-up, the lift, the yield and mastery. What it makes
  * carries your mark (K6). At a guild's bench (`atGuild`) your own tool is neither used nor cracked.
+ * An experiment's hit (K7) is `sure` to hold: it is the find.
  */
-function resolve(
+export function resolve(
   c: Cultivator,
   r: Recipe,
   above: boolean,
@@ -601,10 +624,11 @@ function resolve(
   rng: Rng,
   events: BenchEvent[],
   atGuild = false,
+  sure = false,
 ): Cultivator {
   const tool = atGuild ? null : toolFor(c, r);
   let next = c;
-  const held = rng.chance(holdOdds(c, r, land));
+  const held = sure || rng.chance(holdOdds(c, r, land));
   let made: string | null = null;
   let count = 0;
   let blew = false;
@@ -679,13 +703,14 @@ export function examBatch(
 }
 
 /** The mean steady hand a batch was played at over its hours. */
-function meanHand(c: Cultivator, front: NonNullable<CraftsState['front']>): number {
+export function meanHand(c: Cultivator, front: NonNullable<CraftsState['front']>): number {
   const hours = frontHours(c, front);
   return hours > 0 ? Math.min(1, (front.hand ?? 0) / hours) : 0;
 }
 
 /** Craft hours the front takes: its batch's, or a mend's craft hour a tier. */
 export function frontHours(c: Cultivator, front: NonNullable<CraftsState['front']>): number {
+  if (front.experiment) return experimentHours(c, front.experiment);
   return front.mend ? mendNeeds(front.mend).hours : batchHours(c, recipe(front.recipe));
 }
 
@@ -721,6 +746,7 @@ function finish(
 ): Cultivator {
   const front = c.crafts.front!;
   if (front.mend) return finishMend(c, day);
+  if (front.experiment) return finishExperiment(c, day, rng, events, spot);
   const r = recipe(front.recipe);
   const batches = front.batches ?? 1;
   const hand = meanHand(c, front);
@@ -754,6 +780,7 @@ export function workBench(
 ): BenchResult {
   const hand = Math.max(0, Math.min(1, at.hand ?? 0));
   const spot = at.spot ?? null;
+  keepFound(c);
   let next = c;
   let left = hours;
   let batches = 0;
@@ -806,6 +833,7 @@ export function benchWaits(c: Cultivator): string | null {
     const need = mendNeeds(entry.mend);
     return heldOf(c, need.input, need.tier).length > 0 ? null : `Short 1 ${item(need.input).name}.`;
   }
+  if (entry.experiment) return experimentWaits(c, entry.experiment);
   const r = recipe(entry.recipe);
   const why = cantBrew(c, r.output);
   if (why) return why;
