@@ -179,7 +179,7 @@ function Sheet({ c }: { c: Cultivator }) {
         Six plain numbers and the bars a hit meets first; a fight compares two sheets. Each line's
         band says the stage it is sized at, so a line that reads the next realm has crossed it.
       </p>
-      <dl className="sheet">
+      <dl className="sheet" data-guide="sheet">
         <SheetRow
           name="Accuracy"
           lines={perLadder(sh.accuracy)}

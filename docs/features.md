@@ -2,7 +2,7 @@
 
 Every feature a player can touch in the game today (built in code, not only designed), where it lives, how a player first meets it, what it needs first and what teaches it now. Drafted 2026-10-20 for the opening redone (design § Still to design, The opening redone), awaiting Jan's review; the introductions, the codex's entries and the origin's chain are designed from it. A phase that adds a feature the player touches adds its row here.
 
-**Way in** (The opening, built, 2026-10-20) names how the row is introduced: a guide (`src/content/guides.ts`), an introduction quest offered where the feature lives (written with the origin's chains), or the codex alone. Every row has a codex entry (`src/content/codex`), its first column copied word for word; a test holds the two together. The other columns describe the game before the guides: since then a guided feature drops its hint, and the rail builds itself during the first seclusion.
+**Way in** (The opening, built, 2026-10-20) names how the row is introduced: a guide (`src/content/guides.ts`), an introduction quest offered where the feature lives (`src/content/quests/intro.ts`, or the origin's chain for the four rows every chain teaches, The opening, built: chains, rogue, knobs), or the codex alone. Every row has a codex entry (`src/content/codex`), its first column copied word for word; a test holds the two together. The other columns describe the game before the guides: since then a guided feature drops its hint, and the rail builds itself during the first seclusion.
 
 **Taught by** names a first-time hint from `src/content/firsts.ts` (`hint:`), a "?" explainer (`Why:`), a beacon, the new-screen glow and dot, a caption, or nothing.
 
@@ -77,7 +77,7 @@ Every feature a player can touch in the game today (built in code, not only desi
 
 | Feature | Where | First met today | Needs first | Taught by | Way in |
 |---|---|---|---|---|---|
-| Sparring: foes at your realm, nothing dies or drops | Combat | The list of spars | a technique | Screen caption | introduction quest |
+| Sparring: foes at your realm, nothing dies or drops | Combat | The list of spars | a technique | Screen caption | introduction quest (the chain’s first lesson) |
 | Techniques, Strike, Flurry, Defend, Take cover | Combat, your move | Buttons priced against the foe | a technique | Why (the odds) | guide: the first turn of a fight |
 | Items in a fight (pills, fight items) | Combat | The items row | an item with a fight use | nothing | codex |
 | Words and feet: bluff, intimidate, bargain, surrender, flee | Combat | Quiet buttons | nothing | nothing | codex |
@@ -107,7 +107,7 @@ Every feature a player can touch in the game today (built in code, not only desi
 | The Journey tab: where you are, where to, ahead, the course card, stop, turn back | Map's column | The left column | a course | Labels | codex |
 | Road routines: by day, pressed march, night road, caravan guard | Map's column | The picker | nothing | Why | codex |
 | Ways to go: light step, mount, flying, wagon, ship, someone's sword | Map | Greyed, with why | a mount, Foundation to fly | The greyed reason | codex |
-| Stance: Avoid, Careful, Bold (settles what the road brings) | Map's column | Chips and a note | nothing | The stance's note | introduction quest |
+| Stance: Avoid, Careful, Bold (settles what the road brings) | Map's column | Chips and a note | nothing | The stance's note | introduction quest (the chain’s board road) |
 | Encounter seals on the map; the Card tab (exits with verdicts, going round) | Map, the Card tab | A seal, a rail mark | travel | The card's foot line | codex |
 | Encounter kinds: beast, cultivator, mortal, place, omen, plot (41 templates) | Map | Seals | travel | The card's opening | codex |
 | Looking, gathering and sensing (Look and Gather hours, sensing by realm) | The road wheel | The hour kinds | road hours | The hour's tooltip | codex |
@@ -115,7 +115,7 @@ Every feature a player can touch in the game today (built in code, not only desi
 | Gates, tolls, the watch reading your realm | The place's strip | The gate strip | cities and gates | Strip text | codex |
 | Travelling with a group (a caravan, a cloud ship), and leaving it | A map card | The group card | a caravan or ship | Card text | codex |
 | Sites: caves, huts, shrines; staying to cultivate | A place screen | The site's counter | a site found or seen | Counter text | codex |
-| Bounty postings pinned on the map | Map, the board | Gold marks | taking a posting | The board's caption | introduction quest |
+| Bounty postings pinned on the map | Map, the board | Gold marks | taking a posting | The board's caption | introduction quest (the chain’s board) |
 
 ## Places, shops and money
 
@@ -139,6 +139,7 @@ Every feature a player can touch in the game today (built in code, not only desi
 
 | Feature | Where | First met today | Needs first | Taught by | Way in |
 |---|---|---|---|---|---|
+| The rogue's way: no power behind you, day hires, your own place | Place › Work, a found cave or hut | Refusing at testing day | refusing | the chain's Your own way | introduction quest |
 | Joining a power (its way in: a test, a buy-in, a trial) | The seat's place › Join | A door | being at its seat | Door subtitle | introduction quest |
 | A gift to a power (monthly tribute) | The seat's place | A door | an outsider at a seat | Door subtitle | codex |
 | Seats and titles, contribution, the monthly allowance, the tithe, the quota | Character › memberships, People | A line | membership | Caption | codex |
@@ -147,7 +148,7 @@ Every feature a player can touch in the game today (built in code, not only desi
 | The open counter and the guest elder (an outsider at ×1.25) | The shop's counter | The terms line | a power's hall | Counter text | codex |
 | The scripture pavilion: chapters by seat | Place › Own | A door | a member of rank | Door subtitle | codex |
 | The dwelling: seclusion in your seat's richer qi | Place, Routine's rates | The place's line | a member at the seat | The place's line | codex |
-| Posts and hires: the Work door, shifts as Duty hours, pay, perk, kept or missed, leaving | Place › Work, Routine's column | The post panel | a post | Panel rows | introduction quest |
+| Posts and hires: the Work door, shifts as Duty hours, pay, perk, kept or missed, leaving | Place › Work, Routine's column | The post panel | a post | Panel rows | introduction quest (the chain’s Your place, or Your own way) |
 | A dangerous post's monthly raid | A map card | The raid encounter | a post with danger | Card text | codex |
 | Backing by your power (named in trouble) | Under encounters | Unseen | membership | nothing | codex |
 | Guarded methods: seen using one, you are marked; the law hall's restitution; hunted on the roads | The place's strip, the law hall's door | The mark strip | using a guarded method | Strip text | codex |

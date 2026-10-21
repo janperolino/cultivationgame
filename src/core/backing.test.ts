@@ -299,7 +299,10 @@ describe('what it asks', () => {
   });
 
   it('a missed quota costs standing on the second month and strikes you off on the third', () => {
-    const s = member(life());
+    // Past the drill: no quota is asked through the tutorial layers (The opening, built).
+    const drilled = member(life());
+    expect(membership(settleQuotas(months(drilled, 3)).world, ME, GATE)?.missed).toBe(0);
+    const s = member(atRealm(life(), 'qi-condensation', 4));
     const one = settleQuotas(months(s));
     expect(membership(one.world, ME, GATE)?.missed).toBe(1);
     expect(rows(one.world, GATE)).not.toContain('missed-quota');
@@ -317,7 +320,7 @@ describe('what it asks', () => {
   it('struck off is a parting by the rule, even where leaving is betrayal, and takes the copies back', () => {
     const NIGHT_BRIDGE = 'qm-yeqiao-hui';
     const SLIP = 'method:night-bridge';
-    let s = member(life(), NIGHT_BRIDGE);
+    let s = member(atRealm(life(), 'qi-condensation', 4), NIGHT_BRIDGE);
     s = withPlayer(s, { ...s.player, copies: { ...s.player.copies, [SLIP]: 1 } });
     const off = settleQuotas(months(s, 3));
     expect(membership(off.world, ME, NIGHT_BRIDGE)).toBeUndefined();
@@ -356,7 +359,7 @@ describe('the save', () => {
     raw.version = 39;
     delete raw.state.world.members[0]!.quota;
     const back = loadSave(raw);
-    expect(back.version).toBe(49);
+    expect(back.version).toBe(50);
     const m = back.state.world.members[0]!;
     expect(m.quota).toBe(m.paid);
     expect(emptyWorld().members).toEqual([]);

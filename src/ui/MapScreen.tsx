@@ -857,7 +857,7 @@ function MapView({
                 {hereWords(game)}
                 {atPlace && <span className="hanzi"> {atPlace.hanzi}</span>}
               </h3>
-              <p className="map-here-line">
+              <p className="map-here-line" data-guide="sense">
                 {TERRAIN_WORDS[terrainAt(map, life.at)] ?? terrainAt(map, life.at)} · {QI_NAMES[qd]}{' '}
                 qi ({qd}) · you see {sightAt(map, life.at)} li
               </p>

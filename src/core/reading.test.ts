@@ -3,6 +3,7 @@
 // the cards that hand over copies instead of teaching, what's new for a copy, and save v15.
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../content/cards/index.ts';
+import { QUESTS } from '../content/quests.ts';
 import {
   copyId,
   copyItem,
@@ -246,53 +247,25 @@ describe('the cards that hand over copies', () => {
     expect(nursed.manuals).toEqual([]);
   });
 
-  it('teaches the lamp-keeper’s art to one who sits the night, and hands a copy to one who goes', () => {
-    const sat = resolveCard(pend(base, 'lamp-keeper'), 1, 0).state.player;
-    expect('still-lantern' in sat.methods).toBe(true);
-    expect(copyCount(sat, LANTERN)).toBe(0);
-    const went = resolveCard(pend(base, 'lamp-keeper'), 1, 1).state.player;
-    expect('still-lantern' in went.methods).toBe(false);
-    expect(copyCount(went, LANTERN)).toBe(1);
-  });
-
-  it('teaches the deserter’s method and the first techniques, and hands the rest over as copies', () => {
-    const effectsOf = (k: (typeof CARDS)[number]) =>
-      k.choices.flatMap((ch) => [...ch.pass.effects, ...(ch.fail?.effects ?? [])]);
-    const firstHour = CARDS.filter((k) => k.deck === 'first-hour');
-    const taught = firstHour.filter(
-      (k) => k.id === 'night-bridge-offer' || k.id.startsWith('first-technique-'),
+  it('teaches the deserter’s breathing, and hands the rest over as copies (the chains)', () => {
+    // Jan's call (P2.5f), kept by the chains: the tempering and nourishing arts and the bounty
+    // office's torn manual are things handed over, so copies; the Society's breathing is taught.
+    const chains = QUESTS.filter((q) => q.chain);
+    for (const q of chains.filter((x) => x.id.endsWith('-board')))
+      expect(q.reward.copy, q.id).toBe('method:stone-bearing');
+    for (const q of chains.filter((x) => x.id.endsWith('-place')))
+      expect(q.reward.copy, q.id).toBe(LANTERN);
+    const acts = chains.flatMap((q) =>
+      q.steps.flatMap((st) => (st.act && 'work' in st.act ? [st.act] : [])),
     );
-    expect(taught.length).toBe(7);
-    for (const k of taught)
-      expect(
-        effectsOf(k).some((e) => e.do === 'copy'),
-        k.id,
-      ).toBe(false);
-    // Jan's call (P2.5f): the errands' tempering art, the bounty office's torn manual and the six
-    // Foundation chapters are things handed over, so copies, never a method taught.
-    const handed = firstHour.filter(
-      (k) =>
-        k.id.startsWith('errand-') ||
-        k.id === 'bounty-office-job' ||
-        (k.id.startsWith('foundation-') && k.id !== 'foundation-again'),
-    );
-    expect(handed.length).toBe(13);
-    for (const k of handed) {
-      const effects = effectsOf(k);
-      expect(
-        effects.some((e) => e.do === 'copy'),
-        k.id,
-      ).toBe(true);
-      expect(
-        effects.some((e) => e.do === 'method'),
-        k.id,
-      ).toBe(false);
-    }
+    const effects = acts.flatMap((a) => a.effects);
+    expect(effects).toContainEqual({ do: 'method', id: 'night-bridge' });
+    expect(effects).toContainEqual({ do: 'copy', id: 'method:bounty-scrap' });
     const copies = CARDS.flatMap((k) =>
       k.choices.flatMap((ch) => ch.pass.effects.filter((e) => e.do === 'copy')),
     );
     expect(copies.map((e) => (e.do === 'copy' ? e.id : ''))).toEqual(
-      expect.arrayContaining([BREATH, TIDE, LANTERN]),
+      expect.arrayContaining([BREATH, TIDE]),
     );
   });
 

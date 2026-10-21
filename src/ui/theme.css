@@ -4020,6 +4020,19 @@ select {
   color: var(--muted);
 }
 
+/* A rogue's first work on Cultivate, before the screen has built itself (ui/ChainOffer.tsx). */
+.first-work {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  max-width: 420px;
+}
+
+/* Refusing is harder (design § The rogue start), said beside the choice. */
+.button.choice .caption.creation-harder {
+  color: var(--warn);
+}
+
 /* The card tray under the figure: cards rise into it with a flare along their top edge, and
    slide out into the chronicle once settled. Its rim walks faster while a card waits. */
 .tray {

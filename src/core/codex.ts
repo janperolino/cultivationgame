@@ -35,7 +35,8 @@ function held(s: GameState, test: (id: string) => boolean): boolean {
 }
 
 /** The named checks (content/codex/schema.ts, `MET_TESTS`); the UI-seen ones read false here. */
-const MET: Readonly<Record<MetTest, (s: GameState) => boolean>> = {
+/** The named checks on the life, also read by a quest's step (core/journal.ts). */
+export const MET: Readonly<Record<MetTest, (s: GameState) => boolean>> = {
   'qi-method': (s) => s.player.activeMethods.qi !== null,
   art: (s) => knownMethods(s.player, 'body').length + knownMethods(s.player, 'soul').length > 0,
   minor: (s) =>
@@ -96,6 +97,8 @@ const MET: Readonly<Record<MetTest, (s: GameState) => boolean>> = {
   tool: (s) => held(s, (id) => item(id).kind === 'tool'),
   batch: (s) => s.player.crafts.recent.length > 0,
   quest: (s) => s.journal.quests.length > 0,
+  rogue: (s) =>
+    s.player.origin?.choice === 'refuse' && !s.world.members.some((m) => m.who === s.player.id),
 };
 
 /** Whether the state shows an entry's feature met. */

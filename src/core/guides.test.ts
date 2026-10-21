@@ -200,6 +200,6 @@ describe('save v48', () => {
     expect(back.state.lineage.guides).toEqual([...GUIDE_IDS]);
     expect(back.state.lineage.codex).toEqual({});
     expect(back.state.journal).toEqual({ quests: [], followed: null });
-    expect(withPlayer(back.state, back.state.player).lineage.guides).toHaveLength(14);
+    expect(withPlayer(back.state, back.state.player).lineage.guides).toHaveLength(GUIDE_IDS.length);
   });
 });

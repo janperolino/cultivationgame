@@ -72,6 +72,7 @@ export const MET_TESTS = [
   'tool', // a craft tool held
   'batch', // a craft batch finished
   'quest', // a quest taken
+  'rogue', // a start that refused, belonging to no power
 ] as const;
 export type MetTest = (typeof MET_TESTS)[number];
 

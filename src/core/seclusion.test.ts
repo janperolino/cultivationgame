@@ -24,6 +24,7 @@ import {
 } from './cards.ts';
 import { eventText, settledItself, whoFor } from './chronicle.ts';
 import { comingBackStory } from './comingBack.ts';
+import { withoutChain } from './chains.ts';
 import { createLife } from './creation.ts';
 import { finishAllGuides } from './guides.ts';
 import { ALL_FIRSTS } from './firsts.ts';
@@ -49,22 +50,24 @@ const life = (
 ): GameState =>
   seasoned(
     finishAllGuides(
-      createLife({
-        name: 'Han Li',
-        pronouns: 'he/him',
-        look: '',
-        mode: 'ironman',
-        seed,
-        choice,
-        roll: {
-          root: 'true',
-          elements: ['wood', 'fire'],
-          body: 'farmhands-frame',
-          soul: 'plain-mind',
-          fate: 'ordinary-fate',
-          origin,
-        },
-      }),
+      withoutChain(
+        createLife({
+          name: 'Han Li',
+          pronouns: 'he/him',
+          look: '',
+          mode: 'ironman',
+          seed,
+          choice,
+          roll: {
+            root: 'true',
+            elements: ['wood', 'fire'],
+            body: 'farmhands-frame',
+            soul: 'plain-mind',
+            fate: 'ordinary-fate',
+            origin,
+          },
+        }),
+      ),
     ),
   );
 
@@ -234,9 +237,10 @@ describe('drawing the seclusion deck', () => {
         expect(yearDay(day)).toBeLessThan(k.trigger.yearDay[1]);
       }
     }
-    // Two or three a season, near enough, and many different cards.
-    expect(seen.length / (3000 / 90)).toBeGreaterThan(1.5);
-    expect(seen.length / (3000 / 90)).toBeLessThan(3.5);
+    // A card every three to five real minutes since The opening, built (chains, rogue, knobs): a
+    // season is fifteen real minutes at Qi Condensation; the cards sim measures the minutes.
+    expect(seen.length / (3000 / 90)).toBeGreaterThan(1.8);
+    expect(seen.length / (3000 / 90)).toBeLessThan(4.5);
     expect(new Set(seen.map((x) => x.id)).size).toBeGreaterThan(15);
     // A once-only card came at most once; cooldowns hold.
     for (const k of SECLUSION) {
@@ -409,7 +413,8 @@ describe('save v8', () => {
     expect(Object.keys(s.player.people).sort()).toEqual(['clerk-fan', 'senior-zhao']);
     const log = personLog(s, 'senior-zhao').map((e) => e.type);
     expect(log[0]).toBe('testing');
-    expect(log).toContain('card');
+    // The v7 save's cards (the first technique, the errand) were the first-hour cards The opening,
+    // built (chains, rogue, knobs) took out, so the migration no longer reads who they named.
     for (const e of s.chronicle) {
       expect(EVENT_TEMPLATES).toHaveProperty(e.type);
       expect(eventText(s, e)).not.toMatch(/\{\w+\}|undefined/);

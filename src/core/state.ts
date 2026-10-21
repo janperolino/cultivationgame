@@ -482,6 +482,8 @@ export const QuestStateSchema = z.object({
   opened: z.number(),
   /** The day it was handed in, or null while it runs. */
   handed: z.number().nullable(),
+  /** Where an `@any` giver's quest was taken, and so is handed in. */
+  at: z.string().optional(),
 });
 export type QuestState = z.infer<typeof QuestStateSchema>;
 

@@ -7,6 +7,7 @@ import { OMEN_ENCOUNTERS, PLACE_ENCOUNTERS } from './finds.ts';
 import { GOAL_ENCOUNTERS } from './goals.ts';
 import { LAW_HALL_ENCOUNTERS } from './lawHall.ts';
 import { PLOT_ENCOUNTERS } from './plots.ts';
+import { QUEST_ENCOUNTERS } from './quests.ts';
 import { MORTAL_ENCOUNTERS } from './road-folk.ts';
 import type { Template } from './schema.ts';
 
@@ -21,7 +22,8 @@ export const ENCOUNTERS: readonly Template[] = [
   ...LAW_HALL_ENCOUNTERS,
 ];
 
-const byId = new Map(ENCOUNTERS.map((t) => [t.id, t]));
+// The quests' own postings' templates are found by id but never drawn (content/encounters/quests.ts).
+const byId = new Map([...ENCOUNTERS, ...QUEST_ENCOUNTERS].map((t) => [t.id, t]));
 
 export function encounterTemplate(id: string): Template {
   const t = byId.get(id);

@@ -1,6 +1,7 @@
 // Every deck of cards, and lookups. M1 ships the first hour's deck here; P1.8 adds the seclusion
 // deck, and each milestone after adds its own (design § Story cards and events).
 import { FIRST_HOUR_CARDS } from './firstHour.ts';
+import { RETIRED_CARDS } from './retired.ts';
 import type { Card } from './schema.ts';
 import { SECLUSION_CARDS } from './seclusion.ts';
 
@@ -27,10 +28,17 @@ export const CARDS: readonly Card[] = [...FIRST_HOUR_CARDS, ...SECLUSION_CARDS];
  * A starting value for the sims.
  */
 export const DECK_PACE: Readonly<Record<string, { minutes: number }>> = {
-  seclusion: { minutes: 6.5 },
+  // About four real minutes a card once the chain's first lesson is in (The opening, built: the
+  // knobs, the design's three to five). Today's 35-card deck caps the draw near one every five and
+  // a half minutes, its cards on their cooldowns and seasons; P3.12's larger deck reaches the pace.
+  seclusion: { minutes: 3 },
 };
 
-const byId = new Map(CARDS.map((c) => [c.id, c]));
+/** The seclusion deck, held until the origin's chain's first lesson is handed in (core/cards.ts). */
+export const SECLUSION_DECK = 'seclusion';
+
+// Retired cards are found by id for an older life's chronicle and feed, never drawn.
+const byId = new Map([...CARDS, ...RETIRED_CARDS].map((c) => [c.id, c]));
 
 export function card(id: string): Card {
   const c = byId.get(id);

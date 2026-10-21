@@ -37,7 +37,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 49;
+export const SAVE_VERSION = 50;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1099,6 +1099,22 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const lineage = { ...((s.lineage ?? {}) as Raw), guides: [...GUIDE_IDS], codex: {} };
     const journal = { quests: [], followed: null };
     return { ...old, version: 49, state: { ...s, lineage, journal } };
+  },
+  // The opening, built (chains, rogue, knobs): its three new guides (a rogue's first work, the
+  // sheet after the spar, sense on the road) count as done for a lineage past its first
+  // seclusion, which met those things before they were taught; an old life has no chain, so its
+  // seclusion deck isn't held.
+  49: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const lineage = (s.lineage ?? {}) as Raw;
+    const guides = Array.isArray(lineage.guides) ? (lineage.guides as string[]) : [];
+    if (!guides.includes('focus')) return { ...old, version: 50 };
+    const added = ['first-work', 'sheet', 'sense'].filter((g) => !guides.includes(g));
+    return {
+      ...old,
+      version: 50,
+      state: { ...s, lineage: { ...lineage, guides: [...guides, ...added] } },
+    };
   },
 };
 

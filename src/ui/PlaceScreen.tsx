@@ -26,6 +26,7 @@ import { encounterTemplate } from '../content/encounters/index.ts';
 import {
   claimPosting,
   dropPosting,
+  hasBoard,
   isMissionHall,
   postingsAt,
   takePosting,
@@ -356,7 +357,7 @@ function doorsOf(
             sub: `you sleep here by rule: ${info.bed} taels a night`,
           },
         ];
-  if (info.board && !isMissionHall(p.id)) {
+  if (hasBoard(p) && !isMissionHall(p.id)) {
     const held = s.map?.postings.filter((x) => x.board === p.id && x.done).length ?? 0;
     hear.push({
       id: 'board',

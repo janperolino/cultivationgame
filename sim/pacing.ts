@@ -41,10 +41,21 @@ import {
 } from '../src/core/attention.ts';
 import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
+import { withoutChain } from '../src/core/chains.ts';
+import { contemplate } from '../src/core/insight.ts';
 import { finishAllGuides } from '../src/core/guides.ts';
 import { TREES, treeNode, type TreeNode } from '../src/content/trees/index.ts';
-import { majorCheck } from '../src/core/cultivation.ts';
-import { breakThrough, gainMethod, learn, playFirsts, switchMethod } from '../src/core/life.ts';
+import { barFill, majorCheck } from '../src/core/cultivation.ts';
+import {
+  breakThrough,
+  gainCopy,
+  gainMethod,
+  learn,
+  moveRead,
+  readCopy,
+  playFirsts,
+  switchMethod,
+} from '../src/core/life.ts';
 import { advance } from '../src/core/loop.ts';
 import { methodMastery } from '../src/core/methods.ts';
 import { Rng } from '../src/core/rng.ts';
@@ -147,6 +158,9 @@ function buyNodes(s: GameState): GameState {
   }
 }
 
+/** The arts the origin's chain hands over as copies. */
+const TEMPERING = 'method:stone-bearing';
+const NOURISHING = 'method:still-lantern';
 const givePill = (s: GameState, which: LadderId = 'qi') =>
   withPlayer(s, addItem(s.player, GATE[which], 1));
 
@@ -233,7 +247,11 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
     },
   });
   // The guides are a player's, not the sim's: every one ended, so minor breakthroughs run on auto.
-  s = playFirsts(finishAllGuides(s));
+  // The opening's chain isn't what this sim measures: without it the seclusion deck isn't held.
+  // Nor is a post: the cadet's watch takes four Duty hours from layer 4 (it stood only until the
+  // quota struck the cadet off by minute 15, fixed in The opening, built), so the life holds none.
+  s = playFirsts(withoutChain(finishAllGuides(s)));
+  s = withPlayer(s, { ...s.player, jobs: [] });
   const L = ladderOf(how);
   const art = PATH_ART[L];
   if (art) {
@@ -244,6 +262,8 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
   const run: Run = { at, fails: 0 };
   let ms = 0;
   let chronicleSeen = s.chronicle.length;
+  /** The wheel set aside while the bought chapter is read on every waking hour. */
+  let reading: GameState['player']['wheel'] | null = null;
   let seat = startAttention(s);
   const sitter = new Rng(seed * 7919 + 1);
   const skip = new Set<number>();
@@ -260,6 +280,21 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
     const hours = ms / 3_600_000;
     for (const c of s.chronicle.slice(chronicleSeen)) if (c.type.endsWith('setback')) run.fails++;
     chronicleSeen = s.chronicle.length;
+    // The origin's chain hands over the tempering art at the board (about minute 25) and the
+    // nourishing art at Your place (about minute 40), as copies read on the study hours.
+    if (!art) {
+      if (hours >= 25 / 60 && !s.player.copies[TEMPERING] && !('stone-bearing' in s.player.methods))
+        s = gainCopy(s, TEMPERING, 'is given');
+      if (
+        hours >= 40 / 60 &&
+        !s.player.copies[NOURISHING] &&
+        !('still-lantern' in s.player.methods)
+      ) {
+        // Handed over with a night's talk on stillness, as the lamp-keeper's card once did.
+        s = gainCopy(s, NOURISHING, 'is given');
+        s = withPlayer(s, contemplate(s.player, 'shrine-lecture').cultivator);
+      }
+    }
     if (how === 'nodes') s = buyNodes(s);
     if (how === 'routine') s = followRoutine(s);
     if (how === 'qi-only') s = allQi(s);
@@ -277,11 +312,36 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
         run.nodesAt9 = p.nodes.length;
         run.masteryAt9 = qiMastery(s);
       }
-      // In M1 the origin's layer 9 card hands over a Foundation Pill and a copy of the next chapter;
-      // a pure path is handed its chapter and its own gate.
+      // At layer 9 the life finds its Foundation Pill and next chapter in the world (since The
+      // opening, built: chains, rogue, knobs, no card hands them over; a player buys them), so the
+      // sim hands them over: the chapter as a copy read on the study hours, as bought; a pure path
+      // is handed its chapter and its own gate.
       if (l.stage === 9) {
-        s = takeChapter(s, L, art !== undefined || how === 'qi-only');
-        if (art && !s.player.items[GATE[L]]) s = givePill(s, L);
+        const given = art !== undefined || how === 'qi-only';
+        const id = s.player.activeMethods[L];
+        const chapter = id ? nextChapter(method(id)) : undefined;
+        const copy = chapter ? `method:${chapter.id}` : null;
+        if (!given && copy && !(chapter!.id in s.player.methods) && !s.player.copies[copy]) {
+          s = readCopy(gainCopy(s, copy, 'buys'), copy).state;
+          // A player reads the chapter they bought first.
+          for (let i = 0; i < 4; i++) s = moveRead(s, copy, -1);
+        }
+        // With the bar full and the chapter unread, a player turns the idle qi hours to Study until
+        // it is read, then puts the wheel back.
+        const unread = !!copy && !(chapter!.id in s.player.methods) && !!s.player.copies[copy];
+        if (unread && barFill(s.player[L]) >= 1 && !reading) {
+          reading = [...s.player.wheel];
+          s = withPlayer(s, {
+            ...s.player,
+            wheel: s.player.wheel.map((k) => (k === 'qi' ? 'study' : k)),
+          });
+        }
+        if (!unread && reading) {
+          s = withPlayer(s, { ...s.player, wheel: reading });
+          reading = null;
+        }
+        s = takeChapter(s, L, given);
+        if (!s.player.items[GATE[L]]) s = givePill(s, L);
       }
       // The sim breaks through as soon as it may, at the bare minimum.
       if (majorCheck(s.player, L)?.ready) {

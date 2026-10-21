@@ -4,6 +4,7 @@
 // ends at the first fall. What the fight spends comes home as any fight's does (core/played.ts), and
 // a spar won from the brink is a moment on the Intent ladder. Each partner spars once a day.
 import { person } from '../content/people.ts';
+import { CHAIN_SPAR } from '../content/quests/chains.ts';
 import { realm, type RealmId } from '../content/realms.ts';
 import { template } from '../content/roster.ts';
 import { fromCultivator } from './combat/combatant.ts';
@@ -88,9 +89,54 @@ export function personPartner(s: GameState, id: string): Partner | null {
   return { ...p, name, words: name };
 }
 
+/**
+ * The origin chain's first lesson's partner (`chain:<path>`): the spar that always teaches. They
+ * hold back, fighting a layer under you at their roster's lowest pedigree, so a fresh cultivator
+ * who has studied wins most first tries; a loss is again tomorrow, as every spar is.
+ */
+export function chainPartner(s: GameState, who: string): Partner | null {
+  const path = who.slice('chain:'.length);
+  const sp = CHAIN_SPAR[path];
+  if (!sp) return null;
+  const r = realmOf(s.player);
+  const stage = Math.max(1, stageOf(s.player) - CHAIN_HOLDS_BACK);
+  const p = partnerAt(who, sp.roster, r, stage);
+  return { ...p, words: sp.words };
+}
+
+/** How many layers the chain's partner holds back by. */
+export const CHAIN_HOLDS_BACK = 1;
+
+/**
+ * How much the chain's teacher holds back beyond the layer: their bars at this share of a sheet
+ * like yours. A fresh cultivator has no weapon, armor or arts yet, where anyone the roster makes
+ * carries a kit, so the teacher spars as you do, empty-handed, and lets you win most first tries.
+ */
+export const CHAIN_HOLD_BACK = 0.75;
+
+/** The chain's spar: your own sheet a layer down, held back, empty-handed, named for the partner. */
+function chainSpar(s: GameState, p: Partner): Fight {
+  const down = { ...s.player, qi: { ...s.player.qi, stage: p.stage } };
+  const them = fromCultivator(down, 'them');
+  const held = (n: number) => Math.round(n * CHAIN_HOLD_BACK);
+  return startFight([
+    fromCultivator(s.player, YOU),
+    {
+      ...them,
+      id: `spar-${p.who}`,
+      name: p.name,
+      hp: held(them.hp),
+      maxHp: held(them.maxHp),
+      shield: held(them.shield),
+      maxShield: held(them.maxShield),
+    },
+  ]);
+}
+
 /** The partner a spar's `who` names, or null when there is none. */
 export function partnerOf(s: GameState, who: string): Partner | null {
   if (who.startsWith('person:')) return personPartner(s, who.slice('person:'.length));
+  if (who.startsWith('chain:')) return chainPartner(s, who);
   const [, power, , rank] = who.split(':');
   if (!power) return null;
   return groundPartners(s, power).find((p) => p.who.endsWith(`:${rank}`)) ?? null;
@@ -109,7 +155,9 @@ export function sparWhy(s: GameState, who: string): string | null {
   if (s.ended) return 'The life is over.';
   if (s.fight) return 'You are in a fight.';
   const here = s.map?.inside ?? null;
-  if (who.startsWith('person:')) {
+  if (who.startsWith('chain:')) {
+    if (!chainPartner(s, who)) return 'No one to spar with.';
+  } else if (who.startsWith('person:')) {
     const id = who.slice('person:'.length);
     if (!s.player.people[id]) return 'You don’t know them.';
     if (person(id).mortal) return 'They aren’t a cultivator.';
@@ -133,6 +181,7 @@ export function sparWhy(s: GameState, who: string): string | null {
 export function sparFight(s: GameState, who: string): Fight | null {
   const p = partnerOf(s, who);
   if (!p) return null;
+  if (who.startsWith('chain:')) return chainSpar(s, p);
   const t = template(p.roster);
   if (t.kind !== 'cultivator') return null;
   const npc = generateCultivator(t, p.realm, p.stage, new Rng(p.seed), {

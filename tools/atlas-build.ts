@@ -362,6 +362,7 @@ for (const region of atlas.entries) {
         pinyin: e.pinyin,
         hanzi: e.hanzi,
         kind: e.kind,
+        site: e.site ?? null,
         terrain: e.terrain ?? null,
         qiDensity: e.qiDensity ?? null,
         vein: e.vein ?? null,
