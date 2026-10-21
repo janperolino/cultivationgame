@@ -56,6 +56,30 @@ Ranked by what a player would feel at the checkpoint.
 
 ## Medium
 
+**Round 2, Jan's go ("fix them all"): 5 to 20 fixed.** On the four that asked Jan, the review took the safe call and put the rest under Open questions:
+- 13: a tempo repeat of a volley, a detonation, flags or a thing used is a strike.
+- 16: a standing gate on the offer, while whether a guest counts as a member for the leak rule stays open.
+- 20: a running growing array tends its dwelling's slots, as design.md says. K10's density steps stay in place of the ×2.
+- 29: no change.
+
+What each fix does:
+- 5: `handNow` reads the hand only from a sitting at your own bench (`bench`). The guild's exam sits with `bench: false`, and another page of the Crafts screen stands you up.
+- 6: mid-sheet, `deskFamily` keeps the brush's path and the next sheet takes the new one (`then`).
+- 7: a queued throw with nothing left to find (`throwSpent`) leaves the bench before it takes a thing, as a stale mend does.
+- 8: "Stop after this one" trims the head entry to the batches in the tool rather than removing it, so the finish moves past it and nothing else. It is disabled when nothing more is queued in that entry.
+- 9: a cultivator's own found recipes overwrite the lookup. The Crafts screen registers them before reading (low 25 with it).
+- 10: a harvest's packets go to the tray when the Bag is full.
+- 11: the Farming page's Rent and Buy are a written village's or town's (`fieldsHere`), at its own land. At your dwelling it points to the Dwelling screen.
+- 12: a burning pill that can't take, or a Body-Fixing spent this fight, is disabled with its reason, and so is a volley short of its qi. Every skipped action of yours is logged.
+- 14: the three plainest pieces are offered, each asking "sure?" before it blows.
+- 15: the order cards' `made` trigger is "your make named and room to hold it" (`yourMake`, under three open).
+- 17: a harvest's and the exam batch's events reach the chronicle and renown through `benchEvents` (`core/life.ts`), which the bench uses too.
+- 18: on a course, the Crafts page says the bench waits and the wheel's craft hour notes it, as it does an empty bench.
+- 19: a set takes its count of flags and no more.
+- 20: `BOOST.array` is gone.
+
+Each fix has a test where core changed: experiment ×3, talisman, farming ×2, upkeep (tempo), craftDeck (the trigger), styles (the guest seat), placing. `npm test` has 1,442 passing, and lint and build are clean.
+
 5. **Fire control's hand stays frozen and credited when you leave the scene without standing up.** The Spirit Farming tab inside the Crafts screen unmounts the furnace scene but doesn't stand you up (`ui/CraftsScreen.tsx`'s page buttons; `ui/furnace.ts` `handNow` reads `sitting && attended`). Every batch then resolves at the last hand, such as 0.9, while you click around the farm. The Examination hall (`ui/PlaceScreen.tsx:1394`, `sitDown(pick, row.craft)`) does the same across crafts: sitting a forge exam feeds its hand to an alchemy batch cooking at your bench. It skews what the checkpoint measures, playing against queuing. *Fix:* `handNow` counts only while a scene is mounted for the bench front's craft (a `scene` flag the three scenes set and clear), and the page buttons stand you up.
 
 6. **A talisman sheet snaps when the bench's front changes family while you draw.** *(run)* `core/talisman.ts:147-151` (`deskFamily`). The docstring says the new family is drawn "from its next sheet on", but mid-draw it swaps the path at once while the brush and the traced index stay on the old one. The next move ends the sheet `snapped` (quality 0, the hand down 0.35). Going from a longer path to a shorter one gives `dist = Infinity` and snaps the same way. It happens whenever a batch finishes mid-sheet and the next entry is another family. *Fix:* in `draw`, keep the family and apply the new one in `fresh`.
