@@ -4,16 +4,17 @@
 import { HINT_CODEX } from '../content/firsts.ts';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { go } from './nav.ts';
+import { openSquare } from './square.ts';
 import { useGame } from './store.ts';
 import { dismissToast, TOAST_MS, useToasts, type Toast } from './toasts.ts';
 
 function ToastCard({ t }: { t: Toast }) {
   const [held, setHeld] = useState(false);
   useEffect(() => {
-    if (held || t.hint) return;
+    if (held || t.hint || t.stays) return;
     const timer = setTimeout(() => dismissToast(t.key), TOAST_MS);
     return () => clearTimeout(timer);
-  }, [held, t.key, t.hint]);
+  }, [held, t.key, t.hint, t.stays]);
   const dismiss = () => {
     dismissToast(t.key);
     if (t.hint) useGame.getState().markHint(t.hint);
@@ -24,7 +25,7 @@ function ToastCard({ t }: { t: Toast }) {
   const to = t.to;
   return (
     <li
-      className={`toast${t.hint ? ' is-hint' : ''}`}
+      className={`toast${t.hint ? ' is-hint' : ''}${t.stays ? ' is-notice' : ''}`}
       style={style}
       onMouseEnter={() => setHeld(true)}
       onMouseLeave={() => setHeld(false)}
@@ -37,7 +38,10 @@ function ToastCard({ t }: { t: Toast }) {
         {t.glyph}
       </span>
       <span className="toast-text">
-        <span className="toast-label">{t.label} · </span>
+        <span className="toast-label">
+          {t.label}
+          {t.stays ? '' : ' · '}
+        </span>
         {t.hint ? (
           <>
             <span className="toast-name">{t.name}</span>
@@ -64,6 +68,24 @@ function ToastCard({ t }: { t: Toast }) {
                   Codex
                 </button>
               </>
+            )}
+          </>
+        ) : t.stays ? (
+          <>
+            <span className="toast-name">{t.name}</span>
+            {t.line && <span className="toast-line">{t.line}</span>}
+            {t.open && (
+              <button
+                type="button"
+                className="button toast-open"
+                onClick={() => {
+                  if (to) go(to.screen);
+                  openSquare(t.open!);
+                  dismissToast(t.key);
+                }}
+              >
+                Open
+              </button>
             )}
           </>
         ) : to ? (

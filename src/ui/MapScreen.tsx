@@ -90,7 +90,8 @@ import { onArtLoad } from './map/art.ts';
 import { markMoving } from './moving.ts';
 import { drawMap, isDeadly, pickAt, toScreen, toWorld, type View } from './map/draw.ts';
 import { fogOf } from './map/fog.ts';
-import { EncounterCard } from './EncounterCard.tsx';
+import { Stub } from './CardFeed.tsx';
+import { openSquare, seeEncounters } from './square.ts';
 import { sealOf } from './encounterSeals.ts';
 import { PlaceScreen } from './PlaceScreen.tsx';
 import { canvasDensity, pointIn, stageFactor, useStage } from './stage.ts';
@@ -815,10 +816,17 @@ function MapView({
     if (!shownId) setTab('journey');
   }
   const tabNow = tab;
+  // An encounter is read in the square (F1); the Card tab keeps its stub.
   const openCard = (id: string) => {
     setOpenEnc(id);
     setTab('card');
+    openSquare({ kind: 'encounter', id });
   };
+  // The Map looked at: the road's encounters stop lighting its glyph.
+  const encIds = life.encounters.map((e) => e.id).join(',');
+  useEffect(() => {
+    seeEncounters(encIds ? encIds.split(',') : []);
+  }, [encIds]);
   // What the road brings and the postings you hold, as round seals over the map.
   const marks: { id: string; at: Pt; template: string; how?: Encounter['how']; board?: boolean }[] =
     [
@@ -1081,7 +1089,11 @@ function MapView({
           </>
         ) : tabNow === 'card' ? (
           shown ? (
-            <EncounterCard game={game} life={life} enc={shown} act={act} say={say} />
+            <Stub
+              kicker={shown.state === 'waiting' ? 'Waits on your road' : 'Sensed ahead'}
+              title={encounterTemplate(shown.template).title}
+              onOpen={() => openSquare({ kind: 'encounter', id: shown.id })}
+            />
           ) : (
             <p className="map-card-none">
               Nothing waits on you. What the road brings shows here, and opens this tab when it

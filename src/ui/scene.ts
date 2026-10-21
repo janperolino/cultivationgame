@@ -4,6 +4,7 @@
 // ends it on time, even with the tab hidden, and rolls with what was caught. Drawing only reads
 // it. The breakthrough panel (ui/BreakthroughPanel.tsx) that leads to a major one is the
 // session's too, and lives here so any screen can open it.
+import { cue } from './cues.ts';
 import { guideNow } from '../core/guides.ts';
 import { create } from 'zustand';
 import { SCENE_OUTCOME_S } from '../content/scene.ts';
@@ -45,14 +46,34 @@ export interface PanelOpen {
   lastChance: boolean;
 }
 
+/**
+ * A breakthrough's warning (F1, Jan's yes in its talk): a step that always holds starts its scene
+ * by itself at the figure, so a line over the figure says it is coming for WARN_MS first.
+ */
+export interface SceneWarn {
+  key: string;
+  ladder: LadderId;
+  /** Page time it was raised, in ms. */
+  at: number;
+}
+
+/** How long the warning stands before the scene it warns of starts by itself. */
+export const WARN_MS = 3000;
+
 interface SceneStore {
   play: ScenePlay | null;
+  warn: SceneWarn | null;
   panel: PanelOpen | null;
   /** "Wait, let it fill": a ladder's button stays quiet until its bar passes this fill. */
   quietUntil: Partial<Record<LadderId, { key: string; fill: number }>>;
 }
 
-export const useScene = create<SceneStore>()(() => ({ play: null, panel: null, quietUntil: {} }));
+export const useScene = create<SceneStore>()(() => ({
+  play: null,
+  warn: null,
+  panel: null,
+  quietUntil: {},
+}));
 
 export const lifeKey = (s: GameState) => `${s.lineage.id}/${s.lineage.life}/${s.seed}`;
 /** The life and the ladder's step, so waiting is forgotten once the step is tried. */
@@ -118,15 +139,20 @@ export function readyLadders(s: GameState): LadderId[] {
   return LADDERS.filter((which) => stepState(s, which) === 'ready');
 }
 
-/** Starts a scene on a ladder's next breakthrough; false when it can't be tried now. */
+/**
+ * Starts a scene on a ladder's next breakthrough; false when it can't be tried now. `warned`: its
+ * warning already stood, and S1's cue with it.
+ */
 export function startScene(
   s: GameState,
   which: LadderId,
   offerings: readonly string[] = [],
+  warned = false,
 ): boolean {
   if (scenePlaying()) return false;
   const attempt = attemptOf(s, which, offerings);
   if (!attempt) return false;
+  if (!warned) cue('warn');
   const l = s.player[which];
   useScene.setState({
     play: {
@@ -145,9 +171,46 @@ export function startScene(
       offerings: attempt.major ? [...offerings] : [],
       outcome: null,
     },
+    warn: null,
     panel: null,
   });
   return true;
+}
+
+/**
+ * The scene that starts by itself, warned of first: the warning rises on the first call, and the
+ * scene starts once it has stood WARN_MS; a different ladder, or none, starts the count again.
+ * Returns whether the scene started.
+ */
+export function warnThenStart(
+  s: GameState,
+  which: LadderId | null,
+  now = performance.now(),
+): boolean {
+  const warn = useScene.getState().warn;
+  const key = lifeKey(s);
+  if (!which) {
+    if (warn) useScene.setState({ warn: null });
+    return false;
+  }
+  if (!warn || warn.ladder !== which || warn.key !== key) {
+    useScene.setState({ warn: { key, ladder: which, at: now } });
+    cue('warn');
+    return false;
+  }
+  if (now - warn.at < WARN_MS) return false;
+  useScene.setState({ warn: null });
+  return startScene(s, which, [], true);
+}
+
+/** The warning's words over the figure, by ladder; a great realm's gate looms. */
+export function warnWords(which: LadderId, major: boolean): string {
+  if (major) return 'The great gate looms…';
+  return which === 'qi'
+    ? 'Qi gathers at the gate…'
+    : which === 'body'
+      ? 'Your bones strain toward the gate…'
+      : 'Your soul stirs toward the gate…';
 }
 
 /** A tap or click on the figure while the scene runs; returns whether it caught a gate. */

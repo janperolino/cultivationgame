@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Feel pass study</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* F1's talk (2026-10-21): where stones and insight sit on Cultivate, the seal by the name, the +n,
+     the breakthrough's warning, the low-stones hint and the encounter alert. Three takes for the
+     stones, then the rest on one stage. Static: the +n is drawn mid-rise.
+     Jan's picks: take C (the grades of stones would make anything showier messy), and the rest as
+     stage 4 shows it, built in F1 on take C. */
+  :root { --accent: #d6ab4c; --gilt: #d9b46a; --text: #e9e5da; --muted: #8d949d; --seal: #b8432f; --warn: #e08a6a; --crack: #7fc7d9;
+    --line: color-mix(in srgb, var(--gilt) 40%, transparent); --line-faint: color-mix(in srgb, var(--gilt) 16%, transparent);
+    --panel: rgb(7 8 11 / 0.9); }
+  body { margin: 0; background: #040507; color: var(--text); font-family: Inter, system-ui, sans-serif; }
+  .stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; margin-bottom: 24px;
+    background: url('../../src/ui/art/cultivate/scene.webp') 188px 0 / 1620px 1080px no-repeat, #040507; }
+  /* The figure is the painted silhouette, centred on the screen's middle (x 998 on the 1920 stage), its head near y 510 and the dais near 750. */
+  .tag { position: absolute; top: 90px; left: 50%; transform: translateX(-50%); font: 600 15px Inter; letter-spacing: .12em; color: var(--gilt);
+    text-transform: uppercase; background: rgb(4 5 7 / .8); padding: 8px 14px; border: 1px solid var(--line-faint); border-radius: 4px; }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(5 6 8 / .9); border-right: 1px solid var(--line-faint); }
+  .rail i { position: absolute; left: 22px; width: 28px; height: 28px; border: 1px solid var(--line-faint); border-radius: 5px; }
+  .rail i.lit { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .rail i.alert { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 0 18px color-mix(in srgb, var(--accent) 55%, transparent); }
+  .rail i.alert::after { content: ''; position: absolute; right: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .top { position: absolute; top: 24px; left: 104px; right: 40px; display: flex; justify-content: space-between; font: 600 22px 'Cormorant Garamond'; }
+  .top .r { display: flex; gap: 28px; align-items: center; font: 400 15px Inter; }
+  .top .r b { font: 600 20px 'Cormorant Garamond'; display: block; }
+  .top .r small { color: var(--muted); font-size: 12px; }
+  .ghost { opacity: .3; }
+  .bottom { position: absolute; left: 72px; right: 0; bottom: 0; height: 300px;
+    background: linear-gradient(to top, rgb(4 5 7 / .96) 60%, transparent); }
+  .who { position: absolute; left: 112px; bottom: 170px; }
+  .who .n { font: 600 34px 'Cormorant Garamond'; display: flex; align-items: center; gap: 12px; }
+  .who .n small { font: 400 13px Inter; color: var(--muted); }
+  .who .realm { font: 500 15px Inter; margin-top: 4px; }
+  .who .realm span { color: var(--muted); margin-left: 12px; }
+  .bars { position: absolute; left: 112px; bottom: 96px; width: 520px; height: 46px; border: 1px solid var(--line-faint); border-radius: 4px; }
+  .middle { position: absolute; left: 998px; transform: translateX(-50%); bottom: 60px; width: 620px; padding: 16px 20px; border-left: 1px solid var(--line-faint); border-right: 1px solid var(--line-faint); color: var(--muted); font-size: 14px; line-height: 1.7; }
+  .middle h3 { margin: 0 0 4px; font: 600 24px 'Cormorant Garamond'; color: var(--text); }
+  .recent { position: absolute; right: 40px; bottom: 60px; width: 300px; font-size: 13px; color: var(--muted); line-height: 1.9; padding-left: 16px; }
+  /* The figure: a black silhouette on the dais, as the scene paints it. */
+  .fig { position: absolute; left: 50%; top: 520px; transform: translateX(-50%); width: 170px; height: 150px;
+    background: radial-gradient(ellipse 50% 70% at 50% 100%, #07080a 70%, transparent 71%); }
+  .fig::before { content: ''; position: absolute; left: 60px; top: -10px; width: 50px; height: 60px; border-radius: 50% 50% 40% 40%; background: #07080a; }
+  .fig::after { content: ''; position: absolute; left: 80px; top: 90px; width: 8px; height: 8px; border-radius: 50%; background: var(--crack); box-shadow: 0 0 14px var(--crack); }
+  .ring { position: absolute; left: 50%; top: 340px; transform: translateX(-50%); width: 510px; height: 510px; border-radius: 50%;
+    border: 2px solid color-mix(in srgb, var(--gilt) 50%, transparent); clip-path: polygon(0 0, 100% 0, 100% 62%, 0 62%); }
+  .under { position: absolute; left: 998px; transform: translateX(-50%); top: 768px; text-align: center; font-size: 15px; color: var(--text); white-space: nowrap; }
+  .under .btn { margin: 0 4px; }
+  .btn { display: inline-block; border: 1px solid var(--line); border-radius: 4px; padding: 7px 14px; font-size: 13px; color: var(--text); background: rgb(12 13 17 / .9); }
+  .btn.first { border-color: var(--accent); color: var(--accent); }
+  .glyph { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; }
+  .glyph svg { width: 100%; height: 100%; fill: none; stroke: var(--gilt); stroke-width: 1.6; }
+
+  /* Take A: stones and insight flank the figure on the dais, the +n rising from them. */
+  .flank { position: absolute; top: 690px; font: 600 26px 'Cormorant Garamond'; display: flex; align-items: center; gap: 8px; }
+  .flank small { font: 400 12px Inter; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; display: block; }
+  .flank.l { left: calc(998px - 190px); transform: translateX(-100%); text-align: right; flex-direction: row-reverse; }
+  .flank.r { left: calc(998px + 190px); }
+  .flank .glyph { width: 20px; height: 20px; margin: 0; }
+  /* Take B: one line in the band under the realm. */
+  .purse { margin-top: 8px; font: 500 15px Inter; display: flex; gap: 22px; color: var(--text); }
+  /* Take C: under the figure's line. */
+  .underpurse { position: absolute; left: 998px; transform: translateX(-50%); top: 800px; font: 500 15px Inter; display: flex; gap: 26px; }
+
+  /* The +n: rises about 40 px and fades over 1.2 s, once; a burst stacks. Drawn mid-rise. */
+  .plus { position: absolute; font: 700 24px 'Cormorant Garamond'; color: var(--gilt); text-shadow: 0 0 10px rgb(0 0 0 / .9); }
+  .plus.loss { color: var(--warn); }
+  .plus .glyph { width: 15px; height: 15px; }
+  /* The seal: a small red square with the power's first hanzi, by the name; its seat on hover. */
+  .seal { display: inline-grid; place-items: center; width: 30px; height: 30px; background: var(--seal); color: #f3e3d0; border-radius: 3px;
+    font: 600 18px 'Noto Serif SC', serif; box-shadow: inset 0 0 0 2px rgb(0 0 0 / .18); }
+  .seal-tip { position: absolute; font-size: 13px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; line-height: 1.5; }
+  .seal-tip b { font-weight: 600; } .seal-tip span { color: var(--muted); }
+  /* The warning: a line over the figure, about 3 s before the first circle. */
+  .warnline { position: absolute; left: 998px; transform: translateX(-50%); top: 440px; font: italic 600 30px 'Cormorant Garamond'; color: var(--gilt-core, #fff1c9);
+    text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 60%, transparent), 0 2px 6px #000; white-space: nowrap; }
+  .toasts { position: absolute; top: 96px; right: 40px; width: 380px; display: grid; gap: 10px; }
+  .toast { background: var(--panel); border: 1px solid var(--line-faint); border-left: 2px solid var(--accent); border-radius: 4px; padding: 12px 14px; font-size: 14px; line-height: 1.5; }
+  .toast .k { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .toast b { font: 600 20px 'Cormorant Garamond'; display: block; margin: 2px 0 4px; }
+  .toast.hint { border-left-color: var(--crack); }
+  .toast .row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+  .note { position: absolute; font-size: 13px; color: var(--accent); background: rgb(4 5 7 / .85); border: 1px dashed var(--line); padding: 6px 10px; border-radius: 4px; max-width: 280px; line-height: 1.45; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="stone" viewBox="0 0 24 24"><path d="M7 4h10l4.5 5.2L12 20.5 2.5 9.2z" /></symbol>
+  <symbol id="insight" viewBox="0 0 24 24"><path d="M11 3l1.7 5.6L18 10.5l-5.3 1.9L11 18l-1.7-5.6L4 10.5l5.3-1.9z" /></symbol>
+</svg>
+
+<!-- 1 · Take A -->
+<div class="stage">
+  <div class="tag">1 · Take A: stones and insight flank the figure (top keeps season and hour)</div>
+  <div class="rail"><i class="lit" style="top:110px"></i><i style="top:160px"></i><i style="top:210px"></i><i style="top:260px"></i><i style="top:310px"></i></div>
+  <div class="top"><span>Severed Heaven <span style="color:var(--gilt)">断天</span></span>
+    <div class="r"><div><b>Winter 3,127</b><small>Late afternoon · hour of Shen</small></div><span class="ghost">◆ 284 &nbsp; ✦ 46</span></div></div>
+  
+  <div class="flank l"><span><small>Stones</small>284</span><span class="glyph"><svg><use href="#stone" /></svg></span></div>
+  <div class="flank r"><span class="glyph"><svg><use href="#insight" /></svg></span><span><small>Insight</small>46</span></div>
+  <div class="plus" style="left:calc(998px - 250px); top:646px; opacity:.85">+20</div>
+  <div class="plus" style="left:calc(998px + 200px); top:652px; opacity:.9">+3</div>
+  <div class="under">Qi Condensation, fifth layer · the bar fills in about 9 days</div>
+  <div class="note" style="left:calc(998px + 330px); top:670px">Under the ring's ends, outside the focus ring. The +n rises from the number it adds to.<br />The top's pair goes ghost here: hidden on Cultivate only.</div>
+  <div class="bottom"></div>
+  <div class="who"><div class="n">Lu Ning <small>they/them</small></div><div class="realm">Qi Condensation, fifth layer <span>17 y 9 m of 120</span></div></div>
+  <div class="bars"></div>
+  <div class="middle"><h3>Today</h3>Reading the Breath Before the Brick, practicing Wind Step. 6 qi · 2 sleep · 4 duty.</div>
+  <div class="recent">Lu Ning answers a summons from the Market.<br />Lu Ning turns down a garrison breath-count.<br />Lu Ning bars the cave against the hungry dark.</div>
+</div>
+
+<!-- 2 · Take B -->
+<div class="stage">
+  <div class="tag">2 · Take B: one line in the band, under your realm</div>
+  <div class="rail"><i class="lit" style="top:110px"></i><i style="top:160px"></i><i style="top:210px"></i><i style="top:260px"></i><i style="top:310px"></i></div>
+  <div class="top"><span>Severed Heaven <span style="color:var(--gilt)">断天</span></span>
+    <div class="r"><div><b>Winter 3,127</b><small>Late afternoon · hour of Shen</small></div><span>◆ 284 &nbsp; ✦ 46</span></div></div>
+  
+  <div class="under">Qi Condensation, fifth layer · the bar fills in about 9 days</div>
+  <div class="bottom"></div>
+  <div class="who" style="bottom:150px"><div class="n">Lu Ning <small>they/them</small></div><div class="realm">Qi Condensation, fifth layer <span>17 y 9 m of 120</span></div>
+    <div class="purse"><span><span class="glyph"><svg><use href="#stone" /></svg></span>284 stones</span><span><span class="glyph"><svg><use href="#insight" /></svg></span>46 insight</span></div></div>
+  <div class="plus" style="left:150px; top:842px; opacity:.85">+20</div>
+  <div class="bars" style="bottom:86px"></div>
+  <div class="middle"><h3>Today</h3>Reading the Breath Before the Brick, practicing Wind Step. 6 qi · 2 sleep · 4 duty.</div>
+  <div class="recent">Lu Ning answers a summons from the Market.<br />Lu Ning turns down a garrison breath-count.<br />Lu Ning bars the cave against the hungry dark.</div>
+  <div class="note" style="left:400px; top:700px">Still far from the figure, and it crowds the left column that the bars and routine already fill.</div>
+</div>
+
+<!-- 3 · Take C -->
+<div class="stage">
+  <div class="tag">3 · Take C: a row under the figure's line</div>
+  <div class="rail"><i class="lit" style="top:110px"></i><i style="top:160px"></i><i style="top:210px"></i><i style="top:260px"></i><i style="top:310px"></i></div>
+  <div class="top"><span>Severed Heaven <span style="color:var(--gilt)">断天</span></span>
+    <div class="r"><div><b>Winter 3,127</b><small>Late afternoon · hour of Shen</small></div><span class="ghost">◆ 284 &nbsp; ✦ 46</span></div></div>
+  
+  <div class="under">Qi Condensation, fifth layer · the bar fills in about 9 days</div>
+  <div class="underpurse"><span><span class="glyph"><svg><use href="#stone" /></svg></span>284</span><span><span class="glyph"><svg><use href="#insight" /></svg></span>46</span></div>
+  <div class="plus" style="left:calc(998px - 60px); top:762px; opacity:.85">+20</div>
+  <div class="bottom"></div>
+  <div class="who"><div class="n">Lu Ning <small>they/them</small></div><div class="realm">Qi Condensation, fifth layer <span>17 y 9 m of 120</span></div></div>
+  <div class="bars"></div>
+  <div class="middle"><h3>Today</h3>Reading the Breath Before the Brick, practicing Wind Step. 6 qi · 2 sleep · 4 duty.</div>
+  <div class="recent">Lu Ning answers a summons from the Market.<br />Lu Ning turns down a garrison breath-count.<br />Lu Ning bars the cave against the hungry dark.</div>
+  <div class="note" style="left:calc(998px + 160px); top:820px">Tight on the breakthrough buttons when they stand under the figure.</div>
+</div>
+
+<!-- 4 · The rest, on take A -->
+<div class="stage">
+  <div class="tag">4 · The rest: seal, warning, low stones, the encounter alert (on take A)</div>
+  <div class="rail"><i class="lit" style="top:110px"></i><i style="top:160px"></i><i class="alert" style="top:210px"></i><i style="top:260px"></i><i style="top:310px"></i></div>
+  <div class="note" style="left:86px; top:200px; max-width:200px">The Map's glyph: the beacons' still glow and a dot, till you open it.</div>
+  <div class="top"><span>Severed Heaven <span style="color:var(--gilt)">断天</span></span>
+    <div class="r"><div><b>Winter 3,127</b><small>Late afternoon · hour of Shen</small></div></div></div>
+  <div class="toasts">
+    <div class="toast"><div class="k">On the road · Ashfall Track</div><b>Grey Wolves at the Ford</b>A pack holds the crossing. You can go round.<div class="row"><span style="color:var(--muted);font-size:12px">waits on the Map</span><span class="btn first">Open</span></div></div>
+    <div class="toast hint"><div class="k">Your pouch</div><b>Stones run low</b>12 stones left, less than a day's burn (16). Qi slows to the wheel alone once they're gone.</div>
+  </div>
+  <div class="warnline">Qi gathers at the gate…</div>
+  <div class="note" style="left:calc(998px + 230px); top:436px">≈3 s before the first circle; the line fades as the circle draws.</div>
+  
+  <div class="flank l"><span><small>Stones</small>12</span><span class="glyph"><svg><use href="#stone" /></svg></span></div>
+  <div class="flank r"><span class="glyph"><svg><use href="#insight" /></svg></span><span><small>Insight</small>46</span></div>
+  <div class="plus loss" style="left:calc(998px - 256px); top:650px; opacity:.8">−20</div>
+  <div class="plus" style="left:calc(998px + 200px); top:612px; opacity:.55">+1 Qi Gathering Pill</div>
+  <div class="plus" style="left:calc(998px + 200px); top:650px; opacity:.9">+3</div>
+  <div class="bottom"></div>
+  <div class="who"><div class="n"><span class="seal" title="Clear Heaven Sword Sect">青</span>Lu Ning <small>they/them</small></div><div class="realm">Qi Condensation, fifth layer <span>17 y 9 m of 120</span></div></div>
+  <div class="seal-tip" style="left:112px; top:760px"><b>Clear Heaven Sword Sect</b> 青天剑宗<br /><span>Outer disciple · 120 contribution</span></div>
+  <div class="bars"></div>
+  <div class="middle"><h3>Today</h3>Reading the Breath Before the Brick, practicing Wind Step. 6 qi · 2 sleep · 4 duty.</div>
+  <div class="recent">Lu Ning answers a summons from the Market.<br />Lu Ning turns down a garrison breath-count.<br />Lu Ning bars the cave against the hungry dark.</div>
+</div>
+<script>
+  const fit = () => { document.body.style.zoom = String(innerWidth / 1920); };
+  addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>

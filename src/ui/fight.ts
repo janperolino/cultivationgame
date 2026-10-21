@@ -12,6 +12,7 @@ import { encounterTemplate } from '../content/encounters/index.ts';
 import { combatantIn, type Fight, type Outcome, type Tick } from '../core/combat/fight.ts';
 import { logLine } from '../core/combat/log.ts';
 import { fightEnd, playTurn, type FightEnd, type YourAction } from '../core/played.ts';
+import { cueGains, deltas, riseGains, type Delta } from './feel.ts';
 import { currentFight, dropLostFight, finishFight, foeNames } from '../core/playFight.ts';
 import type { GameState } from '../core/state.ts';
 import { useGame } from './store.ts';
@@ -34,6 +35,8 @@ interface FightStore {
   end: FightEnd | null;
   /** What the card or the road said when the fight went back to it, shown once. */
   after: string | null;
+  /** What the fight and its hand-back gave or took (F1), shown as +n with `after`. */
+  afterGains: Delta[];
 }
 
 export const useFight = create<FightStore>()(() => ({
@@ -43,6 +46,7 @@ export const useFight = create<FightStore>()(() => ({
   pending: null,
   end: null,
   after: null,
+  afterGains: [],
 }));
 
 function firstFoe(f: Fight, me: string): string | null {
@@ -195,11 +199,14 @@ export function leaveFight(): void {
   const { fight } = useFight.getState();
   if (!fight) return;
   let text = '';
+  let changed: Delta[] = [];
   useGame.getState().applyLife((s) => {
     const r = finishFight(s, fight);
     text = r?.text ?? '';
+    if (r) changed = deltas(s, r.state);
     return r?.state ?? s;
   });
+  cueGains(changed);
   useFight.setState({
     fight: null,
     target: null,
@@ -207,11 +214,13 @@ export function leaveFight(): void {
     pending: null,
     end: null,
     after: text || null,
+    afterGains: changed,
   });
   void useGame.getState().saveNow();
 }
 
 /** The hand-back's words were read. */
 export function dismissAfter(): void {
-  useFight.setState({ after: null });
+  riseGains(useFight.getState().afterGains);
+  useFight.setState({ after: null, afterGains: [] });
 }

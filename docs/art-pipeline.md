@@ -7,6 +7,7 @@ What comes from the Jade Sanctuary prototype (Jan's Codex test, 2026-10-16, kept
 ## The loop
 
 1. **Concept.** Claude writes a concept prompt for one screen (template A) with the screen's real content, and attaches a screenshot of the current build as the content reference. Jan runs it, two to four takes, and picks one or asks GPT for edits. The pick is saved in `art/concepts/<screen>-<n>.webp` and committed, since it is the reference the build is held to.
+   **Room to grow** (Jan's call, 2026-10-21): a screen is painted now, not once its features stop changing, so the concept leaves room for what later phases add: a tab more in a row, a column that scrolls inside, a quiet zone in the scene, a panel's place. Only the backdrop and the ornaments are paint; a later feature slots in as code in the kit with no repaint. The talk goes over what later phases might add (How each session runs) and the prompt names that room. A screen that doesn't exist yet is built in the kit by the phase that adds it, which paints nothing; painting it is an A phase Jan takes up when he gets to it, with no fixed slot (Jan's call: "I'll do it when I get to it").
 2. **Cut list.** Claude reads the pick and writes the cut list (template B): what is art and what is code, and for each asset its id, kind, size, slice insets, budget and prompt. Jan says yes or edits.
 3. **Assets.** Jan runs each asset prompt (templates C to F) with the concept attached, so GPT matches it, and drops the PNG in `art/inbox/` named by its asset id (`cultivate-scene.png`).
 4. **Ingest.** `npm run art` moves the inbox files to `art/source/`, writes `src/ui/art/<screen>/<id>.webp` as the manifest says, checks the budgets and prints the sizes.
@@ -28,7 +29,7 @@ Art is the still set. Code is everything that reads state, changes, moves, or th
 | The day wheel, the trees' fans, the Chronicle river, the cracks | drawn from data |
 | Anything that animates | art never moves |
 
-Art can also be content, later: an item, place or beast entry names an art id, and missing art shows nothing, never a broken image. No phase does this yet.
+Art can also be content: an item, beast, card or encounter entry names an art id, and missing art shows nothing, never a broken image (§ Content art, A11).
 
 ## Asset kinds
 
@@ -110,7 +111,7 @@ Every prompt carries the style block word for word, so the assets agree with eac
 
 **A. Concept, one screen**
 
-> Use case: ui-mockup. Create ONE polished desktop game screen for Severed Heaven 断天, a literary cultivation RPG, a 16:9 landscape PC monitor screen at 1920x1080 proportions, straight-on actual UI with real readable text. Keep everything the player needs inside the centre 90% of the width; the outer edges carry only scenery. The attached screenshot is the current screen: keep its content and controls, redesign its look and layout. [STYLE BLOCK] STRUCTURE: build the screen from solid carved panels with real ornament at their corners, not thin outline boxes; one painted scene is the heart of the screen; the one thing waiting on the player is the brightest panel; [layout for this screen, e.g. "character slab left, scene center, card right, routine rail above a bottom navigation"]. CONTENT, use exactly, English first with small hanzi: [the screen's real copy and numbers from the build]. Nothing over the painted scene except [list]. No invented mechanics, no extra stats, no presentation captions.
+> Use case: ui-mockup. Create ONE polished desktop game screen for Severed Heaven 断天, a literary cultivation RPG, a 16:9 landscape PC monitor screen at 1920x1080 proportions, straight-on actual UI with real readable text. Keep everything the player needs inside the centre 90% of the width; the outer edges carry only scenery. The attached screenshot is the current screen: keep its content and controls, redesign its look and layout. [STYLE BLOCK] STRUCTURE: build the screen from solid carved panels with real ornament at their corners, not thin outline boxes; one painted scene is the heart of the screen; the one thing waiting on the player is the brightest panel; [layout for this screen, e.g. "character slab left, scene center, card right, routine rail above a bottom navigation"]. CONTENT, use exactly, English first with small hanzi: [the screen's real copy and numbers from the build]. Nothing over the painted scene except [list]. ROOM TO GROW: [what later phases add here, e.g. "the tab row has space for two more tabs; the right column scrolls inside its panel"]. No invented mechanics, no extra stats, no presentation captions.
 
 **B. Cut list** (Claude writes it, Jan reads it)
 
@@ -159,9 +160,31 @@ Stays code: the name, pronouns, realm, bars and numbers, recent events, the seat
 3. **The walking rim light** goes; a panel that waits on you keeps a still accent glow. A2 also dropped the 9-slice slab frames for single CSS hairlines (Jan: thin and sleek over carved), so frames as art are for a screen that wants one.
 4. **Where the rule lives.** design.md § Look, rewritten in A2.
 
+## Content art (A11)
+
+Jan's call, 2026-10-21: the things inside the screens get pictures, trickled in like A5.4 whenever there is ChatGPT time, never blocking a phase.
+
+- **The hook.** An item, beast, enemy, card or encounter entry may name an `art` id. One without falls back to its kind's picture (every pill shows a pill, every talisman a talisman), and a missing file shows nothing. Rarity stays code, the rim and glow the game draws, so one icon serves every rarity.
+- **Item icons:** about 290 items, painted as ornament sheets (template F) of 16 on a 4×4 grid of 256 px cells, one object a cell on transparent, lit as the style block says, no frame or rim of its own; about 19 sheets, kind by kind; shipped at 128 px (64 on the stage). Shown in the Bag, shop rows, recipes, loot and the +n on gains.
+- **Beasts and enemies:** 35, a painted bust each, on 2×2 sheets of 512 px cells (9 sheets), shipped at 512; shown in the square and on the fight screen.
+- **Vignettes:** about 40 scenes (template E, landscape) shared by tag across the cards and encounters: a road ambush, a herb find, ruins, a sect gate, an elder, a storm, a night camp and so on; each card or encounter names one; shown at 720×380 in the square (design § Story cards and events, The square), so painted landscape and shipped at 1440×760, about 150 KB.
+- **Portraits by type** (Jan's call, 2026-10-21: faces now): about 48, a man or a woman, young, middle-aged or old, and eight kinds (cultivator, merchant, scholar, farmer, guard, elder, rogue, beast-tamer), busts on 2×2 sheets of 512 px cells (12), shipped at 512. A person's seed picks one that fits; the cast list (design § Still to design, NPC depth) brings the cast's own faces and other races', which replace them.
+- **Places paint their own** (A6): a banner scene and the doors as one sheet, a 3×3 grid of door scenes, about two runs a place, never a picture shared by kind; the five inspo favorites (`docs/mockups/inspo/`) are the layouts, not the light.
+- **Order:** items first (the Bag and shops show the most), then faces, beasts, then vignettes. About 80 ChatGPT runs in all, each loaded only when shown.
+
+## Sound (S1)
+
+Jan's call, 2026-10-21. The same split as the art: Jan gathers or generates, Claude writes the cue list and the code.
+
+- **Where it comes from.** Effects and ambience free first: CC0 (Kenney's audio packs, Sonniss's GDC bundles, Freesound's and OpenGameArt's CC0), CC-BY with its credit line kept, never a NonCommercial licence (it would bar Steam) or a file whose source is unclear. Music by AI on a paid plan that grants its use (Suno or Udio) in Chinese instruments, guzheng, dizi, erhu, pipa, guqin and xiao, with free tracks where good ones turn up. Steam would want the AI music disclosed beside the art.
+- **The cue list.** Claude writes it per phase: each cue's id, the engine event it plays on, and search terms for a free sound or a prompt for the music.
+- **Files.** `sound/inbox/` (ignored) for what Jan drops, named by cue id; `sound/manifest.json` (committed): each sound's id, kind (music, ambience or effect), source URL, licence and credit; `npm run sound` writes MP3s under `src/ui/sound/` and fails on a sound with no licence or credit, or over budget.
+- **Budgets, as loading hygiene:** a track about 3 MB at 128 kbps, streamed when first played; an ambience loop about 1 MB; an effect under 50 KB, loaded with its screen.
+- **Credits:** the manifest's credits are listed in Settings.
+
 ## The overhaul
 
-`plan.md` runs the pipeline as phases A1 to A9, before P3.8: A1 builds the stage and `npm run art`, A2 the shell and the shared kit (and rewrites design.md § Look), then the screens one or a few at a time.
+`plan.md` runs the pipeline as phases A1 to A10 (the backlog since 2026-10-18; A10 Crafts added 2026-10-21): A1 builds the stage and `npm run art`, A2 the shell and the shared kit (and rewrites design.md § Look), then the screens one or a few at a time, painted now with room to grow; a new screen is built in the kit by its phase and waits for an A phase, taken up when Jan gets to it.
 
 ## The travel map: a region painted whole (A5)
 

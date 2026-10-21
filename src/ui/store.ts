@@ -42,17 +42,32 @@ import { guideHold } from './guide.ts';
 import { noteCodex } from '../core/codex.ts';
 import { noteGuides, unguidedStart } from '../core/guides.ts';
 import { noteQuests } from '../core/journal.ts';
-import { attemptOf, endScene, sceneDue, sceneRolled, startScene, useScene } from './scene.ts';
+import {
+  attemptOf,
+  endScene,
+  sceneDue,
+  sceneRolled,
+  startScene,
+  useScene,
+  warnThenStart,
+} from './scene.ts';
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
 import { technique } from '../content/techniques.ts';
 import { intentRisen, stageName as intentName } from '../core/intent.ts';
-import { ensureMap } from '../core/map/travel.ts';
+import { ensureMap, mapOf } from '../core/map/travel.ts';
+import { areaAt } from '../core/map/region.ts';
+import { encounterTemplate } from '../content/encounters/index.ts';
+import { cue } from './cues.ts';
+import { cueGains, deltas, lowStonesRearms, lowStonesWords, type Delta } from './feel.ts';
+import { useNav } from './nav.ts';
+import { clearSquare } from './square.ts';
 import {
   clearToasts,
   dismissToast,
   leftSlots,
   raiseStartToasts,
+  raiseNotice,
   raiseToast,
   raiseToasts,
   shownHint,
@@ -79,6 +94,8 @@ export interface CardOutcomeView {
   pass: boolean | null;
   /** Your attribute against the card's number, and the verdict. */
   check?: CardCheck;
+  /** What the choice gave or took (F1), shown as +n in the square. */
+  gains: Delta[];
 }
 
 export type Phase =
@@ -353,17 +370,19 @@ export const useGame = create<GameStore>()((set, get) => {
       update(r.state);
       if (!r.success) void get().saveNow();
       sceneRolled({ success: r.success, major: r.major, odds: r.odds });
+      if (r.success) cue('fanfare');
       return;
     }
-    // Never over the breakthrough panel while you lay offerings.
-    const { play, panel } = useScene.getState();
+    // Never over the breakthrough panel while you lay offerings; a warning stands over the figure
+    // for a few seconds before the scene starts by itself (F1).
+    const { play, panel, warn } = useScene.getState();
     if (game && seat.scene === 'ready' && !play && !panel) {
       const certain = LADDERS.find((which) => {
         const attempt = attemptOf(game, which);
         return attempt && !attempt.major && attempt.odds >= 1;
       });
-      if (certain) startScene(game, certain);
-    }
+      warnThenStart(game, certain ?? null);
+    } else if (warn && !play) useScene.setState({ warn: null });
   }
 
   function startLoop() {
@@ -559,6 +578,8 @@ export const useGame = create<GameStore>()((set, get) => {
         void get().saveNow();
         return null;
       }
+      const changed = deltas(game, r.state);
+      cueGains(changed);
       set({
         cardOutcome: {
           uid,
@@ -566,6 +587,7 @@ export const useGame = create<GameStore>()((set, get) => {
           text: r.text,
           pass: r.pass,
           goesOn: !r.done,
+          gains: changed,
           ...(r.check ? { check: r.check } : {}),
         },
       });
@@ -944,7 +966,11 @@ useGame.subscribe((now, was) => {
       });
   }
   if (now.slot !== was.slot || !now.game || now.game.lineage.life !== was.game?.lineage.life) {
-    if (now.game !== was.game) clearToasts();
+    if (now.game !== was.game) {
+      clearToasts();
+      clearSquare();
+      lowStonesArmed = true;
+    }
     driveHints();
     return;
   }
@@ -953,6 +979,7 @@ useGame.subscribe((now, was) => {
   raiseToasts(gains(was.game, now.game), now.game);
   const ranOut = stonesRanOut(was.game, now.game);
   if (ranOut) raiseToast('stones', ranOut);
+  feelFor(was.game, now.game);
   // A technique reaching Origin leaves its slot, which stays empty until the player fills it.
   for (const id of leftSlots(was.game, now.game)) {
     raiseToast('slot', `${technique(id).name} reached Origin and left its slot`, {
@@ -967,6 +994,53 @@ useGame.subscribe((now, was) => {
     raiseToast('intent', `${st.name} ${st.hanzi} wakes`, { screen: 'character' });
   }
 });
+
+/** The low-stones hint fires once on the way down, and again once the pouch has refilled (F1). */
+let lowStonesArmed = true;
+
+/**
+ * The feel pass's moments in a change (F1): a card or an encounter arriving (S1's chime), an
+ * encounter that stops your road while you're off the Map (the alert and its toast; on Cultivate
+ * the square pops instead), and the pouch falling under a day's burn.
+ */
+function feelFor(was: GameState, now: GameState): void {
+  if (now.cards.nextUid > was.cards.nextUid) cue('arrive');
+  const before = new Map((was.map?.encounters ?? []).map((e) => [e.id, e.state]));
+  const stopped = (now.map?.encounters ?? []).filter(
+    (e) => e.state === 'waiting' && before.get(e.id) !== 'waiting',
+  );
+  const fresh = (now.map?.encounters ?? []).some((e) => !before.has(e.id));
+  if (fresh && stopped.length === 0) cue('arrive');
+  const here = useNav.getState().here;
+  for (const e of stopped) {
+    cue('alert');
+    if (here === 'map' || here === 'cultivate') continue;
+    const t = encounterTemplate(e.template);
+    const map = mapOf(now);
+    const where = map ? areaAt(map, e.at)?.name : undefined;
+    raiseNotice(
+      'road',
+      t.title,
+      e.how === 'sprung'
+        ? 'Sprung on you; it waits.'
+        : e.how === 'found'
+          ? 'It found you first; it waits.'
+          : 'It waits on your road.',
+      {
+        link: { screen: 'map' },
+        open: { kind: 'encounter', id: e.id },
+        ...(where ? { where } : {}),
+      },
+    );
+  }
+  if (lowStonesArmed) {
+    const words = lowStonesWords(was, now, true);
+    if (words) {
+      lowStonesArmed = false;
+      raiseNotice('pouch', 'Stones run low', words, { link: { screen: 'routine', tab: 'day' } });
+    }
+  } else if (lowStonesRearms(now)) lowStonesArmed = true;
+}
 
 /**
  * Hints, one at a time (ui/hints.ts): a hint showing stays until the player does what it says or
