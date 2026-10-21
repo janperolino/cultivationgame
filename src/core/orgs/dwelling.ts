@@ -1,4 +1,5 @@
 // Where a member secludes by seat, and the qi density it gives.
+import { stepsOf } from '../arrays.ts';
 import {
   DWELLING,
   DWELLING_NAMES,
@@ -41,7 +42,8 @@ export function dwellingWords(s: GameState): string | null {
  */
 export function densityHere(s: GameState): number {
   if (s.map?.course) return 1;
-  return Math.max(dwellingOf(s)?.density ?? 1, stepMult(dwellingHere(s)?.steps ?? 0));
+  const here = dwellingHere(s);
+  return Math.max(dwellingOf(s)?.density ?? 1, stepMult(here ? stepsOf(here) : 0));
 }
 
 /** A power's dwelling's density at a place: its seat's, capped by the place's vein (O2's talk). */

@@ -6,6 +6,7 @@
 import { cardFight, resolveCard } from './cards.ts';
 import { combatantIn, type Fight } from './combat/fight.ts';
 import { roadFight, settlePlayed } from './map/encounters.ts';
+import { burnFought, settleTrap, trapFight } from './formations.ts';
 import { afterFight, fightEnd, openFight, replay, type FightEnd } from './played.ts';
 import { endSpar, sparFight, sparWhy } from './spar.ts';
 import type { FightFrom, GameState } from './state.ts';
@@ -19,6 +20,8 @@ export function fightStart(s: GameState, from: FightFrom): Fight | null {
       return roadFight(s, from.enc, from.exit);
     case 'card':
       return cardFight(s, from.uid, from.choice);
+    case 'trap':
+      return trapFight(s, from.ground);
   }
 }
 
@@ -86,7 +89,7 @@ export function finishFight(s: GameState, f: Fight): Finished | null {
   if (!rec || !end) return null;
   const used = usedArts(s);
   const names = foeNames(s, f);
-  const st = afterFight(s, f);
+  const st = burnFought(afterFight(s, f), f);
   switch (rec.from.kind) {
     case 'spar':
       return { state: endSpar(st, f, names, end, rec.from.who), text: SPAR_WORDS[end], end };
@@ -97,6 +100,10 @@ export function finishFight(s: GameState, f: Fight): Finished | null {
     case 'card': {
       const r = resolveCard(st, rec.from.uid, rec.from.choice, { played: end });
       return { state: r.ok ? r.state : st, text: r.ok ? r.text : '', end };
+    }
+    case 'trap': {
+      const r = settleTrap(st, rec.from.ground, end);
+      return { ...r, end };
     }
   }
 }

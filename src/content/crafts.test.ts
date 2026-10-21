@@ -7,6 +7,7 @@ import { RARE } from './catalogs/rare.ts';
 import {
   ALCHEMY_MAKES,
   FAMILIES,
+  FORMATIONS_MAKES,
   PROPERTIES,
   RECIPES,
   REFINING_MAKES,
@@ -148,6 +149,32 @@ describe('the recipes', () => {
         expect(
           ESCAPE_THROUGH.some((e) => elements.has(e)),
           `${r.output} goes through earth or water`,
+        ).toBe(true);
+    }
+  });
+
+  it('give every array a formations recipe (K10)', () => {
+    for (const a of ITEMS.filter((i) => itemKind(i) === 'array'))
+      expect(
+        RECIPES.some((r) => r.output === a.id && r.craft === 'formations'),
+        a.id,
+      ).toBe(true);
+  });
+
+  it('could each make their array by formations’ row of the effect table, the eye aside', () => {
+    for (const r of RECIPES.filter((x) => x.craft === 'formations')) {
+      const does = item(r.output).uses.array?.does;
+      expect(does, r.output).toBeDefined();
+      const ins = r.inputs.filter((i) => i.thing !== 'array-plate-blank').map((i) => item(i.thing));
+      const props = new Set(ins.flatMap((i) => i.uses.ingredient?.properties ?? []));
+      expect(
+        FORMATIONS_MAKES[does!].some((p) => props.has(p)),
+        `${r.output} needs ${FORMATIONS_MAKES[does!].join(' or ')}`,
+      ).toBe(true);
+      if (does === 'growing')
+        expect(
+          ins.some((i) => i.element === 'wood'),
+          `${r.output} grows through wood`,
         ).toBe(true);
     }
   });

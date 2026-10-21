@@ -10,6 +10,7 @@ Crafters should be clearly richer than gathering or duty from Glimpse on (D4, K1
 - **Talismans don't pay queued either** (K5). A queued Ember Talisman nets 9.8–17 at Comprehension, played 19–28, against alchemy's 28–46. Levers: a talisman's price by kind, or the shops' buy rate.
 - **Herb prices** (K1). Herbs dropped 2 → 0.7 low to make alchemy pay, which also cut gathering's pay. K1's suggestion: herbs back near 1, and raise batch yield to make up for it (yield only touches the crafter).
 - **The clock** (rerun at K9's merge). The opening landed (Foundation at about 2.5 attended hours), and craft mastery is anchored to the attended crafter: Comprehension at 3 batches, Mastery 12, Perfection 35, Origin 85 (were 10, 40, 120, 300). `npm run sim -- craft` still PASSes and alchemy's money hardly moved (Comprehension 30.8 and 50.7 low per four hours, was 28 and 46). Worth a look: at the City a queued Glimpse batch nets 4.4 low, under four gather hours' 7.2; only the markets' average (1.3×) keeps Glimpse above gathering.
+- **Formations' money isn't measured** (K10). An array is worth 12 low at white tier 1 and its inputs about 6–8 (the jade blank, two Banner Silk, what it is drawn from), but `npm run sim -- craft gathering-flags` comes back NaN: the sim's buy-and-sell loop is written for pills. An array's worth to the player is mostly what it does at their own site, so the checkpoint can weigh whether selling arrays should pay at all.
 
 ## 2. Your parked ideas
 
@@ -35,10 +36,11 @@ Each is listed under *Awaiting Jan's review* in `plan.md`, with where to look.
 - **K7:** the generated recipes' names (two words an element, an effect word and a kind each, Fierce for a toxic pill), their sizes and the floor's odds, and the Experiment tab's words. Any craft page's Experiment tab: `herbs 20` fills the shelf, and after a miss `pity` makes the next throw of that set all but find.
 - **K8:** the sixteen crops and their bed counts (30 at a white floor down to 1 at gold), the packets' names, the four boosters (Spirit Soil, Earth Milk, the Spring-Rain and Pest-Warding Talismans) and the Fields door's words. Dev console `at spear-plow`, then `farm` (and `farm 100` to age the beds), on the Crafts screen's Farming page.
 - **K9:** the dwellings table (rents, stores, slots, the broker's lines), your quarters' names by seat, the three works, the raid cards and the chronicle's dwelling lines. Dev console `vein` then the Map's Journey to claim a cave abode; `at qm-shoukou-cheng` and the City's Broker door; the Dwelling screen 居.
+- **K10:** the thirteen arrays (nine on the continent, the Ward-Flag Method's two, the Pavilion's two), their recipes and inputs, Banner Silk, the Mirage Pearl and the Bronze Inscribing Plate; the eye, burn, trap and placing numbers in `content/formations.ts`; the five codex entries. Dev console `craft gathering-flags`, `item snare-disc`, `vein` and claim a cave abode, then lay into its slot on the Dwelling screen; the Map's own menu to lay on open ground, then `trap` and check it.
 
 ## 4. Small calls the phases made on their own
 
-Under Open questions in `plan.md`, "Small calls in K1" to "K9". The ones you're most likely to feel in play:
+Under Open questions in `plan.md`, "Small calls in K1" to "K10". The ones you're most likely to feel in play:
 
 - **K1:** a cracked tool works nothing until mended; the bench waits while you travel; a slip's node costs 25 insight.
 - **K2:** tier 1 holds 13 nodes and is held at 7; Hand's tier 2 capstones were made lift +0.5.
@@ -51,4 +53,6 @@ Under Open questions in `plan.md`, "Small calls in K1" to "K9". The ones you're 
 - **K8:** a plot is held only at a written village or town, and every Border Wilds plot sits at qi density 3 (6 low a season); a lease running out takes the plot back with whatever grows on it; a tending sitting counts only after 10 seconds; the Wood spell is free once a season; no shop buys packets back yet; Lore's pity and seed crossing wait. The rest are under Open questions, Small calls in K8.
 - **K9:** reading the land takes no clock time, once a day a spot; raiders are the land's band where the site stands, so a deep site draws Foundation raiders a Qi Condensation store rarely tempts; a raid's fight is at your realm; works only on land claimed in the wild; a hut or hidden valley holds no array slot (no vein); an abandoned abode stays in the world, hidden, its store gone. The rest are under Open questions, Small calls in K9.
 
-All four minigames play the same at every tier. Worth a look in play: should a higher tier quicken them?
+- **K10:** formations' bench is queued only, the hand coming from placing when you lay; an array laid at a full hand goes up a band, its leftover lift its strength inside the band, nothing rolled; taking one up gives the flags back at the rarity they were; the eye is charged in full when laid (30 low at tier 1); a tier 1 white ward turns only Qi Condensation 1–3 raiders, so a deep site wants green or blue; arrays fight only in a raid you face at your site and in a trap's catch (flags mid-fight are K11's); a trap catches only the thunder-horned deer for now (the beast raid's roster); the guild doesn't examine formations yet. The rest are under Open questions, Small calls in K10.
+
+All five minigames play the same at every tier. Worth a look in play: should a higher tier quicken them, or, for placing, bring more currents and stones?

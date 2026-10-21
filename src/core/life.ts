@@ -74,6 +74,7 @@ import { openRings } from './loot.ts';
 import { densityHere, membershipDay, protectorOf, protectorSpent } from './organizations.ts';
 import { bedNights } from './map/place.ts';
 import { dwellingOpens, dwellingsDay } from './dwellings.ts';
+import { formationsDay } from './formations.ts';
 import { setCopyGain } from './map/encounters.ts';
 import { benchSpot, cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 import { atHome, jobsDay, onShift } from './jobs.ts';
@@ -250,6 +251,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   // The plots grow wherever you are, tended where you stand (K8).
   next = fieldsDay(next, s.calendar.day - days, s.calendar.day);
   next = dwellingsDay(next, s.calendar.day - days, s.calendar.day);
+  // Arrays burn their eyes' stones, and traps on open ground catch what walks in (K10).
+  next = formationsDay(next, s.calendar.day - days, s.calendar.day);
   return noteQuests(noteFirsts(checkScreens(next)));
 };
 

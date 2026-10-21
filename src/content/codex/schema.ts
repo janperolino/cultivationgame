@@ -75,6 +75,9 @@ export const MET_TESTS = [
   'quest', // a quest taken
   'dwelling', // a dwelling held (K9)
   'claimed', // a site claimed in the wild
+  'array', // an array's flags or disc held, or one laid (K10)
+  'laid', // an array laid at a site or on open ground
+  'prepared', // an array laid on open ground
 ] as const;
 export type MetTest = (typeof MET_TESTS)[number];
 

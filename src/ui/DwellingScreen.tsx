@@ -1,11 +1,25 @@
 // The Dwelling screen 居 (K9, design § Dwellings are sites; take A of docs/mockups/dwelling-study.html):
 // the dwelling where you stand, its place read on the left (qi density on the ladder, its vein,
-// concealment, defenses, worth, reach and neighbors), its store and land in the middle, its array
-// slots (K10 lays them), the works you can build and how you hold it on the right. Anywhere else it
-// is greyed: the dwellings you hold, and that a town's broker 牙行 lets them.
+// concealment, defenses, worth, reach and neighbors), its store and land in the middle, its arrays
+// (K10: laid through placing, their eyes fed and taken up, and your prepared ground), the works you
+// can build and how you hold it on the right. Anywhere else it is greyed: the dwellings you hold,
+// and that a town's broker 牙行 lets them.
 import { useState } from 'react';
 import { DWELLINGS, WORKS } from '../content/dwellings.ts';
 import { item } from '../content/items.ts';
+import {
+  arrayBand,
+  arrayName,
+  arraySteps,
+  arrayUse,
+  burnOf,
+  eyeHolds,
+  gatheringSteps,
+  running,
+  stepsOf,
+} from '../core/arrays.ts';
+import { feedArray, feedCost, groundWhere, takeUp } from '../core/formations.ts';
+import { PlacingScene } from './PlacingScene.tsx';
 import { QI_NAMES } from '../content/map/travel.ts';
 import { capitalize } from '../content/words.ts';
 import {
@@ -39,7 +53,7 @@ import { depthInfo, qiAt } from '../core/map/depth.ts';
 import { placeById } from '../core/map/region.ts';
 import { goToPlace, mapOf } from '../core/map/travel.ts';
 import { veinAt } from '../content/map/index.ts';
-import type { Dwelling, GameState } from '../core/state.ts';
+import type { Dwelling, GameState, LaidArray } from '../core/state.ts';
 import { go } from './nav.ts';
 import { useGame } from './store.ts';
 
@@ -66,13 +80,62 @@ function reachWords(s: GameState, d: Dwelling): { head: string; sub: string } {
   };
 }
 
-function Ladder({ land, density }: { land: number; density: number }) {
+function Ladder({ land, density, arrays = 0 }: { land: number; density: number; arrays?: number }) {
   return (
     <div className="dw-ladder" aria-hidden="true">
       {Array.from({ length: LADDER }, (_, i) => (
-        <span key={i} className={i < land ? 'is-land' : i < density ? 'is-up' : ''} />
+        <span
+          key={i}
+          className={
+            i < land ? 'is-land' : i < density - arrays ? 'is-up' : i < density ? 'is-array' : ''
+          }
+        />
       ))}
     </div>
+  );
+}
+
+/** What a laid array is doing, in a line. */
+function arrayLine(a: LaidArray): string {
+  const u = arrayUse(a);
+  const band = bandName(arrayBand(a));
+  switch (u.does) {
+    case 'gathering':
+      return `+${arraySteps(a)} step${arraySteps(a) === 1 ? '' : 's'} of qi`;
+    case 'growing':
+      return `the fields here grow ${arraySteps(a)} step${arraySteps(a) === 1 ? '' : 's'} denser`;
+    case 'concealing':
+      return `${arraySteps(a)} band${arraySteps(a) === 1 ? '' : 's'} of concealment`;
+    case 'warding':
+      return u.beastsOnly
+        ? `beasts of ${bandName(arrayBand(a) + (u.beasts ?? 0))} or under turn away`
+        : `a barrier at ${band}: raiders at it or under turn away`;
+    case 'alarm':
+      return 'a raid’s card waits twice as long';
+    case 'binding':
+      return `holds foes of ${band} or under, one turn in ${u.every ?? 2}`;
+    case 'killing':
+      return 'strikes every foe inside, each turn';
+    case 'maze':
+      return `foes of ${band} or under lose a third of their aim`;
+  }
+}
+
+function Eye({ a }: { a: LaidArray }) {
+  const full = eyeHolds(item(a.item).tier);
+  const burn = burnOf(a);
+  const left = burn > 0 ? Math.floor(a.stones / burn) : Infinity;
+  return (
+    <>
+      <div className="dw-eye" aria-hidden="true">
+        <div style={{ width: `${Math.min(100, (a.stones / full) * 100)}%` }} />
+      </div>
+      <small>
+        {running(a)
+          ? `its eye: ${Math.round(a.stones * 10) / 10} of ${full} low · ${Math.round(burn * 100) / 100} a day · ${left === Infinity ? '—' : `${left} days`}`
+          : 'dark: its eye is empty'}
+      </small>
+    </>
   );
 }
 
@@ -130,6 +193,9 @@ function Here({ game, d, act }: { game: GameState; d: Dwelling; act: (f: Change)
   const gone = lapsed(d, game.calendar.day);
   const plots = slotPlots(game.player, d);
   const arrays = arraySlots(game.player, d);
+  const [laying, setLaying] = useState(false);
+  const gathered = gatheringSteps(d).steps;
+  const away = game.player.grounds.filter((g) => g.region === game.map?.region);
   const works = worksAt(d);
   const vein = d.kind === 'cave' || d.kind === 'mountain' ? d.steps : veinAt(d.place);
   const price = rentPrice(game, d);
@@ -159,12 +225,15 @@ function Here({ game, d, act }: { game: GameState; d: Dwelling; act: (f: Change)
             <b className="dw-qi">
               {density} · {QI_NAMES[density]}
             </b>{' '}
-            <span className="muted">· seclusion ×{stepMult(d.steps)}</span>
-            <Ladder land={land} density={density} />
+            <span className="muted">· seclusion ×{stepMult(stepsOf(d))}</span>
+            <Ladder land={land} density={density} arrays={gathered} />
             <div className="dw-why-line">
               The land’s {land}
-              {d.steps > 0 ? `, and ${d.steps} step${d.steps === 1 ? '' : 's'} up` : ''}. Crops grow
-              to tier {Math.max(1, Math.floor(density / 2))} here.
+              {d.steps > 0 ? `, and ${d.steps} step${d.steps === 1 ? '' : 's'} up` : ''}
+              {gathered > 0
+                ? `, ${gathered} more for the gathering array${gathered === 1 ? '' : 's'}`
+                : ''}
+              . Crops grow to tier {Math.max(1, Math.floor(density / 2))} here.
             </div>
           </Prop>
           <Prop k="Vein">
@@ -191,12 +260,28 @@ function Here({ game, d, act }: { game: GameState; d: Dwelling; act: (f: Change)
                 </div>
               </Prop>
               <Prop k="Defenses">
-                <b>{d.kind === 'cave' || d.kind === 'mountain' ? 'The rock' : 'Its walls'}</b> · no
-                arrays
-                <div className="dw-why-line">
-                  Guards nothing worth taking. A guarding array (Formation Inscribing) turns raiders
-                  below its barrier.
-                </div>
+                {read.guard >= 0 || read.guardBeasts >= 0 ? (
+                  <>
+                    <b className="is-good">
+                      A ward at {bandName(Math.max(read.guard, read.guardBeasts))}
+                    </b>
+                    <div className="dw-why-line">
+                      {read.guard >= 0
+                        ? `Raiders at ${bandName(read.guard)} or under turn away; stronger ones come and break it in the fight, where it stands over you.`
+                        : `Beasts at ${bandName(read.guardBeasts)} or under turn away; men walk through it.`}
+                      {read.guard >= read.land ? ' The land’s own thieves turn from it.' : ''}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <b>{d.kind === 'cave' || d.kind === 'mountain' ? 'The rock' : 'Its walls'}</b> ·
+                    no arrays
+                    <div className="dw-why-line">
+                      Guards nothing worth taking. A warding array turns raiders at its band or
+                      under.
+                    </div>
+                  </>
+                )}
               </Prop>
               <Prop k="Worth">
                 <b className={read.thievesCome ? 'is-bad' : ''}>{read.worth} low</b>{' '}
@@ -343,7 +428,9 @@ function Here({ game, d, act }: { game: GameState; d: Dwelling; act: (f: Change)
           <section className="panel">
             <h3 className="panel-heading">
               Arrays <span className="hanzi">阵</span>
-              <span className="dw-right">0 of {arrays}</span>
+              <span className="dw-right">
+                {d.arrays.length} of {arrays}
+              </span>
             </h3>
             {arrays === 0 ? (
               <p className="muted">
@@ -352,17 +439,82 @@ function Here({ game, d, act }: { game: GameState; d: Dwelling; act: (f: Change)
                   : 'Arrays of yours are laid only on land you hold in the wild.'}
               </p>
             ) : (
-              Array.from({ length: arrays }, (_, i) => (
-                <div key={i} className="dw-slot is-dim">
-                  <span className="dw-sq is-empty">阵</span>
-                  <div>
-                    An empty array slot
-                    <small>Formation Inscribing lays its flags and disc.</small>
+              <>
+                {d.arrays.map((a) => (
+                  <div key={a.id} className={`dw-slot${running(a) ? '' : ' is-dim'}`}>
+                    <span className="dw-sq">{item(a.item).hanzi.slice(0, 1)}</span>
+                    <div>
+                      {arrayName(a)} <span className={`rarity-${a.rarity}`}>{a.rarity}</span>
+                      <small>{arrayLine(a)}</small>
+                      <Eye a={a} />
+                    </div>
+                    <div className="dw-btns">
+                      <button
+                        type="button"
+                        className="place-btn"
+                        disabled={feedCost(a) <= 0}
+                        title={`Top its eye up: ${feedCost(a)} low`}
+                        onClick={() => act((s) => feedArray(s, { dwelling: d.id }, a.id))}
+                      >
+                        Feed
+                      </button>
+                      <button
+                        type="button"
+                        className="place-btn is-quiet"
+                        title={`Its ${arrayUse(a).form} back in the Bag, ${a.from}; the stones in its eye are lost.`}
+                        onClick={() => act((s) => takeUp(s, { dwelling: d.id }, a.id))}
+                      >
+                        Take up
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+                {Array.from({ length: Math.max(0, arrays - d.arrays.length) }, (_, i) => (
+                  <div key={`empty-${i}`} className="dw-slot is-dim">
+                    <span className="dw-sq is-empty">阵</span>
+                    <div>
+                      An empty array slot
+                      <small>Lay flags or a disc from your Bag, through placing.</small>
+                    </div>
+                    <button type="button" className="place-btn" onClick={() => setLaying(true)}>
+                      Lay
+                    </button>
+                  </div>
+                ))}
+                <p className="dw-why-line">
+                  An array runs while its eye holds stones, here or away. The vein holds {d.steps}{' '}
+                  step{d.steps === 1 ? '' : 's'} of gathering more; past it only a gold array
+                  reaches, at double upkeep.
+                </p>
+              </>
+            )}
+            {away.length > 0 && (
+              <>
+                <h3 className="panel-heading dw-sub-head">
+                  Prepared ground <span className="hanzi">伏</span>
+                </h3>
+                {away.map((g) => (
+                  <div key={g.id} className={`dw-slot${running(g) ? '' : ' is-dim'}`}>
+                    <span className="dw-sq">{item(g.item).hanzi.slice(0, 1)}</span>
+                    <div>
+                      {arrayName(g)} <span className={`rarity-${g.rarity}`}>{g.rarity}</span>
+                      <small>
+                        in {groundWhere(game, g)} · {arrayLine(g)}
+                      </small>
+                      {g.held && <small className="is-bad">Something is held in it.</small>}
+                      <Eye a={g} />
+                    </div>
+                    <button type="button" className="place-btn is-quiet" onClick={() => go('map')}>
+                      On the map
+                    </button>
+                  </div>
+                ))}
+              </>
             )}
           </section>
+          {laying && (
+            <PlacingScene game={game} at={{ dwelling: d.id }} onClose={() => setLaying(false)} />
+          )}
           {works.length > 0 && (
             <section className="panel">
               <h3 className="panel-heading">

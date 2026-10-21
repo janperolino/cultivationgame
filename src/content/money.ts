@@ -53,6 +53,8 @@ export const BASE_PRICE: Record<ItemKind, number> = {
   tool: 30,
   // A packet sets its own: three of its crop (K8).
   seed: 2,
+  // An array's flags or disc (K10): a set worth a few tier 1 talismans' sheets.
+  array: 12,
 };
 
 /** Gear that carries squares is dearer than a blade. */

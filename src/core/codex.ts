@@ -98,6 +98,9 @@ const MET: Readonly<Record<MetTest, (s: GameState) => boolean>> = {
   quest: (s) => s.journal.quests.length > 0,
   dwelling: (s) => s.player.dwellings.length > 0,
   claimed: (s) => s.player.dwellings.some((d) => d.held === 'claimed'),
+  array: (s) => held(s, (id) => !!item(id).uses.array) || MET.laid(s),
+  laid: (s) => s.player.grounds.length > 0 || s.player.dwellings.some((d) => d.arrays.length > 0),
+  prepared: (s) => s.player.grounds.length > 0,
 };
 
 /** Whether the state shows an entry's feature met. */

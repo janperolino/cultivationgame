@@ -194,6 +194,16 @@ Every feature a player can touch in the game today (built in code, not only desi
 | Raids by thieves and beasts on a site in the wild | A card | The card | a claimed site worth taking, or raised qi and old beds | Card text |
 | Rent taken as its time turns, a lapsed lease's store kept a month | Dwelling, the Chronicle | A line | a rented dwelling | Panel lines |
 
+## Formations (K10)
+
+| Feature | Where | First met today | Needs first | Taught by | Way in |
+|---|---|---|---|---|---|
+| Formation Inscribing: flags 阵旗 and discs 阵盘 made at the bench, queued | Crafts › Formations | The recipe list | an inscribing plate or an array diagram | Page line | codex |
+| Placing 布阵: laying an array by reading the currents, the hand lifting its rarity | Dwelling › Arrays, the map's own menu | The placing veil | an array in the Bag | Scene text | codex |
+| Arrays at a site: gathering under the vein's cap, warding, concealing, alarm, growing; their eyes fed and taken up | Dwelling › Arrays | The Arrays panel | land claimed on a vein | Panel lines | codex |
+| Arrays in a fight on their ground: warding, binding, killing, maze | Combat | Log lines | a raid at your site, or a trap's catch | Log lines | codex |
+| Prepared ground and traps: an array on open ground, what walks in held until you check it | Map, your own menu | A 阵 seal on the map | an array on open ground | Menu subtitles | codex |
+
 ## Chronicle and the rest
 
 | Feature | Where | First met today | Needs first | Taught by | Way in |

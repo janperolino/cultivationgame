@@ -43,7 +43,8 @@ import { canPay, pay, receive, spend, stonesOf, withStones, worthOf } from './pu
 import { hashSeed, Rng } from './rng.ts';
 import { fromCultivator } from './combat/combatant.ts';
 import { edgeWords, fightEdge, isSure, type FightEdge } from './combat/edge.ts';
-import { startFight, type Fight } from './combat/fight.ts';
+import { onGround, startFight, type Fight } from './combat/fight.ts';
+import { fightArrays } from './arrays.ts';
 import { generateBeast, generateCultivator } from './combat/generate.ts';
 import { openFight, type FightEnd } from './played.ts';
 import {
@@ -332,7 +333,10 @@ export function cardFight(s: GameState, uid: number, index: number): Fight | nul
       : generateCultivator(t, r, stage, rng, opts);
   const name = f.person ? fillSlots(`{${f.person}}`, cardWho(s.player, at.pending.vars)) : null;
   const foe = name ? { ...npc.combatant, name } : npc.combatant;
-  return startFight([fromCultivator(s.player, 'you'), foe]);
+  const fight = startFight([fromCultivator(s.player, 'you'), foe]);
+  // A raid fought at your own site meets its arrays (K10).
+  const site = at.pending.vars?.here ? s.player.dwellings.find((d) => d.raid?.uid === uid) : null;
+  return site ? onGround(fight, fightArrays(site.arrays, 'you')) : fight;
 }
 
 /** A card fight's edge, read as the road reads one: and whether it is a sure win. */
@@ -344,7 +348,7 @@ export function cardEdge(
   const f = cardFight(s, uid, index);
   if (!f) return null;
   const [me, ...foes] = f.combatants;
-  const edge = fightEdge(me!, foes);
+  const edge = fightEdge(me!, foes, f.arrays);
   return { edge, sure: isSure(edge), words: edgeWords(edge) };
 }
 
@@ -546,7 +550,9 @@ function drawDay(s: GameState, day: number, opts: DrawOptions): GameState {
   let next = s;
   for (const p of s.cards.pending) {
     const urgent = card(p.card).urgent;
-    if (urgent && day - p.day >= urgent.days) next = resolveByDefault(next, p.uid);
+    // A card's `wait` var stretches its days: an alarm array's raid card (K10).
+    if (urgent && day - p.day >= urgent.days * (p.vars?.wait ?? 1))
+      next = resolveByDefault(next, p.uid);
   }
   const { value: drawn, state } = withStream(next, 'world', (rng) => {
     const { story, paced } = rollCandidates(next, day, rng, opts.decks);

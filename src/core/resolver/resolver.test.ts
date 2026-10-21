@@ -579,7 +579,7 @@ describe('plans', () => {
 describe('the save', () => {
   it('carries the world from v20, and a v19 save loads with an empty one', () => {
     const s = life();
-    expect(SAVE_VERSION).toBe(50);
+    expect(SAVE_VERSION).toBe(51);
     const raw = JSON.parse(JSON.stringify(makeSave(s, 1))) as {
       version: number;
       state: Record<string, unknown>;

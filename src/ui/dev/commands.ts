@@ -99,6 +99,9 @@ import { advance, daysPerRealMs } from '../../core/loop.ts';
 import { madeUpLife } from '../../core/fixtures/madeUpLife.ts';
 import { madeUpManuals } from '../../core/fixtures/madeUpManuals.ts';
 import { addItem, ageYears, daysLived, withPlayer, type GameState } from '../../core/state.ts';
+import { bandAt } from '../../core/map/depth.ts';
+import { arrayBand } from '../../core/arrays.ts';
+import { RAIDERS } from '../../content/dwellings.ts';
 import { formatDays, formatLadder, formatNumber } from '../format.ts';
 import { screens } from '../screens.ts';
 import { useSeat } from '../seat.ts';
@@ -721,7 +724,7 @@ export const COMMANDS: Record<string, Command> = {
   },
   craft: {
     usage: 'craft [recipe] [mastery batches]',
-    help: 'Sets up a crafter (K1, K4): its craft’s crude tool (a clay furnace, an iron forge, a wolf-hair brush), the recipe known (the Qi-Gathering Pill unless told), inputs for five batches, four Craft hours from 辰, and the family at that many batches. `craft iron-sword` makes a refiner, `craft ember-talisman` a talisman master.',
+    help: 'Sets up a crafter (K1, K4): its craft’s crude tool (a clay furnace, an iron forge, a wolf-hair brush), the recipe known (the Qi-Gathering Pill unless told), inputs for five batches, four Craft hours from 辰, and the family at that many batches. `craft iron-sword` makes a refiner, `craft ember-talisman` a talisman master, `craft gathering-flags` an array master.',
     run([id, batches], store) {
       const r = id ?? 'qi-gathering-pill';
       if (!hasRecipe(r)) return `No recipe ${r}: ${RECIPES.map((x) => x.output).join(', ')}.`;
@@ -838,6 +841,38 @@ export const COMMANDS: Record<string, Command> = {
           };
         },
         `On a tier ${v.tier} vein in ${map.areas.find((a) => a.id === v.area)?.name ?? v.area} (rating ${v.rating}).`,
+      );
+    },
+  },
+  trap: {
+    usage: 'trap',
+    help: 'Puts a beast of the land in your nearest trap on open ground in this region (K10), as if it walked in today, at the trap’s band where the land runs stronger; the Map’s own menu then offers to check it.',
+    run(_, store) {
+      const s = needGame(store);
+      const at = s.map?.at ?? [0, 0];
+      const g = s.player.grounds
+        .filter((x) => x.region === s.map?.region && x.stones > 0)
+        .sort(
+          (a, b) =>
+            Math.hypot(a.at[0] - at[0], a.at[1] - at[1]) -
+            Math.hypot(b.at[0] - at[0], b.at[1] - at[1]),
+        )[0];
+      if (!g)
+        return 'You have no running array on open ground in this region: `item snare-disc`, then lay it from the Map.';
+      return apply(
+        store,
+        (t) => {
+          const map = mapOf(ensureMap(t))!;
+          // Something the trap can hold: the land's band, or the trap's when the land runs stronger.
+          const trap = arrayBand(g) + (item(g.item).uses.array?.beasts ?? 0);
+          const band = Math.min(trap, Math.max(0, bandAt(map, g.at)));
+          const held = { roster: RAIDERS.beast, band, since: Math.floor(t.calendar.day) };
+          return withPlayer(t, {
+            ...t.player,
+            grounds: t.player.grounds.map((x) => (x.id === g.id ? { ...x, held } : x)),
+          });
+        },
+        'Something walked in. Go and check it.',
       );
     },
   },

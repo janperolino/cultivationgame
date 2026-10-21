@@ -150,6 +150,36 @@ export type Plot = z.infer<typeof PlotSchema>;
  * qi density steps it stands above the land, its plot slots and store squares, what lies in the
  * store, the works you have built and the one under way, a seat's power, and a raid waiting.
  */
+/**
+ * An array laid (K10, design § Sites and formations): its flags' or disc's thing, the rarity it was
+ * laid at and its strength inside that band (the placing hand's lift past the whole bands), the
+ * stones left in its eye and the day it went in.
+ */
+export const LaidArraySchema = z.object({
+  id: z.string(),
+  item: z.string(),
+  rarity: z.enum(RARITY_IDS),
+  /** The rarity its flags or disc were, which taking it up gives back. */
+  from: z.enum(RARITY_IDS),
+  strength: z.number().min(0).max(1),
+  stones: z.number().min(0),
+  laid: z.number(),
+});
+export type LaidArray = z.infer<typeof LaidArraySchema>;
+
+/**
+ * Prepared ground (K10): an array laid off your sites, at a spot of a region. A trap holds what
+ * walked in (a beast of the land's, its roster and band, since a day) until you come; `asked` is
+ * the last day the world sent something across it.
+ */
+export const GroundSchema = LaidArraySchema.extend({
+  region: z.string(),
+  at: z.tuple([z.number(), z.number()]),
+  held: z.object({ roster: z.string(), band: z.number().int(), since: z.number() }).nullable(),
+  asked: z.number(),
+});
+export type Ground = z.infer<typeof GroundSchema>;
+
 export const DwellingSchema = z.object({
   id: z.string(),
   kind: z.enum(DWELLING_KINDS),
@@ -172,6 +202,8 @@ export const DwellingSchema = z.object({
     .nullable(),
   /** The month the world last sent a raid. */
   raided: z.number().int().nullable(),
+  /** The arrays laid in its slots (K10). */
+  arrays: z.array(LaidArraySchema),
 });
 export type Dwelling = z.infer<typeof DwellingSchema>;
 
@@ -438,6 +470,8 @@ export const CultivatorSchema = z.object({
   /** The dwellings you hold (K9), and the one that is your abode. */
   dwellings: z.array(DwellingSchema),
   abode: z.string().nullable(),
+  /** Arrays laid on open ground (K10). */
+  grounds: z.array(GroundSchema),
 });
 export type Cultivator = z.infer<typeof CultivatorSchema>;
 
@@ -494,6 +528,8 @@ export type CardsState = z.infer<typeof Cards>;
  */
 export const FightFrom = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('spar'), who: z.string() }),
+  /** What a trap on open ground holds (K10), by the ground's id. */
+  z.object({ kind: z.literal('trap'), ground: z.string() }),
   z.object({ kind: z.literal('road'), enc: z.string(), exit: z.number().int() }),
   z.object({ kind: z.literal('card'), uid: z.number().int(), choice: z.number().int() }),
 ]);
@@ -713,6 +749,7 @@ export function newCultivator(
     crafts: emptyCrafts(),
     dwellings: [],
     abode: null,
+    grounds: [],
   };
 }
 

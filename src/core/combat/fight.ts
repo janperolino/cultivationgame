@@ -48,7 +48,7 @@ import { TOXICITY_MAX, type LadderId } from '../../content/cultivation.ts';
 import { actionDaos, isCombatDao, type DaoStatKind } from '../../content/daos.ts';
 import type { Item } from '../../content/items.ts';
 import { rarityAccuracy, rarityMultiplier } from '../../content/rarity.ts';
-import { realmIndex, tierStep, type RealmId } from '../../content/realms.ts';
+import { realm as realmInfo, realmIndex, tierStep, type RealmId } from '../../content/realms.ts';
 import {
   BRINK_HP,
   DOMAIN,
@@ -134,11 +134,51 @@ export interface Feature {
   since?: number;
 }
 
+/**
+ * An array on the fight's ground (K10, design § Sites and formations, Prepared ground; Jan's call
+ * in K10's talk): laid at your site or set on open ground, it works for the side that laid it, each
+ * by its own numbers. Binding and maze read its band against a foe's soul, Body-Fixing's rule:
+ * binding holds a foe at its band or under one turn in `every`, maze takes `dull` of their
+ * Accuracy. Killing strikes every foe inside at each turn's start and never misses. Warding stands
+ * over its side as shield from the start (`onGround`).
+ */
+export interface FightArray {
+  id: string;
+  name: string;
+  side: string;
+  does: 'warding' | 'binding' | 'killing' | 'maze';
+  /** Its band, as the land's are counted: (tier − 1) × 3 and its rarity's third. */
+  band: number;
+  every?: number;
+  dull?: number;
+  /** Bands more against a beast; or beasts alone. */
+  beasts?: number;
+  beastsOnly?: boolean;
+  /** Killing: its strike's base, its Attack (rung size × rarity × strength) and type. */
+  base?: number;
+  attack?: number;
+  type?: DamageType;
+  /** Warding: the shield it stood over its side. */
+  ward?: number;
+}
+
+/** What an array on the ground did at a turn's start: a strike, or a foe held. */
+export interface GroundLine {
+  array: string;
+  name: string;
+  does: FightArray['does'];
+  target: string;
+  damage?: number;
+  hp?: { id: string; hp: number; max: number };
+}
+
 export interface Fight {
   /** Turns resolved so far. */
   turn: number;
   combatants: Combatant[];
   features: Feature[];
+  /** The arrays on its ground (K10). */
+  arrays?: FightArray[];
 }
 
 /** What one action did to one target: the five tags, then the numbers the log line shows. */
@@ -194,6 +234,8 @@ export interface TurnResult {
   fight: Fight;
   outcomes: Outcome[];
   ticks: Tick[];
+  /** What the arrays on the ground did as the turn began (K10). */
+  ground?: GroundLine[];
   /** Actions that did nothing, and why: a down actor, a frozen one, a technique they can't pay. */
   skipped: { actor: string; reason: string }[];
 }
@@ -201,6 +243,111 @@ export interface TurnResult {
 /** A fight between these combatants, in this order (ties in Agility go by it). */
 export function startFight(combatants: Combatant[], features: Feature[] = []): Fight {
   return { turn: 0, combatants: combatants.map((c) => ({ ...c })), features: [...features] };
+}
+
+/**
+ * The fight on ground where these arrays stand (K10). A warding array stands its shield over its
+ * side's fighters at once, past their caps, shared among them; one that wards off beasts alone
+ * stands only when every foe is a beast.
+ */
+export function onGround(f: Fight, arrays: readonly FightArray[]): Fight {
+  if (!arrays.length) return f;
+  const combatants = f.combatants.map((c) => ({ ...c }));
+  for (const a of arrays) {
+    if (a.does !== 'warding' || !a.ward) continue;
+    const foes = combatants.filter((c) => c.side !== a.side);
+    if (a.beastsOnly && !foes.every((c) => c.beast)) continue;
+    const mine = combatants.filter((c) => c.side === a.side);
+    for (const c of mine) c.shield += Math.round(a.ward / mine.length);
+  }
+  return { ...f, combatants, arrays: arrays.map((a) => ({ ...a })) };
+}
+
+/** A soul's band, as the land's are counted: three to a realm, by which third its stage stands in. */
+function soulBand(c: Combatant): number {
+  const r = c.rungs.soul;
+  const stages = realmInfo(r.realm).stages;
+  const third = Math.min(2, Math.floor(((r.stage - 1) * 3) / Math.max(1, stages)));
+  return realmIndex(r.realm) * 3 + third;
+}
+
+/** Whether an array reaches a combatant: a foe of its side, a beast if it wants one, at its band. */
+export function groundReaches(a: FightArray, c: Combatant): boolean {
+  if (c.side === a.side || c.state !== 'fighting') return false;
+  if (a.beastsOnly && !c.beast) return false;
+  if (a.does === 'killing') return true;
+  return soulBand(c) <= a.band + (c.beast ? (a.beasts ?? 0) : 0);
+}
+
+/** What a maze leaves of a combatant's aim: each one reaching them takes its share. */
+function groundDull(f: Fight, c: Combatant): number {
+  let left = 1;
+  for (const a of f.arrays ?? [])
+    if (a.does === 'maze' && groundReaches(a, c)) left *= 1 - (a.dull ?? 0);
+  return left;
+}
+
+/**
+ * A killing array's strike on one foe: its force through the foe's bars, never missing, protective
+ * qi holding against an array a realm below them. Reads, never writes.
+ */
+function groundLanding(a: FightArray, target: Combatant): Landing {
+  const type = a.type ?? 'physical';
+  const element = elementMultiplier(damagePhase(type), target.element);
+  const n: Numbers = {
+    accuracy: 1,
+    evasion: 1,
+    attack: a.attack ?? 0,
+    defense: defense(target, guardLadder(type)),
+    weaken: 1,
+    element,
+    resist: target.resist[type] ?? 0,
+    pierce: 1,
+    crit: 0,
+    critAttack: 1,
+    sure: true,
+    below: Math.floor(a.band / 3) < ownRealm(target),
+  };
+  const hit = force({ base: a.base ?? 0, attack: n.attack, element, result: 'hit' });
+  return landing(target, hit, type, n);
+}
+
+/** What a killing array would deal a foe in one turn, for the edge's race. */
+export function groundStrike(a: FightArray, target: Combatant): number {
+  const l = groundLanding(a, target);
+  return l.shield + l.armor + l.hp;
+}
+
+/**
+ * The arrays at a turn's start: killing strikes every foe inside, binding holds those it reaches on
+ * its turns (held for this turn alone), in the arrays' order.
+ */
+function groundTurn(f: Fight): GroundLine[] {
+  const lines: GroundLine[] = [];
+  for (const a of f.arrays ?? []) {
+    if (a.does === 'killing') {
+      for (const c of f.combatants) {
+        if (!groundReaches(a, c)) continue;
+        const dealt = land(c, groundLanding(a, c));
+        lines.push({
+          array: a.id,
+          name: a.name,
+          does: a.does,
+          target: c.id,
+          damage: dealt,
+          hp: { id: c.id, hp: c.hp, max: c.maxHp },
+        });
+      }
+    }
+    if (a.does === 'binding' && (f.turn - 1) % Math.max(1, a.every ?? 2) === 0) {
+      for (const c of f.combatants) {
+        if (!groundReaches(a, c) || hasStatus(c, 'held')) continue;
+        c.statuses = [...c.statuses, { id: 'held', turns: 1, dot: 0, since: f.turn - 1 }];
+        lines.push({ array: a.id, name: a.name, does: a.does, target: c.id });
+      }
+    }
+  }
+  return lines;
 }
 
 export function combatantIn(f: Fight, id: string): Combatant | undefined {
@@ -241,10 +388,12 @@ export function resolveTurn(
     turn: fight.turn + 1,
     combatants: fight.combatants.map((c) => ({ ...c, statuses: [...c.statuses] })),
     features: fight.features.map((x) => ({ ...x })),
+    ...(fight.arrays ? { arrays: fight.arrays.map((a) => ({ ...a })) } : {}),
   };
   const outcomes: Outcome[] = [];
   const skipped: TurnResult['skipped'] = [];
   const ticks = startOfTurn(f);
+  const ground = f.arrays?.length ? groundTurn(f) : [];
 
   const seen = new Set<string>();
   const order = actions
@@ -330,7 +479,7 @@ export function resolveTurn(
   }
 
   endOfTurn(f);
-  return { fight: f, outcomes, ticks, skipped };
+  return { fight: f, outcomes, ticks, skipped, ...(ground.length ? { ground } : {}) };
 }
 
 /**
@@ -643,7 +792,10 @@ function attackAccuracy(f: Fight, actor: Combatant, a: Attack, quiet = false): n
       if (aura !== 0) around *= Math.max(0, 1 - aura);
     }
   }
-  return rungSize(a.rung) * a.accuracy * actor.accuracy * statusFactor(actor, 'accuracy') * around;
+  const dull = f.arrays?.length ? groundDull(f, actor) : 1;
+  return (
+    rungSize(a.rung) * a.accuracy * actor.accuracy * statusFactor(actor, 'accuracy') * around * dull
+  );
 }
 
 /** Everything an attack compares against one target, before the roll. */

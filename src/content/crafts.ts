@@ -132,6 +132,21 @@ export const STRIKE_NEEDS: Partial<Record<string, Property>> = {
 export const ESCAPE_THROUGH: readonly Element[] = ['earth', 'water'];
 
 /**
+ * Formations' row of the effect table (K10): what an array's inputs carry for what it does, the
+ * eye's jade aside. Growing reads nourishing or tempering with wood, which a test checks too.
+ */
+export const FORMATIONS_MAKES = {
+  gathering: ['nourishing'],
+  growing: ['nourishing', 'tempering'],
+  warding: ['hard'],
+  concealing: ['concealing'],
+  alarm: ['resonant', 'burning'],
+  binding: ['binding'],
+  killing: ['sharp', 'burning'],
+  maze: ['illusory'],
+} as const satisfies Record<string, readonly Property[]>;
+
+/**
  * Mending is refining (design § Production, commissions and the craft deck; K4): a craft hour a
  * tier of the piece at a whole forge of its tier, and one piece of what it was made of (its
  * recipe's first input, or this ore when it has none). It never fails and counts no mastery.
@@ -143,6 +158,7 @@ export const STARTER_TOOLS: Partial<Record<CraftId, string>> = {
   alchemy: 'crude-clay-furnace',
   refining: 'crude-iron-forge',
   talismans: 'wolf-hair-talisman-brush',
+  formations: 'bronze-inscribing-plate',
 };
 
 /** The kind of tool each craft works with: a furnace, a forge, a brush and an array plate. */

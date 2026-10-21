@@ -8,6 +8,37 @@ import type { Catalog } from './types.ts';
 export const BORDER_WILDS: Catalog = {
   at: 'qm-bianhuang',
   layer: 'region',
+  // The Frontier Ward-Flag Method's arrays (K10), the goods its seals name: stood by the powers
+  // that hold the style, never a market's line. **Awaiting Jan's review.**
+  items: [
+    {
+      id: 'beast-repelling-flags',
+      name: 'Beast-Repelling Flags',
+      pinyin: 'Qushou Qi',
+      hanzi: '驱兽旗',
+      tier: 1,
+      rarity: 'white',
+      upTo: 'blue',
+      kind: 'array',
+      uses: { array: { does: 'warding', form: 'flags', beasts: 1, beastsOnly: true } },
+      source: 'the corral villages of the frontier, whose headmen each swear by their own placing',
+      text: 'Four flags at a corral’s corners, inked in cinnabar over shell-ash, and the wolves walk around. A band stronger against beasts than a ward, and nothing at all against men.',
+    },
+    {
+      id: 'signal-fire-disc',
+      name: 'Signal-Fire Disc',
+      pinyin: 'Fenghuo Pan',
+      hanzi: '烽火盘',
+      tier: 1,
+      rarity: 'white',
+      upTo: 'blue',
+      element: 'fire',
+      kind: 'array',
+      uses: { array: { does: 'alarm', form: 'disc' } },
+      source: 'the Wall’s watch posts, which lay one at every gap between the bones',
+      text: 'A disc that lights a pillar of red qi when something crosses the line, seen for a hundred li and felt for more.',
+    },
+  ],
   techniques: [
     {
       id: 'porters-sweep',
@@ -493,8 +524,32 @@ export const BORDER_WILDS: Catalog = {
       family: 'armor',
       inputs: [{ thing: 'beast-hide', count: 3 }],
     },
+    // The Ward-Flag Method's arrays (K10).
+    {
+      output: 'beast-repelling-flags',
+      craft: 'formations',
+      family: 'guarding',
+      inputs: [
+        { thing: 'array-plate-blank', count: 1 },
+        { thing: 'banner-silk', count: 2 },
+        { thing: 'beast-shell', count: 1 },
+        { thing: 'cinnabar-ore', count: 1 },
+      ],
+    },
+    {
+      output: 'signal-fire-disc',
+      craft: 'formations',
+      family: 'guarding',
+      inputs: [
+        { thing: 'array-plate-blank', count: 1 },
+        { thing: 'cinnabar-ore', count: 1 },
+      ],
+    },
   ],
   lots: [
+    // The Ward-Flag Method's arrays (K10): stood by the powers that hold the style, no shop's line.
+    { thing: 'beast-repelling-flags', shops: [] },
+    { thing: 'signal-fire-disc', shops: [] },
     // Wall issue
     { thing: 'ash-wood-spear', shops: ['refiner', 'house', 'stall'] },
     { thing: 'boar-hide-vest', shops: ['refiner', 'house'] },

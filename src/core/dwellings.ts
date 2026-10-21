@@ -31,6 +31,15 @@ import { hasJob, isHire, job } from '../content/jobs.ts';
 import { veinAt } from '../content/map/index.ts';
 import { realmScale } from '../content/realms.ts';
 import { BANDS } from '../content/map/travel.ts';
+import {
+  alarmed,
+  arraySlots as heldSlots,
+  concealingBands,
+  growingSteps,
+  guardBand,
+  stepsOf,
+} from './arrays.ts';
+import { ALARM_DAYS } from '../content/formations.ts';
 import { isRipe } from './farming.ts';
 import { bagStacks, splitsOf, stow } from './gear.ts';
 import { inSphere } from './guarded.ts';
@@ -104,12 +113,12 @@ export function dwellingHere(s: GameState): Dwelling | null {
   return d && !lapsed(d, s.calendar.day) ? d : null;
 }
 
-/** The qi density a dwelling stands at on the ladder: its land's and its steps. */
+/** The qi density a dwelling stands at on the ladder: its land's, its steps and its gathering arrays'. */
 export function densityOf(s: GameState, d: Dwelling): number {
   const map = mapOf(s);
   const p = map ? placeById(map, d.place) : undefined;
   const land = map && p ? qiAt(map, [p.x, p.y]) : 3;
-  return Math.min(9, land + d.steps);
+  return Math.min(9, land + stepsOf(d));
 }
 
 /** A dwelling's name: its kind's, or the seat's for your quarters. */
@@ -209,6 +218,7 @@ function fresh(kind: DwellingKind, place: string, day: number): Dwelling {
     power: null,
     raid: null,
     raided: null,
+    arrays: [],
   };
 }
 
@@ -576,9 +586,7 @@ export function slotCap(d: Dwelling): number {
 
 /** The array slots a dwelling's vein holds (K10 lays them): one at tier 1, one more a tier. */
 export function arraySlots(c: Cultivator, d: Dwelling): number {
-  if (d.held !== 'claimed') return 0;
-  const vein = d.kind === 'cave' || d.kind === 'mountain' ? d.steps : 0;
-  return vein > 0 ? vein + Math.max(0, stats(c).arraysHeld ?? 0) : 0;
+  return heldSlots(d, stats(c).arraysHeld ?? 0);
 }
 
 // ---------------------------------------------------------------- concealment, worth and raids
@@ -604,8 +612,9 @@ export interface SiteRead {
   worth: number;
   storeWorth: number;
   bedsWorth: number;
-  /** What its guard turns away, in low-grade stones' worth; 0 until K10's arrays. */
+  /** The band its warding arrays turn away, against men and against beasts; −1 with none (K10). */
   guard: number;
+  guardBeasts: number;
   /** A raider's month at the land's band: less than this isn't worth the walk. */
   wage: number;
   /** The oldest bed in its slots, in years. */
@@ -632,8 +641,8 @@ export function readSite(s: GameState, d: Dwelling): SiteRead | null {
   const p = map ? placeById(map, d.place) : undefined;
   if (!map || !p) return null;
   const watched = d.held !== 'claimed';
-  const concealment = concealmentAt(map, p, DWELLINGS[d.kind].hides ?? 0);
-  const againstBeasts = Math.max(0, concealment - d.steps);
+  const concealment = concealmentAt(map, p, DWELLINGS[d.kind].hides ?? 0) + concealingBands(d);
+  const againstBeasts = Math.max(0, concealment - stepsOf(d));
   const land = Math.max(0, bandAt(map, [p.x, p.y]));
   let storeWorth = 0;
   for (const [id, n] of Object.entries(d.items)) if (hasItem(id)) storeWorth += priceOf(id) * n;
@@ -648,7 +657,8 @@ export function readSite(s: GameState, d: Dwelling): SiteRead | null {
   }
   const worth = Math.round(storeWorth + bedsWorth);
   const wage = wageAt(land);
-  const guard = 0;
+  const guard = guardBand(d, 'thieves');
+  const guardBeasts = guardBand(d, 'beast');
   const thievesFind = land >= concealment;
   const beastsFind = land >= againstBeasts;
   return {
@@ -659,12 +669,14 @@ export function readSite(s: GameState, d: Dwelling): SiteRead | null {
     storeWorth: Math.round(storeWorth),
     bedsWorth: Math.round(bedsWorth),
     guard,
+    guardBeasts,
     wage,
     oldest,
     thievesFind,
     beastsFind,
-    thievesCome: !watched && thievesFind && worth > Math.max(guard, wage),
-    beastsDrawn: !watched && (d.steps > 0 || oldest >= RAIDS.oldBed[0]!),
+    // A warding array turns raiders at its band or under (K10): the weaker turn from it.
+    thievesCome: !watched && thievesFind && worth > wage && land > guard,
+    beastsDrawn: !watched && (stepsOf(d) > 0 || oldest >= RAIDS.oldBed[0]!),
     watched,
   };
 }
@@ -807,8 +819,9 @@ function raidsMonth(s: GameState, month: number): GameState {
     let band = r.land;
     if (r.thievesCome) kind = 'thieves';
     else if (r.beastsDrawn && r.beastsFind) {
-      kind = 'beast';
       if (r.oldest >= RAIDS.oldBed[1]!) band += 1;
+      // Beasts turn from a ward at their band or above (K10).
+      if (band > r.guardBeasts) kind = 'beast';
     }
     const marked = { ...dwellingById(next.player, d.id)!, raided: month };
     if (!kind) {
@@ -819,7 +832,8 @@ function raidsMonth(s: GameState, month: number): GameState {
     const q = queueCard(
       next,
       kind === 'thieves' ? 'raid-thieves' : 'raid-beast',
-      { here, band },
+      // An alarm lets the card wait twice as long (K10).
+      { here, band, ...(alarmed(d) ? { wait: ALARM_DAYS } : {}) },
       { site: dwellingName(next, d).toLowerCase(), where: dwellingPlaceName(next, d) },
     );
     next = withPlayer(
@@ -1023,8 +1037,8 @@ export function dwellingsDay(s0: GameState, from: number, to: number): GameState
       } else d = { ...d, work: { ...d.work, left } };
     }
     c = withDwelling(c, d);
-    // Plots in its slots read its density.
-    const density = densityOf(s, d);
+    // Plots in its slots read its density, and its growing arrays' steps on top (K10).
+    const density = Math.min(9, densityOf(s, d) + growingSteps(d));
     if (slotPlots(c, d).some((p) => p.density !== density))
       c = {
         ...c,

@@ -42,6 +42,8 @@ export interface Scene {
   /** Hidden veins your geomancy read, unclaimed (K9), and the rings it marked past its reach. */
   veins?: readonly { x: number; y: number }[];
   veinRings?: readonly Pt[];
+  /** Your arrays on open ground (K10): a 阵 seal, red while it holds something, faint once dark. */
+  arrays?: readonly { at: Pt; held: boolean; dark: boolean }[];
 }
 
 const C = {
@@ -694,6 +696,26 @@ export function drawMap(f: Frame, s: Scene): boolean {
     ctx.fillStyle = rgba(C.crack, 0.95);
     ctx.fillText('脉', x, y + 1);
     ctx.textBaseline = 'alphabetic';
+  }
+
+  // Your arrays on open ground (K10).
+  for (const a of s.arrays ?? []) {
+    const [x, y] = at(a.at);
+    const tone = a.held ? C.warn : C.accent;
+    ctx.globalAlpha = a.dark ? 0.45 : 1;
+    ctx.fillStyle = 'rgba(8,9,12,0.92)';
+    ctx.strokeStyle = tone;
+    ctx.lineWidth = 1.1;
+    roundRect(ctx, x - 7, y - 7, 14, 14, 3);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = `10px 'Ma Shan Zheng', KaiTi, serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = tone;
+    ctx.fillText('阵', x, y + 1);
+    ctx.textBaseline = 'alphabetic';
+    ctx.globalAlpha = 1;
   }
 
   // Pins.

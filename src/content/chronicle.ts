@@ -196,6 +196,10 @@ const DWELLING_LINES: Record<
   robbed: (w, n, at, d) => `Thieves find ${w}’s ${lower(n)} in ${at} and carry off ${s(d.took)}.`,
   grazed: (w, n, at, d) =>
     `A beast comes for the fields of ${w}’s ${lower(n)} in ${at} and eats the ${s(d.took)}.`,
+  // Arrays (K10): `name` is the array's.
+  laid: (w, n, at) => `${w} lays ${lower(n)} in ${at}.`,
+  dark: (w, n, at) => `${w}’s ${lower(n)} in ${at} burns its last stone and goes dark.`,
+  trapped: (w, n, at, d) => `A ${s(d.took)} walks into ${w}’s ${lower(n)} in ${at} and is held.`,
 };
 /** "a cultivation chamber", "a room": a dwelling's name with its article. */
 function aDwelling(name: string): string {
