@@ -215,8 +215,10 @@ function playChain(s0: GameState): GameState {
     const r = goToPlace(s, goal.reach);
     return r.ok ? r.state : s;
   }
-  if ('event' in goal && goal.event === 'job') {
-    const st = s.map!.course ? s : atHome(s);
+  // The hire is taken at home, as its step says, not from the road: taken on the way back from the
+  // hideout, a fast root crossed layer 4 before home, missed the shifts and was let go.
+  if ('event' in goal && goal.event === 'job' && !s.map!.course) {
+    const st = atHome(s);
     const r = takeJob(st, String(goal.match!.job));
     return r.ok ? r.state : st;
   }

@@ -27,7 +27,7 @@ export const CULTIVATION: readonly CodexEntry[] = [
     area: 'cultivation',
     text: [
       'Creation rolls five things at once: a spirit root with its elements, a body talent, a soul talent, a fate talent, and an origin. You get three free rerolls, and each one rerolls all five.',
-      'The root sets how fast you cultivate qi, once you are past the first three layers. The roll is seeded, so the same seed and the same number of rerolls always show the same five.',
+      'The root sets how fast you cultivate qi, from the third layer on. The roll is seeded, so the same seed and the same number of rerolls always show the same five.',
     ],
     numbers: [
       ['Free rerolls', '3'],
@@ -35,7 +35,7 @@ export const CULTIVATION: readonly CodexEntry[] = [
         'Root speed, mixed to heavenly',
         '×{rootMixed} mixed, ×{rootTrue} true, ×{rootSingle} single-element, ×{rootMutated} mutated, ×{rootHeavenly} heavenly',
       ],
-      ['Root speed counts from', 'Qi Condensation layer 4'],
+      ['Root speed counts from', 'Qi Condensation layer 3, on the way to 4'],
     ],
     where: { screen: 'creation', label: 'A New Life' },
     met: { start: true },
@@ -73,7 +73,10 @@ export const CULTIVATION: readonly CodexEntry[] = [
     numbers: [
       ['Bar to the next step, from layers 1 to 9', '50, 100, 165, 260, 345, 455, 595, 780, 1200'],
       ['A full day of qi hours, before bonuses', '1 qi at Qi Condensation'],
-      ['Layers 1 to 3', 'a slower clock (×0.75) that ignores root, fit and your method’s tier'],
+      [
+        'Layers 1 to 3',
+        'a slower clock (×0.75) that ignores fit and your method’s tier, and the root until layer 3',
+      ],
       ['Past layer 3', 'everything cultivates ×{pace}'],
       ['Attending', '×{attentionThere} to ×{attentionFull}; away, ×1'],
       ['Bar cap', '{barCap}'],
