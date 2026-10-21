@@ -2,6 +2,8 @@
 
 The crafts' review list for Jan, kept by the K line's hub and updated at each merge. It points into `plan.md` (Open questions, Awaiting Jan's review) rather than repeating it; the crafts play checkpoint goes through all of it (Jan's call after K4). Newest phase last.
 
+**Gone through at the crafts play checkpoint, 2026-10-21** (`docs/crafts-checkpoint-2026-10-21.md`, The rounds with Jan). Section 1 is settled: the maker's rate 0.6, gear ×2 on 3 ore a piece, shelves a month's use, notices for what no shop has, herbs kept at 0.7, Glimpse as it is, upkeep and formations' money as they are, plots uncapped. Section 2 stays parked as listed there (playing as the whole craft is a sketch in design.md; the hand before the queue is built). Section 3 stays here for Jan to look at in game. Section 4's small calls stand except where the checkpoint changed them.
+
 ## 1. Money to tune at the checkpoint
 
 Crafters should be clearly richer than gathering or duty from Glimpse on (D4, K1's talk). Today only alchemy is.

@@ -415,7 +415,7 @@ export const NIGHT_BRIDGE: Catalog = {
       craft: 'refining',
       family: 'blades',
       inputs: [
-        { thing: 'red-rocks-iron-ore', count: 5 },
+        { thing: 'red-rocks-iron-ore', count: 3 },
         { thing: 'bat-fat-lamp-oil', count: 1 },
       ],
     },

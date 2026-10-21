@@ -5,6 +5,7 @@
 // once and is never stocked; and a copy's form is a book or a slip. The haul's mark itself is
 // `npm run sim -- haul`.
 import { describe, expect, it } from 'vitest';
+import { STARTER_TOOLS } from '../content/crafts.ts';
 import { COPY_FORM_WORDS, copyForm } from '../content/copies.ts';
 import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { item } from '../content/items.ts';
@@ -79,7 +80,9 @@ describe('staples stand on the shelf where they are made', () => {
     expect(t2!.price).toBeGreaterThan(standing(s, small, 'spirit-rice')!.price * 5);
   });
 
-  it('a trading house stands only what its market’s sum counts, its copies and its styles’ goods', () => {
+  it('a trading house stands only what its market’s sum counts, its copies, its styles’ goods and the starter tools', () => {
+    // A craft's starter tool always stands where its line is sold (the crafts play checkpoint).
+    const tools = new Set<string>(Object.values(STARTER_TOOLS));
     const city = market('qm-shoukou-cheng')!;
     // The Qian Clan holds the frontier's common styles, so its hall brews their goods too (K6).
     const styled = new Set(styleLines(shop('mouth-guild')).map((l) => l.thing));
@@ -88,7 +91,9 @@ describe('staples stand on the shelf where they are made', () => {
       const stands = standsAt(emptyWorld(), city, month);
       for (const l of stockOf('mouth-guild', month))
         if (l.standing)
-          expect(l.endless || stands.has(goodOf(l.thing)) || styled.has(l.thing)).toBe(true);
+          expect(
+            l.endless || stands.has(goodOf(l.thing)) || styled.has(l.thing) || tools.has(l.thing),
+          ).toBe(true);
     }
   });
 });

@@ -23,7 +23,7 @@ import {
 } from '../content/crafts.ts';
 import type { Recipe } from '../content/catalogs/types.ts';
 import { baseOf, item, rarityRange, variantId } from '../content/items.ts';
-import { rarityRank, type RarityId } from '../content/rarity.ts';
+import { rarity, rarityRank, type RarityId } from '../content/rarity.ts';
 import { BORDER_WILDS_NAMES } from '../content/roster.ts';
 import { shop as shopById, shopVein, type Shop } from '../content/shops.ts';
 import { gradeCertified } from './craftGrade.ts';
@@ -37,7 +37,7 @@ import { pay, receive, stonesOf, tierGrade, withStones } from './purse.ts';
 import { remember } from './resolver/opinion.ts';
 import type { World } from './resolver/world.ts';
 import { hashSeed, Rng } from './rng.ts';
-import { askAt, catalogsFor, keeperId, withKeeper } from './shops.ts';
+import { askAt, catalogsFor, keeperId, stockOf, withKeeper } from './shops.ts';
 import {
   addItem,
   withPlayer,
@@ -87,6 +87,45 @@ function floorIn(base: string, roll: RarityId): RarityId {
   return rarityRank(roll) > rarityRank(range.at(-1)!) ? range.at(-1)! : roll;
 }
 
+/** What a market's shelves stand this month of a thing at a tier, by rarity: worked out once. */
+const stockedCache = new WeakMap<World, Map<string, Map<RarityId, number>>>();
+function stockedIn(w: World, m: Market, base: string, tier: number, month: number) {
+  const key = `${m.id}|${month}|${base}|${tier}`;
+  let byWorld = stockedCache.get(w);
+  if (!byWorld) stockedCache.set(w, (byWorld = new Map()));
+  const kept = byWorld.get(key);
+  if (kept) return kept;
+  const held = new Map<RarityId, number>();
+  for (const id of m.shops)
+    for (const l of stockOf(id, month, w)) {
+      if (baseOf(l.thing) !== base || item(l.thing).tier !== tier) continue;
+      const r = item(l.thing).rarity;
+      held.set(r, (held.get(r) ?? 0) + l.n);
+    }
+  byWorld.set(key, held);
+  return held;
+}
+
+/**
+ * The plainest rarity from `floor` up that the market's shelves stand under a batch of (the crafts
+ * play checkpoint, Jan's call: a notice asks for what nobody here sells, so it reads as a reason
+ * rather than a wait for stock), or null when every rarity it comes in stands a batch.
+ */
+function unstocked(
+  w: World,
+  m: Market,
+  base: string,
+  tier: number,
+  floor: RarityId,
+  n: number,
+  month: number,
+): RarityId | null {
+  const held = stockedIn(w, m, base, tier, month);
+  for (const r of rarityRange(item(base)))
+    if (rarityRank(r) >= rarityRank(floor) && (held.get(r) ?? 0) < n) return r;
+  return null;
+}
+
 /** One of a thing at its floor at a shop's market today, times the share it pays. */
 function eachAt(w: World, m: Market, base: string, floor: RarityId, day: number, share: number) {
   return askAt(priceOf(variantId(base, floor)) * marketFactor(w, m, base, day) * share, true);
@@ -114,19 +153,23 @@ export function postedAt(w: World, shopId: string, day: number): Offered | null 
     floor = rarity;
     if ((roll -= share) < 0) break;
   }
-  floor = floorIn(base, floor);
+  const n = recipeYield(r);
+  const open = unstocked(w, m, base, recipeTier(r), floorIn(base, floor), n, month);
+  if (!open) return null;
+  floor = open;
   const sh = shopById(shopId);
   const graded = !sh.small && sh.weight >= 3 && rng.next() < COMMISSION.gradedShare;
+  const line = shortLine(m, short).replace(/\.$/, '');
   return {
     shop: shopId,
     month,
     kind: 'posted',
     thing: base,
-    n: recipeYield(r),
+    n,
     floor,
     ...(graded ? { grade: recipeTier(r) } : {}),
     each: eachAt(w, m, base, floor, day, graded ? COMMISSION.graded : COMMISSION.pay),
-    why: shortLine(m, short),
+    why: `${line}, and no shop here has ${n > 1 ? 'them' : 'one'} ${rarity(floor).name.toLowerCase()}.`,
   };
 }
 
@@ -218,7 +261,18 @@ export function cantTake(c: Cultivator, o: Commission): string | null {
 }
 
 /** Takes a shop's commission, posted or by name: its price is fixed now. */
+/**
+ * Why a counter's business can't be done from where you stand: it is done inside the shop's town
+ * (the code review's seam: only the Commission tab checked it). Null when you are there.
+ */
+function awayFrom(s: GameState, shopId: string): string | null {
+  const sh = shopById(shopId);
+  return s.map?.inside === sh.at ? null : 'That is done at its counter, inside its town.';
+}
+
 export function takeCommission(s: GameState, shopId: string, kind: 'posted' | 'named') {
+  const away = awayFrom(s, shopId);
+  if (away) return { ok: false, reason: away } as CommissionResult;
   const o = offeredAt(s, shopId).find((x) => x.kind === kind);
   if (!o) return { ok: false, reason: 'Nothing is offered.' } as CommissionResult;
   return holdCommission(s, o);
@@ -259,6 +313,8 @@ export function handIn(s: GameState, at: number): CommissionResult {
   const all = commissionsOf(s.player);
   const k = all[at];
   if (!k || k.done) return { ok: false, reason: 'No such commission open.' };
+  const away = awayFrom(s, k.shop);
+  if (away) return { ok: false, reason: away };
   if (carried(s.player, k) < k.n) return { ok: false, reason: `It asks for ${k.n}.` };
   const sh = shopById(k.shop);
   const m = marketOfShop(k.shop);
@@ -440,6 +496,8 @@ export function placeOrder(
   output: string,
   yours: boolean,
 ): CommissionResult {
+  const away = awayFrom(s, shopId);
+  if (away) return { ok: false, reason: away };
   const q = quote(s, shopId, output, yours);
   if (!q) return { ok: false, reason: 'The shop doesn’t make that.' };
   if (q.cant) return { ok: false, reason: q.cant };
@@ -480,6 +538,8 @@ export function collectOrder(s: GameState, at: number): CommissionResult {
   const orders = s.player.crafts.orders ?? [];
   const o = orders[at];
   if (!o) return { ok: false, reason: 'No such order.' };
+  const away = awayFrom(s, o.shop);
+  if (away) return { ok: false, reason: away };
   if (s.calendar.day < o.ready) return { ok: false, reason: 'It isn’t ready yet.' };
   // Room first, as a shop asks when you buy (review 2026-10-21).
   if (roomFor(s.player, o.made) < o.n)

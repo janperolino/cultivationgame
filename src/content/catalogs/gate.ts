@@ -479,13 +479,13 @@ export const BUTCHER_GATE: Catalog = {
       output: 'green-steel-saber',
       craft: 'refining',
       family: 'blades',
-      inputs: [{ thing: 'red-rocks-iron-ore', count: 6 }],
+      inputs: [{ thing: 'red-rocks-iron-ore', count: 4 }],
     },
     {
       output: 'gutting-saber',
       craft: 'refining',
       family: 'blades',
-      inputs: [{ thing: 'red-rocks-iron-ore', count: 5 }],
+      inputs: [{ thing: 'red-rocks-iron-ore', count: 3 }],
     },
     {
       output: 'hide-apron',

@@ -134,9 +134,9 @@ describe('prices', () => {
   it('follow the yardstick: a few low for a pill, about 400 for a Foundation blade', () => {
     expect(priceOf('qi-gathering-pill')).toBe(3);
     expect(priceOf('qi-gathering-pill~blue')).toBe(15);
-    expect(priceOf('azure-cloud-sword')).toBe(45 * 9 * 5);
-    expect(priceOf('iron-sword')).toBe(45);
-    expect(priceOf('storage-pouch')).toBe(60);
+    expect(priceOf('azure-cloud-sword')).toBe(90 * 9 * 5);
+    expect(priceOf('iron-sword')).toBe(90);
+    expect(priceOf('storage-pouch')).toBe(120);
     expect(priceOf('beast-core')).toBe(2.5);
     expect(priceOf('beast-core~white')).toBe(5);
     // A written price moves with the tier too: a Foundation beast's core is Foundation money.
@@ -190,6 +190,16 @@ describe('the purse', () => {
 });
 
 describe('shops', () => {
+  it('always stand a craft’s starter tool where its line is sold (the crafts play checkpoint)', () => {
+    for (const month of [1300, 1301, 1302]) {
+      const stands = (id: string, thing: string) =>
+        stockOf(id, month).some((l) => l.thing === thing && l.standing && l.n > 0);
+      expect(stands('mouth-alchemy', 'crude-clay-furnace')).toBe(true);
+      expect(stands('mouth-refiner', 'crude-iron-forge')).toBe(true);
+      expect(stands('qm-shoukou-cheng.talisman-1', 'wolf-hair-talisman-brush')).toBe(true);
+    }
+  });
+
   it('stock the same lots for the same shop and month, and another month differs', () => {
     for (const s of SHOPS) {
       expect(stockOf(s.id, 1300)).toEqual(stockOf(s.id, 1300));
@@ -199,9 +209,9 @@ describe('shops', () => {
     expect(stockOf('mouth-stall', 1300).map((l) => l.thing)).toMatchInlineSnapshot(`
       [
         "gathering-flags~green",
-        "seed.ridge-bitterroot",
+        "seed.old-apricot-kernel",
+        "technique:quiet-bell-roar",
         "technique:rampart-palm",
-        "method:still-lantern",
         "method:market-stall",
         "seed.blood-salt-kelp",
       ]
@@ -281,7 +291,7 @@ describe('shops', () => {
   it('buy back at 40%, only what they deal in, out of a finite purse', () => {
     let s = withPlayer(life(), addItem(life().player, 'iron-sword', 120));
     const offer = offerFor(s, 'mouth-refiner', 'iron-sword');
-    expect(offer.ok && offer.each).toBeCloseTo(45 * 0.4 * 1, 0);
+    expect(offer.ok && offer.each).toBeCloseTo(90 * 0.4 * 1, 0);
     expect(offerFor(s, 'mouth-alchemy', 'iron-sword')).toMatchObject({ ok: false });
     const r = sell(s, 'mouth-refiner', 'iron-sword', 10) as { ok: true; state: GameState };
     expect(r.ok).toBe(true);
@@ -380,7 +390,7 @@ describe('armor’s wear and repairs', () => {
     expect(wornArmor(after)!.hp).toBe(Math.round(fresh.max / 2));
     expect(fromCultivator(after, 'a').armor!.hp).toBe(Math.round(fresh.max / 2));
     s = withPlayer(s, after);
-    expect(repairCost(s, 'boar-hide-vest')).toBeCloseTo(45 * 0.2 * 0.5);
+    expect(repairCost(s, 'boar-hide-vest')).toBeCloseTo(90 * 0.2 * 0.5);
     expect(repair(s, 'mouth-stall', 'boar-hide-vest')).toMatchObject({ ok: false });
     const r = repair(s, 'mouth-refiner', 'boar-hide-vest') as { ok: true; state: GameState };
     expect(r.state.player.wear['boar-hide-vest']).toBeUndefined();

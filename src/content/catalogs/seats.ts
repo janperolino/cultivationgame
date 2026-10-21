@@ -105,7 +105,7 @@ export const RIVER_BEND: Catalog = {
       craft: 'refining',
       family: 'blades',
       inputs: [
-        { thing: 'red-rocks-iron-ore', count: 4 },
+        { thing: 'red-rocks-iron-ore', count: 2 },
         { thing: 'ash-spear-shaft', count: 1 },
       ],
     },
@@ -113,7 +113,7 @@ export const RIVER_BEND: Catalog = {
       output: 'intendant-guard-glaive',
       craft: 'refining',
       family: 'blades',
-      inputs: [{ thing: 'red-rocks-iron-ore', count: 6 }],
+      inputs: [{ thing: 'red-rocks-iron-ore', count: 4 }],
     },
   ],
   lots: [

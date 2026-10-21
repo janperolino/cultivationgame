@@ -107,7 +107,7 @@ export const INTRO_QUESTS: readonly Quest[] = [
     title: 'Three Batches',
     giver: any('shop', 'the alchemy shop’s master', 'alchemy'),
     reason:
-      'The alchemy shop’s master buys apprentices’ pills at a fair price and says the only way to learn a furnace is to run one. Get a furnace and a recipe, give your day Craft hours, and let the bench run three batches.',
+      'The alchemy shop’s master buys apprentices’ pills at a fair price and says the only way to learn a furnace is to run one. A crude clay furnace stands on this shelf; with it in hand, the Alchemy Dao on the Trees screen teaches the Qi-Gathering Pill at its root seal. Give your day Craft hours on Routine and let the bench run three batches.',
     steps: [
       {
         text: 'Finish three batches at your own bench, queued on your Craft hours.',

@@ -42,6 +42,12 @@ import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
 import { rectIn } from './stage.ts';
 
+/** Whether every foe left the field by fleeing, none brought down (the crafts checkpoint's deer). */
+function foesFled(f: Fight, side: string): boolean {
+  const foes = f.combatants.filter((c) => c.side !== side);
+  return foes.length > 0 && foes.every((c) => c.state === 'fled');
+}
+
 const END_WORDS: Record<FightEnd, string> = {
   won: 'You bring them down.',
   lost: 'You are brought down.',
@@ -344,7 +350,7 @@ function BurnGoods({ f, me, target }: { f: Fight; me: Combatant; target: string 
                 ? `Blow apart the ${h.item.name}: sure?`
                 : `Blow apart the ${h.item.name}`
             }
-            extra="sure, and it is gone"
+            extra="sure to land, and it is gone"
             onArm={arming === h.item.id ? undefined : () => setArming(h.item.id)}
           />
         ))}
@@ -555,7 +561,11 @@ export function CombatScreen() {
         {end && (
           <div className="fight-end">
             <p>
-              <strong>{END_WORDS[end]}</strong>
+              <strong>
+                {end === 'won' && foesFled(f, me.side)
+                  ? 'They break off and get away.'
+                  : END_WORDS[end]}
+              </strong>
             </p>
             <button type="button" className="button" onClick={leaveFight}>
               Go on

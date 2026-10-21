@@ -139,8 +139,9 @@ import {
   brokerAt,
   claim,
   claimsHere,
+  densityOf,
   dwellingAt,
-  dwellingName,
+  dwellingNoun,
   offersAt,
   stepMult,
   takeFromBroker,
@@ -380,7 +381,7 @@ function doorsOf(
       seal: broker === 'village' ? '舍' : '牙',
       name: broker === 'village' ? 'Farmhouse to let' : 'Broker 牙行',
       sub: mine
-        ? `your ${dwellingName(s, mine).toLowerCase()} here`
+        ? `your ${dwellingNoun(s, mine)} here`
         : broker === 'village'
           ? 'a house and two fields of its own'
           : 'rooms, chambers and courtyards',
@@ -444,6 +445,8 @@ export function PlaceScreen({
   const open = doors.find((d) => d.id === door && !d.later) ?? null;
   const area = place.area ? areaById(map, place.area) : null;
   const qd = qiAt(map, [place.x, place.y]);
+  // A dwelling of yours here reads at its own density, the land's beside it (the crafts checkpoint).
+  const ownHere = dwellingAt(game.player, place.id);
   // A place's prosperity names its kind: a lean town, a thriving city (design § Economy, Prosperity).
   const prosperity = prosperityOf(game.world, place.id, game.calendar.day);
   const usual = writtenProsperity(place.id);
@@ -453,7 +456,7 @@ export function PlaceScreen({
       : `${prosperityWord(prosperity)} ${info.name}` +
         (prosperity === usual ? '' : ` (usually ${prosperityWord(usual)})`),
     TERRAIN_NAMES[place.terrain] ?? place.terrain,
-    `qi density ${qd}, ${QI_NAMES[qd]}`,
+    densityWords(qd, ownHere ? densityOf(game, ownHere) : qd),
     area?.name,
   ].filter(Boolean);
   // The market's biggest gap and its cause (design § Economy, People make and use, the guards).
@@ -1881,7 +1884,11 @@ function FieldsCounter({ game, place, act }: { game: GameState; place: MapPlace;
       <p className="place-note">
         <b>{mine === 0 ? 'A plot' : mine === 1 ? 'Your plot here' : 'Your plots here'}</b> is worked
         on the Crafts screen’s Spirit Farming page, only while you stand here.{' '}
-        <button type="button" className="link-button" onClick={() => go('crafts')}>
+        <button
+          type="button"
+          className="link-button"
+          onClick={() => go('crafts', undefined, 'farming')}
+        >
           Open it
         </button>
       </p>
@@ -1950,7 +1957,7 @@ function BrokerCounter({ game, place, act }: { game: GameState; place: MapPlace;
       </div>
       {mine && (
         <p className="place-note">
-          <b>Your {dwellingName(game, mine).toLowerCase()} here</b> is on the Dwelling screen.{' '}
+          <b>Your {dwellingNoun(game, mine)} here</b> is on the Dwelling screen.{' '}
           <button type="button" className="link-button" onClick={() => go('dwelling')}>
             Open it
           </button>
@@ -2385,16 +2392,16 @@ function SiteCounter({
         ))}
       </div>
       <p className="place-note">
-        <b>Inside, a scene waits for P3.9.</b> Until then a site is a place to stand:{' '}
+        <b>Nothing more to do inside yet.</b> It is a place to stand:{' '}
         {['cave', 'hut', 'shrine'].includes(place.sub)
           ? 'your wheel sleeps here by rule, as shelter you have found, '
           : ''}
-        and P3.7’s encounters read its band.
+        and what you meet here comes at its band.
       </p>
       {held && (
         <p className="place-note">
-          <b>Your {dwellingName(game, held).toLowerCase()}.</b> Its store, land and works are on the
-          Dwelling screen.{' '}
+          <b>Your {dwellingNoun(game, held)}.</b> Its store, land and works are on the Dwelling
+          screen.{' '}
           <button type="button" className="link-button" onClick={() => go('dwelling')}>
             Open it
           </button>
@@ -2438,4 +2445,11 @@ function SiteCounter({
       </div>
     </section>
   );
+}
+
+/** A place head's qi density, a dwelling's raised one with the land's beside it. */
+function densityWords(land: number, at: number): string {
+  return at === land
+    ? `qi density ${land}, ${QI_NAMES[land]}`
+    : `qi density ${at}, ${QI_NAMES[at]} (the land's ${land})`;
 }

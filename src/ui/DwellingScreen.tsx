@@ -29,6 +29,7 @@ import {
   densityOf,
   dwellingAt,
   dwellingName,
+  dwellingNoun,
   dwellingPlaceName,
   fromStore,
   giveUp,
@@ -52,6 +53,7 @@ import { bagStacks } from '../core/gear.ts';
 import { MARKETS } from '../core/markets.ts';
 import { depthInfo, qiAt } from '../core/map/depth.ts';
 import { placeById } from '../core/map/region.ts';
+import { enterAt, standsAt } from '../core/map/gate.ts';
 import { goToPlace, mapOf } from '../core/map/travel.ts';
 import { veinAt } from '../content/map/index.ts';
 import type { Dwelling, GameState, LaidArray } from '../core/state.ts';
@@ -694,9 +696,28 @@ function Elsewhere({ game, act }: { game: GameState; act: (f: Change) => void })
   const here = map && game.map?.inside ? placeById(map, game.map.inside) : undefined;
   const abode = abodeOf(game.player);
   const broker = here && (here.kind === 'town' || (here.kind === 'atlas' && here.sub === 'city'));
+  // A dwelling of yours you stand at but haven't gone into (the crafts checkpoint): go in from here.
+  const atOwn = map
+    ? game.player.dwellings
+        .map((d) => ({ d, p: placeById(map, d.place) }))
+        .find((x) => x.p && game.map?.inside !== x.p.id && standsAt(game, x.p))
+    : undefined;
   return (
     <>
-      <h2 className="dw-title">Not where you stand</h2>
+      {atOwn?.p ? (
+        <h2 className="dw-title">
+          You stand at your {dwellingNoun(game, atOwn.d)}{' '}
+          <button
+            type="button"
+            className="button"
+            onClick={() => act((s) => enterAt(s, map!, atOwn.p!))}
+          >
+            Go in
+          </button>
+        </h2>
+      ) : (
+        <h2 className="dw-title">Not where you stand</h2>
+      )}
       <div className="dw-sub">
         {here ? `In ${here.name}` : game.map?.course ? 'On the road' : 'Out on the land'}
         {at && map ? ` · qi density ${qiAt(map, at)}` : ''}

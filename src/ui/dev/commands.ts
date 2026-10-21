@@ -101,6 +101,8 @@ import { advance, daysPerRealMs } from '../../core/loop.ts';
 import { madeUpLife } from '../../core/fixtures/madeUpLife.ts';
 import { madeUpManuals } from '../../core/fixtures/madeUpManuals.ts';
 import { addItem, ageYears, daysLived, withPlayer, type GameState } from '../../core/state.ts';
+import { toolsHeld } from '../../core/crafts.ts';
+import { dwellingName, dwellingPlaceName, readSite } from '../../core/dwellings.ts';
 import { bandAt } from '../../core/map/depth.ts';
 import { arrayBand } from '../../core/arrays.ts';
 import { RAIDERS } from '../../content/dwellings.ts';
@@ -182,6 +184,23 @@ function summary(s: GameState, speed: number): string[] {
     `origin ${p.origin ? `${p.origin.id}/${p.origin.choice}` : 'none'} · root ${p.root} (${p.rootElements.join(', ')}) · talents ${p.talents.join(', ') || 'none'}`,
     `cards waiting: ${s.cards.pending.map((c) => c.card).join(', ') || 'none'} · clock ×${speed}`,
   ];
+}
+
+/** A raid card's words and vars at your first claimed site, as the month's raid would set them. */
+function raidWords(s: GameState, id: string) {
+  if (id !== 'raid-beast' && id !== 'raid-thieves') return null;
+  const d = s.player.dwellings.find((x) => x.held === 'claimed');
+  if (!d) return null;
+  const r = readSite(s, d);
+  const here = s.map?.inside === d.place && !s.map.course ? 1 : 0;
+  return {
+    words: {
+      site: dwellingName(s, d).toLowerCase(),
+      where: dwellingPlaceName(s, d),
+      _place: d.place,
+    },
+    vars: { here, band: id === 'raid-beast' ? (r?.beastRaider ?? 0) : (r?.raider ?? 0) },
+  };
 }
 
 export const COMMANDS: Record<string, Command> = {
@@ -309,7 +328,9 @@ export const COMMANDS: Record<string, Command> = {
         store,
         (g) => {
           const m = ensureMap(g);
-          return { ...m, map: { ...m.map!, at: [p.x, p.y], course: null, inside: null } };
+          // Seen in your fog, so the Map offers to go in (the crafts checkpoint's note).
+          const life = raise(m.map!, p.id, 'seen');
+          return { ...m, map: { ...life, at: [p.x, p.y], course: null, inside: null } };
         },
         `At ${p.name}.`,
       );
@@ -744,7 +765,8 @@ export const COMMANDS: Record<string, Command> = {
         (s) => {
           const rec = recipe(r);
           const tool = STARTER_TOOLS[rec.craft] ?? 'crude-clay-furnace';
-          let c = addItem(s.player, tool, 1);
+          // A tool only when you carry none of its craft: run again, it restocks the inputs alone.
+          let c = toolsHeld(s.player, rec.craft).length ? s.player : addItem(s.player, tool, 1);
           for (const i of rec.inputs) c = addItem(c, i.thing, i.count * 5);
           const node = `${slipId(r)}-node`;
           if (!c.nodes.includes(node)) c = { ...c, nodes: [...c.nodes, node] };
@@ -1017,24 +1039,47 @@ export const COMMANDS: Record<string, Command> = {
       if (!id || !hasCard(id)) return 'Give a card id (see cards).';
       return apply(
         store,
-        (s) => ({
-          ...s,
-          cards: {
-            ...s.cards,
-            pending: [
-              ...s.cards.pending,
-              {
-                uid: s.cards.nextUid,
-                card: id,
-                day: s.calendar.day,
-                // A craft card is set where its field or market is (K12).
-                ...(card(id).deck === CRAFT_DECK ? { words: craftWords(s, card(id)) ?? {} } : {}),
-              },
-            ],
-            drawn: { ...s.cards.drawn, [id]: s.calendar.day },
-            nextUid: s.cards.nextUid + 1,
-          },
-        }),
+        (s0) => {
+          const raid = raidWords(s0, id);
+          // A raid's site waits on its card, as the month's raid marks it.
+          const s = raid
+            ? withPlayer(s0, {
+                ...s0.player,
+                dwellings: s0.player.dwellings.map((d) =>
+                  d.place === raid.words._place
+                    ? {
+                        ...d,
+                        raid: {
+                          uid: s0.cards.nextUid,
+                          kind: id === 'raid-beast' ? ('beast' as const) : ('thieves' as const),
+                          band: raid.vars.band,
+                        },
+                      }
+                    : d,
+                ),
+              })
+            : s0;
+          return {
+            ...s,
+            cards: {
+              ...s.cards,
+              pending: [
+                ...s.cards.pending,
+                {
+                  uid: s.cards.nextUid,
+                  card: id,
+                  day: s.calendar.day,
+                  // A craft card is set where its field or market is (K12), a raid at your first
+                  // claimed site (the crafts checkpoint's note).
+                  ...(card(id).deck === CRAFT_DECK ? { words: craftWords(s, card(id)) ?? {} } : {}),
+                  ...(raid ?? {}),
+                },
+              ],
+              drawn: { ...s.cards.drawn, [id]: s.calendar.day },
+              nextUid: s.cards.nextUid + 1,
+            },
+          };
+        },
         `${id} waits in the feed.`,
       );
     },

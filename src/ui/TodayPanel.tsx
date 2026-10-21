@@ -3,6 +3,7 @@
 // qi a day with when the bar fills. Only today's work, never the other ladders' next steps (Jan's
 // call). With nothing read or practiced, its row says so and links to the tab that sets it up.
 import { ratesHere } from '../core/life.ts';
+import { seclusionWords } from '../core/orgs/dwelling.ts';
 import { copyTitle, readDays } from '../content/copies.ts';
 import { MASTERY } from '../content/mastery.ts';
 import { technique } from '../content/techniques.ts';
@@ -107,13 +108,15 @@ function todayRows(game: GameState): Row[] {
     const stones = c.plan.burnStones ? Math.min(rates.stoneCap, Math.floor(c.stones)) : 0;
     const perDay = rates.qi + stonesQi(rates, 1, stones);
     const left = Math.max(0, barSize(c.qi) - c.qi.bar);
+    const where = seclusionWords(game);
+    const line =
+      left <= 0
+        ? 'the bar is full; the breakthrough waits'
+        : `the bar fills ${inAbout(perDay > 0 ? left / perDay : null, 'with no qi hours')}`;
     rows.push({
       key: 'qi',
       title: `${formatRate(perDay)} qi a day`,
-      line:
-        left <= 0
-          ? 'the bar is full; the breakthrough waits'
-          : `the bar fills ${inAbout(perDay > 0 ? left / perDay : null, 'with no qi hours')}`,
+      line: where ? `${line} · ${where}` : line,
     });
   }
   return rows;
