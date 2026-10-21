@@ -483,6 +483,8 @@ export const BORDER_WILDS: RegionContent = {
     'qm-anbian-fu': 'pacified-fort',
     'qm-shoukou-cheng': 'qm-shoukou-cheng',
     'qm-muling-guo': 'corral-town',
+    // The Myriad Crafts Guild's branch (K6): its doors stand in the City.
+    'qm-wanyi-hui': 'qm-shoukou-cheng',
   },
   defaultHome: 'qm-shoukou-cheng',
 };

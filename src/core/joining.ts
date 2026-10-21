@@ -26,6 +26,7 @@ import type { MapPlace, RegionMap } from './map/region.ts';
 import {
   dwellingDensity,
   elderPrice,
+  entrySeat,
   houseOf,
   giftFlaw,
   isOrganization,
@@ -36,6 +37,7 @@ import {
   organization,
   partingOf,
   realmStageOf,
+  seatGate,
   seatOf,
   theName,
   yearOf,
@@ -110,10 +112,11 @@ export function entryOf(s: GameState, power: string): EntryView | null {
     sponsor: `a sponsor's word, for one ${theName(house)} favors`,
     kin: '',
   };
-  let shut: string | null = null;
+  let shut: string | null;
   if (wordRank(word) <= wordRank('hostile')) shut = `${capitalize(theName(house))} won't hear you.`;
   else if (e.by === 'sponsor' && wordRank(word) < wordRank(SPONSOR_FROM))
     shut = `Nobody of ${theName(house)} would vouch for you; they don't know you well enough.`;
+  else shut = seatGate(s.player, house, entrySeat(house, realmStageOf(s)));
   return { power: house, by: e.by, title: { name: e.name, hanzi: e.hanzi }, sub: subs[e.by], shut };
 }
 

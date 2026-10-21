@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Craft Grade Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
+<style>
+  /* K6 study: the craft grade and craft renown on the Crafts page (takes A and B), and the
+     Myriad Crafts Guild's door on the Place screen. Tokens copied from src/ui/theme.css. */
+  :root {
+    --void: #040507; --text: #e9e5da; --muted: #8d949d; --accent: #d6ab4c; --gilt: #d9b46a;
+    --panel: rgb(7 8 11 / 0.84); --line-faint: color-mix(in srgb, var(--gilt) 16%, transparent);
+    --edge-strong: rgb(255 255 255 / 0.14); --hour-craft: #d9a441; --warn: #e08a6a;
+    --craft-hand: #8fb7d9; --craft-line: #d99a6a; --craft-lore: #a9c98a;
+    --rarity-white: #ece8de; --rarity-green: #7fca8c; --seal: #b8432f;
+    --font-display: 'Cormorant Garamond', Georgia, serif; --font-brush: 'Ma Shan Zheng', KaiTi, serif;
+    --font-ui: Inter, system-ui, 'Segoe UI', sans-serif;
+  }
+  body { margin: 0; background: var(--void); color: var(--text); font-family: var(--font-ui); font-size: 14px; }
+  .note { max-width: 1100px; margin: 28px auto 8px; padding: 0 16px; color: var(--muted); line-height: 1.5; }
+  .note h1 { font-family: var(--font-display); color: var(--text); font-weight: 600; font-size: 30px; margin: 0 0 4px; }
+  .note b { color: var(--text); font-weight: 600; }
+  .frame { width: 100%; overflow: hidden; margin: 10px 0 34px; }
+  .stage { width: 1920px; height: 1080px; transform-origin: 0 0; position: relative;
+    background: radial-gradient(1200px 700px at 60% 30%, #0d1522 0%, #05070b 60%, #030405 100%); }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 64px; border-right: 1px solid var(--line-faint); background: rgb(5 6 8 / 0.9); }
+  .rail i { display: block; width: 26px; height: 26px; margin: 22px auto; border: 1px solid var(--line-faint); border-radius: 5px; }
+  .rail i.on { border-color: var(--hour-craft); background: color-mix(in srgb, var(--hour-craft) 20%, transparent); }
+  .screen { position: absolute; left: 110px; top: 70px; right: 300px; bottom: 60px; }
+  .crumb { font-family: var(--font-display); font-size: 22px; color: var(--text); }
+  .crumb .hz, .hz { color: var(--accent); font-family: var(--font-brush); }
+  .title { font-family: var(--font-display); font-size: 40px; font-weight: 600; margin: 10px 0 18px; }
+  .pages { display: flex; align-items: baseline; gap: 26px; padding-bottom: 10px; border-bottom: 1px solid var(--line-faint); margin-bottom: 18px; font-size: 16px; }
+  .pages span { color: var(--muted); padding-bottom: 3px; }
+  .pages span.cur { color: var(--text); border-bottom: 2px solid var(--hour-craft); }
+  .pages span.off { opacity: .45; }
+  .pages .hours { margin-left: auto; font-size: 14px; }
+  .chip { display: inline-flex; gap: 6px; align-items: center; margin-left: 8px; font-size: 12px; color: var(--gilt);
+    border: 1px solid color-mix(in srgb, var(--gilt) 35%, transparent); border-radius: 999px; padding: 1px 8px; }
+  .chip.dim { color: var(--muted); border-color: var(--line-faint); }
+  .cols { display: grid; grid-template-columns: 1fr 1.35fr 0.9fr; gap: 20px; align-items: start; }
+  .panel { padding: 22px 24px; border: 1px solid var(--line-faint); border-radius: 4px; background: var(--panel);
+    box-shadow: 0 24px 50px -28px #000; }
+  .panel + .panel { margin-top: 16px; }
+  h2 { font-family: var(--font-display); font-weight: 600; font-size: 21px; margin: 0 0 10px; }
+  h2 + h2, ul + h2, p + h2, .row + h2, .regions + h2 { margin-top: 20px; }
+  h3 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 500; margin: 14px 0 6px; }
+  .muted { color: var(--muted); }
+  p { margin: 4px 0; line-height: 1.5; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line-faint); }
+  .green { color: var(--rarity-green); } .white { color: var(--rarity-white); }
+  .mark { font-family: var(--font-brush); color: var(--seal); font-size: 15px; margin-left: 6px; }
+  .button { display: inline-block; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 6px 14px; border-radius: 3px; font-size: 13px; }
+  .button.quiet { color: var(--muted); border-color: var(--edge-strong); background: none; }
+  .button.off { opacity: .4; }
+  /* the badge */
+  .badge { display: grid; grid-template-columns: 74px 1fr; gap: 16px; align-items: center; }
+  .seal { width: 70px; height: 70px; border: 2px solid var(--seal); border-radius: 6px; display: grid; place-items: center;
+    color: var(--seal); font-family: var(--font-brush); font-size: 26px; line-height: 1; white-space: nowrap;
+    background: color-mix(in srgb, var(--seal) 10%, transparent); box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--seal) 18%, transparent); }
+  .seal.none { border-style: dashed; color: var(--muted); border-color: var(--edge-strong); background: none; box-shadow: none; font-size: 22px; }
+  .badge .name { font-family: var(--font-display); font-size: 22px; font-weight: 600; }
+  /* renown */
+  .regions { display: grid; gap: 12px; margin-top: 6px; }
+  .region .top { display: flex; justify-content: space-between; align-items: baseline; }
+  .pips { display: flex; gap: 4px; margin: 6px 0 4px; }
+  .pips b { width: 22px; height: 6px; border-radius: 1px; background: rgb(255 255 255 / 0.08); }
+  .pips b.on { background: var(--gilt); }
+  .pips b.part { background: linear-gradient(90deg, var(--gilt) 60%, rgb(255 255 255 / 0.08) 60%); }
+  .small { font-size: 12.5px; }
+  .tag { font-size: 11px; color: var(--muted); border: 1px solid var(--line-faint); padding: 0 6px; border-radius: 2px; margin-left: 6px; }
+  /* place screen */
+  .place-head { display: flex; align-items: baseline; gap: 14px; }
+  .place-head .nm { font-family: var(--font-display); font-size: 32px; font-weight: 600; }
+  .doors li { justify-content: flex-start; gap: 12px; font-size: 15px; }
+  .doors li.cur { color: var(--accent); }
+  .doors li span.k { width: 22px; color: var(--muted); font-family: var(--font-brush); }
+  .exam { display: grid; grid-template-columns: 170px 150px 1fr auto; gap: 14px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line-faint); }
+  .select { border: 1px solid var(--edge-strong); padding: 5px 10px; border-radius: 3px; color: var(--text); font-size: 13px; }
+  .seats li span:first-child { min-width: 220px; }
+  .ok { color: var(--rarity-green); }
+  .lean { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+</style>
+</head>
+<body>
+
+<div class="note">
+  <h1>The craft grade and craft renown</h1>
+  K6 study. Three frames, each the 1920×1080 stage. <b>A</b> and <b>B</b> are two takes on where the grade and the name sit on the Crafts page.
+  <b>C</b> is the guild's door. Mockups to discuss; the art overhaul paints them later.
+</div>
+
+<!-- ============================================================ TAKE A -->
+<div class="note"><b>Take A: a "Grade and name" panel heading the right column.</b> The badge is a vermilion seal, with your name by region under it.
+Recipes known groups by where they came from, so a style's seals read as the style's.</div>
+<div class="frame"><div class="stage">
+  <div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+  <div class="screen">
+    <div class="crumb">Severed Heaven <span class="hz">断天</span></div>
+    <div class="title">Crafts <span class="hz">艺</span></div>
+    <div class="pages">
+      <span class="cur">Alchemy <span class="hz">丹</span></span><span>Refining <span class="hz">器</span></span>
+      <span>Talismans <span class="hz">符</span></span><span class="off">Formations <span class="hz">阵</span></span><span class="off">Farming <span class="hz">植</span></span>
+      <span class="hours muted">4 craft hours a day · set on Routine</span>
+    </div>
+    <div class="cols">
+      <div>
+        <div class="panel">
+          <h2>The furnace</h2>
+          <p>Crude Clay Furnace <span class="hz">粗陶炉</span></p><p class="muted small">White · Qi Condensation · whole</p>
+          <h2>Recipes known</h2>
+          <h3>Alchemy <span class="hz">丹道</span></h3>
+          <ul><li><span>Qi-Gathering Pill</span><span class="muted">qi pills</span></li>
+              <li><span>Qi-Restoring Pill</span><span class="muted">restoring pills</span></li></ul>
+          <h3>Frontier Pill Method <span class="hz">边荒丹法</span> · ch. 1 <span class="tag">common style</span></h3>
+          <ul><li><span>Bone-Meal Pill</span><span class="muted">body pills</span></li>
+              <li><span>Garrison Ration Pill</span><span class="muted">body pills</span></li>
+              <li><span>Poison-Purging Pill</span><span class="muted">purging pills</span></li></ul>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <h2>The bench</h2>
+          <ul>
+            <li><span>Bone-Meal Pill ×3</span><span class="muted">batch 1 of 3 · 2 h left</span></li>
+          </ul>
+          <h2>The last batches</h2>
+          <ul>
+            <li><span class="green">11 Bone-Meal Pill, green <span class="mark">记</span></span><span class="muted small">played at 0.82</span></li>
+            <li><span class="white">12 Qi-Gathering Pill, white <span class="mark">记</span></span><span class="muted small">queued</span></li>
+            <li><span class="white">12 Qi-Gathering Pill, white <span class="mark">记</span></span><span class="muted small">queued</span></li>
+          </ul>
+          <p class="muted small" style="margin-top:10px">记 your maker's mark: what you make carries it, and it sells by your name where you're known.</p>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <h2>Grade and name <span class="hz">品 · 名</span></h2>
+          <div class="badge">
+            <div class="seal">一品</div>
+            <div><div class="name">First-grade Alchemist <span class="hz">一品丹师</span></div>
+              <p class="muted small">Certified at the Myriad Crafts Guild, City of the Guarded Mouth · Spring 3132</p></div>
+          </div>
+          <p class="small" style="margin-top:10px">You hold Alchemy's tier 2: the second-grade test waits at the guild <span class="muted">(20 low, one tier 2 batch that holds)</span>.</p>
+          <h3>Your name as an alchemist</h3>
+          <div class="regions">
+            <div class="region">
+              <div class="top"><span>The Border Wilds</span><span class="hz" style="font-size:18px">3</span></div>
+              <div class="pips"><b class="on"></b><b class="on"></b><b class="on"></b><b class="part"></b><b></b><b></b><b></b><b></b><b></b></div>
+              <p class="small">Known across a town. Your mark <b style="color:var(--gilt);font-weight:500">+9%</b> on pills of yours sold here.</p>
+              <p class="muted small">This month 41 low of yours sold here: +1 toward 4. It fades a step in 11 months if nothing of yours sells.</p>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Mastery by family</h2>
+          <p class="small">Qi pills <span class="hz">聚气</span> · Mastery · 40 of 120</p>
+          <h2>The soul gate</h2><p class="muted small">Crafts tier 1 · your soul keeps pace</p>
+          <h2>Steady hands <span class="hz">稳手</span></h2><p class="muted small">Reach 1.25 of 2 bands</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ============================================================ TAKE B -->
+<div class="note"><b>Take B: the grade and the name ride the page tabs</b>, so all five crafts read at a glance (一品 · 名3), and the right column keeps a smaller panel for the craft you're on.
+A craft you haven't certified shows its tier held instead.</div>
+<div class="frame"><div class="stage">
+  <div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+  <div class="screen">
+    <div class="crumb">Severed Heaven <span class="hz">断天</span></div>
+    <div class="title">Crafts <span class="hz">艺</span></div>
+    <div class="pages">
+      <span class="cur">Alchemy <span class="hz">丹</span><span class="chip">一品 · 名 3</span></span>
+      <span>Refining <span class="hz">器</span><span class="chip dim">tier 1 held · 名 0</span></span>
+      <span>Talismans <span class="hz">符</span><span class="chip dim">名 1</span></span>
+      <span class="off">Formations <span class="hz">阵</span></span><span class="off">Farming <span class="hz">植</span></span>
+      <span class="hours muted">4 craft hours</span>
+    </div>
+    <div class="cols">
+      <div><div class="panel">
+        <h2>The furnace</h2><p>Crude Clay Furnace <span class="hz">粗陶炉</span></p>
+        <h2>Recipes known</h2>
+        <ul><li><span>Qi-Gathering Pill</span><span class="muted">Alchemy</span></li>
+          <li><span>Bone-Meal Pill</span><span class="muted">Frontier Pill Method</span></li>
+          <li><span>Garrison Ration Pill</span><span class="muted">Frontier Pill Method</span></li>
+          <li><span>Poison-Purging Pill</span><span class="muted">Frontier Pill Method</span></li></ul>
+      </div></div>
+      <div><div class="panel"><h2>The bench</h2><p class="muted">Nothing queued. Pick a recipe and queue a batch.</p></div></div>
+      <div>
+        <div class="panel">
+          <div class="badge" style="grid-template-columns:54px 1fr">
+            <div class="seal" style="width:50px;height:50px;font-size:21px">一品</div>
+            <div><div class="name" style="font-size:19px">First-grade Alchemist</div><p class="muted small">the Myriad Crafts Guild · Spring 3132</p></div>
+          </div>
+          <h3>Name 名</h3>
+          <ul class="small">
+            <li><span>The Border Wilds</span><span>3 · known across a town · <span style="color:var(--gilt)">+9%</span></span></li>
+            <li><span class="muted">Medicine Ridges</span><span class="muted">unknown</span></li>
+          </ul>
+        </div>
+        <div class="panel"><h2>Mastery by family</h2><p class="small">Qi pills · Mastery</p></div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ============================================================ C: THE GUILD -->
+<div class="note"><b>C: the Myriad Crafts Guild's door</b>, on the Place screen's pattern (doors left, the counter beside). It holds three things: the examination (one test batch at its bench, your inputs, a fee),
+its seats (each needing a grade), and its counter, which sells the area's common styles openly.
+Formations and Farming are examined once their benches exist (K8, K10).</div>
+<div class="frame"><div class="stage">
+  <div class="rail"><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
+  <div class="screen">
+    <div class="crumb muted" style="font-family:var(--font-ui);font-size:14px">The Border Wilds · City of the Guarded Mouth</div>
+    <div class="place-head" style="margin:8px 0 18px"><span class="nm">City of the Guarded Mouth</span><span class="hz" style="font-size:24px">守口城</span></div>
+    <div class="cols" style="grid-template-columns: 300px 1fr">
+      <div class="panel doors">
+        <h2>Doors</h2>
+        <ul>
+          <li><span class="k">市</span>The free market</li><li><span class="k">丹</span>Pill Street</li>
+          <li><span class="k">器</span>Refiners' Row</li><li><span class="k">符</span>Talisman Lane</li>
+          <li><span class="k">兽</span>The beast-part market</li><li><span class="k">钱</span>The Qian Clan's trading hall</li>
+          <li class="cur"><span class="k">艺</span>The Myriad Crafts Guild</li>
+          <li><span class="k">赏</span>The bounty office</li><li><span class="k">粮</span>The grain and cloth market</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <h2 style="font-size:28px;margin:0">The Myriad Crafts Guild <span class="hz">万艺公会</span></h2>
+          <span class="muted small">a guild · its City branch · Branch Master Gongsun, Foundation</span>
+        </div>
+        <p class="muted" style="margin:6px 0 4px">A hall of five benches behind the Pill Street gate, where a crafter of the frontier is tested and given a badge. Its examiners are Foundation, so it grades to 二品.</p>
+
+        <h3 style="margin-top:20px">Examination 考品 · one test batch at the guild's bench, of the grade's tier, that holds. Played or queued, your own inputs.</h3>
+        <div class="exam"><span>Alchemy <span class="hz">丹</span></span><span class="ok">一品 certified</span>
+          <span class="small">二品: tier 2 held · <span class="select">Core-Blood Pill ▾</span> <span class="muted">· inputs in your Bag</span></span>
+          <span><span class="button">Sit it · 20 low</span> <span class="button quiet">Queue it</span></span></div>
+        <div class="exam"><span>Refining <span class="hz">器</span></span><span class="muted">no grade</span>
+          <span class="small">一品: tier 1 held · <span class="select">Iron Sword ▾</span> <span class="muted">· Red Rocks ore ×3 short</span></span>
+          <span><span class="button off">Sit it · 10 low</span></span></div>
+        <div class="exam"><span>Talismans <span class="hz">符</span></span><span class="muted">no grade</span>
+          <span class="small muted">一品 needs Talismans' tier 1 held (4 of 7 nodes)</span><span></span></div>
+        <div class="exam"><span class="muted">Formations, Farming</span><span class="muted">—</span>
+          <span class="small muted">The guild examines these once you work their benches.</span><span></span></div>
+
+        <div class="cols" style="grid-template-columns:1.2fr 1fr;margin-top:22px">
+          <div>
+            <h3>Seats 席 · a seat needs its realm's grade, in any of the guild's crafts</h3>
+            <ul class="seats small">
+              <li><span>Member 会员</span><span class="ok">一品 ✓ · 30 low to buy in</span><span class="button" style="padding:3px 10px">Join</span></li>
+              <li><span>Senior member 高级会员</span><span class="muted">一品 · Qi Condensation 7</span></li>
+              <li><span>Guild steward 执事</span><span class="muted">一品 · appointed</span></li>
+              <li><span>Guild elder 长老</span><span class="muted">二品 · Foundation</span></li>
+              <li><span>Guest elder 客卿</span><span class="muted">offered at name 6 in a craft</span></li>
+            </ul>
+          </div>
+          <div>
+            <h3>The counter · the frontier's common styles, sold openly</h3>
+            <ul class="small">
+              <li><span><span class="lean" style="background:var(--craft-line)"></span>Frontier Pill Method <span class="hz">边荒丹法</span> ch. 1</span><span>12 low</span></li>
+              <li><span><span class="lean" style="background:var(--craft-hand)"></span>Frontier Forging Method <span class="hz">边荒器法</span> ch. 1</span><span>12 low</span></li>
+              <li><span><span class="lean" style="background:var(--craft-line)"></span>Frontier Talisman Script <span class="hz">边荒符箓</span> ch. 1</span><span>12 low</span></li>
+              <li><span class="muted">Each ch. 2</span><span class="muted">a fragment, 60 low</span></li>
+              <li><span class="muted">Later chapters</span><span class="muted">members, for contribution</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<script>
+  // Fit each 1920×1080 stage to the page width, as the game's stage does to its window.
+  function fit() {
+    for (const f of document.querySelectorAll('.frame')) {
+      const s = f.querySelector('.stage');
+      const k = f.clientWidth / 1920;
+      s.style.transform = `scale(${k})`;
+      f.style.height = `${1080 * k}px`;
+    }
+  }
+  addEventListener('resize', fit);
+  fit();
+</script>
+</body>
+</html>

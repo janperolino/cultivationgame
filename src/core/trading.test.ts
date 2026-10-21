@@ -15,6 +15,7 @@ import { shop } from '../content/shops.ts';
 import { emptyWorld, heatOf, standingOf } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
 import { buy, offerFor, sell, shelf, standsAt, stockOf } from './shops.ts';
+import { styleLines } from './styles.ts';
 import { addItem, newLife, withPlayer, type GameState } from './state.ts';
 
 const life = (seed = 'trading'): GameState => {
@@ -78,12 +79,16 @@ describe('staples stand on the shelf where they are made', () => {
     expect(t2!.price).toBeGreaterThan(standing(s, small, 'spirit-rice')!.price * 5);
   });
 
-  it('a trading house stands only what its market’s sum counts, and its copies', () => {
+  it('a trading house stands only what its market’s sum counts, its copies and its styles’ goods', () => {
     const city = market('qm-shoukou-cheng')!;
+    // The Qian Clan holds the frontier's common styles, so its hall brews their goods too (K6).
+    const styled = new Set(styleLines(shop('mouth-guild')).map((l) => l.thing));
+    expect(styled.size).toBeGreaterThan(0);
     for (let month = 0; month < 12; month++) {
       const stands = standsAt(emptyWorld(), city, month);
       for (const l of stockOf('mouth-guild', month))
-        if (l.standing) expect(l.endless || stands.has(goodOf(l.thing))).toBe(true);
+        if (l.standing)
+          expect(l.endless || stands.has(goodOf(l.thing)) || styled.has(l.thing)).toBe(true);
     }
   });
 });
@@ -237,7 +242,7 @@ describe('the save', () => {
     raw.version = 34;
     delete raw.state.world.copied;
     const old = loadSave(raw);
-    expect(old.version).toBe(44);
+    expect(old.version).toBe(45);
     expect(old.state.world.copied).toEqual({});
   });
 });

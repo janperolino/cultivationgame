@@ -44,6 +44,7 @@ import {
 import { baseOf, hasItem, item, rarityRange, variantId, type Item } from '../content/items.ts';
 import { MANUALS } from '../content/manuals.ts';
 import { MAX_MASTERY } from '../content/mastery.ts';
+import { CRAFT_RENOWN } from '../content/styles.ts';
 import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
 import { realmIndex } from '../content/realms.ts';
 import { craftStat, type CraftStatKind, type StatId } from '../content/stats.ts';
@@ -527,7 +528,9 @@ export function takeTray(c: Cultivator): Cultivator {
 /** Something the bench did worth a line in the chronicle. */
 export type BenchEvent =
   | { type: 'craft-level'; data: { family: string; level: number } }
-  | { type: 'blow-up'; data: { recipe: string; tool: string } };
+  | { type: 'blow-up'; data: { recipe: string; tool: string } }
+  /** A gold piece or better made (K6): craft renown where it was made. */
+  | { type: 'made-rare'; data: { made: string; craft: CraftId } };
 
 export interface BenchResult {
   cultivator: Cultivator;
@@ -584,7 +587,10 @@ export interface BenchAt {
   spot?: BenchSpot | null;
 }
 
-/** Resolves one batch: whether it holds, a blow-up, the lift, the yield and mastery. */
+/**
+ * Resolves one batch: whether it holds, a blow-up, the lift, the yield and mastery. What it makes
+ * carries your mark (K6). At a guild's bench (`atGuild`) your own tool is neither used nor cracked.
+ */
 function resolve(
   c: Cultivator,
   r: Recipe,
@@ -594,8 +600,9 @@ function resolve(
   day: number,
   rng: Rng,
   events: BenchEvent[],
+  atGuild = false,
 ): Cultivator {
-  const tool = toolFor(c, r);
+  const tool = atGuild ? null : toolFor(c, r);
   let next = c;
   const held = rng.chance(holdOdds(c, r, land));
   let made: string | null = null;
@@ -610,6 +617,11 @@ function resolve(
     count = yieldOf(c, r);
     const s = stow(next, made, count);
     next = s.c;
+    next = withCrafts(next, {
+      marked: { ...next.crafts.marked, [made]: (next.crafts.marked[made] ?? 0) + count },
+    });
+    if (rarityRank(rar) >= rarityRank(CRAFT_RENOWN.rareFrom))
+      events.push({ type: 'made-rare', data: { made, craft: r.craft } });
     if (s.left > 0)
       next = withCrafts(next, {
         tray: { ...next.crafts.tray, [made]: (next.crafts.tray[made] ?? 0) + s.left },
@@ -642,6 +654,28 @@ function resolve(
     ...next.crafts.recent,
   ].slice(0, RECENT_BATCHES);
   return withCrafts(next, { recent });
+}
+
+/**
+ * The guild's test batch (K6; Styles and the craft grade): one batch of a recipe at the guild's
+ * bench, its inputs from your Bag, resolved at once at the hand you sat it with (none queued), the
+ * guild's furnace standing in for yours. Null when the Bag can't fill it.
+ */
+export function examBatch(
+  c: Cultivator,
+  r: Recipe,
+  hand: number,
+  day: number,
+  rng: Rng,
+): { cultivator: Cultivator; held: boolean; events: BenchEvent[] } | null {
+  const plan = planInputs(c, r);
+  if (plan.short.length > 0) return null;
+  let next = c;
+  for (const [id, n] of Object.entries(plan.take)) next = addItem(next, id, -n);
+  const events: BenchEvent[] = [];
+  const h = Math.max(0, Math.min(1, hand));
+  next = resolve(next, r, plan.above, h, NO_LAND, day, rng, events, true);
+  return { cultivator: next, held: next.crafts.recent[0]?.made != null, events };
 }
 
 /** The mean steady hand a batch was played at over its hours. */

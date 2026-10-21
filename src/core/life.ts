@@ -82,6 +82,9 @@ import { setCopyGain } from './map/encounters.ts';
 import { benchSpot, cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 import { atHome, jobsDay, onShift } from './jobs.ts';
 import { craftsOpen, workBench } from './crafts.ts';
+import { addCraftFame } from './craftRenown.ts';
+import { CRAFT_RENOWN } from '../content/styles.ts';
+import { HOME_REGION } from '../content/resolver.ts';
 
 /**
  * The Trees screen opens with anything that lives there (design § UI and screens, Only what you
@@ -171,8 +174,18 @@ function benchDay(s: GameState, days: number, hand = 0): GameState {
     workBench(s.player, hours, s.calendar.day, rng, { hand, spot: benchSpot(s) }),
   );
   let next = withPlayer(state, r.cultivator);
-  for (const e of r.events)
+  for (const e of r.events) {
+    // A gold piece or better is talked of where it was made (K6): craft renown, no line of its own.
+    if (e.type === 'made-rare') {
+      const region = next.map?.region ?? HOME_REGION;
+      next = withPlayer(
+        next,
+        addCraftFame(next.player, region, e.data.craft, CRAFT_RENOWN.rare, next.calendar.day),
+      );
+      continue;
+    }
     next = addEvent(next, e.type === 'craft-level' ? 'mastery' : e.type, e.data);
+  }
   return next;
 }
 

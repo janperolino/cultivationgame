@@ -1,4 +1,6 @@
 // Belonging: joining, leaving, guest seats and how a member stands behind them.
+import { craftLevel } from '../craftRenown.ts';
+import { CRAFT_RENOWN } from '../../content/styles.ts';
 import { DAYS_PER_YEAR } from '../../content/calendar.ts';
 import { copyChapter, copyId } from '../../content/copies.ts';
 import {
@@ -267,13 +269,23 @@ export function guardedKnown(c: Cultivator, power: string): string[] {
 
 /**
  * Whether a power offers the player its guest elder 客卿 seat (design: an honored outsider): they
- * aren't its member and stand honored with it. A beast power keeps no outsiders' seats.
+ * aren't its member and stand honored with it, or are famed across its region (craft renown 6) in
+ * a craft it practices (K6). A beast power keeps no outsiders' seats.
  */
 export function guestOffered(s: GameState, power: string): boolean {
   if (!isOrganization(power)) return false;
   const house = houseOf(power);
   if (organization(house).type === 'beast' || membership(s.world, s.player.id, house)) return false;
-  return standingOf(s.world, house, s.player.id, s.calendar.day).word === GUEST_ELDER.from;
+  if (standingOf(s.world, house, s.player.id, s.calendar.day).word === GUEST_ELDER.from)
+    return true;
+  // A crafter famed across its region in a craft it practices (K6: craft renown 6).
+  const region = organization(house).row.region;
+  return (
+    !!region &&
+    (organization(house).row.crafts ?? []).some(
+      (k) => craftLevel(s.player, region, k, s.calendar.day) >= CRAFT_RENOWN.guest,
+    )
+  );
 }
 
 /**

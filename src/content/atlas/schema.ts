@@ -154,6 +154,9 @@ export const ORG_TYPES = [
 ] as const;
 export type OrgType = (typeof ORG_TYPES)[number];
 
+/** The crafts a power's `crafts` may name (content/crafts.ts `CRAFTS`, kept here so the atlas stands alone). */
+export const ATLAS_CRAFTS = ['alchemy', 'refining', 'talismans', 'formations', 'farming'] as const;
+
 export const LINE_STYLES = ['river', 'ridge', 'span', 'array', 'wall', 'road'] as const;
 
 const point = z.tuple([z.number(), z.number()]);
@@ -283,6 +286,11 @@ const baseFields = {
   kind: z.enum(ENTRY_KINDS),
   /** A power's organization type (O1); a power always has one, nothing else does. */
   type: z.enum(ORG_TYPES).optional(),
+  /**
+   * What a guild or a works practices, on a power only (K6; design § Styles and the craft grade):
+   * the crafts it certifies at its hall or writes its own style in.
+   */
+  crafts: z.array(z.enum(ATLAS_CRAFTS)).optional(),
   parent: z.string().nullable(),
   status: z.enum(['draft', 'canon']),
   summary: z.string(),
@@ -332,6 +340,7 @@ function entryRules(
   e: {
     kind: EntryKind;
     type?: unknown;
+    crafts?: unknown;
     site?: unknown;
     hidden?: unknown;
     access?: Access;
@@ -352,6 +361,8 @@ function entryRules(
   if (e.kind !== 'site' && e.site !== undefined) issue('site', 'only a site has a sub-kind');
   if (e.kind === 'power' && e.type === undefined) issue('type', 'a power needs its type');
   if (e.kind !== 'power' && e.type !== undefined) issue('type', 'only a power has a type');
+  if (e.kind !== 'power' && e.crafts !== undefined)
+    issue('crafts', 'only a power practices crafts');
   if (!place) {
     for (const k of [
       'hidden',

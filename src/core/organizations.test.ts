@@ -57,7 +57,7 @@ const atRealm = (s: GameState, realm: RealmId, stage: number): GameState =>
 describe('every power has a type', () => {
   it('in the generated table, and every one reads a ladder', () => {
     const powers = ORG_ROWS.filter((r) => r.type);
-    expect(powers.length).toBe(159);
+    expect(powers.length).toBe(160);
     for (const p of powers) {
       expect(isOrganization(p.id), p.id).toBe(true);
       expect(() => seatRanges(p.id), p.id).not.toThrow();
@@ -269,7 +269,7 @@ describe('the save', () => {
     raw.version = 37;
     raw.state.world.members = [{ who: YOU, power: GATE, since: 5 }];
     const back = loadSave(raw);
-    expect(back.version).toBe(44);
+    expect(back.version).toBe(45);
     expect(back.state.world.members).toEqual([
       {
         who: YOU,

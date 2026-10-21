@@ -764,5 +764,9 @@ export const NAMELESS_MARKET: Catalog = {
     { thing: 'ash-leaf-tea', shops: ['stall'], count: [2, 8] },
     { thing: 'technique:paired-flying-swords', shops: ['black-market'], weight: 0.05 },
     { thing: 'technique:nameless-needle-storm', shops: ['black-market'], weight: 0.05 },
+    // Red Marrow Cave's pills (K6), which reach the world only here; its people know them.
+    { thing: 'red-marrow-pill', shops: ['black-market'], weight: 0.5, count: [1, 3] },
+    { thing: 'penned-beast-blood-pill', shops: ['black-market'], weight: 0.5, count: [1, 3] },
+    { thing: 'manual:marrow-draining-blood-method', shops: ['black-market'], weight: 0.05 },
   ],
 };

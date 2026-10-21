@@ -12,7 +12,10 @@ import { hasPerson, person } from '../../content/people.ts';
 import { realm, realmIndex, REALM_IDS, REALMS, type RealmId } from '../../content/realms.ts';
 import { isMember } from '../resolver/names.ts';
 import { type RealmStage, type World } from '../resolver/world.ts';
-import { addEvent, ageYears, type GameState } from '../state.ts';
+import { addEvent, ageYears, type Cultivator, type GameState } from '../state.ts';
+import { CRAFTS } from '../../content/crafts.ts';
+import { CRAFT_GRADES } from '../../content/styles.ts';
+import { capitalize } from '../../content/words.ts';
 import { isOrganization, organization, theName, houseOf } from './identity.ts';
 import { membership, membershipsOf } from './membership.ts';
 import { realmStageOf } from './trial.ts';
@@ -115,6 +118,33 @@ export function reaches(power: string, seat: SeatId, r: RealmStage): boolean {
   return from === null || rank(r) >= rank(from);
 }
 
+/** The craft grade a seat asks, 0 for none: a crafting guild's seat, its realm's tier (K6). */
+export function seatGrade(power: string, seat: SeatId): number {
+  const house = houseOf(power);
+  const org = organization(house);
+  if (org.type !== 'guild' || !org.row.crafts?.length) return 0;
+  const from = seatRanges(house)[seat].from;
+  return realmIndex(from?.realm ?? REALMS[0]!.id) + 1;
+}
+
+/**
+ * What a seat asks beyond its realm (K6, the code review's one gate): a guild that practices
+ * crafts seats you only with the craft grade of the seat's realm's tier, certified in any of its
+ * crafts (a guild whose elders are Foundation wants 二品 for elder). Why not, or null when it lets
+ * you in. Joining, the inner seat taken outright and the true seat offered early all read it.
+ */
+export function seatGate(c: Cultivator, power: string, seat: SeatId): string | null {
+  const house = houseOf(power);
+  const org = organization(house);
+  const crafts = org.row.crafts ?? [];
+  const need = seatGrade(house, seat);
+  if (need === 0) return null;
+  const best = Math.max(0, ...crafts.map((k) => c.crafts.grades[k]?.grade ?? 0));
+  if (best >= need) return null;
+  const which = crafts.length > 1 ? 'any of its crafts' : CRAFTS[crafts[0]!].name;
+  return `${capitalize(theName(house))} seats a ${org.seats[seat].name} only with a certified ${CRAFT_GRADES[need - 1]!.hanzi} badge, in ${which}.`;
+}
+
 /** The seat a cultivator takes on joining: outer, or inner outright when their realm reaches it. */
 export function entrySeat(power: string, r: RealmStage): SeatId {
   return reaches(power, 'inner', r) ? 'inner' : 'outer';
@@ -212,6 +242,7 @@ export function raiseEarly(s: GameState): GameState {
     const from = seatRanges(m.power).true.from;
     if (!from || rank(r) < rank(from)) continue;
     if (age >= realm(from.realm).lifespan * EARLY_TRUE.share) continue;
+    if (seatGate(s.player, m.power, 'true')) continue;
     state = { ...state, world: setSeat(state.world, who, m.power, 'true') };
     state = addEvent(state, 'power', {
       power: m.power,
@@ -232,6 +263,7 @@ export function seatsByRealm(s: GameState): GameState {
   for (const m of membershipsOf(s.world, s.player.id)) {
     if (!isOrganization(m.power) || m.guest || m.seat !== 'outer') continue;
     if (seatOf(s.world, s.player.id, m.power, r) !== 'inner') continue;
+    if (seatGate(s.player, m.power, 'inner')) continue;
     state = { ...state, world: setSeat(state.world, s.player.id, m.power, 'inner') };
     state = addEvent(state, 'power', {
       power: m.power,

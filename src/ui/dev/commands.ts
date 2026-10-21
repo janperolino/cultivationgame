@@ -23,7 +23,14 @@ import { addFame } from '../../core/resolver/names.ts';
 import { SEAT_IDS, type SeatId } from '../../content/organizations.ts';
 import { hasJob, job, JOBS } from '../../content/jobs.ts';
 import { BRANCHES } from '../../content/hours.ts';
-import { RECIPES, STARTER_TOOLS, hasRecipe, recipe } from '../../content/crafts.ts';
+import {
+  CRAFT_IDS,
+  RECIPES,
+  STARTER_TOOLS,
+  hasRecipe,
+  recipe,
+  type CraftId,
+} from '../../content/crafts.ts';
 import { slipId } from '../../content/catalogs/index.ts';
 import { jobsView, quitJob, takeJob } from '../../core/jobs.ts';
 import {
@@ -92,6 +99,7 @@ import type { GameStore } from '../store.ts';
 import { shop, SHOP_KIND_INFO, SHOPS } from '../../content/shops.ts';
 import { marketSum, restAt, restOf, whyOf } from '../../core/making.ts';
 import { priceWords, purseWords } from '../../core/purse.ts';
+import { addCraftFame } from '../../core/craftRenown.ts';
 import { buy, haggle, repair, sell, shelf, type ShopResult } from '../../core/shops.ts';
 import {
   addProsperity,
@@ -652,6 +660,42 @@ export const COMMANDS: Record<string, Command> = {
           world: addFame(s.world, s.player.id, HOME_REGION, kind, v, s.calendar.day),
         }),
         `${kind === 'renown' ? 'Renown' : 'Infamy'} +${v}.`,
+      );
+    },
+  },
+  grade: {
+    usage: 'grade <craft> <n>',
+    help: 'Certifies a craft grade, 1 to 9, as if at the Myriad Crafts Guild (K6); 0 takes it away.',
+    run([craft, n], store) {
+      if (!craft || !(CRAFT_IDS as readonly string[]).includes(craft))
+        return `Name a craft: ${CRAFT_IDS.join(', ')}.`;
+      const v = Number(n);
+      if (!Number.isInteger(v) || v < 0 || v > 9) return 'Give a grade from 0 to 9.';
+      return apply(
+        store,
+        (s) => {
+          const grades = { ...s.player.crafts.grades };
+          if (v === 0) delete grades[craft];
+          else grades[craft] = { grade: v, day: s.calendar.day, at: 'qm-wanyi-hui' };
+          return withPlayer(s, { ...s.player, crafts: { ...s.player.crafts, grades } });
+        },
+        v === 0 ? `No grade in ${craft}.` : `${craft}: grade ${v} certified.`,
+      );
+    },
+  },
+  craftfame: {
+    usage: 'craftfame <craft> <points>',
+    help: 'Adds points of craft renown in the Border Wilds (K6): level 3 at 4 points, 6 at 16, 9 at 37.',
+    run([craft, n], store) {
+      if (!craft || !(CRAFT_IDS as readonly string[]).includes(craft))
+        return `Name a craft: ${CRAFT_IDS.join(', ')}.`;
+      const v = Number(n);
+      if (!Number.isFinite(v)) return 'Give a number.';
+      return apply(
+        store,
+        (s) =>
+          withPlayer(s, addCraftFame(s.player, HOME_REGION, craft as CraftId, v, s.calendar.day)),
+        `${craft} renown +${v}.`,
       );
     },
   },

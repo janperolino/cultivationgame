@@ -8,6 +8,7 @@
 import type { OrgType, Population } from './atlas/schema.ts';
 import type { RealmId } from './realms.ts';
 import type { TripGoal } from './encounters/schema.ts';
+import type { CraftId } from './crafts.ts';
 import generated from './generated/organizations.json';
 
 export { ORG_TYPES, type OrgType } from './atlas/schema.ts';
@@ -625,6 +626,10 @@ export interface OrgRow {
   vein?: number;
   /** The powers and kingdoms it is hostile to: its enemy and feud ties. */
   foes: readonly string[];
+  /** Where it trades: its trade and secret ties (K6: where its people know its own goods). */
+  trades?: readonly string[];
+  /** What a guild or works practices (K6). */
+  crafts?: readonly CraftId[];
 }
 
 export const ORG_ROWS: readonly OrgRow[] = generated as OrgRow[];
