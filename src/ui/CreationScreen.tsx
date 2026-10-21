@@ -8,11 +8,12 @@ import {
   GIVEN_NAMES,
   origin,
   PRONOUN_CHOICES,
+  REFUSE_NOTE,
   type OriginChoice,
 } from '../content/origins.ts';
 import { root } from '../content/roots.ts';
 import { talent, talentEffects } from '../content/talents.ts';
-import { FREE_REROLLS, rollFor, type TalentRoll } from '../core/creation.ts';
+import { FREE_REROLLS, originWords, rollFor, type TalentRoll } from '../core/creation.ts';
 import { capitalize, formatEffect, listWords } from './format.ts';
 import { useGame } from './store.ts';
 
@@ -267,8 +268,8 @@ export function CreationScreen() {
           <h2 id="creation-heading" className="panel-heading">
             {o.name} <span className="hanzi muted">{o.hanzi}</span>
           </h2>
-          <p>{o.childhood}</p>
-          <p>{o.testing}</p>
+          <p>{originWords(o, o.childhood)}</p>
+          <p>{originWords(o, o.testing)}</p>
           <div className="choices">
             {(['along', 'refuse'] as const).map((c) => (
               <button
@@ -282,6 +283,7 @@ export function CreationScreen() {
               >
                 <strong>{o[c].label}</strong>
                 <span className="caption">You become {o[c].name}.</span>
+                {c === 'refuse' && <span className="caption creation-harder">{REFUSE_NOTE}</span>}
               </button>
             ))}
           </div>
@@ -304,7 +306,7 @@ export function CreationScreen() {
           <h2 id="creation-heading" className="panel-heading">
             Testing day
           </h2>
-          <p>{o[choice].text}</p>
+          <p>{originWords(o, o[choice].text)}</p>
           <div className="actions">
             <button
               type="button"

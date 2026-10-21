@@ -75,7 +75,7 @@ import { gradesOdds, gradesSpeed } from './grades.ts';
 import { stageGrowth } from './growth.ts';
 import { gainInsight, masteryBurst } from './insight.ts';
 import { burn, burnable, realmGrade, stonesOf, withStones } from './purse.ts';
-import { addReading } from './reading.ts';
+import { addReading, readingCopy } from './reading.ts';
 import {
   addMethodPractice,
   breakthroughBonus,
@@ -344,7 +344,14 @@ export function hourYields(
   const base = dayBase(c, day, unfed, seat, density);
   const discipline = followedRoutine(c) ? DISCIPLINE_BONUS : 0;
   const night = stats(c).nightQi;
-  return effectiveWheel(c).map((kind, hour) => {
+  // With no qi method yet, no study hour and a copy on the reading stand, the qi hours read it: a
+  // first copy takes the whole wheel until it is read (design § Character creation, the street
+  // cultivator's torn manual, which comes before the screen is built and the wheel can be set).
+  const wheel = effectiveWheel(c);
+  const readsInstead =
+    !ladderMethod(c, 'qi') && !wheel.includes('study') && readingCopy(c) !== null;
+  return wheel.map((wheelKind, hour) => {
+    const kind = readsInstead && wheelKind === 'qi' ? 'study' : wheelKind;
     const y: HourYield = {
       hour,
       kind,

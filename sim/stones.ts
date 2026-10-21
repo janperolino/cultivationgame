@@ -22,6 +22,18 @@ import {
 import { rarity } from '../src/content/rarity.ts';
 import { priceOf } from '../src/core/prices.ts';
 import { emptyWorld } from '../src/core/resolver/world.ts';
+import { defaultElements } from '../src/content/roots.ts';
+import type { Seat } from '../src/core/attention.ts';
+import { playDay, resolveByDefault } from '../src/core/cards.ts';
+import { actNow, doAct, withoutChain } from '../src/core/chains.ts';
+import { createLife } from '../src/core/creation.ts';
+import { finishAllGuides } from '../src/core/guides.ts';
+import { takeJob } from '../src/core/jobs.ts';
+import { switchMethod } from '../src/core/life.ts';
+import { advance } from '../src/core/loop.ts';
+import { ensureMap } from '../src/core/map/travel.ts';
+import { stonesOf, worthOf } from '../src/core/purse.ts';
+import type { GameState } from '../src/core/state.ts';
 
 /** Kept by the left-over share of the wages, across the region's markets. */
 const BAND = [0.05, 0.4] as const;
@@ -29,6 +41,9 @@ const REALMS = [
   { tier: 1, name: 'Qi Condensation' },
   { tier: 2, name: 'Foundation' },
 ] as const;
+
+/** A steady attended player's seat, near what sim/pacing.ts's sitter averages. */
+const SEAT: Seat = { factor: 3.2, attended: true };
 
 const w = emptyWorld();
 const day = 0;
@@ -97,4 +112,68 @@ console.log(
     ? '\nPASS: stones in beat stones out, but tightly, at Qi Condensation and Foundation.'
     : '\nFAIL: stones in and out are off the mark.',
 );
-if (!pass) process.exitCode = 1;
+
+// The rogue's purse at the peak of Qi Condensation (The opening, built: the rogue start): a rogue
+// takes its home's day hire from the first layer and keeps it every day, attended, living on what
+// it earns (the basket is the market's model, never taken from you), and nothing else earned; the
+// mark is the Foundation Pill's posted price, which the black market and alchemy shops ask.
+const PILL = priceOf('foundation-pill');
+const ROGUES = [
+  ['conscript', 'dock-carrying'],
+  ['frontier-orphan', 'stall-minding'],
+  ['cave-orphan', 'smugglers-porter'],
+] as const;
+console.log(
+  `\nA rogue’s day hire to the peak of Qi Condensation, attended (the pill is ${fmt(PILL)} low):`,
+);
+let rogueOk = true;
+for (const [origin, hire] of ROGUES) {
+  let s = ensureMap(
+    finishAllGuides(
+      createLife({
+        name: 'Sim',
+        pronouns: 'they/them',
+        look: '',
+        mode: 'ironman',
+        seed: `stones-${origin}`,
+        choice: 'refuse',
+        roll: {
+          root: 'true',
+          elements: defaultElements('true'),
+          body: 'farmhands-frame',
+          soul: 'plain-mind',
+          fate: 'ordinary-fate',
+          origin,
+        },
+      }),
+    ),
+  );
+  const work = actNow(s);
+  if (work && 'work' in work.act) s = doAct(s, work.quest.id) as GameState;
+  s = withoutChain(s);
+  let minutes = 0;
+  while (!Object.keys(s.player.methods).length && minutes < 60) {
+    s = advance(s, 60_000, { step: playDay, seat: SEAT }).state;
+    minutes++;
+  }
+  s = switchMethod(s, 'qi', Object.keys(s.player.methods)[0]!).state;
+  const took = takeJob(s, hire);
+  if (took.ok) s = took.state;
+  while (s.player.qi.stage < 9 && s.player.qi.realm === 'qi-condensation' && minutes < 600) {
+    s = advance(s, 60_000, { step: playDay, seat: SEAT }).state;
+    while (s.cards.pending.length) s = resolveByDefault(s, s.cards.pending[0]!.uid);
+    minutes++;
+  }
+  const purse = worthOf(stonesOf(s.player));
+  const ok = purse >= PILL * 0.8;
+  if (!ok) rogueOk = false;
+  console.log(
+    `${origin.padEnd(18)} ${hire.padEnd(18)} layer 9 at ${fmt(minutes)} min, ${fmt(purse)} low in hand (${Math.round((purse / PILL) * 100)}% of the pill)${ok ? '' : ' (short)'}`,
+  );
+}
+console.log(
+  rogueOk
+    ? 'PASS: a rogue’s work reaches its Foundation Pill by layer 9.'
+    : 'FAIL: a rogue’s work falls short of its Foundation Pill by layer 9.',
+);
+if (!pass || !rogueOk) process.exitCode = 1;

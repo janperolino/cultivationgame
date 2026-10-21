@@ -30739,5 +30739,712 @@
     "why": "We are the Starfall Sect's last hall, sealed under its ruins."
    }
   ]
+ },
+ {
+  "id": "qm-op-weeping-ravine",
+  "name": "Weeping Ravine",
+  "pinyin": "Kuxia Gu",
+  "hanzi": "哭峡谷",
+  "kind": "site",
+  "site": "herb-valley",
+  "parent": "qm-anbian-fu",
+  "status": "draft",
+  "terrain": "hills",
+  "tags": [
+   "opening"
+  ],
+  "summary": "A ravine a hundred and twenty li long west of Pacified Fort whose walls seep all year, where Pit-Edge Nettle grows thick on every wet ledge.",
+  "lore": "The garrison school sends its cadets to Weeping Ravine for nettle when the infirmary runs short, since its seeps keep the ledges green through the dry season and nothing bigger than a boar lairs in it. The walls are cut with old cadets' names, a row for every intake back to the March's charter.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "the seeping ledges",
+    "tags": [
+     "water",
+     "height",
+     "fall"
+    ]
+   },
+   {
+    "name": "the cadets' names cut in the wall",
+    "tags": [
+     "witnesses"
+    ]
+   },
+   {
+    "name": "a stream along the floor",
+    "tags": [
+     "water",
+     "crossing"
+    ]
+   }
+  ],
+  "map": {
+   "x": 182100,
+   "y": 217200
+  },
+  "size": 120,
+  "fromAbove": "A dark crease in the March's hills, green along its wet walls, a thread of water down its floor.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-boar-wallows",
+  "name": "The Boar Wallows",
+  "pinyin": "Zhuwa",
+  "hanzi": "猪洼",
+  "kind": "site",
+  "site": "den",
+  "parent": "qm-anbian-fu",
+  "status": "draft",
+  "terrain": "hills",
+  "tags": [
+   "opening"
+  ],
+  "summary": "Mud hollows in the oak hills north-east of Pacified Fort where stone-skin boars wallow, too few and too slow to be worth the garrison's arrows.",
+  "lore": "Stone-skin boars come down to the Wallows in the wet months to soak their hides soft enough to shed, and the March's cadets hunt the stragglers for practice. A boar that has grown its stone back is another matter, and the garrison has buried cadets who forgot it.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "mud hollows under the oaks",
+    "tags": [
+     "cover",
+     "water"
+    ]
+   },
+   {
+    "name": "a fallen oak across the wallow",
+    "tags": [
+     "height",
+     "burnable"
+    ]
+   }
+  ],
+  "map": {
+   "x": 184600,
+   "y": 216200
+  },
+  "size": 80,
+  "fromAbove": "Brown pocks of mud in the oak hills, ringed by trampled ground.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-lotus-backwater",
+  "name": "Lotus Backwater",
+  "pinyin": "Lianwan",
+  "hanzi": "莲湾",
+  "kind": "site",
+  "site": "herb-valley",
+  "parent": "qm-anbian-fu",
+  "status": "draft",
+  "terrain": "hills",
+  "tags": [
+   "opening"
+  ],
+  "summary": "A still backwater of the great river below River-Bend City, a hundred and fifty li of reed and lotus where Bend-Water Lotus Seed is cut from the pods.",
+  "lore": "The river left the backwater behind when it changed its bed three hundred years ago, and the lotus took it. River-Bend's alchemy shops buy the seed by the sack; the Night Bridge's ferrymen pole through its reeds at night, since the levy barges never come in.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "the lotus beds",
+    "tags": [
+     "water",
+     "cover",
+     "fragile"
+    ]
+   },
+   {
+    "name": "reed channels",
+    "tags": [
+     "water",
+     "narrow",
+     "cover"
+    ]
+   },
+   {
+    "name": "a ferryman's mooring post",
+    "tags": [
+     "crossing"
+    ]
+   }
+  ],
+  "map": {
+   "x": 183300,
+   "y": 221300
+  },
+  "size": 150,
+  "fromAbove": "A green eye of lotus beside the river's brown bend, cut by thin dark channels.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-howling-gully",
+  "name": "Howling Gully",
+  "pinyin": "Haogou",
+  "hanzi": "嚎沟",
+  "kind": "site",
+  "site": "den",
+  "parent": "qm-bianhuang",
+  "status": "draft",
+  "terrain": "hills",
+  "tags": [
+   "opening"
+  ],
+  "summary": "A gully on the edge of the Howling Downs south-west of River-Bend City where young marsh crocodiles den in the river's old bed, and the wind through it howls.",
+  "lore": "When the river moved it left its old bed full of mud and the crocodiles that liked it, and every flood sends a few young ones up the gully. Grown, they are below a cultivator's notice past the first layers; young, they have still killed cadets who thought so too soon.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "the river's old bed, all mud",
+    "tags": [
+     "water",
+     "cover"
+    ]
+   },
+   {
+    "name": "the gully's mouth where the wind howls",
+    "tags": [
+     "narrow"
+    ]
+   }
+  ],
+  "map": {
+   "x": 181100,
+   "y": 221500
+  },
+  "size": 90,
+  "fromAbove": "A dry scar off the river's bend running into the Downs, its floor still dark with mud.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-stilt-hut",
+  "name": "The Stilt Hut",
+  "pinyin": "Gaojiao Wu",
+  "hanzi": "高脚屋",
+  "kind": "site",
+  "site": "hut",
+  "parent": "qm-anbian-fu",
+  "status": "draft",
+  "terrain": "hills",
+  "tags": [
+   "opening"
+  ],
+  "summary": "A ferryman's hut on stilts over the reeds west of River-Bend City, empty since its ferryman drowned, which the Night Bridge lends to those it hides.",
+  "lore": "The hut stands on ironwood stilts over a reed bed the river floods every spring, so no patrol can walk up to it unheard. The Night Bridge keeps it empty and lets those it shelters cultivate there: thin qi, but nobody asks your name.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "the stilts over the reeds",
+    "tags": [
+     "height",
+     "water"
+    ]
+   },
+   {
+    "name": "the reed bed below",
+    "tags": [
+     "cover",
+     "water"
+    ]
+   }
+  ],
+  "map": {
+   "x": 181000,
+   "y": 220300
+  },
+  "size": 1,
+  "fromAbove": "A speck on the reeds beside the river, too small to see but for its lamp at night.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-glowcap-sinkhole",
+  "name": "Glow-Cap Sinkhole",
+  "pinyin": "Yingjun Keng",
+  "hanzi": "萤菌坑",
+  "kind": "site",
+  "site": "herb-valley",
+  "parent": "qm-shiyan-guo",
+  "status": "draft",
+  "terrain": "karst",
+  "tags": [
+   "opening"
+  ],
+  "summary": "A sinkhole thirty li across north-east of the Terraces whose floor glows at night with Glow-Cap Mushroom, picked by the cave clans for their winter store.",
+  "lore": "The clans have picked Glow-Cap Sinkhole since before the kingdom had a king, and only clan children go down its rope ladders, since the caps are soft and the ledges are not. The glow comes from the caps and from the bats' leavings they feed on.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "the rope ladders down the wall",
+    "tags": [
+     "height",
+     "fall",
+     "narrow"
+    ]
+   },
+   {
+    "name": "the glowing floor",
+    "tags": [
+     "dark",
+     "fragile"
+    ]
+   },
+   {
+    "name": "bat roosts under the rim",
+    "tags": [
+     "dark",
+     "cover"
+    ]
+   }
+  ],
+  "map": {
+   "x": 193600,
+   "y": 210300
+  },
+  "size": 30,
+  "fromAbove": "A round dark well in the stone forest, faintly green at its bottom by night.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-bat-chimney",
+  "name": "The Bat Chimney",
+  "pinyin": "Bianfu Tong",
+  "hanzi": "蝙蝠筒",
+  "kind": "site",
+  "site": "cave",
+  "parent": "qm-shiyan-guo",
+  "status": "draft",
+  "terrain": "karst",
+  "tags": [
+   "opening"
+  ],
+  "summary": "A cave shaft south-west of the Terraces that breathes bats at dusk, millions of them, and swarms anyone who climbs into it by day.",
+  "lore": "Every dusk the Chimney exhales its bats over the karst like smoke, and the clans read the weather from which way the column leans. The swarms inside are wild-qi beasts at the first layers, mean but no worse; the clans send children to scrape guano there to learn to keep a lamp alive in a draught.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "the shaft's throat",
+    "tags": [
+     "dark",
+     "narrow",
+     "fall"
+    ]
+   },
+   {
+    "name": "guano heaps",
+    "tags": [
+     "burnable",
+     "cover"
+    ]
+   }
+  ],
+  "map": {
+   "x": 191500,
+   "y": 212400
+  },
+  "size": 10,
+  "fromAbove": "A black hole in a karst tower that smokes with bats each dusk.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-breathing-crack",
+  "name": "The Breathing Crack",
+  "pinyin": "Xi Feng",
+  "hanzi": "息缝",
+  "kind": "site",
+  "site": "cave",
+  "parent": "qm-shiyan-guo",
+  "status": "draft",
+  "terrain": "karst",
+  "tags": [
+   "opening"
+  ],
+  "summary": "A crack west of the Terraces that breathes cold air in and out on the hour, behind which the clans keep a dry cave for a child they hide.",
+  "lore": "No tester's lamp has found the Breathing Crack, since its draught puts out every flame held to it, and the clans walk it in the dark by touch. Behind it is a cave as dry as a granary, where a hidden child can cultivate on the karst's thin qi and nobody comes asking.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "the crack that breathes",
+    "tags": [
+     "narrow",
+     "dark"
+    ]
+   },
+   {
+    "name": "the dry cave behind it",
+    "tags": [
+     "dark",
+     "cover"
+    ]
+   }
+  ],
+  "map": {
+   "x": 191300,
+   "y": 211300
+  },
+  "size": 2,
+  "fromAbove": "Nothing at all from above: a seam in the karst like a hundred others.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-nettle-gully",
+  "name": "Nettle Gully",
+  "pinyin": "Ma Gou",
+  "hanzi": "麻沟",
+  "kind": "site",
+  "site": "herb-valley",
+  "parent": "qm-bianhuang",
+  "status": "draft",
+  "terrain": "hills",
+  "tags": [
+   "opening"
+  ],
+  "summary": "A gully below the Wall of Piled Bones choked with Pit-Edge Nettle, where the bones the Wall sheds have rotted the ground rich.",
+  "lore": "Bones fall off the old stretches of the Wall in every storm and roll down into the gully, and the nettle grows on what they leave. The Foot of the Wall's healer pays the patrols to cut it, since a nettle poultice keeps a beast-bite clean.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "nettle thick as a hedge",
+    "tags": [
+     "cover",
+     "fragile"
+    ]
+   },
+   {
+    "name": "bones the Wall shed",
+    "tags": [
+     "fragile",
+     "fall"
+    ]
+   }
+  ],
+  "map": {
+   "x": 176000,
+   "y": 197400
+  },
+  "size": 60,
+  "fromAbove": "A green crease below the bone-white Wall, littered white along its floor.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-wolf-ridge",
+  "name": "Wolf Ridge",
+  "pinyin": "Lang Ji",
+  "hanzi": "狼脊",
+  "kind": "site",
+  "site": "den",
+  "parent": "qm-bianhuang",
+  "status": "draft",
+  "terrain": "hills",
+  "tags": [
+   "opening"
+  ],
+  "summary": "A bare ridge south-west of the Wall where a ridge wolf too old to run with a pack keeps a den and watches the patrol walk.",
+  "lore": "The patrols have a name for every lone wolf on the ridge, and the old one there now they call the Quartermaster, since it takes its share of whatever they carry. It is a wild-qi beast of the first layers, and a cadet who can't make it give ground isn't ready for the Wall.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "the bare ridge top",
+    "tags": [
+     "height"
+    ]
+   },
+   {
+    "name": "the den under a slab",
+    "tags": [
+     "dark",
+     "narrow"
+    ]
+   }
+  ],
+  "map": {
+   "x": 174900,
+   "y": 197100
+  },
+  "size": 100,
+  "fromAbove": "A grey spine of rock in the coastal hills, bare of trees.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-blood-vine-gorge",
+  "name": "Blood-Vine Gorge",
+  "pinyin": "Xueteng Xia",
+  "hanzi": "血藤峡",
+  "kind": "site",
+  "site": "herb-valley",
+  "parent": "qm-bianhuang",
+  "status": "draft",
+  "terrain": "hills",
+  "tags": [
+   "opening"
+  ],
+  "summary": "A gorge north of the Beast-Butcher Gate where Beast-Blood Vine climbs the walls on the runoff from the Gate's butchering yards.",
+  "lore": "The Gate's yards drain into the gorge, and what drains is blood; the vine drinks it and goes red to the root. The mission hall posts the vine more often than anything, since every alchemist on the Wall wants it, and outer disciples cut it to make up their quota.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "red vine on the walls",
+    "tags": [
+     "cover",
+     "fragile",
+     "height"
+    ]
+   },
+   {
+    "name": "the runoff from the yards",
+    "tags": [
+     "water"
+    ]
+   },
+   {
+    "name": "a narrow floor",
+    "tags": [
+     "narrow"
+    ]
+   }
+  ],
+  "map": {
+   "x": 174000,
+   "y": 208600
+  },
+  "size": 140,
+  "fromAbove": "A gorge in the Bonefields stained rust-red down its walls.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-deer-meadows",
+  "name": "Thunder Meadows",
+  "pinyin": "Lei Yuan",
+  "hanzi": "雷原",
+  "kind": "site",
+  "site": "den",
+  "parent": "qm-bianhuang",
+  "status": "draft",
+  "terrain": "hills",
+  "tags": [
+   "opening"
+  ],
+  "summary": "High meadows south-east of the Gate where thunder-horned deer graze, and the grass grows in rings where their horns have struck.",
+  "lore": "The deer are the Gate's first hunt: a disciple's first core is a deer's, and a deer's horn calls lightning when it is cornered. The burned rings in the grass mark where an outer disciple learned that.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "open grass",
+    "tags": [
+     "witnesses"
+    ]
+   },
+   {
+    "name": "burned rings where lightning struck",
+    "tags": [
+     "fire"
+    ]
+   },
+   {
+    "name": "a stand of thorn",
+    "tags": [
+     "cover",
+     "burnable"
+    ]
+   }
+  ],
+  "map": {
+   "x": 174900,
+   "y": 210900
+  },
+  "size": 200,
+  "fromAbove": "Pale meadows in the Bonefields pocked with dark rings like old hearths.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-kelp-flats",
+  "name": "The Kelp Flats",
+  "pinyin": "Haidai Tan",
+  "hanzi": "海带滩",
+  "kind": "site",
+  "site": "herb-valley",
+  "parent": "qm-bianhuang",
+  "status": "draft",
+  "terrain": "coast",
+  "tags": [
+   "opening"
+  ],
+  "summary": "Tidal flats north-west of the City of the Guarded Mouth where Blood-Salt Kelp is cut at low tide, between the fens and the strait.",
+  "lore": "The kelp grows where the strait's salt meets the Ghost-Lamp Fens' black water, and it is cut only at the lowest tides, when the flats run out seventy li. The bounty office posts it for the alchemy shops on Pill Street, and street children cut it for the runners who take the posting.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "the flats at low tide",
+    "tags": [
+     "water",
+     "crossing"
+    ]
+   },
+   {
+    "name": "kelp beds",
+    "tags": [
+     "water",
+     "cover"
+    ]
+   },
+   {
+    "name": "the tide coming in",
+    "tags": [
+     "water",
+     "fall"
+    ]
+   }
+  ],
+  "map": {
+   "x": 150200,
+   "y": 211800
+  },
+  "size": 70,
+  "fromAbove": "Grey flats striped with dark kelp at low tide, gone under at high.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-crab-shoals",
+  "name": "Crab Shoals",
+  "pinyin": "Xie Qian",
+  "hanzi": "蟹浅",
+  "kind": "site",
+  "site": "den",
+  "parent": "qm-bianhuang",
+  "status": "draft",
+  "terrain": "coast",
+  "tags": [
+   "opening"
+  ],
+  "summary": "Shoals north of the City where tide crabs the size of carts come up to moult on the fens' edge.",
+  "lore": "Tide crabs come up the shoals to moult, and a soft crab is a fortune in shell to the refiners, so the shoals draw a crowd of cultivators every spring tide. The rest of the year the crabs keep their shells on and the shoals to themselves.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "shallows over sand",
+    "tags": [
+     "water",
+     "crossing"
+    ]
+   },
+   {
+    "name": "moulted shells",
+    "tags": [
+     "cover",
+     "fragile"
+    ]
+   }
+  ],
+  "map": {
+   "x": 151000,
+   "y": 211200
+  },
+  "size": 40,
+  "fromAbove": "Pale sandbars at the fens' edge, white with shell.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
+ },
+ {
+  "id": "qm-op-drowned-shrine",
+  "name": "The Drowned Shrine",
+  "pinyin": "Moxiang Ci",
+  "hanzi": "没香祠",
+  "kind": "site",
+  "site": "shrine",
+  "parent": "qm-bianhuang",
+  "status": "draft",
+  "terrain": "marsh",
+  "tags": [
+   "opening"
+  ],
+  "summary": "A shrine to a forgotten river god half under the Ghost-Lamp Fens east of the City, dry on its upper floor, where the City's rogues go to cultivate unseen.",
+  "lore": "Nobody remembers whose shrine it was; the fens rose over its lower hall a century ago. Its upper floor stays dry, the fen lamps keep the curious off, and every street cultivator in the City has slept there at least once.",
+  "truth": "",
+  "notes": "The opening, built (chains, rogue, knobs): a place a few days' road from a start, for its chain. Awaiting Jan's review.",
+  "features": [
+   {
+    "name": "the dry upper floor",
+    "tags": [
+     "height",
+     "cover"
+    ]
+   },
+   {
+    "name": "the drowned hall below",
+    "tags": [
+     "water",
+     "dark"
+    ]
+   },
+   {
+    "name": "fen lamps round it",
+    "tags": [
+     "fire",
+     "dark"
+    ]
+   }
+  ],
+  "map": {
+   "x": 152400,
+   "y": 212600
+  },
+  "size": 1,
+  "fromAbove": "A roof in the fens' black water, ringed by ghost-lamps.",
+  "top": "Qi Condensation",
+  "way": "",
+  "editedAt": "2026-10-21T12:00:00Z",
+  "editedBy": "claude"
  }
 ]

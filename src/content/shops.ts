@@ -374,6 +374,14 @@ const WRITTEN: readonly WrittenShop[] = [
     name: 'a sutler’s stall by the watchtower',
   },
   {
+    id: 'wall-sutler',
+    kind: 'stall',
+    at: 'qm-duigu-qiang',
+    ...BW,
+    power: null,
+    name: 'the sutler’s stall under the skull gate',
+  },
+  {
     id: 'march-mortal',
     kind: 'mortal',
     at: 'qm-anbian-fu',

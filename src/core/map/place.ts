@@ -4,6 +4,7 @@
 // ride or guard with, the money changer, and the bed you sleep in by rule. Guides and caravans are
 // seeded by the place and the month or week, like a shop's stock, so the same town shows the same
 // faces and draws no stream; only what you join is kept.
+import { didDeed } from '../journal.ts';
 import {
   CARAVAN_FARE_LOW,
   CARAVAN_LEAVES_HOUR,
@@ -396,6 +397,12 @@ export type Change = 'break-low' | 'buy-low' | 'break-mid' | 'buy-mid';
 
 /** The money changer: a stone for 110 taels and 120 back, a mid-grade for 1,100 low and 1,200 back. */
 export function changeMoney(s: GameState, placeId: string, how: Change): PlaceResult {
+  const r = change(s, placeId, how);
+  // An introduction quest's step may wait on it (core/journal.ts).
+  return r.ok ? { ...r, state: didDeed(r.state, 'changed') } : r;
+}
+
+function change(s: GameState, placeId: string, how: Change): PlaceResult {
   const here = inPlace(s, placeId);
   if (typeof here === 'string') return { ok: false, reason: here };
   if (!here.info.changer) return { ok: false, reason: 'There’s no money changer here.' };
@@ -435,7 +442,7 @@ export function bedNights(s: GameState, fromDay: number, toDay: number): GameSta
   if (homeOf(s, map).id === here.place.id) return s;
   let c = s.player;
   for (let i = 0; i < nights; i++) c = paySilver(c, here.info.bed) ?? c;
-  return c === s.player ? s : withPlayer(s, c);
+  return c === s.player ? s : didDeed(withPlayer(s, c), 'slept');
 }
 
 /** Whether you stand at a place, so its Enter is offered. */

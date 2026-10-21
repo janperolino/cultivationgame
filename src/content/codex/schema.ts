@@ -78,6 +78,7 @@ export const MET_TESTS = [
   'array', // an array's flags or disc held, or one laid (K10)
   'laid', // an array laid at a site or on open ground
   'prepared', // an array laid on open ground
+  'rogue', // a start that refused, belonging to no power
 ] as const;
 export type MetTest = (typeof MET_TESTS)[number];
 

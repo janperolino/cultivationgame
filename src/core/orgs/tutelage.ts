@@ -1,4 +1,5 @@
 // What an elder’s time buys: lessons and a protector at a breakthrough.
+import { didDeed } from '../journal.ts';
 import { ELDER_TIME } from '../../content/organizations.ts';
 import { realm, realmScale, type RealmId } from '../../content/realms.ts';
 import { INSIGHT_PER_STUDY_DAY } from '../../content/cultivation.ts';
@@ -57,7 +58,7 @@ export function takeLesson(s: GameState, power: string): Bought {
   if (m.taught === month) return { ok: false, why: 'An elder has taught you this month.' };
   const player = gainInsight(s.player, lessonInsight(s));
   const world = withMember(addBalance(s.world, m.who, m.power, -price), m, { taught: month });
-  return { ok: true, state: { ...withPlayer(s, player), world } };
+  return { ok: true, state: didDeed({ ...withPlayer(s, player), world }, 'lesson') };
 }
 
 /**

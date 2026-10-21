@@ -28,6 +28,12 @@ export interface PlaceKindInfo {
   board: boolean;
 }
 
+/**
+ * Places that keep a board though their kind keeps none (The opening, built: every start has a
+ * board near): the Wall of Piled Bones' garrison notice board, where its cadets' work is posted.
+ */
+export const NOTICE_BOARDS: readonly string[] = ['qm-duigu-qiang'];
+
 export const PLACE_KIND_INFO: Record<PlaceKindId, PlaceKindInfo> = {
   city: {
     name: 'city',

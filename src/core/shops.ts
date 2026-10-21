@@ -10,7 +10,8 @@ import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { CATALOGS } from '../content/catalogs/index.ts';
 import { RARE } from '../content/catalogs/rare.ts';
 import type { Catalog, Lot } from '../content/catalogs/types.ts';
-import { copyChapter, copyManual, hasCopy } from '../content/copies.ts';
+import { copyChapter, copyManual, copyTitle, hasCopy } from '../content/copies.ts';
+import { waitsOn } from './journal.ts';
 import { baseOf, hasItem, item, itemKind, variantId } from '../content/items.ts';
 import { CRACK_MEND_SHARE, mended } from './crafts.ts';
 import {
@@ -702,7 +703,13 @@ export function buy(s: GameState, shopId: string, slot: number, count?: number):
     lot.standing && !lot.endless
       ? { ...sm.took, [lot.thing]: (sm.took[lot.thing] ?? 0) + k }
       : sm.took;
-  return { ok: true, state: withShopMonth(next, shopId, { ...sm, bought, took }) };
+  next = withShopMonth(next, shopId, { ...sm, bought, took });
+  // A quest's step that waits on a buy hears of it (the origin's board quest).
+  if (waitsOn(next, 'bought')) {
+    const what = hasCopy(lot.thing) ? copyTitle(lot.thing) : item(lot.thing).name;
+    next = addEvent(next, 'bought', { what, where: sh.name, thing: lot.thing });
+  }
+  return { ok: true, state: next };
 }
 
 /** What the shop deals in, for a thing you hold: its Bag kind, or a copy. */

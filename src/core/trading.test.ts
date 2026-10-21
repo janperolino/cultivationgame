@@ -242,7 +242,7 @@ describe('the save', () => {
     raw.version = 34;
     delete raw.state.world.copied;
     const old = loadSave(raw);
-    expect(old.version).toBe(51);
+    expect(old.version).toBe(52);
     expect(old.state.world.copied).toEqual({});
   });
 });

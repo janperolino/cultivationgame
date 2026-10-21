@@ -246,6 +246,8 @@ describe('markets by reach', () => {
     expect(names('corral-town').sort()).toEqual(
       [
         'foot-of-the-wall',
+        // The Wall's sutler (The opening, built: chains, rogue, knobs).
+        'qm-duigu-qiang',
         'qm-baijiang-zong',
         'qm-fugu-ge',
         'qm-qianlan-cheng',
@@ -322,7 +324,7 @@ describe('prosperity', () => {
     delete raw.state.world.prosperity;
     delete raw.state.world.supply;
     const old = loadSave(raw);
-    expect(old.version).toBe(51);
+    expect(old.version).toBe(52);
     expect(old.state.world.supply).toEqual({});
     expect(old.state.world.prosperity).toEqual({});
   });

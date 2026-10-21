@@ -54,8 +54,8 @@ const BW = 'qm-bianhuang';
 const life = (
   origin: 'cave-orphan' | 'conscript' | 'frontier-orphan' = 'cave-orphan',
   seed = 'map',
-): GameState =>
-  quiet(ensureMap(newLife({ name: 'Han Li', seed, origin: { id: origin, choice: 'along' } })));
+  choice: 'along' | 'refuse' = 'refuse',
+): GameState => quiet(ensureMap(newLife({ name: 'Han Li', seed, origin: { id: origin, choice } })));
 
 /** A quiet road: the travel tests meet no encounters (core/map/encounters.test.ts meets them). */
 const quiet = (s: GameState): GameState => ({
@@ -139,10 +139,17 @@ describe('what you know', () => {
     expect(m.at).toEqual([192600, 211300]);
   });
 
-  it('starts a conscript at Pacified Fort and a frontier orphan in the City', () => {
-    expect(life('conscript').map!.at).toEqual([183600, 217200]);
-    const city = placeById(mapFor(life('frontier-orphan')), 'qm-shoukou-cheng')!;
-    expect(life('frontier-orphan').map!.at).toEqual([city.x, city.y]);
+  it('starts each path where it put you: the cadets, the deserter, the Gate’s disciple, the street', () => {
+    expect(life('cave-orphan', 'map', 'along').map!.at).toEqual([183600, 217200]);
+    expect(life('conscript', 'map', 'along').map!.at).toEqual([176000, 196000]);
+    const at = (o: 'conscript' | 'frontier-orphan', c: 'along' | 'refuse', id: string) => {
+      const s = life(o, 'map', c);
+      const p = placeById(mapFor(s), id)!;
+      expect(s.map!.at, `${o}/${c}`).toEqual([p.x, p.y]);
+    };
+    at('conscript', 'refuse', 'qm-hewan-cheng');
+    at('frontier-orphan', 'along', 'qm-tushou-men');
+    at('frontier-orphan', 'refuse', 'qm-shoukou-cheng');
   });
 
   it('sees 600 li in the open and 150 in closed country', () => {

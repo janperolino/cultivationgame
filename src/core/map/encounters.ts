@@ -1323,6 +1323,42 @@ export function arrive(
   return st;
 }
 
+/**
+ * A written encounter placed ahead on the course at a point (the origin's board quest's road
+ * beast): seen at the edge of your sight, met when the course reaches it, and gone round at once
+ * on Avoid, as a drawn one is.
+ */
+export function placeAhead(
+  s: GameState,
+  map: RegionMap,
+  template: string,
+  band: number,
+  index: number,
+  id: string,
+): GameState {
+  const life = s.map!;
+  if (!life.course || life.encounters.some((e) => e.id === id)) return s;
+  const t = encounterTemplate(template);
+  const at = life.course.pts[index]!;
+  const enc: Encounter = {
+    id,
+    template,
+    seed: hashSeed(`${id}/${s.lineage.id}`),
+    band,
+    at: [at[0], at[1]],
+    meetAt: index,
+    state: 'sensed',
+    how: 'seen',
+    tried: [],
+    day: s.calendar.day,
+    where: whereWords(map, at),
+  };
+  const st = { ...s, map: { ...life, encounters: [...life.encounters, enc] } };
+  if (st.map.stance === 'avoid' && t.kind !== 'place' && t.kind !== 'omen')
+    return goRound(st, id, 'stance');
+  return st;
+}
+
 /** The road's notice an hour adds: on a road or off it, by night, heat, flying and a group. */
 export function noticeRate(
   s: GameState,

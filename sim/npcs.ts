@@ -17,6 +17,7 @@ import { defaultElements } from '../src/content/roots.ts';
 import { tierStep } from '../src/content/realms.ts';
 import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
+import { withoutChain } from '../src/core/chains.ts';
 import { finishAllGuides } from '../src/core/guides.ts';
 import { majorCheck } from '../src/core/cultivation.ts';
 import { breakThrough, playFirsts, switchMethod } from '../src/core/life.ts';
@@ -73,7 +74,8 @@ function play(seed: number): { at: Record<string, number>; insight500?: number }
       origin: 'cave-orphan',
     },
   });
-  s = playFirsts(finishAllGuides(s));
+  // The opening's chain isn't what this sim measures: without it the seclusion deck isn't held.
+  s = playFirsts(withoutChain(finishAllGuides(s)));
   const at: Record<string, number> = {};
   let insight500: number | undefined;
   let ms = 0;

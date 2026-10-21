@@ -207,6 +207,8 @@ export interface Card {
   chance?: number;
   /** In a paced deck, a card that keeps its own daily chance instead: a named day. */
   fixed?: boolean;
+  /** Never drawn: a quest brings it when you take its step (the rogue's first big job). */
+  pushed?: boolean;
   /** Days lived by which it comes for certain, once its trigger holds. */
   sureAt?: number;
   /** Comes once a life. */

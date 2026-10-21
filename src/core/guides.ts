@@ -7,6 +7,7 @@
 import { BUILD_GUIDES, GUIDE_IDS, GUIDES, type Guide, type GuideId } from '../content/guides.ts';
 import { FIRST_NODE_INSIGHT } from '../content/firsts.ts';
 import { barFill, nextStep } from './cultivation.ts';
+import { actNow } from './chains.ts';
 import { FIRST_BREATH } from './life.ts';
 import { knownMethods } from './methods.ts';
 import { ownedCopies, knowsCopy } from './reading.ts';
@@ -40,6 +41,8 @@ export function guideDone(s: GameState, id: GuideId): boolean {
 function doneInState(s: GameState, id: GuideId): boolean {
   const p = s.player;
   switch (id) {
+    case 'first-work':
+      return s.chronicle.some((e) => e.type === 'work');
     case 'take-up':
       return p.activeMethods.qi !== null;
     case 'first-orb':
@@ -70,9 +73,13 @@ function ready(s: GameState, id: GuideId, ctx: GuideContext): boolean {
   if (g.tab && ctx.tab !== g.tab) return false;
   const p = s.player;
   const built = BUILD_GUIDES.every((b) => guideDone(s, b));
-  // Past the first seclusion's guides, nothing fires until the screen is built (but a fight).
-  if (!built && !BUILD_GUIDES.includes(id) && id !== 'fight-turn') return false;
+  // Past the first seclusion's guides, nothing fires until the screen is built (but a fight, and
+  // a rogue's first work, which comes before the first breath).
+  if (!built && !BUILD_GUIDES.includes(id) && id !== 'fight-turn' && id !== 'first-work')
+    return false;
   switch (id) {
+    case 'first-work':
+      return needsWork(s);
     case 'take-up':
       return p.activeMethods.qi === null && knownMethods(p, 'qi').length > 0;
     case 'qi-bar':
@@ -103,7 +110,17 @@ function ready(s: GameState, id: GuideId, ctx: GuideContext): boolean {
       return !!ctx.shop;
     case 'fight-turn':
       return !!s.fight;
+    case 'sheet':
+      return s.chronicle.some((e) => e.type === 'spar' && e.data.result === 'won');
+    case 'sense':
+      return !!s.map?.course && !ctx.inside;
   }
+}
+
+/** A rogue's first work waits to be done: the chain's act that pays the method. */
+function needsWork(s: GameState): boolean {
+  const a = actNow(s);
+  return !!a && 'work' in a.act;
 }
 
 /** The guide standing now, here: the first in order whose moment has come, or null. */

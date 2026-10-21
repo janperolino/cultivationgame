@@ -22,6 +22,8 @@ import { BreakthroughPanel, BreakthroughRow, StepNeeds } from './BreakthroughPan
 import { useScene } from './scene.ts';
 import { SeatedFigure, SeatMeter } from './SeatedFigure.tsx';
 import { TodayPanel } from './TodayPanel.tsx';
+import { ChainOfferCard, FirstWorkButton } from './ChainOffer.tsx';
+import { chainOffer } from '../core/chains.ts';
 import { useGame, type AwaySummary } from './store.ts';
 import { technique } from '../content/techniques.ts';
 import { readingLine } from './bookcase.ts';
@@ -215,6 +217,7 @@ export function CultivateScreen() {
               </p>
             </>
           )}
+          <FirstWorkButton game={game} />
           {toTakeUp && (
             <button
               type="button"
@@ -257,6 +260,8 @@ export function CultivateScreen() {
                 <BreakthroughPanel game={game} />
               ) : away && !game.ended ? (
                 <AwayCard away={away} onRead={() => setReading((r) => !r)} />
+              ) : chainOffer(game) && !game.ended ? (
+                <ChainOfferCard game={game} />
               ) : undefined
             }
           />

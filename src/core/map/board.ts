@@ -13,7 +13,7 @@ import type { Template, TripGoal } from '../../content/encounters/schema.ts';
 import { parentsOf, veinAt } from '../../content/map/index.ts';
 import { MISSION_GOALS } from '../../content/organizations.ts';
 import { addStanding } from '../resolver/opinion.ts';
-import { PLACE_KIND_INFO } from '../../content/map/places.ts';
+import { NOTICE_BOARDS, PLACE_KIND_INFO } from '../../content/map/places.ts';
 import {
   addBalance,
   houseOf,
@@ -32,6 +32,8 @@ import { bandAt } from './depth.ts';
 import { contact } from './encounters.ts';
 import { placeKindOf } from './gate.ts';
 import { areaAt, placeById, type MapPlace, type RegionMap } from './region.ts';
+import { hasQuest, quest } from '../../content/quests.ts';
+import { homeOf } from './travel.ts';
 import type { Encounter, Posting } from './schema.ts';
 
 /** The goals a board posts; an escort is a caravan's, joined at the guild (P3.6b). */
@@ -51,7 +53,7 @@ export const RETRY_DAYS = 30;
 
 export function hasBoard(p: MapPlace): boolean {
   const k = placeKindOf(p);
-  return (!!k && PLACE_KIND_INFO[k].board) || isMissionHall(p.id);
+  return (!!k && PLACE_KIND_INFO[k].board) || isMissionHall(p.id) || NOTICE_BOARDS.includes(p.id);
 }
 
 /** A sect's seat keeps a mission hall: its board, paying contribution (design § Posts). */
@@ -122,9 +124,69 @@ function patronOf(board: MapPlace): { patron?: string } {
   return p ? { patron: p } : {};
 }
 
+/**
+ * A quest's own posting (the origin's board quest): it stands on its board while the quest is under
+ * way at its first step, beside the month's, and pays what the quest writes.
+ */
+export function questPostingsAt(s: GameState, map: RegionMap, board: MapPlace): Posting[] {
+  const out: Posting[] = [];
+  for (const q of s.journal.quests) {
+    if (q.handed !== null || !hasQuest(q.id)) continue;
+    const def = quest(q.id);
+    const qp = def.posting;
+    if (!qp || postingReached(s, def.id, 'paid', q.taken)) continue;
+    const at = qp.board === '@home' ? homeOf(s, map) : placeById(map, qp.board);
+    const spot = placeById(map, qp.spot);
+    if (!at || at.id !== board.id || !spot) continue;
+    const li = Math.round(Math.hypot(spot.x - board.x, spot.y - board.y) / 100) * 100;
+    out.push({
+      id: questPostingId(def.id),
+      board: board.id,
+      template: qp.template,
+      title: qp.title,
+      text: `${spot.name}, ${li.toLocaleString('en')} li ${bearing(board, spot)}.`,
+      spot: [spot.x, spot.y],
+      place: spot.id,
+      band: Math.max(0, bandAt(map, [spot.x, spot.y])),
+      pay: qp.pay,
+      taken: s.calendar.day,
+      done: false,
+      // A mission hall pays its members in contribution, as all its postings do.
+      ...(isMissionHall(board.id) ? { power: houseOf(board.id) } : {}),
+    });
+  }
+  return out;
+}
+
+/** A quest's own posting's id. */
+export function questPostingId(questId: string): string {
+  return `quest:${questId}`;
+}
+
+/** Whether a quest's own posting is taken, its goal met, or paid at its board since `since`. */
+export function postingReached(
+  s: GameState,
+  questId: string,
+  state: 'taken' | 'met' | 'paid',
+  since: number,
+): boolean {
+  const id = questPostingId(questId);
+  const paid = s.chronicle.some(
+    (e) => e.type === 'encounter' && e.data.posting === id && e.day >= since - 1,
+  );
+  if (paid) return true;
+  const held = s.map?.postings.find((p) => p.id === id);
+  if (state === 'taken') return !!held;
+  if (state === 'met') return !!held?.done;
+  return false;
+}
+
 /** This month's postings on a board: seeded by the place and the month, the same for every visit. */
 export function postingsAt(s: GameState, map: RegionMap, board: MapPlace): Posting[] {
-  if (!hasBoard(board)) return [];
+  const own = questPostingsAt(s, map, board).filter(
+    (p) => !s.map?.postings.some((x) => x.id === p.id),
+  );
+  if (!hasBoard(board)) return own;
   const month = monthIndex(s.calendar.day);
   const rng = new Rng(hashSeed(`board/${board.id}/${month}`));
   const pool = goalTemplates(board);
@@ -159,7 +221,7 @@ export function postingsAt(s: GameState, map: RegionMap, board: MapPlace): Posti
       ...(isMissionHall(board.id) ? { power: houseOf(board.id) } : patronOf(board)),
     });
   }
-  return out;
+  return [...own, ...out];
 }
 
 export type BoardCheck = { ok: true; state: GameState } | { ok: false; reason: string };
@@ -207,7 +269,10 @@ export function claimPosting(s: GameState, map: RegionMap, id: string): BoardChe
     st = { ...s, world: addBalance(s.world, s.player.id, p.power, points) };
     paid = `${points} ${organization(p.power).preset.currency.name} at the mission hall`;
   } else {
-    const purse = receive(stonesOf(s.player), p.pay, tierGrade(veinAt(p.board)));
+    // A quest's own posting pays in low-grade stones, which a first buy can spend (a part-drunk
+    // higher stone can't be broken for change, E1).
+    const grade = p.id.startsWith('quest:') ? 0 : tierGrade(veinAt(p.board));
+    const purse = receive(stonesOf(s.player), p.pay, grade);
     st = withPlayer(s, withStones(s.player, purse));
     paid = `${p.pay} low-grade stones at the bounty board`;
   }
@@ -229,6 +294,7 @@ export function claimPosting(s: GameState, map: RegionMap, id: string): BoardChe
       line: `is paid ${paid} for ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}`,
       where: b?.name ?? map.name,
       kind: 'choice',
+      posting: p.id,
     }),
   };
 }

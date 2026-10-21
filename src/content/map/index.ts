@@ -14,6 +14,8 @@ export interface RegionPlace {
   pinyin: string;
   hanzi: string;
   kind: string;
+  /** A hand-written site's sub-kind (the atlas's `site`), null for any other kind. */
+  site?: string | null;
   terrain: string | null;
   qiDensity: number | null;
   /** The tier of the strongest spirit vein it sits on, null when it names none. */
