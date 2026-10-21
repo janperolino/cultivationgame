@@ -949,7 +949,7 @@ Agility counts as it does in a fight, 5% a point above 10. A check with no oppon
 - **Open scenes** carry no stakes: your stall, a teahouse, a walk through a market. They tick like any scene, people drift in at the place's traffic (a stall's customers come from its people table), and Wait skips to the next arrival. One ends when you leave, or when you set the stall to tend itself as hours on your wheel, selling while you're idle.
 - **A scene ends** when you leave (fleeing, if mid-fight), when its stakes resolve, or when you are dead or taken. It saves after every step, so a reload drops you back into it.
 - **Groups.** A group sneaks at its worst member's stealth and talks at its best member's; a helper adds ×1.2, two at most.
-- **Narration.** A narrator call for every turn of yours, however many steps it ran. In a fight a turn gets a sentence or two, so it stays quick, and the moments that matter get more: the first blow, a kill, an arrival, the end. At the spike's prices a ten-turn fight costs about a cent.
+- **Narration.** A narrator call for every turn of yours, however many steps it ran, at a length the engine picks by the moment (P3.9's planning, 2026-10-21): going in 80–150 words, a turn with something at stake 50–120, a plain turn (talk, a move, listening) 25–70, a fight's end told once 60–120, and 30 more on a turn with an arrival, the law or a cover blown. Second person, present tense, people speaking in quotes in their own voices. At these lengths a typed turn costs about $0.003 and a clicked one $0.0025 on the chosen hosts: an evening of 100 turns in a town about 30¢, a card's scene about 4¢. The chronicler runs every 10 turns and on leaving, and its last call gives the leaving card its one line. When a call fails, the step has still happened: the engine's plain line shows with **Tell it**, which retries the telling only; an interpreter that can't be reached leaves your words in the box and spends no tick. Settings can warn once a day past a sum you set, off by default, and never stops you.
 
 **What lasts.**
 
@@ -1782,7 +1782,7 @@ GLM gets five jobs, all with thinking off except the rare heart-demon scene. Non
 | Role | Runs when | Returns | Settings |
 |---|---|---|---|
 | Interpreter | you type free text; clicked choices skip it | action JSON, checked against a schema | temperature 0.2, structured output |
-| Narrator | every turn | 80–200 words, streamed, then a JSON tail: 3–4 next actions, memory notes, new names | temperature 0.8, max 600 tokens |
+| Narrator | every turn | 25–150 words by the moment (The resolver, Scenes and time, Narration), streamed, then a JSON tail: 3–4 next actions, memory notes, new names | temperature 0.8, max 600 tokens |
 | Chronicler | every 10 turns, and when you leave the world | a short summary plus NPC memory updates | temperature 0.3 |
 | Scribe | at world-calendar ticks and when you return | rumors, headlines and steward's reports on what the engine already decided, rewritten from the game's templated lines | one batched call per tick; optional |
 | Heart-demon author | before a major breakthrough, from Nascent Soul | a personal trial scene built from your chronicle, played like a go-in scene | thinking on: rare and worth the depth; a templated trial stands in without a key |
