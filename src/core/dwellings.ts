@@ -58,7 +58,7 @@ import {
 } from './map/region.ts';
 import { mapOf, mapPlaceOf } from './map/travel.ts';
 import { veinById, veinsKnown, type Vein } from './map/veins.ts';
-import { houseOf, isOrganization, organization, theName } from './orgs/identity.ts';
+import { houseOf, isOrganization, organization } from './orgs/identity.ts';
 import { membershipsOf } from './orgs/membership.ts';
 import { seatOf } from './orgs/seats.ts';
 import { realmStageOf } from './orgs/trial.ts';
@@ -83,7 +83,6 @@ const no = (reason: string): Done => ({ ok: false, reason });
 
 // ---------------------------------------------------------------- reading
 
-export const dwellingsOf = (c: Cultivator): readonly Dwelling[] => c.dwellings;
 export const dwellingById = (c: Cultivator, id: string): Dwelling | null =>
   c.dwellings.find((d) => d.id === id) ?? null;
 export const dwellingAt = (c: Cultivator, place: string): Dwelling | null =>
@@ -162,6 +161,9 @@ function storeOpen(s: GameState, d: Dwelling): boolean {
 export function toStore(s: GameState, id: string, thing: string, at: number): Done {
   const d = dwellingById(s.player, id);
   if (!d || !storeOpen(s, d)) return no('The store opens only where it stands.');
+  // A lapsed lease keeps the store a month for taking out, never for putting in.
+  if (lapsed(d, s.calendar.day))
+    return no('Your lease has run out: the store only gives back now.');
   const stack = bagStacks(s.player).filter((x) => x.id === thing)[at];
   if (!stack) return no('You hold no such stack.');
   const items = { ...d.items, [thing]: (d.items[thing] ?? 0) + stack.n };
@@ -292,7 +294,11 @@ export function giveUp(s: GameState, id: string): Done {
     for (const a of d.arrays) next = gainItem(next, variantId(a.item, a.from), 1).state;
     for (const [thing, n] of Object.entries(d.items)) next = gainItem(next, thing, n).state;
   }
-  if (d.held === 'claimed' && d.power) next = { ...next, world: endSquat(next.world, s, d.power) };
+  // The deed ends with the last claim on that power's land (review 2026-10-21).
+  const squatsOn = (power: string) =>
+    next.player.dwellings.some((x) => x.held === 'claimed' && x.power === power);
+  if (d.held === 'claimed' && d.power && !squatsOn(d.power))
+    next = { ...next, world: endSquat(next.world, s, d.power) };
   return {
     ok: true,
     state: addEvent(next, 'dwelling', {
@@ -594,6 +600,9 @@ export function claim(s: GameState, index: number): Done {
     next = { ...next, map: raise(next.map!, place, 'seen') };
     const built = mapOf(next)!;
     site.rating = concealmentAt(built, placeById(built, place)!, DWELLINGS[c0.kind].hides ?? 0);
+    // A fresh gen, so the map is built again with the rating rather than the 0 it was read with
+    // (review 2026-10-21).
+    next = { ...next, mapgen: { ...next.mapgen, [map.id]: { ...gen, made: [...made] } } };
   }
   const steps = c0.vein ? c0.vein.tier : 0;
   const slots = c0.kind === 'cave' ? DWELLINGS.cave.slots + steps : DWELLINGS[c0.kind].slots;
@@ -722,6 +731,7 @@ export function slotPlots(c: Cultivator, d: Dwelling): Plot[] {
 export function layOutPlot(s: GameState, id: string): Done {
   const d = dwellingById(s.player, id);
   if (!d || s.map?.inside !== d.place) return no('You lay out land only where it lies.');
+  if (lapsed(d, s.calendar.day)) return no('Your lease has run out.');
   if (slotPlots(s.player, d).length >= d.slots) return no('Every slot holds a plot already.');
   const map = mapOf(s)!;
   const p = placeById(map, d.place)!;
@@ -909,6 +919,8 @@ export function syncQuarters(s: GameState): GameState {
     if (m.guest || !isOrganization(m.power)) continue;
     const place = quartersPlace(s, map, m.power);
     if (!place) continue;
+    // One a place: a room you already hold there serves (review 2026-10-21).
+    if (c.dwellings.some((x) => x.place === place && x.held !== 'seat')) continue;
     const seat = seatOf(s.world, s.player.id, m.power, realmStageOf(s));
     if (!seat) continue;
     const q = QUARTERS[seat];
@@ -1128,9 +1140,6 @@ export function dwellingOpens(s: GameState): boolean {
     (d) => d.held !== 'seat' || s.calendar.day - d.since >= QUARTERS_OPEN_DAYS,
   );
 }
-
-/** A power's name for the deed line. */
-export const squatWords = (power: string) => `Squatting on ${theName(power)}’s land`;
 
 /** Days of rent left, or null when it isn't rented. */
 export function rentLeft(d: Dwelling, day: number): number | null {

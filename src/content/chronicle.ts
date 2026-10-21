@@ -7,7 +7,7 @@ import type { CardOutcome } from './cards/schema.ts';
 import { GRADES, type GradeId, type LadderId } from './cultivation.ts';
 import { BRANCHES, HOUR_KINDS, HOUR_OPENINGS, SLEEP_FREED_TEXT, type HourKind } from './hours.ts';
 import { copyTitle } from './copies.ts';
-import { FAMILIES, type CraftId, type FamilyId } from './crafts.ts';
+import { CRAFTS, FAMILIES, type CraftId, type FamilyId } from './crafts.ts';
 import { CRAFT_GRADES, CRAFTER } from './styles.ts';
 import { COMBAT_DAOS, type CombatDaoId } from './daos.ts';
 import { item } from './items.ts';
@@ -293,8 +293,11 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
       : `${w.name} sits the examination at ${powerName(s(d.power))}, and the batch of ${item(s(d.recipe)).name}s fails in front of the examiners. They keep the fee.`;
   },
   // A failed batch that cracked the furnace (K1).
-  'blow-up': (d) =>
-    `The furnace bursts over ${s(d.recipe) === 'experiment' ? 'an experiment' : `a batch of ${item(s(d.recipe)).name}s`}: the ${item(s(d.tool)).name} is cracked, and wants a refiner.`,
+  // The tool's own word: a furnace, a forge, a brush (review 2026-10-21).
+  'blow-up': (d) => {
+    const tool = CRAFTS[item(s(d.tool)).uses.tool?.craft ?? 'alchemy'].tool;
+    return `The ${tool} ${tool === 'brush' ? 'splits' : 'bursts'} over ${s(d.recipe) === 'experiment' ? 'an experiment' : `a batch of ${item(s(d.recipe)).name}s`}: the ${item(s(d.tool)).name} is cracked, and wants a refiner.`;
+  },
   // A recipe found by experiment (K7): one nobody wrote, or a written one found by your own hand.
   'recipe-found': (d, w) => {
     const it = item(s(d.recipe));

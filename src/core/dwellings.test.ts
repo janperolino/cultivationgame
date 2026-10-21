@@ -193,8 +193,10 @@ describe('claiming in the wild', () => {
       veins(s).map((x) => `${x.id}@${x.x},${x.y}`),
     );
     expect(claimsHere(t).find((c) => c.vein?.id === v.id)?.why).toBe('You hold it already.');
-    // The world keeps the site after the life.
-    expect(t.mapgen[t.map!.region]!.made?.some((m) => m.id === d.place)).toBe(true);
+    // The world keeps the site after the life, and the map reads its concealment at once.
+    const kept = t.mapgen[t.map!.region]!.made?.find((m) => m.id === d.place);
+    expect(kept!.rating).toBeGreaterThan(0);
+    expect(placeById(mapOf(t)!, d.place)!.rating).toBe(kept!.rating);
     const there = inside(t, d.place);
     expect(densityHere(there)).toBe(stepMult(1));
     expect(densityOf(there, d)).toBe(4);

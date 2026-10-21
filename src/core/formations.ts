@@ -4,7 +4,7 @@
 // burning its stones day by day wherever you are; a trap on open ground holding what walks in until
 // you come to check it, and fought bound; the arrays on a fight's ground paying a day of stones a
 // turn. core/arrays.ts reads them, core/placing.ts is the placing game.
-import { TRAP } from '../content/formations.ts';
+import { GROUND_CLEAR_LI, TRAP } from '../content/formations.ts';
 import { hasItem, item, itemKind, variantId, type ArrayUse } from '../content/items.ts';
 import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
 import { template as rosterTemplate } from '../content/roster.ts';
@@ -121,6 +121,15 @@ export function cantLay(
   if (at === 'ground') {
     if (!s.map || s.map.course) return 'Stop walking first.';
     if (s.map.inside) return 'Prepared ground is laid out in the open, not inside a place.';
+    // Clear of the towns and seats by a stretch (review 2026-10-21: the constant was never read).
+    const at = s.map.at;
+    const near = mapFor(s, s.map.region)?.places.find(
+      (p) =>
+        p.kind !== 'site' &&
+        p.kind !== 'heart' &&
+        Math.hypot(p.x - at[0], p.y - at[1]) < GROUND_CLEAR_LI,
+    );
+    if (near) return `Too close to ${near.name}: prepared ground stands in open country.`;
     if (groundsHere(s).near.length) return 'One of your arrays already stands here.';
     return null;
   }

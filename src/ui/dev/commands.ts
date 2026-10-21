@@ -732,12 +732,13 @@ export const COMMANDS: Record<string, Command> = {
   },
   craft: {
     usage: 'craft [recipe] [mastery batches]',
-    help: 'Sets up a crafter (K1, K4): its craft’s crude tool (a clay furnace, an iron forge, a wolf-hair brush), the recipe known (the Qi-Gathering Pill unless told), inputs for five batches, four Craft hours from 辰, and the family at that many batches. `craft iron-sword` makes a refiner, `craft ember-talisman` a talisman master, `craft gathering-flags` an array master.',
+    help: 'Sets up a crafter (K1, K4): its craft’s crude tool (a clay furnace, an iron forge, a wolf-hair brush), the recipe known (the Qi-Gathering Pill unless told), inputs for five batches, four Craft hours from 辰 when the wheel has none, and the family at that many batches when told (run again, it only restocks). `craft iron-sword` makes a refiner, `craft ember-talisman` a talisman master, `craft gathering-flags` an array master.',
     run([id, batches], store) {
       const r = id ?? 'qi-gathering-pill';
       if (!hasRecipe(r)) return `No recipe ${r}: ${RECIPES.map((x) => x.output).join(', ')}.`;
-      const n = batches === undefined ? 0 : Number(batches);
-      if (!Number.isFinite(n) || n < 0) return 'Give a number of batches.';
+      // Run again to restock, it keeps the mastery and the wheel you have (review 2026-10-21).
+      const n = batches === undefined ? null : Number(batches);
+      if (n !== null && (!Number.isFinite(n) || n < 0)) return 'Give a number of batches.';
       return apply(
         store,
         (s) => {
@@ -747,12 +748,18 @@ export const COMMANDS: Record<string, Command> = {
           for (const i of rec.inputs) c = addItem(c, i.thing, i.count * 5);
           const node = `${slipId(r)}-node`;
           if (!c.nodes.includes(node)) c = { ...c, nodes: [...c.nodes, node] };
-          c = { ...c, crafts: { ...c.crafts, mastery: { ...c.crafts.mastery, [rec.family]: n } } };
+          if (n !== null)
+            c = {
+              ...c,
+              crafts: { ...c.crafts, mastery: { ...c.crafts.mastery, [rec.family]: n } },
+            };
           c = {
             ...c,
             flags: c.flags.includes('hours-craft') ? c.flags : [...c.flags, 'hours-craft'],
           };
-          const wheel = c.wheel.map((k, i) => (i >= 4 && i < 8 && k !== 'sleep' ? 'craft' : k));
+          const wheel = c.wheel.includes('craft')
+            ? c.wheel
+            : c.wheel.map((k, i) => (i >= 4 && i < 8 && k !== 'sleep' ? 'craft' : k));
           return withPlayer(s, { ...c, wheel });
         },
         `A crafter: ${r}, inputs for five batches, Craft hours from 辰 to 未.`,

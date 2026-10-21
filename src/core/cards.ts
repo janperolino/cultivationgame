@@ -636,7 +636,9 @@ function drawDay(s: GameState, day: number, opts: DrawOptions): GameState {
     // The craft deck's share of the paced draws is your wheel's Craft hours, at most half (K12).
     const craft = paced.filter((k) => k.deck === CRAFT_DECK);
     const rest = paced.filter((k) => k.deck !== CRAFT_DECK);
-    if (craft.length && rng.next() < craftShare(next.player)) return pickByWeight(craft, rng);
+    // Its own keyed roll, so a crafter's world draws never shift by it (review 2026-10-21).
+    const share = new Rng(hashSeed(`craft-share/${next.lineage.id}/${Math.floor(day)}`)).next();
+    if (craft.length && share < craftShare(next.player)) return pickByWeight(craft, rng);
     return pickByWeight(rest, rng);
   });
   next = state;

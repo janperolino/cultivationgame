@@ -260,6 +260,8 @@ const CraftsSchema = z.object({
       hand: z.number().min(0).optional(),
       /** The piece being mended, when the front is a mend (K4). */
       mend: z.string().optional(),
+      /** What the mend took, given back if the piece is gone by its end (review 2026-10-21). */
+      took: z.string().optional(),
       /** What is thrown in, when the front is an experiment (K7). */
       experiment: Experiment.optional(),
     })

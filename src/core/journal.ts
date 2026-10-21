@@ -60,11 +60,6 @@ export function questState(s: GameState, id: string): QuestState | undefined {
   return s.journal.quests.find((q) => q.id === id);
 }
 
-/** Quests under way: taken and not handed in. */
-export function questsUnderway(s: GameState): QuestState[] {
-  return s.journal.quests.filter((q) => q.handed === null);
-}
-
 /** Whether every step of a quest taken is done, so it waits to be handed in. */
 export function stepsDone(q: QuestState): boolean {
   return hasQuest(q.id) && q.step >= quest(q.id).steps.length;

@@ -69,7 +69,7 @@ import {
 } from '../core/markets.ts';
 import { whyOf } from '../core/making.ts';
 import { priceOf as priceOfThing } from '../core/prices.ts';
-import { gradeCount, priceWords, stonesOf, stonesWords } from '../core/purse.ts';
+import { gradeCount, pay, priceWords, stonesOf, stonesWords } from '../core/purse.ts';
 import { buyChapter, hallTerms, pavilion, pavilionChapters, titheFor } from '../core/halls.ts';
 import { lawHallAt, liftByPaying, marksHere, yourMark } from '../core/guarded.ts';
 import {
@@ -122,6 +122,7 @@ import { go } from './nav.ts';
 import { useGame } from './store.ts';
 import { copyManual } from '../content/copies.ts';
 import { CRAFTS, recipe, type CraftId } from '../content/crafts.ts';
+import { planInputs } from '../core/crafts.ts';
 import { CRAFT_DEALS, CRAFT_GRADES, CRAFT_RENOWN, CRAFTER } from '../content/styles.ts';
 import { knownCrafts } from '../core/craftRenown.ts';
 import {
@@ -1370,6 +1371,12 @@ function ExamCounter({ game, power, act, say }: CounterProps) {
       <ul className="place-exam">
         {rows.map((row) => {
           const pick = picks[row.craft] ?? row.recipes[0]?.output ?? '';
+          // Said before the sitting, not after it (review 2026-10-21).
+          const cant = !pay(stonesOf(game.player), row.fee)
+            ? `The examination costs ${row.fee} low.`
+            : pick && planInputs(game.player, recipe(pick)).short.length
+              ? 'Your Bag can’t fill the test batch.'
+              : null;
           return (
             <li key={row.craft}>
               <span>
@@ -1396,6 +1403,8 @@ function ExamCounter({ game, power, act, say }: CounterProps) {
                   <button
                     type="button"
                     className="place-btn"
+                    disabled={!!cant}
+                    title={cant ?? undefined}
                     onClick={() => {
                       sitDown(pick, row.craft, { bench: false });
                       setSat({ craft: row.craft, recipe: pick });
@@ -1403,9 +1412,15 @@ function ExamCounter({ game, power, act, say }: CounterProps) {
                   >
                     Sit it · {row.fee} low
                   </button>{' '}
-                  <button type="button" className="place-btn" onClick={() => sit(pick, 0)}>
+                  <button
+                    type="button"
+                    className="place-btn"
+                    disabled={!!cant}
+                    onClick={() => sit(pick, 0)}
+                  >
                     Queue it
                   </button>
+                  {cant && <span className="muted"> {cant}</span>}
                 </span>
               )}
             </li>

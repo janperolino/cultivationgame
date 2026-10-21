@@ -114,6 +114,42 @@ Each fix has a test where core changed: experiment ×3, talisman, farming ×2, u
 
 ## Low
 
+**Round 3, Jan's go ("fix them all"): the lows fixed, apart from the questions and the latent ones, which went to Open questions.**
+- 21: a mend keeps what it took (`took` on the bench's front, optional, so no save bump) and gives it back if the piece is gone by its end.
+- 22: in round 1.
+- 23: a batch's remaining hours are held at 0.
+- 24: above the floor, the plainest herbs go in first.
+- 25: with medium 9.
+- 26: the exam's Sit and Queue are disabled with the reason when you can't pay or fill the batch.
+- 27: a furnace or forge bursts and a brush splits.
+- 28: the Trees screen says "realm or soul" for a craft Dao.
+- 31: the Farming page reads a slot's rent off its dwelling.
+- 32: a lapsed dwelling takes no store puts and no lay-outs.
+- 33: the squatting deed ends with the last claim on that power's land.
+- 34: no quarters where you already hold a room.
+- 35: dug soil never lowers a plot, and a seat's land isn't dug.
+- 36: sowing and reaping wait while you sit tending, and another plot stands you up.
+- 37: the craft deck's share is its own keyed roll (`craft-share/<lineage>/<day>`).
+- 38: a fight's spending goes through `addItem`.
+- 39:
+  - `collectOrder` asks for room.
+  - The Old Master's Slip comes only when a slip waits (`slip` on the craft trigger).
+  - The cracked-tool card cracks the tool the batch is worked with, and never a lent one.
+  - Upkeep spends the lowest tier first.
+  - A made site's rating is on the map from the claim.
+  - The rest (where you stand for commissions, marked goods eaten, a lone cracked forge) is under Open questions.
+- 40: plan.md's K1 notes the re-anchoring.
+- 42: the dev `craft` restocks without touching mastery or a wheel that has craft hours.
+- 43: the save layer already checks every save as it writes it (round 3 of the last review), so a failed check is now logged with where it failed, at the step that wrote it.
+- Left: 29 (a question), 30 (latent) and 41 (until a second cultivator crafts), all under Open questions.
+
+**Dead code, round 3.**
+- Removed: the never-read list and `offerFor`'s `fixed`.
+- `BOOST.array` went in round 2.
+- `GROUND_CLEAR_LI` is enforced rather than dropped: prepared ground stands 30 li from any town or seat.
+
+**Checked in the dev build:** a new life, `craft`, five batches queued, and "Stop after this one" trims the entry to the one in the furnace and then greys out. The batch finishes and the bench clears, with no console errors.
+
 21. **A mend loses its input if the piece leaves mid-mend.** `core/crafts.ts:622-629, 761-780`: `finishMend` does nothing when the piece is gone (sold, dropped), and the ore is spent. *Fix:* refund the input then.
 22. **Float dust can write a negative array strength**, which fails `LaidArraySchema`'s `min(0)` on the next load (`core/formations.ts:146-149`, a lift within 1e-9 under a whole band). Rare, but the cost is a save that won't open. *Fix:* `Math.max(0, …)`. One line, worth taking with round 1.
 23. **`workBench` can mint hours when a batch gets shorter mid-run** (`core/crafts.ts:839`, a Speed node bought at 2.9 of 3 h makes `need` negative). *Fix:* `Math.max(0, …)`.
