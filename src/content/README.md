@@ -13,6 +13,9 @@ Game content as data: realms, trees and nodes, techniques, recipes, items, talen
 - `cards/`: the card format (`schema.ts`: trigger, weight, daily chance and sure day, once or cooldown, urgent, choices with costs, checks, effects and chronicle lines) and the decks, the first hour's in `firstHour.ts`.
 - `chronicle.ts`: the chronicle's event types, each with the template that writes its line as a biography, and the slot filling the cards share.
 - `elements.ts`: the five phases and the three mutated elements; lightning and wind count as wood, ice as water.
+- `guides.ts`: the fourteen guides (The opening, built): each one's form (the screen building itself, the veil, the ring), where it fires, the control it rings by `data-guide`, the narrator's lines, its ghost hand and the codex entry it adds; their names for Settings' replay.
+- `codex/`: the codex's entry record (`schema.ts`: title and hanzi, area, plain words with `{slot}`s, the numbers, where it lives, what meets it and its way in), the live numbers the slots read (`slots.ts`), and the 124 entries by area, one a row of `docs/features.md`.
+- `quests.ts`: the quest record (a giver where it is offered, one to five steps the engine finishes, a reward, the thanks, the codex entries it opens) and the quests; one test errand until the origins' chains are written.
 - `firsts.ts`: the first times a lineage does itself (P2.8), the hints toward each, one at a time in order, and the coming-back card's line for a first still waiting.
 - `hours.ts`: the twelve double-hours with their elements, the kinds of hour, the element, dawn and discipline bonuses, sleep at 子 and 丑, and when each kind of hour opens.
 - `routines.ts`: routines learned from teachers, manuals and sects, each a whole wheel.

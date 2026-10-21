@@ -295,7 +295,7 @@ export function TreesScreen() {
         {grafts.length > 0 &&
           ' The manuals you hold are jewels in each band’s crown, joined to none of its nodes; tap one to open it.'}
       </p>
-      <div className={`fan-holder${nodeBeacon ? ' has-node-beacon' : ''}`}>
+      <div className={`fan-holder${nodeBeacon ? ' has-node-beacon' : ''}`} data-guide="node">
         <TreeFan
           key={`${tree.id}:${treeFocus?.seq ?? 'home'}`}
           c={c}

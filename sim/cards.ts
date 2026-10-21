@@ -10,6 +10,7 @@ import { ORIGIN_CHOICES, ORIGIN_IDS, pathKey } from '../src/content/origins.ts';
 import { defaultElements } from '../src/content/roots.ts';
 import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
+import { finishAllGuides } from '../src/core/guides.ts';
 import { advance } from '../src/core/loop.ts';
 import type { GameState } from '../src/core/state.ts';
 
@@ -47,6 +48,7 @@ function run(origin: (typeof ORIGIN_IDS)[number], choice: 'along' | 'refuse', se
       origin,
     },
   });
+  s = finishAllGuides(s);
   const draws: Draw[] = [];
   const realmMs: Record<string, number> = {};
   const realmDays: Record<string, number> = {};

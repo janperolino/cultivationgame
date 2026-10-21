@@ -4,6 +4,7 @@ import { DAYS_PER_MONTH } from '../../content/calendar.ts';
 import { LADDERS } from '../../content/cultivation.ts';
 import type { Element } from '../../content/elements.ts';
 import type { FirstId } from '../../content/firsts.ts';
+import { GUIDE_IDS } from '../../content/guides.ts';
 import { FRESH_WHEEL, SLEEP_HOURS, type HourKind } from '../../content/hours.ts';
 import { METHOD_MASTERY, TECHNIQUE_MASTERY } from '../../content/mastery.ts';
 import { hasTechnique, technique as techniqueOf } from '../../content/techniques.ts';
@@ -36,7 +37,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 48;
+export const SAVE_VERSION = 49;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1090,6 +1091,14 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const p = (s.player ?? {}) as Raw;
     const crafts = { plots: [], ...((p.crafts ?? {}) as Raw) };
     return { ...old, version: 48, state: { ...s, player: { ...p, crafts } } };
+  },
+  // The opening, built: the guides (every one done for a life already past its first seclusion),
+  // the codex (filled from what the life has met as it next runs) and the journal.
+  48: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const lineage = { ...((s.lineage ?? {}) as Raw), guides: [...GUIDE_IDS], codex: {} };
+    const journal = { quests: [], followed: null };
+    return { ...old, version: 49, state: { ...s, lineage, journal } };
   },
 };
 

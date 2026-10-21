@@ -59,6 +59,7 @@ import {
   type TechniqueCheck,
 } from './techniques.ts';
 import { FIRST_IDS, firstsWaiting, noteFirsts, type FirstStep } from './firsts.ts';
+import { noteQuests } from './journal.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
 import {
   followWheel,
@@ -251,7 +252,7 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   if (!road) next = benchDay(next, days, ctx?.seat?.hand);
   // The plots grow wherever you are, tended where you stand (K8).
   next = fieldsDay(next, s.calendar.day - days, s.calendar.day);
-  return noteFirsts(checkScreens(next));
+  return noteQuests(noteFirsts(checkScreens(next)));
 };
 
 export interface LifeBreakthrough {

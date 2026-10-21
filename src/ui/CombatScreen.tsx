@@ -279,7 +279,7 @@ function Actions({ f, me }: { f: Fight; me: Combatant }) {
           to price every action against them.
         </Why>
       </h2>
-      <div className="fight-actions">
+      <div className="fight-actions" data-guide="moves">
         {techniques.map(({ technique: t }) => (
           <ActionButton
             key={t.id}

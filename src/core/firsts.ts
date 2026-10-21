@@ -80,7 +80,10 @@ export function firstsWaiting(s: GameState): FirstStep[] {
     const id = unqueuedCopies(c)[0];
     if (id) out.push({ first: 'copy', hint: 'copy', id });
   }
-  if (todo('study-hour')) out.push({ first: 'study-hour', hint: 'study-hour' });
+  // The study hour waits until there is something to study for: a method taken up (the first
+  // lesson's insight) or a copy to read.
+  const study = c.activeMethods.qi !== null || ownedCopies(c).some((id) => !knowsCopy(c, id));
+  if (todo('study-hour') && study) out.push({ first: 'study-hour', hint: 'study-hour' });
   if (todo('method') && c.activeMethods.qi === null) {
     const m = knownMethods(c, 'qi').find((x) => meetsRequirements(c, x).ok);
     if (m) out.push({ first: 'method', hint: 'method', id: m.id });

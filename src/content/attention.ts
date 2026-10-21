@@ -1,6 +1,6 @@
 // Attended seclusion (design § Cultivation, Attended seclusion; § How the two halves connect).
-// While you attend, qi speed carries one more factor, attention: ×1.25 for being there, up to ×2
-// at full focus. Orbs drift in now and then; drawing one in fills focus, focus drains slowly back
+// While you attend, cultivation carries one more factor, attention: ×2.5 for being there, up to ×4
+// at full focus (the opening redone, 2026-10-20: away is a quarter of the attended rate). Orbs drift in now and then; drawing one in fills focus, focus drains slowly back
 // toward the floor, and greedy catching heats the meridians until they tip into unsettled. Every
 // number here is a starting value that sim/pacing.ts's attended rows tune; core/attention.ts reads
 // them. Times are real seconds: focus is a multiplier on in-game rates, so a slower clock is never
@@ -8,10 +8,10 @@
 import type { PhaseElement } from './elements.ts';
 import { NIGHT_HOURS } from './hours.ts';
 
-/** Being there: the attention factor's floor, ×1.25 on qi. */
-export const ATTENTION_FLOOR = 0.25;
-/** Full focus: ×2 on qi. The Breath branch raises it (stat `focusCeiling`); it stays a ceiling. */
-export const ATTENTION_CEILING = 1;
+/** Being there: the attention factor's floor, ×2.5 on qi, body, soul and insight. */
+export const ATTENTION_FLOOR = 1.5;
+/** Full focus: ×4. The Breath branch raises it (stat `focusCeiling`); it stays a ceiling. */
+export const ATTENTION_CEILING = 3;
 
 /**
  * You attend while the tab is visible and you have touched it this recently, so a tab left open on

@@ -1,6 +1,6 @@
 // Attended seclusion (design § Cultivation, Attended seclusion): the seat's two states. Away is
-// idle as it always was, the floor, and earns exactly today's rates. Attending adds a factor to qi
-// speed, ×1.25 for being there up to ×2 at full focus, and leaves a second insight trickle. Orbs
+// idle as it always was, the floor, and earns exactly today's rates. Attending adds a factor to qi,
+// body, soul and insight, ×2.5 for being there up to ×4 at full focus, and leaves a second insight trickle. Orbs
 // drift in on their own `orbs` stream while Cultivate's figure is on screen; drawing one in (by
 // pointer or a finger) fills focus, more on the inhale; focus drains slowly back
 // toward the floor, and every breath warms the meridians until greed tips them into unsettled.
@@ -49,7 +49,7 @@ import { stats } from './stats.ts';
 
 /** What the day step needs from the seat: the qi factor, and whether you attend now. */
 export interface Seat {
-  /** Multiplies qi speed: 1 away, 1.25 for being there, up to 2 at full focus. */
+  /** Multiplies qi, body, soul and insight: 1 away, 2.5 for being there, up to 4 at full focus. */
   factor: number;
   /** Attended hours leave a second insight trickle. */
   attended: boolean;
@@ -143,7 +143,7 @@ const between = (rng: Rng, [lo, hi]: readonly [number, number]) => lo + rng.next
 
 // ---------------------------------------------------------------- the numbers
 
-/** The most attention adds at full focus: +100%, more with Whale Swallows the Sea. */
+/** The most attention adds at full focus: +300%, more with Whale Swallows the Sea. */
 export function attentionCeiling(c: Cultivator): number {
   return ATTENTION_CEILING * (1 + stats(c).focusCeiling);
 }

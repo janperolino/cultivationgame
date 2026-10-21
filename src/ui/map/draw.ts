@@ -594,7 +594,9 @@ export function drawMap(f: Frame, s: Scene): boolean {
     const st = known(life, q.id);
     if (st !== 'seen' && st !== 'sketched') continue;
     if (p.x0 > box[2] || p.y0 > box[3] || p.x0 + p.w < box[0] || p.y0 + p.h < box[1]) continue;
-    const show = Math.max(pieceIn * GLOW_CLOSE, s.hover === q.id ? GLOW_HOVER : 0) * (st === 'seen' ? 1 : 0.55);
+    const show =
+      Math.max(pieceIn * GLOW_CLOSE, s.hover === q.id ? GLOW_HOVER : 0) *
+      (st === 'seen' ? 1 : 0.55);
     const img = show > 0 ? glowOf(p) : null;
     if (!img) continue;
     ctx.globalAlpha = show;

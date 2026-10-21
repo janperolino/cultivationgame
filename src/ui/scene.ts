@@ -4,6 +4,7 @@
 // ends it on time, even with the tab hidden, and rolls with what was caught. Drawing only reads
 // it. The breakthrough panel (ui/BreakthroughPanel.tsx) that leads to a major one is the
 // session's too, and lives here so any screen can open it.
+import { guideNow } from '../core/guides.ts';
 import { create } from 'zustand';
 import { SCENE_OUTCOME_S } from '../content/scene.ts';
 import { BAR_CAP, LADDERS, type LadderId } from '../content/cultivation.ts';
@@ -30,6 +31,8 @@ export interface ScenePlay {
   certain: boolean;
   /** Page time it started, in ms. */
   started: number;
+  /** How fast its time runs: half for the lineage's first, under its guide's veil. */
+  pace?: number;
   scene: Scene;
   /** What a major attempt lays beside the gate pill (core/offerings.ts). */
   offerings: string[];
@@ -60,7 +63,7 @@ const stepKey = (s: GameState, which: LadderId) => {
 
 /** Scene seconds now. */
 export function sceneTime(p: ScenePlay, now = performance.now()): number {
-  return (now - p.started) / 1000;
+  return ((now - p.started) / 1000) * (p.pace ?? 1);
 }
 
 /** A scene runs and has not rolled yet. */
@@ -134,6 +137,10 @@ export function startScene(
       odds: attempt.odds,
       certain: attempt.odds >= 1,
       started: performance.now(),
+      // The first minor breakthrough's spark runs at half speed (core/guides.ts, its veil).
+      ...(!attempt.major && guideNow(s, { screen: 'cultivate' })?.id === 'first-minor'
+        ? { pace: 0.5 }
+        : {}),
       scene: newScene(),
       offerings: attempt.major ? [...offerings] : [],
       outcome: null,

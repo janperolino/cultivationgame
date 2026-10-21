@@ -11,6 +11,7 @@ import { HELD } from '../content/farming.ts';
 import { ELEMENTS, type Element } from '../content/elements.ts';
 import { EXPERIMENT_CRAFTS } from '../content/found.ts';
 import { ALL_FIRSTS, FIRST_IDS, type FirstId } from '../content/firsts.ts';
+import { GUIDE_IDS, type GuideId } from '../content/guides.ts';
 import { FRESH_WHEEL, HOUR_KIND_IDS, HOURS_PER_DAY } from '../content/hours.ts';
 import {
   ORIGIN_CHOICES,
@@ -472,6 +473,18 @@ export const PlayedFightSchema = z.object({
 });
 export type PlayedFight = z.infer<typeof PlayedFightSchema>;
 
+/** A quest you've taken (core/journal.ts): the step it is at and the day that step opened. */
+export const QuestStateSchema = z.object({
+  id: z.string(),
+  taken: z.number(),
+  /** The step under way; past the last, every step is done and it waits to be handed in. */
+  step: z.number().int().min(0),
+  opened: z.number(),
+  /** The day it was handed in, or null while it runs. */
+  handed: z.number().nullable(),
+});
+export type QuestState = z.infer<typeof QuestStateSchema>;
+
 export const GameStateSchema = z.object({
   lineage: z.object({
     id: z.string(),
@@ -479,7 +492,13 @@ export const GameStateSchema = z.object({
     life: z.number().int().min(1),
     /** The first times done (core/firsts.ts), so a reborn cultivator isn't walked through them. */
     firsts: z.array(z.enum(FIRST_IDS)),
+    /** The guides done or skipped (core/guides.ts), once a lineage. */
+    guides: z.array(z.enum(GUIDE_IDS)),
+    /** The codex entries met (core/codex.ts), new until opened; the lineage keeps what it knows. */
+    codex: z.record(z.string(), z.enum(['new', 'seen'])),
   }),
+  /** The journal's quests (core/journal.ts): those taken, and the one you follow. */
+  journal: z.object({ quests: z.array(QuestStateSchema), followed: z.string().nullable() }),
   mode: z.enum(['ironman', 'gentle']),
   calendar: z.object({
     /** World days since the lineage began, fractional while time runs. */
@@ -569,6 +588,8 @@ export interface NewLifeOptions {
    * NPCs run on the defaults. Creation starts a lineage with none.
    */
   firsts?: readonly FirstId[];
+  /** The guides the lineage has done (core/guides.ts); every one unless given, like the firsts. */
+  guides?: readonly GuideId[];
   /** Burn stones in qi hours from the start: a reborn life whose lineage has done it before. */
   burnStones?: boolean;
 }
@@ -722,7 +743,10 @@ export function newLife(opts: NewLifeOptions): GameState {
       id: opts.seed ?? opts.name,
       life: 1,
       firsts: [...(opts.firsts ?? ALL_FIRSTS)],
+      guides: [...(opts.guides ?? GUIDE_IDS)],
+      codex: {},
     },
+    journal: { quests: [], followed: null },
     hints: { on: true, shown: [] },
     mode,
     calendar: { day: startDay },

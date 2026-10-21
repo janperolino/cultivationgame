@@ -7,6 +7,7 @@
 // remember of you and their ties as you know them; their log is your chronicle filtered by them.
 // A follower's page says why they follow and how that breaks, and your name's reach by region
 // sits under the powers (P3.4b). Full in M5.
+import { QuestOffers } from './QuestOffers.tsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { placeName } from '../content/origins.ts';
 import { person, TIES, type TieId } from '../content/people.ts';
@@ -224,6 +225,8 @@ function PersonActs({ game, id }: { game: GameState; id: string }) {
         </button>
       </div>
       {(said ?? sparNo) && <p className="caption">{said ?? sparNo}</p>}
+      {/* A person offers their quests where they stand (design § The journal). */}
+      {here && where === here && <QuestOffers game={game} kind="person" place={here} who={id} />}
     </>
   );
 }
