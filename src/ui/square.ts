@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { card } from '../content/cards/index.ts';
 import type { GameState } from '../core/state.ts';
+import { cue } from './cues.ts';
 import { riseGains, type Delta } from './feel.ts';
 
 /** What the square holds: the card that waits first, or one that won't wait; or one encounter. */
@@ -38,12 +39,14 @@ export const useSquare = create<SquareStore>()(() => ({
 }));
 
 export function openSquare(open: SquareOpen): void {
+  if (!useSquare.getState().open) cue('ui-open');
   useSquare.setState((s) => ({ open, result: null, popped: addKey(s.popped, keyOf(open)) }));
 }
 
 /** Go on, Later, or a fight taking the stage: the square closes; what waits shows as a stub. */
 export function closeSquare(): void {
-  const { carried } = useSquare.getState();
+  const { carried, open } = useSquare.getState();
+  if (open) cue('ui-close');
   useSquare.setState({ open: null, result: null, carried: [] });
   riseGains(carried);
 }

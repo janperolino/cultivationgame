@@ -21,7 +21,6 @@ import {
   CRAFT_SITES,
   EARTH_FIRE_CRAFTS,
   EARTH_FIRE_TERRAIN,
-  FAMILIES,
   HAND,
   HOLDS,
   LAND,
@@ -62,6 +61,7 @@ import {
   finishExperiment,
   keepFound,
   loadExperiment,
+  throwSpent,
 } from './experiment.ts';
 import { tierHeld } from './trees.ts';
 
@@ -495,7 +495,8 @@ export interface InputPlan {
 
 /**
  * What a batch takes (K1's small call): the inputs above the recipe's floor when every one of them
- * can be filled so, for the lift; otherwise the worst first, so the good herbs wait.
+ * can be filled so, for the lift, the plainest of those first since any above lifts the same;
+ * otherwise the worst first, so the good herbs wait.
  */
 export function planInputs(c: Cultivator, r: Recipe): InputPlan {
   const tier = recipeTier(r);
@@ -509,7 +510,7 @@ export function planInputs(c: Cultivator, r: Recipe): InputPlan {
   );
   const take: Record<string, number> = {};
   for (const { i, have } of held) {
-    const pool = aboveOk ? have.filter((h) => h.rank > floor).reverse() : have;
+    const pool = aboveOk ? have.filter((h) => h.rank > floor) : have;
     let left = i.count;
     for (const h of pool) {
       if (left <= 0) break;
@@ -559,6 +560,15 @@ export function queueBatches(
  * front entry leaves its batch to finish.
  */
 export function unqueue(c: Cultivator, at: number): Cultivator {
+  const front = c.crafts.front;
+  const head = c.crafts.bench[0];
+  // The entry in the tool keeps the batches loaded, so the finish moves past it and nothing else
+  // (review 2026-10-21: taking it off made a finished throw drop the next entry).
+  if (at === 0 && front && head) {
+    const loaded = front.batches ?? 1;
+    if (head.batches <= loaded) return c;
+    return withCrafts(c, { bench: [{ ...head, batches: loaded }, ...c.crafts.bench.slice(1)] });
+  }
   const bench = c.crafts.bench.filter((_, i) => i !== at);
   return withCrafts(c, { bench });
 }
@@ -633,7 +643,7 @@ function loadMend(c: Cultivator, thing: string): Cultivator | null {
   const need = mendNeeds(thing);
   const have = heldOf(c, need.input, need.tier)[0];
   if (!have) return null;
-  const front = { recipe: baseOf(thing), above: false, hours: 0, mend: thing };
+  const front = { recipe: baseOf(thing), above: false, hours: 0, mend: thing, took: have.id };
   return withCrafts(addItem(c, have.id, -1), { front });
 }
 
@@ -768,9 +778,10 @@ export function frontHours(c: Cultivator, front: NonNullable<CraftsState['front'
 
 /** Finishes a mend: the piece mended if you still have it, and the bench moves on. */
 function finishMend(c: Cultivator, day: number): Cultivator {
-  const thing = c.crafts.front!.mend!;
+  const { mend: thing, took } = c.crafts.front! as { mend: string; took?: string };
   const still = needsMend(c, thing);
-  const next = still ? mended(c, thing) : c;
+  // A piece sold or mended in town while it waited gives its input back.
+  const next = still ? mended(c, thing) : took ? addItem(c, took, 1) : c;
   const done = {
     day,
     recipe: baseOf(thing),
@@ -845,7 +856,8 @@ export function workBench(
       next = loaded;
     }
     const front = next.crafts.front!;
-    const need = frontHours(next, front) - front.hours;
+    // Never below nothing: a batch made shorter mid-run (a Speed node) mints no hours.
+    const need = Math.max(0, frontHours(next, front) - front.hours);
     if (left + 1e-9 < need) {
       next = withCrafts(next, { front: withHand(front, left, hand) });
       break;
@@ -857,10 +869,12 @@ export function workBench(
   return { cultivator: next, events, batches };
 }
 
-/** Mends at the bench's head for pieces no longer needing it (sold, or mended in town) leave it. */
+/** Mends at the bench's head for pieces no longer needing it (sold, or mended in town), and throws with nothing left to find, leave it. */
 function dropStaleMends(c: Cultivator): Cultivator {
   let i = 0;
-  while (c.crafts.bench[i]?.mend && !needsMend(c, c.crafts.bench[i]!.mend!)) i++;
+  const stale = (e: CraftsState['bench'][number] | undefined) =>
+    !!e && ((!!e.mend && !needsMend(c, e.mend)) || (!!e.experiment && throwSpent(c, e.experiment)));
+  while (stale(c.crafts.bench[i])) i++;
   return i === 0 ? c : withCrafts(c, { bench: c.crafts.bench.slice(i) });
 }
 
@@ -900,9 +914,4 @@ export function benchWaits(c: Cultivator): string | null {
   if (short.length > 0)
     return `Short ${short.map((s) => `${s.need} ${item(s.thing).name}`).join(' and ')}.`;
   return null;
-}
-
-/** The family a recipe is filed under, for the page. */
-export function familyName(id: FamilyId): string {
-  return FAMILIES[id].name;
 }

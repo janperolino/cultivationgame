@@ -81,11 +81,10 @@ import { setCopyGain } from './map/encounters.ts';
 import { benchSpot, cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 import { atHome, jobsDay, onShift } from './jobs.ts';
 import { craftsOpen, workBench } from './crafts.ts';
-import { growPlots } from './farming.ts';
+import { growPlots, type FarmEvent } from './farming.ts';
 import { farmHere, plotPlaceName } from './map/fields.ts';
 import { heatOf } from './resolver/world.ts';
-import { addCraftFame } from './craftRenown.ts';
-import { CRAFT_RENOWN } from '../content/styles.ts';
+import { keepMarks, madeRare } from './craftRenown.ts';
 import { HOME_REGION } from '../content/resolver.ts';
 
 /**
@@ -176,15 +175,23 @@ function benchDay(s: GameState, days: number, hand = 0): GameState {
   const { value: r, state } = withStream(s, 'craft', (rng) =>
     workBench(s.player, hours, s.calendar.day, rng, { hand, spot: benchSpot(s) }),
   );
-  let next = withPlayer(state, r.cultivator);
-  for (const e of r.events) {
-    // A gold piece or better is talked of where it was made (K6): craft renown, no line of its own.
+  return benchEvents(withPlayer(state, r.cultivator), r.events);
+}
+
+/**
+ * What a bench, a harvest or an exam's batch made worth a line, into the chronicle: a gold piece
+ * or better is talked of where it was made (K6), craft renown and no line of its own. The
+ * Fields and the guild's bench hand theirs here too (review 2026-10-21).
+ */
+export function benchEvents(
+  s: GameState,
+  events: readonly FarmEvent[],
+  region = s.map?.region ?? HOME_REGION,
+): GameState {
+  let next = s;
+  for (const e of events) {
     if (e.type === 'made-rare') {
-      const region = next.map?.region ?? HOME_REGION;
-      next = withPlayer(
-        next,
-        addCraftFame(next.player, region, e.data.craft, CRAFT_RENOWN.rare, next.calendar.day),
-      );
+      next = withPlayer(next, madeRare(next.player, region, e.data.craft, next.calendar.day));
       continue;
     }
     next = addEvent(next, e.type === 'craft-level' ? 'mastery' : e.type, e.data);
@@ -255,7 +262,9 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   next = dwellingsDay(next, s.calendar.day - days, s.calendar.day);
   // A commission left unfilled past its month costs its keeper's regard (K12).
   next = commissionsDay(next);
-  // A field card's `here`: whether you stand at its field (K12).
+  // A mark leaves with the piece: eaten, burned or fed (the crafts play checkpoint).
+  next = withPlayer(next, keepMarks(next.player));
+  // A field or raid card's `here`: whether you stand at its field or site (K12, the checkpoint).
   next = craftCardsHere(next);
   // Arrays burn their eyes' stones, and traps on open ground catch what walks in (K10).
   next = formationsDay(next, s.calendar.day - days, s.calendar.day);

@@ -41,7 +41,8 @@ export const BASE_PRICE: Record<ItemKind, number> = {
   herb: 0.7,
   material: 1,
   'beast-part': 1,
-  gear: 45,
+  // Artifacts are dear, as in the novels (the crafts play checkpoint, Jan's call): ×2 from E1's 45.
+  gear: 90,
   treasure: 80,
   manual: 30,
   vessel: 50,
@@ -58,7 +59,7 @@ export const BASE_PRICE: Record<ItemKind, number> = {
 };
 
 /** Gear that carries squares is dearer than a blade. */
-export const STORAGE_PRICE = 60;
+export const STORAGE_PRICE = 120;
 
 /** A copy's price by what it teaches: a loose manual by its kind, a method, a technique. */
 export const COPY_PRICE: Record<ManualKind | 'method' | 'technique', number> = {

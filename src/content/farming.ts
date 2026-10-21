@@ -108,10 +108,11 @@ export const PACKET_PRICE = 3;
 export const CUTTING_SHARE = 0.1;
 
 /**
- * Boosters (design § Spirit farming): a season of Spring-Rain or a Wood spell ×1.5 on a plot, a
- * growing array ×2 (K10 lays it). Earth milk adds its years at once, its rarity setting them.
+ * Boosters (design § Spirit farming): a season of Spring-Rain or a Wood spell ×1.5 on a plot. A
+ * growing array lifts a dwelling's density by its steps and tends its slots (K10, core/arrays.ts),
+ * where design.md wrote ×2. Earth milk adds its years at once, its rarity setting them.
  */
-export const BOOST = { rain: 1.5, wood: 1.5, array: 2, days: 90 } as const;
+export const BOOST = { rain: 1.5, wood: 1.5, days: 90 } as const;
 export const EARTH_MILK_YEARS: Partial<Record<RarityId, number>> = {
   white: 3,
   green: 10,

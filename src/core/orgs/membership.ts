@@ -14,7 +14,7 @@ import { realmIndex } from '../../content/realms.ts';
 import { HOME_REGION } from '../../content/resolver.ts';
 import { guardedBy } from '../markets.ts';
 import { realmOfActor, type Actor } from '../resolver/actor.ts';
-import { higher } from '../resolver/backers.ts';
+import { higher, traceFor } from '../resolver/backers.ts';
 import { breakOath, liftMark, secretsOf, startMark, swearOath } from '../resolver/marks.ts';
 import { currentPlaces, powerPrivate } from '../resolver/knows.ts';
 import { isMember } from '../resolver/names.ts';
@@ -276,9 +276,12 @@ export function guestOffered(s: GameState, power: string): boolean {
   if (!isOrganization(power)) return false;
   const house = houseOf(power);
   if (organization(house).type === 'beast' || membership(s.world, s.player.id, house)) return false;
-  if (standingOf(s.world, house, s.player.id, s.calendar.day).word === GUEST_ELDER.from)
-    return true;
-  // A crafter famed across its region in a craft it practices (K6: craft renown 6).
+  const word = standingOf(s.world, house, s.player.id, s.calendar.day).word;
+  if (word === GUEST_ELDER.from) return true;
+  // A crafter famed across its region in a craft it practices (K6: craft renown 6), never by a
+  // house that hunts or holds a trace on them (review 2026-10-21).
+  if (word === 'hunted' || word === 'hostile') return false;
+  if (traceFor(s.world, s.player.id, house, s.calendar.day)) return false;
   const region = organization(house).row.region;
   return (
     !!region &&

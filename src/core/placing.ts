@@ -165,6 +165,9 @@ function lineWhy(g: PlacingGround, flags: readonly Node[], a: Pt, b: Pt, closing
 /** Why a flag can't go here, or '' when it can. */
 export function cantPlant(g: PlacingGround, p: Placing, n: Node): string {
   if (p.closed) return 'the ring is closed';
+  // A set has its count of flags: past it the hand would read more than the set holds (review
+  // 2026-10-21).
+  if (p.flags.length >= g.nodes) return 'every flag of the set stands: pull one up';
   if (n[0] < 0 || n[1] < 0 || n[0] >= PLACING.side || n[1] >= PLACING.side) return 'off the ground';
   if (g.rocks.includes(key(n))) return 'a stone: no flag stands there';
   if (n[0] === g.eye[0] && n[1] === g.eye[1]) return 'the disc sits in the eye';

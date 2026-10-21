@@ -1,0 +1,280 @@
+{
+  "sounds": [
+    {
+      "id": "act-defend",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactMetal_heavy_000.ogg"
+    },
+    {
+      "id": "act-flee",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: footstep_grass_000.ogg"
+    },
+    {
+      "id": "bag-equip",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: cloth1.ogg"
+    },
+    {
+      "id": "bag-stones",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactMining_000.ogg"
+    },
+    {
+      "id": "book-graft",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: bookPlace1.ogg"
+    },
+    {
+      "id": "book-page",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: bookFlip1.ogg"
+    },
+    {
+      "id": "craft-brush",
+      "source": "https://kenney.nl/assets/interface-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: scratch_001.ogg"
+    },
+    {
+      "id": "craft-hammer",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactMetal_heavy_000.ogg"
+    },
+    {
+      "id": "craft-pill",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: metalPot1.ogg"
+    },
+    {
+      "id": "el-earth",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactMining_000.ogg"
+    },
+    {
+      "id": "el-ice",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactGlass_medium_000.ogg"
+    },
+    {
+      "id": "el-metal",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactMetal_light_000.ogg"
+    },
+    {
+      "id": "el-wood",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactWood_heavy_000.ogg"
+    },
+    {
+      "id": "feel-alert",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactBell_heavy_000.ogg"
+    },
+    {
+      "id": "feel-arrive",
+      "source": "https://kenney.nl/assets/interface-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: scroll_001.ogg"
+    },
+    {
+      "id": "feel-fail",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactGlass_heavy_000.ogg"
+    },
+    {
+      "id": "feel-gain",
+      "source": "https://kenney.nl/assets/interface-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: glass_001.ogg"
+    },
+    {
+      "id": "feel-layer",
+      "source": "https://kenney.nl/assets/interface-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: confirmation_001.ogg"
+    },
+    {
+      "id": "feel-loss",
+      "source": "https://kenney.nl/assets/interface-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: drop_001.ogg"
+    },
+    {
+      "id": "feel-pass",
+      "source": "https://kenney.nl/assets/interface-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: pluck_001.ogg"
+    },
+    {
+      "id": "feel-settle",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactBell_heavy_000.ogg"
+    },
+    {
+      "id": "feel-sheathe",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: drawKnife1.ogg"
+    },
+    {
+      "id": "feel-stage",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactBell_heavy_000.ogg"
+    },
+    {
+      "id": "hit-charge",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactSoft_heavy_000.ogg"
+    },
+    {
+      "id": "hit-palm",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactPunch_heavy_000.ogg"
+    },
+    {
+      "id": "hit-slash",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: knifeSlice.ogg"
+    },
+    {
+      "id": "hit-thrust",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: knifeSlice.ogg"
+    },
+    {
+      "id": "map-depart",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: footstep_grass_000.ogg"
+    },
+    {
+      "id": "music-cave-1",
+      "source": "https://pixabay.com/music/id-618302/",
+      "licence": "Pixabay",
+      "credit": "\"Chinese Bamboo Flute & Guzheng – Relaxing Zen Music\" by ChineseZenMusic, via Pixabay"
+    },
+    {
+      "id": "music-map-1",
+      "source": "https://pixabay.com/music/id-576160/",
+      "licence": "Pixabay",
+      "credit": "\"Breezes Through The Golden Bamboo\" by kaazoom, via Pixabay"
+    },
+    {
+      "id": "music-map-2",
+      "source": "https://pixabay.com/music/id-420793/",
+      "licence": "Pixabay",
+      "credit": "\"Guqin Reflection\" by RainStreetCat, via Pixabay"
+    },
+    {
+      "id": "music-map-3",
+      "source": "https://pixabay.com/music/id-471706/",
+      "licence": "Pixabay",
+      "credit": "\"Cinematic, Film Score Version 9\" by Guzheng-Soundtrack, via Pixabay"
+    },
+    {
+      "id": "shop-buy",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: handleCoins.ogg"
+    },
+    {
+      "id": "shop-sell",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: handleCoins.ogg"
+    },
+    {
+      "id": "tree-node",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: impactGlass_light_000.ogg"
+    },
+    {
+      "id": "ui-click",
+      "source": "https://kenney.nl/assets/interface-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: click_001.ogg"
+    },
+    {
+      "id": "ui-close",
+      "source": "https://kenney.nl/assets/interface-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: close_001.ogg"
+    },
+    {
+      "id": "ui-open",
+      "source": "https://kenney.nl/assets/interface-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: open_001.ogg"
+    },
+    {
+      "id": "ui-tab",
+      "source": "https://kenney.nl/assets/interface-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: switch_001.ogg"
+    },
+    {
+      "id": "ui-toast",
+      "source": "https://kenney.nl/assets/interface-sounds",
+      "licence": "CC0",
+      "credit": "Kenney (kenney.nl), CC0",
+      "note": "starting pick: pluck_001.ogg"
+    }
+  ]
+}

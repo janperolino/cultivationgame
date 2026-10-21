@@ -67,6 +67,7 @@ import {
 } from './state.ts';
 import { verdict, type Verdict } from './resolver/check.ts';
 import { gainItem } from './map/ground.ts';
+import { bandRealm } from './map/encounters.ts';
 import { settleRaid } from './dwellings.ts';
 import {
   applyCraftEffect,
@@ -347,16 +348,25 @@ function choiceAt(s: GameState, uid: number, index: number) {
 
 /**
  * The fight a card's choice goes into: you against its foe at your realm, the stages it names from
- * yours, regenerated from the card and the choice so a reload builds the same start.
+ * yours, or at the band a card variable holds; regenerated from the card and the choice so a reload
+ * builds the same start.
  */
 export function cardFight(s: GameState, uid: number, index: number): Fight | null {
   const at = choiceAt(s, uid, index);
   const f: CardFight | undefined = at?.choice.fight;
   if (!at || !f) return null;
   const t = rosterTemplate(f.roster);
-  const r = realmOf(s.player);
-  const stage = Math.max(1, Math.min(realm(r).stages, stageOf(s.player) + (f.stages ?? 0)));
   const rng = new Rng(hashSeed(`card/${uid}/${at.k.id}/${at.pending.step ?? ''}/${index}`));
+  const band = f.band !== undefined ? at.pending.vars?.[f.band] : undefined;
+  const yours = {
+    realm: realmOf(s.player),
+    stage: Math.max(
+      1,
+      Math.min(realm(realmOf(s.player)).stages, stageOf(s.player) + (f.stages ?? 0)),
+    ),
+  };
+  // A raider comes at its land's band, whatever yours (Jan's call: "the raid shouldn't babysit").
+  const { realm: r, stage } = band !== undefined ? bandRealm(band, rng) : yours;
   const opts = { id: `card-${uid}-foe`, side: 'them' };
   const npc =
     t.kind === 'beast'
@@ -518,6 +528,14 @@ function cardTexts(k: Card, path: readonly number[]): string[] {
 }
 
 /** Resolves a waiting card by its defaults, step by step, as if the player had stayed away. */
+/** You open a waiting card: an urgent one that counts from then starts counting (`urgent.fromSeen`). */
+export function seeCard(s: GameState, uid: number): GameState {
+  const p = s.cards.pending.find((x) => x.uid === uid);
+  if (!p || p.seen !== undefined || !card(p.card).urgent?.fromSeen) return s;
+  const pending = s.cards.pending.map((x) => (x.uid === uid ? { ...x, seen: s.calendar.day } : x));
+  return { ...s, cards: { ...s.cards, pending } };
+}
+
 export function resolveByDefault(s: GameState, uid: number): GameState {
   let next = s;
   // A card has few steps; the bound only guards against a loop in the content.
@@ -626,9 +644,17 @@ function drawDay(s: GameState, day: number, opts: DrawOptions): GameState {
   let next = s;
   for (const p of s.cards.pending) {
     const urgent = card(p.card).urgent;
+    if (!urgent) continue;
     // A card's `wait` var stretches its days: an alarm array's raid card (K10).
-    if (urgent && day - p.day >= urgent.days * (p.vars?.wait ?? 1))
-      next = resolveByDefault(next, p.uid);
+    let days = urgent.days * (p.vars?.wait ?? 1);
+    let from = p.day;
+    const seen = urgent.fromSeen;
+    if (seen && p.seen === undefined) days = seen.unseen;
+    else if (seen) {
+      from = p.seen!;
+      days = Math.max(days, seen.minutes * 60_000 * daysPerRealMs(s));
+    }
+    if (day - from >= days) next = resolveByDefault(next, p.uid);
   }
   const { value: drawn, state } = withStream(next, 'world', (rng) => {
     const { story, paced } = rollCandidates(next, day, rng, opts.decks);
@@ -636,7 +662,9 @@ function drawDay(s: GameState, day: number, opts: DrawOptions): GameState {
     // The craft deck's share of the paced draws is your wheel's Craft hours, at most half (K12).
     const craft = paced.filter((k) => k.deck === CRAFT_DECK);
     const rest = paced.filter((k) => k.deck !== CRAFT_DECK);
-    if (craft.length && rng.next() < craftShare(next.player)) return pickByWeight(craft, rng);
+    // Its own keyed roll, so a crafter's world draws never shift by it (review 2026-10-21).
+    const share = new Rng(hashSeed(`craft-share/${next.lineage.id}/${Math.floor(day)}`)).next();
+    if (craft.length && share < craftShare(next.player)) return pickByWeight(craft, rng);
     return pickByWeight(rest, rng);
   });
   next = state;

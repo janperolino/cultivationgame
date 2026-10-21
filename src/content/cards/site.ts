@@ -17,7 +17,10 @@ export const SITE_CARDS: readonly Card[] = [
     title: 'Tracks at {where}',
     text: 'Men of the wilds have followed a trail to your {site} at {where}, and they are wondering what is behind the door. Away, you won’t stop them; back before they finish, you can.',
     trigger: {},
-    urgent: { days: RAIDS.thievesDays },
+    urgent: {
+      days: RAIDS.thievesDays,
+      fromSeen: { minutes: RAIDS.thievesMinutes, unseen: RAIDS.unseenDays },
+    },
     defaultChoice: 0,
     choices: [
       {
@@ -31,7 +34,7 @@ export const SITE_CARDS: readonly Card[] = [
       {
         label: 'Drive them off',
         when: { id: 'here', min: 1 },
-        fight: { roster: RAIDERS.thieves },
+        fight: { roster: RAIDERS.thieves, band: 'band' },
         pass: {
           effects: [{ do: 'raid', outcome: 'driven' }],
           text: 'They run with nothing, and they won’t be back this month.',
@@ -58,7 +61,10 @@ export const SITE_CARDS: readonly Card[] = [
     title: 'A Beast at the Beds',
     text: 'Something of the wilds has scented the qi at your {site} at {where} and is pawing at the soft earth by the beds. Left to it, it eats the oldest.',
     trigger: {},
-    urgent: { days: RAIDS.beastDays },
+    urgent: {
+      days: RAIDS.beastDays,
+      fromSeen: { minutes: RAIDS.beastMinutes, unseen: RAIDS.unseenDays },
+    },
     defaultChoice: 0,
     choices: [
       {
@@ -72,7 +78,7 @@ export const SITE_CARDS: readonly Card[] = [
       {
         label: 'Drive it off',
         when: { id: 'here', min: 1 },
-        fight: { roster: RAIDERS.beast },
+        fight: { roster: RAIDERS.beast, band: 'band' },
         pass: {
           effects: [{ do: 'raid', outcome: 'driven' }],
           text: 'It breaks off and crashes away into the dark.',

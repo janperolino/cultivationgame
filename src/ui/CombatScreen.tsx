@@ -5,15 +5,18 @@
 // every outcome plays as an effect layered from its five tags, with a still flash under reduced
 // motion. P3.9 moves the same fight into the scene; only this frame changes.
 import { GainRow } from './Gains.tsx';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { rarityRank } from '../content/rarity.ts';
 import { realm, stageName } from '../content/realms.ts';
 import {
   TALK_STYLES,
   burnTurns,
+  burnWhy,
   combatantIn,
   detonable,
   flagsCost,
   preview,
+  techniqueCost,
   type Fight,
   type MainAction,
 } from '../core/combat/fight.ts';
@@ -22,6 +25,7 @@ import { mod, topRung, type Combatant } from '../core/combat/combatant.ts';
 import { stageName as intentName } from '../core/intent.ts';
 import type { FightEnd } from '../core/played.ts';
 import { FxLayer, type FxShot } from './combatFx.ts';
+import { playShot } from './sound/index.ts';
 import {
   act,
   dismissAfter,
@@ -37,6 +41,12 @@ import { reducedMotion, useSettings } from './settings.ts';
 import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
 import { rectIn } from './stage.ts';
+
+/** Whether every foe left the field by fleeing, none brought down (the crafts checkpoint's deer). */
+function foesFled(f: Fight, side: string): boolean {
+  const foes = f.combatants.filter((c) => c.side !== side);
+  return foes.length > 0 && foes.every((c) => c.state === 'fled');
+}
 
 const END_WORDS: Record<FightEnd, string> = {
   won: 'You bring them down.',
@@ -166,6 +176,7 @@ function ActionButton({
   name,
   extra,
   disabled,
+  onArm,
 }: {
   f: Fight;
   me: string;
@@ -173,6 +184,8 @@ function ActionButton({
   name: string;
   extra?: string;
   disabled?: boolean;
+  /** A first click that only asks; the action waits for the next. */
+  onArm?: () => void;
 }) {
   const p = preview(f, me, m);
   const cant = disabled || ((m.type === 'technique' || m.type === 'strike') && !p);
@@ -184,7 +197,7 @@ function ActionButton({
       type="button"
       className="button fight-action"
       disabled={cant}
-      onClick={() => act({ main: m })}
+      onClick={() => (onArm ? onArm() : act({ main: m }))}
     >
       <span>{name}</span>
       {price && <span className="caption">{price}</span>}
@@ -202,7 +215,7 @@ function Arena({ f, me }: { f: Fight; me: Combatant }) {
 
   useEffect(() => {
     if (!canvas.current || !arena.current) return;
-    layer.current = new FxLayer(canvas.current, arena.current);
+    layer.current = new FxLayer(canvas.current, arena.current, playShot);
     return () => layer.current?.dispose();
   }, []);
 
@@ -266,13 +279,23 @@ function itemWord(it: Combatant['items'][string]['item']): string {
  * The arts that burn goods (K11): a volley art with each stack of strike talismans, a piece blown
  * apart, and flags set mid-fight, each priced against the foe you picked.
  */
+/** The most pieces the blow-apart list offers, plainest first. */
+const PIECES_SHOWN = 3;
+
 function BurnGoods({ f, me, target }: { f: Fight; me: Combatant; target: string }) {
   const held = Object.values(me.items).filter((h) => h.n > 0);
   const volleys = Object.values(me.techniques)
     .map((k) => k.technique)
     .filter((t) => t.volley && (me.talismanTier ?? 0) >= t.tier);
   const talismans = held.filter((h) => h.item.uses.fight);
-  const pieces = held.filter((h) => detonable(h.item));
+  // The plainest few pieces only, and each asks twice: a Bag carries gear to sell (review 2026-10-21).
+  const pieces = held
+    .filter((h) => detonable(h.item))
+    .sort(
+      (a, b) => rarityRank(a.item.rarity) - rarityRank(b.item.rarity) || a.item.tier - b.item.tier,
+    )
+    .slice(0, PIECES_SHOWN);
+  const [arming, setArming] = useState<string | null>(null);
   const flags = me.marks.flags
     ? []
     : held.filter((h) => {
@@ -301,7 +324,7 @@ function BurnGoods({ f, me, target }: { f: Fight; me: Combatant; target: string 
                 key={`${t.id}:${h.item.id}`}
                 type="button"
                 className="button fight-action"
-                disabled={!p}
+                disabled={!p || me.qi < techniqueCost(me, t)}
                 onClick={() => act({ main: { type: 'volley', id: t.id, item: h.item.id, target } })}
               >
                 <span>
@@ -322,8 +345,13 @@ function BurnGoods({ f, me, target }: { f: Fight; me: Combatant; target: string 
             f={f}
             me={me.id}
             m={{ type: 'detonate', id: h.item.id, target }}
-            name={`Blow apart the ${h.item.name}`}
-            extra="sure, and it is gone"
+            name={
+              arming === h.item.id
+                ? `Blow apart the ${h.item.name}: sure?`
+                : `Blow apart the ${h.item.name}`
+            }
+            extra="sure to land, and it is gone"
+            onArm={arming === h.item.id ? undefined : () => setArming(h.item.id)}
           />
         ))}
         {flags.map((h) => {
@@ -428,16 +456,25 @@ function Actions({ f, me }: { f: Fight; me: Combatant }) {
         <>
           <h3 className="sub-heading">Items</h3>
           <div className="fight-actions">
-            {items.map((h) => (
-              <ActionButton
-                key={h.item.id}
-                f={f}
-                me={me.id}
-                m={{ type: 'item', id: h.item.id, target }}
-                name={`${h.item.name} (${h.n})`}
-                extra={itemWord(h.item)}
-              />
-            ))}
+            {items.map((h) => {
+              // An item that can't take now says why rather than costing the exchange (review 2026-10-21).
+              const why = h.item.uses.burn
+                ? burnWhy(me, h.item)
+                : h.item.uses.fix?.keep && me.marks[`kept:${h.item.id}`]
+                  ? 'spent this fight'
+                  : null;
+              return (
+                <ActionButton
+                  key={h.item.id}
+                  f={f}
+                  me={me.id}
+                  m={{ type: 'item', id: h.item.id, target }}
+                  name={`${h.item.name} (${h.n})`}
+                  extra={why ?? itemWord(h.item)}
+                  disabled={!!why}
+                />
+              );
+            })}
           </div>
         </>
       )}
@@ -524,7 +561,11 @@ export function CombatScreen() {
         {end && (
           <div className="fight-end">
             <p>
-              <strong>{END_WORDS[end]}</strong>
+              <strong>
+                {end === 'won' && foesFled(f, me.side)
+                  ? 'They break off and get away.'
+                  : END_WORDS[end]}
+              </strong>
             </p>
             <button type="button" className="button" onClick={leaveFight}>
               Go on

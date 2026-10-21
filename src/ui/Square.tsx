@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { statInfo } from '../content/stats.ts';
 import { encounterTemplate } from '../content/encounters/index.ts';
-import { viewCard, type CardView } from '../core/cards.ts';
+import { seeCard, viewCard, type CardView } from '../core/cards.ts';
 import { endGuide } from './guide.ts';
 import { EncounterCard } from './EncounterCard.tsx';
 import { cueGains, deltas } from './feel.ts';
@@ -91,6 +91,11 @@ function CardSquare({ uid }: { uid?: number }) {
   useEffect(() => {
     if (empty) closeSquare();
   }, [empty]);
+  // Opening a raid's card starts its wait (the crafts play checkpoint).
+  const seenUid = top?.uid;
+  useEffect(() => {
+    if (seenUid !== undefined) useGame.getState().applyLife((s) => seeCard(s, seenUid));
+  }, [seenUid]);
 
   if (outcome) {
     return (

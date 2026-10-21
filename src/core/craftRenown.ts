@@ -58,6 +58,20 @@ export function addCraftFame(
   return withEntry(c, region, craft, { ...e, n: Math.max(0, pointsNow(e, day) + n), day });
 }
 
+/**
+ * A gold piece or better made in a region: its points, never past the month's most there, as sales
+ * are held (the crafts play checkpoint; the code review's low 29: 19 gold batches reached name 9).
+ */
+export function madeRare(c: Cultivator, region: string, craft: CraftId, day: number): Cultivator {
+  const e0 = entryOf(c, region, craft);
+  const month = monthOf(day);
+  const fresh = e0.month === month ? e0 : { ...e0, month, sold: 0, given: 0, rare: 0 };
+  const gain = Math.min(CRAFT_RENOWN.rare, CRAFT_RENOWN.monthMost - (fresh.rare ?? 0));
+  if (gain <= 0) return c;
+  const n = pointsNow(fresh, day) + gain;
+  return withEntry(c, region, craft, { ...fresh, n, day, rare: (fresh.rare ?? 0) + gain });
+}
+
 /** A month's wage on the realm curve by your realm: what a point of sales asks (30 low at Qi Condensation). */
 export function wagePoint(c: Cultivator): number {
   return CRAFT_RENOWN.wage * realmScale(realmOf(c));
@@ -87,6 +101,25 @@ export function soldMarked(
 /** How many of a thing in the Bag carry your mark: what you made, never more than you hold. */
 export function markedHeld(c: Cultivator, thing: string): number {
   return Math.min(c.crafts.marked[thing] ?? 0, itemCount(c, thing));
+}
+
+/**
+ * Trims each mark to what you still hold, in the Bag, your stores and the tray (the crafts play
+ * checkpoint): a piece eaten, burned, fed to an upkeep or given away takes its mark with it, so one
+ * bought later never sells as yours. The day step runs it.
+ */
+export function keepMarks(c: Cultivator): Cultivator {
+  let changed = false;
+  const marked = { ...c.crafts.marked };
+  for (const [thing, n] of Object.entries(marked)) {
+    let held = (c.items[thing] ?? 0) + (c.crafts.tray[thing] ?? 0);
+    for (const d of c.dwellings) held += d.items[thing] ?? 0;
+    if (n <= held) continue;
+    changed = true;
+    if (held > 0) marked[thing] = held;
+    else delete marked[thing];
+  }
+  return changed ? { ...c, crafts: { ...c.crafts, marked } } : c;
 }
 
 /** Takes the mark off pieces that left the Bag, yours first. */

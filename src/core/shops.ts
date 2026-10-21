@@ -29,6 +29,8 @@ import {
   DAMAGE_REPAIR_SHARE,
   FRIENDLY_BUY_RATE,
   HAGGLE_OFF,
+  MAKER_BUY_RATE,
+  TOOL_STREET,
   PRICE_SPREAD,
   REPAIR_SHARE,
   doorOf,
@@ -191,6 +193,9 @@ function claimFresh(thing: string): ShopKind {
   const streets = STREET_ORDER.filter((k) => k !== 'mortal');
   for (const k of streets) if (STREETS[k]!.tags.some((t) => tags.includes(t))) return k;
   const kind = itemKind(it);
+  // A craft's tool sells on its craft's street (the crafts play checkpoint): a furnace on Pill Street.
+  const tool = it.uses.tool?.craft;
+  if (kind === 'tool' && tool && TOOL_STREET[tool]) return TOOL_STREET[tool]!;
   for (const k of streets) if (STREETS[k]!.wares.includes(kind)) return k;
   return 'stall';
 }
@@ -450,6 +455,14 @@ function everyCandidate(s: Shop): Candidate[] {
   return out;
 }
 
+/** The lines a shop always stands (a catalog line's `stands`): a craft's starter tool at its floor. */
+function toolLines(s: Shop): { thing: string; n: number }[] {
+  const out = new Map<string, number>();
+  for (const c of everyCandidate(s))
+    if (c.lot.stands && !out.has(c.floor)) out.set(c.floor, c.lot.stands);
+  return [...out].map(([thing, n]) => ({ thing, n }));
+}
+
 /** A thing a shelf can hold: a copy or an item. */
 const hasStock = (thing: string) => hasCopy(thing) || hasItem(thing);
 
@@ -517,9 +530,14 @@ export function stockOf(shopId: string, month: number, w: World = EMPTY): StockL
   const info = SHOP_KIND_INFO[s.kind];
   const rng = new Rng(hashSeed(`stock/${s.id}/${month}`));
   const goods = standingGoods(s, w, month);
+  const tools = keepsOwn(s) ? [] : toolLines(s);
   const m = marketOfShop(s.id);
   // A display lot is a better rarity, or a thing the sum doesn't stand: never a shelf's own.
-  let pool = candidates(s, m && !keepsOwn(s) ? standsAt(w, m, month) : new Set());
+  const stands = new Set([
+    ...(m && !keepsOwn(s) ? standsAt(w, m, month) : []),
+    ...tools.map((t) => t.thing),
+  ]);
+  let pool = candidates(s, stands);
   const factor = shopFactor(s);
   const posted = (thing: string) => (s.kind === 'mortal' ? item(thing).taels! : priceOf(thing));
   const out: StockLot[] = [];
@@ -547,6 +565,7 @@ export function stockOf(shopId: string, month: number, w: World = EMPTY): StockL
   }
   const lines: { thing: string; n: number; endless?: boolean }[] = [
     ...goods,
+    ...tools,
     ...(keepsOwn(s) ? hallLines(s).map((l) => ({ ...l, endless: true })) : []),
     // A power's shop stands the goods of the styles it holds, brewed in its own hall (K6).
     ...styleLines(s),
@@ -750,15 +769,13 @@ export function buyRate(s: GameState, sh: Shop): number {
 
 /**
  * What a shop offers for one of a thing, or the reason it won't buy: its rate of its market's
- * price, and 80% of it for what the market needs (`wanted`), except at a black market. A `fixed`
- * price (a commission's, K12) is paid as it stands, past the rate and the loop's cap, once the
- * shop would buy the thing at all.
+ * price, and 80% of it for what the market needs (`wanted`), except at a black market.
  */
 export function offerFor(
   s: GameState,
   shopId: string,
   thing: string,
-  fixed?: number,
+  opts: { plain?: boolean } = {},
 ): { ok: true; each: number; wanted: boolean } | { ok: false; reason: string } {
   const sh = shopById(shopId);
   const info = SHOP_KIND_INFO[sh.kind];
@@ -781,13 +798,17 @@ export function offerFor(
           ? 'The hall keeps its own methods.'
           : 'No honest shop buys a sect’s own method.',
     };
-  if (fixed !== undefined) return { ok: true, each: fixed, wanted: false };
   // A posted rate is the posted rate: the bounty office's 50% doesn't drift with the shop.
   const drift = info.posted ? 1 : priceFactor(sh);
   const m = marketOfShop(shopId);
   const day = s.calendar.day;
   const needs = !!m && sh.kind !== 'black-market' && wanted(s.world, m, thing, day);
-  const rate = needs ? Math.max(NEED_RATE, buyRate(s, sh)) : buyRate(s, sh);
+  // Your own make sells at the maker's rate at an honest shop (the crafts checkpoint); `plain`
+  // asks the rate anyone gets, so a sale pays the maker's only on its marked pieces.
+  const maker =
+    !opts.plain && !info.posted && sh.kind !== 'black-market' && markedHeld(s.player, thing) > 0;
+  const own = maker ? Math.max(MAKER_BUY_RATE, buyRate(s, sh)) : buyRate(s, sh);
+  const rate = needs ? Math.max(NEED_RATE, own) : own;
   const posted = mortalGood ? item(thing).taels! : priceOf(thing);
   const price = posted * (m ? marketFactor(s.world, m, thing, day) : 1);
   const round = mortalGood ? 100 : 10;
@@ -862,7 +883,7 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
   const held = hasCopy(thing) ? (s.player.copies[thing] ?? 0) : itemCount(s.player, thing);
   if (!Number.isInteger(n) || n <= 0) return { ok: false, reason: 'Name how many.' };
   if (held < n) return { ok: false, reason: 'You don’t have that many.' };
-  const offer = offerFor(s, shopId, thing);
+  const offer = offerFor(s, shopId, thing, { plain: true });
   if (!offer.ok) return offer;
   // What its power handed you, its own hall won't buy back (the checkpoint's fix).
   const gift =
@@ -881,7 +902,7 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
   let total = 0;
   for (let left = n; left > 0;) {
     const k = Math.min(size, left);
-    const o = left === n ? offer : offerFor({ ...s, world }, shopId, thing);
+    const o = left === n ? offer : offerFor({ ...s, world }, shopId, thing, { plain: true });
     if (!o.ok) return o;
     total += o.each * k;
     if (m) world = moveSupply(world, m, thing, k, day);
@@ -889,7 +910,8 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
   }
   // Your mark (K6): what you made sells by your name in its craft where you are known there.
   const mark = markOn(s, shopId, thing, n);
-  total += mark.value * mark.lift;
+  // The marked pieces at the maker's rate over the plain one, then the mark's lift on their worth.
+  total += Math.max(0, mark.value - offer.each * mark.n) + mark.value * mark.lift;
   total = Math.round(total * 100) / 100;
   // A harsh power takes its tithe of what its lower seats bring in (O2): a bounty, loot at its hall.
   const kept = Math.round(total * (1 - titheFor(s, sh)) * 100) / 100;

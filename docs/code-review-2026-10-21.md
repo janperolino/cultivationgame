@@ -56,6 +56,30 @@ Ranked by what a player would feel at the checkpoint.
 
 ## Medium
 
+**Round 2, Jan's go ("fix them all"): 5 to 20 fixed.** On the four that asked Jan, the review took the safe call and put the rest under Open questions:
+- 13: a tempo repeat of a volley, a detonation, flags or a thing used is a strike.
+- 16: a standing gate on the offer, while whether a guest counts as a member for the leak rule stays open.
+- 20: a running growing array tends its dwelling's slots, as design.md says. K10's density steps stay in place of the ×2.
+- 29: no change.
+
+What each fix does:
+- 5: `handNow` reads the hand only from a sitting at your own bench (`bench`). The guild's exam sits with `bench: false`, and another page of the Crafts screen stands you up.
+- 6: mid-sheet, `deskFamily` keeps the brush's path and the next sheet takes the new one (`then`).
+- 7: a queued throw with nothing left to find (`throwSpent`) leaves the bench before it takes a thing, as a stale mend does.
+- 8: "Stop after this one" trims the head entry to the batches in the tool rather than removing it, so the finish moves past it and nothing else. It is disabled when nothing more is queued in that entry.
+- 9: a cultivator's own found recipes overwrite the lookup. The Crafts screen registers them before reading (low 25 with it).
+- 10: a harvest's packets go to the tray when the Bag is full.
+- 11: the Farming page's Rent and Buy are a written village's or town's (`fieldsHere`), at its own land. At your dwelling it points to the Dwelling screen.
+- 12: a burning pill that can't take, or a Body-Fixing spent this fight, is disabled with its reason, and so is a volley short of its qi. Every skipped action of yours is logged.
+- 14: the three plainest pieces are offered, each asking "sure?" before it blows.
+- 15: the order cards' `made` trigger is "your make named and room to hold it" (`yourMake`, under three open).
+- 17: a harvest's and the exam batch's events reach the chronicle and renown through `benchEvents` (`core/life.ts`), which the bench uses too.
+- 18: on a course, the Crafts page says the bench waits and the wheel's craft hour notes it, as it does an empty bench.
+- 19: a set takes its count of flags and no more.
+- 20: `BOOST.array` is gone.
+
+Each fix has a test where core changed: experiment ×3, talisman, farming ×2, upkeep (tempo), craftDeck (the trigger), styles (the guest seat), placing. `npm test` has 1,442 passing, and lint and build are clean.
+
 5. **Fire control's hand stays frozen and credited when you leave the scene without standing up.** The Spirit Farming tab inside the Crafts screen unmounts the furnace scene but doesn't stand you up (`ui/CraftsScreen.tsx`'s page buttons; `ui/furnace.ts` `handNow` reads `sitting && attended`). Every batch then resolves at the last hand, such as 0.9, while you click around the farm. The Examination hall (`ui/PlaceScreen.tsx:1394`, `sitDown(pick, row.craft)`) does the same across crafts: sitting a forge exam feeds its hand to an alchemy batch cooking at your bench. It skews what the checkpoint measures, playing against queuing. *Fix:* `handNow` counts only while a scene is mounted for the bench front's craft (a `scene` flag the three scenes set and clear), and the page buttons stand you up.
 
 6. **A talisman sheet snaps when the bench's front changes family while you draw.** *(run)* `core/talisman.ts:147-151` (`deskFamily`). The docstring says the new family is drawn "from its next sheet on", but mid-draw it swaps the path at once while the brush and the traced index stay on the old one. The next move ends the sheet `snapped` (quality 0, the hand down 0.35). Going from a longer path to a shorter one gives `dist = Infinity` and snaps the same way. It happens whenever a batch finishes mid-sheet and the next entry is another family. *Fix:* in `draw`, keep the family and apply the new one in `fresh`.
@@ -89,6 +113,42 @@ Ranked by what a player would feel at the checkpoint.
 20. **A growing array doesn't count as tended, and its ×2 isn't there.** design.md § Spirit farming: "a growing array or a Spring-Rain talisman counts as tended", "a growing array ×2". K10 built it as density steps on slot plots (`dwellings.ts:1041`). `tended` (`farming.ts:185`) is presence or rain only, and `BOOST.array = 2` is never read. A slot plot under a growing array still grows at hardiness ×0.5 while you're away and draws pests. *Question for Jan:* make a running growing array count as tended (likely the intent), or write K10's steps into design.md and drop `BOOST.array`.
 
 ## Low
+
+**Round 3, Jan's go ("fix them all"): the lows fixed, apart from the questions and the latent ones, which went to Open questions.**
+- 21: a mend keeps what it took (`took` on the bench's front, optional, so no save bump) and gives it back if the piece is gone by its end.
+- 22: in round 1.
+- 23: a batch's remaining hours are held at 0.
+- 24: above the floor, the plainest herbs go in first.
+- 25: with medium 9.
+- 26: the exam's Sit and Queue are disabled with the reason when you can't pay or fill the batch.
+- 27: a furnace or forge bursts and a brush splits.
+- 28: the Trees screen says "realm or soul" for a craft Dao.
+- 31: the Farming page reads a slot's rent off its dwelling.
+- 32: a lapsed dwelling takes no store puts and no lay-outs.
+- 33: the squatting deed ends with the last claim on that power's land.
+- 34: no quarters where you already hold a room.
+- 35: dug soil never lowers a plot, and a seat's land isn't dug.
+- 36: sowing and reaping wait while you sit tending, and another plot stands you up.
+- 37: the craft deck's share is its own keyed roll (`craft-share/<lineage>/<day>`).
+- 38: a fight's spending goes through `addItem`.
+- 39:
+  - `collectOrder` asks for room.
+  - The Old Master's Slip comes only when a slip waits (`slip` on the craft trigger).
+  - The cracked-tool card cracks the tool the batch is worked with, and never a lent one.
+  - Upkeep spends the lowest tier first.
+  - A made site's rating is on the map from the claim.
+  - The rest (where you stand for commissions, marked goods eaten, a lone cracked forge) is under Open questions.
+- 40: plan.md's K1 notes the re-anchoring.
+- 42: the dev `craft` restocks without touching mastery or a wheel that has craft hours.
+- 43: the save layer already checks every save as it writes it (round 3 of the last review), so a failed check is now logged with where it failed, at the step that wrote it.
+- Left: 29 (a question), 30 (latent) and 41 (until a second cultivator crafts), all under Open questions.
+
+**Dead code, round 3.**
+- Removed: the never-read list and `offerFor`'s `fixed`.
+- `BOOST.array` went in round 2.
+- `GROUND_CLEAR_LI` is enforced rather than dropped: prepared ground stands 30 li from any town or seat.
+
+**Checked in the dev build:** a new life, `craft`, five batches queued, and "Stop after this one" trims the entry to the one in the furnace and then greys out. The batch finishes and the bench clears, with no console errors.
 
 21. **A mend loses its input if the piece leaves mid-mend.** `core/crafts.ts:622-629, 761-780`: `finishMend` does nothing when the piece is gone (sold, dropped), and the ore is spent. *Fix:* refund the input then.
 22. **Float dust can write a negative array strength**, which fails `LaidArraySchema`'s `min(0)` on the next load (`core/formations.ts:146-149`, a lift within 1e-9 under a whole band). Rare, but the cost is a save that won't open. *Fix:* `Math.max(0, …)`. One line, worth taking with round 1.

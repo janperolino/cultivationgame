@@ -32,7 +32,7 @@ function refiner(level = 0, n = 0): Cultivator {
     items: {},
     nodes: [...s.player.nodes, `${slipId(SWORD)}-node`],
   };
-  c = addItem(addItem(c, 'crude-iron-forge', 1), ORE, 5 * n);
+  c = addItem(addItem(c, 'crude-iron-forge', 1), ORE, 3 * n);
   return { ...c, crafts: { ...c.crafts, mastery: { blades: CRAFT_MASTERY.batches[level]! } } };
 }
 
@@ -46,7 +46,7 @@ describe('the forge', () => {
     expect(item(SWORD).source).not.toMatch(/smith/);
   });
 
-  it('a refiner forges a blade from five ore on the bench', () => {
+  it('a refiner forges a blade from three ore on the bench', () => {
     let c = queueBatches(refiner(3, 1), SWORD).cultivator;
     expect(benchWaits(c)).toBeNull();
     const r = workBench(c, 8, 1, new Rng(3));
@@ -117,6 +117,21 @@ describe('mending at the bench', () => {
     const r = workBench(c, 1, 1, new Rng(1)).cultivator;
     expect(r.crafts.bench).toEqual([]);
     expect(r.items[ORE]).toBe(1);
+  });
+
+  it('gives a mend’s ore back when the piece leaves mid-mend (review 2026-10-21)', () => {
+    const dmg = variantId('iron-sword', 'white', { damaged: true });
+    const input = mendNeeds(dmg).input;
+    let c = addItem(addItem(refiner(), dmg, 1), input, 1);
+    c = queueMend(c, dmg).cultivator;
+    c = workBench(c, 0.5, 1, new Rng(1)).cultivator;
+    expect(c.items[input] ?? 0).toBe(0);
+    expect(c.crafts.front?.mend).toBe(dmg);
+    // Sold while it waited.
+    c = addItem(c, dmg, -1);
+    const r = workBench(c, 1, 1, new Rng(1)).cultivator;
+    expect(r.crafts.front).toBeNull();
+    expect(r.items[input]).toBe(1);
   });
 
   it('counts the hours a tier: a tier 2 piece takes two', () => {

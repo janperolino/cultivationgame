@@ -174,7 +174,15 @@ export function seatOf(w: World, who: string, power: string, r?: RealmStage): Se
     const p = person(who);
     return p.power === house && p.seat ? p.seat : null;
   }
-  if (r && seatRank(m.seat) < seatRank('inner') && reaches(house, 'inner', r)) return 'inner';
+  // Realm alone never carries a seat past a higher grade's gate (the code review's low 30): that
+  // step waits for a promotion that reads `seatGate`.
+  if (
+    r &&
+    seatRank(m.seat) < seatRank('inner') &&
+    reaches(house, 'inner', r) &&
+    seatGrade(house, 'inner') <= seatGrade(house, m.seat)
+  )
+    return 'inner';
   return m.seat;
 }
 

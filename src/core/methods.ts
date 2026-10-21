@@ -237,13 +237,16 @@ export function setActiveMethod(
 // ---------------------------------------------------------------- upkeep
 
 /**
- * The things in the Bag that pay an upkeep's goods, plainest first: a written thing at any rarity
+ * The things in the Bag that pay an upkeep's goods, plainest first (the lowest tier, then rarity): a written thing at any rarity
  * (its variants), or any thing of the kind and tier asked.
  */
 function upkeepGoods(c: Cultivator, up: Upkeep): { ids: string[]; n: number }[] {
   const held = Object.keys(c.items).filter((id) => (c.items[id] ?? 0) > 0 && hasItem(id));
   const plainest = (ids: string[]) =>
-    ids.sort((a, b) => rarityRank(item(a).rarity) - rarityRank(item(b).rarity));
+    ids.sort(
+      (a, b) =>
+        item(a).tier - item(b).tier || rarityRank(item(a).rarity) - rarityRank(item(b).rarity),
+    );
   const asks = Object.entries(up.items ?? {}).map(([base, n]) => ({
     ids: plainest(held.filter((id) => baseOf(id) === base)),
     n,

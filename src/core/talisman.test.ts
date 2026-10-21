@@ -2,7 +2,7 @@
 // hold is the check that the minigame is the skill. A steady hand at a good pace holds about 0.9, a
 // wandering one lower, a dawdler's brush runs dry and an idle one never starts, so both fall to 0.
 import { describe, expect, it } from 'vitest';
-import { HAND_SETTLE, LAY_S, STEP, WAIT_S } from '../content/talisman.ts';
+import { HAND_SETTLE, LAY_S, SHOW_S, STEP, WAIT_S } from '../content/talisman.ts';
 import { Rng } from './rng.ts';
 import { newLife } from './state.ts';
 import {
@@ -124,5 +124,17 @@ describe('one-breath drawing', () => {
     expect(d.family).toBe('passage');
     expect(d.on).toHaveLength(pathOf('passage').length - 1);
     expect(tickDesk(d, LAY_S).phase).toBe('ready');
+  });
+
+  it('keeps the brush on its path mid-sheet, and turns on the next (review 2026-10-21)', () => {
+    const drawing = { ...startDesk(s, 'strikes'), phase: 'draw' as const };
+    const d = deskFamily(drawing, 'wards');
+    expect(d.family).toBe('strikes');
+    expect(d.on).toHaveLength(pathOf('strikes').length - 1);
+    const next = tickDesk({ ...d, phase: 'show', phaseAt: d.t }, SHOW_S + 0.1);
+    expect(next.family).toBe('wards');
+    expect(next.on).toHaveLength(pathOf('wards').length - 1);
+    // Back to its own family before the sheet ends: nothing waits.
+    expect(deskFamily(d, 'strikes').then).toBeUndefined();
   });
 });

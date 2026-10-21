@@ -30,8 +30,10 @@ import {
   applyToPlot,
   woodSpellCheck,
   type FarmCheck,
+  type FarmEvent,
 } from '../core/farming.ts';
-import { farmHere, plotPlaceName } from '../core/map/fields.ts';
+import { benchEvents } from '../core/life.ts';
+import { farmHere, fieldsHere, plotPlaceName } from '../core/map/fields.ts';
 import { withPlayer, type Bed, type Cultivator, type GameState, type Plot } from '../core/state.ts';
 import { formatPercent } from './format.ts';
 import { TendingScene } from './TendingScene.tsx';
@@ -45,13 +47,19 @@ const years = (b: Bed) => {
     : `${Math.floor(y)} year${Math.floor(y) === 1 ? '' : 's'}`;
 };
 
-function heldWords(p: Plot, day: number): string {
+/** Sowing and reaping wait while you sit: a bed sown mid-sitting would take a hand it never had. */
+const SOWING_SITTING = 'Stand up from tending first: what you sow or reap waits for your hands.';
+
+function heldWords(c: Cultivator, p: Plot, day: number): string {
   if (p.held === 'bought') return 'bought';
-  // A dwelling's land (K9): it ends only with a rented dwelling's lease.
-  if (p.held === 'slot')
-    return p.until === null
+  // A dwelling's land (K9): it ends only with a rented dwelling's lease, read off the dwelling
+  // since a paid rent moves it on (review 2026-10-21).
+  if (p.held === 'slot') {
+    const until = c.dwellings.find((d) => d.place === p.place)?.until ?? p.until;
+    return until === null
       ? 'a dwelling’s land'
-      : `a dwelling’s land, ${Math.max(0, Math.ceil(p.until - day))} days of rent`;
+      : `a dwelling’s land, ${Math.max(0, Math.ceil(until - day))} days of rent`;
+  }
   const left = Math.max(0, Math.ceil((p.until ?? day) - day));
   return `rented, ${left} day${left === 1 ? '' : 's'} left`;
 }
@@ -82,6 +90,7 @@ export function FarmingPage({ game, families }: { game: GameState; families: Rea
   const c = game.player;
   const day = game.calendar.day;
   const here = farmHere(game);
+  const fields = fieldsHere(game);
   const herePlots = here ? c.crafts.plots.filter((p) => p.place === here.place) : [];
   const plot = herePlots.find((p) => p.id === chosen) ?? herePlots[0] ?? null;
   const picked = plot && bed !== null ? (plot.beds[bed] ?? null) : null;
@@ -93,12 +102,13 @@ export function FarmingPage({ game, families }: { game: GameState; families: Rea
   };
   useEffect(() => () => standUp(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const run = (f: (c: Cultivator, day: number) => FarmCheck) => {
+  const run = (f: (c: Cultivator, day: number) => FarmCheck & { events?: FarmEvent[] }) => {
     let reason: string | null = null;
     applyLife((s) => {
       const r = f(s.player, s.calendar.day);
       reason = r.reason;
-      return withPlayer(s, r.cultivator);
+      // A harvest's mastery and a gold crop's renown, as the bench's (review 2026-10-21).
+      return benchEvents(withPlayer(s, r.cultivator), r.events ?? []);
     });
     setWhy(reason);
   };
@@ -120,6 +130,8 @@ export function FarmingPage({ game, families }: { game: GameState; families: Rea
                     className={`crafts-recipe${plot?.id === p.id ? ' is-selected' : ''}`}
                     disabled={!isHere}
                     onClick={() => {
+                      // Another plot stands you up from this one, its hand given (review 2026-10-21).
+                      if (p.id !== plot?.id) standUp();
                       setChosen(p.id);
                       setBed(null);
                     }}
@@ -127,7 +139,7 @@ export function FarmingPage({ game, families }: { game: GameState; families: Rea
                     <span>
                       {plotPlaceName(game, p.place)}
                       <span className="farm-sub">
-                        {heldWords(p, day)} · {p.land} · {soilWords(p)} · qi density {p.density}
+                        {heldWords(c, p, day)} · {p.land} · {soilWords(p)} · qi density {p.density}
                       </span>
                     </span>
                     <span className="muted">{isHere ? 'here' : 'away'}</span>
@@ -138,29 +150,33 @@ export function FarmingPage({ game, families }: { game: GameState; families: Rea
           </ul>
         )}
         <h2 className="panel-heading">Fields here 田</h2>
-        {here ? (
+        {fields ? (
           <>
             <p className="muted">
-              {here.name}: {here.land}, qi density {here.density}. Nine beds, by the season or
+              {fields.name}: {fields.land}, qi density {fields.density}. Nine beds, by the season or
               bought.
             </p>
             <div className="crafts-actions">
               <button
                 type="button"
                 className="button"
-                onClick={() => run((p, d) => takePlot(p, here, 'rented', d))}
+                onClick={() => run((p, d) => takePlot(p, fields, 'rented', d))}
               >
-                Rent a season · {rentOf(here.density)} low
+                Rent a season · {rentOf(fields.density)} low
               </button>
               <button
                 type="button"
                 className="button button-quiet"
-                onClick={() => run((p, d) => takePlot(p, here, 'bought', d))}
+                onClick={() => run((p, d) => takePlot(p, fields, 'bought', d))}
               >
-                Buy · {buyOf(here.density)} low
+                Buy · {buyOf(fields.density)} low
               </button>
             </div>
           </>
+        ) : here ? (
+          <p className="muted">
+            A dwelling’s land is its slots: lay them out on the Dwelling screen 居.
+          </p>
         ) : (
           <p className="muted">
             Plots are held at a village or town, and you work them only where you stand.
@@ -257,8 +273,10 @@ export function FarmingPage({ game, families }: { game: GameState; families: Rea
             plot={plot}
             bed={bed}
             b={picked}
-            onRun={run}
-            onHarvest={() => run((p, d) => harvest(p, plot.id, bed, d))}
+            onRun={sitting ? () => setWhy(SOWING_SITTING) : run}
+            onHarvest={() =>
+              sitting ? setWhy(SOWING_SITTING) : run((p, d) => harvest(p, plot.id, bed, d))
+            }
           />
         )}
         {plot && (

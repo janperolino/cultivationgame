@@ -514,7 +514,7 @@ export const BORDER_WILDS: Catalog = {
       craft: 'refining',
       family: 'blades',
       inputs: [
-        { thing: 'red-rocks-iron-ore', count: 3 },
+        { thing: 'red-rocks-iron-ore', count: 2 },
         { thing: 'ash-spear-shaft', count: 1 },
       ],
     },

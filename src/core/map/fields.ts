@@ -36,6 +36,16 @@ export function farmHere(s: GameState): (PlotSpot & { name: string }) | null {
       density: densityOf(s, d),
       name: at.name,
     };
+  return fieldsHere(s);
+}
+
+/**
+ * The written village or town you stand at, whose Fields door rents and sells plots at its own
+ * land, or null. A dwelling's land is its slots, never more plots (review 2026-10-21).
+ */
+export function fieldsHere(s: GameState): (PlotSpot & { name: string }) | null {
+  const map = mapOf(s);
+  if (!map || !s.map || s.map.course) return null;
   for (const p of map.places) {
     if (!farmsAt(p) || !standsAt(s, p)) continue;
     const spot = plotSpot(s, p);

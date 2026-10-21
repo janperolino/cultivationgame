@@ -285,7 +285,9 @@ export const RECIPES: readonly Recipe[] = CATALOG_RECIPES;
  * (core/experiment.ts `keepFound`); a written recipe's id is never taken.
  */
 export function addFoundRecipes(rs: readonly Recipe[]): void {
-  for (const r of rs) if (!byOutput.has(r.output) && isFound(r.output)) byOutput.set(r.output, r);
+  // The cultivator's own win: two lives in one tab can find one signature with other things
+  // (review 2026-10-21).
+  for (const r of rs) if (isFound(r.output)) byOutput.set(r.output, r);
 }
 
 export function hasRecipe(id: string): boolean {

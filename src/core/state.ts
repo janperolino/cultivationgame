@@ -260,6 +260,8 @@ const CraftsSchema = z.object({
       hand: z.number().min(0).optional(),
       /** The piece being mended, when the front is a mend (K4). */
       mend: z.string().optional(),
+      /** What the mend took, given back if the piece is gone by its end (review 2026-10-21). */
+      took: z.string().optional(),
       /** What is thrown in, when the front is an experiment (K7). */
       experiment: Experiment.optional(),
     })
@@ -325,6 +327,8 @@ const CraftsSchema = z.object({
         month: z.number().int(),
         sold: z.number().min(0),
         given: z.number().int().min(0),
+        /** Points this month's gold pieces gave, held to the sales' monthly most (the checkpoint). */
+        rare: z.number().int().min(0).optional(),
       }),
     ),
   ),
@@ -552,6 +556,8 @@ const PendingCard = z.object({
   path: z.array(z.number().int()).optional(),
   /** Words a system that queued it fills its slots with: a site's name (K9). */
   words: z.record(z.string(), z.string()).optional(),
+  /** The world day you first opened it, for an urgent card that counts from then. */
+  seen: z.number().optional(),
 });
 export type PendingCard = z.infer<typeof PendingCard>;
 

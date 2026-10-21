@@ -143,6 +143,10 @@ function hourNote(game: GameState, y: HourYield): string | null {
     const reading = readingLine(game.player);
     return reading ? `Also ${reading}.` : null;
   }
+  if (y.kind === 'craft') {
+    if (game.map?.course) return 'The bench waits while you travel.';
+    if (!c.crafts.front && c.crafts.bench.length === 0) return 'Nothing queued at the bench.';
+  }
   return null;
 }
 

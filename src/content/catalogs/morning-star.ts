@@ -163,7 +163,7 @@ export const MORNING_STAR: Catalog = {
       kind: 'tool',
       bulk: 2,
       uses: { tool: { craft: 'alchemy' } },
-      source: 'any refiner, fired by the dozen',
+      source: 'every alchemy shop, fired by the dozen',
       text: 'A squat clay furnace on three legs, its lid sealed with a mud rim. It holds a tier 1 fire, and cracks if you ask more of it.',
     },
     // Refining's starter tool (K4's talk): a bulk tool, every refiner on the continent casts them.
@@ -621,7 +621,7 @@ export const MORNING_STAR: Catalog = {
       output: 'iron-sword',
       craft: 'refining',
       family: 'blades',
-      inputs: [{ thing: 'red-rocks-iron-ore', count: 5 }],
+      inputs: [{ thing: 'red-rocks-iron-ore', count: 3 }],
     },
     {
       output: 'storage-pouch',
@@ -638,7 +638,7 @@ export const MORNING_STAR: Catalog = {
       family: 'vessels',
       inputs: [
         { thing: 'mustard-seed-stone', count: 3 },
-        { thing: 'red-rocks-iron-ore', count: 2 },
+        { thing: 'red-rocks-iron-ore', count: 1 },
       ],
     },
     {
@@ -782,7 +782,12 @@ export const MORNING_STAR: Catalog = {
     },
     { thing: 'divine-travel-talisman', shops: ['stall', 'house'], weight: 0.6, count: [1, 4] },
     { thing: 'yellow-talisman-paper', shops: ['stall', 'house'], count: [10, 40] },
-    { thing: 'wolf-hair-talisman-brush', shops: ['stall', 'house'], weight: 0.5 },
+    {
+      thing: 'wolf-hair-talisman-brush',
+      shops: ['stall', 'house', 'talisman'],
+      weight: 0.5,
+      stands: 3,
+    },
     { thing: 'binding-rope', shops: ['refiner', 'house'], weight: 0.1 },
     { thing: 'iron-sword', shops: ['refiner', 'house'] },
     { thing: 'method:garrison-standard', shops: ['stall', 'house'], weight: 0.6 },
@@ -793,8 +798,8 @@ export const MORNING_STAR: Catalog = {
     { thing: 'storage-pouch', shops: ['refiner', 'house'], weight: 0.5 },
     { thing: 'storage-ring', shops: ['house'], weight: 0.2 },
     { thing: 'warding-jade', shops: ['refiner', 'house', 'stall'], weight: 0.4 },
-    { thing: 'crude-clay-furnace', shops: ['refiner', 'house'], weight: 0.5 },
-    { thing: 'crude-iron-forge', shops: ['refiner'], weight: 0.3 },
+    { thing: 'crude-clay-furnace', shops: ['refiner', 'house', 'alchemy'], weight: 0.5, stands: 3 },
+    { thing: 'crude-iron-forge', shops: ['refiner'], weight: 0.3, stands: 2 },
     { thing: 'mustard-seed-stone', shops: ['refiner'], weight: 0.2, count: [1, 3] },
     { thing: 'spirit-silk', shops: ['refiner', 'stall'], weight: 0.4, count: [2, 6] },
     // Beast parts, sold as well as bought
@@ -819,7 +824,12 @@ export const MORNING_STAR: Catalog = {
     { thing: 'array-plate-blank', shops: ['talisman', 'stall'], count: [2, 6] },
     { thing: 'banner-silk', shops: ['talisman', 'stall'], count: [4, 12] },
     { thing: 'mirage-pearl', shops: ['stall'], weight: 0.3, count: [1, 3], land: ['coast'] },
-    { thing: 'bronze-inscribing-plate', shops: ['talisman', 'house'], weight: 0.5 },
+    {
+      thing: 'bronze-inscribing-plate',
+      shops: ['talisman', 'house', 'stall'],
+      weight: 0.5,
+      stands: 2,
+    },
     { thing: 'gathering-flags', shops: ['talisman', 'house'], weight: 0.3 },
     { thing: 'growing-flags', shops: ['talisman', 'stall'], weight: 0.2 },
     { thing: 'warding-flags', shops: ['talisman', 'house'], weight: 0.3 },

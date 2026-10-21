@@ -18,12 +18,20 @@ import {
 import { ITEMS, hasItem, item } from '../content/items.ts';
 import { MANUALS } from '../content/manuals.ts';
 import { tierNodes, tree } from '../content/trees/index.ts';
-import { craftTiersHeld, knowsRecipe, knownRecipes, queueBatches, workBench } from './crafts.ts';
+import {
+  craftTiersHeld,
+  knowsRecipe,
+  knownRecipes,
+  queueBatches,
+  unqueue,
+  workBench,
+} from './crafts.ts';
 import {
   baseOdds,
   cantThrow,
   experimentHours,
   lean,
+  keepFound,
   queueExperiment,
   setKey,
   target,
@@ -245,6 +253,47 @@ describe('a throw at the bench', () => {
     expect(after.items['old-apricot-kernel'] ?? 0).toBe(0);
     expect(after.crafts.recent[0]?.experiment?.inputs).toEqual(t.inputs);
     expect(after.crafts.bench).toEqual([]);
+  });
+
+  it('reads each life’s own things for a found recipe two lives share (review 2026-10-21)', () => {
+    const t = throwOf('alchemy', { 'old-apricot-kernel': 6, 'thunderhead-clover': 4 });
+    let a = certain(alchemist({ 'old-apricot-kernel': 6, 'thunderhead-clover': 4 }), t);
+    a = work(queueExperiment(a, t, 1).cultivator).cultivator;
+    const id = a.crafts.found[0]!;
+    const other = [{ thing: 'ridge-bitterroot', count: 10 }];
+    const b = {
+      ...a,
+      crafts: { ...a.crafts, recipes: a.crafts.recipes.map((r) => ({ ...r, inputs: other })) },
+    };
+    keepFound(b);
+    expect(recipe(id).inputs).toEqual(other);
+    keepFound(a);
+    expect(recipe(id).inputs).toEqual(t.inputs);
+  });
+
+  it('drops a queued throw whose find came first, taking none of its things (review 2026-10-21)', () => {
+    const t = throwOf('alchemy', { 'old-apricot-kernel': 6, 'thunderhead-clover': 4 });
+    let c = certain(alchemist({ 'old-apricot-kernel': 12, 'thunderhead-clover': 8 }), t);
+    c = queueExperiment(c, t, 1).cultivator;
+    c = queueExperiment(c, t, 1).cultivator;
+    const after = workBench(c, 2 * experimentHours(c, t), 100, Rng.fromString('k7')).cultivator;
+    expect(after.crafts.found).toHaveLength(1);
+    expect(after.crafts.bench).toEqual([]);
+    expect(after.items['old-apricot-kernel']).toBe(6);
+    expect(after.items['thunderhead-clover']).toBe(4);
+    expect(after.crafts.pity[setKey(t)]).toBeUndefined();
+  });
+
+  it('stops after the throw in the tool and keeps what waits behind it (review 2026-10-21)', () => {
+    const t = throwOf('alchemy', { 'old-apricot-kernel': 6, 'thunderhead-clover': 4 });
+    let c = alchemist({ 'old-apricot-kernel': 12, 'thunderhead-clover': 8 });
+    c = queueExperiment(queueExperiment(c, t, 1).cultivator, t, 1).cultivator;
+    c = workBench(c, 0.1, 100, Rng.fromString('miss')).cultivator;
+    expect(c.crafts.front?.experiment).toBeDefined();
+    c = unqueue(c, 0);
+    const after = workBench(c, experimentHours(c, t) - 0.1, 100, Rng.fromString('miss')).cultivator;
+    expect(after.crafts.front).toBeNull();
+    expect(after.crafts.bench).toHaveLength(1);
   });
 
   it('finds a guarded recipe with no leak: nothing of the style is learned', () => {

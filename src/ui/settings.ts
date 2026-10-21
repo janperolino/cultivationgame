@@ -1,5 +1,5 @@
 // Settings live in localStorage; saves never do (design § Saves). These are the player's, not the
-// life's: text size, motion, colors and the glass, and for going in the OpenRouter key and what the
+// life's: text size, motion, colors and the glass, the sound's volumes (S1), and for going in the OpenRouter key and what the
 // calls have cost (src/ai, the cost meter). The clock speed belongs to the life and saves
 // with the slot instead. Only this file and the save layer touch browser storage.
 import { create } from 'zustand';
@@ -31,6 +31,13 @@ export interface Settings {
   openRouterKey: string;
   /** What going in's calls have cost, since the meter was last reset. */
   aiMeter: MeterTotals;
+  /** The sound's volumes, 0 to 100 (S1): master over music, ambience and effects. */
+  master: number;
+  music: number;
+  ambience: number;
+  effects: number;
+  /** Silent while the window isn't focused. */
+  muteUnfocused: boolean;
 }
 
 export const TEXT_SCALES = [
@@ -54,6 +61,11 @@ export const DEFAULT_SETTINGS: Settings = {
   rim: 1,
   openRouterKey: '',
   aiMeter: emptyTotals(),
+  master: 80,
+  music: 60,
+  ambience: 50,
+  effects: 80,
+  muteUnfocused: true,
 };
 
 const clamp = (x: unknown, lo: number, hi: number, d: number) =>
@@ -99,6 +111,11 @@ export function cleanSettings(raw: Partial<Record<keyof Settings, unknown>>): Se
     rim: clamp(raw.rim, 0.3, 1.6, d.rim),
     openRouterKey: typeof raw.openRouterKey === 'string' ? raw.openRouterKey.trim() : '',
     aiMeter: cleanMeter(raw.aiMeter),
+    master: Math.round(clamp(raw.master, 0, 100, d.master)),
+    music: Math.round(clamp(raw.music, 0, 100, d.music)),
+    ambience: Math.round(clamp(raw.ambience, 0, 100, d.ambience)),
+    effects: Math.round(clamp(raw.effects, 0, 100, d.effects)),
+    muteUnfocused: typeof raw.muteUnfocused === 'boolean' ? raw.muteUnfocused : d.muteUnfocused,
   };
 }
 

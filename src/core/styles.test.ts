@@ -8,11 +8,21 @@ import { manual, MANUALS } from '../content/manuals.ts';
 import { CRAFT_RENOWN } from '../content/styles.ts';
 import { tierNodes } from '../content/trees/index.ts';
 import { gradeCertified, gradeHeld, certify, examRows, examinesTo } from './craftGrade.ts';
-import { addCraftFame, craftLevel, craftPoints, markedHeld, soldMarked } from './craftRenown.ts';
+import {
+  addCraftFame,
+  craftLevel,
+  craftPoints,
+  keepMarks,
+  madeRare,
+  markedHeld,
+  soldMarked,
+} from './craftRenown.ts';
 import { craftDao } from './crafts.ts';
 import { askToJoin, entryOf } from './joining.ts';
 import { guestOffered, membership, seatGate } from './organizations.ts';
 import { markFor } from './resolver/marks.ts';
+import { addStanding } from './resolver/opinion.ts';
+import { standingOf } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
 import { sell, stockOf } from './shops.ts';
 import { addItem, emptyCrafts, newLife, withPlayer, type GameState } from './state.ts';
@@ -193,13 +203,34 @@ describe('craft renown', () => {
     s = withPlayer(s, addItem(s.player, 'bone-meal-pill', 20));
     const plain = sell(s, 'mouth-stall', 'bone-meal-pill', 10);
     const made = { ...s.player.crafts.marked, 'bone-meal-pill': 20 };
-    let m = withPlayer(s, { ...s.player, crafts: { ...s.player.crafts, marked: made } });
-    m = withPlayer(m, addCraftFame(m.player, BW, 'alchemy', 4, m.calendar.day));
+    const own = withPlayer(s, { ...s.player, crafts: { ...s.player.crafts, marked: made } });
+    const unknown = sell(own, 'mouth-stall', 'bone-meal-pill', 10);
+    const m = withPlayer(own, addCraftFame(own.player, BW, 'alchemy', 4, own.calendar.day));
     const marked = sell(m, 'mouth-stall', 'bone-meal-pill', 10);
-    if (!plain.ok || !marked.ok) throw new Error('no sale');
+    if (!plain.ok || !unknown.ok || !marked.ok) throw new Error('no sale');
     const gain = (x: GameState) => x.player.stones - s.player.stones;
-    expect(gain(marked.state) / gain(plain.state)).toBeCloseTo(1.09, 1);
+    expect(gain(marked.state) / gain(unknown.state)).toBeCloseTo(1.09, 1);
+    // The maker's rate (the crafts play checkpoint): your own make sells at 0.6, a stranger's at 0.4.
+    expect(gain(unknown.state) / gain(plain.state)).toBeCloseTo(1.5, 1);
     expect(marked.state.player.crafts.marked['bone-meal-pill']).toBe(10);
+  });
+
+  it('trims a mark to what you still hold, and holds gold-piece renown to two a month', () => {
+    // The crafts play checkpoint: a pill eaten takes its mark, so one bought later sells as bought.
+    const s = alchemist();
+    let c = addItem(s.player, 'bone-meal-pill', 5);
+    c = { ...c, crafts: { ...c.crafts, marked: { 'bone-meal-pill': 20, 'ember-talisman': 3 } } };
+    c = keepMarks(c);
+    expect(c.crafts.marked).toEqual({ 'bone-meal-pill': 5 });
+    // The code review's low 29: a month's gold pieces give at most the sales' monthly most.
+    const day = s.calendar.day;
+    let r = madeRare(s.player, BW, 'alchemy', day);
+    r = madeRare(r, BW, 'alchemy', day);
+    expect(craftPoints(r, BW, 'alchemy', day)).toBe(CRAFT_RENOWN.monthMost);
+    r = madeRare(r, BW, 'alchemy', day + 30);
+    expect(craftPoints(r, BW, 'alchemy', day + 30)).toBe(
+      CRAFT_RENOWN.monthMost + CRAFT_RENOWN.rare,
+    );
   });
 
   it('brings the guild’s guest elder seat at 6 in one of its crafts', () => {
@@ -207,6 +238,12 @@ describe('craft renown', () => {
     expect(guestOffered(s, GUILD)).toBe(false);
     s = withPlayer(s, addCraftFame(s.player, BW, 'alchemy', 16, s.calendar.day));
     expect(guestOffered(s, GUILD)).toBe(true);
+    // Never from a house that hunts you (review 2026-10-21).
+    let w = s.world;
+    for (let i = 0; i < 3; i++)
+      w = addStanding(w, { power: GUILD, about: s.player.id, row: 'betrayed-us' }, s.calendar.day);
+    expect(standingOf(w, GUILD, s.player.id, s.calendar.day).word).toMatch(/hunted|hostile/);
+    expect(guestOffered({ ...s, world: w }, GUILD)).toBe(false);
   });
 });
 

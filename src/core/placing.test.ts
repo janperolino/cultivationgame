@@ -113,6 +113,9 @@ describe('placing', () => {
     const back = pull(r);
     expect(back.flags.length).toBe(3);
     expect(back.spilt).toBeCloseTo(PLACING.spill);
+    // The disc's four stand, open: a fifth waits for one to come up (review 2026-10-21).
+    expect(r.flags).toHaveLength(g.nodes);
+    expect(cantPlant(g, r, [4, 4])).toMatch(/every flag/);
   });
 
   it('gives a reader 0.85 and more, a blind octagon half that, and an empty ground nothing', () => {

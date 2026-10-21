@@ -7,7 +7,7 @@ import type { CardOutcome } from './cards/schema.ts';
 import { GRADES, type GradeId, type LadderId } from './cultivation.ts';
 import { BRANCHES, HOUR_KINDS, HOUR_OPENINGS, SLEEP_FREED_TEXT, type HourKind } from './hours.ts';
 import { copyTitle } from './copies.ts';
-import { FAMILIES, type CraftId, type FamilyId } from './crafts.ts';
+import { CRAFTS, FAMILIES, type CraftId, type FamilyId } from './crafts.ts';
 import { CRAFT_GRADES, CRAFTER } from './styles.ts';
 import { COMBAT_DAOS, type CombatDaoId } from './daos.ts';
 import { item } from './items.ts';
@@ -114,6 +114,15 @@ function cardOutcome(d: EventData): CardOutcome {
 
 type Template = (d: EventData, who: Who) => string;
 
+/** What a family's mastery line says as it rises, by its craft. */
+const MASTERY_WORDS: Record<string, string> = {
+  alchemy: 'the fire answers the hand',
+  refining: 'the metal answers the hammer',
+  talismans: 'the brush keeps its line',
+  formations: 'the flags hold the currents',
+  farming: 'the field answers the hand',
+};
+
 /** A place's name as a sentence takes it: "the Beast-Butcher Gate" for a power's seat. */
 function withThe(where: string): string {
   const isPower = ORG_ROWS.some((r) => r.name === where && r.type !== undefined);
@@ -193,7 +202,7 @@ const DWELLING_LINES: Record<
 > = {
   rented: (w, n, at) => `${w} takes ${aDwelling(n)} in ${at}.`,
   bought: (w, n, at) => `${w} buys ${aDwelling(n)} in ${at}.`,
-  claimed: (w, n, at) => `${w} claims ${aDwelling(n)} in ${at} and moves in.`,
+  claimed: (w, n, at) => `${w} claims ${aDwelling(n)} in ${at} and stakes it out.`,
   abode: (w, n, at) => `${w} makes ${aDwelling(n)} in ${at} home.`,
   'gave-up': (w, n, at) => `${w} gives up ${aDwelling(n)} in ${at}.`,
   lapsed: (w, n, at) =>
@@ -202,11 +211,13 @@ const DWELLING_LINES: Record<
     `${w} finishes ${WORK_WORDS[s(d.work)] ?? 'the work'} at the ${lower(n)} in ${at}.`,
   robbed: (w, n, at, d) => `Thieves find ${w}’s ${lower(n)} in ${at} and carry off ${s(d.took)}.`,
   grazed: (w, n, at, d) =>
-    `A beast comes for the fields of ${w}’s ${lower(n)} in ${at} and eats the ${s(d.took)}.`,
-  // Arrays (K10): `name` is the array's.
-  laid: (w, n, at) => `${w} lays ${lower(n)} in ${at}.`,
-  dark: (w, n, at) => `${w}’s ${lower(n)} in ${at} burns its last stone and goes dark.`,
-  trapped: (w, n, at, d) => `A ${s(d.took)} walks into ${w}’s ${lower(n)} in ${at} and is held.`,
+    s(d.took) === 'nothing'
+      ? `A beast comes for the fields of ${w}’s ${lower(n)} in ${at}, finds nothing ripe and wanders off.`
+      : `A beast comes for the fields of ${w}’s ${lower(n)} in ${at} and eats the ${s(d.took)}.`,
+  // Arrays (K10): `name` is the array's, a thing's name kept as written.
+  laid: (w, n, at) => `${w} lays the ${n} in ${at}.`,
+  dark: (w, n, at) => `${w}’s ${n} in ${at} burns its last stone and goes dark.`,
+  trapped: (w, n, at, d) => `A ${s(d.took)} walks into ${w}’s ${n} in ${at} and is held.`,
 };
 /** "a cultivation chamber", "a room": a dwelling's name with its article. */
 function aDwelling(name: string): string {
@@ -293,8 +304,11 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
       : `${w.name} sits the examination at ${powerName(s(d.power))}, and the batch of ${item(s(d.recipe)).name}s fails in front of the examiners. They keep the fee.`;
   },
   // A failed batch that cracked the furnace (K1).
-  'blow-up': (d) =>
-    `The furnace bursts over ${s(d.recipe) === 'experiment' ? 'an experiment' : `a batch of ${item(s(d.recipe)).name}s`}: the ${item(s(d.tool)).name} is cracked, and wants a refiner.`,
+  // The tool's own word: a furnace, a forge, a brush (review 2026-10-21).
+  'blow-up': (d) => {
+    const tool = CRAFTS[item(s(d.tool)).uses.tool?.craft ?? 'alchemy'].tool;
+    return `The ${tool} ${tool === 'brush' ? 'splits' : 'bursts'} over ${s(d.recipe) === 'experiment' ? 'an experiment' : `a batch of ${item(s(d.recipe)).name}s`}: the ${item(s(d.tool)).name} is cracked, and wants a refiner.`;
+  },
   // A recipe found by experiment (K7): one nobody wrote, or a written one found by your own hand.
   'recipe-found': (d, w) => {
     const it = item(s(d.recipe));
@@ -313,7 +327,7 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   dwelling: (d, w) => DWELLING_LINES[s(d.what)]?.(w.name, s(d.name), s(d.where), d) ?? '',
   mastery: (d) =>
     d.family
-      ? `Your ${FAMILIES[s(d.family) as FamilyId].name.toLowerCase()} reach ${MASTERY[n(d.level)]!.name}: ${FAMILIES[s(d.family) as FamilyId].craft === 'farming' ? 'the field answers the hand' : 'the fire answers the hand'}.`
+      ? `Your ${FAMILIES[s(d.family) as FamilyId].name.toLowerCase()} reach ${MASTERY[n(d.level)]!.name}: ${MASTERY_WORDS[FAMILIES[s(d.family) as FamilyId].craft]}.`
       : d.technique
         ? `${technique(s(d.technique)).name} reaches ${MASTERY[n(d.level)]!.name}; the form finally clicks.`
         : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
@@ -370,8 +384,10 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
         .filter(([key]) => key.startsWith('var.'))
         .map(([key, v]) => [key, String(v)]),
     );
-    // A card that settled itself says so beside the line (core/chronicle.ts, settledItself).
-    return fillSlots(outcome.chronicle ?? '', { ...w, slots: { ...w.slots, ...vars } });
+    // A card that settled itself says so beside the line (core/chronicle.ts, settledItself); one
+    // with no line of its own gives its title, so the mark is never alone (the crafts checkpoint).
+    if (!outcome.chronicle) return d.byDefault === true ? `${card(s(d.card)).title}.` : '';
+    return fillSlots(outcome.chronicle, { ...w, slots: { ...w.slots, ...vars } });
   },
   // A stage of the Intent ladder opening (core/intent.ts): an epiphany or a fight won from the brink.
   intent: (d, w) => {

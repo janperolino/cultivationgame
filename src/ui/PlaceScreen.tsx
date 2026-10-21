@@ -69,7 +69,7 @@ import {
 } from '../core/markets.ts';
 import { whyOf } from '../core/making.ts';
 import { priceOf as priceOfThing } from '../core/prices.ts';
-import { gradeCount, priceWords, stonesOf, stonesWords } from '../core/purse.ts';
+import { gradeCount, pay, priceWords, stonesOf, stonesWords } from '../core/purse.ts';
 import { buyChapter, hallTerms, pavilion, pavilionChapters, titheFor } from '../core/halls.ts';
 import { lawHallAt, liftByPaying, marksHere, yourMark } from '../core/guarded.ts';
 import {
@@ -122,6 +122,7 @@ import { go } from './nav.ts';
 import { useGame } from './store.ts';
 import { copyManual } from '../content/copies.ts';
 import { CRAFTS, recipe, type CraftId } from '../content/crafts.ts';
+import { planInputs } from '../core/crafts.ts';
 import { CRAFT_DEALS, CRAFT_GRADES, CRAFT_RENOWN, CRAFTER } from '../content/styles.ts';
 import { knownCrafts } from '../core/craftRenown.ts';
 import {
@@ -138,8 +139,9 @@ import {
   brokerAt,
   claim,
   claimsHere,
+  densityOf,
   dwellingAt,
-  dwellingName,
+  dwellingNoun,
   offersAt,
   stepMult,
   takeFromBroker,
@@ -150,6 +152,7 @@ import { FurnaceScene } from './FurnaceScene.tsx';
 import { TalismanScene } from './TalismanScene.tsx';
 import { groundPartners, sparWhy } from '../core/spar.ts';
 import { askSpar } from '../core/playFight.ts';
+import { cue } from './cues.ts';
 
 type Act = (change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0]) => string | null;
 
@@ -378,7 +381,7 @@ function doorsOf(
       seal: broker === 'village' ? '舍' : '牙',
       name: broker === 'village' ? 'Farmhouse to let' : 'Broker 牙行',
       sub: mine
-        ? `your ${dwellingName(s, mine).toLowerCase()} here`
+        ? `your ${dwellingNoun(s, mine)} here`
         : broker === 'village'
           ? 'a house and two fields of its own'
           : 'rooms, chambers and courtyards',
@@ -442,6 +445,8 @@ export function PlaceScreen({
   const open = doors.find((d) => d.id === door && !d.later) ?? null;
   const area = place.area ? areaById(map, place.area) : null;
   const qd = qiAt(map, [place.x, place.y]);
+  // A dwelling of yours here reads at its own density, the land's beside it (the crafts checkpoint).
+  const ownHere = dwellingAt(game.player, place.id);
   // A place's prosperity names its kind: a lean town, a thriving city (design § Economy, Prosperity).
   const prosperity = prosperityOf(game.world, place.id, game.calendar.day);
   const usual = writtenProsperity(place.id);
@@ -451,7 +456,7 @@ export function PlaceScreen({
       : `${prosperityWord(prosperity)} ${info.name}` +
         (prosperity === usual ? '' : ` (usually ${prosperityWord(usual)})`),
     TERRAIN_NAMES[place.terrain] ?? place.terrain,
-    `qi density ${qd}, ${QI_NAMES[qd]}`,
+    densityWords(qd, ownHere ? densityOf(game, ownHere) : qd),
     area?.name,
   ].filter(Boolean);
   // The market's biggest gap and its cause (design § Economy, People make and use, the guards).
@@ -1015,8 +1020,10 @@ function ShopCounter({
                         endGuide('first-buy');
                         act((s) => {
                           const r = buy(s, shopId, l.slot, k);
-                          if (r.ok)
+                          if (r.ok) {
                             say(`Bought ${w.name}${(k ?? l.n) > 1 ? ` ×${k ?? l.n}` : ''}.`);
+                            cue('shop-buy');
+                          }
                           return r;
                         });
                       }}
@@ -1055,7 +1062,10 @@ function ShopCounter({
                     onClick={() =>
                       act((s) => {
                         const r = sell(s, shopId, thing, lotOf(thing, n));
-                        if (r.ok) say(`Sold ${w.name}.`);
+                        if (r.ok) {
+                          say(`Sold ${w.name}.`);
+                          cue('shop-sell');
+                        }
                         return r;
                       })
                     }
@@ -1364,6 +1374,12 @@ function ExamCounter({ game, power, act, say }: CounterProps) {
       <ul className="place-exam">
         {rows.map((row) => {
           const pick = picks[row.craft] ?? row.recipes[0]?.output ?? '';
+          // Said before the sitting, not after it (review 2026-10-21).
+          const cant = !pay(stonesOf(game.player), row.fee)
+            ? `The examination costs ${row.fee} low.`
+            : pick && planInputs(game.player, recipe(pick)).short.length
+              ? 'Your Bag can’t fill the test batch.'
+              : null;
           return (
             <li key={row.craft}>
               <span>
@@ -1390,16 +1406,24 @@ function ExamCounter({ game, power, act, say }: CounterProps) {
                   <button
                     type="button"
                     className="place-btn"
+                    disabled={!!cant}
+                    title={cant ?? undefined}
                     onClick={() => {
-                      sitDown(pick, row.craft);
+                      sitDown(pick, row.craft, { bench: false });
                       setSat({ craft: row.craft, recipe: pick });
                     }}
                   >
                     Sit it · {row.fee} low
                   </button>{' '}
-                  <button type="button" className="place-btn" onClick={() => sit(pick, 0)}>
+                  <button
+                    type="button"
+                    className="place-btn"
+                    disabled={!!cant}
+                    onClick={() => sit(pick, 0)}
+                  >
                     Queue it
                   </button>
+                  {cant && <span className="muted"> {cant}</span>}
                 </span>
               )}
             </li>
@@ -1860,7 +1884,11 @@ function FieldsCounter({ game, place, act }: { game: GameState; place: MapPlace;
       <p className="place-note">
         <b>{mine === 0 ? 'A plot' : mine === 1 ? 'Your plot here' : 'Your plots here'}</b> is worked
         on the Crafts screen’s Spirit Farming page, only while you stand here.{' '}
-        <button type="button" className="link-button" onClick={() => go('crafts')}>
+        <button
+          type="button"
+          className="link-button"
+          onClick={() => go('crafts', undefined, 'farming')}
+        >
           Open it
         </button>
       </p>
@@ -1929,7 +1957,7 @@ function BrokerCounter({ game, place, act }: { game: GameState; place: MapPlace;
       </div>
       {mine && (
         <p className="place-note">
-          <b>Your {dwellingName(game, mine).toLowerCase()} here</b> is on the Dwelling screen.{' '}
+          <b>Your {dwellingNoun(game, mine)} here</b> is on the Dwelling screen.{' '}
           <button type="button" className="link-button" onClick={() => go('dwelling')}>
             Open it
           </button>
@@ -2038,7 +2066,10 @@ function MapsCounter({
                 onClick={() =>
                   act((s) => {
                     const r = buyMap(s, place.id, m.id);
-                    if (r.ok) say(`${m.name}: its ground is Sketched on your map.`);
+                    if (r.ok) {
+                      say(`${m.name}: its ground is Sketched on your map.`);
+                      cue('shop-buy');
+                    }
                     return r;
                   })
                 }
@@ -2361,16 +2392,16 @@ function SiteCounter({
         ))}
       </div>
       <p className="place-note">
-        <b>Inside, a scene waits for P3.9.</b> Until then a site is a place to stand:{' '}
+        <b>Nothing more to do inside yet.</b> It is a place to stand:{' '}
         {['cave', 'hut', 'shrine'].includes(place.sub)
           ? 'your wheel sleeps here by rule, as shelter you have found, '
           : ''}
-        and P3.7’s encounters read its band.
+        and what you meet here comes at its band.
       </p>
       {held && (
         <p className="place-note">
-          <b>Your {dwellingName(game, held).toLowerCase()}.</b> Its store, land and works are on the
-          Dwelling screen.{' '}
+          <b>Your {dwellingNoun(game, held)}.</b> Its store, land and works are on the Dwelling
+          screen.{' '}
           <button type="button" className="link-button" onClick={() => go('dwelling')}>
             Open it
           </button>
@@ -2414,4 +2445,11 @@ function SiteCounter({
       </div>
     </section>
   );
+}
+
+/** A place head's qi density, a dwelling's raised one with the land's beside it. */
+function densityWords(land: number, at: number): string {
+  return at === land
+    ? `qi density ${land}, ${QI_NAMES[land]}`
+    : `qi density ${at}, ${QI_NAMES[at]} (the land's ${land})`;
 }

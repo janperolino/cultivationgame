@@ -493,7 +493,7 @@ export const MARCH: Catalog = {
       craft: 'refining',
       family: 'blades',
       inputs: [
-        { thing: 'red-rocks-iron-ore', count: 3 },
+        { thing: 'red-rocks-iron-ore', count: 2 },
         { thing: 'ash-spear-shaft', count: 1 },
       ],
     },
@@ -502,7 +502,7 @@ export const MARCH: Catalog = {
       craft: 'refining',
       family: 'armor',
       inputs: [
-        { thing: 'red-rocks-iron-ore', count: 4 },
+        { thing: 'red-rocks-iron-ore', count: 2 },
         { thing: 'cloud-goat-wool', count: 1 },
       ],
     },

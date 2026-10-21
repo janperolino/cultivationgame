@@ -29,7 +29,7 @@ import {
 } from './farming.ts';
 import { gatherFactor } from './map/gather.ts';
 import { loadSave, makeSave } from './save/format.ts';
-import { addItem, newLife, type Cultivator } from './state.ts';
+import { addItem, newLife, type Cultivator, type Dwelling } from './state.ts';
 
 const SPEAR_PLOW: PlotSpot = { place: 'spear-plow', land: 'plains', density: 3 };
 const RICE = 'spirit-rice';
@@ -176,6 +176,48 @@ describe('growing', () => {
     const hot = days(c, 80, 35, false, () => 3);
     expect(plotOf(quiet, id)!.beds.filter(Boolean)).toHaveLength(2);
     expect(plotOf(hot, id)!.beds.filter(Boolean)).toHaveLength(1);
+  });
+
+  it('counts a dwelling’s slots as tended under a running growing array (review 2026-10-21)', () => {
+    const { c, id } = sown();
+    const slot: Cultivator = {
+      ...c,
+      crafts: { ...c.crafts, plots: c.crafts.plots.map((p) => ({ ...p, held: 'slot' as const })) },
+    };
+    const array = {
+      id: 'arr-0-0',
+      item: 'growing-flags',
+      rarity: 'white' as const,
+      from: 'white' as const,
+      strength: 0,
+      stones: 30,
+      laid: 0,
+    };
+    const site = { place: 'spear-plow', arrays: [array] } as unknown as Dwelling;
+    const grown = (x: Cultivator) => plotOf(days(x, 0, 30, false), id)!.beds[1]!.grown;
+    expect(grown({ ...slot, dwellings: [site] })).toBeGreaterThan(grown(slot));
+    expect(grown({ ...slot, dwellings: [site] })).toBeCloseTo(
+      plotOf(days(slot, 0, 30, true), id)!.beds[1]!.grown,
+      5,
+    );
+  });
+
+  it('keeps a harvest’s packets in the tray when the Bag is full (review 2026-10-21)', () => {
+    const { c, id } = sown();
+    const milk = variantId('earth-milk', 'purple');
+    const r = applyToPlot(addItem(c, milk, 1), id, milk, 0, 1);
+    const full: Cultivator = {
+      ...r.cultivator,
+      items: { ...r.cultivator.items, 'travel-rations': 99 * 20 },
+    };
+    const h = harvest(full, id, 1, 1);
+    for (const [pid, n] of Object.entries(h.packets))
+      expect(
+        (h.cultivator.items[pid] ?? 0) -
+          (full.items[pid] ?? 0) +
+          (h.cultivator.crafts.tray[pid] ?? 0),
+      ).toBe(n);
+    expect(Object.keys(h.cultivator.crafts.tray).some((k) => k.startsWith('seed.'))).toBe(true);
   });
 
   it('earth milk ages a bed at once by its years, and age lifts a herb past its written top', () => {

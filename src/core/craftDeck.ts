@@ -6,8 +6,9 @@
 // run on the realm curve and the craft tier. A card about your bench or field lights its page on
 // the Crafts screen, and an urgent one takes its default if left, as urgent cards do.
 import type { Card, CardEffect, Trigger } from '../content/cards/index.ts';
+import { COMMISSION } from '../content/commissions.ts';
 import { DAYS_PER_MONTH } from '../content/calendar.ts';
-import { CRAFTS, CRAFT_IDS, recipe, recipeFor, type CraftId } from '../content/crafts.ts';
+import { CRAFTS, CRAFT_IDS, recipe, type CraftId } from '../content/crafts.ts';
 import { copyId, hasCopy } from '../content/copies.ts';
 import { slipId } from '../content/catalogs/index.ts';
 import { baseOf, hasItem, item, variantId } from '../content/items.ts';
@@ -15,7 +16,14 @@ import { realmScale } from '../content/realms.ts';
 import { BORDER_WILDS_NAMES } from '../content/roster.ts';
 import { keeperName, shop as shopById } from '../content/shops.ts';
 import { CRAFTER } from '../content/styles.ts';
-import { askedCommission, askerFor, holdCommission, postsFor } from './commissions.ts';
+import {
+  askedCommission,
+  askerFor,
+  holdCommission,
+  openCommissions,
+  postsFor,
+  yourMake,
+} from './commissions.ts';
 import { gradeCertified } from './craftGrade.ts';
 import { addCraftFame, craftLevel } from './craftRenown.ts';
 import {
@@ -23,6 +31,7 @@ import {
   craftTiersHeld,
   knowsRecipe,
   lentTools,
+  toolFor,
   toolsHeld,
   withCrafts,
 } from './crafts.ts';
@@ -78,8 +87,11 @@ export function craftTriggerHolds(s: GameState, t: Trigger['craft']): boolean {
   if (!craft) return false;
   if (t.ungraded && craftTiersHeld(c, craft) <= gradeCertified(c, craft)) return false;
   if (t.renown !== undefined && !bestRegion(s, craft, t.renown)) return false;
-  if (t.made && !c.crafts.recent.some((b) => b.made && recipeFor(b.made)?.craft === craft))
-    return false;
+  // An order for your make: one to name, and room to hold it (review 2026-10-21: the card said
+  // "on your list" when neither held).
+  if (t.made && (!yourMake(c, craft) || openCommissions(c).length >= COMMISSION.most)) return false;
+  // A slip to give, or the card would sell you nothing (review 2026-10-21).
+  if (t.slip && !slipFor(c, craft)) return false;
   return true;
 }
 
@@ -170,7 +182,10 @@ export function craftPage(k: Card, words: Readonly<Record<string, string>> | und
   return null;
 }
 
-/** Sets each waiting field card's `here`: whether you stand at its field with no course set. */
+/**
+ * Sets each waiting field card's and raid card's `here`: whether you stand at its field or site
+ * with no course set, so Drive it off is there whenever you are (the crafts play checkpoint).
+ */
 export function craftCardsHere(s: GameState): GameState {
   let changed = false;
   const pending = s.cards.pending.map((p) => {
@@ -234,9 +249,10 @@ export function applyCraftEffect(
       if (!front) return s;
       if (e.outcome === 'finer')
         return withPlayer(s, withCrafts(c, { front: { ...front, above: true } }));
-      const r = recipe(front.recipe);
-      const tool = toolsHeld(c, r.craft).find((t) => !t.cracked && t.tier >= item(r.output).tier);
-      if (!tool) return s;
+      // The tool the batch is worked with, and only your own: a lent furnace isn't yours to crack
+      // (review 2026-10-21).
+      const tool = toolFor(c, recipe(front.recipe));
+      if (!tool || (c.items[tool.id] ?? 0) <= 0) return s;
       const cracked = variantId(baseOf(tool.id), tool.rarity, { cracked: true });
       return withPlayer(s, addItem(addItem(c, tool.id, -1), cracked, 1));
     }

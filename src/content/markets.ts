@@ -138,8 +138,10 @@ export const BASKET = {
   detox: [0, 0.2, 0.2, 0.2],
   'body-fuel': [0, 0.3, 0.3, 0.3],
   'soul-fuel': [0, 0.2, 0.2, 0.2],
-  weapon: [0, 0.03, 0.03, 0.03],
-  armor: [0, 0.03, 0.03, 0.03],
+  // A piece every five and a half years: artifacts last, and cost twice what they did (the crafts
+  // play checkpoint doubled gear's price and halved these from 0.03, so a month spends the same).
+  weapon: [0, 0.015, 0.015, 0.015],
+  armor: [0, 0.015, 0.015, 0.015],
 } as const satisfies Record<string, readonly [number, number, number, number]>;
 export type BasketNeed = keyof typeof BASKET;
 
@@ -148,13 +150,14 @@ export const FILLED_BY: Partial<Record<string, readonly string[]>> = { cloth: ['
 
 /**
  * What a maker uses a piece, by what it makes (design § Economy, What makers use): a pill a herb of
- * its tier, a talisman its ink, a weapon or armor 5 ore, a sack of spirit grain 0.1 of bone meal.
+ * its tier, a talisman its ink, a weapon or armor 3 ore (5 until the crafts play checkpoint), a sack
+ * of spirit grain 0.1 of bone meal.
  * A catalog line may write its own (`Lot.uses`). Inputs use nothing.
  */
 export const MAKER_USES = {
   pill: { herb: 1 },
   talisman: { ink: 1 },
-  gear: { ore: 5 },
+  gear: { ore: 3 },
   grain: { 'bone-meal': 0.1 },
 } as const satisfies Record<string, Record<string, number>>;
 
@@ -217,9 +220,10 @@ export const MORTAL_SPEND_TAELS = 0.2;
 
 /**
  * What stands on a district's shelves of a good in the monthly sum (E5, Shelves): this share of its
- * market's month of use, about three days' trade, times its supply.
+ * market's month of use times its supply. A month's use (the crafts play checkpoint, Jan's call:
+ * "there cannot be just 8 swords for sale in a city"); E5 stood a tenth, about three days' trade.
  */
-export const SHELF_SHARE = 0.1;
+export const SHELF_SHARE = 1;
 
 /** A trading house takes this share of every good it sells off the top, before the district's split. */
 export const HOUSE_TAKE = { plain: 0.2, import: 0.4 } as const;

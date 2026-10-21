@@ -24,6 +24,13 @@ describe('settings', () => {
     expect(s.rim).toBe(1);
   });
 
+  it("keeps the sound's volumes to 0 to 100 and mute-when-unfocused on unless turned off", () => {
+    const s = cleanSettings({ master: 140, music: -5, ambience: 33.4, effects: 'loud' });
+    expect([s.master, s.music, s.ambience, s.effects]).toEqual([100, 0, 33, 80]);
+    expect(s.muteUnfocused).toBe(true);
+    expect(cleanSettings({ muteUnfocused: false }).muteUnfocused).toBe(false);
+  });
+
   it('an empty store is the defaults', () => {
     expect(cleanSettings({})).toEqual(DEFAULT_SETTINGS);
   });

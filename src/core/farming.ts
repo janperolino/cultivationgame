@@ -6,6 +6,7 @@
 // at its place is high. You plant, harvest and tend only where you stand; the page lists every plot.
 // The batch's rules are the bench's (core/crafts.ts): the family's mastery and the tending hand
 // lift a harvest's rarity, a bed counts as a batch, and its yield gains as a batch's does.
+import { growingSteps } from './arrays.ts';
 import type { Recipe } from '../content/catalogs/types.ts';
 import { LAND_ELEMENT, hasRecipe, recipe } from '../content/crafts.ts';
 import {
@@ -37,7 +38,6 @@ import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
 import { realmScale, tierRealm } from '../content/realms.ts';
 import {
   countBatches,
-  familyLevel,
   knowsRecipe,
   liftOf,
   withCrafts,
@@ -73,10 +73,6 @@ export function rentOf(density: number): number {
 export function buyOf(density: number): number {
   return rentOf(density) * PLOT.buySeasons;
 }
-
-export const plotsOf = (c: Cultivator): readonly Plot[] => c.crafts.plots;
-export const plotsAt = (c: Cultivator, place: string): Plot[] =>
-  c.crafts.plots.filter((p) => p.place === place);
 
 export function plotOf(c: Cultivator, id: string): Plot | null {
   return c.crafts.plots.find((p) => p.id === id) ?? null;
@@ -243,7 +239,11 @@ export function growPlots(
       continue;
     }
     const isHere = here === p0.place;
-    const care = tended(p0, isHere, to);
+    // A growing array running over a dwelling's land tends its slots (design § Spirit farming;
+    // review 2026-10-21).
+    const grown =
+      p0.held === 'slot' && c.dwellings.some((d) => d.place === p0.place && growingSteps(d) > 0);
+    const care = grown || tended(p0, isHere, to);
     let plot: Plot = {
       ...p0,
       beds: p0.beds.map((b) => {
@@ -423,7 +423,15 @@ export function harvest(c: Cultivator, id: string, bed: number, day: number): Ha
     const pid = variantId(seedId(b.crop), rar);
     packets[pid] = (packets[pid] ?? 0) + 1;
   }
-  for (const [pid, n] of Object.entries(packets)) next = stow(next, pid, n).c;
+  // What the Bag can't hold waits in the tray, as the crop does (review 2026-10-21).
+  for (const [pid, n] of Object.entries(packets)) {
+    const r = stow(next, pid, n);
+    next = r.c;
+    if (r.left > 0)
+      next = withCrafts(next, {
+        tray: { ...next.crafts.tray, [pid]: (next.crafts.tray[pid] ?? 0) + r.left },
+      });
+  }
   const events: BenchEvent[] = [];
   next = countBatches(next, r, 1, events);
   // A grain bed with Second Harvest (Line's capstones) heads again without sowing.
@@ -466,6 +474,7 @@ export function applyToPlot(
     if (plot.soil >= it.tier) return { cultivator: c, reason: 'The soil is already that good.' };
     next = { ...plot, soil: it.tier };
   } else if (use.dug !== undefined) {
+    if (plot.soil >= use.dug) return { cultivator: c, reason: 'The soil is already that good.' };
     next = { ...plot, soil: use.dug };
   } else if (use.milk) {
     const b = bed !== undefined ? plot.beds[bed] : null;
@@ -516,6 +525,9 @@ export function digSoil(
   // A bought plot's, or a slot's of a dwelling you own (K9); rented soil is the landlord's.
   if (plot.held !== 'bought' && !(plot.held === 'slot' && plot.until === null))
     return { cultivator: c, reason: "A rented plot's soil is the village's.", events: [] };
+  // A seat's quarters are the power's, their land with them (review 2026-10-21).
+  if (c.dwellings.some((d) => d.place === plot.place && d.held === 'seat'))
+    return { cultivator: c, reason: "Your quarters' soil is your power's.", events: [] };
   let next = c;
   const events: FarmEvent[] = [];
   plot.beds.forEach((b, i) => {
@@ -545,14 +557,4 @@ export function tendPlot(c: Cultivator, id: string, hand: number): Cultivator {
     ...plot,
     beds: plot.beds.map((b) => (b ? { ...b, hand: b.hand + h, sat: b.sat + 1 } : b)),
   });
-}
-
-/** The page's word for a bed: ripe, its hardiness's word, or the days it still needs. */
-export function bedWord(c: Cultivator, b: Bed): string {
-  return hardiness(c, b).word;
-}
-
-/** The family a crop's mastery is kept by, and its level. */
-export function cropMastery(c: Cultivator, crop: string): number {
-  return familyLevel(c, recipe(crop).family);
 }

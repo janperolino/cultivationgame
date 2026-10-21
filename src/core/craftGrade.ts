@@ -14,7 +14,7 @@ import { addEvent, withPlayer, withStream, type Cultivator, type GameState } fro
 import type { Recipe } from '../content/catalogs/types.ts';
 import { copyId } from '../content/copies.ts';
 import { hasManual, manual } from '../content/manuals.ts';
-import { gainCopy } from './life.ts';
+import { benchEvents, gainCopy } from './life.ts';
 import { priceOf } from './prices.ts';
 import { stylesHeld } from './styles.ts';
 
@@ -121,7 +121,8 @@ export function certify(s: GameState, guild: string, output: string, hand = 0): 
     };
     c = addCraftFame(c, organization(guild).row.region ?? '', r.craft, CRAFT_RENOWN.certified, day);
   }
-  let next = withPlayer(state, c);
+  // The test batch counts as any batch: its mastery and a gold piece's renown (review 2026-10-21).
+  let next = benchEvents(withPlayer(state, c), b.events, organization(guild).row.region ?? '');
   next = addEvent(next, 'graded', {
     power: guild,
     craft: r.craft,

@@ -29,6 +29,7 @@ import { setHand } from './furnace.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { canvasDensity } from './stage.ts';
 import { useGame } from './store.ts';
+import { cue } from './cues.ts';
 
 const { w: W, h: H } = FURNACE_BOX;
 const CX = W / 2;
@@ -140,6 +141,7 @@ export function FurnaceScene({ game, recipe }: { game: GameState; recipe: Recipe
     furnace.current = r.furnace;
     setHand(r.furnace.hand);
     if (r.burned) {
+      cue('craft-furnace');
       const good = r.burned.speck.kind === 'dross';
       marks.current.push({ at: r.burned.at, good, t: f.t });
       if (good) ash.current.push({ at: r.burned.at, t: f.t });

@@ -66,8 +66,10 @@ export interface Trigger {
     bench?: boolean;
     renown?: number;
     ungraded?: boolean;
-    /** Something of the craft made lately: what an order for your make asks for. */
+    /** Something of the craft made lately and room for a commission: an order for your make. */
     made?: boolean;
+    /** A recipe slip of the craft at your tier you don't know, for the card to hand over. */
+    slip?: boolean;
   };
 }
 
@@ -171,6 +173,11 @@ export interface CardFight {
   roster: string;
   /** Stages from yours, held inside your realm: 1 is a layer above you. 0 when absent. */
   stages?: number;
+  /**
+   * The card variable holding the foe's band, when the foe comes at the world's strength rather
+   * than yours: a raid's, at its land (the crafts play checkpoint). `stages` is read only without it.
+   */
+  band?: string;
   /** A people slot ({rival}) the foe is, by name. */
   person?: string;
 }
@@ -247,8 +254,13 @@ export interface Card {
   once?: boolean;
   /** Days before it can come again. */
   cooldown?: number;
-  /** An urgent card resolves by its default choice once it has waited this many days. */
-  urgent?: { days: number };
+  /**
+   * An urgent card resolves by its default choice once it has waited this many days. With
+   * `fromSeen` (the crafts play checkpoint: a raid settled before its owner saw it), the days count
+   * from when you first open it, at least `minutes` real minutes, and one never opened waits
+   * `unseen` days from its coming.
+   */
+  urgent?: { days: number; fromSeen?: { minutes: number; unseen: number } };
   /** The choice taken when it resolves without you; the first when absent. */
   defaultChoice?: number;
   choices: readonly CardChoice[];

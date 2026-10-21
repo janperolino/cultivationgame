@@ -37,7 +37,7 @@ import {
 import { slipId } from '../../content/catalogs/index.ts';
 import { CROPS, seedId } from '../../content/farming.ts';
 import { takePlot } from '../../core/farming.ts';
-import { farmHere } from '../../core/map/fields.ts';
+import { fieldsHere } from '../../core/map/fields.ts';
 import { veinsOf } from '../../core/map/veins.ts';
 import { jobsView, quitJob, takeJob } from '../../core/jobs.ts';
 import {
@@ -101,6 +101,8 @@ import { advance, daysPerRealMs } from '../../core/loop.ts';
 import { madeUpLife } from '../../core/fixtures/madeUpLife.ts';
 import { madeUpManuals } from '../../core/fixtures/madeUpManuals.ts';
 import { addItem, ageYears, daysLived, withPlayer, type GameState } from '../../core/state.ts';
+import { toolsHeld } from '../../core/crafts.ts';
+import { dwellingName, dwellingPlaceName, readSite } from '../../core/dwellings.ts';
 import { bandAt } from '../../core/map/depth.ts';
 import { arrayBand } from '../../core/arrays.ts';
 import { RAIDERS } from '../../content/dwellings.ts';
@@ -129,6 +131,7 @@ import {
   thingOfGood,
   writtenProsperity,
 } from '../../core/markets.ts';
+import { soundConsole } from '../sound/index.ts';
 
 export type Output = string | string[];
 
@@ -183,6 +186,23 @@ function summary(s: GameState, speed: number): string[] {
   ];
 }
 
+/** A raid card's words and vars at your first claimed site, as the month's raid would set them. */
+function raidWords(s: GameState, id: string) {
+  if (id !== 'raid-beast' && id !== 'raid-thieves') return null;
+  const d = s.player.dwellings.find((x) => x.held === 'claimed');
+  if (!d) return null;
+  const r = readSite(s, d);
+  const here = s.map?.inside === d.place && !s.map.course ? 1 : 0;
+  return {
+    words: {
+      site: dwellingName(s, d).toLowerCase(),
+      where: dwellingPlaceName(s, d),
+      _place: d.place,
+    },
+    vars: { here, band: id === 'raid-beast' ? (r?.beastRaider ?? 0) : (r?.raider ?? 0) },
+  };
+}
+
 export const COMMANDS: Record<string, Command> = {
   help: {
     usage: 'help [command]',
@@ -194,6 +214,11 @@ export const COMMANDS: Record<string, Command> = {
       }
       return Object.values(COMMANDS).map((c) => `${c.usage.padEnd(30)} ${c.help}`);
     },
+  },
+  sound: {
+    usage: 'sound [cue]',
+    help: 'Shows what music and ambience play now, or plays an effect from the cue table.',
+    run: ([id]) => soundConsole(id),
   },
   speed: {
     usage: 'speed [n]',
@@ -303,7 +328,9 @@ export const COMMANDS: Record<string, Command> = {
         store,
         (g) => {
           const m = ensureMap(g);
-          return { ...m, map: { ...m.map!, at: [p.x, p.y], course: null, inside: null } };
+          // Seen in your fog, so the Map offers to go in (the crafts checkpoint's note).
+          const life = raise(m.map!, p.id, 'seen');
+          return { ...m, map: { ...life, at: [p.x, p.y], course: null, inside: null } };
         },
         `At ${p.name}.`,
       );
@@ -726,27 +753,35 @@ export const COMMANDS: Record<string, Command> = {
   },
   craft: {
     usage: 'craft [recipe] [mastery batches]',
-    help: 'Sets up a crafter (K1, K4): its craft’s crude tool (a clay furnace, an iron forge, a wolf-hair brush), the recipe known (the Qi-Gathering Pill unless told), inputs for five batches, four Craft hours from 辰, and the family at that many batches. `craft iron-sword` makes a refiner, `craft ember-talisman` a talisman master, `craft gathering-flags` an array master.',
+    help: 'Sets up a crafter (K1, K4): its craft’s crude tool (a clay furnace, an iron forge, a wolf-hair brush), the recipe known (the Qi-Gathering Pill unless told), inputs for five batches, four Craft hours from 辰 when the wheel has none, and the family at that many batches when told (run again, it only restocks). `craft iron-sword` makes a refiner, `craft ember-talisman` a talisman master, `craft gathering-flags` an array master.',
     run([id, batches], store) {
       const r = id ?? 'qi-gathering-pill';
       if (!hasRecipe(r)) return `No recipe ${r}: ${RECIPES.map((x) => x.output).join(', ')}.`;
-      const n = batches === undefined ? 0 : Number(batches);
-      if (!Number.isFinite(n) || n < 0) return 'Give a number of batches.';
+      // Run again to restock, it keeps the mastery and the wheel you have (review 2026-10-21).
+      const n = batches === undefined ? null : Number(batches);
+      if (n !== null && (!Number.isFinite(n) || n < 0)) return 'Give a number of batches.';
       return apply(
         store,
         (s) => {
           const rec = recipe(r);
           const tool = STARTER_TOOLS[rec.craft] ?? 'crude-clay-furnace';
-          let c = addItem(s.player, tool, 1);
+          // A tool only when you carry none of its craft: run again, it restocks the inputs alone.
+          let c = toolsHeld(s.player, rec.craft).length ? s.player : addItem(s.player, tool, 1);
           for (const i of rec.inputs) c = addItem(c, i.thing, i.count * 5);
           const node = `${slipId(r)}-node`;
           if (!c.nodes.includes(node)) c = { ...c, nodes: [...c.nodes, node] };
-          c = { ...c, crafts: { ...c.crafts, mastery: { ...c.crafts.mastery, [rec.family]: n } } };
+          if (n !== null)
+            c = {
+              ...c,
+              crafts: { ...c.crafts, mastery: { ...c.crafts.mastery, [rec.family]: n } },
+            };
           c = {
             ...c,
             flags: c.flags.includes('hours-craft') ? c.flags : [...c.flags, 'hours-craft'],
           };
-          const wheel = c.wheel.map((k, i) => (i >= 4 && i < 8 && k !== 'sleep' ? 'craft' : k));
+          const wheel = c.wheel.includes('craft')
+            ? c.wheel
+            : c.wheel.map((k, i) => (i >= 4 && i < 8 && k !== 'sleep' ? 'craft' : k));
           return withPlayer(s, { ...c, wheel });
         },
         `A crafter: ${r}, inputs for five batches, Craft hours from 辰 to 未.`,
@@ -804,7 +839,7 @@ export const COMMANDS: Record<string, Command> = {
           c = addItem(addItem(c, 'spirit-soil', 2), variantId('earth-milk', 'purple'), 1);
           c = addItem(addItem(c, variantId('earth-milk', 'green'), 2), 'spring-rain-talisman', 2);
           c = addItem(c, 'pest-warding-talisman', 2);
-          const here = farmHere(s);
+          const here = fieldsHere(s);
           if (here) c = takePlot(c, here, 'bought', s.calendar.day).cultivator;
           return withPlayer(s, c);
         },
@@ -1004,24 +1039,47 @@ export const COMMANDS: Record<string, Command> = {
       if (!id || !hasCard(id)) return 'Give a card id (see cards).';
       return apply(
         store,
-        (s) => ({
-          ...s,
-          cards: {
-            ...s.cards,
-            pending: [
-              ...s.cards.pending,
-              {
-                uid: s.cards.nextUid,
-                card: id,
-                day: s.calendar.day,
-                // A craft card is set where its field or market is (K12).
-                ...(card(id).deck === CRAFT_DECK ? { words: craftWords(s, card(id)) ?? {} } : {}),
-              },
-            ],
-            drawn: { ...s.cards.drawn, [id]: s.calendar.day },
-            nextUid: s.cards.nextUid + 1,
-          },
-        }),
+        (s0) => {
+          const raid = raidWords(s0, id);
+          // A raid's site waits on its card, as the month's raid marks it.
+          const s = raid
+            ? withPlayer(s0, {
+                ...s0.player,
+                dwellings: s0.player.dwellings.map((d) =>
+                  d.place === raid.words._place
+                    ? {
+                        ...d,
+                        raid: {
+                          uid: s0.cards.nextUid,
+                          kind: id === 'raid-beast' ? ('beast' as const) : ('thieves' as const),
+                          band: raid.vars.band,
+                        },
+                      }
+                    : d,
+                ),
+              })
+            : s0;
+          return {
+            ...s,
+            cards: {
+              ...s.cards,
+              pending: [
+                ...s.cards.pending,
+                {
+                  uid: s.cards.nextUid,
+                  card: id,
+                  day: s.calendar.day,
+                  // A craft card is set where its field or market is (K12), a raid at your first
+                  // claimed site (the crafts checkpoint's note).
+                  ...(card(id).deck === CRAFT_DECK ? { words: craftWords(s, card(id)) ?? {} } : {}),
+                  ...(raid ?? {}),
+                },
+              ],
+              drawn: { ...s.cards.drawn, [id]: s.calendar.day },
+              nextUid: s.cards.nextUid + 1,
+            },
+          };
+        },
         `${id} waits in the feed.`,
       );
     },

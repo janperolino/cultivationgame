@@ -14,6 +14,7 @@ import {
   craftDeckOpen,
   craftPage,
   craftShare,
+  craftTriggerHolds,
   craftWords,
 } from './craftDeck.ts';
 import { addCraftFame } from './craftRenown.ts';
@@ -145,5 +146,29 @@ describe('the craft deck', () => {
       const at = { ...c, qi: { ...c.qi, realm } };
       for (const e of lifted) expect(hasItem(atCraftTier(at, e.id, e.rarity))).toBe(true);
     }
+  });
+
+  it('asks for an order of your make only when one is named and there is room (review 2026-10-21)', () => {
+    const t = { crafts: ['alchemy'] as const, made: true };
+    const s = crafter();
+    expect(craftTriggerHolds(s, t)).toBe(true);
+    // Only a mend of late: nothing of your make to name.
+    const mended = withPlayer(s, {
+      ...s.player,
+      crafts: {
+        ...s.player.crafts,
+        recent: [
+          {
+            day: 0,
+            recipe: 'qi-gathering-pill',
+            made: 'qi-gathering-pill',
+            count: 1,
+            blew: false,
+            mend: true,
+          },
+        ],
+      },
+    });
+    expect(craftTriggerHolds(mended, t)).toBe(false);
   });
 });

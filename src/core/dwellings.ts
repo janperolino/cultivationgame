@@ -7,6 +7,7 @@
 // seclusion reads the steps on O2's ladder. Its land is its plot slots, each a plot by K8's rules;
 // its store a second grid opened only there. A site in the wild is found by its concealment and
 // raided by its worth, and the land's beasts come for its raised qi and its old herbs.
+import { SEAT_IDS } from '../content/organizations.ts';
 import { DAYS_PER_MONTH, DAYS_PER_YEAR } from '../content/calendar.ts';
 import {
   CAVE_GROWS,
@@ -58,7 +59,7 @@ import {
 } from './map/region.ts';
 import { mapOf, mapPlaceOf } from './map/travel.ts';
 import { veinById, veinsKnown, type Vein } from './map/veins.ts';
-import { houseOf, isOrganization, organization, theName } from './orgs/identity.ts';
+import { houseOf, isOrganization, organization } from './orgs/identity.ts';
 import { membershipsOf } from './orgs/membership.ts';
 import { seatOf } from './orgs/seats.ts';
 import { realmStageOf } from './orgs/trial.ts';
@@ -83,7 +84,6 @@ const no = (reason: string): Done => ({ ok: false, reason });
 
 // ---------------------------------------------------------------- reading
 
-export const dwellingsOf = (c: Cultivator): readonly Dwelling[] => c.dwellings;
 export const dwellingById = (c: Cultivator, id: string): Dwelling | null =>
   c.dwellings.find((d) => d.id === id) ?? null;
 export const dwellingAt = (c: Cultivator, place: string): Dwelling | null =>
@@ -131,6 +131,16 @@ export function dwellingName(s: GameState, d: Dwelling): string {
   return DWELLINGS[d.kind].name;
 }
 
+/**
+ * A dwelling's name as a noun after "your" or "the": lowercased, with no article or "Your" of its
+ * own ("barracks bunk", "cave", "spirit mountain"; the crafts checkpoint's "your a barracks bunk").
+ */
+export function dwellingNoun(s: GameState, d: Dwelling): string {
+  return dwellingName(s, d)
+    .replace(/^(a|an|the|your) /i, '')
+    .toLowerCase();
+}
+
 /** Where a dwelling stands, by name: its town or seat, or for a site in the wild the land it is in. */
 export function dwellingPlaceName(s: GameState, d: Dwelling): string {
   const map = mapOf(s);
@@ -162,6 +172,9 @@ function storeOpen(s: GameState, d: Dwelling): boolean {
 export function toStore(s: GameState, id: string, thing: string, at: number): Done {
   const d = dwellingById(s.player, id);
   if (!d || !storeOpen(s, d)) return no('The store opens only where it stands.');
+  // A lapsed lease keeps the store a month for taking out, never for putting in.
+  if (lapsed(d, s.calendar.day))
+    return no('Your lease has run out: the store only gives back now.');
   const stack = bagStacks(s.player).filter((x) => x.id === thing)[at];
   if (!stack) return no('You hold no such stack.');
   const items = { ...d.items, [thing]: (d.items[thing] ?? 0) + stack.n };
@@ -292,7 +305,11 @@ export function giveUp(s: GameState, id: string): Done {
     for (const a of d.arrays) next = gainItem(next, variantId(a.item, a.from), 1).state;
     for (const [thing, n] of Object.entries(d.items)) next = gainItem(next, thing, n).state;
   }
-  if (d.held === 'claimed' && d.power) next = { ...next, world: endSquat(next.world, s, d.power) };
+  // The deed ends with the last claim on that power's land (review 2026-10-21).
+  const squatsOn = (power: string) =>
+    next.player.dwellings.some((x) => x.held === 'claimed' && x.power === power);
+  if (d.held === 'claimed' && d.power && !squatsOn(d.power))
+    next = { ...next, world: endSquat(next.world, s, d.power) };
   return {
     ok: true,
     state: addEvent(next, 'dwelling', {
@@ -484,6 +501,16 @@ export function sphereAt(map: RegionMap, at: [number, number]): string | null {
   return null;
 }
 
+/**
+ * The power a claim is a deed against: its sphere's, your own power's too, unless you hold its
+ * elder seat or higher there (the crafts play checkpoint, Jan's call: an elder takes a cave freely).
+ */
+function squatOn(s: GameState, power: string | null): string | null {
+  if (!power) return null;
+  const seat = seatOf(s.world, s.player.id, power, realmStageOf(s));
+  return seat && SEAT_IDS.indexOf(seat) >= SEAT_IDS.indexOf('elder') ? null : power;
+}
+
 /** Hidden-valley spots: falling water, a sinkhole, a herb valley. */
 const VALLEY_SITES = new Set(['falls', 'herb-valley']);
 const isValleySpot = (p: MapPlace) =>
@@ -518,7 +545,7 @@ export function claimsHere(s: GameState): Claim[] {
       kind: v.tier > 1 ? 'mountain' : 'cave',
       vein: v,
       at: [v.x, v.y],
-      power: sphereAt(map, [v.x, v.y]),
+      power: squatOn(s, sphereAt(map, [v.x, v.y])),
       why: taken(madeId)
         ? 'You hold it already.'
         : owned
@@ -532,7 +559,7 @@ export function claimsHere(s: GameState): Claim[] {
       kind: 'valley',
       site: inside,
       at: [inside.x, inside.y],
-      power: sphereAt(map, [inside.x, inside.y]),
+      power: squatOn(s, sphereAt(map, [inside.x, inside.y])),
       why: taken(inside.id) ? 'You hold it already.' : null,
     });
   if (!life.inside && onLand(map, at)) {
@@ -542,7 +569,7 @@ export function claimsHere(s: GameState): Claim[] {
     out.push({
       kind: 'hut',
       at: [Math.round(at[0]), Math.round(at[1])],
-      power: sphereAt(map, at),
+      power: squatOn(s, sphereAt(map, at)),
       why: settled
         ? 'This land is a town’s: its broker lets courtyards.'
         : stands
@@ -594,6 +621,9 @@ export function claim(s: GameState, index: number): Done {
     next = { ...next, map: raise(next.map!, place, 'seen') };
     const built = mapOf(next)!;
     site.rating = concealmentAt(built, placeById(built, place)!, DWELLINGS[c0.kind].hides ?? 0);
+    // A fresh gen, so the map is built again with the rating rather than the 0 it was read with
+    // (review 2026-10-21).
+    next = { ...next, mapgen: { ...next.mapgen, [map.id]: { ...gen, made: [...made] } } };
   }
   const steps = c0.vein ? c0.vein.tier : 0;
   const slots = c0.kind === 'cave' ? DWELLINGS.cave.slots + steps : DWELLINGS[c0.kind].slots;
@@ -649,6 +679,13 @@ export interface SiteRead {
   guardBeasts: number;
   /** A raider's month at the land's band: less than this isn't worth the walk. */
   wage: number;
+  /**
+   * The band a raider comes at, thief or beast (the crafts play checkpoint, Jan's call: "up to the
+   * area and value"): the land's, and one above for a site worth ten raiders' months, or a beast for
+   * a hundred-year bed; never more, so the area is the cap.
+   */
+  raider: number;
+  beastRaider: number;
   /** The oldest bed in its slots, in years. */
   oldest: number;
   thievesFind: boolean;
@@ -693,6 +730,9 @@ export function readSite(s: GameState, d: Dwelling): SiteRead | null {
   const guardBeasts = guardBand(d, 'beast');
   const thievesFind = land >= concealment;
   const beastsFind = land >= againstBeasts;
+  const rich = worth >= RAIDS.rich * wage;
+  const raider = land + (rich ? 1 : 0);
+  const beastRaider = land + (rich || oldest >= RAIDS.oldBed[1]! ? 1 : 0);
   return {
     concealment,
     againstBeasts,
@@ -703,11 +743,13 @@ export function readSite(s: GameState, d: Dwelling): SiteRead | null {
     guard,
     guardBeasts,
     wage,
+    raider,
+    beastRaider,
     oldest,
     thievesFind,
     beastsFind,
     // A warding array turns raiders at its band or under (K10): the weaker turn from it.
-    thievesCome: !watched && thievesFind && worth > wage && land > guard,
+    thievesCome: !watched && thievesFind && worth > wage && raider > guard,
     beastsDrawn: !watched && (stepsOf(d) > 0 || oldest >= RAIDS.oldBed[0]!),
     watched,
   };
@@ -722,6 +764,7 @@ export function slotPlots(c: Cultivator, d: Dwelling): Plot[] {
 export function layOutPlot(s: GameState, id: string): Done {
   const d = dwellingById(s.player, id);
   if (!d || s.map?.inside !== d.place) return no('You lay out land only where it lies.');
+  if (lapsed(d, s.calendar.day)) return no('Your lease has run out.');
   if (slotPlots(s.player, d).length >= d.slots) return no('Every slot holds a plot already.');
   const map = mapOf(s)!;
   const p = placeById(map, d.place)!;
@@ -848,10 +891,10 @@ function raidsMonth(s: GameState, month: number): GameState {
     const r = readSite(next, d);
     if (!r) continue;
     let kind: 'thieves' | 'beast' | null = null;
-    let band = r.land;
+    let band = r.raider;
     if (r.thievesCome) kind = 'thieves';
     else if (r.beastsDrawn && r.beastsFind) {
-      if (r.oldest >= RAIDS.oldBed[1]!) band += 1;
+      band = r.beastRaider;
       // Beasts turn from a ward at their band or above (K10).
       if (band > r.guardBeasts) kind = 'beast';
     }
@@ -866,7 +909,12 @@ function raidsMonth(s: GameState, month: number): GameState {
       kind === 'thieves' ? 'raid-thieves' : 'raid-beast',
       // An alarm lets the card wait twice as long (K10).
       { here, band, ...(alarmed(d) ? { wait: ALARM_DAYS } : {}) },
-      { site: dwellingName(next, d).toLowerCase(), where: dwellingPlaceName(next, d) },
+      // `_place` lets the day step keep `here` true whenever you stand at the site (craftCardsHere).
+      {
+        site: dwellingName(next, d).toLowerCase(),
+        where: dwellingPlaceName(next, d),
+        _place: d.place,
+      },
     );
     next = withPlayer(
       q.state,
@@ -909,6 +957,8 @@ export function syncQuarters(s: GameState): GameState {
     if (m.guest || !isOrganization(m.power)) continue;
     const place = quartersPlace(s, map, m.power);
     if (!place) continue;
+    // One a place: a room you already hold there serves (review 2026-10-21).
+    if (c.dwellings.some((x) => x.place === place && x.held !== 'seat')) continue;
     const seat = seatOf(s.world, s.player.id, m.power, realmStageOf(s));
     if (!seat) continue;
     const q = QUARTERS[seat];
@@ -1128,9 +1178,6 @@ export function dwellingOpens(s: GameState): boolean {
     (d) => d.held !== 'seat' || s.calendar.day - d.since >= QUARTERS_OPEN_DAYS,
   );
 }
-
-/** A power's name for the deed line. */
-export const squatWords = (power: string) => `Squatting on ${theName(power)}’s land`;
 
 /** Days of rent left, or null when it isn't rented. */
 export function rentLeft(d: Dwelling, day: number): number | null {
