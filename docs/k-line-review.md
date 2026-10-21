@@ -18,7 +18,8 @@ Crafters should be clearly richer than gathering or duty from Glimpse on (D4, K1
 - **Trees more tree-like** (K2). Middle ground between branches, and branches that don't all lead to the next band. With *Branches in every tree*, for a design session.
 - **The gather hour and divine sense** (K1). Settled in K8: ×3 a soul realm from Foundation's divine sense, +25% a Herbs mastery level; worth feeling in play whether a Foundation gatherer now earns too close to a crafter.
 - **Sects' resource nodes** (K8's talk). Herb grounds, mines and training grounds held in rotation inside a sect's sphere, found and fought over; a sketch in design § Still to design, for the living world.
-- **Building your own base** (K8's talk). Lots of ways to customize a dwelling, a wild one most; parked for K9 and K10.
+- **Building your own base** (K8's talk). Lots of ways to customize a dwelling, a wild one most. K9 built clearing land, the store dug deeper and a quiet chamber; K10 lays arrays; an alchemy room on earth fire, a spring for water crops and building at a bought dwelling still wait.
+- **Carts for a store, a hired geomancer** (K9). Moving your abode carries only your Bag; carting a store and hiring a geomancer wait for the living world.
 - **Crafters are respected** (K1). For P3.9's scenes and K6's renown.
 - **More insight for the new sinks** (after K2). A sketch in design.md; the checkpoint measures insight earned against nodes worth buying.
 
@@ -33,10 +34,11 @@ Each is listed under *Awaiting Jan's review* in `plan.md`, with where to look.
 - **K6:** the eight styles' chapter 1s (the five frontier common styles, the Pavilion's, Red Marrow's and the Valley's), the four new pills, who holds which style, and the Myriad Crafts Guild's atlas entry. The City's Examination hall and the guild's counter, with the dev console's `grade` and `craftfame`.
 - **K7:** the generated recipes' names (two words an element, an effect word and a kind each, Fierce for a toxic pill), their sizes and the floor's odds, and the Experiment tab's words. Any craft page's Experiment tab: `herbs 20` fills the shelf, and after a miss `pity` makes the next throw of that set all but find.
 - **K8:** the sixteen crops and their bed counts (30 at a white floor down to 1 at gold), the packets' names, the four boosters (Spirit Soil, Earth Milk, the Spring-Rain and Pest-Warding Talismans) and the Fields door's words. Dev console `at spear-plow`, then `farm` (and `farm 100` to age the beds), on the Crafts screen's Farming page.
+- **K9:** the dwellings table (rents, stores, slots, the broker's lines), your quarters' names by seat, the three works, the raid cards and the chronicle's dwelling lines. Dev console `vein` then the Map's Journey to claim a cave abode; `at qm-shoukou-cheng` and the City's Broker door; the Dwelling screen 居.
 
 ## 4. Small calls the phases made on their own
 
-Under Open questions in `plan.md`, "Small calls in K1" to "K7". The ones you're most likely to feel in play:
+Under Open questions in `plan.md`, "Small calls in K1" to "K9". The ones you're most likely to feel in play:
 
 - **K1:** a cracked tool works nothing until mended; the bench waits while you travel; a slip's node costs 25 insight.
 - **K2:** tier 1 holds 13 nodes and is held at 7; Hand's tier 2 capstones were made lift +0.5.
@@ -47,5 +49,6 @@ Under Open questions in `plan.md`, "Small calls in K1" to "K7". The ones you're 
 - **K7:** experimenting reads your craft Dao's tiers *held*, so a fresh alchemist finds tier 1 at 1.5% a try (about nine tries with pity); a hit makes every set thrown as a batch, sure to hold; a miss gives no mastery; the panel tells you plainly whether something written lies close, and refuses a set that is your own recipe's; generated gear and talismans carry no special properties at green or blue; the shelf can run long with a full Bag. The rest are under Open questions, Small calls in K7.
 
 - **K8:** a plot is held only at a written village or town, and every Border Wilds plot sits at qi density 3 (6 low a season); a lease running out takes the plot back with whatever grows on it; a tending sitting counts only after 10 seconds; the Wood spell is free once a season; no shop buys packets back yet; Lore's pity and seed crossing wait. The rest are under Open questions, Small calls in K8.
+- **K9:** reading the land takes no clock time, once a day a spot; raiders are the land's band where the site stands, so a deep site draws Foundation raiders a Qi Condensation store rarely tempts; a raid's fight is at your realm; works only on land claimed in the wild; a hut or hidden valley holds no array slot (no vein); an abandoned abode stays in the world, hidden, its store gone. The rest are under Open questions, Small calls in K9.
 
 All four minigames play the same at every tier. Worth a look in play: should a higher tier quicken them?

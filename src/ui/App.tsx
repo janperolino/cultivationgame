@@ -55,6 +55,7 @@ const SCREENS = {
   CharacterScreen: () => import('./CharacterScreen.tsx'),
   ChronicleScreen: () => import('./ChronicleScreen.tsx'),
   CraftsScreen: () => import('./CraftsScreen.tsx'),
+  DwellingScreen: () => import('./DwellingScreen.tsx'),
   CombatScreen: () => import('./CombatScreen.tsx'),
   MapScreen: () => import('./MapScreen.tsx'),
   PeopleScreen: () => import('./PeopleScreen.tsx'),
@@ -69,6 +70,9 @@ const ChronicleScreen = lazy(() =>
   SCREENS.ChronicleScreen().then((m) => ({ default: m.ChronicleScreen })),
 );
 const CraftsScreen = lazy(() => SCREENS.CraftsScreen().then((m) => ({ default: m.CraftsScreen })));
+const DwellingScreen = lazy(() =>
+  SCREENS.DwellingScreen().then((m) => ({ default: m.DwellingScreen })),
+);
 const CombatScreen = lazy(() => SCREENS.CombatScreen().then((m) => ({ default: m.CombatScreen })));
 const MapScreen = lazy(() => SCREENS.MapScreen().then((m) => ({ default: m.MapScreen })));
 const PeopleScreen = lazy(() => SCREENS.PeopleScreen().then((m) => ({ default: m.PeopleScreen })));
@@ -290,6 +294,7 @@ export function App() {
                   {phase !== 'loading' && current.id === 'map' && <MapScreen />}
                   {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
                   {phase !== 'loading' && current.id === 'crafts' && <CraftsScreen />}
+                  {phase !== 'loading' && current.id === 'dwelling' && <DwellingScreen />}
                   {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
                   {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
                   {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}

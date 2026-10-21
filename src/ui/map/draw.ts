@@ -39,6 +39,9 @@ export interface Scene {
   noFog?: boolean;
   /** What lies on the ground today (core/map/ground.ts), each pile marked where it fell. */
   ground?: readonly { at: Pt }[];
+  /** Hidden veins your geomancy read, unclaimed (K9), and the rings it marked past its reach. */
+  veins?: readonly { x: number; y: number }[];
+  veinRings?: readonly Pt[];
 }
 
 const C = {
@@ -594,7 +597,9 @@ export function drawMap(f: Frame, s: Scene): boolean {
     const st = known(life, q.id);
     if (st !== 'seen' && st !== 'sketched') continue;
     if (p.x0 > box[2] || p.y0 > box[3] || p.x0 + p.w < box[0] || p.y0 + p.h < box[1]) continue;
-    const show = Math.max(pieceIn * GLOW_CLOSE, s.hover === q.id ? GLOW_HOVER : 0) * (st === 'seen' ? 1 : 0.55);
+    const show =
+      Math.max(pieceIn * GLOW_CLOSE, s.hover === q.id ? GLOW_HOVER : 0) *
+      (st === 'seen' ? 1 : 0.55);
     const img = show > 0 ? glowOf(p) : null;
     if (!img) continue;
     ctx.globalAlpha = show;
@@ -663,6 +668,33 @@ export function drawMap(f: Frame, s: Scene): boolean {
     ctx.lineTo(x + 1.5, y - 3);
     ctx.stroke();
   });
+
+  // Veins your geomancy read (K9): a 脉 seal in qi's color; past its reach, a dashed ring.
+  for (const r of s.veinRings ?? []) {
+    const [x, y] = at(r);
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(9, 400 * k), 0, 7);
+    ctx.setLineDash([3, 5]);
+    ctx.strokeStyle = rgba(C.crack, 0.45);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  for (const vn of s.veins ?? []) {
+    const [x, y] = at([vn.x, vn.y]);
+    ctx.fillStyle = 'rgba(8,9,12,0.92)';
+    ctx.strokeStyle = rgba(C.crack, 0.8);
+    ctx.lineWidth = 1.1;
+    roundRect(ctx, x - 7, y - 7, 14, 14, 3);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = `10px 'Ma Shan Zheng', KaiTi, serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = rgba(C.crack, 0.95);
+    ctx.fillText('脉', x, y + 1);
+    ctx.textBaseline = 'alphabetic';
+  }
 
   // Pins.
   life.pins.forEach((p, i) => {

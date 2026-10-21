@@ -5,7 +5,8 @@ import type { PlotSpot } from '../farming.ts';
 import type { GameState } from '../state.ts';
 import { qiAt } from './depth.ts';
 import { placeKindOf, standsAt } from './gate.ts';
-import { terrainAt, type MapPlace } from './region.ts';
+import { placeById, terrainAt, type MapPlace } from './region.ts';
+import { densityOf, dwellingHere } from '../dwellings.ts';
 import { mapOf } from './travel.ts';
 
 /** A place that rents plots: a written village or town. */
@@ -21,11 +22,20 @@ export function plotSpot(s: GameState, p: MapPlace): PlotSpot | null {
   return { place: p.id, land: terrainAt(map, [p.x, p.y]), density: qiAt(map, [p.x, p.y]) };
 }
 
-/** The farming place you stand at, with no course set, or null. */
+/** The farming place you stand at, with no course set, or null: a dwelling's land first (K9). */
 export function farmHere(s: GameState): (PlotSpot & { name: string }) | null {
   if (!s.map || s.map.course) return null;
   const map = mapOf(s);
   if (!map) return null;
+  const d = dwellingHere(s);
+  const at = d && d.slots > 0 ? placeById(map, d.place) : undefined;
+  if (d && at)
+    return {
+      place: d.place,
+      land: terrainAt(map, [at.x, at.y]),
+      density: densityOf(s, d),
+      name: at.name,
+    };
   for (const p of map.places) {
     if (!farmsAt(p) || !standsAt(s, p)) continue;
     const spot = plotSpot(s, p);

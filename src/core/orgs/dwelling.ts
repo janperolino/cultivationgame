@@ -7,6 +7,7 @@ import {
 } from '../../content/organizations.ts';
 import { veinAt } from '../../content/map/index.ts';
 import { type GameState } from '../state.ts';
+import { dwellingHere, stepMult } from '../dwellings.ts';
 import { isOrganization, organization, theName } from './identity.ts';
 import { seatOf } from './seats.ts';
 import { membershipsOf } from './membership.ts';
@@ -34,9 +35,13 @@ export function dwellingWords(s: GameState): string | null {
   );
 }
 
-/** The qi density your seclusion has today: a dwelling's while no course is set, else the open air's. */
+/**
+ * The qi density your seclusion has today: a dwelling's while no course is set, else the open air's.
+ * A power's dwelling by seat (O2), or one you hold where you stand by its steps (K9), the better.
+ */
 export function densityHere(s: GameState): number {
-  return s.map?.course ? 1 : (dwellingOf(s)?.density ?? 1);
+  if (s.map?.course) return 1;
+  return Math.max(dwellingOf(s)?.density ?? 1, stepMult(dwellingHere(s)?.steps ?? 0));
 }
 
 /** A power's dwelling's density at a place: its seat's, capped by the place's vein (O2's talk). */

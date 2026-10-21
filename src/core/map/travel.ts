@@ -75,9 +75,12 @@ export function mapPlaceOf(map: RegionMap, id: string): MapPlace | null {
   return placeById(map, content?.homes[id] ?? id) ?? null;
 }
 
-/** Where a life starts: its origin's home town, or the region's default. */
+/** Home: your abode (K9), else where a life starts, its origin's home town or the region's default. */
 export function homeOf(s: GameState, map: RegionMap): MapPlace {
   const content = regionData(map.id)!.content;
+  const abode = s.player.dwellings?.find((d) => d.id === s.player.abode);
+  const at = abode ? placeById(map, abode.place) : undefined;
+  if (at) return at;
   // A post you hold keeps you where its shift is kept: the cadet starts on the Wall (O4).
   for (const h of s.player.jobs) {
     const place = hasJob(h.id) ? job(h.id).place : null;

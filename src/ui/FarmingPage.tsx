@@ -47,6 +47,11 @@ const years = (b: Bed) => {
 
 function heldWords(p: Plot, day: number): string {
   if (p.held === 'bought') return 'bought';
+  // A dwelling's land (K9): it ends only with a rented dwelling's lease.
+  if (p.held === 'slot')
+    return p.until === null
+      ? 'a dwelling’s land'
+      : `a dwelling’s land, ${Math.max(0, Math.ceil(p.until - day))} days of rent`;
   const left = Math.max(0, Math.ceil((p.until ?? day) - day));
   return `rented, ${left} day${left === 1 ? '' : 's'} left`;
 }
@@ -444,7 +449,7 @@ function PlotPanel({
             </button>
           </>
         )}
-        {plot.held === 'bought' && (
+        {(plot.held === 'bought' || (plot.held === 'slot' && plot.until === null)) && (
           <button
             type="button"
             className="button button-quiet"

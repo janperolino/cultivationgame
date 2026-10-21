@@ -35,6 +35,7 @@ import { slipId } from '../../content/catalogs/index.ts';
 import { CROPS, seedId } from '../../content/farming.ts';
 import { takePlot } from '../../core/farming.ts';
 import { farmHere } from '../../core/map/fields.ts';
+import { veinsOf } from '../../core/map/veins.ts';
 import { jobsView, quitJob, takeJob } from '../../core/jobs.ts';
 import {
   addBalance,
@@ -800,6 +801,40 @@ export const COMMANDS: Record<string, Command> = {
           return withPlayer(s, c);
         },
         'A spirit farmer: every crop known, packets, boosters and 200 low; a bought plot if you stand at a village or town (`at spear-plow` first).',
+      );
+    },
+  },
+  vein: {
+    usage: 'vein',
+    help: 'Stands you on the nearest hidden vein (K9) and reads it into your map, so the Journey tab offers to claim it as a cave abode.',
+    run(_, store) {
+      const s = needGame(store);
+      const m = ensureMap(s);
+      const map = mapOf(m)!;
+      const at = m.map!.at;
+      const v = veinsOf(map, m.lineage.id)
+        .filter((x) => !(m.map!.veins ?? []).includes(x.id))
+        .sort(
+          (a, b) => Math.hypot(a.x - at[0], a.y - at[1]) - Math.hypot(b.x - at[0], b.y - at[1]),
+        )[0];
+      if (!v) return 'Every vein in the region is read already.';
+      return apply(
+        store,
+        (g) => {
+          const t = ensureMap(g);
+          const life = t.map!;
+          return {
+            ...t,
+            map: {
+              ...life,
+              at: [v.x, v.y],
+              course: null,
+              inside: null,
+              veins: [...(life.veins ?? []), v.id],
+            },
+          };
+        },
+        `On a tier ${v.tier} vein in ${map.areas.find((a) => a.id === v.area)?.name ?? v.area} (rating ${v.rating}).`,
       );
     },
   },

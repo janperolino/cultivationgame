@@ -7,6 +7,10 @@
 // What the road brings also shows as round seals on the map.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { BRANCHES } from '../content/hours.ts';
+import { DWELLINGS } from '../content/dwellings.ts';
+import { bandName, claim, claimsHere } from '../core/dwellings.ts';
+import { geomancyLi, geomancyOf, readLand, readToday, veinsOf } from '../core/map/veins.ts';
+import { gatherLines } from '../core/map/gather.ts';
 import { realm as realmInfo, stageName, type RealmId } from '../content/realms.ts';
 import {
   CHECKPOINT_TOLL_LOW,
@@ -241,6 +245,11 @@ function MapView({
     setView(centred([(charted[0] + charted[2]) / 2, (charted[1] + charted[3]) / 2], minK));
   const v: View = view ?? centred(life.at, clampK(0.03));
 
+  // The veins your geomancy read that nobody has dug into yet (K9).
+  const readVeins = veinsOf(map, game.lineage.id).filter(
+    (x) => (life.veins ?? []).includes(x.id) && !placeById(map, `made:${x.id}`),
+  );
+
   // Draw on every change of the life, the view or the hover; again soon when the fog stood in.
   useEffect(() => {
     const c = canvas.current;
@@ -249,7 +258,15 @@ function MapView({
     const id = requestAnimationFrame(() => {
       const stale = drawMap(
         { ctx: c.getContext('2d')!, W: size.W, H: size.H, dpr: size.dpr, view: v },
-        { map, life, yourBand: band0, hover: hover?.id ?? null, ground: groundPiles(game) },
+        {
+          map,
+          life,
+          yourBand: band0,
+          hover: hover?.id ?? null,
+          ground: groundPiles(game),
+          veins: readVeins,
+          veinRings: Object.values(life.veinRings ?? {}),
+        },
       );
       if (stale) again = window.setTimeout(() => redraw((n) => n + 1), 1600);
     });
@@ -260,6 +277,7 @@ function MapView({
   }, [map, life, v.x, v.y, v.k, hover, size, band0, drawn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scene = { map, life, yourBand: band0, hover: hover?.id ?? null, ground: groundPiles(game) };
+  const claimable = claimsHere(game);
   const pickAtSpot = (sx: number, sy: number) =>
     pickAt({ view: v, W: size.W, H: size.H }, scene, sx, sy);
   const local = (e: { clientX: number; clientY: number }) => {
@@ -406,9 +424,52 @@ function MapView({
       s: 'the home wheel turns here',
       run: () => act(stopHere),
     });
+    // Claiming where you stand (K9): bare land as a hut, a vein you read as a cave abode.
+    claimable.forEach((c, i) => {
+      if (c.kind !== 'valley') items.push(claimItem(i));
+    });
+    items.push({
+      t: 'Read the land 堪舆',
+      s: readToday(life, game.calendar.day)
+        ? 'read today already'
+        : 'soul and Earth Dao, for veins',
+      run: () => {
+        if (readToday(life, game.calendar.day)) return say('You have read this land today.');
+        let found = 0;
+        act((s) => {
+          const r = readLand(mapOf(s)!, s.lineage.id, s.map!, s.player, s.calendar.day);
+          found = r.found.length;
+          return { ...s, map: r.life };
+        });
+        say(
+          found
+            ? `The land answers: ${found === 1 ? 'a vein' : `${found} veins`} close by, now on your map.`
+            : 'Nothing your reading can find lies close; the Journey tab says what it read.',
+        );
+      },
+    });
     if (home.id !== atPlace?.id)
       items.push({ t: 'Go home', s: home.name, run: () => act((s) => goToPlace(s, home.id)) });
     return items;
+  };
+
+  const claimItem = (i: number): MenuItem => {
+    const c = claimable[i]!;
+    const what = DWELLINGS[c.kind];
+    return {
+      t: `Claim it: ${what.name.toLowerCase()} ${what.hanzi}`,
+      s:
+        c.why ??
+        (c.power
+          ? `a deed against ${theName(c.power)}: squatting on its land`
+          : 'free: no power holds it'),
+      warn: !!c.power,
+      later: !!c.why,
+      run: () => {
+        if (c.why) return say(c.why);
+        if (!act((s) => claim(s, i))) say(`${what.name} claimed. The Dwelling screen 居 has it.`);
+      },
+    };
   };
 
   const menuFor = (sx: number, sy: number): Menu => {
@@ -453,6 +514,30 @@ function MapView({
         items: [
           { t: pileWords(g.items), s: `gone ${GROUND_DAYS} days after it fell` },
           { t: 'Go here', run: () => goTo(g.at, null) },
+        ],
+      };
+    }
+    const veinAt = readVeins.find((x) => {
+      const [vx, vy] = toScreen(v, size.W, size.H, [x.x, x.y]);
+      return Math.hypot(vx - sx, vy - sy) < 10;
+    });
+    if (veinAt) {
+      const i = claimable.findIndex((c) => c.vein?.id === veinAt.id);
+      return {
+        x: sx,
+        y: sy,
+        head: `A local vein, tier ${veinAt.tier}`,
+        items: [
+          ...(i >= 0
+            ? [claimItem(i)]
+            : [
+                {
+                  t: 'Go here',
+                  s: 'claimed once you stand on it',
+                  run: () => goTo([veinAt.x, veinAt.y], null),
+                },
+              ]),
+          { t: 'Pin it', run: () => act((s) => pin(s, [veinAt.x, veinAt.y])) },
         ],
       };
     }
@@ -547,7 +632,11 @@ function MapView({
         { t: 'Pin this spot', run: () => act((s) => pin(s, w)) },
         { sep: true, t: '' },
         later('Bury a stash here', 'a hidden site only you know', 'P3.12'),
-        later('Found an abode here', 'a site of your own', 'M4'),
+        {
+          t: 'Found an abode here',
+          s: 'go there, and claim it where you stand',
+          run: () => goTo(w, null),
+        },
         later('Raise a sect or a faction here', 'a project', 'M5'),
       ],
     };
@@ -862,6 +951,21 @@ function MapView({
                   </button>
                 ))}
               </div>
+              {readToday(life, game.calendar.day) && (
+                <p className="map-here-lore">
+                  <b>Read today 堪舆</b>: your reading stands at {bandName(geomancyOf(game.player))}{' '}
+                  within {geomancyLi(game.player)} li.{' '}
+                  {readVeins.length
+                    ? `${readVeins.length} vein${readVeins.length === 1 ? '' : 's'} on your map, unclaimed.`
+                    : 'No vein your reading meets lies close.'}{' '}
+                  The land grows{' '}
+                  {gatherLines(map, life.at)
+                    .slice(0, 3)
+                    .map((id) => item(id).name)
+                    .join(', ') || 'nothing worth gathering'}
+                  .
+                </p>
+              )}
             </section>
             <CourseCard
               game={game}

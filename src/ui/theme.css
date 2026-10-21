@@ -10900,3 +10900,276 @@ p.map-above {
   stroke-width: 0.6;
   rx: 1px;
 }
+
+/* The Dwelling screen 居 (K9; take A of docs/mockups/dwelling-study.html): the place read on the
+   left, the store and land in the middle, arrays, works and how you hold it on the right. No live
+   blur and nothing looping (Jan's guardrail on big panels). */
+.dwelling {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dw-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 6px;
+}
+
+.dw-head h2,
+.dw-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: calc(34px * var(--text-scale));
+  line-height: 1.05;
+}
+
+.dw-seal {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--seal);
+  border-radius: 8px;
+  color: var(--seal);
+  font-family: var(--font-brush);
+  font-size: calc(32px * var(--text-scale));
+  background: color-mix(in srgb, var(--seal) 8%, transparent);
+}
+
+.dw-sub {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.dw-abode {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 0 9px;
+  border: 1px solid var(--accent-edge);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: calc(12px * var(--text-scale));
+  vertical-align: middle;
+}
+
+.dw-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(0, 0.95fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.dw-cols.is-two {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  max-width: 1300px;
+  margin-top: 16px;
+}
+
+.dw-mid,
+.dw-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel.is-greyed {
+  filter: grayscale(0.85);
+  opacity: 0.55;
+}
+
+.dw-right {
+  float: right;
+  font-family: var(--font-ui);
+  font-weight: 400;
+  font-size: calc(12.5px * var(--text-scale));
+  color: var(--muted);
+}
+
+.dw-prop {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.dw-prop:last-child {
+  border-bottom: 0;
+}
+
+.dw-k {
+  color: var(--muted);
+  padding-top: 1px;
+}
+
+.dw-prop b {
+  font-weight: 600;
+}
+
+.dw-qi {
+  color: var(--hour-qi);
+}
+
+.dw-why-line {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: calc(12.5px * var(--text-scale));
+}
+
+.dw-why-line.is-good {
+  color: var(--rarity-green);
+}
+
+.dw-why-line.is-bad,
+.dwelling .is-bad {
+  color: var(--warn);
+}
+
+.dw-ladder {
+  display: flex;
+  gap: 3px;
+  margin: 6px 0 2px;
+}
+
+.dw-ladder span {
+  width: 24px;
+  height: 7px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.07);
+}
+
+.dw-ladder span.is-land {
+  background: color-mix(in srgb, var(--hour-qi) 45%, transparent);
+}
+
+.dw-ladder span.is-up {
+  background: var(--hour-qi);
+}
+
+.dw-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-auto-rows: 50px;
+  gap: 4px;
+  margin: 4px 0 10px;
+}
+
+.dw-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 2px;
+  border: 1px solid var(--line-faint);
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.02);
+  color: var(--muted);
+  font: inherit;
+  font-size: calc(10.5px * var(--text-scale));
+  text-align: center;
+  line-height: 1.15;
+}
+
+.dw-cell.is-item {
+  border-color: color-mix(in srgb, var(--gilt) 40%, transparent);
+  background: color-mix(in srgb, var(--gilt) 6%, transparent);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.dw-cell i,
+.dw-chip i {
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  font-style: normal;
+  color: var(--muted);
+  font-size: calc(10px * var(--text-scale));
+}
+
+.dw-bag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.dw-chip {
+  position: relative;
+  padding: 4px 22px 4px 8px;
+  border: 1px solid var(--line-faint);
+  border-radius: 3px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: calc(12px * var(--text-scale));
+  cursor: pointer;
+}
+
+.dw-slot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.dw-slot:last-child {
+  border-bottom: 0;
+}
+
+.dw-slot > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.dw-slot small {
+  display: block;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+}
+
+.dw-slot.is-dim {
+  color: var(--muted);
+}
+
+.dw-sq {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-faint);
+  border-radius: 4px;
+  color: var(--accent);
+  font-family: var(--font-brush);
+  font-size: calc(16px * var(--text-scale));
+}
+
+.dw-sq.is-empty {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.dw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dw-why {
+  color: var(--warn);
+}
+
+/* The broker's counter (K9): a let's terms and its buttons. */
+.broker-row {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.broker-buttons {
+  display: flex;
+  gap: 6px;
+}

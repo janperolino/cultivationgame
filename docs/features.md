@@ -176,6 +176,22 @@ Every feature a player can touch in the game today (built in code, not only desi
 | The tray and the last batches | Crafts | The tray | a batch done | nothing |
 | Shops brewing and refining what they sell | Alchemy shop, refiner | The shelf | markets | nothing |
 
+## Dwellings and sites (K9)
+
+| Feature | Where | First met today | Needs first | Taught by |
+|---|---|---|---|---|
+| The Dwelling screen 居: the one where you stand (its qi on the ladder, vein, concealment, defenses, worth, reach, neighbors), greyed elsewhere with the ones you hold | Dwelling, on the rail under Crafts | glow and dot | a dwelling you take or claim, or a month at your seat's quarters | Panel lines |
+| Your seat's quarters: a bunk or cave by seat, its footlocker, a dynasty's at your post | Dwelling | The screen opening after a month | membership | Panel lines |
+| The broker 牙行: rooms, cultivation chambers, courtyards, a medicine garden, a mansion, the spirit hill's caves; a village's farmhouse | Place › Hear and hire | A door | a town or city | Counter text |
+| The store, a second grid opened only at its dwelling | Dwelling | The store panel | a dwelling with a store | Panel line |
+| A dwelling's land as plot slots, laid out as K8's plots | Dwelling, then Crafts › Farming | The Land panel | a dwelling with slots | Panel line |
+| Your abode: home, a free bed, moving it | Dwelling, the map's Go home | The abode chip | a dwelling | nothing |
+| Hidden veins and reading the land 堪舆 (soul and Earth Dao, once a day) | Map › Journey, where you stand | A button | nothing | Button subtitle |
+| Claiming: a thatched hut on bare land, a cave abode or spirit mountain on a vein read, a hidden valley at falls or a sinkhole; a deed inside a power's sphere | Map › Journey and right-click, a site's screen | Buttons | standing there | Button subtitle |
+| Building your base: clearing land, digging the store, a quiet chamber | Dwelling › Build | The panel | land claimed in the wild | Panel lines |
+| Raids by thieves and beasts on a site in the wild | A card | The card | a claimed site worth taking, or raised qi and old beds | Card text |
+| Rent taken as its time turns, a lapsed lease's store kept a month | Dwelling, the Chronicle | A line | a rented dwelling | Panel lines |
+
 ## Chronicle and the rest
 
 | Feature | Where | First met today | Needs first | Taught by |
@@ -195,7 +211,7 @@ No hint, card, tooltip or "?" at all:
 
 - **The map:** click to go, the right-click menu, fog, pins, rumor rings, Look and Gather hours.
 - **Fights:** that the Combat screen exists, words and feet, fight items.
-- **Organizations:** the starting post and its Duty hours, the membership and dwelling a path that went along begins with, the elders' hall, backing, the pavilion, a guarded method's mark.
+- **Organizations:** the starting post and its Duty hours, the membership a path that went along begins with (its quarters open the Dwelling screen after a month, K9), the elders' hall, backing, the pavilion, a guarded method's mark.
 - **People:** followers, the powers list, your name's reach.
 - **Shops:** buying, selling, mending, the market labels, selling copies and staples, the changer.
 - **Crafts:** the bench queue, formula slips, mending, the greyed pages (a tooltip only).

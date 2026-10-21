@@ -36,7 +36,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 48;
+export const SAVE_VERSION = 49;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1090,6 +1090,16 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const p = (s.player ?? {}) as Raw;
     const crafts = { plots: [], ...((p.crafts ?? {}) as Raw) };
     return { ...old, version: 48, state: { ...s, player: { ...p, crafts } } };
+  },
+  // K9: dwellings and your abode; an old life holds none until the day step houses a member.
+  48: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    return {
+      ...old,
+      version: 49,
+      state: { ...s, player: { dwellings: [], abode: null, ...p } },
+    };
   },
 };
 

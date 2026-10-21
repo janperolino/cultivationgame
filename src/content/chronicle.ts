@@ -84,6 +84,7 @@ export function stepLabel(id: RealmId, stage: number): string {
 
 /** The line each screen writes when it opens. */
 export const SCREEN_TEXT: Record<string, string> = {
+  dwelling: 'The Dwelling screen 居 opens: where you live, its store and its land.',
   trees: 'The trees open: what you hold grafts on them, and insight buys their nodes.',
   techniques: 'A first technique to drill: the techniques open.',
   crafts: 'A furnace or a recipe in hand: the crafts open, and the bench waits for craft hours.',
@@ -177,6 +178,37 @@ function jobLine(d: EventData, w: Who): string {
 }
 
 /** How a follower's bond ended, as the chronicle says it. */
+/** A dwelling's lines (K9): the who, the dwelling's name, where it stands, and the rest. */
+const DWELLING_LINES: Record<
+  string,
+  (who: string, name: string, where: string, d: EventData) => string
+> = {
+  rented: (w, n, at) => `${w} takes ${aDwelling(n)} in ${at}.`,
+  bought: (w, n, at) => `${w} buys ${aDwelling(n)} in ${at}.`,
+  claimed: (w, n, at) => `${w} claims ${aDwelling(n)} in ${at} and moves in.`,
+  abode: (w, n, at) => `${w} makes ${aDwelling(n)} in ${at} home.`,
+  'gave-up': (w, n, at) => `${w} gives up ${aDwelling(n)} in ${at}.`,
+  lapsed: (w, n, at) =>
+    `The rent on ${w}’s ${lower(n).replace(/^rented /, '')} in ${at} runs out, and it is let to someone else.`,
+  built: (w, n, at, d) =>
+    `${w} finishes ${WORK_WORDS[s(d.work)] ?? 'the work'} at the ${lower(n)} in ${at}.`,
+  robbed: (w, n, at, d) => `Thieves find ${w}’s ${lower(n)} in ${at} and carry off ${s(d.took)}.`,
+  grazed: (w, n, at, d) =>
+    `A beast comes for the fields of ${w}’s ${lower(n)} in ${at} and eats the ${s(d.took)}.`,
+};
+/** "a cultivation chamber", "a room": a dwelling's name with its article. */
+function aDwelling(name: string): string {
+  const n = lower(name)
+    .replace(/^rented /, '')
+    .replace(/^(a|an|the|your) /, '');
+  return `${/^[aeiou]/.test(n) ? 'an' : 'a'} ${n}`;
+}
+const WORK_WORDS: Record<string, string> = {
+  clear: 'clearing a new field',
+  store: 'digging the store deeper',
+  chamber: 'cutting a quiet chamber',
+};
+
 const FOLLOWER_ENDS: Record<string, string> = {
   unpaid: 'goes unpaid and leaves',
   loyalty: 'has had enough and leaves',
@@ -265,6 +297,8 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
     `Someone lifts a ripe bed of ${item(s(d.crop)).name} from your plot in ${s(d.name)} while you are away. The village knows your face.`,
   'plot-lost': (d) =>
     `The lease on your plot in ${s(d.name)} runs out, and the village takes it back.`,
+  // A dwelling taken, claimed, given up, lost, built on or raided (K9).
+  dwelling: (d, w) => DWELLING_LINES[s(d.what)]?.(w.name, s(d.name), s(d.where), d) ?? '',
   mastery: (d) =>
     d.family
       ? `Your ${FAMILIES[s(d.family) as FamilyId].name.toLowerCase()} reach ${MASTERY[n(d.level)]!.name}: ${FAMILIES[s(d.family) as FamilyId].craft === 'farming' ? 'the field answers the hand' : 'the fire answers the hand'}.`
@@ -440,6 +474,7 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   'plot-pests': 'hurt',
   'plot-thief': 'hurt',
   'plot-lost': 'settled',
+  dwelling: (d) => (d.what === 'robbed' || d.what === 'grazed' ? 'hurt' : 'settled'),
   graded: 'mastery',
   rewind: 'opening',
   card: (d) => (d.byDefault === true ? 'settled' : (cardOutcome(d).kind ?? 'choice')),

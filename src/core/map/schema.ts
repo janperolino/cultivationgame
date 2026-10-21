@@ -10,6 +10,21 @@ const pt = z.tuple([z.number(), z.number()]);
 
 const feature = z.object({ name: z.string(), tags: z.array(z.enum(FEATURE_TAGS)) });
 
+const GenSiteSchema = z.object({
+  id: z.string(),
+  sub: z.enum(SITE_KINDS),
+  name: z.string(),
+  x: z.number(),
+  y: z.number(),
+  area: z.string().nullable(),
+  terrain: z.string(),
+  hidden: z.boolean(),
+  rating: z.number(),
+  features: z.array(feature),
+  road: z.string().optional(),
+  guards: z.string().optional(),
+});
+
 export const RegionGenSchema = z.object({
   version: z.literal(1),
   region: z.string(),
@@ -24,22 +39,12 @@ export const RegionGenSchema = z.object({
     }),
   ),
   roads: z.array(z.object({ id: z.string(), a: z.string(), b: z.string(), pts: z.array(pt) })),
-  sites: z.array(
-    z.object({
-      id: z.string(),
-      sub: z.enum(SITE_KINDS),
-      name: z.string(),
-      x: z.number(),
-      y: z.number(),
-      area: z.string().nullable(),
-      terrain: z.string(),
-      hidden: z.boolean(),
-      rating: z.number(),
-      features: z.array(feature),
-      road: z.string().optional(),
-      guards: z.string().optional(),
-    }),
-  ),
+  sites: z.array(GenSiteSchema),
+  /**
+   * Sites a life made (K9): a hut, a cave abode or a spirit mountain claimed on bare land or a vein.
+   * They belong to the world, so a life's abode stays on the land after it, for the next to find.
+   */
+  made: z.array(GenSiteSchema.extend({ by: z.string(), day: z.number() })).optional(),
   hearts: z.array(
     z.object({
       id: z.string(),
@@ -222,6 +227,11 @@ export const MapLifeSchema = z.object({
   ground: z
     .array(z.object({ at: pt, day: z.number(), items: z.record(z.string(), z.number().int()) }))
     .optional(),
+  /** The hidden veins your geomancy has read (K9), and the rings it marked past its reach. */
+  veins: z.array(z.string()).optional(),
+  veinRings: z.record(z.string(), pt).optional(),
+  /** The day and spot you last read the land: once a day a spot. */
+  read: z.object({ day: z.number(), at: pt }).optional(),
   /** Lines from the road since you last looked: what the stance settled. */
   road: z.array(
     z.object({

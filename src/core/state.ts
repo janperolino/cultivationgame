@@ -8,6 +8,7 @@ import type { EventData } from '../content/chronicle.ts';
 import { AUTO_IDS, GRADE_IDS } from '../content/cultivation.ts';
 import { FAMILY_IDS } from '../content/crafts.ts';
 import { HELD } from '../content/farming.ts';
+import { DWELLING_HELD, DWELLING_KINDS, RENT_PERIODS } from '../content/dwellings.ts';
 import { ELEMENTS, type Element } from '../content/elements.ts';
 import { EXPERIMENT_CRAFTS } from '../content/found.ts';
 import { ALL_FIRSTS, FIRST_IDS, type FirstId } from '../content/firsts.ts';
@@ -140,6 +141,38 @@ export const PlotSchema = z.object({
   thief: z.number().int().optional(),
 });
 export type Plot = z.infer<typeof PlotSchema>;
+
+/**
+ * A dwelling (K9, design § Dwellings are sites): one record for every place you live, at most one
+ * a place. Its kind, the place it stands in (a town, a city, a seat, or a site), how it is held
+ * and the day its rent runs to (null when bought, claimed or a seat's), the rent's period, the
+ * qi density steps it stands above the land, its plot slots and store squares, what lies in the
+ * store, the works you have built and the one under way, a seat's power, and a raid waiting.
+ */
+export const DwellingSchema = z.object({
+  id: z.string(),
+  kind: z.enum(DWELLING_KINDS),
+  place: z.string(),
+  held: z.enum(DWELLING_HELD),
+  until: z.number().nullable(),
+  period: z.enum(Object.keys(RENT_PERIODS) as [keyof typeof RENT_PERIODS]).nullable(),
+  steps: z.number().int().min(0),
+  slots: z.number().int().min(0),
+  store: z.number().int().min(0),
+  items: z.record(z.string(), z.number().int().min(0)),
+  built: z.array(z.string()),
+  work: z.object({ id: z.string(), left: z.number() }).nullable(),
+  since: z.number(),
+  /** A seat's quarters: the power. A claim inside a power's sphere: the power it squats on. */
+  power: z.string().nullable(),
+  /** A raid's card waiting (its uid) and what came: thieves or a beast, at a band. */
+  raid: z
+    .object({ uid: z.number().int(), kind: z.enum(['thieves', 'beast']), band: z.number() })
+    .nullable(),
+  /** The month the world last sent a raid. */
+  raided: z.number().int().nullable(),
+});
+export type Dwelling = z.infer<typeof DwellingSchema>;
 
 const CraftsSchema = z.object({
   bench: z.array(
@@ -401,6 +434,9 @@ export const CultivatorSchema = z.object({
    */
   intent: z.record(z.string(), z.number().int().min(1)),
   crafts: CraftsSchema,
+  /** The dwellings you hold (K9), and the one that is your abode. */
+  dwellings: z.array(DwellingSchema),
+  abode: z.string().nullable(),
 });
 export type Cultivator = z.infer<typeof CultivatorSchema>;
 
@@ -433,6 +469,8 @@ const PendingCard = z.object({
   vars: z.record(z.string(), z.number()).optional(),
   /** The choices taken so far, one per step. */
   path: z.array(z.number().int()).optional(),
+  /** Words a system that queued it fills its slots with: a site's name (K9). */
+  words: z.record(z.string(), z.string()).optional(),
 });
 export type PendingCard = z.infer<typeof PendingCard>;
 
@@ -652,6 +690,8 @@ export function newCultivator(
     ),
     intent: {},
     crafts: emptyCrafts(),
+    dwellings: [],
+    abode: null,
   };
 }
 

@@ -96,6 +96,8 @@ export interface RegionGen {
   roads: GenRoad[];
   sites: GenSite[];
   hearts: GenHeart[];
+  /** Sites a life made (K9): who made it and when. */
+  made?: (GenSite & { by: string; day: number })[];
 }
 
 // ---------------------------------------------------------------- the built map
@@ -310,7 +312,7 @@ function buildFrom(data: RegionData, gen: RegionGen): RegionMap {
       features: t.features,
       settled: true,
     });
-  for (const s of gen.sites)
+  for (const s of [...gen.sites, ...(gen.made ?? [])])
     places.push({
       id: s.id,
       kind: 'site',

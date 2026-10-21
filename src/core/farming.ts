@@ -101,7 +101,12 @@ function spendStones(c: Cultivator, price: number): Cultivator | null {
 }
 
 /** Takes a plot where you stand: rented to a season from today, or bought. */
-export function takePlot(c: Cultivator, spot: PlotSpot, held: Held, day: number): FarmCheck {
+export function takePlot(
+  c: Cultivator,
+  spot: PlotSpot,
+  held: Exclude<Held, 'slot'>,
+  day: number,
+): FarmCheck {
   const price = held === 'rented' ? rentOf(spot.density) : buyOf(spot.density);
   const paid = spendStones(c, price);
   if (!paid)
@@ -123,9 +128,10 @@ export function takePlot(c: Cultivator, spot: PlotSpot, held: Held, day: number)
 }
 
 /** Pays a rented plot's rent for another season, or buys it outright. */
-export function keepPlot(c: Cultivator, id: string, held: Held): FarmCheck {
+export function keepPlot(c: Cultivator, id: string, held: Exclude<Held, 'slot'>): FarmCheck {
   const plot = plotOf(c, id);
   if (!plot || plot.held === 'bought') return { cultivator: c, reason: 'You own it already.' };
+  if (plot.held === 'slot') return { cultivator: c, reason: 'It goes with its dwelling.' };
   const price = held === 'rented' ? rentOf(plot.density) : buyOf(plot.density);
   const paid = spendStones(c, price);
   if (!paid)
@@ -497,7 +503,7 @@ export function castWood(c: Cultivator, id: string, day: number): FarmCheck {
 }
 
 /**
- * Digs a bought plot's soil up as one 2×2 thing carrying its tier (Soil moves): what is ripe is
+ * Digs a bought plot's (or an owned dwelling's slot's) soil up as one 2×2 thing carrying its tier (Soil moves): what is ripe is
  * harvested first and the rest is lost, and the plot is left plain earth.
  */
 export function digSoil(
@@ -507,7 +513,8 @@ export function digSoil(
 ): FarmCheck & { events: FarmEvent[] } {
   const plot = plotOf(c, id);
   if (!plot) return { cultivator: c, reason: 'No such plot.', events: [] };
-  if (plot.held !== 'bought')
+  // A bought plot's, or a slot's of a dwelling you own (K9); rented soil is the landlord's.
+  if (plot.held !== 'bought' && !(plot.held === 'slot' && plot.until === null))
     return { cultivator: c, reason: "A rented plot's soil is the village's.", events: [] };
   let next = c;
   const events: FarmEvent[] = [];

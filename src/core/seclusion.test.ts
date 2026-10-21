@@ -134,7 +134,9 @@ describe('the seclusion deck as data', () => {
       }
       for (const { o } of outcomes(k)) {
         if (o.next) expect(k.steps?.[o.next], `${k.id} → ${o.next}`).toBeDefined();
-        else expect(o.chronicle, `${k.id} ending has a line`).toBeTruthy();
+        // A queued card's ending is written by what queued it (K9's raids name what was taken).
+        else if (!(k.queued && o.effects.some((e) => e.do === 'raid' && e.outcome === 'taken')))
+          expect(o.chronicle, `${k.id} ending has a line`).toBeTruthy();
       }
       // Every later step is reached by some outcome.
       const reached = new Set(outcomes(k).map(({ o }) => o.next));
