@@ -16,6 +16,7 @@ import { useGame } from './store.ts';
 import { placeIndex, setPlaces } from '../core/resolver/knows.ts';
 import { screenDot, screenIsNew } from '../core/seen.ts';
 import { useBeacons } from './useBeacons.ts';
+import { useFight } from './fight.ts';
 
 function SlotNotice() {
   const phase = useGame((s) => s.phase);
@@ -198,6 +199,11 @@ export function App() {
     return () => document.removeEventListener('scroll', markMoving, { capture: true });
   }, []);
 
+  // A fight takes the whole stage, the rail hidden, until you leave it (Fights you play).
+  const lifeFights = useGame((s) => !!s.game?.fight);
+  const stageFights = useFight((s) => s.fight !== null || s.after !== null);
+  const fighting = lifeFights || stageFights;
+
   // Opening a screen clears its dot, and so does something new arriving while it is open.
   const here = phase === 'playing' && !creating ? current.id : null;
   const hereDot = here !== null && dots.includes(here);
@@ -210,7 +216,16 @@ export function App() {
       <GlassBackground />
       <div className="stage-frame">
         <div className="stage">
-          <div className={`shell is-${current.id}`}>
+          {fighting && phase === 'playing' && (
+            <div className="shell is-fight">
+              <main className="main fight-main">
+                <Suspense fallback={null}>
+                  <CombatScreen />
+                </Suspense>
+              </main>
+            </div>
+          )}
+          <div className={`shell is-${current.id}`} hidden={fighting && phase === 'playing'}>
             <nav id="side-menu" className="side-rail" aria-label="Screens">
               <div className="rail-mark" aria-hidden="true">
                 <AbodeMark />
@@ -276,7 +291,6 @@ export function App() {
                   {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
                   {phase !== 'loading' && current.id === 'crafts' && <CraftsScreen />}
                   {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
-                  {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}
                   {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
                   {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}
                   {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}

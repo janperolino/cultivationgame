@@ -17,6 +17,7 @@ import {
   type Card,
   type CardChoice,
   type CardEffect,
+  type CardFight,
   type CardOutcome,
   type CardStep,
   type Trigger,
@@ -26,7 +27,8 @@ import { fillSlots, type Who } from '../content/chronicle.ts';
 import { copyId } from '../content/copies.ts';
 import { COMBAT_DAOS } from '../content/daos.ts';
 import { pathKey } from '../content/origins.ts';
-import { realmIndex } from '../content/realms.ts';
+import { realm, realmIndex } from '../content/realms.ts';
+import { template as rosterTemplate } from '../content/roster.ts';
 import { firstTechnique } from '../content/techniques.ts';
 import { seasonOf, whoFor } from './chronicle.ts';
 import { barFill, barSize, fromWorld } from './cultivation.ts';
@@ -38,7 +40,12 @@ import { copyCount } from './reading.ts';
 import { daysPerRealMs, type DayStep } from './loop.ts';
 import { applyPersonEffect, knowsSlot, peopleIn, resolveWho } from './people.ts';
 import { canPay, pay, receive, spend, stonesOf, withStones, worthOf } from './purse.ts';
-import type { Rng } from './rng.ts';
+import { hashSeed, Rng } from './rng.ts';
+import { fromCultivator } from './combat/combatant.ts';
+import { edgeWords, fightEdge, isSure, type FightEdge } from './combat/edge.ts';
+import { startFight, type Fight } from './combat/fight.ts';
+import { generateBeast, generateCultivator } from './combat/generate.ts';
+import { openFight, type FightEnd } from './played.ts';
 import {
   addEvent,
   addFlag,
@@ -47,7 +54,9 @@ import {
   daysLived,
   hasFlag,
   itemCount,
+  realmOf,
   setMark,
+  stageOf,
   withPlayer,
   withStream,
   type Cultivator,
@@ -249,6 +258,8 @@ export interface CardResult {
   check?: CardCheck;
   /** False when the card goes on to a further step and still waits. */
   done: boolean;
+  /** The choice opened a fight on the stage; the card waits for its end (Fights you play). */
+  fight?: boolean;
 }
 
 /** A card's check: your attribute against its number, clear, close or short, never a roll. */
@@ -283,6 +294,52 @@ export function cardWho(c: Cultivator, vars: Readonly<Record<string, number>> = 
   return { ...who, slots: { ...who.slots, ...ready, ...v } };
 }
 
+// ---------------------------------------------------------------- a card's fight
+
+/** The choice a waiting card's step offers at an index, with the card. */
+function choiceAt(s: GameState, uid: number, index: number) {
+  const pending = s.cards.pending.find((p) => p.uid === uid);
+  if (!pending) return null;
+  const k = card(pending.card);
+  const choice = stepOf(k, pending.step).choices[index];
+  return choice ? { pending, k, choice } : null;
+}
+
+/**
+ * The fight a card's choice goes into: you against its foe at your realm, the stages it names from
+ * yours, regenerated from the card and the choice so a reload builds the same start.
+ */
+export function cardFight(s: GameState, uid: number, index: number): Fight | null {
+  const at = choiceAt(s, uid, index);
+  const f: CardFight | undefined = at?.choice.fight;
+  if (!at || !f) return null;
+  const t = rosterTemplate(f.roster);
+  const r = realmOf(s.player);
+  const stage = Math.max(1, Math.min(realm(r).stages, stageOf(s.player) + (f.stages ?? 0)));
+  const rng = new Rng(hashSeed(`card/${uid}/${at.k.id}/${at.pending.step ?? ''}/${index}`));
+  const opts = { id: `card-${uid}-foe`, side: 'them' };
+  const npc =
+    t.kind === 'beast'
+      ? generateBeast(t, r, stage, rng, opts)
+      : generateCultivator(t, r, stage, rng, opts);
+  const name = f.person ? fillSlots(`{${f.person}}`, cardWho(s.player, at.pending.vars)) : null;
+  const foe = name ? { ...npc.combatant, name } : npc.combatant;
+  return startFight([fromCultivator(s.player, 'you'), foe]);
+}
+
+/** A card fight's edge, read as the road reads one: and whether it is a sure win. */
+export function cardEdge(
+  s: GameState,
+  uid: number,
+  index: number,
+): { edge: FightEdge; sure: boolean; words: string } | null {
+  const f = cardFight(s, uid, index);
+  if (!f) return null;
+  const [me, ...foes] = f.combatants;
+  const edge = fightEdge(me!, foes);
+  return { edge, sure: isSure(edge), words: edgeWords(edge) };
+}
+
 /**
  * Resolves the step a waiting card stands at with a choice: pays its cost, makes its check and
  * applies the outcome's effects: a close pass takes the choice's close outcome when it has one. An outcome that leads on moves the card to its
@@ -293,7 +350,13 @@ export function resolveCard(
   s: GameState,
   uid: number,
   index: number,
-  opts: { byDefault?: boolean } = {},
+  opts: {
+    byDefault?: boolean;
+    /** How the choice's fight ended on the stage. */
+    played?: FightEnd;
+    /** Play a sure fight rather than let it resolve. */
+    play?: boolean;
+  } = {},
 ): CardResult {
   const pending = s.cards.pending.find((p) => p.uid === uid);
   const none = { state: s, ok: false, text: '', pass: null, done: false };
@@ -306,6 +369,14 @@ export function resolveCard(
   const can = canChoose(s.player, choice);
   if (!can.ok) return { ...none, reason: can.reason };
 
+  // A fight that isn't a sure win, chosen by you, is played on the stage first (Fights you play).
+  const edge = choice.fight && !opts.played ? cardEdge(s, uid, index) : null;
+  if (edge && !opts.byDefault && (opts.play || !edge.sure)) {
+    if (s.fight) return { ...none, reason: 'You are in a fight.' };
+    const open = openFight(s, { kind: 'card', uid, choice: index });
+    return { state: open, ok: true, text: '', pass: null, done: false, fight: true };
+  }
+
   let next: GameState = s;
   const cost = choice.cost;
   if (cost?.stones) {
@@ -314,14 +385,24 @@ export function resolveCard(
   }
   if (cost?.item) next = withPlayer(next, addItem(next.player, cost.item.id, -cost.item.n));
 
-  const check = cardCheck(next.player, choice) ?? undefined;
-  const pass = check ? check.verdict !== 'short' : null;
+  // A fight's end, or its edge's verdict without you, stands in for a check.
+  const check =
+    cardCheck(next.player, choice) ??
+    (edge ? { yours: edge.edge.ratio, against: 1, verdict: edge.edge.verdict } : undefined);
+  const played = opts.played;
+  const pass = played
+    ? played === 'won' || played === 'talked'
+    : check
+      ? check.verdict !== 'short'
+      : null;
   const outcome: CardOutcome =
-    pass === false && choice.fail
-      ? choice.fail
-      : check?.verdict === 'close' && choice.close
-        ? choice.close
-        : choice.pass;
+    (played === 'fled' || played === 'draw') && (choice.fled ?? choice.fail)
+      ? (choice.fled ?? choice.fail)!
+      : pass === false && choice.fail
+        ? choice.fail
+        : !played && check?.verdict === 'close' && choice.close
+          ? choice.close
+          : choice.pass;
   for (const e of outcome.effects) if (e.do === 'var') vars[e.id] = (vars[e.id] ?? 0) + e.n;
   const text = fillSlots(outcome.text, cardWho(s.player, vars));
   const path = [...(pending.path ?? []), index];
@@ -524,8 +605,15 @@ export interface CardView {
     label: string;
     check: ChoiceCheck;
     comparison: CardCheck | null;
+    /** A fight's edge in words, and whether it is a sure win (Fights you play). */
+    fight: { words: string; sure: boolean } | null;
     choice: CardChoice;
   }[];
+}
+
+function fightWords(s: GameState, uid: number, index: number) {
+  const e = cardEdge(s, uid, index);
+  return e ? { words: e.words, sure: e.sure } : null;
 }
 
 /** A waiting card as the player reads it: slots filled, each offered choice with whether it can be paid. */
@@ -549,6 +637,7 @@ export function viewCard(s: GameState, p: PendingCard): CardView {
         label: fillSlots(choice.label, who),
         check: canChoose(s.player, choice),
         comparison: cardCheck(s.player, choice),
+        fight: choice.fight ? fightWords(s, p.uid, index) : null,
         choice,
       })),
   };

@@ -1,7 +1,8 @@
 // An encounter on the map as a card (P3.7, docs/mockups/encounter-study.html): its seal and title,
 // how it met you, the narrator's opening line, the people as you read them, what can be won or lost,
-// and its exits with the verdict you can judge, your stance's pick outlined. It sits in the course
-// card; going in is P3.9's.
+// and its exits with the verdict you can judge, your stance's pick outlined. A fight that isn't a
+// sure win is played on the stage (Fights you play), and a sure one can be played anyway. It sits
+// in the course card; going in is P3.9's.
 import { encounterTemplate } from '../content/encounters/index.ts';
 import type { Stake, Template } from '../content/encounters/schema.ts';
 import { hasItem, item } from '../content/items.ts';
@@ -13,7 +14,9 @@ import {
   goRound,
   isBig,
   meet,
-  stancePick,
+  playExit,
+  stanceThere,
+  type ExitView,
 } from '../core/map/encounters.ts';
 import type { Encounter, MapLife } from '../core/map/schema.ts';
 import { paceOf } from '../core/map/travel.ts';
@@ -103,7 +106,12 @@ export function EncounterCard({
   const t = encounterTemplate(enc.template);
   const m = meet(game, enc);
   const views = exitViews(game, m);
-  const pick = stancePick(t, views, life.stance);
+  // What the stance does while you're there: a sure fight it settles, and Bold plays the rest.
+  const there = stanceThere(t, views, life.stance);
+  const pick = there && 'settle' in there ? there.settle : null;
+  const bold = there && 'play' in there ? there.play : null;
+  const play = (v: ExitView) =>
+    act((s) => playExit(s, enc.id, v.i) ?? { ok: false, reason: 'That fight can’t start now.' });
   const danger = enc.how !== 'seen';
   const roles = t.roles
     .map((r) => {
@@ -130,7 +138,9 @@ export function EncounterCard({
         : 'Nothing here was clear enough for your stance, so it waits and the course has stopped.'
       : pick !== null
         ? `Leave it, and your stance takes “${lower(views[pick]!.exit.label)}” when you reach it.`
-        : canGoRound(enc) && life.stance === 'avoid'
+        : bold !== null
+          ? `Leave it, and Bold goes into “${lower(views[bold]!.exit.label)}” with you when you reach it.`
+          : canGoRound(enc) && life.stance === 'avoid'
           ? 'Your stance would go round it.'
           : 'Nothing here is clear enough for your stance: it will wait for you and stop the course.';
   return (
@@ -168,35 +178,47 @@ export function EncounterCard({
               : v.exit.road === 'pass' || v.exit.road === 'take' || v.exit.road === 'deal'
                 ? 'sure'
                 : v.judged;
+          // A fight that isn't a sure win is played on the stage.
+          const played = v.exit.road === 'fight' && !v.sure;
           return (
-            <button
-              key={v.i}
-              type="button"
-              className={`enc-exit${pick === v.i ? ' is-stance' : ''}`}
-              disabled={!!v.refused}
-              title={v.refused ?? undefined}
-              onClick={() =>
-                act((s) => {
-                  const r = chooseExit(s, enc.id, v.i);
-                  if (!r) return { ok: false, reason: 'That can’t be done now.' };
-                  say(r.text);
-                  return { ok: true, state: r.state };
-                })
-              }
-            >
-              <span>
-                <span className="enc-exit-name">
-                  {v.exit.label}
-                  {pick === v.i && <i> · your stance</i>}
-                </span>
-                <span className="enc-why">{v.refused ?? v.why}</span>
-              </span>
-              <span
-                className={`enc-v is-${v.judged === '?' ? 'q' : tag === 'sure' ? 'sure' : v.judged}`}
+            <div key={v.i} className="enc-exit-row">
+              <button
+                type="button"
+                className={`enc-exit${pick === v.i || bold === v.i ? ' is-stance' : ''}`}
+                disabled={!!v.refused}
+                title={v.refused ?? undefined}
+                onClick={() =>
+                  played
+                    ? play(v)
+                    : act((s) => {
+                        const r = chooseExit(s, enc.id, v.i);
+                        if (!r) return { ok: false, reason: 'That can’t be done now.' };
+                        say(r.text);
+                        return { ok: true, state: r.state };
+                      })
+                }
               >
-                {tag}
-              </span>
-            </button>
+                <span>
+                  <span className="enc-exit-name">
+                    {v.exit.label}
+                    {(pick === v.i || bold === v.i) && <i> · your stance</i>}
+                  </span>
+                  <span className="enc-why">
+                    {v.refused ?? (played ? `${v.why} · you play it` : v.why)}
+                  </span>
+                </span>
+                <span
+                  className={`enc-v is-${v.judged === '?' ? 'q' : tag === 'sure' ? 'sure' : v.judged}`}
+                >
+                  {v.sure ? 'sure' : tag}
+                </span>
+              </button>
+              {v.sure && !v.refused && (
+                <button type="button" className="button button-quiet" onClick={() => play(v)}>
+                  Play it
+                </button>
+              )}
+            </div>
           );
         })}
         {canGoRound(enc) && (

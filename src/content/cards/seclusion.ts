@@ -250,7 +250,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Drive it off',
-        check: { attribute: 'agility', against: 10 },
+        fight: { roster: 'stone-skin-boar' },
         pass: {
           effects: [
             { do: 'stones', n: 6 },
@@ -1225,7 +1225,7 @@ export const SECLUSION_CARDS: readonly Card[] = [
       },
       {
         label: 'Spar with him',
-        check: { attribute: 'agility', against: 10 },
+        fight: { roster: 'march-conscript', stages: 1, person: 'rival' },
         pass: {
           effects: [
             { do: 'flag', id: 'met-rival' },

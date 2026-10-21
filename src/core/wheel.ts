@@ -45,18 +45,26 @@ export function drilling(c: Cultivator): boolean {
   return inTutorial(c.qi);
 }
 
-/**
- * The job whose shift holds an hour (O4): its Duty hour, locked like sleep. Your own choice for the
- * hour stays on the wheel underneath, and comes back when you leave the job.
- */
-export function dutyAt(c: Cultivator, hour: number): Job | null {
-  if (!c.jobs.length || drilling(c)) return null;
+/** The job you hold whose shift falls at an hour, at drill or not: the arc on the bezel. */
+export function shiftAt(c: Cultivator, hour: number): Job | null {
   for (const h of c.jobs) {
     if (!hasJob(h.id)) continue;
     const j = job(h.id);
     if (j.shift.includes(hour)) return j;
   }
   return null;
+}
+
+/**
+ * The job whose shift holds an hour (O4): its Duty hour, locked like sleep. Your own choice for the
+ * hour stays on the wheel underneath, and comes back when you leave the job. At drill a shift is
+ * not worked, unless you put Duty on its hour yourself (the wheel's Duty bug, Fights you play).
+ */
+export function dutyAt(c: Cultivator, hour: number): Job | null {
+  if (!c.jobs.length) return null;
+  const j = shiftAt(c, hour);
+  if (!j) return null;
+  return drilling(c) && c.wheel[hour] !== 'duty' ? null : j;
 }
 
 /** The wheel as yours to give: your own hours, with a shift's marked Duty so no rule picks them. */
@@ -69,11 +77,20 @@ export function hourOfDay(day: number): number {
   return Math.floor((((day % 1) + 1) % 1) * HOURS_PER_DAY) % HOURS_PER_DAY;
 }
 
-/** What each hour goes to: the wheel, with locked hours asleep and a shift's on duty whatever it says. */
+/**
+ * What each hour goes to: the wheel, with locked hours asleep and a shift's on duty whatever it
+ * says. A Duty you set with no shift under it any more (the job left) cultivates qi.
+ */
 export function effectiveWheel(c: Cultivator): HourKind[] {
   const locked = sleepLocked(c);
   return c.wheel.map((kind, i) =>
-    dutyAt(c, i) ? 'duty' : locked && SLEEP_HOURS.includes(i) ? 'sleep' : kind,
+    dutyAt(c, i)
+      ? 'duty'
+      : locked && SLEEP_HOURS.includes(i)
+        ? 'sleep'
+        : kind === 'duty'
+          ? 'qi'
+          : kind,
   );
 }
 
@@ -81,6 +98,8 @@ const openFlag = (kind: HourKind) => `hours-${kind}`;
 
 /** Whether hours can be given to this kind yet: qi, study and sleep always, the rest once opened. */
 export function hourKindOpen(c: Cultivator, kind: HourKind): boolean {
+  // Duty opens with a job whose shift is on the wheel.
+  if (kind === 'duty') return c.jobs.some((h) => hasJob(h.id) && job(h.id).shift.length > 0);
   return ALWAYS_OPEN_HOURS.includes(kind) || hasFlag(c, openFlag(kind));
 }
 
@@ -97,8 +116,11 @@ export function canSetHour(c: Cultivator, hour: number, kind: HourKind): WheelCh
   if (!Number.isInteger(hour) || hour < 0 || hour >= c.wheel.length) {
     return { ok: false, reason: 'There is no such hour.' };
   }
+  // A worked shift is locked; at drill the hour is still yours, Duty or not.
   const duty = dutyAt(c, hour);
-  if (duty) return { ok: false, reason: `That hour is your shift: ${duty.name}.` };
+  if (duty && !drilling(c)) return { ok: false, reason: `That hour is your shift: ${duty.name}.` };
+  if (kind === 'duty' && !shiftAt(c, hour))
+    return { ok: false, reason: 'No shift of yours falls at that hour.' };
   if (hourLocked(c, hour) && kind !== 'sleep') {
     return { ok: false, reason: 'At Qi Condensation the body still needs its sleep at 子 and 丑.' };
   }

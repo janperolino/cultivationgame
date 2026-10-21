@@ -113,7 +113,8 @@ export interface GameStore {
   /** Starts the life creation decided: a first life, or the next one after a death. */
   finishCreation(creation: Creation): Promise<void>;
   /** Resolves a waiting card with a choice; returns why not, or null. */
-  chooseCard(uid: number, index: number, title: string): string | null;
+  /** `play` plays a sure fight on the stage rather than let it resolve (Fights you play). */
+  chooseCard(uid: number, index: number, title: string, play?: boolean): string | null;
   dismissCardOutcome(): void;
   /** Saves now; each breakthrough saves with `rewindPoint` set. */
   saveNow(opts?: { rewindPoint?: boolean }): Promise<void>;
@@ -315,6 +316,8 @@ export const useGame = create<GameStore>()((set, get) => {
     const now = Date.now();
     const gap = now - lastTick;
     lastTick = now;
+    // A fight holds the clock, and the seat with it, until it ends (Fights you play).
+    if (game.fight) return;
     // The seat runs on real seconds; a long gap is time away, which the seat spends fading.
     const { seat, state } = tickSeat(game, gap / 1000);
     if (gap > OFFLINE_GAP_MS) {
@@ -536,13 +539,18 @@ export const useGame = create<GameStore>()((set, get) => {
         if (opened) raiseStartToasts(opened);
       }),
 
-    chooseCard(uid, index, title) {
+    chooseCard(uid, index, title, play) {
       const { game } = get();
       if (!game || !holdsLock) return 'This life is not open in this tab.';
-      const r = resolveCard(game, uid, index);
+      const r = resolveCard(game, uid, index, { play });
       if (!r.ok) return r.reason ?? 'That cannot be chosen.';
       update(r.state);
       get().markHint('cards');
+      // A fight takes the stage; its end resolves the card (Fights you play).
+      if (r.fight) {
+        void get().saveNow();
+        return null;
+      }
       set({
         cardOutcome: {
           uid,

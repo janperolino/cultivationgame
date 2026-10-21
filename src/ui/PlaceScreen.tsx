@@ -9,7 +9,7 @@ import { item, stackSize } from '../content/items.ts';
 import { PLACE_KIND_INFO, type PlaceKindInfo } from '../content/map/places.ts';
 import { capitalize, possessive } from '../content/words.ts';
 import { QI_NAMES, TERRAIN_NAMES } from '../content/map/travel.ts';
-import { REALM_IDS, realm, realmIdFromName, type RealmId } from '../content/realms.ts';
+import { REALM_IDS, realm, realmIdFromName, stageName, type RealmId } from '../content/realms.ts';
 import {
   doorsAt,
   keeperName,
@@ -129,6 +129,8 @@ import { sitDown, standUp, useFurnace } from './furnace.ts';
 import { ForgeScene } from './ForgeScene.tsx';
 import { FurnaceScene } from './FurnaceScene.tsx';
 import { TalismanScene } from './TalismanScene.tsx';
+import { groundPartners, sparWhy } from '../core/spar.ts';
+import { askSpar } from '../core/playFight.ts';
 
 type Act = (change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0]) => string | null;
 
@@ -181,6 +183,16 @@ function doorsOf(
   if (seat) {
     const hall = eldersHall(s, seat);
     const entry = entryOf(s, seat);
+    // Its training ground, where a member asks a senior, a fellow disciple or a junior to spar
+    // (Fights you play).
+    if (hall)
+      own.push({
+        id: 'ground',
+        seal: '武',
+        name: 'Training ground',
+        sub: 'spar a senior, a fellow disciple or a junior',
+        tag: 'members',
+      });
     if (hall && !hall.guest)
       own.push({
         id: 'elders',
@@ -627,6 +639,8 @@ function Counter({
       if (door === 'gift') return <GiftCounter game={game} power={power} act={act} say={say} />;
       return <EldersCounter game={game} power={power} act={act} say={say} />;
     }
+    case 'ground':
+      return <GroundCounter game={game} power={seatPowerAt(map, place)!} act={act} />;
     case 'exam':
       return <ExamCounter game={game} power={seatPowerAt(map, place)!} act={act} say={say} />;
     case 'counter':
@@ -1489,6 +1503,51 @@ function GiftCounter({ game, power, act, say }: CounterProps) {
       </div>
     </>
   );
+}
+
+/**
+ * The training ground: this month's partners, a senior two stages up, a fellow disciple at yours
+ * and a junior two below, each asked once a day. A spar takes the stage (Fights you play).
+ */
+function GroundCounter({ game, power, act }: { game: GameState; power: string; act: Act }) {
+  const partners = groundPartners(game, power);
+  return (
+    <>
+      <p className="place-sub">
+        Ask someone to spar. Nobody dies and nothing drops; it ends at the first fall. The pills
+        you swallow are spent, and the gear you wear bonds a little each exchange.
+      </p>
+      <div className="place-rows">
+        {partners.map((p) => {
+          const why = sparWhy(game, p.who);
+          return (
+            <div key={p.who} className="place-row is-plain">
+              <span className="place-row-name">
+                {p.name} · {p.words}
+              </span>
+              <span className="place-price">
+                {realm(p.realm).name}, {stageName(p.realm, p.stage)}
+              </span>
+              <button
+                type="button"
+                className="place-btn"
+                disabled={!!why}
+                title={why ?? undefined}
+                onClick={() => act((s) => asSpar(askSpar(s, p.who)))}
+              >
+                Spar
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/** A spar asked: the fight opened, or why not. */
+function asSpar(r: GameState | string) {
+  return typeof r === 'string' ? { ok: false as const, reason: r } : { ok: true as const, state: r };
 }
 
 /** The elders' hall: an elder's lesson, a protector, the inner trial in its month, being released. */

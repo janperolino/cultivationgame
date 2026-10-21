@@ -394,7 +394,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
     choices: [
       {
         label: 'Go down the rope',
-        check: { attribute: 'agility', against: 10 },
+        fight: { roster: 'vast-wilds-raider-beast', stages: -2 },
         pass: {
           effects: [TEMPERING, { do: 'stones', n: 8 }, { do: 'fuel', ladder: 'body', share: 0.2 }],
           text: 'A bone-gnawer pup, half grown, digging at the wall. You drive it off with the spear and bring back the tooth it broke. {sergeant} pays the bounty out of pocket and hands you the garrison tempering art.',
@@ -474,7 +474,7 @@ export const FIRST_HOUR_CARDS: readonly Card[] = [
     choices: [
       {
         label: 'Drive the boar',
-        check: { attribute: 'agility', against: 10 },
+        fight: { roster: 'stone-skin-boar', stages: -1 },
         pass: {
           effects: [TEMPERING, { do: 'stones', n: 8 }, { do: 'fuel', ladder: 'body', share: 0.2 }],
           text: 'You drive it into {senior}\'s saber like you have done it all your life. Your share of the core is eight stones, and {senior} tosses you the Gate\'s tempering art: "Get heavier."',

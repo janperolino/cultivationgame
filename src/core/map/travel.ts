@@ -594,7 +594,12 @@ export interface TravelNote {
  * pace (the terrain slowing you off the road, unless you fly), what comes into sight turns Seen, a
  * look-around hour looks once, and on arriving you look around and stop. A guard's wage runs.
  */
-export function travelDays(s: GameState, fromDay: number, toDay: number): GameState {
+export function travelDays(
+  s: GameState,
+  fromDay: number,
+  toDay: number,
+  played = false,
+): GameState {
   const map = mapOf(s);
   const start = s.map;
   if (!map || !start?.course || toDay <= fromDay) return s;
@@ -739,7 +744,17 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
     // The road's hour: its notice fills and what it brings is met; a posting's spot reached meets its goal.
     if (life.course && !waiting) {
       const st = reachPostings(
-        roadHour({ ...next, map: life }, map, hour, end - h0, moving, !!w.flies, yb, sense),
+        roadHour(
+          { ...next, map: life },
+          map,
+          hour,
+          end - h0,
+          moving,
+          !!w.flies,
+          yb,
+          sense,
+          played,
+        ),
         map,
       );
       next = st;

@@ -95,6 +95,7 @@ const SPAR_ENDS: Record<string, string> = {
   lost: 'and is brought down',
   fled: 'and breaks away',
   yielded: 'and yields',
+  talked: 'and talks them down',
   draw: 'until neither can go on',
 };
 

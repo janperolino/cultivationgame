@@ -39,7 +39,7 @@ import {
 import { veinAt } from '../../content/map/index.ts';
 import { realmIndex } from '../../content/realms.ts';
 import { combatant, topRung, wearFrom } from '../combat/combatant.ts';
-import { startFight } from '../combat/fight.ts';
+import { fightOver, startFight, winner as fightWinner, type Fight } from '../combat/fight.ts';
 import { runFight } from '../combat/profile.ts';
 import { canPay, stonesOf, tierGrade } from '../purse.ts';
 import { withStream, type GameState } from '../state.ts';
@@ -1285,38 +1285,77 @@ export function doStep(
 }
 
 /**
- * A fight run whole on the combat engine: the two sides present, and the two who started it even
- * from hiding (an ambush), on the `combat` stream. Each fighter leaves it with the HP and qi it
- * ended on.
+ * The fight an act opens in a scene: the two sides present, and the two who started it even from
+ * hiding (an ambush). The engine runs it whole (`runSceneFight`); a fight you play runs it on the
+ * stage and hands its end back through `endSceneFight` (Fights you play), the same after-fight.
  */
+export function sceneFight(scene: Scene, actorId: string, targetId: string): Fight | null {
+  const a = actorIn(scene, actorId);
+  const target = actorIn(scene, targetId);
+  if (!a || !target) return null;
+  const sides = new Set([a.side, target.side]);
+  const starts = (x: Actor) => x.id === a.id || x.id === target.id;
+  const fighters = scene.actors.filter(
+    (x) => sides.has(x.side) && (x.state === 'present' || (x.state === 'hidden' && starts(x))),
+  );
+  return startFight(
+    fighters.map((x) => {
+      const c =
+        x.combatant ??
+        combatant({ id: x.id, name: x.name, side: x.side, rungs: x.rungs, agility: x.agility });
+      return { ...c, id: x.id, side: x.side };
+    }),
+  );
+}
+
+/**
+ * A fight's end handed back to its scene, however it was fought: the arts the players threw are
+ * seen, blows from hiding give the striker away, everyone keeps the HP and qi they ended on for the
+ * next fight in the scene, your armor its wear, and the down and the fled leave the fight as such.
+ */
+export function endSceneFight(
+  s: GameState,
+  scene: Scene,
+  start: Fight,
+  end: Fight,
+  used: Readonly<Record<string, readonly string[]>> = {},
+): { state: GameState; scene: Scene; winner: string | null } {
+  const w: Working = { s, scene, deeds: [], surprise: null };
+  const winner = afterFight(w, start, end, used, end.turn);
+  return { state: w.s, scene: w.scene, winner };
+}
+
+/** A fight run whole on the combat engine, on the `combat` stream. */
 function runSceneFight(
   w: Working,
   a: Actor,
   target: Actor,
 ): { winner: string | null; turns: number } {
-  const sides = new Set([a.side, target.side]);
-  const starts = (x: Actor) => x.id === a.id || x.id === target.id;
-  const fighters = w.scene.actors.filter(
-    (x) => sides.has(x.side) && (x.state === 'present' || (x.state === 'hidden' && starts(x))),
-  );
-  const combatants = fighters.map((x) => {
-    const c =
-      x.combatant ??
-      combatant({ id: x.id, name: x.name, side: x.side, rungs: x.rungs, agility: x.agility });
-    return { ...c, id: x.id, side: x.side };
-  });
+  const start = sceneFight(w.scene, a.id, target.id)!;
+  const r = withStream(w.s, 'combat', (rng) => runFight(start, rng));
+  w.s = r.state;
+  const winner = afterFight(w, start, r.value.fight, r.value.used, r.value.turns);
+  return { winner, turns: r.value.turns };
+}
+
+function afterFight(
+  w: Working,
+  start: Fight,
+  end: Fight,
+  used: Readonly<Record<string, readonly string[]>>,
+  turns: number,
+): string | null {
+  const fighters = start.combatants.map((c) => actorIn(w.scene, c.id)!).filter(Boolean);
   // Everyone there sees the arts thrown, before anyone falls (O5).
   const saw = w.scene.actors.filter(active);
-  const r = withStream(w.s, 'combat', (rng) => runFight(startFight(combatants), rng));
-  w.s = r.state;
   for (const x of fighters)
-    if (w.scene.players.includes(x.id) && r.value.used[x.id])
-      artsSeen(w, x, r.value.used[x.id]!.map(artCopy), saw);
+    if (w.scene.players.includes(x.id) && used[x.id])
+      artsSeen(w, x, used[x.id]!.map(artCopy), saw);
   // Blows struck from hiding give you away.
   for (const x of fighters)
     if (x.state === 'hidden') setActor(w, x.id, (y) => ({ ...y, state: 'present' }));
-  const before = new Map(combatants.map((c) => [c.id, c]));
-  for (const c of r.value.fight.combatants) {
+  const before = new Map(start.combatants.map((c) => [c.id, c]));
+  for (const c of end.combatants) {
     // The wounds and the spent qi stay for the next fight in the scene; the shield refills, as it
     // does at every fight's start, and nothing else of the fight (statuses, turns) carries.
     const was = before.get(c.id);
@@ -1331,8 +1370,9 @@ function runSceneFight(
     realmIndex(topRung(x).realm) > realmIndex(topRung(m).realm) ? x : m,
   );
   makeNoise(w, loudest);
-  note(w, `The fight ends after ${r.value.turns} turns: ${r.value.winner ?? 'nobody'} stands.`);
-  return { winner: r.value.winner, turns: r.value.turns };
+  const winner = fightOver(end) ? fightWinner(end) : null;
+  note(w, `The fight ends after ${turns} turns: ${winner ?? 'nobody'} stands.`);
+  return winner;
 }
 
 // ── Rounds ───────────────────────────────────────────────────────────────────────────────────

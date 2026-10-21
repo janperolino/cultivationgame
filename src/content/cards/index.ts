@@ -8,6 +8,7 @@ export type {
   Card,
   CardChoice,
   CardEffect,
+  CardFight,
   CardKind,
   CardOutcome,
   CardStep,

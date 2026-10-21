@@ -5523,21 +5523,50 @@ button.fight-card {
   color: var(--muted);
 }
 
-.spar-list {
-  list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
+/* A fight takes the whole stage (Fights you play): no rail and no top, the arena above and your
+   move beside the exchanges below. */
+.shell.is-fight {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'main';
 }
 
-.spar-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 0;
-  border-top: 1px solid var(--edge);
+.shell[hidden] {
+  display: none;
+}
+
+.fight-main {
+  grid-area: main;
+  padding: 40px 120px;
+}
+
+.fight-stage {
+  display: grid;
+  gap: 18px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.fight-stage .fight-arena {
+  min-height: 300px;
+}
+
+.fight-stage-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.fight-stage-lower .fight-log {
+  max-height: 420px;
+}
+
+.fight-after {
+  max-width: 760px;
+  margin: 240px auto 0;
+  display: grid;
+  gap: 14px;
+  justify-items: start;
 }
 
 :root[data-motion='reduced'] .fight-arena.is-shaking {
@@ -8330,6 +8359,13 @@ p.map-above {
 .enc-exits {
   display: grid;
   gap: 4px;
+}
+
+/* An exit with its "Play it" beside it, for a sure fight (Fights you play). */
+.enc-exit-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
 }
 
 .enc-exit {
