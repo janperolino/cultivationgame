@@ -137,12 +137,45 @@ const CraftsSchema = z.object({
       mend: z.boolean().optional(),
     }),
   ),
+  /** The grades certified at a guild's hall, by craft (K6): the grade, the day and the guild. */
+  grades: z.record(
+    z.string(),
+    z.object({ grade: z.number().int().min(1).max(9), day: z.number(), at: z.string() }),
+  ),
+  /** How many of each thing held are of your own making, your maker's mark 记 (K6). */
+  marked: z.record(z.string(), z.number().int().min(0)),
+  /**
+   * Craft renown by region, then craft (K6): the points at the last gain and its day, and this
+   * month's marked sales there with the points they gave.
+   */
+  renown: z.record(
+    z.string(),
+    z.record(
+      z.string(),
+      z.object({
+        n: z.number().min(0),
+        day: z.number(),
+        month: z.number().int(),
+        sold: z.number().min(0),
+        given: z.number().int().min(0),
+      }),
+    ),
+  ),
 });
 export type CraftsState = z.infer<typeof CraftsSchema>;
 
-/** An empty bench, no mastery: every new life's, and every old save's (v43). */
+/** An empty bench, no mastery, no grade or name: every new life's, and every old save's (v43, v45). */
 export function emptyCrafts(): CraftsState {
-  return { bench: [], front: null, tray: {}, mastery: {}, recent: [] };
+  return {
+    bench: [],
+    front: null,
+    tray: {},
+    mastery: {},
+    recent: [],
+    grades: {},
+    marked: {},
+    renown: {},
+  };
 }
 
 export const CultivatorSchema = z.object({

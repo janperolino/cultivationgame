@@ -215,6 +215,42 @@ export function leakSold(
   return learn(r.world, r.id, { id: `hall:${house}`, power: house }, false, day);
 }
 
+/**
+ * A power's own good sold where its people trade (K6; design: selling its guarded goods where its
+ * people trade is seen in use, they know their own pill). Its shopfolk know the pill and the face:
+ * a leak deed at the style's chapter, its grudge and the mark, as an art seen used undisguised is.
+ * A member, or one sworn to it, sells freely; a face already marked at that chapter tells it
+ * nothing new.
+ */
+export function ownGoodSold(
+  w: World,
+  seller: string,
+  good: { power: string; copy: string },
+  place: string,
+  day: number,
+): { world: World; marked: boolean } {
+  const house = houseOf(good.power);
+  if (mayUse(w, seller, house, day)) return { world: w, marked: false };
+  const had = markFor(w, seller, house, day);
+  if (had && leakChapter(had.data.method!) >= copyChapter(good.copy))
+    return { world: w, marked: false };
+  const r = recordDeed(
+    w,
+    {
+      kind: 'leak',
+      actor: seller,
+      place,
+      power: house,
+      evidence: [good.copy],
+      witnesses: [{ id: `hall:${house}`, power: house }],
+    },
+    day,
+  );
+  let world = oneGrudge(r.world, seller, house);
+  world = startMark(world, seller, house, good.copy, headRealm(house), day);
+  return { world, marked: true };
+}
+
 /** Why someone may not sell a copy: the oath they swore to its power. */
 export function oathRefusal(w: World, who: string, thing: string, day: number): string | null {
   const guard = guardedBy(thing);

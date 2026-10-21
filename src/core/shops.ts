@@ -87,9 +87,12 @@ import { rollNature } from './resolver/nature.ts';
 import { addStanding, opinion, remember } from './resolver/opinion.ts';
 import { talkCheck } from './resolver/talk.ts';
 import { addHeat, emptyWorld, standingOf, type ShopMonth, type World } from './resolver/world.ts';
-import { leakSold, oathRefusal } from './guarded.ts';
+import { leakSold, oathRefusal, ownGoodSold } from './guarded.ts';
+import { craftLevel, markedHeld, markLift, soldMarked, unmark } from './craftRenown.ts';
+import { ownGood, styleLines, tradesAt } from './styles.ts';
+import { recipeFor, type CraftId } from '../content/crafts.ts';
 import { hashSeed, Rng } from './rng.ts';
-import { addItem, itemCount, withPlayer, type GameState } from './state.ts';
+import { addEvent, addItem, itemCount, withPlayer, type GameState } from './state.ts';
 
 /** A staple: the `trade` tag (core/markets.ts). */
 export { isStaple } from './markets.ts';
@@ -535,6 +538,8 @@ export function stockOf(shopId: string, month: number, w: World = EMPTY): StockL
   const lines: { thing: string; n: number; endless?: boolean }[] = [
     ...goods,
     ...(keepsOwn(s) ? hallLines(s).map((l) => ({ ...l, endless: true })) : []),
+    // A power's shop stands the goods of the styles it holds, brewed in its own hall (K6).
+    ...styleLines(s),
     ...standingCopies(w, s, month).map((thing) => ({ thing, n: 1, endless: true })),
   ];
   lines.forEach(({ thing, n, endless }, i) => {
@@ -863,6 +868,9 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
     if (m) world = moveSupply(world, m, thing, k, day);
     left -= k;
   }
+  // Your mark (K6): what you made sells by your name in its craft where you are known there.
+  const mark = markOn(s, shopId, thing, n);
+  total += mark.value * mark.lift;
   total = Math.round(total * 100) / 100;
   // A harsh power takes its tithe of what its lower seats bring in (O2): a bounty, loot at its hall.
   const kept = Math.round(total * (1 - titheFor(s, sh)) * 100) / 100;
@@ -876,16 +884,48 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
       : withStones(s.player, receive(stonesOf(s.player), kept, tierGrade(shopVein(sh))));
   if (hasCopy(thing)) player = { ...player, copies: { ...player.copies, [thing]: held - n } };
   else player = addItem(player, thing, -n);
+  if (mark.n > 0 && mark.craft) {
+    player = unmark(player, thing, mark.n);
+    player = soldMarked(player, sh.region, mark.craft, mark.value * (1 + mark.lift), day);
+  }
   if (m && spreads(thing, sh.kind === 'black-market')) world = copyInto(world, m, thing, day);
   // A power's own sold to a black market: it learns that it leaked, never who (O5).
   if (guard && sh.kind === 'black-market') world = leakSold(world, s.player.id, thing, sh.at, day);
-  return {
-    ok: true,
-    state: withShopMonth(withPlayer({ ...s, world }, player), shopId, {
-      ...sm,
-      paid: sm.paid + total,
-    }),
-  };
+  // A power's own good sold where its people trade: they know their own pill (K6).
+  const own = ownGood(thing);
+  let marked = false;
+  if (own && m && tradesAt(own.power).has(m.id)) {
+    const r = ownGoodSold(world, s.player.id, own, sh.at, day);
+    world = r.world;
+    marked = r.marked;
+  }
+  let state = withShopMonth(withPlayer({ ...s, world }, player), shopId, {
+    ...sm,
+    paid: sm.paid + total,
+  });
+  if (marked) state = addEvent(state, 'power', { power: houseOf(own!.power), what: 'marked' });
+  return { ok: true, state };
+}
+
+/**
+ * Your mark on a sale (K6): how many of `n` you made, the craft they are of, their share of the
+ * sale's worth at the shop's offer, and what your name in that craft lifts it by in the shop's region.
+ */
+export function markOn(
+  s: GameState,
+  shopId: string,
+  thing: string,
+  n: number,
+): { n: number; craft: CraftId | null; value: number; lift: number } {
+  const none = { n: 0, craft: null, value: 0, lift: 0 };
+  if (hasCopy(thing) || !hasItem(thing)) return none;
+  const r = recipeFor(baseOf(thing));
+  const k = Math.min(n, markedHeld(s.player, thing));
+  if (!r || k <= 0) return none;
+  const offer = offerFor(s, shopId, thing);
+  if (!offer.ok) return none;
+  const level = craftLevel(s.player, shopById(shopId).region, r.craft, s.calendar.day);
+  return { n: k, craft: r.craft, value: offer.each * k, lift: markLift(level) };
 }
 
 /** The keeper you haggle with: someone the world keeps from the first haggle on. */

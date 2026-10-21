@@ -3,7 +3,7 @@
 // strip, its doors on the left grouped by what they are for, and the open door's counter beside them.
 // Everything done in a place is done here: its shops on P3.5's calls, the teahouse, the map seller,
 // guides, caravans, the money changer and the bed you sleep in by rule.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { COPY_FORM_WORDS, copyForm, copyItem, copyTitle, hasCopy } from '../content/copies.ts';
 import { item, stackSize } from '../content/items.ts';
 import { PLACE_KIND_INFO, type PlaceKindInfo } from '../content/map/places.ts';
@@ -99,6 +99,7 @@ import {
   buy,
   haggle,
   isStaple,
+  markOn,
   offerFor,
   priceToYou,
   repair,
@@ -110,6 +111,24 @@ import {
 } from '../core/shops.ts';
 import type { GameState } from '../core/state.ts';
 import { useGame } from './store.ts';
+import { copyManual } from '../content/copies.ts';
+import { CRAFTS, recipe, type CraftId } from '../content/crafts.ts';
+import { CRAFT_DEALS, CRAFT_GRADES, CRAFT_RENOWN, CRAFTER } from '../content/styles.ts';
+import { knownCrafts } from '../core/craftRenown.ts';
+import {
+  buyAtGuild,
+  certify,
+  examines,
+  examinesTo,
+  examRows,
+  guildCounter,
+} from '../core/craftGrade.ts';
+import { seatGrade } from '../core/organizations.ts';
+import { formatPercent } from './format.ts';
+import { sitDown, standUp, useFurnace } from './furnace.ts';
+import { ForgeScene } from './ForgeScene.tsx';
+import { FurnaceScene } from './FurnaceScene.tsx';
+import { TalismanScene } from './TalismanScene.tsx';
 
 type Act = (change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0]) => string | null;
 
@@ -181,6 +200,21 @@ function doorsOf(
       });
     if (!hall)
       own.push({ id: 'gift', seal: '礼', name: 'Offer a gift', sub: 'remembered as tribute' });
+    // A crafting guild examines crafters and sells its area's common styles (K6).
+    if (examines(seat)) {
+      own.push({
+        id: 'exam',
+        seal: '考',
+        name: 'Examination hall',
+        sub: 'one test batch at its bench for a grade badge',
+      });
+      own.push({
+        id: 'counter',
+        seal: '艺',
+        name: 'The guild’s counter',
+        sub: 'the common styles, sold openly',
+      });
+    }
   }
   const ownGroup: [string, Door[]] = [seat ? capitalize(theName(seat)) : '', own];
   // A door is a district, or a firm, a hall or the office alone (E5).
@@ -593,6 +627,10 @@ function Counter({
       if (door === 'gift') return <GiftCounter game={game} power={power} act={act} say={say} />;
       return <EldersCounter game={game} power={power} act={act} say={say} />;
     }
+    case 'exam':
+      return <ExamCounter game={game} power={seatPowerAt(map, place)!} act={act} say={say} />;
+    case 'counter':
+      return <GuildCounter game={game} power={seatPowerAt(map, place)!} act={act} say={say} />;
     case 'pavilion':
       return <PavilionCounter game={game} power={place.id} act={act} say={say} />;
     case 'law-hall':
@@ -756,8 +794,17 @@ function ShopCounter({
   ]
     .map((thing) => ({ thing, cost: repairCost(game, thing) }))
     .filter((x) => x.cost !== null);
+  // Known by name from craft renown 3 (K6): the keeper knows the maker of what they deal in.
+  const byName = knownCrafts(game.player, sh.region, game.calendar.day).find((k) =>
+    CRAFT_DEALS[k].some((w) => kinfo.buys.includes(w)),
+  );
   return (
     <>
+      {byName && (
+        <p className="place-good">
+          The keeper knows you: the {CRAFTER[byName].name} whose make sells across the town.
+        </p>
+      )}
       <div className="place-keeper">
         <span>
           {capitalize(keeperName(sh))} · {sh.small ? 'together they' : 'they'} can pay out{' '}
@@ -901,6 +948,7 @@ function ShopCounter({
                     <span className="place-row-name">{w.name}</span>{' '}
                     <span className="place-sub">· you hold {n}</span>
                     {offer.ok && offer.wanted && <span className="place-good"> · wanted here</span>}
+                    <MarkWords game={game} shopId={shopId} thing={thing} n={n} />
                   </span>
                   <span className="place-price">
                     {offer.ok ? cost(Math.round(offer.each * (1 - tithe) * 100) / 100) : ''}
@@ -1139,6 +1187,227 @@ function DonateRows({ game, power, act, say }: CounterProps) {
 }
 
 type CounterProps = { game: GameState; power: string; act: Act; say: (t: string) => void };
+
+/**
+ * A guild's examination hall 考品 (K6's study, take C): a row a craft, your grade certified and
+ * the next one's test batch, sat at its bench (the craft's own sitting, handed in when you will)
+ * or queued at no hand; then its seats and the grade each asks, and its guest elder seat when your
+ * name in one of its crafts carries across the region.
+ */
+function ExamCounter({ game, power, act, say }: CounterProps) {
+  const rows = examRows(game.player, power);
+  const [picks, setPicks] = useState<Partial<Record<CraftId, string>>>({});
+  const [sat, setSat] = useState<{ craft: CraftId; recipe: string } | null>(null);
+  const hand = useFurnace((f) => f.hand);
+  useEffect(() => standUp, []);
+  const sit = (output: string, h: number) =>
+    act((s) => {
+      const r = certify(s, power, output, h);
+      if (r.ok)
+        say(
+          r.held
+            ? `The batch holds. The examiners seal your ${CRAFT_GRADES[r.grade - 1]!.hanzi} badge.`
+            : 'The batch fails in front of the examiners. They keep the fee.',
+        );
+      return r;
+    });
+  if (sat) {
+    const r = recipe(sat.recipe);
+    return (
+      <>
+        <p className="place-sub">
+          At the guild’s bench, a batch of {item(r.output).name}s in front of the examiners. Hand it
+          in when you will: they read the hand you sat it with.
+        </p>
+        {sat.craft === 'refining' ? (
+          <ForgeScene key="forge" game={game} family={r.family} />
+        ) : sat.craft === 'talismans' ? (
+          <TalismanScene key="desk" game={game} family={r.family} />
+        ) : (
+          <FurnaceScene key="furnace" game={game} recipe={r} />
+        )}
+        <p className="place-note">Your hand: {formatPercent(hand)}.</p>
+        <button
+          type="button"
+          className="place-btn"
+          onClick={() => {
+            const h = useFurnace.getState().hand;
+            standUp();
+            setSat(null);
+            sit(sat.recipe, h);
+          }}
+        >
+          Hand in the batch
+        </button>{' '}
+        <button
+          type="button"
+          className="place-btn"
+          onClick={() => {
+            standUp();
+            setSat(null);
+          }}
+        >
+          Stand up
+        </button>
+      </>
+    );
+  }
+  const seats = (['outer', 'inner', 'true', 'elder'] as const).map((seat) => ({
+    seat,
+    title: seatTitle(power, seat),
+    grade: seatGrade(power, seat),
+  }));
+  return (
+    <>
+      <p className="place-sub">
+        One batch of the grade’s tier at the guild’s bench, your own inputs, that holds: played or
+        queued. The branch grades to {CRAFT_GRADES[examinesTo(power) - 1]!.hanzi}.
+      </p>
+      <ul className="place-exam">
+        {rows.map((row) => {
+          const pick = picks[row.craft] ?? row.recipes[0]?.output ?? '';
+          return (
+            <li key={row.craft}>
+              <span>
+                {CRAFTS[row.craft].name} <span className="hanzi">{CRAFTS[row.craft].hanzi}</span>
+              </span>
+              <span className={row.certified ? 'is-good' : 'muted'}>
+                {row.certified ? `${CRAFT_GRADES[row.certified - 1]!.hanzi} certified` : 'no grade'}
+              </span>
+              {row.shut ? (
+                <span className="muted">{row.shut}</span>
+              ) : (
+                <span>
+                  {CRAFT_GRADES[row.next! - 1]!.hanzi}:{' '}
+                  <select
+                    value={pick}
+                    onChange={(e) => setPicks({ ...picks, [row.craft]: e.target.value })}
+                  >
+                    {row.recipes.map((r) => (
+                      <option key={r.output} value={r.output}>
+                        {item(r.output).name}
+                      </option>
+                    ))}
+                  </select>{' '}
+                  <button
+                    type="button"
+                    className="place-btn"
+                    onClick={() => {
+                      sitDown(pick, row.craft);
+                      setSat({ craft: row.craft, recipe: pick });
+                    }}
+                  >
+                    Sit it · {row.fee} low
+                  </button>{' '}
+                  <button type="button" className="place-btn" onClick={() => sit(pick, 0)}>
+                    Queue it
+                  </button>
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="place-sub">
+        Seats: each asks the grade of its realm’s tier, certified in any of the guild’s crafts.
+      </p>
+      <ul className="place-exam">
+        {seats.map((x) => (
+          <li key={x.seat}>
+            <span>
+              {capitalize(x.title.name)} <span className="hanzi">{x.title.hanzi}</span>
+            </span>
+            <span className="muted">{CRAFT_GRADES[x.grade - 1]?.hanzi ?? 'no grade'}</span>
+          </li>
+        ))}
+        <li>
+          <span>
+            Guest elder <span className="hanzi">客卿</span>
+          </span>
+          <span className="muted">offered at name {CRAFT_RENOWN.guest} in one of its crafts</span>
+          {guestOffered(game, power) && !membership(game.world, game.player.id, power) && (
+            <button
+              type="button"
+              className="place-btn"
+              onClick={() =>
+                act((s) => {
+                  const r = becomeGuest(s, power);
+                  if (r.ok) say(`You sit as a guest elder of ${theName(power)}.`);
+                  return r.ok ? r : { ok: false, reason: r.why };
+                })
+              }
+            >
+              Take the guest elder’s seat they offer
+            </button>
+          )}
+        </li>
+      </ul>
+    </>
+  );
+}
+
+/** Your mark on a line you sell (K6): how many are yours, and what your name adds here. */
+function MarkWords({
+  game,
+  shopId,
+  thing,
+  n,
+}: {
+  game: GameState;
+  shopId: string;
+  thing: string;
+  n: number;
+}) {
+  const m = markOn(game, shopId, thing, n);
+  if (m.n === 0) return null;
+  return (
+    <span className="place-good">
+      {' · '}
+      {m.n === n ? 'your make' : `${m.n} your make`}
+      {m.lift > 0 ? `, your mark +${Math.round(m.lift * 100)}%` : ''}
+    </span>
+  );
+}
+
+/** A guild's counter (K6): its area's common styles, each chapter sold openly to anyone. */
+function GuildCounter({ game, power, act, say }: CounterProps) {
+  return (
+    <>
+      <p className="place-sub">
+        The frontier’s common styles, sold and taught openly, never guarded: most powers that craft
+        at all hold them, so the clans of the Border Wilds brew alike.
+      </p>
+      <ul className="place-exam">
+        {guildCounter(power).map((l) => {
+          const m = copyManual(l.thing);
+          const owned = (game.player.copies[l.thing] ?? 0) > 0;
+          return (
+            <li key={l.thing}>
+              <span>
+                {m.name} <span className="hanzi">{m.hanzi}</span> · ch. {m.chapter ?? 1}
+              </span>
+              <span className="muted">{priceWords(l.price)}</span>
+              <button
+                type="button"
+                className="place-btn"
+                disabled={owned}
+                onClick={() =>
+                  act((s) => {
+                    const r = buyAtGuild(s, power, l.thing);
+                    if (r.ok) say(`You buy the ${m.name}.`);
+                    return r;
+                  })
+                }
+              >
+                {owned ? 'On your shelf' : 'Buy'}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
 
 /** The way into a power, asked at its seat: a test, vows, enlisting, buying in, an oath, a sponsor. */
 function JoinCounter({ game, power, act, say }: CounterProps) {

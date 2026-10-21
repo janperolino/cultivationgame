@@ -119,6 +119,7 @@ export function copyChapter(id: string): number {
   const of = copyOf(id);
   if (of?.kind === 'method') return method(of.id).chapter;
   if (of?.kind === 'technique') return technique(of.id).chapter;
+  if (of?.kind === 'manual') return manual(of.id).chapter ?? 1;
   return 1;
 }
 

@@ -20005,6 +20005,12 @@
     "kind": "secret",
     "open": false,
     "why": "The City’s great families settle their quarrels through a house nobody names, and the watch closes those cases fast."
+   },
+   {
+    "to": "qm-wanyi-hui",
+    "kind": "trade",
+    "open": true,
+    "why": "The Myriad Crafts Guild's branch grades our crafters, and our buyers ask for its badge."
    }
   ],
   "top": "Nascent Soul",
@@ -29777,7 +29783,10 @@
     "why": "Our miners hold the vein's upper galleries."
    }
   ],
-  "prosperity": 5
+  "prosperity": 5,
+  "crafts": [
+   "formations"
+  ]
  },
  {
   "id": "qm-baijiang-zong",
@@ -30076,6 +30085,9 @@
     "open": false,
     "why": "Gate disciples sell us beasts alive, for stones their sect doesn't know about."
    }
+  ],
+  "crafts": [
+   "alchemy"
   ]
  },
  {
@@ -30213,6 +30225,12 @@
     "kind": "trade",
     "open": true,
     "why": "We grade the frontier's cores and sell the best to Apricot Grove's hall."
+   },
+   {
+    "to": "qm-wanyi-hui",
+    "kind": "trade",
+    "open": true,
+    "why": "We carry a crafter's goods out of the region only under the guild's grade."
    }
   ]
  },
@@ -30278,6 +30296,83 @@
     "kind": "patron",
     "open": true,
     "why": "The Valley posts our master and takes the cores we buy."
+   }
+  ],
+  "crafts": [
+   "alchemy"
+  ]
+ },
+ {
+  "id": "qm-wanyi-hui",
+  "name": "The Myriad Crafts Guild",
+  "pinyin": "Wanyi Gonghui",
+  "hanzi": "万艺公会",
+  "kind": "power",
+  "type": "guild",
+  "crafts": [
+   "alchemy",
+   "refining",
+   "talismans",
+   "formations",
+   "farming"
+  ],
+  "parent": "qm-bianhuang",
+  "status": "canon",
+  "terrain": "coast",
+  "way": "neutral",
+  "tags": [
+   "frontier",
+   "guild",
+   "crafts"
+  ],
+  "summary": "The Morning Star Continent's guild of crafters, whose City of the Guarded Mouth branch tests the frontier's alchemists, refiners, talisman masters, array masters and spirit farmers and gives the badges a guild seat asks for.",
+  "lore": "A crafter on the Morning Star Continent is asked two things before a price: which grade, and which guild hall sealed it. The Myriad Crafts Guild's City branch keeps five benches behind the Pill Street gate, one for each craft, and a crafter who brings their own inputs and makes one batch of a tier that holds, in front of its examiners, walks out with a badge. Its examiners are Foundation, so the frontier branch grades to second-grade and sends anyone better to the continent's halls. Its counter sells the frontier's common styles to anyone, and its members trade commissions and furnace time among themselves.",
+  "truth": "",
+  "features": [
+   {
+    "name": "the five examination benches",
+    "tags": [
+     "fire",
+     "witnesses"
+    ]
+   },
+   {
+    "name": "the badge wall, every grade sealed in vermilion",
+    "tags": [
+     "witnesses",
+     "fragile"
+    ]
+   }
+  ],
+  "top": "Foundation Establishment (Branch Master Lu, a second-grade alchemist)",
+  "vein": 3,
+  "prosperity": 6,
+  "population": {
+   "mortals": 800,
+   "qi": 180,
+   "foundation": 12
+  },
+  "size": 1,
+  "fromAbove": "Nothing of its own: five chimneys smoking in a row behind Pill Street.",
+  "map": {
+   "x": 151300,
+   "y": 212400,
+   "sphere": 3000
+  },
+  "editedBy": "claude",
+  "editedAt": "2026-10-20T12:00:00Z",
+  "ties": [
+   {
+    "to": "qm-shoukou-cheng",
+    "kind": "trade",
+    "open": true,
+    "why": "The City's crafters sell under our badges, and the City buys by them."
+   },
+   {
+    "to": "qm-qian-shi",
+    "kind": "trade",
+    "open": true,
+    "why": "The Qians ask for our grade before they carry a crafter's goods out of the region."
    }
   ]
  },

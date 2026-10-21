@@ -7,7 +7,8 @@ import type { CardOutcome } from './cards/schema.ts';
 import { GRADES, type GradeId, type LadderId } from './cultivation.ts';
 import { BRANCHES, HOUR_KINDS, HOUR_OPENINGS, SLEEP_FREED_TEXT, type HourKind } from './hours.ts';
 import { copyTitle } from './copies.ts';
-import { FAMILIES, type FamilyId } from './crafts.ts';
+import { FAMILIES, type CraftId, type FamilyId } from './crafts.ts';
+import { CRAFT_GRADES, CRAFTER } from './styles.ts';
 import { COMBAT_DAOS, type CombatDaoId } from './daos.ts';
 import { item } from './items.ts';
 import { INTENT_HANZI, INTENT_STAGES } from './intent.ts';
@@ -237,6 +238,15 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
       : `${press} against the gate of ${r.name}, but you hold no ${pill ? item(pill).name : r.gate.replace(/^an? /, '')}.`;
   },
   screen: (d) => SCREEN_TEXT[s(d.screen)] ?? `The ${s(d.screen)} open.`,
+  // The examination at a guild's bench (K6): the badge, or the fee kept.
+  graded: (d, w) => {
+    const craft = s(d.craft) as CraftId;
+    const g = CRAFT_GRADES[n(d.grade) - 1]!;
+    const title = `${g.name.toLowerCase()} ${CRAFTER[craft].name} ${g.hanzi}${CRAFTER[craft].hanzi}`;
+    return d.held
+      ? `${w.name} sits the examination at ${powerName(s(d.power))}: the batch of ${item(s(d.recipe)).name}s holds, and the examiners seal a ${title}’s badge.`
+      : `${w.name} sits the examination at ${powerName(s(d.power))}, and the batch of ${item(s(d.recipe)).name}s fails in front of the examiners. They keep the fee.`;
+  },
   // A failed batch that cracked the furnace (K1).
   'blow-up': (d) =>
     `The furnace bursts over a batch of ${item(s(d.recipe)).name}s: the ${item(s(d.tool)).name} is cracked, and wants a refiner.`,
@@ -411,6 +421,7 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   screen: 'opening',
   'method-capped': 'opening',
   'blow-up': 'hurt',
+  graded: 'mastery',
   rewind: 'opening',
   card: (d) => (d.byDefault === true ? 'settled' : (cardOutcome(d).kind ?? 'choice')),
 };

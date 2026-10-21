@@ -7,7 +7,14 @@ import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { hasCopy } from '../content/copies.ts';
 import { baseOf, item } from '../content/items.ts';
 import { lotShape } from './loot.ts';
-import { DOOR_SHARE, doorsAt, HAGGLE_OFF, keeperName, shop, SHOP_KIND_INFO } from '../content/shops.ts';
+import {
+  DOOR_SHARE,
+  doorsAt,
+  HAGGLE_OFF,
+  keeperName,
+  shop,
+  SHOP_KIND_INFO,
+} from '../content/shops.ts';
 import {
   goodOf,
   market,
@@ -166,7 +173,7 @@ describe('the save', () => {
       [`keeper:${CITY}.stall-5`]: keeper,
     };
     const back = loadSave(raw);
-    expect(back.version).toBe(44);
+    expect(back.version).toBe(45);
     expect(back.state.world.shops).toEqual({ 'mouth-alchemy': { ...month, took: {} } });
     expect(Object.keys(back.state.world.kept)).toEqual([`keeper:${CITY}.alchemy-2`]);
     expect(back.state.world.kept[`keeper:${CITY}.alchemy-2`]!.name).toBe(

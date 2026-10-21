@@ -43,7 +43,15 @@ import {
 } from '../core/crafts.ts';
 import { ratesHere } from '../core/life.ts';
 import { benchSpot } from '../core/map/travel.ts';
-import { withPlayer, type Cultivator } from '../core/state.ts';
+import { withPlayer, type Cultivator, type GameState } from '../core/state.ts';
+import { gradeHeld, gradeTitle } from '../core/craftGrade.ts';
+import { craftLevel, craftPoints, markLift, wagePoint } from '../core/craftRenown.ts';
+import { theName } from '../core/organizations.ts';
+import { fameWord } from '../core/resolver/names.ts';
+import { regionData } from '../content/map/index.ts';
+import { FAME_LEVELS, HOME_REGION } from '../content/resolver.ts';
+import { CRAFT_GRADES } from '../content/styles.ts';
+import { capitalize } from '../content/words.ts';
 import { formatPercent } from './format.ts';
 import { sitDown, standUp, useFurnace } from './furnace.ts';
 import { ForgeScene } from './ForgeScene.tsx';
@@ -244,6 +252,10 @@ export function CraftsScreen() {
           </section>
         )}
         <section className="panel crafts-right">
+          <h2 className="panel-heading">
+            Grade and name <span className="hanzi">品 · 名</span>
+          </h2>
+          <GradeAndName game={game} craft={page} />
           <h2 className="panel-heading">Mastery by family</h2>
           <Families c={c} craft={page} />
           <h2 className="panel-heading">The soul gate</h2>
@@ -256,6 +268,63 @@ export function CraftsScreen() {
         </section>
       </div>
     </div>
+  );
+}
+
+/**
+ * Your grade and your name in the craft (K6, part of the study's take A): the grade the sim knows
+ * you hold, sealed solid once a guild's hall has certified it, and your craft renown where you
+ * stand, with what your mark adds to the price of what you make there.
+ */
+function GradeAndName({ game, craft }: { game: GameState; craft: CraftId }) {
+  const c = game.player;
+  const held = gradeHeld(c, craft);
+  const cert = c.crafts.grades[craft];
+  // The seal shows the badge once there is one; the grade held above it waits for its test.
+  const shown = cert?.grade ?? held;
+  const region = game.map?.region ?? HOME_REGION;
+  const day = game.calendar.day;
+  const level = craftLevel(c, region, craft, day);
+  const points = craftPoints(c, region, craft, day);
+  const next = FAME_LEVELS[level];
+  const title = shown > 0 ? gradeTitle(shown, craft) : null;
+  return (
+    <>
+      <div className="crafts-grade">
+        <div className={`crafts-seal${cert ? '' : ' is-held'}`} aria-hidden="true">
+          {shown > 0 ? CRAFT_GRADES[shown - 1]!.hanzi : '无品'}
+        </div>
+        <div>
+          <div className="crafts-grade-name">
+            {title ? capitalize(title.name) : `No grade in ${CRAFTS[craft].name}`}{' '}
+            {title && <span className="hanzi">{title.hanzi}</span>}
+          </div>
+          <p className="muted">
+            {cert && cert.grade >= held
+              ? `Certified at ${theName(cert.at)}.`
+              : cert
+                ? `Certified ${CRAFT_GRADES[cert.grade - 1]!.hanzi} at ${theName(cert.at)}; you hold tier ${held}, so the ${CRAFT_GRADES[held - 1]!.hanzi} test waits at a guild’s hall.`
+                : held > 0
+                  ? `You hold ${CRAFTS[craft].name}’s tier ${held}. A guild’s hall certifies it by one test batch, and only a certified badge opens its doors.`
+                  : `${CRAFTS[craft].name}’s tier 1 held is first-grade.`}
+          </p>
+        </div>
+      </div>
+      <p className="crafts-name">
+        In {(regionData(region)?.file.name ?? 'this region').replace(/^The /, 'the ')}:{' '}
+        {level > 0 ? `${level}, ${fameWord(level)}` : 'unknown'}
+        {level > 0 && (
+          <>
+            {' · '}your mark <strong>+{Math.round(markLift(level) * 100)}%</strong>
+          </>
+        )}
+      </p>
+      <p className="muted">
+        {next !== undefined
+          ? `${Math.floor(points)} of ${next} points to the next. Your marked goods sold here add a point a month’s wage (${round1(wagePoint(c))} low), two a month at most.`
+          : 'Known as far as a name goes.'}
+      </p>
+    </>
   );
 }
 

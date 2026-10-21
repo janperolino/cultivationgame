@@ -103,6 +103,12 @@ export interface Manual {
    * a copy of it is guarded as that power's methods are.
    */
   guardedBy?: string;
+  /**
+   * A Style's line and its chapter in it, from 1 (design § Styles and the craft grade; K6): chapter
+   * 1 at Qi Condensation, sold as a method's chapters are.
+   */
+  line?: string;
+  chapter?: number;
 }
 
 export type ManualDef = Omit<Manual, 'nodes' | 'ladder' | 'host' | 'tier'> & {

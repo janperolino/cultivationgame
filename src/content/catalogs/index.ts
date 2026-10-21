@@ -16,7 +16,7 @@ import {
   RIVER_BEND,
   THOUSAND_PADDOCKS,
 } from './seats.ts';
-import { BOUND_BONES, HUNDRED_REINS, LAMP_KEEPERS } from './sects.ts';
+import { BOUND_BONES, FRONTIER_HALL, HUNDRED_REINS, LAMP_KEEPERS, RED_MARROW } from './sects.ts';
 import { STONE_EYES, STONE_FOREST } from './stone-eyes.ts';
 import type { Catalog, Lot } from './types.ts';
 
@@ -60,6 +60,8 @@ export const CATALOGS: readonly Catalog[] = [
   HUNDRED_REINS,
   BOUND_BONES,
   LAMP_KEEPERS,
+  RED_MARROW,
+  FRONTIER_HALL,
 ].map(withSlips);
 
 /** Everything written, catalogs and the gold and red list alike. */

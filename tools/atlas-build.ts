@@ -231,12 +231,14 @@ const orgRow = (e: AtlasEntry) => ({
   pinyin: e.pinyin,
   hanzi: e.hanzi,
   ...(e.type ? { type: e.type } : {}),
+  ...(e.crafts ? { crafts: e.crafts } : {}),
   parent: e.parent,
   region: regionOf(e.id),
   top: e.top.realm,
   ...(e.population ? { population: e.population } : {}),
   ...(e.vein !== undefined ? { vein: e.vein } : {}),
   foes: (e.ties ?? []).filter((t) => t.kind === 'enemy' || t.kind === 'feud').map((t) => t.to),
+  trades: (e.ties ?? []).filter((t) => t.kind === 'trade' || t.kind === 'secret').map((t) => t.to),
 });
 writeFileSync(
   ORGS_OUT,

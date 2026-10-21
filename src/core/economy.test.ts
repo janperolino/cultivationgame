@@ -444,9 +444,9 @@ describe('loot', () => {
         "items": {
           "beast-blood": 1,
           "beast-core": 1,
-          "manual:recipe-bone-binding-talisman": 1,
-          "rockfall-talisman~green": 1,
-          "stone-milk-pill": 4,
+          "fen-yin-pill": 4,
+          "glow-cap-mushroom": 7,
+          "soul-returning-pill~green": 1,
         },
         "stones": 181,
       }
