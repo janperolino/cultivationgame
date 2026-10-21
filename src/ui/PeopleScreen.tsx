@@ -29,6 +29,11 @@ import { membershipsView, personSeat } from '../core/organizations.ts';
 import { knowsTie } from '../core/resolver/opinion.ts';
 import type { GameState, PersonRecord } from '../core/state.ts';
 import { capitalize } from './format.ts';
+import { askSpar } from '../core/playFight.ts';
+import { sparWhy, whereIs } from '../core/spar.ts';
+import { goToPlace, mapOf } from '../core/map/travel.ts';
+import { placeById } from '../core/map/region.ts';
+import { go } from './nav.ts';
 import { clampZoom, viewAt, type Size, type View } from './panzoom.ts';
 import {
   BOND_Y,
@@ -162,6 +167,67 @@ function Chips({ words, more }: { words: string[]; more?: string }) {
   );
 }
 
+/**
+ * What you can do with someone (Fights you play): spar while they stand where you are, and seek
+ * them out, a course to where you last heard of them. The rest of the row waits for the People
+ * layer.
+ */
+function PersonActs({ game, id }: { game: GameState; id: string }) {
+  const [said, setSaid] = useState<string | null>(null);
+  const who = `person:${id}`;
+  const sparNo = sparWhy(game, who);
+  const where = whereIs(game, id);
+  const map = game.map ? mapOf(game) : null;
+  const here = game.map?.inside ?? null;
+  const seekNo = !where
+    ? 'You don’t know where they are.'
+    : where === here
+      ? 'They are where you are.'
+      : !map || !placeById(map, where)
+        ? 'They are beyond this map.'
+        : null;
+  const { mapAct } = useGame.getState();
+  return (
+    <>
+      <div className="actions spaced">
+        <button
+          type="button"
+          className="button"
+          disabled={!!sparNo}
+          title={sparNo ?? undefined}
+          onClick={() =>
+            setSaid(
+              mapAct((s) => {
+                const r = askSpar(s, who);
+                return typeof r === 'string' ? { ok: false, reason: r } : { ok: true, state: r };
+              }),
+            )
+          }
+        >
+          Spar
+        </button>
+        <button
+          type="button"
+          className="button"
+          disabled={!!seekNo}
+          title={seekNo ?? undefined}
+          onClick={() => {
+            const err = mapAct((s) => goToPlace(s, where!, true));
+            if (err) setSaid(err);
+            else go('map');
+          }}
+        >
+          Seek them out
+        </button>
+        <button type="button" className="button" disabled title="Letters arrive with M5">
+          Write a letter
+        </button>
+      </div>
+      {(said ?? sparNo) && <p className="caption">{said ?? sparNo}</p>}
+    </>
+  );
+}
+
 function PersonPage({ game, id }: { game: GameState; id: string }) {
   const p = person(id);
   const r = game.player.people[id]!;
@@ -281,14 +347,7 @@ function PersonPage({ game, id }: { game: GameState; id: string }) {
       ) : (
         <p className="caption">Nothing yet.</p>
       )}
-      <div className="actions spaced">
-        <button type="button" className="button" disabled title="Letters arrive with M5">
-          Write a letter
-        </button>
-        <button type="button" className="button" disabled title="Travel arrives with M3">
-          Seek them out
-        </button>
-      </div>
+      <PersonActs game={game} id={id} />
     </section>
   );
 }

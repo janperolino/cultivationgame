@@ -407,6 +407,29 @@ const Cards = z.object({
 });
 export type CardsState = z.infer<typeof Cards>;
 
+/**
+ * Where a fight you play came from, so its end goes back there (Fights you play): a spar with a
+ * person or a training ground's partner, a road encounter's exit, or a seclusion card's choice.
+ */
+export const FightFrom = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('spar'), who: z.string() }),
+  z.object({ kind: z.literal('road'), enc: z.string(), exit: z.number().int() }),
+  z.object({ kind: z.literal('card'), uid: z.number().int(), choice: z.number().int() }),
+]);
+export type FightFrom = z.infer<typeof FightFrom>;
+
+/**
+ * A fight under way (core/played.ts): where it came from, the combat stream where its rolls
+ * started and stand now, and the actions you took, so a reload replays it to the same turn.
+ */
+export const PlayedFightSchema = z.object({
+  from: FightFrom,
+  start: z.number().int(),
+  now: z.number().int(),
+  actions: z.array(z.record(z.string(), z.unknown())),
+});
+export type PlayedFight = z.infer<typeof PlayedFightSchema>;
+
 export const GameStateSchema = z.object({
   lineage: z.object({
     id: z.string(),
@@ -469,6 +492,8 @@ export const GameStateSchema = z.object({
   map: MapLifeSchema.nullable(),
   /** Where each named random stream stands, so a reload continues the same sequences. */
   rng: z.record(z.string(), z.number().int()),
+  /** The fight you are in (Fights you play): it holds the clock until it ends. */
+  fight: PlayedFightSchema.nullable(),
 });
 export type GameState = z.infer<typeof GameStateSchema>;
 
@@ -675,6 +700,7 @@ export function newLife(opts: NewLifeOptions): GameState {
     world: startingWorld(emptyWorld(), player.origin, player.id, startDay),
     mapgen: {},
     map: null,
+    fight: null,
   };
 }
 

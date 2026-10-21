@@ -391,8 +391,8 @@ function shiftsOf(game: GameState, road = false): Shift[] {
     .map((j) => ({
       id: j.id,
       hours: j.shift,
-      name: j.drilling ? `${j.name} from layer 4` : j.name,
-      missed: !j.drilling && (road || !j.here),
+      name: j.drilling ? `${j.name} · at drill` : j.name,
+      missed: j.shift.some((h) => dutyAt(game.player, h)) && (road || !j.here),
     }));
 }
 

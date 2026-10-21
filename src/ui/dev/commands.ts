@@ -268,9 +268,11 @@ export const COMMANDS: Record<string, Command> = {
             day: s.calendar.day,
             where: hereWords(s),
           };
+          // You're there: a fight your stance isn't sure of is played or waits (Fights you play).
           return contact(
             { ...s, map: { ...s.map!, encounters: [...s.map!.encounters, enc] } },
             enc.id,
+            true,
           );
         },
         `Met ${id}.`,
