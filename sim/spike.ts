@@ -12,7 +12,7 @@ import {
 } from '../src/ai/openrouter.ts';
 import {
   fixedPrefix,
-  INTERPRETER_TASK,
+  FIGHT_TASK,
   NARRATOR_TASK,
   TAIL_TASK,
   regionBrief,
@@ -20,8 +20,8 @@ import {
 } from '../src/ai/prompts.ts';
 import {
   checkTail,
-  interpretedActionJsonSchema,
-  interpretedActionSchema,
+  fightTurnJsonSchema,
+  fightTurnSchema,
   narratorTailJsonSchema,
   splitNarration,
 } from '../src/ai/schemas.ts';
@@ -219,7 +219,7 @@ async function thinking() {
 
 // Step 2: interpreter, 40 typed actions, alternating hosts.
 async function interpreter() {
-  const system = `${PREFIX}\n\n${INTERPRETER_TASK}`;
+  const system = `${PREFIX}\n\n${FIGHT_TASK}`;
   const rows = await pool(TYPED_ACTIONS, 4, async (action, i) => {
     const host = HOSTS[i % HOSTS.length]!;
     const r = await call({
@@ -234,7 +234,7 @@ async function interpreter() {
       max_tokens: 300,
       response_format: {
         type: 'json_schema',
-        json_schema: { name: 'action', strict: true, schema: interpretedActionJsonSchema },
+        json_schema: { name: 'action', strict: true, schema: fightTurnJsonSchema },
       },
       provider: pin(host, { require_parameters: true }),
     });
@@ -245,7 +245,7 @@ async function interpreter() {
     } catch (e) {
       error = `JSON: ${(e as Error).message}`;
     }
-    const parsed = json === null ? null : interpretedActionSchema.safeParse(json);
+    const parsed = json === null ? null : fightTurnSchema.safeParse(json);
     if (parsed && !parsed.success) error = z.prettifyError(parsed.error);
     const action_ = parsed?.success ? parsed.data : null;
     const ids = action_

@@ -273,19 +273,56 @@ export function openRouterProvider(defaults: ChatOptions): ChatProvider {
   return { chat: (request, options) => streamChat(request, { ...defaults, ...options }) };
 }
 
-/** Adds up what the calls cost; the Settings cost meter reads it. */
-export class CostMeter {
+/** What a meter has counted: calls and dollars, in all and by role. */
+export interface MeterTotals {
+  calls: number;
+  cost: number;
+  promptTokens: number;
+  cachedTokens: number;
+  completionTokens: number;
+  byRole: Record<string, { calls: number; cost: number }>;
+}
+
+export function emptyTotals(): MeterTotals {
+  return { calls: 0, cost: 0, promptTokens: 0, cachedTokens: 0, completionTokens: 0, byRole: {} };
+}
+
+/**
+ * Adds up what the calls cost, every call, retries and tail calls among them, by the role that
+ * made it; the Settings cost meter reads it. `onChange` lets the settings layer keep the totals.
+ */
+export class CostMeter implements MeterTotals {
   calls = 0;
   cost = 0;
   promptTokens = 0;
   cachedTokens = 0;
   completionTokens = 0;
+  byRole: Record<string, { calls: number; cost: number }> = {};
+  onChange?: (totals: MeterTotals) => void;
 
-  record(usage: Usage): void {
+  constructor(start: MeterTotals = emptyTotals()) {
+    Object.assign(this, structuredClone(start));
+  }
+
+  record(usage: Usage, role = 'other'): void {
     this.calls += 1;
     this.cost += usage.cost;
     this.promptTokens += usage.promptTokens;
     this.cachedTokens += usage.cachedTokens;
     this.completionTokens += usage.completionTokens;
+    const r = (this.byRole[role] ??= { calls: 0, cost: 0 });
+    r.calls += 1;
+    r.cost += usage.cost;
+    this.onChange?.(this.totals());
+  }
+
+  totals(): MeterTotals {
+    const { calls, cost, promptTokens, cachedTokens, completionTokens, byRole } = this;
+    return structuredClone({ calls, cost, promptTokens, cachedTokens, completionTokens, byRole });
+  }
+
+  reset(): void {
+    Object.assign(this, emptyTotals());
+    this.onChange?.(this.totals());
   }
 }

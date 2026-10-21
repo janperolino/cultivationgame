@@ -2102,7 +2102,8 @@ select {
   gap: 6px;
 }
 
-.field input[type='text'] {
+.field input[type='text'],
+.field input[type='password'] {
   width: 220px;
   max-width: 100%;
   padding: 6px 10px;

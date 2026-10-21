@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mockProvider, sseResponse } from './mock.ts';
 import { buildBody, CostMeter, OpenRouterError, streamChat } from './openrouter.ts';
-import {
-  checkTail,
-  interpretedActionJsonSchema,
-  interpretedActionSchema,
-  splitNarration,
-} from './schemas.ts';
+import { checkTail, fightTurnJsonSchema, fightTurnSchema, splitNarration } from './schemas.ts';
 
 const fakeFetch = (response: Response) => (async () => response) as unknown as typeof fetch;
 
@@ -116,28 +111,25 @@ describe('interpreter schema', () => {
       creativity: 2,
       feasible: true,
     };
-    expect(interpretedActionSchema.parse(example).main.id).toBe('ember-palm');
+    expect(fightTurnSchema.parse(example).main.id).toBe('ember-palm');
   });
 
   it('rejects out-of-range creativity and unknown action types', () => {
     const base = { main: { type: 'strike' }, uses: [], feasible: true };
-    expect(interpretedActionSchema.safeParse({ ...base, creativity: 5 }).success).toBe(false);
+    expect(fightTurnSchema.safeParse({ ...base, creativity: 5 }).success).toBe(false);
     expect(
-      interpretedActionSchema.safeParse({ ...base, main: { type: 'summon' }, creativity: 0 })
-        .success,
+      fightTurnSchema.safeParse({ ...base, main: { type: 'summon' }, creativity: 0 }).success,
     ).toBe(false);
   });
 
   it('keeps the JSON schema keys in step with Zod', () => {
     const zodKeys = (s: { shape: object }) => Object.keys(s.shape).sort();
-    const shape = interpretedActionSchema.shape;
-    expect(Object.keys(interpretedActionJsonSchema.properties).sort()).toEqual(
-      zodKeys(interpretedActionSchema),
-    );
-    expect(Object.keys(interpretedActionJsonSchema.properties.main.properties).sort()).toEqual(
+    const shape = fightTurnSchema.shape;
+    expect(Object.keys(fightTurnJsonSchema.properties).sort()).toEqual(zodKeys(fightTurnSchema));
+    expect(Object.keys(fightTurnJsonSchema.properties.main.properties).sort()).toEqual(
       zodKeys(shape.main),
     );
-    expect(Object.keys(interpretedActionJsonSchema.properties.minor.properties).sort()).toEqual(
+    expect(Object.keys(fightTurnJsonSchema.properties.minor.properties).sort()).toEqual(
       zodKeys(shape.minor.unwrap().unwrap()),
     );
   });
