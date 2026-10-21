@@ -59,6 +59,7 @@ import {
   type TechniqueCheck,
 } from './techniques.ts';
 import { FIRST_IDS, firstsWaiting, noteFirsts, type FirstStep } from './firsts.ts';
+import { noteQuests } from './journal.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
 import {
   followWheel,
@@ -230,7 +231,7 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   next = membershipDay(next, days, atHome);
   // The bench works its Craft hours wherever you seclude, never on the road (K1).
   if (!road) next = benchDay(next, days, ctx?.seat?.hand);
-  return noteFirsts(checkScreens(next));
+  return noteQuests(noteFirsts(checkScreens(next)));
 };
 
 export interface LifeBreakthrough {

@@ -14,9 +14,10 @@
 // The attended rows (design § How the two halves connect) sit with the seat for none, a third
 // (twenty minutes of every real hour) or all of the time: a steady player on Cultivate who takes
 // four orbs in five, each on the first inhale it is in reach, and never grabs into the heat.
-// Targets (design § Character creation): every root at layer 3 in about 45 minutes; a true root at
-// layer 9 in 15–20 hours away and about half that attended throughout; a heavenly root in about
-// half the true root's time. Then the three paths (design § Economy, What the balance sims
+// Targets (design § Character creation, the opening redone): every root at layer 3 near minute 15
+// attended; attended throughout, a true root reaches Foundation in about 2.5 real hours, around age
+// 14.5, a heavenly root in about half that and a mixed root in about 4; away, at a quarter of the
+// attended rate, about 10 hours. Then the three paths (design § Economy, What the balance sims
 // measure): a pure body life and a pure soul life, given their art at birth and every waking hour
 // on it, its Foundation chapter and its gate pill at layer 9, reach layer 9 and Foundation within
 // 15% of the pure qi life (every waking hour on qi), on the true root.
@@ -40,6 +41,7 @@ import {
 } from '../src/core/attention.ts';
 import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
+import { finishAllGuides } from '../src/core/guides.ts';
 import { TREES, treeNode, type TreeNode } from '../src/content/trees/index.ts';
 import { majorCheck } from '../src/core/cultivation.ts';
 import { breakThrough, gainMethod, learn, playFirsts, switchMethod } from '../src/core/life.ts';
@@ -202,6 +204,7 @@ interface Run {
   /** Real hours at which qi reached each layer, index 2..9, and Foundation as index 10. */
   at: (number | undefined)[];
   ageAt9?: number;
+  ageAtF?: number;
   insightAt9?: number;
   bodyAt9?: string;
   soulAt9?: string;
@@ -229,7 +232,8 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
       origin: 'cave-orphan',
     },
   });
-  s = playFirsts(s);
+  // The guides are a player's, not the sim's: every one ended, so minor breakthroughs run on auto.
+  s = playFirsts(finishAllGuides(s));
   const L = ladderOf(how);
   const art = PATH_ART[L];
   if (art) {
@@ -282,11 +286,14 @@ function play(rootId: RootId, seed: number, how: Play, schedule: Schedule): Run 
       // The sim breaks through as soon as it may, at the bare minimum.
       if (majorCheck(s.player, L)?.ready) {
         s = breakThrough(s, L).state;
-        if (s.player[L].realm !== 'qi-condensation') at[10] = hours;
-        else s = givePill(s, L); // a failed attempt costs a pill; the sim gives another
+        if (s.player[L].realm !== 'qi-condensation') {
+          at[10] = hours;
+          run.ageAtF = ageYears(s.player, s.calendar.day);
+        } else s = givePill(s, L); // a failed attempt costs a pill; the sim gives another
       }
     } else {
       at[10] ??= hours;
+      run.ageAtF = ageYears(s.player, s.calendar.day);
       break;
     }
     if (r.atEdge) break;
@@ -311,6 +318,7 @@ interface Medians {
   l9?: number;
   found?: number;
   age?: number;
+  ageF?: number;
 }
 
 function table(
@@ -335,7 +343,8 @@ function table(
     );
     const at = (k: number) =>
       median(runs.map((x) => x.at[k]).filter((x): x is number => x !== undefined));
-    out[r.id] = { l3: at(3), l9: at(9), found: at(10), age };
+    const ageF = median(runs.map((x) => x.ageAtF).filter((x): x is number => x !== undefined));
+    out[r.id] = { l3: at(3), l9: at(9), found: at(10), age, ageF };
     const mid = runs[Math.floor(SEEDS / 2)]!;
     const fails = median(runs.map((x) => x.fails)) ?? 0;
     console.log(
@@ -415,58 +424,62 @@ const third = table(
 const attended = table('Attended throughout, default rule', 'default', 'all');
 const engaged = table('Attended throughout, buying tree nodes', 'nodes', 'all');
 
-// The pacing targets (design § Character creation and the first hour), checked on the away row,
-// which is the floor: the default rule with nobody at the wheel.
-const trueL9 = away.true?.l9;
+// The pacing targets (design § Character creation and the first hour, the opening redone): the
+// attended row is the goal, the away row the floor.
 checks.push([
-  'True root reaches layer 9 in 15–20 real hours, away',
-  fmt(trueL9),
-  within(trueL9, 15, 20),
+  'Attended, a true root reaches Foundation in about 2.5 real hours (2–3)',
+  fmt(attended.true?.found),
+  within(attended.true?.found, 2, 3),
 ]);
 checks.push([
-  'True root is about 30 at layer 9 (25–35)',
-  away.true?.age?.toFixed(1) ?? '—',
-  within(away.true?.age, 25, 35),
+  'Attended, a true root is about 14.5 at Foundation (14–15.5)',
+  attended.true?.ageF?.toFixed(1) ?? '—',
+  within(attended.true?.ageF, 14, 15.5),
 ]);
-const ratio = (away.heavenly?.found ?? NaN) / (away.true?.found ?? NaN);
+const ratio = (attended.heavenly?.found ?? NaN) / (attended.true?.found ?? NaN);
 checks.push([
-  'A heavenly root reaches Foundation in about half the time (0.4–0.6)',
+  'Attended, a heavenly root reaches Foundation in about half the time (0.4–0.6)',
   Number.isFinite(ratio) ? ratio.toFixed(2) : '—',
   within(ratio, 0.4, 0.6),
 ]);
-const l3s = Object.values(away).map((m) => m.l3);
 checks.push([
-  'Every root reaches layer 3 in about 45 minutes (30–60)',
+  'Attended, a mixed root reaches Foundation in about 4 hours (3.3–4.8)',
+  fmt(attended.mixed?.found),
+  within(attended.mixed?.found, 3.3, 4.8),
+]);
+const l3s = Object.values(attended).map((m) => m.l3);
+checks.push([
+  'Attended, every root reaches layer 3 near minute 15 (12–18)',
   `${fmt(Math.min(...l3s.map((x) => x ?? Infinity)))}–${fmt(Math.max(...l3s.map((x) => x ?? 0)))}`,
-  l3s.every((x) => within(x, 0.5, 1)),
+  l3s.every((x) => within(x, 0.2, 0.3)),
 ]);
 checks.push([
-  'Playing the wheel never runs slower than the floor (true root, layer 9)',
-  `nodes ${fmt(nodes.true?.l9)}, routine ${fmt(routineRow.true?.l9)}`,
-  (nodes.true?.l9 ?? Infinity) <= (trueL9 ?? 0) &&
-    (routineRow.true?.l9 ?? Infinity) <= (trueL9 ?? 0),
+  'Away, a true root reaches Foundation in about 10 real hours (8–12)',
+  fmt(away.true?.found),
+  within(away.true?.found, 8, 12),
 ]);
-// The attended rows (design § Character creation, the pacing targets' attended row).
-const halfOf = (attended.true?.l9 ?? NaN) / (trueL9 ?? NaN);
+const quarter = (attended.true?.found ?? NaN) / (away.true?.found ?? NaN);
 checks.push([
-  'Attended throughout reaches layer 9 in about half the away hours (0.4–0.6)',
-  `${fmt(attended.true?.l9)}, ${Number.isFinite(halfOf) ? halfOf.toFixed(2) : '—'} of away`,
-  within(halfOf, 0.4, 0.6),
+  'Away runs at about a quarter of the attended pace (0.2–0.3)',
+  Number.isFinite(quarter) ? quarter.toFixed(2) : '—',
+  within(quarter, 0.2, 0.3),
 ]);
 checks.push([
-  'Attended throughout is around 21 at layer 9 (18–25)',
-  attended.true?.age?.toFixed(1) ?? '—',
-  within(attended.true?.age, 18, 25),
+  'Playing the wheel never runs slower than the floor (true root, Foundation)',
+  `nodes ${fmt(nodes.true?.found)}, routine ${fmt(routineRow.true?.found)}`,
+  (nodes.true?.found ?? Infinity) <= (away.true?.found ?? 0) &&
+    (routineRow.true?.found ?? Infinity) <= (away.true?.found ?? 0),
 ]);
 checks.push([
   'A third attended sits between away and attended throughout',
-  fmt(third.true?.l9),
-  (third.true?.l9 ?? 0) < (trueL9 ?? 0) && (third.true?.l9 ?? 0) > (attended.true?.l9 ?? Infinity),
+  fmt(third.true?.found),
+  (third.true?.found ?? 0) < (away.true?.found ?? 0) &&
+    (third.true?.found ?? 0) > (attended.true?.found ?? Infinity),
 ]);
 checks.push([
-  'Attended and buying nodes lands no lower than 0.4 of the away floor',
-  fmt(engaged.true?.l9),
-  (engaged.true?.l9 ?? 0) >= 0.4 * (trueL9 ?? Infinity),
+  'Attended and buying nodes lands no lower than 0.8 of attended throughout',
+  fmt(engaged.true?.found),
+  (engaged.true?.found ?? 0) >= 0.8 * (attended.true?.found ?? Infinity),
 ]);
 printChecks();
 console.log(

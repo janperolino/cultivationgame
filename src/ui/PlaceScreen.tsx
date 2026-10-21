@@ -3,7 +3,10 @@
 // strip, its doors on the left grouped by what they are for, and the open door's counter beside them.
 // Everything done in a place is done here: its shops on P3.5's calls, the teahouse, the map seller,
 // guides, caravans, the money changer and the bed you sleep in by rule.
+import { QuestOffers } from './QuestOffers.tsx';
 import { useEffect, useState } from 'react';
+import { meetCodex } from '../core/codex.ts';
+import { endGuide, lookAt } from './guide.ts';
 import { COPY_FORM_WORDS, copyForm, copyItem, copyTitle, hasCopy } from '../content/copies.ts';
 import { item, stackSize } from '../content/items.ts';
 import { PLACE_KIND_INFO, type PlaceKindInfo } from '../content/map/places.ts';
@@ -369,6 +372,11 @@ export function PlaceScreen({
 }) {
   const mapAct = useGame((s) => s.mapAct);
   const [door, setDoor] = useState<string | null>(() => doorsAt(place.id)[0]?.id ?? null);
+  // Inside a place, its doors' guide can fire (ui/guide.ts).
+  useEffect(() => {
+    lookAt({ inside: true });
+    return () => lookAt({ inside: false, shop: false });
+  }, []);
   const [toast, setToast] = useState<string | null>(null);
   const kind = placeKindOf(place)!;
   const info = PLACE_KIND_INFO[kind];
@@ -476,7 +484,7 @@ export function PlaceScreen({
         <SiteCounter game={game} map={map} place={place} act={act} onMap={onMap} />
       ) : (
         <div className="place-body">
-          <nav className="place-doors panel" aria-label="Doors">
+          <nav className="place-doors panel" aria-label="Doors" data-guide="doors">
             {groups.length === 0 && <p className="muted">Nothing here trades with outsiders.</p>}
             {groups.map(([label, ds]) => (
               <div key={label} className="place-group">
@@ -488,7 +496,10 @@ export function PlaceScreen({
                     className={`place-door${d.later ? ' is-later' : ''}`}
                     aria-pressed={door === d.id}
                     disabled={d.later}
-                    onClick={() => setDoor(d.id)}
+                    onClick={() => {
+                      endGuide('place-doors');
+                      setDoor(d.id);
+                    }}
                   >
                     <span className={`place-seal is-small${d.later ? ' is-dim' : ''}`}>
                       {d.seal}
@@ -749,6 +760,13 @@ function ShopCounter({
   if (kinfo.repairs) tabs.push(['mend', 'Mend']);
   const [tab, setTab] = useState(tabs[0]![0]);
   const silver = kinfo.money === 'silver';
+  // A counter open: the first buy's guide can fire, and the codex meets the shops.
+  const applyLife = useGame((s) => s.applyLife);
+  useEffect(() => {
+    lookAt({ shop: true });
+    applyLife((s) => meetCodex(s, 'shop'));
+    return () => lookAt({ shop: false });
+  }, [applyLife]);
   // A sect's hall: its own pay in its currency, an outsider at friendly at the open counter (O2).
   const terms = hallTerms(game, sh);
   const house = sh.power && isOrganization(sh.power) ? houseOf(sh.power) : null;
@@ -898,8 +916,16 @@ function ShopCounter({
           )}
         </p>
       )}
+      {game.map?.inside && (
+        <QuestOffers
+          game={game}
+          kind={sh.kind === 'sect' ? 'hall' : 'shop'}
+          place={game.map.inside}
+          who={shopId}
+        />
+      )}
       {tab === 'buy' && (
-        <div className="place-rows">
+        <div className="place-rows" data-guide="buy">
           {lots.length === 0 && <p className="muted">The shelf is bare until the month turns.</p>}
           {lots.map((l) => {
             const w = ware(l.thing);
@@ -931,14 +957,15 @@ function ShopCounter({
                       key={k ?? 'lot'}
                       type="button"
                       className="place-btn"
-                      onClick={() =>
+                      onClick={() => {
+                        endGuide('first-buy');
                         act((s) => {
                           const r = buy(s, shopId, l.slot, k);
                           if (r.ok)
                             say(`Bought ${w.name}${(k ?? l.n) > 1 ? ` ×${k ?? l.n}` : ''}.`);
                           return r;
-                        })
-                      }
+                        });
+                      }}
                     >
                       {k === undefined ? 'Buy' : `Buy ${k}`}
                     </button>
@@ -2044,6 +2071,7 @@ function BoardCounter({
     p.patron && isOrganization(p.patron) ? ' · for ' + theName(p.patron) : '';
   return (
     <>
+      <QuestOffers game={game} kind="board" place={place.id} />
       <p className="place-sub">
         Take one and its spot is pinned on the map; you meet its goal there like anything the road
         brings, and are paid here when you come back. The bounty office beside it buys cores and

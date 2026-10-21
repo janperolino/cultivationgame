@@ -87,6 +87,7 @@ export const SCREEN_TEXT: Record<string, string> = {
   trees: 'The trees open: what you hold grafts on them, and insight buys their nodes.',
   techniques: 'A first technique to drill: the techniques open.',
   crafts: 'A furnace or a recipe in hand: the crafts open, and the bench waits for craft hours.',
+  journal: 'A first errand taken on: the journal opens, to keep the quests you carry.',
 };
 
 /** How a spar ended, from the subject's side (core/spar.ts). */
@@ -268,6 +269,11 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   follower: (d, w) => `${s(d.name)} ${FOLLOWER_ENDS[s(d.why)] ?? 'leaves'} ${w.name}.`,
   power: (d, w) => POWER_LINES[s(d.what)]?.(w, powerName(s(d.power)), d) ?? '',
   job: (d, w) => jobLine(d, w),
+  // A quest taken or handed in (core/journal.ts).
+  quest: (d, w) =>
+    s(d.what) === 'handed'
+      ? `${w.name} hands in ${s(d.title)}.`
+      : `${w.name} takes on ${s(d.title)}.`,
   spar: (d, w) =>
     `${w.name} spars with ${s(d.foe)} ${SPAR_ENDS[s(d.result)] ?? 'and walks away'}${n(d.turns) > 0 ? ` in ${n(d.turns)} exchange${n(d.turns) === 1 ? '' : 's'}` : ''}.`,
   // A node or manual a save names but the game no longer holds (a made-up one, a removed one) is
@@ -402,6 +408,7 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   intent: 'mastery',
   death: 'death',
   spar: 'fight',
+  quest: 'choice',
   follower: 'people',
   power: 'people',
   job: 'settled',

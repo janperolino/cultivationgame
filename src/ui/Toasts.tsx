@@ -1,6 +1,7 @@
 // The toasts in the corner (ui/toasts.ts): top right, under the season and the stones, each gone
 // after about six seconds unless hovered or focused, read out politely. A hint stays until its
 // action is done or it is dismissed, and its link leaves it showing.
+import { HINT_CODEX } from '../content/firsts.ts';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { go } from './nav.ts';
 import { useGame } from './store.ts';
@@ -49,6 +50,18 @@ function ToastCard({ t }: { t: Toast }) {
                   onClick={() => go(to.screen, to.trees, to.select, to.tab)}
                 >
                   Show me
+                </button>
+              </>
+            )}
+            {HINT_CODEX[t.hint] && (
+              <>
+                {' '}
+                <button
+                  type="button"
+                  className="link-button toast-go"
+                  onClick={() => go('journal', undefined, `codex:${HINT_CODEX[t.hint!]}`)}
+                >
+                  Codex
                 </button>
               </>
             )}

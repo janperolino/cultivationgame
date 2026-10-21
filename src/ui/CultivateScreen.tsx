@@ -27,6 +27,8 @@ import { technique } from '../content/techniques.ts';
 import { readingLine } from './bookcase.ts';
 import { EventLine, LadderBar, LifeEdgeCard } from './widgets.tsx';
 import { go, goToTab } from './nav.ts';
+import { built } from '../core/guides.ts';
+import { knownMethods } from '../core/methods.ts';
 
 /** Up to this many settled cards are told in full; past it, one a kind and the rest folded away. */
 const SHORT_TELLING = 5;
@@ -155,6 +157,7 @@ export function CultivateScreen() {
   // A great realm's panel, open, takes the band's middle before anything else (Jan's call).
   const gate = useScene((s) => !!s.panel && !s.play);
   const [reading, setReading] = useState(false);
+  const setMethod = useGame((s) => s.setMethod);
   if (!game) return null;
 
   const c = game.player;
@@ -171,6 +174,10 @@ export function CultivateScreen() {
 
   const recent = game.chronicle.slice(-RECENT_LINES).reverse();
   const age = ageYears(c, game.calendar.day);
+  // The first seclusion builds the screen a piece at a time (core/guides.ts): the figure and the
+  // qi bar alone at first, with the method to take up; the band's rest once its guides are done.
+  const whole = built(game, 'band');
+  const toTakeUp = c.activeMethods.qi === null ? knownMethods(c, 'qi')[0] : undefined;
 
   // The scene (A3; docs/mockups/cultivate-bottom-study.html): the seat fills the screen with the
   // figure low in its middle, the sun's hand behind it; along the foot a band of three columns,
@@ -195,16 +202,30 @@ export function CultivateScreen() {
       <div className="cultivate-band">
         <section className="band-who" aria-label="The cultivator">
           <h1 className="visually-hidden">Cultivate</h1>
-          <p className="cultivate-name">
-            {c.name} <small>{c.pronouns}</small>
-          </p>
-          <p className="cultivate-realm">
-            {formatLadder(c.qi)}
-            <span className="cultivate-age" title="Age against lifespan">
-              {formatAgeShort(age)} <small>of {lifespanYears(c)}</small>
-            </span>
-          </p>
-          <div className="bars cultivate-bars">
+          {whole && (
+            <>
+              <p className="cultivate-name">
+                {c.name} <small>{c.pronouns}</small>
+              </p>
+              <p className="cultivate-realm">
+                {formatLadder(c.qi)}
+                <span className="cultivate-age" title="Age against lifespan">
+                  {formatAgeShort(age)} <small>of {lifespanYears(c)}</small>
+                </span>
+              </p>
+            </>
+          )}
+          {toTakeUp && (
+            <button
+              type="button"
+              className="button take-up"
+              data-guide="take-up"
+              onClick={() => setMethod('qi', toTakeUp.id)}
+            >
+              Take up the {toTakeUp.name}
+            </button>
+          )}
+          <div className="bars cultivate-bars" data-guide="qi-bar">
             <LadderBar game={game} which="qi" why={<QiWhy game={game} />} />
             {ladderOpen(c, 'body') && (
               <LadderBar game={game} which="body" why={<StepNeeds game={game} which="body" />} />
@@ -213,60 +234,66 @@ export function CultivateScreen() {
               <LadderBar game={game} which="soul" why={<StepNeeds game={game} which="soul" />} />
             )}
           </div>
-          <div className="cultivate-routine">
-            <div className="cultivate-routine-head">
-              <h2>Today&apos;s routine</h2>
-              <small>{rates.routine ? rates.routine.name : 'Your own day'}</small>
-              <button type="button" className="link-button" onClick={() => goToTab('day')}>
-                Arrange your day →
-              </button>
+          {whole && (
+            <div className="cultivate-routine">
+              <div className="cultivate-routine-head">
+                <h2>Today&apos;s routine</h2>
+                <small>{rates.routine ? rates.routine.name : 'Your own day'}</small>
+                <button type="button" className="link-button" onClick={() => goToTab('day')}>
+                  Arrange your day →
+                </button>
+              </div>
+              <WheelStrip hours={effectiveWheel(c)} />
+              <p className="cultivate-today">{today}</p>
             </div>
-            <WheelStrip hours={effectiveWheel(c)} />
-            <p className="cultivate-today">{today}</p>
-          </div>
-        </section>
-
-        <CardFeed
-          quiet={<TodayPanel game={game} />}
-          first={
-            gate && !game.ended ? (
-              <BreakthroughPanel game={game} />
-            ) : away && !game.ended ? (
-              <AwayCard away={away} onRead={() => setReading((r) => !r)} />
-            ) : undefined
-          }
-        />
-
-        <section className="band-recent" aria-label="Recent events">
-          <h2>
-            Recent{' '}
-            <button type="button" className="link-button" onClick={() => go('chronicle')}>
-              Read all →
-            </button>
-          </h2>
-          {recent.length === 0 ? (
-            <p className="caption">Nothing has happened yet.</p>
-          ) : (
-            <ol className="chronicle">
-              {recent.map((e, i) => {
-                // Each line led by its kind's brush mark, as on the Chronicle.
-                const k = eventKind(e.type, e.data);
-                return (
-                  <li key={`${e.day}-${i}`}>
-                    <span
-                      className="cr-mk"
-                      style={{ '--kc': `var(--k-${k})` } as CSSProperties}
-                      title={KIND_WORDS[k].name}
-                    >
-                      {KIND_WORDS[k].hanzi}
-                    </span>
-                    <EventLine game={game} e={e} />
-                  </li>
-                );
-              })}
-            </ol>
           )}
         </section>
+
+        {whole && (
+          <CardFeed
+            quiet={<TodayPanel game={game} />}
+            first={
+              gate && !game.ended ? (
+                <BreakthroughPanel game={game} />
+              ) : away && !game.ended ? (
+                <AwayCard away={away} onRead={() => setReading((r) => !r)} />
+              ) : undefined
+            }
+          />
+        )}
+
+        {whole && (
+          <section className="band-recent" aria-label="Recent events">
+            <h2>
+              Recent{' '}
+              <button type="button" className="link-button" onClick={() => go('chronicle')}>
+                Read all →
+              </button>
+            </h2>
+            {recent.length === 0 ? (
+              <p className="caption">Nothing has happened yet.</p>
+            ) : (
+              <ol className="chronicle">
+                {recent.map((e, i) => {
+                  // Each line led by its kind's brush mark, as on the Chronicle.
+                  const k = eventKind(e.type, e.data);
+                  return (
+                    <li key={`${e.day}-${i}`}>
+                      <span
+                        className="cr-mk"
+                        style={{ '--kc': `var(--k-${k})` } as CSSProperties}
+                        title={KIND_WORDS[k].name}
+                      >
+                        {KIND_WORDS[k].hanzi}
+                      </span>
+                      <EventLine game={game} e={e} />
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </section>
+        )}
       </div>
     </div>
   );

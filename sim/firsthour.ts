@@ -15,6 +15,7 @@ import { defaultElements, ROOTS, type RootId } from '../src/content/roots.ts';
 import { startAttention, tickAttention } from '../src/core/attention.ts';
 import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
+import { finishAllGuides } from '../src/core/guides.ts';
 import { playFirsts } from '../src/core/life.ts';
 import { advance } from '../src/core/loop.ts';
 import type { GameState } from '../src/core/state.ts';
@@ -34,22 +35,24 @@ function run(
   seed: number,
 ) {
   let s: GameState = playFirsts(
-    createLife({
-      name: 'Sim',
-      pronouns: 'they/them',
-      look: '',
-      mode: 'ironman',
-      seed: `firsthour-${rootId}-${origin}-${choice}-${seed}`,
-      choice,
-      roll: {
-        root: rootId,
-        elements: defaultElements(rootId),
-        body: 'farmhands-frame',
-        soul: 'plain-mind',
-        fate: 'ordinary-fate',
-        origin,
-      },
-    }),
+    finishAllGuides(
+      createLife({
+        name: 'Sim',
+        pronouns: 'they/them',
+        look: '',
+        mode: 'ironman',
+        seed: `firsthour-${rootId}-${origin}-${choice}-${seed}`,
+        choice,
+        roll: {
+          root: rootId,
+          elements: defaultElements(rootId),
+          body: 'farmhands-frame',
+          soul: 'plain-mind',
+          fate: 'ordinary-fate',
+          origin,
+        },
+      }),
+    ),
   );
   const at: Partial<Record<Mark, number>> = {};
   let ms = 0;

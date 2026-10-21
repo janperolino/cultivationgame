@@ -2,11 +2,12 @@
 import { describe, expect, it } from 'vitest';
 import { comingBackStory } from '../core/comingBack.ts';
 import { createLife, type Creation } from '../core/creation.ts';
+import { finishAllGuides } from '../core/guides.ts';
 import { gainMethod, giveHours, readCopy, switchMethod } from '../core/life.ts';
 import type { GameState } from '../core/state.ts';
 import { freeWheel, hourToFlip } from '../core/wheel.ts';
 import { beacons, rings } from './beacons.ts';
-import { HINTS_OFF_DAYS } from '../content/firsts.ts';
+import { GUIDED_HINTS, HINT_CODEX, HINTS_OFF_DAYS } from '../content/firsts.ts';
 import { hintDone, hintsWaiting, nextHint } from './hints.ts';
 
 const creation: Creation = {
@@ -26,14 +27,21 @@ const creation: Creation = {
   },
 };
 
-const s0 = () => createLife(creation);
+/**
+ * A start handed its method as a copy to read, as the rogue's torn manual is (since The opening,
+ * built a start that goes along holds its method known).
+ */
+const s0 = (): GameState => {
+  const s = finishAllGuides(createLife(creation));
+  return { ...s, player: { ...s.player, methods: {}, copies: { 'method:garrison-standard': 1 } } };
+};
 
 const study = (s: GameState) =>
   giveHours(s, [hourToFlip(freeWheel(s.player), s.player.rootElements)!], 'study').state;
 
 describe('beacons', () => {
   it('stand on Routine for a new life: Read now on Study and the wheel; stones from layer 2', () => {
-    const s = createLife(creation);
+    const s = s0();
     const bs = beacons(s);
     expect(bs).toEqual([
       { screen: 'routine', tab: 'study', control: 'read-now', id: 'method:garrison-standard' },
@@ -46,7 +54,7 @@ describe('beacons', () => {
   });
 
   it('clear the moment the action is done', () => {
-    let s = readCopy(createLife(creation), 'method:garrison-standard').state;
+    let s = readCopy(s0(), 'method:garrison-standard').state;
     expect(rings(beacons(s), 'read-now')).toBe(false);
     s = study(s);
     expect(rings(beacons(s), 'wheel')).toBe(false);
@@ -61,44 +69,31 @@ describe('beacons', () => {
 });
 
 describe('hints', () => {
-  it('come one at a time in order, once a life, with a link to the control', () => {
-    const s = createLife(creation);
-    const first = nextHint(s)!;
-    expect(first.id).toBe('copy');
-    expect(first.text).toBe(
-      'Your Garrison Standard Method waits on the shelf. Read now puts it on your study hours.',
-    );
-    expect(first.to).toEqual({ screen: 'routine', tab: 'study' });
-    expect(hintsWaiting(s).map((h) => h.id)).toEqual(['copy', 'study-hour']);
+  it('come one at a time in order, once a life, with a link to the control and the codex', () => {
+    const taken = switchMethod(
+      finishAllGuides(createLife(creation)),
+      'qi',
+      'garrison-standard',
+    ).state;
+    const climbed = { ...taken, player: { ...taken.player, qi: { ...taken.player.qi, stage: 2 } } };
+    const first = nextHint(climbed)!;
+    expect(first.id).toBe('qi-hours');
+    expect(first.to).toEqual({ screen: 'routine', tab: 'day' });
+    expect(HINT_CODEX['qi-hours']).toBe('wheel');
     // Shown once: a life that dismissed it is shown the next.
-    const shown = { ...s, hints: { on: true, shown: ['copy'] } };
-    expect(nextHint(shown)!.id).toBe('study-hour');
-    // Done, its moment passes.
-    expect(
-      hintsWaiting(readCopy(s, 'method:garrison-standard').state).map((h) => h.id),
-    ).not.toContain('copy');
+    const shown = { ...climbed, hints: { on: true, shown: ['qi-hours'] } };
+    expect(nextHint(shown)!.id).toBe(hintsWaiting(climbed)[1]!.id);
   });
 
-  it('ask to take up a first method before the orbs, which wait on one taken up', () => {
-    const read = {
-      ...s0(),
-      player: { ...s0().player, methods: { 'garrison-standard': { practice: 0, fedUntil: 0 } } },
+  it('leave what a guide speaks to the guide: the copy, the method, the orbs, cards and breakthroughs', () => {
+    const s = s0();
+    const pending = {
+      ...s,
+      cards: { ...s.cards, pending: [{ uid: 1, card: 'lamp-keeper', day: 0 }] },
+      player: { ...s.player, qi: { ...s.player.qi, bar: 1e9 }, flags: ['drew-orb'] },
     };
-    const ids = hintsWaiting(read).map((h) => h.id);
-    expect(ids).toContain('method');
-    expect(ids).not.toContain('orbs');
-    expect(hintsWaiting(read).find((h) => h.id === 'method')!.text).toMatch(
-      /^You have learned your first cultivation method, the Garrison Standard Method. Take it up under Climb with to start cultivating.$/,
-    );
-    const taken = switchMethod(read, 'qi', 'garrison-standard').state;
-    // Taken up, more qi hours come next, then the orbs, before the stones.
-    const after = hintsWaiting(taken).map((h) => h.id);
-    expect(after.indexOf('qi-hours')).toBeGreaterThanOrEqual(0);
-    expect(after.indexOf('orbs')).toBe(after.indexOf('qi-hours') + 1);
-    expect(after).not.toContain('method');
-    const layer2 = { ...taken, player: { ...taken.player, qi: { ...taken.player.qi, stage: 2 } } };
-    const order = hintsWaiting(layer2).map((h) => h.id);
-    expect(order.indexOf('stones')).toBeGreaterThan(order.indexOf('orbs'));
+    const ids = hintsWaiting(pending).map((h) => h.id);
+    for (const id of GUIDED_HINTS) expect(ids, id).not.toContain(id);
   });
 
   it('go only when the player does what they say, not when the moment passes by itself', () => {
@@ -123,34 +118,17 @@ describe('hints', () => {
       screen: 'settings',
     });
   });
-
-  it('point at the card tray and a breakthrough, which are already yours to do', () => {
-    const s = createLife(creation);
-    const pending = {
-      ...s,
-      cards: { ...s.cards, pending: [{ uid: 1, card: 'lamp-keeper', day: 0 }] },
-    };
-    expect(hintsWaiting(pending).map((h) => h.id)).toContain('cards');
-    const full = {
-      ...s,
-      player: { ...s.player, qi: { ...s.player.qi, bar: 1e9 } },
-    };
-    expect(hintsWaiting(full).map((h) => h.id)).toContain('breakthrough');
-  });
 });
 
 describe('hints after a first', () => {
-  it('say what attending does after the first orb, and where insight comes from after the first node', () => {
+  it('say where insight comes from after the first node', () => {
     const s = s0();
     const ids = (x: GameState) => hintsWaiting(x).map((h) => h.id);
-    expect(ids(s)).not.toContain('attending');
     expect(ids(s)).not.toContain('insight');
-    const drew = { ...s, player: { ...s.player, flags: [...s.player.flags, 'drew-orb'] } };
-    expect(ids(drew)).toContain('attending');
     const node = { ...s, player: { ...s.player, nodes: ['qi-sensing-breath'] } };
     expect(hintsWaiting(node).find((h) => h.id === 'insight')!.text).toMatch(/study hours/);
-    // Only dismissing them answers them.
-    expect(hintDone(drew, 'attending')).toBe(false);
+    // Only dismissing it answers it.
+    expect(hintDone(node, 'insight')).toBe(false);
   });
 });
 

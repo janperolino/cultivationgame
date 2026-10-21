@@ -5,6 +5,7 @@
 // its routine, the ways of going, the stance and the course card with what's ahead) or Card, the
 // card the road brought, which shows only while one waits or is opened and opens itself then (P3.7).
 // What the road brings also shows as round seals on the map.
+import { following } from '../core/journal.ts';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { BRANCHES } from '../content/hours.ts';
 import { realm as realmInfo, stageName, type RealmId } from '../content/realms.ts';
@@ -659,9 +660,15 @@ function MapView({
         .map((p) => ({ id: `post:${p.id}`, at: p.spot, template: p.template, board: true })),
     ];
 
+  // The quest you follow: its next step's place, or its giver's to hand it in (core/journal.ts).
+  const f = following(game);
+  const questAt = f?.place
+    ? { at: [f.place.x, f.place.y] as Pt, title: f.quest.title, text: f.text }
+    : null;
+
   return (
     <div className="map-screen">
-      <div className="map-stage" ref={stage}>
+      <div className="map-stage" ref={stage} data-guide="map">
         <canvas
           ref={canvas}
           className={`map-canvas${hover ? '' : ' is-go'}`}
@@ -691,6 +698,20 @@ function MapView({
             </button>
           );
         })}
+        {questAt &&
+          (() => {
+            const [x, y] = toScreen(v, size.W, size.H, questAt.at);
+            if (x < -40 || y < -40 || x > size.W + 40 || y > size.H + 40) return null;
+            return (
+              <span
+                className="map-enc is-quest"
+                style={{ left: x, top: y }}
+                title={`${questAt.title}: ${questAt.text}`}
+              >
+                <span className="hanzi">志</span>
+              </span>
+            );
+          })()}
         <div className="map-float map-zoom">
           <button
             type="button"
