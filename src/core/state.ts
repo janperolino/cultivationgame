@@ -7,6 +7,7 @@ import { z } from 'zod';
 import type { EventData } from '../content/chronicle.ts';
 import { AUTO_IDS, GRADE_IDS } from '../content/cultivation.ts';
 import { FAMILY_IDS } from '../content/crafts.ts';
+import { HELD } from '../content/farming.ts';
 import { ELEMENTS, type Element } from '../content/elements.ts';
 import { EXPERIMENT_CRAFTS } from '../content/found.ts';
 import { ALL_FIRSTS, FIRST_IDS, type FirstId } from '../content/firsts.ts';
@@ -102,6 +103,44 @@ export type PersonRecord = z.infer<typeof PersonRecord>;
 const Inputs = z.array(z.object({ thing: z.string(), count: z.number().int().min(1) }));
 /** A throw at the bench (K7): the craft and what goes in, the talisman sheet with it. */
 const Experiment = z.object({ craft: z.enum(EXPERIMENT_CRAFTS), inputs: Inputs });
+/**
+ * A plot (K8, design § Spirit farming): nine beds however it is held, locked to its place, with the
+ * land and qi density it lies on, its soil's tiers above plain earth, the last day you stood there
+ * (tended), a season's boosters by the day they end, and the pests and thief it has had since.
+ * A bed is one crop sown from one packet: its floor, the days of growth it has put on (its age, in
+ * days), the tending sittings since its sowing and their summed hand, and second heads taken.
+ */
+export const BedSchema = z.object({
+  crop: z.string(),
+  floor: z.string(),
+  sown: z.number(),
+  grown: z.number().min(0),
+  hand: z.number().min(0),
+  sat: z.number().int().min(0),
+  again: z.number().int().min(0),
+});
+export type Bed = z.infer<typeof BedSchema>;
+export const PlotSchema = z.object({
+  id: z.string(),
+  place: z.string(),
+  held: z.enum(HELD),
+  /** The day a rented plot's lease runs out; null when bought. */
+  until: z.number().nullable(),
+  land: z.string(),
+  density: z.number().int().min(1).max(9),
+  soil: z.number().int().min(0),
+  beds: z.array(BedSchema.nullable()),
+  there: z.number(),
+  rain: z.number().optional(),
+  wood: z.number().optional(),
+  ward: z.number().optional(),
+  /** Beds the pests have taken since you were last there. */
+  pests: z.number().int().min(0),
+  /** The month a thief last came. */
+  thief: z.number().int().optional(),
+});
+export type Plot = z.infer<typeof PlotSchema>;
+
 const CraftsSchema = z.object({
   bench: z.array(
     z.object({
@@ -173,6 +212,8 @@ const CraftsSchema = z.object({
   ),
   /** Misses on each set of things thrown in (K7), by the set's key: experimentation's pity. */
   pity: z.record(z.string(), z.number().min(0)),
+  /** The plots you hold, rented or bought (K8). */
+  plots: z.array(PlotSchema),
   /** How many of each thing held are of your own making, your maker's mark 记 (K6). */
   marked: z.record(z.string(), z.number().int().min(0)),
   /**
@@ -195,7 +236,7 @@ const CraftsSchema = z.object({
 });
 export type CraftsState = z.infer<typeof CraftsSchema>;
 
-/** An empty bench, no mastery, no grade or name, nothing found: every new life's (v43, v45, v46). */
+/** An empty bench, no mastery, no grade or name, nothing found, no plot: every new life's (v43–v47). */
 export function emptyCrafts(): CraftsState {
   return {
     bench: [],
@@ -209,6 +250,7 @@ export function emptyCrafts(): CraftsState {
     found: [],
     recipes: [],
     pity: {},
+    plots: [],
   };
 }
 

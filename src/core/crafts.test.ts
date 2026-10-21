@@ -236,6 +236,10 @@ describe('in play', () => {
       }
       return need <= 0;
     };
+    // Shelves change by the month: wait for the first a refiner stands a clay furnace (K8's lots
+    // moved this one's draw).
+    for (let i = 0; i < 12 && !shelves().some((x) => x.l.thing === 'crude-clay-furnace'); i++)
+      s = { ...s, calendar: { ...s.calendar, day: s.calendar.day + 30 } };
     expect(buyAll('crude-clay-furnace', 1)).toBe(true);
     expect(buyAll('old-apricot-kernel', 12)).toBe(true);
     expect(buyAll('ridge-bitterroot', 8)).toBe(true);
@@ -285,7 +289,7 @@ describe('the save', () => {
     raw.version = 42;
     delete raw.state.player.crafts;
     const back = loadSave(raw);
-    expect(back.version).toBe(46);
+    expect(back.version).toBe(47);
     expect(back.state.player.crafts).toEqual({
       bench: [],
       front: null,
@@ -298,6 +302,7 @@ describe('the save', () => {
       found: [],
       recipes: [],
       pity: {},
+      plots: [],
     });
   });
 

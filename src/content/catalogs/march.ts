@@ -11,6 +11,48 @@ export const MARCH: Catalog = {
   at: 'qm-anbian-fu',
   layer: 'place',
   items: [
+    // Spirit farming's boosters (K8, design § Spirit farming): the farm county's, drafted for Jan's review.
+    {
+      id: 'spirit-soil',
+      name: 'Spirit Soil',
+      pinyin: 'Ling Tu',
+      hanzi: '灵土',
+      tier: 1,
+      rarity: 'white',
+      kind: 'material',
+      price: 20,
+      uses: { field: { soil: true } },
+      source: 'farm county stalls, black earth turned for decades under spirit rice',
+      text: 'A sack of dark loam that still hums faintly. Worked into a plot, it lifts its soil a tier above plain earth, to its own tier.',
+    },
+    {
+      id: 'spring-rain-talisman',
+      name: 'Spring-Rain Talisman',
+      pinyin: 'Chunyu Fu',
+      hanzi: '春雨符',
+      tier: 1,
+      rarity: 'white',
+      upTo: 'blue',
+      element: 'water',
+      kind: 'talisman',
+      uses: { field: { season: 'rain' } },
+      source: 'talisman stalls in farming country, drawn over a pressed kernel',
+      text: 'Burned over a plot, it hangs a fine warm drizzle there for a season: the plot grows half again and counts as tended.',
+    },
+    {
+      id: 'pest-warding-talisman',
+      name: 'Pest-Warding Talisman',
+      pinyin: 'Quchong Fu',
+      hanzi: '驱虫符',
+      tier: 1,
+      rarity: 'white',
+      upTo: 'blue',
+      element: 'wood',
+      kind: 'talisman',
+      uses: { field: { season: 'ward' } },
+      source: 'talisman stalls in farming country, drawn in bitterroot juice',
+      text: 'Pinned to a stake at the plot’s corner, its bitter smell keeps the spirit insects off for a season.',
+    },
     // A staple (E3): bulk goods sold by the lot, a Bag square of twenty, standing on the shelf
     // where they are made. **Awaiting Jan’s review.**
     {
@@ -404,7 +446,27 @@ export const MARCH: Catalog = {
   ],
   // The recipes for its pills (K1), each brewed by the inputs its line tells of.
   recipes: [
-    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    {
+      output: 'spring-rain-talisman',
+      craft: 'talismans',
+      family: 'wards',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'old-apricot-kernel', count: 1 },
+      ],
+    },
+    {
+      output: 'pest-warding-talisman',
+      craft: 'talismans',
+      family: 'wards',
+      inputs: [
+        { thing: 'yellow-talisman-paper', count: 5 },
+        { thing: 'cinnabar-ore', count: 1 },
+        { thing: 'ridge-bitterroot', count: 1 },
+      ],
+    },
+        // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
     {
       output: 'iron-rain-talisman',
       craft: 'talismans',
@@ -452,6 +514,10 @@ export const MARCH: Catalog = {
     },
   ],
   lots: [
+    // Spirit farming's boosters (K8)
+    { thing: 'spirit-soil', shops: ['stall', 'house'], weight: 0.5, count: [1, 4] },
+    { thing: 'spring-rain-talisman', shops: ['stall', 'house'], weight: 0.5, count: [1, 3] },
+    { thing: 'pest-warding-talisman', shops: ['stall', 'house'], weight: 0.5, count: [1, 3] },
     // Staples (E3)
     // Grain from any plain (E4's land tags, for Jan's review).
     { thing: 'spirit-rice', shops: ['stall', 'house'], count: [20, 20], land: ['plains'] },

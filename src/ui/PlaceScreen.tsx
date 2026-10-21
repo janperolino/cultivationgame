@@ -109,7 +109,10 @@ import {
   shopMonth,
   type StockLot,
 } from '../core/shops.ts';
-import type { GameState } from '../core/state.ts';
+import { withPlayer, type GameState } from '../core/state.ts';
+import { buyOf, rentOf, takePlot } from '../core/farming.ts';
+import { farmsAt, plotSpot } from '../core/map/fields.ts';
+import { go } from './nav.ts';
 import { useGame } from './store.ts';
 import { copyManual } from '../content/copies.ts';
 import { CRAFTS, recipe, type CraftId } from '../content/crafts.ts';
@@ -268,6 +271,21 @@ function doorsOf(
       tag: held ? 'paid' : 'members',
     });
   }
+  // A village or town rents and sells plots (K8).
+  const land: Door[] = [];
+  if (farmsAt(p)) {
+    const held = s.player.crafts.plots.filter((x) => x.place === p.id).length;
+    land.push({
+      id: 'fields',
+      seal: '田',
+      name: 'Fields',
+      sub: held
+        ? held === 1
+          ? 'your plot here'
+          : 'your ' + held + ' plots here'
+        : 'a plot of nine beds, rented or bought',
+    });
+  }
   if (kind === 'gate')
     return ([['Behind the gate', shops], ownGroup, ['Work', work]] as [string, Door[]][]).filter(
       ([, d]) => d.length > 0,
@@ -338,6 +356,7 @@ function doorsOf(
       ['Trade', trade],
       ownGroup,
       ['Work', work],
+      ['Land', land],
       [info.guides > 0 ? 'Hear and hire' : 'Hear', hear],
       ['Rest', rest],
     ] as [string, Door[]][]
@@ -637,6 +656,8 @@ function Counter({
       return <LawHallCounter game={game} power={place.id} act={act} say={say} />;
     case 'changer':
       return <ChangerCounter game={game} place={place} act={act} />;
+    case 'fields':
+      return <FieldsCounter game={game} place={place} act={act} />;
     case 'talk':
       return <TalkCounter game={game} map={map} place={place} act={act} />;
     case 'maps':
@@ -1671,6 +1692,53 @@ function ChangerCounter({ game, place, act }: { game: GameState; place: MapPlace
       </div>
       <p className="place-sub">
         Inns, ferries and mortal shops deal in silver and can’t make change for a stone.
+      </p>
+    </>
+  );
+}
+
+/** A village's or town's fields (K8): a plot rented for a season or bought, worked on the Crafts screen. */
+function FieldsCounter({ game, place, act }: { game: GameState; place: MapPlace; act: Act }) {
+  const spot = plotSpot(game, place);
+  if (!spot) return null;
+  const mine = game.player.crafts.plots.filter((p) => p.place === place.id).length;
+  const take = (held: 'rented' | 'bought') =>
+    act((st) => {
+      const r = takePlot(st.player, spot, held, st.calendar.day);
+      return r.reason
+        ? { ok: false, reason: r.reason }
+        : { ok: true, state: withPlayer(st, r.cultivator) };
+    });
+  const rows: ['rented' | 'bought', string, string, number][] = [
+    ['rented', 'Rent a plot', 'nine beds for a season', rentOf(spot.density)],
+    ['bought', 'Buy a plot', 'nine beds, yours to dig up and carry off', buyOf(spot.density)],
+  ];
+  return (
+    <>
+      <p className="place-sub">
+        {capitalize(spot.land)} land, qi density {spot.density}: a crop grows best where the density
+        stands at twice its tier or more. The village watches its fields, so nobody touches your
+        beds while it thinks well of you.
+      </p>
+      <div className="place-rows">
+        {rows.map(([held, n, sub, price]) => (
+          <div key={held} className="place-row is-plain">
+            <span>
+              <span className="place-row-name">{n}</span> <span className="place-sub">· {sub}</span>
+            </span>
+            <span className="place-price">{price} low</span>
+            <button type="button" className="place-btn" onClick={() => take(held)}>
+              {held === 'rented' ? 'Rent' : 'Buy'}
+            </button>
+          </div>
+        ))}
+      </div>
+      <p className="place-note">
+        <b>{mine === 0 ? 'A plot' : mine === 1 ? 'Your plot here' : 'Your plots here'}</b> is worked
+        on the Crafts screen’s Spirit Farming page, only while you stand here.{' '}
+        <button type="button" className="link-button" onClick={() => go('crafts')}>
+          Open it
+        </button>
       </p>
     </>
   );

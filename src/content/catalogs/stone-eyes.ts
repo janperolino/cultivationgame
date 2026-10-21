@@ -12,6 +12,22 @@ export const STONE_EYES: Catalog = {
   at: 'qm-shiyan-guo',
   layer: 'place',
   items: [
+    // Spirit farming's earth milk (K8), drafted for Jan's review.
+    {
+      id: 'earth-milk',
+      name: 'Earth Milk',
+      pinyin: 'Di Ru',
+      hanzi: '地乳',
+      tier: 1,
+      rarity: 'white',
+      upTo: 'purple',
+      element: 'earth',
+      kind: 'material',
+      price: 4,
+      uses: { field: { milk: true } },
+      source: 'the drip of deep karst caves, where a vein sweats into the stone',
+      text: 'A stoppered vial of milk-white water that has stood in the dark for years. Poured on a bed, those years go into the roots at once.',
+    },
     {
       id: 'slate-plate-vest',
       name: 'Slate-Plate Vest',
@@ -484,6 +500,8 @@ export const STONE_EYES: Catalog = {
     },
   ],
   lots: [
+    // Earth milk 地乳 from the deep caves' drip, spirit farming's (K8)
+    { thing: 'earth-milk', shops: ['alchemy', 'stall'], weight: 0.3 },
     { thing: 'slate-plate-vest', shops: ['stall'] },
     { thing: 'basalt-gauntlets', shops: ['stall'] },
     { thing: 'iron-knuckles', shops: ['stall'], weight: 0.5 },

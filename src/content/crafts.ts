@@ -122,6 +122,8 @@ export const TALISMAN_MAKES = {
   escape: ['swift'],
   swift: ['swift'],
   hide: ['concealing'],
+  // A plot's talisman (K8): Spring-Rain feeds, the pest ward drives off.
+  field: ['nourishing', 'purging'],
 } as const satisfies Record<string, readonly Property[]>;
 export const STRIKE_NEEDS: Partial<Record<string, Property>> = {
   poison: 'toxic',
@@ -155,7 +157,7 @@ export const BATCH = {
   refining: { hours: 8, yield: 1 },
   talismans: { hours: 2, yield: 5 },
   formations: { hours: 4, yield: 1 },
-  farming: { hours: 0, yield: 0 },
+  farming: { hours: 0, yield: 30 },
 } as const satisfies Record<CraftId, { hours: number; yield: number }>;
 export const TIER_HOURS = 1.5;
 

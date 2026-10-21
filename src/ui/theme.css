@@ -10574,6 +10574,68 @@ p.map-above {
   padding-top: 10px;
 }
 
+/* ---------------------------------------------------------------- spirit farming (K8) */
+/* The plot as its nine beds, flat; the tending scene takes the middle column while you sit. */
+.tending-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 760 / 640;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.farm-beds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.farm-bed {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 92px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-faint);
+  border-radius: 4px;
+  background: rgb(62 54 40 / 0.35);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.farm-bed.is-bare {
+  background: none;
+}
+
+.farm-bed.is-selected {
+  border-color: var(--hour-craft);
+}
+
+.farm-sub {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+.farm-away {
+  opacity: 0.5;
+}
+
+.farm-wrap {
+  flex-wrap: wrap;
+}
+
+.farm-kv {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 6px;
+  column-gap: 12px;
+  margin-bottom: 10px;
+}
+
 /* ---------------------------------------------------------------- experimenting (K7, take B) */
 /* The left column flips to a shelf of what you carry, grouped by property; the middle gains the
    bench's mouth, a ring for each thing thrown in, above the bench. Flat, nothing looping. */

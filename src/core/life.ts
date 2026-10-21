@@ -82,6 +82,9 @@ import { setCopyGain } from './map/encounters.ts';
 import { benchSpot, cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 import { atHome, jobsDay, onShift } from './jobs.ts';
 import { craftsOpen, workBench } from './crafts.ts';
+import { growPlots } from './farming.ts';
+import { farmHere, plotPlaceName } from './map/fields.ts';
+import { heatOf } from './resolver/world.ts';
 import { addCraftFame } from './craftRenown.ts';
 import { CRAFT_RENOWN } from '../content/styles.ts';
 import { HOME_REGION } from '../content/resolver.ts';
@@ -190,6 +193,22 @@ function benchDay(s: GameState, days: number, hand = 0): GameState {
 }
 
 /**
+ * The plots across a stretch (K8): they grow wherever you are, tended where you stand, and the
+ * pests, a thief or a lease run out get a line in the chronicle.
+ */
+function fieldsDay(s: GameState, from: number, to: number): GameState {
+  if (!s.player.crafts.plots.length) return s;
+  const here = farmHere(s)?.place ?? null;
+  const r = growPlots(s.player, from, to, here, (place) => heatOf(s.world, place, to));
+  let next = withPlayer(s, r.cultivator);
+  for (const e of r.events) {
+    if (e.type === 'plot-pests' || e.type === 'plot-thief' || e.type === 'plot-lost')
+      next = addEvent(next, e.type, { ...e.data, name: plotPlaceName(next, e.data.place) });
+  }
+  return next;
+}
+
+/**
  * The game's day step for `advance`: the player cultivates for a stretch of at most a day, and
  * minor breakthroughs run on the auto setting. Major breakthroughs never happen here.
  */
@@ -231,6 +250,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   next = membershipDay(next, days, atHome);
   // The bench works its Craft hours wherever you seclude, never on the road (K1).
   if (!road) next = benchDay(next, days, ctx?.seat?.hand);
+  // The plots grow wherever you are, tended where you stand (K8).
+  next = fieldsDay(next, s.calendar.day - days, s.calendar.day);
   return noteFirsts(checkScreens(next));
 };
 

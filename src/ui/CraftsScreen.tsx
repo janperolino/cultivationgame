@@ -74,6 +74,7 @@ import { formatPercent } from './format.ts';
 import { sitDown, standUp, useFurnace } from './furnace.ts';
 import { addThing, countThing, type Tossed } from './experiment.ts';
 import { Mouth, Reads, Shelf } from './ExperimentPanels.tsx';
+import { FarmingPage } from './FarmingPage.tsx';
 import { ForgeScene } from './ForgeScene.tsx';
 import { FurnaceScene } from './FurnaceScene.tsx';
 import { TalismanScene } from './TalismanScene.tsx';
@@ -84,8 +85,8 @@ import { useGame } from './store.ts';
 /** Hours to a tenth, as the bench counts them. */
 const round1 = (h: number) => Math.round(h * 10) / 10;
 
-/** The crafts built so far (alchemy in K1, refining in K4, talismans in K5); the rest show as pages yet to open. */
-const BUILT: readonly CraftId[] = ['alchemy', 'refining', 'talismans'];
+/** The crafts built so far (alchemy in K1, refining in K4, talismans in K5, spirit farming in K8); the rest show as pages yet to open. */
+const BUILT: readonly CraftId[] = ['alchemy', 'refining', 'talismans', 'farming'];
 
 /** What each built craft's page calls its things. */
 const WORDS: Partial<
@@ -270,168 +271,172 @@ export function CraftsScreen() {
           </button>
         </span>
       </nav>
-      <div className="crafts-columns">
-        <section className="panel crafts-left">
-          {experiments(page) && (
-            <div className="exp-tabs" role="tablist">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={!experimenting}
-                className={!experimenting ? 'is-current' : ''}
-                onClick={() => setTab('recipes')}
-              >
-                Recipes
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={experimenting}
-                className={experimenting ? 'is-current' : ''}
-                onClick={() => {
-                  setTab('experiment');
+      {page === 'farming' ? (
+        <FarmingPage game={game} families={<Families c={c} craft="farming" />} />
+      ) : (
+        <div className="crafts-columns">
+          <section className="panel crafts-left">
+            {experiments(page) && (
+              <div className="exp-tabs" role="tablist">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={!experimenting}
+                  className={!experimenting ? 'is-current' : ''}
+                  onClick={() => setTab('recipes')}
+                >
+                  Recipes
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={experimenting}
+                  className={experimenting ? 'is-current' : ''}
+                  onClick={() => {
+                    setTab('experiment');
+                    setWhy(null);
+                  }}
+                >
+                  Experiment <span className="hanzi">试</span>
+                </button>
+              </div>
+            )}
+            {experimenting && experiments(page) ? (
+              <Shelf
+                c={c}
+                craft={page}
+                tossed={tossed}
+                onAdd={(thing) => {
+                  setTossed((t) => addThing(t, page, thing));
                   setWhy(null);
                 }}
-              >
-                Experiment <span className="hanzi">试</span>
-              </button>
+              />
+            ) : (
+              <>
+                <h2 className="panel-heading">The {CRAFTS[page].tool}</h2>
+                <Tools c={c} craft={page} />
+                <h2 className="panel-heading">Recipes known</h2>
+                <Recipes c={c} craft={page} pick={pick} onPick={setPick} />
+                {pick && <RecipeCard c={c} r={recipe(pick)} spot={spot} onQueue={queue} />}
+                {why && <p className="warn">{why}</p>}
+              </>
+            )}
+            {!experimenting && page === 'refining' && (
+              <>
+                <h2 className="panel-heading">To mend</h2>
+                <Mends
+                  c={c}
+                  onMend={(thing) => {
+                    let reason: string | null = null;
+                    change((p) => {
+                      const r = queueMend(p, thing);
+                      reason = r.reason;
+                      return r.cultivator;
+                    });
+                    setWhy(reason);
+                  }}
+                />
+              </>
+            )}
+            {sitting && (
+              <>
+                <h2 className="panel-heading">The bench</h2>
+                <Bench c={c} onChange={change} />
+                <Tray c={c} onTake={() => change(takeTray)} />
+              </>
+            )}
+          </section>
+          {sitting && (atCraft === 'refining' || playing) ? (
+            <section className="panel crafts-furnace">
+              <div className="crafts-furnace-top">
+                <h2 className="panel-heading">
+                  {words(atCraft).at} <span className="hanzi">{words(atCraft).hanzi}</span>
+                </h2>
+                <button type="button" className="button button-quiet" onClick={standUp}>
+                  Stand up
+                </button>
+              </div>
+              {atCraft === 'refining' ? (
+                <ForgeScene key="forge" game={game} family={family} />
+              ) : atCraft === 'talismans' ? (
+                <TalismanScene key="desk" game={game} family={family} />
+              ) : (
+                playRecipe && <FurnaceScene key="furnace" game={game} recipe={playRecipe} />
+              )}
+              <p className="crafts-furnace-line muted">{words(atCraft).line}</p>
+              <BatchHand c={c} />
+            </section>
+          ) : (
+            <div className="crafts-middle">
+              {experimenting && experiments(page) && (
+                <section className="panel">
+                  <h2 className="panel-heading">{MOUTH_HEADS[page][0]}</h2>
+                  <Mouth
+                    c={c}
+                    craft={page}
+                    tossed={tossed}
+                    sets={sets}
+                    onSets={setSets}
+                    onCount={(thing, by) => {
+                      setTossed((t) => countThing(t, thing, by));
+                      setWhy(null);
+                    }}
+                    onEmpty={() => {
+                      setTossed([]);
+                      setWhy(null);
+                    }}
+                    onQueue={() => throwNow(false)}
+                    onSit={() => throwNow(true)}
+                    why={why}
+                  />
+                </section>
+              )}
+              <section className="panel crafts-bench">
+                <div className="crafts-furnace-top">
+                  <h2 className="panel-heading">The bench</h2>
+                  <button
+                    type="button"
+                    className="button"
+                    disabled={!head}
+                    title={head ? undefined : 'Queue a batch to sit at it.'}
+                    onClick={() => head && headCraft && sitDown(head.recipe, headCraft)}
+                  >
+                    {words(headCraft ?? page).sit}
+                  </button>
+                </div>
+                <Bench c={c} onChange={change} />
+                <Tray c={c} onTake={() => change(takeTray)} />
+                <Recent c={c} />
+              </section>
             </div>
           )}
           {experimenting && experiments(page) ? (
-            <Shelf
-              c={c}
-              craft={page}
-              tossed={tossed}
-              onAdd={(thing) => {
-                setTossed((t) => addThing(t, page, thing));
-                setWhy(null);
-              }}
-            />
-          ) : (
-            <>
-              <h2 className="panel-heading">The {CRAFTS[page].tool}</h2>
-              <Tools c={c} craft={page} />
-              <h2 className="panel-heading">Recipes known</h2>
-              <Recipes c={c} craft={page} pick={pick} onPick={setPick} />
-              {pick && <RecipeCard c={c} r={recipe(pick)} spot={spot} onQueue={queue} />}
-              {why && <p className="warn">{why}</p>}
-            </>
-          )}
-          {!experimenting && page === 'refining' && (
-            <>
-              <h2 className="panel-heading">To mend</h2>
-              <Mends
-                c={c}
-                onMend={(thing) => {
-                  let reason: string | null = null;
-                  change((p) => {
-                    const r = queueMend(p, thing);
-                    reason = r.reason;
-                    return r.cultivator;
-                  });
-                  setWhy(reason);
-                }}
-              />
-            </>
-          )}
-          {sitting && (
-            <>
-              <h2 className="panel-heading">The bench</h2>
-              <Bench c={c} onChange={change} />
-              <Tray c={c} onTake={() => change(takeTray)} />
-            </>
-          )}
-        </section>
-        {sitting && (atCraft === 'refining' || playing) ? (
-          <section className="panel crafts-furnace">
-            <div className="crafts-furnace-top">
-              <h2 className="panel-heading">
-                {words(atCraft).at} <span className="hanzi">{words(atCraft).hanzi}</span>
-              </h2>
-              <button type="button" className="button button-quiet" onClick={standUp}>
-                Stand up
-              </button>
-            </div>
-            {atCraft === 'refining' ? (
-              <ForgeScene key="forge" game={game} family={family} />
-            ) : atCraft === 'talismans' ? (
-              <TalismanScene key="desk" game={game} family={family} />
-            ) : (
-              playRecipe && <FurnaceScene key="furnace" game={game} recipe={playRecipe} />
-            )}
-            <p className="crafts-furnace-line muted">{words(atCraft).line}</p>
-            <BatchHand c={c} />
-          </section>
-        ) : (
-          <div className="crafts-middle">
-            {experimenting && experiments(page) && (
-              <section className="panel">
-                <h2 className="panel-heading">{MOUTH_HEADS[page][0]}</h2>
-                <Mouth
-                  c={c}
-                  craft={page}
-                  tossed={tossed}
-                  sets={sets}
-                  onSets={setSets}
-                  onCount={(thing, by) => {
-                    setTossed((t) => countThing(t, thing, by));
-                    setWhy(null);
-                  }}
-                  onEmpty={() => {
-                    setTossed([]);
-                    setWhy(null);
-                  }}
-                  onQueue={() => throwNow(false)}
-                  onSit={() => throwNow(true)}
-                  why={why}
-                />
-              </section>
-            )}
-            <section className="panel crafts-bench">
-              <div className="crafts-furnace-top">
-                <h2 className="panel-heading">The bench</h2>
-                <button
-                  type="button"
-                  className="button"
-                  disabled={!head}
-                  title={head ? undefined : 'Queue a batch to sit at it.'}
-                  onClick={() => head && headCraft && sitDown(head.recipe, headCraft)}
-                >
-                  {words(headCraft ?? page).sit}
-                </button>
-              </div>
-              <Bench c={c} onChange={change} />
-              <Tray c={c} onTake={() => change(takeTray)} />
-              <Recent c={c} />
+            <section className="panel crafts-right">
+              <h2 className="panel-heading">{MOUTH_HEADS[page][1]}</h2>
+              <Reads craft={page} />
+              <h2 className="panel-heading">Mastery by family</h2>
+              <Families c={c} craft={page} />
+              {sitting && <Recent c={c} />}
             </section>
-          </div>
-        )}
-        {experimenting && experiments(page) ? (
-          <section className="panel crafts-right">
-            <h2 className="panel-heading">{MOUTH_HEADS[page][1]}</h2>
-            <Reads craft={page} />
-            <h2 className="panel-heading">Mastery by family</h2>
-            <Families c={c} craft={page} />
-            {sitting && <Recent c={c} />}
-          </section>
-        ) : (
-          <section className="panel crafts-right">
-            <h2 className="panel-heading">
-              Grade and name <span className="hanzi">品 · 名</span>
-            </h2>
-            <GradeAndName game={game} craft={page} />
-            <h2 className="panel-heading">Mastery by family</h2>
-            <Families c={c} craft={page} />
-            <h2 className="panel-heading">The soul gate</h2>
-            <SoulGate c={c} />
-            <h2 className="panel-heading">Steady hands 稳手</h2>
-            <SteadyHands c={c} craft={page} />
-            <h2 className="panel-heading">The land</h2>
-            <Land c={c} craft={page} spot={spot} />
-            {sitting && <Recent c={c} />}
-          </section>
-        )}
-      </div>
+          ) : (
+            <section className="panel crafts-right">
+              <h2 className="panel-heading">
+                Grade and name <span className="hanzi">品 · 名</span>
+              </h2>
+              <GradeAndName game={game} craft={page} />
+              <h2 className="panel-heading">Mastery by family</h2>
+              <Families c={c} craft={page} />
+              <h2 className="panel-heading">The soul gate</h2>
+              <SoulGate c={c} />
+              <h2 className="panel-heading">Steady hands 稳手</h2>
+              <SteadyHands c={c} craft={page} />
+              <h2 className="panel-heading">The land</h2>
+              <Land c={c} craft={page} spot={spot} />
+              {sitting && <Recent c={c} />}
+            </section>
+          )}
+        </div>
+      )}
     </div>
   );
 }
