@@ -10,7 +10,7 @@ import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { CRAFTS, CRAFT_IDS, recipe, recipeFor, type CraftId } from '../content/crafts.ts';
 import { copyId, hasCopy } from '../content/copies.ts';
 import { slipId } from '../content/catalogs/index.ts';
-import { baseOf, item, variantId } from '../content/items.ts';
+import { baseOf, hasItem, item, variantId } from '../content/items.ts';
 import { realmScale } from '../content/realms.ts';
 import { BORDER_WILDS_NAMES } from '../content/roster.ts';
 import { keeperName, shop as shopById } from '../content/shops.ts';
@@ -184,10 +184,14 @@ export function craftCardsHere(s: GameState): GameState {
   return changed ? { ...s, cards: { ...s.cards, pending } } : s;
 }
 
-/** A thing at your craft tier: the reach of your craft, at least the thing's own tier. */
-function atCraftTier(c: Cultivator, id: string, rarity?: string): string {
+/**
+ * A thing at your craft tier: the reach of your craft, at least the thing's own tier. A thing with
+ * no variant at that tier (a herb takes none) stays at its own (review 2026-10-21).
+ */
+export function atCraftTier(c: Cultivator, id: string, rarity?: string): string {
   const tier = Math.max(item(id).tier, craftReach(c).tier);
-  return variantId(id, (rarity as never) ?? undefined, { tier });
+  const lifted = variantId(id, (rarity as never) ?? undefined, { tier });
+  return hasItem(lifted) ? lifted : variantId(id, (rarity as never) ?? undefined);
 }
 
 /** A recipe slip of a craft you don't hold, at your craft tier or under, the lowest first; never a power's own. */

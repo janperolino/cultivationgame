@@ -32,6 +32,7 @@ import {
   dwellingPlaceName,
   fromStore,
   giveUp,
+  givingUpLoses,
   layOutPlot,
   lapsed,
   makeAbode,
@@ -194,6 +195,8 @@ function Here({ game, d, act }: { game: GameState; d: Dwelling; act: (f: Change)
   const plots = slotPlots(game.player, d);
   const arrays = arraySlots(game.player, d);
   const [laying, setLaying] = useState(false);
+  // Giving up asks once, naming what goes with it (review 2026-10-21).
+  const [asking, setAsking] = useState(false);
   const gathered = gatheringSteps(d).steps;
   const away = game.player.grounds.filter((g) => g.region === game.map?.region);
   const works = worksAt(d);
@@ -594,16 +597,41 @@ function Here({ game, d, act }: { game: GameState; d: Dwelling; act: (f: Change)
                   Make it your abode
                 </button>
               )}
-              {d.held !== 'seat' && (
+              {d.held !== 'seat' && !asking && (
                 <button
                   type="button"
                   className="place-btn is-quiet"
-                  onClick={() => act((s) => giveUp(s, d.id))}
+                  onClick={() => setAsking(true)}
                 >
                   Give it up
                 </button>
               )}
             </div>
+            {asking && (
+              <div className="dw-actions">
+                <p className="muted">
+                  Give it up for good?{' '}
+                  {capitalize(givingUpLoses(game, d.id) ?? 'nothing of yours stays in it')}.
+                </p>
+                <button
+                  type="button"
+                  className="place-btn"
+                  onClick={() => {
+                    setAsking(false);
+                    act((s) => giveUp(s, d.id));
+                  }}
+                >
+                  Give it up
+                </button>
+                <button
+                  type="button"
+                  className="place-btn is-quiet"
+                  onClick={() => setAsking(false)}
+                >
+                  Keep it
+                </button>
+              </div>
+            )}
           </section>
           <Others game={game} except={d.id} act={act} />
         </div>

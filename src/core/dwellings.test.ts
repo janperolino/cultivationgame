@@ -14,6 +14,7 @@ import {
   dwellingOpens,
   fromStore,
   giveUp,
+  givingUpLoses,
   layOutPlot,
   makeAbode,
   offersAt,
@@ -24,6 +25,7 @@ import {
   takeFromBroker,
   toStore,
 } from './dwellings.ts';
+import { layArray } from './formations.ts';
 import { cultivate } from './life.ts';
 import { densityHere } from './organizations.ts';
 import { joinPower, leavePower } from './orgs/membership.ts';
@@ -217,6 +219,23 @@ describe('claiming in the wild', () => {
     const gone = ok(giveUp(claimed, d.id));
     expect(gone.player.dwellings).toHaveLength(0);
     expect(gone.world.standing.some((x) => x.row === 'squatting')).toBe(false);
+  });
+
+  it('gives a cave up with its arrays and store in your pack, and lets you claim it again (review 2026-10-21)', () => {
+    const v = aVein(life(), (x) => x.rating <= 2);
+    let t = claimVein(life(), v);
+    const d = t.player.dwellings[0]!;
+    t = inside(t, d.place);
+    t = withPlayer(t, addItem(addItem(t.player, 'gathering-flags', 1), 'qi-gathering-pill', 3));
+    t = ok(layArray(t, { dwelling: d.id }, 'gathering-flags', 0));
+    t = ok(toStore(t, d.id, 'qi-gathering-pill', 0));
+    expect(t.player.items['qi-gathering-pill'] ?? 0).toBe(0);
+    expect(givingUpLoses(t, d.id)).toMatch(/come into your pack/);
+    const gone = ok(giveUp(t, d.id));
+    expect(gone.player.items['gathering-flags']).toBe(1);
+    expect(gone.player.items['qi-gathering-pill']).toBe(3);
+    const back = standAt(gone, [v.x, v.y]);
+    expect(claimsHere(back).find((c) => c.vein?.id === v.id)?.why).toBeNull();
   });
 });
 

@@ -14,6 +14,8 @@ Five reviewers read it in slices: the alchemy engine, trees, fire control and ex
 
 ## The two known items
 
+**Round 1, Jan's go ("fix them all"): both fixed as proposed.** `testTimeout: 30_000`, and two suites run at once now pass (1,434 each). The road talismans (a talisman whose use is `escape` or `swift`: Earth Escape, Divine Travel) carry `road-talisman` instead of `talisman` in `goodTags`, so they fill no talisman need. The stones sim PASSes again: Sinkhole Terraces 1% left, Qi Condensation 16% on average, Foundation 14%. The shelves' draws moved with it, so `crafts.test`'s furnace purchase now waits up to 60 months for a City refiner to stand one. A clay furnace stands on a City shelf about one month in ten, before and after (12 and 14 months of 120), which is worth feeling at the checkpoint: a new crafter at the City may wait a while for one.
+
 **A. The tests that fail on the first run after a merge.** *(run)* No test depends on order or the clock. Nothing in a test reads time. The module caches in core are keyed by everything they read. Vitest isolates each file. The cause is load. About a dozen simulation-heavy tests take 2 to 4 s on a quiet machine against vitest's default limit of 5 s: `trees.test` "changes exactly the numbers each node claims" (3.8 s), `cards.test` "runs through catch-up with the day step" (3.6 s), `placing.test` (3.2 s), `played.test`, `seclusion.test`, `map.test`, `districts.test` ×2, `craftDeck.test`, `chains.test`, `loop.test`, `encounters.test` and `place.test`. Two full suites run at once time out 11 and 13 of them, and fail no assertion. A merge session's first run competes with whatever just ran (the merge, a build, another session's sims), which is why it is always the first run and why it passes on a rerun. `economy.test`'s 5.3 s test already sets its own 20 s.
 - *Fix:* `testTimeout: 30_000` in `vite.config.ts`'s `test` block, so a slow machine is never a failure and a real hang still ends. Check it by running two suites at once again.
 
@@ -25,6 +27,12 @@ Five reviewers read it in slices: the alchemy engine, trees, fire control and ex
 ## Major
 
 Ranked by what a player would feel at the checkpoint.
+
+**Round 1, Jan's go: 1 to 4 fixed as proposed, with low 22.**
+- 1: a mend queued while nothing is in the tool goes after the mends at the bench's head and before its first batch, so mends keep their order. `crafts.test` cracks the furnace at Glimpse, queues the mend at a forge and works it whole.
+- 2: `atCraftTier` keeps the thing's own tier when no variant stands at yours. A test runs every `craftTier` effect at every realm through `hasItem`.
+- 3: "Give it up" asks once, naming what goes: sown beds end, and the arrays and store come into your pack where you stand in it (what won't fit is set down there), or stay behind when you're away. Your own dug site can be claimed again, while another life's still can't. A test gives up a cave with an array and three stored pills, gets both back, and claims it again.
+- 4: an array's id is the first `arr-<day>-<n>` that no array or ground you hold carries. A test lays two in a tier 2 cave on one clock and takes one up. Low 22 is fixed beside it: the strength is held at 0, and a test sweeps the hand.
 
 1. **A furnace cracked by a blow-up can't be mended at your own forge: the mend queues behind the batch it blocks.** *(run)*
    - Where: `core/crafts.ts:294-304` (`queueMend` appends to the bench's end); `workBench` and `load` stop at a head entry that can't load.

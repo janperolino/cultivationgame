@@ -290,7 +290,11 @@ export function cantMend(c: Cultivator, thing: string): string | null {
   return null;
 }
 
-/** Queues a piece to be mended at the bench's end. */
+/**
+ * Queues a piece to be mended: while nothing is loaded in the tool, after the mends at the bench's
+ * head and before its first batch, since a cracked tool's mend is what lets that batch load
+ * (review 2026-10-21); else at its end.
+ */
 export function queueMend(
   c: Cultivator,
   thing: string,
@@ -299,7 +303,12 @@ export function queueMend(
   if (why) return { cultivator: c, reason: why };
   if (c.crafts.bench.some((e) => e.mend === thing))
     return { cultivator: c, reason: 'It is on the bench already.' };
-  const bench = [...c.crafts.bench, { recipe: baseOf(thing), batches: 1, mend: thing }];
+  const entry = { recipe: baseOf(thing), batches: 1, mend: thing };
+  const at = c.crafts.front ? -1 : c.crafts.bench.findIndex((e) => !e.mend);
+  const bench =
+    at < 0
+      ? [...c.crafts.bench, entry]
+      : [...c.crafts.bench.slice(0, at), entry, ...c.crafts.bench.slice(at)];
   return { cultivator: withCrafts(c, { bench }), reason: null };
 }
 

@@ -26,7 +26,7 @@ import {
   type WorkId,
 } from '../content/dwellings.ts';
 import { PLOT } from '../content/farming.ts';
-import { hasItem, item, stackSize } from '../content/items.ts';
+import { hasItem, item, stackSize, variantId } from '../content/items.ts';
 import { hasJob, isHire, job } from '../content/jobs.ts';
 import { veinAt } from '../content/map/index.ts';
 import { realmScale } from '../content/realms.ts';
@@ -258,12 +258,40 @@ function drop(c: Cultivator, d: Dwelling): Cultivator {
   return { ...c, dwellings, abode, crafts: { ...c.crafts, plots } };
 }
 
-/** Gives a dwelling up: a squatter's deed ends with it. A seat's quarters go only with the seat. */
+/**
+ * What giving a dwelling up costs, in words for the ask: its beds end with it, and its arrays and
+ * store come with you where you stand in it, else stay behind. Null when nothing is lost.
+ */
+export function givingUpLoses(s: GameState, id: string): string | null {
+  const d = dwellingById(s.player, id);
+  if (!d) return null;
+  const here = s.map?.inside === d.place;
+  const beds = s.player.crafts.plots.filter((p) => p.held === 'slot' && p.place === d.place);
+  const sown = beds.reduce((n, p) => n + p.beds.filter((b) => b !== null).length, 0);
+  const stored = Object.values(d.items).reduce((n, k) => n + k, 0);
+  const out: string[] = [];
+  if (sown) out.push(`its ${sown} sown bed${sown === 1 ? '' : 's'} end with it`);
+  if (!here && d.arrays.length)
+    out.push(`its ${d.arrays.length} laid array${d.arrays.length === 1 ? '' : 's'} stay behind`);
+  if (!here && stored) out.push('its store stays behind');
+  if (here && (d.arrays.length || stored))
+    out.push('its arrays and store come into your pack, what won’t fit set down here');
+  return out.length ? out.join('; ') : null;
+}
+
+/**
+ * Gives a dwelling up: a squatter's deed ends with it. A seat's quarters go only with the seat.
+ * Standing in it, you take its arrays up and its store with you (review 2026-10-21).
+ */
 export function giveUp(s: GameState, id: string): Done {
   const d = dwellingById(s.player, id);
   if (!d) return no('You don’t hold it.');
   if (d.held === 'seat') return no('Your quarters go with your seat: ask to be released.');
   let next = withPlayer(s, drop(s.player, d));
+  if (s.map?.inside === d.place) {
+    for (const a of d.arrays) next = gainItem(next, variantId(a.item, a.from), 1).state;
+    for (const [thing, n] of Object.entries(d.items)) next = gainItem(next, thing, n).state;
+  }
   if (d.held === 'claimed' && d.power) next = { ...next, world: endSquat(next.world, s, d.power) };
   return {
     ok: true,
@@ -481,7 +509,11 @@ export function claimsHere(s: GameState): Claim[] {
     const v = veinById(map, s.lineage.id, id);
     if (!v || !near(v.x, v.y)) continue;
     const madeId = `made:${v.id}`;
-    const owned = map.places.some((p) => p.id === madeId);
+    // A site another life dug is theirs; one you gave up is yours to claim again.
+    const mine = (s.mapgen[map.id]?.made ?? []).some(
+      (m) => m.id === madeId && m.by === s.player.id,
+    );
+    const owned = !mine && map.places.some((p) => p.id === madeId);
     out.push({
       kind: v.tier > 1 ? 'mountain' : 'cave',
       vein: v,

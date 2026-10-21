@@ -523,7 +523,10 @@ export function goodOf(thing: string): string {
 export function goodTags(thing: string): string[] {
   if (hasCopy(thing)) return ['copy'];
   const it = item(thing);
-  const tags: string[] = [itemKind(it), ...(it.tags ?? [])];
+  // A talisman for the road (Earth Escape, Divine Travel) is no month's wear: it fills no talisman
+  // need (K5's passage talismans tipped the stones sim, review 2026-10-21).
+  const road = itemKind(it) === 'talisman' && (!!it.uses.escape || !!it.uses.swift);
+  const tags: string[] = [road ? 'road-talisman' : itemKind(it), ...(it.tags ?? [])];
   for (const e of it.uses.consume?.effects ?? []) {
     if (e.effect === 'restore') tags.push(e.what === 'hp' ? 'healing' : 'qi-restoring');
     if (e.effect === 'fuel') tags.push(`${e.ladder}-fuel`);

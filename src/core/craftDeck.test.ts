@@ -4,9 +4,18 @@
 // choice settles on the game, its stakes on the realm curve.
 import { describe, expect, it } from 'vitest';
 import { CARDS, card, type Card } from '../content/cards/index.ts';
+import { hasItem } from '../content/items.ts';
+import { REALM_IDS } from '../content/realms.ts';
 import { shop } from '../content/shops.ts';
 import { pushCard, resolveCard, drawCards, costStones } from './cards.ts';
-import { CRAFT_DECK, craftDeckOpen, craftPage, craftShare, craftWords } from './craftDeck.ts';
+import {
+  atCraftTier,
+  CRAFT_DECK,
+  craftDeckOpen,
+  craftPage,
+  craftShare,
+  craftWords,
+} from './craftDeck.ts';
 import { addCraftFame } from './craftRenown.ts';
 import { takePlot } from './farming.ts';
 import { addItem, newLife, withPlayer, type GameState } from './state.ts';
@@ -121,5 +130,20 @@ describe('the craft deck', () => {
     expect(craft).toBeGreaterThan(0);
     expect(craft / all).toBeGreaterThan(0.15);
     expect(craft / all).toBeLessThan(0.5);
+  });
+
+  it('gives every thing a card lifts to your craft tier, at every realm (review 2026-10-21)', () => {
+    const lifted: { id: string; rarity?: string }[] = [];
+    JSON.stringify(DECK, (_k, v: unknown) => {
+      const e = v as { do?: string; craftTier?: boolean; id?: string; rarity?: string } | null;
+      if (e?.do === 'item' && e.craftTier && e.id) lifted.push({ id: e.id, rarity: e.rarity });
+      return v;
+    });
+    expect(lifted.length).toBeGreaterThan(0);
+    const c = newLife({ name: 'Han Li', seed: 'craft-deck' }).player;
+    for (const realm of REALM_IDS) {
+      const at = { ...c, qi: { ...c.qi, realm } };
+      for (const e of lifted) expect(hasItem(atCraftTier(at, e.id, e.rarity))).toBe(true);
+    }
   });
 });

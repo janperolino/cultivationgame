@@ -20,6 +20,7 @@ import {
   liftOf,
   planInputs,
   queueBatches,
+  queueMend,
   takeTray,
   workBench,
   yieldOf,
@@ -167,6 +168,13 @@ describe('the bench', () => {
     const cracked = Object.keys(c.items).find((id) => item(id).cracked)!;
     expect(baseOf(cracked)).toBe('crude-clay-furnace');
     expect(benchWaits(c)).toMatch(/cracked/);
+    // Or your own forge does: the mend goes ahead of the batch it unblocks (review 2026-10-21).
+    let own = addItem(addItem(c, 'crude-iron-forge', 1), 'red-rocks-iron-ore', 5);
+    own = queueMend(own, cracked).cultivator;
+    expect(own.crafts.bench[0]?.mend).toBe(cracked);
+    own = workBench(own, 2, 0, new Rng(3)).cultivator;
+    expect(own.items['crude-clay-furnace']).toBe(1);
+    expect(own.items[cracked] ?? 0).toBe(0);
     // A refiner mends it for a tenth of its worth.
     let s = withPlayer(newLife({ name: 'Han Li', seed: 'craft' }), { ...c, stones: 100 });
     const refiner = SHOPS.find((sh) => sh.kind === 'refiner')!.id;
@@ -236,9 +244,9 @@ describe('in play', () => {
       }
       return need <= 0;
     };
-    // Shelves change by the month: wait for the first a refiner stands a clay furnace (K8's lots
-    // moved this one's draw).
-    for (let i = 0; i < 12 && !shelves().some((x) => x.l.thing === 'crude-clay-furnace'); i++)
+    // Shelves change by the month: wait for the first a refiner stands a clay furnace, about one
+    // month in ten at the City (K8's lots and the review's road talismans moved this one's draw).
+    for (let i = 0; i < 60 && !shelves().some((x) => x.l.thing === 'crude-clay-furnace'); i++)
       s = { ...s, calendar: { ...s.calendar, day: s.calendar.day + 30 } };
     expect(buyAll('crude-clay-furnace', 1)).toBe(true);
     expect(buyAll('old-apricot-kernel', 12)).toBe(true);

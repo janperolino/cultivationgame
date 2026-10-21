@@ -146,7 +146,19 @@ export function laidAt(
   const bands = Math.floor(lift + 1e-9);
   const rank = Math.min(RARITY_IDS.length - 1, rarityRank(rarity) + bands);
   const top = rank === RARITY_IDS.length - 1;
-  return { rarity: RARITY_IDS[rank]!, strength: top ? 0 : Math.min(1, lift - bands) };
+  // Held at 0: a lift a hair under a whole band leaves float dust below it.
+  return { rarity: RARITY_IDS[rank]!, strength: top ? 0 : Math.max(0, Math.min(1, lift - bands)) };
+}
+
+/** An id no array or ground you hold carries, so two laid on one clock never share one. */
+function freshArrayId(c: Cultivator, day: number): string {
+  const taken = new Set([
+    ...c.grounds.map((g) => g.id),
+    ...c.dwellings.flatMap((d) => d.arrays.map((a) => a.id)),
+  ]);
+  let n = 0;
+  while (taken.has(`arr-${Math.round(day * 1000)}-${n}`)) n++;
+  return `arr-${Math.round(day * 1000)}-${n}`;
 }
 
 /** Lays an array from the Bag at a dwelling you stand in or on the open ground here. */
@@ -165,7 +177,7 @@ export function layArray(
   const day = s.calendar.day;
   const { rarity, strength } = laidAt(s.player, it.rarity, hand);
   const laid: LaidArray = {
-    id: `arr-${Math.round(day * 1000)}-${s.player.grounds.length + s.player.dwellings.length}`,
+    id: freshArrayId(s.player, day),
     item: it.id,
     rarity,
     from: it.rarity,

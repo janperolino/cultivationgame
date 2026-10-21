@@ -61,8 +61,8 @@ const days = (s: GameState, n: number): GameState => {
 const veins = (s: GameState): Vein[] => veinsOf(mapOf(s)!, s.lineage.id);
 
 /** A cave abode claimed on a tier 1 vein, stood in. */
-function cave(s: GameState, where: (v: Vein) => boolean = () => true): GameState {
-  const v = veins(s).find((x) => x.tier === 1 && where(x));
+function cave(s: GameState, where: (v: Vein) => boolean = () => true, tier = 1): GameState {
+  const v = veins(s).find((x) => x.tier === tier && where(x));
   if (!v) throw new Error('no vein');
   let t = standAt(withPlayer(s, { ...s.player, soul: { ...s.player.soul, stage: 9 } }), [v.x, v.y]);
   t = { ...t, map: readLand(mapOf(t)!, t.lineage.id, t.map!, t.player, t.calendar.day).life };
@@ -115,6 +115,26 @@ describe('laying an array', () => {
     s = ok(takeUp(s, at(s), id));
     expect(site(s).arrays).toHaveLength(0);
     expect(s.player.items['gathering-flags']).toBe(1);
+  });
+
+  it('gives two laid on one clock their own ids: taking one up leaves the other (review 2026-10-21)', () => {
+    // A tier 2 vein's cave holds two; the clock doesn't move between the two.
+    let s = cave(life(), () => true, 2);
+    s = give(give(s, 'gathering-flags'), 'warding-flags');
+    s = ok(layArray(s, at(s), 'gathering-flags', 0));
+    s = ok(layArray(s, at(s), 'warding-flags', 0));
+    const [a, b] = site(s).arrays;
+    expect(a!.id).not.toBe(b!.id);
+    s = ok(takeUp(s, at(s), a!.id));
+    expect(site(s).arrays.map((x) => x.item)).toEqual(['warding-flags']);
+    expect(s.player.items['gathering-flags']).toBe(1);
+  });
+
+  it('never lays a strength below 0, whatever the float dust', () => {
+    const c = life().player;
+    for (let h = 0; h <= 1; h += 0.001) {
+      expect(laidAt(c, 'white', h).strength).toBeGreaterThanOrEqual(0);
+    }
   });
 
   it('only on land claimed on a vein, or on open ground', () => {
