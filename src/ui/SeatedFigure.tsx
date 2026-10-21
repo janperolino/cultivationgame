@@ -46,6 +46,7 @@ import { holdStill, noteDay, onBreath, seatTime, showFigure, useSeat } from './s
 import { reducedMotion, useSettings } from './settings.ts';
 import { SunCanvas } from './sunCanvas.ts';
 import { useGame } from './store.ts';
+import { built } from '../core/guides.ts';
 import { Why } from './widgets.tsx';
 
 /** One mote stands for this share of the bar, so motes come at the real qi rate. */
@@ -98,6 +99,8 @@ export function SeatedFigure({ game }: { game: GameState }) {
   const sunRef = useRef<HTMLCanvasElement>(null);
   const sunEngine = useRef<SunCanvas | null>(null);
 
+  // While a breakthrough's scene runs, the figure is where its gates are tapped (ui/GuideLayer.tsx).
+  const scenePlays = useScene((s) => !!s.play);
   const fill = Math.min(1.5, Math.max(0, barFill(c.qi)));
   const level = Math.min(1, fill);
   const state = figureState(game, useSeat.getState().attention);
@@ -191,6 +194,7 @@ export function SeatedFigure({ game }: { game: GameState }) {
       <div
         ref={boxRef}
         className="seat-figure"
+        data-guide={scenePlays ? 'gate' : undefined}
         onPointerMove={(ev) => onPointer(ev)}
         onPointerDown={(ev) => onPointer(ev, true)}
         onPointerLeave={onLeave}
@@ -217,6 +221,7 @@ export function SeatedFigure({ game }: { game: GameState }) {
         <canvas
           ref={canvasRef}
           className="seat-canvas"
+          data-guide="orb"
           style={{ '--qi-pad': QI_PAD } as CSSProperties}
           aria-hidden="true"
         />
@@ -318,7 +323,7 @@ function FocusRing({ game, box }: { game: GameState; box: string }) {
   const c = game.player;
   const a = useSeat((s) => s.attention);
   const play = useScene((s) => s.play);
-  if (!a || play || game.ended || !ladderMethod(c, 'qi')) return null;
+  if (!a || play || game.ended || !ladderMethod(c, 'qi') || !built(game, 'focus')) return null;
   const seat = seatOf(a, c);
   const heat = Math.min(1, a.heat / heatLimit(c));
   const ceiling = 1 + attentionCeiling(c);
@@ -346,6 +351,7 @@ function FocusRing({ game, box }: { game: GameState; box: string }) {
   return (
     <svg
       className="focus-ring"
+      data-guide="focus"
       viewBox={box}
       role="meter"
       aria-label={`Attention ×${seat.factor.toFixed(2)} of ×${ceiling.toFixed(2)}, heat ${Math.round(heat * 100)}%`}
@@ -372,7 +378,7 @@ function FocusMeter({ game }: { game: GameState }) {
   const c = game.player;
   const a = useSeat((s) => s.attention);
   const hint = useMemo(() => (a ? seatHint(c, a) : null), [a, c]);
-  if (!hint || game.ended) return null;
+  if (!hint || game.ended || !built(game, 'focus')) return null;
   return (
     <div className="seat-meter">
       <p className="caption">

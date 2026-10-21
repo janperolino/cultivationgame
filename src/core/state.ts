@@ -6,8 +6,13 @@ import { DAYS_PER_YEAR } from '../content/calendar.ts';
 import { z } from 'zod';
 import type { EventData } from '../content/chronicle.ts';
 import { AUTO_IDS, GRADE_IDS } from '../content/cultivation.ts';
+import { FAMILY_IDS } from '../content/crafts.ts';
+import { HELD } from '../content/farming.ts';
+import { DWELLING_HELD, DWELLING_KINDS, RENT_PERIODS } from '../content/dwellings.ts';
 import { ELEMENTS, type Element } from '../content/elements.ts';
+import { EXPERIMENT_CRAFTS } from '../content/found.ts';
 import { ALL_FIRSTS, FIRST_IDS, type FirstId } from '../content/firsts.ts';
+import { GUIDE_IDS, type GuideId } from '../content/guides.ts';
 import { FRESH_WHEEL, HOUR_KIND_IDS, HOURS_PER_DAY } from '../content/hours.ts';
 import {
   ORIGIN_CHOICES,
@@ -94,8 +99,114 @@ export type PersonRecord = z.infer<typeof PersonRecord>;
  * The crafts (core/crafts.ts, K1): the bench's queue, worked from the front on Craft hours; the
  * front batch, its inputs already in the tool; the tray where finished pieces wait when the Bag is
  * full; the batches counted toward each family's mastery; and the bench's last few batches. A bench
- * entry with `mend` mends that piece at the forge (K4): its `recipe` is the piece's own id.
+ * entry with `mend` mends that piece at the forge (K4): its `recipe` is the piece's own id. One
+ * with `experiment` throws things in (K7): its `recipe` is `experiment` and its batches the sets.
  */
+const Inputs = z.array(z.object({ thing: z.string(), count: z.number().int().min(1) }));
+/** A throw at the bench (K7): the craft and what goes in, the talisman sheet with it. */
+const Experiment = z.object({ craft: z.enum(EXPERIMENT_CRAFTS), inputs: Inputs });
+/**
+ * A plot (K8, design § Spirit farming): nine beds however it is held, locked to its place, with the
+ * land and qi density it lies on, its soil's tiers above plain earth, the last day you stood there
+ * (tended), a season's boosters by the day they end, and the pests and thief it has had since.
+ * A bed is one crop sown from one packet: its floor, the days of growth it has put on (its age, in
+ * days), the tending sittings since its sowing and their summed hand, and second heads taken.
+ */
+export const BedSchema = z.object({
+  crop: z.string(),
+  floor: z.string(),
+  sown: z.number(),
+  grown: z.number().min(0),
+  hand: z.number().min(0),
+  sat: z.number().int().min(0),
+  again: z.number().int().min(0),
+});
+export type Bed = z.infer<typeof BedSchema>;
+export const PlotSchema = z.object({
+  id: z.string(),
+  place: z.string(),
+  held: z.enum(HELD),
+  /** The day a rented plot's lease runs out; null when bought. */
+  until: z.number().nullable(),
+  land: z.string(),
+  density: z.number().int().min(1).max(9),
+  soil: z.number().int().min(0),
+  beds: z.array(BedSchema.nullable()),
+  there: z.number(),
+  rain: z.number().optional(),
+  wood: z.number().optional(),
+  ward: z.number().optional(),
+  /** Beds the pests have taken since you were last there. */
+  pests: z.number().int().min(0),
+  /** The month a thief last came. */
+  thief: z.number().int().optional(),
+});
+export type Plot = z.infer<typeof PlotSchema>;
+
+/**
+ * A dwelling (K9, design § Dwellings are sites): one record for every place you live, at most one
+ * a place. Its kind, the place it stands in (a town, a city, a seat, or a site), how it is held
+ * and the day its rent runs to (null when bought, claimed or a seat's), the rent's period, the
+ * qi density steps it stands above the land, its plot slots and store squares, what lies in the
+ * store, the works you have built and the one under way, a seat's power, and a raid waiting.
+ */
+/**
+ * An array laid (K10, design § Sites and formations): its flags' or disc's thing, the rarity it was
+ * laid at and its strength inside that band (the placing hand's lift past the whole bands), the
+ * stones left in its eye and the day it went in.
+ */
+export const LaidArraySchema = z.object({
+  id: z.string(),
+  item: z.string(),
+  rarity: z.enum(RARITY_IDS),
+  /** The rarity its flags or disc were, which taking it up gives back. */
+  from: z.enum(RARITY_IDS),
+  strength: z.number().min(0).max(1),
+  stones: z.number().min(0),
+  laid: z.number(),
+});
+export type LaidArray = z.infer<typeof LaidArraySchema>;
+
+/**
+ * Prepared ground (K10): an array laid off your sites, at a spot of a region. A trap holds what
+ * walked in (a beast of the land's, its roster and band, since a day) until you come; `asked` is
+ * the last day the world sent something across it.
+ */
+export const GroundSchema = LaidArraySchema.extend({
+  region: z.string(),
+  at: z.tuple([z.number(), z.number()]),
+  held: z.object({ roster: z.string(), band: z.number().int(), since: z.number() }).nullable(),
+  asked: z.number(),
+});
+export type Ground = z.infer<typeof GroundSchema>;
+
+export const DwellingSchema = z.object({
+  id: z.string(),
+  kind: z.enum(DWELLING_KINDS),
+  place: z.string(),
+  held: z.enum(DWELLING_HELD),
+  until: z.number().nullable(),
+  period: z.enum(Object.keys(RENT_PERIODS) as [keyof typeof RENT_PERIODS]).nullable(),
+  steps: z.number().int().min(0),
+  slots: z.number().int().min(0),
+  store: z.number().int().min(0),
+  items: z.record(z.string(), z.number().int().min(0)),
+  built: z.array(z.string()),
+  work: z.object({ id: z.string(), left: z.number() }).nullable(),
+  since: z.number(),
+  /** A seat's quarters: the power. A claim inside a power's sphere: the power it squats on. */
+  power: z.string().nullable(),
+  /** A raid's card waiting (its uid) and what came: thieves or a beast, at a band. */
+  raid: z
+    .object({ uid: z.number().int(), kind: z.enum(['thieves', 'beast']), band: z.number() })
+    .nullable(),
+  /** The month the world last sent a raid. */
+  raided: z.number().int().nullable(),
+  /** The arrays laid in its slots (K10). */
+  arrays: z.array(LaidArraySchema),
+});
+export type Dwelling = z.infer<typeof DwellingSchema>;
+
 const CraftsSchema = z.object({
   bench: z.array(
     z.object({
@@ -103,6 +214,8 @@ const CraftsSchema = z.object({
       batches: z.number().int().min(1),
       /** The piece mended at the forge, by its id, when the entry is a mend (K4). */
       mend: z.string().optional(),
+      /** What is thrown in, when the entry is an experiment (K7). */
+      experiment: Experiment.optional(),
     }),
   ),
   front: z
@@ -118,6 +231,8 @@ const CraftsSchema = z.object({
       hand: z.number().min(0).optional(),
       /** The piece being mended, when the front is a mend (K4). */
       mend: z.string().optional(),
+      /** What is thrown in, when the front is an experiment (K7). */
+      experiment: Experiment.optional(),
     })
     .nullable(),
   tray: z.record(z.string(), z.number().int().min(0)),
@@ -135,6 +250,10 @@ const CraftsSchema = z.object({
       hand: z.number().min(0).max(1).optional(),
       /** A piece mended rather than a batch made (K4). */
       mend: z.boolean().optional(),
+      /** An experiment (K7): what went in, the recipe found if it took, a miss that came close. */
+      experiment: z
+        .object({ inputs: Inputs, found: z.string().optional(), near: z.boolean().optional() })
+        .optional(),
     }),
   ),
   /** The grades certified at a guild's hall, by craft (K6): the grade, the day and the guild. */
@@ -142,6 +261,25 @@ const CraftsSchema = z.object({
     z.string(),
     z.object({ grade: z.number().int().min(1).max(9), day: z.number(), at: z.string() }),
   ),
+  /**
+   * Recipes found by experiment (K7), written or generated, by id, in the order found. Written ones
+   * are known as if learned; a craft Dao's own seal is learned in its place besides.
+   */
+  found: z.array(z.string()),
+  /** The generated recipes found (K7): their thing's id carries the rest (content/found.ts). */
+  recipes: z.array(
+    z.object({
+      output: z.string(),
+      craft: z.enum(EXPERIMENT_CRAFTS),
+      family: z.enum(FAMILY_IDS),
+      inputs: Inputs,
+      day: z.number(),
+    }),
+  ),
+  /** Misses on each set of things thrown in (K7), by the set's key: experimentation's pity. */
+  pity: z.record(z.string(), z.number().min(0)),
+  /** The plots you hold, rented or bought (K8). */
+  plots: z.array(PlotSchema),
   /** How many of each thing held are of your own making, your maker's mark 记 (K6). */
   marked: z.record(z.string(), z.number().int().min(0)),
   /**
@@ -164,7 +302,7 @@ const CraftsSchema = z.object({
 });
 export type CraftsState = z.infer<typeof CraftsSchema>;
 
-/** An empty bench, no mastery, no grade or name: every new life's, and every old save's (v43, v45). */
+/** An empty bench, no mastery, no grade or name, nothing found, no plot: every new life's (v43–v48). */
 export function emptyCrafts(): CraftsState {
   return {
     bench: [],
@@ -175,6 +313,10 @@ export function emptyCrafts(): CraftsState {
     grades: {},
     marked: {},
     renown: {},
+    found: [],
+    recipes: [],
+    pity: {},
+    plots: [],
   };
 }
 
@@ -325,6 +467,11 @@ export const CultivatorSchema = z.object({
    */
   intent: z.record(z.string(), z.number().int().min(1)),
   crafts: CraftsSchema,
+  /** The dwellings you hold (K9), and the one that is your abode. */
+  dwellings: z.array(DwellingSchema),
+  abode: z.string().nullable(),
+  /** Arrays laid on open ground (K10). */
+  grounds: z.array(GroundSchema),
 });
 export type Cultivator = z.infer<typeof CultivatorSchema>;
 
@@ -357,6 +504,8 @@ const PendingCard = z.object({
   vars: z.record(z.string(), z.number()).optional(),
   /** The choices taken so far, one per step. */
   path: z.array(z.number().int()).optional(),
+  /** Words a system that queued it fills its slots with: a site's name (K9). */
+  words: z.record(z.string(), z.string()).optional(),
 });
 export type PendingCard = z.infer<typeof PendingCard>;
 
@@ -373,6 +522,45 @@ const Cards = z.object({
 });
 export type CardsState = z.infer<typeof Cards>;
 
+/**
+ * Where a fight you play came from, so its end goes back there (Fights you play): a spar with a
+ * person or a training ground's partner, a road encounter's exit, or a seclusion card's choice.
+ */
+export const FightFrom = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('spar'), who: z.string() }),
+  /** What a trap on open ground holds (K10), by the ground's id. */
+  z.object({ kind: z.literal('trap'), ground: z.string() }),
+  z.object({ kind: z.literal('road'), enc: z.string(), exit: z.number().int() }),
+  z.object({ kind: z.literal('card'), uid: z.number().int(), choice: z.number().int() }),
+]);
+export type FightFrom = z.infer<typeof FightFrom>;
+
+/**
+ * A fight under way (core/played.ts): where it came from, the combat stream where its rolls
+ * started and stand now, and the actions you took, so a reload replays it to the same turn.
+ */
+export const PlayedFightSchema = z.object({
+  from: FightFrom,
+  start: z.number().int(),
+  now: z.number().int(),
+  actions: z.array(z.record(z.string(), z.unknown())),
+});
+export type PlayedFight = z.infer<typeof PlayedFightSchema>;
+
+/** A quest you've taken (core/journal.ts): the step it is at and the day that step opened. */
+export const QuestStateSchema = z.object({
+  id: z.string(),
+  taken: z.number(),
+  /** The step under way; past the last, every step is done and it waits to be handed in. */
+  step: z.number().int().min(0),
+  opened: z.number(),
+  /** The day it was handed in, or null while it runs. */
+  handed: z.number().nullable(),
+  /** Where an `@any` giver's quest was taken, and so is handed in. */
+  at: z.string().optional(),
+});
+export type QuestState = z.infer<typeof QuestStateSchema>;
+
 export const GameStateSchema = z.object({
   lineage: z.object({
     id: z.string(),
@@ -380,7 +568,13 @@ export const GameStateSchema = z.object({
     life: z.number().int().min(1),
     /** The first times done (core/firsts.ts), so a reborn cultivator isn't walked through them. */
     firsts: z.array(z.enum(FIRST_IDS)),
+    /** The guides done or skipped (core/guides.ts), once a lineage. */
+    guides: z.array(z.enum(GUIDE_IDS)),
+    /** The codex entries met (core/codex.ts), new until opened; the lineage keeps what it knows. */
+    codex: z.record(z.string(), z.enum(['new', 'seen'])),
   }),
+  /** The journal's quests (core/journal.ts): those taken, and the one you follow. */
+  journal: z.object({ quests: z.array(QuestStateSchema), followed: z.string().nullable() }),
   mode: z.enum(['ironman', 'gentle']),
   calendar: z.object({
     /** World days since the lineage began, fractional while time runs. */
@@ -435,6 +629,8 @@ export const GameStateSchema = z.object({
   map: MapLifeSchema.nullable(),
   /** Where each named random stream stands, so a reload continues the same sequences. */
   rng: z.record(z.string(), z.number().int()),
+  /** The fight you are in (Fights you play): it holds the clock until it ends. */
+  fight: PlayedFightSchema.nullable(),
 });
 export type GameState = z.infer<typeof GameStateSchema>;
 
@@ -468,6 +664,8 @@ export interface NewLifeOptions {
    * NPCs run on the defaults. Creation starts a lineage with none.
    */
   firsts?: readonly FirstId[];
+  /** The guides the lineage has done (core/guides.ts); every one unless given, like the firsts. */
+  guides?: readonly GuideId[];
   /** Burn stones in qi hours from the start: a reborn life whose lineage has done it before. */
   burnStones?: boolean;
 }
@@ -551,6 +749,9 @@ export function newCultivator(
     ),
     intent: {},
     crafts: emptyCrafts(),
+    dwellings: [],
+    abode: null,
+    grounds: [],
   };
 }
 
@@ -621,7 +822,10 @@ export function newLife(opts: NewLifeOptions): GameState {
       id: opts.seed ?? opts.name,
       life: 1,
       firsts: [...(opts.firsts ?? ALL_FIRSTS)],
+      guides: [...(opts.guides ?? GUIDE_IDS)],
+      codex: {},
     },
+    journal: { quests: [], followed: null },
     hints: { on: true, shown: [] },
     mode,
     calendar: { day: startDay },
@@ -641,6 +845,7 @@ export function newLife(opts: NewLifeOptions): GameState {
     world: startingWorld(emptyWorld(), player.origin, player.id, startDay),
     mapgen: {},
     map: null,
+    fight: null,
   };
 }
 

@@ -2,6 +2,9 @@
 // the game uses where they can (time runs through the day step, breakthroughs roll their odds,
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
 import { addStanding } from '../../core/resolver/opinion.ts';
+import { hasQuest, quest } from '../../content/quests.ts';
+import { finishAllGuides } from '../../core/guides.ts';
+import { takeQuest } from '../../core/journal.ts';
 import { standingOf } from '../../core/resolver/world.ts';
 import { huntOf, seeUse } from '../../core/guarded.ts';
 import { actorFromCultivator, plainActor } from '../../core/resolver/actor.ts';
@@ -32,6 +35,10 @@ import {
   type CraftId,
 } from '../../content/crafts.ts';
 import { slipId } from '../../content/catalogs/index.ts';
+import { CROPS, seedId } from '../../content/farming.ts';
+import { takePlot } from '../../core/farming.ts';
+import { farmHere } from '../../core/map/fields.ts';
+import { veinsOf } from '../../core/map/veins.ts';
 import { jobsView, quitJob, takeJob } from '../../core/jobs.ts';
 import {
   addBalance,
@@ -60,7 +67,7 @@ import { CARDS, hasCard } from '../../content/cards/index.ts';
 import { COMBAT_DAO_IDS, isCombatDao } from '../../content/daos.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
 import { COPY_KINDS, copyId, copyTitle, hasCopy } from '../../content/copies.ts';
-import { hasItem, item, ITEMS } from '../../content/items.ts';
+import { hasItem, item, ITEMS, variantId } from '../../content/items.ts';
 import { hasManual, MANUALS } from '../../content/manuals.ts';
 import { TREES, treeNode } from '../../content/trees/index.ts';
 import { registerManuals } from '../../content/nodes.ts';
@@ -92,6 +99,9 @@ import { advance, daysPerRealMs } from '../../core/loop.ts';
 import { madeUpLife } from '../../core/fixtures/madeUpLife.ts';
 import { madeUpManuals } from '../../core/fixtures/madeUpManuals.ts';
 import { addItem, ageYears, daysLived, withPlayer, type GameState } from '../../core/state.ts';
+import { bandAt } from '../../core/map/depth.ts';
+import { arrayBand } from '../../core/arrays.ts';
+import { RAIDERS } from '../../content/dwellings.ts';
 import { formatDays, formatLadder, formatNumber } from '../format.ts';
 import { screens } from '../screens.ts';
 import { useSeat } from '../seat.ts';
@@ -268,9 +278,11 @@ export const COMMANDS: Record<string, Command> = {
             day: s.calendar.day,
             where: hereWords(s),
           };
+          // You're there: a fight your stance isn't sure of is played or waits (Fights you play).
           return contact(
             { ...s, map: { ...s.map!, encounters: [...s.map!.encounters, enc] } },
             enc.id,
+            true,
           );
         },
         `Met ${id}.`,
@@ -712,7 +724,7 @@ export const COMMANDS: Record<string, Command> = {
   },
   craft: {
     usage: 'craft [recipe] [mastery batches]',
-    help: 'Sets up a crafter (K1, K4): its craft’s crude tool (a clay furnace, an iron forge, a wolf-hair brush), the recipe known (the Qi-Gathering Pill unless told), inputs for five batches, four Craft hours from 辰, and the family at that many batches. `craft iron-sword` makes a refiner, `craft ember-talisman` a talisman master.',
+    help: 'Sets up a crafter (K1, K4): its craft’s crude tool (a clay furnace, an iron forge, a wolf-hair brush), the recipe known (the Qi-Gathering Pill unless told), inputs for five batches, four Craft hours from 辰, and the family at that many batches. `craft iron-sword` makes a refiner, `craft ember-talisman` a talisman master, `craft gathering-flags` an array master.',
     run([id, batches], store) {
       const r = id ?? 'qi-gathering-pill';
       if (!hasRecipe(r)) return `No recipe ${r}: ${RECIPES.map((x) => x.output).join(', ')}.`;
@@ -737,6 +749,160 @@ export const COMMANDS: Record<string, Command> = {
         },
         `A crafter: ${r}, inputs for five batches, Craft hours from 辰 to 未.`,
       );
+    },
+  },
+  herbs: {
+    usage: 'herbs [n]',
+    help: 'Adds n of every herb, material and beast part that carries properties (ten unless told), to throw in on a craft page’s Experiment tab (K7).',
+    run([n], store) {
+      const v = n === undefined ? 10 : Number(n);
+      if (!Number.isInteger(v) || v <= 0) return 'Give a whole number.';
+      return apply(
+        store,
+        (s) => {
+          let c = s.player;
+          for (const it of ITEMS) if (it.uses.ingredient) c = addItem(c, it.id, v);
+          return withPlayer(s, c);
+        },
+        `${v} of every ingredient.`,
+      );
+    },
+  },
+  farm: {
+    usage: 'farm [years]',
+    help: 'Sets up a spirit farmer (K8): every crop known, three packets of each, spirit soil, earth milk, Spring-Rain and pest-warding talismans, and a bought plot where you stand if it is a village or town. `farm 100` ages every sown bed a hundred years instead.',
+    run([n], store) {
+      if (n !== undefined) {
+        const y = Number(n);
+        if (!Number.isFinite(y) || y < 0) return 'Give a number of years.';
+        return apply(
+          store,
+          (s) => {
+            const plots = s.player.crafts.plots.map((pl) => ({
+              ...pl,
+              beds: pl.beds.map((b) => (b ? { ...b, grown: b.grown + y * DAYS_PER_YEAR } : b)),
+            }));
+            return withPlayer(s, { ...s.player, crafts: { ...s.player.crafts, plots } });
+          },
+          `Every sown bed is ${y} years older.`,
+        );
+      }
+      return apply(
+        store,
+        (s0) => {
+          const s = ensureMap(s0);
+          let c = s.player;
+          const nodes = new Set(c.nodes);
+          nodes.add('farming-spirit-rice-seal');
+          for (const crop of Object.keys(CROPS)) {
+            if (hasRecipe(crop)) nodes.add(`${slipId(crop)}-node`);
+            c = addItem(c, seedId(crop), 3);
+          }
+          c = { ...c, nodes: [...nodes], stones: c.stones + 200 };
+          c = addItem(addItem(c, 'spirit-soil', 2), variantId('earth-milk', 'purple'), 1);
+          c = addItem(addItem(c, variantId('earth-milk', 'green'), 2), 'spring-rain-talisman', 2);
+          c = addItem(c, 'pest-warding-talisman', 2);
+          const here = farmHere(s);
+          if (here) c = takePlot(c, here, 'bought', s.calendar.day).cultivator;
+          return withPlayer(s, c);
+        },
+        'A spirit farmer: every crop known, packets, boosters and 200 low; a bought plot if you stand at a village or town (`at spear-plow` first).',
+      );
+    },
+  },
+  vein: {
+    usage: 'vein',
+    help: 'Stands you on the nearest hidden vein (K9) and reads it into your map, so the Journey tab offers to claim it as a cave abode.',
+    run(_, store) {
+      const s = needGame(store);
+      const m = ensureMap(s);
+      const map = mapOf(m)!;
+      const at = m.map!.at;
+      const v = veinsOf(map, m.lineage.id)
+        .filter((x) => !(m.map!.veins ?? []).includes(x.id))
+        .sort(
+          (a, b) => Math.hypot(a.x - at[0], a.y - at[1]) - Math.hypot(b.x - at[0], b.y - at[1]),
+        )[0];
+      if (!v) return 'Every vein in the region is read already.';
+      return apply(
+        store,
+        (g) => {
+          const t = ensureMap(g);
+          const life = t.map!;
+          return {
+            ...t,
+            map: {
+              ...life,
+              at: [v.x, v.y],
+              course: null,
+              inside: null,
+              veins: [...(life.veins ?? []), v.id],
+            },
+          };
+        },
+        `On a tier ${v.tier} vein in ${map.areas.find((a) => a.id === v.area)?.name ?? v.area} (rating ${v.rating}).`,
+      );
+    },
+  },
+  trap: {
+    usage: 'trap',
+    help: 'Puts a beast of the land in your nearest trap on open ground in this region (K10), as if it walked in today, at the trap’s band where the land runs stronger; the Map’s own menu then offers to check it.',
+    run(_, store) {
+      const s = needGame(store);
+      const at = s.map?.at ?? [0, 0];
+      const g = s.player.grounds
+        .filter((x) => x.region === s.map?.region && x.stones > 0)
+        .sort(
+          (a, b) =>
+            Math.hypot(a.at[0] - at[0], a.at[1] - at[1]) -
+            Math.hypot(b.at[0] - at[0], b.at[1] - at[1]),
+        )[0];
+      if (!g)
+        return 'You have no running array on open ground in this region: `item snare-disc`, then lay it from the Map.';
+      return apply(
+        store,
+        (t) => {
+          const map = mapOf(ensureMap(t))!;
+          // Something the trap can hold: the land's band, or the trap's when the land runs stronger.
+          const trap = arrayBand(g) + (item(g.item).uses.array?.beasts ?? 0);
+          const band = Math.min(trap, Math.max(0, bandAt(map, g.at)));
+          const held = { roster: RAIDERS.beast, band, since: Math.floor(t.calendar.day) };
+          return withPlayer(t, {
+            ...t.player,
+            grounds: t.player.grounds.map((x) => (x.id === g.id ? { ...x, held } : x)),
+          });
+        },
+        'Something walked in. Go and check it.',
+      );
+    },
+  },
+  pity: {
+    usage: 'pity [misses]',
+    help: 'Sets the misses on every set you have thrown in and missed to this many (90 unless told), so the next throw of it all but finds (K7).',
+    run([n], store) {
+      const v = n === undefined ? 90 : Number(n);
+      if (!Number.isInteger(v) || v < 0) return 'Give a whole number.';
+      return apply(
+        store,
+        (s) => {
+          const pity = Object.fromEntries(Object.keys(s.player.crafts.pity).map((k) => [k, v]));
+          return withPlayer(s, { ...s.player, crafts: { ...s.player.crafts, pity } });
+        },
+        `Every set missed now stands at ${v} misses.`,
+      );
+    },
+  },
+  quest: {
+    usage: 'quest [id|guides]',
+    help: 'Takes a quest (the test errand unless told; it is also offered at your home board), or "guides" ends every guide.',
+    run([id], store) {
+      if (id === 'guides')
+        return apply(store, finishAllGuides, 'Every guide ended for the lineage.');
+      const which = id ?? 'test-errand';
+      if (!hasQuest(which)) return `No quest ${which}.`;
+      const r = takeQuest(ensureMap(needGame(store)), which);
+      if (!r.ok) return r.reason;
+      return apply(store, () => r.state, `Taken: ${quest(which).title}.`);
     },
   },
   kit: {

@@ -13,8 +13,10 @@ const source = (read('../../../content/atlas/entries.json') as unknown[]).map((e
 );
 const atlas = generatedAtlasSchema.parse(read('../generated/atlas.json'));
 const byId = new Map(atlas.entries.map((e) => [e.id, e]));
+// The region and the places straight under it; the opening's small hand-written sites near each
+// start (`qm-op-*`, The opening, built: chains, rogue, knobs) are places, not powers, and carry no ties.
 const borderWilds = atlas.entries.filter(
-  (e) => e.id === 'qm-bianhuang' || e.parent === 'qm-bianhuang',
+  (e) => (e.id === 'qm-bianhuang' || e.parent === 'qm-bianhuang') && e.kind !== 'site',
 );
 
 const base = {

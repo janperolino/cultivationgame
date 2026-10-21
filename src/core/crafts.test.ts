@@ -177,7 +177,7 @@ describe('the bench', () => {
     expect(s.player.items['crude-clay-furnace']).toBe(1);
   });
 
-  it('raises the family to Comprehension near ten batches', () => {
+  it('raises the family to Comprehension near three batches (the attended crafter, K9)', () => {
     let c = queueBatches(alchemist(0, 30), QI_PILL, 30).cultivator;
     let batches = 0;
     const rng = new Rng(11);
@@ -190,8 +190,8 @@ describe('the bench', () => {
       batches += r.batches;
     }
     expect(familyLevel(c, 'qi-pills')).toBe(1);
-    expect(batches).toBeGreaterThanOrEqual(10);
-    expect(batches).toBeLessThanOrEqual(20);
+    expect(batches).toBeGreaterThanOrEqual(CRAFT_MASTERY.batches[1]!);
+    expect(batches).toBeLessThanOrEqual(CRAFT_MASTERY.batches[1]! * 2);
     // The level releases its insight, and the chronicle says so.
     expect(c.insight.earned).toBeGreaterThanOrEqual(CRAFT_MASTERY.burst[1]);
   });
@@ -236,6 +236,10 @@ describe('in play', () => {
       }
       return need <= 0;
     };
+    // Shelves change by the month: wait for the first a refiner stands a clay furnace (K8's lots
+    // moved this one's draw).
+    for (let i = 0; i < 12 && !shelves().some((x) => x.l.thing === 'crude-clay-furnace'); i++)
+      s = { ...s, calendar: { ...s.calendar, day: s.calendar.day + 30 } };
     expect(buyAll('crude-clay-furnace', 1)).toBe(true);
     expect(buyAll('old-apricot-kernel', 12)).toBe(true);
     expect(buyAll('ridge-bitterroot', 8)).toBe(true);
@@ -285,7 +289,7 @@ describe('the save', () => {
     raw.version = 42;
     delete raw.state.player.crafts;
     const back = loadSave(raw);
-    expect(back.version).toBe(45);
+    expect(back.version).toBe(52);
     expect(back.state.player.crafts).toEqual({
       bench: [],
       front: null,
@@ -295,6 +299,10 @@ describe('the save', () => {
       grades: {},
       marked: {},
       renown: {},
+      found: [],
+      recipes: [],
+      pity: {},
+      plots: [],
     });
   });
 

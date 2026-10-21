@@ -12,6 +12,9 @@ import { RARITY_IDS, rarity, rarityRank, type RarityId } from './rarity.ts';
 import type { Effect } from './stats.ts';
 import type { DamageType, Form } from './techniques.ts';
 import { CATALOG_ITEMS } from './catalogs/index.ts';
+import { AGED_PAST_TOP, PACKET_PRICE, cropOfSeed } from './farming.ts';
+import { foundItem } from './found.ts';
+import { BASE_PRICE } from './money.ts';
 import { MAP_ITEMS } from './map/places.ts';
 
 /** What the Bag draws and stacks it as (design § Items and gear, the item record). */
@@ -29,6 +32,8 @@ export const ITEM_KINDS = [
   'beast',
   'map',
   'tool',
+  'seed',
+  'array',
 ] as const;
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
@@ -50,6 +55,8 @@ export const STACK_BY_KIND: Record<ItemKind, number> = {
   beast: 1,
   map: 1,
   tool: 1,
+  seed: 99,
+  array: 10,
 };
 
 /** The glyph a square shows for a kind, until design-time art arrives. */
@@ -67,6 +74,8 @@ export const KIND_GLYPH: Record<ItemKind, string> = {
   beast: '兽',
   map: '图',
   tool: '炉',
+  seed: '种',
+  array: '阵',
 };
 
 /**
@@ -210,6 +219,61 @@ export interface ToolUse {
   craft: CraftId;
 }
 
+/**
+ * What it does at a plot (K8, design § Spirit farming): spirit soil raises a plot's soil to its
+ * tier above plain earth, earth milk ages a bed at once by its rarity's years, a talisman covers a
+ * plot for a season (Spring-Rain's growth or a pest ward), and a plot's soil dug up carries its tier.
+ */
+export interface FieldUse {
+  soil?: boolean;
+  milk?: boolean;
+  season?: 'rain' | 'ward';
+  dug?: number;
+}
+
+/**
+ * What an array does (K10, design § Sites and formations; the effect table's Formations row):
+ * gathering and growing lift the qi density, warding, concealing and alarm guard a site, and
+ * binding, killing and maze play in a fight on their own ground.
+ */
+export const ARRAY_DOES = [
+  'gathering',
+  'growing',
+  'warding',
+  'concealing',
+  'alarm',
+  'binding',
+  'killing',
+  'maze',
+] as const;
+export type ArrayDoes = (typeof ARRAY_DOES)[number];
+
+/**
+ * An array (K10): flags 阵旗 planted in a ring round their eye, or a disc 阵盘 complete in itself,
+ * laid at a site or on open ground through placing and burning its eye's stones a day. What it
+ * does is the Formations row; how strongly is its own (Jan's call in K10's talk: each array's
+ * numbers are the array's).
+ */
+export interface ArrayUse {
+  does: ArrayDoes;
+  form: 'flags' | 'disc';
+  /** Gathering, growing and concealing: steps (or bands) at tier 1, before the tier and gold add. */
+  steps?: number;
+  /** Warding: the share of a full qi shield it stands over your side in a fight. */
+  share?: number;
+  /** Killing: the strike's power, as a fight item's, and its damage type. */
+  power?: number;
+  damage?: DamageType;
+  /** Binding: a foe it holds loses one turn in this many. */
+  every?: number;
+  /** Maze: the share of Accuracy a foe it reaches loses. */
+  dull?: number;
+  /** Bands more against beasts: beast-repelling flags, the spirit-quelling disc. */
+  beasts?: number;
+  /** It works on beasts alone. */
+  beastsOnly?: boolean;
+}
+
 /** Formation slots for M4's enchantments. */
 export interface InscribeUse {
   slots: number;
@@ -233,6 +297,8 @@ export interface ItemUses {
   fix?: FixUse;
   escape?: EscapeUse;
   swift?: SwiftUse;
+  field?: FieldUse;
+  array?: ArrayUse;
 }
 
 /**
@@ -778,7 +844,7 @@ export function variantId(
   r?: RarityId,
   o: { tier?: number; damaged?: boolean; cracked?: boolean } = {},
 ): string {
-  const b = byId.get(base);
+  const b = byId.get(base) ?? (writtenOf(base) && byId.get(base));
   const parts = [base];
   const rarityDiffers = r !== undefined && (!b || r !== b.rarity);
   const tierDiffers = o.tier !== undefined && (!b || o.tier !== b.tier);
@@ -794,10 +860,77 @@ export function baseOf(id: string): string {
   return id.split('~')[0]!;
 }
 
+/**
+ * A written thing as written, or a generated recipe's thing (K7, content/found.ts), built from its
+ * id the first time it is asked for and kept beside the written ones.
+ */
+function writtenOf(id: string): Item | undefined {
+  const known = written.get(id);
+  if (known) return known;
+  const found = foundItem(id) ?? seedItem(id) ?? soilItem(id);
+  if (!found) return undefined;
+  written.set(id, found);
+  byId.set(id, found.upTo ? atRarity(found, id, found.rarity) : found);
+  return found;
+}
+
+/**
+ * A crop's packet of seeds or cuttings (K8): it sows one bed, at its crop's written range, and costs
+ * about three of its crop.
+ */
+function seedItem(id: string): Item | null {
+  const crop = cropOfSeed(id);
+  const c = crop && crop === id.slice(5) ? writtenOf(crop) : undefined;
+  if (!c) return null;
+  const herb = c.kind === 'herb';
+  return {
+    id,
+    name: `${c.name} ${herb ? 'Seeds' : 'Seed Grain'}`,
+    pinyin: `${c.pinyin} Zhong`,
+    hanzi: `${c.hanzi}种`,
+    tier: c.tier,
+    rarity: c.rarity,
+    ...(c.upTo ? { upTo: c.upTo } : {}),
+    ...(c.element ? { element: c.element } : {}),
+    kind: 'seed',
+    ...(c.taels !== undefined
+      ? { taels: c.taels * PACKET_PRICE }
+      : { price: (c.price ?? BASE_PRICE[itemKind(c)]) * PACKET_PRICE }),
+    uses: {},
+    source: c.source,
+    text: 'A packet of seed, or a bundle of cuttings wrapped in damp moss: enough to sow one bed.',
+  };
+}
+
+/** A plot's soil dug up (K8): one bulk thing, 2×2, carrying its tiers above plain earth. */
+function soilItem(id: string): Item | null {
+  const m = /^soil\.(\d)$/.exec(id);
+  if (!m) return null;
+  const tier = Number(m[1]);
+  return {
+    id,
+    name: `Spirit Field Soil, ${tier === 0 ? 'plain' : `tier ${tier}`}`,
+    pinyin: 'Lingtian Tu',
+    hanzi: '灵田土',
+    tier: 1,
+    rarity: 'white',
+    kind: 'material',
+    bulk: 4,
+    stack: 1,
+    price: 10 * Math.max(1, tier),
+    uses: { field: { dug: tier } },
+    source: 'a plot you bought, dug up',
+    text: 'A plot’s worth of worked spirit soil, bound in a straw mat. Laid on another plot, it brings its soil with it.',
+  };
+}
+
+/** Herbs and their packets age past their written top in a plot (K8): two bands, reached only there. */
+const AGES: readonly ItemKind[] = ['herb', 'seed'];
+
 /** A variant built from its written thing, or null when the id names nothing it can be. */
 function variant(id: string): Item | null {
   const [base, r, ...rest] = id.split('~');
-  const b = base ? written.get(base) : undefined;
+  const b = base ? writtenOf(base) : undefined;
   if (!b || !r || !rarityIds.has(r as RarityId)) return null;
   const rar = r as RarityId;
   const damaged = rest.includes('dmg');
@@ -809,7 +942,8 @@ function variant(id: string): Item | null {
   if (rest.some((x) => x !== 'dmg' && x !== 'crk' && x !== tierPart)) return null;
   // A damaged piece stands a step below what it was, so the range shifts down one.
   const lo = rarityRank(b.rarity) - (damaged ? 1 : 0);
-  const hi = rarityRank(b.upTo ?? b.rarity) - (damaged ? 1 : 0);
+  const aged = AGES.includes(itemKind(b)) ? AGED_PAST_TOP : 0;
+  const hi = rarityRank(b.upTo ?? b.rarity) - (damaged ? 1 : 0) + aged;
   if (rarityRank(rar) < Math.max(0, lo) || rarityRank(rar) > hi) return null;
   return {
     ...atRarity(b, id, rar),
@@ -829,11 +963,11 @@ function atRarity(b: Item, id: string, rar: RarityId): Item {
 }
 
 export function hasItem(id: string): boolean {
-  return byId.has(id) || variant(id) !== null;
+  return byId.has(id) || writtenOf(id) !== undefined || variant(id) !== null;
 }
 
 export function item(id: string): Item {
-  const known = byId.get(id);
+  const known = byId.get(id) ?? (writtenOf(id) && byId.get(id));
   if (known) return known;
   const v = variant(id);
   if (!v) throw new RangeError(`Unknown item ${id}`);

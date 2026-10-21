@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Formation Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
+<style>
+  /* K10 study: Formation Inscribing. Placing 布阵 in two takes, an array on the Dwelling screen 居,
+     a fight on your own ground, and a trap on the road. Tokens from src/ui/theme.css, as K9's study.
+     Real Border Wilds content; every number is a proposal for the talk. */
+  :root {
+    --void: #040507; --text: #e9e5da; --muted: #8d949d; --accent: #d6ab4c; --gilt: #d9b46a;
+    --panel: rgb(7 8 11 / 0.84); --line-faint: color-mix(in srgb, var(--gilt) 16%, transparent);
+    --edge-strong: rgb(255 255 255 / 0.14); --warn: #e08a6a; --ok: #8fc79a; --qi: #8fb7d9;
+    --rarity-white: #ece8de; --rarity-green: #7fca8c; --rarity-blue: #6fa8e8; --rarity-gold: #e3b955; --seal: #b8432f;
+    --font-display: 'Cormorant Garamond', Georgia, serif; --font-brush: 'Ma Shan Zheng', KaiTi, serif;
+    --font-ui: Inter, system-ui, 'Segoe UI', sans-serif;
+  }
+  body { margin: 0; background: var(--void); color: var(--text); font-family: var(--font-ui); font-size: 14px; }
+  .note { max-width: 1200px; margin: 24px auto 6px; padding: 0 16px; color: var(--muted); line-height: 1.5; }
+  .note h1 { font-family: var(--font-display); color: var(--text); font-weight: 600; font-size: 30px; margin: 0 0 4px; }
+  .note b { color: var(--text); font-weight: 600; }
+  .tabs { max-width: 1200px; margin: 10px auto; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .tabs button { font: inherit; color: var(--muted); background: none; border: 1px solid var(--line-faint); border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+  .tabs button.on { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .frame { width: 100%; overflow: hidden; margin: 6px 0 30px; }
+  .stage { width: 1920px; height: 1080px; transform-origin: 0 0; position: relative; overflow: hidden;
+    background: radial-gradient(1200px 700px at 60% 30%, #0d1522 0%, #05070b 60%, #030405 100%); }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 64px; border-right: 1px solid var(--line-faint); background: rgb(5 6 8 / 0.92); padding-top: 14px; z-index: 3; }
+  .rail i { display: grid; place-items: center; width: 34px; height: 34px; margin: 10px auto; border: 1px solid var(--line-faint); border-radius: 6px;
+    font-style: normal; font-family: var(--font-brush); color: var(--muted); font-size: 17px; }
+  .rail i.on { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .view { display: none; } .view.on { display: block; }
+  .scene { position: absolute; left: 64px; right: 0; top: 0; height: 430px;
+    background: linear-gradient(180deg, rgb(4 5 7 / 0) 40%, var(--void) 100%), radial-gradient(900px 380px at 70% 40%, #1d2c33 0%, #0b1217 55%, #05070b 100%); }
+  .scene .hint { position: absolute; right: 340px; top: 120px; color: #3c4a52; font-family: var(--font-display); font-size: 26px; font-style: italic; }
+  .screen { position: absolute; left: 110px; top: 54px; right: 70px; bottom: 40px; }
+  .crumb { font-family: var(--font-display); font-size: 20px; color: var(--muted); }
+  .hz { color: var(--accent); font-family: var(--font-brush); }
+  .head { display: flex; align-items: center; gap: 20px; margin: 10px 0 6px; }
+  .bigseal { width: 76px; height: 76px; border: 2px solid var(--seal); border-radius: 8px; display: grid; place-items: center; color: var(--seal); font-family: var(--font-brush); font-size: 40px; }
+  .title { font-family: var(--font-display); font-size: 44px; font-weight: 600; line-height: 1; }
+  .title .py { font-family: var(--font-ui); font-size: 14px; color: var(--muted); font-weight: 400; margin-left: 10px; }
+  .sub { color: var(--muted); font-size: 15px; margin-top: 6px; }
+  .abode { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 999px; padding: 2px 10px; margin-left: 10px; vertical-align: middle; }
+  .lore { max-width: 860px; color: #c9c3b5; font-family: var(--font-display); font-size: 19px; line-height: 1.45; margin: 10px 0 22px; }
+  .cols { display: grid; grid-template-columns: 1.05fr 1fr 0.95fr; gap: 20px; align-items: start; }
+  .panel { padding: 20px 22px; border: 1px solid var(--line-faint); border-radius: 4px; background: var(--panel); box-shadow: 0 24px 50px -28px #000; }
+  .panel + .panel { margin-top: 16px; }
+  h2 { font-family: var(--font-display); font-weight: 600; font-size: 22px; margin: 0 0 10px; display: flex; align-items: baseline; gap: 10px; }
+  h2 .hz { font-size: 18px; }
+  h2 .right { margin-left: auto; font-family: var(--font-ui); font-size: 13px; color: var(--muted); font-weight: 400; }
+  h3 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 500; margin: 14px 0 6px; }
+  .muted { color: var(--muted); } .warn { color: var(--warn); } .ok { color: var(--ok); } .qi { color: var(--qi); }
+  .white { color: var(--rarity-white); } .green { color: var(--rarity-green); } .blue { color: var(--rarity-blue); } .gold { color: var(--rarity-gold); }
+  p { margin: 4px 0; line-height: 1.5; }
+  .prop { display: grid; grid-template-columns: 112px 1fr; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line-faint); }
+  .prop:last-child { border-bottom: 0; }
+  .prop .k { color: var(--muted); font-size: 13px; padding-top: 2px; }
+  .prop .v b { font-weight: 600; }
+  .prop .why { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .ladder { display: flex; gap: 3px; margin: 6px 0 2px; }
+  .ladder span { width: 26px; height: 7px; border-radius: 2px; background: rgb(255 255 255 / .07); }
+  .ladder span.land { background: color-mix(in srgb, var(--qi) 45%, transparent); }
+  .ladder span.up { background: var(--qi); }
+  .ladder span.arr { background: var(--accent); }
+  .ladder span.cap { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .slot { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-faint); }
+  .slot:last-child { border-bottom: 0; }
+  .slot .sq { width: 34px; height: 34px; border: 1px solid var(--line-faint); border-radius: 4px; display: grid; place-items: center; font-family: var(--font-brush); color: var(--accent); font-size: 17px; flex: none; }
+  .slot .sq.empty { border-style: dashed; color: var(--muted); }
+  .slot .grow { flex: 1; } .slot .grow small { display: block; color: var(--muted); font-size: 12px; }
+  .meter { height: 5px; background: rgb(255 255 255 / 0.07); border-radius: 3px; margin: 6px 0 2px; }
+  .meter > div { height: 100%; background: var(--qi); border-radius: 3px; }
+  .button { display: inline-block; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 5px 13px; border-radius: 3px; font-size: 13px; white-space: nowrap; cursor: pointer; }
+  .button.quiet { color: var(--muted); border-color: var(--edge-strong); background: none; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .ask { position: absolute; right: 70px; bottom: 40px; width: 560px; color: var(--muted); font-size: 13px; line-height: 1.5; border-left: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); padding-left: 14px; }
+  .ask b { color: var(--text); font-weight: 600; }
+  /* the placing scene */
+  .place { display: grid; grid-template-columns: 420px 680px 1fr; gap: 24px; align-items: start; }
+  .board { padding: 14px; border: 1px solid var(--line-faint); border-radius: 4px; background: rgb(5 7 9 / .9); }
+  canvas { display: block; cursor: crosshair; }
+  .how { color: var(--muted); font-size: 13px; text-align: center; margin-top: 8px; }
+  .how b { color: var(--text); font-weight: 500; }
+  .kv { display: grid; grid-template-columns: 1fr auto; row-gap: 7px; column-gap: 14px; }
+  .kv span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; }
+  .hand { height: 8px; background: rgb(255 255 255 / .07); border-radius: 4px; margin: 10px 0 4px; }
+  .hand > div { height: 100%; width: 0; background: var(--accent); border-radius: 4px; }
+  .flags { display: flex; gap: 6px; margin: 8px 0; }
+  .flags i { width: 20px; height: 28px; border: 1px solid var(--line-faint); border-radius: 2px; font-style: normal; display: grid; place-items: center; font-family: var(--font-brush); font-size: 12px; color: var(--muted); }
+  .flags i.used { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+  .rec { padding: 8px 0; border-bottom: 1px solid var(--line-faint); display: flex; justify-content: space-between; gap: 10px; }
+  .rec small { display: block; color: var(--muted); font-size: 12px; }
+  .rec.sel { background: color-mix(in srgb, var(--accent) 8%, transparent); padding-left: 8px; padding-right: 8px; border-radius: 3px; }
+  /* the fight */
+  .fight { position: absolute; inset: 0; background: radial-gradient(900px 600px at 50% 45%, #121a1c 0%, #06080a 70%); }
+  .ground { position: absolute; left: 50%; top: 470px; width: 1100px; height: 420px; transform: translate(-50%, -50%); }
+  .fighter { position: absolute; width: 150px; text-align: center; }
+  .fighter .orb { width: 54px; height: 54px; border-radius: 50%; margin: 0 auto 8px; border: 1px solid var(--edge-strong); background: radial-gradient(circle at 40% 35%, #c9d6e2, #4a5a68 60%, #1a2026); }
+  .fighter.foe .orb { background: radial-gradient(circle at 40% 35%, #e3c39a, #6e4a2a 60%, #24170d); }
+  .fighter .nm { font-family: var(--font-display); font-size: 18px; }
+  .fighter small { display: block; color: var(--muted); font-size: 12px; }
+  .bar { height: 5px; background: rgb(255 255 255 / .08); border-radius: 3px; margin: 4px 14px 0; }
+  .bar > div { height: 100%; border-radius: 3px; }
+  .tag { display: inline-block; font-size: 11.5px; border: 1px solid var(--edge-strong); border-radius: 999px; padding: 0 7px; margin-top: 5px; color: var(--muted); }
+  .tag.held { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+  .arrayband { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); width: 1180px; padding: 12px 18px; border: 1px solid var(--line-faint); border-radius: 4px; background: var(--panel); display: flex; gap: 26px; align-items: center; }
+  .arrayband .who { font-family: var(--font-display); font-size: 20px; }
+  .arrayband .it { display: flex; gap: 10px; align-items: center; }
+  .arrayband .it .sq { width: 30px; height: 30px; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 4px; display: grid; place-items: center; font-family: var(--font-brush); color: var(--accent); }
+  .arrayband small { display: block; color: var(--muted); font-size: 12px; }
+  .log { position: absolute; left: 50%; bottom: 150px; transform: translateX(-50%); width: 980px; font-size: 13.5px; color: #c9c3b5; }
+  .log div { padding: 3px 0; border-bottom: 1px solid rgb(255 255 255 / .04); }
+  .log .m { color: var(--muted); font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+  .acts { position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); display: flex; gap: 10px; }
+  /* the map */
+  .map { position: absolute; left: 64px; right: 0; top: 0; bottom: 0;
+    background: radial-gradient(600px 400px at 62% 46%, #24301f 0%, #172015 40%, #0b0f0b 75%, #050706 100%); }
+  .col { position: absolute; left: 64px; top: 0; bottom: 0; width: 420px; background: linear-gradient(90deg, rgb(4 5 7 / .96) 70%, rgb(4 5 7 / 0)); padding: 40px 34px; box-sizing: border-box; }
+  .mseal { position: absolute; width: 30px; height: 30px; border: 1.5px solid var(--seal); border-radius: 5px; display: grid; place-items: center; color: var(--seal); font-family: var(--font-brush); font-size: 17px; background: rgb(10 10 10 / .5); }
+  .mseal.arr { border-color: var(--accent); color: var(--accent); }
+  .ctx { position: absolute; width: 360px; background: rgb(8 9 12 / .97); border: 1px solid var(--edge-strong); border-radius: 5px; padding: 8px 0; box-shadow: 0 18px 40px -10px #000; }
+  .ctx .h { padding: 6px 16px 8px; color: var(--muted); font-size: 12.5px; border-bottom: 1px solid var(--line-faint); margin-bottom: 4px; }
+  .ctx .i { padding: 7px 16px; } .ctx .i small { display: block; color: var(--muted); font-size: 12px; }
+  .ctx .i.hl { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); }
+  .road { position: absolute; height: 2px; background: rgb(214 171 76 / .25); transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<div class="note">
+  <h1>K10 study: Formation Inscribing</h1>
+  <b>Flags 阵旗</b> and <b>discs 阵盘</b> are made at the bench like any recipe, queued. The hands-on part is <b>placing 布阵</b>,
+  when you lay an array at your site or on open ground: its own game, and the hand it gives lifts the array's rarity, never whether it holds.
+  Tabs A and B are two takes on placing (both play); C is the Dwelling screen with arrays laid; D a raid fought on your own ground; E a binding disc on the road.
+</div>
+<div class="tabs">
+  <button data-v="a" class="on">A · Placing: reading the currents (recommended)</button>
+  <button data-v="b">B · Placing: pacing the stars 踏罡</button>
+  <button data-v="c">C · The Dwelling screen with arrays</button>
+  <button data-v="d">D · A raid on your own ground</button>
+  <button data-v="e">E · A trap on the road</button>
+</div>
+<div class="frame"><div class="stage" id="stage">
+  <nav class="rail"><i>修</i><i>课</i><i>艺</i><i class="on">居</i><i>舆</i><i>树</i><i>囊</i><i>骨</i><i>人</i><i>平</i></nav>
+
+  <!-- A: placing, reading the currents -->
+  <section class="view on" data-v="a">
+    <div class="screen">
+      <div class="crumb">Dwelling <span class="hz">居</span> · The Cave behind Ravine Falls · laying an array</div>
+      <div class="head"><div class="bigseal">阵</div><div>
+        <div class="title">Gathering Flags <span class="py">Juling Zhenqi · 聚灵阵旗 · tier 1, <span class="green">green</span></span></div>
+        <div class="sub">Eight flags round the disc. Plant them where the vein's currents run, and close the ring.</div></div></div>
+      <div class="place" style="margin-top:22px">
+        <div class="panel">
+          <h2>What you lay <span class="hz">旗</span></h2>
+          <div class="flags" id="aFlags"></div>
+          <div class="kv">
+            <span>The flags</span><span class="green">green</span>
+            <span>Steady hands' reach</span><span>1 band</span>
+            <span>Your sense reaches</span><span>3 li <small class="muted">(soul QC 4–6)</small></span>
+            <span>The disc holds</span><span>30 low · 60 days</span>
+          </div>
+          <h3>The rule</h3>
+          <p class="muted">A flag draws what runs under it, and a line draws what it rides along. Your divine sense shows the currents near your hand; the rest of the ground is dark until a flag stands in it. The ring must close round the disc, the eye 阵眼, without crossing itself or a stone.</p>
+          <p class="muted">Right-click pulls the last flag up; a little qi spills each time.</p>
+          <div class="row"><span class="button quiet" id="aReset">Start over</span><span class="button quiet">Set it plain (hand 0)</span></div>
+        </div>
+        <div class="board"><canvas id="aCv" width="650" height="650"></canvas>
+          <div class="how"><b>Click</b> a point to plant the next flag · the eighth closes the ring by itself · <b>right-click</b> pulls the last</div></div>
+        <div class="panel">
+          <h2>How it reads <span class="hz">察</span></h2>
+          <div class="kv">
+            <span>Under your hand</span><span id="aHere">–</span>
+            <span>The next line</span><span id="aLine">–</span>
+            <span>Flags so far</span><span id="aSoFar">–</span>
+            <span>Qi spilt</span><span id="aSpill">0</span>
+          </div>
+          <div class="hand"><div id="aHand"></div></div>
+          <div class="kv"><span>The hand</span><span id="aHandN">0.00</span></div>
+          <h3>What it lays</h3>
+          <p id="aOut" class="muted">A green tier 1 Gathering Array: the cave's density 4 → 5. The hand lifts it a band at 1.0 (the reach), so a hand of 1.0 lays it blue.</p>
+          <p class="muted" style="margin-top:12px">No timer, and nothing rolled: what you read and where you commit is the skill. Nothing moves while you think, so the scene paints only when the hand moves.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- B: placing, pacing the stars -->
+  <section class="view" data-v="b">
+    <div class="screen">
+      <div class="crumb">Dwelling <span class="hz">居</span> · The Cave behind Ravine Falls · laying an array</div>
+      <div class="head"><div class="bigseal">罡</div><div>
+        <div class="title">Gathering Flags <span class="py">pacing the stars 踏罡步斗 · tier 1, <span class="green">green</span></span></div>
+        <div class="sub">The pattern is written. The vein breathes out from the eye in rings; plant each star as the ring reaches it, in order.</div></div></div>
+      <div class="place" style="margin-top:22px">
+        <div class="panel">
+          <h2>The pattern <span class="hz">斗</span></h2>
+          <p class="muted">Seven stars and the eye. The ring passes each at its own distance, so the order makes you wait, then hurry.</p>
+          <p class="muted">A star planted on the ring's edge takes the most; early or late takes less; a star missed leaves its line dark.</p>
+          <div class="row"><span class="button" id="bGo">Begin</span><span class="button quiet">Set it plain (hand 0)</span></div>
+        </div>
+        <div class="board"><canvas id="bCv" width="650" height="650"></canvas>
+          <div class="how"><b>Click</b> the lit star as the ring crosses it · in order, one to seven</div></div>
+        <div class="panel">
+          <h2>How it reads <span class="hz">察</span></h2>
+          <div class="kv"><span>Stars planted</span><span id="bN">0 of 7</span><span>Last star</span><span id="bLast">–</span></div>
+          <div class="hand"><div id="bHand"></div></div>
+          <div class="kv"><span>The hand</span><span id="bHandN">0.00</span></div>
+          <p class="muted" style="margin-top:12px">Take B is timing, closer to fire control's breath than take A is. It animates while you sit.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- C: the Dwelling screen with arrays -->
+  <section class="view" data-v="c">
+    <div class="scene"><div class="hint">painted: a cave mouth behind falling water</div></div>
+    <div class="screen">
+      <div class="crumb">Dwelling <span class="hz">居</span></div>
+      <div class="head">
+        <div class="bigseal">洞</div>
+        <div>
+          <div class="title">The Cave on Split-Pine Ridge <span class="py">Songlie Ling Dongfu · 松裂岭洞府</span></div>
+          <div class="sub">A wild cave abode on a tier 2 vein, claimed on Day 2, Month 7 of Year 15 · the Howling Downs, no power's land <span class="abode">家 your abode</span></div>
+        </div>
+      </div>
+      <div class="lore">The flags stand in the scree round the mouth. The air inside is heavy enough to taste.</div>
+      <div class="cols">
+        <div class="panel">
+          <h2>The place <span class="hz">地</span></h2>
+          <div class="prop"><div class="k">Qi density</div><div class="v"><b class="qi">6 · rich</b> <span class="muted">· seclusion ×1.6</span>
+            <div class="ladder"><span class="land"></span><span class="land"></span><span class="land"></span><span class="up"></span><span class="up"></span><span class="arr"></span><span class="cap"></span><span></span><span></span></div>
+            <div class="why">The land's thin 3, two steps for the vein, one for the Gathering Array. The vein holds two steps more than its own (to 7); past that only a gold array reaches, at double upkeep.</div></div></div>
+          <div class="prop"><div class="k">Concealment</div><div class="v"><b>Qi Condensation 7–9</b><div class="why">The land's band, a band for the cave, a band for the Concealing Flags… none laid here. Against beasts three bands less: they smell the raised qi.</div></div></div>
+          <div class="prop"><div class="k">Defenses</div><div class="v"><b class="ok">Warding Array, Qi Condensation 4–6</b><div class="why">Raiders at 4–6 or under turn away. Stronger ones come and break it in the fight, where it stands as a barrier over you.</div></div></div>
+          <div class="prop"><div class="k">Worth</div><div class="v"><b>112 low</b> <span class="muted">· the store 97, ripe beds 15</span><div class="why">The land's thieves are QC 4–6: the ward turns them.</div></div></div>
+          <div class="prop"><div class="k">Neighbors</div><div class="v"><b>Beasts of Qi Condensation 4–6</b><div class="why">Ring 1 of 3 toward the Wolf King's ridge.</div></div></div>
+        </div>
+        <div>
+          <div class="panel">
+            <h2>Arrays <span class="hz">阵</span><span class="right">2 of 2 · a tier 2 vein</span></h2>
+            <div class="slot"><div class="sq">聚</div><div class="grow">Gathering Array <span class="blue">blue</span>, tier 1<small>+1 step · laid at a hand of 0.82 (green flags, a band up)</small>
+              <div class="meter"><div style="width:62%"></div></div><small>its disc: 18.6 of 30 low · 0.5 a day · 37 days</small></div><span class="button quiet">Feed</span></div>
+            <div class="slot"><div class="sq">护</div><div class="grow">Warding Array <span class="green">green</span>, tier 1<small>a barrier at QC 4–6 · 120 over your side in a fight</small>
+              <div class="meter"><div style="width:90%"></div></div><small>its disc: 27 of 30 low · 0.5 a day · 54 days</small></div><span class="button quiet">Feed</span></div>
+            <p class="muted" style="margin-top:8px">An array runs while its disc holds stones, here or away. Feed it from your purse while you stand here. Taking one up gives its flags back, the stones in it lost.</p>
+          </div>
+          <div class="panel">
+            <h2>Prepared ground <span class="hz">伏</span><span class="right">laid off your sites</span></h2>
+            <div class="slot"><div class="sq">困</div><div class="grow">Binding Disc, <span class="white">white</span><small>on the Howling Downs, 340 li east · holds QC 1–3 or under</small><small class="warn">something walked in on Day 14</small></div><span class="button quiet">On the map</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="panel">
+            <h2>Lay an array <span class="hz">布</span></h2>
+            <div class="rec"><span>Concealing Flags ×1 <span class="white">white</span><small>+1 band of concealment · a slot</small></span><span class="button quiet">No slot free</span></div>
+            <div class="rec"><span>Binding Disc ×2 <span class="white">white</span><small>a trap here, or set down anywhere off a site</small></span><span class="button quiet">No slot free</span></div>
+            <p class="muted" style="margin-top:8px">One More Array (Formations, Hand) adds a slot to every claimed vein.</p>
+          </div>
+          <div class="panel">
+            <h2>Build <span class="hz">建</span></h2>
+            <p class="muted">Clear land, dig the store, a quiet chamber (K9). The arrays are laid above.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- D: a raid on your own ground -->
+  <section class="view" data-v="d">
+    <div class="fight">
+      <div class="arrayband">
+        <div class="who">On your own ground <span class="hz">阵</span><small>the Cave on Split-Pine Ridge</small></div>
+        <div class="it"><div class="sq">护</div><div>Warding Array, <span class="green">green</span><small>a barrier over your side: 74 of 120</small></div></div>
+        <div class="it"><div class="sq">困</div><div>Binding Disc, <span class="white">white</span><small>holds foes at QC 1–3 or under one turn in two</small></div></div>
+        <div class="it"><div class="sq">杀</div><div>Sword-Qi Disc, <span class="white">white</span><small>strikes every foe inside each turn: 22 metal, never missing</small></div></div>
+      </div>
+      <div class="ground">
+        <div class="fighter" style="left:120px;top:150px"><div class="orb"></div><div class="nm">You</div><small>Qi Condensation 7</small>
+          <div class="bar"><div style="width:100%;background:var(--accent)"></div></div><small>barrier 74 / 120</small>
+          <div class="bar"><div style="width:88%;background:var(--qi)"></div></div><small>qi shield 154 / 176</small></div>
+        <div class="fighter foe" style="left:700px;top:40px"><div class="orb"></div><div class="nm">Garrison deserter</div><small>QC 3 · the ward's band holds him</small>
+          <div class="bar"><div style="width:52%;background:#c9705a"></div></div><span class="tag held">定 held this turn</span></div>
+        <div class="fighter foe" style="left:880px;top:150px"><div class="orb"></div><div class="nm">Garrison deserter</div><small>QC 3</small>
+          <div class="bar"><div style="width:71%;background:#c9705a"></div></div><span class="tag">acts this turn</span></div>
+        <div class="fighter foe" style="left:720px;top:270px"><div class="orb"></div><div class="nm">Deserter sergeant</div><small>QC 5 · above the disc: shrugs it off</small>
+          <div class="bar"><div style="width:86%;background:#c9705a"></div></div><span class="tag">acts this turn</span></div>
+      </div>
+      <div class="log">
+        <div>The flags flare. Three threads of sword qi drop out of the air on the men inside the ring.<br/><span class="m">Sword-Qi Disc · 22 metal · deserter 61/118 · deserter 84/118 · sergeant 140/162 · disc 9.4 low</span></div>
+        <div>The first deserter's legs lock mid-stride; the lines of the Binding Disc are round his ankles.<br/><span class="m">Binding Disc · QC 1–3 against his soul QC 3 · held (定) this turn, free the next</span></div>
+        <div>The sergeant's saber meets the ward a hand from your face and skids off it.<br/><span class="m">Hit 61% · 46 · the barrier takes it · 74/120</span></div>
+      </div>
+      <div class="acts"><span class="button">Ember Palm</span><span class="button quiet">Sweep</span><span class="button quiet">Defend</span><span class="button quiet">Item</span><span class="button quiet">Talk</span><span class="button quiet">Flee</span></div>
+      <div class="ask" style="bottom:auto;top:150px;right:40px;width:330px">
+        <b>How each array plays</b> (the four shapes, as numbers):<br/>
+        <b>Warding 护</b>: a barrier over your side, a full qi shield at its rung (×10 its size), hit first, gone when spent.<br/>
+        <b>Binding 困</b>: a foe whose soul stands at its band or under is held one turn in two; above it, shrugged off (Body-Fixing's rule).<br/>
+        <b>Killing 杀</b>: at each round's start strikes every foe once at a strike talisman's power for its rung, its element, never missing.<br/>
+        <b>Maze 迷</b>: foes at its band or under lose a third of their Accuracy.<br/>
+        Each turn of the fight burns a day of its disc.
+      </div>
+    </div>
+  </section>
+
+  <!-- E: a trap on the road -->
+  <section class="view" data-v="e">
+    <div class="map">
+      <div class="road" style="left:620px;top:620px;width:900px;transform:rotate(-14deg)"></div>
+      <div class="mseal" style="left:1120px;top:470px">洞</div>
+      <div class="mseal arr" style="left:1380px;top:560px">困</div>
+      <div class="ctx" style="left:1420px;top:600px">
+        <div class="h">Binding Disc · the Howling Downs, 340 li east of your cave</div>
+        <div class="i hl">Check the trap<small>A Thunder Deer (QC 1–3) is held. It walked in on Day 14; the disc has burned 6 low holding it.</small></div>
+        <div class="i">Fight it bound<small>held one turn in two · a sure win: resolved, or play it</small></div>
+        <div class="i">Let it go<small>the disc stays set</small></div>
+        <div class="i">Take the disc up<small>its stones lost, the disc back in the Bag</small></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="crumb">Map <span class="hz">舆</span> · Journey</div>
+      <h2 style="margin-top:18px">Prepared ground <span class="hz">伏</span></h2>
+      <p class="muted">A disc or flags set anywhere off a site: right-click a spot, Lay an array here. It needs no slot and lasts while its stones last.</p>
+      <h3>A passive trap</h3>
+      <p class="muted">Each day the land may send something across it: a beast of the land's band where it stands, about one day in ten (the world's roll, keyed by the spot and the day). One at its band or under is held until you come; a stronger one breaks through and the disc's stones are spent.</p>
+      <p class="muted">Holding burns five times the stones, so a beast left long enough eats the disc dry and walks off.</p>
+      <h3>When you check</h3>
+      <p class="muted">Its seal turns red when something waits. A held beast is fought bound, on the disc's ground, through the fights you play.</p>
+    </div>
+  </section>
+</div></div>
+
+<script>
+// Fit the 1920×1080 stage to the window, as the game does.
+const stage = document.getElementById('stage');
+function fit() { const w = document.documentElement.clientWidth || innerWidth; const s = w > 0 ? Math.min(1, w / 1920) : 1; stage.style.transform = `scale(${s})`; stage.parentElement.style.height = 1080 * s + 'px'; }
+addEventListener('resize', fit); fit();
+document.querySelectorAll('.tabs button').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.view').forEach((v) => v.classList.toggle('on', v.dataset.v === b.dataset.v));
+});
+
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6d2b79f5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const gold = '#d6ab4c', qiC = '143,183,217';
+
+// ---------------- Take A: reading the currents
+(() => {
+  const cv = document.getElementById('aCv'), g = cv.getContext('2d');
+  const N = 11, SP = 56, O = 45, EYE = [5, 5], FLAGS = 8, SENSE = 150, SPILL = 0.04;
+  const P = (i, j) => [O + i * SP, O + j * SP];
+  let rnd, currents, rocks, flags, lines, spill, mouse, closed, msg;
+  function seed() {
+    rnd = mulberry32(1234 + Math.floor(Math.random() * 1e6));
+    currents = [];
+    for (let k = 0; k < 3; k++) {
+      // A current: a gentle curve crossing the board, near the eye more often than not.
+      const a = rnd() * Math.PI, cx = 325 + (rnd() - .5) * 220, cy = 325 + (rnd() - .5) * 220;
+      const dx = Math.cos(a), dy = Math.sin(a), bend = (rnd() - .5) * 0.006, pts = [];
+      for (let t = -460; t <= 460; t += 10) { const off = bend * t * t; pts.push([cx + dx * t - dy * off, cy + dy * t + dx * off]); }
+      currents.push({ pts, w: 0.6 + rnd() * 0.4 });
+    }
+    rocks = new Set();
+    while (rocks.size < 7) { const i = Math.floor(rnd() * N), j = Math.floor(rnd() * N); if (Math.abs(i - 5) + Math.abs(j - 5) > 1) rocks.add(i + ',' + j); }
+    flags = []; lines = []; spill = 0; closed = false; msg = '';
+    draw(); readout();
+  }
+  // The field at a point: each current's strength falling off over ~26 px.
+  function field(x, y) {
+    let f = 0;
+    for (const c of currents) { let d = 1e9; for (const p of c.pts) d = Math.min(d, (p[0] - x) ** 2 + (p[1] - y) ** 2); f += c.w * Math.exp(-d / (2 * 26 * 26)); }
+    return Math.min(1.4, f);
+  }
+  const lineWorth = (a, b) => { let s = 0; for (let k = 0; k <= 16; k++) { const t = k / 16; s += field(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t); } return s / 17; };
+  function cross(p1, p2, p3, p4) {
+    const d = (a, b, c) => (c[0] - a[0]) * (b[1] - a[1]) - (b[0] - a[0]) * (c[1] - a[1]);
+    const d1 = d(p3, p4, p1), d2 = d(p3, p4, p2), d3 = d(p1, p2, p3), d4 = d(p1, p2, p4);
+    return ((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0));
+  }
+  function nearRock(a, b) {
+    for (const r of rocks) { const [i, j] = r.split(',').map(Number), q = P(i, j);
+      const vx = b[0] - a[0], vy = b[1] - a[1], t = Math.max(0, Math.min(1, ((q[0] - a[0]) * vx + (q[1] - a[1]) * vy) / (vx * vx + vy * vy || 1)));
+      if (Math.hypot(a[0] + vx * t - q[0], a[1] + vy * t - q[1]) < 14) return true; }
+    return false;
+  }
+  function inside(pt, poly) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > pt[1]) !== (yj > pt[1]) && pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi) c = !c; } return c; }
+  // A fair scale for this ground: the strongest points the board offers.
+  let norm = 1;
+  function setNorm() { const v = []; for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) v.push(field(...P(i, j))); v.sort((a, b) => b - a); norm = Math.max(0.3, v[FLAGS] * 0.85); }
+  function okLine(a, b, skipFirst) {
+    if (nearRock(a, b)) return 'a stone stands in the way';
+    for (let k = 0; k < lines.length - (skipFirst ? 0 : 1); k++) { const [p, q] = lines[k]; if (k === 0 && skipFirst) continue; if (cross(a, b, p, q)) return 'the line would cross another'; }
+    return '';
+  }
+  function hand() {
+    if (!flags.length) return 0;
+    const fv = flags.reduce((s, f) => s + Math.min(1, field(...f.p) / norm), 0) / FLAGS;
+    const lv = lines.reduce((s, l) => s + Math.min(1, l[2] / norm), 0) / FLAGS;
+    const h = 0.4 * fv + 0.6 * lv - spill;
+    return Math.max(0, Math.min(1, closed ? h : h * 0.9));
+  }
+  function pick(e) { const r = cv.getBoundingClientRect(), sx = cv.width / r.width; const x = (e.clientX - r.left) * sx, y = (e.clientY - r.top) * sx;
+    const i = Math.round((x - O) / SP), j = Math.round((y - O) / SP); return { x, y, i, j, ok: i >= 0 && j >= 0 && i < N && j < N && Math.hypot(x - P(i, j)[0], y - P(i, j)[1]) < 22 }; }
+  cv.addEventListener('mousemove', (e) => { mouse = pick(e); draw(); readout(); });
+  cv.addEventListener('mouseleave', () => { mouse = null; draw(); readout(); });
+  cv.addEventListener('contextmenu', (e) => { e.preventDefault(); if (!flags.length) return; if (closed) { closed = false; lines.pop(); } flags.pop(); if (lines.length >= flags.length && lines.length) lines.pop(); spill += SPILL; msg = ''; draw(); readout(); });
+  cv.addEventListener('click', (e) => {
+    if (closed) return; const m = pick(e); if (!m.ok) return;
+    const key = m.i + ',' + m.j, p = P(m.i, m.j);
+    if (rocks.has(key)) { msg = 'a stone: no flag stands there'; return readout(); }
+    if (m.i === EYE[0] && m.j === EYE[1]) { msg = 'the disc sits in the eye'; return readout(); }
+    if (flags.some((f) => f.key === key)) { msg = 'a flag already stands there'; return readout(); }
+    if (flags.length) { const why = okLine(flags[flags.length - 1].p, p); if (why) { msg = why; return readout(); } }
+    if (flags.length) lines.push([flags[flags.length - 1].p, p, lineWorth(flags[flags.length - 1].p, p)]);
+    flags.push({ key, p }); msg = '';
+    if (flags.length === FLAGS) {
+      const a = p, b = flags[0].p, why = nearRock(a, b) ? 'a stone stands in the way' : lines.slice(1, -1).some(([q, r]) => cross(a, b, q, r)) ? 'the closing line would cross another' : '';
+      if (why) msg = 'The ring will not close: ' + why + '. Pull a flag up.';
+      else if (!inside(P(...EYE), flags.map((f) => f.p))) msg = 'The ring closes, but the eye lies outside it. Pull a flag up.';
+      else { lines.push([a, b, lineWorth(a, b)]); closed = true; }
+    }
+    draw(); readout();
+  });
+  function draw() {
+    g.clearRect(0, 0, cv.width, cv.height);
+    // Currents: bright inside your sense and round each flag, all but gone elsewhere.
+    const seen = [...flags.map((f) => [f.p, 70]), ...(mouse ? [[[mouse.x, mouse.y], SENSE]] : [])];
+    for (const c of currents) for (const p of c.pts) {
+      let a = 0.035; for (const [q, r] of seen) { const d = Math.hypot(p[0] - q[0], p[1] - q[1]); if (d < r) a = Math.max(a, 0.75 * (1 - d / r) + 0.1); }
+      g.fillStyle = `rgba(${qiC},${a * c.w})`; g.beginPath(); g.arc(p[0], p[1], 3.2, 0, 7); g.fill();
+    }
+    if (mouse) { g.strokeStyle = `rgba(${qiC},.18)`; g.setLineDash([4, 6]); g.beginPath(); g.arc(mouse.x, mouse.y, SENSE, 0, 7); g.stroke(); g.setLineDash([]); }
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+      const [x, y] = P(i, j);
+      if (rocks.has(i + ',' + j)) { g.fillStyle = '#3a3630'; g.beginPath(); g.moveTo(x - 9, y + 7); g.lineTo(x - 2, y - 9); g.lineTo(x + 9, y + 6); g.fill(); continue; }
+      g.fillStyle = 'rgba(233,229,218,.18)'; g.beginPath(); g.arc(x, y, 1.6, 0, 7); g.fill();
+    }
+    const e = P(...EYE); g.strokeStyle = gold; g.lineWidth = 1.5; g.beginPath(); g.arc(e[0], e[1], 13, 0, 7); g.stroke(); g.fillStyle = 'rgba(214,171,76,.25)'; g.fill();
+    g.fillStyle = gold; g.font = '15px "Ma Shan Zheng", KaiTi'; g.textAlign = 'center'; g.fillText('眼', e[0], e[1] + 5);
+    for (const [a, b, w] of lines) { g.strokeStyle = `rgba(214,171,76,${0.25 + 0.7 * Math.min(1, w / norm)})`; g.lineWidth = 2; g.beginPath(); g.moveTo(...a); g.lineTo(...b); g.stroke(); }
+    if (closed) { g.fillStyle = 'rgba(214,171,76,.06)'; g.beginPath(); flags.forEach((f, k) => k ? g.lineTo(...f.p) : g.moveTo(...f.p)); g.fill(); }
+    if (mouse && mouse.ok && flags.length && !closed) { const a = flags[flags.length - 1].p, b = P(mouse.i, mouse.j); g.setLineDash([5, 5]); g.strokeStyle = 'rgba(214,171,76,.5)'; g.beginPath(); g.moveTo(...a); g.lineTo(...b); g.stroke(); g.setLineDash([]); }
+    flags.forEach((f, k) => { const [x, y] = f.p; g.fillStyle = '#0b0d10'; g.strokeStyle = gold; g.lineWidth = 1.5; g.beginPath(); g.rect(x - 7, y - 16, 14, 18); g.fill(); g.stroke(); g.fillStyle = gold; g.font = '11px Inter'; g.fillText(k + 1, x, y - 3); });
+  }
+  function readout() {
+    const $ = (id) => document.getElementById(id);
+    $('aFlags').innerHTML = Array.from({ length: FLAGS }, (_, k) => `<i class="${k < flags.length ? 'used' : ''}">旗</i>`).join('');
+    const m = mouse && mouse.ok ? mouse : null;
+    $('aHere').textContent = m ? (rocks.has(m.i + ',' + m.j) ? 'stone' : Math.min(1, field(...P(m.i, m.j)) / norm).toFixed(2)) : '–';
+    $('aLine').textContent = m && flags.length && !closed ? Math.min(1, lineWorth(flags[flags.length - 1].p, P(m.i, m.j)) / norm).toFixed(2) : '–';
+    $('aSoFar').textContent = `${flags.length} of ${FLAGS}${closed ? ' · closed' : ''}`;
+    $('aSpill').textContent = spill.toFixed(2);
+    const h = hand(); $('aHand').style.width = h * 100 + '%'; $('aHandN').textContent = h.toFixed(2);
+    $('aOut').innerHTML = msg ? `<span class="warn">${msg}</span>` : closed
+      ? `The ring closes. A tier 1 Gathering Array at a hand of ${h.toFixed(2)}: ${h >= 1 ? '<span class="blue">blue</span>, a band up' : h >= 0.5 ? '<span class="green">green</span>, most of a band toward blue (the lift past a whole band waits on Steady hands)' : '<span class="green">green</span>, as the flags were'}. The cave's density 4 → 5.`
+      : 'A green tier 1 Gathering Array: the cave\'s density 4 → 5. The hand lifts it a band at 1.0 (the reach).';
+  }
+  document.getElementById('aReset').onclick = () => { seed(); setNorm(); draw(); readout(); };
+  seed(); setNorm(); draw(); readout();
+})();
+
+// ---------------- Take B: pacing the stars
+(() => {
+  const cv = document.getElementById('bCv'), g = cv.getContext('2d'), C = [325, 325], PERIOD = 2600, TOL = 26;
+  // Seven stars at different distances from the eye, so the ring reaches them out of order.
+  const stars = [[-70, -150], [60, -210], [190, -120], [230, 60], [90, 200], [-120, 170], [-230, 10]].map(([x, y]) => [C[0] + x, C[1] + y]);
+  const R = stars.map((s) => Math.hypot(s[0] - C[0], s[1] - C[1]));
+  let t0 = 0, run = false, got = [], raf = 0;
+  const ring = (t) => ((t - t0) % PERIOD) / PERIOD * 300;
+  function draw(t) {
+    g.clearRect(0, 0, 650, 650);
+    const r = run ? ring(t) : -1;
+    if (run) { g.strokeStyle = `rgba(${qiC},.55)`; g.lineWidth = 2; g.beginPath(); g.arc(...C, r, 0, 7); g.stroke(); g.strokeStyle = `rgba(${qiC},.12)`; g.lineWidth = TOL * 2; g.beginPath(); g.arc(...C, r, 0, 7); g.stroke(); }
+    g.lineWidth = 2;
+    for (let k = 1; k < got.length; k++) { g.strokeStyle = `rgba(214,171,76,${0.2 + 0.75 * got[k]})`; g.beginPath(); g.moveTo(...stars[k - 1]); g.lineTo(...stars[k]); g.stroke(); }
+    if (got.length === 7) { g.strokeStyle = 'rgba(214,171,76,.6)'; g.beginPath(); g.moveTo(...stars[6]); g.lineTo(...stars[0]); g.stroke(); }
+    stars.forEach((s, k) => { const next = k === got.length, lit = run && next && Math.abs(r - R[k]) < TOL;
+      g.fillStyle = k < got.length ? gold : lit ? '#f3dc9c' : next ? 'rgba(214,171,76,.45)' : 'rgba(233,229,218,.18)';
+      g.beginPath(); g.arc(...s, lit ? 11 : 7, 0, 7); g.fill(); g.fillStyle = '#8d949d'; g.font = '12px Inter'; g.textAlign = 'center'; g.fillText(k + 1, s[0], s[1] - 14); });
+    g.strokeStyle = gold; g.beginPath(); g.arc(...C, 13, 0, 7); g.stroke(); g.fillStyle = gold; g.font = '15px "Ma Shan Zheng", KaiTi'; g.fillText('眼', C[0], C[1] + 5);
+    if (run && got.length < 7) raf = requestAnimationFrame(draw);
+  }
+  function show() { const h = got.length ? got.reduce((a, b) => a + b, 0) / 7 : 0;
+    document.getElementById('bN').textContent = `${got.length} of 7`; document.getElementById('bHand').style.width = h * 100 + '%'; document.getElementById('bHandN').textContent = h.toFixed(2); }
+  cv.addEventListener('click', (e) => { if (!run || got.length >= 7) return; const rc = cv.getBoundingClientRect(), sx = 650 / rc.width, x = (e.clientX - rc.left) * sx, y = (e.clientY - rc.top) * sx;
+    const k = got.length; if (Math.hypot(x - stars[k][0], y - stars[k][1]) > 26) return;
+    const q = Math.max(0, 1 - Math.abs(ring(performance.now()) - R[k]) / TOL); got.push(q);
+    document.getElementById('bLast').textContent = q > 0.8 ? 'on the ring' : q > 0 ? (ring(performance.now()) < R[k] ? 'early' : 'late') : 'missed: its line dark'; show(); });
+  document.getElementById('bGo').onclick = () => { cancelAnimationFrame(raf); got = []; t0 = performance.now(); run = true; show(); raf = requestAnimationFrame(draw); };
+  draw(0); show();
+})();
+</script>
+</body>
+</html>

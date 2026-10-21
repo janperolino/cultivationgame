@@ -703,6 +703,7 @@ function TechniquePage({
         <button
           type="button"
           className={`button${ring ? ' beacon-ring' : ''}`}
+          data-guide="practice-this"
           aria-pressed={practicing}
           disabled={!practicing && (!canPractice(c, t.id) || full)}
           onClick={() => {

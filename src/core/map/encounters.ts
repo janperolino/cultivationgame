@@ -50,6 +50,8 @@ import { CLOSE_WOUND } from '../../content/resolver.ts';
 import { template as rosterTemplate } from '../../content/roster.ts';
 import { hasCopy } from '../../content/copies.ts';
 import { startFight, preview, type Fight } from '../combat/fight.ts';
+import { edgeWords, fightEdge, isSure } from '../combat/edge.ts';
+import { hpLost, openFight, type FightEnd } from '../played.ts';
 import type { Combatant } from '../combat/combatant.ts';
 import { generateBeast, generateCultivator, generatePack } from '../combat/generate.ts';
 import type { Npc } from '../combat/generate.ts';
@@ -102,6 +104,9 @@ import { areaAt, terrainAt, type RegionMap } from './region.ts';
 import { nearRoad } from './route.ts';
 import { gainItem } from './ground.ts';
 import type { Encounter, MapLife, Stance } from './schema.ts';
+
+/** The fight's edge lives with the combat rules, since a card's fight reads it too. */
+export { fightEdge, type FightEdge } from '../combat/edge.ts';
 
 // ---------------------------------------------------------------- hooks
 
@@ -239,67 +244,6 @@ export function meet(s: GameState, enc: Encounter): Met {
   return { enc, template, you, actors, npcs, roles, scene };
 }
 
-// ---------------------------------------------------------------- the fight's edge
-
-/** The best a combatant lands on another in one exchange, by its strike or a technique, unrolled. */
-function bestBlow(f: Fight, a: Combatant, target: Combatant): number {
-  let best = 0;
-  const strike = preview(f, a.id, { type: 'strike', target: target.id });
-  if (strike) best = strike.chance * strike.damage;
-  for (const id of Object.keys(a.techniques)) {
-    const p = preview(f, a.id, { type: 'technique', id, target: target.id });
-    if (p) best = Math.max(best, p.chance * p.damage);
-  }
-  return best;
-}
-
-function pool(c: Combatant): number {
-  return c.hp + c.shield + (c.armor?.hp ?? 0);
-}
-
-export interface FightEdge {
-  /** Exchanges you need to fell them all, quickest first. */
-  yours: number;
-  /** Exchanges they'd need to fell you, at the rate they hit you while you do. */
-  theirs: number;
-  /** Your strength over what you'd lose felling them: theirs over yours. */
-  ratio: number;
-  /** The share of your strength the fight would cost you. */
-  costs: number;
-  verdict: Verdict;
-}
-
-/**
- * A fight's edge with no dice (P3.7's talk), from both sheets' expected blows: you fell them one by
- * one, the quickest first, and each of them still standing strikes you every exchange. The ratio is
- * your strength (HP, shield and armor) over what that race takes from it: clear at ×1.25, close at ×1.
- */
-export function fightEdge(you: Combatant, foes: readonly Combatant[]): FightEdge {
-  if (!foes.length)
-    return { yours: 0, theirs: Infinity, ratio: Infinity, costs: 0, verdict: 'clear' };
-  const me = { ...you, side: YOU };
-  const them = foes.map((c) => ({ ...c, side: THEM }));
-  const f = startFight([me, ...them]);
-  const order = them
-    .map((t) => {
-      const blow = bestBlow(f, me, t);
-      return { need: blow > 0 ? pool(t) / blow : Infinity, hits: bestBlow(f, t, me) };
-    })
-    .sort((a, b) => a.need - b.need);
-  let yours = 0;
-  let taken = 0;
-  let standing = order.reduce((n, o) => n + o.hits, 0);
-  for (const o of order) {
-    yours += o.need;
-    taken += o.need * standing;
-    standing -= o.hits;
-  }
-  const mine = pool(me);
-  const ratio = taken > 0 ? mine / taken : Infinity;
-  const theirs = Number.isFinite(ratio) ? yours * ratio : Infinity;
-  return { yours, theirs, ratio, costs: Math.min(1, taken / mine), verdict: verdict(ratio, 1) };
-}
-
 // ---------------------------------------------------------------- what you can judge
 
 export interface ExitView {
@@ -316,6 +260,8 @@ export interface ExitView {
   tried: boolean;
   /** An escape talisman the flee burns to come clear (K5), by rule. */
   burns?: string;
+  /** A fight that is a sure win (Fights you play): it resolves on its own; anything less is played. */
+  sure?: boolean;
 }
 
 function faced(m: Met, e: Exit): Actor[] {
@@ -328,8 +274,6 @@ function faced(m: Met, e: Exit): Actor[] {
 function readsAll(you: Actor, them: readonly Actor[]): boolean {
   return them.every((t) => readRealm(you, t).kind !== 'beyond');
 }
-
-const round = (n: number) => (Number.isFinite(n) ? Math.max(1, Math.round(n)) : '∞');
 
 export function exitViews(s: GameState, m: Met): ExitView[] {
   return m.template.exits.map((exit, i) => withEscape(s, m, exitView(s, m, exit, i)));
@@ -382,14 +326,19 @@ function exitView(s: GameState, m: Met, exit: Exit, i: number): ExitView {
   const them = faced(m, exit);
   if (exit.road === 'fight') {
     const edge = fightEdge(m.you.combatant!, them.map((a) => a.combatant!).filter(Boolean));
-    const judged = readsAll(m.you, them) ? edge.verdict : '?';
-    const why =
-      judged === '?'
-        ? 'fight · you can’t read them'
-        : edge.costs >= 1
-          ? `fight · you’d fall before they do: ${round(edge.yours)} exchanges to fell them, ${round(edge.theirs)} to fell you`
-          : `fight · you’d fell them in ${round(edge.yours)} exchanges, at about ${Math.round(edge.costs * 100)}% of your strength (×${edge.ratio >= 10 ? '10+' : edge.ratio.toFixed(2)})`;
-    return { i, exit, verdict: edge.verdict, judged, why, refused, tried };
+    const reads = readsAll(m.you, them);
+    const judged = reads ? edge.verdict : '?';
+    const why = judged === '?' ? 'fight · you can’t read them' : `fight · ${edgeWords(edge)}`;
+    return {
+      i,
+      exit,
+      verdict: edge.verdict,
+      judged,
+      why,
+      refused,
+      tried,
+      sure: isSure(edge, reads),
+    };
   }
   if (exit.road === 'take' || exit.road === 'pass' || exit.road === 'deal') {
     const why =
@@ -465,6 +414,24 @@ export function stancePick(
     if (ok(v.judged)) return v.i;
   }
   return null;
+}
+
+/**
+ * What your stance does with a card while you're there (Fights you play): it settles its pick,
+ * unless the pick is a fight that isn't a sure win, which Bold goes into on the stage and Careful
+ * leaves waiting for you. Away, every pick settles by its verdict.
+ */
+export function stanceThere(
+  t: Template,
+  views: readonly ExitView[],
+  stance: Stance,
+  gathers = true,
+): { settle: number } | { play: number } | null {
+  const pick = stancePick(t, views, stance, gathers);
+  if (pick === null) return null;
+  const v = views[pick]!;
+  if (v.exit.road !== 'fight' || v.sure) return { settle: pick };
+  return stance === 'bold' ? { play: pick } : null;
 }
 
 // ---------------------------------------------------------------- settling
@@ -658,6 +625,15 @@ export function setMapOf(f: (s: GameState) => RegionMap | null): void {
   mapHook = f;
 }
 
+/** Robbers: a person on the card whose motives hold greed. */
+function isGreedy(m: Met): boolean {
+  return m.template.roles.some(
+    (r) =>
+      r.motives?.includes('greed') &&
+      !('roster' in r.who && rosterTemplate(r.who.roster).kind === 'beast'),
+  );
+}
+
 /** The outcome an exit gives at a verdict, with the act's own when the template leaves it out. */
 function outcomeOf(
   m: Met,
@@ -681,11 +657,7 @@ function outcomeOf(
       stays: true,
     };
   // A slip or a fight fallen short: they have you, and the fight goes as the fight would.
-  const greedy = m.template.roles.some(
-    (r) =>
-      r.motives?.includes('greed') &&
-      !('roster' in r.who && rosterTemplate(r.who.roster).kind === 'beast'),
-  );
+  const greedy = isGreedy(m);
   const lost: Stake[] = [{ do: 'wound', share: SHORT_WOUND.share, days: SHORT_WOUND.days }];
   if (greedy) lost.push({ do: 'robbed', share: ROBBED_SHARE, item: true });
   return {
@@ -742,6 +714,29 @@ export function settle(
         ...(life.region ? { region: life.region } : {}),
       }).state;
   }
+  return closeCard(st, m, i, o, [...(o.stakes ?? []), ...extra], {
+    stays,
+    met: view.verdict !== 'short',
+    kind: by === 'stance' ? 'settled' : e.road === 'fight' ? 'fight' : 'choice',
+    verdict: view.verdict,
+  });
+}
+
+/**
+ * The card's end once its stakes have landed: it stays with that exit spent when a talk fell
+ * short, or leaves with a road line and a chronicle line, its posting met when it was.
+ */
+function closeCard(
+  st0: GameState,
+  m: Met,
+  i: number,
+  o: ExitOutcome,
+  stakes: readonly Stake[],
+  how: { stays: boolean; met: boolean; kind: string; verdict: Verdict },
+): Settled {
+  let st = st0;
+  const enc = m.enc;
+  const { stays, verdict: v } = how;
   const l = st.map!;
   if (stays) {
     return {
@@ -756,14 +751,13 @@ export function settle(
       },
       text: o.text,
       stays: true,
-      verdict: view.verdict,
+      verdict: v,
     };
   }
-  const hurt = [...(o.stakes ?? []), ...extra].some((k) => k.do === 'wound');
-  const kind =
-    by === 'stance' ? 'settled' : hurt ? 'hurt' : e.road === 'fight' ? 'fight' : 'choice';
+  const hurt = stakes.some((k) => k.do === 'wound');
+  const kind = how.kind !== 'settled' && hurt ? 'hurt' : how.kind;
   const postings =
-    enc.posting && view.verdict !== 'short'
+    enc.posting && how.met
       ? l.postings.map((p) => (p.id === enc.posting ? { ...p, done: true } : p))
       : l.postings;
   st = {
@@ -779,7 +773,132 @@ export function settle(
     },
   };
   st = addEvent(st, 'encounter', { line: o.line, where: enc.where, kind });
-  return { state: st, text: o.text, stays: false, verdict: view.verdict };
+  return { state: st, text: o.text, stays: false, verdict: v };
+}
+
+// ---------------------------------------------------------------- fights you play
+
+/**
+ * The fight an exit opens on the stage: you against whoever the exit faces, regenerated from the
+ * encounter's seed, so a reload builds the same start. Null when it isn't a fight.
+ */
+export function roadFight(s: GameState, encId: string, i: number): Fight | null {
+  const enc = s.map?.encounters.find((e) => e.id === encId);
+  if (!enc) return null;
+  const m = meet(s, enc);
+  const e = m.template.exits[i];
+  if (!e || e.road !== 'fight' || !m.you.combatant) return null;
+  const foes = faced(m, e)
+    .map((a) => a.combatant)
+    .filter((c): c is Combatant => !!c)
+    .map((c) => ({ ...c, side: THEM }));
+  if (!foes.length) return null;
+  return startFight([{ ...m.you.combatant, side: YOU }, ...foes]);
+}
+
+/**
+ * Opens an exit's fight on the stage instead of settling it by its verdict: the card waits, and
+ * the course with it, until the fight ends. Null when the exit isn't a fight you can take.
+ */
+export function playExit(s: GameState, encId: string, i: number): GameState | null {
+  const life = s.map;
+  const enc = life?.encounters.find((e) => e.id === encId);
+  if (!life || !enc || s.fight) return null;
+  const view = exitViews(s, meet(s, enc))[i];
+  if (!view || view.refused || view.exit.road !== 'fight') return null;
+  if (!roadFight(s, encId, i)) return null;
+  const waits: GameState = {
+    ...s,
+    map: {
+      ...life,
+      encounters: life.encounters.map((e) =>
+        e.id === encId ? { ...e, state: 'waiting', meetAt: null } : e,
+      ),
+    },
+  };
+  return openFight(waits, { kind: 'road', enc: encId, exit: i });
+}
+
+/** What the HP a fight took comes home as: none under a quarter, close to a half, short past it. */
+function woundFrom(lost: number): Stake[] {
+  if (lost >= 0.5) return [{ do: 'wound', share: SHORT_WOUND.share, days: SHORT_WOUND.days }];
+  if (lost >= 0.25) return [{ do: 'wound', share: CLOSE_WOUND.share, days: CLOSE_WOUND.days }];
+  return [];
+}
+
+/**
+ * A road fight you played, handed back to its card (Fights you play): won, the exit's pass and a
+ * wound by the HP it took; fallen, its short as the verdict would have it; fled or drawn off, you
+ * are away with the wound; yielded, robbers rob you and anyone else lets you go; talked down, the
+ * pass without their kit. The arts you threw are seen by everyone there.
+ */
+export function settlePlayed(
+  s: GameState,
+  encId: string,
+  i: number,
+  end: FightEnd,
+  f: Fight,
+  used: readonly string[] = [],
+): Settled | null {
+  const life = s.map;
+  const enc = life?.encounters.find((e) => e.id === encId);
+  if (!life || !enc) return null;
+  const m = meet(s, enc);
+  const e = m.template.exits[i];
+  if (!e) return null;
+  const them = m.template.roles[0]?.name ?? 'them';
+  const wound = woundFrom(hpLost(f, s.player.id));
+  let o: ExitOutcome;
+  let extra: Stake[] = [];
+  let verdict: Verdict = 'clear';
+  switch (end) {
+    case 'won':
+      o = e.pass;
+      extra = wound;
+      break;
+    case 'talked':
+      o = { ...e.pass, stakes: (e.pass.stakes ?? []).filter((k) => k.do !== 'loot') };
+      extra = wound;
+      break;
+    case 'lost': {
+      const r = outcomeOf(m, e, 'short');
+      o = r.o;
+      extra = r.extra;
+      verdict = 'short';
+      break;
+    }
+    case 'yielded':
+      verdict = 'short';
+      if (isGreedy(m)) {
+        o = {
+          text: 'You yield. They take what they want and let you go.',
+          line: `yields to ${them} and is robbed`,
+        };
+        extra = [{ do: 'robbed', share: ROBBED_SHARE, item: true }];
+      } else o = { text: 'You yield, and they let you go.', line: `yields to ${them}` };
+      break;
+    default:
+      verdict = 'close';
+      o = {
+        text: `You break away from ${them} and leave them behind.`,
+        line: `breaks away from ${them}`,
+      };
+      extra = wound;
+  }
+  const rng = new Rng(hashSeed(`${enc.id}/played/${i}`));
+  const stakes = [...(o.stakes ?? []), ...extra];
+  let st = applyStakes(s, m, stakes, rng);
+  if (used.length)
+    st = seenUsing(st, used.map(artCopy), m.actors, m.you, {
+      place: enc.id,
+      ...(life.region ? { region: life.region } : {}),
+    }).state;
+  return closeCard(st, m, i, o, stakes, {
+    stays: false,
+    met: end === 'won' || end === 'talked',
+    kind: 'fight',
+    verdict,
+  });
 }
 
 /** Goes round a sensed encounter that hasn't found you: 60 li more cross-country. */
@@ -811,8 +930,12 @@ export function canGoRound(enc: Encounter): boolean {
   return enc.state === 'sensed' && enc.how === 'seen';
 }
 
-/** Lets a stance settle what it can when you reach it; the rest waits and stops the course. */
-export function contact(s: GameState, encId: string): GameState {
+/**
+ * Lets a stance settle what it can when you reach it; the rest waits and stops the course. While
+ * you're there (`played`), a stance settles only a sure fight, and Bold goes into a clear or close
+ * one on the stage (Fights you play); away, every fight settles by its verdict.
+ */
+export function contact(s: GameState, encId: string, played = false): GameState {
   const life = s.map;
   const enc = life?.encounters.find((e) => e.id === encId);
   if (!life || !enc) return s;
@@ -824,8 +947,13 @@ export function contact(s: GameState, encId: string): GameState {
   const law = m.template.where.lawHall && enc.power && yourMark(s, enc.power) ? enc.power : null;
   const lastMet = law ? life.lawMet?.[law] : undefined;
   const holds = !!law && (lastMet === undefined || s.calendar.day - lastMet >= GUARDED.coolDays);
-  const pick = holds ? null : stancePick(m.template, exitViews(s, m), life.stance, gathers);
-  if (pick !== null) {
+  const views = exitViews(s, m);
+  const pick = holds ? null : stancePick(m.template, views, life.stance, gathers);
+  const there = played && !holds ? stanceThere(m.template, views, life.stance, gathers) : null;
+  if (there && 'play' in there && !s.fight) {
+    const r = playExit(s, encId, there.play);
+    if (r) return r;
+  } else if (pick !== null && (!played || (there && 'settle' in there))) {
     const r = settle(s, encId, pick, 'stance');
     if (r && !r.stays) return r.state;
   }
@@ -856,7 +984,7 @@ export function waiting(life: MapLife | null): Encounter[] {
 export function setStance(s: GameState, stance: Stance): GameState {
   if (!s.map) return s;
   let st: GameState = { ...s, map: { ...s.map, stance } };
-  for (const e of waiting(st.map)) st = contact(st, e.id);
+  for (const e of waiting(st.map)) st = contact(st, e.id, true);
   return st;
 }
 
@@ -1135,6 +1263,7 @@ export function arrive(
   yourBand: number,
   sense: number,
   rng: Rng,
+  played = false,
 ): GameState {
   const life = s.map!;
   if (!life.course || life.encounters.filter((e) => e.state === 'sensed').length >= MAX_AHEAD)
@@ -1183,7 +1312,7 @@ export function arrive(
       }
     : enc;
   st = { ...st, map: { ...st.map!, encounters: [...st.map!.encounters, placed] } };
-  if (met) return contact(st, placed.id);
+  if (met) return contact(st, placed.id, played);
   if (
     st.map!.stance === 'avoid' &&
     placed.how === 'seen' &&
@@ -1191,6 +1320,42 @@ export function arrive(
     d.template.kind !== 'omen'
   )
     return goRound(st, placed.id, 'stance');
+  return st;
+}
+
+/**
+ * A written encounter placed ahead on the course at a point (the origin's board quest's road
+ * beast): seen at the edge of your sight, met when the course reaches it, and gone round at once
+ * on Avoid, as a drawn one is.
+ */
+export function placeAhead(
+  s: GameState,
+  map: RegionMap,
+  template: string,
+  band: number,
+  index: number,
+  id: string,
+): GameState {
+  const life = s.map!;
+  if (!life.course || life.encounters.some((e) => e.id === id)) return s;
+  const t = encounterTemplate(template);
+  const at = life.course.pts[index]!;
+  const enc: Encounter = {
+    id,
+    template,
+    seed: hashSeed(`${id}/${s.lineage.id}`),
+    band,
+    at: [at[0], at[1]],
+    meetAt: index,
+    state: 'sensed',
+    how: 'seen',
+    tried: [],
+    day: s.calendar.day,
+    where: whereWords(map, at),
+  };
+  const st = { ...s, map: { ...life, encounters: [...life.encounters, enc] } };
+  if (st.map.stance === 'avoid' && t.kind !== 'place' && t.kind !== 'omen')
+    return goRound(st, id, 'stance');
   return st;
 }
 
@@ -1231,6 +1396,7 @@ export function roadHour(
   flying: boolean,
   yourBand: number,
   sense: number,
+  played = false,
 ): GameState {
   let st = s;
   const life = st.map!;
@@ -1251,6 +1417,7 @@ export function roadHour(
             yourBand,
             sense,
             rng,
+            played,
           ),
         };
       });
@@ -1258,19 +1425,19 @@ export function roadHour(
       st = { ...value.after, rng: { ...value.after.rng, road: state.rng.road! } };
     } else st = { ...st, map: { ...life, notice: { ...life.notice, n } } };
   }
-  return meetReached(st);
+  return meetReached(st, played);
 }
 
-/** Meets every sensed encounter the course has reached. */
-export function meetReached(s: GameState): GameState {
+/** Meets every sensed encounter the course has reached; `played` while you're there. */
+export function meetReached(s: GameState, played = false): GameState {
   let st = s;
   const life = st.map;
   if (!life?.course) return st;
   for (const e of life.encounters) {
     if (e.state !== 'sensed' || e.meetAt === null) continue;
     const near = Math.hypot(e.at[0] - life.at[0], e.at[1] - life.at[1]) < CONTACT_LI;
-    if (life.course.at >= e.meetAt || near) st = contact(st, e.id);
-    if (waiting(st.map).length) break;
+    if (life.course.at >= e.meetAt || near) st = contact(st, e.id, played);
+    if (waiting(st.map).length || st.fight) break;
   }
   return st;
 }

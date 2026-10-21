@@ -2,14 +2,18 @@
 // real clock, each card taken by its default as it comes, counting cards per real hour, by deck
 // and by kind, at each realm, and how often a card repeats: the share of draws that repeat a card
 // seen in the last real hour, and the median real minutes between two draws of the same card.
-// Targets: one card every five to eight real minutes, two or three an in-game season at Qi
-// Condensation, and repeats rare.
+// Targets: one card every three to five real minutes once the origin's chain's first lesson is
+// handed in (The opening, built: the knobs; the deck is held until then, about minute 15, which the
+// sim stands in for by letting the chain go at minute 15), and repeats rare. The rates count from
+// the lesson.
 // Run: npm run sim -- cards [--seeds=4] [--hours=20]
 import { card } from '../src/content/cards/index.ts';
 import { ORIGIN_CHOICES, ORIGIN_IDS, pathKey } from '../src/content/origins.ts';
 import { defaultElements } from '../src/content/roots.ts';
 import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
+import { withoutChain } from '../src/core/chains.ts';
+import { finishAllGuides } from '../src/core/guides.ts';
 import { advance } from '../src/core/loop.ts';
 import type { GameState } from '../src/core/state.ts';
 
@@ -20,6 +24,8 @@ const num = (name: string, fallback: number) => {
 const SEEDS = num('seeds', 4);
 const HOURS = num('hours', 20);
 const CHUNK_MS = 15_000;
+/** Where the chain's first lesson is handed in, about: the deck is held till then. */
+const LESSON_MS = 15 * 60_000;
 
 interface Draw {
   card: string;
@@ -47,20 +53,29 @@ function run(origin: (typeof ORIGIN_IDS)[number], choice: 'along' | 'refuse', se
       origin,
     },
   });
+  s = finishAllGuides(s);
+  let held = true;
   const draws: Draw[] = [];
   const realmMs: Record<string, number> = {};
   const realmDays: Record<string, number> = {};
   let ms = 0;
   let seen = s.cards.nextUid;
-  while (ms < HOURS * 3_600_000 && !s.ended) {
+  while (ms < LESSON_MS + HOURS * 3_600_000 && !s.ended) {
+    // The first lesson handed in near minute 15: the seclusion deck comes from then.
+    if (held && ms >= LESSON_MS) {
+      s = withoutChain(s);
+      held = false;
+    }
     const realm = s.player.qi.realm;
     const r = advance(s, CHUNK_MS, { step: playDay });
     s = r.state;
     ms += r.usedMs;
-    realmMs[realm] = (realmMs[realm] ?? 0) + r.usedMs;
-    realmDays[realm] = (realmDays[realm] ?? 0) + r.days;
+    if (!held) {
+      realmMs[realm] = (realmMs[realm] ?? 0) + r.usedMs;
+      realmDays[realm] = (realmDays[realm] ?? 0) + r.days;
+    }
     for (const p of s.cards.pending) {
-      if (p.uid < seen) continue;
+      if (p.uid < seen || held) continue;
       const k = card(p.card);
       draws.push({
         card: k.id,

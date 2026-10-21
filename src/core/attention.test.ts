@@ -16,7 +16,7 @@ import {
   ORB_LINGER_S,
   ORB_TIMED,
 } from '../content/attention.ts';
-import { INSIGHT_ATTENDED } from '../content/cultivation.ts';
+import { INSIGHT_ATTENDED, PACE } from '../content/cultivation.ts';
 import { method } from '../content/methods.ts';
 import { realm } from '../content/realms.ts';
 import {
@@ -89,17 +89,17 @@ const INHALE_T = 60; // 60 / 6 = 10 cycles exactly: the start of an inhale.
 const EXHALE_T = 64;
 
 describe('the attention factor', () => {
-  it('is ×1.25 for being there and ×2 at full focus, ×1 away', () => {
+  it('is ×2.5 for being there and ×4 at full focus, ×1 away', () => {
     const c = seated();
     expect(attentionFactor(sitting(c, { focus: 0 }), c)).toBe(1 + ATTENTION_FLOOR);
-    expect(attentionFactor(sitting(c, { focus: 1 }), c)).toBe(2);
-    expect(attentionFactor(sitting(c, { focus: 0.5 }), c)).toBeCloseTo(1.625);
+    expect(attentionFactor(sitting(c, { focus: 1 }), c)).toBe(4);
+    expect(attentionFactor(sitting(c, { focus: 0.5 }), c)).toBeCloseTo(3.25);
     expect(attentionFactor({ ...sitting(c, { focus: 1 }), presence: 0, attended: false }, c)).toBe(
       1,
     );
   });
 
-  it('rises to ×2.25 with Whale Swallows the Sea, and to ×2 in the tutorial layers too', () => {
+  it('rises to ×4.75 with Whale Swallows the Sea, and to ×4 in the tutorial layers too', () => {
     const whale = learn(
       seated(),
       'qi-sensing-breath',
@@ -110,12 +110,12 @@ describe('the attention factor', () => {
       'qi-twin-streams',
       'qi-whale-swallows',
     );
-    expect(attentionFactor(sitting(whale, { focus: 1 }), whale)).toBeCloseTo(2.25);
+    expect(attentionFactor(sitting(whale, { focus: 1 }), whale)).toBeCloseTo(4.75);
     const tutorial = seated(3);
-    expect(attentionFactor(sitting(tutorial, { focus: 1 }), tutorial)).toBeCloseTo(2);
+    expect(attentionFactor(sitting(tutorial, { focus: 1 }), tutorial)).toBeCloseTo(4);
   });
 
-  it('multiplies the qi hours exactly, leaves stones alone and adds a second insight trickle', () => {
+  it('multiplies the qi hours and insight exactly, leaves stones alone and adds a second trickle', () => {
     const c = seated();
     const away = dayRates(c, DAY);
     const seat = { factor: 1.6, attended: true };
@@ -127,10 +127,10 @@ describe('the attention factor', () => {
     const trickle =
       ((INSIGHT_ATTENDED * realm('qi-condensation').insightRate * aptitudeMultiplier(c)) / 12) *
       waking;
-    expect(there.insight - away.insight).toBeCloseTo(trickle);
-    // The factor alone, without attending, leaves no trickle: a seat fading after you left.
+    expect(there.insight).toBeCloseTo((away.insight + trickle * PACE) * 1.6);
+    // The factor alone, without attending, leaves no second trickle: a seat fading after you left.
     expect(dayRates(c, DAY, [], { factor: 1.6, attended: false }).insight).toBeCloseTo(
-      away.insight,
+      away.insight * 1.6,
     );
   });
 });
@@ -172,7 +172,7 @@ describe('focus and its drain', () => {
     const c = seated();
     const a = tickAttention(sitting(c, { focus: 1 }), c, 150, ATTENDING);
     expect(a.focus).toBeCloseTo(1 - 150 * FOCUS_DRAIN);
-    expect(attentionFactor(tickAttention(a, c, 1000, ATTENDING), c)).toBe(1.25);
+    expect(attentionFactor(tickAttention(a, c, 1000, ATTENDING), c)).toBe(2.5);
   });
 
   it('drains slower with Lingering Breath, and not at all on Still Pool while resting', () => {
@@ -200,14 +200,12 @@ describe('focus and its drain', () => {
     const c = seated();
     const away = { ...ATTENDING, attended: false };
     const half = tickAttention(sitting(c, { focus: 1 }), c, AWAY_FADE_S / 2, away);
-    expect(attentionFactor(half, c)).toBeGreaterThan(1.4);
-    expect(attentionFactor(half, c)).toBeLessThan(1.6);
+    expect(attentionFactor(half, c)).toBeGreaterThan(2.4);
+    expect(attentionFactor(half, c)).toBeLessThan(2.6);
     const gone = tickAttention(half, c, AWAY_FADE_S, away);
     expect(attentionFactor(gone, c)).toBe(1);
     expect(seatOf(gone, c)).toEqual({ factor: 1, attended: false, focus: 0 });
-    expect(attentionFactor(tickAttention(gone, c, 0.25, ATTENDING), c)).toBeGreaterThanOrEqual(
-      1.25,
-    );
+    expect(attentionFactor(tickAttention(gone, c, 0.25, ATTENDING), c)).toBeGreaterThanOrEqual(2.5);
   });
 
   it('starts at zero on every load: nothing of it is saved', () => {
@@ -249,8 +247,8 @@ describe('breathing', () => {
 
   it('reaches only so far, further with Grasping Breath', () => {
     const c = seated();
-    // On its way in from the right, three seconds into its drift: out of `breathe`'s reach.
-    const far: Orb = { ...orb(1, INHALE_T, 0), born: INHALE_T - 3, arrives: INHALE_T + 4 };
+    // On its way in from the right, most of its drift done: still out of `breathe`'s reach.
+    const far: Orb = { ...orb(1, INHALE_T, 0), born: INHALE_T - 6, arrives: INHALE_T + 4 };
     const a = sitting(c, { t: INHALE_T, orbs: [far] });
     const d = Math.hypot(orbPosition(far, INHALE_T)[0], orbPosition(far, INHALE_T)[1] - 9);
     expect(d).toBeGreaterThan(58);
@@ -282,14 +280,15 @@ describe('breathing', () => {
 });
 
 describe('heat', () => {
-  /** Twenty greedy grabs off the breath, one right after another. */
+  /** Thirty greedy grabs off the breath, one right after another. */
   function greedy(c: Cultivator) {
     let a = sitting(c, { t: EXHALE_T });
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
       a = { ...a, orbs: [orb(10 + i, a.t)] };
       const [x, y] = orbPosition(a.orbs[0]!, a.t);
       a = catchAt(a, c, x, y).attention;
-      a = tickAttention(a, c, 0.1, ATTENDING);
+      // Off the breath throughout: thirty grabs inside the exhale.
+      a = tickAttention(a, c, 0.07, ATTENDING);
     }
     return a;
   }
@@ -335,7 +334,7 @@ describe('the orbs stream', () => {
     return { a, orbs: [...seen.values()] };
   }
 
-  it('brings an orb every five to ten seconds, mostly arriving on the inhale', () => {
+  it('brings an orb every one to two seconds, mostly arriving on the inhale', () => {
     const c = seated();
     const { orbs } = hour(life(c), c);
     expect(orbs.length).toBeGreaterThan(3600 / ORB_EVERY_S[1] - 5);
@@ -413,8 +412,8 @@ describe('the Breath branch, tier 2', () => {
   it('Circulating Thought grows the attended insight trickle with focus, half again at full', () => {
     const c = breathing('qi-circulating-thought');
     const away = dayRates(c, DAY).insight;
-    const dull = dayRates(c, DAY, [], { factor: 1.25, attended: true, focus: 0 }).insight - away;
-    const full = dayRates(c, DAY, [], { factor: 2, attended: true, focus: 1 }).insight - away;
+    const dull = dayRates(c, DAY, [], { factor: 4, attended: true, focus: 0 }).insight - away * 4;
+    const full = dayRates(c, DAY, [], { factor: 4, attended: true, focus: 1 }).insight - away * 4;
     expect(full / dull).toBeCloseTo(1.5);
   });
 });

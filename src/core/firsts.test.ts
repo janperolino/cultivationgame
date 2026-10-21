@@ -24,7 +24,7 @@ import { newLife, withPlayer, type GameState } from './state.ts';
 import { stopPractice } from './techniques.ts';
 import { freeWheel, hourToFlip } from './wheel.ts';
 
-const METHOD = 'method:garrison-standard';
+const METHOD2 = 'method:crude-cave';
 
 const creation = (over: Partial<Creation> = {}): Creation => ({
   name: 'Han Li',
@@ -56,39 +56,39 @@ const give = (s: GameState, kind: HourKind): GameState =>
   giveHours(s, [hourToFlip(freeWheel(s.player), s.player.rootElements)!], kind).state;
 
 describe('a new lineage', () => {
-  it('starts all qi with its method unread, and nothing moves until it is read and taken up', () => {
+  it('starts all qi with its method known, and nothing moves until it is taken up', () => {
     let s = createLife(creation());
     expect(s.player.wheel).toEqual(FRESH_WHEEL);
-    expect(s.player.copies[METHOD]).toBe(1);
-    expect(s.player.reading.queue).toEqual([]);
-    expect(s.player.plan.burnStones).toBe(false);
-    expect(waiting(s)).toEqual(['copy', 'study-hour']);
-    // Left alone, nothing is read and the qi hours give nothing.
-    s = run(s, 3);
-    expect(s.player.reading.days[METHOD] ?? 0).toBe(0);
-    expect(s.player.qi.bar).toBe(0);
-    // Read now queues it, but with no study hour it still waits.
-    s = readCopy(s, METHOD).state;
-    expect(s.lineage.firsts).toContain('copy');
-    expect(waiting(s)).toEqual(['study-hour']);
-    s = run(s, 1);
-    expect(s.player.reading.days[METHOD] ?? 0).toBe(0);
-    // An hour turned to study reads it; read, the method is known but nothing climbs with it.
-    s = give(s, 'study');
-    expect(s.lineage.firsts).toContain('study-hour');
-    s = run(s, 10);
+    expect(s.player.copies).toEqual({});
     expect('garrison-standard' in s.player.methods).toBe(true);
     expect(s.player.activeMethods.qi).toBeNull();
-    expect(waiting(s)).toContain('method');
-    const bar = s.player.qi.bar;
-    s = run(s, 1);
-    expect(s.player.qi.bar).toBe(bar);
-    // Taken up under Climb with, the qi climbs.
+    expect(s.player.plan.burnStones).toBe(false);
+    // The study hour waits for something to study for.
+    expect(waiting(s)).toEqual(['method']);
+    // Left alone, the qi hours give nothing.
+    s = run(s, 3);
+    expect(s.player.qi.bar).toBe(0);
+    // Taken up under Climb with, the qi climbs, and the study hour is asked for.
     s = switchMethod(s, 'qi', 'garrison-standard').state;
     expect(s.lineage.firsts).toContain('method');
-    expect(waiting(s)).not.toContain('method');
+    expect(waiting(s)).toEqual(['study-hour']);
     s = run(s, 1);
-    expect(s.player.qi.bar).toBeGreaterThan(bar);
+    expect(s.player.qi.bar).toBeGreaterThan(0);
+    s = give(s, 'study');
+    expect(s.lineage.firsts).toContain('study-hour');
+  });
+
+  it('reads a copy the first time only once it is queued and given a study hour', () => {
+    let s = createLife(creation());
+    s = withPlayer(s, { ...s.player, copies: { [METHOD2]: 1 } });
+    expect(waiting(s)).toEqual(['copy', 'study-hour', 'method']);
+    s = run(s, 1);
+    expect(s.player.reading.days[METHOD2] ?? 0).toBe(0);
+    s = readCopy(s, METHOD2).state;
+    expect(s.lineage.firsts).toContain('copy');
+    s = give(s, 'study');
+    s = run(s, 10);
+    expect('crude-cave' in s.player.methods).toBe(true);
   });
 
   it('gives a technique no slot and no hour the first time, then the default after it', () => {
@@ -168,7 +168,7 @@ describe('a new lineage', () => {
 });
 
 describe('a reborn life', () => {
-  it('gets no first times: its method queued, a study hour set, stones burning', () => {
+  it('gets no first times: its method taken up, a study hour set, stones burning', () => {
     const done = { ...playFirsts(createLife(creation())), ended: { day: 0, cause: 'test' } };
     const all = {
       ...done,
@@ -180,13 +180,11 @@ describe('a reborn life', () => {
     expect(next.lineage.firsts).toEqual(ALL_FIRSTS);
     // Hints are each life's own: on again, none shown.
     expect(next.hints).toEqual({ on: true, shown: [] });
-    expect(next.player.reading.queue).toEqual([METHOD]);
+    // Its method is taken up by itself.
+    expect(next.player.activeMethods.qi).toBe('garrison-standard');
     expect(hours(next, 'study')).toBe(1);
     expect(next.player.plan.burnStones).toBe(true);
     expect(firstsWaiting(next)).toEqual([]);
-    // Read, the method is taken up by itself.
-    const read = run(next, 10);
-    expect(read.player.activeMethods.qi).toBe('garrison-standard');
   });
 
   it('runs NPCs and tests on the defaults: a life made without creation has done every first', () => {

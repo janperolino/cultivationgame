@@ -40,7 +40,7 @@ const RIM_MARGIN = 30;
  * The qi canvas reaches this share of the figure's box past it on every side, handed to theme.css's
  * `.seat-canvas` as `--qi-pad` (SeatedFigure.tsx), so orbs and motes come in from well out round it.
  */
-export const QI_PAD = 0.35;
+export const QI_PAD = 0.8;
 const QI_BOX = {
   x: FIGURE_BOX.x - FIGURE_BOX.w * QI_PAD,
   y: FIGURE_BOX.y - FIGURE_BOX.h * QI_PAD,

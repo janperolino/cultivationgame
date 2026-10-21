@@ -1,19 +1,19 @@
-// The fight in progress on the Combat screen: the session's, never saved, the way a scene is. The
-// rules run in core/spar.ts against the open life through the store, so every roll lands on the
-// life's `combat` stream; this keeps the fight, the selected foe, the log and the outcomes the
-// effects layer still has to play. A reload mid-fight drops it, and nothing is spent until it ends.
+// The fight on the stage (Fights you play): the life holds the fight under way (core/played.ts),
+// and this keeps what the screen shows of it: the fight as it stands, the selected foe, the log and
+// the outcomes the effects layer still has to play. Every roll lands on the fight's own seed, so a
+// reload replays the actions to the same turn (the log starts over from there). The fight hands its
+// end back only when you leave it, so the stage holds until then.
+import { endGuide } from './guide.ts';
 import { create } from 'zustand';
 import { hasItem, item } from '../content/items.ts';
 import { hasTechnique, technique } from '../content/techniques.ts';
-import {
-  combatantIn,
-  type Action,
-  type Fight,
-  type Outcome,
-  type Tick,
-} from '../core/combat/fight.ts';
+import { card } from '../content/cards/index.ts';
+import { encounterTemplate } from '../content/encounters/index.ts';
+import { combatantIn, type Fight, type Outcome, type Tick } from '../core/combat/fight.ts';
 import { logLine } from '../core/combat/log.ts';
-import { endSpar, playTurn, sparResult, startSpar, YOU, type SparResult } from '../core/spar.ts';
+import { fightEnd, playTurn, type FightEnd, type YourAction } from '../core/played.ts';
+import { currentFight, finishFight, foeNames } from '../core/playFight.ts';
+import type { GameState } from '../core/state.ts';
 import { useGame } from './store.ts';
 
 export interface LogEntry {
@@ -26,26 +26,29 @@ export interface LogEntry {
 
 interface FightStore {
   fight: Fight | null;
-  foe: string;
   /** The foe the technique buttons price against. */
   target: string | null;
   log: LogEntry[];
   /** Outcomes and ticks the effects layer hasn't played yet, oldest first. */
   pending: { outcomes: Outcome[]; ticks: Tick[]; fight: Fight } | null;
-  result: SparResult | null;
+  end: FightEnd | null;
+  /** What the card or the road said when the fight went back to it, shown once. */
+  after: string | null;
 }
 
 export const useFight = create<FightStore>()(() => ({
   fight: null,
-  foe: '',
   target: null,
   log: [],
   pending: null,
-  result: null,
+  end: null,
+  after: null,
 }));
 
-const firstFoe = (f: Fight) =>
-  f.combatants.find((c) => c.side !== YOU && c.state === 'fighting')?.id ?? null;
+function firstFoe(f: Fight, me: string): string | null {
+  const side = combatantIn(f, me)?.side;
+  return f.combatants.find((c) => c.side !== side && c.state === 'fighting')?.id ?? null;
+}
 
 /** What an outcome's actor did, in words: "Han Li · Rampart Palm". */
 function head(f: Fight, o: Outcome): string {
@@ -63,41 +66,68 @@ function head(f: Fight, o: Outcome): string {
   return `${who} · ${what}`;
 }
 
-/** Opens a spar against a roster template; returns why not, or null. */
-export function beginSpar(templateId: string): string | null {
-  let started: ReturnType<typeof startSpar> = null;
-  const ok = useGame.getState().applyLife((s) => {
-    started = startSpar(s, templateId);
-    return started?.state ?? s;
-  });
-  const r = started as ReturnType<typeof startSpar>;
-  if (!ok || !r) return 'No fight can start now.';
-  useFight.setState({
-    fight: r.fight,
-    foe: r.foe,
-    target: firstFoe(r.fight),
-    log: [],
-    pending: null,
-    result: null,
-  });
-  return null;
+/** The fight's title on the stage: who you spar with, the encounter, or the card. */
+export function fightTitle(s: GameState, f: Fight): string {
+  const from = s.fight?.from;
+  if (!from || from.kind === 'spar') return `Sparring with ${foeNames(s, f)}`;
+  if (from.kind === 'road') {
+    const enc = s.map?.encounters.find((e) => e.id === from.enc);
+    return enc ? encounterTemplate(enc.template).title : `Against ${foeNames(s, f)}`;
+  }
+  if (from.kind === 'trap') return `In your trap: ${foeNames(s, f)}`;
+  const p = s.cards.pending.find((x) => x.uid === from.uid);
+  return p ? card(p.card).title : `Against ${foeNames(s, f)}`;
 }
 
-/** Plays the player's action and every foe's; closes the spar when it ends. */
-export function act(action: Omit<Action, 'actor'>): void {
-  const { fight, target, foe } = useFight.getState();
-  const me = useGame.getState().game?.player.id;
-  if (!fight || !me || useFight.getState().result) return;
-  let turn: ReturnType<typeof playTurn>['turn'] | null = null;
-  useGame.getState().applyLife((s) => {
-    const r = playTurn(s, fight, { ...action, actor: me });
-    turn = r.turn;
-    return r.state;
+/**
+ * Puts the life's fight on the stage when the screen has none of it: a fight just opened by the
+ * rules (a card, the road, a spar), or one a reload brought back.
+ */
+export function syncFight(s: GameState): void {
+  const st = useFight.getState();
+  if (!s.fight) {
+    if (st.fight && !st.end) useFight.setState({ fight: null, log: [], pending: null });
+    return;
+  }
+  if (st.fight) return;
+  const f = currentFight(s);
+  if (!f) return;
+  useFight.setState({
+    fight: f,
+    target: firstFoe(f, s.player.id),
+    log: [],
+    pending: null,
+    end: fightEnd(f, s.player.id),
+    after: null,
   });
-  const t = turn as ReturnType<typeof playTurn>['turn'] | null;
+}
+
+/** Plays your action and every foe's. */
+export function act(action: YourAction): void {
+  // The first move ends the first fight turn's veil (ui/guide.ts).
+  endGuide('fight-turn');
+  const { fight, target, end } = useFight.getState();
+  const me = useGame.getState().game?.player.id;
+  if (!fight || !me || end) return;
+  let turn: ReturnType<typeof playTurn> = null;
+  useGame.getState().applyLife((s) => {
+    turn = playTurn(s, fight, action);
+    return turn?.state ?? s;
+  });
+  const t = (turn as ReturnType<typeof playTurn>)?.turn;
   if (!t) return;
   const f = t.fight;
   const lines: LogEntry[] = [
+    // The arrays on the ground act as the turn begins (K10): a strike, or a foe held.
+    ...(t.ground ?? []).map((g) => ({
+      turn: f.turn,
+      head: `${g.name} · ${combatantIn(f, g.target)?.name ?? g.target}`,
+      line:
+        g.does === 'killing'
+          ? `${g.damage ?? 0} from the array, never missing${g.hp ? ` · ${g.hp.hp}/${g.hp.max}` : ''}`
+          : 'held by the lines this turn (定)',
+      mine: true,
+    })),
     ...t.ticks.map((k) => ({
       turn: f.turn,
       head: `${combatantIn(f, k.id)?.name ?? k.id} · ${k.status}`,
@@ -112,25 +142,35 @@ export function act(action: Omit<Action, 'actor'>): void {
     })),
     ...t.skipped
       .filter(
-        (x) => x.reason === 'frozen' || x.reason === 'undertow' || x.reason === 'not enough qi',
+        (x) =>
+          x.reason === 'frozen' ||
+          x.reason === 'held' ||
+          x.reason === 'undertow' ||
+          x.reason === 'not enough qi',
       )
       .map((x) => ({
         turn: f.turn,
         head: combatantIn(f, x.actor)?.name ?? x.actor,
-        line: x.reason === 'frozen' ? 'frozen, loses the turn' : x.reason,
+        line:
+          x.reason === 'frozen'
+            ? 'frozen, loses the turn'
+            : x.reason === 'held'
+              ? 'held, loses the turn'
+              : x.reason,
         mine: x.actor === me,
       })),
   ];
-  const result = sparResult(f, me);
-  const stillThere = target && combatantIn(f, target)?.state === 'fighting' ? target : firstFoe(f);
+  const stillThere =
+    target && combatantIn(f, target)?.state === 'fighting' ? target : firstFoe(f, me);
   useFight.setState((st) => ({
     fight: f,
     target: stillThere,
     log: [...st.log, ...lines],
     pending: { outcomes: t.outcomes, ticks: t.ticks, fight: f },
-    result,
+    end: fightEnd(f, me),
   }));
-  if (result) useGame.getState().applyLife((s) => endSpar(s, f, foe));
+  // Every exchange is saved, so a reload comes back to it rather than away from it.
+  void useGame.getState().saveNow();
 }
 
 export function selectTarget(id: string): void {
@@ -142,7 +182,28 @@ export function takePending(): void {
   useFight.setState({ pending: null });
 }
 
-/** Leaves the finished spar for the list. */
-export function leaveSpar(): void {
-  useFight.setState({ fight: null, foe: '', target: null, log: [], pending: null, result: null });
+/** Leaves the ended fight: its end goes back to where it came from and the clock runs again. */
+export function leaveFight(): void {
+  const { fight } = useFight.getState();
+  if (!fight) return;
+  let text = '';
+  useGame.getState().applyLife((s) => {
+    const r = finishFight(s, fight);
+    text = r?.text ?? '';
+    return r?.state ?? s;
+  });
+  useFight.setState({
+    fight: null,
+    target: null,
+    log: [],
+    pending: null,
+    end: null,
+    after: text || null,
+  });
+  void useGame.getState().saveNow();
+}
+
+/** The hand-back's words were read. */
+export function dismissAfter(): void {
+  useFight.setState({ after: null });
 }

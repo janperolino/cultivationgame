@@ -3,15 +3,23 @@
 // of all five at once, and the life the choices make: name, look and pronouns, ironman or gentle,
 // and testing day's choice, which sets the starting method, routines, stones, flags and place.
 // The roll is seeded, so the same seed and reroll count give the same talents.
-import { ORIGIN_IDS, originPath, type OriginChoice, type OriginId } from '../content/origins.ts';
+import {
+  ORIGIN_IDS,
+  originPath,
+  type Origin,
+  type OriginChoice,
+  type OriginId,
+} from '../content/origins.ts';
+import { hasPerson, person } from '../content/people.ts';
 import { rollRarity } from '../content/rarity.ts';
 import type { Element } from '../content/elements.ts';
 import { rollElements, rollRoot, type RootId } from '../content/roots.ts';
 import { talentsOf, TALENT_KINDS, type Talent, type TalentKind } from '../content/talents.ts';
-import { copyId } from '../content/copies.ts';
 import { hasJob, job } from '../content/jobs.ts';
+import { startChain } from './chains.ts';
 import { takeJob } from './jobs.ts';
-import { gainCopy } from './life.ts';
+import { guidedStart } from './guides.ts';
+import { gainMethod } from './life.ts';
 import { joinPower, realmStageOf } from './organizations.ts';
 import { hashSeed, Rng } from './rng.ts';
 import { seeAll } from './seen.ts';
@@ -86,8 +94,7 @@ export function lifeOptions(c: Creation): NewLifeOptions {
     talents: [c.roll.body, c.roll.soul, c.roll.fate],
     origin: { id: c.roll.origin, choice: c.choice },
     place: path.place,
-    // The origin hands its method over as a book (design § Cultivation, Reading): a copy, read
-    // before it is any use, so the life starts with none known (handMethod, below).
+    // The origin's method is handed over known, not taken up (handMethod, below).
     method: null,
     routines: [...path.routines],
     stones: path.stones,
@@ -95,16 +102,18 @@ export function lifeOptions(c: Creation): NewLifeOptions {
     // A new lineage has done nothing for the first time yet (core/firsts.ts); the next life in a
     // slot keeps its lineage's record instead (nextLife).
     firsts: [],
+    guides: [],
   };
 }
 
 /**
- * The origin path's method as a copy: unread on the shelf the first time in a lineage, joining the
- * empty reading queue after.
+ * The origin path's method, known from the first breath but not yet taken up (Jan's call in The
+ * opening, built's talk, 2026-10-20: a start handed its method skips reading it, and the study
+ * page is met with a later copy instead).
  */
 function handMethod(s: GameState, c: Creation): GameState {
   const id = originPath(c.roll.origin, c.choice).method;
-  return id ? gainCopy(s, copyId('method', id), 'is handed') : s;
+  return id ? gainMethod(s, id, 'is handed') : s;
 }
 
 /**
@@ -128,12 +137,26 @@ function handPost(s: GameState, c: Creation): GameState {
   return took.ok ? took.state : st;
 }
 
+/**
+ * An origin's text at creation, its roles filled with whoever holds them for a first life: a
+ * named person's name, or the role's own words (design § NPC basics, Origin people are roles).
+ */
+export function originWords(o: Origin, text: string): string {
+  return text.replace(/\{(\w+)\}/g, (whole, slot: string) => {
+    const who = o.people[slot];
+    if (!who) return whole;
+    return hasPerson(who) ? person(who).name : who;
+  });
+}
+
 /** A first life from creation's choices, holding nothing new. */
 export function createLife(c: Creation): GameState {
-  return seeAll(handPost(handMethod(newLife(lifeOptions(c)), c), c));
+  return seeAll(guidedStart(startChain(handPost(handMethod(newLife(lifeOptions(c)), c), c))));
 }
 
 /** The next life in a slot after a death, from creation's choices; the chronicle carries on. */
 export function createNextLife(prev: GameState, c: Creation): GameState {
-  return seeAll(handPost(handMethod(nextLife(prev, lifeOptions(c)), c), c));
+  return seeAll(
+    guidedStart(startChain(handPost(handMethod(nextLife(prev, lifeOptions(c)), c), c))),
+  );
 }

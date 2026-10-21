@@ -79,7 +79,7 @@ export const CRAFT_DEALS: Readonly<Record<CraftId, readonly ItemKind[]>> = {
   alchemy: ['pill'],
   refining: ['gear', 'treasure', 'tool'],
   talismans: ['talisman'],
-  formations: [],
+  formations: ['array'],
   farming: ['herb'],
 };
 

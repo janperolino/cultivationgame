@@ -2,15 +2,20 @@
 // land where you stand, in place of the stances gathering as you walk. You stop for the hour and
 // gain nothing on the wheel. What it finds is what the land grows there (its terrain's herb,
 // material and staple lines); how much is the land's yield, deep wilds over the wilds over the
-// picked-over ground near people, times (1 + your Perception), a part carried to the next hour;
+// picked-over ground near people, times (1 + your Perception + Herb sense), your sense by your
+// soul's realm and the Herbs family's mastery (K8's talk), a part carried to the next hour, and one
+// find in ten of a crop comes as a live cutting you can plant;
 // how good is your soul against the land's band, a comparison, not a roll. Which line it finds is
 // seeded by the spot and the hour, as world content is.
+import { CUTTING_SHARE, GATHER_MASTERY, SENSE_STEP, seedId } from '../../content/farming.ts';
 import { GATHER } from '../../content/map/travel.ts';
 import { BANDS, EDGE_LI, RING_LI } from '../../content/map/travel.ts';
 import { hasItem, item, rarityRange, variantId } from '../../content/items.ts';
 import { veinAt } from '../../content/map/index.ts';
 import { RARITY_IDS, type RarityId } from '../../content/rarity.ts';
 import { realmIndex } from '../../content/realms.ts';
+import { familyLevel } from '../crafts.ts';
+import { isCrop } from '../farming.ts';
 import { landLines } from '../making.ts';
 import { hashSeed, Rng } from '../rng.ts';
 import { stats } from '../stats.ts';
@@ -26,6 +31,18 @@ export function landYield(map: RegionMap, at: Pt): number {
   const li = peopleLi(map, at);
   if (li < EDGE_LI) return GATHER.near;
   return li < EDGE_LI + RING_LI ? GATHER.wild : GATHER.deep;
+}
+
+/**
+ * What a gather hour's pieces are multiplied by beyond the land (K8's talk, Jan's call): your
+ * Perception and Herb sense, your sense by your soul's realm (×1 at Qi Condensation's eyes, ×3 a
+ * realm from Foundation's divine sense) and the Herbs family's mastery, +25% a level.
+ */
+export function gatherFactor(c: Cultivator): number {
+  const s = stats(c);
+  const sense = SENSE_STEP ** realmIndex(c.soul.realm);
+  const mastery = 1 + GATHER_MASTERY * familyLevel(c, 'herbs');
+  return (1 + Math.max(0, s.perception ?? 0) + Math.max(0, s.herbSense ?? 0)) * sense * mastery;
 }
 
 /** The lines the land grows where you stand. */
@@ -92,8 +109,7 @@ export function gatherHour(
 ): Gathered {
   const lines = gatherLines(map, life.at);
   if (!lines.length) return { life, player: c, finds: {} };
-  const perception = Math.max(0, stats(c).perception ?? 0);
-  const dug = life.gathered + landYield(map, life.at) * (1 + perception) * share;
+  const dug = life.gathered + landYield(map, life.at) * gatherFactor(c) * share;
   const whole = Math.floor(dug + 1e-9);
   // Held at 0: a sum just under a whole leaves float dust below it, which the save refuses.
   const next = { ...life, gathered: Math.max(0, dug - whole) };
@@ -107,7 +123,10 @@ export function gatherHour(
   let player = c;
   const finds: Record<string, number> = {};
   for (let i = 0; i < whole; i++) {
-    const id = found(rng.pick(lines), rarity);
+    const line = rng.pick(lines);
+    // One find of a crop in ten comes up roots and all, a cutting that sows a bed (K8).
+    const cutting = isCrop(line) && rng.chance(CUTTING_SHARE);
+    const id = found(cutting ? seedId(line) : line, rarity);
     finds[id] = (finds[id] ?? 0) + 1;
   }
   // What the Bag can't hold falls where you stand (core/map/ground.ts).

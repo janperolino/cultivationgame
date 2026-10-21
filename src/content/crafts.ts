@@ -7,6 +7,7 @@
 import { CATALOG_RECIPES } from './catalogs/index.ts';
 import type { Recipe } from './catalogs/types.ts';
 import type { Element } from './elements.ts';
+import { isFound } from './found.ts';
 import { baseOf, item, type ItemKind } from './items.ts';
 
 export const CRAFTS = {
@@ -121,12 +122,29 @@ export const TALISMAN_MAKES = {
   escape: ['swift'],
   swift: ['swift'],
   hide: ['concealing'],
+  // A plot's talisman (K8): Spring-Rain feeds, the pest ward drives off.
+  field: ['nourishing', 'purging'],
 } as const satisfies Record<string, readonly Property[]>;
 export const STRIKE_NEEDS: Partial<Record<string, Property>> = {
   poison: 'toxic',
   soul: 'resonant',
 };
 export const ESCAPE_THROUGH: readonly Element[] = ['earth', 'water'];
+
+/**
+ * Formations' row of the effect table (K10): what an array's inputs carry for what it does, the
+ * eye's jade aside. Growing reads nourishing or tempering with wood, which a test checks too.
+ */
+export const FORMATIONS_MAKES = {
+  gathering: ['nourishing'],
+  growing: ['nourishing', 'tempering'],
+  warding: ['hard'],
+  concealing: ['concealing'],
+  alarm: ['resonant', 'burning'],
+  binding: ['binding'],
+  killing: ['sharp', 'burning'],
+  maze: ['illusory'],
+} as const satisfies Record<string, readonly Property[]>;
 
 /**
  * Mending is refining (design § Production, commissions and the craft deck; K4): a craft hour a
@@ -140,6 +158,7 @@ export const STARTER_TOOLS: Partial<Record<CraftId, string>> = {
   alchemy: 'crude-clay-furnace',
   refining: 'crude-iron-forge',
   talismans: 'wolf-hair-talisman-brush',
+  formations: 'bronze-inscribing-plate',
 };
 
 /** The kind of tool each craft works with: a furnace, a forge, a brush and an array plate. */
@@ -154,7 +173,7 @@ export const BATCH = {
   refining: { hours: 8, yield: 1 },
   talismans: { hours: 2, yield: 5 },
   formations: { hours: 4, yield: 1 },
-  farming: { hours: 0, yield: 0 },
+  farming: { hours: 0, yield: 30 },
 } as const satisfies Record<CraftId, { hours: number; yield: number }>;
 export const TIER_HOURS = 1.5;
 
@@ -230,12 +249,13 @@ export const CRAFT_SITES: Readonly<
 export const YIELD_BY_MASTERY = [0, 0.1, 0.2, 0.3, 0.4] as const;
 
 /**
- * Mastery grows by batches: Comprehension at 10, Mastery at 40, Perfection at 120, Origin at 300.
- * A batch at your tier counts 1, one below a quarter, a failed one half. Each level reached
- * releases insight, as a technique's does.
+ * Mastery grows by batches: Comprehension at 3, Mastery at 12, Perfection at 35, Origin at 85,
+ * anchored to the attended crafter on the opening's faster clock (design § What the faster clock
+ * moves: ÷3.5 from D4's 10, 40, 120 and 300, set at K9's merge). A batch at your tier counts 1,
+ * one below a quarter, a failed one half. Each level reached releases insight, as a technique's does.
  */
 export const CRAFT_MASTERY = {
-  batches: [0, 10, 40, 120, 300],
+  batches: [0, 3, 12, 35, 85],
   burst: [0, 5, 20, 60, 150],
   below: 0.25,
   failed: 0.5,
@@ -256,6 +276,15 @@ const byOutput = new Map(CATALOG_RECIPES.map((r) => [r.output, r]));
 
 /** Every written recipe, by the catalogs' order. */
 export const RECIPES: readonly Recipe[] = CATALOG_RECIPES;
+
+/**
+ * Generated recipes (K7, content/found.ts) join the lookup as their finders' saves hold them: only
+ * their inputs aren't in their ids. Core adds a cultivator's own before reading them
+ * (core/experiment.ts `keepFound`); a written recipe's id is never taken.
+ */
+export function addFoundRecipes(rs: readonly Recipe[]): void {
+  for (const r of rs) if (!byOutput.has(r.output) && isFound(r.output)) byOutput.set(r.output, r);
+}
 
 export function hasRecipe(id: string): boolean {
   return byOutput.has(id);

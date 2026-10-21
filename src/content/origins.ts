@@ -1,9 +1,10 @@
 // Origins (design § Character creation): the three Border Wilds origins of the first playable,
 // rolled a third each, with fixed childhood text until GLM writes it from M3, the testing-day
 // scene, and the choice it ends on. Going along or refusing sets the starting method, routines,
-// stones, flags and where you live; the origin path's first technique (content/techniques.ts,
-// `firstFor`) and everything after arrive as cards (content/cards/). The named people fill the
-// cards' slots. Drafted in P1.7 for Jan's review.
+// stones, flags and where you live; the origin's chain (content/quests/chains.ts) carries the rest.
+// Origin people are roles (design § NPC basics): the text reads {aunt}, {sergeant}, {senior}, and
+// the people map fills each with whoever holds it, the named people only the first life's
+// defaults. Drafted in P1.7, made roles in The opening, built (chains, rogue, knobs).
 
 export type OriginId = 'cave-orphan' | 'conscript' | 'frontier-orphan';
 export type OriginChoice = 'along' | 'refuse';
@@ -58,14 +59,14 @@ export const ORIGINS: readonly Origin[] = [
     home: 'qm-shiyan-guo',
     summary: 'raised by the cave clans of the Kingdom of Stone Eyes',
     childhood:
-      "You were found at the bottom of a sinkhole in the Kingdom of Stone Eyes, wrapped in a smuggler's oilcloth, and the cave clans raised you the way they raise everything that falls in: Aunt Yan fed you bat-guano rice and taught you which caves breathe and which ones swallow. You learned to walk on terraces, to keep a lamp alive in a draught, and never to ask which neighbors have scales under their sleeves.",
+      "You were found at the bottom of a sinkhole in the Kingdom of Stone Eyes, wrapped in a smuggler's oilcloth, and the cave clans raised you the way they raise everything that falls in: {aunt} fed you bat-guano rice and taught you which caves breathe and which ones swallow. You learned to walk on terraces, to keep a lamp alive in a draught, and never to ask which neighbors have scales under their sleeves.",
     testing:
-      'This year the imperial tester comes down to the sinkholes himself, with a garrison escort and a grey stone that lights for rooted children. The clans have hidden their rooted ones in the lower caves for a generation. Aunt Yan pulls you toward the dark. But the stone has already seen you across the terrace, and it is glowing.',
+      'This year the imperial tester comes down to the sinkholes himself, with a garrison escort and a grey stone that lights for rooted children. The clans have hidden their rooted ones in the lower caves for a generation. {aunt} pulls you toward the dark. But the stone has already seen you across the terrace, and it is glowing.',
     people: { aunt: 'aunt-yan', sergeant: 'sergeant-hou', tester: 'tester-qiu' },
     along: {
       name: 'a garrison school cadet',
       label: 'Walk to the stone',
-      text: "You walk up the terrace and put your hand on the stone. Tester Qiu writes your name in the Registry, and by evening you are in a cart bound for the March's garrison school: a standard method, rations, and a place on the wall.",
+      text: "You walk up the terrace and put your hand on the stone. {tester} writes your name in the Registry, and by evening you are in a cart bound for the March's garrison school: a standard method, rations, and a place on the wall.",
       method: 'garrison-standard',
       routines: ['watch-rotation'],
       stones: 10,
@@ -78,7 +79,7 @@ export const ORIGINS: readonly Origin[] = [
     refuse: {
       name: 'a hidden cave child',
       label: 'Run for the lower caves',
-      text: "You run. Aunt Yan pulls you through a crack no tester's lamp has found, and the clans close the cave behind you. They give you a crude method scratched on the cave wall, a map of caves no one else has, and the names of the smugglers who owe them.",
+      text: "You run. {aunt} pulls you through a crack no tester's lamp has found, and the clans close the cave behind you. They give you a crude method scratched on the cave wall, a map of caves no one else has, and the names of the smugglers who owe them.",
       method: 'crude-cave',
       routines: [],
       stones: 0,
@@ -97,12 +98,12 @@ export const ORIGINS: readonly Origin[] = [
     childhood:
       'Your mother held a watchtower on the March of Pacified Borders until the year the raids tripled, and your father went to the wall at sixteen like every son of the march and came back in a box with a beast core on the lid. You grew up reading tracks before letters, plowing with a spear across the furrow, and telling a raid horn from a hunt horn in your sleep.',
     testing:
-      "The Gongsun garrison's frontier tester comes at twelve now, under the march's charter, and every rooted child goes to the cadet school instead of the capital. Sergeant Lei waits by the stone with a list. You put your hand on it, and it lights.",
+      "The Gongsun garrison's frontier tester comes at twelve now, under the march's charter, and every rooted child goes to the cadet school instead of the capital. {sergeant} waits by the stone with a list. You put your hand on it, and it lights.",
     people: { sergeant: 'sergeant-lei', fixer: 'old-sha', tester: 'the frontier tester' },
     along: {
       name: 'a garrison cadet',
       label: 'Take the cadet oath',
-      text: 'You take the oath with the other lit children. Sergeant Lei hands you a cadet spear, a manual and a purse of low-grade stones, and by the end of the week you are walking patrols on the Wall of Piled Bones.',
+      text: 'You take the oath with the other lit children. {sergeant} hands you a cadet spear, a manual and a purse of low-grade stones, and by the end of the week you are walking patrols on the Wall of Piled Bones.',
       method: 'cadet-spear',
       routines: ['wall-drill'],
       stones: 30,
@@ -115,12 +116,13 @@ export const ORIGINS: readonly Origin[] = [
     refuse: {
       name: 'a deserter',
       label: 'Slip away before the oath',
-      text: 'You slip out the back of the hall before the oath and keep running. By morning there is a bounty on a lit child of twelve, and you have no method, no stones and nowhere to go, except a half-blood ferryman who says the Night Bridge Society might find a use for you.',
+      text: 'You slip out the back of the hall before the oath and keep running, downriver, until the wharves of River-Bend City swallow you. By morning there is a bounty on a lit child of twelve, and you have no method, no stones and nowhere to go, except {fixer}, a half-blood ferryman on the docks who says the Night Bridge Society might find a use for you.',
       method: null,
       routines: [],
       stones: 0,
       flags: ['bounty'],
-      place: 'qm-anbian-fu',
+      // Downriver from the garrison's seat, where the Night Bridge's ferrymen work the docks.
+      place: 'qm-hewan-cheng',
       chronicle:
         'On root-testing day, {name} slips away before the cadet oath, with a bounty on {their} head by morning.',
     },
@@ -139,19 +141,20 @@ export const ORIGINS: readonly Origin[] = [
     along: {
       name: 'an outer disciple',
       label: 'Swear to the Gate',
-      text: 'You swear to the Beast-Butcher Gate. They give you a saber method, a bunk, and Senior Brother Zhao, who tells you that contribution comes from cores, that cores come from beasts, and that he expects results.',
+      text: 'You swear to the Beast-Butcher Gate. They give you a saber method, a bunk, a post in the medicine garden, and {senior}, who tells you that contribution comes from cores, that cores come from beasts, and that he expects results.',
       method: 'butcher-saber',
       routines: ['butchers-day'],
       stones: 5,
       flags: ['outer-disciple'],
       place: 'qm-tushou-men',
+      job: 'gate-garden',
       chronicle:
         'On root-testing day, {name} swears to the Beast-Butcher Gate as an outer disciple.',
     },
     refuse: {
       name: 'a street cultivator',
       label: 'Walk away',
-      text: 'You take your hand off the stone and walk back into the alleys. The recruiter writes something down. You have no method yet, but Clerk Fan at the bounty office always needs runners, and the Gate remembers you said no.',
+      text: 'You take your hand off the stone and walk back into the alleys. The recruiter writes something down. You have no method yet, but {clerk} at the bounty office always needs someone to mind a stall, and the Gate remembers you said no.',
       method: null,
       routines: [],
       stones: 2,
@@ -175,7 +178,10 @@ export function originPath(id: OriginId, choice: OriginChoice): OriginPath {
   return origin(id)[choice];
 }
 
-/** The key techniques and cards use for an origin path: "cave-orphan/along". */
+/** Said beside refusing at creation (design § The rogue start). */
+export const REFUSE_NOTE = 'Harder: for a player who knows the game.';
+
+/** The key techniques, cards and chains use for an origin path: "cave-orphan/along". */
 export function pathKey(id: OriginId, choice: OriginChoice): string {
   return `${id}/${choice}`;
 }
@@ -192,6 +198,7 @@ export const PLACE_NAMES: Readonly<Record<string, string>> = {
   'qm-tushou-men': 'the Beast-Butcher Gate',
   'qm-yeqiao-hui': 'the Night Bridge Society',
   'qm-duigu-qiang': 'the Wall of Piled Bones',
+  'qm-hewan-cheng': 'River-Bend City',
   'great-jing': 'the Great Jing Dynasty',
 };
 
@@ -204,6 +211,7 @@ export const PLACE_HANZI: Readonly<Record<string, string>> = {
   'qm-tushou-men': '屠兽门',
   'qm-yeqiao-hui': '夜桥会',
   'qm-duigu-qiang': '堆骨墙',
+  'qm-hewan-cheng': '河湾城',
 };
 
 /** A place's name for the text, "the Kingdom of Stone Eyes"; its id when unknown. */

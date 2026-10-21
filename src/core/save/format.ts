@@ -4,6 +4,7 @@ import { DAYS_PER_MONTH } from '../../content/calendar.ts';
 import { LADDERS } from '../../content/cultivation.ts';
 import type { Element } from '../../content/elements.ts';
 import type { FirstId } from '../../content/firsts.ts';
+import { GUIDE_IDS } from '../../content/guides.ts';
 import { FRESH_WHEEL, SLEEP_HOURS, type HourKind } from '../../content/hours.ts';
 import { METHOD_MASTERY, TECHNIQUE_MASTERY } from '../../content/mastery.ts';
 import { hasTechnique, technique as techniqueOf } from '../../content/techniques.ts';
@@ -36,7 +37,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 45;
+export const SAVE_VERSION = 52;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1066,6 +1067,71 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const p = (s.player ?? {}) as Raw;
     const crafts = { grades: {}, marked: {}, renown: {}, ...((p.crafts ?? {}) as Raw) };
     return { ...old, version: 45, state: { ...s, player: { ...p, crafts } } };
+  },
+  // K7: experimentation's finds, generated recipes and pity; an old life has found nothing yet.
+  45: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const crafts = { found: [], recipes: [], pity: {}, ...((p.crafts ?? {}) as Raw) };
+    return { ...old, version: 46, state: { ...s, player: { ...p, crafts } } };
+  },
+  // Fights you play: a fight under way is saved, and the Combat screen left the rail, so its
+  // unlock and its seen mark go.
+  46: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const unlocks = ((s.unlocks ?? []) as string[]).filter((u) => u !== 'combat');
+    const seen = { ...((s.seen ?? {}) as Record<string, Record<string, unknown>>) };
+    if (seen.screen)
+      seen.screen = Object.fromEntries(Object.entries(seen.screen).filter(([k]) => k !== 'combat'));
+    return { ...old, version: 47, state: { ...s, unlocks, seen, fight: null } };
+  },
+  // K8: spirit farming's plots; an old life holds none.
+  47: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const crafts = { plots: [], ...((p.crafts ?? {}) as Raw) };
+    return { ...old, version: 48, state: { ...s, player: { ...p, crafts } } };
+  },
+  // The opening, built: the guides (every one done for a life already past its first seclusion),
+  // the codex (filled from what the life has met as it next runs) and the journal.
+  48: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const lineage = { ...((s.lineage ?? {}) as Raw), guides: [...GUIDE_IDS], codex: {} };
+    const journal = { quests: [], followed: null };
+    return { ...old, version: 49, state: { ...s, lineage, journal } };
+  },
+  // K9: dwellings and your abode; an old life holds none until the day step houses a member.
+  49: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    return {
+      ...old,
+      version: 50,
+      state: { ...s, player: { dwellings: [], abode: null, ...p } },
+    };
+  },
+  // K10: arrays laid in a dwelling's slots and on open ground; an old life has laid none.
+  50: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const dwellings = ((p.dwellings ?? []) as Raw[]).map((d) => ({ arrays: [], ...d }));
+    return { ...old, version: 51, state: { ...s, player: { grounds: [], ...p, dwellings } } };
+  },
+  // The opening, built (chains, rogue, knobs): its three new guides (a rogue's first work, the
+  // sheet after the spar, sense on the road) count as done for a lineage past its first
+  // seclusion, which met those things before they were taught; an old life has no chain, so its
+  // seclusion deck isn't held.
+  51: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const lineage = (s.lineage ?? {}) as Raw;
+    const guides = Array.isArray(lineage.guides) ? (lineage.guides as string[]) : [];
+    if (!guides.includes('focus')) return { ...old, version: 52 };
+    const added = ['first-work', 'sheet', 'sense'].filter((g) => !guides.includes(g));
+    return {
+      ...old,
+      version: 52,
+      state: { ...s, lineage: { ...lineage, guides: [...guides, ...added] } },
+    };
   },
 };
 

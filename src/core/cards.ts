@@ -14,9 +14,11 @@ import {
   card,
   DECK_PACE,
   OFFLINE_QUEUE,
+  SECLUSION_DECK,
   type Card,
   type CardChoice,
   type CardEffect,
+  type CardFight,
   type CardOutcome,
   type CardStep,
   type Trigger,
@@ -26,7 +28,8 @@ import { fillSlots, type Who } from '../content/chronicle.ts';
 import { copyId } from '../content/copies.ts';
 import { COMBAT_DAOS } from '../content/daos.ts';
 import { pathKey } from '../content/origins.ts';
-import { realmIndex } from '../content/realms.ts';
+import { realm, realmIndex } from '../content/realms.ts';
+import { template as rosterTemplate } from '../content/roster.ts';
 import { firstTechnique } from '../content/techniques.ts';
 import { seasonOf, whoFor } from './chronicle.ts';
 import { barFill, barSize, fromWorld } from './cultivation.ts';
@@ -38,7 +41,13 @@ import { copyCount } from './reading.ts';
 import { daysPerRealMs, type DayStep } from './loop.ts';
 import { applyPersonEffect, knowsSlot, peopleIn, resolveWho } from './people.ts';
 import { canPay, pay, receive, spend, stonesOf, withStones, worthOf } from './purse.ts';
-import type { Rng } from './rng.ts';
+import { hashSeed, Rng } from './rng.ts';
+import { fromCultivator } from './combat/combatant.ts';
+import { edgeWords, fightEdge, isSure, type FightEdge } from './combat/edge.ts';
+import { onGround, startFight, type Fight } from './combat/fight.ts';
+import { fightArrays } from './arrays.ts';
+import { generateBeast, generateCultivator } from './combat/generate.ts';
+import { openFight, type FightEnd } from './played.ts';
 import {
   addEvent,
   addFlag,
@@ -47,7 +56,9 @@ import {
   daysLived,
   hasFlag,
   itemCount,
+  realmOf,
   setMark,
+  stageOf,
   withPlayer,
   withStream,
   type Cultivator,
@@ -56,6 +67,7 @@ import {
 } from './state.ts';
 import { verdict, type Verdict } from './resolver/check.ts';
 import { gainItem } from './map/ground.ts';
+import { settleRaid } from './dwellings.ts';
 import { agility, aptitude, fortune, stats } from './stats.ts';
 
 // ---------------------------------------------------------------- triggers
@@ -175,9 +187,12 @@ export function defaultChoice(
 }
 
 /** One effect of a card on the game; `var` effects are the caller's. */
-function applyEffect(s: GameState, e: CardEffect): GameState {
+// A card's effect; `uid` names the card for what settles by it (a raid), none for a quest's work.
+export function applyEffect(s: GameState, e: CardEffect, uid = -1): GameState {
   const c = s.player;
   switch (e.do) {
+    case 'raid':
+      return settleRaid(s, uid, e.outcome);
     case 'stones':
       // A loss is paid as a price, as far as the purse reaches; a gain comes in low.
       return withPlayer(
@@ -249,6 +264,8 @@ export interface CardResult {
   check?: CardCheck;
   /** False when the card goes on to a further step and still waits. */
   done: boolean;
+  /** The choice opened a fight on the stage; the card waits for its end (Fights you play). */
+  fight?: boolean;
 }
 
 /** A card's check: your attribute against its number, clear, close or short, never a roll. */
@@ -283,6 +300,60 @@ export function cardWho(c: Cultivator, vars: Readonly<Record<string, number>> = 
   return { ...who, slots: { ...who.slots, ...ready, ...v } };
 }
 
+/** A queued card's own words over the slots. */
+function withWords(who: Who, words: Readonly<Record<string, string>> | undefined): Who {
+  return words ? { ...who, slots: { ...who.slots, ...words } } : who;
+}
+
+// ---------------------------------------------------------------- a card's fight
+
+/** The choice a waiting card's step offers at an index, with the card. */
+function choiceAt(s: GameState, uid: number, index: number) {
+  const pending = s.cards.pending.find((p) => p.uid === uid);
+  if (!pending) return null;
+  const k = card(pending.card);
+  const choice = stepOf(k, pending.step).choices[index];
+  return choice ? { pending, k, choice } : null;
+}
+
+/**
+ * The fight a card's choice goes into: you against its foe at your realm, the stages it names from
+ * yours, regenerated from the card and the choice so a reload builds the same start.
+ */
+export function cardFight(s: GameState, uid: number, index: number): Fight | null {
+  const at = choiceAt(s, uid, index);
+  const f: CardFight | undefined = at?.choice.fight;
+  if (!at || !f) return null;
+  const t = rosterTemplate(f.roster);
+  const r = realmOf(s.player);
+  const stage = Math.max(1, Math.min(realm(r).stages, stageOf(s.player) + (f.stages ?? 0)));
+  const rng = new Rng(hashSeed(`card/${uid}/${at.k.id}/${at.pending.step ?? ''}/${index}`));
+  const opts = { id: `card-${uid}-foe`, side: 'them' };
+  const npc =
+    t.kind === 'beast'
+      ? generateBeast(t, r, stage, rng, opts)
+      : generateCultivator(t, r, stage, rng, opts);
+  const name = f.person ? fillSlots(`{${f.person}}`, cardWho(s.player, at.pending.vars)) : null;
+  const foe = name ? { ...npc.combatant, name } : npc.combatant;
+  const fight = startFight([fromCultivator(s.player, 'you'), foe]);
+  // A raid fought at your own site meets its arrays (K10).
+  const site = at.pending.vars?.here ? s.player.dwellings.find((d) => d.raid?.uid === uid) : null;
+  return site ? onGround(fight, fightArrays(site.arrays, 'you')) : fight;
+}
+
+/** A card fight's edge, read as the road reads one: and whether it is a sure win. */
+export function cardEdge(
+  s: GameState,
+  uid: number,
+  index: number,
+): { edge: FightEdge; sure: boolean; words: string } | null {
+  const f = cardFight(s, uid, index);
+  if (!f) return null;
+  const [me, ...foes] = f.combatants;
+  const edge = fightEdge(me!, foes, f.arrays);
+  return { edge, sure: isSure(edge), words: edgeWords(edge) };
+}
+
 /**
  * Resolves the step a waiting card stands at with a choice: pays its cost, makes its check and
  * applies the outcome's effects: a close pass takes the choice's close outcome when it has one. An outcome that leads on moves the card to its
@@ -293,7 +364,13 @@ export function resolveCard(
   s: GameState,
   uid: number,
   index: number,
-  opts: { byDefault?: boolean } = {},
+  opts: {
+    byDefault?: boolean;
+    /** How the choice's fight ended on the stage. */
+    played?: FightEnd;
+    /** Play a sure fight rather than let it resolve. */
+    play?: boolean;
+  } = {},
 ): CardResult {
   const pending = s.cards.pending.find((p) => p.uid === uid);
   const none = { state: s, ok: false, text: '', pass: null, done: false };
@@ -306,6 +383,14 @@ export function resolveCard(
   const can = canChoose(s.player, choice);
   if (!can.ok) return { ...none, reason: can.reason };
 
+  // A fight that isn't a sure win, chosen by you, is played on the stage first (Fights you play).
+  const edge = choice.fight && !opts.played ? cardEdge(s, uid, index) : null;
+  if (edge && !opts.byDefault && (opts.play || !edge.sure)) {
+    if (s.fight) return { ...none, reason: 'You are in a fight.' };
+    const open = openFight(s, { kind: 'card', uid, choice: index });
+    return { state: open, ok: true, text: '', pass: null, done: false, fight: true };
+  }
+
   let next: GameState = s;
   const cost = choice.cost;
   if (cost?.stones) {
@@ -314,16 +399,26 @@ export function resolveCard(
   }
   if (cost?.item) next = withPlayer(next, addItem(next.player, cost.item.id, -cost.item.n));
 
-  const check = cardCheck(next.player, choice) ?? undefined;
-  const pass = check ? check.verdict !== 'short' : null;
+  // A fight's end, or its edge's verdict without you, stands in for a check.
+  const check =
+    cardCheck(next.player, choice) ??
+    (edge ? { yours: edge.edge.ratio, against: 1, verdict: edge.edge.verdict } : undefined);
+  const played = opts.played;
+  const pass = played
+    ? played === 'won' || played === 'talked'
+    : check
+      ? check.verdict !== 'short'
+      : null;
   const outcome: CardOutcome =
-    pass === false && choice.fail
-      ? choice.fail
-      : check?.verdict === 'close' && choice.close
-        ? choice.close
-        : choice.pass;
+    (played === 'fled' || played === 'draw') && (choice.fled ?? choice.fail)
+      ? (choice.fled ?? choice.fail)!
+      : pass === false && choice.fail
+        ? choice.fail
+        : !played && check?.verdict === 'close' && choice.close
+          ? choice.close
+          : choice.pass;
   for (const e of outcome.effects) if (e.do === 'var') vars[e.id] = (vars[e.id] ?? 0) + e.n;
-  const text = fillSlots(outcome.text, cardWho(s.player, vars));
+  const text = fillSlots(outcome.text, withWords(cardWho(s.player, vars), pending.words));
   const path = [...(pending.path ?? []), index];
   const rest = next.cards.pending.filter((p) => p.uid !== uid);
 
@@ -337,7 +432,7 @@ export function resolveCard(
         pending: next.cards.pending.map((p) => (p.uid === uid ? moved : p)),
       },
     };
-    for (const e of outcome.effects) next = applyEffect(next, e);
+    for (const e of outcome.effects) next = applyEffect(next, e, uid);
     return { state: next, ok: true, text, pass, done: false, ...(check ? { check } : {}) };
   }
 
@@ -360,7 +455,7 @@ export function resolveCard(
   }
   for (const [key, v] of Object.entries(vars)) data[`var.${key}`] = v;
   next = addEvent(next, 'card', data, [next.player.id, ...named]);
-  for (const e of outcome.effects) next = applyEffect(next, e);
+  for (const e of outcome.effects) next = applyEffect(next, e, uid);
   return { state: next, ok: true, text, pass, done: true, ...(check ? { check } : {}) };
 }
 
@@ -421,8 +516,12 @@ function rollCandidates(
   const paceRolls = new Map<string, boolean>();
   const story: Card[] = [];
   const paced: Card[] = [];
+  const held = deckHeld(s);
   for (const k of CARDS) {
-    if (decks && !decks.includes(k.deck)) continue;
+    if (k.queued || (decks && !decks.includes(k.deck))) continue;
+    // A card a quest brings (the rogue's first big job) comes only when it is brought.
+    if (k.pushed) continue;
+    if (held && k.deck === SECLUSION_DECK) continue;
     if (!cardEligible(s, k, day)) continue;
     const pace = DECK_PACE[k.deck];
     if (pace && !k.fixed) {
@@ -438,6 +537,32 @@ function rollCandidates(
     else if ((k.chance ?? 1) >= 1 || rng.next() < (k.chance ?? 1)) story.push(k);
   }
   return { story, paced };
+}
+
+/**
+ * The seclusion deck is held until the origin's chain's first lesson is handed in (design § Story
+ * cards and events, Pacing): a life whose chain has begun and whose lesson isn't in yet.
+ */
+export function deckHeld(s: GameState): boolean {
+  const lesson = s.journal.quests.find((q) => /^chain-.*-lesson$/.test(q.id));
+  const begun = s.journal.quests.some((q) => q.id.startsWith('chain-'));
+  return begun && (lesson?.handed ?? null) === null;
+}
+
+/** Brings a card to the feed now, outside the decks' draw (a quest's act); once while it waits. */
+export function pushCard(s: GameState, id: string): GameState {
+  if (s.cards.pending.some((p) => p.card === id)) return s;
+  card(id);
+  const entry: PendingCard = { uid: s.cards.nextUid, card: id, day: s.calendar.day };
+  return {
+    ...s,
+    cards: {
+      ...s.cards,
+      pending: [...s.cards.pending, entry],
+      drawn: { ...s.cards.drawn, [id]: s.calendar.day },
+      nextUid: entry.uid + 1,
+    },
+  };
 }
 
 /** Picks one card by weight. */
@@ -457,7 +582,9 @@ function drawDay(s: GameState, day: number, opts: DrawOptions): GameState {
   let next = s;
   for (const p of s.cards.pending) {
     const urgent = card(p.card).urgent;
-    if (urgent && day - p.day >= urgent.days) next = resolveByDefault(next, p.uid);
+    // A card's `wait` var stretches its days: an alarm array's raid card (K10).
+    if (urgent && day - p.day >= urgent.days * (p.vars?.wait ?? 1))
+      next = resolveByDefault(next, p.uid);
   }
   const { value: drawn, state } = withStream(next, 'world', (rng) => {
     const { story, paced } = rollCandidates(next, day, rng, opts.decks);
@@ -524,8 +651,15 @@ export interface CardView {
     label: string;
     check: ChoiceCheck;
     comparison: CardCheck | null;
+    /** A fight's edge in words, and whether it is a sure win (Fights you play). */
+    fight: { words: string; sure: boolean } | null;
     choice: CardChoice;
   }[];
+}
+
+function fightWords(s: GameState, uid: number, index: number) {
+  const e = cardEdge(s, uid, index);
+  return e ? { words: e.words, sure: e.sure } : null;
 }
 
 /** A waiting card as the player reads it: slots filled, each offered choice with whether it can be paid. */
@@ -533,7 +667,7 @@ export function viewCard(s: GameState, p: PendingCard): CardView {
   const k = card(p.card);
   const step = stepOf(k, p.step);
   const vars = p.vars ?? {};
-  const who = cardWho(s.player, vars);
+  const who = withWords(cardWho(s.player, vars), p.words);
   return {
     uid: p.uid,
     card: k,
@@ -549,6 +683,7 @@ export function viewCard(s: GameState, p: PendingCard): CardView {
         label: fillSlots(choice.label, who),
         check: canChoose(s.player, choice),
         comparison: cardCheck(s.player, choice),
+        fight: choice.fight ? fightWords(s, p.uid, index) : null,
         choice,
       })),
   };

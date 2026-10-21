@@ -1,6 +1,6 @@
 // Attended seclusion (design § Cultivation, Attended seclusion; § How the two halves connect).
-// While you attend, qi speed carries one more factor, attention: ×1.25 for being there, up to ×2
-// at full focus. Orbs drift in now and then; drawing one in fills focus, focus drains slowly back
+// While you attend, cultivation carries one more factor, attention: ×2.5 for being there, up to ×4
+// at full focus (the opening redone, 2026-10-20: away is a quarter of the attended rate). Orbs drift in now and then; drawing one in fills focus, focus drains slowly back
 // toward the floor, and greedy catching heats the meridians until they tip into unsettled. Every
 // number here is a starting value that sim/pacing.ts's attended rows tune; core/attention.ts reads
 // them. Times are real seconds: focus is a multiplier on in-game rates, so a slower clock is never
@@ -8,10 +8,10 @@
 import type { PhaseElement } from './elements.ts';
 import { NIGHT_HOURS } from './hours.ts';
 
-/** Being there: the attention factor's floor, ×1.25 on qi. */
-export const ATTENTION_FLOOR = 0.25;
-/** Full focus: ×2 on qi. The Breath branch raises it (stat `focusCeiling`); it stays a ceiling. */
-export const ATTENTION_CEILING = 1;
+/** Being there: the attention factor's floor, ×2.5 on qi, body, soul and insight. */
+export const ATTENTION_FLOOR = 1.5;
+/** Full focus: ×4. The Breath branch raises it (stat `focusCeiling`); it stays a ceiling. */
+export const ATTENTION_CEILING = 3;
 
 /**
  * You attend while the tab is visible and you have touched it this recently, so a tab left open on
@@ -28,25 +28,26 @@ export const BREATH_S = 6;
 export const INHALE_SHARE = 0.45;
 
 /**
- * An orb drifts in every one and a half to three seconds, while Cultivate's figure is on screen: a steady
- * flow of small orbs rather than a few big ones (Jan's call after P1.10, the design's first guess
- * was ten to twenty), twice as many and each worth half since Jan's note after A4. Each catch fills
- * and heats half what it did, so a minute of catching fills and heats about the same.
+ * An orb drifts in every one to two seconds, while Cultivate's figure is on screen: a steady flow
+ * of small orbs rather than a few big ones (Jan's call after P1.10, the design's first guess was
+ * ten to twenty), twice as many and each worth half since Jan's note after A4, and half as many
+ * again since The opening, built (chains, rogue, knobs: the knobs). Each catch fills and heats in
+ * step, so a minute of catching fills and heats about the same.
  */
-export const ORB_EVERY_S: readonly [min: number, max: number] = [1.5, 3];
+export const ORB_EVERY_S: readonly [min: number, max: number] = [1, 2];
 /** The share of orbs whose arrival is moved onto an inhale. */
 export const ORB_INHALE_LEAN = 0.7;
-/** Seconds an orb takes to drift from the edge of the cave to the figure. */
-export const ORB_DRIFT_S = 7;
+/** Seconds an orb takes to drift in from far out round the figure (from 7 when they came nearer). */
+export const ORB_DRIFT_S = 10;
 /** Seconds it then floats near the figure before it fades. */
 export const ORB_LINGER_S = 10;
 /** With Heaven and Earth Resonance, dawn's orbs come this much sooner (the wait is multiplied by it). */
 export const RESONANCE_DAWN_EVERY = 0.6;
 /** At most this many orbs at once, so a long look away doesn't fill the cave. */
-export const ORB_CAP = 10;
+export const ORB_CAP = 16;
 
 /** A catch fills this share of the focus meter; a catch on the inhale is worth this much more. */
-export const ORB_FOCUS = 0.02;
+export const ORB_FOCUS = 0.0133;
 export const ORB_TIMED = 1.75;
 
 /** A breath without a pointer (`breathe`) draws in the nearest orb this close to the dantian. */
@@ -61,7 +62,7 @@ export const BREATHE_COOLDOWN_S = 1.5;
  * Catching half the orbs on the inhale stays just under the cooling; grabbing every orb off the
  * breath tips over in about three minutes.
  */
-export const HEAT_PER_BREATH = 0.06;
+export const HEAT_PER_BREATH = 0.04;
 export const HEAT_TIMED = 0.5;
 export const HEAT_LIMIT = 1;
 /** Heat lost each second. */
@@ -72,11 +73,12 @@ export const HEAT_UNSETTLED_S = 40;
 /**
  * The figure, in its own units: the head at (0, −41), the dantian below the navel at (0, 9), the
  * crossed legs reaching y 42. Orbs come in from an ellipse well out round it (further since Jan's note
- * after A4) and float on a ring nearer in, where they floated before.
+ * after A4, and out toward the scene's edges since The opening, built's knobs) and float on a ring
+ * nearer in, where they floated before.
  */
 export const DANTIAN: readonly [x: number, y: number] = [0, 9];
-export const ORB_EDGE: readonly [rx: number, ry: number] = [140, 115];
-export const ORB_RING = 0.34;
+export const ORB_EDGE: readonly [rx: number, ry: number] = [240, 180];
+export const ORB_RING = 0.2;
 
 /**
  * What an orb carries (design § Attended seclusion, orb kinds). The hour's element is the common

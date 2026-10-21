@@ -27,12 +27,15 @@ import {
   MINOR_INJURY_DAYS,
   ODDS_PER_TENTH,
   OFFER_INJURY,
+  PACE,
   PEAK_MARGIN,
   QI_PER_DAY,
   SCENE_ODDS_CAP,
   SOUL_PER_DAY,
   STONE_QI,
   STONES_PER_QI_DAY,
+  TUTORIAL_LAYERS,
+  TUTORIAL_PACE,
   UNSETTLED_DAYS,
   type GradeId,
   type LadderId,
@@ -73,7 +76,7 @@ import { gradesOdds, gradesSpeed } from './grades.ts';
 import { stageGrowth } from './growth.ts';
 import { gainInsight, masteryBurst } from './insight.ts';
 import { burn, burnable, realmGrade, stonesOf, withStones } from './purse.ts';
-import { addReading } from './reading.ts';
+import { addReading, readingCopy } from './reading.ts';
 import {
   addMethodPractice,
   breakthroughBonus,
@@ -170,7 +173,7 @@ export interface QiSpeed {
   aptitude: number;
   /** Tree nodes' and the method's qi gain, as a multiplier. */
   nodes: number;
-  /** Attention: ×1 away, ×1.25 for being there, up to ×2 at full focus (core/attention.ts). */
+  /** Attention: ×1 away, ×2.5 for being there, up to ×4 at full focus (core/attention.ts). */
   attention: number;
   /** The grades on the qi ladder (D2.1): the latest ×0.85 flawed to ×1.35 heavenly, with echoes. */
   grade: number;
@@ -182,7 +185,7 @@ export interface QiSpeed {
 /**
  * Root speed × the method (tier bonus × rarity × mastery) × fit × qi density × Aptitude × nodes ×
  * the realm's grade × attention. Zero without a qi method, or with one past its tier. Layers 1–3
- * ignore the root, the method part and the fit.
+ * ignore the method part and the fit, and layers 1–2 the root.
  */
 export function qiSpeed(c: Cultivator, seat: Seat = AWAY, density = 1): QiSpeed {
   const m = ladderMethod(c, 'qi');
@@ -196,7 +199,9 @@ export function qiSpeed(c: Cultivator, seat: Seat = AWAY, density = 1): QiSpeed 
     return { ...none, density, aptitude: apt, nodes, attention, grade, capped: false, total: 0 };
   }
   const tutorial = inTutorial(c.qi);
-  const rootSpeed = tutorial ? 1 : root(c.root).speed;
+  // The root counts from layer 3's bar, so every root reaches layer 3 together and the fast ones
+  // pull away on the way to 4 (Jan's call, 2026-10-21: the heavenly root's pace).
+  const rootSpeed = tutorial && c.qi.stage < TUTORIAL_LAYERS ? 1 : root(c.root).speed;
   const fit = tutorial ? 1 : methodFitSpeed(c, m);
   return {
     root: rootSpeed,
@@ -250,6 +255,11 @@ function dayBase(
   const apt = aptitudeMultiplier(c);
   const insight = realm(realmOf(c)).insightRate * apt * (1 + m.insightGain);
   const fed = (which: LadderId) => (unfed.includes(which) ? 0 : 1);
+  // The faster clock past the tutorial layers, and attention on every ladder and on insight.
+  // Insight runs on the faster clock once any ladder is past its tutorial, so a pure body or soul
+  // life studies as fast as a qi one.
+  const pace = (which: LadderId) => (inTutorial(c[which]) ? TUTORIAL_PACE : PACE);
+  const lift = (LADDERS.some((l) => !inTutorial(c[l])) ? PACE : TUTORIAL_PACE) * seat.factor;
   // A ladder gains only with a method on it; until then it grows from the world alone. Body and
   // soul ignore the root, so their speed is the method part alone.
   const art = (which: 'body' | 'soul', perDay: number, gain: number) =>
@@ -260,17 +270,20 @@ function dayBase(
     apt *
     (1 + gain) *
     setbackMultiplier(c[which], day) *
-    fed(which);
+    fed(which) *
+    pace(which) *
+    seat.factor;
   return {
     qi:
       QI_PER_DAY *
       realmScale(c.qi.realm) *
       qiSpeed(c, seat, density).total *
       setbackMultiplier(c.qi, day) *
-      fed('qi'),
+      fed('qi') *
+      pace('qi'),
     body: art('body', BODY_PER_DAY, m.bodyGain),
     soul: art('soul', SOUL_PER_DAY, m.soulGain),
-    study: INSIGHT_PER_STUDY_DAY * insight,
+    study: INSIGHT_PER_STUDY_DAY * insight * lift,
     studyDays: apt,
     // Circulating Thought grows the attended trickle with focus, half again at full.
     trickle:
@@ -278,7 +291,8 @@ function dayBase(
         (seat.attended
           ? INSIGHT_ATTENDED * (1 + m.circulatingThought * Math.min(1, seat.focus ?? 0))
           : 0)) *
-      insight,
+      insight *
+      lift,
     practice: practicingNow(c).length > 0 ? apt * (1 + m.practiceGain) : 0,
   };
 }
@@ -333,7 +347,14 @@ export function hourYields(
   const base = dayBase(c, day, unfed, seat, density);
   const discipline = followedRoutine(c) ? DISCIPLINE_BONUS : 0;
   const night = stats(c).nightQi;
-  return effectiveWheel(c).map((kind, hour) => {
+  // With no qi method yet, no study hour and a copy on the reading stand, the qi hours read it: a
+  // first copy takes the whole wheel until it is read (design § Character creation, the street
+  // cultivator's torn manual, which comes before the screen is built and the wheel can be set).
+  const wheel = effectiveWheel(c);
+  const readsInstead =
+    !ladderMethod(c, 'qi') && !wheel.includes('study') && readingCopy(c) !== null;
+  return wheel.map((wheelKind, hour) => {
+    const kind = readsInstead && wheelKind === 'qi' ? 'study' : wheelKind;
     const y: HourYield = {
       hour,
       kind,

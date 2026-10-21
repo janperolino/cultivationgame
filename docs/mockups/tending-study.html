@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tending study (K8)</title>
+<style>
+  :root {
+    --void: #040507; --glass: rgb(10 12 16 / 0.8); --edge: rgb(255 255 255 / 0.075);
+    --edge-strong: rgb(255 255 255 / 0.14); --text: #e9e5da; --muted: #8d949d;
+    --accent: #d6ab4c; --warn: #e08a6a; --qi-wood: #86d19a; --qi-water: #7fc7d9; --qi-earth: #dcb359;
+    --rarity-white: #ece8de; --rarity-green: #7fca8c; --rarity-blue: #6ea6f0;
+    --font-display: 'Cormorant Garamond', Georgia, serif; --font-ui: Inter, system-ui, 'Segoe UI', sans-serif;
+  }
+  html, body { margin: 0; height: 100%; background: var(--void); color: var(--text); font: 15px/1.45 var(--font-ui); overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px;
+    background: radial-gradient(1200px 700px at 55% 40%, #0f130d 0%, #07080b 60%, #040507 100%); }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(7 8 11 / 0.96); border-right: 1px solid var(--edge); }
+  .rail i { display: block; width: 28px; height: 28px; margin: 22px auto; border-radius: 6px; background: rgb(255 255 255 / 0.06); }
+  .rail i.on { background: color-mix(in srgb, var(--accent) 40%, transparent); box-shadow: -22px 0 0 -18px var(--accent); }
+  .screen { position: absolute; left: 72px; right: 0; top: 0; bottom: 0; padding: 40px 48px; box-sizing: border-box; }
+  h1 { font: 500 34px var(--font-display); margin: 0 0 4px; letter-spacing: .02em; }
+  h1 .hz { color: var(--muted); font-size: 22px; margin-left: 8px; }
+  .pages { display: flex; gap: 22px; align-items: baseline; margin: 6px 0 22px; color: var(--muted); }
+  .pages b { color: var(--text); font-weight: 500; border-bottom: 1px solid var(--accent); padding-bottom: 3px; }
+  .pages .sp { flex: 1; }
+  .cols { display: grid; grid-template-columns: 360px 1fr 380px; gap: 22px; height: 880px; }
+  .panel { background: var(--glass); border: 1px solid var(--edge); border-radius: 10px; padding: 20px 22px; box-sizing: border-box; overflow: hidden; }
+  .ph { font: 500 13px var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  .panel > .ph:not(:first-child) { margin-top: 26px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { padding: 8px 0; border-bottom: 1px solid var(--edge); display: flex; justify-content: space-between; gap: 10px; }
+  li small { display: block; color: var(--muted); font-size: 12px; }
+  .muted { color: var(--muted); }
+  .dim { opacity: .45; }
+  .white { color: var(--rarity-white); } .green { color: var(--rarity-green); } .blue { color: var(--rarity-blue); }
+  .sel { background: rgb(214 171 76 / 0.08); border-radius: 6px; padding-left: 8px; padding-right: 8px; }
+  .btn { display: inline-block; border: 1px solid var(--edge-strong); border-radius: 6px; padding: 7px 14px; margin: 10px 8px 0 0; cursor: pointer; background: none; color: var(--text); font: inherit; }
+  .btn.main { border-color: color-mix(in srgb, var(--accent) 55%, transparent); color: var(--accent); }
+  .btn.on { background: rgb(214 171 76 / 0.12); border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+  .plot { position: relative; padding: 0; display: flex; flex-direction: column; }
+  .plot .top { padding: 18px 22px 0; display: flex; justify-content: space-between; align-items: center; }
+  .plot .top .title { font: 500 22px var(--font-display); }
+  canvas { display: block; margin: 6px auto 0; touch-action: none; }
+  .how { text-align: center; color: var(--muted); margin: 2px 32px 0; font-size: 14px; }
+  .how b { color: var(--text); font-weight: 500; }
+  .kv { display: grid; grid-template-columns: 1fr auto; row-gap: 8px; column-gap: 14px; }
+  .kv span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; }
+  .sum { border-top: 1px solid var(--edge-strong); padding-top: 8px; }
+  .odds { display: flex; height: 10px; border-radius: 3px; overflow: hidden; margin: 10px 0 6px; background: rgb(255 255 255 / 0.05); }
+  .meter { height: 6px; background: rgb(255 255 255 / 0.06); border-radius: 3px; margin: 8px 0 4px; }
+  .meter > div { height: 100%; background: var(--accent); border-radius: 3px; }
+  .note { font-size: 13px; color: var(--muted); margin-top: 16px; line-height: 1.5; }
+  .word { font-size: 12px; padding: 1px 7px; border-radius: 9px; border: 1px solid var(--edge-strong); color: var(--muted); }
+  .word.alone { color: var(--qi-wood); border-color: color-mix(in srgb, var(--qi-wood) 40%, transparent); }
+  .toggle { position: fixed; right: 12px; bottom: 10px; z-index: 9; font-size: 12px; color: var(--muted); }
+  .toggle label { margin-left: 10px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
+  <div class="screen">
+    <h1>Crafts <span class="hz">艺</span></h1>
+    <div class="pages"><span>Alchemy 丹</span><span>Refining 器</span><span>Talismans 符</span><span>Formations 阵</span><b>Spirit Farming 灵植</b><span class="sp"></span><span>Spring, 3118 · Spear-Plow Village · qi density 3, thin</span></div>
+    <div class="cols">
+      <section class="panel">
+        <h2 class="ph">Your plots</h2>
+        <ul>
+          <li class="sel"><span>Spear-Plow Village<small>rented to autumn · plains · plain earth</small></span><span class="muted">here</span></li>
+          <li class="dim"><span>Grain Ford<small>bought · plains · spirit soil, tier 1</small></span><span class="muted">31,000 li</span></li>
+          <li class="dim"><span>Reedwater<small>rented to summer · marsh, water · plain earth</small></span><span class="muted">58,000 li</span></li>
+        </ul>
+        <h2 class="ph">The beds here</h2>
+        <ul>
+          <li><span>Calm-Heart Grass ×3 <span class="white">white</span><small>sown 38 days ago · ripe in 52</small></span><span class="word">needs tending</span></li>
+          <li><span>Spirit Rice ×3 <span class="white">white</span><small>sown 38 days ago · ripe in 52</small></span><span class="word">needs tending</span></li>
+          <li><span>Ridge Bitterroot ×2 <span class="green">green</span><small>14 years old · ripe</small></span><span class="word">hardy</span></li>
+          <li><span>Old Apricot Kernel ×1 <span class="blue">blue</span><small>112 years old · ripe</small></span><span class="word alone">stands alone</span></li>
+        </ul>
+        <button class="btn">Plant</button><button class="btn">Harvest the ripe</button><button class="btn">Boosters</button>
+        <p class="note">Tended today: you're here. Pests come two months after you leave (plains, three).</p>
+      </section>
+
+      <section class="panel plot">
+        <div class="top">
+          <span class="title">At the plot <span class="muted" style="font-size:16px">守田</span></span>
+          <span><button class="btn on" id="takeA" style="margin:0 6px 0 0">A · the sleeve's ring 拂袖</button><button class="btn" id="takeB" style="margin:0 12px 0 0">B · calling rain 唤雨</button><button class="btn main" id="sit" style="margin:0">Sit down</button></span>
+        </div>
+        <canvas id="cv"></canvas>
+        <p class="how" id="how"></p>
+      </section>
+
+      <section class="panel">
+        <h2 class="ph">The hand</h2>
+        <div class="kv"><span>This sitting</span><span id="handNow">0.00</span></div>
+        <div class="meter"><div id="handBar" style="width:0%"></div></div>
+        <div class="kv" style="margin-top:12px">
+          <span>Sittings since sowing</span><span id="sittings">2</span>
+          <span>Mean hand, the harvest reads</span><span id="mean">0.71</span>
+        </div>
+        <h2 class="ph">The harvest it lifts</h2>
+        <p class="muted" style="margin:0">Calm-Heart Grass ×3 beds, 30 a bed from a white packet</p>
+        <div class="kv" style="margin-top:10px">
+          <span>Herbs mastery, Comprehension</span><span>+0.25</span>
+          <span>Mean hand × reach 1.0</span><span id="liftHand">+0.71</span>
+          <span class="sum">Lift</span><span class="sum" id="lift">0.96 bands</span>
+        </div>
+        <div class="odds"><div id="oW" style="background:var(--rarity-white)"></div><div id="oG" style="background:var(--rarity-green)"></div></div>
+        <div class="kv"><span class="white">white</span><span id="pW">4%</span><span class="green">green, its written top</span><span id="pG">96%</span></div>
+        <p class="note">The hand moves only rarity, never how much grows. Age does the rest: green at ten years, blue at a hundred, reached only in a plot.</p>
+        <h2 class="ph">Marks</h2>
+        <div class="kv" id="marks"></div>
+      </section>
+    </div>
+  </div>
+</div>
+<div class="toggle">mockup: <label><input type="checkbox" id="rm"> reduced motion</label></div>
+<script>
+// ---- the stage, the canvas and the seeded rolls
+const stage = document.getElementById('stage');
+function fit() { const k = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transformOrigin = 'center'; stage.style.transform = `translate(-50%,-50%) scale(${k})`; }
+addEventListener('resize', fit); fit();
+const reduced = () => document.getElementById('rm').checked;
+const W = 760, H = 640;
+const cv = document.getElementById('cv'), g = cv.getContext('2d');
+const DPR = Math.min(2, devicePixelRatio || 1); cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; g.scale(DPR, DPR);
+const toCanvas = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+function mulberry32(a) { return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+let rnd = mulberry32(8);
+const lerp = (a, b, k) => a + (b - a) * k, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+// ---- the plot: 3×3 beds, each one crop
+const BW = 196, BH = 150, GAP = 26, FX = (W - (BW * 3 + GAP * 2)) / 2, FY = 96;
+const CROPS = ['Calm-Heart', 'Calm-Heart', 'Calm-Heart', 'Spirit Rice', 'Spirit Rice', 'Spirit Rice', 'Bitterroot', 'Bitterroot', 'Apricot'];
+const beds = [];
+for (let i = 0; i < 9; i++) {
+  const x = FX + (i % 3) * (BW + GAP), y = FY + Math.floor(i / 3) * (BH + GAP);
+  const sprouts = [];
+  for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) sprouts.push({ x: x + 36 + c * 62 + (rnd() - 0.5) * 14, y: y + 46 + r * 58 + (rnd() - 0.5) * 12, hurt: -9 });
+  beds.push({ i, x, y, crop: CROPS[i], sprouts, dark: 0, wet: 0.62 + (rnd() - 0.5) * 0.16, dry: 0.012 + rnd() * 0.016 });
+}
+const inBed = (b, p) => p[0] >= b.x && p[0] <= b.x + BW && p[1] >= b.y && p[1] <= b.y + BH;
+
+// ---- the hand, as fire control's: it moves toward each outcome by a share of the gap
+let hand = 0, sitting = false, take = 'A', t = 0, last = 0, marks = [];
+const tally = { swept: 0, rings: 0, sank: 0, bruised: 0, clouds: 0 };
+function toward(q, k = 0.09) { hand += (q - hand) * k; }
+function mark(at, m, c) { marks.push({ at: [...at], m, c, t }); }
+
+function drawField() {
+  // the earth between the beds, one fill, no blur
+  g.fillStyle = '#0d0f0b'; g.fillRect(FX - 22, FY - 22, BW * 3 + GAP * 2 + 44, BH * 3 + GAP * 2 + 44);
+  for (const b of beds) {
+    const w = take === 'B' ? b.wet : 0.6;
+    const dryC = [74, 62, 44], wetC = [30, 34, 36];
+    const k = clamp(w, 0, 1), col = dryC.map((d, j) => Math.round(lerp(d, wetC[j], k)));
+    g.fillStyle = `rgb(${col.join(',')})`; g.fillRect(b.x, b.y, BW, BH);
+    // furrows
+    g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 1;
+    for (let r = 0; r < 2; r++) { const yy = b.y + 46 + r * 58 + 14; g.beginPath(); g.moveTo(b.x + 10, yy); g.lineTo(b.x + BW - 10, yy); g.stroke(); }
+    if (b.dark > 0) { g.fillStyle = `rgba(40,20,50,${0.5 * b.dark})`; g.fillRect(b.x, b.y, BW, BH); }
+    if (take === 'B' && b.wet > 0.92) { g.fillStyle = 'rgba(60,90,120,0.28)'; g.fillRect(b.x, b.y, BW, BH); }
+    g.fillStyle = 'rgba(233,229,218,0.55)'; g.font = '12px Inter, system-ui'; g.textAlign = 'left'; g.fillText(b.crop, b.x + 8, b.y + 16);
+    for (const s of b.sprouts) drawSprout(b, s);
+    if (take === 'B') drawWetBar(b);
+  }
+}
+function drawSprout(b, s) {
+  const hurt = t - s.hurt < 3;
+  let green = '134,209,154';
+  if (take === 'B') { if (b.wet < 0.45) green = '196,186,110'; if (b.wet < 0.25) green = '170,140,90'; if (b.wet > 0.92) green = '90,130,140'; }
+  if (hurt) green = '224,138,106';
+  const gr = g.createRadialGradient(s.x, s.y, 0, s.x, s.y, 16);
+  gr.addColorStop(0, `rgba(${green},0.55)`); gr.addColorStop(1, `rgba(${green},0)`);
+  g.fillStyle = gr; g.beginPath(); g.arc(s.x, s.y, 16, 0, 7); g.fill();
+  const droop = hurt ? 5 : take === 'B' && b.wet < 0.3 ? 4 : 0;
+  g.strokeStyle = `rgb(${green})`; g.lineWidth = 2; g.beginPath();
+  g.moveTo(s.x, s.y + 7); g.quadraticCurveTo(s.x - 1, s.y, s.x - 6, s.y - 5 + droop); g.moveTo(s.x, s.y + 2); g.quadraticCurveTo(s.x + 2, s.y - 4, s.x + 6, s.y - 7 + droop); g.stroke();
+}
+function drawRing() {
+  // the seat's gold ring, 65% of a circle open toward the floor, at the top right
+  const cx = W - 54, cy = 46, r = 26, a0 = Math.PI * (0.5 + 0.35), span = Math.PI * 2 * 0.65;
+  g.lineWidth = 4; g.strokeStyle = 'rgba(255,255,255,0.08)'; g.beginPath(); g.arc(cx, cy, r, a0, a0 + span); g.stroke();
+  g.strokeStyle = '#d6ab4c'; g.beginPath(); g.arc(cx, cy, r, a0, a0 + span * clamp(hand, 0, 1)); g.stroke();
+  g.fillStyle = '#e9e5da'; g.font = '13px Inter, system-ui'; g.textAlign = 'center'; g.fillText(hand.toFixed(2), cx, cy + 5);
+}
+function drawMarks() {
+  marks = marks.filter((m) => t - m.t < 0.9);
+  for (const m of marks) { const k = (t - m.t) / 0.9; g.globalAlpha = 1 - k; g.fillStyle = m.c; g.font = '28px KaiTi, serif'; g.textAlign = 'center'; g.fillText(m.m, m.at[0], m.at[1] - (reduced() ? 0 : k * 16)); g.globalAlpha = 1; }
+}
+
+// ================================================================ take A, the sleeve's ring 拂袖
+// Knots of foul qi 浊气 rise from the beds and drift together. Draw a closed ring round them and
+// your sleeve sweeps them up: each knot swept is a 1, a ring of three or more a 1 again (妙). A ring
+// whose line crosses a sprout's light bruises it (伤, a 0 twice); a knot left 8 s sinks into the roots
+// (浊, a 0). Idle play falls to 0 as the knots sink. The ring's line runs out past 1,100 px.
+const A = { every: [0.9, 1.7], life: 8, sinkFrom: 6, drift: 9, pull: 7, pullR: 130, close: 48, most: 1100, bruiseR: 10 };
+let knots = [], nextKnot = 0, path = null, sweeps = [];
+function spawnKnot() {
+  const b = beds[Math.floor(rnd() * 9)];
+  let p; for (let k = 0; k < 8; k++) { p = [b.x + 14 + rnd() * (BW - 28), b.y + 22 + rnd() * (BH - 34)]; if (b.sprouts.every((s) => Math.hypot(s.x - p[0], s.y - p[1]) > 22)) break; }
+  const a = rnd() * 7;
+  knots.push({ x: p[0], y: p[1], vx: Math.cos(a) * A.drift, vy: Math.sin(a) * A.drift, born: t, bed: b, ph: rnd() * 7 });
+}
+function stepA(dt) {
+  if (t >= nextKnot) { spawnKnot(); nextKnot = t + lerp(A.every[0], A.every[1], rnd()); }
+  for (const k of knots) {
+    if (!reduced()) {
+      let near = null, nd = A.pullR;
+      for (const o of knots) if (o !== k) { const d = Math.hypot(o.x - k.x, o.y - k.y); if (d < nd) { nd = d; near = o; } }
+      let px = 0, py = 0; if (near && nd > 18) { px = (near.x - k.x) / nd * A.pull; py = (near.y - k.y) / nd * A.pull; }
+      k.x += (k.vx + px) * dt; k.y += (k.vy + py) * dt;
+      if (k.x < FX - 10 || k.x > FX + BW * 3 + GAP * 2 + 10) k.vx *= -1;
+      if (k.y < FY - 10 || k.y > FY + BH * 3 + GAP * 2 + 10) k.vy *= -1;
+    }
+    if (t - k.born >= A.life) { k.gone = true; toward(0); tally.sank++; k.bed.dark = 1; mark([k.x, k.y], '浊', '#8a7a9a'); }
+  }
+  knots = knots.filter((k) => !k.gone);
+  for (const b of beds) b.dark = Math.max(0, b.dark - dt * 0.5);
+  sweeps = sweeps.filter((s) => t - s.t < 0.5);
+}
+function drawA() {
+  for (const k of knots) {
+    const age = t - k.born, rise = clamp(age / 0.6, 0, 1), sink = clamp((age - A.sinkFrom) / (A.life - A.sinkFrom), 0, 1);
+    const r = (14 + (reduced() ? 0 : Math.sin(t * 3 + k.ph) * 1.5)) * rise * (1 - sink * 0.5);
+    const gr = g.createRadialGradient(k.x, k.y, 0, k.x, k.y, r * 2);
+    gr.addColorStop(0, `rgba(${Math.round(lerp(120, 70, sink))},${Math.round(lerp(96, 50, sink))},${Math.round(lerp(140, 80, sink))},0.95)`);
+    gr.addColorStop(0.45, 'rgba(70,52,88,0.55)'); gr.addColorStop(1, 'rgba(40,30,50,0)');
+    g.fillStyle = gr; g.beginPath(); g.arc(k.x, k.y, r * 2, 0, 7); g.fill();
+    // a knot: two crossed loops
+    g.strokeStyle = `rgba(200,180,220,${0.5 * (1 - sink)})`; g.lineWidth = 1.2; g.beginPath(); g.ellipse(k.x, k.y, r * 0.7, r * 0.35, k.ph + t * 0.6, 0, 7); g.ellipse(k.x, k.y, r * 0.35, r * 0.7, k.ph + t * 0.6, 0, 7); g.stroke();
+  }
+  for (const s of sweeps) { const k = (t - s.t) / 0.5; for (const p of s.from) { g.fillStyle = `rgba(214,171,76,${1 - k})`; g.beginPath(); g.arc(lerp(p[0], s.to[0], k), lerp(p[1], s.to[1], k), 5 * (1 - k) + 1, 0, 7); g.fill(); } }
+  if (path) {
+    const used = pathLen(path), left = 1 - used / A.most;
+    g.strokeStyle = `rgba(214,171,76,${0.35 + 0.55 * left})`; g.lineWidth = 2.5; g.lineCap = 'round'; g.lineJoin = 'round';
+    g.beginPath(); path.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.stroke();
+    const end = path[path.length - 1], st = path[0];
+    if (path.length > 6 && Math.hypot(end[0] - st[0], end[1] - st[1]) < A.close) { g.strokeStyle = 'rgba(214,171,76,0.9)'; g.beginPath(); g.arc(st[0], st[1], 9, 0, 7); g.stroke(); }
+  }
+}
+const pathLen = (p) => p.reduce((s, q, i) => (i ? s + Math.hypot(q[0] - p[i - 1][0], q[1] - p[i - 1][1]) : 0), 0);
+function inside(poly, x, y) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; }
+function segDist(p, a, b) { const dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy || 1, k = clamp(((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l, 0, 1); return Math.hypot(p[0] - a[0] - k * dx, p[1] - a[1] - k * dy); }
+function closeRing() {
+  const p = path; path = null;
+  if (p.length < 6) return;
+  const st = p[0], end = p[p.length - 1];
+  if (Math.hypot(end[0] - st[0], end[1] - st[1]) >= A.close) return; // an open stroke does nothing
+  let bruised = 0;
+  for (const b of beds) for (const s of b.sprouts) {
+    if (t - s.hurt < 3) continue;
+    for (let i = 1; i < p.length; i++) if (segDist([s.x, s.y], p[i - 1], p[i]) < A.bruiseR) { s.hurt = t; bruised++; mark([s.x, s.y - 12], '伤', '#e08a6a'); break; }
+  }
+  for (let i = 0; i < bruised; i++) { toward(0); toward(0); }
+  tally.bruised += bruised;
+  const caught = knots.filter((k) => inside(p, k.x, k.y));
+  if (!caught.length) return;
+  knots = knots.filter((k) => !caught.includes(k));
+  for (const k of caught) toward(1);
+  tally.swept += caught.length;
+  sweeps.push({ t, from: caught.map((k) => [k.x, k.y]), to: end });
+  if (caught.length >= 3) { toward(1); tally.rings++; mark(end, '妙', '#d6ab4c'); }
+}
+
+// ================================================================ take B, calling rain 唤雨
+// Each bed dries at its own rate under the sun; it wants its water in the band (the tick on its edge).
+// Click to gather a cloud where you point: it takes 0.6 s to form, then the wind carries it, raining
+// under it for 5 s. Two clouds at most. The wind turns every 9–13 s. Twice a second the hand moves
+// toward the share of beds in the band; a sodden bed (past 0.92) rots and counts as dry ground does.
+const B = { band: [0.45, 0.8], rot: 0.92, rain: 0.3, radius: 90, form: 0.6, life: 5, most: 2, sample: 0.5 };
+let clouds = [], wind = { a: 0.3, to: 0.3, s: 46, next: 10 }, nextSample = 0, streaks = [];
+for (let i = 0; i < 26; i++) streaks.push({ x: rnd() * W, y: rnd() * H, l: 18 + rnd() * 26 });
+function stepB(dt) {
+  if (t >= wind.next) { wind.to = wind.a + (rnd() - 0.5) * 2.4; wind.s = 30 + rnd() * 40; wind.next = t + 9 + rnd() * 4; }
+  wind.a += (wind.to - wind.a) * Math.min(1, dt * 0.6);
+  const vx = Math.cos(wind.a) * wind.s, vy = Math.sin(wind.a) * wind.s;
+  for (const b of beds) b.wet = clamp(b.wet - b.dry * dt, 0, 1);
+  for (const c of clouds) {
+    const age = t - c.born; if (age < B.form) continue;
+    c.x += vx * dt; c.y += vy * dt;
+    for (const b of beds) b.wet = clamp(b.wet + B.rain * dt * cover(b, c), 0, 1);
+  }
+  clouds = clouds.filter((c) => t - c.born < B.form + B.life);
+  if (!reduced()) for (const s of streaks) { s.x += vx * dt * 2.2; s.y += vy * dt * 2.2; if (s.x < -40) s.x += W + 80; if (s.x > W + 40) s.x -= W + 80; if (s.y < -40) s.y += H + 80; if (s.y > H + 40) s.y -= H + 80; }
+  if (t >= nextSample) {
+    nextSample = t + B.sample;
+    const q = beds.reduce((s, b) => s + bedQ(b.wet), 0) / beds.length;
+    toward(q, 0.05);
+  }
+}
+function bedQ(w) { const [lo, hi] = B.band; if (w > B.rot) return 0; if (w >= lo && w <= hi) return 1; if (w < lo) return clamp((w - 0.25) / (lo - 0.25), 0, 1); return clamp((B.rot - w) / (B.rot - hi), 0, 1); }
+function cover(b, c) { let n = 0; for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) { const x = b.x + (i + 0.5) * BW / 5, y = b.y + (j + 0.5) * BH / 4; if (Math.hypot(x - c.x, y - c.y) < B.radius) n++; } return n / 20; }
+function drawWetBar(b) {
+  const x = b.x + 10, y = b.y + BH - 10, w = BW - 20;
+  g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(x, y, w, 4);
+  g.fillStyle = 'rgba(134,209,154,0.25)'; g.fillRect(x + w * B.band[0], y, w * (B.band[1] - B.band[0]), 4);
+  const q = bedQ(b.wet); g.fillStyle = q > 0.99 ? '#86d19a' : b.wet > B.band[1] ? '#7fc7d9' : '#dcb359';
+  g.fillRect(x + w * b.wet - 2, y - 3, 4, 10);
+}
+function drawB() {
+  g.strokeStyle = 'rgba(200,220,230,0.07)'; g.lineWidth = 1;
+  const ux = Math.cos(wind.a), uy = Math.sin(wind.a);
+  for (const s of streaks) { g.beginPath(); g.moveTo(s.x, s.y); g.lineTo(s.x - ux * s.l, s.y - uy * s.l); g.stroke(); }
+  for (const c of clouds) {
+    const age = t - c.born, form = clamp(age / B.form, 0, 1), fade = clamp((B.form + B.life - age) / 0.6, 0, 1), a = form * fade;
+    if (age >= B.form) {
+      g.fillStyle = `rgba(127,199,217,${0.08 * a})`; g.beginPath(); g.arc(c.x, c.y, B.radius, 0, 7); g.fill();
+      if (!reduced()) { g.strokeStyle = `rgba(160,210,230,${0.35 * a})`; g.lineWidth = 1; for (let i = 0; i < 14; i++) { const ang = i * 2.4 + c.seed, rr = ((i * 37) % B.radius), px = c.x + Math.cos(ang) * rr, py = c.y + Math.sin(ang) * rr, f = ((t * 3 + i * 0.13) % 1); g.beginPath(); g.moveTo(px, py - 14 + f * 14); g.lineTo(px - 2, py + f * 14); g.stroke(); } }
+    }
+    // the cloud itself: three soft lobes, gradients only
+    for (const [ox, oy, r] of [[-22, -6, 24], [0, -14, 28], [22, -6, 22]]) {
+      const x = c.x + ox, y = c.y - 34 + oy, gr = g.createRadialGradient(x, y, 0, x, y, r * form);
+      gr.addColorStop(0, `rgba(210,222,230,${0.75 * a})`); gr.addColorStop(1, 'rgba(210,222,230,0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(x, y, r * form || 0.1, 0, 7); g.fill();
+    }
+  }
+  // the wind vane, top left
+  const cx = 54, cy = 46; g.strokeStyle = 'rgba(233,229,218,0.6)'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx - ux * 18, cy - uy * 18); g.lineTo(cx + ux * 18, cy + uy * 18); g.stroke();
+  g.beginPath(); g.moveTo(cx + ux * 18, cy + uy * 18); g.lineTo(cx + ux * 10 - uy * 6, cy + uy * 10 + ux * 6); g.lineTo(cx + ux * 10 + uy * 6, cy + uy * 10 - ux * 6); g.closePath(); g.fillStyle = 'rgba(233,229,218,0.6)'; g.fill();
+  g.fillStyle = 'rgba(233,229,218,0.55)'; g.font = '12px Inter, system-ui'; g.textAlign = 'left'; g.fillText('wind ' + Math.max(0, Math.round(wind.next - t)) + ' s to turn', cx + 30, cy + 4);
+}
+
+// ---- input
+cv.addEventListener('pointerdown', (e) => {
+  if (!sitting) return;
+  const p = toCanvas(e);
+  if (take === 'A') { path = [p]; cv.setPointerCapture(e.pointerId); }
+  else if (clouds.length < B.most) { clouds.push({ x: p[0], y: p[1], born: t, seed: rnd() * 7 }); tally.clouds++; }
+});
+cv.addEventListener('pointermove', (e) => {
+  if (!path) return;
+  const p = toCanvas(e), q = path[path.length - 1];
+  if (Math.hypot(p[0] - q[0], p[1] - q[1]) < 4) return;
+  path.push(p);
+  if (pathLen(path) > A.most) path = null; // the sleeve's qi runs out; the stroke breaks
+});
+cv.addEventListener('pointerup', () => { if (path) closeRing(); });
+
+// ---- the loop: runs only while you sit and the tab shows
+function frame(ms) {
+  const now = ms / 1000, dt = Math.min(0.05, now - last); last = now;
+  if (sitting && !document.hidden) { t += dt; take === 'A' ? stepA(dt) : stepB(dt); }
+  g.clearRect(0, 0, W, H);
+  drawField(); take === 'A' ? drawA() : drawB(); drawRing(); drawMarks();
+  if (!sitting) { g.fillStyle = 'rgba(4,5,7,0.55)'; g.fillRect(0, 0, W, H); g.fillStyle = '#e9e5da'; g.font = '20px Cormorant Garamond, Georgia, serif'; g.textAlign = 'center'; g.fillText('Sit down to tend the plot', W / 2, H / 2); }
+  panel();
+  if (sitting) requestAnimationFrame(frame);
+}
+function panel() {
+  document.getElementById('handNow').textContent = hand.toFixed(2);
+  document.getElementById('handBar').style.width = (hand * 100).toFixed(0) + '%';
+  // this sitting joins the two before it in the mean the harvest reads
+  const mean = (0.71 * 2 + hand) / 3, lift = 0.25 + mean, pG = clamp(lift, 0, 1);
+  document.getElementById('sittings').textContent = sitting || hand > 0 ? '3' : '2';
+  document.getElementById('mean').textContent = mean.toFixed(2);
+  document.getElementById('liftHand').textContent = '+' + mean.toFixed(2);
+  document.getElementById('lift').textContent = lift.toFixed(2) + ' bands';
+  document.getElementById('oW').style.width = ((1 - pG) * 100) + '%'; document.getElementById('oG').style.width = (pG * 100) + '%';
+  document.getElementById('pW').textContent = Math.round((1 - pG) * 100) + '%'; document.getElementById('pG').textContent = Math.round(pG * 100) + '%';
+  const rows = take === 'A'
+    ? [['Knots swept', tally.swept], ['Rings of three or more 妙', tally.rings], ['Sank into the roots 浊', tally.sank], ['Sprouts bruised 伤', tally.bruised]]
+    : [['Clouds called', tally.clouds], ['Beds in the band', beds.filter((b) => bedQ(b.wet) > 0.99).length + ' of 9'], ['Sodden, rotting', beds.filter((b) => b.wet > B.rot).length], ['Parched', beds.filter((b) => b.wet < 0.25).length]];
+  document.getElementById('marks').innerHTML = rows.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('');
+}
+const HOW = {
+  A: '<b>Draw a closed ring</b> round the knots of foul qi to sweep them into your sleeve. Three or more in one ring is 妙. Keep the line off the sprouts, or you bruise them; a knot left too long sinks into the roots.',
+  B: '<b>Click to gather a rain cloud</b>; the wind carries it across. Keep each bed\'s water inside its band. Two clouds at most, and the wind turns.',
+};
+function reset() { rnd = mulberry32(take === 'A' ? 8 : 9); hand = 0; t = 0; knots = []; clouds = []; path = null; nextKnot = 0.4; nextSample = 0; marks = []; for (const k in tally) tally[k] = 0; for (const b of beds) { b.wet = 0.62 + (rnd() - 0.5) * 0.16; b.dark = 0; for (const s of b.sprouts) s.hurt = -9; } wind = { a: 0.3, to: 0.3, s: 46, next: 10 }; }
+function setTake(k) { take = k; document.getElementById('takeA').classList.toggle('on', k === 'A'); document.getElementById('takeB').classList.toggle('on', k === 'B'); document.getElementById('how').innerHTML = HOW[k]; reset(); if (!sitting) frame(performance.now()); }
+document.getElementById('takeA').onclick = () => setTake('A');
+document.getElementById('takeB').onclick = () => setTake('B');
+document.getElementById('sit').onclick = () => {
+  sitting = !sitting; document.getElementById('sit').textContent = sitting ? 'Stand up' : 'Sit down';
+  if (sitting) { reset(); last = performance.now() / 1000; requestAnimationFrame(frame); } else frame(performance.now());
+};
+document.addEventListener('visibilitychange', () => { if (!document.hidden && sitting) { last = performance.now() / 1000; } });
+setTake('A');
+</script>
+</body>
+</html>

@@ -283,7 +283,7 @@ export function huntOf(w: World, power: string, day: number): number {
  * Whether a spot lies inside a power's sphere: within its atlas radius of its seat, or for one with
  * no radius (a kingdom read as a dynasty, the March) on its own land, read off the map's areas.
  */
-function inSphere(power: string, at: Pt, map?: RegionMap | null): boolean {
+export function inSphere(power: string, at: Pt, map?: RegionMap | null): boolean {
   const house = houseOf(power);
   const s = sphereOf(power) ?? sphereOf(house);
   if (s) return Math.hypot(at[0] - s.x, at[1] - s.y) <= s.sphere;

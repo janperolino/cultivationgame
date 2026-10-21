@@ -87,7 +87,36 @@ export const HINTS: Readonly<Record<HintId, string>> = {
   breakthrough: 'A bar is full. Break through with the button under your figure on Cultivate.',
   auto: 'Minor breakthroughs run on their own, at safe odds, even while you are away. Choose how bold under Minor breakthroughs on Routine. Major breakthroughs are always yours to call.',
   cards: 'A card waits in the tray on Cultivate. Each is a choice, and it waits for you.',
-  'hints-off': 'Hints like this one can be turned off in Settings, and shown again from there.',
+  'hints-off':
+    'Guides and hints like this one can be turned off in Settings, and replayed from there.',
+};
+
+/**
+ * The hints a guide speaks instead (The opening, built: a guided feature drops its hint); the
+ * firsts beneath them stay, with their beacons, as the fallback.
+ */
+export const GUIDED_HINTS: readonly HintId[] = [
+  'copy',
+  'study-hour',
+  'method',
+  'orbs',
+  'attending',
+  'technique',
+  'technique-hour',
+  'node',
+  'breakthrough',
+  'cards',
+];
+
+/** The codex entry each hint left links to (content/codex). */
+export const HINT_CODEX: Readonly<Partial<Record<HintId, string>>> = {
+  'qi-hours': 'wheel',
+  art: 'body-soul',
+  'art-hour': 'body-soul',
+  stones: 'stone-burning',
+  insight: 'insight-sources',
+  auto: 'auto-minor',
+  'hints-off': 'guides-settings',
 };
 
 /** The coming-back card's line for each first still waiting, by its step. */

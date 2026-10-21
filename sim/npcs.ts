@@ -17,8 +17,12 @@ import { defaultElements } from '../src/content/roots.ts';
 import { tierStep } from '../src/content/realms.ts';
 import { playDay, resolveByDefault } from '../src/core/cards.ts';
 import { createLife } from '../src/core/creation.ts';
+import { withoutChain } from '../src/core/chains.ts';
+import { finishAllGuides } from '../src/core/guides.ts';
 import { majorCheck } from '../src/core/cultivation.ts';
-import { breakThrough, switchMethod } from '../src/core/life.ts';
+import { breakThrough, playFirsts, switchMethod } from '../src/core/life.ts';
+import { PACE, TUTORIAL_PACE } from '../src/content/cultivation.ts';
+import { inTutorial } from '../src/core/methods.ts';
 import { advance } from '../src/core/loop.ts';
 import { addItem, DAYS_PER_YEAR, withPlayer, type GameState } from '../src/core/state.ts';
 
@@ -28,6 +32,16 @@ const CHUNK_MS = 60_000;
 const MAX_HOURS = 150;
 
 /** Stage keys in climbing order: q2..q9 for the layers, f1..f4 for Foundation's stages. */
+/**
+ * NPCs keep their pace (design § Character creation, What the faster clock moves): the faster
+ * clock is the player's, so the world's people climb at the rates before it, a seat that takes
+ * the faster clock's factor back off every ladder and insight (and the tutorial's own pace in it).
+ */
+const npcSeat = (s: GameState) => ({
+  factor: 1 / (inTutorial(s.player.qi) ? TUTORIAL_PACE : PACE),
+  attended: false,
+});
+
 const KEYS = [2, 3, 4, 5, 6, 7, 8, 9].map((k) => `q${k}`).concat(['f1', 'f2', 'f3', 'f4']);
 
 function settleCards(s: GameState): GameState {
@@ -60,12 +74,14 @@ function play(seed: number): { at: Record<string, number>; insight500?: number }
       origin: 'cave-orphan',
     },
   });
+  // The opening's chain isn't what this sim measures: without it the seclusion deck isn't held.
+  s = playFirsts(withoutChain(finishAllGuides(s)));
   const at: Record<string, number> = {};
   let insight500: number | undefined;
   let ms = 0;
   while (ms < MAX_HOURS * 3_600_000) {
-    const r = advance(s, CHUNK_MS, { step: playDay });
-    s = settleCards(r.state);
+    const r = advance(s, CHUNK_MS, { step: playDay, seat: npcSeat(s) });
+    s = playFirsts(settleCards(r.state));
     ms += r.usedMs;
     const p = s.player;
     const lived = s.calendar.day - p.bornDay;

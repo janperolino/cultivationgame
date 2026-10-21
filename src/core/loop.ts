@@ -92,8 +92,9 @@ export function advance(
   let steps = 0;
 
   while (remaining > 0 && steps < (opts.maxSteps ?? Infinity)) {
-    // A life that has ended stands still until a new one begins.
-    if (state.ended) break;
+    // A life that has ended stands still until a new one begins, and a fight holds the clock
+    // until it ends (Fights you play).
+    if (state.ended || state.fight) break;
     const edge = lifespanEdgeDay(state.player);
     const room = edge - state.calendar.day;
     if (room <= 0) break;

@@ -190,8 +190,11 @@ function Ring({
   label,
   beacon,
   shifts = [],
+  guide,
 }: {
   shifts?: readonly Shift[];
+  /** The guide's mark (ui/GuideLayer.tsx), on the home wheel. */
+  guide?: string;
   cells: readonly Cell[];
   pick: HourPick;
   onPick: (pick: number[]) => void;
@@ -243,6 +246,7 @@ function Ring({
   return (
     <svg
       className={`wheel ring${beacon ? ' is-beacon' : ''}`}
+      data-guide={guide}
       viewBox="-188 -188 376 376"
       role="group"
       aria-label={label}
@@ -391,8 +395,8 @@ function shiftsOf(game: GameState, road = false): Shift[] {
     .map((j) => ({
       id: j.id,
       hours: j.shift,
-      name: j.drilling ? `${j.name} from layer 4` : j.name,
-      missed: !j.drilling && (road || !j.here),
+      name: j.drilling ? `${j.name} · at drill` : j.name,
+      missed: j.shift.some((h) => dutyAt(game.player, h)) && (road || !j.here),
     }));
 }
 
@@ -471,6 +475,7 @@ export function DayWheel({
       label="The day wheel: twelve double-hours, 子 at midnight at the top"
       beacon={wants.size > 0}
       shifts={shiftsOf(game)}
+      guide="wheel"
     />,
     <div className="wheel-editor">
       {pick.length > 0 ? (

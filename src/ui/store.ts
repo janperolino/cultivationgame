@@ -38,6 +38,10 @@ import { rerollGlass, withPlayer, type GameState } from '../core/state.ts';
 import { forgetSavedRoutine, saveRoutine } from '../core/wheel.ts';
 import type { HintId } from '../content/firsts.ts';
 import { hintDone, nextHint } from './hints.ts';
+import { guideHold } from './guide.ts';
+import { noteCodex } from '../core/codex.ts';
+import { noteGuides } from '../core/guides.ts';
+import { noteQuests } from '../core/journal.ts';
 import { attemptOf, endScene, sceneDue, sceneRolled, startScene, useScene } from './scene.ts';
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
 import { loadSettings, saveSettings } from './settings.ts';
@@ -113,7 +117,8 @@ export interface GameStore {
   /** Starts the life creation decided: a first life, or the next one after a death. */
   finishCreation(creation: Creation): Promise<void>;
   /** Resolves a waiting card with a choice; returns why not, or null. */
-  chooseCard(uid: number, index: number, title: string): string | null;
+  /** `play` plays a sure fight on the stage rather than let it resolve (Fights you play). */
+  chooseCard(uid: number, index: number, title: string, play?: boolean): string | null;
   dismissCardOutcome(): void;
   /** Saves now; each breakthrough saves with `rewindPoint` set. */
   saveNow(opts?: { rewindPoint?: boolean }): Promise<void>;
@@ -315,13 +320,19 @@ export const useGame = create<GameStore>()((set, get) => {
     const now = Date.now();
     const gap = now - lastTick;
     lastTick = now;
+    // A fight holds the clock, and the seat with it, until it ends (Fights you play).
+    if (game.fight) return;
+    // A veil holds the clock while it waits (core/guides.ts); the first orb's runs at half, the
+    // breath with it, since orbs need motion.
+    const hold = guideHold(game);
     // The seat runs on real seconds; a long gap is time away, which the seat spends fading.
-    const { seat, state } = tickSeat(game, gap / 1000);
+    const { seat, state } = tickSeat(game, (hold === 'half' ? gap / 2 : gap) / 1000);
     if (gap > OFFLINE_GAP_MS) {
       void catchUpAway(state, now - gap, now);
       return;
     }
-    update(advance(state, gap * speed, { step: playDay, seat }).state);
+    const ms = hold === 'held' ? 0 : hold === 'half' ? gap / 2 : gap;
+    update(advance(state, ms * speed, { step: playDay, seat }).state);
     playScene(seat);
   }
 
@@ -536,13 +547,18 @@ export const useGame = create<GameStore>()((set, get) => {
         if (opened) raiseStartToasts(opened);
       }),
 
-    chooseCard(uid, index, title) {
+    chooseCard(uid, index, title, play) {
       const { game } = get();
       if (!game || !holdsLock) return 'This life is not open in this tab.';
-      const r = resolveCard(game, uid, index);
+      const r = resolveCard(game, uid, index, { play });
       if (!r.ok) return r.reason ?? 'That cannot be chosen.';
       update(r.state);
       get().markHint('cards');
+      // A fight takes the stage; its end resolves the card (Fights you play).
+      if (r.fight) {
+        void get().saveNow();
+        return null;
+      }
       set({
         cardOutcome: {
           uid,
@@ -916,6 +932,16 @@ export const useGame = create<GameStore>()((set, get) => {
 // Every gift names itself in a toast as it comes (ui/toasts.ts): a change to the open life is
 // checked for what it gained, unless it came from time away, a rewind or another life.
 useGame.subscribe((now, was) => {
+  // Quests step on, guides done in the state end, and the codex meets what the life has met
+  // (core/journal.ts, core/guides.ts, core/codex.ts), after the change that called it.
+  if (now.game && now.game !== was.game && !now.game.ended) {
+    const game = now.game;
+    const noted = noteCodex(noteGuides(noteQuests(game)));
+    if (noted !== game)
+      queueMicrotask(() => {
+        if (useGame.getState().game === game) useGame.setState({ game: noted });
+      });
+  }
   if (now.slot !== was.slot || !now.game || now.game.lineage.life !== was.game?.lineage.life) {
     if (now.game !== was.game) clearToasts();
     driveHints();

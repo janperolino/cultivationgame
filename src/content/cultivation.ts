@@ -11,6 +11,18 @@ export type LadderId = (typeof LADDERS)[number];
  * multiplier. Each hour on the wheel is a twelfth of a day (content/hours.ts).
  */
 export const QI_PER_DAY = 1;
+/**
+ * The faster clock (the opening redone, 2026-10-20): qi, body, soul and insight all run this much
+ * faster than the rates above say, past the tutorial layers, so an away life reaches Foundation in
+ * about 10 real hours and an attended one, with attention's ×4, in about 2.5. The knob that
+ * stretches the climb once there is more to do on the way (design § Character creation).
+ */
+export const PACE = 2.3;
+/**
+ * The tutorial layers' own pace: slower than the rates say, so with attention every root reaches
+ * layer 3 near minute 15 (the first lesson's end), not 11.
+ */
+export const TUTORIAL_PACE = 0.75;
 /** Tempering and nourishment per full day, in the same units; body and soul ignore the root. */
 export const BODY_PER_DAY = 1.1;
 export const SOUL_PER_DAY = 1.1;
@@ -29,8 +41,8 @@ export const APTITUDE_BASE = 10;
 export const APTITUDE_STEP = 0.05;
 
 /**
- * Qi Condensation layers up to this one are the tutorial: they ignore root speed, method fit and
- * the element hours. Dawn, discipline, Aptitude and nodes still count.
+ * Qi Condensation layers up to this one are the tutorial: they ignore method fit and the element
+ * hours, and root speed until this layer's own bar. Dawn, discipline, Aptitude and nodes count.
  */
 export const TUTORIAL_LAYERS = 3;
 

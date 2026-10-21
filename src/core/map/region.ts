@@ -96,6 +96,8 @@ export interface RegionGen {
   roads: GenRoad[];
   sites: GenSite[];
   hearts: GenHeart[];
+  /** Sites a life made (K9): who made it and when. */
+  made?: (GenSite & { by: string; day: number })[];
 }
 
 // ---------------------------------------------------------------- the built map
@@ -227,14 +229,16 @@ export function areaById(map: RegionMap, id: string): MapArea | undefined {
 
 const atlasPlace = (p: RegionPlace, shops: readonly string[]): MapPlace | null => {
   if (p.x === null || p.y === null || p.outline) return null;
+  // A hand-written site (the opening's places near each start) reads as a seeded one does.
+  const sub = p.kind === 'site' && p.site ? (p.site as SiteKind) : null;
   return {
     id: p.id,
-    kind: 'atlas',
-    sub: p.kind,
+    kind: sub ? 'site' : 'atlas',
+    sub: sub ?? p.kind,
     name: p.name,
     pinyin: p.pinyin,
     hanzi: p.hanzi,
-    seal: PLACE_SEAL[p.kind] ?? '·',
+    seal: sub ? SITE_SEAL[sub] : (PLACE_SEAL[p.kind] ?? '·'),
     x: p.x,
     y: p.y,
     area: null,
@@ -310,7 +314,7 @@ function buildFrom(data: RegionData, gen: RegionGen): RegionMap {
       features: t.features,
       settled: true,
     });
-  for (const s of gen.sites)
+  for (const s of [...gen.sites, ...(gen.made ?? [])])
     places.push({
       id: s.id,
       kind: 'site',

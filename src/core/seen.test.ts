@@ -74,7 +74,6 @@ describe('the seen record', () => {
         'item:spring-returning-pill:3:true',
         'tree:fist:1:true',
         'screen:techniques:1:true',
-        'screen:combat:1:true',
         'screen:bag:1:true',
       ]),
     );

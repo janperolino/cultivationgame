@@ -94,9 +94,12 @@ function readyForFoundation(fill = 1, opts: LifeOpts = {}): Cultivator {
 const step = (c: Cultivator, days: number) => cultivateDays(c, days, ctx()).cultivator;
 
 describe('qi speed', () => {
-  it('ignores root speed and fit in layers 1 to 3', () => {
+  it('ignores fit in layers 1 to 3, and root speed until layer 3', () => {
     expect(qiSpeed(player({ root: 'heavenly' })).total).toBe(1);
-    expect(qiSpeed(at(player({ root: 'mixed' }), 'qi', { stage: 3 })).total).toBe(1);
+    expect(qiSpeed(at(player({ root: 'mixed' }), 'qi', { stage: 2 })).total).toBe(1);
+    // Layer 3's bar counts the root, so the fast roots pull away on the way to 4.
+    expect(qiSpeed(at(player({ root: 'heavenly' }), 'qi', { stage: 3 })).total).toBe(2.5);
+    expect(qiSpeed(at(player({ root: 'mutated' }), 'qi', { stage: 3 })).total).toBe(2);
   });
 
   it('multiplies root speed, method fit and Aptitude from layer 4', () => {

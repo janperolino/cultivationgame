@@ -111,8 +111,6 @@ describe('the five craft Daos', () => {
 
     it(`${t.name}: every seal names a good of its craft`, () => {
       for (const n of t.nodes.filter((x) => x.recipe)) {
-        // Formations' flags and discs are written with their phase (K10).
-        if (t.craft === 'formations') continue;
         expect(hasItem(n.recipe!), n.id).toBe(true);
         if (hasRecipe(n.recipe!)) expect(recipe(n.recipe!).craft, n.id).toBe(t.craft);
       }

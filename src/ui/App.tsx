@@ -16,6 +16,10 @@ import { useGame } from './store.ts';
 import { placeIndex, setPlaces } from '../core/resolver/knows.ts';
 import { screenDot, screenIsNew } from '../core/seen.ts';
 import { useBeacons } from './useBeacons.ts';
+import { useFight } from './fight.ts';
+import { built } from '../core/guides.ts';
+import { GuideLayer } from './GuideLayer.tsx';
+import { lookAt } from './guide.ts';
 
 function SlotNotice() {
   const phase = useGame((s) => s.phase);
@@ -54,11 +58,13 @@ const SCREENS = {
   CharacterScreen: () => import('./CharacterScreen.tsx'),
   ChronicleScreen: () => import('./ChronicleScreen.tsx'),
   CraftsScreen: () => import('./CraftsScreen.tsx'),
+  DwellingScreen: () => import('./DwellingScreen.tsx'),
   CombatScreen: () => import('./CombatScreen.tsx'),
   MapScreen: () => import('./MapScreen.tsx'),
   PeopleScreen: () => import('./PeopleScreen.tsx'),
   SettingsScreen: () => import('./SettingsScreen.tsx'),
   TreesScreen: () => import('./TreesScreen.tsx'),
+  JournalScreen: () => import('./JournalScreen.tsx'),
 };
 const BagScreen = lazy(() => SCREENS.BagScreen().then((m) => ({ default: m.BagScreen })));
 const CharacterScreen = lazy(() =>
@@ -68,6 +74,9 @@ const ChronicleScreen = lazy(() =>
   SCREENS.ChronicleScreen().then((m) => ({ default: m.ChronicleScreen })),
 );
 const CraftsScreen = lazy(() => SCREENS.CraftsScreen().then((m) => ({ default: m.CraftsScreen })));
+const DwellingScreen = lazy(() =>
+  SCREENS.DwellingScreen().then((m) => ({ default: m.DwellingScreen })),
+);
 const CombatScreen = lazy(() => SCREENS.CombatScreen().then((m) => ({ default: m.CombatScreen })));
 const MapScreen = lazy(() => SCREENS.MapScreen().then((m) => ({ default: m.MapScreen })));
 const PeopleScreen = lazy(() => SCREENS.PeopleScreen().then((m) => ({ default: m.PeopleScreen })));
@@ -75,9 +84,19 @@ const SettingsScreen = lazy(() =>
   SCREENS.SettingsScreen().then((m) => ({ default: m.SettingsScreen })),
 );
 const TreesScreen = lazy(() => SCREENS.TreesScreen().then((m) => ({ default: m.TreesScreen })));
+const JournalScreen = lazy(() =>
+  SCREENS.JournalScreen().then((m) => ({ default: m.JournalScreen })),
+);
 
 /** Kept one array, so the shell doesn't re-render on every tick for a fresh empty list. */
 const NO_UNLOCKS: readonly string[] = [];
+/** The glyphs open from the first minute that wait for the first minor breakthrough's guide. */
+const LATE_GLYPHS: ReadonlySet<ScreenId> = new Set<ScreenId>([
+  'map',
+  'character',
+  'people',
+  'chronicle',
+]);
 const LEAVE_MS = 170;
 const ENTER_MS = 420;
 
@@ -158,7 +177,15 @@ export function App() {
   }, []);
 
   const unlocks = useGame((s) => s.game?.unlocks ?? NO_UNLOCKS);
-  const available = screens.filter((s) => !s.unlock || unlocks.includes(s.unlock));
+  // The first seclusion builds the rail a glyph at a time (core/guides.ts): Settings alone at
+  // first, then Cultivate and Routine, then the rest after the first minor breakthrough.
+  const build = useGame((s) =>
+    s.game ? `${built(s.game, 'rail') ? 1 : 0}${built(s.game, 'rail-rest') ? 1 : 0}` : '11',
+  );
+  const railShows = (id: ScreenId) =>
+    build[0] !== '1' ? id === 'settings' : build[1] === '1' || !LATE_GLYPHS.has(id);
+  const open = screens.filter((s) => !s.unlock || unlocks.includes(s.unlock));
+  const available = open.filter((s) => railShows(s.id));
   // A dot on a menu item while its screen holds something new you haven't opened it on.
   const dots = useGame((s) =>
     s.game
@@ -187,7 +214,7 @@ export function App() {
       ? { id: 'creation', name: 'A New Life', hanzi: '新生' }
       : phase === 'no-slot'
         ? screens.find((s) => s.id === 'settings')!
-        : (available.find((s) => s.id === id) ?? available[0]!);
+        : (open.find((s) => s.id === id) ?? open[0]!);
   // What the main column shows, and what the rail lights (ahead of it while a glide runs).
   const current = pickScreen(shown);
   const wanted = pickScreen(screen);
@@ -198,19 +225,36 @@ export function App() {
     return () => document.removeEventListener('scroll', markMoving, { capture: true });
   }, []);
 
+  // A fight takes the whole stage, the rail hidden, until you leave it (Fights you play).
+  const lifeFights = useGame((s) => !!s.game?.fight);
+  const stageFights = useFight((s) => s.fight !== null || s.after !== null);
+  const fighting = lifeFights || stageFights;
+
   // Opening a screen clears its dot, and so does something new arriving while it is open.
   const here = phase === 'playing' && !creating ? current.id : null;
   const hereDot = here !== null && dots.includes(here);
   useEffect(() => {
     if (here) useGame.getState().openScreen(here);
   }, [here, hereDot]);
+  // The guides fire where their feature lives (ui/guide.ts).
+  useEffect(() => lookAt({ screen: fighting ? 'fight' : current.id }), [fighting, current.id]);
 
   return (
     <>
       <GlassBackground />
       <div className="stage-frame">
         <div className="stage">
-          <div className={`shell is-${current.id}`}>
+          {fighting && phase === 'playing' && (
+            <div className="shell is-fight">
+              <main className="main fight-main">
+                <Suspense fallback={null}>
+                  <CombatScreen />
+                </Suspense>
+              </main>
+            </div>
+          )}
+          {phase === 'playing' && !creating && <GuideLayer />}
+          <div className={`shell is-${current.id}`} hidden={fighting && phase === 'playing'}>
             <nav id="side-menu" className="side-rail" aria-label="Screens">
               <div className="rail-mark" aria-hidden="true">
                 <AbodeMark />
@@ -246,7 +290,7 @@ export function App() {
             </nav>
 
             <div className="main-column">
-              <ShellHeader />
+              {build[0] === '1' && <ShellHeader />}
               <main
                 className={`main${leaving ? ' is-leaving' : ''}${entering ? ' is-entering' : ''}`}
                 ref={main}
@@ -275,12 +319,13 @@ export function App() {
                   {phase !== 'loading' && current.id === 'map' && <MapScreen />}
                   {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
                   {phase !== 'loading' && current.id === 'crafts' && <CraftsScreen />}
+                  {phase !== 'loading' && current.id === 'dwelling' && <DwellingScreen />}
                   {phase !== 'loading' && current.id === 'bag' && <BagScreen />}
-                  {phase !== 'loading' && current.id === 'combat' && <CombatScreen />}
                   {phase !== 'loading' && current.id === 'character' && <CharacterScreen />}
                   {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}
                   {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}
                   {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
+                  {phase !== 'loading' && current.id === 'journal' && <JournalScreen />}
                 </Suspense>
               </main>
             </div>

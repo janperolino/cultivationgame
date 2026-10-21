@@ -59,6 +59,7 @@ import {
   type TechniqueCheck,
 } from './techniques.ts';
 import { FIRST_IDS, firstsWaiting, noteFirsts, type FirstStep } from './firsts.ts';
+import { noteQuests } from './journal.ts';
 import { learnNode, type LearnCheck } from './trees.ts';
 import {
   followWheel,
@@ -70,18 +71,17 @@ import {
 } from './wheel.ts';
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
-import {
-  densityHere,
-  dwellingOf,
-  membershipDay,
-  protectorOf,
-  protectorSpent,
-} from './organizations.ts';
+import { densityHere, membershipDay, protectorOf, protectorSpent } from './organizations.ts';
 import { bedNights } from './map/place.ts';
+import { dwellingOpens, dwellingsDay } from './dwellings.ts';
+import { formationsDay } from './formations.ts';
 import { setCopyGain } from './map/encounters.ts';
 import { benchSpot, cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 import { atHome, jobsDay, onShift } from './jobs.ts';
 import { craftsOpen, workBench } from './crafts.ts';
+import { growPlots } from './farming.ts';
+import { farmHere, plotPlaceName } from './map/fields.ts';
+import { heatOf } from './resolver/world.ts';
 import { addCraftFame } from './craftRenown.ts';
 import { CRAFT_RENOWN } from '../content/styles.ts';
 import { HOME_REGION } from '../content/resolver.ts';
@@ -142,13 +142,14 @@ export function checkScreens(s: GameState): GameState {
   }
   if (Object.keys(s.player.techniques).length > 0) {
     next = unlock(next, 'techniques');
-    next = unlock(next, 'combat');
   }
   const p = s.player;
   const holds = Object.values(p.items).some((n) => n > 0) || wornIds(p).length > 0;
   if (holds) next = unlock(next, 'bag');
   // The crafts open where they live: the first time you hold a tool or know a recipe (K1).
   if (craftsOpen(p)) next = unlock(next, 'crafts', true);
+  // The Dwelling screen: a dwelling you took, or a month at your seat's quarters (K9).
+  if (dwellingOpens(next)) next = unlock(next, 'dwelling', true);
   return next;
 }
 
@@ -190,6 +191,22 @@ function benchDay(s: GameState, days: number, hand = 0): GameState {
 }
 
 /**
+ * The plots across a stretch (K8): they grow wherever you are, tended where you stand, and the
+ * pests, a thief or a lease run out get a line in the chronicle.
+ */
+function fieldsDay(s: GameState, from: number, to: number): GameState {
+  if (!s.player.crafts.plots.length) return s;
+  const here = farmHere(s)?.place ?? null;
+  const r = growPlots(s.player, from, to, here, (place) => heatOf(s.world, place, to));
+  let next = withPlayer(s, r.cultivator);
+  for (const e of r.events) {
+    if (e.type === 'plot-pests' || e.type === 'plot-thief' || e.type === 'plot-lost')
+      next = addEvent(next, e.type, { ...e.data, name: plotPlaceName(next, e.data.place) });
+  }
+  return next;
+}
+
+/**
  * The game's day step for `advance`: the player cultivates for a stretch of at most a day, and
  * minor breakthroughs run on the auto setting. Major breakthroughs never happen here.
  */
@@ -206,8 +223,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
       seat: ctx?.seat,
       firsts: s.lineage.firsts,
       hourFactor: road?.factor,
-      // A power's dwelling by your seat, while you seclude inside its seat (O2).
-      density: road ? 1 : (dwellingOf(s)?.density ?? 1),
+      // A power's dwelling by your seat (O2), or a dwelling you hold (K9), while you seclude in it.
+      density: road ? 1 : densityHere(s),
     }),
   );
   const cultivated = {
@@ -216,8 +233,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
     jobs: s.player.jobs,
   };
   let next = addNotes(withPlayer(state, cultivated), r.notes);
-  // The hours on the road carry you along your course.
-  next = travelDays(next, s.calendar.day - days, s.calendar.day);
+  // The hours on the road carry you along your course; a fight you're there for is played.
+  next = travelDays(next, s.calendar.day - days, s.calendar.day, ctx?.seat?.attended === true);
   // Nights inside a town away from home are paid at its inn by rule (P3.6b).
   next = bedNights(next, s.calendar.day - days, s.calendar.day);
   for (const b of r.breakthroughs) if (b.success) next = flare(next, b.ladder, b.major);
@@ -231,7 +248,12 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   next = membershipDay(next, days, atHome);
   // The bench works its Craft hours wherever you seclude, never on the road (K1).
   if (!road) next = benchDay(next, days, ctx?.seat?.hand);
-  return noteFirsts(checkScreens(next));
+  // The plots grow wherever you are, tended where you stand (K8).
+  next = fieldsDay(next, s.calendar.day - days, s.calendar.day);
+  next = dwellingsDay(next, s.calendar.day - days, s.calendar.day);
+  // Arrays burn their eyes' stones, and traps on open ground catch what walks in (K10).
+  next = formationsDay(next, s.calendar.day - days, s.calendar.day);
+  return noteQuests(noteFirsts(checkScreens(next)));
 };
 
 export interface LifeBreakthrough {

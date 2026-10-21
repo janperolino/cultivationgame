@@ -18,7 +18,8 @@ import {
 } from './seats.ts';
 import { BOUND_BONES, FRONTIER_HALL, HUNDRED_REINS, LAMP_KEEPERS, RED_MARROW } from './sects.ts';
 import { STONE_EYES, STONE_FOREST } from './stone-eyes.ts';
-import type { Catalog, Lot } from './types.ts';
+import { CROPS, seedId } from '../farming.ts';
+import type { Catalog, Lot, Recipe } from './types.ts';
 
 /** A recipe's slip 丹方 as a manual id (content/manuals.ts writes it from the recipe, K1). */
 export const slipId = (output: string) => `recipe-${output}`;
@@ -38,6 +39,35 @@ function withSlips(c: Catalog): Catalog {
     };
   });
   return { ...c, lots: [...c.lots, ...slips] };
+}
+
+/**
+ * A crop's recipe and its packet (K8): written beside the first line that sells it, sown from one
+ * packet, and the packet sold by the same doors as often as its crop.
+ */
+const cropsWritten = new Set<string>();
+function withCrops(c: Catalog): Catalog {
+  const recipes: Recipe[] = [];
+  const lots: Lot[] = [];
+  for (const l of c.lots) {
+    const crop = CROPS[l.thing];
+    if (!crop || !l.shops.length || cropsWritten.has(l.thing)) continue;
+    cropsWritten.add(l.thing);
+    const seed = seedId(l.thing);
+    recipes.push({
+      output: l.thing,
+      craft: 'farming',
+      family: crop.family,
+      inputs: [{ thing: seed, count: 1 }],
+    });
+    lots.push({
+      thing: seed,
+      shops: l.shops,
+      ...(l.weight !== undefined ? { weight: l.weight } : {}),
+    });
+  }
+  if (!recipes.length) return c;
+  return { ...c, recipes: [...(c.recipes ?? []), ...recipes], lots: [...c.lots, ...lots] };
 }
 
 export const CATALOGS: readonly Catalog[] = [
@@ -62,7 +92,9 @@ export const CATALOGS: readonly Catalog[] = [
   LAMP_KEEPERS,
   RED_MARROW,
   FRONTIER_HALL,
-].map(withSlips);
+]
+  .map(withCrops)
+  .map(withSlips);
 
 /** Everything written, catalogs and the gold and red list alike. */
 const WRITERS = [...CATALOGS, RARE];

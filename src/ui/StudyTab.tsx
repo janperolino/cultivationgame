@@ -252,6 +252,7 @@ function Shelf({ game }: { game: GameState }) {
                 <button
                   type="button"
                   className={`button${rings(bs, 'read-now', { id }) ? ' beacon-ring' : ''}`}
+                  data-guide="read-now"
                   disabled={!!game.ended}
                   onClick={() => setError(readCopy(id))}
                 >

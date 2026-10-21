@@ -1,0 +1,148 @@
+// The codex's Chronicle and the rest entries, one a row of docs/features.md; drafted, awaiting Jan's review.
+import type { CodexEntry } from './schema.ts';
+
+export const REST: readonly CodexEntry[] = [
+  {
+    id: 'chronicle-river',
+    title: 'The Chronicle',
+    hanzi: '史记',
+    area: 'rest',
+    text: [
+      'The Chronicle is your life told as a river, newest at the top. The milestones (breakthroughs, gates, mastery, birth and death) are stations on one gilt line, and everything else is a season’s paragraph of prose beside it. A chapter begins where each qi realm does. Years are written in digits, counted in the Sealed Era.',
+      'The Almanac is the same life as a grid, a row for each year and a column for each season. Pick a season to read it, and jump between the two views. The kind chips above both turn kinds of line on and off. Earlier lives in the slot are in a picker, each on the one world calendar.',
+    ],
+    numbers: [
+      ['Kinds of line', '14, from Qi and Body to Choices and Openings'],
+      ['Stations', 'Qi, body, soul, gates, mastery, birth, death'],
+      ['A page of the river', '40 years; Further back adds as many again'],
+    ],
+    where: { screen: 'chronicle', label: 'Chronicle' },
+    met: { screen: 'chronicle' },
+    way: 'codex',
+    feature:
+      'The Chronicle’s river (stations, season prose, realm chapters), the almanac, kind chips, earlier lives',
+  },
+  {
+    id: 'character-sheet',
+    title: 'The Character screen',
+    hanzi: '人物志',
+    area: 'rest',
+    text: [
+      'Your name, pronouns and look sit at the top, with a line for each power you belong to: your seat, contribution, allowance and what it asks. Below are your talents, your attributes, your sheet, and your growth.',
+      'Growth shows what each stage you have climbed kept from the method that climbed it, with the current realm counting most. Each realm past the first carries the grade of the breakthrough that opened it. Once you climb past it, a third of its speed and odds echoes on for life. The foot of the screen links to the manuals you hold.',
+    ],
+    numbers: [['A past realm’s grade echoes', 'A third of its speed and odds, for life']],
+    where: { screen: 'character', label: 'Character' },
+    met: { screen: 'character' },
+    way: 'codex',
+    feature:
+      'The Character screen: talents, attributes, the sheet, growth, grades, memberships, manuals held',
+  },
+  {
+    id: 'toasts-glow',
+    title: 'Toasts, glows, dots and beacons',
+    hanzi: '提示',
+    area: 'rest',
+    text: [
+      'Each gift the game hands over names itself in a corner toast with a link to where it lives. Time away never raises toasts: the coming-back story tells it instead. A hint is a toast too, and it stays until you do the thing or dismiss it.',
+      'A screen whose menu button wears a dot holds something new you have not noticed. Open it and the dot clears, and the new thing itself glows until you select it. A first-time action that waits makes a beacon: its menu button and tab glow and the control wears a soft ring, until you act. A beacon outranks the new-screen glow.',
+    ],
+    numbers: [
+      ['Toasts at once', '3; a burst of more folds into the third as +N more'],
+      ['A toast stays', '6 seconds, unless hovered or focused'],
+    ],
+    where: { screen: 'cultivate', label: 'Everywhere' },
+    met: { start: true },
+    way: 'codex',
+    feature: 'Toasts for gifts, the new-screen glow, dots, beacons',
+  },
+  {
+    id: 'settings-saves',
+    title: 'Saves',
+    hanzi: '存档',
+    area: 'rest',
+    text: [
+      'Settings holds eight slots, each a lineage. A slot autosaves while you play and keeps the save before it as a backup, so a bad write never pushes out a good one. From an empty slot you begin a new life. A used slot can be played, exported, imported over, or erased. Erasing cannot be undone unless you exported it.',
+      'Export writes the slot to a file you keep, and Import reads one back into a slot. The row shows when you last saved and last exported, and warns when the export is more than a week old.',
+      'In gentle mode, you get one rewind: it returns you to your latest breakthrough and is spent until the next major breakthrough. Ironman has none, and the choice is made at creation.',
+    ],
+    numbers: [
+      ['Slots', '8'],
+      ['Autosave', 'Every 30 seconds'],
+      ['Rewind (gentle)', 'One charge, returns to the latest breakthrough'],
+      ['Export warning', 'When the last export is over a week old'],
+    ],
+    where: { screen: 'settings', label: 'Settings › Saves' },
+    met: { screen: 'settings' },
+    way: 'codex',
+    feature: 'Settings: eight slots, a new life, export, import, delete, rewind (gentle)',
+  },
+  {
+    id: 'clock-speed',
+    title: 'The clock and time away',
+    hanzi: '光阴',
+    area: 'rest',
+    text: [
+      'One real hour is one game year at Qi Condensation. Gains, costs and lifespan all count game time, so a slower clock is never stronger, only slower. Each qi realm you reach unlocks its own calendar speed. By default the clock follows your realm, and you can hold it at the pace of any realm you have reached.',
+      'Time away counts up to a cap, and the coming-back story tells what happened. Attention is separate from the clock: being there you cultivate ×{attentionThere}, up to ×{attentionFull} at full focus.',
+    ],
+    numbers: [
+      ['Qi Condensation', '1 game year an hour'],
+      ['Foundation Establishment', 'About 1.7 game years an hour'],
+      ['Core Formation', 'About 4 game years an hour'],
+      ['Time away counts', 'Up to 12 real hours'],
+    ],
+    where: { screen: 'settings', label: 'Settings › The clock' },
+    met: { screen: 'settings' },
+    way: 'codex',
+    feature: 'The clock speeding with your realm; the cap on time away',
+  },
+  {
+    id: 'look-settings',
+    title: 'Look',
+    hanzi: '外观',
+    area: 'rest',
+    text: [
+      'Colors and glass: pick a preset or set the accent and the crack light yourself. Each color keeps its job whatever it looks like: the accent marks what you can act on, and the crack light is qi. Every rarity has its own color, and rarity never borrows the accent, so a gold name never looks like a button.',
+      'The glass has a fine web, the season and weather on it, and the panel rims, and a button that draws a new glass pattern for the life. Text and motion set the text size and how much moves. Fullscreen, or F11, gives the game the whole monitor.',
+    ],
+    numbers: [
+      ['Fine web', 'None, Light, Heavy, Shattered'],
+      ['Season and weather', 'Off, Faint, Full'],
+      ['Text size', 'Small ×0.9, Default, Large ×1.15, Larger ×1.3'],
+      ['Motion', 'Follow the system, Reduce, Full'],
+    ],
+    where: { screen: 'settings', label: 'Settings › Colors and glass, Text and motion' },
+    met: { screen: 'settings' },
+    way: 'codex',
+    feature: 'Look: the accent, rarity colors, glass, text size, motion, fullscreen',
+  },
+  {
+    id: 'guides-settings',
+    title: 'Guides, on or off, and replayed',
+    hanzi: '指引',
+    area: 'rest',
+    text: [
+      'Guides walk you through the loop and each control you need to get on, once a lineage, where it lives. Settings turns them on or off and replays any of them. A replayed guide comes again where it lives.',
+      'Each guide has an I know this to skip it, and the first offers to skip them all.',
+    ],
+    numbers: [['Guides', '14']],
+    where: { screen: 'settings', label: 'Settings › Guides' },
+    met: { screen: 'settings' },
+    way: 'codex',
+    feature: 'Hints on or off, replaying them',
+  },
+  {
+    id: 'one-tab',
+    title: 'One tab a slot',
+    hanzi: '单页',
+    area: 'rest',
+    text: [
+      'Only one browser tab plays a slot at a time, so two autosaves never overwrite each other. Open the game in a second tab and it says the life is open in another tab, with a Take over here button. The first tab stops at once without saving and tells you another tab took the life over. Take it back from there.',
+    ],
+    where: { screen: 'settings', label: 'A dialog over the game' },
+    met: { start: true },
+    way: 'codex',
+    feature: 'One tab a slot (take over)',
+  },
+];

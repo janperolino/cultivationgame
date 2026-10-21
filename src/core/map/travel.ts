@@ -24,7 +24,8 @@ import {
   type WayId,
 } from '../../content/map/travel.ts';
 import { HOURS_PER_DAY, SLEEP_HOURS, type HourKind } from '../../content/hours.ts';
-import { origin } from '../../content/origins.ts';
+import { origin, originPath } from '../../content/origins.ts';
+import { questRoad } from '../chains.ts';
 import { realmIndex } from '../../content/realms.ts';
 import { pay, receive, stonesOf, tierGrade, withStones } from '../purse.ts';
 import { fameOf } from '../resolver/names.ts';
@@ -75,18 +76,26 @@ export function mapPlaceOf(map: RegionMap, id: string): MapPlace | null {
   return placeById(map, content?.homes[id] ?? id) ?? null;
 }
 
-/** Where a life starts: its origin's home town, or the region's default. */
+/** Home: your abode (K9), else where a life starts, its origin's home town or the region's default. */
 export function homeOf(s: GameState, map: RegionMap): MapPlace {
   const content = regionData(map.id)!.content;
+  const abode = s.player.dwellings?.find((d) => d.id === s.player.abode);
+  const at = abode ? placeById(map, abode.place) : undefined;
+  if (at) return at;
   // A post you hold keeps you where its shift is kept: the cadet starts on the Wall (O4).
   for (const h of s.player.jobs) {
     const place = hasJob(h.id) ? job(h.id).place : null;
     const p = place ? mapPlaceOf(map, place) : null;
     if (p) return p;
   }
-  const atlasHome = s.player.origin ? origin(s.player.origin.id).home : s.player.place;
-  const id = (atlasHome && content.homes[atlasHome]) || content.defaultHome;
-  return placeById(map, id) ?? placeById(map, content.defaultHome)!;
+  // Where the origin path put you (the deserter downriver at River-Bend), else where you grew up.
+  const o = s.player.origin;
+  const tries = o ? [originPath(o.id, o.choice).place, origin(o.id).home] : [s.player.place];
+  for (const at of tries) {
+    const p = at ? placeById(map, content.homes[at] ?? at) : undefined;
+    if (p) return p;
+  }
+  return placeById(map, content.defaultHome)!;
 }
 
 /**
@@ -594,7 +603,12 @@ export interface TravelNote {
  * pace (the terrain slowing you off the road, unless you fly), what comes into sight turns Seen, a
  * look-around hour looks once, and on arriving you look around and stop. A guard's wage runs.
  */
-export function travelDays(s: GameState, fromDay: number, toDay: number): GameState {
+export function travelDays(
+  s: GameState,
+  fromDay: number,
+  toDay: number,
+  played = false,
+): GameState {
   const map = mapOf(s);
   const start = s.map;
   if (!map || !start?.course || toDay <= fromDay) return s;
@@ -739,7 +753,17 @@ export function travelDays(s: GameState, fromDay: number, toDay: number): GameSt
     // The road's hour: its notice fills and what it brings is met; a posting's spot reached meets its goal.
     if (life.course && !waiting) {
       const st = reachPostings(
-        roadHour({ ...next, map: life }, map, hour, end - h0, moving, !!w.flies, yb, sense),
+        roadHour(
+          questRoad({ ...next, map: life }, map),
+          map,
+          hour,
+          end - h0,
+          moving,
+          !!w.flies,
+          yb,
+          sense,
+          played,
+        ),
         map,
       );
       next = st;

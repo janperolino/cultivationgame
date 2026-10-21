@@ -47,6 +47,7 @@ import { StudyTab } from './StudyTab.tsx';
 import { readingLine } from './bookcase.ts';
 import { useBeacons } from './useBeacons.ts';
 import { rings } from './beacons.ts';
+import { lookAt } from './guide.ts';
 import { LifeEdgeCard, Why } from './widgets.tsx';
 import { capitalize } from '../content/words.ts';
 
@@ -686,6 +687,8 @@ export function RoutineScreen() {
   useEffect(() => {
     if (tab === 'practice') openScreen('techniques');
   }, [tab, openScreen]);
+  // The guides fire on the tab their control lives on (ui/guide.ts).
+  useEffect(() => lookAt({ tab }), [tab]);
   if (!game) return null;
   const practiceNew =
     newIds(game, 'technique').length > 0 ||

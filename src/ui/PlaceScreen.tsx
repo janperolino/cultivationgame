@@ -3,13 +3,16 @@
 // strip, its doors on the left grouped by what they are for, and the open door's counter beside them.
 // Everything done in a place is done here: its shops on P3.5's calls, the teahouse, the map seller,
 // guides, caravans, the money changer and the bed you sleep in by rule.
+import { QuestOffers } from './QuestOffers.tsx';
 import { useEffect, useState } from 'react';
+import { meetCodex } from '../core/codex.ts';
+import { endGuide, lookAt } from './guide.ts';
 import { COPY_FORM_WORDS, copyForm, copyItem, copyTitle, hasCopy } from '../content/copies.ts';
 import { item, stackSize } from '../content/items.ts';
 import { PLACE_KIND_INFO, type PlaceKindInfo } from '../content/map/places.ts';
 import { capitalize, possessive } from '../content/words.ts';
 import { QI_NAMES, TERRAIN_NAMES } from '../content/map/travel.ts';
-import { REALM_IDS, realm, realmIdFromName, type RealmId } from '../content/realms.ts';
+import { REALM_IDS, realm, realmIdFromName, stageName, type RealmId } from '../content/realms.ts';
 import {
   doorsAt,
   keeperName,
@@ -23,6 +26,7 @@ import { encounterTemplate } from '../content/encounters/index.ts';
 import {
   claimPosting,
   dropPosting,
+  hasBoard,
   isMissionHall,
   postingsAt,
   takePosting,
@@ -109,7 +113,10 @@ import {
   shopMonth,
   type StockLot,
 } from '../core/shops.ts';
-import type { GameState } from '../core/state.ts';
+import { withPlayer, type GameState } from '../core/state.ts';
+import { buyOf, rentOf, takePlot } from '../core/farming.ts';
+import { farmsAt, plotSpot } from '../core/map/fields.ts';
+import { go } from './nav.ts';
 import { useGame } from './store.ts';
 import { copyManual } from '../content/copies.ts';
 import { CRAFTS, recipe, type CraftId } from '../content/crafts.ts';
@@ -125,10 +132,22 @@ import {
 } from '../core/craftGrade.ts';
 import { seatGrade } from '../core/organizations.ts';
 import { formatPercent } from './format.ts';
+import {
+  brokerAt,
+  claim,
+  claimsHere,
+  dwellingAt,
+  dwellingName,
+  offersAt,
+  stepMult,
+  takeFromBroker,
+} from '../core/dwellings.ts';
 import { sitDown, standUp, useFurnace } from './furnace.ts';
 import { ForgeScene } from './ForgeScene.tsx';
 import { FurnaceScene } from './FurnaceScene.tsx';
 import { TalismanScene } from './TalismanScene.tsx';
+import { groundPartners, sparWhy } from '../core/spar.ts';
+import { askSpar } from '../core/playFight.ts';
 
 type Act = (change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0]) => string | null;
 
@@ -181,6 +200,16 @@ function doorsOf(
   if (seat) {
     const hall = eldersHall(s, seat);
     const entry = entryOf(s, seat);
+    // Its training ground, where a member asks a senior, a fellow disciple or a junior to spar
+    // (Fights you play).
+    if (hall)
+      own.push({
+        id: 'ground',
+        seal: '武',
+        name: 'Training ground',
+        sub: 'spar a senior, a fellow disciple or a junior',
+        tag: 'members',
+      });
     if (hall && !hall.guest)
       own.push({
         id: 'elders',
@@ -268,6 +297,21 @@ function doorsOf(
       tag: held ? 'paid' : 'members',
     });
   }
+  // A village or town rents and sells plots (K8).
+  const land: Door[] = [];
+  if (farmsAt(p)) {
+    const held = s.player.crafts.plots.filter((x) => x.place === p.id).length;
+    land.push({
+      id: 'fields',
+      seal: '田',
+      name: 'Fields',
+      sub: held
+        ? held === 1
+          ? 'your plot here'
+          : 'your ' + held + ' plots here'
+        : 'a plot of nine beds, rented or bought',
+    });
+  }
   if (kind === 'gate')
     return ([['Behind the gate', shops], ownGroup, ['Work', work]] as [string, Door[]][]).filter(
       ([, d]) => d.length > 0,
@@ -323,7 +367,23 @@ function doorsOf(
             sub: `you sleep here by rule: ${info.bed} taels a night`,
           },
         ];
-  if (info.board && !isMissionHall(p.id)) {
+  // The broker 牙行 lets rooms, chambers and courtyards; a village its farmhouses (K9).
+  const broker = brokerAt(p);
+  if (broker) {
+    const mine = dwellingAt(s.player, p.id);
+    hear.push({
+      id: 'broker',
+      seal: broker === 'village' ? '舍' : '牙',
+      name: broker === 'village' ? 'Farmhouse to let' : 'Broker 牙行',
+      sub: mine
+        ? `your ${dwellingName(s, mine).toLowerCase()} here`
+        : broker === 'village'
+          ? 'a house and two fields of its own'
+          : 'rooms, chambers and courtyards',
+      tag: mine ? 'yours' : undefined,
+    });
+  }
+  if (hasBoard(p) && !isMissionHall(p.id)) {
     const held = s.map?.postings.filter((x) => x.board === p.id && x.done).length ?? 0;
     hear.push({
       id: 'board',
@@ -338,6 +398,7 @@ function doorsOf(
       ['Trade', trade],
       ownGroup,
       ['Work', work],
+      ['Land', land],
       [info.guides > 0 ? 'Hear and hire' : 'Hear', hear],
       ['Rest', rest],
     ] as [string, Door[]][]
@@ -357,6 +418,11 @@ export function PlaceScreen({
 }) {
   const mapAct = useGame((s) => s.mapAct);
   const [door, setDoor] = useState<string | null>(() => doorsAt(place.id)[0]?.id ?? null);
+  // Inside a place, its doors' guide can fire (ui/guide.ts).
+  useEffect(() => {
+    lookAt({ inside: true });
+    return () => lookAt({ inside: false, shop: false });
+  }, []);
   const [toast, setToast] = useState<string | null>(null);
   const kind = placeKindOf(place)!;
   const info = PLACE_KIND_INFO[kind];
@@ -464,7 +530,7 @@ export function PlaceScreen({
         <SiteCounter game={game} map={map} place={place} act={act} onMap={onMap} />
       ) : (
         <div className="place-body">
-          <nav className="place-doors panel" aria-label="Doors">
+          <nav className="place-doors panel" aria-label="Doors" data-guide="doors">
             {groups.length === 0 && <p className="muted">Nothing here trades with outsiders.</p>}
             {groups.map(([label, ds]) => (
               <div key={label} className="place-group">
@@ -476,7 +542,10 @@ export function PlaceScreen({
                     className={`place-door${d.later ? ' is-later' : ''}`}
                     aria-pressed={door === d.id}
                     disabled={d.later}
-                    onClick={() => setDoor(d.id)}
+                    onClick={() => {
+                      endGuide('place-doors');
+                      setDoor(d.id);
+                    }}
                   >
                     <span className={`place-seal is-small${d.later ? ' is-dim' : ''}`}>
                       {d.seal}
@@ -627,6 +696,8 @@ function Counter({
       if (door === 'gift') return <GiftCounter game={game} power={power} act={act} say={say} />;
       return <EldersCounter game={game} power={power} act={act} say={say} />;
     }
+    case 'ground':
+      return <GroundCounter game={game} power={seatPowerAt(map, place)!} act={act} />;
     case 'exam':
       return <ExamCounter game={game} power={seatPowerAt(map, place)!} act={act} say={say} />;
     case 'counter':
@@ -637,6 +708,10 @@ function Counter({
       return <LawHallCounter game={game} power={place.id} act={act} say={say} />;
     case 'changer':
       return <ChangerCounter game={game} place={place} act={act} />;
+    case 'fields':
+      return <FieldsCounter game={game} place={place} act={act} />;
+    case 'broker':
+      return <BrokerCounter game={game} place={place} act={act} />;
     case 'talk':
       return <TalkCounter game={game} map={map} place={place} act={act} />;
     case 'maps':
@@ -735,6 +810,13 @@ function ShopCounter({
   if (kinfo.repairs) tabs.push(['mend', 'Mend']);
   const [tab, setTab] = useState(tabs[0]![0]);
   const silver = kinfo.money === 'silver';
+  // A counter open: the first buy's guide can fire, and the codex meets the shops.
+  const applyLife = useGame((s) => s.applyLife);
+  useEffect(() => {
+    lookAt({ shop: true });
+    applyLife((s) => meetCodex(s, 'shop'));
+    return () => lookAt({ shop: false });
+  }, [applyLife]);
   // A sect's hall: its own pay in its currency, an outsider at friendly at the open counter (O2).
   const terms = hallTerms(game, sh);
   const house = sh.power && isOrganization(sh.power) ? houseOf(sh.power) : null;
@@ -884,8 +966,16 @@ function ShopCounter({
           )}
         </p>
       )}
+      {game.map?.inside && (
+        <QuestOffers
+          game={game}
+          kind={sh.kind === 'sect' ? 'hall' : 'shop'}
+          place={game.map.inside}
+          who={shopId}
+        />
+      )}
       {tab === 'buy' && (
-        <div className="place-rows">
+        <div className="place-rows" data-guide="buy">
           {lots.length === 0 && <p className="muted">The shelf is bare until the month turns.</p>}
           {lots.map((l) => {
             const w = ware(l.thing);
@@ -917,14 +1007,15 @@ function ShopCounter({
                       key={k ?? 'lot'}
                       type="button"
                       className="place-btn"
-                      onClick={() =>
+                      onClick={() => {
+                        endGuide('first-buy');
                         act((s) => {
                           const r = buy(s, shopId, l.slot, k);
                           if (r.ok)
                             say(`Bought ${w.name}${(k ?? l.n) > 1 ? ` ×${k ?? l.n}` : ''}.`);
                           return r;
-                        })
-                      }
+                        });
+                      }}
                     >
                       {k === undefined ? 'Buy' : `Buy ${k}`}
                     </button>
@@ -1491,6 +1582,53 @@ function GiftCounter({ game, power, act, say }: CounterProps) {
   );
 }
 
+/**
+ * The training ground: this month's partners, a senior two stages up, a fellow disciple at yours
+ * and a junior two below, each asked once a day. A spar takes the stage (Fights you play).
+ */
+function GroundCounter({ game, power, act }: { game: GameState; power: string; act: Act }) {
+  const partners = groundPartners(game, power);
+  return (
+    <>
+      <p className="place-sub">
+        Ask someone to spar. Nobody dies and nothing drops; it ends at the first fall. The pills you
+        swallow are spent, and the gear you wear bonds a little each exchange.
+      </p>
+      <div className="place-rows">
+        {partners.map((p) => {
+          const why = sparWhy(game, p.who);
+          return (
+            <div key={p.who} className="place-row is-plain">
+              <span className="place-row-name">
+                {p.name} · {p.words}
+              </span>
+              <span className="place-price">
+                {realm(p.realm).name}, {stageName(p.realm, p.stage)}
+              </span>
+              <button
+                type="button"
+                className="place-btn"
+                disabled={!!why}
+                title={why ?? undefined}
+                onClick={() => act((s) => asSpar(askSpar(s, p.who)))}
+              >
+                Spar
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/** A spar asked: the fight opened, or why not. */
+function asSpar(r: GameState | string) {
+  return typeof r === 'string'
+    ? { ok: false as const, reason: r }
+    : { ok: true as const, state: r };
+}
+
 /** The elders' hall: an elder's lesson, a protector, the inner trial in its month, being released. */
 function EldersCounter({ game, power, act, say }: CounterProps) {
   const [asking, setAsking] = useState(false);
@@ -1672,6 +1810,124 @@ function ChangerCounter({ game, place, act }: { game: GameState; place: MapPlace
       <p className="place-sub">
         Inns, ferries and mortal shops deal in silver and can’t make change for a stone.
       </p>
+    </>
+  );
+}
+
+/** A village's or town's fields (K8): a plot rented for a season or bought, worked on the Crafts screen. */
+function FieldsCounter({ game, place, act }: { game: GameState; place: MapPlace; act: Act }) {
+  const spot = plotSpot(game, place);
+  if (!spot) return null;
+  const mine = game.player.crafts.plots.filter((p) => p.place === place.id).length;
+  const take = (held: 'rented' | 'bought') =>
+    act((st) => {
+      const r = takePlot(st.player, spot, held, st.calendar.day);
+      return r.reason
+        ? { ok: false, reason: r.reason }
+        : { ok: true, state: withPlayer(st, r.cultivator) };
+    });
+  const rows: ['rented' | 'bought', string, string, number][] = [
+    ['rented', 'Rent a plot', 'nine beds for a season', rentOf(spot.density)],
+    ['bought', 'Buy a plot', 'nine beds, yours to dig up and carry off', buyOf(spot.density)],
+  ];
+  return (
+    <>
+      <p className="place-sub">
+        {capitalize(spot.land)} land, qi density {spot.density}: a crop grows best where the density
+        stands at twice its tier or more. The village watches its fields, so nobody touches your
+        beds while it thinks well of you.
+      </p>
+      <div className="place-rows">
+        {rows.map(([held, n, sub, price]) => (
+          <div key={held} className="place-row is-plain">
+            <span>
+              <span className="place-row-name">{n}</span> <span className="place-sub">· {sub}</span>
+            </span>
+            <span className="place-price">{price} low</span>
+            <button type="button" className="place-btn" onClick={() => take(held)}>
+              {held === 'rented' ? 'Rent' : 'Buy'}
+            </button>
+          </div>
+        ))}
+      </div>
+      <p className="place-note">
+        <b>{mine === 0 ? 'A plot' : mine === 1 ? 'Your plot here' : 'Your plots here'}</b> is worked
+        on the Crafts screen’s Spirit Farming page, only while you stand here.{' '}
+        <button type="button" className="link-button" onClick={() => go('crafts')}>
+          Open it
+        </button>
+      </p>
+    </>
+  );
+}
+
+/** The broker's lets and sales (K9): what a place has, by the period or bought. */
+function BrokerCounter({ game, place, act }: { game: GameState; place: MapPlace; act: Act }) {
+  const offers = offersAt(game, place);
+  const mine = dwellingAt(game.player, place.id);
+  return (
+    <>
+      <p className="place-sub">
+        You may hold one dwelling in a place. Rent comes off your purse as its time turns; leave it
+        unpaid, and what is in the store is kept a month, then sold for the debt.
+      </p>
+      <div className="place-rows">
+        {offers.map((o) => (
+          <div key={o.kind} className="place-row is-plain broker-row">
+            <span>
+              <span className="place-row-name">
+                {o.name} <span className="hanzi">{o.hanzi}</span>
+              </span>
+              <span className="place-sub">
+                {' '}
+                · {o.line}
+                {o.steps > 0 ? ` · qi ×${stepMult(o.steps)}` : ''}
+                {o.store > 0 ? ` · a store of ${o.store}` : ' · no store'}
+                {o.slots > 0 ? ` · ${o.slots} plot slot${o.slots === 1 ? '' : 's'}` : ''}
+              </span>
+            </span>
+            <span className="place-price">
+              {o.rent.map((r) => `${r.price.toLocaleString()} low a ${r.period}`).join(' · ')}
+              {o.buy !== null
+                ? `${o.rent.length ? ' · ' : ''}${o.buy.toLocaleString()} low to buy`
+                : ''}
+            </span>
+            <span className="broker-buttons">
+              {o.rent.map((r) => (
+                <button
+                  key={r.period}
+                  type="button"
+                  className="place-btn"
+                  disabled={!!o.why}
+                  title={o.why ?? undefined}
+                  onClick={() => act((s) => takeFromBroker(s, place, o.kind, r.period))}
+                >
+                  {o.rent.length > 1 ? `By the ${r.period}` : 'Rent'}
+                </button>
+              ))}
+              {o.buy !== null && (
+                <button
+                  type="button"
+                  className="place-btn"
+                  disabled={!!o.why}
+                  title={o.why ?? undefined}
+                  onClick={() => act((s) => takeFromBroker(s, place, o.kind, 'bought'))}
+                >
+                  Buy
+                </button>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+      {mine && (
+        <p className="place-note">
+          <b>Your {dwellingName(game, mine).toLowerCase()} here</b> is on the Dwelling screen.{' '}
+          <button type="button" className="link-button" onClick={() => go('dwelling')}>
+            Open it
+          </button>
+        </p>
+      )}
     </>
   );
 }
@@ -1983,6 +2239,7 @@ function BoardCounter({
     p.patron && isOrganization(p.patron) ? ' · for ' + theName(p.patron) : '';
   return (
     <>
+      <QuestOffers game={game} kind="board" place={place.id} />
       <p className="place-sub">
         Take one and its spot is pinned on the map; you meet its goal there like anything the road
         brings, and are paid here when you come back. The bounty office beside it buys cores and
@@ -2079,6 +2336,9 @@ function SiteCounter({
   const at: [number, number] = [place.x, place.y];
   const d = depthInfo(map, at);
   const b = band(bandAt(map, at));
+  const held = dwellingAt(game.player, place.id);
+  const claims = game.map?.inside === place.id ? claimsHere(game) : [];
+  const valley = claims.findIndex((c) => c.kind === 'valley');
   return (
     <section className="place-counter panel">
       <div className="map-label">What’s here</div>
@@ -2100,6 +2360,15 @@ function SiteCounter({
           : ''}
         and P3.7’s encounters read its band.
       </p>
+      {held && (
+        <p className="place-note">
+          <b>Your {dwellingName(game, held).toLowerCase()}.</b> Its store, land and works are on the
+          Dwelling screen.{' '}
+          <button type="button" className="link-button" onClick={() => go('dwelling')}>
+            Open it
+          </button>
+        </p>
+      )}
       <div className="place-actions">
         <button
           type="button"
@@ -2111,6 +2380,17 @@ function SiteCounter({
         >
           Stay and cultivate here
         </button>
+        {valley >= 0 && (
+          <button
+            type="button"
+            className="place-btn"
+            disabled={!!claims[valley]!.why}
+            title={claims[valley]!.why ?? undefined}
+            onClick={() => act((s) => claim(s, valley))}
+          >
+            Claim it: a hidden valley 秘谷
+          </button>
+        )}
         <button
           type="button"
           className="place-btn"

@@ -1,6 +1,8 @@
 // Settings (design § UI and screens, the Settings row): saves, the life's clock speed, colors and
 // glass, text size and motion, and going in's OpenRouter key and cost meter. The clock belongs to the life and saves with the slot; the rest
 // are the player's and live in ui/settings.ts.
+import { GUIDE_IDS, GUIDE_NAMES } from '../content/guides.ts';
+import { replayGuide } from './guide.ts';
 import { useRef, useState } from 'react';
 import { RARITIES, type RarityId } from '../content/rarity.ts';
 import { realm, stageName } from '../content/realms.ts';
@@ -498,19 +500,20 @@ function ReadingPanel() {
 }
 
 /**
- * Hints toward first times (ui/hints.ts), the open life's own: on or off, and shown again, each
- * once more. With no life open there is nothing to set.
+ * Guides and hints (design § UI and screens, Introductions): the open life's switch for both,
+ * the hints shown again, and any of the guides replayed at its control. Guides run once a
+ * lineage; with them off the screen comes whole and the beacons still point the way.
  */
-function HintsPanel() {
+function GuidesPanel() {
   const replay = useGame((g) => g.replayHints);
   const setHints = useGame((g) => g.setHints);
   const on = useGame((g) => g.game?.hints.on ?? true);
   const hasLife = useGame((g) => !!g.game && !g.game.ended);
   const [replayed, setReplayed] = useState(false);
   return (
-    <section className="panel" aria-labelledby="hints-heading">
-      <h2 id="hints-heading" className="panel-heading">
-        Hints
+    <section className="panel" aria-labelledby="guides-heading">
+      <h2 id="guides-heading" className="panel-heading">
+        Guides
       </h2>
       <label className="check">
         <input
@@ -519,11 +522,12 @@ function HintsPanel() {
           disabled={!hasLife}
           onChange={(e) => setHints(e.target.checked)}
         />
-        Show hints
+        Show guides and hints
       </label>
       <p className="caption spaced">
-        The first time something reaches you, a hint points at it, once a life, and stays until you
-        do it or dismiss it. Each life keeps its own setting.
+        The first time you meet something you must use, a guide walks you through it, once a
+        lineage; the rest get a hint, once a life, with a link to the codex. Each life keeps its own
+        setting.
       </p>
       <div className="actions">
         <button
@@ -539,6 +543,21 @@ function HintsPanel() {
         </button>
         {replayed && <span className="caption">Hints will come again as their moments do.</span>}
       </div>
+      <h3 className="sub-heading spaced">Replay a guide</h3>
+      <ul className="guide-replays">
+        {GUIDE_IDS.map((id) => (
+          <li key={id}>
+            <button
+              type="button"
+              className="link-button"
+              disabled={!hasLife}
+              onClick={() => replayGuide(id)}
+            >
+              {GUIDE_NAMES[id]}
+            </button>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -550,7 +569,7 @@ export function SettingsScreen() {
       <ClockPanel />
       <LookPanel />
       <ReadingPanel />
-      <HintsPanel />
+      <GuidesPanel />
       <GoingInPanel />
     </>
   );

@@ -84,9 +84,11 @@ export function stepLabel(id: RealmId, stage: number): string {
 
 /** The line each screen writes when it opens. */
 export const SCREEN_TEXT: Record<string, string> = {
+  dwelling: 'The Dwelling screen 居 opens: where you live, its store and its land.',
   trees: 'The trees open: what you hold grafts on them, and insight buys their nodes.',
   techniques: 'A first technique to drill: the techniques open.',
   crafts: 'A furnace or a recipe in hand: the crafts open, and the bench waits for craft hours.',
+  journal: 'A first errand taken on: the journal opens, to keep the quests you carry.',
 };
 
 /** How a spar ended, from the subject's side (core/spar.ts). */
@@ -95,6 +97,7 @@ const SPAR_ENDS: Record<string, string> = {
   lost: 'and is brought down',
   fled: 'and breaks away',
   yielded: 'and yields',
+  talked: 'and talks them down',
   draw: 'until neither can go on',
 };
 
@@ -122,6 +125,13 @@ function powerName(id: string): string {
   const n = ORG_ROWS.find((r) => r.id === id)?.name ?? id;
   return n.startsWith('The ') ? n : `the ${n}`;
 }
+
+/** A deed an introduction quest waited on (core/journal.ts, `didDeed`). */
+const DEED_LINES: Record<string, string> = {
+  changed: 'changes money at a money changer',
+  slept: 'sleeps a night in an inn instead of a ditch',
+  lesson: 'sits a lesson in the elders’ hall',
+};
 
 /** What a power did with you as its member (O3): the year's pill, the true seat, a quota, leave. */
 const POWER_LINES: Record<string, (w: Who, p: string, d: EventData) => string> = {
@@ -176,6 +186,41 @@ function jobLine(d: EventData, w: Who): string {
 }
 
 /** How a follower's bond ended, as the chronicle says it. */
+/** A dwelling's lines (K9): the who, the dwelling's name, where it stands, and the rest. */
+const DWELLING_LINES: Record<
+  string,
+  (who: string, name: string, where: string, d: EventData) => string
+> = {
+  rented: (w, n, at) => `${w} takes ${aDwelling(n)} in ${at}.`,
+  bought: (w, n, at) => `${w} buys ${aDwelling(n)} in ${at}.`,
+  claimed: (w, n, at) => `${w} claims ${aDwelling(n)} in ${at} and moves in.`,
+  abode: (w, n, at) => `${w} makes ${aDwelling(n)} in ${at} home.`,
+  'gave-up': (w, n, at) => `${w} gives up ${aDwelling(n)} in ${at}.`,
+  lapsed: (w, n, at) =>
+    `The rent on ${w}’s ${lower(n).replace(/^rented /, '')} in ${at} runs out, and it is let to someone else.`,
+  built: (w, n, at, d) =>
+    `${w} finishes ${WORK_WORDS[s(d.work)] ?? 'the work'} at the ${lower(n)} in ${at}.`,
+  robbed: (w, n, at, d) => `Thieves find ${w}’s ${lower(n)} in ${at} and carry off ${s(d.took)}.`,
+  grazed: (w, n, at, d) =>
+    `A beast comes for the fields of ${w}’s ${lower(n)} in ${at} and eats the ${s(d.took)}.`,
+  // Arrays (K10): `name` is the array's.
+  laid: (w, n, at) => `${w} lays ${lower(n)} in ${at}.`,
+  dark: (w, n, at) => `${w}’s ${lower(n)} in ${at} burns its last stone and goes dark.`,
+  trapped: (w, n, at, d) => `A ${s(d.took)} walks into ${w}’s ${lower(n)} in ${at} and is held.`,
+};
+/** "a cultivation chamber", "a room": a dwelling's name with its article. */
+function aDwelling(name: string): string {
+  const n = lower(name)
+    .replace(/^rented /, '')
+    .replace(/^(a|an|the|your) /, '');
+  return `${/^[aeiou]/.test(n) ? 'an' : 'a'} ${n}`;
+}
+const WORK_WORDS: Record<string, string> = {
+  clear: 'clearing a new field',
+  store: 'digging the store deeper',
+  chamber: 'cutting a quiet chamber',
+};
+
 const FOLLOWER_ENDS: Record<string, string> = {
   unpaid: 'goes unpaid and leaves',
   loyalty: 'has had enough and leaves',
@@ -249,10 +294,26 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   },
   // A failed batch that cracked the furnace (K1).
   'blow-up': (d) =>
-    `The furnace bursts over a batch of ${item(s(d.recipe)).name}s: the ${item(s(d.tool)).name} is cracked, and wants a refiner.`,
+    `The furnace bursts over ${s(d.recipe) === 'experiment' ? 'an experiment' : `a batch of ${item(s(d.recipe)).name}s`}: the ${item(s(d.tool)).name} is cracked, and wants a refiner.`,
+  // A recipe found by experiment (K7): one nobody wrote, or a written one found by your own hand.
+  'recipe-found': (d, w) => {
+    const it = item(s(d.recipe));
+    return d.made
+      ? `${w.name} throws things in until something takes: the ${it.name} ${it.hanzi}, a recipe nobody wrote.`
+      : `${w.name} throws things in until something takes: the ${it.name}, found by ${w.name}’s own hand rather than taught.`;
+  },
+  // A plot's bed lost while you were away, or its lease run out (K8).
+  'plot-pests': (d) =>
+    `Spirit insects strip a bed of ${item(s(d.crop)).name} at your plot in ${s(d.name)}: it went untended too long.`,
+  'plot-thief': (d) =>
+    `Someone lifts a ripe bed of ${item(s(d.crop)).name} from your plot in ${s(d.name)} while you are away. The village knows your face.`,
+  'plot-lost': (d) =>
+    `The lease on your plot in ${s(d.name)} runs out, and the village takes it back.`,
+  // A dwelling taken, claimed, given up, lost, built on or raided (K9).
+  dwelling: (d, w) => DWELLING_LINES[s(d.what)]?.(w.name, s(d.name), s(d.where), d) ?? '',
   mastery: (d) =>
     d.family
-      ? `Your ${FAMILIES[s(d.family) as FamilyId].name.toLowerCase()} reach ${MASTERY[n(d.level)]!.name}: the fire answers the hand.`
+      ? `Your ${FAMILIES[s(d.family) as FamilyId].name.toLowerCase()} reach ${MASTERY[n(d.level)]!.name}: ${FAMILIES[s(d.family) as FamilyId].craft === 'farming' ? 'the field answers the hand' : 'the fire answers the hand'}.`
       : d.technique
         ? `${technique(s(d.technique)).name} reaches ${MASTERY[n(d.level)]!.name}; the form finally clicks.`
         : `The ${method(s(d.method)).name} reaches ${MASTERY[n(d.level)]!.name}; the breath runs deeper, and understanding with it.`,
@@ -260,6 +321,15 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   follower: (d, w) => `${s(d.name)} ${FOLLOWER_ENDS[s(d.why)] ?? 'leaves'} ${w.name}.`,
   power: (d, w) => POWER_LINES[s(d.what)]?.(w, powerName(s(d.power)), d) ?? '',
   job: (d, w) => jobLine(d, w),
+  // A quest taken or handed in (core/journal.ts).
+  quest: (d, w) =>
+    s(d.what) === 'handed'
+      ? `${w.name} hands in ${s(d.title)}.`
+      : `${w.name} takes on ${s(d.title)}.`,
+  // The rogue's first work (core/chains.ts), and a buy a quest's step waited for (core/shops.ts).
+  work: (d, w) => `${w.name} ${s(d.line)}.`,
+  bought: (d, w) => `${w.name} buys ${s(d.what)} at ${s(d.where)}.`,
+  did: (d, w) => `${w.name} ${DEED_LINES[s(d.deed)] ?? 'does what was asked'}.`,
   spar: (d, w) =>
     `${w.name} spars with ${s(d.foe)} ${SPAR_ENDS[s(d.result)] ?? 'and walks away'}${n(d.turns) > 0 ? ` in ${n(d.turns)} exchange${n(d.turns) === 1 ? '' : 's'}` : ''}.`,
   // A node or manual a save names but the game no longer holds (a made-up one, a removed one) is
@@ -394,6 +464,10 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   intent: 'mastery',
   death: 'death',
   spar: 'fight',
+  quest: 'choice',
+  work: 'settled',
+  bought: 'settled',
+  did: 'settled',
   follower: 'people',
   power: 'people',
   job: 'settled',
@@ -421,6 +495,11 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   screen: 'opening',
   'method-capped': 'opening',
   'blow-up': 'hurt',
+  'recipe-found': 'learned',
+  'plot-pests': 'hurt',
+  'plot-thief': 'hurt',
+  'plot-lost': 'settled',
+  dwelling: (d) => (d.what === 'robbed' || d.what === 'grazed' ? 'hurt' : 'settled'),
   graded: 'mastery',
   rewind: 'opening',
   card: (d) => (d.byDefault === true ? 'settled' : (cardOutcome(d).kind ?? 'choice')),
