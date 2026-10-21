@@ -14,14 +14,7 @@ import { cardEdge, resolveCard } from './cards.ts';
 import { createLife, type Creation } from './creation.ts';
 import { advance } from './loop.ts';
 import { cultivate } from './life.ts';
-import {
-  contact,
-  chooseExit,
-  exitViews,
-  meet,
-  playExit,
-  settlePlayed,
-} from './map/encounters.ts';
+import { contact, chooseExit, exitViews, meet, playExit, settlePlayed } from './map/encounters.ts';
 import type { Encounter } from './map/schema.ts';
 import { ensureMap } from './map/travel.ts';
 import { joinPower } from './organizations.ts';
@@ -137,7 +130,9 @@ describe('a road fight you play', () => {
     const f = fightStart(playExit(w, 'e-test', 0)!, { kind: 'road', enc: 'e-test', exit: 0 })!;
     const end = (e: FightEnd) => settlePlayed(w, 'e-test', 0, e, f)!;
     const won = end('won');
-    expect(Object.keys(won.state.player.items).some((id) => id.startsWith('beast-hide'))).toBe(true);
+    expect(Object.keys(won.state.player.items).some((id) => id.startsWith('beast-hide'))).toBe(
+      true,
+    );
     const fled = end('fled');
     expect(fled.text).toMatch(/break away/);
     expect(fled.state.map!.encounters).toHaveLength(0);
@@ -149,7 +144,10 @@ describe('a road fight you play', () => {
     expect(lost.state.world.states.some((x) => x.data.kind === 'wound')).toBe(true);
     // A fight that took most of your HP comes home as the short wound, even won.
     const me = f.combatants.find((c) => c.id === PLAYER_ID)!;
-    const battered = { ...f, combatants: f.combatants.map((c) => (c === me ? { ...c, hp: 1 } : c)) };
+    const battered = {
+      ...f,
+      combatants: f.combatants.map((c) => (c === me ? { ...c, hp: 1 } : c)),
+    };
     const hurt = settlePlayed(w, 'e-test', 0, 'won', battered)!;
     expect(hurt.state.world.states.some((x) => x.data.kind === 'wound')).toBe(true);
     // Robbers you yield to rob you; talked down, they walk off with their kit.
@@ -158,7 +156,11 @@ describe('a road fight you play', () => {
       { ...rich, map: { ...rich.map!, encounters: [] } },
       enc('pine-deserters', 1),
     );
-    const rf = fightStart(playExit(robbers, 'e-test', 0)!, { kind: 'road', enc: 'e-test', exit: 0 })!;
+    const rf = fightStart(playExit(robbers, 'e-test', 0)!, {
+      kind: 'road',
+      enc: 'e-test',
+      exit: 0,
+    })!;
     expect(settlePlayed(robbers, 'e-test', 0, 'yielded', rf)!.state.player.stones).toBe(20);
     const talked = settlePlayed(robbers, 'e-test', 0, 'talked', rf)!;
     expect(talked.state.player.stones).toBe(40);
@@ -289,7 +291,12 @@ describe('spars, asked of people', () => {
 describe('a threat that lands ends a hurt person’s fight', () => {
   const big = { realm: 'nascent-soul' as const, stage: 1, grade: 0 };
   const small = { realm: 'qi-condensation' as const, stage: 1, grade: 0 };
-  const you = combatant({ id: 'you', name: 'You', side: 'you', rungs: { qi: big, body: big, soul: big } });
+  const you = combatant({
+    id: 'you',
+    name: 'You',
+    side: 'you',
+    rungs: { qi: big, body: big, soul: big },
+  });
   const foe = (hp: number, beast = false) =>
     combatant({
       id: 'foe',
@@ -301,8 +308,11 @@ describe('a threat that lands ends a hurt person’s fight', () => {
       ...(beast ? { beast: true } : {}),
     });
   const threaten = (f: Fight) =>
-    resolveTurn(f, [{ actor: 'you', main: { type: 'talk', style: 'intimidate', target: 'foe' } }], new Rng(1))
-      .fight;
+    resolveTurn(
+      f,
+      [{ actor: 'you', main: { type: 'talk', style: 'intimidate', target: 'foe' } }],
+      new Rng(1),
+    ).fight;
 
   it('yields a person past half their HP, never a whole one or a beast', () => {
     expect(combatantIn(threaten(startFight([you, foe(40)])), 'foe')!.state).toBe('yielded');
@@ -372,12 +382,18 @@ describe('the wheel’s Duty bug', () => {
     expect(canSetHour(c, h, 'qi')).toEqual({ ok: true });
     // Worked at its post, it pays a duty day.
     const at = withPlayer(s, c);
-    const post = { ...at, map: at.map ? { ...at.map, inside: job('wall-patrol').place, course: null } : at.map };
+    const post = {
+      ...at,
+      map: at.map ? { ...at.map, inside: job('wall-patrol').place, course: null } : at.map,
+    };
     const before = post.player.jobs[0]!.kept;
     const paid = jobsDay(post, post.calendar.day, post.calendar.day + 1);
     expect(paid.player.jobs[0]!.kept).toBeGreaterThan(before);
     // Left at its default, at drill, the shift isn't worked.
-    expect(jobsDay(withPlayer(post, s.player), post.calendar.day, post.calendar.day + 1).player.jobs[0]!.kept).toBe(before);
+    expect(
+      jobsDay(withPlayer(post, s.player), post.calendar.day, post.calendar.day + 1).player.jobs[0]!
+        .kept,
+    ).toBe(before);
     // Past drill the shift's hours are Duty and locked.
     const posted = withPlayer(s, { ...s.player, qi: { ...s.player.qi, stage: 4 } });
     expect(effectiveWheel(posted.player)[h]).toBe('duty');

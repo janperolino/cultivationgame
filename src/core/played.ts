@@ -5,7 +5,14 @@
 // The save keeps the fight as its start on the `combat` stream and the actions you took, so a reload
 // replays it to the same turn. The foes act on their profiles, so the same actions replay the same
 // fight.
-import { combatantIn, fightOver, resolveTurn, type Action, type Fight, type TurnResult } from './combat/fight.ts';
+import {
+  combatantIn,
+  fightOver,
+  resolveTurn,
+  type Action,
+  type Fight,
+  type TurnResult,
+} from './combat/fight.ts';
 import { chooseAction, profile } from './combat/profile.ts';
 import { wearFrom } from './combat/combatant.ts';
 import { bondFromFight } from './gear.ts';

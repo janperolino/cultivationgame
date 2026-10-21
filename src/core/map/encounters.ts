@@ -329,7 +329,16 @@ function exitView(s: GameState, m: Met, exit: Exit, i: number): ExitView {
     const reads = readsAll(m.you, them);
     const judged = reads ? edge.verdict : '?';
     const why = judged === '?' ? 'fight · you can’t read them' : `fight · ${edgeWords(edge)}`;
-    return { i, exit, verdict: edge.verdict, judged, why, refused, tried, sure: isSure(edge, reads) };
+    return {
+      i,
+      exit,
+      verdict: edge.verdict,
+      judged,
+      why,
+      refused,
+      tried,
+      sure: isSure(edge, reads),
+    };
   }
   if (exit.road === 'take' || exit.road === 'pass' || exit.road === 'deal') {
     const why =
@@ -891,7 +900,6 @@ export function settlePlayed(
     verdict,
   });
 }
-
 
 /** Goes round a sensed encounter that hasn't found you: 60 li more cross-country. */
 export function goRound(s: GameState, encId: string, by: 'you' | 'stance' = 'you'): GameState {

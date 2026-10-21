@@ -1514,8 +1514,8 @@ function GroundCounter({ game, power, act }: { game: GameState; power: string; a
   return (
     <>
       <p className="place-sub">
-        Ask someone to spar. Nobody dies and nothing drops; it ends at the first fall. The pills
-        you swallow are spent, and the gear you wear bonds a little each exchange.
+        Ask someone to spar. Nobody dies and nothing drops; it ends at the first fall. The pills you
+        swallow are spent, and the gear you wear bonds a little each exchange.
       </p>
       <div className="place-rows">
         {partners.map((p) => {
@@ -1547,7 +1547,9 @@ function GroundCounter({ game, power, act }: { game: GameState; power: string; a
 
 /** A spar asked: the fight opened, or why not. */
 function asSpar(r: GameState | string) {
-  return typeof r === 'string' ? { ok: false as const, reason: r } : { ok: true as const, state: r };
+  return typeof r === 'string'
+    ? { ok: false as const, reason: r }
+    : { ok: true as const, state: r };
 }
 
 /** The elders' hall: an elder's lesson, a protector, the inner trial in its month, being released. */

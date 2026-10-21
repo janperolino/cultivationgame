@@ -146,6 +146,8 @@ export function act(action: YourAction): void {
     pending: { outcomes: t.outcomes, ticks: t.ticks, fight: f },
     end: fightEnd(f, me),
   }));
+  // Every exchange is saved, so a reload comes back to it rather than away from it.
+  void useGame.getState().saveNow();
 }
 
 export function selectTarget(id: string): void {
@@ -175,6 +177,7 @@ export function leaveFight(): void {
     end: null,
     after: text || null,
   });
+  void useGame.getState().saveNow();
 }
 
 /** The hand-back's words were read. */

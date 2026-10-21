@@ -744,17 +744,7 @@ export function travelDays(
     // The road's hour: its notice fills and what it brings is met; a posting's spot reached meets its goal.
     if (life.course && !waiting) {
       const st = reachPostings(
-        roadHour(
-          { ...next, map: life },
-          map,
-          hour,
-          end - h0,
-          moving,
-          !!w.flies,
-          yb,
-          sense,
-          played,
-        ),
+        roadHour({ ...next, map: life }, map, hour, end - h0, moving, !!w.flies, yb, sense, played),
         map,
       );
       next = st;

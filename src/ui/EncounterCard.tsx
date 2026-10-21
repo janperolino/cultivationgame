@@ -141,8 +141,8 @@ export function EncounterCard({
         : bold !== null
           ? `Leave it, and Bold goes into “${lower(views[bold]!.exit.label)}” with you when you reach it.`
           : canGoRound(enc) && life.stance === 'avoid'
-          ? 'Your stance would go round it.'
-          : 'Nothing here is clear enough for your stance: it will wait for you and stop the course.';
+            ? 'Your stance would go round it.'
+            : 'Nothing here is clear enough for your stance: it will wait for you and stop the course.';
   return (
     <section className={`enc-card${danger ? ' is-danger' : ''}`} aria-label={t.title}>
       <div className="enc-head">

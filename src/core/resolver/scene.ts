@@ -1349,8 +1349,7 @@ function afterFight(
   // Everyone there sees the arts thrown, before anyone falls (O5).
   const saw = w.scene.actors.filter(active);
   for (const x of fighters)
-    if (w.scene.players.includes(x.id) && used[x.id])
-      artsSeen(w, x, used[x.id]!.map(artCopy), saw);
+    if (w.scene.players.includes(x.id) && used[x.id]) artsSeen(w, x, used[x.id]!.map(artCopy), saw);
   // Blows struck from hiding give you away.
   for (const x of fighters)
     if (x.state === 'hidden') setActor(w, x.id, (y) => ({ ...y, state: 'present' }));

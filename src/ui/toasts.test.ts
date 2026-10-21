@@ -22,8 +22,8 @@ describe('toasts', () => {
       'New tree · Earth Dao',
       'New tree · Fist Dao',
     ]);
-    // Routine › Practice and Combat open too, folded into the third.
-    expect(t.map((x) => x.more)).toEqual([0, 0, 2]);
+    // Routine › Practice opens too, folded into the third (Combat left the rail).
+    expect(t.map((x) => x.more)).toEqual([0, 0, 1]);
     expect(t[0]!.to).toEqual({
       screen: 'routine',
       tab: 'practice',

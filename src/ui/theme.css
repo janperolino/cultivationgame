@@ -5547,7 +5547,13 @@ button.fight-card {
 }
 
 .fight-stage .fight-arena {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   min-height: 300px;
+}
+
+/* A pack or a crowd sits in columns, so your move stays on the stage. */
+.fight-stage .fight-side + .fight-side {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 }
 
 .fight-stage-lower {
