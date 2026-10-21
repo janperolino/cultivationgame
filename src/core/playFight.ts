@@ -11,18 +11,30 @@ import { afterFight, fightEnd, openFight, replay, takeUpFlags, type FightEnd } f
 import { endSpar, sparFight, sparWhy } from './spar.ts';
 import type { FightFrom, GameState } from './state.ts';
 
-/** The fight's start, built again from where it came from. */
+/**
+ * The fight's start, built again from where it came from. Null when it can't be: a save naming a
+ * card, encounter or roster template a later build no longer has.
+ */
 export function fightStart(s: GameState, from: FightFrom): Fight | null {
-  switch (from.kind) {
-    case 'spar':
-      return sparFight(s, from.who);
-    case 'road':
-      return roadFight(s, from.enc, from.exit);
-    case 'card':
-      return cardFight(s, from.uid, from.choice);
-    case 'trap':
-      return trapFight(s, from.ground);
+  try {
+    switch (from.kind) {
+      case 'spar':
+        return sparFight(s, from.who);
+      case 'road':
+        return roadFight(s, from.enc, from.exit);
+      case 'card':
+        return cardFight(s, from.uid, from.choice);
+      case 'trap':
+        return trapFight(s, from.ground);
+    }
+  } catch {
+    return null;
   }
+}
+
+/** Clears a saved fight whose start can't be built again, so the clock isn't held on nothing. */
+export function dropLostFight(s: GameState): GameState {
+  return s.fight && !fightStart(s, s.fight.from) ? { ...s, fight: null } : s;
 }
 
 /** The fight under way as it stands now, replayed from its start; null with none. */
@@ -36,7 +48,8 @@ export function currentFight(s: GameState): Fight | null {
 export function askSpar(s: GameState, who: string): GameState | string {
   const why = sparWhy(s, who);
   if (why) return why;
-  return openFight(s, { kind: 'spar', who });
+  const from = { kind: 'spar', who } as const;
+  return openFight(s, from, fightStart(s, from)) ?? 'They can’t spar now.';
 }
 
 /** Who you face, by name: "Elder Mo", or "ridge wolves (3)". */

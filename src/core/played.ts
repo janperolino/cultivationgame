@@ -29,10 +29,14 @@ export type FightEnd = 'won' | 'lost' | 'fled' | 'yielded' | 'talked' | 'draw';
 /** Your action, without who acts: the fight knows it is yours. */
 export type YourAction = Omit<Action, 'actor'>;
 
-/** Opens a fight on the stage: its rolls start from one drawn off the life's `combat` stream. */
-export function openFight(s: GameState, from: FightFrom): GameState {
-  const { value: start, state } = withStream(s, 'combat', (rng) => rng.int(0, 0x7fffffff));
-  return { ...state, fight: { from, start, now: start, actions: [] } };
+/**
+ * Opens a fight on the stage: its rolls start from one drawn off the life's `combat` stream. The
+ * caller passes the start it built (core/playFight.ts `fightStart`); without one it refuses, null.
+ */
+export function openFight(s: GameState, from: FightFrom, start: Fight | null): GameState | null {
+  if (!start) return null;
+  const { value: seed, state } = withStream(s, 'combat', (rng) => rng.int(0, 0x7fffffff));
+  return { ...state, fight: { from, start: seed, now: seed, actions: [] } };
 }
 
 function foesAct(f: Fight, me: string): Action[] {
@@ -87,8 +91,10 @@ export function fightEnd(f: Fight, me: string): FightEnd | null {
   if (fightOver(f)) {
     const foes = f.combatants.filter((c) => c.side !== you.side);
     if (foes.some((c) => c.state === 'fighting')) return 'lost';
-    if (foes.every((c) => c.state !== 'down') && foes.some((c) => c.state === 'yielded'))
-      return 'talked';
+    // Talked only when a foe yielded to your side's words: a coward's own surrender is a win.
+    const toWords = (c: (typeof foes)[number]) =>
+      c.state === 'yielded' && !!c.yieldedTo && combatantIn(f, c.yieldedTo)?.side === you.side;
+    if (foes.every((c) => c.state !== 'down') && foes.some(toWords)) return 'talked';
     return 'won';
   }
   if (f.turn >= FIGHT_TURNS) return 'draw';

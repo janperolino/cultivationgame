@@ -806,7 +806,8 @@ export function playExit(s: GameState, encId: string, i: number): GameState | nu
   if (!life || !enc || s.fight) return null;
   const view = exitViews(s, meet(s, enc))[i];
   if (!view || view.refused || view.exit.road !== 'fight') return null;
-  if (!roadFight(s, encId, i)) return null;
+  const start = roadFight(s, encId, i);
+  if (!start) return null;
   const waits: GameState = {
     ...s,
     map: {
@@ -816,7 +817,7 @@ export function playExit(s: GameState, encId: string, i: number): GameState | nu
       ),
     },
   };
-  return openFight(waits, { kind: 'road', enc: encId, exit: i });
+  return openFight(waits, { kind: 'road', enc: encId, exit: i }, start);
 }
 
 /** What the HP a fight took comes home as: none under a quarter, close to a half, short past it. */

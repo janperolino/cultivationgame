@@ -18,7 +18,7 @@ export const INTRO_QUESTS: readonly Quest[] = [
     reason:
       'The refiner has a rack of pieces nobody came back for, and says a cultivator who fights in their sleeves dies in them. Buy something off the counter and wear it out the door.',
     steps: [
-      { text: 'Buy a piece at this counter.', goal: { event: 'bought' } },
+      { text: 'Buy a piece at this counter.', goal: { event: 'bought', here: true } },
       { text: 'Wear a piece of gear: drag it onto its square in the Bag.', goal: { met: 'gear' } },
     ],
     reward: { stones: 3, text: '3 low-grade stones back on the price' },
@@ -97,7 +97,7 @@ export const INTRO_QUESTS: readonly Quest[] = [
     giver: any('hall', 'the hall’s steward', 'sect'),
     reason:
       'Members buy at the hall in contribution at the members’ price, lines no outsider sees. The steward wants every new disciple to spend something here once, so they know what their work buys.',
-    steps: [{ text: 'Buy something at this hall.', goal: { event: 'bought' } }],
+    steps: [{ text: 'Buy something at this hall.', goal: { event: 'bought', here: true } }],
     reward: { stones: 2, text: '2 low-grade stones' },
     thanks: '“Now you know what a month of your work is worth here.”',
     codex: ['sect-shop'],

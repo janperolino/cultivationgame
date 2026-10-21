@@ -1,6 +1,6 @@
 import { ratesHere } from '../core/life.ts';
 import { HOUR_KIND_IDS, HOUR_KINDS } from '../content/hours.ts';
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { eventKind, KIND_WORDS } from '../content/chronicle.ts';
 import { comingBackStory, type StorySection } from '../core/comingBack.ts';
 import { barSize, ladderOpen, stonesQi } from '../core/cultivation.ts';
@@ -30,6 +30,7 @@ import { readingLine } from './bookcase.ts';
 import { EventLine, LadderBar, LifeEdgeCard } from './widgets.tsx';
 import { go, goToTab } from './nav.ts';
 import { built } from '../core/guides.ts';
+import { meetCodex } from '../core/codex.ts';
 import { knownMethods } from '../core/methods.ts';
 
 /** Up to this many settled cards are told in full; past it, one a kind and the rest folded away. */
@@ -53,7 +54,12 @@ function Sections({ sections }: { sections: StorySection[] }) {
 /** The coming-back story in the band: its opening and what grew, the rest raised over the scene. */
 function AwayCard({ away, onRead }: { away: AwaySummary; onRead: () => void }) {
   const dismissAway = useGame((s) => s.dismissAway);
+  const applyLife = useGame((s) => s.applyLife);
   const story = comingBackStory(away.before, away.state);
+  // The story told: the codex meets it.
+  useEffect(() => {
+    applyLife((s) => meetCodex(s, 'came-back'));
+  }, [applyLife]);
   return (
     <article className="story story-away" aria-labelledby="away-heading">
       <p className="band-kicker">

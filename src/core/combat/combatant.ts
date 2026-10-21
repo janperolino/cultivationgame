@@ -199,6 +199,8 @@ export interface Combatant {
   /** Weakened after a burning pill, for the rest of the day: every rung at half (K11). */
   weakened?: boolean;
   state: CombatantState;
+  /** Who a yield was to: the speaker whose bluff or threat ended this fighter's fight. */
+  yieldedTo?: string;
 }
 
 export type CombatantInit = Partial<Combatant> & Pick<Combatant, 'id' | 'name' | 'side'>;

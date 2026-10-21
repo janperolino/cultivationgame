@@ -136,8 +136,8 @@ function DayTab({ game, head }: { game: GameState; head: ReactNode }) {
       </span>
       {inTutorial(c.qi) && (
         <span>
-          Layers 1–3 ignore the root, the method's tier, rarity and mastery, its fit and the element
-          hours.
+          Layers 1–3 ignore the method's tier, rarity and mastery, its fit and the element hours,
+          and layers 1–2 the root.
         </span>
       )}
       {rates.unfed.includes('qi') && <span>Its upkeep went unpaid: it stalls today.</span>}

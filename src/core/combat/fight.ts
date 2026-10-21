@@ -1642,8 +1642,10 @@ function main(
         (m.style === 'bluff' || m.style === 'intimidate') &&
         !target.beast &&
         target.hp < target.maxHp / 2
-      )
+      ) {
         target.state = 'yielded';
+        target.yieldedTo = actor.id;
+      }
       return [
         {
           ...base,

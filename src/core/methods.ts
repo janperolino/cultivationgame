@@ -42,8 +42,9 @@ import { stats } from './stats.ts';
 export type MethodCheck = { ok: true } | { ok: false; reason: string };
 
 /**
- * Qi Condensation layers 1–3 are the tutorial: root speed, method fit, the method's tier, rarity
- * and mastery, and the element hours don't count there. The same holds for body and soul.
+ * Qi Condensation layers 1–3 are the tutorial: method fit, the method's tier, rarity and mastery,
+ * and the element hours don't count there, and root speed doesn't through layer 2 (layer 3's bar
+ * counts it). The same holds for body and soul.
  */
 export function inTutorial(l: Ladder): boolean {
   return l.realm === 'qi-condensation' && l.stage <= TUTORIAL_LAYERS;

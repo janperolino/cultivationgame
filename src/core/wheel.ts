@@ -67,9 +67,12 @@ export function dutyAt(c: Cultivator, hour: number): Job | null {
   return drilling(c) && c.wheel[hour] !== 'duty' ? null : j;
 }
 
-/** The wheel as yours to give: your own hours, with a shift's marked Duty so no rule picks them. */
+/**
+ * The wheel as yours to give: your own hours, with a shift's marked Duty so no rule picks them. A
+ * Duty hour no shift holds any more is qi, as it is cultivated.
+ */
 export function freeWheel(c: Cultivator): HourKind[] {
-  return c.wheel.map((k, i) => (dutyAt(c, i) ? 'duty' : k));
+  return c.wheel.map((k, i) => (dutyAt(c, i) ? 'duty' : k === 'duty' ? 'qi' : k));
 }
 
 /** The hour of the day wheel a world day stands in: 0 at 子 (midnight), 11 at 亥. */

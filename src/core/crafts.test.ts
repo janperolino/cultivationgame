@@ -289,7 +289,7 @@ describe('the save', () => {
     raw.version = 42;
     delete raw.state.player.crafts;
     const back = loadSave(raw);
-    expect(back.version).toBe(52);
+    expect(back.version).toBe(53);
     expect(back.state.player.crafts).toEqual({
       bench: [],
       front: null,

@@ -269,7 +269,7 @@ describe('the save', () => {
     raw.version = 37;
     raw.state.world.members = [{ who: YOU, power: GATE, since: 5 }];
     const back = loadSave(raw);
-    expect(back.version).toBe(52);
+    expect(back.version).toBe(53);
     expect(back.state.world.members).toEqual([
       {
         who: YOU,

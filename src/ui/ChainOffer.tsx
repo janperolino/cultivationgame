@@ -4,9 +4,16 @@
 // rogue's first work, the spar, the first big job) and its hand-in are buttons on Today's quest line,
 // the first work beside the take-up button before the screen has built itself.
 import { useState } from 'react';
-import { actNow, chainOffer, doAct, handInHere, takeChainOffer } from '../core/chains.ts';
+import {
+  actNow,
+  chainOffer,
+  doAct,
+  firstWorkDone,
+  handInHere,
+  takeChainOffer,
+} from '../core/chains.ts';
 import { copyTitle, readDays } from '../content/copies.ts';
-import { hasQuest, quest } from '../content/quests.ts';
+import { quest } from '../content/quests.ts';
 import { readingCopy, readProgress } from '../core/reading.ts';
 import { handInCheck, questState, stepsDone } from '../core/journal.ts';
 import type { GameState } from '../core/state.ts';
@@ -106,9 +113,8 @@ export function FirstWorkButton({ game }: { game: GameState }) {
   const a = actNow(game);
   if (!a || !('work' in a.act)) {
     // Once done, what the work paid stays said here until the method is taken up.
-    const done = game.chronicle.find((e) => e.type === 'work');
-    if (!done || game.player.activeMethods.qi !== null || !hasQuest(String(done.data.quest)))
-      return null;
+    const done = firstWorkDone(game);
+    if (!done || game.player.activeMethods.qi !== null) return null;
     const step = quest(String(done.data.quest)).steps.find((x) => x.act && 'work' in x.act);
     if (!step?.act || !('work' in step.act)) return null;
     const reading = readingCopy(game.player);

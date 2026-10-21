@@ -5,7 +5,7 @@
 // met so far by area, each with a dot until opened, in plain words with the real numbers.
 import { useState } from 'react';
 import { CODEX_AREAS, fillSlots, type CodexEntry } from '../content/codex/index.ts';
-import { quest } from '../content/quests.ts';
+import { hasQuest, quest } from '../content/quests.ts';
 import { codexMet, seeCodex } from '../core/codex.ts';
 import {
   dropQuest,
@@ -159,7 +159,8 @@ function QuestPage({ q, game }: { q: QuestState; game: GameState }) {
 function Quests({ game }: { game: GameState }) {
   const [pick, setPick] = useState<string | null>(null);
   const [showDone, setShowDone] = useState(false);
-  const all = game.journal.quests;
+  // A quest a later build lost isn't shown; the next day step drops it (core/journal.ts).
+  const all = game.journal.quests.filter((q) => hasQuest(q.id));
   const under = all.filter((q) => q.handed === null);
   // The followed quest first, then the rest under way in the order taken.
   under.sort(
