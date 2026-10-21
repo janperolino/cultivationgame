@@ -4,6 +4,8 @@
 // Everything done in a place is done here: its shops on P3.5's calls, the teahouse, the map seller,
 // guides, caravans, the money changer and the bed you sleep in by rule.
 import { QuestOffers } from './QuestOffers.tsx';
+import { CommissionCounter } from './CommissionCounter.tsx';
+import { hasCommissionTab } from './commissionWords.ts';
 import { useEffect, useState } from 'react';
 import { meetCodex } from '../core/codex.ts';
 import { endGuide, lookAt } from './guide.ts';
@@ -808,6 +810,8 @@ function ShopCounter({
         ['sell', 'Sell'],
       ];
   if (kinfo.repairs) tabs.push(['mend', 'Mend']);
+  // A craft's shop posts commissions and makes to order (K12).
+  if (hasCommissionTab(game, shopId)) tabs.push(['commission', 'Commission 托']);
   const [tab, setTab] = useState(tabs[0]![0]);
   const silver = kinfo.money === 'silver';
   // A counter open: the first buy's guide can fire, and the codex meets the shops.
@@ -1072,6 +1076,9 @@ function ShopCounter({
               ` The prices shown are what you keep after ${possessive(theName(titheFrom!), '’')} ${Math.round(tithe * 100)}% tithe.`}
           </p>
         </>
+      )}
+      {tab === 'commission' && (
+        <CommissionCounter game={game} shopId={shopId} act={act} say={say} />
       )}
       {tab === 'donate' && house && <DonateRows game={game} power={house} act={act} say={say} />}
       {tab === 'mend' && (

@@ -115,6 +115,15 @@ export interface StockLot {
   endless?: boolean;
 }
 
+/**
+ * A price as a shelf posts it (the code review's `askAt`): a standing line to the hundredth, a
+ * display lot to the tenth, never under its step.
+ */
+export function askAt(price: number, standing = false): number {
+  const step = standing ? 100 : 10;
+  return Math.max(1 / step, Math.round(price * step) / step);
+}
+
 /** A shop's prices against the posted rate, drawn once from its id: 0.9 to 1.15. */
 export function priceFactor(s: Shop): number {
   const u = hashSeed(`price/${s.id}`) / 4294967296;
@@ -533,7 +542,7 @@ export function stockOf(shopId: string, month: number, w: World = EMPTY): StockL
       slot,
       thing,
       n,
-      price: Math.max(0.1, Math.round(posted(thing) * factor * 10) / 10),
+      price: askAt(posted(thing) * factor),
     });
   }
   const lines: { thing: string; n: number; endless?: boolean }[] = [
@@ -544,7 +553,7 @@ export function stockOf(shopId: string, month: number, w: World = EMPTY): StockL
     ...standingCopies(w, s, month).map((thing) => ({ thing, n: 1, endless: true })),
   ];
   lines.forEach(({ thing, n, endless }, i) => {
-    const price = Math.max(0.01, Math.round(posted(thing) * factor * 100) / 100);
+    const price = askAt(posted(thing) * factor, true);
     out.push({
       slot: STANDING_SLOT + i,
       thing,
@@ -589,10 +598,7 @@ export function shelf(s: GameState, shopId: string): StockLot[] {
     .filter((l) => l.n > 0)
     .map((l) => {
       if (!m) return l;
-      const price = l.price * marketFactor(s.world, m, l.thing, day);
-      const floor = l.standing ? 0.01 : 0.1;
-      const round = l.standing ? 100 : 10;
-      return { ...l, price: Math.max(floor, Math.round(price * round) / round) };
+      return { ...l, price: askAt(l.price * marketFactor(s.world, m, l.thing, day), l.standing) };
     });
 }
 
@@ -637,9 +643,7 @@ export function priceToYou(s: GameState, shopId: string, lot: StockLot, count?: 
  * and never above it): a point a low-grade stone, the shelf's price without the hall's own markup.
  */
 export function hallPoints(sh: Shop, lot: StockLot): number {
-  const round = lot.standing ? 100 : 10;
-  const points = lot.price / Math.max(1, priceFactor(sh));
-  return Math.max(1 / round, Math.round(points * round) / round);
+  return askAt(lot.price / Math.max(1, priceFactor(sh)), lot.standing);
 }
 
 /** A shop's answer; a refusal may still change the world (a stolen thing recognized). */
@@ -746,12 +750,15 @@ export function buyRate(s: GameState, sh: Shop): number {
 
 /**
  * What a shop offers for one of a thing, or the reason it won't buy: its rate of its market's
- * price, and 80% of it for what the market needs (`wanted`), except at a black market.
+ * price, and 80% of it for what the market needs (`wanted`), except at a black market. A `fixed`
+ * price (a commission's, K12) is paid as it stands, past the rate and the loop's cap, once the
+ * shop would buy the thing at all.
  */
 export function offerFor(
   s: GameState,
   shopId: string,
   thing: string,
+  fixed?: number,
 ): { ok: true; each: number; wanted: boolean } | { ok: false; reason: string } {
   const sh = shopById(shopId);
   const info = SHOP_KIND_INFO[sh.kind];
@@ -774,6 +781,7 @@ export function offerFor(
           ? 'The hall keeps its own methods.'
           : 'No honest shop buys a sect’s own method.',
     };
+  if (fixed !== undefined) return { ok: true, each: fixed, wanted: false };
   // A posted rate is the posted rate: the bounty office's 50% doesn't drift with the shop.
   const drift = info.posted ? 1 : priceFactor(sh);
   const m = marketOfShop(shopId);
@@ -810,8 +818,6 @@ function cheapestAsk(
   posted: number,
   market: number,
 ): number | null {
-  const at = (n: number, step: number, floor: number) =>
-    Math.max(floor, Math.round(n * step) / step);
   let low: number | null = null;
   for (const id of shops) {
     const sh = shopById(id);
@@ -819,8 +825,8 @@ function cheapestAsk(
     if (info.posted || !info.buys.includes(ware)) continue;
     if ((info.money === 'silver') !== mortalGood) continue;
     const f = shopFactor(sh);
-    const display = at(at(posted * f, 10, 0.1) * market, 10, 0.1);
-    const standing = at(at(posted * f, 100, 0.01) * market, 100, 0.01);
+    const display = askAt(askAt(posted * f) * market);
+    const standing = askAt(askAt(posted * f, true) * market, true);
     const ask = Math.min(display, standing);
     if (low === null || ask < low) low = ask;
   }
@@ -946,7 +952,7 @@ export function keeperId(shopId: string): string {
   return `keeper:${shopId}`;
 }
 
-function withKeeper(w: World, sh: Shop): World {
+export function withKeeper(w: World, sh: Shop): World {
   const id = keeperId(sh.id);
   if (w.kept[id]) return w;
   const nature = rollNature(sh.id, { trade: 'merchant' });

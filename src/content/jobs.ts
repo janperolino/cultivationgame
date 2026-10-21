@@ -33,6 +33,11 @@ export interface Job {
   shift: readonly number[];
   /** What it gives beside its pay, a line of data (design § What membership gives and asks). */
   perk: string;
+  /**
+   * What the perk lends that a system reads (K12, the code review's ask): a tool the bench works
+   * with while you hold the post (the alchemy hall's furnace).
+   */
+  use?: { tool: string };
   /** How it is left: freely, or only by leaving its power (a dynasty's soldier deserts). */
   leave: 'free' | 'power';
   /**
@@ -109,6 +114,19 @@ export const JOBS: readonly Job[] = [
     seat: 'outer',
     shift: r(7, 4),
     perk: 'a share of the ore dug',
+    leave: 'free',
+  },
+  {
+    id: 'gate-alchemy-hall',
+    name: 'Tend the alchemy hall',
+    hanzi: '丹房',
+    power: 'qm-tushou-men',
+    hall: 'the alchemy hall 丹房',
+    place: 'qm-tushou-men',
+    seat: 'inner',
+    shift: r(4, 4),
+    perk: "the alchemy hall's bronze furnace at your bench",
+    use: { tool: 'bronze-pill-furnace' },
     leave: 'free',
   },
   {

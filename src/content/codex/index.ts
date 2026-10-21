@@ -2,6 +2,7 @@
 // `docs/features.md`, in the areas' order. Drafted 2026-10-20 for The opening, built, awaiting
 // Jan's review; a phase that adds a feature the player touches adds its entry here.
 import { BAG } from './bag.ts';
+import { COMMISSIONS } from './commissions.ts';
 import { CRAFTS } from './crafts.ts';
 import { CULTIVATION } from './cultivation.ts';
 import { DWELLINGS } from './dwellings.ts';
@@ -34,6 +35,7 @@ export const CODEX: readonly CodexEntry[] = [
   ...DWELLINGS,
   ...FORMATIONS,
   ...UPKEEP,
+  ...COMMISSIONS,
   ...REST,
 ];
 

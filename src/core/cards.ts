@@ -28,7 +28,7 @@ import { fillSlots, type Who } from '../content/chronicle.ts';
 import { copyId } from '../content/copies.ts';
 import { COMBAT_DAOS } from '../content/daos.ts';
 import { pathKey } from '../content/origins.ts';
-import { realm, realmIndex } from '../content/realms.ts';
+import { realm, realmIndex, realmScale } from '../content/realms.ts';
 import { template as rosterTemplate } from '../content/roster.ts';
 import { firstTechnique } from '../content/techniques.ts';
 import { seasonOf, whoFor } from './chronicle.ts';
@@ -68,6 +68,13 @@ import {
 import { verdict, type Verdict } from './resolver/check.ts';
 import { gainItem } from './map/ground.ts';
 import { settleRaid } from './dwellings.ts';
+import {
+  applyCraftEffect,
+  CRAFT_DECK,
+  craftShare,
+  craftTriggerHolds,
+  craftWords,
+} from './craftDeck.ts';
 import { agility, aptitude, fortune, stats } from './stats.ts';
 
 // ---------------------------------------------------------------- triggers
@@ -114,6 +121,7 @@ export function triggerHolds(s: GameState, t: Trigger, day = s.calendar.day): bo
   if (t.people && !t.people.every((slot) => knowsSlot(c, slot))) return false;
   if (t.minStones !== undefined && worthOf(stonesOf(c)) < t.minStones) return false;
   if (t.intentReady && readyDaos(c).length === 0) return false;
+  if (t.craft && !craftTriggerHolds(s, t.craft)) return false;
   return true;
 }
 
@@ -151,11 +159,18 @@ export function choiceOffered(choice: CardChoice, vars: Readonly<Record<string, 
   return varHolds(vars, choice.when);
 }
 
+/** A choice's cost in stones, run up the realm curve when it is `scaled` (the craft deck, K12). */
+export function costStones(c: Cultivator, choice: CardChoice): number {
+  const n = choice.cost?.stones ?? 0;
+  return choice.cost?.scaled ? Math.round(n * realmScale(realmOf(c)) * 100) / 100 : n;
+}
+
 /** Whether the player can pay a choice's cost. */
 export function canChoose(c: Cultivator, choice: CardChoice): ChoiceCheck {
   const cost = choice.cost;
-  if (cost?.stones && !canPay(stonesOf(c), cost.stones)) {
-    return { ok: false, reason: `It costs ${cost.stones} spirit stones.` };
+  const stones = costStones(c, choice);
+  if (stones && !canPay(stonesOf(c), stones)) {
+    return { ok: false, reason: `It costs ${stones} spirit stones.` };
   }
   if (cost?.item && itemCount(c, cost.item.id) < cost.item.n) {
     return { ok: false, reason: 'You lack what it costs.' };
@@ -188,18 +203,32 @@ export function defaultChoice(
 
 /** One effect of a card on the game; `var` effects are the caller's. */
 // A card's effect; `uid` names the card for what settles by it (a raid), none for a quest's work.
-export function applyEffect(s: GameState, e: CardEffect, uid = -1): GameState {
+// A craft card's `words` name what it is set at (K12).
+export function applyEffect(
+  s: GameState,
+  e: CardEffect,
+  uid = -1,
+  words: Readonly<Record<string, string>> = {},
+): GameState {
   const c = s.player;
   switch (e.do) {
+    case 'bench':
+    case 'field':
+    case 'renown':
+    case 'commission':
+    case 'slip':
+      return applyCraftEffect(s, e, words) ?? s;
     case 'raid':
       return settleRaid(s, uid, e.outcome);
     case 'stones':
+      if (e.scaled) return applyCraftEffect(s, e, words) ?? s;
       // A loss is paid as a price, as far as the purse reaches; a gain comes in low.
       return withPlayer(
         s,
         withStones(c, e.n < 0 ? spend(stonesOf(c), -e.n) : receive(stonesOf(c), e.n)),
       );
     case 'item':
+      if (e.craftTier || e.rarity) return applyCraftEffect(s, e, words) ?? s;
       return gainItem(s, e.id, e.n).state;
     case 'fuel': {
       const amount = e.share * barSize(c[e.ladder]);
@@ -433,7 +462,7 @@ export function resolveCard(
         pending: next.cards.pending.map((p) => (p.uid === uid ? moved : p)),
       },
     };
-    for (const e of outcome.effects) next = applyEffect(next, e, uid);
+    for (const e of outcome.effects) next = applyEffect(next, e, uid, pending.words);
     return { state: next, ok: true, text, pass, done: false, ...(check ? { check } : {}) };
   }
 
@@ -456,7 +485,7 @@ export function resolveCard(
   }
   for (const [key, v] of Object.entries(vars)) data[`var.${key}`] = v;
   next = addEvent(next, 'card', data, [next.player.id, ...named]);
-  for (const e of outcome.effects) next = applyEffect(next, e, uid);
+  for (const e of outcome.effects) next = applyEffect(next, e, uid, pending.words);
   return { state: next, ok: true, text, pass, done: true, ...(check ? { check } : {}) };
 }
 
@@ -464,7 +493,7 @@ export function resolveCard(
 function payCost(s: GameState, cost: CardChoice['cost']): GameState {
   let next = s;
   if (cost?.stones) {
-    const after = pay(stonesOf(next.player), cost.stones)!;
+    const after = pay(stonesOf(next.player), costStones(next.player, { cost } as CardChoice))!;
     next = withPlayer(next, withStones(next.player, after));
   }
   if (cost?.item) next = withPlayer(next, addItem(next.player, cost.item.id, -cost.item.n));
@@ -533,14 +562,17 @@ function rollCandidates(
     if (k.queued || (decks && !decks.includes(k.deck))) continue;
     // A card a quest brings (the rogue's first big job) comes only when it is brought.
     if (k.pushed) continue;
-    if (held && k.deck === SECLUSION_DECK) continue;
+    // The craft deck rides the seclusion deck's pace and hold (K12): it adds no cards, it shares.
+    const paceDeck = k.deck === CRAFT_DECK ? SECLUSION_DECK : k.deck;
+    if (held && paceDeck === SECLUSION_DECK) continue;
     if (!cardEligible(s, k, day)) continue;
-    const pace = DECK_PACE[k.deck];
+    if (k.deck === CRAFT_DECK && !craftWords(s, k)) continue;
+    const pace = DECK_PACE[paceDeck];
     if (pace && !k.fixed) {
-      let passed = paceRolls.get(k.deck);
+      let passed = paceRolls.get(paceDeck);
       if (passed === undefined) {
         passed = rng.next() < paceChance(s, pace.minutes);
-        paceRolls.set(k.deck, passed);
+        paceRolls.set(paceDeck, passed);
       }
       if (passed) paced.push(k);
       continue;
@@ -600,11 +632,22 @@ function drawDay(s: GameState, day: number, opts: DrawOptions): GameState {
   }
   const { value: drawn, state } = withStream(next, 'world', (rng) => {
     const { story, paced } = rollCandidates(next, day, rng, opts.decks);
-    return pickByWeight(story.length ? story : paced, rng);
+    if (story.length) return pickByWeight(story, rng);
+    // The craft deck's share of the paced draws is your wheel's Craft hours, at most half (K12).
+    const craft = paced.filter((k) => k.deck === CRAFT_DECK);
+    const rest = paced.filter((k) => k.deck !== CRAFT_DECK);
+    if (craft.length && rng.next() < craftShare(next.player)) return pickByWeight(craft, rng);
+    return pickByWeight(rest, rng);
   });
   next = state;
   if (!drawn) return next;
-  const entry: PendingCard = { uid: next.cards.nextUid, card: drawn.id, day: next.calendar.day };
+  const words = drawn.deck === CRAFT_DECK ? (craftWords(next, drawn) ?? undefined) : undefined;
+  const entry: PendingCard = {
+    uid: next.cards.nextUid,
+    card: drawn.id,
+    day: next.calendar.day,
+    ...(words ? { words } : {}),
+  };
   next = {
     ...next,
     cards: {

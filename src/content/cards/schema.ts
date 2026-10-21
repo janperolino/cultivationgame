@@ -5,9 +5,11 @@
 // step, each with its own text, choices and default, reading what earlier steps set in the card's
 // variables, and the chronicle gets one line for the path. core/cards.ts draws them on the `world`
 // stream, keeps the feed and applies the effects. A new card is an entry in a deck, not new code.
+import type { CraftId } from '../crafts.ts';
 import type { LadderId } from '../cultivation.ts';
 import type { OriginChoice, OriginId } from '../origins.ts';
 import type { TieId } from '../people.ts';
+import type { RarityId } from '../rarity.ts';
 import type { RealmId } from '../realms.ts';
 
 /** The attributes a card's check can read (design § Combat, the six attributes). */
@@ -53,12 +55,28 @@ export interface Trigger {
    * learned, a moment away. The card's text names that Dao as {dao} and the stage as {intent}.
    */
   intentReady?: boolean;
+  /**
+   * The craft deck's (K12): a tool held of one of these crafts (any when empty), a field held,
+   * a batch on the bench, craft renown of at least this level where its market is, a craft Dao
+   * tier held past your certified grade, or something of the craft made lately.
+   */
+  craft?: {
+    crafts?: readonly CraftId[];
+    field?: boolean;
+    bench?: boolean;
+    renown?: number;
+    ungraded?: boolean;
+    /** Something of the craft made lately: what an order for your make asks for. */
+    made?: boolean;
+  };
 }
 
 /** What a choice does, applied in order. Fuel is a share of the ladder's current bar. */
 export type CardEffect =
-  | { do: 'stones'; n: number }
-  | { do: 'item'; id: string; n: number }
+  /** Stones; `scaled` runs them up the realm curve, as a raid's or a rent (K12). */
+  | { do: 'stones'; n: number; scaled?: boolean }
+  /** A thing; `craftTier` makes it at your craft tier, `rarity` at that rarity (K12). */
+  | { do: 'item'; id: string; n: number; craftTier?: boolean; rarity?: RarityId }
   /** A share of the bar; a negative share spills fuel, never below empty. */
   | { do: 'fuel'; ladder: LadderId; share: number }
   | { do: 'insight'; n: number }
@@ -86,6 +104,20 @@ export type CardEffect =
   /** Marks the day, for a later card's trigger; `clear-mark` forgets it. */
   | { do: 'mark'; id: string }
   | { do: 'clear-mark'; id: string }
+  /**
+   * The craft deck's (K12), on what the card is set at: the batch on the bench (its inputs read as
+   * above the floor, or its tool cracks), your field (its ripest bed taken, beds lost, its beds aged
+   * some days, or watched against a thief this month), craft renown in the card's market's region,
+   * a commission by name at the card's shop (batches of what you make, at a floor), or a recipe
+   * slip of the craft you don't hold.
+   */
+  | { do: 'bench'; outcome: 'finer' | 'crack' }
+  | { do: 'field'; outcome: 'robbed' | 'watched' }
+  | { do: 'field'; lose: number }
+  | { do: 'field'; age: number }
+  | { do: 'renown'; n: number }
+  | { do: 'commission'; batches: number; floor: RarityId }
+  | { do: 'slip' }
   /** Adds to one of the card's own variables, for its later steps and its chronicle line. */
   | { do: 'var'; id: string; n: number }
   /** A raid on a site you hold settles (K9): its raiders take what they came for, or are driven off. */
@@ -155,7 +187,7 @@ export interface CardChoice {
   /** Offered only while a card variable is in range. */
   when?: VarCheck;
   /** What it costs up front; it can't be chosen without it. */
-  cost?: { stones?: number; item?: { id: string; n: number } };
+  cost?: { stones?: number; item?: { id: string; n: number }; scaled?: boolean };
   /**
    * Your attribute against a number, the resolver's comparison with no roll (design § The resolver;
    * P3.3): clear at ×1.25 of it, close at ×1, short below. A card is you against yourself, so it
@@ -224,4 +256,11 @@ export interface Card {
   steps?: Readonly<Record<string, CardStep>>;
   /** Never drawn: a system queues it where it happens (K9's raids). */
   queued?: boolean;
+  /**
+   * Where a craft card is set (K12, design: a card about a field or a market is set where that
+   * field or market is): your field, the nearest market with a shop of the craft, the market
+   * where your name in the craft stands highest, or your bench where you are. Its words name
+   * the place, a shop and its keeper, or the field's neighbour, and the craft.
+   */
+  setAt?: 'field' | 'market' | 'renown' | 'bench';
 }

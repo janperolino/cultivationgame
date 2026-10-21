@@ -63,7 +63,9 @@ import {
   seatTitle,
   theName,
 } from '../../core/organizations.ts';
-import { CARDS, hasCard } from '../../content/cards/index.ts';
+import { CARDS, card, hasCard } from '../../content/cards/index.ts';
+import { CRAFT_DECK, craftWords } from '../../core/craftDeck.ts';
+import { openCommissions } from '../../core/commissions.ts';
 import { COMBAT_DAO_IDS, isCombatDao } from '../../content/daos.ts';
 import { LADDERS, type LadderId } from '../../content/cultivation.ts';
 import { COPY_KINDS, copyId, copyTitle, hasCopy } from '../../content/copies.ts';
@@ -1006,12 +1008,36 @@ export const COMMANDS: Record<string, Command> = {
           ...s,
           cards: {
             ...s.cards,
-            pending: [...s.cards.pending, { uid: s.cards.nextUid, card: id, day: s.calendar.day }],
+            pending: [
+              ...s.cards.pending,
+              {
+                uid: s.cards.nextUid,
+                card: id,
+                day: s.calendar.day,
+                // A craft card is set where its field or market is (K12).
+                ...(card(id).deck === CRAFT_DECK ? { words: craftWords(s, card(id)) ?? {} } : {}),
+              },
+            ],
             drawn: { ...s.cards.drawn, [id]: s.calendar.day },
             nextUid: s.cards.nextUid + 1,
           },
         }),
         `${id} waits in the feed.`,
+      );
+    },
+  },
+  commission: {
+    usage: 'commission',
+    help: 'Puts what each open commission asks for in your Bag, at its floor (K12).',
+    run(_, store) {
+      return apply(
+        store,
+        (s) => {
+          let c = s.player;
+          for (const k of openCommissions(c)) c = addItem(c, variantId(k.thing, k.floor), k.n);
+          return withPlayer(s, c);
+        },
+        'Your open commissions are filled in the Bag.',
       );
     },
   },

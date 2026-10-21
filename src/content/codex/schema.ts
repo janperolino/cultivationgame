@@ -83,6 +83,10 @@ export const MET_TESTS = [
   'volley', // a volley art known
   'burn-goods', // a burning pill, or an array with a fight in it, held; or the blood burned
   'rogue', // a start that refused, belonging to no power
+  'commission', // a commission taken (K12)
+  'commission-done', // a commission handed in
+  'order', // something ordered made at a shop
+  'craft-card', // a craft deck card drawn
 ] as const;
 export type MetTest = (typeof MET_TESTS)[number];
 

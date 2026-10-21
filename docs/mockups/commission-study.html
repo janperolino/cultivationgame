@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Commission Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
+<style>
+  /* K12 study: a commission at a shop's counter, the Crafts page's commissions, and the craft deck.
+     Tokens copied from src/ui/theme.css, as the K6 study. Numbers are the City's month 0. */
+  :root {
+    --void: #040507; --text: #e9e5da; --muted: #8d949d; --accent: #d6ab4c; --gilt: #d9b46a;
+    --panel: rgb(7 8 11 / 0.84); --line-faint: color-mix(in srgb, var(--gilt) 16%, transparent);
+    --edge-strong: rgb(255 255 255 / 0.14); --hour-craft: #d9a441; --warn: #e08a6a;
+    --rarity-white: #ece8de; --rarity-green: #7fca8c; --rarity-blue: #7fa8e0; --seal: #b8432f;
+    --font-display: 'Cormorant Garamond', Georgia, serif; --font-brush: 'Ma Shan Zheng', KaiTi, serif;
+    --font-ui: Inter, system-ui, 'Segoe UI', sans-serif;
+  }
+  body { margin: 0; background: var(--void); color: var(--text); font-family: var(--font-ui); font-size: 14px; }
+  .note { max-width: 1100px; margin: 28px auto 8px; padding: 0 16px; color: var(--muted); line-height: 1.5; }
+  .note h1 { font-family: var(--font-display); color: var(--text); font-weight: 600; font-size: 30px; margin: 0 0 4px; }
+  .note b { color: var(--text); font-weight: 600; }
+  .frame { width: 100%; overflow: hidden; margin: 10px 0 34px; }
+  .stage { width: 1920px; height: 1080px; transform-origin: 0 0; position: relative;
+    background: radial-gradient(1200px 700px at 60% 30%, #0d1522 0%, #05070b 60%, #030405 100%); }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 64px; border-right: 1px solid var(--line-faint); background: rgb(5 6 8 / 0.9); }
+  .rail i { display: block; width: 26px; height: 26px; margin: 22px auto; border: 1px solid var(--line-faint); border-radius: 5px; position: relative; }
+  .rail i.on { border-color: var(--hour-craft); background: color-mix(in srgb, var(--hour-craft) 20%, transparent); }
+  .rail i.dot::after, .dot::after { content: ''; position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--seal); top: -3px; right: -4px; }
+  .screen { position: absolute; left: 110px; top: 70px; right: 110px; bottom: 60px; }
+  .crumb { font-family: var(--font-display); font-size: 22px; color: var(--text); }
+  .hz { color: var(--accent); font-family: var(--font-brush); }
+  .title { font-family: var(--font-display); font-size: 40px; font-weight: 600; margin: 10px 0 18px; }
+  .pages { display: flex; align-items: baseline; gap: 26px; padding-bottom: 10px; border-bottom: 1px solid var(--line-faint); margin-bottom: 18px; font-size: 16px; }
+  .pages span { color: var(--muted); padding-bottom: 3px; position: relative; }
+  .pages span.cur { color: var(--text); border-bottom: 2px solid var(--hour-craft); }
+  .pages .hours { margin-left: auto; font-size: 14px; }
+  .cols { display: grid; grid-template-columns: 1fr 1.35fr 0.9fr; gap: 20px; align-items: start; }
+  .panel { padding: 22px 24px; border: 1px solid var(--line-faint); border-radius: 4px; background: var(--panel); box-shadow: 0 24px 50px -28px #000; }
+  .panel + .panel { margin-top: 16px; }
+  h2 { font-family: var(--font-display); font-weight: 600; font-size: 21px; margin: 0 0 10px; }
+  h3 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 500; margin: 16px 0 6px; }
+  .muted { color: var(--muted); } .small { font-size: 12.5px; }
+  p { margin: 4px 0; line-height: 1.5; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line-faint); }
+  .green { color: var(--rarity-green); } .white { color: var(--rarity-white); } .blue { color: var(--rarity-blue); }
+  .mark { font-family: var(--font-brush); color: var(--seal); font-size: 15px; margin-left: 4px; }
+  .button { display: inline-block; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 6px 14px; border-radius: 3px; font-size: 13px; }
+  .button.quiet { color: var(--muted); border-color: var(--edge-strong); background: none; }
+  .button.off { opacity: .4; }
+  .why { color: var(--warn); font-size: 13px; }
+  .place-head { display: flex; align-items: baseline; gap: 14px; }
+  .place-head .nm { font-family: var(--font-display); font-size: 32px; font-weight: 600; }
+  .doors li { justify-content: flex-start; gap: 12px; font-size: 15px; }
+  .doors li.cur { color: var(--accent); }
+  .doors li span.k { width: 22px; color: var(--muted); font-family: var(--font-brush); }
+  .tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line-faint); margin: 12px 0 16px; }
+  .tabs span { padding-bottom: 6px; color: var(--muted); position: relative; }
+  .tabs span.cur { color: var(--text); border-bottom: 2px solid var(--accent); }
+  /* the notice: a posted commission as a slip pinned at the counter */
+  .notice { border: 1px solid color-mix(in srgb, var(--seal) 45%, transparent); background: color-mix(in srgb, var(--seal) 6%, transparent);
+    border-radius: 3px; padding: 16px 18px; display: grid; grid-template-columns: 52px 1fr auto; gap: 16px; align-items: start; }
+  .notice + .notice { margin-top: 12px; }
+  .notice .stamp { width: 46px; height: 46px; border: 2px solid var(--seal); color: var(--seal); border-radius: 4px; display: grid; place-items: center;
+    font-family: var(--font-brush); font-size: 24px; }
+  .notice .ask { font-family: var(--font-display); font-size: 21px; font-weight: 600; }
+  .notice .pay { text-align: right; }
+  .notice .pay b { font-size: 20px; color: var(--gilt); font-weight: 500; }
+  .notice.graded { border-color: color-mix(in srgb, var(--gilt) 50%, transparent); background: color-mix(in srgb, var(--gilt) 6%, transparent); }
+  .notice.graded .stamp { border-color: var(--gilt); color: var(--gilt); font-size: 17px; }
+  .order { display: grid; grid-template-columns: 150px 1fr; gap: 10px 16px; align-items: center; margin-top: 8px; }
+  .select { border: 1px solid var(--edge-strong); padding: 5px 10px; border-radius: 3px; color: var(--text); font-size: 13px; display: inline-block; }
+  .seg { display: inline-flex; border: 1px solid var(--edge-strong); border-radius: 3px; overflow: hidden; font-size: 13px; }
+  .seg span { padding: 5px 12px; color: var(--muted); } .seg span.on { color: var(--text); background: rgb(255 255 255 / 0.07); }
+  .bar { display: flex; height: 8px; border-radius: 2px; overflow: hidden; width: 260px; }
+  .bar i { display: block; height: 100%; }
+  /* commissions on the Crafts page */
+  .comm { padding: 10px 0; border-bottom: 1px solid var(--line-faint); }
+  .comm .top { display: flex; justify-content: space-between; gap: 10px; }
+  .comm .nm { font-weight: 500; }
+  .prog { height: 4px; background: rgb(255 255 255 / 0.08); border-radius: 2px; margin: 7px 0 4px; }
+  .prog i { display: block; height: 100%; background: var(--gilt); border-radius: 2px; }
+  /* the tray */
+  .tray { position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%); width: 620px; }
+  .card { border: 1px solid var(--line-faint); background: rgb(9 10 14 / 0.94); border-radius: 4px; padding: 20px 22px; box-shadow: 0 30px 60px -30px #000; }
+  .card .kind { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--hour-craft); }
+  .card .t { font-family: var(--font-display); font-size: 25px; font-weight: 600; margin: 4px 0 8px; }
+  .card .choices { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
+  .card .choices span { border: 1px solid var(--edge-strong); border-radius: 3px; padding: 7px 12px; display: flex; justify-content: space-between; }
+  .card .choices span em { font-style: normal; color: var(--muted); font-size: 12.5px; }
+  .figure { position: absolute; left: 50%; top: 170px; transform: translateX(-50%); width: 240px; height: 380px; border-radius: 120px 120px 30px 30px;
+    background: radial-gradient(closest-side, rgb(214 171 76 / 0.16), transparent); border: 1px dashed var(--line-faint); display: grid; place-items: center; color: var(--muted); }
+  /* the deck, as cards in a grid */
+  .deck { max-width: 1400px; margin: 10px auto 60px; padding: 0 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .deck .card { padding: 16px 18px; }
+  .deck .card .t { font-size: 21px; }
+  .deck .card .set { font-size: 12px; color: var(--muted); margin-top: -4px; margin-bottom: 6px; }
+  .deck .card .choices span { padding: 6px 10px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="note">
+  <h1>Commissions and the craft deck</h1>
+  K12 study, for the phase talk. Three frames on the 1920×1080 stage, then the twelve craft cards drafted. The prices are real: month 0 in the City of the Guarded Mouth,
+  where healing pills are the market's biggest shortage (a Spring-Returning Pill stands at 4.24 low there).
+</div>
+
+<!-- ============================================================ A: AT THE SHOP -->
+<div class="note"><b>A. A posted commission at the counter.</b> A shop dealing in a craft gets a fourth tab, <b>Commission 托</b>, beside Buy, Sell and Mend.
+At the top is the month's notice, pinned with the market's line of why. Under it, if you're known by name there (craft renown 3), comes a second notice <i>by name</i>.
+At an alchemy shop or a refiner, <b>Made to order 订做</b> sits under the notices. The rail's Place icon gets a dot while a commission you've taken can be handed in where you stand.</div>
+<div class="frame"><div class="stage">
+  <div class="rail"><i></i><i></i><i></i><i></i><i class="on dot"></i><i></i><i></i><i></i></div>
+  <div class="screen">
+    <div class="crumb muted" style="font-family:var(--font-ui);font-size:14px">The Border Wilds · City of the Guarded Mouth · Pill Street</div>
+    <div class="place-head" style="margin:8px 0 6px"><span class="nm">City of the Guarded Mouth</span><span class="hz" style="font-size:24px">守口城</span></div>
+    <p class="why" style="margin-bottom:16px">Healing pills run short: an army's headquarters bleeds faster than the markets round it carry them in.</p>
+    <div class="cols" style="grid-template-columns: 300px 1fr 1fr">
+      <div class="panel doors">
+        <h2>Pill Street <span class="hz">丹街</span></h2>
+        <ul>
+          <li><span class="k">丹</span>the Apricot Grove branch shop</li>
+          <li><span class="k">丹</span>the Pan family pill shop</li>
+          <li class="cur"><span class="k">丹</span>Auntie Yan's herb hall</li>
+          <li><span class="k">丹</span>the small shops of Pill Street</li>
+        </ul>
+        <h3>Back</h3>
+        <ul><li><span class="k">门</span>The city's doors</li></ul>
+      </div>
+      <div class="panel">
+        <h2>Auntie Yan's herb hall</h2>
+        <p class="muted small">Auntie Yan · she can pay out 1,240 low this month</p>
+        <div class="tabs"><span>Buy</span><span>Sell</span><span class="cur dot">Commission <span class="hz">托</span></span></div>
+
+        <div class="notice">
+          <div class="stamp">托</div>
+          <div>
+            <div class="ask">Ten Spring-Returning Pills, tier 1, white or better</div>
+            <p class="small">"The garrison's surgeons came twice this week and left with the shelf. I'll take ten of your make, and I don't care whose name is on the furnace."</p>
+            <p class="muted small">By the month's end · 23 days left · only pills you made (your mark <span class="mark">记</span>) fill it</p>
+            <p class="small" style="margin-top:8px"><span class="button">Take it</span> &nbsp;<span class="muted">You carry 12 of your own.</span></p>
+          </div>
+          <div class="pay"><b>63.6 low</b><p class="muted small">6.36 each<br>×1.5 the market</p></div>
+        </div>
+
+        <div class="notice">
+          <div class="stamp" style="font-size:16px">名</div>
+          <div>
+            <div class="ask">By name: twenty Qi-Gathering Pills, green or better</div>
+            <p class="small">"You're the one whose pills the cadets ask after. Twenty, green, and I'll pay for the name."</p>
+            <p class="muted small">Offered only to you, from craft renown 3 · by the month's end · your mark's +9% on top</p>
+            <p class="small" style="margin-top:8px"><span class="button quiet">Take it</span></p>
+          </div>
+          <div class="pay"><b>106.5 low</b><p class="muted small">5.33 each<br>×1.5, +9%</p></div>
+        </div>
+
+        <h3>Taken: hand in</h3>
+        <ul class="small">
+          <li><span>Ten Spring-Returning Pills <span class="muted">· 12 of yours carried</span></span><span><span class="button">Hand in 10 for 63.6 low</span></span></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2>Made to order <span class="hz">订做</span></h2>
+        <p class="muted small">Auntie Yan's furnace brews what this hall sells. You pay ×1.25 the market, less what your own inputs are worth.</p>
+        <div class="order">
+          <span class="muted">The recipe</span><span class="select">Spring-Returning Pill · tier 1 ▾</span>
+          <span class="muted">The inputs</span><span class="seg"><span>Hers</span><span class="on">Yours</span></span>
+          <span></span><span class="small">2 Moon Sea-Grape, 1 Old Apricot Kernel <span class="green">green</span> from your Bag: <span class="green">+0.5 lift</span></span>
+          <span class="muted">Her hand</span><span class="small">Mastery: +0.5 lift, and the batch always holds</span>
+          <span class="muted">It comes out</span>
+          <span><span class="bar"><i style="width:100%;background:var(--rarity-green)"></i></span><span class="small"><span class="green">green, sure</span> <span class="muted">(white 50 / green 50 with hers)</span></span></span>
+          <span class="muted">Ready</span><span class="small">in 1 day, at this counter</span>
+          <span class="muted">The price</span><span class="small"><b style="color:var(--gilt);font-weight:500">46.0 low</b> <span class="muted">(10 pills at 4.24 ×1.25 = 53.0, less your herbs' 7.0)</span></span>
+        </div>
+        <p style="margin-top:14px"><span class="button">Order it</span></p>
+        <h3>Waiting at this counter</h3>
+        <p class="muted small">Nothing ordered here.</p>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ============================================================ B: THE CRAFTS PAGE -->
+<div class="note"><b>B. The Crafts page.</b> A <b>Commissions 托</b> panel heads the right column on every craft's page, showing that craft's taken commissions and your orders.
+Each has its progress (your marked pieces carried against the count), its time left and where to hand it in. A page tab gets a dot when a craft card about that page waits in the tray;
+here it's Farming, with a thief at the field.</div>
+<div class="frame"><div class="stage">
+  <div class="rail"><i></i><i></i><i></i><i class="on dot"></i><i></i><i></i><i></i><i></i></div>
+  <div class="screen">
+    <div class="crumb">Severed Heaven <span class="hz">断天</span></div>
+    <div class="title">Crafts <span class="hz">艺</span></div>
+    <div class="pages">
+      <span class="cur">Alchemy <span class="hz">丹</span></span><span>Refining <span class="hz">器</span></span>
+      <span>Talismans <span class="hz">符</span></span><span>Formations <span class="hz">阵</span></span><span class="dot">Farming <span class="hz">植</span></span>
+      <span class="hours muted">4 craft hours a day · set on Routine</span>
+    </div>
+    <div class="cols">
+      <div><div class="panel">
+        <h2>The furnace</h2><p>Crude Clay Furnace <span class="hz">粗陶炉</span></p><p class="muted small">White · Qi Condensation · whole</p>
+        <h2 style="margin-top:20px">Recipes known</h2>
+        <ul><li><span>Qi-Gathering Pill</span><span class="muted">qi pills</span></li>
+          <li><span>Spring-Returning Pill</span><span class="muted">healing pills</span></li>
+          <li><span>Bone-Meal Pill</span><span class="muted">body pills</span></li></ul>
+      </div></div>
+      <div><div class="panel">
+        <h2>The bench</h2>
+        <ul><li><span>Spring-Returning Pill ×2</span><span class="muted">batch 1 of 2 · 2 h left</span></li></ul>
+        <h2 style="margin-top:20px">The last batches</h2>
+        <ul>
+          <li><span class="white">12 Spring-Returning Pill, white <span class="mark">记</span></span><span class="muted small">queued</span></li>
+          <li><span class="green">11 Qi-Gathering Pill, green <span class="mark">记</span></span><span class="muted small">played at 0.82</span></li>
+        </ul>
+      </div></div>
+      <div>
+        <div class="panel">
+          <h2>Commissions <span class="hz">托</span></h2>
+          <div class="comm">
+            <div class="top"><span class="nm">Ten Spring-Returning Pills</span><span style="color:var(--gilt)">63.6 low</span></div>
+            <div class="prog"><i style="width:100%"></i></div>
+            <p class="muted small">12 of yours carried, ready · Auntie Yan's herb hall, the City · 23 days left</p>
+          </div>
+          <div class="comm">
+            <div class="top"><span class="nm">Five Bone-Shard Talismans, <span class="green">green</span></span><span style="color:var(--gilt)">1,328 low</span></div>
+            <div class="prog"><i style="width:0%"></i></div>
+            <p class="muted small">0 of 5 · Widow Yao's talisman shop, the City · tier 2, graded: second-grade · 23 days left</p>
+          </div>
+          <h3>Ordered</h3>
+          <div class="comm">
+            <div class="top"><span class="nm">Boar-Hide Vest</span><span class="muted">paid 65.6</span></div>
+            <p class="muted small">Master Cao's refinery, Thousand Paddocks · ready, waiting at the counter</p>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Grade and name <span class="hz">品 · 名</span></h2>
+          <p class="small">First-grade Alchemist · the Border Wilds 3, <span style="color:var(--gilt)">+9%</span></p>
+          <p class="muted small">Commissions done count toward your name: a point each.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ============================================================ C: A CRAFT CARD IN THE TRAY -->
+<div class="note"><b>C. A craft card in Cultivate's tray.</b> It looks like any card, with its deck word in the hour's craft gold. It's set where its field or market is, and names a person and a door you can go to.</div>
+<div class="frame"><div class="stage">
+  <div class="rail"><i class="on"></i><i></i><i></i><i class="dot"></i><i></i><i></i><i></i><i></i></div>
+  <div class="figure">the figure</div>
+  <div class="tray">
+    <div class="card">
+      <div class="kind">Craft · the field at Spear-Plow</div>
+      <div class="t">Footprints in the Furrows</div>
+      <p>Old Hu, who keeps the Spear-Plow fields beside yours, sends word by a carter: someone has been walking your beds at night, and the Calm-Heart Grass is ripe. Three nights at most before they come with a sack.</p>
+      <div class="choices">
+        <span>Pay Old Hu to sit up with a lamp <em>3 low · the beds are watched this month</em></span>
+        <span>Go and wait for them yourself <em>you're at Spear-Plow · a fight, a layer under you</em></span>
+        <span>Let it be <em>if left: they take the ripest bed</em></span>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ============================================================ THE DECK -->
+<div class="note"><b>The craft deck, twelve cards drafted.</b> Each names a person or a door you can go into. Its <i>set</i> line is filled where you hold a field, or where the nearest market with your craft's shops is.
+Stakes run on the realm curve: stones ×the realm's wage (shown at Qi Condensation), and herbs, ore and slips at your craft tier. "Urgent" cards take their default if left.</div>
+<div class="deck">
+  <div class="card"><div class="kind">Market · alchemy, farming</div><div class="t">The Hundred-Year Root</div><div class="set">set at the nearest Pill Street: a herb hall and its keeper</div>
+    <p class="small">A root-digger down from the ridges has sold Auntie Yan a hundred-year Old Apricot Kernel. She'll let it go to a crafter before the sects hear of it.</p>
+    <div class="choices"><span>Buy it <em>12 low · a blue herb at your tier</em></span><span>Bargain for it <em>Fortune 14 · 8 low</em></span><span>Let it go</span></div></div>
+  <div class="card"><div class="kind">Bench · alchemy, refining · 2 steps</div><div class="t">The Fire Leaps</div><div class="set">where you are, while a batch is on the bench</div>
+    <p class="small">Halfway through the batch the fire in your {tool} climbs white at its heart and roars. Push it while it burns and the batch could come out finer, or crack the vessel.</p>
+    <div class="choices"><span>Push it <em>Aptitude 13 · the batch +1 band / the tool cracks</em></span><span>Bank it <em>the batch goes on as it was</em></span></div></div>
+  <div class="card"><div class="kind">Market · any craft</div><div class="t">The Steward's Order</div><div class="set">a power's hall in the nearest market (the Qian Clan's trading hall)</div>
+    <p class="small">The Qians' steward, Qian Lu, wants a crafter who'll fill an order without asking who it's for: two batches of your commonest make, by the month's end.</p>
+    <div class="choices"><span>Take the order <em>a commission by name at the hall, ×1.5</em></span><span>Turn him down</span></div></div>
+  <div class="card"><div class="kind">Market · any craft</div><div class="t">Undercut</div><div class="set">the market where your mark sells best</div>
+    <p class="small">A pill-seller from River-Bend, Pan Sheng, is crying Qi-Gathering Pills on Pill Street at two-thirds of yours. The keepers have started to listen.</p>
+    <div class="choices"><span>Buy one and look inside <em>Aptitude 12 · he cuts them with chaff: +1 name</em></span><span>Let your pills speak for themselves <em>−1 name there</em></span></div></div>
+  <div class="card"><div class="kind">Market · a craft you hold ungraded</div><div class="t">The Examiner's Month</div><div class="set">the Myriad Crafts Guild, City of the Guarded Mouth</div>
+    <p class="small">Examiner Wen of the guild sits the {craft} tests this month, and her notes on the last year's failures go for a price to anyone who asks the porter.</p>
+    <div class="choices"><span>Buy the notes <em>6 low · insight, a quarter of a node</em></span><span>Sit the test cold</span></div></div>
+  <div class="card"><div class="kind">Market · any craft · 2 steps</div><div class="t">The Old Master's Slip</div><div class="set">a back room off the nearest craft street</div>
+    <p class="small">Old Gao, who brewed for the Wall forty years, is dying in the room behind his son's shop. The son can't read the slips and wants them gone.</p>
+    <div class="choices"><span>Sit with the old man a day <em>he gives you one: a slip of your craft you don't hold</em></span><span>Buy the box from the son <em>20 low · the same slip</em></span><span>Leave them to their grief</span></div></div>
+  <div class="card"><div class="kind">Field · urgent, 3 days</div><div class="t">Footprints in the Furrows</div><div class="set">your field (Spear-Plow), its neighbour Old Hu</div>
+    <p class="small">The tray card in frame C. If left, the thief takes the ripest bed.</p>
+    <div class="choices"><span>Pay Old Hu to sit up <em>3 low</em></span><span>Wait for them yourself <em>when there · a fight</em></span><span>Let it be</span></div></div>
+  <div class="card"><div class="kind">Field</div><div class="t">Grey Rot</div><div class="set">your field, the village's herbwoman</div>
+    <p class="small">A grey rot is creeping down one furrow of your field at Spear-Plow. Granny Shi says a purging powder stops it, if it's laid before the rain.</p>
+    <div class="choices"><span>Buy her powder <em>4 low · the beds are saved</em></span><span>Pull up the sick bed <em>one bed lost</em></span><span>Trust the hardiness <em>Aptitude 12 · or two beds lost</em></span></div></div>
+  <div class="card"><div class="kind">Field</div><div class="t">The Spirit Rain</div><div class="set">your field</div>
+    <p class="small">A warm spirit rain is rolling up the valley toward Spear-Plow. Fields that are tended through it drink a season's growth in a night.</p>
+    <div class="choices"><span>Go and tend through the night <em>when there · the beds age a season</em></span><span>Let it fall <em>the beds age a month</em></span></div></div>
+  <div class="card"><div class="kind">Market · refining</div><div class="t">A Prospector's Lode</div><div class="set">the nearest Refiners' Row</div>
+    <p class="small">A prospector out of the Red Rocks, Dong the Elder, has more ore than mules. He'll sell the lot cheap at Master Jiang's back gate before he walks it home.</p>
+    <div class="choices"><span>Buy the lot <em>9 low · 10 ore at your tier, half its price</em></span><span>Buy half <em>5 low · 5 ore</em></span><span>Pass</span></div></div>
+  <div class="card"><div class="kind">Market · talismans</div><div class="t">Blood Cinnabar</div><div class="set">the nearest Talisman Lane</div>
+    <p class="small">Widow Yao has a jar of cinnabar so red it looks wet, ground from a beast's heart-stone, she says. Ink like that draws a sheet a band finer.</p>
+    <div class="choices"><span>Buy the jar <em>10 low · 5 green cinnabar at your tier</em></span><span>Pass</span></div></div>
+  <div class="card"><div class="kind">Market · alchemy · 2 steps</div><div class="t">The Brother's Complaint</div><div class="set">the market where your mark sells best</div>
+    <p class="small">A drover at Pacified Fort swears your pill turned his brother's stomach black and has come to Auntie Luo's counter with two friends to say so.</p>
+    <div class="choices"><span>Pay him off <em>6 low</em></span><span>Stand by your make <em>Aptitude 13 · +1 name / −1 name</em></span><span>Run them off <em>a fight: three of them, a layer under you</em></span></div></div>
+</div>
+<script>
+  // Fit each 1920×1080 stage to the page width, as the game's stage does to its window.
+  function fit() {
+    for (const f of document.querySelectorAll('.frame')) {
+      const s = f.querySelector('.stage');
+      const k = f.clientWidth / 1920;
+      s.style.transform = `scale(${k})`;
+      f.style.height = `${1080 * k}px`;
+    }
+  }
+  addEventListener('resize', fit);
+  fit();
+</script>
+</body>
+</html>

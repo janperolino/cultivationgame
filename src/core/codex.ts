@@ -19,6 +19,8 @@ import { groundPiles } from './map/ground.ts';
 import { placeById } from './map/region.ts';
 import { mapOf } from './map/travel.ts';
 import { technique, hasTechnique } from '../content/techniques.ts';
+import { card, hasCard } from '../content/cards/index.ts';
+import { CRAFT_DECK } from './craftDeck.ts';
 
 export { CODEX, codexEntry, hasCodexEntry } from '../content/codex/index.ts';
 
@@ -122,6 +124,11 @@ export const MET: Readonly<Record<MetTest, (s: GameState) => boolean>> = {
       const u = item(id).uses;
       return !!u.burn || ['warding', 'binding', 'killing', 'maze'].includes(u.array?.does ?? '');
     }),
+  commission: (s) => (s.player.crafts.commissions?.length ?? 0) > 0 || MET['commission-done'](s),
+  'commission-done': (s) => (s.player.crafts.commissions ?? []).some((k) => k.done),
+  order: (s) => (s.player.crafts.orders?.length ?? 0) > 0,
+  'craft-card': (s) =>
+    Object.keys(s.cards.drawn).some((id) => hasCard(id) && card(id).deck === CRAFT_DECK),
   rogue: (s) =>
     s.player.origin?.choice === 'refuse' && !s.world.members.some((m) => m.who === s.player.id),
 };

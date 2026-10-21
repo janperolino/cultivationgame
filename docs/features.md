@@ -214,6 +214,14 @@ Every feature a player can touch in the game today (built in code, not only desi
 | The talisman volley: 3, 5 or 10 talismans thrown in one action | Combat › Burn goods | A Burn goods button | a volley art, the Talismans Dao held | Why ×1 | codex |
 | Arts that burn goods: a piece blown apart, flags set mid-fight, the burning pill | Combat › Burn goods, Items | A Burn goods button | a spare piece, an array or a burning pill in the Bag | Why ×1 | codex |
 
+## Commissions and the craft deck (K12)
+
+| Feature | Where | First met today | Needs first | Taught by | Way in |
+|---|---|---|---|---|---|
+| Commissions 托: a shop's notice for its market's shortage, and by name from craft renown 3 | A craft shop's counter › Commission | The notice on the tab | nothing; graded ones a certified grade | Quest: A Notice on the Counter | quest |
+| Made to order 订做: a recipe made at an alchemy shop or refiner, your inputs or theirs | An alchemy shop or refiner › Commission | Made to order under the notice | stones, or the inputs | Codex | codex |
+| The craft deck: cards of the bench, the field and the market, at your Craft hours' share | Cultivate, the tray | A craft card | a tool or a field held | Codex | codex |
+
 ## Chronicle and the rest
 
 | Feature | Where | First met today | Needs first | Taught by | Way in |

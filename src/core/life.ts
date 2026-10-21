@@ -21,6 +21,8 @@ import {
 } from './cultivation.ts';
 import type { Seat } from './attention.ts';
 import type { DayStep } from './loop.ts';
+import { commissionsDay } from './commissions.ts';
+import { craftCardsHere } from './craftDeck.ts';
 import { gainInsight } from './insight.ts';
 import type { EquipSlot } from '../content/items.ts';
 import { equip, feedArtifact, unequip, wornIds, type GearCheck } from './gear.ts';
@@ -251,6 +253,10 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   // The plots grow wherever you are, tended where you stand (K8).
   next = fieldsDay(next, s.calendar.day - days, s.calendar.day);
   next = dwellingsDay(next, s.calendar.day - days, s.calendar.day);
+  // A commission left unfilled past its month costs its keeper's regard (K12).
+  next = commissionsDay(next);
+  // A field card's `here`: whether you stand at its field (K12).
+  next = craftCardsHere(next);
   // Arrays burn their eyes' stones, and traps on open ground catch what walks in (K10).
   next = formationsDay(next, s.calendar.day - days, s.calendar.day);
   // A burning pill's weakness lifts as its day ends (K11).

@@ -207,6 +207,35 @@ export const DwellingSchema = z.object({
 });
 export type Dwelling = z.infer<typeof DwellingSchema>;
 
+/**
+ * A commission taken (K12): the shop and month, the thing at its tier and floor, how many, the
+ * grade it asks, the stones each, fixed when taken, and who asked when it came by name or by a
+ * card. Handed in, it stays marked done for the month so the shop doesn't post it again.
+ */
+export const CommissionSchema = z.object({
+  shop: z.string(),
+  month: z.number().int(),
+  kind: z.enum(['posted', 'named', 'card']),
+  thing: z.string(),
+  n: z.number().int().min(1),
+  floor: z.enum(RARITY_IDS),
+  grade: z.number().int().min(1).max(9).optional(),
+  each: z.number().min(0),
+  asker: z.string().optional(),
+  done: z.boolean().optional(),
+});
+export type Commission = z.infer<typeof CommissionSchema>;
+
+/** A piece made to order at a shop (K12): what came out, how many, the day it is ready, the price. */
+export const OrderSchema = z.object({
+  shop: z.string(),
+  made: z.string(),
+  n: z.number().int().min(1),
+  ready: z.number(),
+  paid: z.number().min(0),
+});
+export type Order = z.infer<typeof OrderSchema>;
+
 const CraftsSchema = z.object({
   bench: z.array(
     z.object({
@@ -299,6 +328,10 @@ const CraftsSchema = z.object({
       }),
     ),
   ),
+  /** The commissions you took (K12): this month's, open or handed in, by shop. */
+  commissions: z.array(CommissionSchema).optional(),
+  /** What you ordered made at a shop (K12): what came out and the day it is ready there. */
+  orders: z.array(OrderSchema).optional(),
 });
 export type CraftsState = z.infer<typeof CraftsSchema>;
 

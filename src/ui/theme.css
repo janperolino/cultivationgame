@@ -11483,3 +11483,160 @@ p.map-above {
   border-radius: 4px;
   background: var(--accent);
 }
+
+/* Commissions (K12, docs/mockups/commission-study.html): the notice pinned at a craft's counter,
+   with its seal; a graded one in gilt; Made to order; and the Crafts page's commissions panel. */
+.commission {
+  gap: 8px;
+}
+
+.commission-notice {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--seal) 45%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--seal) 6%, transparent);
+}
+
+.commission-notice > span:nth-child(2) {
+  display: grid;
+  gap: 3px;
+  justify-items: start;
+}
+
+.commission-notice .place-btn {
+  margin-top: 6px;
+}
+
+.commission-notice.graded {
+  border-color: color-mix(in srgb, var(--gilt) 50%, transparent);
+  background: color-mix(in srgb, var(--gilt) 6%, transparent);
+}
+
+.commission-stamp {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--seal);
+  border-radius: 4px;
+  color: var(--seal);
+  font-family: var(--font-brush);
+  font-size: calc(20px * var(--text-scale));
+}
+
+.commission-notice.graded .commission-stamp {
+  border-color: var(--gilt);
+  color: var(--gilt);
+}
+
+.commission-ask {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: calc(18px * var(--text-scale));
+}
+
+.commission-why {
+  color: var(--warn);
+}
+
+.commission-notice .place-price {
+  display: grid;
+  gap: 2px;
+  color: var(--gilt);
+  font-size: calc(16px * var(--text-scale));
+}
+
+.commission-head {
+  margin: 10px 0 2px;
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.commission-order {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 8px 14px;
+  align-items: center;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.commission-order select {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--edge-strong);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font: inherit;
+}
+
+.commission-seg {
+  display: inline-flex;
+  border: 1px solid var(--edge-strong);
+  border-radius: 4px;
+  overflow: hidden;
+  justify-self: start;
+}
+
+.commission-seg button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 4px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.commission-seg button[aria-pressed='true'] {
+  color: var(--text);
+  background: rgb(255 255 255 / 0.07);
+}
+
+.crafts-page {
+  position: relative;
+}
+
+.crafts-dot {
+  position: absolute;
+  top: -2px;
+  right: -9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--seal);
+}
+
+.crafts-commissions > li {
+  display: grid;
+  gap: 3px;
+}
+
+.crafts-commission-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.crafts-commission-pay {
+  color: var(--gilt);
+}
+
+.crafts-commission-bar {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.08);
+}
+
+.crafts-commission-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--gilt);
+}

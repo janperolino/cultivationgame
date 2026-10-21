@@ -641,7 +641,7 @@ function reasonFor(m: Market, need: string): string | undefined {
   return undefined;
 }
 
-function shortLine(m: Market, s: Shortage): string {
+export function shortLine(m: Market, s: Shortage): string {
   const need = s.need;
   const word = NEED_WORDS[need] ?? { word: need };
   const head = `${capitalize(word.word)} ${word.one ? 'runs' : 'run'} short`;

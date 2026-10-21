@@ -135,6 +135,22 @@ export const INTRO_QUESTS: readonly Quest[] = [
     codex: ['furnace-sitting'],
   },
   {
+    id: 'intro-commission',
+    title: 'A Notice on the Counter',
+    giver: any('shop', 'the alchemy shop’s master', 'alchemy'),
+    reason:
+      'The alchemy shop’s master pins a notice on the counter each month for what the market runs short of, and pays half again for it. Take one, here or at any shop of a craft, and hand it in before the month turns.',
+    steps: [
+      {
+        text: 'Take a commission at a craft shop’s counter and hand it in by its month’s end.',
+        goal: { met: 'commission-done' },
+      },
+    ],
+    reward: { stones: 5, text: '5 low-grade stones' },
+    thanks: '“On time, and the right grade. I’ll pin another next month.”',
+    codex: ['commissions'],
+  },
+  {
     id: 'intro-mend',
     title: 'A Worn Edge',
     giver: any('shop', 'the refiner', 'refiner'),

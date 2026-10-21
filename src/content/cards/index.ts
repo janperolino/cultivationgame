@@ -1,5 +1,6 @@
 // Every deck of cards, and lookups. M1 ships the first hour's deck here; P1.8 adds the seclusion
 // deck, and each milestone after adds its own (design § Story cards and events).
+import { CRAFT_CARDS } from './craft.ts';
 import { FIRST_HOUR_CARDS } from './firstHour.ts';
 import { RETIRED_CARDS } from './retired.ts';
 import type { Card } from './schema.ts';
@@ -20,7 +21,12 @@ export type {
   VarCheck,
 } from './schema.ts';
 
-export const CARDS: readonly Card[] = [...FIRST_HOUR_CARDS, ...SECLUSION_CARDS, ...SITE_CARDS];
+export const CARDS: readonly Card[] = [
+  ...FIRST_HOUR_CARDS,
+  ...SECLUSION_CARDS,
+  ...SITE_CARDS,
+  ...CRAFT_CARDS,
+];
 
 /**
  * Decks that come at a pace rather than by each card's own chance: about one card every so many

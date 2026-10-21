@@ -81,6 +81,14 @@ import { TalismanScene } from './TalismanScene.tsx';
 import { itemTag } from './itemWords.ts';
 import { go } from './nav.ts';
 import { useGame } from './store.ts';
+import { commissionAsk, days } from './commissionWords.ts';
+import { card } from '../content/cards/index.ts';
+import { DAYS_PER_MONTH } from '../content/calendar.ts';
+import { shop } from '../content/shops.ts';
+import { carried, craftOf, makesToOrder, openCommissions } from '../core/commissions.ts';
+import { craftPage } from '../core/craftDeck.ts';
+import { marketOfShop } from '../core/markets.ts';
+import { priceWords } from '../core/purse.ts';
 
 /** Hours to a tenth, as the bench counts them. */
 const round1 = (h: number) => Math.round(h * 10) / 10;
@@ -257,6 +265,13 @@ export function CraftsScreen() {
     setWhy(reason);
   };
 
+  // A craft card about your bench or field lights its page while it waits in the tray (K12).
+  const lit = new Set(
+    game.cards.pending
+      .map((p) => craftPage(card(p.card), p.words))
+      .filter((k): k is CraftId => !!k),
+  );
+
   return (
     <div className="crafts">
       <nav className="crafts-pages" aria-label="Crafts">
@@ -274,6 +289,7 @@ export function CraftsScreen() {
             }}
           >
             {CRAFTS[k].page} <span className="hanzi">{CRAFTS[k].hanzi}</span>
+            {lit.has(k) && <i className="crafts-dot" aria-label="a card waits" />}
           </button>
         ))}
         <span className="crafts-hours">
@@ -447,6 +463,7 @@ export function CraftsScreen() {
             </section>
           ) : (
             <section className="panel crafts-right">
+              <Commissions game={game} craft={page} />
               <h2 className="panel-heading">
                 Grade and name <span className="hanzi">品 · 名</span>
               </h2>
@@ -465,6 +482,64 @@ export function CraftsScreen() {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Your commissions in a craft (K12, the study's frame B): each taken one with what you carry of it
+ * against its count, where to hand it in and the days left, then your orders and when they're ready.
+ */
+function Commissions({ game, craft }: { game: GameState; craft: CraftId }) {
+  const c = game.player;
+  const day = game.calendar.day;
+  const open = openCommissions(c).filter((k) => craftOf(k) === craft);
+  const orders = (c.crafts.orders ?? []).filter((o) => makesToOrder(o.shop) === craft);
+  if (open.length === 0 && orders.length === 0) return null;
+  const left = (month: number) => Math.max(0, Math.ceil((month + 1) * DAYS_PER_MONTH - day));
+  const where = (shopId: string) =>
+    `${shop(shopId).name}, ${marketOfShop(shopId)?.name ?? ''}`.replace(/, $/, '');
+  return (
+    <>
+      <h2 className="panel-heading">
+        Commissions <span className="hanzi">托</span>
+      </h2>
+      <ul className="crafts-list crafts-commissions">
+        {open.map((k) => {
+          const have = Math.min(k.n, carried(c, k));
+          return (
+            <li key={`${k.shop}/${k.kind}/${k.month}`}>
+              <span className="crafts-commission-top">
+                <span>{commissionAsk(k)}</span>
+                <span className="crafts-commission-pay">{priceWords(k.each * k.n)}</span>
+              </span>
+              <span className="crafts-commission-bar">
+                <i style={{ width: `${(have / k.n) * 100}%` }} />
+              </span>
+              <span className="muted">
+                {have} of {k.n} carried · {where(k.shop)}
+                {k.asker ? ` · for ${k.asker.split(',')[0]}` : ''}
+                {k.grade ? ` · graded` : ''} · {days(left(k.month))} left
+              </span>
+            </li>
+          );
+        })}
+        {orders.map((o, i) => (
+          <li key={`order-${i}`}>
+            <span className="crafts-commission-top">
+              <span>
+                {item(o.made).name}
+                {o.n > 1 ? ` ×${o.n}` : ''}, made to order
+              </span>
+              <span className="muted">paid {priceWords(o.paid)}</span>
+            </span>
+            <span className="muted">
+              {where(o.shop)} ·{' '}
+              {day >= o.ready ? 'ready, waiting at the counter' : `ready in ${days(o.ready - day)}`}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 

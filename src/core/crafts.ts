@@ -45,6 +45,7 @@ import {
 } from '../content/crafts.ts';
 import { baseOf, hasItem, item, rarityRange, variantId, type Item } from '../content/items.ts';
 import { MANUALS } from '../content/manuals.ts';
+import { job } from '../content/jobs.ts';
 import { MAX_MASTERY } from '../content/mastery.ts';
 import { CRAFT_RENOWN } from '../content/styles.ts';
 import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
@@ -196,9 +197,31 @@ export function toolsHeld(c: Cultivator, craft: CraftId): Item[] {
     .map(item);
 }
 
-/** The best whole tool of a craft whose tier reaches this one. */
+/**
+ * The tools of a craft a post you hold lends the bench (K12: a post's perk by id, `use.tool`), the
+ * alchemy hall's furnace; never in the Bag, so never sold, and the hall mends its own.
+ */
+export function lentTools(c: Cultivator, craft: CraftId): Item[] {
+  return c.jobs
+    .map((j) => job(j.id).use?.tool)
+    .filter((t): t is string => !!t && hasItem(t))
+    .map(item)
+    .filter((t) => isTool(t, craft));
+}
+
+/** Whether a tool is one a post lends rather than one you carry. */
+export function isLent(c: Cultivator, tool: Item): boolean {
+  return (
+    (c.items[tool.id] ?? 0) <= 0 &&
+    lentTools(c, tool.uses.tool!.craft).some((t) => t.id === tool.id)
+  );
+}
+
+/** The best whole tool of a craft whose tier reaches this one, yours or a post's. */
 export function toolAt(c: Cultivator, craft: CraftId, tier: number): Item | null {
-  const fit = toolsHeld(c, craft).filter((t) => !t.cracked && t.tier >= tier);
+  const fit = [...toolsHeld(c, craft), ...lentTools(c, craft)].filter(
+    (t) => !t.cracked && t.tier >= tier,
+  );
   fit.sort((a, b) => rarityRank(b.rarity) - rarityRank(a.rarity) || b.tier - a.tier);
   return fit[0] ?? null;
 }
@@ -685,7 +708,7 @@ export function resolve(
       next = withCrafts(next, {
         tray: { ...next.crafts.tray, [made]: (next.crafts.tray[made] ?? 0) + s.left },
       });
-  } else if (tool && rng.chance(blowUpShare(c, r.craft))) {
+  } else if (tool && !isLent(c, tool) && rng.chance(blowUpShare(c, r.craft))) {
     blew = true;
     const cracked = variantId(baseOf(tool.id), tool.rarity, { cracked: true });
     next = addItem(addItem(next, tool.id, -1), cracked, 1);
