@@ -8,6 +8,7 @@ import { ELEMENT_INFO, phaseOf } from '../content/elements.ts';
 import { BRANCHES } from '../content/hours.ts';
 import { MASTERY, METHOD_MASTERY } from '../content/mastery.ts';
 import { copyOf, copyTitle } from '../content/copies.ts';
+import { hasItem, item } from '../content/items.ts';
 import { method as methodOf, nextChapter, type Method, type Upkeep } from '../content/methods.ts';
 import { rarity, rarityRank, type Rarity } from '../content/rarity.ts';
 import type { LadderId } from '../core/cultivation.ts';
@@ -22,6 +23,7 @@ import {
   methodFitSpeed,
   methodMastery,
   methodSpeed,
+  runningRarity,
 } from '../core/methods.ts';
 import { copyUnread, ownedCopies, readingCopy } from '../core/reading.ts';
 import type { Cultivator, GameState } from '../core/state.ts';
@@ -86,13 +88,15 @@ function bonusWords(r: Rarity): string {
   return parts.length ? `At a breakthrough, ${list(parts)}` : 'No breakthrough bonus';
 }
 
+/** What a method drinks a day, in words: "1 Qi-Gathering Pill", "any 3 tier 1 herbs". */
 function upkeepWords(up: Upkeep | null): string {
   if (!up) return 'No upkeep';
   const parts = [
-    up.stones ? `${up.stones} spirit ${up.stones === 1 ? 'stone' : 'stones'}` : '',
-    ...Object.entries(up.items ?? {}).map(([id, n]) => `${n} ${id.replace(/-/g, ' ')}`),
+    up.stones ? `${formatNumber(up.stones)} spirit ${up.stones === 1 ? 'stone' : 'stones'}` : '',
+    ...Object.entries(up.items ?? {}).map(([id, n]) => `${n} ${hasItem(id) ? item(id).name : id}`),
+    up.any ? `any ${up.any.n} ${tierName(up.any.tier)} ${up.any.kind}s` : '',
   ].filter(Boolean);
-  return `Drinks ${list(parts)} a day`;
+  return `Drinks ${list(parts)} a day, ${up.weight} upkeep`;
 }
 
 function ActiveMethod({ game, which, m }: { game: GameState; which: LadderId; m: Method }) {
@@ -105,7 +109,8 @@ function ActiveMethod({ game, which, m }: { game: GameState; which: LadderId; m:
   const capped = methodCapped(c, m);
   const fed = methodFed(c, which, game.calendar.day);
   const fit = methodFitSpeed(c, m);
-  const total = realmGrowthTotal(m, fit);
+  // Fed, an upkeep method leaves the band it climbs as (K11).
+  const total = realmGrowthTotal(m, fit, fed ? runningRarity(c, m) : undefined);
   const split = Object.entries(m.growth)
     .map(([s, v]) => `${GROWTH_WORDS[s] ?? s} ${formatPercent(v ?? 0)}`)
     .join(', ');
@@ -183,6 +188,19 @@ function ActiveMethod({ game, which, m }: { game: GameState; which: LadderId; m:
         </p>
       )}
       {!fed && <p className="warn">Unfed: it stalls until its upkeep is paid.</p>}
+      {fed && m.upkeep && !capped && (
+        <p className="caption">
+          Fed, it climbs as{' '}
+          <span className={`rarity-${runningRarity(c, m)}`}>
+            {rarity(runningRarity(c, m)).name.toLowerCase()}
+          </span>
+          <Why label="What upkeep buys">
+            A method that drinks an upkeep cultivates and leaves its growth a band rarer while fed
+            on light upkeep, two on heavy; unfed it stalls and gains nothing. Its breakthrough
+            bonuses stay at its written rarity.
+          </Why>
+        </p>
+      )}
       <p className="caption">
         {growthWords(m)}. {bonusWords(r)}. {upkeepWords(m.upkeep)}.
         <Why label="What it builds">

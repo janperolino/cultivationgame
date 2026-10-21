@@ -214,6 +214,16 @@ export interface SwiftUse {
   days: number;
 }
 
+/**
+ * A burning pill (K11, 燃血丹, design § Professions, people and powers, Arts that burn goods): a
+ * main action in a fight that lifts every line of your sheet a realm step for these turns at
+ * white, a turn more a rarity up, and leaves you weakened for the rest of the day. It works only at
+ * its own tier.
+ */
+export interface BurnUse {
+  turns: number;
+}
+
 /** A craft's tool (K1): a furnace, a forge, a brush or an array plate; its tier caps the recipes it works. */
 export interface ToolUse {
   craft: CraftId;
@@ -299,6 +309,7 @@ export interface ItemUses {
   swift?: SwiftUse;
   field?: FieldUse;
   array?: ArrayUse;
+  burn?: BurnUse;
 }
 
 /**

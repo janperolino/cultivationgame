@@ -253,8 +253,19 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   next = dwellingsDay(next, s.calendar.day - days, s.calendar.day);
   // Arrays burn their eyes' stones, and traps on open ground catch what walks in (K10).
   next = formationsDay(next, s.calendar.day - days, s.calendar.day);
+  // A burning pill's weakness lifts as its day ends (K11).
+  next = recovered(next);
   return noteQuests(noteFirsts(checkScreens(next)));
 };
+
+/** A burned blood's weakness lifts once the day it ends comes (K11). */
+function recovered(s: GameState): GameState {
+  const until = s.player.weakUntil;
+  if (until === undefined || s.calendar.day < until) return s;
+  const player = { ...s.player };
+  delete player.weakUntil;
+  return { ...s, player };
+}
 
 export interface LifeBreakthrough {
   state: GameState;

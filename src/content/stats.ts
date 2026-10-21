@@ -52,6 +52,14 @@ const BASE_STATS = {
   insightGain: { name: 'Insight', unit: 'percent', what: 'insight from study and seclusion' },
   practiceGain: { name: 'Practice', unit: 'percent', what: 'mastery from each practice day' },
   stoneQi: { name: 'Stone fuel', unit: 'percent', what: 'qi from each spirit stone burned' },
+  // K11: stone swallowing, upkeep and pills.
+  stoneCap: {
+    name: 'Stone swallowing',
+    unit: 'percent',
+    what: 'stones a day can burn, those past the old cap at half worth',
+  },
+  upkeepCut: { name: 'Frugal upkeep', unit: 'percent', what: 'days each day of upkeep feeds' },
+  pillFuel: { name: 'Pill fuel', unit: 'percent', what: 'what a pill that feeds a ladder gives' },
   minorOdds: { name: 'Minor odds', unit: 'odds', what: 'the odds of minor breakthroughs' },
   majorOdds: { name: 'Major odds', unit: 'odds', what: 'the odds of major breakthroughs' },
   failLoss: { name: 'Failure loss', unit: 'percent', what: 'the bar a failed breakthrough costs' },

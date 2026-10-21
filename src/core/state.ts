@@ -341,9 +341,22 @@ export const CultivatorSchema = z.object({
   /**
    * Methods known, by id (content/methods.ts): qi methods, tempering and nourishing arts, each
    * with the practice days cultivated with it, which set its mastery, and the world day its
-   * upkeep is paid through.
+   * upkeep is paid through; `starved` while its last day went unpaid, so a stage climbed then
+   * leaves its written growth, not the fed band's (K11).
    */
-  methods: z.record(z.string(), z.object({ practice: z.number().min(0), fedUntil: z.number() })),
+  /**
+   * The day a burning pill's backlash ends (K11): until then every line of the sheet is weakened.
+   * Cleared as that day comes.
+   */
+  weakUntil: z.number().optional(),
+  methods: z.record(
+    z.string(),
+    z.object({
+      practice: z.number().min(0),
+      fedUntil: z.number(),
+      starved: z.boolean().optional(),
+    }),
+  ),
   /** The method each ladder climbs with; a ladder gains nothing from its hours without one. */
   activeMethods: z.object({ qi: activeMethod, body: activeMethod, soul: activeMethod }),
   /** The three attributes that come from birth (design § Combat), at their base; talents add as stats. */

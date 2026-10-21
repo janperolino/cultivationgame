@@ -68,7 +68,7 @@ import {
   tierStep,
   type RealmId,
 } from '../../content/realms.ts';
-import { BACKER_ONE_IN, LUCKY_ROGUE_ONE_IN } from '../../content/resolver.ts';
+import { BACKER_ONE_IN, HEAVY_ONE_IN, LUCKY_ROGUE_ONE_IN } from '../../content/resolver.ts';
 import {
   BORDER_WILDS_NAMES,
   type BeastTemplate,
@@ -233,6 +233,11 @@ export interface Npc {
   find?: { slot: LuckySlot };
   /** A great-sect young master's backer: the "my father is…" tie (P3.4b). */
   backer?: { id: string; name: string; realm: RealmId; stage: number };
+  /**
+   * A young master running a heavy method (K11): its qi growth two bands past the rolled method, a
+   * month of its upkeep among their stones, and a burning pill for the brink.
+   */
+  heavy?: boolean;
   combatant: Combatant;
 }
 
@@ -264,6 +269,31 @@ function rollLuck(
     };
   }
   return {};
+}
+
+/** The heavy method's roll has its own stream, keyed off the seed, so it shifts no other roll. */
+const HEAVY_SALT = 0x2c1b3c6d;
+
+/**
+ * Whether a young master runs a heavy method (K11, design § Professions, people and powers, The
+ * world uses them): one great-sect cultivator in HEAVY_ONE_IN, and every sacred land's and chosen
+ * one's.
+ */
+export function runsHeavy(seed: number, pedigree: PedigreeId): boolean {
+  if (pedigree === 'sacred-land' || pedigree === 'chosen') return true;
+  if (pedigree !== 'great-sect') return false;
+  return new Rng((seed ^ HEAVY_SALT) >>> 0).int(1, HEAVY_ONE_IN) === 1;
+}
+
+/** A rarity this many bands up, held at red as generated things are. */
+function bandsUp(r: RarityId, n: number): RarityId {
+  return RARITIES[Math.min(rarityRank('red'), rarityRank(r) + n)]!.id as RarityId;
+}
+
+/** The burning pill a young master carries at their tier: the written one, at its tier. */
+function burningPill(tier: number): Item {
+  const base = tier <= 1 ? 'blood-burning-pill' : 'marrow-burning-pill';
+  return item(variantId(base, item(base).rarity, { tier }));
 }
 
 /** An untrained ladder: Qi Condensation's first layer, which the floor lifts. */
@@ -474,6 +504,7 @@ export function generateCultivator(
   }
   const id = opts.id ?? `${t.id}-${seed >>> 0}`;
   const luck = rollLuck(seed, t.pedigree, realmId, id);
+  const heavy = runsHeavy(seed, t.pedigree);
   if (luck.find) {
     const { slot, rarity } = luck.find;
     if (slot === 'method') rolls.method.qi = rarity;
@@ -542,6 +573,7 @@ export function generateCultivator(
     for (let i = 0; i < n; i++) {
       consumables.push(consumable(pickOne(rng, CONSUMABLES).key, tier, roll()));
     }
+    if (heavy) consumables.push(burningPill(tier));
   }
   const who = name(rng);
   return {
@@ -560,13 +592,17 @@ export function generateCultivator(
     carries: [...(t.carries ?? [])],
     ...(luck.find ? { find: { slot: luck.find.slot } } : {}),
     ...(luck.backer ? { backer: luck.backer } : {}),
+    ...(heavy ? { heavy: true } : {}),
     combatant: build({
       id,
       name: who,
       side: opts.side ?? id,
       realm: realmId,
       stage,
-      rolls,
+      // A heavy method fed climbs two bands rarer, and its growth with it.
+      rolls: heavy
+        ? { ...rolls, method: { ...rolls.method, qi: bandsUp(rolls.method.qi, 2) } }
+        : rolls,
       weaponKind: t.weapon,
       element,
       path,

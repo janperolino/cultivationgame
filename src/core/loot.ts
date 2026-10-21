@@ -12,7 +12,10 @@ import type { Lot } from '../content/catalogs/types.ts';
 import { FORTUNE_DROP } from '../content/combat.ts';
 import { copyOf, hasCopy } from '../content/copies.ts';
 import { hasItem, item, ITEMS, rarityRange, variantId, type Item } from '../content/items.ts';
+import { dayWage } from '../content/bonds.ts';
+import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { CARRIED_STONES, PART_ITEM, RING_LOTS } from '../content/loot.ts';
+import { HEAVY_WAGES } from '../content/methods.ts';
 import { manual } from '../content/manuals.ts';
 import { method } from '../content/methods.ts';
 import { RARITY_IDS, rarityRank, type RarityId } from '../content/rarity.ts';
@@ -102,11 +105,15 @@ export function findOf(n: Npc): string | null {
   return any.length ? rngFor(n, 'find').pick(any) : null;
 }
 
-/** The stones an NPC carries: a count by realm, from their seed. */
+/**
+ * The stones an NPC carries: a count by realm, from their seed; a young master running a heavy
+ * method a month of its upkeep more (K11).
+ */
 export function carriedStones(n: Npc): number {
   if (n.kind === 'beast') return 0;
   const [lo, hi] = CARRIED_STONES[Math.min(realmIndex(n.realm), CARRIED_STONES.length - 1)]!;
-  return rngFor(n, 'stones').int(lo, hi);
+  const upkeep = n.heavy ? HEAVY_WAGES * dayWage(n.realm) * DAYS_PER_MONTH : 0;
+  return rngFor(n, 'stones').int(lo, hi) + upkeep;
 }
 
 /** Every catalog's lots and the rare list's: what a ring can hold, sold anywhere or nowhere. */

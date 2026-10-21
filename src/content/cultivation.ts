@@ -53,6 +53,11 @@ export const TUTORIAL_LAYERS = 3;
  */
 export const STONE_QI = 0.2;
 export const STONES_PER_QI_DAY = 5;
+/**
+ * Stone swallowing 吞灵石 (K11, design § Professions, people and powers): a stone burned past the
+ * day's old cap gives this share of a stone's qi.
+ */
+export const SWALLOWED_WORTH = 0.5;
 
 /** The bar keeps filling past full up to this, and each extra 10% raises the odds. */
 export const BAR_CAP = 1.5;

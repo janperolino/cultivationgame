@@ -158,7 +158,8 @@ describe('arts that strike many', () => {
   it('are at least as common as single arts at every tier and rarity in the catalogs', () => {
     const cells = new Map<string, { one: number; many: number }>();
     for (const t of TECHNIQUES) {
-      if (t.guard) continue;
+      // A guard art is never cast, and a volley throws talismans, each its own reach (K11).
+      if (t.guard || t.volley) continue;
       const k = `${t.tier}/${t.rarity}`;
       const cell = cells.get(k) ?? { one: 0, many: 0 };
       if (fullCount(t.targets, t.tier) > 1) cell.many++;

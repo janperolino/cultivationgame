@@ -34,6 +34,7 @@ import {
   SOUL_PER_DAY,
   STONE_QI,
   STONES_PER_QI_DAY,
+  SWALLOWED_WORTH,
   TUTORIAL_PACE,
   UNSETTLED_DAYS,
   type GradeId,
@@ -85,6 +86,7 @@ import {
   methodCapped,
   methodFitSpeed,
   methodSpeed,
+  runningRarity,
 } from './methods.ts';
 import { offerings, type Offerings } from './offerings.ts';
 import type { Rng } from './rng.ts';
@@ -430,8 +432,12 @@ export interface DayRates {
   methodPractice: Record<LadderId, number>;
   /** The ladders whose method stalls today, its upkeep unpaid. */
   unfed: LadderId[];
-  /** The most stones a full day can burn, and the qi each one adds. */
+  /**
+   * The most stones a full day can burn, and the qi each one adds. Stone swallowing (K11) widens the
+   * cap: those past `baseCap` give `SWALLOWED_WORTH` of a stone's qi.
+   */
   stoneCap: number;
+  baseCap: number;
   qiPerStone: number;
 }
 
@@ -464,7 +470,8 @@ export function dayRates(
   const qiShare = count.qi / HOURS_PER_DAY;
   // Each stone adds a fifth of a full day of qi hours and a full day takes five, both scaled by the
   // realm curve, so a full burn doubles the day whatever the realm. Fewer qi hours, fewer stones.
-  const stoneCap = sum.qi > 0 && c.plan.burnStones ? STONES_PER_QI_DAY * qiScale * qiShare : 0;
+  const baseCap = sum.qi > 0 && c.plan.burnStones ? STONES_PER_QI_DAY * qiScale * qiShare : 0;
+  const stoneCap = baseCap * (1 + Math.max(0, stats(c).stoneCap));
   // Attention lifts what you draw from the air, not what a stone holds.
   const qiPerStone =
     stoneCap > 0
@@ -486,8 +493,22 @@ export function dayRates(
     methodPractice,
     unfed: [...unfed],
     stoneCap,
+    baseCap,
     qiPerStone,
   };
+}
+
+/** The qi `burned` stones give over `days`: those past the base cap at `SWALLOWED_WORTH`. */
+export function stonesQi(rates: DayRates, days: number, burned: number): number {
+  const full = Math.min(burned, rates.baseCap * days);
+  return (full + (burned - full) * SWALLOWED_WORTH) * rates.qiPerStone;
+}
+
+/** The most stones whose qi fits in `room`, the swallowed ones counting at their worth. */
+function swallowRoom(rates: DayRates, days: number, room: number): number {
+  const full = room / rates.qiPerStone;
+  const base = rates.baseCap * days;
+  return full <= base ? full : base + (full - base) / SWALLOWED_WORTH;
 }
 
 /** How long a setback lasts, after what nodes take off. */
@@ -761,7 +782,8 @@ function withLadder(c: Cultivator, which: LadderId, l: Ladder): Cultivator {
  */
 function climbed(c: Cultivator, which: LadderId, l: Ladder, realmId: RealmId, stage: number) {
   const m = ladderMethod(c, which);
-  const record = stageGrowth(m, m ? methodFitSpeed(c, m) : 1, which, realmId, stage);
+  const fit = m ? methodFitSpeed(c, m) : 1;
+  const record = stageGrowth(m, fit, which, realmId, stage, m ? runningRarity(c, m) : undefined);
   return { ...l, realm: realmId, stage, bar: 0, growth: [...l.growth, record] };
 }
 
@@ -1081,9 +1103,9 @@ export function cultivateDays(c: Cultivator, days: number, ctx: RuleContext): Cu
   const purse = stonesOf(fed);
   const burned =
     rates.qiPerStone > 0 && room > 1e-9
-      ? Math.min(burnable(purse, grade), rates.stoneCap * days, room / rates.qiPerStone)
+      ? Math.min(burnable(purse, grade), rates.stoneCap * days, swallowRoom(rates, days, room))
       : 0;
-  const qiGain = rates.qi * days + burned * rates.qiPerStone;
+  const qiGain = rates.qi * days + stonesQi(rates, days, burned);
   const practiced = practiceDays(
     gainInsight(
       {

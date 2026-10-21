@@ -3,7 +3,7 @@ import { HOUR_KIND_IDS, HOUR_KINDS } from '../content/hours.ts';
 import { useState, type CSSProperties } from 'react';
 import { eventKind, KIND_WORDS } from '../content/chronicle.ts';
 import { comingBackStory, type StorySection } from '../core/comingBack.ts';
-import { barSize, ladderOpen } from '../core/cultivation.ts';
+import { barSize, ladderOpen, stonesQi } from '../core/cultivation.ts';
 import { daysPerRealMs } from '../core/loop.ts';
 import { ageYears, lifespanYears, type GameState } from '../core/state.ts';
 import { CardFeed } from './CardFeed.tsx';
@@ -120,13 +120,13 @@ function QiWhy({ game }: { game: GameState }) {
   const c = game.player;
   const rates = ratesHere(game);
   const stones = c.plan.burnStones ? Math.min(rates.stoneCap, Math.floor(c.stones)) : 0;
-  const perDay = rates.qi + stones * rates.qiPerStone;
+  const perDay = rates.qi + stonesQi(rates, 1, stones);
   const left = Math.max(0, barSize(c.qi) - c.qi.bar);
   const days = perDay > 0 ? left / perDay : Infinity;
   return (
     <>
       {formatRate(rates.qi)} qi a day from today&apos;s wheel
-      {stones > 0 && `, and ${formatRate(stones * rates.qiPerStone)} from ${stones} stones`}.{' '}
+      {stones > 0 && `, and ${formatRate(stonesQi(rates, 1, stones))} from ${stones} stones`}.{' '}
       {left <= 0
         ? 'The bar is full; past full raises the odds of the breakthrough.'
         : Number.isFinite(days)

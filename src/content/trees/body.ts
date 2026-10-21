@@ -566,8 +566,11 @@ export const BODY_TREE = defineTree({
       at: [1.4, 1.5],
       cost: 150,
       requires: ['body-foundation-flesh'],
-      effects: [{ stat: 'regeneration', value: 0.05 }],
-      text: 'Blood boiled clean of dross mends flesh in hours, not days.',
+      effects: [
+        { stat: 'regeneration', value: 0.05 },
+        { stat: 'upkeepCut', value: 0.1 },
+      ],
+      text: 'Blood boiled clean of dross mends flesh in hours, not days, and a bath of herbs or blood goes further.',
     },
     {
       id: 'body-pearled-blood',

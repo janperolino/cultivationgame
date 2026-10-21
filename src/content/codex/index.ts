@@ -14,6 +14,7 @@ import { PLACES } from './places.ts';
 import { REST } from './rest.ts';
 import type { CodexEntry } from './schema.ts';
 import { TREES } from './trees.ts';
+import { UPKEEP } from './upkeep.ts';
 import { WHEEL } from './wheel.ts';
 
 export * from './schema.ts';
@@ -32,6 +33,7 @@ export const CODEX: readonly CodexEntry[] = [
   ...CRAFTS,
   ...DWELLINGS,
   ...FORMATIONS,
+  ...UPKEEP,
   ...REST,
 ];
 

@@ -204,6 +204,15 @@ Every feature a player can touch in the game today (built in code, not only desi
 | Arrays in a fight on their ground: warding, binding, killing, maze | Combat | Log lines | a raid at your site, or a trap's catch | Log lines | codex |
 | Prepared ground and traps: an array on open ground, what walks in held until you check it | Map, your own menu | A 阵 seal on the map | an array on open ground | Menu subtitles | codex |
 
+## Methods that eat resources, arts that burn goods (K11)
+
+| Feature | Where | First met today | Needs first | Taught by | Way in |
+|---|---|---|---|---|---|
+| Methods that eat resources: fed a band rarer for light upkeep, two for heavy | Routine › Day column | The method row's Fed line | an upkeep method's slip | Why ×1 | codex |
+| Stone swallowing 吞灵石: twice the stones a day, those past the cap at half worth | Cultivate, the day's line | The day's qi line | a swallowing method or node | Codex | codex |
+| The talisman volley: 3, 5 or 10 talismans thrown in one action | Combat › Burn goods | A Burn goods button | a volley art, the Talismans Dao held | Why ×1 | codex |
+| Arts that burn goods: a piece blown apart, flags set mid-fight, the burning pill | Combat › Burn goods, Items | A Burn goods button | a spare piece, an array or a burning pill in the Bag | Why ×1 | codex |
+
 ## Chronicle and the rest
 
 | Feature | Where | First met today | Needs first | Taught by | Way in |

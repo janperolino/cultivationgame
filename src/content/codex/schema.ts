@@ -78,6 +78,10 @@ export const MET_TESTS = [
   'array', // an array's flags or disc held, or one laid (K10)
   'laid', // an array laid at a site or on open ground
   'prepared', // an array laid on open ground
+  'upkeep', // a method that drinks an upkeep known (K11)
+  'swallowing', // stone swallowing held, from a method or a node
+  'volley', // a volley art known
+  'burn-goods', // a burning pill, or an array with a fight in it, held; or the blood burned
 ] as const;
 export type MetTest = (typeof MET_TESTS)[number];
 

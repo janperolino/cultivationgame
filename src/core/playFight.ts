@@ -7,7 +7,7 @@ import { cardFight, resolveCard } from './cards.ts';
 import { combatantIn, type Fight } from './combat/fight.ts';
 import { roadFight, settlePlayed } from './map/encounters.ts';
 import { burnFought, settleTrap, trapFight } from './formations.ts';
-import { afterFight, fightEnd, openFight, replay, type FightEnd } from './played.ts';
+import { afterFight, fightEnd, openFight, replay, takeUpFlags, type FightEnd } from './played.ts';
 import { endSpar, sparFight, sparWhy } from './spar.ts';
 import type { FightFrom, GameState } from './state.ts';
 
@@ -89,7 +89,7 @@ export function finishFight(s: GameState, f: Fight): Finished | null {
   if (!rec || !end) return null;
   const used = usedArts(s);
   const names = foeNames(s, f);
-  const st = burnFought(afterFight(s, f), f);
+  const st = takeUpFlags(burnFought(afterFight(s, f), f), f, end, rec.from.kind === 'spar');
   switch (rec.from.kind) {
     case 'spar':
       return { state: endSpar(st, f, names, end, rec.from.who), text: SPAR_WORDS[end], end };

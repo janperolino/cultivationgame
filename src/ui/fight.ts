@@ -58,7 +58,11 @@ function head(f: Fight, o: Outcome): string {
       ? technique(o.id).name
       : o.action === 'technique'
         ? (combatantIn(f, o.actor)?.techniques[o.id ?? '']?.technique.name ?? 'a technique')
-        : o.action === 'item' && o.id
+        : (o.action === 'item' ||
+              o.action === 'volley' ||
+              o.action === 'detonate' ||
+              o.action === 'flags') &&
+            o.id
           ? hasItem(o.id)
             ? item(o.id).name
             : (combatantIn(f, o.actor)?.items[o.id]?.item.name ?? 'an item')

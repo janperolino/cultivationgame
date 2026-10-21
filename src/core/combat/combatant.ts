@@ -23,11 +23,12 @@ import {
   RESOLVE_BASE,
   SOFT_GAP,
   statusInfo,
+  WEAKENED,
   type DamageType,
   type StatusId,
   type WeaponKind,
 } from '../../content/combat.ts';
-import type { LadderId } from '../../content/cultivation.ts';
+import { LADDERS, type LadderId } from '../../content/cultivation.ts';
 import type { ProfileId } from '../../content/enemies.ts';
 import { phaseOf, type PhaseElement } from '../../content/elements.ts';
 import { hasItem, item, type Item } from '../../content/items.ts';
@@ -36,8 +37,10 @@ import { DAOS, tierNodes } from '../../content/trees/index.ts';
 import { gearBand, weaponAccuracy } from '../gear.ts';
 import { ownTier } from '../toxicity.ts';
 import { artOwn, tierHeld } from '../trees.ts';
+import { craftTiersHeld } from '../crafts.ts';
+import { stonesOf, worthOf } from '../purse.ts';
 import { rarityAccuracy, rarityMultiplier, type RarityId } from '../../content/rarity.ts';
-import { realmSize, tierRealm, tierStep } from '../../content/realms.ts';
+import { realmSize, stepOut, tierRealm, tierStep } from '../../content/realms.ts';
 import {
   GUARDS,
   hasTechnique,
@@ -187,6 +190,14 @@ export interface Combatant {
   combo: Combo | null;
   /** Creative tricks already used this fight; the same one earns nothing twice. */
   tricks: string[];
+  /** The Talismans craft Dao's tiers held, which a volley art asks for (K11). */
+  talismanTier?: number;
+  /** The stones they can spend in the fight, worth in low-grade: an array's eye set mid-fight (K11). */
+  stones?: number;
+  /** A burning pill's last turn (K11): every rung a realm step up until it runs out. */
+  burning?: number;
+  /** Weakened after a burning pill, for the rest of the day: every rung at half (K11). */
+  weakened?: boolean;
   state: CombatantState;
 }
 
@@ -369,7 +380,7 @@ export function fromCultivator(c: Cultivator, side: string): Combatant {
   for (const [id, n] of Object.entries(c.items)) {
     if (n > 0 && hasItem(id)) items[id] = { item: item(id), n };
   }
-  return combatant({
+  const me = combatant({
     id: c.id,
     name: c.name,
     side,
@@ -394,7 +405,30 @@ export function fromCultivator(c: Cultivator, side: string): Combatant {
     daos: daoTiers(c),
     intent: { ...c.intent },
     mods,
+    talismanTier: craftTiersHeld(c, 'talismans'),
+    stones: worthOf(stonesOf(c)),
   });
+  // A burning pill's backlash lasts the day (K11).
+  if (c.weakUntil !== undefined) weaken(me);
+  return me;
+}
+
+/** A rung lifted (or lowered) by this many of its realm's steps out. */
+export function graded(r: Rung, steps: number): Rung {
+  return { ...r, grade: r.grade + steps };
+}
+
+/**
+ * Weakened after a burning pill (K11), for the rest of the day: every rung at WEAKENED of its size,
+ * as a grade below its realm's step.
+ */
+export function weaken(c: Combatant): void {
+  if (c.weakened) return;
+  for (const l of LADDERS) {
+    const r = c.rungs[l];
+    c.rungs = { ...c.rungs, [l]: graded(r, Math.log(WEAKENED) / Math.log(stepOut(r.realm))) };
+  }
+  c.weakened = true;
 }
 
 /** Their highest rung, which is their realm (design § Cultivation, Three paths). */

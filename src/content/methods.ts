@@ -10,6 +10,7 @@ import type { Element } from './elements.ts';
 import type { RarityId } from './rarity.ts';
 import type { RootKind } from './roots.ts';
 import type { Effect, StatId } from './stats.ts';
+import type { ItemKind } from './items.ts';
 import { CATALOG_METHODS } from './catalogs/index.ts';
 
 export type Fit = 'full' | 'partial' | 'poor';
@@ -48,13 +49,29 @@ export interface MethodRequirements {
   flags?: readonly string[];
 }
 
-/** What a method drinks every day it is cultivated; an unfed day stalls it. */
+/**
+ * What a method drinks every day it is cultivated; an unfed day stalls it. Fed, it climbs a band
+ * rarer for light upkeep and two for heavy (design § Professions, people and powers, What upkeep
+ * buys): about half a day's wage a day for light and two days' for heavy.
+ */
 export interface Upkeep {
+  weight: UpkeepWeight;
   /** Low-grade spirit stones a day. */
   stones?: number;
-  /** Items a day, by id. */
+  /** Items a day, by written id: any rarity of it does, the plainest drunk first. */
   items?: Readonly<Record<string, number>>;
+  /** Or any things of a kind and tier: "any 3 tier 1 herbs" for an herb bath. */
+  any?: { kind: ItemKind; tier: number; n: number };
 }
+
+export type UpkeepWeight = 'light' | 'heavy';
+
+/** What a day of each weight drinks, in days of your realm's wage (design § Cultivation, Methods). */
+export const UPKEEP_WAGES: Record<UpkeepWeight, number> = { light: 0.5, heavy: 2 };
+export const HEAVY_WAGES = UPKEEP_WAGES.heavy;
+
+/** The bands of rarity a fed method climbs as, past what is written. */
+export const UPKEEP_BANDS: Record<UpkeepWeight, number> = { light: 1, heavy: 2 };
 
 export interface Method {
   id: string;
@@ -406,7 +423,7 @@ const WRITTEN: readonly Method[] = [
     fit: 'full',
     fitBy: { mixed: 'partial', mutated: 'poor' },
     requirements: {},
-    upkeep: { stones: 1 },
+    upkeep: { weight: 'light', stones: 1 },
     growth: { qiPool: 0.3, techniquePower: 0.5, qiRecovery: 0.2 },
     properties: [
       {

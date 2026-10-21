@@ -147,6 +147,17 @@ export function reachCost(targets: Targets | undefined, tier: number): number {
   const n = fullCount(targets, tier);
   return Math.sqrt(Number.isFinite(n) ? n : REACH[3]!.blast);
 }
+/**
+ * Arts that burn goods (K11, design § Professions, people and powers). Artifact detonation 自爆法宝:
+ * a piece blown apart strikes its tier's blast of foes at this many times the Attack of a basic
+ * strike sized at its band, and never misses. Flags set mid-fight draw this share of their eye's
+ * charge from your stones. A burning pill's backlash leaves every line at this share until the day
+ * ends.
+ */
+export const DETONATE_ATTACK = 5;
+export const FLAGS_EYE_SHARE = 0.1;
+export const WEAKENED = 0.5;
+
 /** Armor's material turns aside this much of one damage type, at any rarity. */
 export const MATERIAL_RESIST = 0.25;
 /** No resistance turns aside more than this. */

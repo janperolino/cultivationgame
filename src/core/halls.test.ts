@@ -117,7 +117,8 @@ describe('the open counter', () => {
     const r = buy(t, 'gate-sect', lot.slot);
     if (!r.ok) throw new Error(r.reason);
     const paid = worthOf(stonesOf(t.player)) - worthOf(stonesOf(r.state.player));
-    expect(paid).toBeCloseTo(posted.price * 1.25, 0);
+    // A lot sells whole: its price a piece, times its count.
+    expect(paid).toBeCloseTo(posted.price * 1.25 * lot.n, 0);
   });
 
   it('never shows the members’ lines or a chapter', () => {

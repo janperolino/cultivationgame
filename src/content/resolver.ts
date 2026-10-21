@@ -261,6 +261,8 @@ export const PROJECTION = {
 } as const;
 /** One generated great-sect young master in this many has a backer. */
 export const BACKER_ONE_IN = 5;
+/** One great-sect young master in this many runs a heavy method and carries its stones (K11). */
+export const HEAVY_ONE_IN = 3;
 /** One rogue in this many has found something (design § NPC basics, The lucky rogue). */
 export const LUCKY_ROGUE_ONE_IN = 50;
 

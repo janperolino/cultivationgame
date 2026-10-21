@@ -18,6 +18,7 @@ import {
 } from './seats.ts';
 import { BOUND_BONES, FRONTIER_HALL, HUNDRED_REINS, LAMP_KEEPERS, RED_MARROW } from './sects.ts';
 import { STONE_EYES, STONE_FOREST } from './stone-eyes.ts';
+import { UPKEEP_CATALOGS } from './upkeep.ts';
 import { CROPS, seedId } from '../farming.ts';
 import type { Catalog, Lot, Recipe } from './types.ts';
 
@@ -92,6 +93,7 @@ export const CATALOGS: readonly Catalog[] = [
   LAMP_KEEPERS,
   RED_MARROW,
   FRONTIER_HALL,
+  ...UPKEEP_CATALOGS,
 ]
   .map(withCrops)
   .map(withSlips);

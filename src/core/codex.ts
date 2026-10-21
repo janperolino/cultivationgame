@@ -101,6 +101,19 @@ const MET: Readonly<Record<MetTest, (s: GameState) => boolean>> = {
   array: (s) => held(s, (id) => !!item(id).uses.array) || MET.laid(s),
   laid: (s) => s.player.grounds.length > 0 || s.player.dwellings.some((d) => d.arrays.length > 0),
   prepared: (s) => s.player.grounds.length > 0,
+  upkeep: (s) =>
+    (['qi', 'body', 'soul'] as const).some((l) =>
+      knownMethods(s.player, l).some((m) => m.upkeep !== null),
+    ),
+  swallowing: (s) => stats(s.player).stoneCap > 0,
+  volley: (s) =>
+    Object.keys(s.player.techniques).some((id) => hasTechnique(id) && !!technique(id).volley),
+  'burn-goods': (s) =>
+    s.player.weakUntil !== undefined ||
+    held(s, (id) => {
+      const u = item(id).uses;
+      return !!u.burn || ['warding', 'binding', 'killing', 'maze'].includes(u.array?.does ?? '');
+    }),
 };
 
 /** Whether the state shows an entry's feature met. */

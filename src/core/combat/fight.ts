@@ -15,8 +15,10 @@ import {
   DEFEND_EVASION,
   DEFEND_QI,
   DEFEND_SHIELD,
+  DETONATE_ATTACK,
   EVERGREEN_HP,
   FIRST_BLOOD_ORDER,
+  FLAGS_EYE_SHARE,
   HALVED_HIT,
   MAX_CREATIVITY,
   MAX_RESIST,
@@ -36,6 +38,7 @@ import {
   UNBREAKING_DEFENSE,
   fullCount,
   reachCost,
+  reachOf,
   statusInfo,
   statusOf,
   type DamageType,
@@ -44,10 +47,10 @@ import {
   type StatusId,
   type Targets,
 } from '../../content/combat.ts';
-import { TOXICITY_MAX, type LadderId } from '../../content/cultivation.ts';
+import { LADDERS, TOXICITY_MAX, type LadderId } from '../../content/cultivation.ts';
 import { actionDaos, isCombatDao, type DaoStatKind } from '../../content/daos.ts';
-import type { Item } from '../../content/items.ts';
-import { rarityAccuracy, rarityMultiplier } from '../../content/rarity.ts';
+import { baseOf, type Item } from '../../content/items.ts';
+import { rarityAccuracy, rarityMultiplier, rarityRank } from '../../content/rarity.ts';
 import { realm as realmInfo, realmIndex, tierStep, type RealmId } from '../../content/realms.ts';
 import {
   BRINK_HP,
@@ -62,6 +65,7 @@ import {
 import { daoStat } from '../../content/stats.ts';
 import type { Form, Technique } from '../../content/techniques.ts';
 import type { Rng } from '../rng.ts';
+import { eyeHolds, fightArrays } from '../arrays.ts';
 import { topStage } from '../intent.ts';
 import { doseAt } from '../toxicity.ts';
 import { backfireChance, judge } from './check.ts';
@@ -70,10 +74,12 @@ import {
   evasion,
   mod,
   shieldDefense,
+  graded,
   soulWound,
   statusFactor,
   statusFlag,
   tempo,
+  weaken,
   type Combatant,
 } from './combatant.ts';
 import {
@@ -97,6 +103,15 @@ export type MainAction =
   | { type: 'defend' }
   /** A fight item strikes the target; a consume item restores the actor. */
   | { type: 'item'; id: string; target?: string }
+  /**
+   * A talisman volley (K11): a volley art throws this many of one stack of talismans, each a cast
+   * of its own at full power.
+   */
+  | { type: 'volley'; id: string; item: string; target: string }
+  /** Artifact detonation 自爆法宝 (K11): a piece from the Bag blown apart at the target. */
+  | { type: 'detonate'; id: string; target: string }
+  /** Flags set mid-fight (K11): an array from the Bag stands for your side to the fight's end. */
+  | { type: 'flags'; id: string }
   /** Lets a beast on your side act this turn. */
   | { type: 'command'; id: string }
   | { type: 'talk'; style: TalkStyle; target: string }
@@ -520,6 +535,7 @@ function startOfTurn(f: Fight): Tick[] {
   }
   for (const c of f.combatants) {
     if (c.state !== 'fighting') continue;
+    if (c.burning !== undefined && f.turn > c.burning) burnedOut(c);
     if (f.turn > 1) c.qi = Math.min(c.maxQi, c.qi + Math.round(QI_REGEN * c.maxQi));
     const mend = mod(c, 'fightRegen');
     if (mend > 0 && f.turn > 1) {
@@ -671,6 +687,8 @@ interface Attack {
   /** How many foes it strikes, and the tier its reach is read at (design § Combat). */
   targets: Targets;
   tier: number;
+  /** It cannot miss: a piece blown apart (K11). */
+  sure?: boolean;
 }
 
 /** What a technique costs this actor in qi, its Daos' cost nodes included. */
@@ -911,7 +929,8 @@ function fixedOf(f: Fight, actor: Combatant, a: Attack): Fixed {
     critDamage: 1 + mod(actor, 'critDamage'),
     executioner: 1 + mod(actor, 'executioner'),
     sure:
-      a.form === 'thrust' && mod(actor, 'dragonThrust') > 0 && actor.marks.dragonTurn !== f.turn,
+      a.sure === true ||
+      (a.form === 'thrust' && mod(actor, 'dragonThrust') > 0 && actor.marks.dragonTurn !== f.turn),
     realm: ownRealm(actor),
   };
 }
@@ -1123,6 +1142,9 @@ function priced(f: Fight, actor: Combatant, m: MainAction, quiet = false): Price
   } else if (m.type === 'item') {
     const held = actor.items[m.id];
     a = held && held.n > 0 ? itemAttack(actor, held.item, 1) : null;
+  } else if (m.type === 'detonate') {
+    const held = actor.items[m.id];
+    a = held && held.n > 0 && detonable(held.item) ? detonation(actor, held.item) : null;
   } else return null;
   if (!a || typeof a === 'string') return null;
   const spec = m.type === 'technique' ? rained(f, actor, a) : a;
@@ -1429,6 +1451,7 @@ function main(
     case 'technique': {
       const known = actor.techniques[m.id];
       if (!known) return `doesn't know ${m.id}`;
+      if (known.technique.volley) return 'a volley throws its talismans';
       const cost = techniqueCost(actor, known.technique);
       if (actor.qi < cost) return 'not enough qi';
       const target = foe(f, actor, m.target);
@@ -1534,6 +1557,12 @@ function main(
         spend(actor, m.id);
         return [escapeBy(f, actor, it, base)];
       }
+      if (it.uses.burn) {
+        const why = burnWhy(actor, it);
+        if (why) return why;
+        spend(actor, m.id);
+        return [burnBlood(f, actor, it, base)];
+      }
       const consume = it.uses.consume;
       if (!consume) return `${m.id} can't be used in a fight`;
       spend(actor, m.id);
@@ -1564,6 +1593,15 @@ function main(
         },
       ];
     }
+
+    case 'volley':
+      return volley(f, actor, m, rng);
+
+    case 'detonate':
+      return detonate(f, actor, m, rng);
+
+    case 'flags':
+      return setFlags(f, actor, m.id, base);
 
     case 'command': {
       const beast = combatantIn(f, m.id);
@@ -1758,6 +1796,188 @@ function others(f: Fight, actor: Combatant, target: Combatant): Combatant[] {
   );
 }
 
+// ---------------------------------------------------------------- arts that burn goods (K11)
+
+/**
+ * A talisman volley: a volley art throws its count of one stack, each talisman a cast of its own at
+ * full power and reach, at the chosen foe while it stands and then at the first still standing.
+ * The art's qi is paid once; it is thrown only with the Talismans Dao held to its tier.
+ */
+function volley(
+  f: Fight,
+  actor: Combatant,
+  m: Extract<MainAction, { type: 'volley' }>,
+  rng: Rng,
+): Outcome[] | string {
+  const known = actor.techniques[m.id];
+  const n = known?.technique.volley;
+  if (!known || !n) return `doesn't know ${m.id}`;
+  if ((actor.talismanTier ?? 0) < known.technique.tier) return 'the Talismans Dao is not held';
+  const held = actor.items[m.item];
+  if (!held || held.n <= 0 || !held.item.uses.fight) return `holds no ${m.item}`;
+  const cost = techniqueCost(actor, known.technique);
+  if (actor.qi < cost) return 'not enough qi';
+  if (!foe(f, actor, m.target)) return 'no target';
+  actor.qi -= cost;
+  const out: Outcome[] = [];
+  for (let k = 0; k < n && (actor.items[m.item]?.n ?? 0) > 0; k++) {
+    if (actor.state !== 'fighting') break;
+    const target = foe(f, actor, m.target) ?? firstStanding(f, actor);
+    if (!target) break;
+    spend(actor, m.item);
+    const strike = itemAttack(actor, held.item, 1)!;
+    out.push(
+      ...cast(f, actor, target, rng, strike).map((o, i) => ({
+        ...o,
+        action: 'volley' as const,
+        id: held.item.id,
+        ...(k === 0 && i === 0 ? { qi: cost, pool: { qi: actor.qi, max: actor.maxQi } } : {}),
+      })),
+    );
+  }
+  return out;
+}
+
+/** The first foe still standing, in the fight's order. */
+function firstStanding(f: Fight, actor: Combatant): Combatant | undefined {
+  return f.combatants.find((c) => c.side !== actor.side && c.state === 'fighting');
+}
+
+/** Whether a piece can be blown apart: a weapon, armor or a treasure. */
+export function detonable(it: Item): boolean {
+  const slot = it.uses.equip?.slot;
+  return slot === 'weapon' || slot === 'armor' || slot === 'treasure';
+}
+
+/**
+ * Artifact detonation 自爆法宝: a piece from the Bag blown apart strikes its tier's blast of foes
+ * (5 at tier 1), each at DETONATE_ATTACK times a basic strike sized at the piece's band, and never
+ * misses. The piece is gone.
+ */
+function detonate(
+  f: Fight,
+  actor: Combatant,
+  m: Extract<MainAction, { type: 'detonate' }>,
+  rng: Rng,
+): Outcome[] | string {
+  const held = actor.items[m.id];
+  if (!held || held.n <= 0) return `holds no ${m.id}`;
+  const it = held.item;
+  if (!detonable(it)) return `${it.name} can't be blown apart`;
+  const target = foe(f, actor, m.target);
+  if (!target) return 'no target';
+  spend(actor, m.id);
+  return cast(f, actor, target, rng, detonation(actor, it)).map((o) => ({
+    ...o,
+    action: 'detonate' as const,
+    id: it.id,
+  }));
+}
+
+/** A piece blown apart as an attack: a basic strike at its band, ×DETONATE_ATTACK, its tier's blast. */
+function detonation(actor: Combatant, it: Item): Attack {
+  return {
+    form: 'aura',
+    type: 'physical',
+    base: STRIKE_POWER * tierScale(it.tier),
+    ladder: 'qi',
+    rung: itemRung(actor, it),
+    accuracy: 1,
+    attack: rarityMultiplier(it.rarity, tierStep(it.tier)) * DETONATE_ATTACK,
+    qi: false,
+    daos: [],
+    targets: reachOf(it.tier).blast,
+    tier: it.tier,
+    sure: true,
+  };
+}
+
+/**
+ * Flags set mid-fight: an array from the Bag with a fight's shape stands for your side from the
+ * next turn to the fight's end, at its rarity's band with no placing hand, its eye drawing
+ * FLAGS_EYE_SHARE of its charge from your stones; one a fight. Warding stands its shield at once.
+ */
+function setFlags(f: Fight, actor: Combatant, id: string, base: OutcomeBase): Outcome[] | string {
+  const held = actor.items[id];
+  if (!held || held.n <= 0 || !held.item.uses.array) return `holds no ${id}`;
+  if (actor.marks.flags) return 'one array a fight';
+  const laid = { id: `set:${actor.id}:${id}`, item: baseOf(id), rarity: held.item.rarity };
+  const [a] = fightArrays(
+    [{ ...laid, from: laid.rarity, strength: 0, stones: 1, laid: 0 }],
+    actor.side,
+  );
+  if (!a) return `${held.item.name} has no fight in it`;
+  const cost = flagsCost(held.item);
+  if ((actor.stones ?? 0) < cost) return 'not enough stones for its eye';
+  actor.stones = (actor.stones ?? 0) - cost;
+  spend(actor, id);
+  mark(actor, 'flags');
+  mark(actor, `set:${id}`);
+  f.arrays = [...(f.arrays ?? []), a];
+  if (a.does === 'warding' && a.ward) {
+    const foes = f.combatants.filter((c) => c.side !== a.side && c.state === 'fighting');
+    if (!a.beastsOnly || foes.every((c) => c.beast)) {
+      const mine = f.combatants.filter((c) => c.side === a.side && c.state === 'fighting');
+      for (const c of mine) c.shield += Math.round(a.ward / mine.length);
+    }
+  }
+  return [
+    {
+      ...base,
+      id,
+      target: null,
+      form: 'item',
+      type: null,
+      realm: actor.rungs.qi.realm,
+      result: 'held',
+    },
+  ];
+}
+
+/** What setting an array mid-fight draws from your stones: a share of its eye's charge. */
+export function flagsCost(it: Item): number {
+  return FLAGS_EYE_SHARE * eyeHolds(it.tier);
+}
+
+/** Why a burning pill won't take: one a day, and only at its own tier. */
+export function burnWhy(actor: Combatant, it: Item): string | null {
+  if (actor.burning !== undefined || actor.marks.burned || actor.weakened)
+    return 'the blood has burned already today';
+  if (ownRealm(actor) + 1 !== it.tier) return `${it.name} is not of your realm`;
+  return null;
+}
+
+/** How many turns a burning pill burns: its written turns, a turn more a rarity past white. */
+export function burnTurns(it: Item): number {
+  return it.uses.burn!.turns + Math.max(0, rarityRank(it.rarity) - rarityRank('white'));
+}
+
+/**
+ * A burning pill 燃血丹: every line of the sheet a realm step up (a grade of a whole step on every
+ * rung) for its turns; then weakened (`burnedOut`).
+ */
+function burnBlood(f: Fight, actor: Combatant, it: Item, base: OutcomeBase): Outcome {
+  for (const l of LADDERS) actor.rungs = { ...actor.rungs, [l]: graded(actor.rungs[l], 1) };
+  actor.burning = f.turn + burnTurns(it) - 1;
+  mark(actor, 'burned');
+  return {
+    ...base,
+    id: it.id,
+    target: null,
+    form: 'item',
+    type: null,
+    realm: actor.rungs.qi.realm,
+    result: 'held',
+  };
+}
+
+/** The burn runs out: the step comes off, and the sheet falls to WEAKENED for the rest of the day. */
+function burnedOut(c: Combatant): void {
+  for (const l of LADDERS) c.rungs = { ...c.rungs, [l]: graded(c.rungs[l], -1) };
+  weaken(c);
+  delete c.burning;
+}
+
 function spend(actor: Combatant, id: string): void {
   const held = actor.items[id]!;
   actor.items = { ...actor.items, [id]: { ...held, n: held.n - 1 } };
@@ -1887,7 +2107,7 @@ function attack(
   spill: boolean,
 ): Omit<Outcome, 'action'>[] {
   const n = numbers(f, actor, target, a, ctx.accuracy, ctx.fixed);
-  if (n.sure) mark(actor, 'dragonTurn', f.turn);
+  if (n.sure && !a.sure) mark(actor, 'dragonTurn', f.turn);
   const { result, chance } = judge(rng, n.accuracy, n.evasion, {
     fortune: actor.fortune,
     crit: n.crit,

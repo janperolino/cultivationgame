@@ -86,6 +86,11 @@ export interface Technique {
    * damage, power and cost are unused (power 0, cost 0).
    */
   guard?: GuardId;
+  /**
+   * A talisman volley (K11): this many talismans of one stack thrown in one action, each at full
+   * power, for the art's qi once. Thrown only with the Talismans Dao held to the art's tier.
+   */
+  volley?: number;
   /** The origin path that hands it out, as origin/choice; its first-technique card reads this. */
   firstFor?: string;
   /** Where it comes from, for the tooltip. */

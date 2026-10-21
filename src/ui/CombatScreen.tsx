@@ -8,7 +8,10 @@ import { useEffect, useRef } from 'react';
 import { realm, stageName } from '../content/realms.ts';
 import {
   TALK_STYLES,
+  burnTurns,
   combatantIn,
+  detonable,
+  flagsCost,
   preview,
   type Fight,
   type MainAction,
@@ -124,9 +127,14 @@ function FighterCard({
       {c.armor && <Meter label="Armor" value={c.armor.hp} max={c.armor.max} kind="armor" />}
       <Meter label="HP" value={c.hp} max={c.maxHp} kind="hp" />
       <Meter label="Qi" value={c.qi} max={c.maxQi} kind="qi" />
-      {c.statuses.length > 0 && (
+      {(c.statuses.length > 0 || c.burning !== undefined || c.weakened) && (
         <span className="caption fight-statuses">
-          {c.statuses.map((s) => `${s.id} (${s.turns})`).join(' · ')}
+          {[
+            ...c.statuses.map((s) => `${s.id} (${s.turns})`),
+            // A burning pill (K11): the blood alight to its last turn, then weak for the day.
+            ...(c.burning !== undefined ? [`blood burning, to exchange ${c.burning}`] : []),
+            ...(c.weakened ? ['weakened'] : []),
+          ].join(' · ')}
         </span>
       )}
     </>
@@ -249,7 +257,94 @@ function itemWord(it: Combatant['items'][string]['item']): string {
   if (u.ward) return 'a gold ward over your shield';
   if (u.fix) return u.fix.keep ? 'holds a foe, once a fight' : 'holds a foe a turn';
   if (u.escape) return `a sure flee through the ${u.escape.through}`;
+  if (u.burn) return `a realm step for ${burnTurns(it)} turns, then weak for the day`;
   return 'restores';
+}
+
+/**
+ * The arts that burn goods (K11): a volley art with each stack of strike talismans, a piece blown
+ * apart, and flags set mid-fight, each priced against the foe you picked.
+ */
+function BurnGoods({ f, me, target }: { f: Fight; me: Combatant; target: string }) {
+  const held = Object.values(me.items).filter((h) => h.n > 0);
+  const volleys = Object.values(me.techniques)
+    .map((k) => k.technique)
+    .filter((t) => t.volley && (me.talismanTier ?? 0) >= t.tier);
+  const talismans = held.filter((h) => h.item.uses.fight);
+  const pieces = held.filter((h) => detonable(h.item));
+  const flags = me.marks.flags
+    ? []
+    : held.filter((h) => {
+        const does = h.item.uses.array?.does;
+        return does === 'warding' || does === 'binding' || does === 'killing' || does === 'maze';
+      });
+  if (!volleys.length && !pieces.length && !flags.length) return null;
+  return (
+    <>
+      <h3 className="sub-heading">
+        Burn goods
+        <Why label="Arts that burn goods">
+          A volley throws its count of one stack at once, each talisman at full power, for the art's
+          qi once. A piece blown apart strikes its tier's blast at five times its strike and never
+          misses; it is gone. Flags set now stand for you to the fight's end, drawing their eye from
+          your stones, and you take them up again if you hold the field.
+        </Why>
+      </h3>
+      <div className="fight-actions">
+        {volleys.flatMap((t) =>
+          talismans.map((h) => {
+            const p = preview(f, me.id, { type: 'item', id: h.item.id, target });
+            const n = Math.min(t.volley!, h.n);
+            return (
+              <button
+                key={`${t.id}:${h.item.id}`}
+                type="button"
+                className="button fight-action"
+                disabled={!p}
+                onClick={() => act({ main: { type: 'volley', id: t.id, item: h.item.id, target } })}
+              >
+                <span>
+                  {t.name}: {h.item.name} ×{n}
+                </span>
+                {p && (
+                  <span className="caption">
+                    Hit {Math.round(p.chance * 100)}% · {formatNumber(p.damage)} each
+                  </span>
+                )}
+              </button>
+            );
+          }),
+        )}
+        {pieces.map((h) => (
+          <ActionButton
+            key={h.item.id}
+            f={f}
+            me={me.id}
+            m={{ type: 'detonate', id: h.item.id, target }}
+            name={`Blow apart the ${h.item.name}`}
+            extra="sure, and it is gone"
+          />
+        ))}
+        {flags.map((h) => {
+          const cost = flagsCost(h.item);
+          return (
+            <button
+              key={h.item.id}
+              type="button"
+              className="button button-quiet fight-action"
+              disabled={(me.stones ?? 0) < cost}
+              onClick={() => act({ main: { type: 'flags', id: h.item.id } })}
+            >
+              <span>Set the {h.item.name}</span>
+              <span className="caption">
+                {h.item.uses.array!.does}, {formatNumber(cost)} low for its eye
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
 }
 
 function Actions({ f, me }: { f: Fight; me: Combatant }) {
@@ -258,7 +353,8 @@ function Actions({ f, me }: { f: Fight; me: Combatant }) {
   if (end) return null;
   // A beast hears no words: no talk, no surrender.
   const heard = !combatantIn(f, target)?.beast;
-  const techniques = Object.values(me.techniques);
+  // A volley art throws its talismans (Burn goods), never on its own.
+  const techniques = Object.values(me.techniques).filter((k) => !k.technique.volley);
   const items = Object.values(me.items).filter(
     (h) =>
       h.n > 0 &&
@@ -266,6 +362,7 @@ function Actions({ f, me }: { f: Fight; me: Combatant }) {
         h.item.uses.ward ||
         h.item.uses.fix ||
         h.item.uses.escape ||
+        h.item.uses.burn ||
         h.item.uses.consume?.effects.some((e) => e.effect === 'restore')),
   );
   const flurry = mod(me, 'flurry') > 0 && me.weapon.kind === 'fist';
@@ -343,6 +440,7 @@ function Actions({ f, me }: { f: Fight; me: Combatant }) {
           </div>
         </>
       )}
+      <BurnGoods f={f} me={me} target={target} />
       <h3 className="sub-heading">Words and feet</h3>
       <div className="fight-actions">
         {(heard ? TALK_STYLES : []).map((style) => (

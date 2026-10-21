@@ -199,11 +199,11 @@ describe('shops', () => {
     expect(stockOf('mouth-stall', 1300).map((l) => l.thing)).toMatchInlineSnapshot(`
       [
         "gathering-flags~green",
-        "manual:recipe-boar-hide-vest",
-        "method:stone-bearing",
-        "manual:recipe-warding-flags",
+        "seed.ridge-bitterroot",
+        "technique:rampart-palm",
+        "method:still-lantern",
         "method:market-stall",
-        "seed.old-apricot-kernel",
+        "seed.blood-salt-kelp",
       ]
     `);
   });
@@ -444,9 +444,9 @@ describe('loot', () => {
         "items": {
           "beast-blood": 1,
           "beast-core": 1,
-          "drowned-word-talisman": 3,
-          "iron-knuckles": 1,
-          "soul-returning-pill~green": 1,
+          "intendant-guard-glaive": 1,
+          "manual:recipe-calm-soul-incense": 1,
+          "rockfall-talisman": 3,
         },
         "stones": 181,
       }

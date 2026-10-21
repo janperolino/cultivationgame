@@ -17,7 +17,8 @@ import { chooseAction, profile } from './combat/profile.ts';
 import { wearFrom } from './combat/combatant.ts';
 import { bondFromFight } from './gear.ts';
 import { Rng } from './rng.ts';
-import { withPlayer, withStream, type FightFrom, type GameState } from './state.ts';
+import { pay, stonesOf, withStones, worthOf } from './purse.ts';
+import { addItem, withPlayer, withStream, type FightFrom, type GameState } from './state.ts';
 
 /** A fight that runs this long ends with both sides drawing off. */
 export const FIGHT_TURNS = 60;
@@ -110,7 +111,30 @@ export function afterFight(s: GameState, f: Fight): GameState {
   const me = combatantIn(f, p.id);
   if (!me) return { ...s, fight: null };
   const items = { ...p.items };
-  for (const [id, held] of Object.entries(me.items)) if (id in items) items[id] = held.n;
-  const back = wearFrom(bondFromFight({ ...p, items, toxicity: me.toxicity }, f.turn), me);
+  for (const [id, held] of Object.entries(me.items)) {
+    if (!(id in items)) continue;
+    if (held.n > 0) items[id] = held.n;
+    else delete items[id];
+  }
+  let back = wearFrom(bondFromFight({ ...p, items, toxicity: me.toxicity }, f.turn), me);
+  // What the arts that burn goods leave (K11): the stones an array's eye drew, and a burned blood's
+  // weakness until the day ends.
+  const spent = worthOf(stonesOf(p)) - (me.stones ?? worthOf(stonesOf(p)));
+  if (spent > 0) back = withStones(back, pay(stonesOf(back), spent) ?? stonesOf(back));
+  if (me.marks.burned) back = { ...back, weakUntil: Math.floor(s.calendar.day) + 1 };
   return { ...withPlayer(s, back), fight: null };
+}
+
+/**
+ * Flags set mid-fight are taken up again by whoever holds the field (K11): you, unless you fled or
+ * fell; a spar's fall still leaves them yours.
+ */
+export function takeUpFlags(s: GameState, f: Fight, end: FightEnd, spar: boolean): GameState {
+  const me = combatantIn(f, s.player.id);
+  if (!me || end === 'fled' || (end === 'lost' && !spar)) return s;
+  const set = Object.keys(me.marks).filter((k) => k.startsWith('set:'));
+  if (!set.length) return s;
+  let c = s.player;
+  for (const k of set) c = addItem(c, k.slice(4), 1);
+  return withPlayer(s, c);
 }
