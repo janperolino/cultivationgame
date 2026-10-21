@@ -262,7 +262,8 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
     `Spirit insects strip a bed of ${item(s(d.crop)).name} at your plot in ${s(d.name)}: it went untended too long.`,
   'plot-thief': (d) =>
     `Someone lifts a ripe bed of ${item(s(d.crop)).name} from your plot in ${s(d.name)} while you are away. The village knows your face.`,
-  'plot-lost': (d) => `The lease on your plot in ${s(d.name)} runs out, and the village takes it back.`,
+  'plot-lost': (d) =>
+    `The lease on your plot in ${s(d.name)} runs out, and the village takes it back.`,
   mastery: (d) =>
     d.family
       ? `Your ${FAMILIES[s(d.family) as FamilyId].name.toLowerCase()} reach ${MASTERY[n(d.level)]!.name}: ${FAMILIES[s(d.family) as FamilyId].craft === 'farming' ? 'the field answers the hand' : 'the fire answers the hand'}.`

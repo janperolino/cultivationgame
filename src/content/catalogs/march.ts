@@ -466,7 +466,7 @@ export const MARCH: Catalog = {
         { thing: 'ridge-bitterroot', count: 1 },
       ],
     },
-        // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
+    // Its talismans (K5): five sheets of paper and the cinnabar ink, with what the effect is drawn from.
     {
       output: 'iron-rain-talisman',
       craft: 'talismans',
