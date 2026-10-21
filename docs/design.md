@@ -816,7 +816,7 @@ Checkpoints inside a sphere charge tolls from the Economy's fee list, and your f
 - **You sense them coming.** As you travel, a card shows at the edge of your sight or your divine sense, so the realm you have is how early you see trouble, and you can go round it, go in or wait (The road's encounters, Sensing).
 - **Any card that holds a person or a place can be gone into,** seclusion cards included. A card's choices are the quick road and going in the long one.
 - **Plot encounters come from what is yours:** your origin, talents and grudges, and the people the world keeps.
-- **The Combat screen goes** once go-in fights exist: every fight happens in a scene, and sparring stays as something you do with people you know, a fellow disciple or a rival's challenge.
+- **The Combat screen leaves the rail** with Fights you play (Jan's call, the opening redone, 2026-10-20): there is no list of spars to pick from. **A fight happens to you**: when one starts it takes the whole stage, the rail hides and the clock holds, and you can't click away; it ends only when you win, flee, surrender, talk it to an end or fall. **Sparring is asked of people**: a senior or a fellow disciple at your power's training ground (a door at the seat), or Spar on the page of someone you know while you stand in the same place, and a rival's challenge; the origin's chain's spar is the first, and P2.6's Intent moment (a spar won from under a tenth of HP) is one of these. Once go-in fights exist, the same fight plays inside the scene: only its frame moves.
 
 **The road's encounters** (the look is `docs/mockups/encounter-study.html`; numbers in `src/content/encounters/pace.ts`).
 
