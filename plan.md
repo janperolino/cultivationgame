@@ -134,7 +134,7 @@ Built bottom-up from here (planning, 2026-10-18, Jan's call): what other systems
 - [ ] P3.12 The decks and rebirth (the seclusion deck rewritten and the next life; its opening half moved to The opening, built)
 - [ ] P3.13 Tone and reliability pass
 
-*The side line* (docs, art and code apart from the other two; A5.4 from the art backlog whenever there's ChatGPT time):
+*The side line* (docs, art and code apart from the other two; since 2026-10-21 the art backlog's Before the friends' build, then the rest whenever there's ChatGPT time):
 
 - [x] P3.8 GLM roles (before P3.9, which reads it)
 - [ ] Design: Core Formation, its own layer (Jan's call in D4; design § Still to design, Before crafts: tier 3 chapters, the Core-Forming Pill brewed, and breakthrough pills as supplements a genius can do without; after the opening's design, since its pacing continues the new clock)
@@ -148,18 +148,26 @@ Built bottom-up from here (planning, 2026-10-18, Jan's call): what other systems
 **Backlog: the art overhaul's rest.** Painted now, leaving room for later features; a new screen is painted by the phase that builds it. A5.4 can trickle alongside anything, since it is mostly Jan's ChatGPT time.
 
 - [x] A5.3 Places on the map, painted into the land at xianxia scale
-- [ ] A5.4 The seeded sites' pieces, and the Border Wilds' places painted in
+
+*Before the friends' build* (planning, 2026-10-21, Jan's call: the first hour's art, sound and feel, on the side line while the friends' line runs P3.9; the feel pass brought forward from M8), in this order:
+
+- [ ] F1 The feel pass (code only, so it can start at once)
+- [ ] S1 The sound layer
+- [ ] A3.1 The cave repainted
+- [ ] A9 Chronicle, Settings, creation and Combat (with the journal and the guides)
+- [ ] A12 The intros
+- [ ] F2 The haul
+
+Trickling alongside, as Jan's ChatGPT time allows: A11's item icons and faces first, and A6's banners and door sheets for the places near the starts, painted ahead (they show once A6 builds the layouts). About 100 ChatGPT runs before the friends' build in all.
+
+*After the friends' build:*
+
+- [ ] A11 Content art: items, beasts, faces and vignettes (trickles like A5.4; its items and faces start before)
 - [ ] A6 Places and shops
+- [ ] A5.4 The seeded sites' pieces, and the Border Wilds' places painted in
 - [ ] A7 The Trees
 - [ ] A8 Bag, Character and People
-- [ ] A9 Chronicle, Settings, creation and Combat
 - [ ] A10 Crafts
-- [ ] A11 Content art: items, beasts, faces and vignettes (trickles like A5.4)
-- [ ] S1 The sound layer
-- [ ] F1 The feel pass
-- [ ] F2 The haul
-- [ ] A3.1 The cave repainted
-- [ ] A12 The intros
 
 ---
 
@@ -443,7 +451,7 @@ Since the three lines (2026-10-20), each line adds its entries under its own hea
 
 ### Side line
 
-- 2026-10-21, planning: art and sound, a design pass for the art overhaul (Jan's blocks, in order: screens, content art, sound, the feel pass, the order). Screens: paint now and leave room, replacing the wait for a screen's features to stop changing; the painting is backdrop and ornament, a later feature slots in as code, and a screen that doesn't exist yet is painted by the phase that builds it (`docs/art-pipeline.md`, The loop; template A's ROOM TO GROW). A6 to A9 keep their numbers; A10 Crafts added for K1 to K6's four screens. Content art: an entry names an `art` id, else its kind's picture, else nothing, rarity staying code; item icons in sheets of 16 (about 19), beast busts in sheets of 4 (9), about 40 vignettes shared by tag for cards and encounters; portraits by type now (about 48), the cast's own later; A11 trickles like A5.4. Place screens take the five inspo favorites' layouts, not their light, and each place paints its own banner and door sheet, never a picture shared by kind (about 80 runs for the Border Wilds, in A6). Sound: S1 builds the layer (a module in `src/ui` hearing the engine's events through a cue table; master, music, ambience and effects sliders and mute when unfocused), about 30 UI and feel sounds, about 26 for combat by form and element, six ambience loops, and the cave's and the map's music; music takes one to three minute breaks of ambience between tracks; effects and ambience free first (CC0, CC-BY with credit, never NonCommercial), music by AI on a paid plan (Suno or Udio) in Chinese instruments; an A phase brings its screens' music after S1. The feel pass placed, none of it built yet (checked against the build): F1 the small UI items (the +n, the off-Map encounter alert, the breakthrough's warning, low stones, stones and insight by the figure, the affiliation seal), F2 the haul, A3.1 the cave repainted (warmer light and godrays, Routine's own painting, the orbs from the stage's true edge), A12 the intros (one voiced intro for the world, Jan's call, and stills for each of the six starts); the chimes and fanfare are S1's. After merging main: A10 takes K7 to K10's screens too (eight), A9 the journal and the guides, and Combat is ready since Fights you play.
+- 2026-10-21, planning: art and sound, a design pass for the art overhaul (Jan's blocks, in order: screens, content art, sound, the feel pass, the order). Screens: paint now and leave room, replacing the wait for a screen's features to stop changing; the painting is backdrop and ornament, a later feature slots in as code, and a screen that doesn't exist yet is painted by the phase that builds it (`docs/art-pipeline.md`, The loop; template A's ROOM TO GROW). A6 to A9 keep their numbers; A10 Crafts added for K1 to K6's four screens. Content art: an entry names an `art` id, else its kind's picture, else nothing, rarity staying code; item icons in sheets of 16 (about 19), beast busts in sheets of 4 (9), about 40 vignettes shared by tag for cards and encounters; portraits by type now (about 48), the cast's own later; A11 trickles like A5.4. Place screens take the five inspo favorites' layouts, not their light, and each place paints its own banner and door sheet, never a picture shared by kind (about 80 runs for the Border Wilds, in A6). Sound: S1 builds the layer (a module in `src/ui` hearing the engine's events through a cue table; master, music, ambience and effects sliders and mute when unfocused), about 30 UI and feel sounds, about 26 for combat by form and element, six ambience loops, and the cave's and the map's music; music takes one to three minute breaks of ambience between tracks; effects and ambience free first (CC0, CC-BY with credit, never NonCommercial), music by AI on a paid plan (Suno or Udio) in Chinese instruments; an A phase brings its screens' music after S1. The feel pass placed, none of it built yet (checked against the build): F1 the small UI items (the +n, the off-Map encounter alert, the breakthrough's warning, low stones, stones and insight by the figure, the affiliation seal), F2 the haul, A3.1 the cave repainted (warmer light and godrays, Routine's own painting, the orbs from the stage's true edge), A12 the intros (one voiced intro for the world, Jan's call, and stills for each of the six starts); the chimes and fanfare are S1's. After merging main: A10 takes K7 to K10's screens too (eight), A9 the journal and the guides, and Combat is ready since Fights you play. The order (Jan's call): before the friends' build, on the side line beside P3.9, F1, S1, A3.1, A9, A12 and F2, with A11's icons and faces and A6's pictures for the places near the starts trickling (about 100 ChatGPT runs); after it A6, A5.4, A7, A8, A10 and the rest of A11. The feel pass came forward from M8.
 - 2026-10-20, P3.8: GLM roles (`src/ai`). The interpreter turns your words into P3.3's plans, one reading or two or three when the words are unclear, its refs mapped back and any it never held dropped, so words grant nothing; a fight's turn keeps P0.3's shape. The context builder sends the fixed text first (rules, world bible, voice, the acts), then the region, your sheet, the scene and the recent turns, holding only what your character knows: strangers under the scene's own refs, people as behaviour (63 lines in `content/behaviour.ts`, for Jan's review), their voice and the memories of you that you know, and voices told apart. Zod with one retry, then fallbacks that never act for you (Jan's call in the talk); the narrator's tail asked for alone, then the scene's clicks; the chronicler; the cost meter by role, kept in Settings beside the key (`keys.ts`, swappable for M8's sign-in); the rules prompt rewritten with no d20. On GLM by hand (`npm run glm`, `docs/spike/p3.8-roles.md`, about 2 cents a run): 7 to 8 of 11 playbook sentences read as the playbook's acts (the rest defensible readings the engine judges), 4 of 5 unclear sentences gave three readings, 3 of 3 tricks read as nothing; strict decoding trapped GLM in a lone verb's prefix ("go after him" forced to `go-home`), so three acts go by another name to GLM. No save change. Next: P3.9 stores the notes and summary with the scene and calls `ui/ai.ts`'s `gameAi`.
 - 2026-10-20, planning: the journal and Fights you play (Jan's calls, talked through here). Fights you play splits from P3.9 onto the friends' line before The opening, built, so a fight that isn't a sure win is played and the first tasks can be real fights. The opening's quests are carried by a journal, the quests you've taken plus a codex of the mechanics, quests offered where they live; the opening's design lists every feature first, then designs the introductions from it. From The opening, built on, a phase that adds a feature adds its codex entry and introduction quest (How each session runs).
 - 2026-10-20, planning: the Log split by line, so the three lines' entries merge without meeting (Jan's call; a cleanup after the K line's closing code review).
