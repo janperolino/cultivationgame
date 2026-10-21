@@ -271,14 +271,21 @@ describe('routines', () => {
 });
 
 describe('the tutorial', () => {
-  it('ignores root speed, fit and element hours in layers 1 to 3, but not dawn or Aptitude', () => {
+  it('ignores fit and element hours in layers 1 to 3, and the root to 3, but not dawn or Aptitude', () => {
     const layer3 = (opts: LifeOpts) => at(player(opts), 'qi', { stage: 3 });
+    const layer2 = (opts: LifeOpts) => at(player(opts), 'qi', { stage: 2 });
     const heavenly = dayRates(layer3({ root: 'heavenly' }), DAY);
     const mixed = dayRates(layer3({ root: 'mixed' }), DAY);
-    expect(heavenly.qi).toBeCloseTo(mixed.qi);
+    expect(dayRates(layer2({ root: 'heavenly' }), DAY).qi).toBeCloseTo(
+      dayRates(layer2({ root: 'mixed' }), DAY).qi,
+    );
+    // Layer 3's bar counts the root, nothing else.
+    expect(heavenly.qi).toBeCloseTo((mixed.qi * 2.5) / 0.6);
     expect(heavenly.hours.every((x) => x.element === 0)).toBe(true);
     expect(qiAt(layer3({}), h('卯'))).toBeCloseTo((TUTORIAL_PACE * 1.1) / 12);
-    expect(dayRates(layer3({ aptitude: 12 }), DAY).qi).toBeCloseTo(mixed.qi * 1.1);
+    expect(dayRates(layer3({ aptitude: 12 }), DAY).qi).toBeCloseTo(
+      dayRates(layer3({}), DAY).qi * 1.1,
+    );
     // Layer 4 counts all of it.
     const four = at(player({ root: 'heavenly' }), 'qi', { stage: 4 });
     expect(dayRates(four, DAY).qi).toBeGreaterThan(2.5 * mixed.qi);

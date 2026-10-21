@@ -34,6 +34,7 @@ import {
   SOUL_PER_DAY,
   STONE_QI,
   STONES_PER_QI_DAY,
+  TUTORIAL_LAYERS,
   TUTORIAL_PACE,
   UNSETTLED_DAYS,
   type GradeId,
@@ -184,7 +185,7 @@ export interface QiSpeed {
 /**
  * Root speed × the method (tier bonus × rarity × mastery) × fit × qi density × Aptitude × nodes ×
  * the realm's grade × attention. Zero without a qi method, or with one past its tier. Layers 1–3
- * ignore the root, the method part and the fit.
+ * ignore the method part and the fit, and layers 1–2 the root.
  */
 export function qiSpeed(c: Cultivator, seat: Seat = AWAY, density = 1): QiSpeed {
   const m = ladderMethod(c, 'qi');
@@ -198,7 +199,9 @@ export function qiSpeed(c: Cultivator, seat: Seat = AWAY, density = 1): QiSpeed 
     return { ...none, density, aptitude: apt, nodes, attention, grade, capped: false, total: 0 };
   }
   const tutorial = inTutorial(c.qi);
-  const rootSpeed = tutorial ? 1 : root(c.root).speed;
+  // The root counts from layer 3's bar, so every root reaches layer 3 together and the fast ones
+  // pull away on the way to 4 (Jan's call, 2026-10-21: the heavenly root's pace).
+  const rootSpeed = tutorial && c.qi.stage < TUTORIAL_LAYERS ? 1 : root(c.root).speed;
   const fit = tutorial ? 1 : methodFitSpeed(c, m);
   return {
     root: rootSpeed,
