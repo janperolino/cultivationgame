@@ -4,6 +4,7 @@
 // technique shows its hit chance and damage against the selected foe before you press it, and
 // every outcome plays as an effect layered from its five tags, with a still flash under reduced
 // motion. P3.9 moves the same fight into the scene; only this frame changes.
+import { GainRow } from './Gains.tsx';
 import { useEffect, useRef } from 'react';
 import { realm, stageName } from '../content/realms.ts';
 import {
@@ -492,6 +493,7 @@ export function CombatScreen() {
   const f = useFight((s) => s.fight);
   const end = useFight((s) => s.end);
   const after = useFight((s) => s.after);
+  const afterGains = useFight((s) => s.afterGains);
   // The life's fight comes onto the stage: one the rules just opened, or one a reload brought back.
   useEffect(() => {
     if (game) syncFight(game);
@@ -502,6 +504,7 @@ export function CombatScreen() {
     return (
       <section className="panel fight-after">
         <p>{after}</p>
+        <GainRow gains={afterGains} />
         <button type="button" className="button" onClick={dismissAfter}>
           Go on
         </button>

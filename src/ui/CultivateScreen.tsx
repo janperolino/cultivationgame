@@ -22,6 +22,7 @@ import { BreakthroughPanel, BreakthroughRow, StepNeeds } from './BreakthroughPan
 import { useScene } from './scene.ts';
 import { SeatedFigure, SeatMeter } from './SeatedFigure.tsx';
 import { TodayPanel } from './TodayPanel.tsx';
+import { AffiliationSeal, SeatPurse, WarnLine } from './SeatFeel.tsx';
 import { ChainOfferCard, FirstWorkButton } from './ChainOffer.tsx';
 import { chainOffer } from '../core/chains.ts';
 import { useGame, type AwaySummary } from './store.ts';
@@ -197,9 +198,14 @@ export function CultivateScreen() {
       <section className={`cultivate-seat${breaking}`} aria-label="The seat">
         <CaveBackdrop />
         <div className="seat-flash" aria-hidden="true" />
+        <WarnLine />
         <SeatedFigure game={game} />
         <SeatMeter game={game} />
-        <BreakthroughRow game={game} />
+        {/* The stones and insight under the line (F1); beside a breakthrough's buttons when they show. */}
+        <div className="seat-under">
+          {whole && <SeatPurse game={game} />}
+          <BreakthroughRow game={game} />
+        </div>
       </section>
 
       <div className="cultivate-rise">
@@ -213,6 +219,7 @@ export function CultivateScreen() {
           {whole && (
             <>
               <p className="cultivate-name">
+                <AffiliationSeal game={game} />
                 {c.name} <small>{c.pronouns}</small>
               </p>
               <p className="cultivate-realm">

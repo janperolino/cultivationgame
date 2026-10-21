@@ -1,150 +1,67 @@
 // The cards in Cultivate's band (design § Story cards and events; A3,
-// docs/mockups/cultivate-bottom-study.html): the oldest card open in the band's middle, with how
-// many wait behind it; the rest come up one at a time (Jan's call: no tray). A new card rises in;
-// what a choice led to stays until you send it on, when it slides out into the chronicle, or, on a
-// card with further steps, turns to the next step. Something that comes first, the coming-back
-// story, takes the open card's place until it is cleared. Under reduced motion nothing moves. A
-// choice must not shrink the card: it keeps its height while the outcome shows. Cultivate never
-// scrolls (Jan's call in A3), so nothing here scrolls into view.
-import { endGuide } from './guide.ts';
-import { useRef, useState, type ReactNode } from 'react';
-import { statInfo } from '../content/stats.ts';
-import { viewCard, type CardView } from '../core/cards.ts';
-import { reducedMotion } from './settings.ts';
+// docs/mockups/cultivate-bottom-study.html): the oldest card waits in the band's middle as a stub,
+// with how many wait behind it and Open, and is read in the square (F1, ui/Square.tsx), so nothing
+// pulls you off the orbs. Something that comes first, the coming-back story, takes the stub's
+// place until it is cleared. Cultivate never scrolls (Jan's call in A3).
+import type { ReactNode } from 'react';
+import { viewCard } from '../core/cards.ts';
 import { formatNumber } from './format.ts';
+import { openSquare, useSquare } from './square.ts';
 import { useGame } from './store.ts';
 
-/** A check's verdict after the choice: your attribute against the card's number, no roll. */
-const VERDICT_WORDS = { clear: 'Clear', close: 'Close', short: 'Short' } as const;
-
-function Choices({ open, onChose }: { open: CardView; onChose: (error: string | null) => void }) {
-  const { chooseCard } = useGame.getState();
+/** A card or an encounter where it waits: its kicker, its title and Open (F1). */
+export function Stub({
+  kicker,
+  count,
+  title,
+  onOpen,
+  guide,
+}: {
+  kicker: string;
+  count?: string;
+  title: string;
+  onOpen: () => void;
+  guide?: string;
+}) {
   return (
-    <div className="choices">
-      {open.choices.map((c) => (
-        <button
-          key={c.index}
-          type="button"
-          className="button choice"
-          disabled={!c.check.ok}
-          onClick={() => {
-            endGuide('first-card');
-            onChose(chooseCard(open.uid, c.index, open.title));
-          }}
-          onContextMenu={(e) => {
-            // A sure fight plays on the stage anyway on a right-click (Fights you play).
-            if (!c.fight?.sure || !c.check.ok) return;
-            e.preventDefault();
-            endGuide('first-card');
-            onChose(chooseCard(open.uid, c.index, open.title, true));
-          }}
-        >
-          <strong>{c.label}</strong>
-          {c.choice.cost?.stones ? (
-            <span className="caption">{c.choice.cost.stones} spirit stones</span>
-          ) : null}
-          {c.choice.check && c.comparison && (
-            <span className="caption">
-              {statInfo(c.choice.check.attribute).name} {c.comparison.yours} against{' '}
-              {c.comparison.against} · {c.comparison.verdict}
-            </span>
-          )}
-          {c.fight && (
-            <span className="caption">
-              Fight · {c.fight.words} ·{' '}
-              {c.fight.sure ? 'sure: right-click to play it' : 'you play it'}
-            </span>
-          )}
-          {!c.check.ok && <span className="caption warn">{c.check.reason}</span>}
-        </button>
-      ))}
-    </div>
+    <article className="stub is-arriving" data-guide={guide}>
+      <div className="stub-text">
+        <p className="band-kicker">
+          <span>{kicker}</span>
+          {count && <span className="accent">{count}</span>}
+        </p>
+        <h3>{title}</h3>
+      </div>
+      <button type="button" className="button" onClick={onOpen}>
+        Open
+      </button>
+    </article>
   );
 }
 
-/** The band's middle: the open card, `first` while it shows, or `quiet` while nothing waits. */
+/** The band's middle: the waiting card's stub, `first` while it shows, or `quiet` while nothing waits. */
 export function CardFeed({ first, quiet }: { first?: ReactNode; quiet?: ReactNode }) {
   const game = useGame((s) => s.game);
   const outcome = useGame((s) => s.cardOutcome);
-  const { dismissCardOutcome } = useGame.getState();
-  const [error, setError] = useState<string | null>(null);
-  const [leaving, setLeaving] = useState(false);
-  const stack = useRef<HTMLDivElement>(null);
-  // The stack's height when a choice was made, kept as its least height while the outcome shows.
-  const [hold, setHold] = useState<number | null>(null);
-  const pending = !game || game.ended ? [] : game.cards.pending.map((p) => viewCard(game, p));
-  // The top card: the one a step goes on with, or the oldest.
-  const top = (outcome?.goesOn && pending.find((v) => v.uid === outcome.uid)) || pending[0];
-  const waiting = pending.length > 0;
-
-  const sendOn = () => {
-    // A card with a next step turns in place; a finished one slides off the stack.
-    if (outcome?.goesOn || reducedMotion()) {
-      dismissCardOutcome();
-      return;
-    }
-    setLeaving(true);
-  };
+  const reading = useSquare((s) => s.open?.kind === 'card');
+  const pending = !game || game.ended ? [] : game.cards.pending;
+  const top = pending[0] && game ? viewCard(game, pending[0]) : null;
+  const waiting = pending.length > 0 || !!outcome;
 
   const open = first ? (
     first
-  ) : !game || game.ended ? null : !outcome && !top ? (
+  ) : !game || game.ended ? null : !waiting ? (
     (quiet ?? <p className="tray-quiet">Seclusion is quiet.</p>)
   ) : (
-    <div className="stack" ref={stack} style={outcome && hold ? { minHeight: hold } : undefined}>
-      {outcome ? (
-        <article
-          className={`story is-result ${leaving ? 'is-leaving' : ''}`}
-          aria-live="polite"
-          onAnimationEnd={(e) => {
-            if (e.animationName !== 'card-leave') return;
-            setLeaving(false);
-            dismissCardOutcome();
-          }}
-        >
-          <h3>{outcome.title}</h3>
-          <p className="result">{outcome.text}</p>
-          {outcome.check && (
-            <p className="caption spaced">
-              {VERDICT_WORDS[outcome.check.verdict]}: {outcome.check.yours} against{' '}
-              {outcome.check.against}.
-            </p>
-          )}
-          <div className="actions">
-            <button
-              type="button"
-              className={`button ${outcome.goesOn ? '' : 'button-quiet'}`}
-              onClick={sendOn}
-            >
-              {outcome.goesOn ? 'Go on' : 'Into the chronicle'}
-            </button>
-          </div>
-        </article>
-      ) : top ? (
-        // Keyed by card and step, so each new card or step mounts fresh and rises in.
-        <article
-          key={`${top.uid}-${top.stepNumber}`}
-          className={`story is-arriving ${top.stepNumber > 1 ? 'is-step' : ''}`}
-          data-guide="card"
-          aria-labelledby={`card-${top.uid}`}
-        >
-          <p className="band-kicker">
-            <span>Waiting</span>
-            <span className="accent">1 of {formatNumber(pending.length)}</span>
-          </p>
-          <h3 id={`card-${top.uid}`}>{top.title}</h3>
-          <p>{top.text}</p>
-          <Choices
-            open={top}
-            onChose={(e) => {
-              setHold(stack.current?.offsetHeight ?? null);
-              setError(e);
-            }}
-          />
-          {error && <p className="warn spaced">{error}</p>}
-        </article>
-      ) : null}
-    </div>
+    <Stub
+      key={top?.uid ?? 'outcome'}
+      kicker={reading ? 'Reading' : 'Waiting'}
+      count={pending.length > 0 ? `1 of ${formatNumber(pending.length)}` : undefined}
+      title={outcome?.title ?? top?.title ?? ''}
+      onOpen={() => openSquare({ kind: 'card' })}
+      // The first card's guide rings the stub, then the square once it is open.
+      {...(reading ? {} : { guide: 'card' })}
+    />
   );
 
   return (

@@ -32,6 +32,8 @@ interface NavStore {
   tab: RoutineTab | null;
   /** The wheel and hour Routine's Day tab opens on. */
   wheel: WheelTarget | null;
+  /** The screen showing now, set by the app: what an encounter's alert reads (F1). */
+  here: ScreenId | null;
 }
 
 export const useNav = create<NavStore>()(() => ({
@@ -41,6 +43,7 @@ export const useNav = create<NavStore>()(() => ({
   select: null,
   tab: null,
   wheel: null,
+  here: null,
 }));
 
 /**

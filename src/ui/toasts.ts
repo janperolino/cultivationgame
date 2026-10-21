@@ -17,6 +17,7 @@ import { tree } from '../content/trees/index.ts';
 import { ranOutWords } from '../core/purse.ts';
 import type { Gain } from '../core/seen.ts';
 import type { GameState } from '../core/state.ts';
+import type { SquareOpen } from './square.ts';
 import { mastery, MAX_MASTERY } from '../core/techniques.ts';
 import type { RoutineTab, TreesTarget } from './nav.ts';
 import { screens, type ScreenId } from './screens.ts';
@@ -46,9 +47,15 @@ export interface Toast {
   to: ToastLink | null;
   /** A hint: it stays until its action is done or it is dismissed. */
   hint?: HintId;
+  /** A line under the name (F1: an encounter's how, the low-stones hint's numbers). */
+  line?: string;
+  /** Open shows this in the square (ui/square.ts) on the link's screen. */
+  open?: SquareOpen;
+  /** It stays until opened or dismissed, as a hint does. */
+  stays?: boolean;
 }
 
-type ToastView = Omit<Toast, 'key' | 'more' | 'hint'>;
+type ToastView = Omit<Toast, 'key' | 'more' | 'hint' | 'line' | 'open' | 'stays'>;
 
 /** A Dao's tree reads "the Fist Dao"; the big three "the Soul tree". */
 function treeName(id: string): string {
@@ -194,6 +201,10 @@ export const HAND_TOASTS = {
   intent: { glyph: '意', label: 'Intent' },
   /** A hint toward a first time's control (ui/hints.ts). */
   hint: { glyph: '指', label: 'Hint' },
+  /** An encounter stopped your road while you were off the Map (F1). */
+  road: { glyph: '途', label: 'On the road' },
+  /** The pouch fell under a day's burn (F1). */
+  pouch: { glyph: '灵', label: 'Your pouch' },
 } as const;
 export type HandToast = keyof typeof HAND_TOASTS;
 
@@ -222,6 +233,31 @@ export function raiseToast(
         : { toasts: st.toasts, waiting: [...st.waiting, t] },
     ),
   );
+}
+
+/**
+ * A toast that stays until it is opened or dismissed (F1): an encounter on the road, opened in the
+ * square, or the pouch running low. `where` follows the kind's label: "On the road · Ashfall Track".
+ */
+export function raiseNotice(
+  kind: HandToast,
+  name: string,
+  line: string,
+  opts: { where?: string; link?: ToastLink; open?: SquareOpen } = {},
+): void {
+  const k = HAND_TOASTS[kind];
+  const t: Toast = {
+    key: nextKey++,
+    glyph: k.glyph,
+    label: opts.where ? `${k.label} · ${opts.where}` : k.label,
+    name,
+    line,
+    more: 0,
+    to: opts.link ?? null,
+    stays: true,
+    ...(opts.open ? { open: opts.open } : {}),
+  };
+  useToasts.setState((st) => settle({ toasts: st.toasts, waiting: [t, ...st.waiting] }));
 }
 
 /** The hint showing or waiting its turn, if any. */

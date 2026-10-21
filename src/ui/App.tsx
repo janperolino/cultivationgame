@@ -16,6 +16,8 @@ import { useGame } from './store.ts';
 import { placeIndex, setPlaces } from '../core/resolver/knows.ts';
 import { screenDot, screenIsNew } from '../core/seen.ts';
 import { useBeacons } from './useBeacons.ts';
+import { Square } from './Square.tsx';
+import { unseenEncounters, useSquare } from './square.ts';
 import { useFight } from './fight.ts';
 import { built } from '../core/guides.ts';
 import { GuideLayer } from './GuideLayer.tsx';
@@ -208,6 +210,10 @@ export function App() {
   // over the "new screen" glow.
   const beaconsNow = useBeacons();
   const beaconed = new Set(beaconsNow.map((b) => b.screen));
+  // An encounter on the road not yet seen on the Map lights its glyph with the beacons' still glow
+  // and a dot (F1), until the Map is looked at.
+  const seenEnc = useSquare((s) => s.seen);
+  const roadAlert = useGame((s) => (s.game ? unseenEncounters(s.game, seenEnc).length > 0 : false));
   // With no life open, Settings is where you pick or start one.
   const pickScreen = (id: ScreenId) =>
     creating
@@ -232,6 +238,10 @@ export function App() {
 
   // Opening a screen clears its dot, and so does something new arriving while it is open.
   const here = phase === 'playing' && !creating ? current.id : null;
+  const hereNow = fighting ? null : here;
+  useEffect(() => {
+    useNav.setState({ here: hereNow as ScreenId | null });
+  }, [hereNow]);
   const hereDot = here !== null && dots.includes(here);
   useEffect(() => {
     if (here) useGame.getState().openScreen(here);
@@ -264,7 +274,7 @@ export function App() {
                   <li key={s.id}>
                     <button
                       type="button"
-                      className={`rail-item${s.id === wanted.id ? ' is-active' : ''}${beaconed.has(s.id) ? ' is-beacon' : fresh.includes(s.id) && s.id !== wanted.id ? ' is-new' : ''}`}
+                      className={`rail-item${s.id === wanted.id ? ' is-active' : ''}${beaconed.has(s.id) ? ' is-beacon' : s.id === 'map' && roadAlert && s.id !== wanted.id ? ' is-alert' : fresh.includes(s.id) && s.id !== wanted.id ? ' is-new' : ''}`}
                       aria-current={s.id === wanted.id ? 'page' : undefined}
                       aria-label={s.name}
                       onClick={() => setScreen(s.id)}
@@ -275,6 +285,13 @@ export function App() {
                           className="menu-mark"
                           role="img"
                           aria-label="a breakthrough is ready"
+                        />
+                      )}
+                      {s.id === 'map' && roadAlert && s.id !== wanted.id && (
+                        <span
+                          className="menu-mark is-alert"
+                          role="img"
+                          aria-label="something on the road"
                         />
                       )}
                       {dots.includes(s.id) && s.id !== wanted.id && (
@@ -290,7 +307,7 @@ export function App() {
             </nav>
 
             <div className="main-column">
-              {build[0] === '1' && <ShellHeader />}
+              {build[0] === '1' && <ShellHeader purse={current.id !== 'cultivate'} />}
               <main
                 className={`main${leaving ? ' is-leaving' : ''}${entering ? ' is-entering' : ''}`}
                 ref={main}
@@ -328,6 +345,8 @@ export function App() {
                   {phase !== 'loading' && current.id === 'journal' && <JournalScreen />}
                 </Suspense>
               </main>
+              {/* A card or an encounter read in the square, over Cultivate and the Map (F1). */}
+              {here !== null && (current.id === 'cultivate' || current.id === 'map') && <Square />}
             </div>
 
             <Toasts />

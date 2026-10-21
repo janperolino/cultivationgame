@@ -11483,3 +11483,446 @@ p.map-above {
   border-radius: 4px;
   background: var(--accent);
 }
+
+/* ---------------------------------------------------------------- the feel pass (F1) */
+
+/* The square (design § Story cards and events, The square; docs/mockups/card-popout-study.html):
+   a card or an encounter read about 720 px wide over Cultivate or the Map, the screen behind under
+   a still gradient, never a blur. It rises in once; nothing in it loops. */
+.square-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at center, rgb(4 5 7 / 0.55), rgb(4 5 7 / 0.88));
+}
+
+.square {
+  position: relative;
+  width: 720px;
+  max-height: calc(100% - 120px);
+  overflow-y: auto;
+  background: var(--obsidian);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.6);
+  animation: square-in 0.28s ease-out both;
+}
+
+@keyframes square-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+:root[data-motion='reduced'] .square {
+  animation: none;
+}
+
+.square-later {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 1;
+  padding: 5px 12px;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.square-body {
+  padding: 26px 30px;
+}
+
+.square-kicker {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 90px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.square-kicker b {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.square-body h2 {
+  margin: 8px 90px 10px 0;
+  font-family: var(--font-display);
+  font-size: calc(36px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.square-body > p:not(.square-kicker, .gain-row) {
+  margin: 0 0 18px;
+  font-size: calc(16px * var(--text-scale));
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--text) 90%, transparent);
+}
+
+/* The choices side by side, the first in the accent. */
+.square .choices {
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  margin-top: 0;
+}
+
+.square .choices > .button.choice:first-child:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.square .actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* An encounter keeps its own card (ui/EncounterCard.tsx), given the square's room. */
+.square-body.is-encounter {
+  padding: 22px 26px;
+}
+
+.square-body.is-encounter .enc-card {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.square-body.is-encounter .enc-head {
+  margin-right: 80px;
+}
+
+/* Where a card or an encounter waits: a stub with Open, so nothing pulls you off the orbs. */
+.stub {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stub-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.stub h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: calc(24px * var(--text-scale));
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stub .button {
+  flex: none;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* The Map's column is narrow: the title wraps rather than hiding. */
+.map-col .stub h3 {
+  font-size: calc(21px * var(--text-scale));
+  white-space: normal;
+}
+
+.stub.is-arriving {
+  animation: stub-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes stub-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+:root[data-motion='reduced'] .stub.is-arriving {
+  animation: none;
+}
+
+/* The +n: gilt for a gain, the warning's color for a loss. */
+.gain-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-size: calc(19px * var(--text-scale));
+  font-weight: 600;
+  color: var(--gilt);
+}
+
+.gain,
+.gain-float {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.gain.is-loss,
+.gain-float.is-loss {
+  color: var(--warn);
+}
+
+.gain .top-glyph,
+.gain-float .top-glyph {
+  fill: currentColor;
+}
+
+/* Stones and insight under the figure's line of words (take C, Jan's pick in F1's talk), the
+   top's pair hidden on Cultivate; the +n rises from them, or over the figure for qi and things. */
+/* While a breakthrough's buttons show, the pair stands at their left on the same row, so the
+   buttons keep their place, centred under the figure and clear of the band. */
+.cultivate-seat > .seat-under {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.cultivate-seat > .seat-under:has(> .bt-row) {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  align-self: stretch;
+  column-gap: 24px;
+}
+
+.seat-under:has(> .bt-row) > .seat-purse {
+  justify-self: end;
+}
+
+.seat-under:has(> .bt-row) > .seat-purse {
+  padding-bottom: 8px;
+}
+
+.seat-purse {
+  position: relative;
+  flex: none;
+  white-space: nowrap;
+}
+
+.seat-purse-stats {
+  display: flex;
+  gap: 26px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.seat-purse-stats > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.seat-purse-stats dt {
+  display: flex;
+}
+
+.seat-purse-stats dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: calc(19px * var(--text-scale));
+  font-weight: 500;
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.8);
+}
+
+.gain-floats {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.gain-float {
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: calc(var(--at, 0) * 24px);
+  font-family: var(--font-display);
+  font-size: calc(22px * var(--text-scale));
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--gilt);
+  text-shadow: 0 0 10px rgb(0 0 0 / 0.9);
+  animation: gain-rise 1.2s ease-out both;
+}
+
+.gain-float.is-stones {
+  left: 0;
+}
+
+.gain-float.is-insight {
+  right: 0;
+}
+
+.gain-float.is-over {
+  left: 50%;
+  bottom: calc(100% + 290px);
+  translate: -50% 0;
+}
+
+@keyframes gain-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
+
+@keyframes gain-fade {
+  15% {
+    opacity: 1;
+  }
+
+  from,
+  to {
+    opacity: 0;
+  }
+}
+
+:root[data-motion='reduced'] .gain-float {
+  animation-name: gain-fade;
+}
+
+/* The breakthrough's warning, a line over the figure: it rises once, and fades as the race begins. */
+.cultivate-seat > .warn-line {
+  position: absolute;
+  top: 436px;
+  left: calc(44px + (100% - 84px) / 2);
+  margin: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: calc(30px * var(--text-scale));
+  font-style: italic;
+  font-weight: 600;
+  color: var(--gilt-core);
+  text-shadow:
+    0 0 18px color-mix(in srgb, var(--accent) 60%, transparent),
+    0 2px 6px #000;
+  pointer-events: none;
+  animation: warn-in 0.6s ease-out both;
+  transition: opacity 0.6s ease-in;
+}
+
+.cultivate-seat > .warn-line.is-fading {
+  opacity: 0;
+}
+
+@keyframes warn-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+}
+
+:root[data-motion='reduced'] .cultivate-seat > .warn-line {
+  animation: none;
+  transition: none;
+}
+
+/* Your house's seal by your name: its first hanzi in red; its name, seat and standing on hover. */
+.house-seal {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  vertical-align: 3px;
+  background: var(--seal);
+  color: #f3e3d0;
+  font-size: calc(16px * var(--text-scale));
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 0.18);
+  cursor: pointer;
+}
+
+.house-seal-tip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 5;
+  padding: 8px 12px;
+  white-space: nowrap;
+  text-align: left;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: calc(13px * var(--text-scale));
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--glass-strong);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+}
+
+.house-seal-tip small {
+  display: block;
+  color: var(--muted);
+  font-size: inherit;
+}
+
+.house-seal:hover .house-seal-tip,
+.house-seal:focus-visible .house-seal-tip {
+  display: block;
+}
+
+/* The Map's glyph while an encounter on the road waits unseen: the beacons' still glow, no motes. */
+.rail-item.is-alert {
+  border-color: var(--accent-edge);
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--accent) 36%, transparent),
+    inset 0 0 8px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.menu-mark.is-alert {
+  animation: none;
+}
+
+/* A notice stays until opened or dismissed: an encounter on the road, the pouch running low. */
+.toast.is-notice {
+  align-items: flex-start;
+}
+
+.toast.is-notice .toast-label {
+  display: block;
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.toast.is-notice .toast-name {
+  display: block;
+  margin: 2px 0;
+  font-family: var(--font-display);
+  font-size: calc(19px * var(--text-scale));
+  font-weight: 600;
+}
+
+.toast-line {
+  display: block;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--text) 82%, transparent);
+}
+
+.toast-open {
+  margin: 8px 0 2px;
+  padding: 4px 16px;
+  border-color: var(--accent);
+  color: var(--accent);
+}
