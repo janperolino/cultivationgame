@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Card pop-out study</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* A card with a still pops out of Cultivate's band into a square over the scene (art and sound talk, 2026-10-21).
+     The still is a stand-in (the teahouse inspo) until A11's vignettes exist. */
+  :root { --accent: #d6ab4c; --gilt: #d9b46a; --text: #e9e5da; --dim: #9b968a;
+    --line: color-mix(in srgb, var(--gilt) 40%, transparent); --line-faint: color-mix(in srgb, var(--gilt) 16%, transparent);
+    --panel: rgb(7 8 11 / 0.9); }
+  body { margin: 0; background: #040507; color: var(--text); font-family: Inter, system-ui, sans-serif; }
+  .stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; margin-bottom: 24px;
+    background: url('../../src/ui/art/cultivate/scene.webp') center 30% / cover no-repeat; }
+  .tag { position: absolute; top: 24px; right: 32px; font: 600 15px Inter; letter-spacing: .12em; color: var(--gilt); text-transform: uppercase; }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 72px; background: rgb(5 6 8 / .9); border-right: 1px solid var(--line-faint); }
+  .bottom { position: absolute; left: 72px; right: 0; bottom: 0; height: 250px;
+    background: linear-gradient(to top, rgb(4 5 7 / .96) 55%, transparent); }
+  .who { position: absolute; left: 96px; bottom: 140px; font: 600 34px 'Cormorant Garamond'; }
+  .who small { display: block; font: 400 14px Inter; color: var(--dim); margin-top: 4px; }
+  .recent { position: absolute; right: 40px; bottom: 60px; width: 280px; font-size: 13px; color: var(--dim); line-height: 1.9; border-left: 1px solid var(--line-faint); padding-left: 16px; }
+  /* Take: the band holds a stub, the card's still small beside its title. */
+  .stub { position: absolute; left: 50%; transform: translateX(-50%); bottom: 64px; width: 620px; display: flex; gap: 18px; align-items: center;
+    background: var(--panel); border: 1px solid var(--accent); border-radius: 6px; padding: 12px; box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 22%, transparent); }
+  .still { background: url("inspo/rumors/quiet-moon-teahouse.webp") 84% 10% / 325% auto no-repeat; }
+  .stub .still { width: 144px; height: 76px; border-radius: 3px; border: 1px solid var(--line); }
+  .stub .t { flex: 1; } .stub .k { font-size: 12px; letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+  .stub h3 { margin: 4px 0 0; font: 600 26px 'Cormorant Garamond'; }
+  .btn { border: 1px solid var(--line); border-radius: 4px; padding: 10px 16px; font-size: 14px; color: var(--text); background: rgb(12 13 17 / .9); }
+  .btn.first { border-color: var(--accent); color: var(--accent); }
+  /* Opened: a static scrim (no blur), the square centred over the scene. */
+  .scrim { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgb(4 5 7 / .55), rgb(4 5 7 / .88)); }
+  .pop { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 720px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .pop .still { display: block; width: 720px; height: 380px; }
+  .pop .body { padding: 22px 30px 26px; }
+  .pop .k { display: flex; justify-content: space-between; font-size: 12px; letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+  .pop .k b { color: var(--accent); font-weight: 600; }
+  .pop h2 { margin: 8px 0 10px; font: 600 38px 'Cormorant Garamond'; }
+  .pop p { margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #d8d3c6; }
+  .choices { display: flex; gap: 10px; } .choices .btn { flex: 1; } .choices .btn small { display: block; color: var(--dim); font-size: 12px; margin-top: 3px; }
+  .later { position: absolute; top: 14px; right: 16px; font-size: 13px; color: var(--text); background: rgb(4 5 7 / .7); border: 1px solid var(--line-faint); border-radius: 4px; padding: 6px 10px; }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="tag">1 · It arrives: a stub in the band (and S1's chime)</div>
+    <div class="rail"></div><div class="bottom"></div>
+    <div class="who">Wei Qing<small>Qi Condensation, first layer · 12 y of 120</small></div>
+    <div class="stub">
+      <div class="still"></div>
+      <div class="t"><div class="k">Waiting · 1 of 2</div><h3>A Pill at the Door</h3></div>
+      <span class="btn first">Open</span>
+    </div>
+    <div class="recent">Wei Qing takes on Breath Before the Brick.<br />A first errand taken on: the journal opens.<br />Wei Qing is set to work the medicine garden.</div>
+  </div>
+
+  <div class="stage">
+    <div class="tag">2 · Opened: the square over the scene</div>
+    <div class="rail"></div><div class="bottom"></div>
+    <div class="who">Wei Qing<small>Qi Condensation, first layer · 12 y of 120</small></div>
+    <div class="scrim"></div>
+    <div class="pop">
+      <div class="still"></div>
+      <span class="later">Later</span>
+      <div class="body">
+        <div class="k"><span>Waiting</span><b>1 of 2</b></div>
+        <h2>A Pill at the Door</h2>
+        <p>Peddler Gou pulls his cart up to the mouth of your cave and opens a lacquered box: a Qi Gathering Pill, the real thing, he swears. Twenty spirit stones, and not a stone less.</p>
+        <div class="choices">
+          <span class="btn first">Send him on his way</span>
+          <span class="btn">Pay twenty<small>costs 20 spirit stones</small></span>
+          <span class="btn">Haggle</span>
+        </div>
+      </div>
+    </div>
+  </div>
+<script>
+  // The stages are laid out at 1920×1080 and scaled as one to the window, as the game's stage is.
+  const fit = () => { document.body.style.zoom = String(innerWidth / 1920); };
+  addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>
