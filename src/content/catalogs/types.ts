@@ -46,6 +46,11 @@ export interface Lot {
    * members, never at the open counter an outsider at friendly buys from.
    */
   members?: boolean;
+  /**
+   * A thing every shop of the line's kinds always stands, this many a month at its floor (the crafts
+   * play checkpoint: a craft's starter tool is never rare, only dear), beside any rarer display lot.
+   */
+  stands?: number;
 }
 
 /** A technique's Art, written beside the technique: its passives, waking as it masters. */

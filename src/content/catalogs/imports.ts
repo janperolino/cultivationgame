@@ -73,7 +73,7 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
         output: 'black-iron-saber',
         craft: 'refining',
         family: 'blades',
-        inputs: [{ thing: 'red-rocks-iron-ore', count: 5 }],
+        inputs: [{ thing: 'red-rocks-iron-ore', count: 3 }],
       },
       {
         output: 'fire-bead',
@@ -151,7 +151,7 @@ export const BORDER_WILDS_IMPORTS: readonly Catalog[] = [
         craft: 'refining',
         family: 'blades',
         inputs: [
-          { thing: 'red-rocks-iron-ore', count: 6 },
+          { thing: 'red-rocks-iron-ore', count: 4 },
           { thing: 'beast-wing', count: 1 },
         ],
       },

@@ -8,7 +8,7 @@ import {
 } from '../../content/organizations.ts';
 import { veinAt } from '../../content/map/index.ts';
 import { type GameState } from '../state.ts';
-import { dwellingHere, stepMult } from '../dwellings.ts';
+import { dwellingHere, dwellingNoun, stepMult } from '../dwellings.ts';
 import { isOrganization, organization, theName } from './identity.ts';
 import { seatOf } from './seats.ts';
 import { membershipsOf } from './membership.ts';
@@ -44,6 +44,24 @@ export function densityHere(s: GameState): number {
   if (s.map?.course) return 1;
   const here = dwellingHere(s);
   return Math.max(dwellingOf(s)?.density ?? 1, stepMult(here ? stepsOf(here) : 0));
+}
+
+/**
+ * Where your seclusion's qi comes from today, in a few words for the day's qi figure (the crafts
+ * play checkpoint: a dwelling of your own named, as a seat's is): null at ×1.
+ */
+export function seclusionWords(s: GameState): string | null {
+  const x = densityHere(s);
+  if (x <= 1) return null;
+  const own = dwellingHere(s);
+  const seat = dwellingOf(s);
+  const where =
+    own && stepMult(stepsOf(own)) >= (seat?.density ?? 1)
+      ? `your ${dwellingNoun(s, own)}`
+      : seat
+        ? DWELLING_NAMES[seat.seat].toLowerCase()
+        : 'here';
+  return `qi ×${Math.round(x * 100) / 100} at ${where}`;
 }
 
 /** A power's dwelling's density at a place: its seat's, capped by the place's vein (O2's talk). */

@@ -4,6 +4,7 @@
 // district → shop: the stock lives in the market and a shop is a window onto it). A shop's display
 // lots come from the catalogs of its place, its region, its continent and the imports along their
 // ties (content/catalogs/), weighted by the layer weights below. Every number is a starting value.
+import type { CraftId } from './crafts.ts';
 import type { Population } from './atlas/schema.ts';
 import type { Layer } from './catalogs/types.ts';
 import type { ItemKind } from './items.ts';
@@ -250,6 +251,20 @@ export const HAGGLE_OFF = { clear: 0.2, close: 0.1 } as const;
 
 /** Selling at the better rate once the keeper is friendly or their power favors you. */
 export const FRIENDLY_BUY_RATE = 0.6;
+
+/**
+ * What an honest shop pays for your own make (the crafts play checkpoint, Jan's call): a maker's
+ * work is bought at this share of the market, and the need rate still above it where it runs short.
+ */
+export const MAKER_BUY_RATE = 0.6;
+
+/** The street a craft's tools sell on, where a market has it, else the free market. */
+export const TOOL_STREET: Partial<Record<CraftId, ShopKind>> = {
+  alchemy: 'alchemy',
+  refining: 'refiner',
+  talismans: 'talisman',
+  formations: 'talisman',
+};
 
 /** A refiner mends a full bar of wear for this share of the armor's price. */
 export const REPAIR_SHARE = 0.2;

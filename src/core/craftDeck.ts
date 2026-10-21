@@ -182,7 +182,10 @@ export function craftPage(k: Card, words: Readonly<Record<string, string>> | und
   return null;
 }
 
-/** Sets each waiting field card's `here`: whether you stand at its field with no course set. */
+/**
+ * Sets each waiting field card's and raid card's `here`: whether you stand at its field or site
+ * with no course set, so Drive it off is there whenever you are (the crafts play checkpoint).
+ */
 export function craftCardsHere(s: GameState): GameState {
   let changed = false;
   const pending = s.cards.pending.map((p) => {

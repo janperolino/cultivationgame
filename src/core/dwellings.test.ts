@@ -4,8 +4,9 @@
 // Dwelling screen shows it there and greys it elsewhere. And the rest of the rules.
 import { describe, expect, it } from 'vitest';
 import { DAYS_PER_MONTH } from '../content/calendar.ts';
-import { VEINS } from '../content/dwellings.ts';
-import { resolveByDefault } from './cards.ts';
+import { RAIDS, VEINS } from '../content/dwellings.ts';
+import { cardFight, drawCards, resolveByDefault, seeCard } from './cards.ts';
+import { daysPerRealMs } from './loop.ts';
 import {
   claim,
   claimsHere,
@@ -305,6 +306,70 @@ describe('raids', () => {
     // Beasts smell the raised qi: a band closer for the vein's step, and drawn by it.
     expect(read.againstBeasts).toBe(read.concealment - 1);
     expect(read.beastsDrawn).toBe(true);
+  });
+});
+
+describe('raids by area and worth (the crafts play checkpoint)', () => {
+  /** A hut near people, its store holding what it is handed. */
+  function hutWith(thing: string, n: number): GameState {
+    const s = life();
+    const map = mapOf(s)!;
+    const v = aVein(s, (x) => Math.max(0, bandAt(map, [x.x, x.y])) === 0);
+    let t = standAt(s, [v.x, v.y]);
+    t = ok(
+      claim(
+        t,
+        claimsHere(t).findIndex((c) => c.kind === 'hut'),
+      ),
+    );
+    const d = t.player.dwellings[0]!;
+    t = inside(t, d.place);
+    t = withPlayer(t, addItem(t.player, thing, n));
+    return ok(toStore(t, d.id, thing, 0));
+  }
+  const raidOf = (t: GameState) => {
+    const next = days({ ...t, calendar: { ...t.calendar, day: DAYS_PER_MONTH - 1 } }, 2);
+    return { next, card: next.cards.pending.find((p) => p.card === 'raid-thieves')! };
+  };
+
+  it('send the land’s band, one above for a site worth ten raiders’ months, and never more', () => {
+    const plain = hutWith('qi-gathering-pill', 20);
+    const p = readSite(plain, plain.player.dwellings[0]!)!;
+    expect(p.raider).toBe(p.land);
+    const rich = hutWith('azure-cloud-sword', 1);
+    const r = readSite(rich, rich.player.dwellings[0]!)!;
+    expect(r.worth).toBeGreaterThanOrEqual(RAIDS.rich * r.wage);
+    expect(r.raider).toBe(r.land + 1);
+    expect(r.beastRaider).toBe(r.land + 1);
+  });
+
+  it('fight at the raider’s band, never yours', () => {
+    const t = hutWith('qi-gathering-pill', 20);
+    const strong = withPlayer(t, {
+      ...t.player,
+      qi: { ...t.player.qi, realm: 'foundation-establishment', stage: 2 },
+    });
+    const { next, card } = raidOf(strong);
+    expect(card.vars?.band).toBe(0);
+    const drive = card.vars?.here ? 1 : -1;
+    expect(drive).toBe(1);
+    const foe = cardFight(next, card.uid, drive)!.combatants[1]!;
+    expect(foe.rungs.qi.realm).toBe('qi-condensation');
+    expect(foe.rungs.qi.stage).toBeLessThanOrEqual(3);
+  });
+
+  it('wait once opened, at least its real minutes, and a month unseen', () => {
+    const { next, card } = raidOf(hutWith('qi-gathering-pill', 20));
+    // The decks' step settles urgent cards: the days run, then the cards.
+    const on = (x: GameState, n: number) =>
+      drawCards(days({ ...x, cards: { ...x.cards, checked: Math.floor(x.calendar.day) } }, n));
+    const waits = (x: GameState) => x.cards.pending.some((p) => p.uid === card.uid);
+    expect(waits(on(next, RAIDS.thievesDays + 1))).toBe(true);
+    const seen = seeCard(next, card.uid);
+    const need = Math.max(RAIDS.thievesDays, RAIDS.thievesMinutes * 60_000 * daysPerRealMs(seen));
+    expect(waits(on(seen, Math.floor(need) - 1))).toBe(true);
+    expect(waits(on(seen, Math.ceil(need) + 1))).toBe(false);
+    expect(waits(on(next, RAIDS.unseenDays + 1))).toBe(false);
   });
 });
 

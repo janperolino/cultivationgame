@@ -135,7 +135,7 @@ export const HUNDRED_REINS: Catalog = {
       craft: 'refining',
       family: 'blades',
       inputs: [
-        { thing: 'red-rocks-iron-ore', count: 3 },
+        { thing: 'red-rocks-iron-ore', count: 2 },
         { thing: 'ash-spear-shaft', count: 1 },
         { thing: 'thunderhorn', count: 1 },
       ],

@@ -304,6 +304,8 @@ export const GEOMANCY = {
 export const RAIDS = {
   /** Raiders come for a store worth more than a month's wage at their band (30 low at Qi Condensation). */
   wage: 30,
+  /** A site worth this many raiders' months draws one a band above its land's, and never more. */
+  rich: 10,
   /** A bed this many years old draws the land's beasts; at the next a beast a band stronger. */
   oldBed: [10, 100],
   /** Thieves left alone take this share of the store's worth, dearest first. */
@@ -311,6 +313,10 @@ export const RAIDS = {
   /** Days the card waits before it settles: thieves, a beast. */
   thievesDays: 5,
   beastDays: 3,
+  /** Real minutes a raid card waits once you open it at the least, and days one never opened waits. */
+  thievesMinutes: 5,
+  beastMinutes: 3,
+  unseenDays: 30,
 } as const;
 
 /** The roster templates a raid's fight reads: thieves of the land and a beast at its beds. */

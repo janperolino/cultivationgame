@@ -30,6 +30,7 @@ import { shortages, whyOf } from './making.ts';
 import { priceOf } from './prices.ts';
 import { stonesOf, worthOf } from './purse.ts';
 import { keeperId, askAt } from './shops.ts';
+import { ensureMap } from './map/travel.ts';
 import { addItem, newLife, withPlayer, type GameState } from './state.ts';
 
 const CITY = 'City of the Guarded Mouth';
@@ -40,6 +41,12 @@ const shopsOf = (name: string, kind: string) =>
 function life(): GameState {
   const s = newLife({ name: 'Han Li', seed: 'commissions' });
   return withPlayer(s, { ...s.player, stones: 2000 });
+}
+
+/** Stands you inside a shop's town: a counter's business is done there (the crafts checkpoint). */
+function at(s: GameState, shopId: string): GameState {
+  const m = ensureMap(s);
+  return { ...m, map: { ...m.map!, inside: shop(shopId).at, course: null } };
 }
 
 const worth = (s: GameState) => worthOf(stonesOf(s.player));
@@ -55,7 +62,9 @@ describe('a commission posted', () => {
     const posts = shopsOf(CITY, 'alchemy').map((id) => postedAt(s.world, id, day)!);
     for (const p of posts) {
       expect(goodTags(p.thing)).toContain('healing');
-      expect(p.why).toBe(whyOf(s.world, m, day));
+      // Its line of why, and that no shop here stands it at the floor (the crafts checkpoint).
+      expect(p.why!.startsWith(whyOf(s.world, m, day)!.replace(/\.$/, ''))).toBe(true);
+      expect(p.why).toMatch(/no shop here has them (green|blue|purple)\.$/);
       expect(p.n).toBe(10);
     }
     // The shops of one craft spread over the shortage's goods.
@@ -81,7 +90,9 @@ describe('a commission posted', () => {
     const paddocks = shopsOf('Thousand Paddocks', 'refiner').map((id) =>
       postedAt(s.world, id, day),
     );
-    expect(paddocks.every((p) => p && item(p.thing).kind === 'gear')).toBe(true);
+    // Armor, unless every rarity it comes in already stands on the Paddocks' shelves.
+    expect(paddocks.some((p) => p)).toBe(true);
+    expect(paddocks.every((p) => !p || item(p.thing).kind === 'gear')).toBe(true);
   });
 
   it('lets one stall post talismans where no talisman shop stands', () => {
@@ -100,6 +111,9 @@ describe('taking and handing in', () => {
   it('pays the fixed price for anything of the thing at the floor, a point of name, and the keeper’s thanks', () => {
     let s = life();
     const p = postedAt(s.world, shopId, s.calendar.day)!;
+    // Only at its counter, in its town (the code review's seam).
+    expect(takeCommission(s, shopId, 'posted').ok).toBe(false);
+    s = at(s, shopId);
     const r = takeCommission(s, shopId, 'posted');
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -134,7 +148,7 @@ describe('taking and handing in', () => {
   });
 
   it('costs the keeper’s regard when left past its month', () => {
-    let s = life();
+    let s = at(life(), shopId);
     const r = takeCommission(s, shopId, 'posted');
     if (!r.ok) throw new Error(r.reason);
     s = {
@@ -179,7 +193,7 @@ describe('made to order', () => {
   const refiner = shopsOf('Thousand Paddocks', 'refiner')[1]!;
 
   it('quotes ×1.25 the market with its inputs, less with yours, and makes it after the crafter’s hours', () => {
-    let s = life();
+    let s = at(life(), refiner);
     const q = quote(s, refiner, 'boar-hide-vest', false)!;
     const m = marketNamed('Thousand Paddocks');
     const market =

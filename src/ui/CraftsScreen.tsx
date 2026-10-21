@@ -80,7 +80,7 @@ import { ForgeScene } from './ForgeScene.tsx';
 import { FurnaceScene } from './FurnaceScene.tsx';
 import { TalismanScene } from './TalismanScene.tsx';
 import { itemTag } from './itemWords.ts';
-import { go } from './nav.ts';
+import { go, useNav } from './nav.ts';
 import { useGame } from './store.ts';
 import { commissionAsk, days } from './commissionWords.ts';
 import { card } from '../content/cards/index.ts';
@@ -124,8 +124,8 @@ const WORDS: Partial<
     sit: 'Sit at the furnace',
     line: 'Click the dark dross to burn it to ash; let the gold essence fall back into the pill. Every flick heats the furnace.',
     unit: ['pill', 'pills'],
-    none: 'Refiners sell them; a crude clay furnace is 30 low.',
-    slip: 'A recipe slip 丹方 is read on study hours, as a formula is; every alchemy shop sells the Qi-Gathering Pill’s.',
+    none: 'Every alchemy shop stands one, and the free market where a town has none; a crude clay furnace is 30 low.',
+    slip: 'With a furnace in hand, the Alchemy Dao on the Trees screen teaches the Qi-Gathering Pill at its root seal. A recipe slip 丹方 teaches the rest, read on study hours as a formula is, where its pill is sold.',
   },
   refining: {
     at: 'At the forge',
@@ -133,8 +133,8 @@ const WORDS: Partial<
     sit: 'Sit at the forge',
     line: 'Press a seal into each rune point as its glow passes orange: too hot it blurs, too cold it won’t take. On the last heat, quench the piece as it passes cherry.',
     unit: ['piece', 'pieces'],
-    none: 'Refiners sell them; a crude iron forge is 60 low.',
-    slip: 'A gear slip 器谱 is read on study hours, as a formula is; every refiner sells the Iron Sword’s.',
+    none: 'Every refiner stands one, and the free market where a town has none; a crude iron forge is 60 low.',
+    slip: 'With a forge in hand, the Refining Dao on the Trees screen teaches its first piece at its root seal. A gear slip 器谱 teaches the rest, read on study hours as a formula is, where its piece is sold.',
   },
   talismans: {
     at: 'At the desk',
@@ -142,8 +142,8 @@ const WORDS: Partial<
     sit: 'Sit at the desk',
     line: 'Press on the vermilion head and draw the whole talisman in one breath. The ink thins as you go and the line narrows with it: hurry the open curves, take the foot with care, and don’t lift.',
     unit: ['sheet', 'sheets'],
-    none: 'Talisman stalls sell them; a wolf-hair talisman brush is 30 low.',
-    slip: 'A talisman slip 符谱 is read on study hours, as a formula is; every stall that sells the Ember Talisman sells its slip.',
+    none: 'Every talisman shop stands one, and the free market where a town has none; a wolf-hair talisman brush is 30 low.',
+    slip: 'With a brush in hand, the Talismans Dao on the Trees screen teaches its first talisman at its root seal. A talisman slip 符谱 teaches the rest, read on study hours as a formula is, where its talisman is sold.',
   },
   formations: {
     at: 'At the plate',
@@ -151,7 +151,7 @@ const WORDS: Partial<
     sit: 'Inscribing is queued',
     line: 'Flags and discs are cut on the plate while the bench runs. You play the array when you lay it: at a vein you claimed (the Dwelling screen 居) or on open ground (the Map, your own menu).',
     unit: ['set', 'sets'],
-    none: 'Talisman shops sell them; a bronze inscribing plate is 30 low.',
+    none: 'Every talisman shop stands one, and the free market where a town has none; a bronze inscribing plate is 30 low.',
     slip: 'An array diagram 阵图 is read on study hours, as a formula is; the talisman shops that sell an array sell its diagram.',
   },
 };
@@ -202,7 +202,11 @@ function throwWords(t: { inputs: readonly { thing: string; count: number }[] }):
 export function CraftsScreen() {
   const game = useGame((s) => s.game);
   const applyLife = useGame((s) => s.applyLife);
-  const [page, setPage] = useState<CraftId>('alchemy');
+  // A link may open a page by name: the Fields door's opens Spirit Farming (the crafts checkpoint).
+  const [page, setPage] = useState<CraftId>(() => {
+    const asked = useNav.getState().select;
+    return (CRAFT_IDS as readonly string[]).includes(asked ?? '') ? (asked as CraftId) : 'alchemy';
+  });
   const [pick, setPick] = useState<string | null>(null);
   const [why, setWhy] = useState<string | null>(null);
   const [tab, setTab] = useState<'recipes' | 'experiment'>('recipes');
@@ -243,6 +247,17 @@ export function CraftsScreen() {
         : recipe(head.recipe).family
     : null;
   const experimenting = tab === 'experiment' && experiments(page);
+  // You sit at the work at the bench's front, or with nothing queued at this page's own bench, so
+  // the hand warms before a batch goes in (the crafts play checkpoint): what you queue then starts
+  // at the hand you hold.
+  const empty =
+    toolsHeld(c, page).length > 0 ? knownRecipes(c).find((r) => r.craft === page) : null;
+  const sitOn: { recipe: string; craft: CraftId } | null =
+    head && headCraft
+      ? { recipe: head.recipe, craft: headCraft }
+      : empty
+        ? { recipe: pick && recipe(pick).craft === page ? pick : empty.output, craft: page }
+        : null;
   const hours = ratesHere(game).count.craft;
   const spot = benchSpot(game);
   const change = (f: (c: Cultivator) => Cultivator) => applyLife((s) => withPlayer(s, f(s.player)));
@@ -437,19 +452,18 @@ export function CraftsScreen() {
                   <button
                     type="button"
                     className="button"
-                    disabled={!head || (!!headCraft && QUEUED_ONLY.includes(headCraft))}
+                    disabled={!sitOn || QUEUED_ONLY.includes(sitOn.craft)}
                     title={
-                      !head
-                        ? 'Queue a batch to sit at it.'
-                        : headCraft && QUEUED_ONLY.includes(headCraft)
-                          ? words(headCraft).line
+                      !sitOn
+                        ? `A ${CRAFTS[page].tool} and a recipe in hand, and you can sit at it.`
+                        : QUEUED_ONLY.includes(sitOn.craft)
+                          ? words(sitOn.craft).line
                           : undefined
                     }
                     onClick={() =>
-                      head &&
-                      headCraft &&
-                      !QUEUED_ONLY.includes(headCraft) &&
-                      sitDown(head.recipe, headCraft)
+                      sitOn &&
+                      !QUEUED_ONLY.includes(sitOn.craft) &&
+                      sitDown(sitOn.recipe, sitOn.craft)
                     }
                   >
                     {words(headCraft ?? page).sit}
@@ -697,7 +711,9 @@ function RecipeCard({
         {round1(batchHours(c, r))} craft hours · holds {formatPercent(holdOdds(c, r, land))} ·{' '}
         {yieldOf(c, r)} {words(r.craft).unit[yieldOf(c, r) === 1 ? 0 : 1]} · {lands}
       </p>
-      <p className="muted">Sat at with a full hand: {odds(1)}.</p>
+      <p className="muted">
+        {QUEUED_ONLY.includes(r.craft) ? 'Laid' : 'Sat at'} with a full hand: {odds(1)}.
+      </p>
       <p className="muted">
         The Bag fills {batchesHeld(c, r)} batch{batchesHeld(c, r) === 1 ? '' : 'es'}
         {plan.above ? ', every input a rarity above the floor' : ''}.
@@ -805,7 +821,7 @@ function Tray({ c, onTake }: { c: Cultivator; onTake: () => void }) {
   return (
     <div className="crafts-tray">
       <h3 className="panel-heading">The tray</h3>
-      <p className="muted">The Bag had no room, so these wait by the furnace.</p>
+      <p className="muted">The Bag had no room, so these wait at your bench.</p>
       <ul className="crafts-list">
         {tray.map(([id, n]) => (
           <li key={id} className={`rarity-${item(id).rarity}`}>
@@ -956,12 +972,18 @@ function Land({ c, craft, spot }: { c: Cultivator; craft: CraftId; spot: BenchSp
 /** The batch in the furnace and the hand it has read so far. */
 function BatchHand({ c }: { c: Cultivator }) {
   const front = c.crafts.front;
-  if (!front)
+  if (!front) {
+    const waits = benchWaits(c);
     return (
       <p className="muted crafts-furnace-batch">
-        Nothing on the bench yet: the next goes in on your next craft hour.
+        {waits
+          ? `The bench waits: ${waits}`
+          : c.crafts.bench.length
+            ? 'The next batch goes in on your next craft hour, at the hand you hold.'
+            : 'Nothing on the bench: warm your hand, and what you queue starts at it.'}
       </p>
     );
+  }
   const hours = frontHours(c, front);
   const mean = front.hours > 0 ? (front.hand ?? 0) / front.hours : 0;
   return (

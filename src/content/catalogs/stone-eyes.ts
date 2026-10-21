@@ -478,7 +478,7 @@ export const STONE_EYES: Catalog = {
       output: 'iron-knuckles',
       craft: 'refining',
       family: 'blades',
-      inputs: [{ thing: 'red-rocks-iron-ore', count: 4 }],
+      inputs: [{ thing: 'red-rocks-iron-ore', count: 2 }],
     },
     {
       output: 'slate-plate-vest',
