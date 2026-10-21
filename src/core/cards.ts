@@ -380,24 +380,25 @@ export function resolveCard(
   const vars = { ...(pending.vars ?? {}) };
   const choice = step.choices[index];
   if (!choice || !choiceOffered(choice, vars)) return { ...none, reason: 'No such choice.' };
-  const can = canChoose(s.player, choice);
-  if (!can.ok) return { ...none, reason: can.reason };
+  // A fight handed back was paid for as it opened: what it cost may be spent in it (a pill drunk).
+  if (!opts.played) {
+    const can = canChoose(s.player, choice);
+    if (!can.ok) return { ...none, reason: can.reason };
+  }
 
-  // A fight that isn't a sure win, chosen by you, is played on the stage first (Fights you play).
+  // A fight that isn't a sure win, chosen by you, is played on the stage first (Fights you play),
+  // its cost paid as it opens.
   const edge = choice.fight && !opts.played ? cardEdge(s, uid, index) : null;
   if (edge && !opts.byDefault && (opts.play || !edge.sure)) {
     if (s.fight) return { ...none, reason: 'You are in a fight.' };
-    const open = openFight(s, { kind: 'card', uid, choice: index });
+    const paid = payCost(s, choice.cost);
+    const from = { kind: 'card', uid, choice: index } as const;
+    const open = openFight(paid, from, cardFight(paid, uid, index));
+    if (!open) return { ...none, reason: 'The fight can’t be had.' };
     return { state: open, ok: true, text: '', pass: null, done: false, fight: true };
   }
 
-  let next: GameState = s;
-  const cost = choice.cost;
-  if (cost?.stones) {
-    const after = pay(stonesOf(next.player), cost.stones)!;
-    next = withPlayer(next, withStones(next.player, after));
-  }
-  if (cost?.item) next = withPlayer(next, addItem(next.player, cost.item.id, -cost.item.n));
+  let next: GameState = opts.played ? s : payCost(s, choice.cost);
 
   // A fight's end, or its edge's verdict without you, stands in for a check.
   const check =
@@ -457,6 +458,17 @@ export function resolveCard(
   next = addEvent(next, 'card', data, [next.player.id, ...named]);
   for (const e of outcome.effects) next = applyEffect(next, e, uid);
   return { state: next, ok: true, text, pass, done: true, ...(check ? { check } : {}) };
+}
+
+/** Pays a choice's cost, its stones and its item, already checked by `canChoose`. */
+function payCost(s: GameState, cost: CardChoice['cost']): GameState {
+  let next = s;
+  if (cost?.stones) {
+    const after = pay(stonesOf(next.player), cost.stones)!;
+    next = withPlayer(next, withStones(next.player, after));
+  }
+  if (cost?.item) next = withPlayer(next, addItem(next.player, cost.item.id, -cost.item.n));
+  return next;
 }
 
 /** Every text a card showed along a path of choices, for the people it named. */

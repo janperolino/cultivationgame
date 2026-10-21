@@ -12,7 +12,7 @@ import { encounterTemplate } from '../content/encounters/index.ts';
 import { combatantIn, type Fight, type Outcome, type Tick } from '../core/combat/fight.ts';
 import { logLine } from '../core/combat/log.ts';
 import { fightEnd, playTurn, type FightEnd, type YourAction } from '../core/played.ts';
-import { currentFight, finishFight, foeNames } from '../core/playFight.ts';
+import { currentFight, dropLostFight, finishFight, foeNames } from '../core/playFight.ts';
 import type { GameState } from '../core/state.ts';
 import { useGame } from './store.ts';
 
@@ -91,7 +91,11 @@ export function syncFight(s: GameState): void {
   }
   if (st.fight) return;
   const f = currentFight(s);
-  if (!f) return;
+  // A fight whose start a later build lost leaves the stage, and the clock runs again.
+  if (!f) {
+    useGame.getState().applyLife(dropLostFight);
+    return;
+  }
   useFight.setState({
     fight: f,
     target: firstFoe(f, s.player.id),

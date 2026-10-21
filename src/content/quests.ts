@@ -41,7 +41,12 @@ export type StepGoal =
   /** Hold this many of an item in the bag. */
   | { hold: string; n: number }
   /** A chronicle line of this type after the step opened, its data matching (a fight won, a spar). */
-  | { event: string; match?: Readonly<Record<string, string | number | boolean>> }
+  | {
+      event: string;
+      match?: Readonly<Record<string, string | number | boolean>>;
+      /** At the counter the quest was taken at: its place (`at`), a shop of its giver's kind. */
+      here?: true;
+    }
   /** A ladder at a realm's layer or past it. */
   | { layer: { ladder: LadderId; stage: number; realm?: RealmId } }
   /** This many tree nodes held. */
@@ -56,8 +61,10 @@ export type StepGoal =
   | { active: LadderId }
   /** An hour of this kind on your day's wheel. */
   | { hour: HourKind }
-  /** Duty days kept at a post or hire, this month and last. */
+  /** Duty days kept at one post or hire since the step opened. */
   | { kept: number }
+  /** A post or hire held: taken now, or held already. */
+  | { job: string }
   /** Points of your power's currency on its ledger. */
   | { balance: number }
   /** One of the codex's named checks on the life holds (gear worn, a member, with a caravan). */

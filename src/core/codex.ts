@@ -16,6 +16,8 @@ import { stats } from './stats.ts';
 import { followersOf } from './resolver/followers.ts';
 import { lifespanEdgeDay, unlock, type GameState } from './state.ts';
 import { groundPiles } from './map/ground.ts';
+import { placeById } from './map/region.ts';
+import { mapOf } from './map/travel.ts';
 import { technique, hasTechnique } from '../content/techniques.ts';
 
 export { CODEX, codexEntry, hasCodexEntry } from '../content/codex/index.ts';
@@ -34,8 +36,10 @@ function held(s: GameState, test: (id: string) => boolean): boolean {
   return Object.entries(s.player.items).some(([id, n]) => n > 0 && hasItem(id) && test(id));
 }
 
-/** The named checks (content/codex/schema.ts, `MET_TESTS`); the UI-seen ones read false here. */
-/** The named checks on the life, also read by a quest's step (core/journal.ts). */
+/**
+ * The named checks on the life (content/codex/schema.ts, `MET_TESTS`), also read by a quest's step
+ * (core/journal.ts); the UI-seen ones (a shop's counter, the coming-back story) read false here.
+ */
 export const MET: Readonly<Record<MetTest, (s: GameState) => boolean>> = {
   'qi-method': (s) => s.player.activeMethods.qi !== null,
   art: (s) => knownMethods(s.player, 'body').length + knownMethods(s.player, 'soul').length > 0,
@@ -84,7 +88,10 @@ export const MET: Readonly<Record<MetTest, (s: GameState) => boolean>> = {
   travelled: (s) => !!s.map?.course || (s.map?.trail.length ?? 0) > 1,
   encounter: (s) => s.chronicle.some((e) => e.type === 'encounter'),
   group: (s) => !!s.map?.group,
-  site: () => false,
+  site: (s) => {
+    const map = s.map?.inside ? mapOf(s) : null;
+    return !!map && placeById(map, s.map!.inside!)?.kind === 'site';
+  },
   posting: (s) => (s.map?.postings.length ?? 0) > 0,
   place: (s) => !!s.map?.inside,
   shop: () => false,

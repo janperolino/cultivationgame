@@ -154,7 +154,7 @@ function chain(s: Start): Quest[] {
           reason: p.reason,
           steps: [
             {
-              text: 'Keep three days of your post’s shifts: stand at it as its Duty hours pass.',
+              text: 'Keep three days of your post’s shifts: stand at it as its Duty hours pass. Until layer 4 you are at drill: set Duty on its hours yourself.',
               where: home,
               goal: { kept: 3 },
             },
@@ -187,9 +187,13 @@ function chain(s: Start): Quest[] {
             {
               text: `Take the day hire at home: ${p.hireName}.`,
               where: home,
-              goal: { event: 'job', match: { job: p.hire, what: 'taken' } },
+              goal: { job: p.hire },
             },
-            { text: 'Keep three days of the hire.', where: home, goal: { kept: 3 } },
+            {
+              text: 'Keep three days of the hire. Until layer 4 you are at drill: set Duty on its hours yourself.',
+              where: home,
+              goal: { kept: 3 },
+            },
             {
               text: p.job.text,
               goal: { flag: p.job.flag },

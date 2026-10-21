@@ -18,6 +18,7 @@ import {
   groundsHere,
   letGo,
   settleTrap,
+  trapFight,
   takeUp,
   trapSure,
 } from '../core/formations.ts';
@@ -496,7 +497,8 @@ function MapView({
                 return r.state;
               });
               if (text) say(text);
-            } else act((s) => openFight(s, { kind: 'trap', ground: g.id }));
+            } else
+              act((s) => openFight(s, { kind: 'trap', ground: g.id }, trapFight(s, g.id)) ?? s);
           },
         });
         items.push({

@@ -558,6 +558,13 @@ export const QuestStateSchema = z.object({
   handed: z.number().nullable(),
   /** Where an `@any` giver's quest was taken, and so is handed in. */
   at: z.string().optional(),
+  /**
+   * The held jobs' month tallies as a step waiting on kept days opened, by job id: what it counts
+   * from. Absent on a step that waits on something else.
+   */
+  keptAt: z
+    .record(z.string(), z.object({ month: z.number().int(), kept: z.number().min(0) }))
+    .optional(),
 });
 export type QuestState = z.infer<typeof QuestStateSchema>;
 

@@ -707,7 +707,13 @@ export function buy(s: GameState, shopId: string, slot: number, count?: number):
   // A quest's step that waits on a buy hears of it (the origin's board quest).
   if (waitsOn(next, 'bought')) {
     const what = hasCopy(lot.thing) ? copyTitle(lot.thing) : item(lot.thing).name;
-    next = addEvent(next, 'bought', { what, where: sh.name, thing: lot.thing });
+    next = addEvent(next, 'bought', {
+      what,
+      where: sh.name,
+      thing: lot.thing,
+      at: sh.at,
+      kind: sh.kind,
+    });
   }
   return { ok: true, state: next };
 }

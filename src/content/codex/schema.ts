@@ -60,7 +60,7 @@ export const MET_TESTS = [
   'travelled', // a course set on the map
   'encounter', // a road encounter met
   'group', // travelling with a group
-  'site', // a site found or seen
+  'site', // a site stood in
   'posting', // a bounty posting taken
   'place', // a place's screen entered
   'shop', // a shop's counter opened
