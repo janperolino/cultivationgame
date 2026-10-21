@@ -6,7 +6,9 @@ import { DAYS_PER_YEAR } from '../content/calendar.ts';
 import { z } from 'zod';
 import type { EventData } from '../content/chronicle.ts';
 import { AUTO_IDS, GRADE_IDS } from '../content/cultivation.ts';
+import { FAMILY_IDS } from '../content/crafts.ts';
 import { ELEMENTS, type Element } from '../content/elements.ts';
+import { EXPERIMENT_CRAFTS } from '../content/found.ts';
 import { ALL_FIRSTS, FIRST_IDS, type FirstId } from '../content/firsts.ts';
 import { FRESH_WHEEL, HOUR_KIND_IDS, HOURS_PER_DAY } from '../content/hours.ts';
 import {
@@ -94,8 +96,12 @@ export type PersonRecord = z.infer<typeof PersonRecord>;
  * The crafts (core/crafts.ts, K1): the bench's queue, worked from the front on Craft hours; the
  * front batch, its inputs already in the tool; the tray where finished pieces wait when the Bag is
  * full; the batches counted toward each family's mastery; and the bench's last few batches. A bench
- * entry with `mend` mends that piece at the forge (K4): its `recipe` is the piece's own id.
+ * entry with `mend` mends that piece at the forge (K4): its `recipe` is the piece's own id. One
+ * with `experiment` throws things in (K7): its `recipe` is `experiment` and its batches the sets.
  */
+const Inputs = z.array(z.object({ thing: z.string(), count: z.number().int().min(1) }));
+/** A throw at the bench (K7): the craft and what goes in, the talisman sheet with it. */
+const Experiment = z.object({ craft: z.enum(EXPERIMENT_CRAFTS), inputs: Inputs });
 const CraftsSchema = z.object({
   bench: z.array(
     z.object({
@@ -103,6 +109,8 @@ const CraftsSchema = z.object({
       batches: z.number().int().min(1),
       /** The piece mended at the forge, by its id, when the entry is a mend (K4). */
       mend: z.string().optional(),
+      /** What is thrown in, when the entry is an experiment (K7). */
+      experiment: Experiment.optional(),
     }),
   ),
   front: z
@@ -118,6 +126,8 @@ const CraftsSchema = z.object({
       hand: z.number().min(0).optional(),
       /** The piece being mended, when the front is a mend (K4). */
       mend: z.string().optional(),
+      /** What is thrown in, when the front is an experiment (K7). */
+      experiment: Experiment.optional(),
     })
     .nullable(),
   tray: z.record(z.string(), z.number().int().min(0)),
@@ -135,6 +145,10 @@ const CraftsSchema = z.object({
       hand: z.number().min(0).max(1).optional(),
       /** A piece mended rather than a batch made (K4). */
       mend: z.boolean().optional(),
+      /** An experiment (K7): what went in, the recipe found if it took, a miss that came close. */
+      experiment: z
+        .object({ inputs: Inputs, found: z.string().optional(), near: z.boolean().optional() })
+        .optional(),
     }),
   ),
   /** The grades certified at a guild's hall, by craft (K6): the grade, the day and the guild. */
@@ -142,6 +156,23 @@ const CraftsSchema = z.object({
     z.string(),
     z.object({ grade: z.number().int().min(1).max(9), day: z.number(), at: z.string() }),
   ),
+  /**
+   * Recipes found by experiment (K7), written or generated, by id, in the order found. Written ones
+   * are known as if learned; a craft Dao's own seal is learned in its place besides.
+   */
+  found: z.array(z.string()),
+  /** The generated recipes found (K7): their thing's id carries the rest (content/found.ts). */
+  recipes: z.array(
+    z.object({
+      output: z.string(),
+      craft: z.enum(EXPERIMENT_CRAFTS),
+      family: z.enum(FAMILY_IDS),
+      inputs: Inputs,
+      day: z.number(),
+    }),
+  ),
+  /** Misses on each set of things thrown in (K7), by the set's key: experimentation's pity. */
+  pity: z.record(z.string(), z.number().min(0)),
   /** How many of each thing held are of your own making, your maker's mark 记 (K6). */
   marked: z.record(z.string(), z.number().int().min(0)),
   /**
@@ -164,7 +195,7 @@ const CraftsSchema = z.object({
 });
 export type CraftsState = z.infer<typeof CraftsSchema>;
 
-/** An empty bench, no mastery, no grade or name: every new life's, and every old save's (v43, v45). */
+/** An empty bench, no mastery, no grade or name, nothing found: every new life's (v43, v45, v46). */
 export function emptyCrafts(): CraftsState {
   return {
     bench: [],
@@ -175,6 +206,9 @@ export function emptyCrafts(): CraftsState {
     grades: {},
     marked: {},
     renown: {},
+    found: [],
+    recipes: [],
+    pity: {},
   };
 }
 

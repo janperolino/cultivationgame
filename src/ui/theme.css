@@ -10573,3 +10573,226 @@ p.map-above {
   border-top: 1px solid var(--edge);
   padding-top: 10px;
 }
+
+/* ---------------------------------------------------------------- experimenting (K7, take B) */
+/* The left column flips to a shelf of what you carry, grouped by property; the middle gains the
+   bench's mouth, a ring for each thing thrown in, above the bench. Flat, nothing looping. */
+.crafts-middle {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.exp-tabs {
+  display: flex;
+  gap: 18px;
+  margin: -4px 0 12px;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.exp-tabs button {
+  padding: 4px 0 6px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.exp-tabs button.is-current {
+  color: var(--text);
+  border-bottom-color: var(--craft-lore);
+}
+
+.exp-shelf {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.exp-group .panel-heading {
+  margin: 4px 0 2px;
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.exp-group .crafts-list {
+  margin-bottom: 8px;
+}
+
+.exp-pick {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.exp-pick.is-in {
+  color: var(--accent);
+}
+
+.exp-tag {
+  margin-left: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--line-faint);
+  border-radius: 2px;
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+}
+
+.exp-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: 1px;
+  background: var(--muted);
+}
+
+.exp-dot.is-wood {
+  background: var(--qi-wood);
+}
+.exp-dot.is-fire {
+  background: var(--qi-fire);
+}
+.exp-dot.is-earth {
+  background: var(--qi-earth);
+}
+.exp-dot.is-metal {
+  background: var(--qi-metal);
+}
+.exp-dot.is-water {
+  background: var(--qi-water);
+}
+.exp-dot.is-lightning {
+  background: var(--dawn);
+}
+.exp-dot.is-wind {
+  background: #9fd6c6;
+}
+.exp-dot.is-ice {
+  background: #bfe3f0;
+}
+
+.exp-mouth {
+  text-align: center;
+  padding: 18px 14px 6px;
+  border: 1px solid var(--line-faint);
+  border-radius: 50% 50% 8px 8px / 26% 26% 8px 8px;
+  background: radial-gradient(ellipse at 50% 0%, rgb(217 164 65 / 0.12), transparent 60%);
+}
+
+.exp-rings {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 6px 0 12px;
+}
+
+.exp-ring {
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 6px;
+  box-sizing: border-box;
+  border: 1px solid var(--edge-strong);
+  border-radius: 50%;
+  font-size: calc(12px * var(--text-scale));
+  line-height: 1.2;
+}
+
+.exp-ring.is-empty {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.exp-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.exp-count button {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--edge-strong);
+  border-radius: 2px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.exp-read {
+  margin: 4px 0 10px;
+}
+
+.exp-read p {
+  margin: 2px 0;
+}
+
+.exp-lean {
+  font-family: var(--font-display);
+  font-size: calc(19px * var(--text-scale));
+}
+
+.exp-sets {
+  display: inline-flex;
+  margin: 4px 0 6px;
+  border: 1px solid var(--edge-strong);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.exp-sets button {
+  padding: 3px 10px;
+  border: 0;
+  border-right: 1px solid var(--edge-strong);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.exp-sets button:last-child {
+  border-right: 0;
+}
+
+.exp-sets button.is-on {
+  color: var(--text);
+  background: rgb(255 255 255 / 0.07);
+}
+
+.exp-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+/* The discoveries edge (K7): a found recipe is a square seal at its tier's rim on Lore's side,
+   named on hover though the lines beneath it take no pointer. */
+.fan-found {
+  pointer-events: auto;
+  cursor: help;
+  fill: var(--seal);
+  stroke: var(--text);
+  stroke-width: 0.6;
+  rx: 1px;
+}

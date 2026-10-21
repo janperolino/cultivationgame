@@ -12,6 +12,7 @@ import { RARITY_IDS, rarity, rarityRank, type RarityId } from './rarity.ts';
 import type { Effect } from './stats.ts';
 import type { DamageType, Form } from './techniques.ts';
 import { CATALOG_ITEMS } from './catalogs/index.ts';
+import { foundItem } from './found.ts';
 import { MAP_ITEMS } from './map/places.ts';
 
 /** What the Bag draws and stacks it as (design § Items and gear, the item record). */
@@ -778,7 +779,7 @@ export function variantId(
   r?: RarityId,
   o: { tier?: number; damaged?: boolean; cracked?: boolean } = {},
 ): string {
-  const b = byId.get(base);
+  const b = byId.get(base) ?? (writtenOf(base) && byId.get(base));
   const parts = [base];
   const rarityDiffers = r !== undefined && (!b || r !== b.rarity);
   const tierDiffers = o.tier !== undefined && (!b || o.tier !== b.tier);
@@ -794,10 +795,24 @@ export function baseOf(id: string): string {
   return id.split('~')[0]!;
 }
 
+/**
+ * A written thing as written, or a generated recipe's thing (K7, content/found.ts), built from its
+ * id the first time it is asked for and kept beside the written ones.
+ */
+function writtenOf(id: string): Item | undefined {
+  const known = written.get(id);
+  if (known) return known;
+  const found = foundItem(id);
+  if (!found) return undefined;
+  written.set(id, found);
+  byId.set(id, found.upTo ? atRarity(found, id, found.rarity) : found);
+  return found;
+}
+
 /** A variant built from its written thing, or null when the id names nothing it can be. */
 function variant(id: string): Item | null {
   const [base, r, ...rest] = id.split('~');
-  const b = base ? written.get(base) : undefined;
+  const b = base ? writtenOf(base) : undefined;
   if (!b || !r || !rarityIds.has(r as RarityId)) return null;
   const rar = r as RarityId;
   const damaged = rest.includes('dmg');
@@ -829,11 +844,11 @@ function atRarity(b: Item, id: string, rar: RarityId): Item {
 }
 
 export function hasItem(id: string): boolean {
-  return byId.has(id) || variant(id) !== null;
+  return byId.has(id) || writtenOf(id) !== undefined || variant(id) !== null;
 }
 
 export function item(id: string): Item {
-  const known = byId.get(id);
+  const known = byId.get(id) ?? (writtenOf(id) && byId.get(id));
   if (known) return known;
   const v = variant(id);
   if (!v) throw new RangeError(`Unknown item ${id}`);

@@ -296,6 +296,43 @@ function wedgePath(from: number, to: number, inner: number, outer: number, o: Po
   return `M${a.x + o.x} ${a.y + o.y} L${b.x + o.x} ${b.y + o.y}${arcTo(outer, from, to, o)} L${d.x + o.x} ${d.y + o.y}${arcTo(inner, to, from, o)} Z`;
 }
 
+/** A recipe found by experiment, laid on a craft Dao's discoveries edge (K7). */
+export interface EdgeSeal extends Point {
+  id: string;
+  tier: number;
+}
+/** Px of arc between found seals on the edge, and how far in from the band's outer edge they lie. */
+export const EDGE_STEP = 30;
+export const EDGE_INSET = 16;
+const degOf = (px: number, r: number) => ((px / r) * 180) / Math.PI;
+
+/**
+ * The discoveries edge (design § Professions, Experimentation; K7): the recipes found by
+ * experiment that no seal of the tree teaches, laid at their tier's rim on Lore's side in the
+ * order found, from the band's outer corner inward along its arc, a row further in once Lore's
+ * wedge is full. Unlinked, so the hand-laid part never moves; a tier of many finds reads fatter
+ * on that side.
+ */
+export function edgeSeals(f: Fan, found: readonly { id: string; tier: number }[]): EdgeSeal[] {
+  const out: EdgeSeal[] = [];
+  for (const b of f.bands) {
+    const edge = Math.min(LEVEL, b.half);
+    const split = b.half * WEDGE_SPLIT;
+    let r = b.outer - EDGE_INSET;
+    let a = edge - degOf(EDGE_STEP / 2, r);
+    for (const x of found.filter((y) => y.tier === b.tier)) {
+      if (a < split + degOf(EDGE_STEP / 2, r)) {
+        r -= EDGE_STEP;
+        a = edge - degOf(EDGE_STEP / 2, r);
+      }
+      const p = polar(a, r);
+      out.push({ id: x.id, tier: b.tier, x: p.x + f.hub.x, y: p.y + f.hub.y });
+      a -= degOf(EDGE_STEP, r);
+    }
+  }
+  return out;
+}
+
 /** Px of arc kept between neighbouring spokes, and between a fork's nodes, at the band's middle. */
 const SPOKE_GAP = 120;
 const FORK_GAP = 80;

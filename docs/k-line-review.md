@@ -29,10 +29,11 @@ Each is listed under *Awaiting Jan's review* in `plan.md`, with where to look.
 - **K4:** the 43 refining recipes and their inputs, the Crude Iron Forge. Dev console `craft <recipe>`, the Refining page.
 - **K5:** the 25 talisman recipes, the wolf-hair brush and talisman paper, Golden Light, Body-Fixing, Earth Escape, Divine Travel and the Immortal-Binding Rope. The Talisman Drawing page.
 - **K6:** the eight styles' chapter 1s (the five frontier common styles, the Pavilion's, Red Marrow's and the Valley's), the four new pills, who holds which style, and the Myriad Crafts Guild's atlas entry. The City's Examination hall and the guild's counter, with the dev console's `grade` and `craftfame`.
+- **K7:** the generated recipes' names (two words an element, an effect word and a kind each, Fierce for a toxic pill), their sizes and the floor's odds, and the Experiment tab's words. Any craft page's Experiment tab: `herbs 20` fills the shelf, and after a miss `pity` makes the next throw of that set all but find.
 
 ## 4. Small calls the phases made on their own
 
-Under Open questions in `plan.md`, "Small calls in K1" to "K5". The ones you're most likely to feel in play:
+Under Open questions in `plan.md`, "Small calls in K1" to "K7". The ones you're most likely to feel in play:
 
 - **K1:** a cracked tool works nothing until mended; the bench waits while you travel; a slip's node costs 25 insight.
 - **K2:** tier 1 holds 13 nodes and is held at 7; Hand's tier 2 capstones were made lift +0.5.
@@ -40,5 +41,6 @@ Under Open questions in `plan.md`, "Small calls in K1" to "K5". The ones you're 
 - **K4:** tempering plays the same at every tier; the numbers are in `content/forge.ts`.
 - **K5:** one-breath drawing plays the same at every tier; the talisman families are Strikes, Wards and Passage.
 - **K6:** only chapter 1 of each style is written; the exam takes no hours and can be resat at once; a certified grade never lapses; the mark is a count per thing, spent first when you sell; "where its people trade" is a power's shops and its trade and secret ties. The rest are under Open questions, Small calls in K6.
+- **K7:** experimenting reads your craft Dao's tiers *held*, so a fresh alchemist finds tier 1 at 1.5% a try (about nine tries with pity); a hit makes every set thrown as a batch, sure to hold; a miss gives no mastery; the panel tells you plainly whether something written lies close, and refuses a set that is your own recipe's; generated gear and talismans carry no special properties at green or blue; the shelf can run long with a full Bag. The rest are under Open questions, Small calls in K7.
 
 All three minigames play the same at every tier. Worth a look in play: should a higher tier quicken them?
