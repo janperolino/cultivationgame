@@ -29,7 +29,7 @@ Art is the still set. Code is everything that reads state, changes, moves, or th
 | The day wheel, the trees' fans, the Chronicle river, the cracks | drawn from data |
 | Anything that animates | art never moves |
 
-Art can also be content, later: an item, place or beast entry names an art id, and missing art shows nothing, never a broken image. No phase does this yet.
+Art can also be content: an item, beast, card or encounter entry names an art id, and missing art shows nothing, never a broken image (§ Content art, A11).
 
 ## Asset kinds
 
@@ -159,6 +159,17 @@ Stays code: the name, pronouns, realm, bars and numbers, recent events, the seat
 2. **The glass.** The cracks stay code, since they flare on a breakthrough and are seeded per life, and the void sky surface lies under them in place of today's flat black.
 3. **The walking rim light** goes; a panel that waits on you keeps a still accent glow. A2 also dropped the 9-slice slab frames for single CSS hairlines (Jan: thin and sleek over carved), so frames as art are for a screen that wants one.
 4. **Where the rule lives.** design.md § Look, rewritten in A2.
+
+## Content art (A11)
+
+Jan's call, 2026-10-21: the things inside the screens get pictures, trickled in like A5.4 whenever there is ChatGPT time, never blocking a phase.
+
+- **The hook.** An item, beast, enemy, card or encounter entry may name an `art` id. One without falls back to its kind's picture (every pill shows a pill, every talisman a talisman), and a missing file shows nothing. Rarity stays code, the rim and glow the game draws, so one icon serves every rarity.
+- **Item icons:** about 290 items, painted as ornament sheets (template F) of 16 on a 4×4 grid of 256 px cells, one object a cell on transparent, lit as the style block says, no frame or rim of its own; about 19 sheets, kind by kind; shipped at 128 px (64 on the stage). Shown in the Bag, shop rows, recipes, loot and the +n on gains.
+- **Beasts and enemies:** 35, a painted bust each, on 2×2 sheets of 512 px cells (9 sheets), shipped at 512; shown on encounter cards and the fight screen.
+- **Vignettes:** about 40 scenes (template E, landscape) shared by tag across the cards and encounters: a road ambush, a herb find, ruins, a sect gate, an elder, a storm, a night camp and so on; each card or encounter names one; shipped 768×512 at about 60 KB.
+- **Portraits** wait for the cast list (design § Still to design, NPC depth); the person page keeps a portrait's place.
+- **Order:** items first (the Bag and shops show the most), then beasts, then vignettes. About 70 ChatGPT runs in all, each loaded only when shown.
 
 ## The overhaul
 
