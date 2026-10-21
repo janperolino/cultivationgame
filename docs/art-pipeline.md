@@ -7,6 +7,7 @@ What comes from the Jade Sanctuary prototype (Jan's Codex test, 2026-10-16, kept
 ## The loop
 
 1. **Concept.** Claude writes a concept prompt for one screen (template A) with the screen's real content, and attaches a screenshot of the current build as the content reference. Jan runs it, two to four takes, and picks one or asks GPT for edits. The pick is saved in `art/concepts/<screen>-<n>.webp` and committed, since it is the reference the build is held to.
+   **Room to grow** (Jan's call, 2026-10-21): a screen is painted now, not once its features stop changing, so the concept leaves room for what later phases add: a tab more in a row, a column that scrolls inside, a quiet zone in the scene, a panel's place. Only the backdrop and the ornaments are paint; a later feature slots in as code in the kit with no repaint. The talk goes over what later phases might add (How each session runs) and the prompt names that room. A screen that doesn't exist yet is painted by the phase that builds it, its concept in that phase's talk.
 2. **Cut list.** Claude reads the pick and writes the cut list (template B): what is art and what is code, and for each asset its id, kind, size, slice insets, budget and prompt. Jan says yes or edits.
 3. **Assets.** Jan runs each asset prompt (templates C to F) with the concept attached, so GPT matches it, and drops the PNG in `art/inbox/` named by its asset id (`cultivate-scene.png`).
 4. **Ingest.** `npm run art` moves the inbox files to `art/source/`, writes `src/ui/art/<screen>/<id>.webp` as the manifest says, checks the budgets and prints the sizes.
@@ -110,7 +111,7 @@ Every prompt carries the style block word for word, so the assets agree with eac
 
 **A. Concept, one screen**
 
-> Use case: ui-mockup. Create ONE polished desktop game screen for Severed Heaven 断天, a literary cultivation RPG, a 16:9 landscape PC monitor screen at 1920x1080 proportions, straight-on actual UI with real readable text. Keep everything the player needs inside the centre 90% of the width; the outer edges carry only scenery. The attached screenshot is the current screen: keep its content and controls, redesign its look and layout. [STYLE BLOCK] STRUCTURE: build the screen from solid carved panels with real ornament at their corners, not thin outline boxes; one painted scene is the heart of the screen; the one thing waiting on the player is the brightest panel; [layout for this screen, e.g. "character slab left, scene center, card right, routine rail above a bottom navigation"]. CONTENT, use exactly, English first with small hanzi: [the screen's real copy and numbers from the build]. Nothing over the painted scene except [list]. No invented mechanics, no extra stats, no presentation captions.
+> Use case: ui-mockup. Create ONE polished desktop game screen for Severed Heaven 断天, a literary cultivation RPG, a 16:9 landscape PC monitor screen at 1920x1080 proportions, straight-on actual UI with real readable text. Keep everything the player needs inside the centre 90% of the width; the outer edges carry only scenery. The attached screenshot is the current screen: keep its content and controls, redesign its look and layout. [STYLE BLOCK] STRUCTURE: build the screen from solid carved panels with real ornament at their corners, not thin outline boxes; one painted scene is the heart of the screen; the one thing waiting on the player is the brightest panel; [layout for this screen, e.g. "character slab left, scene center, card right, routine rail above a bottom navigation"]. CONTENT, use exactly, English first with small hanzi: [the screen's real copy and numbers from the build]. Nothing over the painted scene except [list]. ROOM TO GROW: [what later phases add here, e.g. "the tab row has space for two more tabs; the right column scrolls inside its panel"]. No invented mechanics, no extra stats, no presentation captions.
 
 **B. Cut list** (Claude writes it, Jan reads it)
 
@@ -161,7 +162,7 @@ Stays code: the name, pronouns, realm, bars and numbers, recent events, the seat
 
 ## The overhaul
 
-`plan.md` runs the pipeline as phases A1 to A9, before P3.8: A1 builds the stage and `npm run art`, A2 the shell and the shared kit (and rewrites design.md § Look), then the screens one or a few at a time.
+`plan.md` runs the pipeline as phases A1 to A10 (the backlog since 2026-10-18; A10 Crafts added 2026-10-21): A1 builds the stage and `npm run art`, A2 the shell and the shared kit (and rewrites design.md § Look), then the screens one or a few at a time, painted now with room to grow; a new screen is painted by the phase that builds it.
 
 ## The travel map: a region painted whole (A5)
 

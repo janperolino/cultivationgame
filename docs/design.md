@@ -1969,7 +1969,7 @@ Five rules keep it sane:
 
 ## Roadmap
 
-Built bottom-up: what other systems read comes first, each layer thin (the least the layers after it need) and ending with a play session, and a screen is painted once its features stop changing. `plan.md` holds the order and the phases.
+Built bottom-up: what other systems read comes first, each layer thin (the least the layers after it need) and ending with a play session, and a screen is painted now with room left for later features, a new screen by the phase that builds it (planning, 2026-10-21). `plan.md` holds the order and the phases.
 
 | Stage | Contents |
 |---|---|
