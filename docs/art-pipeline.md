@@ -168,8 +168,9 @@ Jan's call, 2026-10-21: the things inside the screens get pictures, trickled in 
 - **Item icons:** about 290 items, painted as ornament sheets (template F) of 16 on a 4×4 grid of 256 px cells, one object a cell on transparent, lit as the style block says, no frame or rim of its own; about 19 sheets, kind by kind; shipped at 128 px (64 on the stage). Shown in the Bag, shop rows, recipes, loot and the +n on gains.
 - **Beasts and enemies:** 35, a painted bust each, on 2×2 sheets of 512 px cells (9 sheets), shipped at 512; shown on encounter cards and the fight screen.
 - **Vignettes:** about 40 scenes (template E, landscape) shared by tag across the cards and encounters: a road ambush, a herb find, ruins, a sect gate, an elder, a storm, a night camp and so on; each card or encounter names one; shipped 768×512 at about 60 KB.
-- **Portraits** wait for the cast list (design § Still to design, NPC depth); the person page keeps a portrait's place.
-- **Order:** items first (the Bag and shops show the most), then beasts, then vignettes. About 70 ChatGPT runs in all, each loaded only when shown.
+- **Portraits by type** (Jan's call, 2026-10-21: faces now): about 48, a man or a woman, young, middle-aged or old, and eight kinds (cultivator, merchant, scholar, farmer, guard, elder, rogue, beast-tamer), busts on 2×2 sheets of 512 px cells (12), shipped at 512. A person's seed picks one that fits; the cast list (design § Still to design, NPC depth) brings the cast's own faces and other races', which replace them.
+- **Places paint their own** (A6): a banner scene and the doors as one sheet, a 3×3 grid of door scenes, about two runs a place, never a picture shared by kind; the five inspo favorites (`docs/mockups/inspo/`) are the layouts, not the light.
+- **Order:** items first (the Bag and shops show the most), then faces, beasts, then vignettes. About 80 ChatGPT runs in all, each loaded only when shown.
 
 ## The overhaul
 
