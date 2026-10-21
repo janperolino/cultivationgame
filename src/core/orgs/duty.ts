@@ -1,4 +1,5 @@
 // What a power asks: monthly quotas, striking off, and the year’s leave.
+import { drilling } from '../wheel.ts';
 import { DAYS_PER_MONTH } from '../../content/calendar.ts';
 import {
   LEAVE,
@@ -62,9 +63,11 @@ export function settleQuotas(s: GameState): GameState {
       // A post kept the month before meets the quota by the work (O4); otherwise it is paid in
       // from the balance.
       const kept = postKeptFor(state.player, m.power, k - 1);
-      const met = due === 0 || kept || m.balance >= due;
+      // A post isn't worked through the tutorial layers (`drilling`), so no quota is asked of a
+      // member who is still drilling (The opening, built: the cadets were struck off by minute 15).
+      const met = due === 0 || kept || m.balance >= due || drilling(state.player);
       const missed = met ? 0 : (m.missed ?? 0) + 1;
-      const paid = met && !kept && due > 0;
+      const paid = met && !kept && due > 0 && m.balance >= due;
       let world = paid ? addBalance(state.world, who, m.power, -due) : state.world;
       world = withMember(world, m, { quota: k, missed });
       state = { ...state, world };

@@ -1,5 +1,6 @@
 // The live numbers a codex entry or a guide may name as `{slot}` (content/codex/schema.ts), read
 // from the constants the sims tune, so the words stay true when a number moves.
+import { DUTY_PAY } from '../jobs.ts';
 import {
   ATTENTION_CEILING,
   ATTENTION_FLOOR,
@@ -36,6 +37,7 @@ export const CODEX_SLOTS: Readonly<Record<string, string>> = {
   heatUnsettledSeconds: num(HEAT_UNSETTLED_S),
   /** The faster clock past the tutorial layers. */
   pace: num(PACE),
+  dutyPay: num(DUTY_PAY),
   rootMixed: rootSpeed('mixed'),
   rootTrue: rootSpeed('true'),
   rootSingle: rootSpeed('single'),

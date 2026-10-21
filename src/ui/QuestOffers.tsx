@@ -3,11 +3,12 @@
 // their reason and reward, taken with Take; one of theirs with every step done is handed in here.
 import { useState } from 'react';
 import { quest, type QuestGiver } from '../content/quests.ts';
+import { hasShop, shop } from '../content/shops.ts';
 import {
+  giverPlace,
   handIn,
   handInCheck,
   offersAt,
-  questPlace,
   stepsDone,
   takeQuest,
 } from '../core/journal.ts';
@@ -34,7 +35,11 @@ export function QuestOffers({
   const toHand = game.journal.quests.filter((q) => {
     if (q.handed !== null || !stepsDone(q)) return false;
     const g = quest(q.id).giver;
-    return g.kind === kind && g.who === who && questPlace(game, g.place)?.id === place;
+    if (g.kind !== kind || giverPlace(game, q)?.id !== place) return false;
+    // A giver of its kind anywhere takes it back at any counter of that kind where it was taken.
+    return g.place === '@any'
+      ? !g.shopKind || (!!who && hasShop(who) && shop(who).kind === g.shopKind)
+      : g.who === who;
   });
   if (offers.length === 0 && toHand.length === 0) return null;
   const run = (

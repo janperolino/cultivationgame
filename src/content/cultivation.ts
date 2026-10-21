@@ -41,8 +41,8 @@ export const APTITUDE_BASE = 10;
 export const APTITUDE_STEP = 0.05;
 
 /**
- * Qi Condensation layers up to this one are the tutorial: they ignore root speed, method fit and
- * the element hours. Dawn, discipline, Aptitude and nodes still count.
+ * Qi Condensation layers up to this one are the tutorial: they ignore method fit and the element
+ * hours, and root speed until this layer's own bar. Dawn, discipline, Aptitude and nodes count.
  */
 export const TUTORIAL_LAYERS = 3;
 

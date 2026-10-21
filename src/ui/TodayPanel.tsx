@@ -16,6 +16,7 @@ import { formatDays, formatRate } from './format.ts';
 import { go, goToTab, type RoutineTab } from './nav.ts';
 import type { ScreenId } from './screens.ts';
 import { following } from '../core/journal.ts';
+import { QuestLineActs } from './ChainOffer.tsx';
 
 /** Two techniques at most, so the qi row always has its place. */
 const PRACTICE_ROWS = 2;
@@ -142,6 +143,12 @@ export function TodayPanel({ game }: { game: GameState }) {
             </strong>
             <span>
               {r.line}
+              {r.key === 'quest' && (
+                <>
+                  {' '}
+                  <QuestLineActs game={game} />
+                </>
+              )}
               {r.link && (
                 <>
                   {' · '}

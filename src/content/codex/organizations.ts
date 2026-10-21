@@ -3,6 +3,24 @@ import type { CodexEntry } from './schema.ts';
 
 export const ORGANIZATIONS: readonly CodexEntry[] = [
   {
+    id: 'rogue',
+    title: 'A rogue cultivator',
+    hanzi: '散修',
+    area: 'organizations',
+    text: [
+      'You belong to no power. Nobody pays you a stipend, gives you a dwelling’s richer qi, sells you its pavilion’s chapters or sends a senior when you are in trouble, and no power stands behind you when someone weighs whether to rob you.',
+      'In return nobody asks a quota, a tithe or leave of you, so you go where you like, and the black market and the world’s work are open. You earn by day hires at a Work door, paid by the day, by the board’s postings and by selling what you gather. Any power can still take you in later by its own way in.',
+    ],
+    numbers: [
+      ['A day hire pays', '{dutyPay} low-grade stones a duty day at Qi Condensation'],
+      ['A Foundation Pill’s posted price', '1,000 low-grade stones'],
+    ],
+    where: { screen: 'map', label: "A place's Work door" },
+    met: { test: 'rogue' },
+    way: 'quest',
+    feature: 'The rogue’s way: no power behind you, day hires, your own place',
+  },
+  {
     id: 'join-power',
     title: 'Joining a power',
     hanzi: '入门',

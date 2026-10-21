@@ -14,6 +14,7 @@ import {
   card,
   DECK_PACE,
   OFFLINE_QUEUE,
+  SECLUSION_DECK,
   type Card,
   type CardChoice,
   type CardEffect,
@@ -186,7 +187,8 @@ export function defaultChoice(
 }
 
 /** One effect of a card on the game; `var` effects are the caller's. */
-function applyEffect(s: GameState, e: CardEffect, uid: number): GameState {
+// A card's effect; `uid` names the card for what settles by it (a raid), none for a quest's work.
+export function applyEffect(s: GameState, e: CardEffect, uid = -1): GameState {
   const c = s.player;
   switch (e.do) {
     case 'raid':
@@ -514,8 +516,12 @@ function rollCandidates(
   const paceRolls = new Map<string, boolean>();
   const story: Card[] = [];
   const paced: Card[] = [];
+  const held = deckHeld(s);
   for (const k of CARDS) {
     if (k.queued || (decks && !decks.includes(k.deck))) continue;
+    // A card a quest brings (the rogue's first big job) comes only when it is brought.
+    if (k.pushed) continue;
+    if (held && k.deck === SECLUSION_DECK) continue;
     if (!cardEligible(s, k, day)) continue;
     const pace = DECK_PACE[k.deck];
     if (pace && !k.fixed) {
@@ -531,6 +537,32 @@ function rollCandidates(
     else if ((k.chance ?? 1) >= 1 || rng.next() < (k.chance ?? 1)) story.push(k);
   }
   return { story, paced };
+}
+
+/**
+ * The seclusion deck is held until the origin's chain's first lesson is handed in (design § Story
+ * cards and events, Pacing): a life whose chain has begun and whose lesson isn't in yet.
+ */
+export function deckHeld(s: GameState): boolean {
+  const lesson = s.journal.quests.find((q) => /^chain-.*-lesson$/.test(q.id));
+  const begun = s.journal.quests.some((q) => q.id.startsWith('chain-'));
+  return begun && (lesson?.handed ?? null) === null;
+}
+
+/** Brings a card to the feed now, outside the decks' draw (a quest's act); once while it waits. */
+export function pushCard(s: GameState, id: string): GameState {
+  if (s.cards.pending.some((p) => p.card === id)) return s;
+  card(id);
+  const entry: PendingCard = { uid: s.cards.nextUid, card: id, day: s.calendar.day };
+  return {
+    ...s,
+    cards: {
+      ...s.cards,
+      pending: [...s.cards.pending, entry],
+      drawn: { ...s.cards.drawn, [id]: s.calendar.day },
+      nextUid: entry.uid + 1,
+    },
+  };
 }
 
 /** Picks one card by weight. */

@@ -229,14 +229,16 @@ export function areaById(map: RegionMap, id: string): MapArea | undefined {
 
 const atlasPlace = (p: RegionPlace, shops: readonly string[]): MapPlace | null => {
   if (p.x === null || p.y === null || p.outline) return null;
+  // A hand-written site (the opening's places near each start) reads as a seeded one does.
+  const sub = p.kind === 'site' && p.site ? (p.site as SiteKind) : null;
   return {
     id: p.id,
-    kind: 'atlas',
-    sub: p.kind,
+    kind: sub ? 'site' : 'atlas',
+    sub: sub ?? p.kind,
     name: p.name,
     pinyin: p.pinyin,
     hanzi: p.hanzi,
-    seal: PLACE_SEAL[p.kind] ?? '·',
+    seal: sub ? SITE_SEAL[sub] : (PLACE_SEAL[p.kind] ?? '·'),
     x: p.x,
     y: p.y,
     area: null,

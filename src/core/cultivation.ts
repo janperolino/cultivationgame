@@ -35,6 +35,7 @@ import {
   STONE_QI,
   STONES_PER_QI_DAY,
   SWALLOWED_WORTH,
+  TUTORIAL_LAYERS,
   TUTORIAL_PACE,
   UNSETTLED_DAYS,
   type GradeId,
@@ -76,7 +77,7 @@ import { gradesOdds, gradesSpeed } from './grades.ts';
 import { stageGrowth } from './growth.ts';
 import { gainInsight, masteryBurst } from './insight.ts';
 import { burn, burnable, realmGrade, stonesOf, withStones } from './purse.ts';
-import { addReading } from './reading.ts';
+import { addReading, readingCopy } from './reading.ts';
 import {
   addMethodPractice,
   breakthroughBonus,
@@ -186,7 +187,7 @@ export interface QiSpeed {
 /**
  * Root speed × the method (tier bonus × rarity × mastery) × fit × qi density × Aptitude × nodes ×
  * the realm's grade × attention. Zero without a qi method, or with one past its tier. Layers 1–3
- * ignore the root, the method part and the fit.
+ * ignore the method part and the fit, and layers 1–2 the root.
  */
 export function qiSpeed(c: Cultivator, seat: Seat = AWAY, density = 1): QiSpeed {
   const m = ladderMethod(c, 'qi');
@@ -200,7 +201,9 @@ export function qiSpeed(c: Cultivator, seat: Seat = AWAY, density = 1): QiSpeed 
     return { ...none, density, aptitude: apt, nodes, attention, grade, capped: false, total: 0 };
   }
   const tutorial = inTutorial(c.qi);
-  const rootSpeed = tutorial ? 1 : root(c.root).speed;
+  // The root counts from layer 3's bar, so every root reaches layer 3 together and the fast ones
+  // pull away on the way to 4 (Jan's call, 2026-10-21: the heavenly root's pace).
+  const rootSpeed = tutorial && c.qi.stage < TUTORIAL_LAYERS ? 1 : root(c.root).speed;
   const fit = tutorial ? 1 : methodFitSpeed(c, m);
   return {
     root: rootSpeed,
@@ -346,7 +349,14 @@ export function hourYields(
   const base = dayBase(c, day, unfed, seat, density);
   const discipline = followedRoutine(c) ? DISCIPLINE_BONUS : 0;
   const night = stats(c).nightQi;
-  return effectiveWheel(c).map((kind, hour) => {
+  // With no qi method yet, no study hour and a copy on the reading stand, the qi hours read it: a
+  // first copy takes the whole wheel until it is read (design § Character creation, the street
+  // cultivator's torn manual, which comes before the screen is built and the wheel can be set).
+  const wheel = effectiveWheel(c);
+  const readsInstead =
+    !ladderMethod(c, 'qi') && !wheel.includes('study') && readingCopy(c) !== null;
+  return wheel.map((wheelKind, hour) => {
+    const kind = readsInstead && wheelKind === 'qi' ? 'study' : wheelKind;
     const y: HourYield = {
       hour,
       kind,

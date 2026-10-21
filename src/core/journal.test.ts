@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { QUESTS, quest } from '../content/quests.ts';
 import { hasCopy } from '../content/copies.ts';
 import { hasItem } from '../content/items.ts';
+import { withoutChain } from './chains.ts';
 import { createLife, type Creation } from './creation.ts';
 import { finishAllGuides } from './guides.ts';
 import {
@@ -40,7 +41,7 @@ const creation: Creation = {
   },
 };
 
-const life = (): GameState => ensureMap(finishAllGuides(createLife(creation)));
+const life = (): GameState => ensureMap(withoutChain(finishAllGuides(createLife(creation))));
 const ok = (r: { ok: true; state: GameState } | { ok: false; reason: string }) => {
   if (!r.ok) throw new Error(r.reason);
   return r.state;

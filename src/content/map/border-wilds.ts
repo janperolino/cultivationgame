@@ -350,6 +350,8 @@ export const BORDER_WILDS: RegionContent = {
       'mouth-mortal',
     ],
     'qm-tushou-men': ['gate-sect'],
+    // The Wall's sutler (The opening, built: every start buys at a counter near home).
+    'qm-duigu-qiang': ['wall-sutler'],
     'qm-yeqiao-hui': ['bridge-black', 'bridge-stall'],
     // A5.2's seats and the sects that keep a shop (E2.1).
     'qm-hewan-cheng': ['bend-stall', 'bend-refiner', 'bend-guild', 'bend-mortal'],

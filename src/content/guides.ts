@@ -12,6 +12,7 @@
 //
 // Each guide ends by adding its codex entry with a dot (core/codex.ts). Texts await Jan's review.
 export const GUIDE_IDS = [
+  'first-work',
   'take-up',
   'qi-bar',
   'first-orb',
@@ -26,6 +27,8 @@ export const GUIDE_IDS = [
   'place-doors',
   'first-buy',
   'fight-turn',
+  'sheet',
+  'sense',
 ] as const;
 export type GuideId = (typeof GUIDE_IDS)[number];
 
@@ -49,7 +52,10 @@ export type GuideControl =
   | 'map'
   | 'doors'
   | 'buy'
-  | 'moves';
+  | 'moves'
+  | 'first-work'
+  | 'sheet'
+  | 'sense';
 
 export interface Guide {
   id: GuideId;
@@ -67,6 +73,16 @@ export interface Guide {
 }
 
 export const GUIDES: Readonly<Record<GuideId, Guide>> = {
+  // A rogue's first work, before the first breath (design § The rogue start): the one step that
+  // brings the method to a start with none.
+  'first-work': {
+    id: 'first-work',
+    form: 'ring',
+    screen: 'cultivate',
+    control: 'first-work',
+    lines: ['You have no method yet. This work pays for one.'],
+    codex: 'rogue',
+  },
   'take-up': {
     id: 'take-up',
     form: 'build',
@@ -187,10 +203,34 @@ export const GUIDES: Readonly<Record<GuideId, Guide>> = {
     lines: ['Your move. Each button shows its odds against this foe.'],
     codex: 'fight-moves',
   },
+  // The stats where they first matter: after the chain's spar, why you won (design § The origin's chain).
+  sheet: {
+    id: 'sheet',
+    form: 'ring',
+    screen: 'character',
+    control: 'sheet',
+    lines: ['Why you won: a fight compares two sheets. Hover a line for what feeds it.'],
+    codex: 'character-sheet',
+    ack: true,
+  },
+  // Divine sense on the board's road: what you see and sense ahead, and the stance that meets it.
+  sense: {
+    id: 'sense',
+    form: 'ring',
+    screen: 'map',
+    control: 'sense',
+    lines: [
+      'You see this far, and sense what waits ahead before you reach it.',
+      'Your stance decides what you do when you meet it: Avoid, Careful or Bold.',
+    ],
+    codex: 'look-gather-sense',
+    ack: true,
+  },
 };
 
 /** Each guide as Settings' replay list names it. */
 export const GUIDE_NAMES: Readonly<Record<GuideId, string>> = {
+  'first-work': 'A rogue’s first work',
   'take-up': 'Taking up your method',
   'qi-bar': 'The qi bar',
   'first-orb': 'Drawing an orb',
@@ -205,6 +245,8 @@ export const GUIDE_NAMES: Readonly<Record<GuideId, string>> = {
   'place-doors': 'A place’s doors',
   'first-buy': 'The first buy',
   'fight-turn': 'The first turn of a fight',
+  sheet: 'Why you won: the sheet',
+  sense: 'Sight, sense and the stance',
 };
 
 /** The narrator's skip, on every guide; the first also offers to skip them all. */

@@ -247,8 +247,8 @@ describe('breathing', () => {
 
   it('reaches only so far, further with Grasping Breath', () => {
     const c = seated();
-    // On its way in from the right, three seconds into its drift: out of `breathe`'s reach.
-    const far: Orb = { ...orb(1, INHALE_T, 0), born: INHALE_T - 3, arrives: INHALE_T + 4 };
+    // On its way in from the right, most of its drift done: still out of `breathe`'s reach.
+    const far: Orb = { ...orb(1, INHALE_T, 0), born: INHALE_T - 6, arrives: INHALE_T + 4 };
     const a = sitting(c, { t: INHALE_T, orbs: [far] });
     const d = Math.hypot(orbPosition(far, INHALE_T)[0], orbPosition(far, INHALE_T)[1] - 9);
     expect(d).toBeGreaterThan(58);
@@ -280,14 +280,15 @@ describe('breathing', () => {
 });
 
 describe('heat', () => {
-  /** Twenty greedy grabs off the breath, one right after another. */
+  /** Thirty greedy grabs off the breath, one right after another. */
   function greedy(c: Cultivator) {
     let a = sitting(c, { t: EXHALE_T });
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
       a = { ...a, orbs: [orb(10 + i, a.t)] };
       const [x, y] = orbPosition(a.orbs[0]!, a.t);
       a = catchAt(a, c, x, y).attention;
-      a = tickAttention(a, c, 0.1, ATTENDING);
+      // Off the breath throughout: thirty grabs inside the exhale.
+      a = tickAttention(a, c, 0.07, ATTENDING);
     }
     return a;
   }
@@ -333,7 +334,7 @@ describe('the orbs stream', () => {
     return { a, orbs: [...seen.values()] };
   }
 
-  it('brings an orb every five to ten seconds, mostly arriving on the inhale', () => {
+  it('brings an orb every one to two seconds, mostly arriving on the inhale', () => {
     const c = seated();
     const { orbs } = hour(life(c), c);
     expect(orbs.length).toBeGreaterThan(3600 / ORB_EVERY_S[1] - 5);

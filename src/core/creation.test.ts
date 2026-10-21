@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../content/cards/index.ts';
+import { CATALOGS } from '../content/catalogs/index.ts';
 import { EVENT_TEMPLATES, fillSlots, pronounWords } from '../content/chronicle.ts';
 import { hasContemplationSource } from '../content/contemplation.ts';
 import { hasMethod, method } from '../content/methods.ts';
@@ -279,24 +280,24 @@ describe('the first hour’s cards as data', () => {
     }
   });
 
-  it('hand each origin path its Foundation chapter at layer 9', () => {
+  it('leave each origin path’s Foundation chapter to be found on a shelf, never handed over', () => {
+    const lots = CATALOGS.flatMap((c) => c.lots.map((l) => l.thing));
     for (const o of ORIGINS) {
       for (const choice of ORIGIN_CHOICES) {
-        const k = CARDS.find(
-          (c) =>
-            c.trigger.origin?.includes(o.id) &&
-            c.trigger.choice === choice &&
-            c.trigger.qi?.minStage === 9,
-        );
-        expect(k, pathKey(o.id, choice)).toBeDefined();
-        const effects = k!.choices[0]!.pass.effects;
-        expect(effects).toContainEqual({ do: 'item', id: 'foundation-pill', n: 1 });
-        // A copy of the chapter, read before it can be taken up.
-        const m = effects.find((e) => e.do === 'copy');
-        const id = m && m.do === 'copy' ? m.id.replace(/^method:/, '') : '';
-        expect(method(id).chapter).toBe(2);
+        const first = o[choice].method ?? (o.id === 'conscript' ? 'night-bridge' : 'bounty-scrap');
+        const id = `${first}-foundation`;
+        expect(method(id).chapter, pathKey(o.id, choice)).toBe(2);
+        expect(lots, pathKey(o.id, choice)).toContain(`method:${id}`);
       }
     }
+    // No card hands a Foundation Pill over.
+    for (const k of CARDS)
+      for (const c of k.choices)
+        expect(c.pass.effects, k.id).not.toContainEqual({
+          do: 'item',
+          id: 'foundation-pill',
+          n: 1,
+        });
   });
 });
 

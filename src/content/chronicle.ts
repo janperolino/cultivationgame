@@ -126,6 +126,13 @@ function powerName(id: string): string {
   return n.startsWith('The ') ? n : `the ${n}`;
 }
 
+/** A deed an introduction quest waited on (core/journal.ts, `didDeed`). */
+const DEED_LINES: Record<string, string> = {
+  changed: 'changes money at a money changer',
+  slept: 'sleeps a night in an inn instead of a ditch',
+  lesson: 'sits a lesson in the elders’ hall',
+};
+
 /** What a power did with you as its member (O3): the year's pill, the true seat, a quota, leave. */
 const POWER_LINES: Record<string, (w: Who, p: string, d: EventData) => string> = {
   pill: (w, p) => `${capitalize(p)} hands ${w.name} a Foundation Pill from the year's ranking.`,
@@ -319,6 +326,10 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
     s(d.what) === 'handed'
       ? `${w.name} hands in ${s(d.title)}.`
       : `${w.name} takes on ${s(d.title)}.`,
+  // The rogue's first work (core/chains.ts), and a buy a quest's step waited for (core/shops.ts).
+  work: (d, w) => `${w.name} ${s(d.line)}.`,
+  bought: (d, w) => `${w.name} buys ${s(d.what)} at ${s(d.where)}.`,
+  did: (d, w) => `${w.name} ${DEED_LINES[s(d.deed)] ?? 'does what was asked'}.`,
   spar: (d, w) =>
     `${w.name} spars with ${s(d.foe)} ${SPAR_ENDS[s(d.result)] ?? 'and walks away'}${n(d.turns) > 0 ? ` in ${n(d.turns)} exchange${n(d.turns) === 1 ? '' : 's'}` : ''}.`,
   // A node or manual a save names but the game no longer holds (a made-up one, a removed one) is
@@ -454,6 +465,9 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   death: 'death',
   spar: 'fight',
   quest: 'choice',
+  work: 'settled',
+  bought: 'settled',
+  did: 'settled',
   follower: 'people',
   power: 'people',
   job: 'settled',
