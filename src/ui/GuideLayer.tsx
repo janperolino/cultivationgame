@@ -1,7 +1,7 @@
 // The guide standing now, drawn over the stage (design § UI and screens, Introductions; core/
 // guides.ts): a gilt ring round its control and the narrator's line or two beside it, with "I know
 // this". A veil dims the rest of the stage, still and unblurred for the paint cost, and nothing
-// under it answers but the lit control; a ghost hand shows a pointer motion once. The control is
+// under it answers but the lit control. The control is
 // found by its `data-guide` attribute and measured a few times a second, so the ring follows it.
 import { useEffect, useState, type CSSProperties } from 'react';
 import { CODEX_SLOTS, fillSlots } from '../content/codex/index.ts';
@@ -14,7 +14,6 @@ import { copyManual, hasCopy } from '../content/copies.ts';
 import type { GameState } from '../core/state.ts';
 import { endReplay, lookAt, useGuideCtx } from './guide.ts';
 import { useSeat } from './seat.ts';
-import { reducedMotion, useSettings } from './settings.ts';
 import { useGame } from './store.ts';
 
 interface Box {
@@ -78,7 +77,6 @@ export function GuideLayer() {
   const applyLife = useGame((s) => s.applyLife);
   const ctx = useGuideCtx();
   const orb = useSeat((s) => (s.attention?.orbs.length ?? 0) > 0);
-  const reduced = useSettings((s) => reducedMotion(s));
   useEffect(() => lookAt({ orb }), [orb]);
   // A guide replayed from Settings shows as a ring, closed by Got it, held or recorded nowhere.
   const replaying: Guide | null = ctx.replay
@@ -158,13 +156,6 @@ export function GuideLayer() {
         </>
       )}
       <div className="guide-ring" style={ring} />
-      {guide.hand && !reduced && (
-        <div
-          className={`guide-hand is-${guide.hand}`}
-          style={{ left: box.x + box.w / 2, top: box.y + box.h / 2 } as CSSProperties}
-          aria-hidden="true"
-        />
-      )}
       <section className="guide-callout" style={calloutStyle} aria-label="Guide">
         {linesOf(guide, game).map((l) => (
           <p key={l}>{l}</p>

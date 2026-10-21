@@ -10841,7 +10841,7 @@ p.map-above {
 
 /* The guides (ui/GuideLayer.tsx, design § UI and screens, Introductions): a gilt ring round the
    control, the narrator's lines beside it; the veil dims the rest of the stage, still and with no
-   blur (Jan's paint-cost rule). A ghost hand passes once, then is gone. */
+   blur (Jan's paint-cost rule). */
 .guide-layer {
   position: absolute;
   inset: 0;
@@ -10886,62 +10886,6 @@ p.map-above {
   gap: 18px;
   align-items: center;
   margin-top: 8px;
-}
-
-.guide-hand {
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  margin: -13px 0 0 -13px;
-  border: 2px solid var(--gilt-core);
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--gilt-core) 25%, transparent);
-  opacity: 0;
-}
-
-.guide-hand.is-through {
-  animation: guide-through 2.4s ease-in-out 0.4s 1;
-}
-
-.guide-hand.is-tap {
-  animation: guide-tap 1.6s ease-out 0.4s 1;
-}
-
-@keyframes guide-through {
-  0% {
-    opacity: 0;
-    transform: translate(-160px, -90px);
-  }
-  15% {
-    opacity: 0.9;
-  }
-  85% {
-    opacity: 0.9;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(140px, 70px);
-  }
-}
-
-@keyframes guide-tap {
-  0%,
-  100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  30% {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-  45% {
-    opacity: 0.9;
-    transform: scale(0.7);
-  }
-  60% {
-    opacity: 0.9;
-    transform: scale(1);
-  }
 }
 
 /* The method to take up, on Cultivate before the first breath. */

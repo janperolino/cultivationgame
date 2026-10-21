@@ -7,7 +7,7 @@
 // - `build`: the screen building itself for the first seclusion. Cultivate opens on the figure and
 //   the qi bar, and each piece fades in as its guide comes (core/guides.ts, `built`).
 // - `veil`: what must not be missed. A still dark veil, one control lit in a gilt ring, the clock
-//   held (the first orb's breath runs at half instead), a ghost hand showing the motion once.
+//   held (the first orb's breath runs at half instead).
 // - `ring`: a gilt ring and a short line at the control, nothing held.
 //
 // Each guide ends by adding its codex entry with a dot (core/codex.ts). Texts await Jan's review.
@@ -60,8 +60,6 @@ export interface Guide {
   control: GuideControl;
   /** At most two lines; {method}, {technique} and {copy} fill in. */
   lines: readonly string[];
-  /** A ghost hand shows the pointer motion once (design: passing through an orb, tapping a gate). */
-  hand?: 'through' | 'tap';
   /** The codex entry it adds as it ends. */
   codex: string;
   /** A ring that waits only for a look, and closes on its "Got it". */
@@ -92,7 +90,6 @@ export const GUIDES: Readonly<Record<GuideId, Guide>> = {
     screen: 'cultivate',
     control: 'orb',
     lines: ['Qi drifts in. Pass the pointer through an orb to draw it in.'],
-    hand: 'through',
     codex: 'orbs',
   },
   focus: {
@@ -122,7 +119,6 @@ export const GUIDES: Readonly<Record<GuideId, Guide>> = {
     screen: 'cultivate',
     control: 'gate',
     lines: ['The bar is full. Break through, then tap as the spark passes each gate.'],
-    hand: 'tap',
     codex: 'minor-breakthrough',
   },
   'first-node': {
