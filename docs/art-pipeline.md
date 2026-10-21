@@ -172,6 +172,16 @@ Jan's call, 2026-10-21: the things inside the screens get pictures, trickled in 
 - **Places paint their own** (A6): a banner scene and the doors as one sheet, a 3×3 grid of door scenes, about two runs a place, never a picture shared by kind; the five inspo favorites (`docs/mockups/inspo/`) are the layouts, not the light.
 - **Order:** items first (the Bag and shops show the most), then faces, beasts, then vignettes. About 80 ChatGPT runs in all, each loaded only when shown.
 
+## Sound (S1)
+
+Jan's call, 2026-10-21. The same split as the art: Jan gathers or generates, Claude writes the cue list and the code.
+
+- **Where it comes from.** Effects and ambience free first: CC0 (Kenney's audio packs, Sonniss's GDC bundles, Freesound's and OpenGameArt's CC0), CC-BY with its credit line kept, never a NonCommercial licence (it would bar Steam) or a file whose source is unclear. Music by AI on a paid plan that grants its use (Suno or Udio) in Chinese instruments, guzheng, dizi, erhu, pipa, guqin and xiao, with free tracks where good ones turn up. Steam would want the AI music disclosed beside the art.
+- **The cue list.** Claude writes it per phase: each cue's id, the engine event it plays on, and search terms for a free sound or a prompt for the music.
+- **Files.** `sound/inbox/` (ignored) for what Jan drops, named by cue id; `sound/manifest.json` (committed): each sound's id, kind (music, ambience or effect), source URL, licence and credit; `npm run sound` writes MP3s under `src/ui/sound/` and fails on a sound with no licence or credit, or over budget.
+- **Budgets, as loading hygiene:** a track about 3 MB at 128 kbps, streamed when first played; an ambience loop about 1 MB; an effect under 50 KB, loaded with its screen.
+- **Credits:** the manifest's credits are listed in Settings.
+
 ## The overhaul
 
 `plan.md` runs the pipeline as phases A1 to A10 (the backlog since 2026-10-18; A10 Crafts added 2026-10-21): A1 builds the stage and `npm run art`, A2 the shell and the shared kit (and rewrites design.md § Look), then the screens one or a few at a time, painted now with room to grow; a new screen is painted by the phase that builds it.
