@@ -11173,3 +11173,149 @@ p.map-above {
   display: flex;
   gap: 6px;
 }
+
+/* The guides (ui/GuideLayer.tsx, design § UI and screens, Introductions): a gilt ring round the
+   control, the narrator's lines beside it; the veil dims the rest of the stage, still and with no
+   blur (Jan's paint-cost rule). */
+.guide-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.guide-veil {
+  position: absolute;
+  background: rgb(2 3 5 / 0.78);
+  pointer-events: auto;
+}
+
+.guide-ring {
+  position: absolute;
+  border: 1px solid var(--gilt);
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--gilt) 22%, transparent),
+    0 0 22px color-mix(in srgb, var(--gilt) 35%, transparent);
+}
+
+.guide-callout {
+  position: absolute;
+  padding: 14px 18px 12px;
+  border: 1px solid var(--gilt-soft);
+  border-radius: 4px;
+  background: var(--panel-solid);
+  box-shadow: 0 24px 50px -28px rgb(0 0 0 / 0.95);
+  pointer-events: auto;
+}
+
+.guide-callout p {
+  margin: 0 0 6px;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.guide-actions {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+/* The method to take up, on Cultivate before the first breath. */
+.take-up {
+  margin: 0 0 10px;
+}
+
+.guide-callout.is-centred {
+  left: 50%;
+  top: 40%;
+  width: 420px;
+  transform: translateX(-50%);
+}
+
+.guide-replays {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  columns: 2;
+  column-gap: 24px;
+}
+
+.guide-replays li {
+  margin: 2px 0;
+}
+
+/* The journal 志 (ui/JournalScreen.tsx): its tabs, a quest's steps, the codex's numbers. */
+.journal-tabs {
+  margin-bottom: 14px;
+}
+
+.quest-seal {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--muted, var(--text));
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.quest-seal.is-followed {
+  border-color: var(--gilt);
+  color: var(--gilt);
+}
+
+.quest-steps {
+  margin: 4px 0 8px;
+  padding-left: 22px;
+}
+
+.quest-steps li {
+  margin: 4px 0;
+}
+
+.quest-steps li.is-done {
+  color: var(--gilt);
+}
+
+.codex-area + .codex-area {
+  margin-top: 12px;
+}
+
+.codex-numbers {
+  margin-top: 10px;
+  border-collapse: collapse;
+}
+
+.codex-numbers th,
+.codex-numbers td {
+  padding: 3px 18px 3px 0;
+  border-bottom: 1px solid var(--line-faint);
+  text-align: left;
+  font-weight: normal;
+}
+
+.codex-numbers th {
+  color: var(--muted, var(--text));
+}
+
+.map-enc.is-quest {
+  --enc-color: var(--gilt);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.quest-offers {
+  margin-bottom: 12px;
+}
+
+/* The codex's list scrolls on its own, so the page never does. */
+.codex-list {
+  max-height: 820px;
+  overflow-y: auto;
+}

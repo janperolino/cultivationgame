@@ -2,6 +2,9 @@
 // the game uses where they can (time runs through the day step, breakthroughs roll their odds,
 // cards go through the feed), and set numbers directly where testing needs a jump. Dev builds only.
 import { addStanding } from '../../core/resolver/opinion.ts';
+import { hasQuest, quest } from '../../content/quests.ts';
+import { finishAllGuides } from '../../core/guides.ts';
+import { takeQuest } from '../../core/journal.ts';
 import { standingOf } from '../../core/resolver/world.ts';
 import { huntOf, seeUse } from '../../core/guarded.ts';
 import { actorFromCultivator, plainActor } from '../../core/resolver/actor.ts';
@@ -852,6 +855,19 @@ export const COMMANDS: Record<string, Command> = {
         },
         `Every set missed now stands at ${v} misses.`,
       );
+    },
+  },
+  quest: {
+    usage: 'quest [id|guides]',
+    help: 'Takes a quest (the test errand unless told; it is also offered at your home board), or "guides" ends every guide.',
+    run([id], store) {
+      if (id === 'guides')
+        return apply(store, finishAllGuides, 'Every guide ended for the lineage.');
+      const which = id ?? 'test-errand';
+      if (!hasQuest(which)) return `No quest ${which}.`;
+      const r = takeQuest(ensureMap(needGame(store)), which);
+      if (!r.ok) return r.reason;
+      return apply(store, () => r.state, `Taken: ${quest(which).title}.`);
     },
   },
   kit: {

@@ -177,7 +177,7 @@ describe('the bench', () => {
     expect(s.player.items['crude-clay-furnace']).toBe(1);
   });
 
-  it('raises the family to Comprehension near ten batches', () => {
+  it('raises the family to Comprehension near three batches (the attended crafter, K9)', () => {
     let c = queueBatches(alchemist(0, 30), QI_PILL, 30).cultivator;
     let batches = 0;
     const rng = new Rng(11);
@@ -190,8 +190,8 @@ describe('the bench', () => {
       batches += r.batches;
     }
     expect(familyLevel(c, 'qi-pills')).toBe(1);
-    expect(batches).toBeGreaterThanOrEqual(10);
-    expect(batches).toBeLessThanOrEqual(20);
+    expect(batches).toBeGreaterThanOrEqual(CRAFT_MASTERY.batches[1]!);
+    expect(batches).toBeLessThanOrEqual(CRAFT_MASTERY.batches[1]! * 2);
     // The level releases its insight, and the chronicle says so.
     expect(c.insight.earned).toBeGreaterThanOrEqual(CRAFT_MASTERY.burst[1]);
   });
@@ -289,7 +289,7 @@ describe('the save', () => {
     raw.version = 42;
     delete raw.state.player.crafts;
     const back = loadSave(raw);
-    expect(back.version).toBe(49);
+    expect(back.version).toBe(50);
     expect(back.state.player.crafts).toEqual({
       bench: [],
       front: null,

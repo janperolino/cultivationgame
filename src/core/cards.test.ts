@@ -20,6 +20,7 @@ import {
 } from './cards.ts';
 import { eventText } from './chronicle.ts';
 import { createLife, type Creation } from './creation.ts';
+import { finishAllGuides } from './guides.ts';
 import { breakThrough, FOUNDATION_FAILED, playFirsts } from './life.ts';
 import { advance, catchUp } from './loop.ts';
 import { Rng } from './rng.ts';
@@ -33,22 +34,24 @@ const life = (
   choice: OriginChoice = 'along',
   seed = 'cards',
 ): GameState =>
-  createLife({
-    name: 'Han Li',
-    pronouns: 'they/them',
-    look: '',
-    mode: 'ironman',
-    seed,
-    choice,
-    roll: {
-      root: 'true',
-      elements: ['wood', 'fire'],
-      body: 'farmhands-frame',
-      soul: 'plain-mind',
-      fate: 'ordinary-fate',
-      origin,
-    },
-  } satisfies Creation);
+  finishAllGuides(
+    createLife({
+      name: 'Han Li',
+      pronouns: 'they/them',
+      look: '',
+      mode: 'ironman',
+      seed,
+      choice,
+      roll: {
+        root: 'true',
+        elements: ['wood', 'fire'],
+        body: 'farmhands-frame',
+        soul: 'plain-mind',
+        fate: 'ordinary-fate',
+        origin,
+      },
+    } satisfies Creation),
+  );
 
 /** The state moved on to a day lived, without cultivating. */
 const atLived = (s: GameState, lived: number): GameState => ({
@@ -298,11 +301,13 @@ describe('the first hour', () => {
 
   for (const origin of ORIGIN_IDS) {
     for (const choice of ORIGIN_CHOICES) {
-      it(`${pathKey(origin, choice)}: a method, the technique, layer 3 inside the hour, the errand`, () => {
-        const { s, at } = play(origin, choice, 70);
-        expect(at.layer3).toBeLessThan(60);
-        // Since P2.8 the method is read on the one study hour the player sets: about six minutes.
-        if (choice === 'along') expect(at.layer3).toBeLessThan(55);
+      it(`${pathKey(origin, choice)}: a method, the technique, layer 3 near the hour away, the errand`, () => {
+        // Away: the tutorial layers run slower since The opening, built (TUTORIAL_PACE), so layer 3
+        // lands near the hour away and near minute 15 attended (the pacing sim).
+        const { s, at } = play(origin, choice, 90);
+        expect(at.layer3).toBeLessThan(80);
+        // A start that goes along holds its method known; a refusal finds it on a card first.
+        if (choice === 'along') expect(at.layer3).toBeLessThan(65);
         else if (origin !== 'cave-orphan') expect(at.layer3).toBeGreaterThan(at.method!);
         expect(at.technique).toBeGreaterThanOrEqual(20);
         expect(at.technique).toBeLessThanOrEqual(36);

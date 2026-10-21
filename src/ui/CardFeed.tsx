@@ -6,6 +6,7 @@
 // story, takes the open card's place until it is cleared. Under reduced motion nothing moves. A
 // choice must not shrink the card: it keeps its height while the outcome shows. Cultivate never
 // scrolls (Jan's call in A3), so nothing here scrolls into view.
+import { endGuide } from './guide.ts';
 import { useRef, useState, type ReactNode } from 'react';
 import { statInfo } from '../content/stats.ts';
 import { viewCard, type CardView } from '../core/cards.ts';
@@ -26,11 +27,15 @@ function Choices({ open, onChose }: { open: CardView; onChose: (error: string | 
           type="button"
           className="button choice"
           disabled={!c.check.ok}
-          onClick={() => onChose(chooseCard(open.uid, c.index, open.title))}
+          onClick={() => {
+            endGuide('first-card');
+            onChose(chooseCard(open.uid, c.index, open.title));
+          }}
           onContextMenu={(e) => {
             // A sure fight plays on the stage anyway on a right-click (Fights you play).
             if (!c.fight?.sure || !c.check.ok) return;
             e.preventDefault();
+            endGuide('first-card');
             onChose(chooseCard(open.uid, c.index, open.title, true));
           }}
         >
@@ -120,6 +125,7 @@ export function CardFeed({ first, quiet }: { first?: ReactNode; quiet?: ReactNod
         <article
           key={`${top.uid}-${top.stepNumber}`}
           className={`story is-arriving ${top.stepNumber > 1 ? 'is-step' : ''}`}
+          data-guide="card"
           aria-labelledby={`card-${top.uid}`}
         >
           <p className="band-kicker">

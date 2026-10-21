@@ -233,12 +233,13 @@ export const CRAFT_SITES: Readonly<
 export const YIELD_BY_MASTERY = [0, 0.1, 0.2, 0.3, 0.4] as const;
 
 /**
- * Mastery grows by batches: Comprehension at 10, Mastery at 40, Perfection at 120, Origin at 300.
- * A batch at your tier counts 1, one below a quarter, a failed one half. Each level reached
- * releases insight, as a technique's does.
+ * Mastery grows by batches: Comprehension at 3, Mastery at 12, Perfection at 35, Origin at 85,
+ * anchored to the attended crafter on the opening's faster clock (design § What the faster clock
+ * moves: ÷3.5 from D4's 10, 40, 120 and 300, set at K9's merge). A batch at your tier counts 1,
+ * one below a quarter, a failed one half. Each level reached releases insight, as a technique's does.
  */
 export const CRAFT_MASTERY = {
-  batches: [0, 10, 40, 120, 300],
+  batches: [0, 3, 12, 35, 85],
   burst: [0, 5, 20, 60, 150],
   below: 0.25,
   failed: 0.5,

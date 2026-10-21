@@ -9,6 +9,7 @@ export type ScreenId =
   | 'crafts'
   | 'dwelling'
   | 'map'
+  | 'journal'
   | 'trees'
   | 'bag'
   | 'character'
@@ -30,6 +31,7 @@ export const screens: readonly ScreenInfo[] = [
   { id: 'crafts', name: 'Crafts', hanzi: '艺', unlock: 'crafts' },
   { id: 'dwelling', name: 'Dwelling', hanzi: '居', unlock: 'dwelling' },
   { id: 'map', name: 'Map', hanzi: '舆图', unlock: 'map' },
+  { id: 'journal', name: 'Journal', hanzi: '志', unlock: 'journal' },
   { id: 'trees', name: 'Trees', hanzi: '道树', unlock: 'trees' },
   { id: 'bag', name: 'Bag', hanzi: '行囊', unlock: 'bag' },
   { id: 'character', name: 'Character', hanzi: '根骨', unlock: 'character' },

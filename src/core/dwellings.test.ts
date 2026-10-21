@@ -330,14 +330,14 @@ describe('building your own base', () => {
 });
 
 describe('the save', () => {
-  it('keeps dwellings, the abode, the made site and the veins read (v49)', () => {
+  it('keeps dwellings, the abode, the made site and the veins read (v50)', () => {
     const s = life();
     const t = claimVein(
       s,
       aVein(s, (x) => x.rating <= 2),
     );
     const back = loadSave(makeSave(t, 1));
-    expect(back.version).toBe(49);
+    expect(back.version).toBe(50);
     expect(back.state.player.dwellings).toEqual(t.player.dwellings);
     expect(back.state.player.abode).toBe(t.player.abode);
     expect(back.state.map!.veins).toEqual(t.map!.veins);

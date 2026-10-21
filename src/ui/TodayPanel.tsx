@@ -13,7 +13,9 @@ import type { GameState } from '../core/state.ts';
 import { daysToNextLevel, knownTechniques, mastery } from '../core/techniques.ts';
 import { readDaysLeft } from './bookcase.ts';
 import { formatDays, formatRate } from './format.ts';
-import { goToTab, type RoutineTab } from './nav.ts';
+import { go, goToTab, type RoutineTab } from './nav.ts';
+import type { ScreenId } from './screens.ts';
+import { following } from '../core/journal.ts';
 
 /** Two techniques at most, so the qi row always has its place. */
 const PRACTICE_ROWS = 2;
@@ -25,8 +27,10 @@ interface Row {
   /** A bar's fill, 0 to 1. */
   fill?: number;
   tone?: 'read' | 'practice';
-  /** An empty row's way to fill it. */
-  link?: { label: string; tab: RoutineTab };
+  /** An empty row's way to fill it: a Routine tab, or another screen. */
+  link?: { label: string; tab?: RoutineTab; screen?: ScreenId };
+  /** The quest you follow's seal. */
+  seal?: boolean;
 }
 
 /** "in about 6 days", or what stands in the way when nothing moves it. */
@@ -39,6 +43,18 @@ function todayRows(game: GameState): Row[] {
   const c = game.player;
   const rates = ratesHere(game);
   const rows: Row[] = [];
+
+  // The quest you follow comes first (design § UI and screens, The journal).
+  const f = following(game);
+  if (f) {
+    rows.push({
+      key: 'quest',
+      title: f.quest.title,
+      line: f.place ? `${f.text} At ${f.place.name}.` : f.text,
+      link: { label: 'Journal →', screen: 'journal' },
+      seal: true,
+    });
+  }
 
   const reading = readingCopy(c);
   if (reading) {
@@ -116,7 +132,14 @@ export function TodayPanel({ game }: { game: GameState }) {
             key={r.key}
             className={`today-row${r.tone ? ` is-${r.tone}` : ''}${r.link ? ' is-empty' : ''}`}
           >
-            <strong>{r.title}</strong>
+            <strong>
+              {r.seal && (
+                <span className="quest-seal is-followed" aria-hidden="true">
+                  志
+                </span>
+              )}
+              {r.title}
+            </strong>
             <span>
               {r.line}
               {r.link && (
@@ -125,7 +148,9 @@ export function TodayPanel({ game }: { game: GameState }) {
                   <button
                     type="button"
                     className="link-button"
-                    onClick={() => goToTab(r.link!.tab)}
+                    onClick={() =>
+                      r.link!.screen ? go(r.link!.screen) : goToTab(r.link!.tab ?? 'day')
+                    }
                   >
                     {r.link.label}
                   </button>

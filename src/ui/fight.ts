@@ -3,6 +3,7 @@
 // the outcomes the effects layer still has to play. Every roll lands on the fight's own seed, so a
 // reload replays the actions to the same turn (the log starts over from there). The fight hands its
 // end back only when you leave it, so the stage holds until then.
+import { endGuide } from './guide.ts';
 import { create } from 'zustand';
 import { hasItem, item } from '../content/items.ts';
 import { hasTechnique, technique } from '../content/techniques.ts';
@@ -102,6 +103,8 @@ export function syncFight(s: GameState): void {
 
 /** Plays your action and every foe's. */
 export function act(action: YourAction): void {
+  // The first move ends the first fight turn's veil (ui/guide.ts).
+  endGuide('fight-turn');
   const { fight, target, end } = useFight.getState();
   const me = useGame.getState().game?.player.id;
   if (!fight || !me || end) return;

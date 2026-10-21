@@ -1,4 +1,4 @@
-import { BODY_PER_DAY } from '../content/cultivation.ts';
+import { BODY_PER_DAY, PACE, TUTORIAL_PACE } from '../content/cultivation.ts';
 import { describe, expect, it } from 'vitest';
 import { eventText } from './chronicle.ts';
 import { stepSize } from '../content/realms.ts';
@@ -83,15 +83,17 @@ describe("the wheel's yields", () => {
     ]);
     const hours = hourYields(c, DAY);
     expect(hours[h('子')]).toMatchObject({ kind: 'sleep', qi: 0, insight: 0 });
-    expect(hours[h('辰')]!.qi).toBeCloseTo(1 / 12);
+    expect(hours[h('辰')]!.qi).toBeCloseTo(TUTORIAL_PACE / 12);
     // Ten waking hours, all on qi, each leaving a twelfth of the day's trickle of 0.05 insight.
     const r = dayRates({ ...c, wheel: [...FRESH_WHEEL] }, DAY);
     expect(r.count).toMatchObject({ qi: 10, sleep: 2, study: 0 });
-    expect(r.insight).toBeCloseTo((0.05 * 10) / 12);
+    expect(r.insight).toBeCloseTo((TUTORIAL_PACE * 0.05 * 10) / 12);
     // Ten qi hours, dawn's included.
-    expect(r.qi).toBeCloseTo(10.1 / 12);
+    expect(r.qi).toBeCloseTo((TUTORIAL_PACE * 10.1) / 12);
     const allQi = { ...c, wheel: [...FRESH_WHEEL] };
-    expect(cultivateDays(allQi, 1, ctx()).cultivator.qi.bar).toBeCloseTo(10.1 / 12);
+    expect(cultivateDays(allQi, 1, ctx()).cultivator.qi.bar).toBeCloseTo(
+      (TUTORIAL_PACE * 10.1) / 12,
+    );
   });
 
   it('pays study in insight and practice in practice days', () => {
@@ -99,7 +101,7 @@ describe("the wheel's yields", () => {
     const r = dayRates(c, DAY);
     expect(r.count).toMatchObject({ qi: 8, study: 1, practice: 1, sleep: 2 });
     const study = r.hours.find((x) => x.kind === 'study')!;
-    expect(study.insight).toBeCloseTo((1 + 0.05) / 12);
+    expect(study.insight).toBeCloseTo((TUTORIAL_PACE * (1 + 0.05)) / 12);
     expect(r.practice).toBeCloseTo(1 / 12);
   });
 });
@@ -109,10 +111,10 @@ describe('element hours', () => {
     // A true root holds wood and fire by default: 寅 and 卯 are wood, 巳 and 午 fire.
     const c = at(player(), 'qi', { stage: 4 });
     expect(c.rootElements).toEqual(['wood', 'fire']);
-    expect(qiAt(c, h('寅'))).toBeCloseTo(1.25 / 12);
-    expect(qiAt(c, h('午'))).toBeCloseTo(1.25 / 12);
-    expect(qiAt(c, h('辰'))).toBeCloseTo(1 / 12);
-    expect(qiAt(c, h('申'))).toBeCloseTo(1 / 12);
+    expect(qiAt(c, h('寅'))).toBeCloseTo((PACE * 1.25) / 12);
+    expect(qiAt(c, h('午'))).toBeCloseTo((PACE * 1.25) / 12);
+    expect(qiAt(c, h('辰'))).toBeCloseTo(PACE / 12);
+    expect(qiAt(c, h('申'))).toBeCloseTo(PACE / 12);
     // An earth root would match all four earth hours.
     const earth = { ...c, rootElements: ['earth' as const] };
     for (const b of ['丑', '辰', '未', '戌']) {
@@ -123,19 +125,19 @@ describe('element hours', () => {
   it('count lightning and wind as wood and ice as water', () => {
     // Common methods fit mutated roots poorly: root ×2.0 × fit ×0.6.
     const lightning = at(player({ root: 'mutated' }), 'qi', { stage: 4 });
-    expect(qiAt(lightning, h('寅'))).toBeCloseTo((1.2 * 1.25) / 12);
-    expect(qiAt(lightning, h('申'))).toBeCloseTo(1.2 / 12);
+    expect(qiAt(lightning, h('寅'))).toBeCloseTo((PACE * 1.2 * 1.25) / 12);
+    expect(qiAt(lightning, h('申'))).toBeCloseTo((PACE * 1.2) / 12);
     const ice = at(player({ root: 'mutated', elements: ['ice'] }), 'qi', { stage: 4 });
-    expect(qiAt(ice, h('亥'))).toBeCloseTo((1.2 * 1.25) / 12);
-    expect(qiAt(ice, h('寅'))).toBeCloseTo(1.2 / 12);
+    expect(qiAt(ice, h('亥'))).toBeCloseTo((PACE * 1.2 * 1.25) / 12);
+    expect(qiAt(ice, h('寅'))).toBeCloseTo((PACE * 1.2) / 12);
   });
 
   it("match a tempering art's element on body hours", () => {
     let c = mastered(openHours(learnMethod(player(), FIRST_ARTS.body)).cultivator);
     c = at(withHours(c, { [h('辰')]: 'body', [h('申')]: 'body' }), 'body', { stage: 4 });
     // The Stone-Bearing art is earth: 辰 matches, 申 is metal.
-    expect(hourYields(c, DAY)[h('辰')]!.body).toBeCloseTo((BODY_PER_DAY * 1.25) / 12);
-    expect(hourYields(c, DAY)[h('申')]!.body).toBeCloseTo(BODY_PER_DAY / 12);
+    expect(hourYields(c, DAY)[h('辰')]!.body).toBeCloseTo((PACE * BODY_PER_DAY * 1.25) / 12);
+    expect(hourYields(c, DAY)[h('申')]!.body).toBeCloseTo((PACE * BODY_PER_DAY) / 12);
   });
 });
 
@@ -143,14 +145,14 @@ describe('dawn', () => {
   it('adds a tenth to qi at 卯, in the tutorial too, and to nothing else', () => {
     const c = player();
     expect(hourYields(c, DAY)[h('卯')]!.dawn).toBe(0.1);
-    expect(qiAt(c, h('卯'))).toBeCloseTo(1.1 / 12);
+    expect(qiAt(c, h('卯'))).toBeCloseTo((TUTORIAL_PACE * 1.1) / 12);
     // Past the tutorial it stacks with the element: 卯 is wood.
-    expect(qiAt(at(c, 'qi', { stage: 4 }), h('卯'))).toBeCloseTo(1.35 / 12);
+    expect(qiAt(at(c, 'qi', { stage: 4 }), h('卯'))).toBeCloseTo((PACE * 1.35) / 12);
     const body = withHours(openHours(learnMethod(c, FIRST_ARTS.body)).cultivator, {
       [h('卯')]: 'body',
     });
     expect(hourYields(body, DAY)[h('卯')]!.dawn).toBe(0);
-    expect(hourYields(body, DAY)[h('卯')]!.body).toBeCloseTo(BODY_PER_DAY / 12);
+    expect(hourYields(body, DAY)[h('卯')]!.body).toBeCloseTo((TUTORIAL_PACE * BODY_PER_DAY) / 12);
   });
 });
 
@@ -237,14 +239,14 @@ describe('routines', () => {
     const c = r.cultivator;
     expect(followedRoutine(c)?.id).toBe('watch-rotation');
     const hours = hourYields(c, DAY);
-    expect(hours[h('寅')]!.qi).toBeCloseTo(1.1 / 12);
-    expect(hours[h('卯')]!.qi).toBeCloseTo(1.2 / 12);
+    expect(hours[h('寅')]!.qi).toBeCloseTo((TUTORIAL_PACE * 1.1) / 12);
+    expect(hours[h('卯')]!.qi).toBeCloseTo((TUTORIAL_PACE * 1.2) / 12);
     expect(hours[h('未')]).toMatchObject({ kind: 'study', discipline: 0.1 });
     expect(hours[h('子')]!.discipline).toBe(0);
     // One hour off the routine, and the bonus is gone.
     const broken = setHours(c, [h('亥')], 'study').cultivator;
     expect(followedRoutine(broken)).toBeNull();
-    expect(qiAt(broken, h('寅'))).toBeCloseTo(1 / 12);
+    expect(qiAt(broken, h('寅'))).toBeCloseTo(TUTORIAL_PACE / 12);
   });
 
   it('earn nothing from a wheel you saved yourself', () => {
@@ -275,7 +277,7 @@ describe('the tutorial', () => {
     const mixed = dayRates(layer3({ root: 'mixed' }), DAY);
     expect(heavenly.qi).toBeCloseTo(mixed.qi);
     expect(heavenly.hours.every((x) => x.element === 0)).toBe(true);
-    expect(qiAt(layer3({}), h('卯'))).toBeCloseTo(1.1 / 12);
+    expect(qiAt(layer3({}), h('卯'))).toBeCloseTo((TUTORIAL_PACE * 1.1) / 12);
     expect(dayRates(layer3({ aptitude: 12 }), DAY).qi).toBeCloseTo(mixed.qi * 1.1);
     // Layer 4 counts all of it.
     const four = at(player({ root: 'heavenly' }), 'qi', { stage: 4 });

@@ -113,7 +113,7 @@ export function BreakthroughRow({ game }: { game: GameState }) {
   });
   if (!buttons.length) return null;
   return (
-    <div className="bt-row" role="group" aria-label="Breakthroughs">
+    <div className="bt-row" role="group" aria-label="Breakthroughs" data-guide="gate">
       {buttons}
     </div>
   );

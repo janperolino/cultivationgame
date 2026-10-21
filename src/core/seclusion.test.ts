@@ -25,6 +25,7 @@ import {
 import { eventText, settledItself, whoFor } from './chronicle.ts';
 import { comingBackStory } from './comingBack.ts';
 import { createLife } from './creation.ts';
+import { finishAllGuides } from './guides.ts';
 import { ALL_FIRSTS } from './firsts.ts';
 import { playFirsts } from './life.ts';
 import { catchUp } from './loop.ts';
@@ -47,22 +48,24 @@ const life = (
   seed = 'seclusion',
 ): GameState =>
   seasoned(
-    createLife({
-      name: 'Han Li',
-      pronouns: 'he/him',
-      look: '',
-      mode: 'ironman',
-      seed,
-      choice,
-      roll: {
-        root: 'true',
-        elements: ['wood', 'fire'],
-        body: 'farmhands-frame',
-        soul: 'plain-mind',
-        fate: 'ordinary-fate',
-        origin,
-      },
-    }),
+    finishAllGuides(
+      createLife({
+        name: 'Han Li',
+        pronouns: 'he/him',
+        look: '',
+        mode: 'ironman',
+        seed,
+        choice,
+        roll: {
+          root: 'true',
+          elements: ['wood', 'fire'],
+          body: 'farmhands-frame',
+          soul: 'plain-mind',
+          fate: 'ordinary-fate',
+          origin,
+        },
+      }),
+    ),
   );
 
 const atLived = (s: GameState, lived: number): GameState => ({

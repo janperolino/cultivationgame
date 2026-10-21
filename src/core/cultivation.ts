@@ -27,12 +27,14 @@ import {
   MINOR_INJURY_DAYS,
   ODDS_PER_TENTH,
   OFFER_INJURY,
+  PACE,
   PEAK_MARGIN,
   QI_PER_DAY,
   SCENE_ODDS_CAP,
   SOUL_PER_DAY,
   STONE_QI,
   STONES_PER_QI_DAY,
+  TUTORIAL_PACE,
   UNSETTLED_DAYS,
   type GradeId,
   type LadderId,
@@ -170,7 +172,7 @@ export interface QiSpeed {
   aptitude: number;
   /** Tree nodes' and the method's qi gain, as a multiplier. */
   nodes: number;
-  /** Attention: ×1 away, ×1.25 for being there, up to ×2 at full focus (core/attention.ts). */
+  /** Attention: ×1 away, ×2.5 for being there, up to ×4 at full focus (core/attention.ts). */
   attention: number;
   /** The grades on the qi ladder (D2.1): the latest ×0.85 flawed to ×1.35 heavenly, with echoes. */
   grade: number;
@@ -250,6 +252,11 @@ function dayBase(
   const apt = aptitudeMultiplier(c);
   const insight = realm(realmOf(c)).insightRate * apt * (1 + m.insightGain);
   const fed = (which: LadderId) => (unfed.includes(which) ? 0 : 1);
+  // The faster clock past the tutorial layers, and attention on every ladder and on insight.
+  // Insight runs on the faster clock once any ladder is past its tutorial, so a pure body or soul
+  // life studies as fast as a qi one.
+  const pace = (which: LadderId) => (inTutorial(c[which]) ? TUTORIAL_PACE : PACE);
+  const lift = (LADDERS.some((l) => !inTutorial(c[l])) ? PACE : TUTORIAL_PACE) * seat.factor;
   // A ladder gains only with a method on it; until then it grows from the world alone. Body and
   // soul ignore the root, so their speed is the method part alone.
   const art = (which: 'body' | 'soul', perDay: number, gain: number) =>
@@ -260,17 +267,20 @@ function dayBase(
     apt *
     (1 + gain) *
     setbackMultiplier(c[which], day) *
-    fed(which);
+    fed(which) *
+    pace(which) *
+    seat.factor;
   return {
     qi:
       QI_PER_DAY *
       realmScale(c.qi.realm) *
       qiSpeed(c, seat, density).total *
       setbackMultiplier(c.qi, day) *
-      fed('qi'),
+      fed('qi') *
+      pace('qi'),
     body: art('body', BODY_PER_DAY, m.bodyGain),
     soul: art('soul', SOUL_PER_DAY, m.soulGain),
-    study: INSIGHT_PER_STUDY_DAY * insight,
+    study: INSIGHT_PER_STUDY_DAY * insight * lift,
     studyDays: apt,
     // Circulating Thought grows the attended trickle with focus, half again at full.
     trickle:
@@ -278,7 +288,8 @@ function dayBase(
         (seat.attended
           ? INSIGHT_ATTENDED * (1 + m.circulatingThought * Math.min(1, seat.focus ?? 0))
           : 0)) *
-      insight,
+      insight *
+      lift,
     practice: practicingNow(c).length > 0 ? apt * (1 + m.practiceGain) : 0,
   };
 }

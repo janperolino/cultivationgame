@@ -2,6 +2,7 @@
 // the game so focus is never saved and the figure can read it every frame without re-rendering
 // the screens. You attend while the tab is visible and you have touched it in the last few
 // minutes; the store's loop ticks it with the game and hands the seat to the day step.
+import { built } from '../core/guides.ts';
 import { create } from 'zustand';
 import { ATTENDED_INPUT_MS } from '../content/attention.ts';
 import {
@@ -78,7 +79,8 @@ function attentionFor(s: GameState): Attention {
 export function tickSeat(s: GameState, dt: number): { seat: Seat; state: GameState } {
   const playing = scenePlaying();
   const attended = !s.ended && attendingNow();
-  const atFigure = figureShown > 0 && !s.ended;
+  // Orbs come once the first seclusion's guides have built that far (core/guides.ts).
+  const atFigure = figureShown > 0 && !s.ended && built(s, 'orbs');
   // No new orbs come while a breakthrough scene holds the figure.
   const a = tickAttention(attentionFor(s), s.player, dt, {
     attended,

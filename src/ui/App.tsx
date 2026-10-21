@@ -17,6 +17,9 @@ import { placeIndex, setPlaces } from '../core/resolver/knows.ts';
 import { screenDot, screenIsNew } from '../core/seen.ts';
 import { useBeacons } from './useBeacons.ts';
 import { useFight } from './fight.ts';
+import { built } from '../core/guides.ts';
+import { GuideLayer } from './GuideLayer.tsx';
+import { lookAt } from './guide.ts';
 
 function SlotNotice() {
   const phase = useGame((s) => s.phase);
@@ -61,6 +64,7 @@ const SCREENS = {
   PeopleScreen: () => import('./PeopleScreen.tsx'),
   SettingsScreen: () => import('./SettingsScreen.tsx'),
   TreesScreen: () => import('./TreesScreen.tsx'),
+  JournalScreen: () => import('./JournalScreen.tsx'),
 };
 const BagScreen = lazy(() => SCREENS.BagScreen().then((m) => ({ default: m.BagScreen })));
 const CharacterScreen = lazy(() =>
@@ -80,9 +84,19 @@ const SettingsScreen = lazy(() =>
   SCREENS.SettingsScreen().then((m) => ({ default: m.SettingsScreen })),
 );
 const TreesScreen = lazy(() => SCREENS.TreesScreen().then((m) => ({ default: m.TreesScreen })));
+const JournalScreen = lazy(() =>
+  SCREENS.JournalScreen().then((m) => ({ default: m.JournalScreen })),
+);
 
 /** Kept one array, so the shell doesn't re-render on every tick for a fresh empty list. */
 const NO_UNLOCKS: readonly string[] = [];
+/** The glyphs open from the first minute that wait for the first minor breakthrough's guide. */
+const LATE_GLYPHS: ReadonlySet<ScreenId> = new Set<ScreenId>([
+  'map',
+  'character',
+  'people',
+  'chronicle',
+]);
 const LEAVE_MS = 170;
 const ENTER_MS = 420;
 
@@ -163,7 +177,15 @@ export function App() {
   }, []);
 
   const unlocks = useGame((s) => s.game?.unlocks ?? NO_UNLOCKS);
-  const available = screens.filter((s) => !s.unlock || unlocks.includes(s.unlock));
+  // The first seclusion builds the rail a glyph at a time (core/guides.ts): Settings alone at
+  // first, then Cultivate and Routine, then the rest after the first minor breakthrough.
+  const build = useGame((s) =>
+    s.game ? `${built(s.game, 'rail') ? 1 : 0}${built(s.game, 'rail-rest') ? 1 : 0}` : '11',
+  );
+  const railShows = (id: ScreenId) =>
+    build[0] !== '1' ? id === 'settings' : build[1] === '1' || !LATE_GLYPHS.has(id);
+  const open = screens.filter((s) => !s.unlock || unlocks.includes(s.unlock));
+  const available = open.filter((s) => railShows(s.id));
   // A dot on a menu item while its screen holds something new you haven't opened it on.
   const dots = useGame((s) =>
     s.game
@@ -192,7 +214,7 @@ export function App() {
       ? { id: 'creation', name: 'A New Life', hanzi: '新生' }
       : phase === 'no-slot'
         ? screens.find((s) => s.id === 'settings')!
-        : (available.find((s) => s.id === id) ?? available[0]!);
+        : (open.find((s) => s.id === id) ?? open[0]!);
   // What the main column shows, and what the rail lights (ahead of it while a glide runs).
   const current = pickScreen(shown);
   const wanted = pickScreen(screen);
@@ -214,6 +236,8 @@ export function App() {
   useEffect(() => {
     if (here) useGame.getState().openScreen(here);
   }, [here, hereDot]);
+  // The guides fire where their feature lives (ui/guide.ts).
+  useEffect(() => lookAt({ screen: fighting ? 'fight' : current.id }), [fighting, current.id]);
 
   return (
     <>
@@ -229,6 +253,7 @@ export function App() {
               </main>
             </div>
           )}
+          {phase === 'playing' && !creating && <GuideLayer />}
           <div className={`shell is-${current.id}`} hidden={fighting && phase === 'playing'}>
             <nav id="side-menu" className="side-rail" aria-label="Screens">
               <div className="rail-mark" aria-hidden="true">
@@ -265,7 +290,7 @@ export function App() {
             </nav>
 
             <div className="main-column">
-              <ShellHeader />
+              {build[0] === '1' && <ShellHeader />}
               <main
                 className={`main${leaving ? ' is-leaving' : ''}${entering ? ' is-entering' : ''}`}
                 ref={main}
@@ -300,6 +325,7 @@ export function App() {
                   {phase !== 'loading' && current.id === 'people' && <PeopleScreen />}
                   {phase !== 'loading' && current.id === 'chronicle' && <ChronicleScreen />}
                   {phase !== 'loading' && current.id === 'settings' && <SettingsScreen />}
+                  {phase !== 'loading' && current.id === 'journal' && <JournalScreen />}
                 </Suspense>
               </main>
             </div>

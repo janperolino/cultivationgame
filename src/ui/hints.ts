@@ -3,9 +3,10 @@
 // control. One per first time's step (core/firsts.ts), plus breakthroughs, drawing orbs and the card
 // tray, which are already yours to do, and one saying hints can be turned off. The texts are data
 // (content/firsts.ts); the life keeps whether hints show and the ones acted on or dismissed.
-import { HINT_IDS, HINTS, HINTS_OFF_DAYS, type HintId } from '../content/firsts.ts';
+import { GUIDED_HINTS, HINT_IDS, HINTS, HINTS_OFF_DAYS, type HintId } from '../content/firsts.ts';
 import { firstsWaiting, firstText } from '../core/firsts.ts';
 import { FIRST_BREATH } from '../core/life.ts';
+import { built } from '../core/guides.ts';
 import { daysLived, type GameState } from '../core/state.ts';
 import { practiced } from '../core/techniques.ts';
 import { autoHintWaiting, beaconFor, type Beacon } from './beacons.ts';
@@ -30,12 +31,15 @@ function linkTo(b: Beacon): ToastLink {
 
 /** Every hint whose moment is here, in order, shown or not. */
 export function hintsWaiting(s: GameState): HintView[] {
-  if (s.ended) return [];
+  // Nothing is hinted while the first seclusion's screen builds itself (core/guides.ts).
+  if (s.ended || !built(s, 'rail')) return [];
   const open = (to: ToastLink) => (s.unlocks.includes(to.screen) ? to : null);
   const steps = new Map(firstsWaiting(s).map((st) => [st.hint as HintId, st]));
   const seat = open({ screen: 'cultivate' });
   const out: HintView[] = [];
   for (const id of HINT_IDS) {
+    // A guided feature drops its hint (core/guides.ts speaks it).
+    if (GUIDED_HINTS.includes(id)) continue;
     const step = steps.get(id);
     if (step) {
       out.push({ id, text: firstText(HINTS[id], step), to: open(linkTo(beaconFor(step))) });

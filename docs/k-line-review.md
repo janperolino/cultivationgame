@@ -9,7 +9,7 @@ Crafters should be clearly richer than gathering or duty from Glimpse on (D4, K1
 - **Refining doesn't pay queued** (K4). A queued Iron Sword nets 1.3–2.9 low per four craft hours at Comprehension, against alchemy's 28–46; played at a good hand, 6–7. The market wants little gear. Levers: gear's use in the baskets, gear's price by kind, fewer ore a piece.
 - **Talismans don't pay queued either** (K5). A queued Ember Talisman nets 9.8–17 at Comprehension, played 19–28, against alchemy's 28–46. Levers: a talisman's price by kind, or the shops' buy rate.
 - **Herb prices** (K1). Herbs dropped 2 → 0.7 low to make alchemy pay, which also cut gathering's pay. K1's suggestion: herbs back near 1, and raise batch yield to make up for it (yield only touches the crafter).
-- **The clock.** Once the friends' line's opening lands (Foundation at about 2.5 attended hours), every crafts number is rerun on the new clock.
+- **The clock** (rerun at K9's merge). The opening landed (Foundation at about 2.5 attended hours), and craft mastery is anchored to the attended crafter: Comprehension at 3 batches, Mastery 12, Perfection 35, Origin 85 (were 10, 40, 120, 300). `npm run sim -- craft` still PASSes and alchemy's money hardly moved (Comprehension 30.8 and 50.7 low per four hours, was 28 and 46). Worth a look: at the City a queued Glimpse batch nets 4.4 low, under four gather hours' 7.2; only the markets' average (1.3×) keeps Glimpse above gathering.
 
 ## 2. Your parked ideas
 
