@@ -40,7 +40,7 @@ import type { HintId } from '../content/firsts.ts';
 import { hintDone, nextHint } from './hints.ts';
 import { guideHold } from './guide.ts';
 import { noteCodex } from '../core/codex.ts';
-import { noteGuides } from '../core/guides.ts';
+import { noteGuides, unguidedStart } from '../core/guides.ts';
 import { noteQuests } from '../core/journal.ts';
 import { attemptOf, endScene, sceneDue, sceneRolled, startScene, useScene } from './scene.ts';
 import { catchNow, startSeatInput, tickSeat } from './seat.ts';
@@ -793,7 +793,8 @@ export const useGame = create<GameStore>()((set, get) => {
       const shown = game.hints.shown.includes('hints-off')
         ? game.hints.shown
         : [...game.hints.shown, 'hints-off'];
-      set({ game: { ...game, hints: { on, shown } } });
+      const next = { ...game, hints: { on, shown } };
+      set({ game: on ? next : unguidedStart(next) });
     },
 
     replayHints() {

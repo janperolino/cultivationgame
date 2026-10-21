@@ -32,6 +32,7 @@ import {
   unlock,
   type QuestState,
 } from './state.ts';
+import type { Held } from './jobs.ts';
 
 export type JournalCheck = { ok: true; state: GameState } | { ok: false; reason: string };
 
@@ -66,7 +67,7 @@ export function questsUnderway(s: GameState): QuestState[] {
 
 /** Whether every step of a quest taken is done, so it waits to be handed in. */
 export function stepsDone(q: QuestState): boolean {
-  return q.step >= quest(q.id).steps.length;
+  return hasQuest(q.id) && q.step >= quest(q.id).steps.length;
 }
 
 /**
@@ -103,18 +104,52 @@ function anyGiverHere(q: Quest, where: { kind: Quest['giver']['kind']; who?: str
 
 /** Where a quest is handed in: its giver's place, or for `@any` where it was taken. */
 export function giverPlace(s: GameState, q: QuestState): MapPlace | null {
+  if (!hasQuest(q.id)) return null;
   const at = quest(q.id).giver.place;
   return at === ANY ? (q.at ? questPlace(s, q.at) : null) : questPlace(s, at);
 }
 
-/** Whether a step's goal holds now, counting events from the day the step opened. */
-export function goalMet(s: GameState, goal: StepGoal, opened: number, id?: string): boolean {
+/** What a step waiting on kept days counts from: the held jobs' month tallies as it opens. */
+type KeptAt = NonNullable<QuestState['keptAt']>;
+
+function keptAtOpening(s: GameState, goal: StepGoal | undefined): KeptAt | undefined {
+  if (!goal || !('kept' in goal)) return undefined;
+  return Object.fromEntries(s.player.jobs.map((h) => [h.id, { month: h.month, kept: h.kept }]));
+}
+
+/**
+ * Duty days a held job kept since the step opened: this month's and last month's tallies, less
+ * what stood as it opened. A job taken since (or with no tally kept, a step from an older save)
+ * counts both whole.
+ */
+function keptSince(h: Held, opened: number, at: KeptAt | undefined): number {
+  const both = h.kept + (h.last?.kept ?? 0);
+  const was = at?.[h.id];
+  if (!was || h.since > opened) return both;
+  if (h.month === was.month) return h.kept - was.kept;
+  if (h.last?.month === was.month) return h.last.kept - was.kept + h.kept;
+  return both;
+}
+
+/**
+ * Whether a step's goal holds now, counting events (and kept days) from the day the step opened.
+ * `q` names the quest, for its posting, its kept days' tallies and the counter it was taken at.
+ */
+export function goalMet(
+  s: GameState,
+  goal: StepGoal,
+  opened: number,
+  q?: Pick<QuestState, 'id' | 'keptAt' | 'at'>,
+): boolean {
   const p = s.player;
+  const id = q?.id;
   if ('reach' in goal) return standsAtPlace(s, goal.reach);
   if ('flag' in goal) return hasFlag(p, goal.flag);
   if ('active' in goal) return p.activeMethods[goal.active] !== null;
   if ('hour' in goal) return effectiveWheel(p).includes(goal.hour);
-  if ('kept' in goal) return p.jobs.some((h) => h.kept + (h.last?.kept ?? 0) >= goal.kept - 1e-9);
+  if ('kept' in goal)
+    return p.jobs.some((h) => keptSince(h, opened, q?.keptAt) >= goal.kept - 1e-9);
+  if ('job' in goal) return p.jobs.some((h) => h.id === goal.job);
   if ('balance' in goal) return membershipsOf(s.world, p.id).some((m) => m.balance >= goal.balance);
   if ('posting' in goal) return id !== undefined && postingReached(s, id, goal.posting, opened);
   if ('met' in goal) return MET[goal.met](s);
@@ -140,11 +175,13 @@ export function goalMet(s: GameState, goal: StepGoal, opened: number, id?: strin
     return l.stage >= goal.layer.stage;
   }
   const match = goal.match ?? {};
+  const kind = goal.here && q && hasQuest(q.id) ? quest(q.id).giver.shopKind : undefined;
   return s.chronicle.some(
     (e) =>
       e.type === goal.event &&
       e.day >= opened &&
-      Object.entries(match).every(([k, v]) => e.data[k] === v),
+      Object.entries(match).every(([k, v]) => e.data[k] === v) &&
+      (!goal.here || (!!q?.at && e.data.at === q.at && (!kind || e.data.kind === kind))),
   );
 }
 
@@ -170,21 +207,39 @@ export function didDeed(s: GameState, deed: Deed): GameState {
   return waits ? noteQuests(addEvent(s, 'did', { deed })) : s;
 }
 
+/**
+ * Drops the quests a later build no longer has (a save from before a quest's id changed), as the
+ * jobs drop a lost job; the one followed moves on.
+ */
+function dropLostQuests(s: GameState): GameState {
+  const quests = s.journal.quests.filter((q) => hasQuest(q.id));
+  if (quests.length === s.journal.quests.length) return s;
+  const followed =
+    s.journal.followed && hasQuest(s.journal.followed)
+      ? s.journal.followed
+      : (quests.find((x) => x.handed === null)?.id ?? null);
+  return { ...s, journal: { quests, followed } };
+}
+
 /** Moves every quest under way past the steps whose goals now hold; the same state if none. */
-export function noteQuests(s: GameState): GameState {
+export function noteQuests(s0: GameState): GameState {
+  const s = dropLostQuests(s0);
   if (!s.journal.quests.some((q) => q.handed === null)) return s;
   let changed = false;
   const quests = s.journal.quests.map((q) => {
     if (q.handed !== null) return q;
     const steps = quest(q.id).steps;
-    let { step, opened } = q;
-    while (step < steps.length && goalMet(s, steps[step]!.goal, opened, q.id)) {
+    let { step, opened, keptAt } = q;
+    while (step < steps.length && goalMet(s, steps[step]!.goal, opened, { ...q, keptAt })) {
       step += 1;
       opened = s.calendar.day;
+      keptAt = keptAtOpening(s, steps[step]?.goal);
     }
     if (step === q.step) return q;
     changed = true;
-    return { ...q, step, opened };
+    const next: QuestState = { ...q, step, opened, keptAt };
+    if (!keptAt) delete next.keptAt;
+    return next;
   });
   return changed ? { ...s, journal: { ...s.journal, quests } } : s;
 }
@@ -194,6 +249,7 @@ export function takeQuest(s: GameState, id: string): JournalCheck {
   if (questState(s, id)) return { ok: false, reason: 'You have taken it already.' };
   const q = quest(id);
   const here = s.map?.inside ?? homeAt(s);
+  const keptAt = keptAtOpening(s, q.steps[0]?.goal);
   const record: QuestState = {
     id,
     taken: s.calendar.day,
@@ -201,6 +257,7 @@ export function takeQuest(s: GameState, id: string): JournalCheck {
     opened: s.calendar.day,
     handed: null,
     ...(q.giver.place === ANY && here ? { at: here } : {}),
+    ...(keptAt ? { keptAt } : {}),
   };
   const journal = {
     quests: [...s.journal.quests, record],
@@ -222,7 +279,8 @@ export function followQuest(s: GameState, id: string): GameState {
 export function dropQuest(s: GameState, id: string): JournalCheck {
   const q = questState(s, id);
   if (!q || q.handed !== null) return { ok: false, reason: 'It isn’t under way.' };
-  if (quest(id).origin) return { ok: false, reason: 'Your origin’s quests can’t be dropped.' };
+  if (hasQuest(id) && quest(id).origin)
+    return { ok: false, reason: 'Your origin’s quests can’t be dropped.' };
   const quests = s.journal.quests.filter((x) => x.id !== id);
   return { ok: true, state: { ...s, journal: { quests, followed: nextFollowed(quests, s, id) } } };
 }
@@ -238,7 +296,7 @@ export function handInCheck(
   id: string,
 ): { ok: true } | { ok: false; reason: string } {
   const q = questState(s, id);
-  if (!q || q.handed !== null) return { ok: false, reason: 'It isn’t under way.' };
+  if (!q || q.handed !== null || !hasQuest(id)) return { ok: false, reason: 'It isn’t under way.' };
   if (!stepsDone(q)) return { ok: false, reason: 'Its steps aren’t done yet.' };
   const def = quest(id);
   const at = giverPlace(s, q);
@@ -284,7 +342,7 @@ export interface Following {
 export function following(s: GameState): Following | null {
   const id = s.journal.followed;
   const q = id ? questState(s, id) : undefined;
-  if (!q || q.handed !== null) return null;
+  if (!q || q.handed !== null || !hasQuest(q.id)) return null;
   const def = quest(q.id);
   const step = def.steps[q.step];
   if (!step) {

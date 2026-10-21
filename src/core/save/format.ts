@@ -37,7 +37,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 52;
+export const SAVE_VERSION = 53;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1133,6 +1133,10 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       state: { ...s, lineage: { ...lineage, guides: [...guides, ...added] } },
     };
   },
+  // The friends' line review: a quest step waiting on kept days records the held jobs' tallies it
+  // counts from (`keptAt`). A step under way in an older save has none, and counts this month's
+  // and last month's days whole, as it did.
+  52: (old) => ({ ...old, version: 53 }),
 };
 
 /** The City of the Guarded Mouth before and after it moved to the coast (v30). */

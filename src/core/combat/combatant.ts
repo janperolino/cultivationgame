@@ -188,6 +188,8 @@ export interface Combatant {
   /** Creative tricks already used this fight; the same one earns nothing twice. */
   tricks: string[];
   state: CombatantState;
+  /** Who a yield was to: the speaker whose bluff or threat ended this fighter's fight. */
+  yieldedTo?: string;
 }
 
 export type CombatantInit = Partial<Combatant> & Pick<Combatant, 'id' | 'name' | 'side'>;

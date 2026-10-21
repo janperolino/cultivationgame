@@ -240,7 +240,7 @@ describe('a fight on the stage', () => {
         'cold-moon-sword',
       ),
     );
-    s = openFight(s, { kind: 'spar', who: 'person:test' });
+    s = openFight(s, { kind: 'spar', who: 'person:test' }, against(s))!;
     expect(s.rng.combat).toBeDefined();
     let f = against(s);
     const r = playTurn(s, f, { main: { type: 'item', id: 'spring-returning-pill' } })!;
