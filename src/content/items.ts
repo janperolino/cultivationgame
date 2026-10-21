@@ -33,6 +33,7 @@ export const ITEM_KINDS = [
   'map',
   'tool',
   'seed',
+  'array',
 ] as const;
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
@@ -55,6 +56,7 @@ export const STACK_BY_KIND: Record<ItemKind, number> = {
   map: 1,
   tool: 1,
   seed: 99,
+  array: 10,
 };
 
 /** The glyph a square shows for a kind, until design-time art arrives. */
@@ -73,6 +75,7 @@ export const KIND_GLYPH: Record<ItemKind, string> = {
   map: '图',
   tool: '炉',
   seed: '种',
+  array: '阵',
 };
 
 /**
@@ -228,6 +231,49 @@ export interface FieldUse {
   dug?: number;
 }
 
+/**
+ * What an array does (K10, design § Sites and formations; the effect table's Formations row):
+ * gathering and growing lift the qi density, warding, concealing and alarm guard a site, and
+ * binding, killing and maze play in a fight on their own ground.
+ */
+export const ARRAY_DOES = [
+  'gathering',
+  'growing',
+  'warding',
+  'concealing',
+  'alarm',
+  'binding',
+  'killing',
+  'maze',
+] as const;
+export type ArrayDoes = (typeof ARRAY_DOES)[number];
+
+/**
+ * An array (K10): flags 阵旗 planted in a ring round their eye, or a disc 阵盘 complete in itself,
+ * laid at a site or on open ground through placing and burning its eye's stones a day. What it
+ * does is the Formations row; how strongly is its own (Jan's call in K10's talk: each array's
+ * numbers are the array's).
+ */
+export interface ArrayUse {
+  does: ArrayDoes;
+  form: 'flags' | 'disc';
+  /** Gathering, growing and concealing: steps (or bands) at tier 1, before the tier and gold add. */
+  steps?: number;
+  /** Warding: the share of a full qi shield it stands over your side in a fight. */
+  share?: number;
+  /** Killing: the strike's power, as a fight item's, and its damage type. */
+  power?: number;
+  damage?: DamageType;
+  /** Binding: a foe it holds loses one turn in this many. */
+  every?: number;
+  /** Maze: the share of Accuracy a foe it reaches loses. */
+  dull?: number;
+  /** Bands more against beasts: beast-repelling flags, the spirit-quelling disc. */
+  beasts?: number;
+  /** It works on beasts alone. */
+  beastsOnly?: boolean;
+}
+
 /** Formation slots for M4's enchantments. */
 export interface InscribeUse {
   slots: number;
@@ -252,6 +298,7 @@ export interface ItemUses {
   escape?: EscapeUse;
   swift?: SwiftUse;
   field?: FieldUse;
+  array?: ArrayUse;
 }
 
 /**

@@ -153,6 +153,33 @@ export const BOUND_BONES: Catalog = {
   at: 'qm-fugu-ge',
   layer: 'place',
   items: [
+    // The Bone-Binding Array Canon's arrays (K10), guarded with the style. **Awaiting Jan's review.**
+    {
+      id: 'bone-binding-flags',
+      name: 'Bone-Binding Flags',
+      pinyin: 'Fugu Qi',
+      hanzi: '缚骨旗',
+      tier: 1,
+      rarity: 'green',
+      upTo: 'blue',
+      kind: 'array',
+      uses: { array: { does: 'binding', form: 'flags', every: 2 } },
+      source: 'the Pavilion of Bound Bones, which plants them in the Wall’s own bones',
+      text: 'Flags planted in the bones themselves, so what stirs in them stirs the flags first. A ring of them holds a band harder than a snare, on anything that walks.',
+    },
+    {
+      id: 'spirit-quelling-disc',
+      name: 'Spirit-Quelling Disc',
+      pinyin: 'Zhenling Pan',
+      hanzi: '镇灵盘',
+      tier: 1,
+      rarity: 'green',
+      upTo: 'blue',
+      kind: 'array',
+      uses: { array: { does: 'binding', form: 'disc', beasts: 1, beastsOnly: true } },
+      source: 'the Pavilion’s bone-readers, who press one into every skull that dreams',
+      text: 'A disc pressed into a skull’s brow, and the beast spirit inside goes back to sleep. Set on the ground, it lulls a beast a band above what a snare could hold.',
+    },
     {
       id: 'skull-socket-robe',
       name: 'Skull-Socket Robe',
@@ -306,6 +333,27 @@ export const BOUND_BONES: Catalog = {
         { thing: 'array-plate-blank', count: 1 },
       ],
     },
+    // Its style's arrays (K10).
+    {
+      output: 'bone-binding-flags',
+      craft: 'formations',
+      family: 'trapping',
+      inputs: [
+        { thing: 'array-plate-blank', count: 1 },
+        { thing: 'banner-silk', count: 2 },
+        { thing: 'root-binding-jade', count: 1 },
+      ],
+    },
+    {
+      output: 'spirit-quelling-disc',
+      craft: 'formations',
+      family: 'trapping',
+      inputs: [
+        { thing: 'array-plate-blank', count: 1 },
+        { thing: 'root-binding-jade', count: 1 },
+        { thing: 'beast-core', count: 1 },
+      ],
+    },
   ],
   // Its own style (K6): the Wall's binding arrays are the Pavilion's trade, so it writes its own,
   // guarded as its methods are and sold at its scripture pavilion. Its seals name the flags and
@@ -379,6 +427,8 @@ export const BOUND_BONES: Catalog = {
     { thing: 'skull-socket-robe', shops: ['sect'], weight: 0.5 },
     { thing: 'bone-binding-talisman', shops: ['sect'], count: [1, 3], members: true },
     { thing: 'array-plate-blank', shops: ['sect'], count: [2, 6] },
+    { thing: 'bone-binding-flags', shops: ['sect'], weight: 0.3, members: true },
+    { thing: 'spirit-quelling-disc', shops: ['sect'], weight: 0.3, members: true },
     { thing: 'technique:divine-sense-needles', shops: ['sect'], weight: 0.2 },
     { thing: 'technique:ghost-month-bone-howl', shops: ['sect'], weight: 0.2 },
   ],

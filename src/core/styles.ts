@@ -27,7 +27,7 @@ export function styleCraft(m: Manual): CraftId {
   return m.host as CraftId;
 }
 
-/** The goods a style's seals teach that have a recipe written today (Formations' wait on K10). */
+/** The goods a style's seals teach that have a recipe written today. */
 export function styleGoods(m: Manual): string[] {
   return m.nodes.map((n) => n.recipe).filter((r): r is string => !!r && hasRecipe(r));
 }

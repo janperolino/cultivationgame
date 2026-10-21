@@ -74,6 +74,7 @@ export function fightTitle(s: GameState, f: Fight): string {
     const enc = s.map?.encounters.find((e) => e.id === from.enc);
     return enc ? encounterTemplate(enc.template).title : `Against ${foeNames(s, f)}`;
   }
+  if (from.kind === 'trap') return `In your trap: ${foeNames(s, f)}`;
   const p = s.cards.pending.find((x) => x.uid === from.uid);
   return p ? card(p.card).title : `Against ${foeNames(s, f)}`;
 }
@@ -117,6 +118,16 @@ export function act(action: YourAction): void {
   if (!t) return;
   const f = t.fight;
   const lines: LogEntry[] = [
+    // The arrays on the ground act as the turn begins (K10): a strike, or a foe held.
+    ...(t.ground ?? []).map((g) => ({
+      turn: f.turn,
+      head: `${g.name} · ${combatantIn(f, g.target)?.name ?? g.target}`,
+      line:
+        g.does === 'killing'
+          ? `${g.damage ?? 0} from the array, never missing${g.hp ? ` · ${g.hp.hp}/${g.hp.max}` : ''}`
+          : 'held by the lines this turn (定)',
+      mine: true,
+    })),
     ...t.ticks.map((k) => ({
       turn: f.turn,
       head: `${combatantIn(f, k.id)?.name ?? k.id} · ${k.status}`,
@@ -131,12 +142,21 @@ export function act(action: YourAction): void {
     })),
     ...t.skipped
       .filter(
-        (x) => x.reason === 'frozen' || x.reason === 'undertow' || x.reason === 'not enough qi',
+        (x) =>
+          x.reason === 'frozen' ||
+          x.reason === 'held' ||
+          x.reason === 'undertow' ||
+          x.reason === 'not enough qi',
       )
       .map((x) => ({
         turn: f.turn,
         head: combatantIn(f, x.actor)?.name ?? x.actor,
-        line: x.reason === 'frozen' ? 'frozen, loses the turn' : x.reason,
+        line:
+          x.reason === 'frozen'
+            ? 'frozen, loses the turn'
+            : x.reason === 'held'
+              ? 'held, loses the turn'
+              : x.reason,
         mine: x.actor === me,
       })),
   ];

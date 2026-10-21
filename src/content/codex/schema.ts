@@ -18,6 +18,7 @@ export const CODEX_AREAS = [
   { id: 'organizations', name: 'Organizations and jobs', hanzi: '宗门' },
   { id: 'people', name: 'People', hanzi: '人物' },
   { id: 'crafts', name: 'Crafts', hanzi: '艺' },
+  { id: 'dwellings', name: 'Dwellings and sites', hanzi: '居' },
   { id: 'rest', name: 'Chronicle and the rest', hanzi: '杂' },
 ] as const;
 export type CodexAreaId = (typeof CODEX_AREAS)[number]['id'];
@@ -72,6 +73,11 @@ export const MET_TESTS = [
   'tool', // a craft tool held
   'batch', // a craft batch finished
   'quest', // a quest taken
+  'dwelling', // a dwelling held (K9)
+  'claimed', // a site claimed in the wild
+  'array', // an array's flags or disc held, or one laid (K10)
+  'laid', // an array laid at a site or on open ground
+  'prepared', // an array laid on open ground
   'rogue', // a start that refused, belonging to no power
 ] as const;
 export type MetTest = (typeof MET_TESTS)[number];

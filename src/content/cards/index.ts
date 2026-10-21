@@ -4,6 +4,7 @@ import { FIRST_HOUR_CARDS } from './firstHour.ts';
 import { RETIRED_CARDS } from './retired.ts';
 import type { Card } from './schema.ts';
 import { SECLUSION_CARDS } from './seclusion.ts';
+import { SITE_CARDS } from './site.ts';
 
 export type {
   Card,
@@ -19,7 +20,7 @@ export type {
   VarCheck,
 } from './schema.ts';
 
-export const CARDS: readonly Card[] = [...FIRST_HOUR_CARDS, ...SECLUSION_CARDS];
+export const CARDS: readonly Card[] = [...FIRST_HOUR_CARDS, ...SECLUSION_CARDS, ...SITE_CARDS];
 
 /**
  * Decks that come at a pace rather than by each card's own chance: about one card every so many

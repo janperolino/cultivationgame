@@ -5,7 +5,14 @@
 // can read: it resolves on its own, and anything less is played on the Combat screen.
 import { verdict, type Verdict } from '../resolver/check.ts';
 import type { Combatant } from './combatant.ts';
-import { preview, startFight, type Fight } from './fight.ts';
+import {
+  groundReaches,
+  groundStrike,
+  preview,
+  startFight,
+  type Fight,
+  type FightArray,
+} from './fight.ts';
 
 /** The edge a fight must reach to be won on its own: it costs at most a quarter of your strength. */
 export const SURE_EDGE = 4;
@@ -43,18 +50,32 @@ export interface FightEdge {
 
 /**
  * A fight's edge from both sheets' expected blows. The ratio is your strength (HP, shield and
- * armor) over what the race takes from it: clear at ×1.25, close at ×1.
+ * armor) over what the race takes from it: clear at ×1.25, close at ×1. Your arrays on the ground
+ * (K10) count: a killing array's strike adds to your blow on each foe, a binding one takes the
+ * turns it holds them off their hits, a maze its share of their aim.
  */
-export function fightEdge(you: Combatant, foes: readonly Combatant[]): FightEdge {
+export function fightEdge(
+  you: Combatant,
+  foes: readonly Combatant[],
+  arrays: readonly FightArray[] = [],
+): FightEdge {
   if (!foes.length)
     return { yours: 0, theirs: Infinity, ratio: Infinity, costs: 0, verdict: 'clear' };
   const me = { ...you, side: MINE };
   const them = foes.map((c) => ({ ...c, side: THEIRS }));
   const f = startFight([me, ...them]);
+  const ground = arrays.map((a) => ({ ...a, side: MINE }));
   const order = them
     .map((t) => {
-      const blow = bestBlow(f, me, t);
-      return { need: blow > 0 ? pool(t) / blow : Infinity, hits: bestBlow(f, t, me) };
+      let blow = bestBlow(f, me, t);
+      let hits = bestBlow(f, t, me);
+      for (const a of ground) {
+        if (!groundReaches(a, t)) continue;
+        if (a.does === 'killing') blow += groundStrike(a, t);
+        if (a.does === 'binding') hits *= 1 - 1 / Math.max(1, a.every ?? 2);
+        if (a.does === 'maze') hits *= 1 - (a.dull ?? 0);
+      }
+      return { need: blow > 0 ? pool(t) / blow : Infinity, hits };
     })
     .sort((a, b) => a.need - b.need);
   let yours = 0;

@@ -37,7 +37,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 50;
+export const SAVE_VERSION = 52;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1100,19 +1100,36 @@ const migrations: Record<number, (old: Raw) => Raw> = {
     const journal = { quests: [], followed: null };
     return { ...old, version: 49, state: { ...s, lineage, journal } };
   },
+  // K9: dwellings and your abode; an old life holds none until the day step houses a member.
+  49: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    return {
+      ...old,
+      version: 50,
+      state: { ...s, player: { dwellings: [], abode: null, ...p } },
+    };
+  },
+  // K10: arrays laid in a dwelling's slots and on open ground; an old life has laid none.
+  50: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const p = (s.player ?? {}) as Raw;
+    const dwellings = ((p.dwellings ?? []) as Raw[]).map((d) => ({ arrays: [], ...d }));
+    return { ...old, version: 51, state: { ...s, player: { grounds: [], ...p, dwellings } } };
+  },
   // The opening, built (chains, rogue, knobs): its three new guides (a rogue's first work, the
   // sheet after the spar, sense on the road) count as done for a lineage past its first
   // seclusion, which met those things before they were taught; an old life has no chain, so its
   // seclusion deck isn't held.
-  49: (old) => {
+  51: (old) => {
     const s = (old.state ?? {}) as Raw;
     const lineage = (s.lineage ?? {}) as Raw;
     const guides = Array.isArray(lineage.guides) ? (lineage.guides as string[]) : [];
-    if (!guides.includes('focus')) return { ...old, version: 50 };
+    if (!guides.includes('focus')) return { ...old, version: 52 };
     const added = ['first-work', 'sheet', 'sense'].filter((g) => !guides.includes(g));
     return {
       ...old,
-      version: 50,
+      version: 52,
       state: { ...s, lineage: { ...lineage, guides: [...guides, ...added] } },
     };
   },

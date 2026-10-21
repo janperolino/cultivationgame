@@ -97,6 +97,11 @@ export const MET: Readonly<Record<MetTest, (s: GameState) => boolean>> = {
   tool: (s) => held(s, (id) => item(id).kind === 'tool'),
   batch: (s) => s.player.crafts.recent.length > 0,
   quest: (s) => s.journal.quests.length > 0,
+  dwelling: (s) => s.player.dwellings.length > 0,
+  claimed: (s) => s.player.dwellings.some((d) => d.held === 'claimed'),
+  array: (s) => held(s, (id) => !!item(id).uses.array) || MET.laid(s),
+  laid: (s) => s.player.grounds.length > 0 || s.player.dwellings.some((d) => d.arrays.length > 0),
+  prepared: (s) => s.player.grounds.length > 0,
   rogue: (s) =>
     s.player.origin?.choice === 'refuse' && !s.world.members.some((m) => m.who === s.player.id),
 };

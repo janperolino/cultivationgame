@@ -179,6 +179,32 @@ Every feature a player can touch in the game today (built in code, not only desi
 | The tray and the last batches | Crafts | The tray | a batch done | nothing | codex |
 | Shops brewing and refining what they sell | Alchemy shop, refiner | The shelf | markets | nothing | codex |
 
+## Dwellings and sites (K9)
+
+| Feature | Where | First met today | Needs first | Taught by |
+|---|---|---|---|---|
+| The Dwelling screen 居: the one where you stand (its qi on the ladder, vein, concealment, defenses, worth, reach, neighbors), greyed elsewhere with the ones you hold | Dwelling, on the rail under Crafts | glow and dot | a dwelling you take or claim, or a month at your seat's quarters | Panel lines |
+| Your seat's quarters: a bunk or cave by seat, its footlocker, a dynasty's at your post | Dwelling | The screen opening after a month | membership | Panel lines |
+| The broker 牙行: rooms, cultivation chambers, courtyards, a medicine garden, a mansion, the spirit hill's caves; a village's farmhouse | Place › Hear and hire | A door | a town or city | Counter text |
+| The store, a second grid opened only at its dwelling | Dwelling | The store panel | a dwelling with a store | Panel line |
+| A dwelling's land as plot slots, each a farming plot | Dwelling, then Crafts › Farming | The Land panel | a dwelling with slots | Panel line |
+| Your abode: home, a free bed, moving it | Dwelling, the map's Go home | The abode chip | a dwelling | nothing |
+| Hidden veins and reading the land 堪舆 (soul and Earth Dao, once a day) | Map › Journey, where you stand | A button | nothing | Button subtitle |
+| Claiming: a thatched hut on bare land, a cave abode or spirit mountain on a vein read, a hidden valley at falls or a sinkhole; a deed inside a power's sphere | Map › Journey and right-click, a site's screen | Buttons | standing there | Button subtitle |
+| Building your base: clearing land, digging the store, a quiet chamber | Dwelling › Build | The panel | land claimed in the wild | Panel lines |
+| Raids by thieves and beasts on a site in the wild | A card | The card | a claimed site worth taking, or raised qi and old beds | Card text |
+| Rent taken as its time turns, a lapsed lease's store kept a month | Dwelling, the Chronicle | A line | a rented dwelling | Panel lines |
+
+## Formations (K10)
+
+| Feature | Where | First met today | Needs first | Taught by | Way in |
+|---|---|---|---|---|---|
+| Formation Inscribing: flags 阵旗 and discs 阵盘 made at the bench, queued | Crafts › Formations | The recipe list | an inscribing plate or an array diagram | Page line | codex |
+| Placing 布阵: laying an array by reading the currents, the hand lifting its rarity | Dwelling › Arrays, the map's own menu | The placing veil | an array in the Bag | Scene text | codex |
+| Arrays at a site: gathering under the vein's cap, warding, concealing, alarm, growing; their eyes fed and taken up | Dwelling › Arrays | The Arrays panel | land claimed on a vein | Panel lines | codex |
+| Arrays in a fight on their ground: warding, binding, killing, maze | Combat | Log lines | a raid at your site, or a trap's catch | Log lines | codex |
+| Prepared ground and traps: an array on open ground, what walks in held until you check it | Map, your own menu | A 阵 seal on the map | an array on open ground | Menu subtitles | codex |
+
 ## Chronicle and the rest
 
 | Feature | Where | First met today | Needs first | Taught by | Way in |
@@ -198,7 +224,7 @@ No hint, card, tooltip or "?" at all:
 
 - **The map:** click to go, the right-click menu, fog, pins, rumor rings, Look and Gather hours.
 - **Fights:** that the Combat screen exists, words and feet, fight items.
-- **Organizations:** the starting post and its Duty hours, the membership and dwelling a path that went along begins with, the elders' hall, backing, the pavilion, a guarded method's mark.
+- **Organizations:** the starting post and its Duty hours, the membership a path that went along begins with (its quarters open the Dwelling screen after a month, K9), the elders' hall, backing, the pavilion, a guarded method's mark.
 - **People:** followers, the powers list, your name's reach.
 - **Shops:** buying, selling, mending, the market labels, selling copies and staples, the changer.
 - **Crafts:** the bench queue, formula slips, mending, the greyed pages (a tooltip only).

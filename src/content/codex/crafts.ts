@@ -129,7 +129,7 @@ export const CRAFTS: readonly CodexEntry[] = [
       'Some places lend a hand. Earth fire on volcanic land adds lift and holding to alchemy and refining, and a land of a recipe’s element does the same for that recipe.',
     ],
     numbers: [
-      ['Batches for each level', 'Comprehension 10, Mastery 40, Perfection 120, Origin 300'],
+      ['Batches for each level', 'Comprehension 3, Mastery 12, Perfection 35, Origin 85'],
       ['A batch holds', '50%, 70%, 85%, 95%, 99% by level, Glimpse to Origin'],
       ['A tier below yours', 'Odds +15 points; two or more below +25; one above −30'],
       ['A matched soul', 'Odds ×1.25; blow-ups from 1 in 5 to 1 in 10'],

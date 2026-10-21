@@ -39,8 +39,8 @@ export const PLOT = {
   season: 90,
 } as const;
 
-/** How a plot is held: rented by the season, bought, and from K9 a dwelling's slot or your site. */
-export const HELD = ['rented', 'bought'] as const;
+/** How a plot is held: rented by the season, bought, or laid out in a dwelling's slot (K9). */
+export const HELD = ['rented', 'bought', 'slot'] as const;
 export type Held = (typeof HELD)[number];
 
 /**

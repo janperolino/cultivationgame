@@ -85,8 +85,14 @@ import { useGame } from './store.ts';
 /** Hours to a tenth, as the bench counts them. */
 const round1 = (h: number) => Math.round(h * 10) / 10;
 
-/** The crafts built so far (alchemy in K1, refining in K4, talismans in K5, spirit farming in K8); the rest show as pages yet to open. */
-const BUILT: readonly CraftId[] = ['alchemy', 'refining', 'talismans', 'farming'];
+/** The crafts built so far (alchemy in K1, refining in K4, talismans in K5, spirit farming in K8, formations in K10). */
+const BUILT: readonly CraftId[] = ['alchemy', 'refining', 'talismans', 'formations', 'farming'];
+
+/**
+ * Crafts whose bench is queued only (K10): inscribing flags and discs is patient work, and the
+ * hands-on part is placing, when an array is laid.
+ */
+const QUEUED_ONLY: readonly CraftId[] = ['formations'];
 
 /** What each built craft's page calls its things. */
 const WORDS: Partial<
@@ -129,6 +135,15 @@ const WORDS: Partial<
     unit: ['sheet', 'sheets'],
     none: 'Talisman stalls sell them; a wolf-hair talisman brush is 30 low.',
     slip: 'A talisman slip 符谱 is read on study hours, as a formula is; every stall that sells the Ember Talisman sells its slip.',
+  },
+  formations: {
+    at: 'At the plate',
+    hanzi: '刻阵',
+    sit: 'Inscribing is queued',
+    line: 'Flags and discs are cut on the plate while the bench runs. You play the array when you lay it: at a vein you claimed (the Dwelling screen 居) or on open ground (the Map, your own menu).',
+    unit: ['set', 'sets'],
+    none: 'Talisman shops sell them; a bronze inscribing plate is 30 low.',
+    slip: 'An array diagram 阵图 is read on study hours, as a formula is; the talisman shops that sell an array sell its diagram.',
   },
 };
 const words = (k: CraftId) => WORDS[k] ?? WORDS.alchemy!;
@@ -319,6 +334,7 @@ export function CraftsScreen() {
                 <Recipes c={c} craft={page} pick={pick} onPick={setPick} />
                 {pick && <RecipeCard c={c} r={recipe(pick)} spot={spot} onQueue={queue} />}
                 {why && <p className="warn">{why}</p>}
+                {QUEUED_ONLY.includes(page) && <p className="muted">{words(page).line}</p>}
               </>
             )}
             {!experimenting && page === 'refining' && (
@@ -397,9 +413,20 @@ export function CraftsScreen() {
                   <button
                     type="button"
                     className="button"
-                    disabled={!head}
-                    title={head ? undefined : 'Queue a batch to sit at it.'}
-                    onClick={() => head && headCraft && sitDown(head.recipe, headCraft)}
+                    disabled={!head || (!!headCraft && QUEUED_ONLY.includes(headCraft))}
+                    title={
+                      !head
+                        ? 'Queue a batch to sit at it.'
+                        : headCraft && QUEUED_ONLY.includes(headCraft)
+                          ? words(headCraft).line
+                          : undefined
+                    }
+                    onClick={() =>
+                      head &&
+                      headCraft &&
+                      !QUEUED_ONLY.includes(headCraft) &&
+                      sitDown(head.recipe, headCraft)
+                    }
                   >
                     {words(headCraft ?? page).sit}
                   </button>

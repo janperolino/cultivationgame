@@ -88,6 +88,8 @@ export type CardEffect =
   | { do: 'clear-mark'; id: string }
   /** Adds to one of the card's own variables, for its later steps and its chronicle line. */
   | { do: 'var'; id: string; n: number }
+  /** A raid on a site you hold settles (K9): its raiders take what they came for, or are driven off. */
+  | { do: 'raid'; outcome: 'taken' | 'driven' }
   /**
    * What you learn of a person, by slot ({senior}, {mentor}) or id (content/people.ts): `regard`
    * lands as a memory of ±10 a step that fades over a season (a plain mapping until P3.12 names
@@ -220,4 +222,6 @@ export interface Card {
   choices: readonly CardChoice[];
   /** Later steps, by id, that outcomes lead on to. */
   steps?: Readonly<Record<string, CardStep>>;
+  /** Never drawn: a system queues it where it happens (K9's raids). */
+  queued?: boolean;
 }

@@ -132,6 +132,21 @@ export const STRIKE_NEEDS: Partial<Record<string, Property>> = {
 export const ESCAPE_THROUGH: readonly Element[] = ['earth', 'water'];
 
 /**
+ * Formations' row of the effect table (K10): what an array's inputs carry for what it does, the
+ * eye's jade aside. Growing reads nourishing or tempering with wood, which a test checks too.
+ */
+export const FORMATIONS_MAKES = {
+  gathering: ['nourishing'],
+  growing: ['nourishing', 'tempering'],
+  warding: ['hard'],
+  concealing: ['concealing'],
+  alarm: ['resonant', 'burning'],
+  binding: ['binding'],
+  killing: ['sharp', 'burning'],
+  maze: ['illusory'],
+} as const satisfies Record<string, readonly Property[]>;
+
+/**
  * Mending is refining (design § Production, commissions and the craft deck; K4): a craft hour a
  * tier of the piece at a whole forge of its tier, and one piece of what it was made of (its
  * recipe's first input, or this ore when it has none). It never fails and counts no mastery.
@@ -143,6 +158,7 @@ export const STARTER_TOOLS: Partial<Record<CraftId, string>> = {
   alchemy: 'crude-clay-furnace',
   refining: 'crude-iron-forge',
   talismans: 'wolf-hair-talisman-brush',
+  formations: 'bronze-inscribing-plate',
 };
 
 /** The kind of tool each craft works with: a furnace, a forge, a brush and an array plate. */
@@ -233,12 +249,13 @@ export const CRAFT_SITES: Readonly<
 export const YIELD_BY_MASTERY = [0, 0.1, 0.2, 0.3, 0.4] as const;
 
 /**
- * Mastery grows by batches: Comprehension at 10, Mastery at 40, Perfection at 120, Origin at 300.
- * A batch at your tier counts 1, one below a quarter, a failed one half. Each level reached
- * releases insight, as a technique's does.
+ * Mastery grows by batches: Comprehension at 3, Mastery at 12, Perfection at 35, Origin at 85,
+ * anchored to the attended crafter on the opening's faster clock (design § What the faster clock
+ * moves: ÷3.5 from D4's 10, 40, 120 and 300, set at K9's merge). A batch at your tier counts 1,
+ * one below a quarter, a failed one half. Each level reached releases insight, as a technique's does.
  */
 export const CRAFT_MASTERY = {
-  batches: [0, 10, 40, 120, 300],
+  batches: [0, 3, 12, 35, 85],
   burst: [0, 5, 20, 60, 150],
   below: 0.25,
   failed: 0.5,

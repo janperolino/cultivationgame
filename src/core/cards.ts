@@ -44,7 +44,8 @@ import { canPay, pay, receive, spend, stonesOf, withStones, worthOf } from './pu
 import { hashSeed, Rng } from './rng.ts';
 import { fromCultivator } from './combat/combatant.ts';
 import { edgeWords, fightEdge, isSure, type FightEdge } from './combat/edge.ts';
-import { startFight, type Fight } from './combat/fight.ts';
+import { onGround, startFight, type Fight } from './combat/fight.ts';
+import { fightArrays } from './arrays.ts';
 import { generateBeast, generateCultivator } from './combat/generate.ts';
 import { openFight, type FightEnd } from './played.ts';
 import {
@@ -66,6 +67,7 @@ import {
 } from './state.ts';
 import { verdict, type Verdict } from './resolver/check.ts';
 import { gainItem } from './map/ground.ts';
+import { settleRaid } from './dwellings.ts';
 import { agility, aptitude, fortune, stats } from './stats.ts';
 
 // ---------------------------------------------------------------- triggers
@@ -185,9 +187,12 @@ export function defaultChoice(
 }
 
 /** One effect of a card on the game; `var` effects are the caller's. */
-export function applyEffect(s: GameState, e: CardEffect): GameState {
+// A card's effect; `uid` names the card for what settles by it (a raid), none for a quest's work.
+export function applyEffect(s: GameState, e: CardEffect, uid = -1): GameState {
   const c = s.player;
   switch (e.do) {
+    case 'raid':
+      return settleRaid(s, uid, e.outcome);
     case 'stones':
       // A loss is paid as a price, as far as the purse reaches; a gain comes in low.
       return withPlayer(
@@ -295,6 +300,11 @@ export function cardWho(c: Cultivator, vars: Readonly<Record<string, number>> = 
   return { ...who, slots: { ...who.slots, ...ready, ...v } };
 }
 
+/** A queued card's own words over the slots. */
+function withWords(who: Who, words: Readonly<Record<string, string>> | undefined): Who {
+  return words ? { ...who, slots: { ...who.slots, ...words } } : who;
+}
+
 // ---------------------------------------------------------------- a card's fight
 
 /** The choice a waiting card's step offers at an index, with the card. */
@@ -325,7 +335,10 @@ export function cardFight(s: GameState, uid: number, index: number): Fight | nul
       : generateCultivator(t, r, stage, rng, opts);
   const name = f.person ? fillSlots(`{${f.person}}`, cardWho(s.player, at.pending.vars)) : null;
   const foe = name ? { ...npc.combatant, name } : npc.combatant;
-  return startFight([fromCultivator(s.player, 'you'), foe]);
+  const fight = startFight([fromCultivator(s.player, 'you'), foe]);
+  // A raid fought at your own site meets its arrays (K10).
+  const site = at.pending.vars?.here ? s.player.dwellings.find((d) => d.raid?.uid === uid) : null;
+  return site ? onGround(fight, fightArrays(site.arrays, 'you')) : fight;
 }
 
 /** A card fight's edge, read as the road reads one: and whether it is a sure win. */
@@ -337,7 +350,7 @@ export function cardEdge(
   const f = cardFight(s, uid, index);
   if (!f) return null;
   const [me, ...foes] = f.combatants;
-  const edge = fightEdge(me!, foes);
+  const edge = fightEdge(me!, foes, f.arrays);
   return { edge, sure: isSure(edge), words: edgeWords(edge) };
 }
 
@@ -405,7 +418,7 @@ export function resolveCard(
           ? choice.close
           : choice.pass;
   for (const e of outcome.effects) if (e.do === 'var') vars[e.id] = (vars[e.id] ?? 0) + e.n;
-  const text = fillSlots(outcome.text, cardWho(s.player, vars));
+  const text = fillSlots(outcome.text, withWords(cardWho(s.player, vars), pending.words));
   const path = [...(pending.path ?? []), index];
   const rest = next.cards.pending.filter((p) => p.uid !== uid);
 
@@ -419,7 +432,7 @@ export function resolveCard(
         pending: next.cards.pending.map((p) => (p.uid === uid ? moved : p)),
       },
     };
-    for (const e of outcome.effects) next = applyEffect(next, e);
+    for (const e of outcome.effects) next = applyEffect(next, e, uid);
     return { state: next, ok: true, text, pass, done: false, ...(check ? { check } : {}) };
   }
 
@@ -442,7 +455,7 @@ export function resolveCard(
   }
   for (const [key, v] of Object.entries(vars)) data[`var.${key}`] = v;
   next = addEvent(next, 'card', data, [next.player.id, ...named]);
-  for (const e of outcome.effects) next = applyEffect(next, e);
+  for (const e of outcome.effects) next = applyEffect(next, e, uid);
   return { state: next, ok: true, text, pass, done: true, ...(check ? { check } : {}) };
 }
 
@@ -505,7 +518,7 @@ function rollCandidates(
   const paced: Card[] = [];
   const held = deckHeld(s);
   for (const k of CARDS) {
-    if (decks && !decks.includes(k.deck)) continue;
+    if (k.queued || (decks && !decks.includes(k.deck))) continue;
     // A card a quest brings (the rogue's first big job) comes only when it is brought.
     if (k.pushed) continue;
     if (held && k.deck === SECLUSION_DECK) continue;
@@ -569,7 +582,9 @@ function drawDay(s: GameState, day: number, opts: DrawOptions): GameState {
   let next = s;
   for (const p of s.cards.pending) {
     const urgent = card(p.card).urgent;
-    if (urgent && day - p.day >= urgent.days) next = resolveByDefault(next, p.uid);
+    // A card's `wait` var stretches its days: an alarm array's raid card (K10).
+    if (urgent && day - p.day >= urgent.days * (p.vars?.wait ?? 1))
+      next = resolveByDefault(next, p.uid);
   }
   const { value: drawn, state } = withStream(next, 'world', (rng) => {
     const { story, paced } = rollCandidates(next, day, rng, opts.decks);
@@ -652,7 +667,7 @@ export function viewCard(s: GameState, p: PendingCard): CardView {
   const k = card(p.card);
   const step = stepOf(k, p.step);
   const vars = p.vars ?? {};
-  const who = cardWho(s.player, vars);
+  const who = withWords(cardWho(s.player, vars), p.words);
   return {
     uid: p.uid,
     card: k,

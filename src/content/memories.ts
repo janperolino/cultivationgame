@@ -207,6 +207,8 @@ export const STANDING_ROWS = {
   'attacked-ours': { reason: 'Attacked one of ours', value: -10, fade: SEASON },
   'lied-to-us': { reason: 'Lied to us', value: -10, fade: SEASON },
   mission: { reason: 'A mission done for us', value: 10, fade: YEAR },
+  // K9: a site claimed inside its sphere, for as long as you hold it.
+  squatting: { reason: 'Squatting on our land', value: -10, fade: null },
   tribute: { reason: 'Tribute', value: 5, fade: SEASON, own: true },
   member: { reason: 'One of ours', value: 10, fade: null },
   // O1 (design § Organizations share one skeleton): a member of other blood, while they belong;

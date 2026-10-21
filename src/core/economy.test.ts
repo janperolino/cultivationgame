@@ -198,12 +198,12 @@ describe('shops', () => {
     // The seeded stall, pinned: a change to the catalogs or the roll shows here.
     expect(stockOf('mouth-stall', 1300).map((l) => l.thing)).toMatchInlineSnapshot(`
       [
-        "manual:recipe-body-fixing-talisman",
-        "seed.ridge-bitterroot",
-        "technique:lamp-shadow-step",
+        "gathering-flags~green",
+        "manual:recipe-boar-hide-vest",
         "method:stone-bearing",
+        "manual:recipe-warding-flags",
         "method:market-stall",
-        "seed.blood-salt-kelp",
+        "seed.old-apricot-kernel",
       ]
     `);
   });
@@ -445,8 +445,8 @@ describe('loot', () => {
           "beast-blood": 1,
           "beast-core": 1,
           "drowned-word-talisman": 3,
-          "method:pillar-shadow-nourishing": 1,
-          "stalactite-milk": 5,
+          "iron-knuckles": 1,
+          "soul-returning-pill~green": 1,
         },
         "stones": 181,
       }

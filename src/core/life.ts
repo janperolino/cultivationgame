@@ -71,14 +71,10 @@ import {
 } from './wheel.ts';
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
-import {
-  densityHere,
-  dwellingOf,
-  membershipDay,
-  protectorOf,
-  protectorSpent,
-} from './organizations.ts';
+import { densityHere, membershipDay, protectorOf, protectorSpent } from './organizations.ts';
 import { bedNights } from './map/place.ts';
+import { dwellingOpens, dwellingsDay } from './dwellings.ts';
+import { formationsDay } from './formations.ts';
 import { setCopyGain } from './map/encounters.ts';
 import { benchSpot, cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 import { atHome, jobsDay, onShift } from './jobs.ts';
@@ -152,6 +148,8 @@ export function checkScreens(s: GameState): GameState {
   if (holds) next = unlock(next, 'bag');
   // The crafts open where they live: the first time you hold a tool or know a recipe (K1).
   if (craftsOpen(p)) next = unlock(next, 'crafts', true);
+  // The Dwelling screen: a dwelling you took, or a month at your seat's quarters (K9).
+  if (dwellingOpens(next)) next = unlock(next, 'dwelling', true);
   return next;
 }
 
@@ -225,8 +223,8 @@ export const cultivate: DayStep = (s0, days, ctx) => {
       seat: ctx?.seat,
       firsts: s.lineage.firsts,
       hourFactor: road?.factor,
-      // A power's dwelling by your seat, while you seclude inside its seat (O2).
-      density: road ? 1 : (dwellingOf(s)?.density ?? 1),
+      // A power's dwelling by your seat (O2), or a dwelling you hold (K9), while you seclude in it.
+      density: road ? 1 : densityHere(s),
     }),
   );
   const cultivated = {
@@ -252,6 +250,9 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   if (!road) next = benchDay(next, days, ctx?.seat?.hand);
   // The plots grow wherever you are, tended where you stand (K8).
   next = fieldsDay(next, s.calendar.day - days, s.calendar.day);
+  next = dwellingsDay(next, s.calendar.day - days, s.calendar.day);
+  // Arrays burn their eyes' stones, and traps on open ground catch what walks in (K10).
+  next = formationsDay(next, s.calendar.day - days, s.calendar.day);
   return noteQuests(noteFirsts(checkScreens(next)));
 };
 

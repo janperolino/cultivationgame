@@ -132,6 +132,16 @@ import {
 } from '../core/craftGrade.ts';
 import { seatGrade } from '../core/organizations.ts';
 import { formatPercent } from './format.ts';
+import {
+  brokerAt,
+  claim,
+  claimsHere,
+  dwellingAt,
+  dwellingName,
+  offersAt,
+  stepMult,
+  takeFromBroker,
+} from '../core/dwellings.ts';
 import { sitDown, standUp, useFurnace } from './furnace.ts';
 import { ForgeScene } from './ForgeScene.tsx';
 import { FurnaceScene } from './FurnaceScene.tsx';
@@ -357,6 +367,22 @@ function doorsOf(
             sub: `you sleep here by rule: ${info.bed} taels a night`,
           },
         ];
+  // The broker 牙行 lets rooms, chambers and courtyards; a village its farmhouses (K9).
+  const broker = brokerAt(p);
+  if (broker) {
+    const mine = dwellingAt(s.player, p.id);
+    hear.push({
+      id: 'broker',
+      seal: broker === 'village' ? '舍' : '牙',
+      name: broker === 'village' ? 'Farmhouse to let' : 'Broker 牙行',
+      sub: mine
+        ? `your ${dwellingName(s, mine).toLowerCase()} here`
+        : broker === 'village'
+          ? 'a house and two fields of its own'
+          : 'rooms, chambers and courtyards',
+      tag: mine ? 'yours' : undefined,
+    });
+  }
   if (hasBoard(p) && !isMissionHall(p.id)) {
     const held = s.map?.postings.filter((x) => x.board === p.id && x.done).length ?? 0;
     hear.push({
@@ -684,6 +710,8 @@ function Counter({
       return <ChangerCounter game={game} place={place} act={act} />;
     case 'fields':
       return <FieldsCounter game={game} place={place} act={act} />;
+    case 'broker':
+      return <BrokerCounter game={game} place={place} act={act} />;
     case 'talk':
       return <TalkCounter game={game} map={map} place={place} act={act} />;
     case 'maps':
@@ -1833,6 +1861,77 @@ function FieldsCounter({ game, place, act }: { game: GameState; place: MapPlace;
   );
 }
 
+/** The broker's lets and sales (K9): what a place has, by the period or bought. */
+function BrokerCounter({ game, place, act }: { game: GameState; place: MapPlace; act: Act }) {
+  const offers = offersAt(game, place);
+  const mine = dwellingAt(game.player, place.id);
+  return (
+    <>
+      <p className="place-sub">
+        You may hold one dwelling in a place. Rent comes off your purse as its time turns; leave it
+        unpaid, and what is in the store is kept a month, then sold for the debt.
+      </p>
+      <div className="place-rows">
+        {offers.map((o) => (
+          <div key={o.kind} className="place-row is-plain broker-row">
+            <span>
+              <span className="place-row-name">
+                {o.name} <span className="hanzi">{o.hanzi}</span>
+              </span>
+              <span className="place-sub">
+                {' '}
+                · {o.line}
+                {o.steps > 0 ? ` · qi ×${stepMult(o.steps)}` : ''}
+                {o.store > 0 ? ` · a store of ${o.store}` : ' · no store'}
+                {o.slots > 0 ? ` · ${o.slots} plot slot${o.slots === 1 ? '' : 's'}` : ''}
+              </span>
+            </span>
+            <span className="place-price">
+              {o.rent.map((r) => `${r.price.toLocaleString()} low a ${r.period}`).join(' · ')}
+              {o.buy !== null
+                ? `${o.rent.length ? ' · ' : ''}${o.buy.toLocaleString()} low to buy`
+                : ''}
+            </span>
+            <span className="broker-buttons">
+              {o.rent.map((r) => (
+                <button
+                  key={r.period}
+                  type="button"
+                  className="place-btn"
+                  disabled={!!o.why}
+                  title={o.why ?? undefined}
+                  onClick={() => act((s) => takeFromBroker(s, place, o.kind, r.period))}
+                >
+                  {o.rent.length > 1 ? `By the ${r.period}` : 'Rent'}
+                </button>
+              ))}
+              {o.buy !== null && (
+                <button
+                  type="button"
+                  className="place-btn"
+                  disabled={!!o.why}
+                  title={o.why ?? undefined}
+                  onClick={() => act((s) => takeFromBroker(s, place, o.kind, 'bought'))}
+                >
+                  Buy
+                </button>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+      {mine && (
+        <p className="place-note">
+          <b>Your {dwellingName(game, mine).toLowerCase()} here</b> is on the Dwelling screen.{' '}
+          <button type="button" className="link-button" onClick={() => go('dwelling')}>
+            Open it
+          </button>
+        </p>
+      )}
+    </>
+  );
+}
+
 function TalkCounter({
   game,
   map,
@@ -2237,6 +2336,9 @@ function SiteCounter({
   const at: [number, number] = [place.x, place.y];
   const d = depthInfo(map, at);
   const b = band(bandAt(map, at));
+  const held = dwellingAt(game.player, place.id);
+  const claims = game.map?.inside === place.id ? claimsHere(game) : [];
+  const valley = claims.findIndex((c) => c.kind === 'valley');
   return (
     <section className="place-counter panel">
       <div className="map-label">What’s here</div>
@@ -2258,6 +2360,15 @@ function SiteCounter({
           : ''}
         and P3.7’s encounters read its band.
       </p>
+      {held && (
+        <p className="place-note">
+          <b>Your {dwellingName(game, held).toLowerCase()}.</b> Its store, land and works are on the
+          Dwelling screen.{' '}
+          <button type="button" className="link-button" onClick={() => go('dwelling')}>
+            Open it
+          </button>
+        </p>
+      )}
       <div className="place-actions">
         <button
           type="button"
@@ -2269,6 +2380,17 @@ function SiteCounter({
         >
           Stay and cultivate here
         </button>
+        {valley >= 0 && (
+          <button
+            type="button"
+            className="place-btn"
+            disabled={!!claims[valley]!.why}
+            title={claims[valley]!.why ?? undefined}
+            onClick={() => act((s) => claim(s, valley))}
+          >
+            Claim it: a hidden valley 秘谷
+          </button>
+        )}
         <button
           type="button"
           className="place-btn"

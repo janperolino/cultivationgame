@@ -4,6 +4,8 @@
 import { BAG } from './bag.ts';
 import { CRAFTS } from './crafts.ts';
 import { CULTIVATION } from './cultivation.ts';
+import { DWELLINGS } from './dwellings.ts';
+import { FORMATIONS } from './formations.ts';
 import { FIGHTING } from './fighting.ts';
 import { MAP } from './map.ts';
 import { ORGANIZATIONS } from './organizations.ts';
@@ -28,6 +30,8 @@ export const CODEX: readonly CodexEntry[] = [
   ...ORGANIZATIONS,
   ...PEOPLE,
   ...CRAFTS,
+  ...DWELLINGS,
+  ...FORMATIONS,
   ...REST,
 ];
 
