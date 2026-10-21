@@ -515,9 +515,22 @@ function bank(f: Fight, actor: Combatant): boolean {
   return extra > 0;
 }
 
-/** An extra action with no profile to choose it: the same main again, at another foe if its target fell. */
+/**
+ * An extra action with no profile to choose it: the same main again, at another foe if its target
+ * fell. A main that spends goods (a volley, a piece blown apart, flags, a thing used) strikes
+ * instead, so tempo never burns a second of what the screen priced once (review 2026-10-21).
+ */
 function repeat(f: Fight, actor: Combatant, a: Action): Action | undefined {
-  const m = a.main && retarget(f, actor, a.main);
+  const spends =
+    a.main?.type === 'volley' ||
+    a.main?.type === 'detonate' ||
+    a.main?.type === 'flags' ||
+    a.main?.type === 'item';
+  const main: MainAction | null | undefined =
+    a.main && spends
+      ? { type: 'strike', target: 'target' in a.main ? (a.main.target ?? '') : '' }
+      : a.main;
+  const m = main && retarget(f, actor, main);
   return m ? { actor: actor.id, main: m } : undefined;
 }
 

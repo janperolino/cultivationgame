@@ -13,6 +13,8 @@ import { craftDao } from './crafts.ts';
 import { askToJoin, entryOf } from './joining.ts';
 import { guestOffered, membership, seatGate } from './organizations.ts';
 import { markFor } from './resolver/marks.ts';
+import { addStanding } from './resolver/opinion.ts';
+import { standingOf } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
 import { sell, stockOf } from './shops.ts';
 import { addItem, emptyCrafts, newLife, withPlayer, type GameState } from './state.ts';
@@ -207,6 +209,12 @@ describe('craft renown', () => {
     expect(guestOffered(s, GUILD)).toBe(false);
     s = withPlayer(s, addCraftFame(s.player, BW, 'alchemy', 16, s.calendar.day));
     expect(guestOffered(s, GUILD)).toBe(true);
+    // Never from a house that hunts you (review 2026-10-21).
+    let w = s.world;
+    for (let i = 0; i < 3; i++)
+      w = addStanding(w, { power: GUILD, about: s.player.id, row: 'betrayed-us' }, s.calendar.day);
+    expect(standingOf(w, GUILD, s.player.id, s.calendar.day).word).toMatch(/hunted|hostile/);
+    expect(guestOffered({ ...s, world: w }, GUILD)).toBe(false);
   });
 });
 

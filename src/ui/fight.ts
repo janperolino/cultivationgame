@@ -152,13 +152,19 @@ export function act(action: YourAction): void {
       line: logLine(f, o),
       mine: o.actor === me,
     })),
+    // Every action of yours that didn't take says why, so no turn passes in silence (review
+    // 2026-10-21); a foe's only for what holds it.
     ...t.skipped
       .filter(
         (x) =>
           x.reason === 'frozen' ||
           x.reason === 'held' ||
           x.reason === 'undertow' ||
-          x.reason === 'not enough qi',
+          x.reason === 'not enough qi' ||
+          (x.actor === me &&
+            x.reason !== 'not in the fight' &&
+            x.reason !== 'not commanded' &&
+            combatantIn(f, me)?.state === 'fighting'),
       )
       .map((x) => ({
         turn: f.turn,

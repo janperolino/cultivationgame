@@ -81,7 +81,7 @@ import { setCopyGain } from './map/encounters.ts';
 import { benchSpot, cultivationWheel, ensureMap, travelDays } from './map/travel.ts';
 import { atHome, jobsDay, onShift } from './jobs.ts';
 import { craftsOpen, workBench } from './crafts.ts';
-import { growPlots } from './farming.ts';
+import { growPlots, type FarmEvent } from './farming.ts';
 import { farmHere, plotPlaceName } from './map/fields.ts';
 import { heatOf } from './resolver/world.ts';
 import { addCraftFame } from './craftRenown.ts';
@@ -176,11 +176,22 @@ function benchDay(s: GameState, days: number, hand = 0): GameState {
   const { value: r, state } = withStream(s, 'craft', (rng) =>
     workBench(s.player, hours, s.calendar.day, rng, { hand, spot: benchSpot(s) }),
   );
-  let next = withPlayer(state, r.cultivator);
-  for (const e of r.events) {
-    // A gold piece or better is talked of where it was made (K6): craft renown, no line of its own.
+  return benchEvents(withPlayer(state, r.cultivator), r.events);
+}
+
+/**
+ * What a bench, a harvest or an exam's batch made worth a line, into the chronicle: a gold piece
+ * or better is talked of where it was made (K6), craft renown and no line of its own. The
+ * Fields and the guild's bench hand theirs here too (review 2026-10-21).
+ */
+export function benchEvents(
+  s: GameState,
+  events: readonly FarmEvent[],
+  region = s.map?.region ?? HOME_REGION,
+): GameState {
+  let next = s;
+  for (const e of events) {
     if (e.type === 'made-rare') {
-      const region = next.map?.region ?? HOME_REGION;
       next = withPlayer(
         next,
         addCraftFame(next.player, region, e.data.craft, CRAFT_RENOWN.rare, next.calendar.day),

@@ -56,6 +56,7 @@ import {
   experimentHours,
   lean,
   queueExperiment,
+  keepFound,
   thrown,
   type Throw,
 } from '../core/experiment.ts';
@@ -214,6 +215,8 @@ export function CraftsScreen() {
   useEffect(() => standUp, []);
   if (!game) return null;
   const c = game.player;
+  // A found recipe joins the lookup before anything reads it, a freshly loaded save's included.
+  keepFound(c);
   // The work at the bench: the batch or mend in the tool, else the next queued, else the one you
   // sat down to; a mend is the forge's.
   const head = c.crafts.front ?? c.crafts.bench[0] ?? null;
@@ -283,6 +286,8 @@ export function CraftsScreen() {
             disabled={!BUILT.includes(k)}
             title={BUILT.includes(k) ? undefined : 'Opens with its own phase.'}
             onClick={() => {
+              // Another page leaves the bench's scene: the hand stops with it (review 2026-10-21).
+              if (k !== page) standUp();
               setPage(k);
               setTossed([]);
               setWhy(null);
@@ -293,9 +298,12 @@ export function CraftsScreen() {
           </button>
         ))}
         <span className="crafts-hours">
-          {hours > 0
-            ? `${hours} craft hour${hours === 1 ? '' : 's'} a day`
-            : 'No craft hours on the wheel'}
+          {/* The bench waits on the road (core/life.ts), whatever the wheel says (review 2026-10-21). */}
+          {game.map?.course && hours > 0
+            ? 'Travelling: the bench waits for you to stop'
+            : hours > 0
+              ? `${hours} craft hour${hours === 1 ? '' : 's'} a day`
+              : 'No craft hours on the wheel'}
           {' · '}
           <button type="button" className="link-button" onClick={() => go('routine')}>
             set on Routine
@@ -766,6 +774,7 @@ function Bench({
                 <button
                   type="button"
                   className="button button-quiet"
+                  disabled={inTool && e.batches <= (front.batches ?? 1)}
                   onClick={() => onChange((p) => unqueue(p, i))}
                 >
                   {inTool ? 'Stop after this one' : 'Take off'}

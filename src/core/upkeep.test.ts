@@ -214,6 +214,27 @@ describe('the talisman volley', () => {
     expect(combatantIn(r.fight, 'me')!.items['ember-talisman']!.n).toBe(2);
   });
 
+  it('turns tempo’s extra action into a strike, never a second volley (review 2026-10-21)', () => {
+    const f = startFight([thrower(1), ...foes(3)]);
+    // A whole action banked: the turn's tempo acts again.
+    combatantIn(f, 'me')!.marks.tempo = 1;
+    const r = turn(f, [
+      {
+        actor: 'me',
+        main: {
+          type: 'volley',
+          id: 'five-pearl-talisman-chain',
+          item: 'ember-talisman',
+          target: 'f0',
+        },
+      },
+    ]);
+    expect(combatantIn(r.fight, 'me')!.items['ember-talisman']!.n).toBe(2);
+    expect(
+      r.outcomes.filter((o) => o.actor === 'me' && o.action !== 'volley').length,
+    ).toBeGreaterThan(0);
+  });
+
   it('is thrown only with the Talismans Dao held to its tier', () => {
     const f = startFight([thrower(0), ...foes(1)]);
     const r = turn(f, [

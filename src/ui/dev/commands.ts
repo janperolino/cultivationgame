@@ -37,7 +37,7 @@ import {
 import { slipId } from '../../content/catalogs/index.ts';
 import { CROPS, seedId } from '../../content/farming.ts';
 import { takePlot } from '../../core/farming.ts';
-import { farmHere } from '../../core/map/fields.ts';
+import { fieldsHere } from '../../core/map/fields.ts';
 import { veinsOf } from '../../core/map/veins.ts';
 import { jobsView, quitJob, takeJob } from '../../core/jobs.ts';
 import {
@@ -804,7 +804,7 @@ export const COMMANDS: Record<string, Command> = {
           c = addItem(addItem(c, 'spirit-soil', 2), variantId('earth-milk', 'purple'), 1);
           c = addItem(addItem(c, variantId('earth-milk', 'green'), 2), 'spring-rain-talisman', 2);
           c = addItem(c, 'pest-warding-talisman', 2);
-          const here = farmHere(s);
+          const here = fieldsHere(s);
           if (here) c = takePlot(c, here, 'bought', s.calendar.day).cultivator;
           return withPlayer(s, c);
         },

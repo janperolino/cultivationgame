@@ -62,6 +62,7 @@ import {
   finishExperiment,
   keepFound,
   loadExperiment,
+  throwSpent,
 } from './experiment.ts';
 import { tierHeld } from './trees.ts';
 
@@ -559,6 +560,15 @@ export function queueBatches(
  * front entry leaves its batch to finish.
  */
 export function unqueue(c: Cultivator, at: number): Cultivator {
+  const front = c.crafts.front;
+  const head = c.crafts.bench[0];
+  // The entry in the tool keeps the batches loaded, so the finish moves past it and nothing else
+  // (review 2026-10-21: taking it off made a finished throw drop the next entry).
+  if (at === 0 && front && head) {
+    const loaded = front.batches ?? 1;
+    if (head.batches <= loaded) return c;
+    return withCrafts(c, { bench: [{ ...head, batches: loaded }, ...c.crafts.bench.slice(1)] });
+  }
   const bench = c.crafts.bench.filter((_, i) => i !== at);
   return withCrafts(c, { bench });
 }
@@ -857,10 +867,12 @@ export function workBench(
   return { cultivator: next, events, batches };
 }
 
-/** Mends at the bench's head for pieces no longer needing it (sold, or mended in town) leave it. */
+/** Mends at the bench's head for pieces no longer needing it (sold, or mended in town), and throws with nothing left to find, leave it. */
 function dropStaleMends(c: Cultivator): Cultivator {
   let i = 0;
-  while (c.crafts.bench[i]?.mend && !needsMend(c, c.crafts.bench[i]!.mend!)) i++;
+  const stale = (e: CraftsState['bench'][number] | undefined) =>
+    !!e && ((!!e.mend && !needsMend(c, e.mend)) || (!!e.experiment && throwSpent(c, e.experiment)));
+  while (stale(c.crafts.bench[i])) i++;
   return i === 0 ? c : withCrafts(c, { bench: c.crafts.bench.slice(i) });
 }
 

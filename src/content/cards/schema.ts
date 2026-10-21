@@ -66,7 +66,7 @@ export interface Trigger {
     bench?: boolean;
     renown?: number;
     ungraded?: boolean;
-    /** Something of the craft made lately: what an order for your make asks for. */
+    /** Something of the craft made lately and room for a commission: an order for your make. */
     made?: boolean;
   };
 }

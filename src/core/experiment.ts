@@ -337,6 +337,16 @@ export function queueExperiment(
 
 type Entry = CraftsState['bench'][number];
 
+/**
+ * Whether a queued throw has nothing left to find: its aim was found since it was queued (an
+ * earlier throw of the set, a slip read), so the bench drops it before it takes a thing
+ * (review 2026-10-21).
+ */
+export function throwSpent(c: Cultivator, t: Throw): boolean {
+  const k = target(c, t).kind;
+  return k !== 'written' && k !== 'made';
+}
+
 /** Loads a throw: a whole tool, and every set of it from the Bag, worst first. */
 export function loadExperiment(c: Cultivator, entry: Entry): Cultivator | null {
   const t = entry.experiment!;

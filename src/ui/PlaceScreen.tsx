@@ -1391,7 +1391,7 @@ function ExamCounter({ game, power, act, say }: CounterProps) {
                     type="button"
                     className="place-btn"
                     onClick={() => {
-                      sitDown(pick, row.craft);
+                      sitDown(pick, row.craft, { bench: false });
                       setSat({ craft: row.craft, recipe: pick });
                     }}
                   >

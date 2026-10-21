@@ -43,6 +43,8 @@ export interface Desk {
   hand: number;
   /** The family whose path the sheet carries. */
   family: string;
+  /** The family the next sheet takes up, when the bench's front changed mid-sheet. */
+  then?: string;
   phase: DeskPhase;
   /** Session second the phase began. */
   phaseAt: number;
@@ -115,13 +117,14 @@ export function bandAt(ink: number): number {
   return BAND[0] + (BAND[1] - BAND[0]) * ink;
 }
 
-const fresh = (d: Desk): Desk => ({
+const fresh = ({ then, ...d }: Desk): Desk => ({
   ...d,
+  family: then ?? d.family,
   phase: 'lay',
   phaseAt: d.t,
   ink: 1,
   idx: 0,
-  on: new Array<boolean | null>(pathOf(d.family).length - 1).fill(null),
+  on: new Array<boolean | null>(pathOf(then ?? d.family).length - 1).fill(null),
   stroke: [],
 });
 
@@ -145,9 +148,12 @@ export function startDesk(s: GameState, family: string): Desk {
 
 /** The desk drawing another family's path from its next sheet on (the bench's front changed). */
 export function deskFamily(d: Desk, family: string): Desk {
-  if (d.family === family) return d;
-  const next = { ...d, family };
-  return d.phase === 'draw' ? next : fresh(next);
+  if (d.family === family && d.then === undefined) return d;
+  // Mid-sheet the brush keeps to the path it is on, and the next sheet takes the new one: a swap
+  // under the brush snapped the sheet (review 2026-10-21).
+  if (d.phase === 'draw')
+    return d.family === family ? { ...d, then: undefined } : { ...d, then: family };
+  return fresh({ ...d, family, then: undefined });
 }
 
 /** Ends the sheet: its quality the share of the path drawn on the line, 0 if it broke. */

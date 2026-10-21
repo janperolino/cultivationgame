@@ -129,8 +129,8 @@ export function postedAt(w: World, shopId: string, day: number): Offered | null 
   };
 }
 
-/** The recipe of a craft you have made most of late, or the first you know of it. */
-function yourMake(c: Cultivator, craft: CraftId): Recipe | null {
+/** The recipe of a craft you have made most of late, mends and throws aside, if any. */
+export function yourMake(c: Cultivator, craft: CraftId): Recipe | null {
   const count = new Map<string, number>();
   for (const b of c.crafts.recent) {
     const r = b.made ? recipeFor(b.made) : null;

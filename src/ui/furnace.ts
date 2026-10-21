@@ -15,6 +15,8 @@ interface FurnaceStore {
   recipe: string | null;
   /** The craft you sat down at: the furnace or the forge. */
   craft: CraftId | null;
+  /** Whether the sitting feeds your own bench: the guild's exam keeps its hand to itself. */
+  bench: boolean;
 }
 
 export const useFurnace = create<FurnaceStore>()(() => ({
@@ -22,16 +24,21 @@ export const useFurnace = create<FurnaceStore>()(() => ({
   hand: 0,
   recipe: null,
   craft: null,
+  bench: false,
 }));
 
 /** Sits down at the furnace or the forge for the work at its front: the hand starts from nothing. */
-export function sitDown(recipe: string, craft: CraftId = 'alchemy'): void {
-  useFurnace.setState({ sitting: true, hand: 0, recipe, craft });
+export function sitDown(
+  recipe: string,
+  craft: CraftId = 'alchemy',
+  o: { bench?: boolean } = {},
+): void {
+  useFurnace.setState({ sitting: true, hand: 0, recipe, craft, bench: o.bench ?? true });
 }
 
 /** Stands up: no hand from here on. */
 export function standUp(): void {
-  useFurnace.setState({ sitting: false, hand: 0, recipe: null, craft: null });
+  useFurnace.setState({ sitting: false, hand: 0, recipe: null, craft: null, bench: false });
 }
 
 /** The minigame sets the hand as it plays. */
@@ -39,8 +46,11 @@ export function setHand(hand: number): void {
   useFurnace.setState({ hand: Math.max(0, Math.min(1, hand)) });
 }
 
-/** The hand the day step reads now: the store's while you sit and attend, else none. */
+/**
+ * The hand the day step reads now: the store's while you sit at your bench and attend, else none.
+ * An exam's sitting is the examiners', never your bench's (review 2026-10-21).
+ */
 export function handNow(attended: boolean): number | undefined {
-  const { sitting, hand } = useFurnace.getState();
-  return sitting && attended ? hand : undefined;
+  const { sitting, hand, bench } = useFurnace.getState();
+  return sitting && bench && attended ? hand : undefined;
 }
