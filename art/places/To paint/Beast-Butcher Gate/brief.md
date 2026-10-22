@@ -6,22 +6,32 @@ A sect behind its gate and array, shown in the hall layout (A6). 3 ChatGPT runs:
 - `place-tushou-men-doors-1.png`
 - `place-tushou-men-doors-2.png`
 
+**Attach this to every run**, the place as it is painted on the world map: `C:\Users\janpe\CMPTProjects\cultivationGame2\art\map\qm-bianhuang\places\Done\Beast-Butcher Gate\painted.png`
+
+Run them in one chat, the banner first, so the door sheets keep its look.
+
 ## 1. The banner: `place-tushou-men-banner.png`
 
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Beast-Butcher Gate (Tushou Men 屠兽门), a sect behind its gate and array, as a traveller arriving sees it from a height nearby.
 
-What it looks like: Three peaks above the karst with their tops sheared flat, the halls on them lit red by the core furnaces, under a blood-red sect array.
+Attached is Beast-Butcher Gate as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
+
+Make it unmistakably Beast-Butcher Gate, unlike any other city, town or sect in the game. What sets it apart: Three peaks above the karst with their tops sheared flat, the halls on them lit red by the core furnaces, under a blood-red sect array. Within it: the drill yard, where rank is counted in cores; the core vault; racks of frontier sabers.
+
+The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
+
+The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
 Paint the place only: no people close up, no cultivator, no creatures unless named here.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 About the place, for its look and mood (none of this is written on the image):
 
-- Beast-Butcher Gate, Tushou Men 屠兽门, in the Border Wilds, a orthodox-way sect.
+- Beast-Butcher Gate, Tushou Men 屠兽门, in the Border Wilds, an orthodox-way sect.
 
 - A frontier sect of three thousand saber cultivators who raid across the strait for beast cores, on three peaks its founder sheared flat with one cut. Brutal, rich and the beasts' favorite target.
 
@@ -39,7 +49,7 @@ About the place, for its look and mood (none of this is written on the image):
 If ChatGPT drifts off the grid, ask in the same chat: "Same image, but on an exact even 3x3 grid, edge to edge, no text."
 
 ```text
-Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Beast-Butcher Gate (屠兽门), a sect behind its gate and array: the same place, the same light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 1 of 2.
+Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Beast-Butcher Gate (屠兽门), a sect behind its gate and array, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 1 of 2.
 
 Cells, left to right, top to bottom:
 
@@ -55,7 +65,15 @@ Cells, left to right, top to bottom:
 
 People only small, in the middle distance, faceless; the place is the subject.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+Attached is Beast-Butcher Gate as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
+
+Make it unmistakably Beast-Butcher Gate, unlike any other city, town or sect in the game. What sets it apart: Three peaks above the karst with their tops sheared flat, the halls on them lit red by the core furnaces, under a blood-red sect array. Within it: the drill yard, where rank is counted in cores; the core vault; racks of frontier sabers.
+
+The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
+
+The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 The place, for mood: A frontier sect of three thousand saber cultivators who raid across the strait for beast cores, on three peaks its founder sheared flat with one cut. Brutal, rich and the beasts' favorite target.
 ```
@@ -65,7 +83,7 @@ The place, for mood: A frontier sect of three thousand saber cultivators who rai
 If ChatGPT drifts off the grid, ask in the same chat: "Same image, but on an exact even 3x3 grid, edge to edge, no text."
 
 ```text
-Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Beast-Butcher Gate (屠兽门), a sect behind its gate and array: the same place, the same light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 2 of 2.
+Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Beast-Butcher Gate (屠兽门), a sect behind its gate and array, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 2 of 2.
 
 Cells, left to right, top to bottom:
 
@@ -81,7 +99,15 @@ Cells, left to right, top to bottom:
 
 People only small, in the middle distance, faceless; the place is the subject.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+Attached is Beast-Butcher Gate as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
+
+Make it unmistakably Beast-Butcher Gate, unlike any other city, town or sect in the game. What sets it apart: Three peaks above the karst with their tops sheared flat, the halls on them lit red by the core furnaces, under a blood-red sect array. Within it: the drill yard, where rank is counted in cores; the core vault; racks of frontier sabers.
+
+The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
+
+The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 The place, for mood: A frontier sect of three thousand saber cultivators who raid across the strait for beast cores, on three peaks its founder sheared flat with one cut. Brutal, rich and the beasts' favorite target.
 ```

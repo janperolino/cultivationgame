@@ -5,18 +5,24 @@ A village, the seat of a farming county, shown in the village layout (A6). 2 Cha
 - `place-hatchling-barns-banner.png`
 - `place-hatchling-barns-doors-1.png`
 
+Run them in one chat, the banner first, so the door sheets keep its look.
+
 ## 1. The banner: `place-hatchling-barns-banner.png`
 
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Hatchling Barns (Chupeng Cun 雏棚村), a village, the seat of a farming county, as a traveller arriving sees it from a height nearby.
 
-What it looks like: Long barns sunk into a valley under a warmth array that keeps the frost off them, a faint amber haze.
+Make it unmistakably Hatchling Barns, unlike any other city, town or sect in the game. What sets it apart: Long barns sunk into a valley under a warmth array that keeps the frost off them, a faint amber haze. Within it: the hatchling barns.
+
+The land: open grass plains to the horizon, wide sky, herds and wind.
+
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows the whole painting behind a few cards: keep the top-left third calmer and darker (the name and lore sit there) and the bottom quarter calm near ground (a row of door cards sits there); put the place itself in the centre and right.
 
 Paint the place only: no people close up, no cultivator, no creatures unless named here.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 About the place, for its look and mood (none of this is written on the image):
 
@@ -36,7 +42,7 @@ About the place, for its look and mood (none of this is written on the image):
 If ChatGPT drifts off the grid, ask in the same chat: "Same image, but on an exact even 3x3 grid, edge to edge, no text."
 
 ```text
-Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Hatchling Barns (雏棚村), a village, the seat of a farming county: the same place, the same light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third).
+Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Hatchling Barns (雏棚村), a village, the seat of a farming county, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third).
 
 Cells, left to right, top to bottom:
 
@@ -52,7 +58,13 @@ Cells, left to right, top to bottom:
 
 People only small, in the middle distance, faceless; the place is the subject.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+Make it unmistakably Hatchling Barns, unlike any other city, town or sect in the game. What sets it apart: Long barns sunk into a valley under a warmth array that keeps the frost off them, a faint amber haze. Within it: the hatchling barns.
+
+The land: open grass plains to the horizon, wide sky, herds and wind.
+
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 The place, for mood: The Night Bridge’s crates come in after dark, and nobody asks what hatches.
 ```

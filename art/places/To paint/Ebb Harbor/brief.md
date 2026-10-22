@@ -6,18 +6,24 @@ A city, shown in the grid layout (A6). 3 ChatGPT runs: the banner, then 2 door s
 - `place-tuichao-gang-doors-1.png`
 - `place-tuichao-gang-doors-2.png`
 
+Run them in one chat, the banner first, so the door sheets keep its look.
+
 ## 1. The banner: `place-tuichao-gang-banner.png`
 
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Ebb Harbor (Tuichao Gang 退潮港), a city, as a traveller arriving sees it from a height nearby.
 
-What it looks like: A crescent of breakwater lit along its length by an old binding array, a harbor that drains to bright mud at low tide, and the chain's first reef running out from it into the strait.
+Make it unmistakably Ebb Harbor, unlike any other city, town or sect in the game. What sets it apart: A crescent of breakwater lit along its length by an old binding array, a harbor that drains to bright mud at low tide, and the chain's first reef running out from it into the strait. Within it: the bound-reef breakwaters; the harbor floor at low tide; the east quay warehouses.
+
+The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
+
+The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
 Paint the place only: no people close up, no cultivator, no creatures unless named here.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 About the place, for its look and mood (none of this is written on the image):
 
@@ -39,7 +45,7 @@ About the place, for its look and mood (none of this is written on the image):
 If ChatGPT drifts off the grid, ask in the same chat: "Same image, but on an exact even 3x3 grid, edge to edge, no text."
 
 ```text
-Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Ebb Harbor (退潮港), a city: the same place, the same light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 1 of 2.
+Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Ebb Harbor (退潮港), a city, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 1 of 2.
 
 Cells, left to right, top to bottom:
 
@@ -55,7 +61,13 @@ Cells, left to right, top to bottom:
 
 People only small, in the middle distance, faceless; the place is the subject.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+Make it unmistakably Ebb Harbor, unlike any other city, town or sect in the game. What sets it apart: A crescent of breakwater lit along its length by an old binding array, a harbor that drains to bright mud at low tide, and the chain's first reef running out from it into the strait. Within it: the bound-reef breakwaters; the harbor floor at low tide; the east quay warehouses.
+
+The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
+
+The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 The place, for mood: A strait port of a million on the Tidewrack Shore, where the island chain's first reef runs out at low tide. Honest cargo goes out on the tide; the rest goes out on the Night Bridge.
 ```
@@ -65,7 +77,7 @@ The place, for mood: A strait port of a million on the Tidewrack Shore, where th
 If ChatGPT drifts off the grid, ask in the same chat: "Same image, but on an exact even 3x3 grid, edge to edge, no text."
 
 ```text
-Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Ebb Harbor (退潮港), a city: the same place, the same light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 2 of 2.
+Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Ebb Harbor (退潮港), a city, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 2 of 2.
 
 Cells, left to right, top to bottom:
 
@@ -81,7 +93,13 @@ Cells, left to right, top to bottom:
 
 People only small, in the middle distance, faceless; the place is the subject.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+Make it unmistakably Ebb Harbor, unlike any other city, town or sect in the game. What sets it apart: A crescent of breakwater lit along its length by an old binding array, a harbor that drains to bright mud at low tide, and the chain's first reef running out from it into the strait. Within it: the bound-reef breakwaters; the harbor floor at low tide; the east quay warehouses.
+
+The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
+
+The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 The place, for mood: A strait port of a million on the Tidewrack Shore, where the island chain's first reef runs out at low tide. Honest cargo goes out on the tide; the rest goes out on the Night Bridge.
 ```

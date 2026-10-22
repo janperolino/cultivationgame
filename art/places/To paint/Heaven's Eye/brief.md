@@ -6,18 +6,28 @@ A city, shown in the grid layout (A6). 3 ChatGPT runs: the banner, then 2 door s
 - `place-tianyan-doors-1.png`
 - `place-tianyan-doors-2.png`
 
+**Attach this to every run**, the place as it is painted on the world map: `C:\Users\janpe\CMPTProjects\cultivationGame2\art\map\qm-bianhuang\places\Done\Heaven's Eye\painted.png`
+
+Run them in one chat, the banner first, so the door sheets keep its look.
+
 ## 1. The banner: `place-tianyan-banner.png`
 
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Heaven's Eye (Tianyan 天眼), a city, as a traveller arriving sees it from a height nearby.
 
-What it looks like: A round sinkhole sixty li across, dark as an eye from above, terraced to the bottom, with cloud pooling in it at dawn and a faint lamp-glow along the council's cliff stairs.
+Attached is Heaven's Eye as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
+
+Make it unmistakably Heaven's Eye, unlike any other city, town or sect in the game. What sets it apart: A round sinkhole sixty li across, dark as an eye from above, terraced to the bottom, with cloud pooling in it at dawn and a faint lamp-glow along the council's cliff stairs. Within it: the terraces down the sinkhole wall; the council hall in the cliff; the fields at the bottom that never see noon.
+
+The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
+
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
 Paint the place only: no people close up, no cultivator, no creatures unless named here.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 About the place, for its look and mood (none of this is written on the image):
 
@@ -39,7 +49,7 @@ About the place, for its look and mood (none of this is written on the image):
 If ChatGPT drifts off the grid, ask in the same chat: "Same image, but on an exact even 3x3 grid, edge to edge, no text."
 
 ```text
-Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Heaven's Eye (天眼), a city: the same place, the same light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 1 of 2.
+Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Heaven's Eye (天眼), a city, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 1 of 2.
 
 Cells, left to right, top to bottom:
 
@@ -55,7 +65,15 @@ Cells, left to right, top to bottom:
 
 People only small, in the middle distance, faceless; the place is the subject.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+Attached is Heaven's Eye as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
+
+Make it unmistakably Heaven's Eye, unlike any other city, town or sect in the game. What sets it apart: A round sinkhole sixty li across, dark as an eye from above, terraced to the bottom, with cloud pooling in it at dawn and a faint lamp-glow along the council's cliff stairs. Within it: the terraces down the sinkhole wall; the council hall in the cliff; the fields at the bottom that never see noon.
+
+The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
+
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 The place, for mood: The greatest sinkhole in Stone Eyes, sixty li across and five million people terraced down its walls, where the council of cave clans meets in a hall cut into the cliff halfway down.
 ```
@@ -65,7 +83,7 @@ The place, for mood: The greatest sinkhole in Stone Eyes, sixty li across and fi
 If ChatGPT drifts off the grid, ask in the same chat: "Same image, but on an exact even 3x3 grid, edge to edge, no text."
 
 ```text
-Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Heaven's Eye (天眼), a city: the same place, the same light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 2 of 2.
+Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Heaven's Eye (天眼), a city, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 2 of 2.
 
 Cells, left to right, top to bottom:
 
@@ -81,7 +99,15 @@ Cells, left to right, top to bottom:
 
 People only small, in the middle distance, faceless; the place is the subject.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+Attached is Heaven's Eye as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
+
+Make it unmistakably Heaven's Eye, unlike any other city, town or sect in the game. What sets it apart: A round sinkhole sixty li across, dark as an eye from above, terraced to the bottom, with cloud pooling in it at dawn and a faint lamp-glow along the council's cliff stairs. Within it: the terraces down the sinkhole wall; the council hall in the cliff; the fields at the bottom that never see noon.
+
+The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
+
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 The place, for mood: The greatest sinkhole in Stone Eyes, sixty li across and five million people terraced down its walls, where the council of cave clans meets in a hall cut into the cliff halfway down.
 ```

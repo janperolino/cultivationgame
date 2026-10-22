@@ -7,7 +7,9 @@
 //   npx tsx tools/place-brief.ts [region-id]      (the Border Wilds by default)
 // Run it again after a place's data or doors change: briefs in To paint/ and the manifest's
 // entries are rewritten; a place in Done/ is left alone.
+import { execSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import type { Population } from '../src/content/atlas/schema.ts';
 import { REGIONS } from '../src/content/map/index.ts';
 import { PLACE_KIND_INFO } from '../src/content/map/places.ts';
@@ -75,9 +77,50 @@ const people = (p: Population) =>
     .filter(Boolean)
     .join(', ');
 
-/** The style every place's prompt carries word for word, so a place's sheets agree. */
+/**
+ * The style every place's prompt carries word for word. It names no buildings and no palette:
+ * a stock list of walls, domes and spirit-fire made the City and Pacified Fort come out alike
+ * (Jan, after the first two), so each place's look comes from its own data, terrain and light.
+ */
 const STYLE =
-  'STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.';
+  'STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.';
+
+/** The land a place stands in, as the painting should feel it. */
+const TERRAIN_LOOK: Record<string, string> = {
+  coast: 'a sea coast: surf, reefs, sea cliffs, harbour water and salt haze',
+  hills:
+    'folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines',
+  karst:
+    'karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves',
+  marsh: 'black fen water, reeds, mist lying flat on the water, stilts and causeways',
+  plains: 'open grass plains to the horizon, wide sky, herds and wind',
+  steppe: 'high dry steppe, wind-bent grass, a huge sky',
+  forest: 'old forest, giant trees, roots and moss, light falling in shafts',
+  mountains: 'high mountains, snowfields and sheer faces, cloud below the peaks',
+  canyon: 'a deep red canyon, sheer walls and a river far below',
+};
+
+/** Each place's own light, picked by its id, so neighbours are not painted under one sky. */
+const LIGHTS = [
+  'a grey dawn, mist low in the valleys and the first sun on the high stone',
+  'a moonlit night, silver light on stone and water, lamps warm against it',
+  'late golden afternoon under heavy cloud, long shadows',
+  'a storm rolling in, rain curtains and lightning far off',
+  'a red sunset smouldering through smoke',
+  'a snowy night, the roofs white, lamps warm in the cold',
+  'heavy rain at dusk, every street and roof a mirror',
+  'a bright overcast morning, soft light, colours clear',
+];
+const lightOf = (id: string) =>
+  LIGHTS[[...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % LIGHTS.length]!;
+
+/** The main checkout, where the map's painted places live (art/map is shared by every worktree). */
+const MAIN = dirname(resolve(execSync('git rev-parse --git-common-dir').toString().trim()));
+/** A place's own painting on the world map (A5.3), the reference every run attaches. */
+function refOf(name: string): string | undefined {
+  const f = join(MAIN, 'art', 'map', region, 'places', 'Done', folderName(name), 'painted.png');
+  return existsSync(f) ? f : undefined;
+}
 
 /** What the place is, in a line, for the prompt. */
 function kindWords(p: MapPlace): string {
@@ -108,6 +151,23 @@ interface Brief {
   doors: Door[];
   about: string[];
   fromAbove: string;
+  terrain: string;
+  features: string[];
+  ref?: string;
+}
+
+/** What makes a place itself: its reference, its land, its light and what sets it apart. */
+function look(b: Brief): string[] {
+  return [
+    ...(b.ref
+      ? [
+          `Attached is ${b.name} as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.`,
+        ]
+      : []),
+    `Make it unmistakably ${b.name}, unlike any other city, town or sect in the game. What sets it apart: ${b.fromAbove}${b.features.length ? ` Within it: ${b.features.join('; ')}.` : ''}`,
+    `The land: ${TERRAIN_LOOK[b.terrain] ?? b.terrain}.`,
+    `The light: ${lightOf(b.id)}. Keep the whole on the dark side, so gold and ivory text reads over it.`,
+  ];
 }
 
 const slug = (id: string) => id.replace(/^qm-/, '').replace(/[^a-z0-9-]/g, '-');
@@ -115,7 +175,7 @@ const slug = (id: string) => id.replace(/^qm-/, '').replace(/[^a-z0-9-]/g, '-');
 function bannerPrompt(b: Brief): string {
   return [
     `Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of ${b.name} (${b.pinyin} ${b.hanzi}), ${b.what}, as a traveller arriving sees it from a height nearby.`,
-    `What it looks like: ${b.fromAbove}`,
+    ...look(b),
     bannerRoom(b.layout),
     'Paint the place only: no people close up, no cultivator, no creatures unless named here.',
     STYLE,
@@ -131,10 +191,11 @@ function sheetPrompt(b: Brief, doors: Door[], i: number, of: number): string {
   });
   for (let k = doors.length; k < 9; k++) cells.push(`${k + 1}. Empty: plain dark mist.`);
   return [
-    `Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside ${b.name} (${b.hanzi}), ${b.what}: the same place, the same light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third).${of > 1 ? ` This is sheet ${i} of ${of}.` : ''}`,
+    `Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside ${b.name} (${b.hanzi}), ${b.what}, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third).${of > 1 ? ` This is sheet ${i} of ${of}.` : ''}`,
     'Cells, left to right, top to bottom:',
     cells.join('\n'),
     'People only small, in the middle distance, faceless; the place is the subject.',
+    ...look(b),
     STYLE,
     `The place, for mood: ${b.about[1] ?? b.about[0]}`,
   ].join('\n\n');
@@ -151,6 +212,14 @@ function markdown(b: Brief, sheets: Door[][]): string {
     `${b.what[0]!.toUpperCase()}${b.what.slice(1)}, shown in the ${b.layout} layout (A6). ${1 + sheets.length} ChatGPT runs: the banner, then ${sheets.length === 1 ? 'one door sheet' : `${sheets.length} door sheets`} of nine. Save each result into \`art/inbox/\` under its name below, run \`npm run art\`, and move this folder to \`Done/\` once all are in.`,
     '',
     ...files.map((f) => `- \`${f}\``),
+    '',
+    ...(b.ref
+      ? [
+          `**Attach this to every run**, the place as it is painted on the world map: \`${b.ref}\``,
+          '',
+        ]
+      : []),
+    'Run them in one chat, the banner first, so the door sheets keep its look.',
     '',
     `## 1. The banner: \`${files[0]}\``,
     '',
@@ -226,7 +295,7 @@ function hallDoors(p: MapPlace, power: string, onlyPower: boolean): Door[] {
 function about(e: Entry | undefined, regionName: string): string[] {
   if (!e) return [];
   return [
-    `${e.name}${e.pinyin ? `, ${e.pinyin}` : ''}${e.hanzi ? ` ${e.hanzi}` : ''}, in ${regionName.replace(/^The /, 'the ')}${e.way ? `, a ${e.way}-way ${e.type ?? 'power'}` : ''}.`,
+    `${e.name}${e.pinyin ? `, ${e.pinyin}` : ''}${e.hanzi ? ` ${e.hanzi}` : ''}, in ${regionName.replace(/^The /, 'the ')}${e.way ? `, ${/^[aeiou]/.test(e.way) ? 'an' : 'a'} ${e.way}-way ${e.type ?? 'power'}` : ''}.`,
     e.summary ? plain(e.summary) : e.lore ? plain(e.lore) : '',
     e.summary && e.lore ? plain(e.lore) : '',
     e.size ? `It is about ${n(e.size)} li (${n(Math.round(e.size / 2))} km) across.` : '',
@@ -306,6 +375,9 @@ for (const p of map.places) {
       doors: list,
       about: about(e, map.name),
       fromAbove: e?.fromAbove ?? p.lore,
+      terrain: p.terrain,
+      features: p.features.map((f) => f.name),
+      ref: refOf(p.name),
     },
     sheets,
     near: p.id === data.content.defaultHome ? -1 : nearStart(p),
