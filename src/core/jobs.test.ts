@@ -10,7 +10,7 @@ import { DUTY_PAY, job } from '../content/jobs.ts';
 import { EDGE_LI, GATHER, RING_LI } from '../content/map/travel.ts';
 import { realmScale } from '../content/realms.ts';
 import { createLife, type Creation } from './creation.ts';
-import { atHome, atPost, jobAsks, jobPay, jobsDay, quitJob, takeJob } from './jobs.ts';
+import { atHome, atPost, dutyAhead, jobAsks, jobPay, jobsDay, quitJob, takeJob } from './jobs.ts';
 import { cultivate, ratesHere } from './life.ts';
 import { comingBackStory } from './comingBack.ts';
 import { claimPosting, isMissionHall, postingsAt, takePosting } from './map/board.ts';
@@ -61,6 +61,14 @@ const creation = (
   },
 });
 
+/** A conscript's child gone along, with the Wall's patrol taken at its door (the chain's step). */
+const cadet = (): GameState => {
+  const s = createLife(creation('conscript'));
+  const r = takeJob(s, 'wall-patrol');
+  if (!r.ok) throw new Error(r.reason);
+  return r.state;
+};
+
 /** Out of the tutorial layers, where posts are worked: Qi Condensation 4. */
 const posted = (s: GameState): GameState =>
   withPlayer(s, { ...s.player, qi: { ...s.player.qi, stage: 4 } });
@@ -90,7 +98,7 @@ const member = (s: GameState, power: string) => {
 
 describe('the cadet’s patrols', () => {
   it('stand on the wheel as Duty, locked, and keep Wall Drill’s discipline', () => {
-    const s = posted(createLife(creation('conscript')));
+    const s = posted(cadet());
     expect(s.player.jobs.map((h) => h.id)).toEqual(['wall-patrol']);
     expect(membership(s.world, YOU, MARCH)?.seat).toBe('outer');
     const wheel = effectiveWheel(s.player);
@@ -118,7 +126,7 @@ describe('the cadet’s patrols', () => {
   });
 
   it('shows the day as the loop plays it: away from the Wall, the shift is your own hours again', () => {
-    const s = ensureMap(posted(createLife(creation('conscript'))));
+    const s = ensureMap(posted(cadet()));
     expect(ratesHere(s).count.duty).toBe(job('wall-patrol').shift.length);
     // Walked far off, no post is kept, and the screens read the hours beneath as the loop does.
     const away = {
@@ -137,7 +145,7 @@ describe('the cadet’s patrols', () => {
   });
 
   it('pay a duty day at the Wall: half in military merit, half in stones, on the realm curve', () => {
-    const s = posted(createLife(creation('conscript')));
+    const s = posted(cadet());
     const pay = jobPay(job('wall-patrol'), 'qi-condensation');
     expect(pay).toEqual({ points: DUTY_PAY / 2, stones: DUTY_PAY / 2 });
     expect(jobPay(job('wall-patrol'), 'foundation-establishment').points).toBe(
@@ -157,7 +165,7 @@ describe('the cadet’s patrols', () => {
 
 describe('drill', () => {
   it('holds the post through the tutorial layers without working it', () => {
-    const s = createLife(creation('conscript'));
+    const s = cadet();
     expect(s.player.jobs.map((h) => h.id)).toEqual(['wall-patrol']);
     expect(effectiveWheel(s.player)).not.toContain('duty');
     const after = days(s, 3);
@@ -256,7 +264,7 @@ describe('a missed shift', () => {
   });
 
   it('is excused while a house’s leave lasts, and costs standing past it', () => {
-    const s = posted(createLife(creation('conscript')));
+    const s = posted(cadet());
     const away = { ...ensureMap(s), map: { ...ensureMap(s).map!, inside: CITY } };
     expect(rows(days(away, 3), MARCH, 'missed-shift')).toBe(0);
     const year = Math.floor(away.calendar.day / 360);
@@ -277,7 +285,7 @@ describe('home for a house member', () => {
   const leaveTaken = (s: GameState) => membership(s.world, YOU, MARCH)?.leave?.days ?? 0;
 
   it('is their own post: the cadet on the Wall spends no leave', () => {
-    const s = posted(createLife(creation('conscript')));
+    const s = posted(cadet());
     const wall = days(ensureMap(s), 20);
     expect(wall.player.jobs[0]!.missed).toBe(0);
     expect(leaveTaken(wall)).toBe(0);
@@ -285,7 +293,7 @@ describe('home for a house member', () => {
   });
 
   it('is any town of a dynasty’s kingdom, and leave runs only outside it', () => {
-    const s = ensureMap(posted(createLife(creation('conscript'))));
+    const s = ensureMap(posted(cadet()));
     const fort = mapPlaceOf(mapOf(s)!, MARCH)!;
     const atFort = {
       ...s,
@@ -344,7 +352,7 @@ describe('a harsh power’s lower seats', () => {
 
 describe('a coming-back story', () => {
   it('tells missed shifts once a month with their count, and folds a power’s repeated lines', () => {
-    const s = posted(createLife(creation('conscript')));
+    const s = posted(cadet());
     const away = { ...ensureMap(s), map: { ...ensureMap(s).map!, inside: CITY } };
     const year = Math.floor(away.calendar.day / 360);
     const spent = {
@@ -379,8 +387,8 @@ describe('leaving a job', () => {
     expect(dropped.state.player.jobs).toEqual([]);
     expect(membership(dropped.state.world, YOU, GATE)).toBeDefined();
 
-    const cadet = posted(createLife(creation('conscript')));
-    const deserted = quitJob(cadet, 'wall-patrol');
+    const soldier = posted(cadet());
+    const deserted = quitJob(soldier, 'wall-patrol');
     if (!deserted.ok) throw new Error(deserted.reason);
     expect(membership(deserted.state.world, YOU, MARCH)).toBeUndefined();
     expect(rows(deserted.state, MARCH, 'betrayed-us')).toBe(1);
@@ -389,7 +397,7 @@ describe('leaving a job', () => {
 
 describe('a post kept', () => {
   it('counts as the quota kept, and is remembered by its power', () => {
-    let s = posted(createLife(creation('conscript')));
+    let s = posted(cadet());
     s = { ...s, world: addBalance(s.world, YOU, MARCH, -balance(s, MARCH)) };
     s = days(s, DAYS_PER_MONTH + 1);
     const held = s.player.jobs[0]!;
@@ -412,7 +420,7 @@ describe('a post kept', () => {
   });
 
   it('never owes below nothing, so a save taken mid-shift loads', () => {
-    const s = posted(createLife(creation('conscript')));
+    const s = posted(cadet());
     const day = Math.floor(s.calendar.day);
     // Owed just under a whole stone and point: a sliver of shift tips it to one, and the float
     // dust left must not dip below zero, which the save refuses.
@@ -429,7 +437,7 @@ describe('a post kept', () => {
   });
 
   it('keeps no shift in a stretch walked in on the road, though it ends at the post', () => {
-    const s = posted(createLife(creation('conscript')));
+    const s = posted(cadet());
     const from = Math.floor(s.calendar.day) + 7 / 12;
     const to = from + 0.05;
     const at = { ...s, calendar: { ...s.calendar, day: to } };
@@ -439,7 +447,7 @@ describe('a post kept', () => {
   });
 
   it('pays nothing and misses nothing in a stretch with no shift hours in it', () => {
-    const s = posted(createLife(creation('conscript')));
+    const s = posted(cadet());
     const day = Math.floor(s.calendar.day);
     const night = jobsDay({ ...s, calendar: { ...s.calendar, day: day + 0.1 } }, day, day + 0.1);
     expect(night.player.jobs[0]!.kept).toBe(0);
@@ -539,8 +547,22 @@ describe('the save', () => {
     delete raw.state.player.jobs;
     delete raw.state.map.gathered;
     const back = loadSave(raw);
-    expect(back.version).toBe(53);
+    expect(back.version).toBe(54);
     expect(back.state.player.jobs).toEqual([]);
     expect(back.state.map!.gathered).toBe(0);
+  });
+});
+
+describe('leaving with Duty still to come (Jan’s playtest after S1)', () => {
+  it('names the post whose shift is ahead today where you stand, and nothing once it is past or you are off', () => {
+    const at = inside(posted(cadet()), 'qm-duigu-qiang');
+    const day = Math.floor(at.calendar.day);
+    const morning = { ...at, calendar: { ...at.calendar, day: day + 0.01 } };
+    expect(dutyAhead(morning)?.id).toBe('wall-patrol');
+    // The shift is hours 6 to 9: by the last hour of the day it is behind you.
+    const late = { ...at, calendar: { ...at.calendar, day: day + 11.5 / 12 } };
+    expect(dutyAhead(late)).toBeNull();
+    // Away from the Wall, no post's hours wait on you here.
+    expect(dutyAhead(inside(morning, CITY))).toBeNull();
   });
 });

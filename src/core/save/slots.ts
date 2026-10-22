@@ -58,6 +58,23 @@ function tryLoad(raw: unknown): { save?: Save; error?: string } {
   }
 }
 
+/** A slot's line for the list, read from its save: who, how far, how old (`ageYears`), when. */
+function summarize(slot: SlotId, save: Save, rec: SlotRecord): SlotSummary {
+  const s = save.state;
+  return {
+    slot,
+    empty: false,
+    name: s.player.name,
+    qiRealm: realmOf(s.player),
+    qiStage: stageOf(s.player),
+    age: ageYears(s.player, s.calendar.day),
+    mode: s.mode,
+    savedAt: save.savedAt,
+    lastExportAt: rec.lastExportAt,
+    canRewind: s.mode === 'gentle' && s.rewindCharges > 0 && rec.rewind !== undefined,
+  };
+}
+
 export class SaveSlots {
   private readonly db: SaveDb;
   /**
@@ -198,20 +215,16 @@ export class SaveSlots {
         return { slot, empty: true };
       const save = tryLoad(rec.current).save ?? tryLoad(rec.backup).save;
       if (!save) return { slot, empty: false, broken: true, lastExportAt: rec.lastExportAt };
-      const s = save.state;
-      return {
-        slot,
-        empty: false,
-        name: s.player.name,
-        qiRealm: realmOf(s.player),
-        qiStage: stageOf(s.player),
-        age: ageYears(s.player, s.calendar.day),
-        mode: s.mode,
-        savedAt: save.savedAt,
-        lastExportAt: rec.lastExportAt,
-        canRewind: s.mode === 'gentle' && s.rewindCharges > 0 && rec.rewind !== undefined,
-      };
+      return summarize(slot, save, rec);
     });
+  }
+
+  /**
+   * The slot's summary as of the save just written, without reading it back: the slot list follows
+   * every save, so its age and realm never lag the life's (Jan's playtest after S1).
+   */
+  summaryOf(slot: SlotId, save: Save): SlotSummary {
+    return summarize(slot, save, this.known.get(slot) ?? { slot });
   }
 
   /** The slot as one compressed file, recording the export date. */

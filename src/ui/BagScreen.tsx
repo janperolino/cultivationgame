@@ -38,6 +38,7 @@ import { stats } from '../core/stats.ts';
 import { pillDose, toxicityDecay } from '../core/toxicity.ts';
 import { formatEffect, formatNumber } from './format.ts';
 import { itemTag, toxicityWords, useLines } from './itemWords.ts';
+import { itemTipProps } from './itemTip.ts';
 import { useNav } from './nav.ts';
 import { useGame } from './store.ts';
 import { Why } from './widgets.tsx';
@@ -89,6 +90,7 @@ function ItemSquare({
       onClick={onPick}
       aria-pressed={selected}
       aria-label={`${it.name}${n && n > 1 ? `, ${n}` : ''}`}
+      {...itemTipProps(it.id)}
     >
       <span className="bag-glyph hanzi">{itemGlyph(it)}</span>
       <span className="bag-name">{it.name}</span>

@@ -222,15 +222,23 @@ export function hourTint(hour: number): { kind: OrbKindId; tint: QiTint } {
 
 const ease = (p: number) => 1 - (1 - p) ** 3;
 
-/** An orb's place in figure units at session time `t`: in from the edge, then floating on its ring. */
+/** How far an orb sways side to side on its way in, at the middle of its drift, in figure units. */
+const DRIFT_SWAY = 11;
+
+/**
+ * An orb's place in figure units at session time `t`: in from the edge, swaying side to side as it
+ * comes (most at the middle of its drift, none as it sets off or arrives, so it joins its float
+ * smoothly; Jan's playtest after S1), then floating on its ring.
+ */
 export function orbPosition(o: Orb, t: number): [number, number] {
   const ex = Math.cos(o.angle) * ORB_EDGE[0];
   const ey = Math.sin(o.angle) * ORB_EDGE[1] - 6;
   const p = Math.min(1, Math.max(0, (t - o.born) / (o.arrives - o.born)));
   const k = 1 - (1 - ORB_RING) * ease(p);
+  const sway = DRIFT_SWAY * Math.sin(Math.PI * p) * Math.sin((t - o.born) * 2.6 + o.wobble);
   const float = Math.max(0, t - o.arrives);
-  const fx = Math.sin(float * 0.9 + o.wobble) * 5;
-  const fy = Math.cos(float * 0.7 + o.wobble * 1.3) * 4;
+  const fx = Math.sin(float * 1.1 + o.wobble) * 7 - Math.sin(o.angle) * sway;
+  const fy = Math.cos(float * 0.85 + o.wobble * 1.3) * 6 + Math.cos(o.angle) * sway;
   return [ex * k + fx, ey * k + fy];
 }
 

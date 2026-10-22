@@ -37,7 +37,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 53;
+export const SAVE_VERSION = 54;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1137,7 +1137,43 @@ const migrations: Record<number, (old: Raw) => Raw> = {
   // counts from (`keptAt`). A step under way in an older save has none, and counts this month's
   // and last month's days whole, as it did.
   52: (old) => ({ ...old, version: 53 }),
+  // Jan's playtest after S1: the Map screen is the World 天下, its unlock and its seen record
+  // renamed with it. A post start's last chain quest opens with taking the post at its Work door,
+  // so a quest of theirs already taken moves one step on (the post it held is the step done).
+  53: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const unlocks = Array.isArray(s.unlocks)
+      ? (s.unlocks as string[]).map((u) => (u === 'map' ? 'world' : u))
+      : s.unlocks;
+    const seen = (s.seen ?? {}) as Raw;
+    const screens = (seen.screen ?? {}) as Raw;
+    const { map: mapSeen, ...rest } = screens;
+    const screen = mapSeen === undefined ? screens : { ...rest, world: mapSeen };
+    const journal = (s.journal ?? {}) as Raw;
+    const quests = Array.isArray(journal.quests)
+      ? (journal.quests as Raw[]).map((q) =>
+          POST_QUESTS.includes(String(q.id)) ? { ...q, step: Number(q.step) + 1 } : q,
+        )
+      : journal.quests;
+    return {
+      ...old,
+      version: 54,
+      state: {
+        ...s,
+        unlocks,
+        ...(s.seen ? { seen: { ...seen, ...(seen.screen ? { screen } : {}) } } : {}),
+        ...(s.journal ? { journal: { ...journal, quests } } : {}),
+      },
+    };
+  },
 };
+
+/** The post starts' last chain quests, which gained a first step in v54. */
+const POST_QUESTS: readonly string[] = [
+  'chain-cadet-school-place',
+  'chain-cadet-wall-place',
+  'chain-gate-disciple-place',
+];
 
 /** The City of the Guarded Mouth before and after it moved to the coast (v30). */
 const OLD_CITY = [166000, 210000] as const;

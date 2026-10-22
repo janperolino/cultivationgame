@@ -193,7 +193,8 @@ describe('claiming in the wild', () => {
     expect(veins(t).map((x) => `${x.id}@${x.x},${x.y}`)).toEqual(
       veins(s).map((x) => `${x.id}@${x.x},${x.y}`),
     );
-    expect(claimsHere(t).find((c) => c.vein?.id === v.id)?.why).toBe('You hold it already.');
+    // Held already, it is no longer offered at all.
+    expect(claimsHere(t).find((c) => c.vein?.id === v.id)).toBeUndefined();
     // The world keeps the site after the life, and the map reads its concealment at once.
     const kept = t.mapgen[t.map!.region]!.made?.find((m) => m.id === d.place);
     expect(kept!.rating).toBeGreaterThan(0);
@@ -222,6 +223,20 @@ describe('claiming in the wild', () => {
     const gone = ok(giveUp(claimed, d.id));
     expect(gone.player.dwellings).toHaveLength(0);
     expect(gone.world.standing.some((x) => x.row === 'squatting')).toBe(false);
+  });
+
+  it('offers nothing on a place’s drawn footprint, not even beside its pin (Jan’s playtest after S1)', () => {
+    const s = life();
+    const map = mapOf(s)!;
+    const gate = placeById(map, GATE)!;
+    const city = placeById(map, CITY)!;
+    // On the Gate's pin, and well out on its painted grounds, there is no hut to claim.
+    for (const at of [
+      [gate.x, gate.y],
+      [gate.x + 900, gate.y + 400],
+      [city.x - 1200, city.y],
+    ] as const)
+      expect(claimsHere(standAt(s, at)).some((c) => c.kind === 'hut')).toBe(false);
   });
 
   it('gives a cave up with its arrays and store in your pack, and lets you claim it again (review 2026-10-21)', () => {
@@ -423,7 +438,7 @@ describe('the save', () => {
       aVein(s, (x) => x.rating <= 2),
     );
     const back = loadSave(makeSave(t, 1));
-    expect(back.version).toBe(53);
+    expect(back.version).toBe(54);
     expect(back.state.player.dwellings).toEqual(t.player.dwellings);
     expect(back.state.player.abode).toBe(t.player.abode);
     expect(back.state.map!.veins).toEqual(t.map!.veins);

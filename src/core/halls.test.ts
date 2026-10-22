@@ -347,7 +347,7 @@ describe('the save', () => {
     raw.version = 38;
     delete raw.state.world.members[0]!.paid;
     const back = loadSave(raw);
-    expect(back.version).toBe(53);
+    expect(back.version).toBe(54);
     expect(back.state.world.members[0]!.paid).toBe(Math.floor(s.calendar.day / DAYS_PER_MONTH));
   });
 });

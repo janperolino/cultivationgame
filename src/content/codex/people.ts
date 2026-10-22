@@ -115,7 +115,7 @@ export const PEOPLE: readonly CodexEntry[] = [
       ['A rumor', 'One a day, from the nearest 3 unknown places'],
       ['Reach', 'Teahouse 6,000 li; elder 4,500 li'],
     ],
-    where: { screen: 'map', label: 'A place › Hear' },
+    where: { screen: 'world', label: 'A place › Hear' },
     met: { test: 'place' },
     way: 'codex',
     feature: 'Rumors about people and places',

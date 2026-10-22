@@ -748,7 +748,14 @@ export function emptyGear(): Cultivator['gear'] {
 }
 
 /** The screens a life starts with. */
-export const STARTING_UNLOCKS = ['cultivate', 'routine', 'map', 'character', 'people', 'chronicle'];
+export const STARTING_UNLOCKS = [
+  'cultivate',
+  'routine',
+  'world',
+  'character',
+  'people',
+  'chronicle',
+];
 
 /** A cultivator at age 12, every ladder at Qi Condensation layer 1 with an empty bar. */
 export function newCultivator(

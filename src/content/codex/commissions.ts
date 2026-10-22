@@ -18,7 +18,7 @@ export const COMMISSIONS: readonly CodexEntry[] = [
       ['By name', 'From craft renown 3, ×1.5 and your mark'],
       ['Held at once', '3'],
     ],
-    where: { screen: 'map', label: 'A craft shop’s counter › Commission 托' },
+    where: { screen: 'world', label: 'A craft shop’s counter › Commission 托' },
     met: { test: 'commission' },
     way: 'quest',
     feature:
@@ -38,7 +38,7 @@ export const COMMISSIONS: readonly CodexEntry[] = [
       ['Ready', 'The recipe’s hours at 8 craft hours a day'],
       ['The house', 'Small shops +0.25 lift, a shop +0.5, a notable shop +0.75'],
     ],
-    where: { screen: 'map', label: 'An alchemy shop or refiner › Commission 托' },
+    where: { screen: 'world', label: 'An alchemy shop or refiner › Commission 托' },
     met: { test: 'order' },
     way: 'codex',
     feature:

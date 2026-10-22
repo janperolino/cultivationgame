@@ -135,6 +135,9 @@ const MAX_BREAK_POPS = 200;
 const FLASH_S = 0.9;
 const WAVE_S = 1.1;
 const SAMPLES = 22;
+/** An orb's trail: this many fading glows behind it, a step of this many seconds apart. */
+const TRAIL = 6;
+const TRAIL_STEP_S = 0.045;
 
 /** Smooth closed curve through the points (Catmull–Rom), as many samples a segment. */
 function smooth(points: readonly Point[], n = SAMPLES): Point[] {
@@ -501,6 +504,16 @@ export class QiCanvas {
         const alpha = orbAlpha(o, t);
         const beat = 1 + 0.25 * Math.sin((t - o.born) * (f.reduced ? 2 : 4));
         const c = this.tint(o.tint);
+        // A short trail: where the orb was a moment ago, fading, read from its path rather than kept.
+        if (!f.reduced) {
+          for (let k = TRAIL; k >= 1; k--) {
+            const back = t - k * TRAIL_STEP_S;
+            if (back <= o.born) continue;
+            const [tx, ty] = orbPosition(o, back);
+            const fade = 1 - k / (TRAIL + 1);
+            this.glow(tx, ty, 2.5 + 3 * fade, c, 0.4 * fade * alpha);
+          }
+        }
         this.glow(x, y, 11 * beat, c, 0.4 * alpha);
         this.glow(x, y, 5, c, 0.95 * alpha);
         this.glow(x, y, 3.5, '#ffffff', 0.8 * alpha);

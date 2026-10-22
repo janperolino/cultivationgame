@@ -60,7 +60,7 @@ export const DWELLINGS: readonly CodexEntry[] = [
       ['A mansion', '2,400 low, a store of 64'],
       ['The spirit hill', 'Its slope 90 a season at ×1.3; its crown on the vein, 810 at tier 4'],
     ],
-    where: { screen: 'map', label: 'A town’s place › Hear and hire › Broker' },
+    where: { screen: 'world', label: 'A town’s place › Hear and hire › Broker' },
     met: { test: 'place' },
     way: 'quest',
     feature:
@@ -124,7 +124,7 @@ export const DWELLINGS: readonly CodexEntry[] = [
       ['Reach', '60 li, ×3 a soul realm from Foundation'],
       ['Seeded', 'About three a wild tract, one a kingdom; one in six a tier richer'],
     ],
-    where: { screen: 'map', label: 'Map › Journey, where you stand' },
+    where: { screen: 'world', label: 'World › Journey, where you stand' },
     met: { test: 'travelled' },
     way: 'codex',
     feature: 'Hidden veins and reading the land 堪舆 (soul and Earth Dao, once a day)',
@@ -144,7 +144,7 @@ export const DWELLINGS: readonly CodexEntry[] = [
       ['A hidden valley', '4 slots, growing to 6; two bands of concealment'],
       ['Squatting', '−10 with the power'],
     ],
-    where: { screen: 'map', label: 'Map › Journey and right-click' },
+    where: { screen: 'world', label: 'World › Journey and right-click' },
     met: { test: 'claimed' },
     way: 'codex',
     feature:

@@ -895,7 +895,7 @@ export const COMMANDS: Record<string, Command> = {
             Math.hypot(b.at[0] - at[0], b.at[1] - at[1]),
         )[0];
       if (!g)
-        return 'You have no running array on open ground in this region: `item snare-disc`, then lay it from the Map.';
+        return 'You have no running array on open ground in this region: `item snare-disc`, then lay it from the World screen.';
       return apply(
         store,
         (t) => {

@@ -29,7 +29,7 @@ import type { Encounter } from './map/schema.ts';
 import { bandOf } from './guarded.ts';
 import { hashSeed } from './rng.ts';
 import { areaAt, type RegionMap } from './map/region.ts';
-import { drilling } from './wheel.ts';
+import { drilling, dutyAt, hourOfDay } from './wheel.ts';
 import { guardedBy } from './markets.ts';
 import {
   addBalance,
@@ -447,3 +447,15 @@ export function jobsView(s: GameState) {
 }
 
 const round = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * The post whose Duty hours are still to come today where you stand, or null: setting a course
+ * now walks away from them, which the map asks about once a day (Jan's playtest after S1).
+ */
+export function dutyAhead(s: GameState): Job | null {
+  for (let h = hourOfDay(s.calendar.day); h < HOURS_PER_DAY; h++) {
+    const j = dutyAt(s.player, h);
+    if (j && atPost(s, j)) return j;
+  }
+  return null;
+}

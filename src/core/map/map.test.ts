@@ -527,7 +527,7 @@ describe('the v24 save', () => {
     const loaded = loadSave(raw);
     expect(loaded.state.map).toBeNull();
     expect(loaded.state.mapgen).toEqual({});
-    expect(loaded.state.unlocks).toContain('map');
+    expect(loaded.state.unlocks).toContain('world');
   });
 
   it('round-trips a life with its map', () => {

@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { CODEX_AREAS, fillSlots, type CodexEntry } from '../content/codex/index.ts';
 import { hasQuest, quest } from '../content/quests.ts';
+import { chainOffer, takeChainOffer } from '../core/chains.ts';
 import { codexMet, seeCodex } from '../core/codex.ts';
 import {
   dropQuest,
@@ -58,7 +59,15 @@ function QuestRow({
   );
 }
 
-function QuestPage({ q, game }: { q: QuestState; game: GameState }) {
+function QuestPage({
+  q,
+  game,
+  onHanded,
+}: {
+  q: QuestState;
+  game: GameState;
+  onHanded: () => void;
+}) {
   const applyLife = useGame((s) => s.applyLife);
   const [said, setSaid] = useState<string | null>(null);
   const def = quest(q.id);
@@ -96,7 +105,7 @@ function QuestPage({ q, game }: { q: QuestState; game: GameState }) {
                 <>
                   {' '}
                   <span className="caption">at {where.name}</span>{' '}
-                  <button type="button" className="link-button" onClick={() => go('map')}>
+                  <button type="button" className="link-button" onClick={() => go('world')}>
                     Show on map →
                   </button>
                 </>
@@ -125,7 +134,10 @@ function QuestPage({ q, game }: { q: QuestState; game: GameState }) {
               className="button"
               disabled={!check.ok}
               title={check.ok ? undefined : check.reason}
-              onClick={() => act((s) => handIn(s, q.id))}
+              onClick={() => {
+                act((s) => handIn(s, q.id));
+                onHanded();
+              }}
             >
               Hand in
             </button>
@@ -156,7 +168,36 @@ function QuestPage({ q, game }: { q: QuestState; game: GameState }) {
   );
 }
 
+/** The chain's next quest, offered at the top of Under way as soon as the one before is handed in. */
+function Offer({ game }: { game: GameState }) {
+  const applyLife = useGame((s) => s.applyLife);
+  const q = chainOffer(game);
+  if (!q) return null;
+  return (
+    <div className="quest-offer">
+      <p className="caption">Offered · {q.giver.name}</p>
+      <p>
+        <strong>{q.title}</strong>
+      </p>
+      <p className="caption">{q.reason}</p>
+      <button
+        type="button"
+        className="button spaced"
+        onClick={() =>
+          applyLife((s) => {
+            const r = takeChainOffer(s);
+            return r.ok ? r.state : s;
+          })
+        }
+      >
+        Take it
+      </button>
+    </div>
+  );
+}
+
 function Quests({ game }: { game: GameState }) {
+  // Handing a quest in moves the page on to what is under way (Jan's playtest after S1).
   const [pick, setPick] = useState<string | null>(null);
   const [showDone, setShowDone] = useState(false);
   // A quest a later build lost isn't shown; the next day step drops it (core/journal.ts).
@@ -168,13 +209,15 @@ function Quests({ game }: { game: GameState }) {
   );
   const handed = all.filter((q) => q.handed !== null);
   const picked = all.find((q) => q.id === pick) ?? under[0] ?? handed[0];
-  if (all.length === 0) return <p className="caption">No quests taken yet.</p>;
+  const offer = chainOffer(game);
+  if (all.length === 0 && !offer) return <p className="caption">No quests taken yet.</p>;
   return (
     <div className="people-split">
       <section className="panel" aria-label="Quests">
         <h2 className="panel-heading">Under way</h2>
+        <Offer game={game} />
         {under.length === 0 ? (
-          <p className="caption">Nothing under way.</p>
+          !offer && <p className="caption">Nothing under way.</p>
         ) : (
           <ul className="people-list">
             {under.map((q) => (
@@ -214,7 +257,7 @@ function Quests({ game }: { game: GameState }) {
           </>
         )}
       </section>
-      {picked && <QuestPage q={picked} game={game} />}
+      {picked && <QuestPage q={picked} game={game} onHanded={() => setPick(null)} />}
     </div>
   );
 }

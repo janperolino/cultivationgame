@@ -51,7 +51,7 @@ export function endGuide(id: Parameters<typeof finishGuide>[1]): void {
  */
 export function replayGuide(id: GuideId): void {
   const g = GUIDES[id];
-  const screen = (g.id === 'place-doors' || g.id === 'first-buy' ? 'map' : g.screen) as ScreenId;
+  const screen = (g.id === 'place-doors' || g.id === 'first-buy' ? 'world' : g.screen) as ScreenId;
   go(screen, undefined, undefined, g.tab as RoutineTab | undefined);
   useGuideCtx.setState({ replay: id });
 }

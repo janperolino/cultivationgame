@@ -107,7 +107,7 @@ export const CUES = [
   ),
   fx(
     'feel-alert',
-    'An encounter stopping your road while you are off the Map',
+    'An encounter stopping your road while you are off the World screen',
     ['temple bell single hit', 'small gong hit'],
     ['impactBell_heavy', 'bong'],
   ),
@@ -263,25 +263,25 @@ export const CUES = [
   {
     id: 'amb-wilds',
     kind: 'ambience',
-    plays: 'The Map, the wild places',
+    plays: 'The World, the wild places',
     search: ['forest wind birds ambience', 'mountain wind loop'],
   },
   {
     id: 'amb-market',
     kind: 'ambience',
-    plays: 'The Map at a town or a city',
+    plays: 'The World at a town or a city',
     search: ['market crowd ambience', 'bazaar ambience'],
   },
   {
     id: 'amb-sect',
     kind: 'ambience',
-    plays: 'The Map at a sect or a gated hall',
+    plays: 'The World at a sect or a gated hall',
     search: ['temple bell distant ambience', 'monastery bells wind'],
   },
   {
     id: 'amb-night',
     kind: 'ambience',
-    plays: 'After dark, under the cave or the Map',
+    plays: 'After dark, under the cave or the World',
     search: ['night insects crickets loop', 'night crickets ambience'],
   },
   {

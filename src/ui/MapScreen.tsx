@@ -92,6 +92,7 @@ import { drawMap, isDeadly, pickAt, toScreen, toWorld, type View } from './map/d
 import { fogOf } from './map/fog.ts';
 import { Stub } from './CardFeed.tsx';
 import { openSquare, seeEncounters } from './square.ts';
+import { courseOrAsk, leaveAnyway, stayOnDuty, useDutyAsk } from './dutyAsk.ts';
 import { sealOf } from './encounterSeals.ts';
 import { PlaceScreen } from './PlaceScreen.tsx';
 import { canvasDensity, pointIn, stageFactor, useStage } from './stage.ts';
@@ -197,6 +198,7 @@ function MapView({
   const [menu, setMenu] = useState<Menu | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const dutyAsk = useDutyAsk((s) => s.ask);
   const [laying, setLaying] = useState(false);
   const [openEnc, setOpenEnc] = useState<string | null>(null);
   const drag = useRef<{ x: number; y: number; vx: number; vy: number; moved: boolean } | null>(
@@ -335,7 +337,7 @@ function MapView({
       setLeaving(true);
       return;
     }
-    act((s) => setCourse(s, to, target, enter));
+    courseOrAsk(game, () => act((s) => setCourse(s, to, target, enter)));
   };
 
   const placeFor = (q: MapPlace | MapArea): Pt =>
@@ -471,7 +473,11 @@ function MapView({
       },
     });
     if (home.id !== atPlace?.id)
-      items.push({ t: 'Go home', s: home.name, run: () => act((s) => goToPlace(s, home.id)) });
+      items.push({
+        t: 'Go home',
+        s: home.name,
+        run: () => courseOrAsk(game, () => act((s) => goToPlace(s, home.id))),
+      });
     return items;
   };
 
@@ -971,6 +977,25 @@ function MapView({
           </div>
         )}
         {toast && <div className="map-toast panel">{toast}</div>}
+        {dutyAsk && (
+          <div className="map-leave panel" role="alertdialog" aria-label="Leave your post?">
+            <span className="map-label">Leave your post?</span>
+            <p>{dutyAsk.text}</p>
+            <p className="muted">A missed duty day costs standing with the power.</p>
+            <div className="map-buttons">
+              <button type="button" className="button" onClick={stayOnDuty}>
+                Stay
+              </button>
+              <button
+                type="button"
+                className="button button-danger"
+                onClick={() => leaveAnyway(game)}
+              >
+                Leave anyway
+              </button>
+            </div>
+          </div>
+        )}
         {leaving && life.group && (
           <div className="map-leave panel" role="alertdialog" aria-label="Leave the group?">
             <span className="map-label">
@@ -1485,7 +1510,7 @@ function CourseCard({
             <button
               type="button"
               className="button button-quiet"
-              onClick={() => act((s) => goToPlace(s, homeOf(s, map).id))}
+              onClick={() => courseOrAsk(game, () => act((s) => goToPlace(s, homeOf(s, map).id)))}
             >
               Turn back home
             </button>
