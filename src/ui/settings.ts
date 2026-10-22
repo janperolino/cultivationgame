@@ -38,6 +38,17 @@ export interface Settings {
   effects: number;
   /** Silent while the window isn't focused. */
   muteUnfocused: boolean;
+  /**
+   * Going in (P3.9): mature mode, off by default and turned on behind a confirmation that you are
+   * 18 or older; the scene's cost in the corner; and a once-a-day warning past a sum you set
+   * (dollars, 0 for off), with the day it last warned and what that day has spent.
+   */
+  mature: boolean;
+  showSceneCost: boolean;
+  warnAt: number;
+  aiDay: string;
+  aiToday: number;
+  warnedOn: string;
 }
 
 export const TEXT_SCALES = [
@@ -66,6 +77,12 @@ export const DEFAULT_SETTINGS: Settings = {
   ambience: 50,
   effects: 80,
   muteUnfocused: true,
+  mature: false,
+  showSceneCost: true,
+  warnAt: 0,
+  aiDay: '',
+  aiToday: 0,
+  warnedOn: '',
 };
 
 const clamp = (x: unknown, lo: number, hi: number, d: number) =>
@@ -116,7 +133,63 @@ export function cleanSettings(raw: Partial<Record<keyof Settings, unknown>>): Se
     ambience: Math.round(clamp(raw.ambience, 0, 100, d.ambience)),
     effects: Math.round(clamp(raw.effects, 0, 100, d.effects)),
     muteUnfocused: typeof raw.muteUnfocused === 'boolean' ? raw.muteUnfocused : d.muteUnfocused,
+    mature: raw.mature === true,
+    showSceneCost: typeof raw.showSceneCost === 'boolean' ? raw.showSceneCost : d.showSceneCost,
+    warnAt: clamp(raw.warnAt, 0, 1000, d.warnAt),
+    aiDay: typeof raw.aiDay === 'string' ? raw.aiDay : '',
+    aiToday: count(raw.aiToday),
+    warnedOn: typeof raw.warnedOn === 'string' ? raw.warnedOn : '',
   };
+}
+
+/**
+ * What a day of going in has spent, and whether to warn: once a day, past the sum set, never
+ * stopping you. Called with each call's cost.
+ */
+export function spendToday(cost: number, today = new Date().toISOString().slice(0, 10)): boolean {
+  const s = useSettings.getState();
+  const spent = (s.aiDay === today ? s.aiToday : 0) + cost;
+  const warn = s.warnAt > 0 && spent >= s.warnAt && s.warnedOn !== today;
+  saveSettings({ aiDay: today, aiToday: spent, ...(warn ? { warnedOn: today } : {}) });
+  return warn;
+}
+
+const MEANT_KEY = 'severed-heaven.not-what-i-meant';
+
+/** One "Not what I meant" flag: your words, what the interpreter read, and what you meant. */
+export interface NotMeant {
+  at: string;
+  words: string;
+  read: string;
+  meant: string;
+}
+
+/** The local log of "Not what I meant", the list the interpreter is tuned against (P3.13). */
+export function notMeantLog(): NotMeant[] {
+  try {
+    const raw = localStorage.getItem(MEANT_KEY);
+    const list = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(list) ? (list as NotMeant[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addNotMeant(n: Omit<NotMeant, 'at'>): void {
+  try {
+    const list = [...notMeantLog(), { ...n, at: new Date().toISOString() }].slice(-500);
+    localStorage.setItem(MEANT_KEY, JSON.stringify(list));
+  } catch {
+    // Blocked storage: the flag just doesn't stick.
+  }
+}
+
+export function clearNotMeant(): void {
+  try {
+    localStorage.removeItem(MEANT_KEY);
+  } catch {
+    // Nothing to clear.
+  }
 }
 
 export function loadSettings(): Settings {

@@ -16,6 +16,7 @@ import {
   hasEncounterTemplate,
 } from '../../content/encounters/index.ts';
 import { contact } from '../../core/map/encounters.ts';
+import { goInDev } from '../goin.ts';
 import { ensureMap, getDevPace, hereWords, mapOf, setDevPace } from '../../core/map/travel.ts';
 import { raise } from '../../core/map/fog.ts';
 import { placeById } from '../../core/map/region.ts';
@@ -314,6 +315,17 @@ export const COMMANDS: Record<string, Command> = {
         },
         `Met ${id}.`,
       );
+    },
+  },
+  goin: {
+    usage: 'goin <template|here>',
+    help: 'Goes into a scene (P3.9) on your OpenRouter key: an encounter template set down where you stand, or Go in here.',
+    run([id], store) {
+      if (!id) return ['goin here', ...ENCOUNTERS.map((t) => `goin ${t.id} (${t.kind})`)];
+      if (id !== 'here' && !hasEncounterTemplate(id)) return `No template ${id}.`;
+      const s = needGame(store);
+      if (!s.map) store.devApply(ensureMap);
+      return goInDev(id) ?? `Going in: ${id}.`;
     },
   },
   at: {

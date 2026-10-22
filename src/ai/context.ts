@@ -108,6 +108,20 @@ export function nameKnown(s: GameState, viewer: string, a: Actor): boolean {
   return s.world.known.includes(`name:${a.id}`);
 }
 
+/** What a beast is, by its roster template's name, lowercased; null for anyone not a beast. */
+function beastKind(a: Actor): string | null {
+  if (!a.npc) return null;
+  const t = template(a.npc.template);
+  if (t.kind !== 'beast') return null;
+  // One of a pack: "Ridge wolves" is a ridge wolf, "Stone apes" a stone ape.
+  const name = t.name.toLowerCase();
+  return name.endsWith('wolves')
+    ? `${name.slice(0, -6)}wolf`
+    : name.endsWith('s') && !name.endsWith('ss')
+      ? name.slice(0, -1)
+      : name;
+}
+
 /** What a stranger looks like: a roster template's name, as the road's encounters show it. */
 function looksLike(a: Actor): string | null {
   if (!a.npc) return null;
@@ -350,11 +364,20 @@ export function buildView(input: ContextInput): View {
   const refs: Record<string, string> = {};
   const people: View['people'] = {};
   let strangers = 0;
+  let beasts = 0;
   for (const a of scene.actors) {
     if (a.id === viewer) continue;
     // Someone hiding from you isn't there to you; the gone and the fled have left.
     if (a.state === 'gone' || a.state === 'fled') continue;
     if (a.state === 'hidden' && a.side !== me.side) continue;
+    // A beast is no stranger: it goes by what it is, "a ridge wolf" (P3.9).
+    const kind = beastKind(a);
+    if (kind) {
+      const ref = `${kind.replace(/\W+/g, '-')}-${++beasts}`;
+      refs[ref] = a.id;
+      people[a.id] = { ref, label: `${/^[aeiou]/.test(kind) ? 'an' : 'a'} ${kind}` };
+      continue;
+    }
     const known = nameKnown(s, viewer, a);
     const ref = known ? a.id : `stranger-${++strangers}`;
     refs[ref] = a.id;

@@ -61,6 +61,8 @@ function doneInState(s: GameState, id: GuideId): boolean {
       return p.reading.queue.length > 0 || ownedCopies(p).some((id) => knowsCopy(p, id));
     case 'first-course':
       return !!s.map?.course;
+    case 'go-in':
+      return !!s.goin || s.lineage.firsts.includes('go-in');
     default:
       return false;
   }
@@ -114,6 +116,10 @@ function ready(s: GameState, id: GuideId, ctx: GuideContext): boolean {
       return s.chronicle.some((e) => e.type === 'spar' && e.data.result === 'won');
     case 'sense':
       return !!s.map?.course && !ctx.inside;
+    case 'go-in':
+      return (
+        !ctx.inside && !s.fight && (s.map?.encounters ?? []).some((e) => e.state === 'waiting')
+      );
   }
 }
 

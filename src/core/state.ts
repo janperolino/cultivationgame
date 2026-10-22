@@ -30,6 +30,8 @@ import { flipHour } from './wheel.ts';
 import { startingWorld } from './resolver/opinion.ts';
 import { emptyWorld, WorldSchema } from './resolver/world.ts';
 import { MapLifeSchema, RegionGenSchema } from './map/schema.ts';
+import { PlanSchema, StepSchema } from './resolver/plan.ts';
+import type { Scene } from './resolver/scene.ts';
 
 /** The in-game calendar's year (content/calendar.ts), here for core's many readers. */
 export { DAYS_PER_YEAR };
@@ -584,6 +586,8 @@ export const FightFrom = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('trap'), ground: z.string() }),
   z.object({ kind: z.literal('road'), enc: z.string(), exit: z.number().int() }),
   z.object({ kind: z.literal('card'), uid: z.number().int(), choice: z.number().int() }),
+  /** A fight in a scene you went into (P3.9): who started it and the step, rebuilt from the scene. */
+  z.object({ kind: z.literal('scene'), actor: z.string(), step: StepSchema }),
 ]);
 export type FightFrom = z.infer<typeof FightFrom>;
 
@@ -598,6 +602,85 @@ export const PlayedFightSchema = z.object({
   actions: z.array(z.record(z.string(), z.unknown())),
 });
 export type PlayedFight = z.infer<typeof PlayedFightSchema>;
+
+/** Where a scene you went into opened (P3.9): an encounter's card on the map, or Go in here. */
+export const GoInFrom = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('card'), enc: z.string() }),
+  z.object({ kind: z.literal('here'), at: z.tuple([z.number(), z.number()]) }),
+]);
+export type GoInFrom = z.infer<typeof GoInFrom>;
+
+/** One turn of a scene as the screen keeps it: your words, the telling and its quiet line. */
+export const GoInTurnSchema = z.object({
+  /** Your words or the click; null for going in. */
+  said: z.string().nullable(),
+  told: z.string(),
+  /** "asked · clear · she likes you · ½ hour". */
+  line: z.string(),
+  /** The numbers behind the line, for its "?". */
+  why: z.string().optional(),
+  /** The narrator couldn't be had: `told` is the engine's plain lines, and `outcome` waits for Tell it. */
+  outcome: z.string().optional(),
+  /** The length it was told at (content/goin.ts). */
+  length: z.string().optional(),
+  /** What the interpreter read your words as: the reading's label. */
+  read: z.string().optional(),
+});
+export type GoInTurn = z.infer<typeof GoInTurnSchema>;
+
+/**
+ * A scene you went into (P3.9, core/goin.ts): where it opened, the scene as its last step left it
+ * (a snapshot, since each step lands on the world at once and a replay would land it twice), the
+ * last turns, what the narrator and the chronicler keep, a plan waiting on Do it, the offline time
+ * banked while it is open, and what you carried going in, for the leaving card.
+ */
+export const GoInSchema = z.object({
+  from: GoInFrom,
+  title: z.string(),
+  scene: z.custom<Scene>(
+    (v) => typeof v === 'object' && v !== null && Array.isArray((v as { actors?: unknown }).actors),
+    'not a scene',
+  ),
+  turns: z.array(GoInTurnSchema),
+  /** The narrator's suggestions after the last turn. */
+  choices: z.array(z.string()),
+  /** The chronicler's summary so far, its notes by id, and the turns since it last ran. */
+  summary: z.string(),
+  notes: z.record(z.string(), z.array(z.string())),
+  since: z.number().int().min(0),
+  pending: z.object({ words: z.string(), label: z.string(), plan: PlanSchema }).nullable(),
+  /** Offline time banked while the scene is open, landing when you leave it (ms, capped). */
+  banked: z.number().min(0),
+  /** What the scene has cost on the meter so far, in dollars. */
+  cost: z.number().min(0),
+  /** Who the template's roles made each actor, by id, and what moves them (the fall reads it). */
+  roles: z.record(
+    z.string(),
+    z.object({
+      motives: z.array(z.string()),
+      beast: z.boolean(),
+      /** Drifted in from the road, not the card's own: they stand against nothing of it. */
+      drift: z.boolean().optional(),
+    }),
+  ),
+  /** What you carried going in, and the world's counts then, for the leaving card. */
+  went: z.object({
+    day: z.number(),
+    stones: z.number(),
+    items: z.record(z.string(), z.number()),
+    memories: z.number().int(),
+    deeds: z.number().int(),
+  }),
+  /** Nothing in it stands against you any more: Leave is no flight, and the card is settled. */
+  resolved: z.boolean(),
+  /** You are down: one last act, then whoever stands over you decides. */
+  down: z.boolean(),
+  /** The scene ends once its last turn is told: left, fled, down, or dead. */
+  ending: z.enum(['left', 'fled', 'down', 'dead']).nullable(),
+  /** Who killed you, for the chronicle's line. */
+  killer: z.string().optional(),
+});
+export type GoIn = z.infer<typeof GoInSchema>;
 
 /** A quest you've taken (core/journal.ts): the step it is at and the day that step opened. */
 export const QuestStateSchema = z.object({
@@ -690,6 +773,8 @@ export const GameStateSchema = z.object({
   rng: z.record(z.string(), z.number().int()),
   /** The fight you are in (Fights you play): it holds the clock until it ends. */
   fight: PlayedFightSchema.nullable(),
+  /** The scene you went into (P3.9): it holds the clock until you leave it. */
+  goin: GoInSchema.nullable(),
 });
 export type GameState = z.infer<typeof GameStateSchema>;
 
@@ -912,6 +997,7 @@ export function newLife(opts: NewLifeOptions): GameState {
     mapgen: {},
     map: null,
     fight: null,
+    goin: null,
   };
 }
 

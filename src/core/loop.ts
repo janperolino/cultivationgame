@@ -95,6 +95,16 @@ export function advance(
     // A life that has ended stands still until a new one begins, and a fight holds the clock
     // until it ends (Fights you play).
     if (state.ended || state.fight) break;
+    // A scene holds the clock too (P3.9): the offline hours bank while it is open, under the cap,
+    // and land when you leave it; the time you spend in it typing costs nothing.
+    if (state.goin) {
+      if (offline) {
+        const banked = Math.min(OFFLINE_CAP_MS, state.goin.banked + remaining);
+        state = { ...state, goin: { ...state.goin, banked } };
+        remaining = 0;
+      }
+      break;
+    }
     const edge = lifespanEdgeDay(state.player);
     const room = edge - state.calendar.day;
     if (room <= 0) break;

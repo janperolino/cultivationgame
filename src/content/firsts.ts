@@ -14,6 +14,7 @@ export const FIRST_IDS = [
   'art',
   'stones',
   'node',
+  'go-in',
 ] as const;
 export type FirstId = (typeof FIRST_IDS)[number];
 
@@ -59,6 +60,7 @@ export const HINT_IDS = [
   'breakthrough',
   'auto',
   'cards',
+  'go-in',
   'hints-off',
 ] as const;
 export type HintId = (typeof HINT_IDS)[number];
@@ -87,6 +89,8 @@ export const HINTS: Readonly<Record<HintId, string>> = {
   breakthrough: 'A bar is full. Break through with the button under your figure on Cultivate.',
   auto: 'Minor breakthroughs run on their own, at safe odds, even while you are away. Choose how bold under Minor breakthroughs on Routine. Major breakthroughs are always yours to call.',
   cards: 'A card waits in the tray on Cultivate. Each is a choice, and it waits for you.',
+  'go-in':
+    'A card waits on the road. Go in at its foot to play it as a scene, typing what you do while a narrator tells it.',
   'hints-off':
     'Guides and hints like this one can be turned off in Settings, and replayed from there.',
 };
@@ -117,6 +121,7 @@ export const HINT_CODEX: Readonly<Partial<Record<HintId, string>>> = {
   insight: 'insight-sources',
   auto: 'auto-minor',
   'hints-off': 'guides-settings',
+  'go-in': 'going-in',
 };
 
 /** The coming-back card's line for each first still waiting, by its step. */
@@ -145,4 +150,5 @@ export const FIRST_WAITING: Readonly<
   'art-hour': 'Your {artKind} waits for an hour.',
   stones: 'Your spirit stones wait to be burned.',
   node: 'Insight enough for a node waits on the Trees.',
+  'go-in': 'A card on the road waits for you to go in.',
 };

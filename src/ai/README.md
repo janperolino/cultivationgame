@@ -13,5 +13,6 @@ The GLM layer (design § How GLM fits in; § The resolver, What GLM sees). Nothi
 - `schemas.ts`: what each role returns, as Zod and as JSON Schema for strict structured output.
 - `mock.ts`: `mockProvider` replays canned replies for tests and UI work; `sseResponse` fakes a raw OpenRouter stream.
 - `playbook.ts`: the playbook's sentences in one scene, for the tests and `npm run glm`.
+- `scene.ts` (P3.9): a scene you went into as GLM gets it: the view of the saved scene with its last turns, notes and summary, the words each moment is told in, where you stand under a card's opening line, and the tone setting (mature or not, no refusal lines). The go-in screen's store (`ui/goin.ts`) runs a turn through it.
 
-`npm run spike` (`sim/spike.ts`) was P0.3's measurement (`docs/spike-report.md`); `npm run glm` (`sim/glm.ts`) runs P3.8's roles on GLM by hand and writes `docs/spike/p3.8-roles.md`.
+`npm run spike` (`sim/spike.ts`) was P0.3's measurement (`docs/spike-report.md`); `npm run glm` (`sim/glm.ts`) runs P3.8's roles on GLM by hand and writes `docs/spike/p3.8-roles.md`; `npm run goin` (`sim/goin.ts`) plays P3.9's road scenes through the whole pipeline on GLM and writes `docs/spike/p3.9-road.md`.

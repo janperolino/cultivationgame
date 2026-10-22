@@ -98,6 +98,7 @@ export function hintDone(s: GameState, id: HintId): boolean {
     case 'method':
     case 'stones':
     case 'node':
+    case 'go-in':
       return firsts.includes(id);
     case 'technique':
       return firsts.includes('technique') || practiced(p).length > 0;

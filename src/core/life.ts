@@ -328,11 +328,22 @@ export function attemptLastChance(s: GameState): LifeBreakthrough {
 }
 
 /** The life ends at the lifespan edge. The slot keeps the chronicle and offers a new life. */
-export function endLife(s: GameState, cause = 'lifespan'): GameState {
+export function endLife(
+  s: GameState,
+  cause = 'lifespan',
+  extra: { killer?: string } = {},
+): GameState {
   if (s.ended) return s;
   const p = s.player;
   const age = Math.floor(ageYears(p, s.calendar.day));
-  const data = { age, realm: realmOf(p), stage: stageOf(p), cause };
+  // A death in a scene names whoever killed you (P3.9).
+  const data = {
+    age,
+    realm: realmOf(p),
+    stage: stageOf(p),
+    cause,
+    ...(extra.killer ? { killer: extra.killer } : {}),
+  };
   return { ...addEvent(s, 'death', data), ended: { day: s.calendar.day, cause } };
 }
 
@@ -548,6 +559,7 @@ function playStep(s: GameState, step: FirstStep): GameState {
     case 'stones':
       return setPlan(s, { burnStones: true });
     case 'node':
+    case 'go-in':
       return s;
   }
 }
@@ -562,7 +574,7 @@ export function playFirsts(s: GameState): GameState {
   // Each step clears its first or moves it on (a slot, then its hour); a step that can't be done
   // ends the round, and the cap stops a step that would be done again and again.
   for (let i = 0; i < 2 * FIRST_IDS.length; i++) {
-    const step = firstsWaiting(next).find((x) => x.first !== 'node');
+    const step = firstsWaiting(next).find((x) => x.first !== 'node' && x.first !== 'go-in');
     if (!step) break;
     const played = playStep(next, step);
     if (played === next) break;

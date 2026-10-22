@@ -194,19 +194,32 @@ export function presence(
     (b.infamy ? PRESENCE.infamy : 1) *
     PRESENCE.follower ** Math.min(PRESENCE.followers, b.followers ?? 0) *
     (1 + (you.stats.intimidate ?? 0));
-  // Realm pressure is felt, not read: it pins by the realm you truly show, veiled or not.
-  const felt = you.shown ?? realmOfActor(you);
-  const pinned = realmIndex(felt.realm) - realmIndex(theirs.realm) >= PIN_REALMS;
-  return { value: size * Math.min(HELP_CAP, f), pinned };
+  return { value: size * Math.min(HELP_CAP, f), pinned: pressurePins(you, them) };
+}
+
+/** From Nascent Soul up, one realm's pressure is enough to pin (Scale of destruction). */
+const PIN_ONE_FROM = realmIndex('nascent-soul');
+
+/**
+ * Whether one's realm pressure pins another (design § Scale of destruction; code review item 9):
+ * felt, not read, by the realm they show, against the other's soul; two realms up pins, and one
+ * from Nascent Soul up. A veil that shows less presses less.
+ */
+export function pressurePins(from: Actor, on: Actor): boolean {
+  const felt = from.shown ?? realmOfActor(from);
+  const gap = realmIndex(felt.realm) - realmIndex(on.rungs.soul.realm);
+  return gap >= PIN_REALMS || (gap >= 1 && realmIndex(felt.realm) >= PIN_ONE_FROM);
 }
 
 /**
  * The safety someone feels: their realm times their sect or their backer, whichever stands taller,
  * their crew and despair, held to ×2.
  */
-export function composure(them: Actor, crew = 0): number {
+export function composure(them: Actor, crew = 0, nerve = 1): number {
   const sect = backerComposure(them);
+  // Nerve moves it (COMPOSURE_AXIS, read by the caller from their nature; the code review's item 10).
   const f =
+    nerve *
     sect *
     COMPOSURE.crew ** Math.min(COMPOSURE.crews, crew) *
     (them.desperate ? COMPOSURE.desperate : 1);

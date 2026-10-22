@@ -12,7 +12,7 @@ import type { ScreenId } from './screens.ts';
 
 /** The control a beacon rings. */
 export type BeaconControl =
-  'wheel' | 'read-now' | 'climb-with' | 'practice-this' | 'node' | 'burn-stones' | 'auto';
+  'wheel' | 'read-now' | 'climb-with' | 'practice-this' | 'node' | 'burn-stones' | 'auto' | 'go-in';
 
 export interface Beacon {
   screen: ScreenId;
@@ -54,6 +54,8 @@ export function beaconFor(step: FirstStep): Beacon {
       return on('day', 'burn-stones');
     case 'node':
       return { screen: 'trees', control: 'node' };
+    case 'go-in':
+      return { screen: 'world', control: 'go-in' };
   }
 }
 

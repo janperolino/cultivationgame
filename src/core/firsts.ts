@@ -42,6 +42,8 @@ export function firstsPassed(c: Cultivator): FirstId[] {
     art: ART_LADDERS.some((l) => c.activeMethods[l] !== null && c.wheel.includes(l)),
     stones: c.plan.burnStones,
     node: c.nodes.length > 0,
+    // Going in is marked on the lineage as a door opens (core/goin.ts), not read off the cultivator.
+    'go-in': false,
   };
   return FIRST_IDS.filter((id) => passed[id]);
 }
@@ -107,6 +109,10 @@ export function firstsWaiting(s: GameState): FirstStep[] {
   }
   if (todo('node') && c.insight.current >= FIRST_NODE_INSIGHT) {
     out.push({ first: 'node', hint: 'node' });
+  }
+  // A card waiting on the road can be gone into (P3.9).
+  if (todo('go-in') && (s.map?.encounters ?? []).some((e) => e.state === 'waiting')) {
+    out.push({ first: 'go-in', hint: 'go-in' });
   }
   return out;
 }

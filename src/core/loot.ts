@@ -15,6 +15,7 @@ import { hasItem, item, ITEMS, rarityRange, variantId, type Item } from '../cont
 import { dayWage } from '../content/bonds.ts';
 import { DAYS_PER_MONTH } from '../content/calendar.ts';
 import { CARRIED_STONES, PART_ITEM, RING_LOTS } from '../content/loot.ts';
+import { CARRIED_ITEM } from '../content/tokens.ts';
 import { HEAVY_WAGES } from '../content/methods.ts';
 import { manual } from '../content/manuals.ts';
 import { method } from '../content/methods.ts';
@@ -222,6 +223,12 @@ export function kitOf(n: Npc): Haul {
   if (n.storage === 'storage pouch') add(h, 'storage-pouch');
   if (n.storage === 'storage ring') add(h, 'storage-ring');
   for (const p of n.carries) {
+    // A power's token or an escape talisman is the written thing itself (P3.9: `carries` as items).
+    const carried = CARRIED_ITEM[p];
+    if (carried) {
+      add(h, carried);
+      continue;
+    }
     const id = PART_ITEM[p];
     if (id) add(h, variantId(id, n.rolls.method.qi, { tier }));
   }

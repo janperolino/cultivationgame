@@ -48,6 +48,7 @@ import type { Pt } from './geometry.ts';
 import { known, lookAround, seeFrom, senseLi, startKnowledge, type Seeing } from './fog.ts';
 import { roadHour, setMapOf, waiting } from './encounters.ts';
 import { reachPostings } from './board.ts';
+import { noteRoad } from '../roadHome.ts';
 import { bedAt, enterAt } from './gate.ts';
 import {
   areaAt,
@@ -628,6 +629,8 @@ export function travelDays(
   let paidAt: string | null = null;
   const passed: string[] = [];
   let enterTarget: MapPlace | null = null;
+  // The li walked, for the road home's card (P3.9).
+  let walked = 0;
   const take = (r: Seeing) => {
     life = r.life;
     for (const id of r.found) notes.push({ type: 'found', place: id });
@@ -699,6 +702,7 @@ export function travelDays(
           budget = 0;
         }
       }
+      walked += Math.hypot(at[0] - life.at[0], at[1] - life.at[1]);
       const last: Pt | undefined = life.trail[life.trail.length - 1];
       const trail: [number, number][] =
         !last || Math.hypot(last[0] - at[0], last[1] - at[1]) > 150
@@ -796,7 +800,10 @@ export function travelDays(
     const r = enterAt(next, map, enterTarget);
     if (r.ok) next = r.state;
   }
-  return next;
+  // Out from home the trip's li grow; home again after days away, the road home's card (P3.9).
+  const home = homeOf(next, map);
+  const here = next.map!.at;
+  return noteRoad(next, Math.hypot(home.x - here[0], home.y - here[1]) < ENTER_LI, walked);
 }
 
 /** Where you stand on the map, for the line under the date. */

@@ -87,6 +87,7 @@ export const MET_TESTS = [
   'commission-done', // a commission handed in
   'order', // something ordered made at a shop
   'craft-card', // a craft deck card drawn
+  'road-home', // the road home's card drawn (P3.9)
 ] as const;
 export type MetTest = (typeof MET_TESTS)[number];
 
