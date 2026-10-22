@@ -28,22 +28,22 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 
 **The lines at a glance** (planning, 2026-10-22, Jan's call: the lines side by side; the lists below keep the detail). Read down a column for a line's order; rows aren't dates. Bold is a design session.
 
-| Friends' line | Main line | Side line | Art line |
-|---|---|---|---|
-| P3.9 The road | **Guild trade** | **Core Formation** | A6 Places |
-| **People and ties** | Trade phases | Core phases | A6.1 Rooms |
-| P3.9b Places, people | Trade checkpoint | Atlas fill ¹ | A3.1 Cave |
-| P3.9c Scene fights | | | A9 Chronicle… |
-| People phases | | | A12 Intros |
-| People checkpoint | | | F2 The haul |
-| P3.10 The Ways | | | A11 Content art |
-| P3.11 Ruins | | | A5.4, A7, A8, A10 |
-| P3.12 Decks, rebirth | | | |
-| P3.13 Tone pass | | | |
-| **M7** Big moments ² | | | |
-| → | **The living world** ³ | | |
-| | Living world phases | | |
-| | **M8** Rebirth, friends | | |
+| Friends' line        | Main line               | Side line          | Art line          |
+| -------------------- | ----------------------- | ------------------ | ----------------- |
+| P3.9 The road        | **Guild trade**         | **Core Formation** | A6 Places         |
+| **People and ties**  | Trade phases            | Core phases        | A6.1 Rooms        |
+| P3.9b Places, people | Trade checkpoint        | Atlas fill ¹       | A3.1 Cave         |
+| P3.9c Scene fights   |                         |                    | A9 Chronicle…     |
+| People phases        |                         |                    | A12 Intros        |
+| People checkpoint    |                         |                    | F2 The haul       |
+| P3.10 The Ways       |                         |                    | A11 Content art   |
+| P3.11 Ruins          |                         |                    | A5.4, A7, A8, A10 |
+| P3.12 Decks, rebirth |                         |                    |                   |
+| P3.13 Tone pass      |                         |                    |                   |
+| **M7** Big moments ² |                         |                    |                   |
+| →                    | **The living world** ³  |                    |                   |
+|                      | Living world phases     |                    |                   |
+|                      | **M8** Rebirth, friends |                    |                   |
 
 ¹ Once the Border Wilds are solid. ² Needs Core Formation and P3.13. ³ Needs People and ties, Guild trade, P3.13 and the atlas fill; the lines join here.
 
