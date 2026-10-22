@@ -12,11 +12,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Temple of the Quiet Bell (Jingzhong Si 静钟寺), the seat of a temple, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Temple of the Quiet Bell, unlike any other city, town or sect in the game. What sets it apart: Burial fields in rows across the hills round a single pale bone tower, and once a year a ring of gold light spreading from it when the bell is struck. Within it: the bell tower of one bone; the burial fields; the meditation caves.
+Make it unmistakably Temple of the Quiet Bell, unlike any other city, town or sect in the game.
+
+ITS LOOK: A hill temple of a few hundred monks: burial fields in neat rows of low mounds across the slopes, a single pale tower cut from one bone holding a great bronze bell, small meditation caves, plain grey monastic halls, and once a year a ring of gold light spreading from the tower. Colours: bone white, monk grey, earth brown, pale gold. It feels still, humble, mournful, quiet. Leave out: bustle, markets, weapons, red banners, gilded halls, skulls, walls.
+
+From the world map it shows as: Burial fields in rows across the hills round a single pale bone tower, and once a year a ring of gold light spreading from it when the bell is struck. Within it: the bell tower of one bone; the burial fields; the meditation caves.
+
+SCALE: it is about 10 li (5 km) across, home to about 3,000 mortals, 300 at Qi Condensation, 15 at Foundation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a storm rolling in, rain curtains and lightning far off. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -58,13 +64,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Temple of the Quiet Bell, unlike any other city, town or sect in the game. What sets it apart: Burial fields in rows across the hills round a single pale bone tower, and once a year a ring of gold light spreading from it when the bell is struck. Within it: the bell tower of one bone; the burial fields; the meditation caves.
+Make it unmistakably Temple of the Quiet Bell, unlike any other city, town or sect in the game.
+
+ITS LOOK: A hill temple of a few hundred monks: burial fields in neat rows of low mounds across the slopes, a single pale tower cut from one bone holding a great bronze bell, small meditation caves, plain grey monastic halls, and once a year a ring of gold light spreading from the tower. Colours: bone white, monk grey, earth brown, pale gold. It feels still, humble, mournful, quiet. Leave out: bustle, markets, weapons, red banners, gilded halls, skulls, walls.
+
+From the world map it shows as: Burial fields in rows across the hills round a single pale bone tower, and once a year a ring of gold light spreading from it when the bell is struck. Within it: the bell tower of one bone; the burial fields; the meditation caves.
+
+SCALE: it is about 10 li (5 km) across, home to about 3,000 mortals, 300 at Qi Condensation, 15 at Foundation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a storm rolling in, rain curtains and lightning far off. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

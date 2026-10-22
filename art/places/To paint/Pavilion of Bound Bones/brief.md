@@ -13,11 +13,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Pavilion of Bound Bones (Fugu Ge 缚骨阁), the seat of a sect, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Pavilion of Bound Bones, unlike any other city, town or sect in the game. What sets it apart: A hall standing in the eye socket of a beast-king skull the size of a hill in the Wall, with the binding array's thread of light running away from it along the Wall in both directions. Within it: the hall in the great skull's eye socket; the array plates along the Wall's top; the bone-reading room.
+Make it unmistakably Pavilion of Bound Bones, unlike any other city, town or sect in the game.
+
+ITS LOOK: A hall standing in the eye socket of the greatest skull in the Wall, a hill-sized beast-king skull of ivory bone with the sect’s lacquered pavilion set inside it; array plates glimmer in lines along the Wall top and a thread of light runs away along it in both directions; a dim bone-reading room within. Colours: ivory bone, lacquer black, array thread gold-white, shadow. It feels solemn, ritual, eerie, patient. Leave out: towns, markets, red martial banners, gardens, fields, water.
+
+From the world map it shows as: A hall standing in the eye socket of a beast-king skull the size of a hill in the Wall, with the binding array's thread of light running away from it along the Wall in both directions. Within it: the hall in the great skull's eye socket; the array plates along the Wall's top; the bone-reading room.
+
+SCALE: it is about 120 li (60 km) across, home to about 15,000 mortals, 2,500 at Qi Condensation, 120 at Foundation, 3 at Core Formation. Paint it at that true size from a nearby height: its roofs run past the horizon, its walls and great works are cliffs hundreds of metres tall, and a whole tower is a speck in the view. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -59,13 +65,19 @@ Cells, left to right, top to bottom:
 8. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
 9. Your seat 席位: What the power wants of you this month, and what it gives.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Pavilion of Bound Bones, unlike any other city, town or sect in the game. What sets it apart: A hall standing in the eye socket of a beast-king skull the size of a hill in the Wall, with the binding array's thread of light running away from it along the Wall in both directions. Within it: the hall in the great skull's eye socket; the array plates along the Wall's top; the bone-reading room.
+Make it unmistakably Pavilion of Bound Bones, unlike any other city, town or sect in the game.
+
+ITS LOOK: A hall standing in the eye socket of the greatest skull in the Wall, a hill-sized beast-king skull of ivory bone with the sect’s lacquered pavilion set inside it; array plates glimmer in lines along the Wall top and a thread of light runs away along it in both directions; a dim bone-reading room within. Colours: ivory bone, lacquer black, array thread gold-white, shadow. It feels solemn, ritual, eerie, patient. Leave out: towns, markets, red martial banners, gardens, fields, water.
+
+From the world map it shows as: A hall standing in the eye socket of a beast-king skull the size of a hill in the Wall, with the binding array's thread of light running away from it along the Wall in both directions. Within it: the hall in the great skull's eye socket; the array plates along the Wall's top; the bone-reading room.
+
+SCALE: it is about 120 li (60 km) across, home to about 15,000 mortals, 2,500 at Qi Condensation, 120 at Foundation, 3 at Core Formation. Paint it at that true size from a nearby height: its roofs run past the horizon, its walls and great works are cliffs hundreds of metres tall, and a whole tower is a speck in the view. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
@@ -91,13 +103,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Pavilion of Bound Bones, unlike any other city, town or sect in the game. What sets it apart: A hall standing in the eye socket of a beast-king skull the size of a hill in the Wall, with the binding array's thread of light running away from it along the Wall in both directions. Within it: the hall in the great skull's eye socket; the array plates along the Wall's top; the bone-reading room.
+Make it unmistakably Pavilion of Bound Bones, unlike any other city, town or sect in the game.
+
+ITS LOOK: A hall standing in the eye socket of the greatest skull in the Wall, a hill-sized beast-king skull of ivory bone with the sect’s lacquered pavilion set inside it; array plates glimmer in lines along the Wall top and a thread of light runs away along it in both directions; a dim bone-reading room within. Colours: ivory bone, lacquer black, array thread gold-white, shadow. It feels solemn, ritual, eerie, patient. Leave out: towns, markets, red martial banners, gardens, fields, water.
+
+From the world map it shows as: A hall standing in the eye socket of a beast-king skull the size of a hill in the Wall, with the binding array's thread of light running away from it along the Wall in both directions. Within it: the hall in the great skull's eye socket; the array plates along the Wall's top; the bone-reading room.
+
+SCALE: it is about 120 li (60 km) across, home to about 15,000 mortals, 2,500 at Qi Condensation, 120 at Foundation, 3 at Core Formation. Paint it at that true size from a nearby height: its roofs run past the horizon, its walls and great works are cliffs hundreds of metres tall, and a whole tower is a speck in the view. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

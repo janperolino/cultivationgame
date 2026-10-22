@@ -12,11 +12,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Apricot Grove's Frontier Hall (Xinglin Bianguan 杏林边馆), the seat of a sect, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Apricot Grove's Frontier Hall, unlike any other city, town or sect in the game. What sets it apart: Nothing of its own: a green roof in the City. Within it: the clinic hall; the pill counter.
+Make it unmistakably Apricot Grove's Frontier Hall, unlike any other city, town or sect in the game.
+
+ITS LOOK: A pill shop, clinic and buying office under one broad green-glazed roof among the City’s streets: a wide clinic hall with rows of cots and screens, a long pill counter fronted with rows of small lacquered drawers and jars, a courtyard of drying herbs and an apricot tree in a stone planter. Colours: celadon green roof, apricot pink, white linen, herb brown. It feels calm, clean, medicinal, busy with patients. Leave out: skulls, ledgers and lamps, weapons, sea and ships, grandeur.
+
+From the world map it shows as: Nothing of its own: a green roof in the City. Within it: the clinic hall; the pill counter.
+
+SCALE: it is about 1 li (1 km) across, home to about 600 mortals, 150 at Qi Condensation, 12 at Foundation, 1 at Core Formation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
 
-The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -58,13 +64,19 @@ Cells, left to right, top to bottom:
 8. Law hall 律堂: Where a marked face kneels and makes restitution.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Apricot Grove's Frontier Hall, unlike any other city, town or sect in the game. What sets it apart: Nothing of its own: a green roof in the City. Within it: the clinic hall; the pill counter.
+Make it unmistakably Apricot Grove's Frontier Hall, unlike any other city, town or sect in the game.
+
+ITS LOOK: A pill shop, clinic and buying office under one broad green-glazed roof among the City’s streets: a wide clinic hall with rows of cots and screens, a long pill counter fronted with rows of small lacquered drawers and jars, a courtyard of drying herbs and an apricot tree in a stone planter. Colours: celadon green roof, apricot pink, white linen, herb brown. It feels calm, clean, medicinal, busy with patients. Leave out: skulls, ledgers and lamps, weapons, sea and ships, grandeur.
+
+From the world map it shows as: Nothing of its own: a green roof in the City. Within it: the clinic hall; the pill counter.
+
+SCALE: it is about 1 li (1 km) across, home to about 600 mortals, 150 at Qi Condensation, 12 at Foundation, 1 at Core Formation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
 
-The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

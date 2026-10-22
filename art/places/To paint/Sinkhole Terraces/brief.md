@@ -13,11 +13,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Sinkhole Terraces (Tiankeng Tai 天坑台), a town, the seat of a county, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Sinkhole Terraces, unlike any other city, town or sect in the game. What sets it apart: A sinkhole thirty li across, dark as an eye from above, terraced all the way down its walls, with cloud pooling in it at dawn. Within it: the sinkhole rim; the testing stone.
+Make it unmistakably Sinkhole Terraces, unlike any other city, town or sect in the game.
+
+ITS LOOK: A town of two million terraced down the wall of a sinkhole thirty li across: farms at the bottom, stacked rings of pale stone houses and stair-streets cut into the walls, hanging bridges across the void, cloud pooling in the pit at dawn, and the Registry’s testing stone on the top terrace. Colours: limestone cream, terrace green, cloud white, shadow blue. It feels vertical, enclosed, hushed, vertiginous. Leave out: open plains, a council hall in the cliff, walls and gates, sea, a pit sixty li across.
+
+From the world map it shows as: A sinkhole thirty li across, dark as an eye from above, terraced all the way down its walls, with cloud pooling in it at dawn. Within it: the sinkhole rim; the testing stone.
+
+SCALE: it is about 30 li (15 km) across, home to about 2,000,000 mortals, 600 at Qi Condensation, 20 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -57,13 +63,19 @@ Cells, left to right, top to bottom:
 8. Caravans 商队: Wagons loading at the yard; each sets off at 辰 on its day, guard or passenger.
 9. Broker 牙行: The broker lets rooms, chambers and courtyards by the season, sealed with his chop.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Sinkhole Terraces, unlike any other city, town or sect in the game. What sets it apart: A sinkhole thirty li across, dark as an eye from above, terraced all the way down its walls, with cloud pooling in it at dawn. Within it: the sinkhole rim; the testing stone.
+Make it unmistakably Sinkhole Terraces, unlike any other city, town or sect in the game.
+
+ITS LOOK: A town of two million terraced down the wall of a sinkhole thirty li across: farms at the bottom, stacked rings of pale stone houses and stair-streets cut into the walls, hanging bridges across the void, cloud pooling in the pit at dawn, and the Registry’s testing stone on the top terrace. Colours: limestone cream, terrace green, cloud white, shadow blue. It feels vertical, enclosed, hushed, vertiginous. Leave out: open plains, a council hall in the cliff, walls and gates, sea, a pit sixty li across.
+
+From the world map it shows as: A sinkhole thirty li across, dark as an eye from above, terraced all the way down its walls, with cloud pooling in it at dawn. Within it: the sinkhole rim; the testing stone.
+
+SCALE: it is about 30 li (15 km) across, home to about 2,000,000 mortals, 600 at Qi Condensation, 20 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
@@ -89,13 +101,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Sinkhole Terraces, unlike any other city, town or sect in the game. What sets it apart: A sinkhole thirty li across, dark as an eye from above, terraced all the way down its walls, with cloud pooling in it at dawn. Within it: the sinkhole rim; the testing stone.
+Make it unmistakably Sinkhole Terraces, unlike any other city, town or sect in the game.
+
+ITS LOOK: A town of two million terraced down the wall of a sinkhole thirty li across: farms at the bottom, stacked rings of pale stone houses and stair-streets cut into the walls, hanging bridges across the void, cloud pooling in the pit at dawn, and the Registry’s testing stone on the top terrace. Colours: limestone cream, terrace green, cloud white, shadow blue. It feels vertical, enclosed, hushed, vertiginous. Leave out: open plains, a council hall in the cliff, walls and gates, sea, a pit sixty li across.
+
+From the world map it shows as: A sinkhole thirty li across, dark as an eye from above, terraced all the way down its walls, with cloud pooling in it at dawn. Within it: the sinkhole rim; the testing stone.
+
+SCALE: it is about 30 li (15 km) across, home to about 2,000,000 mortals, 600 at Qi Condensation, 20 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

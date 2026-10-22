@@ -12,11 +12,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Bat Roost (Fuqi Cun 蝠栖村), a village, the seat of a farming county, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Bat Roost, unlike any other city, town or sect in the game. What sets it apart: A cave mouth in a cliff, bat swarms pouring out of it at dusk like smoke a hundred li long. Within it: bat roosts heaped with guano.
+Make it unmistakably Bat Roost, unlike any other city, town or sect in the game.
+
+ITS LOOK: A cave mouth a li high in a karst cliff, with rope ladders, plank scaffolds and basket hoists up the face, guano heaped in brown mounds and sacked at the foot, diggers’ lean-to huts, and swarms of bats pouring from the mouth at dusk like smoke. Colours: guano brown, cave black, dusk purple, pale cliff grey. It feels foul, dim, industrious, acrid. Leave out: terraces, grand buildings, gardens, clean water, banners.
+
+From the world map it shows as: A cave mouth in a cliff, bat swarms pouring out of it at dusk like smoke a hundred li long. Within it: bat roosts heaped with guano.
+
+SCALE: it is about 8 li (4 km) across, home to about 80,000 mortals. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a snowy night, the roofs white, lamps warm in the cold. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows the whole painting behind a few cards: keep the top-left third calmer and darker (the name and lore sit there) and the bottom quarter calm near ground (a row of door cards sits there); put the place itself in the centre and right.
 
@@ -56,13 +62,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Bat Roost, unlike any other city, town or sect in the game. What sets it apart: A cave mouth in a cliff, bat swarms pouring out of it at dusk like smoke a hundred li long. Within it: bat roosts heaped with guano.
+Make it unmistakably Bat Roost, unlike any other city, town or sect in the game.
+
+ITS LOOK: A cave mouth a li high in a karst cliff, with rope ladders, plank scaffolds and basket hoists up the face, guano heaped in brown mounds and sacked at the foot, diggers’ lean-to huts, and swarms of bats pouring from the mouth at dusk like smoke. Colours: guano brown, cave black, dusk purple, pale cliff grey. It feels foul, dim, industrious, acrid. Leave out: terraces, grand buildings, gardens, clean water, banners.
+
+From the world map it shows as: A cave mouth in a cliff, bat swarms pouring out of it at dusk like smoke a hundred li long. Within it: bat roosts heaped with guano.
+
+SCALE: it is about 8 li (4 km) across, home to about 80,000 mortals. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a snowy night, the roofs white, lamps warm in the cold. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

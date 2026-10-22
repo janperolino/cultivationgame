@@ -14,6 +14,7 @@ import type { Population } from '../src/content/atlas/schema.ts';
 import { REGIONS } from '../src/content/map/index.ts';
 import { PLACE_KIND_INFO } from '../src/content/map/places.ts';
 import { doorLine } from '../src/content/doorLines.ts';
+import { PLACE_LOOKS } from '../src/content/placeLooks.ts';
 import { newLife, type GameState } from '../src/core/state.ts';
 import { ensureMap, mapOf } from '../src/core/map/travel.ts';
 import { placeKindOf } from '../src/core/map/gate.ts';
@@ -100,7 +101,7 @@ const TERRAIN_LOOK: Record<string, string> = {
   canyon: 'a deep red canyon, sheer walls and a river far below',
 };
 
-/** Each place's own light, picked by its id, so neighbours are not painted under one sky. */
+/** The lights a place is painted under (Jan, after the first two came out alike). */
 const LIGHTS = [
   'a grey dawn, mist low in the valleys and the first sun on the high stone',
   'a moonlit night, silver light on stone and water, lamps warm against it',
@@ -111,8 +112,9 @@ const LIGHTS = [
   'heavy rain at dusk, every street and roof a mirror',
   'a bright overcast morning, soft light, colours clear',
 ];
-const lightOf = (id: string) =>
-  LIGHTS[[...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % LIGHTS.length]!;
+/** Each place's light, dealt in the painting order, so places painted one after another differ. */
+const lights = new Map<string, string>();
+const lightOf = (id: string) => lights.get(id) ?? LIGHTS[0]!;
 
 /** The main checkout, where the map's painted places live (art/map is shared by every worktree). */
 const MAIN = dirname(resolve(execSync('git rev-parse --git-common-dir').toString().trim()));
@@ -154,17 +156,43 @@ interface Brief {
   terrain: string;
   features: string[];
   ref?: string;
+  size?: number;
+  population?: Population;
 }
 
 /** What makes a place itself: its reference, its land, its light and what sets it apart. */
+/** The place's true size, said so the painting is drawn at it (Jan: make the scale accurate). */
+function scaleOf(b: Brief): string | null {
+  if (!b.size) return null;
+  const km = Math.round(b.size / 2);
+  const who = b.population ? `, home to ${people(b.population)}` : '';
+  const at =
+    km >= 50
+      ? 'its roofs run past the horizon, its walls and great works are cliffs hundreds of metres tall, and a whole tower is a speck in the view'
+      : km >= 15
+        ? 'a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills'
+        : km >= 5
+          ? 'a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them'
+          : 'a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life';
+  return `SCALE: it is about ${n(b.size)} li (${n(km)} km) across${who}. Paint it at that true size from a nearby height: ${at}. Never a small medieval town.`;
+}
+
 function look(b: Brief): string[] {
+  const own = PLACE_LOOKS[b.id];
   return [
     ...(b.ref
       ? [
           `Attached is ${b.name} as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.`,
         ]
       : []),
-    `Make it unmistakably ${b.name}, unlike any other city, town or sect in the game. What sets it apart: ${b.fromAbove}${b.features.length ? ` Within it: ${b.features.join('; ')}.` : ''}`,
+    `Make it unmistakably ${b.name}, unlike any other city, town or sect in the game.`,
+    ...(own
+      ? [
+          `ITS LOOK: ${own.look} Colours: ${own.colours}. It feels ${own.feels}. Leave out: ${own.not}.`,
+        ]
+      : []),
+    `From the world map it shows as: ${b.fromAbove}${b.features.length ? ` Within it: ${b.features.join('; ')}.` : ''}`,
+    ...[scaleOf(b)].filter((x): x is string => !!x),
     `The land: ${TERRAIN_LOOK[b.terrain] ?? b.terrain}.`,
     `The light: ${lightOf(b.id)}. Keep the whole on the dark side, so gold and ivory text reads over it.`,
   ];
@@ -194,7 +222,7 @@ function sheetPrompt(b: Brief, doors: Door[], i: number, of: number): string {
     `Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside ${b.name} (${b.hanzi}), ${b.what}, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third).${of > 1 ? ` This is sheet ${i} of ${of}.` : ''}`,
     'Cells, left to right, top to bottom:',
     cells.join('\n'),
-    'People only small, in the middle distance, faceless; the place is the subject.',
+    'Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.',
     ...look(b),
     STYLE,
     `The place, for mood: ${b.about[1] ?? b.about[0]}`,
@@ -377,6 +405,8 @@ for (const p of map.places) {
       fromAbove: e?.fromAbove ?? p.lore,
       terrain: p.terrain,
       features: p.features.map((f) => f.name),
+      size: e?.size,
+      population: e?.population,
       ref: refOf(p.name),
     },
     sheets,
@@ -385,6 +415,7 @@ for (const p of map.places) {
 }
 
 briefs.sort((a, z) => a.near - z.near);
+briefs.forEach(({ b }, i) => lights.set(b.id, LIGHTS[i % LIGHTS.length]!));
 
 // The briefs, and the manifest's trickle entries for every place not done.
 const done = new Set(existsSync(DONE) ? readdirSync(DONE) : []);

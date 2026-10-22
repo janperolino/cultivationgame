@@ -13,7 +13,13 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Thousand Paddocks (Qianlan Cheng 千栏城), a city, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Thousand Paddocks, unlike any other city, town or sect in the game. What sets it apart: Pale rings of array-fenced paddock in rings round a royal city sixty li across, the herds moving between them like cloud shadow. Within it: the array-fenced paddocks; the king's riding court; the remount officers' hall.
+Make it unmistakably Thousand Paddocks, unlike any other city, town or sect in the game.
+
+ITS LOOK: The herders’ royal city of three million inside rings of array-fenced paddocks sixty li across: the king’s riding court as an open ring of sand under awnings, felted-tent and timber halls of the great herder families, the remount officers’ long hall, herds moving between rings like cloud shadow, and riders everywhere on thunder-horned deer and scale-horses. Colours: grass green, horse and hide brown, felt white, saddle red. It feels open, equestrian, boisterous, sprawling. Leave out: stone walls, skulls, terraces, ships, narrow lanes, towers.
+
+From the world map it shows as: Pale rings of array-fenced paddock in rings round a royal city sixty li across, the herds moving between them like cloud shadow. Within it: the array-fenced paddocks; the king's riding court; the remount officers' hall.
+
+SCALE: it is about 60 li (30 km) across, home to about 3,000,000 mortals, 2,500 at Qi Condensation, 100 at Foundation, 1 at Core Formation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
@@ -59,9 +65,15 @@ Cells, left to right, top to bottom:
 8. The grain and cloth market 粮布市: Grain by the cartload, bolts of cloth, salt and oil, all of it weighed in silver.
 9. Money changer 钱庄: Spirit stones broken to silver and silver raised to stones, at the house’s rate.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Thousand Paddocks, unlike any other city, town or sect in the game. What sets it apart: Pale rings of array-fenced paddock in rings round a royal city sixty li across, the herds moving between them like cloud shadow. Within it: the array-fenced paddocks; the king's riding court; the remount officers' hall.
+Make it unmistakably Thousand Paddocks, unlike any other city, town or sect in the game.
+
+ITS LOOK: The herders’ royal city of three million inside rings of array-fenced paddocks sixty li across: the king’s riding court as an open ring of sand under awnings, felted-tent and timber halls of the great herder families, the remount officers’ long hall, herds moving between rings like cloud shadow, and riders everywhere on thunder-horned deer and scale-horses. Colours: grass green, horse and hide brown, felt white, saddle red. It feels open, equestrian, boisterous, sprawling. Leave out: stone walls, skulls, terraces, ships, narrow lanes, towers.
+
+From the world map it shows as: Pale rings of array-fenced paddock in rings round a royal city sixty li across, the herds moving between them like cloud shadow. Within it: the array-fenced paddocks; the king's riding court; the remount officers' hall.
+
+SCALE: it is about 60 li (30 km) across, home to about 3,000,000 mortals, 2,500 at Qi Condensation, 100 at Foundation, 1 at Core Formation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
@@ -91,9 +103,15 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Thousand Paddocks, unlike any other city, town or sect in the game. What sets it apart: Pale rings of array-fenced paddock in rings round a royal city sixty li across, the herds moving between them like cloud shadow. Within it: the array-fenced paddocks; the king's riding court; the remount officers' hall.
+Make it unmistakably Thousand Paddocks, unlike any other city, town or sect in the game.
+
+ITS LOOK: The herders’ royal city of three million inside rings of array-fenced paddocks sixty li across: the king’s riding court as an open ring of sand under awnings, felted-tent and timber halls of the great herder families, the remount officers’ long hall, herds moving between rings like cloud shadow, and riders everywhere on thunder-horned deer and scale-horses. Colours: grass green, horse and hide brown, felt white, saddle red. It feels open, equestrian, boisterous, sprawling. Leave out: stone walls, skulls, terraces, ships, narrow lanes, towers.
+
+From the world map it shows as: Pale rings of array-fenced paddock in rings round a royal city sixty li across, the herds moving between them like cloud shadow. Within it: the array-fenced paddocks; the king's riding court; the remount officers' hall.
+
+SCALE: it is about 60 li (30 km) across, home to about 3,000,000 mortals, 2,500 at Qi Condensation, 100 at Foundation, 1 at Core Formation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 

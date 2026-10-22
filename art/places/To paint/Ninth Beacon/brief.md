@@ -12,11 +12,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Ninth Beacon (Jiu Feng 九烽), a village, the seat of a farming county, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Ninth Beacon, unlike any other city, town or sect in the game. What sets it apart: A lone peak with a pillar of spirit-fire standing on it, the ninth of the March’s beacons. Within it: the beacon tower.
+Make it unmistakably Ninth Beacon, unlike any other city, town or sect in the game.
+
+ITS LOOK: A lone steep peak with a tall stone beacon tower on its summit and a pillar of spirit-fire rising from it, the March’s border post and a great stone road gate at its foot, long watch-barracks, and the county seat’s forty thousand herders and carters spread down the slopes beside the road. Colours: fire orange, dark rock, ash grey, sky blue. It feels remote, watchful, windy, lonely. Leave out: fields, large crowds, markets, water, parades or drill grounds.
+
+From the world map it shows as: A lone peak with a pillar of spirit-fire standing on it, the ninth of the March’s beacons. Within it: the beacon tower.
+
+SCALE: it is about 5 li (3 km) across, home to about 40,000 mortals, 30 at Qi Condensation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
-The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows the whole painting behind a few cards: keep the top-left third calmer and darker (the name and lore sit there) and the bottom quarter calm near ground (a row of door cards sits there); put the place itself in the centre and right.
 
@@ -56,13 +62,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Ninth Beacon, unlike any other city, town or sect in the game. What sets it apart: A lone peak with a pillar of spirit-fire standing on it, the ninth of the March’s beacons. Within it: the beacon tower.
+Make it unmistakably Ninth Beacon, unlike any other city, town or sect in the game.
+
+ITS LOOK: A lone steep peak with a tall stone beacon tower on its summit and a pillar of spirit-fire rising from it, the March’s border post and a great stone road gate at its foot, long watch-barracks, and the county seat’s forty thousand herders and carters spread down the slopes beside the road. Colours: fire orange, dark rock, ash grey, sky blue. It feels remote, watchful, windy, lonely. Leave out: fields, large crowds, markets, water, parades or drill grounds.
+
+From the world map it shows as: A lone peak with a pillar of spirit-fire standing on it, the ninth of the March’s beacons. Within it: the beacon tower.
+
+SCALE: it is about 5 li (3 km) across, home to about 40,000 mortals, 30 at Qi Condensation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
-The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

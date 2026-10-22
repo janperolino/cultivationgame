@@ -14,11 +14,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Corral Town (Weilan Zhen 围栏镇), a town, the seat of a county, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Corral Town, unlike any other city, town or sect in the game. What sets it apart: Rings of array-fenced paddock a few li wide each, and the herds moving between them like cloud shadow. Within it: the corrals; the auction ring.
+Make it unmistakably Corral Town, unlike any other city, town or sect in the game.
+
+ITS LOOK: The herders’ trading post: ring upon ring of fenced corrals packed with thunder-horned deer and scale-horses, a great round auction ring with banked seats, buyers’ halls with standing tents, hay and dung heaps, hitching posts, dust and sparks flickering off the horns. Colours: dust yellow, hay gold, fence-timber brown, spark blue-white. It feels noisy, dusty, haggling, animal. Leave out: stone walls, towers, skulls, clean streets, temples, water.
+
+From the world map it shows as: Rings of array-fenced paddock a few li wide each, and the herds moving between them like cloud shadow. Within it: the corrals; the auction ring.
+
+SCALE: it is about 30 li (15 km) across, home to about 700,000 mortals, 200 at Qi Condensation, 10 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
-The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a storm rolling in, rain curtains and lightning far off. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -58,13 +64,19 @@ Cells, left to right, top to bottom:
 8. Broker 牙行: The broker lets rooms, chambers and courtyards by the season, sealed with his chop.
 9. Bounty board 赏榜: Postings nailed three deep, each with its pay and the seal of whoever is paying.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Corral Town, unlike any other city, town or sect in the game. What sets it apart: Rings of array-fenced paddock a few li wide each, and the herds moving between them like cloud shadow. Within it: the corrals; the auction ring.
+Make it unmistakably Corral Town, unlike any other city, town or sect in the game.
+
+ITS LOOK: The herders’ trading post: ring upon ring of fenced corrals packed with thunder-horned deer and scale-horses, a great round auction ring with banked seats, buyers’ halls with standing tents, hay and dung heaps, hitching posts, dust and sparks flickering off the horns. Colours: dust yellow, hay gold, fence-timber brown, spark blue-white. It feels noisy, dusty, haggling, animal. Leave out: stone walls, towers, skulls, clean streets, temples, water.
+
+From the world map it shows as: Rings of array-fenced paddock a few li wide each, and the herds moving between them like cloud shadow. Within it: the corrals; the auction ring.
+
+SCALE: it is about 30 li (15 km) across, home to about 700,000 mortals, 200 at Qi Condensation, 10 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
-The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a storm rolling in, rain curtains and lightning far off. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
@@ -90,13 +102,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Corral Town, unlike any other city, town or sect in the game. What sets it apart: Rings of array-fenced paddock a few li wide each, and the herds moving between them like cloud shadow. Within it: the corrals; the auction ring.
+Make it unmistakably Corral Town, unlike any other city, town or sect in the game.
+
+ITS LOOK: The herders’ trading post: ring upon ring of fenced corrals packed with thunder-horned deer and scale-horses, a great round auction ring with banked seats, buyers’ halls with standing tents, hay and dung heaps, hitching posts, dust and sparks flickering off the horns. Colours: dust yellow, hay gold, fence-timber brown, spark blue-white. It feels noisy, dusty, haggling, animal. Leave out: stone walls, towers, skulls, clean streets, temples, water.
+
+From the world map it shows as: Rings of array-fenced paddock a few li wide each, and the herds moving between them like cloud shadow. Within it: the corrals; the auction ring.
+
+SCALE: it is about 30 li (15 km) across, home to about 700,000 mortals, 200 at Qi Condensation, 10 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
-The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a storm rolling in, rain curtains and lightning far off. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
@@ -122,13 +140,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Corral Town, unlike any other city, town or sect in the game. What sets it apart: Rings of array-fenced paddock a few li wide each, and the herds moving between them like cloud shadow. Within it: the corrals; the auction ring.
+Make it unmistakably Corral Town, unlike any other city, town or sect in the game.
+
+ITS LOOK: The herders’ trading post: ring upon ring of fenced corrals packed with thunder-horned deer and scale-horses, a great round auction ring with banked seats, buyers’ halls with standing tents, hay and dung heaps, hitching posts, dust and sparks flickering off the horns. Colours: dust yellow, hay gold, fence-timber brown, spark blue-white. It feels noisy, dusty, haggling, animal. Leave out: stone walls, towers, skulls, clean streets, temples, water.
+
+From the world map it shows as: Rings of array-fenced paddock a few li wide each, and the herds moving between them like cloud shadow. Within it: the corrals; the auction ring.
+
+SCALE: it is about 30 li (15 km) across, home to about 700,000 mortals, 200 at Qi Condensation, 10 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
-The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a storm rolling in, rain curtains and lightning far off. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

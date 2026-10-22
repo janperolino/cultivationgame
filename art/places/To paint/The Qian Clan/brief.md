@@ -12,11 +12,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of The Qian Clan (Qian Shi 钱氏), the seat of a clan, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably The Qian Clan, unlike any other city, town or sect in the game. What sets it apart: Nothing of its own: a gilded roof among the City's millions. Within it: the core exchange, graded by lamp; the clan vault under the exchange.
+Make it unmistakably The Qian Clan, unlike any other city, town or sect in the game.
+
+ITS LOOK: A merchant clan’s compound in the middle of the City’s waterfront: a tall counting house with a gilded roof, its exchange hall lit by rows of graded lamps over long tables of sorted cores, strongrooms of dressed stone below, clerks and porters in the yard, wax-sealed crates and brass scales everywhere. Colours: lamp gold, lacquered dark wood, brass, ledger-paper cream. It feels orderly, polite, quietly rich, watchful. Leave out: skulls and rough walls, soldiers, open sea, temple halls, green roofs.
+
+From the world map it shows as: Nothing of its own: a gilded roof among the City's millions. Within it: the core exchange, graded by lamp; the clan vault under the exchange.
+
+SCALE: it is about 2 li (1 km) across, home to about 5,000 mortals, 200 at Qi Condensation, 12 at Foundation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
 
-The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a snowy night, the roofs white, lamps warm in the cold. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -58,13 +64,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably The Qian Clan, unlike any other city, town or sect in the game. What sets it apart: Nothing of its own: a gilded roof among the City's millions. Within it: the core exchange, graded by lamp; the clan vault under the exchange.
+Make it unmistakably The Qian Clan, unlike any other city, town or sect in the game.
+
+ITS LOOK: A merchant clan’s compound in the middle of the City’s waterfront: a tall counting house with a gilded roof, its exchange hall lit by rows of graded lamps over long tables of sorted cores, strongrooms of dressed stone below, clerks and porters in the yard, wax-sealed crates and brass scales everywhere. Colours: lamp gold, lacquered dark wood, brass, ledger-paper cream. It feels orderly, polite, quietly rich, watchful. Leave out: skulls and rough walls, soldiers, open sea, temple halls, green roofs.
+
+From the world map it shows as: Nothing of its own: a gilded roof among the City's millions. Within it: the core exchange, graded by lamp; the clan vault under the exchange.
+
+SCALE: it is about 2 li (1 km) across, home to about 5,000 mortals, 200 at Qi Condensation, 12 at Foundation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
 
-The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a snowy night, the roofs white, lamps warm in the cold. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

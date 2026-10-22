@@ -11,7 +11,11 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Starfall Remnant (Xingyun Canjing 星陨残境), a sect behind its gate and array, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Starfall Remnant, unlike any other city, town or sect in the game. What sets it apart: Nothing while it sleeps; for its ten days, a column of starlight over the ruins' heart. Within it: the halls as they were the night the mountain fell; the star in its vault; the guardians the elders left.
+Make it unmistakably Starfall Remnant, unlike any other city, town or sect in the game.
+
+ITS LOOK: A pocket of space holding the sect’s halls as they were the night the mountain fell: whole white-stone halls with intact roofs hung with star-dust, a library, a vault at the centre holding a captive star as a burning bead, guardians standing motionless. A sky of stars with no ground horizon. Colours: starlight silver, deep indigo, white stone, a single star’s gold-white. It feels frozen in time, solemn, luminous, empty. Leave out: ruin, forest, rubble, crowds, banners, ordinary daylight or sky.
+
+From the world map it shows as: Nothing while it sleeps; for its ten days, a column of starlight over the ruins' heart. Within it: the halls as they were the night the mountain fell; the star in its vault; the guardians the elders left.
 
 The land: old forest, giant trees, roots and moss, light falling in shafts.
 

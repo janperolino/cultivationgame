@@ -17,11 +17,17 @@ Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML tex
 
 Attached is Lamp-Keeper Sect as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
 
-Make it unmistakably Lamp-Keeper Sect, unlike any other city, town or sect in the game. What sets it apart: Ten thousand pale-green lamp points strung in lines across black fen water, and a stilt hall at their centre. Within it: lamp poles across the black water; the stilt hall in the fens; the drowned, circling under the lamps.
+Make it unmistakably Lamp-Keeper Sect, unlike any other city, town or sect in the game.
+
+ITS LOOK: A ghost-way sect on a black fen: ten thousand pale-green lamps on poles in lines across black water, with the drowned circling beneath them, and a multi-roofed stilt hall at the centre lit warm amber among small pine islets. Mist, no roads, all of it on water. Colours: black water, pale lamp green, stilt-hall amber, mist grey-blue. It feels eerie, hushed, cold, patient. Leave out: streets, walls, red banners, dry ground, peaks, bright daylight, crowds.
+
+From the world map it shows as: Ten thousand pale-green lamp points strung in lines across black fen water, and a stilt hall at their centre. Within it: lamp poles across the black water; the stilt hall in the fens; the drowned, circling under the lamps.
+
+SCALE: it is about 40 li (20 km) across, home to about 2,000 mortals, 500 at Qi Condensation, 20 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: black fen water, reeds, mist lying flat on the water, stilts and causeways.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a storm rolling in, rain curtains and lightning far off. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -63,15 +69,21 @@ Cells, left to right, top to bottom:
 8. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
 9. Your seat 席位: What the power wants of you this month, and what it gives.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
 Attached is Lamp-Keeper Sect as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
 
-Make it unmistakably Lamp-Keeper Sect, unlike any other city, town or sect in the game. What sets it apart: Ten thousand pale-green lamp points strung in lines across black fen water, and a stilt hall at their centre. Within it: lamp poles across the black water; the stilt hall in the fens; the drowned, circling under the lamps.
+Make it unmistakably Lamp-Keeper Sect, unlike any other city, town or sect in the game.
+
+ITS LOOK: A ghost-way sect on a black fen: ten thousand pale-green lamps on poles in lines across black water, with the drowned circling beneath them, and a multi-roofed stilt hall at the centre lit warm amber among small pine islets. Mist, no roads, all of it on water. Colours: black water, pale lamp green, stilt-hall amber, mist grey-blue. It feels eerie, hushed, cold, patient. Leave out: streets, walls, red banners, dry ground, peaks, bright daylight, crowds.
+
+From the world map it shows as: Ten thousand pale-green lamp points strung in lines across black fen water, and a stilt hall at their centre. Within it: lamp poles across the black water; the stilt hall in the fens; the drowned, circling under the lamps.
+
+SCALE: it is about 40 li (20 km) across, home to about 2,000 mortals, 500 at Qi Condensation, 20 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: black fen water, reeds, mist lying flat on the water, stilts and causeways.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a storm rolling in, rain curtains and lightning far off. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
@@ -97,15 +109,21 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
 Attached is Lamp-Keeper Sect as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
 
-Make it unmistakably Lamp-Keeper Sect, unlike any other city, town or sect in the game. What sets it apart: Ten thousand pale-green lamp points strung in lines across black fen water, and a stilt hall at their centre. Within it: lamp poles across the black water; the stilt hall in the fens; the drowned, circling under the lamps.
+Make it unmistakably Lamp-Keeper Sect, unlike any other city, town or sect in the game.
+
+ITS LOOK: A ghost-way sect on a black fen: ten thousand pale-green lamps on poles in lines across black water, with the drowned circling beneath them, and a multi-roofed stilt hall at the centre lit warm amber among small pine islets. Mist, no roads, all of it on water. Colours: black water, pale lamp green, stilt-hall amber, mist grey-blue. It feels eerie, hushed, cold, patient. Leave out: streets, walls, red banners, dry ground, peaks, bright daylight, crowds.
+
+From the world map it shows as: Ten thousand pale-green lamp points strung in lines across black fen water, and a stilt hall at their centre. Within it: lamp poles across the black water; the stilt hall in the fens; the drowned, circling under the lamps.
+
+SCALE: it is about 40 li (20 km) across, home to about 2,000 mortals, 500 at Qi Condensation, 20 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: black fen water, reeds, mist lying flat on the water, stilts and causeways.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a storm rolling in, rain curtains and lightning far off. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

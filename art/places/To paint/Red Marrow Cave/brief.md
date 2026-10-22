@@ -12,11 +12,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Red Marrow Cave (Chisui Dong 赤髓洞), the seat of a sect, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Red Marrow Cave, unlike any other city, town or sect in the game. What sets it apart: Nothing: grey karst like the rest, though on still nights a faint red haze hangs over one valley. Within it: beast pens a li underground; the blood pools; a cave mouth that smells of iron.
+Make it unmistakably Red Marrow Cave, unlike any other city, town or sect in the game.
+
+ITS LOOK: A grey karst valley that looks empty, with one cave mouth stained iron-red and a faint red haze hanging over it on still nights; below, pens cut into the rock hold chained beasts above shallow blood-dark pools. Seen only as a cave and a smell. Colours: iron red, cave black, grey karst, dull rust. It feels sinister, rumoured, airless, sickly. Leave out: proud halls, banners, markets, gardens, any comfort or crowds.
+
+From the world map it shows as: Nothing: grey karst like the rest, though on still nights a faint red haze hangs over one valley. Within it: beast pens a li underground; the blood pools; a cave mouth that smells of iron.
+
+SCALE: it is about 15 li (8 km) across, home to 400 at Qi Condensation, 25 at Foundation, 1 at Core Formation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -58,13 +64,19 @@ Cells, left to right, top to bottom:
 8. Inside 内门: members only
 9. Law hall 律堂: Where a marked face kneels and makes restitution.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Red Marrow Cave, unlike any other city, town or sect in the game. What sets it apart: Nothing: grey karst like the rest, though on still nights a faint red haze hangs over one valley. Within it: beast pens a li underground; the blood pools; a cave mouth that smells of iron.
+Make it unmistakably Red Marrow Cave, unlike any other city, town or sect in the game.
+
+ITS LOOK: A grey karst valley that looks empty, with one cave mouth stained iron-red and a faint red haze hanging over it on still nights; below, pens cut into the rock hold chained beasts above shallow blood-dark pools. Seen only as a cave and a smell. Colours: iron red, cave black, grey karst, dull rust. It feels sinister, rumoured, airless, sickly. Leave out: proud halls, banners, markets, gardens, any comfort or crowds.
+
+From the world map it shows as: Nothing: grey karst like the rest, though on still nights a faint red haze hangs over one valley. Within it: beast pens a li underground; the blood pools; a cave mouth that smells of iron.
+
+SCALE: it is about 15 li (8 km) across, home to 400 at Qi Condensation, 25 at Foundation, 1 at Core Formation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

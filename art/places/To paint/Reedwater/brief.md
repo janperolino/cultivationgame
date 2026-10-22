@@ -12,11 +12,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Reedwater (Weishui Cun 苇水村), a village, the seat of a farming county, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Reedwater, unlike any other city, town or sect in the game. What sets it apart: Salt-reed beds silvering the last dry ground before the fens. Within it: reed beds; the salt pans.
+Make it unmistakably Reedwater, unlike any other city, town or sect in the game.
+
+ITS LOOK: Salt-reed cutters on the last dry ground before the fens: silvery salt-reed beds in great swathes, rectangular salt pans glittering, stacked bundles of reed and flat punts on narrow channels, thatched huts on low mounds, and the fens as a grey line beyond. Colours: reed silver, salt white, thatch gold, flat water grey. It feels flat, quiet, windy, damp. Leave out: stone, towers, crowds, peaks, banners, thorn hedge, lamps.
+
+From the world map it shows as: Salt-reed beds silvering the last dry ground before the fens. Within it: reed beds; the salt pans.
+
+SCALE: it is about 10 li (5 km) across, home to about 40,000 mortals. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
 
-The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows the whole painting behind a few cards: keep the top-left third calmer and darker (the name and lore sit there) and the bottom quarter calm near ground (a row of door cards sits there); put the place itself in the centre and right.
 
@@ -56,13 +62,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Reedwater, unlike any other city, town or sect in the game. What sets it apart: Salt-reed beds silvering the last dry ground before the fens. Within it: reed beds; the salt pans.
+Make it unmistakably Reedwater, unlike any other city, town or sect in the game.
+
+ITS LOOK: Salt-reed cutters on the last dry ground before the fens: silvery salt-reed beds in great swathes, rectangular salt pans glittering, stacked bundles of reed and flat punts on narrow channels, thatched huts on low mounds, and the fens as a grey line beyond. Colours: reed silver, salt white, thatch gold, flat water grey. It feels flat, quiet, windy, damp. Leave out: stone, towers, crowds, peaks, banners, thorn hedge, lamps.
+
+From the world map it shows as: Salt-reed beds silvering the last dry ground before the fens. Within it: reed beds; the salt pans.
+
+SCALE: it is about 10 li (5 km) across, home to about 40,000 mortals. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
 
-The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

@@ -12,11 +12,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Thunderhorn Camp (Leijiao Ying 雷角营), a village, the seat of a farming county, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Thunderhorn Camp, unlike any other city, town or sect in the game. What sets it apart: A herd of thunder-horned deer a hundred thousand strong on the open grass, sparks off their horns flickering over it on stormy nights. Within it: open grass to the horizon.
+Make it unmistakably Thunderhorn Camp, unlike any other city, town or sect in the game.
+
+ITS LOOK: A summer camp of round felt yurts on open grass, riders breaking thunder-horned deer to the saddle in a ring, a herd a hundred thousand strong sweeping over the plain with sparks jumping between their horns, picket lines and cookfires under a huge sky. Colours: grass green, felt cream, storm grey, spark white-blue. It feels wild, windswept, nomadic, free. Leave out: walls, stone, towers, streets, ships, any city.
+
+From the world map it shows as: A herd of thunder-horned deer a hundred thousand strong on the open grass, sparks off their horns flickering over it on stormy nights. Within it: open grass to the horizon.
+
+SCALE: it is about 20 li (10 km) across, home to about 30,000 mortals, 40 at Qi Condensation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
-The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows the whole painting behind a few cards: keep the top-left third calmer and darker (the name and lore sit there) and the bottom quarter calm near ground (a row of door cards sits there); put the place itself in the centre and right.
 
@@ -56,13 +62,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Thunderhorn Camp, unlike any other city, town or sect in the game. What sets it apart: A herd of thunder-horned deer a hundred thousand strong on the open grass, sparks off their horns flickering over it on stormy nights. Within it: open grass to the horizon.
+Make it unmistakably Thunderhorn Camp, unlike any other city, town or sect in the game.
+
+ITS LOOK: A summer camp of round felt yurts on open grass, riders breaking thunder-horned deer to the saddle in a ring, a herd a hundred thousand strong sweeping over the plain with sparks jumping between their horns, picket lines and cookfires under a huge sky. Colours: grass green, felt cream, storm grey, spark white-blue. It feels wild, windswept, nomadic, free. Leave out: walls, stone, towers, streets, ships, any city.
+
+From the world map it shows as: A herd of thunder-horned deer a hundred thousand strong on the open grass, sparks off their horns flickering over it on stormy nights. Within it: open grass to the horizon.
+
+SCALE: it is about 20 li (10 km) across, home to about 30,000 mortals, 40 at Qi Condensation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: open grass plains to the horizon, wide sky, herds and wind.
 
-The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

@@ -12,11 +12,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of The Hu Clan (Hu Shi 胡氏), the seat of a clan, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably The Hu Clan, unlike any other city, town or sect in the game. What sets it apart: Nothing of its own: a stretch of terraces down Heaven's Eye's wall, like the rest. Within it: the clan's stretch of the sinkhole wall; burial caves nobody else enters.
+Make it unmistakably The Hu Clan, unlike any other city, town or sect in the game.
+
+ITS LOOK: A stretch of the sinkhole’s wall held by a clan: narrow cave-mouth doorways cut in a pale cliff, handsome carved lintels and stair-landings, family shrines in alcoves and bare mirrorless rooms, and sealed burial caves at the dark end, with children guiding lantern parties along ledges. Colours: pale cave stone, soot black, lantern amber, deep red cloth. It feels close-knit, private, nimble, wary of mirrors. Leave out: open terraced streets, market stalls, grand halls, mirrors or polished metal, farms.
+
+From the world map it shows as: Nothing of its own: a stretch of terraces down Heaven's Eye's wall, like the rest. Within it: the clan's stretch of the sinkhole wall; burial caves nobody else enters.
+
+SCALE: it is about 5 li (3 km) across, home to about 40,000 mortals, 300 at Qi Condensation, 10 at Foundation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -58,13 +64,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably The Hu Clan, unlike any other city, town or sect in the game. What sets it apart: Nothing of its own: a stretch of terraces down Heaven's Eye's wall, like the rest. Within it: the clan's stretch of the sinkhole wall; burial caves nobody else enters.
+Make it unmistakably The Hu Clan, unlike any other city, town or sect in the game.
+
+ITS LOOK: A stretch of the sinkhole’s wall held by a clan: narrow cave-mouth doorways cut in a pale cliff, handsome carved lintels and stair-landings, family shrines in alcoves and bare mirrorless rooms, and sealed burial caves at the dark end, with children guiding lantern parties along ledges. Colours: pale cave stone, soot black, lantern amber, deep red cloth. It feels close-knit, private, nimble, wary of mirrors. Leave out: open terraced streets, market stalls, grand halls, mirrors or polished metal, farms.
+
+From the world map it shows as: Nothing of its own: a stretch of terraces down Heaven's Eye's wall, like the rest. Within it: the clan's stretch of the sinkhole wall; burial caves nobody else enters.
+
+SCALE: it is about 5 li (3 km) across, home to about 40,000 mortals, 300 at Qi Condensation, 10 at Foundation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

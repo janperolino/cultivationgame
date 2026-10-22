@@ -12,7 +12,13 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Lower Caves (Xiadong Cun 下洞村), a village, the seat of a farming county, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Lower Caves, unlike any other city, town or sect in the game. What sets it apart: Nothing: it is all underground. Within it: caves no map shows.
+Make it unmistakably Lower Caves, unlike any other city, town or sect in the game.
+
+ITS LOOK: A web of dark cave passages with a few lantern-lit cave-mouth homes: low arches, narrow ledges, dripping flowstone, rope lines and chalk marks, a clan’s hearth room carved into the rock, and a runner’s bundle on a shelf. The whole place is under the ground. Colours: wet flowstone grey, soot black, a single lantern gold, moss green. It feels cramped, secret, silent, no map to it. Leave out: sky, towns, towers, the sinkhole’s terraces, open water, banners.
+
+From the world map it shows as: Nothing: it is all underground. Within it: caves no map shows.
+
+SCALE: it is about 6 li (3 km) across, home to about 50,000 mortals, 40 at Qi Condensation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
@@ -56,9 +62,15 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Lower Caves, unlike any other city, town or sect in the game. What sets it apart: Nothing: it is all underground. Within it: caves no map shows.
+Make it unmistakably Lower Caves, unlike any other city, town or sect in the game.
+
+ITS LOOK: A web of dark cave passages with a few lantern-lit cave-mouth homes: low arches, narrow ledges, dripping flowstone, rope lines and chalk marks, a clan’s hearth room carved into the rock, and a runner’s bundle on a shelf. The whole place is under the ground. Colours: wet flowstone grey, soot black, a single lantern gold, moss green. It feels cramped, secret, silent, no map to it. Leave out: sky, towns, towers, the sinkhole’s terraces, open water, banners.
+
+From the world map it shows as: Nothing: it is all underground. Within it: caves no map shows.
+
+SCALE: it is about 6 li (3 km) across, home to about 50,000 mortals, 40 at Qi Condensation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 

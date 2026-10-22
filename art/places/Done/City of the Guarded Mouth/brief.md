@@ -7,18 +7,28 @@ A city, shown in the grid layout (A6). 4 ChatGPT runs: the banner, then 3 door s
 - `place-shoukou-cheng-doors-2.png`
 - `place-shoukou-cheng-doors-3.png`
 
+**Attach this to every run**, the place as it is painted on the world map: `C:\Users\janpe\CMPTProjects\cultivationGame2\art\map\qm-bianhuang\places\Done\City of the Guarded Mouth\painted.png`
+
+Run them in one chat, the banner first, so the door sheets keep its look.
+
 ## 1. The banner: `place-shoukou-cheng-banner.png`
 
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of City of the Guarded Mouth (Shoukou Cheng 守口城), a city, as a traveller arriving sees it from a height nearby.
 
-What it looks like: A ring of sea-cliff walls 150 li across rising out of the surf, faced with beast-king skulls, a ward dome over the harbour mouth and the reef road showing at low tide.
+Attached is City of the Guarded Mouth as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
+
+Make it unmistakably City of the Guarded Mouth, unlike any other city, town or sect in the game. What sets it apart: A ring of sea-cliff walls 150 li across rising out of the surf, faced with beast-king skulls, a ward dome over the harbour mouth and the reef road showing at low tide. Within it: the sea-cliff walls, faced with beast-king skulls; the bounty office, paying for cores by grade; the beast-part market; the reef road below the walls at low tide.
+
+The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
+
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
 Paint the place only: no people close up, no cultivator, no creatures unless named here.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 About the place, for its look and mood (none of this is written on the image):
 
@@ -40,7 +50,7 @@ About the place, for its look and mood (none of this is written on the image):
 If ChatGPT drifts off the grid, ask in the same chat: "Same image, but on an exact even 3x3 grid, edge to edge, no text."
 
 ```text
-Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside City of the Guarded Mouth (守口城), a city: the same place, the same light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 1 of 3.
+Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside City of the Guarded Mouth (守口城), a city, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 1 of 3.
 
 Cells, left to right, top to bottom:
 
@@ -56,7 +66,15 @@ Cells, left to right, top to bottom:
 
 People only small, in the middle distance, faceless; the place is the subject.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+Attached is City of the Guarded Mouth as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
+
+Make it unmistakably City of the Guarded Mouth, unlike any other city, town or sect in the game. What sets it apart: A ring of sea-cliff walls 150 li across rising out of the surf, faced with beast-king skulls, a ward dome over the harbour mouth and the reef road showing at low tide. Within it: the sea-cliff walls, faced with beast-king skulls; the bounty office, paying for cores by grade; the beast-part market; the reef road below the walls at low tide.
+
+The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
+
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 The place, for mood: The empire's frontier headquarters, a fortress city of eight million on the coast where the island chain begins. Its walls rise out of the surf as tall as sea cliffs, faced with the skulls of the beast kings that tried them.
 ```
@@ -66,7 +84,7 @@ The place, for mood: The empire's frontier headquarters, a fortress city of eigh
 If ChatGPT drifts off the grid, ask in the same chat: "Same image, but on an exact even 3x3 grid, edge to edge, no text."
 
 ```text
-Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside City of the Guarded Mouth (守口城), a city: the same place, the same light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 2 of 3.
+Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside City of the Guarded Mouth (守口城), a city, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 2 of 3.
 
 Cells, left to right, top to bottom:
 
@@ -82,7 +100,15 @@ Cells, left to right, top to bottom:
 
 People only small, in the middle distance, faceless; the place is the subject.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+Attached is City of the Guarded Mouth as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
+
+Make it unmistakably City of the Guarded Mouth, unlike any other city, town or sect in the game. What sets it apart: A ring of sea-cliff walls 150 li across rising out of the surf, faced with beast-king skulls, a ward dome over the harbour mouth and the reef road showing at low tide. Within it: the sea-cliff walls, faced with beast-king skulls; the bounty office, paying for cores by grade; the beast-part market; the reef road below the walls at low tide.
+
+The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
+
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 The place, for mood: The empire's frontier headquarters, a fortress city of eight million on the coast where the island chain begins. Its walls rise out of the surf as tall as sea cliffs, faced with the skulls of the beast kings that tried them.
 ```
@@ -92,7 +118,7 @@ The place, for mood: The empire's frontier headquarters, a fortress city of eigh
 If ChatGPT drifts off the grid, ask in the same chat: "Same image, but on an exact even 3x3 grid, edge to edge, no text."
 
 ```text
-Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside City of the Guarded Mouth (守口城), a city: the same place, the same light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 3 of 3.
+Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside City of the Guarded Mouth (守口城), a city, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third). This is sheet 3 of 3.
 
 Cells, left to right, top to bottom:
 
@@ -100,17 +126,25 @@ Cells, left to right, top to bottom:
 2. Offer a gift (The Myriad Crafts Guild): A gift laid before the steward is remembered as tribute.
 3. Examination hall (The Myriad Crafts Guild) 考堂: One test batch at the guild’s bench, and a badge for the grade it shows.
 4. The guild’s counter (The Myriad Crafts Guild): The common styles of the area, sold openly to any crafter.
-5. Your seat (The Myriad Crafts Guild) 席位: What the power wants of you this month, and what it gives.
-6. Inside (The Myriad Crafts Guild) 内门: members only
-7. Training ground (The Myriad Crafts Guild) 演武场: A drill ground where seniors spar with juniors, once a day each.
-8. Elders’ hall (The Myriad Crafts Guild) 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
-9. Empty: plain dark mist.
+5. Training ground (The Myriad Crafts Guild) 演武场: A drill ground where seniors spar with juniors, once a day each.
+6. Stewards’ office (The Myriad Crafts Guild) 执事房: Where the elders sit: a lesson, a protector, a seat raised or a release.
+7. Your seat (The Myriad Crafts Guild) 席位: What the power wants of you this month, and what it gives.
+8. Inside (The Myriad Crafts Guild) 内门: members only
+9. Law hall (The Myriad Crafts Guild) 律堂: Where a marked face kneels and makes restitution.
 
 People only small, in the middle distance, faceless; the place is the subject.
 
-STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail and calm, restrained light, in a deep, dark-toned palette (dusk, lamplight, mist, the night sky) so that gold and ivory text reads over it, with a little muted cyan qi light where cultivation shows; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and drawn larger than life: tiered pagodas, palace halls with sweeping upturned golden eaves, pavilions on cliff edges, long carved stone stairs, jade bridges, walls as tall as cliffs, formation arrays as domes or rings of glowing runes, spirit-fire as pillars of light. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+Attached is City of the Guarded Mouth as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
+
+Make it unmistakably City of the Guarded Mouth, unlike any other city, town or sect in the game. What sets it apart: A ring of sea-cliff walls 150 li across rising out of the surf, faced with beast-king skulls, a ward dome over the harbour mouth and the reef road showing at low tide. Within it: the sea-cliff walls, faced with beast-king skulls; the bounty office, paying for cores by grade; the beast-part market; the reef road below the walls at low tide.
+
+The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
+
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
 The place, for mood: The empire's frontier headquarters, a fortress city of eight million on the coast where the island chain begins. Its walls rise out of the surf as tall as sea cliffs, faced with the skulls of the beast kings that tried them.
 ```
 
-Pieces, in order: stall, alchemy, refiner, talisman, parts, house, bounty, mortal, changer | teahouse, guides, caravans, broker, board, inn, work, maps | join, gift, exam, counter, seat, inside, ground, elders.
+Pieces, in order: stall, alchemy, refiner, talisman, parts, house, bounty, mortal, changer | teahouse, guides, caravans, broker, board, inn, work, maps | join, gift, exam, counter, ground, elders, seat, inside, law-hall.

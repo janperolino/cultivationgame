@@ -11,11 +11,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Ruins of the Starfall Sect (Xingyun Zong Yizhi 星陨宗遗址), a landmark, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Ruins of the Starfall Sect, unlike any other city, town or sect in the game. What sets it apart: A broken mountain under black pine forest, its pieces scattered across a hundred and fifty li, a crater at its heart that faintly glows. Within it: broken halls under blackpines; star-iron in the rubble; the glowing ground at the heart.
+Make it unmistakably Ruins of the Starfall Sect, unlike any other city, town or sect in the game.
+
+ITS LOOK: A broken mountain’s pieces scattered over a hundred and fifty li under black pine: shattered halls and fallen roofs furred with moss, stair flights climbing to nothing, star-iron glinting dark blue in the rubble, a crater at the heart faintly glowing, scavengers’ camps in the gaps. Colours: blackpine green-black, rubble grey, star-iron blue, faint crater glow. It feels ruined, overgrown, haunted, forgotten. Leave out: intact buildings, crowds, banners, lamps, water, bright colour.
+
+From the world map it shows as: A broken mountain under black pine forest, its pieces scattered across a hundred and fifty li, a crater at its heart that faintly glows. Within it: broken halls under blackpines; star-iron in the rubble; the glowing ground at the heart.
+
+SCALE: it is about 150 li (75 km) across. Paint it at that true size from a nearby height: its roofs run past the horizon, its walls and great works are cliffs hundreds of metres tall, and a whole tower is a speck in the view. Never a small medieval town.
 
 The land: old forest, giant trees, roots and moss, light falling in shafts.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 

@@ -13,11 +13,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of River-Bend City (Hewan Cheng 河湾城), a city, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably River-Bend City, unlike any other city, town or sect in the game. What sets it apart: A city fifty li long laid along a river bend, its wharves and barge lines a dark comb on the water, with the March's beacon pillars on the hills round it. Within it: the muster yards; the tax wharves on the bend; the grain market.
+Make it unmistakably River-Bend City, unlike any other city, town or sect in the game.
+
+ITS LOOK: A city of three million laid fifty li along a river bend: wharves and barge lines like a dark comb on the water, grain warehouses and iron yards, vast muster yards where lines of sixteen-year-olds stand in rows, tax wharves piled with levy sacks, endless low roofs along the bank under the March’s beacon pillars on the hills. Colours: river brown-green, iron grey, grain gold, black and red banners. It feels working, heavy, commercial, conscription and cargo. Leave out: skull walls, sea, karst, gardens, a single fortress, elegance.
+
+From the world map it shows as: A city fifty li long laid along a river bend, its wharves and barge lines a dark comb on the water, with the March's beacon pillars on the hills round it. Within it: the muster yards; the tax wharves on the bend; the grain market.
+
+SCALE: it is about 50 li (25 km) across, home to about 3,000,000 mortals, 2,000 at Qi Condensation, 80 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -59,13 +65,19 @@ Cells, left to right, top to bottom:
 8. Teahouse 茶楼: A pot of tea buys a seat, and a seat buys whatever the teller heard last night.
 9. Guides 向导: Hunters, herb-gatherers and grave-robbers, each knowing a month’s walk of their trade.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably River-Bend City, unlike any other city, town or sect in the game. What sets it apart: A city fifty li long laid along a river bend, its wharves and barge lines a dark comb on the water, with the March's beacon pillars on the hills round it. Within it: the muster yards; the tax wharves on the bend; the grain market.
+Make it unmistakably River-Bend City, unlike any other city, town or sect in the game.
+
+ITS LOOK: A city of three million laid fifty li along a river bend: wharves and barge lines like a dark comb on the water, grain warehouses and iron yards, vast muster yards where lines of sixteen-year-olds stand in rows, tax wharves piled with levy sacks, endless low roofs along the bank under the March’s beacon pillars on the hills. Colours: river brown-green, iron grey, grain gold, black and red banners. It feels working, heavy, commercial, conscription and cargo. Leave out: skull walls, sea, karst, gardens, a single fortress, elegance.
+
+From the world map it shows as: A city fifty li long laid along a river bend, its wharves and barge lines a dark comb on the water, with the March's beacon pillars on the hills round it. Within it: the muster yards; the tax wharves on the bend; the grain market.
+
+SCALE: it is about 50 li (25 km) across, home to about 3,000,000 mortals, 2,000 at Qi Condensation, 80 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
@@ -91,13 +103,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably River-Bend City, unlike any other city, town or sect in the game. What sets it apart: A city fifty li long laid along a river bend, its wharves and barge lines a dark comb on the water, with the March's beacon pillars on the hills round it. Within it: the muster yards; the tax wharves on the bend; the grain market.
+Make it unmistakably River-Bend City, unlike any other city, town or sect in the game.
+
+ITS LOOK: A city of three million laid fifty li along a river bend: wharves and barge lines like a dark comb on the water, grain warehouses and iron yards, vast muster yards where lines of sixteen-year-olds stand in rows, tax wharves piled with levy sacks, endless low roofs along the bank under the March’s beacon pillars on the hills. Colours: river brown-green, iron grey, grain gold, black and red banners. It feels working, heavy, commercial, conscription and cargo. Leave out: skull walls, sea, karst, gardens, a single fortress, elegance.
+
+From the world map it shows as: A city fifty li long laid along a river bend, its wharves and barge lines a dark comb on the water, with the March's beacon pillars on the hills round it. Within it: the muster yards; the tax wharves on the bend; the grain market.
+
+SCALE: it is about 50 li (25 km) across, home to about 3,000,000 mortals, 2,000 at Qi Condensation, 80 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

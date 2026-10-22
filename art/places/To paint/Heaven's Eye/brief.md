@@ -17,11 +17,17 @@ Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML tex
 
 Attached is Heaven's Eye as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
 
-Make it unmistakably Heaven's Eye, unlike any other city, town or sect in the game. What sets it apart: A round sinkhole sixty li across, dark as an eye from above, terraced to the bottom, with cloud pooling in it at dawn and a faint lamp-glow along the council's cliff stairs. Within it: the terraces down the sinkhole wall; the council hall in the cliff; the fields at the bottom that never see noon.
+Make it unmistakably Heaven's Eye, unlike any other city, town or sect in the game.
+
+ITS LOOK: The greatest sinkhole city: a pit sixty li across ringed by karst teeth, its walls cut into ring upon ring of stone terraces for five million people with roofs packed edge to edge, golden lamps in every window, stair-streets and bridges, a council hall carved into the north cliff face halfway down, and green fields at the bottom lost in cloud. Colours: grey limestone, lamp gold, cloud white, dark pine green. It feels vast, vertiginous, dense, a bowl of lights. Leave out: plains, walls and gates, the sea, red banners, a single tower.
+
+From the world map it shows as: A round sinkhole sixty li across, dark as an eye from above, terraced to the bottom, with cloud pooling in it at dawn and a faint lamp-glow along the council's cliff stairs. Within it: the terraces down the sinkhole wall; the council hall in the cliff; the fields at the bottom that never see noon.
+
+SCALE: it is about 60 li (30 km) across, home to about 5,000,000 mortals, 1,500 at Qi Condensation, 50 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -63,15 +69,21 @@ Cells, left to right, top to bottom:
 8. Teahouse 茶楼: A pot of tea buys a seat, and a seat buys whatever the teller heard last night.
 9. Guides 向导: Hunters, herb-gatherers and grave-robbers, each knowing a month’s walk of their trade.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
 Attached is Heaven's Eye as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
 
-Make it unmistakably Heaven's Eye, unlike any other city, town or sect in the game. What sets it apart: A round sinkhole sixty li across, dark as an eye from above, terraced to the bottom, with cloud pooling in it at dawn and a faint lamp-glow along the council's cliff stairs. Within it: the terraces down the sinkhole wall; the council hall in the cliff; the fields at the bottom that never see noon.
+Make it unmistakably Heaven's Eye, unlike any other city, town or sect in the game.
+
+ITS LOOK: The greatest sinkhole city: a pit sixty li across ringed by karst teeth, its walls cut into ring upon ring of stone terraces for five million people with roofs packed edge to edge, golden lamps in every window, stair-streets and bridges, a council hall carved into the north cliff face halfway down, and green fields at the bottom lost in cloud. Colours: grey limestone, lamp gold, cloud white, dark pine green. It feels vast, vertiginous, dense, a bowl of lights. Leave out: plains, walls and gates, the sea, red banners, a single tower.
+
+From the world map it shows as: A round sinkhole sixty li across, dark as an eye from above, terraced to the bottom, with cloud pooling in it at dawn and a faint lamp-glow along the council's cliff stairs. Within it: the terraces down the sinkhole wall; the council hall in the cliff; the fields at the bottom that never see noon.
+
+SCALE: it is about 60 li (30 km) across, home to about 5,000,000 mortals, 1,500 at Qi Condensation, 50 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
@@ -97,15 +109,21 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
 Attached is Heaven's Eye as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
 
-Make it unmistakably Heaven's Eye, unlike any other city, town or sect in the game. What sets it apart: A round sinkhole sixty li across, dark as an eye from above, terraced to the bottom, with cloud pooling in it at dawn and a faint lamp-glow along the council's cliff stairs. Within it: the terraces down the sinkhole wall; the council hall in the cliff; the fields at the bottom that never see noon.
+Make it unmistakably Heaven's Eye, unlike any other city, town or sect in the game.
+
+ITS LOOK: The greatest sinkhole city: a pit sixty li across ringed by karst teeth, its walls cut into ring upon ring of stone terraces for five million people with roofs packed edge to edge, golden lamps in every window, stair-streets and bridges, a council hall carved into the north cliff face halfway down, and green fields at the bottom lost in cloud. Colours: grey limestone, lamp gold, cloud white, dark pine green. It feels vast, vertiginous, dense, a bowl of lights. Leave out: plains, walls and gates, the sea, red banners, a single tower.
+
+From the world map it shows as: A round sinkhole sixty li across, dark as an eye from above, terraced to the bottom, with cloud pooling in it at dawn and a faint lamp-glow along the council's cliff stairs. Within it: the terraces down the sinkhole wall; the council hall in the cliff; the fields at the bottom that never see noon.
+
+SCALE: it is about 60 li (30 km) across, home to about 5,000,000 mortals, 1,500 at Qi Condensation, 50 at Foundation. Paint it at that true size from a nearby height: a great city in its own right that fills the whole view, streets as wide as rivers, its biggest halls the size of hills. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: late golden afternoon under heavy cloud, long shadows. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

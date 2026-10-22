@@ -11,11 +11,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Field of the Broken Tide (Duanchao Yuan 断潮原), a landmark, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Field of the Broken Tide, unlike any other city, town or sect in the game. What sets it apart: White salt flats on the coast scattered with the bones of beasts the size of hills, and on still nights a faint grey shimmer of ranks drawn up across them. Within it: salt flats white with bone; the ghost armies forming up on still nights; artifacts in the salt.
+Make it unmistakably Field of the Broken Tide, unlike any other city, town or sect in the game.
+
+ITS LOOK: Salt flats three hundred li across, white with salt and bone to the horizon: the ribs and skulls of beast-kings the size of hills half sunk in the crust, old rusted blades and armour standing where soldiers fell, scavengers’ pits and sledges, and on still nights faint grey ranks of ghost soldiers drawn up in the haze. Colours: salt white, bone ivory, rust brown, ghost grey. It feels empty, silent, bleached, haunted. Leave out: buildings, walls, green growth, crowds, fire, mountains.
+
+From the world map it shows as: White salt flats on the coast scattered with the bones of beasts the size of hills, and on still nights a faint grey shimmer of ranks drawn up across them. Within it: salt flats white with bone; the ghost armies forming up on still nights; artifacts in the salt.
+
+SCALE: it is about 300 li (150 km) across. Paint it at that true size from a nearby height: its roofs run past the horizon, its walls and great works are cliffs hundreds of metres tall, and a whole tower is a speck in the view. Never a small medieval town.
 
 The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
 
-The light: a storm rolling in, rain curtains and lightning far off. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 

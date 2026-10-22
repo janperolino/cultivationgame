@@ -13,11 +13,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Grain Ford (Liangdu Zhen 粮渡镇), a town, the seat of a county, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Grain Ford, unlike any other city, town or sect in the game. What sets it apart: Granary terraces in tiers along a river crossing, their warding talismans a faint gold net over them. Within it: the granaries; the ford.
+Make it unmistakably Grain Ford, unlike any other city, town or sect in the game.
+
+ITS LOOK: Granaries in long tiers along a river ford: great windowless storehouses with deep thatched or tiled roofs stepped up the bank, each hung with faint gold warding talismans, ox-carts and barges queued at the crossing, tally clerks at counting sheds and tax-gate barriers across the road. Colours: grain gold, river brown, thatch straw, faint talisman gold. It feels orderly, fat, bureaucratic, guarded against theft. Leave out: soldiers drilling, skulls, rock peaks, sea, ornament, towers.
+
+From the world map it shows as: Granary terraces in tiers along a river crossing, their warding talismans a faint gold net over them. Within it: the granaries; the ford.
+
+SCALE: it is about 25 li (13 km) across, home to about 600,000 mortals, 150 at Qi Condensation, 5 at Foundation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -57,13 +63,19 @@ Cells, left to right, top to bottom:
 8. Bounty board 赏榜: Postings nailed three deep, each with its pay and the seal of whoever is paying.
 9. Inn 客栈: A bed, a bath and a lock on the door, paid by the night from your silver.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Grain Ford, unlike any other city, town or sect in the game. What sets it apart: Granary terraces in tiers along a river crossing, their warding talismans a faint gold net over them. Within it: the granaries; the ford.
+Make it unmistakably Grain Ford, unlike any other city, town or sect in the game.
+
+ITS LOOK: Granaries in long tiers along a river ford: great windowless storehouses with deep thatched or tiled roofs stepped up the bank, each hung with faint gold warding talismans, ox-carts and barges queued at the crossing, tally clerks at counting sheds and tax-gate barriers across the road. Colours: grain gold, river brown, thatch straw, faint talisman gold. It feels orderly, fat, bureaucratic, guarded against theft. Leave out: soldiers drilling, skulls, rock peaks, sea, ornament, towers.
+
+From the world map it shows as: Granary terraces in tiers along a river crossing, their warding talismans a faint gold net over them. Within it: the granaries; the ford.
+
+SCALE: it is about 25 li (13 km) across, home to about 600,000 mortals, 150 at Qi Condensation, 5 at Foundation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
@@ -89,13 +101,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Grain Ford, unlike any other city, town or sect in the game. What sets it apart: Granary terraces in tiers along a river crossing, their warding talismans a faint gold net over them. Within it: the granaries; the ford.
+Make it unmistakably Grain Ford, unlike any other city, town or sect in the game.
+
+ITS LOOK: Granaries in long tiers along a river ford: great windowless storehouses with deep thatched or tiled roofs stepped up the bank, each hung with faint gold warding talismans, ox-carts and barges queued at the crossing, tally clerks at counting sheds and tax-gate barriers across the road. Colours: grain gold, river brown, thatch straw, faint talisman gold. It feels orderly, fat, bureaucratic, guarded against theft. Leave out: soldiers drilling, skulls, rock peaks, sea, ornament, towers.
+
+From the world map it shows as: Granary terraces in tiers along a river crossing, their warding talismans a faint gold net over them. Within it: the granaries; the ford.
+
+SCALE: it is about 25 li (13 km) across, home to about 600,000 mortals, 150 at Qi Condensation, 5 at Foundation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

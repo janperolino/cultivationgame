@@ -17,11 +17,17 @@ Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML tex
 
 Attached is Beast-Butcher Gate as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
 
-Make it unmistakably Beast-Butcher Gate, unlike any other city, town or sect in the game. What sets it apart: Three peaks above the karst with their tops sheared flat, the halls on them lit red by the core furnaces, under a blood-red sect array. Within it: the drill yard, where rank is counted in cores; the core vault; racks of frontier sabers.
+Make it unmistakably Beast-Butcher Gate, unlike any other city, town or sect in the game.
+
+ITS LOOK: A sect on three sheared flat peaks joined by arched bridges: sabre racks, a red-lit drill yard on a peak top, core furnaces glowing in the halls, rank-boards of cores taken, hides and bleached beast bones stacked at the foot, all under a blood-red sect array. Colours: blood red, black rock, furnace orange, hide brown. It feels brutal, proud, martial, hungry. Leave out: soft pavilions, gardens, bells and incense, a city, water.
+
+From the world map it shows as: Three peaks above the karst with their tops sheared flat, the halls on them lit red by the core furnaces, under a blood-red sect array. Within it: the drill yard, where rank is counted in cores; the core vault; racks of frontier sabers.
+
+SCALE: it is about 300 li (150 km) across, home to about 20,000 mortals, 3,000 at Qi Condensation, 180 at Foundation, 6 at Core Formation, 1 at Nascent Soul. Paint it at that true size from a nearby height: its roofs run past the horizon, its walls and great works are cliffs hundreds of metres tall, and a whole tower is a speck in the view. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 
@@ -63,15 +69,21 @@ Cells, left to right, top to bottom:
 8. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
 9. Your seat 席位: What the power wants of you this month, and what it gives.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
 Attached is Beast-Butcher Gate as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
 
-Make it unmistakably Beast-Butcher Gate, unlike any other city, town or sect in the game. What sets it apart: Three peaks above the karst with their tops sheared flat, the halls on them lit red by the core furnaces, under a blood-red sect array. Within it: the drill yard, where rank is counted in cores; the core vault; racks of frontier sabers.
+Make it unmistakably Beast-Butcher Gate, unlike any other city, town or sect in the game.
+
+ITS LOOK: A sect on three sheared flat peaks joined by arched bridges: sabre racks, a red-lit drill yard on a peak top, core furnaces glowing in the halls, rank-boards of cores taken, hides and bleached beast bones stacked at the foot, all under a blood-red sect array. Colours: blood red, black rock, furnace orange, hide brown. It feels brutal, proud, martial, hungry. Leave out: soft pavilions, gardens, bells and incense, a city, water.
+
+From the world map it shows as: Three peaks above the karst with their tops sheared flat, the halls on them lit red by the core furnaces, under a blood-red sect array. Within it: the drill yard, where rank is counted in cores; the core vault; racks of frontier sabers.
+
+SCALE: it is about 300 li (150 km) across, home to about 20,000 mortals, 3,000 at Qi Condensation, 180 at Foundation, 6 at Core Formation, 1 at Nascent Soul. Paint it at that true size from a nearby height: its roofs run past the horizon, its walls and great works are cliffs hundreds of metres tall, and a whole tower is a speck in the view. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
@@ -97,15 +109,21 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
 Attached is Beast-Butcher Gate as it is painted on the game's world map, seen from very high: this is the same place up close, so keep its architecture, its colours and the way it sits on the land.
 
-Make it unmistakably Beast-Butcher Gate, unlike any other city, town or sect in the game. What sets it apart: Three peaks above the karst with their tops sheared flat, the halls on them lit red by the core furnaces, under a blood-red sect array. Within it: the drill yard, where rank is counted in cores; the core vault; racks of frontier sabers.
+Make it unmistakably Beast-Butcher Gate, unlike any other city, town or sect in the game.
+
+ITS LOOK: A sect on three sheared flat peaks joined by arched bridges: sabre racks, a red-lit drill yard on a peak top, core furnaces glowing in the halls, rank-boards of cores taken, hides and bleached beast bones stacked at the foot, all under a blood-red sect array. Colours: blood red, black rock, furnace orange, hide brown. It feels brutal, proud, martial, hungry. Leave out: soft pavilions, gardens, bells and incense, a city, water.
+
+From the world map it shows as: Three peaks above the karst with their tops sheared flat, the halls on them lit red by the core furnaces, under a blood-red sect array. Within it: the drill yard, where rank is counted in cores; the core vault; racks of frontier sabers.
+
+SCALE: it is about 300 li (150 km) across, home to about 20,000 mortals, 3,000 at Qi Condensation, 180 at Foundation, 6 at Core Formation, 1 at Nascent Soul. Paint it at that true size from a nearby height: its roofs run past the horizon, its walls and great works are cliffs hundreds of metres tall, and a whole tower is a speck in the view. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a grey dawn, mist low in the valleys and the first sun on the high stone. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

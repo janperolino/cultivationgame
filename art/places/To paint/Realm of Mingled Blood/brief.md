@@ -11,7 +11,11 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Realm of Mingled Blood (Hexue Jing 合血境), a sect behind its gate and array, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Realm of Mingled Blood, unlike any other city, town or sect in the game. What sets it apart: Nothing while it sleeps, its gate a cave mouth in the karst; for the thirty days it opens, a column of green light stands over the cave. Within it: the gate cave in the karst; a ruined village of the one people; a bloodline altar; herb meadows under a green sky.
+Make it unmistakably Realm of Mingled Blood, unlike any other city, town or sect in the game.
+
+ITS LOOK: A green shard world: a gate cave in the karst opens on endless lush meadows under a green sky, with the vine-grown ruins of a village of the one people, round bloodline altars carved with beast and human faces, and herb fields in bloom, no walls and no road. Colours: jade green, sky green, moss and vine, altar stone grey. It feels ancient, lush, still, otherworldly. Leave out: cities, soldiers, red banners, smoke, sea, any karst town.
+
+From the world map it shows as: Nothing while it sleeps, its gate a cave mouth in the karst; for the thirty days it opens, a column of green light stands over the cave. Within it: the gate cave in the karst; a ruined village of the one people; a bloodline altar; herb meadows under a green sky.
 
 The land: old forest, giant trees, roots and moss, light falling in shafts.
 

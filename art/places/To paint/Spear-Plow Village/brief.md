@@ -12,11 +12,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Spear-Plow Village (Qiangli Cun 枪犁村), a village, the seat of a farming county, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Spear-Plow Village, unlike any other city, town or sect in the game. What sets it apart: The county’s fields in a patchwork down the valleys, and a beacon peak over the seat. Within it: fields plowed with spears at hand; a beast-pit.
+Make it unmistakably Spear-Plow Village, unlike any other city, town or sect in the game.
+
+ITS LOOK: The seat of a farming county in a hill valley: terraced spirit-grain fields running up the slopes, farmers ploughing with spears slung or planted at the field edge, a plain timber-and-rammed-earth town of long granary roofs and a county store, a beast-pit fenced with stakes, and a beacon peak standing over it all. Colours: barley gold, ploughed brown, rammed-earth ochre, iron grey spear heads. It feels tough, practical, alert, rural. Leave out: barracks ranks, black-and-red banners, big walls, bazaar crowds, ornament.
+
+From the world map it shows as: The county’s fields in a patchwork down the valleys, and a beacon peak over the seat. Within it: fields plowed with spears at hand; a beast-pit.
+
+SCALE: it is about 15 li (8 km) across, home to about 150,000 mortals, 40 at Qi Condensation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows the whole painting behind a few cards: keep the top-left third calmer and darker (the name and lore sit there) and the bottom quarter calm near ground (a row of door cards sits there); put the place itself in the centre and right.
 
@@ -56,13 +62,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Spear-Plow Village, unlike any other city, town or sect in the game. What sets it apart: The county’s fields in a patchwork down the valleys, and a beacon peak over the seat. Within it: fields plowed with spears at hand; a beast-pit.
+Make it unmistakably Spear-Plow Village, unlike any other city, town or sect in the game.
+
+ITS LOOK: The seat of a farming county in a hill valley: terraced spirit-grain fields running up the slopes, farmers ploughing with spears slung or planted at the field edge, a plain timber-and-rammed-earth town of long granary roofs and a county store, a beast-pit fenced with stakes, and a beacon peak standing over it all. Colours: barley gold, ploughed brown, rammed-earth ochre, iron grey spear heads. It feels tough, practical, alert, rural. Leave out: barracks ranks, black-and-red banners, big walls, bazaar crowds, ornament.
+
+From the world map it shows as: The county’s fields in a patchwork down the valleys, and a beacon peak over the seat. Within it: fields plowed with spears at hand; a beast-pit.
+
+SCALE: it is about 15 li (8 km) across, home to about 150,000 mortals, 40 at Qi Condensation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a bright overcast morning, soft light, colours clear. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 

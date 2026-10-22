@@ -11,11 +11,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Black Jade Vein (Heiyu Mai 黑玉脉), a landmark, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Black Jade Vein, unlike any other city, town or sect in the game. What sets it apart: Gallery mouths and spoil heaps scarring the foot of the needle peaks, a dark seam glinting where the jade breaks the surface. Within it: galleries cut through black jade; the contested middle shafts; spoil heaps at the gallery mouths.
+Make it unmistakably Black Jade Vein, unlike any other city, town or sect in the game.
+
+ITS LOOK: The foot of needle peaks cut through with mine galleries: black jade exposed as a glinting dark seam, timber-braced gallery mouths with spoil heaps at their feet, rope hoists and ore sleds, upper galleries and lower galleries held by two camps, rockfalls and thunder-ape shadows high above. Colours: black jade glint, spoil grey, timber brown, dust haze. It feels harsh, contested, dangerous, dusty. Leave out: towns, gardens, temples, crowds, water, ornamental halls.
+
+From the world map it shows as: Gallery mouths and spoil heaps scarring the foot of the needle peaks, a dark seam glinting where the jade breaks the surface. Within it: galleries cut through black jade; the contested middle shafts; spoil heaps at the gallery mouths.
+
+SCALE: it is about 400 li (200 km) across. Paint it at that true size from a nearby height: its roofs run past the horizon, its walls and great works are cliffs hundreds of metres tall, and a whole tower is a speck in the view. Never a small medieval town.
 
 The land: karst country: stone pillars by the hundred standing out of a sea of cloud, sinkholes and caves.
 
-The light: heavy rain at dusk, every street and roof a mirror. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a moonlit night, silver light on stone and water, lamps warm against it. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
 

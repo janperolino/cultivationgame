@@ -12,11 +12,17 @@ Run them in one chat, the banner first, so the door sheets keep its look.
 ```text
 Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Foot of the Wall (Qiangjiao Cun 墙脚村), a village, the seat of a farming county, as a traveller arriving sees it from a height nearby.
 
-Make it unmistakably Foot of the Wall, unlike any other city, town or sect in the game. What sets it apart: A sprawl in the Wall’s shadow under the smoke of the bone-carters’ kilns. Within it: bone heaps waiting to be built in.
+Make it unmistakably Foot of the Wall, unlike any other city, town or sect in the game.
+
+ITS LOOK: A sprawl in the Wall’s long shadow: carts of bones queuing to the wall, the bone-carters’ kilns smoking, cook-tents and long benches where women feed the patrols, heaps of beast-king bones waiting to be built in, and the Wall itself rising like a cliff behind every roof. Colours: bone white, kiln smoke grey, mud brown, cook-fire orange. It feels grim, working, dusty, in shadow. Leave out: gardens, gilding, markets of luxury, sea, banners, skull-eye gates.
+
+From the world map it shows as: A sprawl in the Wall’s shadow under the smoke of the bone-carters’ kilns. Within it: bone heaps waiting to be built in.
+
+SCALE: it is about 10 li (5 km) across, home to about 120,000 mortals, 60 at Qi Condensation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a snowy night, the roofs white, lamps warm in the cold. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 The game shows the whole painting behind a few cards: keep the top-left third calmer and darker (the name and lore sit there) and the bottom quarter calm near ground (a row of door cards sits there); put the place itself in the centre and right.
 
@@ -56,13 +62,19 @@ Cells, left to right, top to bottom:
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
-People only small, in the middle distance, faceless; the place is the subject.
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
 
-Make it unmistakably Foot of the Wall, unlike any other city, town or sect in the game. What sets it apart: A sprawl in the Wall’s shadow under the smoke of the bone-carters’ kilns. Within it: bone heaps waiting to be built in.
+Make it unmistakably Foot of the Wall, unlike any other city, town or sect in the game.
+
+ITS LOOK: A sprawl in the Wall’s long shadow: carts of bones queuing to the wall, the bone-carters’ kilns smoking, cook-tents and long benches where women feed the patrols, heaps of beast-king bones waiting to be built in, and the Wall itself rising like a cliff behind every roof. Colours: bone white, kiln smoke grey, mud brown, cook-fire orange. It feels grim, working, dusty, in shadow. Leave out: gardens, gilding, markets of luxury, sea, banners, skull-eye gates.
+
+From the world map it shows as: A sprawl in the Wall’s shadow under the smoke of the bone-carters’ kilns. Within it: bone heaps waiting to be built in.
+
+SCALE: it is about 10 li (5 km) across, home to about 120,000 mortals, 60 at Qi Condensation. Paint it at that true size from a nearby height: a large town spreading across its valley or terraces, thousands of roofs, its cultivators’ works towering over them. Never a small medieval town.
 
 The land: folded green hill country, terraced fields in the valleys, beacon peaks on the ridgelines.
 
-The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+The light: a snowy night, the roofs white, lamps warm in the cold. Keep the whole on the dark side, so gold and ivory text reads over it.
 
 STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
 
