@@ -42,7 +42,7 @@ export const LICENCES = [
 
 /** Each kind's budget in KB, as loading hygiene: a long sound is trimmed, never left out. */
 export const KIND_BUDGET_KB: Record<SoundKind, number> = {
-  effect: 50,
+  effect: 96,
   loop: 512,
   ambience: 2048,
   music: 6144,
@@ -178,6 +178,18 @@ export function guessOf(file: string): {
   return { source: '', licence: 'CC0', credit: '', guessed: true };
 }
 
+/**
+ * The longest each kind ships, in seconds, and the fade at the cut (S1.1): a long recording (a
+ * gong's whole decay, a ten-minute field take) is cut to fit its budget rather than turned away,
+ * and the manifest's `trim` picks another stretch.
+ */
+export const KIND_MAX_S: Record<SoundKind, { s: number; fade: number } | null> = {
+  effect: { s: 7.5, fade: 1.5 },
+  loop: { s: 40, fade: 0.05 },
+  ambience: { s: 160, fade: 0.05 },
+  music: null,
+};
+
 /** ffmpeg's arguments for a sound: trimmed, a leading silence cut from an effect, loudness evened. */
 export function ffmpegArgs(
   e: SoundEntry,
@@ -189,6 +201,8 @@ export function ffmpegArgs(
   const filters: string[] = [];
   if (kind === 'effect')
     filters.push('silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.01');
+  const max = KIND_MAX_S[kind];
+  if (max) filters.push(`atrim=end=${max.s}`, `afade=t=out:st=${max.s - max.fade}:d=${max.fade}`);
   filters.push(`loudnorm=I=${enc.lufs}:TP=-1.5:LRA=11`);
   if (e.gainDb) filters.push(`volume=${e.gainDb}dB`);
   const trim = e.trim ? ['-ss', String(e.trim[0]), '-to', String(e.trim[1])] : [];

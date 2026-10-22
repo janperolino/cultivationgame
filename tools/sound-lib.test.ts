@@ -61,6 +61,8 @@ describe('the sound manifest', () => {
     // A loop keeps its head, so it loops without a jump.
     const loop = ffmpegArgs(entry({ id: 'feel-qi-hum' }), 'loop', 'in.wav', 'o.mp3');
     expect(loop.join(' ')).not.toContain('silenceremove');
+    // A long take is cut to fit, an effect with a fade.
+    expect(fx.join(' ')).toContain('atrim=end=7.5,afade=t=out:st=6:d=1.5');
   });
 
   it("guesses a download's page and credit from its name, Freesound's and Pixabay's", () => {
@@ -102,7 +104,7 @@ describe('npm run sound', () => {
   it('fails on a missing source and on a sound over its budget', () => {
     const root = project([entry(), entry({ id: 'ui-tab' })]);
     writeFileSync(join(root, 'sound', 'inbox', 'ui-tab.wav'), 'x');
-    const r = runSound(root, fakeEncode(80));
+    const r = runSound(root, fakeEncode(120));
     expect(r.errors.some((e) => e.startsWith('ui-click: no source'))).toBe(true);
     expect(r.errors.some((e) => e.startsWith('ui-tab:') && e.includes('budget'))).toBe(true);
   });
