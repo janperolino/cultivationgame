@@ -73,12 +73,12 @@ In this order (planning, 2026-10-21, Jan's call: the first hour's art, sound and
 - [x] F1 The feel pass
 - [x] S1 The sound layer
 - [ ] S1.1 Sound, the second pass (from Jan's K12/S1 playtest: fewer retro sounds, qi and the breakthrough's charge, the quests' chimes, and a page to pick sounds on)
+- [ ] A6 Places and shops (moved up after S1.1, Jan's call, 2026-10-22: a layout for each kind of place, settled in its design talk; its banners and door sheets painted ahead as Jan's ChatGPT time allows, the places near the starts first)
 - [ ] A3.1 The cave repainted
 - [ ] A9 Chronicle, Settings, creation and Combat (with the journal and the guides)
 - [ ] A12 The intros
 - [ ] F2 The haul
 - [ ] A11 Content art: items, beasts, faces and vignettes (trickles like A5.4, its items and faces from the start)
-- [ ] A6 Places and shops (its banners and door sheets painted ahead as Jan's ChatGPT time allows, the places near the starts first)
 - [ ] A5.4 The seeded sites' pieces, and the Border Wilds' places painted in
 - [ ] A7 The Trees
 - [ ] A8 Bag, Character and People
@@ -274,6 +274,7 @@ Since the three lines (2026-10-20), each line adds its entries under its own hea
 
 ### Side line
 
+- 2026-10-22, planning: A6 Places and shops moved up to just after S1.1 (Jan's call), with a design talk on a layout for each kind of place running beside it (Design: place layouts, one per kind).
 - 2026-10-22, planning: S1.1 Sound, the second pass, added after S1 in the art overhaul's order (Jan's K12/S1 playtest, passed on by the top hub's Living world split session): sources off the retro side, new cues for qi, the breakthrough's charge and the quests, and a sound picker. The orbs' feel went to the playtest's code fixes; pay for duty and jobs is parked.
 - 2026-10-22, planning: Open questions gone through after the crafts play checkpoint (Jan's yes to the sort). Eight left for `docs/plan-archive.md`: refining and talismans paying queued, the K line's code review leftovers, the hand before the queue, the minigames as the whole craft (a sketch in design.md), the dev console notes, `setPlaces` (wired since P3.6), and trees more tree-like (now a sentence on design.md's Branches in every tree). The flying sword keeps a short line for the living world's long travel; body and soul past Foundation and no qi method reaching Core are tagged for Core Formation's design. For the AI half left for the friends' line (`MOTIVE_AGAINST` is read in `check.ts` now).
 - 2026-10-22, planning: plan.md thinned (small calls to `docs/small-calls.md`, the review queue to `docs/review-queue.md`, the finished Log and Status to `docs/plan-archive.md`; Jan's call), from 274 KB to 106 KB.
