@@ -8,6 +8,7 @@ import {
   checkMaps,
   checkScreens,
   keyOut,
+  screenOf,
   outputsOf,
   runArt,
   type ArtAsset,
@@ -74,7 +75,7 @@ describe('the manifest checks', () => {
       ],
     }).join('\n');
     expect(problems).toMatch(/2 pieces don't fit 1×1 cells/);
-    expect(problems).toMatch(/common-slab: only an ornament sheet has cells/);
+    expect(problems).toMatch(/common-slab: only an ornament or a scene sheet has cells/);
   });
 
   it('writes a sheet as a file a piece', () => {
@@ -223,6 +224,43 @@ describe('npm run art', () => {
     expect(checkMaps(root, m).join()).toMatch(/its art is 0.0 MB, over its 0.001 MB/);
     expect(checkMaps(root, { ...m, maps: [{ region: 'qm-test', budgetMB: 1 }] })).toEqual([]);
   });
+
+  it('cuts a place’s door sheet into scenes that keep their shape, and waits on a trickle', async () => {
+    const doors: ArtAsset = {
+      id: 'place-test-doors-1',
+      kind: 'scene',
+      out: 'src/ui/art/places/qm-test/doors-1',
+      width: 240,
+      quality: 84,
+      budgetKB: 60,
+      prompt: 'A door sheet.',
+      cells: [3, 3],
+      pieces: ['stall', 'alchemy', 'refiner'],
+    };
+    const banner: ArtAsset = {
+      id: 'place-test-banner',
+      kind: 'scene',
+      out: 'src/ui/art/places/qm-test/banner.webp',
+      width: 960,
+      quality: 84,
+      budgetKB: 300,
+      prompt: 'A banner.',
+      trickle: true,
+    };
+    await project([doors, banner], {
+      'place-test-doors-1.png': await noise(768).then((b) =>
+        sharp(b).resize(768, 512, { fit: 'fill' }).png().toBuffer(),
+      ),
+    });
+    const r = await runArt(root);
+    expect(r.errors).toEqual([]);
+    expect(r.waiting).toEqual(['place-test-banner']);
+    const meta = await sharp(join(root, 'src/ui/art/places/qm-test/doors-1/stall.webp')).metadata();
+    expect(meta.width).toBe(240);
+    expect(Math.abs(meta.height! - 160)).toBeLessThanOrEqual(1); // a third of 512, rounded
+    expect(screenOf('place-test-doors-1')).toBe('place-test');
+    expect(screenOf('place-test-banner')).toBe('place-test');
+  }, 20_000);
 
   it('fails a missing source and a stray inbox file', async () => {
     await project([frame], { 'stray.png': await testFrame() });

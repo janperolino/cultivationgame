@@ -41,7 +41,7 @@ import { daysPerRealMs } from '../core/loop.ts';
 import { band, bandAt, depthInfo, pullsIn, qiAt } from '../core/map/depth.ts';
 import { setStance, setVeil, veilReach, waiting } from '../core/map/encounters.ts';
 import { known, sightAt } from '../core/map/fog.ts';
-import { enterAt, gateOf, placeKindOf } from '../core/map/gate.ts';
+import { enterAt, gateOf, placeKindOf, standsAt } from '../core/map/gate.ts';
 import {
   askToJoin,
   entryOf,
@@ -167,11 +167,41 @@ export function MapScreen() {
     setWas(inside);
     if (!inside) setLooking(null);
   }
+  // A gated place shut to you opens as the hall shut (A6): you look at its gate, not go in.
+  const [atGate, setAtGate] = useState<string | null>(null);
   if (!game || !map || !game.map) return <p className="muted">Unrolling the map…</p>;
   const place = inside ? placeById(map, inside) : undefined;
   if (place && looking !== inside)
-    return <PlaceScreen game={game} map={map} place={place} onMap={() => setLooking(inside)} />;
-  return <MapView game={game} map={map} life={game.map} onGoIn={() => setLooking(null)} />;
+    return (
+      <PlaceScreen
+        key={place.id}
+        game={game}
+        map={map}
+        place={place}
+        onMap={() => setLooking(inside)}
+      />
+    );
+  const gated = !inside && atGate ? placeById(map, atGate) : undefined;
+  if (gated && standsAt(game, gated))
+    return (
+      <PlaceScreen
+        key={`gate:${gated.id}`}
+        game={game}
+        map={map}
+        place={gated}
+        shut
+        onMap={() => setAtGate(null)}
+      />
+    );
+  return (
+    <MapView
+      game={game}
+      map={map}
+      life={game.map}
+      onGoIn={() => setLooking(null)}
+      onGate={setAtGate}
+    />
+  );
 }
 
 function MapView({
@@ -179,11 +209,13 @@ function MapView({
   map,
   life,
   onGoIn,
+  onGate,
 }: {
   game: GameState;
   map: RegionMap;
   life: MapLife;
   onGoIn: () => void;
+  onGate: (id: string) => void;
 }) {
   const mapAct = useGame((s) => s.mapAct);
   const stage = useRef<HTMLDivElement>(null);
@@ -416,7 +448,9 @@ function MapView({
     if (atPlace && placeKindOf(atPlace)) {
       const gate = gateOf(game, map, atPlace);
       const goIn = (bribe = false) => {
-        if (!act((s) => enterAt(s, map, atPlace, { bribe }))) onGoIn();
+        // A shut gate is looked at from outside: its screen shows the hall shut (A6).
+        if (gate.kind === 'shut' && placeKindOf(atPlace) === 'gate') onGate(atPlace.id);
+        else if (!act((s) => enterAt(s, map, atPlace, { bribe }))) onGoIn();
       };
       if (life.inside === atPlace.id)
         items.push({ t: 'Go back in', s: 'its own screen', run: onGoIn });
