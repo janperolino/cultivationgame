@@ -17,7 +17,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { extname, join } from 'node:path';
+import { dirname, extname, isAbsolute, join, resolve } from 'node:path';
 import ffmpegPath from 'ffmpeg-static';
 import { z } from 'zod';
 import { CUES, cueInfo, type SoundKind } from '../src/ui/sound/table.ts';
@@ -39,6 +39,7 @@ export const LICENCES = [
 /** Each kind's budget in KB, as loading hygiene: a long sound is trimmed, never left out. */
 export const KIND_BUDGET_KB: Record<SoundKind, number> = {
   effect: 50,
+  loop: 512,
   ambience: 2048,
   music: 6144,
 };
@@ -46,9 +47,29 @@ export const KIND_BUDGET_KB: Record<SoundKind, number> = {
 /** How each kind is encoded: channels, bitrate and loudness (LUFS). */
 const ENCODE: Record<SoundKind, { channels: number; kbps: number; lufs: number }> = {
   effect: { channels: 1, kbps: 96, lufs: -16 },
+  loop: { channels: 1, kbps: 96, lufs: -20 },
   ambience: { channels: 2, kbps: 96, lufs: -24 },
   music: { channels: 2, kbps: 128, lufs: -18 },
 };
+
+/**
+ * Where the sounds that aren't committed live (inbox, source, takes): the main checkout's sound/,
+ * so every worktree shares what Jan dropped in and the originals outlive a worktree (S1.1). A
+ * folder outside git keeps its own.
+ */
+export function soundHome(root: string): string {
+  try {
+    const common = execFileSync('git', ['rev-parse', '--git-common-dir'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    const dir = isAbsolute(common) ? common : resolve(root, common);
+    return dirname(dir);
+  } catch {
+    return root;
+  }
+}
 
 export const AUDIO_EXTS = ['.mp3', '.wav', '.ogg', '.flac', '.m4a', '.aac', '.opus', '.webm'];
 
@@ -122,6 +143,37 @@ export function sourceOf(dir: string, id: string): string | null {
   return f ? join(dir, f) : null;
 }
 
+/**
+ * A downloaded file's source and credit, from its name: Freesound's `<id>__<user>__<name>`, and
+ * Pixabay's `<author>-<title>-<id>` (its pages sit behind Cloudflare, so nothing is fetched). A guess, for Jan to check on the
+ * page before the picker ships it.
+ */
+export function guessOf(file: string): {
+  source: string;
+  licence: string;
+  credit: string;
+  guessed: boolean;
+} {
+  const base = file.slice(0, file.length - extname(file).length);
+  const fs = base.match(/^(\d+)__(.+?)__/);
+  if (fs)
+    return {
+      source: `https://freesound.org/s/${fs[1]}/`,
+      licence: 'CC0',
+      credit: `${fs[2]} (freesound.org)`,
+      guessed: true,
+    };
+  const px = base.match(/^([^-]+)-.*-(\d{3,})$/);
+  if (px)
+    return {
+      source: `https://pixabay.com/sound-effects/id-${px[2]}/`,
+      licence: 'Pixabay',
+      credit: `${px[1]} (Pixabay)`,
+      guessed: true,
+    };
+  return { source: '', licence: 'CC0', credit: '', guessed: true };
+}
+
 /** ffmpeg's arguments for a sound: trimmed, a leading silence cut from an effect, loudness evened. */
 export function ffmpegArgs(
   e: SoundEntry,
@@ -167,7 +219,11 @@ const hashOf = (file: string, e: SoundEntry) =>
     .digest('hex')
     .slice(0, 12);
 
-export function runSound(root: string, encode = encodeWithFfmpeg): SoundReport {
+export function runSound(
+  root: string,
+  encode = encodeWithFfmpeg,
+  home = soundHome(root),
+): SoundReport {
   const report: SoundReport = { moved: [], written: [], kept: [], removed: [], errors: [] };
   let manifest: { sounds: SoundEntry[] };
   try {
@@ -176,8 +232,8 @@ export function runSound(root: string, encode = encodeWithFfmpeg): SoundReport {
     report.errors.push(`sound/manifest.json: ${err instanceof Error ? err.message : String(err)}`);
     return report;
   }
-  const inbox = join(root, 'sound', 'inbox');
-  const source = join(root, 'sound', 'source');
+  const inbox = join(home, 'sound', 'inbox');
+  const source = join(home, 'sound', 'source');
   const out = join(root, 'public', 'sound');
   const shippedPath = join(root, 'src', 'ui', 'sound', 'shipped.json');
   mkdirSync(source, { recursive: true });

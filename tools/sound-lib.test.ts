@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { ffmpegArgs, manifestSchema, runSound, type SoundEntry } from './sound-lib.ts';
+import { ffmpegArgs, guessOf, manifestSchema, runSound, type SoundEntry } from './sound-lib.ts';
 
 const entry = (over: Partial<SoundEntry> = {}): SoundEntry => ({
   id: 'ui-click',
@@ -58,6 +58,23 @@ describe('the sound manifest', () => {
     );
     expect(music.join(' ')).toContain('-b:a 128k');
     expect(music.join(' ')).toContain('-ss 2 -to 90');
+    // A loop keeps its head, so it loops without a jump.
+    const loop = ffmpegArgs(entry({ id: 'feel-qi-hum' }), 'loop', 'in.wav', 'o.mp3');
+    expect(loop.join(' ')).not.toContain('silenceremove');
+  });
+
+  it("guesses a download's page and credit from its name, Freesound's and Pixabay's", () => {
+    expect(guessOf('123456__someone__gong-swell.wav')).toMatchObject({
+      source: 'https://freesound.org/s/123456/',
+      credit: 'someone (freesound.org)',
+      licence: 'CC0',
+    });
+    expect(guessOf('primalhousemusic-17-long-gong-shimmer-212955.mp3')).toMatchObject({
+      source: 'https://pixabay.com/sound-effects/id-212955/',
+      credit: 'primalhousemusic (Pixabay)',
+      licence: 'Pixabay',
+    });
+    expect(guessOf('gong.wav').source).toBe('');
   });
 });
 
@@ -88,6 +105,17 @@ describe('npm run sound', () => {
     const r = runSound(root, fakeEncode(80));
     expect(r.errors.some((e) => e.startsWith('ui-click: no source'))).toBe(true);
     expect(r.errors.some((e) => e.startsWith('ui-tab:') && e.includes('budget'))).toBe(true);
+  });
+
+  it('reads the inbox and keeps the originals in the sound home, shipping into the project', () => {
+    const root = project([entry()]);
+    const home = mkdtempSync(join(tmpdir(), 'sound-home-'));
+    dirs.push(home);
+    mkdirSync(join(home, 'sound', 'inbox'), { recursive: true });
+    writeFileSync(join(home, 'sound', 'inbox', 'ui-click.ogg'), 'x');
+    expect(runSound(root, fakeEncode(), home).errors).toEqual([]);
+    expect(existsSync(join(home, 'sound', 'source', 'ui-click.ogg'))).toBe(true);
+    expect(existsSync(join(root, 'public', 'sound', 'ui-click.mp3'))).toBe(true);
   });
 
   it('removes a shipped file no entry names any more', () => {

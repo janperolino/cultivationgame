@@ -5,6 +5,7 @@ import { ACTION_FORMS, BEAST_FORMS, DAMAGE_TYPES, TECHNIQUE_FORMS } from '../../
 import { newLife, type GameState } from '../../core/state.ts';
 import { shotLayers } from './combat.ts';
 import { momentsOf } from './moments.ts';
+import { chargeAt, gateRate, humAt } from './qi.ts';
 import { breakMs, isNight, nextTrack, scapeOf, type Where } from './scape.ts';
 import { CUES, cueInfo, ELEMENT_CUE, FORM_CUE, MUSIC_SETS } from './table.ts';
 
@@ -166,5 +167,43 @@ describe('the moments a change plays', () => {
       },
     };
     expect(momentsOf(was, now)).toEqual(['tree-node', 'bag-equip']);
+  });
+
+  it("chimes a quest's step and plays its own sound when it is handed in", () => {
+    const base = life();
+    const q = { id: 'some-quest', taken: 0, step: 0, opened: 0, handed: null as number | null };
+    const at = (over: Partial<typeof q>) => ({
+      ...base,
+      journal: { quests: [{ ...q, ...over }], followed: null },
+    });
+    const was = at({});
+    expect(momentsOf(was, at({ step: 1 }))).toEqual(['quest-step']);
+    expect(momentsOf(at({ step: 2 }), at({ step: 2, handed: 5 }))).toEqual(['quest-done']);
+    // A quest just taken is neither.
+    expect(momentsOf(base, was)).toEqual([]);
+  });
+});
+
+describe("qi's sounds", () => {
+  it('climbs the five-note scale a gate at a time', () => {
+    const rates = [1, 2, 3, 4, 5, 6].map(gateRate);
+    expect(rates[0]).toBe(1);
+    for (let i = 1; i < rates.length; i++) expect(rates[i]!).toBeGreaterThan(rates[i - 1]!);
+    expect(rates[5]).toBeCloseTo(2, 5);
+  });
+
+  it('raises the charge through the race and runs a great gate deeper', () => {
+    const start = chargeAt(0, false);
+    const mid = chargeAt(9, false);
+    const end = chargeAt(14, false);
+    expect(mid.level).toBeGreaterThan(start.level);
+    expect(end.level).toBeCloseTo(1);
+    expect(end.rate).toBeGreaterThan(mid.rate);
+    expect(chargeAt(14, true).rate).toBeLessThan(end.rate);
+  });
+
+  it('swells the hum as the bar fills, and holds it past full', () => {
+    expect(humAt(1).level).toBeGreaterThan(humAt(0).level);
+    expect(humAt(1.4)).toEqual(humAt(1));
   });
 });

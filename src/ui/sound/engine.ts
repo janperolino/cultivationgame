@@ -10,7 +10,7 @@ import { cueInfo, MUSIC_SETS, type EffectGroup, type MusicSet } from './table.ts
 
 export interface Shipped {
   id: string;
-  kind: 'effect' | 'ambience' | 'music';
+  kind: 'effect' | 'loop' | 'ambience' | 'music';
   file: string;
   credit: string;
 }
@@ -45,6 +45,14 @@ interface Deck {
   gain: GainNode;
 }
 
+/** A loop held on the effects (S1.1): qi's hum, the breakthrough's charge. */
+interface Hold {
+  source: AudioBufferSourceNode | null;
+  gain: GainNode;
+  /** Wanted: still held, so a buffer that decodes late starts. */
+  on: boolean;
+}
+
 interface Loop {
   source: AudioBufferSourceNode | null;
   gain: GainNode;
@@ -67,6 +75,7 @@ export class SoundEngine {
   private readonly lastPlayed = new Map<string, number>();
   private volumes: Volumes = { master: 80, music: 60, ambience: 50, effects: 80, muted: false };
   private readonly loops = new Map<string, Loop>();
+  private readonly holds = new Map<string, Hold>();
   private wantAmbience: AmbienceLayer[] = [];
   private set: MusicSet | null = null;
   private wantDuck = 1;
@@ -159,7 +168,9 @@ export class SoundEngine {
   /** Decodes a group's effects ahead of need: the UI's at the start, crafts' and combat's later. */
   async preload(group: EffectGroup): Promise<void> {
     if (!this.ctx) return;
-    const ids = SHIPPED.filter((s) => s.kind === 'effect' && cueInfo(s.id)?.group === group);
+    const ids = SHIPPED.filter(
+      (s) => (s.kind === 'effect' || s.kind === 'loop') && (cueInfo(s.id)?.group ?? 'ui') === group,
+    );
     await Promise.all(ids.map((s) => this.load(s.id)));
   }
 
@@ -190,6 +201,55 @@ export class SoundEngine {
       gain.connect(this.effects);
       src.start(ctx.currentTime + (o.delay ?? 0) / 1000);
     });
+  }
+
+  // ---------------------------------------------------------------- held loops
+
+  /**
+   * Holds a loop on the effects at a level and a rate, ramping there over `over` seconds; the
+   * first call starts it, later ones move it (a charge rising, a hum swelling as the bar fills).
+   */
+  hold(id: string, level: number, rate = 1, over = 0.4): void {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state !== 'running' || !this.files.has(id)) return;
+    let h = this.holds.get(id);
+    if (!h) {
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.connect(this.effects);
+      h = { source: null, gain, on: true };
+      this.holds.set(id, h);
+      const held = h;
+      void this.load(id).then((buffer) => {
+        if (!buffer || !held.on || held.source || !this.ctx) return;
+        const src = this.ctx.createBufferSource();
+        src.buffer = buffer;
+        src.loop = true;
+        src.playbackRate.value = rate;
+        src.connect(held.gain);
+        src.start();
+        held.source = src;
+      });
+    }
+    h.on = true;
+    this.ramp(h.gain.gain, level, over);
+    if (h.source) this.ramp(h.source.playbackRate, rate, over);
+  }
+
+  /** Lets a held loop go, fading over `over` seconds. */
+  release(id: string, over = 0.6): void {
+    const h = this.holds.get(id);
+    if (!h || !this.ctx) return;
+    this.holds.delete(id);
+    h.on = false;
+    this.ramp(h.gain.gain, 0, over);
+    window.setTimeout(
+      () => {
+        h.source?.stop();
+        h.gain.disconnect();
+      },
+      over * 1000 + 100,
+    );
   }
 
   // ---------------------------------------------------------------- ambience
@@ -342,6 +402,7 @@ export class SoundEngine {
       `Audio ${this.ctx?.state ?? 'not started'}; ${this.files.size} sounds shipped.`,
       `Music: ${this.set ?? 'none'}, ${this.track && el ? `${this.track} at ${el.currentTime.toFixed(0)} s of ${el.duration.toFixed(0)}` : this.breakTimer ? 'in a break' : 'silent'}, duck ${this.wantDuck}.`,
       `Ambience: ${loops.join(', ') || 'none'}.`,
+      `Held: ${[...this.holds].map(([id, h]) => `${id} ${h.gain.gain.value.toFixed(2)}`).join(', ') || 'none'}.`,
     ];
   }
 
