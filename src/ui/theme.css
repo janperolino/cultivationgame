@@ -8924,13 +8924,16 @@ p.map-above {
 
 .place-card-pic {
   position: absolute;
-  inset: 0;
+  inset: 0 0 46px;
 }
 
+/* The scene shows above the label, never under it, its upper middle kept (the sheet asks for the
+   subject in the upper two thirds). */
 .place-card-pic img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: 50% 38%;
 }
 
 /* A door without its picture yet: the plain kit card, hatched, its hanzi faint. */
@@ -8959,8 +8962,11 @@ p.map-above {
   display: flex;
   gap: 12px;
   align-items: center;
-  padding: 10px 14px 11px;
-  background: linear-gradient(0deg, rgb(6 7 10 / 0.98) 60%, rgb(6 7 10 / 0.7));
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 7px 14px 8px;
+  background: rgb(6 7 10 / 0.98);
+  border-top: 1px solid var(--line-faint);
 }
 
 .place-card-seal {

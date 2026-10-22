@@ -276,11 +276,19 @@ async function build(a: ArtAsset, src: string, root: string): Promise<string[]> 
     const { width, height } = await sharp(sheet.data, { raw: sheet.info }).metadata();
     const cw = Math.floor(width! / a.cells[0]);
     const ch = Math.floor(height! / a.cells[1]);
+    // GPT draws a hairline between a scene sheet's cells and never quite on the thirds, so a door's
+    // picture is cut 3% inside its cell (A6).
+    const trim = a.kind === 'scene' ? Math.round(Math.min(cw, ch) * 0.03) : 0;
     for (const [i, file] of files.entries()) {
       const col = i % a.cells[0];
       const row = Math.floor(i / a.cells[0]);
       await sharp(sheet.data, { raw: sheet.info })
-        .extract({ left: col * cw, top: row * ch, width: cw, height: ch })
+        .extract({
+          left: col * cw + trim,
+          top: row * ch + trim,
+          width: cw - 2 * trim,
+          height: ch - 2 * trim,
+        })
         // An ornament sits in a square; a scene's piece (a door's picture) keeps its cell's shape.
         .resize(
           a.kind === 'scene'

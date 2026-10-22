@@ -257,7 +257,8 @@ describe('npm run art', () => {
     expect(r.waiting).toEqual(['place-test-banner']);
     const meta = await sharp(join(root, 'src/ui/art/places/qm-test/doors-1/stall.webp')).metadata();
     expect(meta.width).toBe(240);
-    expect(Math.abs(meta.height! - 160)).toBeLessThanOrEqual(1); // a third of 512, rounded
+    // The cell's shape kept, cut 3% inside its edges: 246 × 160 at 240 wide.
+    expect(Math.abs(meta.height! - 156)).toBeLessThanOrEqual(1);
     expect(screenOf('place-test-doors-1')).toBe('place-test');
     expect(screenOf('place-test-banner')).toBe('place-test');
   }, 20_000);

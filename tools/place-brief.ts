@@ -17,7 +17,7 @@ import { ensureMap, mapOf } from '../src/core/map/travel.ts';
 import { placeKindOf } from '../src/core/map/gate.ts';
 import { isMissionHall } from '../src/core/map/board.ts';
 import { seatPowerAt } from '../src/core/joining.ts';
-import { isOrganization, organization, theName } from '../src/core/organizations.ts';
+import { isOrganization, theName } from '../src/core/organizations.ts';
 import type { MapPlace } from '../src/core/map/region.ts';
 import {
   doorsOf,
@@ -229,7 +229,6 @@ const homes = Object.values(data.content.homes)
   .filter(Boolean);
 const nearStart = (p: { x: number; y: number }) =>
   Math.min(...homes.map((h) => Math.hypot(h.x - p.x, h.y - p.y)));
-const powersSeen = new Set<string>();
 
 for (const p of map.places) {
   const kind = placeKindOf(p);
@@ -264,9 +263,24 @@ for (const p of map.places) {
       hanzi: undefined,
       art: 'hall',
     });
+  // A power whose seat stands here (the Guild in the City, the March at Pacified Fort) paints its
+  // hall with the place, so one site's brief covers every picture shown there (Jan's call): its
+  // doors on sheets of their own after the place's, so the place's sheets keep their cells.
+  const housed = Object.entries(data.content.homes)
+    .filter(([pow, h]) => h === p.id && pow !== p.id && isOrganization(pow))
+    .map(([pow]) => pow);
+  // The power's own map place (the Guild's) paints with the place it stands in.
+  const home = data.content.homes[p.id];
+  if (home && home !== p.id) continue;
   if (list.length === 0 && !e?.fromAbove) continue;
   const sheets: Door[][] = [];
   for (let i = 0; i < list.length; i += 9) sheets.push(list.slice(i, i + 9));
+  for (const pow of housed) {
+    const pd = hallDoors(power === pow ? doors.filter((d) => d.group === 'power') : [], pow).map(
+      (d) => ({ ...d, name: `${d.name} (${theName(pow)})` }),
+    );
+    for (let i = 0; i < pd.length; i += 9) sheets.push(pd.slice(i, i + 9));
+  }
   briefs.push({
     b: {
       id: p.id,
@@ -282,37 +296,6 @@ for (const p of map.places) {
     sheets,
     near: p.id === data.content.defaultHome ? -1 : nearStart(p),
   });
-  // A power seated at a place but no place of its own (the March at Pacified Fort): its own brief.
-  if (
-    power &&
-    !own &&
-    isOrganization(power) &&
-    !map.places.some((x) => x.id === power) &&
-    !powersSeen.has(power)
-  ) {
-    powersSeen.add(power);
-    const org = organization(power);
-    const pe = byId.get(power);
-    const pd = hallDoors(
-      doors.filter((d) => d.group === 'power'),
-      power,
-    );
-    briefs.push({
-      b: {
-        id: power,
-        name: org.name,
-        hanzi: org.hanzi,
-        pinyin: org.row.pinyin,
-        what: `the hall of ${theName(power)} at ${p.name}`,
-        layout: 'hall',
-        doors: pd,
-        about: about(pe, map.name),
-        fromAbove: `${theName(power)}'s own hall inside ${p.name}: ${pe?.fromAbove ?? ''}`,
-      },
-      sheets: [pd.slice(0, 9), ...(pd.length > 9 ? [pd.slice(9)] : [])],
-      near: nearStart(p) + 1,
-    });
-  }
 }
 
 briefs.sort((a, z) => a.near - z.near);

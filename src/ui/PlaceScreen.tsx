@@ -9,6 +9,7 @@
 // each kind of door its room, Enter opens the door's counter (PlaceCounters.tsx) as a plain room.
 import { useEffect, useState, type ReactNode } from 'react';
 import { PLACE_KIND_INFO } from '../content/map/places.ts';
+import { regionData } from '../content/map/index.ts';
 import { capitalize } from '../content/words.ts';
 import { QI_NAMES, TERRAIN_NAMES } from '../content/map/travel.ts';
 import { REALM_IDS, realm, realmIdFromName, type RealmId } from '../content/realms.ts';
@@ -119,8 +120,17 @@ export function PlaceScreen({ game, map, place, onMap, shut = false }: Props) {
     endGuide('place-doors');
     setRoom(id);
   };
-  // The art a door or the banner reads: a power's own when you stand in its hall, else the place's.
-  const artAt = view !== 'place' && power && bannerArt(power) ? power : place.id;
+  // The art a door or the banner reads: in a power's hall, its own, else that of the place its seat
+  // stands in (the Guild's hall is painted with the City's sheets), else this place's.
+  const home = power ? regionData(map.id)?.content.homes[power] : undefined;
+  const artAt =
+    view !== 'place' && power
+      ? bannerArt(power)
+        ? power
+        : home && bannerArt(home)
+          ? home
+          : place.id
+      : place.id;
   const whole = view === 'place' && (layout === 'village' || layout === 'site');
 
   // What's under the banner: a room when a door is open, else the view's layout.
