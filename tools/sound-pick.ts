@@ -1,8 +1,8 @@
 // `npm run sound:pick` (docs/art-pipeline.md § Sound): the sound picker at http://localhost:4322.
 // Every cue in a row by what it is (menu and navigation, feel, qi and the breakthrough, quests,
 // things, combat, ambience, music), what it plays on and what to listen for, then its takes side
-// by side: the one shipped now, what Jan dropped in sound/inbox/<cue>/, and Kenney's recorded
-// packs from `npm run sound:find`. A tile plays at a click or its number key (↑ and ↓ move between
+// by side: the one shipped now and what Jan dropped in sound/inbox/<cue>/ (Kenney's packs left
+// out: Jan heard all of them as retro in S1.1's talk). A tile plays at a click or its number key (↑ and ↓ move between
 // rows); Pick writes the manifest with the take's source, licence and credit and makes the MP3s at
 // once, so the game hears it on its next reload (S1.1).
 
@@ -18,7 +18,6 @@ import {
 import { createServer, type ServerResponse } from 'node:http';
 import { extname, join, normalize } from 'node:path';
 import { CUES, type CueInfo } from '../src/ui/sound/table.ts';
-import type { Candidate } from './sound-find.ts';
 import {
   AUDIO_EXTS,
   guessOf,
@@ -38,8 +37,8 @@ const home = soundHome(root);
 const takes = join(home, 'sound', 'takes');
 const inbox = join(home, 'sound', 'inbox');
 
-/** Kenney's synth packs, the retro side S1.1 moves off: a cue shipped from one wants a swap. */
-const RETRO = ['kenney.nl/assets/interface-sounds', 'kenney.nl/assets/ui-audio'];
+/** Kenney's packs, all heard as retro in S1.1's talk: a cue shipped from one wants a swap. */
+const RETRO = ['kenney.nl/'];
 
 /** Cues S1.1's talk moved to a new sound (Jan's picks: a gong swell, a cinematic thud). */
 const MOVED = [
@@ -82,21 +81,15 @@ const SECTIONS: { title: string; has: (c: CueInfo) => boolean }[] = [
 
 /** A take to hear and pick: where it is, and what the manifest gets if it's picked. */
 interface Take {
-  /** The page's path to it: /takes/… or /finds/…. */
+  /** The page's path to it, under /finds/. */
   url: string;
   name: string;
-  from: 'kenney' | 'find';
   source: string;
   licence: string;
   credit: string;
   /** The source and credit were guessed from the file's name; check them before picking. */
   guessed: boolean;
 }
-
-const kenney = (): Record<string, Candidate[]> => {
-  const f = join(takes, 'candidates.json');
-  return existsSync(f) ? (JSON.parse(readFileSync(f, 'utf8')) as Record<string, Candidate[]>) : {};
-};
 
 function finds(id: string): Take[] {
   const dir = join(inbox, id);
@@ -107,22 +100,8 @@ function finds(id: string): Take[] {
     .map((f) => ({
       url: `/finds/${id}/${encodeURIComponent(f)}`,
       name: f,
-      from: 'find',
       ...guessOf(f),
     }));
-}
-
-function takesOf(id: string): Take[] {
-  const k = (kenney()[id] ?? []).map((t): Take => ({
-    url: `/takes/${t.file}`,
-    name: t.file.split('/').pop()!,
-    from: 'kenney',
-    source: t.source,
-    licence: t.licence,
-    credit: t.credit,
-    guessed: false,
-  }));
-  return [...finds(id), ...k.filter((t) => !RETRO.some((r) => t.source.includes(r)))];
 }
 
 function record(entry: SoundEntry): void {
@@ -196,11 +175,11 @@ function row(c: CueInfo, picked: SoundEntry | undefined): string {
     picked && shipped
       ? `<div class="tile now" data-url="/shipped/${c.id}.mp3"><span class="n"></span><span class="nm">Now</span><small>${esc(picked.credit)}</small></div>`
       : `<div class="tile now off"><span class="nm">Now</span><small>${picked ? 'run Make' : 'silent'}</small></div>`;
-  const tiles = takesOf(c.id)
+  const tiles = finds(c.id)
     .map(
       (
         t,
-      ) => `<div class="tile ${t.from}" data-url="${esc(t.url)}" data-source="${esc(t.source)}" data-licence="${esc(t.licence)}" data-credit="${esc(t.credit)}" data-guessed="${t.guessed}">
+      ) => `<div class="tile find" data-url="${esc(t.url)}" data-source="${esc(t.source)}" data-licence="${esc(t.licence)}" data-credit="${esc(t.credit)}" data-guessed="${t.guessed}">
   <span class="n"></span><span class="nm" title="${esc(t.name)}">${esc(t.name)}</span><small>${esc(t.credit || 'no credit yet')}</small>
   <button class="pick">Pick</button></div>`,
     )

@@ -32,6 +32,10 @@ export const LICENCES = [
   'CC-BY-4.0',
   'Pixabay',
   'Sonniss-GDC',
+  // S1.1: royalty-free packs for games, no credit asked (each one's own licence, checked by Jan).
+  'Mixkit',
+  'Shapeforms',
+  '99Sounds',
   'Suno-paid',
   'Udio-paid',
 ] as const;
