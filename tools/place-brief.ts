@@ -440,7 +440,7 @@ for (const { b, sheets } of briefs) {
     kind: 'scene',
     out: `src/ui/art/places/${b.id}/banner.webp`,
     width: 1536,
-    quality: 82,
+    quality: 78,
     budgetKB: 300,
     prompt: bannerPrompt(b),
     trickle: true,
