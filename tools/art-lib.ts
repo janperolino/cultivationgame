@@ -27,6 +27,13 @@ export const KIND_BUDGET_KB: Record<ArtKind, number> = {
 export const SCREEN_BUDGET_KB = 800;
 
 /**
+ * A place's art (A6): its banner and up to three sheets of nine door pictures, of which a screen
+ * shows the banner and one tab's nine at a time (the cards load lazily). Raised over a screen's as
+ * loading hygiene, never a reason to cut art (Jan's call).
+ */
+export const PLACE_BUDGET_KB = 1600;
+
+/**
  * A travel map region's art (A5.1): its painting and its tiles' chunk pyramids, made by the map
  * tools (docs/art-pipeline.md § The travel map) and shipped in public/map/<region>/, loaded a chunk
  * at a time as you zoom, so it has a budget of its own rather than the screen's.
@@ -55,6 +62,11 @@ export const assetSchema = z
     /** A sheet: columns and rows, and a name for each piece, left to right, top to bottom. */
     cells: z.tuple([z.number().int().positive(), z.number().int().positive()]).optional(),
     pieces: z.array(z.string().regex(ID)).optional(),
+    /**
+     * Painted as Jan's ChatGPT time allows (A6's place sheets, trickling like A5.4): a missing
+     * source waits, listed, rather than failing the run; the game shows the plain card till then.
+     */
+    trickle: z.boolean().optional(),
     /** A green screen to key out, as #rrggbb. */
     key: z
       .string()
@@ -93,7 +105,7 @@ export function checkManifest(m: ArtManifest): string[] {
         out.push(`${a.id}: a concept is written to art/concepts/<name>.webp`);
     } else if (!target.startsWith('src/ui/art/')) {
       out.push(`${a.id}: art ships under src/ui/art/, so Vite hashes it`);
-    } else if (a.kind !== 'ornament' || !a.cells) {
+    } else if (!a.cells) {
       if (!target.endsWith('.webp')) out.push(`${a.id}: the file is a .webp`);
     }
     if (a.budgetKB > KIND_BUDGET_KB[a.kind])
@@ -105,7 +117,8 @@ export function checkManifest(m: ArtManifest): string[] {
       out.push(`${a.id}: only a frame has a slice`);
     }
     if (a.cells || a.pieces) {
-      if (a.kind !== 'ornament') out.push(`${a.id}: only an ornament sheet has cells`);
+      if (a.kind !== 'ornament' && a.kind !== 'scene')
+        out.push(`${a.id}: only an ornament or a scene sheet has cells`);
       else if (!a.cells || !a.pieces) out.push(`${a.id}: a sheet names both its cells and pieces`);
       else if (a.pieces.length > a.cells[0] * a.cells[1])
         out.push(`${a.id}: ${a.pieces.length} pieces don't fit ${a.cells[0]}×${a.cells[1]} cells`);
@@ -140,7 +153,9 @@ export function checkMaps(root: string, m: ArtManifest): string[] {
   for (const r of m.maps ?? []) {
     const dir = join(root, 'public', 'map', r.region);
     if (!existsSync(join(dir, 'painting.webp'))) {
-      out.push(`map ${r.region}: no public/map/${r.region}/painting.webp (npx tsx tools/map-chunks.ts ${r.region})`);
+      out.push(
+        `map ${r.region}: no public/map/${r.region}/painting.webp (npx tsx tools/map-chunks.ts ${r.region})`,
+      );
       continue;
     }
     const mb = folderBytes(dir) / 1e6;
@@ -152,8 +167,7 @@ export function checkMaps(root: string, m: ArtManifest): string[] {
 
 /** The files an asset writes, from the project root. */
 export function outputsOf(a: ArtAsset): string[] {
-  if (a.kind === 'ornament' && a.cells && a.pieces)
-    return a.pieces.map((p) => posix.join(a.out, `${p}.webp`));
+  if (a.cells && a.pieces) return a.pieces.map((p) => posix.join(a.out, `${p}.webp`));
   return [a.out];
 }
 
@@ -163,6 +177,8 @@ export interface ArtReport {
   written: { id: string; file: string; kb: number; budgetKB: number }[];
   /** Missing sources, files over budget, a broken manifest: any of these fails the run. */
   errors: string[];
+  /** Trickle assets still to be painted, by id. */
+  waiting: string[];
 }
 
 /**
@@ -170,7 +186,7 @@ export interface ArtReport {
  * asset is rebuilt from its source each run, so the output always matches the manifest.
  */
 export async function runArt(root: string): Promise<ArtReport> {
-  const report: ArtReport = { moved: [], written: [], errors: [] };
+  const report: ArtReport = { moved: [], written: [], errors: [], waiting: [] };
   const manifestPath = join(root, 'art', 'manifest.json');
   if (!existsSync(manifestPath)) {
     report.errors.push('art/manifest.json is missing');
@@ -207,7 +223,8 @@ export async function runArt(root: string): Promise<ArtReport> {
   for (const a of m.assets) {
     const src = join(source, `${a.id}.png`);
     if (!existsSync(src)) {
-      report.errors.push(`${a.id}: no source (drop ${a.id}.png in art/inbox/)`);
+      if (a.trickle) report.waiting.push(a.id);
+      else report.errors.push(`${a.id}: no source (drop ${a.id}.png in art/inbox/)`);
       continue;
     }
     const files = await build(a, src, root);
@@ -223,8 +240,13 @@ export async function runArt(root: string): Promise<ArtReport> {
   return report;
 }
 
-/** The screen an asset belongs to: its id's first word (`common` for the shared kit). */
+/**
+ * The screen an asset belongs to: its id's first word (`common` for the shared kit). A place's own
+ * art is its own screen (A6: each place paints its banner and doors, `place-<place>-banner`), so
+ * the budget reads a place at a time.
+ */
 export function screenOf(id: string): string {
+  if (id.startsWith('place-')) return id.replace(/-(banner|doors-\d+)$/, '');
   return id.split('-')[0]!;
 }
 
@@ -238,8 +260,9 @@ export function checkScreens(m: ArtManifest, written: ArtReport['written']): str
     totals.set(s, (totals.get(s) ?? 0) + w.kb);
   }
   return [...totals]
-    .filter(([, kb]) => kb > SCREEN_BUDGET_KB)
-    .map(([s, kb]) => `${s}: its art is ${kb.toFixed(0)} KB, over ${SCREEN_BUDGET_KB} KB`);
+    .map(([s, kb]) => [s, kb, s.startsWith('place-') ? PLACE_BUDGET_KB : SCREEN_BUDGET_KB] as const)
+    .filter(([, kb, most]) => kb > most)
+    .map(([s, kb, most]) => `${s}: its art is ${kb.toFixed(0)} KB, over ${most} KB`);
 }
 
 /** Writes one asset's webp files from its source. */
@@ -248,17 +271,43 @@ async function build(a: ArtAsset, src: string, root: string): Promise<string[]> 
   for (const f of files) mkdirSync(dirname(join(root, f)), { recursive: true });
   const webp = { quality: a.quality, alphaQuality: 100, effort: 6 };
 
-  if (a.kind === 'ornament' && a.cells && a.pieces) {
+  if (a.cells && a.pieces) {
     const sheet = await keyed(a, src);
     const { width, height } = await sharp(sheet.data, { raw: sheet.info }).metadata();
     const cw = Math.floor(width! / a.cells[0]);
     const ch = Math.floor(height! / a.cells[1]);
+    // GPT draws a scene sheet's seams up to a few dozen pixels off the even thirds (A6), so its cuts
+    // follow the seams it drew (`seams`), and a door's picture is cut 3% inside its cell besides.
+    const xs =
+      a.kind === 'scene'
+        ? seams(sheet.data, width!, height!, a.cells[0], 'x')
+        : even(width!, a.cells[0]);
+    const ys =
+      a.kind === 'scene'
+        ? seams(sheet.data, width!, height!, a.cells[1], 'y')
+        : even(height!, a.cells[1]);
+    const trim = a.kind === 'scene' ? Math.round(Math.min(cw, ch) * 0.03) : 0;
     for (const [i, file] of files.entries()) {
       const col = i % a.cells[0];
       const row = Math.floor(i / a.cells[0]);
       await sharp(sheet.data, { raw: sheet.info })
-        .extract({ left: col * cw, top: row * ch, width: cw, height: ch })
-        .resize(a.width, a.width, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .extract({
+          left: xs[col]! + trim,
+          top: ys[row]! + trim,
+          width: xs[col + 1]! - xs[col]! - 2 * trim,
+          height: ys[row + 1]! - ys[row]! - 2 * trim,
+        })
+        // An ornament sits in a square; a scene's piece (a door's picture) keeps its cell's shape.
+        .resize(
+          a.kind === 'scene'
+            ? { width: a.width, withoutEnlargement: true }
+            : {
+                width: a.width,
+                height: a.width,
+                fit: 'contain',
+                background: { r: 0, g: 0, b: 0, alpha: 0 },
+              },
+        )
         .webp(webp)
         .toFile(join(root, file));
     }
@@ -278,6 +327,51 @@ async function build(a: ArtAsset, src: string, root: string): Promise<string[]> 
           : base.resize({ width: a.width });
   await sized.webp(webp).toFile(join(root, file));
   return files;
+}
+
+/** A sheet's cell edges, evenly: 0, a third, two thirds, the whole. */
+function even(size: number, n: number): number[] {
+  return Array.from({ length: n + 1 }, (_, k) => Math.round((size * k) / n));
+}
+
+/**
+ * A painted sheet's cell edges where GPT drew them: near each even division (within 6% of the
+ * side), the line across which the picture changes most, the seam between two scenes. Raw RGBA.
+ */
+export function seams(
+  data: Uint8Array,
+  width: number,
+  height: number,
+  n: number,
+  axis: 'x' | 'y',
+): number[] {
+  const size = axis === 'x' ? width : height;
+  const along = axis === 'x' ? height : width;
+  const at = (u: number, v: number) => (axis === 'x' ? (v * width + u) * 4 : (u * width + v) * 4);
+  const step = (u: number) => {
+    let d = 0;
+    for (let v = 0; v < along; v += 2) {
+      const a = at(u - 1, v);
+      const b = at(u, v);
+      d +=
+        Math.abs(data[a]! - data[b]!) +
+        Math.abs(data[a + 1]! - data[b + 1]!) +
+        Math.abs(data[a + 2]! - data[b + 2]!);
+    }
+    return d;
+  };
+  const out = even(size, n);
+  const reach = Math.round(size * 0.06);
+  for (let k = 1; k < n; k++) {
+    let best = out[k]!;
+    let most = -1;
+    for (let u = Math.max(1, out[k]! - reach); u <= Math.min(size - 1, out[k]! + reach); u++) {
+      const d = step(u);
+      if (d > most) [most, best] = [d, u];
+    }
+    out[k] = best;
+  }
+  return out;
 }
 
 /** The source as raw RGBA, with its green screen keyed out when the asset names one. */

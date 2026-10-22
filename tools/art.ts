@@ -11,7 +11,11 @@ const report = await runArt(root);
 for (const f of report.moved) console.log(`moved   inbox/${f} to source/`);
 for (const w of report.written)
   console.log(`wrote   ${w.file}  ${w.kb.toFixed(1)} KB of ${w.budgetKB} KB`);
-if (report.written.length === 0 && report.errors.length === 0)
+if (report.waiting.length)
+  console.log(
+    `waiting ${report.waiting.length} places' sheets to paint, in art/places/README.md's order`,
+  );
+if (report.written.length === 0 && report.errors.length === 0 && report.waiting.length === 0)
   console.log('The manifest names no assets yet.');
 for (const e of report.errors) console.error(`error   ${e}`);
 if (report.errors.length) process.exit(1);

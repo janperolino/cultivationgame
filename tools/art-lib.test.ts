@@ -8,6 +8,8 @@ import {
   checkMaps,
   checkScreens,
   keyOut,
+  screenOf,
+  seams,
   outputsOf,
   runArt,
   type ArtAsset,
@@ -74,7 +76,7 @@ describe('the manifest checks', () => {
       ],
     }).join('\n');
     expect(problems).toMatch(/2 pieces don't fit 1×1 cells/);
-    expect(problems).toMatch(/common-slab: only an ornament sheet has cells/);
+    expect(problems).toMatch(/common-slab: only an ornament or a scene sheet has cells/);
   });
 
   it('writes a sheet as a file a piece', () => {
@@ -147,6 +149,21 @@ describe('npm run art', () => {
       ])
       .png()
       .toBuffer();
+
+  /** A 3×3 sheet of flat grey cells, its seams on the even thirds. */
+  const cells = (w: number, h: number) => {
+    const raw = Buffer.alloc(w * h * 4);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        const v = 30 + 20 * (Math.floor((x * 3) / w) + 3 * Math.floor((y * 3) / h));
+        raw[i] = raw[i + 1] = raw[i + 2] = v;
+        raw[i + 3] = 255;
+      }
+    return sharp(raw, { raw: { width: w, height: h, channels: 4 } })
+      .png()
+      .toBuffer();
+  };
 
   /** Noise, which no codec can squeeze. */
   const noise = (side: number) => {
@@ -224,10 +241,65 @@ describe('npm run art', () => {
     expect(checkMaps(root, { ...m, maps: [{ region: 'qm-test', budgetMB: 1 }] })).toEqual([]);
   });
 
+  it('cuts a place’s door sheet into scenes that keep their shape, and waits on a trickle', async () => {
+    const doors: ArtAsset = {
+      id: 'place-test-doors-1',
+      kind: 'scene',
+      out: 'src/ui/art/places/qm-test/doors-1',
+      width: 240,
+      quality: 84,
+      budgetKB: 60,
+      prompt: 'A door sheet.',
+      cells: [3, 3],
+      pieces: ['stall', 'alchemy', 'refiner'],
+    };
+    const banner: ArtAsset = {
+      id: 'place-test-banner',
+      kind: 'scene',
+      out: 'src/ui/art/places/qm-test/banner.webp',
+      width: 960,
+      quality: 84,
+      budgetKB: 300,
+      prompt: 'A banner.',
+      trickle: true,
+    };
+    await project([doors, banner], {
+      'place-test-doors-1.png': await cells(768, 512),
+    });
+    const r = await runArt(root);
+    expect(r.errors).toEqual([]);
+    expect(r.waiting).toEqual(['place-test-banner']);
+    const meta = await sharp(join(root, 'src/ui/art/places/qm-test/doors-1/stall.webp')).metadata();
+    expect(meta.width).toBe(240);
+    // The cell's shape kept, cut 3% inside its edges: 246 × 160 at 240 wide.
+    expect(Math.abs(meta.height! - 156)).toBeLessThanOrEqual(1);
+    expect(screenOf('place-test-doors-1')).toBe('place-test');
+    expect(screenOf('place-test-banner')).toBe('place-test');
+  }, 20_000);
+
   it('fails a missing source and a stray inbox file', async () => {
     await project([frame], { 'stray.png': await testFrame() });
     const r = await runArt(root);
     expect(r.errors).toContain('inbox/stray.png names no asset in the manifest');
     expect(r.errors).toContain('common-slab: no source (drop common-slab.png in art/inbox/)');
   }, 20_000);
+});
+
+describe('a scene sheet’s seams', () => {
+  it('finds a seam GPT drew off the even third', () => {
+    // A 900 × 600 sheet of two rows whose seam is at y 280, not 300: the cut follows it.
+    const w = 900;
+    const h = 600;
+    const data = new Uint8Array(w * h * 4);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        const v = y < 280 ? 40 : 200;
+        data[i] = v;
+        data[i + 1] = v;
+        data[i + 2] = v;
+        data[i + 3] = 255;
+      }
+    expect(seams(data, w, h, 2, 'y')).toEqual([0, 280, 600]);
+  });
 });

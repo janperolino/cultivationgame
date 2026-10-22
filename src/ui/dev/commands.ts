@@ -17,6 +17,7 @@ import {
 } from '../../content/encounters/index.ts';
 import { contact } from '../../core/map/encounters.ts';
 import { ensureMap, getDevPace, hereWords, mapOf, setDevPace } from '../../core/map/travel.ts';
+import { enterAt } from '../../core/map/gate.ts';
 import { raise } from '../../core/map/fog.ts';
 import { placeById } from '../../core/map/region.ts';
 import type { Encounter } from '../../core/map/schema.ts';
@@ -334,6 +335,33 @@ export const COMMANDS: Record<string, Command> = {
         },
         `At ${p.name}.`,
       );
+    },
+  },
+  in: {
+    usage: 'in <place id>',
+    help: 'Stands you at a place and goes in through its gate, as Enter would (A6: a gate shut to you is looked at from the World).',
+    run([id], store) {
+      const s = needGame(store);
+      const map = s && mapOf(ensureMap(s));
+      const p = map && id ? placeById(map, id) : null;
+      if (!p || !map) return `No place ${id ?? ''} on the map.`;
+      let why: string | null = null;
+      const out = apply(
+        store,
+        (g) => {
+          const m = ensureMap(g);
+          const life = raise(m.map!, p.id, 'seen');
+          const there = {
+            ...m,
+            map: { ...life, at: [p.x, p.y] as [number, number], course: null, inside: null },
+          };
+          const r = enterAt(there, map, p);
+          if (!r.ok) why = r.reason;
+          return r.ok ? r.state : there;
+        },
+        `Inside ${p.name}.`,
+      );
+      return why ? `At ${p.name}: ${why}` : out;
     },
   },
   fast: {

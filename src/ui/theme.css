@@ -8465,33 +8465,148 @@ p.map-above {
   gap: 8px;
 }
 
-/* ---------------------------------------------------------------- a place's own screen (P3.6b) */
+/* ---------------------------------------------------------------- a place's own screen (A6) */
+
+/* One shell for every kind of place (docs/mockups/place-kinds-study.html): the banner painting
+   across the top with the head over its left, a layout by kind under it. Full bleed under the
+   floating top, as the World's map is; nothing scrolls but an open counter. */
+.shell.is-world .main:has(> .place-screen) {
+  padding: 0;
+  overflow: hidden;
+}
+
+.shell.is-world:has(.place-screen) .shell-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.85);
+}
 
 .place-screen {
   position: relative;
   flex: 1;
   min-height: 0;
-  overflow: auto;
-  display: grid;
-  gap: 14px;
-  align-content: start;
-  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* The painting: the banner's strip, or the whole screen for a village or a wild site. Its shade is
+   painted once, still, never a live blur. */
+.place-painting {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 430px;
+  overflow: hidden;
+}
+
+.place-screen.is-hall .place-painting {
+  height: 470px;
+}
+
+.place-painting img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+.place-painting::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(0deg, var(--void) 0%, rgb(4 5 7 / 0.6) 12%, transparent 34%),
+    linear-gradient(
+      90deg,
+      rgb(4 5 7 / 0.96) 0%,
+      rgb(4 5 7 / 0.84) 26%,
+      rgb(4 5 7 / 0.25) 52%,
+      transparent 70%
+    );
+}
+
+.place-painting.is-whole {
+  height: auto;
+  inset: 0;
+}
+
+.place-painting.is-whole::after {
+  background:
+    linear-gradient(0deg, rgb(4 5 7 / 0.92) 0%, transparent 30%),
+    linear-gradient(90deg, rgb(4 5 7 / 0.9) 0%, rgb(4 5 7 / 0.55) 28%, transparent 48%);
+}
+
+/* A place not yet painted: the void, hatched, with its hanzi faint at the right. */
+.place-painting.is-plain {
+  background:
+    repeating-linear-gradient(135deg, rgb(255 255 255 / 0.014) 0 12px, transparent 12px 24px),
+    radial-gradient(1200px 520px at 70% 32%, #101826 0%, #05070b 70%);
+}
+
+.place-painting-hz {
+  position: absolute;
+  right: 8%;
+  top: 46%;
+  transform: translateY(-50%);
+  font-family: var(--font-brush);
+  font-size: 200px;
+  color: rgb(214 171 76 / 0.06);
+  white-space: nowrap;
+}
+
+.place-banner {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  height: 430px;
+  box-sizing: border-box;
+  padding: 56px 44px 0 48px;
+}
+
+.place-banner.is-tall {
+  height: 470px;
+}
+
+.place-purse {
+  position: absolute;
+  right: 44px;
+  bottom: 12px;
+  font-size: calc(12.5px * var(--text-scale));
+  color: var(--muted);
+  text-shadow: 0 1px 6px #000;
+}
+
+.place-purse b {
+  color: var(--gilt);
+  font-weight: 500;
 }
 
 .place-crumbs {
   display: flex;
   align-items: center;
   gap: 10px;
+  max-width: 720px;
+  margin-bottom: 14px;
   font-size: calc(13px * var(--text-scale));
   color: var(--muted);
+  text-shadow: 0 1px 6px #000;
+}
+
+.place-crumb-sep {
+  opacity: 0.5;
 }
 
 .place-back {
   border: 1px solid var(--edge-strong);
-  background: transparent;
+  background: rgb(0 0 0 / 0.35);
   color: var(--text);
-  border-radius: 999px;
-  padding: 4px 11px;
+  border-radius: 3px;
+  padding: 4px 10px;
   font: inherit;
   cursor: pointer;
 }
@@ -8503,6 +8618,1089 @@ p.map-above {
 .place-back.is-quiet {
   margin-left: auto;
   color: var(--muted);
+}
+
+/* The head every place shares. */
+.place-head {
+  max-width: 680px;
+  display: grid;
+  gap: 8px;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 0.8);
+}
+
+.place-name-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.place-head h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: calc(40px * var(--text-scale));
+  margin: 0;
+  line-height: 1.05;
+}
+
+.place-head h2 .hanzi {
+  font-family: var(--font-brush);
+  font-weight: 400;
+  color: var(--accent);
+  font-size: 0.74em;
+  margin-left: 10px;
+}
+
+.place-pinyin {
+  font-size: calc(13px * var(--text-scale));
+  color: var(--muted);
+}
+
+.place-line {
+  font-size: calc(13px * var(--text-scale));
+  color: var(--muted);
+}
+
+.place-line b {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.place-lore {
+  margin: 0;
+  font-size: calc(14px * var(--text-scale));
+  line-height: 1.55;
+  color: #d4d0c6;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* The market's line of why (E4): its biggest gap and its cause. */
+.place-why {
+  font-size: calc(13px * var(--text-scale));
+  color: var(--warn);
+}
+
+.place-seal {
+  width: 54px;
+  height: 54px;
+  border: 1px solid var(--accent-edge);
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-family: var(--font-brush);
+  font-size: 30px;
+  background: rgb(0 0 0 / 0.4);
+  flex: none;
+}
+
+.place-seal.is-small {
+  width: 34px;
+  height: 34px;
+  font-size: 19px;
+}
+
+.place-seal.is-dim {
+  color: var(--muted);
+  border-color: var(--edge-strong);
+  background: transparent;
+}
+
+/* A power's head (Cloudstep): the crest, the name, the chips, and your standing at the right. */
+.place-head.is-power {
+  gap: 6px;
+}
+
+.place-crest {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-edge);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-brush);
+  font-size: 56px;
+  color: var(--accent);
+  background: radial-gradient(circle, rgb(214 171 76 / 0.14), rgb(0 0 0 / 0.55) 70%);
+  margin-bottom: 8px;
+}
+
+.place-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0;
+}
+
+.place-chips span {
+  border: 1px solid var(--line-faint);
+  border-radius: 3px;
+  padding: 3px 10px;
+  font-size: calc(12.5px * var(--text-scale));
+  background: rgb(0 0 0 / 0.4);
+}
+
+.place-standing {
+  position: absolute;
+  right: 44px;
+  top: 104px;
+  width: 300px;
+  margin: 0;
+  padding: 10px 16px;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.place-standing div,
+.place-seat div,
+.place-site-facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.place-standing div:last-child,
+.place-seat div:last-child,
+.place-site-facts div:last-child {
+  border-bottom: 0;
+}
+
+.place-standing dt,
+.place-seat dt,
+.place-site-facts dt {
+  color: var(--muted);
+}
+
+.place-standing dd,
+.place-seat dd,
+.place-site-facts dd {
+  margin: 0;
+  text-align: right;
+}
+
+.place-seat {
+  margin: 0;
+  max-width: 640px;
+  font-size: calc(13.5px * var(--text-scale));
+}
+
+/* Under the banner: the strips, then the layout, filling what is left. */
+.place-under {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 44px 20px 48px;
+}
+
+.place-gate {
+  flex: none;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 5px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.place-gate p {
+  margin: 0;
+}
+
+.place-gate.is-bad {
+  border-color: var(--warn-edge);
+}
+
+.place-gate-end {
+  margin-left: auto;
+}
+
+/* The grid (Jadewater): group tabs and nine door cards, the picked door's preview beside. */
+.place-grid-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(500px, 1fr);
+  gap: 16px;
+}
+
+.place-grid-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.place-group-tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.place-group-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  padding: 4px 0 8px;
+  margin-bottom: -1px;
+  font: inherit;
+  font-size: calc(15px * var(--text-scale));
+  cursor: pointer;
+}
+
+.place-group-tabs button:hover {
+  color: var(--text);
+}
+
+.place-group-tabs button[aria-selected='true'] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.place-group-tabs em {
+  font-style: normal;
+  font-family: var(--font-brush);
+  color: var(--accent);
+  margin-right: 6px;
+}
+
+.place-group-tabs small {
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+  margin-left: 5px;
+}
+
+.place-group-tabs .place-group-link {
+  margin-left: auto;
+  color: var(--accent);
+}
+
+.place-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* A painted door card: the door's scene, its seal and name on a still shade below. */
+.place-card {
+  position: relative;
+  display: block;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--line-faint);
+  border-radius: 4px;
+  background: var(--panel-solid);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.place-card:hover {
+  border-color: var(--accent-edge);
+}
+
+.place-card[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
+.place-card.is-later {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.place-card-pic {
+  position: absolute;
+  inset: 0 0 46px;
+}
+
+/* The scene shows above the label, never under it, its upper middle kept (the sheet asks for the
+   subject in the upper two thirds). */
+.place-card-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 38%;
+}
+
+/* A door without its picture yet: the plain kit card, hatched, its hanzi faint. */
+.place-card.is-plain .place-card-pic {
+  background:
+    repeating-linear-gradient(135deg, rgb(255 255 255 / 0.02) 0 10px, transparent 10px 20px),
+    #0b0e13;
+}
+
+.place-card.is-plain .place-card-pic::after {
+  content: attr(data-hz);
+  position: absolute;
+  inset: 0 0 38% 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-brush);
+  font-size: 54px;
+  color: rgb(214 171 76 / 0.14);
+}
+
+.place-card-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 7px 14px 8px;
+  background: rgb(6 7 10 / 0.98);
+  border-top: 1px solid var(--line-faint);
+}
+
+.place-card-seal {
+  width: 26px;
+  flex: none;
+  text-align: center;
+  font-family: var(--font-brush);
+  font-size: 24px;
+  color: var(--accent);
+}
+
+.place-card-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.place-card-name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: calc(19px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.place-card-sub {
+  display: block;
+  margin-top: 3px;
+  font-size: calc(12px * var(--text-scale));
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.place-card-go {
+  font-size: calc(12px * var(--text-scale));
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* The picked door's preview: a nav hub, not the counter. */
+.place-preview {
+  min-height: 0;
+  overflow: hidden;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.place-preview-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.place-preview-head h3,
+.place-room-bar h3,
+.place-open-body h3,
+.place-shut h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: calc(25px * var(--text-scale));
+  margin: 0;
+  line-height: 1.1;
+}
+
+.place-preview-head .hanzi,
+.place-room-bar .hanzi {
+  font-family: var(--font-brush);
+  font-weight: 400;
+  color: var(--accent);
+  font-size: 0.8em;
+  margin-left: 8px;
+}
+
+.place-preview-count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: calc(12.5px * var(--text-scale));
+}
+
+.place-preview-line {
+  margin: 0;
+  line-height: 1.5;
+  color: #d4d0c6;
+}
+
+.place-preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.place-preview-tags span {
+  border: 1px solid var(--line-faint);
+  border-radius: 3px;
+  padding: 3px 9px;
+  font-size: calc(12px * var(--text-scale));
+  background: rgb(0 0 0 / 0.3);
+}
+
+.place-preview-shop {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-faint);
+  font-size: calc(13px * var(--text-scale));
+}
+
+.place-preview-shop i {
+  font-style: normal;
+  color: var(--muted);
+}
+
+.place-preview-gap p {
+  margin: 4px 0 0;
+  font-size: calc(13px * var(--text-scale));
+  color: var(--warn);
+}
+
+.place-preview-foot {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.place-preview-foot > span {
+  flex: 1;
+  font-size: calc(12.5px * var(--text-scale));
+}
+
+/* A door's room under the banner (A6.1; docs/mockups/place-rooms-study.html): a slim bar, then a
+   layout by the kind of door, its big picture the door's own scene, the counter unchanged. */
+.place-room {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.place-room-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+}
+
+.place-room-bar h3 {
+  font-size: calc(21px * var(--text-scale));
+}
+
+.place-room-go {
+  margin-left: auto;
+}
+
+.place-room-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.place-room-body .place-counter {
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+}
+
+.place-room-body.is-craft,
+.place-room-body.is-trading,
+.place-room-body.is-board {
+  grid-template-columns: 460px minmax(0, 1fr);
+}
+
+.place-room-body.is-market {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+}
+
+.place-room-body.is-teahouse {
+  grid-template-columns: 340px minmax(0, 1fr) 300px;
+}
+
+.place-room-body.is-departures {
+  grid-template-rows: 190px minmax(0, 1fr);
+}
+
+.place-room-body.is-departures .place-room-scene img,
+.place-room-street .place-room-scene img {
+  object-position: center 45%;
+}
+
+.place-room-body.is-changer {
+  grid-template-columns: minmax(0, 1fr) 640px;
+}
+
+/* The door's scene, large; the plain card hatched with its hanzi until it is painted. */
+.place-room-scene {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-faint);
+  border-radius: 4px;
+  background: #0b0e13;
+}
+
+.place-room-scene img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.place-room-scene.is-plain {
+  background:
+    repeating-linear-gradient(135deg, rgb(255 255 255 / 0.02) 0 10px, transparent 10px 20px),
+    #0b0e13;
+}
+
+.place-room-scene.is-plain::before {
+  content: attr(data-hz);
+  position: absolute;
+  inset: 0 0 30% 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-brush);
+  font-size: 72px;
+  color: rgb(214 171 76 / 0.14);
+}
+
+.place-room-over {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 40px 20px 16px;
+  background: linear-gradient(0deg, rgb(6 7 10 / 0.96) 55%, transparent);
+}
+
+.place-room-who {
+  font-family: var(--font-display);
+  font-size: calc(22px * var(--text-scale));
+  font-weight: 600;
+}
+
+.place-room-who small {
+  display: block;
+  font-family: var(--font-ui);
+  font-weight: 400;
+  font-size: calc(12px * var(--text-scale));
+  color: var(--muted);
+}
+
+.place-room-said {
+  margin: 8px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--accent-edge);
+  font-size: calc(13px * var(--text-scale));
+  color: #d4d0c6;
+  line-height: 1.5;
+}
+
+/* A craft shop's, a trading hall's or a board's left: the scene over its dressing. */
+.place-room-side {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+.place-room-dress {
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.place-room-dress .map-label {
+  margin: 0;
+}
+
+.place-room-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 5px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line-faint);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: calc(13px * var(--text-scale));
+  text-align: left;
+  width: 100%;
+}
+
+.place-room-line.is-link {
+  cursor: pointer;
+}
+
+.place-room-line.is-link:hover {
+  color: var(--accent);
+}
+
+.place-room-line.is-later {
+  opacity: 0.45;
+}
+
+/* Talisman Lane's wall: the shelf's talismans as hanging slips. */
+.place-room-wall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.place-room-slip {
+  width: 38px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  writing-mode: vertical-rl;
+  font-family: var(--font-brush);
+  font-size: 18px;
+  color: #b8432f;
+  background: linear-gradient(180deg, #e8d49a, #cdb06a);
+  border-radius: 2px;
+  box-shadow: 0 6px 14px -6px #000;
+}
+
+/* A market's street: the door's scene as a band, its vendors as small cards under it. */
+.place-room-street {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 200px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.place-room-vendors {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 10px;
+}
+
+.place-room-vendor {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-faint);
+  border-radius: 4px;
+  background: var(--panel-solid);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.place-room-vendor:hover {
+  border-color: var(--accent-edge);
+}
+
+.place-room-vendor[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
+.place-room-vendor-name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: calc(17px * var(--text-scale));
+  font-weight: 600;
+}
+
+/* The teahouse: patrons, the scene and its talk, the house. */
+.place-room-patrons,
+.place-room-house {
+  min-height: 0;
+  overflow: hidden;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.place-room-patrons .map-label,
+.place-room-house .map-label {
+  margin: 0 0 2px;
+}
+
+.place-room-patron {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.place-room-patron .place-sub {
+  display: block;
+}
+
+.place-room-face {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-faint);
+  border-radius: 3px;
+  background: radial-gradient(circle at 50% 35%, rgb(255 255 255 / 0.08), transparent 70%);
+  font-family: var(--font-brush);
+  color: var(--muted);
+}
+
+.place-room-patron.is-teller .place-room-face {
+  color: var(--accent);
+  border-color: var(--accent-edge);
+}
+
+.place-room-mid {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+.place-room-mid .place-counter {
+  min-height: 0;
+  max-height: 260px;
+  overflow: auto;
+}
+
+/* A hall room is Cloudstep's open hall, under the sect's banner. */
+.place-room-hall {
+  flex: 1;
+}
+
+/* Changer: one exchange panel beside the scene. */
+.place-room-body.is-changer .place-room-over {
+  padding-top: 30px;
+}
+
+/* The hall (Cloudstep): a row of tiles, the open tile's hall full width under them. */
+.place-hall {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.place-hall > .map-label {
+  margin: 0;
+}
+
+.place-tiles {
+  flex: none;
+  height: 104px;
+  display: grid;
+  gap: 12px;
+}
+
+.place-tile {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 10px 16px 12px;
+  border: 1px solid var(--line-faint);
+  border-radius: 4px;
+  background: var(--panel-solid);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.place-tile:hover:not(:disabled) {
+  border-color: var(--accent-edge);
+}
+
+.place-tile[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
+.place-tile.is-later {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.place-tile img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+}
+
+.place-tile > span {
+  position: relative;
+}
+
+.place-tile-seal {
+  font-family: var(--font-brush);
+  font-size: 24px;
+  color: var(--accent);
+}
+
+.place-tile-name {
+  font-family: var(--font-display);
+  font-size: calc(18px * var(--text-scale));
+  font-weight: 600;
+  text-shadow: 0 1px 6px #000;
+}
+
+.place-tile-sub {
+  font-size: calc(12px * var(--text-scale));
+  color: #c0c3c8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.place-open-hall {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 260px;
+}
+
+.place-open-pic {
+  position: relative;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(135deg, rgb(255 255 255 / 0.02) 0 10px, transparent 10px 20px),
+    #0b0e13;
+}
+
+.place-open-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.place-vhz {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  writing-mode: vertical-rl;
+  font-family: var(--font-brush);
+  font-size: 40px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-shadow: 0 2px 10px #000;
+}
+
+.place-open-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.place-open-body .place-counter-head {
+  align-items: baseline;
+}
+
+.place-open-body .place-counter-head .place-sub {
+  margin-left: auto;
+}
+
+.place-open-note {
+  padding: 18px;
+  border-left: 1px solid var(--line-faint);
+  font-size: calc(12.5px * var(--text-scale));
+  color: var(--muted);
+}
+
+.place-open-note p {
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+/* The gate shut: the array, the way in and what you lack, over the tiles dimmed. */
+.place-shut {
+  flex: none;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+  padding: 18px 24px;
+  border: 1px solid color-mix(in srgb, var(--seal) 55%, transparent);
+  border-radius: 4px;
+  background: rgb(14 7 6 / 0.92);
+}
+
+.place-shut p {
+  margin: 6px 0 0;
+}
+
+.place-shut-seal {
+  width: 70px;
+  height: 70px;
+  border: 2px solid var(--seal);
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-brush);
+  font-size: 40px;
+  color: var(--seal);
+}
+
+/* Village and wild site (the Herb Valley): the painting whole, the head over a shade at the top
+   left or in a dark column, and the doors or doings as cards along the bottom. */
+.place-whole-head {
+  position: absolute;
+  z-index: 2;
+  left: 48px;
+  top: 56px;
+  width: 620px;
+  display: grid;
+  gap: 10px;
+}
+
+.place-whole-head .place-crumbs {
+  margin-bottom: 4px;
+}
+
+.place-site-column {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 580px;
+  box-sizing: border-box;
+  padding: 56px 32px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgb(4 5 7 / 0.95), rgb(4 5 7 / 0.88) 82%, transparent);
+}
+
+.place-site-facts {
+  margin: 0;
+  font-size: calc(13px * var(--text-scale));
+}
+
+.place-heres {
+  display: grid;
+}
+
+.place-heres .map-label {
+  margin: 4px 0 2px;
+}
+
+.place-here {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-faint);
+  font-size: calc(13px * var(--text-scale));
+}
+
+.place-here i {
+  font-style: normal;
+  color: var(--muted);
+}
+
+.place-strip {
+  position: absolute;
+  z-index: 3;
+  left: 48px;
+  right: 44px;
+  bottom: 24px;
+  height: 150px;
+  display: flex;
+  gap: 14px;
+}
+
+.place-strip.is-site {
+  left: 610px;
+}
+
+.place-strip .place-card {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 300px;
+  height: 100%;
+}
+
+.place-strip .place-card-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.place-float {
+  position: absolute;
+  z-index: 3;
+  right: 44px;
+  top: 104px;
+  bottom: 196px;
+  width: 640px;
+  box-sizing: border-box;
+  overflow: auto;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.place-float-close {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 22px;
+  cursor: pointer;
 }
 
 /* A guild's examination hall and counter (K6): a row a craft, a seat or a style. */
@@ -8536,191 +9734,6 @@ p.map-above {
   border-radius: 3px;
   padding: 3px 6px;
   font: inherit;
-}
-
-.place-head {
-  padding: 14px 16px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: center;
-}
-
-.place-head h2 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: calc(28px * var(--text-scale));
-  margin: 0;
-  line-height: 1.1;
-}
-
-.place-head h2 .hanzi {
-  color: var(--accent);
-  font-size: 0.75em;
-  margin-left: 8px;
-}
-
-.place-pinyin {
-  font-size: calc(12px * var(--text-scale));
-  color: var(--muted);
-  font-style: italic;
-}
-
-.place-line {
-  font-size: calc(12.5px * var(--text-scale));
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.place-line b {
-  color: var(--text);
-  font-weight: 500;
-}
-
-/* The market's line of why (E4): its biggest gap and its cause. */
-.place-why {
-  font-size: calc(12.5px * var(--text-scale));
-  color: var(--muted);
-  font-style: italic;
-  margin-top: 4px;
-}
-
-.place-purse {
-  text-align: right;
-  font-size: calc(12.5px * var(--text-scale));
-  color: var(--muted);
-  display: grid;
-  gap: 2px;
-}
-
-.place-purse b {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.place-seal {
-  width: 52px;
-  height: 52px;
-  border: 1.5px solid var(--accent-edge);
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  color: var(--accent);
-  font-family: var(--font-brush);
-  font-size: 30px;
-  background: var(--accent-soft);
-  flex: none;
-}
-
-.place-seal.is-small {
-  width: 34px;
-  height: 34px;
-  font-size: 19px;
-  border-radius: 6px;
-}
-
-.place-seal.is-dim {
-  color: var(--muted);
-  border-color: var(--edge-strong);
-  background: transparent;
-}
-
-.place-lore {
-  margin: 0;
-  font-size: calc(13px * var(--text-scale));
-  color: #c6c1b5;
-  max-width: 90ch;
-}
-
-.place-gate {
-  padding: 10px 14px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  font-size: calc(13px * var(--text-scale));
-}
-
-.place-gate p {
-  margin: 0;
-}
-
-.place-gate.is-bad {
-  border-color: var(--warn-edge);
-}
-
-.place-body {
-  display: grid;
-  grid-template-columns: minmax(270px, 340px) minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
-}
-
-.place-doors {
-  padding: 10px;
-  display: grid;
-  gap: 12px;
-}
-
-.place-group {
-  display: grid;
-  gap: 4px;
-}
-
-.place-group > .map-label {
-  padding: 0 6px;
-  margin: 0;
-}
-
-.place-door {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-  padding: 7px 8px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  width: 100%;
-}
-
-.place-door:hover:not(:disabled) {
-  background: rgb(255 255 255 / 0.03);
-  border-color: var(--edge);
-}
-
-.place-door[aria-pressed='true'] {
-  border-color: var(--accent-edge);
-  background: var(--accent-soft);
-}
-
-.place-door.is-later {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.place-door-name {
-  display: block;
-  font-weight: 500;
-  font-size: calc(13.5px * var(--text-scale));
-}
-
-.place-door-sub {
-  display: block;
-  font-size: calc(12px * var(--text-scale));
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.place-door-tag {
-  font-size: calc(11px * var(--text-scale));
-  color: var(--muted);
-  white-space: nowrap;
 }
 
 .place-counter {
@@ -8901,37 +9914,11 @@ p.map-above {
   margin-right: 4px;
 }
 
-.place-features {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.place-feature {
-  font-size: calc(12px * var(--text-scale));
-  border: 1px solid var(--edge-strong);
-  border-radius: 999px;
-  padding: 2px 9px;
-  color: #c6c1b5;
-}
-
-.place-feature i {
-  color: var(--muted);
-  font-style: normal;
-  font-size: 0.9em;
-  margin-left: 5px;
-}
-
-.place-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
 .place-toast {
-  position: sticky;
-  bottom: 8px;
-  justify-self: end;
+  position: absolute;
+  z-index: 8;
+  right: 44px;
+  bottom: 20px;
   padding: 8px 13px;
   font-size: calc(13px * var(--text-scale));
 }
@@ -12154,4 +13141,32 @@ p.map-above {
 
 .item-tip li {
   margin: 2px 0;
+}
+
+/* A trading hall's floor by department (A6.1): only those holding lots this month. */
+.place-departments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.place-departments button {
+  border: 1px solid var(--edge-strong);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted);
+  padding: 4px 10px;
+  font: inherit;
+  font-size: calc(12.5px * var(--text-scale));
+  cursor: pointer;
+}
+
+.place-departments button[aria-selected='true'] {
+  color: var(--text);
+  border-color: var(--accent-edge);
+}
+
+.place-departments small {
+  color: var(--muted);
+  margin-left: 3px;
 }

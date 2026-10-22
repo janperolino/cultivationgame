@@ -1,0 +1,86 @@
+# Apricot Grove's Frontier Hall 杏林边馆, the art brief
+
+The seat of a sect, shown in the hall layout (A6). 2 ChatGPT runs: the banner, then one door sheet of nine. Save each result into `art/inbox/` under its name below, run `npm run art`, and move this folder to `Done/` once all are in.
+
+- `place-xinglin-bianguan-banner.png`
+- `place-xinglin-bianguan-doors-1.png`
+
+Run them in one chat, the banner first, so the door sheets keep its look.
+
+## 1. The banner: `place-xinglin-bianguan-banner.png`
+
+```text
+Create ONE landscape 1536x1024 painting AS AN ASSET, placed behind real HTML text and buttons on a game screen: the banner of Apricot Grove's Frontier Hall (Xinglin Bianguan 杏林边馆), the seat of a sect, as a traveller arriving sees it from a height nearby.
+
+Make it unmistakably Apricot Grove's Frontier Hall, unlike any other city, town or sect in the game.
+
+ITS LOOK: A pill shop, clinic and buying office under one broad green-glazed roof among the City’s streets: a wide clinic hall with rows of cots and screens, a long pill counter fronted with rows of small lacquered drawers and jars, a courtyard of drying herbs and an apricot tree in a stone planter. Colours: celadon green roof, apricot pink, white linen, herb brown. It feels calm, clean, medicinal, busy with patients. Leave out: skulls, ledgers and lamps, weapons, sea and ships, grandeur.
+
+From the world map it shows as: Nothing of its own: a green roof in the City. Within it: the clinic hall; the pill counter.
+
+SCALE: it is about 1 li (1 km) across, home to about 600 mortals, 150 at Qi Condensation, 12 at Foundation, 1 at Core Formation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
+
+The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
+
+The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+The game shows a wide strip of it, from about 20% to 60% of the height, under its name and lore: put the place itself in that band and in the right two thirds; keep the left third calmer and darker (the text sits over it); above the band quiet sky, below it the near ground fading to dark.
+
+Paint the place only: no people close up, no cultivator, no creatures unless named here.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+
+About the place, for its look and mood (none of this is written on the image):
+
+- Apricot Grove's Frontier Hall, Xinglin Bianguan 杏林边馆, in the Border Wilds, an orthodox-way sect.
+
+- Apricot Grove Valley's branch hall in the City of the Guarded Mouth, which buys the frontier's beast cores for the Valley's furnaces and sells healing pills to anyone, at prices the frontier complains about and pays.
+
+- The Frontier Hall is a pill shop, a clinic and a buying office under one green roof. Its physicians treat garrison soldiers free once a year by the Valley's old promise, and its buyers take the cores the Qian clan grades. Its master is a Core Formation physician posted from the Valley, who would rather be home.
+
+- It is about 1 li (1 km) across.
+
+- Its people: about 600 mortals, 150 at Qi Condensation, 12 at Foundation, 1 at Core Formation.
+
+- Within it: the clinic hall; the pill counter.
+```
+
+## 2. The doors: `place-xinglin-bianguan-doors-1.png`
+
+If ChatGPT drifts off the grid, ask in the same chat: "Same image, but on an exact even 3x3 grid, edge to edge, no text."
+
+```text
+Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes on an even 3x3 grid, each cell exactly 512x341, edge to edge, with no borders, gaps, frames, text or labels between them. The game cuts it into nine pictures, each shown as a door card with its name written under it by the game. All nine are views inside Apricot Grove's Frontier Hall (杏林边馆), the seat of a sect, the same place as the banner made just before in this chat: its architecture, light and palette in every cell, each scene's subject in its upper two thirds (the card's name covers the bottom third).
+
+Cells, left to right, top to bottom:
+
+1. Ask to sit the entrance test 入门考核: Where the way in is asked for, and the answer given at the gate.
+2. Offer a gift: A gift laid before the steward is remembered as tribute.
+3. Mission hall 任务堂: The sect’s postings on lacquered boards, paid in contribution on your return.
+4. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
+5. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
+6. Your seat 席位: What the power wants of you this month, and what it gives.
+7. Inside 内门: members only
+8. Law hall 律堂: Where a marked face kneels and makes restitution.
+9. Empty: plain dark mist.
+
+Vary the shot across the cells: at least three inside (a counter, a hall’s interior, a workshop), some close on the work, some wide; the walls or skyline behind in no more than three cells. People only small, in the middle distance, faceless; the place is the subject.
+
+Make it unmistakably Apricot Grove's Frontier Hall, unlike any other city, town or sect in the game.
+
+ITS LOOK: A pill shop, clinic and buying office under one broad green-glazed roof among the City’s streets: a wide clinic hall with rows of cots and screens, a long pill counter fronted with rows of small lacquered drawers and jars, a courtyard of drying herbs and an apricot tree in a stone planter. Colours: celadon green roof, apricot pink, white linen, herb brown. It feels calm, clean, medicinal, busy with patients. Leave out: skulls, ledgers and lamps, weapons, sea and ships, grandeur.
+
+From the world map it shows as: Nothing of its own: a green roof in the City. Within it: the clinic hall; the pill counter.
+
+SCALE: it is about 1 li (1 km) across, home to about 600 mortals, 150 at Qi Condensation, 12 at Foundation, 1 at Core Formation. Paint it at that true size from a nearby height: a settlement of thousands, its houses at human size and its few cultivators’ works far larger than life. Never a small medieval town.
+
+The land: a sea coast: surf, reefs, sea cliffs, harbour water and salt haze.
+
+The light: a red sunset smouldering through smoke. Keep the whole on the dark side, so gold and ivory text reads over it.
+
+STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: a city is a sea of roofs to the horizon, a village is the seat of a county the size of a country. What cultivators build is grand and larger than life, but paint only what this place has, never a stock xianxia city. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.
+
+The place, for mood: Apricot Grove Valley's branch hall in the City of the Guarded Mouth, which buys the frontier's beast cores for the Valley's furnaces and sells healing pills to anyone, at prices the frontier complains about and pays.
+```
+
+Pieces, in order: join, gift, mission, ground, elders, seat, inside, law-hall.
