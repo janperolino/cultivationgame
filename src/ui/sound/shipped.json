@@ -76,13 +76,6 @@
       "file": "ui-open.mp3",
       "credit": "Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms (Sonniss GDC 2026)",
       "made": "9493a22d0e7d"
-    },
-    {
-      "id": "ui-toast",
-      "kind": "effect",
-      "file": "ui-toast.mp3",
-      "credit": "Mechanical Wave - Sound Effects Collection (Sonniss GDC 2024)",
-      "made": "494f853e524a"
     }
   ]
 }
