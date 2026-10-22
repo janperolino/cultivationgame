@@ -91,16 +91,27 @@ interface Take {
   guessed: boolean;
 }
 
+/**
+ * A cue's takes in sound/inbox/<cue>/; a `credits.json` beside them (a script that fetched them
+ * writes one) gives a take's source, licence and credit, else they're guessed from its name.
+ */
 function finds(id: string): Take[] {
   const dir = join(inbox, id);
   if (!existsSync(dir)) return [];
+  const known = join(dir, 'credits.json');
+  const credits = existsSync(known)
+    ? (JSON.parse(readFileSync(known, 'utf8')) as Record<
+        string,
+        Pick<Take, 'source' | 'licence' | 'credit'>
+      >)
+    : {};
   return readdirSync(dir)
     .filter((f) => AUDIO_EXTS.includes(extname(f).toLowerCase()))
     .sort()
     .map((f) => ({
       url: `/finds/${id}/${encodeURIComponent(f)}`,
       name: f,
-      ...guessOf(f),
+      ...(credits[f] ? { ...credits[f], guessed: false } : guessOf(f)),
     }));
 }
 
