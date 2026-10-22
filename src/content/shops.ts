@@ -781,7 +781,7 @@ export const DOOR_SHARE: Record<ShopKind, number> = {
 const NOTABLE = { most: 3, weight: 3 } as const;
 
 /** The surnames keepers are named by: none a power's (no Qian). */
-const KEEPER_SURNAMES = [
+export const KEEPER_SURNAMES = [
   'Liu',
   'Hu',
   'Zhou',

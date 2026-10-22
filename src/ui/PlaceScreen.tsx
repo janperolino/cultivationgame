@@ -5,8 +5,8 @@
 // the picked door's preview with Enter and Go in. A faction's seat is the hall (Cloudstep): its
 // front's tiles with the open hall under them, and Inside, members only, in the grid layout. A gate
 // is the hall shut. A village and a wild site are the painting whole, their doors or doings along
-// the bottom. Opening a door keeps the banner and changes only what is under it: until A6.1 gives
-// each kind of door its room, Enter opens the door's counter (PlaceCounters.tsx) as a plain room.
+// the bottom. Opening a door keeps the banner and changes only what is under it: Enter opens the
+// door's room, a layout by its kind (PlaceRooms.tsx, A6.1).
 import { useEffect, useState, type ReactNode } from 'react';
 import { PLACE_KIND_INFO } from '../content/map/places.ts';
 import { regionData } from '../content/map/index.ts';
@@ -32,6 +32,7 @@ import { go } from './nav.ts';
 import { useGame } from './store.ts';
 import { useSettings } from './settings.ts';
 import { Counter, type Act } from './PlaceCounters.tsx';
+import { Room } from './PlaceRooms.tsx';
 import { bannerArt, doorArt } from './placeArt.ts';
 import {
   doorsOf,
@@ -138,15 +139,21 @@ export function PlaceScreen({ game, map, place, onMap, shut = false }: Props) {
   const inRoom = room ? doors.find((d) => d.id === room) : undefined;
   if (inRoom && (view === 'inside' || (view === 'place' && layout === 'grid'))) {
     under = (
-      <PlainRoom
+      <Room
+        key={inRoom.id}
+        game={game}
+        map={map}
+        place={place}
         door={inRoom}
         back={view === 'inside' ? 'Inside' : place.name}
         keyed={keyed}
         onBack={() => setRoom(null)}
+        onDoor={(id) => doors.some((d) => d.id === id) && setRoom(id)}
         art={doorArt(artAt, inRoom.art)}
-      >
-        <Counter game={game} map={map} place={place} door={inRoom.id} act={act} say={say} />
-      </PlainRoom>
+        artAt={artAt}
+        act={act}
+        say={say}
+      />
     );
   } else if (view === 'inside') {
     under = (
@@ -837,56 +844,6 @@ function Preview({
         </button>
       </div>
     </section>
-  );
-}
-
-/**
- * A door opened under the banner, until A6.1 gives it a room of its kind: a slim bar (back, the
- * door's seal and name, its line, Go in) over its counter, its picture beside it when painted.
- */
-function PlainRoom({
-  door,
-  back,
-  keyed,
-  onBack,
-  art,
-  children,
-}: {
-  door: Door;
-  back: string;
-  keyed: boolean;
-  onBack: () => void;
-  art?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="place-room">
-      <div className="place-room-bar panel">
-        <button type="button" className="place-back" onClick={onBack}>
-          ‹ {back}
-        </button>
-        <span className="place-seal is-small">{door.seal}</span>
-        <h3>
-          {door.name}
-          {door.hanzi && <span className="hanzi">{door.hanzi}</span>}
-        </h3>
-        <span className="place-sub">{door.sub}</span>
-        {keyed && (
-          <button
-            type="button"
-            className="place-btn is-quiet place-room-go"
-            disabled
-            title="Walking it as a scene comes with going in (P3.9)."
-          >
-            Go in 入
-          </button>
-        )}
-      </div>
-      <div className="place-room-body">
-        <section className="place-counter panel">{children}</section>
-        {art && <img className="place-room-pic" src={art} alt="" draggable={false} />}
-      </div>
-    </div>
   );
 }
 

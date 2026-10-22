@@ -7,7 +7,7 @@ import { hasCommissionTab } from './commissionWords.ts';
 import { useEffect, useState } from 'react';
 import { meetCodex } from '../core/codex.ts';
 import { endGuide, lookAt } from './guide.ts';
-import { COPY_FORM_WORDS, copyForm, copyItem, copyTitle, hasCopy } from '../content/copies.ts';
+import { hasCopy } from '../content/copies.ts';
 import { item, stackSize } from '../content/items.ts';
 import { PLACE_KIND_INFO } from '../content/map/places.ts';
 import { capitalize, possessive } from '../content/words.ts';
@@ -110,23 +110,11 @@ import { groundPartners, sparWhy } from '../core/spar.ts';
 import { askSpar } from '../core/playFight.ts';
 import { cue } from './cues.ts';
 import { itemTipProps } from './itemTip.ts';
+import { departmentsOf, inDepartment, ware, type DepartmentId } from './rooms.ts';
 
 export type Act = (
   change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0],
 ) => string | null;
-
-/** A thing's name and rarity, a copy or an item. */
-function ware(thing: string): { name: string; rarity: string; sub: string } {
-  if (hasCopy(thing)) {
-    const it = copyItem(thing);
-    const title = copyTitle(thing);
-    // A book at tier 1, a jade slip from tier 2 (E3, Methods in the market).
-    const sub = COPY_FORM_WORDS[copyForm(thing)];
-    return { name: title[0]!.toUpperCase() + title.slice(1), rarity: it.rarity, sub };
-  }
-  const it = item(thing);
-  return { name: it.name, rarity: it.rarity, sub: `tier ${it.tier}` };
-}
 
 const STATE_WORDS: Record<string, string> = {
   unknown: 'you know none of it',
@@ -253,16 +241,22 @@ function DoorCounter({
 
 // ---------------------------------------------------------------- a shop
 
-function ShopCounter({
+export function ShopCounter({
   game,
   shopId,
   act,
   say,
+  departments = false,
+  start,
 }: {
   game: GameState;
   shopId: string;
   act: Act;
   say: (t: string) => void;
+  /** A trading hall's floor (A6.1): the shelf by department, only those holding lots this month. */
+  departments?: boolean;
+  /** The tab it opens on, when the room asks (a refiner's Mend). */
+  start?: string;
 }) {
   const sh = shopById(shopId);
   const kinfo = SHOP_KIND_INFO[sh.kind];
@@ -275,7 +269,8 @@ function ShopCounter({
   if (kinfo.repairs) tabs.push(['mend', 'Mend']);
   // A craft's shop posts commissions and makes to order (K12).
   if (hasCommissionTab(game, shopId)) tabs.push(['commission', 'Commission 托']);
-  const [tab, setTab] = useState(tabs[0]![0]);
+  const [tab, setTab] = useState(start && tabs.some(([t]) => t === start) ? start : tabs[0]![0]);
+  const [dept, setDept] = useState<DepartmentId>('all');
   const silver = kinfo.money === 'silver';
   // A counter open: the first buy's guide can fire, and the codex meets the shops.
   const applyLife = useGame((s) => s.applyLife);
@@ -320,7 +315,13 @@ function ShopCounter({
   };
   if (terms?.as === 'shut') return <p className="place-note">{terms.why}</p>;
   // The shelf by the count first, then the month's display lots (E5).
-  const lots = shelf(game, shopId).sort((a, b) => Number(!!b.standing) - Number(!!a.standing));
+  const shelved = shelf(game, shopId).sort((a, b) => Number(!!b.standing) - Number(!!a.standing));
+  const imported = (thing: string) => origin(thing).includes('imported');
+  const floor = departments ? departmentsOf(shelved, imported) : [];
+  const lots =
+    departments && dept !== 'all'
+      ? shelved.filter((l) => inDepartment(l.thing, dept, imported))
+      : shelved;
   // What you carry and the copies on your bookcase, whatever this shop will buy.
   const held = [...Object.entries(game.player.items), ...Object.entries(game.player.copies)]
     .filter(([, n]) => n > 0)
@@ -440,6 +441,21 @@ function ShopCounter({
           place={game.map.inside}
           who={shopId}
         />
+      )}
+      {tab === 'buy' && departments && floor.length > 1 && (
+        <div className="place-departments" role="tablist" aria-label="Departments">
+          {floor.map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              role="tab"
+              aria-selected={dept === d.id}
+              onClick={() => setDept(d.id)}
+            >
+              {d.name} <small>{d.n}</small>
+            </button>
+          ))}
+        </div>
       )}
       {tab === 'buy' && (
         <div className="place-rows" data-guide="buy">
