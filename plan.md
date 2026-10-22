@@ -26,6 +26,25 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 
 ## Status
 
+**The lines at a glance** (planning, 2026-10-22, Jan's call: one table to read the lines side by side; the lists below keep the detail). Rows are order within a line, not dates; a line waits on another only where a cell says *needs*.
+
+| Step | Friends' line (`friends-line`) | Main line (the top hub, main) | Side line | Art line (main) |
+|---|---|---|---|---|
+| 1 | P3.9 Going in: the road | **Design: Guild trade** | Design: Core Formation | A6 Places and shops |
+| 2 | **Design: People and ties** | Guild trade's phases… | Core Formation's phases… | A6.1 Rooms |
+| 3 | P3.9b Places and people | …Guild trade's phases | …Core Formation's phases | A3.1 The cave repainted |
+| 4 | P3.9c The fight inside the scene | Guild trade's play checkpoint | | A9 Chronicle, Settings, creation, Combat |
+| 5 | People and ties' phases… | | | A12 The intros |
+| 6 | …People and ties' phases, its play checkpoint | | | F2 The haul |
+| 7 | P3.10 The Ways | | | A11 Content art (trickles) |
+| 8 | P3.11 Ruins, inheritances | | The atlas fill (once the Border Wilds are solid) | A5.4, A7, A8, A10 |
+| 9 | P3.12 The decks and rebirth | | | |
+| 10 | P3.13 Tone and reliability | | | |
+| 11 | **M7 Big moments** (*needs* Core Formation and P3.13) | | | |
+| 12 | *the lines join* → | **Design: the living world** (*needs* People and ties, Guild trade, P3.13, the atlas fill) | | |
+| 13 | | The living world's phases and play checkpoint | | |
+| 14 | | **M8 Rebirth and friends** | | |
+
 - [x] P0.1–P2.9 and D2 to D2.2 (M0 to M2: setup, the idle core, combat and the screens)
 - [x] D3 and P3.1–P3.7 (M3's first half: the atlas as data, three paths, the resolver, people, catalogs and shops, the travel map, places and encounters)
 - [x] A1–A5.3 (the art overhaul's first half: the stage, the shell and kit, Cultivate, Routine, the Map, the world at scale, places painted into the map)
@@ -37,11 +56,16 @@ Built bottom-up from here (planning, 2026-10-18, Jan's call): what other systems
 - [x] C1–C3 with the realm gap's design (protective qi, arts that strike many, the realm gap built)
 - [x] D4 Design: crafts, then M4's phases and a play checkpoint
 
-**Three lines at once** (planning, 2026-10-20, Jan's call: something to show friends soon without stopping the crafts). Each line runs one phase at a time from its own hub; the lines join at the living world. Whoever merges second pulls `main` first, renumbers its save migration and reconciles Status (each line logs under its own heading in the Log); a K phase that starts after the opening lands reruns `npm run sim -- craft` on the new clock, with the opening's rule (design § Character creation and the first hour, What the faster clock moves): craft mastery anchored to the attended crafter, its batch thresholds near 3, 12, 35 and 85, and a seat's contribution against an attended realm.
+**Three lines at once** (planning, 2026-10-20, Jan's call: something to show friends soon without stopping the crafts). Each line runs one phase at a time from its own hub; the lines join at the living world. Whoever merges second pulls `main` first, renumbers its save migration and reconciles Status (each line logs under its own heading in the Log); a K phase that starts after the opening lands reruns `npm run sim -- craft` on the new clock, with the opening's rule (design § Character creation and the first hour, What the faster clock moves): craft mastery anchored to the attended crafter, its batch thresholds near 3, 12, 35 and 85, and a seat's contribution against an attended realm. Since 2026-10-22 (the living world split, Jan's call) the K line's slot is the main line, the top hub's own, and the lines join at the living world's design there; the table at the top of Status shows them side by side.
 
 *The K line* (the crafts hub):
 
 - [x] K1–K12 and the crafts play checkpoint (the K line, closed 2026-10-21)
+
+*The main line* (the top hub's own since 2026-10-22, in the K line's slot; it also paces the friends' and art lines, and carries the lines' join):
+
+- [ ] Design: Guild trade (guilds trading between markets and regions, caravans, the black market's raids and heat, auctions and appraisal, beast taming and spirit fishing, standing orders and hired hands, the other three origins; it reads K12's commissions rather than adding its own)
+- [ ] Guild trade: its phases and play checkpoint (expanded at its design session)
 
 *The friends' line* (a fast opening, then going in; M3's AI half moved ahead of the living world):
 
@@ -54,6 +78,9 @@ Built bottom-up from here (planning, 2026-10-18, Jan's call): what other systems
 - [ ] P3.11 Ruins, inheritances and the Realm of Mingled Blood
 - [ ] P3.12 The decks and rebirth (the seclusion deck rewritten and the next life; its opening half moved to The opening, built)
 - [ ] P3.13 Tone and reliability pass
+- [ ] Design: People and ties (runs before P3.9b, so places and people are built with its acts in mind; the table has its place)
+- [ ] People and ties: its phases and play checkpoint (after P3.9c, before P3.10, so the Ways can count oaths, gifts and betrayals as deeds)
+- [ ] M7 Big moments: expanded into phases at its design session (after P3.13 and Core Formation: it reads Core and the go-in scene, not the living world)
 
 *The side line* (docs, art and code apart from the other two; A5.4 from the art backlog whenever there's ChatGPT time):
 
@@ -63,8 +90,8 @@ Built bottom-up from here (planning, 2026-10-18, Jan's call): what other systems
 
 *When the lines join:*
 
-- [ ] Design: guild trade and the living world (the rest of M5 and M6: guilds trading between regions, caravans, commissions, the black market, auctions, the events calendar, NPCs who age and climb, rumors), then its phases and a play checkpoint; after the AI half, whose scenes it extends with lives that tick
-- [ ] M7 and M8: expanded into phases at their design sessions (the outline, under The layers)
+- [ ] Design: the living world, then its phases and a play checkpoint (the events calendar, the powers' events and sect wars, rumors and headlines, the world deck, lasting changes to places, map tiers and long travel, founding your own power; on the main line, once People and ties, Guild trade, P3.13 and the atlas fill are in)
+- [ ] M8 Rebirth and friends: expanded into phases at its design session (last, on the main line)
 
 **Backlog: the art overhaul's rest.** Painted now, leaving room for later features; a new screen is built in the kit by its phase and painted by an A phase whenever Jan takes it up. A5.4 can trickle alongside anything, since it is mostly Jan's ChatGPT time.
 
@@ -106,8 +133,10 @@ Built bottom-up since 2026-10-18 (Jan's call): what other systems read is built 
 - **The economy, thin** (design § Economy; § World bible, The world at its true size and How many live there). Reads A5.2's veins, population and prosperity and P3.5's shops and catalogs. Read by organizations (contribution, sect shops), jobs (pay), crafts (what ingredients cost and what sells) and trade. From M6: veins as where the money comes from (the stone grade a vein yields, A5.2's Log), prosperity drifting within the vein and driving what a place makes and needs, shops' stock and money by it, prices that move with supply, and markets by reach. Its design session took D6's economy half and your own trade (2026-10-19, Jan's call: what reads only markets is built here, what reads organizations, jobs or crafts waits); its phase specs (E1 to E5) and play checkpoint are in `docs/plan-archive.md`.
 - **Organizations, thin** (design § Professions, people and powers). Reads P3.4's people and standing, P3.4b's thin membership and the economy. Read by jobs (a job is a post), crafts (alchemy shops and refiners as a power's), trade (the merchant guilds) and the AI half's scenes. From M5: one skeleton for sects, clans, guilds and factions, the atlas's powers tagged by type, ranks, posts and contribution, and P3.5's sect shops priced in contribution. Its design session took D5's organization half and folded in P3.7b's jobs as O4 (2026-10-19, Jan's call); its phase specs (O1 to O5), play checkpoint and fixes are in `docs/plan-archive.md`.
 - **Crafts: M4** (D4 settled it, 2026-10-20; K1 to K12 are built, their specs in `docs/plan-archive.md`, and the play checkpoint is below). Reads the economy and organizations. Read by trade (what moves between markets) and the AI half (crafting in scenes).
-- **The atlas fill: the other continents** (`content/atlas/README.md`; A5.2 filled the Morning Star Continent, its 133 entries the pattern, with How things connect in hand and cheaper agents a region at a time). Read by trade's long travel. It runs on the side line after K6, one session on `entries.json` at a time.
-- **Guild trade and the living world** (the rest of M5 and M6 below; a design session first). Reads every layer above, and the AI half's scenes, which it extends (they run first since 2026-10-20). Your own trade is the economy's; this is guilds trading from region to region (moving the economy's supplies from market to market), caravans, commissions, the black market, auctions, the events calendar, NPCs who age and climb, rumors and headlines, map tiers and long travel.
+- **The atlas fill: the other continents** (`content/atlas/README.md`; A5.2 filled the Morning Star Continent, its 133 entries the pattern, with How things connect in hand and cheaper agents a region at a time). Read by the living world's long travel. It runs on the side line after K6, one session on `entries.json` at a time.
+- **People and ties** (the split, 2026-10-22; a design session first, on the friends' line before P3.9b). Reads people records, the resolver's acts and opinion, organizations and P3.9b's scenes. Read by the Ways (deeds), the living world (the cast's lives) and M8 (children as heirs). The rules that take who acts (the ~40 that read `s.player`, Open questions), the regional cast that lives on its own (aging, death, climbing, a season's event), ties by kind and the acts each opens (courting and the dao companion, sworn siblings' oath, master and disciple teaching with the master tie and tutelage as lectures, a rival's challenge), gifts read through the tie, letters, the person's page with its full row of acts, writing a manual, and the people deck.
+- **Guild trade** (the split, 2026-10-22; a design session first, on the main line now the crafts are closed). Reads the economy, organizations and the crafts (K12's commissions, what shops brew). Read by the living world. Your own trade is the economy's; this is the merchant guilds as powers, caravans moving the economy's supplies from market to market and region to region, competing prices, the black market's raids and heat, auctions and appraisal, beast taming and spirit fishing, standing orders and hired hands, and the other three origins (the beast-ranch child, the merchant's child and the smuggler's ward, whose systems all land here).
+- **The living world** (the split, 2026-10-22; where the lines join, on the main line). Reads People and ties, Guild trade, the AI half's scenes and the atlas fill. The events calendar (tournaments, sect contests, secret-realm openings), the powers' events and sect wars, rumors and headlines into person logs, the world deck and the world coming to you for your name, lasting changes to places, sects' resource nodes, map tiers and long travel with the flying boat, and founding your own power with steward's reports. M7 doesn't wait on it (Status); M8 follows it.
 
 ### The crafts layer
 
@@ -143,7 +172,7 @@ What M2 handed on: no gear is handed out before M3's loot (the dev console's `ki
 
 ### The outline the layers draw from
 
-Each opens with a design session that settles its topics and expands it into phases here. Since 2026-10-18 they are built bottom-up, not in this order: the economy (from M6), organizations (from M5) and M4's crafts come first as thin layers, then M3's AI half as the friends' line beside the crafts (2026-10-20), then the rest of M5 and M6 as trade and the living world; M7 and M8 follow it (Status).
+Each opens with a design session that settles its topics and expands it into phases here. Since 2026-10-18 they are built bottom-up, not in this order: the economy (from M6), organizations (from M5) and M4's crafts come first as thin layers, then M3's AI half as the friends' line beside the crafts (2026-10-20), then the rest of M5 and M6 as three layers, People and ties, Guild trade and the living world (the split, 2026-10-22); M7 after Core Formation and P3.13, and M8 last (Status, the table).
 
 - **M4 Crafts (weeks 11–14):** D4 recipes and craft Dao nodes (P3.5's alchemy shops and refiners become the crafts' own: what they stock is brewed and refined, a refiner's mending is artifact refining, and commissions, ordering a piece made to your wants, start here), the effect table behind generated recipes, styles and their chapters, alchemy's fire control and formations as placing on the qi-handling grammar (design § Still to design); then alchemy and spirit farming; refining, formations and talismans; experimentation with the discoveries edge and generated recipes (design § Professions), production queues and Core Formation; the spirit pool; abodes as sites (on any spot you choose, a pin made a site) with a vein, defenses, reach and neighbors; geomancy (moved from M6, Jan's note in P3.6's talk), reading a site's hidden worth: a spirit vein, good land to farm, ore and herb beds, the lasting wealth a faction might move on, the abode's store and moving abode as a trip (design § Idle production); the craft deck.
 - **M5 People and powers (weeks 15–18):** D5 NPC depth, sects and the organization skeleton, with a cast list of the atlas's named people and the atlas's powers tagged by type; then NPC records and memory, and the People screen in full (the circles regroup by sect and faction, portraits replace the seals, lives that tick and yearly letters); sects, posts and contribution (sect journeys on P3.6's group travel, a sect's cloud ship carrying its disciples to another sect, and contests between sects, tournaments and secret-realm competitions, which M6's calendar schedules; and leave: a member away past their leave loses contribution and standing, and long missions run on a time limit, Jan's note in P3.6's talk), with a style's next chapter handed out by contribution, rank or favor, and P3.5's sect shops priced in contribution; the merchant guilds as organizations with posts and caravans; write a manual (design § Cultivation, Manuals); factions, fame and karma in full; paired cultivation for dao companions (romance itself is D3's ties); founding a sect or faction of your own on a spot you choose and starting a family (a spouse and children the world keeps), both as projects on D3's resolver; the other three origins; steward's reports as templates, with the Scribe's prose when a key is set; the people deck.
@@ -184,11 +213,11 @@ Write questions here when a phase hits something the design doesn't cover, with 
 #### For the layers
 
 - **The resolver reads layers closer** (C3). Checks inside a realm read the same sizes as fights, so layers now stand ×1.07 apart (were ×1.15) and Foundation stages ×1.29 (were ×1.5): peers' checks come out closer and checks across a border harder. Three playbook scenarios moved a layer or two to keep their verdicts; the resolver's 1.25 for a clear verdict may want a look at the next play checkpoint.
-- **From the code review, for the living world** (2026-10-20, medium 17). About 40 day rules and actions read `s.player` rather than taking who acts: the organizations' month (`payAllowances`, `settleQuotas`, `countLeave`, `raiseEarly`, `seatsByRealm`), jobs (`jobsDay`, `onShift`, `atHome`), the halls' and shops' actions. The lower layer (`joinPower`, `addBalance`, the purse) takes one. Taken up when NPC members live their months.
-- **Steppe land makes nowhere** (code review 2026-10-20, content). The `land: ['steppe']` lines (`gate-tanned-hide`, `thunderhorn`, `cloud-goat-wool`) find no Border Wilds market on steppe (the Gate is karst), so the Herders' and the Gate's land making is inert. Retag them, or write the Herders' market.
+- **From the code review, for People and ties** (2026-10-20, medium 17). About 40 day rules and actions read `s.player` rather than taking who acts: the organizations' month (`payAllowances`, `settleQuotas`, `countLeave`, `raiseEarly`, `seatsByRealm`), jobs (`jobsDay`, `onShift`, `atHome`), the halls' and shops' actions. The lower layer (`joinPower`, `addBalance`, the purse) takes one. People and ties takes it up first, when NPC members live their months.
+- **Steppe land makes nowhere** (code review 2026-10-20, content). The `land: ['steppe']` lines (`gate-tanned-hide`, `thunderhorn`, `cloud-goat-wool`) find no Border Wilds market on steppe (the Gate is karst), so the Herders' and the Gate's land making is inert. Retag them, or write the Herders' market: for Guild trade's design.
 - **Left from the code review** (2026-10-20, lows). A tick gap over 60 s puts every screen behind the loading line, so a throttled background tab loses an open door and the Map's view (a call on throttled tabs). The v36 migration reads live shop content, so it shifts as the shops do.
-- **The Raider Isles share the Border Wilds' pinyin** (raised 2026-10-12, D2). Bianhuang 边荒 names the starting region and Bianhuang Qundao 边荒群岛 the Raider Isles, a separate Thousand Isles region far to the south. Left as is, both being frontiers; rename the isles if it confuses once M6's long travel reaches them.
-- **The beast-ranch origin and taming** (raised 2026-10-15, planning). Design § Character creation has the beast-ranch child arrive by M5 "with the taming, trade and smuggling systems they need", but beast taming is M6 (§ Professions, people and powers). Same root as the Realm of Mingled Blood's bonded beast, which P3.11's talk settles for M3. Either the origin moves to M6 or a thin taming lands in M5; D5 decides.
+- **The Raider Isles share the Border Wilds' pinyin** (raised 2026-10-12, D2). Bianhuang 边荒 names the starting region and Bianhuang Qundao 边荒群岛 the Raider Isles, a separate Thousand Isles region far to the south. Left as is, both being frontiers; rename the isles if it confuses once the living world's long travel reaches them.
+- **The beast-ranch origin and taming** (raised 2026-10-15, planning). Design § Character creation has the beast-ranch child arrive by M5 "with the taming, trade and smuggling systems they need", but beast taming is M6 (§ Professions, people and powers). Same root as the Realm of Mingled Blood's bonded beast, which P3.11's talk settles for M3. Placed in the split (2026-10-22): taming, trade and smuggling all land in Guild trade, so the beast-ranch child arrives there, with the merchant's child and the smuggler's ward; its design session writes it into design.md.
 - **Body and soul past Foundation** (for Core Formation's design; assumed in P3.2). Body and soul share the Core-Forming Pill as their Core gate until M4 designs their cores; nobody reaches Core in M3.
 - **No qi method reaches Core Formation** (for Core Formation's design; E1). The written qi methods stop at tier 2, so a Core Formation life gathers no qi and burns nothing, the play checkpoint's `up` life included, until crafts or the atlas fill write a tier 3 chapter; E1's burning test stands a made-up one in (`core/burning.test.ts`).
 - **Stolen goods by id** (P3.5). `world.taken` marks an item id, not a single piece, so a pill bought after one was stolen from the Gate is recognized too. Kept until it bites.
@@ -264,6 +293,10 @@ Paint now and leave room (planning, 2026-10-21, Jan's call, replacing 2026-10-18
 Newest first. 3–5 lines per phase. M0 to A5.2, the economy and organizations layers, combat's C1 to C3 and the crafts layer (D4, K1 to K12, its code review and the crafts play checkpoint) are one line a phase here, under K line and Before the three lines; their full entries, with the sim tables and the hand-offs, are in `docs/plan-archive.md`.
 
 Since the three lines (2026-10-20), each line adds its entries under its own heading, newest first, so lines merging beside each other don't meet at one spot; a planning session that touches every line logs under the line whose hub ran it. Everything before is under Before the three lines.
+
+### Main line
+
+- 2026-10-22, planning: the living world split in three (Jan's call, talked through with the top hub). People and ties (the rules that take who acts, the regional cast, ties by kind and their acts, gifts, letters, the people deck) runs on the friends' line, its design before P3.9b and its phases after P3.9c, before P3.10; Guild trade (caravans, the black market, auctions and appraisal, taming and fishing, standing orders, the other three origins) opens the main line, the K line's slot, now; the living world (the calendar, powers' events, rumors, the world deck, lasting changes, long travel, founding) is where the lines join. M7 moves off the living world's queue to after Core Formation and P3.13; M8 stays last. Status opens with a table of the lines side by side (Jan's ask). This session is the top hub over the lines.
 
 ### K line
 
