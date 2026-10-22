@@ -276,18 +276,26 @@ async function build(a: ArtAsset, src: string, root: string): Promise<string[]> 
     const { width, height } = await sharp(sheet.data, { raw: sheet.info }).metadata();
     const cw = Math.floor(width! / a.cells[0]);
     const ch = Math.floor(height! / a.cells[1]);
-    // GPT draws a hairline between a scene sheet's cells and never quite on the thirds, so a door's
-    // picture is cut 3% inside its cell (A6).
+    // GPT draws a scene sheet's seams up to a few dozen pixels off the even thirds (A6), so its cuts
+    // follow the seams it drew (`seams`), and a door's picture is cut 3% inside its cell besides.
+    const xs =
+      a.kind === 'scene'
+        ? seams(sheet.data, width!, height!, a.cells[0], 'x')
+        : even(width!, a.cells[0]);
+    const ys =
+      a.kind === 'scene'
+        ? seams(sheet.data, width!, height!, a.cells[1], 'y')
+        : even(height!, a.cells[1]);
     const trim = a.kind === 'scene' ? Math.round(Math.min(cw, ch) * 0.03) : 0;
     for (const [i, file] of files.entries()) {
       const col = i % a.cells[0];
       const row = Math.floor(i / a.cells[0]);
       await sharp(sheet.data, { raw: sheet.info })
         .extract({
-          left: col * cw + trim,
-          top: row * ch + trim,
-          width: cw - 2 * trim,
-          height: ch - 2 * trim,
+          left: xs[col]! + trim,
+          top: ys[row]! + trim,
+          width: xs[col + 1]! - xs[col]! - 2 * trim,
+          height: ys[row + 1]! - ys[row]! - 2 * trim,
         })
         // An ornament sits in a square; a scene's piece (a door's picture) keeps its cell's shape.
         .resize(
@@ -319,6 +327,51 @@ async function build(a: ArtAsset, src: string, root: string): Promise<string[]> 
           : base.resize({ width: a.width });
   await sized.webp(webp).toFile(join(root, file));
   return files;
+}
+
+/** A sheet's cell edges, evenly: 0, a third, two thirds, the whole. */
+function even(size: number, n: number): number[] {
+  return Array.from({ length: n + 1 }, (_, k) => Math.round((size * k) / n));
+}
+
+/**
+ * A painted sheet's cell edges where GPT drew them: near each even division (within 6% of the
+ * side), the line across which the picture changes most, the seam between two scenes. Raw RGBA.
+ */
+export function seams(
+  data: Uint8Array,
+  width: number,
+  height: number,
+  n: number,
+  axis: 'x' | 'y',
+): number[] {
+  const size = axis === 'x' ? width : height;
+  const along = axis === 'x' ? height : width;
+  const at = (u: number, v: number) => (axis === 'x' ? (v * width + u) * 4 : (u * width + v) * 4);
+  const step = (u: number) => {
+    let d = 0;
+    for (let v = 0; v < along; v += 2) {
+      const a = at(u - 1, v);
+      const b = at(u, v);
+      d +=
+        Math.abs(data[a]! - data[b]!) +
+        Math.abs(data[a + 1]! - data[b + 1]!) +
+        Math.abs(data[a + 2]! - data[b + 2]!);
+    }
+    return d;
+  };
+  const out = even(size, n);
+  const reach = Math.round(size * 0.06);
+  for (let k = 1; k < n; k++) {
+    let best = out[k]!;
+    let most = -1;
+    for (let u = Math.max(1, out[k]! - reach); u <= Math.min(size - 1, out[k]! + reach); u++) {
+      const d = step(u);
+      if (d > most) [most, best] = [d, u];
+    }
+    out[k] = best;
+  }
+  return out;
 }
 
 /** The source as raw RGBA, with its green screen keyed out when the asset names one. */
