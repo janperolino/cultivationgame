@@ -26,24 +26,26 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 
 ## Status
 
-**The lines at a glance** (planning, 2026-10-22, Jan's call: one table to read the lines side by side; the lists below keep the detail). Rows are order within a line, not dates; a line waits on another only where a cell says *needs*.
+**The lines at a glance** (planning, 2026-10-22, Jan's call: the lines side by side; the lists below keep the detail). Read down a column for a line's order; rows aren't dates. Bold is a design session.
 
-| Step | Friends' line (`friends-line`) | Main line (the top hub, main) | Side line | Art line (main) |
-|---|---|---|---|---|
-| 1 | P3.9 Going in: the road | **Design: Guild trade** | Design: Core Formation | A6 Places and shops |
-| 2 | **Design: People and ties** | Guild trade's phases… | Core Formation's phases… | A6.1 Rooms |
-| 3 | P3.9b Places and people | …Guild trade's phases | …Core Formation's phases | A3.1 The cave repainted |
-| 4 | P3.9c The fight inside the scene | Guild trade's play checkpoint | | A9 Chronicle, Settings, creation, Combat |
-| 5 | People and ties' phases… | | | A12 The intros |
-| 6 | …People and ties' phases, its play checkpoint | | | F2 The haul |
-| 7 | P3.10 The Ways | | | A11 Content art (trickles) |
-| 8 | P3.11 Ruins, inheritances | | The atlas fill (once the Border Wilds are solid) | A5.4, A7, A8, A10 |
-| 9 | P3.12 The decks and rebirth | | | |
-| 10 | P3.13 Tone and reliability | | | |
-| 11 | **M7 Big moments** (*needs* Core Formation and P3.13) | | | |
-| 12 | *the lines join* → | **Design: the living world** (*needs* People and ties, Guild trade, P3.13, the atlas fill) | | |
-| 13 | | The living world's phases and play checkpoint | | |
-| 14 | | **M8 Rebirth and friends** | | |
+| Friends' line        | Main line               | Side line          | Art line          |
+| -------------------- | ----------------------- | ------------------ | ----------------- |
+| P3.9 The road        | **Guild trade**         | **Core Formation** | A6 Places         |
+| **People and ties**  | Trade phases            | Core phases        | A6.1 Rooms        |
+| P3.9b Places, people | Trade checkpoint        | Atlas fill ¹       | A3.1 Cave         |
+| P3.9c Scene fights   |                         |                    | A9 Chronicle…     |
+| People phases        |                         |                    | A12 Intros        |
+| People checkpoint    |                         |                    | F2 The haul       |
+| P3.10 The Ways       |                         |                    | A11 Content art   |
+| P3.11 Ruins          |                         |                    | A5.4, A7, A8, A10 |
+| P3.12 Decks, rebirth |                         |                    |                   |
+| P3.13 Tone pass      |                         |                    |                   |
+| **M7** Big moments ² |                         |                    |                   |
+| →                    | **The living world** ³  |                    |                   |
+|                      | Living world phases     |                    |                   |
+|                      | **M8** Rebirth, friends |                    |                   |
+
+¹ Once the Border Wilds are solid. ² Needs Core Formation and P3.13. ³ Needs People and ties, Guild trade, P3.13 and the atlas fill; the lines join here.
 
 - [x] P0.1–P2.9 and D2 to D2.2 (M0 to M2: setup, the idle core, combat and the screens)
 - [x] D3 and P3.1–P3.7 (M3's first half: the atlas as data, three paths, the resolver, people, catalogs and shops, the travel map, places and encounters)
