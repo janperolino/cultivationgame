@@ -85,6 +85,7 @@ export function useLines(it: Item): string[] {
     out.push(`Read on the study hours, it teaches ${copyTitle(copyId(u.read.kind, u.read.id))}.`);
   if (u.carry) out.push(`Carries ${u.carry.squares} squares while it travels with you.`);
   if (u.key) out.push(`Opens ${u.key.opens}.`);
+  if (u.proof) out.push('Proof of whose you are: shown in a talk, it backs your word.');
   if (u.inscribe) {
     out.push(
       `${u.inscribe.slots} empty inscription slot${u.inscribe.slots === 1 ? '' : 's'} (enchantments arrive in M4).`,

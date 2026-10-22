@@ -22,7 +22,8 @@
     "sound:find": "tsx tools/sound-find.ts",
     "sound:pick": "tsx tools/sound-pick.ts",
     "spike": "node --env-file=.env.local --import tsx sim/spike.ts",
-    "glm": "node --env-file=.env.local --import tsx sim/glm.ts"
+    "glm": "node --env-file=.env.local --import tsx sim/glm.ts",
+    "goin": "node --env-file=.env.local --import tsx sim/goin.ts"
   },
   "dependencies": {
     "dexie": "^4.4.6",

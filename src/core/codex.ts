@@ -127,6 +127,7 @@ export const MET: Readonly<Record<MetTest, (s: GameState) => boolean>> = {
   commission: (s) => (s.player.crafts.commissions?.length ?? 0) > 0 || MET['commission-done'](s),
   'commission-done': (s) => (s.player.crafts.commissions ?? []).some((k) => k.done),
   order: (s) => (s.player.crafts.orders?.length ?? 0) > 0,
+  'road-home': (s) => 'road-home' in s.cards.drawn,
   'craft-card': (s) =>
     Object.keys(s.cards.drawn).some((id) => hasCard(id) && card(id).deck === CRAFT_DECK),
   rogue: (s) =>

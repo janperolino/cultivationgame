@@ -7,6 +7,7 @@
 // what a short one means). A new act or capability is a row here; core/resolver/ never changes for
 // one. core/resolver/ holds the rules.
 import type { TieId } from './people.ts';
+import type { MotiveId } from './personality.ts';
 import type { RealmId } from './realms.ts';
 import type { StatId } from './stats.ts';
 
@@ -371,7 +372,8 @@ export const ACTS = {
     short: 'missed',
   },
   'read-realm': { verb: 'look', name: 'read their realm', target: 'person' },
-  // Talk
+  // Talk. Plain talk is free (P3.9): a chat has no check, a tick of small talk nobody judges.
+  chat: { verb: 'talk', name: 'chat', target: 'person' },
   ask: { verb: 'talk', name: 'ask', target: 'person', ...PEOPLE },
   persuade: { verb: 'talk', name: 'persuade', target: 'person', ...PEOPLE },
   lie: {
@@ -639,6 +641,19 @@ export const STANDING_RANGE = [0.5, 1.5] as const;
 /** A motive against it; suspicion of you. */
 export const MOTIVE_AGAINST = 2;
 export const SUSPICION = 2;
+/**
+ * The motive that stands against each ask (P3.9, the code review's item 10; Jan's to revisit):
+ * the loyal won't be recruited from their own, the greedy won't be bargained down, the proud won't
+ * be talked round, the afraid won't tell, and a grudge won't be calmed or begged.
+ */
+export const AGAINST_ASK: Readonly<Partial<Record<string, MotiveId>>> = {
+  recruit: 'loyalty',
+  bargain: 'greed',
+  persuade: 'pride',
+  ask: 'fear',
+  calm: 'revenge',
+  beg: 'revenge',
+};
 /** A soul this many realms above yours reads your lies. */
 export const LIE_READ_REALMS = 2;
 

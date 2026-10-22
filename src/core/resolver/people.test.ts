@@ -307,7 +307,7 @@ describe('standing', () => {
 describe('talk on real opinion', () => {
   it('reads trust, a motive met and the leans that resist', () => {
     const s = life();
-    const keeper = { ...npc('keeper'), nature: nature(['greed'], { hand: -2 }) };
+    const keeper = { ...npc('keeper'), nature: nature(['curiosity'], { hand: -2 }) };
     let st: GameState = s;
     const sc = scene([you(s), keeper], { kind: 'town' });
     const ask = step('bargain', { target: 'keeper' });
@@ -322,6 +322,10 @@ describe('talk on real opinion', () => {
       ),
     };
     expect(previewStep(st, sc, s.player.id, ask).check!.verdict).toBe('clear');
+    // A greedy keeper holds a motive against a bargain (×2, P3.9): short even trusting you.
+    const greedy = { ...keeper, nature: nature(['greed'], { hand: -2 }) };
+    const sc2 = scene([you(s), greedy], { kind: 'town' });
+    expect(previewStep(st, sc2, s.player.id, ask).check!.verdict).toBe('short');
   });
 
   it('makes ties only at the trust each needs, and from where each needs', () => {

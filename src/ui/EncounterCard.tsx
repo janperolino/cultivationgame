@@ -2,7 +2,8 @@
 // how it met you, the narrator's opening line, the people as you read them, what can be won or lost,
 // and its exits with the verdict you can judge, your stance's pick outlined. A fight that isn't a
 // sure win is played on the stage (Fights you play), and a sure one can be played anyway. It sits
-// in the course card; going in is P3.9's.
+// in the course card, with Go in at its foot: the scene with the narrator (P3.9), saying when your
+// life is at stake there, and pointing to Settings without a key.
 import { encounterTemplate } from '../content/encounters/index.ts';
 import type { Stake, Template } from '../content/encounters/schema.ts';
 import { hasItem, item } from '../content/items.ts';
@@ -23,6 +24,12 @@ import { paceOf } from '../core/map/travel.ts';
 import { readRealm } from '../core/resolver/check.ts';
 import type { GameState } from '../core/state.ts';
 import { sealOf } from './encounterSeals.ts';
+import { lifeAtStake } from '../core/goin.ts';
+import { hasKey } from './ai.ts';
+import { goInto } from './goin.ts';
+import { go } from './nav.ts';
+import { rings } from './beacons.ts';
+import { useBeacons } from './useBeacons.ts';
 import type { useGame } from './store.ts';
 
 type Act = (change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0]) => string | null;
@@ -113,6 +120,9 @@ export function EncounterCard({
   const play = (v: ExitView) =>
     act((s) => playExit(s, enc.id, v.i) ?? { ok: false, reason: 'That fight can’t start now.' });
   const danger = enc.how !== 'seen';
+  const keyed = hasKey();
+  const ringed = rings(useBeacons(), 'go-in');
+  const stake = lifeAtStake(game, enc);
   const roles = t.roles
     .map((r) => {
       const as = m.roles[r.id] ?? [];
@@ -234,12 +244,33 @@ export function EncounterCard({
             <span className="enc-v is-sure">sure</span>
           </button>
         )}
-        <button type="button" className="enc-exit is-later" disabled>
+        <button
+          type="button"
+          className={`enc-exit is-goin${stake ? ' is-stake' : ''}${ringed ? ' beacon-ring' : ''}`}
+          data-guide="go-in"
+          title={keyed ? undefined : 'Going in needs an OpenRouter key: add one in Settings.'}
+          onClick={() => {
+            if (!keyed) {
+              go('settings');
+              return;
+            }
+            const why = goInto(enc.id);
+            if (why) say(why);
+          }}
+        >
           <span>
             <span className="enc-exit-name">Go in</span>
-            <span className="enc-why">the scene, with the narrator (P3.9)</span>
+            <span className="enc-why">
+              {!keyed
+                ? 'needs an OpenRouter key · Settings'
+                : stake
+                  ? 'the scene, with the narrator · your life is at stake'
+                  : 'the scene, with the narrator · the exits you tried stay spent'}
+            </span>
           </span>
-          <span className="enc-v is-sure">later</span>
+          <span className={`enc-v ${stake ? 'is-short' : 'is-sure'}`}>
+            {stake ? 'life' : 'scene'}
+          </span>
         </button>
       </div>
       <p className="enc-foot">{foot}</p>

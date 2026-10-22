@@ -21,6 +21,8 @@ import { useBeacons } from './useBeacons.ts';
 import { Square } from './Square.tsx';
 import { unseenEncounters, useSquare } from './square.ts';
 import { useFight } from './fight.ts';
+// The go-in store takes a scene's fight back from the Combat screen, so it loads with the shell.
+import { useGoIn } from './goin.ts';
 import { built } from '../core/guides.ts';
 import { GuideLayer } from './GuideLayer.tsx';
 import { lookAt } from './guide.ts';
@@ -64,6 +66,7 @@ const SCREENS = {
   CraftsScreen: () => import('./CraftsScreen.tsx'),
   DwellingScreen: () => import('./DwellingScreen.tsx'),
   CombatScreen: () => import('./CombatScreen.tsx'),
+  GoInScreen: () => import('./GoInScreen.tsx'),
   MapScreen: () => import('./MapScreen.tsx'),
   PeopleScreen: () => import('./PeopleScreen.tsx'),
   SettingsScreen: () => import('./SettingsScreen.tsx'),
@@ -82,6 +85,7 @@ const DwellingScreen = lazy(() =>
   SCREENS.DwellingScreen().then((m) => ({ default: m.DwellingScreen })),
 );
 const CombatScreen = lazy(() => SCREENS.CombatScreen().then((m) => ({ default: m.CombatScreen })));
+const GoInScreen = lazy(() => SCREENS.GoInScreen().then((m) => ({ default: m.GoInScreen })));
 const MapScreen = lazy(() => SCREENS.MapScreen().then((m) => ({ default: m.MapScreen })));
 const PeopleScreen = lazy(() => SCREENS.PeopleScreen().then((m) => ({ default: m.PeopleScreen })));
 const SettingsScreen = lazy(() =>
@@ -230,10 +234,14 @@ export function App() {
   const lifeFights = useGame((s) => !!s.game?.fight);
   const stageFights = useFight((s) => s.fight !== null || s.after !== null);
   const fighting = lifeFights || stageFights;
+  // A scene you went into takes the stage the same way (P3.9), and its leaving card after it.
+  const inScene = useGame((s) => !!s.game?.goin);
+  const leavingCard = useGoIn((u) => u.leaving !== null);
+  const going = !fighting && (inScene || leavingCard);
 
   // Opening a screen clears its dot, and so does something new arriving while it is open.
   const here = phase === 'playing' && !creating ? current.id : null;
-  const hereNow = fighting ? null : here;
+  const hereNow = fighting || going ? null : here;
   useEffect(() => {
     useNav.setState({ here: hereNow as ScreenId | null });
   }, [hereNow]);
@@ -260,9 +268,19 @@ export function App() {
               </main>
             </div>
           )}
+          {going && phase === 'playing' && (
+            <div className="shell is-goin">
+              <Suspense fallback={null}>
+                <GoInScreen />
+              </Suspense>
+            </div>
+          )}
           {phase === 'playing' && !creating && <GuideLayer />}
           <ItemTipLayer />
-          <div className={`shell is-${current.id}`} hidden={fighting && phase === 'playing'}>
+          <div
+            className={`shell is-${current.id}`}
+            hidden={(fighting || going) && phase === 'playing'}
+          >
             <nav id="side-menu" className="side-rail" aria-label="Screens">
               <div className="rail-mark" aria-hidden="true">
                 <AbodeMark />

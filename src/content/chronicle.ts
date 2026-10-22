@@ -374,8 +374,13 @@ export const EVENT_TEMPLATES: Record<string, Template> = {
   routine: (d, w) => `${w.name} ${s(d.how)} the ${routine(s(d.routine)).name}.`,
   death: (d, w) => {
     const r = s(d.realm) as RealmId;
-    return `${w.name} dies at ${n(d.age)}, at ${stepLabel(r, n(d.stage))}${r === 'qi-condensation' ? ' of Qi Condensation' : ''}.`;
+    const at = `${stepLabel(r, n(d.stage))}${r === 'qi-condensation' ? ' of Qi Condensation' : ''}`;
+    return d.killer
+      ? `${w.name} is killed by ${s(d.killer)} at ${n(d.age)}, at ${at}.`
+      : `${w.name} dies at ${n(d.age)}, at ${at}.`;
   },
+  // A scene you went into, in the chronicler's words (P3.9): a full line, the player named.
+  scene: (d) => s(d.text),
   // One line for the path a card took: the last step's outcome, with the card's variables.
   card: (d, w) => {
     const outcome = cardOutcome(d);
@@ -479,6 +484,7 @@ export const EVENT_KINDS: Readonly<Record<string, KindOf>> = {
   mastery: 'mastery',
   intent: 'mastery',
   death: 'death',
+  scene: 'choice',
   spar: 'fight',
   quest: 'choice',
   work: 'settled',

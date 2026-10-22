@@ -18,7 +18,9 @@ import {
 } from './colors.ts';
 import { formatAge, formatWhen } from './format.ts';
 import {
+  clearNotMeant,
   DEFAULT_SETTINGS,
+  notMeantLog,
   rarityColor,
   saveSettings,
   TEXT_SCALES,
@@ -719,7 +721,106 @@ function GoingInPanel() {
           Reset the meter
         </button>
       </div>
+      <SceneSettings />
     </section>
+  );
+}
+
+/**
+ * Going in's own settings (P3.9): the scene's cost in a corner, a once-a-day warning past a sum
+ * (off at 0, never stopping you), mature mode behind a confirmation of 18 or older, and the
+ * "Not what I meant" log, kept in this browser and exported for tuning the interpreter.
+ */
+function SceneSettings() {
+  const showCost = useSettings((s) => s.showSceneCost);
+  const warnAt = useSettings((s) => s.warnAt);
+  const mature = useSettings((s) => s.mature);
+  const [asking, setAsking] = useState(false);
+  const [logged, setLogged] = useState(() => notMeantLog().length);
+  const exportLog = () => {
+    const blob = new Blob([JSON.stringify(notMeantLog(), null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'not-what-i-meant.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  return (
+    <>
+      <h3 className="sub-heading spaced">In a scene</h3>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={showCost}
+          onChange={(e) => saveSettings({ showSceneCost: e.target.checked })}
+        />{' '}
+        Show what the scene has cost, small in a corner
+      </label>
+      <label className="field">
+        <span>Warn once a day past ($, 0 for never)</span>
+        <input
+          type="number"
+          min={0}
+          step={0.1}
+          value={warnAt}
+          onChange={(e) => saveSettings({ warnAt: Number(e.target.value) || 0 })}
+        />
+      </label>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={mature}
+          onChange={(e) => {
+            if (!e.target.checked) saveSettings({ mature: false });
+            else setAsking(true);
+          }}
+        />{' '}
+        Mature mode: the narrator may be explicit in intimacy and violence
+      </label>
+      {asking && (
+        <div className="actions">
+          <span className="caption">Only for players 18 or older.</span>
+          <button
+            type="button"
+            className="button"
+            onClick={() => {
+              saveSettings({ mature: true });
+              setAsking(false);
+            }}
+          >
+            I am 18 or older
+          </button>
+          <button type="button" className="button button-quiet" onClick={() => setAsking(false)}>
+            Keep it off
+          </button>
+        </div>
+      )}
+      <p className="caption">
+        Off, intimacy fades to black and death keeps its edge without lingering. It stays in this
+        browser, and goes out only while everyone in the scene is 18 or older.
+      </p>
+      <h3 className="sub-heading spaced">Not what I meant</h3>
+      <p className="caption">
+        {logged} flagged {logged === 1 ? 'turn' : 'turns'}: your words, what they were read as, and
+        what you meant. They tune the interpreter.
+      </p>
+      <div className="actions">
+        <button type="button" className="button" disabled={!logged} onClick={exportLog}>
+          Export the log
+        </button>
+        <button
+          type="button"
+          className="button button-quiet"
+          disabled={!logged}
+          onClick={() => {
+            clearNotMeant();
+            setLogged(0);
+          }}
+        >
+          Clear it
+        </button>
+      </div>
+    </>
   );
 }
 

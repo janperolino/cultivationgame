@@ -232,6 +232,19 @@ export const MapLifeSchema = z.object({
   veinRings: z.record(z.string(), pt).optional(),
   /** The day and spot you last read the land: once a day a spot. */
   read: z.object({ day: z.number(), at: pt }).optional(),
+  /**
+   * Out from home (P3.9, the road home): the day you left, the li walked since and what you
+   * carried leaving, for the coming-back card when you reach home again. Null while at home.
+   */
+  out: z
+    .object({
+      since: z.number(),
+      li: z.number().min(0),
+      stones: z.number(),
+      items: z.record(z.string(), z.number()),
+    })
+    .nullable()
+    .optional(),
   /** Lines from the road since you last looked: what the stance settled. */
   road: z.array(
     z.object({

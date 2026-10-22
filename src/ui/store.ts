@@ -338,8 +338,9 @@ export const useGame = create<GameStore>()((set, get) => {
     const now = Date.now();
     const gap = now - lastTick;
     lastTick = now;
-    // A fight holds the clock, and the seat with it, until it ends (Fights you play).
-    if (game.fight) return;
+    // A fight holds the clock, and the seat with it, until it ends (Fights you play), and so does a
+    // scene you went into (P3.9).
+    if (game.fight || game.goin) return;
     // A veil holds the clock while it waits (core/guides.ts); the first orb's runs at half, the
     // breath with it, since orbs need motion.
     const hold = guideHold(game);

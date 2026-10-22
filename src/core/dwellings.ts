@@ -871,7 +871,7 @@ export function settleRaid(s: GameState, rid: number, outcome: 'taken' | 'driven
  * Queues a card where a system says it happens (K9's raids), never drawn: it waits in the feed
  * with its variables and its words, and settles by its default once its urgent days pass.
  */
-function queueCard(
+export function queueCard(
   s: GameState,
   id: string,
   vars: Record<string, number> = {},

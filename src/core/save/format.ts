@@ -37,7 +37,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 54;
+export const SAVE_VERSION = 55;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -660,6 +660,7 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       art: !!active.body || !!active.soul || hours('body') || hours('soul'),
       stones: ((p.plan ?? {}) as Raw).burnStones === true,
       node: Array.isArray(p.nodes) && p.nodes.length > 0,
+      'go-in': false,
     };
     const firsts = (Object.keys(passed) as FirstId[]).filter((id) => passed[id]);
     const flags = (Array.isArray(p.flags) ? p.flags : []) as string[];
@@ -1166,6 +1167,9 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       },
     };
   },
+  // P3.9 Going in, the road: the scene you went into (`goin`), none in an older save; the map's
+  // `out` is optional and starts the next time you leave home.
+  54: (old) => ({ ...old, version: 55, state: { ...((old.state ?? {}) as Raw), goin: null } }),
 };
 
 /** The post starts' last chain quests, which gained a first step in v54. */

@@ -1,14 +1,15 @@
 // The fights you play, by where they came from (Fights you play): a spar asked of someone, a road
 // encounter's exit, a seclusion card's choice. Each builds its start from the state and its seed,
 // so the save's record of the fight (core/played.ts) replays it, and each takes its end back:
-// the spar to the chronicle, the road's to its card's stakes, a card's to its outcome. P3.9 adds
-// the scene's, through `endSceneFight` in core/resolver/scene.ts.
+// the spar to the chronicle, the road's to its card's stakes, a card's to its outcome, and a
+// scene's back into the round that started it (P3.9, core/goin.ts), the scene going on from it.
 import { cardFight, resolveCard } from './cards.ts';
 import { combatantIn, type Fight } from './combat/fight.ts';
 import { roadFight, settlePlayed } from './map/encounters.ts';
 import { burnFought, settleTrap, trapFight } from './formations.ts';
 import { afterFight, fightEnd, openFight, replay, takeUpFlags, type FightEnd } from './played.ts';
 import { endSpar, sparFight, sparWhy } from './spar.ts';
+import { sceneFightBack, sceneFightStart, type SceneFightBack } from './goin.ts';
 import type { FightFrom, GameState } from './state.ts';
 
 /**
@@ -26,6 +27,8 @@ export function fightStart(s: GameState, from: FightFrom): Fight | null {
         return cardFight(s, from.uid, from.choice);
       case 'trap':
         return trapFight(s, from.ground);
+      case 'scene':
+        return sceneFightStart(s, from);
     }
   } catch {
     return null;
@@ -90,6 +93,8 @@ export interface Finished {
   /** What the spar, the card or the road says happened. */
   text: string;
   end: FightEnd;
+  /** A scene's fight handed back: the round it closed, for the narrator to tell. */
+  scene?: SceneFightBack;
 }
 
 /**
@@ -117,6 +122,11 @@ export function finishFight(s: GameState, f: Fight): Finished | null {
     case 'trap': {
       const r = settleTrap(st, rec.from.ground, end);
       return { ...r, end };
+    }
+    case 'scene': {
+      const start = fightStart(s, rec.from);
+      const r = start ? sceneFightBack(st, rec.from, start, f, end, used) : null;
+      return { state: r?.state ?? st, text: r?.text ?? '', end, ...(r ? { scene: r } : {}) };
     }
   }
 }

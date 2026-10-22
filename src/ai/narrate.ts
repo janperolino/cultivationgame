@@ -88,6 +88,10 @@ function notesFrom(view: View, raw: readonly { about: string; note: string }[]):
 
 export interface NarrateOptions {
   length?: Length;
+  /** Words to tell it in, over `length` (P3.9's lengths by moment, content/goin.ts). */
+  words?: readonly [number, number];
+  /** What goes before the outcome: where you stand, the tone setting (ai/scene.ts). */
+  before?: string;
   /** The prose as it streams, without the tail. */
   onProse?: (text: string) => void;
 }
@@ -99,8 +103,8 @@ export async function narrate(
   outcome: Outcome,
   opts: NarrateOptions = {},
 ): Promise<Narration> {
-  const [lo, hi] = LENGTHS[opts.length ?? 'scene'];
-  const task = `${outcome.text}\n\n# Tell it\nIn ${lo}-${hi} words, then the tail.`;
+  const [lo, hi] = opts.words ?? LENGTHS[opts.length ?? 'scene'];
+  const task = `${opts.before ? `${opts.before}\n\n` : ''}${outcome.text}\n\n# Tell it\nIn ${lo}-${hi} words, then the tail.`;
   const messages = contextMessages(view, NARRATOR_TASK, task);
   let text: string;
   try {

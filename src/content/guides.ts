@@ -29,6 +29,7 @@ export const GUIDE_IDS = [
   'fight-turn',
   'sheet',
   'sense',
+  'go-in',
 ] as const;
 export type GuideId = (typeof GUIDE_IDS)[number];
 
@@ -53,6 +54,7 @@ export type GuideControl =
   | 'doors'
   | 'buy'
   | 'moves'
+  | 'go-in'
   | 'first-work'
   | 'sheet'
   | 'sense';
@@ -232,6 +234,16 @@ export const GUIDES: Readonly<Record<GuideId, Guide>> = {
     codex: 'look-gather-sense',
     ack: true,
   },
+  // The first door (P3.9): a card waiting on the road, its Go in at the foot.
+  'go-in': {
+    id: 'go-in',
+    form: 'ring',
+    screen: 'world',
+    control: 'go-in',
+    lines: ['Go in plays this card as a scene: type what you do, and a narrator tells it.'],
+    codex: 'going-in',
+    ack: true,
+  },
 };
 
 /** Each guide as Settings' replay list names it. */
@@ -253,6 +265,7 @@ export const GUIDE_NAMES: Readonly<Record<GuideId, string>> = {
   'fight-turn': 'The first turn of a fight',
   sheet: 'Why you won: the sheet',
   sense: 'Sight, sense and the stance',
+  'go-in': 'Going in',
 };
 
 /** The narrator's skip, on every guide; the first also offers to skip them all. */

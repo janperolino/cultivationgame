@@ -75,6 +75,7 @@ import {
   type CultivatorTemplate,
 } from '../../content/roster.ts';
 import { GUARDS, type Technique } from '../../content/techniques.ts';
+import { CATALOGS } from '../../content/catalogs/index.ts';
 import { gradesShare } from '../grades.ts';
 import { npcIntent } from '../intent.ts';
 import { Rng } from '../rng.ts';
@@ -167,6 +168,29 @@ export function art(
     source: 'generated',
     text: '',
   };
+}
+
+/**
+ * The name a power's own cultivator gives a generated art (P3.9, riding along from P3.5: NPC arts
+ * named from their power's catalog): the k-th of the power's written techniques of the same form,
+ * else of any form. Only the name: the numbers stay the shape's, which the fight sim is tuned on.
+ */
+function powerArtName(power: string | undefined, form: string, k: number): string | null {
+  if (!power) return null;
+  const own = CATALOGS.filter((c) => c.at === power).flatMap((c) => c.techniques ?? []);
+  const same = own.filter((t) => t.form === form);
+  const pool = same.length ? same : own;
+  return pool.length ? pool[k % pool.length]!.name : null;
+}
+
+/** The shape with its power's name, when it has one. */
+function named<T extends { name: string; form: string }>(
+  shape: T,
+  power: string | undefined,
+  k: number,
+): T {
+  const name = powerArtName(power, shape.form, k);
+  return name ? { ...shape, name } : shape;
 }
 
 /** A beast ability as a technique: on the body ladder (soul for soul damage), its element's Dao. */
@@ -518,7 +542,7 @@ export function generateCultivator(
   const path = t.path ?? ped.path;
   const main = pathArt(path, { ...PATH_ART, form: ART_FORM[t.weapon] }, t.element ?? 'physical');
   const techniques = [
-    art(`${t.id}-path`, main.shape, {
+    art(`${t.id}-path`, named(main.shape, t.power, 0), {
       tier,
       rarity: rolls.technique,
       dao: t.weapon,
@@ -529,7 +553,7 @@ export function generateCultivator(
   if (t.pedigree !== 'rogue') {
     const second = pathArt(path, SECOND_ART, t.element ?? 'physical');
     techniques.push(
-      art(`${t.id}-second`, second.shape, {
+      art(`${t.id}-second`, named(second.shape, t.power, 1), {
         tier,
         rarity: rolls.technique,
         dao: t.element ?? t.weapon,
@@ -541,10 +565,10 @@ export function generateCultivator(
   // Arts that strike many: the common count from Qi Condensation, a blast from small sect up or
   // from Foundation.
   const sweeps = [SWEEP_ART, ...(t.pedigree !== 'rogue' || tier >= 2 ? [BLAST_ART] : [])];
-  for (const shape of sweeps) {
+  for (const [k, shape] of sweeps.entries()) {
     const s = pathArt(path, shape, t.element ?? 'physical');
     techniques.push(
-      art(`${t.id}-${shape.key}`, s.shape, {
+      art(`${t.id}-${shape.key}`, named(s.shape, t.power, 2 + k), {
         tier,
         rarity: rolls.technique,
         dao: t.element ?? t.weapon,

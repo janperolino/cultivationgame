@@ -84,7 +84,9 @@ import {
   yourBand,
 } from '../core/map/travel.ts';
 import type { GameState } from '../core/state.ts';
-import { goToWheel } from './nav.ts';
+import { go, goToWheel } from './nav.ts';
+import { hasKey } from './ai.ts';
+import { goInHereNow } from './goin.ts';
 import { ROAD_WORD } from './roadWords.ts';
 import { onArtLoad } from './map/art.ts';
 import { markMoving } from './moving.ts';
@@ -481,6 +483,17 @@ function MapView({
       s: 'the home wheel turns here',
       run: () => act(stopHere),
     });
+    // Go in here (P3.9): wherever you stand still, the land where you stand is a scene.
+    if (!life.course && !life.inside)
+      items.push({
+        t: 'Go in here',
+        s: hasKey() ? 'the land, with the narrator' : 'needs an OpenRouter key · Settings',
+        run: () => {
+          if (!hasKey()) return go('settings');
+          const why = goInHereNow();
+          if (why) say(why);
+        },
+      });
     // Claiming where you stand (K9): bare land as a hut, a vein you read as a cave abode.
     claimable.forEach((c, i) => {
       if (c.kind !== 'valley') items.push(claimItem(i));

@@ -116,6 +116,8 @@ Every feature a player can touch in the game today (built in code, not only desi
 | Travelling with a group (a caravan, a cloud ship), and leaving it | A map card | The group card | a caravan or ship | Card text | codex |
 | Sites: caves, huts, shrines; staying to cultivate | A place screen | The site's counter | a site found or seen | Counter text | codex |
 | Bounty postings pinned on the map | World, the board | Gold marks | taking a posting | The board's caption | introduction quest (the chain’s board) |
+| Going in: a card's Go in, or Go in here, played as a scene with the narrator | A map card, the Journey tab's Currently at | Go in at a card's foot | an OpenRouter key | The door's words, the scene's lines | guide: the first door |
+| The road home: a card for the trip after three days out | The tray | Coming home | three days out, or a goal handed in | Card text | codex |
 
 ## Places, shops and money
 
