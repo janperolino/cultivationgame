@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Place Kinds Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
+<style>
+  /* A6 study: one layout per kind of place you walk into (PlaceKindId: city, town, village, hall, gate, site).
+     Tokens copied from src/ui/theme.css as the K12 study. The pictures are stand-ins cropped from the inspo
+     (docs/mockups/inspo/): every place paints its own banner and door sheet. Names, shops and lore are the data's. */
+  :root {
+    --void: #040507; --text: #e9e5da; --muted: #8d949d; --accent: #d6ab4c; --gilt: #d9b46a;
+    --panel: rgb(7 8 11 / 0.84); --panel-solid: rgb(8 9 12 / 0.94); --line-faint: color-mix(in srgb, var(--gilt) 16%, transparent);
+    --line: color-mix(in srgb, var(--gilt) 34%, transparent);
+    --edge-strong: rgb(255 255 255 / 0.14); --warn: #e08a6a; --ok: #7fca8c;
+    --rarity-white: #ece8de; --rarity-green: #7fca8c; --rarity-blue: #7fa8e0; --rarity-purple: #b48be0; --seal: #b8432f;
+    --font-display: 'Cormorant Garamond', Georgia, serif; --font-brush: 'Ma Shan Zheng', KaiTi, serif;
+    --font-ui: Inter, system-ui, 'Segoe UI', sans-serif;
+  }
+  body { margin: 0; background: var(--void); color: var(--text); font-family: var(--font-ui); font-size: 14px; }
+  .note { max-width: 1240px; margin: 26px auto 8px; padding: 0 16px; color: var(--muted); line-height: 1.5; }
+  .note h1 { font-family: var(--font-display); color: var(--text); font-weight: 600; font-size: 30px; margin: 0 0 4px; }
+  .note b { color: var(--text); font-weight: 600; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; align-items: center; }
+  .bar button { font: 500 14px var(--font-ui); color: var(--muted); background: none; border: 1px solid var(--edge-strong); border-radius: 3px; padding: 7px 14px; cursor: pointer; }
+  .bar button.on { color: var(--accent); border-color: var(--line); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .bar .lbl { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; margin-right: 6px; }
+  .bar .sp { width: 18px; }
+  .why { max-width: 1240px; margin: 4px auto 0; padding: 0 16px; color: var(--muted); font-size: 13.5px; min-height: 40px; }
+  .why b { color: var(--text); }
+  .frame { width: 100%; overflow: hidden; margin: 10px 0 34px; }
+  .stage { width: 1920px; height: 1080px; transform-origin: 0 0; position: relative; overflow: hidden;
+    background: radial-gradient(1200px 700px at 60% 30%, #0d1522 0%, #05070b 60%, #030405 100%); }
+
+  /* shell: the rail and the floating brand and purse */
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 64px; border-right: 1px solid var(--line-faint); background: rgb(5 6 8 / 0.92); z-index: 5; }
+  .rail i { display: block; width: 26px; height: 26px; margin: 22px auto; border: 1px solid var(--line-faint); border-radius: 5px; }
+  .rail i.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 20%, transparent); box-shadow: -19px 0 0 -16px var(--accent); }
+  .hud { position: absolute; top: 22px; right: 48px; z-index: 6; display: flex; gap: 26px; align-items: baseline; font-size: 14px; text-shadow: 0 1px 6px #000; }
+  .hud .season { font-family: var(--font-display); font-size: 20px; }
+  .hud .m { color: var(--muted); font-size: 12.5px; }
+  .hud b { color: var(--gilt); font-weight: 500; }
+
+  .pic { background-color: #10141b; background-repeat: no-repeat; position: absolute; }
+  .shade-l { position: absolute; inset: 0; background: linear-gradient(90deg, rgb(4 5 7 / .96) 0%, rgb(4 5 7 / .86) 26%, rgb(4 5 7 / .25) 52%, transparent 70%); }
+  .shade-b { position: absolute; inset: 0; background: linear-gradient(0deg, rgb(4 5 7 / 1) 0%, rgb(4 5 7 / .6) 14%, transparent 34%); }
+  .shade-t { position: absolute; inset: 0; background: linear-gradient(180deg, rgb(4 5 7 / .55) 0%, transparent 18%); }
+  .standin { position: absolute; font-size: 11px; color: rgb(255 255 255 / .45); letter-spacing: .06em; text-transform: uppercase; z-index: 3; }
+
+  /* the head every place shares */
+  .head { position: absolute; z-index: 4; }
+  .crumb { font-size: 13.5px; color: var(--muted); display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .crumb .back { color: var(--text); border: 1px solid var(--edge-strong); border-radius: 3px; padding: 4px 10px; background: rgb(0 0 0 / .35); }
+  .crumb .sep { opacity: .5; }
+  .nmrow { display: flex; align-items: center; gap: 16px; }
+  .seal { width: 54px; height: 54px; flex: none; border: 1px solid var(--line); border-radius: 4px; display: grid; place-items: center; font-family: var(--font-brush); font-size: 30px; color: var(--accent); background: rgb(0 0 0 / .4); }
+  .nm { font-family: var(--font-display); font-size: 40px; font-weight: 600; line-height: 1.05; }
+  .nm .hz { font-family: var(--font-brush); color: var(--accent); font-size: 30px; margin-left: 10px; font-weight: 400; }
+  .py { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .line { margin: 12px 0 0; font-size: 13.5px; color: var(--muted); }
+  .line b { color: var(--text); font-weight: 500; }
+  .lore { margin: 10px 0 0; line-height: 1.55; font-size: 14.5px; color: #d4d0c6; }
+  .gap { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .gap i { color: var(--warn); font-style: normal; }
+
+  /* the gate strip */
+  .gate { position: absolute; z-index: 4; display: flex; align-items: center; gap: 16px; padding: 0 18px; height: 44px; border: 1px solid var(--line-faint); border-radius: 4px; background: var(--panel); font-size: 13.5px; }
+  .gate .k { font-family: var(--font-brush); color: var(--ok); font-size: 18px; }
+  .gate .sub { color: var(--muted); }
+  .gate .r { margin-left: auto; }
+
+  /* tabs, buttons, panels: the kit */
+  .tabs { display: flex; gap: 26px; border-bottom: 1px solid var(--line-faint); font-size: 15px; }
+  .tabs span { padding-bottom: 8px; color: var(--muted); }
+  .tabs span.cur { color: var(--text); border-bottom: 2px solid var(--accent); }
+  .tabs span em { font-style: normal; font-family: var(--font-brush); color: var(--accent); margin-right: 6px; }
+  .tabs span small { color: var(--muted); font-size: 12px; margin-left: 4px; }
+  .btn { display: inline-block; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 5px 13px; border-radius: 3px; font-size: 13px; white-space: nowrap; }
+  .btn.quiet { color: var(--muted); border-color: var(--edge-strong); background: none; }
+  .btn.off { opacity: .4; }
+  .panel { position: absolute; z-index: 4; padding: 20px 22px; border: 1px solid var(--line-faint); border-radius: 4px; background: var(--panel-solid); box-shadow: 0 24px 50px -28px #000; box-sizing: border-box; }
+  .ph { display: flex; align-items: center; gap: 12px; }
+  .ph .s { font-family: var(--font-brush); color: var(--accent); font-size: 26px; }
+  .ph h2 { font-family: var(--font-display); font-weight: 600; font-size: 25px; margin: 0; }
+  .ph .c { margin-left: auto; color: var(--muted); font-size: 12.5px; }
+  .muted { color: var(--muted); } .small { font-size: 12.5px; }
+  .keeper { font-size: 13px; color: var(--muted); margin: 10px 0 12px; }
+  .keeper b { color: var(--text); font-weight: 500; }
+  .seg { display: inline-flex; border: 1px solid var(--edge-strong); border-radius: 3px; overflow: hidden; font-size: 13px; }
+  .seg span { padding: 5px 14px; color: var(--muted); } .seg span.on { color: var(--text); background: rgb(255 255 255 / 0.07); }
+  .shoptabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 14px 0 10px; }
+  .shoptabs span { font-size: 12.5px; color: var(--muted); border: 1px solid var(--edge-strong); border-radius: 3px; padding: 4px 9px; }
+  .shoptabs span.on { color: var(--text); border-color: var(--line); }
+
+  /* item rows: the same in every shop */
+  .rows { margin-top: 6px; }
+  .row { display: grid; grid-template-columns: 40px 1fr auto auto; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line-faint); }
+  .row .th { width: 38px; height: 38px; border: 1px solid var(--line-faint); border-radius: 3px; background: radial-gradient(circle at 50% 40%, rgb(255 255 255 / .08), transparent 70%); display: grid; place-items: center; font-family: var(--font-brush); color: var(--muted); font-size: 18px; }
+  .row .n { font-weight: 500; font-size: 14px; } .row .n small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; margin-top: 2px; }
+  .row .p { color: var(--gilt); font-size: 13.5px; text-align: right; min-width: 70px; }
+  .w { color: var(--rarity-white); } .g { color: var(--rarity-green); } .b { color: var(--rarity-blue); } .pu { color: var(--rarity-purple); }
+  .foot { position: absolute; left: 22px; right: 22px; bottom: 16px; display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
+  .foot b { color: var(--gilt); font-weight: 500; }
+
+  /* the door card (city, village, wild site): a painted scene, its seal and name below */
+  .door { position: absolute; border: 1px solid var(--line-faint); border-radius: 4px; overflow: hidden; background: var(--panel-solid); }
+  .door.cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .door.dim { opacity: .42; }
+  .door .pic { left: 0; right: 0; top: 0; }
+  .door .lab { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 14px 11px; display: flex; gap: 12px; align-items: center; background: linear-gradient(0deg, rgb(6 7 10 / .98) 60%, rgb(6 7 10 / .7)); }
+  .door .lab .s { font-family: var(--font-brush); color: var(--accent); font-size: 24px; width: 26px; text-align: center; }
+  .door .lab .t { font-family: var(--font-display); font-size: 20px; font-weight: 600; line-height: 1.1; }
+  .door .lab .t small { display: block; font-family: var(--font-ui); font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .door .lab .go { margin-left: auto; color: var(--muted); }
+  .door.plain .pic { background: repeating-linear-gradient(135deg, rgb(255 255 255 / .02) 0 10px, transparent 10px 20px), #0b0e13 !important; }
+  .door.plain .pic::after { content: attr(data-hz); position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-brush); font-size: 64px; color: rgb(214 171 76 / .14); }
+
+  /* the banded row (town): a door with its own painted band */
+  .brow { position: absolute; height: 62px; border: 1px solid var(--line-faint); border-radius: 4px; overflow: hidden; background: var(--panel-solid); display: flex; align-items: center; gap: 14px; padding: 0 16px; box-sizing: border-box; }
+  .brow.cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .brow .pic { right: 0; top: 0; bottom: 0; width: 58%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%); mask-image: linear-gradient(90deg, transparent, #000 45%); opacity: .8; }
+  .brow .s { position: relative; z-index: 1; width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 3px; display: grid; place-items: center; font-family: var(--font-brush); color: var(--accent); font-size: 20px; background: rgb(0 0 0 / .4); }
+  .brow .t { position: relative; z-index: 1; font-family: var(--font-display); font-size: 19px; font-weight: 600; line-height: 1.1; text-shadow: 0 1px 6px #000; }
+  .brow .t small { display: block; font-family: var(--font-ui); font-weight: 400; color: #b8bcc2; font-size: 12px; margin-top: 2px; }
+
+  /* the sect: crest, hall tiles, the open hall */
+  .crest { width: 120px; height: 120px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--font-brush); font-size: 64px; color: var(--accent); background: radial-gradient(circle, rgb(214 171 76 / .14), rgb(0 0 0 / .55) 70%); margin-bottom: 18px; }
+  .motto { font-size: 12.5px; letter-spacing: .32em; text-transform: uppercase; color: #c9c4b8; margin-top: 10px; }
+  .chips { display: flex; gap: 8px; margin-top: 14px; }
+  .chips span { border: 1px solid var(--line-faint); border-radius: 3px; padding: 3px 10px; font-size: 12.5px; background: rgb(0 0 0 / .4); }
+  .tile { position: absolute; height: 110px; border: 1px solid var(--line-faint); border-radius: 4px; overflow: hidden; background: var(--panel-solid); }
+  .tile.cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .tile.dim { opacity: .35; }
+  .tile .pic { inset: 0; opacity: .55; }
+  .tile .in { position: absolute; left: 16px; right: 12px; bottom: 12px; }
+  .tile .s { font-family: var(--font-brush); color: var(--accent); font-size: 26px; }
+  .tile .t { font-family: var(--font-display); font-size: 19px; font-weight: 600; text-shadow: 0 1px 6px #000; }
+  .tile .t small { display: block; font-family: var(--font-ui); font-weight: 400; color: #c0c3c8; font-size: 12px; }
+  .vhz { position: absolute; z-index: 2; left: 18px; top: 18px; writing-mode: vertical-rl; font-family: var(--font-brush); font-size: 40px; color: var(--accent); text-shadow: 0 2px 10px #000; letter-spacing: .1em; }
+  .stand { font-size: 13px; }
+  .stand div { display: flex; justify-content: space-between; gap: 30px; padding: 6px 0; border-bottom: 1px solid var(--line-faint); }
+  .stand div span:first-child { color: var(--muted); }
+  .post { display: grid; grid-template-columns: 36px 1fr auto auto; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line-faint); }
+  .post .k { font-family: var(--font-brush); color: var(--accent); font-size: 20px; text-align: center; }
+  .post .n { font-weight: 500; } .post .n small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; margin-top: 2px; }
+  .post .pay { color: var(--gilt); font-size: 13px; text-align: right; }
+  .shut { position: absolute; z-index: 4; border: 1px solid color-mix(in srgb, var(--seal) 55%, transparent); background: rgb(14 7 6 / .92); border-radius: 4px; padding: 20px 24px; box-sizing: border-box; display: grid; grid-template-columns: 80px 1fr auto; gap: 22px; align-items: center; }
+  .shut .st { width: 70px; height: 70px; border: 2px solid var(--seal); border-radius: 4px; display: grid; place-items: center; font-family: var(--font-brush); font-size: 40px; color: var(--seal); }
+  .shut h2 { font-family: var(--font-display); font-size: 25px; margin: 0 0 4px; font-weight: 600; }
+  .shut .acts { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+  .feat { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; border-bottom: 1px solid var(--line-faint); font-size: 14px; }
+  .feat span:last-child { color: var(--muted); font-size: 12.5px; }
+  .facts { display: grid; grid-template-columns: 120px 1fr; gap: 6px 14px; font-size: 13.5px; margin-top: 14px; }
+  .facts span:nth-child(odd) { color: var(--muted); }
+  h3 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 500; margin: 18px 0 4px; }
+  .callout { position: absolute; z-index: 7; border: 1px dashed rgb(127 168 224 / .7); color: #a9c4ec; font-size: 12px; padding: 4px 8px; border-radius: 3px; background: rgb(6 10 18 / .85); }
+</style>
+</head>
+<body>
+<div class="note">
+  <h1>Places by kind</h1>
+  A6 study, block 1: one layout for each kind of place you walk into. The kinds are the code's (<b>city, town, village, hall, gate, site</b>, <code>PlaceKindId</code>), and every name, door, shop and line of lore is the Border Wilds' data. Within a job the controls stay the same: every counter has the same item rows, price and Buy, every door shows its seal, name and one line, and every place opens with the same head (the ← Map crumb, seal, name, hanzi, pinyin, the line, the lore). <b>The pictures are stand-ins cropped from the inspo</b>; each place paints its own. Blue dashed labels are notes, not UI.
+  <div class="bar" id="kinds"><span class="lbl">Kind</span></div>
+  <div class="bar" id="subs"></div>
+</div>
+<div class="why" id="why"></div>
+<div class="frame" id="frame"><div class="stage" id="stage"></div></div>
+
+<script>
+const IMG = {
+  jade: 'inspo/places/jadewater-market.webp',
+  cloud: 'inspo/places/cloudstep-sect.webp',
+  valley: 'inspo/exploration/misted-herb-valley.webp',
+  sand: 'inspo/places/sandglass-oasis.webp',
+  tea: 'inspo/rumors/quiet-moon-teahouse.webp',
+};
+const KINDS = [
+  ['city', 'City · Guarded Mouth'], ['town', 'Town · Pacified Fort'], ['village', 'Village · Spear-Plow'],
+  ['hall', 'Hall · Lamp-Keeper Sect'], ['gate', 'Gate · Beast-Butcher Gate'], ['site', 'Wild site · Blood-Vine Gorge'],
+];
+const SUBS = {
+  city: ['group', [['markets', 'Markets'], ['hear', 'Hear, hire and rest'], ['work', 'Work']]],
+  town: ['open', [['pill', 'Open: Pill Street']]],
+  village: ['open', [['store', 'Open: the county store'], ['elder', 'Open: the village elder'], ['none', 'Nothing open']]],
+  hall: ['as', [['out', 'The front, an outsider'], ['member', 'The front, an outer disciple'], ['inside', 'Inside']]],
+  gate: ['as', [['shut', 'The front, no token'], ['member', 'The front, an outer disciple'], ['inside', 'Inside']]],
+  site: ['as', [['first', 'First time here'], ['held', 'You hold a dwelling here']]],
+};
+const WHY = {
+  city: '<b>City → Jadewater.</b> A painted banner with the head over its left, the gate strip, then the doors as painted cards in a 3×3 grid and the open door beside. The City\'s eight districts and the changer are exactly nine; its other doors sit under group tabs over the same grid, so nothing scrolls. The Guild that seats here is one door, <b>The Guild’s hall ›</b>, which opens it in the hall layout.',
+  town: '<b>Town → the city layout</b> (Jan\'s call). Pacified Fort is the City\'s grid with its own banner and door cards: seven markets, then Hear, hire and rest, Work and land, and <b>The March’s hall ›</b> for the power seated here.',
+  village: '<b>Village → Herb Valley, small.</b> Almost all painting: the head at the top left, a strip of four or five painted doors along the bottom, and the open door as a panel over the painting on the right. A village is a place you see, not a menu.',
+  hall: '<b>Hall → Cloudstep, with an Inside.</b> The front: a tall banner with the crest, name and motto and your standing, a row of the doors an outsider meets (its shop, join, gift, the Mission hall) and <b>内 Inside</b>, then the open hall full width. Inside opens the city grid under the sect\'s own banner, every hall a door card. Every faction\'s seat takes this: sects, clans, guilds, temples, and the City\'s Guild through its door.',
+  gate: '<b>Gate → Cloudstep, shut.</b> The same layout as a hall, but the gate stands between you and the tiles: the array\'s realm, its way in and what you lack, with the halls dimmed behind it. Once in, it is a hall (a member\'s view: the Mission hall open).',
+  site: '<b>Wild site → Herb Valley.</b> The whole screen is the painting. The left column holds the head, what\'s here and the features (where the inspo has paths), and the bottom strip holds what you can do there. Later phases (gathering, a ruin\'s depth, P3.9\'s doors) add cards to the strip, never a new layout.',
+};
+const S = { kind: 'city', city: 'markets', town: 'pill', village: 'store', hall: 'out', gate: 'shut', site: 'first' };
+
+// ---- shared pieces
+const hud = () => `<div class="hud"><span class="season">Spring, 3,164</span><span class="m">辰 · morning</span><span><b>129</b> low-grade</span><span><b>5,768</b> insight</span></div>`;
+const rail = () => `<div class="rail"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`;
+const pic = (img, crop, style, extra = '') => `<div class="pic" data-img="${img}" data-crop="${crop}" style="${style}" ${extra}></div>`;
+const crumb = (...trail) => `<div class="crumb"><span class="back">← Map</span>${trail.map((t, i) => `${i ? '<span class="sep">›</span>' : ''}<span>${t}</span>`).join('')}</div>`;
+const head = (o) => `${crumb(...o.trail)}<div class="nmrow"><div class="seal">${o.seal}</div><div><div class="nm">${o.name}<span class="hz">${o.hz}</span></div><div class="py">${o.py}</div></div></div>
+  <div class="line">${o.line}</div><div class="lore">${o.lore}</div>${o.gap ? `<div class="gap">${o.gap}</div>` : ''}`;
+const door = (x, y, w, h, ph, d, cur) => `<div class="door ${cur ? 'cur' : ''} ${d.plain ? 'plain' : ''} ${d.dim ? 'dim' : ''}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
+  ${pic(d.img || IMG.jade, d.crop || '0 0 1 1', `height:${ph}px;left:0;right:0;top:0`, `data-hz="${d.s}"`)}
+  <div class="lab"><span class="s">${d.s}</span><span class="t">${d.t}<small>${d.sub}</small></span><span class="go">›</span></div></div>`;
+const row = (s, n, sub, rar, price, act = 'Buy') => `<div class="row"><div class="th">${s}</div><div class="n ${rar}">${n}<small>${sub}</small></div><div class="p">${price}</div><span class="btn">${act}</span></div>`;
+const callout = (x, y, t) => `<div class="callout" style="left:${x}px;top:${y}px">${t}</div>`;
+
+// The City's Pill Street counter, reused unchanged by the town: the same job, the same controls.
+function pillCounter(x, y, w, h, o) {
+  return `<div class="panel" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
+    <div class="ph"><span class="s">丹</span><h2>Pill Street</h2><span class="c">${o.count}</span></div>
+    <div class="shoptabs">${o.shops.map((s, i) => `<span class="${i ? '' : 'on'}">${s}</span>`).join('')}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center"><div class="seg"><span class="on">Buy</span><span>Sell</span></div><span class="muted small">trust: neutral · haggle once a visit</span></div>
+    <div class="keeper"><b>${o.keeper}</b> · ${o.line}</div>
+    <div class="rows">${o.rows.join('')}</div>
+    <div class="foot"><span>Your purse <b>129 low · 40 taels</b></span><span>The shop's purse ${o.purse} this month</span></div></div>`;
+}
+
+// The grid's right side: the picked door's preview, not the shop (Jan's call: the city screen is a nav hub).
+// Enter turns the part under the banner into the door's room (A6.1).
+function preview(x, y, w, h, o) {
+  return `<div class="panel" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
+    <div class="ph"><span class="s">${o.s}</span><h2>${o.name}</h2><span class="c">${o.count}</span></div>
+    <div class="lore" style="margin-top:10px">${o.flavor}</div>
+    <div class="chips" style="margin-top:12px">${o.tags.map((t) => `<span>${t}</span>`).join('')}</div>
+    <h3>Notable</h3>${o.notable.map(([n, k, tr]) => `<div class="feat"><span>${n}<span class="muted small"> · ${k}</span></span><span>${tr}</span></div>`).join('')}
+    ${o.note ? `<h3>The market</h3><div class="gap" style="margin-top:2px">${o.note}</div>` : ''}
+    <div style="position:absolute;left:22px;right:22px;bottom:20px;display:flex;justify-content:space-between;align-items:center"><span class="muted small">${o.foot}</span><span><span class="btn quiet" style="font-size:15px;padding:8px 18px" title="P3.9: walk it as a scene, with an OpenRouter key">Go in 入</span> <span class="btn" style="font-size:15px;padding:8px 20px">Enter ${o.name} ›</span></span></div></div>`;
+}
+
+// ---- the grid layout (Jadewater): a city, a town, and a hall's Inside
+// P: the banner picture and crop, the head, the strip under the banner, group tabs (a tab with `link` opens
+// another place), the current group's cards, which card is open, and the panel beside.
+function gridPlace(P) {
+  const gx = 100, gy = 548, cw = 352, ch = 156, gp = 14;
+  const grid = P.cards.map((d, i) => door(gx + (i % 3) * (cw + gp), gy + Math.floor(i / 3) * (ch + gp), cw, ch, 104, { img: P.img, ...d }, i === P.cur)).join('');
+  return `${pic(P.img, P.crop, 'left:64px;top:0;right:0;height:450px', P.flip ? 'data-flip="1"' : '')}<div class="shade-l" style="left:64px;height:450px;bottom:auto"></div>
+    <div class="shade-b" style="left:64px;top:0;height:452px;bottom:auto"></div>
+    <span class="standin" style="right:52px;top:420px">stand-in · ${P.standin} paints its own banner</span>
+    <div class="head" style="left:110px;top:66px;width:640px">${P.head}</div>
+    <div class="gate" style="left:100px;top:466px;width:1720px;box-sizing:border-box">${P.strip}</div>
+    <div class="tabs" style="position:absolute;left:100px;top:520px;width:1084px;z-index:4">${P.tabs.map((t) => `<span class="${t.cur ? 'cur' : ''}" ${t.link ? 'style="margin-left:auto;color:var(--accent)"' : ''}><em>${t.h}</em>${t.n}${t.c ? `<small>${t.c}</small>` : ''}</span>`).join('')}</div>
+    ${grid}${P.panel}${P.note || ''}`;
+}
+
+function city() {
+  const J = IMG.jade;
+  const cards = {
+    markets: [
+      { s: '市', t: 'The free market', sub: '216 stalls · Old Tang’s mat, Granny Xie’s stall', crop: '.052 .415 .27 .52' },
+      { s: '丹', t: 'Pill Street', sub: '27 shops · the Apricot Grove branch shop', crop: '.278 .415 .493 .52' },
+      { s: '器', t: 'Refiners’ Row', sub: '27 shops · Master Jiang’s refinery', crop: '.503 .415 .718 .52' },
+      { s: '符', t: 'Talisman Lane', sub: '14 shops · Widow Yao’s talisman shop', crop: '.052 .62 .27 .73' },
+      { s: '骨', t: 'The beast-part market', sub: '14 shops · Big Gao’s hide stall', crop: '.278 .62 .493 .73' },
+      { s: '商', t: 'The Qian Clan’s trading hall', sub: 'a cut of every core that leaves', crop: '.503 .62 .718 .73' },
+      { s: '赏', t: 'The bounty office', sub: 'cores paid by grade', crop: '.052 .83 .27 .905' },
+      { s: '粮', t: 'The grain and cloth market', sub: '160 shops · in silver', crop: '.278 .83 .493 .905' },
+      { s: '兑', t: 'The money changer', sub: 'stones and silver', crop: '.503 .83 .718 .905' },
+    ],
+    hear: [
+      { s: '茶', t: 'The teahouse', sub: 'a pot of tea, 5 taels · a rumor a day', crop: '.503 .415 .718 .52' },
+      { s: '图', t: 'The map seller', sub: 'the region’s map and each kingdom’s', crop: '.278 .62 .493 .73' },
+      { s: '导', t: 'Guides', sub: '2 this month · a herb-gatherer, a beast hunter', crop: '.052 .62 .27 .73' },
+      { s: '驼', t: 'Caravans', sub: '3 this week, from 辰', crop: '.70 .25 .99 .40' },
+      { s: '契', t: 'The broker', sub: 'houses and land to let', plain: true },
+      { s: '榜', t: 'The bounty board', sub: 'postings by the office', crop: '.052 .83 .27 .905' },
+      { s: '宿', t: 'The inn', sub: '20 taels a night', crop: '.503 .62 .718 .73' },
+    ],
+    work: [
+      { s: '赏', t: 'Bounty runner', sub: 'a post at the bounty office', plain: true },
+      { s: '仓', t: 'The Qian warehouse', sub: 'a post with the Qian Clan', plain: true },
+      { s: '摊', t: 'Minding a stall', sub: 'a post in the free market', plain: true },
+    ],
+  };
+  const g = S.city;
+  return gridPlace({ img: J, crop: '.25 .075 1 .40', standin: 'the City',
+    head: head({ trail: ['The Border Wilds', 'City of the Guarded Mouth'], seal: '城', name: 'City of the Guarded Mouth', hz: '守口城', py: 'Shoukou Cheng · seat of the Myriad Crafts Guild',
+      line: 'thriving city · coast · qi density 3 · 150 li · top realm <b>Nascent Soul</b> · garrison of 300,000',
+      lore: 'A ring of walls 150 li across holds the narrow coast where the chain begins. A ward array caps the harbour mouth, and its markets sell beast parts, smuggled Vast Wilds herbs and frontier saber steel.',
+      gap: '<i>Hide runs short:</i> the refiners eat more than the hunters bring in.' }),
+    strip: '<span class="k">验</span><span>The watch at the Sea Gate reads <b>Qi Condensation 6</b>, and lets you in.</span><span class="sub">Toll paid: 1 low-grade · renown 3 here would waive it</span><span class="r sub">inside since 辰</span>',
+    tabs: [{ h: '市', n: 'Markets', c: 9, cur: g === 'markets' }, { h: '闻', n: 'Hear, hire and rest', c: 7, cur: g === 'hear' }, { h: '工', n: 'Work', c: 3, cur: g === 'work' }, { h: '会', n: 'The Guild’s hall ›', link: true }],
+    cards: cards[g], cur: g === 'markets' ? 2 : 0,
+    panel: preview(1200, 520, 620, 524, { s: '器', name: 'Refiners’ Row', count: '27 shops', tags: ['weapons', 'armour', 'mends gear', 'tier 1–2'],
+      flavor: 'Quench smoke over the beast-part market: the Row works the hides and bones the hunters bring in, and frontier saber steel goes out from here.',
+      notable: [['a refiner by the beast-part market', 'Refiner Zhao', 'neutral'], ['Master Jiang’s refinery', 'Master Jiang', 'neutral'], ['the Luo artifact hall', 'Elder Luo', 'unknown']],
+      note: '<i>Hide runs short:</i> the refiners eat more than the hunters bring in.', foot: 'and 24 small shops' }),
+    note: callout(100, 1050, 'The right side previews the picked door; Enter turns everything under the banner into its room (A6.1). The Guild’s hall › opens the Myriad Crafts Guild in the hall layout.') });
+}
+
+// ---- Pacified Fort: the city's layout (Jan's call: a town shares it)
+function town() {
+  const Sd = IMG.sand;
+  const cards = [
+    { s: '市', t: 'The free market', sub: '65 stalls · a sutler’s stall by the watchtower', crop: '.30 .22 .52 .45' },
+    { s: '丹', t: 'Pill Street', sub: '8 shops · Auntie Luo’s herb hall', crop: '.42 .20 .64 .45' },
+    { s: '器', t: 'Refiners’ Row', sub: '8 shops · Master Gu’s quench house', crop: '.56 .18 .78 .45' },
+    { s: '商', t: 'The Guo trading house', sub: 'a firm of its own', crop: '.34 .25 .56 .45' },
+    { s: '赏', t: 'The bounty office', sub: 'cores paid by grade', crop: '.70 .15 .92 .45' },
+    { s: '粮', t: 'The grain and cloth market', sub: '30 shops · in silver', crop: '.46 .25 .68 .45' },
+    { s: '兑', t: 'The money changer', sub: 'stones and silver', crop: '.62 .25 .84 .45' },
+  ];
+  return gridPlace({ img: Sd, crop: '.30 .12 .95 .465', standin: 'Pacified Fort',
+    head: head({ trail: ['The Border Wilds', 'March of Pacified Borders', 'Pacified Fort'], seal: '堡', name: 'Pacified Fort', hz: '安边堡', py: 'Anbian Bao · seat of the March',
+      line: 'thriving town · hills · qi density 2 · 40 li · top realm <b>Foundation</b> · 400,000 under arms',
+      lore: 'The Gongsun war city, cut into the crown of a hill the first general flattened with one stroke. Its walls are the hill’s own rock, raised by formation to the height of cliffs.',
+      gap: '<i>The cadet school eats gathering pills</i> faster than Pill Street can brew them.' }),
+    strip: '<span class="k">验</span><span>The watch on the beacon road reads <b>Qi Condensation 6</b>, and lets you in.</span><span class="sub">No toll in a town</span>',
+    tabs: [{ h: '市', n: 'Markets', c: 7, cur: true }, { h: '闻', n: 'Hear, hire and rest', c: 7 }, { h: '工', n: 'Work and land', c: 2 }, { h: '堡', n: 'The March’s hall ›', link: true }],
+    cards, cur: 1,
+    panel: preview(1200, 520, 620, 524, { s: '丹', name: 'Pill Street', count: '8 shops', tags: ['pills', 'herbs', 'healing', 'tier 1'],
+      flavor: 'A street of furnace houses under the drill grounds. Every drill day the cadets come down it bleeding, and it brews for them first.',
+      notable: [['Auntie Luo’s herb hall', 'Auntie Luo', 'friendly'], ['Old Meng’s furnace house', 'Old Meng', 'neutral'], ['the Tang family pill shop', 'Master Tang', 'neutral']],
+      note: '<i>The cadet school eats gathering pills</i> faster than Pill Street can brew them.', foot: 'and 5 small shops' }),
+    note: callout(100, 1050, 'The same layout as the City: seven markets, and the March’s own doors behind its hall. Work and land: the school watch (a post) and Fields.') });
+}
+
+// ---- a hall's Inside: the grid layout under the sect's own banner
+function inside(kind) {
+  const C = IMG.cloud;
+  const gate = kind === 'gate';
+  const halls = gate
+    ? [['堂', 'The exchange hall', 'in contribution'], ['老', 'Elders’ hall', 'ranks and tutelage'], ['场', 'Training ground', 'practice with the sect'], ['任', 'Mission hall', '6 postings'], ['经', 'Scripture pavilion', 'the Gate’s methods, guarded'], ['律', 'Law hall', 'the Gate’s law'], ['园', 'The spirit garden', 'a post'], ['矿', 'The mine', 'a post'], ['丹', 'The alchemy hall', 'a post']]
+    : [['堂', 'The stilt hall', 'the exchange hall, in contribution'], ['老', 'Elders’ hall', 'ranks and tutelage'], ['场', 'Training ground', 'practice with the sect'], ['任', 'Mission hall', '4 postings'], ['经', 'Scripture pavilion', 'the Lamp-Keepers’ methods'], ['律', 'Law hall', 'the sect’s law'], ['灯', 'Lamp-trimming', 'a post on the fens']];
+  const name = gate ? 'Beast-Butcher Gate' : 'Lamp-Keeper Sect';
+  return gridPlace({ img: C, crop: '.25 0 .82 .53', flip: gate, standin: name,
+    head: head({ trail: ['The Border Wilds', name, 'Inside'], seal: gate ? '屠' : '灯', name, hz: gate ? '屠兽门' : '守灯宗', py: gate ? 'Tushou Men · inside the gate' : 'Shoudeng Zong · inside the sect',
+      line: 'sect · orthodox · you: <b>outer disciple, 2nd rank</b> · contribution 340',
+      lore: gate ? 'Past the array the yards open out: drill grounds, the butchering floors, the cores stacked by grade.' : 'Inside, the stilt halls run out over the black water on poles, lamp to lamp.' }),
+    strip: '<span class="k">内</span><span>Inside the sect, as an <b>outer disciple</b>.</span><span class="sub">Your token was shown at the gate</span><span class="r sub">‹ The front</span>',
+    tabs: [{ h: '宗', n: 'The sect’s halls', c: halls.length, cur: true }],
+    cards: halls.map(([s, t, sub], i) => ({ s, t, sub, crop: `${.26 + (i % 5) * .11} ${.06 + Math.floor(i / 5) * .12} ${.38 + (i % 5) * .11} .45` })), cur: 0,
+    panel: preview(1200, 520, 620, 524, { s: '堂', name: gate ? 'The exchange hall' : 'The stilt hall', count: 'in contribution', tags: ['pills', 'materials', 'members’ prices'],
+      flavor: gate ? 'Cores stacked by grade behind the deacon’s table, and what the Gate keeps for its own.' : 'A hall on poles over the black water, where the sect lets its own buy what it holds back from outsiders.',
+      notable: [[`Deacon ${gate ? 'Qu' : 'Shen'}`, 'keeps the hall', 'trusted']], foot: 'Your contribution 340' }),
+    note: callout(100, 1050, 'Inside: every hall of the sect as a door card in the city grid, under the sect’s own banner. The front (the hall layout) keeps the outsider’s doors and the Inside door.') });
+}
+
+// ---- Spear-Plow Village: the Herb Valley, small
+function village() {
+  const V = IMG.valley;
+  const doors = [
+    { s: '铺', t: 'The county store', sub: 'Storekeeper Tian · in silver', img: V, crop: '.05 .79 .195 .885' },
+    { s: '老', t: 'The village elder', sub: 'a rumor a day, for news of your own', img: V, crop: '.36 .79 .505 .885' },
+    { s: '田', t: 'Fields', sub: 'plots to rent by the season', img: V, crop: '.205 .79 .35 .885' },
+    { s: '契', t: 'A farmhouse to let', sub: 'the broker’s, in a village', img: V, crop: '.675 .79 .82 .885' },
+    { s: '宿', t: 'A bed in a barn', sub: '5 taels a night', img: V, crop: '.835 .79 .98 .885' },
+  ];
+  const curI = { store: 0, elder: 1, none: -1 }[S.village];
+  const strip = doors.map((d, i) => door(100 + i * 346, 846, 330, 196, 128, d, i === curI)).join('');
+  const panel = S.village === 'store'
+    ? `<div class="panel" style="left:1290px;top:150px;width:530px;height:400px">
+        <div class="ph"><span class="s">铺</span><h2>The county store</h2><span class="c">a village store can’t break a stone</span></div>
+        <div style="margin-top:14px"><div class="seg"><span class="on">Buy</span><span>Sell</span></div></div>
+        <div class="keeper"><b>Storekeeper Tian</b> · “The patrols buy the shafts. Spears break in the beast-pit.”</div>
+        <div class="rows">${row('食', 'Millet Cake', 'food', 'w', '2 taels')}${row('材', 'Ash Spear Shaft', 'material', 'w', '8 taels')}${row('食', 'Travel Rations', 'food · ten days', 'w', '30 taels')}</div>
+        <div class="foot"><span>Your purse <b>40 taels</b></span><span>no money changer here</span></div></div>`
+    : S.village === 'elder'
+    ? `<div class="panel" style="left:1290px;top:150px;width:530px;height:400px">
+        <div class="ph"><span class="s">老</span><h2>The village elder</h2><span class="c">one rumor a day, free</span></div>
+        <div class="keeper" style="margin-top:16px">He tells one place he knows within 4,500 li, for news of your own.</div>
+        <div class="lore" style="font-family:var(--font-display);font-size:19px;color:var(--text);border-left:2px solid var(--line);padding-left:16px;margin:18px 0">“The patrol that cut nettle at the Wall’s foot came back with one man short. They say the gully grows on bones the Wall sheds.”</div>
+        <span class="btn">Tell him what you’ve seen</span>
+        <div class="foot"><span>Heard today: nothing yet</span><span>Nettle Gully would go on the map as a rumor</span></div></div>`
+    : '';
+  return `${pic(V, '.27 .07 1 .76', 'left:64px;top:0;right:0;bottom:0')}<div class="shade-l"></div><div class="shade-b"></div><div class="shade-t"></div>
+    <span class="standin" style="right:52px;top:70px">stand-in · Spear-Plow paints its own scene</span>
+    <div class="head" style="left:110px;top:66px;width:560px">${head({ trail: ['The Border Wilds', 'March of Pacified Borders', 'Spear-Plow Village'], seal: '村', name: 'Spear-Plow Village', hz: '枪犁村', py: 'Qiangli Cun',
+      line: 'lean village · hills · qi density 1 · 15 li · a county of six million',
+      lore: 'The seat of a farming county two thousand li across, where fields are plowed with spears at hand; the county store sells to the patrols.' })}
+      <div class="gate" style="position:relative;margin-top:20px;width:560px;box-sizing:border-box"><span class="k" style="color:var(--muted)">村</span><span class="sub">No wall and no watch.</span></div>
+      <h3>What’s here</h3><div class="feat"><span>fields plowed with spears at hand</span><span>witnesses</span></div><div class="feat"><span>a beast-pit</span><span>fall</span></div></div>
+    ${strip}${panel}
+    ${callout(1290, 562, 'the open door floats over the painting; Nothing open shows the whole scene')}`;
+}
+
+// ---- Lamp-Keeper Sect and Beast-Butcher Gate: Cloudstep
+function sect(kind) {
+  const C = IMG.cloud;
+  const gate = kind === 'gate';
+  if (S[kind] === 'inside') return inside(kind);
+  const member = S[kind] === 'member';
+  const o = gate
+    ? { seal: '屠', name: 'Beast-Butcher Gate', hz: '屠兽门', py: 'Tushou Men', motto: 'rank by cores taken', chips: ['Sect · orthodox', 'Saber and Slaughter Daos', 'array: Core Formation'],
+        lore: 'It recruits frontier orphans who have already lost someone to beasts, sells cores to the Apricot Grove Valley, and leads the empire’s punitive raids across the island chain.' }
+    : { seal: '灯', name: 'Lamp-Keeper Sect', hz: '守灯宗', py: 'Shoudeng Zong', motto: 'ten thousand lamps on the water', chips: ['Sect · orthodox', 'the Ghost-Lamp Fens', 'no gate'],
+        lore: 'Ten thousand lamps on poles across the Ghost-Lamp Fens burn yin fire that the drowned follow in circles instead of walking out. The City pays the sect to keep them lit.' };
+  const tilesOut = gate
+    ? [['堂', 'The exchange hall', 'members, in contribution'], ['入', 'Ask to join', 'frontier orphans first'], ['礼', 'Offer a gift', 'to be known to the Gate'], ['任', 'Mission hall', 'postings for members'], ['内', 'Inside', 'members only']]
+    : [['堂', 'The stilt hall', 'sells outside, in stones'], ['入', 'Ask to join', 'the Lamp-Keepers'], ['礼', 'Offer a gift', 'to be known to the sect'], ['任', 'Mission hall', 'postings for members'], ['内', 'Inside', 'members only']];
+  const tilesIn = gate
+    ? [['堂', 'The exchange hall', 'in contribution'], ['老', 'Elders’ hall', 'ranks and tutelage'], ['任', 'Mission hall', '6 postings'], ['场', 'Training ground', 'practice with the sect'], ['内', 'Inside', 'all nine halls ›']]
+    : [['堂', 'The stilt hall', 'in contribution'], ['老', 'Elders’ hall', 'ranks and tutelage'], ['任', 'Mission hall', '4 postings'], ['场', 'Training ground', 'practice with the sect'], ['内', 'Inside', 'all seven halls ›']];
+  const tiles = member ? tilesIn : tilesOut;
+  const curT = member ? 2 : 0;
+  const tw = 334, tg = 14;
+  const shut = gate && !member;
+  const tileRow = tiles.map(([s, t, sub], i) => `<div class="tile ${i === curT && !shut ? 'cur' : ''} ${shut ? 'dim' : ''}" style="left:${100 + i * (tw + tg)}px;top:${shut ? 760 : 600}px;width:${tw}px">
+      ${pic(C, `${.26 + i * .11} .08 ${.38 + i * .11} .45`, '')}<div class="in"><div class="s">${s}</div><div class="t">${t}<small>${sub}</small></div></div></div>`).join('');
+  const standing = member
+    ? [['You', 'outer disciple'], ['Rank', 'outer · 2nd'], ['Contribution', '340'], ['Standing', 'trusted']]
+    : [['You', 'an outsider'], ['Standing', gate ? 'unknown' : 'known · 1'], ['Contribution', '—'], ['Your realm', 'Qi Condensation 6']];
+  let open;
+  if (gate && !member) {
+    open = `<div class="shut" style="left:100px;top:600px;width:1720px;height:120px"><div class="st">闭</div>
+        <div><h2>The gate is shut to you</h2><div class="muted">Its array is <b style="color:var(--text)">Core Formation</b>. It opens to a token of the Gate or an invitation; forcing it needs your realm above the array’s. You carry neither.</div></div>
+        <div class="acts"><span class="btn off">Show a token</span><span class="btn off">Present an invitation</span></div></div>
+      <h3 style="position:absolute;left:100px;top:728px;margin:0">Behind the gate · dimmed until you are let in</h3>
+      <div class="keeper" style="position:absolute;left:100px;top:886px;width:1100px">An exchange hall, the sect’s own halls, a Mission hall and five posts. The Mission hall posts the vine in Blood-Vine Gorge more often than anything.</div>`;
+  } else if (member) {
+    const posts = gate
+      ? [['藤', 'Cut blood-vine in Blood-Vine Gorge', 'herb · the outer disciples’ quota', '30 contribution'], ['核', 'Bring in three tier 1 cores', 'beast · any den in the March', '45 contribution'], ['袭', 'Join the strait raid', 'fight · a season across the chain', '200 contribution'], ['守', 'Stand the night watch on the yards', 'duty · six nights', '24 contribution']]
+      : [['灯', 'Relight the eastern lamp line', 'duty · two nights on the fens', '30 contribution'], ['魂', 'Walk a drowned one out', 'soul · the fens’ edge', '60 contribution'], ['藻', 'Cut kelp at the lowest tide', 'herb · the Kelp Flats', '24 contribution'], ['城', 'Carry the lamp oil to the City', 'errand · the City of the Guarded Mouth', '18 contribution']];
+    open = `<div class="panel" style="left:100px;top:734px;width:1720px;height:310px;padding:0;overflow:hidden">
+        ${pic(C, '.105 .68 .33 .975', 'left:0;top:0;bottom:0;width:300px')}<div class="vhz">任务堂</div>
+        <div style="position:absolute;left:330px;top:20px;right:420px">
+          <div class="ph"><h2>Mission hall</h2><span class="c">postings in contribution</span></div>
+          <div style="margin-top:10px">${posts.map(([k, n, sub, pay]) => `<div class="post"><span class="k">${k}</span><span class="n">${n}<small>${sub}</small></span><span class="pay">${pay}</span><span class="btn">Take it</span></div>`).join('')}</div></div>
+        <div style="position:absolute;right:24px;top:22px;width:360px" class="small muted"><h3 style="margin-top:0">The hall</h3>Work posted by the sect, paid in contribution; contribution buys from the exchange hall and climbs your rank. A posting is a quest with a giver: hand it in here.</div></div>`;
+  } else {
+    open = `<div class="panel" style="left:100px;top:734px;width:1720px;height:310px;padding:0;overflow:hidden">
+        ${pic(C, '.105 .68 .33 .975', 'left:0;top:0;bottom:0;width:300px')}<div class="vhz">高脚堂</div>
+        <div style="position:absolute;left:330px;top:20px;right:420px">
+          <div class="ph"><h2>The stilt hall</h2><span class="c">the sect’s exchange hall</span></div>
+          <div class="keeper">Deacon Shen · “Outsiders buy in stones, and only what the sect lets go.”</div>
+          <div class="rows" style="margin-top:0">${row('丹', 'Clear-Heart Pill', 'pill · tier 1 · members only', 'g', '— ', 'Members')}${row('丹', 'Heart-Guarding Pill', 'pill · tier 1', 'b', '36 low')}${row('油', 'Yin-fire lamp oil', 'material · tier 1', 'w', '6 low')}</div></div>
+        <div style="position:absolute;right:24px;top:22px;width:360px" class="small muted"><h3 style="margin-top:0">The hall</h3>Every sect’s shop is its exchange hall: the same rows and Buy as any counter, its prices in contribution for members and in stones for whatever it sells outside.</div></div>`;
+  }
+  return `${pic(C, '.25 0 .82 .53', 'left:64px;top:0;right:0;height:580px', gate ? 'data-flip="1"' : '')}<div class="shade-l" style="left:64px;height:580px;bottom:auto"></div>
+    <div class="shade-b" style="left:64px;top:0;height:582px;bottom:auto"></div>
+    ${gate ? '<div style="position:absolute;left:64px;top:0;right:0;height:580px;background:rgb(70 10 6 / .28);mix-blend-mode:multiply"></div>' : ''}
+    <span class="standin" style="right:52px;top:552px">stand-in · ${o.name} paints its own banner</span>
+    <div class="head" style="left:110px;top:66px;width:620px">${crumb('The Border Wilds', o.name)}
+      <div class="crest">${o.seal}</div>
+      <div class="nm" style="font-size:46px">${o.name}<span class="hz">${o.hz}</span></div><div class="py">${o.py}</div>
+      <div class="motto">${o.motto}</div>
+      <div class="chips">${o.chips.map((c) => `<span>${c}</span>`).join('')}</div>
+      <div class="lore">${o.lore}</div></div>
+    <div class="panel stand" style="right:48px;top:80px;width:330px;padding:16px 20px;background:var(--panel)">${standing.map(([a, b]) => `<div><span>${a}</span><span>${b}</span></div>`).join('')}</div>
+    ${tileRow}${open}
+    ${shut ? callout(100, 576, 'the gate panel stands where the hall tiles go; the tiles wait dimmed under it') : callout(100, 576, 'hall tiles: painted from the sect’s own sheet')}`;
+}
+
+// ---- Blood-Vine Gorge: the Herb Valley
+function site() {
+  const V = IMG.valley;
+  const held = S.site === 'held';
+  const acts = [
+    { s: '栖', t: 'Stay and cultivate here', sub: 'your wheel turns at the site', crop: '.835 .79 .98 .885' },
+    { s: '钉', t: 'Pin it', sub: 'a seal on your map', crop: '.36 .79 .505 .885' },
+    { s: '谷', t: 'Claim it: a hidden valley', sub: 'only a valley nobody knows', crop: '.205 .79 .35 .885', dim: true },
+    { s: '居', t: held ? 'Your dwelling' : 'A dwelling', sub: held ? 'a thatched lodge on the floor' : 'build one once it is yours', crop: '.675 .79 .82 .885', dim: !held },
+    { s: '回', t: 'Back to the map', sub: 'step out', crop: '.515 .79 .66 .885' },
+  ];
+  const strip = acts.map((d, i) => door(560 + i * 254, 852, 240, 190, 122, { ...d, img: V }, i === 0)).join('');
+  return `${pic(V, '.27 .07 1 .76', 'left:64px;top:0;right:0;bottom:0', 'data-flip="1"')}
+    <div style="position:absolute;inset:0;background:linear-gradient(90deg, rgb(4 5 7 / .97) 0%, rgb(4 5 7 / .9) 26%, rgb(4 5 7 / .2) 38%, transparent 50%)"></div><div class="shade-b"></div><div class="shade-t"></div>
+    <div style="position:absolute;left:64px;top:0;right:0;bottom:0;background:rgb(90 10 10 / .16);mix-blend-mode:multiply"></div>
+    <span class="standin" style="right:52px;top:70px">stand-in · the Gorge paints its own scene</span>
+    <div class="head" style="left:110px;top:66px;width:470px">${head({ trail: ['The Border Wilds', 'Blood-Vine Gorge'], seal: '谷', name: 'Blood-Vine Gorge', hz: '血藤峡', py: 'Xueteng Xia',
+      line: 'herb valley · qi density 2', lore: 'The Gate’s yards drain into the gorge, and what drains is blood; the vine drinks it and goes red to the root. Every alchemist on the Wall wants it.' })}
+      <div class="facts"><span>Depth</span><span>shallow</span><span>Beasts</span><span>tier 1, the yards’ scavengers</span><span>Finds</span><span>3 known, more to find</span><span>Near</span><span>Beast-Butcher Gate, half a day</span></div>
+      <h3>Features</h3>
+      <div class="feat"><span>red vine on the walls</span><span>cover · fragile · height</span></div>
+      <div class="feat"><span>the runoff from the yards</span><span>water</span></div>
+      <div class="feat"><span>a narrow floor</span><span>narrow</span></div></div>
+    ${strip}
+    ${callout(560, 822, 'the strip: what you can do here. Later phases add cards (gather, go deeper, P3.9’s doors), never a new layout')}`;
+}
+
+// ---- stand-in cropping: data-crop is the source rect as fractions (x0 y0 x1 y1), scaled to cover
+const NAT = {};
+function crop() {
+  document.querySelectorAll('#stage .pic[data-img]').forEach((el) => {
+    const src = el.dataset.img, n = NAT[src];
+    if (!n) return;
+    const [x0, y0, x1, y1] = el.dataset.crop.split(' ').map(Number);
+    const W = el.offsetWidth, H = el.offsetHeight;
+    if (!W || !H) return;
+    const s = Math.max(W / ((x1 - x0) * n.w), H / ((y1 - y0) * n.h));
+    el.style.backgroundImage = `url("${src}")`;
+    el.style.backgroundSize = `${n.w * s}px ${n.h * s}px`;
+    el.style.backgroundPosition = `${-x0 * n.w * s}px ${-y0 * n.h * s}px`;
+    if (el.dataset.flip) el.style.transform = 'scaleX(-1)';
+  });
+}
+Object.values(IMG).forEach((src) => { const im = new Image(); im.onload = () => { NAT[src] = { w: im.naturalWidth, h: im.naturalHeight }; crop(); }; im.src = src; });
+
+function render() {
+  const k = S.kind;
+  const body = { city, town, village, hall: () => sect('hall'), gate: () => sect('gate'), site }[k]();
+  document.getElementById('stage').innerHTML = rail() + hud() + body;
+  document.getElementById('kinds').innerHTML = '<span class="lbl">Kind</span>' + KINDS.map(([id, n]) => `<button class="${id === k ? 'on' : ''}" data-k="${id}">${n}</button>`).join('');
+  const [key, opts] = SUBS[k];
+  document.getElementById('subs').innerHTML = '<span class="lbl">Show</span>' + opts.map(([id, n]) => `<button class="${S[k] === id ? 'on' : ''}" data-s="${id}">${n}</button>`).join('');
+  document.getElementById('why').innerHTML = WHY[k];
+  crop();
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.k) S.kind = b.dataset.k;
+  if (b.dataset.s) S[S.kind] = b.dataset.s;
+  render();
+});
+function fit() {
+  const st = document.getElementById('stage'), fr = document.getElementById('frame');
+  const s = Math.min(1, fr.clientWidth / 1920);
+  st.style.transform = `scale(${s})`; fr.style.height = `${1080 * s}px`;
+}
+window.addEventListener('resize', fit);
+render(); fit();
+</script>
+</body>
+</html>

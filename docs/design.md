@@ -802,7 +802,7 @@ A mortal on foot makes 20 li a double-hour. A kingdom of 10,000 li is half a yea
 
 Checkpoints inside a sphere charge tolls from the Economy's fee list, and your fame decides whether the guard knows your face. Until that list exists, a checkpoint on your course takes 1 low-grade as you pass it, renown 3 in the region waives it as at the watch, and a cultivator with nothing to pay is waved through; the night road goes round them.
 
-**Entering a place** (the look study is `docs/mockups/place-screen-study.html`). Right-click a place you stand at and choose Enter, or arrive on a course marked to go in: the place's own screen stands in for the World screen, which is one step back (← World looks at the map without leaving). Entering takes no time and the clock runs on; you are inside until you set a course or step out, the home wheel turning there. The screen: the place's head and lore, the gate strip, its doors on the left grouped as Trade, Hear and hire, Rest and Later, and the open door's counter beside them.
+**Entering a place** (the look study is `docs/mockups/place-screen-study.html`). Right-click a place you stand at and choose Enter, or arrive on a course marked to go in: the place's own screen stands in for the World screen, which is one step back (← World looks at the map without leaving). Entering takes no time and the clock runs on; you are inside until you set a course or step out, the home wheel turning there. The screen (`docs/mockups/place-kinds-study.html`, Jan's calls in the place layouts talk, 2026-10-22): the place's banner painting across the top with its head and lore, and under it a layout by its kind. A city or town is a grid of painted door cards under group tabs, with the picked door previewed beside it, Enter for its room and Go in to walk it as a scene when a key is set (a nav hub); a faction's seat is a hall, its front a row of tiles with the open hall under them and an Inside, members only, in the grid layout; a gate is the hall shut; a village and a wild site are the painting whole with their doors or doings along the bottom. Opening a door keeps the banner and turns the part under it into the door's room, one layout per kind of door, with the same controls in every place (A6 and A6.1).
 
 | Kind | The gate | Doors |
 |---|---|---|
@@ -2036,6 +2036,7 @@ Settle each before the stage that needs it (Roadmap), grouped by the layer that 
 
 - [x] A power's methods guarded: settled in Professions, people and powers, Guarded methods, and Economy, Methods in the market
 - [ ] Sects: politics, founding your own, sect wars (the skeleton, seats, posts, contribution and the atlas's types settled in Professions, people and powers, 2026-10-19); faction strength weighted by the realm curve, so a sect is mostly its ancestor; every organization on the shared skeleton (Professions, people and powers), with the atlas's powers tagged by type and an assassins' organization added (the skeleton, ranks, posts and contribution in the thin layer; politics, wars and founding in trade and the living world)
+- [ ] A sect's grounds (a sketch, Jan's note in the place layouts talk, 2026-10-22): social areas, training grounds and lecture halls inside a sect, each a door in its Inside. Parked.
 
 **Before crafts**
 
