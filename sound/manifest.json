@@ -1,199 +1,34 @@
 {
   "sounds": [
     {
-      "id": "act-defend",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactMetal_heavy_000.ogg"
-    },
-    {
-      "id": "act-flee",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: footstep_grass_000.ogg"
-    },
-    {
-      "id": "bag-equip",
-      "source": "https://kenney.nl/assets/rpg-audio",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: cloth1.ogg"
-    },
-    {
-      "id": "bag-stones",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactMining_000.ogg"
-    },
-    {
-      "id": "book-graft",
-      "source": "https://kenney.nl/assets/rpg-audio",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: bookPlace1.ogg"
-    },
-    {
-      "id": "book-page",
-      "source": "https://kenney.nl/assets/rpg-audio",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: bookFlip1.ogg"
-    },
-    {
-      "id": "craft-brush",
-      "source": "https://kenney.nl/assets/interface-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: scratch_001.ogg"
-    },
-    {
-      "id": "craft-hammer",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactMetal_heavy_000.ogg"
-    },
-    {
-      "id": "craft-pill",
-      "source": "https://kenney.nl/assets/rpg-audio",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: metalPot1.ogg"
-    },
-    {
-      "id": "el-earth",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactMining_000.ogg"
+      "id": "craft-quench",
+      "source": "https://sonniss.com/gameaudiogdc/",
+      "licence": "Sonniss-GDC",
+      "credit": "Ivo Vicic - Campfire - Bonfire FX (Sonniss GDC 2026)"
     },
     {
       "id": "el-ice",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactGlass_medium_000.ogg"
-    },
-    {
-      "id": "el-metal",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactMetal_light_000.ogg"
-    },
-    {
-      "id": "el-wood",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactWood_heavy_000.ogg"
-    },
-    {
-      "id": "feel-alert",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactBell_heavy_000.ogg"
+      "source": "https://sonniss.com/gameaudiogdc/",
+      "licence": "Sonniss-GDC",
+      "credit": "Alexander Kopeikin - 100 kHz Designed Ice (Sonniss GDC 2026)"
     },
     {
       "id": "feel-arrive",
-      "source": "https://kenney.nl/assets/interface-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: scroll_001.ogg"
-    },
-    {
-      "id": "feel-fail",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactGlass_heavy_000.ogg"
-    },
-    {
-      "id": "feel-gain",
-      "source": "https://kenney.nl/assets/interface-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: glass_001.ogg"
-    },
-    {
-      "id": "feel-layer",
-      "source": "https://kenney.nl/assets/interface-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: confirmation_001.ogg"
-    },
-    {
-      "id": "feel-loss",
-      "source": "https://kenney.nl/assets/interface-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: drop_001.ogg"
-    },
-    {
-      "id": "feel-pass",
-      "source": "https://kenney.nl/assets/interface-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: pluck_001.ogg"
-    },
-    {
-      "id": "feel-settle",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactBell_heavy_000.ogg"
-    },
-    {
-      "id": "feel-sheathe",
-      "source": "https://kenney.nl/assets/rpg-audio",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: drawKnife1.ogg"
-    },
-    {
-      "id": "feel-stage",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactBell_heavy_000.ogg"
+      "source": "https://sonniss.com/gameaudiogdc/",
+      "licence": "Sonniss-GDC",
+      "credit": "Epic Stock Media - Board Game - Sound Set Kit for Tabletop and Digital Games (Sonniss GDC 2026)"
     },
     {
       "id": "hit-charge",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactSoft_heavy_000.ogg"
+      "source": "https://sonniss.com/gameaudiogdc/",
+      "licence": "Sonniss-GDC",
+      "credit": "David Dumais Audio - Melee Weapons Sound Effects Pack 2 (Sonniss GDC 2026)"
     },
     {
       "id": "hit-palm",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0"
-    },
-    {
-      "id": "hit-slash",
-      "source": "https://kenney.nl/assets/rpg-audio",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: knifeSlice.ogg"
-    },
-    {
-      "id": "hit-thrust",
-      "source": "https://kenney.nl/assets/rpg-audio",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: knifeSlice.ogg"
-    },
-    {
-      "id": "map-depart",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: footstep_grass_000.ogg"
+      "source": "https://sonniss.com/gameaudiogdc/",
+      "licence": "Sonniss-GDC",
+      "credit": "David Dumais Audio - Melee Weapons Sound Effects Pack 2 (Sonniss GDC 2026)"
     },
     {
       "id": "music-cave-1",
@@ -220,60 +55,22 @@
       "credit": "\"Cinematic, Film Score Version 9\" by Guzheng-Soundtrack, via Pixabay"
     },
     {
-      "id": "shop-buy",
-      "source": "https://kenney.nl/assets/rpg-audio",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: handleCoins.ogg"
-    },
-    {
-      "id": "shop-sell",
-      "source": "https://kenney.nl/assets/rpg-audio",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: handleCoins.ogg"
-    },
-    {
-      "id": "tree-node",
-      "source": "https://kenney.nl/assets/impact-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: impactGlass_light_000.ogg"
-    },
-    {
-      "id": "ui-click",
-      "source": "https://kenney.nl/assets/interface-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: click_001.ogg"
-    },
-    {
       "id": "ui-close",
-      "source": "https://kenney.nl/assets/interface-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: close_001.ogg"
+      "source": "https://sonniss.com/gameaudiogdc/",
+      "licence": "Sonniss-GDC",
+      "credit": "InMotionAudio - Foley T-Shirt (Sonniss GDC 2026)"
     },
     {
       "id": "ui-open",
-      "source": "https://kenney.nl/assets/interface-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: open_001.ogg"
-    },
-    {
-      "id": "ui-tab",
-      "source": "https://kenney.nl/assets/interface-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: switch_001.ogg"
+      "source": "https://sonniss.com/gameaudiogdc/",
+      "licence": "Sonniss-GDC",
+      "credit": "Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms (Sonniss GDC 2026)"
     },
     {
       "id": "ui-toast",
-      "source": "https://kenney.nl/assets/interface-sounds",
-      "licence": "CC0",
-      "credit": "Kenney (kenney.nl), CC0",
-      "note": "starting pick: pluck_001.ogg"
+      "source": "https://sonniss.com/gameaudiogdc/",
+      "licence": "Sonniss-GDC",
+      "credit": "Mechanical Wave - Sound Effects Collection (Sonniss GDC 2024)"
     }
   ]
 }

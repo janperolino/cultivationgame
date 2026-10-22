@@ -1,200 +1,39 @@
 {
   "sounds": [
     {
-      "id": "act-defend",
+      "id": "craft-quench",
       "kind": "effect",
-      "file": "act-defend.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "47f5d5185025"
-    },
-    {
-      "id": "act-flee",
-      "kind": "effect",
-      "file": "act-flee.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "a2ae0c6373b4"
-    },
-    {
-      "id": "bag-equip",
-      "kind": "effect",
-      "file": "bag-equip.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "16319a3de4cd"
-    },
-    {
-      "id": "bag-stones",
-      "kind": "effect",
-      "file": "bag-stones.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "7b742615c373"
-    },
-    {
-      "id": "book-graft",
-      "kind": "effect",
-      "file": "book-graft.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "ef0e62d4e06f"
-    },
-    {
-      "id": "book-page",
-      "kind": "effect",
-      "file": "book-page.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "79cd83bb634a"
-    },
-    {
-      "id": "craft-brush",
-      "kind": "effect",
-      "file": "craft-brush.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "3fa83d9ec58f"
-    },
-    {
-      "id": "craft-hammer",
-      "kind": "effect",
-      "file": "craft-hammer.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "47f5d5185025"
-    },
-    {
-      "id": "craft-pill",
-      "kind": "effect",
-      "file": "craft-pill.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "3d972da199d8"
-    },
-    {
-      "id": "el-earth",
-      "kind": "effect",
-      "file": "el-earth.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "7b742615c373"
+      "file": "craft-quench.mp3",
+      "credit": "Ivo Vicic - Campfire - Bonfire FX (Sonniss GDC 2026)",
+      "made": "6d9c35c6386e"
     },
     {
       "id": "el-ice",
       "kind": "effect",
       "file": "el-ice.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "cd6ba7fd24cf"
-    },
-    {
-      "id": "el-metal",
-      "kind": "effect",
-      "file": "el-metal.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "c33abd05828c"
-    },
-    {
-      "id": "el-wood",
-      "kind": "effect",
-      "file": "el-wood.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "0709348bb261"
-    },
-    {
-      "id": "feel-alert",
-      "kind": "effect",
-      "file": "feel-alert.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "f8b3125dba5f"
+      "credit": "Alexander Kopeikin - 100 kHz Designed Ice (Sonniss GDC 2026)",
+      "made": "96983baffa16"
     },
     {
       "id": "feel-arrive",
       "kind": "effect",
       "file": "feel-arrive.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "e1e6c5a88de5"
-    },
-    {
-      "id": "feel-fail",
-      "kind": "effect",
-      "file": "feel-fail.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "ddaf2b9bfe3e"
-    },
-    {
-      "id": "feel-gain",
-      "kind": "effect",
-      "file": "feel-gain.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "0ed773ff7a02"
-    },
-    {
-      "id": "feel-layer",
-      "kind": "effect",
-      "file": "feel-layer.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "c820bc6aaaac"
-    },
-    {
-      "id": "feel-loss",
-      "kind": "effect",
-      "file": "feel-loss.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "ca71ce6f7640"
-    },
-    {
-      "id": "feel-pass",
-      "kind": "effect",
-      "file": "feel-pass.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "068a9562871b"
-    },
-    {
-      "id": "feel-settle",
-      "kind": "effect",
-      "file": "feel-settle.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "f8b3125dba5f"
-    },
-    {
-      "id": "feel-sheathe",
-      "kind": "effect",
-      "file": "feel-sheathe.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "c9caa4a71cbe"
-    },
-    {
-      "id": "feel-stage",
-      "kind": "effect",
-      "file": "feel-stage.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "f8b3125dba5f"
+      "credit": "Epic Stock Media - Board Game - Sound Set Kit for Tabletop and Digital Games (Sonniss GDC 2026)",
+      "made": "3130cfe292ec"
     },
     {
       "id": "hit-charge",
       "kind": "effect",
       "file": "hit-charge.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "3838627305d2"
+      "credit": "David Dumais Audio - Melee Weapons Sound Effects Pack 2 (Sonniss GDC 2026)",
+      "made": "71aae44b71c1"
     },
     {
       "id": "hit-palm",
       "kind": "effect",
       "file": "hit-palm.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "9600e79cc5ab"
-    },
-    {
-      "id": "hit-slash",
-      "kind": "effect",
-      "file": "hit-slash.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "68f5f1f4badc"
-    },
-    {
-      "id": "hit-thrust",
-      "kind": "effect",
-      "file": "hit-thrust.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "68f5f1f4badc"
-    },
-    {
-      "id": "map-depart",
-      "kind": "effect",
-      "file": "map-depart.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "a2ae0c6373b4"
+      "credit": "David Dumais Audio - Melee Weapons Sound Effects Pack 2 (Sonniss GDC 2026)",
+      "made": "71aae44b71c1"
     },
     {
       "id": "music-cave-1",
@@ -225,60 +64,25 @@
       "made": "6e1398bc4420"
     },
     {
-      "id": "shop-buy",
-      "kind": "effect",
-      "file": "shop-buy.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "9a597467e2b8"
-    },
-    {
-      "id": "shop-sell",
-      "kind": "effect",
-      "file": "shop-sell.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "9a597467e2b8"
-    },
-    {
-      "id": "tree-node",
-      "kind": "effect",
-      "file": "tree-node.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "45eaff7bf8be"
-    },
-    {
-      "id": "ui-click",
-      "kind": "effect",
-      "file": "ui-click.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "1db123a25e2b"
-    },
-    {
       "id": "ui-close",
       "kind": "effect",
       "file": "ui-close.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "461cb1fc50c3"
+      "credit": "InMotionAudio - Foley T-Shirt (Sonniss GDC 2026)",
+      "made": "21fe3a38e2e9"
     },
     {
       "id": "ui-open",
       "kind": "effect",
       "file": "ui-open.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "63717848bfaf"
-    },
-    {
-      "id": "ui-tab",
-      "kind": "effect",
-      "file": "ui-tab.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "ca9ac0b9c9f7"
+      "credit": "Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms (Sonniss GDC 2026)",
+      "made": "9493a22d0e7d"
     },
     {
       "id": "ui-toast",
       "kind": "effect",
       "file": "ui-toast.mp3",
-      "credit": "Kenney (kenney.nl), CC0",
-      "made": "068a9562871b"
+      "credit": "Mechanical Wave - Sound Effects Collection (Sonniss GDC 2024)",
+      "made": "494f853e524a"
     }
   ]
 }
