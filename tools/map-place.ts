@@ -501,6 +501,35 @@ for (const l of laid) {
     .webp({ quality: 80, alphaQuality: 70 })
     .toFile(`${shipDir(region)}/places/${l.crop.place}-glow.webp`);
 }
+
+/** The glow's alpha from which a place counts as drawn, for its footprint. */
+const FOOT_ALPHA = 100;
+
+/**
+ * The place's footprint on the map, [x0, y0, x1, y1] in li: where its glow is strong, the place
+ * itself and a little round it. Claims never sit on it (core/dwellings.ts, Jan's playtest after S1).
+ */
+function footOf(l: (typeof laid)[number]): [number, number, number, number] {
+  const { w, h, data } = l.glow;
+  let [x0, y0, x1, y1] = [w, h, 0, 0];
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++)
+      if ((data[y * w + x] as number) >= FOOT_ALPHA) {
+        x0 = Math.min(x0, x);
+        x1 = Math.max(x1, x + 1);
+        y0 = Math.min(y0, y);
+        y1 = Math.max(y1, y + 1);
+      }
+  const kx = l.crop.w / w;
+  const ky = l.crop.h / h;
+  return [
+    Math.round(l.crop.x0 + x0 * kx),
+    Math.round(l.crop.y0 + y0 * ky),
+    Math.round(l.crop.x0 + x1 * kx),
+    Math.round(l.crop.y0 + y1 * ky),
+  ];
+}
+
 writeFileSync(
   `${dir}/places.json`,
   `${JSON.stringify({
@@ -511,6 +540,7 @@ writeFileSync(
       y0: l.crop.y0,
       w: l.crop.w,
       h: l.crop.h,
+      foot: footOf(l),
     })),
   })}\n`,
 );

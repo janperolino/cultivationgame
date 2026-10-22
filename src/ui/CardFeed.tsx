@@ -9,7 +9,10 @@ import { formatNumber } from './format.ts';
 import { openSquare, useSquare } from './square.ts';
 import { useGame } from './store.ts';
 
-/** A card or an encounter where it waits: its kicker, its title and Open (F1). */
+/**
+ * A card or an encounter where it waits: its kicker, its title and Open (F1). The whole stub opens
+ * it, not only its button (Jan's playtest after S1: a click on the card did nothing).
+ */
 export function Stub({
   kicker,
   count,
@@ -24,7 +27,7 @@ export function Stub({
   guide?: string;
 }) {
   return (
-    <article className="stub is-arriving" data-guide={guide}>
+    <article className="stub is-arriving" data-guide={guide} onClick={onOpen}>
       <div className="stub-text">
         <p className="band-kicker">
           <span>{kicker}</span>
@@ -32,7 +35,14 @@ export function Stub({
         </p>
         <h3>{title}</h3>
       </div>
-      <button type="button" className="button" onClick={onOpen}>
+      <button
+        type="button"
+        className="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpen();
+        }}
+      >
         Open
       </button>
     </article>

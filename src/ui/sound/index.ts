@@ -2,21 +2,25 @@
 // plays the cue table's sounds. The cues (ui/cues.ts) play effects, combat plays each outcome's
 // layers as its effect lands, and the soundscape follows the screen, the place, the hour, the
 // weather and the road. The volumes are the settings'; core never hears a sound.
+import { barFill } from '../../core/cultivation.ts';
 import { placeKindOf } from '../../core/map/gate.ts';
 import { placeById } from '../../core/map/region.ts';
 import { mapOf } from '../../core/map/travel.ts';
+import { ladderMethod } from '../../core/methods.ts';
 import type { GameState } from '../../core/state.ts';
 import { weatherOn } from '../../core/weather.ts';
 import { hourOfDay } from '../../core/wheel.ts';
 import { setCuePlayer } from '../cues.ts';
 import { useFight } from '../fight.ts';
 import { useNav } from '../nav.ts';
+import { sceneTime, useScene } from '../scene.ts';
 import { useSettings, type Settings } from '../settings.ts';
 import { useSquare } from '../square.ts';
 import { useGame } from '../store.ts';
 import { useToasts } from '../toasts.ts';
 import { shotLayers, type ShotTags } from './combat.ts';
-import { SoundEngine } from './engine.ts';
+import { SoundEngine, type EffectOptions } from './engine.ts';
+import { chargeAt, gateRate, humAt } from './qi.ts';
 import { isNight, scapeOf, type Base, type Where } from './scape.ts';
 import { cueInfo, type EffectId } from './table.ts';
 
@@ -26,7 +30,7 @@ let engine: SoundEngine | null = null;
 let lastMajor = -1e9;
 let pendingClick = 0;
 
-function play(id: EffectId): void {
+function play(id: EffectId, o?: EffectOptions): void {
   if (!engine) return;
   const minor = cueInfo(id)?.minor ?? false;
   const now = performance.now();
@@ -36,7 +40,7 @@ function play(id: EffectId): void {
     window.clearTimeout(pendingClick);
     pendingClick = 0;
   }
-  engine.effect(id);
+  engine.effect(id, o);
   if (id === 'feel-fanfare') engine.sting();
 }
 
@@ -173,4 +177,59 @@ export function startSound(): void {
   useNav.subscribe(scape);
   useFight.subscribe(scape);
   useSquare.subscribe(scape);
+
+  // Qi's hum under Cultivate while it flows, swelling with the bar (S1.1); quiet through a scene,
+  // whose charge stands in, and moved only when its level shows a change.
+  let hum = '';
+  const humNow = () => {
+    const game = useGame.getState().game;
+    const flows =
+      !!game &&
+      !game.ended &&
+      whereNow().screen === 'cultivate' &&
+      !useScene.getState().play &&
+      !!ladderMethod(game.player, 'qi');
+    const h = flows ? humAt(barFill(game.player.qi)) : null;
+    const next = h ? `${h.level.toFixed(2)}/${h.rate.toFixed(2)}` : '';
+    // Before the first click the context waits; the game's next tick asks again.
+    if (next === hum || (h && !e.running)) return;
+    hum = next;
+    if (h) e.hold('feel-qi-hum', h.level, h.rate, 1.2);
+    else e.release('feel-qi-hum', 1.2);
+  };
+  humNow();
+  useGame.subscribe(humNow);
+  useNav.subscribe(humNow);
+  useScene.subscribe(humNow);
+
+  // The breakthrough's charge, rising through the scene, and a note up the scale for each gate
+  // caught; the charge lets go as the scene rolls, and the moment's own sound plays the end.
+  let charging = 0;
+  let caught = 0;
+  const charge = () => {
+    const p = useScene.getState().play;
+    if (!p || p.outcome) {
+      if (charging) {
+        window.clearInterval(charging);
+        charging = 0;
+        e.release('feel-charge', 0.8);
+      }
+      caught = 0;
+      return;
+    }
+    const hits = p.scene.gates.filter((g) => g === 'hit').length;
+    if (hits > caught) play('feel-gate', { rate: gateRate(hits) });
+    caught = hits;
+    if (!charging) {
+      const tick = () => {
+        const q = useScene.getState().play;
+        if (!q || q.outcome) return;
+        const c = chargeAt(sceneTime(q), q.major);
+        e.hold('feel-charge', c.level, c.rate, 0.3);
+      };
+      tick();
+      charging = window.setInterval(tick, 250);
+    }
+  };
+  useScene.subscribe(charge);
 }

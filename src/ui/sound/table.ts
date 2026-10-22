@@ -1,12 +1,15 @@
 // The cue table (S1, docs/art-pipeline.md § Sound): every sound the game plays, by id, with the
 // moment it plays on and where to find it. The sound layer reads the ids and kinds; the tools read
-// the rest (`npm run sound:find` lays Kenney's CC0 packs out as candidates by their file names, and
-// the picker shows `plays` with search links to Pixabay and Freesound's site for what Jan finds by
-// hand; never Freesound's API, which is non-commercial). A cue with no file shipped plays nothing,
-// so a cue can stand here before its sound is found.
+// the rest (`npm run sound:find` lays Kenney's recorded packs out as candidates by their file names,
+// and the picker shows `plays` and `listen` with search links to Pixabay and Freesound's site for
+// what Jan finds by hand; never Freesound's API, which is non-commercial). A cue with no file
+// shipped plays nothing, so a cue can stand here before its sound is found. S1.1, Jan's calls: real
+// recorded sounds (bronze, wood, cloth, breath, strings), never synth blips, so Kenney's Interface
+// Sounds and UI Audio packs are off the list.
 import type { DamageType, OutcomeForm } from '../../content/combat.ts';
 
-export type SoundKind = 'effect' | 'ambience' | 'music';
+/** A loop is an effect held while something lasts (qi flowing, a breakthrough's charge). */
+export type SoundKind = 'effect' | 'loop' | 'ambience' | 'music';
 
 /** When an effect is loaded: at the start, with the crafts, or when a fight starts. */
 export type EffectGroup = 'ui' | 'craft' | 'combat';
@@ -24,6 +27,8 @@ export interface CueInfo {
   pixabay?: string;
   /** The brief a track is picked to: the cave's three takes from S1's talk. */
   brief?: string;
+  /** What to listen for, for the picker: S1.1's direction for the effect. */
+  listen?: string;
   group?: EffectGroup;
   /** Low-priority effects (a click, a tab, a toast) stay quiet when another effect just played. */
   minor?: boolean;
@@ -44,115 +49,143 @@ const hit = <I extends string>(
   plays: string,
   search: readonly string[],
   kenney?: readonly string[],
-) => fx(id, plays, search, kenney, { group: 'combat' });
+  more: Partial<CueInfo> = {},
+) => fx(id, plays, search, kenney, { group: 'combat', ...more });
+
+/** S1.1, Jan's pick for a blow: a short whoosh, then a deep boom with a little ring. */
+const THUD = 'A short whoosh, then a deep cinematic boom with a little ring: qi behind the blow.';
 
 export const CUES = [
-  // ---------------------------------------------------------------- UI and feel
-  fx(
-    'ui-click',
-    'Any button',
-    ['wood click soft ui', 'soft click button'],
-    ['click', 'mouseclick'],
-    {
-      minor: true,
-    },
-  ),
-  fx(
-    'ui-tab',
-    'A tab or a rail glyph',
-    ['paper tab switch', 'soft switch ui'],
-    ['switch', 'toggle', 'select'],
-    {
-      minor: true,
-    },
-  ),
-  fx(
-    'ui-toast',
-    'A toast',
-    ['soft bell notification', 'small chime notification'],
-    ['pluck', 'confirmation', 'bong'],
-    {
-      minor: true,
-    },
-  ),
+  // ---------------------------------------------------------------- menu and navigation
+  fx('ui-click', 'Any button', ['wood tap soft', 'wooden click'], [], {
+    minor: true,
+    listen: 'A soft knock of wood, short and dry; heard a hundred times an hour.',
+  }),
+  fx('ui-tab', 'A tab or a rail glyph', ['paper flip soft', 'page flick'], [], {
+    minor: true,
+    listen: 'A flick of paper or silk, lighter than the click.',
+  }),
+  fx('ui-toast', 'A toast', ['small bell ding soft', 'tingsha'], [], {
+    minor: true,
+    listen: 'One small bell, soft, a little ring after it.',
+  }),
   fx(
     'ui-open',
     'The square opening',
     ['cloth whoosh soft', 'scroll unroll paper'],
-    ['open', 'maximize', 'bookOpen'],
+    ['bookOpen', 'cloth'],
+    { listen: 'Silk or a scroll unrolling: a soft whoosh with grain in it.' },
   ),
-  fx(
-    'ui-close',
-    'The square closing',
-    ['paper fold soft', 'cloth whoosh short'],
-    ['close', 'minimize', 'bookClose'],
-  ),
-  fx(
-    'feel-gain',
-    'A gain by the figure (F1)',
-    ['jade chime short', 'crystal ting'],
-    ['glass', 'confirmation'],
-  ),
+  fx('ui-close', 'The square closing', ['paper fold soft', 'cloth whoosh short'], ['bookClose'], {
+    listen: 'The same cloth or paper, shorter, folding away.',
+  }),
+
+  // ---------------------------------------------------------------- feel
+  fx('feel-gain', 'A gain by the figure (F1)', ['wind chime single', 'crystal chime'], [], {
+    listen: 'A small chime, jade or glass, bright but never a beep.',
+  }),
   fx(
     'feel-loss',
     'A loss by the figure (F1)',
-    ['low wooden knock', 'muted thud'],
-    ['drop', 'error', 'impactWood_light'],
+    ['wood knock low', 'muted thud'],
+    ['impactWood_light'],
+    { listen: 'A low, muted knock of wood.' },
   ),
-  fx(
-    'feel-arrive',
-    'A card arriving',
-    ['paper slide', 'letter arrive soft chime'],
-    ['scroll', 'bookPlace'],
-  ),
+  fx('feel-arrive', 'A card arriving', ['paper slide', 'letter paper'], ['bookPlace'], {
+    listen: 'Paper sliding onto a table.',
+  }),
   fx(
     'feel-alert',
-    'An encounter stopping your road while you are off the Map',
+    'An encounter stopping your road while you are off the World screen',
     ['temple bell single hit', 'small gong hit'],
-    ['impactBell_heavy', 'bong'],
+    ['impactBell_heavy'],
+    { listen: 'A temple bell struck once, a call to look.' },
   ),
-  fx(
-    'feel-pass',
-    'An encounter ahead you can go round',
-    ['wind chime short gentle', 'chime soft single'],
-    ['pluck', 'glass'],
-  ),
+  fx('feel-pass', 'An encounter ahead you can go round', ['wind chime gentle', 'chimes soft'], [], {
+    listen: 'Wind chimes stirring, gentle, passing.',
+  }),
   fx(
     'feel-sheathe',
     'An encounter or a fight over',
     ['sword sheath', 'sword sheathe slide'],
     ['drawKnife', 'metalLatch'],
   ),
-  fx('feel-orb', 'An orb drawn into the figure', ['magic absorb soft', 'energy whoosh absorb']),
+
+  // ---------------------------------------------------------------- qi and the breakthrough
+  fx('feel-orb', 'An orb drawn into the figure', ['soft breath whoosh', 'magic absorb soft'], [], {
+    listen: 'A soft in-breath, airy, with a faint shimmer; qi coming in.',
+  }),
+  {
+    id: 'feel-qi-hum',
+    kind: 'loop',
+    plays: 'Under Cultivate while qi flows, swelling as the bar fills',
+    search: ['meditation drone hum', 'singing bowl drone loop'],
+    listen: 'A faint low hum that loops without a seam, like a bowl still ringing.',
+  },
   fx(
     'feel-settle',
     'A ladder full, ready for the gate',
     ['singing bowl short', 'low hum swell'],
     ['impactBell'],
+    { listen: 'A singing bowl touched once: full, waiting.' },
   ),
   fx(
-    'feel-layer',
-    'A layer up in Qi Condensation',
-    ['chime rise magic', 'level up soft chime'],
-    ['confirmation', 'maximize'],
+    'feel-warn',
+    "The breakthrough's warning, 3 s before (F1)",
+    ['wind rising', 'rumble swell'],
+    [],
+    {
+      listen: 'Wind gathering, low; something is coming.',
+    },
   ),
+  {
+    id: 'feel-charge',
+    kind: 'loop',
+    plays: "The breakthrough's charge, qi building through the scene",
+    search: ['rising drone swell', 'energy riser'],
+    listen: 'A low drone that can loop; the game raises it and its pitch as the race runs.',
+  },
   fx(
-    'feel-stage',
-    'A stage up past Qi Condensation',
-    ['gong swell', 'bell resonance long'],
-    ['impactBell_heavy'],
+    'feel-gate',
+    'A gate caught in the scene, a step higher each',
+    ['guzheng single note', 'zither pluck'],
+    [],
+    {
+      listen: 'One plucked guzheng note, clean; the game pitches it up the five-note scale.',
+    },
   ),
-  fx('feel-warn', "The breakthrough's warning, 3 s before (F1)", [
-    'deep drum roll low',
-    'rumble swell',
-  ]),
-  fx('feel-fanfare', 'Through a great gate (F1)', ['gong crash', 'chinese gong hit large']),
+  fx('feel-layer', 'A layer up in Qi Condensation', ['small gong swell', 'gong soft'], [], {
+    listen:
+      "Jan's pick: a gong swell, smaller; wind rushing in, then a gong that blooms and fades.",
+  }),
+  fx('feel-stage', 'A stage up past Qi Condensation', ['gong swell', 'temple gong'], [], {
+    listen: "Jan's pick: a gong swell; wind rushing in, then a temple gong that blooms and fades.",
+  }),
+  fx('feel-fanfare', 'Through a great gate (F1)', ['gong crash', 'large gong swell'], [], {
+    listen: 'The biggest gong of all, a crash that blooms long; the sting plays over it.',
+  }),
   fx(
     'feel-fail',
     'A failed breakthrough',
     ['glass crack low', 'thunder short dull'],
     ['impactGlass_heavy'],
   ),
+
+  // ---------------------------------------------------------------- quests
+  fx(
+    'quest-step',
+    "A quest's step done, the origin's chain too",
+    ['small bell ting', 'bell tap'],
+    [],
+    {
+      listen: 'One small bell, a ting; quieter than the toast.',
+    },
+  ),
+  fx('quest-done', 'A quest handed in', ['guqin', 'chinese harp short'], [], {
+    listen: 'A short guqin phrase, three notes or so, over a soft bell.',
+  }),
+
+  // ---------------------------------------------------------------- things
   fx('shop-buy', 'Buying', ['coin pouch', 'coins handful'], ['handleCoins']),
   fx('shop-sell', 'Selling', ['coins drop table', 'coins counting'], ['handleCoins']),
   fx(
@@ -174,12 +207,7 @@ export const CUES = [
     ['seal stamp', 'wood stamp thud'],
     ['bookPlace', 'impactWood_medium'],
   ),
-  fx(
-    'tree-node',
-    'Buying a node',
-    ['jade click resonant', 'crystal tap'],
-    ['impactGlass_light', 'glass'],
-  ),
+  fx('tree-node', 'Buying a node', ['jade click resonant', 'crystal tap'], ['impactGlass_light']),
   fx('craft-furnace', 'The furnace lit', ['fire whoosh ignite', 'furnace roar short'], [], {
     group: 'craft',
   }),
@@ -200,7 +228,7 @@ export const CUES = [
     ['impactMetal_heavy', 'impactPlate_heavy'],
     { group: 'craft' },
   ),
-  fx('craft-brush', 'A talisman stroke', ['brush stroke paper', 'calligraphy brush'], ['scratch'], {
+  fx('craft-brush', 'A talisman stroke', ['brush stroke paper', 'calligraphy brush'], [], {
     group: 'craft',
   }),
   fx(
@@ -218,14 +246,32 @@ export const CUES = [
   ),
 
   // ---------------------------------------------------------------- combat: the forms
-  hit('hit-slash', 'A slash lands', ['sword swing slash'], ['knifeSlice', 'chop']),
-  hit('hit-thrust', 'A thrust lands', ['spear stab'], ['knifeSlice']),
-  hit('hit-palm', 'A palm lands', ['punch impact whoosh'], ['impactPunch']),
+  hit(
+    'hit-slash',
+    'A slash lands',
+    ['sword whoosh hit', 'sword slash impact'],
+    ['knifeSlice', 'chop'],
+    {
+      listen: THUD,
+    },
+  ),
+  hit('hit-thrust', 'A thrust lands', ['spear stab whoosh', 'stab impact'], ['knifeSlice'], {
+    listen: THUD,
+  }),
+  hit('hit-palm', 'A palm lands', ['cinematic punch', 'cinematic hit'], ['impactPunch'], {
+    listen: THUD,
+  }),
   hit('hit-projectile', 'A projectile lands', ['magic projectile hit', 'arrow impact']),
   hit('hit-aura', 'An aura washes over', ['energy wave whoosh']),
   hit('hit-bite', 'A bite', ['animal bite crunch']),
   hit('hit-claw', 'A claw', ['claw scratch slash']),
-  hit('hit-charge', 'A charge', ['heavy body impact'], ['impactSoft_heavy', 'impactPunch_heavy']),
+  hit(
+    'hit-charge',
+    'A charge',
+    ['cinematic impact heavy', 'heavy body impact'],
+    ['impactSoft_heavy', 'impactPunch_heavy'],
+    { listen: THUD },
+  ),
   hit('hit-tail', 'A tail', ['whip lash heavy']),
   hit('hit-breath', 'A breath', ['monster breath roar']),
   hit(
@@ -263,25 +309,25 @@ export const CUES = [
   {
     id: 'amb-wilds',
     kind: 'ambience',
-    plays: 'The Map, the wild places',
+    plays: 'The World, the wild places',
     search: ['forest wind birds ambience', 'mountain wind loop'],
   },
   {
     id: 'amb-market',
     kind: 'ambience',
-    plays: 'The Map at a town or a city',
+    plays: 'The World at a town or a city',
     search: ['market crowd ambience', 'bazaar ambience'],
   },
   {
     id: 'amb-sect',
     kind: 'ambience',
-    plays: 'The Map at a sect or a gated hall',
+    plays: 'The World at a sect or a gated hall',
     search: ['temple bell distant ambience', 'monastery bells wind'],
   },
   {
     id: 'amb-night',
     kind: 'ambience',
-    plays: 'After dark, under the cave or the Map',
+    plays: 'After dark, under the cave or the World',
     search: ['night insects crickets loop', 'night crickets ambience'],
   },
   {
@@ -369,6 +415,7 @@ export type CueId = (typeof CUES)[number]['id'];
 export type EffectId = Extract<(typeof CUES)[number], { kind: 'effect' }>['id'];
 export type AmbienceId = Extract<(typeof CUES)[number], { kind: 'ambience' }>['id'];
 export type MusicId = Extract<(typeof CUES)[number], { kind: 'music' }>['id'];
+export type LoopId = Extract<(typeof CUES)[number], { kind: 'loop' }>['id'];
 
 const byId = new Map<string, CueInfo>(CUES.map((c) => [c.id, c]));
 

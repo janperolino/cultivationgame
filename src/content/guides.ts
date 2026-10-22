@@ -70,6 +70,11 @@ export interface Guide {
   codex: string;
   /** A ring that waits only for a look, and closes on its "Got it". */
   ack?: boolean;
+  /**
+   * The narrator's box beside the control rather than under or over it, where what the step opens
+   * comes up under it (the wheel's kinds under the wheel; Jan's playtest after S1).
+   */
+  beside?: true;
 }
 
 export const GUIDES: Readonly<Record<GuideId, Guide>> = {
@@ -128,6 +133,7 @@ export const GUIDES: Readonly<Record<GuideId, Guide>> = {
     control: 'wheel',
     lines: ['Your day has twelve hours. Turn one to Study for insight.'],
     codex: 'wheel',
+    beside: true,
   },
   'first-minor': {
     id: 'first-minor',
@@ -174,7 +180,7 @@ export const GUIDES: Readonly<Record<GuideId, Guide>> = {
   'first-course': {
     id: 'first-course',
     form: 'ring',
-    screen: 'map',
+    screen: 'world',
     control: 'map',
     lines: ['Click the map to set a course. The clock carries you.'],
     codex: 'course',
@@ -182,7 +188,7 @@ export const GUIDES: Readonly<Record<GuideId, Guide>> = {
   'place-doors': {
     id: 'place-doors',
     form: 'ring',
-    screen: 'map',
+    screen: 'world',
     control: 'doors',
     lines: ['Doors are grouped: Trade, Own, Work, Hear, Rest. Open one.'],
     codex: 'place',
@@ -190,7 +196,7 @@ export const GUIDES: Readonly<Record<GuideId, Guide>> = {
   'first-buy': {
     id: 'first-buy',
     form: 'ring',
-    screen: 'map',
+    screen: 'world',
     control: 'buy',
     lines: ['Pick a row, then Buy.'],
     codex: 'buy-sell',
@@ -217,7 +223,7 @@ export const GUIDES: Readonly<Record<GuideId, Guide>> = {
   sense: {
     id: 'sense',
     form: 'ring',
-    screen: 'map',
+    screen: 'world',
     control: 'sense',
     lines: [
       'You see this far, and sense what waits ahead before you reach it.',

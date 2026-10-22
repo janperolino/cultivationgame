@@ -222,6 +222,12 @@ function playChain(s0: GameState): GameState {
     const r = takeJob(st, String(goal.match!.job));
     return r.ok ? r.state : st;
   }
+  // A member's post is taken at home's Work door, as the post quest's first step says.
+  if ('job' in goal && !s.map!.course) {
+    const st = atHome(s);
+    const r = takeJob(st, goal.job);
+    return r.ok ? noteQuests(r.state) : st;
+  }
   // Shifts and currency: stand at home with no course set.
   if (('kept' in goal || 'balance' in goal) && !s.map!.course) {
     const here = Math.hypot(s.map!.at[0] - home.x, s.map!.at[1] - home.y) < 50;

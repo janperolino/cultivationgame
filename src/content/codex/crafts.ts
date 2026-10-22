@@ -165,7 +165,7 @@ export const CRAFTS: readonly CodexEntry[] = [
     numbers: [
       ['Brewed in the town’s workshops', 'Half of the recipe goods it uses but does not make'],
     ],
-    where: { screen: 'map', label: 'An alchemy shop or refiner’s shelf' },
+    where: { screen: 'world', label: 'An alchemy shop or refiner’s shelf' },
     met: { test: 'shop' },
     way: 'codex',
     feature: 'Shops brewing and refining what they sell',

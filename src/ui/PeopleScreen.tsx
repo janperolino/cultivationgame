@@ -215,7 +215,7 @@ function PersonActs({ game, id }: { game: GameState; id: string }) {
           onClick={() => {
             const err = mapAct((s) => goToPlace(s, where!, true));
             if (err) setSaid(err);
-            else go('map');
+            else go('world');
           }}
         >
           Seek them out

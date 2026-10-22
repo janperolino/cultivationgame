@@ -96,7 +96,7 @@ export const FORMATIONS: readonly CodexEntry[] = [
       ['Holding', '×5 the burn'],
       ['Within reach', '60 li'],
     ],
-    where: { screen: 'map', label: 'Map' },
+    where: { screen: 'world', label: 'World' },
     met: { test: 'prepared' },
     way: 'codex',
     feature:

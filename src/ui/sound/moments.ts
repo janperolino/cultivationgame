@@ -35,6 +35,13 @@ export function momentsOf(was: GameState, now: GameState): EffectId[] {
     if (fresh.some((r) => r.blew)) out.push('feel-fail');
     else if (fresh.length > 0) out.push('craft-pill');
   }
+  // A quest's step done, the origin's chain's too, a chime each; handed in, its own sound (S1.1).
+  const quests = new Map(was.journal.quests.map((q) => [q.id, q]));
+  for (const q of now.journal.quests) {
+    const p = quests.get(q.id);
+    if (q.handed !== null && p?.handed === null) out.push('quest-done');
+    else if (p && q.step > p.step) out.push('quest-step');
+  }
   if (b.nodes.length > a.nodes.length) out.push('tree-node');
   if (b.manuals.length > a.manuals.length) out.push('book-graft');
   if (gearKey(was) !== gearKey(now)) out.push('bag-equip');

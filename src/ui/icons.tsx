@@ -16,8 +16,8 @@ const SCREEN_ICONS: Record<ScreenId, string> = {
     'M6 10h12v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4zM5 10h14M9 7h6l1 3H8zM12 7V5.5M7.5 19l-1 2.5M16.5 19l1 2.5M12 19v2.5',
   // A roof over a door: where you live (K9).
   dwelling: 'M3 11l9-7 9 7M5.5 9.5V20h13V9.5M10 20v-5.5h4V20',
-  // A folded map.
-  map: 'M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14',
+  // The World 天下: a folded map of it.
+  world: 'M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14',
   // A rolled scroll, its lines written.
   journal:
     'M7 4h11v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1h10v1a2 2 0 0 0 2 2M7 4a2 2 0 0 0-2 2v11M10 8h5M10 11h5M10 14h3',

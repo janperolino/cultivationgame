@@ -220,7 +220,7 @@ export function comingBackStory(before: GameState, after: GameState): ComingBack
   // What waits on the road has stopped the course: you camp where it met you.
   const met = (after.map?.encounters ?? []).find((e) => e.state === 'waiting');
   const onTheRoad = met
-    ? `On the road, ${lowerFirst(encounterTemplate(met.template).title)} waits for you on the Map; you camp where it met you.`
+    ? `On the road, ${lowerFirst(encounterTemplate(met.template).title)} waits for you on the World screen; you camp where it met you.`
     : null;
   const waiting = [onTheRoad, tray].filter(Boolean).join(' ') || null;
 

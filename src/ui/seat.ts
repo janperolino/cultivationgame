@@ -36,6 +36,12 @@ let lastInput = 0;
 let tickedAt = 0;
 /** The game ticks four times a second; never run the clock on further than this past a tick. */
 const MAX_LEAD_S = 0.5;
+/** The seat's clock's pace against the page's, as the last tick ran it (seatTime). */
+let clockRate = 1;
+/** The seat's time the figure was last shown, and when. */
+let shown = { t: 0, at: 0 };
+/** Further than this from where the figure is, the clock jumps rather than eases. */
+const SNAP_S = 0.5;
 let figureShown = 0;
 const breathListeners = new Set<(b: Breath) => void>();
 
@@ -87,7 +93,12 @@ export function tickSeat(s: GameState, dt: number): { seat: Seat; state: GameSta
     figure: atFigure && !playing,
     hour: hourOfDay(s.calendar.day),
   });
-  tickedAt = performance.now();
+  const now = performance.now();
+  // How fast the seat's clock ran against the page's this tick: 1, or ½ while the first orb's
+  // guide holds it at half; the figure runs on at the same pace between ticks.
+  const gap = (now - tickedAt) / 1000;
+  if (gap > 0 && gap < 1 && dt > 0) clockRate = Math.round(Math.min(1.5, dt / gap) * 4) / 4;
+  tickedAt = now;
   useSeat.setState({ attention: a });
   if (s.ended) return { seat: AWAY, state: keepOrbStream(s, a) };
   const seat = seatOf(a, s.player);
@@ -114,11 +125,19 @@ function apply(s: GameState, r: Breath): GameState {
 }
 
 /**
- * The seat's clock now, in session seconds: the last tick's, run on by the page time since, so
- * orbs move smoothly every frame rather than in the loop's quarter-second steps.
+ * The seat's clock now, in session seconds: the last tick's, run on by the page time since at the
+ * tick's pace, so orbs move smoothly every frame rather than in the loop's quarter-second steps.
+ * What the figure was last shown runs on and eases toward that, never stepping back, so a tick
+ * that lands late or early, or a clock held at half, never jolts the orbs (Jan's playtest after
+ * S1: they stuttered under the first orb's guide). A jump (a new life, time away) is taken at once.
  */
 export function seatTime(a: Attention, now = performance.now()): number {
-  return a.t + Math.min(MAX_LEAD_S, Math.max(0, (now - tickedAt) / 1000));
+  const target = a.t + Math.min(MAX_LEAD_S, Math.max(0, (clockRate * (now - tickedAt)) / 1000));
+  const run = shown.t + (clockRate * Math.max(0, now - shown.at)) / 1000;
+  const t =
+    Math.abs(target - run) > SNAP_S ? target : Math.max(shown.t, run + (target - run) * 0.15);
+  shown = { t, at: now };
+  return t;
 }
 
 /** The world day the figure last saw, when, and how fast it was moving, in days a second. */

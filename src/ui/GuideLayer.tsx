@@ -129,11 +129,21 @@ export function GuideLayer() {
   const roomAbove = box.y >= CALLOUT_ROOM;
   const below = roomBelow && (box.y + box.h / 2 < box.sh / 2 || !roomAbove);
   const left = Math.min(Math.max(16, box.x + box.w / 2 - CALLOUT_W / 2), box.sw - CALLOUT_W - 16);
-  const calloutStyle: CSSProperties = below
-    ? { left, top: box.y + box.h + 12, width: CALLOUT_W }
-    : roomAbove
-      ? { left, bottom: box.sh - box.y + 12, width: CALLOUT_W }
-      : { left, top: Math.max(16, box.y) + 16, width: CALLOUT_W };
+  // A guide whose step opens something under its control keeps its box beside it, where it fits.
+  const besideAt =
+    guide.beside && box.x + box.w + 12 + CALLOUT_W <= box.sw - 16
+      ? box.x + box.w + 12
+      : guide.beside && box.x - 12 - CALLOUT_W >= 16
+        ? box.x - 12 - CALLOUT_W
+        : null;
+  const calloutStyle: CSSProperties =
+    besideAt !== null
+      ? { left: besideAt, top: box.y + box.h / 2 - 60, width: CALLOUT_W }
+      : below
+        ? { left, top: box.y + box.h + 12, width: CALLOUT_W }
+        : roomAbove
+          ? { left, bottom: box.sh - box.y + 12, width: CALLOUT_W }
+          : { left, top: Math.max(16, box.y) + 16, width: CALLOUT_W };
   const ring: CSSProperties = { left: box.x, top: box.y, width: box.w, height: box.h };
   return (
     <div className={`guide-layer${veil ? ' is-veil' : ''}`} aria-live="polite">

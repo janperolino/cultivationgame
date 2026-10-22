@@ -26,7 +26,7 @@ import { loadSave, makeSave } from './save/format.ts';
 import { groundPartners, sparWhy } from './spar.ts';
 import { newLife, PLAYER_ID, withPlayer, type GameState } from './state.ts';
 import { canSetHour, dutyAt, effectiveWheel, hourKindOpen, setHours } from './wheel.ts';
-import { jobsDay } from './jobs.ts';
+import { jobsDay, takeJob } from './jobs.ts';
 
 const life = (seed = 'fights'): GameState =>
   ensureMap(newLife({ name: 'Han Li', seed, origin: { id: 'conscript', choice: 'along' } }));
@@ -334,7 +334,7 @@ describe('the v47 save', () => {
     const back = loadSave({ ...raw, version: 46, state }).state;
     expect(back.fight).toBeNull();
     expect(back.unlocks).not.toContain('combat');
-    expect(back.seen.screen).toEqual({ map: 'seen' });
+    expect(back.seen.screen).toEqual({ world: 'seen' });
   });
 
   it('keeps a fight under way across a save', () => {
@@ -364,7 +364,10 @@ describe('the wheel’s Duty bug', () => {
   };
 
   it('puts Duty on the shift’s hours at drill, worked and paid; past drill they are Duty, locked', () => {
-    const s = createLife(creation);
+    // The patrol taken at its Work door, the chain's step.
+    const took = takeJob(createLife(creation), 'wall-patrol');
+    if (!took.ok) throw new Error(took.reason);
+    const s = took.state;
     const shift = job('wall-patrol').shift;
     const h = shift[0]!;
     // At drill the arc marks the hours, and Duty can go on them, and only on them.

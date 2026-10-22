@@ -307,10 +307,16 @@ describe('the rogue', () => {
 });
 
 describe('your place and your own way', () => {
-  it('walks a member through the post: shifts kept, the first currency, the nourishing art', () => {
+  it('walks a member through the post: taken at its door, shifts kept, the first currency, the nourishing art', () => {
+    const id = 'chain-cadet-school-place';
     let s = withoutChain(life('cave-orphan', 'along', 'place'));
+    // The oath seats the cadet in the March, but the watch waits at its Work door.
+    expect(s.player.jobs).toEqual([]);
     s = withPlayer(s, { ...s.player, qi: { ...s.player.qi, stage: 4 } });
-    s = atHome(ok(takeQuest(s, 'chain-cadet-school-place')));
+    s = atHome(ok(takeQuest(s, id)));
+    expect(questState(s, id)!.step).toBe(0);
+    s = noteQuests(ok(takeJob(s, 'school-watch')));
+    expect(questState(s, id)!.step).toBe(1);
     s = { ...s, map: { ...s.map!, inside: null } };
     s = until(s, (x) => stepsDone(questState(x, 'chain-cadet-school-place')!), 60);
     s = ok(handInHere(atHome(s), 'chain-cadet-school-place'));

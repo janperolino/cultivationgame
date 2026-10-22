@@ -65,7 +65,7 @@ const NIGHT: Record<Base, [number, number]> = {
 export function baseOf(w: Where, last: Base | null): Base | null {
   if (w.screen === null) return null;
   if (CAVE_SCREENS.has(w.screen)) return 'cave';
-  if (w.screen === 'map') return w.place ? PLACE_BASE[w.place] : 'wilds';
+  if (w.screen === 'world') return w.place ? PLACE_BASE[w.place] : 'wilds';
   return last;
 }
 

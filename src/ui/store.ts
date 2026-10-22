@@ -602,8 +602,11 @@ export const useGame = create<GameStore>()((set, get) => {
       // Mid catch-up the game is still the one before the time away (see pagehide).
       if (!game || !slot || !holdsLock || catching) return;
       const savedAt = Date.now();
-      await db().write(slot, makeSave(game, savedAt), opts);
-      set({ savedAt });
+      const save = makeSave(game, savedAt);
+      await db().write(slot, save, opts);
+      // The slot's line in Settings follows each save rather than the last time the list was read.
+      const line = db().summaryOf(slot, save);
+      set((st) => ({ savedAt, slots: st.slots.map((x) => (x.slot === slot ? line : x)) }));
     },
 
     setPlan(patch) {
@@ -1019,7 +1022,7 @@ function feelFor(was: GameState, now: GameState): void {
   const here = useNav.getState().here;
   for (const e of stopped) {
     cue('feel-alert');
-    if (here === 'map' || here === 'cultivate') continue;
+    if (here === 'world' || here === 'cultivate') continue;
     const t = encounterTemplate(e.template);
     const map = mapOf(now);
     const where = map ? areaAt(map, e.at)?.name : undefined;
@@ -1032,7 +1035,7 @@ function feelFor(was: GameState, now: GameState): void {
           ? 'It found you first; it waits.'
           : 'It waits on your road.',
       {
-        link: { screen: 'map' },
+        link: { screen: 'world' },
         open: { kind: 'encounter', id: e.id },
         ...(where ? { where } : {}),
       },

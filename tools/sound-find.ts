@@ -1,14 +1,16 @@
 // `npm run sound:find` (docs/art-pipeline.md § Sound): lays out candidates for the cue table's
-// effects from Kenney's CC0 audio packs, downloaded once into sound/takes/kenney/ (ignored), and
-// writes sound/takes/candidates.json for the picker (`npm run sound:pick`). Kenney's packs are the
-// only source fetched by script: everything else is found by hand from the picker's search links.
+// effects from Kenney's CC0 audio packs, downloaded once into sound/takes/kenney/ (ignored, in the
+// main checkout: `soundHome`), and writes sound/takes/candidates.json for the picker (`npm run
+// sound:pick`). Kenney's packs are the only source fetched by script: everything else is found by
+// hand from the picker's search links. Only the recorded packs (S1.1, Jan's call: no synth blips).
 
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, join, relative } from 'node:path';
 import { unzipSync } from 'fflate';
 import { CUES, type CueInfo } from '../src/ui/sound/table.ts';
+import { soundHome } from './sound-lib.ts';
 
-export const KENNEY_PACKS = ['interface-sounds', 'ui-audio', 'rpg-audio', 'impact-sounds'];
+export const KENNEY_PACKS = ['rpg-audio', 'impact-sounds'];
 
 export interface Candidate {
   /** The file, from sound/takes/. */
@@ -18,8 +20,7 @@ export interface Candidate {
   credit: string;
 }
 
-const root = process.cwd();
-const takes = join(root, 'sound', 'takes');
+const takes = join(soundHome(process.cwd()), 'sound', 'takes');
 const kenneyDir = join(takes, 'kenney');
 
 async function fetchPack(pack: string): Promise<void> {

@@ -5,6 +5,7 @@ import { ACTION_FORMS, BEAST_FORMS, DAMAGE_TYPES, TECHNIQUE_FORMS } from '../../
 import { newLife, type GameState } from '../../core/state.ts';
 import { shotLayers } from './combat.ts';
 import { momentsOf } from './moments.ts';
+import { chargeAt, gateRate, humAt } from './qi.ts';
 import { breakMs, isNight, nextTrack, scapeOf, type Where } from './scape.ts';
 import { CUES, cueInfo, ELEMENT_CUE, FORM_CUE, MUSIC_SETS } from './table.ts';
 
@@ -92,18 +93,20 @@ describe('the soundscape', () => {
     const cave = scapeOf(where({}), null);
     expect(cave).toMatchObject({ base: 'cave', music: 'cave', duck: 1 });
     expect(cave.ambience).toEqual([{ id: 'amb-cave', level: 1 }]);
-    expect(scapeOf(where({ screen: 'map' }), 'cave').ambience[0]!.id).toBe('amb-wilds');
-    expect(scapeOf(where({ screen: 'map', place: 'city' }), null).ambience[0]!.id).toBe(
+    expect(scapeOf(where({ screen: 'world' }), 'cave').ambience[0]!.id).toBe('amb-wilds');
+    expect(scapeOf(where({ screen: 'world', place: 'city' }), null).ambience[0]!.id).toBe(
       'amb-market',
     );
-    expect(scapeOf(where({ screen: 'map', place: 'gate' }), null).ambience[0]!.id).toBe('amb-sect');
+    expect(scapeOf(where({ screen: 'world', place: 'gate' }), null).ambience[0]!.id).toBe(
+      'amb-sect',
+    );
     const bag = scapeOf(where({ screen: 'bag' }), 'market');
     expect(bag).toMatchObject({ base: 'market', music: 'map' });
     expect(scapeOf(where({ screen: null }), 'cave')).toMatchObject({ music: null, ambience: [] });
   });
 
   it('lays insects under the night and rain over a storm', () => {
-    const night = scapeOf(where({ screen: 'map', night: true }), null);
+    const night = scapeOf(where({ screen: 'world', night: true }), null);
     expect(night.ambience.map((l) => l.id)).toEqual(['amb-wilds', 'amb-night']);
     const storm = scapeOf(where({ storm: true }), null);
     expect(storm.ambience.map((l) => l.id)).toEqual(['amb-cave', 'amb-storm']);
@@ -111,7 +114,7 @@ describe('the soundscape', () => {
   });
 
   it('stands a drone in for the rest while an encounter waits, and a fight plays its own track', () => {
-    const tense = scapeOf(where({ screen: 'map', tense: true }), null);
+    const tense = scapeOf(where({ screen: 'world', tense: true }), null);
     expect(tense.ambience).toEqual([{ id: 'amb-tense', level: 1 }]);
     expect(tense.duck).toBeLessThan(1);
     expect(tense.music).toBe('map');
@@ -166,5 +169,43 @@ describe('the moments a change plays', () => {
       },
     };
     expect(momentsOf(was, now)).toEqual(['tree-node', 'bag-equip']);
+  });
+
+  it("chimes a quest's step and plays its own sound when it is handed in", () => {
+    const base = life();
+    const q = { id: 'some-quest', taken: 0, step: 0, opened: 0, handed: null as number | null };
+    const at = (over: Partial<typeof q>) => ({
+      ...base,
+      journal: { quests: [{ ...q, ...over }], followed: null },
+    });
+    const was = at({});
+    expect(momentsOf(was, at({ step: 1 }))).toEqual(['quest-step']);
+    expect(momentsOf(at({ step: 2 }), at({ step: 2, handed: 5 }))).toEqual(['quest-done']);
+    // A quest just taken is neither.
+    expect(momentsOf(base, was)).toEqual([]);
+  });
+});
+
+describe("qi's sounds", () => {
+  it('climbs the five-note scale a gate at a time', () => {
+    const rates = [1, 2, 3, 4, 5, 6].map(gateRate);
+    expect(rates[0]).toBe(1);
+    for (let i = 1; i < rates.length; i++) expect(rates[i]!).toBeGreaterThan(rates[i - 1]!);
+    expect(rates[5]).toBeCloseTo(2, 5);
+  });
+
+  it('raises the charge through the race and runs a great gate deeper', () => {
+    const start = chargeAt(0, false);
+    const mid = chargeAt(9, false);
+    const end = chargeAt(14, false);
+    expect(mid.level).toBeGreaterThan(start.level);
+    expect(end.level).toBeCloseTo(1);
+    expect(end.rate).toBeGreaterThan(mid.rate);
+    expect(chargeAt(14, true).rate).toBeLessThan(end.rate);
+  });
+
+  it('swells the hum as the bar fills, and holds it past full', () => {
+    expect(humAt(1).level).toBeGreaterThan(humAt(0).level);
+    expect(humAt(1.4)).toEqual(humAt(1));
   });
 });
