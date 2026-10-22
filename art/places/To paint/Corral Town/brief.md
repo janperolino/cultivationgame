@@ -96,11 +96,11 @@ Cells, left to right, top to bottom:
 
 1. Enlist (the Kingdom of Spirit Herders) 从军: Where the way in is asked for, and the answer given at the gate.
 2. Offer a gift (the Kingdom of Spirit Herders): A gift laid before the steward is remembered as tribute.
-3. Your seat (the Kingdom of Spirit Herders) 席位: What the power wants of you this month, and what it gives.
-4. Inside (the Kingdom of Spirit Herders) 内门: members only
-5. Training ground (the Kingdom of Spirit Herders) 演武场: A drill ground where seniors spar with juniors, once a day each.
-6. Elders’ hall (the Kingdom of Spirit Herders) 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
-7. Empty: plain dark mist.
+3. Training ground (the Kingdom of Spirit Herders) 演武场: A drill ground where seniors spar with juniors, once a day each.
+4. Commandery (the Kingdom of Spirit Herders) 军府: Where the elders sit: a lesson, a protector, a seat raised or a release.
+5. Your seat (the Kingdom of Spirit Herders) 席位: What the power wants of you this month, and what it gives.
+6. Inside (the Kingdom of Spirit Herders) 内门: members only
+7. Law hall (the Kingdom of Spirit Herders) 律堂: Where a marked face kneels and makes restitution.
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
@@ -111,4 +111,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: The herders’ trading post, where thunder-horned deer and scale-horses are sold by the hundred head and the empire’s buyers keep a standing hall.
 ```
 
-Pieces, in order: stall, house, mortal, changer, teahouse, guides, caravans, broker, board | inn, fields, maps | join, gift, seat, inside, ground, elders.
+Pieces, in order: stall, house, mortal, changer, teahouse, guides, caravans, broker, board | inn, fields, maps | join, gift, ground, elders, seat, inside, law-hall.

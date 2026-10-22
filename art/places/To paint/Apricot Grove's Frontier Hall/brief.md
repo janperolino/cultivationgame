@@ -45,11 +45,11 @@ Cells, left to right, top to bottom:
 1. Ask to sit the entrance test 入门考核: Where the way in is asked for, and the answer given at the gate.
 2. Offer a gift: A gift laid before the steward is remembered as tribute.
 3. Mission hall 任务堂: The sect’s postings on lacquered boards, paid in contribution on your return.
-4. Your seat 席位: What the power wants of you this month, and what it gives.
-5. Inside 内门: members only
-6. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
-7. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
-8. Empty: plain dark mist.
+4. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
+5. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
+6. Your seat 席位: What the power wants of you this month, and what it gives.
+7. Inside 内门: members only
+8. Law hall 律堂: Where a marked face kneels and makes restitution.
 9. Empty: plain dark mist.
 
 People only small, in the middle distance, faceless; the place is the subject.
@@ -59,4 +59,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: Apricot Grove Valley's branch hall in the City of the Guarded Mouth, which buys the frontier's beast cores for the Valley's furnaces and sells healing pills to anyone, at prices the frontier complains about and pays.
 ```
 
-Pieces, in order: join, gift, mission, seat, inside, ground, elders.
+Pieces, in order: join, gift, mission, ground, elders, seat, inside, law-hall.

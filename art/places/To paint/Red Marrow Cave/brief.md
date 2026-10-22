@@ -46,11 +46,11 @@ Cells, left to right, top to bottom:
 2. Offer a gift: A gift laid before the steward is remembered as tribute.
 3. Scripture pavilion 藏经阁: The sect’s own chapters, on shelves that open by seat.
 4. Mission hall 任务堂: The sect’s postings on lacquered boards, paid in contribution on your return.
-5. Your seat 席位: What the power wants of you this month, and what it gives.
-6. Inside 内门: members only
-7. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
-8. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
-9. Empty: plain dark mist.
+5. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
+6. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
+7. Your seat 席位: What the power wants of you this month, and what it gives.
+8. Inside 内门: members only
+9. Law hall 律堂: Where a marked face kneels and makes restitution.
 
 People only small, in the middle distance, faceless; the place is the subject.
 
@@ -59,4 +59,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: A rumor of a demonic sect in the Grey Karst Reaches that keeps beasts in pens underground and drains their blood for pills that let a cultivator climb fast and die young.
 ```
 
-Pieces, in order: join, gift, pavilion, mission, seat, inside, ground, elders.
+Pieces, in order: join, gift, pavilion, mission, ground, elders, seat, inside, law-hall.

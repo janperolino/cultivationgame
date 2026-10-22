@@ -42,11 +42,11 @@ Cells, left to right, top to bottom:
 
 1. Ask to be sponsored 引荐: Where the way in is asked for, and the answer given at the gate.
 2. Offer a gift: A gift laid before the steward is remembered as tribute.
-3. Your seat 席位: What the power wants of you this month, and what it gives.
-4. Inside 内门: members only
-5. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
-6. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
-7. Empty: plain dark mist.
+3. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
+4. Inner hall 内堂: Where the elders sit: a lesson, a protector, a seat raised or a release.
+5. Your seat 席位: What the power wants of you this month, and what it gives.
+6. Inside 内门: members only
+7. Law hall 律堂: Where a marked face kneels and makes restitution.
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
@@ -57,4 +57,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: An assassins’ house hidden inside the Night Bridge Society, whose killers cross the strait in the Society’s relays at low tide and are gone again before the tide turns.
 ```
 
-Pieces, in order: join, gift, seat, inside, ground, elders.
+Pieces, in order: join, gift, ground, elders, seat, inside, law-hall.

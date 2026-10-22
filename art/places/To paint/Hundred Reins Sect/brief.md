@@ -49,9 +49,9 @@ Cells, left to right, top to bottom:
 4. Scripture pavilion 藏经阁: The sect’s own chapters, on shelves that open by seat.
 5. Work 差事: Posts and day hires, by the shift: the pay is small, the standing grows.
 6. Mission hall 任务堂: The sect’s postings on lacquered boards, paid in contribution on your return.
-7. Your seat 席位: What the power wants of you this month, and what it gives.
-8. Inside 内门: members only
-9. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
+7. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
+8. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
+9. Your seat 席位: What the power wants of you this month, and what it gives.
 
 People only small, in the middle distance, faceless; the place is the subject.
 
@@ -69,8 +69,8 @@ Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes 
 
 Cells, left to right, top to bottom:
 
-1. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
-2. Empty: plain dark mist.
+1. Inside 内门: members only
+2. Law hall 律堂: Where a marked face kneels and makes restitution.
 3. Empty: plain dark mist.
 4. Empty: plain dark mist.
 5. Empty: plain dark mist.
@@ -86,4 +86,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: A beast-taming sect of three thousand that the Spirit Herders back, teaching the bond between rider and beast as a Dao. It is in a blood feud with the Beast-Butcher Gate, who call it the collaborators' sect.
 ```
 
-Pieces, in order: join, gift, sect, pavilion, work, mission, seat, inside, ground | elders.
+Pieces, in order: join, gift, sect, pavilion, work, mission, ground, elders, seat | inside, law-hall.

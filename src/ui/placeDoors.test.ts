@@ -1,8 +1,10 @@
 // A6's layouts by kind: the City's and Pacified Fort's grids, Spear-Plow's strip, the Lamp-Keeper
 // Sect's front for an outsider and a member and its Inside, Beast-Butcher Gate shut, a seeded herb
 // valley, and the tabs of nine.
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { joinPower, leavePower, membershipsOf } from '../core/organizations.ts';
+import { BORDER_WILDS } from '../content/map/border-wilds.ts';
+import { isOrganization, joinPower, leavePower, membershipsOf } from '../core/organizations.ts';
 import { gateOf, placeKindOf } from '../core/map/gate.ts';
 import { seatPowerAt } from '../core/joining.ts';
 import { placeById, type MapPlace } from '../core/map/region.ts';
@@ -16,8 +18,10 @@ import {
   gridTabs,
   hallFront,
   insideTabs,
+  INSIDE_TILE,
   layoutOf,
   memberOf,
+  SEAT_TILE,
   type Door,
 } from './placeDoors.ts';
 
@@ -158,5 +162,64 @@ describe('the preview', () => {
     expect(gapTouches(line, door('parts'))).toBe(true);
     expect(gapTouches(line, door('alchemy'))).toBe(false);
     expect(gapTouches(null, door('parts'))).toBe(false);
+  });
+});
+
+describe('the briefs paint a site whole', () => {
+  // Jan's call after the City: one site's brief carries every picture its screens can show, so it
+  // is painted in one go. Every door an outsider or a member can meet at a place, its power's
+  // tiles and a village's link to its power's hall, has a cell on the sheets that place reads.
+  const manifest = JSON.parse(readFileSync('art/manifest.json', 'utf8')) as {
+    assets: { out: string; pieces?: string[] }[];
+  };
+  const pieces = new Map<string, Set<string>>();
+  for (const a of manifest.assets) {
+    const m = /^src\/ui\/art\/places\/([^/]+)\/doors-\d+$/.exec(a.out);
+    if (!m || !a.pieces) continue;
+    const set = pieces.get(m[1]!) ?? new Set();
+    for (const p of a.pieces) set.add(p);
+    pieces.set(m[1]!, set);
+  }
+
+  it('leaves no door without its cell', () => {
+    const s = life();
+    const map = mapOf(s)!;
+    const homes = BORDER_WILDS.homes;
+    const missing: string[] = [];
+    for (const p of map.places) {
+      const kind = placeKindOf(p);
+      if (!kind || kind === 'site') continue;
+      const power = seatPowerAt(map, p);
+      const seen: Door[] = [...doorsOf(s, map, p)];
+      if (power && isOrganization(power)) {
+        let m = s;
+        for (const x of membershipsOf(m.world, m.player.id))
+          m = { ...m, world: leavePower(m.world, m.player.id, x.power, m.calendar.day).world };
+        for (const by of [undefined, 'birth'] as const) {
+          const r = joinPower(m.world, m.player.id, power, m.calendar.day, {
+            you: true,
+            realm: realmStageOf(m),
+            ...(by ? { by } : {}),
+          });
+          if (r.ok) {
+            seen.push(...doorsOf({ ...m, world: r.world }, map, p));
+            break;
+          }
+        }
+        seen.push(SEAT_TILE, INSIDE_TILE);
+      }
+      // Where each door's picture is read: a power's doors from its seat's home, else the place.
+      const folderOf = (d: Door) =>
+        d.group === 'power' || p.id === power
+          ? (homes[power ?? ''] ?? (pieces.has(power ?? '') ? power! : p.id))
+          : (homes[p.id] ?? p.id);
+      for (const d of seen) {
+        const f = folderOf(d);
+        if (!pieces.get(f)?.has(d.art)) missing.push(`${p.name}: ${d.art} (in ${f})`);
+      }
+      if (layoutOf(kind) === 'village' && power && !pieces.get(p.id)?.has('hall'))
+        missing.push(`${p.name}: hall`);
+    }
+    expect([...new Set(missing)]).toEqual([]);
   });
 });

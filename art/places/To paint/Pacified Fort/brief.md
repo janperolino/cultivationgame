@@ -96,11 +96,11 @@ Cells, left to right, top to bottom:
 
 1. Enlist (the March of Pacified Borders) 从军: Where the way in is asked for, and the answer given at the gate.
 2. Offer a gift (the March of Pacified Borders): A gift laid before the steward is remembered as tribute.
-3. Your seat (the March of Pacified Borders) 席位: What the power wants of you this month, and what it gives.
-4. Inside (the March of Pacified Borders) 内门: members only
-5. Training ground (the March of Pacified Borders) 演武场: A drill ground where seniors spar with juniors, once a day each.
-6. Elders’ hall (the March of Pacified Borders) 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
-7. Empty: plain dark mist.
+3. Training ground (the March of Pacified Borders) 演武场: A drill ground where seniors spar with juniors, once a day each.
+4. Commandery (the March of Pacified Borders) 军府: Where the elders sit: a lesson, a protector, a seat raised or a release.
+5. Your seat (the March of Pacified Borders) 席位: What the power wants of you this month, and what it gives.
+6. Inside (the March of Pacified Borders) 内门: members only
+7. Law hall (the March of Pacified Borders) 律堂: Where a marked face kneels and makes restitution.
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
@@ -111,4 +111,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: The Gongsun war city and the March’s seat, cut into the crown of a hill the first general flattened with one stroke. Its walls are the hill’s own rock, raised by formation to the height of cliffs; inside them, barracks, armouries and drill grounds hold four hundred thousand under arms, and every sixteen-year-old the March owes the garrison passes through its cadet school. The March’s beacon burns on its highest bastion, and a lockdown array rises over it as a dome of pale light when beasts come.
 ```
 
-Pieces, in order: stall, alchemy, refiner, house, bounty, mortal, changer, teahouse, guides | caravans, broker, board, inn, work, fields, maps | join, gift, seat, inside, ground, elders.
+Pieces, in order: stall, alchemy, refiner, house, bounty, mortal, changer, teahouse, guides | caravans, broker, board, inn, work, fields, maps | join, gift, ground, elders, seat, inside, law-hall.

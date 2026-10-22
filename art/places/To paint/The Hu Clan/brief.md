@@ -43,11 +43,11 @@ Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes 
 Cells, left to right, top to bottom:
 
 1. Offer a gift: A gift laid before the steward is remembered as tribute.
-2. Your seat 席位: What the power wants of you this month, and what it gives.
-3. Inside 内门: members only
-4. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
-5. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
-6. Empty: plain dark mist.
+2. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
+3. Ancestral hall 祠堂: Where the elders sit: a lesson, a protector, a seat raised or a release.
+4. Your seat 席位: What the power wants of you this month, and what it gives.
+5. Inside 内门: members only
+6. Law hall 律堂: Where a marked face kneels and makes restitution.
 7. Empty: plain dark mist.
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
@@ -59,4 +59,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: A cave clan of Stone Eyes, forty thousand strong with three hundred cultivators, that holds a stretch of Heaven's Eye's wall and a council vote. Its people are handsome and quick, and none of them stands long in front of a mirror array.
 ```
 
-Pieces, in order: gift, seat, inside, ground, elders.
+Pieces, in order: gift, ground, elders, seat, inside, law-hall.

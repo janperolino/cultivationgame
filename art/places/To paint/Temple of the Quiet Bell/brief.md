@@ -44,11 +44,11 @@ Cells, left to right, top to bottom:
 
 1. Ask to take the vows 受戒: Where the way in is asked for, and the answer given at the gate.
 2. Offer a gift: A gift laid before the steward is remembered as tribute.
-3. Your seat 席位: What the power wants of you this month, and what it gives.
-4. Inside 内门: members only
-5. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
-6. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
-7. Empty: plain dark mist.
+3. Training ground 演武场: A drill ground where seniors spar with juniors, once a day each.
+4. Elders’ hall 长老院: Where the elders sit: a lesson, a protector, a seat raised or a release.
+5. Your seat 席位: What the power wants of you this month, and what it gives.
+6. Inside 内门: members only
+7. Law hall 律堂: Where a marked face kneels and makes restitution.
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
@@ -59,4 +59,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: A Buddhist temple of a few hundred monks in the Bonefields that buries the raids' dead, mortal and beast alike, and quiets the Wall each Ghost Month with a bell that is only ever struck once a year.
 ```
 
-Pieces, in order: join, gift, seat, inside, ground, elders.
+Pieces, in order: join, gift, ground, elders, seat, inside, law-hall.

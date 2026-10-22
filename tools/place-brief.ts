@@ -12,12 +12,18 @@ import type { Population } from '../src/content/atlas/schema.ts';
 import { REGIONS } from '../src/content/map/index.ts';
 import { PLACE_KIND_INFO } from '../src/content/map/places.ts';
 import { doorLine } from '../src/content/doorLines.ts';
-import { newLife } from '../src/core/state.ts';
+import { newLife, type GameState } from '../src/core/state.ts';
 import { ensureMap, mapOf } from '../src/core/map/travel.ts';
 import { placeKindOf } from '../src/core/map/gate.ts';
-import { isMissionHall } from '../src/core/map/board.ts';
 import { seatPowerAt } from '../src/core/joining.ts';
-import { isOrganization, theName } from '../src/core/organizations.ts';
+import {
+  isOrganization,
+  joinPower,
+  leavePower,
+  membershipsOf,
+  realmStageOf,
+  theName,
+} from '../src/core/organizations.ts';
 import type { MapPlace } from '../src/core/map/region.ts';
 import {
   doorsOf,
@@ -168,43 +174,53 @@ function markdown(b: Brief, sheets: Door[][]): string {
 }
 
 /** A place's or a power's doors to paint: everything a member or an outsider could open. */
-function hallDoors(outsider: Door[], power: string): Door[] {
-  const extra: Door[] = [SEAT_TILE, INSIDE_TILE];
-  const has = (id: string) => outsider.some((d) => d.id === id);
-  if (!has('ground'))
-    extra.push({
-      id: 'ground',
-      seal: '武',
-      name: 'Training ground',
-      hanzi: '演武场',
-      sub: '',
-      group: 'power',
-      art: 'ground',
-      room: 'hall',
+/** A life that is a member of a power, to read the doors its members see. */
+function memberOf(base: GameState, power: string): GameState | null {
+  let s = base;
+  for (const m of membershipsOf(s.world, s.player.id))
+    s = { ...s, world: leavePower(s.world, s.player.id, m.power, s.calendar.day).world };
+  for (const by of [undefined, 'birth'] as const) {
+    const r = joinPower(s.world, s.player.id, power, s.calendar.day, {
+      you: true,
+      realm: realmStageOf(s),
+      ...(by ? { by } : {}),
     });
-  if (!has('elders'))
-    extra.push({
-      id: 'elders',
-      seal: '长',
-      name: 'Elders’ hall',
-      hanzi: '长老院',
-      sub: '',
-      group: 'power',
-      art: 'elders',
-      room: 'hall',
-    });
-  if (isMissionHall(power) && !has('board'))
-    extra.push({
-      id: 'board',
-      seal: '任',
-      name: 'Mission hall',
-      hanzi: '任务堂',
-      sub: '',
-      group: 'hall',
-      art: 'mission',
-      room: 'board',
-    });
-  return [...outsider, ...extra];
+    if (r.ok) return { ...s, world: r.world };
+  }
+  return null;
+}
+
+/**
+ * Every door a power's hall can show at a place, so a brief paints them all at once (Jan's call:
+ * a site's art in one go): what an outsider sees, what a member sees (read from a member's life,
+ * so the elders' hall has its own name, the Commandery at the March), the member's own tiles, and
+ * the law hall a marked face is sent to.
+ */
+function hallDoors(p: MapPlace, power: string, onlyPower: boolean): Door[] {
+  const pick = (ds: Door[]) => (onlyPower ? ds.filter((d) => d.group === 'power') : ds);
+  const out = pick(doorsOf(life, map, p));
+  const member = memberOf(life, power);
+  const extra: Door[] = [
+    ...(member ? pick(doorsOf(member, map, p)) : []),
+    SEAT_TILE,
+    INSIDE_TILE,
+    ...(isOrganization(power)
+      ? [
+          {
+            id: 'law-hall',
+            seal: '律',
+            name: 'Law hall',
+            hanzi: '律堂',
+            sub: 'restitution for a leaked method',
+            group: 'hall' as const,
+            art: 'law-hall',
+            room: 'hall' as const,
+          },
+        ]
+      : []),
+  ];
+  for (const d of extra) if (!out.some((x) => x.art === d.art)) out.push(d);
+  return out;
 }
 
 function about(e: Entry | undefined, regionName: string): string[] {
@@ -239,7 +255,7 @@ for (const p of map.places) {
   const layout = layoutOf(kind);
   const e = byId.get(p.id);
   let list: Door[];
-  if (layout === 'hall' && own && power && isOrganization(power)) list = hallDoors(doors, power);
+  if (layout === 'hall' && own && power && isOrganization(power)) list = hallDoors(p, power, false);
   else if (layout === 'grid') list = gridTabs(doors).flatMap((t) => t.doors);
   else list = doors.filter((d) => d.group !== 'power');
   // The map seller shows only to one inside (mapsAt), so the brief adds it by the kind's maps;
@@ -276,9 +292,7 @@ for (const p of map.places) {
   const sheets: Door[][] = [];
   for (let i = 0; i < list.length; i += 9) sheets.push(list.slice(i, i + 9));
   for (const pow of housed) {
-    const pd = hallDoors(power === pow ? doors.filter((d) => d.group === 'power') : [], pow).map(
-      (d) => ({ ...d, name: `${d.name} (${theName(pow)})` }),
-    );
+    const pd = hallDoors(p, pow, true).map((d) => ({ ...d, name: `${d.name} (${theName(pow)})` }));
     for (let i = 0; i < pd.length; i += 9) sheets.push(pd.slice(i, i + 9));
   }
   briefs.push({
@@ -304,7 +318,13 @@ briefs.sort((a, z) => a.near - z.near);
 const done = new Set(existsSync(DONE) ? readdirSync(DONE) : []);
 const manifestPath = 'art/manifest.json';
 const manifest = manifestSchema.parse(JSON.parse(readFileSync(manifestPath, 'utf8')));
-const keep = manifest.assets.filter((a) => !a.id.startsWith('place-') || !a.trickle);
+// A place in Done/ keeps its entries (its art is in); the rest are written again.
+const doneIds = new Set(
+  briefs.filter(({ b }) => done.has(folderName(b.name))).map(({ b }) => `place-${slug(b.id)}-`),
+);
+const keep = manifest.assets.filter(
+  (a) => !a.id.startsWith('place-') || !a.trickle || [...doneIds].some((d) => a.id.startsWith(d)),
+);
 const added: ArtAsset[] = [];
 for (const { b, sheets } of briefs) {
   const folder = folderName(b.name);
