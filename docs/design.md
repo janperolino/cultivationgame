@@ -938,7 +938,7 @@ Agility counts as it does in a fight, 5% a point above 10. A check with no oppon
 **People checks** are not sized by realm: a Qi Condensation con man with a forged token can fool a Foundation noble, and a mortal merchant can out-haggle you. Persuade, ask, lie, bargain, recruit and calm weigh your leverage against their resistance, both starting at 1, with the same three verdicts.
 
 - **Leverage:** trust, the word their opinion of you reads (hostile ×0.25, wary ×0.5, neutral ×1, friendly ×1.5, trusting ×2; What lasts); an offer that meets one of their motives ×2; proof or a prop ×1.5 (a token, a sect's robe); standing with their power, ×0.5 at its worst to ×1.5 at its best; a talent, node or Way that names the check.
-- **Resistance:** a motive against it ×2, suspicion of you ×2, their own talents.
+- **Resistance:** a motive against it ×2, suspicion of you ×2, their own talents. The motive against each ask (P3.9, `AGAINST_ASK`): loyalty against recruiting them from their own, greed against a bargain, pride against being persuaded, fear against telling what they know, a grudge against calming or begging.
 - What you see is your read of them, built from what you know. A motive you haven't learned can turn it: "he had a reason you didn't know".
 - A soul two realms above yours reads your lies, so a lie to it fails and it knows.
 

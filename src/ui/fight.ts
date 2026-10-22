@@ -13,7 +13,14 @@ import { combatantIn, type Fight, type Outcome, type Tick } from '../core/combat
 import { logLine } from '../core/combat/log.ts';
 import { fightEnd, playTurn, type FightEnd, type YourAction } from '../core/played.ts';
 import { cueGains, deltas, riseGains, type Delta } from './feel.ts';
-import { currentFight, dropLostFight, finishFight, foeNames } from '../core/playFight.ts';
+import {
+  currentFight,
+  dropLostFight,
+  finishFight,
+  foeNames,
+  type Finished,
+} from '../core/playFight.ts';
+import type { SceneFightBack } from '../core/goin.ts';
 import type { GameState } from '../core/state.ts';
 import { useGame } from './store.ts';
 
@@ -83,6 +90,7 @@ export function fightTitle(s: GameState, f: Fight): string {
     return enc ? encounterTemplate(enc.template).title : `Against ${foeNames(s, f)}`;
   }
   if (from.kind === 'trap') return `In your trap: ${foeNames(s, f)}`;
+  if (from.kind === 'scene') return s.goin?.title || `Against ${foeNames(s, f)}`;
   const p = s.cards.pending.find((x) => x.uid === from.uid);
   return p ? card(p.card).title : `Against ${foeNames(s, f)}`;
 }
@@ -206,13 +214,23 @@ export function leaveFight(): void {
   if (!fight) return;
   let text = '';
   let changed: Delta[] = [];
+  let back: Finished | null = null;
   useGame.getState().applyLife((s) => {
     const r = finishFight(s, fight);
+    back = r;
     text = r?.text ?? '';
     if (r) changed = deltas(s, r.state);
     return r?.state ?? s;
   });
   cueGains(changed);
+  // A scene's fight goes back to the scene, which tells it (P3.9): no words over the stage.
+  const scene = (back as Finished | null)?.scene;
+  if (scene) {
+    useFight.setState({ fight: null, target: null, log: [], pending: null, end: null });
+    void useGame.getState().saveNow();
+    sceneFightBack?.(scene, (back as unknown as Finished).end);
+    return;
+  }
   useFight.setState({
     fight: null,
     target: null,
@@ -223,6 +241,13 @@ export function leaveFight(): void {
     afterGains: changed,
   });
   void useGame.getState().saveNow();
+}
+
+let sceneFightBack: ((back: SceneFightBack, end: FightEnd) => void) | null = null;
+
+/** The go-in screen takes a scene's fight back to tell it (ui/goin.ts). */
+export function setSceneFightBack(f: (back: SceneFightBack, end: FightEnd) => void): void {
+  sceneFightBack = f;
 }
 
 /** The hand-back's words were read. */

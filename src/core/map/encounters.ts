@@ -145,7 +145,12 @@ export interface Met {
 
 const THEM = 'them';
 
-function roleActors(s: GameState, enc: Encounter, role: Role, npcs: Record<string, Npc>): Actor[] {
+export function roleActors(
+  s: GameState,
+  enc: Encounter,
+  role: Role,
+  npcs: Record<string, Npc>,
+): Actor[] {
   const rng = new Rng(hashSeed(`${enc.id}/${enc.seed}/${role.id}`));
   const at = bandRealm(Math.max(0, enc.band + (role.band ?? 0)), rng);
   const who = role.who;
@@ -264,7 +269,7 @@ export interface ExitView {
   sure?: boolean;
 }
 
-function faced(m: Met, e: Exit): Actor[] {
+export function faced(m: Met, e: Exit): Actor[] {
   const id = e.against ?? m.template.roles[0]?.id;
   if (!id) return [];
   return e.road === 'fight' ? m.actors : (m.roles[id] ?? []);
@@ -481,7 +486,7 @@ export interface Settled {
   verdict: Verdict;
 }
 
-function applyStakes(s: GameState, m: Met, stakes: readonly Stake[], rng: Rng): GameState {
+export function applyStakes(s: GameState, m: Met, stakes: readonly Stake[], rng: Rng): GameState {
   let st = s;
   const pid = st.player.id;
   for (const k of stakes) {
@@ -626,7 +631,7 @@ export function setMapOf(f: (s: GameState) => RegionMap | null): void {
 }
 
 /** Robbers: a person on the card whose motives hold greed. */
-function isGreedy(m: Met): boolean {
+export function isGreedy(m: Met): boolean {
   return m.template.roles.some(
     (r) =>
       r.motives?.includes('greed') &&
@@ -726,7 +731,7 @@ export function settle(
  * The card's end once its stakes have landed: it stays with that exit spent when a talk fell
  * short, or leaves with a road line and a chronicle line, its posting met when it was.
  */
-function closeCard(
+export function closeCard(
   st0: GameState,
   m: Met,
   i: number,
@@ -1036,7 +1041,7 @@ export function senseReach(map: RegionMap, p: Pt, sense: number): number {
   return Math.max(sightAt(map, p), sense);
 }
 
-function tierOfRealm(r: RealmId): number {
+export function tierOfRealm(r: RealmId): number {
   return realmIndex(r) + 1;
 }
 
@@ -1051,7 +1056,7 @@ function stealthAgainst(s: GameState, you: Actor, them: Actor): number {
   return Math.max(own, sizeAt({ realm: r, stage: realmInfo(r).stages }));
 }
 
-function realmOfTop(a: Actor): RealmId {
+export function realmOfTop(a: Actor): RealmId {
   const rs = [a.rungs.qi, a.rungs.body, a.rungs.soul];
   return rs.reduce((best, r) => (realmIndex(r.realm) > realmIndex(best.realm) ? r : best)).realm;
 }
@@ -1108,7 +1113,13 @@ function hourIsNight(hour: number): boolean {
 }
 
 /** What the road can bring here: the templates whose where holds, by kind. */
-function eligible(s: GameState, map: RegionMap, p: Pt, hour: number, onRoad: boolean): Template[] {
+export function eligible(
+  s: GameState,
+  map: RegionMap,
+  p: Pt,
+  hour: number,
+  onRoad: boolean,
+): Template[] {
   const terrain = terrainAt(map, p);
   const night = hourIsNight(hour);
   const season = seasonOf(s.calendar.day);
@@ -1248,7 +1259,7 @@ function aheadOn(life: MapLife, li: number): { at: Pt; i: number } {
   return { at, i: c.pts.length - 1 };
 }
 
-function whereWords(map: RegionMap, p: Pt): string {
+export function whereWords(map: RegionMap, p: Pt): string {
   return areaAt(map, p)?.name ?? map.name;
 }
 

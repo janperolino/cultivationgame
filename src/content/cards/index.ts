@@ -5,6 +5,7 @@ import { FIRST_HOUR_CARDS } from './firstHour.ts';
 import { RETIRED_CARDS } from './retired.ts';
 import type { Card } from './schema.ts';
 import { SECLUSION_CARDS } from './seclusion.ts';
+import { ROAD_CARDS } from './road.ts';
 import { SITE_CARDS } from './site.ts';
 
 export type {
@@ -25,6 +26,7 @@ export const CARDS: readonly Card[] = [
   ...FIRST_HOUR_CARDS,
   ...SECLUSION_CARDS,
   ...SITE_CARDS,
+  ...ROAD_CARDS,
   ...CRAFT_CARDS,
 ];
 

@@ -55,8 +55,7 @@ export const BEAST_ENCOUNTERS: readonly Template[] = [
         },
       },
     ],
-    opening:
-      'Grey shapes trot the ridge above you, noses low, working the wind toward the goat folds.',
+    opening: 'Grey shapes trot the ridge above you, noses low, working the wind along the slope.',
   },
   {
     id: 'stone-skin-boar',

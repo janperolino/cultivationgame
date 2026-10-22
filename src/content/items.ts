@@ -14,6 +14,7 @@ import type { DamageType, Form } from './techniques.ts';
 import { CATALOG_ITEMS } from './catalogs/index.ts';
 import { AGED_PAST_TOP, PACKET_PRICE, cropOfSeed } from './farming.ts';
 import { foundItem } from './found.ts';
+import { TOKENS } from './tokens.ts';
 import { BASE_PRICE } from './money.ts';
 import { MAP_ITEMS } from './map/places.ts';
 
@@ -162,6 +163,11 @@ export interface CarryUse {
   squares: number;
 }
 
+/** Proof of whose you are (P3.9's tokens): a power's token, shown as a prop in a talk. */
+export interface ProofUse {
+  power: string;
+}
+
 /** What it opens: a place, a card or a lock. */
 export interface KeyUse {
   opens: string;
@@ -299,6 +305,7 @@ export interface ItemUses {
   offer?: OfferUse;
   carry?: CarryUse;
   key?: KeyUse;
+  proof?: ProofUse;
   inscribe?: InscribeUse;
   chart?: ChartUse;
   hide?: HideUse;
@@ -828,8 +835,8 @@ const WRITTEN: readonly Item[] = [
   },
 ];
 
-/** The written list, every catalog's (content/catalogs/) and the maps for sale (content/map/places.ts). */
-export const ITEMS: readonly Item[] = [...WRITTEN, ...CATALOG_ITEMS, ...MAP_ITEMS];
+/** The written list, the powers' tokens, every catalog's (content/catalogs/) and the maps for sale (content/map/places.ts). */
+export const ITEMS: readonly Item[] = [...WRITTEN, ...TOKENS, ...CATALOG_ITEMS, ...MAP_ITEMS];
 
 /** Every written thing as written, every property its best rarity takes; variants read these. */
 const written = new Map(ITEMS.map((i) => [i.id, i]));

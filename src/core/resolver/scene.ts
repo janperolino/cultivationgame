@@ -48,6 +48,7 @@ import {
   plainActor,
   purseGrade,
   realmOfActor,
+  realmSizeOf,
   sizeAt,
   YOU,
   type Actor,
@@ -58,6 +59,7 @@ import {
   isBeyond,
   judgedOf,
   presence,
+  pressurePins,
   readRealm,
   readsLies,
   verdict,
@@ -72,7 +74,8 @@ import { intentOf } from './intent.ts';
 import { believesDead, currentPlaces, foundAlive, hear, telling } from './knows.ts';
 import { fameOf, knowsName } from './names.ts';
 import { meetingShows, revealNature } from './nature.ts';
-import { contest, remember, tieOf } from './opinion.ts';
+import { addTie, axisFactor, contest, lean, remember, tieOf } from './opinion.ts';
+import { COMPOSURE_AXIS, FIRST_LOOK_EACH } from '../../content/personality.ts';
 import { actorNature, giftOf, talkCheck } from './talk.ts';
 import type { Plan, Step } from './plan.ts';
 import {
@@ -90,8 +93,12 @@ import {
   type RealmStage,
 } from './world.ts';
 import { keepThreaded, noteTaken, npcFrom } from '../kept.ts';
-import { opensRing, ringOf, ringTier, type Haul } from '../loot.ts';
+import { damageArmor, fortuneDrop, opensRing, ringOf, ringTier, type Haul } from '../loot.ts';
+import { hasItem, item } from '../../content/items.ts';
+import { template as rosterTemplate } from '../../content/roster.ts';
+import { fortune } from '../stats.ts';
 import { artCopy, seenUsing } from '../guarded.ts';
+import { PINNED_REFUSES } from '../../content/goin.ts';
 
 /** A thing in the scene that can be used, searched, broken or hidden behind. */
 export interface SceneFeature {
@@ -179,6 +186,16 @@ export function startScene(init: SceneInit): Scene {
 
 export function actorIn(scene: Scene, id: string): Actor | undefined {
   return scene.actors.find((a) => a.id === id);
+}
+
+/**
+ * Who pins someone with their realm pressure (P3.9): anyone present on another side, two realms
+ * above their soul or one from Nascent Soul up; the strongest of them, or none.
+ */
+export function pinnedBy(scene: Scene, a: Actor): Actor | undefined {
+  return scene.actors
+    .filter((o) => o.side !== a.side && o.state === 'present' && pressurePins(o, a))
+    .sort((x, y) => realmSizeOf(y) - realmSizeOf(x))[0];
 }
 
 /** Present: in the scene and able to act or see, hidden included. */
@@ -303,7 +320,11 @@ export function checkFor(s: GameState, scene: Scene, a: Actor, st: Step): StepCh
     const crew = scene.actors.filter(
       (x) => x.side === target.side && x.id !== target.id && x.state === 'present',
     ).length;
-    const theirs = composure(target, crew);
+    const theirs = composure(
+      target,
+      crew,
+      axisFactor(actorNature(s.world, target), COMPOSURE_AXIS),
+    );
     const v = p.pinned ? 'clear' : verdict(p.value, theirs);
     return {
       yours: p.value,
@@ -359,6 +380,9 @@ export interface StepPreview {
   line: string;
 }
 
+/** Acts that hand something of yours over: stones unless they name a thing. */
+const GIVES: readonly string[] = ['buy', 'sell', 'pay', 'gift', 'bribe', 'ransom', 'deliver'];
+
 /** Why a step can't be tried, by scale, by what you hold or by what the act needs; null if it can. */
 function refusal(
   s: GameState,
@@ -370,12 +394,24 @@ function refusal(
   const info: ActInfo = ACTS[st.act];
   if (info.waits) return `${info.name} waits for ${info.waits}`;
   if (!active(a)) return `${a.name} can't act`;
+  if (PINNED_REFUSES.includes(st.act) && pinnedBy(scene, a)) {
+    return `pinned by ${pinnedBy(scene, a)!.name}'s realm pressure: you can only talk, beg or burn a talisman`;
+  }
   for (const u of st.uses ?? []) {
     const held = (a.items[u] ?? 0) > 0 || a.techniques[u] !== undefined;
     const there = scene.features.some((f) => f.id === u && !f.hidden && !f.broken);
     if (!held && !there) return `there is no ${u} to use`;
   }
   if (st.prop && !(a.items[st.prop] ?? 0)) return `you don't hold ${st.prop}`;
+  // What you hand over must be yours to hand (P3.9: GLM's "buy some salt" with no stones held).
+  if (GIVES.includes(st.act)) {
+    const thing = st.thing ?? 'stones';
+    const n = st.n ?? 1;
+    // Your purse goes into the scene as your actor's stones, and every stone effect keeps both.
+    const have = thing !== 'stones' ? (a.items[thing] ?? 0) : a.stones;
+    if (have < n)
+      return thing === 'stones' ? 'you have no stones to hand over' : `you don't hold ${thing}`;
+  }
   if (info.target === 'person' && (!st.target || !actorIn(scene, st.target)))
     return 'nobody to aim it at';
   if (info.target === 'feature' && !scene.features.some((f) => f.id === st.target && !f.hidden)) {
@@ -775,6 +811,7 @@ export function doStep(
   scene: Scene,
   actorId: string,
   st: Step,
+  played?: PlayedInScene,
 ): {
   state: GameState;
   scene: Scene;
@@ -950,6 +987,17 @@ export function doStep(
             const sealed = { from: target.id, name: target.name, tier, ...ring };
             w.s = { ...w.s, world: { ...w.s.world, sealed: [...w.s.world.sealed, sealed] } };
           }
+        }
+        // Each point of Fortune above 10 gives a chance of one thing more from the dead (P3.5's
+        // `fortuneDrop`, read here since P3.9: what the fallen leave in a scene).
+        if (youAre(a) && target.npc) {
+          const x = target.npc;
+          const drop = withStream(w.s, 'loot', (rng) =>
+            fortuneDrop(rng, npcFrom(x.template, x.seed, x.realm, x.stage), fortune(w.s.player)),
+          );
+          w.s = drop.state;
+          if (drop.value)
+            effects.push({ do: 'item', who: a.id, id: drop.value, n: 1, how: 'gained' });
         }
         apply(w, effects);
         if (youAre(a)) {
@@ -1224,6 +1272,16 @@ export function doStep(
     }
     case 'finish':
       if (target && target.state === 'down') {
+        // The killing blow falls on their armor: it comes off them a rarity lower, damaged (P3.5's
+        // `damageArmor`, read since P3.9).
+        const armor = Object.keys(target.items).find(
+          (id) =>
+            (target.items[id] ?? 0) > 0 && hasItem(id) && item(id).uses.equip?.slot === 'armor',
+        );
+        if (armor) {
+          const items = damageArmor({ items: target.items, stones: 0 }, armor).items;
+          setActor(w, target.id, (x) => ({ ...x, items }));
+        }
         apply(w, [{ do: 'person', id: target.id, state: 'dead' }]);
         const id = deed(
           w,
@@ -1253,7 +1311,12 @@ export function doStep(
   // Fights go to the engine whole: an ambush's check came first, and noticed it is a straight fight.
   let fight: StepResult['fight'];
   if (info.fight && target) {
-    fight = runSceneFight(w, a, target);
+    fight = played
+      ? {
+          winner: afterFight(w, played.start, played.end, played.used, played.end.turn),
+          turns: played.end.turn,
+        }
+      : runSceneFight(w, a, target);
     seenBy = watchers(w.scene, a).filter((x) => x.state === 'present' || x.state === 'down');
     ticks = 1;
     // A spar or a duel is a contest: the loser remembers it, and the proud make a rival of it.
@@ -1374,6 +1437,29 @@ function afterFight(
   return winner;
 }
 
+/**
+ * A fight played on the stage (P3.9) and handed back into the round that started it: its start,
+ * built from the scene, its end and the arts each side threw. The round does the step's after-fight
+ * with these instead of running the fight whole.
+ */
+export interface PlayedInScene {
+  start: Fight;
+  end: Fight;
+  used: Readonly<Record<string, readonly string[]>>;
+}
+
+export interface RoundOptions {
+  /** The fight the given step opened, played on the stage. */
+  played?: PlayedInScene;
+  /** Only the given steps act: the round of a fight played on the stage is everyone's. */
+  only?: boolean;
+  /**
+   * Stop before a fight that would take in a player, so it can be played on the stage (P3.9): the
+   * round hands back who started it and the step, and the clock hasn't run on.
+   */
+  stopAtFight?: boolean;
+}
+
 // ── Rounds ───────────────────────────────────────────────────────────────────────────────────
 
 export interface RoundResult {
@@ -1388,6 +1474,8 @@ export interface RoundResult {
   broke: BondBreak[];
   /** What an arrival or the law found out: a cover seen through, a face recognized. */
   surprise: string | null;
+  /** A fight taking in a player, stopped before it ran, to be played on the stage. */
+  fightAt?: { actor: string; step: Step };
 }
 
 /** Agility order, the faster first, then by id so the order never wobbles. */
@@ -1406,6 +1494,7 @@ export function round(
   s: GameState,
   scene: Scene,
   steps: Readonly<Record<string, Step>>,
+  opts: RoundOptions = {},
 ): RoundResult {
   // Everyone the players see shows them their outer leans and quirks.
   let state = meet(s, scene);
@@ -1418,6 +1507,7 @@ export function round(
     const now = actorIn(sc, a.id)!;
     if (!active(now)) continue;
     const mine = steps[a.id];
+    if (opts.only && !mine) continue;
     const own = !mine && now.plan?.length ? now.plan[0] : undefined;
     // Nobody telling them and no plan of their own: they act on their motives.
     const intent =
@@ -1451,7 +1541,19 @@ export function round(
       sc = { ...sc, log: [...sc.log, `${now.name} refuses: ${refused}.`] };
       continue;
     }
-    const r = doStep(state, sc, a.id, st);
+    if (opts.stopAtFight && !opts.played && takesInPlayer(state, sc, a, st)) {
+      return {
+        state,
+        scene: sc,
+        results,
+        arrivals: [],
+        law: false,
+        broke: [],
+        surprise: null,
+        fightAt: { actor: a.id, step: st },
+      };
+    }
+    const r = doStep(state, sc, a.id, st, mine && opts.played ? opts.played : undefined);
     state = r.state;
     sc = r.scene;
     results.push(r.result);
@@ -1476,6 +1578,19 @@ export function round(
     broke: bonds.broke,
     surprise: came.surprise ?? law.surprise,
   };
+}
+
+/**
+ * Whether a step is a fight that takes in a player: one of theirs, or someone's aimed at them or
+ * their side, with nothing refusing it. Such a fight is played on the stage (P3.9).
+ */
+function takesInPlayer(s: GameState, scene: Scene, a: Actor, st: Step): boolean {
+  if (!(ACTS[st.act] as ActInfo).fight || !st.target) return false;
+  const target = actorIn(scene, st.target);
+  if (!target) return false;
+  const sides = new Set(scene.players.map((p) => actorIn(scene, p)?.side));
+  if (!sides.has(a.side) && !sides.has(target.side)) return false;
+  return !previewStep(s, scene, a.id, st).refused;
 }
 
 /** What acting on a motive or a lean shows of someone. */
@@ -1509,9 +1624,37 @@ function meet(s: GameState, scene: Scene): GameState {
       if (me && !me.disguised && me.state === 'present' && believesDead(world, x.id, p)) {
         world = foundAlive(world, x.id, p, scene.place, s.calendar.day);
       }
+      // A first impression lands at first meeting, a lean of Trust (−10 to +10), and fades over
+      // a season (P3.9; the code review's item 10). Beasts form none.
+      if (
+        !isBeastActor(x) &&
+        !world.memories.some((m) => m.holder === x.id && m.about === p && m.row === 'first-look')
+      ) {
+        const v = FIRST_LOOK_EACH * lean(actorNature(world, x), 'trust');
+        if (v)
+          world = remember(
+            world,
+            { holder: x.id, about: p, row: 'first-look', value: v },
+            s.calendar.day,
+          );
+      }
+    }
+    // A backer stands behind their charge as kin would: the tie is made when the charge is met, so
+    // a killing ripples to them (P3.9; the code review's item 13).
+    if (x.backer && !tieOf(world, x.backer.id, x.id)) {
+      world = addTie(world, { a: x.backer.id, b: x.id, kind: 'backer' });
     }
   }
   return world === s.world ? s : { ...s, world };
+}
+
+function isBeastActor(a: Actor): boolean {
+  if (!a.npc) return false;
+  try {
+    return rosterTemplate(a.npc.template).kind === 'beast';
+  } catch {
+    return false;
+  }
 }
 
 /** Calls the next arrival if nobody is on the way and the scene is open or a noise rings. */
@@ -1619,25 +1762,34 @@ export function runPlan(s: GameState, scene: Scene, plan: Plan): PlanRun {
     state = r.state;
     sc = r.scene;
     all.push(...r.results);
-    const mine = r.results.find((x) => x.actor === plan.actor);
-    if (mine?.refused) return { state, scene: sc, results: all, stopped: mine.refused };
-    if (mine?.check?.verdict === 'short') {
-      return { state, scene: sc, results: all, stopped: mine.short ? SHORTS[mine.short] : 'short' };
-    }
-    const surprise =
-      r.results.find((x) => x.surprise)?.surprise ??
-      r.surprise ??
-      (r.arrivals.length ? `${r.arrivals.length} arrive` : null) ??
-      (r.law ? 'the law arrives' : null) ??
-      (r.broke.length
-        ? `${actorIn(sc, r.broke[0]!.follower)?.name ?? 'a follower'} ${r.broke[0]!.how === 'turn' ? 'turns on you' : 'leaves you'}`
-        : null) ??
-      (r.results.some((x) => x.actor !== plan.actor && x.step.target === plan.actor)
-        ? 'someone acts on you'
-        : null);
-    if (surprise) return { state, scene: sc, results: all, stopped: surprise };
+    const stopped = roundStop(r, plan.actor);
+    if (stopped) return { state, scene: sc, results: all, stopped };
   }
   return { state, scene: sc, results: all, stopped: null };
+}
+
+/**
+ * Why a plan hands back after a round, or null to go on: the actor's step refused or short, or a
+ * surprise: a step that went otherwise than judged, a cover blown, an arrival, the law, a follower
+ * breaking, someone acting on them.
+ */
+export function roundStop(r: RoundResult, actor: string): string | null {
+  const sc = r.scene;
+  const mine = r.results.find((x) => x.actor === actor);
+  if (mine?.refused) return mine.refused;
+  if (mine?.check?.verdict === 'short') return mine.short ? SHORTS[mine.short] : 'short';
+  return (
+    r.results.find((x) => x.surprise)?.surprise ??
+    r.surprise ??
+    (r.arrivals.length ? `${r.arrivals.length} arrive` : null) ??
+    (r.law ? 'the law arrives' : null) ??
+    (r.broke.length
+      ? `${actorIn(sc, r.broke[0]!.follower)?.name ?? 'a follower'} ${r.broke[0]!.how === 'turn' ? 'turns on you' : 'leaves you'}`
+      : null) ??
+    (r.results.some((x) => x.actor !== actor && x.step.target === actor)
+      ? 'someone acts on you'
+      : null)
+  );
 }
 
 /**

@@ -20,6 +20,7 @@ import {
 import { realmIndex } from '../../content/realms.ts';
 import {
   ACTS,
+  AGAINST_ASK,
   HOME_REGION,
   type ActInfo,
   type DeedKind,
@@ -131,7 +132,10 @@ export function talkCheck(
       for (const q of nn.quirks) factor *= (QUIRKS[q] as { confess?: number }).confess ?? 1;
     }
     const always = lean(nn, 'trust') <= ALWAYS_SUSPICIOUS;
-    return resistance({ suspicion: suspicious || always }) * factor;
+    // A motive against the ask doubles it; what you see counts only the motives you have learned.
+    const motive = AGAINST_ASK[st.act];
+    const against = !!motive && nn.motives.includes(motive);
+    return resistance({ suspicion: suspicious || always, against }) * factor;
   };
   const yours = yoursFor(trust, met, n);
   const theirs = theirsFor(n);

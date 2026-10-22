@@ -150,7 +150,7 @@ describe('the v33 save', () => {
     const s = life();
     const part = withPlayer(s, { ...s.player, higherStones: { mid: 2.4375, high: 1, top: 0 } });
     const loaded = loadSave(JSON.parse(JSON.stringify(makeSave(part, 1))));
-    expect(loaded.version).toBe(54);
+    expect(loaded.version).toBe(55);
     expect(loaded.state.player.higherStones).toEqual({ mid: 2.4375, high: 1, top: 0 });
     const raw = JSON.parse(JSON.stringify(makeSave(s, 1))) as { version: number };
     raw.version = 32;

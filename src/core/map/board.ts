@@ -34,6 +34,7 @@ import { placeKindOf } from './gate.ts';
 import { areaAt, placeById, type MapPlace, type RegionMap } from './region.ts';
 import { hasQuest, quest } from '../../content/quests.ts';
 import { homeOf } from './travel.ts';
+import { handedIn } from '../roadHome.ts';
 import type { Encounter, Posting } from './schema.ts';
 
 /** The goals a board posts; an escort is a caravan's, joined at the guild (P3.6b). */
@@ -290,12 +291,15 @@ export function claimPosting(s: GameState, map: RegionMap, id: string): BoardChe
   const b = placeById(map, p.board);
   return {
     ok: true,
-    state: addEvent(st, 'encounter', {
-      line: `is paid ${paid} for ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}`,
-      where: b?.name ?? map.name,
-      kind: 'choice',
-      posting: p.id,
-    }),
+    // A goal handed in brings the road home's card for the trip so far (P3.9).
+    state: handedIn(
+      addEvent(st, 'encounter', {
+        line: `is paid ${paid} for ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}`,
+        where: b?.name ?? map.name,
+        kind: 'choice',
+        posting: p.id,
+      }),
+    ),
   };
 }
 
