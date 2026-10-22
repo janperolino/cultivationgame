@@ -74,7 +74,7 @@ Cells, left to right, top to bottom:
 3. Broker 牙行: The broker lets rooms, chambers and courtyards by the season, sealed with his chop.
 4. Bounty board 赏榜: Postings nailed three deep, each with its pay and the seal of whoever is paying.
 5. Inn 客栈: A bed, a bath and a lock on the door, paid by the night from your silver.
-6. Empty: plain dark mist.
+6. Map seller 图铺: Rolled hides and silk sheets, the region’s and every kingdom’s, inked by surveyors.
 7. Empty: plain dark mist.
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
@@ -86,4 +86,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: A free market of two hundred thousand in a karst valley of the Southern Karst that no sect, clan or crown rules: rogue cultivators sell what they found, took or stole, and nobody asks whose it was.
 ```
 
-Pieces, in order: stall, alchemy, refiner, house, black-market, bounty, mortal, changer, teahouse | guides, caravans, broker, board, inn.
+Pieces, in order: stall, alchemy, refiner, house, black-market, bounty, mortal, changer, teahouse | guides, caravans, broker, board, inn, maps.

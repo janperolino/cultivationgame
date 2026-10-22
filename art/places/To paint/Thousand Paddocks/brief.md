@@ -75,7 +75,7 @@ Cells, left to right, top to bottom:
 4. Broker 牙行: The broker lets rooms, chambers and courtyards by the season, sealed with his chop.
 5. Bounty board 赏榜: Postings nailed three deep, each with its pay and the seal of whoever is paying.
 6. Inn 客栈: A bed, a bath and a lock on the door, paid by the night from your silver.
-7. Empty: plain dark mist.
+7. Map seller 图铺: Rolled hides and silk sheets, the region’s and every kingdom’s, inked by surveyors.
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
@@ -86,4 +86,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: The Spirit Herders' royal city, three million people inside a ring of array-fenced paddocks sixty li across, where the king holds court on horseback and the empire's remount officers keep a standing hall.
 ```
 
-Pieces, in order: stall, alchemy, refiner, talisman, parts, house, bounty, mortal, changer | teahouse, guides, caravans, broker, board, inn.
+Pieces, in order: stall, alchemy, refiner, talisman, parts, house, bounty, mortal, changer | teahouse, guides, caravans, broker, board, inn, maps.

@@ -71,7 +71,7 @@ Cells, left to right, top to bottom:
 2. Inn 客栈: A bed, a bath and a lock on the door, paid by the night from your silver.
 3. Work 差事: Posts and day hires, by the shift: the pay is small, the standing grows.
 4. Fields 田: Spirit fields in rows of nine beds, rented by the season or bought outright.
-5. Empty: plain dark mist.
+5. Map seller 图铺: Rolled hides and silk sheets, the region’s and every kingdom’s, inked by surveyors.
 6. Empty: plain dark mist.
 7. Empty: plain dark mist.
 8. Empty: plain dark mist.
@@ -84,4 +84,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: A town of two million terraced down the walls of a sinkhole thirty li across, its farms at the bottom, and the Registry’s testing stone on the top terrace.
 ```
 
-Pieces, in order: stall, alchemy, refiner, mortal, changer, teahouse, guides, caravans, broker | board, inn, work, fields.
+Pieces, in order: stall, alchemy, refiner, mortal, changer, teahouse, guides, caravans, broker | board, inn, work, fields, maps.

@@ -73,7 +73,7 @@ Cells, left to right, top to bottom:
 2. Broker 牙行: The broker lets rooms, chambers and courtyards by the season, sealed with his chop.
 3. Bounty board 赏榜: Postings nailed three deep, each with its pay and the seal of whoever is paying.
 4. Inn 客栈: A bed, a bath and a lock on the door, paid by the night from your silver.
-5. Empty: plain dark mist.
+5. Map seller 图铺: Rolled hides and silk sheets, the region’s and every kingdom’s, inked by surveyors.
 6. Empty: plain dark mist.
 7. Empty: plain dark mist.
 8. Empty: plain dark mist.
@@ -86,4 +86,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: The greatest sinkhole in Stone Eyes, sixty li across and five million people terraced down its walls, where the council of cave clans meets in a hall cut into the cliff halfway down.
 ```
 
-Pieces, in order: stall, alchemy, refiner, house, bounty, mortal, changer, teahouse, guides | caravans, broker, board, inn.
+Pieces, in order: stall, alchemy, refiner, house, bounty, mortal, changer, teahouse, guides | caravans, broker, board, inn, maps.

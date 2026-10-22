@@ -69,7 +69,7 @@ Cells, left to right, top to bottom:
 
 1. Inn 客栈: A bed, a bath and a lock on the door, paid by the night from your silver.
 2. Fields 田: Spirit fields in rows of nine beds, rented by the season or bought outright.
-3. Empty: plain dark mist.
+3. Map seller 图铺: Rolled hides and silk sheets, the region’s and every kingdom’s, inked by surveyors.
 4. Empty: plain dark mist.
 5. Empty: plain dark mist.
 6. Empty: plain dark mist.
@@ -84,4 +84,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: The herders’ trading post, where thunder-horned deer and scale-horses are sold by the hundred head and the empire’s buyers keep a standing hall.
 ```
 
-Pieces, in order: stall, house, mortal, changer, teahouse, guides, caravans, broker, board | inn, fields.
+Pieces, in order: stall, house, mortal, changer, teahouse, guides, caravans, broker, board | inn, fields, maps.

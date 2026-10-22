@@ -74,7 +74,7 @@ Cells, left to right, top to bottom:
 3. Bounty board 赏榜: Postings nailed three deep, each with its pay and the seal of whoever is paying.
 4. Inn 客栈: A bed, a bath and a lock on the door, paid by the night from your silver.
 5. Work 差事: Posts and day hires, by the shift: the pay is small, the standing grows.
-6. Empty: plain dark mist.
+6. Map seller 图铺: Rolled hides and silk sheets, the region’s and every kingdom’s, inked by surveyors.
 7. Empty: plain dark mist.
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
@@ -86,4 +86,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: The March's biggest market, three million people in a bend of the river below Grain Ford, where the garrison buys, the counties sell and the Gongsuns' tax barges load.
 ```
 
-Pieces, in order: stall, alchemy, refiner, house, bounty, mortal, changer, teahouse, guides | caravans, broker, board, inn, work.
+Pieces, in order: stall, alchemy, refiner, house, bounty, mortal, changer, teahouse, guides | caravans, broker, board, inn, work, maps.

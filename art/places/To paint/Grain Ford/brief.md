@@ -68,7 +68,7 @@ Create ONE landscape 1536x1024 image AS A SHEET of nine separate painted scenes 
 Cells, left to right, top to bottom:
 
 1. Fields 田: Spirit fields in rows of nine beds, rented by the season or bought outright.
-2. Empty: plain dark mist.
+2. Map seller 图铺: Rolled hides and silk sheets, the region’s and every kingdom’s, inked by surveyors.
 3. Empty: plain dark mist.
 4. Empty: plain dark mist.
 5. Empty: plain dark mist.
@@ -84,4 +84,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: Where the March’s grain is counted, taxed and stolen, in that order: granaries for forty million mouths in tiers along the ford.
 ```
 
-Pieces, in order: stall, mortal, changer, teahouse, guides, caravans, broker, board, inn | fields.
+Pieces, in order: stall, mortal, changer, teahouse, guides, caravans, broker, board, inn | fields, maps.

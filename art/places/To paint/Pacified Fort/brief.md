@@ -73,7 +73,7 @@ Cells, left to right, top to bottom:
 4. Inn 客栈: A bed, a bath and a lock on the door, paid by the night from your silver.
 5. Work 差事: Posts on the walls and in the stores, by the shift, under a sergeant’s eye.
 6. Fields 田: Spirit fields in rows of nine beds, rented by the season or bought outright.
-7. Empty: plain dark mist.
+7. Map seller 图铺: Rolled hides and silk sheets, the region’s and every kingdom’s, inked by surveyors.
 8. Empty: plain dark mist.
 9. Empty: plain dark mist.
 
@@ -84,4 +84,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: The Gongsun war city and the March’s seat, cut into the crown of a hill the first general flattened with one stroke. Its walls are the hill’s own rock, raised by formation to the height of cliffs; inside them, barracks, armouries and drill grounds hold four hundred thousand under arms, and every sixteen-year-old the March owes the garrison passes through its cadet school. The March’s beacon burns on its highest bastion, and a lockdown array rises over it as a dome of pale light when beasts come.
 ```
 
-Pieces, in order: stall, alchemy, refiner, house, bounty, mortal, changer, teahouse, guides | caravans, broker, board, inn, work, fields.
+Pieces, in order: stall, alchemy, refiner, house, bounty, mortal, changer, teahouse, guides | caravans, broker, board, inn, work, fields, maps.

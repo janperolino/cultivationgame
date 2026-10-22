@@ -10,6 +10,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import type { Population } from '../src/content/atlas/schema.ts';
 import { REGIONS } from '../src/content/map/index.ts';
+import { PLACE_KIND_INFO } from '../src/content/map/places.ts';
 import { doorLine } from '../src/content/doorLines.ts';
 import { newLife } from '../src/core/state.ts';
 import { ensureMap, mapOf } from '../src/core/map/travel.ts';
@@ -242,6 +243,19 @@ for (const p of map.places) {
   if (layout === 'hall' && own && power && isOrganization(power)) list = hallDoors(doors, power);
   else if (layout === 'grid') list = gridTabs(doors).flatMap((t) => t.doors);
   else list = doors.filter((d) => d.group !== 'power');
+  // The map seller shows only to one inside (mapsAt), so the brief adds it by the kind's maps;
+  // last on the sheets, so a sheet already painted keeps its cells.
+  if (PLACE_KIND_INFO[kind].maps && !list.some((d) => d.id === 'maps'))
+    list.push({
+      id: 'maps',
+      seal: '图',
+      name: 'Map seller',
+      hanzi: '图铺',
+      sub: 'the region’s maps and its kingdoms’',
+      group: 'hear',
+      art: 'maps',
+      room: 'departures',
+    });
   if (layout === 'village' && power)
     list.push({
       ...SEAT_TILE,

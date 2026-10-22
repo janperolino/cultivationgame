@@ -76,7 +76,7 @@ Cells, left to right, top to bottom:
 5. Bounty board 赏榜: Postings nailed three deep, each with its pay and the seal of whoever is paying.
 6. Inn 客栈: A bed, a bath and a lock on the door, paid by the night from your silver.
 7. Work 差事: Posts and day hires, by the shift: the pay is small, the standing grows.
-8. Empty: plain dark mist.
+8. Map seller 图铺: Rolled hides and silk sheets, the region’s and every kingdom’s, inked by surveyors.
 9. Empty: plain dark mist.
 
 People only small, in the middle distance, faceless; the place is the subject.
@@ -86,4 +86,4 @@ STYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and 
 The place, for mood: The empire's frontier headquarters, a fortress city of eight million on the coast where the island chain begins. Its walls rise out of the surf as tall as sea cliffs, faced with the skulls of the beast kings that tried them.
 ```
 
-Pieces, in order: stall, alchemy, refiner, talisman, parts, house, bounty, mortal, changer | teahouse, guides, caravans, broker, board, inn, work.
+Pieces, in order: stall, alchemy, refiner, talisman, parts, house, bounty, mortal, changer | teahouse, guides, caravans, broker, board, inn, work, maps.
