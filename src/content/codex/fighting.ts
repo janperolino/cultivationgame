@@ -19,7 +19,7 @@ export const FIGHTING: readonly CodexEntry[] = [
       ['Spars with each partner', 'one a day'],
       ['A fight nobody wins', 'ends as a draw after 60 exchanges'],
     ],
-    where: { screen: 'map', label: 'A power’s Training ground, or People › Spar' },
+    where: { screen: 'world', label: 'A power’s Training ground, or People › Spar' },
     met: { test: 'fight' },
     way: 'quest',
     feature: 'Sparring: foes at your realm, nothing dies or drops',

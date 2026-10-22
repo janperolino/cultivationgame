@@ -17,7 +17,6 @@ import { rollElements, rollRoot, type RootId } from '../content/roots.ts';
 import { talentsOf, TALENT_KINDS, type Talent, type TalentKind } from '../content/talents.ts';
 import { hasJob, job } from '../content/jobs.ts';
 import { startChain } from './chains.ts';
-import { takeJob } from './jobs.ts';
 import { guidedStart } from './guides.ts';
 import { gainMethod } from './life.ts';
 import { joinPower, realmStageOf } from './organizations.ts';
@@ -117,10 +116,11 @@ function handMethod(s: GameState, c: Creation): GameState {
 }
 
 /**
- * The origin path's post (O4): the oath seats you in its power at the outer seat and hands you
- * the post, so the cadet's patrols stand on the wheel from the first day.
+ * The origin path's oath (O4): it seats you in the post's power at the outer seat. The post itself
+ * is taken at its Work door, a step of the chain's last quest (Jan's playtest after S1: a post held
+ * from the first day never taught Duty).
  */
-function handPost(s: GameState, c: Creation): GameState {
+function swearOath(s: GameState, c: Creation): GameState {
   const id = originPath(c.roll.origin, c.choice).job;
   if (!id || !hasJob(id)) return s;
   const power = job(id).power;
@@ -133,8 +133,7 @@ function handPost(s: GameState, c: Creation): GameState {
     if (!joined.ok) return st;
     st = addEvent({ ...st, world: joined.world }, 'power', { power, what: 'joined' });
   }
-  const took = takeJob(st, id);
-  return took.ok ? took.state : st;
+  return st;
 }
 
 /**
@@ -151,12 +150,12 @@ export function originWords(o: Origin, text: string): string {
 
 /** A first life from creation's choices, holding nothing new. */
 export function createLife(c: Creation): GameState {
-  return seeAll(guidedStart(startChain(handPost(handMethod(newLife(lifeOptions(c)), c), c))));
+  return seeAll(guidedStart(startChain(swearOath(handMethod(newLife(lifeOptions(c)), c), c))));
 }
 
 /** The next life in a slot after a death, from creation's choices; the chronicle carries on. */
 export function createNextLife(prev: GameState, c: Creation): GameState {
   return seeAll(
-    guidedStart(startChain(handPost(handMethod(nextLife(prev, lifeOptions(c)), c), c))),
+    guidedStart(startChain(swearOath(handMethod(nextLife(prev, lifeOptions(c)), c), c))),
   );
 }

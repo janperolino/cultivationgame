@@ -132,7 +132,7 @@ export const WHEEL: readonly CodexEntry[] = [
     area: 'wheel',
     text: [
       'Once you set a course, a second wheel moves you hour by hour. Beside the home kinds, its hours can be Travel, Look, Guard, Home and Gather. Home takes the home wheel’s hour for that time of day. Look reveals sites hidden nearby. Gather searches the land where you stand. Guard is for the hours of a paid caravan guard.',
-      'Switch to the road wheel with the toggle on Routine’s Day tab, or from the Map. Three routines are saved for it, and you can edit and rename them. A fourth, the caravan guard’s, is kept only while you travel with a group that asks it.',
+      'Switch to the road wheel with the toggle on Routine’s Day tab, or from the World screen. Three routines are saved for it, and you can edit and rename them. A fourth, the caravan guard’s, is kept only while you travel with a group that asks it.',
     ],
     numbers: [
       [
@@ -143,7 +143,11 @@ export const WHEEL: readonly CodexEntry[] = [
       ['The night road', '4 hours of travel, off the roads and round the checkpoints'],
       ['On a road', 'within 80 li of one'],
     ],
-    where: { screen: 'routine', tab: 'day', label: 'Routine › Day, the road toggle, and the Map' },
+    where: {
+      screen: 'routine',
+      tab: 'day',
+      label: 'Routine › Day, the road toggle, and the World',
+    },
     met: { test: 'travelled' },
     way: 'codex',
     feature: 'The road wheel (travel, look, guard, home, gather)',
@@ -154,7 +158,7 @@ export const WHEEL: readonly CodexEntry[] = [
     hanzi: '值守',
     area: 'wheel',
     text: [
-      'A post puts its shift on your wheel as Duty hours, named for the work and locked like sleep. A power’s post pays in its currency, and some also in stones. A shop’s or office’s hire pays in stones. Each carries a perk, and it can be left freely or only by leaving the power.',
+      'A post is taken at its place’s Work door, and puts its shift on your wheel as Duty hours, named for the work and locked like sleep. A power’s post pays in its currency, and some also in stones. A shop’s or office’s hire pays in stones. Each carries a perk, and it can be left freely or only by leaving the power.',
       'A duty day pays above a day’s wage and below the qi the same hours would give in seclusion, so working never beats secluding. While you are still at drill, in the first three layers, the shift is not worked unless you set Duty on its hours yourself.',
       'A missed duty day costs standing with the power, which fades over a season. A month with at least half its shifts kept earns some back.',
     ],

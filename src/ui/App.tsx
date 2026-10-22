@@ -6,12 +6,14 @@ import { RoutineScreen } from './RoutineScreen.tsx';
 import { GlassBackground } from './GlassBackground.tsx';
 import { ShellHeader } from './ShellHeader.tsx';
 import { AbodeMark, ScreenIcon } from './icons.tsx';
+import { clearItemTip } from './itemTip.ts';
+import { ItemTipLayer } from './ItemTip.tsx';
 import { Toasts } from './Toasts.tsx';
 import { readyLadders, useScene } from './scene.ts';
 import { useNav } from './nav.ts';
 import { markMoving } from './moving.ts';
 import { reducedMotion, useSettings } from './settings.ts';
-import { screens, type ScreenId } from './screens.ts';
+import { LATE_GLYPHS, screens, type ScreenId } from './screens.ts';
 import { useGame } from './store.ts';
 import { placeIndex, setPlaces } from '../core/resolver/knows.ts';
 import { screenDot, screenIsNew } from '../core/seen.ts';
@@ -92,13 +94,6 @@ const JournalScreen = lazy(() =>
 
 /** Kept one array, so the shell doesn't re-render on every tick for a fresh empty list. */
 const NO_UNLOCKS: readonly string[] = [];
-/** The glyphs open from the first minute that wait for the first minor breakthrough's guide. */
-const LATE_GLYPHS: ReadonlySet<ScreenId> = new Set<ScreenId>([
-  'map',
-  'character',
-  'people',
-  'chronicle',
-]);
 const LEAVE_MS = 170;
 const ENTER_MS = 420;
 
@@ -248,6 +243,8 @@ export function App() {
   }, [here, hereDot]);
   // The guides fire where their feature lives (ui/guide.ts).
   useEffect(() => lookAt({ screen: fighting ? 'fight' : current.id }), [fighting, current.id]);
+  // A hovered item's card goes with the screen it was on.
+  useEffect(() => clearItemTip(), [current.id]);
 
   return (
     <>
@@ -264,6 +261,7 @@ export function App() {
             </div>
           )}
           {phase === 'playing' && !creating && <GuideLayer />}
+          <ItemTipLayer />
           <div className={`shell is-${current.id}`} hidden={fighting && phase === 'playing'}>
             <nav id="side-menu" className="side-rail" aria-label="Screens">
               <div className="rail-mark" aria-hidden="true">
@@ -274,7 +272,7 @@ export function App() {
                   <li key={s.id}>
                     <button
                       type="button"
-                      className={`rail-item${s.id === wanted.id ? ' is-active' : ''}${beaconed.has(s.id) ? ' is-beacon' : s.id === 'map' && roadAlert && s.id !== wanted.id ? ' is-alert' : fresh.includes(s.id) && s.id !== wanted.id ? ' is-new' : ''}`}
+                      className={`rail-item${s.id === wanted.id ? ' is-active' : ''}${beaconed.has(s.id) ? ' is-beacon' : s.id === 'world' && roadAlert && s.id !== wanted.id ? ' is-alert' : fresh.includes(s.id) && s.id !== wanted.id ? ' is-new' : ''}`}
                       aria-current={s.id === wanted.id ? 'page' : undefined}
                       aria-label={s.name}
                       onClick={() => setScreen(s.id)}
@@ -287,7 +285,7 @@ export function App() {
                           aria-label="a breakthrough is ready"
                         />
                       )}
-                      {s.id === 'map' && roadAlert && s.id !== wanted.id && (
+                      {s.id === 'world' && roadAlert && s.id !== wanted.id && (
                         <span
                           className="menu-mark is-alert"
                           role="img"
@@ -312,11 +310,13 @@ export function App() {
                 className={`main${leaving ? ' is-leaving' : ''}${entering ? ' is-entering' : ''}`}
                 ref={main}
               >
-                {current.id !== 'cultivate' && current.id !== 'routine' && current.id !== 'map' && (
-                  <h1 className="screen-title">
-                    {current.name} <span className="hanzi">{current.hanzi}</span>
-                  </h1>
-                )}
+                {current.id !== 'cultivate' &&
+                  current.id !== 'routine' &&
+                  current.id !== 'world' && (
+                    <h1 className="screen-title">
+                      {current.name} <span className="hanzi">{current.hanzi}</span>
+                    </h1>
+                  )}
                 {notice && (
                   <section className="panel notice" role="status">
                     <p>{notice}</p>
@@ -333,7 +333,7 @@ export function App() {
                 {phase !== 'loading' && current.id === 'cultivate' && <CultivateScreen />}
                 {phase !== 'loading' && current.id === 'routine' && <RoutineScreen />}
                 <Suspense fallback={null}>
-                  {phase !== 'loading' && current.id === 'map' && <MapScreen />}
+                  {phase !== 'loading' && current.id === 'world' && <MapScreen />}
                   {phase !== 'loading' && current.id === 'trees' && <TreesScreen />}
                   {phase !== 'loading' && current.id === 'crafts' && <CraftsScreen />}
                   {phase !== 'loading' && current.id === 'dwelling' && <DwellingScreen />}
@@ -345,8 +345,10 @@ export function App() {
                   {phase !== 'loading' && current.id === 'journal' && <JournalScreen />}
                 </Suspense>
               </main>
-              {/* A card or an encounter read in the square, over Cultivate and the Map (F1). */}
-              {here !== null && (current.id === 'cultivate' || current.id === 'map') && <Square />}
+              {/* A card or an encounter read in the square, over Cultivate and the World (F1). */}
+              {here !== null && (current.id === 'cultivate' || current.id === 'world') && (
+                <Square />
+              )}
             </div>
 
             <Toasts />

@@ -27,7 +27,7 @@ import {
   arraySlots,
   bandName,
   densityOf,
-  dwellingAt,
+  atDwelling,
   dwellingName,
   dwellingNoun,
   dwellingPlaceName,
@@ -58,6 +58,8 @@ import { goToPlace, mapOf } from '../core/map/travel.ts';
 import { veinAt } from '../content/map/index.ts';
 import type { Dwelling, GameState, LaidArray } from '../core/state.ts';
 import { go } from './nav.ts';
+import { courseOrAsk } from './dutyAsk.ts';
+import { screenReached } from './screens.ts';
 import { useGame } from './store.ts';
 
 type Change = Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0];
@@ -173,8 +175,8 @@ export function DwellingScreen() {
   const [why, setWhy] = useState<string | null>(null);
   if (!game) return null;
   const act = (f: Change) => setWhy(mapAct(f));
-  const inside = game.map?.course ? null : (game.map?.inside ?? null);
-  const d = inside ? dwellingAt(game.player, inside) : null;
+  // Standing on its pin counts, without going in (Jan's playtest after S1).
+  const d = game.player.dwellings.find((x) => atDwelling(game, x.place)) ?? null;
   return (
     <div className="dwelling">
       {d ? <Here game={game} d={d} act={act} /> : <Elsewhere game={game} act={act} />}
@@ -509,7 +511,11 @@ function Here({ game, d, act }: { game: GameState; d: Dwelling; act: (f: Change)
                       {g.held && <small className="is-bad">Something is held in it.</small>}
                       <Eye a={g} />
                     </div>
-                    <button type="button" className="place-btn is-quiet" onClick={() => go('map')}>
+                    <button
+                      type="button"
+                      className="place-btn is-quiet"
+                      onClick={() => go('world')}
+                    >
                       On the map
                     </button>
                   </div>
@@ -654,6 +660,10 @@ function Others({
   const rest = game.player.dwellings.filter((x) => x.id !== except);
   if (!rest.length) return null;
   const abode = abodeOf(game.player)?.id;
+  const map = mapOf(game);
+  // Set course waits on the map's own gate, and isn't offered where you stand already (Jan's
+  // playtest after S1: a cadet in the barracks got the map early).
+  const courses = screenReached(game, 'world');
   return (
     <section className="panel">
       <h3 className="panel-heading">
@@ -661,6 +671,8 @@ function Others({
       </h3>
       {rest.map((x) => {
         const left = rentLeft(x, game.calendar.day);
+        const p = map ? placeById(map, x.place) : undefined;
+        const here = !!p && standsAt(game, p);
         return (
           <div key={x.id} className="dw-slot">
             <span className="dw-sq">{DWELLINGS[x.kind].seal}</span>
@@ -673,16 +685,18 @@ function Others({
                 {x.raid ? ' · a raid waits there' : ''}
               </small>
             </div>
-            <button
-              type="button"
-              className="place-btn"
-              onClick={() => {
-                act((s) => goToPlace(s, x.place, true));
-                go('map');
-              }}
-            >
-              Set course
-            </button>
+            {courses && !here && (
+              <button
+                type="button"
+                className="place-btn"
+                onClick={() => {
+                  courseOrAsk(game, () => act((s) => goToPlace(s, x.place, true)));
+                  go('world');
+                }}
+              >
+                Set course
+              </button>
+            )}
           </div>
         );
       })}

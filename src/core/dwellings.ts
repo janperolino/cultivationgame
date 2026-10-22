@@ -57,6 +57,7 @@ import {
   type MapPlace,
   type RegionMap,
 } from './map/region.ts';
+import { onFootprint } from './map/footprint.ts';
 import { mapOf, mapPlaceOf } from './map/travel.ts';
 import { veinById, veinsKnown, type Vein } from './map/veins.ts';
 import { houseOf, isOrganization, organization } from './orgs/identity.ts';
@@ -105,11 +106,24 @@ export function stepMult(steps: number): number {
   return STEP_MULT[STEP_MULT.length - 1]! * STEP_PAST ** (steps - STEP_MULT.length + 1);
 }
 
-/** The dwelling you stand in: inside its place, no course set, its rent paid. */
+/**
+ * Whether you are at a dwelling's place: gone into it, or standing on its pin with no course set,
+ * without Enter (Jan's playtest after S1); a place's doors still want you inside.
+ */
+export function atDwelling(s: GameState, place: string): boolean {
+  const life = s.map;
+  if (!life) return false;
+  if (life.inside) return life.inside === place;
+  if (life.course) return false;
+  const map = mapOf(s);
+  const p = map ? placeById(map, place) : undefined;
+  return !!p && Math.hypot(p.x - life.at[0], p.y - life.at[1]) < ENTER_LI;
+}
+
+/** The dwelling you stand in: at its place, no course set, its rent paid. */
 export function dwellingHere(s: GameState): Dwelling | null {
-  const inside = s.map?.inside;
-  if (!inside || s.map?.course) return null;
-  const d = dwellingAt(s.player, inside);
+  if (!s.map || s.map.course) return null;
+  const d = s.player.dwellings.find((x) => atDwelling(s, x.place));
   return d && !lapsed(d, s.calendar.day) ? d : null;
 }
 
@@ -165,7 +179,7 @@ export function storeUsed(items: Readonly<Record<string, number>>): number {
 
 /** Whether the store can be opened: you stand in it, or a lapsed lease still keeps it a month. */
 function storeOpen(s: GameState, d: Dwelling): boolean {
-  return s.map?.inside === d.place && !s.map.course && d.store > 0;
+  return atDwelling(s, d.place) && d.store > 0;
 }
 
 /** Sets one of the Bag's stacks in the store: the `at`-th stack of the item, whole. */
@@ -190,7 +204,7 @@ export function toStore(s: GameState, id: string, thing: string, at: number): Do
 /** Takes a thing out of the store into the Bag, as many as it has room for. */
 export function fromStore(s: GameState, id: string, thing: string): Done {
   const d = dwellingById(s.player, id);
-  if (!d || !(storeOpen(s, d) || (lapsed(d, s.calendar.day) && s.map?.inside === d.place)))
+  if (!d || !(storeOpen(s, d) || (lapsed(d, s.calendar.day) && atDwelling(s, d.place))))
     return no('The store opens only where it stands.');
   const n = d.items[thing] ?? 0;
   if (n <= 0) return no('There is none in the store.');
@@ -278,7 +292,7 @@ function drop(c: Cultivator, d: Dwelling): Cultivator {
 export function givingUpLoses(s: GameState, id: string): string | null {
   const d = dwellingById(s.player, id);
   if (!d) return null;
-  const here = s.map?.inside === d.place;
+  const here = atDwelling(s, d.place);
   const beds = s.player.crafts.plots.filter((p) => p.held === 'slot' && p.place === d.place);
   const sown = beds.reduce((n, p) => n + p.beds.filter((b) => b !== null).length, 0);
   const stored = Object.values(d.items).reduce((n, k) => n + k, 0);
@@ -301,7 +315,7 @@ export function giveUp(s: GameState, id: string): Done {
   if (!d) return no('You don’t hold it.');
   if (d.held === 'seat') return no('Your quarters go with your seat: ask to be released.');
   let next = withPlayer(s, drop(s.player, d));
-  if (s.map?.inside === d.place) {
+  if (atDwelling(s, d.place)) {
     for (const a of d.arrays) next = gainItem(next, variantId(a.item, a.from), 1).state;
     for (const [thing, n] of Object.entries(d.items)) next = gainItem(next, thing, n).state;
   }
@@ -522,7 +536,11 @@ const CLAIM_LI = 60;
 /**
  * What can be claimed where you stand: a vein you have read close by (a cave abode, or a spirit
  * mountain over a vein a tier above the land's), a found falls, sinkhole or herb valley you stand
- * in (a hidden valley), or the bare land under you (a thatched hut).
+ * in (a hidden valley), or the bare land under you (a thatched hut). Nothing is claimed on a
+ * place's drawn footprint (core/map/footprint.ts), so a hut or a cave never sits on a city's or a
+ * sect's picture, and a claim that can never be had here (yours already, dug by another, a place
+ * standing on the spot) isn't offered at all (Jan's playtest after S1); `why` is left for one you
+ * could take later.
  */
 export function claimsHere(s: GameState): Claim[] {
   const map = mapOf(s);
@@ -532,51 +550,42 @@ export function claimsHere(s: GameState): Claim[] {
   const out: Claim[] = [];
   const near = (x: number, y: number) => Math.hypot(x - at[0], y - at[1]) <= CLAIM_LI;
   const taken = (place: string) => s.player.dwellings.some((d) => d.place === place);
+  const drawn = (p: readonly [number, number]) => map.places.some((q) => onFootprint(q, p));
   for (const id of veinsKnown(life)) {
     const v = veinById(map, s.lineage.id, id);
-    if (!v || !near(v.x, v.y)) continue;
+    if (!v || !near(v.x, v.y) || drawn([v.x, v.y])) continue;
     const madeId = `made:${v.id}`;
     // A site another life dug is theirs; one you gave up is yours to claim again.
     const mine = (s.mapgen[map.id]?.made ?? []).some(
       (m) => m.id === madeId && m.by === s.player.id,
     );
     const owned = !mine && map.places.some((p) => p.id === madeId);
+    if (taken(madeId) || owned) continue;
     out.push({
       kind: v.tier > 1 ? 'mountain' : 'cave',
       vein: v,
       at: [v.x, v.y],
       power: squatOn(s, sphereAt(map, [v.x, v.y])),
-      why: taken(madeId)
-        ? 'You hold it already.'
-        : owned
-          ? 'Someone dug in here before you.'
-          : null,
+      why: null,
     });
   }
   const inside = life.inside ? placeById(map, life.inside) : undefined;
-  if (inside && isValleySpot(inside))
+  if (inside && isValleySpot(inside) && !taken(inside.id))
     out.push({
       kind: 'valley',
       site: inside,
       at: [inside.x, inside.y],
       power: squatOn(s, sphereAt(map, [inside.x, inside.y])),
-      why: taken(inside.id) ? 'You hold it already.' : null,
+      why: null,
     });
-  if (!life.inside && onLand(map, at)) {
-    const near = (li: number, p: MapPlace) => Math.hypot(p.x - at[0], p.y - at[1]) < li;
-    const settled = map.places.some((p) => p.kind !== 'site' && p.kind !== 'heart' && near(300, p));
-    const stands = map.places.find((p) => near(ENTER_LI, p));
+  const stands = map.places.some((p) => Math.hypot(p.x - at[0], p.y - at[1]) < ENTER_LI);
+  if (!life.inside && onLand(map, at) && !stands && !drawn(at))
     out.push({
       kind: 'hut',
       at: [Math.round(at[0]), Math.round(at[1])],
       power: squatOn(s, sphereAt(map, at)),
-      why: settled
-        ? 'This land is a town’s: its broker lets courtyards.'
-        : stands
-          ? `${stands.name} stands here already.`
-          : null,
+      why: null,
     });
-  }
   return out;
 }
 
@@ -763,7 +772,7 @@ export function slotPlots(c: Cultivator, d: Dwelling): Plot[] {
 /** Lays out a plot in an empty slot of a dwelling you stand in: nine beds of plain earth. */
 export function layOutPlot(s: GameState, id: string): Done {
   const d = dwellingById(s.player, id);
-  if (!d || s.map?.inside !== d.place) return no('You lay out land only where it lies.');
+  if (!d || !atDwelling(s, d.place)) return no('You lay out land only where it lies.');
   if (lapsed(d, s.calendar.day)) return no('Your lease has run out.');
   if (slotPlots(s.player, d).length >= d.slots) return no('Every slot holds a plot already.');
   const map = mapOf(s)!;
@@ -903,7 +912,7 @@ function raidsMonth(s: GameState, month: number): GameState {
       next = withPlayer(next, withDwelling(next.player, marked));
       continue;
     }
-    const here = next.map?.inside === d.place && !next.map.course ? 1 : 0;
+    const here = atDwelling(next, d.place) ? 1 : 0;
     const q = queueCard(
       next,
       kind === 'thieves' ? 'raid-thieves' : 'raid-beast',
@@ -1166,7 +1175,7 @@ function markHere(s: GameState): GameState {
   const pending = s.cards.pending.map((p) => {
     const d = raids.find((x) => x.raid!.uid === p.uid);
     if (!d) return p;
-    const here = s.map?.inside === d.place && !s.map.course ? 1 : 0;
+    const here = atDwelling(s, d.place) ? 1 : 0;
     return p.vars?.here === here ? p : { ...p, vars: { ...p.vars, here } };
   });
   return { ...s, cards: { ...s.cards, pending } };

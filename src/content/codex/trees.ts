@@ -213,13 +213,13 @@ export const TREES: readonly CodexEntry[] = [
     area: 'trees',
     text: [
       'Veiled Aura is a notable on the Qi tree. It gives you a stage of concealment: you can show a realm lower than your own. Hidden Realm, a notable in tier 2, adds another stage.',
-      'On the Map, the Travel veiled toggle is greyed until you have a stage of concealment. Turn it on and the gate watch and the cultivators you meet on the road read the realm you show. Acting above it blows your cover, and turning the toggle off ends it.',
+      'On the World screen, the Travel veiled toggle is greyed until you have a stage of concealment. Turn it on and the gate watch and the cultivators you meet on the road read the realm you show. Acting above it blows your cover, and turning the toggle off ends it.',
     ],
     numbers: [
       ['Veiled Aura (Qi, tier 1)', '+1 stage of concealment, 120 insight'],
       ['Hidden Realm (Qi, tier 2)', '+1 stage, 600 insight'],
     ],
-    where: { screen: 'map', label: 'Map › the column, Travel veiled' },
+    where: { screen: 'world', label: 'World › the column, Travel veiled' },
     met: { test: 'veiled-aura' },
     way: 'codex',
     feature: 'Veiled Aura (showing a lower realm)',

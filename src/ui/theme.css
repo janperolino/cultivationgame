@@ -7569,7 +7569,7 @@ label.beacon-ring {
   --map-depth: #d07a96;
 }
 
-.shell.is-map .main {
+.shell.is-world .main {
   display: flex;
   flex-direction: column;
   padding-bottom: 16px;
@@ -7580,12 +7580,12 @@ label.beacon-ring {
    full bleed under the top, and one column on the left over a tight still shade, showing where you
    stand and, under Routine's tabs, the journey or the card. A place's own screen (P3.6b) keeps the
    main column's padding. */
-.shell.is-map .main:has(> .map-screen) {
+.shell.is-world .main:has(> .map-screen) {
   padding: 0;
   overflow: hidden;
 }
 
-.shell.is-map:has(.map-screen) .shell-top {
+.shell.is-world:has(.map-screen) .shell-top {
   position: absolute;
   top: 0;
   left: 0;
@@ -10624,6 +10624,19 @@ p.map-above {
   text-align: center;
 }
 
+/* Sitting at an empty bench: the hand warms, and the scene says plainly that nothing is made. */
+.crafts-warming {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--gilt-soft);
+  border-radius: 4px;
+  color: var(--text);
+}
+
+.crafts-warming b {
+  color: var(--accent);
+}
+
 .crafts-furnace-batch {
   border-top: 1px solid var(--edge);
   padding-top: 10px;
@@ -11283,6 +11296,18 @@ p.map-above {
   color: var(--gilt);
 }
 
+/* The chain's next quest, offered at the top of the journal's Under way. */
+.quest-offer {
+  margin: 0 0 14px;
+  padding: 10px 14px 12px;
+  border: 1px solid var(--gilt-soft);
+  border-radius: 4px;
+}
+
+.quest-offer p {
+  margin: 0 0 4px;
+}
+
 .quest-steps {
   margin: 4px 0 8px;
   padding-left: 22px;
@@ -11758,6 +11783,7 @@ p.map-above {
   display: flex;
   align-items: center;
   gap: 16px;
+  cursor: pointer;
 }
 
 .stub-text {
@@ -12096,4 +12122,36 @@ p.map-above {
   padding-left: 18px;
   display: grid;
   gap: 2px;
+}
+
+/* An item's hover card in the Bag and at a shop (ui/ItemTip.tsx, Jan's playtest after S1): still,
+   solid, no blur (Paint cost), beside the square or row the pointer rests on. */
+.item-tip {
+  position: absolute;
+  z-index: 70;
+  padding: 12px 16px 10px;
+  border: 1px solid var(--gilt-soft);
+  border-radius: 4px;
+  background: var(--panel-solid);
+  box-shadow: 0 24px 50px -28px rgb(0 0 0 / 0.95);
+  pointer-events: none;
+}
+
+.item-tip p {
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+
+.item-tip-name {
+  font-family: var(--font-display);
+  font-size: calc(20px * var(--text-scale));
+}
+
+.item-tip ul {
+  margin: 4px 0 6px;
+  padding-left: 18px;
+}
+
+.item-tip li {
+  margin: 2px 0;
 }

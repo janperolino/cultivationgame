@@ -6,6 +6,7 @@ import { regionData } from '../../content/map/index.ts';
 import { RUMOR_RING_LI } from '../../content/map/travel.ts';
 import { fieldFrom, heartBand, peopleLi, pullsIn, warped } from '../../core/map/depth.ts';
 import { known, sightAt } from '../../core/map/fog.ts';
+import { footprintLi, pieceLi } from '../../core/map/footprint.ts';
 import { type Multi, type Pt, ringCentroid, smoothstep } from '../../core/map/geometry.ts';
 import { parseHex, rgba } from '../colors.ts';
 import { band } from '../../core/map/depth.ts';
@@ -164,17 +165,6 @@ function pieceOf(q: MapPlace): HTMLCanvasElement | null {
   g.fillRect(-r, -r, 2 * r, 2 * r);
   PIECE_SOFT.set(id, c);
   return c;
-}
-
-/**
- * A piece's width on the map, in li: a city's or a famous place's widest, a site's least. Larger
- * than life, as the painting draws its peaks (Jan's call in A5.3: readable, not the lore's size).
- */
-function pieceLi(q: MapPlace): number {
-  if (q.sub === 'city') return 2400;
-  if (q.kind === 'atlas') return 2000;
-  if (q.sub === 'town') return 1700;
-  return 1000;
 }
 
 // ---------------------------------------------------------------- the painted places
@@ -901,7 +891,7 @@ function seal(ctx: CanvasRenderingContext2D, q: MapPlace, x: number, y: number, 
 export function pickAt(f: Pick, s: Scene, sx: number, sy: number): MapPlace | MapArea | null {
   const { map, life } = s;
   let best: MapPlace | MapArea | null = null;
-  let bd = 13;
+  let bd = Infinity;
   for (const q of [...map.places, ...map.areas]) {
     const st = known(life, q.id);
     if (st === 'unknown') continue;
@@ -912,13 +902,23 @@ export function pickAt(f: Pick, s: Scene, sx: number, sy: number): MapPlace | Ma
         : [(q as MapPlace).x, (q as MapPlace).y];
     const [x, y] = toScreen(f.view, f.W, f.H, p);
     const d = Math.hypot(x - sx, y - sy);
-    if (d < bd) {
+    // A big place (a city, a power, the Wall) answers across much of its drawing, not just its
+    // seal (Jan's playtest after S1); a seal nearer the click still wins, by distance.
+    const reach =
+      st === 'rumored' || !('x' in q)
+        ? PICK_PX
+        : Math.min(PICK_BIG_PX, Math.max(PICK_PX, footprintLi(q) * f.view.k * 0.6));
+    if (d < reach && d < bd) {
       bd = d;
       best = q;
     }
   }
   return best;
 }
+
+/** How near a seal a click picks it, and how far a big place's drawing reaches at most, in px. */
+const PICK_PX = 13;
+const PICK_BIG_PX = 56;
 
 export interface Pick {
   view: View;

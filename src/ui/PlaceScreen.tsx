@@ -153,6 +153,7 @@ import { TalismanScene } from './TalismanScene.tsx';
 import { groundPartners, sparWhy } from '../core/spar.ts';
 import { askSpar } from '../core/playFight.ts';
 import { cue } from './cues.ts';
+import { itemTipProps } from './itemTip.ts';
 
 type Act = (change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0]) => string | null;
 
@@ -468,7 +469,7 @@ export function PlaceScreen({
     <div className="place-screen">
       <div className="place-crumbs">
         <button type="button" className="place-back" onClick={onMap}>
-          ← Map
+          ← World
         </button>
         <span>{map.name}</span>
         <button
@@ -989,7 +990,7 @@ function ShopCounter({
           {lots.map((l) => {
             const w = ware(l.thing);
             return (
-              <div key={l.slot} className="place-row">
+              <div key={l.slot} className="place-row" {...itemTipProps(l.thing)}>
                 <i className="place-dot" style={{ background: `var(--rarity-${w.rarity})` }} />
                 <span>
                   <span className="place-row-name">
@@ -1044,7 +1045,7 @@ function ShopCounter({
             {held.map(({ thing, n, offer }) => {
               const w = ware(thing);
               return (
-                <div key={thing} className="place-row">
+                <div key={thing} className="place-row" {...itemTipProps(thing)}>
                   <i className="place-dot" style={{ background: `var(--rarity-${w.rarity})` }} />
                   <span>
                     <span className="place-row-name">{w.name}</span>{' '}

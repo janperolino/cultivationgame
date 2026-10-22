@@ -2,7 +2,14 @@ import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { eventText } from '../chronicle.ts';
-import { addItem, chronicleEvent, newLife, noteBreakthrough, type GameState } from '../state.ts';
+import {
+  addItem,
+  ageYears,
+  chronicleEvent,
+  newLife,
+  noteBreakthrough,
+  type GameState,
+} from '../state.ts';
 import { ensureMap } from '../map/travel.ts';
 import { decodeSaveFile, encodeSaveFile } from './file.ts';
 import { loadSave, makeSave, SAVE_VERSION, SaveError } from './format.ts';
@@ -99,7 +106,7 @@ describe('save format', () => {
       'cultivate',
       'routine',
       'techniques',
-      'map',
+      'world',
       'character',
       'people',
       'chronicle',
@@ -202,8 +209,8 @@ describe('save format', () => {
     raw.state.unlocks = ['abode', 'cultivate', 'techniques', 'map'];
     raw.state.seen.screen = { abode: 'seen', cultivate: 'noticed', map: 'seen' };
     const s = loadSave(raw).state;
-    expect(s.unlocks).toEqual(['cultivate', 'routine', 'techniques', 'map']);
-    expect(s.seen.screen).toEqual({ cultivate: 'seen', routine: 'noticed', map: 'seen' });
+    expect(s.unlocks).toEqual(['cultivate', 'routine', 'techniques', 'world']);
+    expect(s.seen.screen).toEqual({ cultivate: 'seen', routine: 'noticed', world: 'seen' });
   });
 
   it('renames walking on foot to Light step and Travel by day', () => {
@@ -348,5 +355,39 @@ describe('save slots', () => {
     await db.write(1, makeSave(s, 1), { rewindPoint: true });
     await expect(db.rewind(1, 2)).rejects.toThrow(/gentle/);
     expect(noteBreakthrough(s, true).rewindCharges).toBe(0);
+  });
+});
+
+describe('the v54 save (Jan’s playtest after S1)', () => {
+  it('renames the Map screen to the World, and moves a post quest one step on', () => {
+    const raw = JSON.parse(JSON.stringify(makeSave(newLife({ name: 'Han Li', seed: 'v53' }), 0)));
+    raw.version = 53;
+    raw.state.unlocks = [...raw.state.unlocks.filter((u: string) => u !== 'world'), 'map'];
+    raw.state.seen = { ...raw.state.seen, screen: { ...raw.state.seen.screen, map: 'seen' } };
+    const q = { id: 'chain-cadet-wall-place', taken: 0, step: 1, opened: 0, handed: null };
+    raw.state.journal = { ...raw.state.journal, quests: [q] };
+    const s = loadSave(raw).state;
+    expect(s.unlocks).toContain('world');
+    expect(s.unlocks).not.toContain('map');
+    expect(s.seen.screen?.world).toBe('seen');
+    expect(s.seen.screen?.map).toBeUndefined();
+    expect(s.journal.quests[0]!.step).toBe(2);
+  });
+
+  it('gives an old save’s slot the age the life reads, and follows each save', async () => {
+    const db = slots();
+    const old = loadSave(fixture('v10'));
+    await db.write(1, old);
+    const age = ageYears(old.state.player, old.state.calendar.day);
+    expect((await db.list())[0]!.age).toBeCloseTo(age);
+    // A year on, the summary from the save just written agrees with the life without a re-read.
+    const later = {
+      ...old.state,
+      calendar: { ...old.state.calendar, day: old.state.calendar.day + 360 },
+    };
+    const save = makeSave(later, 1);
+    await db.write(1, save);
+    expect(db.summaryOf(1, save).age).toBeCloseTo(ageYears(later.player, later.calendar.day));
+    expect((await db.list())[0]!.age).toBeCloseTo(db.summaryOf(1, save).age!);
   });
 });

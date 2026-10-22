@@ -149,7 +149,7 @@ const WORDS: Partial<
     at: 'At the plate',
     hanzi: '刻阵',
     sit: 'Inscribing is queued',
-    line: 'Flags and discs are cut on the plate while the bench runs. You play the array when you lay it: at a vein you claimed (the Dwelling screen 居) or on open ground (the Map, your own menu).',
+    line: 'Flags and discs are cut on the plate while the bench runs. You play the array when you lay it: at a vein you claimed (the Dwelling screen 居) or on open ground (the World screen, your own menu).',
     unit: ['set', 'sets'],
     none: 'Every talisman shop stands one, and the free market where a town has none; a bronze inscribing plate is 30 low.',
     slip: 'An array diagram 阵图 is read on study hours, as a formula is; the talisman shops that sell an array sell its diagram.',
@@ -411,6 +411,15 @@ export function CraftsScreen() {
                   Stand up
                 </button>
               </div>
+              {/* Sitting at an empty bench is allowed (the crafts play checkpoint: sit before you
+                  queue), but it says so plainly, so a round never seems to make nothing silently
+                  (Jan's playtest after S1). */}
+              {!c.crafts.front && c.crafts.bench.length === 0 && (
+                <p className="crafts-warming">
+                  <b>Warming your hand.</b> Nothing is on the bench, so these rounds make nothing:
+                  queue a batch and it starts at the hand you hold.
+                </p>
+              )}
               {atCraft === 'refining' ? (
                 <ForgeScene key="forge" game={game} family={family} />
               ) : atCraft === 'talismans' ? (
@@ -980,7 +989,7 @@ function BatchHand({ c }: { c: Cultivator }) {
           ? `The bench waits: ${waits}`
           : c.crafts.bench.length
             ? 'The next batch goes in on your next craft hour, at the hand you hold.'
-            : 'Nothing on the bench: warm your hand, and what you queue starts at it.'}
+            : 'Nothing on the bench: queue a batch to put your hand to use.'}
       </p>
     );
   }

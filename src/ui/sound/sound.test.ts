@@ -92,18 +92,20 @@ describe('the soundscape', () => {
     const cave = scapeOf(where({}), null);
     expect(cave).toMatchObject({ base: 'cave', music: 'cave', duck: 1 });
     expect(cave.ambience).toEqual([{ id: 'amb-cave', level: 1 }]);
-    expect(scapeOf(where({ screen: 'map' }), 'cave').ambience[0]!.id).toBe('amb-wilds');
-    expect(scapeOf(where({ screen: 'map', place: 'city' }), null).ambience[0]!.id).toBe(
+    expect(scapeOf(where({ screen: 'world' }), 'cave').ambience[0]!.id).toBe('amb-wilds');
+    expect(scapeOf(where({ screen: 'world', place: 'city' }), null).ambience[0]!.id).toBe(
       'amb-market',
     );
-    expect(scapeOf(where({ screen: 'map', place: 'gate' }), null).ambience[0]!.id).toBe('amb-sect');
+    expect(scapeOf(where({ screen: 'world', place: 'gate' }), null).ambience[0]!.id).toBe(
+      'amb-sect',
+    );
     const bag = scapeOf(where({ screen: 'bag' }), 'market');
     expect(bag).toMatchObject({ base: 'market', music: 'map' });
     expect(scapeOf(where({ screen: null }), 'cave')).toMatchObject({ music: null, ambience: [] });
   });
 
   it('lays insects under the night and rain over a storm', () => {
-    const night = scapeOf(where({ screen: 'map', night: true }), null);
+    const night = scapeOf(where({ screen: 'world', night: true }), null);
     expect(night.ambience.map((l) => l.id)).toEqual(['amb-wilds', 'amb-night']);
     const storm = scapeOf(where({ storm: true }), null);
     expect(storm.ambience.map((l) => l.id)).toEqual(['amb-cave', 'amb-storm']);
@@ -111,7 +113,7 @@ describe('the soundscape', () => {
   });
 
   it('stands a drone in for the rest while an encounter waits, and a fight plays its own track', () => {
-    const tense = scapeOf(where({ screen: 'map', tense: true }), null);
+    const tense = scapeOf(where({ screen: 'world', tense: true }), null);
     expect(tense.ambience).toEqual([{ id: 'amb-tense', level: 1 }]);
     expect(tense.duck).toBeLessThan(1);
     expect(tense.music).toBe('map');

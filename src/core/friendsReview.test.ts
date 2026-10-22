@@ -107,25 +107,27 @@ describe('1. the rogue’s day hire', () => {
 describe('2. keeping three days', () => {
   const id = 'chain-cadet-school-place';
   it('at drill, counts only the shift hours set to Duty, as the step says', () => {
-    expect(quest(id).steps[0]!.text).toMatch(/set Duty on its hours/);
+    expect(quest(id).steps[1]!.text).toMatch(/set Duty on its hours/);
     let s = standingHome(atLayer(withoutChain(life('cave-orphan', 'along', 'drill')), 3));
-    s = ok(takeQuest(s, id));
+    s = ok(takeJob(s, 'school-watch'));
+    s = noteQuests(ok(takeQuest(s, id)));
     s = run(s, 6);
-    expect(questState(s, id)!.step).toBe(0);
+    expect(questState(s, id)!.step).toBe(1);
     const shift = job(s.player.jobs[0]!.id).shift;
     s = withPlayer(s, setHours(s.player, shift, 'duty').cultivator);
     s = run(s, 6);
-    expect(questState(s, id)!.step).toBeGreaterThan(0);
+    expect(questState(s, id)!.step).toBeGreaterThan(1);
   });
 
   it('counts from the step’s opening, not days kept before it', () => {
     let s = standingHome(atLayer(withoutChain(life('cave-orphan', 'along', 'before')), 4));
+    s = ok(takeJob(s, 'school-watch'));
     s = run(s, 6);
     expect(s.player.jobs[0]!.kept).toBeGreaterThanOrEqual(3);
-    s = ok(takeQuest(s, id));
-    expect(questState(s, id)!.step).toBe(0);
+    s = noteQuests(ok(takeQuest(s, id)));
+    expect(questState(s, id)!.step).toBe(1);
     s = run(s, 6);
-    expect(questState(s, id)!.step).toBeGreaterThan(0);
+    expect(questState(s, id)!.step).toBeGreaterThan(1);
   });
 });
 

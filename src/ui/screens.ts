@@ -3,12 +3,15 @@
 // day wheel with its Practice and Study tabs (Cultivate until then). The Techniques screen lives in
 // Routine › Practice since P2.5f, though its unlock and the seen
 // record's screen id stay `techniques` (the Practice tab shows with it).
+import { built } from '../core/guides.ts';
+import type { GameState } from '../core/state.ts';
+
 export type ScreenId =
   | 'cultivate'
   | 'routine'
   | 'crafts'
   | 'dwelling'
-  | 'map'
+  | 'world'
   | 'journal'
   | 'trees'
   | 'bag'
@@ -30,7 +33,7 @@ export const screens: readonly ScreenInfo[] = [
   { id: 'routine', name: 'Routine', hanzi: '日课', unlock: 'routine' },
   { id: 'crafts', name: 'Crafts', hanzi: '艺', unlock: 'crafts' },
   { id: 'dwelling', name: 'Dwelling', hanzi: '居', unlock: 'dwelling' },
-  { id: 'map', name: 'Map', hanzi: '舆图', unlock: 'map' },
+  { id: 'world', name: 'World', hanzi: '天下', unlock: 'world' },
   { id: 'journal', name: 'Journal', hanzi: '志', unlock: 'journal' },
   { id: 'trees', name: 'Trees', hanzi: '道树', unlock: 'trees' },
   { id: 'bag', name: 'Bag', hanzi: '行囊', unlock: 'bag' },
@@ -39,3 +42,21 @@ export const screens: readonly ScreenInfo[] = [
   { id: 'chronicle', name: 'Chronicle', hanzi: '生平', unlock: 'chronicle' },
   { id: 'settings', name: 'Settings', hanzi: '设置' },
 ];
+
+/** The glyphs open from the first minute that wait for the first minor breakthrough's guide. */
+export const LATE_GLYPHS: ReadonlySet<ScreenId> = new Set<ScreenId>([
+  'world',
+  'character',
+  'people',
+  'chronicle',
+]);
+
+/**
+ * Whether the life has reached a screen: its unlock held, and the rail built that far. A way to a
+ * screen from another (the Dwelling's Set course to the map) waits on the same gate.
+ */
+export function screenReached(s: GameState, id: ScreenId): boolean {
+  const info = screens.find((x) => x.id === id);
+  if (info?.unlock && !s.unlocks.includes(info.unlock)) return false;
+  return built(s, 'rail') && (built(s, 'rail-rest') || !LATE_GLYPHS.has(id));
+}

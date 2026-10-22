@@ -52,7 +52,7 @@ describe('the first seclusion builds the screen', () => {
       expect(built(s, p), p).toBe(false);
     }
     // Elsewhere, nothing fires: a guide fires where its feature lives.
-    expect(now(s, { screen: 'map' })).toBeNull();
+    expect(now(s, { screen: 'world' })).toBeNull();
   });
 
   it('walks take-up, the bar, the first orb and focus, each piece coming in turn', () => {
@@ -121,9 +121,9 @@ describe('the first seclusion builds the screen', () => {
         guides: GUIDE_IDS.filter((g) => !['first-course', 'place-doors', 'first-buy'].includes(g)),
       },
     };
-    expect(now(later, { screen: 'map' })).toBe('first-course');
-    expect(now(later, { screen: 'map', inside: true })).toBe('place-doors');
-    expect(now(later, { screen: 'map', inside: true, shop: true })).toBe('first-buy');
+    expect(now(later, { screen: 'world' })).toBe('first-course');
+    expect(now(later, { screen: 'world', inside: true })).toBe('place-doors');
+    expect(now(later, { screen: 'world', inside: true, shop: true })).toBe('first-buy');
   });
 });
 

@@ -6,7 +6,7 @@ Every feature a player can touch in the game today (built in code, not only desi
 
 **Taught by** names a first-time hint from `src/content/firsts.ts` (`hint:`), a "?" explainer (`Why:`), a beacon, the new-screen glow and dot, a caption, or nothing.
 
-**Open from the first minute:** the rail shows Cultivate, Routine, Map, Character, People, Chronicle and Settings. The rest open where they live: the Trees at 10 insight earned or a method or copy, the Practice tab and Combat at the first technique, the Bag at the first item, Crafts at the first tool or recipe.
+**Open from the first minute:** the rail shows Cultivate, Routine, World, Character, People, Chronicle and Settings. The rest open where they live: the Trees at 10 insight earned or a method or copy, the Practice tab and Combat at the first technique, the Bag at the first item, Crafts at the first tool or recipe.
 
 **The seven firsts** (copy, study hour, method, technique, art, stones, node) arrive switched off with a beacon. The 17 hints, in order: copy, study hour, method, qi hours, orbs, attending, technique, technique hour, art, art hour, stones, node, insight, breakthrough, auto, cards, hints off.
 
@@ -48,7 +48,7 @@ Every feature a player can touch in the game today (built in code, not only desi
 | Your own wheel saved, renamed, forgotten | Routine › Day fold | The fold | nothing | nothing | codex |
 | The methods panel: Climb with, Change, mastery, upkeep, properties | Routine › Day column | The method row | a method | hint:method, Why ×4 | codex |
 | Sleep freed at Foundation (two more hours) | Routine › Day | A line when it lands | Foundation | Chronicle line | codex |
-| The road wheel (travel, look, guard, home, gather) | Routine › Day toggle, the Map | The Map's Journey tab | a course | Why | codex |
+| The road wheel (travel, look, guard, home, gather) | Routine › Day toggle, the World | The World's Journey tab | a course | Why | codex |
 | Your post | Routine › Day column | There from the start on a path that went along | a post | nothing | codex |
 | The Study tab: the reading stand, the queue, Read now | Routine › Study | A copy on the shelf | a copy | hint:copy, hint:study-hour, beacon | guide: reading a copy |
 | What study gives (insight a day, Aptitude) | Routine › Study | The column panel | nothing | Caption | codex |
@@ -71,7 +71,7 @@ Every feature a player can touch in the game today (built in code, not only desi
 | The bookcase: spines, filters, search, the finished stack | Trees › Manuals | The shelf | a copy or manual | The spine's hover card | codex |
 | The Intent ladder (Qi, Intent, Domain) | Character sheet | A row, late | a tier 2 or 4 Dao capstone, then a moment | Why | codex |
 | Treasure slots, opened by notables | Bag | A caption on Worn | the Qi and Soul notables | Why | codex |
-| Veiled Aura (showing a lower realm) | Map, travel veiled | A greyed toggle | the node | Tooltip | codex |
+| Veiled Aura (showing a lower realm) | World, travel veiled | A greyed toggle | the node | Tooltip | codex |
 
 ## Fighting
 
@@ -100,28 +100,28 @@ Every feature a player can touch in the game today (built in code, not only desi
 
 | Feature | Where | First met today | Needs first | Taught by | Way in |
 |---|---|---|---|---|---|
-| The painted map: pan, zoom, fog, all you have charted | Map | Open from the start | nothing | nothing | codex |
-| Click to set a course, and the clock carries you | Map | A click | nothing | nothing | guide: setting a course |
-| The right-click menu: go here, pin, stay and cultivate, go home, search for it, go and enter | Map | A right-click | nothing | nothing | codex |
-| Knowing a place: unknown, rumored, sketched, seen; rumor rings | Map, place pages | Pins and rings | rumors, maps, walking | nothing | codex |
-| The Journey tab: where you are, where to, ahead, the course card, stop, turn back | Map's column | The left column | a course | Labels | codex |
-| Road routines: by day, pressed march, night road, caravan guard | Map's column | The picker | nothing | Why | codex |
-| Ways to go: light step, mount, flying, wagon, ship, someone's sword | Map | Greyed, with why | a mount, Foundation to fly | The greyed reason | codex |
-| Stance: Avoid, Careful, Bold (settles what the road brings) | Map's column | Chips and a note | nothing | The stance's note | introduction quest (the chain’s board road) |
-| Encounter seals on the map; the Card tab (exits with verdicts, going round) | Map, the Card tab | A seal, a rail mark | travel | The card's foot line | codex |
-| Encounter kinds: beast, cultivator, mortal, place, omen, plot (41 templates) | Map | Seals | travel | The card's opening | codex |
+| The painted map: pan, zoom, fog, all you have charted | World | Open from the start | nothing | nothing | codex |
+| Click to set a course, and the clock carries you | World | A click | nothing | nothing | guide: setting a course |
+| The right-click menu: go here, pin, stay and cultivate, go home, search for it, go and enter | World | A right-click | nothing | nothing | codex |
+| Knowing a place: unknown, rumored, sketched, seen; rumor rings | World, place pages | Pins and rings | rumors, maps, walking | nothing | codex |
+| The Journey tab: where you are, where to, ahead, the course card, stop, turn back | World's column | The left column | a course | Labels | codex |
+| Road routines: by day, pressed march, night road, caravan guard | World's column | The picker | nothing | Why | codex |
+| Ways to go: light step, mount, flying, wagon, ship, someone's sword | World | Greyed, with why | a mount, Foundation to fly | The greyed reason | codex |
+| Stance: Avoid, Careful, Bold (settles what the road brings) | World's column | Chips and a note | nothing | The stance's note | introduction quest (the chain’s board road) |
+| Encounter seals on the map; the Card tab (exits with verdicts, going round) | World, the Card tab | A seal, a rail mark | travel | The card's foot line | codex |
+| Encounter kinds: beast, cultivator, mortal, place, omen, plot (41 templates) | World | Seals | travel | The card's opening | codex |
 | Looking, gathering and sensing (Look and Gather hours, sensing by realm) | The road wheel | The hour kinds | road hours | The hour's tooltip | codex |
-| Depth bands and the "a realm above you" warning | Map's column | Pips and a warning | travel | Warning text | codex |
+| Depth bands and the "a realm above you" warning | World's column | Pips and a warning | travel | Warning text | codex |
 | Gates, tolls, the watch reading your realm | The place's strip | The gate strip | cities and gates | Strip text | codex |
 | Travelling with a group (a caravan, a cloud ship), and leaving it | A map card | The group card | a caravan or ship | Card text | codex |
 | Sites: caves, huts, shrines; staying to cultivate | A place screen | The site's counter | a site found or seen | Counter text | codex |
-| Bounty postings pinned on the map | Map, the board | Gold marks | taking a posting | The board's caption | introduction quest (the chain’s board) |
+| Bounty postings pinned on the map | World, the board | Gold marks | taking a posting | The board's caption | introduction quest (the chain’s board) |
 
 ## Places, shops and money
 
 | Feature | Where | First met today | Needs first | Taught by | Way in |
 |---|---|---|---|---|---|
-| The place screen: the gate strip, doors grouped Trade, Own, Work, Hear, Rest | Map › enter | Entering | being there | Door subtitles | guide: a place’s doors |
+| The place screen: the gate strip, doors grouped Trade, Own, Work, Hear, Rest | World › enter | Entering | being there | Door subtitles | guide: a place’s doors |
 | Shop kinds: stall, alchemy shop, refiner, talisman shop, part dealer, sect shop, trading house, black market, bounty office, mortal shop | Place doors | Door names | the place and district | Door subtitles and tags | codex |
 | Buy, Sell, Mend and Restore | The shop's counter | Tabs | stones or silver | nothing | guide: the first buy |
 | Haggling (once a visit) | The shop's counter | The keeper's line | nothing | The button's label | codex |
@@ -189,8 +189,8 @@ Every feature a player can touch in the game today (built in code, not only desi
 | The store, a second grid opened only at its dwelling | Dwelling | The store panel | a dwelling with a store | Panel line |
 | A dwelling's land as plot slots, each a farming plot | Dwelling, then Crafts › Farming | The Land panel | a dwelling with slots | Panel line |
 | Your abode: home, a free bed, moving it | Dwelling, the map's Go home | The abode chip | a dwelling | nothing |
-| Hidden veins and reading the land 堪舆 (soul and Earth Dao, once a day) | Map › Journey, where you stand | A button | nothing | Button subtitle |
-| Claiming: a thatched hut on bare land, a cave abode or spirit mountain on a vein read, a hidden valley at falls or a sinkhole; a deed inside a power's sphere | Map › Journey and right-click, a site's screen | Buttons | standing there | Button subtitle |
+| Hidden veins and reading the land 堪舆 (soul and Earth Dao, once a day) | World › Journey, where you stand | A button | nothing | Button subtitle |
+| Claiming: a thatched hut on bare land, a cave abode or spirit mountain on a vein read, a hidden valley at falls or a sinkhole; a deed inside a power's sphere | World › Journey and right-click, a site's screen | Buttons | standing there | Button subtitle |
 | Building your base: clearing land, digging the store, a quiet chamber | Dwelling › Build | The panel | land claimed in the wild | Panel lines |
 | Raids by thieves and beasts on a site in the wild | A card | The card | a claimed site worth taking, or raised qi and old beds | Card text |
 | Rent taken as its time turns, a lapsed lease's store kept a month | Dwelling, the Chronicle | A line | a rented dwelling | Panel lines |
@@ -203,7 +203,7 @@ Every feature a player can touch in the game today (built in code, not only desi
 | Placing 布阵: laying an array by reading the currents, the hand lifting its rarity | Dwelling › Arrays, the map's own menu | The placing veil | an array in the Bag | Scene text | codex |
 | Arrays at a site: gathering under the vein's cap, warding, concealing, alarm, growing; their eyes fed and taken up | Dwelling › Arrays | The Arrays panel | land claimed on a vein | Panel lines | codex |
 | Arrays in a fight on their ground: warding, binding, killing, maze | Combat | Log lines | a raid at your site, or a trap's catch | Log lines | codex |
-| Prepared ground and traps: an array on open ground, what walks in held until you check it | Map, your own menu | A 阵 seal on the map | an array on open ground | Menu subtitles | codex |
+| Prepared ground and traps: an array on open ground, what walks in held until you check it | World, your own menu | A 阵 seal on the map | an array on open ground | Menu subtitles | codex |
 
 ## Methods that eat resources, arts that burn goods (K11)
 

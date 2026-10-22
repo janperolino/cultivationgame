@@ -40,7 +40,16 @@ interface Start {
     thanks: string;
   };
   place:
-    | { kind: 'post'; title: string; giver: string; reason: string; thanks: string }
+    | {
+        kind: 'post';
+        title: string;
+        giver: string;
+        reason: string;
+        /** The post, taken at home's Work door: its job id, and the step's words for it. */
+        job: string;
+        take: string;
+        thanks: string;
+      }
     | {
         kind: 'own';
         title: string;
@@ -153,6 +162,9 @@ function chain(s: Start): Quest[] {
           giver: { kind: 'person', place: home, name: p.giver },
           reason: p.reason,
           steps: [
+            // The oath seats you in the power; the post itself is taken where it lives, at the
+            // Work door, which teaches Duty there (Jan's playtest after S1).
+            { text: p.take, where: home, goal: { job: p.job } },
             {
               text: 'Keep three days of your post’s shifts: stand at it as its Duty hours pass. Until layer 4 you are at drill: set Duty on its hours yourself.',
               where: home,
@@ -256,6 +268,8 @@ const STARTS: readonly Start[] = [
       kind: 'post',
       title: 'The Evening Watch',
       giver: 'the school’s quartermaster',
+      job: 'school-watch',
+      take: 'Take the school’s watch at the Work door: its shift goes on your wheel as Duty.',
       reason:
         'From the third layer a cadet stands the school’s evening watch and is paid in the March’s merit, and the quartermaster hands a nourishing art to every cadet whose first merit is on his ledger, so they don’t fall asleep on it.',
       thanks:
@@ -360,6 +374,8 @@ const STARTS: readonly Start[] = [
       kind: 'post',
       title: 'Your Stretch of Wall',
       giver: 'your patrol sergeant',
+      job: 'wall-patrol',
+      take: 'Take the Wall’s patrol at the Work door: its shift goes on your wheel as Duty.',
       reason:
         'From the third layer a cadet walks the patrol for the March’s merit, and the sergeant hands a nourishing art to every cadet with merit on the ledger, since a patrol that sleeps on the Wall doesn’t come back.',
       thanks:
@@ -480,6 +496,8 @@ const STARTS: readonly Start[] = [
       kind: 'post',
       title: 'The Medicine Garden',
       giver: 'your senior',
+      job: 'gate-garden',
+      take: 'Take the medicine garden at the Work door: its shift goes on your wheel as Duty.',
       reason:
         'An outer disciple works a post for the Gate’s contribution: yours is the medicine garden. Every outer disciple with contribution on the ledger may take a nourishing art from the hall, and your senior wants yours on it before his own seniors ask why it isn’t.',
       thanks:
