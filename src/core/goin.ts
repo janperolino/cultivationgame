@@ -1201,6 +1201,8 @@ export function leavingCard(
 export function templatedLine(s: GameState): string {
   const g = s.goin;
   if (!g) return '';
+  // A place's frame keeps its names' capitals; a card's title is a phrase.
+  if (g.place) return `${s.player.name} went into ${g.title}.`;
   return g.title
     ? `${s.player.name} went in on ${g.title.toLowerCase()}.`
     : `${s.player.name} stopped a while in the open.`;
