@@ -716,17 +716,51 @@ export const NOISE_TICKS = 2;
 export const TRAFFIC = { busy: 2, road: 6, wilds: 12 } as const;
 export type Traffic = keyof typeof TRAFFIC;
 
-/** The law of a place, from its kind (design § The resolver, Scenes and time). */
+/**
+ * The law of a place, from its kind (design § The resolver, Scenes and time): who comes, at what
+ * realm, in how many ticks to a deed, and on which turn of a fight it joins (P3.9c, Jan's yes: an
+ * elder's divine sense on the 2nd, the garrison the 3rd, the watch the 5th, the headman the 10th).
+ */
 export const LAW = {
   wilds: null,
-  village: { who: 'the headman and a guard', realm: 'qi-condensation', stage: 3, ticks: 2 },
-  town: { who: 'the watch and its captain', realm: 'qi-condensation', stage: 6, ticks: 1 },
-  city: { who: 'the garrison', realm: 'foundation-establishment', stage: 1, ticks: 1 },
-  sect: { who: 'an elder', realm: 'foundation-establishment', stage: 3, ticks: 1 },
+  village: {
+    who: 'the headman and a guard',
+    realm: 'qi-condensation',
+    stage: 3,
+    ticks: 2,
+    turns: 10,
+  },
+  town: {
+    who: 'the watch and its captain',
+    realm: 'qi-condensation',
+    stage: 6,
+    ticks: 1,
+    turns: 5,
+  },
+  city: { who: 'the garrison', realm: 'foundation-establishment', stage: 1, ticks: 1, turns: 3 },
+  sect: { who: 'an elder', realm: 'foundation-establishment', stage: 3, ticks: 1, turns: 2 },
 } as const satisfies Record<
   string,
-  { who: string; realm: RealmId; stage: number; ticks: number } | null
+  { who: string; realm: RealmId; stage: number; ticks: number; turns: number } | null
 >;
+
+/**
+ * Who joins a fight inside a scene, and on which turn (P3.9c; design § Scenes and time, A fight is
+ * a mode of the scene): someone in your frame whose motive takes a side on the 2nd, a follower left
+ * nearby (another room of the district) on the 3rd, one within call (another district) on the 6th.
+ */
+export const FIGHT_JOIN = { bystander: 2, nearby: 3, call: 6 } as const;
+
+/** A scene feature's tags as the fight reads them (design § Combat, Free text and creativity). */
+export const FIGHT_TAGS: Readonly<Record<string, string>> = {
+  burnable: 'flammable',
+  height: 'high ground',
+  cover: 'cover',
+  dark: 'dark',
+  water: 'water',
+  fire: 'fire',
+  fragile: 'fragile',
+};
 export type PlaceKind = keyof typeof LAW;
 
 // ── What lasts ───────────────────────────────────────────────────────────────────────────────

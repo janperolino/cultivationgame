@@ -9,7 +9,15 @@ import { hasItem, item } from '../content/items.ts';
 import { hasTechnique, technique } from '../content/techniques.ts';
 import { card } from '../content/cards/index.ts';
 import { encounterTemplate } from '../content/encounters/index.ts';
-import { combatantIn, type Fight, type Outcome, type Tick } from '../core/combat/fight.ts';
+import {
+  combatantIn,
+  type Fight,
+  type Join,
+  type Outcome,
+  type Tick,
+} from '../core/combat/fight.ts';
+import { PROJECTION } from '../content/resolver.ts';
+import { capitalize } from './format.ts';
 import { logLine } from '../core/combat/log.ts';
 import { fightEnd, playTurn, type FightEnd, type YourAction } from '../core/played.ts';
 import { cueGains, deltas, riseGains, type Delta } from './feel.ts';
@@ -122,13 +130,66 @@ export function syncFight(s: GameState): void {
   });
 }
 
+/** One exchange as the screen tells it: its lines, who joined and who faded, and the fight after. */
+export interface Exchange {
+  fight: Fight;
+  /** What each action did, for the narrator (ai/outcome.ts `exchangeOutcome`). */
+  outcomes: Outcome[];
+  lines: LogEntry[];
+  came: Join[];
+  faded: string[];
+  end: FightEnd | null;
+  /** Your words, or the button's name. */
+  said: string;
+  /** Why a typed turn played as something else (P3.9c). */
+  why: string | null;
+  /** You gave face this exchange. */
+  face: boolean;
+}
+
+/** A scene's fight tells each exchange on the go-in screen (ui/goin.ts), and holds the buttons while it does. */
+let sceneTurn: ((x: Exchange) => void) | null = null;
+let held: () => boolean = () => false;
+
+export function setSceneTurn(f: (x: Exchange) => void, hold: () => boolean): void {
+  sceneTurn = f;
+  held = hold;
+}
+
+/** Your action in words: "Ember Palm", "Strike", "Bluff". */
+function saidOf(f: Fight, me: string, a: YourAction): string {
+  if (a.face) return 'Give face';
+  const m = a.main;
+  if (!m) return 'Wait';
+  if (m.type === 'technique')
+    return combatantIn(f, me)?.techniques[m.id]?.technique.name ?? 'An art';
+  if (m.type === 'item') return combatantIn(f, me)?.items[m.id]?.item.name ?? 'An item';
+  if (m.type === 'talk') return capitalize(m.style);
+  if (m.type === 'defend' && a.minor?.type === 'take_cover') return 'Take cover and defend';
+  return capitalize(m.type);
+}
+
+/** Who joined, as the log says it: the law against whoever started it, a projection's line. */
+function cameLine(f: Fight, j: Join, me: string): LogEntry {
+  const mine = j.who.side === combatantIn(f, me)?.side;
+  return {
+    turn: f.turn,
+    head: j.who.name,
+    line:
+      j.why === 'projection'
+        ? `arrives at ${combatantIn(f, j.charge ?? '')?.name ?? 'their charge'}'s side: “${PROJECTION.line}”`
+        : `joins the fight, ${mine ? 'on your side' : 'against you'}`,
+    mine,
+  };
+}
+
 /** Plays your action and every foe's. */
-export function act(action: YourAction): void {
+export function act(action: YourAction, said?: string, why: string | null = null): void {
   // The first move ends the first fight turn's veil (ui/guide.ts).
   endGuide('fight-turn');
   const { fight, target, end } = useFight.getState();
   const me = useGame.getState().game?.player.id;
-  if (!fight || !me || end) return;
+  if (!fight || !me || end || held()) return;
   let turn: ReturnType<typeof playTurn> = null;
   useGame.getState().applyLife((s) => {
     turn = playTurn(s, fight, action);
@@ -138,6 +199,14 @@ export function act(action: YourAction): void {
   if (!t) return;
   const f = t.fight;
   const lines: LogEntry[] = [
+    // Who joined as the turn began (P3.9c), and a projection whose turns ran out.
+    ...t.came.map((j) => cameLine(f, j, me)),
+    ...t.faded.map((id) => ({
+      turn: f.turn,
+      head: combatantIn(f, id)?.name ?? id,
+      line: 'fades',
+      mine: false,
+    })),
     // The arrays on the ground act as the turn begins (K10): a strike, or a foe held.
     ...(t.ground ?? []).map((g) => ({
       turn: f.turn,
@@ -197,6 +266,18 @@ export function act(action: YourAction): void {
   }));
   // Every exchange is saved, so a reload comes back to it rather than away from it.
   void useGame.getState().saveNow();
+  if (useGame.getState().game?.fight?.from.kind === 'scene')
+    sceneTurn?.({
+      fight: f,
+      outcomes: t.outcomes,
+      lines,
+      came: t.came,
+      faded: t.faded,
+      end: fightEnd(f, me),
+      said: said ?? saidOf(fight, me, action),
+      why,
+      face: !!action.face,
+    });
 }
 
 export function selectTarget(id: string): void {
@@ -228,7 +309,7 @@ export function leaveFight(): void {
   if (scene) {
     useFight.setState({ fight: null, target: null, log: [], pending: null, end: null });
     void useGame.getState().saveNow();
-    sceneFightBack?.(scene, (back as unknown as Finished).end);
+    sceneFightBack?.(scene, (back as unknown as Finished).end, fight);
     return;
   }
   useFight.setState({
@@ -243,10 +324,12 @@ export function leaveFight(): void {
   void useGame.getState().saveNow();
 }
 
-let sceneFightBack: ((back: SceneFightBack, end: FightEnd) => void) | null = null;
+let sceneFightBack: ((back: SceneFightBack, end: FightEnd, f: Fight) => void) | null = null;
 
 /** The go-in screen takes a scene's fight back to tell it (ui/goin.ts). */
-export function setSceneFightBack(f: (back: SceneFightBack, end: FightEnd) => void): void {
+export function setSceneFightBack(
+  f: (back: SceneFightBack, end: FightEnd, fight: Fight) => void,
+): void {
   sceneFightBack = f;
 }
 

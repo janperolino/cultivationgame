@@ -194,6 +194,21 @@ export interface Fight {
   features: Feature[];
   /** The arrays on its ground (K10). */
   arrays?: FightArray[];
+  /** Who joins it on a later turn (P3.9c, core/combat/joins.ts): the law, followers, a projection. */
+  joins?: readonly Join[];
+}
+
+/**
+ * Someone who joins a fight under way (P3.9c): on a set turn, or, for a backer's projection, the
+ * turn after their charge's life is at stake.
+ */
+export interface Join {
+  /** The turn they fight from; null for a projection, which comes when its charge falls low. */
+  turn: number | null;
+  who: Combatant;
+  why: 'law' | 'follower' | 'bystander' | 'projection';
+  /** A projection's charge. */
+  charge?: string;
 }
 
 /** What one action did to one target: the five tags, then the numbers the log line shows. */
@@ -404,6 +419,7 @@ export function resolveTurn(
     combatants: fight.combatants.map((c) => ({ ...c, statuses: [...c.statuses] })),
     features: fight.features.map((x) => ({ ...x })),
     ...(fight.arrays ? { arrays: fight.arrays.map((a) => ({ ...a })) } : {}),
+    ...(fight.joins ? { joins: fight.joins } : {}),
   };
   const outcomes: Outcome[] = [];
   const skipped: TurnResult['skipped'] = [];

@@ -21,6 +21,7 @@ import {
   HOME_REGION,
   MERCY_KARMA,
   COSTS,
+  FIGHT_TAGS,
   LAW,
   NOISE_LI,
   NOISE_LI_MAX,
@@ -38,8 +39,14 @@ import {
 } from '../../content/resolver.ts';
 import { veinAt } from '../../content/map/index.ts';
 import { realmIndex } from '../../content/realms.ts';
-import { combatant, topRung, wearFrom } from '../combat/combatant.ts';
-import { fightOver, startFight, winner as fightWinner, type Fight } from '../combat/fight.ts';
+import { combatant, topRung, wearFrom, type Combatant } from '../combat/combatant.ts';
+import {
+  fightOver,
+  startFight,
+  winner as fightWinner,
+  type Feature,
+  type Fight,
+} from '../combat/fight.ts';
 import { runFight } from '../combat/profile.ts';
 import { canPay, stonesOf, tierGrade } from '../purse.ts';
 import { withStream, type GameState } from '../state.ts';
@@ -1413,13 +1420,31 @@ export function sceneFight(scene: Scene, actorId: string, targetId: string): Fig
     (x) => sides.has(x.side) && (x.state === 'present' || (x.state === 'hidden' && starts(x))),
   );
   return startFight(
-    fighters.map((x) => {
-      const c =
-        x.combatant ??
-        combatant({ id: x.id, name: x.name, side: x.side, rungs: x.rungs, agility: x.agility });
-      return { ...c, id: x.id, side: x.side };
-    }),
+    fighters.map((x) => fighterOf(x)),
+    fightFeatures(scene),
   );
+}
+
+/** Someone in a scene as a fighter: their combatant, or one built from their rungs. */
+export function fighterOf(x: Actor, side = x.side): Combatant {
+  const c =
+    x.combatant ??
+    combatant({ id: x.id, name: x.name, side: x.side, rungs: x.rungs, agility: x.agility });
+  return { ...c, id: x.id, side };
+}
+
+/**
+ * The scene's features as a fight reads them (P3.9c): the ones in sight, their tags turned into
+ * the fight's (FIGHT_TAGS), so a typed turn can kick the brazier into the straw.
+ */
+export function fightFeatures(scene: Scene): Feature[] {
+  return scene.features
+    .filter((f) => !f.hidden && !f.broken)
+    .map((f) => ({
+      id: f.id,
+      name: f.name,
+      tags: [...new Set(f.tags.map((t) => FIGHT_TAGS[t]).filter((t): t is string => !!t))],
+    }));
 }
 
 /**

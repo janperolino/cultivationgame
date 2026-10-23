@@ -13171,7 +13171,6 @@ p.map-above {
   margin-left: 3px;
 }
 
-
 /* The go-in screen (P3.9, docs/mockups/go-in-study.html): a scene takes the stage as a fight does,
    three columns under a static shade (no live blur): where you are, the story, who's here and you. */
 .shell.is-goin {
@@ -13186,8 +13185,6 @@ p.map-above {
   overflow: hidden;
 }
 
-
-
 .goin-label {
   font-size: 11px;
   letter-spacing: 0.1em;
@@ -13195,7 +13192,6 @@ p.map-above {
   color: var(--muted);
   margin: 0 0 6px;
 }
-
 
 .goin-place {
   display: grid;
@@ -14100,4 +14096,161 @@ p.map-above {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+}
+
+/* A fight inside the scene (P3.9c, docs/mockups/scene-fight-study.html, Jan's yes): the two sides
+   over the painting's lower half with the effects over them, your move along its foot where the
+   doors were, Give face for the one exchange a projection asks it. Static: no blur. */
+.goin-over.is-fight {
+  bottom: auto;
+  top: 120px;
+}
+
+.goin-fight {
+  position: absolute;
+  left: 36px;
+  right: 844px;
+  bottom: 28px;
+  display: grid;
+  gap: 12px;
+}
+
+.goin-fight .fight-arena {
+  grid-template-columns: 340px 340px;
+  justify-content: space-between;
+  align-items: end;
+  padding: 0;
+  min-height: 0;
+}
+
+.goin-fight .fight-side:last-of-type {
+  justify-items: end;
+}
+
+.goin-fight .fight-card {
+  width: 340px;
+  background: rgb(7 8 11 / 0.84);
+  border-color: var(--edge-strong);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.5);
+}
+
+.goin-fight .fight-card.is-selected {
+  border-color: var(--accent-edge);
+  box-shadow:
+    0 0 0 1px var(--accent-edge),
+    0 6px 20px rgb(0 0 0 / 0.5);
+}
+
+.fight-card.is-ally {
+  border-color: color-mix(in srgb, var(--good) 45%, transparent);
+}
+
+.goin-fight-bar .panel {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.goin-fight-bar .panel-heading {
+  display: none;
+}
+
+.goin-fight-bar .sub-heading {
+  margin: 4px 0 0;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.goin-fight-bar .fight-actions {
+  gap: 6px;
+  margin: 4px 0 0;
+}
+
+.goin-fight-bar .fight-action {
+  min-width: 118px;
+  padding: 7px 11px;
+  background: rgb(7 8 11 / 0.84);
+  border-color: var(--edge-strong);
+}
+
+.goin-fight.is-held .goin-fight-bar,
+.goin-fight.is-held .goin-give-face {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.goin-give-face {
+  justify-self: start;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 8px 14px;
+  border-color: color-mix(in srgb, var(--crack) 60%, transparent);
+  background: rgb(12 18 28 / 0.92);
+}
+
+.goin-give-face .caption {
+  color: var(--muted);
+}
+
+.goin-fighting {
+  color: var(--warn);
+}
+
+.goin-exchange {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.goin-turn.is-exchange .goin-prose {
+  font-size: 21px;
+}
+
+.goin-coming {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.goin-track.is-mini {
+  width: 90px;
+  height: 4px;
+  margin-top: 4px;
+}
+
+/* The river's turns, pinned to its foot while the prose is revealed (ui/reveal.ts). */
+.goin-river-in {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* A turn's quiet line comes in softly as its telling ends, once, not looping. */
+.goin-turn .goin-line {
+  animation: goin-line-in 220ms ease-out;
+}
+
+@keyframes goin-line-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.goin-fight .goin-fight-bar,
+.goin-fight .goin-give-face {
+  transition: opacity 200ms ease;
+}
+
+.goin-fight.is-held .goin-fight-bar,
+.goin-fight.is-held .goin-give-face {
+  opacity: 0.8;
+}
+
+.goin-fill {
+  transition: width 400ms ease;
 }

@@ -7,9 +7,17 @@
 // end comes back here to be told (ui/fight.ts). Every step saves.
 import { create } from 'zustand';
 import { atlasOf, type Atlas, type AtlasEntry } from '../ai/context.ts';
-import { FALLBACK_LINE, interpret, type Reading } from '../ai/interpret.ts';
+import {
+  FALLBACK_LINE,
+  fightActionOf,
+  interpret,
+  interpretFight,
+  type FightAction,
+  type Reading,
+} from '../ai/interpret.ts';
 import { CHRONICLE_EVERY, chronicle, narrate } from '../ai/narrate.ts';
-import { outcomeOf } from '../ai/outcome.ts';
+import { exchangeOutcome, fightEndOutcome, outcomeOf } from '../ai/outcome.ts';
+import { combatantIn, type Fight } from '../core/combat/fight.ts';
 import { sceneView, settingText, toneText, wordsFor } from '../ai/scene.ts';
 import type { GoInLength } from '../content/goin.ts';
 import { ACTS, COSTS, SHORTS } from '../content/resolver.ts';
@@ -39,18 +47,36 @@ import {
 } from '../core/goin.ts';
 import type { FightEnd } from '../core/played.ts';
 import { keepLasts } from '../core/voices.ts';
-import { goInPlace, sitLecture, type PlaceDoor } from '../core/goinPlace.ts';
+import {
+  crowdHere,
+  engageAimed,
+  goInPlace,
+  sitLecture,
+  type PlaceDoor,
+} from '../core/goinPlace.ts';
+import { faceId } from '../core/crowd.ts';
 import { NEW_SPOT } from '../content/goin.ts';
 import { placeById, type MapPlace, type RegionMap } from '../core/map/region.ts';
 import { mapOf } from '../core/map/travel.ts';
 import { doorsOf } from './placeDoors.ts';
 import { nameOf } from '../core/people.ts';
+import { realmOfActor } from '../core/resolver/actor.ts';
+import { fighterOf } from '../core/resolver/scene.ts';
+import { REALM_IDS, realmIndex } from '../content/realms.ts';
 import { opinion } from '../core/resolver/opinion.ts';
 import type { Plan } from '../core/resolver/plan.ts';
 import type { Scene, StepResult } from '../core/resolver/scene.ts';
 import type { GameState, GoInTurn } from '../core/state.ts';
 import { gameAi, hasKey, meter } from './ai.ts';
-import { setSceneFightBack } from './fight.ts';
+import {
+  act,
+  leaveFight,
+  setSceneFightBack,
+  setSceneTurn,
+  useFight,
+  type Exchange,
+} from './fight.ts';
+import { currentFight, foeNames } from '../core/playFight.ts';
 import { addNotMeant, spendToday, useSettings } from './settings.ts';
 import { useGame } from './store.ts';
 
@@ -77,6 +103,8 @@ interface GoInUi {
   busy: 'reading' | 'telling' | 'leaving' | null;
   /** The turn being told: your words, and the prose as it streams. */
   saying: string | null;
+  /** The fight's exchange being told, so its heading stands before the prose arrives (P3.9c). */
+  sayingExchange: number | null;
   streaming: string;
   /** The text box. */
   words: string;
@@ -94,6 +122,7 @@ interface GoInUi {
 export const useGoIn = create<GoInUi>()(() => ({
   busy: null,
   saying: null,
+  sayingExchange: null,
   streaming: '',
   words: '',
   readings: null,
@@ -237,6 +266,12 @@ interface Telling {
   /** Engine lines the outcome adds: a card's exit, a fall, a flight. */
   extra?: readonly string[];
   read?: string;
+  /** The quiet line, when the engine's own isn't it: a fight's exchange (P3.9c). */
+  line?: { line: string; why?: string };
+  /** A fight's exchange inside the scene, its number. */
+  exchange?: number;
+  /** The outcome as the narrator gets it, when it isn't the round's: a fight's exchange. */
+  outcome?: (view: ReturnType<typeof sceneView>) => ReturnType<typeof outcomeOf>;
 }
 
 /** The meter's cost of a call made since `from`. */
@@ -251,13 +286,20 @@ async function tell(t: Telling): Promise<void> {
   const s0 = game();
   if (!s0?.goin) return;
   const from = meter.cost;
-  useGoIn.setState({ busy: 'telling', saying: t.said, streaming: '' });
+  useGoIn.setState({
+    busy: 'telling',
+    saying: t.said,
+    sayingExchange: t.exchange ?? null,
+    streaming: '',
+  });
   try {
     const a = await loadAtlas();
     const s = game()!;
     const g = s.goin!;
     const view = sceneView(s, a);
-    const out = outcomeOf(view, t.before, g.scene, t.results, t.stopped ?? null);
+    const out = t.outcome
+      ? t.outcome(view)
+      : outcomeOf(view, t.before, g.scene, t.results, t.stopped ?? null);
     if (t.extra?.length) {
       out.plain.push(...t.extra);
       out.text += `\n${t.extra.map((l) => `- ${l}`).join('\n')}`;
@@ -286,8 +328,9 @@ async function tell(t: Telling): Promise<void> {
     const turn: GoInTurn = {
       said: t.said,
       told: n.prose,
-      ...(t.said === null ? { line: 'you go in' } : lineOf(s, t.results, ticks)),
+      ...(t.said === null ? { line: 'you go in' } : (t.line ?? lineOf(s, t.results, ticks))),
       length: t.length,
+      ...(t.exchange ? { exchange: t.exchange } : {}),
       ...(t.read ? { read: t.read } : {}),
       ...(n.fellBack === 'prose' ? { outcome: out.text } : {}),
     };
@@ -372,8 +415,42 @@ export async function tellAgain(): Promise<void> {
 
 // ── Your turn ────────────────────────────────────────────────────────────────────────────────
 
-/** What a fight the scene opened left to tell once it comes back from the Combat screen. */
-let fightTurn: { said: string; read?: string } | null = null;
+/** What a fight inside the scene left to tell once it ends: its last exchange, its lines. */
+let fightTurn: { said: string; read?: string; extra?: string[] } | null = null;
+
+/**
+ * A fight opens inside the scene (P3.9c): the steps that led to it and the first sight of it, told
+ * as a beat; the exchanges follow on the painting.
+ */
+function opensFight(
+  said: string,
+  before: Scene,
+  results: readonly StepResult[],
+  read?: string,
+): void {
+  const s = game()!;
+  const f = currentFight(s);
+  // Named as you know them: a stranger stays a stranger (P3.9c).
+  const me = f && combatantIn(f, s.player.id);
+  const foes =
+    f && atlas && me
+      ? f.combatants
+          .filter((c) => c.side !== me.side)
+          .map((c) => sceneView(s, atlas!).people[c.id]?.label ?? 'someone')
+          .join(', ')
+      : f
+        ? foeNames(s, f)
+        : 'them';
+  void tell({
+    said,
+    before,
+    results,
+    length: 'beat',
+    extra: [`A fight begins: you against ${foes}.`],
+    line: { line: `a fight · against ${foes}` },
+    ...(read ? { read } : {}),
+  });
+}
 
 /** Runs a plan as the turn, or opens the fight it reaches; then tells it. */
 async function run(plan: Plan, said: string, read?: string, stake = false): Promise<void> {
@@ -382,7 +459,7 @@ async function run(plan: Plan, said: string, read?: string, stake = false): Prom
   const r = runTurn(s, plan);
   apply(r.state);
   if (r.fight) {
-    fightTurn = { said, ...(read ? { read } : {}) };
+    opensFight(said, r.before, r.results, read);
     return;
   }
   const surprise = r.results.some((x) => x.surprise);
@@ -426,6 +503,7 @@ export async function say(words: string): Promise<void> {
     useGoIn.setState({ note: 'Going in needs an OpenRouter key: add one in Settings.' });
     return;
   }
+  if (s.fight?.from.kind === 'scene') return sayInFight(text);
   useGoIn.setState({ busy: 'reading', note: null, readings: null, words: text });
   const from = meter.cost;
   try {
@@ -453,6 +531,86 @@ export async function say(words: string): Promise<void> {
     if (useGoIn.getState().busy === 'reading') useGoIn.setState({ busy: null });
   }
 }
+
+/**
+ * Your words in a fight inside the scene (P3.9c): P3.8's fight interpreter reads one turn, made
+ * legal against the fight; one beyond you plays as the closest legal action and says why. Words it
+ * can't read stay in the box, and no exchange passes.
+ */
+async function sayInFight(text: string): Promise<void> {
+  const s = game()!;
+  const f = useFight.getState().fight;
+  if (!f) return;
+  useGoIn.setState({ busy: 'reading', note: null, readings: null, words: text });
+  const from = meter.cost;
+  let read: FightAction | undefined;
+  try {
+    const r = await interpretFight(gameAi, sceneView(s, await loadAtlas()), text);
+    apply(keepTelling(game()!, { cost: spentSince(from) }));
+    if (r.kind === 'fallback') {
+      useGoIn.setState({ note: r.reason });
+      return;
+    }
+    read = fightActionOf(f, s.player.id, r.turn, useFight.getState().target);
+  } catch (e) {
+    useGoIn.setState({ note: `The words don’t reach anyone: ${(e as Error).message}` });
+    return;
+  } finally {
+    spendToday(spentSince(from));
+    useGoIn.setState({ busy: null });
+  }
+  if (!read) return;
+  useGoIn.setState({ words: '' });
+  act(read.action, text, read.why);
+}
+
+/** Flee, from a fight inside the scene: the engine's flight, against their Speed. */
+export function fleeFight(): void {
+  act({ main: { type: 'flee' } }, 'Flee');
+}
+
+/** Give face to the projection that asked for it: it takes its charge away. */
+export function giveFaceNow(): void {
+  act({ face: true }, 'Give face');
+}
+
+/**
+ * An exchange of a fight inside the scene, told as a beat of a sentence or two (P3.9c); the last
+ * exchange is told with the fight's end, once, at the fight's length.
+ */
+function tellExchange(x: Exchange): void {
+  const s = game();
+  if (!s?.goin) return;
+  // The fight's last exchange is told with its end; its lines named as your context names them.
+  const extra = atlas
+    ? exchangeOutcome(sceneView(s, atlas), x).plain
+    : x.lines.map((l) => `${l.head}: ${l.line}`);
+  if (x.end) {
+    fightTurn = { said: x.said, extra };
+    leaveFight();
+    return;
+  }
+  // The quiet line names people as your context does, never a stranger's name (P3.9c).
+  const plain = atlas ? exchangeOutcome(sceneView(s, atlas), x).plain : null;
+  const mine = plain
+    ? plain.filter((l) => l.startsWith('you: ')).map((l) => l.slice(5))
+    : x.lines.filter((l) => l.mine).map((l) => l.line);
+  void tell({
+    said: x.said,
+    before: s.goin.scene,
+    results: [],
+    length: 'beat',
+    arrival: x.came.length > 0,
+    outcome: (view) => exchangeOutcome(view, x),
+    exchange: x.fight.turn,
+    line: {
+      line: [...(x.why ? [`can’t: ${x.why}`] : []), ...mine].join(' · ') || 'the exchange',
+      why: plain ? plain.join(' / ') : x.lines.map((l) => `${l.head} · ${l.line}`).join(' / '),
+    },
+  });
+}
+
+setSceneTurn(tellExchange, () => !!useGoIn.getState().busy);
 
 /** One of the readings, picked. */
 export function pickReading(r: Reading): void {
@@ -490,6 +648,75 @@ export function moveNow(frame: string, name: string): void {
     { actor: s.player.id, steps: [{ verb: 'go', act: 'enter', target: frame }] },
     `Go to ${name}`,
   );
+}
+
+/**
+ * The dev console's `goin fight` (P3.9c): you attack someone in your frame, by id or the first
+ * stranger, so a fight inside the scene can be looked at without a key.
+ */
+export function fightDev(who?: string): string | null {
+  const s = game();
+  if (!s?.goin) return 'Go in first.';
+  const target = s.goin.scene.actors.find(
+    (a) =>
+      a.state === 'present' &&
+      !s.goin!.scene.players.includes(a.id) &&
+      (who ? a.id === who || a.name.toLowerCase().includes(who.toLowerCase()) : a.side !== 'law'),
+  );
+  // Nobody made yet: one of the crowd's faces, made as it is aimed at (P3.9b).
+  const face = target ? null : crowdHere(s)?.faces.find((x) => !who || x.line.includes(who));
+  if (!target && !face) return 'Nobody here to fight.';
+  void run(
+    {
+      actor: s.player.id,
+      steps: [{ verb: 'fight', act: 'attack', target: target?.id ?? faceId(face!.key) }],
+    },
+    `Attack ${target?.name ?? face!.line}`,
+  );
+  return null;
+}
+
+/**
+ * The dev console's `goin backer` (P3.9c): someone in your frame, the first stranger or by id,
+ * gets a backer two realms up and is left hurt, so a projection can be looked at.
+ */
+export function backerDev(who?: string): string | null {
+  const s0 = game();
+  if (!s0?.goin) return 'Go in first.';
+  // Nobody made yet: the crowd's first face is made into someone to back.
+  const face = crowdHere(s0)?.faces[0];
+  const s =
+    face && !who && !s0.goin.scene.actors.some((x) => !s0.goin!.scene.players.includes(x.id))
+      ? engageAimed(s0, [faceId(face.key)])
+      : s0;
+  const sc = s.goin!.scene;
+  const a = sc.actors.find(
+    (x) =>
+      x.state === 'present' &&
+      !sc.players.includes(x.id) &&
+      (who ? x.id === who : x.side !== 'law'),
+  );
+  if (!a) return 'Nobody here to back.';
+  const r = realmOfActor(a);
+  const up = REALM_IDS[Math.min(REALM_IDS.length - 1, realmIndex(r.realm) + 2)]!;
+  const backer = { id: `${a.id}-backer`, name: 'Elder Han', realm: { realm: up, stage: 1 } };
+  const hurt = fighterOf(a);
+  apply({
+    ...s,
+    goin: {
+      ...s.goin!,
+      // Hurt to under a third, so a few blows call the projection.
+      scene: {
+        ...sc,
+        actors: sc.actors.map((x) =>
+          x.id === a.id
+            ? { ...x, backer, combatant: { ...hurt, hp: Math.ceil(hurt.maxHp * 0.3) } }
+            : x,
+        ),
+      },
+    },
+  });
+  return null;
 }
 
 /** Somewhere quiet: a made frame off where you stand, out of the crowd's eyes. */
@@ -540,7 +767,7 @@ export function takeExit(i: number, label: string): void {
   const before = s.goin.scene;
   apply(r.state);
   if (r.fight) {
-    fightTurn = { said: label };
+    opensFight(label, before, []);
     return;
   }
   void tell({ said: label, before, results: [], length: 'stake', extra: [r.text] });
@@ -557,7 +784,7 @@ export function leaveNow(): void {
   }
   apply(r.state);
   if (r.turn?.fight) {
-    fightTurn = { said: 'Leave' };
+    opensFight('Leave', r.turn.before, r.turn.results);
     return;
   }
   if (r.turn) {
@@ -607,16 +834,19 @@ export function notMeant(turn: GoInTurn, meant: string): void {
 
 // ── A fight played on the stage comes back ───────────────────────────────────────────────────
 
-setSceneFightBack((back: SceneFightBack, end: FightEnd) => {
+setSceneFightBack((back: SceneFightBack, end: FightEnd, f: Fight) => {
   const t = fightTurn ?? { said: 'The fight' };
   fightTurn = null;
+  const last = [...(t.extra ?? []), back.text, ...(end === 'lost' ? ['You are down.'] : [])];
   void tell({
     said: t.said,
     before: back.before,
     results: back.results,
     length: 'fight',
     arrival: false,
-    extra: [back.text, ...(end === 'lost' ? ['You are down.'] : [])],
+    // Its own outcome: how it ended, the sides, its last exchange, what the scene made of it.
+    outcome: (view) =>
+      fightEndOutcome(view, f, end, back.before, game()!.goin!.scene, back.results, last),
     ...(t.read ? { read: t.read } : {}),
   });
 });
