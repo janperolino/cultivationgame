@@ -38,6 +38,8 @@ import {
   changeIt,
   dismissLeaving,
   doIt,
+  fleeFight,
+  giveFaceNow,
   lastActNow,
   leaveNow,
   lectureNow,
@@ -53,6 +55,11 @@ import {
   wait,
 } from './goin.ts';
 import { useSettings } from './settings.ts';
+import { Actions, Arena } from './CombatScreen.tsx';
+import { syncFight, useFight } from './fight.ts';
+import { combatantIn, type Fight } from '../core/combat/fight.ts';
+import type { Combatant } from '../core/combat/combatant.ts';
+import { faceAsked } from '../core/combat/joins.ts';
 import { bannerArt, doorArt } from './placeArt.ts';
 import { landArt } from './landArt.ts';
 import { terrainAt } from '../core/map/region.ts';
@@ -88,7 +95,8 @@ function Turn({ t, last }: { t: GoInTurn; last: boolean }) {
   const [meant, setMeant] = useState('');
   const [kept, setKept] = useState(false);
   return (
-    <div className="goin-turn">
+    <div className={`goin-turn${t.exchange ? ' is-exchange' : ''}`}>
+      {t.exchange !== undefined && <div className="goin-exchange">Exchange {t.exchange}</div>}
       {t.said !== null && (
         <div className="goin-you">
           <span>{t.said}</span>
@@ -177,7 +185,7 @@ function sceneArt(s: GameState): string | undefined {
 }
 
 /** The head over the painting: the seal, where you are, the hour and the time spent. */
-function Head({ s }: { s: GameState }) {
+function Head({ s, f }: { s: GameState; f: Fight | null }) {
   const g = s.goin!;
   const enc = sceneEncounter(s);
   const t = enc ? encounterTemplate(enc.template) : null;
@@ -191,6 +199,7 @@ function Head({ s }: { s: GameState }) {
           {g.place ? g.place.name : enc?.where || hereWords(s)} ·{' '}
           <span className="hanzi goin-hour">{b.hanzi}</span> {b.time} ·{' '}
           {g.scene.tick ? `${tickWords(g.scene.tick)} in` : 'just now'}
+          {f && <span className="goin-fighting"> · a fight, exchange {f.turn}</span>}
         </div>
       </div>
     </header>
@@ -201,17 +210,19 @@ function Head({ s }: { s: GameState }) {
  * Over the painting's foot: a happening under way (the lecture, with its question), what is here
  * to use, and the crowd's faces, a click naming one in the box.
  */
-function Over({ s, busy }: { s: GameState; busy: boolean }) {
+function Over({ s, busy, fight }: { s: GameState; busy: boolean; fight: boolean }) {
   const g = s.goin!;
   const here = g.place?.frames.find((f) => f.id === g.place!.at);
-  const h = g.place ? happeningAt(s, g.place.id, here, s.calendar.day + g.scene.tick / 48) : null;
-  const crowd = g.place ? crowdHere(s) : null;
+  // In a fight only what the fight can use shows: the features (P3.9c).
+  const h =
+    g.place && !fight ? happeningAt(s, g.place.id, here, s.calendar.day + g.scene.tick / 48) : null;
+  const crowd = g.place && !fight ? crowdHere(s) : null;
   const name = (line: string) =>
     useGoIn.setState((u) => ({
       words: `${u.words}${u.words && !u.words.endsWith(' ') ? ' ' : ''}${line}`,
     }));
   return (
-    <div className={`goin-over${g.place ? '' : ' is-low'}`}>
+    <div className={`goin-over${fight ? ' is-fight' : g.place ? '' : ' is-low'}`}>
       {h?.on && (
         <div className="goin-happening">
           <span>
@@ -315,7 +326,7 @@ function Doors({ s, busy }: { s: GameState; busy: boolean }) {
  * The page's head (take B): who is here as you know them, each a click that names them in the box,
  * and you: your realm, HP and qi and what holds you, with what you carry on hover.
  */
-function People({ s }: { s: GameState }) {
+function People({ s, f }: { s: GameState; f: Fight | null }) {
   const g = s.goin!;
   const ready = useGoIn((u) => u.atlasReady);
   const me = youIn(s);
@@ -331,7 +342,8 @@ function People({ s }: { s: GameState }) {
       !(a.state === 'hidden' && a.side !== me?.side),
   );
   const pinned = me ? pinnedBy(g.scene, me) : undefined;
-  const c = me?.combatant;
+  // In a fight the bars are the fight's (P3.9c).
+  const c = (f && combatantIn(f, s.player.id)) || me?.combatant;
   const hp = c ? Math.round((c.hp / Math.max(1, c.maxHp)) * 100) : 100;
   const qi = c ? Math.round((c.qi / Math.max(1, c.maxQi)) * 100) : 100;
   const hurt = woundShare(s.world, s.player.id, s.calendar.day);
@@ -385,6 +397,7 @@ function People({ s }: { s: GameState }) {
                   {realmText} · <span className={`is-${word}`}>{word}</span>
                   {calls && <> · “{calls}”</>}
                 </div>
+                {f && <HpMini c={combatantIn(f, a.id)} />}
               </div>
             </button>
           );
@@ -431,7 +444,7 @@ function People({ s }: { s: GameState }) {
   );
 }
 
-function Box({ s }: { s: GameState }) {
+function Box({ s, fight }: { s: GameState; fight: boolean }) {
   const words = useGoIn((u) => u.words);
   const busy = useGoIn((u) => u.busy);
   const down = !!s.goin?.down;
@@ -467,34 +480,50 @@ function Box({ s }: { s: GameState }) {
         placeholder="What do you do?"
         onChange={(e) => useGoIn.setState({ words: e.target.value, note: null })}
       />
-      <button
-        type="button"
-        className="button button-quiet"
-        disabled={!!busy || down || ending}
-        onClick={wait}
-      >
-        Wait
-      </button>
-      <button
-        type="button"
-        className="button button-quiet"
-        title={leaveWhy}
-        disabled={!!busy || down || ending || lv.kind === 'pinned'}
-        onClick={leaveNow}
-      >
-        {leaveLabel}
-      </button>
+      {fight ? (
+        // In a fight Wait is gone and Leave is the engine's flight (P3.9c).
+        <button
+          type="button"
+          className="button button-quiet goin-flee"
+          title="Break away: your Speed against theirs"
+          disabled={!!busy}
+          onClick={fleeFight}
+        >
+          Flee
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            className="button button-quiet"
+            disabled={!!busy || down || ending}
+            onClick={wait}
+          >
+            Wait
+          </button>
+          <button
+            type="button"
+            className="button button-quiet"
+            title={leaveWhy}
+            disabled={!!busy || down || ending || lv.kind === 'pinned'}
+            onClick={leaveNow}
+          >
+            {leaveLabel}
+          </button>
+        </>
+      )}
     </form>
   );
 }
 
-function Act({ s }: { s: GameState }) {
+function Act({ s, f }: { s: GameState; f: Fight | null }) {
   const g = s.goin!;
   const readings = useGoIn((u) => u.readings);
   const note = useGoIn((u) => u.note);
   const busy = useGoIn((u) => u.busy);
   const enc = sceneEncounter(s);
-  const exits = useMemo(() => (enc ? exitViews(s, meet(s, enc)) : []), [s, enc]);
+  const exits = useMemo(() => (enc && !f ? exitViews(s, meet(s, enc)) : []), [s, enc, f]);
+  const coming = f ? comingTo(f) : [];
   if (g.down && !g.ending) {
     const { by, fate } = fallFate(s);
     return (
@@ -616,8 +645,79 @@ function Act({ s }: { s: GameState }) {
             ))}
         </div>
       )}
+      {coming.length > 0 && (
+        <p className="goin-coming">
+          on the way: {coming.map((c) => `${c.name}, exchange ${c.turn}`).join(' · ')}
+        </p>
+      )}
       {note && <p className="goin-note">{note}</p>}
-      <Box s={s} />
+      <Box s={s} fight={!!f} />
+    </div>
+  );
+}
+
+/** A fighter's HP as a thin bar under their name on the page's head. */
+function HpMini({ c }: { c: Combatant | undefined }) {
+  if (!c) return null;
+  return (
+    <div className="goin-track is-mini">
+      <div
+        className="goin-fill is-hp"
+        style={{ width: `${Math.round((c.hp / Math.max(1, c.maxHp)) * 100)}%` }}
+      />
+    </div>
+  );
+}
+
+/** Who is on the way to the fight, and on which exchange (P3.9c): the law, a follower. */
+function comingTo(f: Fight): { name: string; turn: number }[] {
+  return (f.joins ?? [])
+    .filter((j) => j.turn !== null && j.turn > f.turn && !combatantIn(f, j.who.id))
+    .map((j) => ({ name: j.who.name, turn: j.turn! }));
+}
+
+/**
+ * A fight inside the scene (P3.9c; docs/mockups/scene-fight-study.html): the two sides over the
+ * painting's lower half with the effects over them, and your move along its foot where the doors
+ * were; Give face leads it for the one exchange a backer's projection asks for it.
+ */
+function FightField({ s, f, busy }: { s: GameState; f: Fight; busy: boolean }) {
+  const ready = useGoIn((u) => u.atlasReady);
+  const view = useMemo(() => {
+    const a = atlasNow();
+    return ready && a ? sceneView(s, a) : null;
+  }, [s, ready]);
+  const me = combatantIn(f, s.player.id);
+  if (!me) return null;
+  // Named as you know them: a stranger's card says "a stranger" (P3.9c); the law and a
+  // projection by what they are.
+  const names = (id: string) => {
+    const label = view?.people[id]?.label;
+    if (label) return label.charAt(0).toUpperCase() + label.slice(1);
+    return id.startsWith('law:') || id.startsWith('projection:') ? undefined : 'Someone';
+  };
+  const asked = faceAsked(f);
+  const charge = asked && f.joins?.find((j) => j.who.id === asked.id)?.charge;
+  return (
+    <div className={`goin-fight${busy ? ' is-held' : ''}`}>
+      <Arena f={f} me={me} names={names} />
+      {asked && (
+        <button
+          type="button"
+          className="button goin-give-face"
+          disabled={busy}
+          onClick={giveFaceNow}
+        >
+          <span>Give face</span>
+          <span className="caption">
+            let {charge ? (names(charge)?.toLowerCase() ?? 'them') : 'them'} go with {asked.name} ·
+            this exchange only
+          </span>
+        </button>
+      )}
+      <div className="goin-fight-bar">
+        <Actions f={f} me={me} />
+      </div>
     </div>
   );
 }
@@ -687,10 +787,17 @@ export function GoInScreen() {
   const streaming = useGoIn((u) => u.streaming);
   const warn = useGoIn((u) => u.warn);
   const showCost = useSettings((x) => x.showSceneCost);
+  const stageFight = useFight((x) => x.fight);
   const river = useRef<HTMLDivElement>(null);
   useEffect(() => {
     void loadAtlas();
   }, []);
+  // A fight the scene opened comes onto the painting (P3.9c), and one a reload brought back.
+  const sceneFight = s?.fight?.from.kind === 'scene';
+  useEffect(() => {
+    if (s && sceneFight) syncFight(s);
+  }, [s, sceneFight]);
+  const f = sceneFight ? stageFight : null;
   const turns = s?.goin?.turns;
   useEffect(() => {
     river.current?.scrollTo({ top: river.current.scrollHeight });
@@ -711,11 +818,11 @@ export function GoInScreen() {
           </span>
         )}
       </div>
-      <Head s={s} />
-      <Over s={s} busy={busyNow} />
-      {g.place && <Doors s={s} busy={busyNow} />}
+      <Head s={s} f={f} />
+      <Over s={s} busy={busyNow} fight={!!f} />
+      {f ? <FightField s={s} f={f} busy={busyNow} /> : g.place && <Doors s={s} busy={busyNow} />}
       <section className="goin-page">
-        <People s={s} />
+        <People s={s} f={f} />
         <div className="goin-river" ref={river}>
           {g.turns.map((t, i) => (
             <Turn key={i} t={t} last={i === g.turns.length - 1 && !busy} />
@@ -736,7 +843,7 @@ export function GoInScreen() {
           {busy === 'reading' && <p className="goin-line">reading your words…</p>}
           {busy === 'leaving' && <p className="goin-line">the scene closes…</p>}
         </div>
-        <Act s={s} />
+        <Act s={s} f={f} />
       </section>
       {warn && (
         <button

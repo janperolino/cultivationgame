@@ -18,6 +18,8 @@ export const GOIN_LENGTHS = {
   stake: [50, 120],
   plain: [25, 70],
   fight: [60, 120],
+  /** A fight's exchange inside the scene, a sentence or two (P3.9c). */
+  beat: [20, 40],
 } as const;
 export type GoInLength = keyof typeof GOIN_LENGTHS;
 export const ARRIVAL_WORDS = 30;

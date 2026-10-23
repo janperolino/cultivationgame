@@ -19,9 +19,11 @@ import {
 import { hasItem, item } from '../content/items.ts';
 import { MEMORIES } from '../content/memories.ts';
 import type { MotiveId } from '../content/personality.ts';
-import { ACTS, TICKS_PER_DAY, type ActInfo } from '../content/resolver.ts';
+import { ACTS, FIGHT_JOIN, LAW, TICKS_PER_DAY, type ActInfo } from '../content/resolver.ts';
 import { template as rosterTemplate } from '../content/roster.ts';
-import type { Fight } from './combat/fight.ts';
+import { combatant } from './combat/combatant.ts';
+import { combatantIn, type Fight, type Join } from './combat/fight.ts';
+import { faceGiven, projectionFighter } from './combat/joins.ts';
 import { endLife } from './life.ts';
 import { bandAt } from './map/depth.ts';
 import {
@@ -47,10 +49,11 @@ import { stonesOf, takeShare, withStones, worthOf } from './purse.ts';
 import { realmSizeOf, YOU, type Actor } from './resolver/actor.ts';
 import { applyEffects } from './resolver/effects.ts';
 import { intentOf } from './resolver/intent.ts';
-import { lean, remember } from './resolver/opinion.ts';
+import { lean, opinion, remember } from './resolver/opinion.ts';
 import { step, type Plan, type Step } from './resolver/plan.ts';
 import {
   actorIn,
+  fighterOf,
   leaveScene,
   pinnedBy,
   previewStep,
@@ -474,7 +477,79 @@ function openSceneFight(s: GameState, at: { actor: string; step: Step }): GameSt
 export function sceneFightStart(s: GameState, from: { actor: string; step: Step }): Fight | null {
   const g = s.goin;
   if (!g || !from.step.target) return null;
-  return sceneFight(g.scene, from.actor, from.step.target);
+  const f = sceneFight(g.scene, from.actor, from.step.target);
+  if (!f) return null;
+  const joins = fightJoins(s, f, from.actor, from.step.target);
+  return joins.length ? { ...f, joins } : f;
+}
+
+/**
+ * Who joins a scene's fight under way (P3.9c, Jan's yes; design § A fight is a mode of the scene),
+ * read from the scene as the fight opens: the place's law on its kind's turn and anyone of the
+ * law's in your frame on the 2nd, both against whoever started it; someone in your frame who is
+ * friendly or trusting to you on the 2nd, at your side; your followers left in another room of the
+ * district on the 3rd and in another district on the 6th; and a backer's projection for every
+ * fighter who has a backer, when their charge falls low.
+ */
+export function fightJoins(s: GameState, f: Fight, starter: string, target: string): Join[] {
+  const g = s.goin!;
+  const sc = g.scene;
+  const me = s.player.id;
+  const day = s.calendar.day;
+  const fighting = (id: string) => f.combatants.some((c) => c.id === id);
+  const started = combatantIn(f, starter)?.side;
+  // The law fights whoever started it: on the side they struck at.
+  const against = started === 'law' ? undefined : combatantIn(f, target)?.side;
+  const mine = combatantIn(f, me)?.side;
+  const out: Join[] = [];
+  const law = LAW[sc.kind];
+  const lawId = `law:${sc.place}`;
+  if (law && against && !sc.actors.some((a) => a.id === lawId)) {
+    const at = { realm: law.realm, stage: law.stage, grade: 0 };
+    out.push({
+      turn: law.turns,
+      why: 'law',
+      who: combatant({
+        id: lawId,
+        name: law.who,
+        side: against,
+        rungs: { qi: at, body: at, soul: at },
+      }),
+    });
+  }
+  for (const a of sc.actors) {
+    if (fighting(a.id) || a.state !== 'present' || sc.players.includes(a.id)) continue;
+    const side =
+      a.side === 'law'
+        ? against
+        : mine && ['friendly', 'trusting'].includes(opinion(s.world, a.id, me, day).word)
+          ? mine
+          : undefined;
+    if (side) out.push({ turn: FIGHT_JOIN.bystander, why: 'bystander', who: fighterOf(a, side) });
+  }
+  const place = g.place;
+  const here = place?.frames.find((x) => x.id === place.at);
+  if (place && here && mine) {
+    for (const [frame, people] of Object.entries(place.left)) {
+      const there = place.frames.find((x) => x.id === frame);
+      for (const a of people) {
+        if (a.follows !== me || a.state !== 'present') continue;
+        const turn = there?.district === here.district ? FIGHT_JOIN.nearby : FIGHT_JOIN.call;
+        out.push({ turn, why: 'follower', who: fighterOf(a, mine) });
+      }
+    }
+  }
+  for (const c of f.combatants) {
+    const a = actorIn(sc, c.id);
+    if (a?.backer && !sc.players.includes(a.id))
+      out.push({
+        turn: null,
+        why: 'projection',
+        charge: a.id,
+        who: projectionFighter(a.backer, c.side),
+      });
+  }
+  return out;
 }
 
 /**
@@ -726,6 +801,34 @@ export interface SceneFightBack {
   text: string;
 }
 
+/**
+ * The scene as a fight hands back, with who joined it in it: a follower moves from the room they
+ * were left in into your frame, and the law that joined is due as the round ends.
+ */
+function joinedScene(
+  g: NonNullable<GameState['goin']>,
+  end: Fight,
+): NonNullable<GameState['goin']> {
+  const joined = new Set(end.combatants.map((c) => c.id));
+  let scene = g.scene;
+  let place = g.place;
+  if (place) {
+    const moved = Object.values(place.left)
+      .flat()
+      .filter((a) => joined.has(a.id) && !scene.actors.some((x) => x.id === a.id));
+    if (moved.length) {
+      const left = Object.fromEntries(
+        Object.entries(place.left).map(([k, v]) => [k, v.filter((a) => !joined.has(a.id))]),
+      );
+      place = { ...place, left };
+      scene = { ...scene, actors: [...scene.actors, ...moved] };
+    }
+  }
+  if (joined.has(`law:${scene.place}`) && !scene.actors.some((a) => a.id === `law:${scene.place}`))
+    scene = { ...scene, lawDue: scene.tick };
+  return { ...g, scene, ...(place ? { place } : {}) };
+}
+
 const FIGHT_WORDS: Record<FightEnd, string> = {
   won: 'The fight is yours.',
   lost: 'You go down.',
@@ -750,9 +853,13 @@ export function sceneFightBack(
   how: FightEnd,
   used: readonly string[],
 ): SceneFightBack | null {
-  const g = s.goin;
-  if (!g) return null;
-  const before = g.scene;
+  const g0 = s.goin;
+  if (!g0) return null;
+  const before = g0.scene;
+  // Who joined comes into the scene: followers from the rooms they were left in, and the law, due
+  // now, arriving as the round ends (P3.9c).
+  const g = joinedScene(g0, end);
+  s = { ...s, goin: g };
   const r = round(
     s,
     g.scene,
@@ -765,6 +872,22 @@ export function sceneFightBack(
   // Fled, you are away: the scene ends once the turn is told.
   if (how === 'fled') st = ending(st, 'fled');
   let text = FIGHT_WORDS[how];
+  // You gave face: the projection took its charge away, and its backer remembers it.
+  const faced = faceGiven(end);
+  const backer = faced ? actorIn(g.scene, faced)?.backer : undefined;
+  if (faced && backer) {
+    const charge = actorIn(g.scene, faced)!;
+    st = {
+      ...st,
+      world: remember(
+        st.world,
+        { holder: backer.id, about: s.player.id, row: 'gave-face', what: `let ${charge.name} go` },
+        st.calendar.day,
+      ),
+    };
+    // Named by what they are, since the narrator names people as your context does (P3.9c's GLM run).
+    text = 'You gave face, and the projection took its charge away.';
+  }
   if (how === 'yielded') {
     const y = surrender(st);
     st = y.state;

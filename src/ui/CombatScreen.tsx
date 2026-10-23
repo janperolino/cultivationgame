@@ -117,17 +117,22 @@ function FighterCard({
   c,
   selected,
   onSelect,
+  ally,
+  name,
 }: {
   c: Combatant;
   selected?: boolean;
   onSelect?: () => void;
+  ally?: boolean;
+  /** How the card names them, when not by their name: a stranger in a scene (P3.9c). */
+  name?: string;
 }) {
   const r = topRung(c);
   const down = c.state !== 'fighting';
   const body = (
     <>
       <span className="fight-name">
-        {c.name}
+        {name ?? c.name}
         <IntentMarks c={c} />
       </span>
       <span className="caption">
@@ -162,7 +167,10 @@ function FighterCard({
       {body}
     </button>
   ) : (
-    <div data-fighter={c.id} className={`fight-card is-you${down ? ' is-down' : ''}`}>
+    <div
+      data-fighter={c.id}
+      className={`fight-card ${ally ? 'is-ally' : 'is-you'}${down ? ' is-down' : ''}`}
+    >
       {body}
     </div>
   );
@@ -205,7 +213,16 @@ function ActionButton({
   );
 }
 
-function Arena({ f, me }: { f: Fight; me: Combatant }) {
+/** The two sides with the effects layer over them: you and whoever fights beside you, then your foes. */
+export function Arena({
+  f,
+  me,
+  names,
+}: {
+  f: Fight;
+  me: Combatant;
+  names?: (id: string) => string | undefined;
+}) {
   const target = useFight((s) => s.target);
   const pending = useFight((s) => s.pending);
   const settings = useSettings();
@@ -244,16 +261,22 @@ function Arena({ f, me }: { f: Fight; me: Combatant }) {
   }, [pending, settings]);
 
   const foes = f.combatants.filter((c) => c.side !== me.side);
+  // Since P3.9c anyone who joins at your side fights there: the law, a follower, a friend.
+  const allies = f.combatants.filter((c) => c.side === me.side && c.id !== me.id);
   return (
     <div className="fight-arena" ref={arena}>
       <div className="fight-side">
         <FighterCard c={me} />
+        {allies.map((c) => (
+          <FighterCard key={c.id} c={c} ally name={names?.(c.id)} />
+        ))}
       </div>
       <div className="fight-side">
         {foes.map((c) => (
           <FighterCard
             key={c.id}
             c={c}
+            name={names?.(c.id)}
             selected={c.id === target}
             onSelect={() => selectTarget(c.id)}
           />
@@ -376,7 +399,8 @@ function BurnGoods({ f, me, target }: { f: Fight; me: Combatant; target: string 
   );
 }
 
-function Actions({ f, me }: { f: Fight; me: Combatant }) {
+/** Your move: the arts priced against the picked foe, items, burning goods, words and feet. */
+export function Actions({ f, me }: { f: Fight; me: Combatant }) {
   const target = useFight((s) => s.target) ?? '';
   const end = useFight((s) => s.end);
   if (end) return null;

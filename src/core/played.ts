@@ -11,8 +11,10 @@ import {
   resolveTurn,
   type Action,
   type Fight,
+  type Join,
   type TurnResult,
 } from './combat/fight.ts';
+import { arrive, faceAsked, giveFace, speaking } from './combat/joins.ts';
 import { chooseAction, profile } from './combat/profile.ts';
 import { wearFrom } from './combat/combatant.ts';
 import { bondFromFight } from './gear.ts';
@@ -33,8 +35,11 @@ export const FIGHT_TURNS = 60;
 /** How a fight ended for you. Talked: every foe yielded or fled, at least one to your words. */
 export type FightEnd = 'won' | 'lost' | 'fled' | 'yielded' | 'talked' | 'draw';
 
-/** Your action, without who acts: the fight knows it is yours. */
-export type YourAction = Omit<Action, 'actor'>;
+/**
+ * Your action, without who acts: the fight knows it is yours. `face` gives face to a backer's
+ * projection that just asked for it (P3.9c), in place of an action.
+ */
+export type YourAction = Omit<Action, 'actor'> & { face?: boolean };
 
 /**
  * Opens a fight on the stage: its rolls start from one drawn off the life's `combat` stream. The
@@ -46,22 +51,41 @@ export function openFight(s: GameState, from: FightFrom, start: Fight | null): G
   return { ...state, fight: { from, start: seed, now: seed, actions: [] } };
 }
 
-function foesAct(f: Fight, me: string): Action[] {
-  const side = combatantIn(f, me)?.side;
+/**
+ * Everyone but you acts on their profile: foes, and since P3.9c anyone fighting on your side (the
+ * law, a follower, a friend who joined), a beast that waits on a command apart. A projection says
+ * its line on the turn it arrives and strikes no blow.
+ */
+function othersAct(f: Fight, me: string): Action[] {
   return f.combatants
-    .filter((c) => c.side !== side && c.state === 'fighting')
+    .filter((c) => c.id !== me && c.state === 'fighting' && !c.needsCommand && !speaking(f, c.id))
     .map((c) => chooseAction(f, c.id, profile(c.profile ?? 'fanatical')));
 }
 
+/** One turn as it played: the joins that stepped in as it began, and the turn itself. */
+export interface PlayedTurn extends TurnResult {
+  came: Join[];
+  faded: string[];
+}
+
 /**
- * One turn: your action and every foe's on its profile. A foe whose tempo earns it a second action
- * picks it on its profile; yours repeats your main action (design § Combat, Speed is tempo).
+ * One turn: the joins due step in, then your action and everyone else's on its profile. A fighter
+ * whose tempo earns it a second action picks it on its profile; yours repeats your main action
+ * (design § Combat, Speed is tempo).
  */
-function turnOf(f: Fight, me: string, action: YourAction, rng: Rng): TurnResult {
-  return resolveTurn(f, [{ ...action, actor: me }, ...foesAct(f, me)], rng, (at, id) => {
+function turnOf(f0: Fight, me: string, action: YourAction, rng: Rng): PlayedTurn {
+  const a = arrive(f0);
+  const { face, ...rest } = action;
+  const faced = face && faceAsked(a.fight);
+  const f = faced ? giveFace(a.fight) : a.fight;
+  const mine: Action = faced ? { actor: me } : { ...rest, actor: me };
+  const t = resolveTurn(f, [mine, ...othersAct(f, me)], rng, (at, id) => {
     const c = combatantIn(at, id);
-    return c && id !== me ? chooseAction(at, id, profile(c.profile ?? 'fanatical')) : undefined;
+    return c && id !== me && !speaking(f, id)
+      ? chooseAction(at, id, profile(c.profile ?? 'fanatical'))
+      : undefined;
   });
+  return { ...t, came: a.came, faded: a.faded };
 }
 
 /** Plays your action in the open fight; null when no fight is open or it has ended. */
@@ -69,7 +93,7 @@ export function playTurn(
   s: GameState,
   fight: Fight,
   action: YourAction,
-): { state: GameState; turn: TurnResult } | null {
+): { state: GameState; turn: PlayedTurn } | null {
   const rec = s.fight;
   if (!rec || fightEnd(fight, s.player.id)) return null;
   const rng = new Rng(rec.now);

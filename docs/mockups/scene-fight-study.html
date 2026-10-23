@@ -1,0 +1,452 @@
+<!doctype html>
+<!-- P3.9c: the fight inside the scene, on the go-in screen's take B, on the 1920×1080 stage. Mock data:
+     Pacified Fort's free market at 午, a cutpurse and his partner; three moments of the same screen
+     (a typed exchange, the watch arriving on turn 5, a young master's backer's projection). Nothing
+     here is wired to the game. Open it through the dev server (/docs/mockups/scene-fight-study.html)
+     so the painting loads. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scene Fight Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&family=Ma+Shan+Zheng&display=swap">
+<style>
+:root {
+  --page: #020203;
+  --obsidian: rgb(7 8 11 / 0.84);
+  --glass: rgb(7 8 11 / 0.66);
+  --edge: rgb(255 255 255 / 0.075);
+  --edge-strong: rgb(255 255 255 / 0.15);
+  --text: #e9e5da;
+  --muted: #8d949d;
+  --accent: #d6ab4c;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-edge: color-mix(in srgb, var(--accent) 45%, transparent);
+  --good: #9fc4ad;
+  --close: #d9c27a;
+  --warn: #e08a6a;
+  --hp: #c96a5a;
+  --shield: #8fb3d9;
+  --qi: #7fc3c0;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', serif;
+  --font-ui: Inter, system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--page); color: var(--text); font: 15px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; overflow: hidden; }
+.hanzi { font-family: var(--font-brush); font-weight: 400; }
+button { font: inherit; color: inherit; }
+
+/* Study controls (not part of the game). */
+.study { position: fixed; top: 6px; left: 50%; transform: translateX(-50%); opacity: 0.35; transition: opacity .15s; z-index: 20; display: flex; gap: 10px; align-items: center; padding: 6px 10px; border: 1px dashed var(--edge-strong); border-radius: 10px; background: #07080aee; font-size: 12px; }
+.study:hover { opacity: 1; }
+.study span { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.seg { display: inline-flex; border: 1px solid var(--edge-strong); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 4px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--edge); }
+.seg button[aria-pressed="true"] { background: rgb(255 255 255 / 0.08); color: var(--text); }
+
+.stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: center; overflow: hidden; background: #0b0c10; }
+.moment { position: absolute; inset: 0; display: none; }
+.moment.on { display: block; }
+
+/* The painting, as take B, with the fight over its lower half. */
+.paint { position: absolute; left: 0; top: 0; bottom: 0; width: 1150px; background: url('../../src/ui/art/places/pacified-fort/doors-1/stall.webp') center / cover no-repeat; }
+.paint::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 75%, rgb(3 4 6 / 0.95)), linear-gradient(0deg, rgb(3 4 6 / 0.94) 0%, rgb(3 4 6 / 0.7) 30%, rgb(3 4 6 / 0.15) 52%, transparent 62%); }
+.head { position: absolute; left: 36px; top: 30px; padding: 12px 16px; display: flex; gap: 12px; align-items: center; background: var(--glass); border-radius: 10px; border: 1px solid var(--edge); }
+.head h2 { margin: 0; font-family: var(--font-display); font-size: 28px; line-height: 1; }
+.seal { width: 44px; height: 44px; border: 1.5px solid var(--accent-edge); border-radius: 8px; display: grid; place-items: center; color: var(--accent); font-family: var(--font-brush); font-size: 26px; background: var(--accent-soft); flex: none; }
+.seal.war { border-color: color-mix(in srgb, var(--warn) 55%, transparent); color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.exchange { position: absolute; right: 836px; top: 34px; padding: 8px 14px; border-radius: 999px; background: var(--glass); border: 1px solid var(--edge); font-size: 14px; }
+.exchange b { color: var(--warn); font-weight: 600; }
+.d { font-size: 12px; color: var(--muted); }
+
+/* The features the fight can use, tagged on the painting. */
+.feat { position: absolute; display: flex; gap: 6px; align-items: center; padding: 3px 10px; border-radius: 999px; background: rgb(7 8 11 / 0.72); border: 1px dashed var(--edge-strong); font-size: 12px; color: #cfc8b8; }
+.feat i { font-style: normal; color: var(--muted); }
+.feat.burning { border: 1px solid color-mix(in srgb, var(--warn) 60%, transparent); color: #f0b495; }
+
+/* The two sides. */
+.sides { position: absolute; left: 36px; right: 836px; bottom: 214px; display: flex; justify-content: space-between; align-items: end; }
+.side { display: grid; gap: 8px; width: 330px; }
+.side.them { justify-items: end; }
+.side .label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.fighter { width: 330px; padding: 10px 12px; border-radius: 10px; background: var(--obsidian); border: 1px solid var(--edge); display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; cursor: pointer; box-shadow: 0 6px 20px rgb(0 0 0 / 0.5); }
+.fighter.target { border-color: var(--accent-edge); box-shadow: 0 0 0 1px var(--accent-edge), 0 6px 20px rgb(0 0 0 / 0.5); }
+.fighter.down { opacity: 0.45; }
+.fighter.new { border-color: color-mix(in srgb, var(--good) 55%, transparent); }
+.fighter.ghost { border-color: color-mix(in srgb, var(--shield) 60%, transparent); background: rgb(10 16 26 / 0.86); }
+.fighter .port { grid-row: span 2; }
+.port { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--edge-strong); display: grid; place-items: center; font-family: var(--font-brush); font-size: 20px; background: #15161b; flex: none; }
+.port.cult { border-color: var(--accent-edge); color: var(--accent); }
+.n { font-size: 14px; font-weight: 500; }
+.bars { display: grid; gap: 3px; }
+.bar { height: 5px; border-radius: 3px; background: rgb(255 255 255 / 0.07); overflow: hidden; }
+.bar > i { display: block; height: 100%; }
+.bar.hp > i { background: var(--hp); }
+.bar.sh > i { background: var(--shield); }
+.bar.qi > i { background: var(--qi); }
+.tagline { grid-column: 2; font-size: 11.5px; color: var(--muted); }
+.vs { font-family: var(--font-brush); font-size: 46px; color: color-mix(in srgb, var(--warn) 70%, transparent); padding-bottom: 40px; }
+.coming { font-size: 12px; color: var(--muted); padding: 4px 10px; border: 1px dashed var(--edge-strong); border-radius: 999px; background: rgb(0 0 0 / 0.4); }
+
+/* The action bar, where the door cards were. */
+.actions { position: absolute; left: 36px; right: 836px; bottom: 30px; display: grid; gap: 8px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
+.act { min-width: 120px; padding: 8px 12px; border: 1px solid var(--edge-strong); border-radius: 9px; background: rgb(7 8 11 / 0.8); cursor: pointer; display: grid; gap: 1px; text-align: left; }
+.act b { font-weight: 500; font-size: 14px; }
+.act span { font-size: 11.5px; color: var(--muted); }
+.act.art { border-color: var(--accent-edge); }
+.act.art b { font-family: var(--font-display); font-size: 17px; font-weight: 600; }
+.act.face { border-color: color-mix(in srgb, var(--shield) 60%, transparent); background: rgb(12 18 28 / 0.9); }
+.act.face b { color: #cfe0f2; }
+.act[aria-disabled="true"] { opacity: 0.4; }
+.group { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); align-self: center; width: 56px; }
+
+/* The page, as take B. */
+.page { position: absolute; right: 0; top: 0; bottom: 0; width: 800px; background: #0a0b0e; border-left: 1px solid var(--edge); padding: 30px 44px 30px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 18px; }
+.people { display: flex; gap: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--edge); flex-wrap: wrap; }
+.who { display: flex; gap: 10px; align-items: center; }
+.mini { width: 90px; height: 4px; border-radius: 2px; background: rgb(255 255 255 / 0.07); overflow: hidden; margin-top: 4px; }
+.mini > i { display: block; height: 100%; background: var(--hp); }
+.river { overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 20px; mask-image: linear-gradient(transparent, #000 160px); }
+.prose { font-family: var(--font-display); font-size: 22px; line-height: 1.5; margin: 0; color: #ece7da; }
+.prose q { color: #f3e6c4; }
+.beat .prose { font-size: 21px; }
+.old { opacity: 0.5; }
+.old .prose { font-size: 18px; }
+.you { font-size: 14px; color: var(--muted); font-style: italic; }
+.you::before { content: '› '; color: var(--accent); font-style: normal; }
+.you .btnword { font-style: normal; border: 1px solid var(--edge-strong); border-radius: 5px; padding: 0 6px; font-size: 12.5px; }
+.line { font-size: 12.5px; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-variant-numeric: tabular-nums; }
+.line .q { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--edge-strong); display: inline-grid; place-items: center; font-size: 10px; cursor: help; }
+.turnno { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.arrive { border-left: 2px solid color-mix(in srgb, var(--good) 55%, transparent); padding-left: 14px; }
+.arrive.ghost { border-left-color: color-mix(in srgb, var(--shield) 70%, transparent); }
+.why { font-size: 12.5px; color: var(--close); }
+.box { display: flex; gap: 8px; align-items: center; }
+.input { flex: 1; height: 46px; border: 1px solid var(--accent-edge); border-radius: 9px; background: rgb(0 0 0 / 0.45); padding: 0 14px; color: var(--muted); display: flex; align-items: center; font-size: 15px; }
+.input.typed { color: var(--text); }
+.btn { height: 46px; padding: 0 16px; border: 1px solid var(--edge-strong); border-radius: 9px; background: rgb(255 255 255 / 0.03); cursor: pointer; display: inline-flex; align-items: center; }
+.btn.flee { border-color: color-mix(in srgb, var(--warn) 45%, transparent); color: #f0b495; }
+.cost { position: absolute; right: 18px; bottom: 10px; font-size: 11px; color: var(--muted); opacity: 0.7; }
+.chip { font-size: 13px; padding: 5px 12px; border: 1px solid var(--edge-strong); border-radius: 999px; background: rgb(255 255 255 / 0.03); }
+</style>
+
+<div class="study">
+  <span>Moment</span>
+  <div class="seg" id="seg">
+    <button aria-pressed="true" data-m="a">A · A typed exchange</button>
+    <button aria-pressed="false" data-m="b">B · The watch arrives</button>
+    <button aria-pressed="false" data-m="c">C · The backer's projection</button>
+  </div>
+</div>
+
+<div class="stage" id="stage">
+
+  <!-- A: exchange 3 of a cutpurse's fight on the free market street. The painting stays; the two
+       sides stand over its lower half; the action bar takes the doors' place; the page tells each
+       exchange in a beat, a typed turn among them, and the watch is counted down at the foot. -->
+  <section class="moment on" id="a">
+    <div class="paint"></div>
+    <div class="head"><div class="seal war">战</div><div><h2>The free market street</h2><div class="d">Pacified Fort · 戌 night · a fight</div></div></div>
+    <div class="exchange">Exchange <b>3</b></div>
+
+    <span class="feat burning" style="left:520px; top:430px">the dumpling stall's brazier <i>· fire</i></span>
+    <span class="feat burning" style="left:250px; top:500px">straw bales <i>· burning, 2 turns</i></span>
+    <span class="feat" style="left:820px; top:390px">stall awnings <i>· cover</i></span>
+    <span class="feat" style="left:700px; top:520px">the rain barrel <i>· water</i></span>
+
+    <div class="sides">
+      <div class="side">
+        <p class="label">You</p>
+        <div class="fighter">
+          <span class="port cult">林</span>
+          <div class="n">Lin Ye <span class="d">· Qi Condensation 4</span></div>
+          <div class="bars"><div class="bar hp"><i style="width:71%"></i></div><div class="bar sh"><i style="width:40%"></i></div><div class="bar qi"><i style="width:58%"></i></div></div>
+          <div class="tagline">HP 64/90 · shield 18/45 · qi 41/70</div>
+        </div>
+      </div>
+      <div class="vs">对</div>
+      <div class="side them">
+        <p class="label">Against you</p>
+        <div class="fighter target">
+          <span class="port cult">贼</span>
+          <div class="n">the cutpurse <span class="d">· Qi Condensation 5</span></div>
+          <div class="bars"><div class="bar hp"><i style="width:48%"></i></div><div class="bar sh"><i style="width:0%"></i></div><div class="bar qi"><i style="width:35%"></i></div></div>
+          <div class="tagline">HP 47/98 · burning · in the smoke</div>
+        </div>
+        <div class="fighter">
+          <span class="port">刀</span>
+          <div class="n">his partner <span class="d">· a mortal knife</span></div>
+          <div class="bars"><div class="bar hp"><i style="width:90%"></i></div></div>
+          <div class="tagline">HP 27/30</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="row">
+        <span class="group">Arts</span>
+        <div class="act art"><b>Ember Palm</b><span>hit 61% · ~38 fire · 12 qi</span></div>
+        <div class="act art"><b>Iron Wind Step</b><span>Evasion ×1.4 · 6 qi</span></div>
+        <div class="act"><b>Strike</b><span>hit 74% · ~14</span></div>
+        <div class="act"><b>Defend</b><span>Evasion ×1.5, qi back</span></div>
+      </div>
+      <div class="row">
+        <span class="group">Items</span>
+        <div class="act"><b>Qi-Gathering Pill ×2</b><span>+25 qi</span></div>
+        <div class="act"><b>Fire Talisman ×1</b><span>hit 80% · ~30 fire</span></div>
+        <span class="group" style="margin-left:14px">Words</span>
+        <div class="act"><b>Intimidate</b><span>clear · he's under half</span></div>
+        <div class="act"><b>Bargain</b><span>close</span></div>
+        <div class="act"><b>Take cover</b><span>the awnings</span></div>
+      </div>
+    </div>
+
+    <div class="page">
+      <div class="people">
+        <div class="who"><span class="port cult">贼</span><div><div class="n">the cutpurse</div><div class="d">Qi Condensation 5 · hostile</div><div class="mini"><i style="width:48%"></i></div></div></div>
+        <div class="who"><span class="port">刀</span><div><div class="n">his partner</div><div class="d">mortal · hostile</div><div class="mini"><i style="width:90%"></i></div></div></div>
+        <div class="who"><span class="port">包</span><div><div class="n">the dumpling seller</div><div class="d">mortal · hiding under her stall</div></div></div>
+        <div class="who"><span class="d" style="align-self:center">a crowd of about 18, backing off</span></div>
+      </div>
+      <div class="river">
+        <div class="old">
+          <div class="turnno">Exchange 1</div>
+          <div class="you"><span class="btnword">Strike</span></div>
+          <p class="prose">Your fist finds his wrist and the stolen purse spins away under the carts. <q>You'll pay for that, little brother.</q></p>
+          <div class="line">Hit 74% · 15 · shield 0/30 · the cutpurse 83/98 <span class="q">?</span></div>
+        </div>
+        <div class="old">
+          <div class="turnno">Exchange 2</div>
+          <div class="you"><span class="btnword">Iron Wind Step</span></div>
+          <p class="prose">His partner's knife cuts the air where your ribs were. The cutpurse's palm doesn't miss: it lands like a door slammed on your chest.</p>
+          <div class="line">Evasion ×1.4 · the knife misses · his Black Sand Palm hits · 26 · you 64/90 <span class="q">?</span></div>
+        </div>
+        <div class="beat">
+          <div class="turnno">Exchange 3</div>
+          <div class="you">Kick the dumpling stall's brazier into the straw and Ember Palm him through the smoke</div>
+          <p class="prose">Coals spill and the straw goes up with a roar. You come through the smoke before he sees you, and your palm sinks into his side. <q>Mad dog!</q> His sleeve is burning.</p>
+          <div class="line">creativity +2 · Hit 72% · 36 fire · the cutpurse 47/98 · burning · straw burning (2 turns) · qi 41/70 <span class="q">?</span></div>
+        </div>
+      </div>
+      <div style="display:grid; gap:12px">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+          <span class="chip">Tell him to drop it, he's burning</span>
+          <span class="chip">Drive him into the rain barrel</span>
+          <span class="chip">Go for the partner</span>
+          <span class="coming" style="margin-left:auto">the watch is coming · turn 5</span>
+        </div>
+        <div class="box"><div class="input">What do you do?</div><span class="btn flee">Flee</span></div>
+      </div>
+    </div>
+    <div class="cost">this scene: 0.6¢ · the fight so far: 0.3¢</div>
+  </section>
+
+  <!-- B: exchange 5, the town's watch on its turn. It fights whoever started it, the cutpurse; the
+       arrival's beat runs 30 words longer, and its card is ringed new on your side. -->
+  <section class="moment" id="b">
+    <div class="paint"></div>
+    <div class="head"><div class="seal war">战</div><div><h2>The free market street</h2><div class="d">Pacified Fort · 戌 night · a fight</div></div></div>
+    <div class="exchange">Exchange <b>5</b></div>
+
+    <span class="feat" style="left:520px; top:430px">the dumpling stall's brazier <i>· knocked over</i></span>
+    <span class="feat" style="left:250px; top:500px">straw bales <i>· ash</i></span>
+    <span class="feat" style="left:820px; top:390px">stall awnings <i>· cover</i></span>
+
+    <div class="sides">
+      <div class="side">
+        <p class="label">Your side</p>
+        <div class="fighter">
+          <span class="port cult">林</span>
+          <div class="n">Lin Ye <span class="d">· Qi Condensation 4</span></div>
+          <div class="bars"><div class="bar hp"><i style="width:52%"></i></div><div class="bar sh"><i style="width:0%"></i></div><div class="bar qi"><i style="width:30%"></i></div></div>
+          <div class="tagline">HP 47/90 · qi 21/70</div>
+        </div>
+        <div class="fighter new">
+          <span class="port cult">卫</span>
+          <div class="n">Captain Gou <span class="d">· Qi Condensation 6</span></div>
+          <div class="bars"><div class="bar hp"><i style="width:100%"></i></div><div class="bar sh"><i style="width:100%"></i></div></div>
+          <div class="tagline">the watch · just arrived · fights whoever started it</div>
+        </div>
+        <div class="fighter new" style="padding:6px 12px">
+          <span class="port" style="width:30px;height:30px;font-size:15px">兵</span>
+          <div class="n">three watchmen <span class="d">· mortal, with polearms</span></div>
+        </div>
+      </div>
+      <div class="vs">对</div>
+      <div class="side them">
+        <p class="label">Against you</p>
+        <div class="fighter target">
+          <span class="port cult">贼</span>
+          <div class="n">the cutpurse <span class="d">· Qi Condensation 5</span></div>
+          <div class="bars"><div class="bar hp"><i style="width:22%"></i></div><div class="bar sh"><i style="width:0%"></i></div><div class="bar qi"><i style="width:12%"></i></div></div>
+          <div class="tagline">HP 22/98 · looking for a way out</div>
+        </div>
+        <div class="fighter down">
+          <span class="port">刀</span>
+          <div class="n">his partner <span class="d">· down</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="row">
+        <span class="group">Arts</span>
+        <div class="act art"><b>Ember Palm</b><span>hit 70% · ~38 fire · 12 qi</span></div>
+        <div class="act art"><b>Iron Wind Step</b><span>Evasion ×1.4 · 6 qi</span></div>
+        <div class="act"><b>Strike</b><span>hit 78% · ~14</span></div>
+        <div class="act"><b>Defend</b><span>Evasion ×1.5, qi back</span></div>
+      </div>
+      <div class="row">
+        <span class="group">Items</span>
+        <div class="act"><b>Qi-Gathering Pill ×2</b><span>+25 qi</span></div>
+        <div class="act"><b>Fire Talisman ×1</b><span>hit 82% · ~30 fire</span></div>
+        <span class="group" style="margin-left:14px">Words</span>
+        <div class="act"><b>Intimidate</b><span>clear · he's under half</span></div>
+        <div class="act"><b>Bargain</b><span>clear</span></div>
+        <div class="act"><b>Take cover</b><span>the awnings</span></div>
+      </div>
+    </div>
+
+    <div class="page">
+      <div class="people">
+        <div class="who"><span class="port cult">贼</span><div><div class="n">the cutpurse</div><div class="d">Qi Condensation 5 · hostile</div><div class="mini"><i style="width:22%"></i></div></div></div>
+        <div class="who"><span class="port cult">卫</span><div><div class="n">Captain Gou</div><div class="d">Qi Condensation 6 · the watch · neutral</div><div class="mini"><i style="width:100%"></i></div></div></div>
+        <div class="who"><span class="port">包</span><div><div class="n">the dumpling seller</div><div class="d">mortal · <span style="color:var(--warn)">wary</span> · her stall burned</div></div></div>
+      </div>
+      <div class="river">
+        <div class="old">
+          <div class="turnno">Exchange 4</div>
+          <div class="you"><span class="btnword">Ember Palm</span> on the partner</div>
+          <p class="prose">The mortal goes down in the ash and stays there. The cutpurse's next palm grazes your shoulder and you feel the bone.</p>
+          <div class="line">Hit 81% · 31 fire · his partner down · Black Sand Palm · 17 · you 47/90 <span class="q">?</span></div>
+        </div>
+        <div class="beat arrive">
+          <div class="turnno">Exchange 5 · the watch arrives</div>
+          <div class="you">Drive him back toward the gate, away from the stalls</div>
+          <p class="prose">You press him step by step toward the gate, and he gives ground. A gong hammers from the gate tower and polearms come round the corner. Captain Gou takes in the smoke, the man on the ground, the purse under the cart. <q>Him. Take him.</q> The cutpurse looks for a gap between the shafts and finds none.</p>
+          <div class="line">move · the cutpurse gives ground · the watch joins against him (he started it) · you 47/90 <span class="q">?</span></div>
+        </div>
+      </div>
+      <div style="display:grid; gap:12px">
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
+          <span class="chip">Tell him to yield to the captain</span>
+          <span class="chip">Leave him to the watch and get the purse</span>
+          <span class="chip">Finish it</span>
+        </div>
+        <div class="box"><div class="input">What do you do?</div><span class="btn flee">Flee</span></div>
+      </div>
+    </div>
+    <div class="cost">this scene: 0.8¢ · the fight so far: 0.5¢</div>
+  </section>
+
+  <!-- C: another fight. A Waking Thunder Sect young master falls under a quarter of his HP; his
+       backer's projection arrives on his side the next turn. Its first turn is its line and no
+       blow, and Give face shows for that one turn. -->
+  <section class="moment" id="c">
+    <div class="paint" style="background-image:url('../../src/ui/art/places/pacified-fort/doors-1/teahouse.webp')"></div>
+    <div class="head"><div class="seal war">战</div><div><h2>The teahouse</h2><div class="d">Pacified Fort · 酉 evening · a fight</div></div></div>
+    <div class="exchange">Exchange <b>7</b></div>
+
+    <span class="feat" style="left:640px; top:420px">the tea brazier <i>· fire</i></span>
+    <span class="feat" style="left:300px; top:460px">the tables <i>· cover</i></span>
+
+    <div class="sides">
+      <div class="side">
+        <p class="label">You</p>
+        <div class="fighter">
+          <span class="port cult">林</span>
+          <div class="n">Lin Ye <span class="d">· Qi Condensation 6</span></div>
+          <div class="bars"><div class="bar hp"><i style="width:58%"></i></div><div class="bar sh"><i style="width:10%"></i></div><div class="bar qi"><i style="width:34%"></i></div></div>
+          <div class="tagline">HP 63/108 · qi 30/88</div>
+        </div>
+      </div>
+      <div class="vs">对</div>
+      <div class="side them">
+        <p class="label">Against you</p>
+        <div class="fighter ghost">
+          <span class="port cult" style="border-color:var(--shield); color:#cfe0f2">雷</span>
+          <div class="n">Elder Han's projection <span class="d">· Core Formation 1, a third of it</span></div>
+          <div class="bars"><div class="bar hp"><i style="width:100%; background:var(--shield)"></i></div></div>
+          <div class="tagline">for three turns · it hasn't struck</div>
+        </div>
+        <div class="fighter target">
+          <span class="port cult">赵</span>
+          <div class="n">Zhao Qian <span class="d">· Qi Condensation 7</span></div>
+          <div class="bars"><div class="bar hp"><i style="width:19%"></i></div><div class="bar sh"><i style="width:0%"></i></div><div class="bar qi"><i style="width:20%"></i></div></div>
+          <div class="tagline">Waking Thunder Sect · HP 21/112 · his jade pendant cracked</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="row">
+        <div class="act face"><b>Give face</b><span>let him go with his elder · this turn only</span></div>
+        <span class="group" style="margin-left:6px">Arts</span>
+        <div class="act art"><b>Ember Palm</b><span>on Zhao Qian · hit 66% · ~44 fire</span></div>
+        <div class="act art"><b>Iron Wind Step</b><span>Evasion ×1.4 · 6 qi</span></div>
+        <div class="act"><b>Strike</b><span>hit 71% · ~16</span></div>
+        <div class="act"><b>Defend</b><span>Evasion ×1.5, qi back</span></div>
+      </div>
+      <div class="row">
+        <span class="group">Items</span>
+        <div class="act"><b>Qi-Gathering Pill ×1</b><span>+25 qi</span></div>
+        <span class="group" style="margin-left:14px">Words</span>
+        <div class="act"><b>Bargain</b><span>with the projection · ?</span></div>
+        <div class="act"><b>Surrender</b><span>to the projection</span></div>
+        <div class="act"><b>Take cover</b><span>the tables</span></div>
+      </div>
+    </div>
+
+    <div class="page">
+      <div class="people">
+        <div class="who"><span class="port cult">赵</span><div><div class="n">Zhao Qian</div><div class="d">Qi Condensation 7 · hostile · "dog"</div><div class="mini"><i style="width:19%"></i></div></div></div>
+        <div class="who"><span class="port cult" style="border-color:var(--shield); color:#cfe0f2">雷</span><div><div class="n">Elder Han's projection</div><div class="d">you can't see through him</div></div></div>
+        <div class="who"><span class="d" style="align-self:center">about 12 at the tables, gone quiet</span></div>
+      </div>
+      <div class="river">
+        <div class="old">
+          <div class="turnno">Exchange 6</div>
+          <div class="you">Feint at his face with the cup and Ember Palm his gut when he flinches</div>
+          <p class="prose">He flinches at the cup like a boy. Your palm folds him over the bench, and the jade at his neck cracks with a sound like ice.</p>
+          <div class="line">creativity +1 · Hit 79% · 48 fire · Zhao Qian 21/112 <span class="q">?</span></div>
+        </div>
+        <div class="beat arrive ghost">
+          <div class="turnno">Exchange 7 · a projection arrives</div>
+          <div class="you"><span class="btnword">Defend</span></div>
+          <p class="prose">The cracked jade gives out a thread of light, and the light stands up into an old man in grey whose feet don't quite touch the ground. The air in the room turns heavy as wet sand. He doesn't look at the boy at all, only at you. <q>Fellow daoist, give me some face.</q></p>
+          <div class="line">Evasion ×1.5 · Elder Han's projection arrives on his side · it speaks and doesn't strike <span class="q">?</span></div>
+        </div>
+      </div>
+      <div style="display:grid; gap:12px">
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
+          <span class="chip">Bow and step back</span>
+          <span class="chip">Ask what face is worth to him</span>
+          <span class="chip">Finish the boy first</span>
+        </div>
+        <div class="box"><div class="input">What do you do?</div><span class="btn flee">Flee</span></div>
+      </div>
+    </div>
+    <div class="cost">this scene: 1.1¢ · the fight so far: 0.7¢</div>
+  </section>
+</div>
+
+<script>
+const stage = document.getElementById('stage');
+const fit = () => {
+  const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+  stage.style.transform = `translate(-50%, -50%) scale(${k})`;
+};
+addEventListener('resize', fit);
+fit();
+const pick = (m) => {
+  for (const b of document.querySelectorAll('#seg button')) b.setAttribute('aria-pressed', String(b.dataset.m === m));
+  for (const s of document.querySelectorAll('.moment')) s.classList.toggle('on', s.id === m);
+  try { localStorage.setItem('scene-fight-moment', m); } catch {}
+};
+for (const b of document.querySelectorAll('#seg button')) b.addEventListener('click', () => pick(b.dataset.m));
+try { const m = localStorage.getItem('scene-fight-moment'); if (m) pick(m); } catch {}
+</script>

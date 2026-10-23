@@ -16,7 +16,7 @@ import {
   hasEncounterTemplate,
 } from '../../content/encounters/index.ts';
 import { contact } from '../../core/map/encounters.ts';
-import { goInDev } from '../goin.ts';
+import { backerDev, fightDev, goInDev } from '../goin.ts';
 import { ensureMap, getDevPace, hereWords, mapOf, setDevPace } from '../../core/map/travel.ts';
 import { enterAt } from '../../core/map/gate.ts';
 import { raise } from '../../core/map/fog.ts';
@@ -319,17 +319,22 @@ export const COMMANDS: Record<string, Command> = {
     },
   },
   goin: {
-    usage: 'goin <template|here|streets|door id>',
+    usage: 'goin <template|here|streets|door id|fight|backer>',
     help: 'Goes into a scene (P3.9) on your OpenRouter key: an encounter template set down where you stand, Go in here, or inside a place its streets or a door by its id (P3.9b).',
-    run([id], store) {
+    run([id, ...rest], store) {
       if (!id)
         return [
           'goin here',
+          'goin fight [who] (in a scene: attack someone there)',
+          'goin backer [who] (in a scene: give someone a backer two realms up, and hurt them)',
           'goin streets (inside a place)',
           'goin <door id> (inside a place: inn, teahouse, stall, elders…)',
           ...ENCOUNTERS.map((t) => `goin ${t.id} (${t.kind})`),
         ];
       const s0 = needGame(store);
+      // Inside a scene (P3.9c): a fight with someone in your frame, or a backer for them.
+      if (id === 'fight') return fightDev(rest[0]) ?? 'A fight.';
+      if (id === 'backer') return backerDev(rest[0]) ?? 'They have a backer now.';
       if (s0.map?.inside && !hasEncounterTemplate(id) && id !== 'here')
         return goInDev(id === 'streets' ? 'place:' : `place:${id}`) ?? `Going in: ${id}.`;
       if (id !== 'here' && !hasEncounterTemplate(id)) return `No template ${id}.`;
