@@ -13186,28 +13186,7 @@ p.map-above {
   overflow: hidden;
 }
 
-.goin-shade {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      90deg,
-      rgb(3 4 6 / 0.88) 0%,
-      rgb(3 4 6 / 0.55) 22%,
-      rgb(3 4 6 / 0.72) 50%,
-      rgb(3 4 6 / 0.55) 78%,
-      rgb(3 4 6 / 0.88) 100%
-    ),
-    linear-gradient(0deg, rgb(3 4 6 / 0.9) 0%, transparent 40%);
-}
 
-.goin-cols {
-  position: absolute;
-  inset: 40px 180px 36px;
-  display: grid;
-  grid-template-columns: 360px 760px 360px;
-  gap: 40px;
-}
 
 .goin-label {
   font-size: 11px;
@@ -13217,15 +13196,6 @@ p.map-above {
   margin: 0 0 6px;
 }
 
-.goin-where,
-.goin-who {
-  padding: 18px;
-  display: grid;
-  gap: 18px;
-  align-content: start;
-  min-height: 0;
-  overflow: hidden;
-}
 
 .goin-place {
   display: grid;
@@ -13302,6 +13272,237 @@ p.map-above {
 
 .goin-leave {
   justify-self: start;
+}
+
+/* Take B (docs/mockups/go-in-takes.html, Jan's pick after P3.9b): the painting of where you stand
+   on the left, bright, with the moves as painted door cards along its foot; the story a page on the
+   right. Static: no blur, no looping paint. */
+.goin-paint {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 800px;
+  overflow: hidden;
+  background: #0b0c10;
+}
+
+.goin-paint img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.goin-paint::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 78%, rgb(3 4 6 / 0.95)),
+    linear-gradient(0deg, rgb(3 4 6 / 0.88) 0%, transparent 34%),
+    linear-gradient(180deg, rgb(3 4 6 / 0.55) 0%, transparent 18%);
+}
+
+.goin-paint.is-plain {
+  display: grid;
+  place-items: center;
+}
+
+.goin-paint-hz {
+  font-size: 360px;
+  color: rgb(255 255 255 / 0.04);
+}
+
+.goin-head {
+  position: absolute;
+  left: 36px;
+  top: 30px;
+  max-width: 760px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 18px 12px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--edge);
+  background: rgb(7 8 11 / 0.66);
+}
+
+.goin-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.05;
+}
+
+.goin-hour {
+  color: var(--accent);
+}
+
+.goin-over {
+  position: absolute;
+  left: 36px;
+  right: 844px;
+  bottom: 150px;
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.goin-over.is-low {
+  bottom: 36px;
+}
+
+.goin-over .goin-feat span {
+  background: rgb(7 8 11 / 0.66);
+}
+
+.goin-over .goin-happening {
+  padding: 6px 8px 6px 14px;
+  border-radius: 999px;
+  background: rgb(20 17 10 / 0.82);
+  border: 1px solid var(--accent-edge);
+}
+
+.goin-over .goin-face {
+  background: rgb(0 0 0 / 0.45);
+  color: #c9c3b6;
+}
+
+.goin-face.is-count {
+  border-style: solid;
+  border-color: transparent;
+  cursor: default;
+}
+
+.goin-doors {
+  position: absolute;
+  left: 36px;
+  right: 844px;
+  bottom: 30px;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.goin-door {
+  position: relative;
+  flex: 0 0 160px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--edge-strong);
+  background: #111217;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.goin-door img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.goin-door::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgb(0 0 0 / 0.88), transparent 70%);
+}
+
+.goin-door:hover:not(:disabled) {
+  border-color: var(--accent-edge);
+}
+
+.goin-door b {
+  position: absolute;
+  left: 10px;
+  right: 8px;
+  bottom: 22px;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.goin-door i {
+  position: absolute;
+  left: 10px;
+  bottom: 6px;
+  z-index: 1;
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.goin-door.is-barred img {
+  filter: grayscale(0.7) brightness(0.6);
+}
+
+.goin-door.is-barred b {
+  color: var(--muted);
+}
+
+.goin-door.is-plain {
+  background: repeating-linear-gradient(135deg, #111217 0 10px, #14151b 10px 20px);
+}
+
+.goin-page {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 800px;
+  background: #0a0b0e;
+  border-left: 1px solid var(--edge);
+  padding: 30px 44px 30px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 18px;
+}
+
+.goin-page-head {
+  display: grid;
+  grid-template-columns: 1fr 210px;
+  gap: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--edge);
+  align-items: start;
+}
+
+.goin-page-head .goin-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  max-height: 104px;
+  overflow: hidden;
+}
+
+.goin-page-head .goin-me {
+  border-top: 0;
+  padding-top: 0;
+  gap: 6px;
+  cursor: help;
+}
+
+.goin-page .goin-river {
+  padding: 60px 4px 0;
+  mask-image: linear-gradient(transparent 0, #000 90px);
+}
+
+.goin-page .goin-prose {
+  text-shadow: none;
+}
+
+.goin-page .goin-act {
+  padding: 0;
 }
 
 /* P3.9b: the moves inside a place, a happening under way, and the crowd's faces. */

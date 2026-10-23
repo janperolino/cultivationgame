@@ -554,14 +554,18 @@ export function movesHere(s: GameState): MoveView[] {
   const here = g && frameOf(g);
   if (!g?.place || !here) return [];
   const frames = g.place.frames;
-  return frames
-    .filter((f) => f.id !== here.id)
-    .filter((f) => {
-      // A district's own doors and rooms; another district's street and doors, not its rooms.
-      if (f.district !== here.district) return f.kind === 'street' || f.id.startsWith('door:');
-      return f.off === here.id || f.id === here.off || f.off === here.off || f.kind === 'street';
-    })
-    .map((f) => ({ frame: f, ticks: moveTicks(frames, here, f), barred: barOf(s, f) }));
+  return (
+    frames
+      .filter((f) => f.id !== here.id)
+      .filter((f) => {
+        // A district's own doors and rooms; another district's street and doors, not its rooms.
+        if (f.district !== here.district) return f.kind === 'street' || f.id.startsWith('door:');
+        return f.off === here.id || f.id === here.off || f.off === here.off || f.kind === 'street';
+      })
+      .map((f) => ({ frame: f, ticks: moveTicks(frames, here, f), barred: barOf(s, f) }))
+      // Nearest first: the rooms here, then this district's doors, then the other districts.
+      .sort((a, b) => a.ticks - b.ticks)
+  );
 }
 
 export interface MoveRun {
