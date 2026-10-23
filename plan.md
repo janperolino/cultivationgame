@@ -32,12 +32,14 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 | --------------------- | ----------------------- | ------------------ | ----------------- |
 | ✓ P3.9 The road       | **Guild trade**         | **Core Formation** | ✓ A6 Places       |
 | ✓ **People and ties** | Trade phases            | Core phases        | ✓ A6.1 Rooms      |
-| ✓ P3.9b Places, people | Trade checkpoint        | Atlas fill ¹       | A3.1 Cave         |
+| ✓ P3.9b Places        | Trade checkpoint        | Atlas fill ¹       | A3.1 Cave         |
 | ✓ P3.9c Scene fights  |                         |                    | A9 Chronicle…     |
-| N1–N8 People          |                         |                    | A12 Intros        |
-| People checkpoint     |                         |                    | F2 The haul       |
-| P3.10 The Ways        |                         |                    | A11 Content art   |
-| P3.11 Ruins           |                         |                    | A5.4, A7, A8, A10 |
+| ✓ P3.9t Talk first    |                         |                    | A12 Intros        |
+| P3.9w World book      |                         |                    | F2 The haul       |
+| N1–N8 People          |                         |                    | A11 Content art   |
+| People checkpoint     |                         |                    | A5.4, A7, A8, A10 |
+| P3.10 The Ways        |                         |                    |                   |
+| P3.11 Ruins           |                         |                    |                   |
 | P3.12 Decks, rebirth  |                         |                    |                   |
 | P3.13 Tone pass       |                         |                    |                   |
 | **M7** Big moments ²  |                         |                    |                   |
