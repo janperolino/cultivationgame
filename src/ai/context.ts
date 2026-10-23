@@ -28,6 +28,10 @@ import { stonesOf, stonesWords } from '../core/purse.ts';
 import type { GameState } from '../core/state.ts';
 import type { ChatMessage } from './openrouter.ts';
 import { FIXED_TEXT } from './prompts.ts';
+import { DOOR_KINDS } from '../content/doorKinds.ts';
+import { PLACE_AIR } from '../content/placeAir.ts';
+import { crowdHere, happeningAt, movesHere, wordOfPlace } from '../core/goinPlace.ts';
+import { voiceOf as keptVoice } from '../core/voices.ts';
 
 // ── The atlas, as the context reads it ───────────────────────────────────────────────────────
 
@@ -104,6 +108,8 @@ export function truthKnown(s: GameState, id: string): boolean {
 /** Whether you know someone's name: on your side, met, the name learned, or the law, named for what it is. */
 export function nameKnown(s: GameState, viewer: string, a: Actor): boolean {
   if (a.id === viewer || a.side === YOU || a.side === 'law') return true;
+  // A door's keeper goes by what they are ("the innkeeper"), an elder lecturing by name (P3.9b).
+  if (a.id.startsWith('keeper:') || a.id.startsWith('elder:')) return true;
   if (s.player.id === viewer && a.id in s.player.people) return true;
   return s.world.known.includes(`name:${a.id}`);
 }
@@ -285,12 +291,17 @@ function sceneText(
   scene: Scene,
   atlas: Atlas,
   me: Actor,
-  view: Pick<View, 'people' | 'things'>,
+  view: Pick<View, 'people' | 'things' | 'refs'>,
   notes: ContextInput['notes'],
 ): string {
   const place = atlas.get(scene.place);
+  // Inside a place you went into, it goes by its name even when the atlas has no entry for it.
   const placeName =
-    place && (placeKnown(s, place.id) || scene.place === place.id) ? place.name : null;
+    s.goin?.place?.id === scene.place
+      ? s.goin.place.name
+      : place && (placeKnown(s, place.id) || scene.place === place.id)
+        ? place.name
+        : null;
   const lines = [
     `# The scene: ${placeName ?? 'an unnamed spot'} (${scene.kind}${scene.open ? ', open' : ''}), ${scene.tick} ticks in`,
   ];
@@ -334,10 +345,21 @@ function sceneText(
         return `${l.memory.note ?? MEMORIES[l.memory.row].reason} ${v >= 0 ? '+' : ''}${v}${l.fading ? ' (fading)' : ''}`;
       });
     if (mem.length) lines.push(`  They remember of you: ${mem.join('; ')}.`);
+    // Between you (P3.9b): the stories the memories carry, faded ones too, and what they keep of you.
+    const between = betweenYou(s, a.id, me.id);
+    if (between.length) lines.push(`  Between you: ${between.join(' | ')}.`);
+    const v = keptVoice(s.world, a.id);
+    if (v.summary) lines.push(`  Your history with them: ${v.summary}`);
+    if (v.lines.length)
+      lines.push(`  Last time they said: ${v.lines.map((l) => `"${l}"`).join(' ')}`);
+    if (v.address) lines.push(`  They call you: ${v.address}.`);
+    for (const note of v.notes)
+      if (!(notes?.[a.id] ?? []).includes(note)) lines.push(`  Note: ${note}`);
     for (const note of notes?.[a.id] ?? []) lines.push(`  Note: ${note}`);
   }
   if (voiced.length >= 2)
     lines.push(`Their voices differ: ${voiced.join('; ')}. Never let them sound alike.`);
+  lines.push(...placeText(s, view));
   if (scene.noise && scene.noise.until > scene.tick) {
     lines.push(`A noise rings out ${scene.noise.li} li.`);
   }
@@ -352,6 +374,103 @@ function recentText(input: ContextInput): string {
   for (const t of turns) lines.push(`You: ${t.said}`, `Told: ${t.told}`);
   if (lines.length === 1) lines.push('The scene has just begun.');
   return lines.join('\n');
+}
+
+/**
+ * The stories behind someone's memories of you that you know they hold (design § Memories carry
+ * their story): faded ones too, since "remember when" reads them. A past not here never happened.
+ */
+export function betweenYou(s: GameState, holder: string, you: string): string[] {
+  return s.world.memories
+    .filter(
+      (m) => m.holder === holder && m.about === you && m.known.includes(you) && (m.what || m.felt),
+    )
+    .map((m) => [m.what, m.felt ? `"${m.felt}"` : ''].filter(Boolean).join(', '));
+}
+
+/**
+ * Where you stand inside a place (P3.9b): its air, the frame and what its door does, the moves from
+ * here with their ticks (refs the interpreter's enter takes), the crowd as a count and its faces as
+ * refs, a happening under way, and the word going round when you stand where it is told.
+ */
+function placeText(s: GameState, view: Pick<View, 'things' | 'refs'>): string[] {
+  const g = s.goin;
+  const place = g?.place;
+  if (!g || !place) return [];
+  const here = place.frames.find((f) => f.id === place.at);
+  if (!here) return [];
+  const air = PLACE_AIR[place.id];
+  const kind = here.kind === 'street' || here.kind === 'alley' ? null : DOOR_KINDS[here.kind];
+  const out = ['', `# Where you stand in ${place.name}: ${here.name}`];
+  if (air) {
+    out.push(`The place: ${air.air}`);
+    const door =
+      kind && here.kind !== 'street' && here.kind !== 'alley' ? air.doors?.[here.kind] : undefined;
+    if (door) out.push(`This door: ${door}`);
+  }
+  if (kind) out.push(`${kind.name}: ${kind.does}.`);
+  if (here.keeper && here.ground === 'resident') out.push(`Whose: ${here.keeper}'s.`);
+  // What is kept behind each way in that you would know of: your own power's treasury, a room got
+  // into this scene; a stranger's store you know only as "everything" (P3.9b).
+  view.things.add('taels');
+  view.things.add('everything');
+  for (const [way, store] of Object.entries(g.scene.stores ?? {})) {
+    const inside = way === `store:${here.id}`;
+    const room = inside ? here : place.frames.find((f) => `way:${f.id}` === way);
+    const own =
+      room?.ground === 'power' &&
+      !!g.scene.power &&
+      s.world.members.some((m) => m.who === s.player.id && m.power === g.scene.power);
+    if (!room || !(own || room.open || inside)) continue;
+    const held = Object.entries(store.items).filter(([, n]) => n > 0);
+    if (!held.length) continue;
+    out.push(
+      `Kept behind ${way} (${room.name}): ${held
+        .map(([id, n]) => {
+          view.things.add(id);
+          return `${hasItem(id) ? item(id).name : id} (${id})${n > 1 ? ` ×${n}` : ''}`;
+        })
+        .join('; ')}.`,
+    );
+  }
+  const moves = movesHere(s);
+  if (moves.length) {
+    out.push('You can go to (enter, by id):');
+    for (const m of moves) {
+      view.things.add(m.frame.id);
+      const way = g.scene.features.some((f) => f.id === `way:${m.frame.id}`)
+        ? `; its way in is way:${m.frame.id}`
+        : '';
+      out.push(
+        `- ${m.frame.id}: ${m.frame.name}, ${m.ticks ? `${m.ticks} ticks` : 'a step'}${m.barred ? ` (${m.barred}${way})` : ''}`,
+      );
+    }
+  }
+  if (Object.keys(g.scene.stores ?? {}).length)
+    out.push(
+      `Taking what a store keeps is burgle at its way in (or at the store, inside), thing an item id, "taels" or "everything": a stranger's store is unknown until you are in.`,
+    );
+  const crowd = crowdHere(s);
+  if (crowd.count > 0) {
+    out.push(`The crowd: about ${crowd.count}. Faces you can pick out (refs):`);
+    crowd.faces.forEach((f, i) => {
+      if (f.made) return;
+      const ref = `face-${i + 1}`;
+      view.refs[ref] = `face:${f.key}`;
+      out.push(`- ${ref}: ${f.line}`);
+    });
+  }
+  const h = happeningAt(s, place.id, here, s.calendar.day + g.scene.tick / 48);
+  if (h?.on) out.push(`Under way: ${h.lecturer.elder}'s lecture on ${h.lecturer.subject}.`);
+  else if (h && here.kind === 'hall')
+    out.push(
+      `${h.lecturer.elder} lectures here on the 1st and 15th at 辰${h.member ? '' : ', members only'}.`,
+    );
+  if (here.kind === 'teahouse' || here.kind === 'wine-house') {
+    const word = wordOfPlace(s, place.id).slice(0, 3);
+    if (word.length) out.push(`Word going round: ${word.join('; ')}.`);
+  }
+  return out;
 }
 
 /** Everything the context holds for one viewer, and its refs. */
@@ -381,7 +500,7 @@ export function buildView(input: ContextInput): View {
     const known = nameKnown(s, viewer, a);
     const ref = known ? a.id : `stranger-${++strangers}`;
     refs[ref] = a.id;
-    const looks = known ? null : looksLike(a);
+    const looks = known ? null : (a.looks ?? looksLike(a));
     const an = looks && /^[aeiou]/.test(looks) ? 'an' : 'a';
     const label = known ? a.name : looks ? `a stranger, ${an} ${looks} by the look` : 'a stranger';
     people[a.id] = { ref, label };
@@ -390,7 +509,7 @@ export function buildView(input: ContextInput): View {
   people[viewer] = { ref: viewer, label: 'you' };
   const region = regionText(s, scene, atlas, viewer, things);
   const sheet = sheetText(s, me, things);
-  const sceneOut = sceneText(s, scene, atlas, me, { people, things }, input.notes);
+  const sceneOut = sceneText(s, scene, atlas, me, { people, things, refs }, input.notes);
   return {
     viewer,
     refs,

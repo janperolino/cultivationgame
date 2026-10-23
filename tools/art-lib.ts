@@ -247,6 +247,8 @@ export async function runArt(root: string): Promise<ArtReport> {
  */
 export function screenOf(id: string): string {
   if (id.startsWith('place-')) return id.replace(/-(banner|doors-\d+)$/, '');
+  // The wilds' paintings for going in: a region's terrain at a time (tools/land-request.ts).
+  if (id.startsWith('land-')) return id.replace(/-\d+$/, '');
   return id.split('-')[0]!;
 }
 
@@ -260,7 +262,9 @@ export function checkScreens(m: ArtManifest, written: ArtReport['written']): str
     totals.set(s, (totals.get(s) ?? 0) + w.kb);
   }
   return [...totals]
-    .map(([s, kb]) => [s, kb, s.startsWith('place-') ? PLACE_BUDGET_KB : SCREEN_BUDGET_KB] as const)
+    .map(
+      ([s, kb]) => [s, kb, /^(place|land)-/.test(s) ? PLACE_BUDGET_KB : SCREEN_BUDGET_KB] as const,
+    )
     .filter(([, kb, most]) => kb > most)
     .map(([s, kb, most]) => `${s}: its art is ${kb.toFixed(0)} KB, over ${most} KB`);
 }

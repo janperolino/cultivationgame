@@ -1507,6 +1507,386 @@
         "maps"
       ],
       "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-karst-1",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/karst/1.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Limestone towers rising out of morning mist as far as the eye goes, a goat track winding between their feet. Pale dawn.\n\nTHE LAND: limestone karst: stone towers and needles hundreds of zhang tall, sinkholes, caves, slot gorges, ferns and twisted pines clinging to grey rock, mist in the hollows.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-karst-2",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/karst/2.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A sinkhole's mouth as wide as a valley, ferns and vines hanging over its lip, its floor lost in dark. Overcast noon.\n\nTHE LAND: limestone karst: stone towers and needles hundreds of zhang tall, sinkholes, caves, slot gorges, ferns and twisted pines clinging to grey rock, mist in the hollows.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-karst-3",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/karst/3.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A cave under a great overhang, its ceiling blackened by old fires, a raider's cold camp of stones and bones. Late afternoon light slanting in.\n\nTHE LAND: limestone karst: stone towers and needles hundreds of zhang tall, sinkholes, caves, slot gorges, ferns and twisted pines clinging to grey rock, mist in the hollows.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-karst-4",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/karst/4.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A green river running out of a cave mouth into a gorge between towers. Rain.\n\nTHE LAND: limestone karst: stone towers and needles hundreds of zhang tall, sinkholes, caves, slot gorges, ferns and twisted pines clinging to grey rock, mist in the hollows.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-karst-5",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/karst/5.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A forest of stone needles under a full moon, silver light on wet rock, deep shadow between.\n\nTHE LAND: limestone karst: stone towers and needles hundreds of zhang tall, sinkholes, caves, slot gorges, ferns and twisted pines clinging to grey rock, mist in the hollows.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-karst-6",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/karst/6.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A collapsed valley floor of fallen rock between pillars, a smugglers’ cairn of stacked stones marking the way. Noon haze.\n\nTHE LAND: limestone karst: stone towers and needles hundreds of zhang tall, sinkholes, caves, slot gorges, ferns and twisted pines clinging to grey rock, mist in the hollows.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-karst-7",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/karst/7.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: From a high saddle between two peaks, a sea of karst towers to the horizon. A red sunset.\n\nTHE LAND: limestone karst: stone towers and needles hundreds of zhang tall, sinkholes, caves, slot gorges, ferns and twisted pines clinging to grey rock, mist in the hollows.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-karst-8",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/karst/8.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A slot gorge so narrow the sky is a thread, water ankle-deep over pale stone. Dim blue light.\n\nTHE LAND: limestone karst: stone towers and needles hundreds of zhang tall, sinkholes, caves, slot gorges, ferns and twisted pines clinging to grey rock, mist in the hollows.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-marsh-1",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/marsh/1.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Reed beds taller than a man under thick fog, a narrow channel of black water through them. Grey morning.\n\nTHE LAND: black-water marsh between karst knolls: reed beds taller than a man, drowned trees, plank causeways, lotus and duckweed, fog.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-marsh-2",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/marsh/2.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A plank causeway on stilts crossing black water of no depth you can see. Dusk.\n\nTHE LAND: black-water marsh between karst knolls: reed beds taller than a man, drowned trees, plank causeways, lotus and duckweed, fog.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-marsh-3",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/marsh/3.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A drowned grove of dead trees standing in still water, their reflections perfect. Overcast.\n\nTHE LAND: black-water marsh between karst knolls: reed beds taller than a man, drowned trees, plank causeways, lotus and duckweed, fog.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-marsh-4",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/marsh/4.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: An abandoned fisher's stilt hut leaning over the water, its nets rotted. Low evening sun.\n\nTHE LAND: black-water marsh between karst knolls: reed beds taller than a man, drowned trees, plank causeways, lotus and duckweed, fog.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-marsh-5",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/marsh/5.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Pale marsh-lights drifting over black water at night, karst knolls dark behind.\n\nTHE LAND: black-water marsh between karst knolls: reed beds taller than a man, drowned trees, plank causeways, lotus and duckweed, fog.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-hills-1",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/hills/1.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Terraced slopes of ripening millet stepping down a valley, mist pooled in its floor. Dawn.\n\nTHE LAND: folded green hill country between the karst, terraced fields in the valleys, beacon towers on the ridgelines, pine and bamboo on the slopes.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-hills-2",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/hills/2.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A grassy crest with a stone beacon tower far off on the next ridge, its fire lit. Dusk.\n\nTHE LAND: folded green hill country between the karst, terraced fields in the valleys, beacon towers on the ridgelines, pine and bamboo on the slopes.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-hills-3",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/hills/3.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A woodcutter's bark shelter on a steep slope of pines. Rain.\n\nTHE LAND: folded green hill country between the karst, terraced fields in the valleys, beacon towers on the ridgelines, pine and bamboo on the slopes.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-hills-4",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/hills/4.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A hill road climbing to a pass with a small roadside shrine and a stone lion. Clear noon.\n\nTHE LAND: folded green hill country between the karst, terraced fields in the valleys, beacon towers on the ridgelines, pine and bamboo on the slopes.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-hills-5",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/hills/5.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Folded hills under a starry night, a single farm lamp in a valley.\n\nTHE LAND: folded green hill country between the karst, terraced fields in the valleys, beacon towers on the ridgelines, pine and bamboo on the slopes.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-forest-1",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/forest/1.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: An old pine with low spreading branches in a clearing, shafts of light through the canopy. Morning.\n\nTHE LAND: old forest in the karst valleys: camphor and pine giants, moss, deep undergrowth, ravines and fallen trunks, shafts of light.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-forest-2",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/forest/2.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A ravine choked with deep undergrowth and ferns, dark and close. Dim green light.\n\nTHE LAND: old forest in the karst valleys: camphor and pine giants, moss, deep undergrowth, ravines and fallen trunks, shafts of light.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-forest-3",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/forest/3.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A fallen trunk bridging a deep gully, moss thick on it. Afternoon.\n\nTHE LAND: old forest in the karst valleys: camphor and pine giants, moss, deep undergrowth, ravines and fallen trunks, shafts of light.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-forest-4",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/forest/4.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Camphor giants hung with moss in rain, the trunks wider than houses.\n\nTHE LAND: old forest in the karst valleys: camphor and pine giants, moss, deep undergrowth, ravines and fallen trunks, shafts of light.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-forest-5",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/forest/5.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A clearing burned black by something that breathes fire, the trees around it scorched. Smoky dusk.\n\nTHE LAND: old forest in the karst valleys: camphor and pine giants, moss, deep undergrowth, ravines and fallen trunks, shafts of light.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-coast-1",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/coast/1.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A shingle bank and the tide line, surf breaking on reefs offshore. Windy grey morning.\n\nTHE LAND: a rocky sea coast: shingle banks, reefs, sea cliffs, tide pools, fishing villages far off, salt haze, the strait beyond.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-coast-2",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/coast/2.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Fishers' drying racks with nets and split fish on a pebble beach, boats drawn up. Evening.\n\nTHE LAND: a rocky sea coast: shingle banks, reefs, sea cliffs, tide pools, fishing villages far off, salt haze, the strait beyond.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-coast-3",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/coast/3.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Sea cliffs with surf exploding at their feet, seabirds wheeling. Storm light.\n\nTHE LAND: a rocky sea coast: shingle banks, reefs, sea cliffs, tide pools, fishing villages far off, salt haze, the strait beyond.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-coast-4",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/coast/4.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: At low tide, a chain of islands stepping off toward the horizon across wet sand and reef. Golden afternoon.\n\nTHE LAND: a rocky sea coast: shingle banks, reefs, sea cliffs, tide pools, fishing villages far off, salt haze, the strait beyond.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-coast-5",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/coast/5.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A wrecked junk on a reef at dusk, its sails in tatters.\n\nTHE LAND: a rocky sea coast: shingle banks, reefs, sea cliffs, tide pools, fishing villages far off, salt haze, the strait beyond.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-plains-1",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/plains/1.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A lone camphor tree in a field of tall millet, a cart track beside it. Summer noon.\n\nTHE LAND: a kingdom’s farmland on the flat between karst: millet and rice, cart tracks, lone trees, villages far off.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-plains-2",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/plains/2.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Flooded rice paddies mirroring the sky, karst towers on the horizon. Dawn.\n\nTHE LAND: a kingdom’s farmland on the flat between karst: millet and rice, cart tracks, lone trees, villages far off.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-plains-3",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/plains/3.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A farmstead burned after a beast raid, smoke still rising, its fields trampled. Overcast.\n\nTHE LAND: a kingdom’s farmland on the flat between karst: millet and rice, cart tracks, lone trees, villages far off.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-plains-4",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/plains/4.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Open grassland under a coming storm, the grass flattened by the wind.\n\nTHE LAND: a kingdom’s farmland on the flat between karst: millet and rice, cart tracks, lone trees, villages far off.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-plains-5",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/plains/5.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A village’s threshing floor and haystacks under harvest moonlight.\n\nTHE LAND: a kingdom’s farmland on the flat between karst: millet and rice, cart tracks, lone trees, villages far off.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-sea-1",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/sea/1.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Green strait water seen from a low reef, sea stacks rising out of it. Bright morning.\n\nTHE LAND: the Jade Strait and the island chain: green water, sea stacks, reefs and small islands, the far shore beast country.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-sea-2",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/sea/2.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: A small island in the chain with a tidal causeway of wet stone. Afternoon.\n\nTHE LAND: the Jade Strait and the island chain: green water, sea stacks, reefs and small islands, the far shore beast country.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-sea-3",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/sea/3.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: Sea stacks in fog, waves breaking on their feet.\n\nTHE LAND: the Jade Strait and the island chain: green water, sea stacks, reefs and small islands, the far shore beast country.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-sea-4",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/sea/4.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: The night sea glowing with green light in the wake of something unseen, stars above.\n\nTHE LAND: the Jade Strait and the island chain: green water, sea stacks, reefs and small islands, the far shore beast country.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
+    },
+    {
+      "id": "land-qm-bianhuang-sea-5",
+      "kind": "scene",
+      "out": "src/ui/art/land/qm-bianhuang/sea/5.webp",
+      "width": 1280,
+      "quality": 74,
+      "budgetKB": 220,
+      "prompt": "Create ONE landscape 1536x1024 painting AS AN ASSET for a game screen: a place in the Border Wilds's wilds as someone standing there sees it, at eye level or from a little above.\n\nTHE SCENE: The strait in a storm, waves high, the far shore a dark line.\n\nTHE LAND: the Jade Strait and the island chain: green water, sea stacks, reefs and small islands, the far shore beast country.\n\nTHE REGION: The Border Wilds: sixty thousand li of wild karst hills on a continent's southwest coast, kingdoms that are islands of farmland in a sea of stone, beasts holding the rest; across a strait lies beast country, and at low tide an island chain is a road both ways. Raids have tripled in five years. A frontier: old, wild, a little dangerous, rich with spirit herbs and hidden caves.\n\nThe game shows it on the left of the screen, cropped to a square from the middle: keep the subject in the middle third, sky above and near ground below. A small dark caption box sits over the top-left corner, and small labels over the bottom fifth, so keep both calm.\n\nPaint the land only: no people close up, no cultivator, no creatures. Rich, painterly, atmospheric; not too bright.\n\nSTYLE: Chinese xianxia cultivation fantasy, as in Chinese cultivation games and donghua, painted with rich detail; never medieval European, never sci-fi. The world is vast, at continental scale: stone towers hundreds of zhang tall, valleys a day across. Rock stays natural rock. NO TEXT, NO LETTERS, NO NUMBERS, NO UI, no signs with writing, no frame, no watermark.",
+      "trickle": true
     }
   ],
   "maps": [

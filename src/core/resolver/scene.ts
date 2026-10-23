@@ -76,7 +76,7 @@ import { fameOf, knowsName } from './names.ts';
 import { meetingShows, revealNature } from './nature.ts';
 import { addTie, axisFactor, contest, lean, remember, tieOf } from './opinion.ts';
 import { COMPOSURE_AXIS, FIRST_LOOK_EACH } from '../../content/personality.ts';
-import { actorNature, giftOf, talkCheck } from './talk.ts';
+import { actorNature, bestCraftGrade, giftOf, talkCheck } from './talk.ts';
 import type { Plan, Step } from './plan.ts';
 import {
   healWounds,
@@ -98,7 +98,12 @@ import { hasItem, item } from '../../content/items.ts';
 import { template as rosterTemplate } from '../../content/roster.ts';
 import { fortune } from '../stats.ts';
 import { artCopy, seenUsing } from '../guarded.ts';
-import { PINNED_REFUSES } from '../../content/goin.ts';
+import { CRAFT_RESPECT, PINNED_REFUSES } from '../../content/goin.ts';
+import { LOOSE_TALK } from '../../content/doorKinds.ts';
+import { deedKarma } from '../../content/resolver.ts';
+
+/** Deeds a temple's sanctuary counts twice (P3.9b). */
+const SANCTUARY_DEEDS: readonly DeedKind[] = ['assault', 'killing', 'massacre'];
 
 /** A thing in the scene that can be used, searched, broken or hidden behind. */
 export interface SceneFeature {
@@ -142,6 +147,13 @@ export interface Scene {
   /** The tick the law arrives, once called. */
   lawDue: number | null;
   log: string[];
+  /**
+   * What a guarded room holds, by the feature that is its way in (P3.9b): a burglary there takes
+   * only what is in it, the store's silver and stones among it.
+   */
+  stores?: Record<string, { items: Record<string, number>; taels: number; stones: number }>;
+  /** The door kind's special thing, where the resolver reads it: loose talk, sanctuary (P3.9b). */
+  special?: string;
 }
 
 export interface SceneInit {
@@ -292,11 +304,15 @@ export function checkFor(s: GameState, scene: Scene, a: Actor, st: Step): StepCh
       };
     }
     const t = talkCheck(s, a, target, st, scene.region);
+    // Loose talk (P3.9b, the flower house): asking for a truth meets less resistance there.
+    const loose = scene.special === 'loose-talk' && st.act === 'ask';
+    const gated = t.verdict === 'short' && verdict(t.yours, t.theirs) !== 'short';
+    const theirs = loose ? t.theirs * LOOSE_TALK : t.theirs;
     return {
       yours: t.yours,
-      theirs: t.theirs,
-      verdict: t.verdict,
-      judged: t.judged,
+      theirs,
+      verdict: loose && !gated ? verdict(t.yours, theirs) : t.verdict,
+      judged: loose && !gated && t.judged !== 'short' ? verdict(t.yours, theirs) : t.judged,
       beyond: false,
       faced: [target.id],
     };
@@ -408,9 +424,14 @@ function refusal(
     const thing = st.thing ?? 'stones';
     const n = st.n ?? 1;
     // Your purse goes into the scene as your actor's stones, and every stone effect keeps both.
-    const have = thing !== 'stones' ? (a.items[thing] ?? 0) : a.stones;
+    const have =
+      thing === 'stones' ? a.stones : thing === 'taels' ? (a.taels ?? 0) : (a.items[thing] ?? 0);
     if (have < n)
-      return thing === 'stones' ? 'you have no stones to hand over' : `you don't hold ${thing}`;
+      return thing === 'stones'
+        ? 'you have no stones to hand over'
+        : thing === 'taels'
+          ? `you haven't ${n} taels`
+          : `you don't hold ${thing}`;
   }
   if (info.target === 'person' && (!st.target || !actorIn(scene, st.target)))
     return 'nobody to aim it at';
@@ -600,6 +621,12 @@ function deed(
   );
   w.s = { ...w.s, world: r.world };
   w.deeds.push(r.id);
+  // Sanctuary (P3.9b, the temple): blood shed there costs heaven twice.
+  if (w.scene.special === 'sanctuary' && SANCTUARY_DEEDS.includes(kind)) {
+    const weaker =
+      !!victim && realmIndex(realmOfActor(victim).realm) < realmIndex(realmOfActor(a).realm);
+    apply(w, [{ do: 'karma', who: a.id, n: deedKarma(kind, weaker) }]);
+  }
   const law = LAW[w.scene.kind];
   if (law && !LAWFUL.includes(kind) && seenBy.length > 0 && w.scene.lawDue === null) {
     w.scene = { ...w.scene, lawDue: w.scene.tick + law.ticks };
@@ -918,6 +945,20 @@ export function doStep(
   switch (st.act) {
     case 'steal':
     case 'rob':
+      // A mortal's purse is silver (P3.9b): a cutpurse takes taels.
+      if (passed && target && thing === 'taels') {
+        const took = Math.min(target.taels ?? 0, st.n ?? target.taels ?? 0);
+        if (took > 0) {
+          apply(w, [
+            { do: 'silver', who: target.id, n: -took },
+            { do: 'silver', who: a.id, n: took },
+          ]);
+          if (youAre(a))
+            w.s = { ...w.s, world: noteTaken(w.s.world, target, {}, 0, w.scene.place) };
+        }
+        if (st.act === 'rob') seenBy = [...new Set([...seenBy, ...watchers(w.scene, a)])];
+        break;
+      }
       if (passed && target) {
         const have = thing === 'stones' ? target.stones : (target.items[thing] ?? 0);
         const took = Math.min(have, thing === 'stones' ? (st.n ?? have) : n);
@@ -946,6 +987,11 @@ export function doStep(
       }
       break;
     case 'burgle':
+      // A guarded room's store holds what it holds (P3.9b): only that comes out of it.
+      if (st.target && w.scene.stores?.[st.target]) {
+        if (passed) burgleStore(w, a, st.target, st.thing, st.n);
+        break;
+      }
       // What a burglary takes is the place's, so it simply comes to you.
       if (passed && st.thing && st.thing !== 'stones') {
         apply(w, [{ do: 'item', who: a.id, id: st.thing, n, how: 'gained' }]);
@@ -1024,10 +1070,15 @@ export function doStep(
                 { do: 'stones', who: a.id, n: -n },
                 { do: 'stones', who: target.id, n, grade: purseGrade(a) },
               ]
-            : [
-                { do: 'item', who: a.id, id: thing, n: -n, how: 'lost' },
-                { do: 'item', who: target.id, id: thing, n, how: 'gained' },
-              ];
+            : thing === 'taels'
+              ? [
+                  { do: 'silver', who: a.id, n: -n },
+                  { do: 'silver', who: target.id, n },
+                ]
+              : [
+                  { do: 'item', who: a.id, id: thing, n: -n, how: 'lost' },
+                  { do: 'item', who: target.id, id: thing, n, how: 'gained' },
+                ];
         apply(w, effects);
         if (st.act === 'gift') {
           const g = giftOf(thing, n);
@@ -1630,7 +1681,12 @@ function meet(s: GameState, scene: Scene): GameState {
         !isBeastActor(x) &&
         !world.memories.some((m) => m.holder === x.id && m.about === p && m.row === 'first-look')
       ) {
-        const v = FIRST_LOOK_EACH * lean(actorNature(world, x), 'trust');
+        // A crafter is looked at with respect (P3.9b): two a grade of your best craft, up to six.
+        const craft =
+          p === s.player.id
+            ? Math.min(CRAFT_RESPECT.firstLookMax, CRAFT_RESPECT.firstLook * bestCraftGrade(s))
+            : 0;
+        const v = FIRST_LOOK_EACH * lean(actorNature(world, x), 'trust') + craft;
         if (v)
           world = remember(
             world,
@@ -1801,6 +1857,33 @@ export function leaveScene(s: GameState, scene: Scene): GameState {
   // Whoever the scene left a thread to you is kept; everyone else is thrown away (core/kept.ts).
   const world = keepThreaded(healWounds(s.world, day), scene, s.player.id, scene.place);
   return { ...s, calendar: { day }, world };
+}
+
+/**
+ * A burglary of a guarded room's store (P3.9b): the thing named if it is there, as many as asked
+ * and no more; named nothing, or "everything", it all comes out, the silver and stones with it.
+ */
+function burgleStore(w: Working, a: Actor, at: string, thing?: string, n?: number): void {
+  const store = w.scene.stores![at]!;
+  const effects: Effect[] = [];
+  const left = { items: { ...store.items }, taels: store.taels, stones: store.stones };
+  const all = !thing || thing === 'everything';
+  for (const [id, k] of Object.entries(store.items)) {
+    if (k <= 0 || (!all && id !== thing)) continue;
+    const took = all ? k : Math.min(k, n ?? 1);
+    effects.push({ do: 'item', who: a.id, id, n: took, how: 'gained' });
+    left.items[id] = k - took;
+  }
+  if ((all || thing === 'taels') && store.taels > 0) {
+    effects.push({ do: 'silver', who: a.id, n: store.taels });
+    left.taels = 0;
+  }
+  if ((all || thing === 'stones') && store.stones > 0) {
+    effects.push({ do: 'stones', who: a.id, n: store.stones, grade: 0 });
+    left.stones = 0;
+  }
+  apply(w, effects);
+  w.scene = { ...w.scene, stores: { ...w.scene.stores, [at]: left } };
 }
 
 /** A generated NPC's ring, as their seed fills it (core/loot.ts), or null for anyone else. */

@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { BOND_IDS } from '../content/bonds.ts';
 import { OFFERS } from '../content/personality.ts';
 import { REALM_IDS } from '../content/realms.ts';
+import { MEMORY_TAGS } from '../content/memories.ts';
 import { ACT_IDS, HELPER_MAX, MANNERS, USE_MAX, type ActId } from '../content/resolver.ts';
 
 // ── The interpreter's plans ──────────────────────────────────────────────────────────────────
@@ -253,6 +254,32 @@ export const narratorTailSchema = z.object({
       z.object({ name: z.string().min(1), kind: z.enum(NAME_KINDS), note: z.string().max(200) }),
     )
     .max(4),
+  /**
+   * What lasts of the turn's people (P3.9b; design § Memories carry their story, A voice is kept):
+   * a line each said that sounds most like them, how they address the player the first time they do,
+   * a memory's own words in the holder's voice (up to 40), and at most one moment, the blank row.
+   */
+  said: z
+    .array(z.object({ about: z.string().min(1), line: z.string().min(1).max(200) }))
+    .max(4)
+    .default([]),
+  address: z
+    .array(z.object({ about: z.string().min(1), address: z.string().min(1).max(40) }))
+    .max(4)
+    .default([]),
+  felt: z
+    .array(z.object({ about: z.string().min(1), felt: z.string().min(1).max(300) }))
+    .max(4)
+    .default([]),
+  moment: z
+    .object({
+      about: z.string().min(1),
+      reason: z.string().min(1).max(100),
+      story: z.string().min(1).max(300),
+      tag: z.enum(MEMORY_TAGS),
+      sign: z.enum(['good', 'bad']),
+    })
+    .nullish(),
 });
 
 export type NarratorTail = z.infer<typeof narratorTailSchema>;
@@ -261,7 +288,7 @@ export type NarratorTail = z.infer<typeof narratorTailSchema>;
 export const narratorTailJsonSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['choices', 'memory', 'names'],
+  required: ['choices', 'memory', 'names', 'said', 'address', 'felt', 'moment'],
   properties: {
     choices: {
       type: 'array',
@@ -281,6 +308,62 @@ export const narratorTailJsonSchema = {
           note: { type: 'string', minLength: 1, maxLength: 200 },
         },
       },
+    },
+    said: {
+      type: 'array',
+      maxItems: 4,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['about', 'line'],
+        properties: {
+          about: { type: 'string', minLength: 1 },
+          line: { type: 'string', minLength: 1, maxLength: 200 },
+        },
+      },
+    },
+    address: {
+      type: 'array',
+      maxItems: 4,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['about', 'address'],
+        properties: {
+          about: { type: 'string', minLength: 1 },
+          address: { type: 'string', minLength: 1, maxLength: 40 },
+        },
+      },
+    },
+    felt: {
+      type: 'array',
+      maxItems: 4,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['about', 'felt'],
+        properties: {
+          about: { type: 'string', minLength: 1 },
+          felt: { type: 'string', minLength: 1, maxLength: 300 },
+        },
+      },
+    },
+    moment: {
+      anyOf: [
+        { type: 'null' },
+        {
+          type: 'object',
+          additionalProperties: false,
+          required: ['about', 'reason', 'story', 'tag', 'sign'],
+          properties: {
+            about: { type: 'string', minLength: 1 },
+            reason: { type: 'string', minLength: 1, maxLength: 100 },
+            story: { type: 'string', minLength: 1, maxLength: 300 },
+            tag: { type: 'string', enum: [...MEMORY_TAGS] },
+            sign: { type: 'string', enum: ['good', 'bad'] },
+          },
+        },
+      ],
     },
     names: {
       type: 'array',

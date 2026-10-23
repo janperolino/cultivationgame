@@ -71,6 +71,9 @@ function youLines(before: Actor | undefined, after: Actor | undefined): string[]
     if (d < 0) lost.push(counted(-d, id));
     if (d > 0) gained.push(counted(d, id));
   }
+  const taels = (after.taels ?? 0) - (before.taels ?? 0);
+  if (taels < 0) lost.push(`${-taels} taels of silver`);
+  if (taels > 0) gained.push(`${taels} taels of silver`);
   const stones = after.stones - before.stones;
   if (stones < 0) lost.push(`${-stones} low-grade stones' worth`);
   if (stones > 0) gained.push(`${stones} low-grade stones' worth`);
@@ -89,6 +92,9 @@ function youLines(before: Actor | undefined, after: Actor | undefined): string[]
     );
   return out;
 }
+
+/** A scene's log lines the place layer wrote to be told (core/goinPlace.ts `told`). */
+const TOLD = '» ';
 
 /**
  * The outcome of a round or a plan's run, for the viewer: each step in order, who arrived, what
@@ -117,6 +123,9 @@ export function outcomeOf(
       after.actors.find((a) => a.id === view.viewer),
     ),
   );
+  // What the place answered (P3.9b): a move, a witness, a noise heard across it, a word told.
+  for (const l of after.log.slice(before.log.length))
+    if (l.startsWith(TOLD)) plain.push(l.slice(2));
   if (stopped) plain.push(`It hands back to you: ${stopped}.`);
   const text = [
     '# What the engine decided (final; tell exactly this)',

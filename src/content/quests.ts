@@ -23,7 +23,8 @@ import { INTRO_QUESTS } from './quests/intro.ts';
 export type QuestPlace = string;
 
 export interface QuestGiver {
-  kind: 'board' | 'shop' | 'hall' | 'person';
+  /** A teahouse's keeper offers the going-in introduction (P3.9b). */
+  kind: 'board' | 'shop' | 'hall' | 'person' | 'teahouse';
   /** Where they offer it, and where it is handed in. */
   place: QuestPlace;
   /** The person's id, for a person; a shop's id, for a shop or hall at one place. */

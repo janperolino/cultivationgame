@@ -7,6 +7,9 @@
 // anyone who knows your name; a recruit's bond sets what it needs: loyalty asks friendly (P3.4b).
 import { hasItem, item, itemKind, type Item } from '../../content/items.ts';
 import { priceOf } from '../prices.ts';
+import { craftTiersHeld } from '../crafts.ts';
+import { CRAFT_IDS } from '../../content/crafts.ts';
+import { CRAFT_RESPECT } from '../../content/goin.ts';
 import {
   ALWAYS_SUSPICIOUS,
   BARGAIN_AXIS,
@@ -137,9 +140,11 @@ export function talkCheck(
     const against = !!motive && nn.motives.includes(motive);
     return resistance({ suspicion: suspicious || always, against }) * factor;
   };
-  const yours = yoursFor(trust, met, n);
+  // A crafter is respected (Jan, K1's talk; P3.9b): your best craft's grade adds to any ask.
+  const craft = a.id === s.player.id ? craftRespect(s) : 1;
+  const yours = yoursFor(trust, met, n) * craft;
   const theirs = theirsFor(n);
-  const yoursSeen = yoursFor(seenTrust, seenMet, seen);
+  const yoursSeen = yoursFor(seenTrust, seenMet, seen) * craft;
   const theirsSeen = theirsFor(seen);
   // An act that needs a trust they don't hold is refused whatever you bring.
   const needs =
@@ -153,6 +158,17 @@ export function talkCheck(
     trust,
     seenTrust,
   };
+}
+
+/** A crafter's standing in a talk: ×(1 + a tenth a grade of your best craft), to ×1.3. */
+export function craftRespect(s: GameState): number {
+  const g = bestCraftGrade(s);
+  return 1 + Math.min(CRAFT_RESPECT.max, CRAFT_RESPECT.perGrade * g);
+}
+
+/** Your best craft's grade held, 0 for none. */
+export function bestCraftGrade(s: GameState): number {
+  return Math.max(0, ...CRAFT_IDS.map((c) => craftTiersHeld(s.player, c)));
 }
 
 // ── Gifts ────────────────────────────────────────────────────────────────────────────────────

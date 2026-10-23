@@ -11,6 +11,23 @@ const any = (kind: Quest['giver']['kind'], name: string, shopKind?: Quest['giver
   ({ kind, place: '@any', name, ...(shopKind ? { shopKind } : {}) }) as const;
 
 export const INTRO_QUESTS: readonly Quest[] = [
+  // Going in (P3.9b): the teahouse's own introduction, offered at any teahouse's counter.
+  {
+    id: 'intro-going-in',
+    title: 'A Seat by the Window',
+    giver: { kind: 'teahouse', place: '@any', name: 'the teahouse keeper' },
+    reason:
+      'The teahouse keeper says nobody learns a town from its signboards: you sit, you listen, you buy someone a pot and let them talk. Go in and spend some time among the tables, then come back and tell the keeper what you heard.',
+    steps: [
+      {
+        text: 'Go in at a place’s door or its streets, and leave again: Go in 入 needs an OpenRouter key.',
+        goal: { event: 'scene' },
+      },
+    ],
+    reward: { stones: 3, text: '3 low-grade stones and a free pot' },
+    thanks: '“There. Now you know the town better than its magistrate does.”',
+    codex: ['going-in'],
+  },
   {
     id: 'intro-gear',
     title: 'Try the Fit',

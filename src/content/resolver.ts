@@ -542,6 +542,17 @@ export const ACTS = {
     deed: 'frame',
   },
   // Use
+  // Getting rid of a body (P3.9b, Jan's call): hidden it is found by how well (a week clear, three
+  // days close, by morning short); burned with a fire art or talisman, sunk or fed to beasts, never.
+  dispose: {
+    verb: 'use',
+    name: 'get rid of the body',
+    check: { yours: 'stealth', faces: 'perception' },
+    target: 'person',
+    ticks: 2,
+    costs: ['time', 'witness'],
+    short: 'noticed',
+  },
   break: {
     verb: 'use',
     name: 'break',

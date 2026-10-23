@@ -146,7 +146,7 @@ describe('narrator tail', () => {
     const text = `He takes the core.\n\n\`\`\`json\n${JSON.stringify(tail)}\n\`\`\``;
     const { prose, tailText } = splitNarration(text);
     expect(prose).toBe('He takes the core.');
-    expect(checkTail(tailText)).toEqual({ ok: true, tail });
+    expect(checkTail(tailText)).toMatchObject({ ok: true, tail });
   });
 
   it('finds a bare trailing object', () => {
