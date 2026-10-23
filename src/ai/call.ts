@@ -18,9 +18,12 @@ export const ROLE_SETTINGS: Record<Role, Omit<ChatRequest, 'messages'>> = {
   interpreter: { temperature: 0.2, max_tokens: 1200, provider: STRUCTURED },
   fight: { temperature: 0.2, max_tokens: 400, provider: STRUCTURED },
   // The narrator on Morph, the richest prose, with DeepInfra as fallback.
+  // Thinking on (talk first, 2026-10-23, Jan's call): it holds people to their station and the
+  // player's choices to the player, for about twice the cost and a longer wait he doesn't mind.
   narrator: {
     temperature: 0.8,
-    max_tokens: 600,
+    max_tokens: 3000,
+    reasoning: { enabled: true },
     provider: { order: ['morph', 'deepinfra'], ignore: IGNORE },
   },
   tail: {
