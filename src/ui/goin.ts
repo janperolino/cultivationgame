@@ -38,6 +38,12 @@ import {
   type SceneFightBack,
 } from '../core/goin.ts';
 import type { FightEnd } from '../core/played.ts';
+import { keepLasts } from '../core/voices.ts';
+import { goInPlace, sitLecture, type PlaceDoor } from '../core/goinPlace.ts';
+import { NEW_SPOT } from '../content/goin.ts';
+import { placeById, type MapPlace, type RegionMap } from '../core/map/region.ts';
+import { mapOf } from '../core/map/travel.ts';
+import { doorsOf } from './placeDoors.ts';
 import { nameOf } from '../core/people.ts';
 import { opinion } from '../core/resolver/opinion.ts';
 import type { Plan } from '../core/resolver/plan.ts';
@@ -132,8 +138,55 @@ export function goInHereNow(): string | null {
   return openBy(goInHere);
 }
 
+/** A place's streets or one of its doors, from its screen (P3.9b). */
+export function goInDoor(d: PlaceDoor): string | null {
+  return openBy((s) => goInPlace(s, d));
+}
+
+/** Go in at a place's door, or its streets with none, as its screen lays its doors out. */
+export function goInAt(
+  map: RegionMap,
+  place: MapPlace,
+  door: string | null,
+  person?: string,
+  opening?: string,
+): string | null {
+  const s = game();
+  if (!s) return 'No life is open.';
+  const doors = doorsOf(s, map, place).map((d) => ({
+    id: d.id,
+    name: d.name,
+    art: d.art,
+    group: d.group,
+  }));
+  return goInDoor({
+    place,
+    doors,
+    door,
+    ...(person ? { person } : {}),
+    ...(opening ? { opening } : {}),
+  });
+}
+
 /** The dev console's `goin <template>`. */
 export function goInDev(template: string): string | null {
+  // Inside a place (P3.9b): `place:` its streets, `place:<door>` a door, without a key.
+  if (template.startsWith('place:')) {
+    const s = game();
+    const map = s?.map ? mapOf(s) : null;
+    const place = map && s?.map?.inside ? placeById(map, s.map.inside) : null;
+    if (!s || !map || !place) return 'Enter a place first.';
+    const doors = doorsOf(s, map, place).map((d) => ({
+      id: d.id,
+      name: d.name,
+      art: d.art,
+      group: d.group,
+    }));
+    // A door by its counter's key or by its piece on the sheet: `goin stall`, `goin inn`.
+    const want = template.slice(6);
+    const door = want ? (doors.find((d) => d.id === want || d.art === want)?.id ?? want) : null;
+    return openBy((x) => goInPlace(x, { place, doors, door }), false);
+  }
   return openBy((s) => (template === 'here' ? goInHere(s) : goInTemplate(s, template)), false);
 }
 
@@ -213,7 +266,12 @@ async function tell(t: Telling): Promise<void> {
     // Going in: the engine's own line, should the narrator not be had, is the card's opening.
     if (t.said === null) {
       out.text += '\n- You go in.';
-      out.plain.push(set?.opening ?? 'You stop where you stand and take in the land.');
+      out.plain.push(
+        set?.opening ??
+          (g.place
+            ? `You step into ${g.title}.`
+            : 'You stop where you stand and take in the land.'),
+      );
     }
     const before = [
       ...(t.said === null && set ? [settingText(set)] : []),
@@ -234,6 +292,8 @@ async function tell(t: Telling): Promise<void> {
       ...(n.fellBack === 'prose' ? { outcome: out.text } : {}),
     };
     let next = keepTelling(addTurn(game()!, turn), { choices: n.choices, notes: n.notes });
+    // What lasts of the turn's people: their lines, their word for you, a memory's own words, a moment.
+    next = keepLasts(next, n.lasts, t.results);
     if (next.goin!.since >= CHRONICLE_EVERY) next = await sumUp(next);
     apply(keepTelling(next, { cost: spentSince(from) }));
   } finally {
@@ -420,6 +480,52 @@ export function wait(): void {
   const s = game();
   if (!s?.goin || useGoIn.getState().busy) return;
   void run({ actor: s.player.id, steps: [{ verb: 'rest', act: 'wait' }] }, 'Wait');
+}
+
+/** A move inside a place, clicked (P3.9b): a door here, another district's street, a room. */
+export function moveNow(frame: string, name: string): void {
+  const s = game();
+  if (!s?.goin || useGoIn.getState().busy) return;
+  void run(
+    { actor: s.player.id, steps: [{ verb: 'go', act: 'enter', target: frame }] },
+    `Go to ${name}`,
+  );
+}
+
+/** Somewhere quiet: a made frame off where you stand, out of the crowd's eyes. */
+export function quietNow(): void {
+  const s = game();
+  const here = s?.goin?.place?.frames.find((f) => f.id === s.goin!.place!.at);
+  if (!s?.goin || !here || useGoIn.getState().busy) return;
+  void run(
+    {
+      actor: s.player.id,
+      steps: [
+        { verb: 'go', act: 'enter', target: NEW_SPOT, as: `a quiet corner behind ${here.name}` },
+      ],
+    },
+    'Somewhere quiet',
+  );
+}
+
+/** The elder's lecture, sat (and a question asked), told as a turn. */
+export function lectureNow(question: boolean): void {
+  const s = game();
+  if (!s?.goin || useGoIn.getState().busy) return;
+  const r = sitLecture(s, question);
+  if (typeof r === 'string') {
+    useGoIn.setState({ note: r });
+    return;
+  }
+  const before = s.goin.scene;
+  apply(r.state);
+  void tell({
+    said: question ? 'Sit the lecture, and ask a question' : 'Sit the lecture',
+    before,
+    results: [],
+    length: 'plain',
+    extra: [r.text],
+  });
 }
 
 /** A card's exit, clicked: the Combat screen, or the card settling as it always has. */

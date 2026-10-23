@@ -13304,6 +13304,120 @@ p.map-above {
   justify-self: start;
 }
 
+/* P3.9b: the moves inside a place, a happening under way, and the crowd's faces. */
+.goin-moves {
+  display: grid;
+  gap: 8px;
+  min-height: 0;
+}
+
+.goin-move-list {
+  display: grid;
+  gap: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.goin-move {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  text-align: left;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.goin-move:hover:not(:disabled) {
+  border-color: var(--edge-strong);
+}
+
+.goin-move i {
+  font-style: normal;
+  color: var(--muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.goin-move.is-barred span {
+  color: var(--muted);
+}
+
+.goin-happening {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.goin-crowd-block {
+  display: grid;
+  gap: 6px;
+}
+
+.goin-faces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.goin-face {
+  font-size: 12px;
+  padding: 3px 9px;
+  border: 1px dashed var(--edge-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.goin-face:hover {
+  color: inherit;
+}
+
+.place-streets {
+  margin-left: auto;
+}
+
+/* Around you 周遭 (P3.9b): the place's pulse over the banner's painted side, static lines that
+   fade with age, clear of the doors and the preview's buttons. */
+.place-around {
+  position: absolute;
+  right: 24px;
+  top: 44px;
+  width: 360px;
+  max-height: 230px;
+  overflow: hidden;
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.place-around-line p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.place-around-line.is-card p:first-child {
+  color: var(--accent);
+}
+
+.place-around-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+
 .goin-story {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;

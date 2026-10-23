@@ -319,10 +319,19 @@ export const COMMANDS: Record<string, Command> = {
     },
   },
   goin: {
-    usage: 'goin <template|here>',
-    help: 'Goes into a scene (P3.9) on your OpenRouter key: an encounter template set down where you stand, or Go in here.',
+    usage: 'goin <template|here|streets|door id>',
+    help: 'Goes into a scene (P3.9) on your OpenRouter key: an encounter template set down where you stand, Go in here, or inside a place its streets or a door by its id (P3.9b).',
     run([id], store) {
-      if (!id) return ['goin here', ...ENCOUNTERS.map((t) => `goin ${t.id} (${t.kind})`)];
+      if (!id)
+        return [
+          'goin here',
+          'goin streets (inside a place)',
+          'goin <door id> (inside a place: inn, teahouse, stall, elders…)',
+          ...ENCOUNTERS.map((t) => `goin ${t.id} (${t.kind})`),
+        ];
+      const s0 = needGame(store);
+      if (s0.map?.inside && !hasEncounterTemplate(id) && id !== 'here')
+        return goInDev(id === 'streets' ? 'place:' : `place:${id}`) ?? `Going in: ${id}.`;
       if (id !== 'here' && !hasEncounterTemplate(id)) return `No template ${id}.`;
       const s = needGame(store);
       if (!s.map) store.devApply(ensureMap);

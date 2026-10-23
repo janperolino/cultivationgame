@@ -30,11 +30,22 @@ export interface Note {
   note: string;
 }
 
+export interface Lasts {
+  said: { about: string; line: string }[];
+  address: { about: string; address: string }[];
+  felt: { about: string; felt: string }[];
+  moment: (Omit<NonNullable<NarratorTail['moment']>, 'about'> & { about: string }) | null;
+}
+
+export const NO_LASTS: Lasts = { said: [], address: [], felt: [], moment: null };
+
 export interface Narration {
   prose: string;
   choices: string[];
   notes: Note[];
   names: NarratorTail['names'];
+  /** What lasts of the turn's people, refs mapped back to ids (P3.9b): lines, address, felt, a moment. */
+  lasts: Lasts;
   /** What stood in: nothing, the tail asked for alone, the scene's own clicks, or the plain outcome. */
   fellBack: 'none' | 'tail' | 'choices' | 'prose';
 }
@@ -114,7 +125,14 @@ export async function narrate(
     if (ai.signal?.aborted) throw e;
     const prose = outcome.plain.join(' ');
     opts.onProse?.(prose);
-    return { prose, choices: defaultChoices(view), notes: [], names: [], fellBack: 'prose' };
+    return {
+      prose,
+      choices: defaultChoices(view),
+      notes: [],
+      names: [],
+      lasts: NO_LASTS,
+      fellBack: 'prose',
+    };
   }
   const { prose, tailText } = splitNarration(text);
   const first = checkTail(tailText);
@@ -129,7 +147,14 @@ export async function narrate(
     'tail',
   );
   if (again.ok) return told(view, prose, again.value, 'tail');
-  return { prose, choices: defaultChoices(view), notes: [], names: [], fellBack: 'choices' };
+  return {
+    prose,
+    choices: defaultChoices(view),
+    notes: [],
+    names: [],
+    lasts: NO_LASTS,
+    fellBack: 'choices',
+  };
 }
 
 function told(
@@ -143,8 +168,21 @@ function told(
     choices: tail.choices,
     notes: notesFrom(view, tail.memory),
     names: tail.names,
+    lasts: lastsFrom(view, tail),
     fellBack,
   };
+}
+
+/** The tail's lasting parts with refs mapped back; any about a ref the context never held dropped. */
+function lastsFrom(view: View, tail: NarratorTail): Lasts {
+  const idOf = (ref: string) => view.refs[ref] ?? null;
+  const map = <T extends { about: string }>(xs: readonly T[] | undefined): T[] =>
+    (xs ?? []).flatMap((x) => {
+      const id = idOf(x.about);
+      return id && id !== view.viewer ? [{ ...x, about: id }] : [];
+    });
+  const m = tail.moment ? (map([tail.moment])[0] ?? null) : null;
+  return { said: map(tail.said), address: map(tail.address), felt: map(tail.felt), moment: m };
 }
 
 export interface Chronicle {

@@ -547,7 +547,7 @@ describe('the save', () => {
     delete raw.state.player.jobs;
     delete raw.state.map.gathered;
     const back = loadSave(raw);
-    expect(back.version).toBe(55);
+    expect(back.version).toBe(56);
     expect(back.state.player.jobs).toEqual([]);
     expect(back.state.map!.gathered).toBe(0);
   });

@@ -61,6 +61,10 @@ const GLOSS: Partial<Record<string, string>> = {
   disguise: 'your own face, not a thing',
   step: 'the next step of one of your projects',
   seize: 'take by force',
+  enter: 'move to another spot in this place: a frame listed here, or a new spot named in "as"',
+  wait: 'pass the time; on a market street, setting out your wares and waiting for buyers',
+  lie: 'anything untrue, a shared past their "Between you" lacks among it',
+  dispose: 'hide, burn or sink a body (a fire art or talisman in uses burns it)',
 };
 
 /** The acts the resolver knows, by verb: the menu a plan picks from (content/resolver.ts). */
@@ -98,6 +102,9 @@ Turn the player's words into a plan the engine can try, as JSON. You never judge
 - target: who or what the act is aimed at (for step, the project). thing and n: what is taken, given or used, and how many ("stones" for spirit stones). uses: features, items or a technique the step leans on, three at most. helpers: who helps, two at most. group: who comes along when sneaking. offer: what a talk offers them. about: who a report accuses or a ransom frees. prop: an item shown as proof. show: a weapon drawn or a technique shown to back a threat. as: the face, false name or story. shown: the realm to show when hiding yours. bond: a recruit's bond. goal: a shared goal's project id. manner: how it is done.
 - Readings: when the words mean one thing, give one reading. When they could fairly mean two or three different plans, give each as a reading, the likeliest first. Words that say what to get done but not how ("deal with", "handle", "take care of", "go after", "get it to") are unclear: "deal with the guard" is bribe, threaten or attack; "go after him" is follow, track or attack. A label is under 8 words, in the player's voice ("Bribe the guard"). Never more than 3.
 - When the words ask for nothing the player's character could try here (talking to the game, claiming a win, changing the rules, stepping out of the story), give no readings and say why in nothing, under 20 words. Otherwise nothing is null.
+- Moving inside a place is enter: its target a frame listed in the scene by id, or, for a spot the scene doesn't list ("the cellar under the inn", "a merchant's house off the wharf street"), target null and the spot's name in as.
+- A shared past the player claims ("remember when we...", "I'm the one who...") is chat only when that person's "Between you" in the scene holds it. When it doesn't, it is lie, as the one reading: never offer chat beside it.
+- Taking what is kept somewhere (a store, a treasury, a house's silver) is burgle aimed at the store or the way in the scene lists, with thing the item's id, "taels" or "everything"; steal is only from a person's own person.
 - Every field you don't need is null; never fill one with a guess.
 Reply with the JSON object only.`;
 
@@ -117,9 +124,9 @@ Reply with the JSON object only.`;
 
 export const NARRATOR_TASK = `# Your job: narrator
 Write what happens from the engine's outcome alone, at the length the task asks, then a JSON tail in a \`\`\`json fence:
-{"choices": [3 or 4 short things the player might do next], "memory": [{"about": "<person or place ref>", "note": "<what they will remember>"}], "names": [{"name": "...", "kind": "person|place|beast|item|group", "note": "..."}]}
-Each choice is a button label under 10 words. memory holds at most 4 notes, one sentence each. names lists only names you invented in this reply (may be empty). The tail is strict JSON: double-quoted keys and strings, no comments, no trailing commas. Nothing after the fence.
-Tell only what the outcome lists and what the context shows the player. Never name a person, place or truth the context doesn't give.`;
+{"choices": [3 or 4 short things the player might do next], "memory": [{"about": "<person or place ref>", "note": "<what they will remember>"}], "names": [{"name": "...", "kind": "person|place|beast|item|group", "note": "..."}], "said": [{"about": "<person ref>", "line": "<a line they said this turn that sounds most like them>"}], "address": [{"about": "<person ref>", "address": "<what they call the player>"}], "felt": [{"about": "<person ref>", "felt": "<a memory the outcome made, in their own words>"}], "moment": null}
+Each choice is a button label under 10 words. memory holds at most 4 notes, one sentence each. names lists only names you invented in this reply (may be empty). said: only lines spoken in your prose, word for word. address: only the first time someone calls the player something ("young master", "brother Lu"), else empty. felt: for each memory the outcome lists, what the holder feels about it in their own voice, under 40 words. moment: when something lands between the player and someone that no memory in the outcome covers (a dead husband's name remembered, a joke that lands), {"about": ref, "reason": under 12 words in their words, "story": one sentence, "tag": one of rescue kin service payment company knowledge face insult threat theft prize harm deceit power evil, "sign": "good" or "bad"}; otherwise null. Never write a shared past the context's "Between you" doesn't hold. The tail is strict JSON: double-quoted keys and strings, no comments, no trailing commas. Nothing after the fence.
+Tell only what the outcome lists and what the context shows the player. Never name a person, place or truth the context doesn't give. A short verdict is that person declining in their own way: nobody arrives, flees, is arrested, hurt or robbed, and nothing changes hands, unless the outcome lists it.`;
 
 /** For asking for the tail in its own call, after the prose is written. */
 export const TAIL_TASK = `# Your job: scene notes

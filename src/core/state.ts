@@ -32,6 +32,8 @@ import { emptyWorld, WorldSchema } from './resolver/world.ts';
 import { MapLifeSchema, RegionGenSchema } from './map/schema.ts';
 import { PlanSchema, StepSchema } from './resolver/plan.ts';
 import type { Scene } from './resolver/scene.ts';
+import type { Actor } from './resolver/actor.ts';
+import { FrameSchema } from './frameSchema.ts';
 
 /** The in-game calendar's year (content/calendar.ts), here for core's many readers. */
 export { DAYS_PER_YEAR };
@@ -607,6 +609,13 @@ export type PlayedFight = z.infer<typeof PlayedFightSchema>;
 export const GoInFrom = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('card'), enc: z.string() }),
   z.object({ kind: z.literal('here'), at: z.tuple([z.number(), z.number()]) }),
+  /** A place's streets or one of its doors (P3.9b), or a person where you both stand. */
+  z.object({
+    kind: z.literal('place'),
+    place: z.string(),
+    door: z.string().nullable(),
+    person: z.string().optional(),
+  }),
 ]);
 export type GoInFrom = z.infer<typeof GoInFrom>;
 
@@ -679,6 +688,26 @@ export const GoInSchema = z.object({
   ending: z.enum(['left', 'fled', 'down', 'dead']).nullable(),
   /** Who killed you, for the chronicle's line. */
   killer: z.string().optional(),
+  /**
+   * Inside a place (P3.9b): its frames, the one you stand in, the faces made people by their key,
+   * and who stays in each frame you left, so walking back finds them where they were.
+   */
+  place: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      city: z.boolean(),
+      frames: z.array(FrameSchema),
+      at: z.string(),
+      faces: z.record(z.string(), z.string()),
+      left: z.record(
+        z.string(),
+        z.array(z.custom<Actor>((v) => typeof v === 'object' && v !== null, 'not an actor')),
+      ),
+      /** What brought you in: an Around you line, the narrator's seed. */
+      opening: z.string().optional(),
+    })
+    .optional(),
 });
 export type GoIn = z.infer<typeof GoInSchema>;
 

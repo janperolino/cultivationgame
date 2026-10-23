@@ -1,6 +1,7 @@
 // The Zustand store that bridges core and UI: it owns the open slot, runs the loop, autosaves,
 // and holds the slot's tab lock so two tabs never autosave over each other.
 import { create } from 'zustand';
+import { streetSlow } from './street.ts';
 import type { HourKind } from '../content/hours.ts';
 import { playDay, resolveCard, type CardCheck } from '../core/cards.ts';
 import { createLife, createNextLife, type Creation } from '../core/creation.ts';
@@ -345,13 +346,14 @@ export const useGame = create<GameStore>()((set, get) => {
     // breath with it, since orbs need motion.
     const hold = guideHold(game);
     // The seat runs on real seconds; a long gap is time away, which the seat spends fading.
-    const { seat, state } = tickSeat(game, (hold === 'half' ? gap / 2 : gap) / 1000);
+    const { seat, state } = tickSeat(game, (hold === 'half' ? gap / 2 : gap) / 1000 / streetSlow());
     if (gap > OFFLINE_GAP_MS) {
       void catchUpAway(state, now - gap, now);
       return;
     }
     const ms = hold === 'held' ? 0 : hold === 'half' ? gap / 2 : gap;
-    update(advance(state, ms * speed, { step: playDay, seat }).state);
+    // Street time: on a place's screens the clock runs ×12 slower (P3.9b), never stronger.
+    update(advance(state, (ms * speed) / streetSlow(), { step: playDay, seat }).state);
     playScene(seat);
   }
 

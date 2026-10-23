@@ -46,6 +46,8 @@ export const EffectSchema = z.discriminatedUnion('do', [
     n: z.number().int(),
     grade: z.number().int().min(0).max(3).optional(),
   }),
+  /** Silver taels, a mortal's money (P3.9b): a house's silver, a merchant's purse. */
+  z.object({ do: z.literal('silver'), who: Who, n: z.number() }),
   z.object({
     do: z.literal('item'),
     who: Who,
@@ -184,6 +186,14 @@ export function applyEffects(
           state = withPlayer(state, withStones(state.player, after));
         }
         sc = withActor(sc, e.who, (a) => ({ ...a, stones: Math.max(0, a.stones + e.n) }));
+        break;
+      case 'silver':
+        if (e.who === you)
+          state = withPlayer(state, {
+            ...state.player,
+            silver: Math.max(0, state.player.silver + e.n),
+          });
+        sc = withActor(sc, e.who, (a) => ({ ...a, taels: Math.max(0, (a.taels ?? 0) + e.n) }));
         break;
       case 'item':
         if (e.who === you) state = gainItem(state, e.id, e.n).state;

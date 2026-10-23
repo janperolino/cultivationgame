@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { encounterTemplate } from '../content/encounters/index.ts';
 import { BRANCHES } from '../content/hours.ts';
+import { DOOR_KINDS } from '../content/doorKinds.ts';
 import { hasItem, item } from '../content/items.ts';
 import { realm as realmInfo, stageName } from '../content/realms.ts';
 import { ACTS, COSTS, SHORTS, type ActInfo } from '../content/resolver.ts';
@@ -20,6 +21,7 @@ import {
   type Fate,
 } from '../core/goin.ts';
 import { exitViews, meet } from '../core/map/encounters.ts';
+import { crowdHere, happeningAt, movesHere } from '../core/goinPlace.ts';
 import { hereWords } from '../core/map/travel.ts';
 import { readRealm } from '../core/resolver/check.ts';
 import { opinion } from '../core/resolver/opinion.ts';
@@ -36,7 +38,10 @@ import {
   doIt,
   lastActNow,
   leaveNow,
+  lectureNow,
   loadAtlas,
+  moveNow,
+  quietNow,
   notMeant,
   pickReading,
   say,
@@ -128,6 +133,13 @@ function Turn({ t, last }: { t: GoInTurn; last: boolean }) {
   );
 }
 
+/** Inside a place, the seal of the door kind you stand in: 街 on a street, 茶 at a teahouse. */
+function placeSeal(g: NonNullable<GameState['goin']>): string {
+  const f = g.place!.frames.find((x) => x.id === g.place!.at);
+  if (!f || f.kind === 'street' || f.kind === 'alley') return '街';
+  return DOOR_KINDS[f.kind].hanzi.slice(0, 1);
+}
+
 function Where({ s }: { s: GameState }) {
   const g = s.goin!;
   const enc = sceneEncounter(s);
@@ -148,7 +160,9 @@ function Where({ s }: { s: GameState }) {
   return (
     <aside className="panel goin-where">
       <div className="goin-place">
-        <div className="goin-seal hanzi">{t ? KIND_SEAL[t.kind] : '野'}</div>
+        <div className="goin-seal hanzi">
+          {t ? KIND_SEAL[t.kind] : g.place ? placeSeal(g) : '野'}
+        </div>
         <div>
           <h2>{g.title || 'Open ground'}</h2>
           <div className="goin-sub">{enc?.where || hereWords(s)}</div>
@@ -176,6 +190,7 @@ function Where({ s }: { s: GameState }) {
           </div>
         </div>
       )}
+      {g.place && <Moves s={s} busy={!!busy} />}
       <button
         type="button"
         className="button button-quiet goin-leave"
@@ -186,6 +201,68 @@ function Where({ s }: { s: GameState }) {
         {leaveLabel}
       </button>
     </aside>
+  );
+}
+
+/**
+ * The moves inside a place (design § The go-in screen): the doors here, the other districts' streets
+ * and the rooms off where you stand, each with its ticks, a barred room with why on hover; somewhere
+ * quiet; and a happening under way, the elder's lecture with its question.
+ */
+function Moves({ s, busy }: { s: GameState; busy: boolean }) {
+  const g = s.goin!;
+  const moves = movesHere(s);
+  const here = g.place!.frames.find((f) => f.id === g.place!.at);
+  const h = happeningAt(s, g.place!.id, here, s.calendar.day + g.scene.tick / 48);
+  return (
+    <div className="goin-moves">
+      {h?.on && (
+        <div>
+          <p className="goin-label">Under way</p>
+          <div className="goin-happening">
+            <span>
+              {h.lecturer.elder} lectures on {h.lecturer.subject}
+            </span>
+            <button
+              type="button"
+              className="goin-chip"
+              disabled={busy || !h.member}
+              onClick={() => lectureNow(false)}
+            >
+              Sit it
+            </button>
+            <button
+              type="button"
+              className="goin-chip"
+              disabled={busy || !h.member}
+              onClick={() => lectureNow(true)}
+            >
+              Sit it, and ask
+            </button>
+          </div>
+        </div>
+      )}
+      <p className="goin-label">Go to</p>
+      <div className="goin-move-list">
+        {moves.map((m) => (
+          <button
+            type="button"
+            key={m.frame.id}
+            className={`goin-move${m.barred ? ' is-barred' : ''}`}
+            title={m.barred ?? undefined}
+            disabled={busy}
+            onClick={() => moveNow(m.frame.id, m.frame.name)}
+          >
+            <span>{m.frame.name}</span>
+            <i>{m.ticks ? tickWords(m.ticks) : 'a step'}</i>
+          </button>
+        ))}
+        <button type="button" className="goin-move" disabled={busy} onClick={quietNow}>
+          <span>Somewhere quiet</span>
+          <i>a step</i>
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -265,6 +342,7 @@ function Who({ s }: { s: GameState }) {
           })}
         </div>
       </div>
+      {g.place && <Crowd s={s} />}
       <div className="goin-me">
         <p className="goin-label">
           You ·{' '}
@@ -338,6 +416,36 @@ function Who({ s }: { s: GameState }) {
         )}
       </div>
     </aside>
+  );
+}
+
+/** The crowd where you stand: its count, and the faces you can pick out, a click naming one. */
+function Crowd({ s }: { s: GameState }) {
+  const c = crowdHere(s);
+  if (c.count === 0) return null;
+  return (
+    <div className="goin-crowd-block">
+      <p className="goin-label">The crowd · about {c.count}</p>
+      <div className="goin-faces">
+        {c.faces
+          .filter((f) => !f.made)
+          .map((f) => (
+            <button
+              type="button"
+              key={f.key}
+              className="goin-face"
+              title="Name them in the box"
+              onClick={() =>
+                useGoIn.setState((u) => ({
+                  words: `${u.words}${u.words && !u.words.endsWith(' ') ? ' ' : ''}${f.line}`,
+                }))
+              }
+            >
+              {f.line}
+            </button>
+          ))}
+      </div>
+    </div>
   );
 }
 

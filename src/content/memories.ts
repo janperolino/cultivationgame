@@ -77,8 +77,18 @@ export const MEMORIES = {
     tag: 'company',
   },
   'spent-time': { reason: 'Spent time with me', value: 2, fade: WEEK, cap: 20, tag: 'company' },
+  // A scene with someone that made no other memory (P3.9b; design § Memories carry their story):
+  // "an evening at the Quiet Moon", stacking to +5, which never alone makes a friend.
+  company: { reason: 'Spent an evening with me', value: 1, fade: SEASON, cap: 5, tag: 'company' },
   // knowledge
   'told-new': { reason: 'Told me something new', value: 5, fade: SEASON, tag: 'knowledge' },
+  // The elder's notice at a lecture (P3.9b, the happening slot's first).
+  'good-question': {
+    reason: 'Asked me a good question',
+    value: 5,
+    fade: YEAR,
+    tag: 'knowledge',
+  },
   // face
   'gave-face': { reason: 'Gave me face', value: 10, fade: SEASON, tag: 'face' },
   'cost-face': { reason: 'Cost me face', value: -15, fade: SEASON, tag: 'face' },
@@ -118,6 +128,9 @@ export const MEMORIES = {
   'first-look': { reason: 'A first impression', value: 0, fade: SEASON, tag: null, own: true },
   'good-turn': { reason: 'Did right by me', value: 10, fade: SEASON, tag: null, own: true },
   'bad-turn': { reason: 'Did me wrong', value: -10, fade: SEASON, tag: null, own: true },
+  // The blank row (P3.9b; design § A moment): GLM writes its reason and picks its tag, the engine
+  // sizes it (slight ±2, real ±5 when a step that turn backs it), one a person a scene.
+  moment: { reason: 'A moment', value: 0, fade: SEASON, tag: null, own: true },
   // O3 (design § What membership gives and asks, Connections): worked out while two people share a
   // power, never stored, so it goes when either leaves.
   fellow: { reason: 'One of ours', value: 10, fade: null, tag: null },
@@ -128,6 +141,31 @@ export const MEMORY_IDS = Object.keys(MEMORIES) as MemoryId[];
 /** A gift's worth as a memory: its value in stones, held to +5 to +30. */
 export const GIFT_MIN = 5;
 export const GIFT_MAX = 30;
+
+/** A moment's size (design § A moment): slight, or real when a step that turn backs it. */
+export const MOMENT = { slight: 2, real: 5, words: 12 } as const;
+
+/** A memory's own story (design § Memories carry their story): `felt` up to this many words. */
+export const FELT_WORDS = 40;
+
+/**
+ * Room (design § Room): a person holds this many rows; past it the oldest faded small rows fold
+ * into their summary, a row worth `keep` or more either way never folds. The summary is 120 words,
+ * 300 once their word for you is friendly, trusting or hostile. Their context in a call is held
+ * near `compact` tokens (Compact on their page folds now) and past `fold` it folds on its own.
+ */
+export const ROOM = {
+  rows: 40,
+  keep: 20,
+  summary: 120,
+  long: 300,
+  compact: 2000,
+  fold: 5000,
+} as const;
+
+/** The voice kept (design § People as you know them): three lines, six notes. */
+export const VOICE_LINES = 3;
+export const VOICE_NOTES = 6;
 
 /** The whole weight a memory can carry, from motives, leans, quirks and likes together. */
 export const WEIGHT_MIN = 0.25;

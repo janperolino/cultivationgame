@@ -78,6 +78,15 @@ export interface Actor {
   state: ActorState;
   /** How a fight takes them; built when absent. */
   combatant?: Combatant;
+  /** What a stranger sees of them, from a crowd's face (P3.9b): "a conscript with a bandaged hand". */
+  looks?: string;
+  /** Silver taels a mortal carries (P3.9b): a thief takes them as silver. */
+  taels?: number;
+  /**
+   * Made from a crowd's face (P3.9b): its key, the mortal kind when they don't cultivate, and the
+   * year they were born, so the kept record rebuilds them and the cast's aging (N3) can read them.
+   */
+  face?: { key: string; mortal?: string; born: number };
   /** A generated NPC's template and seed, from which their kit regenerates if the world keeps them. */
   npc?: { template: string; seed: number; realm: RealmId; stage: number };
 }
@@ -165,6 +174,8 @@ export function actorFromCultivator(s: GameState, id = s.player.id, side = YOU):
     techniques,
     items: { ...c.items },
     stones: Math.floor(worthOf(stonesOf(c))),
+    // Silver, a mortal's money, for a scene's prices in taels (P3.9b).
+    taels: Math.floor(c.silver),
     weapon,
     wound: woundShare(s.world, id, day),
     shown: cover?.data.shown,

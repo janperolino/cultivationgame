@@ -54,6 +54,9 @@ import {
 import { useGame } from './store.ts';
 import { BUTTON_STEP, usePanZoom } from './usePanZoom.ts';
 import { EventLine } from './widgets.tsx';
+import { goInAt, useGoIn } from './goin.ts';
+import { useSettings } from './settings.ts';
+import { canCompact, fold, foldable, voiceOf } from '../core/voices.ts';
 
 /** Their realm as you know it, in words. */
 function realmWords(id: string, r: PersonRecord): string {
@@ -153,6 +156,69 @@ function Memories({ name, view }: { name: string; view: PersonView }) {
   );
 }
 
+/**
+ * Between you (P3.9b; design § Memories carry their story): the stories behind what they remember of
+ * you, faded ones too, each in the engine's words and theirs; what they keep of your history, the
+ * lines that sound most like them and what they call you. Compact folds a long tie's oldest rows.
+ */
+function BetweenYou({ game, id, name }: { game: GameState; id: string; name: string }) {
+  const me = game.player.id;
+  const rows = game.world.memories.filter(
+    (m) => m.holder === id && m.about === me && m.known.includes(me) && (m.what || m.felt),
+  );
+  const v = voiceOf(game.world, id);
+  if (!rows.length && !v.summary && !v.lines.length && !v.address) return null;
+  const compact = canCompact(game.world, id, me);
+  return (
+    <>
+      <h3 className="sub-heading spaced">Between you</h3>
+      {v.summary && <p className="caption">{v.summary}</p>}
+      <ul className="person-thread">
+        {rows
+          .slice()
+          .reverse()
+          .map((m) => (
+            <li key={m.id}>
+              <span className="caption">{worldWhen(m.day)}</span> {m.what}
+              {m.felt && <span className="between-felt"> “{m.felt}”</span>}
+            </li>
+          ))}
+      </ul>
+      {(v.lines.length > 0 || v.address) && (
+        <p className="caption">
+          {v.address && (
+            <>
+              {name} calls you “{v.address}”.{' '}
+            </>
+          )}
+          {v.lines.map((l) => `“${l}”`).join(' ')}
+        </p>
+      )}
+      {compact && (
+        <button
+          type="button"
+          className="button button-quiet"
+          title="Fold the oldest faded memories into their summary"
+          onClick={() =>
+            useGame.getState().applyLife((s) => ({
+              ...s,
+              world: fold(
+                s.world,
+                id,
+                me,
+                foldable(s.world, id, me, s.calendar.day, true),
+                s.calendar.day,
+              ),
+            }))
+          }
+        >
+          Compact
+        </button>
+      )}
+    </>
+  );
+}
+
 /** Small chips: their leans, wants and likes as far as you know them. */
 function Chips({ words, more }: { words: string[]; more?: string }) {
   return (
@@ -188,6 +254,7 @@ function PersonActs({ game, id }: { game: GameState; id: string }) {
         ? 'They are beyond this map.'
         : null;
   const { mapAct } = useGame.getState();
+  const keyed = useSettings((x) => !!x.openRouterKey);
   return (
     <>
       <div className="actions spaced">
@@ -224,6 +291,32 @@ function PersonActs({ game, id }: { game: GameState; id: string }) {
           Write a letter
         </button>
       </div>
+      {/* The person door (P3.9b): talk or go in where you both stand, never sought out. */}
+      {keyed && here && where === here && map && placeById(map, here) && (
+        <div className="actions">
+          <button
+            type="button"
+            className="button"
+            onClick={() => {
+              const why = goInAt(map, placeById(map, here)!, null, id);
+              if (why) setSaid(why);
+              else useGoIn.setState({ words: `I go over to ${person(id).name} and talk` });
+            }}
+          >
+            Talk
+          </button>
+          <button
+            type="button"
+            className="button"
+            onClick={() => {
+              const why = goInAt(map, placeById(map, here)!, null, id);
+              if (why) setSaid(why);
+            }}
+          >
+            Go in 入
+          </button>
+        </div>
+      )}
       {(said ?? sparNo) && <p className="caption">{said ?? sparNo}</p>}
       {/* A person offers their quests where they stand (design § The journal). */}
       {here && where === here && <QuestOffers game={game} kind="person" place={here} who={id} />}
@@ -307,6 +400,7 @@ function PersonPage({ game, id }: { game: GameState; id: string }) {
         )}
       </dl>
       <Memories name={p.name} view={view} />
+      <BetweenYou game={game} id={id} name={p.name} />
       {(view.ties.length > 0 || view.hiddenTies > 0) && (
         <>
           <h3 className="sub-heading spaced">Their ties, as you know them</h3>
