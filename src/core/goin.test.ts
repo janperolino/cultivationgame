@@ -125,10 +125,18 @@ describe('the loop', () => {
       steps: [step('threaten', { target: peddler.id })],
     });
     expect(threat.stake).toBe(true);
-    // A chat is a tick of small talk, nobody judged.
-    const r = runTurn(s, { actor: s.player.id, steps: [step('chat', { target: peddler.id })] });
-    expect(r.state.goin!.scene.tick).toBe(1);
+    // Small talk nobody judges, an exchange of three lines to a tick (talk first).
+    const chat1 = { actor: s.player.id, steps: [step('chat', { target: peddler.id })] };
+    const r = runTurn(s, chat1);
+    expect(r.state.goin!.scene.tick).toBe(0);
     expect(r.fight).toBe(false);
+    const r3 = runTurn(runTurn(r.state, chat1).state, chat1);
+    expect(r3.state.goin!.scene.tick).toBe(1);
+    expect(r3.state.goin!.scene.talk).toBe(0);
+    // Anything else passes its own time and starts the count afresh.
+    const look = runTurn(r.state, { actor: s.player.id, steps: [step('look-around', {})] });
+    expect(look.state.goin!.scene.tick).toBe(4);
+    expect(look.state.goin!.scene.talk).toBe(0);
   });
 
   it('refuses a step it can’t try and spends no tick', () => {

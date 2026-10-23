@@ -30,11 +30,22 @@ export interface Note {
   note: string;
 }
 
+export interface Lasts {
+  said: { about: string; line: string }[];
+  address: { about: string; address: string }[];
+  felt: { about: string; felt: string }[];
+  moment: (Omit<NonNullable<NarratorTail['moment']>, 'about'> & { about: string }) | null;
+}
+
+export const NO_LASTS: Lasts = { said: [], address: [], felt: [], moment: null };
+
 export interface Narration {
   prose: string;
   choices: string[];
   notes: Note[];
   names: NarratorTail['names'];
+  /** What lasts of the turn's people, refs mapped back to ids (P3.9b): lines, address, felt, a moment. */
+  lasts: Lasts;
   /** What stood in: nothing, the tail asked for alone, the scene's own clicks, or the plain outcome. */
   fellBack: 'none' | 'tail' | 'choices' | 'prose';
 }
@@ -92,8 +103,58 @@ export interface NarrateOptions {
   words?: readonly [number, number];
   /** What goes before the outcome: where you stand, the tone setting (ai/scene.ts). */
   before?: string;
+  /** Your words this turn, as typed or clicked: already said, so the telling goes on from them. */
+  said?: string | null;
   /** The prose as it streams, without the tail. */
   onProse?: (text: string) => void;
+  /** The streamed prose is dropped: a telling with figures the engine never gave is told again. */
+  onRetell?: () => void;
+}
+
+/** Number words as digits, so "third layer" is known from "Qi Condensation 3". */
+const WORDS: Readonly<Record<string, string>> = Object.fromEntries(
+  [
+    ['one', 'first'],
+    ['two', 'second'],
+    ['three', 'third'],
+    ['four', 'fourth'],
+    ['five', 'fifth'],
+    ['six', 'sixth'],
+    ['seven', 'seventh'],
+    ['eight', 'eighth'],
+    ['nine', 'ninth'],
+    ['ten', 'tenth'],
+  ].flatMap(([n, nth], i) => [
+    [n, String(i + 1)],
+    [nth, String(i + 1)],
+  ]),
+);
+const NUMBER = `\\d[\\d,.]*|${Object.keys(WORDS).join('|')}|eleven|twelve|twenty|thirty|forty|fifty|sixty|hundred|thousand`;
+const UNIT = '(?:low|mid|high|top)[- ]grade|spirit stones?|stones?|taels?|silver|li\\b|layers?\\b';
+/** A number an amount, a distance or a layer: what only the engine may name. */
+const FIGURE = new RegExp(`\\b(${NUMBER})\\s+(?:[a-z-]+\\s+)?(?:${UNIT})`, 'gi');
+const digit = (w: string) => WORDS[w] ?? w;
+
+/**
+ * The amounts, distances and layers a telling names that the engine never gave (talk first,
+ * 2026-10-22): a figure next to stones, taels, li or a layer whose number appears nowhere in what
+ * the narrator was sent.
+ */
+export function strayFigures(prose: string, sent: string): string[] {
+  const known = new Set(
+    (
+      sent
+        .toLowerCase()
+        .replace(/,/g, '')
+        .match(/\b[a-z0-9.]+\b/g) ?? []
+    ).map(digit),
+  );
+  const out: string[] = [];
+  for (const m of prose.matchAll(FIGURE)) {
+    const n = digit(m[1]!.toLowerCase().replace(/,/g, '').replace(/\.$/, ''));
+    if (!known.has(n)) out.push(m[0]);
+  }
+  return out;
 }
 
 /** Tells one step's outcome. */
@@ -104,17 +165,40 @@ export async function narrate(
   opts: NarrateOptions = {},
 ): Promise<Narration> {
   const [lo, hi] = opts.words ?? LENGTHS[opts.length ?? 'scene'];
-  const task = `${opts.before ? `${opts.before}\n\n` : ''}${outcome.text}\n\n# Tell it\nIn ${lo}-${hi} words, then the tail.`;
+  const said = opts.said
+    ? `# The player, this turn\n${opts.said}\n(Already said and done: never repeat or paraphrase it. Go on from it.)\n\n`
+    : '';
+  const task = `${opts.before ? `${opts.before}\n\n` : ''}${said}${outcome.text}\n\n# Tell it\nIn ${lo}-${hi} words, then the tail.`;
   const messages = contextMessages(view, NARRATOR_TASK, task);
   let text: string;
   try {
     const onToken = opts.onProse ? proseStream(opts.onProse) : undefined;
     text = (await callRole(ai, 'narrator', messages, {}, onToken)).text;
+    // A figure the engine never gave is told again, once, without it (talk first).
+    const stray = strayFigures(
+      splitNarration(text).prose,
+      messages.map((m) => m.content).join('\n'),
+    );
+    if (stray.length) {
+      opts.onRetell?.();
+      const again = `${task}\n\nYour last telling named figures the engine never gave (${stray.join('; ')}). Tell it again without them: say any amount or distance in words.`;
+      const onAgain = opts.onProse ? proseStream(opts.onProse) : undefined;
+      text = (
+        await callRole(ai, 'narrator', contextMessages(view, NARRATOR_TASK, again), {}, onAgain)
+      ).text;
+    }
   } catch (e) {
     if (ai.signal?.aborted) throw e;
     const prose = outcome.plain.join(' ');
     opts.onProse?.(prose);
-    return { prose, choices: defaultChoices(view), notes: [], names: [], fellBack: 'prose' };
+    return {
+      prose,
+      choices: defaultChoices(view),
+      notes: [],
+      names: [],
+      lasts: NO_LASTS,
+      fellBack: 'prose',
+    };
   }
   const { prose, tailText } = splitNarration(text);
   const first = checkTail(tailText);
@@ -129,7 +213,14 @@ export async function narrate(
     'tail',
   );
   if (again.ok) return told(view, prose, again.value, 'tail');
-  return { prose, choices: defaultChoices(view), notes: [], names: [], fellBack: 'choices' };
+  return {
+    prose,
+    choices: defaultChoices(view),
+    notes: [],
+    names: [],
+    lasts: NO_LASTS,
+    fellBack: 'choices',
+  };
 }
 
 function told(
@@ -143,8 +234,21 @@ function told(
     choices: tail.choices,
     notes: notesFrom(view, tail.memory),
     names: tail.names,
+    lasts: lastsFrom(view, tail),
     fellBack,
   };
+}
+
+/** The tail's lasting parts with refs mapped back; any about a ref the context never held dropped. */
+function lastsFrom(view: View, tail: NarratorTail): Lasts {
+  const idOf = (ref: string) => view.refs[ref] ?? null;
+  const map = <T extends { about: string }>(xs: readonly T[] | undefined): T[] =>
+    (xs ?? []).flatMap((x) => {
+      const id = idOf(x.about);
+      return id && id !== view.viewer ? [{ ...x, about: id }] : [];
+    });
+  const m = tail.moment ? (map([tail.moment])[0] ?? null) : null;
+  return { said: map(tail.said), address: map(tail.address), felt: map(tail.felt), moment: m };
 }
 
 export interface Chronicle {

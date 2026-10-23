@@ -19,9 +19,11 @@ import {
 import { hasItem, item } from '../content/items.ts';
 import { MEMORIES } from '../content/memories.ts';
 import type { MotiveId } from '../content/personality.ts';
-import { ACTS, TICKS_PER_DAY, type ActInfo } from '../content/resolver.ts';
+import { ACTS, FIGHT_JOIN, LAW, TICKS_PER_DAY, type ActInfo } from '../content/resolver.ts';
 import { template as rosterTemplate } from '../content/roster.ts';
-import type { Fight } from './combat/fight.ts';
+import { combatant } from './combat/combatant.ts';
+import { combatantIn, type Fight, type Join } from './combat/fight.ts';
+import { faceGiven, projectionFighter } from './combat/joins.ts';
 import { endLife } from './life.ts';
 import { bandAt } from './map/depth.ts';
 import {
@@ -47,10 +49,11 @@ import { stonesOf, takeShare, withStones, worthOf } from './purse.ts';
 import { realmSizeOf, YOU, type Actor } from './resolver/actor.ts';
 import { applyEffects } from './resolver/effects.ts';
 import { intentOf } from './resolver/intent.ts';
-import { lean, remember } from './resolver/opinion.ts';
+import { lean, opinion, remember } from './resolver/opinion.ts';
 import { step, type Plan, type Step } from './resolver/plan.ts';
 import {
   actorIn,
+  fighterOf,
   leaveScene,
   pinnedBy,
   previewStep,
@@ -84,6 +87,20 @@ import {
   type GoInTurn,
 } from './state.ts';
 import { actorFromCultivator } from './resolver/actor.ts';
+import {
+  afterRound,
+  askToBeTaken,
+  endPlace,
+  enterSpot,
+  hostileFace,
+  matBuyer,
+  moveTo,
+  crowdHere,
+  readyPlan,
+  readyStep,
+} from './goinPlace.ts';
+import { foldDue, keepVoices } from './voices.ts';
+import { NEW_SPOT } from '../content/goin.ts';
 
 const FAVORS: Partial<Record<string, SceneFeature['favors']>> = {
   cover: ['stealth'],
@@ -94,7 +111,7 @@ const FAVORS: Partial<Record<string, SceneFeature['favors']>> = {
 // ── Opening a scene: the doors ───────────────────────────────────────────────────────────────
 
 /** Why no scene can open now, or null. */
-function cannotOpen(s: GameState): string | null {
+export function cannotOpen(s: GameState): string | null {
   if (s.ended) return 'This life is over.';
   if (s.goin) return 'You are already in a scene.';
   if (s.fight) return 'A fight holds you.';
@@ -128,7 +145,7 @@ function wentOf(s: GameState): GoIn['went'] {
   };
 }
 
-function open(
+export function openScene(
   s: GameState,
   from: GoInFrom,
   title: string,
@@ -256,7 +273,7 @@ export function goInCard(s: GameState, encId: string): GameState | string {
       ),
     },
   };
-  return open(waits, { kind: 'card', enc: encId }, m.template.title, scene, {
+  return openScene(waits, { kind: 'card', enc: encId }, m.template.title, scene, {
     ...roles,
     ...drift.roles,
   });
@@ -306,7 +323,7 @@ export function goInHere(s: GameState): GameState | string {
     players: [you.id],
     table: drift.table,
   });
-  return open(s, { kind: 'here', at }, site?.name ?? '', scene, drift.roles);
+  return openScene(s, { kind: 'here', at }, site?.name ?? '', scene, drift.roles);
 }
 
 /**
@@ -413,7 +430,11 @@ export interface PlanCheck {
 export function checkPlan(s: GameState, plan: Plan): PlanCheck {
   const g = s.goin;
   if (!g) return { previews: [], refused: 'You are in no scene.', stake: false };
-  const previews = plan.steps.map((st) => previewStep(s, g.scene, plan.actor, st));
+  // Inside a place, the faces the plan aims at are made first and a way in read as such (P3.9b).
+  const ready = readyPlan(s, plan);
+  const sc = ready.state.goin!.scene;
+  plan = ready.plan;
+  const previews = plan.steps.map((st) => previewStep(ready.state, sc, plan.actor, st));
   const refused = previews.find((p) => p.refused)?.refused ?? null;
   const stake = plan.steps.some((st, i) => {
     const info: ActInfo = ACTS[st.act];
@@ -457,7 +478,79 @@ function openSceneFight(s: GameState, at: { actor: string; step: Step }): GameSt
 export function sceneFightStart(s: GameState, from: { actor: string; step: Step }): Fight | null {
   const g = s.goin;
   if (!g || !from.step.target) return null;
-  return sceneFight(g.scene, from.actor, from.step.target);
+  const f = sceneFight(g.scene, from.actor, from.step.target);
+  if (!f) return null;
+  const joins = fightJoins(s, f, from.actor, from.step.target);
+  return joins.length ? { ...f, joins } : f;
+}
+
+/**
+ * Who joins a scene's fight under way (P3.9c, Jan's yes; design § A fight is a mode of the scene),
+ * read from the scene as the fight opens: the place's law on its kind's turn and anyone of the
+ * law's in your frame on the 2nd, both against whoever started it; someone in your frame who is
+ * friendly or trusting to you on the 2nd, at your side; your followers left in another room of the
+ * district on the 3rd and in another district on the 6th; and a backer's projection for every
+ * fighter who has a backer, when their charge falls low.
+ */
+export function fightJoins(s: GameState, f: Fight, starter: string, target: string): Join[] {
+  const g = s.goin!;
+  const sc = g.scene;
+  const me = s.player.id;
+  const day = s.calendar.day;
+  const fighting = (id: string) => f.combatants.some((c) => c.id === id);
+  const started = combatantIn(f, starter)?.side;
+  // The law fights whoever started it: on the side they struck at.
+  const against = started === 'law' ? undefined : combatantIn(f, target)?.side;
+  const mine = combatantIn(f, me)?.side;
+  const out: Join[] = [];
+  const law = LAW[sc.kind];
+  const lawId = `law:${sc.place}`;
+  if (law && against && !sc.actors.some((a) => a.id === lawId)) {
+    const at = { realm: law.realm, stage: law.stage, grade: 0 };
+    out.push({
+      turn: law.turns,
+      why: 'law',
+      who: combatant({
+        id: lawId,
+        name: law.who,
+        side: against,
+        rungs: { qi: at, body: at, soul: at },
+      }),
+    });
+  }
+  for (const a of sc.actors) {
+    if (fighting(a.id) || a.state !== 'present' || sc.players.includes(a.id)) continue;
+    const side =
+      a.side === 'law'
+        ? against
+        : mine && ['friendly', 'trusting'].includes(opinion(s.world, a.id, me, day).word)
+          ? mine
+          : undefined;
+    if (side) out.push({ turn: FIGHT_JOIN.bystander, why: 'bystander', who: fighterOf(a, side) });
+  }
+  const place = g.place;
+  const here = place?.frames.find((x) => x.id === place.at);
+  if (place && here && mine) {
+    for (const [frame, people] of Object.entries(place.left)) {
+      const there = place.frames.find((x) => x.id === frame);
+      for (const a of people) {
+        if (a.follows !== me || a.state !== 'present') continue;
+        const turn = there?.district === here.district ? FIGHT_JOIN.nearby : FIGHT_JOIN.call;
+        out.push({ turn, why: 'follower', who: fighterOf(a, mine) });
+      }
+    }
+  }
+  for (const c of f.combatants) {
+    const a = actorIn(sc, c.id);
+    if (a?.backer && !sc.players.includes(a.id))
+      out.push({
+        turn: null,
+        why: 'projection',
+        charge: a.id,
+        who: projectionFighter(a.backer, c.side),
+      });
+  }
+  return out;
 }
 
 /**
@@ -466,17 +559,47 @@ export function sceneFightStart(s: GameState, from: { actor: string; step: Step 
  * screen, the scene saved as the fight began. The scene saves after every round.
  */
 export function runTurn(s: GameState, plan: Plan): TurnRun {
-  const g = s.goin!;
-  const before = g.scene;
-  let st: GameState = { ...s, goin: { ...g, pending: null } };
-  let sc = before;
+  const before = s.goin!.scene;
+  // Inside a place, a face aimed at is made before anyone acts, and one may come at you (P3.9b).
+  const ready = readyPlan({ ...s, goin: { ...s.goin!, pending: null } }, plan);
+  plan = ready.plan;
+  let st: GameState = ready.state;
+  if (st.goin?.place) st = hostileFace(st) ?? st;
+  let sc = st.goin!.scene;
   const results: StepResult[] = [];
   let stopped: string | null = null;
   let arrivals = false;
-  for (const x of plan.steps) {
+  const memoriesBefore = st.world.memories.length;
+  for (const step0 of plan.steps) {
+    // Inside a place, each step aims at the scene as the last one left it (P3.9b).
+    const x = readyStep(st, step0);
+    // Moving inside a place is no round: the move's ticks pass and you stand somewhere else.
+    if (x.act === 'enter' && st.goin?.place) {
+      const m = x.target === NEW_SPOT && x.as ? enterSpot(st, x.as) : moveTo(st, x.target ?? '');
+      if (typeof m === 'string') {
+        stopped = m;
+        break;
+      }
+      st = m.state;
+      sc = st.goin!.scene;
+      continue;
+    }
+    // Waiting at your mat on the market street brings someone to look (P3.9b).
+    if (x.act === 'wait' && st.goin?.place) {
+      const buyer = matBuyer(st);
+      if (buyer) {
+        st = buyer;
+        sc = st.goin!.scene;
+        arrivals = true;
+        stopped = 'someone stops at your mat';
+      }
+    }
+    const prior = sc;
     const r: RoundResult = round(st, sc, { [plan.actor]: x }, { stopAtFight: true });
     st = withScene(r.state, r.scene);
-    sc = r.scene;
+    if (st.goin?.place) st = afterRound(st, prior, r.results);
+    st = disciple(st, r.results);
+    sc = st.goin!.scene;
     results.push(...r.results);
     if (r.arrivals.length || r.law) arrivals = true;
     if (r.fightAt) {
@@ -484,10 +607,91 @@ export function runTurn(s: GameState, plan: Plan): TurnRun {
       if (opened)
         return { state: opened, before, results, stopped: 'a fight', fight: true, arrivals };
     }
-    stopped = roundStop(r, plan.actor);
+    stopped = stopped ?? roundStop(r, plan.actor);
     if (stopped) break;
   }
+  st = foldDue(storied(st, memoriesBefore, results));
   return { state: settleScene(st), before, results, stopped, fight: false, arrivals };
+}
+
+/** An act in the past tense, for a memory's `what`: "bought", "asked". */
+const PAST: Partial<Record<string, string>> = {
+  buy: 'bought',
+  sell: 'sold',
+  pay: 'paid',
+  gift: 'gave',
+  ask: 'asked',
+  chat: 'talked',
+  persuade: 'persuaded',
+  lie: 'lied',
+  bargain: 'bargained',
+  threaten: 'threatened',
+  steal: 'stole',
+  rob: 'robbed',
+  attack: 'attacked',
+  spar: 'sparred',
+  bribe: 'bribed',
+  recruit: 'recruited',
+  beg: 'begged',
+  report: 'reported',
+  deliver: 'delivered',
+  calm: 'calmed',
+  heal: 'healed',
+  burgle: 'broke into',
+  finish: 'finished',
+};
+
+/**
+ * Every memory a turn made keeps the engine's fact line (design § Memories carry their story): what
+ * the step was, the thing, and where, so it is never invented.
+ */
+function storied(s: GameState, from: number, results: readonly StepResult[]): GameState {
+  const fresh = s.world.memories.slice(from).filter((m) => !m.what);
+  if (!fresh.length) return s;
+  const g = s.goin;
+  const where = g?.place
+    ? (g.place.frames.find((f) => f.id === g.place!.at)?.name ?? g.place.name)
+    : g?.title || 'the road';
+  const line = (about: string, holder: string): string => {
+    const r =
+      [...results]
+        .reverse()
+        .find((x) => x.actor === about && (x.step.target === holder || !x.step.target)) ??
+      [...results].reverse().find((x) => x.actor === about);
+    if (!r) return `at ${where}`;
+    const verb = PAST[r.step.act] ?? ACTS[r.step.act].name;
+    const thing =
+      r.step.thing && r.step.thing !== 'stones' && hasItem(r.step.thing)
+        ? ` ${item(r.step.thing).name}`
+        : '';
+    const n = r.step.n && r.step.n > 1 ? ` ×${r.step.n}` : '';
+    return `${verb}${thing}${n} at ${where}`;
+  };
+  const ids = new Set(fresh.map((m) => m.id));
+  return {
+    ...s,
+    world: {
+      ...s.world,
+      memories: s.world.memories.map((m) =>
+        ids.has(m.id) ? { ...m, what: line(m.about, m.holder) } : m,
+      ),
+    },
+  };
+}
+
+/**
+ * An elder taking you as a disciple (P3.9b, riding along): a persuasion of a lecturing elder about
+ * yourself that passes, at friendly or better and a realm above you.
+ */
+function disciple(s: GameState, results: readonly StepResult[]): GameState {
+  for (const r of results) {
+    if (r.actor !== s.player.id || r.refused) continue;
+    if (r.step.act !== 'persuade' || r.step.about !== s.player.id) continue;
+    if (!r.step.target?.startsWith('elder:')) continue;
+    const t = askToBeTaken(s, r.step.target, r.check?.verdict !== 'short');
+    if (typeof t !== 'string') return t;
+  }
+  return s;
 }
 
 /** Wait: skips to the next arrival, when someone is on the way, else a tick. */
@@ -598,6 +802,34 @@ export interface SceneFightBack {
   text: string;
 }
 
+/**
+ * The scene as a fight hands back, with who joined it in it: a follower moves from the room they
+ * were left in into your frame, and the law that joined is due as the round ends.
+ */
+function joinedScene(
+  g: NonNullable<GameState['goin']>,
+  end: Fight,
+): NonNullable<GameState['goin']> {
+  const joined = new Set(end.combatants.map((c) => c.id));
+  let scene = g.scene;
+  let place = g.place;
+  if (place) {
+    const moved = Object.values(place.left)
+      .flat()
+      .filter((a) => joined.has(a.id) && !scene.actors.some((x) => x.id === a.id));
+    if (moved.length) {
+      const left = Object.fromEntries(
+        Object.entries(place.left).map(([k, v]) => [k, v.filter((a) => !joined.has(a.id))]),
+      );
+      place = { ...place, left };
+      scene = { ...scene, actors: [...scene.actors, ...moved] };
+    }
+  }
+  if (joined.has(`law:${scene.place}`) && !scene.actors.some((a) => a.id === `law:${scene.place}`))
+    scene = { ...scene, lawDue: scene.tick };
+  return { ...g, scene, ...(place ? { place } : {}) };
+}
+
 const FIGHT_WORDS: Record<FightEnd, string> = {
   won: 'The fight is yours.',
   lost: 'You go down.',
@@ -622,9 +854,13 @@ export function sceneFightBack(
   how: FightEnd,
   used: readonly string[],
 ): SceneFightBack | null {
-  const g = s.goin;
-  if (!g) return null;
-  const before = g.scene;
+  const g0 = s.goin;
+  if (!g0) return null;
+  const before = g0.scene;
+  // Who joined comes into the scene: followers from the rooms they were left in, and the law, due
+  // now, arriving as the round ends (P3.9c).
+  const g = joinedScene(g0, end);
+  s = { ...s, goin: g };
   const r = round(
     s,
     g.scene,
@@ -632,9 +868,27 @@ export function sceneFightBack(
     { played: { start, end, used: { [s.player.id]: used } }, only: true },
   );
   let st = withScene(r.state, r.scene);
+  // Inside a place, the place answers the fight: its noise, its witnesses (P3.9b).
+  if (st.goin?.place) st = afterRound(st, g.scene, r.results);
   // Fled, you are away: the scene ends once the turn is told.
   if (how === 'fled') st = ending(st, 'fled');
   let text = FIGHT_WORDS[how];
+  // You gave face: the projection took its charge away, and its backer remembers it.
+  const faced = faceGiven(end);
+  const backer = faced ? actorIn(g.scene, faced)?.backer : undefined;
+  if (faced && backer) {
+    const charge = actorIn(g.scene, faced)!;
+    st = {
+      ...st,
+      world: remember(
+        st.world,
+        { holder: backer.id, about: s.player.id, row: 'gave-face', what: `let ${charge.name} go` },
+        st.calendar.day,
+      ),
+    };
+    // Named by what they are, since the narrator names people as your context does (P3.9c's GLM run).
+    text = 'You gave face, and the projection took its charge away.';
+  }
   if (how === 'yielded') {
     const y = surrender(st);
     st = y.state;
@@ -937,9 +1191,14 @@ export function endScene(
   s: GameState,
   how: SceneEnd | 'dead' = s.goin?.ending ?? 'left',
 ): GameState {
-  const g = s.goin;
-  if (!g) return s;
-  let st = leaveScene(s, g.scene);
+  if (!s.goin) return s;
+  // A place's scene: bodies where they lie, an evening kept with everyone, its frames kept (P3.9b).
+  const placed = s.goin.place ? endPlace(s) : s;
+  const g = placed.goin!;
+  const everyone = g.place
+    ? [...g.scene.actors, ...Object.values(g.place.left).flat()]
+    : g.scene.actors;
+  let st = leaveScene(keepVoices(placed), { ...g.scene, actors: everyone });
   if (how === 'dead') return { ...endLife(st, 'killed', { killer: g.killer }), goin: null };
   const enc = sceneEncounter(st);
   if (enc) {
@@ -1066,6 +1325,8 @@ export function leavingCard(
 export function templatedLine(s: GameState): string {
   const g = s.goin;
   if (!g) return '';
+  // A place's frame keeps its names' capitals; a card's title is a phrase.
+  if (g.place) return `${s.player.name} went into ${g.title}.`;
   return g.title
     ? `${s.player.name} went in on ${g.title.toLowerCase()}.`
     : `${s.player.name} stopped a while in the open.`;
@@ -1094,6 +1355,8 @@ export interface Setting {
   opening: string | null;
   /** Nobody is in it: told shorter (content/goin.ts, `quiet`). */
   quiet: boolean;
+  /** Inside a place, where the road doesn't come into it. */
+  inside: boolean;
 }
 
 export function sceneSetting(s: GameState): Setting | null {
@@ -1110,14 +1373,21 @@ export function sceneSetting(s: GameState): Setting | null {
     hour: `${b.hanzi} ${b.time}`,
     season: seasonOf(s.calendar.day),
     weather: weatherOn(s.glass.seed, Math.floor(s.calendar.day / SPELL_DAYS) * SPELL_DAYS),
-    land: TERRAIN_NAMES[terrainAt(map, at)] ?? terrainAt(map, at),
+    land: g.place
+      ? `${g.place.frames.find((f) => f.id === g.place!.at)?.name ?? 'the streets'} of ${g.place.name}`
+      : (TERRAIN_NAMES[terrainAt(map, at)] ?? terrainAt(map, at)),
     road: onRoadAt(map, at),
     headed: target?.name ?? null,
     title: g.title,
-    opening: enc ? encounterTemplate(enc.template).opening : null,
-    quiet: !g.scene.actors.some(
-      (a) => a.id !== s.player.id && g.roles[a.id] && !g.roles[a.id]!.drift,
-    ),
+    opening: enc ? encounterTemplate(enc.template).opening : (g.place?.opening ?? null),
+    // Nobody here: no one else present but drift-ins from the road, and no crowd where you stand
+    // (talk first: a keeper behind his desk is someone).
+    quiet:
+      !g.scene.actors.some(
+        (a) =>
+          a.id !== s.player.id && a.side !== YOU && a.state === 'present' && !g.roles[a.id]?.drift,
+      ) && !(g.place && crowdHere(s).count > 0),
+    inside: !!g.place,
   };
 }
 

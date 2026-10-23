@@ -25,4 +25,12 @@ export const MORTALS: Readonly<Record<string, MortalKind>> = {
   'grave-robber': { name: 'a grave robber', hides: 1, taels: [10, 40] },
   'post-rider': { name: 'a post rider of the Jing', taels: [10, 30] },
   pilgrim: { name: 'a pilgrim', taels: [2, 15] },
+  // A place's crowd (content/crowd.ts, P3.9b): who a street's faces are once engaged.
+  soldier: { name: 'a soldier', taels: [5, 25] },
+  clerk: { name: 'a clerk', taels: [10, 40] },
+  merchant: { name: 'a merchant', taels: [30, 120] },
+  craftsman: { name: 'a craftsman', taels: [10, 40] },
+  servant: { name: 'a servant', taels: [2, 10] },
+  farmer: { name: 'a farmer', taels: [2, 12] },
+  beggar: { name: 'a beggar', taels: [0, 2] },
 };

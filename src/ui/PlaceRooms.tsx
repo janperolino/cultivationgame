@@ -21,6 +21,8 @@ import { priceWords } from '../core/purse.ts';
 import { Counter, ShopCounter, type Act } from './PlaceCounters.tsx';
 import { notables, type Door } from './placeDoors.ts';
 import { craftShelf, ware } from './rooms.ts';
+import { goInAt } from './goin.ts';
+import { QuestOffers } from './QuestOffers.tsx';
 
 interface RoomProps {
   game: GameState;
@@ -72,7 +74,7 @@ export function Room(p: RoomProps) {
 }
 
 /** The slim bar every room opens with. */
-function RoomBar({ door, back, keyed, onBack }: RoomProps) {
+function RoomBar({ map, place, door, back, keyed, onBack, say }: RoomProps) {
   return (
     <div className="place-room-bar panel">
       <button type="button" className="place-back" onClick={onBack}>
@@ -90,8 +92,11 @@ function RoomBar({ door, back, keyed, onBack }: RoomProps) {
         <button
           type="button"
           className="place-btn is-quiet place-room-go"
-          disabled
-          title="Walking it as a scene comes with going in (P3.9)."
+          title="Walk in as a scene, with the narrator."
+          onClick={() => {
+            const why = goInAt(map, place, door.id);
+            if (why) say(why);
+          }}
         >
           Go in 入
         </button>
@@ -413,6 +418,10 @@ function TeahouseRoom(p: RoomProps) {
       </aside>
       <section className="place-room-mid">
         <Scene door={p.door} art={p.art} />
+        {/* Going in's introduction, at any teahouse (P3.9b). */}
+        {p.door.art === 'teahouse' && (
+          <QuestOffers game={p.game} kind="teahouse" place={p.place.id} />
+        )}
         <div className="place-counter panel">
           <Counter
             game={p.game}

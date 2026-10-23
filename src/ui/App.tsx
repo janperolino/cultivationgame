@@ -233,7 +233,9 @@ export function App() {
   // A fight takes the whole stage, the rail hidden, until you leave it (Fights you play).
   const lifeFights = useGame((s) => !!s.game?.fight);
   const stageFights = useFight((s) => s.fight !== null || s.after !== null);
-  const fighting = lifeFights || stageFights;
+  // A scene's fight plays inside the go-in screen (P3.9c), never on the Combat screen.
+  const sceneFights = useGame((s) => s.game?.fight?.from.kind === 'scene');
+  const fighting = (lifeFights || stageFights) && !sceneFights;
   // A scene you went into takes the stage the same way (P3.9), and its leaving card after it.
   const inScene = useGame((s) => !!s.game?.goin);
   const leavingCard = useGoIn((u) => u.leaving !== null);

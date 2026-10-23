@@ -26,15 +26,28 @@ export function threaded(w: World, id: string, you: string): boolean {
 
 /** Keeps a generated actor as a seed plus pins; anyone named or already kept stays as they are. */
 export function keep(w: World, a: Actor, home: string | null): World {
-  if (hasPerson(a.id) || w.kept[a.id] || !a.npc) return w;
+  // A crowd's face made someone, or a door's keeper (P3.9b), is kept as a generated person is.
+  const keeper = a.id.startsWith('keeper:');
+  if (hasPerson(a.id) || w.kept[a.id] || (!a.npc && !a.face && !keeper)) return w;
   const kept: Kept = {
     name: a.name,
     nature: a.nature ?? rollNature(a.id),
     power: a.power ?? null,
     home,
-    template: a.npc.template,
-    seed: a.npc.seed,
-    realm: { realm: a.npc.realm, stage: a.npc.stage },
+    ...(a.npc
+      ? {
+          template: a.npc.template,
+          seed: a.npc.seed,
+          realm: { realm: a.npc.realm, stage: a.npc.stage },
+        }
+      : {}),
+    ...(a.face
+      ? {
+          face: a.face.key,
+          born: a.face.born,
+          ...(a.face.mortal ? { mortal: a.face.mortal } : {}),
+        }
+      : {}),
   };
   return { ...w, kept: { ...w.kept, [a.id]: kept } };
 }
@@ -43,7 +56,8 @@ export function keep(w: World, a: Actor, home: string | null): World {
 export function keepThreaded(w: World, scene: Scene, you: string, home: string | null): World {
   let out = w;
   for (const a of scene.actors) {
-    if (a.id !== you && a.npc && threaded(out, a.id, you)) out = keep(out, a, home);
+    if (a.id !== you && (a.npc || a.face || a.id.startsWith('keeper:')) && threaded(out, a.id, you))
+      out = keep(out, a, home);
   }
   return out;
 }

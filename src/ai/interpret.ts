@@ -7,6 +7,14 @@
 // reply that fails its check is asked for again once, and then the interpreter gives up without
 // acting for you: you say it another way, and no tick passes. In a fight, the interpreter reads one
 // turn: a main action and a minor one (design § Combat).
+import { NEW_FACE, NEW_SPOT } from '../content/goin.ts';
+import {
+  combatantIn,
+  type Fight,
+  type MainAction,
+  type MinorAction,
+} from '../core/combat/fight.ts';
+import type { YourAction } from '../core/played.ts';
 import { ACTS, type ActInfo } from '../content/resolver.ts';
 import { PlanSchema, StepSchema, type Plan, type Step } from '../core/resolver/plan.ts';
 import { callJson, type Ai } from './call.ts';
@@ -54,12 +62,21 @@ export function toStep(view: View, r: ReadStep): Step | null {
   const info: ActInfo = ACTS[act];
   // A project act's project is its target, wherever GLM put it (it has filed it under goal).
   const target = idOf(view, r.target) ?? (info.target === 'project' ? idOf(view, r.goal) : null);
+  // A spot the scene doesn't list yet is named, and the engine makes it (P3.9b, made frames).
+  const newSpot = act === 'enter' && !target && !!r.as;
+  // Someone in the crowd the context doesn't list is named, and the engine makes them (talk first).
+  const newFace = info.target === 'person' && !target && !!r.who;
   // An act that needs a target and names none the context holds is aimed at nothing there.
-  if (info.target && !target) return null;
+  if (info.target && !target && !newSpot && !newFace) return null;
   const list = (refs: readonly string[] | null | undefined) =>
     (refs ?? []).map((x) => idOf(view, x)).filter((x): x is string => !!x);
   const step: Record<string, unknown> = { verb: info.verb, act };
   if (target) step.target = target;
+  else if (newSpot) step.target = NEW_SPOT;
+  else if (newFace) {
+    step.target = NEW_FACE;
+    step.who = r.who;
+  }
   if (r.manner) step.manner = r.manner;
   const uses = list(r.uses);
   if (uses.length) step.uses = uses;
@@ -100,7 +117,9 @@ export function toInterpretation(view: View, reply: InterpretationReply): Interp
 
 /** Your words as plans. */
 export async function interpret(ai: Ai, view: View, words: string): Promise<Interpretation> {
-  const messages = contextMessages(view, INTERPRETER_TASK, `# The player types\n${words}`);
+  const messages = contextMessages(view, INTERPRETER_TASK, `# The player types\n${words}`, {
+    stores: true,
+  });
   const r = await callJson(
     ai,
     'interpreter',
@@ -140,5 +159,98 @@ export async function interpretFight(ai: Ai, view: View, words: string): Promise
         : null,
       uses: t.uses.map((u) => back(u)).filter((u): u is string => !!u),
     },
+  };
+}
+
+/** A typed fight turn as a legal action, and why it isn't what you asked for when it isn't. */
+export interface FightAction {
+  action: YourAction;
+  /** The interpreter's reason it was beyond you, or the thing it named you don't have. */
+  why: string | null;
+}
+
+/**
+ * A fight turn read from your words, made legal against the fight as it stands (P3.9c, Jan's call):
+ * an act beyond you plays as the closest legal action, earning no creativity, with the reason the
+ * telling gives. A technique or item you don't hold, or a target not fighting, falls back to a
+ * strike at the foe you picked; a minor action keeps only features the fight holds.
+ */
+export function fightActionOf(
+  f: Fight,
+  me: string,
+  t: FightTurn,
+  picked: string | null,
+): FightAction {
+  const c = combatantIn(f, me);
+  const foe = (id: string | null | undefined) => {
+    const x = id ? combatantIn(f, id) : undefined;
+    return x && x.side !== c?.side && x.state === 'fighting' ? x.id : undefined;
+  };
+  const target =
+    foe(t.main.target) ??
+    foe(picked) ??
+    f.combatants.find((x) => x.side !== c?.side && x.state === 'fighting')?.id ??
+    '';
+  let why = t.feasible ? null : (t.reason ?? 'beyond you');
+  const strike = (missing: string): MainAction => {
+    why = why ?? missing;
+    return { type: 'strike', target };
+  };
+  const m = t.main;
+  let main: MainAction;
+  switch (m.type) {
+    case 'technique':
+      main =
+        m.id && c?.techniques[m.id]
+          ? { type: 'technique', id: m.id, target }
+          : strike('no such art of yours');
+      break;
+    case 'item':
+      main =
+        m.id && (c?.items[m.id]?.n ?? 0) > 0
+          ? { type: 'item', id: m.id, target }
+          : strike('nothing like that in your bag');
+      break;
+    case 'command': {
+      const beast = m.id ? combatantIn(f, m.id) : undefined;
+      main =
+        beast && beast.side === c?.side
+          ? { type: 'command', id: beast.id }
+          : strike('no beast of yours here');
+      break;
+    }
+    case 'talk':
+      main = { type: 'talk', style: m.style ?? 'intimidate', target };
+      break;
+    case 'defend':
+      main = { type: 'defend' };
+      break;
+    case 'flee':
+      main = { type: 'flee' };
+      break;
+    default:
+      main = { type: 'strike', target };
+  }
+  const feature = (id: string | null | undefined) =>
+    id && f.features.some((x) => x.id === id) ? id : undefined;
+  let minor: MinorAction | null = null;
+  const n = t.minor;
+  if (n?.type === 'move' || n?.type === 'take_cover') minor = { type: n.type };
+  else if (n?.type === 'swap_artifact')
+    minor = { type: 'swap_artifact', ...(n.id ? { id: n.id } : {}) };
+  else if (n?.type === 'interact' && feature(n.feature)) {
+    const onto = feature(n.onto);
+    minor = { type: 'interact', feature: n.feature!, ...(onto ? { onto } : {}) };
+  }
+  const uses = t.uses.filter(
+    (u) => !!feature(u) || !!c?.techniques[u] || (c?.items[u]?.n ?? 0) > 0,
+  );
+  return {
+    action: {
+      main,
+      ...(minor ? { minor } : {}),
+      ...(t.feasible && t.creativity > 0 ? { creativity: t.creativity, uses } : {}),
+    },
+    why,
   };
 }

@@ -16,8 +16,10 @@ export const GOIN_LENGTHS = {
   opening: [80, 150],
   quiet: [50, 90],
   stake: [50, 120],
-  plain: [25, 70],
+  plain: [40, 100],
   fight: [60, 120],
+  /** A fight's exchange inside the scene, a sentence or two (P3.9c). */
+  beat: [20, 40],
 } as const;
 export type GoInLength = keyof typeof GOIN_LENGTHS;
 export const ARRIVAL_WORDS = 30;
@@ -163,3 +165,32 @@ export const TERRAIN_FEATURES: Readonly<Record<string, readonly LandFeature[]>> 
     { name: 'a spar of wreckage', tags: ['crossing', 'fragile'] },
   ],
 };
+
+/**
+ * Crafters are respected (Jan, K1's talk; P3.9b): your best craft's grade adds a tenth a grade to a
+ * talk's leverage, up to three tenths, and two a grade to a first impression, up to six.
+ */
+export const CRAFT_RESPECT = { perGrade: 0.1, max: 0.3, firstLook: 2, firstLookMax: 6 } as const;
+
+/** The target of an enter that names a spot the scene doesn't list: the engine makes it from `as`. */
+export const NEW_SPOT = 'frame:new';
+
+/** Lines of talk to a tick: an exchange of talk is a tick, not a tick a line (talk first). */
+export const TALK_PER_TICK = 3;
+
+/** The target of an act aimed at someone in the crowd the scene doesn't list: made from `who`. */
+export const NEW_FACE = 'face:new';
+
+/**
+ * Noise heard across the whole place (design § Moving): a Qi Condensation brawl stays on its street,
+ * a Foundation fight is heard across a town, a Nascent Soul one across a city. The li a noise must
+ * carry to fill the place, by where it stands.
+ */
+export const PLACE_LI = { village: 1, town: 5, seat: 25, city: 120, wilds: 1 } as const;
+
+/**
+ * A body found (Jan's call in P3.9b's talk): hidden, by the stealth it was hidden with, in days (a
+ * week clear, three days close, by the next morning short); left where it fell, by morning where the
+ * place keeps a watch. Burned, sunk or fed to beasts, never.
+ */
+export const BODY_FOUND = { clear: 7, close: 3, short: 0.25 } as const;

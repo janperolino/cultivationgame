@@ -8,6 +8,7 @@
 // Knowing who did a deed lands it as a memory and as standing (opinion.ts) and carries its renown
 // or infamy across its region (names.ts); its karma lands as it is done, seen or not.
 import { DAYS_PER_MONTH } from '../../content/calendar.ts';
+import { FrameSchema } from '../frameSchema.ts';
 import { LAW_HALL, SEAT_IDS } from '../../content/organizations.ts';
 import { z } from 'zod';
 import {
@@ -224,6 +225,17 @@ export const ShopMonthSchema = z.object({
 });
 export type ShopMonth = z.infer<typeof ShopMonthSchema>;
 
+/** What a person keeps of you beside their memories (P3.9b). */
+export const VoiceSchema = z.object({
+  summary: z.string(),
+  lines: z.array(z.string()),
+  address: z.string().optional(),
+  /** The tie they had when they first addressed you so: a new tie, a new word for you. */
+  addressTie: z.string().optional(),
+  notes: z.array(z.string()),
+});
+export type Voice = z.infer<typeof VoiceSchema>;
+
 export const WorldSchema = z.object({
   heat: z.record(z.string(), Heat),
   deeds: z.array(DeedSchema),
@@ -301,6 +313,17 @@ export const WorldSchema = z.object({
    * them and their tier, until your soul or your realm reaches it.
    */
   sealed: z.array(SealedSchema),
+  /**
+   * What a person keeps of you beside their memories (P3.9b; design § People as you know them, Room):
+   * the chronicler's summary their oldest rows folded into, the three lines they said that sound most
+   * like them, how they address you, and the narrator's six notes on them. By their id.
+   */
+  voices: z.record(z.string(), VoiceSchema),
+  /**
+   * The made frames a place keeps because something happened there (a body, a stash, a promise),
+   * and its rooms robbed or with a body in them (P3.9b), by place id.
+   */
+  frames: z.record(z.string(), z.array(FrameSchema)),
   /** The next deed's, lasting state's and memory's id. */
   next: z.number().int().min(1),
 });
@@ -331,6 +354,8 @@ export function emptyWorld(): World {
     copied: {},
     population: {},
     sealed: [],
+    voices: {},
+    frames: {},
     next: 1,
   };
 }

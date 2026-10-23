@@ -1,6 +1,7 @@
 // The save envelope, its version number and the migrations that bring old saves up to date.
 import { z } from 'zod';
 import { DAYS_PER_MONTH } from '../../content/calendar.ts';
+import { MEMORIES, type MemoryId } from '../../content/memories.ts';
 import { LADDERS } from '../../content/cultivation.ts';
 import type { Element } from '../../content/elements.ts';
 import type { FirstId } from '../../content/firsts.ts';
@@ -37,7 +38,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 55;
+export const SAVE_VERSION = 56;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1170,6 +1171,34 @@ const migrations: Record<number, (old: Raw) => Raw> = {
   // P3.9 Going in, the road: the scene you went into (`goin`), none in an older save; the map's
   // `out` is optional and starts the next time you leave home.
   54: (old) => ({ ...old, version: 55, state: { ...((old.state ?? {}) as Raw), goin: null } }),
+  // P3.9b Going in, places and people: every memory keeps its story (`what` from its row's reason
+  // and note), what a person keeps of you (`voices`, from an open scene's notes), and the frames a
+  // place keeps (`frames`, none yet). An open scene keeps its road frame.
+  55: (old) => {
+    const s = (old.state ?? {}) as Raw;
+    const world = (s.world ?? {}) as Raw;
+    const memories = Array.isArray(world.memories)
+      ? (world.memories as Raw[]).map((m) =>
+          m.what !== undefined
+            ? m
+            : { ...m, what: String(m.note ?? MEMORIES[m.row as MemoryId]?.reason ?? '') },
+        )
+      : world.memories;
+    const goin = (s.goin ?? null) as Raw | null;
+    const voices: Record<string, unknown> = {};
+    for (const [id, notes] of Object.entries((goin?.notes ?? {}) as Record<string, unknown>)) {
+      if (Array.isArray(notes))
+        voices[id] = { summary: '', lines: [], notes: (notes as string[]).slice(-6) };
+    }
+    return {
+      ...old,
+      version: 56,
+      state: {
+        ...s,
+        ...(s.world ? { world: { ...world, memories, voices, frames: {} } } : {}),
+      },
+    };
+  },
 };
 
 /** The post starts' last chain quests, which gained a first step in v54. */

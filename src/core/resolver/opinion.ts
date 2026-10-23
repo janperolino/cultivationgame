@@ -21,6 +21,7 @@ import {
   LIKED_GIFT,
   MEMORIES,
   MEMORY_IDS,
+  MEMORY_TAGS,
   MOTIVE_WEIGHT,
   STANDING_IDS,
   STANDING_ROWS,
@@ -30,6 +31,7 @@ import {
   WEIGHT_MIN,
   type MemoryId,
   type MemoryRow,
+  type MemoryTag,
   type StandingId,
   type StandingWord,
 } from '../../content/memories.ts';
@@ -94,6 +96,14 @@ export const MemorySchema = z.object({
   like: z.enum(GIFT_KINDS).optional(),
   /** The deed it came from, so a deed lands once. */
   deed: z.number().int().optional(),
+  /**
+   * Its story (P3.9b; design § Memories carry their story): `what`, the engine's fact line from the
+   * step that made it, so it is never invented; `felt`, up to 40 words in the holder's own voice.
+   */
+  what: z.string().optional(),
+  felt: z.string().optional(),
+  /** A moment's tag, which GLM picks, in place of the row's (design § A moment). */
+  tag: z.enum(MEMORY_TAGS).optional(),
 });
 export type Memory = z.infer<typeof MemorySchema>;
 
@@ -153,6 +163,13 @@ export const KeptSchema = z.object({
   took: z.record(z.string(), z.number().int().min(0)).optional(),
   /** Stones you took. */
   tookStones: z.number().min(0).optional(),
+  /**
+   * Made from a crowd's face (P3.9b): its key, rebuilt from it; the mortal kind for one who doesn't
+   * cultivate; the year they were born, so People and ties' N3 can age them.
+   */
+  face: z.string().optional(),
+  mortal: z.string().optional(),
+  born: z.number().int().optional(),
 });
 export type Kept = z.infer<typeof KeptSchema>;
 
@@ -185,9 +202,9 @@ export function axisFactor(n: Nature, f: AxisFactor): number {
 // ── Memories ─────────────────────────────────────────────────────────────────────────────────
 
 /** What weighs on a memory: the holder's motives, leans, quirks and likes, held to ×0.25–×3. */
-export function weightOf(m: Pick<Memory, 'row' | 'like'>, n: Nature): number {
+export function weightOf(m: Pick<Memory, 'row' | 'like' | 'tag'>, n: Nature): number {
   const row = MEMORIES[m.row];
-  const tag = row.tag;
+  const tag = m.tag ?? row.tag;
   if (tag === 'evil') {
     const c = lean(n, 'conscience');
     return c > 0 ? EVIL_BY_CONSCIENCE[c as 1 | 2] : 0;
@@ -345,6 +362,11 @@ export interface NewMemory {
   deed?: number;
   /** Who sees it land; the one it's about knows of it if they're among them. */
   known?: readonly string[];
+  /** Its story: the engine's fact line, and the holder's own words. */
+  what?: string;
+  felt?: string;
+  /** A moment's tag. */
+  tag?: MemoryTag;
 }
 
 /**
@@ -390,6 +412,9 @@ export function remember(w: World, m: NewMemory, day: number): World {
       ...(m.note ? { note: m.note } : {}),
       ...(m.like ? { like: m.like } : {}),
       ...(m.deed !== undefined ? { deed: m.deed } : {}),
+      ...(m.what ? { what: m.what } : {}),
+      ...(m.felt ? { felt: m.felt } : {}),
+      ...(m.tag ? { tag: m.tag } : {}),
     };
     memories = [...w.memories, mem];
     next += 1;

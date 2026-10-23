@@ -13,7 +13,8 @@ import { callJson } from './call.ts';
 import { atlasOf, buildView, contextMessages, type AtlasEntry } from './context.ts';
 import { FALLBACK_LINE, interpret, interpretFight } from './interpret.ts';
 import { mockProvider } from './mock.ts';
-import { chronicle, defaultChoices, narrate, proseStream } from './narrate.ts';
+import { chronicle, defaultChoices, narrate, proseStream, strayFigures } from './narrate.ts';
+import { NEW_FACE } from '../content/goin.ts';
 import { CostMeter } from './openrouter.ts';
 import { outcomeOf } from './outcome.ts';
 import { playbookScene, PLAYBOOK_SENTENCES } from './playbook.ts';
@@ -255,6 +256,15 @@ describe('the interpreter', () => {
     const leaked = reply([reading('Ask', { act: 'ask', target: 'peddler-gou' })]);
     const r2 = await interpret({ provider: mockProvider([leaked]) }, view, 'ask Gou');
     expect(r2).toEqual({ kind: 'nothing', reason: 'Nothing like that is here.' });
+    // Someone the context doesn't list, named in your words, is for the engine to make (talk first).
+    const who = 'the woman counting silver';
+    const named = reply([reading('Talk to her', { act: 'chat', target: null, who })]);
+    const r3 = await interpret({ provider: mockProvider([named]) }, view, 'talk to the woman');
+    expect(r3.kind === 'plan' && r3.readings[0]!.plan.steps[0]).toMatchObject({
+      act: 'chat',
+      target: NEW_FACE,
+      who,
+    });
   });
 
   it('reads words that ask for nothing as nothing to do', async () => {
@@ -409,6 +419,35 @@ describe('the narrator', () => {
     expect(meter.byRole.narrator!.calls).toBe(1);
   });
 
+  it('hands the narrator your words, and tells a figure it was never given again', async () => {
+    const { view, outcome } = setup();
+    const provider = mockProvider([
+      `"Forty low-grade stones," she says.
+
+${TAIL}`,
+      `"More than you'll see this year," she says.
+
+${TAIL}`,
+    ]);
+    let dropped = 0;
+    const n = await narrate({ provider }, view, outcome, {
+      said: '"Who do you owe?"',
+      onRetell: () => dropped++,
+    });
+    expect(provider.requests[0]!.messages[1]!.content).toContain(
+      '# The player, this turn\n"Who do you owe?"',
+    );
+    expect(provider.requests).toHaveLength(2);
+    expect(dropped).toBe(1);
+    expect(n.prose).toBe(`"More than you'll see this year," she says.`);
+    // A figure the engine gave stands.
+    expect(strayFigures('She takes your 20 low-grade stones.', outcome.text)).toEqual([]);
+    expect(strayFigures('Thirty taels, 2,400 li south.', outcome.text)).toEqual([
+      'Thirty taels',
+      '2,400 li',
+    ]);
+  });
+
   it('asks for a bad tail alone, then falls back to the scene’s clicks', async () => {
     const { view, outcome } = setup();
     const meter = new CostMeter();
@@ -536,13 +575,18 @@ describe("the context's fog", () => {
       expect(all).not.toContain(e.truth!.slice(0, 40));
     }
     // A place you haven't seen or heard of stays out, unless what everyone knows names it: the
-    // region's lore, or the summary of a power everyone there knows.
+    // region's lore, or the summary of a power everyone there knows. What the people present know
+    // as locals is theirs to tell, and your own seat names your power (talk first).
     const told = atlas.inRegion(REGION).filter((e) => e.kind === 'power' && !e.hidden);
     const lore = [region.summary, region.lore, ...told.map((e) => e.summary)].join(' ');
+    const yours = all
+      .split('\n')
+      .filter((l) => !l.includes('  Knows, as') && !l.startsWith('Your seat:'))
+      .join('\n');
     for (const e of atlas.inRegion(REGION)) {
       if (e.kind === 'power' || e.hidden || lore.includes(e.name) || e.id === 'qm-wuming-ji')
         continue;
-      expect(all, e.name).not.toContain(e.name);
+      expect(yours, e.name).not.toContain(e.name);
     }
     // People: a stranger's name and id stay out; someone hiding from you isn't there.
     expect(all).not.toContain('Peddler Gou');

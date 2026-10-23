@@ -34,6 +34,9 @@ import { useSettings } from './settings.ts';
 import { Counter, type Act } from './PlaceCounters.tsx';
 import { Room } from './PlaceRooms.tsx';
 import { bannerArt, doorArt } from './placeArt.ts';
+import { goInAt } from './goin.ts';
+import { setStreet } from './street.ts';
+import { AroundYou } from './AroundYou.tsx';
 import {
   doorsOf,
   gapTouches,
@@ -90,7 +93,12 @@ export function PlaceScreen({ game, map, place, onMap, shut = false }: Props) {
   // Inside a place, its doors' guide can fire (ui/guide.ts).
   useEffect(() => {
     lookAt({ inside: true });
-    return () => lookAt({ inside: false, shop: false });
+    // Street time (P3.9b): the clock runs ×12 slower while a place's screens are open.
+    setStreet(true);
+    return () => {
+      lookAt({ inside: false, shop: false });
+      setStreet(false);
+    };
   }, []);
   const say = (t: string) => {
     setToast(t);
@@ -120,6 +128,11 @@ export function PlaceScreen({ game, map, place, onMap, shut = false }: Props) {
   const openDoor = (id: string) => {
     endGuide('place-doors');
     setRoom(id);
+  };
+  // Going in at a door, or the streets at the head of the screen (P3.9b).
+  const goIn = (id: string | null) => {
+    const why = goInAt(map, place, id);
+    if (why) say(why);
   };
   // The art a door or the banner reads: in a power's hall, its own, else that of the place its seat
   // stands in (the Guild's hall is painted with the City's sheets), else this place's.
@@ -164,6 +177,7 @@ export function PlaceScreen({ game, map, place, onMap, shut = false }: Props) {
         pick={pick}
         setPick={setPick}
         onEnter={openDoor}
+        onGoIn={goIn}
         game={game}
         place={place}
         artAt={artAt}
@@ -195,6 +209,7 @@ export function PlaceScreen({ game, map, place, onMap, shut = false }: Props) {
         pick={pick}
         setPick={setPick}
         onEnter={openDoor}
+        onGoIn={goIn}
         game={game}
         place={place}
         artAt={artAt}
@@ -224,6 +239,7 @@ export function PlaceScreen({ game, map, place, onMap, shut = false }: Props) {
         onMap={onMap}
         act={act}
         say={say}
+        {...(keyed ? { goIn } : {})}
       />
     );
   } else {
@@ -256,6 +272,16 @@ export function PlaceScreen({ game, map, place, onMap, shut = false }: Props) {
             ) : (
               <PlaceHead game={game} map={map} place={place} />
             )}
+            {keyed && view === 'place' && (
+              <button
+                type="button"
+                className="place-btn is-quiet place-streets"
+                title="Walk the streets as a scene, with the narrator."
+                onClick={() => goIn(null)}
+              >
+                The streets 街 · Go in
+              </button>
+            )}
             <span className="place-purse">
               <b>{Math.floor(game.player.silver).toLocaleString('en')}</b> taels
             </span>
@@ -271,6 +297,7 @@ export function PlaceScreen({ game, map, place, onMap, shut = false }: Props) {
           </div>
         </>
       )}
+      {!shut && <AroundYou map={map} place={place} />}
       {toast && <div className="place-toast panel">{toast}</div>}
     </div>
   );
@@ -689,6 +716,7 @@ function Grid({
   artAt,
   keyed,
   link,
+  onGoIn,
 }: {
   tabs: Tab[];
   tab: string | null;
@@ -696,6 +724,7 @@ function Grid({
   pick: string | null;
   setPick: (id: string) => void;
   onEnter: (id: string) => void;
+  onGoIn: (id: string) => void;
   game: GameState;
   place: MapPlace;
   artAt: string;
@@ -752,6 +781,7 @@ function Grid({
           door={picked}
           keyed={keyed}
           onEnter={() => onEnter(picked.id)}
+          onGoIn={() => onGoIn(picked.id)}
         />
       ) : (
         <section className="place-preview panel" />
@@ -771,12 +801,14 @@ function Preview({
   door,
   keyed,
   onEnter,
+  onGoIn,
 }: {
   game: GameState;
   place: MapPlace;
   door: Door;
   keyed: boolean;
   onEnter: () => void;
+  onGoIn: () => void;
 }) {
   const d = door.market;
   const here = market(place.id);
@@ -828,8 +860,9 @@ function Preview({
           <button
             type="button"
             className="place-btn is-quiet"
-            disabled
-            title="Walking it as a scene comes with going in (P3.9)."
+            disabled={door.later}
+            title="Walk in as a scene, with the narrator."
+            onClick={onGoIn}
           >
             Go in 入
           </button>
@@ -1021,6 +1054,7 @@ function Village({
   onMap,
   act,
   say,
+  goIn,
 }: {
   game: GameState;
   map: RegionMap;
@@ -1032,6 +1066,8 @@ function Village({
   onHall: () => void;
   onMap: () => void;
   act: Act;
+  /** Go in at a door or the village's streets, with a key (P3.9b). */
+  goIn?: (id: string | null) => void;
   say: (t: string) => void;
 }) {
   const cur = doors.find((d) => d.id === open) ?? null;
@@ -1048,6 +1084,16 @@ function Village({
           act={act}
         />
         <PlaceHead game={game} map={map} place={place} />
+        {goIn && (
+          <button
+            type="button"
+            className="place-btn is-quiet place-streets"
+            title="Walk the village as a scene, with the narrator."
+            onClick={() => goIn(null)}
+          >
+            The village 街 · Go in
+          </button>
+        )}
         <GateStrip game={game} map={map} place={place} />
         <MarkStrip game={game} place={place} />
         {place.features.length > 0 && (
@@ -1070,6 +1116,16 @@ function Village({
               <h3>{cur.name}</h3>
               <div className="place-sub">{cur.sub}</div>
             </div>
+            {goIn && (
+              <button
+                type="button"
+                className="place-btn is-quiet"
+                title="Walk in as a scene, with the narrator."
+                onClick={() => goIn(cur.id)}
+              >
+                Go in 入
+              </button>
+            )}
             <button
               type="button"
               className="place-float-close"

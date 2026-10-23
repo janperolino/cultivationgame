@@ -379,9 +379,9 @@ describe('the introduction quests', () => {
     const ids = new Set(CODEX.map((e) => e.id));
     for (const q of QUESTS)
       for (const c of q.codex ?? []) expect(ids, `${q.id}: ${c}`).toContain(c);
-    // Eleven of the feature list's introduction-quest rows are quests here (K12 added the
-    // commission's); the other four (sparring, the stance, postings, posts and hires) are every
-    // chain's to teach.
-    expect(QUESTS.filter((q) => q.id.startsWith('intro-'))).toHaveLength(11);
+    // Twelve of the feature list's introduction-quest rows are quests here (K12 added the
+    // commission's, P3.9b going in's at the teahouse); the other four (sparring, the stance,
+    // postings, posts and hires) are every chain's to teach.
+    expect(QUESTS.filter((q) => q.id.startsWith('intro-'))).toHaveLength(12);
   });
 });
