@@ -14222,3 +14222,35 @@ p.map-above {
   height: 4px;
   margin-top: 4px;
 }
+
+/* The river's turns, pinned to its foot while the prose is revealed (ui/reveal.ts). */
+.goin-river-in {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* A turn's quiet line comes in softly as its telling ends, once, not looping. */
+.goin-turn .goin-line {
+  animation: goin-line-in 220ms ease-out;
+}
+
+@keyframes goin-line-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.goin-fight .goin-fight-bar,
+.goin-fight .goin-give-face {
+  transition: opacity 200ms ease;
+}
+
+.goin-fight.is-held .goin-fight-bar,
+.goin-fight.is-held .goin-give-face {
+  opacity: 0.8;
+}
+
+.goin-fill {
+  transition: width 400ms ease;
+}

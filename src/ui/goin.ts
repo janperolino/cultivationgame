@@ -103,6 +103,8 @@ interface GoInUi {
   busy: 'reading' | 'telling' | 'leaving' | null;
   /** The turn being told: your words, and the prose as it streams. */
   saying: string | null;
+  /** The fight's exchange being told, so its heading stands before the prose arrives (P3.9c). */
+  sayingExchange: number | null;
   streaming: string;
   /** The text box. */
   words: string;
@@ -120,6 +122,7 @@ interface GoInUi {
 export const useGoIn = create<GoInUi>()(() => ({
   busy: null,
   saying: null,
+  sayingExchange: null,
   streaming: '',
   words: '',
   readings: null,
@@ -283,7 +286,12 @@ async function tell(t: Telling): Promise<void> {
   const s0 = game();
   if (!s0?.goin) return;
   const from = meter.cost;
-  useGoIn.setState({ busy: 'telling', saying: t.said, streaming: '' });
+  useGoIn.setState({
+    busy: 'telling',
+    saying: t.said,
+    sayingExchange: t.exchange ?? null,
+    streaming: '',
+  });
   try {
     const a = await loadAtlas();
     const s = game()!;

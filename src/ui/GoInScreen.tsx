@@ -54,7 +54,8 @@ import {
   useGoIn,
   wait,
 } from './goin.ts';
-import { useSettings } from './settings.ts';
+import { reducedMotion, useSettings } from './settings.ts';
+import { useReveal } from './reveal.ts';
 import { Actions, Arena } from './CombatScreen.tsx';
 import { syncFight, useFight } from './fight.ts';
 import { combatantIn, type Fight } from '../core/combat/fight.ts';
@@ -89,6 +90,21 @@ const realmWords = (r: { realm: Parameters<typeof realmInfo>[0]; stage: number }
 /** The verdict's class: clear, close, short or unread. */
 const vClass = (v: string | null | undefined) =>
   v === 'clear' ? 'clear' : v === 'close' ? 'close' : v === 'short' ? 'short' : 'unk';
+
+/**
+ * The narrator's prose, revealed at a steady pace while it is the live turn's (ui/reveal.ts): a
+ * click shows the rest. Earlier turns show whole.
+ */
+function Prose({ text, fresh, cursor }: { text: string; fresh: boolean; cursor?: boolean }) {
+  const settings = useSettings();
+  const r = useReveal(text, fresh, reducedMotion(settings));
+  return (
+    <p className="goin-prose" onClick={r.done ? undefined : r.skip}>
+      {r.shown}
+      {(cursor || !r.done) && <span className="goin-cursor" />}
+    </p>
+  );
+}
 
 function Turn({ t, last }: { t: GoInTurn; last: boolean }) {
   const [asking, setAsking] = useState(false);
@@ -130,7 +146,7 @@ function Turn({ t, last }: { t: GoInTurn; last: boolean }) {
           </button>
         </form>
       )}
-      <p className="goin-prose">{t.told}</p>
+      {last ? <Prose text={t.told} fresh={false} /> : <p className="goin-prose">{t.told}</p>}
       <div className="goin-line">
         <span>{t.line}</span>
         {t.why && (
@@ -798,10 +814,25 @@ export function GoInScreen() {
     if (s && sceneFight) syncFight(s);
   }, [s, sceneFight]);
   const f = sceneFight ? stageFight : null;
+  const sayingExchange = useGoIn((u) => u.sayingExchange);
+  const inner = useRef<HTMLDivElement>(null);
+  // The river stays pinned to its foot while the prose grows, unless you scrolled up to read.
+  const pinned = useRef(true);
   const turns = s?.goin?.turns;
+  const open = !!s?.goin;
   useEffect(() => {
+    pinned.current = true;
     river.current?.scrollTo({ top: river.current.scrollHeight });
-  }, [turns, streaming]);
+  }, [turns]);
+  useEffect(() => {
+    const el = inner.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      if (pinned.current && river.current) river.current.scrollTop = river.current.scrollHeight;
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [leaving, open]);
   if (leaving) return <Leaving />;
   if (!s?.goin) return null;
   const g = s.goin;
@@ -823,25 +854,34 @@ export function GoInScreen() {
       {f ? <FightField s={s} f={f} busy={busyNow} /> : g.place && <Doors s={s} busy={busyNow} />}
       <section className="goin-page">
         <People s={s} f={f} />
-        <div className="goin-river" ref={river}>
-          {g.turns.map((t, i) => (
-            <Turn key={i} t={t} last={i === g.turns.length - 1 && !busy} />
-          ))}
-          {busy === 'telling' && (
-            <div className="goin-turn">
-              {saying !== null && (
-                <div className="goin-you">
-                  <span>{saying}</span>
-                </div>
-              )}
-              <p className="goin-prose">
-                {streaming}
-                <span className="goin-cursor" />
-              </p>
-            </div>
-          )}
-          {busy === 'reading' && <p className="goin-line">reading your words…</p>}
-          {busy === 'leaving' && <p className="goin-line">the scene closes…</p>}
+        <div
+          className="goin-river"
+          ref={river}
+          onScroll={(e) => {
+            const r = e.currentTarget;
+            pinned.current = r.scrollHeight - r.scrollTop - r.clientHeight < 40;
+          }}
+        >
+          <div className="goin-river-in" ref={inner}>
+            {g.turns.map((t, i) => (
+              <Turn key={i} t={t} last={i === g.turns.length - 1 && !busy} />
+            ))}
+            {busy === 'telling' && (
+              <div className={`goin-turn${sayingExchange ? ' is-exchange' : ''}`}>
+                {sayingExchange !== null && (
+                  <div className="goin-exchange">Exchange {sayingExchange}</div>
+                )}
+                {saying !== null && (
+                  <div className="goin-you">
+                    <span>{saying}</span>
+                  </div>
+                )}
+                <Prose text={streaming} fresh cursor />
+              </div>
+            )}
+            {busy === 'reading' && <p className="goin-line">reading your words…</p>}
+            {busy === 'leaving' && <p className="goin-line">the scene closes…</p>}
+          </div>
         </div>
         <Act s={s} f={f} />
       </section>
