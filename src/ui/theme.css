@@ -13852,7 +13852,7 @@ p.map-above {
 
 .goin-box {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   gap: 8px;
 }
 
@@ -14253,4 +14253,36 @@ p.map-above {
 
 .goin-fill {
   transition: width 400ms ease;
+}
+
+/* The hour on a Go in before you go in (P3.9w): small and dim beside the words. */
+.goin-door-hour {
+  margin-left: 6px;
+  font-size: 0.8em;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+/* Wait until (P3.9w): three small hours beside Wait. */
+.goin-until {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: calc(13px * var(--text-scale));
+  opacity: 0.75;
+}
+
+.goin-until-btn {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+
+.goin-until-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }

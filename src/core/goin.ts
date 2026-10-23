@@ -15,6 +15,8 @@ import {
   HERE_ARRIVALS,
   LEFT_FOR_DEAD,
   TERRAIN_FEATURES,
+  WAIT_UNTIL,
+  type WaitUntil,
 } from '../content/goin.ts';
 import { hasItem, item } from '../content/items.ts';
 import { MEMORIES } from '../content/memories.ts';
@@ -692,6 +694,25 @@ function disciple(s: GameState, results: readonly StepResult[]): GameState {
     if (typeof t !== 'string') return t;
   }
   return s;
+}
+
+/**
+ * The ticks from the scene's clock to the start of an hour (P3.9w): the next dawn, noon or dusk,
+ * a whole day on when it is that hour's start now.
+ */
+export function ticksUntil(s: GameState, hour: WaitUntil): number {
+  const g = s.goin;
+  const now = s.calendar.day + (g ? g.scene.tick / TICKS_PER_DAY : 0);
+  const perHour = TICKS_PER_DAY / 12;
+  const at = (((now % 1) + 1) % 1) * TICKS_PER_DAY;
+  const to = WAIT_UNTIL[hour] * perHour;
+  const n = Math.ceil(to - at - 1e-9);
+  return n > 0 ? n : n + TICKS_PER_DAY;
+}
+
+/** Wait until dawn, noon or dusk: one wait of that many ticks, stopped by an arrival. */
+export function waitUntilTurn(s: GameState, hour: WaitUntil): TurnRun {
+  return runTurn(s, { actor: s.player.id, steps: [step('wait', { n: ticksUntil(s, hour) })] });
 }
 
 /** Wait: skips to the next arrival, when someone is on the way, else a tick. */

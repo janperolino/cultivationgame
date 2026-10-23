@@ -10,6 +10,7 @@ import type { MapPlace, RegionMap } from '../core/map/region.ts';
 import { goInAt } from './goin.ts';
 import { useSettings } from './settings.ts';
 import { useGame } from './store.ts';
+import { GoInHour } from './GoInHour.tsx';
 
 interface Line {
   n: number;
@@ -98,7 +99,7 @@ export function AroundYou({ map, place }: { map: RegionMap; place: MapPlace }) {
                     title="Go into the street with the narrator"
                     onClick={() => goInAt(map, place, null, undefined, l.text)}
                   >
-                    Go in 入
+                    Go in 入 <GoInHour />
                   </button>
                 )}
               </div>

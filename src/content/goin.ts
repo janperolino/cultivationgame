@@ -12,6 +12,13 @@ export const GOIN_TURNS_KEPT = 20;
  * going in where nobody is (a find, an omen, open ground), a turn with something at stake, a plain
  * turn, a fight's end told once, and the words more for an arrival, the law or a cover blown.
  */
+/**
+ * Wait until (P3.9w, from P3.9t's playtest): the double-hours a scene can wait for, dawn 卯, noon 午
+ * and dusk 酉, by their index on the wheel. An arrival stops the wait, as Wait's does.
+ */
+export const WAIT_UNTIL = { dawn: 3, noon: 6, dusk: 9 } as const;
+export type WaitUntil = keyof typeof WAIT_UNTIL;
+
 export const GOIN_LENGTHS = {
   opening: [80, 150],
   quiet: [50, 90],
