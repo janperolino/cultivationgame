@@ -1619,7 +1619,9 @@ export function round(
   const before = sc.tick;
   // Talk shares a tick (talk first, 2026-10-22): a line of chat passes no time until the
   // exchange runs to TALK_PER_TICK lines; anything else you do passes its own and starts afresh.
-  const talked = results.some((r) => sc.players.includes(r.actor) && r.step.act === 'chat');
+  const talked = results.some(
+    (r) => sc.players.includes(r.actor) && (r.step.act === 'chat' || r.step.act === 'think'),
+  );
   const talk = talked ? (sc.talk ?? 0) + 1 : 0;
   const free = talked && talk < TALK_PER_TICK;
   sc = { ...sc, tick: sc.tick + (free ? 0 : Math.max(1, ticks)), talk: free ? talk : 0 };

@@ -548,6 +548,12 @@ function placeText(
   if (kind) out.push(`${kind.name}: ${kind.does}.`);
   // What the hour means here (talk first): shut, its dead hours, or its busiest.
   const share = kind ? kind.hours[branchOf(s.calendar.day + g.scene.tick / 48)]! : null;
+  const own =
+    here.ground === 'power' &&
+    !!g.scene.power &&
+    s.world.members.some((m) => m.who === s.player.id && m.power === houseOf(g.scene.power!));
+  if (own && share !== null && share < 0.15)
+    out.push('You are one of its own: you walked in by the door, as a member may at any hour.');
   if (share === 0)
     out.push(
       `At this hour ${here.name} is shut and dark: whoever keeps it is asleep or on the night watch, and anyone else here is out of place.`,
