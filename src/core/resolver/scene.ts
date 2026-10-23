@@ -105,7 +105,7 @@ import { hasItem, item } from '../../content/items.ts';
 import { template as rosterTemplate } from '../../content/roster.ts';
 import { fortune } from '../stats.ts';
 import { artCopy, seenUsing } from '../guarded.ts';
-import { CRAFT_RESPECT, PINNED_REFUSES } from '../../content/goin.ts';
+import { CRAFT_RESPECT, PINNED_REFUSES, TALK_PER_TICK } from '../../content/goin.ts';
 import { LOOSE_TALK } from '../../content/doorKinds.ts';
 import { deedKarma } from '../../content/resolver.ts';
 
@@ -153,6 +153,8 @@ export interface Scene {
   due: number | null;
   /** The tick the law arrives, once called. */
   lawDue: number | null;
+  /** Lines of talk since the last tick passed: an exchange shares a tick (talk first). */
+  talk?: number;
   log: string[];
   /**
    * What a guarded room holds, by the feature that is its way in (P3.9b): a burglary there takes
@@ -1640,7 +1642,14 @@ export function round(
   state = bonds.state;
   sc = bonds.scene;
   const before = sc.tick;
-  sc = { ...sc, tick: sc.tick + Math.max(1, ticks) };
+  // Talk shares a tick (talk first, 2026-10-22): a line of chat passes no time until the
+  // exchange runs to TALK_PER_TICK lines; anything else you do passes its own and starts afresh.
+  const talked = results.some(
+    (r) => sc.players.includes(r.actor) && (r.step.act === 'chat' || r.step.act === 'think'),
+  );
+  const talk = talked ? (sc.talk ?? 0) + 1 : 0;
+  const free = talked && talk < TALK_PER_TICK;
+  sc = { ...sc, tick: sc.tick + (free ? 0 : Math.max(1, ticks)), talk: free ? talk : 0 };
   const came = arrivals(state, sc, before);
   state = came.state;
   sc = came.scene;

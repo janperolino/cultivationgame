@@ -5,6 +5,7 @@
 // voice kept, a person met last week naming what you did, and the save.
 import { describe, expect, it } from 'vitest';
 import { CROWD_TAGS } from '../content/crowd.ts';
+import { NEW_FACE } from '../content/goin.ts';
 import { DOOR_KIND_IDS, DOOR_KINDS, doorKindOf } from '../content/doorKinds.ts';
 import { HOUSEHOLDS } from '../content/households.ts';
 import { MOMENT, ROOM } from '../content/memories.ts';
@@ -257,6 +258,24 @@ describe('going in at a place', () => {
     expect(m?.row).toBe('company');
     expect(m?.what).toContain(s.goin!.place!.name);
     expect(done.world.kept[buyer.id]?.face).toBe(face.key);
+  });
+
+  it('makes someone you name in the crowd, the same person all scene (talk first)', () => {
+    const s = goIn(atHour(inside(life('named'), FORT), 5), FORT, 'stall');
+    expect(crowdHere(s).count).toBeGreaterThan(0);
+    const who = 'the woman counting silver by the well';
+    const talk = { actor: s.player.id, steps: [step('chat', { target: NEW_FACE, who })] };
+    const c = checkPlan(s, talk);
+    expect(c.refused).toBeNull();
+    expect(c.stake).toBe(false);
+    const r = runTurn(s, talk);
+    const her = r.state.goin!.scene.actors.at(-1)!;
+    expect(her.looks).toBe('woman counting silver by the well');
+    expect(r.results[0]?.step.target).toBe(her.id);
+    // The same words find her again, and nobody new is made.
+    const again = runTurn(r.state, talk);
+    expect(again.state.goin!.scene.actors.length).toBe(r.state.goin!.scene.actors.length);
+    expect(again.results[0]?.step.target).toBe(her.id);
   });
 
   it('breaks into a stranger’s house: shut until forced, its store taken, found by morning', () => {

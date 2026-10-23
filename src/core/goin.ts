@@ -95,6 +95,7 @@ import {
   hostileFace,
   matBuyer,
   moveTo,
+  crowdHere,
   readyPlan,
   readyStep,
 } from './goinPlace.ts';
@@ -1354,6 +1355,8 @@ export interface Setting {
   opening: string | null;
   /** Nobody is in it: told shorter (content/goin.ts, `quiet`). */
   quiet: boolean;
+  /** Inside a place, where the road doesn't come into it. */
+  inside: boolean;
 }
 
 export function sceneSetting(s: GameState): Setting | null {
@@ -1377,9 +1380,14 @@ export function sceneSetting(s: GameState): Setting | null {
     headed: target?.name ?? null,
     title: g.title,
     opening: enc ? encounterTemplate(enc.template).opening : (g.place?.opening ?? null),
-    quiet: !g.scene.actors.some(
-      (a) => a.id !== s.player.id && g.roles[a.id] && !g.roles[a.id]!.drift,
-    ),
+    // Nobody here: no one else present but drift-ins from the road, and no crowd where you stand
+    // (talk first: a keeper behind his desk is someone).
+    quiet:
+      !g.scene.actors.some(
+        (a) =>
+          a.id !== s.player.id && a.side !== YOU && a.state === 'present' && !g.roles[a.id]?.drift,
+      ) && !(g.place && crowdHere(s).count > 0),
+    inside: !!g.place,
   };
 }
 

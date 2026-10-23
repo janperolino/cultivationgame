@@ -167,6 +167,34 @@ export function facesAt(
   return out;
 }
 
+/**
+ * Someone you name in the crowd who isn't among its faces ("the woman counting silver by the tally
+ * board"; talk first, 2026-10-22): a face of their own from your words, keyed by the place, the frame,
+ * the day and the words, their tag drawn from the crowd's mix, so the same words that day are the
+ * same person. Nobody when the frame has no crowd.
+ */
+export function namedFace(
+  f: PlaceFacts,
+  frame: string,
+  day: number,
+  count: number,
+  looks: string,
+  crowd: Partial<Record<CrowdTag, number>> = f.crowd,
+): Face | null {
+  if (count <= 0) return null;
+  // "the woman counting silver" is read as "a woman counting silver", as faces' lines are.
+  const words = looks
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/^(the|a|an) /, '')
+    .slice(0, 80);
+  if (!words) return null;
+  const key = `${f.id}/${frame}/${Math.floor(day)}/named:${words}`;
+  const tag = pickTag(new Rng(hashSeed(`face/${key}`)), crowd);
+  return { key, tag, line: words };
+}
+
 // ── Making a face ────────────────────────────────────────────────────────────────────────────
 
 /**

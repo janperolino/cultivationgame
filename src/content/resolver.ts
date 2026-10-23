@@ -354,6 +354,9 @@ export const ACTS = {
     costs: ['time', 'noise'],
     short: 'nothing',
   },
+  // A thought kept to yourself (talk first): nobody hears it, nothing is checked, and it shares
+  // talk's tick.
+  think: { verb: 'look', name: 'think' },
   watch: {
     verb: 'look',
     name: 'watch',

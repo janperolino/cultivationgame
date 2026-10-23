@@ -221,7 +221,7 @@ export function goInDev(template: string): string | null {
 
 // ── Telling ──────────────────────────────────────────────────────────────────────────────────
 
-/** "asked · clear · ½ hour", and the numbers behind it for its "?". */
+/** "asked · close · they trust you a little less · ½ hour", and the numbers behind it for its "?". */
 function lineOf(
   s: GameState,
   results: readonly StepResult[],
@@ -243,6 +243,9 @@ function lineOf(
     return { line: `a fight · ${how} · ${fought.fight.turns} turns` };
   }
   const l = last!;
+  // A turn with nothing at stake shows no line (talk first, 2026-10-22): the prose told it, and the
+  // time is the clock's at the page's head.
+  if (!l.refused && !l.check) return { line: '' };
   const parts: string[] = [ACTS[l.step.act].name];
   let why: string | undefined;
   if (l.refused) parts.push(`can’t: ${l.refused}`);
@@ -251,7 +254,7 @@ function lineOf(
     if (l.cost) parts.push(COSTS[l.cost]);
     if (l.short) parts.push(SHORTS[l.short]);
     why = `yours ${l.check.yours.toFixed(2)} against ${l.check.theirs.toFixed(2)}`;
-  } else parts.push('nothing at stake');
+  }
   parts.push(tickWords(Math.max(1, ticks)));
   return { line: parts.join(' · '), ...(why ? { why } : {}) };
 }
@@ -322,7 +325,9 @@ async function tell(t: Telling): Promise<void> {
     const n = await narrate(gameAi, view, out, {
       words: wordsFor(t.length, t.arrival),
       before,
+      said: t.said,
       onProse: (p) => useGoIn.setState((u) => ({ streaming: u.streaming + p })),
+      onRetell: () => useGoIn.setState({ streaming: '' }),
     });
     const ticks = g.scene.tick - t.before.tick;
     const turn: GoInTurn = {
@@ -393,7 +398,9 @@ export async function tellAgain(): Promise<void> {
       {
         words: wordsFor((last.length as GoInLength | undefined) ?? 'plain'),
         before: toneText(useSettings.getState().mature && everyoneAdult(s)),
+        said: last.said,
         onProse: (p) => useGoIn.setState((u) => ({ streaming: u.streaming + p })),
+        onRetell: () => useGoIn.setState({ streaming: '' }),
       },
     );
     if (n.fellBack !== 'prose') {

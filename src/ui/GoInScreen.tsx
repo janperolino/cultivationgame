@@ -147,19 +147,21 @@ function Turn({ t, last }: { t: GoInTurn; last: boolean }) {
         </form>
       )}
       {last ? <Prose text={t.told} fresh={false} /> : <p className="goin-prose">{t.told}</p>}
-      <div className="goin-line">
-        <span>{t.line}</span>
-        {t.why && (
-          <span className="goin-q" title={t.why}>
-            ?
-          </span>
-        )}
-        {last && t.outcome && (
-          <button type="button" className="button button-quiet" onClick={() => void tellAgain()}>
-            Tell it
-          </button>
-        )}
-      </div>
+      {(t.line || (last && t.outcome)) && (
+        <div className="goin-line">
+          {t.line && <span>{t.line}</span>}
+          {t.why && (
+            <span className="goin-q" title={t.why}>
+              ?
+            </span>
+          )}
+          {last && t.outcome && (
+            <button type="button" className="button button-quiet" onClick={() => void tellAgain()}>
+              Tell it
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
