@@ -138,8 +138,10 @@ export function knowledgeOf(
   places: PlaceIndex,
   id: string,
   n: Nature = natureOf(w, id),
+  /** Where they stand, as home for someone the world keeps no home for: a keeper, a face (talk first). */
+  at: string | null = null,
 ): Knowledge {
-  const home = homeOf(w, id);
+  const home = homeOf(w, id) ?? at;
   const power = powerOf(w, id);
   const common = new Set<string>();
   const priv = new Set<string>();

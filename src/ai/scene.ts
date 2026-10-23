@@ -33,7 +33,7 @@ export function settingText(set: Setting): string {
   const lines = ['# Where you stand'];
   if (set.title) lines.push(`The card: ${set.title}.`);
   lines.push(
-    `${set.hour}, ${set.season}, the weather ${set.weather}. ${capital(set.land)}, ${set.road ? 'on the road' : 'off the road'}${set.headed ? `, on your way to ${set.headed}` : ''}.`,
+    `${set.hour}, ${set.season}, the weather ${set.weather}. ${capital(set.land)}${set.inside ? '' : `, ${set.road ? 'on the road' : 'off the road'}${set.headed ? `, on your way to ${set.headed}` : ''}`}.`,
   );
   if (set.opening)
     lines.push(

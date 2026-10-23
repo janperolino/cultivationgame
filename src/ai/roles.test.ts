@@ -575,13 +575,18 @@ describe("the context's fog", () => {
       expect(all).not.toContain(e.truth!.slice(0, 40));
     }
     // A place you haven't seen or heard of stays out, unless what everyone knows names it: the
-    // region's lore, or the summary of a power everyone there knows.
+    // region's lore, or the summary of a power everyone there knows. What the people present know
+    // as locals is theirs to tell, and your own seat names your power (talk first).
     const told = atlas.inRegion(REGION).filter((e) => e.kind === 'power' && !e.hidden);
     const lore = [region.summary, region.lore, ...told.map((e) => e.summary)].join(' ');
+    const yours = all
+      .split('\n')
+      .filter((l) => !l.includes('  Knows, as') && !l.startsWith('Your seat:'))
+      .join('\n');
     for (const e of atlas.inRegion(REGION)) {
       if (e.kind === 'power' || e.hidden || lore.includes(e.name) || e.id === 'qm-wuming-ji')
         continue;
-      expect(all, e.name).not.toContain(e.name);
+      expect(yours, e.name).not.toContain(e.name);
     }
     // People: a stranger's name and id stay out; someone hiding from you isn't there.
     expect(all).not.toContain('Peddler Gou');

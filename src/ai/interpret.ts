@@ -110,7 +110,9 @@ export function toInterpretation(view: View, reply: InterpretationReply): Interp
 
 /** Your words as plans. */
 export async function interpret(ai: Ai, view: View, words: string): Promise<Interpretation> {
-  const messages = contextMessages(view, INTERPRETER_TASK, `# The player types\n${words}`);
+  const messages = contextMessages(view, INTERPRETER_TASK, `# The player types\n${words}`, {
+    stores: true,
+  });
   const r = await callJson(
     ai,
     'interpreter',
