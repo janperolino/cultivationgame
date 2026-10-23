@@ -151,6 +151,29 @@ button { font: inherit; color: inherit; }
 #d .old .prose { font-size: 18px; }
 #d .foot { position: absolute; left: 400px; right: 400px; bottom: 36px; display: grid; gap: 12px; }
 #d .faces { display: flex; gap: 6px; flex-wrap: wrap; }
+/* ── E: B and C together: the painting and its doors, the page with the one you face at its head ── */
+#e .paint { left: 0; top: 0; bottom: 0; width: 1150px; }
+#e .paint::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 75%, rgb(3 4 6 / 0.95)), linear-gradient(0deg, rgb(3 4 6 / 0.85), transparent 26%); }
+#e .head { position: absolute; left: 36px; top: 30px; padding: 12px 16px; display: flex; gap: 12px; align-items: center; background: var(--glass); border-radius: 10px; border: 1px solid var(--edge); }
+#e .head h2 { margin: 0; font-family: var(--font-display); font-size: 28px; line-height: 1; }
+#e .here { position: absolute; left: 36px; top: 112px; display: grid; gap: 6px; justify-items: start; }
+#e .pill { display: flex; gap: 8px; align-items: center; padding: 4px 12px 4px 4px; border-radius: 999px; background: var(--glass); border: 1px solid var(--edge); font-size: 13.5px; cursor: pointer; }
+#e .pill .port { width: 28px; height: 28px; font-size: 15px; }
+#e .pill.on { border-color: var(--accent-edge); background: rgb(20 17 10 / 0.8); }
+#e .faces { position: absolute; left: 36px; bottom: 146px; display: flex; gap: 6px; flex-wrap: wrap; width: 1000px; }
+#e .doors { position: absolute; left: 36px; right: 806px; bottom: 30px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+#e .doors .door { height: 96px; }
+#e .page { position: absolute; right: 0; top: 0; bottom: 0; width: 800px; background: #0a0b0e; border-left: 1px solid var(--edge); padding: 34px 44px 30px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 20px; }
+#e .speaker { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; padding-bottom: 18px; border-bottom: 1px solid var(--edge); }
+#e .speaker .port { width: 84px; height: 84px; font-size: 42px; border-width: 2px; }
+#e .speaker h3 { margin: 0; font-family: var(--font-display); font-size: 32px; line-height: 1.05; }
+#e .speaker .d { font-size: 13px; }
+#e .speaker .kept { margin-top: 6px; font-size: 13px; color: var(--muted); }
+#e .speaker .kept q { font-family: var(--font-display); font-size: 16px; color: #cfc6b0; }
+#e .river { overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 22px; mask-image: linear-gradient(transparent, #000 140px); }
+#e .river .prose { text-shadow: none; }
+#e .old { opacity: 0.55; }
+#e .old .prose { font-size: 19px; }
 </style>
 
 <div class="study">
@@ -160,6 +183,7 @@ button { font: inherit; color: inherit; }
     <button aria-pressed="false" data-t="b">B · The scroll</button>
     <button aria-pressed="false" data-t="c">C · Face to face</button>
     <button aria-pressed="false" data-t="d">D · Lighter columns</button>
+    <button aria-pressed="false" data-t="e">E · B and C</button>
   </div>
 </div>
 
@@ -370,6 +394,62 @@ button { font: inherit; color: inherit; }
         <span class="chip">Buy the word going round · 5 taels</span>
       </div>
       <div class="box"><div class="input">What do you do?</div><span class="btn">Wait</span><span class="btn">Leave</span></div>
+    </div>
+    <div class="cost">this scene: 0.9¢</div>
+  </section>
+  <!-- E: B's painting with its doors along the foot and the faces over it; who's here as pills on
+       the painting, the one you face lit; C's speaker at the head of B's page, their kept line and
+       what is between you under their name, then the story read like a book. -->
+  <section class="take" id="e">
+    <div class="paint"></div>
+    <div class="head"><div class="seal">茶</div><div><h2>The Quiet Moon</h2><div class="d">the teahouse lanes · 酉 evening · ½ hour in</div></div></div>
+    <div class="here">
+      <span class="pill on"><span class="port cult">猎</span>a beast hunter <span class="d">· neutral</span></span>
+      <span class="pill"><span class="port">宋</span>Old Song <span class="d">· keeper · <span class="warm">friendly</span></span></span>
+      <span class="pill"><span class="port">说</span>the storyteller</span>
+    </div>
+    <div class="faces">
+      <span class="face">a pill peddler with a tray on a strap</span>
+      <span class="face">two Gate disciples arguing over a core</span>
+      <span class="face">a lone cultivator in a patched robe</span>
+      <span class="face">and about 19 more at the tables</span>
+    </div>
+    <div class="doors">
+      <div class="door" style="background-image:url('../../src/ui/art/places/qm-shoukou-cheng/doors-2/inn.webp')"><b>The inn</b><i>½ hour</i></div>
+      <div class="door" style="background-image:url('../../src/ui/art/places/qm-shoukou-cheng/doors-2/broker.webp')"><b>The broker</b><i>½ hour</i></div>
+      <div class="door" style="background-image:url('../../src/ui/art/places/qm-shoukou-cheng/doors-2/board.webp')"><b>Bounty board</b><i>½ hour</i></div>
+      <div class="door" style="background-image:url('../../src/ui/art/places/qm-shoukou-cheng/doors-1/stall.webp')"><b>Market quarter</b><i>2 hours</i></div>
+      <div class="door locked" style="background-image:url('../../src/ui/art/places/qm-shoukou-cheng/doors-2/teahouse.webp')"><b>Booth upstairs</b><i>2 taels</i></div>
+      <div class="door" style="background-image:url('../../src/ui/art/places/qm-shoukou-cheng/doors-2/caravans.webp')"><b>Somewhere quiet</b><i>a step</i></div>
+    </div>
+    <div class="page">
+      <div class="speaker">
+        <span class="port cult">猎</span>
+        <div>
+          <h3>A beast hunter</h3>
+          <div class="d">Qi Condensation 6 · neutral · met just now · claw marks down his arm</div>
+          <div class="kept">Click Old Song to face him instead: <q>"Price is the price."</q> · calls you "young sir" · between you: a pot of Cloud Mist last week, "tipped like a lord"</div>
+        </div>
+      </div>
+      <div class="river">
+        <div class="old">
+          <div class="you">You go in</div>
+          <p class="prose">Lanterns swing over the rail, and the strait beyond is a field of masts. The storyteller is between stories; the room has gone to its own talk. Old Song sees you, sets down a cup without being asked. <q>Young sir. The Cloud Mist again?</q></p>
+        </div>
+        <div>
+          <div class="you">Ask the hunter by the rail if he's walked the Black Pine road</div>
+          <p class="prose">The hunter turns his arm so the claw marks catch the lamplight. <q>Walked it? Crawled the last forty li of it.</q> He taps the table twice. <q>There's a ridge-wolf den past the second ford that wasn't there in spring. Something pushed them down.</q></p>
+          <div class="line">asked · <span class="v clear">clear</span> · told you something new · ½ hour</div>
+        </div>
+      </div>
+      <div style="display:grid; gap:12px">
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
+          <span class="chip">Ask what pushed the wolves down</span>
+          <span class="chip">Buy him a pot</span>
+          <span class="chip">Buy the word going round · 5 taels</span>
+        </div>
+        <div class="box"><div class="input">What do you do?</div><span class="btn">Wait</span><span class="btn">Leave</span></div>
+      </div>
     </div>
     <div class="cost">this scene: 0.9¢</div>
   </section>
