@@ -59,6 +59,7 @@ export const readStepSchema = z.object({
   prop: ref.nullish(),
   show: z.array(z.enum(SHOW_IDS)).max(2).nullish(),
   as: z.string().min(1).max(80).nullish(),
+  who: z.string().min(1).max(80).nullish(),
   shown: z.object({ realm: z.enum(REALM_IDS), stage: z.number().int().min(1).max(9) }).nullish(),
   bond: z.enum(BOND_IDS).nullish(),
   goal: ref.nullish(),
@@ -105,6 +106,7 @@ const READ_STEP_PROPERTIES = {
   prop: refJson,
   show: { type: ['array', 'null'], items: { type: 'string', enum: [...SHOW_IDS] }, maxItems: 2 },
   as: str(80),
+  who: str(80),
   shown: {
     type: ['object', 'null'],
     additionalProperties: false,

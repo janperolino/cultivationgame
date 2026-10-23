@@ -8,7 +8,7 @@
 // morning, a fight loud enough is heard across the whole place, a body goes where you put it. When
 // the scene ends everyone you spent it with keeps an evening with you, and a frame where something
 // happened stays on its door.
-import { BODY_FOUND, PLACE_LI } from '../content/goin.ts';
+import { BODY_FOUND, NEW_FACE, PLACE_LI } from '../content/goin.ts';
 import { HOSTILE_FACE } from '../content/crowd.ts';
 import { DOOR_KINDS, RUMOR_TAELS } from '../content/doorKinds.ts';
 import { HOUSEHOLDS } from '../content/households.ts';
@@ -26,6 +26,7 @@ import {
   crowdRealm,
   facesAt,
   makeFace,
+  namedFace,
   placeFacts,
   type Face,
   type PlaceFacts,
@@ -434,10 +435,10 @@ export function crowdHere(s: GameState): CrowdView {
  * Engages a face (Jan's call in P3.9b's talk): they are made from their tag at a realm by the rule
  * and stand in the scene, the same person for the same face. Already made, nothing changes.
  */
-export function engageFace(s: GameState, key: string): GameState {
+export function engageFace(s: GameState, key: string, named?: Face): GameState {
   const g = s.goin;
   if (!g?.place || g.place.faces[key]) return s;
-  const face = crowdHere(s).faces.find((x) => x.key === key);
+  const face = named ?? crowdHere(s).faces.find((x) => x.key === key);
   if (!face) return s;
   const made = makeFace(
     s.world,
@@ -459,6 +460,33 @@ export function engageFace(s: GameState, key: string): GameState {
 }
 
 /**
+ * Someone you name in the crowd who isn't among its faces (talk first, 2026-10-22): made from your
+ * words as any face is, and kept by them, so "the woman by the tally board" is the same person all
+ * scene. Their id, or null where the frame has no crowd to hold them.
+ */
+export function engageNamed(s: GameState, who: string): { state: GameState; id: string | null } {
+  const g = s.goin;
+  const f = g && frameOf(g);
+  if (!g?.place || !f) return { state: s, id: null };
+  const crowd = crowdHere(s);
+  const facts = placeFacts(g.place.id);
+  const day = s.calendar.day + g.scene.tick / 48;
+  const face = namedFace(
+    facts,
+    f.id,
+    day,
+    crowd.count,
+    who,
+    PLACE_AIR[g.place.id]?.crowd ?? facts.crowd,
+  );
+  if (!face) return { state: s, id: null };
+  const made = g.place.faces[face.key];
+  if (made) return { state: s, id: made };
+  const st = engageFace(s, face.key, face);
+  return { state: st, id: st.goin!.place!.faces[face.key] ?? null };
+}
+
+/**
  * A plan made ready for a place (P3.9b): the faces it aims at made, and an act that gets you through
  * a way in (burgle, sneak, break, open) aimed at the room itself turned to its way in, as GLM reads
  * "force the lock of the house" at the house.
@@ -475,10 +503,20 @@ export function readyPlan(s: GameState, plan: Plan): { state: GameState; plan: P
       return { ...st, target: `store:${t}` };
     return st;
   });
-  const ready = { ...plan, steps };
+  // Someone named in the crowd is made, and the step aimed at them (talk first).
+  let named = s;
+  const aimed = steps.map((st) => {
+    if (st.target !== NEW_FACE || !st.who) return st;
+    const r = engageNamed(named, st.who);
+    named = r.state;
+    const { who: _who, ...rest } = st;
+    void _who;
+    return r.id ? { ...rest, target: r.id } : st;
+  });
+  const ready = { ...plan, steps: aimed };
   const state = engageAimed(
-    s,
-    steps.flatMap((x) => [x.target, ...(x.helpers ?? []), x.about]),
+    named,
+    aimed.flatMap((x) => [x.target, ...(x.helpers ?? []), x.about]),
   );
   return { state, plan: ready };
 }

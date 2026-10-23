@@ -7,7 +7,7 @@
 // reply that fails its check is asked for again once, and then the interpreter gives up without
 // acting for you: you say it another way, and no tick passes. In a fight, the interpreter reads one
 // turn: a main action and a minor one (design § Combat).
-import { NEW_SPOT } from '../content/goin.ts';
+import { NEW_FACE, NEW_SPOT } from '../content/goin.ts';
 import { ACTS, type ActInfo } from '../content/resolver.ts';
 import { PlanSchema, StepSchema, type Plan, type Step } from '../core/resolver/plan.ts';
 import { callJson, type Ai } from './call.ts';
@@ -57,13 +57,19 @@ export function toStep(view: View, r: ReadStep): Step | null {
   const target = idOf(view, r.target) ?? (info.target === 'project' ? idOf(view, r.goal) : null);
   // A spot the scene doesn't list yet is named, and the engine makes it (P3.9b, made frames).
   const newSpot = act === 'enter' && !target && !!r.as;
+  // Someone in the crowd the context doesn't list is named, and the engine makes them (talk first).
+  const newFace = info.target === 'person' && !target && !!r.who;
   // An act that needs a target and names none the context holds is aimed at nothing there.
-  if (info.target && !target && !newSpot) return null;
+  if (info.target && !target && !newSpot && !newFace) return null;
   const list = (refs: readonly string[] | null | undefined) =>
     (refs ?? []).map((x) => idOf(view, x)).filter((x): x is string => !!x);
   const step: Record<string, unknown> = { verb: info.verb, act };
   if (target) step.target = target;
   else if (newSpot) step.target = NEW_SPOT;
+  else if (newFace) {
+    step.target = NEW_FACE;
+    step.who = r.who;
+  }
   if (r.manner) step.manner = r.manner;
   const uses = list(r.uses);
   if (uses.length) step.uses = uses;

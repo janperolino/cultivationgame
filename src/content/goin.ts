@@ -16,7 +16,7 @@ export const GOIN_LENGTHS = {
   opening: [80, 150],
   quiet: [50, 90],
   stake: [50, 120],
-  plain: [25, 70],
+  plain: [40, 100],
   fight: [60, 120],
 } as const;
 export type GoInLength = keyof typeof GOIN_LENGTHS;
@@ -172,6 +172,12 @@ export const CRAFT_RESPECT = { perGrade: 0.1, max: 0.3, firstLook: 2, firstLookM
 
 /** The target of an enter that names a spot the scene doesn't list: the engine makes it from `as`. */
 export const NEW_SPOT = 'frame:new';
+
+/** Lines of talk to a tick: an exchange of talk is a tick, not a tick a line (talk first). */
+export const TALK_PER_TICK = 3;
+
+/** The target of an act aimed at someone in the crowd the scene doesn't list: made from `who`. */
+export const NEW_FACE = 'face:new';
 
 /**
  * Noise heard across the whole place (design § Moving): a Qi Condensation brawl stays on its street,

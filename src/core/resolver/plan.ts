@@ -49,6 +49,8 @@ export const StepSchema = z
     shown: z.object({ realm: z.enum(REALM_IDS), stage: z.number().int().min(1) }).optional(),
     /** A disguise's face, a false name, a story. */
     as: z.string().optional(),
+    /** Someone in the crowd the scene doesn't list, in your words: the engine makes them (talk first). */
+    who: z.string().optional(),
   })
   .refine((s) => ACTS[s.act].verb === s.verb, { message: "The act isn't under that verb." });
 export type Step = z.infer<typeof StepSchema>;
