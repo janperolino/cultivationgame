@@ -54,6 +54,8 @@ import {
 } from './goin.ts';
 import { useSettings } from './settings.ts';
 import { bannerArt, doorArt } from './placeArt.ts';
+import { landArt } from './landArt.ts';
+import { terrainAt } from '../core/map/region.ts';
 import { voiceOf } from '../core/voices.ts';
 import type { Frame } from '../core/frames.ts';
 import { useGame } from './store.ts';
@@ -150,12 +152,10 @@ function frameArt(placeId: string, f: Frame | undefined): string | undefined {
   return (f?.door && doorArt(placeId, f.door)) || bannerArt(placeId);
 }
 
-/** On the road, the banner of the nearest painted place this near stands in for the land. */
-const NEAR_LI = 300;
-
 /**
- * The painting of where you stand (take B, Jan's pick): a door's own, a place's banner, a site's;
- * on the road the nearest painted place's within a day's walk, else none (the plain seal).
+ * The painting of where you stand (take B, Jan's pick): a door's own, a place's banner, a site's; in
+ * the wilds one of its terrain's paintings for the spot; and with none painted yet, the nearest
+ * painted place's banner, however far (Jan: the nearest legible one).
  */
 function sceneArt(s: GameState): string | undefined {
   const g = s.goin!;
@@ -167,10 +167,12 @@ function sceneArt(s: GameState): string | undefined {
   const own = bannerArt(g.scene.place);
   const map = mapOf(s);
   if (own || !map || !s.map) return own;
-  const [x, y] = s.map.at;
+  const at: [number, number] = [s.map.at[0], s.map.at[1]];
+  const land = landArt(map.id, terrainAt(map, at), at);
+  if (land) return land;
   return map.places
-    .filter((p) => bannerArt(p.id) && Math.hypot(p.x - x, p.y - y) <= NEAR_LI)
-    .sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))
+    .filter((p) => bannerArt(p.id))
+    .sort((a, b) => Math.hypot(a.x - at[0], a.y - at[1]) - Math.hypot(b.x - at[0], b.y - at[1]))
     .map((p) => bannerArt(p.id))[0];
 }
 
