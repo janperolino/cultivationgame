@@ -525,7 +525,7 @@ describe('what lasts', () => {
     delete raw.state.world.voices;
     delete raw.state.world.frames;
     const old = loadSave(raw);
-    expect(old.version).toBe(56);
+    expect(old.version).toBe(57);
     expect(old.state.world.memories[0]?.what).toBe('Paid me fairly');
     expect(old.state.world.voices).toEqual({});
   });

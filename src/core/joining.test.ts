@@ -38,7 +38,7 @@ const rich = (s: GameState, low = 1000): GameState =>
   withPlayer(s, withStones(s.player, receive(stonesOf(s.player), low)));
 const life = () => rich(ensureMap(newLife({ name: 'Ye Chen', seed: 'doors' })));
 const joined = (s: GameState, power: string): GameState => {
-  const r = askToJoin(s, power);
+  const r = askToJoin(s, s.player.id, power);
   if (!r.ok || !r.joined) throw new Error(r.ok ? 'short' : r.reason);
   return r.state;
 };
@@ -46,27 +46,27 @@ const joined = (s: GameState, power: string): GameState => {
 describe('the way in', () => {
   it('lets a rooted child sit the Gate’s entrance test and walk in with its token', () => {
     const s = life();
-    const e = entryOf(s, GATE)!;
+    const e = entryOf(s, s.player.id, GATE)!;
     expect(e.by).toBe('test');
     expect(e.title.name).toBe('Ask to sit the entrance test');
-    const r = askToJoin(s, GATE);
+    const r = askToJoin(s, s.player.id, GATE);
     if (!r.ok) throw new Error(r.reason);
     expect(r.joined).toBe(true);
     expect(r.verdict).not.toBe('short');
     expect(membership(r.state.world, YOU, GATE)?.seat).toBe('outer');
     expect(r.state.world.known).toContain(`token:${GATE}`);
     expect(r.state.chronicle.at(-1)?.data).toMatchObject({ power: GATE, what: 'joined' });
-    expect(entryOf(r.state, GATE)).toBeNull();
+    expect(entryOf(r.state, r.state.player.id, GATE)).toBeNull();
   });
 
   it('keeps one house at a time: a Gate disciple can’t join the Reins without leaving', () => {
     const s = joined(life(), GATE);
-    expect(askToJoin(s, REINS)).toMatchObject({ ok: false });
+    expect(askToJoin(s, s.player.id, REINS)).toMatchObject({ ok: false });
   });
 
   it('has a society sponsor only one it favors', () => {
     const s = life();
-    expect(entryOf(s, NIGHT_BRIDGE)?.shut).toBeTruthy();
+    expect(entryOf(s, s.player.id, NIGHT_BRIDGE)?.shut).toBeTruthy();
     const favored = {
       ...s,
       world: addStanding(
@@ -75,8 +75,11 @@ describe('the way in', () => {
         s.calendar.day,
       ),
     };
-    expect(entryOf(favored, NIGHT_BRIDGE)?.shut).toBeNull();
-    expect(askToJoin(favored, NIGHT_BRIDGE)).toMatchObject({ ok: true, joined: true });
+    expect(entryOf(favored, favored.player.id, NIGHT_BRIDGE)?.shut).toBeNull();
+    expect(askToJoin(favored, favored.player.id, NIGHT_BRIDGE)).toMatchObject({
+      ok: true,
+      joined: true,
+    });
   });
 
   it('enlists at a town of a dynasty’s kingdom, and a guild takes its buying-in price', () => {
@@ -85,11 +88,11 @@ describe('the way in', () => {
     const fort = mapPlaceOf(map, MARCH)!;
     expect(seatPowerAt(map, fort)).toBe(MARCH);
     expect(seatPowerAt(map, placeById(map, GATE)!)).toBe(GATE);
-    expect(entryOf(s, MARCH)?.by).toBe('enlist');
+    expect(entryOf(s, s.player.id, MARCH)?.by).toBe('enlist');
     expect(membership(joined(s, MARCH).world, YOU, MARCH)?.seat).toBe('outer');
     const before = worthOf(stonesOf(s.player));
     const guild = joined(s, GUILD);
-    expect(before - worthOf(stonesOf(guild.player))).toBeCloseTo(buyInPrice(s), 5);
+    expect(before - worthOf(stonesOf(guild.player))).toBeCloseTo(buyInPrice(s, s.player.id), 5);
   });
 });
 
@@ -98,9 +101,9 @@ describe('the elders’ hall', () => {
     const s = joined(life(), GATE);
     const year = Math.ceil(s.calendar.day / DAYS_PER_YEAR) * DAYS_PER_YEAR;
     const first = { ...s, calendar: { ...s.calendar, day: year + 3 } };
-    expect(eldersHall(first, GATE)?.trial).toMatchObject({ open: true });
+    expect(eldersHall(first, first.player.id, GATE)?.trial).toMatchObject({ open: true });
     const later = { ...s, calendar: { ...s.calendar, day: year + 3 * DAYS_PER_MONTH } };
-    expect(eldersHall(later, GATE)?.trial).toMatchObject({ open: false });
+    expect(eldersHall(later, later.player.id, GATE)?.trial).toMatchObject({ open: false });
   });
 
   it('tells what being released gives up, then hands the pavilion’s copies back', () => {
@@ -112,16 +115,16 @@ describe('the elders’ hall', () => {
         members: s.world.members.map((m) => (m.power === GATE ? { ...m, balance: 40 } : m)),
       },
     };
-    const took = takeJob(s, 'gate-garden');
+    const took = takeJob(s, s.player.id, 'gate-garden');
     if (!took.ok) throw new Error(took.reason);
     const saber = copyId('method', 'butcher-saber');
     s = withPlayer(took.state, { ...took.state.player, copies: { [saber]: 1 } });
-    const view = releaseView(s, GATE)!;
+    const view = releaseView(s, s.player.id, GATE)!;
     expect(view.parting.kind).toBe('clean');
     expect(view.balance).toBe(40);
     expect(view.posts).toHaveLength(1);
     expect(view.copies.length).toBe(1);
-    const r = askRelease(s, GATE);
+    const r = askRelease(s, s.player.id, GATE);
     if (!r.ok) throw new Error(r.reason);
     expect(membership(r.state.world, YOU, GATE)).toBeUndefined();
     expect(r.state.player.jobs).toEqual([]);
@@ -158,18 +161,20 @@ describe('a town board’s posting', () => {
 describe('a gift', () => {
   it('is remembered as tribute, one a month, and brings a stranger toward known', () => {
     const s = life();
-    const floor = giftFloor(s);
-    const small = offerGift(s, REINS, { stones: floor - 1 });
+    const floor = giftFloor(s, s.player.id);
+    const small = offerGift(s, s.player.id, REINS, { stones: floor - 1 });
     expect(small).toMatchObject({ ok: true, counted: false });
-    const r = offerGift(s, REINS, { stones: floor });
+    const r = offerGift(s, s.player.id, REINS, { stones: floor });
     if (!r.ok) throw new Error(r.reason);
     expect(r.counted).toBe(true);
     expect(standingOf(r.state.world, REINS, YOU, s.calendar.day).total).toBe(5);
-    const again = offerGift(r.state, REINS, { stones: floor });
+    const again = offerGift(r.state, r.state.player.id, REINS, { stones: floor });
     expect(again).toMatchObject({ ok: true, counted: false });
     const m = joinPower(s.world, YOU, REINS, s.calendar.day, { you: true });
     if (!m.ok) throw new Error(m.why);
-    expect(offerGift({ ...s, world: m.world }, REINS, { stones: floor })).toMatchObject({
+    expect(
+      offerGift({ ...s, world: m.world }, s.player.id, REINS, { stones: floor }),
+    ).toMatchObject({
       ok: false,
     });
   });
@@ -187,7 +192,7 @@ describe('the chronicle', () => {
     expect(line(s)).toBe('Ye Chen is taken into the Beast-Butcher Gate.');
     const year = Math.ceil(s.calendar.day / DAYS_PER_YEAR) * DAYS_PER_YEAR;
     s = { ...s, calendar: { ...s.calendar, day: year + 1 } };
-    const short = innerTrial(s, GATE);
+    const short = innerTrial(s, s.player.id, GATE);
     if (!short.ok) throw new Error(short.why);
     expect(line(short.state)).toBe(
       "Ye Chen sits the Beast-Butcher Gate's inner trial and falls short.",
@@ -196,10 +201,10 @@ describe('the chronicle', () => {
       ...s.player,
       qi: { ...s.player.qi, realm: 'foundation-establishment', stage: 1 },
     });
-    expect(line(seatsByRealm(strong))).toBe(
+    expect(line(seatsByRealm(strong, strong.player.id))).toBe(
       'The Beast-Butcher Gate seats Ye Chen as its inner Gate disciple.',
     );
-    const r = askRelease(s, GATE);
+    const r = askRelease(s, s.player.id, GATE);
     if (!r.ok) throw new Error(r.reason);
     expect(line(r.state)).toBe('Ye Chen leaves the Beast-Butcher Gate by its rule.');
   });
@@ -229,6 +234,6 @@ describe('small words', () => {
       'the Wall of Piled Bones and the coast',
     );
     const s = joined(life(), GATE);
-    expect(releaseView(s, GATE)!.parting.why).toBe('released');
+    expect(releaseView(s, s.player.id, GATE)!.parting.why).toBe('released');
   });
 });

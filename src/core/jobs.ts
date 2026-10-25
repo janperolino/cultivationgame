@@ -50,10 +50,11 @@ import {
   theName,
   yearOf,
 } from './organizations.ts';
-import { receive, stonesOf, tierGrade, withStones } from './purse.ts';
+import { tierGrade } from './purse.ts';
 import { addStanding } from './resolver/opinion.ts';
 import type { World } from './resolver/world.ts';
-import { addEvent, realmOf, withPlayer, type Cultivator, type GameState } from './state.ts';
+import { addEvent, realmOf, type Cultivator, type GameState } from './state.ts';
+import { cultivator, receiveInto, withCultivator } from './who.ts';
 
 export type Held = Cultivator['jobs'][number];
 
@@ -79,11 +80,11 @@ export function jobsAt(place: string, map?: RegionMap | null): Job[] {
 }
 
 /**
- * Whether you stand at a job's place to keep its shift: inside it, or at it with no course set.
- * Before the map has opened, you are at home.
+ * Whether a full cultivator stands at a job's place to keep its shift: inside it, or at it with no
+ * course set. Before the map has opened, you are at home. A cast member keeps no shift (N1).
  */
-export function atPost(s: GameState, j: Job): boolean {
-  if (!j.place) return false;
+export function atPost(s: GameState, who: string, j: Job): boolean {
+  if (!j.place || !cultivator(s, who)) return false;
   const life = s.map;
   if (!life) return true;
   if (life.course) return false;
@@ -98,11 +99,15 @@ export function atPost(s: GameState, j: Job): boolean {
  * seat or a branch hall, at a post of its they hold, or, for a dynasty, at any town or garrison of
  * its kingdom with no course set.
  */
-export function atHome(s: GameState, power: string): boolean {
-  if (atSeat(s, power)) return true;
+export function atHome(s: GameState, who: string, power: string): boolean {
+  if (atSeat(s, who, power)) return true;
+  // A cast member is home where they live (`atSeat`, N1); the rest reads where you stand.
+  const c = cultivator(s, who);
+  if (!c) return false;
   const house = houseOf(power);
-  const posts = s.player.jobs.filter((h) => hasJob(h.id) && !isHire(job(h.id)));
-  if (posts.some((h) => houseOf(job(h.id).power!) === house && atPost(s, job(h.id)))) return true;
+  const posts = c.jobs.filter((h) => hasJob(h.id) && !isHire(job(h.id)));
+  if (posts.some((h) => houseOf(job(h.id).power!) === house && atPost(s, who, job(h.id))))
+    return true;
   if (organization(house).type !== 'dynasty') return false;
   const life = s.map;
   const map = mapOf(s);
@@ -116,10 +121,14 @@ export function atHome(s: GameState, power: string): boolean {
   );
 }
 
-/** The jobs whose shift you can keep where you stand: their hours are Duty on the wheel today. */
-export function onShift(s: GameState): Cultivator {
-  const c = s.player;
-  const jobs = c.jobs.filter((h) => hasJob(h.id) && atPost(s, job(h.id)));
+/**
+ * A full cultivator with only the jobs whose shift they can keep where they stand: their hours are
+ * Duty on the wheel today.
+ */
+export function onShift(s: GameState, who: string): Cultivator | null {
+  const c = cultivator(s, who);
+  if (!c) return null;
+  const jobs = c.jobs.filter((h) => hasJob(h.id) && atPost(s, who, job(h.id)));
   return jobs.length === c.jobs.length ? c : { ...c, jobs };
 }
 
@@ -142,18 +151,24 @@ export function jobAsks(j: Job): string | null {
  * Whether you may take a job: a hire's realm, a post's seat, no shift on top of another's, not
  * held already.
  */
-export function canTakeJob(s: GameState, id: string): { ok: true } | { ok: false; reason: string } {
+export function canTakeJob(
+  s: GameState,
+  who: string,
+  id: string,
+): { ok: true } | { ok: false; reason: string } {
   if (!hasJob(id)) return { ok: false, reason: 'There is no such work.' };
   const j = job(id);
-  const c = s.player;
+  // A shift goes on a wheel, which only a full cultivator keeps (N1).
+  const c = cultivator(s, who);
+  if (!c) return { ok: false, reason: 'Only a cultivator with a wheel keeps a shift.' };
   if (heldJob(c, id)) return { ok: false, reason: 'You hold it already.' };
-  if (j.from && rank(realmStageOf(s)) < rank(j.from)) {
+  if (j.from && rank(realmStageOf(s, who)) < rank(j.from)) {
     return { ok: false, reason: `It is given ${jobAsks(j)}.` };
   }
   if (!isHire(j)) {
     const m = membership(s.world, c.id, houseOf(j.power!));
     if (!m || m.guest) return { ok: false, reason: `Only ${theName(j.power!)}'s own hold it.` };
-    const seat = seatOf(s.world, c.id, m.power, realmStageOf(s))!;
+    const seat = seatOf(s.world, c.id, m.power, realmStageOf(s, who))!;
     if (j.seat && seatRank(seat) < seatRank(j.seat)) {
       const t = organization(m.power).seats[j.seat];
       return { ok: false, reason: `It is held from the ${t.name}'s seat.` };
@@ -167,9 +182,10 @@ export function canTakeJob(s: GameState, id: string): { ok: true } | { ok: false
 }
 
 /** Takes a job: its shift goes on your wheel as Duty from today. */
-export function takeJob(s: GameState, id: string): JobCheck {
-  const can = canTakeJob(s, id);
+export function takeJob(s: GameState, who: string, id: string): JobCheck {
+  const can = canTakeJob(s, who, id);
   if (!can.ok) return can;
+  const c = cultivator(s, who)!;
   const day = s.calendar.day;
   const held: Held = {
     id,
@@ -179,7 +195,7 @@ export function takeJob(s: GameState, id: string): JobCheck {
     missed: 0,
     owed: { stones: 0, points: 0 },
   };
-  const st = withPlayer(s, { ...s.player, jobs: [...s.player.jobs, held] });
+  const st = withCultivator(s, { ...c, jobs: [...c.jobs, held] });
   return { ok: true, state: addEvent(st, 'job', { job: id, what: 'taken' }) };
 }
 
@@ -193,36 +209,44 @@ function leavingWords(j: Job): string {
  * Leaves a job by its giver's way out: one held freely just goes; a soldier's post goes only with
  * the power, as leaving it by its rule (a dynasty's deserter before ten years' service, a betrayal).
  */
-export function quitJob(s: GameState, id: string): JobCheck {
-  const held = heldJob(s.player, id);
-  if (!held) return { ok: false, reason: 'You hold no such work.' };
+export function quitJob(s: GameState, who: string, id: string): JobCheck {
+  const c = cultivator(s, who);
+  const held = c ? heldJob(c, id) : undefined;
+  if (!c || !held) return { ok: false, reason: 'You hold no such work.' };
   const j = job(id);
-  let st: GameState = withPlayer(s, {
-    ...s.player,
-    jobs: s.player.jobs.filter((h) => h.id !== id),
-  });
-  if (j.leave === 'power' && j.power) st = partWays(st, j.power);
+  let st: GameState = withCultivator(s, { ...c, jobs: c.jobs.filter((h) => h.id !== id) });
+  if (j.leave === 'power' && j.power) st = partWays(st, who, j.power);
   return { ok: true, state: addEvent(st, 'job', { job: id, what: 'left' }) };
 }
 
 /**
- * The player leaves a power by its rule, as asking to be released or quitting a soldier's post
- * does: its copies handed back to its pavilion (the novels' sect takes its book back), the
- * membership and its balance gone, its posts dropped, and the chronicle's line.
+ * Someone leaves a power by its rule, as asking to be released or quitting a soldier's post does:
+ * its copies handed back to its pavilion (the novels' sect takes its book back), the membership
+ * and its balance gone, its posts dropped, and, for you, the chronicle's line.
  */
-export function partWays(s: GameState, power: string, o: { to?: string } = {}): GameState {
+export function partWays(
+  s: GameState,
+  who: string,
+  power: string,
+  o: { to?: string } = {},
+): GameState {
   const house = houseOf(power);
-  const knows = guardedKnown(s.player, house);
-  const copies = { ...s.player.copies };
-  for (const thing of Object.keys(copies)) if (guardedBy(thing) === house) delete copies[thing];
-  let st = withPlayer(s, { ...s.player, copies });
-  const left = leavePower(st.world, s.player.id, house, s.calendar.day, {
-    you: true,
+  const c = cultivator(s, who);
+  const knows = guardedKnown(c, house);
+  let st = s;
+  if (c) {
+    const copies = { ...c.copies };
+    for (const thing of Object.keys(copies)) if (guardedBy(thing) === house) delete copies[thing];
+    st = withCultivator(s, { ...c, copies });
+  }
+  const left = leavePower(st.world, who, house, s.calendar.day, {
+    you: !!c,
     knows,
     ...(o.to ? { to: o.to } : {}),
   });
   if (!left.parting) return s;
-  st = dropLost({ ...st, world: left.world });
+  st = dropLost({ ...st, world: left.world }, who);
+  if (!c) return st;
   return addEvent(st, 'power', {
     power: house,
     what: left.parting.kind === 'clean' ? 'left' : 'betrayed',
@@ -230,14 +254,15 @@ export function partWays(s: GameState, power: string, o: { to?: string } = {}): 
 }
 
 /** A post goes with its power: one whose membership is gone (struck off, left) is dropped. */
-function dropLost(s: GameState): GameState {
-  const c = s.player;
+function dropLost(s: GameState, who: string): GameState {
+  const c = cultivator(s, who);
+  if (!c) return s;
   const jobs = c.jobs.filter((h) => {
     if (!hasJob(h.id)) return false;
     const j = job(h.id);
     return isHire(j) || !!membership(s.world, c.id, houseOf(j.power!));
   });
-  return jobs.length === c.jobs.length ? s : withPlayer(s, { ...c, jobs });
+  return jobs.length === c.jobs.length ? s : withCultivator(s, { ...c, jobs });
 }
 
 /** Rows of a kind about you, still unfaded: what a stacking row is capped by. */
@@ -274,10 +299,10 @@ function shiftShare(j: Job, from: number, to: number, worked: readonly number[] 
 }
 
 /** Whether a house's leave covers you this year: days away still within the seat's allowance. */
-function onLeave(s: GameState, power: string): boolean {
-  const m = membership(s.world, s.player.id, houseOf(power));
+function onLeave(s: GameState, who: string, power: string): boolean {
+  const m = membership(s.world, who, houseOf(power));
   if (!m || m.guest) return false;
-  const allowed = leaveOf(m.power, seatOf(s.world, s.player.id, m.power, realmStageOf(s))!);
+  const allowed = leaveOf(m.power, seatOf(s.world, who, m.power, realmStageOf(s, who))!);
   if (allowed === Infinity) return false;
   const taken = m.leave?.year === yearOf(s.calendar.day) ? m.leave.days : 0;
   return taken < allowed;
@@ -287,12 +312,16 @@ function onLeave(s: GameState, power: string): boolean {
  * The month turns for a job: its tally becomes last month's, and a month with half its shifts
  * kept is remembered by its power ("Keeps our watch", +2, up to +10).
  */
-function turnMonth(s: GameState, held: Held, month: number): { state: GameState; held: Held } {
+function turnMonth(
+  s: GameState,
+  who: string,
+  held: Held,
+  month: number,
+): { state: GameState; held: Held } {
   if (held.month >= month) return { state: s, held };
   const j = job(held.id);
   let st = s;
   const day = s.calendar.day;
-  const who = s.player.id;
   if (j.power && held.kept >= KEPT_MONTH.share * DAYS_PER_MONTH) {
     const power = houseOf(j.power);
     if (liveRows(st.world, power, who, KEPT_MONTH.row, day) < KEPT_MONTH.most)
@@ -313,27 +342,34 @@ function turnMonth(s: GameState, held: Held, month: number): { state: GameState;
  * the place's vein's grade as whole stones come due; points go to the power's balance. A stretch
  * that began on the road (`walked`) kept no shift, though it ends at the post.
  */
-export function jobsDay(s: GameState, from: number, to: number, walked = false): GameState {
-  let st = dropLost(s);
-  if (!st.player.jobs.length) return st;
-  const who = st.player.id;
+export function jobsDay(
+  s: GameState,
+  who: string,
+  from: number,
+  to: number,
+  walked = false,
+): GameState {
+  let st = dropLost(s, who);
+  const c0 = cultivator(st, who);
+  if (!c0?.jobs.length) return st;
   const month = monthIndex(to);
-  const realm = realmOf(st.player);
+  const realm = realmOf(c0);
   const kept: Held[] = [];
-  for (const h0 of st.player.jobs) {
+  for (const h0 of c0.jobs) {
     if (!hasJob(h0.id)) continue;
     const j = job(h0.id);
-    const turned = turnMonth(st, h0, month);
+    const turned = turnMonth(st, who, h0, month);
     st = turned.state;
     let held = turned.held;
     // A dangerous post's raid, met once for each month its shifts were kept.
     if (j.danger && held.month !== h0.month && h0.kept >= KEPT_MONTH.share * DAYS_PER_MONTH)
-      st = raid(st, j, h0.month);
+      st = raid(st, who, j, h0.month);
     // Through the tutorial layers you are at drill: a shift is worked, or missed, only on the
     // hours you put Duty on yourself.
-    const share = shiftShare(j, from, to, drilling(st.player) ? dutyHours(st.player, j) : j.shift);
+    const c = cultivator(st, who)!;
+    const share = shiftShare(j, from, to, drilling(c) ? dutyHours(c, j) : j.shift);
     if (share > 0) {
-      if (!walked && atPost(st, j)) {
+      if (!walked && atPost(st, who, j)) {
         const pay = jobPay(j, realm);
         // Pay comes due a whole stone and a whole point at a time; the rest waits on the next shift.
         const owed = {
@@ -342,10 +378,7 @@ export function jobsDay(s: GameState, from: number, to: number, walked = false):
         };
         const stones = Math.floor(owed.stones + 1e-9);
         const points = Math.floor(owed.points + 1e-9);
-        if (stones > 0) {
-          const purse = receive(stonesOf(st.player), stones, tierGrade(veinAt(j.place ?? '')));
-          st = withPlayer(st, withStones(st.player, purse));
-        }
+        if (stones > 0) st = receiveInto(st, who, stones, tierGrade(veinAt(j.place ?? '')));
         if (points > 0 && j.power)
           st = { ...st, world: addBalance(st.world, who, houseOf(j.power), points) };
         held = {
@@ -357,7 +390,7 @@ export function jobsDay(s: GameState, from: number, to: number, walked = false):
             points: Math.max(0, owed.points - points),
           },
         };
-      } else if (!(j.power && !isHire(j) && onLeave(st, j.power))) {
+      } else if (!(j.power && !isHire(j) && onLeave(st, who, j.power))) {
         const before = held.missed;
         held = { ...held, missed: before + share };
         const days = Math.floor(held.missed + 1e-9) - Math.floor(before + 1e-9);
@@ -380,19 +413,19 @@ export function jobsDay(s: GameState, from: number, to: number, walked = false):
     }
     kept.push(held);
   }
-  return withPlayer(st, { ...st.player, jobs: kept });
+  return withCultivator(st, { ...cultivator(st, who)!, jobs: kept });
 }
 
 /**
  * A dangerous post's raid (the organizations checkpoint): its template met at the post, at the
  * strongest band of the post's seat, settled by your stance as a road card is or waiting for you.
  */
-function raid(s: GameState, j: Job, month: number): GameState {
+function raid(s: GameState, who: string, j: Job, month: number): GameState {
   const life = s.map;
   const map = mapOf(s);
   if (!life || !map || !j.danger || !j.power) return s;
   // The raid comes to the post: away from it at the month's turn, those on watch meet it.
-  if (!atPost(s, j)) return s;
+  if (!atPost(s, who, j)) return s;
   const id = `raid-${j.id}-${month}`;
   if (life.encounters.some((e) => e.id === id)) return s;
   const seat = seatRanges(houseOf(j.power))[j.seat ?? 'outer'].to;
@@ -413,10 +446,12 @@ function raid(s: GameState, j: Job, month: number): GameState {
   return contact({ ...s, map: { ...life, encounters: [...life.encounters, enc] } }, id);
 }
 
-/** Your jobs as the Routine and Character screens show them. */
-export function jobsView(s: GameState) {
-  const realm = realmOf(s.player);
-  return s.player.jobs
+/** A full cultivator's jobs as the Routine and Character screens show them. */
+export function jobsView(s: GameState, who: string) {
+  const c = cultivator(s, who);
+  if (!c) return [];
+  const realm = realmOf(c);
+  return c.jobs
     .filter((h) => hasJob(h.id))
     .map((h) => {
       const j = job(h.id);
@@ -438,8 +473,8 @@ export function jobsView(s: GameState) {
         perk: j.perk,
         kept: Math.floor(h.kept + 1e-9),
         missed: Math.floor(h.missed + 1e-9),
-        here: atPost(s, j),
-        drilling: drilling(s.player),
+        here: atPost(s, who, j),
+        drilling: drilling(c),
         leaving: leavingWords(j),
         hire: isHire(j),
       };
@@ -452,10 +487,12 @@ const round = (n: number) => Math.round(n * 100) / 100;
  * The post whose Duty hours are still to come today where you stand, or null: setting a course
  * now walks away from them, which the map asks about once a day (Jan's playtest after S1).
  */
-export function dutyAhead(s: GameState): Job | null {
+export function dutyAhead(s: GameState, who: string): Job | null {
+  const c = cultivator(s, who);
+  if (!c) return null;
   for (let h = hourOfDay(s.calendar.day); h < HOURS_PER_DAY; h++) {
-    const j = dutyAt(s.player, h);
-    if (j && atPost(s, j)) return j;
+    const j = dutyAt(c, h);
+    if (j && atPost(s, who, j)) return j;
   }
   return null;
 }

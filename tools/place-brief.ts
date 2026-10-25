@@ -279,7 +279,7 @@ function memberOf(base: GameState, power: string): GameState | null {
   for (const by of [undefined, 'birth'] as const) {
     const r = joinPower(s.world, s.player.id, power, s.calendar.day, {
       you: true,
-      realm: realmStageOf(s),
+      realm: realmStageOf(s, s.player.id),
       ...(by ? { by } : {}),
     });
     if (r.ok) return { ...s, world: r.world };

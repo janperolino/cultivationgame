@@ -194,7 +194,9 @@ function CraftRoom(p: RoomProps) {
   const lots = craftShelf(p.game, shopId, dress.kinds).slice(0, kind === 'talisman' ? 6 : 4);
   const worn =
     kind === 'refiner'
-      ? Object.keys(p.game.player.wear).filter((t) => repairCost(p.game, t) !== null).length
+      ? Object.keys(p.game.player.wear).filter(
+          (t) => repairCost(p.game, p.game.player.id, t) !== null,
+        ).length
       : 0;
   return (
     <div className="place-room-body is-craft">

@@ -69,8 +69,8 @@ describe('the Bag in squares', () => {
 
   it('refuses a buy that won’t fit, and a take-off with no room', () => {
     const s = gainItem(fresh(), BLADE, PACK_SQUARES).state;
-    const lot = shelf(s, 'mouth-stall').find((l) => !l.thing.includes(':'))!;
-    expect(buy(s, 'mouth-stall', lot.slot)).toMatchObject({
+    const lot = shelf(s, s.player.id, 'mouth-stall').find((l) => !l.thing.includes(':'))!;
+    expect(buy(s, s.player.id, 'mouth-stall', lot.slot)).toMatchObject({
       ok: false,
       reason: 'Your pack has no room for it.',
     });

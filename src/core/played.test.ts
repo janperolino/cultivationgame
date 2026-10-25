@@ -365,7 +365,7 @@ describe('the wheel’s Duty bug', () => {
 
   it('puts Duty on the shift’s hours at drill, worked and paid; past drill they are Duty, locked', () => {
     // The patrol taken at its Work door, the chain's step.
-    const took = takeJob(createLife(creation), 'wall-patrol');
+    const took = takeJob(createLife(creation), PLAYER_ID, 'wall-patrol');
     if (!took.ok) throw new Error(took.reason);
     const s = took.state;
     const shift = job('wall-patrol').shift;
@@ -390,12 +390,12 @@ describe('the wheel’s Duty bug', () => {
       map: at.map ? { ...at.map, inside: job('wall-patrol').place, course: null } : at.map,
     };
     const before = post.player.jobs[0]!.kept;
-    const paid = jobsDay(post, post.calendar.day, post.calendar.day + 1);
+    const paid = jobsDay(post, post.player.id, post.calendar.day, post.calendar.day + 1);
     expect(paid.player.jobs[0]!.kept).toBeGreaterThan(before);
     // Left at its default, at drill, the shift isn't worked.
     expect(
-      jobsDay(withPlayer(post, s.player), post.calendar.day, post.calendar.day + 1).player.jobs[0]!
-        .kept,
+      jobsDay(withPlayer(post, s.player), PLAYER_ID, post.calendar.day, post.calendar.day + 1)
+        .player.jobs[0]!.kept,
     ).toBe(before);
     // Past drill the shift's hours are Duty and locked.
     const posted = withPlayer(s, { ...s.player, qi: { ...s.player.qi, stage: 4 } });

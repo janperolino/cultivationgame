@@ -128,7 +128,7 @@ function swearOath(s: GameState, c: Creation): GameState {
   if (power) {
     const joined = joinPower(st.world, st.player.id, power, st.calendar.day, {
       you: true,
-      realm: realmStageOf(st),
+      realm: realmStageOf(st, st.player.id),
     });
     if (!joined.ok) return st;
     st = addEvent({ ...st, world: joined.world }, 'power', { power, what: 'joined' });

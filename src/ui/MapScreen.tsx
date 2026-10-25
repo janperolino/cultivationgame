@@ -385,7 +385,7 @@ function MapView({
   /** What an outsider can ask at a power's shut gate: to join by its way in, and to leave a gift. */
   const gateAsks = (power: string, goIn: () => void): MenuItem[] => {
     const items: MenuItem[] = [];
-    const entry = entryOf(game, power);
+    const entry = entryOf(game, game.player.id, power);
     if (entry)
       items.push({
         t: entry.title.name,
@@ -394,7 +394,7 @@ function MapView({
         run: () => {
           let joined = false;
           const why = act((s) => {
-            const r = askToJoin(s, power);
+            const r = askToJoin(s, s.player.id, power);
             if (!r.ok) return r;
             joined = r.joined;
             say(
@@ -420,15 +420,15 @@ function MapView({
             return r;
           }),
       });
-    const floor = giftFloor(game);
+    const floor = giftFloor(game, game.player.id);
     items.push({
       t: 'Offer a gift',
-      s: giftThisMonth(game, power)
+      s: giftThisMonth(game, game.player.id, power)
         ? `${floor} low; they have counted one this month`
         : `${floor} low, remembered as tribute`,
       run: () =>
         act((s) => {
-          const r = offerGift(s, power, { stones: floor });
+          const r = offerGift(s, s.player.id, power, { stones: floor });
           if (r.ok) say(r.counted ? 'The guards take it in; it is noted.' : 'They take it.');
           return r;
         }),

@@ -145,16 +145,16 @@ describe('the gate and the watch', () => {
 describe('inside the City', () => {
   it('buys, haggles and sells through the shop screen’s calls', () => {
     let s = enter(life(), CITY);
-    const lot = shelf(s, 'mouth-stall')[0]!;
-    const b = buy(s, 'mouth-stall', lot.slot);
+    const lot = shelf(s, s.player.id, 'mouth-stall')[0]!;
+    const b = buy(s, s.player.id, 'mouth-stall', lot.slot);
     if (!b.ok) throw new Error(b.reason);
     s = b.state;
-    expect(shelf(s, 'mouth-stall').some((l) => l.slot === lot.slot)).toBe(false);
-    const h = haggle(s, 'mouth-alchemy');
+    expect(shelf(s, s.player.id, 'mouth-stall').some((l) => l.slot === lot.slot)).toBe(false);
+    const h = haggle(s, s.player.id, 'mouth-alchemy');
     expect(h.ok).toBe(true);
     s = withPlayer(s, addItem(s.player, 'beast-core', 2));
     const before = s.player.stones;
-    const sold = sell(s, 'mouth-bounty', 'beast-core', 1);
+    const sold = sell(s, s.player.id, 'mouth-bounty', 'beast-core', 1);
     if (!sold.ok) throw new Error(sold.reason);
     expect(sold.state.player.stones).toBeGreaterThan(before);
   });

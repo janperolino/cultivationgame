@@ -692,7 +692,7 @@ function Web({
 
 /** The powers that know you, and your standing with each; heat's cap shows beside it. */
 function Powers({ game }: { game: GameState }) {
-  const yours = membershipsView(game);
+  const yours = membershipsView(game, game.player.id);
   const mine = new Set(yours.map((m) => m.power));
   const powers = powersView(game).filter((x) => !mine.has(x.power));
   if (!powers.length && !yours.length) return null;

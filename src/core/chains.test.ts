@@ -232,13 +232,13 @@ describe('the chain from testing day to the board', () => {
         expect(s.chronicle.some((e) => e.data.posting === pid)).toBe(true);
         // A first buy at a counter at home.
         const cheap = (id: string) =>
-          shelf(s, id).filter(
+          shelf(s, s.player.id, id).filter(
             (l) =>
               l.price * (l.standing ? 1 : l.n) <= s.player.stones / 2 && !l.thing.includes(':'),
           );
         const shopId = shopsAt(home.id).find((id) => cheap(id).length > 0);
         expect(shopId, key).toBeDefined();
-        const bought = buy(s, shopId!, cheap(shopId!)[0]!.slot, 1);
+        const bought = buy(s, s.player.id, shopId!, cheap(shopId!)[0]!.slot, 1);
         expect(bought.ok ? 'ok' : bought.reason, key).toBe('ok');
         if (bought.ok) s = noteQuests(bought.state);
         expect(questState(s, ids[2]!)!.step).toBe(quest(ids[2]!).steps.length);
@@ -315,7 +315,7 @@ describe('your place and your own way', () => {
     s = withPlayer(s, { ...s.player, qi: { ...s.player.qi, stage: 4 } });
     s = atHome(ok(takeQuest(s, id)));
     expect(questState(s, id)!.step).toBe(0);
-    s = noteQuests(ok(takeJob(s, 'school-watch')));
+    s = noteQuests(ok(takeJob(s, s.player.id, 'school-watch')));
     expect(questState(s, id)!.step).toBe(1);
     s = { ...s, map: { ...s.map!, inside: null } };
     s = until(s, (x) => stepsDone(questState(x, 'chain-cadet-school-place')!), 60);
@@ -333,7 +333,7 @@ describe('your place and your own way', () => {
     s = noteQuests({ ...s, map: { ...s.map!, at: [hut.x, hut.y] } });
     expect(questState(s, id)!.step).toBe(1);
     s = atHome(s);
-    s = noteQuests(ok(takeJob(s, 'dock-carrying')));
+    s = noteQuests(ok(takeJob(s, s.player.id, 'dock-carrying')));
     expect(questState(s, id)!.step).toBe(2);
     s = { ...s, map: { ...s.map!, inside: null } };
     s = until(s, (x) => questState(x, id)!.step >= 3, 60);

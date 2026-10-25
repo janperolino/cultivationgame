@@ -95,7 +95,8 @@ import { craftLevel, markedHeld, markLift, soldMarked, unmark } from './craftRen
 import { ownGood, styleLines, tradesAt } from './styles.ts';
 import { recipeFor, type CraftId } from '../content/crafts.ts';
 import { hashSeed, Rng } from './rng.ts';
-import { addEvent, addItem, itemCount, withPlayer, type GameState } from './state.ts';
+import { addEvent, addItem, itemCount, type GameState } from './state.ts';
+import { cultivator, giveTo, payFrom, withCultivator } from './who.ts';
 
 /** A staple: the `trade` tag (core/markets.ts). */
 export { isStaple } from './markets.ts';
@@ -602,14 +603,14 @@ function withShopMonth(s: GameState, shopId: string, sm: ShopMonth): GameState {
  * The lots still on the shelf today, priced by its market's supply of each: a standing line less
  * what you bought of it this month, a display lot until it is bought.
  */
-export function shelf(s: GameState, shopId: string): StockLot[] {
+export function shelf(s: GameState, who: string, shopId: string): StockLot[] {
   const sm = shopMonth(s.world, shopId, s.calendar.day);
   const m = marketOfShop(shopId);
   const day = s.calendar.day;
   // A sect's hall leaves its own chapters to the pavilion, and its open counter shows an outsider
   // neither the members' lines nor a copy (O2).
   const sh = shopById(shopId);
-  const counter = hallTerms(s, sh)?.as === 'counter';
+  const counter = hallTerms(s, who, sh)?.as === 'counter';
   return stockOf(shopId, sm.month, s.world)
     .filter((l) => !pavilionKeeps(sh, l.thing) && (!counter || counterSells(sh, l.thing)))
     .filter((l) => l.standing || !sm.bought.includes(l.slot))
@@ -644,9 +645,15 @@ function buyCount(lot: StockLot, count?: number): number {
  * what the market is short of at rest, so a wanted thing bought cheap never sells back at the 80% it
  * fetches.
  */
-export function priceToYou(s: GameState, shopId: string, lot: StockLot, count?: number): number {
+export function priceToYou(
+  s: GameState,
+  who: string,
+  shopId: string,
+  lot: StockLot,
+  count?: number,
+): number {
   const sh = shopById(shopId);
-  const terms = hallTerms(s, sh);
+  const terms = hallTerms(s, who, sh);
   if (terms?.as === 'member') return hallPoints(sh, lot) * buyCount(lot, count);
   const sm = shopMonth(s.world, shopId, s.calendar.day);
   const m = marketOfShop(shopId);
@@ -670,8 +677,8 @@ export type ShopResult =
   { ok: true; state: GameState } | { ok: false; reason: string; state?: GameState };
 
 /** Whether the shop serves you: a sect's hall its own, and from friendly an outsider at its counter. */
-function serves(s: GameState, sh: Shop): string | null {
-  const terms = hallTerms(s, sh);
+function serves(s: GameState, who: string, sh: Shop): string | null {
+  const terms = hallTerms(s, who, sh);
   return terms?.as === 'shut' ? terms.why : null;
 }
 
@@ -679,43 +686,57 @@ function serves(s: GameState, sh: Shop): string | null {
  * Buys off the shelf: a display lot whole, or `count` of a standing line (E5: one, ten or a Bag
  * square). What you buy lowers its market's supply, so every shop's price there climbs.
  */
-export function buy(s: GameState, shopId: string, slot: number, count?: number): ShopResult {
+export function buy(
+  s: GameState,
+  who: string,
+  shopId: string,
+  slot: number,
+  count?: number,
+): ShopResult {
   const sh = shopById(shopId);
-  const refused = serves(s, sh);
+  const refused = serves(s, who, sh);
   if (refused) return { ok: false, reason: refused };
-  const lot = shelf(s, shopId).find((l) => l.slot === slot);
+  const lot = shelf(s, who, shopId).find((l) => l.slot === slot);
   if (!lot) return { ok: false, reason: 'That lot is gone.' };
   const k = buyCount(lot, count);
+  const c = cultivator(s, who);
+  // A cast member buys what their purse saves for and holds it (N1): never a copy, never in taels.
+  if (!c && hasCopy(lot.thing))
+    return { ok: false, reason: 'Only a cultivator who reads buys a copy.' };
+  if (!c && SHOP_KIND_INFO[sh.kind].money === 'silver')
+    return { ok: false, reason: 'A mortal shop deals in taels.' };
   // The Bag holds no more than its squares (Sean's playtest): a buy that won't fit is refused.
-  if (!hasCopy(lot.thing)) {
-    const room = roomFor(s.player, lot.thing);
+  if (c && !hasCopy(lot.thing)) {
+    const room = roomFor(c, lot.thing);
     if (room < k)
       return {
         ok: false,
         reason: room > 0 ? `Your pack holds only ${room} more.` : 'Your pack has no room for it.',
       };
   }
-  const price = priceToYou(s, shopId, lot, k);
+  const price = priceToYou(s, who, shopId, lot, k);
   let next: GameState;
-  if (hallTerms(s, sh)?.as === 'member') {
+  if (c && hallTerms(s, who, sh)?.as === 'member') {
     // A member pays in the power's currency, from their balance (O2).
     const house = houseOf(sh.power!);
-    const m = membership(s.world, s.player.id, house)!;
+    const m = membership(s.world, who, house)!;
     if (m.balance + 1e-9 < price) return { ok: false, reason: 'Your balance won’t cover it.' };
-    next = { ...s, world: addBalance(s.world, s.player.id, house, -price) };
-  } else if (SHOP_KIND_INFO[sh.kind].money === 'silver') {
-    const paid = paySilver(s.player, price);
+    next = { ...s, world: addBalance(s.world, who, house, -price) };
+  } else if (c && SHOP_KIND_INFO[sh.kind].money === 'silver') {
+    const paid = paySilver(c, price);
     if (!paid) return { ok: false, reason: `It costs ${price} taels.` };
-    next = withPlayer(s, paid);
+    next = withCultivator(s, paid);
   } else {
-    const after = pay(stonesOf(s.player), price);
-    if (!after) return { ok: false, reason: 'You can’t pay that.' };
-    next = withPlayer(s, withStones(s.player, after));
+    // A cast member pays from their purse, at their own hall a point a low (Jan's call in N1's
+    // talk: the purse is what saves for the pill).
+    const paid = payFrom(s, who, price);
+    if (!paid) return { ok: false, reason: 'You can’t pay that.' };
+    next = paid;
   }
   if (hasCopy(lot.thing)) {
     for (let i = 0; i < k; i++) next = gainCopy(next, lot.thing, 'buys');
   } else {
-    next = withPlayer(next, addItem(next.player, lot.thing, k));
+    next = giveTo(next, who, lot.thing, k);
   }
   // Each piece bought lowers its market's supply.
   const m = marketOfShop(shopId);
@@ -728,7 +749,7 @@ export function buy(s: GameState, shopId: string, slot: number, count?: number):
       : sm.took;
   next = withShopMonth(next, shopId, { ...sm, bought, took });
   // A quest's step that waits on a buy hears of it (the origin's board quest).
-  if (waitsOn(next, 'bought')) {
+  if (c && waitsOn(next, 'bought')) {
     const what = hasCopy(lot.thing) ? copyTitle(lot.thing) : item(lot.thing).name;
     next = addEvent(next, 'bought', {
       what,
@@ -751,19 +772,17 @@ function wareOf(thing: string): Ware | null {
  * The rate a shop buys at from you: 40%, 60% once you are friendly with its keeper or its power
  * favors you, a bounty office's posted 50%.
  */
-export function buyRate(s: GameState, sh: Shop): number {
+export function buyRate(s: GameState, who: string, sh: Shop): number {
   const info = SHOP_KIND_INFO[sh.kind];
   if (info.posted) return info.buyRate;
   const favored =
     sh.power !== null &&
-    ['favored', 'honored'].includes(
-      standingOf(s.world, sh.power, s.player.id, s.calendar.day).word,
-    );
+    ['favored', 'honored'].includes(standingOf(s.world, sh.power, who, s.calendar.day).word);
   // The keeper is someone the world keeps from your first haggle on; a stranger has no opinion.
   const keeper = keeperId(sh.id);
   const friendly =
     !!s.world.kept[keeper] &&
-    ['friendly', 'trusting'].includes(opinion(s.world, keeper, s.player.id, s.calendar.day).word);
+    ['friendly', 'trusting'].includes(opinion(s.world, keeper, who, s.calendar.day).word);
   return Math.max(info.buyRate, favored || friendly ? FRIENDLY_BUY_RATE : info.buyRate);
 }
 
@@ -773,6 +792,7 @@ export function buyRate(s: GameState, sh: Shop): number {
  */
 export function offerFor(
   s: GameState,
+  who: string,
   shopId: string,
   thing: string,
   opts: { plain?: boolean } = {},
@@ -805,9 +825,10 @@ export function offerFor(
   const needs = !!m && sh.kind !== 'black-market' && wanted(s.world, m, thing, day);
   // Your own make sells at the maker's rate at an honest shop (the crafts checkpoint); `plain`
   // asks the rate anyone gets, so a sale pays the maker's only on its marked pieces.
+  const c = cultivator(s, who);
   const maker =
-    !opts.plain && !info.posted && sh.kind !== 'black-market' && markedHeld(s.player, thing) > 0;
-  const own = maker ? Math.max(MAKER_BUY_RATE, buyRate(s, sh)) : buyRate(s, sh);
+    !opts.plain && !info.posted && sh.kind !== 'black-market' && !!c && markedHeld(c, thing) > 0;
+  const own = maker ? Math.max(MAKER_BUY_RATE, buyRate(s, who, sh)) : buyRate(s, who, sh);
   const rate = needs ? Math.max(NEED_RATE, own) : own;
   const posted = mortalGood ? item(thing).taels! : priceOf(thing);
   const price = posted * (m ? marketFactor(s.world, m, thing, day) : 1);
@@ -861,29 +882,31 @@ function cheapestAsk(
  * refused, and that power's heat rises (and its standing falls, for a method). A copy a market
  * buys it copies (core/markets.ts `spreads`), so it is paid its scarce price once.
  */
-export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopResult {
+export function sell(s: GameState, who: string, shopId: string, thing: string, n = 1): ShopResult {
+  const c = cultivator(s, who);
+  if (!c) return { ok: false, reason: 'Only a cultivator with a Bag sells.' };
   const sh = shopById(shopId);
   const info = SHOP_KIND_INFO[sh.kind];
   const day = s.calendar.day;
   const guard = guardedBy(thing);
   // A clean parting, a fine or restitution swore never to sell its methods (O5).
-  const sworn = oathRefusal(s.world, s.player.id, thing, day);
+  const sworn = oathRefusal(s.world, who, thing, day);
   if (sworn) return { ok: false, reason: sworn };
-  if (guard && guard === sh.power && info.recognizes && !isMember(s.world, s.player.id, guard)) {
+  if (guard && guard === sh.power && info.recognizes && !isMember(s.world, who, guard)) {
     let world = addHeat(s.world, guard, 2, day);
-    world = addStanding(world, { power: guard, about: s.player.id, row: 'sold-our-method' }, day);
+    world = addStanding(world, { power: guard, about: who, row: 'sold-our-method' }, day);
     return {
       ok: false,
       reason: 'The keeper knows that method for the hall’s own.',
       state: { ...s, world },
     };
   }
-  const refused = serves(s, sh);
+  const refused = serves(s, who, sh);
   if (refused) return { ok: false, reason: refused };
-  const held = hasCopy(thing) ? (s.player.copies[thing] ?? 0) : itemCount(s.player, thing);
+  const held = hasCopy(thing) ? (c.copies[thing] ?? 0) : itemCount(c, thing);
   if (!Number.isInteger(n) || n <= 0) return { ok: false, reason: 'Name how many.' };
   if (held < n) return { ok: false, reason: 'You don’t have that many.' };
-  const offer = offerFor(s, shopId, thing, { plain: true });
+  const offer = offerFor(s, who, shopId, thing, { plain: true });
   if (!offer.ok) return offer;
   // What its power handed you, its own hall won't buy back (the checkpoint's fix).
   const gift =
@@ -902,27 +925,27 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
   let total = 0;
   for (let left = n; left > 0;) {
     const k = Math.min(size, left);
-    const o = left === n ? offer : offerFor({ ...s, world }, shopId, thing, { plain: true });
+    const o = left === n ? offer : offerFor({ ...s, world }, who, shopId, thing, { plain: true });
     if (!o.ok) return o;
     total += o.each * k;
     if (m) world = moveSupply(world, m, thing, k, day);
     left -= k;
   }
   // Your mark (K6): what you made sells by your name in its craft where you are known there.
-  const mark = markOn(s, shopId, thing, n);
+  const mark = markOn(s, who, shopId, thing, n);
   // The marked pieces at the maker's rate over the plain one, then the mark's lift on their worth.
   total += Math.max(0, mark.value - offer.each * mark.n) + mark.value * mark.lift;
   total = Math.round(total * 100) / 100;
   // A harsh power takes its tithe of what its lower seats bring in (O2): a bounty, loot at its hall.
-  const kept = Math.round(total * (1 - titheFor(s, sh)) * 100) / 100;
+  const kept = Math.round(total * (1 - titheFor(s, who, sh)) * 100) / 100;
   const sm = shopMonth(s.world, shopId, day);
   if (sm.paid + total > shopPurse(s.world, sh, day))
     return { ok: false, reason: 'The shop hasn’t the money this month.' };
   // Paid as the shop counts it: a mortal shop in taels, any other in its vein's grade at most.
   let player =
     info.money === 'silver'
-      ? { ...s.player, silver: s.player.silver + kept }
-      : withStones(s.player, receive(stonesOf(s.player), kept, tierGrade(shopVein(sh))));
+      ? { ...c, silver: c.silver + kept }
+      : withStones(c, receive(stonesOf(c), kept, tierGrade(shopVein(sh))));
   if (hasCopy(thing)) player = { ...player, copies: { ...player.copies, [thing]: held - n } };
   else player = addItem(player, thing, -n);
   if (mark.n > 0 && mark.craft) {
@@ -931,16 +954,16 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
   }
   if (m && spreads(thing, sh.kind === 'black-market')) world = copyInto(world, m, thing, day);
   // A power's own sold to a black market: it learns that it leaked, never who (O5).
-  if (guard && sh.kind === 'black-market') world = leakSold(world, s.player.id, thing, sh.at, day);
+  if (guard && sh.kind === 'black-market') world = leakSold(world, who, thing, sh.at, day);
   // A power's own good sold where its people trade: they know their own pill (K6).
   const own = ownGood(thing);
   let marked = false;
   if (own && m && tradesAt(own.power).has(m.id)) {
-    const r = ownGoodSold(world, s.player.id, own, sh.at, day);
+    const r = ownGoodSold(world, who, own, sh.at, day);
     world = r.world;
     marked = r.marked;
   }
-  let state = withShopMonth(withPlayer({ ...s, world }, player), shopId, {
+  let state = withShopMonth(withCultivator({ ...s, world }, player), shopId, {
     ...sm,
     paid: sm.paid + total,
   });
@@ -954,18 +977,21 @@ export function sell(s: GameState, shopId: string, thing: string, n = 1): ShopRe
  */
 export function markOn(
   s: GameState,
+  who: string,
   shopId: string,
   thing: string,
   n: number,
 ): { n: number; craft: CraftId | null; value: number; lift: number } {
+  const c = cultivator(s, who);
+  if (!c) return { n: 0, craft: null, value: 0, lift: 0 };
   const none = { n: 0, craft: null, value: 0, lift: 0 };
   if (hasCopy(thing) || !hasItem(thing)) return none;
   const r = recipeFor(baseOf(thing));
-  const k = Math.min(n, markedHeld(s.player, thing));
+  const k = Math.min(n, markedHeld(c, thing));
   if (!r || k <= 0) return none;
-  const offer = offerFor(s, shopId, thing);
+  const offer = offerFor(s, who, shopId, thing);
   if (!offer.ok) return none;
-  const level = craftLevel(s.player, shopById(shopId).region, r.craft, s.calendar.day);
+  const level = craftLevel(c, shopById(shopId).region, r.craft, s.calendar.day);
   return { n: k, craft: r.craft, value: offer.each * k, lift: markLift(level) };
 }
 
@@ -997,7 +1023,9 @@ export function withKeeper(w: World, sh: Shop): World {
  * takes 20% off everything you buy today and a close one 10%; falling short wins nothing, and the
  * keeper remembers being pressed. A bounty office posts its rates.
  */
-export function haggle(s: GameState, shopId: string): ShopResult & { off?: number } {
+export function haggle(s: GameState, who: string, shopId: string): ShopResult & { off?: number } {
+  const c = cultivator(s, who);
+  if (!c) return { ok: false, reason: 'Only a cultivator at the counter haggles.' };
   const sh = shopById(shopId);
   if (SHOP_KIND_INFO[sh.kind].posted) return { ok: false, reason: 'The rates are posted.' };
   const day = Math.floor(s.calendar.day);
@@ -1020,7 +1048,7 @@ export function haggle(s: GameState, shopId: string): ShopResult & { off?: numbe
       world,
       {
         holder: keeper.id,
-        about: s.player.id,
+        about: who,
         row: 'bad-turn',
         value: -5,
         note: 'Haggled hard',
@@ -1038,7 +1066,9 @@ export function haggle(s: GameState, shopId: string): ShopResult & { off?: numbe
  * damaged piece back to its rarity at half the price between the two, and a cracked tool at a
  * tenth of its worth (K1). Null when nothing needs it.
  */
-export function repairCost(s: GameState, thing: string): number | null {
+export function repairCost(s: GameState, who: string, thing: string): number | null {
+  const c = cultivator(s, who);
+  if (!c) return null;
   if (!hasItem(thing)) return null;
   const it = item(thing);
   if (it.cracked)
@@ -1048,19 +1078,21 @@ export function repairCost(s: GameState, thing: string): number | null {
     const mended = variantId(thing.split('~')[0]!, up);
     return Math.round((priceOf(mended) - priceOf(thing)) * DAMAGE_REPAIR_SHARE * 10) / 10;
   }
-  const wear = s.player.wear[thing] ?? 0;
+  const wear = c.wear[thing] ?? 0;
   return wear > 0 ? Math.round(priceOf(thing) * REPAIR_SHARE * wear * 10) / 10 : null;
 }
 
 /** A refiner mends a piece you hold or wear: the refining action you'd do at your own forge (K4). */
-export function repair(s: GameState, shopId: string, thing: string): ShopResult {
+export function repair(s: GameState, who: string, shopId: string, thing: string): ShopResult {
+  const c = cultivator(s, who);
+  if (!c) return { ok: false, reason: 'Only a cultivator who wears gear has it mended.' };
   const sh = shopById(shopId);
   if (!SHOP_KIND_INFO[sh.kind].repairs) return { ok: false, reason: 'Only a refiner mends gear.' };
-  if (itemCount(s.player, thing) <= 0 && !wornIds(s.player).includes(thing))
+  if (itemCount(c, thing) <= 0 && !wornIds(c).includes(thing))
     return { ok: false, reason: 'You don’t have that piece.' };
-  const cost = repairCost(s, thing);
+  const cost = repairCost(s, who, thing);
   if (cost === null) return { ok: false, reason: 'It needs no mending.' };
-  const after = pay(stonesOf(s.player), cost);
+  const after = pay(stonesOf(c), cost);
   if (!after) return { ok: false, reason: 'You can’t pay that.' };
-  return { ok: true, state: withPlayer(s, mended(withStones(s.player, after), thing)) };
+  return { ok: true, state: withCultivator(s, mended(withStones(c, after), thing)) };
 }

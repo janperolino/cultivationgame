@@ -456,7 +456,7 @@ export const COMMANDS: Record<string, Command> = {
       const s = needGame(store);
       const you = s.player.id;
       if (!id) {
-        const rows = membershipsView(s);
+        const rows = membershipsView(s, s.player.id);
         if (!rows.length) return 'You belong to no power.';
         return rows.map(
           (m) =>
@@ -467,7 +467,11 @@ export const COMMANDS: Record<string, Command> = {
       const day = s.calendar.day;
       if (verb === 'join') {
         const by = arg === 'birth' || arg === 'adoption' || arg === 'marriage' ? arg : undefined;
-        const r = joinPower(s.world, you, id, day, { you: true, realm: realmStageOf(s), by });
+        const r = joinPower(s.world, you, id, day, {
+          you: true,
+          realm: realmStageOf(s, s.player.id),
+          by,
+        });
         return r.ok
           ? apply(store, (g) => ({ ...g, world: r.world }), `Joined ${theName(id)}.`)
           : r.why;
@@ -486,7 +490,7 @@ export const COMMANDS: Record<string, Command> = {
         );
       }
       if (verb === 'trial') {
-        const r = innerTrial(s, id);
+        const r = innerTrial(s, s.player.id, id);
         if (!r.ok) return r.why;
         const words = r.passed
           ? `${r.verdict}: ${r.yours.toFixed(1)} against ${r.theirs.toFixed(1)}, the inner seat is yours; ranked ${r.rank} of the outer disciples who sat it${r.pill ? ', a Foundation Pill' : ''}.`
@@ -494,7 +498,7 @@ export const COMMANDS: Record<string, Command> = {
         return apply(store, () => r.state, words);
       }
       if (verb === 'donate') {
-        const r = donate(s, id, { stones: Number(arg) });
+        const r = donate(s, s.player.id, id, { stones: Number(arg) });
         return r.ok ? apply(store, () => r.state, `+${r.points} to ${theName(id)}.`) : r.why;
       }
       if (verb === 'seat') {
@@ -518,7 +522,8 @@ export const COMMANDS: Record<string, Command> = {
         );
       }
       if (verb === 'lesson' || verb === 'protector') {
-        const r = verb === 'lesson' ? takeLesson(s, id) : engageProtector(s, id);
+        const r =
+          verb === 'lesson' ? takeLesson(s, s.player.id, id) : engageProtector(s, s.player.id, id);
         const words =
           verb === 'lesson'
             ? 'An elder teaches you a day.'
@@ -544,12 +549,12 @@ export const COMMANDS: Record<string, Command> = {
       }
       if (verb === 'hunt') return `${theName(id)} hunts at chapter ${huntOf(s.world, id, day)}.`;
       if (verb === 'guest') {
-        const r = becomeGuest(s, id);
+        const r = becomeGuest(s, s.player.id, id);
         return r.ok ? apply(store, () => r.state, `A guest elder of ${theName(id)}.`) : r.why;
       }
       const o = organization(id);
       const ranges = seatRanges(id);
-      const holder = realmStageOf(s).realm;
+      const holder = realmStageOf(s, s.player.id).realm;
       const monthly = (k: SeatId) => {
         const lower = k === 'outer' || k === 'inner' || k === 'true';
         const a = allowanceOf(id, k, lower ? holder : ranges[k].to.realm);
@@ -574,7 +579,7 @@ export const COMMANDS: Record<string, Command> = {
     run([id, verb], store) {
       const s = needGame(store);
       if (!id) {
-        const rows = jobsView(s);
+        const rows = jobsView(s, s.player.id);
         if (!rows.length) return 'You hold no job.';
         return rows.map(
           (j) =>
@@ -587,7 +592,7 @@ export const COMMANDS: Record<string, Command> = {
             `${j.id}: ${j.name} · ${j.place ?? 'on the road'} · ${j.power ?? 'no power'}${j.seat ? ` from ${j.seat}` : ''}`,
         );
       if (!hasJob(id)) return `No job ${id}; \`job all\` lists them.`;
-      const r = verb === 'leave' ? quitJob(s, id) : takeJob(s, id);
+      const r = verb === 'leave' ? quitJob(s, s.player.id, id) : takeJob(s, s.player.id, id);
       if (!r.ok) return r.reason;
       return apply(store, () => r.state, `${verb === 'leave' ? 'Left' : 'Took'} ${job(id).name}.`);
     },
@@ -622,19 +627,23 @@ export const COMMANDS: Record<string, Command> = {
       const act = (r: ShopResult, done: string): Output =>
         r.ok ? apply(store, () => r.state, done) : r.reason;
       if (verb === 'buy')
-        return act(buy(s, id, Number(arg), n ? Number(n) : undefined), `Bought from line ${arg}.`);
-      if (verb === 'sell' && arg) return act(sell(s, id, arg, n ? Number(n) : 1), `Sold ${arg}.`);
+        return act(
+          buy(s, s.player.id, id, Number(arg), n ? Number(n) : undefined),
+          `Bought from line ${arg}.`,
+        );
+      if (verb === 'sell' && arg)
+        return act(sell(s, s.player.id, id, arg, n ? Number(n) : 1), `Sold ${arg}.`);
       if (verb === 'haggle') {
-        const r = haggle(s, id);
+        const r = haggle(s, s.player.id, id);
         return act(r, `Haggled: ${Math.round((r.off ?? 0) * 100)}% off today.`);
       }
-      if (verb === 'repair' && arg) return act(repair(s, id, arg), `Mended ${arg}.`);
+      if (verb === 'repair' && arg) return act(repair(s, s.player.id, id, arg), `Mended ${arg}.`);
       const ware = (t: string) => (hasCopy(t) ? copyTitle(t) : item(t).name);
       const silver = SHOP_KIND_INFO[shop(id).kind].money === 'silver';
       const cost = (p: number) => (silver ? `${p} taels` : priceWords(p));
       return [
         `${shop(id).name}, this month · you hold ${purseWords(s.player)}`,
-        ...shelf(s, id).map(
+        ...shelf(s, s.player.id, id).map(
           (l) =>
             `  ${l.slot}. ${ware(l.thing)} ×${l.n} (${l.thing}): ${cost(l.price)} each${l.standing ? (l.endless ? ' · stands all month' : ' · on the shelf') : ''}`,
         ),

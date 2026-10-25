@@ -78,7 +78,7 @@ export function AffiliationSeal({ game }: { game: GameState }) {
   const m = held.find((x) => organization(x.power).preset.bond !== 'stack') ?? held[0];
   if (!m) return null;
   const org = organization(m.power);
-  const row = membershipsView(game).find((r) => r.power === m.power);
+  const row = membershipsView(game, game.player.id).find((r) => r.power === m.power);
   return (
     <button
       type="button"

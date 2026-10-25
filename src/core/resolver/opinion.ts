@@ -170,6 +170,12 @@ export const KeptSchema = z.object({
   face: z.string().optional(),
   mortal: z.string().optional(),
   born: z.number().int().optional(),
+  /**
+   * Who acts (N1): a cast member's purse, one count of low's worth saving for their next
+   * breakthrough pill, and the few things held (given, bought or taken: an allowance's pills).
+   */
+  purse: z.number().min(0).optional(),
+  held: z.record(z.string(), z.number().int().min(1)).optional(),
 });
 export type Kept = z.infer<typeof KeptSchema>;
 

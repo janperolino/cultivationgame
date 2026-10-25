@@ -32,9 +32,9 @@ describe('A5.2’s seats and sects keep markets', () => {
 
   it('buys what its kind deals in, and the Nameless Market pays for healing it needs', () => {
     const s = withPlayer(life(), addItem(life().player, 'spring-returning-pill', 3));
-    const offer = offerFor(s, 'nameless-stall', 'spring-returning-pill');
+    const offer = offerFor(s, s.player.id, 'nameless-stall', 'spring-returning-pill');
     expect(offer.ok && offer.wanted).toBe(true);
-    expect(offerFor(s, 'bend-refiner', 'spring-returning-pill').ok).toBe(false);
+    expect(offerFor(s, s.player.id, 'bend-refiner', 'spring-returning-pill').ok).toBe(false);
   });
 
   it('reads its written prosperity: River-Bend thriving in a modest March', () => {
@@ -69,11 +69,11 @@ describe('a sect’s hall serves its own', () => {
     let s = life();
     s = { ...s, player: { ...s.player, stones: 100_000 } };
     const day = s.calendar.day;
-    const lot = shelf(s, 'reins-sect')[0]!;
-    const out = buy(s, 'reins-sect', lot.slot);
+    const lot = shelf(s, s.player.id, 'reins-sect')[0]!;
+    const out = buy(s, s.player.id, 'reins-sect', lot.slot);
     expect(out.ok).toBe(false);
     const joined = joinPower(s.world, s.player.id, 'qm-baijiang-zong', day).world;
     const member = { ...s, world: addBalance(joined, s.player.id, 'qm-baijiang-zong', 1000) };
-    expect(buy(member, 'reins-sect', lot.slot).ok).toBe(true);
+    expect(buy(member, member.player.id, 'reins-sect', lot.slot).ok).toBe(true);
   });
 });

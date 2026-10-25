@@ -178,8 +178,8 @@ describe('the bench', () => {
     // A refiner mends it for a tenth of its worth.
     let s = withPlayer(newLife({ name: 'Han Li', seed: 'craft' }), { ...c, stones: 100 });
     const refiner = SHOPS.find((sh) => sh.kind === 'refiner')!.id;
-    expect(repairCost(s, cracked)).toBeCloseTo(3, 0);
-    const mended = repair(s, refiner, cracked);
+    expect(repairCost(s, s.player.id, cracked)).toBeCloseTo(3, 0);
+    const mended = repair(s, s.player.id, refiner, cracked);
     expect(mended.ok).toBe(true);
     if (mended.ok) s = mended.state;
     expect(s.player.items['crude-clay-furnace']).toBe(1);
@@ -231,13 +231,14 @@ describe('in play', () => {
     let s: GameState = ensureMap(newLife({ name: 'Han Li', seed: 'brewer' }));
     s = withPlayer(s, { ...s.player, stones: 300, items: {} });
     const market = 'qm-shoukou-cheng';
-    const shelves = () => shopsAt(market).flatMap((id) => shelf(s, id).map((l) => ({ id, l })));
+    const shelves = () =>
+      shopsAt(market).flatMap((id) => shelf(s, s.player.id, id).map((l) => ({ id, l })));
     const buyAll = (thing: string, n: number) => {
       let need = n;
       for (const { id, l } of shelves().filter((x) => baseOf(x.l.thing) === thing)) {
         if (need <= 0) break;
         if (l.thing !== thing) continue;
-        const r = buy(s, id, l.slot, Math.min(need, l.n));
+        const r = buy(s, s.player.id, id, l.slot, Math.min(need, l.n));
         if (!r.ok) continue;
         need -= Math.min(need, l.n);
         s = r.state;
@@ -276,8 +277,8 @@ describe('in play', () => {
     if (pills.length > 0) {
       const before = worthOf(stonesOf(s.player));
       for (const id of pills) {
-        const shop = shopsAt(market).find((sh) => offerFor(s, sh, id).ok)!;
-        const r = sell(s, shop, id, s.player.items[id]!);
+        const shop = shopsAt(market).find((sh) => offerFor(s, s.player.id, sh, id).ok)!;
+        const r = sell(s, s.player.id, shop, id, s.player.items[id]!);
         expect(r.ok).toBe(true);
         if (r.ok) s = r.state;
       }
@@ -297,7 +298,7 @@ describe('the save', () => {
     raw.version = 42;
     delete raw.state.player.crafts;
     const back = loadSave(raw);
-    expect(back.version).toBe(56);
+    expect(back.version).toBe(57);
     expect(back.state.player.crafts).toEqual({
       bench: [],
       front: null,

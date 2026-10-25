@@ -104,7 +104,7 @@ describe('the hall: a faction’s seat', () => {
     }
     const r = joinPower(s.world, s.player.id, 'qm-shoudeng-zong', s.calendar.day, {
       you: true,
-      realm: realmStageOf(s),
+      realm: realmStageOf(s, s.player.id),
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -198,7 +198,7 @@ describe('the briefs paint a site whole', () => {
         for (const by of [undefined, 'birth'] as const) {
           const r = joinPower(m.world, m.player.id, power, m.calendar.day, {
             you: true,
-            realm: realmStageOf(m),
+            realm: realmStageOf(m, m.player.id),
             ...(by ? { by } : {}),
           });
           if (r.ok) {

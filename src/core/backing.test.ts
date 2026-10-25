@@ -194,26 +194,28 @@ describe('tutelage', () => {
     const price = elderPrice('protector', QC);
     expect(price).toBe(100);
     const poor = ready(member(life(), GATE, 'outer', price - 1));
-    expect(engageProtector(poor, GATE).ok).toBe(false);
+    expect(engageProtector(poor, poor.player.id, GATE).ok).toBe(false);
     const s = ready(member(life(), GATE, 'outer', price));
-    const r = engageProtector(s, GATE);
+    const r = engageProtector(s, s.player.id, GATE);
     if (!r.ok) throw new Error(r.why);
     expect(balance(r.state)).toBe(0);
-    expect(protectorOf(r.state)).toBe(GATE);
+    expect(protectorOf(r.state, r.state.player.id)).toBe(GATE);
     const plain = breakThrough(s, 'qi');
     const guarded = breakThrough(r.state, 'qi');
     expect(guarded.odds).toBeCloseTo(Math.min(0.98, plain.odds + 0.05));
-    expect(protectorOf(guarded.state)).toBeNull();
+    expect(protectorOf(guarded.state, guarded.state.player.id)).toBeNull();
   });
 
   it('an elder’s lesson teaches three days of study for 20 points, once a month', () => {
     const s = member(life(), GATE, 'outer', 50);
-    const r = takeLesson(s, GATE);
+    const r = takeLesson(s, s.player.id, GATE);
     if (!r.ok) throw new Error(r.why);
-    expect(r.state.player.insight.current - s.player.insight.current).toBeCloseTo(lessonInsight(s));
+    expect(r.state.player.insight.current - s.player.insight.current).toBeCloseTo(
+      lessonInsight(s.player),
+    );
     expect(balance(r.state)).toBe(30);
-    expect(takeLesson(r.state, GATE).ok).toBe(false);
-    expect(takeLesson(months(r.state), GATE).ok).toBe(true);
+    expect(takeLesson(r.state, r.state.player.id, GATE).ok).toBe(false);
+    expect(takeLesson(months(r.state), PLAYER_ID, GATE).ok).toBe(true);
   });
 });
 
@@ -236,14 +238,14 @@ describe('investment', () => {
   it('the year’s pills go by the trial’s ranking', () => {
     expect(yearsPills(GATE)).toBe(3);
     const s = atRealm(member(life()), QC, 9);
-    const won = innerTrial(s, GATE);
+    const won = innerTrial(s, s.player.id, GATE);
     if (!won.ok) throw new Error(won.why);
     expect(won).toMatchObject({ passed: true, rank: 1, pill: true });
     expect(itemCount(won.state.player, 'foundation-pill')).toBe(1);
     // Three kept outer disciples stand as high, senior to you: fourth takes none.
     let world = s.world;
     for (const id of ['a', 'b', 'c']) world = rival(world, id, 9);
-    const lost = innerTrial({ ...s, world }, GATE);
+    const lost = innerTrial({ ...s, world }, s.player.id, GATE);
     if (!lost.ok) throw new Error(lost.why);
     expect(lost).toMatchObject({ passed: true, rank: 4, pill: false });
     expect(itemCount(lost.state.player, 'foundation-pill')).toBe(0);
@@ -253,16 +255,16 @@ describe('investment', () => {
     const joined = atRealm(member(life()), FE, 1);
     expect(seatOf(joined.world, ME, GATE, { realm: FE, stage: 1 })).toBe('inner');
     // Never on joining day.
-    expect(membership(raiseEarly(joined).world, ME, GATE)?.seat).toBe('outer');
+    expect(membership(raiseEarly(joined, joined.player.id).world, ME, GATE)?.seat).toBe('outer');
     const s = { ...joined, calendar: { ...joined.calendar, day: joined.calendar.day + 360 } };
-    const raised = raiseEarly(s);
+    const raised = raiseEarly(s, s.player.id);
     expect(membership(raised.world, ME, GATE)?.seat).toBe('true');
     expect(raised.chronicle.at(-1)?.data).toMatchObject({
       what: 'true',
       title: 'true Gate disciple',
     });
     const old = { ...s, calendar: { ...s.calendar, day: s.calendar.day + 30 * 360 } };
-    expect(membership(raiseEarly(old).world, ME, GATE)?.seat).toBe('outer');
+    expect(membership(raiseEarly(old, old.player.id).world, ME, GATE)?.seat).toBe('outer');
   });
 
   it('never skips the inner trial where the inner seat is held within a realm', () => {
@@ -271,7 +273,7 @@ describe('investment', () => {
       calendar: { ...x.calendar, day: x.calendar.day + 360 },
     });
     const by = year(atRealm(member(life(), LAMPS), QC, 9));
-    expect(membership(raiseEarly(by).world, ME, LAMPS)?.seat).toBe('outer');
+    expect(membership(raiseEarly(by, by.player.id).world, ME, LAMPS)?.seat).toBe('outer');
     const inner = member(life(), LAMPS, 'inner');
     const won = year(
       atRealm(
@@ -283,38 +285,38 @@ describe('investment', () => {
         9,
       ),
     );
-    expect(membership(raiseEarly(won).world, ME, LAMPS)?.seat).toBe('true');
+    expect(membership(raiseEarly(won, won.player.id).world, ME, LAMPS)?.seat).toBe('true');
   });
 });
 
 describe('what it asks', () => {
   it('takes the quota from the balance as each month turns', () => {
     const s = member(life(), GATE, 'outer', 25);
-    const paid = settleQuotas(months(s));
+    const paid = settleQuotas(months(s), PLAYER_ID);
     expect(balance(paid)).toBe(15);
     expect(membership(paid.world, ME, GATE)?.missed).toBe(0);
     // A generous power asks none.
     const bell = member(life(), BELL, 'outer', 25);
-    expect(balance(settleQuotas(months(bell)), BELL)).toBe(25);
+    expect(balance(settleQuotas(months(bell), PLAYER_ID), BELL)).toBe(25);
   });
 
   it('a missed quota costs standing on the second month and strikes you off on the third', () => {
     // Past the drill: no quota is asked through the tutorial layers (The opening, built).
     const drilled = member(life());
-    expect(membership(settleQuotas(months(drilled, 3)).world, ME, GATE)?.missed).toBe(0);
+    expect(membership(settleQuotas(months(drilled, 3), PLAYER_ID).world, ME, GATE)?.missed).toBe(0);
     const s = member(atRealm(life(), 'qi-condensation', 4));
-    const one = settleQuotas(months(s));
+    const one = settleQuotas(months(s), PLAYER_ID);
     expect(membership(one.world, ME, GATE)?.missed).toBe(1);
     expect(rows(one.world, GATE)).not.toContain('missed-quota');
-    const two = settleQuotas(months(one));
+    const two = settleQuotas(months(one), PLAYER_ID);
     expect(rows(two.world, GATE)).toContain('missed-quota');
-    const three = settleQuotas(months(two));
+    const three = settleQuotas(months(two), PLAYER_ID);
     expect(membership(three.world, ME, GATE)).toBeUndefined();
     expect(rows(three.world, GATE)).toContain('struck-off');
     expect(rows(three.world, GATE)).not.toContain('parted');
     expect(three.world.known).not.toContain(`token:${GATE}`);
     // Three months away at once tell the same: missed while away is missed.
-    expect(membership(settleQuotas(months(s, 3)).world, ME, GATE)).toBeUndefined();
+    expect(membership(settleQuotas(months(s, 3), PLAYER_ID).world, ME, GATE)).toBeUndefined();
   });
 
   it('struck off is a parting by the rule, even where leaving is betrayal, and takes the copies back', () => {
@@ -322,7 +324,7 @@ describe('what it asks', () => {
     const SLIP = 'method:night-bridge';
     let s = member(atRealm(life(), 'qi-condensation', 4), NIGHT_BRIDGE);
     s = withPlayer(s, { ...s.player, copies: { ...s.player.copies, [SLIP]: 1 } });
-    const off = settleQuotas(months(s, 3));
+    const off = settleQuotas(months(s, 3), PLAYER_ID);
     expect(membership(off.world, ME, NIGHT_BRIDGE)).toBeUndefined();
     expect(rows(off.world, NIGHT_BRIDGE)).toContain('struck-off');
     expect(rows(off.world, NIGHT_BRIDGE)).not.toContain('betrayed-us');
@@ -336,15 +338,19 @@ describe('what it asks', () => {
       ...base,
       map: { inside: null } as unknown as GameState['map'],
     };
-    const within = countLeave(away, 90);
+    const within = countLeave(away, away.player.id, 90);
     expect(balance(within)).toBe(20);
     expect(rows(within.world, GATE)).not.toContain('overstayed');
-    const over = countLeave(within, 5);
+    const over = countLeave(within, within.player.id, 5);
     expect(balance(over)).toBe(15);
     expect(rows(over.world, GATE).filter((r) => r === 'overstayed')).toHaveLength(1);
     expect(over.chronicle.at(-1)?.data.what).toBe('leave-over');
     // At the Gate itself no leave is taken.
-    const home = countLeave({ ...away, map: { inside: GATE } as unknown as GameState['map'] }, 200);
+    const home = countLeave(
+      { ...away, map: { inside: GATE } as unknown as GameState['map'] },
+      away.player.id,
+      200,
+    );
     expect(balance(home)).toBe(20);
   });
 });
@@ -359,7 +365,7 @@ describe('the save', () => {
     raw.version = 39;
     delete raw.state.world.members[0]!.quota;
     const back = loadSave(raw);
-    expect(back.version).toBe(56);
+    expect(back.version).toBe(57);
     const m = back.state.world.members[0]!;
     expect(m.quota).toBe(m.paid);
     expect(emptyWorld().members).toEqual([]);

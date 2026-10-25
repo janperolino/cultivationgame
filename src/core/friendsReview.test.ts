@@ -27,7 +27,7 @@ import { cultivate, switchMethod } from './life.ts';
 import { buy, shelf } from './shops.ts';
 import { Rng } from './rng.ts';
 import { freeWheel, setHours } from './wheel.ts';
-import { withPlayer, type GameState } from './state.ts';
+import { withPlayer, type GameState, PLAYER_ID } from './state.ts';
 
 const roll = (origin: Creation['roll']['origin']): Creation['roll'] => ({
   root: 'true',
@@ -96,7 +96,7 @@ describe('1. the rogue’s day hire', () => {
     let s = withoutChain(life('conscript', 'refuse', 'hire'));
     s = atLayer(s, 4);
     // Taken early for its pay, before the quest asks for it.
-    s = ok(takeJob(atHome(s), 'dock-carrying'));
+    s = ok(takeJob(atHome(s), PLAYER_ID, 'dock-carrying'));
     s = ok(takeQuest(s, id));
     const hut = placeById(mapOf(s)!, 'qm-op-stilt-hut')!;
     s = noteQuests({ ...s, map: { ...s.map!, inside: null, at: [hut.x, hut.y] } });
@@ -109,7 +109,7 @@ describe('2. keeping three days', () => {
   it('at drill, counts only the shift hours set to Duty, as the step says', () => {
     expect(quest(id).steps[1]!.text).toMatch(/set Duty on its hours/);
     let s = standingHome(atLayer(withoutChain(life('cave-orphan', 'along', 'drill')), 3));
-    s = ok(takeJob(s, 'school-watch'));
+    s = ok(takeJob(s, s.player.id, 'school-watch'));
     s = noteQuests(ok(takeQuest(s, id)));
     s = run(s, 6);
     expect(questState(s, id)!.step).toBe(1);
@@ -121,7 +121,7 @@ describe('2. keeping three days', () => {
 
   it('counts from the step’s opening, not days kept before it', () => {
     let s = standingHome(atLayer(withoutChain(life('cave-orphan', 'along', 'before')), 4));
-    s = ok(takeJob(s, 'school-watch'));
+    s = ok(takeJob(s, s.player.id, 'school-watch'));
     s = run(s, 6);
     expect(s.player.jobs[0]!.kept).toBeGreaterThanOrEqual(3);
     s = noteQuests(ok(takeQuest(s, id)));
@@ -266,14 +266,14 @@ describe('11. buying at this counter', () => {
     s = atHome(s);
     s = withPlayer(s, { ...s.player, stones: 5000 });
     const home = homeOf(s, mapOf(s)!);
-    const cheap = (id: string) => shelf(s, id).filter((l) => !l.thing.includes(':'));
+    const cheap = (id: string) => shelf(s, s.player.id, id).filter((l) => !l.thing.includes(':'));
     const other = shopsAt(home.id).find((id) => shop(id).kind !== 'refiner' && cheap(id).length);
     const refiner = shopsAt(home.id).find((id) => shop(id).kind === 'refiner');
     expect(other && refiner).toBeTruthy();
     s = ok(takeQuest(s, 'intro-gear'));
-    s = noteQuests(ok(buy(s, other!, cheap(other!)[0]!.slot, 1)));
+    s = noteQuests(ok(buy(s, s.player.id, other!, cheap(other!)[0]!.slot, 1)));
     expect(questState(s, 'intro-gear')!.step).toBe(0);
-    s = noteQuests(ok(buy(s, refiner!, cheap(refiner!)[0]!.slot, 1)));
+    s = noteQuests(ok(buy(s, s.player.id, refiner!, cheap(refiner!)[0]!.slot, 1)));
     expect(questState(s, 'intro-gear')!.step).toBe(1);
   });
 });
