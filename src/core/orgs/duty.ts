@@ -11,11 +11,12 @@ import {
 import { hasJob, job, KEPT_MONTH } from '../../content/jobs.ts';
 import { guardedBy } from '../markets.ts';
 import { addStanding } from '../resolver/opinion.ts';
-import { addEvent, withPlayer, type GameState } from '../state.ts';
+import { addEvent, type Cultivator, type GameState } from '../state.ts';
+import { castOf, cultivator, realmStageOf, withCultivator } from '../who.ts';
 import { isOrganization, organization, houseOf } from './identity.ts';
 import { seatOf } from './seats.ts';
 import { membership, membershipsOf, leavePower, guardedKnown } from './membership.ts';
-import { yearOf, realmStageOf } from './trial.ts';
+import { yearOf } from './trial.ts';
 import { addBalance, monthIndex } from './contribution.ts';
 import { withMember } from './tutelage.ts';
 
@@ -30,26 +31,37 @@ export function quotaOf(power: string, seat: SeatId, guest = false): number {
  * the type, kept as "Struck from our rolls" in place of the parting. Its copies go back to its
  * pavilion as they do when you ask to be released, and what you learned stays under the oath.
  */
-function strikeOff(s: GameState, power: string): GameState {
+function strikeOff(s: GameState, who: string, power: string): GameState {
   const house = houseOf(power);
-  const knows = guardedKnown(s.player, house);
-  const copies = { ...s.player.copies };
+  const c = cultivator(s, who);
+  const knows = guardedKnown(c, house);
+  const opts = { you: !!c, knows, struck: true };
+  const left = leavePower(s.world, who, house, s.calendar.day, opts);
+  if (!c) return { ...s, world: left.world };
+  const copies = { ...c.copies };
   for (const thing of Object.keys(copies)) if (guardedBy(thing) === house) delete copies[thing];
-  const opts = { you: true, knows, struck: true };
-  const left = leavePower(s.world, s.player.id, house, s.calendar.day, opts);
-  const st = { ...withPlayer(s, { ...s.player, copies }), world: left.world };
+  const st = { ...withCultivator(s, { ...c, copies }), world: left.world };
   return addEvent(st, 'power', { power: house, what: 'struck-off' });
+}
+
+/** A power's chronicle line, for the one who plays: the cast's month leaves none (N3 words it). */
+function note(s: GameState, who: string, data: Record<string, string>): GameState {
+  return cultivator(s, who) ? addEvent(s, 'power', data) : s;
 }
 
 /**
  * The monthly quota (design: a post kept or contribution paid in): as each month turns, each
  * power takes its seat's quota from the balance. Short, the month is missed: the second running
- * costs standing, the third strikes you off. A quota met clears the count.
+ * costs standing, the third strikes them off. A quota met clears the count. A cast member's post
+ * is kept while they are at home (`home`, N1), as yours is by the shifts you keep.
  */
-export function settleQuotas(s: GameState): GameState {
+export function settleQuotas(
+  s: GameState,
+  who: string,
+  home: (s: GameState, who: string, power: string) => boolean = atSeat,
+): GameState {
   const month = monthIndex(s.calendar.day);
-  const who = s.player.id;
-  const r = realmStageOf(s);
+  const r = realmStageOf(s, who);
   let state = s;
   for (const first of membershipsOf(s.world, who)) {
     if (!isOrganization(first.power)) continue;
@@ -62,23 +74,24 @@ export function settleQuotas(s: GameState): GameState {
       const due = quotaOf(m.power, seat, m.guest);
       // A post kept the month before meets the quota by the work (O4); otherwise it is paid in
       // from the balance.
-      const kept = postKeptFor(state.player, m.power, k - 1);
+      const c = cultivator(state, who);
+      const kept = c ? postKeptFor(c, m.power, k - 1) : home(state, who, m.power);
       // A post isn't worked through the tutorial layers (`drilling`), so no quota is asked of a
       // member who is still drilling (The opening, built: the cadets were struck off by minute 15).
-      const met = due === 0 || kept || m.balance >= due || drilling(state.player);
+      const met = due === 0 || kept || m.balance >= due || (!!c && drilling(c));
       const missed = met ? 0 : (m.missed ?? 0) + 1;
       const paid = met && !kept && due > 0 && m.balance >= due;
       let world = paid ? addBalance(state.world, who, m.power, -due) : state.world;
       world = withMember(world, m, { quota: k, missed });
       state = { ...state, world };
       if (missed >= QUOTA_MISSED.struck) {
-        state = strikeOff(state, m.power);
+        state = strikeOff(state, who, m.power);
         break;
       }
       if (missed === QUOTA_MISSED.standing) {
         const row = { power: m.power, about: who, row: 'missed-quota' } as const;
         state = { ...state, world: addStanding(state.world, row, state.calendar.day) };
-        state = addEvent(state, 'power', { power: m.power, what: 'quota-missed' });
+        state = note(state, who, { power: m.power, what: 'quota-missed' });
       }
     }
   }
@@ -86,7 +99,7 @@ export function settleQuotas(s: GameState): GameState {
 }
 
 /** Whether a power's post was kept a month: half its shifts or more (core/jobs.ts keeps the tally). */
-function postKeptFor(c: GameState['player'], power: string, month: number): boolean {
+function postKeptFor(c: Cultivator, power: string, month: number): boolean {
   return c.jobs.some((h) => {
     if (!hasJob(h.id)) return false;
     const j = job(h.id);
@@ -102,10 +115,14 @@ export function leaveOf(power: string, seat: SeatId, guest = false): number {
   return LEAVE[seat];
 }
 
-/** Whether the player is at a power's seat or a branch hall of it: home, not on leave. */
-export function atSeat(s: GameState, power: string): boolean {
-  if (!s.map) return true;
-  const place = s.map.inside;
+/**
+ * Whether someone is at a power's seat or a branch hall of it: home, not on leave. You stand where
+ * the map has you; a cast member is where they live (their `home`, until N2's whereabouts).
+ */
+export function atSeat(s: GameState, who: string, power: string): boolean {
+  const k = castOf(s, who);
+  if (!k && !s.map) return true;
+  const place = k ? k.home : s.map!.inside;
   if (!place) return false;
   return place === power || (isOrganization(place) && organization(place).branchOf === power);
 }
@@ -123,17 +140,17 @@ function overstayRows(days: number): number {
  */
 export function countLeave(
   s: GameState,
+  who: string,
   days: number,
-  home: (s: GameState, power: string) => boolean = atSeat,
+  home: (s: GameState, who: string, power: string) => boolean = atSeat,
 ): GameState {
   if (days <= 0) return s;
-  const who = s.player.id;
   const day = s.calendar.day;
   const year = yearOf(day);
-  const r = realmStageOf(s);
+  const r = realmStageOf(s, who);
   let state = s;
   for (const m of membershipsOf(s.world, who)) {
-    if (!isOrganization(m.power) || m.guest || home(s, m.power)) continue;
+    if (!isOrganization(m.power) || m.guest || home(s, who, m.power)) continue;
     const allowed = leaveOf(m.power, seatOf(s.world, who, m.power, r)!);
     if (allowed === Infinity) continue;
     const before = m.leave?.year === year ? m.leave.days : 0;
@@ -148,7 +165,7 @@ export function countLeave(
     }
     state = { ...state, world };
     if (over > 0 && before <= allowed)
-      state = addEvent(state, 'power', { power: m.power, what: 'leave-over' });
+      state = note(state, who, { power: m.power, what: 'leave-over' });
   }
   return state;
 }

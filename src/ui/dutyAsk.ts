@@ -16,7 +16,7 @@ export const useDutyAsk = create<DutyAskStore>()(() => ({ ask: null, left: null 
 
 /** Sets the course at once, or asks first while today's Duty hours are still to come here. */
 export function courseOrAsk(s: GameState, go: () => void): void {
-  const j = dutyAhead(s);
+  const j = dutyAhead(s, s.player.id);
   const today = Math.floor(s.calendar.day);
   if (!j || useDutyAsk.getState().left === today) return go();
   useDutyAsk.setState({

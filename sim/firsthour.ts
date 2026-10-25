@@ -195,18 +195,18 @@ function playChain(s0: GameState): GameState {
     for (const id of Object.keys(st.player.items))
       if (things.has(id.split('~')[0]!))
         for (const sh of shopsAt(home.id)) {
-          const r = sell(st, sh, id, st.player.items[id]!);
+          const r = sell(st, st.player.id, sh, id, st.player.items[id]!);
           if (r.ok) {
             st = r.state;
             break;
           }
         }
     for (const sh of shopsAt(home.id)) {
-      const lot = shelf(st, sh).find(
+      const lot = shelf(st, st.player.id, sh).find(
         (l) => l.price * (l.standing ? 1 : l.n) <= 5 && !l.thing.includes(':'),
       );
       if (!lot) continue;
-      const r = buy(st, sh, lot.slot, 1);
+      const r = buy(st, st.player.id, sh, lot.slot, 1);
       if (r.ok) return r.state;
     }
     return s;
@@ -219,13 +219,13 @@ function playChain(s0: GameState): GameState {
   // hideout, a fast root crossed layer 4 before home, missed the shifts and was let go.
   if ('event' in goal && goal.event === 'job' && !s.map!.course) {
     const st = atHome(s);
-    const r = takeJob(st, String(goal.match!.job));
+    const r = takeJob(st, st.player.id, String(goal.match!.job));
     return r.ok ? r.state : st;
   }
   // A member's post is taken at home's Work door, as the post quest's first step says.
   if ('job' in goal && !s.map!.course) {
     const st = atHome(s);
-    const r = takeJob(st, goal.job);
+    const r = takeJob(st, st.player.id, goal.job);
     return r.ok ? noteQuests(r.state) : st;
   }
   // Shifts and currency: stand at home with no course set.

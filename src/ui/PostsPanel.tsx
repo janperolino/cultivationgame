@@ -25,7 +25,7 @@ export function PostsPanel({ game }: { game: GameState }) {
   const mapAct = useGame((s) => s.mapAct);
   const [asking, setAsking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const rows = jobsView(game);
+  const rows = jobsView(game, game.player.id);
   if (!rows.length) return null;
   return (
     <section className="panel posts-panel" aria-labelledby="posts-heading">
@@ -66,7 +66,7 @@ export function PostsPanel({ game }: { game: GameState }) {
                   type="button"
                   className="danger"
                   onClick={() => {
-                    setError(mapAct((s) => quitJob(s, j.id)));
+                    setError(mapAct((s) => quitJob(s, s.player.id, j.id)));
                     setAsking(null);
                   }}
                 >
@@ -107,7 +107,7 @@ export function WorkHere({ game, map, place }: { game: GameState; map: RegionMap
       <ul className="place-work-list">
         {jobs.map((j) => {
           const held = game.player.jobs.some((h) => h.id === j.id);
-          const can = canTakeJob(game, j.id);
+          const can = canTakeJob(game, game.player.id, j.id);
           const asks = jobAsks(j);
           const pay = jobPay(j, realm);
           const currency =
@@ -136,7 +136,7 @@ export function WorkHere({ game, map, place }: { game: GameState; map: RegionMap
                   type="button"
                   disabled={!can.ok || !!game.ended}
                   title={can.ok ? undefined : can.reason}
-                  onClick={() => setError(mapAct((s) => takeJob(s, j.id)))}
+                  onClick={() => setError(mapAct((s) => takeJob(s, s.player.id, j.id)))}
                 >
                   Take it
                 </button>

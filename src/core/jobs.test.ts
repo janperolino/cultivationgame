@@ -64,7 +64,7 @@ const creation = (
 /** A conscript's child gone along, with the Wall's patrol taken at its door (the chain's step). */
 const cadet = (): GameState => {
   const s = createLife(creation('conscript'));
-  const r = takeJob(s, 'wall-patrol');
+  const r = takeJob(s, s.player.id, 'wall-patrol');
   if (!r.ok) throw new Error(r.reason);
   return r.state;
 };
@@ -178,7 +178,7 @@ describe('a job in the City of the Guarded Mouth', () => {
   it('sets its shift on the wheel the day it is taken, and pays a hire in stones', () => {
     const s = posted(inside(newLife({ name: 'Han Li', seed: 'city' }), CITY));
     expect(effectiveWheel(s.player)[3]).not.toBe('duty');
-    const r = takeJob(s, 'bounty-runner');
+    const r = takeJob(s, s.player.id, 'bounty-runner');
     if (!r.ok) throw new Error(r.reason);
     const wheel = effectiveWheel(r.state.player);
     for (const h of job('bounty-runner').shift) expect(wheel[h]).toBe('duty');
@@ -187,30 +187,30 @@ describe('a job in the City of the Guarded Mouth', () => {
       stones: DUTY_PAY,
     });
     // A second job can't fall on the same hours.
-    const guard = takeJob(r.state, 'qian-warehouse');
+    const guard = takeJob(r.state, r.state.player.id, 'qian-warehouse');
     expect(guard.ok).toBe(true);
-    expect(takeJob(r.state, 'gate-garden')).toMatchObject({ ok: false });
+    expect(takeJob(r.state, r.state.player.id, 'gate-garden')).toMatchObject({ ok: false });
   });
 
   it('turns a hire away below the realm it asks, and its posting says so first (Sean’s playtest)', () => {
     const s = inside(newLife({ name: 'Han Li', seed: 'city' }), CITY);
     expect(s.player.qi.stage).toBeLessThan(4);
     expect(jobAsks(job('qian-warehouse'))).toBe('from Qi Condensation, fourth layer');
-    const r = takeJob(s, 'qian-warehouse');
+    const r = takeJob(s, s.player.id, 'qian-warehouse');
     expect(r).toEqual({ ok: false, reason: 'It is given from Qi Condensation, fourth layer.' });
-    expect(takeJob(posted(s), 'qian-warehouse').ok).toBe(true);
+    expect(takeJob(posted(s), PLAYER_ID, 'qian-warehouse').ok).toBe(true);
     // A post's posting names its seat.
     expect(jobAsks(job('gate-garden'))).toMatch(/^from the .+'s seat$/);
   });
 
   it('turns a post away from those who aren’t the power’s own, or not at its seat', () => {
     const s = newLife({ name: 'Han Li', seed: 'gate' });
-    expect(takeJob(s, 'gate-garden')).toMatchObject({ ok: false });
+    expect(takeJob(s, s.player.id, 'gate-garden')).toMatchObject({ ok: false });
     const m = member(s, GATE);
-    expect(takeJob(m, 'gate-garden').ok).toBe(true);
-    expect(takeJob(m, 'gate-law-deacon')).toMatchObject({ ok: false });
+    expect(takeJob(m, m.player.id, 'gate-garden').ok).toBe(true);
+    expect(takeJob(m, m.player.id, 'gate-law-deacon')).toMatchObject({ ok: false });
     const inner = { ...m, world: setSeat(m.world, YOU, GATE, 'inner') };
-    expect(takeJob(inner, 'gate-law-deacon').ok).toBe(true);
+    expect(takeJob(inner, inner.player.id, 'gate-law-deacon').ok).toBe(true);
   });
 });
 
@@ -251,11 +251,11 @@ describe('the Gate’s mission hall', () => {
 describe('a missed shift', () => {
   it('costs standing with its giver, a row a duty day, and a hire lets you go after seven', () => {
     let s = posted(inside(newLife({ name: 'Han Li', seed: 'miss' }), CITY));
-    const r = takeJob(s, 'qian-warehouse');
+    const r = takeJob(s, s.player.id, 'qian-warehouse');
     if (!r.ok) throw new Error(r.reason);
     s = inside(r.state, null);
     s = { ...s, map: { ...s.map!, inside: 'qm-tushou-men' } };
-    expect(atPost(s, job('qian-warehouse'))).toBe(false);
+    expect(atPost(s, s.player.id, job('qian-warehouse'))).toBe(false);
     const three = days(s, 3);
     expect(rows(three, QIAN, 'missed-shift')).toBe(3);
     const eight = days(three, 5);
@@ -299,10 +299,10 @@ describe('home for a house member', () => {
       ...s,
       map: { ...s.map!, at: [fort.x, fort.y] as [number, number], inside: fort.id },
     };
-    expect(atHome(atFort, MARCH)).toBe(true);
+    expect(atHome(atFort, atFort.player.id, MARCH)).toBe(true);
     expect(leaveTaken(days(atFort, 5))).toBe(0);
     const away = inside(s, CITY);
-    expect(atHome(away, MARCH)).toBe(false);
+    expect(atHome(away, away.player.id, MARCH)).toBe(false);
     expect(leaveTaken(days(away, 5))).toBe(5);
   });
 });
@@ -314,7 +314,7 @@ describe('a harsh power’s lower seats', () => {
     expect(jobPay(job('gate-strait-raid'), 'qi-condensation').points).toBe(DUTY_PAY * 2);
     let s = posted(inside(newLife({ name: 'Han Li', seed: 'raid' }), GATE));
     s = member(s, GATE);
-    const took = takeJob(s, 'gate-strait-raid');
+    const took = takeJob(s, s.player.id, 'gate-strait-raid');
     if (!took.ok) throw new Error(took.reason);
     const month = monthIndex(took.state.calendar.day);
     const start = {
@@ -380,15 +380,15 @@ describe('a coming-back story', () => {
 describe('leaving a job', () => {
   it('drops a sect’s post freely, but a soldier’s post only by deserting the March', () => {
     const gate = member(newLife({ name: 'Han Li', seed: 'leave' }), GATE);
-    const took = takeJob(gate, 'gate-mine');
+    const took = takeJob(gate, gate.player.id, 'gate-mine');
     if (!took.ok) throw new Error(took.reason);
-    const dropped = quitJob(took.state, 'gate-mine');
+    const dropped = quitJob(took.state, took.state.player.id, 'gate-mine');
     if (!dropped.ok) throw new Error(dropped.reason);
     expect(dropped.state.player.jobs).toEqual([]);
     expect(membership(dropped.state.world, YOU, GATE)).toBeDefined();
 
     const soldier = posted(cadet());
-    const deserted = quitJob(soldier, 'wall-patrol');
+    const deserted = quitJob(soldier, soldier.player.id, 'wall-patrol');
     if (!deserted.ok) throw new Error(deserted.reason);
     expect(membership(deserted.state.world, YOU, MARCH)).toBeUndefined();
     expect(rows(deserted.state, MARCH, 'betrayed-us')).toBe(1);
@@ -407,7 +407,7 @@ describe('a post kept', () => {
     const m = membership(s.world, YOU, MARCH)!;
     expect(m.missed ?? 0).toBe(0);
     const broke = { ...s, world: addBalance(s.world, YOU, MARCH, -m.balance) };
-    expect(membership(settleQuotas(broke).world, YOU, MARCH)!.missed ?? 0).toBe(0);
+    expect(membership(settleQuotas(broke, broke.player.id).world, YOU, MARCH)!.missed ?? 0).toBe(0);
     expect(monthIndex(s.calendar.day)).toBeGreaterThan(0);
     // The work met it, so the balance pays nothing in.
     const month = monthIndex(s.calendar.day);
@@ -416,7 +416,7 @@ describe('a post kept', () => {
       x.who === YOU && x.power === MARCH ? { ...x, quota: month - 1 } : x,
     );
     const banked = { ...broke, world: { ...fifty, members } };
-    expect(balance(settleQuotas(banked), MARCH)).toBe(50);
+    expect(balance(settleQuotas(banked, banked.player.id), MARCH)).toBe(50);
   });
 
   it('never owes below nothing, so a save taken mid-shift loads', () => {
@@ -428,7 +428,12 @@ describe('a post kept', () => {
     const owing = withPlayer(s, { ...s.player, jobs: [held] });
     const from = day + 7 / 12;
     const to = from + 1e-12;
-    const paid = jobsDay({ ...owing, calendar: { ...owing.calendar, day: to } }, from, to);
+    const paid = jobsDay(
+      { ...owing, calendar: { ...owing.calendar, day: to } },
+      owing.player.id,
+      from,
+      to,
+    );
     const owed = paid.player.jobs[0]!.owed;
     expect(owed.stones).toBeGreaterThanOrEqual(0);
     expect(owed.points).toBeGreaterThanOrEqual(0);
@@ -441,15 +446,20 @@ describe('a post kept', () => {
     const from = Math.floor(s.calendar.day) + 7 / 12;
     const to = from + 0.05;
     const at = { ...s, calendar: { ...s.calendar, day: to } };
-    expect(jobsDay(at, from, to).player.jobs[0]!.kept).toBeGreaterThan(0);
+    expect(jobsDay(at, at.player.id, from, to).player.jobs[0]!.kept).toBeGreaterThan(0);
     // Missed rather than kept (the cadet's leave covers the cost).
-    expect(jobsDay(at, from, to, true).player.jobs[0]!.kept).toBe(0);
+    expect(jobsDay(at, at.player.id, from, to, true).player.jobs[0]!.kept).toBe(0);
   });
 
   it('pays nothing and misses nothing in a stretch with no shift hours in it', () => {
     const s = posted(cadet());
     const day = Math.floor(s.calendar.day);
-    const night = jobsDay({ ...s, calendar: { ...s.calendar, day: day + 0.1 } }, day, day + 0.1);
+    const night = jobsDay(
+      { ...s, calendar: { ...s.calendar, day: day + 0.1 } },
+      s.player.id,
+      day,
+      day + 0.1,
+    );
     expect(night.player.jobs[0]!.kept).toBe(0);
     expect(night.player.jobs[0]!.missed).toBe(0);
   });
@@ -547,7 +557,7 @@ describe('the save', () => {
     delete raw.state.player.jobs;
     delete raw.state.map.gathered;
     const back = loadSave(raw);
-    expect(back.version).toBe(56);
+    expect(back.version).toBe(57);
     expect(back.state.player.jobs).toEqual([]);
     expect(back.state.map!.gathered).toBe(0);
   });
@@ -558,11 +568,11 @@ describe('leaving with Duty still to come (Jan’s playtest after S1)', () => {
     const at = inside(posted(cadet()), 'qm-duigu-qiang');
     const day = Math.floor(at.calendar.day);
     const morning = { ...at, calendar: { ...at.calendar, day: day + 0.01 } };
-    expect(dutyAhead(morning)?.id).toBe('wall-patrol');
+    expect(dutyAhead(morning, morning.player.id)?.id).toBe('wall-patrol');
     // The shift is hours 6 to 9: by the last hour of the day it is behind you.
     const late = { ...at, calendar: { ...at.calendar, day: day + 11.5 / 12 } };
-    expect(dutyAhead(late)).toBeNull();
+    expect(dutyAhead(late, late.player.id)).toBeNull();
     // Away from the Wall, no post's hours wait on you here.
-    expect(dutyAhead(inside(morning, CITY))).toBeNull();
+    expect(dutyAhead(inside(morning, CITY), PLAYER_ID)).toBeNull();
   });
 });

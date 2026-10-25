@@ -29,7 +29,7 @@ import { applyEffects } from './resolver/effects.ts';
 import { emptyWorld } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
 import { offerFor, sell, stockOf, tierLean } from './shops.ts';
-import { addItem, newLife, withPlayer, type GameState } from './state.ts';
+import { addItem, newLife, withPlayer, type GameState, PLAYER_ID } from './state.ts';
 
 const life = (seed = 'markets'): GameState => newLife({ name: 'Han Li', seed });
 const later = (s: GameState, days: number): GameState => ({
@@ -56,9 +56,9 @@ describe('prices by where a thing is made and needed', () => {
     expect(nowhere).toBeCloseTo(2);
     // The City buys what it needs at 80% of its own price, the black market never.
     const s = withPlayer(life(), addItem(life().player, 'garrison-ration-pill', 1));
-    const city = offerFor(s, 'mouth-alchemy', 'garrison-ration-pill');
+    const city = offerFor(s, s.player.id, 'mouth-alchemy', 'garrison-ration-pill');
     expect(city).toMatchObject({ ok: true, wanted: true });
-    const bridge = offerFor(s, 'bridge-black', 'garrison-ration-pill');
+    const bridge = offerFor(s, s.player.id, 'bridge-black', 'garrison-ration-pill');
     expect(bridge).toMatchObject({ ok: true, wanted: false });
   });
 
@@ -83,16 +83,16 @@ describe('supply moves and eases back', () => {
     // outside the monthly sum, written at half supply and moved by the depth table.
     const thing = 'storm-peach-stone';
     const s = withPlayer(life(), addItem(life().player, thing, 70));
-    const before = offerFor(s, 'mouth-alchemy', thing);
+    const before = offerFor(s, s.player.id, 'mouth-alchemy', thing);
     if (!before.ok) throw new Error(before.reason);
     expect(before.wanted).toBe(true);
-    const r = sell(s, 'mouth-alchemy', thing, 20);
+    const r = sell(s, s.player.id, 'mouth-alchemy', thing, 20);
     if (!r.ok) throw new Error(r.reason);
     const day = r.state.calendar.day;
     // Twenty lots at 10 points each take it from 50% to 150%: the City is ordinary, and twice an
     // ordinary market's size, so each lot moves it 5.
     expect(supplyOf(r.state.world, m(CITY), thing, day)).toBeCloseTo(150);
-    const after = offerFor(r.state, 'mouth-alchemy', thing);
+    const after = offerFor(r.state, r.state.player.id, 'mouth-alchemy', thing);
     if (!after.ok) throw new Error(after.reason);
     expect(after.wanted).toBe(false);
     expect(after.each).toBeLessThan(before.each / 2);
@@ -101,7 +101,7 @@ describe('supply moves and eases back', () => {
     expect(supplyOf(half.world, m(CITY), thing, half.calendar.day)).toBeCloseTo(
       50 + 100 * 0.9 ** 6,
     );
-    const back = offerFor(later(r.state, 60 * 30), 'mouth-alchemy', thing);
+    const back = offerFor(later(r.state, 60 * 30), PLAYER_ID, 'mouth-alchemy', thing);
     expect(back.ok && back.each).toBeCloseTo(before.each, 0);
   });
 
@@ -109,7 +109,7 @@ describe('supply moves and eases back', () => {
     const s = withPlayer(life(), addItem(life().player, 'beast-core', 3));
     // The Wall's stall, lean (lots ×0.75) and small (sixty cultivators, ×0.5): a beast core, the
     // hunt's and outside the monthly sum, rises 10 ÷ 0.375 a lot from its written 100%.
-    const r = sell(s, 'wall-stall', 'beast-core', 1);
+    const r = sell(s, s.player.id, 'wall-stall', 'beast-core', 1);
     if (!r.ok) throw new Error(r.reason);
     expect(
       supplyOf(r.state.world, m('foot-of-the-wall'), 'beast-core', r.state.calendar.day),
@@ -125,8 +125,8 @@ describe('purses, lots and tiers', () => {
     expect(shopPurse(w, shop('wall-stall'), 0)).toBe(720);
     expect(shopPurse(w, shop('mouth-alchemy'), 0)).toBeCloseTo(3000, -3);
     const s = withPlayer(life(), addItem(life().player, 'foundation-pill', 1));
-    expect(sell(s, 'wall-stall', 'foundation-pill', 1)).toMatchObject({ ok: false });
-    const city = sell(s, 'mouth-alchemy', 'foundation-pill', 1);
+    expect(sell(s, s.player.id, 'wall-stall', 'foundation-pill', 1)).toMatchObject({ ok: false });
+    const city = sell(s, s.player.id, 'mouth-alchemy', 'foundation-pill', 1);
     expect(city.ok).toBe(true);
     expect(wanted(w, m(CITY), 'foundation-pill', 0)).toBe(true);
   });
@@ -324,7 +324,7 @@ describe('prosperity', () => {
     delete raw.state.world.prosperity;
     delete raw.state.world.supply;
     const old = loadSave(raw);
-    expect(old.version).toBe(56);
+    expect(old.version).toBe(57);
     expect(old.state.world.supply).toEqual({});
     expect(old.state.world.prosperity).toEqual({});
   });

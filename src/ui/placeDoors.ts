@@ -87,8 +87,8 @@ export function doorsOf(s: GameState, map: RegionMap, p: MapPlace): Door[] {
   // member (the organizations checkpoint).
   const seat = seatPowerAt(map, p);
   if (seat) {
-    const hall = eldersHall(s, seat);
-    const entry = entryOf(s, seat);
+    const hall = eldersHall(s, s.player.id, seat);
+    const entry = entryOf(s, s.player.id, seat);
     // Its training ground, where a member asks a senior, a fellow disciple or a junior to spar
     // (Fights you play).
     if (hall)
@@ -481,7 +481,7 @@ export function hallFront(doors: readonly Door[], member: boolean): Door[] {
 
 /** Whether you're a member of a power: its elders' hall knows you (a guest seat too). */
 export function memberOf(s: GameState, power: string | null): boolean {
-  return !!power && !!eldersHall(s, power);
+  return !!power && !!eldersHall(s, s.player.id, power);
 }
 
 // ---------------------------------------------------------------- village and wild site

@@ -12,26 +12,51 @@ import { type GameState } from '../state.ts';
 import { isOrganization, organization, houseOf } from './identity.ts';
 import { type SeatRange, seatOf, seatTitle, raiseEarly, seatsByRealm } from './seats.ts';
 import { membershipsOf } from './membership.ts';
-import { yearOf, monthOfYear, realmStageOf } from './trial.ts';
+import { yearOf, monthOfYear, innerTrial } from './trial.ts';
+import { cultivator, monthHolders, realmStageOf } from '../who.ts';
 import { isTop, allowanceOf, payAllowances } from './contribution.ts';
 import { dwellingDensity } from './dwelling.ts';
 import { quotaOf, settleQuotas, leaveOf, atSeat, countLeave } from './duty.ts';
 
 /**
- * Membership's day (O2, O3): the allowances as the month turns, then the quotas, the true seat for
- * a member well ahead of their years, and the leave the days away have taken; `home` says where a
- * member is home (core/jobs.ts `atHome`, which knows the posts and the map).
+ * Membership's day (O2, O3) for everyone a power's month runs over, you and the cast (N1): the
+ * allowances as the month turns, then the quotas, the inner seat by realm, the true seat for a
+ * member well ahead of their years, the cast's inner trial in its month, and the leave the days
+ * away have taken; `home` says where a member is home (core/jobs.ts `atHome`, which knows the posts
+ * and the map).
  */
 export function membershipDay(
   s: GameState,
   days: number,
-  home: (s: GameState, power: string) => boolean = atSeat,
+  home: (s: GameState, who: string, power: string) => boolean = atSeat,
 ): GameState {
-  let next = payAllowances(s);
-  next = settleQuotas(next);
-  next = seatsByRealm(next);
-  next = raiseEarly(next);
-  return countLeave(next, days, home);
+  let next = s;
+  for (const who of monthHolders(s)) {
+    next = payAllowances(next, who);
+    next = settleQuotas(next, who, home);
+    next = seatsByRealm(next, who);
+    next = raiseEarly(next, who);
+    if (!cultivator(next, who)) next = castTrial(next, who);
+    next = countLeave(next, who, days, home);
+  }
+  return next;
+}
+
+/**
+ * The cast sit the inner trial as its month turns (N1): every outer member the world keeps, once a
+ * year, by the same rule you sit it by.
+ */
+function castTrial(s: GameState, who: string): GameState {
+  const day = s.calendar.day;
+  if (monthOfYear(day) !== INNER_TRIAL.month) return s;
+  let state = s;
+  for (const m of membershipsOf(s.world, who)) {
+    if (!isOrganization(m.power) || m.guest || m.tried === yearOf(day)) continue;
+    if (seatOf(state.world, who, m.power, realmStageOf(state, who)) !== 'outer') continue;
+    const sat = innerTrial(state, who, m.power);
+    if (sat.ok) state = sat.state;
+  }
+  return state;
 }
 
 /** A seat's realms in words: "Qi Condensation 7–9", "Foundation Establishment", "Core Formation and below". */
@@ -73,13 +98,13 @@ export function treatmentWords(power: string, seat: SeatId): string | null {
 }
 
 /** Your memberships as the Character and People screens show them. */
-export function membershipsView(s: GameState) {
-  const r = realmStageOf(s);
-  return membershipsOf(s.world, s.player.id)
+export function membershipsView(s: GameState, who: string) {
+  const r = realmStageOf(s, who);
+  return membershipsOf(s.world, who)
     .filter((m) => isOrganization(m.power))
     .map((m) => {
       const org = organization(m.power);
-      const seat = m.guest ? 'elder' : seatOf(s.world, s.player.id, m.power, r)!;
+      const seat = m.guest ? 'elder' : seatOf(s.world, who, m.power, r)!;
       const a = allowanceOf(m.power, seat, r.realm, m.guest);
       const pills = a.pills > 0 ? ` and ${a.pills === 1 ? 'a pill' : `${a.pills} pills`}` : '';
       const dwelling = m.guest ? null : dwellingDensity(seat, m.power);

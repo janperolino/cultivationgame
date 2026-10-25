@@ -17,7 +17,7 @@ import { emptyWorld, heatOf, standingOf } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
 import { buy, offerFor, sell, shelf, standsAt, stockOf } from './shops.ts';
 import { styleLines } from './styles.ts';
-import { addItem, newLife, withPlayer, type GameState } from './state.ts';
+import { addItem, newLife, withPlayer, type GameState, PLAYER_ID } from './state.ts';
 
 const life = (seed = 'trading'): GameState => {
   const s = newLife({ name: 'Han Li', seed });
@@ -33,7 +33,7 @@ const nextMonth = (s: GameState): GameState => ({
 const withCopy = (s: GameState, id: string): GameState =>
   withPlayer(s, { ...s.player, copies: { ...s.player.copies, [id]: 1 } });
 const standing = (s: GameState, shopId: string, thing: string) =>
-  shelf(s, shopId).find((l) => l.standing && l.thing === thing);
+  shelf(s, s.player.id, shopId).find((l) => l.standing && l.thing === thing);
 
 const FOUND = 'method:pillar-shadow-nourishing';
 const GATE = 'method:butcher-saber';
@@ -51,7 +51,7 @@ describe('staples stand on the shelf where they are made', () => {
     const first = standing(s, small, 'spirit-rice')!;
     expect(first.n).toBeGreaterThan(200);
     for (let i = 0; i < 3; i++) {
-      const r = buy(s, small, first.slot, 20);
+      const r = buy(s, s.player.id, small, first.slot, 20);
       if (!r.ok) throw new Error(r.reason);
       s = r.state;
     }
@@ -73,7 +73,7 @@ describe('staples stand on the shelf where they are made', () => {
   it('is tiered like anything else: River-Bend’s Foundation free market stands tier 2 rice', () => {
     const s = life();
     const small = 'qm-hewan-cheng.stall-small';
-    const lines = shelf(s, small).filter((l) => l.standing);
+    const lines = shelf(s, s.player.id, small).filter((l) => l.standing);
     expect(lines.some((l) => l.thing === 'spirit-rice')).toBe(true);
     const t2 = lines.find((l) => l.thing.startsWith('spirit-rice~') && item(l.thing).tier === 2);
     expect(t2).toBeDefined();
@@ -102,10 +102,10 @@ describe('selling lot by lot', () => {
   it('ten lots sold at once fetch what ten sold one at a time do', () => {
     let s = life();
     s = withPlayer(s, addItem(s.player, 'spirit-rice', 200));
-    const once = sell(s, 'eyes-alchemy', 'spirit-rice', 200);
+    const once = sell(s, s.player.id, 'eyes-alchemy', 'spirit-rice', 200);
     let apart = s;
     for (let i = 0; i < 10; i++) {
-      const r = sell(apart, 'eyes-alchemy', 'spirit-rice', 20);
+      const r = sell(apart, apart.player.id, 'eyes-alchemy', 'spirit-rice', 20);
       if (!r.ok) throw new Error(r.reason);
       apart = r.state;
     }
@@ -115,12 +115,12 @@ describe('selling lot by lot', () => {
 
   it('Sinkhole Terraces wants rice, and the want fades as it fills', () => {
     let s = withPlayer(life(), addItem(life().player, 'spirit-rice', 200));
-    const first = offerFor(s, 'eyes-alchemy', 'spirit-rice');
+    const first = offerFor(s, s.player.id, 'eyes-alchemy', 'spirit-rice');
     expect(first.ok && first.wanted).toBe(true);
-    const r = sell(s, 'eyes-alchemy', 'spirit-rice', 200);
+    const r = sell(s, s.player.id, 'eyes-alchemy', 'spirit-rice', 200);
     if (!r.ok) throw new Error(r.reason);
     s = r.state;
-    const later = offerFor(s, 'eyes-alchemy', 'spirit-rice');
+    const later = offerFor(s, s.player.id, 'eyes-alchemy', 'spirit-rice');
     expect(later.ok && first.ok && later.each < first.each).toBe(true);
     // The terraces eat about 1,900 sacks a month, so ten lots move it 100 points a month's worth
     // (E4): about ten.
@@ -137,8 +137,8 @@ describe('selling lot by lot', () => {
 describe('mortal staples trade in taels', () => {
   it('a terrace store buys millet in silver, and a stall won’t touch it', () => {
     const s = withPlayer(life(), addItem(life().player, 'frontier-millet', 20));
-    expect(offerFor(s, 'eyes-stall', 'frontier-millet').ok).toBe(false);
-    const r = sell(s, 'eyes-mortal', 'frontier-millet', 20);
+    expect(offerFor(s, s.player.id, 'eyes-stall', 'frontier-millet').ok).toBe(false);
+    const r = sell(s, s.player.id, 'eyes-mortal', 'frontier-millet', 20);
     if (!r.ok) throw new Error(r.reason);
     expect(r.state.player.silver).toBeGreaterThan(s.player.silver);
     expect(r.state.player.stones).toBe(s.player.stones);
@@ -150,14 +150,14 @@ describe('a found method spreads once sold', () => {
   it('sold at the City, it is on its shelf next month and on Corral Town’s', () => {
     let s = withCopy(life(), FOUND);
     const city = market('qm-shoukou-cheng')!;
-    const offer = offerFor(s, 'mouth-guild', FOUND);
+    const offer = offerFor(s, s.player.id, 'mouth-guild', FOUND);
     expect(offer.ok && offer.wanted).toBe(true);
-    const r = sell(s, 'mouth-guild', FOUND);
+    const r = sell(s, s.player.id, 'mouth-guild', FOUND);
     if (!r.ok) throw new Error(r.reason);
     s = r.state;
     // Copied at once, so the next one is paid the shop's rate…
     expect(seenIn(s.world, city, FOUND).source).toBe('made');
-    const again = offerFor(withCopy(s, FOUND), 'mouth-guild', FOUND);
+    const again = offerFor(withCopy(s, FOUND), PLAYER_ID, 'mouth-guild', FOUND);
     expect(again.ok && !again.wanted && offer.ok && again.each < offer.each).toBe(true);
     // …and on the shelves from next month, here and lent through the City's reach.
     expect(standing(s, 'mouth-stall', FOUND)).toBeUndefined();
@@ -181,15 +181,15 @@ describe('a power’s methods are guarded', () => {
   it('is refused at the Gate’s own hall with heat, refused at the City, and bought at the Night Bridge', () => {
     const s = withCopy(life(), GATE);
     const day = s.calendar.day;
-    const gate = sell(s, 'gate-sect', GATE);
+    const gate = sell(s, s.player.id, 'gate-sect', GATE);
     expect(gate.ok).toBe(false);
     if (gate.ok || !gate.state) throw new Error('the Gate should know it');
     expect(heatOf(gate.state.world, 'qm-tushou-men', day)).toBe(2);
     expect(standingOf(gate.state.world, 'qm-tushou-men', s.player.id, day).total).toBeLessThan(
       standingOf(s.world, 'qm-tushou-men', s.player.id, day).total,
     );
-    expect(sell(s, 'mouth-guild', GATE).ok).toBe(false);
-    const bridge = sell(s, 'bridge-black', GATE);
+    expect(sell(s, s.player.id, 'mouth-guild', GATE).ok).toBe(false);
+    const bridge = sell(s, s.player.id, 'bridge-black', GATE);
     if (!bridge.ok) throw new Error(bridge.reason);
     expect(bridge.state.player.copies[GATE]).toBe(0);
     // It leaks at the sea-cave market alone: never on an honest shelf, never lent.
@@ -205,7 +205,7 @@ describe('sealed slips', () => {
     expect(copyForm(SEALED)).toBe('sealed');
     expect(spreads(SEALED, false)).toBe(false);
     const s = withCopy(life(), SEALED);
-    const r = sell(s, 'mouth-guild', SEALED);
+    const r = sell(s, s.player.id, 'mouth-guild', SEALED);
     if (!r.ok) throw new Error(r.reason);
     const city = market('qm-shoukou-cheng')!;
     expect(r.state.world.copied[city.id]?.[SEALED]).toBeUndefined();
@@ -236,7 +236,7 @@ describe('a copy’s form', () => {
 
 describe('the save', () => {
   it('keeps a market’s copies, and a v34 save loads with none', () => {
-    const r = sell(withCopy(life(), FOUND), 'mouth-guild', FOUND);
+    const r = sell(withCopy(life(), FOUND), PLAYER_ID, 'mouth-guild', FOUND);
     if (!r.ok) throw new Error(r.reason);
     const back = loadSave(JSON.parse(JSON.stringify(makeSave(r.state, 1))));
     expect(back.state.world.copied).toEqual(r.state.world.copied);
@@ -247,7 +247,7 @@ describe('the save', () => {
     raw.version = 34;
     delete raw.state.world.copied;
     const old = loadSave(raw);
-    expect(old.version).toBe(56);
+    expect(old.version).toBe(57);
     expect(old.state.world.copied).toEqual({});
   });
 });

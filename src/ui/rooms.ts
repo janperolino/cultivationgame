@@ -70,7 +70,7 @@ export function departmentsOf(
 
 /** A craft shop's side, from its own shelf this month: the lots of the kinds it makes. */
 export function craftShelf(s: GameState, shopId: string, kinds: readonly ItemKind[]): StockLot[] {
-  return shelf(s, shopId).filter((l) => {
+  return shelf(s, s.player.id, shopId).filter((l) => {
     const k = kindOf(l.thing);
     return !!k && kinds.includes(k);
   });

@@ -157,7 +157,7 @@ for (const [origin, hire] of ROGUES) {
     minutes++;
   }
   s = switchMethod(s, 'qi', Object.keys(s.player.methods)[0]!).state;
-  const took = takeJob(s, hire);
+  const took = takeJob(s, s.player.id, hire);
   if (took.ok) s = took.state;
   while (s.player.qi.stage < 9 && s.player.qi.realm === 'qi-condensation' && minutes < 600) {
     s = advance(s, 60_000, { step: playDay, seat: SEAT }).state;

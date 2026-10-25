@@ -138,7 +138,7 @@ export function densityOf(s: GameState, d: Dwelling): number {
 /** A dwelling's name: its kind's, or the seat's for your quarters. */
 export function dwellingName(s: GameState, d: Dwelling): string {
   if (d.kind === 'quarters' && d.power) {
-    const seat = seatOf(s.world, s.player.id, d.power, realmStageOf(s));
+    const seat = seatOf(s.world, s.player.id, d.power, realmStageOf(s, s.player.id));
     if (organization(houseOf(d.power)).type === 'dynasty') return BUNK_NAME;
     return seat ? QUARTERS_NAMES[seat] : DWELLINGS.quarters.name;
   }
@@ -521,7 +521,7 @@ export function sphereAt(map: RegionMap, at: [number, number]): string | null {
  */
 function squatOn(s: GameState, power: string | null): string | null {
   if (!power) return null;
-  const seat = seatOf(s.world, s.player.id, power, realmStageOf(s));
+  const seat = seatOf(s.world, s.player.id, power, realmStageOf(s, s.player.id));
   return seat && SEAT_IDS.indexOf(seat) >= SEAT_IDS.indexOf('elder') ? null : power;
 }
 
@@ -968,7 +968,7 @@ export function syncQuarters(s: GameState): GameState {
     if (!place) continue;
     // One a place: a room you already hold there serves (review 2026-10-21).
     if (c.dwellings.some((x) => x.place === place && x.held !== 'seat')) continue;
-    const seat = seatOf(s.world, s.player.id, m.power, realmStageOf(s));
+    const seat = seatOf(s.world, s.player.id, m.power, realmStageOf(s, s.player.id));
     if (!seat) continue;
     const q = QUARTERS[seat];
     const vein = Math.max(0, veinAt(place));

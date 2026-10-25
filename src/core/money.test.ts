@@ -25,7 +25,7 @@ import {
 import { applyEffects } from './resolver/effects.ts';
 import { loadSave, makeSave } from './save/format.ts';
 import { offerFor, sell } from './shops.ts';
-import { addItem, newLife, withPlayer, type GameState } from './state.ts';
+import { addItem, newLife, withPlayer, type GameState, PLAYER_ID } from './state.ts';
 
 const life = (seed = 'money'): GameState => newLife({ name: 'Han Li', seed });
 const at = (low: number, mid = 0, high = 0, top = 0): Stones => [low, mid, high, top];
@@ -92,14 +92,14 @@ describe('sales by the vein', () => {
     const s = life();
     // Something the City's guild pays well for, sold in a lot worth more than a mid.
     const thing = ITEMS.map((x) => x.id).find((id) => {
-      const o = offerFor(s, 'mouth-guild', id);
+      const o = offerFor(s, s.player.id, 'mouth-guild', id);
       return o.ok && o.each >= 100 && o.each <= 1000;
     })!;
-    const each = (offerFor(s, 'mouth-guild', thing) as { each: number }).each;
+    const each = (offerFor(s, s.player.id, 'mouth-guild', thing) as { each: number }).each;
     // Lot by lot the price falls as the City fills (E3), so offer well past 2,400.
     const n = Math.ceil(10_000 / each);
     const held = withPlayer(s, addItem(s.player, thing, n));
-    const city = sell(held, 'mouth-guild', thing, n);
+    const city = sell(held, held.player.id, 'mouth-guild', thing, n);
     if (!city.ok) throw new Error(city.reason);
     // Sold lot by lot (E3), the price falls as the City fills, so the total is under each × n.
     const total = worthOf(stonesOf(city.state.player)) - worthOf(stonesOf(held.player));
@@ -108,9 +108,15 @@ describe('sales by the vein', () => {
     expect(city.state.player.stones - held.player.stones).toBeCloseTo(total % 1000, 6);
     // The Wall's stall, in a village on a tier 1 vein, pays in low whatever it buys.
     const herb = ITEMS.map((x) => x.id).find(
-      (id) => itemKind(item(id)) === 'herb' && offerFor(s, 'wall-stall', id).ok,
+      (id) => itemKind(item(id)) === 'herb' && offerFor(s, s.player.id, 'wall-stall', id).ok,
     )!;
-    const village = sell(withPlayer(s, addItem(s.player, herb, 10)), 'wall-stall', herb, 10);
+    const village = sell(
+      withPlayer(s, addItem(s.player, herb, 10)),
+      PLAYER_ID,
+      'wall-stall',
+      herb,
+      10,
+    );
     if (!village.ok) throw new Error(village.reason);
     expect(village.state.player.higherStones).toEqual({ mid: 0, high: 0, top: 0 });
     expect(village.state.player.stones).toBeGreaterThan(0);
@@ -150,7 +156,7 @@ describe('the v33 save', () => {
     const s = life();
     const part = withPlayer(s, { ...s.player, higherStones: { mid: 2.4375, high: 1, top: 0 } });
     const loaded = loadSave(JSON.parse(JSON.stringify(makeSave(part, 1))));
-    expect(loaded.version).toBe(56);
+    expect(loaded.version).toBe(57);
     expect(loaded.state.player.higherStones).toEqual({ mid: 2.4375, high: 1, top: 0 });
     const raw = JSON.parse(JSON.stringify(makeSave(s, 1))) as { version: number };
     raw.version = 32;

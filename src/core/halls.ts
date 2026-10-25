@@ -20,7 +20,6 @@ import {
   isOrganization,
   membership,
   membershipsOf,
-  realmStageOf,
   seatOf,
   seatRank,
   theName,
@@ -30,24 +29,25 @@ import { priceOf } from './prices.ts';
 import { foeHeld } from './resolver/opinion.ts';
 import { standingOf } from './resolver/world.ts';
 import type { GameState } from './state.ts';
+import { cultivator, realmStageOf } from './who.ts';
 
 /** How a members' shop serves you: as its own, as its guest elder, at its open counter, or not. */
 type HallTerms =
   { as: 'member' } | { as: 'guest' } | { as: 'counter' } | { as: 'shut'; why: string };
 
 /**
- * How a sect's hall serves the player (O2): its members in its currency; a guest elder, who earns
+ * How a sect's hall serves someone (O2): its members in its currency; a guest elder, who earns
  * none, in stones at the market's price with the members' lines; an outsider its power stands
  * friendly with or better at the open counter. Null for a shop that serves anyone.
  */
-export function hallTerms(s: GameState, sh: Shop): HallTerms | null {
+export function hallTerms(s: GameState, who: string, sh: Shop): HallTerms | null {
   if (!SHOP_KIND_INFO[sh.kind].members || !sh.power) return null;
   const house = isOrganization(sh.power) ? houseOf(sh.power) : sh.power;
-  const m = membership(s.world, s.player.id, house);
+  const m = membership(s.world, who, house);
   if (m) return m.guest ? { as: 'guest' } : { as: 'member' };
-  const word = standingOf(s.world, house, s.player.id, s.calendar.day).word;
+  const word = standingOf(s.world, house, who, s.calendar.day).word;
   if (wordRank(word) >= wordRank(OPEN_COUNTER.from)) return { as: 'counter' };
-  const foe = foeHeld(s.world, house, s.player.id);
+  const foe = foeHeld(s.world, house, who);
   if (foe)
     return {
       as: 'shut',
@@ -84,14 +84,14 @@ export function pavilionKeeps(sh: Shop, thing: string): boolean {
  * The share a harsh power takes of what its outer and inner seats bring in (design: a tithe of
  * 30% on bounties and loot brought in): a bounty paid, or loot sold at its own hall.
  */
-export function titheFor(s: GameState, sh: Shop): number {
-  const r = realmStageOf(s);
+export function titheFor(s: GameState, who: string, sh: Shop): number {
+  const r = realmStageOf(s, who);
   let share = 0;
-  for (const m of membershipsOf(s.world, s.player.id)) {
+  for (const m of membershipsOf(s.world, who)) {
     if (!isOrganization(m.power)) continue;
     const ours = !!sh.power && isOrganization(sh.power) && houseOf(sh.power) === m.power;
     if (sh.kind !== 'bounty' && !ours) continue;
-    share = Math.max(share, titheOf(s.world, s.player.id, m.power, r));
+    share = Math.max(share, titheOf(s.world, who, m.power, r));
   }
   return share;
 }
@@ -130,12 +130,12 @@ interface PavilionLine {
   open: boolean;
 }
 
-/** The pavilion's shelves as the player sees them, or null for one who isn't its member. */
-export function pavilion(s: GameState, power: string): PavilionLine[] | null {
+/** The pavilion's shelves as a member sees them, or null for one who isn't its member. */
+export function pavilion(s: GameState, who: string, power: string): PavilionLine[] | null {
   const house = houseOf(power);
-  const m = membership(s.world, s.player.id, house);
+  const m = membership(s.world, who, house);
   if (!m || m.guest) return null;
-  const yours = seatOf(s.world, s.player.id, house, realmStageOf(s))!;
+  const yours = seatOf(s.world, who, house, realmStageOf(s, who))!;
   return pavilionChapters(house).map((thing) => {
     const seat = chapterSeat(thing);
     return {
@@ -154,17 +154,21 @@ export function pavilion(s: GameState, power: string): PavilionLine[] | null {
  */
 export function buyChapter(
   s: GameState,
+  who: string,
   power: string,
   thing: string,
 ): { ok: true; state: GameState } | { ok: false; reason: string } {
+  // A copy is read into a method's tree, which only a full cultivator keeps (N1).
+  if (!cultivator(s, who))
+    return { ok: false, reason: 'Only a cultivator who reads keeps a copy.' };
   const house = houseOf(power);
-  const lines = pavilion(s, house);
+  const lines = pavilion(s, who, house);
   if (!lines) return { ok: false, reason: 'The pavilion is for its own disciples.' };
   const line = lines.find((l) => l.thing === thing);
   if (!line) return { ok: false, reason: 'The pavilion keeps no such chapter.' };
   if (!line.open) return { ok: false, reason: `Chapter ${line.chapter} is for higher seats.` };
-  const m = membership(s.world, s.player.id, house)!;
+  const m = membership(s.world, who, house)!;
   if (m.balance < line.points) return { ok: false, reason: 'Your balance won’t cover it.' };
-  const paid = { ...s, world: addBalance(s.world, s.player.id, house, -line.points) };
+  const paid = { ...s, world: addBalance(s.world, who, house, -line.points) };
   return { ok: true, state: gainCopy(paid, thing, 'buys') };
 }

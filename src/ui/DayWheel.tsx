@@ -394,7 +394,7 @@ function DutyNote({ game, pick }: { game: GameState; pick: HourPick }) {
 
 /** The wheel's shifts: each job you hold, missed while you are away from its post. */
 function shiftsOf(game: GameState, road = false): Shift[] {
-  return jobsView(game)
+  return jobsView(game, game.player.id)
     .filter((j) => j.shift.length > 0)
     .map((j) => ({
       id: j.id,

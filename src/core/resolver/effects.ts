@@ -280,7 +280,7 @@ export function applyEffects(
                 you: e.who === you,
                 region: e.region,
                 by: e.by,
-                ...(e.who === you ? { realm: realmStageOf(state) } : {}),
+                ...(e.who === you ? { realm: realmStageOf(state, state.player.id) } : {}),
               }).world
             : leavePower(state.world, e.who, e.power, day, {
                 you: e.who === you,
