@@ -259,7 +259,7 @@ describe('the save', () => {
     delete raw.state.player.crafts.marked;
     delete raw.state.player.crafts.renown;
     const back = loadSave(raw);
-    expect(back.version).toBe(57);
+    expect(back.version).toBe(58);
     expect(back.state.player.crafts).toEqual(emptyCrafts());
   });
 

@@ -284,7 +284,8 @@ describe('offline', () => {
     const cards = away.state.chronicle.filter((e) => e.type === 'card');
     expect(away.state.cards.pending.length + cards.length).toBeGreaterThanOrEqual(3);
     expect(away.state.cards.pending.length).toBeLessThanOrEqual(3);
-  });
+    // Twelve hours away, the Border Wilds' cast living each season of it (N2).
+  }, 90_000);
 
   it('holds the seclusion deck until the chain’s first lesson is handed in', () => {
     const s = life();

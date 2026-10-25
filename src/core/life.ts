@@ -74,7 +74,7 @@ import {
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
 import { densityHere, membershipDay, protectorOf, protectorSpent } from './organizations.ts';
-import { castPills } from './cast.ts';
+import { castDay } from './regionalCast.ts';
 import { cultivator, withCultivator } from './who.ts';
 import { bedNights } from './map/place.ts';
 import { dwellingOpens, dwellingsDay } from './dwellings.ts';
@@ -264,10 +264,11 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   const you = next.player.id;
   next = jobsDay(next, you, s.calendar.day - days, s.calendar.day, !!road);
   // Each power pays its allowance as the month turns (O2), takes its quota and counts the leave
-  // (O3), for you and every cast member who belongs to it (N1); then the cast's purses buy the
-  // breakthrough pill they save for.
+  // (O3), for you and every cast member who belongs to it (N1).
   next = membershipDay(next, days, atHome);
-  next = castPills(next, s.calendar.day - days);
+  // The regional cast lives its seasons, its purses shopping for the pills they save for as each
+  // season turns: the region you stand in each one, the rest a year at a time in summary (N2).
+  next = castDay(next, s.calendar.day - days);
   // The bench works its Craft hours wherever you seclude, never on the road (K1).
   if (!road) next = benchDay(next, you, days, ctx?.seat?.hand);
   // The plots grow wherever you are, tended where you stand (K8).

@@ -5,6 +5,7 @@ import {
   TREATMENT_RULES,
   type SeatId,
 } from '../../content/organizations.ts';
+import { DAYS_PER_MONTH } from '../../content/calendar.ts';
 import { realm, realmIndex, type RealmId } from '../../content/realms.ts';
 import { priceWords } from '../purse.ts';
 import { type Member } from '../resolver/world.ts';
@@ -14,7 +15,7 @@ import { type SeatRange, seatOf, seatTitle, raiseEarly, seatsByRealm } from './s
 import { membershipsOf } from './membership.ts';
 import { yearOf, monthOfYear, innerTrial } from './trial.ts';
 import { cultivator, monthHolders, realmStageOf } from '../who.ts';
-import { isTop, allowanceOf, payAllowances } from './contribution.ts';
+import { isTop, allowanceOf, monthIndex, payAllowances } from './contribution.ts';
 import { dwellingDensity } from './dwelling.ts';
 import { quotaOf, settleQuotas, leaveOf, atSeat, countLeave } from './duty.ts';
 
@@ -31,7 +32,20 @@ export function membershipDay(
   home: (s: GameState, who: string, power: string) => boolean = atSeat,
 ): GameState {
   let next = s;
+  // The cast's month is read as it turns, its days away counted a month at a time (N2: a region's
+  // cast is some 200 people, and nothing of theirs moves between the turns).
+  const turned = monthIndex(s.calendar.day - days) !== monthIndex(s.calendar.day);
   for (const who of monthHolders(s)) {
+    if (!cultivator(next, who)) {
+      if (!turned) continue;
+      next = payAllowances(next, who);
+      next = settleQuotas(next, who, home);
+      next = seatsByRealm(next, who);
+      next = raiseEarly(next, who);
+      next = castTrial(next, who);
+      next = countLeave(next, who, DAYS_PER_MONTH, home);
+      continue;
+    }
     next = payAllowances(next, who);
     next = settleQuotas(next, who, home);
     next = seatsByRealm(next, who);

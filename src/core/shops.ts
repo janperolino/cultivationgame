@@ -586,6 +586,28 @@ export function stockOf(shopId: string, month: number, w: World = EMPTY): StockL
   return out;
 }
 
+const stocking = new Map<string, boolean>();
+
+/**
+ * Whether a shop could ever stock a thing, in any month: a display lot it can roll, a good its
+ * market stands with it as the seller, a hall's or a style's own line. The regional cast reads only
+ * those shelves for their pill (N2).
+ */
+export function mayStock(shopId: string, thing: string): boolean {
+  const key = `${shopId}|${thing}`;
+  let may = stocking.get(key);
+  if (may === undefined) {
+    const s = shopById(shopId);
+    const is = (l: { thing: string }) => baseOf(l.thing) === thing;
+    may =
+      everyCandidate(s).some((c) => is(c.lot)) ||
+      styleLines(s).some(is) ||
+      (keepsOwn(s) ? hallLines(s).some(is) : sellsHere(s, marketOfShop(s.id), thing));
+    stocking.set(key, may);
+  }
+  return may;
+}
+
 /** What you have done to a shop this month: nothing, when the month has turned. */
 export function shopMonth(w: World, shopId: string, day: number): ShopMonth {
   const m = monthIndex(day);

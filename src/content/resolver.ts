@@ -180,6 +180,15 @@ export const DEEDS = {
    * methods): the evidence is the copy. It moves no heat; the hunt is read from the leaks.
    */
   leak: { name: 'a method leaked', heat: 0 },
+  // The regional cast's acts (N2), one deed each so the Ways can count them: a power joined, a
+  // season's hunt or trade, a duel, a companion taken, a child born and a journey made.
+  join: { name: 'a power joined', heat: 0 },
+  hunt: { name: 'a hunt', heat: 0 },
+  trade: { name: 'a season of trade', heat: 0 },
+  duel: { name: 'a duel', heat: 0 },
+  wed: { name: 'a companion taken', heat: 0 },
+  birth: { name: 'a child born', heat: 0 },
+  journey: { name: 'a journey', heat: 0 },
 } as const satisfies Record<string, DeedInfo>;
 export type DeedKind = keyof typeof DEEDS;
 export const DEED_KINDS = Object.keys(DEEDS) as DeedKind[];

@@ -117,12 +117,12 @@ export function leaveOf(power: string, seat: SeatId, guest = false): number {
 
 /**
  * Whether someone is at a power's seat or a branch hall of it: home, not on leave. You stand where
- * the map has you; a cast member is where they live (their `home`, until N2's whereabouts).
+ * the map has you; a cast member is where this season finds them (N2), else where they live.
  */
 export function atSeat(s: GameState, who: string, power: string): boolean {
   const k = castOf(s, who);
   if (!k && !s.map) return true;
-  const place = k ? k.home : s.map!.inside;
+  const place = k ? (k.at ?? k.home) : s.map!.inside;
   if (!place) return false;
   return place === power || (isOrganization(place) && organization(place).branchOf === power);
 }
