@@ -7,6 +7,7 @@
 // people are to each other, made by deeds. Nothing here imports world.ts at run time, so the world
 // can import this.
 import { z } from 'zod';
+import { PEDIGREE_IDS } from '../../content/enemies.ts';
 import { REALM_IDS } from '../../content/realms.ts';
 import {
   DEED_MEMORY,
@@ -176,6 +177,30 @@ export const KeptSchema = z.object({
    */
   purse: z.number().min(0).optional(),
   held: z.record(z.string(), z.number().int().min(1)).optional(),
+  /**
+   * The regional cast (N2): the region whose cast they are (absent for anyone else kept), their
+   * pedigree, the day they reached their stage, where this season finds them, the season they are
+   * hurt through, their folded deeds counted by kind, their children not yet tested, and how they
+   * died.
+   */
+  region: z.string().optional(),
+  pedigree: z.enum(PEDIGREE_IDS).optional(),
+  since: z.number().optional(),
+  at: z.string().optional(),
+  hurt: z.number().int().optional(),
+  tally: z.record(z.string(), z.number().int().min(1)).optional(),
+  /** A made person's first day kept (N2), which their going away is counted from. */
+  made: z.number().optional(),
+  /** The birth years of their children still too young to test: a seed each until 12. */
+  children: z.array(z.number().int()).optional(),
+  died: z
+    .object({
+      day: z.number(),
+      how: z.enum(['age', 'hunt', 'duel']),
+      place: z.string(),
+      by: z.string().optional(),
+    })
+    .optional(),
 });
 export type Kept = z.infer<typeof KeptSchema>;
 

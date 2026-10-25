@@ -393,7 +393,7 @@ describe('the coming-back story', () => {
     expect(story.settled).toBeGreaterThan(5);
     expect(story.highlights.length).toBeGreaterThan(0);
     expect(story.highlights.length).toBeLessThanOrEqual(4);
-  });
+  }, 90_000);
 
   it('tells qi gathered when no step was climbed', () => {
     // Eight real minutes read the method on its one study hour; the minute after is the one told.

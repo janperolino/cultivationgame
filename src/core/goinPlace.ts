@@ -239,7 +239,8 @@ function presentAt(s: GameState, placeId: string, f: Frame, day: number): Actor[
   if (f.kind === 'street') {
     for (const id of Object.keys(s.world.kept)) {
       const k = s.world.kept[id]!;
-      if (k.home !== placeId || s.world.people[id] === 'dead') continue;
+      // The regional cast stands in a place's streets from N3.
+      if (k.home !== placeId || k.region || s.world.people[id] === 'dead') continue;
       const rng = new Rng(hashSeed(`about/${id}/${Math.floor(day)}/${branchOf(day)}`));
       if (!rng.chance(0.5)) continue;
       const a = keptActor(s, id);

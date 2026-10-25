@@ -145,6 +145,8 @@ export const HUNDRED_REINS: Catalog = {
     { thing: 'paired-rider-lance', shops: ['sect'], weight: 0.5, members: true },
     { thing: 'storm-hawk-pinion-talisman', shops: ['sect'], count: [1, 3] },
     { thing: 'shared-blood-pill', shops: ['sect'], count: [1, 4], members: true },
+    // A power headed at Core Formation or above sells its elders the core-forming pill (N2).
+    { thing: 'core-forming-pill', shops: ['sect'], weight: 0.001, members: true },
     { thing: 'technique:thunder-hoof-trample', shops: ['sect'], weight: 0.2 },
   ],
 };
@@ -426,6 +428,7 @@ export const BOUND_BONES: Catalog = {
     { thing: 'manual:bone-binding-array-canon', shops: ['sect'], weight: 0.3, members: true },
     { thing: 'skull-socket-robe', shops: ['sect'], weight: 0.5 },
     { thing: 'bone-binding-talisman', shops: ['sect'], count: [1, 3], members: true },
+    { thing: 'core-forming-pill', shops: ['sect'], weight: 0.001, members: true },
     { thing: 'array-plate-blank', shops: ['sect'], count: [2, 6] },
     { thing: 'bone-binding-flags', shops: ['sect'], weight: 0.3, members: true },
     { thing: 'spirit-quelling-disc', shops: ['sect'], weight: 0.3, members: true },

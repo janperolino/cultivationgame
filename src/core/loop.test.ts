@@ -95,5 +95,6 @@ describe('a long time away in slices', () => {
     expect(sliced.state.calendar.day).toBeCloseTo(whole.state.calendar.day, 6);
     expect(sliced.state.player.qi).toEqual(whole.state.player.qi);
     expect(sliced.state.chronicle.length).toBe(whole.state.chronicle.length);
-  });
+    // Twelve hours away twice over, the Border Wilds' cast living each season of it (N2).
+  }, 90_000);
 });

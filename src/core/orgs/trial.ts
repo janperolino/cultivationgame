@@ -112,6 +112,7 @@ function trialField(s: GameState, power: string, who: string): number[] {
   const top = seatRanges(house).outer.to;
   const field = Object.entries(s.world.kept)
     .filter(([id, k]) => id !== who && k.realm && houseOf(k.power ?? '') === house)
+    .filter(([id]) => s.world.people[id] !== 'dead')
     .filter(([, k]) => rank(k.realm!) <= rank(top))
     .map(([, k]) => sizeAt(k.realm!));
   for (const c of fullCultivators(s)) {

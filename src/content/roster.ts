@@ -286,7 +286,36 @@ export const BORDER_WILDS: readonly Template[] = [
   },
 ];
 
-const byId = new Map(BORDER_WILDS.map((t) => [t.id, t]));
+/**
+ * The regional cast's templates (N2), one a pedigree: a cast member's kit regenerates from theirs
+ * and their seed at the realm they reached. Never drawn by an encounter, which names its own.
+ */
+const CAST_BAND = [
+  'qi-condensation',
+  'foundation-establishment',
+  'core-formation',
+  'nascent-soul',
+] as const;
+const castTemplate = (pedigree: PedigreeId, name: string): CultivatorTemplate => ({
+  id: `cast-${pedigree}`,
+  name,
+  kind: 'cultivator',
+  pedigree,
+  weapon: 'sword',
+  element: null,
+  band: CAST_BAND,
+  profile: 'cautious',
+  notes: 'the regional cast: a seed and pins',
+});
+export const CAST_TEMPLATES: readonly Template[] = [
+  castTemplate('rogue', 'Rogue cultivator'),
+  castTemplate('small-sect', 'Small-sect cultivator'),
+  castTemplate('great-sect', 'Great-sect cultivator'),
+  castTemplate('sacred-land', 'Sacred-land cultivator'),
+  castTemplate('chosen', 'Chosen of heaven'),
+];
+
+const byId = new Map([...BORDER_WILDS, ...CAST_TEMPLATES].map((t) => [t.id, t]));
 
 export function template(id: string): Template {
   const t = byId.get(id);

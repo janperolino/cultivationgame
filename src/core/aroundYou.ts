@@ -50,9 +50,9 @@ export function aroundLine(s: GameState, placeId: string, n: number): AroundLine
   if (word.length && rng.chance(0.3)) {
     return { text: `People are talking: ${rng.pick(word)}.`, card: null };
   }
-  // The kept who live here, going about.
+  // The kept who live here, going about; the regional cast fills Around you from N3.
   const kept = Object.entries(s.world.kept).filter(
-    ([id, k]) => k.home === placeId && s.world.people[id] !== 'dead',
+    ([id, k]) => k.home === placeId && !k.region && s.world.people[id] !== 'dead',
   );
   if (kept.length && rng.chance(0.25)) {
     const [, k] = rng.pick(kept);

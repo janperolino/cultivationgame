@@ -33,7 +33,18 @@ const id = (i: number): RealmId => REALMS[Math.max(0, i)]!.id;
  * counted under, the inner realm split at layer 7. A power without a population reads its written
  * top as one at the top (O1's talk), and one with neither its vein. A power overrides any of it.
  */
+const ladders = new Map<string, Ladder>();
+
 export function ladderOf(power: string): Ladder {
+  const hit = ladders.get(power);
+  if (hit) return hit;
+  const l = readLadder(power);
+  ladders.set(power, l);
+  return l;
+}
+
+/** The ladder as the population reads it: content only, so it is read once a power. */
+function readLadder(power: string): Ladder {
   const org = organization(houseOf(power));
   const counts: number[] = REALMS.map(() => 0);
   const pop = org.row.population;

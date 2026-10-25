@@ -221,12 +221,14 @@ describe('who acts: actions name who acts', () => {
 
 describe('who acts: the purse buys the next breakthrough pill', () => {
   /** The first month and shop (never a black market) whose shelf carries a Foundation Pill. */
-  function pillOnSale(s: GameState): { month: number; shop: string } {
+  /** A month the pill is on a shelf; with `season`, one that opens a season (the day step's). */
+  function pillOnSale(s: GameState, season = false): { month: number; shop: string } {
     for (
       let month = monthIndex(s.calendar.day) + 1;
       month < monthIndex(s.calendar.day) + 120;
       month++
     ) {
+      if (season && month % 3 !== 0) continue;
       for (const sh of SHOPS) {
         if (sh.kind === 'black-market' || SHOP_KIND_INFO[sh.kind].money === 'silver') continue;
         if (SHOP_KIND_INFO[sh.kind].members || !marketOfShop(sh.id)) continue;
@@ -263,14 +265,17 @@ describe('who acts: the purse buys the next breakthrough pill', () => {
     expect(heldOf(p, LAN, 'foundation-pill')).toBe(0);
   });
 
-  it('runs inside the day step you live by', () => {
+  it('runs inside the day step you live by, as the season turns (N2)', () => {
     const base = life();
-    const sale = pillOnSale(base);
+    const sale = pillOnSale(base, true);
     const home = marketOfShop(sale.shop)!.id;
-    const s0 = withLan(base, { realm: { realm: QC, stage: 9 }, home, purse: 5000 });
     const day = sale.month * DAYS_PER_MONTH;
-    const before = { ...s0, calendar: { ...s0.calendar, day: day - 0.5 } };
-    const after = cultivate({ ...before, calendar: { ...before.calendar, day } }, 0.5, { offline: true });
+    // She joins the day before, so the months away from her seat don't strike her off first.
+    const eve = { ...base, calendar: { ...base.calendar, day: day - 0.5 } };
+    const before = withLan(eve, { realm: { realm: QC, stage: 9 }, home, purse: 5000 });
+    const after = cultivate({ ...before, calendar: { ...before.calendar, day } }, 0.5, {
+      offline: true,
+    });
     expect(heldOf(after, LAN, 'foundation-pill')).toBe(1);
   });
 });
@@ -279,7 +284,7 @@ describe('who acts: the save', () => {
   it('keeps a cast member’s purse and held items (v57), and an old save starts them empty', () => {
     const s = giveTo(withLan(life(), { purse: 12.5 }), LAN, ALLOWANCE_PILL, 3);
     const back = loadSave(JSON.parse(JSON.stringify(makeSave(s, 0))));
-    expect(back.version).toBe(57);
+    expect(back.version).toBe(58);
     expect(back.state.world.kept[LAN]?.purse).toBe(12.5);
     expect(back.state.world.kept[LAN]?.held).toEqual({ [ALLOWANCE_PILL]: 3 });
     const old = { ...makeSave(withLan(life()), 0), version: 56 };
