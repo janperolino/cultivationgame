@@ -13,7 +13,7 @@ import { BRANCHES } from '../content/hours.ts';
 import { DOOR_KINDS } from '../content/doorKinds.ts';
 import { hasItem, item } from '../content/items.ts';
 import { realm as realmInfo, stageName } from '../content/realms.ts';
-import { ACTS, COSTS, SHORTS, type ActInfo } from '../content/resolver.ts';
+import { ACTS, COSTS, SHORTS, TICKS_PER_DAY, type ActInfo } from '../content/resolver.ts';
 import {
   fallFate,
   leaveView,
@@ -53,6 +53,7 @@ import {
   tellAgain,
   useGoIn,
   wait,
+  waitUntil,
 } from './goin.ts';
 import { reducedMotion, useSettings } from './settings.ts';
 import { useReveal } from './reveal.ts';
@@ -207,7 +208,8 @@ function Head({ s, f }: { s: GameState; f: Fight | null }) {
   const g = s.goin!;
   const enc = sceneEncounter(s);
   const t = enc ? encounterTemplate(enc.template) : null;
-  const b = BRANCHES[hourOfDay(s.calendar.day)]!;
+  // The world's clock holds in a scene; the scene's own runs on (P3.9w, so Wait until shows).
+  const b = BRANCHES[hourOfDay(s.calendar.day + g.scene.tick / TICKS_PER_DAY)]!;
   return (
     <header className="goin-head">
       <div className="goin-seal hanzi">{t ? KIND_SEAL[t.kind] : g.place ? placeSeal(g) : '野'}</div>
@@ -519,6 +521,20 @@ function Box({ s, fight }: { s: GameState; fight: boolean }) {
           >
             Wait
           </button>
+          <span className="goin-until" title="Wait until the hour: someone arriving stops it">
+            until
+            {(['dawn', 'noon', 'dusk'] as const).map((h) => (
+              <button
+                key={h}
+                type="button"
+                className="goin-until-btn"
+                disabled={!!busy || down || ending}
+                onClick={() => waitUntil(h)}
+              >
+                {h}
+              </button>
+            ))}
+          </span>
           <button
             type="button"
             className="button button-quiet"

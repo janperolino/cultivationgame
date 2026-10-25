@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { BOND_IDS } from '../content/bonds.ts';
 import { OFFERS } from '../content/personality.ts';
 import { REALM_IDS } from '../content/realms.ts';
+import { TOPIC_IDS } from '../content/lore.ts';
 import { MEMORY_TAGS } from '../content/memories.ts';
 import { ACT_IDS, HELPER_MAX, MANNERS, USE_MAX, type ActId } from '../content/resolver.ts';
 
@@ -77,6 +78,13 @@ export const interpretationSchema = z.object({
   readings: z.array(readingSchema).max(READINGS_MAX),
   /** Why the words ask for nothing the character could try here; null otherwise. */
   nothing: z.string().max(200).nullish(),
+  /** What of the world the words touch, for the world book (P3.9w); unknown ones dropped. */
+  topics: z
+    .array(z.string())
+    .nullish()
+    .transform((t) =>
+      (t ?? []).filter((x) => (TOPIC_IDS as readonly string[]).includes(x)).slice(0, 3),
+    ),
 });
 export type InterpretationReply = z.infer<typeof interpretationSchema>;
 
@@ -124,7 +132,7 @@ const READ_STEP_PROPERTIES = {
 export const interpretationJsonSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['readings', 'nothing'],
+  required: ['readings', 'nothing', 'topics'],
   properties: {
     readings: {
       type: 'array',
@@ -150,6 +158,11 @@ export const interpretationJsonSchema = {
       },
     },
     nothing: { type: ['string', 'null'], maxLength: 200 },
+    topics: {
+      type: ['array', 'null'],
+      items: { type: 'string', enum: [...TOPIC_IDS] },
+      maxItems: 3,
+    },
   },
 };
 

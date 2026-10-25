@@ -636,6 +636,8 @@ export const GoInTurnSchema = z.object({
   read: z.string().optional(),
   /** A fight's exchange inside the scene, its number (P3.9c). */
   exchange: z.number().int().optional(),
+  /** The topics the interpreter read in your words, for the world book's next turns (P3.9w). */
+  about: z.array(z.string()).optional(),
 });
 export type GoInTurn = z.infer<typeof GoInTurnSchema>;
 

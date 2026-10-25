@@ -87,6 +87,8 @@ export interface Actor {
    * year they were born, so the kept record rebuilds them and the cast's aging (N3) can read them.
    */
   face?: { key: string; mortal?: string; born: number };
+  /** A mortal: no cultivation at all, whatever their numbers stand at (P3.9w). */
+  mortal?: boolean;
   /** A generated NPC's template and seed, from which their kit regenerates if the world keeps them. */
   npc?: { template: string; seed: number; realm: RealmId; stage: number };
 }
@@ -95,6 +97,11 @@ export interface Actor {
 export const YOU = 'you';
 
 /** Their realm and stage: their highest rung's. */
+/** Someone with no cultivation: a mortal keeper, a crowd's mortal face, a farmer on the road (P3.9w). */
+export function isMortal(a: Pick<Actor, 'mortal' | 'face'>): boolean {
+  return !!a.mortal || !!a.face?.mortal;
+}
+
 export function realmOfActor(a: Pick<Actor, 'rungs'>): RealmStage {
   const r = topRung(a);
   return { realm: r.realm, stage: r.stage };

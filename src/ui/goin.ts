@@ -19,7 +19,7 @@ import { CHRONICLE_EVERY, chronicle, narrate } from '../ai/narrate.ts';
 import { exchangeOutcome, fightEndOutcome, outcomeOf } from '../ai/outcome.ts';
 import { combatantIn, type Fight } from '../core/combat/fight.ts';
 import { sceneView, settingText, toneText, wordsFor } from '../ai/scene.ts';
-import type { GoInLength } from '../content/goin.ts';
+import type { GoInLength, WaitUntil } from '../content/goin.ts';
 import { ACTS, COSTS, SHORTS } from '../content/resolver.ts';
 import {
   addTurn,
@@ -42,6 +42,7 @@ import {
   setPending,
   templatedLine,
   tickWords,
+  ticksUntil,
   type LeavingCard,
   type SceneFightBack,
 } from '../core/goin.ts';
@@ -277,6 +278,12 @@ interface Telling {
   outcome?: (view: ReturnType<typeof sceneView>) => ReturnType<typeof outcomeOf>;
 }
 
+/**
+ * The topics the interpreter read in the words being played (P3.9w): kept with the turn they are
+ * told in, so the world book carries them two turns more. A click that skips the interpreter has none.
+ */
+let turnAbout: string[] = [];
+
 /** The meter's cost of a call made since `from`. */
 const spentSince = (from: number) => Math.max(0, meter.cost - from);
 
@@ -299,7 +306,9 @@ async function tell(t: Telling): Promise<void> {
     const a = await loadAtlas();
     const s = game()!;
     const g = s.goin!;
-    const view = sceneView(s, a);
+    const about = t.said === null ? [] : turnAbout;
+    turnAbout = [];
+    const view = sceneView(s, a, { ...(t.said ? { said: t.said } : {}), about });
     const out = t.outcome
       ? t.outcome(view)
       : outcomeOf(view, t.before, g.scene, t.results, t.stopped ?? null);
@@ -337,6 +346,7 @@ async function tell(t: Telling): Promise<void> {
       length: t.length,
       ...(t.exchange ? { exchange: t.exchange } : {}),
       ...(t.read ? { read: t.read } : {}),
+      ...(about.length ? { about } : {}),
       ...(n.fellBack === 'prose' ? { outcome: out.text } : {}),
     };
     let next = keepTelling(addTurn(game()!, turn), { choices: n.choices, notes: n.notes });
@@ -513,9 +523,11 @@ export async function say(words: string): Promise<void> {
   if (s.fight?.from.kind === 'scene') return sayInFight(text);
   useGoIn.setState({ busy: 'reading', note: null, readings: null, words: text });
   const from = meter.cost;
+  turnAbout = [];
   try {
     const view = sceneView(s, await loadAtlas());
     const r = await interpret(gameAi, view, text);
+    if (r.kind === 'plan') turnAbout = r.about ?? [];
     apply(keepTelling(game()!, { cost: spentSince(from) }));
     if (r.kind === 'fallback') {
       useGoIn.setState({ note: FALLBACK_LINE });
@@ -645,6 +657,16 @@ export function wait(): void {
   const s = game();
   if (!s?.goin || useGoIn.getState().busy) return;
   void run({ actor: s.player.id, steps: [{ verb: 'rest', act: 'wait' }] }, 'Wait');
+}
+
+/** Wait until dawn, noon or dusk (P3.9w): one wait, stopped by an arrival. */
+export function waitUntil(hour: WaitUntil): void {
+  const s = game();
+  if (!s?.goin || useGoIn.getState().busy) return;
+  void run(
+    { actor: s.player.id, steps: [{ verb: 'rest', act: 'wait', n: ticksUntil(s, hour) }] },
+    `Wait until ${hour}`,
+  );
 }
 
 /** A move inside a place, clicked (P3.9b): a door here, another district's street, a room. */

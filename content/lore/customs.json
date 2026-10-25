@@ -1,0 +1,109 @@
+[
+  {
+    "id": "realm-above-kills",
+    "text": "A realm above you can kill you as a grown man kills a child, and nobody asks why. Juniors call any higher realm 'senior', bow first and speak second; peers are 'fellow daoist'. Offend a senior and only someone stronger standing behind you keeps you alive.",
+    "about": ["respect", "realms", "seats"],
+    "knownBy": ["cultivator"],
+    "words": ["senior", "fellow daoist"]
+  },
+  {
+    "id": "immortals-to-mortals",
+    "text": "Immortals are not argued with. You bow low or kneel, call them 'immortal master', answer what they ask and never ask back. An immortal who kills a mortal answers to nobody but his own sect, and sects seldom ask.",
+    "about": ["respect", "mortals"],
+    "knownBy": ["mortal"],
+    "words": ["immortal master", "immortal"]
+  },
+  {
+    "id": "mortals-beneath",
+    "text": "Mortals are beneath a cultivator's notice unless they're in the way. Most cultivators are not cruel to them, only careless; killing one in a city still brings the watch, and killing one in a sect's county brings the sect.",
+    "about": ["respect", "mortals", "law"],
+    "knownBy": ["cultivator"]
+  },
+  {
+    "id": "reading-a-realm",
+    "text": "Sweeping a stranger with divine sense to read their cultivation is rude, and a senior who notices may take it as a slight. A realm you can't see through is a warning: they may be far above you, so you are polite until you know.",
+    "about": ["respect", "realms"],
+    "knownBy": ["cultivator"],
+    "words": ["divine sense", "see through"]
+  },
+  {
+    "id": "sect-address",
+    "text": "In a sect, whoever entered before you is senior brother or senior sister whatever their age, and whoever came after is junior. An elder is Elder and a surname; your own master is Master, and his other disciples your martial brothers and sisters.",
+    "about": ["seats", "powers", "respect"],
+    "knownBy": ["cultivator"],
+    "words": ["senior brother", "senior sister", "martial brother", "martial sister", "shifu"]
+  },
+  {
+    "id": "crafters-respected",
+    "text": "A cultivator with a craft is worth more than one without: everyone needs an alchemist's pills, a refiner's blades and an array master's wards. Even sect elders speak softly to a good alchemist, and a grade from a guild hall opens doors a realm doesn't.",
+    "about": ["crafts", "respect"],
+    "knownBy": ["cultivator", "trade:craft", "trade:trading"]
+  },
+  {
+    "id": "heaven-narrows",
+    "text": "Heaven narrows at every gate. Of thirty at Qi Condensation, one reaches Foundation; of sixty at Foundation, one forms a core. Most cultivators grow old at the ninth layer waiting for a Foundation Pill they never get.",
+    "about": ["realms", "breakthrough", "pills"],
+    "knownBy": ["cultivator"]
+  },
+  {
+    "id": "jade-slips",
+    "text": "Methods are kept in jade slips, read by pressing one to the brow. A power's own method is guarded: copying it, selling it, or throwing its arts where its people can see brings its law hall after you.",
+    "about": ["methods", "law"],
+    "knownBy": ["cultivator"],
+    "words": ["jade slip"]
+  },
+  {
+    "id": "pills-to-mortals",
+    "text": "Immortals eat pills the way rich men eat ginseng. The one they fight over is said to make them truly immortal; a whole town's silver wouldn't buy one, and no mortal you know has ever held one.",
+    "about": ["pills", "prices"],
+    "knownBy": ["mortal"],
+    "words": ["foundation pill"]
+  },
+  {
+    "id": "immortals-live-long",
+    "text": "Immortals live for centuries; the old ones in the sects watched your great-grandfather born. A mortal gets sixty years if the harvests are kind and the beasts stay south.",
+    "about": ["lifespan", "realms"],
+    "knownBy": ["mortal"]
+  },
+  {
+    "id": "silver-and-stones",
+    "text": "Silver taels are honest money. Immortals pay in spirit stones, faintly glowing and worth more than a field; a mortal who finds one sells it fast to a money-changer and tells nobody.",
+    "about": ["money"],
+    "knownBy": ["mortal"]
+  },
+  {
+    "id": "testing-day",
+    "text": "On testing day the immortals touch every child's hand to a stone, and one in a few thousand lights it. That child is taken away to cultivate and the family is paid for it; the rest go back to the fields.",
+    "about": ["roots", "mortals"],
+    "knownBy": ["everyone"],
+    "words": ["testing day", "spirit root"]
+  },
+  {
+    "id": "the-severed-heaven",
+    "text": "Sixty-six thousand years ago the Heaven Ladder to the great world above broke, out in the Shattered Sea. Since then nobody here ascends: the greatest cultivators grow old under a closed sky. Every child knows the story, and every old cultivator half believes it.",
+    "about": ["history"],
+    "knownBy": ["everyone"],
+    "words": ["heaven ladder", "ascend", "ascension", "severed heaven", "shattered sea"]
+  },
+  {
+    "id": "the-sealed-era",
+    "text": "Years are counted in the Sealed Era, now in its fourth thousand years. Older eras are names in sect libraries and nothing more to most people.",
+    "about": ["history"],
+    "knownBy": ["everyone"],
+    "words": ["sealed era", "what year"]
+  },
+  {
+    "id": "no-witnesses",
+    "text": "Outside a city's walls or a sect's grounds, what happens between cultivators is their own business. Kill a man where nobody sees and the only trouble is his backers: a soul lamp goes out in his sect, and they come asking.",
+    "about": ["law"],
+    "knownBy": ["cultivator"],
+    "words": ["soul lamp"]
+  },
+  {
+    "id": "backers",
+    "text": "Nobody on the frontier stands alone if they can help it. Before you strike a cultivator you ask who stands behind him: a sect, a clan, a master a realm above. Young masters say their father's name early for that reason.",
+    "about": ["respect", "powers"],
+    "knownBy": ["cultivator"],
+    "words": ["young master", "backer"]
+  }
+]

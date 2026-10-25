@@ -1,0 +1,173 @@
+[
+  {
+    "id": "bw-the-wall",
+    "text": "The Wall of Piled Bones runs nine thousand li along the coast hills, rammed earth and beast-king bone as tall as cliffs. Every family in the March owes a child to it at sixteen, and over a million conscripts hold the coast behind it.",
+    "about": ["wilds", "beasts", "law"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["wall of piled bones", "the wall", "conscript", "conscripts"]
+  },
+  {
+    "id": "bw-the-chain",
+    "text": "Across the Jade Strait is beast country. At low tide the island chain is a road both ways: beasts come north to raid herds and counties, and hunters, sects and smugglers go south for cores, eggs and herbs. Walking it island to island takes a season at least.",
+    "about": ["wilds", "beasts"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["jade strait", "island chain", "low tide", "across the water"]
+  },
+  {
+    "id": "bw-beast-tides",
+    "text": "Every so often the beasts come north in a tide, not a raid: counties burned, forts lost. The empire first held the shore at the Field of the Broken Tide a thousand years ago, and the Starfall Sect, which ruled here before the empire came, died under one.",
+    "about": ["beasts", "history"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["beast tide", "broken tide"]
+  },
+  {
+    "id": "bw-cores",
+    "text": "The empire pays for every beast core brought in, at the Wall and at the City of the Guarded Mouth. Core hunting across the strait is how a frontier cultivator gets rich, or dies; the Qian Clan's agents buy most of them before they reach the bounty office.",
+    "about": ["beasts", "money", "board"],
+    "knownBy": ["cultivator&region:qm-bianhuang", "trade:bounty", "trade:trading", "trade:hunter"],
+    "words": ["beast core", "core hunt", "cores"]
+  },
+  {
+    "id": "bw-the-gate",
+    "text": "The Beast-Butcher Gate is three thousand saber cultivators on three peaks their founder sheared flat with one cut. They raid across the strait for cores, take in orphans the beasts made, and hate beast tamers and half-bloods alike. Brutal, rich, and the beasts' favorite target.",
+    "about": ["powers"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["beast-butcher gate", "butcher gate", "the gate"]
+  },
+  {
+    "id": "bw-gate-rank",
+    "text": "In the Gate, rank is cores: the year's trial ranks disciples by what they brought back across the strait, and the top of the ranking gets the year's Foundation Pills. Outer disciples work the mine and the medicine garden. A disciple who dies over the water wasn't strong enough.",
+    "about": ["powers", "seats", "pills", "breakthrough"],
+    "knownBy": ["power:qm-tushou-men"],
+    "tells": "friend"
+  },
+  {
+    "id": "bw-hundred-reins",
+    "text": "The Hundred Reins Sect, three thousand beast tamers backed by the Spirit Herders, teaches the bond between rider and beast as a Dao. They are in a blood feud with the Beast-Butcher Gate, whose disciples kill the beasts they bond.",
+    "about": ["powers", "beasts"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["hundred reins"]
+  },
+  {
+    "id": "bw-bound-bones",
+    "text": "The Pavilion of Bound Bones is the array sect paid to keep the Wall's binding arrays lit, so the beast spirits in its bones stay down. Its miners hold the upper galleries of the Black Jade Vein; the Gate's hold the lower, and they fight in the shafts between.",
+    "about": ["powers", "crafts"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["bound bones", "pavilion", "black jade"]
+  },
+  {
+    "id": "bw-quiet-bell",
+    "text": "The monks of the Temple of the Quiet Bell bury what the raids leave, mortal and beast alike, and ask no fee. Their bell is struck once a year, at the start of Ghost Month, and its note carries the length of the Wall.",
+    "about": ["powers", "history"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["quiet bell", "monk", "monks", "ghost month"]
+  },
+  {
+    "id": "bw-ghost-month",
+    "text": "On Ghost Month nights the spirits in the Wall's bones stir. The Pavilion's arrays and the Quiet Bell keep them down, and nobody sensible walks the Wall's foot after dark that month.",
+    "about": ["history", "wilds"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["ghost month", "spirits"]
+  },
+  {
+    "id": "bw-lamp-keepers",
+    "text": "The Lamp-Keepers keep ten thousand lamps of yin fire burning on poles across the Ghost-Lamp Fens, so the drowned walk in circles instead of to the City's walls. The City pays them, since the night a lamp line failed. They talk to the dead and sell what they hear.",
+    "about": ["powers"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["lamp-keeper", "lamp keepers", "ghost-lamp fens", "drowned"]
+  },
+  {
+    "id": "bw-red-marrow",
+    "text": "Hunters in the Grey Karst Reaches tell of caves that smell of iron and beasts bellowing under the ground. Blood pills that let a cultivator climb fast and die young turn up at the Nameless Market, and people say they come from there. Nobody who went looking has said where.",
+    "about": ["powers", "pills"],
+    "knownBy": ["cultivator&region:qm-bianhuang", "trade:hunter"],
+    "words": ["red marrow", "blood pill", "blood pills", "demonic"]
+  },
+  {
+    "id": "bw-night-bridge",
+    "text": "Half-bloods run the island chain for the Night Bridge Society, a crew to each stretch, each waiting on its own tide: people, beast eggs, cubs and herbs go island to island at low tide. Everyone on the coast knows; nobody says it near the watch.",
+    "about": ["powers", "wilds", "law"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["night bridge", "smuggler", "smugglers", "half-blood", "half-bloods"]
+  },
+  {
+    "id": "bw-the-city",
+    "text": "The City of the Guarded Mouth is the empire's frontier headquarters, eight million behind walls that rise out of the surf. The bounty office, the Qian Clan's core exchange, Apricot Grove's frontier hall and the Myriad Crafts Guild's examiners are all there.",
+    "about": ["places", "powers"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["guarded mouth", "the city"]
+  },
+  {
+    "id": "bw-qian-clan",
+    "text": "The Qians came four generations ago with one shop and a contract for the Gate's cores; now they hold the City's core exchange. They are polite to everyone, owe nobody, and a cultivator short of stones can always sell them a future.",
+    "about": ["powers", "money", "beasts"],
+    "knownBy": [
+      "place:qm-shoukou-cheng",
+      "trade:trading",
+      "trade:merchant",
+      "cultivator&region:qm-bianhuang"
+    ],
+    "words": ["qian clan", "the qians", "core exchange"]
+  },
+  {
+    "id": "bw-nameless-market",
+    "text": "The Nameless Market sits in a karst valley no sect, clan or crown rules. Rogue cultivators sell what they found, took or can't explain there, and nobody asks. What you can't buy anywhere else, you buy there, at a price.",
+    "about": ["places", "prices", "law"],
+    "knownBy": ["cultivator&region:qm-bianhuang", "trade:den", "trade:trading"],
+    "words": ["nameless market", "black market"]
+  },
+  {
+    "id": "bw-the-march",
+    "text": "The Gongsun generals have held the March of Pacified Borders for nine generations and buried most of their sons on the Wall. Some forty million farmers plow with spears at hand, and the beacon peaks' spirit-fire carries a raid warning across the march in a night.",
+    "about": ["powers", "mortals", "law"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["gongsun", "the march", "beacon"]
+  },
+  {
+    "id": "bw-rooted-on-the-wall",
+    "text": "In the March the frontier tester comes at twelve, not six, and the garrison keeps every rooted child for the Wall. A family with a rooted child is paid and loses the child the same day.",
+    "about": ["roots", "mortals"],
+    "knownBy": ["region:qm-anbian-fu", "mortal&region:qm-bianhuang"],
+    "words": ["tester", "rooted"]
+  },
+  {
+    "id": "bw-forbidden",
+    "text": "Some ground nobody sane walks into: the Soul-Lost Stone Forest, where a great python's illusions lose whole parties; the Ape-Cry Peaks, whose thunder-ape king has formed his core; and Jiao Gorge, where a flood-jiao rises with the snowmelt.",
+    "about": ["beasts", "wilds"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["stone forest", "python", "ape-cry", "thunder-ape", "jiao"]
+  },
+  {
+    "id": "bw-starfall",
+    "text": "The Starfall Sect ruled the Border Wilds eight hundred years ago until a beast tide broke its mountain; its ruins lie in the Blackpine Forest. Its last hall is folded into a pocket under them that opens for ten days every thirty years, and treasure hunters wait for it.",
+    "about": ["history", "powers"],
+    "knownBy": ["cultivator&region:qm-bianhuang"],
+    "words": ["starfall", "ruins", "secret realm"]
+  },
+  {
+    "id": "bw-guild-grades",
+    "text": "A crafter is asked two things before a price: which grade, and which guild hall sealed it. The Myriad Crafts Guild's City branch tests at five benches behind the Pill Street gate; its examiners are Foundation, so it grades to second-grade and sends anyone better to the continent's halls.",
+    "about": ["crafts"],
+    "knownBy": ["trade:craft", "cultivator&region:qm-bianhuang"],
+    "words": ["myriad crafts", "guild", "badge", "examiner"]
+  },
+  {
+    "id": "bw-immortals-here",
+    "text": "On the frontier an immortal is mostly a soldier or a hunter: the Wall's officers, the Gate's saber men coming back bloody from across the water. Keep out of their way when they come back; they've seen what eats men.",
+    "about": ["respect", "mortals"],
+    "knownBy": ["mortal&region:qm-bianhuang"]
+  },
+  {
+    "id": "bw-keepers-hear",
+    "text": "The frontier's inns and teahouses are where the Wall's men on leave drink and bounty hunters boast. A keeper hears everything and repeats half of it, for a coin or a friendly face.",
+    "about": ["places"],
+    "knownBy": ["trade:inn", "trade:teahouse", "trade:wine-house"]
+  },
+  {
+    "id": "bw-herders-and-stone-eyes",
+    "text": "The Kingdom of Spirit Herders raises the empire's war mounts by the hundred thousand from eggs smuggled out of the beast continent. The Kingdom of Stone Eyes is ruled by cave clans from the great sinkholes, and half-blood families hide down its walls.",
+    "about": ["powers", "beasts"],
+    "knownBy": ["region:qm-bianhuang"],
+    "words": ["spirit herders", "stone eyes", "heaven's eye", "sinkhole"]
+  }
+]

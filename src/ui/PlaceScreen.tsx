@@ -51,6 +51,7 @@ import {
   type Door,
   type Tab,
 } from './placeDoors.ts';
+import { GoInHour } from './GoInHour.tsx';
 
 /** A place's top realm in words: the atlas writes a realm's id or its name. */
 function topWords(top: string): string {
@@ -279,7 +280,7 @@ export function PlaceScreen({ game, map, place, onMap, shut = false }: Props) {
                 title="Walk the streets as a scene, with the narrator."
                 onClick={() => goIn(null)}
               >
-                The streets 街 · Go in
+                The streets 街 · Go in <GoInHour />
               </button>
             )}
             <span className="place-purse">
@@ -864,7 +865,7 @@ function Preview({
             title="Walk in as a scene, with the narrator."
             onClick={onGoIn}
           >
-            Go in 入
+            Go in 入 <GoInHour piece={door.art} />
           </button>
         )}
         <button
@@ -1091,7 +1092,7 @@ function Village({
             title="Walk the village as a scene, with the narrator."
             onClick={() => goIn(null)}
           >
-            The village 街 · Go in
+            The village 街 · Go in <GoInHour />
           </button>
         )}
         <GateStrip game={game} map={map} place={place} />
@@ -1123,7 +1124,7 @@ function Village({
                 title="Walk in as a scene, with the narrator."
                 onClick={() => goIn(cur.id)}
               >
-                Go in 入
+                Go in 入 <GoInHour piece={cur.art} />
               </button>
             )}
             <button

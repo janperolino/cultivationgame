@@ -87,6 +87,7 @@ import type { GameState } from '../core/state.ts';
 import { go, goToWheel } from './nav.ts';
 import { hasKey } from './ai.ts';
 import { goInHereNow } from './goin.ts';
+import { goInHour } from '../core/goinPlace.ts';
 import { ROAD_WORD } from './roadWords.ts';
 import { onArtLoad } from './map/art.ts';
 import { markMoving } from './moving.ts';
@@ -487,7 +488,9 @@ function MapView({
     if (!life.course && !life.inside)
       items.push({
         t: 'Go in here',
-        s: hasKey() ? 'the land, with the narrator' : 'needs an OpenRouter key · Settings',
+        s: hasKey()
+          ? `the land at ${goInHour(game.calendar.day)}, with the narrator`
+          : 'needs an OpenRouter key · Settings',
         run: () => {
           if (!hasKey()) return go('settings');
           const why = goInHereNow();

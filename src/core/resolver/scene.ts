@@ -1268,10 +1268,14 @@ export function doStep(
         apply(w, [{ do: 'item', who: a.id, id: st.target, n: -1, how: 'spent' }]);
       }
       break;
-    case 'wait':
-      // Waiting skips to the next arrival, when someone is on the way.
-      if (w.scene.due !== null) ticks = Math.max(1, w.scene.due - w.scene.tick);
+    case 'wait': {
+      // Waiting skips to the next arrival, when someone is on the way; a wait until an hour
+      // (P3.9w) runs its ticks, and an arrival before it stops it there.
+      const due = w.scene.due !== null ? Math.max(1, w.scene.due - w.scene.tick) : null;
+      if (st.n) ticks = due !== null ? Math.min(due, st.n) : st.n;
+      else if (due !== null) ticks = due;
       break;
+    }
     case 'slip':
       if (passed && target && (a.items[thing] ?? 0) > 0) {
         apply(w, [

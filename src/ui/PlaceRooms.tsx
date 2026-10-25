@@ -23,6 +23,7 @@ import { notables, type Door } from './placeDoors.ts';
 import { craftShelf, ware } from './rooms.ts';
 import { goInAt } from './goin.ts';
 import { QuestOffers } from './QuestOffers.tsx';
+import { GoInHour } from './GoInHour.tsx';
 
 interface RoomProps {
   game: GameState;
@@ -98,7 +99,7 @@ function RoomBar({ map, place, door, back, keyed, onBack, say }: RoomProps) {
             if (why) say(why);
           }}
         >
-          Go in 入
+          Go in 入 <GoInHour piece={door.art} />
         </button>
       )}
     </div>

@@ -38,7 +38,7 @@ export interface Reading {
 
 export type Interpretation =
   /** One reading when the words were clear; two or three to choose from when they weren't. */
-  | { kind: 'plan'; readings: Reading[] }
+  | { kind: 'plan'; readings: Reading[]; about?: string[] }
   /** The words ask for nothing your character could try here. */
   | { kind: 'nothing'; reason: string }
   /** GLM couldn't give a checked reply twice: say it another way. Nothing was done. */
@@ -111,7 +111,8 @@ export function toInterpretation(view: View, reply: InterpretationReply): Interp
     const plan = PlanSchema.safeParse({ actor: view.viewer, steps });
     if (plan.success) readings.push({ label: r.label, plan: plan.data });
   }
-  if (readings.length) return { kind: 'plan', readings };
+  if (readings.length)
+    return { kind: 'plan', readings, ...(reply.topics.length ? { about: reply.topics } : {}) };
   return { kind: 'nothing', reason: reply.nothing ?? NOTHING_THERE };
 }
 
