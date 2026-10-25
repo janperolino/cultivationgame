@@ -74,6 +74,8 @@ import {
 import { followersDay } from './resolver/followers.ts';
 import { openRings } from './loot.ts';
 import { densityHere, membershipDay, protectorOf, protectorSpent } from './organizations.ts';
+import { castDay } from './regionalCast.ts';
+import { cultivator, withCultivator } from './who.ts';
 import { bedNights } from './map/place.ts';
 import { dwellingOpens, dwellingsDay } from './dwellings.ts';
 import { formationsDay } from './formations.ts';
@@ -160,7 +162,7 @@ export function checkScreens(s: GameState): GameState {
  * day gives reads this, so the screens and `cultivate` agree; the crafts' bench joins here.
  */
 export function ratesHere(s: GameState, seat?: Seat): DayRates {
-  return dayRates(onShift(s), s.calendar.day, [], seat, undefined, densityHere(s));
+  return dayRates(onShift(s, s.player.id)!, s.calendar.day, [], seat, undefined, densityHere(s));
 }
 
 /**
@@ -168,14 +170,16 @@ export function ratesHere(s: GameState, seat?: Seat): DayRates {
  * where you stand, a shift's hours Duty at its post, worked from the front of the queue, at the
  * steady hand you sit with (K3; none away) and with what the land lends.
  */
-function benchDay(s: GameState, days: number, hand = 0): GameState {
-  if (s.player.crafts.bench.length === 0 && !s.player.crafts.front) return s;
+function benchDay(s: GameState, who: string, days: number, hand = 0): GameState {
+  // A bench is a full cultivator's (N1): a cast member keeps none.
+  const c = cultivator(s, who);
+  if (!c || (c.crafts.bench.length === 0 && !c.crafts.front)) return s;
   const hours = ratesHere(s).count.craft * days;
   if (hours <= 0) return s;
   const { value: r, state } = withStream(s, 'craft', (rng) =>
-    workBench(s.player, hours, s.calendar.day, rng, { hand, spot: benchSpot(s) }),
+    workBench(c, hours, s.calendar.day, rng, { hand, spot: benchSpot(s) }),
   );
-  return benchEvents(withPlayer(state, r.cultivator), r.events);
+  return benchEvents(withCultivator(state, r.cultivator), r.events);
 }
 
 /**
@@ -203,11 +207,13 @@ export function benchEvents(
  * The plots across a stretch (K8): they grow wherever you are, tended where you stand, and the
  * pests, a thief or a lease run out get a line in the chronicle.
  */
-function fieldsDay(s: GameState, from: number, to: number): GameState {
-  if (!s.player.crafts.plots.length) return s;
+function fieldsDay(s: GameState, who: string, from: number, to: number): GameState {
+  // Plots are a full cultivator's (N1): a cast member tends none.
+  const c = cultivator(s, who);
+  if (!c?.crafts.plots.length) return s;
   const here = farmHere(s)?.place ?? null;
-  const r = growPlots(s.player, from, to, here, (place) => heatOf(s.world, place, to));
-  let next = withPlayer(s, r.cultivator);
+  const r = growPlots(c, from, to, here, (place) => heatOf(s.world, place, to));
+  let next = withCultivator(s, r.cultivator);
   for (const e of r.events) {
     if (e.type === 'plot-pests' || e.type === 'plot-thief' || e.type === 'plot-lost')
       next = addEvent(next, e.type, { ...e.data, name: plotPlaceName(next, e.data.place) });
@@ -226,15 +232,19 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   const road = cultivationWheel(s);
   const { value: r, state } = withStream(s, 'breakthrough', (rng) =>
     // A shift is Duty only where it is kept: at its place, with no course set (O4).
-    cultivateDays(road ? { ...s.player, wheel: road.wheel, jobs: [] } : onShift(s), days, {
-      day: s.calendar.day,
-      rng,
-      seat: ctx?.seat,
-      firsts: s.lineage.firsts,
-      hourFactor: road?.factor,
-      // A power's dwelling by your seat (O2), or a dwelling you hold (K9), while you seclude in it.
-      density: road ? 1 : densityHere(s),
-    }),
+    cultivateDays(
+      road ? { ...s.player, wheel: road.wheel, jobs: [] } : onShift(s, s.player.id)!,
+      days,
+      {
+        day: s.calendar.day,
+        rng,
+        seat: ctx?.seat,
+        firsts: s.lineage.firsts,
+        hourFactor: road?.factor,
+        // A power's dwelling by your seat (O2), or a dwelling you hold (K9), while you seclude in it.
+        density: road ? 1 : densityHere(s),
+      },
+    ),
   );
   const cultivated = {
     ...r.cultivator,
@@ -251,14 +261,18 @@ export const cultivate: DayStep = (s0, days, ctx) => {
   next = followersDay(next);
   // The jobs you hold: shifts kept at their place pay, missed ones cost standing (O4).
   // A stretch walked in on the road kept no shift, though it ends at the post.
-  next = jobsDay(next, s.calendar.day - days, s.calendar.day, !!road);
-  // Each power you belong to pays its allowance as the month turns (O2), takes its quota and
-  // counts your leave (O3).
+  const you = next.player.id;
+  next = jobsDay(next, you, s.calendar.day - days, s.calendar.day, !!road);
+  // Each power pays its allowance as the month turns (O2), takes its quota and counts the leave
+  // (O3), for you and every cast member who belongs to it (N1).
   next = membershipDay(next, days, atHome);
+  // The regional cast lives its seasons, its purses shopping for the pills they save for as each
+  // season turns: the region you stand in each one, the rest a year at a time in summary (N2).
+  next = castDay(next, s.calendar.day - days);
   // The bench works its Craft hours wherever you seclude, never on the road (K1).
-  if (!road) next = benchDay(next, days, ctx?.seat?.hand);
+  if (!road) next = benchDay(next, you, days, ctx?.seat?.hand);
   // The plots grow wherever you are, tended where you stand (K8).
-  next = fieldsDay(next, s.calendar.day - days, s.calendar.day);
+  next = fieldsDay(next, you, s.calendar.day - days, s.calendar.day);
   next = dwellingsDay(next, s.calendar.day - days, s.calendar.day);
   // A commission left unfilled past its month costs its keeper's regard (K12).
   next = commissionsDay(next);
@@ -304,12 +318,12 @@ export function breakThrough(
   const none = { state: s, attempted: false, success: false, major: false, odds: 0 };
   if (s.ended) return none;
   // An elder your power sent stands by as protector (O3), and their watch ends with the attempt.
-  const protector = !!protectorOf(s);
+  const protector = !!protectorOf(s, s.player.id);
   const { value: r, state } = withStream(s, 'breakthrough', (rng) =>
     attemptBreakthrough(s.player, which, { day: s.calendar.day, rng }, { ...opts, protector }),
   );
   if (!r.attempted) return none;
-  let next = addNotes(withPlayer(protectorSpent(state), r.cultivator), r.notes);
+  let next = addNotes(withPlayer(protectorSpent(state, state.player.id), r.cultivator), r.notes);
   if (r.success) next = wakeTalents(flare(next, which, r.major));
   else if (r.major && which === 'qi') next = setMark(next, FOUNDATION_FAILED);
   return { state: next, attempted: true, success: r.success, major: r.major, odds: r.odds };

@@ -76,12 +76,12 @@ function run(
   const lot = item(h.staple).stack ?? 20;
   for (let i = 0; i < LOTS; i++) {
     const lines = shopsAt(h.from)
-      .flatMap((id) => shelf(s, id).map((l) => ({ id, l })))
+      .flatMap((id) => shelf(s, s.player.id, id).map((l) => ({ id, l })))
       .filter((x) => x.l.standing && x.l.thing === h.staple && x.l.n >= lot)
       .sort((x, y) => y.l.n - x.l.n);
     const best = lines[0];
     if (!best) throw new Error(`${h.from} has no shelf of ${h.staple} left`);
-    const r = buy(s, best.id, best.l.slot, lot);
+    const r = buy(s, s.player.id, best.id, best.l.slot, lot);
     if (!r.ok) throw new Error(r.reason);
     s = r.state;
   }
@@ -101,12 +101,12 @@ function run(
   const start = purse(s, h.silver);
   for (let i = 0; i < LOTS; i++) {
     const best = shopsAt(h.to)
-      .map((id) => ({ id, o: offerFor(s, id, h.staple) }))
+      .map((id) => ({ id, o: offerFor(s, s.player.id, id, h.staple) }))
       .filter((x) => x.o.ok)
       .sort((x, y) => (y.o.ok ? y.o.each : 0) - (x.o.ok ? x.o.each : 0));
     let sold = false;
     for (const { id } of best) {
-      const r = sell(s, id, h.staple, lot);
+      const r = sell(s, s.player.id, id, h.staple, lot);
       if (r.ok) {
         s = r.state;
         sold = true;

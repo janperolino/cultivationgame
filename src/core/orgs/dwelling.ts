@@ -79,7 +79,7 @@ export function dwellingDensity(seat: SeatId, place: string): number {
 export function dwellingOf(s: GameState): Dwelling | null {
   const place = s.map?.inside;
   if (!place) return null;
-  const r = realmStageOf(s);
+  const r = realmStageOf(s, s.player.id);
   let best: Dwelling | null = null;
   for (const m of membershipsOf(s.world, s.player.id)) {
     if (m.guest || !isOrganization(m.power)) continue;

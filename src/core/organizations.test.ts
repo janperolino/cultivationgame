@@ -194,7 +194,7 @@ describe('membership', () => {
   it('gives up the balance on leaving', () => {
     const s = life();
     const w = join(s.world, GATE);
-    const r = donate({ ...s, world: w }, GATE, { stones: 0, things: {} });
+    const r = donate({ ...s, world: w }, s.player.id, GATE, { stones: 0, things: {} });
     expect(r.ok).toBe(true);
     expect(leavePower(w, YOU, GATE, 10).world.members).toEqual([]);
   });
@@ -230,12 +230,12 @@ describe('the currency', () => {
     let s = life();
     s = withPlayer(s, addItem(withStones(s.player, [20, 0, 0, 0]), pill, 2));
     s = { ...s, world: join(s.world, GATE) };
-    const r = donate(s, GATE, { stones: 10, things: { [pill]: 2 } });
+    const r = donate(s, s.player.id, GATE, { stones: 10, things: { [pill]: 2 } });
     if (!r.ok) throw new Error(r.why);
     expect(worthOf(stonesOf(r.state.player))).toBeCloseTo(10);
     expect(itemCount(r.state.player, pill)).toBe(0);
     expect(membership(r.state.world, YOU, GATE)?.balance).toBe(r.points);
-    expect(donate(life(), GATE, { stones: 2 }).ok).toBe(false);
+    expect(donate(life(), PLAYER_ID, GATE, { stones: 2 }).ok).toBe(false);
   });
 });
 
@@ -248,15 +248,15 @@ describe('the inner trial', () => {
   it('is held in the first month, once a year, and a QC 9 sheet passes where QC 3 does not', () => {
     const s = member(QC, 9);
     expect(monthOfYear(s.calendar.day)).toBe(1);
-    const r = innerTrial(s, GATE);
+    const r = innerTrial(s, s.player.id, GATE);
     if (!r.ok) throw new Error(r.why);
     expect(r.passed).toBe(true);
     expect(membership(r.state.world, YOU, GATE)?.seat).toBe('inner');
-    const weak = innerTrial(member(QC, 3), GATE);
+    const weak = innerTrial(member(QC, 3), PLAYER_ID, GATE);
     expect(weak.ok && !weak.passed).toBe(true);
-    if (weak.ok) expect(innerTrial(weak.state, GATE).ok).toBe(false);
+    if (weak.ok) expect(innerTrial(weak.state, weak.state.player.id, GATE).ok).toBe(false);
     const later = { ...member(QC, 9), calendar: { day: s.calendar.day + 40 } };
-    expect(innerTrial(later, GATE).ok).toBe(false);
+    expect(innerTrial(later, later.player.id, GATE).ok).toBe(false);
   });
 });
 
@@ -269,7 +269,7 @@ describe('the save', () => {
     raw.version = 37;
     raw.state.world.members = [{ who: YOU, power: GATE, since: 5 }];
     const back = loadSave(raw);
-    expect(back.version).toBe(56);
+    expect(back.version).toBe(58);
     expect(back.state.world.members).toEqual([
       {
         who: YOU,

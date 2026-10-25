@@ -27,6 +27,7 @@ import {
   type World,
 } from '../resolver/world.ts';
 import { type Cultivator, type GameState } from '../state.ts';
+import { cultivator } from '../who.ts';
 import { isOrganization, organization, theName, houseOf, headRealm } from './identity.ts';
 import { ladderOf, seatRank, entrySeat, seatOf } from './seats.ts';
 import { monthIndex } from './contribution.ts';
@@ -258,7 +259,8 @@ export function leavePower(
 }
 
 /** The copies of a power's guarded methods and arts someone knows: those its hall alone sells. */
-export function guardedKnown(c: Cultivator, power: string): string[] {
+export function guardedKnown(c: Cultivator | null, power: string): string[] {
+  if (!c) return [];
   const house = houseOf(power);
   const ids = [
     ...Object.keys(c.methods).map((m) => copyId('method', m)),
@@ -268,25 +270,27 @@ export function guardedKnown(c: Cultivator, power: string): string[] {
 }
 
 /**
- * Whether a power offers the player its guest elder 客卿 seat (design: an honored outsider): they
+ * Whether a power offers someone its guest elder 客卿 seat (design: an honored outsider): they
  * aren't its member and stand honored with it, or are famed across its region (craft renown 6) in
  * a craft it practices (K6). A beast power keeps no outsiders' seats.
  */
-export function guestOffered(s: GameState, power: string): boolean {
+export function guestOffered(s: GameState, who: string, power: string): boolean {
   if (!isOrganization(power)) return false;
   const house = houseOf(power);
-  if (organization(house).type === 'beast' || membership(s.world, s.player.id, house)) return false;
-  const word = standingOf(s.world, house, s.player.id, s.calendar.day).word;
+  if (organization(house).type === 'beast' || membership(s.world, who, house)) return false;
+  const word = standingOf(s.world, house, who, s.calendar.day).word;
   if (word === GUEST_ELDER.from) return true;
   // A crafter famed across its region in a craft it practices (K6: craft renown 6), never by a
   // house that hunts or holds a trace on them (review 2026-10-21).
   if (word === 'hunted' || word === 'hostile') return false;
-  if (traceFor(s.world, s.player.id, house, s.calendar.day)) return false;
+  if (traceFor(s.world, who, house, s.calendar.day)) return false;
   const region = organization(house).row.region;
+  const c = cultivator(s, who);
   return (
     !!region &&
+    !!c &&
     (organization(house).row.crafts ?? []).some(
-      (k) => craftLevel(s.player, region, k, s.calendar.day) >= CRAFT_RENOWN.guest,
+      (k) => craftLevel(c, region, k, s.calendar.day) >= CRAFT_RENOWN.guest,
     )
   );
 }
@@ -297,13 +301,14 @@ export function guestOffered(s: GameState, power: string): boolean {
  */
 export function becomeGuest(
   s: GameState,
+  who: string,
   power: string,
 ): { ok: true; state: GameState } | { ok: false; why: string } {
-  if (!guestOffered(s, power)) return { ok: false, why: 'They offer you no seat.' };
+  if (!guestOffered(s, who, power)) return { ok: false, why: 'They offer you no seat.' };
   const house = houseOf(power);
   const day = s.calendar.day;
   const guest: Member = {
-    who: s.player.id,
+    who,
     power: house,
     since: day,
     seat: 'elder',
@@ -311,9 +316,11 @@ export function becomeGuest(
     paid: monthIndex(day),
     guest: true,
   };
-  const known = s.world.known.includes(`token:${house}`)
-    ? s.world.known
-    : [...s.world.known, `token:${house}`];
+  // Its token is known to you, the one who plays (the world's `known` is yours).
+  const known =
+    !cultivator(s, who) || s.world.known.includes(`token:${house}`)
+      ? s.world.known
+      : [...s.world.known, `token:${house}`];
   return {
     ok: true,
     state: { ...s, world: { ...s.world, members: [...s.world.members, guest], known } },

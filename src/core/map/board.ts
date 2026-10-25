@@ -265,7 +265,7 @@ export function claimPosting(s: GameState, map: RegionMap, id: string): BoardChe
   let st: GameState;
   let paid: string;
   if (p.power) {
-    const tithe = titheOf(s.world, s.player.id, p.power, realmStageOf(s));
+    const tithe = titheOf(s.world, s.player.id, p.power, realmStageOf(s, s.player.id));
     const points = Math.round(p.pay * (1 - tithe) * 10) / 10;
     st = { ...s, world: addBalance(s.world, s.player.id, p.power, points) };
     paid = `${points} ${organization(p.power).preset.currency.name} at the mission hall`;

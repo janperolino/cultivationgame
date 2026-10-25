@@ -93,6 +93,8 @@ export const MEMORIES = {
   'gave-face': { reason: 'Gave me face', value: 10, fade: SEASON, tag: 'face' },
   'cost-face': { reason: 'Cost me face', value: -15, fade: SEASON, tag: 'face' },
   'beat-me': { reason: 'Beat me in a fair contest', value: -5, fade: SEASON, tag: 'face' },
+  // An enemy's duel lost, the regional cast's (N2): the tie stays, and the grudge with it.
+  'beat-me-duel': { reason: 'Beat me in a duel', value: -20, fade: YEAR, tag: 'face' },
   spurned: { reason: 'Spurned me', value: -15, fade: YEAR, tag: 'face' },
   // insult and threat
   insulted: { reason: 'Insulted me', value: -10, fade: MONTH, cap: -30, tag: 'insult' },

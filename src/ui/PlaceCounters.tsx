@@ -280,13 +280,13 @@ export function ShopCounter({
     return () => lookAt({ shop: false });
   }, [applyLife]);
   // A sect's hall: its own pay in its currency, an outsider at friendly at the open counter (O2).
-  const terms = hallTerms(game, sh);
+  const terms = hallTerms(game, game.player.id, sh);
   const house = sh.power && isOrganization(sh.power) ? houseOf(sh.power) : null;
   const yours =
     terms?.as === 'member' && house ? membership(game.world, game.player.id, house) : undefined;
   const currency = house ? organization(house).preset.currency.name : '';
   // What a harsh power's lower seats keep of a sale after its tithe (the checkpoint's fix).
-  const tithe = titheFor(game, sh);
+  const tithe = titheFor(game, game.player.id, sh);
   const titheFrom =
     tithe > 0 ? (house ?? membershipsOf(game.world, game.player.id)[0]?.power ?? null) : null;
   // A member donates at its hall: stones at 2 low a point, goods at half their sell price (O1).
@@ -315,7 +315,9 @@ export function ShopCounter({
   };
   if (terms?.as === 'shut') return <p className="place-note">{terms.why}</p>;
   // The shelf by the count first, then the month's display lots (E5).
-  const shelved = shelf(game, shopId).sort((a, b) => Number(!!b.standing) - Number(!!a.standing));
+  const shelved = shelf(game, game.player.id, shopId).sort(
+    (a, b) => Number(!!b.standing) - Number(!!a.standing),
+  );
   const imported = (thing: string) => origin(thing).includes('imported');
   const floor = departments ? departmentsOf(shelved, imported) : [];
   const lots =
@@ -325,7 +327,7 @@ export function ShopCounter({
   // What you carry and the copies on your bookcase, whatever this shop will buy.
   const held = [...Object.entries(game.player.items), ...Object.entries(game.player.copies)]
     .filter(([, n]) => n > 0)
-    .map(([thing, n]) => ({ thing, n, offer: offerFor(game, shopId, thing) }))
+    .map(([thing, n]) => ({ thing, n, offer: offerFor(game, game.player.id, shopId, thing) }))
     .filter((x) => x.offer.ok);
   // A standing line is bought one, ten or a Bag square at a time (E5).
   const counted = (l: StockLot) => !!l.standing && !l.endless;
@@ -342,7 +344,7 @@ export function ShopCounter({
       ...Object.keys(game.player.items).filter((t) => (game.player.items[t] ?? 0) > 0),
     ]),
   ]
-    .map((thing) => ({ thing, cost: repairCost(game, thing) }))
+    .map((thing) => ({ thing, cost: repairCost(game, game.player.id, thing) }))
     .filter((x) => x.cost !== null);
   // Known by name from craft renown 3 (K6): the keeper knows the maker of what they deal in.
   const byName = knownCrafts(game.player, sh.region, game.calendar.day).find((k) =>
@@ -378,7 +380,7 @@ export function ShopCounter({
             className="place-btn"
             onClick={() =>
               act((s) => {
-                const r = haggle(s, shopId);
+                const r = haggle(s, s.player.id, shopId);
                 if (r.ok)
                   say(
                     r.off
@@ -414,7 +416,7 @@ export function ShopCounter({
       {terms?.as === 'counter' && (
         <p className="place-sub">
           The open counter: ×1.25 in stones, never the members’ lines or the chapters.
-          {house && guestOffered(game, house) && (
+          {house && guestOffered(game, game.player.id, house) && (
             <>
               {' '}
               <button
@@ -422,7 +424,7 @@ export function ShopCounter({
                 className="place-btn"
                 onClick={() =>
                   act((s) => {
-                    const r = becomeGuest(s, house);
+                    const r = becomeGuest(s, s.player.id, house);
                     if (r.ok) say(`You sit as a guest elder of ${theName(house)}.`);
                     return r.ok ? r : { ok: false, reason: r.why };
                   })
@@ -481,8 +483,8 @@ export function ShopCounter({
                 </span>
                 <span className="place-price">
                   {counted(l)
-                    ? `${cost(priceToYou(game, shopId, l, 1))} each`
-                    : cost(priceToYou(game, shopId, l))}
+                    ? `${cost(priceToYou(game, game.player.id, shopId, l, 1))} each`
+                    : cost(priceToYou(game, game.player.id, shopId, l))}
                 </span>
                 <span className="place-buys">
                   {(counted(l) ? amounts(l) : [undefined]).map((k) => (
@@ -493,7 +495,7 @@ export function ShopCounter({
                       onClick={() => {
                         endGuide('first-buy');
                         act((s) => {
-                          const r = buy(s, shopId, l.slot, k);
+                          const r = buy(s, s.player.id, shopId, l.slot, k);
                           if (r.ok) {
                             say(`Bought ${w.name}${(k ?? l.n) > 1 ? ` ×${k ?? l.n}` : ''}.`);
                             cue('shop-buy');
@@ -535,7 +537,7 @@ export function ShopCounter({
                     className="place-btn"
                     onClick={() =>
                       act((s) => {
-                        const r = sell(s, shopId, thing, lotOf(thing, n));
+                        const r = sell(s, s.player.id, shopId, thing, lotOf(thing, n));
                         if (r.ok) {
                           say(`Sold ${w.name}.`);
                           cue('shop-sell');
@@ -588,7 +590,7 @@ export function ShopCounter({
                   className="place-btn"
                   onClick={() =>
                     act((s) => {
-                      const r = repair(s, shopId, thing);
+                      const r = repair(s, s.player.id, shopId, thing);
                       if (r.ok) say(`${w.name} mended.`);
                       return r;
                     })
@@ -619,7 +621,7 @@ function PavilionCounter({
   act: Act;
   say: (t: string) => void;
 }) {
-  const lines = pavilion(game, power);
+  const lines = pavilion(game, game.player.id, power);
   if (!lines) return <p className="place-note">The pavilion is for its own disciples.</p>;
   const m = membership(game.world, game.player.id, houseOf(power))!;
   const currency = organization(houseOf(power)).preset.currency.name;
@@ -653,7 +655,7 @@ function PavilionCounter({
                 disabled={!l.open}
                 onClick={() =>
                   act((s) => {
-                    const r = buyChapter(s, power, l.thing);
+                    const r = buyChapter(s, s.player.id, power, l.thing);
                     if (r.ok) say(`The pavilion copies you ${w.name}.`);
                     return r;
                   })
@@ -723,7 +725,7 @@ function DonateRows({ game, power, act, say }: CounterProps) {
   const currency = organization(power).preset.currency.name;
   const give = (gift: { stones?: number; things?: Record<string, number> }, what: string) =>
     act((s) => {
-      const r = donate(s, power, gift);
+      const r = donate(s, s.player.id, power, gift);
       if (r.ok) say(`${what} donated: ${r.points} ${currency}.`);
       return r.ok ? r : { ok: false, reason: r.why };
     });
@@ -921,21 +923,22 @@ function ExamCounter({ game, power, act, say }: CounterProps) {
             Guest elder <span className="hanzi">客卿</span>
           </span>
           <span className="muted">offered at name {CRAFT_RENOWN.guest} in one of its crafts</span>
-          {guestOffered(game, power) && !membership(game.world, game.player.id, power) && (
-            <button
-              type="button"
-              className="place-btn"
-              onClick={() =>
-                act((s) => {
-                  const r = becomeGuest(s, power);
-                  if (r.ok) say(`You sit as a guest elder of ${theName(power)}.`);
-                  return r.ok ? r : { ok: false, reason: r.why };
-                })
-              }
-            >
-              Take the guest elder’s seat they offer
-            </button>
-          )}
+          {guestOffered(game, game.player.id, power) &&
+            !membership(game.world, game.player.id, power) && (
+              <button
+                type="button"
+                className="place-btn"
+                onClick={() =>
+                  act((s) => {
+                    const r = becomeGuest(s, s.player.id, power);
+                    if (r.ok) say(`You sit as a guest elder of ${theName(power)}.`);
+                    return r.ok ? r : { ok: false, reason: r.why };
+                  })
+                }
+              >
+                Take the guest elder’s seat they offer
+              </button>
+            )}
         </li>
       </ul>
     </>
@@ -954,7 +957,7 @@ function MarkWords({
   thing: string;
   n: number;
 }) {
-  const m = markOn(game, shopId, thing, n);
+  const m = markOn(game, game.player.id, shopId, thing, n);
   if (m.n === 0) return null;
   return (
     <span className="place-good">
@@ -1007,7 +1010,7 @@ function GuildCounter({ game, power, act, say }: CounterProps) {
 
 /** The way into a power, asked at its seat: a test, vows, enlisting, buying in, an oath, a sponsor. */
 function JoinCounter({ game, power, act, say }: CounterProps) {
-  const e = entryOf(game, power);
+  const e = entryOf(game, game.player.id, power);
   if (!e) return <p className="place-note">You are one of theirs already.</p>;
   return (
     <>
@@ -1019,7 +1022,7 @@ function JoinCounter({ game, power, act, say }: CounterProps) {
         disabled={!!e.shut}
         onClick={() =>
           act((s) => {
-            const r = askToJoin(s, power);
+            const r = askToJoin(s, s.player.id, power);
             if (r.ok)
               say(
                 r.joined
@@ -1038,11 +1041,11 @@ function JoinCounter({ game, power, act, say }: CounterProps) {
 
 /** A gift for a power you don't belong to: stones or a thing from the Bag, tribute once a month. */
 function GiftCounter({ game, power, act, say }: CounterProps) {
-  const floor = giftFloor(game);
-  const counted = giftThisMonth(game, power);
+  const floor = giftFloor(game, game.player.id);
+  const counted = giftThisMonth(game, game.player.id, power);
   const give = (gift: { stones?: number; things?: Record<string, number> }) =>
     act((s) => {
-      const r = offerGift(s, power, gift);
+      const r = offerGift(s, s.player.id, power, gift);
       if (r.ok) say(r.counted ? 'It is taken in, and noted.' : 'It is taken in.');
       return r;
     });
@@ -1137,9 +1140,9 @@ function asSpar(r: GameState | string) {
 /** The elders' hall: an elder's lesson, a protector, the inner trial in its month, being released. */
 function EldersCounter({ game, power, act, say }: CounterProps) {
   const [asking, setAsking] = useState(false);
-  const h = eldersHall(game, power);
+  const h = eldersHall(game, game.player.id, power);
   if (!h) return <p className="place-note">The elders see only their own.</p>;
-  const release = releaseView(game, power);
+  const release = releaseView(game, game.player.id, power);
   const pts = (n: number) => `${Math.round(n * 10) / 10} ${h.currency}`;
   return (
     <>
@@ -1159,7 +1162,7 @@ function EldersCounter({ game, power, act, say }: CounterProps) {
             disabled={h.lesson.taken}
             onClick={() =>
               act((s) => {
-                const r = takeLesson(s, power);
+                const r = takeLesson(s, s.player.id, power);
                 if (r.ok) say('An elder spends the day on you.');
                 return r.ok ? r : { ok: false, reason: r.why };
               })
@@ -1182,7 +1185,7 @@ function EldersCounter({ game, power, act, say }: CounterProps) {
             disabled={h.protector.standing}
             onClick={() =>
               act((s) => {
-                const r = engageProtector(s, power);
+                const r = engageProtector(s, s.player.id, power);
                 if (r.ok) say('An elder will stand by you.');
                 return r.ok ? r : { ok: false, reason: r.why };
               })
@@ -1204,7 +1207,7 @@ function EldersCounter({ game, power, act, say }: CounterProps) {
               disabled={!h.trial.open}
               onClick={() =>
                 act((s) => {
-                  const r = innerTrial(s, power);
+                  const r = innerTrial(s, s.player.id, power);
                   if (!r.ok) return { ok: false, reason: r.why };
                   say(trialWords(r));
                   return r;
@@ -1243,7 +1246,7 @@ function EldersCounter({ game, power, act, say }: CounterProps) {
                 className={`place-btn${release.parting.kind === 'clean' ? '' : ' is-bad'}`}
                 onClick={() =>
                   act((s) => {
-                    const r = askRelease(s, power);
+                    const r = askRelease(s, s.player.id, power);
                     if (r.ok) say(`You leave ${theName(power)}.`);
                     return r;
                   })

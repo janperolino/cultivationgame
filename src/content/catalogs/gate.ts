@@ -516,6 +516,8 @@ export const BUTCHER_GATE: Catalog = {
     { thing: 'core-blood-pill', shops: ['sect'], count: [1, 2], weight: 0.3, members: true },
     { thing: 'tempered-marrow', shops: ['sect'], weight: 0.3, members: true },
     { thing: 'marrow-washing-pill', shops: ['sect'], weight: 0.5, members: true },
+    // A power headed at Core Formation or above sells its elders the core-forming pill (N2).
+    { thing: 'core-forming-pill', shops: ['sect'], weight: 0.01, members: true },
     { thing: 'method:butcher-saber', shops: ['sect'], weight: 0.5 },
     { thing: 'method:butcher-saber-foundation', shops: ['sect'], weight: 0.2 },
     { thing: 'method:stone-bearing-foundation', shops: ['sect'], weight: 0.2 },

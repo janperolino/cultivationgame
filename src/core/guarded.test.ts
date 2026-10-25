@@ -258,7 +258,7 @@ describe('a black market sale', () => {
   it('tells the Gate that it leaked, never who, and its copy is bought out in a season', () => {
     let s = life();
     s = withPlayer(s, { ...s.player, copies: { ...s.player.copies, [SABER]: 1 } });
-    const r = sell(s, 'nameless-black', SABER);
+    const r = sell(s, s.player.id, 'nameless-black', SABER);
     expect(r.ok).toBe(true);
     const after = r.state!;
     const day = after.calendar.day;
@@ -343,7 +343,7 @@ describe('leaving and what you learned', () => {
     s = { ...s, world: left.world };
     expect(oathFor(s.world, YOU, GATE, 0)).toBeDefined();
     expect(markFor(s.world, YOU, GATE, 0)).toBeUndefined();
-    const black = sell(s, 'nameless-black', SABER);
+    const black = sell(s, s.player.id, 'nameless-black', SABER);
     expect(black.ok).toBe(false);
     if (!black.ok) expect(black.reason).toContain('heart-demon oath');
     expect(huntOf(s.world, GATE, 0)).toBe(0);
@@ -409,7 +409,7 @@ describe('the save', () => {
     raw.version = 41;
     raw.state.world.states = raw.state.world.states.filter((x) => x.data.kind !== 'vow');
     const back = loadSave(raw);
-    expect(back.version).toBe(56);
+    expect(back.version).toBe(58);
     expect(oathFor(back.state.world, YOU, GATE, 0)).toBeDefined();
   });
 });

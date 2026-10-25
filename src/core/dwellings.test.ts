@@ -438,7 +438,7 @@ describe('the save', () => {
       aVein(s, (x) => x.rating <= 2),
     );
     const back = loadSave(makeSave(t, 1));
-    expect(back.version).toBe(56);
+    expect(back.version).toBe(58);
     expect(back.state.player.dwellings).toEqual(t.player.dwellings);
     expect(back.state.player.abode).toBe(t.player.abode);
     expect(back.state.map!.veins).toEqual(t.map!.veins);

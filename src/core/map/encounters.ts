@@ -181,7 +181,7 @@ export function roleActors(
   if ('mortal' in who) {
     const n = role.count ? rng.int(role.count[0], role.count[1]) : 1;
     return Array.from({ length: n }, (_, i) =>
-      plainActor({ id: idOf(i), name: role.name, side: THEM }),
+      plainActor({ id: idOf(i), name: role.name, side: THEM, mortal: true }),
     );
   }
   // The hunting power's law hall: its own disciples, as many as the hunt sends (O5).

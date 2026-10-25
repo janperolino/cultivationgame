@@ -80,11 +80,11 @@ const nextMonth = (s: GameState, months = 1): GameState => ({
 describe('the exchange hall', () => {
   it('sells to an outer Gate disciple in contribution, at the market’s price and never above', () => {
     const s = member(life(), GATE);
-    expect(hallTerms(s, shop('gate-sect'))).toEqual({ as: 'member' });
-    const lot = shelf(s, 'gate-sect').find((l) => !l.standing)!;
+    expect(hallTerms(s, s.player.id, shop('gate-sect'))).toEqual({ as: 'member' });
+    const lot = shelf(s, s.player.id, 'gate-sect').find((l) => !l.standing)!;
     const points = hallPoints(shop('gate-sect'), lot);
     expect(points).toBeLessThanOrEqual(lot.price);
-    const r = buy(s, 'gate-sect', lot.slot);
+    const r = buy(s, s.player.id, 'gate-sect', lot.slot);
     if (!r.ok) throw new Error(r.reason);
     expect(balance(r.state, GATE)).toBeCloseTo(1000 - points, 1);
     expect(worthOf(stonesOf(r.state.player))).toBe(worthOf(stonesOf(s.player)));
@@ -92,8 +92,8 @@ describe('the exchange hall', () => {
 
   it('refuses a member whose balance won’t cover it', () => {
     const s = member(life(), GATE, 'outer', 0);
-    const lot = shelf(s, 'gate-sect')[0]!;
-    expect(buy(s, 'gate-sect', lot.slot)).toMatchObject({ ok: false });
+    const lot = shelf(s, s.player.id, 'gate-sect')[0]!;
+    expect(buy(s, s.player.id, 'gate-sect', lot.slot)).toMatchObject({ ok: false });
   });
 
   it('leaves the Gate’s own chapters to its pavilion', () => {
@@ -101,7 +101,7 @@ describe('the exchange hall', () => {
     for (let month = 0; month < 12; month++) {
       const t = { ...s, calendar: { ...s.calendar, day: month * DAYS_PER_MONTH } };
       const own = pavilionChapters(GATE);
-      expect(shelf(t, 'gate-sect').some((l) => own.includes(l.thing))).toBe(false);
+      expect(shelf(t, t.player.id, 'gate-sect').some((l) => own.includes(l.thing))).toBe(false);
     }
   });
 });
@@ -109,12 +109,14 @@ describe('the exchange hall', () => {
 describe('the open counter', () => {
   it('shuts to a stranger and opens at friendly, in stones at ×1.25', () => {
     const s = life();
-    expect(hallTerms(s, shop('gate-sect'))?.as).toBe('shut');
+    expect(hallTerms(s, s.player.id, shop('gate-sect'))?.as).toBe('shut');
     const t = known(s, GATE);
-    expect(hallTerms(t, shop('gate-sect'))).toEqual({ as: 'counter' });
-    const lot = shelf(t, 'gate-sect')[0]!;
-    const posted = shelf(member(life(), GATE), 'gate-sect').find((l) => l.slot === lot.slot)!;
-    const r = buy(t, 'gate-sect', lot.slot);
+    expect(hallTerms(t, t.player.id, shop('gate-sect'))).toEqual({ as: 'counter' });
+    const lot = shelf(t, t.player.id, 'gate-sect')[0]!;
+    const posted = shelf(member(life(), GATE), PLAYER_ID, 'gate-sect').find(
+      (l) => l.slot === lot.slot,
+    )!;
+    const r = buy(t, t.player.id, 'gate-sect', lot.slot);
     if (!r.ok) throw new Error(r.reason);
     const paid = worthOf(stonesOf(t.player)) - worthOf(stonesOf(r.state.player));
     // A lot sells whole: its price a piece, times its count.
@@ -129,7 +131,8 @@ describe('the open counter', () => {
     for (let month = 0; month < 12; month++) {
       const day = month * DAYS_PER_MONTH;
       const t = { ...known(life(), GATE), calendar: { day } };
-      for (const l of shelf(t, 'gate-sect')) expect(counterSells(sh, l.thing)).toBe(true);
+      for (const l of shelf(t, t.player.id, 'gate-sect'))
+        expect(counterSells(sh, l.thing)).toBe(true);
       theirs += stockOf('gate-sect', month, emptyWorld()).filter((l) =>
         membersLine(sh, l.thing),
       ).length;
@@ -158,18 +161,18 @@ describe('the scripture pavilion', () => {
 
   it('sells chapter 2 only from the inner seat', () => {
     const outer = member(life(), GATE);
-    expect(pavilion(outer, GATE)!.find((l) => l.thing === CH2)!.open).toBe(false);
-    expect(buyChapter(outer, GATE, CH2).ok).toBe(false);
-    expect(buyChapter(outer, GATE, 'method:butcher-saber').ok).toBe(true);
+    expect(pavilion(outer, outer.player.id, GATE)!.find((l) => l.thing === CH2)!.open).toBe(false);
+    expect(buyChapter(outer, outer.player.id, GATE, CH2).ok).toBe(false);
+    expect(buyChapter(outer, outer.player.id, GATE, 'method:butcher-saber').ok).toBe(true);
     const inner = member(life(), GATE, 'inner');
-    const r = buyChapter(inner, GATE, CH2);
+    const r = buyChapter(inner, inner.player.id, GATE, CH2);
     if (!r.ok) throw new Error(r.reason);
     expect(r.state.player.copies[CH2]).toBe(1);
     expect(balance(r.state, GATE)).toBeLessThan(1000);
   });
 
   it('is shut to an outsider', () => {
-    expect(pavilion(known(life(), GATE), GATE)).toBeNull();
+    expect(pavilion(known(life(), GATE), PLAYER_ID, GATE)).toBeNull();
   });
 });
 
@@ -199,31 +202,43 @@ describe('the monthly allowance', () => {
 
   it('hands out pills its own hall won’t buy back', () => {
     const s = member(life(), REINS);
-    const paid = payAllowances(nextMonth(s));
+    const paid = payAllowances(nextMonth(s), PLAYER_ID);
     const pill = 'qi-gathering-pill';
     const held = itemCount(paid.player, pill);
     expect(givenBy(paid.world, REINS, pill)).toBe(1);
-    const back = sell({ ...paid, map: { ...paid.map!, inside: REINS } }, 'reins-sect', pill, 1);
+    const back = sell(
+      { ...paid, map: { ...paid.map!, inside: REINS } },
+      paid.player.id,
+      'reins-sect',
+      pill,
+      1,
+    );
     expect(back).toMatchObject({ ok: false, reason: expect.stringContaining('gave you') });
     // One bought elsewhere sells: only what it gave is refused.
     const more = withPlayer(paid, {
       ...paid.player,
       items: { ...paid.player.items, [pill]: held + 1 },
     });
-    const r = sell({ ...more, map: { ...more.map!, inside: REINS } }, 'reins-sect', pill, 1);
+    const r = sell(
+      { ...more, map: { ...more.map!, inside: REINS } },
+      more.player.id,
+      'reins-sect',
+      pill,
+      1,
+    );
     if (!r.ok) expect(r.reason).not.toContain('gave you');
     // Gifts used up don't count on: eaten before the next month, only that month's gift is its.
     const ate = withPlayer(paid, { ...paid.player, items: { ...paid.player.items, [pill]: 0 } });
-    expect(givenBy(payAllowances(nextMonth(ate)).world, REINS, pill)).toBe(1);
+    expect(givenBy(payAllowances(nextMonth(ate), PLAYER_ID).world, REINS, pill)).toBe(1);
   });
 
   it('takes no gift or sale of a count that isn’t whole and above nothing', () => {
     const s = member(life(), REINS);
     const pill = 'qi-gathering-pill';
-    expect(donate(s, REINS, { things: { [pill]: -3 } })).toMatchObject({ ok: false });
-    expect(donate(s, REINS, { stones: NaN })).toMatchObject({ ok: false });
+    expect(donate(s, s.player.id, REINS, { things: { [pill]: -3 } })).toMatchObject({ ok: false });
+    expect(donate(s, s.player.id, REINS, { stones: NaN })).toMatchObject({ ok: false });
     const inside = { ...s, map: { ...ensureMap(s).map!, inside: REINS } };
-    expect(sell(inside, 'reins-sect', pill, NaN)).toMatchObject({
+    expect(sell(inside, inside.player.id, 'reins-sect', pill, NaN)).toMatchObject({
       ok: false,
       reason: 'Name how many.',
     });
@@ -231,13 +246,13 @@ describe('the monthly allowance', () => {
 
   it('arrives as the month turns, once', () => {
     const s = member(life(), REINS);
-    expect(payAllowances(s)).toBe(s);
-    const paid = payAllowances(nextMonth(s));
+    expect(payAllowances(s, s.player.id)).toBe(s);
+    const paid = payAllowances(nextMonth(s), PLAYER_ID);
     expect(worthOf(stonesOf(paid.player)) - worthOf(stonesOf(s.player))).toBeCloseTo(3);
     expect(itemCount(paid.player, 'qi-gathering-pill')).toBe(
       itemCount(s.player, 'qi-gathering-pill') + 1,
     );
-    expect(payAllowances(paid)).toBe(paid);
+    expect(payAllowances(paid, paid.player.id)).toBe(paid);
   });
 
   it('comes on the day step, by seat at a harsh power', () => {
@@ -300,29 +315,29 @@ describe('the dwelling', () => {
 describe('the tithe', () => {
   it('a harsh power takes 30% of what its lower seats bring in', () => {
     const outer = member(life(), GATE);
-    expect(titheFor(outer, shop('mouth-bounty'))).toBe(0.3);
-    expect(titheFor(outer, shop('gate-sect'))).toBe(0.3);
-    expect(titheFor(outer, shop('mouth-refiner'))).toBe(0);
-    expect(titheFor(member(life(), GATE, 'true'), shop('mouth-bounty'))).toBe(0);
-    expect(titheFor(member(life(), REINS), shop('mouth-bounty'))).toBe(0);
+    expect(titheFor(outer, outer.player.id, shop('mouth-bounty'))).toBe(0.3);
+    expect(titheFor(outer, outer.player.id, shop('gate-sect'))).toBe(0.3);
+    expect(titheFor(outer, outer.player.id, shop('mouth-refiner'))).toBe(0);
+    expect(titheFor(member(life(), GATE, 'true'), PLAYER_ID, shop('mouth-bounty'))).toBe(0);
+    expect(titheFor(member(life(), REINS), PLAYER_ID, shop('mouth-bounty'))).toBe(0);
   });
 });
 
 describe('the guest elder', () => {
   it('is offered to an honored outsider, opens the hall but not the pavilion, and binds no house', () => {
     const s = known(life(), GATE, 60);
-    expect(guestOffered(known(life(), GATE), GATE)).toBe(false);
-    expect(guestOffered(s, GATE)).toBe(true);
-    const r = becomeGuest(s, GATE);
+    expect(guestOffered(known(life(), GATE), PLAYER_ID, GATE)).toBe(false);
+    expect(guestOffered(s, s.player.id, GATE)).toBe(true);
+    const r = becomeGuest(s, s.player.id, GATE);
     if (!r.ok) throw new Error(r.why);
-    expect(hallTerms(r.state, shop('gate-sect'))).toEqual({ as: 'guest' });
+    expect(hallTerms(r.state, r.state.player.id, shop('gate-sect'))).toEqual({ as: 'guest' });
     // A guest earns no points, so pays in stones at the market's price, the members' lines too.
-    const lots = shelf(r.state, 'gate-sect');
+    const lots = shelf(r.state, r.state.player.id, 'gate-sect');
     expect(lots.some((l) => membersLine(shop('gate-sect'), l.thing))).toBe(true);
     const lot = lots.find((l) => !l.standing)!;
-    expect(priceToYou(r.state, 'gate-sect', lot)).toBeCloseTo(lot.price);
+    expect(priceToYou(r.state, r.state.player.id, 'gate-sect', lot)).toBeCloseTo(lot.price);
     const before = worthOf(stonesOf(r.state.player));
-    const bought = buy(r.state, 'gate-sect', lot.slot);
+    const bought = buy(r.state, r.state.player.id, 'gate-sect', lot.slot);
     if (!bought.ok) throw new Error(bought.reason);
     expect(worthOf(stonesOf(bought.state.player))).toBeLessThan(before);
     // Its leaving is always clean, even from a house whose leaving is betrayal.
@@ -331,7 +346,7 @@ describe('the guest elder', () => {
     const w = { ...r.state.world, members: [...r.state.world.members, row] };
     expect(partingOf(w, YOU, NIGHT_BRIDGE, r.state.calendar.day).kind).toBe('clean');
     expect(partingOf(r.state.world, YOU, NIGHT_BRIDGE, r.state.calendar.day).kind).toBe('betrayal');
-    expect(pavilion(r.state, GATE)).toBeNull();
+    expect(pavilion(r.state, r.state.player.id, GATE)).toBeNull();
     expect(canJoin(r.state.world, YOU, REINS).ok).toBe(true);
     expect(allowanceOf(GATE, 'elder', QC, true)).toEqual({ stones: 33.8, pills: 0 });
   });
@@ -347,7 +362,7 @@ describe('the save', () => {
     raw.version = 38;
     delete raw.state.world.members[0]!.paid;
     const back = loadSave(raw);
-    expect(back.version).toBe(56);
+    expect(back.version).toBe(58);
     expect(back.state.world.members[0]!.paid).toBe(Math.floor(s.calendar.day / DAYS_PER_MONTH));
   });
 });

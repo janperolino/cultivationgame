@@ -324,6 +324,12 @@ export const WorldSchema = z.object({
    * and its rooms robbed or with a body in them (P3.9b), by place id.
    */
   frames: z.record(z.string(), z.array(FrameSchema)),
+  /**
+   * The regions whose cast is seeded (N2; design § The regional cast), by region: the last season
+   * its cast lived (a season index from world day 0). A region is seeded the first time you stand
+   * in it; the Border Wilds with the world.
+   */
+  cast: z.record(z.string(), z.number().int()).optional(),
   /** The next deed's, lasting state's and memory's id. */
   next: z.number().int().min(1),
 });

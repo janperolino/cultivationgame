@@ -115,10 +115,10 @@ describe('a power’s own good, known where its people trade', () => {
   it('marks an outsider who sells the Valley’s pill in the City, and nobody at Pacified Fort', () => {
     let s = alchemist();
     s = withPlayer(s, addItem(s.player, 'heart-guarding-pill', 4));
-    const away = sell(s, 'march-stall', 'heart-guarding-pill', 1);
+    const away = sell(s, s.player.id, 'march-stall', 'heart-guarding-pill', 1);
     if (!away.ok) throw new Error(away.reason);
     expect(markFor(away.state.world, s.player.id, 'xinglin', s.calendar.day)).toBeUndefined();
-    const here = sell(s, 'mouth-stall', 'heart-guarding-pill', 1);
+    const here = sell(s, s.player.id, 'mouth-stall', 'heart-guarding-pill', 1);
     if (!here.ok) throw new Error(here.reason);
     expect(markFor(here.state.world, s.player.id, 'xinglin', s.calendar.day)).toBeDefined();
   });
@@ -126,7 +126,7 @@ describe('a power’s own good, known where its people trade', () => {
   it('Red Marrow knows its blood pill at the Nameless Market’s black market', () => {
     let s = alchemist();
     s = withPlayer(s, addItem(s.player, 'red-marrow-pill', 2));
-    const r = sell(s, 'nameless-black', 'red-marrow-pill', 1);
+    const r = sell(s, s.player.id, 'nameless-black', 'red-marrow-pill', 1);
     if (!r.ok) throw new Error(r.reason);
     expect(markFor(r.state.world, s.player.id, 'qm-chisui-dong', s.calendar.day)).toBeDefined();
   });
@@ -168,12 +168,12 @@ describe('the craft grade', () => {
   it('opens the guild’s member seat with a first-grade badge, and shuts it without', () => {
     let s = alchemist();
     expect(seatGate(s.player, GUILD, 'outer')).toMatch(/一品/);
-    expect(entryOf(s, GUILD)!.shut).toMatch(/一品/);
+    expect(entryOf(s, s.player.id, GUILD)!.shut).toMatch(/一品/);
     const grades = { alchemy: { grade: 1, day: 0, at: GUILD } };
     s = withPlayer(s, { ...s.player, crafts: { ...s.player.crafts, grades } });
     expect(seatGate(s.player, GUILD, 'outer')).toBeNull();
     expect(seatGate(s.player, GUILD, 'elder')).toMatch(/二品/);
-    const r = askToJoin(s, GUILD);
+    const r = askToJoin(s, s.player.id, GUILD);
     if (!r.ok) throw new Error(r.reason);
     expect(membership(r.state.world, s.player.id, GUILD)).toBeDefined();
   });
@@ -201,12 +201,12 @@ describe('craft renown', () => {
   it('lifts the price of what you made by 3% a level where you are known', () => {
     let s = alchemist();
     s = withPlayer(s, addItem(s.player, 'bone-meal-pill', 20));
-    const plain = sell(s, 'mouth-stall', 'bone-meal-pill', 10);
+    const plain = sell(s, s.player.id, 'mouth-stall', 'bone-meal-pill', 10);
     const made = { ...s.player.crafts.marked, 'bone-meal-pill': 20 };
     const own = withPlayer(s, { ...s.player, crafts: { ...s.player.crafts, marked: made } });
-    const unknown = sell(own, 'mouth-stall', 'bone-meal-pill', 10);
+    const unknown = sell(own, own.player.id, 'mouth-stall', 'bone-meal-pill', 10);
     const m = withPlayer(own, addCraftFame(own.player, BW, 'alchemy', 4, own.calendar.day));
-    const marked = sell(m, 'mouth-stall', 'bone-meal-pill', 10);
+    const marked = sell(m, m.player.id, 'mouth-stall', 'bone-meal-pill', 10);
     if (!plain.ok || !unknown.ok || !marked.ok) throw new Error('no sale');
     const gain = (x: GameState) => x.player.stones - s.player.stones;
     expect(gain(marked.state) / gain(unknown.state)).toBeCloseTo(1.09, 1);
@@ -235,15 +235,15 @@ describe('craft renown', () => {
 
   it('brings the guild’s guest elder seat at 6 in one of its crafts', () => {
     let s = alchemist();
-    expect(guestOffered(s, GUILD)).toBe(false);
+    expect(guestOffered(s, s.player.id, GUILD)).toBe(false);
     s = withPlayer(s, addCraftFame(s.player, BW, 'alchemy', 16, s.calendar.day));
-    expect(guestOffered(s, GUILD)).toBe(true);
+    expect(guestOffered(s, s.player.id, GUILD)).toBe(true);
     // Never from a house that hunts you (review 2026-10-21).
     let w = s.world;
     for (let i = 0; i < 3; i++)
       w = addStanding(w, { power: GUILD, about: s.player.id, row: 'betrayed-us' }, s.calendar.day);
     expect(standingOf(w, GUILD, s.player.id, s.calendar.day).word).toMatch(/hunted|hostile/);
-    expect(guestOffered({ ...s, world: w }, GUILD)).toBe(false);
+    expect(guestOffered({ ...s, world: w }, s.player.id, GUILD)).toBe(false);
   });
 });
 
@@ -259,7 +259,7 @@ describe('the save', () => {
     delete raw.state.player.crafts.marked;
     delete raw.state.player.crafts.renown;
     const back = loadSave(raw);
-    expect(back.version).toBe(56);
+    expect(back.version).toBe(58);
     expect(back.state.player.crafts).toEqual(emptyCrafts());
   });
 

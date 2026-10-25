@@ -31,6 +31,7 @@ import { go } from './nav.ts';
 import { rings } from './beacons.ts';
 import { useBeacons } from './useBeacons.ts';
 import type { useGame } from './store.ts';
+import { GoInHour } from './GoInHour.tsx';
 
 type Act = (change: Parameters<ReturnType<typeof useGame.getState>['mapAct']>[0]) => string | null;
 
@@ -259,7 +260,9 @@ export function EncounterCard({
           }}
         >
           <span>
-            <span className="enc-exit-name">Go in</span>
+            <span className="enc-exit-name">
+              Go in <GoInHour />
+            </span>
             <span className="enc-why">
               {!keyed
                 ? 'needs an OpenRouter key · Settings'

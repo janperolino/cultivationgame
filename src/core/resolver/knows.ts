@@ -113,7 +113,7 @@ export type Tier = (typeof TIERS)[number];
 
 export type Knowledge = Record<Tier, string[]>;
 
-function homeOf(w: World, id: string): string | null {
+export function homeOf(w: World, id: string): string | null {
   if (hasPerson(id)) return person(id).home;
   return w.kept[id]?.home ?? null;
 }

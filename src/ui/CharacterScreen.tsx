@@ -333,7 +333,7 @@ function Growth({ c, which }: { c: Cultivator; which: LadderId }) {
 
 /** The powers you belong to (O1): "Beast-Butcher Gate · outer Gate disciple 外门弟子 · 12 contribution". */
 function Memberships({ game }: { game: GameState }) {
-  const rows = membershipsView(game);
+  const rows = membershipsView(game, game.player.id);
   if (!rows.length) return null;
   return (
     <ul className="memberships">

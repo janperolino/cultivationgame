@@ -27,7 +27,7 @@ import {
 import { emptyWorld } from './resolver/world.ts';
 import { loadSave, makeSave } from './save/format.ts';
 import { buy, claimOf, haggle, offerFor, shelf, standsAt, stockOf } from './shops.ts';
-import { newLife, withPlayer, type GameState } from './state.ts';
+import { newLife, withPlayer, type GameState, PLAYER_ID } from './state.ts';
 
 const CITY = 'qm-shoukou-cheng';
 const w = emptyWorld();
@@ -77,35 +77,41 @@ describe('shelves as slices of the market', () => {
 
   it('draws on the pool: a shop’s count falls by what you bought, and the market’s supply with it', () => {
     let s = life();
-    const line = shelf(s, 'mouth-alchemy').find((l) => l.thing === 'qi-gathering-pill')!;
+    const line = shelf(s, s.player.id, 'mouth-alchemy').find(
+      (l) => l.thing === 'qi-gathering-pill',
+    )!;
     const city = market(CITY)!;
     const before = supplyOf(s.world, city, 'qi-gathering-pill', s.calendar.day);
-    const r = buy(s, 'mouth-alchemy', line.slot, 10);
+    const r = buy(s, s.player.id, 'mouth-alchemy', line.slot, 10);
     if (!r.ok) throw new Error(r.reason);
     s = r.state;
-    expect(shelf(s, 'mouth-alchemy').find((l) => l.slot === line.slot)!.n).toBe(line.n - 10);
+    expect(shelf(s, s.player.id, 'mouth-alchemy').find((l) => l.slot === line.slot)!.n).toBe(
+      line.n - 10,
+    );
     expect(s.player.items['qi-gathering-pill']).toBe(10);
     // Two hundred off the small shops move the City's supply of 7,500 a month a few points, and
     // the price at every shop with it; the branch's count stands, since a shelf holds what the
     // month opened with.
     const small = `${CITY}.alchemy-small`;
-    const bulk = shelf(s, small).find((l) => l.thing === 'qi-gathering-pill')!;
+    const bulk = shelf(s, s.player.id, small).find((l) => l.thing === 'qi-gathering-pill')!;
     expect(bulk.n).toBe(
       standing(small, 'qi-gathering-pill', Math.floor(s.calendar.day / DAYS_PER_MONTH))!.n,
     );
-    const r2 = buy(s, small, bulk.slot, 200);
+    const r2 = buy(s, s.player.id, small, bulk.slot, 200);
     if (!r2.ok) throw new Error(r2.reason);
     s = r2.state;
     expect(supplyOf(s.world, city, 'qi-gathering-pill', s.calendar.day)).toBeLessThan(before - 2);
-    const after = shelf(s, 'mouth-alchemy').find((l) => l.slot === line.slot)!;
+    const after = shelf(s, s.player.id, 'mouth-alchemy').find((l) => l.slot === line.slot)!;
     expect(after.n).toBe(line.n - 10);
     expect(after.price).toBeGreaterThan(line.price);
     // You can't buy more than stands.
-    const rest = shelf(s, 'mouth-alchemy').find((l) => l.slot === line.slot)!;
-    const all = buy(s, 'mouth-alchemy', line.slot, 10_000);
+    const rest = shelf(s, s.player.id, 'mouth-alchemy').find((l) => l.slot === line.slot)!;
+    const all = buy(s, s.player.id, 'mouth-alchemy', line.slot, 10_000);
     if (!all.ok) throw new Error(all.reason);
     expect(all.state.player.items['qi-gathering-pill']).toBe(210 + rest.n);
-    expect(shelf(all.state, 'mouth-alchemy').some((l) => l.slot === line.slot)).toBe(false);
+    expect(
+      shelf(all.state, all.state.player.id, 'mouth-alchemy').some((l) => l.slot === line.slot),
+    ).toBe(false);
   });
 });
 
@@ -148,7 +154,7 @@ describe('purses, owners and names', () => {
       .shops.map((id) => shop(id))
       .find((sh) => sh.keeper)!;
     expect(notable.name).toContain(notable.keeper!.split(' ').at(-1)!);
-    const r = haggle(life(), notable.id);
+    const r = haggle(life(), PLAYER_ID, notable.id);
     if (!r.ok) throw new Error(r.reason);
     expect(r.state.world.kept[`keeper:${notable.id}`]!.name).toBe(notable.keeper);
     expect(keeperName(shop('mouth-alchemy'))).toBe("the alchemy shop's keeper");
@@ -165,7 +171,7 @@ describe('the save', () => {
     const month = { month: 0, bought: [1], paid: 3, haggle: null };
     raw.state.world.shops = { 'mouth-alchemy': month, [`${CITY}.stall-5`]: month };
     // A keeper as v36 kept one, under a shop that stands and one that no longer does.
-    const haggled = haggle(life(), 'mouth-alchemy');
+    const haggled = haggle(life(), PLAYER_ID, 'mouth-alchemy');
     if (!haggled.ok) throw new Error(haggled.reason);
     const keeper = haggled.state.world.kept['keeper:mouth-alchemy']!;
     raw.state.world.kept = {
@@ -173,7 +179,7 @@ describe('the save', () => {
       [`keeper:${CITY}.stall-5`]: keeper,
     };
     const back = loadSave(raw);
-    expect(back.version).toBe(56);
+    expect(back.version).toBe(58);
     expect(back.state.world.shops).toEqual({ 'mouth-alchemy': { ...month, took: {} } });
     expect(Object.keys(back.state.world.kept)).toEqual([`keeper:${CITY}.alchemy-2`]);
     expect(back.state.world.kept[`keeper:${CITY}.alchemy-2`]!.name).toBe(
@@ -190,14 +196,14 @@ describe('no loop pays', () => {
     for (const m of markets) {
       const cheapest = new Map<string, number>();
       for (const id of m.shops)
-        for (const l of shelf(s, id)) {
+        for (const l of shelf(s, s.player.id, id)) {
           const short = shortAtRest(s.world, m, l.thing, s.calendar.day);
           const ask = l.price * (short ? 1 : 1 - HAGGLE_OFF.clear);
           if (ask < (cheapest.get(l.thing) ?? Infinity)) cheapest.set(l.thing, ask);
         }
       for (const [thing, ask] of cheapest)
         for (const id of m.shops) {
-          const o = offerFor(s, id, thing);
+          const o = offerFor(s, s.player.id, id, thing);
           if (o.ok && o.each > ask + 1e-9) out.push(`${m.id} ${id} ${thing} ${o.each} > ${ask}`);
         }
     }

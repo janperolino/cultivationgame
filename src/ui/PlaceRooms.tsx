@@ -23,6 +23,7 @@ import { notables, type Door } from './placeDoors.ts';
 import { craftShelf, ware } from './rooms.ts';
 import { goInAt } from './goin.ts';
 import { QuestOffers } from './QuestOffers.tsx';
+import { GoInHour } from './GoInHour.tsx';
 
 interface RoomProps {
   game: GameState;
@@ -98,7 +99,7 @@ function RoomBar({ map, place, door, back, keyed, onBack, say }: RoomProps) {
             if (why) say(why);
           }}
         >
-          Go in 入
+          Go in 入 <GoInHour piece={door.art} />
         </button>
       )}
     </div>
@@ -193,7 +194,9 @@ function CraftRoom(p: RoomProps) {
   const lots = craftShelf(p.game, shopId, dress.kinds).slice(0, kind === 'talisman' ? 6 : 4);
   const worn =
     kind === 'refiner'
-      ? Object.keys(p.game.player.wear).filter((t) => repairCost(p.game, t) !== null).length
+      ? Object.keys(p.game.player.wear).filter(
+          (t) => repairCost(p.game, p.game.player.id, t) !== null,
+        ).length
       : 0;
   return (
     <div className="place-room-body is-craft">

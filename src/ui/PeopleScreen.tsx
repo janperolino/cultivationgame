@@ -57,6 +57,7 @@ import { EventLine } from './widgets.tsx';
 import { goInAt, useGoIn } from './goin.ts';
 import { useSettings } from './settings.ts';
 import { canCompact, fold, foldable, voiceOf } from '../core/voices.ts';
+import { GoInHour } from './GoInHour.tsx';
 
 /** Their realm as you know it, in words. */
 function realmWords(id: string, r: PersonRecord): string {
@@ -313,7 +314,7 @@ function PersonActs({ game, id }: { game: GameState; id: string }) {
               if (why) setSaid(why);
             }}
           >
-            Go in 入
+            Go in 入 <GoInHour />
           </button>
         </div>
       )}
@@ -691,7 +692,7 @@ function Web({
 
 /** The powers that know you, and your standing with each; heat's cap shows beside it. */
 function Powers({ game }: { game: GameState }) {
-  const yours = membershipsView(game);
+  const yours = membershipsView(game, game.player.id);
   const mine = new Set(yours.map((m) => m.power));
   const powers = powersView(game).filter((x) => !mine.has(x.power));
   if (!powers.length && !yours.length) return null;

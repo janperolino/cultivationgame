@@ -25,7 +25,8 @@
     "glm": "node --env-file=.env.local --import tsx sim/glm.ts",
     "goin": "node --env-file=.env.local --import tsx sim/goin.ts",
     "goin:places": "node --env-file=.env.local --import tsx sim/goin-places.ts",
-    "goin:fight": "node --env-file=.env.local --import tsx sim/goin-fight.ts"
+    "goin:fight": "node --env-file=.env.local --import tsx sim/goin-fight.ts",
+    "goin:book": "node --env-file=.env.local --import tsx sim/goin-book.ts"
   },
   "dependencies": {
     "dexie": "^4.4.6",

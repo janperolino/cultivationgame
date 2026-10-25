@@ -356,7 +356,7 @@ describe('the save', () => {
     let s = cave(life());
     s = ok(layArray(give(s, 'gathering-flags'), at(s), 'gathering-flags', 0));
     const back = loadSave(JSON.parse(JSON.stringify(makeSave(s, 1))));
-    expect(back.version).toBe(56);
+    expect(back.version).toBe(58);
     expect(back.state.player.dwellings[0]!.arrays).toHaveLength(1);
     expect(back.state.player.grounds).toEqual([]);
   });

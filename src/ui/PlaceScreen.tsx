@@ -51,6 +51,7 @@ import {
   type Door,
   type Tab,
 } from './placeDoors.ts';
+import { GoInHour } from './GoInHour.tsx';
 
 /** A place's top realm in words: the atlas writes a realm's id or its name. */
 function topWords(top: string): string {
@@ -279,7 +280,7 @@ export function PlaceScreen({ game, map, place, onMap, shut = false }: Props) {
                 title="Walk the streets as a scene, with the narrator."
                 onClick={() => goIn(null)}
               >
-                The streets 街 · Go in
+                The streets 街 · Go in <GoInHour />
               </button>
             )}
             <span className="place-purse">
@@ -461,10 +462,10 @@ function PlaceHead({ game, map, place }: { game: GameState; map: RegionMap; plac
       {game.map?.inside === place.id && dwellingWords(game) && (
         <div className="place-why">{dwellingWords(game)}</div>
       )}
-      {seat && trialThisMonth(game, seat) && (
+      {seat && trialThisMonth(game, game.player.id, seat) && (
         <div className="place-why">
           The inner trial is held this month: sit it at the{' '}
-          {eldersHall(game, seat)!.title.name.toLowerCase()}.
+          {eldersHall(game, game.player.id, seat)!.title.name.toLowerCase()}.
         </div>
       )}
     </header>
@@ -494,7 +495,7 @@ function PowerHead({
     own && place.area ? areaById(map, place.area)?.name : own ? null : `at ${place.name}`,
     access?.array ? `array: ${realm(access.array).name}` : own && !place.gated ? 'no gate' : null,
   ].filter(Boolean) as string[];
-  const you = membershipsView(game).find((m) => m.power === organization(power).id);
+  const you = membershipsView(game, game.player.id).find((m) => m.power === organization(power).id);
   const standing = standingOf(game.world, power, game.player.id, game.calendar.day);
   return (
     <>
@@ -537,7 +538,7 @@ function PowerHead({
 /** Inside a power: its seal, name and your seat, short, so the grid has the room. */
 function InsideHead({ game, power }: { game: GameState; power: string }) {
   const org = organization(power);
-  const you = membershipsView(game).find((m) => m.power === org.id);
+  const you = membershipsView(game, game.player.id).find((m) => m.power === org.id);
   return (
     <header className="place-head">
       <div className="place-name-row">
@@ -608,7 +609,7 @@ function InsideStrip({
   power: string;
   onFront: () => void;
 }) {
-  const you = membershipsView(game).find((m) => m.power === organization(power).id);
+  const you = membershipsView(game, game.player.id).find((m) => m.power === organization(power).id);
   return (
     <div className="place-gate panel">
       <span className="place-seal is-small">内</span>
@@ -864,7 +865,7 @@ function Preview({
             title="Walk in as a scene, with the narrator."
             onClick={onGoIn}
           >
-            Go in 入
+            Go in 入 <GoInHour piece={door.art} />
           </button>
         )}
         <button
@@ -1013,7 +1014,7 @@ function ShutPanel({ game, map, place }: { game: GameState; map: RegionMap; plac
  * from what membership already keeps: your seat, balance, allowance, quota, leave and trial.
  */
 function SeatHall({ game, power }: { game: GameState; power: string }) {
-  const you = membershipsView(game).find((m) => m.power === organization(power).id);
+  const you = membershipsView(game, game.player.id).find((m) => m.power === organization(power).id);
   if (!you) return <p className="place-note">You hold no seat here.</p>;
   const rows: [string, string | null][] = [
     ['Your seat', `${you.title.name} ${you.title.hanzi}`],
@@ -1091,7 +1092,7 @@ function Village({
             title="Walk the village as a scene, with the narrator."
             onClick={() => goIn(null)}
           >
-            The village 街 · Go in
+            The village 街 · Go in <GoInHour />
           </button>
         )}
         <GateStrip game={game} map={map} place={place} />
@@ -1123,7 +1124,7 @@ function Village({
                 title="Walk in as a scene, with the narrator."
                 onClick={() => goIn(cur.id)}
               >
-                Go in 入
+                Go in 入 <GoInHour piece={cur.art} />
               </button>
             )}
             <button

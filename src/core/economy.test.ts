@@ -254,17 +254,17 @@ describe('shops', () => {
 
   it('sell a lot once a month, at its price, paid from the purse', () => {
     let s = rich(life());
-    const lot = shelf(s, 'mouth-refiner')[0]!;
-    const r = buy(s, 'mouth-refiner', lot.slot);
+    const lot = shelf(s, s.player.id, 'mouth-refiner')[0]!;
+    const r = buy(s, s.player.id, 'mouth-refiner', lot.slot);
     expect(r.ok).toBe(true);
     s = (r as { state: GameState }).state;
     expect(s.player.stones).toBeCloseTo(10_000 - lot.price * lot.n);
     expect(s.player.items[lot.thing]).toBe(lot.n);
-    expect(shelf(s, 'mouth-refiner').some((l) => l.slot === lot.slot)).toBe(false);
-    expect(buy(s, 'mouth-refiner', lot.slot)).toMatchObject({ ok: false });
+    expect(shelf(s, s.player.id, 'mouth-refiner').some((l) => l.slot === lot.slot)).toBe(false);
+    expect(buy(s, s.player.id, 'mouth-refiner', lot.slot)).toMatchObject({ ok: false });
     // The month turns and the shelf is full again.
     const later = { ...s, calendar: { day: s.calendar.day + 30 } };
-    expect(shelf(later, 'mouth-refiner')).toHaveLength(
+    expect(shelf(later, later.player.id, 'mouth-refiner')).toHaveLength(
       stockOf('mouth-refiner', Math.floor(later.calendar.day / 30)).length,
     );
   });
@@ -274,45 +274,53 @@ describe('shops', () => {
     const copyLot = (() => {
       for (let d = 0; d < 3000; d += 30) {
         const t = { ...s, calendar: { day: s.calendar.day + d } };
-        const l = shelf(t, 'mouth-guild').find((x) => hasCopy(x.thing));
+        const l = shelf(t, t.player.id, 'mouth-guild').find((x) => hasCopy(x.thing));
         if (l) return { t, l };
       }
       return null;
     })()!;
-    const bought = buy(copyLot.t, 'mouth-guild', copyLot.l.slot) as { ok: true; state: GameState };
+    const bought = buy(copyLot.t, copyLot.t.player.id, 'mouth-guild', copyLot.l.slot) as {
+      ok: true;
+      state: GameState;
+    };
     expect(bought.state.player.copies[copyLot.l.thing]).toBe(copyLot.l.n);
-    const mortal = shelf(s, 'mouth-mortal')[0]!;
-    expect(buy(s, 'mouth-mortal', mortal.slot)).toMatchObject({ ok: false });
+    const mortal = shelf(s, s.player.id, 'mouth-mortal')[0]!;
+    expect(buy(s, s.player.id, 'mouth-mortal', mortal.slot)).toMatchObject({ ok: false });
     s = withPlayer(s, { ...s.player, silver: 100 });
-    const r = buy(s, 'mouth-mortal', mortal.slot) as { ok: true; state: GameState };
+    const r = buy(s, s.player.id, 'mouth-mortal', mortal.slot) as { ok: true; state: GameState };
     expect(r.state.player.silver).toBeCloseTo(100 - mortal.price * mortal.n);
   });
 
   it('buy back at 40%, only what they deal in, out of a finite purse', () => {
     let s = withPlayer(life(), addItem(life().player, 'iron-sword', 120));
-    const offer = offerFor(s, 'mouth-refiner', 'iron-sword');
+    const offer = offerFor(s, s.player.id, 'mouth-refiner', 'iron-sword');
     expect(offer.ok && offer.each).toBeCloseTo(90 * 0.4 * 1, 0);
-    expect(offerFor(s, 'mouth-alchemy', 'iron-sword')).toMatchObject({ ok: false });
-    const r = sell(s, 'mouth-refiner', 'iron-sword', 10) as { ok: true; state: GameState };
+    expect(offerFor(s, s.player.id, 'mouth-alchemy', 'iron-sword')).toMatchObject({ ok: false });
+    const r = sell(s, s.player.id, 'mouth-refiner', 'iron-sword', 10) as {
+      ok: true;
+      state: GameState;
+    };
     expect(r.ok).toBe(true);
     s = r.state;
     expect(s.player.items['iron-sword']).toBe(110);
     expect(s.player.stones).toBeGreaterThan(120);
     // Ten swords flood the City: the next one fetches less (core/markets.ts).
-    const after = offerFor(s, 'mouth-refiner', 'iron-sword');
+    const after = offerFor(s, s.player.id, 'mouth-refiner', 'iron-sword');
     expect(after.ok && offer.ok && after.each < offer.each).toBe(true);
     // A refiner's purse runs out: Grain Ford has none, and Sinkhole Terraces' one, at tier 2 and
     // lean, holds 8,100 a month, less than two thousand swords sold lot by lot (E3).
     const fresh = withPlayer(life(), addItem(life().player, 'iron-sword', 2000));
-    expect(sell(fresh, 'sinkhole-terraces.refiner-1', 'iron-sword', 2000)).toMatchObject({
+    expect(
+      sell(fresh, fresh.player.id, 'sinkhole-terraces.refiner-1', 'iron-sword', 2000),
+    ).toMatchObject({
       ok: false,
     });
   });
 
   it('serve a sect shop’s members only', () => {
     const s = rich(life());
-    const lot = shelf(s, 'gate-sect')[0]!;
-    expect(buy(s, 'gate-sect', lot.slot)).toMatchObject({
+    const lot = shelf(s, s.player.id, 'gate-sect')[0]!;
+    expect(buy(s, s.player.id, 'gate-sect', lot.slot)).toMatchObject({
       ok: false,
       reason: 'It sells only to its own, and its people don’t know you.',
     });
@@ -331,21 +339,24 @@ describe('shops', () => {
         ],
       },
     };
-    expect(buy(member, 'gate-sect', lot.slot).ok).toBe(true);
+    expect(buy(member, member.player.id, 'gate-sect', lot.slot).ok).toBe(true);
   });
 
   it('haggle once a visit: a pass takes its share off, the keeper is kept', () => {
     const s = rich(life());
-    const h = haggle(s, 'mouth-stall');
+    const h = haggle(s, s.player.id, 'mouth-stall');
     expect(h.ok).toBe(true);
     const after = (h as { state: GameState }).state;
     expect(after.world.kept['keeper:mouth-stall']).toBeDefined();
-    expect(haggle(after, 'mouth-stall')).toMatchObject({ ok: false });
-    expect(haggle(s, 'mouth-bounty')).toMatchObject({ ok: false });
+    expect(haggle(after, after.player.id, 'mouth-stall')).toMatchObject({ ok: false });
+    expect(haggle(s, s.player.id, 'mouth-bounty')).toMatchObject({ ok: false });
     const off = h.off!;
     expect([0, 0.1, 0.2]).toContain(off);
-    const lot = shelf(after, 'mouth-stall')[0]!;
-    const r = buy(after, 'mouth-stall', lot.slot) as { ok: true; state: GameState };
+    const lot = shelf(after, after.player.id, 'mouth-stall')[0]!;
+    const r = buy(after, after.player.id, 'mouth-stall', lot.slot) as {
+      ok: true;
+      state: GameState;
+    };
     expect(r.state.player.stones).toBeCloseTo(10_000 - lot.price * lot.n * (1 - off));
   });
 
@@ -367,11 +378,11 @@ describe('shops', () => {
         ],
       },
     };
-    const r = sell(s, 'gate-sect', 'gutting-saber');
+    const r = sell(s, s.player.id, 'gate-sect', 'gutting-saber');
     expect(r).toMatchObject({ ok: false, reason: 'The keeper knows whose that was.' });
     expect(r.state!.world.heat['qm-tushou-men']).toBeDefined();
     // The black market never asks.
-    expect(sell(s, 'bridge-black', 'gutting-saber').ok).toBe(true);
+    expect(sell(s, s.player.id, 'bridge-black', 'gutting-saber').ok).toBe(true);
   });
 });
 
@@ -390,17 +401,22 @@ describe('armor’s wear and repairs', () => {
     expect(wornArmor(after)!.hp).toBe(Math.round(fresh.max / 2));
     expect(fromCultivator(after, 'a').armor!.hp).toBe(Math.round(fresh.max / 2));
     s = withPlayer(s, after);
-    expect(repairCost(s, 'boar-hide-vest')).toBeCloseTo(90 * 0.2 * 0.5);
-    expect(repair(s, 'mouth-stall', 'boar-hide-vest')).toMatchObject({ ok: false });
-    const r = repair(s, 'mouth-refiner', 'boar-hide-vest') as { ok: true; state: GameState };
+    expect(repairCost(s, s.player.id, 'boar-hide-vest')).toBeCloseTo(90 * 0.2 * 0.5);
+    expect(repair(s, s.player.id, 'mouth-stall', 'boar-hide-vest')).toMatchObject({ ok: false });
+    const r = repair(s, s.player.id, 'mouth-refiner', 'boar-hide-vest') as {
+      ok: true;
+      state: GameState;
+    };
     expect(r.state.player.wear['boar-hide-vest']).toBeUndefined();
   });
 
   it('mends a damaged piece back to its rarity at half the price between', () => {
     const dmg = variantId('crab-shell-vest', 'white', { damaged: true });
     const s = rich(withPlayer(life(), addItem(life().player, dmg, 1)));
-    expect(repairCost(s, dmg)).toBeCloseTo((priceOf('crab-shell-vest~green') - priceOf(dmg)) * 0.5);
-    const r = repair(s, 'mouth-refiner', dmg) as { ok: true; state: GameState };
+    expect(repairCost(s, s.player.id, dmg)).toBeCloseTo(
+      (priceOf('crab-shell-vest~green') - priceOf(dmg)) * 0.5,
+    );
+    const r = repair(s, s.player.id, 'mouth-refiner', dmg) as { ok: true; state: GameState };
     expect(r.state.player.items['crab-shell-vest~green']).toBe(1);
     expect(r.state.player.items[dmg] ?? 0).toBe(0);
   });

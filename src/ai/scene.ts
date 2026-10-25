@@ -8,10 +8,21 @@ import type { Setting } from '../core/goin.ts';
 import type { GameState } from '../core/state.ts';
 import { buildView, type Atlas, type Turn, type View } from './context.ts';
 
-/** The view of the scene you are in: your eyes, its last turns, the notes and the summary. */
-export function sceneView(s: GameState, atlas: Atlas): View {
+/**
+ * The view of the scene you are in: your eyes, its last turns, the notes and the summary; with
+ * your words this turn and the topics read from them, for the world book (P3.9w).
+ */
+export function sceneView(
+  s: GameState,
+  atlas: Atlas,
+  now: { said?: string; about?: readonly string[] } = {},
+): View {
   const g = s.goin!;
-  const recent: Turn[] = g.turns.map((t) => ({ said: t.said ?? 'You go in.', told: t.told }));
+  const recent: Turn[] = g.turns.map((t) => ({
+    said: t.said ?? 'You go in.',
+    told: t.told,
+    ...(t.about ? { about: t.about } : {}),
+  }));
   return buildView({
     state: s,
     scene: g.scene,
@@ -19,6 +30,7 @@ export function sceneView(s: GameState, atlas: Atlas): View {
     recent,
     summary: g.summary || undefined,
     notes: g.notes,
+    ...now,
   });
 }
 
@@ -40,6 +52,8 @@ export function settingText(set: Setting): string {
       `The opening, a seed to grow from (keep its facts, tell it in your own words): ${set.opening}`,
     );
   if (set.quiet) lines.push('Nobody else is here: tell the place, not people.');
+  // Going in, a person the telling leaves out is gone for every turn after (P3.9w, on GLM).
+  else lines.push('Everyone under People here is here now, but the hidden: show each of them.');
   return lines.join('\n');
 }
 

@@ -14,11 +14,13 @@ import { MASTERY } from '../content/mastery.ts';
 import { MEMORIES } from '../content/memories.ts';
 import { hasPerson, person, TIES } from '../content/people.ts';
 import { template } from '../content/roster.ts';
-import { realm as realmInfo, stageName } from '../content/realms.ts';
+import { realm as realmInfo, realmIndex, stageName } from '../content/realms.ts';
 import { hasItem, item } from '../content/items.ts';
 import { hasTechnique, technique } from '../content/techniques.ts';
 import type { AxisId, Lean } from '../content/personality.ts';
-import { realmOfActor, YOU, type Actor } from '../core/resolver/actor.ts';
+import { isMortal, realmOfActor, YOU, type Actor } from '../core/resolver/actor.ts';
+import { knowerOf, loreFor, topicsAt, worldBook } from '../core/lore.ts';
+import { LORE_PER_SCENE, TOPIC_TURNS, type LoreEntry, type Topic } from '../content/lore.ts';
 import { readRealm } from '../core/resolver/check.ts';
 import { knowsNature } from '../core/resolver/nature.ts';
 import { knowsTie, memoriesOf, natureOf, tieOf } from '../core/resolver/opinion.ts';
@@ -30,9 +32,16 @@ import type { ChatMessage } from './openrouter.ts';
 import { FIXED_TEXT } from './prompts.ts';
 import { DOOR_KINDS } from '../content/doorKinds.ts';
 import { PLACE_AIR } from '../content/placeAir.ts';
-import { crowdHere, happeningAt, movesHere, wordOfPlace } from '../core/goinPlace.ts';
+import {
+  crowdHere,
+  happeningAt,
+  hourState,
+  hourWords,
+  movesHere,
+  wordOfPlace,
+} from '../core/goinPlace.ts';
+import { TICKS_PER_DAY } from '../content/resolver.ts';
 import { voiceOf as keptVoice } from '../core/voices.ts';
-import { branchOf } from '../core/crowd.ts';
 import { hasQuest, quest } from '../content/quests.ts';
 import { SEAT_IDS } from '../content/organizations.ts';
 import { houseOf, isOrganization, organization, theName } from '../core/orgs/identity.ts';
@@ -153,6 +162,8 @@ export interface Turn {
   said: string;
   /** What the narrator told. */
   told: string;
+  /** The topics the interpreter named for it (the world book, P3.9w). */
+  about?: readonly string[];
 }
 
 export interface ContextInput {
@@ -167,6 +178,9 @@ export interface ContextInput {
   summary?: string;
   /** Notes the narrator and chronicler left, by the real id they are about. */
   notes?: Readonly<Record<string, readonly string[]>>;
+  /** Your words this turn and the topics the interpreter named, for the world book (P3.9w). */
+  said?: string;
+  about?: readonly string[];
 }
 
 export interface View {
@@ -402,10 +416,103 @@ const SIDE_WORDS = (a: Actor, me: Actor) =>
   a.side === me.side ? 'with you' : a.side === 'law' ? 'the law' : 'not with you';
 
 function readWords(me: Actor, a: Actor): string {
+  // No qi moves in a mortal: anyone who cultivates sees it at a glance (P3.9w).
+  if (isMortal(a)) return 'a mortal, no cultivation';
   if (a.side === me.side) return realmWords(realmOfActor(a));
   const read = readRealm(me, a);
   if (read.kind === 'beyond') return "you can't see through their cultivation";
   return realmWords(read.realm);
+}
+
+const REALMS_APART = ['', 'a realm', 'two realms', 'three realms', 'four realms'];
+const apart = (n: number) => REALMS_APART[n] ?? `${n} realms`;
+
+/**
+ * How someone stands to you by realm, as they read you (P3.9w, Jan: "each realm above can kill
+ * you"): a realm up is life and death, so it sets their manners before their nature does. Read
+ * through your cover, and a realm they can't see through is a warning.
+ */
+function regardText(me: Actor, a: Actor): string | null {
+  if (isMortal(me)) return null;
+  if (isMortal(a))
+    return 'to them you are an immortal: a flick of your sleeve could kill them and nobody would ask why. They keep their eyes low, call you immortal master, answer what you ask and never press you; fear shows through even their friendliness.';
+  const read = readRealm(a, me);
+  if (read.kind === 'beyond')
+    return "they can't see through your cultivation, so you may be far above them: they are careful and polite, and give no offense until they know.";
+  const yours = read.realm;
+  const theirs = realmOfActor(a);
+  const gap = realmIndex(yours.realm) - realmIndex(theirs.realm);
+  if (gap >= 2)
+    return `you stand ${apart(gap)} above them: to them you are a calamity walking, able to end them and everything they keep with a thought. They are humble to the edge of fear, call you senior, and yield anything short of their life's ties.`;
+  if (gap === 1)
+    return 'you stand a realm above them: you could kill them as a grown man kills a child, and both of you know it. They call you senior, bow first and give way; only someone stronger behind them lets them stand firm, and even then politely.';
+  if (gap === -1)
+    return 'they stand a realm above you: they could kill you with one hand, and they expect to be called senior and given way. Rudeness from you is an insult they may answer, held back only by the law here, who stands behind you, or their own nature.';
+  if (gap <= -2)
+    return `they stand ${apart(-gap)} above you: you are an ant to them, beneath anger. They may be kind or cold as their nature runs, but they never defer to you, and your words carry only what they choose to hear.`;
+  const d = yours.stage - theirs.stage;
+  const layers = Math.abs(d) === 1 ? 'a layer' : `${Math.abs(d)} layers`;
+  const edge =
+    d === 0 ? 'at their very layer' : d > 0 ? `${layers} above them` : `${layers} below them`;
+  return `you stand at their realm, ${edge}: peers, "fellow daoist" between you. The higher layer carries a little weight, but nobody yields for it.`;
+}
+
+/** The world book for one scene and turn: what's at hand, and the entries each person present gets. */
+interface Book {
+  entries: readonly LoreEntry[];
+  topics: Topic[];
+  asked: Topic[];
+  words: string[];
+  naming: string[];
+  told: Set<string>;
+}
+
+function bookOf(s: GameState, scene: Scene, input: ContextInput): Book {
+  const recent = (input.recent ?? []).slice(-TOPIC_TURNS);
+  // The last turns' words keep their topics; only this turn's name an entry outright.
+  const words = [input.said ?? '', ...recent.map((t) => t.said)].filter(Boolean);
+  const naming = input.said ? [input.said] : [];
+  const named = [...(input.about ?? []), ...recent.flatMap((t) => t.about ?? [])];
+  const g = s.goin?.place;
+  const door = g?.frames.find((f) => f.id === g.at)?.kind ?? null;
+  const asked = topicsAt(words, named, null);
+  const powers = scene.actors.flatMap((a) => (a.power ? [a.power] : []));
+  if (scene.power) powers.push(scene.power);
+  return {
+    entries: worldBook(s, g?.id ?? scene.place, powers),
+    topics: topicsAt(words, named, door),
+    asked,
+    words,
+    naming,
+    told: new Set(),
+  };
+}
+
+/** What a person knows of the topic at hand, as context lines; an entry told once, by its id after. */
+function loreText(s: GameState, scene: Scene, a: Actor, book: Book): string[] {
+  if (!book.topics.length && !book.words.length) return [];
+  const k = knowerOf(s, scene, a);
+  const l = loreFor(k, book.entries, book.topics, book.naming, book.asked);
+  const out: string[] = [];
+  const say = (tells: 'anyone' | 'friend', label: string) => {
+    const these = l.entries.filter((e) => (e.tells ?? 'anyone') === tells);
+    const parts: string[] = [];
+    for (const e of these) {
+      if (book.told.has(e.id)) parts.push(`[${e.id}]`);
+      else if (book.told.size < LORE_PER_SCENE) {
+        book.told.add(e.id);
+        parts.push(`[${e.id}] ${e.text}`);
+      }
+    }
+    if (parts.length) out.push(`  ${label}: ${parts.join(' ')}`);
+  };
+  say('anyone', 'Of this they know (tells anyone)');
+  say('friend', 'Of this, as one of their own (tells a friend)');
+  if (l.blank.length)
+    out.push(
+      `  Knows nothing of ${l.blank.join(', ')} past hearsay: they don't know, and say so in their own way.`,
+    );
+  return out;
 }
 
 function sceneText(
@@ -415,6 +522,7 @@ function sceneText(
   me: Actor,
   view: Pick<View, 'people' | 'things' | 'refs'> & { stores: string[] },
   notes: ContextInput['notes'],
+  book: Book,
 ): string {
   const place = atlas.get(scene.place);
   // Inside a place you went into, it goes by its name even when the atlas has no entry for it.
@@ -425,7 +533,7 @@ function sceneText(
         ? place.name
         : null;
   const lines = [
-    `# The scene: ${placeName ?? 'an unnamed spot'} (${scene.kind}${scene.open ? ', open' : ''}), ${scene.tick} ticks in`,
+    `# The scene: ${placeName ?? 'an unnamed spot'} (${scene.kind}${scene.open ? ', open' : ''}), ${scene.tick} ticks in; the hour now ${hourWords(s.calendar.day + scene.tick / TICKS_PER_DAY)}`,
   ];
   if (scene.power) {
     const p = atlas.get(scene.power);
@@ -460,7 +568,12 @@ function sceneText(
       lines.push(
         `  Their word for you: ${opinion(s.world, a.id, me.id, s.calendar.day).word}${nameKnown(s, a.id, me) ? '' : "; they don't know your name"}.`,
       );
-    if (!beastKind(a)) lines.push(...knowsText(s, scene, atlas, a));
+    if (!beastKind(a)) {
+      const regard = regardText(me, a);
+      if (regard) lines.push(`  By realm, ${regard}`);
+      lines.push(...knowsText(s, scene, atlas, a));
+      lines.push(...loreText(s, scene, a, book));
+    }
     const does = behaviourOf(s, a);
     if (does.length) lines.push(`  What you have seen of them: ${does.join('; ')}.`);
     if (a.state === 'present' || a.state === 'hidden') {
@@ -547,22 +660,25 @@ function placeText(
   }
   if (kind) out.push(`${kind.name}: ${kind.does}.`);
   // What the hour means here (talk first): shut, its dead hours, or its busiest.
-  const share = kind ? kind.hours[branchOf(s.calendar.day + g.scene.tick / 48)]! : null;
+  const hour =
+    here.kind === 'street' || here.kind === 'alley'
+      ? null
+      : hourState(here.kind, s.calendar.day + g.scene.tick / TICKS_PER_DAY);
   const own =
     here.ground === 'power' &&
     !!g.scene.power &&
     s.world.members.some((m) => m.who === s.player.id && m.power === houseOf(g.scene.power!));
-  if (own && share !== null && share < 0.15)
+  if (own && (hour === 'shut' || hour === 'dead'))
     out.push('You are one of its own: you walked in by the door, as a member may at any hour.');
-  if (share === 0)
+  if (hour === 'shut')
     out.push(
       `At this hour ${here.name} is shut and dark: whoever keeps it is asleep or on the night watch, and anyone else here is out of place.`,
     );
-  else if (share !== null && share < 0.15)
+  else if (hour === 'dead')
     out.push(
       `At this hour ${here.name} is in its dead hours, all but empty: whoever is about is on night duty or up to something.`,
     );
-  else if (share !== null && share >= 0.9) out.push(`This is ${here.name}'s busiest hour.`);
+  else if (hour === 'busiest') out.push(`This is ${here.name}'s busiest hour.`);
   if (here.keeper && here.ground === 'resident') out.push(`Whose: ${here.keeper}'s.`);
   // What is kept behind each way in that you would know of: your own power's treasury, a room got
   // into this scene; a stranger's store you know only as "everything" (P3.9b).
@@ -654,8 +770,11 @@ export function buildView(input: ContextInput): View {
     const ref = known ? a.id : `stranger-${++strangers}`;
     refs[ref] = a.id;
     const looks = known ? null : (a.looks ?? looksLike(a));
-    const an = looks && /^[aeiou]/.test(looks) ? 'an' : 'a';
-    const label = known ? a.name : looks ? `a stranger, ${an} ${looks} by the look` : 'a stranger';
+    // A face's line may carry its own article or count ("a grey-bearded elder", "three
+    // conscripts"): it keeps it, so the interpreter can match "the elder" to it (P3.9w).
+    const own = looks && /^(a|an|the|some|two|three|four|five|six|several|\d+)\s/i.test(looks);
+    const an = own ? '' : looks && /^[aeiou]/.test(looks) ? 'an ' : 'a ';
+    const label = known ? a.name : looks ? `a stranger, ${an}${looks} by the look` : 'a stranger';
     people[a.id] = { ref, label };
   }
   refs[viewer] = viewer;
@@ -663,7 +782,15 @@ export function buildView(input: ContextInput): View {
   const region = regionText(s, scene, atlas, viewer, things);
   const sheet = sheetText(s, me, things, scene.region);
   const stores: string[] = [];
-  const sceneOut = sceneText(s, scene, atlas, me, { people, things, refs, stores }, input.notes);
+  const sceneOut = sceneText(
+    s,
+    scene,
+    atlas,
+    me,
+    { people, things, refs, stores },
+    input.notes,
+    bookOf(s, scene, input),
+  );
   return {
     viewer,
     refs,

@@ -38,7 +38,7 @@ import { hasPerson, person, REGARD_VALUES, TIE_IDS } from '../../content/people.
 import { hasShop, keeperName, shop } from '../../content/shops.ts';
 
 /** Bump this and add a migration whenever the saved shape changes. */
-export const SAVE_VERSION = 56;
+export const SAVE_VERSION = 58;
 
 /**
  * Node ids the placement pass renamed (P2.5, design § Cultivation, Every tree has the same
@@ -1199,6 +1199,13 @@ const migrations: Record<number, (old: Raw) => Raw> = {
       },
     };
   },
+  // N1 Who acts: a kept person's purse and held items are new optional pins, so an old save's
+  // cast starts with an empty purse.
+  56: (old) => ({ ...old, version: 57 }),
+  // N2 The regional cast: a kept person's region, pedigree, clock, whereabouts, hurt, tally and
+  // death are new optional pins and the world's seeded regions a new optional key, so an old save's
+  // Border Wilds is seeded on its next day step, as the world day finds it.
+  57: (old) => ({ ...old, version: 58 }),
 };
 
 /** The post starts' last chain quests, which gained a first step in v54. */

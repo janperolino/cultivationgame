@@ -52,12 +52,12 @@ function buyBatch(s0: GameState, market: string, batches = 1): GameState | null 
     let need = input.count * batches - (s.player.items[input.thing] ?? 0);
     while (need > 0) {
       const lots = shopsAt(market)
-        .flatMap((id) => shelf(s, id).map((l) => ({ id, l })))
+        .flatMap((id) => shelf(s, s.player.id, id).map((l) => ({ id, l })))
         .filter((x) => baseOf(x.l.thing) === input.thing && x.l.n > 0 && item(x.l.thing).tier === 1)
         .sort((a, b) => a.l.price - b.l.price);
       const best = lots[0];
       if (!best) return null;
-      const res = buy(s, best.id, best.l.slot, Math.min(need, best.l.n));
+      const res = buy(s, s.player.id, best.id, best.l.slot, Math.min(need, best.l.n));
       if (!res.ok) return null;
       s = res.state;
       need =
@@ -78,13 +78,13 @@ function sellPills(s0: GameState, market: string): GameState {
     let left = n;
     while (left > 0) {
       const offers = shopsAt(market)
-        .map((sh) => ({ sh, o: offerFor(s, sh, id) }))
+        .map((sh) => ({ sh, o: offerFor(s, s.player.id, sh, id) }))
         .filter((x) => x.o.ok)
         .sort((a, b) => (b.o.ok ? b.o.each : 0) - (a.o.ok ? a.o.each : 0));
       let sold = false;
       for (const { sh } of offers) {
         const k = Math.min(left, 10);
-        const r = sell(s, sh, id, k);
+        const r = sell(s, s.player.id, sh, id, k);
         if (r.ok) {
           s = r.state;
           left -= k;
@@ -145,7 +145,7 @@ function run(
       const refiner = shopsAt(market).find(
         (id) => SHOPS.find((sh) => sh.id === id)?.kind === 'refiner',
       );
-      const m = refiner ? repair(s, refiner, cracked) : null;
+      const m = refiner ? repair(s, s.player.id, refiner, cracked) : null;
       if (m?.ok) {
         tally.mend += purse(s) - purse(m.state);
         s = m.state;
@@ -161,7 +161,8 @@ function gatherDay(market: string): number {
   const s = newLife({ name: 'Han Li', seed: 'gather' });
   const o = offerFor(
     withPlayer(s, addItem(s.player, 'old-apricot-kernel', 1)),
-    shopsAt(market).find((sh) => offerFor(s, sh, 'old-apricot-kernel').ok) ?? '',
+    s.player.id,
+    shopsAt(market).find((sh) => offerFor(s, s.player.id, sh, 'old-apricot-kernel').ok) ?? '',
     'old-apricot-kernel',
   );
   return o.ok ? GATHER.wild * HOURS * o.each : 0;

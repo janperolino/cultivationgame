@@ -10,7 +10,8 @@
 // happened stays on its door.
 import { BODY_FOUND, NEW_FACE, PLACE_LI } from '../content/goin.ts';
 import { HOSTILE_FACE } from '../content/crowd.ts';
-import { DOOR_KINDS, RUMOR_TAELS } from '../content/doorKinds.ts';
+import { DOOR_KINDS, doorKindOf, RUMOR_TAELS, type DoorKindId } from '../content/doorKinds.ts';
+import { BRANCHES } from '../content/hours.ts';
 import { HOUSEHOLDS } from '../content/households.ts';
 import { LECTURE, LECTURE_PAYS, LECTURERS } from '../content/happenings.ts';
 import { INSIGHT_PER_STUDY_DAY } from '../content/cultivation.ts';
@@ -134,7 +135,7 @@ function keeperOf(placeId: string, f: Frame, facts: PlaceFacts): Actor | null {
       power: facts.power,
     });
   }
-  return plainActor({ id, name: f.keeper, side: 'keepers', realm: MORTAL, nature });
+  return plainActor({ id, name: f.keeper, side: 'keepers', realm: MORTAL, nature, mortal: true });
 }
 
 /** Someone the world keeps, as an actor again: rebuilt from their seed, or as a face's mortal. */
@@ -148,11 +149,44 @@ export function keptActor(s: GameState, id: string): Actor | null {
     name: k.name,
     side: `kept:${id}`,
     realm: k.realm ?? MORTAL,
+    // Kept with no realm is kept as a mortal (a keeper, a mortal face).
+    ...(k.realm ? {} : { mortal: true }),
     nature: k.nature,
     ...(k.face
       ? { face: { key: k.face, born: k.born ?? 0, ...(k.mortal ? { mortal: k.mortal } : {}) } }
       : {}),
   });
+}
+
+// ── The hour, before and inside ──────────────────────────────────────────────────────────────
+
+/** What an hour means at a door (talk first): shut, its dead hours, its busiest, or nothing to say. */
+export type HourState = 'shut' | 'dead' | 'busiest' | null;
+
+export function hourState(kind: DoorKindId, day: number): HourState {
+  const share = DOOR_KINDS[kind].hours[branchOf(day)]!;
+  return share === 0 ? 'shut' : share < 0.15 ? 'dead' : share >= 0.9 ? 'busiest' : null;
+}
+
+const HOUR_STATE_WORDS: Record<Exclude<HourState, null>, string> = {
+  shut: 'shut',
+  dead: 'all but empty',
+  busiest: 'at its busiest',
+};
+
+/** The double-hour in words: "丑 the small hours". */
+export function hourWords(day: number): string {
+  const b = BRANCHES[branchOf(day)]!;
+  return `${b.hanzi} ${b.time}`;
+}
+
+/**
+ * The hour on a door before you go in (P3.9w, from P3.9t's playtest: a pavilion at the hour of the
+ * ox): "丑 the small hours · shut", by the door's piece; the streets and the land have the hour alone.
+ */
+export function goInHour(day: number, piece: string | null = null): string {
+  const st = piece ? hourState(doorKindOf(piece), day) : null;
+  return st ? `${hourWords(day)} · ${HOUR_STATE_WORDS[st]}` : hourWords(day);
 }
 
 /** Whether a door is open at an hour: it has people by its hours, or it never shuts. */
@@ -205,7 +239,8 @@ function presentAt(s: GameState, placeId: string, f: Frame, day: number): Actor[
   if (f.kind === 'street') {
     for (const id of Object.keys(s.world.kept)) {
       const k = s.world.kept[id]!;
-      if (k.home !== placeId || s.world.people[id] === 'dead') continue;
+      // The regional cast stands in a place's streets from N3.
+      if (k.home !== placeId || k.region || s.world.people[id] === 'dead') continue;
       const rng = new Rng(hashSeed(`about/${id}/${Math.floor(day)}/${branchOf(day)}`));
       if (!rng.chance(0.5)) continue;
       const a = keptActor(s, id);

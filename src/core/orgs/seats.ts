@@ -12,13 +12,13 @@ import { hasPerson, person } from '../../content/people.ts';
 import { realm, realmIndex, REALM_IDS, REALMS, type RealmId } from '../../content/realms.ts';
 import { isMember } from '../resolver/names.ts';
 import { type RealmStage, type World } from '../resolver/world.ts';
-import { addEvent, ageYears, type Cultivator, type GameState } from '../state.ts';
+import { addEvent, type Cultivator, type GameState } from '../state.ts';
+import { ageOf, cultivator, realmStageOf } from '../who.ts';
 import { CRAFTS } from '../../content/crafts.ts';
 import { CRAFT_GRADES } from '../../content/styles.ts';
 import { capitalize } from '../../content/words.ts';
 import { isOrganization, organization, theName, houseOf } from './identity.ts';
 import { membership, membershipsOf } from './membership.ts';
-import { realmStageOf } from './trial.ts';
 
 /** The population's head count keys, by realm index. */
 const POP_KEYS = ['qi', 'foundation', 'core', 'nascent', 'deity', 'void'] as const;
@@ -33,7 +33,18 @@ const id = (i: number): RealmId => REALMS[Math.max(0, i)]!.id;
  * counted under, the inner realm split at layer 7. A power without a population reads its written
  * top as one at the top (O1's talk), and one with neither its vein. A power overrides any of it.
  */
+const ladders = new Map<string, Ladder>();
+
 export function ladderOf(power: string): Ladder {
+  const hit = ladders.get(power);
+  if (hit) return hit;
+  const l = readLadder(power);
+  ladders.set(power, l);
+  return l;
+}
+
+/** The ladder as the population reads it: content only, so it is read once a power. */
+function readLadder(power: string): Ladder {
   const org = organization(houseOf(power));
   const counts: number[] = REALMS.map(() => 0);
   const pop = org.row.population;
@@ -133,13 +144,13 @@ export function seatGrade(power: string, seat: SeatId): number {
  * crafts (a guild whose elders are Foundation wants 二品 for elder). Why not, or null when it lets
  * you in. Joining, the inner seat taken outright and the true seat offered early all read it.
  */
-export function seatGate(c: Cultivator, power: string, seat: SeatId): string | null {
+export function seatGate(c: Cultivator | null, power: string, seat: SeatId): string | null {
   const house = houseOf(power);
   const org = organization(house);
   const crafts = org.row.crafts ?? [];
   const need = seatGrade(house, seat);
   if (need === 0) return null;
-  const best = Math.max(0, ...crafts.map((k) => c.crafts.grades[k]?.grade ?? 0));
+  const best = Math.max(0, ...crafts.map((k) => c?.crafts.grades[k]?.grade ?? 0));
   if (best >= need) return null;
   const which = crafts.length > 1 ? 'any of its crafts' : CRAFTS[crafts[0]!].name;
   return `${capitalize(theName(house))} seats a ${org.seats[seat].name} only with a certified ${CRAFT_GRADES[need - 1]!.hanzi} badge, in ${which}.`;
@@ -236,10 +247,11 @@ export function takeAsDisciple(w: World, elder: string, who: string, power: stri
  * the inner seat is held by realm within one (a split realm), it must have been won by the trial,
  * so the raise never skips it (the checkpoint's fix).
  */
-export function raiseEarly(s: GameState): GameState {
-  const who = s.player.id;
-  const r = realmStageOf(s);
-  const age = ageYears(s.player, s.calendar.day);
+export function raiseEarly(s: GameState, who: string): GameState {
+  const r = realmStageOf(s, who);
+  // A cast member whose birth year isn't known is never raised early (N1).
+  const age = ageOf(s, who, s.calendar.day);
+  if (age === null) return s;
   let state = s;
   for (const m of membershipsOf(s.world, who)) {
     if (!isOrganization(m.power) || m.guest || organization(m.power).preset.byRealm) continue;
@@ -250,13 +262,14 @@ export function raiseEarly(s: GameState): GameState {
     const from = seatRanges(m.power).true.from;
     if (!from || rank(r) < rank(from)) continue;
     if (age >= realm(from.realm).lifespan * EARLY_TRUE.share) continue;
-    if (seatGate(s.player, m.power, 'true')) continue;
+    if (seatGate(cultivator(s, who), m.power, 'true')) continue;
     state = { ...state, world: setSeat(state.world, who, m.power, 'true') };
-    state = addEvent(state, 'power', {
-      power: m.power,
-      what: 'true',
-      title: seatTitle(m.power, 'true', r.realm).name,
-    });
+    if (cultivator(s, who))
+      state = addEvent(state, 'power', {
+        power: m.power,
+        what: 'true',
+        title: seatTitle(m.power, 'true', r.realm).name,
+      });
   }
   return state;
 }
@@ -265,19 +278,21 @@ export function raiseEarly(s: GameState): GameState {
  * The inner seat taken outright on reaching its realm (design: reaching the inner seat's realm
  * makes you an inner disciple outright): kept on the membership, and the chronicle says so.
  */
-export function seatsByRealm(s: GameState): GameState {
-  const r = realmStageOf(s);
+export function seatsByRealm(s: GameState, who: string): GameState {
+  const r = realmStageOf(s, who);
+  const c = cultivator(s, who);
   let state = s;
-  for (const m of membershipsOf(s.world, s.player.id)) {
+  for (const m of membershipsOf(s.world, who)) {
     if (!isOrganization(m.power) || m.guest || m.seat !== 'outer') continue;
-    if (seatOf(s.world, s.player.id, m.power, r) !== 'inner') continue;
-    if (seatGate(s.player, m.power, 'inner')) continue;
-    state = { ...state, world: setSeat(state.world, s.player.id, m.power, 'inner') };
-    state = addEvent(state, 'power', {
-      power: m.power,
-      what: 'raised',
-      title: seatTitle(m.power, 'inner', r.realm).name,
-    });
+    if (seatOf(s.world, who, m.power, r) !== 'inner') continue;
+    if (seatGate(c, m.power, 'inner')) continue;
+    state = { ...state, world: setSeat(state.world, who, m.power, 'inner') };
+    if (c)
+      state = addEvent(state, 'power', {
+        power: m.power,
+        what: 'raised',
+        title: seatTitle(m.power, 'inner', r.realm).name,
+      });
   }
   return state;
 }
