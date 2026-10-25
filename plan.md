@@ -35,9 +35,10 @@ The rules live in `docs/design.md` and the world in `content/atlas/entries.json`
 | ✓ P3.9b Places        | Trade checkpoint        | Atlas fill ¹       | A3.1 Cave         |
 | ✓ P3.9c Scene fights  |                         |                    | A9 Chronicle…     |
 | ✓ P3.9t Talk first    |                         |                    | A12 Intros        |
-| P3.9w World book      |                         |                    | F2 The haul       |
-| N1–N8 People          |                         |                    | A11 Content art   |
-| People checkpoint     |                         |                    | A5.4, A7, A8, A10 |
+| ✓ P3.9w World book    |                         |                    | F2 The haul       |
+| ✓ N1–N2 Who, the cast |                         |                    | A11 Content art   |
+| N3–N8 People          |                         |                    | A5.4, A7, A8, A10 |
+| People checkpoint     |                         |                    |                   |
 | P3.10 The Ways        |                         |                    |                   |
 | P3.11 Ruins           |                         |                    |                   |
 | P3.12 Decks, rebirth  |                         |                    |                   |
